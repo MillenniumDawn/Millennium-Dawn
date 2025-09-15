@@ -543,21 +543,21 @@ USA_american_economic_decisions_category = {
 			add_stability = -0.08
 			set_temp_variable = { treasury_change = -50 }
 			modify_treasury_effect = yes
-			
+
 			custom_effect_tooltip = USA_domestic_policies_tooltip
 			set_temp_variable = { temp_change = -0.07 }
 			USA_change_domestic_political_power_change = yes
 
-			791 = { add_resource = { type = oil amount = 2 } }
-			790 = { add_resource = { type = oil amount = 2 } }
-			789 = { add_resource = { type = oil amount = 2 } }
-			788 = { add_resource = { type = oil amount = 2 } }
-			787 = { add_resource = { type = oil amount = 2 } }
-			786 = { add_resource = { type = oil amount = 2 } }
-			785 = { add_resource = { type = oil amount = 2 } }
-			784 = { add_resource = { type = oil amount = 2 } }
-			199 = { add_resource = { type = oil amount = 2 } }
-			800 = { add_resource = { type = oil amount = 2 } }
+			791 = { add_resource = { type = oil amount = 6 } }
+			790 = { add_resource = { type = oil amount = 6 } }
+			789 = { add_resource = { type = oil amount = 6 } }
+			788 = { add_resource = { type = oil amount = 6 } }
+			787 = { add_resource = { type = oil amount = 6 } }
+			786 = { add_resource = { type = oil amount = 6 } }
+			785 = { add_resource = { type = oil amount = 6 } }
+			784 = { add_resource = { type = oil amount = 6 } }
+			804 = { add_resource = { type = oil amount = 6 } }
+			800 = { add_resource = { type = oil amount = 6 } }
 			set_temp_variable = { party_index = 20 }
 			set_temp_variable = { party_popularity_increase = 0.03 }
 			add_relative_party_popularity = yes
@@ -1527,6 +1527,32 @@ USA_asteroid_mining_decision = {
 
 ## Domestic Policies
 USA_decisions_domestic_policies = {
+	USA_disable_casualty_report = {
+		visible = {
+			has_idea = USA_afghan_mission_cost
+			NOT = {
+				has_country_flag = USA_disabled_casualty_report
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_decision_post_nine_eleven_response"
+			set_country_flag = USA_disabled_casualty_report
+		}
+
+		ai_will_do = { factor = 100 }
+	}
+	USA_enable_casualty_report = {
+		visible = {
+			has_idea = USA_afghan_mission_cost
+			has_country_flag = USA_disabled_casualty_report
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_decision_post_nine_eleven_response"
+			clr_country_flag = USA_disabled_casualty_report
+		}
+
+		ai_will_do = { factor = 100 }
+	}
 	USA_decision_post_nine_eleven_response = {
 		icon = GFX_decision_military_plan
 		available = {
@@ -2346,7 +2372,6 @@ USA_decisions_domestic_policies = {
 
 		ai_will_do = { factor = 100 }
 	}
-
 	USA_decision_the_green_wave_debate = {
 		icon = GFX_decisions_category_energy
 		available = {
@@ -2403,7 +2428,6 @@ USA_decisions_domestic_policies = {
 
 		ai_will_do = { factor = 100 }
 	}
-
 	USA_decision_the_job_impact_scare = {
 		icon = generic_civil_support
 		available = {
@@ -2459,7 +2483,6 @@ USA_decisions_domestic_policies = {
 
 		ai_will_do = { factor = 100 }
 	}
-
 	USA_decision_the_social_impact = {
 		icon = generic_civil_support
 		available = {
@@ -2516,7 +2539,6 @@ USA_decisions_domestic_policies = {
 
 		ai_will_do = { factor = 100 }
 	}
-
 	USA_decision_the_nuclear_question = {
 		icon = GFX_decisions_category_energy
 		available = {
@@ -2573,9 +2595,6 @@ USA_decisions_domestic_policies = {
 
 		ai_will_do = { factor = 100 }
 	}
-
-
-
 }
 
 
@@ -3050,7 +3069,7 @@ USA_political_and_economic_reforms = {
 			USA_change_domestic_drift_defense_change = yes
 			set_temp_variable = { temp_change = -0.04 }
 			USA_change_domestic_democratic_drift_change = yes
-			
+
 			custom_effect_tooltip = USA_blank_space_tooltip
 			custom_effect_tooltip = USA_american_tax_code_tooltip
 			set_temp_variable = { temp_change = 0.03 }
@@ -3138,7 +3157,7 @@ USA_political_and_economic_reforms = {
 			USA_change_domestic_drift_defense_change = yes
 			set_temp_variable = { temp_change = -0.04 }
 			USA_change_domestic_democratic_drift_change = yes
-			
+
 			custom_effect_tooltip = USA_blank_space_tooltip
 			custom_effect_tooltip = USA_american_tax_code_tooltip
 			set_temp_variable = { temp_change = 0.03 }
@@ -3283,7 +3302,9 @@ USA_f35_program_decisions = {
 	USA_expansion_of_the_program = {
 		icon = GFX_decision_nato_f35_expansion_button
 		days_remove = 60
-
+		visible = {
+			original_tag = USA
+		}
 		fire_only_once = yes
 
 		remove_effect = {
@@ -3990,6 +4011,2688 @@ USA_iranian_sanctions = {
 					value > 19
 				}
 				add = 10
+			}
+		}
+	}
+}
+
+
+USA_foreign_policy = {
+	USA_withdraw_from_afghanistan = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+		cost = 100
+		visible = {
+			has_idea = USA_afghan_mission_cost
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_withdraw_from_afghanistan"
+			remove_ideas = USA_afghan_mission_cost
+			clr_country_flag = USA_disabled_casualty_report
+			USA = {
+				release = AFG
+				set_autonomy = {
+					target = AFG
+					autonomous_state = autonomy_free
+					end_wars = no
+				}
+				remove_from_faction = AFG
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				date > 2015.6.21
+				add = 10
+			}
+		}
+	}
+	# FP Decisions
+	# 2000 - 2004
+	USA_chinese_environmentalist_cooperation = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			country_exists = CHI
+			NOT = {
+				has_war_with = CHI
+				has_country_flag = USA_doing_decision
+			}
+		}
+
+		visible = {
+			date > 2001.1.19
+			date < 2005.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_chinese_environmentalist_cooperation"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_chinese_environmentalist_cooperation"
+			clr_country_flag = USA_doing_decision
+			CHI = {
+				country_event = {
+					id = department_of_state.123
+					days = 1
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_SI_green_china_TT
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_the_russian_transition = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			country_exists = SOV
+			NOT = {
+				has_war_with = SOV
+				has_country_flag = USA_doing_decision
+			}
+		}
+
+		visible = {
+			date > 2001.1.19
+			date < 2005.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_the_russian_transition"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_the_russian_transition"
+			clr_country_flag = USA_doing_decision
+			SOV = {
+				country_event = {
+					id = department_of_state.5
+					days = 3
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_RU_transition_TT
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_authorize_intervention_in_somalia = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 120
+
+		visible = {
+			SOM = {
+				OR = {
+					has_war_with = JUB
+					has_war_with = SWS
+					has_war_with = PUN
+				}
+			}
+		}
+
+		available = {
+			country_exists = SOM
+			NOT = {
+				has_war_with = SOM
+				has_country_flag = USA_doing_decision
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_authorize_intervention_in_somalia"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_authorize_intervention_in_somalia"
+			clr_country_flag = USA_doing_decision
+			news_event = {
+				id = department_of_state.8
+				days = 1
+			}
+			newline = yes
+			custom_effect_tooltip = USA_somalia_intervention_TT
+			newline = yes
+			add_relation_modifier = {
+				target = SOM
+				modifier = generic_increased_military_support
+			}
+			add_ai_strategy = {
+				type = send_volunteers_desire
+				id = SOM
+				value = 500
+			}
+			set_country_flag = USA_SOM_intervention
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_airstrikes_against_sudan = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 70
+
+		visible = {
+			SUD = {
+				has_war_with = SSU
+			}
+		}
+
+		available = {
+			country_exists = SUD
+			country_exists = SSU
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_airstrikes_against_sudan"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_airstrikes_against_sudan"
+			clr_country_flag = USA_doing_decision
+			news_event = {
+				id = department_of_state.9
+				days = 1
+			}
+			SUD = {
+				country_event = department_of_state.900
+			}
+			newline = yes
+			custom_effect_tooltip = USA_sudan_intervention_TT
+			set_country_flag = USA_sudan_done
+		}
+
+		ai_will_do = {
+			base = 45
+		}
+	}
+
+	USA_call_on_tanzania_and_kenya = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 35
+
+		visible = {
+			SUD = {
+				has_war_with = SSU
+			}
+			has_country_flag = USA_sudan_done
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+		}
+
+		available = {
+			country_exists = SUD
+			country_exists = SSU
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_call_on_tanzania_and_kenya"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_call_on_tanzania_and_kenya"
+			clr_country_flag = USA_doing_decision
+			KEN = {
+				country_event = {
+					id = department_of_state.11
+					days = 2
+				}
+			}
+			TNZ = {
+				country_event = {
+					id = department_of_state.11
+					days = 2
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_sudan_intervention2_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	# Next 4 Decisions, 2004 to 2009
+
+	USA_our_backyard = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			country_exists = BRA
+			country_exists = COL
+			country_exists = ARG
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+		}
+
+		visible = {
+			date > 2005.1.19
+			date < 2009.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_our_backyard"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_our_backyard"
+			clr_country_flag = USA_doing_decision
+			BRA = {
+				country_event = {
+					id = department_of_state.14
+					days = 2
+				}
+			}
+			COL = {
+				country_event = {
+					id = department_of_state.14
+					days = 2
+				}
+			}
+			ARG = {
+				country_event = {
+					id = department_of_state.14
+					days = 2
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_south_america_investments_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	USA_uniting_georgia = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			country_exists = GEO
+			OR = {
+				country_exists = ABK
+				country_exists = SOO
+			}
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+		}
+
+		visible = {
+			date > 2005.1.19
+			date < 2009.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_uniting_georgia"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_uniting_georgia"
+			clr_country_flag = USA_doing_decision
+			GEO = {
+				country_event = {
+					id = department_of_state.19
+					days = 2
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_georgian_peer_pressure_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	USA_natos_man = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			has_idea = NATO_member
+			is_faction_leader = yes
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+		}
+
+		visible = {
+			date > 2005.1.19
+			date < 2009.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_natos_man"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_natos_man"
+			clr_country_flag = USA_doing_decision
+			every_other_country = {
+				limit = {
+					has_idea = NATO_member
+				}
+				country_event = {
+					id = department_of_state.28
+					days = 2
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_bolstering_nato_TT
+			newline = yes
+			set_temp_variable = { treasury_change = -150 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	USA_belarus_reauthorization_act = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			BLR = {
+				NOT = {
+					is_subject_of = USA
+				}
+				OR = {
+					has_autocratic_government = yes
+					emerging_reactionaries_are_in_power = yes
+				}
+			}
+			if = {
+				limit = {
+					has_dlc = "La Resistance"
+					USA = {
+						is_ai = no
+					}
+				}
+				network_strength = {
+					target = BLR
+					value > 45
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = {
+						has_dlc = "La Resistance"
+					}
+				}
+				BLR = {
+					influence_higher_15 = yes
+				}
+			}
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+		}
+
+		visible = {
+			date > 2005.1.19
+			date < 2009.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_belarus_reauthorization_act"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_belarus_reauthorization_act"
+			clr_country_flag = USA_doing_decision
+			BLR = {
+				if = {
+					limit = { check_variable = { influence_array^0 = USA } }
+					set_temp_variable = { american_influence_percentage = influence_array_val^0 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^1 = USA } }
+					set_temp_variable = { american_influence_percentage = influence_array_val^1 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^2 = USA } }
+					set_temp_variable = { american_influence_percentage = influence_array_val^2 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^3 = USA } }
+					set_temp_variable = { american_influence_percentage = influence_array_val^3 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^4 = USA } }
+					set_temp_variable = { american_influence_percentage = influence_array_val^4 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^5 = USA } }
+					set_temp_variable = { american_influence_percentage = influence_array_val^5 }
+				}
+				else_if = {
+					limit = { check_variable = { influence_array^6 = USA } }
+					set_temp_variable = { american_influence_percentage = influence_array_val^6 }
+				}
+				else = { set_temp_variable = { american_influence_percentage = 0 } }
+				set_temp_variable = { blr_domestic_influence_var = domestic_influence_amount }
+				set_temp_variable = { blr_democratic_outlook_percentage = party_popularity@democratic }
+				multiply_temp_variable = { blr_democratic_outlook_percentage = 100 }
+				set_temp_variable = { blr_not_democratic_popularity = 100 }
+				subtract_from_temp_variable = { blr_not_democratic_popularity = blr_democratic_outlook_percentage }
+
+				#Chances
+
+				#Coup
+				set_temp_variable = { coup_chance = 0 }
+				add_to_temp_variable = { coup_chance = american_influence_percentage }
+				add_to_temp_variable = { coup_chance = 30 }
+
+				#Civil War
+				set_temp_variable = { civil_war_chance = 0 }
+				add_to_temp_variable = { civil_war_chance = 30 } #Makes civil war easier.
+				add_to_temp_variable = { civil_war_chance = blr_democratic_outlook_percentage }
+				add_to_temp_variable = { coup_chance = american_influence_percentage }
+
+				#Nothing happens
+				set_temp_variable = { fail_chance = 0 }
+				add_to_temp_variable = { fail_chance = blr_not_democratic_popularity }
+				add_to_temp_variable = { fail_chance = blr_domestic_influence_var }
+				add_to_temp_variable = { fail_chance = -50 } #Makes civil war easier.
+			}
+			random_list = {
+				coup_chance = {
+					custom_effect_tooltip = USA_blr_coup_TT
+					hidden_effect = {
+						SOV = {
+							country_event = {
+								id = department_of_state.31
+								days = 2
+							}
+						}
+						news_event = department_of_state.29
+						BLR = {
+							set_politics = {
+								ruling_party = democratic
+								elections_allowed = no
+							}
+							set_political_party = {
+								ideology = democratic
+								popularity = 100
+							}
+							set_temp_variable = { party_index = 1 }
+							set_temp_variable = { party_popularity_increase = 1.00 }
+							add_relative_party_popularity = yes
+
+							set_temp_variable = { rul_party_temp = 1 }
+							change_ruling_party_effect = yes
+
+							create_country_leader = {
+								name = "Anatolij Lebiedko"
+								picture = "anatoly_lebedko.dds"
+								ideology = conservatism
+								traits = {
+									western_conservatism career_politician pro_american
+								}
+							}
+
+							set_temp_variable = { percent_change = 10.00 }
+							set_temp_variable = { tag_index = USA }
+							set_temp_variable = { influence_target = BLR }
+							change_influence_percentage = yes
+						}
+					}
+				}
+				civil_war_chance = {
+					custom_effect_tooltip = USA_blr_civilwar_TT
+					hidden_effect = {
+						news_event = department_of_state.30
+						create_dynamic_country = {
+							original_tag = BLR
+							set_country_flag = BLR_liberation_tag
+							copy_tag = BLR
+							set_cosmetic_tag = USA_BLR_STATE
+							set_country_flag = disable_different_country_flag
+							set_popularities = {
+								democratic = 100
+							}
+							set_politics = {
+								ruling_party = democratic
+								last_election = "1997.6.8"
+								election_frequency = 48
+								elections_allowed = no
+							}
+							start_politics_input = yes
+							ingame_startup_nations_effect = yes
+							### Party Popularities
+							set_variable = { party_pop_array^0 = 0.00 } #Western_Autocracy
+							set_variable = { party_pop_array^1 = 1.00 } #conservatism
+							set_variable = { party_pop_array^2 = 0.00 } #liberalism
+							set_variable = { party_pop_array^3 = 0.00 } #socialism
+							set_variable = { party_pop_array^4 = 0.00 } #Communist-State
+							set_variable = { party_pop_array^5 = 0.00 } #anarchist_communism
+							set_variable = { party_pop_array^6 = 0.00 } #Conservative
+							set_variable = { party_pop_array^7 = 0.00 } #Autocracy
+							set_variable = { party_pop_array^8 = 0.00 } #Mod_Vilayat_e_Faqih -> Reformists
+							set_variable = { party_pop_array^9 = 0.00 } #Vilayat_e_Faqih -> Principalists
+							set_variable = { party_pop_array^10 = 0.00 } #Kingdom
+							set_variable = { party_pop_array^11 = 0.00 } #Caliphate
+							set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+							set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
+							set_variable = { party_pop_array^14 = 0.00 } #Neutral_conservatism
+							set_variable = { party_pop_array^15 = 0.00 } #oligarchism
+							set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
+							set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
+							set_variable = { party_pop_array^18 = 0.00 } #neutral_Social
+							set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
+							set_variable = { party_pop_array^20 = 0.00 } #Nat_Populism
+							set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
+							set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
+							set_variable = { party_pop_array^23 = 0.00 } #Monarchist
+							### Ruling Party
+							add_to_array = { ruling_party = 1 }
+							startup_politics = yes
+							# Leader
+							create_country_leader = {
+								name = "Anatolij Lebiedko"
+								picture = "anatoly_lebedko.dds"
+								ideology = conservatism
+								traits = {
+									western_conservatism career_politician pro_american
+								}
+							}
+							load_focus_tree = { tree = belorussia_focus keep_completed = yes }
+						}
+						702 = { transfer_state_to = BLG }
+						1093 = { transfer_state_to = BLG }
+						BLG = {
+							division_template = {
+								name = "Narodnaya Dyviziya"
+								priority = 0
+								template_counter = 0
+								regiments = {
+									Militia_Bat = { x = 0 y = 0 }
+									Militia_Bat = { x = 0 y = 1 }
+									Militia_Bat = { x = 0 y = 2 }
+									Militia_Bat = { x = 0 y = 3 }
+									Militia_Bat = { x = 0 y = 4 }
+								}
+								support = {
+									L_Recce_Comp = { x = 0 y = 0 }
+								}
+							}
+							702 = {
+								create_unit = {
+									division = "name = \"1st. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+									owner = BLG
+									prioritize_location = 3393
+								}
+								create_unit = {
+									division = "name = \"2nd. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+									owner = BLG
+									prioritize_location = 14537
+								}
+								create_unit = {
+									division = "name = \"3rd. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+									owner = BLG
+									prioritize_location = 6413
+								}
+							}
+							1093 = {
+								create_unit = {
+									division = "name = \"4th. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+									owner = BLG
+									prioritize_location = 3392
+								}
+								create_unit = {
+									division = "name = \"5th. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+									owner = BLG
+									prioritize_location = 9304
+								}
+								create_unit = {
+									division = "name = \"6th. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+									owner = BLG
+									prioritize_location = 535
+								}
+								create_unit = {
+									division = "name = \"7th. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+									owner = BLG
+									prioritize_location = 535
+								}
+							}
+							BLG = {
+								declare_war_on = {
+									target = BLR
+									type = civil_war
+								}
+							}
+						}
+					}
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_belarus_decision_TT
+			newline = yes
+			hidden_effect = {
+				if = {
+					limit = {
+						BLR = {
+							has_idea = CSTO_member
+							is_in_faction_with = SOV
+						}
+					}
+					BLR = {
+						leave_faction = yes
+						set_country_flag = BLR_was_in_CSTO
+					}
+				}
+				SOV = {
+					add_ai_strategy = {
+						type = send_volunteers_desire
+						id = BLR
+						value = 500
+					}
+					add_relation_modifier = {
+						target = BLR
+						modifier = generic_increased_military_support
+					}
+				}
+				USA = {
+					add_ai_strategy = {
+						type = send_volunteers_desire
+						id = BLG
+						value = 500
+					}
+					add_relation_modifier = {
+						target = BLG
+						modifier = generic_increased_military_support
+					}
+				}
+				POL = {
+					add_ai_strategy = {
+						type = send_volunteers_desire
+						id = BLG
+						value = 500
+					}
+					add_relation_modifier = {
+						target = BLG
+						modifier = generic_increased_military_support
+					}
+				}
+				FRA = {
+					add_ai_strategy = {
+						type = send_volunteers_desire
+						id = BLG
+						value = 500
+					}
+					add_relation_modifier = {
+						target = BLG
+						modifier = generic_increased_military_support
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	# Next 4 Decisions, 2009 to 2013
+	USA_another_10_trillion_to_israel = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+		}
+
+		visible = {
+			date > 2009.1.19
+			date < 2013.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_another_10_trillion_to_israel"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_another_10_trillion_to_israel"
+			clr_country_flag = USA_doing_decision
+			ISR = {
+				country_event = department_of_state.83
+			}
+			newline = yes
+			custom_effect_tooltip = USA_support_ISR_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	USA_russian_reset = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+			country_exists = SOV
+			SOV = {
+				NOT = {
+					has_war_with = USA
+				}
+			}
+		}
+
+		visible = {
+			has_dlc = "Gotterdammerung"
+			date > 2009.1.19
+			date < 2013.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_push_iran"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_push_iran"
+			clr_country_flag = USA_doing_decision
+			SOV = {
+				country_event = {
+					id = department_of_state.77
+					days = 1
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_russian_reset_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	USA_intervention_in_libya = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+			LBA = {
+				NOT = {
+					has_war_with = USA
+					is_subject_of = USA
+				}
+				OR = {
+					has_civil_war = yes
+					has_war_with = FEZ
+					has_war_with = CYR
+					has_war_with = TRP
+				}
+				emerging_autocracy_are_in_power = yes
+			}
+		}
+
+		visible = {
+			date > 2009.1.19
+			date < 2013.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_intervention_in_libya"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_intervention_in_libya"
+			clr_country_flag = USA_doing_decision
+			news_event = department_of_state.78
+			every_country = {
+				limit = {
+					OR = {
+						original_tag = LBA
+						original_tag = TRP
+						original_tag = FEZ
+						original_tag = CYR
+					}
+					emerging_autocracy_are_in_power = no
+				}
+				USA = {
+					add_ai_strategy = {
+						type = send_volunteers_desire
+						id = THIS
+						value = 500
+					}
+					add_relation_modifier = {
+						target = THIS
+						modifier = generic_increased_military_support
+					}
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_beating_gaddafi_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	USA_moving_in_on_africa = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+			country_exists = CHI
+			CHI = {
+				NOT = {
+					has_war_with = USA
+				}
+			}
+		}
+
+		visible = {
+			date > 2009.1.19
+			date < 2013.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_moving_in_on_africa"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_moving_in_on_africa"
+			clr_country_flag = USA_doing_decision
+			CHI = {
+				country_event = department_of_state.79
+			}
+			every_country = {
+				limit = {
+					capital_scope = {
+						is_on_continent = africa
+					}
+				}
+				set_temp_variable = { percent_change = 2.40 }
+				set_temp_variable = { tag_index = USA }
+				set_temp_variable = { influence_target = THIS }
+				change_influence_percentage = yes
+				set_temp_variable = { percent_change = -10.00 }
+				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = THIS }
+				change_influence_percentage = yes
+			}
+			newline = yes
+			custom_effect_tooltip = USA_kicking_china_out_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+	# Next 4 Decisions, 2013 - 2017
+	USA_push_iran = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+			country_exists = PER
+			PER = {
+				NOT = {
+					has_government = democratic
+					is_subject_of = USA
+				}
+			}
+		}
+
+		visible = {
+			date > 2013.1.19
+			date < 2017.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_push_iran"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_push_iran"
+			clr_country_flag = USA_doing_decision
+			set_country_flag = USA_pressured_iran
+			PER = {
+				country_event = {
+					id = department_of_state.59
+					days = 1
+				}
+				newline = yes
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.05
+				}
+				newline = yes
+				decrease_economic_growth = yes
+			}
+			newline = yes
+			custom_effect_tooltip = USA_pressuring_iran_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	USA_setting_the_pacific_groundwork = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			country_exists = JAP
+			NOT = {
+				has_war_with = JAP
+				has_country_flag = USA_doing_decision
+			}
+			JAP = {
+				is_in_faction = no
+				is_subject = no
+			}
+		}
+
+		visible = {
+			date > 2013.1.19
+			date < 2017.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_setting_the_pacific_groundwork"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_setting_the_pacific_groundwork"
+			clr_country_flag = USA_doing_decision
+			JAP = {
+				country_event = {
+					id = department_of_state.49
+					days = 1
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_pacific_alliance_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	USA_a_strong_east = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			country_exists = SAU
+			country_exists = ISR
+			NOT = {
+				has_war_with = SAU
+				has_war_with = ISR
+				has_country_flag = USA_doing_decision
+			}
+			SAU = {
+				salafist_kingdom_are_in_power = yes
+			}
+		}
+
+		visible = {
+			date > 2013.1.19
+			date < 2017.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_a_strong_east"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_a_strong_east"
+			clr_country_flag = USA_doing_decision
+			ISR = {
+				country_event = {
+					id = department_of_state.52
+					days = 1
+				}
+			}
+			SAU = {
+				country_event = {
+					id = department_of_state.52
+					days = 1
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_arming_saud_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	USA_fighting_little_green_men = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+			country_exists = SOV
+			SOV = {
+				is_subject = no
+			}
+			country_exists = PMR
+			country_exists = MLV
+			MLV = {
+				is_subject = no
+			}
+		}
+
+		visible = {
+			date > 2013.1.19
+			date < 2017.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_fighting_little_green_men"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_fighting_little_green_men"
+			clr_country_flag = USA_doing_decision
+			set_temp_variable = { percent_change = -10 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = UKR }
+			change_influence_percentage = yes
+			newline = yes
+			UKR = {
+				add_popularity = {
+					ideology = democratic
+					popularity = 0.15
+				}
+			}
+			newline = yes
+			MLV = {
+				country_event = {
+					id = department_of_state.55
+					days = 1
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_backing_moldova_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+	# Next 4 Decisions, 2017 - 2021
+	USA_two_percent = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+			country_exists = PER
+			PER = {
+				NOT = {
+					has_government = democratic
+					is_subject_of = USA
+				}
+			}
+		}
+
+		visible = {
+			date > 2017.1.19
+			date < 2021.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_two_percent"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_two_percent"
+			clr_country_flag = USA_doing_decision
+			every_country = {
+				limit = {
+					has_idea = NATO_member
+				}
+				country_event = {
+					id = department_of_state.60
+					days = 2
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_2_percent_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	USA_tehrans_ultimatum = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+			country_exists = PER
+			PER = {
+				NOT = {
+					has_government = democratic
+					has_completed_focus = PER_iaea_autonomy
+					is_subject_of = USA
+				}
+			}
+		}
+
+		visible = {
+			date > 2017.1.19
+			date < 2021.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_tehrans_ultimatum"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_tehrans_ultimatum"
+			clr_country_flag = USA_doing_decision
+			PER = {
+				country_event = {
+					id = department_of_state.62
+					days = 2
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_PER_war_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	USA_economic_destruction_of_beijing = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+			country_exists = CHI
+			NOT = {
+				CHI = {
+					has_government = democratic
+					is_subject_of = USA
+				}
+			}
+			has_government = democratic
+		}
+
+		visible = {
+			date > 2017.1.19
+			date < 2021.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_economic_destruction_of_beijing"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_economic_destruction_of_beijing"
+			clr_country_flag = USA_doing_decision
+			news_event = department_of_state.76
+			add_timed_idea = {
+				idea = USA_CHI_trade_war
+				days = 730
+			}
+			newline = yes
+			every_country = {
+				limit = {
+					has_government = democratic
+					NOT = {
+						original_tag = USA
+					}
+				}
+				country_event = {
+					id = department_of_state.73
+					days = 1
+				}
+			}
+			newline = yes
+			CHI = {
+				country_event = {
+					id = department_of_state.74
+					days = 1
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_CHI_trade_war_TT
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+
+	USA_freedom_in_venezuela = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 365
+
+		available = {
+			VEN = {
+				NOT = {
+					is_subject_of = USA
+					has_government = democratic
+				}
+			}
+			if = {
+				limit = {
+					has_dlc = "La Resistance"
+				}
+				network_strength = {
+					target = VEN
+					value > 45
+				}
+			}
+			else = {
+				VEN = {
+					influence_higher_15 = yes
+				}
+			}
+			NOT = {
+				has_country_flag = USA_doing_decision
+			}
+		}
+
+		visible = {
+			date > 2017.1.19
+			date < 2021.1.20
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_freedom_in_venezuela"
+			set_country_flag = USA_doing_decision
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_freedom_in_venezuela"
+			clr_country_flag = USA_doing_decision
+			custom_effect_tooltip = USA_ven_civilwar_TT
+			hidden_effect = {
+				news_event = department_of_state.75
+				create_dynamic_country = {
+					original_tag = VEN
+					set_country_flag = VEN_liberation_tag
+					copy_tag = VEN
+					set_country_flag = disable_different_country_flag
+					set_popularities = {
+						democratic = 100
+					}
+					set_politics = {
+						ruling_party = democratic
+						last_election = "1997.6.8"
+						election_frequency = 48
+						elections_allowed = yes
+					}
+					start_politics_input = yes
+					ingame_startup_nations_effect = yes
+					### Party Popularities
+					set_variable = { party_pop_array^0 = 0.00 } #Western_Autocracy
+					set_variable = { party_pop_array^1 = 0.00 } #conservatism
+					set_variable = { party_pop_array^2 = 1.00 } #liberalism
+					set_variable = { party_pop_array^3 = 0.00 } #socialism
+					set_variable = { party_pop_array^4 = 0.00 } #Communist-State
+					set_variable = { party_pop_array^5 = 0.00 } #anarchist_communism
+					set_variable = { party_pop_array^6 = 0.00 } #Conservative
+					set_variable = { party_pop_array^7 = 0.00 } #Autocracy
+					set_variable = { party_pop_array^8 = 0.00 } #Mod_Vilayat_e_Faqih -> Reformists
+					set_variable = { party_pop_array^9 = 0.00 } #Vilayat_e_Faqih -> Principalists
+					set_variable = { party_pop_array^10 = 0.00 } #Kingdom
+					set_variable = { party_pop_array^11 = 0.00 } #Caliphate
+					set_variable = { party_pop_array^12 = 0.00 } #Neutral_Muslim_Brotherhood
+					set_variable = { party_pop_array^13 = 0.00 } #Neutral_Autocracy
+					set_variable = { party_pop_array^14 = 0.00 } #Neutral_conservatism
+					set_variable = { party_pop_array^15 = 0.00 } #oligarchism
+					set_variable = { party_pop_array^16 = 0.00 } #Neutral_Libertarian
+					set_variable = { party_pop_array^17 = 0.00 } #Neutral_green
+					set_variable = { party_pop_array^18 = 0.00 } #neutral_Social
+					set_variable = { party_pop_array^19 = 0.00 } #Neutral_Communism
+					set_variable = { party_pop_array^20 = 0.00 } #Nat_Populism
+					set_variable = { party_pop_array^21 = 0.00 } #Nat_Fascism
+					set_variable = { party_pop_array^22 = 0.00 } #Nat_Autocracy
+					set_variable = { party_pop_array^23 = 0.00 } #Monarchist
+					### Ruling Party
+					add_to_array = { ruling_party = 2 }
+					startup_politics = yes
+					# Leader
+					create_country_leader = {
+						name = "Leopoldo Lopez"
+						picture = "leopoldo_lopez.dds"
+						ideology = liberalism
+						traits = {
+							western_liberalism
+						}
+					}
+					load_focus_tree = { tree = venezuela_focus keep_completed = yes }
+				}
+				874 = { transfer_state_to = VLG }
+				915 = { transfer_state_to = VLG }
+				VLG = {
+					division_template = {
+						name = "Brigada de Liberación"
+						priority = 0
+						template_counter = 0
+						regiments = {
+							Militia_Bat = { x = 0 y = 0 }
+							Militia_Bat = { x = 0 y = 1 }
+							Militia_Bat = { x = 0 y = 2 }
+							Militia_Bat = { x = 0 y = 3 }
+							Militia_Bat = { x = 0 y = 4 }
+						}
+						support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+						}
+					}
+					874 = {
+						create_unit = {
+							division = "name = \"1st. Brigada de Liberación\" division_template = \"Brigada de Liberación\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+							owner = VLG
+							prioritize_location = 12285
+						}
+						create_unit = {
+							division = "name = \"14th. Brigada de Liberación\" division_template = \"Brigada de Liberación\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+							owner = VLG
+							prioritize_location = 12285
+						}
+						create_unit = {
+							division = "name = \"2nd. Brigada de Liberación\" division_template = \"Brigada de Liberación\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+							owner = VLG
+							prioritize_location = 12261
+						}
+						create_unit = {
+							division = "name = \"13th. Brigada de Liberación\" division_template = \"Brigada de Liberación\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+							owner = VLG
+							prioritize_location = 12261
+						}
+						create_unit = {
+							division = "name = \"3rd. Brigada de Liberación\" division_template = \"Brigada de Liberación\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+							owner = VLG
+							prioritize_location = 1997
+						}
+						create_unit = {
+							division = "name = \"12th. Brigada de Liberación\" division_template = \"Brigada de Liberación\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+							owner = VLG
+							prioritize_location = 1997
+						}
+					}
+					915 = {
+						create_unit = {
+							division = "name = \"4th. Brigada de Liberación\" division_template = \"Brigada de Liberación\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+							owner = VLG
+							prioritize_location = 5056
+						}
+						create_unit = {
+							division = "name = \"11th. Brigada de Liberación\" division_template = \"Brigada de Liberación\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+							owner = VLG
+							prioritize_location = 5056
+						}
+						create_unit = {
+							division = "name = \"5th. Brigada de Liberación\" division_template = \"Brigada de Liberación\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+							owner = VLG
+							prioritize_location = 8024
+						}
+						create_unit = {
+							division = "name = \"10th. Brigada de Liberación\" division_template = \"Brigada de Liberación\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+							owner = VLG
+							prioritize_location = 8024
+						}
+						create_unit = {
+							division = "name = \"6th. Brigada de Liberación\" division_template = \"Brigada de Liberación\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+							owner = VLG
+							prioritize_location = 4892
+						}
+						create_unit = {
+							division = "name = \"9th. Brigada de Liberación\" division_template = \"Brigada de Liberación\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+							owner = VLG
+							prioritize_location = 4892
+						}
+						create_unit = {
+							division = "name = \"7th. Brigada de Liberación\" division_template = \"Brigada de Liberación\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+							owner = VLG
+							prioritize_location = 5000
+						}
+						create_unit = {
+							division = "name = \"8th. Brigada de Liberación\" division_template = \"Brigada de Liberación\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+							owner = VLG
+							prioritize_location = 5000
+						}
+					}
+					VLG = {
+						declare_war_on = {
+							target = VEN
+							type = civil_war
+						}
+					}
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = USA_venezuela_decision_TT
+			newline = yes
+			hidden_effect = {
+				SOV = {
+					add_ai_strategy = {
+						type = send_volunteers_desire
+						id = VEN
+						value = 500
+					}
+					add_relation_modifier = {
+						target = VEN
+						modifier = generic_increased_military_support
+					}
+				}
+				if = {
+					limit = {
+						PER = {
+							has_government = communism
+						}
+					}
+					PER = {
+						add_ai_strategy = {
+							type = send_volunteers_desire
+							id = VEN
+							value = 500
+						}
+						add_relation_modifier = {
+							target = VEN
+							modifier = generic_increased_military_support
+						}
+					}
+				}
+				if = {
+					limit = {
+						CHI = {
+							has_government = communism
+						}
+					}
+					CHI = {
+						add_ai_strategy = {
+							type = send_volunteers_desire
+							id = VEN
+							value = 500
+						}
+						add_relation_modifier = {
+							target = VEN
+							modifier = generic_increased_military_support
+						}
+					}
+				}
+				USA = {
+					add_ai_strategy = {
+						type = send_volunteers_desire
+						id = VLG
+						value = 500
+					}
+					add_relation_modifier = {
+						target = VLG
+						modifier = generic_increased_military_support
+					}
+				}
+				BRA = {
+					add_ai_strategy = {
+						type = send_volunteers_desire
+						id = VLG
+						value = 500
+					}
+					add_relation_modifier = {
+						target = VLG
+						modifier = generic_increased_military_support
+					}
+				}
+				HOL = {
+					add_ai_strategy = {
+						type = send_volunteers_desire
+						id = VLG
+						value = 500
+					}
+					add_relation_modifier = {
+						target = VLG
+						modifier = generic_increased_military_support
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+	# Next 4 Decisions, 2021-2025 (TO BE CONTINUED LATER)
+	# Pop-up Decisions
+	USA_backing_ukraine = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 14
+
+		available = {
+			NOT = {
+				USA = {
+					has_war_with = SOV
+					has_war_with = UKR
+				}
+			}
+		}
+
+		visible = {
+			UKR = {
+				has_war_with = SOV
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_backing_ukraine"
+			news_event = department_of_state.84
+			UKR = {
+				add_ideas = USA_UKR_aid
+			}
+			every_country = {
+				limit = {
+					has_idea = NATO_member
+				}
+				country_event = department_of_state.85
+			}
+			add_relation_modifier = {
+				target = UKR
+				modifier = generic_increased_military_support
+			}
+			add_ai_strategy = {
+				type = send_volunteers_desire
+				id = UKR
+				value = 500
+			}
+			send_equipment = {
+				amount = 5000
+				type = infantry_weapons
+				target = UKR
+			}
+			send_equipment = {
+				amount = 600
+				type = util_vehicle_equipment
+				target = UKR
+			}
+		}
+
+		ai_will_do = {
+			base = 55
+		}
+	}
+}
+
+USA_iraq_most_wanted = {
+	USA_execute_saddam = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			has_country_flag = IRQ_saddam_caught
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_execute_saddam"
+			set_country_flag = USA_saddam_dead
+			add_to_variable = {
+				var = IRQ_baathist_dead
+				value = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_execute_qusay = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			has_country_flag = IRQ_qusay_caught
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_execute_qusay"
+			set_country_flag = USA_qusay_dead
+			add_to_variable = {
+				var = IRQ_baathist_dead
+				value = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_execute_uday = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			has_country_flag = IRQ_uday_caught
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_execute_uday"
+			set_country_flag = USA_uday_dead
+			add_to_variable = {
+				var = IRQ_baathist_dead
+				value = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_execute_abid = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			has_country_flag = IRQ_abid_caught
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_execute_abid"
+			set_country_flag = USA_abid_dead
+			add_to_variable = {
+				var = IRQ_baathist_dead
+				value = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_execute_majid = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			has_country_flag = IRQ_majid_caught
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_execute_majid"
+			set_country_flag = USA_majid_dead
+			add_to_variable = {
+				var = IRQ_baathist_dead
+				value = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_execute_walter = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			has_country_flag = IRQ_walter_caught
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_execute_walter"
+			set_country_flag = USA_walter_dead
+			add_to_variable = {
+				var = IRQ_baathist_dead
+				value = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_execute_tilfah = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			has_country_flag = IRQ_tilfah_caught
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_execute_tilfah"
+			set_country_flag = USA_latif_dead
+			add_to_variable = {
+				var = IRQ_baathist_dead
+				value = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_execute_salih = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			has_country_flag = IRQ_salih_caught
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_execute_salih"
+			set_country_flag = USA_salih_dead
+			add_to_variable = {
+				var = IRQ_baathist_dead
+				value = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	# Capture Agents
+	USA_SYR_baathists = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			if = {
+				limit = {
+					has_dlc = "La Resistance"
+					NOT = {
+						is_ai = yes
+					}
+				}
+				network_strength = {
+					target = SYR
+					value > 84
+				}
+			}
+			else = {
+				SYR = {
+					influence_higher_20 = yes
+				}
+			}
+			SYR = {
+				OR = {
+					has_country_flag = IRQ_majid_here
+					has_country_flag = IRQ_walter_here
+					has_country_flag = IRQ_tilfah_here
+					has_country_flag = IRQ_salih_here
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_SYR_baathists"
+			if = {
+				limit = {
+					SYR = {
+						has_country_flag = IRQ_majid_here
+					}
+				}
+				SYR = {
+					clr_country_flag = IRQ_majid_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.14
+					}
+				}
+			}
+			if = {
+				limit = {
+					SYR = {
+						has_country_flag = IRQ_walter_here
+					}
+				}
+				SYR = {
+					clr_country_flag = IRQ_walter_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.15
+					}
+				}
+			}
+			if = {
+				limit = {
+					SYR = {
+						has_country_flag = IRQ_tilfah_here
+					}
+				}
+				SYR = {
+					clr_country_flag = IRQ_tilfah_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.16
+					}
+				}
+			}
+			if = {
+				limit = {
+					SYR = {
+						has_country_flag = IRQ_salih_here
+					}
+				}
+				SYR = {
+					clr_country_flag = IRQ_salih_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.17
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_SAU_baathists = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			if = {
+				limit = {
+					has_dlc = "La Resistance"
+					NOT = {
+						is_ai = yes
+					}
+				}
+				network_strength = {
+					target = SAU
+					value > 84
+				}
+			}
+			else = {
+				SAU = {
+					influence_higher_20 = yes
+				}
+			}
+			SAU = {
+				OR = {
+					has_country_flag = IRQ_majid_here
+					has_country_flag = IRQ_walter_here
+					has_country_flag = IRQ_tilfah_here
+					has_country_flag = IRQ_salih_here
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_SAU_baathists"
+			if = {
+				limit = {
+					SAU = {
+						has_country_flag = IRQ_majid_here
+					}
+				}
+				SAU = {
+					clr_country_flag = IRQ_majid_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.14
+					}
+				}
+			}
+			if = {
+				limit = {
+					SAU = {
+						has_country_flag = IRQ_walter_here
+					}
+				}
+				SAU = {
+					clr_country_flag = IRQ_walter_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.15
+					}
+				}
+			}
+			if = {
+				limit = {
+					SAU = {
+						has_country_flag = IRQ_tilfah_here
+					}
+				}
+				SAU = {
+					clr_country_flag = IRQ_tilfah_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.16
+					}
+				}
+			}
+			if = {
+				limit = {
+					SAU = {
+						has_country_flag = IRQ_salih_here
+					}
+				}
+				SAU = {
+					clr_country_flag = IRQ_salih_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.17
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_JOR_baathists = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			if = {
+				limit = {
+					has_dlc = "La Resistance"
+					NOT = {
+						is_ai = yes
+					}
+				}
+				network_strength = {
+					target = JOR
+					value > 84
+				}
+			}
+			else = {
+				JOR = {
+					influence_higher_20 = yes
+				}
+			}
+			JOR = {
+				OR = {
+					has_country_flag = IRQ_majid_here
+					has_country_flag = IRQ_walter_here
+					has_country_flag = IRQ_tilfah_here
+					has_country_flag = IRQ_salih_here
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_JOR_baathists"
+			if = {
+				limit = {
+					JOR = {
+						has_country_flag = IRQ_majid_here
+					}
+				}
+				JOR = {
+					clr_country_flag = IRQ_majid_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.14
+					}
+				}
+			}
+			if = {
+				limit = {
+					JOR = {
+						has_country_flag = IRQ_walter_here
+					}
+				}
+				JOR = {
+					clr_country_flag = IRQ_walter_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.15
+					}
+				}
+			}
+			if = {
+				limit = {
+					JOR = {
+						has_country_flag = IRQ_tilfah_here
+					}
+				}
+				JOR = {
+					clr_country_flag = IRQ_tilfah_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.16
+					}
+				}
+			}
+			if = {
+				limit = {
+					JOR = {
+						has_country_flag = IRQ_salih_here
+					}
+				}
+				JOR = {
+					clr_country_flag = IRQ_salih_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.17
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_KUR_baathists = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			if = {
+				limit = {
+					has_dlc = "La Resistance"
+					NOT = {
+						is_ai = yes
+					}
+				}
+				network_strength = {
+					target = KUR
+					value > 84
+				}
+			}
+			else = {
+				KUR = {
+					influence_higher_20 = yes
+				}
+			}
+			KUR = {
+				OR = {
+					has_country_flag = IRQ_majid_here
+					has_country_flag = IRQ_walter_here
+					has_country_flag = IRQ_tilfah_here
+					has_country_flag = IRQ_salih_here
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_KUR_baathists"
+			if = {
+				limit = {
+					KUR = {
+						has_country_flag = IRQ_majid_here
+					}
+				}
+				KUR = {
+					clr_country_flag = IRQ_majid_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.14
+					}
+				}
+			}
+			if = {
+				limit = {
+					KUR = {
+						has_country_flag = IRQ_walter_here
+					}
+				}
+				KUR = {
+					clr_country_flag = IRQ_walter_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.15
+					}
+				}
+			}
+			if = {
+				limit = {
+					KUR = {
+						has_country_flag = IRQ_tilfah_here
+					}
+				}
+				KUR = {
+					clr_country_flag = IRQ_tilfah_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.16
+					}
+				}
+			}
+			if = {
+				limit = {
+					KUR = {
+						has_country_flag = IRQ_salih_here
+					}
+				}
+				KUR = {
+					clr_country_flag = IRQ_salih_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.17
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_PUK_baathists = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			if = {
+				limit = {
+					has_dlc = "La Resistance"
+					NOT = {
+						is_ai = yes
+					}
+				}
+				network_strength = {
+					target = PUK
+					value > 84
+				}
+			}
+			else = {
+				PUK = {
+					influence_higher_20 = yes
+				}
+			}
+			PUK = {
+				OR = {
+					has_country_flag = IRQ_majid_here
+					has_country_flag = IRQ_walter_here
+					has_country_flag = IRQ_tilfah_here
+					has_country_flag = IRQ_salih_here
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_PUK_baathists"
+			if = {
+				limit = {
+					PUK = {
+						has_country_flag = IRQ_majid_here
+					}
+				}
+				PUK = {
+					clr_country_flag = IRQ_majid_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.14
+					}
+				}
+			}
+			if = {
+				limit = {
+					PUK = {
+						has_country_flag = IRQ_walter_here
+					}
+				}
+				PUK = {
+					clr_country_flag = IRQ_walter_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.15
+					}
+				}
+			}
+			if = {
+				limit = {
+					PUK = {
+						has_country_flag = IRQ_tilfah_here
+					}
+				}
+				PUK = {
+					clr_country_flag = IRQ_tilfah_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.16
+					}
+				}
+			}
+			if = {
+				limit = {
+					PUK = {
+						has_country_flag = IRQ_salih_here
+					}
+				}
+				PUK = {
+					clr_country_flag = IRQ_salih_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.17
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_PER_baathists = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			if = {
+				limit = {
+					has_dlc = "La Resistance"
+					NOT = {
+						is_ai = yes
+					}
+				}
+				network_strength = {
+					target = PER
+					value > 84
+				}
+			}
+			else = {
+				PER = {
+					influence_higher_20 = yes
+				}
+			}
+			PER = {
+				OR = {
+					has_country_flag = IRQ_majid_here
+					has_country_flag = IRQ_walter_here
+					has_country_flag = IRQ_tilfah_here
+					has_country_flag = IRQ_salih_here
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_PER_baathists"
+			if = {
+				limit = {
+					PER = {
+						has_country_flag = IRQ_majid_here
+					}
+				}
+				PER = {
+					clr_country_flag = IRQ_majid_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.14
+					}
+				}
+			}
+			if = {
+				limit = {
+					PER = {
+						has_country_flag = IRQ_walter_here
+					}
+				}
+				PER = {
+					clr_country_flag = IRQ_walter_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.15
+					}
+				}
+			}
+			if = {
+				limit = {
+					PER = {
+						has_country_flag = IRQ_tilfah_here
+					}
+				}
+				PER = {
+					clr_country_flag = IRQ_tilfah_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.16
+					}
+				}
+			}
+			if = {
+				limit = {
+					PER = {
+						has_country_flag = IRQ_salih_here
+					}
+				}
+				PER = {
+					clr_country_flag = IRQ_salih_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.17
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_KUW_baathists = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			if = {
+				limit = {
+					has_dlc = "La Resistance"
+					NOT = {
+						is_ai = yes
+					}
+				}
+				network_strength = {
+					target = KUW
+					value > 84
+				}
+			}
+			else = {
+				KUW = {
+					influence_higher_20 = yes
+				}
+			}
+			KUW = {
+				OR = {
+					has_country_flag = IRQ_majid_here
+					has_country_flag = IRQ_walter_here
+					has_country_flag = IRQ_tilfah_here
+					has_country_flag = IRQ_salih_here
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_KUW_baathists"
+			if = {
+				limit = {
+					KUW = {
+						has_country_flag = IRQ_majid_here
+					}
+				}
+				KUW = {
+					clr_country_flag = IRQ_majid_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.14
+					}
+				}
+			}
+			if = {
+				limit = {
+					KUW = {
+						has_country_flag = IRQ_walter_here
+					}
+				}
+				KUW = {
+					clr_country_flag = IRQ_walter_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.15
+					}
+				}
+			}
+			if = {
+				limit = {
+					KUW = {
+						has_country_flag = IRQ_tilfah_here
+					}
+				}
+				KUW = {
+					clr_country_flag = IRQ_tilfah_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.16
+					}
+				}
+			}
+			if = {
+				limit = {
+					KUW = {
+						has_country_flag = IRQ_salih_here
+					}
+				}
+				KUW = {
+					clr_country_flag = IRQ_salih_here
+				}
+				USA = {
+					country_event = {
+						id = iraqi_MNF.17
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	USA_close_this_menu = {
+		icon = GFX_decision_generic_operation
+		fire_only_once = yes
+
+		days_remove = 180
+
+		visible = {
+			OR = {
+				check_variable = {
+					IRQ_baathist_dead > 3
+				}
+				has_country_flag = IRQ_attacks_happened
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_close_this_menu"
+			clr_country_flag = IRQ_hunt_baathists
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+
+	# Timed Mission
+	USA_fugitive_countdown = {
+		activation = {
+			always = no
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = IRQ_kill_3_baathists_TT
+				check_variable = {
+					IRQ_baathist_dead > 3
+				}
+			}
+		}
+		days_mission_timeout = 1825
+		is_good = no
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_fugitive_countdown"
+			country_event = {
+				id = iraqi_MNF.200
 			}
 		}
 	}

@@ -11,9 +11,6 @@
 	NDefines.NDiplomacy.BASE_NEGATIVE_OPINION_AFTER_BEING_KICKED = 50
 	NDefines.NDiplomacy.DECAY_RATE_OF_NEGATIVE_OPINION_AFTER_BEING_KICKED = 0.5
 	NDefines.NDiplomacy.TRUCE_BREAK_COST_PP = 100
-	NDefines.NDiplomacy.BASE_PEACE_LIBERATE_FACTOR = 110
-	NDefines.NDiplomacy.BASE_PEACE_TAKE_UNCONTROLLED_STATE_FACTOR = 2
-	NDefines.NDiplomacy.BASE_PEACE_FORCE_GOVERNMENT_COST = 20
 	NDefines.NDiplomacy.BASE_IMPROVE_RELATION_SAME_IDEOLOGY_GROUP_MAINTAIN_COST = 0.25
 	NDefines.NDiplomacy.BASE_IMPROVE_RELATION_DIFFERENT_IDEOLOGY_GROUP_MAINTAIN_COST = 0.5
 	NDefines.NDiplomacy.BASE_SEND_ATTACHE_COST = 80
@@ -145,7 +142,7 @@
 	-- NMarket Related Defines
 	NDefines.NProduction.CIC_BANK_SPEED_BOOST_FACTOR = 0 -- 0.25
 	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.5 -- 2.0
-	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 60 -- 30
+	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 45 -- 30
 	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- 15
 	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 0.90 -- 0.75
 	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1.10 -- 1.25
@@ -207,7 +204,7 @@
 	NDefines.NProduction.MAX_LINE_RESOURCE_PENALTY = 50
 	NDefines.NProduction.BASE_FACTORY_SPEED_MIL = 3
 	NDefines.NProduction.BASE_FACTORY_SPEED_NAV = 8
-	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 1
+	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 5
 	NDefines.NProduction.BASE_CONSUMER_GOODS_NEED_FACTOR = 0
 	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 1
 	NDefines.NProduction.EQUIPMENT_LEND_LEASE_WEIGHT_FACTOR = 0.01
@@ -248,7 +245,7 @@
 	NDefines.NProject.BREAKTHROUGH_DAILY_NUCLEAR_REACTOR_GAIN = 0       -- Amount in 1/100th percentage gained per nuclear reactor. E.g. 2 = 0.02% per nuclear reactor.
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
-	NDefines.NBuildings.SAM_MISSION_SUPERIORITY = 5.0	-- How much air superiority each SAM mission gives per rocket wing performing SAM missions.
+	NDefines.NBuildings.SAM_MISSION_SUPERIORITY = 15.0	-- How much air superiority each SAM mission gives per rocket wing performing SAM missions.
 	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 50
 	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 50
 	NDefines.NBuildings.NAVALBASE_REPAIR_MULT = 0.075 -- 0.05 -- Each level of navalbase building repairs X strength and can repair as many ships as its level
@@ -305,7 +302,6 @@
 	NDefines.NMilitary.EXPERIENCE_COMBAT_FACTOR = 0.05 -- 0.25
 	NDefines.NMilitary.EXPERIENCE_LOSS_FACTOR = 0.7 -- 1.00
 	NDefines.NMilitary.EQUIPMENT_COMBAT_LOSS_FACTOR = 0.7 -- 0.7
-	NDefines.NMilitary.BATALION_CHANGED_EXPERIENCE_DROP = 0.25 -- 0.5
 	NDefines.NMilitary.SUPPLY_GRACE = 336 -- 72
 	NDefines.NMilitary.MAX_OUT_OF_SUPPLY_DAYS = 45 -- 30
 	NDefines.NMilitary.OUT_OF_SUPPLY_SPEED = -0.6	-- -0.8
@@ -403,10 +399,8 @@
 	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
 
 	NDefines.NAir.THRUST_WEIGHT_AGILITY_FACTOR = 0 -- 0.5
-	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.15 -- 0.1
-	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 1 -- 2
-	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.01 -- 1
-	NDefines.NAir.ACCIDENT_EFFECT_MULT = 0.05 -- 0.01
+	NDefines.NAir.ACCIDENT_CHANCE_RELIABILITY_MULT = 0.2 -- vanilla 2.0 Multiplier to accident chance per point of missing reliability.
+	NDefines.NAir.ACCIDENT_EFFECT_MULT = 0.007 -- vanill 0.007
 	NDefines.NAir.AIR_WING_MAX_STATS_ATTACK = 999 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_DEFENCE = 999 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_AGILITY = 999 -- 100
@@ -507,7 +501,6 @@
 		0,0, -- SAM
 	}
 
-	NDefines.NNavy.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 4 -- 30
 	NDefines.NNavy.BEST_CAPITALS_TO_CARRIER_RATIO = 4 -- 1
 	NDefines.NNavy.BEST_CAPITALS_TO_SCREENS_RATIO = 0.5 -- 0.25
 	NDefines.NNavy.DETECTION_CHANCE_BALANCE = 1.5 -- 2.5
@@ -811,9 +804,6 @@
 	NDefines.NAI.MINES_SWEEPING_PLANES_PER_MAX_MINES = 10				-- 150
 	NDefines.NAI.MINES_PLANTING_PLANES_PER_MAX_DESIRE = 5				-- 100
 
-	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.2				-- 1.1
-	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20				-- 20
-	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 50					-- 150
 
 	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 25				-- 20
 	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 30				-- 25
@@ -857,9 +847,6 @@
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_LAND_FORT_LEVEL = 7			-- 15
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_COASTAL_FORT_LEVEL = 5		-- 10
 	NDefines.NAI.AIR_SCORE_DISTANCE_IMPACT = 0.4
-	-- NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 4					-- 20
-	-- NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 4					-- 25
-	-- NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 4					-- 25
 	NDefines.NAI.PLAN_ACTIVATION_SUPERIORITY_AGGRO = 0.1				-- 1.0
 	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 0				-- 3 is vanilla, updated this from 8 to 20 for more AI production control
 	NDefines.NAI.UPGRADES_DEFICIT_LIMIT_DAYS = 40				 	-- 50
@@ -872,13 +859,13 @@
 	NDefines.NAI.FUEL_RATIO_TO_EXIST_FUEL_SAVING_MODE = 0.30 					-- countries will exit fuel saving mode if they have more fuel ratio than this
 	NDefines.NAI.LAND_COMBAT_CAS_WINGS_PER_ENEMY_ARMY_LIMIT = 5	-- Limit of CAS wings requested by enemy armies
 	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20				-- Amount of CAS planes requested per enemy army
+
 	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 65
 	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
 	NDefines.NAI.MIN_WANTED_MAX_FUEL = 25
-	NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 10.0
-	NDefines.NAI.STR_BOMB_MIN_EXCORT_PLANES = 200
+	NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 2.5 -- Reduced from 5 to 2.5/originally was 10 but caused issues with the AI being unable to use their planes on missions
 	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
-	NDefines.NAI.NAVAL_MIN_EXCORT_PLANES = 0 --Updated AI Air prioties
+
 	NDefines.NAI.TRADEABLE_FACTORIES_FRACTION = 0.80 -- Updated from 0.80
 	NDefines.NAI.DIPLOMACY_CREATE_FACTION_FACTOR = 1.25 --0.75 in Vanilla		-- Factor for AI desire to create a new faction. Val < 1.0 makes it less likely to create than to join.
 	NDefines.NAI.DIPLOMACY_FACTION_WRONG_IDEOLOGY_PENALTY = 60 -- AI penalty for diplomatic faction acitons between nations of different ideologies
