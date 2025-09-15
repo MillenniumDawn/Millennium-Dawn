@@ -1,0 +1,325 @@
+scripted_gui = {
+	companies_slot = {
+		window_name = "companies_slot"
+        context_type = player_context
+		parent_window_token = politics_tab
+
+		effects = {
+            companies_slot_btn_click = {
+				if = {
+					limit = {
+						has_country_flag = CAC_companies_list
+					}
+
+					clr_country_flag = CAC_companies_list
+					set_variable = { opened_company_details = -1 }
+				}
+				else = {
+					set_country_flag = CAC_companies_list
+				}
+            }
+		}
+	}
+
+    companies_list_window = {
+		window_name = "companies_list_window"
+        context_type = player_context
+		parent_window_token = politics_tab
+
+        visible = {
+			ROOT = {
+				AND = {
+					is_ai = no
+					has_country_flag = CAC_companies_list
+				}
+			}
+		}
+
+		properties = {
+			avaible_companies_grid_item_icon = {
+				image = "[CAC_icon_of_company]"
+			}
+		}
+
+        dynamic_lists = {
+            avaible_companies_grid = {
+                array = CAC_companies
+                entry_container = "avaible_companies_grid_list_item"
+            }
+        }
+
+		effects = {
+			avaible_companies_select_click = {
+
+				set_variable = { opened_company_details = v }
+			}
+
+			close_click = {
+				clr_country_flag = CAC_companies_list
+				set_variable = { opened_company_details = -1 }
+            }
+		}
+	}
+
+    company_detail_window = {
+		window_name = "company_detail_window"
+        context_type = player_context
+
+        visible = {
+			ROOT = {
+				AND = {
+					is_ai = no
+					check_variable = { opened_company_details > -1 }
+					has_country_flag = CAC_companies_list
+				}
+			}
+		}
+
+		properties = {
+			company_detail_icon = {
+				image = "[CAC_icon_of_company_detail]"
+			}
+		}
+
+		triggers = {
+			country_action_1_visible = {
+				has_country_flag = country_actions_ui
+			}
+
+			country_action_2_visible = {
+				has_country_flag = country_actions_ui
+			}
+
+			country_action_3_visible = {
+				has_country_flag = country_actions_ui
+			}
+
+			country_action_4_visible = {
+				has_country_flag = country_actions_ui
+			}
+
+			company_action_1_visible = {
+				NOT = {
+					has_country_flag = country_actions_ui
+				}	
+			}
+
+			company_action_2_visible = {
+				NOT = {
+					has_country_flag = country_actions_ui
+				}	
+			}
+
+			company_action_3_visible = {
+				NOT = {
+					has_country_flag = country_actions_ui
+				}	
+			}
+			company_action_4_visible = {
+				NOT = {
+					has_country_flag = country_actions_ui
+				}	
+			}
+
+			# TODO CREATE COOLDOWN FOR MODERNIZE AND TV COMMERCIAL
+			company_action_1_click_enabled = {
+				CAC_update_variables = yes
+				
+				AND = {
+					check_variable = { CAC_country_selected_companies_expenses_from_factory^opened_company_window > 0 }
+					check_variable = { CAC_country_selected_companies_money^opened_company_window > 0.999 }
+					NOT = { has_country_flag = company_action_1_timeout }
+				}
+			}
+
+			company_action_2_click_enabled = {
+				AND = {
+					check_variable = { CAC_country_selected_companies_money^opened_company_window > 2.599 }
+					NOT = { has_country_flag = company_action_2_timeout }
+				}
+			}
+
+			company_action_3_click_enabled = {
+				AND = {
+					check_variable = { CAC_country_selected_companies_money^opened_company_window > 4.999 }
+					NOT = { has_country_flag = company_action_3_timeout }
+				}
+			}
+
+			company_action_4_click_enabled = {
+				AND = {
+					check_variable = { CAC_country_selected_companies_money^opened_company_window > 9.999 }
+				}
+			}
+
+			country_action_1_click_enabled = {
+				AND = {
+					check_variable = { political_power > 99 }
+					NOT = { has_country_flag = country_action_1_timeout }
+				}
+			}
+
+			country_action_2_click_enabled = {
+				AND = {
+					NOT = { has_country_flag = country_action_2_timeout }
+				}
+			}
+
+			country_action_3_click_enabled = {
+				AND = {
+					NOT = { has_country_flag = country_action_3_timeout }
+				}
+			}
+
+			country_action_4_click_enabled = {
+				AND = {
+					NOT = { has_country_flag = country_action_4_timeout }
+				}
+			}
+		}
+
+		effects = {
+			company_action_switch_page_company_click = {
+				clr_country_flag = country_actions_ui
+			}
+
+			company_action_switch_page_country_click = {
+				set_country_flag = country_actions_ui
+			}
+			
+			company_action_1_click = {
+				set_country_flag = {
+					flag = company_action_1_timeout
+					days = 30
+				}
+
+                set_temp_variable = { cac_money_to_change = -1.0 }
+				set_temp_variable = { cac_money_to_change_slot = opened_company_window }
+				CAC_change_money_effect = yes
+
+				
+                set_temp_variable = { cac_factory_expenses_change = -0.025 }
+				set_temp_variable = { cac_factory_expenses_change_slot = opened_company_window }
+				CAC_change_factory_expenses_effect = yes
+
+				CAC_update_variables = yes
+			}
+
+			company_action_2_click = {
+				set_country_flag = {
+					flag = company_action_2_timeout
+					days = 30
+				}
+
+                set_temp_variable = { cac_money_to_change = -2.5 }
+				set_temp_variable = { cac_money_to_change_slot = opened_company_window }
+				CAC_change_money_effect = yes
+				
+				set_temp_variable = { cac_factory_income_change = 0.02 }
+				set_temp_variable = { cac_factory_income_change_slot = opened_company_window }
+				CAC_change_factory_income_effect = yes
+
+				CAC_update_variables = yes
+			}
+
+			company_action_3_click = {
+				set_country_flag = {
+					flag = company_action_3_timeout
+					days = 30
+				}
+
+                set_temp_variable = { cac_money_to_change = -5 }
+				set_temp_variable = { cac_money_to_change_slot = opened_company_window }
+				CAC_change_money_effect = yes
+
+				set_temp_variable = { cac_additional_income_change = 0.05 }
+				set_temp_variable = { cac_slot = opened_company_window }
+				CAC_change_additional_income_effect = yes
+
+				CAC_update_variables = yes
+			}
+
+			company_action_4_click = {
+                set_temp_variable = { cac_money_to_change = -10 }
+				set_temp_variable = { cac_slot = opened_company_window }
+				CAC_change_money_effect = yes
+
+				set_temp_variable = { cac_factory_amount_change = 1 }
+				set_temp_variable = { cac_factory_amount_change_slot = opened_company_window }
+				CAC_change_factory_amount_effect = yes
+
+				CAC_update_variables = yes
+			}
+
+			country_action_1_click = {
+				set_country_flag = {
+					flag = country_action_1_timeout
+					days = 30
+				}
+
+       			ROOT = { add_political_power = -100 }
+
+				add_to_variable = { CAC_country_selected_companies_additional_income^opened_company_window = 0.05 }
+			}
+
+			country_action_2_click = {
+				set_country_flag = {
+					flag = country_action_2_timeout
+					days = 30
+				}
+
+				set_temp_variable = { treasury_change = -1.0 }
+				modify_treasury_effect = yes
+
+				set_temp_variable = { cac_money_to_change = 1 }
+				set_temp_variable = { cac_money_to_change_slot = opened_company_window }
+				CAC_change_money_effect = yes
+
+				CAC_update_variables = yes
+			}
+
+			country_action_3_click = {
+				set_country_flag = {
+					flag = country_action_3_timeout
+					days = 30
+				}
+
+				set_temp_variable = { treasury_change = -2.5 }
+				modify_treasury_effect = yes
+				
+				set_temp_variable = { cac_money_to_change = 2 }
+				set_temp_variable = { cac_money_to_change_slot = opened_company_window }
+				CAC_change_money_effect = yes
+
+				CAC_update_variables = yes
+			}
+
+			country_action_4_click = {
+				set_country_flag = {
+					flag = country_action_4_timeout
+					days = 30
+				}
+
+				set_temp_variable = { treasury_change = -5.0 }
+				modify_treasury_effect = yes
+
+				set_temp_variable = { cac_money_to_change = 4 }
+				set_temp_variable = { cac_money_to_change_slot = opened_company_window }
+				CAC_change_money_effect = yes
+				
+				CAC_update_variables = yes
+			}
+
+			remove_click = {
+				#set_temp_variable = { cac_slot_to_remove = opened_company_details }
+				#CAC_remove_company_by_slot_effect = yes
+
+				set_variable = { opened_company_details = -1 }
+			}
+
+			close_click = {
+                set_variable = { opened_company_details = -1 }
+            }
+		}
+	}
+}
