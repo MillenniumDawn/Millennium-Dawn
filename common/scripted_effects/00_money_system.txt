@@ -196,6 +196,7 @@ calculate_tax_gain = {
 	multiply_variable = { dockyard_tax = @money_control_factor_scaling }
 	multiply_variable = { office_tax = @money_control_factor_scaling }
 	multiply_variable = { agriculture_district_tax = @money_control_factor_scaling }
+	multiply_variable = { companies_tax = @money_control_factor_scaling }
 
 	# Tax Income Gained
 	multiply_variable = { civil_fac_tax = corporate_tax_rate }
@@ -203,6 +204,7 @@ calculate_tax_gain = {
 	multiply_variable = { dockyard_tax = corporate_tax_rate }
 	multiply_variable = { office_tax = corporate_tax_rate }
 	multiply_variable = { agriculture_district_tax = corporate_tax_rate }
+	multiply_variable = { companies_tax = corporate_tax_rate }
 
 	# Modifier Section
 	set_temp_variable = { civil_modifier = 1 }
@@ -527,6 +529,21 @@ calculate_additional_income_rate = {
 		multiply_variable = { additional_income_overlord_subsidies = 0.01 }
 		multiply_variable = { additional_income_overlord_subsidies = 0.5 }
 		add_to_variable = { additional_income_rate = additional_income_overlord_subsidies }
+	}
+	# Income from Companies
+	if = {
+		limit = { check_variable = { MD_cac_country_selected_companies^num > 0 } }
+		set_variable = { MD_cac_additional_income_from_companies = 0 }
+
+		for_loop_effect = {
+			start = 0
+			end = MD_cac_country_selected_companies^num
+    		value = i
+
+			add_to_variable = { MD_cac_additional_income_from_companies = MD_cac_country_selected_companies_income_taxes^i }
+		}
+
+		add_to_variable = { additional_income_rate = MD_cac_additional_income_from_companies }
 	}
 	# Imposing Taxation on Religious Institutions
 	if = { limit = { has_idea = internal_factions_taxing_religious_institutions }
@@ -4139,6 +4156,7 @@ calculate_gdp = {
 	set_temp_variable = { workers_per_dockyard = 0.025 }
 	set_temp_variable = { workers_per_office = 0.630 }
 	set_temp_variable = { workers_per_agriculture_district = 0.250 }
+	set_temp_variable = { workers_per_company_factory = 0.025 }
 
 	set_temp_variable = { temp_gdp_per_capita = gdpc_converging_var }
 	clamp_temp_variable = { var = temp_gdp_per_capita min = 1 }
@@ -4193,6 +4211,7 @@ calculate_gdp = {
 	multiply_temp_variable = { workers_per_civ_fac = worker_requirement_gdp_multiplier }
 	multiply_temp_variable = { workers_per_office = worker_requirement_gdp_multiplier }
 	multiply_temp_variable = { workers_per_agriculture_district = worker_requirement_gdp_multiplier }
+	multiply_temp_variable = { workers_per_company_factory = worker_requirement_gdp_multiplier }
 
 	set_temp_variable = { civ_facs_worker_requirement_multiplier = 1 }
 	add_to_temp_variable = { civ_facs_worker_requirement_multiplier = modifier@civ_facs_worker_requirement_modifier }
@@ -4267,13 +4286,50 @@ calculate_gdp = {
 		set_variable = { agriculture_district_manpower_fulfillment = 1 }
 	}
 
+	set_temp_variable = { companies_worker_requirement_multiplier = 1 }
+	add_to_temp_variable = { companies_worker_requirement_multiplier = modifier@companies_worker_requirement_modifier }
+	add_to_temp_variable = { companies_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
+	clamp_temp_variable = { var = companies_worker_requirement_multiplier min = 0.10 }
+
+	multiply_temp_variable = { workers_per_company_factory = 1 } # companies_worker_requirement_multiplier
+	set_variable = { workers_per_company_factory_display = workers_per_company_factory }
+	multiply_variable = { workers_per_company_factory_display = 1000 }
+
+	set_variable = { workers_in_companies = 0 }
+
+	for_loop_effect = {
+        start = 0
+        end = MD_cac_country_selected_companies^num
+        value = i
+
+		set_temp_variable = { company_workers = MD_cac_country_selected_companies_factories^i }
+		multiply_temp_variable = { company_workers = workers_per_company_factory }
+
+		add_to_variable = { workers_in_companies = company_workers }
+	}
+
+	set_variable = { max_workers_in_companies = workers_in_companies }
+
+	clamp_variable = {
+		var = workers_in_companies
+		max = workforce_total
+	}
+	multiply_variable = { workers_in_companies = 1 } # companies_employment_var
+	set_variable = { companies_manpower_fulfillment = workers_in_companies }
+	divide_variable = { companies_manpower_fulfillment = max_workers_in_companies }
+	subtract_from_temp_variable = { workforce_total = workers_in_companies }
+	if = { limit = { check_variable = { companies_total = 0 } }
+		set_variable = { companies_manpower_fulfillment = 1 }
+	}
+
 	# Average Worker Fulfillment
 	set_variable = { average_worker_fulfillment = civilian_factories_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = military_factories_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = naval_factories_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = offices_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = agriculture_district_manpower_fulfillment }
-	divide_variable = { average_worker_fulfillment = 5 } # x number of buildings
+	add_to_variable = { average_worker_fulfillment = companies_manpower_fulfillment }
+	divide_variable = { average_worker_fulfillment = 6 } # x number of buildings
 
 	set_variable = { total_unemployed = workforce_total }
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = high_unemployment_modifier } } }
@@ -4309,35 +4365,50 @@ calculate_gdp = {
 	set_temp_variable = { gdp_from_offices = office_park_total }
 	set_temp_variable = { gdp_from_agriculture_district = agriculture_district_total }
 
+	set_temp_variable = { gdp_from_companies = 0 }
+	
+	for_each_loop = {
+		start = 0
+        end = MD_cac_country_selected_companies^num
+        value = i
+
+		add_to_temp_variable = { gdp_from_companies = MD_cac_country_selected_companies_value^i }
+	}
+
 	multiply_temp_variable = { gdp_from_civs = 20 }	#was 15, original 24.8
 	multiply_temp_variable = { gdp_from_mils = 1 }	#was 9, original 15.5
 	multiply_temp_variable = { gdp_from_dockyards = 1 }	#was 9, original 15.5
 	multiply_temp_variable = { gdp_from_offices = 50 }	#was 26, original 38.8
 	multiply_temp_variable = { gdp_from_agriculture_district = 25 }	#was 26, original 38.8
+	multiply_temp_variable = { gdp_from_companies = 20 }
 
 	set_temp_variable = { gdp_from_civs_multiplier = 1 }
 	set_temp_variable = { gdp_from_mils_multiplier = 1 }
 	set_temp_variable = { gdp_from_dockyards_multiplier = 1 }
 	set_temp_variable = { gdp_from_offices_multiplier = 1 }
 	set_temp_variable = { gdp_from_agriculture_district_multiplier = 1 }
+	set_temp_variable = { gdp_from_companies_multiplier = 1 }
 
 	add_to_temp_variable = { gdp_from_civs_multiplier = modifier@civilian_factories_productivity }
 	add_to_temp_variable = { gdp_from_mils_multiplier = modifier@military_factories_productivity }
 	add_to_temp_variable = { gdp_from_dockyards_multiplier = modifier@dockyard_productivity }
 	add_to_temp_variable = { gdp_from_offices_multiplier = modifier@offices_productivity }
 	add_to_temp_variable = { gdp_from_agriculture_district_multiplier = modifier@agricolture_productivity_modifier }
+	add_to_temp_variable = { gdp_from_companies_multiplier = modifier@companies_productivity_modifier }
 
 	multiply_temp_variable = { gdp_from_civs = gdp_from_civs_multiplier }
 	multiply_temp_variable = { gdp_from_mils = gdp_from_mils_multiplier }
 	multiply_temp_variable = { gdp_from_dockyards = gdp_from_dockyards_multiplier }
 	multiply_temp_variable = { gdp_from_offices = gdp_from_offices_multiplier }
 	multiply_temp_variable = { gdp_from_agriculture_district = gdp_from_agriculture_district_multiplier }
+	multiply_temp_variable = { gdp_from_companies = gdp_from_companies_multiplier }
 
 	multiply_temp_variable = { gdp_from_civs = civilian_factories_manpower_fulfillment }
 	multiply_temp_variable = { gdp_from_mils = military_factories_manpower_fulfillment }
 	multiply_temp_variable = { gdp_from_dockyards = naval_factories_manpower_fulfillment }
 	multiply_temp_variable = { gdp_from_offices = offices_manpower_fulfillment }
 	multiply_temp_variable = { gdp_from_agriculture_district = agriculture_district_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_companies = companies_manpower_fulfillment }
 
 	set_temp_variable = { gdp_from_factories = gdp_from_civs }
 	add_to_temp_variable = { gdp_from_factories = gdp_from_mils }
@@ -4348,6 +4419,7 @@ calculate_gdp = {
 	set_variable = { gdp_total = gdp_from_factories }
 	add_to_variable = { gdp_total = gdp_from_agriculture }
 	add_to_variable = { gdp_total = gdp_from_resource_sector }
+	add_to_variable = { gdp_total = gdp_from_companies }
 
 	# Calculate GDP Percentages
 	set_variable = { civil_fac_percent = gdp_from_civs }
@@ -4356,6 +4428,7 @@ calculate_gdp = {
 	set_variable = { office_fac_percent = gdp_from_offices }
 	set_variable = { agriculture_district_fac_percent = gdp_from_agriculture_district }
 	set_variable = { agriculture_percent = gdp_from_agriculture }
+	set_variable = { companies_percent = gdp_from_companies }
 	set_variable = { resources_percent = gdp_from_resource_sector }
 
 	divide_variable = { civil_fac_percent = gdp_total }
@@ -4364,6 +4437,7 @@ calculate_gdp = {
 	divide_variable = { office_fac_percent = gdp_total }
 	divide_variable = { agriculture_district_fac_percent = gdp_total }
 	divide_variable = { agriculture_percent = gdp_total }
+	divide_variable = { companies_percent = gdp_total }
 	divide_variable = { resources_percent = gdp_total }
 
 	# Clamp the variables at the minimum
@@ -4373,6 +4447,7 @@ calculate_gdp = {
 	clamp_variable = { var = office_fac_percent min = 0 max = 1 }
 	clamp_variable = { var = agriculture_district_fac_percent min = 0 max = 1 }
 	clamp_variable = { var = agriculture_percent min = 0 max = 1 }
+	clamp_variable = { var = companies_percent min = 0 max = 1 }
 	clamp_variable = { var = resources_percent min = 0 max = 1 }
 
 	# Overall productivity grows over time (on_monthly) and with techs and its the main source of economic growth for developed countries
