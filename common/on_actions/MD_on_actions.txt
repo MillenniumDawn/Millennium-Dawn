@@ -521,23 +521,22 @@ on_actions = {
 						}
 					}
 				}
+			}
 
-
-				# Achievements
-				if = {
-					limit = {
-						ROOT = { original_tag = LBA }
-						FROM = { original_tag = EGY }
-					}
-					ROOT = { set_country_flag = ribbon_libya_victory_over_egypt }
+			# Achievements
+			if = {
+				limit = {
+					ROOT = { original_tag = LBA }
+					FROM = { original_tag = EGY }
 				}
-				if = {
-					limit = {
-						ROOT = { original_tag = LBA }
-						FROM = { original_tag = CHA }
-					}
-					ROOT = { set_country_flag = ribbon_libya_victory_over_chad }
+				ROOT = { set_country_flag = ribbon_libya_victory_over_egypt }
+			}
+			if = {
+				limit = {
+					ROOT = { original_tag = LBA }
+					FROM = { original_tag = CHA }
 				}
+				ROOT = { set_country_flag = ribbon_libya_victory_over_chad }
 			}
 		}
 	}
@@ -1469,10 +1468,13 @@ on_actions = {
 					if = {
 						limit = {
 							Is_Possible_Muslim_Brotherhood = yes
-							NOT = { has_government = neutrality }
-							NOT = { Is_Muslim_Brotherhood = yes }
-							NOT = { has_elections = yes }
-							NOT = { has_country_flag = BROTHER_civil_war_has_started }
+							has_elections = no
+							NOT = {
+								has_global_flag = GAME_RULE_disable_muslim_brotherhood
+								has_government = neutrality
+								Is_Muslim_Brotherhood = yes
+								has_country_flag = BROTHER_civil_war_has_started
+							}
 						}
 						if = {
 							limit = {
@@ -1705,6 +1707,84 @@ on_actions = {
 
 			}
 			productivity_growth_effect = yes
+
+			# American FP
+			if = {
+				limit = {
+					original_tag = USA
+					SOM = {
+						OR = {
+							has_war_with = JUB
+							has_war_with = SWS
+							has_war_with = PUN
+						}
+					}
+					USA = {
+						NOT = {
+							has_country_flag = USA_SOM_intervention
+						}
+					}
+				}
+				USA = {
+					random_list = {
+						35 = {
+							country_event = {
+								id = department_of_state.01
+								days = 20
+							}
+						}
+						65 = {
+							# Nothing
+						}
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					original_tag = USA
+					has_idea = USA_afghan_mission_cost
+					NOT = {
+						has_country_flag = USA_disabled_casualty_report
+					}
+				}
+				USA = {
+					country_event = department_of_state.200
+				}
+			}
+			if = {
+				limit = {
+					original_tag = USA
+					has_idea = USA_afghan_mission_cost
+					has_country_flag = USA_disabled_casualty_report
+				}
+				USA = {
+					add_manpower = -75
+					random_list = {
+						10 = {
+							add_stability = -0.01
+						}
+						10 = {
+							set_temp_variable = { treasury_change = -4.54 }
+							modify_treasury_effect = yes
+						}
+						10 = {
+							set_party_index_to_ruling_party = yes
+							set_temp_variable = { party_popularity_increase = -0.02 }
+							add_relative_party_popularity = yes
+						}
+						10 = {
+							add_political_power = -200
+						}
+						10 = {
+							army_experience = -25
+						}
+						50 = {
+							# Nothing
+						}
+					}
+				}
+			}
 
 			# Research Configuration for AI
 			if = { limit = { is_ai = yes }
