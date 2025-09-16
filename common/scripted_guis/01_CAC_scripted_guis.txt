@@ -34,6 +34,131 @@ scripted_gui = {
 				}
 			}
 		}
+		
+		triggers = {
+			sort_size_click_enabled = {
+				for_loop_effect = {
+					start = 0
+					end = CAC_companies^num
+					value = i
+
+					add_to_temp_array = {
+						array = sorted_companies_list
+						value = CAC_companies^i
+					}
+
+					add_to_temp_array = {
+						array = sorted_size_companies_list
+						value = CAC_companies_size^i
+					}
+
+					add_to_temp_array = {
+						array = sorted_money_companies_list
+						value = CAC_companies_money^i
+					}
+
+					add_to_temp_array = {
+						array = sorted_value_companies_list
+						value = CAC_companies_value^i
+					}
+
+					add_to_temp_array = {
+						array = sorted_revenue_companies_list
+						value = CAC_companies_revenue^i
+					}
+				}
+			}
+		}
+
+		effects = {
+			companies_details_button_click = {
+
+				set_variable = { opened_company_details = v }
+			}
+
+			sort_size_click = {
+				for_loop_effect = {
+					start = 0
+					end = CAC_companies^num
+					value = i
+
+					for_loop_effect = {
+						start = 0
+						end = CAC_companies^num
+						value = j
+
+						set_temp_variable = { next_j = j }
+						add_to_temp_variable = { next_j = 1 }
+
+						if = {
+							limit = { check_variable = { sorted_size_companies_list^j < sorted_size_companies_list^next_j } }
+
+							set_temp_variable = { temp = sorted_size_companies_list^j }
+							set_temp_variable = { sorted_size_companies_list^j = sorted_size_companies_list^next_j }
+							set_temp_variable = { sorted_size_companies_list^next_j = temp }
+
+							set_temp_variable = { temp = sorted_companies_list^j }
+							set_temp_variable = { sorted_companies_list^j = sorted_companies_list^next_j }
+							set_temp_variable = { sorted_companies_list^next_j = temp }
+						}
+					}
+
+					add_to_temp_array = {
+						array = sorted_companies_list
+						value = CAC_companies^size[i]
+						index = i
+					}
+				}
+			}
+
+			sort_money_click = {
+				for_loop_effect = {
+					start = 0
+					end = CAC_companies^num
+					value = i
+
+					for_loop_effect = {
+						start = 0
+						end = CAC_companies^num
+						value = j
+
+						set_temp_variable = { next_j = j }
+						add_to_temp_variable = { next_j = 1 }
+
+						if = {
+							limit = { check_variable = { sorted_money_companies_list^j < sorted_money_companies_list^next_j } }
+
+							set_temp_variable = { temp = sorted_money_companies_list^j }
+							set_temp_variable = { sorted_money_companies_list^j = sorted_money_companies_list^next_j }
+							set_temp_variable = { sorted_money_companies_list^next_j = temp }
+
+							set_temp_variable = { temp = sorted_companies_list^j }
+							set_temp_variable = { sorted_companies_list^j = sorted_companies_list^next_j }
+							set_temp_variable = { sorted_companies_list^next_j = temp }
+						}
+					}
+
+					add_to_temp_array = {
+						array = sorted_companies_list
+						value = CAC_companies^size[i]
+						index = i
+					}
+				}
+			}
+
+			sort_value_click = {
+			
+			}
+
+			sort_revenue_click = {
+
+			}
+
+			close_click = {
+				clr_country_flag = CAC_companies_list
+				set_variable = { opened_company_details = -1 }
+            }
+		}
 
 		properties = {
 			avaible_companies_grid_item_icon = {
@@ -43,22 +168,10 @@ scripted_gui = {
 
         dynamic_lists = {
             avaible_companies_grid = {
-                array = CAC_companies
+                array = CAC_companies #sorted_companies_list
                 entry_container = "avaible_companies_grid_list_item"
             }
         }
-
-		effects = {
-			avaible_companies_select_click = {
-
-				set_variable = { opened_company_details = v }
-			}
-
-			close_click = {
-				clr_country_flag = CAC_companies_list
-				set_variable = { opened_company_details = -1 }
-            }
-		}
 	}
 
     company_detail_window = {
@@ -121,34 +234,31 @@ scripted_gui = {
 				}	
 			}
 
-			# TODO CREATE COOLDOWN FOR MODERNIZE AND TV COMMERCIAL
 			company_action_1_click_enabled = {
-				CAC_update_variables = yes
-				
 				AND = {
-					check_variable = { CAC_country_selected_companies_expenses_from_factory^opened_company_window > 0 }
-					check_variable = { CAC_country_selected_companies_money^opened_company_window > 0.999 }
+					check_variable = { CAC_companies_expenses_per_factory^opened_company_details > 0.1 }
+					check_variable = { CAC_companies_money^opened_company_details > 0.999 }
 					NOT = { has_country_flag = company_action_1_timeout }
 				}
 			}
 
 			company_action_2_click_enabled = {
 				AND = {
-					check_variable = { CAC_country_selected_companies_money^opened_company_window > 2.599 }
+					check_variable = { CAC_companies_money^opened_company_details > 2.599 }
 					NOT = { has_country_flag = company_action_2_timeout }
 				}
 			}
 
 			company_action_3_click_enabled = {
 				AND = {
-					check_variable = { CAC_country_selected_companies_money^opened_company_window > 4.999 }
+					check_variable = { CAC_companies_money^opened_company_details > 4.999 }
 					NOT = { has_country_flag = company_action_3_timeout }
 				}
 			}
 
 			company_action_4_click_enabled = {
 				AND = {
-					check_variable = { CAC_country_selected_companies_money^opened_company_window > 9.999 }
+					check_variable = { CAC_companies_money^opened_company_details > 9.999 }
 				}
 			}
 
@@ -191,16 +301,16 @@ scripted_gui = {
 				set_country_flag = {
 					flag = company_action_1_timeout
 					days = 30
+					value = 1
 				}
 
-                set_temp_variable = { cac_money_to_change = -1.0 }
-				set_temp_variable = { cac_money_to_change_slot = opened_company_window }
-				CAC_change_money_effect = yes
+                set_temp_variable = { cac_money_change = -1.0 }
+				set_temp_variable = { cac_slot = opened_company_details }
+				CAC_modify_money_effect = yes
 
-				
-                set_temp_variable = { cac_factory_expenses_change = -0.025 }
-				set_temp_variable = { cac_factory_expenses_change_slot = opened_company_window }
-				CAC_change_factory_expenses_effect = yes
+				set_temp_variable = { cac_expenses_per_factory_change = -0.015 }
+				set_temp_variable = { cac_slot = opened_company_details }
+				CAC_change_expenses_per_factory_effect = yes
 
 				CAC_update_variables = yes
 			}
@@ -209,15 +319,16 @@ scripted_gui = {
 				set_country_flag = {
 					flag = company_action_2_timeout
 					days = 30
+					value = 1
 				}
 
-                set_temp_variable = { cac_money_to_change = -2.5 }
-				set_temp_variable = { cac_money_to_change_slot = opened_company_window }
-				CAC_change_money_effect = yes
+                set_temp_variable = { cac_money_change = -2.5 }
+				set_temp_variable = { cac_slot = opened_company_details }
+				CAC_modify_money_effect = yes
 				
-				set_temp_variable = { cac_factory_income_change = 0.02 }
-				set_temp_variable = { cac_factory_income_change_slot = opened_company_window }
-				CAC_change_factory_income_effect = yes
+				set_temp_variable = { cac_income_per_factory_change = 0.02 }
+				set_temp_variable = { cac_slot = opened_company_details }
+				CAC_change_income_per_factory_effect = yes
 
 				CAC_update_variables = yes
 			}
@@ -226,27 +337,32 @@ scripted_gui = {
 				set_country_flag = {
 					flag = company_action_3_timeout
 					days = 30
+					value = 1
 				}
 
-                set_temp_variable = { cac_money_to_change = -5 }
-				set_temp_variable = { cac_money_to_change_slot = opened_company_window }
-				CAC_change_money_effect = yes
+                set_temp_variable = { cac_money_change = -5 }
+				set_temp_variable = { cac_slot = opened_company_details }
+				CAC_modify_money_effect = yes
 
 				set_temp_variable = { cac_additional_income_change = 0.05 }
-				set_temp_variable = { cac_slot = opened_company_window }
-				CAC_change_additional_income_effect = yes
+				set_temp_variable = { cac_slot = opened_company_details }
+				CAC_modify_additional_income_effect = yes
+
+				set_temp_variable = { cac_value_change = 4 }
+				set_temp_variable = { cac_slot = opened_company_details }
+				CAC_modify_value_effect = yes
 
 				CAC_update_variables = yes
 			}
 
 			company_action_4_click = {
-                set_temp_variable = { cac_money_to_change = -10 }
-				set_temp_variable = { cac_slot = opened_company_window }
-				CAC_change_money_effect = yes
+                set_temp_variable = { cac_money_change = -10 }
+				set_temp_variable = { cac_slot = opened_company_details }
+				CAC_modify_money_effect = yes
 
-				set_temp_variable = { cac_factory_amount_change = 1 }
-				set_temp_variable = { cac_factory_amount_change_slot = opened_company_window }
-				CAC_change_factory_amount_effect = yes
+				set_temp_variable = { cac_factories_change = 1 }
+				set_temp_variable = { cac_slot = opened_company_details }
+				CAC_modify_factories_effect = yes
 
 				CAC_update_variables = yes
 			}
@@ -255,25 +371,27 @@ scripted_gui = {
 				set_country_flag = {
 					flag = country_action_1_timeout
 					days = 30
+					value = 1
 				}
 
        			ROOT = { add_political_power = -100 }
 
-				add_to_variable = { CAC_country_selected_companies_additional_income^opened_company_window = 0.05 }
+				CAC_add_government_contract_idea = yes # DODO
 			}
 
 			country_action_2_click = {
 				set_country_flag = {
 					flag = country_action_2_timeout
 					days = 30
+					value = 1
 				}
 
 				set_temp_variable = { treasury_change = -1.0 }
 				modify_treasury_effect = yes
 
-				set_temp_variable = { cac_money_to_change = 1 }
-				set_temp_variable = { cac_money_to_change_slot = opened_company_window }
-				CAC_change_money_effect = yes
+				set_temp_variable = { cac_money_change = 1 }
+				set_temp_variable = { cac_slot = opened_company_details }
+				CAC_modify_money_effect = yes
 
 				CAC_update_variables = yes
 			}
@@ -282,14 +400,15 @@ scripted_gui = {
 				set_country_flag = {
 					flag = country_action_3_timeout
 					days = 30
+					value = 1
 				}
 
 				set_temp_variable = { treasury_change = -2.5 }
 				modify_treasury_effect = yes
-				
-				set_temp_variable = { cac_money_to_change = 2 }
-				set_temp_variable = { cac_money_to_change_slot = opened_company_window }
-				CAC_change_money_effect = yes
+
+				set_temp_variable = { cac_money_change = 2 }
+				set_temp_variable = { cac_slot = opened_company_details }
+				CAC_modify_money_effect = yes
 
 				CAC_update_variables = yes
 			}
@@ -298,14 +417,15 @@ scripted_gui = {
 				set_country_flag = {
 					flag = country_action_4_timeout
 					days = 30
+					value = 1
 				}
 
 				set_temp_variable = { treasury_change = -5.0 }
 				modify_treasury_effect = yes
 
-				set_temp_variable = { cac_money_to_change = 4 }
-				set_temp_variable = { cac_money_to_change_slot = opened_company_window }
-				CAC_change_money_effect = yes
+				set_temp_variable = { cac_money_change = 4 }
+				set_temp_variable = { cac_slot = opened_company_details }
+				CAC_modify_money_effect = yes
 				
 				CAC_update_variables = yes
 			}
