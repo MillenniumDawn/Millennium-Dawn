@@ -240,6 +240,7 @@ CAC_add_company = {
 			index = selected_companies_num_temp
 		}
 
+        CAC_unlock_starting_upgrades = yes
         CAC_update_companies_variables_effect = yes
     }
 }
@@ -580,4 +581,149 @@ CAC_update_upkeep = {
             }
         }
     }
+}
+
+CAC_update_global_stats = {
+    if = {
+        limit = {
+            check_variable = { CAC_companies^num > 0 }
+        }
+
+        for_loop_effect = {
+            start = 0
+            end = CAC_companies^num
+            value = i
+
+            # If global table not full, add normally
+            if = {
+                limit = {
+                    check_variable = { global.CAC_global_companies^num < 15 }
+                }
+
+                add_to_array = { array = global.CAC_global_companies value = CAC_companies^i }
+                add_to_array = { array = global.CAC_global_companies_countries value = THIS }
+                add_to_array = { array = global.CAC_global_companies_value value = CAC_companies_value^i }
+                add_to_array = { array = global.CAC_global_companies_revenue value = CAC_companies_revenue^i }
+                add_to_array = { array = global.CAC_global_companies_factories value = CAC_companies_factories^i }
+            }
+            # If full, check if current value is higher than the lowest
+            else = {
+                set_temp_variable = { min_index = 0 }
+                set_temp_variable = { min_value = global.CAC_global_companies_value^0 }
+                for_loop_effect = {
+                    start = 1
+                    end = 15
+                    value = j
+                    if = {
+                        limit = {
+                            check_variable = { global.CAC_global_companies_value^j < min_value }
+                        }
+                        set_temp_variable = { min_index = j }
+                        set_temp_variable = { min_value = global.CAC_global_companies_value^j }
+                    }
+                }
+                if = {
+                    limit = {
+                        check_variable = { CAC_companies_value^i > min_value }
+                    }
+                    # Insert at sorted position, shift arrays
+                    set_temp_variable = { insert_index = min_index }
+                    set_temp_variable = { insert_value = CAC_companies_value^i }
+                    set_temp_variable = { insert_company = CAC_companies^i }
+                    set_temp_variable = { insert_country = THIS }
+                    set_temp_variable = { insert_revenue = CAC_companies_revenue^i }
+                    set_temp_variable = { insert_factories = CAC_companies_factories^i }
+
+                    # Overwrite lowest
+                    set_variable = { global.CAC_global_companies^insert_index = insert_company }
+                    set_variable = { global.CAC_global_companies_countries^insert_index = insert_country }
+                    set_variable = { global.CAC_global_companies_value^insert_index = insert_value }
+                    set_variable = { global.CAC_global_companies_revenue^insert_index = insert_revenue }
+                    set_variable = { global.CAC_global_companies_factories^insert_index = insert_factories }
+                }
+            }
+        }
+
+        # Sort global arrays by value (descending)
+        for_loop_effect = {
+            start = 0
+            end = global.CAC_global_companies^num
+            value = i
+
+            set_temp_variable = { max_index = i }
+            set_temp_variable = { max_value = global.CAC_global_companies_value^i }
+
+            for_loop_effect = {
+                start = i
+                end = global.CAC_global_companies^num
+                value = j
+
+                if = {
+                    limit = {
+                        check_variable = { global.CAC_global_companies_value^j > max_value }
+                    }
+                    set_temp_variable = { max_index = j }
+                    set_temp_variable = { max_value = global.CAC_global_companies_value^j }
+                }
+            }
+
+            if = {
+                limit = {
+                    check_variable = { max_index != i }
+                }
+
+                set_temp_variable = { temp_company = global.CAC_global_companies^i }
+                set_temp_variable = { temp_country = global.CAC_global_companies_countries^i }
+                set_temp_variable = { temp_value = global.CAC_global_companies_value^i }
+                set_temp_variable = { temp_revenue = global.CAC_global_companies_revenue^i }
+                set_temp_variable = { temp_factories = global.CAC_global_companies_factories^i }
+
+                set_variable = { global.CAC_global_companies^i = global.CAC_global_companies^max_index }
+                set_variable = { global.CAC_global_companies_countries^i = global.CAC_global_companies_countries^max_index }
+                set_variable = { global.CAC_global_companies_value^i = global.CAC_global_companies_value^max_index }
+                set_variable = { global.CAC_global_companies_revenue^i = global.CAC_global_companies_revenue^max_index }
+                set_variable = { global.CAC_global_companies_factories^i = global.CAC_global_companies_factories^max_index }
+
+                set_variable = { global.CAC_global_companies^max_index = temp_company }
+                set_variable = { global.CAC_global_companies_countries^max_index = temp_country }
+                set_variable = { global.CAC_global_companies_value^max_index = temp_value }
+                set_variable = { global.CAC_global_companies_revenue^max_index = temp_revenue }
+                set_variable = { global.CAC_global_companies_factories^max_index = temp_factories }
+            }
+        }
+    }
+}
+
+CAC_unlock_starting_upgrades = {
+    if = { 
+        limit = { check_variable = { cac_company_type = 0 } } 
+        
+        set_temp_variable = { index = cac_selected_company }
+		multiply_temp_variable = { index = 30 }
+		add_to_temp_variable = { index = 0 }
+
+		set_variable = { CAC_companies_upgrades_2d^index = 2 }
+
+        set_temp_variable = { index = cac_selected_company }
+		multiply_temp_variable = { index = 30 }
+		add_to_temp_variable = { index = 11 }
+
+		set_variable = { CAC_companies_upgrades_2d^index = 2 }
+    }
+    if = { 
+        limit = { check_variable = { cac_company_type = 1 } } 
+        
+        set_temp_variable = { index = cac_selected_company }
+		multiply_temp_variable = { index = 30 }
+		add_to_temp_variable = { index = 0 }
+
+		set_variable = { CAC_companies_upgrades_2d^index = 2 }
+
+        set_temp_variable = { index = cac_selected_company }
+		multiply_temp_variable = { index = 30 }
+		add_to_temp_variable = { index = 11 }
+
+		set_variable = { CAC_companies_upgrades_2d^index = 2 }
+    }
+    # TBA
 }
