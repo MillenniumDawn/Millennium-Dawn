@@ -2694,6 +2694,10 @@ focus_tree = {
 			has_political_power > 99
 		}
 
+		cancel_if_invalid = no
+
+		cancelable = no
+
 		select_effect = {
 			add_political_power = -100
 		}
@@ -2933,6 +2937,7 @@ focus_tree = {
 				remove_dynamic_modifier = {
 					modifier = HOL_Groningen_Gas_Winning
 				}
+				newline = yes
 				add_dynamic_modifier = {
 					modifier = HOL_Groningen_Herstelt1
 				}
@@ -2976,6 +2981,7 @@ focus_tree = {
 				remove_dynamic_modifier = {
 					modifier = HOL_Groningen_Herstelt1
 				}
+				newline = yes
 				add_dynamic_modifier = {
 					modifier = HOL_Groningen_Herstelt2
 				}
@@ -3021,6 +3027,7 @@ focus_tree = {
 				remove_dynamic_modifier = {
 					modifier = HOL_Groningen_Herstelt2
 				}
+				newline = yes
 				add_dynamic_modifier = {
 					modifier = HOL_Groningen_Herstelt3
 				}
@@ -7477,7 +7484,7 @@ focus_tree = {
 				limit = { has_dlc = "Man the Guns" }
 				create_equipment_variant = {
 					name = "Future Air Defender"
-					type = cruiser_hull_3
+					type = cruiser_hull_4
 					parent_version = 5
 					modules = {
 						front_1_custom_slot = module_asm_4
@@ -9015,8 +9022,25 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_Damen_Industry_Expansion"
-			two_random_arms_factory = yes
-			two_random_dockyards = yes
+			random_owned_state = {
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			random_owned_state = {
+				limit = {
+					is_coastal = yes
+				}
+				add_building_construction = {
+					type = dockyard
+					level = 3
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 3
+			}
 			if = {
 				limit = { has_idea = maritime_industry }
 				set_temp_variable = { temp_opinion = 5 }
@@ -9060,6 +9084,16 @@ focus_tree = {
 				limit = { has_idea = HOL_nonselfsufficient_army5 }
 				remove_ideas = HOL_nonselfsufficient_army5
 			}
+			if = {
+				limit = { has_idea = HOL_Liberal_Society5 }
+				set_temp_variable = { treasury_change = -30.60 }
+				modify_treasury_effect = yes
+			}
+			else = {
+				set_temp_variable = { treasury_change = -34.00 }
+				modify_treasury_effect = yes
+			}
+
 		}
 
 		ai_will_do = {
@@ -9342,7 +9376,15 @@ focus_tree = {
 				}
 				add_resource = {
 					type = chromium
-					amount = 2
+					amount = 8
+				}
+				add_resource = {
+					type = aluminium
+					amount = 4
+				}
+				add_resource = {
+					type = tungsten
+					amount = 4
 				}
 			}
 			newline = yes
@@ -10850,6 +10892,20 @@ focus_tree = {
 		bypass = {
 			ETH = {
 				NOT = { has_war_with = ERI }
+			}
+		}
+
+		bypass = {
+			if = {
+				limit = {
+					NOT = { has_country_flag = HOL_paars_completed }
+					has_completed_focus = HOL_Threats_Against_Politicians
+					has_completed_focus = HOL_Royal_Wedding
+					has_completed_focus = HOL_Gay
+				}
+				newline = yes
+				custom_effect_tooltip = HOL_politics.73_tt
+				hidden_effect = { country_event = { id = HOL_politics.73 days = 14 } }
 			}
 		}
 
@@ -18876,11 +18932,11 @@ focus_tree = {
 					has_country_flag = PVDA_leader_Timmermans
 				}
 			}
-			if = { #ADVISOR WORKING ON THE FOCUS (Show progress)
+			if = {
 				limit = {
 					has_country_flag = HOL_GL_in_progress_flag
 				}
-				set_temp_variable = { temp_focus_days = @HOL_D66_time_tier_1 } #For tooltip purposes
+				set_temp_variable = { temp_focus_days = @HOL_D66_time_tier_1 }
 				multiply_temp_variable = { temp_focus_days = 7 } #The constant uses focus cost which is in weeks, so convert to days
 				custom_override_tooltip = {
 					tooltip = {
@@ -18890,7 +18946,7 @@ focus_tree = {
 					always = no
 				}
 			}
-			else = { #NOT BEEN WORKED ON (Just Explain)
+			else = {
 				custom_override_tooltip = {
 					tooltip = {
 						localization_key = HOL_focus_can_only_be_completed_by_GL_tt
@@ -20147,17 +20203,15 @@ focus_tree = {
 				add_idea = HOL_restore_nobility_influence_idea
 			}
 			if = {
-				limit = { has_idea = labour_unions }
+				limit = {
+					has_idea = labour_unions
+					NOT = { has_idea = landowners }
+				}
 				swap_ideas = {
 					remove_idea = labour_unions
 					add_idea = landowners
 				}
 			}
-
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -21045,11 +21099,6 @@ focus_tree = {
 			1006 = { add_claim_by = HOL }
 			877 = { add_claim_by = HOL }
 			1005 = { add_claim_by = HOL }
-
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -21082,10 +21131,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: HOL_reclaim_suriname"
 			SUR = { country_event = HOL_WIC.26 }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -21108,9 +21153,16 @@ focus_tree = {
 			GUY = { exists = yes }
 		}
 		bypass = {
-			owns_state = 877
-			owns_state = 1005
-			GUY = { exists = no }
+			OR = {
+				GUY = { exists = no }
+				owns_state = 877
+				owns_state = 1005
+			}
+		}
+
+		bypass_effect = {
+			877 = { add_claim_by = HOL }
+			1005 = { add_claim_by = HOL }
 		}
 
 		available = { nationalist_monarchists_are_in_power = yes }
@@ -21118,10 +21170,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: HOL_reclaim_guyana"
 			GUY = { country_event = HOL_WIC.29 }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -21140,13 +21188,15 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = { focus = HOL_reclaim_suriname }
-		available = {
-			FRA = { exists = yes }
-		}
 		bypass = {
-			owns_state = 877
-			owns_state = 1005
-			GUY = { exists = no }
+			OR = {
+				FRA = { exists = no }
+				owns_state = 67
+			}
+		}
+
+		bypass_effect = {
+			67 = { add_claim_by = HOL }
 		}
 
 		available = { nationalist_monarchists_are_in_power = yes }
@@ -21154,10 +21204,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: HOL_reclaim_french_guyana"
 			FRA = { country_event = HOL_WIC.32 }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -21333,21 +21379,29 @@ focus_tree = {
 			}
 		}
 		bypass = {
-			BRA = { exists = no }
-			owns_state = 889
-			owns_state = 1027
-			owns_state = 1028
-			owns_state = 888
-			owns_state = 1029
+			OR = {
+				BRA = { exists = no }
+				AND = {
+					owns_state = 889
+					owns_state = 1027
+					owns_state = 1028
+					owns_state = 888
+					owns_state = 1029
+				}
+			}
+		}
+
+		bypass_effect = {
+			889 = { add_claim_by = HOL }
+			1027 = { add_claim_by = HOL }
+			1028 = { add_claim_by = HOL }
+			888 = { add_claim_by = HOL }
+			1029 = { add_claim_by = HOL }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: HOL_reclaim_guyana"
 			BRA = { country_event = HOL_WIC.35 }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -21398,19 +21452,20 @@ focus_tree = {
 		prerequisite = { focus = HOL_wic_caribbean }
 		available = {
 			nationalist_monarchists_are_in_power = yes
-			USA = { exists = yes }
 		}
 		bypass = {
-			owns_state = 815
+			OR = {
+				USA = { exists = no }
+				owns_state = 815
+			}
+		}
+		bypass_effect = {
+			815 = { add_claim_by = HOL }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: HOL_reclaim_puerto_rico"
 			USA = { country_event = HOL_WIC.17 }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -21431,20 +21486,22 @@ focus_tree = {
 		prerequisite = { focus = HOL_wic_caribbean }
 		available = {
 			nationalist_monarchists_are_in_power = yes
-			ENG = { exists = yes }
 		}
+
 		bypass = {
-			ENG = { exists = no }
-			owns_state = 23
+			OR = {
+				ENG = { exists = no }
+				owns_state = 23
+			}
+		}
+
+		bypass_effect = {
+			23 = { add_claim_by = HOL }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: HOL_reclaim_british_antilles"
 			ENG = { country_event = HOL_WIC.20 }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -21465,20 +21522,18 @@ focus_tree = {
 		prerequisite = { focus = HOL_wic_caribbean }
 		available = {
 			nationalist_monarchists_are_in_power = yes
-			TRI = { exists = yes }
 		}
 		bypass = {
-			TRI = { exists = no }
 			owns_state = 869
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: HOL_reclaim_trinidad"
-			TRI = { country_event = HOL_WIC.23 }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
+			869 = {
+				owner = {
+					country_event = HOL_WIC.23
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -21685,10 +21740,6 @@ focus_tree = {
 			296 = { add_claim_by = HOL }
 			320 = { add_claim_by = HOL }
 			318 = { add_claim_by = HOL }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -21709,20 +21760,21 @@ focus_tree = {
 		prerequisite = { focus = HOL_wic_africa }
 		available = {
 			nationalist_monarchists_are_in_power = yes
-			SEN = { exists = yes }
 		}
 		bypass = {
-			SEN = { exists = no }
-			owns_state = 363
+			OR = {
+				SEN = { exists = no }
+				owns_state = 363
+			}
+		}
+
+		bypass_effect = {
+			23 = { add_claim_by = HOL }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: HOL_dutch_dakar"
 			SEN = { country_event = HOL_WIC.03 }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -21810,20 +21862,21 @@ focus_tree = {
 		prerequisite = { focus = HOL_wic_africa }
 		available = {
 			nationalist_monarchists_are_in_power = yes
-			GAH = { exists = yes }
 		}
 		bypass = {
-			GAH = { exists = no }
-			owns_state = 346
+			OR = {
+				GAH = { exists = no }
+				owns_state = 346
+			}
+		}
+
+		bypass_effect = {
+			346 = { add_claim_by = HOL }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: HOL_wic_goldcoast"
 			GAH = { country_event = HOL_WIC.08 }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -21853,10 +21906,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: HOL_wic_saint_helena"
 			24 = { owner = { country_event = HOL_WIC.14 } }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -21884,16 +21933,12 @@ focus_tree = {
 					has_civil_war = no
 				}
 			}
-		 }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: HOL_wic_congo"
 			navy_experience = 25
 			298 = { owner = { country_event = HOL_WIC.11 } }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -21922,10 +21967,6 @@ focus_tree = {
 			770 = { add_claim_by = HOL }
 			768 = { add_claim_by = HOL }
 			1084 = { add_claim_by = HOL }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -21945,11 +21986,20 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = { focus = HOL_wic_new_holland }
 		bypass = {
-			USA = { exists = no }
-			owns_state = 769
-			owns_state = 770
-			owns_state = 768
-			owns_state = 1084
+			OR = {
+				USA = { exists = no }
+				owns_state = 769
+				owns_state = 770
+				owns_state = 768
+				owns_state = 1084
+			}
+		}
+
+		bypass_effect = {
+			769 = { add_claim_by = HOL }
+			770 = { add_claim_by = HOL }
+			768 = { add_claim_by = HOL }
+			1084 = { add_claim_by = HOL }
 		}
 
 		available = {
@@ -21968,10 +22018,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: HOL_reclaim_usa"
 			USA = { country_event = HOL_WIC.38 }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -22260,10 +22306,6 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_territories_plan"
 			add_ideas = HOL_VOC_territory_focus
 			custom_effect_tooltip = HOL_territories_plan_tt
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -22298,10 +22340,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_reclaim_VOC_territories"
 			activate_mission = HOL_voc_prepare_for_war_mission1
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -22330,7 +22368,14 @@ focus_tree = {
 				influence_higher_15 = yes
 			}
 		}
-		bypass = { RAJ = { exists = no } }
+		bypass = {
+			RAJ = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_financial_influence_india"
@@ -22372,7 +22417,14 @@ focus_tree = {
 				influence_higher_30 = yes
 			}
 		}
-		bypass = { RAJ = { exists = no } }
+		bypass = {
+			RAJ = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_gujurat_trade_port"
@@ -22417,7 +22469,21 @@ focus_tree = {
 				influence_higher_50 = yes
 			}
 		}
-		bypass = { RAJ = { exists = no } }
+		bypass = {
+			RAJ = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
+
+		bypass_effect = {
+			436 = { add_claim_by = HOL }
+			452 = { add_claim_by = HOL }
+			465 = { add_claim_by = HOL }
+			462 = { add_claim_by = HOL }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_voc_economic_zone_india"
@@ -22425,7 +22491,6 @@ focus_tree = {
 			unlock_decision_tooltip = HOL_voc_india_west_bengal
 			unlock_decision_tooltip = HOL_voc_india_kerala
 			unlock_decision_tooltip = HOL_voc_india_tamil
-			unlock_decision_tooltip = HOL_voc_india_east_gujurat
 			if = {
 				limit = {
 					has_completed_focus = HOL_reclaim_fort_zeelandia
@@ -22467,6 +22532,15 @@ focus_tree = {
 			}
 		}
 
+		bypass = {
+			TAI = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_taiwan_semiconductor_industry"
 			TAI = { country_event = HOL_VOC.70 }
@@ -22505,7 +22579,14 @@ focus_tree = {
 				influence_higher_25 = yes
 			}
 		}
-		bypass = { TAI = { exists = no } }
+		bypass = {
+			TAI = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_ASML_TSMC_partnership"
@@ -22545,7 +22626,14 @@ focus_tree = {
 				influence_higher_60 = yes
 			}
 		}
-		bypass = { TAI = { exists = no } }
+		bypass = {
+			TAI = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_semiconductor_export_control_taiwan"
@@ -22598,7 +22686,19 @@ focus_tree = {
 				influence_higher_70 = yes
 			}
 		}
-		bypass = { TAI = { exists = no } }
+		bypass = {
+			TAI = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
+
+		bypass_effect = {
+			599 = { add_claim_by = HOL }
+			1157 = { add_claim_by = HOL }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_reclaim_fort_zeelandia"
@@ -22644,7 +22744,14 @@ focus_tree = {
 				influence_higher_15 = yes
 			}
 		}
-		bypass = { SRI = { exists = no } }
+		bypass = {
+			SRI = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_modernize_agriculture_srilanka"
@@ -22684,7 +22791,14 @@ focus_tree = {
 				influence_higher_40 = yes
 			}
 		}
-		bypass = { SRI = { exists = no } }
+		bypass = {
+			SRI = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_sustainable_agriculture_srilanka"
@@ -22720,7 +22834,14 @@ focus_tree = {
 				influence_higher_50 = yes
 			}
 		}
-		bypass = { SRI = { exists = no } }
+		bypass = {
+			SRI = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_colombo_port_control"
@@ -22774,7 +22895,20 @@ focus_tree = {
 				influence_higher_70 = yes
 			}
 		}
-		bypass = { SRI = { exists = no } }
+		bypass = {
+			SRI = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
+
+		bypass_effect = {
+			481 = { add_claim_by = HOL }
+			482 = { add_claim_by = HOL }
+			483 = { add_claim_by = HOL }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_economic_zone_srilanka"
@@ -22825,7 +22959,14 @@ focus_tree = {
 				influence_higher_25 = yes
 			}
 		}
-		bypass = { SAF = { exists = no } }
+		bypass = {
+			SAF = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_afrikaner_community_support"
@@ -22901,7 +23042,12 @@ focus_tree = {
 			}
 		}
 		bypass = {
-			NOT = { country_exists = SAF }
+			SAF = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
 		}
 
 		completion_reward = {
@@ -22942,7 +23088,12 @@ focus_tree = {
 			}
 		}
 		bypass = {
-			SAF = { exists = no }
+			SAF = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
 		}
 
 		completion_reward = {
@@ -22983,7 +23134,12 @@ focus_tree = {
 			}
 		}
 		bypass = {
-			SAF = { exists = no }
+			SAF = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
 		}
 
 		completion_reward = {
@@ -23021,7 +23177,18 @@ focus_tree = {
 			}
 		}
 		bypass = {
-			SAF = { exists = no }
+			SAF = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
+
+		bypass_effect = {
+			281 = { add_claim_by = HOL }
+			278 = { add_claim_by = HOL }
+			280 = { add_claim_by = HOL }
 		}
 
 		completion_reward = {
@@ -23076,7 +23243,14 @@ focus_tree = {
 			}
 			IND = { exists = yes }
 		}
-		bypass = { IND = { exists = no } }
+		bypass = {
+			IND = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_reclaim_crown_colony"
@@ -23105,10 +23279,6 @@ focus_tree = {
 				}
 			}
 			activate_decision = HOL_voc_indonesia_attack_mission
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 			hidden_effect = {
 					set_temp_variable = {
 						java_detection_chance = 0
@@ -23139,7 +23309,14 @@ focus_tree = {
 		available = {
 			nationalist_monarchists_are_in_power = yes
 		}
-		bypass = { IND = { exists = no } }
+		bypass = {
+			IND = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_reclaim_batavia"
@@ -23175,7 +23352,14 @@ focus_tree = {
 		available = {
 			nationalist_monarchists_are_in_power = yes
 		}
-		bypass = { IND = { exists = no } }
+		bypass = {
+			IND = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_secret_embassy_expansion"
@@ -23200,15 +23384,21 @@ focus_tree = {
 
 		cost = 5
 
-		search_filters = { FOCUS_FILTER_POLITICAL }
-		prerequisite = { focus = HOL_reclaim_crown_colony }
-		mutually_exclusive = { focus = HOL_reclaim_batavia }
-
-
 		available = {
 			nationalist_monarchists_are_in_power = yes
 		}
-		bypass = { IND = { exists = no } }
+
+		prerequisite = { focus = HOL_reclaim_crown_colony }
+		mutually_exclusive = { focus = HOL_reclaim_batavia }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		bypass = {
+			IND = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_reclaim_batavia"
@@ -23247,7 +23437,14 @@ focus_tree = {
 		available = {
 			nationalist_monarchists_are_in_power = yes
 		}
-		bypass = { IND = { exists = no } }
+		bypass = {
+			IND = {
+				OR = {
+					exists = no
+					is_puppet_of = HOL
+				}
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HOL_contact_rebels_indonesia"
@@ -23762,10 +23959,6 @@ focus_tree = {
 				add_claim_by = HOL
 			}
 			AST = { country_event = HOL_VOC.45 }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -23853,10 +24046,6 @@ focus_tree = {
 			MAY = { country_event = HOL_VOC.51 }
 			BRU = { country_event = HOL_VOC.57 }
 			SIN = { country_event = HOL_VOC.54 }
-			newline = yes
-			set_temp_variable = { treasury_change = gdp_per_capita }
-			multiply_temp_variable = { treasury_change = -0.10 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
