@@ -18,18 +18,15 @@ Further, it offers a new and unique economic system, a new political system, nat
 
 **The following Wiki is currently a work in progress. However, we will do our best to get meaningful content updated and placed on this page.**
 
-<details>
-<summary>Tutorials</summary>
+### Tutorials
 
 - [Economy Tutorial](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/User-Tutorials/Economy-Tutorial)
 - [European Union Tutorial](/TUTORIAL-EUROPEAN-UNION-%E2%80%93-VERSION-1.5.0)
 - [Millennium Dawn Tutorials](https://www.youtube.com/watch?v=9G6lYnP0knI&list=PL36TqZI0G592x3sYphwPHuMvobA6si543)
 - [List of Playable Countries](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/List-of-Countries)
 
-</details>
 
-<details>
-<summary>Developer/Team Resources</summary>
+### Developer/Team Resources
 
 - [Knowledge Based Resources](/dev-resources/knowledge-based-resources/)
 - [MD Code Resource](/dev-resources/code-resource/)
@@ -38,16 +35,11 @@ Further, it offers a new and unique economic system, a new political system, nat
 - [Help! I get an "Authentication failed" error when trying to clone the repo!](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/guides/authentication-failed-cloning-repo)
 - [Bird's Basic Variable Explanation](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/Basic-Variable-Guide)
 
-</details>
-
-<details>
-<summary>Open-Source Resources</summary>
+### Open Source Resources
 
 - [Focus Tree Tool](/dev-resources/focus-tree-tool/)
 - [Localization Tool](/dev-resources/localization-tool/)
 - [Logging Tool](/dev-resources/logging-tool/)
-
-</details>
 
 ## **Credits**
 
