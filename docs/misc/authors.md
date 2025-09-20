@@ -8,7 +8,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 
 # Individuals
 
-| Name | Discord | GitLab | PDX | Email |
+| Name | Discord | GitHub | PDX | Email |
 |------|---------|--------|-----|-------|
 | Ted52 | @Ted52 | @Ted52 | - | - |
 | Angriest Bird | @Angriest Bird | @AngriestBird | - | - |
