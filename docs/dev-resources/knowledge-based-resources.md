@@ -1,3 +1,9 @@
+---
+layout: default
+title: "Knowledge-Based Resources"
+description: "Collection of knowledge-based resources for Millennium Dawn development"
+---
+
 **Anti Submarine Warfare**
 
 * <!--[UnderSea Warfare In Northern Europe by CSIS](https://csis-prod.s3.amazonaws.com/s3fs-public/publication/160721_Hicks_UnderseaWarfare_Web.pdf)-->Unavailable. :(

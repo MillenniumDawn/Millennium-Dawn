@@ -1,3 +1,9 @@
+---
+layout: default
+title: "GFX Entry Generator"
+description: "How to use gfx_entry_generator.py for goals"
+---
+
 <h1>How to use gfx_entry_generator.py for goals</h1>
 <h5>For whoever on gfx-input branch using this script:</h5>
 
