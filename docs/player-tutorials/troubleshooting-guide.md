@@ -1,7 +1,7 @@
 ---
 layout: default
 title: "Troubleshooting Guide"
-permalink: /troubleshooting-guide/
+description: "Guide for troubleshooting common issues in Millennium Dawn"
 ---
 
 # Troubleshooting Guide

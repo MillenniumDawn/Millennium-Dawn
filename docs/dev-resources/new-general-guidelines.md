@@ -1,3 +1,9 @@
+---
+layout: default
+title: "New General Guidelines"
+description: "Guidelines for creating new generals in Millennium Dawn"
+---
+
 ## New General Creation
 **General Amount**
 
