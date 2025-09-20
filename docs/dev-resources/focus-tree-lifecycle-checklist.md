@@ -1,3 +1,9 @@
+---
+layout: default
+title: "Focus Tree Lifecycle Checklist"
+description: "Step-by-step checklist for focus tree development lifecycle"
+---
+
 ### Drafting Stage
 - [ ] Focus tree is layed out in software (Diagram.net e.g.), it is better to think what focuses will do while making a markup as well
   - Example: https://drive.google.com/file/d/1TRd4JlJOCefTLHUeeuZ2jR4ZIQP3s2CT/view
