@@ -18,10 +18,30 @@ Further, it offers a new and unique economic system, a new political system, nat
 
 **The following Wiki is currently a work in progress. However, we will do our best to get meaningful content updated and placed on this page.**
 
+### Joining the Millennium Dawn Development Team
+
+The development team requires that you are at least 16 years of age and own a legitimate copy of Hearts of Iron IV. Furthermore, you have to have some degree of access to our discord to coordinate efforts with us and other developers. We are always looking for new playtesters, developers, and more. Translation on any of our various translation progress is independent of the main team structure and is conducted through Paratranz. Links for the respect language and their project can be found below. More information including the forms can be found on our discord in the [how-to-join-the-team](https://discord.com/channels/210890013334831104/764514951019757579) channel.
+
+**Paratranz Projects**
+
+- [Brazilian Portuguese](https://paratranz.cn/projects/10699)
+- [Korean](https://paratranz.cn/projects/3830)
+- [Traditional Chinese](https://paratranz.cn/projects/6617)
+- [French](https://paratranz.cn/projects/10492)
+- [Spanish](https://paratranz.cn/projects/10688)
+- [Russian](https://paratranz.cn/projects/10514)
+- [Japanese](https://paratranz.cn/projects/3949)
+- [Simplified Chinese](https://paratranz.cn/projects/7367/)
+- [Polish](https://paratranz.cn/projects/10795)
+- [German](https://paratranz.cn/projects/10879)
+- [Ukrainian](https://paratranz.cn/projects/11577)
+- [Turkish](https://paratranz.cn/projects/10792)
+
+
 ### Tutorials
 
 - [Economy Tutorial](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/User-Tutorials/Economy-Tutorial)
-- [European Union Tutorial](/TUTORIAL-EUROPEAN-UNION-%E2%80%93-VERSION-1.5.0)
+- [European Union Tutorial](Millennium-Dawn/player-tutorials/eu-tutorial)
 - [Millennium Dawn Tutorials](https://www.youtube.com/watch?v=9G6lYnP0knI&list=PL36TqZI0G592x3sYphwPHuMvobA6si543)
 - [List of Playable Countries](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/List-of-Countries)
 
