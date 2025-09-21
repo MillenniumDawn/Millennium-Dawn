@@ -1,4 +1,8 @@
-# Millennium Dawn Code Styling Guide
+---
+layout: default
+title: "Code Stylization Guide"
+description: "Millennium Dawn's Code Stylization Guide"
+---
 
 ## Focus Trees
 
