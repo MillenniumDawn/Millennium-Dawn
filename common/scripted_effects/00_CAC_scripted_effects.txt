@@ -1,4 +1,7 @@
 @factory_cost = 10 # base 10
+@size_per_factory = 1
+@size_per_upgrade = 1
+@size_impact_modifier = 0.1
 
 # CAC_add_company
 # Required Input: cac_selected_company (int)
@@ -51,7 +54,7 @@ CAC_add_company = {
         else {
             add_to_array = {
                 array = CAC_companies_size
-                value = 0
+                value = 1
                 index = company_slot_temp
             }
         }
@@ -219,17 +222,6 @@ CAC_add_company = {
 			index = selected_companies_num_temp
 		}
 
-        add_to_array = {
-			array = CAC_companies_income_per_factory_modifier
-			value = 1
-			index = selected_companies_num_temp
-		}
-        add_to_array = {
-			array = CAC_companies_expenses_per_factory_modifier
-			value = 1
-			index = selected_companies_num_temp
-		}
-
         # company modifiers
         add_to_array = {
             array = CAC_companies_income_modifier
@@ -243,7 +235,7 @@ CAC_add_company = {
         }
 
         add_to_array = {
-            array = CAC_companies_upgrade_cost_modifier
+            array = CAC_companies_modifier_from_size
             value = 0
             index = company_slot_temp
         }
@@ -446,8 +438,12 @@ CAC_modify_factories_effect = {
         set_temp_variable = { value_change_temp = cac_factories_change }
         multiply_temp_variable = { value_change_temp = @factory_cost }
 
+        set_temp_variable = { size_change_temp = cac_factories_change }
+        multiply_temp_variable = { size_change_temp = @size_per_factory }
+
         add_to_variable = { CAC_companies_factories^cac_slot = cac_factories_change }
         add_to_variable = { CAC_companies_value^cac_slot = value_change_temp }
+        add_to_variable = { CAC_companies_size^cac_slot = size_change_temp }
 
         CAC_update_variables = yes
     }
@@ -565,6 +561,13 @@ CAC_update_variables = {
             start = 0
             end = CAC_companies^num
             value = i
+
+            set_variable = { CAC_companies_modifier_from_size^i = 1 }
+
+            set_temp_variable = { size_impact_modifier = CAC_companies_size^i }
+            multiply_temp_variable = { size_impact_modifier = @size_impact_modifier }
+
+            add_to_variable = { CAC_companies_modifier_from_size^i = size_impact_modifier }
 
             set_temp_variable = { company_income_temp = CAC_companies_factories^i }
             multiply_temp_variable = { company_income_temp = CAC_companies_income_per_factory^i }
