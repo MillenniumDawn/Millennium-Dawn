@@ -109,7 +109,7 @@ CAC_add_company = {
         if = {
             limit = { check_variable = { cac_company_expenses_per_factory = 0 } }
 
-            set_temp_variable = { cac_company_expenses_per_factory = -0.3 }
+            set_temp_variable = { cac_company_expenses_per_factory = -0.35 }
         }
 
         set_temp_variable = { cac_expenses_per_factory_change = cac_company_expenses_per_factory }
@@ -496,6 +496,41 @@ CAC_modify_expenses_per_factory_effect = {
         add_to_variable = { CAC_companies_expenses_per_factory^cac_slot = cac_expenses_per_factory_change }
 
         CAC_update_variables = yes
+    }
+}
+
+# CAC_modify_upgrade_status_effect
+# Required Input: cac_slot (int)
+# Required Input: cac_upgrade (int)
+# Required Input: cac_new_status (int) 1 - completed 2 - available 3 - blocked
+# Purpose: Change company factory expenses on slot cac_slot by cac_upgrade
+CAC_modify_upgrade_status_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { cac_slot > -1 }
+                check_variable = { cac_slot < CAC_companies^num }
+            }
+        }
+
+        set_temp_variable = { index = cac_slot }
+		multiply_temp_variable = { index = 30 }
+		add_to_temp_variable = { index = cac_upgrade }
+
+		set_variable = { CAC_companies_upgrades_2d^index = cac_new_status }
+
+        if = {
+            limit = { check_variable = { cac_new_status = 1 } }
+            #custom_effect_tooltip = CAC_modify_upgrade_status_1_tt
+        }
+        else_if = {
+            limit = { check_variable = { cac_new_status = 2 } }
+            #custom_effect_tooltip = CAC_modify_upgrade_status_2_tt
+        }
+        else_if = {
+            limit = { check_variable = { cac_new_status = 3 } }
+            #custom_effect_tooltip = CAC_modify_upgrade_status_3_tt
+        }
     }
 }
 
