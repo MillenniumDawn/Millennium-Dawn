@@ -1,3 +1,9 @@
+---
+layout: default
+title: "Logging Tool"
+description: "Tool to help process/filter/search logs for Millennium Dawn"
+---
+
 This is a tool to help process/filter/search logs
 
 Somewhat specific to MD, but should work with other mods

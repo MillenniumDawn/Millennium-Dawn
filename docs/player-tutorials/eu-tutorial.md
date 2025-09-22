@@ -1,3 +1,9 @@
+---
+layout: default
+title: "European Union Tutorial"
+description: "Updated guide to the European Union in Millennium Dawn"
+---
+
 The following guide is an updated guide to the European Union in Millennium Dawn.
 
 # Table of Contents
