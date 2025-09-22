@@ -1,3 +1,10 @@
+---
+layout: default
+title: "Unique Cheats"
+description: "Unique Cheats and commands for Millennium Dawn: A Modern Day Mod"
+---
+
+
 # Purpose of this Page
 
 WIP: This is a living document. We will add things in here as they come up or as Bird remembers this exists.
