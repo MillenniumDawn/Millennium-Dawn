@@ -1,3 +1,9 @@
+---
+layout: default
+title: "Error & Debug Codes"
+description: "Millennium Dawn's Error & Debug Codes"
+---
+
 Purpose: The following page is for those who are reviewing game.log. The below error & debug codes are intended for MD Developers/Submodders to help effectively debug the mod and their submods.
 
 How To Use: When you have game.log open. Ctrl + F and look up DEBUG: CODE_NUM in game.log. Replace code_num with one of the values below.

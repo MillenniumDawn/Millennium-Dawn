@@ -1,3 +1,9 @@
+---
+layout: default
+title: "Authentication Failed Cloning Repo"
+description: "How to resolve 'Authentication failed' errors when cloning a repository from GitLab"
+---
+
 If you have the error screen "Authentication failed" like below:
 
 ![authentication_error](/uploads/8d096bf6646b04ea1c7643f9ea54cf6a/authentication_error.png)
