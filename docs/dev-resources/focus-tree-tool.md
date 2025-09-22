@@ -1,3 +1,9 @@
+---
+layout: default
+title: "Focus Tree Tool"
+description: "Tool to generate focus tree skeletons using Diagram.net"
+---
+
 This is a tool to generate focus tree skeletons using Diagram.net[CrocsFocusTreeTool.zip](uploads/0ed2e142187ecaae5dcb6fc437e89e5f/CrocsFocusTreeTool.zip)
 
 ver 0.2:[CrocsFocusTreeTool.zip](uploads/f34d4789a59758200cc582bf3e2d9635/CrocsFocusTreeTool.zip)

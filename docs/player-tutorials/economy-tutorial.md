@@ -1,3 +1,9 @@
+---
+layout: default
+title: "Economy Tutorial"
+description: "Tutorial explaining the economic elements of Millennium Dawn"
+---
+
 Millennium Dawn includes unique economic features that reflect the modern economy.
 This tutorial will explain the economic elements of MD.
 

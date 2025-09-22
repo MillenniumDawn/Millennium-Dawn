@@ -1,3 +1,9 @@
+---
+layout: default
+title: "Localization Tool"
+description: "Tool to help process missing/duplicated/unused localization files"
+---
+
 This is a tool to help process missing/duplicated/unused loc
 
 Unused part is a bit messy, and will require a lot of manual walkthrough

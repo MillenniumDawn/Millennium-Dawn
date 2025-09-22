@@ -1,3 +1,9 @@
+---
+layout: default
+title: "Code Resources"
+description: "Millennium Dawn unique modifiers, effects and tutorials for modders"
+---
+
 This is a list (not fully up-to-date) of MD unique modifiers, effects and tutorials to assist modders and submodders to create content for our mod.
 
 ## Modifiers
