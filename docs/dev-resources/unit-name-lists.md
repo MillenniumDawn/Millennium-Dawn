@@ -1,3 +1,9 @@
+---
+layout: default
+title: "Unit Name Lists Guidelines"
+description: "Guidelines for creating unit name lists for Millennium Dawn"
+---
+
 # Unit Name Lists Guidelines
 
 This is a requirement for all new content for the developers. Name lists define what new trained units, ships and airwings will be called. Name lists are fairly easy to complete and only take a small amount of effort for us to complete. It adds good flavour while also being a relatively minor addition.

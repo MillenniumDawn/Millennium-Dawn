@@ -1,3 +1,9 @@
+---
+layout: default
+title: "Art Standards"
+description: "Document detailing Millennium Dawn's GFX/Art Standards"
+---
+
 ## File Management
 
 All graphics need to be placed in the right location to ensure they aren’t lost and implemented into the game. Here are the resources you need and the places you need to be looking when you finish your icons.
