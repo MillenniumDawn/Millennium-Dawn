@@ -3,6 +3,8 @@
 @size_per_upgrade = 1
 @size_impact_modifier = 0.1
 
+@global_stats_list_length = 15
+
 # CAC_add_company
 # Required Input: cac_selected_company (int)
 # Required Input: cac_company_type (int)
@@ -230,21 +232,19 @@ CAC_add_company = {
 
             set_variable = { CAC_companies_upgrades_2d^index = 2 }
         }
-
-        CAC_unlock_starting_upgrades = yes
     }
 }
 
 # WORK IN PROGRESS
 # CAC_remove_company_by_slot
-# Required Input: cac_slot_to_remove (int)
-# Purpose: Remove company on slot cac_slot_to_remove
+# Required Input: cac_slot (int)
+# Purpose: Remove company on slot cac_slot
 CAC_remove_company_by_slot = {
     if = {
         limit = {
             AND = {
-                check_variable = { cac_slot_to_remove > -1 }
-                check_variable = { cac_slot_to_remove < CAC_companies^num }
+                check_variable = { cac_slot > -1 }
+                check_variable = { cac_slot < CAC_companies^num }
             }
         }
 
@@ -252,77 +252,77 @@ CAC_remove_company_by_slot = {
 
         remove_from_array = {
             array = CAC_companies_type
-            index = cac_slot_to_remove
+            index = cac_slot
         }
 
         remove_from_array = {
             array = CAC_companies_size
-            index = cac_slot_to_remove
+            index = cac_slot
         }
 
         remove_from_array = {
             array = CAC_companies_value
-            index = cac_slot_to_remove
+            index = cac_slot
         }
 
         remove_from_array = {
             array = CAC_companies_money
-            index = cac_slot_to_remove
+            index = cac_slot
         }
 
         remove_from_array = {
             array = CAC_companies_revenue
-            index = cac_slot_to_remove
+            index = cac_slot
         }
 
         remove_from_array = {
             array = CAC_companies_factories
-            index = cac_slot_to_remove
+            index = cac_slot
         }
 
         remove_from_array = {
             array = CAC_companies_income_per_factory
-            index = cac_slot_to_remove
+            index = cac_slot
         }
 
         remove_from_array = {
             array = CAC_companies_expenses_per_factory
-            index = cac_slot_to_remove
+            index = cac_slot
         }
 
         remove_from_array = {
             array = CAC_companies_additional_income
-            index = cac_slot_to_remove
+            index = cac_slot
         }
 
         remove_from_array = {
             array = CAC_companies_additional_expenses
-            index = cac_slot_to_remove
+            index = cac_slot
         }
 
         remove_from_array = {
             array = CAC_companies_income
-            index = cac_slot_to_remove
+            index = cac_slot
         }
 
         remove_from_array = {
             array = CAC_companies_expenses
-            index = cac_slot_to_remove
+            index = cac_slot
         }
 
         remove_from_array = {
             array = CAC_companies_taxes
-            index = cac_slot_to_remove
+            index = cac_slot
         }
 
         # Modifiers
         remove_from_array = {
             array = CAC_company_modifiers_political_power
-            index = cac_slot_to_remove
+            index = cac_slot
         }
         remove_from_array = {
             array = CAC_company_modifiers_consumer_goods
-            index = cac_slot_to_remove
+            index = cac_slot
         }
 
         # Reset Upgrades
@@ -331,7 +331,7 @@ CAC_remove_company_by_slot = {
 			end = 30
 			value = upgrade_id
 
-			set_temp_variable = { index = CAC_companies^cac_slot_to_remove }
+			set_temp_variable = { index = CAC_companies^cac_slot }
 			multiply_temp_variable = { index = 30 }
 			add_to_temp_variable = { index = upgrade_id }
 
@@ -341,7 +341,7 @@ CAC_remove_company_by_slot = {
         # Remove company
         remove_from_array = {
             array = CAC_companies
-            index = cac_slot_to_remove
+            index = cac_slot
         }
     }
 }
@@ -371,6 +371,7 @@ CAC_modify_money_effect = {
 # CAC_modify_factories_effect
 # Required Input: cac_factories_change (int)
 # Required Input: cac_slot (int)
+# Optional Input: cac_ignore_value (int)
 # Purpose: Change company factories on slot cac_slot by cac_factories_change
 CAC_modify_factories_effect = {
     if = {
@@ -383,17 +384,21 @@ CAC_modify_factories_effect = {
 
         custom_effect_tooltip = CAC_modify_factories_tt
 
-        set_temp_variable = { value_change_temp = cac_factories_change }
-        multiply_temp_variable = { value_change_temp = @factory_cost }
-
         set_temp_variable = { size_change_temp = cac_factories_change }
         multiply_temp_variable = { size_change_temp = @size_per_factory }
 
         add_to_variable = { CAC_companies_factories^cac_slot = cac_factories_change }
-        add_to_variable = { CAC_companies_value^cac_slot = value_change_temp }
         add_to_variable = { CAC_companies_size^cac_slot = size_change_temp }
 
         CAC_update_variables = yes
+
+        if = {
+            limit = { check_variable = { cac_ignore_value = 0 } }
+
+            set_temp_variable = { value_change_temp = cac_factories_change }
+            multiply_temp_variable = { value_change_temp = @factory_cost }
+            add_to_variable = { CAC_companies_value^cac_slot = value_change_temp }
+        }
     }
 }
 
@@ -568,7 +573,7 @@ CAC_update_variables = {
 
             set_temp_variable = { company_expenses_temp = CAC_companies_factories^i }
             multiply_temp_variable = { company_expenses_temp = CAC_companies_expenses_per_factory^i }
-            subtract_from_temp_variable = { company_expenses_temp = CAC_companies_additional_expenses^i }
+            add_to_temp_variable = { company_expenses_temp = CAC_companies_additional_expenses^i }
             
             set_temp_variable = { company_expenses_modifiers = 1 }
             add_to_temp_variable = { company_expenses_modifiers = modifier@companies_expenses_modifier }
@@ -629,14 +634,27 @@ CAC_update_upkeep = {
                     check_variable = { company_new_money < 0 }
                 }
 
-                set_temp_variable = { to_remove_from_value_temp = company_new_money }
-                subtract_from_temp_variable = { to_remove_from_value_temp = CAC_companies_money^i }
-
                 set_variable = { CAC_companies_money^i = 0 }
 
-                add_to_variable = { CAC_companies_value^i = to_remove_from_value_temp }
+                set_temp_variable = { new_value = CAC_companies_value^i }
+                add_to_temp_variable = { new_value = company_new_money }
 
-                # event that company is going bankrupt
+                if = {
+                    limit = { check_variable = { new_value < 0 } }
+
+                    add_to_variable = { CAC_companies_value^i = 0 }
+
+                    ROOT = {
+                        country_event = {
+                            id = CAC_event.1
+                            days = 7
+                        }
+                    }
+                }
+                else = {
+                    add_to_variable = { CAC_companies_value^i = company_new_money }
+                }
+
             }
             else = {
                 add_to_variable = { CAC_companies_money^i = CAC_companies_revenue^i }
@@ -646,115 +664,15 @@ CAC_update_upkeep = {
     }
 }
 
+# TODO
 CAC_update_global_stats = {
-    if = {
-        limit = {
-            check_variable = { CAC_companies^num > 0 }
-        }
+    clear_array = CAC_global_companies
 
-        for_loop_effect = {
-            start = 0
-            end = CAC_companies^num
-            value = i
-
-            # If global table not full, add normally
-            if = {
-                limit = {
-                    check_variable = { global.CAC_global_companies^num < 15 }
-                }
-
-                add_to_array = { array = global.CAC_global_companies value = CAC_companies^i }
-                add_to_array = { array = global.CAC_global_companies_countries value = THIS }
-                add_to_array = { array = global.CAC_global_companies_value value = CAC_companies_value^i }
-                add_to_array = { array = global.CAC_global_companies_revenue value = CAC_companies_revenue^i }
-                add_to_array = { array = global.CAC_global_companies_factories value = CAC_companies_factories^i }
-            }
-            # If full, check if current value is higher than the lowest
-            else = {
-                set_temp_variable = { min_index = 0 }
-                set_temp_variable = { min_value = global.CAC_global_companies_value^0 }
-                for_loop_effect = {
-                    start = 1
-                    end = 15
-                    value = j
-                    if = {
-                        limit = {
-                            check_variable = { global.CAC_global_companies_value^j < min_value }
-                        }
-                        set_temp_variable = { min_index = j }
-                        set_temp_variable = { min_value = global.CAC_global_companies_value^j }
-                    }
-                }
-                if = {
-                    limit = {
-                        check_variable = { CAC_companies_value^i > min_value }
-                    }
-                    # Insert at sorted position, shift arrays
-                    set_temp_variable = { insert_index = min_index }
-                    set_temp_variable = { insert_value = CAC_companies_value^i }
-                    set_temp_variable = { insert_company = CAC_companies^i }
-                    set_temp_variable = { insert_country = THIS }
-                    set_temp_variable = { insert_revenue = CAC_companies_revenue^i }
-                    set_temp_variable = { insert_factories = CAC_companies_factories^i }
-
-                    # Overwrite lowest
-                    set_variable = { global.CAC_global_companies^insert_index = insert_company }
-                    set_variable = { global.CAC_global_companies_countries^insert_index = insert_country }
-                    set_variable = { global.CAC_global_companies_value^insert_index = insert_value }
-                    set_variable = { global.CAC_global_companies_revenue^insert_index = insert_revenue }
-                    set_variable = { global.CAC_global_companies_factories^insert_index = insert_factories }
-                }
-            }
-        }
-
-        # Sort global arrays by value (descending)
-        for_loop_effect = {
-            start = 0
-            end = global.CAC_global_companies^num
-            value = i
-
-            set_temp_variable = { max_index = i }
-            set_temp_variable = { max_value = global.CAC_global_companies_value^i }
-
-            for_loop_effect = {
-                start = i
-                end = global.CAC_global_companies^num
-                value = j
-
-                if = {
-                    limit = {
-                        check_variable = { global.CAC_global_companies_value^j > max_value }
-                    }
-                    set_temp_variable = { max_index = j }
-                    set_temp_variable = { max_value = global.CAC_global_companies_value^j }
-                }
-            }
-
-            if = {
-                limit = {
-                    check_variable = { max_index != i }
-                }
-
-                set_temp_variable = { temp_company = global.CAC_global_companies^i }
-                set_temp_variable = { temp_country = global.CAC_global_companies_countries^i }
-                set_temp_variable = { temp_value = global.CAC_global_companies_value^i }
-                set_temp_variable = { temp_revenue = global.CAC_global_companies_revenue^i }
-                set_temp_variable = { temp_factories = global.CAC_global_companies_factories^i }
-
-                set_variable = { global.CAC_global_companies^i = global.CAC_global_companies^max_index }
-                set_variable = { global.CAC_global_companies_countries^i = global.CAC_global_companies_countries^max_index }
-                set_variable = { global.CAC_global_companies_value^i = global.CAC_global_companies_value^max_index }
-                set_variable = { global.CAC_global_companies_revenue^i = global.CAC_global_companies_revenue^max_index }
-                set_variable = { global.CAC_global_companies_factories^i = global.CAC_global_companies_factories^max_index }
-
-                set_variable = { global.CAC_global_companies^max_index = temp_company }
-                set_variable = { global.CAC_global_companies_countries^max_index = temp_country }
-                set_variable = { global.CAC_global_companies_value^max_index = temp_value }
-                set_variable = { global.CAC_global_companies_revenue^max_index = temp_revenue }
-                set_variable = { global.CAC_global_companies_factories^max_index = temp_factories }
-            }
-        }
+    every_country = {
+        
     }
+    #CAC_global_companies
+    #global_stats_list_length
 }
 
 CAC_save_history = {
