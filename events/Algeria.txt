@@ -49,10 +49,98 @@ add_namespace = ALG_morocco
 add_namespace = alg_general
 add_namespace = ALG_pm
 add_namespace = algeria_intro
+add_namespace = alg_resistance
 
 
 
+# --- Resistance Wins ---
+news_event = {
+    id = alg_resistance.1
+    title = alg_resistance.1.t
+    desc = alg_resistance.1.d
+    picture = GFX_revolution
+    is_triggered_only = yes
 
+    option = {
+        name = alg_resistance.1.a
+        set_country_flag = ALG_resistance_wins
+        add_popularity = { ideology = democratic popularity = 0.15 }
+        add_stability = 0.1
+        add_political_power = 100
+        log = "[GetDateText]: [This.GetName]: alg_resistance.1.a executed"
+    }
+}
+
+# --- Le Pouvoir Wins ---
+news_event = {
+    id = alg_resistance.2
+    title = alg_resistance.2.t
+    desc = alg_resistance.2.d
+    picture = GFX_coup
+    is_triggered_only = yes
+
+    option = {
+        name = alg_resistance.2.a
+        set_country_flag = ALG_pouvoir_wins
+        add_popularity = { ideology = neutrality popularity = 0.15 }
+        add_stability = 0.05
+        add_political_power = 50
+        log = "[GetDateText]: [This.GetName]: alg_resistance.2.a executed"
+    }
+}
+
+# --- Junta / Chaos ---
+news_event = {
+    id = alg_resistance.3
+    title = alg_resistance.3.t
+    desc = alg_resistance.3.d
+    picture = GFX_chaos
+    is_triggered_only = yes
+
+    option = {
+        name = alg_resistance.3.a
+        set_country_flag = ALG_junta
+        add_stability = -0.1
+        add_war_support = -0.1
+        add_political_power = -75
+		country_event = { id = alg_resistance.4 days = 45 }
+        log = "[GetDateText]: [This.GetName]: alg_resistance.3.a executed"
+    }
+}
+country_event = {
+    id = alg_resistance.4
+    title = alg_resistance.4.t
+    desc = alg_resistance.4.d
+    picture = GFX_report_event_generic_revolt
+    is_triggered_only = yes
+
+    immediate = {
+        random_list = {
+            60 = {
+                # Civil War outcome
+                start_civil_war = {
+                    ideology = neutrality
+                    size = 0.35
+                }
+                add_stability = -0.2
+                add_named_threat = { name = alg_civil_war value = 10 }
+                log = "[GetDateText]: [This.GetName]: alg_resistance.4 Civil War triggered"
+            }
+            40 = {
+                # US Intervention outcome
+                USA = { declare_war_on = ALG }
+                add_stability = -0.1
+                add_named_threat = { name = alg_foreign_intervention value = 15 }
+                log = "[GetDateText]: [This.GetName]: alg_resistance.4 US Intervention triggered"
+            }
+        }
+    }
+
+    option = {
+        name = alg_resistance.4.a
+        ai_chance = { factor = 100 } # Only a placeholder, no effect
+    }
+}
 country_event = {
 
     id = algeria_intro.1
