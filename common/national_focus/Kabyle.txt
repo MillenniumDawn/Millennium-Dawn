@@ -1,0 +1,515 @@
+focus_tree = {
+	id = kabyle_focus
+	country = {
+		base = 0
+		modifier = {
+			add = 10
+			tag = KBY
+		}
+	}
+	continuous_focus_position = { x = 5000 y = 2000 }
+focus = {
+		id = KBY_new_state
+		icon = Minority_syr_repres
+		x = 13
+		y = 0
+		cost = 1
+		trigger = {
+			tag = KBY
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_new_state"
+			add_political_power = 100
+			add_ideas = KBY_new_state_born
+			swap_ideas = {
+				remove_idea = landowners
+				add_idea = oligarchs
+			}
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_constitution
+		icon = tat_soviet_constituon
+		x = 0
+		y = 1
+		cost = 5
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_new_state }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_constitution"
+			add_dynamic_modifier = { modifier = KBY_alg_modifier }
+			add_to_variable = { KBY_alg_modifier_political_power_factor = 0.02 }
+			add_to_variable = { KBY_alg_modifier_stability_factor = 0.05 }
+			custom_effect_tooltip = KBY_alg_start_tt
+			add_ideas = KBY_new_institutions
+        	set_country_flag = KBY_government_established
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_nation_quest
+		icon = national_awakening_party
+		x = 0
+		y = 2
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_constitution }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_nation_quest"
+			add_stability = 0.15
+			add_political_power = -50
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_fra_companies
+		icon = nexter_france
+		x = 1
+		y = 7
+		cost = 7
+		available = {
+			is_subject = yes
+			has_autonomy_state = autonomy_republic_rf
+		}
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_maloross_economy }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_fra_companies"
+			one_office_construction = yes
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = FRA }
+			set_temp_variable = { influence_target = ROOT }
+			change_influence_percentage = yes
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_alg_regions
+		icon = align_to_algeria
+		x = -1
+		y = 7
+		cost = 7
+		available = {
+			is_subject = yes
+			has_autonomy_state = autonomy_republic_rf
+		}
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_no_corrupt_military }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_alg_regions"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = ALG }
+			set_temp_variable = { influence_target = ROOT }
+			change_influence_percentage = yes
+			random_owned_controlled_state = {
+				add_extra_state_shared_building_slots = 2
+			}
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_drs
+		icon = Focus_Communist_Spy02
+		x = -3
+		y = 2
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_constitution }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_drs"
+			add_to_variable = { KBY_alg_encryption_factor = 0.10 }
+			add_to_variable = { KBY_alg_foreign_influence_defense_modifier = 0.15 }
+			custom_effect_tooltip = KBY_alg1_tt
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = ALG }
+			set_temp_variable = { influence_target = ROOT }
+			change_influence_percentage = yes
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_ter_defence
+		icon = border_patrol_increase
+		x = -4
+		y = 3
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_drs }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_ter_defence"
+			add_to_variable = { KBY_alg_army_core_defence_factor = 0.10 }
+			custom_effect_tooltip = KBY_alg3_tt
+			custom_effect_tooltip = KBY_ter_oborona_tt
+			hidden_effect = {
+				capital_scope = {
+					create_unit = {
+						division = "name = \"1st Territorial Defense Brigade\" division_template = \"Territorial Defense Brigade\" start_experience_factor = 0.5"
+						owner = ROOT
+						prioritize_location = 3735
+					}
+					create_unit = {
+						division = "name = \"2nd Territorial Defense Brigade\" division_template = \"Territorial Defense Brigade\" start_experience_factor = 0.5"
+						owner = ROOT
+						prioritize_location = 740
+					}
+					create_unit = {
+						division = "name = \"3rd Territorial Defense Brigade\" division_template = \"Territorial Defense Brigade\" start_experience_factor = 0.5"
+						owner = ROOT
+						prioritize_location = 6756
+					}
+				}
+				division_template = {
+					name = "Territorial Defense Brigade"
+					is_locked = yes
+					regiments = {
+						L_Inf_Bat = { x = 0 y = 0 }
+						L_Inf_Bat = { x = 0 y = 1 }
+						Mot_Inf_Bat = { x = 1 y = 0 }
+					}
+				}
+			}
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_mvd
+		icon = francosphere
+		x = -2
+		y = 3
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_drs }
+		prerequisite = { focus = KBY_nation_quest }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_mvd"
+			add_to_variable = { KBY_alg_police_resistance_growth = -0.10 }
+			add_to_variable = { KBY_alg_police_cost_multiplier_modifier = 0.05 }
+			custom_effect_tooltip = KBY_alg2_tt
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_contract_army
+		icon = army_recruting1
+		x = -5
+		y = 4
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_ter_defence }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_contract_army"
+			add_to_variable = { KBY_alg_personnel_cost_multiplier_modifier = 0.35 }
+			add_to_variable = { KBY_alg_army_defence_factor = 0.10 }
+			add_to_variable = { KBY_alg_personnel_army_org_factor = 0.15 }
+			add_to_variable = { KBY_alg_army_attack_factor = 0.15 }
+			custom_effect_tooltip = KBY_alg4_tt
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.003 }
+			add_relative_party_popularity = yes
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_defence_doctrine
+		icon = military_fort2
+		x = -3
+		y = 4
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_ter_defence }
+		prerequisite = { focus = KBY_mvd }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_defence_doctrine"
+			add_to_variable = { KBY_alg_army_defence_factor = 0.10 }
+			add_to_variable = { KBY_alg_personnel_cost_multiplier_modifier = 0.15 }
+			add_to_variable = { KBY_alg_army_core_defence_factor = 0.10 }
+			custom_effect_tooltip = KBY_alg5_tt
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.001 }
+			add_relative_party_popularity = yes
+			add_ideas = KBY_border_readiness
+			385 = {
+				add_building_construction = {
+					type = bunker
+					level = 1
+					province = 7166
+				}
+			}
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_defence_prom
+		icon = army_military_industryy
+		x = -4
+		y = 5
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_defence_doctrine }
+		prerequisite = { focus = KBY_contract_army }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_defence_prom"
+			one_random_arms_factory = yes
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_rebuild_war_academy
+		icon = army_russia_officer_shool
+		x = -2
+		y = 5
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_defence_doctrine }
+		prerequisite = { focus = KBY_nat_guard }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_rebuild_war_academy"
+			add_to_variable = { KBY_alg_personnel_cost_multiplier_modifier = 0.05 }
+			add_to_variable = { KBY_alg_training_time_army_factor = -0.10 }
+			custom_effect_tooltip = KBY_alg6_tt
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			add_relative_party_popularity = yes
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_no_corrupt_military
+		icon = blr_dismiss_soviet_officers
+		x = -3
+		y = 6
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_rebuild_war_academy }
+		prerequisite = { focus = KBY_defence_prom }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_no_corrupt_military"
+			add_to_variable = { KBY_alg_personnel_cost_multiplier_modifier = -0.08 }
+			custom_effect_tooltip = KBY_alg7_tt
+			decrease_corruption = yes
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_nat_guard
+		icon = sov_kob_military
+		x = -1
+		y = 4
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_mvd }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_nat_guard"
+			custom_effect_tooltip = KBY_nat_gurad_tt
+			hidden_effect = {
+			division_template = {
+				name = "Tajmaat n Tmurt"
+				regiments = {
+					Militia_Bat = { x = 0 y = 0 }
+					Militia_Bat = { x = 0 y = 1 }
+					Militia_Bat = { x = 0 y = 2 }
+					Militia_Bat = { x = 0 y = 3 }
+				}
+				support = {
+					L_Engi_Comp = { x = 0 y = 0 }
+					L_Recce_Comp = { x = 0 y = 0 }
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name = \"1st Brigade of the National Guard\" division_template = \"Tajmaat n Tmurt\" start_experience_factor = 0.5"
+					owner = ROOT
+					prioritize_location = 7166
+				}
+				create_unit = {
+					division = "name = \"2nd Brigade of the National Guard\" division_template = \"Tajmaat n Tmurt\" start_experience_factor = 0.5"
+					owner = ROOT
+					prioritize_location = 7166
+				}
+				create_unit = {
+					division = "name = \"3rd Brigade of the National Guard\" division_template = \"Tajmaat n Tmurt\" start_experience_factor = 0.5"
+					owner = ROOT
+					prioritize_location = 7166
+				}
+			}
+			}
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_dinar
+		icon = dollars_money
+		x = 3
+		y = 2
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_constitution }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_dinar"
+			add_political_power = 100
+			set_temp_variable = { percent_change = 7 }
+			set_temp_variable = { tag_index = ALG }
+			set_temp_variable = { influence_target = ROOT }
+			change_influence_percentage = yes
+			add_ideas = KBY_state_economy_plan
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_corruption
+		icon = BLR_Anti_Corruption
+		x = 2
+		y = 3
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_dinar }
+		prerequisite = { focus = KBY_nation_quest }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_corruption"
+			decrease_corruption = yes
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_isr_invest
+		icon = align_to_israel
+		x = 4
+		y = 3
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_dinar }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_isr_invest"
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = ISR }
+			set_temp_variable = { influence_target = ROOT }
+			change_influence_percentage = yes
+			random_owned_controlled_state = {
+				add_extra_state_shared_building_slots = 3
+			}
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_build_factories
+		icon = economic_civil_industry
+		x = 1
+		y = 4
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_corruption }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_build_factories"
+			one_random_industrial_complex = yes
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_infrastructure
+		icon = sov_infra
+		x = 3
+		y = 4
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_corruption }
+		prerequisite = { focus = KBY_isr_invest }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_infrastructure"
+			one_random_infrastructure = yes
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_social_invest
+		icon = NKO_workers
+		x = 5
+		y = 4
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_isr_invest }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_social_invest"
+			increase_healthcare_budget = yes
+			increase_social_spending = yes
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_it_invest
+		icon = economic_it
+		x = 4
+		y = 5
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_social_invest }
+		prerequisite = { focus = KBY_infrastructure }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_it_invest"
+			one_office_construction = yes
+			two_random_network_infrastructure = yes
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_fight_oligarch
+		icon = reducing_influence_of_oligarchs
+		x = 2
+		y = 5
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_build_factories }
+		prerequisite = { focus = KBY_infrastructure }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_fight_oligarch"
+			decrease_corruption = yes
+			add_stability = 0.05
+			set_temp_variable = { temp_opinion = -10 }
+			change_oligarchs_opinion = yes
+			custom_effect_tooltip = KBY_alg8_tt
+		}
+		ai_will_do = { factor = 100 }
+	}
+	focus = {
+		id = KBY_maloross_economy
+		icon = goal_JAP_valueup
+		x = 3
+		y = 6
+		cost = 7
+		relative_position_id = KBY_new_state
+		prerequisite = { focus = KBY_fight_oligarch }
+		prerequisite = { focus = KBY_it_invest }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus KBY_maloross_economy"
+			add_political_power = 100
+			add_timed_idea = { idea = production_efficiency_bonus days = 365 }
+		}
+		ai_will_do = { factor = 100 }
+	}
+}
