@@ -169,7 +169,7 @@ country_event = {
 
     trigger = {
         has_country_flag = ALG_appointed_pm
-        check_variable = { var = ALG_pm_session_var value = 0 }
+        check_variable = { ALG_pm_session_var > 0 }
     }
 
     mean_time_to_happen = { days = 5 }
@@ -296,7 +296,7 @@ country_event = {
     
     trigger = {
         original_tag = ALG
-        check_variable = {  var = algeria_power_balance value = 0.8 } # Hirak at max
+        check_variable = { algeria_power_balance >= 0.8 } # Hirak at max
         has_country_flag = ALG_hirak_active
     }
 
@@ -357,7 +357,7 @@ country_event = {
     trigger = {
         original_tag = ALG
         has_country_flag = ALG_bouteflika_health_crisis
-        check_variable = { var = algeria_power_balance value =  0.3 } # Hirak strong
+        check_variable = { algeria_power_balance >  0.3 } # Hirak strong
         date > 2019.4.1
     }
 
@@ -1072,7 +1072,7 @@ country_event = {
         name = "alg_health_crisis_option_continue"
 		
         add_political_power = 50  # Elite support
-        add_to_variable = { algeria_power_balance = -0.2 }  # Le Pouvoir strengthens
+        add_to_variable = { var = algeria_power_balance value = -0.2 }  # Le Pouvoir strengthens
 		custom_effect_tooltip = alg_le_pouvoir_strengthens_tt
     }
 }
@@ -1100,7 +1100,7 @@ country_event = {
         name = "alg_hirak_reforms_option"
         add_political_power = -50  # Elite backlash
         add_stability = 0.05    # Short-term hope
-        add_to_variable = { algeria_power_balance = 0.3 }  # Hirak gains more influence
+        add_to_variable = { var =  algeria_power_balance value = 0.3 }  # Hirak gains more influence
 		custom_effect_tooltip = alg_hirak_gains_influence_tt
     }
 }
@@ -1115,7 +1115,7 @@ country_event = {
         name = "alg_hirak_crackdown_option"
         add_political_power = 100   # Elite consolidation
         add_stability = -0.10    # Public anger
-        add_to_variable = { algeria_power_balance = -0.3 }  # Le Pouvoir tightens grip
+        add_to_variable = { var = algeria_power_balance value = -0.3 }  # Le Pouvoir tightens grip
 		custom_effect_tooltip = alg_pouvoir_crackdown_tt
     }
 }
@@ -3807,8 +3807,8 @@ country_event = {
 
     trigger = {
         has_country_flag = ALG_resistance_path
-        check_variable = { var = ALG_army_influence value = 0 }
-        check_variable = { var = ALG_people_grievance value = 30 }
+        check_variable = { ALG_army_influence < 5 }
+        check_variable = { ALG_people_grievance > 30 }
     }
 
     mean_time_to_happen = { days = 15 }
@@ -3830,8 +3830,8 @@ country_event = {
 
     trigger = {
         has_country_flag = ALG_resistance_path
-        check_variable = { var = ALG_army_influence value = 30 }
-        check_variable = { var = ALG_people_grievance value = 40 }
+        check_variable = { ALG_army_influence > 30 }
+        check_variable = { ALG_people_grievance > 40 }
     }
 
     mean_time_to_happen = { days = 20 }
@@ -3842,6 +3842,8 @@ country_event = {
         add_stability = -0.1
         add_war_support = -0.05
         add_to_variable = { var = ALG_people_grievance value = 5 }
+		clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+		clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
         clr_country_flag = ALG_resistance_path
     }
 }
@@ -3854,7 +3856,7 @@ country_event = {
 
     trigger = {
         has_country_flag = ALG_resistance_path
-        check_variable = { var = ALG_people_grievance value = 40 }
+        check_variable = { ALG_people_grievance > 40 }
         has_stability < 0.25
     }
 
@@ -3895,6 +3897,7 @@ country_event = {
         add_political_power = 50
         add_timed_idea = { idea = ALG_anti_corruption_probe days = 365 }
         add_to_variable = { var = ALG_people_grievance value = 5 }
+		clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
     }
     option = {
         name = algeria_news.100.c # "Blame the Opposition"
@@ -3945,7 +3948,7 @@ country_event = {
     option = {
         name = "alg_political_struggle_event_option"
         set_country_flag = alg_political_struggle_unlocked
-        add_to_variable = { algeria_power_balance = -0.2 } # Initial tilt toward Old Guard
+        add_to_variable = { var = algeria_power_balance value = -0.2 } # Initial tilt toward Old Guard
 		custom_effect_tooltip = alg_old_guard_advances_tt
     }
 }
@@ -5571,9 +5574,9 @@ country_event = {
     trigger = {
         original_tag = ALG
 		if = {
-		limit = {
-			check_variable = { var =  kabyle_satisfaction value = 15 }
-		}
+			limit = {
+				check_variable = { kabyle_satisfaction < 15 }
+			}
 		}
         NOT = { has_country_flag = kabyle_unrest_triggered }
     }
@@ -5581,8 +5584,9 @@ country_event = {
     option = {
         name = alg_ethnicity.100.a
         add_stability = -0.05
-        subtract_from_variable = { var = kabyle_satisfaction value = 5 }
+        subtract_from_variable = { var = kabyle_satisfaction value = -5 }
         add_to_variable = { var = arab_satisfaction value = 5 }
+		clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
         set_country_flag = kabyle_unrest_triggered
     }
     option = {
@@ -5591,6 +5595,7 @@ country_event = {
         modify_treasury_effect = yes
         add_stability = 0.02
         add_to_variable = { var = kabyle_satisfaction value = 10 }
+		clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
         set_country_flag = kabyle_unrest_triggered
     }
 }
@@ -5606,7 +5611,7 @@ country_event = {
         original_tag = ALG
 		if = {
         limit = {
-			check_variable = { var =  kabyle_satisfaction value = 10 }
+			check_variable = { kabyle_satisfaction < 10 }
 		}
 		}
 		has_country_flag = kabyle_unrest_triggered
