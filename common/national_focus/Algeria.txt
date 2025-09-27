@@ -10914,32 +10914,69 @@ focus = {
 }
 
     focus = {
-    id = ALG_berber_autonomy
-    icon = focus_RAJ_provincial_autonomy
-    prerequisite = { focus = ALG_black_spring }
-	relative_position_id = ALG_black_spring
-	available = {
-		has_country_flag = ALG_kabyle_autonomy
-	}
-	mutually_exclusive = {
-	focus = ALG_suppress_kabyle
-	focus = ALG_recognize_kabyle
-	}
-    x = 0
-    y = 1
-    cost = 2
-    completion_reward = {
-        add_stability = 0.05
-        add_political_power = 25
-		add_ideas = ALG_berber_autonomy_idea
-        remove_ideas = ALG_kabylia_unrest
-            set_autonomy = {
-			target = KBY
-			autonomy_state = autonomy_collaboration_government
+		id = ALG_berber_autonomy
+		icon = focus_RAJ_provincial_autonomy
+		prerequisite = { focus = ALG_black_spring }
+		relative_position_id = ALG_black_spring
+		available = {
+			has_country_flag = ALG_kabyle_autonomy
+			OR = {
+				emerging_communist_state_are_in_power = yes
+				emerging_anarchist_communism_are_in_power = yes
+				emerging_autocracy_are_in_power = yes
 			}
-            add_ideas = KBY_granted_autonomy
-            add_stability = 0.10
-        }
+		}
+		mutually_exclusive = {
+		focus = ALG_suppress_kabyle
+		focus = ALG_recognize_kabyle
+		}
+		x = 0
+		y = 1
+		cost = 2
+		completion_reward = {
+			add_stability = 0.05
+			add_political_power = 25
+			add_ideas = ALG_berber_autonomy_idea
+			remove_ideas = ALG_kabylia_unrest
+			if = {
+				limit = {
+					any_owned_state = { is_core_of = KBY }
+					NOT = { country_exists = KBY }
+				}
+				release_puppet = KBY
+				hidden_effect = {
+					if = {
+						limit = {
+							has_global_flag = GAME_RULE_allow_colored_puppets
+						}
+						set_autonomy = {
+							target = KBY
+							autonomy_state = autonomy_autonomous_province_colored
+							end_wars = yes
+							end_civil_wars = yes
+						}
+					}
+					else = {
+						set_autonomy = {
+							target = KBY
+							autonomy_state = autonomy_autonomous_province
+							end_wars = yes
+							end_civil_wars = yes
+						}
+					}
+				}
+				KBY = {
+					hidden_effect = {
+						effect_puppet_match_ruling_party_to_overlord = yes
+						set_elections_60_months = yes
+					}
+				}
+			}
+			set_temp_variable = { party_index = 7 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
+			add_to_variable = { kabyle_satisfaction = 5 }
+		}
     }
 focus = {
     id = ALG_suppress_kabyle
@@ -10961,6 +10998,7 @@ focus = {
         add_stability = -0.10
         remove_ideas = ALG_kabylia_unrest
         add_ideas = ALG_kabyle_crackdown
+		add_to_variable = { kabyle_satisfaction = -10 }
         KBY = {
             add_ideas = KBY_suppressed_resistance
             add_stability = -0.15
@@ -11064,6 +11102,7 @@ focus = {
             add_ideas = KBY_independence_recognized
             add_stability = 0.15
         }
+		add_to_variable = { kabyle_satisfaction = 10 }
     }
 }
     focus = {
@@ -11078,6 +11117,14 @@ focus = {
     completion_reward = {
         add_stability = 0.05
         add_ideas = ALG_federal_charter_idea
+		set_temp_variable = {
+			ALG_productivity_growth_modifier_pvda_change = 0.05
+		}
+		ALG_modify_ALG_productivity_growth_modifier_pvda_effect = yes
+		set_temp_variable = {
+			ALG_recruitable_population_factor_pvda_change = 0.05
+		}
+		ALG_modify_ALG_recruitable_population_factor_pvda_effect = yes
     }
 }
 
@@ -11092,8 +11139,16 @@ focus = {
     mutually_exclusive = { focus = ALG_federal_charter }
     completion_reward = {
         add_stability = -0.05
-        add_political_power = 30
+        add_political_power = 100
         add_ideas = ALG_strict_centralization_idea
+		set_temp_variable = {
+				ALG_productivity_growth_modifier_pvda_change = -0.05
+			}
+			ALG_modify_ALG_productivity_growth_modifier_pvda_effect = yes
+			set_temp_variable = {
+				ALG_recruitable_population_factor_pvda_change = -0.05
+			}
+			ALG_modify_ALG_recruitable_population_factor_pvda_effect = yes
     }
 }
 focus = {
@@ -12036,7 +12091,8 @@ focus = {
     }
     completion_reward = {
         country_event = { id = ALG_bouteflika.1 } # Power struggle
-        add_political_power = -100
+        add_political_power = -20
+		custom_effect_tooltip = ALG_activate_from_event
 		set_country_flag = ALG_bouteflika_health_crisis
     }
 	ai_will_do = {
@@ -12063,6 +12119,7 @@ focus = {
     }
     completion_reward = {
         country_event = { id = ALG_bouteflika.2 }
+		custom_effect_tooltip = ALG_activate_from_event
     }
 }
 
@@ -12094,6 +12151,7 @@ focus = {
     completion_reward = {
         add_to_variable = { algeria_power_balance = -0.5 }
         country_event = { id = ALG_hirak_crackdown.1 }
+		custom_effect_tooltip = ALG_activate_from_event
     }
 	ai_will_do = {
 		base = 50
@@ -12112,6 +12170,7 @@ focus = {
     completion_reward = {
         add_to_variable = { algeria_power_balance = 0.5 }
         country_event = { id = ALG_hirak_reforms.1 }
+		custom_effect_tooltip = ALG_activate_from_event
     }
 	ai_will_do = {
 		base = 60
@@ -14595,8 +14654,13 @@ focus = {
 			if = { limit = { is_in_array = { global.ct_states = THIS.id } }
 			set_temp_variable = { temp_modify_social_con_government = 5 }
 			modify_social_conservatism_government = yes
-			set_temp_variable = { temp_opinion = -5 }
-			change_The_Military_opinion = yes
+			if = {
+				limit = {
+					has_idea = the_military
+				}
+				set_temp_variable = { temp_opinion = -5 }
+				change_The_Military_opinion = yes
+			}
 			add_political_power = 100
 			}
         }
@@ -14623,10 +14687,10 @@ focus = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ALG_islamist_opposition_victory"
-            add_popularity = {
-            ideology = neutrality
-            popularity = 0.20
-        }
+			set_temp_variable = { party_index = 13 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
 		}
 
 	}
@@ -15269,43 +15333,21 @@ focus = {
         cost = 5.5
 		relative_position_id = MSP_algeria_islamic
         completion_reward = {
-		log = "[GetDateText]: [Root.GetName]: Focus MSP_diplo"
-		add_opinion_modifier = {
-			modifier = supports_us
-			target = TUR
-		}
-		reverse_add_opinion_modifier = {
-			modifier = supports_us
-			target = TUR
-		}
-		set_temp_variable = { percent_change = 3 }
-		set_temp_variable = { tag_index = ALG }
-		set_temp_variable = { influence_target = TUR }
-		change_influence_percentage = yes
-		add_opinion_modifier = {
-			modifier = supports_us
-			target = QAT
-		}
-		reverse_add_opinion_modifier = {
-			modifier = supports_us
-			target = QAT
-		}
-		set_temp_variable = { percent_change = 3 }
-		set_temp_variable = { tag_index = ALG }
-		set_temp_variable = { influence_target = QAT }
-		change_influence_percentage = yes
-		add_opinion_modifier = {
-			modifier = supports_us
-			target = SUD
-		}
-		reverse_add_opinion_modifier = {
-			modifier = supports_us
-			target = SUD
-		}
-		set_temp_variable = { percent_change = 3 }
-		set_temp_variable = { tag_index = ALG }
-		set_temp_variable = { influence_target = SUD }
-		change_influence_percentage = yes
+			log = "[GetDateText]: [Root.GetName]: Focus MSP_diplo"
+			hidden_effect = {
+				random_other_country = {
+					if = {
+						limit = {
+							has_government = neutrality
+							is_in_array = { ruling_party = 13 }
+						}
+					}
+					set_temp_variable = { influence_target = THIS }
+				}
+			}
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = ROOT }
+			change_influence_percentage = yes
 		}
 		ai_will_do = { factor = 1 }
 	}
@@ -15787,7 +15829,7 @@ focus = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_und_supp_hamas"
 			HAM = { country_event = algeria.42 }
-			ALG = {
+			HAM = {
 				add_equipment_to_stockpile = {
 					type = infantry_weapons1
 					amount = -3500
