@@ -3522,6 +3522,7 @@ focus = {
 			set_temp_variable = { influence_target = ALG }
 			change_influence_percentage = yes
 		}
+	}
 }
     focus = {
 		id = ALG_join_nato_partnership
@@ -10040,7 +10041,14 @@ focus = {
 			modify_treasury_effect = yes
 			set_temp_variable = { ALG_bureaucracy_cost_multiplier_modifier_change = 0.05 }
 			update_ALG_bureaucracy_cost_multiplier_modifier = yes
-
+			add_tech_bonus = {
+				name = PER_foreign_exchange
+				bonus = 0.5
+				uses = 2
+				category = CAT_ai
+				category = CAT_computing_tech
+				category = CAT_internet_tech
+			}
         }
     }
 
@@ -10092,8 +10100,57 @@ focus = {
 			modify_treasury_effect = yes
 			set_temp_variable = { ALG_bureaucracy_cost_multiplier_modifier_change = 0.05 }
 			update_ALG_bureaucracy_cost_multiplier_modifier = yes
-
-        }
+			if = {
+				limit = {
+					385 = {
+						is_owned_and_controlled_by = ALG
+					}
+				}
+				385 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = internet_station
+						level = 1
+						instant_build = yes
+					}
+				}
+				newline = yes
+			}
+			if = {
+				limit = {
+					384 = {
+						is_owned_and_controlled_by = ALG
+					}
+				}
+				384 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = internet_station
+						level = 1
+						instant_build = yes
+					}
+				}
+				newline = yes
+			}
+			if = {
+				limit = {
+					386 = {
+						is_owned_and_controlled_by = ALG
+					}
+				}
+				386 = {
+					add_extra_state_shared_building_slots = 1
+					add_building_construction = {
+						type = internet_station
+						level = 1
+						instant_build = yes
+					}
+				}
+				newline = yes
+				set_temp_variable = { treasury_change = -12.00 }
+				modify_treasury_effect = yes
+			}
+		}
     }
 
     focus = {
@@ -11075,6 +11132,894 @@ focus = {
     }
 }
 
+######
+# Foreign intervention branch
+	focus = {
+		id = ALG_algerian_intervention
+		icon = annex_country_2
+		cost = 2
+		x = 72
+		y = 0
+		available = {
+			has_completed_focus = ALG_al_quwwat_al_musallaha_al_jazaeriya
+			has_completed_focus = ALG_foreign_policy_review
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+		}
+		ai_will_do = {
+			factor = 10
+		}
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_algerian_intervention"
+			add_war_support = 0.05
+			add_political_power = 100
+		}
+	}
+	focus = {
+		id = ALG_intervene_in_mali
+		icon = mali_operation
+		cost = 5
+		x = -4
+		y = 1
+		available = {
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+			MAL = {
+				emerging_autocracy_are_in_power = yes
+			}
+			MAL = {
+				has_war_with = TUA
+			}
+			ALG = {
+				NOT = {
+					OR = {
+						has_war_with = MAL
+						has_war_with = TUA
+					}
+				}
+			}
+		}
+		prerequisite = {
+			focus = ALG_algerian_intervention
+		}
+		relative_position_id = ALG_algerian_intervention
+		ai_will_do = {
+			factor = 10
+		}
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_intervene_in_mali"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = ALG }
+			set_temp_variable = { influence_target = TUA }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = ALG }
+			set_temp_variable = { influence_target = MAL }
+			change_influence_percentage = yes
+		}
+	}
+	focus = {
+		id = ALG_support_tuareg
+		icon = attack_mali
+		cost = 7.15
+		x = -5
+		y = 2
+		available = {
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+			emerging_communist_state_are_in_power = yes
+			emerging_anarchist_communism_are_in_power = yes
+			emerging_autocracy_are_in_power = yes
+			nationalist_right_wing_populists_are_in_power = yes
+			emerging_reactionaries_are_in_power = yes
+			nationalist_military_junta_are_in_power = yes
+			has_country_flag = ALG_rise_of_osman
+			emerging_hardline_shiite_are_in_power = yes
+			salafist_caliphate_are_in_power = yes
+			MAL = {
+				has_war_with = TUA
+				emerging_autocracy_are_in_power = yes
+			}
+			country_exists = TUA
+			ALG = {
+				NOT = {
+					has_war_with = MAL
+				}
+			}
+		}
+		mutually_exclusive = {
+			focus = ALG_seek_un_intervention
+		}
+		prerequisite = {
+			focus = ALG_intervene_in_mali
+		}
+		relative_position_id = ALG_algerian_intervention
+		ai_will_do = {
+			factor = 10
+		}
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_support_tuareg"
+			send_embargo = MAL
+			add_equipment_to_stockpile = {
+				type = infantry_weapons1
+				amount = -400
+				producer = ALG
+			}
+			TUA = {
+				add_equipment_to_stockpile = {
+					type = infantry_weapons1
+					amount = 400
+					producer = ALG
+				}
+			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = ALG }
+			set_temp_variable = { influence_target = TUA }
+			change_influence_percentage = yes
+		}
+	}
+	focus = {
+		id = ALG_seek_un_intervention
+		icon = ukr_peace
+		cost = 7.15
+		x = -3
+		y = 2
+		mutually_exclusive = {
+			focus = ALG_support_tuareg
+		}
+		available = {
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+			OR = {
+				western_autocrats_are_in_power = yes
+				neutrality_neutral_muslim_brotherhood_are_in_power = yes
+				western_social_democrats_are_in_power = yes
+				western_liberals_are_in_power = yes
+				western_conservatism_are_in_power = yes
+				neutrality_neutral_oligarch_are_in_power = yes
+				neutrality_neutral_libertarians_are_in_power = yes
+			}
+			MAL = {
+				has_war_with = TUA
+				emerging_autocracy_are_in_power = yes
+			}
+			country_exists = TUA
+			ALG = {
+				NOT = {
+					has_war_with = TUA
+				}
+			}
+		}
+		prerequisite = {
+			focus = ALG_intervene_in_mali
+		}
+		relative_position_id = ALG_algerian_intervention
+		ai_will_do = {
+			factor = 10
+		}
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_seek_un_intervention"
+			send_embargo = TUA
+			add_equipment_to_stockpile = {
+				type = infantry_weapons1
+				amount = -400
+				producer = ALG
+			}
+			MAL = {
+				add_equipment_to_stockpile = {
+					type = infantry_weapons1
+					amount = 400
+					producer = ALG
+				}
+			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = ALG }
+			set_temp_variable = { influence_target = MAL }
+			change_influence_percentage = yes
+		}
+	}
+	focus = {
+		id = ALG_intervene_in_sahrawi
+		icon = align_to_sahrawi
+		cost = 5
+		x = 0
+		y = 1
+		available = {
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+			country_exists = SHA
+			country_exists = MOR
+			MOR = {
+				has_war_with = SHA
+			}
+			ALG = {
+				NOT = {
+					OR = {
+						has_war_with = SHA
+						has_war_with = MOR
+					}
+				}
+			}
+		}
+		prerequisite = {
+			focus = ALG_algerian_intervention
+		}
+		relative_position_id = ALG_algerian_intervention
+		ai_will_do = {
+			factor = 10
+		}
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_intervene_in_sahrawi"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = ALG }
+			set_temp_variable = { influence_target = MOR }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = ALG }
+			set_temp_variable = { influence_target = SHA }
+			change_influence_percentage = yes
+		}
+	}
+	focus = {
+		id = ALG_supp_polisario
+		icon = attack_morocco
+		cost = 7.15
+		x = 1
+		y = 2
+		available = {
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+			country_exists = SHA
+			country_exists = MOR
+			MOR = {
+				has_war_with = SHA
+			}
+			hidden_trigger = {
+				NOT = {
+					OR = {
+						salafist_caliphate_are_in_power = yes
+						emerging_reactionaries_are_in_power = yes
+					}
+				}
+			}
+			SHA = {
+				NOT = {
+					has_war_with = MOR
+				}
+			}
+		}
+		mutually_exclusive = {
+			focus = ALG_a_new_stance
+		}
+		prerequisite = {
+			focus = ALG_intervene_in_sahrawi
+		}
+		relative_position_id = ALG_algerian_intervention
+		ai_will_do = {
+			factor = 10
+		}
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_supp_polisario"
+			add_equipment_to_stockpile = {
+				type = util_vehicle_equipment
+				amount = -400
+				producer = ALG
+			}
+			SHA = {
+				add_equipment_to_stockpile = {
+					type = util_vehicle_equipment
+					amount = 400
+					producer = ALG
+				}
+			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = ALG }
+			set_temp_variable = { influence_target = SHA }
+			change_influence_percentage = yes
+			SHA = {
+				one_random_arms_factory = yes
+			}
+		}
+	}
+	focus = {
+		id = ALG_a_new_stance
+		icon = align_to_morocco
+		cost = 7.15
+		x = -1
+		y = 2
+		available = {
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+			OR = {
+				salafist_caliphate_are_in_power = yes
+				emerging_reactionaries_are_in_power = yes
+			}
+			country_exists = SHA
+			country_exists = MOR
+			MOR = {
+				has_war_with = SHA
+			}
+			ALG = {
+				NOT = {
+					has_war_with = SHA
+				}
+			}
+		}
+		mutually_exclusive = {
+			focus = ALG_supp_polisario
+		}
+		prerequisite = {
+			focus = ALG_intervene_in_sahrawi
+		}
+		relative_position_id = ALG_algerian_intervention
+		ai_will_do = {
+			factor = 10
+		}
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_a_new_stance"
+			add_equipment_to_stockpile = {
+				type = util_vehicle_equipment
+				amount = -400
+				producer = ALG
+			}
+			MOR = {
+				add_equipment_to_stockpile = {
+					type = util_vehicle_equipment
+					amount = 400
+					producer = ALG
+				}
+			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = ALG }
+			set_temp_variable = { influence_target = MOR }
+			change_influence_percentage = yes
+			MOR = {
+				one_random_arms_factory = yes
+			}
+		}
+	}
+	focus = {
+		id = ALG_intervene_in_libya
+		icon = Fatherly_leader
+		cost = 5
+		x = 4
+		y = 1
+		available = {
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+			country_exists = LBA
+			OR = {
+				USA = {
+					has_war_with = LBA
+				}
+				LBA = {
+					is_subject_of = USA
+				}
+			}
+			ALG = {
+				NOT = {
+					has_war_with = LBA
+				}
+			}
+			ALG = {
+				NOT = {
+					has_war_with = USA
+				}
+			}
+		}
+		prerequisite = {
+			focus = ALG_algerian_intervention
+		}
+		relative_position_id = ALG_algerian_intervention
+		ai_will_do = {
+			factor = 10
+		}
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_intervene_in_libya"
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = ALG }
+			set_temp_variable = { influence_target = LBA }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = ALG }
+			set_temp_variable = { influence_target = TUA }
+			change_influence_percentage = yes
+		}
+	}
+	focus = {
+		id = ALG_assassinate_gaddafi
+		icon = assassinate_gaddafi
+		cost = 7.15
+		x = 5
+		y = 2
+		available = {
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+			country_exists = LBA
+			OR = {
+				USA = {
+					has_war_with = LBA
+				}
+				LBA = {
+					is_subject_of = USA
+				}
+			}
+			ALG = {
+				NOT = {
+					has_war_with = LBA
+				}
+			}
+		}
+		mutually_exclusive = {
+			focus = ALG_peacekeepers
+		}
+		prerequisite = {
+			focus = ALG_intervene_in_libya
+		}
+		relative_position_id = ALG_algerian_intervention
+		ai_will_do = {
+			factor = 10
+		}
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_assassinate_gaddafi"
+			country_event = {
+				id = TurkeyFocusEvents.58
+			}
+		}
+	}
+	focus = {
+		id = ALG_peacekeepers
+		icon = LIB_UAR
+		cost = 7.15
+		x = 3
+		y = 2
+		available = {
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+			country_exists = LBA
+			OR = {
+				USA = {
+					has_war_with = LBA
+				}
+				LBA = {
+					is_subject_of = USA
+				}
+			}
+			ALG = {
+				NOT = {
+					has_war_with = LBA
+				}
+			}
+		}
+		mutually_exclusive = {
+			focus = ALG_assassinate_gaddafi
+		}
+		prerequisite = {
+			focus = ALG_intervene_in_libya
+		}
+		relative_position_id = ALG_algerian_intervention
+		ai_will_do = {
+			factor = 10
+		}
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_peacekeepers"
+			add_stability = 0.05
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = ALG }
+			set_temp_variable = { influence_target = LBA }
+			change_influence_percentage = yes
+		}
+	}
+	# Society Branch
+	focus = {
+		id = ALG_our_society
+		icon = sunni_government
+		cost = 5
+		x = 0
+		y = 4
+		available = {
+			has_completed_focus = ALG_at_a_crossroads
+		}
+		relative_position_id = ALG_algerian_intervention
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_our_society"
+			add_political_power = 100
+		}
+	}
+	focus = {
+		id = ALG_drs
+		icon = focus_AFG_work_with_german_inteligence
+		cost = 10
+		x = -8
+		y = 1
+		prerequisite = {
+			focus = ALG_our_society
+		}
+		available = {
+			always = no
+		}
+
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_drs"
+			custom_effect_tooltip = ALG_activate_from_event
+		}
+	}
+	focus = {
+		id = ALG_foreign_focus
+		icon = cctv
+		cost = 7.15
+		x = -7
+		y = 2
+		mutually_exclusive = { focus = ALG_domestic_focus }
+		prerequisite = {
+			focus = ALG_drs
+		}
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_foreign_focus"
+			add_ideas = ALG_drs_emboldened
+		}
+	}
+	focus = {
+		id = ALG_domestic_focus
+		icon = border_patrol_increase
+		cost = 7.15
+		x = -9
+		y = 2
+		mutually_exclusive = { focus = ALG_foreign_focus }
+		prerequisite = {
+			focus = ALG_drs
+		}
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_domestic_focus"
+			add_ideas = ALG_drs_reformed
+		}
+	}
+	focus = {
+		id = ALG_disaster_relief
+		icon = burning_globe
+		cost = 10
+		x = -4
+		y = 1
+		prerequisite = {
+			focus = ALG_our_society
+		}
+		available = {
+			always = no
+		}
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_disaster_relief"
+			custom_effect_tooltip = ALG_activate_from_event
+		}
+	}
+	focus = {
+		id = ALG_charity_based
+		icon = national_unity
+		cost = 7.15
+		x = -5
+		y = 2
+		mutually_exclusive = { focus = ALG_government_reliant }
+		prerequisite = {
+			focus = ALG_disaster_relief
+		}
+
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_charity_based"
+			swap_ideas = {
+				remove_idea = ALG_no_disasters_plan
+				add_idea = ALG_charity_disasters
+			}
+		}
+	}
+	focus = {
+		id = ALG_government_reliant
+		icon = MEX_Allign_the_government
+		cost = 7.15
+		x = -3
+		y = 2
+		mutually_exclusive = { focus = ALG_charity_based }
+		prerequisite = {
+			focus = ALG_disaster_relief
+		}
+
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_government_reliant"
+			swap_ideas = {
+				remove_idea = ALG_no_disasters_plan
+				add_idea = ALG_government_led_disaster
+			}
+		}
+	}
+	focus = {
+		id = ALG_migration_problems
+		icon = blr_migrant_crisis
+		cost = 10
+		x = 0
+		y = 1
+		prerequisite = {
+			focus = ALG_our_society
+		}
+		available = {
+			always = no
+			has_country_flag = ALG_migration_flood
+		}
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS FOCUS_FILTER_MIGRANT_CRISIS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_migration_problems"
+			custom_effect_tooltip = ALG_activate_from_event
+		}
+	}
+	focus = {
+		id = ALG_open_door_policy
+		icon = refuges_welcome
+		cost = 7.15
+		x = -1
+		y = 2
+		mutually_exclusive = { focus = ALG_closed_borders }
+		prerequisite = {
+			focus = ALG_migration_problems
+		}
+
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS FOCUS_FILTER_MIGRANT_CRISIS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_open_door_policy"
+			if = {
+				limit = {has_idea = large_refugee_population }
+				swap_ideas = {
+				remove_idea = large_refugee_population
+				add_idea = ALG_refugees_maintained
+				}
+			}
+			else = {
+				decrease_migration_law = yes
+			}
+		}
+	}
+	focus = {
+		id = ALG_closed_borders
+		icon = united_states_border_patrol
+		cost = 7.15
+		x = 1
+		y = 2
+		mutually_exclusive = { focus = ALG_open_door_policy }
+		prerequisite = {
+			focus = ALG_migration_problems
+		}
+
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS FOCUS_FILTER_MIGRANT_CRISIS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_closed_borders"
+			if = {
+				limit = {has_idea = large_refugee_population }
+				remove_ideas = large_refugee_population
+			}
+			else = {
+				increase_migration_law = yes
+			}
+		}
+	}
+	focus = {
+		id = ALG_rising_nationalism
+		icon = turkish_heritage
+		cost = 10
+		x = 8
+		y = 1
+		prerequisite = {
+			focus = ALG_our_society
+		}
+		available = {
+			always = no
+		}
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_rising_nationalism"
+			custom_effect_tooltip = ALG_activate_from_event
+		}
+	}
+	focus = {
+		id = ALG_combat_it
+		icon = attack_algeria
+		cost = 7.15
+		x = 9
+		y = 2
+		mutually_exclusive = { focus = ALG_utilize_it }
+		prerequisite = {
+			focus = ALG_rising_nationalism
+		}
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_combat_it"
+			add_ideas = ALG_fight_nationalist
+		}
+	}
+	focus = {
+		id = ALG_utilize_it
+		icon = align_to_algeria
+		cost = 7.15
+		x = 7
+		y = 2
+		mutually_exclusive = { focus = ALG_combat_it }
+		prerequisite = {
+			focus = ALG_rising_nationalism
+		}
+
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_utilize_it"
+			add_ideas = ALG_nationalist_advantage
+		}
+	}
+	focus = {
+		id = ALG_drug_problem
+		icon = economic_drugs
+		cost = 10
+		x = 4
+		y = 1
+		prerequisite = {
+			focus = ALG_our_society
+		}
+		available = {
+			always = no
+			has_country_flag = ALG_drugs
+		}
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_drug_problem"
+			custom_effect_tooltip = ALG_activate_from_event
+		}
+	}
+	focus = {
+		id = ALG_relax_restrictions
+		icon = Drug_Fueled
+		cost = 7.15
+		x = 5
+		y = 2
+		mutually_exclusive = { focus = ALG_tighten_punishments }
+		prerequisite = {
+			focus = ALG_drug_problem
+		}
+
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_relax_restrictions"
+			add_to_variable = { ALG_mafia_influence = 5 }
+			custom_effect_tooltip = ALG_mafia_increase_5
+			swap_ideas = {
+				remove_idea = ALG_drug_problem
+				add_idea = ALG_drugs_legalized
+			}
+		}
+	}
+	focus = {
+		id = ALG_tighten_punishments
+		icon = ITA_Focus_Cocaine
+		cost = 7.15
+		x = 3
+		y = 2
+		mutually_exclusive = { focus = ALG_relax_restrictions }
+		prerequisite = {
+			focus = ALG_drug_problem
+		}
+
+		relative_position_id = ALG_our_society
+		ai_will_do = {
+			factor = 1
+		}
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_tighten_punishments"
+			swap_ideas = {
+				remove_idea = ALG_drug_problem
+				add_idea = ALG_drugs_illegalized
+			}
+		}
+	}
+#####
  focus = {
     id = ALG_bouteflika_health_crisis
     icon = algeria_president
@@ -14314,7 +15259,7 @@ focus = {
 	}
     focus = {
         id = MSP_diplo
-        icon = islamic_militia_01
+        icon = egypt_diplo
 		available = {
 			neutrality_neutral_muslim_brotherhood_are_in_power = yes
 		}
