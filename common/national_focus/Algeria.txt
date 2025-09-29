@@ -24,6 +24,7 @@ focus_tree = {
             add_stability = -0.05
             add_war_support = -0.05
 			news_event = algeria_news.2
+			set_country_flag = ALG_policy_path1
         }
 		ai_will_do = {
 			base = 300
@@ -1324,6 +1325,7 @@ focus = {
 			add_ideas = ALG_oil_focused_energy_self_sufficient
 			set_temp_variable = { percent_change = 5 }
 			change_domestic_influence_percentage = yes
+			ALG_increase_desertification_rate = yes
 		}
 
 		ai_will_do = {
@@ -1352,6 +1354,7 @@ focus = {
 			}
 			remove_ideas = ALG_oil_focused_energy_self_sufficient
 			add_ideas = ALG_oil_focused_energy_small_profit
+			ALG_increase_desertification_rate = yes
 		}
 
 		ai_will_do = {
@@ -1502,6 +1505,7 @@ focus = {
 			add_ideas = ALG_renewable_focused_energy_self_sufficient
 			set_temp_variable = { percent_change = 5 }
 			change_domestic_influence_percentage = yes
+			ALG_decrease_desertification_rate = yes
 		}
 
 		ai_will_do = {
@@ -1566,6 +1570,7 @@ focus = {
 			}
 			remove_ideas = ALG_renewable_focused_energy_self_sufficient
 			add_ideas = ALG_renewable_focused_energy_small_profit
+			ALG_decrease_desertification_rate = yes
 		}
 
 		ai_will_do = {
@@ -1603,6 +1608,7 @@ focus = {
 			}
 			remove_ideas = ALG_oil_focused_energy_small_profit
 			add_ideas = ALG_oil_focused_energy_rich
+			ALG_increase_desertification_rate = yes
 		}
 
 		ai_will_do = {
@@ -1647,6 +1653,7 @@ focus = {
 			}
 			remove_ideas = ALG_renewable_focused_energy_small_profit
 			add_ideas = ALG_renewable_focused_energy_rich
+			ALG_decrease_desertification_rate = yes
 		}
 
 		ai_will_do = {
@@ -1676,6 +1683,285 @@ focus = {
 				limit = { has_country_flag = ALG_UN_aid_accepted }
 				remove_ideas = ALG_un_peacekeepers
 			}
+		}
+	}
+	focus = {
+		id = ALG_strengthen_ENTV_environmental_campaigns
+		icon = alg_media
+
+		x = 10
+		y = 8
+
+		cost = 5
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_strengthen_ENTV_environmental_campaigns"
+			if = {
+				limit = {
+					385 = {
+						free_building_slots = {
+							building = internet_station
+							size > 0
+						}
+					}
+					385 = {
+						free_building_slots = {
+							building = internet_station
+							size > 0
+						}
+					}
+				}
+				set_temp_variable = { treasury_change = -6 }
+				modify_treasury_effect = yes
+			}
+			else = {
+				set_temp_variable = { treasury_change = -3 }
+				modify_treasury_effect = yes
+			}
+			385 = {
+				if = {
+					limit = {
+						free_building_slots = {
+							building = internet_station
+							size > 0
+						}
+					}
+					add_building_construction = {
+						type = internet_station
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+			385 = {
+				if = {
+					limit = {
+						free_building_slots = {
+							building = internet_station
+							size > 0
+						}
+					}
+					add_building_construction = {
+						type = internet_station
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+	focus = {
+		id = ALG_increase_cattle_grazing
+		icon = farming_sector
+
+		mutually_exclusive = {
+			focus = ALG_optimize_pastoral_practices
+		}
+
+		relative_position_id = ALG_strengthen_ENTV_environmental_campaigns
+		prerequisite = {
+			focus = ALG_strengthen_ENTV_environmental_campaigns
+		}
+
+		x = -1
+		y = 1
+
+		cost = 10
+		search_filters = { FOCUS_FILTER_ENVIRONMENT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_increase_cattle_grazing"
+			set_temp_variable = { treasury_change = -3.75 }
+			modify_treasury_effect = yes
+			random_owned_state = {
+				limit = {
+					NOT = {
+						has_state_category = state_inhospitable
+						has_state_category = state_military_base
+					}
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = agriculture_district
+					level = 1
+					instant_build = yes
+				}
+			}
+			ALG_increase_desertification_rate = yes
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+	focus = {
+		id = ALG_optimize_pastoral_practices
+		icon = AST_greens
+
+		mutually_exclusive = {
+			focus = ALG_increase_cattle_grazing
+		}
+		prerequisite = {
+			focus = ALG_strengthen_ENTV_environmental_campaigns
+		}
+
+		relative_position_id = ALG_strengthen_ENTV_environmental_campaigns
+
+		x = 1
+		y = 1
+
+		cost = 7
+		search_filters = { FOCUS_FILTER_ENVIRONMENT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_optimize_pastoral_practices"
+			ALG_decrease_desertification_rate = yes
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = ALG_expand_steppe_farming
+		icon = South_ossetia_barn
+		prerequisite = {
+			focus = ALG_increase_cattle_grazing
+		}
+
+		relative_position_id = ALG_increase_cattle_grazing
+
+		x = 0
+		y = 1
+
+		cost = 7
+		search_filters = { FOCUS_FILTER_ENVIRONMENT FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_expand_steppe_farming"
+			ALG_increase_desertification_rate = yes
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			383 = {
+				add_extra_state_shared_building_slots = 1
+			}
+			383 = {
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = ALG_research_drought_resistant_crops
+		icon = blr_research_with_china
+		prerequisite = {
+			focus = ALG_optimize_pastoral_practices
+		}
+
+		relative_position_id = ALG_increase_cattle_grazing
+
+		x = 2
+		y = 1
+
+		cost = 7
+
+		available = {
+			has_tech = gene_therapy
+		}
+
+		search_filters = { FOCUS_FILTER_ENVIRONMENT FOCUS_FILTER_INDUSTRY }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_research_drought_resistant_crops"
+			ALG_decrease_desertification_rate = yes
+			add_tech_bonus = {
+				name = ALG_research_drought_resistant_crops
+				bonus = 0.5
+				uses = 2
+				category = CAT_genes
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+	focus = {
+		id = ALG_expand_nature_reserves_sahara
+		icon = concessions2
+		prerequisite = {
+			focus = ALG_research_drought_resistant_crops
+		}
+		relative_position_id = ALG_strengthen_ENTV_environmental_campaigns
+
+		x = 1
+		y = 3
+
+		cost = 7
+		search_filters = { FOCUS_FILTER_ENVIRONMENT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_expand_nature_reserves_sahara"
+			ALG_decrease_desertification_rate = yes
+			add_stability = 0.05
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	focus = {
+		id = ALG_shrink_nature_reserves_sahara
+		icon = renounce_treaty
+		prerequisite = {
+			focus = ALG_expand_steppe_farming
+		}
+		relative_position_id = ALG_strengthen_ENTV_environmental_campaigns
+
+		x = -1
+		y = 3
+
+		cost = 7
+		search_filters = { FOCUS_FILTER_ENVIRONMENT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_shrink_nature_reserves_sahara"
+			ALG_increase_desertification_rate = yes
+			383 = {
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+	focus = {
+		id = ALG_total_ban_on_poaching
+		icon = banned_guns
+		prerequisite = {
+			focus = ALG_shrink_nature_reserves_sahara
+			focus = ALG_expand_nature_reserves_sahara
+		}
+
+		relative_position_id = ALG_strengthen_ENTV_environmental_campaigns
+		x = 0
+		y = 4
+
+		cost = 7
+		search_filters = { FOCUS_FILTER_ENVIRONMENT }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_total_ban_on_poaching"
+			ALG_decrease_desertification_rate = yes
+		}
+
+		ai_will_do = {
+			factor = 10
 		}
 	}
 	focus = {
@@ -3802,7 +4088,7 @@ focus = {
 		id = ALG_join_arab_league
 		icon = align_to_arab_league
 		prerequisite = { focus = ALG_arab_world_outreach }
-		x = 26
+		x = 24
 		y = 3
 		cost = 6
 		available = {
@@ -3842,7 +4128,7 @@ focus = {
 		id = ALG_egypt_algiers_axis
 		icon = align_to_egypt
 		prerequisite = { focus = ALG_join_arab_league }
-		x = 26
+		x = 24
 		y = 4
 		cost = 6
 		available = {
@@ -3867,7 +4153,7 @@ focus = {
 		id = ALG_support_palestine
 		icon = align_to_palestine
 		prerequisite = { focus = ALG_arab_world_outreach }
-		x = 24
+		x = 26
 		y = 3
 		cost = 5
 		available = {
@@ -3915,7 +4201,7 @@ focus = {
     id = ALG_condemn_israel
     icon = letter_to_israel_morsi
     prerequisite = { focus = ALG_support_palestine }
-    x = 24
+    x = 26
     y = 4
     cost = 2
 	available = {
@@ -3960,7 +4246,7 @@ focus = {
 		id = ALG_palestinian_aid_package
 		icon = pal_flag_over_ham
 		prerequisite = { focus = ALG_condemn_israel }
-		x = 25
+		x = 27
 		y = 5
 		cost = 5
 		mutually_exclusive = {
@@ -4011,7 +4297,7 @@ focus = {
 		mutually_exclusive = {
 			focus = ALG_palestinian_aid_package
 		}
-		x = 23
+		x = 25
 		y = 5
 		search_filters = {
 			FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE
@@ -4056,7 +4342,7 @@ focus = {
 		prerequisite = {
 			focus = ALG_approach_hamas
 		}
-		x = 23
+		x = 25
 		y = 6
 
 		search_filters = {
@@ -4117,7 +4403,7 @@ focus = {
 		prerequisite = {
 			focus = ALG_palestinian_aid_package
 		}
-		x = 25
+		x = 27
 		y = 6
 
 		search_filters = {
@@ -4406,6 +4692,9 @@ focus = {
 		x = 18
 		y = 14
 		cost = 5
+		allow_branch = {
+			has_country_flag = ALG_policy_path
+		}
 		available = {
 			OR = {
 			has_completed_focus = ALG_open_democratic_path
@@ -4927,999 +5216,6 @@ focus = {
 				}
 			}
 		}
-	}
-	focus = {
-		id = ALG_a_radical_reorientation
-		icon = jihad
-
-		x = -5
-		y = 1
-		relative_position_id = ALG_reform_or_control
-
-		cost = 7.2
-
-		prerequisite = { focus = ALG_reform_or_control }
-		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
-
-		available = { has_idea = sunni }
-
-		bypass = { jihadist_government = yes }
-
-		completion_reward = {
-			set_temp_variable = { party_index = 12 }
-			unban_party_scripted_call = yes
-			add_war_support = 0.05
-			log = "[GetDateText]: [This.GetName]: focus ALG_a_radical_reorientation executed"
-		}
-
-		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 1
-				is_historical_focus_on = no
-			}
-			modifier = {
-				add = 4
-				is_historical_focus_on = no
-				OR = {
-					jihadist_government = yes
-					check_variable = { radicalization > 50 }
-				}
-			}
-		}
-	}
-
-	focus = {
-		id = ALG_covert_support_for_islamist_radicals
-		icon = black_market
-
-		x = -1
-		y = 1
-		relative_position_id = ALG_a_radical_reorientation
-
-		cost = 7.2
-
-		prerequisite = { focus = ALG_a_radical_reorientation }
-
-		search_filters = { FOCUS_FILTER_RADICALIZATION }
-
-		available = { NOT = { has_war_with = AQY } }
-
-		bypass = { jihadist_government = yes }
-
-		completion_reward = {
-			set_temp_variable = { treasury_change = -3.00 }
-			modify_treasury_effect = yes
-			MAL = {
-				set_temp_variable = { threat_change = 10 }
-				modify_terror_threat_effect = yes
-			}
-			log = "[GetDateText]: [This.GetName]: focus ALG_covert_support_for_islamist_radicals executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
-		id = ALG_tolerate_radical_preachers
-		icon = islamophobia
-
-		x = 1
-		y = 1
-		relative_position_id = ALG_a_radical_reorientation
-
-		cost = 7.2
-
-		prerequisite = { focus = ALG_a_radical_reorientation }
-
-		search_filters = { FOCUS_FILTER_RADICALIZATION FOCUS_FILTER_SECTARIANISM }
-		bypass = { jihadist_government = yes }
-
-		completion_reward = {
-			set_temp_variable = { rad_change = 10 }
-			modify_radicalization_effect = yes
-			add_popularity = {
-				ideology = fascism
-				popularity = 0.05
-			}
-			recalculate_party = yes
-			log = "[GetDateText]: [This.GetName]: focus ALG_tolerate_radical_preachers executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
-		id = ALG_welcome_militants
-		icon = infiltration
-
-		x = 0
-		y = 1
-		relative_position_id = ALG_covert_support_for_islamist_radicals
-
-		cost = 8.58
-
-		prerequisite = { focus = ALG_covert_support_for_islamist_radicals }
-		prerequisite = { focus = ALG_tolerate_radical_preachers }
-
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
-		bypass = { jihadist_government = yes }
-
-		completion_reward = {
-			add_war_support = 0.05
-			add_stability = -0.05
-			set_temp_variable = { threat_change = 20 }
-			modify_terror_threat_effect = yes
-
-			add_popularity = { ideology = fascism popularity = 0.05 }
-			recalculate_party = yes
-			log = "[GetDateText]: [This.GetName]: focus ALG_welcome_militants executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
-		id = ALG_arms_smuggling
-		icon = small_arms5
-
-		x = 0
-		y = 1
-		relative_position_id = ALG_tolerate_radical_preachers
-
-		cost = 8.58
-
-		prerequisite = { focus = ALG_covert_support_for_islamist_radicals }
-		prerequisite = { focus = ALG_tolerate_radical_preachers }
-
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
-		bypass = { jihadist_government = yes }
-
-		completion_reward = {
-			add_war_support = 0.05
-			add_stability = -0.05
-			set_temp_variable = { threat_change = 20 }
-			modify_terror_threat_effect = yes
-			add_popularity = {
-				ideology = fascism
-				popularity = 0.05
-			}
-			recalculate_party = yes
-			log = "[GetDateText]: [This.GetName]: focus ALG_arms_smuggling executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
-		id = ALG_start_the_uprising
-		icon = violent_coup
-
-		x = -1
-		y = 1
-		relative_position_id = ALG_arms_smuggling
-
-		cost = 7.2
-
-		prerequisite = { focus = ALG_welcome_militants }
-		prerequisite = { focus = ALG_arms_smuggling }
-
-		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
-		bypass = { jihadist_government = yes }
-
-		completion_reward = {
-			hidden_effect = {
-				set_politics = {
-					ruling_party = fascism
-					elections_allowed = no
-				}
-				set_variable = { party_pop_array^11 = 1 }
-				recalculate_party = yes
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 11 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
-			}
-			retire_country_leader = yes
-			create_country_leader = {
-				name = "Abdelmalek Droukdel"
-				picture = "abdelmalek_droukdel.dds"
-				ideology = Caliphate
-				traits = {
-					salafist_Caliphate
-					prince_of_terror
-				}
-			}
-
-			add_to_variable = { Caliphate_leader = 1 }
-			add_ideas = Non_State_Actor
-			set_cosmetic_tag = AQIM
-
-			every_other_country = {
-				limit = { has_military_access_to = ROOT }
-				diplomatic_relation = {
-					country = ROOT
-					relation = military_access
-					active = no
-				}
-			}
-			ALG = {
-				add_ideas = {
-					sunni
-					systematic_corruption
-					LoAS_member
-					rentier_state
-					conservative_society
-					youth_radicalization
-					al_jazeera_allowed
-					stagnation
-					defence_05
-					edu_03
-					health_04
-					social_05
-					bureau_03
-					police_03
-					police_05
-					volunteer_army
-					no_women_in_military
-					wahabi_ulema
-					small_medium_business_owners
-					fossil_fuel_industry
-					officer_advanced_training
-					intervention_limited_interventionism
-					full_isr_boycotte
-				}
-			}
-
-			add_named_threat = {
-				threat = 10
-				name = terror.threat
-			}
-
-			hidden_effect = {
-				set_partyall_allowed = yes
-				set_partyall_banned = yes
-				add_political_power = 460
-			}
-			log = "[GetDateText]: [This.GetName]: focus ALG_start_the_uprising executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
-		id = ALG_clamp_down_on_vices
-		icon = political_arrests
-
-		x = -2
-		y = 1
-		relative_position_id = ALG_start_the_uprising
-
-		cost = 5
-
-		prerequisite = { focus = ALG_start_the_uprising }
-
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SOCIAL_CONSERVATISM }
-
-		available = {
-			jihadist_government = yes
-			has_elections = no
-		}
-
-		completion_reward = {
-			add_political_power = 100
-			set_temp_variable = { temp_modify_social_con_government = 10 }
-			modify_social_conservatism_government = yes
-			log = "[GetDateText]: [This.GetName]: focus ALG_clamp_down_on_vices executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
-		id = ALG_revolutionize_the_ulema
-		icon = revolutionize_ulema
-
-		x = 0
-		y = 1
-		relative_position_id = ALG_start_the_uprising
-
-		cost = 7.2
-
-		prerequisite = { focus = ALG_start_the_uprising }
-
-		search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_SOCIAL_CONSERVATISM }
-
-		available = { jihadist_government = yes }
-
-		completion_reward = {
-			set_temp_variable = { temp_modify_social_con_government = 10 }
-			modify_social_conservatism_government = yes
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_wahabi_ulema_opinion = yes
-			change_the_ulema_opinion = yes
-			log = "[GetDateText]: [This.GetName]: focus ALG_revolutionize_the_ulema executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
-		id = ALG_traditional_gender_roles
-		icon = become_puppet
-
-		x = 2
-		y = 1
-		relative_position_id = ALG_start_the_uprising
-
-		cost = 5
-
-		prerequisite = { focus = ALG_start_the_uprising }
-
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_POLITICAL FOCUS_FILTER_SOCIAL_CONSERVATISM }
-
-		available = {
-			jihadist_government = yes
-			has_elections = no
-		}
-
-		completion_reward = {
-		log = "[GetDateText]: [This.GetName]: focus ALG_traditional_gender_roles executed"
-			set_temp_variable = { temp_modify_social_con_government = 10 }
-			modify_social_conservatism_government = yes
-			set_no_women_effect = yes
-			add_popularity = {
-				ideology = fascism
-				popularity = 0.05
-			}
-			recalculate_party = yes
-		}
-
-		ai_will_do = { base = 1 }
-	}
-	focus = {
-		id = ALG_pledge_allegiance_to_daesh
-		icon = terrorism
-
-		x = 1
-		y = 1
-		relative_position_id = ALG_revolutionize_the_ulema
-
-		cost = 7.2
-
-		prerequisite = { focus = ALG_clamp_down_on_vices }
-		prerequisite = { focus = ALG_revolutionize_the_ulema }
-		prerequisite = { focus = ALG_traditional_gender_roles }
-		mutually_exclusive = { focus = ALG_pledge_allegiance_to_al_qaeda }
-
-		search_filters = { FOCUS_FILTER_SECTARIANISM }
-
-		available = {
-			jihadist_government = yes
-			has_elections = no
-		}
-
-		completion_reward = {
-			add_ideas = isis_allegiance
-			if = {
-				limit = {
-					country_exists = ISI
-					NOT = {
-						any_of_scopes = {
-							array = global.possible_ALG_member_state
-							has_cosmetic_tag = AQIM
-						}
-					}
-				}
-				set_cosmetic_tag = AQIM
-				clr_country_flag = dynamic_flag
-				ISI = {
-					set_autonomy = {
-						target = ROOT
-						autonomy_state = autonomy_terrorist_wilayah
-					}
-				}
-			}
-			else_if = {
-				limit = {
-					country_exists = ISI
-					any_of_scopes = {
-						array = global.possible_ALG_member_state
-						has_cosmetic_tag = AQIM
-					}
-				}
-				random_country = {
-					limit = { has_cosmetic_tag = AQIM }
-					annex_country = {
-						target = ROOT
-						transfer_troops = yes
-					}
-				}
-			}
-			else_if = {
-				limit = { NOT = { country_exists = ISI } }
-				set_cosmetic_tag = ISI
-				clr_country_flag = dynamic_flag
-			}
-			if = {
-				limit = {
-					NOT = { has_completed_focus = ALG_military_coup }
-				}
-			}
-			if = {
-				limit = { country_exists = SHB }
-				remove_opinion_modifier = {
-					target = SHB
-					modifier = ISIS_Are_Terrorists
-				}
-				remove_opinion_modifier = {
-					target = SHB
-					modifier = ISIS_Are_Terrorists_Trade
-				}
-			}
-			if = {
-				limit = { country_exists = ISI }
-				remove_opinion_modifier = {
-					target = ISI
-					modifier = ISIS_Are_Terrorists
-				}
-				remove_opinion_modifier = {
-					target = ISI
-					modifier = ISIS_Are_Terrorists_Trade
-				}
-			}
-			log = "[GetDateText]: [This.GetName]: focus ALG_pledge_allegiance_to_daesh executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-    focus = {
-		id = ALG_jihad_in_arabia
-		icon = jihad_in_arabia
-
-		x = -1
-		y = 1
-		relative_position_id = ALG_pledge_allegiance_to_daesh
-
-		cost = 5
-
-		prerequisite = { focus = ALG_pledge_allegiance_to_al_qaeda focus = ALG_pledge_allegiance_to_daesh }
-
-		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_SECTARIANISM }
-
-		available = {
-			jihadist_government = yes
-			has_elections = no
-		}
-
-		completion_reward = {
-			if = {
-				limit = {
-					check_variable = { shia_population > 0 }
-					NOT = { has_completed_focus = ALG_military_coup }
-				}
-			}
-			if = {
-				limit = {
-					country_exists = BHR
-					BHR = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = BHR
-				}
-			}
-			if = {
-				limit = {
-					country_exists = HEJ
-					HEJ = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = HEJ
-				}
-			}
-			if = {
-				limit = {
-					country_exists = HOU
-					HOU = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = HOU
-				}
-			}
-			if = {
-				limit = {
-					country_exists = KUW
-					KUW = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = KUW
-				}
-			}
-			if = {
-				limit = {
-					country_exists = NEJ
-					NEJ = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = NEJ
-				}
-			}
-			if = {
-				limit = {
-					country_exists = OMA
-					OMA = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = OMA
-				}
-			}
-			if = {
-				limit = {
-					country_exists = QAT
-					QAT = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = QAT
-				}
-			}
-			if = {
-				limit = {
-					country_exists = QTF
-					QTF = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = QTF
-				}
-			}
-			if = {
-				limit = {
-					country_exists = SAU
-					SAU = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = SAU
-				}
-			}
-			if = {
-				limit = {
-					country_exists = UAE
-					UAE = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = UAE
-				}
-			}
-			if = {
-				limit = {
-					country_exists = YEM
-					YEM = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = YEM
-				}
-			}
-			log = "[GetDateText]: [This.GetName]: focus ALG_jihad_in_arabia executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
-		id = ALG_jihad_in_the_levant
-		icon = jihad_in_the_levant
-
-		x = 0
-		y = 1
-		relative_position_id = ALG_jihad_in_arabia
-
-		cost = 5.75
-
-		prerequisite = { focus = ALG_jihad_in_arabia }
-
-		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_SECTARIANISM }
-
-		available = {
-			jihadist_government = yes
-			has_elections = no
-		}
-
-		completion_reward = {
-			if = {
-				limit = {
-					check_variable = { shia_population > 0 }
-					NOT = { has_completed_focus = ALG_military_coup }
-				}
-			}
-			if = {
-				limit = {
-					country_exists = FSA
-					FSA = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = FSA
-				}
-			}
-			if = {
-				limit = {
-					country_exists = IRQ
-					IRQ = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = IRQ
-				}
-			}
-			if = {
-				limit = {
-					country_exists = ISR
-					ISR = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = ISR
-				}
-			}
-			if = {
-				limit = {
-					country_exists = LEB
-					LEB = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = LEB
-				}
-			}
-			if = {
-				limit = {
-					country_exists = JOR
-					JOR = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = JOR
-				}
-			}
-			if = {
-				limit = {
-					country_exists = KUR
-					KUR = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = KUR
-				}
-			}
-			if = {
-				limit = {
-					country_exists = PUK
-					PUK = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = PUK
-				}
-			}
-			if = {
-				limit = {
-					country_exists = PAL
-					PAL = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = PAL
-				}
-			}
-			if = {
-				limit = {
-					country_exists = ROJ
-					ROJ = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = ROJ
-				}
-			}
-			if = {
-				limit = {
-					country_exists = SYR
-					SYR = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = SYR
-				}
-			}
-			if = {
-				limit = {
-					country_exists = DRU
-					DRU = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = DRU
-				}
-			}
-			log = "[GetDateText]: [This.GetName]: focus ALG_jihad_in_the_levant executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
-		id = ALG_pledge_allegiance_to_al_qaeda
-		icon = isis_allegiance
-
-		x = -1
-		y = 1
-		relative_position_id = ALG_revolutionize_the_ulema
-
-		cost = 7.2
-
-		prerequisite = { focus = ALG_clamp_down_on_vices }
-		prerequisite = { focus = ALG_revolutionize_the_ulema }
-		prerequisite = { focus = ALG_traditional_gender_roles }
-		mutually_exclusive = { focus = ALG_pledge_allegiance_to_daesh }
-
-		search_filters = { FOCUS_FILTER_SECTARIANISM }
-
-		available = {
-			jihadist_government = yes
-			has_elections = no
-		}
-
-		completion_reward = {
-			if = {
-				limit = { NOT = { any_other_country = { has_cosmetic_tag = AQIM } } }
-				add_ideas = al_qaeda_network
-				if = {
-					limit = { country_exists = AQY }
-					remove_opinion_modifier = {
-						target = AQY
-						modifier = AlQaida_Are_Terrorists
-					}
-					remove_opinion_modifier = {
-						target = AQY
-						modifier = AlQaida_Are_Terrorists_Trade
-					}
-				}
-			}
-			else_if = {
-				limit = { any_other_country = { has_cosmetic_tag = AQIM } }
-				random_country = {
-					limit = { has_cosmetic_tag = AQIM NOT = { tag = ROOT } }
-					annex_country = {
-						target = ROOT
-						transfer_troops = yes
-					}
-				}
-				custom_effect_tooltip = TT_game_over_warning
-			}
-			log = "[GetDateText]: [This.GetName]: focus ALG_pledge_allegiance_to_al_qaeda executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
-		id = ALG_secure_the_loyalty_of_aqim
-		icon = muslim_expansionism
-
-		x = -1
-		y = 1
-		relative_position_id = ALG_pledge_allegiance_to_al_qaeda
-
-		cost = 4.3
-
-		prerequisite = { focus = ALG_pledge_allegiance_to_al_qaeda }
-
-		search_filters = { FOCUS_FILTER_SECTARIANISM }
-
-		available = {
-			jihadist_government = yes
-			has_elections = no
-		}
-
-		completion_reward = {
-				custom_effect_tooltip = ALG_secure_the_loyalty_effect_tt
-				if = {
-					limit = { country_exists = AQY }
-					set_autonomy = {
-						target = AQY
-						autonomy_state = autonomy_terrorist_branch
-					}
-				}
-				if = {
-					limit = { country_exists = NUS }
-					set_autonomy = {
-						target = NUS
-						autonomy_state = autonomy_terrorist_branch
-					}
-				}
-				if = {
-					limit = { country_exists = TTP }
-					set_autonomy = {
-						target = TTP
-						autonomy_state = autonomy_terrorist_branch
-					}
-				}
-				if = {
-					limit = {
-						NOT = { has_completed_focus = ALG_crackdown_on_opposition }
-					}
-				}
-				log = "[GetDateText]: [This.GetName]: focus ALG_secure_the_loyalty_of_aqim executed"
-			}
-
-		ai_will_do = { base = 1 }
-	}
-	focus = {
-		id = ALG_war_on_daesh
-		icon = attack_isis
-
-		x = 0
-		y = 1
-		relative_position_id = ALG_secure_the_loyalty_of_aqim
-
-		cost = 5
-
-		prerequisite = { focus = ALG_secure_the_loyalty_of_aqim }
-
-		search_filters = { FOCUS_FILTER_ANNEXATION }
-
-		available = {
-			jihadist_government = yes
-			country_exists = ISI
-			has_elections = no
-		}
-
-		completion_reward = {
-			create_wargoal = {
-				type = annex_everything
-				target = ISI
-			}
-			log = "[GetDateText]: [This.GetName]: focus ALG_war_on_daesh executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
-		id = ALG_jihad_in_the_maghreb
-		icon = jihad_in_the_maghreb
-
-		x = 3
-		y = 1
-		relative_position_id = ALG_pledge_allegiance_to_al_qaeda
-
-		cost = 7.2
-
-		prerequisite = {
-			 focus = ALG_pledge_allegiance_to_al_qaeda
-			 focus = ALG_pledge_allegiance_to_daesh
-			  }
-
-		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_SECTARIANISM }
-
-		available = {
-			jihadist_government = yes
-			has_elections = no
-		}
-
-		completion_reward = {
-			if = {
-				limit = {
-					country_exists = LBA
-					LBA = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = LBA
-				}
-			}
-			if = {
-				limit = {
-					country_exists = TUN
-					TUN = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = TUN
-				}
-			}
-			if = {
-				limit = {
-					country_exists = MOR
-					MOR = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = MOR
-				}
-			}
-			if = {
-				limit = {
-					country_exists = EGY
-					EGY = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = EGY
-				}
-			}
-			log = "[GetDateText]: [This.GetName]: focus ALG_jihad_in_the_maghreb executed"
-		}
-
-		ai_will_do = { base = 1 }
-	}
-
-	focus = {
-		id = ALG_jihad_in_west_africa
-		icon = jihad_in_west_africa
-
-		x = 0
-		y = 1
-		relative_position_id = ALG_jihad_in_the_maghreb
-
-		cost = 7.2
-
-		prerequisite = { focus = ALG_jihad_in_the_maghreb }
-
-		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_SECTARIANISM }
-
-		available = {
-			jihadist_government = yes
-			has_elections = no
-		}
-
-		completion_reward = {
-			if = {
-				limit = {
-					country_exists = MAL
-					MAL = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = MAL
-				}
-			}
-			if = {
-				limit = {
-					country_exists = NIG
-					NIG = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = NIG
-				}
-			}
-			if = {
-				limit = {
-					country_exists = MAU
-					MAU = { no_jihadist_government = yes }
-				}
-				create_wargoal = {
-					type = annex_everything
-					target = MAU
-				}
-			}
-			log = "[GetDateText]: [This.GetName]: focus ALG_jihad_in_west_africa executed"
-		}
-
-		ai_will_do = { base = 1 }
 	}
 #new-military-tree
 	focus = {
@@ -10416,7 +9712,7 @@ focus = {
 	focus = {
 		id = ALG_economy_digital_initiative
 		icon = Focus_secret_rearmament
-		x = -18
+		x = -24
 		y = 9
 		cost = 6
 		search_filters = { FOCUS_FILTER_ECONOMY }
@@ -10690,7 +9986,7 @@ focus = {
     id = ALG_automobile_industry
     icon = bmw_car
     cost = 6
-    x = -18
+    x = -24
     y = 14
 	available = {
 		has_completed_focus = ALG_at_a_crossroads
@@ -12259,7 +11555,7 @@ focus = {
 		icon = sunni_government
 		cost = 5
 		x = -6
-		y = 4
+		y = 5
 		available = {
 			has_completed_focus = ALG_at_a_crossroads
 		}
@@ -12626,9 +11922,12 @@ focus = {
  focus = {
     id = ALG_bouteflika_health_crisis
     icon = algeria_president
-    x = -9
+    x = -16
     y = 9
     cost = 5
+	allow_branch = {
+		has_country_flag = ALG_boteflika
+	}
     available = {
         has_country_flag = ALG_boteflika
         has_country_leader = {
@@ -12952,9 +12251,12 @@ focus = {
 focus = {
     id = ALG_by_the_people_for_the_people
     icon = algeria_protests
-    x = 63
-    y = 8
+    x = 30
+    y = 17
     cost = 10
+	prerequisite = {
+		focus = ALG_future_national_policy1
+	}
     available = {
 	custom_trigger_tooltip = {
         check_variable = { algeria_power_balance > 0.7 }
@@ -13072,8 +12374,11 @@ focus = {
 		id = ALG_islam_above_the_nation
 		icon = islamist_gov2
 		cost = 10
-		x = 85
-		y = 8
+		x = -3
+		y = 17
+		prerequisite = {
+			focus = ALG_future_national_policy1
+		}
 		available = {
 		custom_trigger_tooltip = {
 			check_variable = { algeria_power_balance > 0.7 }
@@ -13631,10 +12936,12 @@ focus = {
 	focus = {
 	id = ALG_reclaim_the_crown
 	icon = focus_throne
-	x = 52
-	y = 8
+	x = 34
+	y = 17
 	cost = 10
-
+	prerequisite = {
+		focus = ALG_future_national_policy1
+	}
 	available = {
 		nationalist_monarchists_are_in_power = yes
 	}
@@ -14138,8 +13445,11 @@ focus = {
 		id = ALG_PT
 		icon = alg_PT
 
-		x = 58
-		y = 8
+		x = 26
+		y = 17
+		prerequisite = {
+			focus = ALG_future_national_policy1
+		}
 		available = {
 		    emerging_communist_state_are_in_power = yes
 			is_in_array = { ruling_party = 19 }
@@ -14472,11 +13782,16 @@ focus = {
 		id = ALG_democratic_victory
 		icon = focus_mount_democr
 		cost = 2
-		x = 68
-		y = 8
+		x = 14
+		y = 17
+		prerequisite = {
+			focus = ALG_future_national_policy1
+		}
         available = {
-			has_completed_focus = ALG_public_media_and_transparency
-            has_global_flag = ALG_democratic_victory
+			western_liberals_are_in_power = yes
+			western_autocrats_are_in_power = yes
+			western_conservatism_are_in_power = yes
+			western_social_democrats_are_in_power = yes
         }
 		ai_will_do = {
 			factor = 50
@@ -14499,7 +13814,7 @@ focus = {
 			focus = ALG_democratic_victory
 		}
 		x = -2
-		y = 2
+		y = 1
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -14521,7 +13836,7 @@ focus = {
 			focus = ALG_empower_institutions
 		}
 		x = -1
-		y = 3
+		y = 2
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -14549,7 +13864,7 @@ focus = {
 			focus = ALG_democratic_victory
 		}
 		x = 0
-		y = 2
+		y = 1
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -14574,7 +13889,7 @@ focus = {
 			focus = ALG_democratic_victory
 		}
 		x = 2
-		y = 2
+		y = 1
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -14606,7 +13921,7 @@ focus = {
 			focus = ALG_Get_rid_of_military_corrupt
 		}
 		x = 3
-		y = 3
+		y = 2
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -14632,7 +13947,7 @@ focus = {
 			focus = ALG_Get_rid_of_military_corrupt
 		}
 		x = 1
-		y = 3
+		y = 2
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -14706,7 +14021,7 @@ focus = {
 			focus = ALG_empower_institutions
 		}
 		x = 0
-		y = 4
+		y = 3
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -14731,7 +14046,7 @@ focus = {
 			focus = ALG_dismantle_the_military
 		}
 		x = -2
-		y = 4
+		y = 3
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -14757,7 +14072,7 @@ focus = {
 			focus = ALG_deregulate_economy
 		}
 		x = 2
-		y = 4
+		y = 3
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -14807,7 +14122,7 @@ focus = {
 			focus = ALG_unleash_economic_potential
 		}
 		x = -1
-		y = 5
+		y = 4
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -14839,7 +14154,7 @@ focus = {
 			focus = ALG_democratic_socialism
 		}
 		x = 1
-		y = 5
+		y = 4
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -14869,7 +14184,7 @@ focus = {
 			focus = ALG_democratic_socialism
 		}
 		x = -2
-		y = 6
+		y = 5
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -14943,7 +14258,7 @@ focus = {
 			focus = ALG_unleash_economic_potential
 		}
 		x = 0
-		y = 6
+		y = 5
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -14979,7 +14294,7 @@ focus = {
 			focus = ALG_domestic_investments
 		}
 		x = -1
-		y = 7
+		y = 6
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -15005,7 +14320,7 @@ focus = {
 			focus = ALG_unleash_economic_potential
 		}
 		x = 2
-		y = 6
+		y = 5
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -15058,7 +14373,7 @@ focus = {
 			focus = ALG_subsidize_local_firms
 		}
 		x = 1
-		y = 7
+		y = 6
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -15108,7 +14423,7 @@ focus = {
 			focus = ALG_invite_US_business_giants
 		}
 		x = -1
-		y = 8
+		y = 7
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -15149,7 +14464,7 @@ focus = {
 			focus = ALG_economic_democracy
 		}
 		x = 1
-		y = 8
+		y = 7
 		relative_position_id = ALG_democratic_victory
 
 		ai_will_do = {
@@ -15177,12 +14492,13 @@ focus = {
             id = MSP_algeria_islamic
             icon = align_to_algeria
 			available = {
-				has_completed_focus = ALG_joint_governance_experiment
-                has_global_flag = ALG_MSP
                 neutrality_neutral_muslim_brotherhood_are_in_power = yes
             }
-            x = 77
-            y = 8
+			prerequisite = {
+				focus = ALG_future_national_policy1
+			}
+            x = 5
+            y = 17
             cost = 2
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus MSP_algeria_islamic"
@@ -16430,11 +15746,12 @@ focus = {
 		id = ALG_PNA_victory
 		icon = Generic_Army_Focus_Red02
 		cost = 2
-		x = 91
-		y = 8
+		x = 20
+		y = 17
+		prerequisite = {
+			focus = ALG_future_national_policy1
+		}
 		available = {
-			has_completed_focus = ALG_state_surveillance_network
-            has_global_flag = ALG_nationalist_victory
             nationalist_military_junta_are_in_power = yes
         }
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -16457,7 +15774,7 @@ focus = {
 			focus = ALG_PNA_victory
 		}
 		x = 2
-		y = 2
+		y = 1
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16489,7 +15806,7 @@ focus = {
 			focus = ALG_PNA_victory
 		}
 		x = -2
-		y = 2
+		y = 1
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16527,7 +15844,7 @@ focus = {
 			focus = ALG_subsidise_police
 		}
 		x = -2
-		y = 4
+		y = 3
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16567,7 +15884,7 @@ focus = {
 			focus = ALG_PNA_victory
 		}
 		x = 0
-		y = 2
+		y = 1
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16613,7 +15930,7 @@ focus = {
 			focus = ALG_maintain_military_role
 		}
 		x = -1
-		y = 3
+		y = 2
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16645,7 +15962,7 @@ focus = {
 			focus = ALG_statist_rise
 		}
 		x = 1
-		y = 3
+		y = 2
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16676,7 +15993,7 @@ focus = {
 			focus = ALG_maintain_socialistic_policies
 		}
 		x = 2
-		y = 4
+		y = 3
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16716,7 +16033,7 @@ focus = {
 			focus = ALG_government_planned_economic_projects
 		}
 		x = 3
-		y = 5
+		y = 4
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16751,7 +16068,7 @@ focus = {
 			focus = ALG_maintain_socialistic_policies
 		}
 		x = 0
-		y = 4
+		y = 3
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16788,7 +16105,7 @@ focus = {
 			focus = ALG_illiberal_democracy
 		}
 		x = -1
-		y = 7
+		y = 6
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16816,7 +16133,7 @@ focus = {
 			focus = ALG_kick_out_morocco
 		}
 		x = -3
-		y = 5
+		y = 4
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16851,7 +16168,7 @@ focus = {
 			focus = ALG_expand_youth_organizations
 		}
 		x = -2
-		y = 6
+		y = 5
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16889,7 +16206,7 @@ focus = {
 			focus = ALG_deal_with_the_trade_unions
 		}
 		x = -1
-		y = 5
+		y = 4
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16917,7 +16234,7 @@ focus = {
 			focus = ALG_illiberal_democracy
 		}
 		x = -3
-		y = 7
+		y = 6
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16947,7 +16264,7 @@ focus = {
 			focus = ALG_cultural_rebirth
 		}
 		x = -2
-		y = 9
+		y = 8
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -16980,7 +16297,7 @@ focus = {
 			focus = ALG_houarist_rise
 		}
 		x = -2
-		y = 8
+		y = 7
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -17014,7 +16331,7 @@ focus = {
 			focus = ALG_reestablish_intelligence_committee
 		}
 		x = 1
-		y = 5
+		y = 4
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -17042,7 +16359,7 @@ focus = {
 			focus = ALG_patriotic_propaganda
 		}
 		x = 2
-		y = 6
+		y = 5
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -17085,7 +16402,7 @@ focus = {
 			focus = ALG_reassert_russian_ties
 		}
 		x = 1
-		y = 7
+		y = 6
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -17158,7 +16475,7 @@ focus = {
 			focus = ALG_reassert_russian_ties
 		}
 		x = 3
-		y = 7
+		y = 6
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -17215,7 +16532,7 @@ focus = {
 			focus = ALG_cultural_rebirth
 		}
 		x = 2
-		y = 8
+		y = 7
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -17243,7 +16560,7 @@ focus = {
 			focus = ALG_houarist_rise
 		}
 		x = 2
-		y = 9
+		y = 8
 		relative_position_id = ALG_PNA_victory
 
 		ai_will_do = {
@@ -17265,4 +16582,1024 @@ focus = {
 			modify_radicalization_effect = yes
 		}
     }
+	 focus = {
+		id = ALG_future_national_policy1
+		icon = algeria_indp
+		x = 18
+		y = 16
+		cost = 5
+		allow_branch = {
+			has_country_flag = ALG_policy_path1
+		}
+		available = {
+			OR = {
+			has_completed_focus = ALG_open_democratic_path
+			has_completed_focus = ALG_popular_salvation
+			has_completed_focus = ALG_military_coup
+		}
+		}
+		completion_reward = {
+			add_stability = -0.02
+			add_political_power = 50
+			hidden_effect = {
+				country_event = {id = AlgeriaPoliticalEvents.1}
+			}
+		}
+		ai_will_do = {
+		base = 20
+		}
+	}
+	focus = {
+		id = ALG_a_radical_reorientation
+		icon = ak_jihadi
+
+		x = 22
+		y = 1
+		relative_position_id = ALG_future_national_policy1
+
+		cost = 7.2
+
+		prerequisite = { focus = ALG_future_national_policy1 }
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+
+		available = { has_idea = sunni }
+
+		bypass = { jihadist_government = yes }
+
+		completion_reward = {
+			set_temp_variable = { party_index = 12 }
+			unban_party_scripted_call = yes
+			add_war_support = 0.05
+			log = "[GetDateText]: [This.GetName]: focus ALG_a_radical_reorientation executed"
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 1
+				is_historical_focus_on = no
+			}
+			modifier = {
+				add = 4
+				is_historical_focus_on = no
+				OR = {
+					jihadist_government = yes
+					check_variable = { radicalization > 50 }
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = ALG_covert_support_for_islamist_radicals
+		icon = cybercaliphate
+
+		x = -1
+		y = 1
+		relative_position_id = ALG_a_radical_reorientation
+
+		cost = 7.2
+
+		prerequisite = { focus = ALG_a_radical_reorientation }
+
+		search_filters = { FOCUS_FILTER_RADICALIZATION }
+
+		available = { NOT = { has_war_with = AQY } }
+
+		bypass = { jihadist_government = yes }
+
+		completion_reward = {
+			set_temp_variable = { treasury_change = -3.00 }
+			modify_treasury_effect = yes
+			MAL = {
+				set_temp_variable = { threat_change = 10 }
+				modify_terror_threat_effect = yes
+			}
+			log = "[GetDateText]: [This.GetName]: focus ALG_covert_support_for_islamist_radicals executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = ALG_tolerate_radical_preachers
+		icon = generic_radicalism
+
+		x = 1
+		y = 1
+		relative_position_id = ALG_a_radical_reorientation
+
+		cost = 7.2
+
+		prerequisite = { focus = ALG_a_radical_reorientation }
+
+		search_filters = { FOCUS_FILTER_RADICALIZATION FOCUS_FILTER_SECTARIANISM }
+		bypass = { jihadist_government = yes }
+
+		completion_reward = {
+			set_temp_variable = { rad_change = 10 }
+			modify_radicalization_effect = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.05
+			}
+			recalculate_party = yes
+			log = "[GetDateText]: [This.GetName]: focus ALG_tolerate_radical_preachers executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = ALG_welcome_militants
+		icon = kurdish_militia
+
+		x = 0
+		y = 1
+		relative_position_id = ALG_covert_support_for_islamist_radicals
+
+		cost = 8.58
+
+		prerequisite = { focus = ALG_covert_support_for_islamist_radicals }
+		prerequisite = { focus = ALG_tolerate_radical_preachers }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
+		bypass = { jihadist_government = yes }
+
+		completion_reward = {
+			add_war_support = 0.05
+			add_stability = -0.05
+			set_temp_variable = { threat_change = 20 }
+			modify_terror_threat_effect = yes
+
+			add_popularity = { ideology = fascism popularity = 0.05 }
+			recalculate_party = yes
+			log = "[GetDateText]: [This.GetName]: focus ALG_welcome_militants executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = ALG_arms_smuggling
+		icon = smuggle_truck
+
+		x = 0
+		y = 1
+		relative_position_id = ALG_tolerate_radical_preachers
+
+		cost = 8.58
+
+		prerequisite = { focus = ALG_covert_support_for_islamist_radicals }
+		prerequisite = { focus = ALG_tolerate_radical_preachers }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
+		bypass = { jihadist_government = yes }
+
+		completion_reward = {
+			add_war_support = 0.05
+			add_stability = -0.05
+			set_temp_variable = { threat_change = 20 }
+			modify_terror_threat_effect = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.05
+			}
+			recalculate_party = yes
+			log = "[GetDateText]: [This.GetName]: focus ALG_arms_smuggling executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = ALG_start_the_uprising
+		icon = anti_war_with_big_gun
+
+		x = -1
+		y = 1
+		relative_position_id = ALG_arms_smuggling
+
+		cost = 7.2
+
+		prerequisite = { focus = ALG_welcome_militants }
+		prerequisite = { focus = ALG_arms_smuggling }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
+		bypass = { jihadist_government = yes }
+
+		completion_reward = {
+			hidden_effect = {
+				set_politics = {
+					ruling_party = fascism
+					elections_allowed = no
+				}
+				set_variable = { party_pop_array^11 = 1 }
+				recalculate_party = yes
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 11 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+			}
+			retire_country_leader = yes
+			create_country_leader = {
+				name = "Abdelmalek Droukdel"
+				picture = "abdelmalek_droukdel.dds"
+				ideology = Caliphate
+				traits = {
+					salafist_Caliphate
+					prince_of_terror
+				}
+			}
+
+			add_to_variable = { Caliphate_leader = 1 }
+			add_ideas = Non_State_Actor
+			set_cosmetic_tag = AQIM
+
+			every_other_country = {
+				limit = { has_military_access_to = ROOT }
+				diplomatic_relation = {
+					country = ROOT
+					relation = military_access
+					active = no
+				}
+			}
+			ALG = {
+				add_ideas = {
+					sunni
+					systematic_corruption
+					LoAS_member
+					rentier_state
+					conservative_society
+					youth_radicalization
+					al_jazeera_allowed
+					stagnation
+					defence_05
+					edu_03
+					health_04
+					social_05
+					bureau_03
+					police_03
+					police_05
+					volunteer_army
+					no_women_in_military
+					wahabi_ulema
+					small_medium_business_owners
+					fossil_fuel_industry
+					officer_advanced_training
+					intervention_limited_interventionism
+					full_isr_boycotte
+				}
+			}
+
+			add_named_threat = {
+				threat = 10
+				name = terror.threat
+			}
+
+			hidden_effect = {
+				set_partyall_allowed = yes
+				set_partyall_banned = yes
+				add_political_power = 460
+			}
+			log = "[GetDateText]: [This.GetName]: focus ALG_start_the_uprising executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = ALG_clamp_down_on_vices
+		icon = bloody_purge
+
+		x = -2
+		y = 1
+		relative_position_id = ALG_start_the_uprising
+
+		cost = 5
+
+		prerequisite = { focus = ALG_start_the_uprising }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SOCIAL_CONSERVATISM }
+
+		available = {
+			jihadist_government = yes
+			has_elections = no
+		}
+
+		completion_reward = {
+			add_political_power = 100
+			set_temp_variable = { temp_modify_social_con_government = 10 }
+			modify_social_conservatism_government = yes
+			log = "[GetDateText]: [This.GetName]: focus ALG_clamp_down_on_vices executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = ALG_revolutionize_the_ulema
+		icon = revolutionize_ulema
+
+		x = 0
+		y = 1
+		relative_position_id = ALG_start_the_uprising
+
+		cost = 7.2
+
+		prerequisite = { focus = ALG_start_the_uprising }
+
+		search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_SOCIAL_CONSERVATISM }
+
+		available = { jihadist_government = yes }
+
+		completion_reward = {
+			set_temp_variable = { temp_modify_social_con_government = 10 }
+			modify_social_conservatism_government = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_wahabi_ulema_opinion = yes
+			change_the_ulema_opinion = yes
+			log = "[GetDateText]: [This.GetName]: focus ALG_revolutionize_the_ulema executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = ALG_traditional_gender_roles
+		icon = islam_hijab
+
+		x = 2
+		y = 1
+		relative_position_id = ALG_start_the_uprising
+
+		cost = 5
+
+		prerequisite = { focus = ALG_start_the_uprising }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_POLITICAL FOCUS_FILTER_SOCIAL_CONSERVATISM }
+
+		available = {
+			jihadist_government = yes
+			has_elections = no
+		}
+
+		completion_reward = {
+		log = "[GetDateText]: [This.GetName]: focus ALG_traditional_gender_roles executed"
+			set_temp_variable = { temp_modify_social_con_government = 10 }
+			modify_social_conservatism_government = yes
+			set_no_women_effect = yes
+			add_popularity = {
+				ideology = fascism
+				popularity = 0.05
+			}
+			recalculate_party = yes
+		}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = ALG_pledge_allegiance_to_daesh
+		icon = isis_aks
+
+		x = 1
+		y = 1
+		relative_position_id = ALG_revolutionize_the_ulema
+
+		cost = 7.2
+
+		prerequisite = { focus = ALG_clamp_down_on_vices }
+		prerequisite = { focus = ALG_revolutionize_the_ulema }
+		prerequisite = { focus = ALG_traditional_gender_roles }
+		mutually_exclusive = { focus = ALG_pledge_allegiance_to_al_qaeda }
+
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			jihadist_government = yes
+			has_elections = no
+		}
+
+		completion_reward = {
+			add_ideas = isis_allegiance
+			if = {
+				limit = {
+					country_exists = ISI
+					NOT = {
+						any_of_scopes = {
+							array = global.possible_ALG_member_state
+							has_cosmetic_tag = AQIM
+						}
+					}
+				}
+				set_cosmetic_tag = AQIM
+				clr_country_flag = dynamic_flag
+				ISI = {
+					set_autonomy = {
+						target = ROOT
+						autonomy_state = autonomy_terrorist_wilayah
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					country_exists = ISI
+					any_of_scopes = {
+						array = global.possible_ALG_member_state
+						has_cosmetic_tag = AQIM
+					}
+				}
+				random_country = {
+					limit = { has_cosmetic_tag = AQIM }
+					annex_country = {
+						target = ROOT
+						transfer_troops = yes
+					}
+				}
+			}
+			else_if = {
+				limit = { NOT = { country_exists = ISI } }
+				set_cosmetic_tag = ISI
+				clr_country_flag = dynamic_flag
+			}
+			if = {
+				limit = {
+					NOT = { has_completed_focus = ALG_military_coup }
+				}
+			}
+			if = {
+				limit = { country_exists = SHB }
+				remove_opinion_modifier = {
+					target = SHB
+					modifier = ISIS_Are_Terrorists
+				}
+				remove_opinion_modifier = {
+					target = SHB
+					modifier = ISIS_Are_Terrorists_Trade
+				}
+			}
+			if = {
+				limit = { country_exists = ISI }
+				remove_opinion_modifier = {
+					target = ISI
+					modifier = ISIS_Are_Terrorists
+				}
+				remove_opinion_modifier = {
+					target = ISI
+					modifier = ISIS_Are_Terrorists_Trade
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus ALG_pledge_allegiance_to_daesh executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+    focus = {
+		id = ALG_jihad_in_arabia
+		icon = jihad_in_arabia
+
+		x = -1
+		y = 1
+		relative_position_id = ALG_pledge_allegiance_to_daesh
+
+		cost = 5
+
+		prerequisite = { focus = ALG_pledge_allegiance_to_al_qaeda focus = ALG_pledge_allegiance_to_daesh }
+
+		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			jihadist_government = yes
+			has_elections = no
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					check_variable = { shia_population > 0 }
+					NOT = { has_completed_focus = ALG_military_coup }
+				}
+			}
+			if = {
+				limit = {
+					country_exists = BHR
+					BHR = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = BHR
+				}
+			}
+			if = {
+				limit = {
+					country_exists = HEJ
+					HEJ = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = HEJ
+				}
+			}
+			if = {
+				limit = {
+					country_exists = HOU
+					HOU = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = HOU
+				}
+			}
+			if = {
+				limit = {
+					country_exists = KUW
+					KUW = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = KUW
+				}
+			}
+			if = {
+				limit = {
+					country_exists = NEJ
+					NEJ = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = NEJ
+				}
+			}
+			if = {
+				limit = {
+					country_exists = OMA
+					OMA = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = OMA
+				}
+			}
+			if = {
+				limit = {
+					country_exists = QAT
+					QAT = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = QAT
+				}
+			}
+			if = {
+				limit = {
+					country_exists = QTF
+					QTF = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = QTF
+				}
+			}
+			if = {
+				limit = {
+					country_exists = SAU
+					SAU = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = SAU
+				}
+			}
+			if = {
+				limit = {
+					country_exists = UAE
+					UAE = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = UAE
+				}
+			}
+			if = {
+				limit = {
+					country_exists = YEM
+					YEM = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = YEM
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus ALG_jihad_in_arabia executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = ALG_jihad_in_the_levant
+		icon = jihad_in_the_levant
+
+		x = 0
+		y = 1
+		relative_position_id = ALG_jihad_in_arabia
+
+		cost = 5.75
+
+		prerequisite = { focus = ALG_jihad_in_arabia }
+
+		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			jihadist_government = yes
+			has_elections = no
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					check_variable = { shia_population > 0 }
+					NOT = { has_completed_focus = ALG_military_coup }
+				}
+			}
+			if = {
+				limit = {
+					country_exists = FSA
+					FSA = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = FSA
+				}
+			}
+			if = {
+				limit = {
+					country_exists = IRQ
+					IRQ = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = IRQ
+				}
+			}
+			if = {
+				limit = {
+					country_exists = ISR
+					ISR = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = ISR
+				}
+			}
+			if = {
+				limit = {
+					country_exists = LEB
+					LEB = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = LEB
+				}
+			}
+			if = {
+				limit = {
+					country_exists = JOR
+					JOR = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = JOR
+				}
+			}
+			if = {
+				limit = {
+					country_exists = KUR
+					KUR = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = KUR
+				}
+			}
+			if = {
+				limit = {
+					country_exists = PUK
+					PUK = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = PUK
+				}
+			}
+			if = {
+				limit = {
+					country_exists = PAL
+					PAL = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = PAL
+				}
+			}
+			if = {
+				limit = {
+					country_exists = ROJ
+					ROJ = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = ROJ
+				}
+			}
+			if = {
+				limit = {
+					country_exists = SYR
+					SYR = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = SYR
+				}
+			}
+			if = {
+				limit = {
+					country_exists = DRU
+					DRU = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = DRU
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus ALG_jihad_in_the_levant executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = ALG_pledge_allegiance_to_al_qaeda
+		icon = alqaeda_thing
+
+		x = -1
+		y = 1
+		relative_position_id = ALG_revolutionize_the_ulema
+
+		cost = 7.2
+
+		prerequisite = { focus = ALG_clamp_down_on_vices }
+		prerequisite = { focus = ALG_revolutionize_the_ulema }
+		prerequisite = { focus = ALG_traditional_gender_roles }
+		mutually_exclusive = { focus = ALG_pledge_allegiance_to_daesh }
+
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			jihadist_government = yes
+			has_elections = no
+		}
+
+		completion_reward = {
+			if = {
+				limit = { NOT = { any_other_country = { has_cosmetic_tag = AQIM } } }
+				add_ideas = al_qaeda_network
+				if = {
+					limit = { country_exists = AQY }
+					remove_opinion_modifier = {
+						target = AQY
+						modifier = AlQaida_Are_Terrorists
+					}
+					remove_opinion_modifier = {
+						target = AQY
+						modifier = AlQaida_Are_Terrorists_Trade
+					}
+				}
+			}
+			else_if = {
+				limit = { any_other_country = { has_cosmetic_tag = AQIM } }
+				random_country = {
+					limit = { has_cosmetic_tag = AQIM NOT = { tag = ROOT } }
+					annex_country = {
+						target = ROOT
+						transfer_troops = yes
+					}
+				}
+				custom_effect_tooltip = TT_game_over_warning
+			}
+			log = "[GetDateText]: [This.GetName]: focus ALG_pledge_allegiance_to_al_qaeda executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = ALG_secure_the_loyalty_of_aqim
+		icon = Bin_Ladens_Legacy
+
+		x = -1
+		y = 1
+		relative_position_id = ALG_pledge_allegiance_to_al_qaeda
+
+		cost = 4.3
+
+		prerequisite = { focus = ALG_pledge_allegiance_to_al_qaeda }
+
+		search_filters = { FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			jihadist_government = yes
+			has_elections = no
+		}
+
+		completion_reward = {
+				custom_effect_tooltip = ALG_secure_the_loyalty_effect_tt
+				if = {
+					limit = { country_exists = AQY }
+					set_autonomy = {
+						target = AQY
+						autonomy_state = autonomy_terrorist_branch
+					}
+				}
+				if = {
+					limit = { country_exists = NUS }
+					set_autonomy = {
+						target = NUS
+						autonomy_state = autonomy_terrorist_branch
+					}
+				}
+				if = {
+					limit = { country_exists = TTP }
+					set_autonomy = {
+						target = TTP
+						autonomy_state = autonomy_terrorist_branch
+					}
+				}
+				if = {
+					limit = {
+						NOT = { has_completed_focus = ALG_crackdown_on_opposition }
+					}
+				}
+				log = "[GetDateText]: [This.GetName]: focus ALG_secure_the_loyalty_of_aqim executed"
+			}
+
+		ai_will_do = { base = 1 }
+	}
+	focus = {
+		id = ALG_war_on_daesh
+		icon = attack_isis
+
+		x = 0
+		y = 1
+		relative_position_id = ALG_secure_the_loyalty_of_aqim
+
+		cost = 5
+
+		prerequisite = { focus = ALG_secure_the_loyalty_of_aqim }
+
+		search_filters = { FOCUS_FILTER_ANNEXATION }
+
+		available = {
+			jihadist_government = yes
+			country_exists = ISI
+			has_elections = no
+		}
+
+		completion_reward = {
+			create_wargoal = {
+				type = annex_everything
+				target = ISI
+			}
+			log = "[GetDateText]: [This.GetName]: focus ALG_war_on_daesh executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = ALG_jihad_in_the_maghreb
+		icon = jihad_in_the_maghreb
+
+		x = 3
+		y = 1
+		relative_position_id = ALG_pledge_allegiance_to_al_qaeda
+
+		cost = 7.2
+
+		prerequisite = {
+			 focus = ALG_pledge_allegiance_to_al_qaeda
+			 focus = ALG_pledge_allegiance_to_daesh
+			  }
+
+		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			jihadist_government = yes
+			has_elections = no
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					country_exists = LBA
+					LBA = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = LBA
+				}
+			}
+			if = {
+				limit = {
+					country_exists = TUN
+					TUN = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = TUN
+				}
+			}
+			if = {
+				limit = {
+					country_exists = MOR
+					MOR = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = MOR
+				}
+			}
+			if = {
+				limit = {
+					country_exists = EGY
+					EGY = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = EGY
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus ALG_jihad_in_the_maghreb executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = ALG_jihad_in_west_africa
+		icon = jihad_in_west_africa
+
+		x = 0
+		y = 1
+		relative_position_id = ALG_jihad_in_the_maghreb
+
+		cost = 7.2
+
+		prerequisite = { focus = ALG_jihad_in_the_maghreb }
+
+		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			jihadist_government = yes
+			has_elections = no
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					country_exists = MAL
+					MAL = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = MAL
+				}
+			}
+			if = {
+				limit = {
+					country_exists = NIG
+					NIG = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = NIG
+				}
+			}
+			if = {
+				limit = {
+					country_exists = MAU
+					MAU = { no_jihadist_government = yes }
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = MAU
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: focus ALG_jihad_in_west_africa executed"
+		}
+
+		ai_will_do = { base = 1 }
+	}
 }
