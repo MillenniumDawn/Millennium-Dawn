@@ -172,9 +172,22 @@ CAC_add_company = {
 			index = selected_companies_num_temp
 		}
 
+        # ceo
         add_to_array = {
 			array = CAC_companies_selected_ceo
 			value = -1
+			index = selected_companies_num_temp
+		}
+
+        add_to_array = {
+			array = CAC_companies_selected_ceo_xp
+			value = 0
+			index = selected_companies_num_temp
+		}
+
+        add_to_array = {
+			array = CAC_companies_selected_ceo_level
+			value = 0
 			index = selected_companies_num_temp
 		}
 
@@ -186,6 +199,16 @@ CAC_add_company = {
         }
         add_to_array = {
             array = CAC_companies_expenses_modifier
+            value = 0
+            index = company_slot_temp
+        }
+        add_to_array = {
+            array = CAC_companies_upgrade_cost_modifier
+            value = 0
+            index = company_slot_temp
+        }
+        add_to_array = {
+            array = CAC_companies_factory_cost_modifier
             value = 0
             index = company_slot_temp
         }
@@ -790,6 +813,75 @@ CAC_modify_modifier_fuel_gain_effect = {
 CAC_modify_modifier_research_speed_effect = {
     custom_effect_tooltip = CAC_modify_modifiers_research_speed_tt
     add_to_variable = { CAC_modifier_research_speed = cac_modifier_research_speed_change }
+}
+
+# CAC_select_ceo_effect
+# Required Input: cac_selected_ceo (int)
+# Required Input: cac_slot (int)
+# Purpose: Change company factory expenses on slot cac_slot by cac_upgrade
+CAC_select_ceo_effect = {
+    if = {
+        limit = {
+            AND = {
+                check_variable = { cac_slot > -1 }
+                check_variable = { cac_slot < CAC_companies^num }
+            }
+        }
+
+        if = {
+            limit = { CAC_companies_selected_ceo^cac_slot > -1 }
+
+            if = {
+                limit = { check_variable = { CAC_companies_selected_ceo^cac_slot = 0 } }
+
+                add_to_variable = { CAC_companies_additional_expenses^cac_slot = 0.02 }
+            }
+            else_if = {
+                limit = { check_variable = { CAC_companies_selected_ceo^cac_slot = 1 } }
+
+                add_to_variable = { CAC_companies_additional_expenses^cac_slot = 0.03 }
+            }
+            else_if = {
+                limit = { check_variable = { CAC_companies_selected_ceo^cac_slot = 2 } }
+
+                add_to_variable = { CAC_companies_additional_expenses^cac_slot = 0.04 }
+            }
+            else_if = {
+                limit = { check_variable = { CAC_companies_selected_ceo^cac_slot = 3 } }
+
+                add_to_variable = { CAC_companies_additional_expenses^cac_slot = 0.05 }
+            }
+        }
+
+        set_variable = { CAC_companies_selected_ceo^cac_slot = cac_selected_ceo }
+        set_variable = { CAC_companies_selected_ceo_level^cac_slot = 0 }
+        set_variable = { CAC_companies_selected_ceo_xp^cac_slot = 0 }
+
+        if = {
+            limit = { check_variable = { cac_selected_ceo = 0 } }
+
+            add_to_variable = { CAC_companies_additional_expenses^cac_slot = -0.02 }
+            add_to_variable = { CAC_companies_upgrade_cost_modifier^cac_slot = -0.15 }
+        }
+        else_if = {
+            limit = { check_variable = { cac_selected_ceo = 1 } }
+
+            add_to_variable = { CAC_companies_additional_expenses^cac_slot = -0.03 }
+            add_to_variable = { CAC_companies_expenses_modifier^cac_slot = -0.15 }
+        }
+        else_if = {
+            limit = { check_variable = { cac_selected_ceo = 2 } }
+
+            add_to_variable = { CAC_companies_additional_expenses^cac_slot = -0.04 }
+            add_to_variable = { CAC_companies_factory_cost_modifier^cac_slot = -0.1 }
+        }
+        else_if = {
+            limit = { check_variable = { cac_selected_ceo = 3 } }
+
+            add_to_variable = { CAC_companies_additional_expenses^cac_slot = -0.05 }
+            add_to_variable = { CAC_companies_income_modifier^cac_slot = 0.15 }
+        }
+    }
 }
 
 CAC_update_variables = {

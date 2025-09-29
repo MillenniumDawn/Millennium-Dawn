@@ -858,7 +858,15 @@ scripted_gui = {
 			}
 
 			select_ceo_btn_click = {
-				set_country_flag = ceo_window_open
+				if = {
+					limit = { has_country_flag = ceo_window_open }
+
+					clr_country_flag = ceo_window_open
+				}
+				else = {
+					set_country_flag = ceo_window_open
+
+				}
 			}
 
 			company_history_tab_click = {
@@ -913,9 +921,11 @@ scripted_gui = {
 			}
 		}
 	}
+
 	company_select_ceo_window = {
 		window_name = "company_select_ceo_window"
         context_type = player_context
+		parent_window_name = "company_detail_window"
 
 		visible = {
 			ROOT = {
@@ -925,7 +935,36 @@ scripted_gui = {
 			}
 		}
 
+		triggers = {
+			select_ceo_btn_click_enabled = {
+				check_variable = { CAC_companies_selected_ceo^opened_company_details = -1 }
+			}
+			ceo_list_item_btn_click_enabled = {
+				check_variable = {
+					var = v
+					value = CAC_companies_selected_ceo^opened_company_details
+					compare = not_equals
+				}
+			}
+			select_ceo_btn_click_enabled = {
+				check_variable = { CAC_companies_selected_ceo^opened_company_details = -1 }
+			}
+			ceo_unassign_click_enabled = {
+				check_variable = { CAC_companies_selected_ceo^opened_company_details > -1 }
+			}
+		}
+
 		effects = {
+			select_ceo_btn_click = {
+				set_temp_variable = { cac_selected_ceo = v }
+				set_temp_variable = { cac_slot = opened_company_details }
+				CAC_select_ceo_effect = yes
+			}
+			ceo_unassign_click = {
+				set_temp_variable = { cac_selected_ceo = -1 }
+				set_temp_variable = { cac_slot = opened_company_details }
+				CAC_select_ceo_effect = yes
+			}
 			close_click = {
 				clr_country_flag = ceo_window_open
 			}
@@ -933,7 +972,7 @@ scripted_gui = {
 
 		dynamic_lists = {
 			select_ceo_list_grid = {
-				array = global.CAC_available_ceo_list
+				array = CAC_available_ceo_list
 				entry_container = "select_ceo_list_item"
 			}
 		}
@@ -941,6 +980,9 @@ scripted_gui = {
 		properties = {
 			ceo_list_portrait = {
 				image = "[CAC_get_ceo_portrait]"
+			}
+			ceo_type_icon = {
+				image = "[CAC_get_ceo_type_icon]"
 			}
 		}
 	}
