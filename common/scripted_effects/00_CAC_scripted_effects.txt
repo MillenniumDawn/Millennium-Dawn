@@ -191,6 +191,12 @@ CAC_add_company = {
 			index = selected_companies_num_temp
 		}
 
+        add_to_array = {
+			array = CAC_companies_selected_ceo_level_modifier
+			value = 0
+			index = selected_companies_num_temp
+		}
+
         # company modifiers
         add_to_array = {
             array = CAC_companies_income_modifier
@@ -407,6 +413,11 @@ CAC_modify_factories_effect = {
 
         add_to_variable = { CAC_companies_factories^cac_slot = cac_factories_change }
         add_to_variable = { CAC_companies_size^cac_slot = size_change_temp }
+
+        set_temp_variable = { cac_xp_change = 100 }
+        multiply_temp_variable = { cac_xp_change = cac_factories_change }
+        set_temp_variable = { cac_slot = i }
+        CAC_modify_ceo_xp_effect = yes
 
         CAC_update_variables = yes
 
@@ -856,27 +867,32 @@ CAC_select_ceo_effect = {
                 limit = { check_variable = { CAC_companies_selected_ceo^cac_slot = 0 } }
 
                 add_to_variable = { CAC_companies_additional_expenses^cac_slot = 0.02 }
+                add_to_variable = { CAC_companies_upgrade_cost_modifier^cac_slot = 0.15 }
             }
             else_if = {
                 limit = { check_variable = { CAC_companies_selected_ceo^cac_slot = 1 } }
 
                 add_to_variable = { CAC_companies_additional_expenses^cac_slot = 0.03 }
+                add_to_variable = { CAC_companies_expenses_modifier^cac_slot = 0.15 }
             }
             else_if = {
                 limit = { check_variable = { CAC_companies_selected_ceo^cac_slot = 2 } }
 
                 add_to_variable = { CAC_companies_additional_expenses^cac_slot = 0.04 }
+                add_to_variable = { CAC_companies_factory_cost_modifier^cac_slot = 0.1 }
             }
             else_if = {
                 limit = { check_variable = { CAC_companies_selected_ceo^cac_slot = 3 } }
 
                 add_to_variable = { CAC_companies_additional_expenses^cac_slot = 0.05 }
+                add_to_variable = { CAC_companies_income_modifier^cac_slot = -0.15 }
             }
         }
 
         set_variable = { CAC_companies_selected_ceo^cac_slot = cac_selected_ceo }
-        set_variable = { CAC_companies_selected_ceo_level^cac_slot = 0 }
+        set_variable = { CAC_companies_selected_ceo_level^cac_slot = 1 }
         set_variable = { CAC_companies_selected_ceo_xp^cac_slot = 0 }
+        set_variable = { CAC_companies_selected_ceo_level_modifier^cac_slot = 0 }
 
         if = {
             limit = { check_variable = { cac_selected_ceo = 0 } }
@@ -902,6 +918,30 @@ CAC_select_ceo_effect = {
             add_to_variable = { CAC_companies_additional_expenses^cac_slot = -0.05 }
             add_to_variable = { CAC_companies_income_modifier^cac_slot = 0.15 }
         }
+    }
+}
+
+# CAC_modify_ceo_xp_effect
+# Required Input: cac_xp_change (int)
+# Required Input: cac_slot (int)
+# Purpose: Change ceo xp by cac_xp_change on slot cac_slot
+CAC_modify_ceo_xp_effect = {
+    #custom_effect_tooltip = CAC_modify_ceo_xp_tt
+
+    set_temp_variable = { new_xp = CAC_companies_selected_ceo_xp^cac_slot }
+    add_to_variable = { new_xp = cac_xp_change }
+
+    if = {
+        limit = { check_variable = { new_xp > 500 } }
+
+        subtract_from_temp_variable = { new_xp = 500 }
+        set_variable = { CAC_companies_selected_ceo_xp^cac_slot = new_xp }
+
+        add_to_variable = { CAC_companies_selected_ceo_level^cac_slot = 1 }
+        add_to_variable = { CAC_companies_selected_ceo_level_modifier^cac_slot = 0.1 }
+    }
+    else = {
+        add_to_variable = { CAC_companies_selected_ceo_xp^cac_slot = cac_xp_change }
     }
 }
 
@@ -969,6 +1009,11 @@ CAC_update_variables = {
                 add_to_temp_variable = { company_taxes_modifiers = modifier@companies_taxes_modifier }
 
                 multiply_variable = { CAC_companies_taxes^i = company_taxes_modifiers }
+
+                # ceo
+                set_temp_variable = { cac_xp_change = 10 }
+                set_temp_variable = { cac_slot = i }
+                CAC_modify_ceo_xp_effect = yes
             }
             else = {
                 set_variable = { CAC_companies_taxes^i = 0 }
