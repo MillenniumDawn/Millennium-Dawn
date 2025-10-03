@@ -1029,13 +1029,81 @@ scripted_gui = {
 		window_name = "adopt_foreign_company_window"
         context_type = diplomatic_action
 
-		triggers = {}
+		triggers = {
+			foreign_available_companies_select_click_enabled = {
+				#set_variable = { selected_foreign_company = PREV.CAC_companies^0 }
 
-		effects = {}
+				check_variable = {
+					var = v
+					value = selected_foreign_company
+					compare = not_equals
+				}
+			}
+			companies_dismiss_button_click_enabled = {
+				any_of = {
+					array = CAC_foreign_companies
+					index = index
+					value = company_id
+					
+					AND = {
+						check_variable = { company_id = v }
+						check_variable = { CAC_foreign_companies_countries^index = PREV }
+					}
+				}
+			}
+		}
+
+		effects = {
+			foreign_available_companies_select_click = {
+				set_variable = { selected_foreign_company = v }
+			}
+			companies_dismiss_button_click = {
+				for_each_loop = {
+					array = CAC_foreign_companies
+					index = index
+					value = company_id
+					break = break
+
+					if = {
+						limit = {
+							AND = {
+								check_variable = { company_id = v }
+								check_variable = { CAC_foreign_companies_countries^index = PREV }
+							}
+						}
+
+						remove_from_array = {
+							array = CAC_foreign_companies
+							index = index
+						}
+						remove_from_array = {
+							array = CAC_foreign_companies_countries
+							index = index
+						}
+
+						PREV = {
+							set_variable = { CAC_companies_income_modifier^i = -0.1 }
+
+							set_temp_variable = { cac_slot = v }
+							set_temp_variable = { cac_additional_income_change = -0.1 }
+							CAC_modify_additional_income_effect = yes
+						}
+
+						set_temp_variable = { break = break }
+					}
+				}
+			}
+		}
+
+		properties = {
+			#foreign_available_companies_select = {
+			#	frame = ROOT.
+			#}
+		}
 
 		dynamic_lists = {
 			foreign_available_companies_grid = {
-                array = THIS.CAC_companies
+                array = CAC_companies
                 entry_container = "foreign_available_companies_grid_list_item"
             }
 		}

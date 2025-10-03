@@ -1456,27 +1456,44 @@ scripted_diplomatic_actions = {
 			# chceck if country have avaible slot
 		}
 
-		cost = 100
+		cost = 0 # 100
 
-		requires_acceptance = no
-		show_acceptance_on_action_button = no
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
 
-		icon = 1
+		icon = 19
 
-		send_description = RECALL_VOLUNTEERS_SEND_DESC
+		send_description = ADOPT_FOREIGN_COMPANY_DESC
 
-		complete_effect = {}
+		accept_title = DIPLO_ACTION_ADOPT_FOREIGN_COMPANY_ACCEPT
+		accept_description = DIPLO_ACTION_ADOPT_FOREIGN_COMPANY_ACCEPT_DESC
+		reject_title = DIPLO_ACTION_ADOPT_FOREIGN_COMPANY_REJECT
+		reject_description = DIPLO_ACTION_ADOPT_FOREIGN_COMPANY_REJECT_DESC
+
+		complete_effect = {
+			add_to_array = {
+				array = CAC_foreign_companies
+				value = selected_foreign_company
+			}
+			add_to_array = {
+				array = CAC_foreign_companies_countries
+				value = PREV.id
+			}
+
+			PREV = {
+				set_variable = { CAC_companies_income_modifier^selected_foreign_company = 0.1 }
+
+				set_temp_variable = { cac_slot = selected_foreign_company }
+				set_temp_variable = { cac_additional_income_change = 0.1 }
+				CAC_modify_additional_income_effect = yes
+			}
+		}
 
 		send_scripted_gui = adopt_foreign_company_window
 
-		reset_send_effect = {
-			if = {
-				limit = { 
-					root = {
-						is_ai = yes
-					}
-				}
-				# initialize for ai
+		ai_acceptance = {
+			base_propose_subsidies_to_subject_condition = {
+				base = 1000
 			}
 		}
 	}
