@@ -3599,8 +3599,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VEN_cuban_friendship"
-			add_opinion_modifier = { target = CUB modifier = VEN_friendship_cuba }
-			CUB = { add_opinion_modifier = { target = VEN modifier = VEN_friendship } }
+			add_opinion_modifier = { modifier = VEN_friendship_cuba target = CUB }
+			CUB = { add_opinion_modifier = { modifier = VEN_friendship target = VEN } }
 
 			set_temp_variable = { percent_change = 3 }
 			set_temp_variable = { tag_index = VEN }
@@ -3629,10 +3629,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VEN_brazilian_and_argentine_friendship"
-			add_opinion_modifier = { target = BRA modifier = VEN_friendship_brazil }
-			add_opinion_modifier = { target = ARG modifier = VEN_friendship_argentina }
-			BRA = { add_opinion_modifier = { target = VEN modifier = VEN_friendship } }
-			ARG = { add_opinion_modifier = { target = VEN modifier = VEN_friendship } }
+			add_opinion_modifier = { modifier = VEN_friendship_brazil target = BRA }
+			add_opinion_modifier = { modifier = VEN_friendship_argentina target = ARG }
+			BRA = { add_opinion_modifier = { modifier = VEN_friendship target = VEN } }
+			ARG = { add_opinion_modifier = { modifier = VEN_friendship target = VEN } }
 
 			set_temp_variable = { percent_change = 3 }
 			set_temp_variable = { tag_index = VEN }
@@ -6726,7 +6726,6 @@ focus = {
 				}
 			}
 				
-			# Se elimina la llave '}' extra que estaba causando el error.
 			
 			set_temp_variable = { temp_opinion = -10 }
 			change_fossil_fuel_industry_opinion = yes
@@ -6839,7 +6838,7 @@ focus = {
 			add_popularity = {
 				ideology = nationalist
 				popularity = 0.05
-			} # <-- CORRECCIÓN: Cierre del bloque add_popularity
+			}
 			
 			# --- Modificador de Opinión Mutuo con USA ---
 			USA = {
@@ -7309,7 +7308,7 @@ focus = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VEN_ally_the_us"
 			random_owned_state = {
-				limit = { has_building = { type = internet_station level < 5 } }
+				limit = { internet_station < 5 }
 				prioritize = { 874 875 876 915 916 917 }
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -7319,7 +7318,7 @@ focus = {
 				}
 			}
 			random_owned_state = {
-				limit = { has_building = { type = internet_station level < 5 } }
+				limit = { internet_station < 5 }
 				prioritize = { 874 875 876 915 916 917 }
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -7329,7 +7328,7 @@ focus = {
 				}
 			}
 			random_owned_state = {
-				limit = { has_building = { type = internet_station level < 5 } }
+				limit = { internet_station < 5 }
 				prioritize = { 874 875 876 915 916 917 }
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
@@ -9180,9 +9179,9 @@ focus = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus VEN_call_washington"
+			add_opinion_modifier = { modifier = VEN_reached_to_usa target = USA }
 			USA = {
-				add_opinion_modifier = { target = ROOT modifier = VEN_reached_to_usa }
-				reverse_add_opinion_modifier = { target = ROOT modifier = VEN_reached_to_usa }
+				add_opinion_modifier = { modifier = VEN_reached_to_usa target = ROOT }
 			}
 		}
 
@@ -9955,43 +9954,62 @@ focus = {
 				limit = { check_variable = { VEN.var_us_import_policy = 3 } USA = { has_opinion = { target = VEN value > 80 } } }
 				set_temp_variable = { percent_change = 1 }
 				set_temp_variable = { treasury_change = -1.2 }
-
+				modify_treasury_effect = yes
+				set_temp_variable = { tag_index = USA }
+				set_temp_variable = { influence_target = VEN }
+				change_influence_percentage = yes
 				USA = {
 					add_opinion_modifier = {
 						target = VEN
 						modifier = VEN_us_import_policy_aggressive
 					}
 				}
-			}
-			else_if = {
-				limit = { check_variable = { VEN.var_us_import_policy > 1 } }
-				set_temp_variable = { percent_change = 0.5 }
-				set_temp_variable = { treasury_change = -1.4 }
-			}
-			else_if = {
-				limit = { check_variable = { VEN.var_us_import_policy = 1 } }
-				set_temp_variable = { percent_change = 0 }
-				set_temp_variable = { treasury_change = -1.55 }
-			}
-			else = {
-				set_temp_variable = { percent_change = -1 }
-				set_temp_variable = { treasury_change = -1.750 }
-
-				USA = {
-					add_opinion_modifier = {
-						target = VEN
-						modifier = VEN_us_import_policy_fair
-					}
+				add_equipment_to_stockpile = {
+					type = convoy
+					amount = 130
+					producer = USA
 				}
 			}
-			modify_treasury_effect = yes
-			set_temp_variable = { influence_target = THIS.id }
-			set_temp_variable = { tag_index = USA.id }
-			change_influence_percentage = yes
-
-			add_equipment_to_stockpile = {
-				type = convoy
-				amount = 130
+			else = {
+				if = {
+					limit = { check_variable = { VEN.var_us_import_policy > 1 } }
+					set_temp_variable = { percent_change = 0.5 }
+					set_temp_variable = { treasury_change = -1.4 }
+					modify_treasury_effect = yes
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = VEN }
+					change_influence_percentage = yes
+				}
+				else = {
+					if = {
+						limit = { check_variable = { VEN.var_us_import_policy = 1 } }
+						set_temp_variable = { percent_change = 0 }
+						set_temp_variable = { treasury_change = -1.55 }
+						modify_treasury_effect = yes
+						set_temp_variable = { tag_index = USA }
+						set_temp_variable = { influence_target = VEN }
+						change_influence_percentage = yes
+					}
+					else = {
+						set_temp_variable = { percent_change = -1 }
+						set_temp_variable = { treasury_change = -1.750 }
+						modify_treasury_effect = yes
+						set_temp_variable = { tag_index = USA }
+						set_temp_variable = { influence_target = VEN }
+						change_influence_percentage = yes
+						USA = {
+							add_opinion_modifier = {
+								target = VEN
+								modifier = VEN_us_import_policy_fair
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = convoy
+							amount = 130
+							producer = USA
+						}
+					}
+				}
 			}
 		}
 
@@ -10703,50 +10721,72 @@ focus = {
 				limit = { check_variable = { VEN.var_us_import_policy = 3 } USA = { has_opinion = { target = VEN value > 80 } } }
 				set_temp_variable = { percent_change = 1 }
 				set_temp_variable = { treasury_change = -7.25 }
-
+				modify_treasury_effect = yes
+				set_temp_variable = { tag_index = USA }
+				set_temp_variable = { influence_target = VEN }
+				change_influence_percentage = yes
 				USA = {
 					add_opinion_modifier = {
 						target = VEN
 						modifier = VEN_us_import_policy_aggressive
 					}
 				}
-			}
-			else_if = {
-				limit = { check_variable = { VEN.var_us_import_policy > 1 } }
-				set_temp_variable = { percent_change = 0.5 }
-				set_temp_variable = { treasury_change = -8.5 }
-			}
-			else_if = {
-				limit = { check_variable = { VEN.var_us_import_policy = 1 } }
-				set_temp_variable = { percent_change = 0 }
-				set_temp_variable = { treasury_change = -9.75 }
-			} else = {
-				set_temp_variable = { percent_change = -1 }
-				set_temp_variable = { treasury_change = -11 }
-
-				USA = {
-					add_opinion_modifier = {
-						target = VEN
-						modifier = VEN_us_import_policy_fair
-					}
+				add_equipment_to_stockpile = {
+					type = util_vehicle_3 # Humvee
+					amount = 2400
+					producer = USA
+				}
+				add_equipment_to_stockpile = {
+					type = Heavy_Anti_tank_1 # BGM-71D TOW-2 (Humvee with TOW-2 icon)
+					amount = 2000
+					producer = USA
 				}
 			}
-			modify_treasury_effect = yes
-
-			set_temp_variable = { influence_target = THIS.id }
-			set_temp_variable = { tag_index = USA.id }
-			change_influence_percentage = yes
-
-			# 3 batallions of marine motorized infantry with heavy engineers, motorized recon and CSS
-			add_equipment_to_stockpile = {
-				type = util_vehicle_3 # Humvee
-				amount = 2400
-				producer = USA
-			}
-			add_equipment_to_stockpile = {
-				type = Heavy_Anti_tank_1 # BGM-71D TOW-2 (Humvee with TOW-2 icon)
-				amount = 2000
-				producer = USA
+			else = {
+				if = {
+					limit = { check_variable = { VEN.var_us_import_policy > 1 } }
+					set_temp_variable = { percent_change = 0.5 }
+					set_temp_variable = { treasury_change = -8.5 }
+					modify_treasury_effect = yes
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = VEN }
+					change_influence_percentage = yes
+				}
+				else = {
+					if = {
+						limit = { check_variable = { VEN.var_us_import_policy = 1 } }
+						set_temp_variable = { percent_change = 0 }
+						set_temp_variable = { treasury_change = -9.75 }
+						modify_treasury_effect = yes
+						set_temp_variable = { tag_index = USA }
+						set_temp_variable = { influence_target = VEN }
+						change_influence_percentage = yes
+					}
+					else = {
+						set_temp_variable = { percent_change = -1 }
+						set_temp_variable = { treasury_change = -11 }
+						modify_treasury_effect = yes
+						set_temp_variable = { tag_index = USA }
+						set_temp_variable = { influence_target = VEN }
+						change_influence_percentage = yes
+						USA = {
+							add_opinion_modifier = {
+								target = VEN
+								modifier = VEN_us_import_policy_fair
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = util_vehicle_3 # Humvee
+							amount = 2400
+							producer = USA
+						}
+						add_equipment_to_stockpile = {
+							type = Heavy_Anti_tank_1 # BGM-71D TOW-2 (Humvee with TOW-2 icon)
+							amount = 2000
+							producer = USA
+						}
+					}
+				}
 			}
 		}
 
@@ -10789,59 +10829,92 @@ focus = {
 				limit = { check_variable = { VEN.var_us_import_policy = 3 } USA = { has_opinion = { target = VEN value > 80 } } }
 				set_temp_variable = { percent_change = 1 }
 				set_temp_variable = { treasury_change = -19.5 }
-
+				modify_treasury_effect = yes
+				set_temp_variable = { tag_index = USA }
+				set_temp_variable = { influence_target = VEN }
+				change_influence_percentage = yes
 				USA = {
 					add_opinion_modifier = {
 						target = VEN
 						modifier = VEN_us_import_policy_aggressive
 					}
 				}
-			}
-			else_if = {
-				limit = { check_variable = { VEN.var_us_import_policy > 1 } }
-				set_temp_variable = { percent_change = 0.5 }
-				set_temp_variable = { treasury_change = -22.5 }
-			}
-			else_if = {
-				limit = { check_variable = { VEN.var_us_import_policy = 1 } }
-				set_temp_variable = { percent_change = 0 }
-				set_temp_variable = { treasury_change = -25.5 }
-			} else = {
-				set_temp_variable = { percent_change = -1 }
-				set_temp_variable = { treasury_change = -28.5 }
-
-				USA = {
-					add_opinion_modifier = {
-						target = VEN
-						modifier = VEN_us_import_policy_fair
-					}
+				add_equipment_to_stockpile = {
+					type = infantry_weapons3
+					amount = 2000
+					producer = USA
+				}
+				add_equipment_to_stockpile = {
+					type = command_control_equipment2
+					amount = 1600
+					producer = USA
+				}
+				add_equipment_to_stockpile = {
+					type = Anti_tank_1
+					amount = 400
+					producer = USA
+				}
+				add_equipment_to_stockpile = {
+					type = Anti_Air_1
+					amount = 300
+					producer = USA
 				}
 			}
-			modify_treasury_effect = yes
-			set_temp_variable = { influence_target = THIS.id }
-			set_temp_variable = { tag_index = USA.id }
-			change_influence_percentage = yes
-
-			# 3 batallions of marine motorized infantry with heavy engineers, motorized recon and CSS
-			add_equipment_to_stockpile = {
-				type = infantry_weapons3
-				amount = 2000
-				producer = USA
-			}
-			add_equipment_to_stockpile = {
-				type = command_control_equipment2
-				amount = 1600
-				producer = USA
-			}
-			add_equipment_to_stockpile = {
-				type = Anti_tank_1
-				amount = 400
-				producer = USA
-			}
-			add_equipment_to_stockpile = {
-				type = Anti_Air_1
-				amount = 300
-				producer = USA
+			else = {
+				if = {
+					limit = { check_variable = { VEN.var_us_import_policy > 1 } }
+					set_temp_variable = { percent_change = 0.5 }
+					set_temp_variable = { treasury_change = -22.5 }
+					modify_treasury_effect = yes
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = VEN }
+					change_influence_percentage = yes
+				}
+				else = {
+					if = {
+						limit = { check_variable = { VEN.var_us_import_policy = 1 } }
+						set_temp_variable = { percent_change = 0 }
+						set_temp_variable = { treasury_change = -25.5 }
+						modify_treasury_effect = yes
+						set_temp_variable = { tag_index = USA }
+						set_temp_variable = { influence_target = VEN }
+						change_influence_percentage = yes
+					}
+					else = {
+						set_temp_variable = { percent_change = -1 }
+						set_temp_variable = { treasury_change = -28.5 }
+						modify_treasury_effect = yes
+						set_temp_variable = { tag_index = USA }
+						set_temp_variable = { influence_target = VEN }
+						change_influence_percentage = yes
+						USA = {
+							add_opinion_modifier = {
+								target = VEN
+								modifier = VEN_us_import_policy_fair
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = infantry_weapons3
+							amount = 2000
+							producer = USA
+						}
+						add_equipment_to_stockpile = {
+							type = command_control_equipment2
+							amount = 1600
+							producer = USA
+						}
+						add_equipment_to_stockpile = {
+							type = Anti_tank_1
+							amount = 400
+							producer = USA
+						}
+						add_equipment_to_stockpile = {
+							type = Anti_Air_1
+							amount = 300
+							producer = USA
+						}
+					}
+				}
 			}
 		}
 
@@ -10884,49 +10957,72 @@ focus = {
 				limit = { check_variable = { VEN.var_us_import_policy = 3 } USA = { has_opinion = { target = VEN value > 80 } } }
 				set_temp_variable = { percent_change = 1 }
 				set_temp_variable = { treasury_change = -5.8 }
-
+				modify_treasury_effect = yes
+				set_temp_variable = { tag_index = USA }
+				set_temp_variable = { influence_target = VEN }
+				change_influence_percentage = yes
 				USA = {
 					add_opinion_modifier = {
 						target = VEN
 						modifier = VEN_us_import_policy_aggressive
 					}
 				}
-			}
-			else_if = {
-				limit = { check_variable = { VEN.var_us_import_policy > 1 } }
-				set_temp_variable = { percent_change = 0.5 }
-				set_temp_variable = { treasury_change = -6.8 }
-			}
-			else_if = {
-				limit = { check_variable = { VEN.var_us_import_policy = 1 } }
-				set_temp_variable = { percent_change = 0 }
-				set_temp_variable = { treasury_change = -7.5 }
-			} else = {
-				set_temp_variable = { percent_change = -1 }
-				set_temp_variable = { treasury_change = -8.5 }
-
-				USA = {
-					add_opinion_modifier = {
-						target = VEN
-						modifier = VEN_us_import_policy_fair
-					}
+				add_equipment_to_stockpile = {
+					type = artillery_1
+					amount = 540
+					producer = USA
+				}
+				add_equipment_to_stockpile = {
+					type = command_control_equipment2
+					amount = 2000
+					producer = USA
 				}
 			}
-			modify_treasury_effect = yes
-			set_temp_variable = { influence_target = THIS.id }
-			set_temp_variable = { tag_index = USA.id }
-			change_influence_percentage = yes
-
-			# 3 batallions of marine motorized infantry with heavy engineers, motorized recon and CSS
-			add_equipment_to_stockpile = {
-				type = artillery_1
-				amount = 540
-				producer = USA
-			}
-			add_equipment_to_stockpile = {
-				type = command_control_equipment2
-				amount = 2000
-				producer = USA
+			else = {
+				if = {
+					limit = { check_variable = { VEN.var_us_import_policy > 1 } }
+					set_temp_variable = { percent_change = 0.5 }
+					set_temp_variable = { treasury_change = -6.8 }
+					modify_treasury_effect = yes
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = VEN }
+					change_influence_percentage = yes
+				}
+				else = {
+					if = {
+						limit = { check_variable = { VEN.var_us_import_policy = 1 } }
+						set_temp_variable = { percent_change = 0 }
+						set_temp_variable = { treasury_change = -7.5 }
+						modify_treasury_effect = yes
+						set_temp_variable = { tag_index = USA }
+						set_temp_variable = { influence_target = VEN }
+						change_influence_percentage = yes
+					}
+					else = {
+						set_temp_variable = { percent_change = -1 }
+						set_temp_variable = { treasury_change = -8.5 }
+						modify_treasury_effect = yes
+						set_temp_variable = { tag_index = USA }
+						set_temp_variable = { influence_target = VEN }
+						change_influence_percentage = yes
+						USA = {
+							add_opinion_modifier = {
+								target = VEN
+								modifier = VEN_us_import_policy_fair
+							}
+						}
+						add_equipment_to_stockpile = {
+							type = artillery_1
+							amount = 540
+							producer = USA
+						}
+						add_equipment_to_stockpile = {
+							type = command_control_equipment2
+							amount = 2000
+							producer = USA
+						}
+					}
+				}
 			}
 		}
 
@@ -11292,8 +11388,8 @@ focus = {
 			add_stability = 0.10
 
 			CUB = {
-				add_opinion_modifier = { target = VEN modifier = VEN_reached_out_to_cuba_modifier }
-				reverse_add_opinion_modifier = { target = VEN modifier = VEN_reached_out_to_cuba_modifier }
+				add_opinion_modifier = { modifier = VEN_reached_out_to_cuba_modifier target = VEN }
+				add_opinion_modifier = { modifier = VEN_reached_out_to_cuba_modifier target = CUB }
 			}
 		}
 
@@ -12078,13 +12174,13 @@ focus = {
 					level = 3
 					instant_build = yes
 				}
+			}
 			916 = {
 				add_building_construction = {
 					type = dockyard
 					level = 5
 					instant_build = yes
 				}
-
 			}
 			
 		}
