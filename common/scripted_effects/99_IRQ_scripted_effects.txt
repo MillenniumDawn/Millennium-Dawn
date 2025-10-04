@@ -4849,3 +4849,130 @@ IRQ_government_change = {
 		}
 	}
 }
+
+IRQ_create_pie_chart = {
+	clear_array = pie_chart
+	resize_array = {
+		array = pie_chart
+		value = 1 # 1 is value for neutrality frame, so we don't have to make a loop for it
+		size = 100 # 100 pieces, each percent is one piece
+	}
+	set_temp_variable = { neutrality_pop = party_popularity@neutrality }
+	multiply_temp_variable = { neutrality_pop = 100 }
+	round_temp_variable = neutrality_pop
+
+	set_temp_variable = { communism_pop = party_popularity@communism }
+	multiply_temp_variable = { communism_pop = 100 }
+	round_temp_variable = communism_pop 
+	set_variable = { ROOT.last_idx = neutrality_pop }
+	add_to_temp_variable = { communism_pop = ROOT.last_idx }
+	for_loop_effect = {
+		start = ROOT.last_idx
+		end = communism_pop
+		set_variable = { pie_chart^v = 2 }
+		add_to_variable = { ROOT.last_idx = 1 }
+	}
+
+	set_temp_variable = { democratic_pop = party_popularity@democratic }
+	multiply_temp_variable = { democratic_pop = 100 }
+	round_temp_variable = democratic_pop
+	add_to_temp_variable = { democratic_pop = ROOT.last_idx }
+	for_loop_effect = {
+		start = ROOT.last_idx
+		end = democratic_pop
+		set_variable = { pie_chart^v = 3 }
+		add_to_variable = { ROOT.last_idx = 1 }
+	}
+
+	set_temp_variable = { fascism_pop = party_popularity@fascism }
+	multiply_temp_variable = { fascism_pop = 100 }
+	round_temp_variable = fascism_pop 
+	add_to_temp_variable = { fascism_pop = ROOT.last_idx }
+	for_loop_effect = {
+		start = ROOT.last_idx
+		end = fascism_pop
+		set_variable = { pie_chart^v = 4 }
+	}
+
+	clear_variable = ROOT.last_idx
+	add_to_variable = { pie_chart_dirty = 1 }
+}
+
+generate_culture_pie_chart_effect = {
+			1 = {
+				set_variable = {
+					culture1 = 70
+				}
+				set_variable = {
+					culture2 = 30
+				}
+			}
+			2 = {
+				set_variable = {
+					culture1 = 16
+				}
+				set_variable = {
+					culture2 = 12
+				}
+				set_variable = {
+					culture3 = 12
+				}
+				set_variable = {
+					culture4 = 12
+				}
+				set_variable = {
+					culture5 = 12
+				}
+				set_variable = {
+					culture6 = 12
+				}
+				set_variable = {
+					culture7 = 12
+				}
+				set_variable = {
+					culture8 = 12
+				}
+			}
+    # White
+    set_variable = { white_chart_var = THIS.party_popularity@fascism }
+    multiply_variable = { white_chart_var = 10 }
+    
+    # Gold
+    set_variable = { gold_chart_var = THIS.party_popularity@communism }
+    multiply_variable = { gold_chart_var = 10 }
+    add_to_variable = { gold_chart_var = white_chart_var }
+    
+	# Teal:
+    set_variable = { teal_chart_var = THIS.party_popularity@neutrality }
+    multiply_variable = { teal_chart_var = 10 }
+    add_to_variable = { teal_chart_var = gold_chart_var }
+	
+	# Purple:
+    set_variable = { purple_chart_var = THIS.party_popularity@fascism }
+    multiply_variable = { purple_chart_var = 10 }
+    add_to_variable = { purple_chart_var = teal_chart_var }
+	
+	# Red:
+    set_variable = { red_chart_var = THIS.culture5 }
+    multiply_variable = { red_chart_var = 10 }
+    add_to_variable = { red_chart_var = purple_chart_var }
+	
+	# Green:
+    set_variable = { green_chart_var = THIS.culture6 }
+    multiply_variable = { green_chart_var = 10 }
+    add_to_variable = { green_chart_var = red_chart_var }
+	
+	# Orange:
+    set_variable = { orange_chart_var = THIS.culture7 }
+    multiply_variable = { orange_chart_var = 10 }
+    add_to_variable = { orange_chart_var = green_chart_var }
+	
+	# Pink:
+    set_variable = { pink_chart_var = THIS.culture8 }
+    multiply_variable = { pink_chart_var = 10 }
+    add_to_variable = { pink_chart_var = orange_chart_var }
+	
+    set_temp_variable = { show = 1 }
+    subtract_from_temp_variable = { show = CSS_culture_dirty }
+    set_variable = { CSS_culture_dirty = show }
+}
