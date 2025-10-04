@@ -12996,17 +12996,13 @@ focus = {
 			log = "[GetDateText]: [Root.GetName]: Focus VEN_transport_planes"
 			add_ideas = ven_improved_transport_plane_production
 			add_equipment_to_stockpile = {
-				type = transport_plane2
+				type = transport_plane_equipment_2_item
 				amount = 30
 				producer = USA
 			}
 			add_equipment_to_stockpile = {
-				type = large_plane_awacs_airframe_2
+				type = awacs_plane_equipment_2_item
 				amount = 3
-				# Assuming AWACs also follow a similar naming convention for levels if applicable,
-				# but based on search results, 'awacs_equipment' is the base type.
-				# If a specific level is needed, it would be 'awacs_equipment_X'
-				# For now, using the base type.
 				producer = SWE
 			}
 			set_temp_variable = { treasury_change = -260 }
@@ -13091,7 +13087,7 @@ focus = {
 		id = VEN_domestic_aircraft_production
 		icon = air_industry
 		relative_position_id = VEN_the_airforce
-		x = 1
+		x = 2
 		y = 4
 		cost = 10
 
@@ -13128,7 +13124,7 @@ focus = {
 		id = VEN_international_air_investment
 		icon = continuous_air_production
 		relative_position_id = VEN_the_airforce
-		x = -1
+		x = -2
 		y = 4
 		cost = 10
 
@@ -13197,7 +13193,7 @@ focus = {
 		icon = american_air_supremacy
 		cost = 10
 		x = -2
-		y = 2
+		y = 1
 		relative_position_id = VEN_international_air_investment
 		
 		prerequisite = { focus = VEN_international_air_investment }
@@ -13224,6 +13220,8 @@ focus = {
 		}
 		
 		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus VEN_acquire_f16"
+			
 			USA = {
 				set_temp_variable = { treasury_change = 1080 }
 				modify_treasury_effect = yes
@@ -13235,28 +13233,65 @@ focus = {
 				modifier = VEN_USA_f16_deal
 				target = USA
 			}
+			USA = {
+				add_opinion_modifier = {
+					modifier = VEN_USA_f16_deal
+					target = ROOT
+				}
+			}
 			
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
-				add_tech_license = {
-					target = USA
-					equipment = { type = small_plane_strike_airframe_2 level = 2 }
+				create_equipment_variant = { # Light Fighter
+					name = "F-16C Blk 50/52"
+					type = small_plane_strike_airframe_2
+					parent_version = 2
+					modules = {
+						fixed_main_weapon_slot = weap_mp_med_hardpoint_1
+						fixed_gun_slot = weap_multi_gun_1
+						fixed_auxiliary_weapon_slot_1 = weap_a2a_hardpoint_1
+						engine_type_slot = engine_light_single_1
+						avionics_type_slot = avionics_manned_1
+						wingform_type_slot = wing_delta
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_tgp_1
+						special_slot_type_3 = spec_refuel_1
+					}
+					upgrades = {
+						plane_bba_radar_upgrade = 4
+						plane_bba_engine_upgrade = 3
+					}
+				}
+				
+				USA = {
+					create_production_license = {
+						target = VEN
+						equipment = { type = small_plane_strike_airframe_2 }
+						cost_factor = 0
+						variant_name = "F-16C Blk 50/52"
+						parent_version = 2
+					}
 				}
 				add_equipment_to_stockpile = {
 					type = small_plane_strike_airframe_2
-					variant_name = "F-16C Fighting Falcon"
-					amount = 90
-					producer = "USA"
+					variant_name = "F-16C Blk 50/52"
+					parent_version = 2
+					amount = 120
+					producer = USA
 				}
-			} else = {
-				add_tech_license = {
-					target = USA
-					equipment = { type = MR_Fighter_equipment level = 3 }
+			}
+			else = {
+				USA = {
+					create_production_license = {
+						target = VEN
+						equipment = { type = MR_Fighter3 }
+						cost_factor = 0
+					}
 				}
 				add_equipment_to_stockpile = {
 					type = MR_Fighter3
-					amount = 90
-					producer = "USA"
+					amount = 120
+					producer = USA
 				}
 			}
 		}
@@ -13264,13 +13299,12 @@ focus = {
 			factor = 10
 		}
 	}
-
 	focus = {
 		id = VEN_acquire_gripen
 		icon = SWE_airforce_2
 		cost = 10
 		x = 0
-		y = 2
+		y = 1
 		relative_position_id = VEN_international_air_investment
 		
 		prerequisite = { focus = VEN_international_air_investment }
@@ -13297,6 +13331,8 @@ focus = {
 		}
 		
 		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus VEN_acquire_gripen"
+			
 			SWE = {
 				set_temp_variable = { treasury_change = 990 }
 				modify_treasury_effect = yes
@@ -13308,42 +13344,75 @@ focus = {
 				modifier = VEN_SWE_gripen_deal
 				target = SWE
 			}
+			SWE = {
+				add_opinion_modifier = {
+					modifier = VEN_SWE_gripen_deal
+					target = ROOT
+				}
+			}
 			
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
-				add_tech_license = {
-					target = SWE
-					equipment = { type = small_plane_strike_airframe_2 level = 2 }
+				create_equipment_variant = { # Light Fighter
+					name = "JAS-39E Gripen"
+					type = small_plane_strike_airframe_2
+					parent_version = 1
+					modules = {
+					fixed_main_weapon_slot = weap_mp_med_hardpoint_2
+					fixed_gun_slot = weap_multi_gun_1
+					fixed_auxiliary_weapon_slot_1 = weap_a2a_hardpoint_2
+					engine_type_slot = engine_light_single_3
+					avionics_type_slot = avionics_manned_3
+					wingform_type_slot = wing_delta_canard
+					special_slot_type_1 = spec_countermeasures_2
+					special_slot_type_2 = spec_tgp_2
+					special_slot_type_3 = spec_refuel_3
+				}
+				upgrades = {
+					plane_bba_radar_upgrade = 4
+					plane_bba_engine_upgrade = 1
+				}
+				SWE = {
+					create_production_license = {
+						target = VEN
+						equipment = { type = small_plane_strike_airframe_1 }
+						cost_factor = 0
+					}
 				}
 				add_equipment_to_stockpile = {
-					type = small_plane_strike_airframe_2
-					variant_name = "JAS 39 Gripen"
-					amount = 90
-					producer = "SWE"
+					type = small_plane_strike_airframe_1
+					variant_name = "JAS-39E Gripen"
+					parent_version = 1
+					amount = 120
+					producer = SWE
+					}
 				}
-			} else = {
-				add_tech_license = {
-					target = SWE
-					equipment = { type = MR_Fighter_equipment level = 3 }
+			}
+			else = {
+				SWE = {
+					create_production_license = {
+						target = VEN
+						equipment = { type = MR_Fighter3 }
+						cost_factor = 0
+					}
 				}
 				add_equipment_to_stockpile = {
 					type = MR_Fighter3
-					amount = 90
-					producer = "SWE"
+					amount = 120
+					producer = SWE
+					}
 				}
 			}
-		}
-		ai_will_do = {
+			ai_will_do = {
 			factor = 10
-		}
+			}
 	}
-
 	focus = {
 		id = VEN_acquire_su30
 		icon = SOV_airforce
 		cost = 10
 		x = 2
-		y = 2
+		y = 1
 		relative_position_id = VEN_international_air_investment
 		
 		prerequisite = { focus = VEN_international_air_investment }
@@ -13358,6 +13427,8 @@ focus = {
 		}
 		
 		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus VEN_acquire_su30"
+			
 			SOV = {
 				set_temp_variable = { treasury_change = 1200 }
 				modify_treasury_effect = yes
@@ -13369,34 +13440,62 @@ focus = {
 				modifier = VEN_SOV_su30_deal
 				target = SOV
 			}
+			SOV = {
+				add_opinion_modifier = {
+					modifier = VEN_SOV_su30_deal
+					target = ROOT
+				}
+			}
 			
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
-				add_tech_license = {
-					target = SOV
-					equipment = { type = medium_plane_airframe_2 level = 2 }
+				create_equipment_variant = { # Medium Plane
+					name = "SU-30MKI"
+					type = medium_plane_airframe_2
+					parent_version = 2
+					modules = {
+						fixed_main_weapon_slot = weap_mp_heavy_hardpoint_1
+						fixed_gun_slot = weap_multi_gun_1
+						fixed_auxiliary_weapon_slot_1 = weap_a2a_hardpoint_1
+						engine_type_slot = engine_heavy_single_1
+						avionics_type_slot = avionics_manned_1
+						wingform_type_slot = wing_swept
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_tgp_1
+						special_slot_type_3 = spec_refuel_1
+					}
+				}
+				SOV = {
+					create_production_license = {
+						target = VEN
+						equipment = { type = medium_plane_airframe_2 }
+						cost_factor = 0
+					}
 				}
 				add_equipment_to_stockpile = {
-					type = medium_plane_airframe_2
-					variant_name = "Su-30MK2"
+					type = medium_plane_airframe_1
+					variant_name = "SU-30MKI"
+					parent_version = 2
 					amount = 120
-					producer = "SOV"
+					producer = SOV
+					}
 				}
-			} else = {
-				add_tech_license = {
-					target = SOV
-					equipment = { type = MR_Fighter_equipment level = 3 }
+			else = {
+				SOV = {
+					create_production_license = {
+						target = VEN
+						equipment = { type = MR_Fighter3 }
+						cost_factor = 0
+					}
 				}
 				add_equipment_to_stockpile = {
 					type = MR_Fighter3
 					amount = 120
-					producer = "SOV"
+					producer = SOV
 				}
 			}
-		}
 		ai_will_do = {
 			factor = 10
-			}
 		}
 	}
 }
