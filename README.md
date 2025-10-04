@@ -1,50 +1,181 @@
-# Welcome to Millennium Dawn's Dev Build
+# Millennium Dawn Developer Guide
 
-Millennium Dawn is a comprehensive mod project starting in the year 2000 and extending to the present day and beyond. The mod features unique tech trees, focus trees, events, and decisions designed to fully immerse you in the complexities of the modern era.
+Welcome to the comprehensive development guide for Millennium Dawn, a modern-era Hearts of Iron IV modification that brings the complexities of contemporary geopolitics to your gaming experience.
 
-Experience our innovative economic and political systems, national taxation and debt mechanics, custom internal political factions, international influence dynamics, original 3D models, a custom soundtrack, and much more!
+## About Millennium Dawn
 
-## Important Links
+Millennium Dawn is an ambitious mod project spanning from the year 2000 to the present day and beyond. Our mod transforms Hearts of Iron IV with:
 
-[Millennium Dawn Discord](http://discord.gg/millenniumdawn)
+- **Modern Geopolitical Systems**: Experience realistic economic frameworks, political dynamics, and international relations
+- **Advanced Mechanics**: National taxation systems, debt management, internal political factions, and influence networks
+- **Rich Content**: Unique technology trees, focus trees, events, and decision paths tailored for the modern era
+- **Enhanced Experience**: Original 3D models, custom soundtrack, and immersive gameplay elements
 
-[Git Contribution Guidelines](https://docs.google.com/document/d/1V8DLowqEOSmlgazlHeC-hLZzLki5e6cWhQO_ZK6HVYs)
+## Quick Start
 
-## Community Development
+### Essential Resources
+- **[Discord Community](http://discord.gg/millenniumdawn)** - Join our active development community
+- **[Contribution Guidelines](https://docs.google.com/document/d/1V8DLowqEOSmlgazlHeC-hLZzLki5e6cWhQO_ZK6HVYs)** - Complete workflow procedures
 
-We actively encourage community contributions and external development! Millennium Dawn is designed to be forkable, enabling you to:
+### Development Environment Setup
 
-- Create custom branches or forks for new features
-- Develop submods and extensions
-- Experiment with gameplay modifications
-- Submit your improvements to the main project
+#### Python Installation
 
-If you're interested in contributing, we welcome pull requests and are happy to review community-made changes. Please refer to our Git Contribution Guidelines for proper workflow procedures.
+Python powers our development tools and automation scripts.
 
-## Access Rules
+**Windows Installation:**
+```bash
+# Download from python.org and ensure "Add Python to PATH" is checked
+python --version  # Verify installation
+```
 
-Developer/Junior Developer Access:
+**macOS Installation:**
+```bash
+# Using Homebrew (recommended)
+brew install python
+python3 --version  # Verify installation
+```
 
-- New recruits receive access for two months from their addition date (e.g., if you join on January 1st, access continues until March 1st)
-- Access permissions are role-based. Playtesters have reporter status, allowing them to pull and update local builds but not push to branches
-- All types of contributions count as activity. Please remain as active as reasonably possible
-- Inactive users may be removed based on Discord presence or at the Lead Developers' discretion
+**Linux Installation:**
+```bash
+sudo apt update && sudo apt install python3 python3-pip
+python3 --version  # Verify installation
+```
 
-Playtester Access:
+#### Pre-commit Setup
 
-- First-time access requires completing an initial playtest within 48 hours
-- After the first playtest, monthly access is granted with the expectation of at least one playtest per month
-- Playtesting for Millennium Dawn requires detailed notes and substantive feedback on the content being tested
+Pre-commit ensures code quality and consistency across contributions.
 
-## Maintainers & Approvers
+```bash
+# Install pre-commit
+pip install pre-commit
 
-Millennium Dawn has designated maintainers who can push and pull from the master branch. Most lead developers and select other developers can approve merge requests. If you need a merge request approved, please begin by asking a council member to review your request in our Discord.
+# Navigate to repository and install hooks
+cd millennium-dawn
+pre-commit install
 
-## Fork Users
+# Test installation
+pre-commit run --all-files
+```
 
-Thank you for contributing to Millennium Dawn! Please ensure you add yourself to the [Authors](./AUTHORS.txt) file and document your changes in the [Changelog](./Changelog.txt) so we can properly credit you and track updates.
+## Development Standards
 
-Thank you for your interest in our project!
+### Code Style Guidelines
 
-Sincerely,
-Bird
+**Localization Files (.yml):**
+- Use 1-space indentation
+- Remove trailing 0/1 after colons in string pairs
+- Maintain consistent key formatting
+
+**Script Files:**
+- Use 1 tab indentation (equivalent to 4 spaces)
+- Place comments above or below relevant code blocks
+- Follow existing naming conventions
+
+**Documentation:**
+- Document all significant changes in the changelog
+- Use clear, descriptive commit messages
+- Include relevant context for complex changes
+
+### Quality Assurance
+
+Our development pipeline includes:
+- **CWTools Integration**: Automated syntax checking and validation
+- **Pipeline Formatters**: Consistent code formatting across the project
+- **Pre-commit Hooks**: Automatic style enforcement and issue detection
+
+## Community Contribution
+
+### Open Development Philosophy
+
+Millennium Dawn embraces community-driven development. We encourage:
+
+- **Forking and Branching**: Create custom versions for experimentation
+- **Submod Development**: Build extensions and specialized content
+- **Feature Contributions**: Submit improvements via pull requests
+- **Collaborative Development**: Work with our team on major features
+
+### Getting Your Contributions Merged
+
+1. **Fork the Repository**: Create your own development branch
+2. **Follow Style Guidelines**: Ensure code meets our standards
+3. **Test Thoroughly**: Verify functionality before submission
+4. **Submit Pull Request**: Include detailed description of changes
+5. **Engage with Reviews**: Respond to feedback and iterate as needed
+
+## Access Levels and Responsibilities
+
+### Developer Access
+**New Developer Onboarding:**
+- Initial access period: 2 months from join date
+- Role-based permissions system
+- Regular activity expected across all contribution types
+- Access reviewed based on Discord engagement and contribution frequency
+
+### Playtester Access
+**Requirements:**
+- Complete initial playtest within 48 hours of access
+- Minimum one playtest monthly thereafter
+- Provide detailed feedback reports with substantive analysis
+- Document bugs, balance issues, and gameplay observations
+
+### Maintainer Privileges
+**Responsibilities:**
+- Master branch push/pull access
+- Merge request approval authority
+- Code review and quality assurance
+- Community guidance and mentorship
+
+**Process:**
+Contact council members via Discord for merge request reviews and approval workflows.
+
+## Contributing Guidelines
+
+### For All Contributors
+
+1. **Add Yourself**: Include your information in [`AUTHORS.md`](./docs/misc/authors.md)
+2. **Document Changes**: Update [`Changelog.txt`](./Changelog.txt) with your modifications
+3. **Follow Conventions**: Adhere to established coding and documentation standards
+4. **Stay Engaged**: Participate in community discussions and development planning
+
+### Contribution Workflow
+
+```bash
+# Fork repository and create feature branch
+git checkout -b feature/your-feature-name
+
+# Make changes following style guidelines
+# Run pre-commit hooks
+pre-commit run --all-files
+
+# Commit with descriptive messages
+git commit -m "feat: add modern economic indicators system"
+
+# Push and create pull request
+git push origin feature/your-feature-name
+```
+
+## Resources and Support
+
+### Development Resources
+- **Modding Resources**: Shared documentation and assets for team members
+- **Style Guide**: This document and coding standards
+- **Community Forums**: Discord channels for technical discussions
+- **Documentation**: Comprehensive guides in the repository wiki
+
+### Getting Help
+
+- **Discord Community**: Active support channels for development questions
+- **Mentorship Program**: Experienced developers available for guidance
+- **Code Reviews**: Collaborative improvement process for all contributions
+- **Documentation**: Extensive guides and examples in our resource library
+
+---
+
+## Acknowledgments
+
+Millennium Dawn thrives because of our dedicated community of developers, playtesters, and contributors. Whether you're fixing a typo, implementing major features, or providing crucial feedback, every contribution matters.
+
+Thank you for helping us create the definitive modern-era Hearts of Iron IV experience.
+
+**— The Millennium Dawn Development Team**
