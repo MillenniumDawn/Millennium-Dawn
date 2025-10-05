@@ -1,6 +1,6 @@
 ## Myanmar WIP
 
-![Flag_of_Myanmar__1974_2010_.svg](uploads/1739438291771f60b926de6576ddb850/Flag_of_Myanmar__1974_2010_.svg.png)
+![Myanmar](/Millennium-Dawn/uploads/flags/myanmar.png)
 
 Myanmar is a country surrounded by India and Bangladesh from the West, Kachin State from the North, Wa State from the North-East, China, Laos, Shan State, Karen State from the East and Thailand from the South. It starts with a Population of 39.51 Millions.
 
