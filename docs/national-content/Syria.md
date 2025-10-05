@@ -1,6 +1,6 @@
 ## Syria WIP
 
-![Flag_of_Syria.svg](uploads/ee480e9c3da8788c6b4b2858a0581c75/Flag_of_Syria.svg.png)
+![Syria](/Millennium-Dawn/uploads/flags/syria.png)
 
 Syria is a country surrounded by Turkey from the North, Iraq from the East and South-East, Jordan from the South, Israel from the South-West and Lebanon and Hezbollah from the West. It starts with a Population of 16.01 Millions.
 
