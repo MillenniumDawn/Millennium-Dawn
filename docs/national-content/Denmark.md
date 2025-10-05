@@ -1,6 +1,6 @@
 ## Denmark WIP
 
-![Flag_of_Denmark.svg](uploads/7c5d1ebcac79916d5a78546003c14b3f/Flag_of_Denmark.svg.png)
+![Flag_of_Denmark.svg](/Millennium-Dawn/uploads/flags/denmark.png)
 
 
 Denmark is a country surrounded by Sweden from the East and Germany from the South. It starts with a Population of 5.35 Millions.

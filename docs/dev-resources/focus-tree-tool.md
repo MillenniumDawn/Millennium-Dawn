@@ -31,7 +31,7 @@ Tool should generate you a file, just close it when you are done!
 Examples:
 mutually exclusive line
 ![exclusive](uploads/331c3736294f8f7eab3b4757bf1ba58b/exclusive.png)
-[example1](uploads/e52796ef088f55f121c83ef11eaf048d/example1.jpg)
+[example1](/Millennium-Dawn/uploads/example1.jpg)
 
 Be aware that some complex line collisions are stored weirdly in document, and app may process them incorrectly
 use x-del and y-del to make your tree better spaced out
