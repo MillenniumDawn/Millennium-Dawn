@@ -1,6 +1,6 @@
 ## United Kingdom WIP
 
-![Flag_of_the_United_Kingdom.svg](uploads/ae94da804b5af3e2ed1494f074c23c89/Flag_of_the_United_Kingdom.svg.png)
+![Flag_of_the_United_Kingdom](/Millennium-Dawn/uploads/flags/united_kingdom.png)
 
 The United Kingdom is a country surrounded mainly by water. Its only borders are Ireland and Spain. It starts with a Population of 58.98 Millions.
 
