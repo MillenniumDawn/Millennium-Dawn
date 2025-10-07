@@ -21,6 +21,8 @@ ALG_crackdown_category = {
             add_stability = -0.05
             add_political_power = -50
             add_ideas = ALG_repression_modifier
+			set_temp_variable = { corp_change = 1 }
+            modify_corporate_tax_rate_effect = yes
         }
 
         ai_will_do = {
@@ -46,6 +48,8 @@ ALG_crackdown_category = {
             add_stability = -0.02
             add_political_power = -25
             add_ideas = ALG_surveillance_state_modifier
+			set_temp_variable = { temp_productivity_change = -0.01 }
+            flat_productivity_change_effect = yes
         }
 
         ai_will_do = {
@@ -78,6 +82,8 @@ ALG_crackdown_category = {
                 ideology = nationalist
                 popularity = 0.08
             }
+			increase_centralization = yes
+			decrease_economic_growth = yes
         }
 
         ai_will_do = {
@@ -125,6 +131,12 @@ ALG_economic_recovery_category = {
             add_political_power = 50
             add_stability = -0.01
             add_ideas = ALG_foreign_oil_licensing_bonus
+			random_owned_state = {
+				add_resource = {
+					type = oil
+					amount = 3
+				}
+			}
         }
         ai_will_do = { factor = 1 }
     }
@@ -1127,13 +1139,13 @@ ALG_ethnic_data_category = {
 ALG_political_struggle = {
     ALG_boost_reformists = {
     icon = GFX_decision_poland_revoult
-    available = {
-        has_country_flag = has_power_balance_algeria
-        has_power_balance = {
-            id = algeria_power_balance
-        }
-            has_political_power > 100
-        }
+		available = {
+			has_country_flag = has_power_balance_algeria
+			has_power_balance = {
+				id = algeria_power_balance
+			}
+				has_political_power > 100
+		}
         cost = 100
         complete_effect = {
             add_power_balance_value = {
@@ -2375,8 +2387,8 @@ ALG_anti_poaching_decisions = {
 }
 ALG_de_arabisation_category = {
 	ALG_de_arabisation_mission = {
-		icon = GFX_decision_mission_icon
-		days_mission_timeout = 180
+		icon = arab_federation_nationalist_announce_button
+		days_mission_timeout = 356
 
 		activation = {
 			has_completed_focus = ALG_de_arabisation
@@ -2390,9 +2402,11 @@ ALG_de_arabisation_category = {
 			has_war = yes
 		}
 
+		
 		complete_effect = {
 			remove_ideas = ALG_dearabisation_penalty
 			add_ideas = ALG_imazighen_perseverance
+			add_stability = 0.05
 			custom_effect_tooltip = ALG_dearabisation_end_TT
 
 			every_state = {
@@ -2402,21 +2416,309 @@ ALG_de_arabisation_category = {
 			}
 		}
 
+		
 		timeout_effect = {
 			remove_ideas = ALG_dearabisation_penalty
-			add_ideas = ALG_imazighen_perseverance
-			custom_effect_tooltip = ALG_dearabisation_end_TT
-
-			every_state = {
-				limit = { is_core_of = ALG }
-				remove_core_of = ALG
-				add_core_of = KBY
-			}
+			add_stability = -0.05
+			add_to_variable = { var = kabyle_satisfaction value = -10 }
+			add_to_variable = { var = arab_satisfaction value = -5 }
+			custom_effect_tooltip = ALG_dearabisation_fail_TT
 		}
 
 		remove_effect = {
-			remove_ideas = ALG_dearabisation_penalty
+			add_stability = 0.02
+		}
+	}
+	ALG_subsidise_amazigh_businesses = {
+		icon = decision_money_dec
+		days_mission_timeout = 180
+		cost = 50
+
+		activation = {
+			has_completed_focus = ALG_de_arabisation
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+			check_variable = { ALG_ethnic_kabyle > 10 }
+		}
+
+		
+		complete_trigger = {
+			check_variable = { var = kabyle_satisfaction value = 65 }
+		}
+
+		complete_effect = {
+			add_to_variable = { var = kabyle_satisfaction value = 10 }
+			add_to_variable = { var = ALG_ethnic_kabyle value = 2 }
+			add_political_power = -50
+			add_stability = 0.03
+			custom_effect_tooltip = ALG_amazigh_businesses_complete_TT
+		}
+
+		timeout_effect = {
+			add_to_variable = { var = kabyle_satisfaction value = -5 }
+			add_stability = -0.02
+			custom_effect_tooltip = ALG_amazigh_businesses_fail_TT
+		}
+	}
+	ALG_return_amazigh_exiles = {
+		icon = GFX_goal_generic_political_reform
+		days_mission_timeout = 200
+		cost = 75
+
+		activation = {
+			has_completed_focus = ALG_de_arabisation
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+		}
+
+		complete_trigger = {
+			OR = {
+				political_power > 200
+				stability > 0.6
+			}
+		}
+
+		complete_effect = {
+			add_to_variable = { var = kabyle_satisfaction value = 15 }
+			add_to_variable = { var = ALG_ethnic_kabyle value = 3 }
+			add_war_support = 0.02
+			add_political_power = -75
+			add_manpower = 5000
+			custom_effect_tooltip = ALG_return_exiles_complete_TT
+		}
+
+		timeout_effect = {
+			add_to_variable = { var = kabyle_satisfaction value = -10 }
+			add_stability = -0.03
+			custom_effect_tooltip = ALG_return_exiles_fail_TT
+		}
+	}
+
+	
+	ALG_leave_arab_league = {
+		icon = GFX_decision_generic_political_pressure
+		days_mission_timeout = 90
+		cost = 100
+
+		activation = {
+			has_completed_focus = ALG_de_arabisation
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+			is_in_faction = yes
+		}
+
+		complete_trigger = {
+			NOT = {
+				any_other_country = {
+					is_in_faction_with = ROOT
+					has_idea = LoAS_member
+				}
+			}
+		}
+
+		complete_effect = {
+			leave_faction = yes
+			remove_ideas = LoAS_member
 			add_stability = 0.05
+			add_to_variable = { var = arab_satisfaction value = -15 }
+			add_to_variable = { var = kabyle_satisfaction value = 10 }
+			custom_effect_tooltip = ALG_leave_arab_league_complete_TT
+		}
+
+		timeout_effect = {
+			add_stability = -0.05
+			add_to_variable = { var = kabyle_satisfaction value = -5 }
+			custom_effect_tooltip = ALG_leave_arab_league_fail_TT
+		}
+	}
+	ALG_boost_kabyle_population = {
+		icon = GFX_goal_generic_population
+		days_mission_timeout = 240
+		cost = 100
+
+		activation = {
+			has_completed_focus = ALG_de_arabisation
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+		}
+
+		
+		complete_trigger = {
+			AND = {
+				check_variable = { var = kabyle_satisfaction value > 70 }
+				stability > 0.5
+			}
+		}
+
+		complete_effect = {
+			add_to_variable = { var = ALG_ethnic_kabyle value = 5 }
+			add_to_variable = { var = ALG_ethnic_arab value = -5 }
+			add_to_variable = { var = kabyle_satisfaction value = 15 }
+			add_stability = 0.05
+			custom_effect_tooltip = ALG_kabyle_pop_complete_TT
+		}
+
+		timeout_effect = {
+			add_to_variable = { var = kabyle_satisfaction value = -10 }
+			add_stability = -0.03
+			custom_effect_tooltip = ALG_kabyle_pop_fail_TT
+		}
+	}
+}
+ALG_tamazgha_cultural_revival_category = {
+	ALG_amazigh_language_reform = {
+		icon = amazigh
+		days_mission_timeout = 180
+		cost = 75
+
+		activation = {
+			has_completed_mission = ALG_de_arabisation_mission
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+		}
+
+		complete_trigger = {
+			has_idea = edu_03
+		}
+
+		complete_effect = {
+			add_to_variable = { var = kabyle_satisfaction value = 10 }
+			add_to_variable = { var = ALG_ethnic_kabyle value = 3 }
+			add_stability = 0.03
+			add_political_power = -50
+			set_temp_variable = { temp_productivity_change = 0.015 }
+			flat_productivity_change_effect = yes
+			increase_education_budget_2 = yes
+			custom_effect_tooltip = ALG_amazigh_language_reform_complete_TT
+		}
+
+		timeout_effect = {
+			add_stability = -0.03
+			add_to_variable = { var = kabyle_satisfaction value = -5 }
+			custom_effect_tooltip = ALG_amazigh_language_reform_fail_TT
+		}
+	}
+	ALG_tamazight_in_education = {
+		icon = ISR_education_button
+		days_mission_timeout = 210
+		cost = 100
+
+		activation = {
+			has_completed_mission = ALG_de_arabisation_mission
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+			check_variable = { var = kabyle_satisfaction value >= 60 }
+		}
+
+		complete_trigger = {
+			OR = {
+				has_idea = edu_04
+				stability > 0.6
+			}
+		}
+
+		complete_effect = {
+			add_to_variable = { var = kabyle_satisfaction value = 15 }
+			add_political_power = -100
+			add_stability = 0.04
+			set_temp_variable = { int_investment_change = 0.1 }
+			modify_international_investment_effect = yes
+			custom_effect_tooltip = ALG_tamazight_in_education_complete_TT
+		}
+
+		timeout_effect = {
+			add_stability = -0.04
+			add_to_variable = { var = kabyle_satisfaction value = -10 }
+			custom_effect_tooltip = ALG_tamazight_in_education_fail_TT
+		}
+	}
+	ALG_media_cultural_independence = {
+		icon = independence
+		days_mission_timeout = 150
+		cost = 75
+
+		activation = {
+			has_completed_mission = ALG_de_arabisation_mission
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+			check_variable = { var = kabyle_satisfaction value >= 70 }
+		}
+
+		complete_trigger = {
+			OR = {
+				has_idea = social_04
+				has_idea = police_04
+			}
+		}
+
+		complete_effect = {
+			add_stability = 0.03
+			add_war_support = 0.02
+			add_to_variable = { var = kabyle_satisfaction value = 10 }
+			set_temp_variable = { temp_opinion = 10 }
+			change_small_medium_business_owners_opinion = yes
+			custom_effect_tooltip = ALG_media_cultural_independence_complete_TT
+		}
+
+		timeout_effect = {
+			add_stability = -0.03
+			add_to_variable = { var = kabyle_satisfaction value = -5 }
+			custom_effect_tooltip = ALG_media_cultural_independence_fail_TT
+		}
+	}
+	ALG_tamazgha_regional_cooperation = {
+		icon = decision_eng_ally_imperialist_coup
+		days_mission_timeout = 240
+		cost = 125
+
+		activation = {
+			has_completed_mission = ALG_de_arabisation_mission
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+			is_in_faction = no
+		}
+
+		complete_trigger = {
+			any_other_country = {
+				OR = {
+					tag = MAU
+					tag = TUN
+					tag = MOR
+					tag = LBA
+				}
+				is_in_faction_with = ROOT
+			}
+		}
+
+		complete_effect = {
+			add_to_variable = { var = kabyle_satisfaction value = 20 }
+			add_stability = 0.05
+			add_war_support = 0.03
+			set_temp_variable = { int_investment_change = 0.5 }
+			modify_international_investment_effect = yes
+			custom_effect_tooltip = ALG_tamazgha_regional_cooperation_complete_TT
+		}
+
+		timeout_effect = {
+			add_stability = -0.04
+			add_to_variable = { var = kabyle_satisfaction value = -10 }
+			custom_effect_tooltip = ALG_tamazgha_regional_cooperation_fail_TT
 		}
 	}
 }
