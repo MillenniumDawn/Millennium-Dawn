@@ -1,6 +1,6 @@
 ## Greece WIP
 
-![Flag_of_Greece.svg](uploads/eab4ab49ee61363e1c67fdb9dc6ef079/Flag_of_Greece.svg.png)
+![Greece](/Millennium-Dawn/uploads/flags/greece.png)
 
 Greece is a country surrounded by Albania from the North-West, Macedonia and Bulgaria from the North and Turkey from the East. It starts with a Population of 10.91 Millions.
 
