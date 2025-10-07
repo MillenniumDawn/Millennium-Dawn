@@ -20,6 +20,8 @@ AST_thales_australia_material = {
 		CAT_infrastructure
 	}
 
+	task_capacity = 3
+
 	research_bonus = 0.12
 
 	tree_header_text = {
@@ -4125,6 +4127,8 @@ AST_rheinmetall_australia_tank = {
 	name = AST_rheinmetall_australia_tank
 	icon = GFX_idea_Rheinmetall
 
+	task_capacity = 3
+
 	equipment_type = {
 		util_vehicle_equipment
 		medium_tank_flame_chassis
@@ -4699,7 +4703,7 @@ AST_rheinmetall_australia_tank = {
 AST_raytheon_australia_material = {
 	allowed = { original_tag = AST }
 	name = AST_raytheon_australia_material
-	icon = x
+	icon = GFX_idea_Raytheon
 
 	equipment_type = {
 		guided_missile_equipment
@@ -4719,6 +4723,8 @@ AST_raytheon_australia_material = {
 	}
 
 	research_bonus = 0.06
+
+	task_capacity = 3
 
 	tree_header_text = {
 		text = "Maritime Strike & Missile Systems"
@@ -6301,7 +6307,7 @@ AST_tenix_naval_manufacturer = {
 		}
 
 		equipment_bonus = {
-			naval_torpedo_enemy_critical_chance_factor = -0.10
+			naval_torpedo_damage_reduction_factor = 0.08
 			max_organisation = 0.10
 		}
 
@@ -8213,46 +8219,49 @@ AST_bae_systems_naval_manufacturer = {
 		CAT_l_drone
 	}
 
+	research_bonus = 0.06
+
+	task_capacity = 3
+
 	tree_header_text = {
-		text = "Surface Combat & Patrol"
-		x = 1
+		text = "Surface Combat Integration"
+		x = 2
 	}
 
 	tree_header_text = {
 		text = "Unmanned & Aviation Systems"
-		x = 4
+		x = 7
 	}
 
 	initial_trait = {
-		name = AST_bae_naval_trait
+		name = AST_bae_company_trait_navaluav
 
 		equipment_bonus = {
-			naval_speed = 0.10
-			build_cost_ic = -0.04
+			surface_visibility = -0.04
+			naval_speed = 0.03
+			air_range = 0.04
+			air_agility = 0.02
 		}
 
 		organization_modifier = {
-			military_industrial_organization_research_bonus = 0.03
+			military_industrial_organization_research_bonus = 0.05
 		}
 	}
-
 	trait = {
-		token = AST_bae_mio_trait_modular_payload_architecture
-		name = AST_bae_mio_trait_modular_payload_architecture
-		icon = GFX_generic_mio_trait_icon_lg_attack
-
-		position = { x = 1 y = 0 }
+		token = AST_bae_trait_modular_hull_blocks
+		name = AST_bae_trait_modular_hull_blocks
+		icon = GFX_generic_mio_trait_icon_max_strength
+		position = { x = 2 y = 0 }
 
 		limit_to_equipment_type = {
 			mio_cat_only_small_ships
 			mio_cat_frigates
 			mio_cat_destroyers
-			helicopter_operator
 		}
 
 		equipment_bonus = {
-			lg_attack = 0.12
-			anti_air_attack = 0.04
+			reliability = 0.03
+			max_strength = 0.04
 		}
 
 		on_complete = {
@@ -8278,7 +8287,711 @@ AST_bae_systems_naval_manufacturer = {
 		}
 	}
 
+	trait = {
+		token = AST_bae_trait_signature_management
+		name = AST_bae_trait_signature_management
+		icon = GFX_generic_mio_trait_icon_surface_visibility
+		relative_position_id = AST_bae_trait_modular_hull_blocks
+		position = { x = 2 y = 0 }
+
+		limit_to_equipment_type = {
+			mio_cat_only_small_ships
+			mio_cat_frigates
+			mio_cat_destroyers
+		}
+
+		equipment_bonus = {
+			surface_visibility = -0.08
+			sub_visibility = -0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_patrol_hull_form
+		name = AST_bae_trait_patrol_hull_form
+		icon = GFX_generic_mio_trait_icon_smallships_speed
+
+		relative_position_id = AST_bae_trait_modular_hull_blocks
+		position = { x = -2 y = 1 }
+		all_parents = { AST_bae_trait_modular_hull_blocks }
+
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+
+		equipment_bonus = {
+			naval_speed = 0.06
+			reliability = 0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_sensor_suite_fusion
+		name = AST_bae_trait_sensor_suite_fusion
+		icon = GFX_generic_mio_trait_icon_surface_detection
+
+		relative_position_id = AST_bae_trait_modular_hull_blocks
+		position = { x = -1 y = 2 }
+		all_parents = { AST_bae_trait_signature_management AST_bae_trait_modular_hull_blocks }
+
+		limit_to_equipment_type = {
+			mio_cat_only_small_ships
+			mio_cat_frigates
+			mio_cat_destroyers
+		}
+
+		equipment_bonus = {
+			surface_detection = 0.09
+			anti_air_attack = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_combat_system_integration
+		name = AST_bae_trait_combat_system_integration
+		icon = GFX_generic_mio_trait_icon_lg_attack
+
+		relative_position_id = AST_bae_trait_signature_management
+		position = { x = 0 y = 1 }
+		all_parents = { AST_bae_trait_signature_management }
+
+		limit_to_equipment_type = { mio_cat_frigates mio_cat_destroyers }
+		equipment_bonus = {
+			lg_attack = 0.08
+			lg_armor_piercing = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_hull_reinforcement
+		name = AST_bae_trait_hull_reinforcement
+		icon = GFX_generic_mio_trait_icon_armor_value
+		relative_position_id = AST_bae_trait_combat_system_integration
+		position = { x = 0 y = 1 }
+		all_parents = { AST_bae_trait_combat_system_integration }
+
+		limit_to_equipment_type = { mio_cat_frigates mio_cat_destroyers }
+		equipment_bonus = {
+			armor_value = 0.07
+			reliability = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_helo_deck_integration
+		name = AST_bae_trait_helo_deck_integration
+		icon = GFX_generic_mio_trait_icon_heli_operator_anti_air
+
+		relative_position_id = AST_bae_trait_sensor_suite_fusion
+		position = { x = -1 y = 1 }
+		all_parents = { AST_bae_trait_sensor_suite_fusion }
+
+		limit_to_equipment_type = { helicopter_operator }
+		equipment_bonus = {
+			anti_air_attack = 0.03
+			reliability = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_patrol_endurance
+		name = AST_bae_trait_patrol_endurance
+		icon = GFX_generic_mio_trait_icon_smallships_range
+
+		relative_position_id = AST_bae_trait_patrol_hull_form
+		position = { x = 0 y = 1 }
+		all_parents = { AST_bae_trait_patrol_hull_form }
+
+		limit_to_equipment_type = { mio_cat_only_small_ships }
+
+		equipment_bonus = {
+			naval_range = 0.10
+			reliability = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_surface_logistics
+		name = AST_bae_trait_surface_logistics
+		icon = GFX_generic_mio_trait_icon_task
+
+		relative_position_id = AST_bae_trait_sensor_suite_fusion
+		position = { x = 1 y = 1 }
+		all_parents = { AST_bae_trait_sensor_suite_fusion }
+
+		limit_to_equipment_type = { mio_cat_only_small_ships mio_cat_frigates mio_cat_destroyers }
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_crew_systems_robust
+		name = AST_bae_trait_crew_systems_robust
+		icon = GFX_generic_mio_trait_icon_reliability
+		relative_position_id = AST_bae_trait_hull_reinforcement
+		position = { x = 0 y = 1 }
+		all_parents = { AST_bae_trait_hull_reinforcement }
+
+		limit_to_equipment_type = { mio_cat_frigates mio_cat_destroyers }
+		equipment_bonus = {
+			reliability = 0.08
+			max_organisation = 0.06
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_strix_vtol
+		name = AST_bae_trait_strix_vtol
+		icon = GFX_generic_mio_trait_icon_uav_range
+		position = { x = 7 y = 0 }
+
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		equipment_bonus = {
+			air_range = 0.08
+			reliability = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_uav_payload_modularity
+		name = AST_bae_trait_uav_payload_modularity
+		icon = GFX_generic_mio_trait_icon_uav_ground_attack
+
+		relative_position_id = AST_bae_trait_strix_vtol
+		position = { x = -1 y = 1 }
+		all_parents = { AST_bae_trait_strix_vtol }
+
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		equipment_bonus = {
+			air_ground_attack = 0.06
+			air_agility = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_autonomy_stack
+		name = AST_bae_trait_autonomy_stack
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = AST_bae_trait_strix_vtol
+		position = { x = 1 y = 1 }
+		all_parents = { AST_bae_trait_strix_vtol }
+
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_uav_datalink_integration
+		name = AST_bae_trait_uav_datalink_integration
+		icon = GFX_generic_mio_trait_icon_surface_detection
+
+		relative_position_id = AST_bae_trait_strix_vtol
+		position = { x = 0 y = 2 }
+		all_parents = { AST_bae_trait_uav_payload_modularity AST_bae_trait_autonomy_stack }
+
+		limit_to_equipment_type = { mio_cat_eq_only_uav helicopter_operator }
+
+		equipment_bonus = {
+			surface_detection = 0.06
+			air_agility = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_shipborne_aviation_support
+		name = AST_bae_trait_shipborne_aviation_support
+		icon = GFX_generic_mio_trait_icon_heli_operator_anti_air
+
+		relative_position_id = AST_bae_trait_uav_datalink_integration
+		position = { x = 2 y = 0 }
+		all_parents = { AST_bae_trait_autonomy_stack }
+
+		limit_to_equipment_type = { helicopter_operator }
+
+		equipment_bonus = {
+			reliability = 0.03
+			anti_air_attack = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_uav_maintenance_cells
+		name = AST_bae_trait_uav_maintenance_cells
+		icon = GFX_generic_mio_trait_icon_uav_reliability
+
+		relative_position_id = AST_bae_trait_uav_payload_modularity
+		position = { x = 0 y = 1 }
+		all_parents = { AST_bae_trait_uav_payload_modularity }
+
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		equipment_bonus = {
+			reliability = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_uav_launch_recovery
+		name = AST_bae_trait_uav_launch_recovery
+		icon = GFX_generic_mio_trait_icon_air_range
+		relative_position_id = AST_bae_trait_uav_datalink_integration
+		position = { x = 0 y = 1 }
+		all_parents = { AST_bae_trait_uav_datalink_integration }
+
+		limit_to_equipment_type = { mio_cat_eq_only_uav helicopter_operator }
+		equipment_bonus = {
+			air_range = 0.05
+			reliability = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_swarm_coordination
+		name = AST_bae_trait_swarm_coordination
+		icon = GFX_generic_mio_trait_icon_uav_air_attack
+
+		relative_position_id = AST_bae_trait_autonomy_stack
+		position = { x = 0 y = 2 }
+		all_parents = { AST_bae_trait_autonomy_stack }
+
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		equipment_bonus = {
+			air_attack = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_deck_traffic_management
+		name = AST_bae_trait_deck_traffic_management
+		icon = GFX_generic_mio_trait_icon_heli_operator_reliability
+		relative_position_id = AST_bae_trait_shipborne_aviation_support
+		position = { x = 0 y = 1 }
+		all_parents = { AST_bae_trait_shipborne_aviation_support }
+
+		limit_to_equipment_type = { helicopter_operator }
+
+		equipment_bonus = {
+			reliability = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_bae_trait_maritime_uav_ops_center
+		name = AST_bae_trait_maritime_uav_ops_center
+		icon = GFX_generic_mio_trait_icon_task
+		relative_position_id = AST_bae_trait_uav_datalink_integration
+		position = { x = -1 y = 2 }
+		all_parents = { AST_bae_trait_uav_datalink_integration }
+
+		limit_to_equipment_type = { mio_cat_eq_only_uav }
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
 }
+
 
 # Aircraft
 
@@ -8292,12 +9005,1124 @@ AST_asta_air_manufacturer = {
 		mio_cat_eq_only_uav
 		mio_cat_eq_only_transport
 	}
-}
 
+	research_categories = {
+		CAT_air_eqp
+	}
+
+	tree_header_text = {
+		text = "Airframe Assembly & Sustainment"
+		x = 2
+	}
+
+	tree_header_text = {
+		text = "Uncrewed Targets & Flight Test Systems"
+		x = 7
+	}
+	initial_trait = {
+		name = AST_asta_company_trait
+
+		equipment_bonus = {
+			maximum_speed = 0.03
+			reliability = 0.03
+			build_cost_ic = -0.02
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.02
+		}
+	}
+	trait = {
+		token = AST_asta_trait_bend_built_frames
+		name = AST_asta_trait_bend_built_frames
+		icon = GFX_generic_mio_trait_icon_reliability
+		position = { x = 2 y = 0 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_light_aircraft
+			mio_cat_eq_only_transport
+		}
+
+		equipment_bonus = {
+			reliability = 0.04
+			max_strength = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_hornet_assembly_precision
+		name = AST_asta_trait_hornet_assembly_precision
+		icon = GFX_generic_mio_trait_icon_plane_light_air_agility
+
+		relative_position_id = AST_asta_trait_bend_built_frames
+		position = { x = 2 y = 1 }
+		all_parents = { AST_asta_trait_bend_built_frames }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_light_aircraft
+		}
+
+		equipment_bonus = {
+			air_agility = 0.03
+			air_defence = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_nomad_stol_heritage
+		name = AST_asta_trait_nomad_stol_heritage
+		icon = GFX_generic_mio_trait_icon_transport_plane_range
+
+		relative_position_id = AST_asta_trait_bend_built_frames
+		position = { x = -2 y = 1 }
+		all_parents = { AST_asta_trait_bend_built_frames }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_transport
+		}
+
+		equipment_bonus = {
+			maximum_speed = 0.01
+			air_range = 0.03
+			reliability = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_integrated_avionics_looms
+		name = AST_asta_trait_integrated_avionics_looms
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		relative_position_id = AST_asta_trait_bend_built_frames
+		position = { x = -1 y = 2 }
+		all_parents = { AST_asta_trait_bend_built_frames }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_light_aircraft
+			mio_cat_eq_only_transport
+		}
+
+		equipment_bonus = {
+			reliability = 0.03
+			weight = -0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_weight_balance_discipline
+		name = AST_asta_trait_weight_balance_discipline
+		icon = GFX_generic_mio_trait_icon_plane_light_speed
+
+		relative_position_id = AST_asta_trait_hornet_assembly_precision
+		position = { x = 0 y = 1 }
+		all_parents = { AST_asta_trait_hornet_assembly_precision }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_light_aircraft
+		}
+
+		equipment_bonus = {
+			air_agility = 0.02
+			maximum_speed = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_structural_test_bays
+		name = AST_asta_trait_structural_test_bays
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = AST_asta_trait_integrated_avionics_looms
+		position = { x = 0 y = 1 }
+		all_parents = { AST_asta_trait_integrated_avionics_looms }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_light_aircraft
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_depot_sustainment_flow
+		name = AST_asta_trait_depot_sustainment_flow
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		relative_position_id = AST_asta_trait_integrated_avionics_looms
+		position = { x = 1 y = 1 }
+		all_parents = { AST_asta_trait_integrated_avionics_looms }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_light_aircraft
+			mio_cat_eq_only_transport
+		}
+
+		production_bonus = {
+			production_capacity_factor = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_shop_floor_kitting
+		name = AST_asta_trait_shop_floor_kitting
+		icon = GFX_generic_mio_trait_icon_efficiency_gain
+
+		relative_position_id = AST_asta_trait_depot_sustainment_flow
+		position = { x = 1 y = 1 }
+		all_parents = { AST_asta_trait_depot_sustainment_flow }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_light_aircraft
+			mio_cat_eq_only_transport
+		}
+
+		production_bonus = {
+			production_efficiency_gain_factor = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_composite_repairs_cell
+		name = AST_asta_trait_composite_repairs_cell
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		relative_position_id = AST_asta_trait_shop_floor_kitting
+		position = { x = 0 y = 1 }
+		all_parents = { AST_asta_trait_shop_floor_kitting }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_light_aircraft
+			mio_cat_eq_only_transport
+		}
+
+		equipment_bonus = {
+			build_cost_ic = -0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_fleet_health_analytics
+		name = AST_asta_trait_fleet_health_analytics
+		icon = GFX_generic_mio_trait_icon_funds
+
+		relative_position_id = AST_asta_trait_structural_test_bays
+		position = { x = 0 y = 1 }
+		all_parents = { AST_asta_trait_structural_test_bays }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_light_aircraft
+			mio_cat_eq_only_transport
+		}
+
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.04
+			military_industrial_organization_research_bonus = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_quality_circle_program
+		name = AST_asta_trait_quality_circle_program
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = AST_asta_trait_composite_repairs_cell
+		position = { x = 1 y = 2 }
+		all_parents = { AST_asta_trait_composite_repairs_cell }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_light_aircraft
+			mio_cat_eq_only_transport
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.02
+			military_industrial_organization_funds_gain = 0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_final_assembly_integration_line
+		name = AST_asta_trait_final_assembly_integration_line
+		icon = GFX_generic_mio_trait_icon_plane_light_build_cost
+
+		relative_position_id = AST_asta_trait_quality_circle_program
+		position = { x = 1 y = -1 }
+		all_parents = {
+			AST_asta_trait_quality_circle_program
+			AST_asta_trait_guidance_systems_calibration
+		}
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_light_aircraft
+		}
+
+		equipment_bonus = {
+			build_cost_ic = -0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_local_subcontract_network
+		name = AST_asta_trait_local_subcontract_network
+		icon = GFX_generic_mio_trait_icon_resources
+		relative_position_id = AST_asta_trait_woomera_trial_craft
+		position = { x = -1 y = 1 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_light_aircraft
+			mio_cat_eq_only_transport
+		}
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_jindivik_telemetry_bus
+		name = AST_asta_trait_jindivik_telemetry_bus
+		icon = GFX_generic_mio_trait_icon_uav_air_attack
+		position = { x = 7 y = 0 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_uav
+		}
+
+		equipment_bonus = {
+			air_attack = 0.06
+			reliability = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_turana_control_logic
+		name = AST_asta_trait_turana_control_logic
+		icon = GFX_generic_mio_trait_icon_uav_air_agility
+
+		relative_position_id = AST_asta_trait_jindivik_telemetry_bus
+		position = { x = 2 y = 1 }
+		all_parents = { AST_asta_trait_jindivik_telemetry_bus }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_uav
+		}
+
+		equipment_bonus = {
+			air_agility = 0.03
+			air_range = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_woomera_trial_craft
+		name = AST_asta_trait_woomera_trial_craft
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = AST_asta_trait_jindivik_telemetry_bus
+		position = { x = -1 y = 1 }
+		all_parents = {
+			AST_asta_trait_jindivik_telemetry_bus
+			AST_asta_trait_local_subcontract_network
+		}
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_uav
+			mio_cat_eq_only_light_aircraft
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_instrumented_airframes
+		name = AST_asta_trait_instrumented_airframes
+		icon = GFX_generic_mio_trait_icon_plane_light_air_ground_attack
+
+		relative_position_id = AST_asta_trait_woomera_trial_craft
+		position = { x = 0 y = 1 }
+		all_parents = { AST_asta_trait_woomera_trial_craft }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_light_aircraft
+		}
+
+		equipment_bonus = {
+			air_ground_attack = 0.08
+			reliability = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_quick_turn_sortie_prep
+		name = AST_asta_trait_quick_turn_sortie_prep
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		relative_position_id = AST_asta_trait_woomera_trial_craft
+		position = { x = 1 y = 1 }
+		all_parents = { AST_asta_trait_woomera_trial_craft }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_uav
+		}
+
+		production_bonus = {
+			production_capacity_factor = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_reusable_target_protocols
+		name = AST_asta_trait_reusable_target_protocols
+		icon = GFX_generic_mio_trait_icon_uav_reliability
+
+		relative_position_id = AST_asta_trait_quick_turn_sortie_prep
+		position = { x = 0 y = 1 }
+		all_parents = { AST_asta_trait_quick_turn_sortie_prep }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_uav
+		}
+
+		equipment_bonus = {
+			reliability = 0.04
+			build_cost_ic = -0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_data_link_hardening
+		name = AST_asta_trait_data_link_hardening
+		icon = GFX_generic_mio_trait_icon_uav_air_defense
+
+		relative_position_id = AST_asta_trait_reusable_target_protocols
+		position = { x = -1 y = 1 }
+		all_parents = { AST_asta_trait_reusable_target_protocols }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_uav
+		}
+
+		equipment_bonus = {
+			air_defence = 0.08
+			air_agility = 0.06
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_modular_payload_trays
+		name = AST_asta_trait_modular_payload_trays
+		icon = GFX_generic_mio_trait_icon_uav_air_ground_attack
+
+		relative_position_id = AST_asta_trait_reusable_target_protocols
+		position = { x = 2 y = 0 }
+		all_parents = {
+			AST_asta_trait_quick_turn_sortie_prep
+			AST_asta_trait_turana_control_logic
+		}
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_uav
+		}
+
+		equipment_bonus = {
+			air_ground_attack = 0.04
+			reliability = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_telemetry_checkout_benches
+		name = AST_asta_trait_telemetry_checkout_benches
+		icon = GFX_generic_mio_trait_icon_uav_efficiency_gain
+
+		relative_position_id = AST_asta_trait_modular_payload_trays
+		position = { x = 0 y = 1 }
+		all_parents = { AST_asta_trait_modular_payload_trays }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_uav
+		}
+
+		production_bonus = {
+			production_efficiency_gain_factor = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_long_leg_ferry_kits
+		name = AST_asta_trait_long_leg_ferry_kits
+		icon = GFX_generic_mio_trait_icon_uav_air_range
+	
+		relative_position_id = AST_asta_trait_telemetry_checkout_benches
+		position = { x = 0 y = 1 }
+		all_parents = { AST_asta_trait_telemetry_checkout_benches }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_uav
+		}
+
+		equipment_bonus = {
+			air_range = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_guidance_systems_calibration
+		name = AST_asta_trait_guidance_systems_calibration
+		icon = GFX_generic_mio_trait_icon_uav_air_attack
+		relative_position_id = AST_asta_trait_instrumented_airframes
+		position = { x = -1 y = 2 }
+		all_parents = { AST_asta_trait_instrumented_airframes }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_uav
+		}
+
+		equipment_bonus = {
+			air_attack = 0.02
+			air_agility = 0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_composite_drone_frames
+		name = AST_asta_trait_composite_drone_frames
+		icon = GFX_generic_mio_trait_icon_uav_build_cost
+
+		relative_position_id = AST_asta_trait_guidance_systems_calibration
+		position = { x = 1 y = 2 }
+		all_parents = {
+			AST_asta_trait_guidance_systems_calibration
+			AST_asta_trait_data_link_hardening
+		}
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_uav
+		}
+
+		equipment_bonus = {
+			build_cost_ic = -0.03
+		}
+
+		production_bonus = {
+			production_resource_need_factor = -0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_flight_sciences_cadre
+		name = AST_asta_trait_flight_sciences_cadre
+		icon = GFX_generic_mio_trait_icon_org
+		relative_position_id = AST_asta_trait_reusable_target_protocols
+		position = { x = 0 y = 2 }
+		all_parents = { AST_asta_trait_reusable_target_protocols }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_uav
+			mio_cat_eq_only_light_aircraft
+		}
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_asta_trait_autonomous_systems_lab
+		name = AST_asta_trait_autonomous_systems_lab
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = AST_asta_trait_woomera_trial_craft
+		position = { x = 1 y = 3 }
+		all_parents = { AST_asta_trait_woomera_trial_craft }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_uav
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+}
 AST_kongsberg_air_manufacturer = {
 	allowed = { original_tag = AST }
 	name = AST_kongsberg_air_manufacturer
 	icon = x
+
+	task_capacity = 3
 
 	equipment_type = {
 		sam_missile_equipment
@@ -8306,6 +10131,879 @@ AST_kongsberg_air_manufacturer = {
 	research_categories = {
 		CAT_armor_weapons
 		CAT_sam
+	}
+
+	tree_header_text = { text = "Networked Ground-Based Air Defence" x = 2 }
+	tree_header_text = { text = "Mobile SHORAD & Sustainment" x = 7 }
+
+	initial_trait = {
+		name = AST_kda_company_trait
+
+		equipment_bonus = {
+			air_defence = 0.08
+			reliability = 0.06
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.06
+		}
+	}
+	trait = {
+		token = AST_kda_trait_modular_fdc_network
+		name = AST_kda_trait_modular_fdc_network
+		icon = GFX_generic_mio_trait_icon_task
+		position = { x = 2 y = 0 }
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_amraam_er_integration
+		name = AST_kda_trait_amraam_er_integration
+		icon = GFX_generic_mio_trait_icon_air_range
+
+		relative_position_id = AST_kda_trait_modular_fdc_network
+		position = { x = 2 y = 1 }
+		all_parents = { AST_kda_trait_modular_fdc_network }
+
+		equipment_bonus = {
+			air_range = 0.05
+			air_defence = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_adaptive_engagement_planner
+		name = AST_kda_trait_adaptive_engagement_planner
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = AST_kda_trait_amraam_er_integration
+		position = { x = -1 y = 1 }
+		all_parents = { AST_kda_trait_amraam_er_integration }
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_dual_radar_coordination
+		name = AST_kda_trait_dual_radar_coordination
+		icon = GFX_generic_mio_trait_icon_air_agility
+
+		relative_position_id = AST_kda_trait_amraam_er_integration
+		position = { x = 0 y = 1 }
+		all_parents = { AST_kda_trait_amraam_er_integration }
+
+		equipment_bonus = {
+			air_agility = 0.06
+			air_defence = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_canister_launcher_fabrication
+		name = AST_kda_trait_canister_launcher_fabrication
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		relative_position_id = AST_kda_trait_modular_fdc_network
+		position = { x = 0 y = 1 }
+		all_parents = { AST_kda_trait_modular_fdc_network }
+
+		equipment_bonus = {
+			build_cost_ic = -0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_redundant_power_systems
+		name = AST_kda_trait_redundant_power_systems
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		relative_position_id = AST_kda_trait_dual_radar_coordination
+		position = { x = 1 y = 1 }
+		all_parents = { AST_kda_trait_dual_radar_coordination }
+
+		equipment_bonus = {
+			reliability = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_distributed_fire_nodes
+		name = AST_kda_trait_distributed_fire_nodes
+		icon = GFX_generic_mio_trait_icon_funds
+
+		relative_position_id = AST_kda_trait_canister_launcher_fabrication
+		position = { x = -1 y = 1 }
+		all_parents = { AST_kda_trait_canister_launcher_fabrication }
+
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_australian_sensor_integration
+		name = AST_kda_trait_australian_sensor_integration
+		icon = GFX_generic_mio_trait_icon_air_attack
+
+		relative_position_id = AST_kda_trait_dual_radar_coordination
+		position = { x = -1 y = 1 }
+		all_parents = { AST_kda_trait_dual_radar_coordination }
+
+		equipment_bonus = {
+			air_attack = 0.08
+			reliability = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_missile_command_bus_upgrade
+		name = AST_kda_trait_missile_command_bus_upgrade
+		icon = GFX_generic_mio_trait_icon_air_attack
+
+		relative_position_id = AST_kda_trait_dual_radar_coordination
+		position = { x = 0 y = 1 }
+		all_parents = { AST_kda_trait_dual_radar_coordination }
+
+		equipment_bonus = {
+			air_attack = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_local_datalink_encryption
+		name = AST_kda_trait_local_datalink_encryption
+		icon = GFX_generic_mio_trait_icon_air_defence
+
+		relative_position_id = AST_kda_trait_missile_command_bus_upgrade
+		position = { x = 1 y = 1 }
+		all_parents = {
+			AST_kda_trait_missile_command_bus_upgrade
+			AST_kda_trait_redundant_power_systems
+		}
+
+		equipment_bonus = {
+			air_defence = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_fire_control_simulator
+		name = AST_kda_trait_fire_control_simulator
+		icon = GFX_generic_mio_trait_icon_research
+		relative_position_id = AST_kda_trait_canister_launcher_fabrication
+		position = { x = 0 y = 2 }
+		all_parents = { AST_kda_trait_canister_launcher_fabrication }
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.02
+			military_industrial_organization_funds_gain = 0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_industrial_co_production
+		name = AST_kda_trait_industrial_co_production
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+
+		relative_position_id = AST_kda_trait_fire_control_simulator
+		position = { x = 1 y = 1 }
+		all_parents = {
+			AST_kda_trait_fire_control_simulator
+			AST_kda_trait_australian_sensor_integration
+		}
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.12
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_nomads_deployment_workflow
+		name = AST_kda_trait_nomads_deployment_workflow
+		icon = GFX_generic_mio_trait_icon_production_capacity
+		position = { x = 7 y = 0 }
+
+		production_bonus = {
+			production_capacity_factor = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_rapid_reload_protocols
+		name = AST_kda_trait_rapid_reload_protocols
+		icon = GFX_generic_mio_trait_icon_efficiency_gain
+
+		relative_position_id = AST_kda_trait_nomads_deployment_workflow
+		position = { x = 1 y = 1 }
+		all_parents = { AST_kda_trait_nomads_deployment_workflow }
+
+		production_bonus = {
+			production_efficiency_gain_factor = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_short_range_amraam_adapter
+		name = AST_kda_trait_short_range_amraam_adapter
+		icon = GFX_generic_mio_trait_icon_air_attack
+
+		relative_position_id = AST_kda_trait_rapid_reload_protocols
+		position = { x = -1 y = 1 }
+		all_parents = { AST_kda_trait_rapid_reload_protocols }
+
+		equipment_bonus = {
+			air_attack = 0.03
+			build_cost_ic = -0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_lightweight_launcher_interfaces
+		name = AST_kda_trait_lightweight_launcher_interfaces
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		relative_position_id = AST_kda_trait_short_range_amraam_adapter
+		position = { x = 1 y = 1 }
+		all_parents = { AST_kda_trait_short_range_amraam_adapter }
+
+		equipment_bonus = {
+			reliability = 0.03
+			build_cost_ic = -0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_field_assembly_workshops
+		name = AST_kda_trait_field_assembly_workshops
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		relative_position_id = AST_kda_trait_lightweight_launcher_interfaces
+		position = { x = -1 y = 1 }
+		all_parents = { AST_kda_trait_lightweight_launcher_interfaces }
+
+		production_bonus = {
+			production_capacity_factor = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_australian_maintenance_partnership
+		name = AST_kda_trait_australian_maintenance_partnership
+		icon = GFX_generic_mio_trait_icon_task
+
+		relative_position_id = AST_kda_trait_field_assembly_workshops
+		position = { x = -3 y = 1 }
+		all_parents = {
+			AST_kda_trait_field_assembly_workshops
+			AST_kda_trait_industrial_co_production
+			AST_kda_trait_local_datalink_encryption
+		}
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_composite_canister_sealing
+		name = AST_kda_trait_composite_canister_sealing
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		relative_position_id = AST_kda_trait_field_assembly_workshops
+		position = { x = 1 y = 1 }
+		all_parents = { AST_kda_trait_field_assembly_workshops }
+
+		equipment_bonus = {
+			reliability = 0.03
+			build_cost_ic = -0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_mobile_command_shelter
+		name = AST_kda_trait_mobile_command_shelter
+		icon = GFX_generic_mio_trait_icon_air_defence
+
+		relative_position_id = AST_kda_trait_composite_canister_sealing
+		position = { x = -2 y = 1 }
+		all_parents = {
+			AST_kda_trait_composite_canister_sealing
+			AST_kda_trait_australian_maintenance_partnership
+		}
+
+		equipment_bonus = {
+			air_defence = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_sustainment_analytics_suite
+		name = AST_kda_trait_sustainment_analytics_suite
+		icon = GFX_generic_mio_trait_icon_funds
+
+		relative_position_id = AST_kda_trait_mobile_command_shelter
+		position = { x = -1 y = 1 }
+		all_parents = { AST_kda_trait_mobile_command_shelter }
+
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_australian_supply_chain_hub
+		name = AST_kda_trait_australian_supply_chain_hub
+		icon = GFX_generic_mio_trait_icon_resources
+
+		relative_position_id = AST_kda_trait_mobile_command_shelter
+		position = { x = 1 y = 1 }
+		all_parents = { AST_kda_trait_mobile_command_shelter }
+
+		production_bonus = {
+			production_resource_need_factor = -0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_quick_refit_teams
+		name = AST_kda_trait_quick_refit_teams
+		icon = GFX_generic_mio_trait_icon_task
+
+		relative_position_id = AST_kda_trait_australian_supply_chain_hub
+		position = { x = -1 y = 1 }
+		all_parents = {
+			AST_kda_trait_australian_supply_chain_hub
+			AST_kda_trait_sustainment_analytics_suite
+		}
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = AST_kda_trait_modular_export_variant
+		name = AST_kda_trait_modular_export_variant
+		icon = GFX_generic_mio_trait_icon_air_defence
+
+		relative_position_id = AST_kda_trait_quick_refit_teams
+		position = { x = 0 y = 1 }
+		all_parents = { AST_kda_trait_quick_refit_teams }
+
+		equipment_bonus = {
+			air_defence = 0.03
+			build_cost_ic = -0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = {
+					check_variable = { free_trait_picks > 0 }
+				}
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = {
+				FROM = {
+					small_expenditure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
 	}
 }
 
@@ -8359,9 +11057,448 @@ AST_amc_air_manufacturer = {
 		CAT_missile
 	}
 
-	research_bonus = 0.04
-}
+	tree_header_text = { text = "Long-Range & Strategic Strike" x = 2 }
+	tree_header_text = { text = "Tactical & Modular Missile Systems" x = 7 }
 
+	initial_trait = {
+		name = AST_amc_company_trait
+
+		equipment_bonus = {
+			air_attack = 0.15
+			reliability = 0.10
+		}
+
+		production_bonus = {
+			production_capacity_factor = 0.10
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.06
+		}
+	}
+	trait = {
+		token = AST_amc_trait_strategic_flight_envelope
+		name = AST_amc_trait_strategic_flight_envelope
+		icon = GFX_generic_mio_trait_icon_air_range
+
+		position = { x = 2 y = 0 }
+
+		equipment_bonus = {
+			air_range = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_precision_warhead_tuning
+		name = AST_amc_trait_precision_warhead_tuning
+		icon = GFX_generic_mio_trait_icon_air_attack
+
+		relative_position_id = AST_amc_trait_strategic_flight_envelope
+		position = { x = 2 y = 1 }
+		all_parents = { AST_amc_trait_strategic_flight_envelope }
+
+		equipment_bonus = {
+			air_attack = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_composite_airframe_materials
+		name = AST_amc_trait_composite_airframe_materials
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		relative_position_id = AST_amc_trait_strategic_flight_envelope
+		position = { x = -2 y = 1 }
+		all_parents = { AST_amc_trait_strategic_flight_envelope }
+
+		equipment_bonus = {
+			reliability = 0.03
+			weight = -0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_integrated_guidance_suite
+		name = AST_amc_trait_integrated_guidance_suite
+		icon = GFX_generic_mio_trait_icon_air_attack
+
+		relative_position_id = AST_amc_trait_precision_warhead_tuning
+		position = { x = -2 y = 1 }
+		all_parents = {
+			AST_amc_trait_precision_warhead_tuning
+			AST_amc_trait_composite_airframe_materials
+		}
+
+		equipment_bonus = {
+			air_attack = 0.02
+			reliability = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_co_development_alliances
+		name = AST_amc_trait_co_development_alliances
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = AST_amc_trait_integrated_guidance_suite
+		position = { x = 0 y = 1 }
+		all_parents = { AST_amc_trait_integrated_guidance_suite }
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_export_ready_certification
+		name = AST_amc_trait_export_ready_certification
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		relative_position_id = AST_amc_trait_co_development_alliances
+		position = { x = 0 y = 1 }
+		all_parents = { AST_amc_trait_co_development_alliances }
+
+		production_bonus = {
+			production_capacity_factor = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_redundant_avionics_architecture
+		name = AST_amc_trait_redundant_avionics_architecture
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		relative_position_id = AST_amc_trait_export_ready_certification
+		position = { x = 0 y = 1 }
+		all_parents = { AST_amc_trait_export_ready_certification }
+
+		equipment_bonus = {
+			reliability = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_long_range_test_facilities
+		name = AST_amc_trait_long_range_test_facilities
+		icon = GFX_generic_mio_trait_icon_task
+
+		relative_position_id = AST_amc_trait_redundant_avionics_architecture
+		position = { x = 0 y = 1 }
+		all_parents = { AST_amc_trait_redundant_avionics_architecture }
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_tactical_launcher_modularity
+		name = AST_amc_trait_tactical_launcher_modularity
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+		position = { x = 7 y = 0 }
+
+		equipment_bonus = {
+			air_attack = 0.02
+			build_cost_ic = -0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_rapid_rearm_procedures
+		name = AST_amc_trait_rapid_rearm_procedures
+		icon = GFX_generic_mio_trait_icon_efficiency_gain
+
+		relative_position_id = AST_amc_trait_tactical_launcher_modularity
+		position = { x = 1 y = 1 }
+		all_parents = { AST_amc_trait_tactical_launcher_modularity }
+
+		production_bonus = {
+			production_efficiency_gain_factor = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_modular_warhead_kits
+		name = AST_amc_trait_modular_warhead_kits
+		icon = GFX_generic_mio_trait_icon_strategic_attack
+
+		relative_position_id = AST_amc_trait_tactical_launcher_modularity
+		position = { x = -1 y = 1 }
+		all_parents = { AST_amc_trait_tactical_launcher_modularity }
+
+		equipment_bonus = {
+			air_attack = 0.03
+			strategic_attack = 0.06
+			build_cost_ic = -0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_localised_component_supply
+		name = AST_amc_trait_localised_component_supply
+		icon = GFX_generic_mio_trait_icon_resources
+
+		relative_position_id = AST_amc_trait_modular_warhead_kits
+		position = { x = 1 y = 1 }
+		all_parents = {
+			AST_amc_trait_modular_warhead_kits
+			AST_amc_trait_rapid_rearm_procedures
+		}
+
+		production_bonus = {
+			production_resource_need_factor = -0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_test_diagnostics_lab
+		name = AST_amc_trait_test_diagnostics_lab
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = AST_amc_trait_localised_component_supply
+		position = { x = 0 y = 1 }
+		all_parents = { AST_amc_trait_localised_component_supply }
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_field_maintenance_teams
+		name = AST_amc_trait_field_maintenance_teams
+		icon = GFX_generic_mio_trait_icon_task
+
+		relative_position_id = AST_amc_trait_test_diagnostics_lab
+		position = { x = 0 y = 1 }
+		all_parents = { AST_amc_trait_test_diagnostics_lab }
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_cost_effective_propulsion_builds
+		name = AST_amc_trait_cost_effective_propulsion_builds
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		relative_position_id = AST_amc_trait_field_maintenance_teams
+		position = { x = 0 y = 1 }
+		all_parents = { AST_amc_trait_field_maintenance_teams }
+
+		equipment_bonus = {
+			build_cost_ic = -0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+	trait = {
+		token = AST_amc_trait_hardened_electronics_packaging
+		name = AST_amc_trait_hardened_electronics_packaging
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		relative_position_id = AST_amc_trait_cost_effective_propulsion_builds
+		position = { x = 0 y = 1 }
+		all_parents = { AST_amc_trait_cost_effective_propulsion_builds }
+
+		equipment_bonus = {
+			reliability = 0.06
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { FROM.interest_rate > 8 } }
+		}
+	}
+}
 
 
 
