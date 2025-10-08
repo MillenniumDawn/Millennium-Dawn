@@ -114,49 +114,10 @@ focus_tree = {
 		}
     }
 	focus = {
-        id = ALG_national_reconciliation
-        icon = war_is_over
-        prerequisite = { focus = ALG_charter_for_peace }
-        x = 1
-        y = 2
-        cost = 5
-		search_filters = { FOCUS_FILTER_POLITICAL }
-		relative_position_id = ALG_restore_hope
-        completion_reward = {
-            add_political_power = 250
-            add_stability = 0.01
-			set_temp_variable = { temp_opinion = 2 }
-			change_the_military_opinion = yes
-			country_event = {id = algeria_news.8}
-			custom_effect_tooltip = {
-				localization_key = UNLOCK_DECISION_IN_CATEGORY
-				DECISION = ALG_pardon_moderate_islamist
-				DECISION_CATEGORY = ALG_reconciliation_path_category
-			}
-			custom_effect_tooltip = {
-				localization_key = UNLOCK_DECISION_IN_CATEGORY
-				DECISION = ALG_initiate_national_dialogues
-				DECISION_CATEGORY = ALG_reconciliation_path_category
-			}
-			custom_effect_tooltip = {
-				localization_key = UNLOCK_DECISION_IN_CATEGORY
-				DECISION = ALG_reintegrate_former_fighter
-				DECISION_CATEGORY = ALG_reconciliation_path_category
-			}
-        }
-        ai_will_do = {
-			base = 100
-			modifier = {
-				factor = 2
-				is_historical_focus_on = yes
-			}
-		}
-    }
-	focus = {
         id = ALG_moderate_islamist_talks
         icon = focus_PER_islamic_solidarity
         prerequisite = { focus = ALG_charter_for_peace }
-        x = -1
+        x = 0
         y = 2
         cost = 5
 		search_filters = { FOCUS_FILTER_POLITICAL }
@@ -180,16 +141,250 @@ focus_tree = {
 			}
 		}
     }
-	 focus = {
+	focus = {
+		id = ALG_election_day
+		icon = election2
+		x = 0
+		y = 2
+		cost = 4.5
+		prerequisite = {
+			focus = ALG_moderate_islamist_talks
+		}
+		relative_position_id = ALG_charter_for_peace
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			date > 2000.1.1
+		}
+
+		completion_reward = {
+			set_country_flag = ALG_policy_path1
+			mark_focus_tree_layout_dirty = yes
+			add_political_power = 150
+			set_country_flag = ALG_election_pending
+			add_stability = 0.05
+			add_timed_idea = {
+				idea = ALG_election_time_idea
+				days = 365
+			}
+			custom_effect_tooltip = ALG_election_day_tt
+		}
+	}
+	##FLN Win
+	focus = {
+		id = ALG_FLN_path
+		icon = national_autocracy
+		x = -4
+		y = 1
+		cost = 3.5
+		relative_position_id = ALG_election_day
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		prerequisite = { focus = ALG_election_day }
+		mutually_exclusive = { focus = ALG_opposition_path }
+
+		completion_reward = {
+			set_country_flag = ALG_fln_opp_path
+			mark_focus_tree_layout_dirty = yes
+			add_political_power = 100
+			add_country_flag = ALG_FLN_chosen
+			remove_country_flag = ALG_election_pending
+			set_temp_variable = { party_index = 7 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { percent_change = 2 }
+			change_domestic_influence_percentage = yes
+		}
+	}
+
+	focus = {
+		id = ALG_FLN_preserve_system
+		icon = elections_banned
+		x = -4
+		y = 2
+		cost = 5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_FLN_path }
+
+		completion_reward = {
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+			newline = yes
+			country_event = { id = AlgeriaElections.2}
+		}
+	}
+
+	focus = {
+		id = ALG_FLN_control_media
+		icon = internet_censorship
+		x = -6
+		y = 3
+		cost = 4.5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_FLN_preserve_system }
+
+		completion_reward = {
+			set_temp_variable = { percent_change = 2 }
+			change_domestic_influence_percentage = yes
+			add_ideas = ALG_FLN_media_control_idea
+		}
+	}
+
+	focus = {
+		id = ALG_FLN_military_loyalty
+		icon = a_loyal_military
+		x = -3
+		y = 3
+		cost = 6.5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_FLN_preserve_system }
+
+		completion_reward = {
+			if = {
+				limit = { has_idea = ALG_loyal_military_idea}
+				swap_ideas = {
+					remove_idea = ALG_loyal_military_idea
+					add_idea = ALG_loyal_military2_idea
+				}
+			}
+			if = {
+				limit = { NOT = { has_idea = ALG_loyal_military_idea}}
+				add_ideas = ALG_loyal_military_idea
+			}
+			add_power_balance_value = {
+            	id = algeria_power_balance
+            	value = -0.05
+        	}
+		}
+	}
+
+	focus = {
+		id = ALG_FLN_state_led_development
+		icon = walfare_state
+		x = -5
+		y = 4
+		cost = 7
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_FLN_control_media }
+
+		completion_reward = {
+			add_ideas = ALG_FLN_state_led_development_idea
+			increase_economic_growth = yes
+		}
+	}
+
+	focus = {
+		id = ALG_FLN_oil_for_people
+		icon = focus_PER_increase_oil_sales
+		x = -3
+		y = 4
+		cost = 5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_FLN_military_loyalty }
+
+		completion_reward = {
+			add_ideas = ALG_FLN_oil_for_people_idea
+			add_resource = {
+				type = oil
+				amount = 5
+				state = 384
+			}
+			add_stability = 0.05
+		}
+	}
+
+	focus = {
+		id = ALG_FLN_public_works
+		icon = SOV_kasya_workers
+		x = -4
+		y = 5
+		cost = 6.5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_FLN_state_led_development focus = ALG_FLN_oil_for_people }
+
+		completion_reward = {
+			two_random_industrial_complex = yes
+			one_random_infrastructure = yes
+		}
+	}
+
+	focus = {
+		id = ALG_FLN_national_security_council
+		icon = police_funding_bonus
+		x = -7
+		y = 4
+		cost = 7
+		relative_position_id = ALG_election_day
+		search_filters = { FOCUS_FILTER_INTERNAL_SECURITY }
+
+		prerequisite = { focus = ALG_FLN_control_media }
+
+		completion_reward = {
+			add_ideas = ALG_FLN_national_security_council_idea
+			if = {
+				limit = { has_idea = ALG_loyal_military_idea}
+				swap_ideas = {
+					remove_idea = ALG_loyal_military_idea
+					add_idea = ALG_loyal_military2_idea
+				}
+			}
+			if = {
+				limit = { NOT = { has_idea = ALG_loyal_military_idea}}
+				add_ideas = ALG_loyal_military_idea
+			}
+		}
+	}
+
+	focus = {
+		id = ALG_FLN_industrial_nationalization
+		icon = focus_algerian_industry
+		x = -4
+		y = 6
+		cost = 6.5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_FLN_public_works }
+
+		completion_reward = {
+			add_ideas = ALG_FLN_industrial_nationalization_idea
+		}
+	}
+
+	focus = {
+		id = ALG_FLN_legacy_of_stability
+		icon = democratic_stability
+		x = -4
+		y = 7
+		cost = 7
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_FLN_industrial_nationalization }
+
+		completion_reward = {
+			add_political_power = 100
+			add_ideas = ALG_FLN_legacy_of_stability_idea
+		}
+	}
+	focus = {
         id = ALG_open_democratic_path
         icon = blue_democracy
-        prerequisite = { focus = ALG_national_reconciliation }
-		prerequisite = {focus = ALG_moderate_islamist_talks}
-        x = 0
-        y = 3
+		allow_branch = {
+			has_country_flag = ALG_fln_opp_path
+		}
+        prerequisite = { focus = ALG_FLN_path }
+        x = -7
+        y = 1
         cost = 3.5
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		relative_position_id = ALG_restore_hope
+		relative_position_id = ALG_FLN_path
         completion_reward = {
 		    decrease_corruption = yes
 			remove_ideas = ALG_recovering_from_the_civil_war
@@ -219,7 +414,7 @@ focus_tree = {
 				has_global_flag = FLN_focus
 				has_country_flag = ALG_pres_coa
 			}
-            x = -3
+            x = -2
             y = 1
             cost = 5
 			search_filters = { FOCUS_FILTER_POLITICAL }
@@ -255,7 +450,7 @@ focus_tree = {
         id = FLN_balance_islamists_and_secularists
         icon = loosen_secularism_laws
         prerequisite = { focus = FLN_legacy_revolution }
-        x = 3
+        x = 0
         y = 1
         cost = 7
 		relative_position_id = FLN_legacy_revolution
@@ -285,9 +480,9 @@ focus_tree = {
     }
 	focus = {
 		id = FLN_new_constutition_reforms
-		icon = new_democratic_constitution
+		icon = alg_dostor
 
-		x = 3
+		x = 0
 		y = 2
 
 		cost = 6
@@ -319,7 +514,7 @@ focus_tree = {
 	focus = {
 		id = FLN_share_power
 		icon = dangerous_deal3
-		x = 3
+		x = 0
 		y = 3
 		cost = 6
 		relative_position_id = FLN_legacy_revolution
@@ -343,7 +538,7 @@ focus_tree = {
 		id = FLN_parties_corruptions
 		icon = arm_anticorruption_campaign
 
-		x = 3
+		x = -1
 		y = 4
 
 		cost = 6
@@ -376,13 +571,13 @@ focus_tree = {
 		id = FLN_denounce_previous_colonialist_regimes
 		icon = EGY_Afrique_Francaise
 
-		x = 3
-		y = 5
+		x = 1
+		y = 4
 
 		cost = 6
 		relative_position_id = FLN_legacy_revolution
 
-		prerequisite = { focus = FLN_parties_corruptions }
+		prerequisite = { focus = FLN_share_power }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -408,8 +603,8 @@ focus_tree = {
         id = ALG_sonatrach_scandal
         prerequisite = { focus = FLN_denounce_previous_colonialist_regimes focus = ALG_oppose_ffs_and_rcd }
         icon = seize_oil
-        x = 4
-        y = 6
+        x = 2
+        y = 5
         cost = 7
 		available = {
 			date > 2013.1.1
@@ -436,8 +631,8 @@ focus_tree = {
         id = ALG_hirak_awakens
         prerequisite = { focus = ALG_sonatrach_scandal }
         icon = algeria_riots
-        x = 4
-        y = 7
+        x = 2
+        y = 6
         cost = 6
 		available = {
 		date > 2019.1.1
@@ -466,187 +661,6 @@ focus_tree = {
 			}
 		}
     }
-		focus = {
-            id = FLN_nationalize_resources
-            icon = oil_green
-            prerequisite = { focus = FLN_devlop_industry }
-            x = -3
-            y = 2
-            cost = 7
-			search_filters = { FOCUS_FILTER_INDUSTRY }
-			relative_position_id = FLN_legacy_revolution
-            completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus FLN_nationalize_resources"
-			set_temp_variable = { temp_opinion = 3 }
-			change_fossil_fuel_industry_opinion = yes
-			random_owned_controlled_state = {
-				add_building_construction = {
-					type = fossil_powerplant
-					level = 2
-					instant_build = yes
-				}
-			}
-			set_temp_variable = { treasury_change = -7.5 }
-        	modify_treasury_effect = yes
-			add_resource = {
-				type = oil
-				amount = 8
-				state = 386
-			}
-			add_resource = {
-				type = oil
-				amount = 6
-				state = 385
-			}
-			set_temp_variable = { treasury_change = -13.12 }
-        	modify_treasury_effect = yes
-			set_temp_variable = { corp_change = 2 }
-			modify_corporate_tax_rate_effect = yes
-
-		}
-		ai_will_do = {
-			factor = 5
-		}
-	}
-	focus = {
-           id = FLN_expand_hydro
-           icon = focus_generic_hydroelectric_energy
-           prerequisite = { focus = FLN_legacy_revolution }
-           x = 0
-           y = 1
-           cost = 7
-		search_filters = { FOCUS_FILTER_INDUSTRY }
-		relative_position_id = FLN_legacy_revolution
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus FLN_expand_hydro"
-			random_owned_state = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = synthetic_refinery
-					level = 1
-					instant_build = yes
-				}
-			}
-			random_owned_state = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = synthetic_refinery
-					level = 1
-					instant_build = yes
-				}
-			}
-			newline = yes
-			set_temp_variable = { treasury_change = -17.00 }
-			modify_treasury_effect = yes
-			set_temp_variable = { temp_productivity_change = 0.025 }
-			flat_productivity_change_effect = yes
-		}
-		ai_will_do = { factor = 1 }
-	}
-	focus = {
-		id = FLN_optimize_water_management
-		icon = water_conservation
-		prerequisite = { focus = FLN_expand_hydro }
-		x = -1
-		y = 2
-		cost = 7
-		relative_position_id = FLN_legacy_revolution
-		completion_reward = {
-			add_stability = 0.02
-			random_owned_controlled_state = {
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-
-			}
-			set_temp_variable = { treasury_change = -3.5 }
-			modify_treasury_effect = yes
-			set_temp_variable = { debt_change = 0.1 }
-			modify_debt_effect = yes
-		}
-		ai_will_do = { factor = 1 }
-	}
-
-	focus = {
-		id = FLN_hydroelectric_authority
-		icon = hydroelectric2
-		prerequisite = { focus = FLN_expand_hydro }
-		x = 1
-		y = 2
-		cost = 7
-		relative_position_id = FLN_legacy_revolution
-		completion_reward = {
-			add_stability = 0.05
-			add_ideas = ALG_hydroelectric_power_plants_upgraded_idea
-			set_temp_variable = { temp_change = 2 }
-			build_enrichment_facilities_effect = yes
-		}
-		ai_will_do = { factor = 1 }
-	}
-
-	focus = {
-		id = FLN_electrify_rural_algeria
-		icon = focus_ARG_develop_the_electricity_sector
-		prerequisite = {  focus = FLN_hydroelectric_authority }
-		prerequisite = {focus = FLN_optimize_water_management}
-		x = 0
-		y = 3
-		cost = 7
-		relative_position_id = FLN_legacy_revolution
-		completion_reward = {
-			random_owned_state = { add_building_construction = { type = infrastructure level = 2 instant_build = yes } }
-			add_stability = 0.03
-			set_temp_variable = { treasury_change = -3.5 }
-			modify_treasury_effect = yes
-			swap_ideas = {
-				remove_idea = ALG_hydroelectric_power_plants_upgraded_idea
-				add_idea = ALG_hydroelectric_power_plants_upgraded2_idea
-			}
-		}
-		ai_will_do = { factor = 1 }
-	}
-    focus = {
-            id = FLN_devlop_industry
-            icon = industry_civilian
-            prerequisite = { focus = FLN_legacy_revolution }
-            x = -4
-            y = 1
-            cost = 7
-			search_filters = { FOCUS_FILTER_INDUSTRY }
-			relative_position_id = FLN_legacy_revolution
-            completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus FLN_devlop_industry"
-			add_ideas = ALG_relying_on_our_own_strength_spirit
-			two_random_industrial_complex = yes
-		}
-	}
-	focus = {
-		id = FLN_foreign_investment
-		icon = export_economy
-		prerequisite = { focus = FLN_devlop_industry }
-		x = -5
-		y = 2
-		cost = 7
-		search_filters = { FOCUS_FILTER_INDUSTRY }
-		relative_position_id = FLN_legacy_revolution
-		completion_reward = {
-			random_owned_state = { add_building_construction = { type = industrial_complex level = 1 instant_build = yes } }
-			add_political_power = 50
-			set_temp_variable = { treasury_change = -7.5 }
-			modify_treasury_effect = yes
-			set_temp_variable = { int_investment_change = 0.2 }
-			modify_international_investment_effect = yes
-			set_temp_variable = { target_nation = PER.id }
-			set_temp_variable = { adding_nation = ALG.id }
-			change_permanent_investment_target = yes
-			set_temp_variable = { target_nation = SOV.id }
-			set_temp_variable = { adding_nation = ALG.id }
-			change_permanent_investment_target = yes
-		}
-		ai_will_do = { factor = 1 }
-	}
 	focus = {
             id = ALG_no_pres_alliance
             icon = legacy_of_antonescu
@@ -656,7 +670,7 @@ focus_tree = {
 				has_global_flag = FLN_focus
 				has_country_flag = ALG_only_FLN
 			}
-            x = 3
+            x = 2
             y = 1
             cost = 5
 			search_filters = { FOCUS_FILTER_POLITICAL }
@@ -734,9 +748,9 @@ focus_tree = {
 				add_idea = ALG_shadow_state
 			}
 			add_power_balance_value = {
-            id = algeria_power_balance
-            value = -0.08
-        }
+            	id = algeria_power_balance
+            	value = -0.08
+        	}
             add_ideas = ALG_elite_control
 			set_temp_variable = { ALG_constitution_1996_drift_defense_temp = 0.10 }
             add_to_variable = { ALG_constitution_1996_drift_defence_factor = ALG_constitution_1996_drift_defense_temp }
@@ -773,57 +787,13 @@ focus_tree = {
 		}
 	}
 	focus = {
-		id = ALG_sonatrach_expansion
-		icon = oil_green
-
-		x = 0
-		y = 3
-
-		cost = 6
-		relative_position_id = ALG_no_pres_alliance
-
-		prerequisite = { focus = ALG_le_pouvoir_in_the_shadows }
-		prerequisite = {focus = ALG_nationalize_privatized_industries }
-		search_filters = { FOCUS_FILTER_ECONOMY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus ALG_sonatrach_expansion"
-			add_resource = {
-				type = oil
-				amount = 10
-				state = 386
-			}
-			add_resource = {
-				type = oil
-				amount = 8
-				state = 384
-			}
-			add_resource = {
-				type = oil
-				amount = 6
-				state = 385
-			}
-		set_temp_variable = { treasury_change = -22.5 }
-        modify_treasury_effect = yes
-		set_temp_variable = { corp_change = 2 }
-		modify_corporate_tax_rate_effect = yes
-		}
-
-		ai_will_do = {
-			base = 25
-		}
-	}
-	focus = {
 		id = ALG_the_cult_of_bouteflika
 		icon = algeria_president
 		x = 0
-		y = 4
+		y = 3
 		cost = 7.19
 		relative_position_id = ALG_no_pres_alliance
 		search_filters = { FOCUS_FILTER_POLITICAL }
-		prerequisite = {
-			focus = ALG_sonatrach_expansion
-		}
 		available = {
 			emerging_autocracy_are_in_power = yes
 		}
@@ -845,7 +815,7 @@ focus_tree = {
 		icon = sov_nazbol_anti_liberal_communism
 
 		x = -1
-		y = 5
+		y = 4
 
 		cost = 7
 
@@ -884,7 +854,7 @@ focus_tree = {
 		icon = Red_Tearing_Paper
 
 		x = 1
-		y = 5
+		y = 4
 
 		cost = 7
 		relative_position_id = ALG_no_pres_alliance
@@ -908,6 +878,611 @@ focus_tree = {
 		ai_will_do = {
 			base = 40
 		}
+	}
+    #Opposition WIN
+	focus = {
+		id = ALG_opposition_path
+		icon = opposition_aze
+		x = 4
+		y = 1
+		cost = 3.5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_election_day }
+		mutually_exclusive = { focus = ALG_FLN_path }
+
+		completion_reward = {
+			add_political_power = 100
+			add_country_flag = ALG_opposition_chosen
+			remove_country_flag = ALG_election_pending
+			set_temp_variable = { party_index = 7 }
+			set_temp_variable = { party_popularity_increase = -0.02 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 16 }
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { percent_change = -2 }
+			change_domestic_influence_percentage = yes
+		}
+	}
+
+	focus = {
+		id = ALG_OPP_free_elections
+		icon = Election_graphics
+		x = 4
+		y = 2
+		cost = 5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_opposition_path }
+
+		completion_reward = {
+			country_event = { id = AlgeriaElections.1 }
+			hidden_effect = {
+				set_country_flag = no_leader_change
+				set_temp_variable = { election_year = global.year }
+				subtract_from_temp_variable = { election_year = 3 }
+				meta_effect = {
+					text = {
+						set_politics = {
+							ruling_party = neutrality
+							elections_allowed = yes
+							last_election = "[YEAR].[MONTH].1"
+							election_frequency = 48
+						}
+					}
+					YEAR = global.year
+					MONTH = global.month
+				}
+				clr_country_flag = no_leader_change
+			}
+		}
+	}
+
+	focus = {
+		id = ALG_OPP_new_constitution
+		icon = alg_dostor
+		x = 3
+		y = 3
+		cost = 4.5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_OPP_free_elections }
+
+		completion_reward = {
+			country_event = { id = alg_constitution.1 days = 1 }
+		}
+	}
+
+	focus = {
+		id = ALG_OPP_media_freedom
+		icon = alg_media
+		x = 5
+		y = 3
+		cost = 4
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_OPP_free_elections }
+
+		completion_reward = {
+			add_ideas = ALG_free_media_idea
+		}
+	}
+
+	focus = {
+		id = ALG_OPP_judiciary_reform
+		icon = judiciary_reform
+		x = 4
+		y = 4
+		cost = 5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_OPP_media_freedom focus = ALG_OPP_new_constitution }
+
+		completion_reward = {
+			add_ideas = ALG_reform_the_judicial_system_idea
+		}
+	}
+
+	focus = {
+		id = ALG_OPP_open_market
+		icon = blr_market_economy
+		x = 5
+		y = 5
+		cost = 5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_OPP_judiciary_reform }
+
+		completion_reward = {
+			increase_exports = yes
+			add_ideas = ALG_open_market_idea
+		}
+	}
+
+	focus = {
+		id = ALG_OPP_education_first
+		icon = education_reform
+		x = 3
+		y = 5
+		cost = 5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_OPP_judiciary_reform }
+
+		completion_reward = {
+			add_research_slot = 1
+			add_ideas = ALG_reform_education_system_idea
+		}
+	}
+
+	focus = {
+		id = ALG_OPP_anti_corruption
+		icon = blr_anti_corruption_law
+		x = 7
+		y = 4
+		cost = 5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_OPP_media_freedom }
+
+		completion_reward = {
+			decrease_corruption = yes
+			add_ideas = ALG_anti_corruption_campaign_idea
+		}
+	}
+
+	focus = {
+		id = ALG_OPP_invest_in_youth
+		icon = focus_RAJ_enrollment_of_dali_children
+		x = 7
+		y = 5
+		cost = 6
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_OPP_anti_corruption }
+
+		completion_reward = {
+			increase_education_budget = yes
+			increase_centralization = yes
+			add_ideas = ALG_invest_in_youth_idea
+
+		}
+	}
+	focus = {
+		id = ALG_state_first
+		icon = islamophobia2
+		x = 7
+		y = 6
+		cost = 7.19
+		relative_position_id = ALG_election_day
+		prerequisite = {
+			focus = ALG_OPP_invest_in_youth
+		}
+		available = {
+			western_social_democrats_are_in_power = yes
+		}
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		completion_reward = {
+			two_office_construction = yes
+			newline = yes
+			add_stability = -0.03
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_state_first"
+			set_temp_variable = { party_index = 12 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.035 }
+			add_relative_party_popularity = yes
+			newline = yes
+			set_temp_variable = { party_index = 11 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.035 }
+			add_relative_party_popularity = yes
+			newline = yes
+			set_temp_variable = { party_index = 9 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.035 }
+			add_relative_party_popularity = yes
+			newline = yes
+			set_temp_variable = { party_index = 8 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.035 }
+			add_relative_party_popularity = yes
+		}
+	}
+
+	focus = {
+		id = ALG_OPP_new_era
+		icon = algeria_indp
+		x = 4
+		y = 6
+		cost = 5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_OPP_open_market focus = ALG_OPP_education_first }
+
+		completion_reward = {
+			add_ideas = ALG_new_era_for_algeria_idea
+			increase_economic_growth = yes
+		}
+	}
+
+	focus = {
+        id = ALG_national_reconciliation
+        icon = war_is_over
+        prerequisite = { focus = ALG_FLN_path focus = ALG_opposition_path }
+        x = 0
+        y = 2
+        cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		relative_position_id = ALG_election_day
+        completion_reward = {
+            add_political_power = 250
+            add_stability = 0.01
+			add_ideas = ALG_black_decade_lesson_idea
+			set_temp_variable = { temp_opinion = 2 }
+			change_the_military_opinion = yes
+			country_event = {id = algeria_news.8}
+			custom_effect_tooltip = {
+				localization_key = UNLOCK_DECISION_IN_CATEGORY
+				DECISION = ALG_pardon_moderate_islamist
+				DECISION_CATEGORY = ALG_reconciliation_path_category
+			}
+			custom_effect_tooltip = {
+				localization_key = UNLOCK_DECISION_IN_CATEGORY
+				DECISION = ALG_initiate_national_dialogues
+				DECISION_CATEGORY = ALG_reconciliation_path_category
+			}
+			custom_effect_tooltip = {
+				localization_key = UNLOCK_DECISION_IN_CATEGORY
+				DECISION = ALG_reintegrate_former_fighter
+				DECISION_CATEGORY = ALG_reconciliation_path_category
+			}
+        }
+        ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
+		}
+    }
+
+	focus = {
+		id = ALG_reform_armed_forces
+		icon = focus_la_politique_algerienne
+		x = 0
+		y = 3
+		cost = 6.5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_national_reconciliation }
+
+		completion_reward = {
+			increase_military_spending = yes
+			swap_ideas = {
+				remove_idea = ALG_black_decade_lesson_idea
+				add_idea = ALG_black_decade_lesson2_idea
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_tech = neural_networks_revival
+					}
+				}
+				set_technology = { neural_networks_revival = 1 }
+			}
+			else_if = {
+				limit = {
+					has_tech = neural_networks_revival
+					NOT = {
+						has_tech = data_mining
+					}
+				}
+				set_technology = { data_mining = 1 }
+			}
+			else_if = {
+				limit = {
+					has_tech = data_mining
+					NOT = {
+						has_tech = machine_learning
+					}
+				}
+				set_technology = { machine_learning = 1 }
+			}
+			else_if = {
+				limit = {
+					has_tech = machine_learning
+					NOT = {
+						has_tech = sociable_machines
+					}
+				}
+				set_technology = { sociable_machines = 1 }
+			}
+			else_if = {
+				limit = {
+					has_tech = sociable_machines
+				}
+				set_temp_variable = { ALG_research_speed_factor_change = 0.05 }
+				update_ALG_research_speed_factor = yes
+			}
+			newline = yes
+			set_temp_variable = { ALG_education_cost_multiplier_modifier_change = -0.05 }
+			update_ALG_education_cost_multiplier_modifier = yes
+		}
+	}
+
+	focus = {
+		id = ALG_counter_extremism
+		icon = Jihadi_Fighters
+		x = 0
+		y = 4
+		cost = 6.5
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_reform_armed_forces }
+
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = ALG_black_decade_lesson2_idea
+				add_idea = ALG_black_decade_lesson3_idea
+			}
+			set_temp_variable = { ALG_special_forces_cap_flat_change = 10.00 }
+			update_ALG_special_forces_cap_flat = yes
+			newline = yes
+			set_temp_variable = { ALG_terrain_penalty_reduction_change = 0.05 }
+			update_ALG_terrain_penalty_reduction = yes
+			newline = yes
+			set_temp_variable = { ALG_planning_speed_change = 0.10 }
+			update_ALG_planning_speed = yes
+		}
+	}
+
+	focus = {
+		id = ALG_regional_power
+		icon = beyond_east_africa
+		x = 0
+		y = 5
+		cost = 6.5
+		available = {
+			has_at_least_regional_power_status = yes
+		}
+		relative_position_id = ALG_election_day
+
+		prerequisite = { focus = ALG_counter_extremism }
+
+		completion_reward = {
+			increase_economic_growth = yes
+			decrease_corruption = yes
+			set_temp_variable = { int_investment_change = 15 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { percent_change = 3 }
+     		change_domestic_influence_percentage = yes
+		}
+	}
+	focus = {
+		id = ALG_expanding_the_power_grid
+		icon = barrels
+
+		x = 1
+		y = 1
+
+		relative_position_id = ALG_sonatrach_expansion
+
+		cost = 5.72
+
+		prerequisite = { focus = ALG_sonatrach_expansion }
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_ADD_BUILDING }
+
+		available = {
+			405 = {
+				is_owned_and_controlled_by = PER
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus ALG_expanding_the_power_grid"
+			405 = {
+				add_extra_state_shared_building_slots = 3
+				add_building_construction = {
+					type = fossil_powerplant
+					level = 3
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -6.75 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
+		}
+	}
+	focus = {
+		id = ALG_sonatrach_expansion
+		icon = oil_green
+
+		x = 1
+		y = 1
+
+		cost = 6
+		relative_position_id = ALG_regional_power
+
+		prerequisite = { focus = ALG_regional_power }
+		search_filters = { FOCUS_FILTER_ECONOMY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_sonatrach_expansion"
+			add_resource = {
+				type = oil
+				amount = 10
+				state = 386
+			}
+			add_resource = {
+				type = oil
+				amount = 8
+				state = 384
+			}
+			add_resource = {
+				type = oil
+				amount = 6
+				state = 385
+			}
+		set_temp_variable = { treasury_change = -22.5 }
+        modify_treasury_effect = yes
+		set_temp_variable = { corp_change = 2 }
+		modify_corporate_tax_rate_effect = yes
+		}
+
+		ai_will_do = {
+			base = 25
+		}
+	}
+	focus = {
+           id = FLN_expand_hydro
+           icon = focus_generic_hydroelectric_energy
+           prerequisite = { focus = ALG_sonatrach_expansion focus = FLN_devlop_industry }
+           x = 0
+           y = 2
+           cost = 7
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		relative_position_id = ALG_regional_power
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus FLN_expand_hydro"
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = synthetic_refinery
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = synthetic_refinery
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -17.00 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_productivity_change = 0.025 }
+			flat_productivity_change_effect = yes
+		}
+		ai_will_do = { factor = 1 }
+	}
+	focus = {
+		id = FLN_optimize_water_management
+		icon = water_conservation
+		prerequisite = { focus = FLN_expand_hydro }
+		x = -1
+		y = 1
+		cost = 7
+		relative_position_id = FLN_expand_hydro
+		completion_reward = {
+			add_stability = 0.02
+			random_owned_controlled_state = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+
+			}
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { debt_change = 0.1 }
+			modify_debt_effect = yes
+		}
+		ai_will_do = { factor = 1 }
+	}
+
+	focus = {
+		id = FLN_hydroelectric_authority
+		icon = hydroelectric2
+		prerequisite = { focus = FLN_expand_hydro }
+		x = 1
+		y = 1
+		cost = 7
+		relative_position_id = FLN_expand_hydro
+		completion_reward = {
+			add_stability = 0.05
+			add_ideas = ALG_hydroelectric_power_plants_upgraded_idea
+			set_temp_variable = { temp_change = 2 }
+			build_enrichment_facilities_effect = yes
+		}
+		ai_will_do = { factor = 1 }
+	}
+
+	focus = {
+		id = FLN_electrify_rural_algeria
+		icon = focus_ARG_develop_the_electricity_sector
+		prerequisite = {  focus = FLN_hydroelectric_authority }
+		prerequisite = {focus = FLN_optimize_water_management}
+		x = 0
+		y = 2
+		cost = 7
+		relative_position_id = FLN_expand_hydro
+		completion_reward = {
+			random_owned_state = { add_building_construction = { type = infrastructure level = 2 instant_build = yes } }
+			add_stability = 0.03
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
+			swap_ideas = {
+				remove_idea = ALG_hydroelectric_power_plants_upgraded_idea
+				add_idea = ALG_hydroelectric_power_plants_upgraded2_idea
+			}
+		}
+		ai_will_do = { factor = 1 }
+	}
+    focus = {
+            id = FLN_devlop_industry
+            icon = industry_civilian
+            prerequisite = { focus = ALG_regional_power }
+            x = -1
+            y = 1
+            cost = 6.5
+			search_filters = { FOCUS_FILTER_INDUSTRY }
+			relative_position_id = ALG_regional_power
+            completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus FLN_devlop_industry"
+			add_ideas = ALG_relying_on_our_own_strength_spirit
+			two_random_industrial_complex = yes
+		}
+	}
+	focus = {
+		id = FLN_foreign_investment
+		icon = export_economy
+		prerequisite = { focus = FLN_devlop_industry }
+		x = -1
+		y = 1
+		cost = 7
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+		relative_position_id = FLN_devlop_industry
+		completion_reward = {
+			random_owned_state = { add_building_construction = { type = industrial_complex level = 1 instant_build = yes } }
+			add_political_power = 50
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = 0.2 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { target_nation = PER.id }
+			set_temp_variable = { adding_nation = ALG.id }
+			change_permanent_investment_target = yes
+			set_temp_variable = { target_nation = SOV.id }
+			set_temp_variable = { adding_nation = ALG.id }
+			change_permanent_investment_target = yes
+		}
+		ai_will_do = { factor = 1 }
 	}
 
 
@@ -1103,10 +1678,10 @@ focus = {
 
 	focus = {
 		id = ALG_expand_the_pna
-		prerequisite = { focus = ALG_repression_campaign }
+		prerequisite = { focus = ALG_counterterrorism_program}
 		prerequisite = {focus = ALG_black_market_rises }
 		icon = small_arms5
-		x = -1
+		x = 0
 		y = 3
 		relative_position_id = ALG_military_coup
 		cost = 10
@@ -1129,7 +1704,7 @@ focus = {
 		id = ALG_africas_strongest_army
 		prerequisite = { focus = ALG_expand_the_pna }
 		icon = Sunset_of_Africa
-		x = -1
+		x = 0
 		y = 4
 		cost = 12
 		relative_position_id = ALG_military_coup
@@ -1154,7 +1729,7 @@ focus = {
 		id = ALG_global_power_projection
 		prerequisite = { focus = ALG_africas_strongest_army }
 		icon = global_falangism
-		x = -1
+		x = 0
 		y = 5
 		cost = 12
 		relative_position_id = ALG_military_coup
@@ -1715,8 +2290,8 @@ focus = {
 		id = ALG_strengthen_ENTV_environmental_campaigns
 		icon = alg_media
 
-		x = 10
-		y = 8
+		x = 9
+		y = 12
 
 		cost = 5
 		search_filters = { FOCUS_FILTER_INDUSTRY }
@@ -2643,7 +3218,7 @@ focus = {
 		id = ALG_al_quwwat_al_musallaha_al_jazaeriya
 		icon = algerian_soldier
 
-		x = -33
+		x = -35
 		y = 0
 
 		cost = 5
@@ -3895,7 +4470,7 @@ focus = {
 		id = ALG_continue_1991_program
  		icon = chemical_warfare
 
-		x = -16
+		x = -19
 		y = 0
 
 		cost = 10
@@ -5416,7 +5991,7 @@ focus = {
 focus = {
     id = ALG_morocco_question
     icon = alg_morocco
-    x = -6
+    x = -10
     y = 0
     cost = 6
     available = {
@@ -15389,7 +15964,7 @@ focus = {
 		}
 		available = {
 			OR = {
-			has_completed_focus = ALG_open_democratic_path
+			has_completed_focus = ALG_election_day
 			has_completed_focus = ALG_popular_salvation
 			has_completed_focus = ALG_military_coup
 		}
