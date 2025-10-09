@@ -224,6 +224,8 @@
 	NDefines.NProduction.CAPITAL_SHIP_MAX_NAV_FACTORIES_PER_LINE = 5
 	NDefines.NProduction.MINIMUM_NUMBER_OF_FACTORIES_TAKEN_BY_CONSUMER_GOODS_VALUE = 0		-- The minimum number of factories we have to put on consumer goods, by value.
 	NDefines.NProduction.MINIMUM_NUMBER_OF_FACTORIES_TAKEN_BY_CONSUMER_GOODS_PERCENT = 0	-- The minimum number of factories we have to put on consumer goods, in percent.
+	NDefines.NProduction.RAILWAY_GUN_MAX_MIL_FACTORIES_PER_LINE = 5
+	NDefines.NProduction.RAILWAY_GUN_REPAIR_SPEED = 8
 
 	NDefines.NTechnology.MAX_SUBTECHS = 5
 	NDefines.NTechnology.BASE_YEAR_AHEAD_PENALTY_FACTOR = 1.0
@@ -1067,3 +1069,35 @@
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_POLICY_ATTACH_COST = 25		-- 25
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_ATTACH_POLICY_COOLDOWN = 180	-- 180
 	NDefines.NIndustrialOrganisation.LEGACY_COST_FACTOR_SCALE = 1.0					-- 1.0
+
+	NDefines.NRailwayGun.RAILWAY_GUN_POSSIBLE_RANGES = { 100, 150, 200 }
+	NDefines.NRailwayGun.ATTACK_TO_FORTS_MODIFIER_FACTOR = 1.333		-- Forts modifier is calculated by multiplying railway gun attack value with this and dividing by 100
+	NDefines.NRailwayGun.ATTACK_TO_ENTRENCHMENT_MODIFIER_FACTOR = 0.8		-- Entrenchment modifier is calculated by multiplying railway gun attack value with this and dividing by 100
+	NDefines.NRailwayGun.ATTACK_TO_BOMBARDMENT_MODIFIER_FACTOR = 0.4	-- Bombardment modifier is calculated by multiplying railway gun attack value with this and dividing by 100
+	NDefines.NRailwayGun.DAILY_MANPOWER_GAIN_RATIO = 0.05				-- Railway Guns will be able to gain this ratio of their max manpower daily
+	NDefines.NRailwayGun.DISBAND_MANPOWER_LOSS = 0.0					-- The ration of manpower lost on disbanding railway guns
+	NDefines.NRailwayGun.ENCIRCLED_DISBAND_MANPOWER_FACTOR = 0.2		-- The percentage of manpower returned when an encircled unit is disbanded
+	NDefines.NRailwayGun.OUT_OF_SUPPLY_SPEED = -0.8						-- Max speed reduction from supply for railway guns
+	NDefines.NRailwayGun.BASE_CAPTURE_CHANCE = 0.2						-- The base chance of railway guns being captured during an overrrun. Will be further modified by the equipment capture chance of the capturing unit.
+	NDefines.NRailwayGun.DISTRIBUTION_RAILWAY_GUN_PRESENCE_SCORE = -100					-- Score for Railway Guns in nearby provs. x3 if on that province. x2 if adjacent. x1 if 2 away.
+	NDefines.NRailwayGun.DISTRIBUTION_OUR_UNITS_PRESENCE_SCORE = 1	 					-- Score for our units in province when distributing Railway Guns
+	NDefines.NRailwayGun.DISTRIBUTION_FRIENDLY_UNITS_PRESENCE_SCORE = 0					-- Score for friendly units in province when distributing Railway Guns
+	NDefines.NRailwayGun.DISTRIBUTION_HOSTILE_UNITS_PRESENCE_SCORE = -45				-- Score for hostile units in province when distributing Railway Guns
+	NDefines.NRailwayGun.DISTRIBUTION_COMBATS_PRESENCE_SCORE = -30						-- Score for combats in province when distributing Railway Guns
+	NDefines.NRailwayGun.DISTRIBUTION_COMBATS_INRANGE_SCORE = 15						-- Score for combats in range when distributing Railway Guns
+	NDefines.NRailwayGun.DISTRIBUTION_OUR_UNITS_INRANGE_SCORE = 2.5						-- Score for our units in range when distributing Railway Guns
+	NDefines.NRailwayGun.DISTRIBUTION_FRIENDLY_UNITS_INRANGE_SCORE = 1.5				-- Score for friendly units in range when distributing Railway Guns
+	NDefines.NRailwayGun.DISTRIBUTION_HOSTILE_UNITS_INRANGE_SCORE = 6					-- Score for hostile units in range when distributing Railway Guns
+	NDefines.NRailwayGun.DISTRIBUTION_DISTANCE_SCORE = -0.08							-- Score for distance to province when distributing Railway Guns
+	NDefines.NRailwayGun.DISTRIBUTION_PROVINCE_CONTROLLED_BY_ENEMY_SCORE = -3			-- Score for staying in province controlled by enemy
+	NDefines.NRailwayGun.DISTRIBUTION_PROVINCES_CONTROLLED_BY_ENEMY_INRANGE_SCORE = 15	-- Score for provinces controlled by enemy in range when distributing Railway Guns
+	NDefines.NRailwayGun.DISTRIBUTION_HOLD_POSITION_SCORE = 30							-- Score for staying in the same province when distributing Railway Guns
+	NDefines.NRailwayGun.DISTRIBUTION_NO_RAILWAY_SCORE = -500							-- Score for provinces with no railways (need to be low, but we allow RG to enter port provinces without railways)
+	NDefines.NRailwayGun.DISTRIBUTION_SUPPLY_DEFICIT_SCORE = -100						-- Score for provinces without sufficient supply cap
+
+	NDefines.NAI.RAILWAY_GUN_PRODUCTION_BASE_DIVISIONS_RATIO_PERCENT = 0	-- Base ratio of desired railway guns to divisions for AI (5 means 5%). Can be modified by railway_guns_divisions_ratio AI strategy value
+	NDefines.NAI.RAILWAY_GUN_PRODUCTION_MIN_DIVISONS = 20					-- Minimum required number of divisions for the AI to consider producing railway guns
+	NDefines.NAI.RAILWAY_GUN_PRODUCTION_MIN_FACTORIES = 30					-- Minimum required number of military factories for the AI to consider producing railway guns
+	NDefines.NAI.RAILWAY_GUN_PER_ARMY_CAP = 3								-- Maximum railway guns assigned to one army for the AI
+	NDefines.NAI.RAILWAY_GUN_ASSIGNMENT_SCORE_UNITCOUNT_MULTIPLIER = 5.0	-- Score multiplier for favoring orders groups with more units when assigning railway guns
+	NDefines.NAI.RAILWAY_GUN_ASSIGNMENT_SCORE_HOLD = 20						-- Score for keeping current assignment when assigning railway guns
