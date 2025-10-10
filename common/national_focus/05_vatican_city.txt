@@ -1,0 +1,4315 @@
+# Author(s): AngriestBird, Runezmaster
+focus_tree = {
+	id = vatican_focus
+	country = {
+		base = 0
+		modifier = {
+			add = 100
+			tag = HLS
+		}
+	}
+
+	continuous_focus_position = { x = 0 y = 925 }
+
+	# Industrial Section
+	focus = {
+		id = HLS_industrial_focus
+		icon = production
+		x = 3
+		y = 0
+		cost = 10
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus HLS_industrial_focus"
+			add_tech_bonus = {
+				name = HLS_industrial_focus
+				bonus = 0.30
+				uses = 2
+				category = CAT_industry
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_military_industry_1
+		icon = industry_military
+		x = -3
+		y = 1
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = { focus = HLS_industrial_focus }
+		available = {
+			custom_trigger_tooltip = {
+				all_owned_state = {
+					free_building_slots = {
+						building = arms_factory
+						size < 1
+						include_locked = yes
+					}
+				}
+				tooltip = enough_slots_in_state_tt
+			}
+		}
+		bypass = {
+			# TODO: Replace with a scripted trigger for ease of use
+			custom_trigger_tooltip = {
+				all_owned_state = {
+					free_building_slots = {
+						building = arms_factory
+						size < 1
+						include_locked = yes
+					}
+				}
+				tooltip = enough_slots_in_state_tt
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus HLS_military_industry_1"
+			random_owned_controlled_state = {
+				add_extra_state_shared_building_slots = 1
+				limit = {
+					free_building_slots = {
+						building = arms_factory
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base  = 0
+			modifier = {
+				threat > 0.0
+				add = 0.25
+			}
+			modifier = {
+				has_completed_focus = HLS_road_to_greatness
+				add = 1.0
+			}
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
+			}
+			modifier = {
+				is_historical_focus_on = no
+				add = 0.50
+			}
+		}
+	}
+
+	focus = {
+		id = HLS_civilian_industry_1
+		icon = industry_civilian
+		x = -1
+		y = 1
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_industrial_focus
+		}
+		available = {
+			custom_trigger_tooltip = {
+				all_owned_state = {
+					free_building_slots = {
+						building = industrial_complex
+						size < 1
+						include_locked = yes
+					}
+				}
+				tooltip = enough_slots_in_state_tt
+			}
+		}
+		bypass = {
+			custom_trigger_tooltip = {
+				all_owned_state = {
+					free_building_slots = {
+						building = industrial_complex
+						size < 1
+						include_locked = yes
+					}
+				}
+				tooltip = enough_slots_in_state_tt
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus HLS_civilian_industry_1"
+			random_owned_controlled_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 5
+			modifier = {
+				threat > 0.0
+				add = 0.25
+			}
+			modifier = {
+				has_completed_focus = HLS_road_to_greatness
+				add = 1.0
+			}
+			modifier = {
+				num_of_civilian_factories < 10
+				add = 5
+			}
+			modifier = {
+				is_historical_focus_on = yes
+				add = 0.50
+			}
+			modifier = {
+				is_historical_focus_on = no
+				add = 0.50
+			}
+		}
+	}
+
+	focus = {
+		id = HLS_infrastructure_1
+		icon = infrastructure
+		x = 1
+		y = 1
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = { focus = HLS_industrial_focus }
+
+		available = {
+			any_owned_state = {
+				free_building_slots = {
+					building = infrastructure
+					size < 5
+					include_locked = yes
+				}
+			}
+		}
+		bypass = {
+			NOT = {
+				any_owned_state = {
+					free_building_slots = {
+						building = infrastructure
+						size < 5
+						include_locked = yes
+					}
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus HLS_infrastructure_1"
+			random_owned_controlled_state = {
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+	focus = {
+		id = HLS_resource_focus
+		icon = construction2
+		x = 3
+		y = 1
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = { focus = HLS_industrial_focus }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus HLS_resource_focus"
+			add_timed_idea = {
+				idea = resource_production_bonus
+				days = 1000
+			}
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+	focus = {
+		id = HLS_industrial_development
+		icon = construction
+		x = 0
+		y = 2
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_infrastructure_1
+			focus = HLS_civilian_industry_1
+			focus = HLS_military_industry_1
+		}
+
+		completion_reward = {
+			add_ideas = idea_focus_industrial_development_program
+		}
+
+		ai_will_do = {
+			factor = 30
+		}
+	}
+
+	focus = {
+		id = HLS_military_industry_2
+		icon = industry_military
+		x = -3
+		y = 3
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_industrial_development
+		}
+
+		bypass = {
+			all_owned_state = {
+				free_building_slots = {
+					building = arms_factory
+					size < 1
+					include_locked = yes
+				}
+			}
+		}
+
+		completion_reward = {
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				limit = {
+					free_building_slots = {
+						building = arms_factory
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_civilian_industry_2
+		icon = industry_civilian
+		x = -1
+		y = 3
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = { focus = HLS_industrial_development }
+
+		bypass = {
+			all_owned_state = {
+				free_building_slots = {
+					building = industrial_complex
+					size < 1
+					include_locked = yes
+				}
+			}
+		}
+
+		completion_reward = {
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_infrastructure_2
+		icon = infrastructure
+		x = 1
+		y = 3
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = { focus = HLS_industrial_development }
+
+		completion_reward = {
+			random_owned_state = {
+				add_building_construction = {
+					type = infrastructure
+					level = 2
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_military_industry_3
+		icon = industry_military
+		x = -3
+		y = 4
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_military_industry_2
+		}
+
+		bypass = {
+			custom_trigger_tooltip = {
+				tooltip = production_effort_tt
+				all_owned_state = {
+					free_building_slots = {
+						building = arms_factory
+						size < 1
+						include_locked = yes
+					}
+				}
+			}
+		}
+
+		completion_reward = {
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				limit = {
+					free_building_slots = {
+						building = arms_factory
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_civilian_industry_3
+		icon = industry_civilian
+		x = -1
+		y = 4
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_civilian_industry_2
+		}
+
+		bypass = {
+			custom_trigger_tooltip = {
+				tooltip = construction_effort_tt
+				all_owned_state = {
+					free_building_slots = {
+						building = industrial_complex
+						size < 1
+						include_locked = yes
+					}
+				}
+			}
+		}
+
+		completion_reward = {
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_infrastructure_3
+		icon = infrastructure
+		x = 1
+		y = 4
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_infrastructure_2
+		}
+
+		completion_reward = {
+			random_owned_state = {
+				add_building_construction = {
+					type = infrastructure
+					level = 2
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_steel_factories
+		icon = production2
+		x = 3
+		y = 4
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = { focus = HLS_resource_focus }
+
+		available = {
+			num_of_civilian_factories > 9
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					num_of_civilian_factories < 20
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 2 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 19
+					num_of_civilian_factories < 30
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 3 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 3 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 29
+					num_of_civilian_factories < 40
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 4 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 4 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 4 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 39
+					num_of_civilian_factories < 50
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 5 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 5 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 5 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 5 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 49
+					num_of_civilian_factories < 60
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 6 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 6 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 6 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 6 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 6 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 59
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = steel amount = 7 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_military_industry_4
+		icon = industry_military
+		x = -3
+		y = 5
+		relative_position_id = HLS_industrial_focus
+		cost = 15
+
+		prerequisite = {
+			focus = HLS_military_industry_3
+		}
+
+		bypass = {
+			custom_trigger_tooltip = {
+				tooltip = production_effort_tt
+				all_owned_state = {
+					free_building_slots = {
+						building = arms_factory
+						size < 1
+						include_locked = yes
+					}
+				}
+			}
+		}
+
+		completion_reward = {
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				limit = {
+					free_building_slots = {
+						building = arms_factory
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = arms_factory
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_civilian_industry_4
+		icon = industry_civilian
+		x = -1
+		y = 5
+		relative_position_id = HLS_industrial_focus
+		cost = 15
+
+		prerequisite = {
+			focus = HLS_civilian_industry_3
+		}
+
+		bypass = {
+			custom_trigger_tooltip = {
+				tooltip = construction_effort_tt
+				all_owned_state = {
+					free_building_slots = {
+						building = industrial_complex
+						size < 1
+						include_locked = yes
+					}
+				}
+			}
+		}
+
+		completion_reward = {
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_synthetic_oil
+		icon = oil_production
+		x = 1
+		y = 5
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_steel_factories
+		}
+
+		available = {
+			num_of_civilian_factories > 9
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					num_of_civilian_factories < 20
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 2 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 19
+					num_of_civilian_factories < 30
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 3 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 3 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 29
+					num_of_civilian_factories < 40
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 4 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 4 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 4 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 39
+					num_of_civilian_factories < 50
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 5 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 5 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 5 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 5 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 49
+					num_of_civilian_factories < 60
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 6 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 6 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 6 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 6 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 6 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 59
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = oil amount = 7 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_aluminium_factories
+		icon = production
+		x = 3
+		y = 5
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_steel_factories
+		}
+
+		available = {
+			num_of_civilian_factories > 9
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					num_of_civilian_factories < 20
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 2 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 19
+					num_of_civilian_factories < 30
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 3 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 3 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 29
+					num_of_civilian_factories < 40
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 4 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 4 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 4 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 39
+					num_of_civilian_factories < 50
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 5 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 5 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 5 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 5 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 49
+					num_of_civilian_factories < 60
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 6 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 6 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 6 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 6 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 6 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 59
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 7 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium amount = 7 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_military_industry_5
+		icon = industry_military
+		x = -3
+		y = 6
+		relative_position_id = HLS_industrial_focus
+		cost = 20
+
+		prerequisite = {
+			focus = HLS_military_industry_4
+		}
+
+		bypass = {
+			custom_trigger_tooltip = {
+				tooltip = production_effort_tt
+				all_owned_state = {
+					free_building_slots = {
+						building = arms_factory
+						size < 1
+						include_locked = yes
+					}
+				}
+			}
+		}
+
+		completion_reward = {
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				limit = {
+					free_building_slots = {
+						building = arms_factory
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = arms_factory
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = arms_factory
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_civilian_industry_5
+		icon = industry_civilian
+		x = -1
+		y = 6
+		relative_position_id = HLS_industrial_focus
+		cost = 15
+
+		prerequisite = {
+			focus = HLS_civilian_industry_4
+		}
+
+		bypass = {
+			custom_trigger_tooltip = {
+				tooltip = construction_effort_tt
+				all_owned_state = {
+					free_building_slots = {
+						building = industrial_complex
+						size < 1
+						include_locked = yes
+					}
+				}
+			}
+		}
+
+		completion_reward = {
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_synthetic_rubber
+		icon = oil_production
+		x = 1
+		y = 6
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_synthetic_oil
+		}
+
+		available = {
+			num_of_civilian_factories > 14
+		}
+
+		completion_reward = {
+			#####Needs an Effect
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_rare_metals
+		icon = production2
+		x = 3
+		y = 6
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_aluminium_factories
+		}
+
+		available = {
+			num_of_civilian_factories > 14
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					num_of_civilian_factories < 20
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium  amount = 2 }
+					add_resource = { type = tungsten amount = 2 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 19
+					num_of_civilian_factories < 30
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium  amount = 3 }
+					add_resource = { type = tungsten amount = 3 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium  amount = 3 }
+					add_resource = { type = tungsten amount = 3 }
+				}
+			}
+			else_if = {
+				limit = {
+					num_of_civilian_factories > 29
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium  amount = 4 }
+					add_resource = { type = tungsten amount = 4 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium  amount = 4 }
+					add_resource = { type = tungsten amount = 4 }
+				}
+				random_owned_state = {
+					add_resource = { type = aluminium  amount = 4 }
+					add_resource = { type = tungsten amount = 4 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_political_focus
+		icon = demand_territory
+		x = 17
+		y = 1
+		cost = 5
+
+		prerequisite = {
+			focus = HLS_road_to_greatness
+			focus = HLS_status_quo
+		}
+
+		completion_reward = {
+			add_ideas = political_power_bonus
+			add_stability = 0.02
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+	focus = {
+		id = HLS_internal_politics
+		icon = improve_relations
+		x = -3
+		y = 1
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = { focus = HLS_political_focus }
+
+		completion_reward = {
+			if = {
+				limit = {
+					has_idea = political_power_bonus
+				}
+				swap_ideas = {
+					remove_idea = political_power_bonus
+					add_idea = political_power_bonus2
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = political_power_bonus2
+				}
+				swap_ideas = {
+					remove_idea = political_power_bonus2
+					add_idea = political_power_bonus3
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = political_power_bonus3
+				}
+				add_political_power = 100
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_foreign_politics
+		icon = major_alliance
+		x = 5
+		y = 1
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = { focus = HLS_political_focus }
+
+		completion_reward = {
+			if = {
+				limit = {
+					has_idea = political_power_bonus
+				}
+				swap_ideas = {
+					remove_idea = political_power_bonus
+					add_idea = political_power_bonus2
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = political_power_bonus2
+				}
+				swap_ideas = {
+					remove_idea = political_power_bonus2
+					add_idea = political_power_bonus3
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = political_power_bonus3
+				}
+				add_political_power = 100
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_demographic_studies
+		icon = consumer_goods
+		x = -6
+		y = 2
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_internal_politics
+		}
+
+		completion_reward = {
+			add_political_power = 25
+		}
+	}
+
+	focus = {
+		id = HLS_secure_national_unity
+		icon = national_unity
+		x = -4
+		y = 2
+		relative_position_id = HLS_political_focus
+		cost = 5
+
+		prerequisite = {
+			focus = HLS_internal_politics
+		}
+
+		completion_reward = {
+			add_stability = 0.05
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_recruit_more_administrators
+		icon = intelligence_exchange
+		x = -2
+		y = 2
+		relative_position_id = HLS_political_focus
+		cost = 5
+
+		prerequisite = { focus = HLS_internal_politics }
+
+		completion_reward = {
+			if = {
+				limit = {
+					has_idea = political_power_bonus
+				}
+				swap_ideas = {
+					remove_idea = political_power_bonus
+					add_idea = political_power_bonus2
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = political_power_bonus2
+				}
+				swap_ideas = {
+					remove_idea = political_power_bonus2
+					add_idea = political_power_bonus3
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = political_power_bonus3
+				}
+				add_political_power = 100
+			}
+			add_5_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_recruit_more_diplomats
+		icon = intelligence_exchange
+		x = 3
+		y = 2
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_foreign_politics
+		}
+
+		completion_reward = {
+			add_political_power = 50
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_international_alliances
+		icon = alliance
+		x = 7
+		y = 2
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_foreign_politics
+		}
+
+		available = {
+			threat > 0.10
+			NOT = { has_completed_focus = HLS_road_to_greatness }
+		}
+
+		completion_reward = {
+			add_political_power = 100
+			add_war_support = 0.05
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	#Align with BRICS
+	focus = {
+		id = HLS_brics
+		icon = alliance
+		x = 6
+		y = 3
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_international_alliances
+		}
+		mutually_exclusive = {
+			focus = HLS_the_west
+		}
+
+		completion_reward = {
+			add_popularity = { ideology = communism popularity = 0.05 }
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_the_west
+		icon = alliance
+		x = 8
+		y = 3
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_international_alliances
+		}
+		mutually_exclusive = {
+			focus = HLS_brics
+		}
+
+		completion_reward = {
+			add_popularity = { ideology = democratic popularity = 0.05 }
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_deepen_ties_with_the_east
+		icon = alliance
+		x = 6
+		y = 4
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_brics
+		}
+
+		available = {
+			communism > 0.05
+		}
+
+		completion_reward = {
+			every_country = {
+				limit = {
+					OR = {
+						is_in_faction_with = SOV
+						is_in_faction_with = CHI
+						original_tag = SOV
+						original_tag = CHI
+					}
+				}
+				add_opinion_modifier = {
+					target = HLS
+					modifier = has_expressed_loyalty
+				}
+				reverse_add_opinion_modifier = {
+					target = HLS
+					modifier = has_expressed_loyalty
+				}
+			}
+			add_popularity = {
+				ideology = communism
+				popularity = 0.05
+			}
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_deepen_ties_with_the_west
+		icon = alliance
+		x = 8
+		y = 4
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_the_west
+		}
+
+		available = {
+			democratic > 0.05
+		}
+
+		completion_reward = {
+			every_country = {
+				limit = {
+					OR = {
+						is_in_faction_with = USA
+						has_idea = NATO_member
+						original_tag = USA
+					}
+				}
+				add_opinion_modifier = {
+					target = HLS
+					modifier = has_expressed_loyalty
+				}
+				reverse_add_opinion_modifier = {
+					target = HLS
+					modifier = has_expressed_loyalty
+				}
+			}
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.05
+			}
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_traditional_values
+		icon = demand_territory2
+		x = -7
+		y = 3
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = { focus = HLS_demographic_studies }
+		available = {
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = not_has_liberalism_government_TT
+					NOT = { is_in_array = { ruling_party = 2 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = not_has_socialism_government_TT
+					NOT = { is_in_array = { ruling_party = 3 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = not_has_communist_state_government_TT
+					NOT = { is_in_array = { ruling_party = 4 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = not_has_anarchist_communism_government_TT
+					NOT = { is_in_array = { ruling_party = 5 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = not_has_neutral_social_government_TT
+					NOT = { is_in_array = { ruling_party = 18 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = not_has_neutral_communism_government_TT
+					NOT = { is_in_array = { ruling_party = 19 } }
+				}
+			}
+		}
+
+		mutually_exclusive = { focus = HLS_female_workforce }
+
+		completion_reward = {
+			add_ideas = idea_focus_male_workforce
+			add_stability = -0.05
+			if = {
+				limit = { has_elections = yes }
+				add_popularity = { ideology = democratic popularity = 0.02 }
+				add_popularity = { ideology = communism popularity = 0.02 }
+			}
+			if = {
+				limit = { has_elections = no }
+				add_popularity = { ideology = fascism popularity = 0.01 }
+				add_popularity = { ideology = nationalist popularity = 0.04 }
+			}
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_female_workforce
+		icon = national_unity
+		x = -5
+		y = 3
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = { focus = HLS_demographic_studies }
+		prerequisite = { focus = HLS_secure_national_unity }
+
+		available = {
+			OR = {
+				NOT = { has_government = fascism }
+				custom_trigger_tooltip = {
+					tooltip = not_has_conservatism_government_TT
+					NOT = { is_in_array = { ruling_party = 1 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = not_has_mod_vilayat_e_faqih_government_TT
+					NOT = { is_in_array = { ruling_party = 6 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = not_has_vilayat_e_faqih_government_TT
+					NOT = { is_in_array = { ruling_party = 9 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = not_has_kingdom_government_TT
+					NOT = { is_in_array = { ruling_party = 10 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = not_has_caliphate_government_TT
+					NOT = { is_in_array = { ruling_party = 11 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = not_has_neutral_conservatism_government_TT
+					NOT = { is_in_array = { ruling_party = 14 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = not_has_nat_populism_TT
+					NOT = { is_in_array = { ruling_party = 20 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = not_has_fascist_government_TT
+					NOT = { is_in_array = { ruling_party = 21 } }
+				}
+			}
+		}
+
+		mutually_exclusive = { focus = HLS_traditional_values }
+
+		completion_reward = {
+			add_ideas = idea_focus_equal_workforce
+			if = {
+				limit = { has_elections = yes }
+				add_popularity = { ideology = democratic popularity = 0.04 }
+				add_to_variable = { party_pop_array^3 = 0.02 }
+				recalculate_party = yes
+			}
+			if = {
+				limit = { has_elections = no }
+				add_popularity = { ideology = communism popularity = 0.06 }
+				add_to_variable = { party_pop_array^4 = 0.02 }
+				recalculate_party = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_invest_in_public_service
+		icon = construction3
+		x = -3
+		y = 3
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_recruit_more_administrators
+		}
+
+		completion_reward = {
+			add_ideas = idea_focus_generic_public_service_investment
+			increase_healthcare_budget = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_education_reform
+		icon = construction2
+		x = -1
+		y = 3
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_recruit_more_administrators
+		}
+
+		completion_reward = {
+			increase_education_budget = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_isolation
+		icon = neutrality
+		x = 2
+		y = 3
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = { focus = HLS_recruit_more_diplomats }
+		mutually_exclusive = {
+			focus = HLS_intervention
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					has_idea = neutrality_idea
+				}
+				add_political_power = 100
+				add_stability = 0.05
+			}
+			if = {
+				limit = {
+					NOT = { has_idea = neutrality_idea }
+				}
+				add_ideas = neutrality_idea
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_intervention
+		icon = forceful_treaty
+		x = 4
+		y = 3
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = { focus = HLS_recruit_more_diplomats }
+		mutually_exclusive = { focus = HLS_isolation }
+
+		completion_reward = {
+			if = {
+				limit = {
+					NOT = { has_idea = neutrality_idea }
+				}
+				add_political_power = 25
+				army_experience = 10
+				navy_experience = 10
+				air_experience = 10
+			}
+			if = {
+				limit = { has_idea = neutrality_idea }
+				remove_ideas = neutrality_idea
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_crackdown_on_contraceptives
+		icon = propaganda
+		x = -7
+		y = 4
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_traditional_values
+		}
+		completion_reward = {
+			add_war_support = 0.05
+			add_ideas = idea_HLS_crackdown_contraceptives
+			add_popularity = { ideology = nationalist popularity = 0.05 }
+			add_popularity = { ideology = fascism popularity = 0.05 }
+			recalculate_party = yes
+		}
+	}
+
+	focus = {
+		id = HLS_birth_control_programs
+		icon = radar
+		x = -5
+		y = 4
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_female_workforce
+		}
+
+		completion_reward = {
+			add_stability = 0.05
+		}
+	}
+
+	focus = {
+		id = HLS_research_incentives
+		icon = research
+		x = -3
+		y = 4
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_invest_in_public_service
+		}
+
+		completion_reward = {
+			add_ideas = scientific_advances2
+			add_ideas = idea_focus_generic_census_reform
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_expand_the_secret_services
+		icon = intelligence_exchange
+		x = -1
+		y = 4
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_education_reform
+		}
+
+		completion_reward = {
+			add_ideas = idea_focus_expanded_secret_services
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_destroy_foreign_influence
+		icon = colonial_crackdown
+		x = 2
+		y = 4
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_isolation
+		}
+
+		completion_reward = {
+			add_ideas = idea_focus_destroyed_foreign_influence
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_volunteer_corps
+		icon = conscription
+		x = 4
+		y = 4
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = { focus = HLS_intervention }
+
+		completion_reward = {
+			add_ideas = idea_focus_volunteer_corps
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_extra_research_slot
+		icon = research
+		x = -2
+		y = 5
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_research_incentives
+		}
+		prerequisite = {
+			focus = HLS_expand_the_secret_services
+		}
+
+		completion_reward = {
+			add_research_slot = 1
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_defensive_constructions
+		icon = generic_entrenchment
+		x = 2
+		y = 5
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_volunteer_corps
+			focus = HLS_destroy_foreign_influence
+		}
+
+		completion_reward = {
+			add_ideas = ENG_defensive_constructions_idea
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_political_influence_abroad
+		icon = global_community
+		x = 4
+		y = 5
+		relative_position_id = HLS_political_focus
+		cost = 10
+
+		prerequisite = {
+			focus = HLS_volunteer_corps
+			focus = HLS_destroy_foreign_influence
+		}
+
+		completion_reward = {
+			if = {
+				limit = { has_government = fascism }
+				every_neighbor_country = {
+					add_popularity = { ideology = fascism popularity = 0.05 }
+				}
+			}
+			if = {
+				limit = { has_government = democratic }
+				every_neighbor_country = {
+					add_popularity = { ideology = democratic popularity = 0.05 }
+				}
+			}
+			if = {
+				limit = { has_government = communism }
+				every_neighbor_country = {
+					add_popularity = { ideology = communism popularity = 0.05 }
+				}
+			}
+			if = {
+				limit = { has_government = neutrality }
+				every_neighbor_country = {
+					add_popularity = { ideology = neutrality popularity = 0.05 }
+				}
+			}
+			if = {
+				limit = { has_government = nationalist }
+				every_neighbor_country = {
+					add_popularity = { ideology = nationalist popularity = 0.05 }
+				}
+			}
+			add_political_power = 150
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	# Improve the Holy City
+	focus = {
+		id = HLS_improve_the_city
+		icon = construction
+		x = 5
+		y = 0
+		relative_position_id = HLS_industrial_focus
+		cost = 10
+
+		available = {
+			AND = {
+				owns_state = 929
+				controls_state = 929
+			}
+		}
+
+		completion_reward = {
+			add_stability = 0.10
+			929 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 2
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_strengthen_the_walls
+		icon = city_fort
+		x = 0
+		y = 1
+		cost = 10
+		relative_position_id = HLS_improve_the_city
+
+		prerequisite = { focus = HLS_improve_the_city }
+		available = {
+			AND = {
+				owns_state = 929
+				controls_state = 929
+			}
+		}
+		completion_reward = {
+			929 = {
+				add_building_construction = {
+					type = bunker
+					province = 13205
+					level = 3
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_vatican_factories
+		icon = construction3
+		x = 0
+		y = 2
+		cost = 10
+		relative_position_id = HLS_improve_the_city
+
+		prerequisite = { focus = HLS_strengthen_the_walls }
+
+		available = {
+			AND = {
+				owns_state = 929
+				controls_state = 929
+			}
+		}
+
+		completion_reward = {
+			add_stability = -0.02
+			929 = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_heavy_restructuring
+		icon = money
+		x = -1
+		y = 3
+		cost = 15.0
+		relative_position_id = HLS_improve_the_city
+
+		prerequisite = {
+			focus = HLS_vatican_factories
+		}
+
+		mutually_exclusive = { focus = HLS_vatican_fortress }
+
+		available = {
+			has_stability > 0.5
+			has_war = no
+			AND = {
+				owns_state = 929
+				controls_state = 929
+			}
+		}
+
+		completion_reward = {
+			add_political_power = -150
+			add_stability = 0.12
+			929 = {
+				add_manpower = 600
+				add_extra_state_shared_building_slots = 8
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = industrial_complex
+					level = 4
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = infrastructure
+					level = 4
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_vatican_fortress
+		icon = generic_entrenchment
+		x = 1
+		y = 3
+		cost = 10
+		relative_position_id = HLS_improve_the_city
+
+		prerequisite = { focus = HLS_vatican_factories }
+
+		mutually_exclusive = { focus = HLS_heavy_restructuring }
+
+		available = {
+			OR = {
+				threat > 0.10
+				has_war = yes
+				has_government = fascism
+			}
+			AND = {
+				owns_state = 929
+				controls_state = 929
+			}
+		}
+
+		completion_reward = {
+			add_political_power = -50
+			add_ideas = idea_HLS_fortress_vatican
+			929 = {
+				add_manpower = -100
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = bunker
+					province = 13205
+					level = 4
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = radar_station
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_refurbish_the_vatican_library
+		icon = consumer_goods
+		x = 0
+		y = 4
+		cost = 10
+		relative_position_id = HLS_improve_the_city
+
+		prerequisite = {
+			focus = HLS_vatican_fortress
+			focus = HLS_heavy_restructuring
+		}
+
+		completion_reward = {
+			add_political_power = -75
+			add_stability = 0.05
+			add_research_slot = 1
+			swap_ideas = { remove_idea = idea_HLS_vatican_library add_idea = idea_HLS_refurbished_vatican_library }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	# Political Tree
+	# Handles the political section of the tree.
+	focus = {
+		id = HLS_road_to_greatness
+		icon = demand_territory
+		x = 32
+		y = 0
+		cost = 10
+		mutually_exclusive = { focus = HLS_status_quo }
+
+		completion_reward = {
+			add_political_power = 300
+			ITA = {
+				add_opinion_modifier = { target = HLS modifier = we_are_the_true_vatican }
+			}
+			remove_ideas = neutrality_idea
+			add_stability = -0.15
+			add_war_support = 0.15
+			add_country_leader_trait = inexperienced_imperialist
+			increase_intervention_law_effect = yes
+		}
+
+		ai_will_do = {
+			base  = 0
+		}
+	}
+
+	focus = {
+		id = HLS_status_quo
+		icon = political_pressure_dark_green
+		x = -5
+		y = 0
+		cost = 5
+		relative_position_id = HLS_road_to_greatness
+
+		mutually_exclusive = { focus = HLS_road_to_greatness }
+
+		completion_reward = {
+			add_political_power = 150
+			add_stability = 0.2
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+	}
+
+	focus = {
+		id = HLS_swiss_guard
+		icon = military_mission
+		x = -5
+		y = 1
+		cost = 5
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = {
+			focus = HLS_road_to_greatness
+			focus = HLS_status_quo
+		}
+
+		available = {
+			country_exists = SWI
+			NOT = { has_war_with = SWI }
+		}
+		bypass = {
+			NOT = { country_exists = SWI }
+		}
+
+		completion_reward = {
+			hidden_effect = {
+				add_manpower = 50
+				load_oob = HLS_swiss_guard_oob
+			}
+			custom_effect_tooltip = HLS_swiss_guard_tooltip
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_italy_our_puppet
+		icon = align_to_italy
+		x = -2
+		y = 1
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+		prerequisite = { focus = HLS_road_to_greatness }
+		completion_reward = {
+			puppet = ITA
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_retake_rome
+		icon = demand_territory3
+		x = -2
+		y = 2
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = { focus = HLS_italy_our_puppet }
+		available = {
+			ITA = { is_subject_of = HLS }
+			OR = {
+				has_government = democratic
+				has_government = nationalist
+			}
+		}
+
+		completion_reward = {
+			transfer_state = 81
+			add_state_core = 81
+			81 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			81 = { set_state_name = "Latium" }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_italian_integration
+		icon = treaty2
+		x = -2
+		y = 3
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = { focus = HLS_retake_rome }
+
+		completion_reward = {
+			add_stability = -0.05
+			ITA = {
+				country_event = { days = 1 id = vatican_events.1 }
+			}
+			set_cosmetic_tag = HLS_Empire
+			hidden_effect = {
+				global_every_army_leader = {
+					limit = {
+						OWNER = { tag = ITA }
+					}
+					set_nationality = HLS
+				}
+				ITA = {
+					every_owned_state = {
+						add_core_of = HLS
+					}
+				}
+			}
+			annex_country = { target = ITA transfer_troops = yes }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_rebuild_italy
+		icon = economic_prosperity
+		x = -4
+		y = 4
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = { focus = HLS_italian_integration }
+
+		available = {
+			ITA = { exists = no }
+		}
+
+		completion_reward = {
+			every_owned_state = { add_extra_state_shared_building_slots = 1 }
+			add_stability = 0.05
+			add_timed_idea = {
+				idea = idea_focus_industrial_development_program
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_reinstate_latin_language
+		icon = mobilize_the_students
+		x = -2
+		y = 4
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = { focus = HLS_italian_integration }
+
+		available = {
+			ITA = { exists = no }
+		}
+
+		completion_reward = {
+			add_stability = 0.05
+			add_war_support = 0.10
+			add_political_power = -150
+			83 = { remove_core_of = SCL }
+			79 = { set_state_name = "Tuscanus" }
+			265 = { set_state_name = "Aemilia et Romania" }
+			77 = { set_state_name = "Pedemontium" }
+			80 = { set_state_name = "Langobardia" }
+			78 = { set_state_name = "Venetia" }
+			285 = { set_state_name = "Tridentinum et Tirolum" }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+
+	focus = {
+		id = HLS_the_rise_of_christianity
+		icon = crusader_army
+		x = 1
+		y = 1
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = { focus = HLS_road_to_greatness }
+		mutually_exclusive = { focus = HLS_a_dark_path }
+
+		available = {
+			OR = {
+				has_government = nationalist
+				has_government = democratic
+				has_government = neutrality
+			}
+			NOT = { has_government = fascism }
+		}
+
+		completion_reward = {
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 23 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+			hidden_effect = {
+				if = {
+					limit = {
+						date < 2016.01.01
+					}
+					create_country_leader = {
+						name = "Pope John Paul II"
+						picture = "pope_john_paul.dds"
+						ideology = Monarchist
+						traits = {
+							nationalist_Monarchist
+							crusader_pope
+							zealous
+						}
+					}
+				}
+				if = {
+					limit = {
+						date > 2016.01.01
+					}
+					create_country_leader = {
+						name = "Pope Francis"
+						picture = "jorge_mario_bergoglio.dds"
+						ideology = Monarchist
+						traits = {
+							nationalist_Monarchist
+							crusader_pope
+							zealous
+						}
+					}
+				}
+			}
+			add_timed_idea = { idea = idea_HLS_crusader_state days = 365 }
+			929 = { add_manpower = 1500 }
+			add_political_power = 100
+			add_war_support = 0.1
+			increase_military_spending = yes
+			set_country_flag = crusader_country
+		}
+
+		ai_will_do = {
+			factor = 40
+		}
+	}
+
+	focus = {
+		id = HLS_new_alliance
+		icon = major_alliance
+		x = 5
+		y = 2
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = {
+			focus = HLS_the_rise_of_christianity
+			focus = HLS_a_dark_path
+		}
+
+		available = {
+			is_in_faction = no
+			NOT = { has_idea = NATO_member }
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					OR = {
+						has_government = fascism
+						has_completed_focus = HLS_a_dark_path
+					}
+				}
+				create_faction = "vatican_islamist_alliance"
+				every_country = {
+					limit = {
+						is_puppet_of = HLS
+					}
+					add_to_faction = HLS
+					add_ai_strategy = { type = befriend id = "HLS" value = 100 }
+					add_ai_strategy = { type = alliance id = "HLS" value = 100 }
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						has_government = democratic
+						has_government = nationalist
+					}
+					NOT = { has_completed_focus = HLS_a_dark_path }
+				}
+				create_faction = "vatican_holy_christian_alliance"
+				every_country = {
+					limit = {
+						is_puppet_of = HLS
+					}
+					add_to_faction = HLS
+					add_ai_strategy = { type = befriend id = "HLS" value = 100 }
+					add_ai_strategy = { type = alliance id = "HLS" value = 100 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 40
+		}
+	}
+
+	focus = {
+		id = HLS_religious_recruits
+		icon = entente
+		x = 5
+		y = 3
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = { focus = HLS_new_alliance }
+		completion_reward = {
+			add_ideas = idea_HLS_religious_recruits
+		}
+
+		ai_will_do = {
+			factor = 40
+		}
+	}
+
+
+	focus = {
+		id = HLS_restore_roman_empire
+		icon = roman_empire_fascism
+		x = 0
+		y = 2
+		cost = 5
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = { focus = HLS_the_rise_of_christianity }
+		prerequisite = { focus = HLS_italy_our_puppet }
+
+		available = {
+			owns_state = 81
+		}
+
+		completion_reward = {
+			add_war_support = 0.05
+			add_manpower = 10000
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+
+	focus = {
+		id = HLS_divide_et_impera
+		icon = fascism2
+		x = 0
+		y = 3
+		cost = 5
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = { focus = HLS_restore_roman_empire }
+
+		available = {
+			num_divisions > 10
+			has_war_support > 0.40
+		}
+
+		completion_reward = {
+			add_ideas = ITA_divide_et_impera
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+
+	focus = {
+		id = HLS_strike_gaul
+		icon = attack_france
+		x = 0
+		y = 4
+		relative_position_id = HLS_road_to_greatness
+		cost = 10
+
+		prerequisite = { focus = HLS_divide_et_impera }
+
+		bypass = {
+			AND = {
+				OR = {
+					has_war_with = FRA
+					NOT = { country_exists = FRA }
+					HLS = { is_in_faction_with = FRA }
+				}
+				OR = {
+					has_war_with = SWI
+					NOT = { country_exists = SWI }
+					HLS = { is_in_faction_with = SWI }
+				}
+				OR = {
+					has_war_with = BEL
+					NOT = { country_exists = BEL }
+					HLS = { is_in_faction_with = BEL }
+				}
+				OR = {
+					has_war_with = LUX
+					NOT = { country_exists = LUX }
+					HLS = { is_in_faction_with = LUX }
+				}
+				OR = {
+					has_war_with = ENG
+					NOT = { country_exists = ENG }
+					HLS = { is_in_faction_with = ENG }
+				}
+				OR = {
+					has_war_with = SPR
+					NOT = { country_exists = SPR }
+					HLS = { is_in_faction_with = SPR }
+				}
+				OR = {
+					has_war_with = POR
+					NOT = { country_exists = POR }
+					HLS = { is_in_faction_with = POR }
+				}
+				OR = {
+					has_war_with = CAT
+					NOT = { country_exists = CAT }
+					HLS = { is_in_faction_with = CAT }
+				}
+			}
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					FRA = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = FRA
+				}
+			}
+			if = {
+				limit = {
+					SWI = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = SWI
+				}
+			}
+			if = {
+				limit = {
+					BEL = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = BEL
+				}
+			}
+			if = {
+				limit = {
+					LUX = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = LUX
+				}
+			}
+			if = {
+				limit = {
+					ENG = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = ENG
+				}
+			}
+			if = {
+				limit = {
+					SPR = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = SPR
+				}
+			}
+			if = {
+				limit = {
+					POR = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = POR
+				}
+			}
+			if = {
+				limit = {
+					CAT = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = CAT
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = HLS_retake_african_coast
+		icon = demand_territory
+		x = 0
+		y = 5
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = { focus = HLS_strike_gaul }
+		completion_reward = {
+			hidden_effect = {
+				add_state_claim = 377
+				add_state_claim = 374
+				add_state_claim = 495
+				add_state_claim = 632
+				add_state_claim = 375
+				add_state_claim = 376
+				add_state_claim = 383
+				add_state_claim = 387
+				add_state_claim = 386
+				add_state_claim = 385
+				add_state_claim = 380
+				add_state_claim = 384
+				add_state_claim = 388
+				add_state_claim = 389
+				add_state_claim = 390
+				add_state_claim = 391
+				add_state_claim = 920
+				add_state_claim = 393
+				add_state_claim = 919
+				add_state_claim = 396
+				add_state_claim = 395
+				add_state_claim = 216
+				add_state_claim = 218
+				add_state_claim = 214
+				add_state_claim = 215
+				add_state_claim = 217
+				add_state_claim = 219
+				add_state_claim = 213
+			}
+			custom_effect_tooltip = HLS_retake_african_coast_tt
+			every_country = {
+				limit = {
+					OR = {
+						owns_state = 377
+						owns_state = 374
+						owns_state = 495
+						owns_state = 632
+						owns_state = 375
+						owns_state = 376
+						owns_state = 383
+						owns_state = 387
+						owns_state = 386
+						owns_state = 385
+						owns_state = 380
+						owns_state = 384
+						owns_state = 388
+						owns_state = 389
+						owns_state = 390
+						owns_state = 391
+						owns_state = 920
+						owns_state = 393
+						owns_state = 919
+						owns_state = 396
+						owns_state = 395
+						owns_state = 216
+						owns_state = 218
+						owns_state = 214
+						owns_state = 215
+						owns_state = 217
+						owns_state = 219
+						owns_state = 213
+					}
+				}
+				add_opinion_modifier = {
+					target = HLS
+					modifier = declaration_of_hostility
+				}
+				hidden_effect = {
+					remove_opinion_modifier = {
+						target = HLS
+						modifier = declaration_of_friendship
+					}
+				}
+			}
+		}
+	}
+
+
+	focus = {
+		id = HLS_recover_balkans
+		icon = demand_territory2
+		x = 0
+		y = 6
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+
+		bypass = {
+			AND = {
+				OR = {
+					has_war_with = SLV
+					NOT = { country_exists = SLV }
+					HLS = { is_in_faction_with = SLV }
+				}
+				OR = {
+					has_war_with = CRO
+					CRO = {
+						NOT = { owns_state = 109 }
+					}
+					NOT = { country_exists = CRO }
+					HLS = { is_in_faction_with = CRO }
+				}
+				OR = {
+					has_war_with = BOS
+					NOT = { country_exists = BOS }
+					HLS = { is_in_faction_with = BOS }
+				}
+				OR = {
+					has_war_with = SER
+					NOT = { country_exists = SER }
+					HLS = { is_in_faction_with = SER }
+				}
+				OR = {
+					has_war_with = MNT
+					NOT = { country_exists = MNT }
+					HLS = { is_in_faction_with = MNT }
+				}
+				OR = {
+					has_war_with = ALB
+					NOT = { country_exists = ALB }
+					HLS = { is_in_faction_with = ALB }
+				}
+				OR = {
+					has_war_with = BUL
+
+					NOT = { country_exists = BUL }
+					HLS = { is_in_faction_with = BUL }
+				}
+				OR = {
+					has_war_with = FYR
+					NOT = { country_exists = FYR }
+					HLS = { is_in_faction_with = FYR }
+				}
+				OR = {
+					has_war_with = GRE
+					NOT = { country_exists = GRE }
+					HLS = { is_in_faction_with = GRE }
+				}
+				OR = {
+					has_war_with = HUN
+					NOT = { country_exists = HUN }
+					HLS = { is_in_faction_with = HUN }
+				}
+				OR = {
+					has_war_with = ROM
+					NOT = { country_exists = ROM }
+					HLS = { is_in_faction_with = ROM }
+				}
+				OR = {
+					has_war_with = KOS
+					NOT = { country_exists = KOS }
+					HLS = { is_in_faction_with = KOS }
+				}
+				OR = {
+					has_war_with = AUS
+					NOT = { country_exists = AUS }
+					HLS = { is_in_faction_with = AUS }
+				}
+			}
+		}
+
+		prerequisite = {
+			focus = HLS_retake_african_coast
+		}
+
+		completion_reward = {
+			if = {
+				limit = {
+					SLV = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = SLV
+				}
+			}
+			if = {
+				limit = {
+					CRO = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = CRO
+				}
+			}
+			if = {
+				limit = {
+					BOS = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = BOS
+				}
+			}
+			if = {
+				limit = {
+					SER = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = SER
+				}
+			}
+			if = {
+				limit = {
+					MNT = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = MNT
+				}
+			}
+			if = {
+				limit = {
+					ALB = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = ALB
+				}
+			}
+			if = {
+				limit = {
+					BUL = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = BUL
+				}
+			}
+			if = {
+				limit = {
+					FYR = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = FYR
+				}
+			}
+			if = {
+				limit = {
+					GRE = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = GRE
+				}
+			}
+			if = {
+				limit = {
+					HUN = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = HUN
+				}
+			}
+			if = {
+				limit = {
+					ROM = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = ROM
+				}
+			}
+			if = {
+				limit = {
+					KOS = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = KOS
+				}
+			}
+			if = {
+				limit = {
+					AUS = {
+						exists = yes
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_war_with = HLS }
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = AUS
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = HLS_recover_anatolia
+		icon = demand_territory
+		x = 0
+		y = 7
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+
+		bypass = {
+			AND = {
+				OR = {
+					has_war_with = TUR
+					TUR = {
+						NOT = { owns_state = 934 }
+						NOT = { owns_state = 155 }
+						NOT = { owns_state = 156 }
+						NOT = { owns_state = 157 }
+						NOT = { owns_state = 160 }
+						NOT = { owns_state = 159 }
+						NOT = { owns_state = 161 }
+						NOT = { owns_state = 158 }
+						NOT = { owns_state = 162 }
+						NOT = { owns_state = 163 }
+						NOT = { owns_state = 935 }
+					}
+					NOT = { country_exists = TUR }
+					HLS = { is_in_faction_with = TUR }
+				}
+				OR = {
+					has_war_with = CYP
+					CYP = {
+						NOT = { owns_state = 145 }
+					}
+					NOT = { country_exists = CYP }
+					HLS = { is_in_faction_with = CYP }
+				}
+				OR = {
+					has_war_with = NCY
+					NCY = {
+						NOT = { owns_state = 146 }
+					}
+					NOT = { country_exists = NCY }
+					HLS = { is_in_faction_with = NCY }
+				}
+				OR = {
+					has_war_with = ARM
+					ARM = {
+						NOT = { owns_state = 709 }
+					}
+					NOT = { country_exists = ARM }
+					HLS = { is_in_faction_with = ARM }
+				}
+				OR = {
+					has_war_with = NKR
+					NKR = {
+						NOT = { owns_state = 710 }
+					}
+					NOT = { country_exists = NKR }
+					HLS = { is_in_faction_with = NKR }
+				}
+				OR = {
+					has_war_with = AZE
+					AZE = {
+						NOT = { owns_state = 713 }
+						NOT = { owns_state = 712 }
+						NOT = { owns_state = 711 }
+					}
+					NOT = { country_exists = AZE }
+					HLS = { is_in_faction_with = AZE }
+				}
+				OR = {
+					has_war_with = GEO
+					GEO = {
+						NOT = { owns_state = 707 }
+						NOT = { owns_state = 466 }
+						NOT = { owns_state = 708 }
+					}
+					NOT = { country_exists = GEO }
+					HLS = { is_in_faction_with = GEO }
+				}
+				OR = {
+					has_war_with = SOO
+					SOO = {
+						NOT = { owns_state = 705 }
+					}
+					NOT = { country_exists = SOO }
+					HLS = { is_in_faction_with = SOO }
+				}
+				OR = {
+					has_war_with = ABK
+					ABK = {
+						NOT = { owns_state = 706 }
+					}
+					NOT = { country_exists = ABK }
+					HLS = { is_in_faction_with = ABK }
+				}
+			}
+		}
+
+		prerequisite = { focus = HLS_recover_balkans }
+
+		completion_reward = {
+			if = {
+				limit = {
+				   TUR = {
+						owns_state = 934
+						owns_state = 155
+						owns_state = 156
+						owns_state = 157
+						owns_state = 160
+						owns_state = 159
+						owns_state = 161
+						owns_state = 158
+						owns_state = 162
+						owns_state = 163
+						owns_state = 935
+						NOT = {
+							has_war_with = HLS
+							is_in_faction_with = HLS
+						}
+						exists = yes
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = TUR
+				}
+			}
+			if = {
+				limit = {
+					CYP = {
+						owns_state = 145
+						NOT = {
+							has_war_with = HLS
+							is_in_faction_with = HLS
+						}
+						exists = yes
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = CYP
+				}
+			}
+			if = {
+				limit = {
+					NCY = {
+						owns_state = 146
+						NOT = {
+							has_war_with = HLS
+							is_in_faction_with = HLS
+						}
+						exists = yes
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = NCY
+				}
+			}
+			if = {
+				limit = {
+					ARM = {
+						owns_state = 709
+						NOT = {
+							has_war_with = HLS
+							is_in_faction_with = HLS
+						}
+						exists = yes
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = ARM
+				}
+			}
+			if = {
+				limit = {
+					AZE = {
+						owns_state = 713
+						owns_state = 712
+						owns_state = 711
+						NOT = {
+							has_war_with = HLS
+							is_in_faction_with = HLS
+						}
+						exists = yes
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = AZE
+				}
+			}
+			if = {
+				limit = {
+					GEO = {
+						owns_state = 707
+						owns_state = 466
+						owns_state = 708
+						NOT = {
+							has_war_with = HLS
+							is_in_faction_with = HLS
+						}
+						exists = yes
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = GEO
+				}
+			}
+			if = {
+				limit = {
+					SOO = {
+						owns_state = 705
+						NOT = {
+							has_war_with = HLS
+							is_in_faction_with = HLS
+						}
+						exists = yes
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = SOO
+				}
+			}
+			if = {
+				limit = {
+					NKR = {
+						owns_state = 710
+						NOT = {
+							has_war_with = HLS
+							is_in_faction_with = HLS
+						}
+						exists = yes
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = NKR
+				}
+			}
+			if = {
+				limit = {
+					ABK = {
+						owns_state = 706
+						NOT = {
+							has_war_with = HLS
+							is_in_faction_with = HLS
+						}
+						exists = yes
+					}
+				}
+				create_wargoal = {
+					type = annex_everything
+					target = ABK
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = HLS_holy_soldiers
+		icon = monarchism
+		x = 2
+		y = 2
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = { focus = HLS_the_rise_of_christianity }
+
+		completion_reward = {
+			add_ideas = idea_HLS_holy_soldiers
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+	focus = {
+		id = HLS_anti_islamist_crusade
+		icon = attack_pakistan
+		x = 2
+		y = 3
+		cost = 15
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = { focus = HLS_holy_soldiers }
+		prerequisite = { focus = HLS_new_alliance }
+
+		available = {
+			hidden_trigger = {
+				has_idea = idea_HLS_rejected_islam
+				NOT = { has_idea = idea_HLS_accepted_islam }
+			}
+			custom_trigger_tooltip = {
+				tooltip = HLS_anti_islamist_crusade_custom_trigger
+				has_idea = idea_HLS_rejected_islam
+				NOT = { has_idea = idea_HLS_accepted_islam }
+			}
+		}
+
+		completion_reward = {
+			every_country = {
+				limit = { has_government = fascism }
+				country_event = { days = 1 id = vatican_events.4 }
+			}
+			add_war_support = 0.15
+			add_stability = -0.05
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+
+	focus = {
+		id = HLS_retake_the_holy_land
+		icon = backstab
+		x = 2
+		y = 4
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = {
+			focus = HLS_anti_islamist_crusade
+		}
+
+		completion_reward = {
+			create_wargoal = { type = annex_everything target = PAL }
+			create_wargoal = { type = annex_everything target = ISR }
+			create_wargoal = { type = annex_everything target = JOR }
+			create_wargoal = { type = annex_everything target = LEB }
+			create_wargoal = { type = annex_everything target = SYR }
+			add_war_support = 0.3
+
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+
+	focus = {
+		id = HLS_second_anti_islamist_crusade
+		icon = islamophobia
+		x = 2
+		y = 5
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = {
+			focus = HLS_retake_the_holy_land
+		}
+
+		available = {
+			any_country = { has_government = fascism }
+			hidden_trigger = {
+				has_idea = idea_HLS_rejected_islam
+				NOT = { has_idea = idea_HLS_accepted_islam }
+			}
+			custom_trigger_tooltip = {
+				tooltip = HLS_anti_islamist_crusade_custom_trigger
+				has_idea = idea_HLS_rejected_islam
+				NOT = { has_idea = idea_HLS_accepted_islam }
+			}
+		}
+
+		completion_reward = {
+			every_country = {
+				limit = { has_government = fascism }
+				country_event = { days = 1 id = vatican_events.4 }
+			 }
+			add_war_support = 0.1
+			add_stability = -0.05
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+	#Islamic Focuses - A Dark Path (Road to Greatness Path)
+	focus = {
+		id = HLS_a_dark_path
+		icon = sharia_law
+		x = 8
+		y = 1
+		cost = 10
+		relative_position_id = HLS_road_to_greatness
+
+		prerequisite = {
+			focus = HLS_road_to_greatness
+		}
+
+		available = {
+			hidden_trigger = {
+				NOT = { has_idea = idea_HLS_rejected_islam }
+ 			}
+			custom_trigger_tooltip = {
+				tooltip = HLS_a_dark_path_custom_trigger
+				NOT = { has_idea = idea_HLS_rejected_islam }
+			}
+		}
+
+		mutually_exclusive = { focus = HLS_the_rise_of_christianity }
+
+		completion_reward = {
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 11 }
+				add_to_array = { gov_coalition_array = 10 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+			set_politics = {
+				ruling_party = fascism
+				elections_allowed = no
+			}
+			hidden_effect = {
+				if = {
+					limit = {
+						date < 2016.01.01
+					}
+					create_country_leader = {
+						name = "Caliph John Paul II"
+						picture = "pope_john_paul.dds"
+						ideology = Caliphate
+						traits = {
+							salafist_Caliphate
+							caliph_pope
+							zealous
+						}
+					}
+				}
+				if = {
+					limit = {
+						date > 2016.01.01
+					}
+					create_country_leader = {
+						name = "Caliph Francis"
+						picture = "jorge_mario_bergoglio.dds"
+						ideology = Caliphate
+						traits = {
+							salafist_Caliphate
+							caliph_pope
+							zealous
+						}
+					}
+				}
+			}
+			add_popularity = { ideology = fascism popularity = 0.50 }
+			929 = { add_manpower = 5000 }
+			swap_ideas = { remove_idea = idea_HLS_holy_see add_idea = idea_HLS_rise_of_islam }
+			add_to_variable = { party_pop_array^11 = 0.45 }
+			add_to_variable = { party_pop_array^10 = 0.05 }
+			recalculate_party = yes
+			swap_ideas = {
+				remove_idea = labour_unions
+				add_idea = foreign_jihadis
+			}
+			swap_ideas = {
+				remove_idea = The_Clergy
+				add_idea = The_Ulema
+			}
+			clr_country_flag = enthusiastic_The_Clergy
+			clr_country_flag = enthusiastic_labour_unions
+			clr_country_flag = enthusiastic_small_medium_business_owners
+			set_cosmetic_tag = HLS_papal_caliphate
+		}
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+
+	focus = {
+		id = HLS_take_jerusalem
+		icon = attack_israel
+		x = 1
+		y = 1
+		cost = 10
+		relative_position_id = HLS_a_dark_path
+
+		prerequisite = { focus = HLS_a_dark_path }
+
+		completion_reward = {
+			create_wargoal = { type = holywar_wargoal target = ISR }
+			add_stability = 0.1
+			add_war_support = 0.15
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_anti_america
+		icon = attack_america
+		x = 1
+		y = 2
+		cost = 10
+		relative_position_id = HLS_a_dark_path
+
+		prerequisite = {
+			focus = HLS_take_jerusalem
+		}
+
+		completion_reward = {
+			HLS = {
+				add_opinion_modifier = { target = USA modifier = rival }
+				add_opinion_modifier = { target = USA modifier = embargo }
+				add_stability = 0.1
+				add_war_support = 0.1
+			}
+			create_wargoal = { type = annex_everything target = USA }
+			USA = {
+				add_opinion_modifier = { target = HLS modifier = rival }
+				add_opinion_modifier = { target = HLS modifier = embargo }
+				add_stability = -0.05
+				add_war_support = 0.1
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_sympthaizers_for_the_cause
+		icon = fascism3
+		x = 1
+		y = 3
+		cost = 10
+		relative_position_id = HLS_a_dark_path
+
+		prerequisite = {
+			focus = HLS_anti_america
+		}
+
+		available = {
+			any_country = {
+				has_government = fascism
+			}
+		}
+
+		completion_reward = {
+			add_political_power = 100
+			every_country = {
+				limit = {
+					has_government = fascism
+				}
+				hidden_effect = {
+					add_to_faction = HLS
+					add_ai_strategy = { type = befriend id = "HLS" value = 200 }
+					add_ai_strategy = { type = alliance id = "HLS" value = 200 }
+				}
+				custom_effect_tooltip = HLS_add_to_faction_tt
+			}
+		}
+
+	}
+
+	focus = {
+		id = HLS_aid_our_brethren
+		icon = skull
+		x = -1
+		y = 2
+		cost = 10
+		relative_position_id = HLS_a_dark_path
+
+		prerequisite = { focus = HLS_a_dark_path }
+		prerequisite = { focus = HLS_new_alliance }
+
+		completion_reward = {
+			every_country = {
+				limit = {
+					OR = {
+						has_idea = sunni
+						has_idea = sufi_islam
+						has_idea = shia
+						has_idea = ibadi
+						tag = NIG
+						tag = ISI
+					}
+				}
+				country_event = { id = vatican_events.10 }
+				add_stability = 0.05
+				add_war_support = 0.1
+			}
+			add_manpower = 10000
+			add_stability = 0.15
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_allahs_will
+		icon = skull
+		x = 3
+		y = 1
+		cost = 10
+		relative_position_id = HLS_a_dark_path
+
+		prerequisite = { focus = HLS_a_dark_path }
+
+		completion_reward = {
+			add_ideas = idea_HLS_allahs_will
+			add_manpower = 20000
+			add_war_support = 0.15
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+
+	focus = {
+		id = HLS_jihad
+		icon = jihad
+		x = 3
+		y = 2
+		cost = 10
+		relative_position_id = HLS_a_dark_path
+
+		prerequisite = { focus = HLS_allahs_will }
+
+		completion_reward = {
+			add_war_support = 0.40
+			add_stability = -0.10
+			add_ideas = idea_focus_generic_jihad
+			if = {
+				limit = {
+					is_in_faction = yes
+					is_faction_leader = no
+					any_country = {
+						is_in_faction_with = ROOT
+						OR = {
+							NOT = { has_government = fascism }
+							fascism < 0.25
+						}
+					}
+				}
+				random_country = {
+					limit = {
+						is_in_faction_with = ROOT
+						is_faction_leader = yes
+					}
+					remove_from_faction = ROOT
+				}
+			}
+			#Everybody should hate them; except for Islamist of their confession
+			every_country = {
+				limit = {
+					OR = {
+						NOT = { tag = HLS }
+						NOT = { is_in_faction_with = HLS }
+						NOT = { has_idea = sunni }
+						NOT = { has_idea = sufi_islam }
+						NOT = { has_idea = shia }
+						NOT = { has_government = fascism }
+					}
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = terrorist_menace
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = terrorist_menace_trade
+				}
+			}
+
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	###Papal Armed Forces
+	focus = {
+		id = HLS_papal_armed_forces
+		icon = army_logistics
+		x = 53
+		y = 0
+		cost = 10
+
+		available ={
+			OR = {
+				has_completed_focus = HLS_swiss_guard
+				has_completed_focus = HLS_religious_recruits
+				has_war = yes
+				threat > 0.10
+			}
+		}
+
+		completion_reward = {
+			add_war_support = 0.10
+			add_command_power = 25
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	#Land Army/Swiss Guard Focuses
+	focus = {
+		id = HLS_question_of_the_land_forces
+		icon = military_academy
+		x = -5
+		y = 1
+		cost = 10
+		relative_position_id = HLS_papal_armed_forces
+
+		prerequisite = {
+			focus = HLS_papal_armed_forces
+		}
+
+		completion_reward = {
+			army_experience = 25
+			swap_ideas = {
+				add_idea = idea_HLS_forming_an_army
+				remove_idea = idea_HLS_lacks_an_army
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_maintain_the_swiss_guard
+		icon = gentleman_officers
+		x = -7
+		y = 2
+		cost = 10
+		relative_position_id = HLS_papal_armed_forces
+
+		prerequisite = {
+			focus = HLS_question_of_the_land_forces
+		}
+
+		mutually_exclusive = {
+			focus = HLS_bring_fanatics_to_rome
+		}
+
+		completion_reward = {
+			add_tech_bonus = {
+				name = infantry_bonus
+				category = Cat_INF_WEP
+				bonus = 0.25
+				uses = 1
+			}
+			swap_ideas = {
+				remove_idea = idea_HLS_forming_an_army
+				add_idea = idea_HLS_swiss_guard_reform1
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_drill_the_guard
+		icon = army_reform
+		x = -7
+		y = 3
+		cost = 10
+		relative_position_id = HLS_papal_armed_forces
+
+		prerequisite = {
+			focus = HLS_maintain_the_swiss_guard
+		}
+
+		completion_reward = {
+			add_war_support = 0.05
+			increase_military_spending = yes
+			swap_ideas = {
+				remove_idea = idea_HLS_swiss_guard_reform1
+				add_idea = idea_HLS_swiss_guard_reform2
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_offensive_swiss_guard
+		icon = infantry_india
+		x = -7
+		y = 4
+		cost = 10
+		relative_position_id = HLS_papal_armed_forces
+
+		prerequisite = {
+			focus = HLS_drill_the_guard
+		}
+
+		completion_reward = {
+			add_war_support = 0.05
+			swap_ideas = {
+				remove_idea = idea_HLS_swiss_guard_reform2
+				add_idea = idea_HLS_swiss_guard_reform3
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_refined_equipment_procurment
+		icon = industry_military
+		x = -5
+		y = 3
+		cost = 10
+		relative_position_id = HLS_papal_armed_forces
+
+		prerequisite = {
+			focus = HLS_bring_fanatics_to_rome
+			focus = HLS_maintain_the_swiss_guard
+		}
+
+		completion_reward = {
+			add_ideas = rifle_production_bonus
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				limit = {
+					free_building_slots = {
+						building = arms_factory
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_latium_military_industrial_complex
+		icon = tank_production2
+		x = -5
+		y = 4
+		cost = 10
+		relative_position_id = HLS_papal_armed_forces
+
+		prerequisite = {
+			focus = HLS_refined_equipment_procurment
+		}
+
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = rifle_production_bonus
+				add_idea = rifle_production_bonus2
+			}
+			random_owned_state = {
+				add_extra_state_shared_building_slots = 1
+				limit = {
+					free_building_slots = {
+						building = arms_factory
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_bring_fanatics_to_rome
+		icon = conscription
+		x = -3
+		y = 2
+		cost = 10
+		relative_position_id = HLS_papal_armed_forces
+
+		prerequisite = {
+			focus = HLS_question_of_the_land_forces
+		}
+
+		mutually_exclusive = {
+			focus = HLS_maintain_the_swiss_guard
+		}
+
+		completion_reward = {
+			add_tech_bonus = {
+				name = infantry_bonus
+				category = Cat_INF_WEP
+				bonus = 0.25
+				uses = 1
+			}
+			swap_ideas = {
+				remove_idea = idea_HLS_forming_an_army
+				add_idea = idea_HLS_fanatics_reform1
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_fanatic_infantry
+		icon = recruitment
+		x = -3
+		y = 3
+		cost = 10
+		relative_position_id = HLS_papal_armed_forces
+
+		prerequisite = {
+			focus = HLS_bring_fanatics_to_rome
+		}
+
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = idea_HLS_fanatics_reform1
+				add_idea = idea_HLS_fanatics_reform2
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_discplined_rabble
+		icon = soldier
+		x = -3
+		y = 4
+		cost = 10
+		relative_position_id = HLS_papal_armed_forces
+
+		prerequisite = {
+			focus = HLS_fanatic_infantry
+		}
+
+		completion_reward = {
+			swap_ideas = {
+				remove_idea = idea_HLS_fanatics_reform2
+				add_idea = idea_HLS_fanatics_reform3
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	# Naval Focuses
+	focus = {
+		id = HLS_papal_fleet
+		icon = navy
+		x = 0
+		y = 1
+		cost = 10
+		relative_position_id = HLS_papal_armed_forces
+
+		prerequisite = {
+			focus = HLS_papal_armed_forces
+		}
+
+		available = {
+			any_state = {
+				is_coastal = yes
+				is_owned_by = HLS
+				is_controlled_by = HLS
+			}
+		}
+
+		completion_reward = {
+			navy_experience = 25
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = HLS_angelforce
+		icon = fighter_plane
+		x = 3
+		y = 1
+		cost = 10
+		relative_position_id = HLS_papal_armed_forces
+
+		prerequisite = {
+			focus = HLS_papal_armed_forces
+		}
+
+		completion_reward = {
+			air_experience = 25
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+}

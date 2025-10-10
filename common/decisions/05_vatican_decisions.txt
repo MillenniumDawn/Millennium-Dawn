@@ -1,0 +1,324 @@
+decisions_HLS = {
+	decisions_HLS_ask_for_more_swiss_guard_unit = {
+		visible = {
+			tag = HLS
+			OR = {
+				SWI = { is_subject_of = HLS }
+				country_exists = SWI
+			}
+		}
+		available = {
+			NOT = { has_war_with = SWI }
+			HLS = { has_completed_focus = HLS_swiss_guard }
+		}
+		icon = generic_political_discourse
+
+		cost = 50
+		fire_only_once = no
+		days_re_enable = 100
+		days_remove = 100
+
+		complete_effect = {
+			hidden_effect = {
+				add_manpower = 200
+				if = {
+					limit = {
+						NOT = { has_template = "Swiss Guard" }
+					}
+					division_template = {
+						name = "Swiss Guard"
+						regiments = {
+							L_Inf_Bat = { x = 0 y = 0 }
+						}
+						support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+						}
+						priority = 1
+						is_locked = yes
+					}
+				}
+				929 = { ##Papal Guards Deploy Here in the Vatican
+					create_unit = {
+						division = "division_template = \"Swiss Guard\" start_experience_factor = 0.3 start_equipment_factor = 0.5"
+						owner = HLS
+						count = 1
+					}
+				}
+			}
+			custom_effect_tooltip = HLS_ask_for_more_swiss_guard_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				has_war = yes
+				add = 1
+			}
+			modifier = {
+				has_manpower < 100000
+				add = 1
+			}
+			modifier = {
+				has_completed_focus = HLS_religious_recruits
+				factor = 0
+			}
+			modifier = {
+				has_war = no
+				factor = 0
+			}
+		}
+	}
+
+	decisions_HLS_accept_islam = {
+		visible = {
+			tag = HLS
+			NOT = { has_idea = idea_HLS_rejected_islam }
+		}
+		available = {
+			NOT = { has_completed_focus = HLS_anti_islamist_crusade }
+			NOT = { has_idea = idea_HLS_rejected_islam }
+		}
+		icon = eng_propaganda_campaigns
+		cost = 250
+		fire_only_once = yes
+		complete_effect = {
+			add_ideas = idea_HLS_accepted_islam
+			hidden_effect = {
+				news_event = vatican_news_events.2
+				every_country = {
+					limit = {
+						has_government = fascism
+					}
+					add_opinion_modifier = { target = ROOT modifier = accepted_islam }
+					reverse_add_opinion_modifier = { target = ROOT modifier = accepted_islam }
+				}
+			}
+			custom_effect_tooltip = decisions_HLS_accept_islam_tooltip
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				is_historical_focus_on = no
+				factor = 3
+			}
+		}
+	}
+
+	decisions_HLS_condemn_islam = {
+		visible = {
+			tag = HLS
+			NOT = { has_idea = idea_HLS_accepted_islam }
+		}
+		available = {
+			NOT = { has_completed_focus = HLS_a_dark_path }
+			NOT = { has_idea = idea_HLS_accepted_islam }
+		}
+		icon = oppression
+		cost = 50
+		fire_only_once = yes
+		complete_effect = {
+			add_ideas = idea_HLS_rejected_islam
+			hidden_effect = {
+				news_event = vatican_news_events.3
+				every_country = {
+					limit = {
+						has_idea = sunni
+						has_idea = sufi_islam
+						has_idea = shia
+						has_idea = ibadi
+						tag = NIG
+						tag = ISI
+					}
+					add_opinion_modifier = { target = ROOT modifier = rejected_islam }
+					reverse_add_opinion_modifier = { target = ROOT modifier = rejected_islam }
+				}
+			}
+			custom_effect_tooltip = decisions_HLS_condemn_islam_tooltip
+		}
+		ai_will_do = {
+			factor = 2
+			modifier = {
+				is_historical_focus_on = yes
+				add = 2
+			}
+		}
+	}
+
+	decisions_HLS_general_audience = {
+		visible = {
+			tag = HLS
+		}
+		available = {
+			tag = HLS
+			has_war = no
+		}
+		icon = eng_propaganda_campaigns
+		cost = 10
+		fire_only_once = no
+		days_remove = 7
+		days_re_enable = 7
+		fixed_random_seed = no
+		complete_effect = {
+			add_stability = 0.005
+			random_list = {
+				30 = {
+					add_political_power = -50
+					add_stability = -0.01
+				}
+				45 = {
+					add_political_power = 25
+					add_stability = 0.02
+				}
+				10 = {
+					add_political_power = 100
+					add_stability = 0.03
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				has_stability < 0.75
+				add = 2
+			}
+		}
+	}
+
+	decisions_HLS_rename_istanbul = {
+		visible = {
+			tag = HLS
+			HLS = { controls_state = 934 }
+		}
+
+		available = {
+			tag = HLS
+			HLS = { controls_state = 934 }
+		}
+
+		icon = generic_decision
+
+		cost = 150
+		fire_only_once = yes
+
+		complete_effect = {
+			add_stability = 0.05
+			934 = { set_state_name = "Constantinople" }
+			add_state_core = 934
+			news_event = vatican_news_events.4
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
+
+	decisions_HLS_religious_recruits = {
+		visible = {
+			tag = HLS
+			NOT = { has_completed_focus = HLS_a_dark_path }
+		}
+		available = {
+			tag = HLS
+			has_completed_focus = HLS_religious_recruits
+		}
+		icon = generic_prepare_civil_war
+		cost = 50
+
+		days_re_enable = 120
+		days_remove = 90
+
+		complete_effect = {
+			hidden_effect = {
+				add_manpower = 2000
+				if = {
+					limit = {
+						NOT = { has_template = "Holy Warriors" }
+					}
+					division_template = {
+						name = "Holy Warriors"
+
+						regiments = {
+							Militia_Bat = { x = 0 y = 0 }
+							Militia_Bat = { x = 0 y = 1 }
+							Militia_Bat = { x = 0 y = 2 }
+							Militia_Bat = { x = 0 y = 3 }
+							Militia_Bat = { x = 0 y = 4 }
+						}
+					}
+				}
+				929 = { ##Papal Guards Deploy Here in the Vatican
+					create_unit = {
+						division = "division_template = \"Holy Warriors\" start_experience_factor = 0.3 start_equipment_factor = 0.5"
+						owner = HLS
+						count = 5
+					}
+				}
+			}
+			custom_effect_tooltip = HLS_religious_recruits_tt
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				has_completed_focus = HLS_religious_recruits
+				add = 5
+			}
+		}
+	}
+
+	decisions_HLS_international_jihadists = {
+		visible = {
+			tag = HLS
+			has_completed_focus = HLS_a_dark_path
+		}
+		available = {
+			tag = HLS
+			has_idea = foreign_jihadis
+			has_completed_focus = HLS_religious_recruits
+		}
+		icon = generic_prepare_civil_war
+		cost = 50
+
+		days_re_enable = 90
+		days_remove = 90
+
+		complete_effect = {
+			hidden_effect = {
+				if = {
+					limit = {
+						NOT = { has_template = "Fadiyeen lil Bayt al-Maqdis" }
+					}
+					division_template = {
+						name = "Fadiyeen lil Bayt al-Maqdis"
+
+						regiments = {
+							Militia_Bat = { x = 0 y = 0 }
+							Militia_Bat = { x = 0 y = 1 }
+							Militia_Bat = { x = 0 y = 2 }
+							Militia_Bat = { x = 0 y = 3 }
+							Militia_Bat = { x = 0 y = 4 }
+						}
+					}
+				}
+				929 = { ##Papal Guards Deploy Here in the Vatican
+					create_unit = {
+						division = "division_template = \"Fadiyeen lil Bayt al-Maqdis\" start_experience_factor = 0.3 start_equipment_factor = 0.5"
+						owner = HLS
+						count = 5
+					}
+				}
+				add_manpower = 2000
+			}
+			custom_effect_tooltip = HLS_international_jihadists_tt
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				has_completed_focus = HLS_religious_recruits
+				add = 5
+			}
+		}
+	}
+}

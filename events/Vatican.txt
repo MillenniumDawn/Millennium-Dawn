@@ -1,0 +1,626 @@
+add_namespace = vatican_events
+add_namespace = vatican_news_events
+
+# Annexation of Italy
+country_event = {
+	id = vatican_events.1
+	title = vatican_events.1.t
+	desc = vatican_events.1.d
+	picture = GFX_politics_speak
+	is_triggered_only = yes
+
+	option = {
+		name = vatican_events.1.o1
+		log = "[GetDateText]: [This.GetName]: vatican_events.1.o1 executed"
+		HLS = { country_event = vatican_events.2 }
+
+		ai_chance = {
+			base =  10
+		}
+	}
+
+	option = {
+		name = vatican_events.1.o2
+		log = "[GetDateText]: [This.GetName]: vatican_events.1.o2 executed"
+		HLS = { country_event = { id = vatican_events.3 days = 1 } }
+
+		ai_chance = {
+			base =  0
+		}
+	}
+}
+
+# The Union of Rome
+country_event = {
+	id = vatican_events.2
+	title = vatican_events.2.t
+	desc = vatican_events.2.d
+	picture = GFX_politics_speak
+
+	is_triggered_only = yes
+
+	option = {
+		name = vatican_events.2.o1
+		log = "[GetDateText]: [This.GetName]: vatican_events.2.o1 executed"
+		annex_country = { target = FROM transfer_troops = yes }
+	}
+
+}
+
+# Italy Refuses to be Annexed
+country_event = {
+	id = vatican_events.3
+	title = vatican_events.3.t
+	desc = vatican_events.3.d
+	picture = GFX_politics_demands
+
+	is_triggered_only = yes
+
+	option = {
+		name = vatican_events.3.o1
+		log = "[GetDateText]: [This.GetName]: vatican_events.3.o1 executed"
+		create_wargoal = {
+			type = annex_everything
+			target = FROM
+		}
+		add_opinion_modifier = {
+			target = FROM
+			modifier = refused_to_be_annexed
+		}
+	}
+
+}
+
+country_event = {	##### Recipient of the Crusade national focus
+	id = vatican_events.4
+	title = vatican_events.4.t
+	desc = vatican_events.4.d
+	picture = GFX_politics_autocracy
+	is_triggered_only = yes
+
+	option = {
+		name = vatican_events.4.o1
+		log = "[GetDateText]: [This.GetName]: vatican_events.4.o1 executed"
+		HLS = { country_event = vatican_events.5 }
+
+		ai_chance = {
+			base =  100
+		}
+	}
+
+}
+
+country_event = {	##### Call a crusade or just leave it as our war? (Got through the focus tree)
+	id = vatican_events.5
+	title = vatican_events.5.t
+	desc = vatican_events.5.d
+	picture = GFX_politics_autocracy
+	is_triggered_only = yes
+
+	option = {
+		name = vatican_events.5.o1
+		log = "[GetDateText]: [This.GetName]: vatican_events.5.o1 executed"
+		create_wargoal = {
+			type = holywar_wargoal
+			target = FROM
+		}
+	}
+
+	option = {
+		name = vatican_events.5.o2
+		log = "[GetDateText]: [This.GetName]: vatican_events.5.o2 executed"
+		hidden_effect = {
+			FROM = {
+				add_ideas = idea_HLS_global_crusade_target
+				country_event = vatican_events.8
+			}
+		}
+		create_wargoal = {
+			type = holywar_wargoal
+			target = FROM
+		}
+		set_country_flag = crusader_country
+		custom_effect_tooltip = vatican_holy_war_event_tooltip
+
+		hidden_effect = {
+			FROM = { country_event = { days = 1 id = vatican_events.12 } }
+		}
+	}
+}
+
+country_event = { ##### When being declared war on as islamic country by Vatican City it triggers the call a crusade event
+	id = vatican_events.6
+	is_triggered_only = yes
+	hidden = yes
+	trigger = {
+		has_war_with = HLS
+		OR = {
+			has_idea = sunni
+			has_idea = sufi_islam
+			has_idea = shia
+			has_idea = ibadi
+			tag = NIG
+			tag = ISI
+		}
+		NOT = { has_idea = idea_HLS_global_crusade_target }
+		NOT = { has_idea = idea_HLS_holy_war }
+		HLS = { NOT = { has_government = fascism } }
+	}
+	mean_time_to_happen = { days = 5 }
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: vatican_events.6 executed"
+		HLS = { country_event = vatican_events.7 }
+	}
+}
+
+country_event = {   ##### Call a crusade or keep it as our own war? (When using a holy war declaration)
+	id = vatican_events.7
+	title = vatican_events.7.t
+	desc = vatican_events.7.d
+	is_triggered_only = yes
+
+	option = {
+		name = vatican_events.7.o1
+		log = "[GetDateText]: [This.GetName]: vatican_events.7.o1 executed"
+		ai_chance = {
+			base =  30
+		}
+
+		hidden_effect = { FROM = { add_ideas = idea_HLS_holy_war } }
+	}
+
+	option = {
+		name = vatican_events.7.o2
+		log = "[GetDateText]: [This.GetName]: vatican_events.7.o2 executed"
+		ai_chance = {
+			base =  45
+		}
+
+		hidden_effect = {
+			FROM = {
+				add_ideas = idea_HLS_global_crusade_target
+				country_event = vatican_events.8
+			}
+		}
+		create_wargoal = {
+			type = holywar_wargoal
+			target = FROM
+		}
+		custom_effect_tooltip = vatican_holy_war_event_tooltip
+		hidden_effect = {
+			FROM = { country_event = { days = 1 id = vatican_events.12 } }
+		}
+		add_political_power = -100
+	}
+}
+
+country_event = { #Calls the 1st news event so that the correct country name is used in the event
+	id = vatican_events.8
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: vatican_event.8 executed"
+		news_event = vatican_news_events.1
+	}
+
+}
+
+country_event = { ##### Gets rid of the "Holy war against the vatican" national spirit when the war is over
+	id = vatican_events.9
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = {
+		AND = {
+			OR = {
+				has_idea = idea_HLS_global_crusade_target
+				has_idea = idea_HLS_holy_war
+			}
+			has_war = no
+		}
+	}
+
+	mean_time_to_happen = { days = 1 }
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: vatican_event.9 executed"
+		remove_ideas = idea_HLS_global_crusade_target
+		remove_ideas = idea_HLS_holy_war
+	}
+}
+
+country_event = {  ##### Focus tree to 'aid our brethren'
+	id = vatican_events.10
+	title = vatican_events.10.t
+	desc = vatican_events.10.d
+	picture = GFX_Tahrir_Al_Sham
+	is_triggered_only = yes
+
+	mean_time_to_happen = {
+		days = 1
+	}
+
+	option = {
+		name = vatican_events.10.o1
+		log = "[GetDateText]: [This.GetName]: vatican_event.10.o1 executed"
+			ai_chance = {
+			base =  70
+		}
+		FROM = { add_to_faction = ROOT }
+		add_opinion_modifier = {
+			target = FROM
+			modifier = agreed_to_our_aid
+		}
+		FROM = {
+			 add_opinion_modifier = {
+				target = ROOT
+				modifier = agreed_to_our_aid
+			}
+		}
+	}
+
+	option = {
+		name = vatican_events.10.o2
+		log = "[GetDateText]: [This.GetName]: vatican_event.10.o2 executed"
+			ai_chance = {
+			base =  30
+		}
+		add_opinion_modifier = {
+			target = FROM
+			modifier = disagreed_to_our_aid
+		}
+		FROM = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = disagreed_to_our_aid
+			}
+		}
+	}
+
+}
+
+
+country_event = {   ##### When a war is recognised as a Crusade this event is given to all european countries or ones in Vatican city's faction, allowing them to join the war, provide support to the Vatican city or refuse to participate at all
+	id = vatican_events.11
+	title = vatican_events.11.t
+	desc = vatican_events.11.d
+	picture = GFX_politics_demands
+	is_triggered_only = yes
+
+	option = { ##### Agree to join in the crusades
+		name = vatican_events.11.o1
+		log = "[GetDateText]: [This.GetName]: vatican_event.11.o1 executed"
+		ai_chance = {
+			base =  30
+		}
+		create_wargoal = {
+			type = crusade_wargoal
+			target = FROM
+		}
+		send_equipment = { target = HLS type = infantry_equipment amount = 300 }
+		add_political_power = 50
+	}
+
+	option = { ##### Disagree to join the crusades, but still send help
+		name = vatican_events.11.o2
+		log = "[GetDateText]: [This.GetName]: vatican_event.11.o2 executed"
+		ai_chance = {
+			base =  45
+		}
+		send_equipment = { target = HLS type = infantry_equipment amount = 300 }
+		add_manpower = -750
+		HLS = { add_manpower = 750 }
+		add_political_power = 25
+	}
+
+	option = { ##### Disagree to join the crusades entirely
+		name = vatican_events.11.o3
+		log = "[GetDateText]: [This.GetName]: vatican_event.11.o3 executed"
+		ai_chance = {
+			base =  25
+		}
+		add_political_power = -20
+		add_stability = -0.01
+	}
+}
+
+country_event = {   ##### Some stupid workaround to get the crusade event to work properly
+	id = vatican_events.12
+	title = vatican_events.12.t
+	desc = vatican_events.12.d
+	picture = GFX_politics_demands
+
+	is_triggered_only = yes
+
+	option = {
+		name = vatican_events.12.o1
+		log = "[GetDateText]: [This.GetName]: vatican_event.12.o1 executed"
+		hidden_effect = {
+			every_country = {
+				limit = {
+					NOT = { tag = HLS }
+					NOT = { has_government = fascism }
+					is_in_europe = yes
+				}
+				country_event = { days = 1 id = vatican_events.11 }
+			}
+		}
+	}
+
+}
+
+country_event = { ##### Asking for more swiss guard
+	id = vatican_events.13
+	title = vatican_events.13.t
+	desc = vatican_events.13.d
+	picture = GFX_american_troops
+
+	is_triggered_only = yes
+
+	option = { #### accepted
+		name = vatican_events.13.o1
+		log = "[GetDateText]: [This.GetName]: vatican_event.13.o1 executed"
+		ai_chance = {
+			base =  80
+		}
+
+		add_manpower = -100
+		add_political_power = 50
+		HLS = { country_event = vatican_events.14 }
+	}
+
+	option = { #### refused
+		name = vatican_events.13.o2
+		log = "[GetDateText]: [This.GetName]: vatican_event.13.o2 executed"
+		ai_chance = {
+			base =  20
+		}
+
+		add_political_power = -20
+		HLS = { country_event = vatican_events.15 }
+	}
+
+}
+
+country_event = { ##### Accepting the request for more swiss guard
+	id = vatican_events.14
+	title = vatican_events.14.t
+	desc = vatican_events.14.d
+	picture = GFX_american_troops
+
+	is_triggered_only = yes
+
+	option = {
+		name = vatican_events.14.o1
+		log = "[GetDateText]: [This.GetName]: vatican_event.14.o1 executed"
+			ai_chance = {
+			base =  100
+		}
+
+		custom_effect_tooltip = HLS_swiss_guard_tooltip
+		hidden_effect = {
+			load_oob = HLS_swiss_guard_oob
+			add_manpower = 25
+		}
+	}
+
+
+}
+
+country_event = { ##### refusing the request for more swiss guard
+	id = vatican_events.15
+	title = vatican_events.15.t
+	desc = vatican_events.15.d
+	picture = GFX_politics_demands
+
+	is_triggered_only = yes
+
+	option = {
+		name = vatican_events.15.o1
+		log = "[GetDateText]: [This.GetName]: vatican_event.15.o1 executed"
+
+		ai_chance = {
+			base =  10
+		}
+	}
+}
+
+country_event = {
+	id = vatican_events.16
+	title = vatican_events.16.t
+	desc = vatican_events.16.d
+	picture = GFX_united_states_dollar
+	is_triggered_only = yes
+	trigger = {
+		tag = HLS
+		OR = {
+			has_idea = idea_HLS_holy_see
+			has_idea = christian
+		}
+	}
+
+	option = { #Ah Yes. FUNDS.
+		name = vatican_events.16.o1
+		log = "[GetDateText]: [This.GetName]: vatican_events.16.o1"
+		if = {
+			limit = {
+				num_of_factories < 20
+			}
+			set_temp_variable = { treasury_change = 0.200 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 20
+				num_of_factories < 40
+			}
+			set_temp_variable = { treasury_change = 0.500 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 40
+				num_of_factories < 60
+			}
+			set_temp_variable = { treasury_change = 0.750 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 60
+				num_of_factories < 80
+			}
+			set_temp_variable = { treasury_change = 2.0 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 80
+				num_of_factories < 100
+			}
+			set_temp_variable = { treasury_change = 3.0 }
+		}
+		else_if = {
+			limit = {
+				num_of_factories > 100
+				num_of_factories < 125
+			}
+			set_temp_variable = { treasury_change = 5.0 }
+		else_if = {
+			limit = {
+				num_of_factories > 125
+			}
+			set_temp_variable = { treasury_change = 10.0 }
+		}
+		modify_treasury_effect = yes
+		hidden_effect = {
+			country_event = { id = vatican_events.16 days = 365 }
+		}
+		ai_chance = {
+			base =  1
+		}
+	}
+}
+
+####### News events below
+
+news_event = { ##### Calling a crusade
+	id = vatican_news_events.1
+	title = vatican_news_events.1.t
+	picture = GFX_news_election_rally
+	major = yes
+	is_triggered_only = yes
+	desc = {
+		text = vatican_news_events.1.d1
+		trigger = { NOT = { has_government = fascism } }
+	}
+	desc = {
+		text = vatican_news_events.1.d2
+		trigger = { has_government = fascism }
+	}
+	option = {
+		name = vatican_news_events.1.o1
+		log = "[GetDateText]: [This.GetName]: vatican_news_events.1.o1executed"
+		trigger = { NOT = { has_government = fascism } }
+	}
+
+	option = {
+		name = vatican_news_events.1.o2
+		log = "[GetDateText]: [This.GetName]: vatican_news_events.1.o1executed"
+		trigger = { has_government = fascism }
+	}
+}
+
+news_event = { ##### Accepting Islam
+	id = vatican_news_events.2
+	title = vatican_news_events.2.t
+	picture = GFX_news_election_rally
+	major = yes
+	is_triggered_only = yes
+	desc = {
+		text = vatican_news_events.2.d1
+		trigger = { NOT = { has_government = fascism } }
+	}
+
+	option = {
+		name = vatican_news_events.2.o1
+		log = "[GetDateText]: [This.GetName]: vatican_news_events.2.o1 executed"
+		trigger = { NOT = { has_government = fascism } }
+	}
+
+	option = {
+		name = vatican_news_events.2.o2
+		log = "[GetDateText]: [This.GetName]: vatican_news_events.2.o2 executed"
+		trigger = { has_government = fascism }
+	}
+}
+
+# Condemning Islam
+news_event = {
+	id = vatican_news_events.3
+	title = vatican_news_events.3.t
+	picture = GFX_news_election_rally
+	major = yes
+	is_triggered_only = yes
+	desc = {
+		text = vatican_news_events.3.d1
+		trigger = { NOT = { has_government = fascism } }
+	}
+
+	desc = {
+		text = vatican_news_events.3.d2
+		trigger = { has_government = fascism }
+	}
+
+	option = {
+		name = vatican_news_events.3.o1
+		log = "[GetDateText]: [This.GetName]: vatican_news_events.3.o1 executed"
+		trigger = { NOT = { has_government = fascism } }
+	}
+
+	option = {
+		name = vatican_news_events.3.o2
+		log = "[GetDateText]: [This.GetName]: vatican_news_events.3.o2 executed"
+		trigger = { has_government = fascism }
+	}
+}
+
+# Rename Istanbul to Constantinople
+news_event = {
+	id = vatican_news_events.4
+	title = vatican_news_events.4.t
+	picture = GFX_news_election_rally
+	major = yes
+	is_triggered_only = yes
+	desc = {
+		text = vatican_news_events.4.d1
+		trigger = {
+			NOT = { has_government = fascism }
+		}
+	}
+	desc = {
+		text = vatican_news_events.4.d2
+		trigger = {
+			OR = {
+				has_government = fascism
+				tag = TUR
+			}
+		}
+
+	}
+
+	option = {
+		name = vatican_news_events.4.o1
+		log = "[GetDateText]: [This.GetName]: vatican_news_events.4.o1 executed"
+		trigger = { NOT = { has_government = fascism } }
+	}
+
+	option = {
+		name = vatican_news_events.4.o2
+		log = "[GetDateText]: [This.GetName]: vatican_news_events.4.o2 executed"
+		trigger = {
+			OR = {
+				has_government = fascism
+				tag = TUR
+			}
+		}
+	}
+}
