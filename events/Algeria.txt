@@ -557,7 +557,7 @@ country_event = {
 		name = algeria_invest.10.a
 		log = "[GetDateText]: [This.GetName]: algeria_invest.10.a executed"
 		custom_effect_tooltip = we_will_built_metro_tt
-		386 = { add_dynamic_modifier = { modifier = ALG_algeris_metro } }
+		386 = { add_dynamic_modifier = { modifier = ALG_algeirs_metro } }
 		set_temp_variable = { percent_change = 8 }
 		set_temp_variable = { tag_index = CHI }
 		set_temp_variable = { influence_target = ALG }
@@ -941,11 +941,11 @@ country_event = {
 				}
 			}
 		}
+	}
 
-		option = {
-			name = alg_resistance.4.a
-			ai_chance = { factor = 100 } # Only a placeholder, no effect
-		}
+	option = {
+		name = alg_resistance.4.a
+		ai_chance = { factor = 100 } # Only a placeholder, no effect
 	}
 }
 country_event = {
@@ -2117,42 +2117,6 @@ country_event = {
         add_opinion_modifier = { target = ALG modifier = declined_faction_request }
 		set_country_flag = maghreb_union_declined
     }
-}
-country_event = {
-    id = ALG_sahel_aid.1  
-    title = ALG_sahel_aid.1.t  
-    desc = ALG_sahel_aid.1.d  
-    picture = GFX_AFG_indian_aid  
-    fire_only_once = yes  
-
-    trigger = {  
-        has_completed_focus = ALG_sahel_stabilization_force  
-        country_exists = MAL
-    }  
-
-    immediate = {  
-        MAL = { add_opinion_modifier = { target = ALG modifier = supports_us } }  
-    }
-
-    option = {
-        name = ALG_sahel_aid.1.a  # "Deploy Engineers and Doctors"  
-        set_temp_variable = { treasury_change = -30 }  # Cost of aid  
-        modify_treasury_effect = yes  
-        MAL = {  
-            add_stability = 0.05  
-            add_ideas = ALG_sahel_development_aid  # Infrastructure/health boost for Mali  
-        }  
-        add_ideas = ALG_sahel_hearts_and_minds  # Algerian stability bonus  
-    }
-
-    option = {  
-        name = ALG_sahel_aid.1.b  # "Focus on Counterterrorism Only"  
-        add_war_support = 0.05  
-        MAL = {  
-            add_manpower = -5000  # Mali loses troops (Algerian airstrikes)  
-            add_opinion_modifier = { target = ALG modifier = drama }  
-        }  
-    }  
 }
 news_event = {
 	id = AlgeriaFocusNews.16
@@ -4070,7 +4034,7 @@ news_event = {
 	option = {
 		name = algeria_news.2.a
 		log = "[GetDateText]: [This.GetName]: algeria_news.2.a executed"
-		country_event = {id = algeria_news.9}
+		country_event = {id = algeria_news.9 days = 10}
 	}
 }
 country_event = {
@@ -4514,6 +4478,7 @@ news_event = {
     title = algeria_disaster.1.t
     desc  = algeria_disaster.1.d
     picture = GFX_alg_boum
+	fire_only_once = yes
 
     trigger = {
         tag = ALG
@@ -4525,12 +4490,65 @@ news_event = {
     option = {
         name = algeria_disaster.1.a  # Mobilize emergency response
         add_stability = -0.05
+		add_manpower = -2300
 		add_ideas = ALG_no_disasters_plan
         add_political_power = -50
 		set_country_flag = ALG_disaster_start
-        set_temp_variable = { treasury_change = -14 }
-        modify_treasury_effect = yes
+        country_event = { id = algeria_disaster.2 days = 2 }
+		custom_effect_tooltip = ALG_earthquake_recovery_tt
     }
+}
+country_event = {
+    id = algeria_disaster.2
+    title = algeria_disaster.2.t
+    desc  = algeria_disaster.2.d
+    picture = GFX_alg_flag
+    fire_only_once = yes
+
+    trigger = {
+        has_country_flag = ALG_disaster_start
+    }
+
+    immediate = {
+        clr_country_flag = ALG_disaster_start
+    }
+
+    option = {
+        name = algeria_disaster.2.a # Establish a State Aid Fund
+        add_political_power = -100
+        add_stability = 0.05
+        set_temp_variable = { treasury_change = -40.00 }
+		modify_treasury_effect = yes
+        add_popularity = { ideology = democratic popularity = 0.03 }
+        add_ideas = ALG_government_led_disaster
+        custom_effect_tooltip = ALG_state_aid_fund_tt
+		set_temp_variable = { percent_change = 10 }
+		change_domestic_influence_percentage = yes
+    }
+
+    option = {
+        name = algeria_disaster.2.b # Seek Foreign Assistance
+        add_stability = -0.02
+        set_temp_variable = { treasury_change = 45.00 }
+		modify_treasury_effect = yes
+        add_ideas = ALG_charity_disasters
+        custom_effect_tooltip = ALG_foreign_aid_dependence_tt
+		set_temp_variable = { percent_change = -10 }
+		change_domestic_influence_percentage = yes
+		set_temp_variable = { percent_change = 4.5 }
+		set_temp_variable = { tag_index = USA }
+		set_temp_variable = { influence_target = ALG }
+		change_influence_percentage = yes
+		hidden_effect = {
+			every_country = {
+				limit = { has_idea = EU_member }
+				set_temp_variable = { percent_change = 1.5 }
+				set_temp_variable = { tag_index = ROOT }
+				set_temp_variable = { influence_target = ALG }
+				change_influence_percentage = yes
+			}
+		}
+	}
 }
 
 
@@ -4754,10 +4772,14 @@ country_event = {
     desc = ALG_terror_2003_hostage_desc
     picture = GFX_terrorist_attack
 	fire_only_once = yes
-
-    trigger = {
-	    tag = ALG
+	
+	trigger = {
+		original_tag = ALG
 		date > 2003.02.19
+		has_idea = youth_radicalization
+		no_jihadist_government = yes
+		check_variable = { threat_level > 10 }
+		is_in_array = { global.ct_states = THIS }
 	}
     option = {
         name = "ALG_terror_2003_hostage_option"
@@ -4773,8 +4795,12 @@ country_event = {
     picture = GFX_terrorist_attack
 	fire_only_once = yes
     trigger = {
-	tag = ALG
-	date > 2007.04.11
+		tag = ALG
+		date > 2007.04.11
+		has_idea = youth_radicalization
+		no_jihadist_government = yes
+		check_variable = { threat_level > 10 }
+		is_in_array = { global.ct_states = THIS }
 	}
 
     option = {
@@ -4793,8 +4819,12 @@ country_event = {
     picture = GFX_terrorist_attack
 	fire_only_once = yes
     trigger = {
-	tag = ALG
-	date > 2007.09.06
+		tag = ALG
+		date > 2007.09.06
+		has_idea = youth_radicalization
+		no_jihadist_government = yes
+		check_variable = { threat_level > 10 }
+		is_in_array = { global.ct_states = THIS }
 	}
 
     option = {
@@ -4813,8 +4843,12 @@ country_event = {
     picture = GFX_terrorist_attack
 	fire_only_once = yes
     trigger = {
-	tag = ALG
-	date > 2008.08.19
+		tag = ALG
+		date > 2008.08.19
+		has_idea = youth_radicalization
+		no_jihadist_government = yes
+		check_variable = { threat_level > 10 }
+		is_in_array = { global.ct_states = THIS }
 	}
 
     option = {
@@ -4825,7 +4859,7 @@ country_event = {
     }
 }
 
-# 2013 In Amenas Hostage Crisis - Endgame
+# 2013 In Amenas Hostage Crisis
 country_event = {
     id = ALG_terror.13
     title = ALG_terror_2013_in_amenas_title
@@ -4834,32 +4868,42 @@ country_event = {
 	fire_only_once = yes
 
     trigger = { 
-	tag = ALG
-	date > 2013.01.16
+		tag = ALG
+		date > 2013.01.16
+		has_idea = youth_radicalization
+		no_jihadist_government = yes
+		check_variable = { threat_level > 10 }
+		is_in_array = { global.ct_states = THIS }
 	}
-
-    option = {
-        name = ALG_terror_2013_low_option
-        trigger = { fascism < 5 }
-        add_stability = 0.02
-        add_political_power = 20
+	immediate = {
+        if = {
+            limit = { fascism < 5 }
+            add_stability = 0.02
+            add_political_power = 20
+			custom_effect_tooltip = ALG_terror_2013_low_tt
+        }
+        else_if = {
+            limit = { fascism > 5 }
+            limit = { fascism < 36 }
+            set_temp_variable = { rad_change = 6 }
+            modify_radicalization_effect = yes
+            add_stability = -0.03
+            add_political_power = -10
+			custom_effect_tooltip = ALG_terror_2013_medium_tt
+        }
+        else_if = {
+            limit = { fascism > 35 }
+            set_temp_variable = { rad_change = 10 }
+            modify_radicalization_effect = yes
+            add_stability = -0.07
+            add_political_power = -30
+            add_ideas = ALG_insurgency_unleashed
+			custom_effect_tooltip = ALG_terror_2013_high_tt
+        }
     }
-    option = {
-        name = ALG_terror_2013_medium_option
-        trigger = { fascism > 5 fascism < 36 }
-        set_temp_variable = { rad_change = 6 }
-		modify_radicalization_effect = yes
-        add_stability = -0.03
-        add_political_power = -10
-    }
-    option = {
-        name = ALG_terror_2013_high_option
-        trigger = { fascism > 35 }
-        set_temp_variable = { rad_change = 10 }
-		modify_radicalization_effect = yes
-        add_stability = -0.07
-        add_political_power = -30
-        add_ideas = ALG_insurgency_unleashed
+	option = {
+        name = ALG_terror_2013_placeholder_option
+        # placeholder — effects handled in immediate
     }
 }
 # Year 2000 - Tizi Ouzou Ambush
@@ -4872,8 +4916,12 @@ country_event = {
     trigger = {
 	    tag = ALG
 		date > 2000.09.28
+		has_idea = youth_radicalization
+		no_jihadist_government = yes
+		check_variable = { threat_level > 10 }
+		is_in_array = { global.ct_states = THIS }
 	}
-	    immediate = {
+	immediate = {
         set_global_flag = terror_monitor_enabled
     }
     option = {
@@ -4894,6 +4942,10 @@ country_event = {
     trigger = {
 	    tag = ALG
 		date > 2002.05.15
+		has_idea = youth_radicalization
+		no_jihadist_government = yes
+		check_variable = { threat_level > 10 }
+		is_in_array = { global.ct_states = THIS }
 	}
     option = {
         name = ALG_terror_generic_option
@@ -4913,6 +4965,10 @@ country_event = {
     trigger = {
 	    tag = ALG
 		date > 2002.06.20
+		has_idea = youth_radicalization
+		no_jihadist_government = yes
+		check_variable = { threat_level > 10 }
+		is_in_array = { global.ct_states = THIS }
 	}
     option = {
         name = ALG_terror_generic_option
@@ -4931,6 +4987,10 @@ country_event = {
     trigger = {
 	    tag = ALG
 		date > 2002.06.21
+		has_idea = youth_radicalization
+		no_jihadist_government = yes
+		check_variable = { threat_level > 10 }
+		is_in_array = { global.ct_states = THIS }
 	}
     option = {
         name = ALG_terror_generic_option
@@ -4949,6 +5009,10 @@ country_event = {
     trigger = {
 	    tag = ALG
 		date > 2002.07.05
+		has_idea = youth_radicalization
+		no_jihadist_government = yes
+		check_variable = { threat_level > 10 }
+		is_in_array = { global.ct_states = THIS }
 	}
     option = {
         name = ALG_terror_generic_option
@@ -4967,6 +5031,10 @@ country_event = {
     trigger = {
 	    tag = ALG
 		date > 2002.11.21
+		has_idea = youth_radicalization
+		no_jihadist_government = yes
+		check_variable = { threat_level > 10 }
+		is_in_array = { global.ct_states = THIS }
 	}
     option = {
         name = ALG_terror_generic_option
@@ -4983,8 +5051,12 @@ country_event = {
     picture = GFX_terrorist_attack
 	fire_only_once = yes
     trigger = {
-	tag = ALG
-	date > 2003.06.15
+		tag = ALG
+		date > 2003.06.15
+		has_idea = youth_radicalization
+		no_jihadist_government = yes
+		check_variable = { threat_level > 10 }
+		is_in_array = { global.ct_states = THIS }
 	}
     option = {
         name = ALG_terror_generic_option
@@ -5002,8 +5074,12 @@ country_event = {
     picture = GFX_terrorist_attack
 	fire_only_once = yes
     trigger = {
-	tag = ALG
-	date > 2004.03.12
+		tag = ALG
+		date > 2004.03.12
+		has_idea = youth_radicalization
+		no_jihadist_government = yes
+		check_variable = { threat_level > 10 }
+		is_in_array = { global.ct_states = THIS }
 	}
     option = {
         name = ALG_terror_generic_option
@@ -5021,8 +5097,12 @@ country_event = {
     picture = GFX_terrorist_attack
 	fire_only_once = yes
     trigger = {
-	tag = ALG
-	date > 2005.07.29
+		tag = ALG
+		date > 2005.07.29
+		has_idea = youth_radicalization
+		no_jihadist_government = yes
+		check_variable = { threat_level > 10 }
+		is_in_array = { global.ct_states = THIS }
 	}
     option = {
         name = ALG_terror_generic_option
@@ -5892,77 +5972,7 @@ country_event = {
 	}
 }
 
-# International Sanctions!
-country_event = {
-	id = nuclear_algeria.19
-	title = nuclear_algeria.19.t
-	desc = nuclear_algeria.19.d
-	is_triggered_only = yes
-	fire_only_once = yes
-	# Ok
-	option = {
-		name = nuclear_algeria.19.a
-		log = "[GetDateText]: [This.GetName]: nuclear_algeria.19.a executed"
-		set_country_flag = ALG_sanctioned
-		set_country_flag = ALG_nuclear_known
-		clr_country_flag = ALG_nuclear_negotiations
-		if = {
-			limit = {
-				NOT = {
-					has_completed_focus = ALG_silent_steps
-				}
-			}
-			complete_national_focus = ALG_silent_steps
-		}
-		if = {
-			limit = {
-				NOT = {
-					has_dynamic_modifier = {
-						modifier = ALG_us_sanctions
-					}
-				}
-			}
-			add_dynamic_modifier = {
-				modifier = ALG_us_sanctions
-			}
-		}
-		else_if = {
-			limit = {
-				has_dynamic_modifier = {
-					modifier = ALG_us_sanctions
-				}
-			}
-			ALG = {
-				newline = yes
-				set_temp_variable = { ALG_sanction_trade_opinion_factor_change = -0.1 }
-				update_ALG_sanction_trade_opinion_factor = yes
-				newline = yes
-				newline = yes
-				set_temp_variable = { ALG_sanction_trade_laws_cost_factor_change = 0.1 }
-				update_ALG_sanction_trade_laws_cost_factor = yes
-				newline = yes
-				newline = yes
-				set_temp_variable = { ALG_sanction_oil_export_multiplier_modifier_change = -0.1 }
-				update_ALG_sanction_oil_export_multiplier_modifier = yes
-				newline = yes
-				newline = yes
-				set_temp_variable = { ALG_sanction_improve_relations_maintain_cost_factor_change = 0.1 }
-				update_ALG_sanction_improve_relations_maintain_cost_factor = yes
-				newline = yes
-				newline = yes
-				set_temp_variable = { ALG_sanction_productivity_growth_modifier_change = -0.05 }
-				update_ALG_sanction_productivity_growth_modifier = yes
-				newline = yes
-				newline = yes
-				set_temp_variable = { ALG_sanction_stability_factor_change = -0.05 }
-				update_ALG_sanction_stability_factor = yes
-			}
-		}
-		ai_chance = {
-			base = 5
-		}
-	}
-}
+
 
 country_event = {
 	id = nuclear_algeria.20

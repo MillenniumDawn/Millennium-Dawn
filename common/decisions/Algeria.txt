@@ -980,111 +980,6 @@ ALG_initiate_national_dialogues = {
         }
     }
 }
-ALG_nuclear_ambitions = {
-	ALG_cave_to_western_demands = {
-
-		visible = {
-			has_country_flag = ALG_sanctioned
-		}
-
-		fire_only_once = yes
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout ALG_cave_to_western_demands"
-			custom_effect_tooltip = ALG_no_more_nukes_TT
-			set_country_flag = ALG_its_joever_nukes
-			set_country_flag = ALG_nuclear_negotiations
-			clr_country_flag = ALG_sanctioned
-			custom_effect_tooltip = ALG_can_negotiate_again_TT
-			hidden_effect = {
-				add_equipment_to_stockpile = {
-					type = nuclear_missile_equipment_1
-					amount = -10000
-				}
-				add_equipment_to_stockpile = {
-					type = nuclear_missile_equipment_2
-					amount = -10000
-				}
-				add_equipment_to_stockpile = {
-					type = nuclear_missile_equipment_3
-					amount = -10000
-				}
-				add_equipment_to_stockpile = {
-					type = nuclear_missile_equipment_4
-					amount = -10000
-				}
-				add_equipment_to_stockpile = {
-					type = nuclear_missile_equipment_5
-					amount = -10000
-				}
-				add_equipment_to_stockpile = {
-					type = nuclear_missile_equipment_6
-					amount = -10000
-				}
-				add_equipment_to_stockpile = {
-					type = nuclear_missile_equipment_7
-					amount = -10000
-				}
-				add_equipment_to_stockpile = {
-					type = nuclear_missile_equipment_8
-					amount = -10000
-				}
-			}
-			if = {
-				limit = {
-					NOT = {
-						has_completed_focus = ALG_the_grand_bargain
-					}
-				}
-				complete_national_focus = ALG_the_grand_bargain
-			}
-		}
-	}
-
-	ALG_nuclear_disarming = {
-		activation = {
-			always = no
-		}
-		available = {
-			OR = {
-				has_idea = non_nuclear_power
-				has_idea = nuclear_energy
-			}
-			has_idea = no_use_case
-			has_idea = ALG_restrictions_on_nuclear_weapons
-		}
-		days_mission_timeout = 300
-		is_good = no
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout ALG_nuclear_disarming"
-			custom_effect_tooltip = ALG_iran_behave_TT
-			USA = {
-				country_event = {
-					id = nuclear_algeria.28
-					days = 1
-				}
-				set_country_flag = ALG_iran_behaves
-			}
-			set_country_flag = ALG_its_joever_nukes
-		}
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout ALG_nuclear_disarming"
-			USA = {
-				set_country_flag = {
-					flag = ALG_iran_misbehaved
-					days = 270
-					value = 1
-				}
-				country_event = {
-					id = nuclear_algeria.27
-					days = 1
-				}
-			}
-			clr_country_flag = ALG_its_joever_nukes
-			clr_country_flag = ALG_nuclear_negotiations
-		}
-	}
-}
 ALG_ethnic_data_category = {
     ALG_show_ethnic_data = {
         icon = GFX_decisions_religion_government_button
@@ -1260,9 +1155,15 @@ ALG_resistance_challenges = {
 	ALG_healthcare_reform = {
 		icon = GFX_ISR_healthcare_button
 		visible = { has_country_flag = ALG_resistance_path }
-		available = { check_variable = { ALG_people_grievance < 40 } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_healthcare_reform_tt
+				check_variable = { ALG_people_grievance < 40}
+			}
+			has_idea = health_04
+		}
 		cost = 75
-		days_remove = 180
+		days_mission_timeout = 180
 		cancel_if_not_visible = yes
 		complete_effect = {
 			subtract_from_variable = { var = ALG_people_grievance value = 5 }
@@ -1282,9 +1183,15 @@ ALG_resistance_challenges = {
 		icon = GFX_ISR_education_button
 		
 		visible = { has_country_flag = ALG_resistance_path }
-		available = { check_variable = { ALG_people_grievance < 40 } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_education_reform_tt
+				check_variable = { ALG_people_grievance < 40 }
+			}
+			has_idea = edu_04
+		}
 		cost = 75
-		days_remove = 180
+		days_mission_timeout = 180
 		cancel_if_not_visible = yes
 		complete_effect = {
 			subtract_from_variable = { var = ALG_people_grievance value = 5 }
@@ -1308,9 +1215,19 @@ ALG_resistance_challenges = {
 	ALG_unemployment_reform = {
 		icon = GFX_ISR_welfare_button
 		visible = { has_country_flag = ALG_resistance_path }
-		available = { check_variable = { ALG_people_grievance < 40 } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_unemployment_reform_tt
+				check_variable = { ALG_people_grievance < 40 } 
+			}
+			custom_trigger_tooltip = {
+				tooltip = ALG_employment_TT
+				check_variable = { total_unemployed_percentage_display < 0.2 }
+			}
+			has_idea = social_04
+		}
 		cost = 100
-		days_remove = 180
+		days_mission_timeout = 180
 		cancel_if_not_visible = yes
 		complete_effect = {
 			subtract_from_variable = { var = ALG_people_grievance value = 10 }
@@ -1347,118 +1264,36 @@ alg_ethnic_policy = {
         subtract_from_variable = { var = arab_satisfaction value = -5 }
     }
     days_remove = 0
-}
+	}
 
-# Promote Arabization
-alg_promote_arabization = {
-    icon = arabic
-    allowed = { }
-    visible = { }
-    cost = 150
-    complete_effect = {
-        set_temp_variable = { treasury_change = -20 }
-        modify_treasury_effect = yes
-        add_to_variable = { var = arab_satisfaction value = 10 }
-        subtract_from_variable = { var = kabyle_satisfaction value = -10 }
-        subtract_from_variable = { var = mozabite_satisfaction value = -5 }
-    }
-    days_remove = 0
-}
-# Recognize Tamazight Language
-alg_recognize_tamazight = {
-    icon = amazigh
-    cost = 150
-    complete_effect = {
-        add_stability = -0.02
-        add_political_power = 100
-        add_to_variable = { var = kabyle_satisfaction value = 20 }
-        subtract_from_variable = { var = arab_satisfaction value = -10 }
-    }
-    days_remove = 0
-}
+	# Promote Arabization
+	alg_promote_arabization = {
+		icon = arabic
+		allowed = { }
+		visible = { }
+		cost = 150
+		complete_effect = {
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+			add_to_variable = { var = arab_satisfaction value = 10 }
+			subtract_from_variable = { var = kabyle_satisfaction value = -10 }
+			subtract_from_variable = { var = mozabite_satisfaction value = -5 }
+		}
+		days_remove = 0
+	}
+	# Recognize Tamazight Language
+	alg_recognize_tamazight = {
+		icon = amazigh
+		cost = 150
+		complete_effect = {
+			add_stability = -0.02
+			add_political_power = 100
+			add_to_variable = { var = kabyle_satisfaction value = 20 }
+			subtract_from_variable = { var = arab_satisfaction value = -10 }
+		}
+		days_remove = 0
+	}
 
-}
-ALG_PM_Elections = {
-    # Abdelmalek Sellal
-    ALG_appoint_sellal = {
-        cost = 125
-        visible = {
-            has_country_flag = ALG_minister_selection
-            NOT = { has_country_flag = ALG_sellal_minister }
-        }
-        fire_only_once = yes
-
-        complete_effect = {
-            clr_country_flag = ALG_minister_selection
-        }
-        remove_effect = {
-            add_ideas = ALG_sellal_idea
-            ALG_minister_clear = yes
-            set_country_flag = ALG_sellal_minister
-            add_to_variable = { algerian_pm_change = 1 }
-            custom_effect_tooltip = ALG_sellal_gets_appointed
-            newline = yes
-            custom_effect_tooltip = ALG_sellal_modifiers
-            if = {
-                limit = { NOT = { has_country_flag = ALG_appointed_pm } }
-                set_country_flag = ALG_appointed_pm
-            }
-        }
-    }
-
-    # Ahmed Ouyahia
-    ALG_appoint_ouyahia = {
-        cost = 125
-        visible = {
-            has_country_flag = ALG_minister_selection
-            NOT = { has_country_flag = ALG_ouyahia_minister }
-        }
-        fire_only_once = yes
-
-        complete_effect = {
-            clr_country_flag = ALG_minister_selection
-        }
-        remove_effect = {
-            add_ideas = ALG_ouyahia_idea
-            ALG_minister_clear = yes
-            set_country_flag = ALG_ouyahia_minister
-            add_to_variable = { algerian_pm_change = 1 }
-            custom_effect_tooltip = ALG_ouyahia_gets_appointed
-            newline = yes
-            custom_effect_tooltip = ALG_ouyahia_modifiers
-            if = {
-                limit = { NOT = { has_country_flag = ALG_appointed_pm } }
-                set_country_flag = ALG_appointed_pm
-            }
-        }
-    }
-
-    # Noureddine Bedoui
-    ALG_appoint_bedoui = {
-        cost = 125
-        visible = {
-            has_country_flag = ALG_minister_selection
-            NOT = { has_country_flag = ALG_bedoui_minister }
-        }
-        fire_only_once = yes
-
-        complete_effect = {
-            clr_country_flag = ALG_minister_selection
-        }
-        remove_effect = {
-            add_ideas = ALG_bedoui_idea
-            ALG_minister_clear = yes
-            set_country_flag = ALG_bedoui_minister
-            add_to_variable = { algerian_pm_change = 1 }
-            custom_effect_tooltip = ALG_bedoui_gets_appointed
-            newline = yes
-            custom_effect_tooltip = ALG_bedoui_modifiers
-            if = {
-                limit = { NOT = { has_country_flag = ALG_appointed_pm } }
-                set_country_flag = ALG_appointed_pm
-            }
-        }
-    }
 }
 ALG_resistance_movement = {
     # National Measures
@@ -2389,6 +2224,7 @@ ALG_de_arabisation_category = {
 	ALG_de_arabisation_mission = {
 		icon = arab_federation_nationalist_announce_button
 		days_mission_timeout = 356
+		is_good = no
 
 		activation = {
 			has_completed_focus = ALG_de_arabisation
@@ -2402,7 +2238,11 @@ ALG_de_arabisation_category = {
 			has_war = yes
 		}
 
-		
+		highlight_states = {
+			highlight_states_trigger = {
+				is_core_of = ALG
+			}
+		}
 		complete_effect = {
 			remove_ideas = ALG_dearabisation_penalty
 			add_ideas = ALG_imazighen_perseverance
@@ -2414,9 +2254,35 @@ ALG_de_arabisation_category = {
 				remove_core_of = ALG
 				add_core_of = KBY
 			}
+			every_state = {
+				limit = { is_core_of = EGY }
+				remove_core_of = EGY
+				add_core_of = KBY
+			}
+			every_state = {
+				limit = { is_core_of = MOR }
+				remove_core_of = MOR
+				add_core_of = KBY
+			}
+			every_state = {
+				limit = { is_core_of = TUN }
+				remove_core_of = TUN
+				add_core_of = KBY
+			}
+			every_state = {
+				limit = { is_core_of = MAU }
+				remove_core_of = MAU
+				add_core_of = KBY
+			}
+			every_state = {
+				limit = { is_core_of = LBA }
+				remove_core_of = LBA
+				add_core_of = KBY
+			}
+
+			set_country_flag = ALG_de_arabisation_mission_done
 		}
 
-		
 		timeout_effect = {
 			remove_ideas = ALG_dearabisation_penalty
 			add_stability = -0.05
@@ -2432,7 +2298,7 @@ ALG_de_arabisation_category = {
 	ALG_subsidise_amazigh_businesses = {
 		icon = decision_money_dec
 		days_mission_timeout = 180
-		cost = 50
+		is_good = no
 
 		activation = {
 			has_completed_focus = ALG_de_arabisation
@@ -2440,12 +2306,14 @@ ALG_de_arabisation_category = {
 
 		available = {
 			has_country_flag = ALG_tamazgha_path
-			check_variable = { ALG_ethnic_kabyle > 10 }
-		}
-
-		
-		complete_trigger = {
-			check_variable = { var = kabyle_satisfaction value = 65 }
+			custom_trigger_tooltip = {
+				tooltip = ALG_ethnic_kabyle_tt
+				check_variable = { var = ALG_ethnic_kabyle value > 10 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = ALG_kabyle_satisfaction_tt
+				check_variable = { var = kabyle_satisfaction value = 65 }
+			}
 		}
 
 		complete_effect = {
@@ -2454,6 +2322,7 @@ ALG_de_arabisation_category = {
 			add_political_power = -50
 			add_stability = 0.03
 			custom_effect_tooltip = ALG_amazigh_businesses_complete_TT
+			set_country_flag = ALG_subsidise_amazigh_businesses_done
 		}
 
 		timeout_effect = {
@@ -2465,7 +2334,7 @@ ALG_de_arabisation_category = {
 	ALG_return_amazigh_exiles = {
 		icon = GFX_goal_generic_political_reform
 		days_mission_timeout = 200
-		cost = 75
+		is_good = no
 
 		activation = {
 			has_completed_focus = ALG_de_arabisation
@@ -2473,13 +2342,8 @@ ALG_de_arabisation_category = {
 
 		available = {
 			has_country_flag = ALG_tamazgha_path
-		}
-
-		complete_trigger = {
-			OR = {
-				political_power > 200
-				stability > 0.6
-			}
+			has_political_power > 200
+			has_stability > 0.6
 		}
 
 		complete_effect = {
@@ -2489,6 +2353,7 @@ ALG_de_arabisation_category = {
 			add_political_power = -75
 			add_manpower = 5000
 			custom_effect_tooltip = ALG_return_exiles_complete_TT
+			set_country_flag = ALG_return_amazigh_exiles_done
 		}
 
 		timeout_effect = {
@@ -2497,12 +2362,10 @@ ALG_de_arabisation_category = {
 			custom_effect_tooltip = ALG_return_exiles_fail_TT
 		}
 	}
-
-	
 	ALG_leave_arab_league = {
 		icon = GFX_decision_generic_political_pressure
 		days_mission_timeout = 90
-		cost = 100
+		is_good = no
 
 		activation = {
 			has_completed_focus = ALG_de_arabisation
@@ -2510,10 +2373,6 @@ ALG_de_arabisation_category = {
 
 		available = {
 			has_country_flag = ALG_tamazgha_path
-			is_in_faction = yes
-		}
-
-		complete_trigger = {
 			NOT = {
 				any_other_country = {
 					is_in_faction_with = ROOT
@@ -2529,6 +2388,7 @@ ALG_de_arabisation_category = {
 			add_to_variable = { var = arab_satisfaction value = -15 }
 			add_to_variable = { var = kabyle_satisfaction value = 10 }
 			custom_effect_tooltip = ALG_leave_arab_league_complete_TT
+			set_country_flag = ALG_leave_arab_league_done
 		}
 
 		timeout_effect = {
@@ -2540,7 +2400,7 @@ ALG_de_arabisation_category = {
 	ALG_boost_kabyle_population = {
 		icon = GFX_goal_generic_population
 		days_mission_timeout = 240
-		cost = 100
+		is_good = no
 
 		activation = {
 			has_completed_focus = ALG_de_arabisation
@@ -2548,22 +2408,19 @@ ALG_de_arabisation_category = {
 
 		available = {
 			has_country_flag = ALG_tamazgha_path
-		}
-
-		
-		complete_trigger = {
-			AND = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_kabyle_satisfaction_70_tt
 				check_variable = { var = kabyle_satisfaction value > 70 }
-				stability > 0.5
 			}
+			has_stability > 0.5
 		}
-
 		complete_effect = {
 			add_to_variable = { var = ALG_ethnic_kabyle value = 5 }
 			add_to_variable = { var = ALG_ethnic_arab value = -5 }
 			add_to_variable = { var = kabyle_satisfaction value = 15 }
 			add_stability = 0.05
 			custom_effect_tooltip = ALG_kabyle_pop_complete_TT
+			set_country_flag = ALG_boost_kabyle_population_done
 		}
 
 		timeout_effect = {
@@ -2577,17 +2434,14 @@ ALG_tamazgha_cultural_revival_category = {
 	ALG_amazigh_language_reform = {
 		icon = amazigh
 		days_mission_timeout = 180
-		cost = 75
+		is_good = no
 
 		activation = {
-			has_completed_mission = ALG_de_arabisation_mission
+			has_country_flag = ALG_de_arabisation_mission_done
 		}
 
 		available = {
 			has_country_flag = ALG_tamazgha_path
-		}
-
-		complete_trigger = {
 			has_idea = edu_03
 		}
 
@@ -2600,6 +2454,7 @@ ALG_tamazgha_cultural_revival_category = {
 			flat_productivity_change_effect = yes
 			increase_education_budget_2 = yes
 			custom_effect_tooltip = ALG_amazigh_language_reform_complete_TT
+			set_country_flag = ALG_amazigh_language_reform_done
 		}
 
 		timeout_effect = {
@@ -2611,22 +2466,20 @@ ALG_tamazgha_cultural_revival_category = {
 	ALG_tamazight_in_education = {
 		icon = ISR_education_button
 		days_mission_timeout = 210
-		cost = 100
+		is_good = no
 
 		activation = {
-			has_completed_mission = ALG_de_arabisation_mission
+			has_country_flag = ALG_de_arabisation_mission_done
 		}
 
 		available = {
 			has_country_flag = ALG_tamazgha_path
-			check_variable = { var = kabyle_satisfaction value >= 60 }
-		}
-
-		complete_trigger = {
-			OR = {
-				has_idea = edu_04
-				stability > 0.6
+			custom_trigger_tooltip = {
+				tooltip = ALG_kabyle_satisfaction_60_tt
+				check_variable = { var = kabyle_satisfaction value > 60 }
 			}
+			has_idea = edu_04
+			has_stability > 0.6
 		}
 
 		complete_effect = {
@@ -2636,6 +2489,7 @@ ALG_tamazgha_cultural_revival_category = {
 			set_temp_variable = { int_investment_change = 0.1 }
 			modify_international_investment_effect = yes
 			custom_effect_tooltip = ALG_tamazight_in_education_complete_TT
+			set_country_flag = ALG_tamazight_in_education_done
 		}
 
 		timeout_effect = {
@@ -2647,22 +2501,20 @@ ALG_tamazgha_cultural_revival_category = {
 	ALG_media_cultural_independence = {
 		icon = independence
 		days_mission_timeout = 150
-		cost = 75
+		is_good = no
 
 		activation = {
-			has_completed_mission = ALG_de_arabisation_mission
+			has_country_flag = ALG_de_arabisation_mission_done
 		}
 
 		available = {
 			has_country_flag = ALG_tamazgha_path
-			check_variable = { var = kabyle_satisfaction value >= 70 }
-		}
-
-		complete_trigger = {
-			OR = {
-				has_idea = social_04
-				has_idea = police_04
+			custom_trigger_tooltip = {
+				tooltip = ALG_kabyle_satisfaction_70_tt
+				check_variable = { var = kabyle_satisfaction value > 70 }
 			}
+			has_idea = social_04
+			has_idea = police_04
 		}
 
 		complete_effect = {
@@ -2672,6 +2524,7 @@ ALG_tamazgha_cultural_revival_category = {
 			set_temp_variable = { temp_opinion = 10 }
 			change_small_medium_business_owners_opinion = yes
 			custom_effect_tooltip = ALG_media_cultural_independence_complete_TT
+			set_country_flag = ALG_media_cultural_independence_done
 		}
 
 		timeout_effect = {
@@ -2683,18 +2536,15 @@ ALG_tamazgha_cultural_revival_category = {
 	ALG_tamazgha_regional_cooperation = {
 		icon = decision_eng_ally_imperialist_coup
 		days_mission_timeout = 240
-		cost = 125
+		is_good = no
 
 		activation = {
-			has_completed_mission = ALG_de_arabisation_mission
+			has_country_flag = ALG_de_arabisation_mission_done
 		}
 
 		available = {
 			has_country_flag = ALG_tamazgha_path
 			is_in_faction = no
-		}
-
-		complete_trigger = {
 			any_other_country = {
 				OR = {
 					tag = MAU
@@ -2705,7 +2555,6 @@ ALG_tamazgha_cultural_revival_category = {
 				is_in_faction_with = ROOT
 			}
 		}
-
 		complete_effect = {
 			add_to_variable = { var = kabyle_satisfaction value = 20 }
 			add_stability = 0.05
@@ -2713,6 +2562,7 @@ ALG_tamazgha_cultural_revival_category = {
 			set_temp_variable = { int_investment_change = 0.5 }
 			modify_international_investment_effect = yes
 			custom_effect_tooltip = ALG_tamazgha_regional_cooperation_complete_TT
+			set_country_flag = ALG_tamazgha_regional_cooperation_done
 		}
 
 		timeout_effect = {
@@ -2722,6 +2572,7 @@ ALG_tamazgha_cultural_revival_category = {
 		}
 	}
 }
+
 
 
 
