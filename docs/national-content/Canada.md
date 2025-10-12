@@ -1,6 +1,6 @@
 ## Canada WIP
 
-![Flag_of_Canada__Pantone_.svg](uploads/4c8dfed267aeeb6c58ed0a069a54f476/Flag_of_Canada__Pantone_.svg.png)
+![Canada](/Millennium-Dawn/uploads/flags/canada.png)
 
 Canada is a country surrounded by the US from the west, Alaska, and the south.
 
