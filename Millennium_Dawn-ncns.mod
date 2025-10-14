@@ -13,7 +13,7 @@ tags={
 supported_version="1.16.*"
 picture = "thumbnail.png"
 remote_file_id="2777392649"
-path="mod/Millennium-Dawn"
+path="mod/Millennium-Dawn-ncns"
 
 replace_path = "events"
 replace_path = "common/abilities"
