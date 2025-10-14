@@ -9,6 +9,7 @@ CHI_norinco_manufacturer = {
 		Inf_equipment
 		artillery_equipment
 		L_AT_Equipment
+		H_AT_Equipment
 		util_vehicle_equipment
 		mio_cat_all_armor
 		sam_missile_equipment
@@ -26,7 +27,7 @@ CHI_norinco_manufacturer = {
 	}
 
 	tree_header_text = {
-		text = "Small Arms, ATGM, Trucks & Artillery"
+		text = "Small Arms, L_AT_Equipment, Trucks & Artillery"
 		x = 1
 	}
 	tree_header_text = {
@@ -451,8 +452,8 @@ CHI_norinco_manufacturer = {
 	}
 
 	trait = {
-		token = CHI_norinco_trait_red_arrow_atgm_suite
-		name = CHI_norinco_trait_red_arrow_atgm_suite
+		token = CHI_norinco_trait_red_arrow_L_AT_Equipment_suite
+		name = CHI_norinco_trait_red_arrow_L_AT_Equipment_suite
 		icon = GFX_generic_mio_trait_icon_l_at_hard_attack
 
 		relative_position_id = CHI_norinco_trait_field_proven_rifle_design
@@ -498,7 +499,7 @@ CHI_norinco_manufacturer = {
 
 		relative_position_id = CHI_norinco_trait_field_proven_rifle_design
 		position = { x = 0 y = 5 }
-		all_parents = { CHI_norinco_trait_red_arrow_atgm_suite }
+		all_parents = { CHI_norinco_trait_red_arrow_L_AT_Equipment_suite }
 
 		limit_to_equipment_type = {
 			L_AT_Equipment
@@ -537,7 +538,7 @@ CHI_norinco_manufacturer = {
 		relative_position_id = CHI_norinco_trait_field_proven_rifle_design
 		position = { x = 1 y = 5 }
 		all_parents = {
-			CHI_norinco_trait_red_arrow_atgm_suite
+			CHI_norinco_trait_red_arrow_L_AT_Equipment_suite
 			CHI_norinco_trait_export_certified_artillery
 		}
 
@@ -581,7 +582,7 @@ CHI_norinco_manufacturer = {
 
 		relative_position_id = CHI_norinco_trait_field_proven_rifle_design
 		position = { x = -1 y = 6 }
-		all_parents = { CHI_norinco_trait_red_arrow_atgm_suite }
+		all_parents = { CHI_norinco_trait_red_arrow_L_AT_Equipment_suite }
 
 		limit_to_equipment_type = {
 			inf_equipment
@@ -5001,7 +5002,7 @@ CHI_cetc_manufacturer = {
 
 		equipment_bonus = {
 			reliability = 0.02
-			speed = 0.01
+			maximum_speed = 0.01
 		}
 
 		on_complete = {
@@ -5062,8 +5063,8 @@ CHI_cetc_manufacturer = {
 
 		limit_to_equipment_type = { cnc_equipment }
 
-		organization_modifier = {
-			maximum_organization = 0.075
+		equipment_bonus = {
+			max_organisation = 0.075
 			reliability = 0.075
 		}
 
@@ -6245,10 +6246,6 @@ CHI_casic_manufacturer = {
 			}
 		}
 	}
-
-	# =============================
-	# Branch 2 — SAM / Air Defense (root at x=4,y=0)
-	# =============================
 	trait = {
 		token = CHI_casic_radar_homing_integration
 		name = CHI_casic_radar_homing_integration
@@ -7332,24 +7329,6 @@ CHI_casc_manufacturer = {
 		}
 	}
 }
-
-
-CHI_haig_manufacturer = {
-	allowed = { original_tag = CHI }
-	icon = GFX_idea_haig_company
-
-	task_capacity = 13
-
-	equipment_type = {
-		mio_cat_helicopters
-		mio_cat_eq_only_uav
-	}
-
-	research_categories = {
-		CAT_air_eqp
-		CAT_heli
-	}
-}
 CHI_haig_manufacturer = {
 	allowed = { original_tag = CHI }
 	icon = GFX_idea_haig_company
@@ -8062,6 +8041,7 @@ CHI_sac_manufacturer = {
 
 	equipment_type = {
 		mio_cat_eq_only_all_light_aircraft
+		mio_cat_eq_only_medium_aircraft
 	}
 
 	research_categories = {
@@ -8680,26 +8660,26 @@ CHI_cssc_manufacturer = {
 
 	tree_header_text = {
 		text = "Fleet Systems & Surface Integration"
-		x = 1
+		x = 2
 	}
 
 	tree_header_text = {
 		text = "Submarine & Undersea Systems"
-		x = 5
+		x = 7
 	}
 
 	initial_trait = {
-		name = CHI_cssc_company_maritime_industrial_fusion_bureau
+		name = CHI_cssc_trait
 
 		equipment_bonus = {
-			reliability = 0.04
 			naval_speed = 0.03
 			surface_visibility = -0.03
+			max_strength = 0.03
 		}
 
 		production_bonus = {
 			production_capacity_factor = 0.12
-			production_efficiency_cap_factor = 0.12
+			production_efficiency_cap_factor = 0.10
 		}
 
 		organization_modifier = {
@@ -8710,15 +8690,50 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_radar_absorbent_hull_coating
 		name = CHI_cssc_radar_absorbent_hull_coating
-		icon = GFX_generic_mio_trait_icon_reliability
+		icon = GFX_generic_mio_trait_icon_surface_visibility
 
-		position = { x = 1 y = 0 }
+		position = { x = 2 y = 0 }
 
 		limit_to_equipment_type = { carrier mio_cat_destroyers mio_cat_frigates mio_cat_only_small_ships }
 
 		equipment_bonus = {
 			surface_visibility = -0.06
-			reliability = 0.03
+			max_strength = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_cssc_modular_weapon_mounts
+		name = CHI_cssc_modular_weapon_mounts
+		icon = GFX_generic_mio_trait_icon_lg_attack
+
+		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
+		position = { x = -1 y = 1 }
+		all_parents = { CHI_cssc_radar_absorbent_hull_coating }
+
+		limit_to_equipment_type = { mio_cat_destroyers mio_cat_frigates mio_cat_only_small_ships }
+
+		production_bonus = {
+			production_cost_factor = -0.06
+		}
+
+		equipment_bonus = {
+			lg_attack = 0.04
 		}
 
 		on_complete = {
@@ -8740,7 +8755,7 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_integrated_sensor_mast_array
 		name = CHI_cssc_integrated_sensor_mast_array
-		icon = GFX_generic_mio_trait_icon_range
+		icon = GFX_generic_mio_trait_icon_surface_detection
 
 		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
 		position = { x = 0 y = 1 }
@@ -8749,7 +8764,7 @@ CHI_cssc_manufacturer = {
 		limit_to_equipment_type = { mio_cat_destroyers mio_cat_frigates }
 
 		equipment_bonus = {
-			surface_detection = 0.06
+			surface_detection = 0.07
 			anti_air_attack = 0.03
 		}
 
@@ -8772,7 +8787,7 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_advanced_damage_control_network
 		name = CHI_cssc_advanced_damage_control_network
-		icon = GFX_generic_mio_trait_icon_organization
+		icon = GFX_generic_mio_trait_icon_max_strength
 
 		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
 		position = { x = 1 y = 1 }
@@ -8785,42 +8800,8 @@ CHI_cssc_manufacturer = {
 		}
 
 		equipment_bonus = {
-			reliability = 0.04
-		}
-
-		on_complete = {
-			if = {
-				limit = { check_variable = { free_trait_picks > 0 } }
-				add_to_variable = { free_trait_picks = -1 }
-			}
-			else = { FROM = { small_expenditure = yes } }
-		}
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				check_variable = { FROM.interest_rate > 8 }
-			}
-		}
-	}
-
-	trait = {
-		token = CHI_cssc_modular_weapon_mounts
-		name = CHI_cssc_modular_weapon_mounts
-		icon = GFX_generic_mio_trait_icon_cost_reduction
-
-		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
-		position = { x = -1 y = 1 }
-		all_parents = { CHI_cssc_radar_absorbent_hull_coating }
-
-		limit_to_equipment_type = { mio_cat_destroyers mio_cat_frigates mio_cat_only_small_ships }
-
-		production_bonus = {
-			production_cost_factor = -0.06
-		}
-
-		equipment_bonus = {
-			lg_attack = 0.03
+			max_strength = 0.03
+			max_organisation = 0.05
 		}
 
 		on_complete = {
@@ -8842,7 +8823,7 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_high_thrust_propulsion_drives
 		name = CHI_cssc_high_thrust_propulsion_drives
-		icon = GFX_generic_mio_trait_icon_speed
+		icon = GFX_generic_mio_trait_icon_naval_speed
 
 		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
 		position = { x = 2 y = 1 }
@@ -8851,13 +8832,8 @@ CHI_cssc_manufacturer = {
 		limit_to_equipment_type = { carrier mio_cat_destroyers }
 
 		equipment_bonus = {
-			naval_speed = 0.04
+			naval_speed = 0.05
 		}
-
-		production_bonus = {
-			production_capacity_factor = 0.10
-		}
-
 		on_complete = {
 			if = {
 				limit = { check_variable = { free_trait_picks > 0 } }
@@ -8877,16 +8853,16 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_hull_stress_management_structures
 		name = CHI_cssc_hull_stress_management_structures
-		icon = GFX_generic_mio_trait_icon_reliability
+		icon = GFX_generic_mio_trait_icon_max_strength
 
 		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
-		position = { x = 0 y = 2 }
+		position = { x = -2 y = 2 }
 		all_parents = { CHI_cssc_modular_weapon_mounts }
 
 		limit_to_equipment_type = { carrier mio_cat_destroyers mio_cat_frigates }
 
 		equipment_bonus = {
-			reliability = 0.05
+			max_strength = 0.05
 			naval_speed = 0.02
 		}
 
@@ -8909,17 +8885,16 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_stealth_bow_design
 		name = CHI_cssc_stealth_bow_design
-		icon = GFX_generic_mio_trait_icon_reliability
+		icon = GFX_generic_mio_trait_icon_surface_visibility
 
 		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
-		position = { x = 1 y = 2 }
-		all_parents = { CHI_cssc_integrated_sensor_mast_array }
+		position = { x = -1 y = 2 }
+		all_parents = { CHI_cssc_integrated_sensor_mast_array CHI_cssc_modular_weapon_mounts }
 
 		limit_to_equipment_type = { mio_cat_destroyers mio_cat_frigates mio_cat_only_small_ships }
 
 		equipment_bonus = {
 			surface_visibility = -0.05
-			reliability = 0.02
 		}
 
 		on_complete = {
@@ -8941,151 +8916,17 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_multi_role_missile_cells
 		name = CHI_cssc_multi_role_missile_cells
-		icon = GFX_generic_mio_trait_icon_air_attack
+		icon = GFX_generic_mio_trait_icon_lg_attack
 
 		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
-		position = { x = 2 y = 2 }
+		position = { x = 0 y = 2 }
 		all_parents = { CHI_cssc_integrated_sensor_mast_array }
 
 		limit_to_equipment_type = { carrier mio_cat_destroyers mio_cat_frigates }
 
 		equipment_bonus = {
-			lg_attack = 0.03
+			lg_attack = 0.04
 			anti_air_attack = 0.03
-		}
-
-		on_complete = {
-			if = {
-				limit = { check_variable = { free_trait_picks > 0 } }
-				add_to_variable = { free_trait_picks = -1 }
-			}
-			else = { FROM = { small_expenditure = yes } }
-		}
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				check_variable = { FROM.interest_rate > 8 }
-			}
-		}
-	}
-
-	trait = {
-		token = CHI_cssc_hull_vibration_dampers
-		name = CHI_cssc_hull_vibration_dampers
-		icon = GFX_generic_mio_trait_icon_reliability
-
-		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
-		position = { x = -1 y = 2 }
-		all_parents = { CHI_cssc_modular_weapon_mounts }
-
-		limit_to_equipment_type = { carrier mio_cat_destroyers mio_cat_frigates mio_cat_only_small_ships }
-
-		equipment_bonus = {
-			reliability = 0.04
-		}
-
-		production_bonus = {
-			production_cost_factor = 0.02
-		}
-
-		on_complete = {
-			if = {
-				limit = { check_variable = { free_trait_picks > 0 } }
-				add_to_variable = { free_trait_picks = -1 }
-			}
-			else = { FROM = { small_expenditure = yes } }
-		}
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				check_variable = { FROM.interest_rate > 8 }
-			}
-		}
-	}
-
-	trait = {
-		token = CHI_cssc_adaptive_armor_layers
-		name = CHI_cssc_adaptive_armor_layers
-		icon = GFX_generic_mio_trait_icon_reliability
-
-		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
-		position = { x = -2 y = 2 }
-		all_parents = { CHI_cssc_hull_vibration_dampers }
-
-		limit_to_equipment_type = { carrier mio_cat_destroyers mio_cat_frigates }
-
-		equipment_bonus = {
-			max_strength = 0.05
-			weight = 0.01
-		}
-
-		on_complete = {
-			if = {
-				limit = { check_variable = { free_trait_picks > 0 } }
-				add_to_variable = { free_trait_picks = -1 }
-			}
-			else = { FROM = { small_expenditure = yes } }
-		}
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				check_variable = { FROM.interest_rate > 8 }
-			}
-		}
-	}
-
-	trait = {
-		token = CHI_cssc_composite_superstructure_frame
-		name = CHI_cssc_composite_superstructure_frame
-		icon = GFX_generic_mio_trait_icon_cost_reduction
-
-		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
-		position = { x = -3 y = 2 }
-		all_parents = { CHI_cssc_adaptive_armor_layers }
-
-		limit_to_equipment_type = { carrier mio_cat_destroyers mio_cat_frigates }
-
-		equipment_bonus = {
-			weight = -0.03
-		}
-
-		production_bonus = {
-			production_efficiency_gain_factor = 0.08
-		}
-
-		on_complete = {
-			if = {
-				limit = { check_variable = { free_trait_picks > 0 } }
-				add_to_variable = { free_trait_picks = -1 }
-			}
-			else = { FROM = { small_expenditure = yes } }
-		}
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				check_variable = { FROM.interest_rate > 8 }
-			}
-		}
-	}
-
-	trait = {
-		token = CHI_cssc_electromagnetic_signature_shielding
-		name = CHI_cssc_electromagnetic_signature_shielding
-		icon = GFX_generic_mio_trait_icon_reliability
-
-		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
-		position = { x = -4 y = 2 }
-		all_parents = { CHI_cssc_composite_superstructure_frame }
-
-		limit_to_equipment_type = { carrier mio_cat_destroyers }
-
-		equipment_bonus = {
-			surface_visibility = -0.03
-			reliability = 0.03
 		}
 
 		on_complete = {
@@ -9107,17 +8948,16 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_high_power_energy_distribution
 		name = CHI_cssc_high_power_energy_distribution
-		icon = GFX_generic_mio_trait_icon_cost_reduction
+		icon = GFX_generic_mio_trait_icon_resources
 
 		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
-		position = { x = -5 y = 2 }
-		all_parents = { CHI_cssc_electromagnetic_signature_shielding }
+		position = { x = 1 y = 2 }
+		all_parents = { CHI_cssc_advanced_damage_control_network }
 
 		limit_to_equipment_type = { carrier mio_cat_destroyers mio_cat_frigates }
 
 		production_bonus = {
-			production_capacity_factor = 0.12
-			production_cost_factor = -0.04
+			production_resource_need_factor = -0.15
 		}
 
 		on_complete = {
@@ -9139,17 +8979,84 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_enhanced_anti_air_radars
 		name = CHI_cssc_enhanced_anti_air_radars
-		icon = GFX_generic_mio_trait_icon_air_attack
+		icon = GFX_generic_mio_trait_icon_naval_anti_air_attack
 
 		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
-		position = { x = -6 y = 2 }
+		position = { x = 2 y = 3 }
 		all_parents = { CHI_cssc_high_power_energy_distribution }
 
 		limit_to_equipment_type = { carrier mio_cat_destroyers mio_cat_frigates }
 
 		equipment_bonus = {
-			anti_air_attack = 0.04
+			anti_air_attack = 0.05
 			surface_detection = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_cssc_composite_superstructure_frame
+		name = CHI_cssc_composite_superstructure_frame
+		icon = GFX_generic_mio_trait_icon_armor_value
+
+		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
+		position = { x = -2 y = 3 }
+		all_parents = { CHI_cssc_high_power_energy_distribution }
+
+		limit_to_equipment_type = { carrier mio_cat_destroyers mio_cat_frigates }
+
+		equipment_bonus = {
+			armor_value = 0.08
+		}
+
+		production_bonus = {
+			production_efficiency_gain_factor = 0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_cssc_electromagnetic_signature_shielding
+		name = CHI_cssc_electromagnetic_signature_shielding
+		icon = GFX_generic_mio_trait_icon_max_strength
+
+		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
+		position = { x = -1 y = 3 }
+		all_parents = { CHI_cssc_modular_weapon_mounts }
+
+		limit_to_equipment_type = { carrier mio_cat_destroyers }
+
+		equipment_bonus = {
+			surface_visibility = -0.03
+			max_strength = 0.02
 		}
 
 		on_complete = {
@@ -9171,17 +9078,87 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_hull_flow_optimization
 		name = CHI_cssc_hull_flow_optimization
-		icon = GFX_generic_mio_trait_icon_speed
+		icon = GFX_generic_mio_trait_icon_naval_speed
 
 		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
-		position = { x = -7 y = 2 }
-		all_parents = { CHI_cssc_enhanced_anti_air_radars }
+		position = { x = 0 y = 3 }
+		all_parents = { CHI_cssc_stealth_bow_design }
 
 		limit_to_equipment_type = { mio_cat_destroyers mio_cat_frigates mio_cat_only_small_ships }
 
 		equipment_bonus = {
-			naval_speed = 0.03
+			naval_speed = 0.04
 			fuel_consumption = -0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_cssc_deck_handling_automation
+		name = CHI_cssc_deck_handling_automation
+		icon = GFX_generic_mio_trait_icon_carrier
+
+		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
+		position = { x = 1 y = 3 }
+		all_parents = { CHI_cssc_multi_role_missile_cells }
+
+		limit_to_equipment_type = { carrier helicopter_operator }
+
+		organization_modifier = {
+			military_industrial_organization_design_team_assign_cost = -0.25
+		}
+
+		equipment_bonus = {
+			carrier_size = 2
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_cssc_replenishment_at_sea_systems
+		name = CHI_cssc_replenishment_at_sea_systems
+		icon = GFX_generic_mio_trait_icon_naval_range
+
+		relative_position_id = CHI_cssc_radar_absorbent_hull_coating
+		position = { x = 0 y = 4 }
+		all_parents = { CHI_cssc_deck_handling_automation CHI_cssc_hull_flow_optimization}
+
+		limit_to_equipment_type = { carrier convoy mio_cat_frigates mio_cat_destroyers }
+
+		equipment_bonus = {
+			naval_range = 0.08
+		}
+
+		production_bonus = {
+			production_resource_penalty_factor = -0.12
 		}
 
 		on_complete = {
@@ -9203,15 +9180,15 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_anechoic_tile_layers
 		name = CHI_cssc_anechoic_tile_layers
-		icon = GFX_generic_mio_trait_icon_reliability
+		icon = GFX_generic_mio_trait_icon_submarine_armor
 
-		position = { x = 5 y = 0 }
+		position = { x = 7 y = 0 }
 
 		limit_to_equipment_type = { submarine }
 
 		equipment_bonus = {
 			sub_visibility = -0.06
-			reliability = 0.03
+			armor_value = 0.02
 		}
 
 		on_complete = {
@@ -9233,20 +9210,16 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_pump_jet_propulsion_system
 		name = CHI_cssc_pump_jet_propulsion_system
-		icon = GFX_generic_mio_trait_icon_speed
+		icon = GFX_generic_mio_trait_icon_submarine_speed
 
 		relative_position_id = CHI_cssc_anechoic_tile_layers
-		position = { x = 0 y = 1 }
+		position = { x = -1 y = 1 }
 		all_parents = { CHI_cssc_anechoic_tile_layers }
 
 		limit_to_equipment_type = { submarine }
 
 		equipment_bonus = {
-			naval_speed = 0.03
-		}
-
-		production_bonus = {
-			production_efficiency_gain_factor = 0.07
+			naval_speed = 0.08
 		}
 
 		on_complete = {
@@ -9268,10 +9241,10 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_undersea_network_integration
 		name = CHI_cssc_undersea_network_integration
-		icon = GFX_generic_mio_trait_icon_organization
+		icon = GFX_generic_mio_trait_icon_research
 
 		relative_position_id = CHI_cssc_anechoic_tile_layers
-		position = { x = 1 y = 1 }
+		position = { x = 0 y = 1 }
 		all_parents = { CHI_cssc_anechoic_tile_layers }
 
 		limit_to_equipment_type = { submarine convoy }
@@ -9301,19 +9274,18 @@ CHI_cssc_manufacturer = {
 	}
 
 	trait = {
-		token = CHI_cssc_adaptive_ballast_control
-		name = CHI_cssc_adaptive_ballast_control
-		icon = GFX_generic_mio_trait_icon_reliability
+		token = CHI_cssc_composite_pressure_hull
+		name = CHI_cssc_composite_pressure_hull
+		icon = GFX_generic_mio_trait_icon_max_strength
 
 		relative_position_id = CHI_cssc_anechoic_tile_layers
-		position = { x = 2 y = 1 }
+		position = { x = 1 y = 1 }
 		all_parents = { CHI_cssc_anechoic_tile_layers }
 
 		limit_to_equipment_type = { submarine }
 
 		equipment_bonus = {
-			reliability = 0.05
-			sub_attack = 0.03
+			max_organisation = 0.10
 		}
 
 		on_complete = {
@@ -9333,23 +9305,51 @@ CHI_cssc_manufacturer = {
 	}
 
 	trait = {
-		token = CHI_cssc_composite_pressure_hull
-		name = CHI_cssc_composite_pressure_hull
-		icon = GFX_generic_mio_trait_icon_cost_reduction
+		token = CHI_cssc_advanced_torpedo_launch_systems
+		name = CHI_cssc_advanced_torpedo_launch_systems
+		icon = GFX_generic_mio_trait_icon_submarine
 
 		relative_position_id = CHI_cssc_anechoic_tile_layers
-		position = { x = -1 y = 1 }
+		position = { x = 2 y = 1 }
 		all_parents = { CHI_cssc_anechoic_tile_layers }
 
 		limit_to_equipment_type = { submarine }
 
 		equipment_bonus = {
-			reliability = 0.04
-			weight = -0.03
+			torpedo_attack = 0.05
+			sub_attack = 0.02
 		}
 
-		production_bonus = {
-			production_efficiency_gain_factor = 0.08
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_cssc_adaptive_ballast_control
+		name = CHI_cssc_adaptive_ballast_control
+		icon = GFX_generic_mio_trait_icon_submarine
+
+		relative_position_id = CHI_cssc_anechoic_tile_layers
+		position = { x = -2 y = 2 }
+		all_parents = { CHI_cssc_composite_pressure_hull }
+
+		limit_to_equipment_type = { submarine }
+
+		equipment_bonus = {
+			max_strength = 0.04
+			sub_attack = 0.03
 		}
 
 		on_complete = {
@@ -9371,17 +9371,17 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_silent_running_modes
 		name = CHI_cssc_silent_running_modes
-		icon = GFX_generic_mio_trait_icon_reliability
+		icon = GFX_generic_mio_trait_icon_submarine
 
 		relative_position_id = CHI_cssc_anechoic_tile_layers
-		position = { x = -2 y = 1 }
-		all_parents = { CHI_cssc_composite_pressure_hull }
+		position = { x = -1 y = 2 }
+		all_parents = { CHI_cssc_pump_jet_propulsion_system }
 
 		limit_to_equipment_type = { submarine }
 
 		equipment_bonus = {
-			reliability = 0.04
 			fuel_consumption = -0.03
+			sub_visibility = -0.04
 		}
 
 		on_complete = {
@@ -9403,16 +9403,16 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_hull_flow_optimization_underwater
 		name = CHI_cssc_hull_flow_optimization_underwater
-		icon = GFX_generic_mio_trait_icon_speed
+		icon = GFX_generic_mio_trait_icon_submarine_speed
 
 		relative_position_id = CHI_cssc_anechoic_tile_layers
-		position = { x = -3 y = 1 }
-		all_parents = { CHI_cssc_silent_running_modes }
+		position = { x = 0 y = 3 }
+		all_parents = { CHI_cssc_silent_running_modes CHI_cssc_undersea_network_integration }
 
 		limit_to_equipment_type = { submarine }
 
 		equipment_bonus = {
-			naval_speed = 0.03
+			naval_speed = 0.04
 			fuel_consumption = -0.03
 		}
 
@@ -9435,10 +9435,10 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_acoustic_signature_masking
 		name = CHI_cssc_acoustic_signature_masking
-		icon = GFX_generic_mio_trait_icon_reliability
+		icon = GFX_generic_mio_trait_icon_sub_visibility
 
 		relative_position_id = CHI_cssc_anechoic_tile_layers
-		position = { x = -4 y = 1 }
+		position = { x = 1 y = 2 }
 		all_parents = { CHI_cssc_undersea_network_integration }
 
 		limit_to_equipment_type = { submarine convoy }
@@ -9465,76 +9465,12 @@ CHI_cssc_manufacturer = {
 	}
 
 	trait = {
-		token = CHI_cssc_reinforced_pressure_bulkheads
-		name = CHI_cssc_reinforced_pressure_bulkheads
-		icon = GFX_generic_mio_trait_icon_reliability
-
-		relative_position_id = CHI_cssc_anechoic_tile_layers
-		position = { x = -5 y = 1 }
-		all_parents = { CHI_cssc_composite_pressure_hull }
-
-		limit_to_equipment_type = { submarine }
-
-		equipment_bonus = {
-			reliability = 0.05
-			weight = 0.01
-		}
-
-		on_complete = {
-			if = {
-				limit = { check_variable = { free_trait_picks > 0 } }
-				add_to_variable = { free_trait_picks = -1 }
-			}
-			else = { FROM = { small_expenditure = yes } }
-		}
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				check_variable = { FROM.interest_rate > 8 }
-			}
-		}
-	}
-
-	trait = {
-		token = CHI_cssc_advanced_torpedo_launch_systems
-		name = CHI_cssc_advanced_torpedo_launch_systems
-		icon = GFX_generic_mio_trait_icon_torpedo
-
-		relative_position_id = CHI_cssc_anechoic_tile_layers
-		position = { x = -6 y = 1 }
-		all_parents = { CHI_cssc_anechoic_tile_layers }
-
-		limit_to_equipment_type = { submarine }
-
-		equipment_bonus = {
-			torpedo_attack = 0.04
-			reliability = 0.02
-		}
-
-		on_complete = {
-			if = {
-				limit = { check_variable = { free_trait_picks > 0 } }
-				add_to_variable = { free_trait_picks = -1 }
-			}
-			else = { FROM = { small_expenditure = yes } }
-		}
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				check_variable = { FROM.interest_rate > 8 }
-			}
-		}
-	}
-
-	trait = {
 		token = CHI_cssc_underwater_comm_relay_nodes
 		name = CHI_cssc_underwater_comm_relay_nodes
-		icon = GFX_generic_mio_trait_icon_organization
+		icon = GFX_generic_mio_trait_icon_research
 
 		relative_position_id = CHI_cssc_anechoic_tile_layers
-		position = { x = -7 y = 1 }
+		position = { x = 2 y = 2 }
 		all_parents = { CHI_cssc_undersea_network_integration }
 
 		limit_to_equipment_type = { submarine convoy }
@@ -9564,22 +9500,19 @@ CHI_cssc_manufacturer = {
 	}
 
 	trait = {
-		token = CHI_cssc_stealth_convoy_management
-		name = CHI_cssc_stealth_convoy_management
-		icon = GFX_generic_mio_trait_icon_cost_reduction
+		token = CHI_cssc_reinforced_pressure_bulkheads
+		name = CHI_cssc_reinforced_pressure_bulkheads
+		icon = GFX_generic_mio_trait_icon_submarine_armor
 
 		relative_position_id = CHI_cssc_anechoic_tile_layers
-		position = { x = 0 y = 2 }
-		all_parents = { CHI_cssc_underwater_comm_relay_nodes }
+		position = { x = -2 y = 3 }
+		all_parents = { CHI_cssc_composite_pressure_hull }
 
-		limit_to_equipment_type = { convoy submarine mio_cat_only_small_ships }
+		limit_to_equipment_type = { submarine }
 
 		equipment_bonus = {
-			surface_visibility = -0.04
-		}
-
-		production_bonus = {
-			production_capacity_factor = 0.03
+			max_strength = 0.05
+			armor_value = 0.05
 		}
 
 		on_complete = {
@@ -9601,17 +9534,17 @@ CHI_cssc_manufacturer = {
 	trait = {
 		token = CHI_cssc_dynamic_sonar_nulling
 		name = CHI_cssc_dynamic_sonar_nulling
-		icon = GFX_generic_mio_trait_icon_reliability
+		icon = GFX_generic_mio_trait_icon_submarine
 
 		relative_position_id = CHI_cssc_anechoic_tile_layers
-		position = { x = 1 y = 2 }
+		position = { x = -1 y = 3 }
 		all_parents = { CHI_cssc_advanced_torpedo_launch_systems }
 
 		limit_to_equipment_type = { submarine }
 
 		equipment_bonus = {
 			sub_visibility = -0.04
-			reliability = 0.02
+			sub_detection = 0.02
 		}
 
 		on_complete = {
@@ -9631,19 +9564,51 @@ CHI_cssc_manufacturer = {
 	}
 
 	trait = {
-		token = CHI_cssc_hull_corrosion_resistant_coating
-		name = CHI_cssc_hull_corrosion_resistant_coating
+		token = CHI_cssc_low_frequency_towed_array
+		name = CHI_cssc_low_frequency_towed_array
+		icon = GFX_generic_mio_trait_icon_submarine_range
+
+		relative_position_id = CHI_cssc_anechoic_tile_layers
+		position = { x = 0 y = 4 }
+		all_parents = { CHI_cssc_hull_flow_optimization_underwater }
+
+		limit_to_equipment_type = { submarine }
+
+		equipment_bonus = {
+			sub_detection = 0.05
+			naval_range = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_cssc_magnetic_anomaly_reduction
+		name = CHI_cssc_magnetic_anomaly_reduction
 		icon = GFX_generic_mio_trait_icon_reliability
 
 		relative_position_id = CHI_cssc_anechoic_tile_layers
-		position = { x = 2 y = 2 }
+		position = { x = 1 y = 3 }
 		all_parents = { CHI_cssc_composite_pressure_hull }
 
-		limit_to_equipment_type = { submarine mio_cat_only_small_ships }
+		limit_to_equipment_type = { submarine }
 
 		equipment_bonus = {
-			reliability = 0.04
-			resources = -0.02
+			sub_visibility = -0.04
+			fuel_consumption = -0.02
 		}
 
 		on_complete = {
@@ -9662,7 +9627,6 @@ CHI_cssc_manufacturer = {
 		}
 	}
 }
-
 CHI_csic_manufacturer = {
 	allowed = { original_tag = CHI }
 	icon = GFX_idea_China_Shipbuilding_Industry_Corporation_CHI
@@ -9677,11 +9641,1136 @@ CHI_csic_manufacturer = {
 		convoy
 	}
 
-	research_categories = {
-		CAT_naval_eqp
+	tree_header_text = {
+		text = "Surface & Carrier Systems"
+		x = 2
+	}
+
+	tree_header_text = {
+		text = "Submarine & Undersea Systems"
+		x = 7
+	}
+
+	initial_trait = {
+		name = CHI_csic_company_maritime_systems_bureau
+
+		equipment_bonus = {
+			naval_speed = 0.02
+			surface_visibility = -0.02
+			max_strength = 0.02
+		}
+
+		production_bonus = {
+			production_capacity_factor = 0.10
+			production_efficiency_gain_factor = 0.08
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+	}
+
+	trait = {
+		token = CHI_csic_radar_absorbent_coating
+		name = CHI_csic_radar_absorbent_coating
+		icon = GFX_generic_mio_trait_icon_surface_visibility
+
+		position = { x = 2 y = 0 }
+
+		limit_to_equipment_type = { carrier mio_cat_destroyers cruiser convoy }
+
+		equipment_bonus = {
+			surface_visibility = -0.05
+			max_strength = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_adaptive_stealth_superstructure
+		name = CHI_csic_adaptive_stealth_superstructure
+		icon = GFX_generic_mio_trait_icon_surface_visibility
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = 0 y = 4 }
+		all_parents = {
+			CHI_csic_multi_role_drone_launcher
+			CHI_csic_shore_support_integration
+		}
+
+		limit_to_equipment_type = { carrier mio_cat_destroyers cruiser }
+
+		equipment_bonus = {
+			surface_visibility = -0.04
+			anti_air_attack = 0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_advanced_fire_control_network
+		name = CHI_csic_advanced_fire_control_network
+		icon = GFX_generic_mio_trait_icon_naval_anti_air_attack
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = 1 y = 1 }
+		all_parents = { CHI_csic_radar_absorbent_coating }
+
+		limit_to_equipment_type = { carrier mio_cat_destroyers cruiser }
+
+		equipment_bonus = {
+			anti_air_attack = 0.04
+			surface_detection = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_aerodynamic_hull_flow_optimization
+		name = CHI_csic_aerodynamic_hull_flow_optimization
+		icon = GFX_generic_mio_trait_icon_naval_speed
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = 0 y = 5 }
+		all_parents = { CHI_csic_adaptive_stealth_superstructure }
+
+		limit_to_equipment_type = { carrier mio_cat_destroyers cruiser }
+
+		equipment_bonus = {
+			naval_speed = 0.03
+			fuel_consumption = -0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_modular_munition_cells
+		name = CHI_csic_modular_munition_cells
+		icon = GFX_generic_mio_trait_icon_lg_attack
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = -1 y = 1 }
+		all_parents = { CHI_csic_radar_absorbent_coating }
+
+		limit_to_equipment_type = { carrier mio_cat_destroyers cruiser }
+
+		equipment_bonus = {
+			lg_attack = 0.03
+			anti_air_attack = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_automated_damage_control
+		name = CHI_csic_automated_damage_control
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = -2 y = 6 }
+		all_parents = { CHI_csic_composite_superstructure_frame }
+
+		limit_to_equipment_type = { carrier mio_cat_destroyers cruiser convoy }
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.03
+		}
+
+		equipment_bonus = {
+			reliability = 0.02
+			max_strength = 0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_shipyard_efficiency_modulation
+		name = CHI_csic_shipyard_efficiency_modulation
+		icon = GFX_generic_mio_trait_icon_resources
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = 1 y = 2 }
+		all_parents = { CHI_csic_advanced_fire_control_network }
+
+		limit_to_equipment_type = { carrier mio_cat_destroyers cruiser convoy }
+
+		production_bonus = {
+			production_resource_need_factor = -0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_fleet_replenishment_logistics
+		name = CHI_csic_fleet_replenishment_logistics
+		icon = GFX_generic_mio_trait_icon_surface_detection
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = 0 y = 6 }
+		all_parents = { CHI_csic_aerodynamic_hull_flow_optimization }
+
+		limit_to_equipment_type = { carrier convoy }
+
+		equipment_bonus = {
+			surface_detection = 0.02
+		}
+
+		organization_modifier = {
+			military_industrial_organization_industrial_manufacturer_assign_cost = -0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_composite_superstructure_frame
+		name = CHI_csic_composite_superstructure_frame
+		icon = GFX_generic_mio_trait_icon_armor_value
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = -2 y = 5 }
+		all_parents = { CHI_csic_adaptive_stealth_superstructure }
+
+		limit_to_equipment_type = { carrier cruiser }
+
+		equipment_bonus = {
+			armor_value = 0.08
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_multi_role_drone_launcher
+		name = CHI_csic_multi_role_drone_launcher
+		icon = GFX_generic_mio_trait_icon_surface_detection
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = -1 y = 2 }
+		all_parents = {
+			CHI_csic_modular_munition_cells
+		}
+
+		limit_to_equipment_type = { carrier mio_cat_destroyers cruiser }
+
+		equipment_bonus = {
+			surface_detection = 0.03
+			anti_air_attack = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_emergency_power_distribution
+		name = CHI_csic_emergency_power_distribution
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = 0 y = 7 }
+		all_parents = { CHI_csic_fleet_replenishment_logistics }
+
+		limit_to_equipment_type = { carrier mio_cat_destroyers cruiser }
+
+		equipment_bonus = {
+			reliability = 0.03
+			max_strength = 0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = CHI_csic_hybrid_gas_turbine_drive
+		name = CHI_csic_hybrid_gas_turbine_drive
+		icon = GFX_generic_mio_trait_icon_naval_speed
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = -2 y = 8 }
+		all_parents = { CHI_csic_emergency_power_distribution }
+
+		limit_to_equipment_type = { carrier cruiser mio_cat_destroyers }
+
+		equipment_bonus = {
+			naval_speed = 0.03
+			fuel_consumption = -0.03
+		}
+
+		production_bonus = {
+			production_resource_need_factor = -0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_infrared_decoy_network
+		name = CHI_csic_infrared_decoy_network
+		icon = GFX_generic_mio_trait_icon_surface_visibility
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = 0 y = 8 }
+		all_parents = { CHI_csic_emergency_power_distribution }
+
+		limit_to_equipment_type = { carrier cruiser mio_cat_destroyers }
+
+		equipment_bonus = {
+			surface_visibility = -0.04
+			anti_air_attack = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_electronic_warfare_suite
+		name = CHI_csic_electronic_warfare_suite
+		icon = GFX_generic_mio_trait_icon_surface_detection
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = 2 y = 8 }
+		all_parents = { CHI_csic_emergency_power_distribution }
+
+		limit_to_equipment_type = { carrier cruiser }
+
+		equipment_bonus = {
+			surface_detection = 0.03
+			naval_torpedo_damage_reduction_factor = 0.05
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_hull_integrity_reinforcement
+		name = CHI_csic_hull_integrity_reinforcement
+		icon = GFX_generic_mio_trait_icon_max_strength
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = 2 y = 9 }
+		all_parents = { CHI_csic_electronic_warfare_suite }
+
+		limit_to_equipment_type = { carrier cruiser mio_cat_destroyers }
+
+		equipment_bonus = {
+			max_strength = 0.04
+			reliability = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_automated_magazine_handling
+		name = CHI_csic_automated_magazine_handling
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = 0 y = 9 }
+		all_parents = { CHI_csic_infrared_decoy_network }
+
+		limit_to_equipment_type = { carrier cruiser }
+
+		equipment_bonus = {
+			build_cost_ic = -0.05
+		}
+
+		organization_modifier = {
+			military_industrial_organization_design_team_change_cost = -0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_integrated_battle_networks
+		name = CHI_csic_integrated_battle_networks
+		icon = GFX_generic_mio_trait_icon_funds
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = -2 y = 9 }
+		all_parents = { CHI_csic_hybrid_gas_turbine_drive }
+
+		limit_to_equipment_type = { carrier cruiser mio_cat_destroyers }
+
+		equipment_bonus = {
+			surface_detection = 0.03
+			anti_air_attack = 0.03
+		}
+
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.15
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_corrosion_resistant_alloys
+		name = CHI_csic_corrosion_resistant_alloys
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = -1 y = 10 }
+		all_parents = {
+			CHI_csic_automated_magazine_handling
+			CHI_csic_integrated_battle_networks
+		}
+
+		limit_to_equipment_type = { carrier convoy }
+
+		equipment_bonus = {
+			reliability = 0.05
+			armor_value = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_advanced_cic_design
+		name = CHI_csic_advanced_cic_design
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = 1 y = 10 }
+		all_parents = {
+			CHI_csic_automated_magazine_handling
+			CHI_csic_hull_integrity_reinforcement
+		}
+
+		limit_to_equipment_type = { carrier cruiser }
+
+		equipment_bonus = {
+			surface_detection = 0.02
+			anti_air_attack = 0.02
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_underway_repair_facilities
+		name = CHI_csic_underway_repair_facilities
+		icon = GFX_generic_mio_trait_icon_task
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = 2 y = 6 }
+		all_parents = { CHI_csic_synthetic_materials_pipeline }
+
+		available = {
+			CHI = { NOT = { has_idea = CHI_PLA_Business_Ventures } }
+		}
+
+		limit_to_equipment_type = { carrier mio_cat_destroyers }
+
+		organization_modifier = {
+			military_industrial_organization_task_capacity = 1
+		}
+
+		equipment_bonus = {
+			naval_range = 0.08
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_synthetic_materials_pipeline
+		name = CHI_csic_synthetic_materials_pipeline
+		icon = GFX_generic_mio_trait_icon_resources
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = 2 y = 5 }
+		all_parents = { CHI_csic_adaptive_stealth_superstructure }
+
+		limit_to_equipment_type = { carrier mio_cat_destroyers convoy }
+
+		production_bonus = {
+			production_resource_need_factor = -0.10
+			production_capacity_factor = 0.12
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_shore_support_integration
+		name = CHI_csic_shore_support_integration
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		relative_position_id = CHI_csic_radar_absorbent_coating
+		position = { x = 1 y = 3 }
+		all_parents = { CHI_csic_shipyard_efficiency_modulation }
+
+		limit_to_equipment_type = { convoy mio_cat_destroyers }
+
+		equipment_bonus = {
+			hg_attack = 0.05
+			build_cost_ic = -0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_anechoic_tile_coating
+		name = CHI_csic_anechoic_tile_coating
+		icon = GFX_generic_mio_trait_icon_submarine
+
+		position = { x = 6 y = 0 }
+
+		limit_to_equipment_type = { submarine }
+
+		equipment_bonus = {
+			sub_visibility = -0.06
+			max_strength = 0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_pump_jet_propulsion
+		name = CHI_csic_pump_jet_propulsion
+		icon = GFX_generic_mio_trait_icon_submarine_speed
+
+		relative_position_id = CHI_csic_anechoic_tile_coating
+		position = { x = -1 y = 1 }
+		all_parents = { CHI_csic_anechoic_tile_coating }
+
+		limit_to_equipment_type = { submarine }
+
+		equipment_bonus = {
+			naval_speed = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_modular_pressure_hull
+		name = CHI_csic_modular_pressure_hull
+		icon = GFX_generic_mio_trait_icon_submarine_armor
+
+		relative_position_id = CHI_csic_anechoic_tile_coating
+		position = { x = 0 y = 1 }
+		all_parents = { CHI_csic_anechoic_tile_coating }
+
+		limit_to_equipment_type = { submarine }
+
+		equipment_bonus = {
+			max_strength = 0.03
+			armor_value = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_integrated_sonar_array
+		name = CHI_csic_integrated_sonar_array
+		icon = GFX_generic_mio_trait_icon_submarine_surface_detection
+
+		relative_position_id = CHI_csic_anechoic_tile_coating
+		position = { x = 1 y = 1 }
+		all_parents = { CHI_csic_anechoic_tile_coating }
+
+		limit_to_equipment_type = { submarine }
+
+		equipment_bonus = {
+			sub_detection = 0.05
+			surface_detection = 0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_silent_running_protocols
+		name = CHI_csic_silent_running_protocols
+		icon = GFX_generic_mio_trait_icon_submarine_resources
+
+		relative_position_id = CHI_csic_anechoic_tile_coating
+		position = { x = 0 y = 5 }
+		all_parents = {
+			CHI_csic_pressure_bulkhead_reinforcement
+			CHI_csic_low_frequency_towed_array
+		}
+
+		limit_to_equipment_type = { submarine }
+
+		equipment_bonus = {
+			fuel_consumption = -0.03
+			sub_visibility = -0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_adaptive_ballast_control
+		name = CHI_csic_adaptive_ballast_control
+		icon = GFX_generic_mio_trait_icon_submarine
+
+		relative_position_id = CHI_csic_anechoic_tile_coating
+		position = { x = -1 y = 3 }
+		all_parents = { CHI_csic_dynamic_sonar_nulling }
+
+		limit_to_equipment_type = { submarine }
+
+		equipment_bonus = {
+			max_strength = 0.03
+			sub_attack = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_dynamic_sonar_nulling
+		name = CHI_csic_dynamic_sonar_nulling
+		icon = GFX_generic_mio_trait_icon_submarine_surface_detection
+
+		relative_position_id = CHI_csic_anechoic_tile_coating
+		position = { x = 0 y = 2 }
+		all_parents = {
+			CHI_csic_pump_jet_propulsion
+			CHI_csic_modular_pressure_hull
+			CHI_csic_integrated_sonar_array
+		}
+
+		limit_to_equipment_type = { submarine }
+
+		equipment_bonus = {
+			sub_visibility = -0.04
+			sub_detection = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_undersea_network_relay
+		name = CHI_csic_undersea_network_relay
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = CHI_csic_anechoic_tile_coating
+		position = { x = 1 y = 3 }
+		all_parents = { CHI_csic_dynamic_sonar_nulling }
+
+		limit_to_equipment_type = { submarine convoy }
+
+		equipment_bonus = {
+			sub_detection = 0.03
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_acoustic_masking_coating
+		name = CHI_csic_acoustic_masking_coating
+		icon = GFX_generic_mio_trait_icon_submarine_reliability
+
+		relative_position_id = CHI_csic_anechoic_tile_coating
+		position = { x = 0 y = 6 }
+		all_parents = { CHI_csic_silent_running_protocols }
+
+		limit_to_equipment_type = { submarine }
+
+		equipment_bonus = {
+			sub_visibility = -0.05
+			reliability = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_pressure_bulkhead_reinforcement
+		name = CHI_csic_pressure_bulkhead_reinforcement
+		icon = GFX_generic_mio_trait_icon_submarine_armor
+
+		relative_position_id = CHI_csic_anechoic_tile_coating
+		position = { x = -1 y = 4 }
+		all_parents = { CHI_csic_adaptive_ballast_control }
+
+		limit_to_equipment_type = { submarine }
+
+		equipment_bonus = {
+			armor_value = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csic_low_frequency_towed_array
+		name = CHI_csic_low_frequency_towed_array
+		icon = GFX_generic_mio_trait_icon_submarine_surface_detection
+
+		relative_position_id = CHI_csic_anechoic_tile_coating
+		position = { x = 1 y = 4 }
+		all_parents = { CHI_csic_undersea_network_relay }
+
+		limit_to_equipment_type = { submarine }
+
+		equipment_bonus = {
+			sub_detection = 0.05
+			surface_detection = 0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
 	}
 }
-
 # Material
 CHI_csgc_manufacturer = {
 	allowed = { original_tag = CHI }
@@ -9698,6 +10787,690 @@ CHI_csgc_manufacturer = {
 		CAT_inf
 		CAT_l_at
 	}
+
+	tree_header_text = {
+		text = "Infantry Weapons & Systems"
+		x = 1
+	}
+
+	tree_header_text = {
+		text = "Anti-Tank Guided Missiles"
+		x = 6
+	}
+
+
+	initial_trait = {
+		name = CHI_csgc_trait
+
+		equipment_bonus = {
+			breakthrough = 0.05
+			reliability = 0.05
+		}
+
+		production_bonus = {
+			production_capacity_factor = 0.10
+			production_efficiency_gain_factor = 0.08
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.04
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_polymer_lower_reciever_assemblies
+		name = CHI_csgc_polymer_lower_reciever_assemblies
+		icon = GFX_generic_mio_trait_icon_smallarms_reliability
+
+		position = { x = 1 y = 0 }
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			reliability = 0.05
+		}
+
+		production_bonus = {
+			production_resource_need_factor = -0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_precision_barrel_rifling
+		name = CHI_csgc_precision_barrel_rifling
+		icon = GFX_generic_mio_trait_icon_smallarms
+
+		relative_position_id = CHI_csgc_polymer_lower_reciever_assemblies
+		position = { x = -1 y = 1 }
+		all_parents = { CHI_csgc_polymer_lower_reciever_assemblies }
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			ap_attack = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_quick_change_mag_system
+		name = CHI_csgc_quick_change_mag_system
+		icon = GFX_generic_mio_trait_icon_smallarms_reliability
+
+		relative_position_id = CHI_csgc_polymer_lower_reciever_assemblies
+		position = { x = 1 y = 1 }
+		all_parents = { CHI_csgc_polymer_lower_reciever_assemblies }
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			reliability = 0.02
+		}
+
+		production_bonus = {
+			production_conversion_speed_factor = 0.12
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_electro_optical_sighting_module
+		name = CHI_csgc_electro_optical_sighting_module
+		icon = GFX_generic_mio_trait_icon_smallarms_attack
+
+		relative_position_id = CHI_csgc_precision_barrel_rifling
+		position = { x = 0 y = 2 }
+		all_parents = { CHI_csgc_precision_barrel_rifling }
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			soft_attack = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_durasteel_bolt_material
+		name = CHI_csgc_durasteel_bolt_material
+		icon = GFX_generic_mio_trait_icon_smallarms_reliability
+
+		relative_position_id = CHI_csgc_precision_barrel_rifling
+		position = { x = 1 y = 1 }
+		all_parents = {
+			CHI_csgc_precision_barrel_rifling
+			CHI_csgc_quick_change_mag_system
+		}
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			reliability = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_mass_production_forging
+		name = CHI_csgc_mass_production_forging
+		icon = GFX_generic_mio_trait_icon_smallarms_efficiency_gain
+
+		relative_position_id = CHI_csgc_quick_change_mag_system
+		position = { x = 0 y = 2 }
+		all_parents = { CHI_csgc_quick_change_mag_system }
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.25
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_recoil_compensation_system
+		name = CHI_csgc_recoil_compensation_system
+		icon = GFX_generic_mio_trait_icon_smallarms_attack
+
+		relative_position_id = CHI_csgc_durasteel_bolt_material
+		position = { x = 0 y = 2 }
+		all_parents = { CHI_csgc_durasteel_bolt_material }
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			soft_attack = 0.05
+			reliability = 0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_modular_accessory_interface
+		name = CHI_csgc_modular_accessory_interface
+		icon = GFX_generic_mio_trait_icon_smallarms_attack
+
+		relative_position_id = CHI_csgc_recoil_compensation_system
+		position = { x = -1 y = 1 }
+		all_parents = { CHI_csgc_recoil_compensation_system }
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			breakthrough = 0.05
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_coil_actuated_trigger
+		name = CHI_csgc_coil_actuated_trigger
+		icon = GFX_generic_mio_trait_icon_smallarms_attack
+
+		relative_position_id = CHI_csgc_modular_accessory_interface
+		position = { x = 2 y = 0 }
+		all_parents = { CHI_csgc_recoil_compensation_system }
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			hard_attack = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_stealth_weapon_coating
+		name = CHI_csgc_stealth_weapon_coating
+		icon = GFX_generic_mio_trait_icon_smallarms_defense
+
+		relative_position_id = CHI_csgc_polymer_lower_reciever_assemblies
+		position = { x = 0 y = 6 }
+		all_parents = {
+			CHI_csgc_coil_actuated_trigger
+			CHI_csgc_modular_accessory_interface
+		}
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			defense = 0.10
+		}
+
+		production_bonus = {
+			production_resource_penalty_factor = 0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = CHI_csgc_advanced_guidance_unit
+		name = CHI_csgc_advanced_guidance_unit
+		icon = GFX_generic_mio_trait_icon_ap_attack
+
+		position = { x = 6 y = 0 }
+
+		limit_to_equipment_type = { L_AT_Equipment }
+
+		equipment_bonus = {
+			ap_attack = 0.06
+			breakthrough = 0.06
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_dual_mode_rocket_propulsion
+		name = CHI_csgc_dual_mode_rocket_propulsion
+		icon = GFX_generic_mio_trait_icon_soft_attack
+		relative_position_id = CHI_csgc_advanced_guidance_unit
+		position = { x = -2 y = 1 }
+		all_parents = { CHI_csgc_advanced_guidance_unit }
+
+		limit_to_equipment_type = { L_AT_Equipment }
+
+		equipment_bonus = {
+			soft_attack = 0.05
+			hard_attack = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_smart_fuze_design
+		name = CHI_csgc_smart_fuze_design
+		icon = GFX_generic_mio_trait_icon_ap_attack
+
+		relative_position_id = CHI_csgc_advanced_guidance_unit
+		position = { x = 0 y = 1 }
+		all_parents = { CHI_csgc_advanced_guidance_unit }
+
+		limit_to_equipment_type = { L_AT_Equipment }
+
+		equipment_bonus = {
+			ap_attack = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_backblast_suppression_system
+		name = CHI_csgc_backblast_suppression_system
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		relative_position_id = CHI_csgc_advanced_guidance_unit
+		position = { x = 2 y = 1 }
+		all_parents = { CHI_csgc_advanced_guidance_unit }
+
+		limit_to_equipment_type = { L_AT_Equipment }
+
+		equipment_bonus = {
+			reliability = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_modular_launcher_chassis
+		name = CHI_csgc_modular_launcher_chassis
+		icon = GFX_generic_mio_trait_icon_efficiency_gain
+
+		relative_position_id = CHI_csgc_advanced_guidance_unit
+		position = { x = 0 y = 2 }
+		all_parents = { CHI_csgc_smart_fuze_design }
+
+		limit_to_equipment_type = { L_AT_Equipment }
+
+		production_bonus = {
+			production_efficiency_gain_factor = 0.10
+		}
+
+		organization_modifier = {
+			military_industrial_organization_design_team_assign_cost = -0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_anti_jam_signal_processing
+		name = CHI_csgc_anti_jam_signal_processing
+		icon = GFX_generic_mio_trait_icon_defense
+
+		relative_position_id = CHI_csgc_advanced_guidance_unit
+		position = { x = -1 y = 3 }
+		all_parents = { CHI_csgc_modular_launcher_chassis }
+
+		limit_to_equipment_type = { L_AT_Equipment }
+
+		equipment_bonus = {
+			defense = 0.05
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_lightweight_composite_airshell
+		name = CHI_csgc_lightweight_composite_airshell
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		relative_position_id = CHI_csgc_advanced_guidance_unit
+		position = { x = 1 y = 3 }
+		all_parents = { CHI_csgc_modular_launcher_chassis }
+
+		limit_to_equipment_type = { L_AT_Equipment }
+
+		equipment_bonus = {
+			build_cost_ic = -0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_variable_trajectory_guidance
+		name = CHI_csgc_variable_trajectory_guidance
+		icon = GFX_generic_mio_trait_icon_breakthrough
+
+		relative_position_id = CHI_csgc_advanced_guidance_unit
+		position = { x = 0 y = 4 }
+		all_parents = {
+			CHI_csgc_anti_jam_signal_processing
+			CHI_csgc_lightweight_composite_airshell
+		}
+
+		limit_to_equipment_type = { L_AT_Equipment }
+
+		equipment_bonus = {
+			breakthrough = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_overdrive_booster_stage
+		name = CHI_csgc_overdrive_booster_stage
+		icon = GFX_generic_mio_trait_icon_breakthrough
+
+		relative_position_id = CHI_csgc_advanced_guidance_unit
+		position = { x = 1 y = 5 }
+		all_parents = { CHI_csgc_variable_trajectory_guidance }
+
+		limit_to_equipment_type = { L_AT_Equipment }
+
+		equipment_bonus = {
+			breakthrough = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_csgc_self_seeking_submunition
+		name = CHI_csgc_self_seeking_submunition
+		icon = GFX_generic_mio_trait_icon_hard_attack
+
+		relative_position_id = CHI_csgc_advanced_guidance_unit
+		position = { x = -1 y = 5 }
+		all_parents = { CHI_csgc_variable_trajectory_guidance }
+
+		limit_to_equipment_type = { L_AT_Equipment }
+
+		equipment_bonus = {
+			hard_attack = 0.06
+		}
+
+		production_bonus = {
+			production_capacity_factor = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
 }
 CHI_poly_manufacturer = {
 	allowed = { original_tag = CHI }
@@ -9719,6 +11492,1902 @@ CHI_poly_manufacturer = {
 		CAT_artillery
 		CAT_cm
 		CAT_sam
+	}
+
+	tree_header_text = {
+		text = "Infantry & Artillery Systems"
+		x = 1
+	}
+
+	tree_header_text = {
+		text = "Armor: Rocket & Artillery Chassis"
+		x = 5
+	}
+
+	tree_header_text = {
+		text = "Surface-to-Air & Guided Missiles"
+		x = 8
+	}
+
+	initial_trait = {
+		name = CHI_poly_trait
+
+		equipment_bonus = {
+			soft_attack = 0.02
+			reliability = 0.02
+		}
+
+		production_bonus = {
+			production_capacity_factor = 0.10
+			production_efficiency_gain_factor = 0.08
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+	}
+	trait = {
+		token = CHI_poly_cold_hammer_forged_barrels
+		name = CHI_poly_cold_hammer_forged_barrels
+		icon = GFX_generic_mio_trait_icon_smallarms_reliability
+
+		position = { x = 1 y = 0 }
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			reliability = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_polymer_receiver_casting
+		name = CHI_poly_polymer_receiver_casting
+		icon = GFX_generic_mio_trait_icon_smallarms_resources
+
+		relative_position_id = CHI_poly_cold_hammer_forged_barrels
+		position = { x = -1 y = 1 }
+		all_parents = { CHI_poly_cold_hammer_forged_barrels }
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			reliability = 0.02
+		}
+
+		production_bonus = {
+			production_resource_need_factor = -0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_modular_rail_system
+		name = CHI_poly_modular_rail_system
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = CHI_poly_cold_hammer_forged_barrels
+		position = { x = 1 y = 1 }
+		all_parents = { CHI_poly_cold_hammer_forged_barrels }
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			soft_attack = 0.02
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_ergonomic_recoil_buffers
+		name = CHI_poly_ergonomic_recoil_buffers
+		icon = GFX_generic_mio_trait_icon_smallarms_attack
+
+		relative_position_id = CHI_poly_modular_rail_system
+		position = { x = 1 y = 1 }
+		all_parents = { CHI_poly_modular_rail_system }
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			soft_attack = 0.03
+			reliability = 0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_batch_heat_treatment
+		name = CHI_poly_batch_heat_treatment
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		relative_position_id = CHI_poly_cold_hammer_forged_barrels
+		position = { x = 0 y = 2 }
+		all_parents = {
+			CHI_poly_modular_rail_system
+			CHI_poly_polymer_receiver_casting
+		}
+
+		limit_to_equipment_type = { Inf_equipment artillery_equipment }
+
+		production_bonus = {
+			production_capacity_factor = 0.12
+			production_cost_factor = -0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_corrosion_resistant_finishes
+		name = CHI_poly_corrosion_resistant_finishes
+		icon = GFX_generic_mio_trait_icon_smallarms_reliability
+
+		relative_position_id = CHI_poly_cold_hammer_forged_barrels
+		position = { x = -1 y = 3 }
+		all_parents = { CHI_poly_batch_heat_treatment }
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			reliability = 0.03
+			build_cost_ic = 0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_precision_fuze_machining
+		name = CHI_poly_precision_fuze_machining
+		icon = GFX_generic_mio_trait_icon_artillery_soft_attack
+
+		relative_position_id = CHI_poly_cold_hammer_forged_barrels
+		position = { x = 1 y = 3 }
+		all_parents = { CHI_poly_batch_heat_treatment }
+
+		limit_to_equipment_type = { artillery_equipment }
+
+		equipment_bonus = {
+			soft_attack = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_split_trail_refit
+		name = CHI_poly_split_trail_refit
+		icon = GFX_generic_mio_trait_icon_GFX_generic_mio_trait_icon_artillery_defense
+
+		relative_position_id = CHI_poly_cold_hammer_forged_barrels
+		position = { x = 0 y = 5 }
+		all_parents = {
+			CHI_poly_smart_propellant_grains
+		}
+
+		limit_to_equipment_type = { artillery_equipment }
+
+		equipment_bonus = {
+			defense = 0.03
+			breakthrough = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_shells_qc_sampling
+		name = CHI_poly_shells_qc_sampling
+		icon = GFX_generic_mio_trait_icon_artillery_efficiency_gain
+
+		relative_position_id = CHI_poly_cold_hammer_forged_barrels
+		position = { x = 2 y = 6 }
+		all_parents = { CHI_poly_low_signature_muzzle_brakes }
+
+		limit_to_equipment_type = { artillery_equipment }
+
+		production_bonus = {
+			production_efficiency_gain_factor = 0.15
+		}
+
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_smart_propellant_grains
+		name = CHI_poly_smart_propellant_grains
+		icon = GFX_generic_mio_trait_icon_artillery_soft_attack
+
+		relative_position_id = CHI_poly_cold_hammer_forged_barrels
+		position = { x = 0 y = 4 }
+		all_parents = {
+			CHI_poly_corrosion_resistant_finishes
+			CHI_poly_precision_fuze_machining
+		}
+
+		limit_to_equipment_type = { artillery_equipment }
+
+		equipment_bonus = {
+			soft_attack = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_low_signature_muzzle_brakes
+		name = CHI_poly_low_signature_muzzle_brakes
+		icon = GFX_generic_mio_trait_icon_smallarms_attack
+
+		relative_position_id = CHI_poly_cold_hammer_forged_barrels
+		position = { x = 2 y = 5 }
+		all_parents = { CHI_poly_smart_propellant_grains }
+
+		limit_to_equipment_type = { Inf_equipment }
+
+		equipment_bonus = {
+			soft_attack = 0.03
+			breakthrough = 0.08
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_standardized_cartridge_supply
+		name = CHI_poly_standardized_cartridge_supply
+		icon = GFX_generic_mio_trait_icon_resources
+
+		relative_position_id = CHI_poly_cold_hammer_forged_barrels
+		position = { x = 0 y = 6 }
+		all_parents = { CHI_poly_split_trail_refit }
+
+		limit_to_equipment_type = { Inf_equipment artillery_equipment }
+
+		production_bonus = {
+			production_resource_need_factor = -0.10
+		}
+
+		organization_modifier = {
+			military_industrial_organization_industrial_manufacturer_assign_cost = -0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = CHI_poly_box_launcher_manifolds
+		name = CHI_poly_box_launcher_manifolds
+		icon = GFX_generic_mio_trait_icon_mlrs_attack
+
+		position = { x = 4 y = 0 }
+
+		limit_to_equipment_type = { medium_tank_rocket_chassis }
+
+		equipment_bonus = {
+			soft_attack = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_gyro_stabilized_mounts
+		name = CHI_poly_gyro_stabilized_mounts
+		icon = GFX_generic_mio_trait_icon_spg_breaktrough
+
+		relative_position_id = CHI_poly_box_launcher_manifolds
+		position = { x = 2 y = 0 }
+
+		limit_to_equipment_type = { medium_tank_artillery_chassis }
+
+		equipment_bonus = {
+			breakthrough = 0.03
+			defense = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_overpressure_crew_capsule
+		name = CHI_poly_overpressure_crew_capsule
+		icon = GFX_generic_mio_trait_icon_spg_defense
+
+		relative_position_id = CHI_poly_box_launcher_manifolds
+		position = { x = 0 y = 1 }
+		all_parents = { CHI_poly_box_launcher_manifolds }
+
+		limit_to_equipment_type = { medium_tank_artillery_chassis }
+
+		equipment_bonus = {
+			defense = 0.03
+			reliability = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_rocket_safety_interlocks
+		name = CHI_poly_rocket_safety_interlocks
+		icon = GFX_generic_mio_trait_icon_mlrs_reliability
+
+		relative_position_id = CHI_poly_box_launcher_manifolds
+		position = { x = 2 y = 1 }
+		all_parents = { CHI_poly_gyro_stabilized_mounts }
+
+		limit_to_equipment_type = { medium_tank_rocket_chassis }
+
+		equipment_bonus = {
+			reliability = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_shared_power_distribution
+		name = CHI_poly_shared_power_distribution
+		icon = GFX_generic_mio_trait_icon_fuel_consumption
+
+		relative_position_id = CHI_poly_box_launcher_manifolds
+		position = { x = 1 y = 2 }
+		all_parents = {
+			CHI_poly_overpressure_crew_capsule
+			CHI_poly_rocket_safety_interlocks
+		}
+
+		limit_to_equipment_type = { medium_tank_rocket_chassis medium_tank_artillery_chassis }
+
+		equipment_bonus = {
+			fuel_consumption = -0.05
+		}
+
+		production_bonus = {
+			production_capacity_factor = 0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_automated_loader_cycle
+		name = CHI_poly_automated_loader_cycle
+		icon = GFX_generic_mio_trait_icon_spg_efficiency_cap
+
+		relative_position_id = CHI_poly_box_launcher_manifolds
+		position = { x = 0 y = 3 }
+		all_parents = { CHI_poly_shared_power_distribution }
+
+		limit_to_equipment_type = { medium_tank_artillery_chassis }
+
+		equipment_bonus = {
+			soft_attack = 0.04
+		}
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_reinforced_torsion_bars
+		name = CHI_poly_reinforced_torsion_bars
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		relative_position_id = CHI_poly_box_launcher_manifolds
+		position = { x = 2 y = 3 }
+		all_parents = { CHI_poly_shared_power_distribution }
+
+		limit_to_equipment_type = { medium_tank_rocket_chassis medium_tank_artillery_chassis }
+
+		equipment_bonus = {
+			reliability = 0.03
+			breakthrough = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_composite_skirting_panels
+		name = CHI_poly_composite_skirting_panels
+		icon = GFX_generic_mio_trait_icon_armor_value
+
+		relative_position_id = CHI_poly_box_launcher_manifolds
+		position = { x = 0 y = 4 }
+		all_parents = { CHI_poly_automated_loader_cycle }
+
+		limit_to_equipment_type = { medium_tank_rocket_chassis medium_tank_artillery_chassis }
+
+		equipment_bonus = {
+			armor_value = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_digital_fire_control_bus
+		name = CHI_poly_digital_fire_control_bus
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = CHI_poly_box_launcher_manifolds
+		position = { x = 2 y = 4 }
+		all_parents = { CHI_poly_reinforced_torsion_bars }
+
+		limit_to_equipment_type = { medium_tank_rocket_chassis medium_tank_artillery_chassis }
+
+		equipment_bonus = {
+			soft_attack = 0.03
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_line_replaceable_units
+		name = CHI_poly_line_replaceable_units
+		icon = GFX_generic_mio_trait_icon_conversion_speed
+
+		relative_position_id = CHI_poly_box_launcher_manifolds
+		position = { x = 1 y = 5 }
+		all_parents = {
+			CHI_poly_digital_fire_control_bus
+			CHI_poly_composite_skirting_panels
+		}
+
+		limit_to_equipment_type = { medium_tank_rocket_chassis medium_tank_artillery_chassis }
+
+		production_bonus = {
+			production_conversion_speed_factor = 0.15
+			production_efficiency_gain_factor = 0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_propellant_handling_protocols
+		name = CHI_poly_propellant_handling_protocols
+		icon = GFX_generic_mio_trait_icon_mlrs_reliability
+
+		relative_position_id = CHI_poly_box_launcher_manifolds
+		position = { x = 0 y = 6 }
+		all_parents = { CHI_poly_line_replaceable_units }
+
+		limit_to_equipment_type = { medium_tank_rocket_chassis }
+
+		equipment_bonus = {
+			reliability = 0.03
+			fuel_consumption = -0.01
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_streamlined_hull_fabrication
+		name = CHI_poly_streamlined_hull_fabrication
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+
+		relative_position_id = CHI_poly_box_launcher_manifolds
+		position = { x = 2 y = 6 }
+		all_parents = { CHI_poly_line_replaceable_units }
+
+		limit_to_equipment_type = { medium_tank_rocket_chassis medium_tank_artillery_chassis }
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.10
+			production_resource_penalty_factor = -0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = CHI_poly_dual_pulse_motor_series
+		name = CHI_poly_dual_pulse_motor_series
+		icon = GFX_generic_mio_trait_icon_maximum_speed
+
+		position = { x = 8 y = 0 }
+
+		limit_to_equipment_type = { sam_missile_equipment guided_missile_equipment }
+
+		equipment_bonus = {
+			maximum_speed = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_thrust_vector_control
+		name = CHI_poly_thrust_vector_control
+		icon = GFX_generic_mio_trait_icon_air_agility
+
+		relative_position_id = CHI_poly_dual_pulse_motor_series
+		position = { x = 0 y = 1 }
+		all_parents = { CHI_poly_dual_pulse_motor_series }
+
+		limit_to_equipment_type = { sam_missile_equipment guided_missile_equipment }
+
+		equipment_bonus = {
+			air_agility = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_kalman_guidance_filter
+		name = CHI_poly_kalman_guidance_filter
+		icon = GFX_generic_mio_trait_icon_air_attack
+
+		relative_position_id = CHI_poly_dual_pulse_motor_series
+		position = { x = -1 y = 2 }
+		all_parents = { CHI_poly_thrust_vector_control }
+
+		limit_to_equipment_type = { sam_missile_equipment guided_missile_equipment }
+
+		equipment_bonus = {
+			air_attack = 0.03
+			air_range = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_low_drag_airshells
+		name = CHI_poly_low_drag_airshells
+		icon = GFX_generic_mio_trait_icon_air_range
+
+		relative_position_id = CHI_poly_dual_pulse_motor_series
+		position = { x = 0 y = 3 }
+		all_parents = {
+			CHI_poly_kalman_guidance_filter
+			CHI_poly_ramjet_hybrid_pathfinder
+		}
+
+		limit_to_equipment_type = { sam_missile_equipment guided_missile_equipment }
+
+		equipment_bonus = {
+			air_range = 0.06
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_ramjet_hybrid_pathfinder
+		name = CHI_poly_ramjet_hybrid_pathfinder
+		icon = GFX_generic_mio_trait_icon_guided_missile_speed
+
+		relative_position_id = CHI_poly_dual_pulse_motor_series
+		position = { x = 1 y = 2 }
+		all_parents = { CHI_poly_thrust_vector_control }
+
+		limit_to_equipment_type = { guided_missile_equipment }
+
+		equipment_bonus = {
+			maximum_speed = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_seekers_ecm_hardening
+		name = CHI_poly_seekers_ecm_hardening
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		relative_position_id = CHI_poly_dual_pulse_motor_series
+		position = { x = 0 y = 4 }
+		all_parents = { CHI_poly_low_drag_airshells }
+
+		limit_to_equipment_type = { sam_missile_equipment guided_missile_equipment }
+
+		equipment_bonus = {
+			air_attack = 0.02
+			reliability = 0.02
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_cold_launch_cells
+		name = CHI_poly_cold_launch_cells
+		icon = GFX_generic_mio_trait_icon_air_range
+
+		relative_position_id = CHI_poly_dual_pulse_motor_series
+		position = { x = -1 y = 5 }
+		all_parents = { CHI_poly_seekers_ecm_hardening }
+
+		limit_to_equipment_type = { sam_missile_equipment }
+
+		equipment_bonus = {
+			air_range = 0.02
+		}
+
+		production_bonus = {
+			production_capacity_factor = 0.12
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_propellant_casting_qc
+		name = CHI_poly_propellant_casting_qc
+		icon = GFX_generic_mio_trait_icon_efficiency_gain
+
+		relative_position_id = CHI_poly_dual_pulse_motor_series
+		position = { x = 1 y = 5 }
+		all_parents = { CHI_poly_seekers_ecm_hardening }
+
+		limit_to_equipment_type = { sam_missile_equipment guided_missile_equipment }
+
+		production_bonus = {
+			production_efficiency_gain_factor = 0.18
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_datalink_handshake_protocols
+		name = CHI_poly_datalink_handshake_protocols
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = CHI_poly_dual_pulse_motor_series
+		position = { x = 0 y = 6 }
+		all_parents = {
+			CHI_poly_propellant_casting_qc
+			CHI_poly_cold_launch_cells
+		}
+
+		limit_to_equipment_type = { sam_missile_equipment guided_missile_equipment }
+
+		equipment_bonus = {
+			air_attack = 0.02
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.03
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_composite_booster_casings
+		name = CHI_poly_composite_booster_casings
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		relative_position_id = CHI_poly_dual_pulse_motor_series
+		position = { x = -3 y = 7 }
+		all_parents = { CHI_poly_datalink_handshake_protocols }
+
+		limit_to_equipment_type = { sam_missile_equipment guided_missile_equipment }
+
+		equipment_bonus = {
+			reliability = 0.03
+			armor_value = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_modular_payload_bays
+		name = CHI_poly_modular_payload_bays
+		icon = GFX_generic_mio_trait_icon_guided_missile
+
+		relative_position_id = CHI_poly_dual_pulse_motor_series
+		position = { x = 1 y = 7 }
+		all_parents = { CHI_poly_datalink_handshake_protocols }
+
+		limit_to_equipment_type = { guided_missile_equipment }
+
+		equipment_bonus = {
+			air_ground_attack = 0.03
+		}
+
+		production_bonus = {
+			production_conversion_speed_factor = 0.12
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_poly_supply_chain_vendor_pool
+		name = CHI_poly_supply_chain_vendor_pool
+		icon = GFX_generic_mio_trait_icon_design
+
+		relative_position_id = CHI_poly_dual_pulse_motor_series
+		position = { x = -1 y = 7 }
+		all_parents = { CHI_poly_datalink_handshake_protocols }
+
+		limit_to_equipment_type = { sam_missile_equipment guided_missile_equipment }
+
+		production_bonus = {
+			production_resource_need_factor = -0.12
+		}
+
+		organization_modifier = {
+			military_industrial_organization_design_team_change_cost = -0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+}
+CHI_crrc_manufacturer = {
+	allowed = { original_tag = CHI }
+	icon = GFX_idea_crrc_company
+
+	task_capacity = 5
+
+	equipment_type = {
+		train_equipment
+	}
+
+	research_categories = {
+		CAT_infrastructure
+		CAT_excavation_tech
+		CAT_construction_tech
+		CAT_renewable
+		CAT_3d
+		CAT_industry
+	}
+
+	tree_header_text = {
+		text = "Rail Systems & Rolling Stock"
+		x = 2
+	}
+
+	tree_header_text = {
+		text = "Diversification & Infrastructure"
+		x = 7
+	}
+
+	initial_trait = {
+		name = CHI_crrc_trait
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+			military_industrial_organization_funds_gain = 0.05
+		}
+
+		production_bonus = {
+			production_efficiency_gain_factor = 0.10
+			production_capacity_factor = 0.10
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_high_speed_train_program
+		name = CHI_crrc_high_speed_train_program
+		icon = GFX_generic_mio_trait_icon_research
+
+		position = { x = 2 y = 0 }
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_lightweight_carbody_alloys
+		name = CHI_crrc_lightweight_carbody_alloys
+		icon = GFX_generic_mio_trait_icon_resources
+
+		relative_position_id = CHI_crrc_high_speed_train_program
+		position = { x = -1 y = 1 }
+		all_parents = { CHI_crrc_high_speed_train_program }
+
+		limit_to_equipment_type = { train_equipment }
+
+		production_bonus = {
+			production_resource_need_factor = -0.075
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_energy_recovery_braking
+		name = CHI_crrc_energy_recovery_braking
+		icon = GFX_generic_mio_trait_icon_design
+
+		relative_position_id = CHI_crrc_high_speed_train_program
+		position = { x = 1 y = 1 }
+		all_parents = { CHI_crrc_high_speed_train_program }
+
+		limit_to_equipment_type = { train_equipment }
+
+		organization_modifier = {
+			military_industrial_organization_design_team_assign_cost = -0.25
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_digital_train_network
+		name = CHI_crrc_digital_train_network
+		icon = GFX_generic_mio_trait_icon_efficiency_cap
+
+		relative_position_id = CHI_crrc_high_speed_train_program
+		position = { x = 1 y = 2 }
+		all_parents = { CHI_crrc_energy_recovery_braking }
+
+		limit_to_equipment_type = { train_equipment }
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.03
+		}
+
+		production_bonus = {
+			production_efficiency_cap_factor = 0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_low_rolling_resistance_bogies
+		name = CHI_crrc_low_rolling_resistance_bogies
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		relative_position_id = CHI_crrc_high_speed_train_program
+		position = { x = -1 y = 2 }
+		all_parents = { CHI_crrc_lightweight_carbody_alloys }
+
+		limit_to_equipment_type = { train_equipment }
+
+		equipment_bonus = {
+			reliability = 0.10
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_aerodynamic_nose_shaping
+		name = CHI_crrc_aerodynamic_nose_shaping
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		relative_position_id = CHI_crrc_high_speed_train_program
+		position = { x = 0 y = 3 }
+		all_parents = {
+			CHI_crrc_low_rolling_resistance_bogies
+			CHI_crrc_digital_train_network
+		}
+
+		limit_to_equipment_type = { train_equipment }
+
+		equipment_bonus = {
+			build_cost_ic = -0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = CHI_crrc_smart_diagnostics_telematics
+		name = CHI_crrc_smart_diagnostics_telematics
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = CHI_crrc_high_speed_train_program
+		position = { x = -1 y =4 }
+		all_parents = { CHI_crrc_aerodynamic_nose_shaping }
+
+		limit_to_equipment_type = { train_equipment }
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.03
+		}
+
+		production_bonus = {
+			production_efficiency_gain_factor = 0.15
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_standardized_coupler_interfaces
+		name = CHI_crrc_standardized_coupler_interfaces
+		icon = GFX_generic_mio_trait_icon_efficiency_gain
+
+		relative_position_id = CHI_crrc_high_speed_train_program
+		position = { x = 1 y = 4 }
+		all_parents = { CHI_crrc_aerodynamic_nose_shaping }
+
+		limit_to_equipment_type = { train_equipment }
+
+		production_bonus = {
+			production_efficiency_gain_factor = 0.10
+			production_resource_need_factor = -0.05
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = CHI_crrc_modular_trainset_cabs
+		name = CHI_crrc_modular_trainset_cabs
+		icon = GFX_generic_mio_trait_icon_production_capacity
+
+		relative_position_id = CHI_crrc_high_speed_train_program
+		position = { x = 0 y = 5}
+		all_parents = { CHI_crrc_aerodynamic_nose_shaping }
+
+		limit_to_equipment_type = { train_equipment }
+
+		production_bonus = {
+			production_cost_factor = -0.06
+			production_capacity_factor = 0.12
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+	trait = {
+		token = CHI_crrc_urban_transit_systems
+		name = CHI_crrc_urban_transit_systems
+		icon = GFX_generic_mio_trait_icon_task
+
+		position = { x = 7 y = 0 }
+
+		organization_modifier = {
+			custom_modifier_tooltip = CHI_crrc_urban_transit_systems_tt
+		}
+
+		on_complete = {
+			hidden_effect = {
+				CHI = { add_ideas = CHI_crrc_idea1 }
+			}
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_metro_automation_packages
+		name = CHI_crrc_metro_automation_packages
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = CHI_crrc_urban_transit_systems
+		position = { x = -2 y = 1 }
+		all_parents = { CHI_crrc_urban_transit_systems }
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.04
+		}
+
+		on_complete = {
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_export_financing_arm
+		name = CHI_crrc_export_financing_arm
+		icon = GFX_generic_mio_trait_icon_funds
+
+		relative_position_id = CHI_crrc_urban_transit_systems
+		position = { x = 0 y = 1 }
+		all_parents = { CHI_crrc_urban_transit_systems }
+
+		organization_modifier = {
+			custom_modifier_tooltip = CHI_crrc_export_financing_arm_tt
+		}
+
+		on_complete = {
+			hidden_effect = {
+				CHI = {
+					swap_ideas = {
+						remove_idea = CHI_crrc_idea1
+						add_idea = CHI_crrc_idea2
+					}
+				}
+			}
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_international_infrastructure_partnerships
+		name = CHI_crrc_international_infrastructure_partnerships
+		icon = GFX_generic_mio_trait_icon_task
+
+		relative_position_id = CHI_crrc_urban_transit_systems
+		position = { x = 2 y = 1 }
+		all_parents = { CHI_crrc_urban_transit_systems }
+
+		organization_modifier = {
+			military_industrial_organization_funds_gain = 0.08
+			military_industrial_organization_design_team_change_cost = -0.10
+		}
+
+		production_bonus = {
+			production_resource_need_factor = -0.05
+		}
+
+		on_complete = {
+			CHI = {
+				every_other_country = {
+				limit = {
+					NOT = {
+						has_idea = Non_State_Actor
+						has_idea = Lacks_International_Recognition
+						has_idea = rival_government
+					}
+				}
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = THIS }
+				change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_wind_energy_investments
+		name = CHI_crrc_wind_energy_investments
+		icon = GFX_generic_mio_trait_icon_unique
+
+		relative_position_id = CHI_crrc_urban_transit_systems
+		position = { x = -1 y = 2 }
+		all_parents = {
+			CHI_crrc_metro_automation_packages
+			CHI_crrc_export_financing_arm
+		}
+
+		on_complete = {
+			CHI = {
+				random_owned_state = {
+					add_building_construction = {
+						type = synthetic_refinery
+						level = 2
+						instant_build = yes
+					}
+				}
+				random_owned_state = {
+					add_building_construction = {
+						type = synthetic_refinery
+						level = 2
+						instant_build = yes
+					}
+				}
+				random_owned_state = {
+					add_building_construction = {
+						type = synthetic_refinery
+						level = 2
+						instant_build = yes
+					}
+				}
+			}
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_advanced_materials_division
+		name = CHI_crrc_advanced_materials_division
+		icon = GFX_generic_mio_trait_icon_research
+
+		relative_position_id = CHI_crrc_urban_transit_systems
+		position = { x = 0 y = 3 }
+		all_parents = {
+			CHI_crrc_wind_energy_investments
+			CHI_crrc_green_energy_vehicles
+		}
+
+		organization_modifier = {
+			custom_modifier_tooltip = CHI_crrc_advanced_materials_division_tt
+		}
+
+		on_complete = {
+			hidden_effect = {
+				CHI = {
+					swap_ideas = {
+						remove_idea = CHI_crrc_idea3
+						add_idea = CHI_crrc_idea4
+					}
+				}
+			}
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_green_energy_vehicles
+		name = CHI_crrc_green_energy_vehicles
+		icon = GFX_generic_mio_trait_icon_util
+
+		relative_position_id = CHI_crrc_urban_transit_systems
+		position = { x = 1 y = 2 }
+		all_parents = {
+			CHI_crrc_international_infrastructure_partnerships
+			CHI_crrc_export_financing_arm
+		}
+
+		organization_modifier = {
+			custom_modifier_tooltip = CHI_crrc_green_energy_vehicles_tt
+		}
+
+		on_complete = {
+			hidden_effect = {
+				CHI = {
+					swap_ideas = {
+						remove_idea = CHI_crrc_idea2
+						add_idea = CHI_crrc_idea3
+					}
+				}
+			}
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_heavy_industry_supplier_pool
+		name = CHI_crrc_heavy_industry_supplier_pool
+		icon = GFX_generic_mio_trait_icon_fuel_consumption
+
+		relative_position_id = CHI_crrc_urban_transit_systems
+		position = { x = 0 y = 5 }
+		all_parents = { CHI_crrc_inland_logistics_corridors }
+
+		organization_modifier = {
+			custom_modifier_tooltip = CHI_crrc_heavy_industry_supplier_pool_tt
+		}
+
+		on_complete = {
+			hidden_effect = {
+				CHI = {
+					swap_ideas = {
+						remove_idea = CHI_crrc_idea5
+						add_idea = CHI_crrc_idea6
+					}
+				}
+			}
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = CHI_crrc_inland_logistics_corridors
+		name = CHI_crrc_inland_logistics_corridors
+		icon = GFX_generic_mio_trait_icon_supply_consumption
+
+		relative_position_id = CHI_crrc_urban_transit_systems
+		position = { x = 0 y = 4 }
+		all_parents = { CHI_crrc_advanced_materials_division }
+
+		organization_modifier = {
+			custom_modifier_tooltip = CHI_crrc_inland_logistics_corridors_tt
+		}
+
+		on_complete = {
+			hidden_effect = {
+				CHI = {
+					swap_ideas = {
+						remove_idea = CHI_crrc_idea4
+						add_idea = CHI_crrc_idea5
+					}
+				}
+			}
+			if = {
+				limit = { check_variable = { free_trait_picks > 0 } }
+				add_to_variable = { free_trait_picks = -1 }
+			}
+			else = { FROM = { small_expenditure = yes } }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
 	}
 }
 
