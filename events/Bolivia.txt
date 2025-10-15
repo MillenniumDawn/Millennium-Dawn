@@ -1,0 +1,161 @@
+add_namespace = bolivia_misc
+add_namespace = bolivia_ethnic
+add_namespace = bolivia_news
+
+#National Referendum On Gas
+country_event = {
+	id = bolivia_misc.1
+	title = bolivia_misc.1.t
+	desc = bolivia_misc.1.d
+	picture = oil_refinery
+
+	is_triggered_only = yes
+
+	option = {
+		name = bolivia_misc.1.a
+		log = "[GetDateText]: [This.GetName]: bolivia_misc.1.a executed"
+		set_country_flag = gas_development_ref
+		add_to_variable = {
+			var = BOL_indigenous_support
+			value = 10
+		}
+		custom_effect_tooltip = BOL_increase_indigenous_opinion_10_tt
+	}
+
+	option = {
+		name = bolivia_misc.1.b
+		log = "[GetDateText]: [This.GetName]: bolivia_misc.1.b executed"
+		add_to_variable = {
+			var = BOL_mestizo_support
+			value = 10
+		}
+		custom_effect_tooltip = BOL_increase_mestizo_opinion_10_tt
+		set_country_flag = gas_export_ref
+	}
+}
+#Army Requsts Resignation of the government
+country_event = {
+	id = bolivia_ethnic.1
+	title = bolivia_ethnic.1.t
+	desc = bolivia_ethnic.1.d
+	picture = venez_capt
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = { ##ok army wins we go out
+		name = bolivia_ethnic.1.a
+		log = "[GetDateText]: [This.GetName]: bolivia_ethnic.1.a executed"
+		custom_effect_tooltip = pro_mestizo_army_gov_tt
+		add_to_variable = {
+			var = BOL_mestizo_support
+			value = 25
+		}
+		custom_effect_tooltip = BOL_increase_mestizo_opinion_25_tt
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.10 }
+		set_temp_variable = { temp_outlook_increase = -0.10 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 1 }
+			update_government_coalition_strength = yes
+			update_party_name = yes
+			set_coalition_drift = yes
+			meta_effect = {
+				text = {
+					set_country_flag = [META_SET_RULING_PARTY]
+				}
+				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+			}
+			set_leader = yes
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = yes
+			}
+			country_event = { id = MD4_election_campaign.0 days = 30 }
+			news_event = bolivia_news.1
+		}
+	}
+
+	option = { ##noooo fuck you (won't end well)
+		name = bolivia_ethnic.1.b
+		log = "[GetDateText]: [This.GetName]: bolivia_ethnic.1.b executed"
+		hidden_effect = {
+			country_event = { id = bolivia_ethnic.2 days = 7 }
+		}
+	}
+}
+country_event = { ##Military coup
+	id = bolivia_ethnic.2
+	title = bolivia_ethnic.2.t
+	desc = bolivia_ethnic.2.d
+	picture = news_event_war
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = bolivia_ethnic.2.a
+		log = "[GetDateText]: [This.GetName]: bolivia_ethnic.2.a executed"
+		hidden_effect = {
+			clear_array = ruling_party
+			clear_array = gov_coalition_array
+			add_to_array = { ruling_party = 22 }
+			update_government_coalition_strength = yes
+			update_party_name = yes
+			set_coalition_drift = yes
+			meta_effect = {
+				text = {
+					set_country_flag = [META_SET_RULING_PARTY]
+				}
+				META_SET_RULING_PARTY = "[meta_set_ruling_leader]"
+			}
+			set_leader = yes
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+			news_event = bolivia_news.2
+		}
+		set_temp_variable = { party_index = 22 }
+		set_temp_variable = { party_popularity_increase = 0.25 }
+		set_temp_variable = { temp_outlook_increase = 0.25 }
+		add_relative_party_popularity = yes
+	}
+}
+news_event = { #Military forces bolivian govt to step down
+	id = bolivia_news.1
+	immediate = { log = "[GetDateText]: [Root.GetName]: event bolivia_news.1" }
+
+	title = bolivia_news.1.t
+	desc = bolivia_news.1.d
+	picture = GFX_bolivian_army_forces_resignation_news
+	major = yes
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = bolivia_news.1.a	#ok
+		log = "[GetDateText]: [This.GetName]: bolivia_news.1.a executed"
+	}
+}
+news_event = { #bolivian army coups govt
+	id = bolivia_news.2
+	immediate = { log = "[GetDateText]: [Root.GetName]: event bolivia_news.2" }
+
+	title = bolivia_news.2.t
+	desc = bolivia_news.2.d
+	picture = GFX_bolivia_coup_news
+	major = yes
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = {
+		name = bolivia_news.2.a	#ok
+		log = "[GetDateText]: [This.GetName]: bolivia_news.2.a executed"
+	}
+}

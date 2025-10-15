@@ -498,6 +498,9 @@ country_event = {
 	option = {
 		name = singapore.107.a
 		log = "[GetDateText]: [THIS.GetName]: event singapore.107.a"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.03 }
+		modify_treasury_effect = yes
 		add_timed_idea = {
 			idea = scientific_advances3
 			days = 90
@@ -508,10 +511,10 @@ country_event = {
 		name = singapore.107.b
 		log = "[GetDateText]: [THIS.GetName]: event singapore.107.b"
 		set_temp_variable = { treasury_change = gdp_total }
-		multiply_temp_variable = { treasury_change = -0.03 }
+		multiply_temp_variable = { treasury_change = -0.05 }
 		modify_treasury_effect = yes
 		add_timed_idea = {
-			idea = scientific_advances3
+			idea = scientific_advances4
 			days = 180
 		}
 	}
@@ -640,6 +643,10 @@ country_event = {
 				modifier = SIN_provided_clemency_to_african_men
 			}
 		}
+
+		ai_chance = {
+			base = 1
+		}
 	}
 
 	option = {
@@ -649,6 +656,15 @@ country_event = {
 			add_opinion_modifier = {
 				target = SIN
 				modifier = SIN_executed_african_men
+			}
+		}
+		add_stability = 0.01
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 1.5
+				has_stability < 0.5
 			}
 		}
 	}
@@ -683,6 +699,7 @@ country_event = {
 				modifier = SIN_pro_f1_sentiment
 			}
 		}
+		add_stability = 0.01
 	}
 }
 
@@ -1162,6 +1179,54 @@ country_event = {
 	}
 }
 
+# 2024 - Stepping Down of Lee Hsien Loong
+country_event = {
+	id = singapore.128
+	title = singapore.128.t
+	desc = singapore.128.d
+	is_triggered_only = yes
+	picture = GFX_lawrance_wong
+
+	option = {
+		name = singapore.128.a
+		log = "[GetDateText]: [THIS.GetName]: event singapore.128.a"
+		set_country_flag = lee_hsien_loong_resigns
+		set_variable = { conservatism_leader = 2 }
+		set_variable = { Autocracy_leader = 2 }
+		set_variable = { Neutral_Autocracy_leader = 2 }
+		if = { limit = { is_in_array = { ruling_party = 1 } }
+			set_temp_variable = { rul_party_temp = 1 }
+			set_temp_variable = { col_one = 7 }
+			set_temp_variable = { col_two = 13 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = yes
+			}
+		}
+		else_if = { limit = { is_in_array = { ruling_party = 7 } }
+			set_temp_variable = { rul_party_temp = 7 }
+			set_temp_variable = { col_one = 1 }
+			set_temp_variable = { col_two = 13 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = yes
+			}
+		}
+		else_if = { limit = { is_in_array = { ruling_party = 13 } }
+			set_temp_variable = { rul_party_temp = 13 }
+			set_temp_variable = { col_one = 1 }
+			set_temp_variable = { col_two = 7 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+		}
+	}
+}
+
 # Singapore Alignment Help Event
 country_event = {
 	id = singapore_alignment_help.0
@@ -1211,6 +1276,7 @@ country_event = {
 			set_temp_variable = { rul_party_temp = 1 }
 			set_temp_variable = { col_one = 7 }
 			set_temp_variable = { col_two = 13 }
+			set_temp_variable = { col_two = 22 }
 			set_temp_variable = { change_leader_temp = 1 }
 			change_ruling_party_effect = yes
 			set_politics = {
@@ -1240,6 +1306,7 @@ country_event = {
 			set_temp_variable = { rul_party_temp = 7 }
 			set_temp_variable = { col_one = 1 }
 			set_temp_variable = { col_two = 13 }
+			set_temp_variable = { col_two = 22 }
 			set_temp_variable = { change_leader_temp = 1 }
 			change_ruling_party_effect = yes
 			set_politics = {
@@ -1270,6 +1337,37 @@ country_event = {
 			set_temp_variable = { rul_party_temp = 13 }
 			set_temp_variable = { col_one = 1 }
 			set_temp_variable = { col_two = 7 }
+			set_temp_variable = { col_two = 22 }
+			set_temp_variable = { change_leader_temp = 1 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = yes
+			}
+		}
+
+		if = { limit = { NOT = { has_country_leader_with_trait = neutrality_clique } }
+			add_country_leader_trait = neutrality_clique
+		}
+
+		# Clearing Shit
+		clear_variable = largest_party
+		clear_variable = largest_party_val
+	}
+
+	option = {
+		name = singapore_elections.0.d
+		log = "[GetDateText]: [THIS.GetName]: event singapore_elections.0.d"
+		trigger = { check_variable = { largest_party = 13 } }
+
+		if = { limit = { is_in_array = { ruling_party = 13 } }
+			add_political_power = 150
+		}
+		else = {
+			set_temp_variable = { rul_party_temp = 22 }
+			set_temp_variable = { col_one = 1 }
+			set_temp_variable = { col_two = 7 }
+			set_temp_variable = { col_one = 13 }
 			set_temp_variable = { change_leader_temp = 1 }
 			change_ruling_party_effect = yes
 			set_politics = {
@@ -1295,6 +1393,7 @@ country_event = {
 				check_variable = { largest_party = 1 }
 				check_variable = { largest_party = 7 }
 				check_variable = { largest_party = 13 }
+				check_variable = { largest_party = 22 }
 			}
 		}
 

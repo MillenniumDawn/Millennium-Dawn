@@ -93,7 +93,6 @@ decision_category_internal_factions = {
 			change_labour_unions_opinion = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_small_medium_business_owners_opinion = yes
-			change_the_bazaar_opinion = yes
 			change_the_donju_opinion = yes
 			change_chaebols_opinion = yes
 			change_industrial_conglomerates_opinion = yes
@@ -169,6 +168,29 @@ decision_category_internal_factions = {
 		}
 	}
 
+	# Fossil Fuel Industry
+	allow_temporary_cut_backs_on_regulations_decision = {
+		icon = GFX_decision_bancru_ask_button
+		visible = {
+			has_idea = fossil_fuel_industry
+		}
+
+		days_remove = 180
+		days_re_enable = 180
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: decision allow_temporary_cut_backs_on_regulations_decision"
+			set_temp_variable = { temp_opinion = 5 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+
+		modifier = {
+			stability_weekly = -0.001
+			resource_export_multiplier_modifier = 0.30
+		}
+	}
+
 	# International Bankers/Landowners/Oligarchs
 	cut_taxes_on_the_rich_decision = {
 		icon = GFX_decisions_tax_down_button
@@ -208,14 +230,14 @@ decision_category_internal_factions = {
 				has_idea = the_priesthood
 			}
 		}
-		days_re_enable = 160
-		cost = 100
+		days_re_enable = 220
+		cost = 75
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: decision encourage_religion_in_the_government_decision"
 			set_temp_variable = { arg_popularity = 0.05 }
 			add_ruling_outlook_popularity = yes
-			set_temp_variable = { temp_opinion = 10 }
+			set_temp_variable = { temp_opinion = 5 }
 			change_the_priesthood_opinion = yes
 			change_the_clergy_opinion = yes
 			change_the_ulema_opinion = yes
@@ -254,10 +276,10 @@ decision_category_internal_factions = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: decision remove impose_taxes_on_religious_institutions_decision"
-			set_temp_variable = { temp_opinion = 8 }
+			set_temp_variable = { temp_opinion = 10 }
 			change_communist_cadres_opinion = yes
 			change_the_donju_opinion = yes
-			set_temp_variable = { temp_opinion = -10 }
+			set_temp_variable = { temp_opinion = -15 }
 			change_the_priesthood_opinion = yes
 			change_the_clergy_opinion = yes
 			change_the_ulema_opinion = yes
@@ -345,28 +367,44 @@ decision_category_internal_factions = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: decision remove impose_taxes_on_religious_institutions_decision"
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = 0.005 }
-			modify_treasury_effect = yes
-
-			set_temp_variable = { temp_opinion = 5 }
-			change_communist_cadres_opinion = yes
-			change_landowners_opinion = yes
-			change_oligarchs_opinion = yes
-
-			random_list = {
-				10 = {
-					modifier = {
-						factor = 2
-						has_idea = negligible_corruption
-					}
-					modifier = {
-						factor = 1.5
-						has_idea = slight_corruption
-					}
-					increase_corruption = yes
+			if = {
+				limit = {
+					NOT = { has_idea = paralyzing_corruption }
 				}
-				90 = { }
+
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = 0.005 }
+				modify_treasury_effect = yes
+
+				set_temp_variable = { temp_opinion = 5 }
+				change_communist_cadres_opinion = yes
+				change_landowners_opinion = yes
+				change_oligarchs_opinion = yes
+
+				random_list = {
+					10 = {
+						modifier = {
+							factor = 2
+							has_idea = negligible_corruption
+						}
+						modifier = {
+							factor = 1.5
+							has_idea = slight_corruption
+						}
+						increase_corruption = yes
+					}
+					90 = { }
+				}
+			}
+			else = {
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = 0.009 }
+				modify_treasury_effect = yes
+
+				set_temp_variable = { temp_opinion = 5 }
+				change_communist_cadres_opinion = yes
+				change_landowners_opinion = yes
+				change_oligarchs_opinion = yes
 			}
 		}
 	}
@@ -414,7 +452,6 @@ decision_category_internal_factions = {
 			change_communist_cadres_opinion = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
-			change_the_bazaar_opinion = yes
 			change_the_donju_opinion = yes
 			change_chaebols_opinion = yes
 			change_industrial_conglomerates_opinion = yes
