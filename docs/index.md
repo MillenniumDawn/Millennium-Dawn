@@ -4,7 +4,7 @@ title: "Millennium Dawn"
 description: "Documentation for the Millennium Dawn mod for Hearts of Iron IV"
 ---
 
-![New2](uploads/ee7953c436da05d99872fc0a0d118a1c/New2.png) ![Introduction](uploads/69b932df940f201386d65050a5cd3083/Introduction.png)
+![New2](uploads/main-menu.png) ![Introduction](uploads/Introduction.png)
 
 With the dawn of a new millennium, a new chapter in human history will be written. Globalization continues to change the lives of countless billions while rising extremism is showing signs of igniting the fires of conflict. New powers begin to emerge, and not all believe their place in the global order, or that of some competitors is warranted. A struggle will soon begin, and it will likely change everything. Will you lead your Nation to prosperity and dominance in the decades ahead, or will your Nation fall victim to the defining moments of history?
 

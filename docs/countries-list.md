@@ -10,71 +10,71 @@ The following countries are playable in Millennium Dawn: Modern Day Mod:
 
 The following countries are playable with unique focus trees:
 
-- [Armenia](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Armenia)
+- [Armenia](/Millennium-Dawn/national-content/Armenia)
 - Abkhazia
-- [Afghanistan](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Afghan-Northern-Alliance) (Afghan Northern Alliance in 2000)
+- [Afghanistan](/Millennium-Dawn/national-content/Afghan-Northern-Alliance) (Afghan Northern Alliance in 2000)
 - Armenia
-- [Azerbaijan](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Azerbaijan)
+- [Azerbaijan](/Millennium-Dawn/national-content/Azerbaijan)
 - Artsakh
 - Belarus
 - Bosnia
-- [Botswana](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Botswana)
-- [Brazil](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Brazil)
+- [Botswana](/Millennium-Dawn/national-content/Botswana)
+- [Brazil](/Millennium-Dawn/national-content/Brazil)
 - Bulgaria
-- [Canada](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Canada)
-- [China](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/China)
+- [Canada](/Millennium-Dawn/national-content/Canada)
+- [China](/Millennium-Dawn/national-content/China)
 - Comoros
 - Czechia
 - Cuba
-- [Denmark](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Denmark)
+- [Denmark](/Millennium-Dawn/national-content/Denmark)
 - Egypt
 - Estonia
-- [Ethiopia](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Ethiopia) (Eritrea Puppet Shared)
+- [Ethiopia](/Millennium-Dawn/national-content/Ethiopia) (Eritrea Puppet Shared)
 - Serbia
 - Shared EU Focus (USoE & POTEF)
-- [Finland](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Finland)
+- [Finland](/Millennium-Dawn/national-content/Finland)
 - Fiji
-- [France](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/France)
+- [France](/Millennium-Dawn/national-content/France)
 - Gagauzia
 - Georgia
-- [Germany](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Germany)
-- [Greece](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Greece)
+- [Germany](/Millennium-Dawn/national-content/Germany)
+- [Greece](/Millennium-Dawn/national-content/Greece)
 - Gulf tree for BHR, KUW, OMA, QAT, SAU, UAE including shared GCC tree also available to EGY, IRQ, JOR, MOR, YEM
 - Hezbollah
 - India
 - Indonesia
-- [Iran](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Iran)
+- [Iran](/Millennium-Dawn/national-content/Iran)
 - Iraq
 - Israel
-- [Italy](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Italy)
-- [Japan](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Japan)
+- [Italy](/Millennium-Dawn/national-content/Italy)
+- [Japan](/Millennium-Dawn/national-content/Japan)
 - Kazakhstan
 - Kosovo
 - Kyrgyzstan
 - Libya
-- [Liechtenstein](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Liechtenstein)
-- [Myanmar](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Myanmar)
+- [Liechtenstein](/Millennium-Dawn/national-content/Liechtenstein)
+- [Myanmar](/Millennium-Dawn/national-content/Myanmar)
 - Netherlands
-- [Nigeria](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Nigeria)
-- [Norway](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Norway)
-- [North Korea](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/North-Korea)
-- [Poland](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Poland)
+- [Nigeria](/Millennium-Dawn/national-content/Nigeria)
+- [Norway](/Millennium-Dawn/national-content/Norway)
+- [North Korea](/Millennium-Dawn/national-content/North-Korea)
+- [Poland](/Millennium-Dawn/national-content/Poland)
 - Romania
-- [Russia](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Russia)
+- [Russia](/Millennium-Dawn/national-content/Russia)
 - San Marino
 - Singapore
-- [Spain](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Spain)
-- [Sweden](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Sweden)
-- [Switzerland](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Switzerland)
-- [South Korea](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/South-Korea)
+- [Spain](/Millennium-Dawn/national-content/Spain)
+- [Sweden](/Millennium-Dawn/national-content/Sweden)
+- [Switzerland](/Millennium-Dawn/national-content/Switzerland)
+- [South Korea](/Millennium-Dawn/national-content/South-Korea)
 - South Ossetia
-- [Syria](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Syria)
+- [Syria](/Millennium-Dawn/national-content/Syria)
 - Tajikistan
 - Trasnistria
 - Turkey
-- [Ukraine](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/Ukraine)
-- [United Kingdom](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/United-Kingdom)
-- [United States](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/national-content/United-States)
+- [Ukraine](/Millennium-Dawn/national-content/Ukraine)
+- [United Kingdom](/Millennium-Dawn/national-content/United-Kingdom)
+- [United States](/Millennium-Dawn/national-content/United-States)
 - Uzbekistan
 - Venezuela
 - Yugoslavia
