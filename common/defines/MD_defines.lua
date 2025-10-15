@@ -1068,3 +1068,7 @@
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_POLICY_ATTACH_COST = 25		-- 25
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_ATTACH_POLICY_COOLDOWN = 180	-- 180
 	NDefines.NIndustrialOrganisation.LEGACY_COST_FACTOR_SCALE = 1.0					-- 1.0
+
+	NDefines.NProduction.RESOURCE_TO_ENERGY_COEFFICIENT = 0
+	NDefines.NProduction.ENERGY_SCALING_COST_BY_FACTORY_COUNT = 0
+	NDefines.NProduction.BASE_ENERGY_COST = 0
