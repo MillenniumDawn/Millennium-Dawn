@@ -1072,3 +1072,25 @@
 	NDefines.NProduction.RESOURCE_TO_ENERGY_COEFFICIENT = 0
 	NDefines.NProduction.ENERGY_SCALING_COST_BY_FACTORY_COUNT = 0
 	NDefines.NProduction.BASE_ENERGY_COST = 0
+
+	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_PP_COST = 200				-- Political power cost to assume faction leadership
+	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_MIN_MANPOWER_RATIO = 2		-- The minimum ratio of manpower that a country must have compared to the current leader in order to assume leadership.
+	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_MIN_FACTORY_RATIO = 2		-- 1.5
+	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_COOLDOWN_DAYS = 180			-- Number of days after formation of faction or change in leadership before another country is allowed to assume leadership.
+	NDefines.NDiplomacy.ASSUME_FACTION_SPYMASTER_COOLDOWN_DAYS = 180			-- Number of days after change of Spy Master before another country is allowed to become Spy Master.
+	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_ALERT_THRESHOLD = 0.8		-- Threshold for showing an alert when a faction member is close to being able to assume leadership of the faction that a player currently leads.
+	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_NOT_SUBJECT_WEIGHT = 2		-- Importance of subject status when determining how close a faction member is to being able to assume leadership.
+	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_NOT_CAPITULATED_WEIGHT = 2	-- Importance of capitulation status when determining how close a faction member is to being able to assume leadership.
+	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_IN_ALL_WARS_WEIGHT = 1		-- Importance not being in all faction leader wars when determining how close a faction member is to being able to assume leadership.
+	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_COOLDOWN_WEIGHT = 1			-- Importance of leadership change cooldown when determining how close a faction member is to being able to assume leadership.
+	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_MANPOWER_WEIGHT = 2			-- Importance of manpower in field when determining how close a faction member is to being able to assume leadership.
+	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_FACTORY_WEIGHT = 2			-- Importance of factory count when determining how close a faction member is to being able to assume leadership.
+
+	NDefines.NDiplomacy.FACTION_POWER_RESOURCE_WEIGHT = 0.04			-- 0.05
+	NDefines.NDiplomacy.FACTION_POWER_INDUSTRY_WEIGHT = 0.4			-- 0.1
+	NDefines.NDiplomacy.FACTION_POWER_ARMY_WEIGHT = 0.25				--The weight of the army on the faction's power projection
+	NDefines.NDiplomacy.FACTION_POWER_AIR_BOMBER_WEIGHT = 0.1			-- 0.25
+	NDefines.NDiplomacy.FACTION_POWER_AIR_WEIGHT = 0.04				-- 0.02
+	NDefines.NDiplomacy.FACTION_POWER_NAVAL_CAPITAL_SHIP_WEIGHT = 5	--The weight of the capital ships on the faction's power projection
+	NDefines.NDiplomacy.FACTION_POWER_NAVAL_WEIGHT = 0.25				--The weight of the naval equipment except capital ships on the faction's power projection
+	NDefines.NDiplomacy.FACTION_POWER_EFFECTS_WEIGHT = 1			--The weight of the faction's goal status on the faction's power projection
