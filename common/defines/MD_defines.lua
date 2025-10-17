@@ -4,7 +4,7 @@
 	NDefines.NGame.LAG_DAYS_FOR_LOWER_SPEED = 500
 	NDefines.NGame.LAG_DAYS_FOR_PAUSE = 100
 	NDefines.NGame.MAX_SCRIPTED_LOC_RECURSION = 40
-	NDefines.NGame.ENERGY_RESOURCE = "oil" -- sets what resource is used for energy. We can adjust this later to a proper resource that is tradeable
+	NDefines.NGame.ENERGY_RESOURCE = "power" -- sets what resource is used for energy. We can adjust this later to a proper resource that is tradeable
 
 	-- NDiplomacy Defines
 	NDefines.NDiplomacy.MAX_OPINION_VALUE = 300
@@ -1069,9 +1069,9 @@
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_ATTACH_POLICY_COOLDOWN = 180	-- 180
 	NDefines.NIndustrialOrganisation.LEGACY_COST_FACTOR_SCALE = 1.0					-- 1.0
 
-	NDefines.NProduction.RESOURCE_TO_ENERGY_COEFFICIENT = 0
-	NDefines.NProduction.ENERGY_SCALING_COST_BY_FACTORY_COUNT = 0
-	NDefines.NProduction.BASE_ENERGY_COST = 0
+	NDefines.NProduction.RESOURCE_TO_ENERGY_COEFFICIENT = 1
+	NDefines.NProduction.ENERGY_SCALING_COST_BY_FACTORY_COUNT = 0.02
+	NDefines.NProduction.BASE_ENERGY_COST = 1
 
 	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_PP_COST = 200				-- Political power cost to assume faction leadership
 	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_MIN_MANPOWER_RATIO = 2		-- The minimum ratio of manpower that a country must have compared to the current leader in order to assume leadership.
@@ -1094,3 +1094,5 @@
 	NDefines.NDiplomacy.FACTION_POWER_NAVAL_CAPITAL_SHIP_WEIGHT = 5	--The weight of the capital ships on the faction's power projection
 	NDefines.NDiplomacy.FACTION_POWER_NAVAL_WEIGHT = 0.25				--The weight of the naval equipment except capital ships on the faction's power projection
 	NDefines.NDiplomacy.FACTION_POWER_EFFECTS_WEIGHT = 1			--The weight of the faction's goal status on the faction's power projection
+
+	NDefines.NFactions.FACTION_INFLUENCE_INDUSTRIAL_CAPACITY_FACTOR = 1 --how much the country's industry affects its influence
