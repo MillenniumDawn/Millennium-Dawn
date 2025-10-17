@@ -1071,7 +1071,7 @@
 
 	NDefines.NProduction.RESOURCE_TO_ENERGY_COEFFICIENT = 1
 	NDefines.NProduction.ENERGY_SCALING_COST_BY_FACTORY_COUNT = 0.02
-	NDefines.NProduction.BASE_ENERGY_COST = 1
+	NDefines.NProduction.BASE_ENERGY_COST = 0.4
 
 	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_PP_COST = 200				-- Political power cost to assume faction leadership
 	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_MIN_MANPOWER_RATIO = 2		-- The minimum ratio of manpower that a country must have compared to the current leader in order to assume leadership.
@@ -1095,4 +1095,4 @@
 	NDefines.NDiplomacy.FACTION_POWER_NAVAL_WEIGHT = 0.25				--The weight of the naval equipment except capital ships on the faction's power projection
 	NDefines.NDiplomacy.FACTION_POWER_EFFECTS_WEIGHT = 1			--The weight of the faction's goal status on the faction's power projection
 
-	NDefines.NFactions.FACTION_INFLUENCE_INDUSTRIAL_CAPACITY_FACTOR = 1 --how much the country's industry affects its influence
+	NDefines.NFactions.FACTION_INFLUENCE_INDUSTRIAL_CAPACITY_FACTOR = 0.5 --how much the country's industry affects its influence
