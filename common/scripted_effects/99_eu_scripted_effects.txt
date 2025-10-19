@@ -3769,21 +3769,67 @@ clear_EU_Parliament = {
 }
 
 election_EU_Parliament = {
+
+	# set max MEPs
 	if = {
 		limit = {
-			focus_EU701_accepted = yes 
+			focus_EU651_accepted = yes 
 			focus_EU104_accepted = yes 
 		}
 		set_variable = { global.EU_Parliament_max_MEP = 1000 }
 	}
 	else_if = {
 		limit = {
-			NOT = { focus_EU701_accepted = yes }
+			NOT = { focus_EU651_accepted = yes }
 			focus_EU104_accepted = yes
 		}
 		set_variable = { global.EU_Parliament_max_MEP = 750 }
 	}
 	else = { set_variable = { global.EU_Parliament_max_MEP = 732 } }
+
+	# set MEP clamps for countries
+	if = {
+		limit = {
+			focus_EU651_accepted = yes
+			focus_EU104_accepted = yes
+		}
+		set_variable = { global.min_clamp_eu_mep = 8 }
+	}
+	else_if = {
+		limit = { 
+			NOT = { focus_EU651_accepted = yes }
+			focus_EU104_accepted = yes 
+		}
+		set_variable = { global.min_clamp_eu_mep = 6 }
+	}
+	else_if = {
+		limit = { 
+			NOT = { focus_EU651_accepted = yes }
+			NOT = { focus_EU104_accepted = yes }
+		}
+		set_variable = { global.min_clamp_eu_mep = 5 }
+	}
+	if = {
+		limit = {
+			focus_EU651_accepted = yes
+			focus_EU104_accepted = yes
+		}
+		set_variable = { global.max_clamp_eu_mep = 100 }
+	}
+	else_if = {
+		limit = { 
+			NOT = { focus_EU651_accepted = yes }
+			focus_EU104_accepted = yes 
+		}
+		set_variable = { global.max_clamp_eu_mep = 96 }
+	}
+	else_if = {
+		limit = { 
+			NOT = { focus_EU651_accepted = yes }
+			NOT = { focus_EU104_accepted = yes }
+		}
+		set_variable = { global.max_clamp_eu_mep = 99 }
+	}
 	
 	### Election in member_state
 	for_each_scope_loop = {
@@ -3839,31 +3885,10 @@ election_EU_Parliament_in_member_state = {
 	set_temp_variable = { temp1 = global.EU_Parliament_max_MEP }
 	multiply_temp_variable = { temp1 = THIS.EU_pop_ratio }
 	round_temp_variable = temp1
-	if = {
-		limit = {
-			focus_EU701_accepted = yes
-			focus_EU104_accepted = yes
-		}
-		clamp_temp_variable = { 
-			var = temp1
-			min = 8
-			max = 100
-		}
-	}
-	else_if = {
-		limit = { focus_EU104_accepted = yes }
-		clamp_temp_variable = { 
-			var = temp1
-			min = 6
-			max = 96
-		}
-	}
-	else = {
-		clamp_temp_variable = { 
-			var = temp1
-			min = 5
-			max = 99
-		}
+	clamp_temp_variable = { 
+		var = temp1
+		min = global.min_clamp_eu_mep
+		max = global.max_clamp_eu_mep
 	}
 	set_variable = { THIS.MEP_Total = temp1 }
 	### MEP per subideology
@@ -3891,37 +3916,53 @@ election_EU_Parliament_in_member_state = {
 		meta_effect = {
 			text = {
 				add_to_variable = { THIS.MEP_Total = THIS.MEP_party_[p_n4] }
+			#	add_to_array = { THIS.MEP_party_array = THIS.MEP_party_[p_n4] }
 			}
 			p_n4 = "[?p_number4]"
 		}
 	}
+	
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_0 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_1 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_2 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_3 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_4 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_5 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_6 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_7 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_8 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_9 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_10 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_11 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_12 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_13 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_14 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_15 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_16 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_17 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_18 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_19 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_20 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_21 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_22 }
+	add_to_array = { array = THIS.MEP_party_array value = THIS.MEP_party_23 }
+
+	find_highest_in_array = {
+		array = THIS.MEP_party_array
+		value = THIS.highest_MEP_party_value
+		index = THIS.highest_MEP_party_index
+	}
+#	set_variable = { THIS.temp77 = THIS.MEP_party_array^1 }
+	set_variable = { THIS.temp77 = THIS.highest_MEP_party_value }
+#	clear_array = MEP_party_array
+#	set_temp_variable = { temp77 = THIS.MEP_party_[?THIS.highest_MEP_party_index] }
+	
 	# Reclamp
-	if = {
-		limit = {
-			focus_EU701_accepted = yes
-			focus_EU104_accepted = yes
-		}
-		clamp_temp_variable = { 
-			var = temp1
-			min = 8
-			max = 100
-		}
-	}
-	else_if = {
-		limit = { focus_EU104_accepted = yes }
-		clamp_temp_variable = { 
-			var = temp1
-			min = 6
-			max = 96
-		}
-	}
-	else = {
-		clamp_temp_variable = { 
-			var = temp1
-			min = 5
-			max = 99
-		}
-	}
+#	clamp_temp_variable = { 
+#		var = temp1
+#		min = global.min_clamp_eu_mep
+#		max = global.max_clamp_eu_mep
+#	}
 	
 	update_eu_dirty_variable = yes
 }
