@@ -1070,10 +1070,10 @@
 	NDefines.NIndustrialOrganisation.LEGACY_COST_FACTOR_SCALE = 1.0					-- 1.0
 
 	NDefines.NProduction.RESOURCE_TO_ENERGY_COEFFICIENT = 1
-	NDefines.NProduction.ENERGY_SCALING_COST_BY_FACTORY_COUNT = 0.02
+	NDefines.NProduction.ENERGY_SCALING_COST_BY_FACTORY_COUNT = 0.01
 	NDefines.NProduction.BASE_ENERGY_COST = 0.4
 	NDefines.NProduction.BASE_FACTORY_SPEED = 4
-	NDefines.NProduction.POWERED_FACTORY_SPEED = 5
+	NDefines.NProduction.POWERED_FACTORY_SPEED = 4 -- 5
 
 	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_PP_COST = 200				-- Political power cost to assume faction leadership
 	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_MIN_MANPOWER_RATIO = 2		-- The minimum ratio of manpower that a country must have compared to the current leader in order to assume leadership.
