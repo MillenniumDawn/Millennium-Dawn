@@ -590,19 +590,19 @@
 	NDefines.NNavy.SUB_DETECTION_CHANCE_SPOTTING_SPEED_EFFECT = 1.2 -- 2.0
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_POW_EFFECT = 1.01
 	NDefines.NNavy.SHORE_BOMBARDMENT_CAP = 1 -- Reduced to 100% from 200% -- 25% is vanilla
-	NDefines.NNavy.HEAVY_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.035
-	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.015
+	NDefines.NNavy.HEAVY_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.005
+	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.01
 	NDefines.NNavy.COMBAT_MIN_HIT_CHANCE = 0.05	-- never less hit chance then this?
 	NDefines.NNavy.MIN_HIT_PROFILE_MULT = 0.1 -- largest hit profile penalty to hitting (higher value of the define makes ships easier to hit, i assume by reducing the penalty caused by small hit profile of target ship)
 	NDefines.NNavy.GUN_HIT_PROFILES = { -- hit profiles for guns, if target ih profile is lower the gun will have lower accuracy
-		999.0,	-- big guns
-		50.0,	-- torpedos  #anti ship guided weapons
-		20.0,	-- small guns
+		150.0,	-- Anti-Ship Missiles
+		145.0,	-- torpedos
+		200.0,	-- Guns
 	}
 	NDefines.NNavy.BASE_GUN_COOLDOWNS = { -- number of hours for a gun to be ready after shooting
-		999.0,	-- big guns
-		4.0,	-- torpedos #anti ship guided weapons
-		3.0,	-- small guns
+		1.0,	-- Anti-Ship Missiles
+		3.0,	-- torpedos
+		1.0,	-- Guns
 	}
 
 	NDefines.NNavy.DEPTH_CHARGES_HIT_CHANCE_MULT = 1.5 -- multiplies hit chance of depth charges
