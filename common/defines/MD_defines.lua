@@ -4,7 +4,7 @@
 	NDefines.NGame.LAG_DAYS_FOR_LOWER_SPEED = 500
 	NDefines.NGame.LAG_DAYS_FOR_PAUSE = 100
 	NDefines.NGame.MAX_SCRIPTED_LOC_RECURSION = 40
-	NDefines.NGame.ENERGY_RESOURCE = "power" -- sets what resource is used for energy. We can adjust this later to a proper resource that is tradeable
+	NDefines.NGame.ENERGY_RESOURCE = "oil" -- sets what resource is used for energy. We can adjust this later to a proper resource that is tradeable
 
 	-- NDiplomacy Defines
 	NDefines.NDiplomacy.MAX_OPINION_VALUE = 300
