@@ -539,7 +539,7 @@
 	NDefines.NNavy.SHIP_TO_FLEET_ANTI_AIR_RATIO = 0.1 -- 0.2
 	NDefines.NNavy.ANTI_AIR_POW_ON_INCOMING_AIR_DAMAGE = 0.2 -- 0.2
 	NDefines.NNavy.ANTI_AIR_MULT_ON_INCOMING_AIR_DAMAGE = 0.35 -- 0.15
-	NDefines.NNavy.MAX_ANTI_AIR_REDUCTION_EFFECT_ON_INCOMING_AIR_DAMAGE = 0.99 -- 0.75
+	NDefines.NNavy.MAX_ANTI_AIR_REDUCTION_EFFECT_ON_INCOMING_AIR_DAMAGE = 0.9 -- 0.75
 	NDefines.NNavy.ENEMY_AIR_SUPERIORITY_IMPACT = -1.25
 
 	NDefines.NNavy.MISSION_FUEL_COSTS = {
@@ -590,8 +590,8 @@
 	NDefines.NNavy.SUB_DETECTION_CHANCE_SPOTTING_SPEED_EFFECT = 1.2 -- 2.0
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_POW_EFFECT = 1.01
 	NDefines.NNavy.SHORE_BOMBARDMENT_CAP = 1 -- Reduced to 100% from 200% -- 25% is vanilla
-	NDefines.NNavy.HEAVY_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.005
-	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.01
+	NDefines.NNavy.HEAVY_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.001
+	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.85
 	NDefines.NNavy.COMBAT_MIN_HIT_CHANCE = 0.05	-- never less hit chance then this?
 	NDefines.NNavy.MIN_HIT_PROFILE_MULT = 0.1 -- largest hit profile penalty to hitting (higher value of the define makes ships easier to hit, i assume by reducing the penalty caused by small hit profile of target ship)
 	NDefines.NNavy.GUN_HIT_PROFILES = { -- hit profiles for guns, if target ih profile is lower the gun will have lower accuracy
@@ -608,11 +608,22 @@
 	NDefines.NNavy.DEPTH_CHARGES_HIT_CHANCE_MULT = 1.5 -- multiplies hit chance of depth charges
 	NDefines.NNavy.DEPTH_CHARGES_DAMAGE_MULT = 2 	-- multiplies damage of depth charges
 	NDefines.NNavy.DEPTH_CHARGES_HIT_PROFILE = 24.0	-- hit profile for depth charges
-	NDefines.NNavy.CARRIER_STACK_PENALTY = 2
-	NDefines.NNavy.CARRIER_STACK_PENALTY_EFFECT = 0.5
 	NDefines.NNavy.CARRIER_ONLY_COMBAT_ACTIVATE_TIME = 0 -- 0
-	NDefines.NNavy.CAPITAL_ONLY_COMBAT_ACTIVATE_TIME = 6
-	NDefines.NNavy.ALL_SHIPS_ACTIVATE_TIME = 8 -- 8
+	NDefines.NNavy.CAPITAL_ONLY_COMBAT_ACTIVATE_TIME = 4 -- 6
+	NDefines.NNavy.ALL_SHIPS_ACTIVATE_TIME = 6 -- 8
+
+	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_CAPITAL = 10 -- 10
+	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_SCREEN = 5 -- 5
+	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_CARRIER = 16 -- 16
+	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_SUPPORT = 3 -- 3
+	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_CONVOY = 4 -- 4
+	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_SUBMARINE = 7 -- 7
+
+	NDefines.NNavy.DOMINANCE_PER_SHIP_PER_RANGE_NEUTRAL = 3000 -- 2000
+	NDefines.NNavy.DOMINANCE_PER_SHIP_PER_SPEED_NEUTRAL = 25 -- 20
+	NDefines.NNavy.DOMINANCE_PER_SHIP_PER_CARRIER_SIZE = 0.1 -- 0.1
+	NDefines.NNavy.DOMINANCE_PER_SHIP_PER_HEAVY_GUN_ATTACK = 0.01 --0.01
+
 	NDefines.NNavy.NAVAL_MINES_DECAY_AT_PEACE_TIME = 0.05 -- 0.25
 	NDefines.NNavy.ATTRITION_WHILE_MOVING_FACTOR = 2.5 -- 1.5
 	NDefines.NNavy.ATTRITION_DAMAGE_ORG = 0.03 -- 0.01
