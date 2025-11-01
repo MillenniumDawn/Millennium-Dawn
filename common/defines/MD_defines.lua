@@ -256,7 +256,12 @@
 	NDefines.NBuildings.MAX_SHARED_SLOTS = 56
 	NDefines.NBuildings.OWNER_CHANGE_EXTRA_SHARED_SLOTS_FACTOR = 0.5
 	NDefines.NBuildings.INFRASTRUCTURE_RESOURCE_BONUS = 0.05	--upped from 0.02, vanilla 0.2
-	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 1.0 -- was 4.0 --Fucked with this to see
+	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 2.0 -- was 4.0 --Fucked with this to see
+	-- NOTE: The below piercing values are granularized to make piercing less punishing for nations with no real tank access
+	-- Nations with huge advantages will keep them, but the narrower the gap, the less effective the buffs get
+	-- these stats may be adjusted further, but for now, the scale remains 50% - 100%
+	NDefines.NMilitary.PIERCING_THRESHOLDS = { 1.00, 0.90, 0.80, 0.70, 0.60, 0.50, 0.40, 0.30, 0.20, 0.10, 0.00 } -- Our piercing / their armor must be this value to deal damage fraction equal to the index in the array below [higher number = higher penetration]. If armor is 0, 1.00 will be returned.
+	NDefines.NMilitary.PIERCING_THRESHOLD_DAMAGE_VALUES = { 1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65, 0.60, 0.55, 0.50 } -- 0 armor will always receive maximum damage (so add overmatching at your own peril). the system expects at least 2 values, with no upper limit.
 
 	NDefines.NMilitary.MAX_DIVISION_BRIGADE_WIDTH = 4 -- 5
 	NDefines.NMilitary.MIN_DIVISION_BRIGADE_HEIGHT = 3 -- 4
