@@ -269,15 +269,15 @@
 	NDefines.NMilitary.FIELD_MARSHAL_ARMIES_CAP = 4 -- Vanilla 5
 	NDefines.NMilitary.BASE_DIVISION_SUPPORT_SLOT_COST = 5 -- 10
 	NDefines.NMilitary.COMBAT_MINIMUM_TIME = 8 -- 4
-	NDefines.NMilitary.LAND_COMBAT_ORG_DICE_SIZE = 2 -- 4
-	NDefines.NMilitary.LAND_COMBAT_STR_DICE_SIZE = 3 -- 2
-	NDefines.NMilitary.LAND_COMBAT_STR_DAMAGE_MODIFIER = 0.01 -- 0.05
-	NDefines.NMilitary.LAND_COMBAT_ORG_DAMAGE_MODIFIER = 0.024 -- 0.053
-	NDefines.NMilitary.LAND_AIR_COMBAT_STR_DAMAGE_MODIFIER = 0.05 -- 0.04
-	NDefines.NMilitary.LAND_AIR_COMBAT_ORG_DAMAGE_MODIFIER = 0.05 -- 0.04
-	NDefines.NMilitary.LAND_AIR_COMBAT_MAX_PLANES_PER_ENEMY_WIDTH = 1 -- 3
-	NDefines.NMilitary.LAND_COMBAT_STR_ARMOR_ON_SOFT_DICE_SIZE = 5 -- 6
-	NDefines.NMilitary.LAND_COMBAT_ORG_ARMOR_ON_SOFT_DICE_SIZE = 3 -- 6
+	NDefines.NMilitary.LAND_COMBAT_ORG_DICE_SIZE = 3 -- 4
+	NDefines.NMilitary.LAND_COMBAT_STR_DICE_SIZE = 4 -- 2
+	NDefines.NMilitary.LAND_COMBAT_STR_DAMAGE_MODIFIER = 0.06 -- 0.06
+	NDefines.NMilitary.LAND_COMBAT_ORG_DAMAGE_MODIFIER = 0.053 -- 0.053
+	NDefines.NMilitary.LAND_AIR_COMBAT_STR_DAMAGE_MODIFIER = 0.08 -- 0.08
+	NDefines.NMilitary.LAND_AIR_COMBAT_ORG_DAMAGE_MODIFIER = 0.1 -- 0.04
+	NDefines.NMilitary.LAND_AIR_COMBAT_MAX_PLANES_PER_ENEMY_WIDTH = 2 -- 3
+	NDefines.NMilitary.LAND_COMBAT_STR_ARMOR_ON_SOFT_DICE_SIZE = 3 -- 6
+	NDefines.NMilitary.LAND_COMBAT_ORG_ARMOR_ON_SOFT_DICE_SIZE = 5 -- 6
 	NDefines.NMilitary.LAND_COMBAT_STR_ARMOR_DEFLECTION_FACTOR = 0.3 -- 0.5
 	NDefines.NMilitary.LAND_COMBAT_ORG_ARMOR_DEFLECTION_FACTOR = 0.5 -- 0.5
 	NDefines.NMilitary.LAND_COMBAT_COLLATERAL_FACTOR = 0.05 -- 0.005
@@ -294,7 +294,7 @@
 	NDefines.NMilitary.RIVER_CROSSING_SPEED_PENALTY = -0.25 -- -0.25
 	NDefines.NMilitary.RIVER_CROSSING_SPEED_PENALTY_LARGE = -0.45 -- -0.5
 	NDefines.NMilitary.BASE_FORT_PENALTY = -0.075 -- -0.15
-	NDefines.NMilitary.RECON_SKILL_IMPACT = 0.5 -- 5
+	NDefines.NMilitary.RECON_SKILL_IMPACT = 2.5 -- 5
 	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_IMPACT = -0.5 -- -0.35
 	NDefines.NMilitary.ENEMY_AIR_SUPERIORITY_SPEED_IMPACT = -0.3 -- -0.3
 	NDefines.NMilitary.SLOWEST_SPEED = 4 -- 4
@@ -303,7 +303,7 @@
 	NDefines.NMilitary.EXPERIENCE_COMBAT_FACTOR = 0.05 -- 0.25
 	NDefines.NMilitary.EXPERIENCE_LOSS_FACTOR = 0.7 -- 1.00
 	NDefines.NMilitary.EQUIPMENT_COMBAT_LOSS_FACTOR = 0.7 -- 0.7
-	NDefines.NMilitary.SUPPLY_GRACE = 336 -- 72
+	NDefines.NMilitary.SUPPLY_GRACE = 96 -- 72
 	NDefines.NMilitary.MAX_OUT_OF_SUPPLY_DAYS = 45 -- 30
 	NDefines.NMilitary.OUT_OF_SUPPLY_SPEED = -0.6	-- -0.8
 	NDefines.NMilitary.NON_CORE_SUPPLY_SPEED = -0.20 -- -0.5
@@ -612,15 +612,18 @@
 	NDefines.NNavy.CAPITAL_ONLY_COMBAT_ACTIVATE_TIME = 4 -- 6
 	NDefines.NNavy.ALL_SHIPS_ACTIVATE_TIME = 6 -- 8
 
-	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_CAPITAL = 10 -- 10
-	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_SCREEN = 5 -- 5
-	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_CARRIER = 16 -- 16
+	NDefines.NNavy.NAVAL_COMBAT_PLANE_MIN_STACKING_PENALTY = 140 -- 80, How many planes flying in a naval combat before penalties are introduced
+	NDefines.NNavy.NAVAL_COMBAT_PLANE_STACKING_PENALTY_EFFECT = 0.025 -- 0.025, Each plane above the optimal amount decreases the amount of airplanes being able to takeoff by such %. Subject to diminishing returns
+
+	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_CAPITAL = 10 -- 10, For dynamic plane efficacy, silhouette value (nominally in planes, but very abstract)
+	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_SCREEN = 10 -- 5, As Above. This one would be nice to split by type, but that's problematic.
+	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_CARRIER = 20 -- 16, KILL that carrier
 	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_SUPPORT = 3 -- 3
 	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_CONVOY = 4 -- 4
 	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_SUBMARINE = 7 -- 7
 
-	NDefines.NNavy.DOMINANCE_PER_SHIP_PER_RANGE_NEUTRAL = 3000 -- 2000
-	NDefines.NNavy.DOMINANCE_PER_SHIP_PER_SPEED_NEUTRAL = 25 -- 20
+	NDefines.NNavy.DOMINANCE_PER_SHIP_PER_RANGE_NEUTRAL = 2500 -- 2000
+	NDefines.NNavy.DOMINANCE_PER_SHIP_PER_SPEED_NEUTRAL = 20 -- 20
 	NDefines.NNavy.DOMINANCE_PER_SHIP_PER_CARRIER_SIZE = 0.1 -- 0.1
 	NDefines.NNavy.DOMINANCE_PER_SHIP_PER_HEAVY_GUN_ATTACK = 0.01 --0.01
 
