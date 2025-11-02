@@ -3855,7 +3855,6 @@ election_EU_Parliament = {
 				divide_variable = { global.MEP_Ratio_PG_party_[p_n] = global.MEP_Total }
 				add_to_array = { global.MEP_PG_array^[p_n] = global.MEP_PG_party_[p_n] }
 				set_variable = { global.PI_PG_party_[p_n] = global.MEP_PG_party_[p_n] }
-			#	add_to_variable = { global.MEP_Total = global.MEP_party_[p_n3] }
 			}
 			p_n = "[?p_number]"
 		}
@@ -3891,6 +3890,7 @@ election_EU_Parliament_in_member_state = {
 		max = global.max_clamp_eu_mep
 	}
 	set_variable = { THIS.MEP_Total = temp1 }
+	set_variable = { THIS.MEP_Total_target = THIS.MEP_Total }
 	### MEP per subideology
 	for_each_loop = {
 		array = global.EU_parl_party_number
@@ -3901,8 +3901,6 @@ election_EU_Parliament_in_member_state = {
 				set_variable = { THIS.MEP_party_[p_n3] = party_pop_array^[p_n3] }
 				multiply_variable = { THIS.MEP_party_[p_n3] = THIS.MEP_Total }
 				round_variable = THIS.MEP_party_[p_n3]
-				add_to_variable = { global.MEP_PG_party_[p_n3] = THIS.MEP_party_[p_n3] }
-			#	add_to_variable = { global.MEP_Total = THIS.MEP_party_[p_n3] }
 			}
 			p_n3 = "[?p_number3]"
 		}
@@ -3922,14 +3920,68 @@ election_EU_Parliament_in_member_state = {
 		}
 	}
 
+	set_temp_variable = { value_temp = 0 }
+	set_temp_variable = { index_temp = 0 }
+
 	find_highest_in_array = {
 		array = THIS.MEP_party_array
-		value = THIS.highest_MEP_party_value_temp
-		index = THIS.highest_MEP_party_index_temp
+		value = value_temp
+		index = index_temp
 	}
-	set_variable = { THIS.highest_MEP_party_value = THIS.highest_MEP_party_value_temp }
-	set_variable = { THIS.highest_MEP_party_index = THIS.highest_MEP_party_index_temp }
+	set_variable = { THIS.highest_MEP_party_value = value_temp }
+	set_variable = { THIS.highest_MEP_party_index = index_temp }
 	set_variable = { THIS.var77 = THIS.highest_MEP_party_value }
+
+	if = {
+		limit = { NOT = { check_variable = { THIS.MEP_Total_target = THIS.MEP_Total } } }
+
+		meta_effect = {
+			text = {
+				if = {
+					limit = { check_variable = { THIS.MEP_Total > THIS.MEP_Total_target } }
+					set_temp_variable = { subtraction_value = THIS.MEP_Total }
+					subtract_from_temp_variable = { subtraction_value = THIS.MEP_Total_target }
+					subtract_from_variable = { THIS.MEP_party_[highest_index_meta] = subtraction_value }
+				}
+				else_if = {
+					limit = { check_variable = { THIS.MEP_Total < THIS.MEP_Total_target } }
+					set_temp_variable = { addition_value = THIS.MEP_Total_target }
+					subtract_from_temp_variable = { addition_value = THIS.MEP_Total }
+					add_to_variable = { THIS.MEP_party_[highest_index_meta] = addition_value }
+				}
+			}
+			highest_index_meta = "[?THIS.highest_MEP_party_index]"
+		}
+	}
+
+	set_temp_variable = { value_temp = 0 }
+	set_temp_variable = { index_temp = 0 }
+
+	### Recalc total
+	set_variable = { THIS.MEP_Total = 0 }
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { p_number5 = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				add_to_variable = { THIS.MEP_Total = THIS.MEP_party_[p_n5] }
+			}
+			p_n5 = "[?p_number5]"
+		}
+	}
+	### Recalc PG
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { p_number6 = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				add_to_variable = { global.MEP_PG_party_[p_n6] = THIS.MEP_party_[p_n6] }
+			}
+			p_n6 = "[?p_number6]"
+		}
+	}
 	
 	update_eu_dirty_variable = yes
 }
