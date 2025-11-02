@@ -1,0 +1,137 @@
+name: Millennium Dawn Coding Validation & Fixing
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    tags: [ 'v*' ]
+
+env:
+  INPUT_GAME: "hoi4"
+  INPUT_RULES: 'https://github.com/Kaiserreich/cwtools-hoi4-config.git'
+  INPUT_RULESREF: 'master'
+  INPUT_SUPPRESSEDOFFENCECATEGORIES: '{"failure":["CW226"], "warning":["CW251"], "notice":[]}'
+
+jobs:
+  coding-standards:
+    name: Coding Standards
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.pull_request.labels.*.name, 'skip-coding-pipeline')"
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Run coding standards check
+      run: python tools/coding_standards.py ${{ secrets.BOT_TOKEN }}
+
+  cwtools-validation:
+    name: CWTools Validation
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.pull_request.labels.*.name, 'skip-coding-pipeline') && !contains(github.event.pull_request.labels.*.name, 'skip-cwtools-job')"
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '3.0.x'
+
+    - uses: cwtools/cwtools-action@v1.1.0
+      with:
+        game: hoi4
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # required, secret is automatically set by github
+
+    - name: Upload CWTools output
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: cwtools-build-output
+        path: output.json
+
+  styling-check:
+    name: Style Check
+    runs-on: ubuntu-latest
+    needs: [coding-standards, cwtools-validation]
+    if: "!contains(github.event.pull_request.labels.*.name, 'skip-coding-pipeline') && (success() || contains(github.event.pull_request.labels.*.name, 'skip-cwtools-job'))"
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Run style check
+      run: python tools/check_basic_style_2.py ${{ secrets.BOT_TOKEN }}
+
+  fix-styling:
+    name: Fix Styling
+    runs-on: ubuntu-latest
+    needs: [styling-check]
+    if: "failure() && !contains(github.event.pull_request.labels.*.name, 'skip-coding-pipeline') && !contains(github.event.pull_request.labels.*.name, 'skip-fixing-styling')"
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.BOT_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Configure Git
+      run: |
+        git config --global user.email "millenniumdawnmod@gmail.com"
+        git config --global user.name "millennium_dawn_cwtools"
+        git config --global push.default simple
+
+    - name: Run styling fixes
+      run: python tools/fix_styling.py ${{ secrets.BOT_TOKEN }}
+
+    - name: Commit and push changes
+      run: |
+        git add -A
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m 'Fixed Styling for you'
+          git push origin HEAD:${{ github.head_ref }}
+        fi
+
+    - name: Re-run style checks
+      run: |
+        python tools/check_basic_style.py ${{ secrets.BOT_TOKEN }}
+        python tools/check_basic_style_2.py ${{ secrets.BOT_TOKEN }}
+
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.
