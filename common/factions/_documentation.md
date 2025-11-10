@@ -15,11 +15,11 @@ faction_goal_id = {
 		#
 		# SCOPE = faction leader: COUNTRY
 	}
-	
+
 	auto_complete = yes # automatically complete goal if the progress reaches 100%
-	
+
 	ai_will_do = { #how likely the faction leader AI is to select this goal if there is a free slot
-		factor = 200 
+		factor = 200
 	}
 
 	complete_effect = {
@@ -27,7 +27,7 @@ faction_goal_id = {
 		#
 		# SCOPE = faction leader: COUNTRY
 	}
-	
+
 	cancel = {
 		# Trigger - checks if goal should be removed from faction
 		#
@@ -43,21 +43,21 @@ faction_goal_id = {
 	# NOTE the following block is optional - for continuous goals only!
 	progress = {
 		# we can mark dfifferent sections of the progress give effects like modifiers to different areas of the progress
-		# by doing: 
+		# by doing:
 		#progress_sections = {
 		#  this can hold as many sections as you want and works dynamically
 		#  so you would create a new section by doing:
 		#  	SectionNameLoc = {
 		#  	Min = The start of the section ex 0.1 means that once 10% has been hit this section is active
-		#  	Max = the end of the section ex. 0.5 means that once 50% has been passed we have leave this section 
+		#  	Max = the end of the section ex. 0.5 means that once 50% has been passed we have leave this section
 		#  	So if Section1 has Max 0.5 and Section2 Min 0.5 both will be active
-		#	
+		#
 		#	Modifier = this holds a modifier that is applied when this section is in effect
 		#	Rule = This holds a new rule that is applied when this section is in effect
 		#	on_activate = is disabled for faction goals
 		#   on_deactivate = is disabled for faction goals
 		#	}
-		# 
+		#
 		#}
 	}
 
@@ -80,11 +80,11 @@ faction_goal_id = {
 		#
 		total_amount_collection = collection_id
 		completed_amount_collection = collection_id
-		
+
 		# Alternatively, both total amount and completed amount can be fixed values or variables:
 		total_amount = MY_VALUE
 		completed_amount = MY_OTHER_VALUE
-		
+
 		# NOTE
 		#  - 'total_amount' and 'total_amount_collection' are mutially exclusive!
 		#  - 'completed_amount' and 'completed_amount_collection' are mutially exclusive!
@@ -131,7 +131,7 @@ faction_rule_id = {
 	#    war_declaration_rule - checks who can declare wars
 	#        SCOPE = country declaring the war: COUNTRY
 	#        FROM = target country: COUNTRY
-	#	
+	#
 	#	 call_to_war_rule - checks who can call to war
 	#         SCOPE = country calling to the war: COUNTRY
 	#         FROM = target country: COUNTRY
@@ -147,7 +147,7 @@ faction_rule_id = {
 	# Rule name is localized with Country and Faction environment
 	#
 	type = type_token
-	
+
 
 	visible = {
 		# Whether the rule should show up in the list
@@ -185,7 +185,7 @@ faction_rule_id = {
 		# List of modifiers in this group
 	}
 
-	
+
 	ai_will_do = {
 		# AI weight modifier for this rule
 		# If <= 0, the AI will not use the rule
@@ -211,14 +211,14 @@ group_id = {
 faction_template_id = {
 
 	name = [...] # Faction name
-	
+
 	visible = {
 		# Checks if template shows up when a new faction is created by a country
 		# If empty - the template won't show up (this allows, for example, to make faction templates that can only be created from script)
-		# 
+		#
 		# SCOPE = country creating a faction : COUNTRY
 	}
-	
+
 	available = {
 		# Checks if template should be available to choose when a new faction is created by a country
 		# If empty - the template is always available (given that it is also visible)
@@ -229,7 +229,7 @@ faction_template_id = {
     can_leader_join_other_factions = yes
 	# a setting that allows this faction leader to join another faction
 	# if the faction leader leaves it destroys the existing faction and invite
-	# all the other faction members that are able to join to the new faction 
+	# all the other faction members that are able to join to the new faction
 
 	manifest = faction_goal_id # Main goal (faction manifest)
 
@@ -309,7 +309,7 @@ Faction_Upgrade_Id = {
 Faction_Upgrade_Group_Id = {
 	name = the default localization string key for the screen name
 	desc = the default localization string key for the screen description
-	icon = the default icon that will be displayed 
+	icon = the default icon that will be displayed
 	upgrades = {
 		the faction upgrades within this group, this list will be sorted on their bonus
 	}
@@ -335,7 +335,7 @@ Faction_Member_Upgrade_Id = {
 Faction_Upgrade_Group_Id = {
 	name = the default localization string key for the screen name
 	desc = the default localization string key for the screen description
-	icon = the default icon that will be displayed 
+	icon = the default icon that will be displayed
 	upgrades = {
 		the faction upgrades within this group, this list will be sorted on their bonus
 	}
