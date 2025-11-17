@@ -1117,3 +1117,8 @@
 	NDefines.NDiplomacy.FACTION_POWER_EFFECTS_WEIGHT = 1			--The weight of the faction's goal status on the faction's power projection
 
 	NDefines.NFactions.FACTION_INFLUENCE_INDUSTRIAL_CAPACITY_FACTOR = 0.5 --how much the country's industry affects its influence
+	NDefines.NFactions.FACTION_INFLUENCE_LEADER_BONUS = 50			-- How much influence we are giving a faction member for being the leader, vanilla 200
+	NDefines.NFactions.MAX_NUM_SHORT_TERM_GOALS = 2						-- Maximum number of short term goals a faction can have at any one time, vanilla 1
+	NDefines.NFactions.MAX_NUM_MEDIUM_TERM_GOALS = 1						-- Maximum number of medium term goals a faction can have at any one time
+	NDefines.NFactions.MAX_NUM_LONG_TERM_GOALS = 1						-- Maximum number of long term goals a faction can have at any one time
+	NDefines.NFactions.FACTION_INITIATIVE_CHANGE_RULE_COST = 3 -- vanilla 1
