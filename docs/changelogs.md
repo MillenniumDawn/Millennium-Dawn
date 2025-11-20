@@ -11,6 +11,167 @@ This page is a list of all MD's changelogs from our documentation. In case you w
 
 ## v1.12.0 'Every Tank an Upgrade'
 
+<details>
+	<summary>v1.12.2 11/20/2024 - HOI 1.17 Compatch</summary>
+
+
+	{% capture md %}
+ Achievements:
+  - Added new achievements "Waa-shington State" and "Make America Libertarian Again"
+
+ AI:
+  - Cleaned up some references to add_ai_strategy to be more performance friendly
+  - Added a check to ensure that Erdoğan and Turkey do not leave NATO as an extra safety measure
+
+ Bugfix:
+  - Fixed a bug where the United States would receive an event about a SHORAD project it proposed to NATO members (The U.S. was not supposed to receive it)
+  - Fixed a bug where NATO members were unable to reject the SHORAD project proposal from the United States
+  - Fixed a bug where France "Stage" focuses were not properly checking for their respective regions
+  - Removed a bugged event that was causing other nations get an idea that is meant for Armenia/Georgia
+  - Fixed an issue where Italy would send an event to Egypt that had an improperly targeted state for the oil deal adding oil to Argentina instead of Egypt
+  - Fixed a bug where the Greenland capital was set to the impassable state instead of the correct state which has Nuuk
+  - Fixed a bug where the POTEF focus for German Doctrine incorrectly asking for an AND condition of Bayern and Germany instead of OR
+  - Fixed an issue where Italy's NIMBYs could suddenly start benefiting the government more than it should
+  - Fixed a bug where the Syrian Civil War from the Arab Spring would not unlock the post-civil war focuses for Syria
+  - Fixed a bug where China's economic focuses for developing various regions did not accommodate for subjects such as the SARs
+  - Fixed a bug with the Arab Spring mechanic where the "Extensive Welfare State" idea was not properly reducing the Arab Spring change
+  - Introduced a degree of randomness to when the Arab Spring protest events spawn for each nation after the mission timeout so the world doesn't get spammed with events at the same time
+  - Fixed a bug where Singapore's opinion modifiers were not properly decaying and instead were increasing the opinion
+  - Removed duplicate defines that were in the defines
+  - Fixed the achievement "Perot Meritorious Service Award" not properly triggering due to a bug in the tooltip looking for neutral conservatism instead of neutral autocracy
+  - Fixed the Soviet division name "98th Guards Airborne Division" not properly being set to 98 and instead taking the name of 96th
+  - Fixed the SCO GUI not properly being displayed and instead showing the dynamic lists twice
+  - Fixed the Iraqi event "Iraqi Forces Storm our Embassy" not properly creating a unit for the Iraqi forces
+  - Fixed the Russian Event regarding Alexander Lebed dying triggering when Alexander Lebed is in control of PMR
+  - Fixed the Arab Spring events about army mutinies happening when the Arab Spring has been completed
+  - Fixed the cosmetic tag for the Maghreb Federation not properly being set which was causing it to not properly show the flag
+  - Fixed the Singaporean ideas using the wrong building slots factor modifier causing it to not properly work
+  - Fixed the Israeli focus "The Oslo Accord" not properly requiring you to complete the focus "The Regulation Act" soft-locking you on the sub tree
+  - Fixed the Hezbollahi idea "Increased Iraninan Support" not properly giving money as expected
+  - Fixed broken tooltips for Burmese Insurgency mechanic regarding influence
+  - Fixed a broken localization for the United States Foreign Policy with it stating something about africa when it's in respects to resetting relations with Russia
+  - Fixed other countries then HOL and BEL receiving Belgium and Dutch characters traits
+  - Changed ai weights to Russian focusses, preventing them going to war without bordering NATO or Ukraine without preperation
+  - Added missing starting coalition members for Netherlands
+  - Remove unintended double polical power gain penalty when monarch is blocking laws in The Netherlands
+  - Added bypass triggers for VOC focusses when the country is the puppet of the Netherlands
+  - Fixed wrong bypass triggers for Dutch WIC focus tree branch. Now it properly bypasses when the country doesn't exist, or you already own the state.
+  - Fixed Dutch Liberal Society modifier not giving the reduction cost to economic focusses
+  - Fixed numerous fixes for the VOC content for the Netherlands
+  - Fixed Dutch Mars event chain not giving rewards or penalties
+  - Fixed German MIO's not being selectable for their equipment groups, while having traits for it
+  - Added tooltip to inform player how the Dutch PvdA Leader gets elected
+  - Fixed the lingering configuration of the European Union on nation states that retain configuration from the European Union post-civil war
+  - Fixed the constant civil wars if you disable the Libyan Triablism mechanic and have less than 10% opinion for any of the breakaway tags
+  - Fixed the broken influence actions in the Libya focus tree when the conditions for the targets are not valid
+  - Fixed the broken Spanish Empire cosmetic tag going away
+  - Fixed a broken influence target in the Syrian national focus tree for the focus "Chinese Anime"
+  - Removed a broken event in the German tree referencing GER_cold_war.26
+  - Fixed two Iranian Parliament missions giving some impossible requests if a IRQ or SYR do not exist
+  - Fixed Dutch focusses and events not giving production lines for naval ships
+  - Fixed Iraq scientist not being available after event
+  - Fixed a broken influence tooltip in the Syrian "Anime Industry Boom"
+  - Preventing Belarusian civil war when there is no police funding
+  - Prevent Romania start world war 3 when Historical is on
+  - Added visibility condition check to Spanish `Install the Carlist Monarchy` decision
+  - Removed global stability penalty for news event `United States Not So United?`
+  - Fixed unexpected combatants increments to both sides when using the Serbian `Attack Montenegrin Militants` decisions.
+  - Fixed Incorrect state transfer and tech inherit for Catalunya independent event.
+  - Fixed hard coded welfare decrease.
+  - Fixed the USA getting the event about increasing it's military spending for NATO
+  - Fixed Vadim Corneliu Tudor reincarnating after his daughter gets retired, damn Transylvanian
+  - Fixed Indian subcontinent breakaways having Chinese portraits instead of Indian ones
+  - Added a check to ensure that Belarus exists for America to be able to do the Belarus Democracy Reauthorization Act
+  - Fixed USA being able to do the Belarus Democracy Reauthorization Act without having any influence or network strength
+
+ Balance:
+  - Reduced the stability penalty for the "Nuclear Power (Offensive)" idea from -0.15 to -0.10
+  - Reduced the cost from Somali Pirate event from 25 billion to 15 billion and instead of 5 convoys, you only lose 2 convoys
+  - removed the regional power requirement from the Space Programs for civilian projects
+  - Reduced the cost of the special project facilities from 50,000 to 45,000
+  - Changed the modifier for the "Global Diplomacy" ideas for Singapore from send_volunteer_factor to send_volunteer_size so you can send more volunteers
+  - Made the Bolivian focus "Purchase Russian Aircraft" purchase MiG-29 Fulcrum instead of Tu-160 since these are more realistic for Bolivia
+  - Added more factors to the various economic events (too many random little changes to help fluctates the events and make some often unsee ones a little more likely to come up)
+  - Reduced some of the Italian productivity modifiers so it's not so substantial where they end up passing USA just by being Italy
+  - Added a check that Bosnia needs to be at peace to take the focus allowing them to join NATO
+  - Fixed non-Arabic countries finding their way to being able to be invited to the UAR
+  - Increased the penalty of using VOC or WIC occupation laws
+  - Having increased healthcare spending (Level 3+, low corruption, and government popularity) should now reduce your Arab Spring protests
+  - Increased the amount of oil gained via the focus tree for VEN to better represent their large-scale/sized oil reserves
+  - Adjusted the trade opinion so it's more penalizing on trade opinion factor with the trade laws
+  - Adjusted the penalties for Dutch non-selfsufficient idea
+  - Added additional triggers to Dutch Space Focusses
+  - Added a additional trigger for allowing a nation to go to Neo Imperialism if you have the intervention idea
+
+ Content:
+  - New Content For MP Under Game Rule to Speed games up
+  - NEW/IMPROVED FOCUS TREE: Sweden, South/North Korea
+  - NEW MIO TREE: Romania, Brazil, Australia, China and Japan
+  - Added new decisions for Bolivia to allow them to develop their oil reserves
+  - Added "Robert Hanssen" as an operative for the Russians to use with American citizenship
+  - Added an event for Venezuela where Hugo Chavez dies and Nicolás Maduro becomes the president (Requires Hugo Chavez to be in power at the time)
+  - Added a date trigger for the United States event "Lehman Brothers Collapse" to be any time after 2005.1.1
+  - Added new content for North and South Korea as well as a new Sub Tree for North Korea
+  - Added new decisions for Venezuela to further exploit more of your oil reserves
+  - Changed Chinese STE decision to a mission so there is less micromanagement. Also added a new mission, which was not visible do to a wrong trigger.
+  - Added a bypass for "Recognize Novorossiya" so the Russian tree doesn't get soft locked when Ukraine is invaded earlier and before the NOV rebellion
+
+ Database:
+  - Added 16 Su-24MRs to the Ukrainian stockpile in 2000
+  - Added 2 missing Marine Regiments to the USA in 2000
+  - Changed the starting economic cycle for the USA to "Stable Growth"
+  - Added 2 enrichment facilities to France
+  - Changed the 9k33 OSA to properly have the battlestation it should have
+  - Added the Mid Air Refueling module to AMX Ghibli (International)
+  - Changed the T72A so it has an Cold War Battlestation instead of an Early Cold War Battlestation
+  - Added Modern A2A Weapons tech to Ukraine due to their company Artem designing a lot of the advanced Russian missiles
+  - Added Highlight states for all Formable Countries, making easier to see which states you need
+  - Added tooltips for Dutch Focus trees to let you see the reward when sending an event to a country
+  - Sorted the Country AI behavior Game rules to alphabetic order
+  - Changed CAT_naval_misc to CAT_naval_modules for clearer information
+  - Changed CAT_naval_eqp to CAT_naval_all for clearer information
+  - Reclassified the S3-Viking as the more modern version of the plane type over the S-2 Tracker
+  - Added new generic general portraits for Indian subcontinent nations
+
+ Game Rules:
+  - Added a new game rule to disable the AI from puppeting other nations via the influence system
+  - Added a new game rule to disables aggressive features for Western nations
+
+ Graphics:
+  - Converted all PNG assets to DDS to better optimize for lower end machines
+  - Fixed a broken graphic for Belarus in their utility vehicle graphics
+  - Created new MIO Trait icons
+  - Created new Organisation select icons
+  - Restructured the MIO selection screen
+  - Fixed Czechia having access to the T72M2 Moderna and Slovakia having the T72M4CZ
+  - Added missing Special Project GFX
+
+ Localization:
+  - Removed a confusing statement in the Arab Spring events where it mentioned caretaker governments but was using the name of the former leader instead
+  - Fixed the localization for the Transport Helicopter Equipments
+  - Improved the localization for the influence tooltip for when a nation is trying to influence
+  - Fixed the missing localization for the Cuban focus "Talks with Colombia"
+  - Improved the grammar and structure for some Serbian events
+  - Fixed the localization for the Indian events about communist rebellions not properly referencing India
+  - Fixed the name of "Megawati Sukarnoputri" being incorrect for the Indonesian politician
+
+ Map:
+  - Moved Al-Amarah north of Basrah instead of its currently inaccurate position
+
+ Performance:
+  - Numerous improvements and cleanup on old and antiquated systems making them more in line with modern standards
+  - Removed a large number of unused assets and localization optimizing load times
+  - Removed a series of country flags and arrays that were not being used further optimizing the save file
+
+ User Interface:
+  - Fixed a broken UI element when trying to design Self-Propelled Artillery as Russia
+
+	{% endcapture %}
+	{{ md | markdownify }}
+
+</details>
+
+
 <details><summary>v1.12.1b 8/22/25 Hotfix</summary>
 
 v1.12.1b
