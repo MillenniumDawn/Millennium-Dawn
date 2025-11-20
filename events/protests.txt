@@ -883,60 +883,8 @@ country_event = {
 					original_tag = PREV
 					NOT = { tag = PREV }
 				}
-				set_temp_variable = { temp_democratic = PREV.party_popularity@democratic }
-				multiply_temp_variable = { temp_democratic = 100 }
-				set_temp_variable = { temp_communism = PREV.party_popularity@communism }
-				multiply_temp_variable = { temp_communism = 100 }
-				set_temp_variable = { temp_neutrality = PREV.party_popularity@neutrality }
-				multiply_temp_variable = { temp_neutrality = 100 }
-				set_temp_variable = { temp_fascism = PREV.party_popularity@fascism }
-				multiply_temp_variable = { temp_fascism = 100 }
-				set_temp_variable = { temp_nationalist = PREV.party_popularity@nationalist }
-				multiply_temp_variable = { temp_nationalist = 100 }
-
-				if = { limit = { has_government = nationalist }
-					multiply_temp_variable = { temp_neutrality = 0.5 }
-					add_to_temp_variable = { temp_nationalist = temp_neutrality }
-					add_to_array = { ruling_party = 20 }
-				}
-				else_if = { limit = { has_government = communism }
-					multiply_temp_variable = { temp_democratic = 0.5 }
-					add_to_temp_variable = { temp_communism = temp_democratic }
-					add_to_array = { ruling_party = 6 }
-				}
-				else_if = { limit = { has_government = democratic }
-					multiply_temp_variable = { temp_communism = 0.5 }
-					add_to_temp_variable = { temp_democratic = temp_communism }
-					add_to_array = { ruling_party = 1 }
-				}
-				else_if = { limit = { has_government = fascism }
-					multiply_temp_variable = { temp_neutrality = 0.5 }
-					add_to_temp_variable = { temp_fascism = temp_neutrality }
-					add_to_array = { ruling_party = 14 }
-				}
-				else_if = { limit = { has_government = neutrality }
-					add_to_array = { ruling_party = 11 }
-				}
-				# neutrals fight eachother
-
-				set_popularities = {
-					democratic = temp_democratic
-					communism = temp_communism
-					neutrality = temp_neutrality
-					fascism = temp_fascism
-					nationalist = temp_nationalist
-				}
-				start_politics_input = yes
-				#copy politics
-				for_loop_effect = {
-					end = party_pop_array^num
-					value = v
-					set_variable = { party_pop_array^v = PREV.party_pop_array^v }
-				}
-
-				add_up_party_totals = yes
-				set_party_positions = yes
-				startup_politics = yes
+				set_temp_variable = { nation_to_copy_from = PREV.id }
+				replicate_configure_politics = yes
 
 				set_party_index_to_ruling_party = yes
 				set_temp_variable = { party_popularity_increase = 0.2 }
@@ -970,118 +918,9 @@ country_event = {
 				#LAWS
 				set_variable = { gdp_per_capita = PREV.gdp_per_capita }
 
-				### Internal factions
-				if = { limit = { PREV = { has_idea = small_medium_business_owners } }
-					add_ideas = small_medium_business_owners
-				}
-				if = { limit = { PREV = { has_idea = international_bankers } }
-					add_ideas = international_bankers
-				}
-				if = { limit = { PREV = { has_idea = fossil_fuel_industry } }
-					add_ideas = fossil_fuel_industry
-				}
-				if = { limit = { PREV = { has_idea = industrial_conglomerates } }
-					add_ideas = industrial_conglomerates
-				}
-				if = { limit = { PREV = { has_idea = oligarchs } }
-					add_ideas = oligarchs
-				}
-				if = { limit = { PREV = { has_idea = maritime_industry } }
-					add_ideas = maritime_industry
-				}
-				if = { limit = { PREV = { has_idea = defense_industry } }
-					add_ideas = defense_industry
-				}
-				if = { limit = { PREV = { has_idea = the_military } }
-					add_ideas = the_military
-				}
-				if = { limit = { PREV = { has_idea = intelligence_community } }
-					add_ideas = intelligence_community
-				}
-				if = { limit = { PREV = { has_idea = labour_unions } }
-					add_ideas = labour_unions
-				}
-				if = { limit = { PREV = { has_idea = landowners } }
-					add_ideas = landowners
-				}
-				if = { limit = { PREV = { has_idea = farmers } }
-					add_ideas = farmers
-				}
-				if = {
-					limit = {
-						PREV = {
-							has_idea = communist_cadres
-							ROOT = {
-								OR = {
-									is_in_array = { ruling_party = 4 }
-									is_in_array = { ruling_party = 19 }
-								}
-							}
-						}
-					}
-					add_ideas = communist_cadres
-				}
-				if = { limit = { PREV = { has_idea = the_priesthood } }
-					add_ideas = the_priesthood
-				}
-				if = { limit = { PREV = { has_idea = the_ulema } }
-					add_ideas = the_ulema
-				}
-				if = { limit = { PREV = { has_idea = the_clergy } }
-					add_ideas = the_clergy
-				}
-				if = { limit = { PREV = { has_idea = wahabi_ulema } }
-					add_ideas = wahabi_ulema
-				}
-				if = { limit = { PREV = { has_idea = the_donju } }
-					add_ideas = the_donju
-				}
-				if = {
-					limit = {
-						PREV = {
-							has_idea = saudi_royal_family
-							ROOT = {
-								OR = {
-									is_in_array = { ruling_party = 10 }
-									is_in_array = { ruling_party = 23 }
-									is_in_array = { ruling_party = 0 }
-								}
-							}
-						}
-					}
-					add_ideas = saudi_royal_family
-				}
-				if = {
-					limit = {
-						PREV = {
-							has_idea = iranian_quds_force
-							ROOT = {
-								NOT = {
-									has_government = democratic
-									has_government = fascism
-								}
-							}
-						}
-					}
-					add_ideas = iranian_quds_force
-				}
-				if = {
-					limit = {
-						PREV = {
-							has_idea = foreign_jihadis
-							ROOT = {
-								is_in_array = { ruling_party = 11 }
-							}
-						}
-					}
-					add_ideas = foreign_jihadis
-				}
-				if = { limit = { PREV = { has_idea = wall_street } }
-					add_ideas = wall_street
-				}
-				if = { limit = { PREV = { has_idea = chaebols } }
-					add_ideas = chaebols
-				}
+				# Copy Internal Factions
+				set_temp_variable = { nation_to_copy_from = PREV }
+				copy_internal_factions = yes
 				#copy leader throughput
 				set_temp_variable = { nation_to_copy_from = PREV }
 				copy_subideolgy_leader_throughput = yes

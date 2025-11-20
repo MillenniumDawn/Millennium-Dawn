@@ -9664,3 +9664,58 @@ copy_subideolgy_leader_throughput = {
 	set_variable = { Nat_Autocracy_leader = nation_to_copy_from.Nat_Autocracy_leader?0 }
 	set_variable = { Monarchist_leader = nation_to_copy_from.Monarchist_leader?0 }
 }
+
+# Effect: replicate_configure_politics
+# Purpose: Replicates and configure politics
+# Parameters:
+#  - nation_to_copy_from - the nation to copy the configure politics
+replicate_configure_politics = {
+	set_temp_variable = { temp_democratic = nation_to_copy_from.party_popularity@democratic }
+	multiply_temp_variable = { temp_democratic = 100 }
+	set_temp_variable = { temp_total = temp_democratic }
+	set_temp_variable = { temp_communism = nation_to_copy_from.party_popularity@communism }
+	multiply_temp_variable = { temp_communism = 100 }
+	add_to_temp_variable = { temp_total = temp_communism }
+	set_temp_variable = { temp_neutrality = nation_to_copy_from.party_popularity@neutrality }
+	multiply_temp_variable = { temp_neutrality = 100 }
+	add_to_temp_variable = { temp_total = temp_neutrality }
+	set_temp_variable = { temp_fascism = nation_to_copy_from.party_popularity@fascism }
+	multiply_temp_variable = { temp_fascism = 100 }
+	add_to_temp_variable = { temp_total = temp_fascism }
+	set_temp_variable = { temp_nationalist = nation_to_copy_from.party_popularity@nationalist }
+	multiply_temp_variable = { temp_nationalist = 100 }
+	add_to_temp_variable = { temp_total = temp_nationalist }
+	subtract_from_temp_variable = { temp_total = 100 }
+	multiply_temp_variable = { temp_total = -1 }
+	add_to_temp_variable = { temp_nationalist = temp_total }
+
+	set_popularities = {
+		democratic = temp_democratic
+		communism = temp_communism
+		neutrality = temp_neutrality
+		fascism = temp_fascism
+		nationalist = temp_nationalist
+	}
+	add_popularity = {
+		ideology = neutrality
+		popularity = -0.2
+	}
+	start_politics_input = yes
+	#copy politics
+	for_loop_effect = {
+		end = party_pop_array^num
+		value = v
+		set_variable = { party_pop_array^v = nation_to_copy_from.party_pop_array^v }
+	}
+	add_to_array = { ruling_party = nation_to_copy_from.ruling_party^0 }
+	for_loop_effect = {
+		end = gov_coalition_array^num
+		value = v
+		add_to_array = { gov_coalition_array = nation_to_copy_from.gov_coalition_array^v }
+	}
+	set_variable = { party_pop_array^19 = 0.01 } #all moved to fight ;)
+	set_variable = { party_pop_elect_array^19 = 0 } #made illegal
+	add_up_party_totals = yes
+	set_party_positions = yes
+	startup_politics = yes
+}
