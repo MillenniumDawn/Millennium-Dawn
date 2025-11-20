@@ -173,9 +173,7 @@ This page is a list of all MD's changelogs from our documentation. In case you w
 
 
 <details><summary>v1.12.1b 8/22/25 Hotfix</summary>
-
-v1.12.1b
-
+	{% capture md %}
  AI:
   - AI is less likely to continue to combat influence if their highest influence has a very positive opinion (+100)
   - Improved some of the AI handling of the buying and selling of reactor grade fuel
@@ -255,13 +253,12 @@ v1.12.1b
   - Fixed the special project window for different projects having bad overlap with longer descriptions
   - Fixed the special project window for projects that have multiple options not being properly aligned and having a large amount of overlap
   - Fixed the Economic Numbers overlap in the diplomacy window for people who do not own the La Resistance DLC
-
+	{% endcapture %}
+	{{ md | markdownify }}
 </details>
 
 <details><summary>v1.12.1a 8/15/25 Hotfix</summary>
-
-v1.12.1a
-
+	{% capture md %}
   AI:
   - Moved more add_ai_strategy to the ai_strategy file for better performances
   - Expanded the AI for Ukraine to be more reactionary to the Russian nation if they're justifying or have a wargoal against them
@@ -307,12 +304,12 @@ v1.12.1a
  Graphics:
  - Fixed various missing National Spirit GFX
 
-
+	{% endcapture %}
+	{{ md | markdownify }}
 </details>
 
 <details><summary>v1.12.1</summary>
-
-v1.12.1
+	{% capture md %}
 
  AI:
   - The AI will not pursue a debt war if a nation is guaranteed by a NATO member or CSTO member
@@ -446,6 +443,8 @@ v1.12.1
   - Removed floating "Armour_TITLE_WEAPONS" text from the tech tree
   - Added several national focus filters to Iran and reassigned existing filters to improve playability.
 
+	{% endcapture %}
+	{{ md | markdownify }}
 </details>
 
 <details><summary>v1.12.0d - 7/02/25 Hotfix</summary>
