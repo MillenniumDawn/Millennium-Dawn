@@ -1,5 +1,5 @@
 version="1.12.2"
-name="Millennium Dawn: NCNS Beta Version"
+name="Millennium Dawn: Developer Version"
 tags={
 	"Alternative History"
 	"Gameplay"

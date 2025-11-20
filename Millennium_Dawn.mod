@@ -1,5 +1,5 @@
 version="1.12.2"
-name="Millennium Dawn: NCNS Beta Version"
+name="Millennium Dawn: Developer Version"
 tags={
 	"Alternative History"
 	"Gameplay"
@@ -13,7 +13,7 @@ tags={
 supported_version="1.17.*"
 picture = "thumbnail.png"
 remote_file_id="2777392649"
-path="mod/Millennium-Dawn-ncns"
+path="mod/Millennium-Dawn"
 
 replace_path = "events"
 replace_path = "common/abilities"
