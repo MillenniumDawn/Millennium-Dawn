@@ -1,5 +1,5 @@
-version="1.12.1"
-name="Millennium Dawn: Developer Version"
+version="1.12.2"
+name="Millennium Dawn: NCNS Beta Version"
 tags={
 	"Alternative History"
 	"Gameplay"
@@ -10,7 +10,7 @@ tags={
 	"Balance"
 	"Fixes"
 }
-supported_version="1.16.*"
+supported_version="1.17.*"
 remote_file_id="2777392649"
 
 replace_path = "events"
@@ -41,6 +41,8 @@ replace_path = "common/scripted_diplomatic_actions"
 replace_path = "common/special_projects"
 replace_path = "common/technologies"
 replace_path = "common/technology_sharing"
+replace_path = "common/factions"
+replace_path = "common/doctrines"
 replace_path = "common/unit_leader"
 replace_path = "common/unit_medals"
 replace_path = "common/units"

@@ -94,6 +94,7 @@ NATO_decisions = {
 					AND = {
 						has_government = neutrality
 						NOT = { is_in_array = { ruling_party = 12 } }
+						NOT = { has_country_leader = { name = "Recep Tayyip Erdoğan" ruling_only = yes } }
 					}
 				}
 			}
@@ -1803,6 +1804,135 @@ NATO_ukraine_help = {
 				factor = 0
 				check_variable = { debt_ratio > 1 }
 			}
+		}
+	}
+}
+
+NATO_CSTO_agreement = {
+	propose_agreement_talks = {
+		icon = GFX_decision_generic_join_nato
+		fire_only_once = yes
+
+		visible = {
+			is_faction_leader = yes
+			NOT = { has_global_flag = NATO_CSTO_treaty_adandoned }
+			any_other_country = {
+				has_idea = CSTO_member
+			}
+		}
+
+		# available = {
+		# 	NOT = { has_global_flag = NATO_CSTO_treaty_ratified }
+		# }
+
+		complete_effect = {
+			random_other_country = {
+				limit = {
+					has_idea = CSTO_member
+					is_faction_leader = yes
+				}
+
+				country_event = { id = NATO_CSTO.1 days = 1 }
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	NATO_CSTO_AI_breach_fix = {
+		visible = {
+			is_ai = yes
+			has_country_flag = NATO_CSTO_agreement_breach_warning
+			NOT = { has_global_flag = NATO_CSTO_treaty_adandoned }
+		}
+
+		fire_only_once = no
+		days_re_enable = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NATO_CSTO_AI_breach_fix"
+			random_owned_controlled_state = {
+				PREV = {
+					delete_unit = {
+						state = PREV
+						disband = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				threat > 0.4
+			}
+		}
+	}
+
+	NATO_CSTO_breach_mission = {
+		available = { always = yes }
+		activation = { always = no }
+
+		days_mission_timeout = 120
+		selectable_mission = no
+		is_good = no
+		fire_only_once = no
+
+		cancel_trigger = {
+			if = {
+				limit = { has_idea = NATO_member }
+
+				custom_trigger_tooltip = {
+					tooltip = NATO_CSTO_violation_TT
+					check_variable = { global.var_nato_inf_count < 1000 }
+					check_variable = { global.var_nato_tank_count < 400 }
+				}
+			}
+			else = {
+				custom_trigger_tooltip = {
+					tooltip = NATO_CSTO_violation_TT
+					check_variable = { global.var_csto_inf_count < 1000 }
+					check_variable = { global.var_csto_tank_count < 400 }
+				}
+			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel effect NATO_CSTO_breach_mission"
+			if = {
+				limit = { has_idea = NATO_member }
+
+				every_country = {
+					limit = { has_idea = NATO_member }
+
+					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
+				}
+			}
+			else = {
+				every_country = {
+					limit = { has_idea = CSTO_member }
+
+					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
+				}
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout effect NATO_CSTO_breach_mission"
+			set_global_flag = NATO_CSTO_treaty_adandoned
+			if = {
+				limit = { has_idea = NATO_member }
+
+				news_event = { id = NATO_CSTO.103 days = 1 }
+			}
+			else = {
+				news_event = { id = NATO_CSTO.104 days = 1 }
+			}
+
+			add_threat = 10
 		}
 	}
 }

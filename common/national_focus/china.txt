@@ -235,8 +235,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CHI_Invigorate_Country_Through_STE executed"
-			unlock_decision_category_tooltip = invigorate_country_through_STE_category
-			activate_decision = strategy_of_invigorating_through_STE
+			activate_mission = strategy_of_invigorating_through_STE
+			activate_mission = increase_research_funds
 			add_ideas = CHI_Invigorate_Country_Through_STE1
 		}
 
@@ -1604,7 +1604,7 @@ focus_tree = {
 				name = CHI_Naval_Capability_Enhancements
 				bonus = 0.2
 				uses = 3
-				category = CAT_naval_eqp
+				category = CAT_naval_all
 			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_Naval_Capability_Enhancements executed"
 		}
@@ -4765,12 +4765,13 @@ focus_tree = {
 			if = {
 				limit = { is_faction_leader = yes NOT = { TAI = { is_subject_of = CHI } } }
 				CHI = { add_to_faction = TAI }
+				set_faction_rule = call_to_war_rule_chinese_united_front
 			}
 			else_if = {
 				limit = { is_faction_leader = no NOT = { TAI = { is_subject_of = CHI } } }
-				add_ideas = faction_chinese_united_front
-				create_faction = chinese_united_front
+				create_faction_from_template = faction_template_sco
 				CHI = { add_to_faction = TAI }
+				set_faction_rule = call_to_war_rule_chinese_united_front
 			}
 			if = {
 				limit = { has_government = communism TAI = { is_subject_of = CHI } }
@@ -15233,9 +15234,11 @@ focus_tree = {
 			if = {
 				limit = { is_faction_leader = yes }
 				CHI = { add_to_faction = RAJ }
+				set_faction_rule = call_to_war_rule_chinese_indian_alliance
 			}
 			else = {
-				create_faction = SHANGHAI_PACT
+				create_faction_from_template = faction_template_sco
+				set_faction_rule = call_to_war_rule_chinese_indian_alliance
 				CHI = { add_to_faction = RAJ }
 			}
 			log = "[GetDateText]: [This.GetName]: focus CHI_A_New_Alliance executed"
@@ -15334,7 +15337,7 @@ focus_tree = {
 				limit = { PAK = { is_same_government = yes } }
 				if = {
 					limit = { is_faction_leader = no }
-					create_faction = SHANGHAI_PACT
+					create_faction_from_template = faction_template_sco
 				}
 				add_to_faction = PAK
 			}
@@ -15342,7 +15345,7 @@ focus_tree = {
 				limit = { SRI = { is_same_government = yes } }
 				if = {
 					limit = { is_faction_leader = no }
-					create_faction = SHANGHAI_PACT
+					create_faction_from_template = faction_template_sco
 				}
 				add_to_faction = SRI
 			}
@@ -16917,6 +16920,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CHI_Form_the_SCO executed"
+			create_faction_from_template = faction_template_sco
 			every_country = {
 				limit = {
 					OR = {
@@ -16961,25 +16965,28 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_CHI_AGGRESSION FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESEARCH }
 		completion_reward = {
-			set_temp_variable = { temp_opinion = 5 }
-			change_industrial_conglomerates_opinion = yes
-			every_country = {
-				limit = { has_idea = sco_member }
+			log = "[GetDateText]: [This.GetName]: focus CHI_Emphasize_Economic_Cooperation executed"
+			set_faction_rule = joining_rule_sco
+			newline = yes
+			remove_faction_rule = joining_rule_sco_eco
+			newline = yes
+			every_other_country = {
+				limit = {
+					has_idea = sco_member
+					NOT = { is_in_faction_with = CHI }
+				}
 				swap_ideas = {
 					remove_idea = sco_member
 					add_idea = sco_member_econ
 				}
 			}
-			if = {
-				limit = { NOT = { has_completed_focus = CHI_Form_the_SCO } }
-				effect_tooltip = {
-					add_ideas = sco_member_econ
-				}
-			}
+			newline = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_industrial_conglomerates_opinion = yes
+			newline = yes
 			set_temp_variable = { modify_chinese_aggression = -1 }
 			CHI_modify_chinese_aggression = yes
 			SCO_dirty_update = yes
-			log = "[GetDateText]: [This.GetName]: focus CHI_Emphasize_Economic_Cooperation executed"
 		}
 
 		ai_will_do = {
@@ -17104,23 +17111,25 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_CORRUPTION FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
 		completion_reward = {
-			set_temp_variable = { temp_opinion = 10 }
-			change_communist_cadres_opinion = yes
-			every_country = {
-				limit = { has_idea = sco_member }
+			log = "[GetDateText]: [This.GetName]: focus CHI_Emphasize_Political_Cooperation executed"
+			set_faction_rule = joining_rule_sco
+			newline = yes
+			remove_faction_rule = joining_rule_sco_political
+			newline = yes
+			SCO_dirty_update = yes
+			every_other_country = {
+				limit = {
+					has_idea = sco_member
+					NOT = { is_in_faction_with = CHI }
+				}
 				swap_ideas = {
 					remove_idea = sco_member
 					add_idea = sco_member_pol
 				}
 			}
-			if = {
-				limit = { NOT = { has_completed_focus = CHI_Form_the_SCO } }
-				effect_tooltip = {
-					add_ideas = sco_member_pol
-				}
-			}
-			SCO_dirty_update = yes
-			log = "[GetDateText]: [This.GetName]: focus CHI_Emphasize_Political_Cooperation executed"
+			newline = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_communist_cadres_opinion = yes
 		}
 
 		ai_will_do = {
@@ -17183,25 +17192,28 @@ focus_tree = {
 		}
 
 		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus CHI_Emphasize_Military_Cooperation executed"
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
-			every_country = {
-				limit = { has_idea = sco_member }
+			newline = yes
+			set_faction_rule = joining_rule_sco
+			newline = yes
+			remove_faction_rule = joining_rule_sco_mil
+			newline = yes
+			set_temp_variable = { modify_chinese_aggression = 1 }
+			CHI_modify_chinese_aggression = yes
+			newline = yes
+			SCO_dirty_update = yes
+			every_other_country = {
+				limit = {
+					has_idea = sco_member
+					NOT = { is_in_faction_with = CHI }
+				}
 				swap_ideas = {
 					remove_idea = sco_member
 					add_idea = sco_member_mil
 				}
 			}
-			if = {
-				limit = { NOT = { has_completed_focus = CHI_Form_the_SCO } }
-				effect_tooltip = {
-					add_ideas = sco_member_mil
-				}
-			}
-			set_temp_variable = { modify_chinese_aggression = 1 }
-			CHI_modify_chinese_aggression = yes
-			SCO_dirty_update = yes
-			log = "[GetDateText]: [This.GetName]: focus CHI_Emphasize_Military_Cooperation executed"
 		}
 
 		ai_will_do = {
@@ -17582,13 +17594,16 @@ focus_tree = {
 				if = {
 					limit = { CHI = { has_idea = sco_member_pol } }
 					add_ideas = sco_member_pol
+					CHI = { add_to_faction = PREV }
 				}
 				else_if = {
 					limit = { CHI = { has_idea = sco_member_mil } }
 					add_ideas = sco_member_mil
+					CHI = { add_to_faction = PREV }
 				}
 				else = {
 					add_ideas = sco_member
+					CHI = { add_to_faction = PREV }
 				}
 				add_to_array = { global.sco_members = THIS }
 			}
@@ -17630,16 +17645,15 @@ focus_tree = {
 			}
 		}
 		completion_reward = {
-			if = {
-				limit = { is_in_faction = no }
-				create_faction = SHANGHAI_PACT
-			}
+			set_faction_name = SHANGHAI_PACT
+			set_faction_rule = call_to_war_rule_sco_military_only
+			remove_faction_rule = call_to_war_rule_never
+			newline = yes
 			every_other_country = {
 				limit = {
-					is_sco = yes
-					NOT = { is_in_faction_with = CHI }
+					is_in_faction_with = SOV
 				}
-				news_event = { id = sco.12 days = 1 }
+				CHI = { add_to_faction = PREV }
 			}
 			set_temp_variable = { modify_chinese_aggression = 5 }
 			CHI_modify_chinese_aggression = yes

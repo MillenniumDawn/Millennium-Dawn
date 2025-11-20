@@ -107,7 +107,7 @@ country_event = {
 	}
 }
 
-####
+# Offer to Join the Gran-Colombia Alliance
 country_event = {
 	id = gca.1
 	title = gca.1.t
@@ -121,20 +121,72 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: gca.1.a executed"
 		VEN = {
 			country_event = { id = gca.2 days = 1 }
+			add_to_faction = PREV
 		}
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = {
+				factor = 3
+				OR = {
+					check_variable = { influence_array^0 = VEN.id }
+					check_variable = { influence_array^1 = VEN.id }
+					check_variable = { influence_array^2 = VEN.id }
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = VEN
+					value > 49
+				}
+			}
+		}
 	}
 
 	# No we wont join
 	option = {
 		name = gca.1.b
 		log = "[GetDateText]: [This.GetName]: gca.1.a executed"
-		ai_chance = { base = 0 }
+
+		VEN = {
+			country_event = { id = gca.3 days = 1 }
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = VEN
+					value < 0
+				}
+			}
+		}
 	}
 }
-#
+
+# [FROM.GetName] Joins the GCA
 country_event = {
 	id = gca.2
+	title = gca.2.t
+	desc = gca.2.d
+	is_triggered_only = yes
+	picture = GFX_handshake_black
+
+	# Great they joined
+	option = {
+		name = gca.2.a
+		log = "[GetDateText]: [This.GetName]: gca.2.a executed"
+		effect_tooltip = {
+			VEN = {
+				add_to_faction = FROM
+			}
+		}
+	}
+}
+
+# [FROM.GetName] Refuses to Join the GCA
+country_event = {
+	id = gca.3
 	title = gca.2.t
 	desc = gca.2.d
 	is_triggered_only = yes
