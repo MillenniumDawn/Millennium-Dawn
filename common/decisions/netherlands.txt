@@ -1090,42 +1090,28 @@ HOL_Carrier_Production = {
 		}
 		cost = 75
 		complete_effect = {
-			if = {
-				limit = { has_dlc = "Man the Guns" }
-				create_equipment_variant = {
-					name = "Province Class Aircraft Carrier"
-					type = carrier_hull_3
-					parent_version = 5
-					allow_without_tech = yes
-					modules = {
-						fixed_ship_engine_slot = module_surface_mod_reactor_power
-						fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
-						fixed_ship_radar_slot = module_radar_4
-						fixed_ship_auxillary_slot_2 = module_ciws_3
-						fixed_ship_auxillary_slot_1 = module_ram_3
-						fixed_ship_auxillary_slot = module_esm_1
-						fixed_ship_flight_deck = module_flight_deck_7
-						front_1_custom_slot = module_ram_3
-						front_2_custom_slot = module_ciws_3
-						mid_1_custom_slot = module_helipads_3
-						mid_2_custom_slot = module_helipads_3
-						mid_3_custom_slot = module_helipads_3
-						rear_1_custom_slot = module_ram_3
-						rear_2_custom_slot = module_ciws_3
-					}
+			create_equipment_variant = {
+				name = "Province Class Aircraft Carrier"
+				type = carrier_hull_3
+				parent_version = 5
+				allow_without_tech = yes
+				modules = {
+					fixed_ship_engine_slot = module_surface_mod_reactor_power
+					fixed_ship_fire_control_system_slot = module_advanced_integrated_missile_radar_control
+					fixed_ship_radar_slot = module_radar_4
+					fixed_ship_auxillary_slot_2 = module_ciws_3
+					fixed_ship_auxillary_slot_1 = module_ram_3
+					fixed_ship_auxillary_slot = module_esm_1
+					fixed_ship_flight_deck = module_flight_deck_7
+					front_1_custom_slot = module_ram_3
+					front_2_custom_slot = module_ciws_3
+					mid_1_custom_slot = module_helipads_3
+					mid_2_custom_slot = module_helipads_3
+					mid_3_custom_slot = module_helipads_3
+					rear_1_custom_slot = module_ram_3
+					rear_2_custom_slot = module_ciws_3
 				}
 			}
-			else = {
-				create_equipment_variant = {
-					type = nuclear_carrier_2
-					name = "Province Class Aircraft Carrier"
-					allow_without_tech = yes
-					upgrades = {
-						ship_reliability_upgrade = 2
-						ship_anti_air_upgrade = 3
-					}
-				}
-	   		}
 			set_country_flag = HOL_Carrier_Production_Completed_HOL
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
@@ -1725,8 +1711,10 @@ HOL_VOC_category = {
 		selectable_mission = no
 
 		available = {
+			hidden_trigger = {
+				always = no
+			}
 			RAJ = { is_top3_influencer = yes }
-			has_completed_focus = HOL_financial_influence_india
 		}
 
 		activation = {
@@ -1734,10 +1722,13 @@ HOL_VOC_category = {
 		}
 
 		timeout_effect = {
-			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = HOL }
-			set_temp_variable = { influence_target = RAJ }
-			change_influence_percentage = yes
+			if = {
+				limit = { RAJ = { is_top3_influencer = yes } }
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = HOL }
+				set_temp_variable = { influence_target = RAJ }
+				change_influence_percentage = yes
+			}
 		}
 	}
 	HOL_voc_india_mission2 = {
@@ -1756,11 +1747,21 @@ HOL_VOC_category = {
 		selectable_mission = no
 
 		available = {
-			naval_strength_ratio = {
-				tag = RAJ
-				ratio > 1.3
+			has_naval_control = 205
+			has_naval_control = 104
+			has_naval_control = 203
+			has_naval_control = 101
+			RAJ = {
+				NOT = {
+					has_naval_control = 205
+					has_naval_control = 104
+					has_naval_control = 203
+					has_naval_control = 101
+				}
 			}
-			has_completed_focus = HOL_gujurat_trade_port
+			hidden_trigger = {
+				always = no
+			}
 		}
 
 		activation = {
@@ -1768,10 +1769,26 @@ HOL_VOC_category = {
 		}
 
 		timeout_effect = {
-			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = HOL }
-			set_temp_variable = { influence_target = RAJ }
-			change_influence_percentage = yes
+			if = {
+				limit = {
+					has_naval_control = 205
+					has_naval_control = 104
+					has_naval_control = 203
+					has_naval_control = 101
+					RAJ = {
+						NOT = {
+							has_naval_control = 205
+							has_naval_control = 104
+							has_naval_control = 203
+							has_naval_control = 101
+						}
+					}
+				}
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = HOL }
+				set_temp_variable = { influence_target = RAJ }
+				change_influence_percentage = yes
+			}
 		}
 	}
 	HOL_voc_india_water = {
@@ -1841,14 +1858,8 @@ HOL_VOC_category = {
 			has_completed_focus = HOL_financial_influence_india
 		}
 
-		cost = 150
+		cost = 100
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_christian"
 			set_temp_variable = { percent_change = 5 }
@@ -1884,14 +1895,8 @@ HOL_VOC_category = {
 			has_completed_focus = HOL_financial_influence_india
 		}
 
-		cost = 150
+		cost = 100
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_civilwar"
 			RAJ = { country_event = HOL_VOC.1 }
@@ -1933,12 +1938,6 @@ HOL_VOC_category = {
 
 		cost = 150
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_gujurat_rebellion1"
 			set_temp_variable = { percent_change = 5 }
@@ -1992,12 +1991,6 @@ HOL_VOC_category = {
 
 		cost = 150
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_gujurat_rebellion2"
 			set_temp_variable = { percent_change = 5 }
@@ -2046,12 +2039,6 @@ HOL_VOC_category = {
 
 		cost = 150
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_gujurat_rebellion3"
 			set_temp_variable = { percent_change = 5 }
@@ -2108,12 +2095,6 @@ HOL_VOC_category = {
 
 		cost = 150
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_gujurat_rebellion4"
 			set_temp_variable = { percent_change = 5 }
@@ -2170,12 +2151,6 @@ HOL_VOC_category = {
 
 		cost = 150
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_gujurat_rebellion5"
 			set_temp_variable = { percent_change = 5 }
@@ -2226,12 +2201,6 @@ HOL_VOC_category = {
 
 		cost = 150
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_bengal_rebellion1"
 			set_temp_variable = { percent_change = 5 }
@@ -2285,12 +2254,6 @@ HOL_VOC_category = {
 
 		cost = 150
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_bengal_rebellion2"
 			set_temp_variable = { percent_change = 5 }
@@ -2340,12 +2303,6 @@ HOL_VOC_category = {
 
 		cost = 150
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_bengal_rebellion3"
 			set_temp_variable = { percent_change = 5 }
@@ -2402,12 +2359,6 @@ HOL_VOC_category = {
 
 		cost = 150
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_bengal_rebellion4"
 			set_temp_variable = { percent_change = 5 }
@@ -2464,12 +2415,6 @@ HOL_VOC_category = {
 
 		cost = 150
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_bengal_rebellion5"
 			set_temp_variable = { percent_change = 5 }
@@ -2511,16 +2456,11 @@ HOL_VOC_category = {
 
 		visible = {
 			has_completed_focus = HOL_voc_economic_zone_india
+			NOT = { 436 = { is_owned_by = HOL } }
 		}
 
 		cost = 150
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_east_gujurat"
 			set_temp_variable = { percent_change = -50 }
@@ -2558,17 +2498,11 @@ HOL_VOC_category = {
 
 		visible = {
 			has_completed_focus = HOL_voc_economic_zone_india
+			NOT = { 452 = { is_owned_by = HOL } }
 		}
 
 		cost = 150
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_west_bengal"
 			set_temp_variable = { percent_change = -50 }
@@ -2606,16 +2540,11 @@ HOL_VOC_category = {
 
 		visible = {
 			has_completed_focus = HOL_voc_economic_zone_india
+			NOT = { 465 = { is_owned_by = HOL } }
 		}
 
 		cost = 150
 
-		modifier = {
-
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_kerala"
 			set_temp_variable = { percent_change = -50 }
@@ -2653,12 +2582,11 @@ HOL_VOC_category = {
 
 		visible = {
 			has_completed_focus = HOL_voc_economic_zone_india
+			NOT = { 462 = { is_owned_by = HOL } }
 		}
 
 		cost = 150
 
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_india_tamil"
 			set_temp_variable = { percent_change = -50 }
@@ -2671,8 +2599,11 @@ HOL_VOC_category = {
 		}
 	}
 	HOL_voc_taiwan_mission1 = {
-		allowed = { original_tag = HOL }
 		icon = GFX_decision_influence
+
+		allowed = {
+			original_tag = HOL
+		}
 
 		days_mission_timeout = 90
 
@@ -2684,19 +2615,25 @@ HOL_VOC_category = {
 
 		activation = {
 			has_completed_focus = HOL_ASML_TSMC_partnership
+			NOT = { has_country_flag = HOL_voc_tai_done }
+			TAI = { exists = yes }
 		}
 
 		available = {
 			TAI = { is_top3_influencer = yes }
-			has_completed_focus = HOL_ASML_TSMC_partnership
+			hidden_trigger = {
+				always = no
+			}
 		}
 
-
 		timeout_effect = {
-			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = HOL }
-			set_temp_variable = { influence_target = TAI }
-			change_influence_percentage = yes
+			if = {
+				limit = { TAI = { is_top3_influencer = yes } }
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = HOL }
+				set_temp_variable = { influence_target = TAI }
+				change_influence_percentage = yes
+			}
 		}
 	}
 	HOL_voc_taiwan_mission2 = {
@@ -2715,21 +2652,38 @@ HOL_VOC_category = {
 		selectable_mission = no
 
 		available = {
-			naval_strength_ratio = {
-				tag = TAI
-				ratio > 1.3
+			has_naval_control = 193
+			TAI = {
+				NOT = {
+					has_naval_control = 193
+				}
 			}
-			has_completed_focus = HOL_semiconductor_export_control_taiwan
+			hidden_trigger = {
+				always = no
+			}
 		}
+
 		activation = {
 			has_completed_focus = HOL_semiconductor_export_control_taiwan
+			NOT = { has_country_flag = HOL_voc_tai_done }
+			TAI = { exists = yes }
 		}
 
 		timeout_effect = {
-			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = HOL }
-			set_temp_variable = { influence_target = TAI }
-			change_influence_percentage = yes
+			if = {
+				limit = {
+					has_naval_control = 193
+					TAI = {
+						NOT = {
+							has_naval_control = 193
+						}
+					}
+				}
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = HOL }
+				set_temp_variable = { influence_target = TAI }
+				change_influence_percentage = yes
+			}
 		}
 	}
 	HOL_voc_taiwan_agreement_USA = {
@@ -2766,15 +2720,12 @@ HOL_VOC_category = {
 				NOT = { has_country_flag = HOL_usa_wants_compensation_for_taiwan }
 				NOT = { has_country_flag = HOL_usa_dropped_taiwanese_guarantee }
 			}
+			NOT = { has_country_flag = HOL_voc_tai_done }
+			TAI = { exists = yes }
 		}
 
 		cost = 150
 
-		modifier = {
-		}
-
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_taiwan_agreement_USA"
 			USA = { country_event = HOL_VOC.6 }
@@ -2797,21 +2748,25 @@ HOL_VOC_category = {
 
 		activation = {
 			has_completed_focus = HOL_sustainable_agriculture_srilanka
+			NOT = { has_country_flag = HOL_voc_sri_done }
 			SRI = { exists = yes }
 		}
 
 		available = {
 			SRI = { is_top3_influencer = yes }
 			hidden_trigger = {
-				has_completed_focus = HOL_sustainable_agriculture_srilanka
+				always = no
 			}
 		}
 
 		timeout_effect = {
-			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = HOL }
-			set_temp_variable = { influence_target = SRI }
-			change_influence_percentage = yes
+			if = {
+				limit = { SRI = { is_top3_influencer = yes } }
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = HOL }
+				set_temp_variable = { influence_target = SRI }
+				change_influence_percentage = yes
+			}
 		}
 	}
 	HOL_voc_srilanka_mission2 = {
@@ -2829,26 +2784,39 @@ HOL_VOC_category = {
 
 		selectable_mission = no
 
-		days_re_enable = 90
-
 		activation = {
 			has_completed_focus = HOL_colombo_port_control
+			NOT = { has_country_flag = HOL_voc_sri_done }
 			SRI = { exists = yes }
 		}
 
 		available = {
-			has_completed_focus = HOL_colombo_port_control
-			naval_strength_ratio = {
-				tag = SRI
-				ratio > 1.3
+			has_naval_control = 203
+			SRI = {
+				NOT = {
+					has_naval_control = 203
+				}
+			}
+			hidden_trigger = {
+				always = no
 			}
 		}
 
 		timeout_effect = {
-			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = HOL }
-			set_temp_variable = { influence_target = SRI }
-			change_influence_percentage = yes
+			if = {
+				limit = {
+					has_naval_control = 203
+					SRI = {
+						NOT = {
+							has_naval_control = 203
+						}
+					}
+				}
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = HOL }
+				set_temp_variable = { influence_target = SRI }
+				change_influence_percentage = yes
+			}
 		}
 	}
 	HOL_voc_agriculture_agreement_srilanka = {
@@ -2871,14 +2839,16 @@ HOL_VOC_category = {
 		days_re_enable = 180
 
 		visible = {
-			has_completed_focus = HOL_modernize_agriculture_srilanka
-			NOT = {
-				SRI = { has_idea = HOL_SRI_Dutch_Agriculture_Benefits }
+			AND = {
+				has_completed_focus = HOL_modernize_agriculture_srilanka
+				NOT = {
+					SRI = { has_idea = HOL_SRI_Dutch_Agriculture_Benefits }
+				}
 			}
+			NOT = { has_country_flag = HOL_voc_sri_done }
+			SRI = { exists = yes }
 		}
 
-		complete_effect = {
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision HOL_voc_agriculture_agreement_srilanka"
 			SRI = { country_event = HOL_VOC.17 }
@@ -2894,8 +2864,13 @@ HOL_VOC_category = {
 		targets = { SRI }
 
 		available = {
-			has_completed_focus = HOL_sustainable_agriculture_srilanka
 			has_country_flag = HOL_refused_investment_sri_lanka
+		}
+
+		visible = {
+			has_country_flag = HOL_refused_investment_sri_lanka
+			NOT = { has_country_flag = HOL_voc_sri_done }
+			SRI = { exists = yes }
 		}
 
 		days_remove = 7
@@ -2928,16 +2903,21 @@ HOL_VOC_category = {
 			}
 		}
 
+		visible = {
+			OR = {
+				NOT = { has_country_flag = HOL_refused_investment_sri_lanka }
+				has_country_flag = HOL_small_investment_sri_lanka
+				has_country_flag = HOL_heavy_investment_sri_lanka
+			}
+			NOT = { has_country_flag = HOL_voc_sri_done }
+			SRI = { exists = yes }
+		}
+
 		days_remove = 60
 
 		fire_only_once = no
 
 		days_re_enable = 180
-
-		visible = {
-			NOT = { has_country_flag = HOL_refused_investment_sri_lanka }
-			has_completed_focus = HOL_sustainable_agriculture_srilanka
-		}
 
 		cost = 150
 
@@ -2992,7 +2972,12 @@ HOL_VOC_category = {
 
 		visible = {
 			NOT = { has_country_flag = HOL_refused_investment_sri_lanka }
-			has_completed_focus = HOL_sustainable_agriculture_srilanka
+			OR = {
+				has_country_flag = HOL_medium_investment_sri_lanka
+				has_country_flag = HOL_heavy_investment_sri_lanka
+			}
+			NOT = { has_country_flag = HOL_voc_sri_done }
+			SRI = { exists = yes }
 		}
 
 		cost = 150
@@ -3053,7 +3038,9 @@ HOL_VOC_category = {
 
 		visible = {
 			NOT = { has_country_flag = HOL_refused_investment_sri_lanka }
-			has_completed_focus = HOL_sustainable_agriculture_srilanka
+			has_country_flag = HOL_heavy_investment_sri_lanka
+			NOT = { has_country_flag = HOL_voc_sri_done }
+			SRI = { exists = yes }
 		}
 
 		cost = 150
@@ -3103,6 +3090,10 @@ HOL_VOC_category = {
 	HOL_voc_saf_mission1 = {
 		icon = GFX_decision_influence
 
+		allowed = {
+			original_tag = HOL
+		}
+
 		days_mission_timeout = 90
 
 		fire_only_once = no
@@ -3111,23 +3102,35 @@ HOL_VOC_category = {
 
 		selectable_mission = no
 
-		visible = {
+		activation = {
 			has_completed_focus = HOL_afrikaner_political_partnerships
+			NOT = { has_country_flag = HOL_saf_voc_done }
 			SAF = { exists = yes }
 		}
 
 		available = {
 			SAF = { is_top3_influencer = yes }
 			hidden_trigger = {
-				has_completed_focus = HOL_afrikaner_political_partnerships
+				always = no
 			}
 		}
 
 		timeout_effect = {
-			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = HOL }
-			set_temp_variable = { influence_target = SAF }
-			change_influence_percentage = yes
+			if = {
+				limit = { SAF = { is_top3_influencer = yes } }
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = HOL }
+				set_temp_variable = { influence_target = SAF }
+				change_influence_percentage = yes
+			}
+			else = {
+				effect_tooltip = {
+					set_temp_variable = { percent_change = 5 }
+					set_temp_variable = { tag_index = HOL }
+					set_temp_variable = { influence_target = SAF }
+					change_influence_percentage = yes
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -3138,6 +3141,10 @@ HOL_VOC_category = {
 	HOL_voc_saf_mission2 = {
 		icon = GFX_decision_influence
 
+		allowed = {
+			original_tag = HOL
+		}
+
 		days_mission_timeout = 90
 
 		fire_only_once = no
@@ -3146,24 +3153,47 @@ HOL_VOC_category = {
 
 		selectable_mission = no
 
-		visible = {
+		activation = {
 			has_completed_focus = HOL_resupply_hub_afrika
+			NOT = { has_country_flag = HOL_saf_voc_done }
 			SAF = { exists = yes }
 		}
 
 		available = {
-			has_completed_focus = HOL_resupply_hub_afrika
-			naval_strength_ratio = {
-				tag = SAF
-				ratio > 1.3
+			has_naval_control = 206
+			has_naval_control = 65
+			has_naval_control = 103
+			SAF = {
+				NOT = {
+					has_naval_control = 206
+					has_naval_control = 65
+					has_naval_control = 103
+				}
+			}
+			hidden_trigger = {
+				always = no
 			}
 		}
 
 		timeout_effect = {
-			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = HOL }
-			set_temp_variable = { influence_target = SAF }
-			change_influence_percentage = yes
+			if = {
+				limit = {
+					has_naval_control = 206
+					has_naval_control = 65
+					has_naval_control = 103
+					SAF = {
+						NOT = {
+							has_naval_control = 206
+							has_naval_control = 65
+							has_naval_control = 103
+						}
+					}
+				}
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = HOL }
+				set_temp_variable = { influence_target = SAF }
+				change_influence_percentage = yes
+			}
 		}
 	}
 	HOL_voc_saf_aids_support = {
@@ -3195,6 +3225,7 @@ HOL_VOC_category = {
 		visible = {
 			SAF = { exists = yes }
 			has_completed_focus = HOL_afrikaner_political_partnerships
+			NOT = { has_country_flag = HOL_saf_voc_done }
 		}
 
 		cost = 150
@@ -4025,8 +4056,6 @@ HOL_VOC_category = {
 		}
 
 		days_mission_timeout = 30
-
-		days_remove = 30
 
 		is_good = no
 
@@ -6660,6 +6689,68 @@ HOL_foreign_policy_category = {
 		   USA = { country_event = HOL_politics.48 }
 		   set_temp_variable = { treasury_change = -25 }
 		   modify_treasury_effect = yes
+		   effect_tooltip = {
+				random_owned_state = {
+					add_building_construction = {
+						type = arms_factory
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1
+				}
+				random_owned_state = {
+					add_building_construction = {
+						type = dockyard
+						level = 1
+						instant_build = yes
+					}
+					add_extra_state_shared_building_slots = 1
+				}
+				random_list = {
+					75 = {
+						random_list = {
+							50 = {
+								add_tech_bonus = {
+									name = HOL_usa_operation_market_vision
+									category = CAT_air_eqp
+									ahead_reduction = 1
+									uses = 1
+								}
+							}
+							50 = {
+								add_tech_bonus = {
+									name = HOL_usa_operation_market_vision
+									category = CAT_armor
+									ahead_reduction = 1
+									uses = 1
+								}
+							}
+						}
+					}
+					25 = {
+						random_list = {
+							50 = {
+								random_owned_state = {
+									add_building_construction = {
+										type = land_facility
+										level = 1
+										instant_build = yes
+									}
+								}
+							}
+							50 = {
+								random_owned_state = {
+									add_building_construction = {
+										type = naval_facility
+										level = 1
+										instant_build = yes
+									}
+								}
+							}
+						}
+					}
+				}
+		   }
 		}
 
 		ai_will_do = { factor = 50 }
