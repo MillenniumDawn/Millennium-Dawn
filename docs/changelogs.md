@@ -11,6 +11,80 @@ This page is a list of all MD's changelogs from our documentation. In case you w
 ## v1.12.0 'Every Tank an Upgrade'
 
 <details>
+	<summary>v1.12.2a 11/22/2025 - Hotfix A</summary>
+	{% capture md %}
+
+	v1.12.2a
+
+ AI:
+  - If Estonia has a wargoal and they're less than on-par strength to Russia they won't declare war on Russia
+  - Estonia should try to actively pursue more relations with Latvia and Lithuania, vice-versa
+  - Increased the desire for nations with lots of nuclear reactors to try and build additional enrichment facilities
+
+ Bugfix:
+  - Fixed broken drop downs in the air UI menus for change day night, aggressiveness showing blank menus instead of the correct options
+  - Fixed a crash due to a missing button for legacy faction menus
+  - Fixed missing frames around officer corps leader
+  - Added different effects to "Expanding The Public Sector" Focus of Germany to prevent no effects given
+  - Fixed some triggers for news events for NATO
+  - Reduced cost of taking Chechen states for Russia
+  - Fixed the LAR operation "Steal Naval Blueprint" consuming a civilian token instead of a naval token
+  - Removed a Man the Guns check in the game rules for "Take over Faction"
+  - Fixed the internal faction "Industrial Conglomerates" not properly initializing when switched during the game
+
+ Balance:
+  - Dramatically increased the base Energy Production so the Lack of Power modifier should not appear
+  - Reduced the vanilla energy consumption mechanic closer to 0 to help with Lack of Power sometimes appearing in game
+  - Reduced the amount of ROI you can get via the focus tree for Sweden. Damn Swedes and their savvy investments
+
+ Content:
+  - Added a new diplomatic action "Negotiate Operative Release" allowing you to pay some money and political power for the release of a captive operative
+  - Adjusted the triggers for Threat of Terrorism for India so you don't get locked out of the tree if for some reason America cannot do Operation Enduring Freedom
+
+ Database:
+  - Fixed some minor discrepancies with Swedish starting variants
+  - Rebalanced the starting Swedish party popularity to their most recent election result (as of 2000)
+  - Added 1 enrichment facility to India
+  - The 2K12 Kub now has off vehicle radar and 2 missile pack instead of the incorrect on vehicle radar and 4 missile pack
+  - Lowered the generation of World Tension
+  - Updated the Ecuadorian OOB to be more accurate w/ light tanks and some missing self propelled systems
+  - Removed the defunct Super Heavy Tank Barrel special project (removed in favor of the reworked ammo system for tanks)
+  - Gave the United States another enrichment facility
+  - Cleaned up some unused variables in the Coptic system for Egypt
+  - Fixed the event "A Royal Visit with Strategic Intent?" not correctly giving influence
+
+ Factions:
+  - Added a new long term NATO goal "NATO Economic Development" asking you to get every member state to 25k GDP/c
+
+ Game Rule:
+  - Added a game rule for people who want to freely change internal factions without downloading a submod (express content prohibiting it will still block it)
+
+ Graphics:
+  - Set a default temp icon for Naval Headquarters so its easy for people to see
+  - Fixed "Agent K" not properly having his leader portrait populate
+  - Fixed missing Ranger Division icon (Credits to WHACK)
+  - Fixed broken portraits for the Indian generic generals when they get promoted
+
+ Localization:
+  - Fixed some missing localization in the faction tooltips
+  - Fixed missing Localisation for German HDW Traits
+  - Rewrote the alert for "Insufficient Energy" to tell players to dismiss. It is not actually there but should relieve people's stress.
+  - Fixed the Swedish "Crypto Income" mechanic not displaying properly in the Additional Income section
+  - Added a tooltip for the Swedish "Allow Crypto" focus to notify people of the Cryptocurrency Mechanic so they don't get spoked by the sudden destruction of their economy
+
+ User Interface:
+  - Fixed the broken Intelligence Agency buttons and UI
+  - Removed the non-working Missile Doctrine button
+  - Fixed a missing icon for "unit_med_cas_fighter_icon_small"
+  - Adjusted the air doctrines positions in the officer corps view
+  - Fixed the tiny faction logo in the politics UI view
+
+  	{% endcapture %}
+	{{ md | markdownify }}
+
+</details>
+
+<details>
 	<summary>v1.12.2 11/20/2025 - HOI 1.17 Compatch</summary>
 
 	{% capture md %}
