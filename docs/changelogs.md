@@ -6242,11 +6242,16 @@ Localisation
 - Lots of spelling mistakes fixed
 - Added localisation to the Swiss faction
 
+	{% endcapture %}
+	{{ md | markdownify }}
+
 </details>
 
 ## v1.0 Changes
 
 <details><summary>v1.0.1 Hotfix</summary>
+
+	{% capture md %}
 
 Stability:
 
@@ -6295,6 +6300,10 @@ Map:
 - Westen Georgia renamed to Western Georgia
 - Added localisation to the new straits
 
+
+	{% endcapture %}
+	{{ md | markdownify }}
+
 </details>
 
 <details><summary>v1.0.2 Hotfix</summary>
@@ -6314,6 +6323,8 @@ Database:
 </details>
 
 <details><summary>v1.0.3 Hotfix</summary>
+
+	{% capture md %}
 
 Game rules:
 
@@ -6401,9 +6412,14 @@ Map:
 - Removed Hatay as core of FSA
 - Map fixes
 
+	{% endcapture %}
+	{{ md | markdownify }}
+
 </details>
 
 <details><summary>v1.0.4 Hotfix</summary>
+
+	{% capture md %}
 
 Features
 
@@ -6477,36 +6493,34 @@ Graphics
 - Added party icons for EST & LAT
 - Improved Custom GUI for influence to allow longer names
 
-Database
+ Database
+ - Removed EU national idea from countries that weren't EU members in 2000
+ - Iraq is now Sunni in the 2000 bookmark, and Shia in 2017
+ - Adjusted tax for China, India, USA 2000
+ - Downgraded Angola to 4K gdpc
+ - Corrected 2017 Vietnam popularites
 
-- Removed EU national idea from countries that weren't EU members in 2000
-- Iraq is now Sunni in the 2000 bookmark, and Shia in 2017
-- Adjusted tax for China, India, USA 2000
-- Downgraded Angola to 4K gdpc
-- Corrected 2017 Vietnam popularites
+ Localisation
+ - Added texts to news.50 (Kursk Submarine Disaster)
+ - Improved text of investment events
+ - Influence GUI now use the normal variant of name, not the Def. version of them (avoiding annoying "the"'a)
 
-Localisation
+ Music
+ - Removed music tracks that turned out to be copyrighted (sorry Daniel)
 
-- Added texts to news.50 (Kursk Submarine Disaster)
-- Improved text of investment events
-- Influence GUI now use the normal variant of name, not the Def. version of them (avoiding annoying "the"'a)
+ Politics
+  - Made boosting and attacking parties affect outlooks too
+  - Fixed error where elections did not appear if a different party was winning
+  - Solved a bug where adding popularities or changing election laws would change leader
+  - Added more safeguard values to various situations
+  - Added a bunch of new starting opinion modifiers between countries
+  - Redid Syrian starting politics for 2017
 
-Music
+ Map
+  - Afghanistan has a hidden port and hidden canal so that far-off allies can send supplies to anti-taliban forces if Pakistan is friendly
+  - State of Savoy in SE France
 
-- Removed music tracks that turned out to be copyrighted (sorry Daniel)
-
-Politics
-
-- Made boosting and attacking parties affect outlooks too
-- Fixed error where elections did not appear if a different party was winning
-- Solved a bug where adding popularities or changing election laws would change leader
-- Added more safeguard values to various situations
-- Added a bunch of new starting opinion modifiers between countries
-- Redid Syrian starting politics for 2017
-
-Map
-
-- Afghanistan has a hidden port and hidden canal so that far-off allies can send supplies to anti-taliban forces if Pakistan is friendly
-- State of Savoy in SE France
+	{% endcapture %}
+	{{ md | markdownify }}
 
 </details>
