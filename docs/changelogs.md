@@ -10,10 +10,8 @@ This page is a list of all MD's changelogs from our documentation. In case you w
 
 ## v1.12.0 'Every Tank an Upgrade'
 
-<details>
-	<summary>v1.12.2a 11/22/2025 - Hotfix A</summary>
-	
-	{% capture md %}
+<details><summary>v1.12.2a 11/22/2025 - Hotfix A</summary>
+{% capture md %}
  AI:
   - If Estonia has a wargoal and they're less than on-par strength to Russia they won't declare war on Russia
   - Estonia should try to actively pursue more relations with Latvia and Lithuania, vice-versa
@@ -77,8 +75,8 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Adjusted the air doctrines positions in the officer corps view
   - Fixed the tiny faction logo in the politics UI view
 
-  	{% endcapture %}
-	{{ md | markdownify }}
+{% endcapture %}
+{{ md | markdownify }}
 
 </details>
 
@@ -238,7 +236,6 @@ This page is a list of all MD's changelogs from our documentation. In case you w
 
 	{% endcapture %}
 	{{ md | markdownify }}
-
 </details>
 
 
@@ -6163,7 +6160,7 @@ Units
 </details>
 
 <details><summary>v1.1 Main</summary>
-
+{% capture md %}
 Stability
 
 - Fixed an issue with save games bloating
@@ -6323,12 +6320,10 @@ Localisation
 
 <details><summary>v1.0.1 Hotfix</summary>
 
-	{% capture md %}
-
-Stability:
-
-- Fixed CTD if launching the 2000 bookmark without DoD
-- Fixed CTD from Free College focus
+{% capture md %}
+ Stability:
+  - Fixed CTD if launching the 2000 bookmark without DoD
+  - Fixed CTD from Free College focus
 
 Bugfixes:
 
@@ -6396,7 +6391,7 @@ Database:
 
 <details><summary>v1.0.3 Hotfix</summary>
 
-	{% capture md %}
+{% capture md %}
 
 Game rules:
 
@@ -6491,22 +6486,18 @@ Map:
 
 <details><summary>v1.0.4 Hotfix</summary>
 
-	{% capture md %}
+{% capture md %}
+ Features
+  - Compatibility with 1.7
+  - All Outlooks can boost any Outlook in a foreign country (Boost Party Popularity diplo action)
 
-Features
+ Stability
+  - Fixed savegame corruption bug caused by broken templates
+  - Changed how AI strategies are setup, hopefully bringing some performance improvements to some users
 
-- Compatibility with 1.7
-- All Outlooks can boost any Outlook in a foreign country (Boost Party Popularity diplo action)
-
-Stability
-
-- Fixed savegame corruption bug caused by broken templates
-- Changed how AI strategies are setup, hopefully bringing some performance improvements to some users
-
-Balance
-
-- Increased range of aircrafts somewhat to reflect max combat radius (+5% to 20% increased range depending on model)
-- Removed some exessive armored vehicles for Russia. Poorly maintained and unoperational vehicles in storage now only counted as 1/4 extra ingame vehicle
+ Balance
+  - Increased range of aircrafts somewhat to reflect max combat radius (+5% to 20% increased range depending on model)
+  - Removed some exessive armored vehicles for Russia. Poorly maintained and unoperational vehicles in storage now only counted as 1/4 extra ingame vehicle
 
 Civil Wars
 
@@ -6592,7 +6583,6 @@ Graphics
   - Afghanistan has a hidden port and hidden canal so that far-off allies can send supplies to anti-taliban forces if Pakistan is friendly
   - State of Savoy in SE France
 
-	{% endcapture %}
-	{{ md | markdownify }}
-
+{% endcapture %}
+{{ md | markdownify }}
 </details>
