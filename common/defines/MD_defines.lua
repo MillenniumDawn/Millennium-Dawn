@@ -1090,8 +1090,9 @@
 	NDefines.NIndustrialOrganisation.LEGACY_COST_FACTOR_SCALE = 1.0					-- 1.0
 
 	NDefines.NProduction.RESOURCE_TO_ENERGY_COEFFICIENT = 1
-	NDefines.NProduction.ENERGY_SCALING_COST_BY_FACTORY_COUNT = 0.01
-	NDefines.NProduction.BASE_ENERGY_COST = 0.4
+	NDefines.NProduction.ENERGY_SCALING_COST_BY_FACTORY_COUNT = 0.00001
+	NDefines.NProduction.BASE_ENERGY_COST = 0.0
+	NDefines.NProduction.BASE_COUNTRY_ENERGY_PRODUCTION = 100000
 	NDefines.NProduction.BASE_FACTORY_SPEED = 4
 	NDefines.NProduction.POWERED_FACTORY_SPEED = 4 -- 5
 
