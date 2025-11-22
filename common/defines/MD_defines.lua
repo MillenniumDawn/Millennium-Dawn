@@ -26,13 +26,14 @@
 	NDefines.NDiplomacy.VOLUNTEERS_RETURN_EQUIPMENT = 1
 	NDefines.NDiplomacy.VOLUNTEERS_TRANSFER_SPEED = 7
 	NDefines.NDiplomacy.VOLUNTEERS_DIVISIONS_REQUIRED = 7
-	NDefines.NDiplomacy.TENSION_STATE_VALUE = 3.60 -- 4 as of v1.11.1
-	NDefines.NDiplomacy.TENSION_CIVIL_WAR_IMPACT = 0.4
-	NDefines.NDiplomacy.TENSION_NO_CB_WAR = 11.5 -- 13 as of v1.11.1
-	NDefines.NDiplomacy.TENSION_CB_WAR = 4.25 -- 5 as of v1.11.1
+	NDefines.NDiplomacy.TENSION_STATE_VALUE = 0.18 -- 3.60 as of v.12.2
+	NDefines.NDiplomacy.TENSION_CIVIL_WAR_IMPACT = 0.3 -- 0.4 as of v.12.2
+	NDefines.NDiplomacy.TENSION_NO_CB_WAR = 16.1 -- 11.5 as of v1.12.2
+	NDefines.NDiplomacy.TENSION_CB_WAR = 6.08 -- 4.25 as of v1.12.2
 	NDefines.NDiplomacy.TENSION_PUPPET = 1.5 -- Reduced from 2.0
-	NDefines.NDiplomacy.TENSION_ANNEX_NO_CLAIM = 3
-	NDefines.NDiplomacy.TENSION_ANNEX_CLAIM = 2
+	NDefines.NDiplomacy.TENSION_ANNEX_NO_CLAIM = 0.15
+	NDefines.NDiplomacy.TENSION_ANNEX_CLAIM = 1.44 -- Reduced from 1.8 as of v.12.2
+	NDefines.NDiplomacy.TENSION_ANNEX_CORE = -0.5
 	NDefines.NDiplomacy.TENSION_VOLUNTEER_FORCE_DIVISION = 0.30  -- Reduced from 0.50
 	NDefines.NDiplomacy.TENSION_DECAY_DAILY = 0.02						-- Each months tension decays this much
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_START_DATE = "2000.1.1.12" 	-- Starting at this date, the tension values will be scaled down (will be equal to 1 before that)
@@ -203,8 +204,6 @@
 
 	NDefines.NProduction.MAX_EQUIPMENT_RESOURCES_NEED = 4
 	NDefines.NProduction.MAX_LINE_RESOURCE_PENALTY = 50
-	NDefines.NProduction.BASE_FACTORY_SPEED_MIL = 3
-	NDefines.NProduction.BASE_FACTORY_SPEED_NAV = 8
 	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 5
 	NDefines.NProduction.BASE_CONSUMER_GOODS_NEED_FACTOR = 0
 	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 1
@@ -1088,11 +1087,19 @@
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_ATTACH_POLICY_COOLDOWN = 180	-- 180
 	NDefines.NIndustrialOrganisation.LEGACY_COST_FACTOR_SCALE = 1.0					-- 1.0
 
-	NDefines.NProduction.RESOURCE_TO_ENERGY_COEFFICIENT = 1
-	NDefines.NProduction.ENERGY_SCALING_COST_BY_FACTORY_COUNT = 0.01
-	NDefines.NProduction.BASE_ENERGY_COST = 0.4
+	-- Disables the Energy system from vanilla. Thank you Paradox for making me waste so much of my time.
+	NDefines.NProduction.BASE_COUNTRY_ENERGY_PRODUCTION = 100.0 -- Base Energy Production
+	NDefines.NProduction.RESOURCE_TO_ENERGY_COEFFICIENT = 200.0 -- This is like 9 in the base game, but giving oil 200 energy should improve the ratio
+	NDefines.NProduction.ENERGY_SCALING_COST_BY_FACTORY_COUNT = 0.0001
+	NDefines.NProduction.BASE_ENERGY_COST = 0.01
+
+	-- Set the powered and the base to the same to ensure we aren't buffing them since technically your economy is forever powered.
 	NDefines.NProduction.BASE_FACTORY_SPEED = 4
-	NDefines.NProduction.POWERED_FACTORY_SPEED = 4 -- 5
+	NDefines.NProduction.BASE_FACTORY_SPEED_MIL = 3
+	NDefines.NProduction.BASE_FACTORY_SPEED_NAV = 8
+	NDefines.NProduction.POWERED_FACTORY_SPEED = 4 					--Powered factory speed multiplier.
+	NDefines.NProduction.POWERED_FACTORY_SPEED_MIL = 3 			--Powered factory speed multiplier.
+	NDefines.NProduction.POWERED_FACTORY_SPEED_NAV = 8 			--Powered factory speed multiplier.
 
 	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_PP_COST = 200				-- Political power cost to assume faction leadership
 	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_MIN_MANPOWER_RATIO = 2		-- The minimum ratio of manpower that a country must have compared to the current leader in order to assume leadership.
