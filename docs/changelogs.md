@@ -12,10 +12,8 @@ This page is a list of all MD's changelogs from our documentation. In case you w
 
 <details>
 	<summary>v1.12.2a 11/22/2025 - Hotfix A</summary>
+	
 	{% capture md %}
-
-	v1.12.2a
-
  AI:
   - If Estonia has a wargoal and they're less than on-par strength to Russia they won't declare war on Russia
   - Estonia should try to actively pursue more relations with Latvia and Lithuania, vice-versa
