@@ -271,7 +271,6 @@ IRQ_MNF_setup = {
 				set_state_controller_to = IRQ
 			}
 			leave_faction = yes
-			#create_faction = NULL
 		}
 	}
 }
@@ -626,13 +625,6 @@ AS_spawn_isis_into_game = {
 				limit = { no_jihadist_government = yes }
 				add_opinion_modifier = { target = ISI modifier = terrorism_is_no_no }
 				add_opinion_modifier = { target = ISI modifier = terrorism_is_no_no_trade }
-				# add_ai_strategy = { type = befriend id = "ISI" value = -200 }
-				# add_ai_strategy = { type = support id = "ISI" value = -200 }
-				# add_ai_strategy = { type = protect id = "ISI" value = -200 }
-				# add_ai_strategy = { type = send_volunteers_desire id = "ISI" value = -200 }
-				# add_ai_strategy = { type = contain id = "ISI" value = 200 }
-				# add_ai_strategy = { type = antagonize id = "ISI" value = 200 }
-				# # add_ai_strategy = { type = conquer id = "ISI" value = 200 }
 			}
 		}
 	}
@@ -1253,108 +1245,6 @@ clamp_shia = {
 	}
 }
 
-GCC_show_supporters = {
-	if = {
-		limit = {
-			BHR = {
-				has_idea = idea_gcc_member_state
-				has_country_flag = supports_membership_@ROOT
-			}
-		}
-		BHR_GetNameWithFlag = yes
-	}
-	if = {
-		limit = {
-			EGY = {
-				has_idea = idea_gcc_member_state
-				has_country_flag = supports_membership_@ROOT
-			}
-		}
-		EGY_GetNameWithFlag = yes
-	}
-	if = {
-		limit = {
-			IRQ = {
-				has_idea = idea_gcc_member_state
-				has_country_flag = supports_membership_@ROOT
-			}
-		}
-		IRQ_GetNameWithFlag = yes
-	}
-	if = {
-		limit = {
-			JOR = {
-				has_idea = idea_gcc_member_state
-				has_country_flag = supports_membership_@ROOT
-			}
-		}
-		JOR_GetNameWithFlag = yes
-	}
-	if = {
-		limit = {
-			KUW = {
-				has_idea = idea_gcc_member_state
-				has_country_flag = supports_membership_@ROOT
-			}
-		}
-		KUW_GetNameWithFlag = yes
-	}
-	if = {
-		limit = {
-			MOR = {
-				has_idea = idea_gcc_member_state
-				has_country_flag = supports_membership_@ROOT
-			}
-		}
-		MOR_GetNameWithFlag = yes
-	}
-	if = {
-		limit = {
-			OMA = {
-				has_idea = idea_gcc_member_state
-				has_country_flag = supports_membership_@ROOT
-			}
-		}
-		OMA_GetNameWithFlag = yes
-	}
-	if = {
-		limit = {
-			QAT = {
-				has_idea = idea_gcc_member_state
-				has_country_flag = supports_membership_@ROOT
-			}
-		}
-		QAT_GetNameWithFlag = yes
-	}
-	if = {
-		limit = {
-			SAU = {
-				has_idea = idea_gcc_member_state
-				has_country_flag = supports_membership_@ROOT
-			}
-		}
-		SAU_GetNameWithFlag = yes
-	}
-	if = {
-		limit = {
-			UAE = {
-				has_idea = idea_gcc_member_state
-				has_country_flag = supports_membership_@ROOT
-			}
-		}
-		UAE_GetNameWithFlag = yes
-	}
-	if = {
-		limit = {
-			YEM = {
-				has_idea = idea_gcc_member_state
-				has_country_flag = supports_membership_@ROOT
-			}
-		}
-		YEM_GetNameWithFlag = yes
-	}
-}
-
 # Arab Spring Section
 
 # Effect: change_arab_spring_strength
@@ -1422,6 +1312,20 @@ calculate_monthly_arab_spring_change = {
 		add_to_variable = { arab_spring_change = -3 }
 	}
 
+	# Healthcare Spending
+	if = {
+		limit = { has_idea = health_04 }
+		add_to_variable = { arab_spring_change = -1 }
+	}
+	else_if = {
+		limit = { has_idea = health_05 }
+		add_to_variable = { arab_spring_change = -2 }
+	}
+	else_if = {
+		limit = { has_idea = health_06 }
+		add_to_variable = { arab_spring_change = -3 }
+	}
+
 	# Corruption Increases Arab Spring Likelihood
 	if = { limit = { has_idea = paralyzing_corruption }
 		add_to_variable = { arab_spring_change = 6 }
@@ -1437,6 +1341,18 @@ calculate_monthly_arab_spring_change = {
 	}
 	else_if = { limit = { has_idea = systematic_corruption }
 		add_to_variable = { arab_spring_change = 2 }
+	}
+	else_if = { limit = { has_idea = widespread_corruption }
+		add_to_variable = { arab_spring_change = 2 }
+	}
+	else_if = { limit = { has_idea = modest_corruption }
+		add_to_variable = { arab_spring_change = -1 }
+	}
+	else_if = { limit = { has_idea = slight_corruption }
+		add_to_variable = { arab_spring_change = -2 }
+	}
+	else_if = { limit = { has_idea = negligible_corruption }
+		add_to_variable = { arab_spring_change = -3 }
 	}
 
 	# Historical Section
@@ -1510,6 +1426,40 @@ calculate_monthly_arab_spring_change = {
 			NOT = { has_tech = internet1 }
 		}
 		subtract_from_variable = { arab_spring_change = 4 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { government_coalition_strength <  0.500 }
+		}
+		add_to_variable = { arab_spring_change = 2 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { government_coalition_strength > 0.499 }
+			check_variable = { government_coalition_strength < 0.599 }
+		}
+		add_to_variable = { arab_spring_change = -1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { government_coalition_strength > 0.599 }
+			check_variable = { government_coalition_strength < 0.699 }
+		}
+		add_to_variable = { arab_spring_change = -2 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { government_coalition_strength > 0.699 }
+			check_variable = { government_coalition_strength < 0.799 }
+		}
+		add_to_variable = { arab_spring_change = -3 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { government_coalition_strength > 0.899 }
+		}
+		add_to_variable = { arab_spring_change = -4 }
 	}
 }
 
