@@ -4,9 +4,9 @@ title: "Focus Tree Tool"
 description: "Tool to generate focus tree skeletons using Diagram.net"
 ---
 
-This is a tool to generate focus tree skeletons using Diagram.net[CrocsFocusTreeTool.zip](uploads/0ed2e142187ecaae5dcb6fc437e89e5f/CrocsFocusTreeTool.zip)
+This is a tool to generate focus tree skeletons using Diagram.net[CrocsFocusTreeTool.zip](/Millennium-Dawn/uploads/CrocsFocusTreeTool.zip)
 
-ver 0.2:[CrocsFocusTreeTool.zip](uploads/f34d4789a59758200cc582bf3e2d9635/CrocsFocusTreeTool.zip)
+ver 0.2:[CrocsFocusTreeTool.zip](/Millennium-Dawn/uploads/CrocsFocusTreeTool.zip)
 
 Unpack the archive.
 It might require .NET 6.0 runtime to run
@@ -31,7 +31,7 @@ Tool should generate you a file, just close it when you are done!
 Examples:
 mutually exclusive line
 ![exclusive](uploads/331c3736294f8f7eab3b4757bf1ba58b/exclusive.png)
-[example1](uploads/e52796ef088f55f121c83ef11eaf048d/example1.jpg)
+![example1](/Millennium-Dawn/uploads/example1.jpg)
 
 Be aware that some complex line collisions are stored weirdly in document, and app may process them incorrectly
 use x-del and y-del to make your tree better spaced out
