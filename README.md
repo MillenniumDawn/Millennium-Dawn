@@ -53,9 +53,6 @@ pip install pre-commit
 # Navigate to repository and install hooks
 cd millennium-dawn
 pre-commit install
-
-# Test installation
-pre-commit run --all-files
 ```
 
 ## Development Standards

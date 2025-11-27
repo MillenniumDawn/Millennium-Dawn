@@ -609,7 +609,7 @@ change_industrial_conglomerates_opinion = yes
 # Religious Factions: Wahhabi Ulema, The Ulema, The Clergy, The Priesthood
 #
 # Nation Specific: The Donju, The Bazaar, Saudi Royal Family, IRGC, Iranian Quds Force,
-# Foreign Jihadis, VEVAK, Chaebols, Wall Street, ISI Pakistan
+# Foreign Jihadis, Chaebols, Wall Street
 ```
 </details>
 
@@ -632,8 +632,6 @@ change_industrial_conglomerates_opinion = yes
 - change_the_wahabi_ulema_opinion
 - change_the_military_opinion
 - change_intelligence_community_opinion
-- change_isi_pakistan_opinion -- Pakistani Unique Intelligence Community
-- change_vevak_opinion -- Iranian Unique Intelligence Community
 - change_the_bazaar_opinion -- Iranian Unique Small Medium Business Owners
 - change_the_donju_opinion -- North Korean Oligarchs
 - change_saudi_royal_family_opinion -- Unique Faction for Gulf States
