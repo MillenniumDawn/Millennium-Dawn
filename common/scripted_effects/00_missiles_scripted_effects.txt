@@ -3,7 +3,7 @@ basic_ai_space_prioritization = {
 	if = {
 		limit = {
 			OR = {
-				check_variable = { var_GNSS_mil_system_idx < GNSSVar }
+				check_variable = { var = var_GNSS_mil_system_idx value = GNSSVar }
 				check_variable = { GNSS_satellite_array^GNSSVar < global.GNSS_sat_system_max_array^GNSSVar }
 			}
 		}
@@ -365,21 +365,11 @@ set_prod_display_arrays = {
 }
 
 clear_prod_display_arrays = {
-	clr_country_flag = missile_production_type_1
-	clr_country_flag = missile_production_type_2
-	clr_country_flag = missile_production_type_3
-	clr_country_flag = missile_production_type_4
-	clr_country_flag = missile_production_type_5
-	clr_country_flag = missile_production_type_6
-	clr_country_flag = missile_production_type_7
-	clr_country_flag = missile_production_type_8
-	clr_country_flag = missile_production_type_9
 	clr_country_flag = missile_production_type_10
 	clr_country_flag = missile_production_type_11
 	clr_country_flag = missile_production_type_12
 	clr_country_flag = missile_production_type_13
 	clr_country_flag = missile_production_type_14
-	clr_country_flag = missile_production_type_15
 	resize_array = { prod_1_display_array = 0 }
 	resize_array = { prod_2_display_array = 0 }
 	resize_array = { prod_3_display_array = 0 }
@@ -849,14 +839,8 @@ update_GNSS_system_stats = {
 	}
 	set_variable = { var_GNSS_mil_sat_system_bonus = var_GNSS_mil_coverage }
 	add_to_variable = { var_GNSS_mil_sat_system_bonus = var_GNSS_mil_SBAS_bonus }
-	if = {
-		limit = {
-			check_variable = {
-				var_GNSS_mil_sat_system_bonus < 0
-			}
-		}
-		set_variable = { var_GNSS_mil_sat_system_bonus = 0 }
-	}
+	clamp_variable = { var = var_GNSS_mil_sat_system_bonus min = 0 }
+
 	### GNSS civ system
 	set_variable = { var_GNSS_civ_sat_system_num = GNSS_satellite_array^var_GNSS_civ_system_idx }
 	if = {
@@ -877,14 +861,7 @@ update_GNSS_system_stats = {
 	}
 	set_variable = { var_GNSS_civ_sat_system_bonus = var_GNSS_civ_coverage }
 	add_to_variable = { var_GNSS_civ_sat_system_bonus = var_GNSS_civ_SBAS_bonus }
-	if = {
-		limit = {
-			check_variable = {
-				var_GNSS_civ_sat_system_bonus < 0
-			}
-		}
-		set_variable = { var_GNSS_civ_sat_system_bonus = 0 }
-	}
+	clamp_variable = { var = var_GNSS_civ_sat_system_bonus min = 0 }
 }
 
 update_GNSS_SBAS = {
@@ -907,7 +884,6 @@ update_GNSS_SBAS = {
 	###GNSS civ
 	set_variable = { var_GNSS_civ_SBAS_num = var_GNSS_sat_total }
 	subtract_from_variable = { var_GNSS_civ_SBAS_num = var_GNSS_civ_sat_system_num }
-	#subtract_from_variable = { var_GNSS_civ_SBAS_num = var_GNSS_mil_sat_system_num }
 	set_variable = { var_GNSS_civ_SBAS_bonus = var_GNSS_civ_SBAS_num }
 	divide_variable = { var_GNSS_civ_SBAS_bonus = 100 }
 	set_temp_variable = { temp1 = var_GNSS_civ_coverage }
@@ -963,7 +939,6 @@ update_COM_system_stats = {
 				var_COM_mil_sat_system_num > var_COM_mil_sat_system_max
 			}
 		}
-		#set_variable = { var_COM_mil_sat_system_num = var_COM_mil_sat_system_max }
 		set_variable = { var_COM_mil_coverage = 1.0 }
 	}
 	else = {
@@ -986,14 +961,7 @@ update_COM_system_stats = {
 		set_temp_variable = { temp3 = var_sat_network_traffic_mil }
 		subtract_from_temp_variable = { temp3 = 1 }
 		subtract_from_variable = { var_COM_mil_sat_system_bonus = temp3 }
-		if = {
-			limit = {
-				check_variable = {
-					var_COM_mil_sat_system_bonus < 0
-				}
-			}
-			set_variable = { var_COM_mil_sat_system_bonus = 0 }
-		}
+		clamp_variable = { var = var_COM_mil_sat_system_bonus min = 0 }
 	}
 	if = {
 		limit = {
@@ -1001,7 +969,6 @@ update_COM_system_stats = {
 				var_COM_civ_sat_system_num > var_COM_civ_sat_system_max
 			}
 		}
-		#set_variable = { var_COM_civ_sat_system_num = var_COM_civ_sat_system_max }
 		set_variable = { var_COM_civ_coverage = 1.0 }
 	}
 	else = {
@@ -1023,14 +990,7 @@ update_COM_system_stats = {
 		set_temp_variable = { temp4 = var_sat_network_traffic_civ }
 		subtract_from_temp_variable = { temp4 = 1 }
 		subtract_from_variable = { var_COM_civ_sat_system_bonus = temp4 }
-		if = {
-			limit = {
-				check_variable = {
-					var_COM_civ_sat_system_bonus < 0
-				}
-			}
-			set_variable = { var_COM_civ_sat_system_bonus = 0 }
-		}
+		clamp_variable = { var = var_COM_civ_sat_system_bonus min = 0 }
 	}
 }
 
@@ -1038,7 +998,6 @@ update_COM_system_stats = {
 add_treaty_COM_mil_receiver_num = {
 	set_variable = { var_treaty_COM_mil_receiver_num = 0 }
 	for_each_scope_loop = {
-	#for_each_loop = {
 		array = COM_mil_treaty_array
 		add_to_variable = { PREV.var_treaty_COM_mil_receiver_num = THIS.num_battalions }
 		add_to_variable = { PREV.var_treaty_COM_mil_receiver_num = THIS.num_ships }
@@ -1049,7 +1008,6 @@ add_treaty_COM_mil_receiver_num = {
 add_treaty_COM_civ_receiver_num = {
 	set_variable = { var_treaty_COM_civ_receiver_num = 0 }
 	for_each_scope_loop = {
-	#for_each_loop = {
 		array = COM_civ_treaty_array
 		set_variable = { PREV.var_treaty_COM_civ_receiver_num = THIS.num_controlled_states }
 		multiply_variable = { PREV.var_treaty_COM_civ_receiver_num = 100 }
@@ -1075,14 +1033,7 @@ update_SPY_system_stats = {
 		divide_variable = { var_SPY_mil_coverage = var_SPY_mil_sat_system_max }
 	}
 	set_variable = { var_SPY_mil_sat_system_bonus = var_SPY_mil_coverage }
-	if = {
-		limit = {
-			check_variable = {
-				var_SPY_mil_sat_system_bonus < 0
-			}
-		}
-		set_variable = { var_SPY_mil_sat_system_bonus = 0 }
-	}
+	clamp_variable = { var = var_SPY_mil_sat_system_bonus min = 0 }
 	update_SPY_mission_num = yes
 	### SPY civ system
 	set_variable = { var_SPY_civ_sat_system_num = SPY_satellite_array^var_SPY_civ_system_idx }
@@ -1100,14 +1051,7 @@ update_SPY_system_stats = {
 		divide_variable = { var_SPY_civ_coverage = var_SPY_civ_sat_system_max }
 	}
 	set_variable = { var_SPY_civ_sat_system_bonus = var_SPY_civ_coverage }
-	if = {
-		limit = {
-			check_variable = {
-				var_SPY_civ_sat_system_bonus < 0
-			}
-		}
-		set_variable = { var_SPY_civ_sat_system_bonus = 0 }
-	}
+	clamp_variable = { var = var_SPY_civ_sat_system_bonus min = 0 }
 	update_SPY_mission_num = yes
 }
 
@@ -1356,7 +1300,7 @@ calculate_COM_civ_gui_vars = {
 	if = {
 		limit = {
 			check_variable = {
-				var_COM_civ_decryption_factor_base< var_COM_civ_decryption_factor_min
+				var_COM_civ_decryption_factor_base < var_COM_civ_decryption_factor_min
 			}
 		}
 		set_variable = { var_COM_civ_decryption_factor_base = var_COM_civ_decryption_factor_min }
@@ -4115,26 +4059,6 @@ remove_killsat_used = {
 	set_variable = { var_KILLSAT_orbit = KILL_satellite_array^var_KILLSAT_type }
 }
 
-#remove used rods
-remove_rods_used = {
-	for_each_loop = {
-		array = orbit_array
-		if = {
-			limit = {
-				check_variable = { ROOT.orbit_array^i = ROOT.var_RODS_type }
-			}
-			set_variable = { ROOT.var_rods_fired = i }
-		}
-	}
-	set_variable = { tempTAG = ROOT.id }
-	ROOT = {
-		set_variable = { var_sat_ID = ROOT.var_rods_fired }
-		remove_satellite_from_system = yes
-		remove_satellite_from_orbit = yes
-	}
-	set_satellites_gui = yes
-}
-
 ### right container # sat access arrays
 
 set_sat_access_arrays_selected_TAG = {
@@ -4208,10 +4132,6 @@ update_missile_satellite_inventory = {
 	}
 }
 
-########################################
-### MD_countrymissilesview_nukes_gui ###
-########################################
-
 # Documentation on how the Nuclear Production System works
 # Notable Variables:
 # var_enrichment_grade_factor: This is used to control how many civilian industry is required per enrichment level
@@ -4268,40 +4188,37 @@ add_missile_building_level = {
 			set_technology = { hid_tech_missile_1 = 1 popup = no }
 		}
 		if = { limit = { check_variable = { num_launchers_set = 2 } }
-			set_technology = { hid_tech_missile_2 = 1 popup = no  }
+			set_technology = { hid_tech_missile_2 = 1 popup = no }
 		}
 		if = { limit = { check_variable = { num_launchers_set = 3 } }
-			set_technology = { hid_tech_missile_3 = 1 popup = no  }
+			set_technology = { hid_tech_missile_3 = 1 popup = no }
 		}
 		if = { limit = { check_variable = { num_launchers_set = 4 } }
-			set_technology = { hid_tech_missile_4 = 1 popup = no  }
+			set_technology = { hid_tech_missile_4 = 1 popup = no }
 		}
 		if = { limit = { check_variable = { num_launchers_set = 5 } }
-			set_technology = { hid_tech_missile_5 = 1 popup = no  }
+			set_technology = { hid_tech_missile_5 = 1 popup = no }
 		}
 		if = { limit = { check_variable = { num_launchers_set = 6 } }
-			set_technology = { hid_tech_missile_6 = 1 popup = no  }
+			set_technology = { hid_tech_missile_6 = 1 popup = no }
 		}
 		if = { limit = { check_variable = { num_launchers_set = 7 } }
-			set_technology = { hid_tech_missile_7 = 1 popup = no  }
+			set_technology = { hid_tech_missile_7 = 1 popup = no }
 		}
 		if = { limit = { check_variable = { num_launchers_set = 8 } }
-			set_technology = { hid_tech_missile_8 = 1 popup = no  }
+			set_technology = { hid_tech_missile_8 = 1 popup = no }
 		}
 		if = { limit = { check_variable = { num_launchers_set = 9 } }
-			set_technology = { hid_tech_missile_9 = 1 popup = no  }
+			set_technology = { hid_tech_missile_9 = 1 popup = no }
 		}
 		if = { limit = { check_variable = { num_launchers_set = 10 } }
-			set_technology = { hid_tech_missile_10 = 1 popup = no  }
+			set_technology = { hid_tech_missile_10 = 1 popup = no }
 		}
 	}
 }
 
 setup_missile_configuration_effect = {
-	if = {
-		limit = {
-			NOT = { has_country_flag = setup_missiles }
-		}
+	if = { limit = { NOT = { has_country_flag = setup_missiles } }
 		set_country_flag = setup_missiles
 		set_variable = { orbit_selected_TAG = THIS.id }
 		set_variable = { nuclear_reactor_fuel_production = 0 }

@@ -2,7 +2,7 @@ add_namespace = SyriaFocus
 add_namespace = SyriaFocusNews
 
 #Fate of Rojava
-country_event = {	
+country_event = {
 	id = SyriaFocus.0
 	title = SyriaFocus.0.t
 	desc = SyriaFocus.0.desc
@@ -1524,7 +1524,7 @@ country_event = {
 	title = SyriaFocus.40.t
 	desc = SyriaFocus.40.d
 	picture = GFX_Assad_parade
-	
+
 	trigger = {
 		original_tag = SYR
 		has_country_leader = { name = "Hafez al-Assad" }
@@ -1955,13 +1955,6 @@ country_event = {
 					size = 0.3
 				}
 				set_global_flag = SYR_civil_war_started_early
-				every_country = {
-					limit = {
-						original_tag = SYR
-						NOT = { has_idea = divided_syria }
-					}
-					add_ideas = divided_syria
-				}
 				if = {
 					limit = {
 						LEB = { is_subject_of = ROOT }
@@ -2018,13 +2011,6 @@ country_event = {
 						}
 					}
 					set_global_flag = SYR_civil_war_started_early
-					every_country = {
-						limit = {
-							original_tag = SYR
-							NOT = { has_idea = divided_syria }
-						}
-						add_ideas = divided_syria
-					}
 					if = {
 						limit = {
 							LEB = { is_subject_of = ROOT }
@@ -2861,7 +2847,7 @@ country_event = {
 				limit = { is_core_of = KUR }
 				KUR = { transfer_state = PREV }
 			}
-			every_state = {
+			every_owned_state = {
 				limit = { is_core_of = KUR }
 				add_core_of = ROOT
 			}
@@ -3542,7 +3528,7 @@ country_event = {
 				is_in_faction = yes
 			}
 		}
-		add_ideas = faction_jerusalem_defence_pact_member
+		SYR = { add_to_faction = PREV }
 		FROM = { country_event = { id = md4.17 hours = 3 } }
 	}
 	option = {
@@ -3645,7 +3631,7 @@ country_event = {
 			id = "ISR"
 			value = 50
 		}
-		add_ideas = faction_jerusalem_defence_pact_member
+		SYR = { add_to_faction = PREV }
 		FROM = { country_event = { id = md4.17 hours = 3 } }
 	}
 	option = {
@@ -4094,6 +4080,7 @@ country_event = {
 		ai_chance = { base = 50 }
 		complete_national_focus = SYR_NPF_victory
 		set_temp_variable = { add_col_one = 5 }
+		add_coalition_members_effect = yes
 		meta_effect = {
 			text = {
 				set_politics = {
@@ -4135,6 +4122,7 @@ country_event = {
 		ai_chance = { base = 50 }
 		complete_national_focus = SYR_NPF_victory
 		set_temp_variable = { add_col_one = 20 }
+		add_coalition_members_effect = yes
 		meta_effect = {
 			text = {
 				set_politics = {
@@ -4373,6 +4361,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.91.a executed"
 		ai_chance = { base = 50 }
 		set_temp_variable = { add_col_one = 17 }
+		add_coalition_members_effect = yes
 		set_country_flag = federalists_in_coalition
 		set_temp_variable = { party_index = 17 }
 		set_temp_variable = { party_popularity_increase = 0.10 }
@@ -4385,6 +4374,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.91.b executed"
 		ai_chance = { base = 50 }
 		set_temp_variable = { add_col_one = 20 }
+		add_coalition_members_effect = yes
 		set_country_flag = nationalists_in_coalition
 		set_temp_variable = { party_index = 20 }
 		set_temp_variable = { party_popularity_increase = 0.10 }
@@ -4490,14 +4480,22 @@ country_event = {
 	}
 }
 
-#druze state breaks away
+# The Druze State Breaks Away
 country_event = {
 	id = SyriaFocus.97
 	title = SyriaFocus.97.t
 	desc = SyriaFocus.97.d
 	picture = GFX_elections
 	is_triggered_only = yes
+	trigger = {
+		original_tag = SYR
+	}
 
+	immediate = {
+		set_country_flag = SYR_druze_has_spawned
+	}
+
+	# Alright
 	option = {
 		name = SyriaFocus.97.a #alright
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.97.a executed"
@@ -4535,6 +4533,7 @@ country_event = {
 						add_popularity = { ideology = nationalist popularity = 0.6 }
 					}
 				}
+				recalculate_party = yes
 			}
 		}
 	}
@@ -4822,86 +4821,91 @@ country_event = {
 	}
 }
 
-#japanese anime commercial success
+# Anime Industry Boom
 country_event = {
 	id = SyriaFocus.108
 	title = SyriaFocus.108.t
-	desc = SyriaFocus.108.d
+	desc = {
+		text = SyriaFocus.108.d1
+		trigger = {
+			has_idea = syria_japanese_anime
+		}
+	}
+	desc = {
+		text = SyriaFocus.108.d2
+		trigger = {
+			has_idea = syria_chinese_anime
+		}
+	}
+		desc = {
+		text = SyriaFocus.108.d3
+		trigger = {
+			has_idea = syria_domestic_anime
+		}
+	}
 
 	is_triggered_only = yes
 
 	option = {
 		name = SyriaFocus.108.a
 		log = "[GetDateText]: [This.GetName]: SyriaFocus.108.a executed"
-		ai_chance = { base = 100 }
+		trigger = {
+			has_idea = syria_japanese_anime
+		}
 		swap_ideas = {
 			remove_idea = syria_japanese_anime
 			add_idea = syria_japanese_anime_success
 		}
-		reverse_add_opinion_modifier = {
-			target = JAP
-			modifier = trade_mission
-		}
-		add_opinion_modifier = {
-			target = JAP
-			modifier = trade_mission
-		}
+		reverse_add_opinion_modifier = { target = JAP modifier = trade_mission }
+		add_opinion_modifier = { target = JAP modifier = trade_mission }
 		set_temp_variable = { percent_change = 5 }
 		set_temp_variable = { tag_index = JAP.id }
-		set_temp_variable = { influence_target = JAP.id }
+		set_temp_variable = { influence_target = SYR.id }
 		change_influence_percentage = yes
+
+		ai_chance = {
+			base = 100
+		}
 	}
-}
-
-#chinese anime commercial success
-country_event = {
-	id = SyriaFocus.109
-	title = SyriaFocus.109.t
-	desc = SyriaFocus.109.d
-
-	is_triggered_only = yes
 
 	option = {
-		name = SyriaFocus.109.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocus.109.a executed"
-		ai_chance = { base = 100 }
+		name = SyriaFocus.108.b
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.108.b executed"
+		trigger = {
+			has_idea = syria_chinese_anime
+		}
 		swap_ideas = {
 			remove_idea = syria_chinese_anime
 			add_idea = syria_chinese_anime_success
 		}
-		reverse_add_opinion_modifier = {
-			target = CHI
-			modifier = trade_mission
-		}
-		add_opinion_modifier = {
-			target = CHI
-			modifier = trade_mission
-		}
+		reverse_add_opinion_modifier = { target = CHI modifier = trade_mission }
+		add_opinion_modifier = { target = CHI modifier = trade_mission }
 		set_temp_variable = { percent_change = 5 }
 		set_temp_variable = { tag_index = CHI.id }
-		set_temp_variable = { influence_target = CHI.id }
+		set_temp_variable = { influence_target = SYR.id }
 		change_influence_percentage = yes
+
+		ai_chance = {
+			base = 100
+		}
 	}
-}
-
-#domestic anime commercial success
-country_event = {
-	id = SyriaFocus.110
-	title = SyriaFocus.110.t
-	desc = SyriaFocus.110.d
-
-	is_triggered_only = yes
 
 	option = {
-		name = SyriaFocus.110.a
-		log = "[GetDateText]: [This.GetName]: SyriaFocus.110.a executed"
-		ai_chance = { base = 100 }
+		name = SyriaFocus.108.c
+		log = "[GetDateText]: [This.GetName]: SyriaFocus.108.c executed"
+		trigger = {
+			has_idea = syria_domestic_anime
+		}
 		swap_ideas = {
 			remove_idea = syria_domestic_anime
 			add_idea = syria_domestic_anime_success
 		}
 		set_temp_variable = { percent_change = 5 }
 		change_domestic_influence_percentage = yes
+
+		ai_chance = {
+			base = 100
+		}
 	}
 }
 

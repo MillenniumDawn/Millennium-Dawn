@@ -1,53 +1,28 @@
 ﻿add_namespace = isis
 add_namespace = isisNews
 
-# Remove Idea Cybercaliphate
-news_event = {
-	id = isis.1
-	title = isis.1.t
-	desc = isis.1.d
-	picture = GFX_SYR_tahrir_al_sham
-	is_triggered_only = yes
-
-	major = yes
-	fire_only_once = yes
-
-	trigger = {
-		NOT = { country_exists = ISI }
-	}
-
-	option = {
-		name = isis.1.a
-		log = "[GetDateText]: [This.GetName]: isis.1.a executed"
-			if = { limit = { has_idea = cybercaliphate } remove_ideas = { cybercaliphate }
-		}
-	}
-}
-
-#Infiltrate Tahrir al-Sham
+# Infiltrate Tahrir al-Sham
 country_event = {
 	id = isis.2
 	title = isis.2.t
 	desc = isis.2.d
 	picture = GFX_SYR_tahrir_al_sham
-
-	fire_only_once = yes
-
-	mean_time_to_happen = {
-		days = 60
-	}
-
+	is_triggered_only = yes
 	trigger = {
-		tag = ISI
-		date > 2017.2.1
+		original_tag = ISI
+		NOT = { has_country_flag = ISI_infiltrated_al_nusra }
 		ISI = {
 			is_neighbor_of = NUS
 			NOT = { has_war_with = NUS }
 			surrender_progress < 0.6
-			}
+		}
 		NUS = {
 			surrender_progress < 0.5
-			}
+		}
+	}
+
+	immediate = {
+		set_country_flag = ISI_infiltrated_al_nusra
 	}
 
 	#Do it
@@ -60,8 +35,7 @@ country_event = {
 				ISI = { country_event = { days = 28 id = isis.4 } }
 				hidden_effect = {
 					NUS = { country_event = { days = 30 id = isis.3 } }
-					}
-
+				}
 			}
 			30 = {
 				custom_effect_tooltip = isis.2.a_tt
@@ -69,7 +43,8 @@ country_event = {
 			}
 		}
 	}
-	#avoid provokations
+
+	# Avoid Provocations
 	option = {
 		name = isis.2.b
 		log = "[GetDateText]: [This.GetName]: isis.2.b executed"
@@ -79,7 +54,7 @@ country_event = {
 	}
 }
 
-#Defections from Tahrir al-Sham
+# Defections from Tahrir al-Sham
 country_event = {
 	id = isis.3
 	title = isis.3.t
@@ -169,18 +144,14 @@ country_event = {
 	}
 }
 
-#ISIS is alive, but Tahrir al Sham is close to defeat
-#Makes Tahrir al Sham defect to ISIS
+# ISIS is alive, but Tahrir al Sham is close to defeat
+# Makes Tahrir al Sham defect to ISIS
 country_event = {
 	id = isis.6
 	title = isis.6.t
 	desc = isis.6.d
 	picture = GFX_SYR_tahrir_al_sham
-
-	mean_time_to_happen = {
-		days = 2
-	}
-
+	is_triggered_only = yes
 	trigger = {
 		tag = ISI
 		country_exists = ISI
@@ -192,27 +163,31 @@ country_event = {
 		NUS = {
 			surrender_progress > 0.5
 		}
+		NOT = { has_country_flag = ISI_annexed_al_nusra }
 	}
 
 	option = {
 		name = isis.6.a
 		log = "[GetDateText]: [This.GetName]: isis.6.a executed"
-		ai_chance = { base = 100 }
+		set_country_flag = ISI_annexed_al_nusra
+
 		annex_country = { target = NUS transfer_troops = yes }
 		hidden_effect = { news_event = { id = isisNews.1 hours = 6 } }
+
+		ai_chance = {
+			base = 100
+		}
 	}
 }
 
-#ISIS annexes Tahrir al Sham
+# ISIS annexes Tahrir al Sham
 news_event = {
 	id = isisNews.1
 	title = isisNews.1.t
 	desc = isisNews.1.d
 	picture = GFX_news_rise_of_taliban
-
-	major = yes
-
 	is_triggered_only = yes
+	major = yes
 
 	option = {
 		name = isisNews.1.a

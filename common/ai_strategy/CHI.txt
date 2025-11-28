@@ -36,9 +36,8 @@ CHI_default_stockpile_management = {
 		has_war = no
 		date < 2006.1.1
 	}
-	abort = {
-		date > 2006.1.1
-	}
+	abort_when_not_enabled = yes
+
 	ai_strategy = { type = equipment_stockpile_surplus_ratio value = 20 } # double base stockpile #from 25 to 35
 }
 
@@ -49,6 +48,7 @@ CHI_default_stockpile_management_generic = {
 		date > 2006.1.1
 	}
 	abort_when_not_enabled = yes
+
 	ai_strategy = { type = equipment_stockpile_surplus_ratio value = 45 } # double base stockpile #from 25 to 35
 }
 
@@ -85,20 +85,6 @@ CHI_airforce_breakdown_initial = {
 	ai_strategy = { type = unit_ratio id = cv_naval_bomber value = 8 }
 	ai_strategy = { type = unit_ratio id = cv_suicide value = 1 }
 	ai_strategy = { type = unit_ratio id = cv_interceptor value = 2 }
-
-	#production - weight factories based on the aircraft TYPE
-	#Fighters
-	#ai_strategy = { type = equipment_production_factor id = fighter value = 20 }
-	#CAS
-	#ai_strategy = { type = equipment_production_factor id = cas value = 10 }
-	#Tac Bomber
-	#ai_strategy = { type = equipment_production_factor id = tactical_bomber value = 1 }
-	#strategic_bomber
-	#ai_strategy = { type = equipment_production_factor id = strategic_bomber value = 10 }
-	#naval_bomber
-	#ai_strategy = { type = equipment_production_factor id = naval_bomber value = 20 }
-	#UAV
-	#ai_strategy = { type = equipment_production_factor id = scout_plane value = 2 }
 
 	#production = weight factories based on the specific archtype
 	ai_strategy = { type = equipment_variant_production_factor id = small_plane_airframe value = -100 }
@@ -172,20 +158,6 @@ CHI_airforce_breakdown_late = {
 	ai_strategy = { type = unit_ratio id = cv_naval_bomber value = 8 }
 	ai_strategy = { type = unit_ratio id = cv_suicide value = 1 }
 	ai_strategy = { type = unit_ratio id = cv_interceptor value = 8 }
-
-	#production - weight factories based on the aircraft TYPE
-	#Fighters
-	#ai_strategy = { type = equipment_production_factor id = fighter value = 20 }
-	#CAS
-	#ai_strategy = { type = equipment_production_factor id = cas value = 10 }
-	#Tac Bomber
-	#ai_strategy = { type = equipment_production_factor id = tactical_bomber value = 1 }
-	#strategic_bomber
-	#ai_strategy = { type = equipment_production_factor id = strategic_bomber value = 10 }
-	#naval_bomber
-	#ai_strategy = { type = equipment_production_factor id = naval_bomber value = 20 }
-	#UAV
-	#ai_strategy = { type = equipment_production_factor id = scout_plane value = 2 }
 
 	#production = weight factories based on the specific archtype
 	ai_strategy = { type = equipment_variant_production_factor id = small_plane_airframe value = -100 }
@@ -360,34 +332,47 @@ CHI_area_priority = {
 	ai_strategy = { type = area_priority id = africa value = 150 }
 }
 ###CHINA SPY STRATEGIES###
-CHI_spy_on_USA = { #Spy on USA, steal military tech from USA
+# Spy on USA, steal military tech from USA
+CHI_spy_on_USA = {
 	allowed = { original_tag = CHI }
 	enable = {
+		country_exists = USA
 		CHI = { has_government = communism }
 		NOT = { USA = { is_subject_of = CHI } }
 	}
-	abort = {
-		NOT = { country_exists = USA }
-	}
 	abort_when_not_enabled = yes
+
 	ai_strategy = { type = operative_mission value = 80 mission = build_intel_network mission_target = USA }
 	ai_strategy = { type = operative_operation value = 80 operation = operation_steal_tech_army operation_target = USA }
 }
-CHI_spy_on_TAI = { #Spy on TAI, infiltrate TAI army
+
+# Spy on TAI, infiltrate TAI army, and steal tech from TAI
+CHI_spy_on_TAI = {
 	allowed = { original_tag = CHI }
 	enable = {
+		country_exists = TAI
 		CHI = { has_government = communism }
 		NOT = { TAI = { is_subject_of = CHI } }
-	}
-	abort = {
-		NOT = { country_exists = TAI }
-		has_completed_focus = CHI_Peaceful_Co_Existence
+		NOT = { has_completed_focus = CHI_Peaceful_Co_Existence }
 	}
 	abort_when_not_enabled = yes
+
 	ai_strategy = { type = operative_mission value = 80 mission = build_intel_network mission_target = TAI }
 	ai_strategy = { type = operative_operation value = 80 operation = operation_infiltrate_armed_forces_army operation_target = TAI }
 }
+
 ###CHINA WAR STRATEGIES###
+CHI_defend_beijing = { #If Beijing region is part of a theater, this theater has priority for units
+	allowed = { original_tag = CHI }
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = theatre_distribution_demand_increase
+		id = 547 #state ID
+		value = 20
+	}
+}
 CHI_antagonize_taiwan = { #War preparation against Taiwan
 	allowed = { original_tag = CHI }
 	enable = {
@@ -460,7 +445,7 @@ CHI_focus_naval_japan = { #China focus on invading Japan. Ignore the rest until 
 	ai_strategy = { type = strike_force_home_base id = 76 value = 100 } #East China sea
 }
 CHI_invade_USA = { #CHI is less motivated to invade USA until it can fight US fleet and not at war with Japan and Taiwan
-	allowed = { tag = CHI }
+	allowed = { original_tag = CHI }
 	enable = {
 		NOT = { has_war_with = JAP }
 		NOT = { has_war_with = TAI }
@@ -477,7 +462,7 @@ CHI_invade_USA = { #CHI is less motivated to invade USA until it can fight US fl
 	ai_strategy = { type = invade id = "CHI" value = 400 }
 }
 CHI_protect_coast_against_USA = { #CHI is fighting defensively if it doesn't have a naval favorable strength ratio with USA
-	allowed = { tag = CHI }
+	allowed = { original_tag = CHI }
 	enable = {
 		country_exists = CHI
 		has_war_with = USA
@@ -494,7 +479,7 @@ CHI_protect_coast_against_USA = { #CHI is fighting defensively if it doesn't hav
 	ai_strategy = { type = area_priority id = chinese_coast value = 1000 } #Protect the coast
 }
 CHI_protect_coast = { #CHI is fighting defensively if it doesn't have a naval favorable strength ratio against enemies other than US
-	allowed = { tag = CHI }
+	allowed = { original_tag = CHI }
 	enable = {
 		country_exists = CHI
 		NOT = { has_war_with = USA }
@@ -504,7 +489,7 @@ CHI_protect_coast = { #CHI is fighting defensively if it doesn't have a naval fa
 	ai_strategy = { type = area_priority id = chinese_coast value = 1000 } #Protect the coast
 }
 CHI_protect_coast_against_world = { #CHI is fighting defensively if it doesn't have a naval favorable strength ratio against enemy alliance
-	allowed = { tag = CHI }
+	allowed = { original_tag = CHI }
 	enable = {
 		country_exists = CHI
 		alliance_naval_strength_ratio > 1.5
@@ -583,13 +568,7 @@ CHI_support_north_korea = {
 		NOT = { has_completed_focus = CHI_End_the_Kim_Dynasty }
 		NOT = { KOR = { has_completed_focus = KOR_china_supports_the_south } }
 	}
-	abort = {
-		OR = {
-			NOT = { country_exists = NKO }
-			has_completed_focus = CHI_End_the_Kim_Dynasty
-			KOR = { has_completed_focus = KOR_china_supports_the_south }
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = protect id = "NKO" value = 25 }
 	ai_strategy = { type = befriend id = "NKO" value = 25 }
@@ -656,7 +635,7 @@ CHI_war_with_the_raj = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = front_unit_request tag = RAJ value = 150 }
+	ai_strategy = { type = front_unit_request tag = "RAJ" value = 150 }
 }
 
 CHI_befriend_local_neighbors = {
@@ -687,7 +666,6 @@ CHI_befriend_local_neighbors = {
 CHI_blitz_taiwan = {
 	allowed = { original_tag = CHI }
 	enable = {
-		original_tag = CHI
 		has_war_with = TAI
 	}
 	abort_when_not_enabled = yes
@@ -699,7 +677,6 @@ CHI_blitz_taiwan = {
 CHI_blitz_mongolia = {
 	allowed = { original_tag = CHI }
 	enable = {
-		original_tag = CHI
 		has_war_with = MON
 	}
 	abort_when_not_enabled = yes
@@ -711,7 +688,6 @@ CHI_blitz_mongolia = {
 CHI_prepare_for_war_against_india = {
 	allowed = { original_tag = CHI }
 	enable = {
-		original_tag = CHI
 		has_opinion = { target = CHI value < -25 }
 		OR = {
 			has_war_with = RAJ
@@ -725,11 +701,7 @@ CHI_prepare_for_war_against_india = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = {
-		type = front_unit_request
-		tag = RAJ
-		value = 20
-	}
+	ai_strategy = { type = front_unit_request tag = "RAJ" value = 20 }
 }
 
 CHI_defeat_any_invasion = {
@@ -757,9 +729,7 @@ CHI_defeat_any_invasion = {
 
 CHI_support_botswana_militarily = {
 	allowed = { original_tag = CHI }
-
 	enable = {
-		original_tag = CHI
 		BOT = { has_completed_focus = BOT_chinese_military_cooperation }
 	}
 	abort = {
@@ -805,9 +775,7 @@ CHI_major_production_of_dockyard = {
 		num_of_civilian_factories_available_for_projects > 15
 		num_of_civilian_factories > 190
 	}
-	abort = {
-		num_of_civilian_factories < 192
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = {
 		type = building_target
@@ -852,12 +820,9 @@ CHI_the_great_chinese_highway_projects = {
 	ai_strategy = { type = building_target id = infrastructure value = 100 }
 }
 
-#Russians war
-
+# Russians war
 CHI_concentrates_forces_vs_RUS = {
-	allowed = {
-		original_tag = CHI
-	}
+	allowed = { original_tag = CHI }
 	enable = {
 		has_war_with = SOV
 		OR = {
@@ -875,52 +840,31 @@ CHI_concentrates_forces_vs_RUS = {
 }
 
 CHI_cancel_new_war = {
-	allowed = {
-		original_tag = CHI
-	}
+	allowed = { original_tag = CHI }
 	enable = {
 		has_war_with = SOV
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = {
-		type = declare_war
-		id = RAJ
-		value = -4000
-	}
-
-	ai_strategy = {
-		type = declare_war
-		id = TAI
-		value = -4000
-	}
-
-	ai_strategy = {
-		type = declare_war
-		id = USA
-		value = -4000
-	}
-
-	ai_strategy = {
-		type = declare_war
-		id = JAP
-		value = -4000
-	}
+	ai_strategy = { type = declare_war id = "RAJ" value = -4000 }
+	ai_strategy = { type = declare_war id = "TAI" value = -4000 }
+	ai_strategy = { type = declare_war id = "USA" value = -4000 }
+	ai_strategy = { type = declare_war id = "JAP" value = -4000 }
 }
 
-#China supplied most of Sudan's weapons
+# China supplied most of Sudan's weapons
 CHI_support_sudan = {
 	allowed = { original_tag = CHI }
 	enable = {
 		has_completed_focus = CHI_Global_Influence
 		NOT = { has_war_with = SUD }
 	}
-
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = support id = "SUD" value = 100 }
 }
-#CIVIL WAR IN AMERICA
+
+# CIVIL WAR IN AMERICA
 CHI_california_help = {
 	allowed = { original_tag = CHI }
 	enable = {
@@ -931,9 +875,11 @@ CHI_california_help = {
 		}
 	}
 	abort_when_not_enabled = yes
+
 	ai_strategy = { type = send_volunteers_desire id = "CAL" value = 1000 }
 	ai_strategy = { type = send_lend_lease_desire id = "CAL" value = 400 }
 }
+
 CHI_new_york_help = {
 	allowed = { original_tag = CHI }
 	enable = {
@@ -947,6 +893,7 @@ CHI_new_york_help = {
 	ai_strategy = { type = send_volunteers_desire id = "NYK" value = 1000 }
 	ai_strategy = { type = send_lend_lease_desire id = "NYK" value = 400 }
 }
+
 CHI_cascadia_help = {
 	allowed = { original_tag = CHI }
 	enable = {

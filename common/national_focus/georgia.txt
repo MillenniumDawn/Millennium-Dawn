@@ -253,19 +253,17 @@ focus_tree = {
 			add_popularity = {
 				ideology = communism
 				popularity = 0.1
-				add_to_variable = {
-					party_pop_array^4 = 0.15
-				}
-				recalculate_party = yes
 			}
+			add_to_variable = { party_pop_array^4 = 0.15 }
+			recalculate_party = yes
 			add_popularity = {
 				ideology = neutrality
 				popularity = 0.1
-				add_to_variable = {
-					party_pop_array^19 = 0.15
-				}
-				recalculate_party = yes
 			}
+			add_to_variable = {
+				party_pop_array^19 = 0.15
+			}
+			recalculate_party = yes
 			add_stability = 0.05
 			add_political_power = 150
 		}
@@ -1201,53 +1199,7 @@ focus_tree = {
 			focus = GEO_no_opium_for_people
 		}
 	}
-	focus = {
-		id = GEO_rodina_zakav_com
-		icon = GEO_beria_labour
-		x = 1
-		y = 1
-		cost = 10
-		relative_position_id = GEO_exapnd_com_party
-		ai_will_do = { factor = 15 }
-		search_filters = {
-			FOCUS_FILTER_POLITICAL
-		}
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GEO_rodina_zakav_com"
-			if = {
-				limit = {
-					is_in_faction = yes
-				}
-				dismantle_faction = yes
-				create_faction = ARM_the_fifth_international
-			}
-			else_if = {
-				limit = {
-					is_in_faction = no
-				}
-				create_faction = ARM_the_fifth_international
-			}
-			every_country = {
-				limit = {
-					is_in_array = {
-						ruling_party = 4
-					}
-					has_opinion = {
-						target = GEO
-						value > 0
-					}
-				}
-				country_event = {
-					id = arme.50
-					days = 1
-				}
-			}
-			custom_effect_tooltip = SOV_the_fifth_international_TT
-		}
-		prerequisite = {
-			focus = GEO_exapnd_com_party
-		}
-	}
+
 	focus = {
 		id = GEO_no_opium_for_people
 		icon = anti_orthodoxy
@@ -1300,7 +1252,7 @@ focus_tree = {
 	focus = {
 		id = GEO_clearup_local_gov
 		icon = GEO_beria_gamer
-		x = -1
+		x = 0
 		y = 1
 		cost = 10
 		relative_position_id = GEO_exapnd_com_party
@@ -1324,7 +1276,7 @@ focus_tree = {
 	focus = {
 		id = GEO_new_nep
 		icon = GEO_beria_economy
-		x = 0
+		x = -1
 		y = 1
 		cost = 10
 		relative_position_id = GEO_clearup_local_gov
@@ -1348,10 +1300,10 @@ focus_tree = {
 	focus = {
 		id = GEO_help_othercommies
 		icon = GEO_beria_liberty
-		x = 0
+		x = 1
 		y = 1
 		cost = 10
-		relative_position_id = GEO_rodina_zakav_com
+		relative_position_id = GEO_clearup_local_gov
 		ai_will_do = { factor = 15 }
 		search_filters = {
 			FOCUS_FILTER_POLITICAL
@@ -1367,7 +1319,7 @@ focus_tree = {
 			}
 		}
 		prerequisite = {
-			focus = GEO_rodina_zakav_com
+			focus = GEO_clearup_local_gov
 		}
 	}
 	focus = {
@@ -2786,28 +2738,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GEO_send_troops_toiraq"
 			add_ideas = Enduring_Freedom
-			add_ai_strategy = {
-				type = befriend
-				id = "USA"
-				value = 15
-			}
-			add_ai_strategy = {
-				type = support
-				id = "USA"
-				value = 25
-			}
-			USA = {
-				add_ai_strategy = {
-					type = befriend
-					id = ROOT
-					value = 15
-				}
-				add_ai_strategy = {
-					type = support
-					id = ROOT
-					value = 25
-				}
-			}
 		}
 		prerequisite = {
 			focus = GEO_epoch_of_saakash
@@ -4668,30 +4598,41 @@ focus_tree = {
 	focus = {
 		id = GEO_local_geopolitics
 		icon = local_geopolitics
+
 		x = 1
 		y = 1
+		relative_position_id = GEO_reform_governmant
+
 		cost = 5
+
+		prerequisite = { focus = GEO_reform_governmant }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
 		available = {
+			is_subject = no
 			has_government = nationalist
 		}
-		ai_will_do = {
-			factor = 15
-		}
-		relative_position_id = GEO_reform_governmant
-		search_filters = {
-			FOCUS_FILTER_POLITICAL
-		}
-		prerequisite = {
-			focus = GEO_reform_governmant
-		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GEO_local_geopolitics"
 			add_political_power = 100
-			set_temp_variable = {
-				percent_change = 10
-			}
+			set_temp_variable = { percent_change = 10 }
 			change_domestic_influence_percentage = yes
-			create_faction = GEO_all_of_geo
+
+			if = {
+				limit = { is_faction_leader = yes }
+				dismantle_faction = yes
+			}
+			if = {
+				limit = { is_in_faction = yes }
+				leave_faction = yes
+			}
+
+			create_faction_from_template = faction_template_geo_aog
+		}
+
+		ai_will_do = {
+			factor = 15
 		}
 	}
 	focus = {
@@ -7741,7 +7682,6 @@ focus_tree = {
 			set_temp_variable = { temp_opinion = 5 }
 			change_industrial_conglomerates_opinion = yes
 			change_small_medium_business_owners_opinion = yes
-			change_the_bazaar_opinion = yes
 			change_the_donju_opinion = yes
 			change_chaebols_opinion = yes
 			change_wall_street_opinion = yes
@@ -9314,10 +9254,7 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GEO_decrease_import"
-			swap_ideas = {
-				remove_idea = mixed_economy
-				add_idea = semi_consumption_economy
-			}
+			decrease_exports = yes
 		}
 	}
 	focus = {
@@ -11739,7 +11676,7 @@ focus_tree = {
 					amount = 15
 					producer = SOV
 				}
-			} 
+			}
 			else = {
 				add_equipment_to_stockpile = {
 					type = L_Strike_fighter1
@@ -12116,10 +12053,8 @@ focus_tree = {
 				name = GRE_surface_fleet
 				bonus = 0.3
 				uses = 1
-				technology = destroyer_1
-				technology = destroyer_2
-				technology = missile_destroyer_1
-				technology = missile_destroyer_2
+				technology = destroyer_hull_1
+				technology = destroyer_hull_2
 			}
 			set_temp_variable = {
 				treasury_change = -5
@@ -12267,10 +12202,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GEO_radioloc_usa"
 			add_tech_bonus = {
-				name = CAT_m_cruiser
+				name = CAT_cruiser
 				bonus = 0.3
 				uses = 1
-				category = CAT_m_cruiser
+				category = CAT_cruiser
 			}
 		}
 	}
