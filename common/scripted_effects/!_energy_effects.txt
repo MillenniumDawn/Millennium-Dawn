@@ -13,30 +13,16 @@ calculate_energy_use = {
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = energy_dynamic_modifier } } } add_dynamic_modifier = { modifier = energy_dynamic_modifier } }
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = no_fuel_penalties_modifier } } } add_dynamic_modifier = { modifier = no_fuel_penalties_modifier } }
 
-	# Game Rule Increase For AI/Player Difficulty
-	if = { limit = { is_ai = yes }
-		set_temp_variable = { game_rule_energy_gain = global.ai_energy_gain_modifier }
-		set_temp_variable = { game_rule_energy_use = global.ai_energy_use_modifier }
-	}
-	else = {
-		set_temp_variable = { game_rule_energy_gain = global.player_energy_gain_modifier }
-		set_temp_variable = { game_rule_energy_use = global.player_energy_use_modifier }
-	}
-
 	#set temp vars for each multiplier and add 1 to the multipliers (which are percentages).
 	#IE: if energy_use_multiplier is modified to 40% (.4) it will be treated as a 140% (1.4) multiplication on its correlating modifier
 	# Energy Use Multiplier
 	set_temp_variable = { temp_pop_use_m = 1 }
 	add_to_temp_variable = { temp_pop_use_m = modifier@pop_energy_use_multiplier }
-	add_to_temp_variable = { temp_pop_use_m = game_rule_energy_use }
 	set_temp_variable = { temp_energy_use_m = 1 }
 	add_to_temp_variable = { temp_energy_use_m = modifier@energy_use_multiplier }
-	add_to_temp_variable = { temp_energy_use_m = game_rule_energy_use }
 	# Energy Gain Multiplier
 	set_temp_variable = { temp_energy_gain_m = 1 }
 	add_to_temp_variable = { temp_energy_gain_m = modifier@energy_gain_multiplier }
-	add_to_temp_variable = { temp_energy_gain_m = game_rule_energy_gain }
-
 
 	# Energy Consumption Calculations #
 	# --------------------------------#
@@ -143,6 +129,8 @@ calculate_energy_use = {
 	multiply_variable = { energy_sum = temp_renewable_energy_gain_m }
 	multiply_variable = { minimum_renewable_energy_var = temp_renewable_energy_gain_m }
 	multiply_variable = { maximum_renewable_energy_var = temp_renewable_energy_gain_m }
+	multiply_variable = { minimum_renewable_energy_var = temp_energy_gain_m }
+	multiply_variable = { maximum_renewable_energy_var = temp_energy_gain_m }
 
 	set_variable = { renewable_energy_display_var = energy_sum }
 
@@ -154,6 +142,8 @@ calculate_energy_use = {
 	multiply_temp_variable = { battery_stored_energy = battery_stored_energy_modifier }
 	add_to_variable = { max_stored_energy = battery_stored_energy }
 
+	multiply_variable = { hydroelectric_energy_generation = temp_energy_gain_m }
+	multiply_variable = { geothermal_energy_generation = temp_energy_gain_m }
 	add_to_variable = { energy_sum = hydroelectric_energy_generation }
 	add_to_variable = { energy_sum = geothermal_energy_generation }
 
@@ -167,6 +157,7 @@ calculate_energy_use = {
 		set_temp_variable = { fossil_pp_energy_generation_multiplier = 1 }
 		add_to_temp_variable = { fossil_pp_energy_generation_multiplier = modifier@fossil_pp_energy_generation_modifier }
 		multiply_variable = { fossil_pp_energy_generation = fossil_pp_energy_generation_multiplier }
+		multiply_variable = { fossil_pp_energy_generation = temp_energy_gain_m }
 
 		set_variable = { fossil_pp_fuel_consumption = modifier@fossil_fuel_consumption }
 		set_temp_variable = { fossil_pp_fuel_consumption_multiplier = 1 }
@@ -174,8 +165,6 @@ calculate_energy_use = {
 		multiply_variable = { fossil_pp_fuel_consumption = fossil_pp_fuel_consumption_multiplier }
 		multiply_variable = { fossil_pp_fuel_consumption = -1 }
 	}
-
-
 
 	# Implements the No Fuel Killswitch
 	set_temp_variable = { no_fuel_killswitch_var = 1 }
@@ -232,17 +221,22 @@ calculate_energy_use = {
 			clamp_temp_variable = { var = nuclear_fuel_fulfillment min = 0 max = 1 }
 			multiply_variable = { nuclear_energy_generation = nuclear_fuel_fulfillment }
 		}
+
+		multiply_variable = { nuclear_energy_generation = temp_energy_gain_m }
 		add_to_variable = { energy_sum = nuclear_energy_generation }
 	}
 	else = {
 		set_variable = { nuclear_fuel_consumption = 0 }
 		set_variable = { nuclear_energy_generation = 0 }
+
+		# Set only to production when nuclear power is disabled
+		set_variable = { net_nuclear_fuel_display = nuclear_reactor_fuel_production }
 	}
 
 	# Flat Miscellaneous Gain from Content
 	set_variable = { other_energy_generation = modifier@energy_gain }
+	multiply_variable = { other_energy_generation = temp_energy_gain_m }
 	add_to_variable = { energy_sum = other_energy_generation }
-	multiply_variable = { energy_sum = temp_energy_gain_m }
 
 	set_variable = { energy_consumption = temp_total_energy_use }
 	set_variable = { energy_balance = energy_sum }
@@ -2697,6 +2691,23 @@ build_enrichment_facilities_effect = {
 		if = {
 			limit = { NOT = { has_country_flag = enabled_nuclear_reactor_fuel_production } }
 			set_country_flag = enabled_nuclear_reactor_fuel_production
+		}
+	}
+}
+
+add_hydroelectric_energy_production_effect = {
+	custom_effect_tooltip = add_hydroelectric_energy_production_effect_tt
+	add_to_variable = { hydroelectric_energy_production_var = electric_addition }
+	add_to_variable = { hydroelectric_energy_storage_var = storage_addition }
+
+	hidden_effect = {
+		if = {
+			limit = {
+				NOT = { has_dynamic_modifier = { modifier = hydroelectric_infrastructure_in_state } }
+			}
+			add_dynamic_modifier = {
+				modifier = hydroelectric_infrastructure_in_state
+			}
 		}
 	}
 }

@@ -10,9 +10,18 @@ country_event = {
 	hidden = yes
 	immediate = {
 		log = "[GetDateText]: [This.GetName]: influence.11.a executed"
-		set_variable = { gift_sum = debt }
-		multiply_variable = { gift_sum = 0.05 }
-		clamp_variable = { var = gift_sum min = 1 max = 5000 } # Max Gift Amount Period
+		set_variable = { five_gift_sum = gdp_total }
+		multiply_variable = { five_gift_sum = 0.05 }
+		clamp_variable = { var = five_gift_sum min = 1 max = 5000 } # Max Gift Amount Period
+
+		set_variable = { ten_gift_sum = gdp_total }
+		multiply_variable = { ten_gift_sum = 0.10 }
+		clamp_variable = { var = ten_gift_sum min = 1 max = 5000 } # Max Gift Amount Period
+
+		set_variable = { fifteen_gift_sum = gdp_total }
+		multiply_variable = { fifteen_gift_sum = 0.15 }
+		clamp_variable = { var = fifteen_gift_sum min = 1 max = 5000 } # Max Gift Amount Period
+
 		# event_target is set in the targeting scope
 		event_target:influence_sender = { country_event = { id = influence.1 } }
 	}
@@ -27,24 +36,27 @@ country_event = {
 	picture = GFX_united_states_dollar
 	is_triggered_only = yes
 
-	#Give it
+	# Send 5% of GDP as Economic Aid
 	option = {
 		name = influence.1.a
 		log = "[GetDateText]: [This.GetName]: influence.1.a executed"
 
-		custom_effect_tooltip = influence_0_TT
-		subtract_from_variable = { treasury = FROM.gift_sum }
+		set_temp_variable = { temp_amount_gift_sum = FROM.five_gift_sum }
+		multiply_temp_variable = { temp_amount_gift_sum = -1 }
+		custom_effect_tooltip = economic_aid_influence_value_TT
+		add_to_variable = { treasury = temp_amount_gift_sum }
 		FROM = {
+			set_country_flag = sending_five_percent_of_gdp_@PREV
 			effect_tooltip = {
 				custom_effect_tooltip = accept_money
-				set_temp_variable = { percent_change = 3 }
-				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = PREV.id }
 				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
 				reverse_add_opinion_modifier = { target = FROM modifier = given_gift }
 			}
 
-			country_event = { id = News_influence.0 }
+			country_event = { id = News_influence.0 days = 1 }
 		}
 
 		ai_chance = {
@@ -71,9 +83,57 @@ country_event = {
 		}
 	}
 
-	#Let's not bother
+	# Send 10% of GDP as Economic Aid
 	option = {
 		name = influence.1.b
+		log = "[GetDateText]: [This.GetName]: influence.1.c executed"
+		set_temp_variable = { temp_amount_gift_sum = FROM.ten_gift_sum }
+		multiply_temp_variable = { temp_amount_gift_sum = -1 }
+		custom_effect_tooltip = economic_aid_influence_value_TT
+		add_to_variable = { treasury = temp_amount_gift_sum }
+		FROM = {
+			set_country_flag = sending_ten_percent_of_gdp_@PREV
+			effect_tooltip = {
+				custom_effect_tooltip = accept_money
+				set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { tag_index = PREV.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+				reverse_add_opinion_modifier = { target = FROM modifier = given_gift_ten }
+			}
+
+			country_event = { id = News_influence.0 days = 1 }
+		}
+	}
+
+	# Send 15% of GDP as Economic Aid
+	option = {
+		name = influence.1.c
+		log = "[GetDateText]: [This.GetName]: influence.1.d executed"
+
+		set_temp_variable = { temp_amount_gift_sum = FROM.fifteen_gift_sum }
+		multiply_temp_variable = { temp_amount_gift_sum = -1 }
+		custom_effect_tooltip = economic_aid_influence_value_TT
+		add_to_variable = { treasury = temp_amount_gift_sum }
+		FROM = {
+			set_country_flag = sending_fifteen_percent_of_gdp_@PREV
+			effect_tooltip = {
+				custom_effect_tooltip = accept_money
+				set_temp_variable = { percent_change = 6 }
+				set_temp_variable = { tag_index = PREV.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+				reverse_add_opinion_modifier = { target = FROM modifier = given_gift_fifteen }
+			}
+
+			country_event = { id = News_influence.0 days = 1 }
+		}
+
+	}
+
+	#Let's not bother
+	option = {
+		name = influence.1.e
 		log = "[GetDateText]: [This.GetName]: influence.1.b executed"
 		FROM = { ROOT = { clr_country_flag = recently_sent_aid@PREV } }
 
@@ -108,18 +168,56 @@ country_event = {
 	option = {
 		name = News_influence.0.a
 		log = "[GetDateText]: [This.GetName]: News_influence.0.a executed"
-		custom_effect_tooltip = influence_from_0_TT
-		add_to_variable = { treasury = gift_sum } # Adds Gift Sum
-		set_temp_variable = { percent_change = 2 }
-		set_temp_variable = { tag_index = FROM.id }
-		set_temp_variable = { influence_target = THIS.id }
-		change_influence_percentage = yes
-		add_opinion_modifier = { target = FROM modifier = given_gift }
+
+		if = {
+			limit = { has_country_flag = sending_five_percent_of_gdp_@FROM }
+
+			set_temp_variable = { temp_amount_gift_sum = five_gift_sum }
+
+			custom_effect_tooltip = accept_money
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = FROM.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			add_opinion_modifier = { target = FROM modifier = given_gift }
+		}
+		else_if = {
+			limit = { has_country_flag = sending_ten_percent_of_gdp_@FROM }
+
+			set_temp_variable = { temp_amount_gift_sum = ten_gift_sum }
+
+			custom_effect_tooltip = accept_money
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = FROM.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			add_opinion_modifier = { target = FROM modifier = given_gift_ten }
+		}
+		else_if = {
+			limit = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM }
+
+			set_temp_variable = { temp_amount_gift_sum = fifteen_gift_sum }
+
+			custom_effect_tooltip = accept_money
+			set_temp_variable = { percent_change = 6 }
+			set_temp_variable = { tag_index = FROM.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			add_opinion_modifier = { target = FROM modifier = given_gift_fifteen }
+		}
+
+		custom_effect_tooltip = economic_aid_influence_value_TT
+		add_to_variable = { treasury = temp_amount_gift_sum }
+
+		clr_country_flag = sending_five_percent_of_gdp_@FROM
+		clr_country_flag = sending_ten_percent_of_gdp_@FROM
+		clr_country_flag = sending_fifteen_percent_of_gdp_@FROM
+
 		# Generic Response
 		FROM = { country_event = { id = diplomatic_response.1 } }
 		# AI Section
 		ai_chance = {
-			factor = 5 # Weighted to prefer it
+			base = 5 # Weighted to prefer it
 			# Higher Likelihood if in the same organization
 			modifier = {
 				factor = 1.25
@@ -136,6 +234,11 @@ country_event = {
 				divide_temp_variable = { domestic_influence_amount_tmp = 100 }
 				factor = domestic_influence_amount_tmp
 			}
+			# If they have a high opinion of us they'll take it
+			modifier = {
+				factor = 1.25
+				check_variable = { ROOT.opinion@FROM > 100 }
+			}
 			# Massive Nations such as USA/China should be less likely to take on Economic Aid
 			modifier = {
 				factor = 0.75
@@ -149,9 +252,13 @@ country_event = {
 			modifier = {
 				factor = 0
 				OR = {
-					check_variable = { interest_rate < 5.50 }
-					check_variable = { debt_ratio < 1.00 }
+					check_variable = { interest_rate < 4.00 }
+					check_variable = { debt_ratio < 0.50 }
 				}
+			}
+			modifier = {
+				add = 10000
+				always = yes
 			}
 		}
 	}
@@ -175,12 +282,34 @@ country_event = {
 
 		# Returns Funds to the Influencer Nation
 		FROM = {
-			custom_effect_tooltip = influence_from_0_TT
-			add_to_variable = { treasury = PREV.gift_sum }
+			if = {
+				limit = { PREV = { has_country_flag = sending_five_percent_of_gdp_@FROM } }
+
+				set_temp_variable = { temp_amount_gift_sum = PREV.five_gift_sum }
+			}
+			else_if = {
+				limit = { PREV = { has_country_flag = sending_ten_percent_of_gdp_@FROM } }
+
+				set_temp_variable = { temp_amount_gift_sum = PREV.ten_gift_sum }
+			}
+			else_if = {
+				limit = { PREV = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM } }
+
+				set_temp_variable = { temp_amount_gift_sum = PREV.fifteen_gift_sum }
+			}
+
+			custom_effect_tooltip = economic_aid_influence_value_TT
+			add_to_variable = { treasury = temp_amount_gift_sum }
+
 			country_event = { id = diplomatic_response.2 }
 		}
+
+		clr_country_flag = sending_five_percent_of_gdp_@FROM
+		clr_country_flag = sending_ten_percent_of_gdp_@FROM
+		clr_country_flag = sending_fifteen_percent_of_gdp_@FROM
+
 		ai_chance = {
-			factor = 1
+			base = 1
 			# If they have lower domestic influence trigger fight or flight
 			modifier = {
 				set_temp_variable = { domestic_influence_amount_tmp = domestic_influence_amount }
@@ -1690,8 +1819,8 @@ country_event = {
 		name = influence.52.b
 		trigger = {
 			OR = {
-				has_equipment = { apc_hull > 10 }
-				has_equipment = { ifv_hull > 10 }
+				has_equipment = { medium_tank_amphibious_chassis > 10 }
+				has_equipment = { medium_tank_flame_chassis > 10 }
 				has_equipment = { util_vehicle_equipment > 10 }
 			}
 		}
@@ -1699,40 +1828,40 @@ country_event = {
 		set_country_flag = forwarding_light_armor_vehicles
 		if = {
 			limit = {
-				has_equipment = { apc_hull > 10 }
+				has_equipment = { medium_tank_amphibious_chassis > 10 }
 			}
 			effect_tooltip = {
 				FROM = {
 					add_equipment_to_stockpile = {
 						amount = -10
-						type = apc_hull
+						type = medium_tank_amphibious_chassis
 						producer = PREV
 					}
 				}
 				FROM.FROM = { #Should be the targeted influencing nation
 					add_equipment_to_stockpile = {
 						amount = 10
-						type = apc_hull
+						type = medium_tank_amphibious_chassis
 					}
 				}
 			}
 		}
 		if = {
 			limit = {
-				has_equipment = { ifv_hull > 10 }
+				has_equipment = { medium_tank_flame_chassis > 10 }
 			}
 			effect_tooltip = {
 				FROM = {
 					add_equipment_to_stockpile = {
 						amount = -10
-						type = ifv_hull
+						type = medium_tank_flame_chassis
 						producer = PREV
 					}
 				}
 				FROM.FROM = { #Should be the targeted influencing nation
 					add_equipment_to_stockpile = {
 						amount = 10
-						type = ifv_hull
+						type = medium_tank_flame_chassis
 						producer = FROM
 					}
 				}
@@ -1921,32 +2050,32 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.53.b executed"
 		FROM = { clr_country_flag = forwarding_light_armor_vehicles }
 		if = {
-			limit = { FROM = { has_equipment = { apc_hull > 10 } } }
+			limit = { FROM = { has_equipment = { medium_tank_amphibious_chassis > 10 } } }
 			FROM = {
 				add_equipment_to_stockpile = {
 					amount = -10
-					type = apc_hull
+					type = medium_tank_amphibious_chassis
 					producer = PREV
 				}
 			}
 			add_equipment_to_stockpile = {
 				amount = 10
-				type = apc_hull
+				type = medium_tank_amphibious_chassis
 				producer = FROM
 			}
 		}
 		if = {
-			limit = { FROM = { has_equipment = { ifv_hull > 10 } } }
+			limit = { FROM = { has_equipment = { medium_tank_flame_chassis > 10 } } }
 			FROM = {
 				add_equipment_to_stockpile = {
 					amount = -10
-					type = ifv_hull
+					type = medium_tank_flame_chassis
 					producer = PREV
 				}
 			}
 			add_equipment_to_stockpile = {
 				amount = 10
-				type = ifv_hull
+				type = medium_tank_flame_chassis
 				producer = FROM
 			}
 		}
@@ -2096,7 +2225,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_0_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2118,7 +2247,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_1_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2140,7 +2269,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_2_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2162,7 +2291,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_3_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2184,7 +2313,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_4_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2206,7 +2335,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_5_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2228,7 +2357,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_6_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2250,7 +2379,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_7_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2272,7 +2401,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_8_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2294,7 +2423,7 @@ country_event = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = found  }
+					limit = { has_country_flag = found }
 					add_to_variable = { ROOT.auto_influence_target_9_val = influence_array_val^influencer_index }
 				}
 			}
@@ -2307,5 +2436,116 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.54.a executed"
 
 		clear_variable = nations_influenced
+	}
+}
+
+##Military Aid - NONAI Master Event
+country_event = {
+	id = influence.55
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event influence.55"
+		FROM = {
+			country_event = { id = influence.56 } #Choose how to ship equipment
+		}
+	}
+	title = "You shouldn't see this. REE DONT TRIGGER MY EVENTS"
+	desc = "Why you be triggering my events?"
+	hidden = yes
+	is_triggered_only = yes
+}
+
+#Send Military Supply to [THIS.GetName]
+country_event = {
+	id = influence.56
+	title = influence.56.t
+	desc = influence.56.d
+	picture = GFX_weapons_arms1
+	is_triggered_only = yes
+
+	#Send a Shipment around on Target size power etc
+	option = {
+		name = influence.56.a
+		log = "[GetDateText]: [This.GetName]: influence.56.a executed"
+		trigger = {
+			PREV = {
+				tag = PER
+				has_equipment = { Inf_equipment > 250 }
+			}
+		}
+		PER_scripted_effect_update_palestine_arms_via_land = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = influence.56.b
+		log = "[GetDateText]: [This.GetName]: influence.56.b executed"
+		trigger = {
+			PREV = {
+				tag = PER
+				has_equipment = { Inf_equipment > 250 }
+			}
+			any_state = {
+				is_owned_by = FROM
+				is_coastal = yes
+			}
+		}
+		PER_scripted_effect_update_palestine_arms_via_sea = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	#Maybe its better not
+	option = {
+		name = influence.56.c
+		log = "[GetDateText]: [This.GetName]: influence.56.c executed"
+
+		custom_effect_tooltip = influence.51.b_tt
+		FROM = { ROOT = { clr_country_flag = recently_sent_military_aid@PREV } }
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+# Influence Master Event
+country_event = {
+	id = influence.500
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_ai = yes
+		has_political_power > 200
+		# Do not influence in the situation you are in a looming bankruptcy
+		NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		# Do not influence in the instance you are a subject
+		is_subject = no
+	}
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: AI Influence Pulse"
+		save_event_target_as = influence_sender
+
+		AI_select_influence_target = yes
+
+		# Check Investing Country
+		if = {
+			limit = {
+				OR = {
+					check_variable = { AI_best_country_score = -1 }
+					check_variable = { AI_best_country_score < AI_minimum_influence }
+				}
+			}
+			log = "[GetDateText]: [This.GetName]: Influence Failed. No valid influence country. Skipping this influence pulse."
+		}
+		else = {
+			log = "[GetDateText]: [This.GetName]: Influence Country Succeeded. [?var:AI_best_country.GetName] scored a [?AI_best_country_score]"
+			var:AI_best_country = {
+				spread_influence = yes
+			}
+		}
 	}
 }

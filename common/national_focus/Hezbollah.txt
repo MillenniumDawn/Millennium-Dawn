@@ -79,10 +79,19 @@ focus_tree = {
 			remove_state_core = 553
 			remove_state_core = 203
 		}
-		ai_will_do = { factor = 1
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				factor = 1
+				date > 2012.1.1
+			}
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = PER_hezbollah_iran_focuses
 			}
 		}
 	}
@@ -120,10 +129,18 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 1
+			factor = 0
+			modifier = {
+				factor = 1
+				date > 2012.1.1
+			}
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 10
+				has_global_flag = PER_hezbollah_iran_focuses
 			}
 		}
 	}
@@ -599,22 +616,20 @@ focus_tree = {
 		cost = 10
 
 		bypass = {
-			if = {
-				NOT = {
-					any_country = {
-						NOT = {
-							has_war_with = HEZ
-						}
-						is_major = yes
+			NOT = {
+				any_country = {
+					NOT = {
+						has_war_with = HEZ
+					}
+					is_major = yes
+					has_opinion = {
+						target = HEZ
+						value > -19
+					}
+					HEZ = {
 						has_opinion = {
-							target = HEZ
+							target = ROOT
 							value > -19
-						}
-						HEZ = {
-							has_opinion = {
-								target = ROOT
-								value > -19
-							}
 						}
 					}
 				}
@@ -1933,7 +1948,21 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_STABILITY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HEZ_Al-Manar"
-			add_ideas = HEZ_al_manar
+			HEZ = {
+				add_ideas = HEZ_al_manar
+			}
+			SYR = {
+				add_ideas = HEZ_al_manar
+			}
+			PAL = {
+				add_ideas = HEZ_al_manar
+			}
+			LEB = {
+				add_ideas = HEZ_al_manar
+			}
+			ISR = {
+				add_ideas = HEZ_al_manar
+			}
 		}
 
 		ai_will_do = { factor = 1 }
@@ -1957,20 +1986,36 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_STABILITY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HEZ_Satellite_link_up"
-			every_country = {
-				limit = {
-					OR = {
-						is_neighbor_of = ROOT
-						original_tag = PAL
-						original_tag = HAM
-					}
+			HEZ = {
+				swap_ideas = {
+					remove_idea = HEZ_al_manar
+					add_idea = HEZ_al_manar_2
 				}
 			}
-			swap_ideas = {
-				remove_idea = HEZ_al_manar
-				add_idea = HEZ_al_manar_2
+			SYR = {
+				swap_ideas = {
+					remove_idea = HEZ_al_manar
+					add_idea = HEZ_al_manar_2
+				}
 			}
-
+			PAL = {
+				swap_ideas = {
+					remove_idea = HEZ_al_manar
+					add_idea = HEZ_al_manar_2
+				}
+			}
+			LEB = {
+				swap_ideas = {
+					remove_idea = HEZ_al_manar
+					add_idea = HEZ_al_manar_2
+				}
+			}
+			ISR = {
+				swap_ideas = {
+					remove_idea = HEZ_al_manar
+					add_idea = HEZ_al_manar_2
+				}
+			}
 		}
 
 		ai_will_do = { factor = 1 }
@@ -2445,6 +2490,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus HEZ_Getting_off_our_shores"
 			add_tech_bonus = {
+				name = HEZ_Getting_off_our_shores
 				bonus = 0.5
 				uses = 2
 				category = CAT_surface_ship
@@ -2560,7 +2606,17 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { factor = 1 }
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				factor = 1
+				date > 2012.1.1
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = PER_hezbollah_iran_focuses
+			}
+		}
 	}
 
 	focus = {
@@ -2601,16 +2657,6 @@ focus_tree = {
 		relative_position_id = HEZ_Influence_Lebanese_politics
 
 		prerequisite = { focus = HEZ_Influence_Lebanese_politics }
-
-		bypass = {
-			OR = {
- 				NOT = {
-					country_exists = PER
-					PER = { has_government = communism }
-				}
-				has_war_with = PER
-			}
-		}
 
 		cost = 10
 		available = {
@@ -4027,7 +4073,7 @@ focus_tree = {
 				  has_idea = officer_military_school
 				  has_idea = officer_military_academy
 				  has_idea = officer_international_education
-			  }
+			 }
 			}
 		}
 		prerequisite = { focus = HEZ_Badr_in_the_shadows }
@@ -4127,7 +4173,11 @@ focus_tree = {
 
 		available = {
 			has_manpower > 999
-
+			OR = {
+				IRQ = { is_subject_of = USA }
+				IRQ = { has_war_with = USA }
+				USA = { has_military_access_to = IRQ }
+			}
 		}
 		prerequisite = { focus = HEZ_Organize_Shii_Forces }
 
@@ -4142,10 +4192,8 @@ focus_tree = {
 			change_influence_percentage = yes
 
 			IRQ = {
-				add_popularity = {
-					ideology = communism
-					popularity = 0.015
-				}
+				add_popularity = { ideology = communism popularity = 0.015 }
+				recalculate_party = yes
 				set_temp_variable = { party_index = 9 }
 				set_temp_variable = { party_popularity_increase = 0.015 }
 				add_relative_party_popularity = yes

@@ -8,8 +8,16 @@ IRQ_iraq_war = {
 		}
 		visible = { always = yes }
 		available = {
-			488 = {
-				is_owned_and_controlled_by = IRQ
+			OR = {
+				488 = {
+					is_controlled_by = IRQ
+				}
+				USA = {
+					controls_province = 11266
+				}
+				MNF = {
+					controls_province = 11266
+				}
 			}
 		}
 		days_mission_timeout = 180
@@ -21,13 +29,36 @@ IRQ_iraq_war = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout IRQ_war_phase_two"
-			488 = {
-				transfer_state_to = IRQ
+			if = {
+				limit = {
+					488 = {
+						is_controlled_by = IRQ
+					}
+				}
+				488 = {
+					transfer_state_to = IRQ
+					add_core_of = IRQ
+				}
+				USA = {
+					country_event = {
+						id = iraq_war.8
+						days = 1
+					}
+				}
 			}
-			USA = {
-				country_event = {
-					id = iraq_war.8
-					days = 1
+			else_if = {
+				limit = {
+					OR = {
+						USA = {
+							controls_province = 11266
+						}
+						MNF = {
+							controls_province = 11266
+						}
+					}
+				}
+				IRQ = {
+					country_event = iraqi_MNF.2
 				}
 			}
 		}
@@ -51,8 +82,16 @@ IRQ_iraq_war = {
 		}
 		visible = { always = yes }
 		available = {
-			488 = {
-				is_owned_and_controlled_by = IRQ
+			OR = {
+				488 = {
+					is_controlled_by = IRQ
+				}
+				USA = {
+					controls_province = 11266
+				}
+				MNF = {
+					controls_province = 11266
+				}
 			}
 		}
 		days_mission_timeout = 90
@@ -64,13 +103,36 @@ IRQ_iraq_war = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout IRQ_war_phase_two"
-			488 = {
-				transfer_state_to = IRQ
+			if = {
+				limit = {
+					488 = {
+						is_controlled_by = IRQ
+					}
+				}
+				488 = {
+					transfer_state_to = IRQ
+					add_core_of = IRQ
+				}
+				USA = {
+					country_event = {
+						id = iraq_war.8
+						days = 1
+					}
+				}
 			}
-			USA = {
-				country_event = {
-					id = iraq_war.8
-					days = 1
+			else_if = {
+				limit = {
+					OR = {
+						USA = {
+							controls_province = 11266
+						}
+						MNF = {
+							controls_province = 11266
+						}
+					}
+				}
+				IRQ = {
+					country_event = iraqi_MNF.2
 				}
 			}
 		}
@@ -690,6 +752,34 @@ IRQ_civil_war_mechanic = {
 
 # Ba'athist specific political decisions
 IRQ_political_decisions = {
+	IRQ_leave_socialist_union = {
+		days_remove = 25
+		fire_only_once = yes
+		visible = {
+			has_country_flag = IRQ_leave_socialist_union
+			has_autonomy_state = autonomy_socialist_union
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_leave_socialist_union"
+			PER = {
+				set_autonomy = {
+					target = IRQ
+					autonomous_state = autonomy_free
+					end_wars = no
+				}
+				country_event = iranian_focus.95
+			}
+		}
+		ai_will_do = {
+			base = 0
+			modifier = {
+				NOT = {
+					neutrality_neutral_communism_are_in_power = yes
+				}
+				add = 10
+			}
+		}
+	}
 	IRQ_mek_revolt_trig = {
 		days_remove = 25
 		fixed_random_seed = yes
@@ -955,6 +1045,45 @@ IRQ_political_decisions = {
 			set_temp_variable = { party_popularity_increase = 0.045 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
+		}
+		ai_will_do = {
+			factor = 10
+		}
+	}
+	# Occupation Zones
+	IRQ_request_british_withdrawal = {
+		days_remove = 380
+		fire_only_once = yes
+		visible = {
+			country_exists = BOZ
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_request_british_withdrawal"
+			ENG = {
+				country_event = {
+					id = iraqi_MNF.4
+					days = 3
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 10
+		}
+	}
+	IRQ_request_polish_withdrawal = {
+		days_remove = 380
+		fire_only_once = yes
+		visible = {
+			country_exists = POZ
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRQ_request_polish_withdrawal"
+			POL = {
+				country_event = {
+					id = iraqi_MNF.4
+					days = 3
+				}
+			}
 		}
 		ai_will_do = {
 			factor = 10
@@ -1415,7 +1544,7 @@ IRQ_black_gold_decisions = {
 						IRQ_aramco_control > 74.99
 					}
 					check_variable = {
-						IRQ_aramco_control < 89.99
+						IRQ_aramco_control < 99.99
 					}
 				}
 				custom_effect_tooltip = IRQ_aramco_high_chance_TT
@@ -4033,19 +4162,44 @@ IRQ_spring_of_islam = {
 IRQ_kurdish_friends = {
 	IRQ_negotiations_with_kurdish_government = {
 		visible = {
-			country_exists = KUR
-			NOT = {
-				has_war_with = KUR
+			OR = {
+				country_exists = KUR
+				country_exists = PUK
 			}
-			KUR = {
+			OR = {
 				NOT = {
-					is_subject_of = IRQ
+					has_war_with = KUR
+				}
+				NOT = {
+					has_war_with = PUK
+				}
+			}
+			OR = {
+				KUR = {
+					NOT = {
+						is_subject_of = IRQ
+					}
+				}
+				PUK = {
+					NOT = {
+						is_subject_of = IRQ
+					}
 				}
 			}
 		}
 		available = {
-			KUR = {
-				neutrality_neutral_communism_in_power_or_coalition = yes
+			if = {
+				limit = {
+					country_exists = KUR
+				}
+				KUR = {
+					neutrality_neutral_communism_in_power_or_coalition = yes
+				}
+			}
+			else = {
+				PUK = {
+					neutrality_neutral_communism_in_power_or_coalition = yes
+				}
 			}
 		}
 		highlight_states = {
@@ -4059,10 +4213,23 @@ IRQ_kurdish_friends = {
 		fire_only_once = yes
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_negotiations_with_kurdish_government"
-			KUR = {
-				country_event = {
-					id = iraq_md.59
-					days = 1
+			if = {
+				limit = {
+					country_exists = KUR
+				}
+				KUR = {
+					country_event = {
+						id = iraq_md.59
+						days = 1
+					}
+				}
+			}
+			else = {
+				PUK = {
+					country_event = {
+						id = iraq_md.59
+						days = 1
+					}
 				}
 			}
 			newline = yes
@@ -4138,19 +4305,35 @@ IRQ_kurdish_friends = {
 
 	IRQ_bolster_communist_party_of_kurdistan_iraq = {
 		visible = {
-			country_exists = KUR
+			OR = {
+				country_exists = KUR
+				country_exists = PUK
+			}
 			NOT = {
 				has_war_with = KUR
+			}
+			NOT = {
+				has_war_with = PUK
 			}
 			KUR = {
 				NOT = {
 					is_subject_of = IRQ
 				}
 			}
+			PUK = {
+				NOT = {
+					is_subject_of = IRQ
+				}
+			}
 		}
 		available = {
-			KUR = {
-				influence_higher_15 = yes
+			OR = {
+				KUR = {
+					influence_higher_15 = yes
+				}
+				PUK = {
+					influence_higher_15 = yes
+				}
 			}
 		}
 		highlight_states = {
@@ -4167,6 +4350,10 @@ IRQ_kurdish_friends = {
 			set_temp_variable = { percent_change = -1.5 }
 			set_temp_variable = { tag_index = IRQ }
 			set_temp_variable = { influence_target = KUR }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = -1.5 }
+			set_temp_variable = { tag_index = IRQ }
+			set_temp_variable = { influence_target = PUK }
 			change_influence_percentage = yes
 		}
 		remove_effect = {
@@ -4185,12 +4372,24 @@ IRQ_kurdish_friends = {
 					set_temp_variable = { temp_outlook_increase = 0.045 }
 					add_relative_party_popularity = yes
 				}
+				PUK = {
+					set_temp_variable = { party_index = 19 }
+					set_temp_variable = { party_popularity_increase = 0.055 }
+					set_temp_variable = { temp_outlook_increase = 0.045 }
+					add_relative_party_popularity = yes
+				}
 			}
 			if = {
 				limit = {
 					has_country_flag = IRQ_news_paper2
 				}
 				KUR = {
+					set_temp_variable = { party_index = 19 }
+					set_temp_variable = { party_popularity_increase = 0.085 }
+					set_temp_variable = { temp_outlook_increase = 0.075 }
+					add_relative_party_popularity = yes
+				}
+				PUK = {
 					set_temp_variable = { party_index = 19 }
 					set_temp_variable = { party_popularity_increase = 0.085 }
 					set_temp_variable = { temp_outlook_increase = 0.075 }
@@ -4208,7 +4407,10 @@ IRQ_kurdish_friends = {
 
 	IRQ_request_an_election = {
 		visible = {
-			country_exists = KUR
+			OR = {
+				country_exists = KUR
+				country_exists = PUK
+			}
 			NOT = {
 				has_war_with = KUR
 			}
@@ -4219,9 +4421,20 @@ IRQ_kurdish_friends = {
 			}
 		}
 		available = {
-			KUR = {
-				influence_higher_40 = yes
-				neutrality > 0.70
+			if = {
+				limit = {
+					country_exists = KUR
+				}
+				KUR = {
+					influence_higher_40 = yes
+					neutrality > 0.70
+				}
+			}
+			else = {
+				PUK = {
+					influence_higher_40 = yes
+					neutrality > 0.70
+				}
 			}
 		}
 		highlight_states = {
@@ -4235,10 +4448,23 @@ IRQ_kurdish_friends = {
 		days_remove = 35
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRQ_request_an_election" #GFX_KUR_Neutral_Communism_small
-			KUR = {
-				country_event = {
-					id = iraq_md.66
-					days = 3
+			if = {
+				limit = {
+					country_exists = KUR
+				}
+				KUR = {
+					country_event = {
+						id = iraq_md.66
+						days = 3
+					}
+				}
+			}
+			else = {
+				PUK = {
+					country_event = {
+						id = iraq_md.66
+						days = 3
+					}
 				}
 			}
 			newline = yes

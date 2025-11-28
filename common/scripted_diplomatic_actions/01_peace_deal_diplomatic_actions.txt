@@ -1,0 +1,229 @@
+scripted_diplomatic_actions = {
+	CPD_offer_conditional_peace = {
+		# will only be possible to have if conditional peace deals are enabled
+		# this will default to being always on
+		allowed = {
+			has_game_rule = {
+				rule = allowed_CPD
+				option = yes
+			}
+		}
+
+		# only visible if you're actively at war with the diplomatic target
+		visible = {
+			has_war_with = ROOT
+			CPD_is_a_custom_civil_war = yes
+		}
+
+		selectable = {
+			# can't have conditional peace with a rival government
+			# (rework this later to allow for frozen conflicts)
+			ROOT = {
+				NOT = { civilwar_target = PREV }
+				if = {
+					limit = { is_subject = yes }
+					CPD_is_an_autonomy_allowed_to_send_deal = yes
+				}
+			}
+			if = {
+				limit = { PREV = { is_subject = yes } }
+				PREV = {
+					CPD_is_an_autonomy_allowed_to_receive_deal = yes
+				}
+			}
+		}
+
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		cost = 0
+
+		icon = 1
+
+		# ROOT will consider the current peace deal as soon as you send it
+		on_sent_effect = { ROOT = { set_country_flag = CPD_considering_peace_deal } }
+
+		complete_effect = {
+			CPD_clear_victory_points = yes
+			CPD_sign_peace_deal = yes
+			ROOT = {
+				clr_country_flag = CPD_considering_peace_deal
+				clr_country_flag = CPD_AI_wants_peace
+				clear_variable = CPD_AI_wants_peace_with
+			}
+			CPD_reset_built_peace_deal = yes
+		}
+
+		reject_effect = {
+			ROOT = {
+				clr_country_flag = CPD_considering_peace_deal
+				clr_country_flag = CPD_AI_wants_peace
+				clear_variable = CPD_AI_wants_peace_with
+			}
+		}
+
+		send_scripted_gui = CPD_peace_deal_builder
+
+		reset_send_effect = {
+			ROOT = { clr_country_flag = CPD_giving_concessions }
+			CPD_reset_built_peace_deal = yes
+		}
+
+		can_be_sent = { always = yes }
+
+		receive_scripted_gui = CPD_built_peace_deal
+
+		ai_desire = {
+			base = -25
+			modifier = {
+				add = 100
+				ROOT = { has_country_flag = CPD_AI_wants_peace }
+				check_variable = { ROOT.CPD_AI_wants_peace_with = THIS }
+			}
+		}
+
+		ai_acceptance = {
+			CPD_base_reluctance = { base = -50 }
+			CPD_economic_cost_of_war = {
+				# more likely to surrender if in default or high interest rate
+				base = 0
+				modifier = {
+					add = 2
+					check_variable = { interest_rate > 4.99 }
+				}
+				modifier = {
+					add = 2
+					check_variable = { interest_rate > 7.99 }
+				}
+				modifier = {
+					add = 2
+					check_variable = { interest_rate > 9.99 }
+				}
+				modifier = {
+					add = 2
+					check_variable = { interest_rate > 12.99 }
+				}
+				modifier = {
+					add = 2
+					check_variable = { interest_rate > 14.99 }
+				}
+				modifier = {
+					add = 5
+					has_active_mission = debt_default_main_mission
+				}
+			}
+			CPD_support_of_war = {
+				# less likely to surrender if has high war support
+				base = 0
+				# at base 50 this doesn't change
+				#
+				# for every 10% war support
+				# -20 points towards willingness to sign peace deal
+				modifier = {
+					set_temp_variable = { CPD_WS = var:THIS.has_war_support }
+					multiply_temp_variable = { CPD_WS = -200 }
+					round_temp_variable = CPD_WS
+					add_to_temp_variable = { CPD_WS = 101 }
+					add = var:CPD_WS
+				}
+			}
+			CPD_relative_strength_of_belligerents = {
+				# more likely to surrender if weaker than sender of peace offer
+				base = 0
+				modifier = {
+					set_temp_variable = { CPD_RSB = THIS.enemies_strength_ratio@ROOT }
+					multiply_temp_variable = { CPD_RSB = 100 }
+					round_temp_variable = CPD_RSB
+					subtract_from_temp_variable = { CPD_RSB = 100 }
+					clamp_temp_variable = {
+						var = CPD_RSB
+						max = 1000
+					}
+					add = var:CPD_RSB
+				}
+			}
+			CPD_close_to_surrender = {
+				# more likely to surrender if closer to surrender limit
+				base = 0
+				modifier = {
+					set_temp_variable = { CPD_SP = var:THIS.surrender_progress }
+					multiply_temp_variable = { CPD_SP = 200 }
+					round_temp_variable = CPD_SP
+					subtract_from_temp_variable = { CPD_SP = 100 }
+					clamp_temp_variable = {
+						var = CPD_SP
+						min = 0
+						max = 100
+					}
+					add = var:CPD_SP
+				}
+			}
+			CPD_battles_won = {
+				# more likely to surrender if receiver has less war score than sender
+				base = 0
+				modifier = {
+					set_temp_variable = { CPD_RBW = ROOT.CPD_VP@PREV }
+					set_temp_variable = { CPD_TBW = THIS.CPD_VP@ROOT }
+					subtract_from_temp_variable = { CPD_RBW = CPD_TBW }
+					round_temp_variable = CPD_RBW
+					add = var:CPD_RBW
+				}
+			}
+			CPD_power_ranking = {
+				# more likely to surrender if receiver is not at least minor power
+				base = 0
+				modifier = {
+					add = -60
+					THIS = { has_idea = superpower }
+				}
+				modifier = {
+					add = -45
+					THIS = { has_idea = great_power }
+				}
+				modifier = {
+					add = -30
+					THIS = { has_idea = large_power }
+				}
+				modifier = {
+					add = -15
+					THIS = { has_idea = regional_power }
+				}
+				modifier = {
+					add = 15
+					THIS = { has_idea = non_power }
+				}
+			}
+			CPD_faction_backing = {
+				# more likely to not surrender if ROOT is in one of the major factions
+				base = 0
+				modifier = {
+					add = -25
+					has_idea = NATO_member
+				}
+				modifier = {
+					add = -25
+					has_idea = CSTO_member
+				}
+			}
+			CPD_months_at_war = {
+				# More likely to surrender if THIS has been at war for a very long time
+				base = 0
+				modifier = {
+					set_temp_variable = { months_at_war_tmp = THIS.months_at_war }
+					multiply_temp_variable = { months_at_war_tmp = 2 }
+					add = var:months_at_war_tmp
+				}
+			}
+
+			# Acceptance from Calculate Peace Deal
+			CPD_accepting_peace_deal = {
+				base = 0
+				modifier = {
+					always = yes
+					set_temp_variable = { v = ROOT.CPD_total_cost_of_built_peace_deal }
+					multiply_temp_variable = { v = -5 }
+					add = var:v
+				}
+			}
+		}
+	}
+}

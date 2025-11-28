@@ -11,9 +11,7 @@ generic_coalition_politics_decisions = {
 				limit = {
 					original_tag = TAJ
 				}
-				NOT = {
-					has_country_flag = TAJ_dictatorship_flag
-				}
+				NOT = { has_country_flag = TAJ_dictatorship_flag }
 			}
 			if = {
 				limit = { tag = IRQ	}
@@ -42,10 +40,6 @@ generic_coalition_politics_decisions = {
 			if = {
 				limit = { tag = OMA }
 				NOT = { is_in_array = { ruling_party = 13 } }
-			}
-			if = {
-				limit = { tag = ISR }
-				NOT = { tag = ISR }
 			}
 			if = { ##Can't Retire the PAP Prime Minister
 				limit = { tag = SIN }
@@ -91,7 +85,9 @@ generic_coalition_politics_decisions = {
 					}
 				}
 			}
+			NOT = { tag = ISR }
 			NOT = { tag = ITA }
+			NOT = { tag = CHE }
 			NOT = { tag = SPR }
 			NOT = { tag = WAG }
 		}
@@ -105,8 +101,8 @@ generic_coalition_politics_decisions = {
 			}
 			if = {
 				limit = { has_country_flag = arab_spring_active }
-				custom_effect_tooltip = substantially_weaken_protests_tt
-				subtract_from_variable = { arab_spring = 40 }
+				set_temp_variable = { temp_strength = -40 }
+				change_arab_spring_strength = yes
 				if = {
 					limit = { check_variable = { arab_spring < 26 } }
 					random_list = {
@@ -201,6 +197,7 @@ generic_coalition_politics_decisions = {
 			}
 			# Singapore can never suspend elections =
 			NOT = { original_tag = SIN }
+			NOT = { original_tag = NKO }
 			NOT = { tag = USA }
 			if = {
 				limit = { tag = USA }
@@ -225,6 +222,15 @@ generic_coalition_politics_decisions = {
 					}
 				}
 			}
+			if = {
+				limit = { tag = ARM }
+				NOT = {
+					emerging_reactionaries_are_in_power = yes
+					neutrality_neutral_communism_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					neutrality_neutral_libertarians_are_in_power = yes
+				}
+			}
 			has_elections = yes
 		}
 
@@ -243,8 +249,6 @@ generic_coalition_politics_decisions = {
 		icon = GFX_decision_electionban_button
 
 		cost = 125
-		days_remove = 0
-		days_re_enable = 0
 
 		visible = {
 			has_elections = yes
@@ -299,8 +303,8 @@ generic_coalition_politics_decisions = {
 				limit = { tag = CZE }
 				NOT = {
 					has_country_leader = {
-    						name = "Petr Pavel"
-    						ruling_only = yes
+							name = "Petr Pavel"
+							ruling_only = yes
 					}
 				}
 			}
@@ -388,8 +392,6 @@ generic_coalition_politics_decisions = {
 		icon = GFX_decision_electionreturn_button
 
 		cost = 85
-		days_remove = 0
-		days_re_enable = 0
 		fixed_random_seed = no
 
 		visible = {
@@ -480,63 +482,11 @@ generic_coalition_politics_decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision return_democracy"
-			set_country_flag = no_leader_change
-			if = {
-				limit = {
-					check_variable = { term_limit > 0 }
-				}
-				set_variable = { current_term = 1 }
-			}
-			if = {
-				limit = {
-					has_government = democratic
-				}
-				set_politics = {
-					ruling_party = democratic
-					elections_allowed = yes
-				}
-			}
-			else_if = {
-				limit = {
-					has_government = communism
-				}
-				set_politics = {
-					ruling_party = communism
-					elections_allowed = yes
-				}
-			}
-			else_if = {
-				limit = {
-					has_government = fascism
-				}
-				set_politics = {
-					ruling_party = fascism
-					elections_allowed = yes
-				}
-			}
-			else_if = {
-				limit = {
-					has_government = neutrality
-				}
-				set_politics = {
-					ruling_party = neutrality
-					elections_allowed = yes
-				}
-			}
-			else_if = {
-				limit = {
-					has_government = nationalist
-				}
-				set_politics = {
-					ruling_party = nationalist
-					elections_allowed = yes
-				}
-			}
-			clr_country_flag = no_leader_change
+			enable_elections_with_no_leader_change = yes
 			if = {
 				limit = { has_country_flag = arab_spring_active }
-				custom_effect_tooltip = substantially_weaken_protests_tt
-				subtract_from_variable = { arab_spring = 40 }
+				set_temp_variable = { temp_strength = -40 }
+				change_arab_spring_strength = yes
 				if = {
 					limit = { check_variable = { arab_spring < 26 } }
 					random_list = {
@@ -639,7 +589,7 @@ generic_coalition_politics_decisions = {
 
 	# Auto-Decline corruption events
 	auto_decline_corruption_offers = {
-		icon = GFX_decision_generic_political_discourse
+		icon = GFX_decision_message_decline_button
 
 		visible = {
 			NOT = {
@@ -655,7 +605,7 @@ generic_coalition_politics_decisions = {
 	}
 
 	lift_auto_decline_corruption_events = {
-		icon = GFX_decision_generic_political_discourse
+		icon = GFX_decision_message_receive_button
 
 		visible = {
 			has_country_flag = auto_decline_corruption
@@ -673,8 +623,6 @@ generic_coalition_politics_decisions = {
 		icon = revolt
 
 		cost = 150
-		days_remove = 0
-		days_re_enable = 0
 
 		visible = {
 			check_variable = { party_pop_array^21 > 0.10 } #significant fascism
@@ -701,38 +649,7 @@ generic_coalition_politics_decisions = {
 
 			hidden_effect = {
 				#Release copy of existing
-				set_country_flag = no_leader_change
-				if = { limit = { has_government = nationalist }
-					start_civil_war = {
-						ideology = nationalist
-						size = 0.5
-					}
-				}
-				else_if = { limit = { has_government = communism }
-					start_civil_war = {
-						ideology = communism
-						size = 0.5
-					}
-				}
-				else_if = { limit = { has_government = democratic }
-					start_civil_war = {
-						ideology = democratic
-						size = 0.5
-					}
-				}
-				else_if = { limit = { has_government = neutrality }
-					start_civil_war = {
-						ideology = neutrality
-						size = 0.5
-					}
-				}
-				else_if = { limit = { has_government = fascism }
-					start_civil_war = {
-						ideology = fascism
-						size = 0.5
-					}
-				}
-				clr_country_flag = no_leader_change
+				start_civil_war_with_no_leader_change = yes
 
 				#replicating current politics
 				random_other_country = {
@@ -740,386 +657,7 @@ generic_coalition_politics_decisions = {
 						original_tag = PREV
 						NOT = { TAG = PREV }
 					}
-					set_temp_variable = { temp_democratic = PREV.party_popularity@democratic }
-					multiply_temp_variable = { temp_democratic = 100 }
-					set_temp_variable = { temp_total = temp_democratic }
-					set_temp_variable = { temp_communism = PREV.party_popularity@communism }
-					multiply_temp_variable = { temp_communism = 100 }
-					add_to_temp_variable = { temp_total = temp_communism }
-					set_temp_variable = { temp_neutrality = PREV.party_popularity@neutrality }
-					multiply_temp_variable = { temp_neutrality = 100 }
-					add_to_temp_variable = { temp_total = temp_neutrality }
-					set_temp_variable = { temp_fascism = PREV.party_popularity@fascism }
-					multiply_temp_variable = { temp_fascism = 100 }
-					add_to_temp_variable = { temp_total = temp_fascism }
-					set_temp_variable = { temp_nationalist = PREV.party_popularity@nationalist }
-					multiply_temp_variable = { temp_nationalist = 100 }
-					add_to_temp_variable = { temp_total = temp_nationalist }
-					subtract_from_temp_variable = { temp_total = 100 }
-					multiply_temp_variable = { temp_total = -1 }
-					add_to_temp_variable = { temp_nationalist = temp_total }
-
-					set_popularities = {
-						democratic = temp_democratic
-						communism = temp_communism
-						neutrality = temp_neutrality
-						fascism = temp_fascism
-						nationalist = temp_nationalist
-					}
-					add_popularity = {
-						ideology = nationalist
-						popularity = -0.2
-					}
-					start_politics_input = yes
-					#copy politics
-					for_loop_effect = {
-						end = party_pop_array^num
-						value = v
-						set_variable = { party_pop_array^v = PREV.party_pop_array^v }
-					}
-					add_to_array = { ruling_party = PREV.ruling_party^0 }
-					for_loop_effect = {
-						end = gov_coalition_array^num
-						value = v
-						add_to_array = { gov_coalition_array = PREV.gov_coalition_array^v }
-					}
-					set_variable = { party_pop_array^21 = 0.01 } #all moved to fight ;)
-					set_variable = { party_pop_elect_array^21 = 0 } #made illegal
-					add_up_party_totals = yes
-					set_party_positions = yes
-					startup_politics = yes
-
-					#VARIABLES
-					set_variable = { var = corporate_tax_rate value = PREV.corporate_tax_rate }
-					set_variable = { var = population_tax_rate value = PREV.population_tax_rate }
-					set_variable = { treasury = PREV.treasury }
-
-					#don't get values of original yet - REMINDER -> add it on_civil_war_end
-					set_variable = { debt = 0 }
-					set_variable = { int_investments = 0 }
-
-					#influence
-					set_variable = { domestic_influence_amount = PREV.domestic_influence_amount }
-					#just copy all
-					for_loop_effect = {
-						end = PREV.influence_array^num
-						value = v
-
-						add_to_array = { influence_array = PREV.influence_array^v }
-						add_to_array = { influence_array_val = PREV.influence_array_val^v }
-					}
-					recalculate_influence = yes
-
-					#GAME VARIABLES
-					add_political_power = PREV.political_power
-					add_political_power = 400 #bonus
-
-					#LAWS
-					set_variable = { gdp_per_capita = PREV.gdp_per_capita }
-					update_budget_laws_for_new_nation = yes
-
-					if = { limit = { PREV = { has_idea = depression } }
-						add_ideas = depression
-					}
-					else_if = { limit = { PREV = { has_idea = recession } }
-						add_ideas = recession
-					}
-					else_if = { limit = { PREV = { has_idea = stagnation } }
-						add_ideas = stagnation
-					}
-					else_if = { limit = { PREV = { has_idea = stable_growth } }
-						add_ideas = stable_growth
-					}
-					else_if = { limit = { PREV = { has_idea = fast_growth } }
-						add_ideas = fast_growth
-					}
-					else_if = { limit = { PREV = { has_idea = economic_boom } }
-						add_ideas = economic_boom
-					}
-
-					if = { limit = { PREV = { has_idea = paralyzing_corruption } }
-						add_ideas = paralyzing_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = crippling_corruption } }
-						add_ideas = crippling_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = rampant_corruption } }
-						add_ideas = rampant_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = unrestrained_corruption } }
-						add_ideas = unrestrained_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = systematic_corruption } }
-						add_ideas = systematic_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = widespread_corruption } }
-						add_ideas = widespread_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = medium_corruption } }
-						add_ideas = medium_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = modest_corruption } }
-						add_ideas = modest_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = slight_corruption } }
-						add_ideas = slight_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = negligible_corruption } }
-						add_ideas = negligible_corruption
-					}
-
-					if = { limit = { PREV = { has_idea = consumption_economy } }
-						add_ideas = consumption_economy
-					}
-					else_if = { limit = { PREV = { has_idea = mixed_economy } }
-						add_ideas = mixed_economy
-					}
-					else_if = { limit = { PREV = { has_idea = export_economy } }
-						add_ideas = export_economy
-					}
-
-					if = { limit = { PREV = { has_idea = no_military } }
-						add_ideas = no_military
-					}
-					else_if = { limit = { PREV = { has_idea = volunteer_army } }
-						add_ideas = volunteer_army
-					}
-					else_if = { limit = { PREV = { has_idea = partial_draft_army } }
-						add_ideas = partial_draft_army
-					}
-					else_if = { limit = { PREV = { has_idea = draft_army } }
-						add_ideas = draft_army
-					}
-
-					if = { limit = { PREV = { has_idea = no_women_in_military } }
-						add_ideas = no_women_in_military
-					}
-					else_if = { limit = { PREV = { has_idea = volunteer_women } }
-						add_ideas = volunteer_women
-					}
-					else_if = { limit = { PREV = { has_idea = drafted_women } }
-						add_ideas = drafted_women
-					}
-
-					if = { limit = { PREV = { has_idea = intervention_isolation } }
-						add_ideas = intervention_isolation
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_local_security } }
-						add_ideas = intervention_local_security
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_limited_interventionism } }
-						add_ideas = intervention_limited_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_regional_interventionism } }
-						add_ideas = intervention_regional_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_global_interventionism } }
-						add_ideas = intervention_global_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_neo_imperialism } }
-						add_ideas = intervention_neo_imperialism
-					}
-
-					if = { limit = { PREV = { has_idea = officer_baptism_by_fire } }
-						add_ideas = officer_baptism_by_fire
-					}
-					else_if = { limit = { PREV = { has_idea = officer_basic_training } }
-						add_ideas = officer_basic_training
-					}
-					else_if = { limit = { PREV = { has_idea = officer_advanced_training } }
-						add_ideas = officer_advanced_training
-					}
-					else_if = { limit = { PREV = { has_idea = officer_military_school } }
-						add_ideas = officer_military_school
-					}
-					else_if = { limit = { PREV = { has_idea = officer_military_academy } }
-						add_ideas = officer_military_academy
-					}
-					else_if = { limit = { PREV = { has_idea = officer_international_education } }
-						add_ideas = officer_international_education
-					}
-
-					### Internal factions
-					if = { limit = { PREV = { has_idea = small_medium_business_owners } }
-						add_ideas = small_medium_business_owners
-					}
-					if = { limit = { PREV = { has_idea = international_bankers } }
-						add_ideas = international_bankers
-					}
-					if = { limit = { PREV = { has_idea = fossil_fuel_industry } }
-						add_ideas = fossil_fuel_industry
-					}
-					if = { limit = { PREV = { has_idea = industrial_conglomerates } }
-						add_ideas = industrial_conglomerates
-					}
-					if = { limit = { PREV = { has_idea = oligarchs } }
-						add_ideas = oligarchs
-					}
-					if = { limit = { PREV = { has_idea = maritime_industry } }
-						add_ideas = maritime_industry
-					}
-					if = { limit = { PREV = { has_idea = defense_industry } }
-						add_ideas = defense_industry
-					}
-					if = { limit = { PREV = { has_idea = the_military } }
-						add_ideas = the_military
-					}
-					if = { limit = { PREV = { has_idea = intelligence_community } }
-						add_ideas = intelligence_community
-					}
-					if = { limit = { PREV = { has_idea = labour_unions } }
-						add_ideas = labour_unions
-					}
-					if = { limit = { PREV = { has_idea = landowners } }
-						add_ideas = landowners
-					}
-					if = { limit = { PREV = { has_idea = farmers } }
-						add_ideas = farmers
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = communist_cadres
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 4 }
-										is_in_array = { ruling_party = 19 }
-									}
-								}
-							}
-						}
-						add_ideas = communist_cadres
-					}
-					if = { limit = { PREV = { has_idea = the_priesthood } }
-						add_ideas = the_priesthood
-					}
-					if = { limit = { PREV = { has_idea = the_ulema } }
-						add_ideas = the_ulema
-					}
-					if = { limit = { PREV = { has_idea = the_clergy } }
-						add_ideas = the_clergy
-					}
-					if = { limit = { PREV = { has_idea = wahabi_ulema } }
-						add_ideas = wahabi_ulema
-					}
-					if = { limit = { PREV = { has_idea = the_donju } }
-						add_ideas = the_donju
-					}
-					if = { limit = { PREV = { has_idea = the_bazaar } }
-						add_ideas = the_bazaar
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = saudi_royal_family
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 10 }
-										is_in_array = { ruling_party = 23 }
-										is_in_array = { ruling_party = 0 }
-									}
-								}
-							}
-						}
-						add_ideas = saudi_royal_family
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = irgc
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = irgc
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = iranian_quds_force
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = iranian_quds_force
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = vevak
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = vevak
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = foreign_jihadis
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 11 }
-									}
-								}
-							}
-						}
-						add_ideas = foreign_jihadis
-					}
-					if = { limit = { PREV = { has_idea = wall_street } }
-						add_ideas = wall_street
-					}
-					if = { limit = { PREV = { has_idea = chaebols } }
-						add_ideas = chaebols
-					}
-					#copy leader throughput
-					set_variable = { Western_Autocracy_leader = PREV.Western_Autocracy_leader?0 }
-					set_variable = { conservatism_leader = PREV.conservatism_leader?0 }
-					set_variable = { liberalism_leader = PREV.liberalism_leader?0 }
-					set_variable = { socialism_leader = PREV.socialism_leader?0 }
-
-					set_variable = { Communist-State_leader = PREV.Communist-State_leader?0 }
-					set_variable = { anarchist_communism_leader = PREV.anarchist_communism_leader?0 }
-					set_variable = { Conservative_leader = PREV.Conservative_leader?0 }
-					set_variable = { Autocracy_leader = PREV.Autocracy_leader?0 }
-					set_variable = { Mod_Vilayat_e_Faqih_leader = PREV.Mod_Vilayat_e_Faqih_leader?0 }
-					set_variable = { Vilayat_e_Faqih_leader = PREV.Vilayat_e_Faqih_leader?0 }
-
-					set_variable = { Kingdom_leader = PREV.Kingdom_leader?0 }
-					set_variable = { Caliphate_leader = PREV.Caliphate_leader?0 }
-
-					set_variable = { Neutral_Muslim_Brotherhood_leader = PREV.Neutral_Muslim_Brotherhood_leader?0 }
-					set_variable = { Neutral_Autocracy_leader = PREV.Neutral_Autocracy_leader?0 }
-					set_variable = { Neutral_conservatism_leader = PREV.Neutral_conservatism_leader?0 }
-					set_variable = { oligarchism_leader = PREV.oligarchism_leader?0 }
-					set_variable = { Neutral_Libertarian_leader = PREV.Neutral_Libertarian_leader?0 }
-					set_variable = { Neutral_green_leader = PREV.Neutral_green_leader?0 }
-					set_variable = { neutral_Social_leader = PREV.neutral_Social_leader?0 }
-					set_variable = { Neutral_Communism_leader = PREV.Neutral_Communism_leader?0 }
-					set_variable = { Nat_Populism_leader = PREV.Nat_Populism_leader?0 }
-					set_variable = { Nat_Fascism_leader = PREV.Nat_Fascism_leader?0 }
-					set_variable = { Nat_Autocracy_leader = PREV.Nat_Autocracy_leader?0 }
-					set_variable = { Monarchist_leader = PREV.Monarchist_leader?0 }
-
-					calculate_influence_percentage = yes #set alignment drifts from influence
-					ingame_update_setup = yes 	#money system
-					setup_init_factions = yes 	#flags for int. factions
-					update_neighbors_effects = yes # Updates Neighbor Effects
-					economic_cycle_drift_popularity = yes #drift from neighbor
-
-					country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
+					civil_war_replication_effect = yes
 				}
 
 				#For player:
@@ -1152,8 +690,6 @@ generic_coalition_politics_decisions = {
 		icon = revolt
 
 		cost = 150
-		days_remove = 0
-		days_re_enable = 0
 
 		visible = {
 			check_variable = { party_pop_array^22 > 0.10 } #significant nat autocracy
@@ -1180,53 +716,7 @@ generic_coalition_politics_decisions = {
 
 			hidden_effect = {
 				#Release copy of existing
-				set_country_flag = no_leader_change
-				if = {
-					limit = {
-						has_government = nationalist
-					}
-					start_civil_war = {
-						ideology = nationalist
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = communism
-					}
-					start_civil_war = {
-						ideology = communism
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = democratic
-					}
-					start_civil_war = {
-						ideology = democratic
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = neutrality
-					}
-					start_civil_war = {
-						ideology = neutrality
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = fascism
-					}
-					start_civil_war = {
-						ideology = fascism
-						size = 0.5
-					}
-				}
-				clr_country_flag = no_leader_change
+				start_civil_war_with_no_leader_change = yes
 
 				#replicating current politics
 				random_other_country = {
@@ -1234,386 +724,7 @@ generic_coalition_politics_decisions = {
 						original_tag = PREV
 						NOT = { TAG = PREV }
 					}
-					set_temp_variable = { temp_democratic = PREV.party_popularity@democratic }
-					multiply_temp_variable = { temp_democratic = 100 }
-					set_temp_variable = { temp_total = temp_democratic }
-					set_temp_variable = { temp_communism = PREV.party_popularity@communism }
-					multiply_temp_variable = { temp_communism = 100 }
-					add_to_temp_variable = { temp_total = temp_communism }
-					set_temp_variable = { temp_neutrality = PREV.party_popularity@neutrality }
-					multiply_temp_variable = { temp_neutrality = 100 }
-					add_to_temp_variable = { temp_total = temp_neutrality }
-					set_temp_variable = { temp_fascism = PREV.party_popularity@fascism }
-					multiply_temp_variable = { temp_fascism = 100 }
-					add_to_temp_variable = { temp_total = temp_fascism }
-					set_temp_variable = { temp_nationalist = PREV.party_popularity@nationalist }
-					multiply_temp_variable = { temp_nationalist = 100 }
-					add_to_temp_variable = { temp_total = temp_nationalist }
-					subtract_from_temp_variable = { temp_total = 100 }
-					multiply_temp_variable = { temp_total = -1 }
-					add_to_temp_variable = { temp_nationalist = temp_total }
-
-					set_popularities = {
-						democratic = temp_democratic
-						communism = temp_communism
-						neutrality = temp_neutrality
-						fascism = temp_fascism
-						nationalist = temp_nationalist
-					}
-					add_popularity = {
-						ideology = nationalist
-						popularity = -0.2
-					}
-					start_politics_input = yes
-					#copy politics
-					for_loop_effect = {
-						end = party_pop_array^num
-						value = v
-						set_variable = { party_pop_array^v = PREV.party_pop_array^v }
-					}
-					add_to_array = { ruling_party = PREV.ruling_party^0 }
-					for_loop_effect = {
-						end = gov_coalition_array^num
-						value = v
-						add_to_array = { gov_coalition_array = PREV.gov_coalition_array^v }
-					}
-					set_variable = { party_pop_array^22 = 0.01 } #all moved to fight ;)
-					set_variable = { party_pop_elect_array^22 = 0 } #made illegal
-					add_up_party_totals = yes
-					set_party_positions = yes
-					startup_politics = yes
-
-					#VARIABLES
-					set_variable = { var = corporate_tax_rate value = PREV.corporate_tax_rate }
-					set_variable = { var = population_tax_rate value = PREV.population_tax_rate }
-					set_variable = { treasury = PREV.treasury }
-
-					#don't get values of original yet - REMINDER -> add it on_civil_war_end
-					set_variable = { debt = 0 }
-					set_variable = { int_investments = 0 }
-
-					#influence
-					set_variable = { domestic_influence_amount = PREV.domestic_influence_amount }
-					#just copy all
-					for_loop_effect = {
-						end = PREV.influence_array^num
-						value = v
-
-						add_to_array = { influence_array = PREV.influence_array^v }
-						add_to_array = { influence_array_val = PREV.influence_array_val^v }
-					}
-					recalculate_influence = yes
-
-					#GAME VARIABLES
-					add_political_power = PREV.political_power
-					add_political_power = 400 #bonus
-
-					#LAWS
-					set_variable = { gdp_per_capita = PREV.gdp_per_capita }
-					update_budget_laws_for_new_nation = yes
-
-					if = { limit = { PREV = { has_idea = depression } }
-						add_ideas = depression
-					}
-					else_if = { limit = { PREV = { has_idea = recession } }
-						add_ideas = recession
-					}
-					else_if = { limit = { PREV = { has_idea = stagnation } }
-						add_ideas = stagnation
-					}
-					else_if = { limit = { PREV = { has_idea = stable_growth } }
-						add_ideas = stable_growth
-					}
-					else_if = { limit = { PREV = { has_idea = fast_growth } }
-						add_ideas = fast_growth
-					}
-					else_if = { limit = { PREV = { has_idea = economic_boom } }
-						add_ideas = economic_boom
-					}
-
-					if = { limit = { PREV = { has_idea = paralyzing_corruption } }
-						add_ideas = paralyzing_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = crippling_corruption } }
-						add_ideas = crippling_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = rampant_corruption } }
-						add_ideas = rampant_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = unrestrained_corruption } }
-						add_ideas = unrestrained_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = systematic_corruption } }
-						add_ideas = systematic_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = widespread_corruption } }
-						add_ideas = widespread_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = medium_corruption } }
-						add_ideas = medium_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = modest_corruption } }
-						add_ideas = modest_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = slight_corruption } }
-						add_ideas = slight_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = negligible_corruption } }
-						add_ideas = negligible_corruption
-					}
-
-					if = { limit = { PREV = { has_idea = consumption_economy } }
-						add_ideas = consumption_economy
-					}
-					else_if = { limit = { PREV = { has_idea = mixed_economy } }
-						add_ideas = mixed_economy
-					}
-					else_if = { limit = { PREV = { has_idea = export_economy } }
-						add_ideas = export_economy
-					}
-
-					if = { limit = { PREV = { has_idea = no_military } }
-						add_ideas = no_military
-					}
-					else_if = { limit = { PREV = { has_idea = volunteer_army } }
-						add_ideas = volunteer_army
-					}
-					else_if = { limit = { PREV = { has_idea = partial_draft_army } }
-						add_ideas = partial_draft_army
-					}
-					else_if = { limit = { PREV = { has_idea = draft_army } }
-						add_ideas = draft_army
-					}
-
-					if = { limit = { PREV = { has_idea = no_women_in_military } }
-						add_ideas = no_women_in_military
-					}
-					else_if = { limit = { PREV = { has_idea = volunteer_women } }
-						add_ideas = volunteer_women
-					}
-					else_if = { limit = { PREV = { has_idea = drafted_women } }
-						add_ideas = drafted_women
-					}
-
-					if = { limit = { PREV = { has_idea = intervention_isolation } }
-						add_ideas = intervention_isolation
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_local_security } }
-						add_ideas = intervention_local_security
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_limited_interventionism } }
-						add_ideas = intervention_limited_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_regional_interventionism } }
-						add_ideas = intervention_regional_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_global_interventionism } }
-						add_ideas = intervention_global_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_neo_imperialism } }
-						add_ideas = intervention_neo_imperialism
-					}
-
-					if = { limit = { PREV = { has_idea = officer_baptism_by_fire } }
-						add_ideas = officer_baptism_by_fire
-					}
-					else_if = { limit = { PREV = { has_idea = officer_basic_training } }
-						add_ideas = officer_basic_training
-					}
-					else_if = { limit = { PREV = { has_idea = officer_advanced_training } }
-						add_ideas = officer_advanced_training
-					}
-					else_if = { limit = { PREV = { has_idea = officer_military_school } }
-						add_ideas = officer_military_school
-					}
-					else_if = { limit = { PREV = { has_idea = officer_military_academy } }
-						add_ideas = officer_military_academy
-					}
-					else_if = { limit = { PREV = { has_idea = officer_international_education } }
-						add_ideas = officer_international_education
-					}
-
-					### Internal factions
-					if = { limit = { PREV = { has_idea = small_medium_business_owners } }
-						add_ideas = small_medium_business_owners
-					}
-					if = { limit = { PREV = { has_idea = international_bankers } }
-						add_ideas = international_bankers
-					}
-					if = { limit = { PREV = { has_idea = fossil_fuel_industry } }
-						add_ideas = fossil_fuel_industry
-					}
-					if = { limit = { PREV = { has_idea = industrial_conglomerates } }
-						add_ideas = industrial_conglomerates
-					}
-					if = { limit = { PREV = { has_idea = oligarchs } }
-						add_ideas = oligarchs
-					}
-					if = { limit = { PREV = { has_idea = maritime_industry } }
-						add_ideas = maritime_industry
-					}
-					if = { limit = { PREV = { has_idea = defense_industry } }
-						add_ideas = defense_industry
-					}
-					if = { limit = { PREV = { has_idea = the_military } }
-						add_ideas = the_military
-					}
-					if = { limit = { PREV = { has_idea = intelligence_community } }
-						add_ideas = intelligence_community
-					}
-					if = { limit = { PREV = { has_idea = labour_unions } }
-						add_ideas = labour_unions
-					}
-					if = { limit = { PREV = { has_idea = landowners } }
-						add_ideas = landowners
-					}
-					if = { limit = { PREV = { has_idea = farmers } }
-						add_ideas = farmers
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = communist_cadres
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 4 }
-										is_in_array = { ruling_party = 19 }
-									}
-								}
-							}
-						}
-						add_ideas = communist_cadres
-					}
-					if = { limit = { PREV = { has_idea = the_priesthood } }
-						add_ideas = the_priesthood
-					}
-					if = { limit = { PREV = { has_idea = the_ulema } }
-						add_ideas = the_ulema
-					}
-					if = { limit = { PREV = { has_idea = the_clergy } }
-						add_ideas = the_clergy
-					}
-					if = { limit = { PREV = { has_idea = wahabi_ulema } }
-						add_ideas = wahabi_ulema
-					}
-					if = { limit = { PREV = { has_idea = the_donju } }
-						add_ideas = the_donju
-					}
-					if = { limit = { PREV = { has_idea = the_bazaar } }
-						add_ideas = the_bazaar
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = saudi_royal_family
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 10 }
-										is_in_array = { ruling_party = 23 }
-										is_in_array = { ruling_party = 0 }
-									}
-								}
-							}
-						}
-						add_ideas = saudi_royal_family
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = irgc
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = irgc
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = iranian_quds_force
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = iranian_quds_force
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = vevak
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = vevak
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = foreign_jihadis
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 11 }
-									}
-								}
-							}
-						}
-						add_ideas = foreign_jihadis
-					}
-					if = { limit = { PREV = { has_idea = wall_street } }
-						add_ideas = wall_street
-					}
-					if = { limit = { PREV = { has_idea = chaebols } }
-						add_ideas = chaebols
-					}
-					#copy leader throughput
-					set_variable = { Western_Autocracy_leader = PREV.Western_Autocracy_leader?0 }
-					set_variable = { conservatism_leader = PREV.conservatism_leader?0 }
-					set_variable = { liberalism_leader = PREV.liberalism_leader?0 }
-					set_variable = { socialism_leader = PREV.socialism_leader?0 }
-
-					set_variable = { Communist-State_leader = PREV.Communist-State_leader?0 }
-					set_variable = { anarchist_communism_leader = PREV.anarchist_communism_leader?0 }
-					set_variable = { Conservative_leader = PREV.Conservative_leader?0 }
-					set_variable = { Autocracy_leader = PREV.Autocracy_leader?0 }
-					set_variable = { Mod_Vilayat_e_Faqih_leader = PREV.Mod_Vilayat_e_Faqih_leader?0 }
-					set_variable = { Vilayat_e_Faqih_leader = PREV.Vilayat_e_Faqih_leader?0 }
-
-					set_variable = { Kingdom_leader = PREV.Kingdom_leader?0 }
-					set_variable = { Caliphate_leader = PREV.Caliphate_leader?0 }
-
-					set_variable = { Neutral_Muslim_Brotherhood_leader = PREV.Neutral_Muslim_Brotherhood_leader?0 }
-					set_variable = { Neutral_Autocracy_leader = PREV.Neutral_Autocracy_leader?0 }
-					set_variable = { Neutral_conservatism_leader = PREV.Neutral_conservatism_leader?0 }
-					set_variable = { oligarchism_leader = PREV.oligarchism_leader?0 }
-					set_variable = { Neutral_Libertarian_leader = PREV.Neutral_Libertarian_leader?0 }
-					set_variable = { Neutral_green_leader = PREV.Neutral_green_leader?0 }
-					set_variable = { neutral_Social_leader = PREV.neutral_Social_leader?0 }
-					set_variable = { Neutral_Communism_leader = PREV.Neutral_Communism_leader?0 }
-					set_variable = { Nat_Populism_leader = PREV.Nat_Populism_leader?0 }
-					set_variable = { Nat_Fascism_leader = PREV.Nat_Fascism_leader?0 }
-					set_variable = { Nat_Autocracy_leader = PREV.Nat_Autocracy_leader?0 }
-					set_variable = { Monarchist_leader = PREV.Monarchist_leader?0 }
-
-					calculate_influence_percentage = yes #set alignment drifts from influence
-					ingame_update_setup = yes 	#money system
-					setup_init_factions = yes 	#flags for int. factions
-					update_neighbors_effects = yes # Updates Neighbor Effects
-					economic_cycle_drift_popularity = yes #drift from neighbor
-
-					country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
+					civil_war_replication_effect = yes
 				}
 
 				#For player:
@@ -1646,8 +757,6 @@ generic_coalition_politics_decisions = {
 		icon = revolt
 
 		cost = 150
-		days_remove = 0
-		days_re_enable = 0
 
 		visible = {
 			check_variable = { party_pop_array^23 > 0.10 } #significant fascism
@@ -1674,53 +783,7 @@ generic_coalition_politics_decisions = {
 
 			hidden_effect = {
 				#Release copy of existing
-				set_country_flag = no_leader_change
-				if = {
-					limit = {
-						has_government = nationalist
-					}
-					start_civil_war = {
-						ideology = nationalist
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = communism
-					}
-					start_civil_war = {
-						ideology = communism
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = democratic
-					}
-					start_civil_war = {
-						ideology = democratic
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = neutrality
-					}
-					start_civil_war = {
-						ideology = neutrality
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = fascism
-					}
-					start_civil_war = {
-						ideology = fascism
-						size = 0.5
-					}
-				}
-				clr_country_flag = no_leader_change
+				start_civil_war_with_no_leader_change = yes
 
 				#replicating current politics
 				random_other_country = {
@@ -1728,387 +791,7 @@ generic_coalition_politics_decisions = {
 						original_tag = PREV
 						NOT = { TAG = PREV }
 					}
-					set_temp_variable = { temp_democratic = PREV.party_popularity@democratic }
-					multiply_temp_variable = { temp_democratic = 100 }
-					set_temp_variable = { temp_total = temp_democratic }
-					set_temp_variable = { temp_communism = PREV.party_popularity@communism }
-					multiply_temp_variable = { temp_communism = 100 }
-					add_to_temp_variable = { temp_total = temp_communism }
-					set_temp_variable = { temp_neutrality = PREV.party_popularity@neutrality }
-					multiply_temp_variable = { temp_neutrality = 100 }
-					add_to_temp_variable = { temp_total = temp_neutrality }
-					set_temp_variable = { temp_fascism = PREV.party_popularity@fascism }
-					multiply_temp_variable = { temp_fascism = 100 }
-					add_to_temp_variable = { temp_total = temp_fascism }
-					set_temp_variable = { temp_nationalist = PREV.party_popularity@nationalist }
-					multiply_temp_variable = { temp_nationalist = 100 }
-					add_to_temp_variable = { temp_total = temp_nationalist }
-					subtract_from_temp_variable = { temp_total = 100 }
-					multiply_temp_variable = { temp_total = -1 }
-					add_to_temp_variable = { temp_nationalist = temp_total }
-
-					set_popularities = {
-						democratic = temp_democratic
-						communism = temp_communism
-						neutrality = temp_neutrality
-						fascism = temp_fascism
-						nationalist = temp_nationalist
-					}
-					add_popularity = {
-						ideology = nationalist
-						popularity = -0.2
-					}
-					start_politics_input = yes
-					#copy politics
-					for_loop_effect = {
-						end = party_pop_array^num
-						value = v
-						set_variable = { party_pop_array^v = PREV.party_pop_array^v }
-					}
-					add_to_array = { ruling_party = PREV.ruling_party^0 }
-					for_loop_effect = {
-						end = gov_coalition_array^num
-						value = v
-						add_to_array = { gov_coalition_array = PREV.gov_coalition_array^v }
-					}
-					set_variable = { party_pop_array^23 = 0.01 } #all moved to fight ;)
-					set_variable = { party_pop_elect_array^23 = 0 } #made illegal
-					add_up_party_totals = yes
-					set_party_positions = yes
-					startup_politics = yes
-
-					#VARIABLES
-					set_variable = { var = corporate_tax_rate value = PREV.corporate_tax_rate }
-					set_variable = { var = population_tax_rate value = PREV.population_tax_rate }
-					set_variable = { treasury = PREV.treasury }
-
-					#don't get values of original yet - REMINDER -> add it on_civil_war_end
-					set_variable = { debt = 0 }
-					set_variable = { int_investments = 0 }
-
-					#influence
-					set_variable = { domestic_influence_amount = PREV.domestic_influence_amount }
-					#just copy all
-					for_loop_effect = {
-						end = PREV.influence_array^num
-						value = v
-
-						add_to_array = { influence_array = PREV.influence_array^v }
-						add_to_array = { influence_array_val = PREV.influence_array_val^v }
-					}
-					recalculate_influence = yes
-
-					#GAME VARIABLES
-					add_political_power = PREV.political_power
-					add_political_power = 400 #bonus
-
-					#LAWS
-					set_variable = { gdp_per_capita = PREV.gdp_per_capita }
-					update_budget_laws_for_new_nation = yes
-
-					if = { limit = { PREV = { has_idea = depression } }
-						add_ideas = depression
-					}
-					else_if = { limit = { PREV = { has_idea = recession } }
-						add_ideas = recession
-					}
-					else_if = { limit = { PREV = { has_idea = stagnation } }
-						add_ideas = stagnation
-					}
-					else_if = { limit = { PREV = { has_idea = stable_growth } }
-						add_ideas = stable_growth
-					}
-					else_if = { limit = { PREV = { has_idea = fast_growth } }
-						add_ideas = fast_growth
-					}
-					else_if = { limit = { PREV = { has_idea = economic_boom } }
-						add_ideas = economic_boom
-					}
-
-					if = { limit = { PREV = { has_idea = paralyzing_corruption } }
-						add_ideas = paralyzing_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = crippling_corruption } }
-						add_ideas = crippling_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = rampant_corruption } }
-						add_ideas = rampant_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = unrestrained_corruption } }
-						add_ideas = unrestrained_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = systematic_corruption } }
-						add_ideas = systematic_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = widespread_corruption } }
-						add_ideas = widespread_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = medium_corruption } }
-						add_ideas = medium_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = modest_corruption } }
-						add_ideas = modest_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = slight_corruption } }
-						add_ideas = slight_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = negligible_corruption } }
-						add_ideas = negligible_corruption
-					}
-
-					if = { limit = { PREV = { has_idea = consumption_economy } }
-						add_ideas = consumption_economy
-					}
-					else_if = { limit = { PREV = { has_idea = mixed_economy } }
-						add_ideas = mixed_economy
-					}
-					else_if = { limit = { PREV = { has_idea = export_economy } }
-						add_ideas = export_economy
-					}
-
-					if = { limit = { PREV = { has_idea = no_military } }
-						add_ideas = no_military
-					}
-					else_if = { limit = { PREV = { has_idea = volunteer_army } }
-						add_ideas = volunteer_army
-					}
-					else_if = { limit = { PREV = { has_idea = partial_draft_army } }
-						add_ideas = partial_draft_army
-					}
-					else_if = { limit = { PREV = { has_idea = draft_army } }
-						add_ideas = draft_army
-					}
-
-					if = { limit = { PREV = { has_idea = no_women_in_military } }
-						add_ideas = no_women_in_military
-					}
-					else_if = { limit = { PREV = { has_idea = volunteer_women } }
-						add_ideas = volunteer_women
-					}
-					else_if = { limit = { PREV = { has_idea = drafted_women } }
-						add_ideas = drafted_women
-					}
-
-					if = { limit = { PREV = { has_idea = intervention_isolation } }
-						add_ideas = intervention_isolation
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_local_security } }
-						add_ideas = intervention_local_security
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_limited_interventionism } }
-						add_ideas = intervention_limited_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_regional_interventionism } }
-						add_ideas = intervention_regional_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_global_interventionism } }
-						add_ideas = intervention_global_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_neo_imperialism } }
-						add_ideas = intervention_neo_imperialism
-					}
-
-					if = { limit = { PREV = { has_idea = officer_baptism_by_fire } }
-						add_ideas = officer_baptism_by_fire
-					}
-					else_if = { limit = { PREV = { has_idea = officer_basic_training } }
-						add_ideas = officer_basic_training
-					}
-					else_if = { limit = { PREV = { has_idea = officer_advanced_training } }
-						add_ideas = officer_advanced_training
-					}
-					else_if = { limit = { PREV = { has_idea = officer_military_school } }
-						add_ideas = officer_military_school
-					}
-					else_if = { limit = { PREV = { has_idea = officer_military_academy } }
-						add_ideas = officer_military_academy
-					}
-					else_if = { limit = { PREV = { has_idea = officer_international_education } }
-						add_ideas = officer_international_education
-					}
-
-					### Internal factions
-					if = { limit = { PREV = { has_idea = small_medium_business_owners } }
-						add_ideas = small_medium_business_owners
-					}
-					if = { limit = { PREV = { has_idea = international_bankers } }
-						add_ideas = international_bankers
-					}
-					if = { limit = { PREV = { has_idea = fossil_fuel_industry } }
-						add_ideas = fossil_fuel_industry
-					}
-					if = { limit = { PREV = { has_idea = industrial_conglomerates } }
-						add_ideas = industrial_conglomerates
-					}
-					if = { limit = { PREV = { has_idea = oligarchs } }
-						add_ideas = oligarchs
-					}
-					if = { limit = { PREV = { has_idea = maritime_industry } }
-						add_ideas = maritime_industry
-					}
-					if = { limit = { PREV = { has_idea = defense_industry } }
-						add_ideas = defense_industry
-					}
-					if = { limit = { PREV = { has_idea = the_military } }
-						add_ideas = the_military
-					}
-					if = { limit = { PREV = { has_idea = intelligence_community } }
-						add_ideas = intelligence_community
-					}
-					if = { limit = { PREV = { has_idea = labour_unions } }
-						add_ideas = labour_unions
-					}
-					if = { limit = { PREV = { has_idea = landowners } }
-						add_ideas = landowners
-					}
-					if = { limit = { PREV = { has_idea = farmers } }
-						add_ideas = farmers
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = communist_cadres
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 4 }
-										is_in_array = { ruling_party = 19 }
-									}
-								}
-							}
-						}
-						add_ideas = communist_cadres
-					}
-					if = { limit = { PREV = { has_idea = the_priesthood } }
-						add_ideas = the_priesthood
-					}
-					if = { limit = { PREV = { has_idea = the_ulema } }
-						add_ideas = the_ulema
-					}
-					if = { limit = { PREV = { has_idea = the_clergy } }
-						add_ideas = the_clergy
-					}
-					if = { limit = { PREV = { has_idea = wahabi_ulema } }
-						add_ideas = wahabi_ulema
-					}
-					if = { limit = { PREV = { has_idea = the_donju } }
-						add_ideas = the_donju
-					}
-					if = { limit = { PREV = { has_idea = the_bazaar } }
-						add_ideas = the_bazaar
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = saudi_royal_family
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 10 }
-										is_in_array = { ruling_party = 23 }
-										is_in_array = { ruling_party = 0 }
-									}
-								}
-							}
-						}
-						add_ideas = saudi_royal_family
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = irgc
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = irgc
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = iranian_quds_force
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = iranian_quds_force
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = vevak
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = vevak
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = foreign_jihadis
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 11 }
-									}
-								}
-							}
-						}
-						add_ideas = foreign_jihadis
-					}
-					if = { limit = { PREV = { has_idea = wall_street } }
-						add_ideas = wall_street
-					}
-					if = { limit = { PREV = { has_idea = chaebols } }
-						add_ideas = chaebols
-					}
-
-					#copy leader throughput
-					set_variable = { Western_Autocracy_leader = PREV.Western_Autocracy_leader?0 }
-					set_variable = { conservatism_leader = PREV.conservatism_leader?0 }
-					set_variable = { liberalism_leader = PREV.liberalism_leader?0 }
-					set_variable = { socialism_leader = PREV.socialism_leader?0 }
-
-					set_variable = { Communist-State_leader = PREV.Communist-State_leader?0 }
-					set_variable = { anarchist_communism_leader = PREV.anarchist_communism_leader?0 }
-					set_variable = { Conservative_leader = PREV.Conservative_leader?0 }
-					set_variable = { Autocracy_leader = PREV.Autocracy_leader?0 }
-					set_variable = { Mod_Vilayat_e_Faqih_leader = PREV.Mod_Vilayat_e_Faqih_leader?0 }
-					set_variable = { Vilayat_e_Faqih_leader = PREV.Vilayat_e_Faqih_leader?0 }
-
-					set_variable = { Kingdom_leader = PREV.Kingdom_leader?0 }
-					set_variable = { Caliphate_leader = PREV.Caliphate_leader?0 }
-
-					set_variable = { Neutral_Muslim_Brotherhood_leader = PREV.Neutral_Muslim_Brotherhood_leader?0 }
-					set_variable = { Neutral_Autocracy_leader = PREV.Neutral_Autocracy_leader?0 }
-					set_variable = { Neutral_conservatism_leader = PREV.Neutral_conservatism_leader?0 }
-					set_variable = { oligarchism_leader = PREV.oligarchism_leader?0 }
-					set_variable = { Neutral_Libertarian_leader = PREV.Neutral_Libertarian_leader?0 }
-					set_variable = { Neutral_green_leader = PREV.Neutral_green_leader?0 }
-					set_variable = { neutral_Social_leader = PREV.neutral_Social_leader?0 }
-					set_variable = { Neutral_Communism_leader = PREV.Neutral_Communism_leader?0 }
-					set_variable = { Nat_Populism_leader = PREV.Nat_Populism_leader?0 }
-					set_variable = { Nat_Fascism_leader = PREV.Nat_Fascism_leader?0 }
-					set_variable = { Nat_Autocracy_leader = PREV.Nat_Autocracy_leader?0 }
-					set_variable = { Monarchist_leader = PREV.Monarchist_leader?0 }
-
-					calculate_influence_percentage = yes #set alignment drifts from influence
-					ingame_update_setup = yes 	#money system
-					setup_init_factions = yes 	#flags for int. factions
-					update_neighbors_effects = yes # Updates Neighbor Effects
-					economic_cycle_drift_popularity = yes #drift from neighbor
-
-					country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
+					civil_war_replication_effect = yes
 				}
 
 				#For player:
@@ -2141,8 +824,6 @@ generic_coalition_politics_decisions = {
 		icon = revolt
 
 		cost = 150
-		days_remove = 0
-		days_re_enable = 0
 
 		visible = {
 			check_variable = { party_pop_array^11 > 0.10 } #significant jihadist
@@ -2175,53 +856,7 @@ generic_coalition_politics_decisions = {
 
 			hidden_effect = {
 				#Release copy of existing
-				set_country_flag = no_leader_change
-				if = {
-					limit = {
-						has_government = nationalist
-					}
-					start_civil_war = {
-						ideology = nationalist
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = communism
-					}
-					start_civil_war = {
-						ideology = communism
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = democratic
-					}
-					start_civil_war = {
-						ideology = democratic
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = neutrality
-					}
-					start_civil_war = {
-						ideology = neutrality
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = fascism
-					}
-					start_civil_war = {
-						ideology = fascism
-						size = 0.5
-					}
-				}
-				clr_country_flag = no_leader_change
+				start_civil_war_with_no_leader_change = yes
 
 				#replicating current politics
 				random_other_country = {
@@ -2229,387 +864,7 @@ generic_coalition_politics_decisions = {
 						original_tag = PREV
 						NOT = { TAG = PREV }
 					}
-					set_temp_variable = { temp_democratic = PREV.party_popularity@democratic }
-					multiply_temp_variable = { temp_democratic = 100 }
-					set_temp_variable = { temp_total = temp_democratic }
-					set_temp_variable = { temp_communism = PREV.party_popularity@communism }
-					multiply_temp_variable = { temp_communism = 100 }
-					add_to_temp_variable = { temp_total = temp_communism }
-					set_temp_variable = { temp_neutrality = PREV.party_popularity@neutrality }
-					multiply_temp_variable = { temp_neutrality = 100 }
-					add_to_temp_variable = { temp_total = temp_neutrality }
-					set_temp_variable = { temp_fascism = PREV.party_popularity@fascism }
-					multiply_temp_variable = { temp_fascism = 100 }
-					add_to_temp_variable = { temp_total = temp_fascism }
-					set_temp_variable = { temp_nationalist = PREV.party_popularity@nationalist }
-					multiply_temp_variable = { temp_nationalist = 100 }
-					add_to_temp_variable = { temp_total = temp_nationalist }
-					subtract_from_temp_variable = { temp_total = 100 }
-					multiply_temp_variable = { temp_total = -1 }
-					add_to_temp_variable = { temp_nationalist = temp_total }
-
-					set_popularities = {
-						democratic = temp_democratic
-						communism = temp_communism
-						neutrality = temp_neutrality
-						fascism = temp_fascism
-						nationalist = temp_nationalist
-					}
-					add_popularity = {
-						ideology = fascism
-						popularity = -0.2
-					}
-					start_politics_input = yes
-					#copy politics
-					for_loop_effect = {
-						end = party_pop_array^num
-						value = v
-						set_variable = { party_pop_array^v = PREV.party_pop_array^v }
-					}
-					add_to_array = { ruling_party = PREV.ruling_party^0 }
-					for_loop_effect = {
-						end = gov_coalition_array^num
-						value = v
-						add_to_array = { gov_coalition_array = PREV.gov_coalition_array^v }
-					}
-					set_variable = { party_pop_array^11 = 0.01 } #all moved to fight ;)
-					set_variable = { party_pop_elect_array^11 = 0 } #made illegal
-					add_up_party_totals = yes
-					set_party_positions = yes
-					startup_politics = yes
-
-					#VARIABLES
-					set_variable = { var = corporate_tax_rate value = PREV.corporate_tax_rate }
-					set_variable = { var = population_tax_rate value = PREV.population_tax_rate }
-					set_variable = { treasury = PREV.treasury }
-
-					#don't get values of original yet - REMINDER -> add it on_civil_war_end
-					set_variable = { debt = 0 }
-					set_variable = { int_investments = 0 }
-
-					#influence
-					set_variable = { domestic_influence_amount = PREV.domestic_influence_amount }
-					#just copy all
-					for_loop_effect = {
-						end = PREV.influence_array^num
-						value = v
-
-						add_to_array = { influence_array = PREV.influence_array^v }
-						add_to_array = { influence_array_val = PREV.influence_array_val^v }
-					}
-					recalculate_influence = yes
-
-					#GAME VARIABLES
-					add_political_power = PREV.political_power
-					add_political_power = 400 #bonus
-
-					#LAWS
-					set_variable = { gdp_per_capita = PREV.gdp_per_capita }
-					update_budget_laws_for_new_nation = yes
-
-					if = { limit = { PREV = { has_idea = depression } }
-						add_ideas = depression
-					}
-					else_if = { limit = { PREV = { has_idea = recession } }
-						add_ideas = recession
-					}
-					else_if = { limit = { PREV = { has_idea = stagnation } }
-						add_ideas = stagnation
-					}
-					else_if = { limit = { PREV = { has_idea = stable_growth } }
-						add_ideas = stable_growth
-					}
-					else_if = { limit = { PREV = { has_idea = fast_growth } }
-						add_ideas = fast_growth
-					}
-					else_if = { limit = { PREV = { has_idea = economic_boom } }
-						add_ideas = economic_boom
-					}
-
-					if = { limit = { PREV = { has_idea = paralyzing_corruption } }
-						add_ideas = paralyzing_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = crippling_corruption } }
-						add_ideas = crippling_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = rampant_corruption } }
-						add_ideas = rampant_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = unrestrained_corruption } }
-						add_ideas = unrestrained_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = systematic_corruption } }
-						add_ideas = systematic_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = widespread_corruption } }
-						add_ideas = widespread_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = medium_corruption } }
-						add_ideas = medium_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = modest_corruption } }
-						add_ideas = modest_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = slight_corruption } }
-						add_ideas = slight_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = negligible_corruption } }
-						add_ideas = negligible_corruption
-					}
-
-					if = { limit = { PREV = { has_idea = consumption_economy } }
-						add_ideas = consumption_economy
-					}
-					else_if = { limit = { PREV = { has_idea = mixed_economy } }
-						add_ideas = mixed_economy
-					}
-					else_if = { limit = { PREV = { has_idea = export_economy } }
-						add_ideas = export_economy
-					}
-
-					if = { limit = { PREV = { has_idea = no_military } }
-						add_ideas = no_military
-					}
-					else_if = { limit = { PREV = { has_idea = volunteer_army } }
-						add_ideas = volunteer_army
-					}
-					else_if = { limit = { PREV = { has_idea = partial_draft_army } }
-						add_ideas = partial_draft_army
-					}
-					else_if = { limit = { PREV = { has_idea = draft_army } }
-						add_ideas = draft_army
-					}
-
-					if = { limit = { PREV = { has_idea = no_women_in_military } }
-						add_ideas = no_women_in_military
-					}
-					else_if = { limit = { PREV = { has_idea = volunteer_women } }
-						add_ideas = volunteer_women
-					}
-					else_if = { limit = { PREV = { has_idea = drafted_women } }
-						add_ideas = drafted_women
-					}
-
-					if = { limit = { PREV = { has_idea = intervention_isolation } }
-						add_ideas = intervention_isolation
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_local_security } }
-						add_ideas = intervention_local_security
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_limited_interventionism } }
-						add_ideas = intervention_limited_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_regional_interventionism } }
-						add_ideas = intervention_regional_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_global_interventionism } }
-						add_ideas = intervention_global_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_neo_imperialism } }
-						add_ideas = intervention_neo_imperialism
-					}
-
-					if = { limit = { PREV = { has_idea = officer_baptism_by_fire } }
-						add_ideas = officer_baptism_by_fire
-					}
-					else_if = { limit = { PREV = { has_idea = officer_basic_training } }
-						add_ideas = officer_basic_training
-					}
-					else_if = { limit = { PREV = { has_idea = officer_advanced_training } }
-						add_ideas = officer_advanced_training
-					}
-					else_if = { limit = { PREV = { has_idea = officer_military_school } }
-						add_ideas = officer_military_school
-					}
-					else_if = { limit = { PREV = { has_idea = officer_military_academy } }
-						add_ideas = officer_military_academy
-					}
-					else_if = { limit = { PREV = { has_idea = officer_international_education } }
-						add_ideas = officer_international_education
-					}
-
-					### Internal factions
-					if = { limit = { PREV = { has_idea = small_medium_business_owners } }
-						add_ideas = small_medium_business_owners
-					}
-					if = { limit = { PREV = { has_idea = international_bankers } }
-						add_ideas = international_bankers
-					}
-					if = { limit = { PREV = { has_idea = fossil_fuel_industry } }
-						add_ideas = fossil_fuel_industry
-					}
-					if = { limit = { PREV = { has_idea = industrial_conglomerates } }
-						add_ideas = industrial_conglomerates
-					}
-					if = { limit = { PREV = { has_idea = oligarchs } }
-						add_ideas = oligarchs
-					}
-					if = { limit = { PREV = { has_idea = maritime_industry } }
-						add_ideas = maritime_industry
-					}
-					if = { limit = { PREV = { has_idea = defense_industry } }
-						add_ideas = defense_industry
-					}
-					if = { limit = { PREV = { has_idea = the_military } }
-						add_ideas = the_military
-					}
-					if = { limit = { PREV = { has_idea = intelligence_community } }
-						add_ideas = intelligence_community
-					}
-					if = { limit = { PREV = { has_idea = labour_unions } }
-						add_ideas = labour_unions
-					}
-					if = { limit = { PREV = { has_idea = landowners } }
-						add_ideas = landowners
-					}
-					if = { limit = { PREV = { has_idea = farmers } }
-						add_ideas = farmers
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = communist_cadres
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 4 }
-										is_in_array = { ruling_party = 19 }
-									}
-								}
-							}
-						}
-						add_ideas = communist_cadres
-					}
-					if = { limit = { PREV = { has_idea = the_priesthood } }
-						add_ideas = the_priesthood
-					}
-					if = { limit = { PREV = { has_idea = the_ulema } }
-						add_ideas = the_ulema
-					}
-					if = { limit = { PREV = { has_idea = the_clergy } }
-						add_ideas = the_clergy
-					}
-					if = { limit = { PREV = { has_idea = wahabi_ulema } }
-						add_ideas = wahabi_ulema
-					}
-					if = { limit = { PREV = { has_idea = the_donju } }
-						add_ideas = the_donju
-					}
-					if = { limit = { PREV = { has_idea = the_bazaar } }
-						add_ideas = the_bazaar
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = saudi_royal_family
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 10 }
-										is_in_array = { ruling_party = 23 }
-										is_in_array = { ruling_party = 0 }
-									}
-								}
-							}
-						}
-						add_ideas = saudi_royal_family
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = irgc
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = irgc
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = iranian_quds_force
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = iranian_quds_force
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = vevak
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = vevak
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = foreign_jihadis
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 11 }
-									}
-								}
-							}
-						}
-						add_ideas = foreign_jihadis
-					}
-					if = { limit = { PREV = { has_idea = wall_street } }
-						add_ideas = wall_street
-					}
-					if = { limit = { PREV = { has_idea = chaebols } }
-						add_ideas = chaebols
-					}
-
-					#copy leader throughput
-					set_variable = { Western_Autocracy_leader = PREV.Western_Autocracy_leader?0 }
-					set_variable = { conservatism_leader = PREV.conservatism_leader?0 }
-					set_variable = { liberalism_leader = PREV.liberalism_leader?0 }
-					set_variable = { socialism_leader = PREV.socialism_leader?0 }
-
-					set_variable = { Communist-State_leader = PREV.Communist-State_leader?0 }
-					set_variable = { anarchist_communism_leader = PREV.anarchist_communism_leader?0 }
-					set_variable = { Conservative_leader = PREV.Conservative_leader?0 }
-					set_variable = { Autocracy_leader = PREV.Autocracy_leader?0 }
-					set_variable = { Mod_Vilayat_e_Faqih_leader = PREV.Mod_Vilayat_e_Faqih_leader?0 }
-					set_variable = { Vilayat_e_Faqih_leader = PREV.Vilayat_e_Faqih_leader?0 }
-
-					set_variable = { Kingdom_leader = PREV.Kingdom_leader?0 }
-					set_variable = { Caliphate_leader = PREV.Caliphate_leader?0 }
-
-					set_variable = { Neutral_Muslim_Brotherhood_leader = PREV.Neutral_Muslim_Brotherhood_leader?0 }
-					set_variable = { Neutral_Autocracy_leader = PREV.Neutral_Autocracy_leader?0 }
-					set_variable = { Neutral_conservatism_leader = PREV.Neutral_conservatism_leader?0 }
-					set_variable = { oligarchism_leader = PREV.oligarchism_leader?0 }
-					set_variable = { Neutral_Libertarian_leader = PREV.Neutral_Libertarian_leader?0 }
-					set_variable = { Neutral_green_leader = PREV.Neutral_green_leader?0 }
-					set_variable = { neutral_Social_leader = PREV.neutral_Social_leader?0 }
-					set_variable = { Neutral_Communism_leader = PREV.Neutral_Communism_leader?0 }
-					set_variable = { Nat_Populism_leader = PREV.Nat_Populism_leader?0 }
-					set_variable = { Nat_Fascism_leader = PREV.Nat_Fascism_leader?0 }
-					set_variable = { Nat_Autocracy_leader = PREV.Nat_Autocracy_leader?0 }
-					set_variable = { Monarchist_leader = PREV.Monarchist_leader?0 }
-
-					calculate_influence_percentage = yes #set alignment drifts from influence
-					ingame_update_setup = yes 	#money system
-					setup_init_factions = yes 	#flags for int. factions
-					update_neighbors_effects = yes # Updates Neighbor Effects
-					economic_cycle_drift_popularity = yes #drift from neighbor
-
-					country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
+					civil_war_replication_effect = yes
 				}
 
 				#For player:
@@ -2642,8 +897,6 @@ generic_coalition_politics_decisions = {
 		icon = revolt
 
 		cost = 150
-		days_remove = 0
-		days_re_enable = 0
 
 		visible = {
 			check_variable = { party_pop_array^4 > 0.10 } #significant communism
@@ -2675,53 +928,7 @@ generic_coalition_politics_decisions = {
 
 			hidden_effect = {
 				#Release copy of existing
-				set_country_flag = no_leader_change
-				if = {
-					limit = {
-						has_government = nationalist
-					}
-					start_civil_war = {
-						ideology = nationalist
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = communism
-					}
-					start_civil_war = {
-						ideology = communism
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = democratic
-					}
-					start_civil_war = {
-						ideology = democratic
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = neutrality
-					}
-					start_civil_war = {
-						ideology = neutrality
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = fascism
-					}
-					start_civil_war = {
-						ideology = fascism
-						size = 0.5
-					}
-				}
-				clr_country_flag = no_leader_change
+				start_civil_war_with_no_leader_change = yes
 
 				#replicating current politics
 				random_other_country = {
@@ -2729,388 +936,12 @@ generic_coalition_politics_decisions = {
 						original_tag = PREV
 						NOT = { TAG = PREV }
 					}
-					set_temp_variable = { temp_democratic = PREV.party_popularity@democratic }
-					multiply_temp_variable = { temp_democratic = 100 }
-					set_temp_variable = { temp_total = temp_democratic }
-					set_temp_variable = { temp_communism = PREV.party_popularity@communism }
-					multiply_temp_variable = { temp_communism = 100 }
-					add_to_temp_variable = { temp_total = temp_communism }
-					set_temp_variable = { temp_neutrality = PREV.party_popularity@neutrality }
-					multiply_temp_variable = { temp_neutrality = 100 }
-					add_to_temp_variable = { temp_total = temp_neutrality }
-					set_temp_variable = { temp_fascism = PREV.party_popularity@fascism }
-					multiply_temp_variable = { temp_fascism = 100 }
-					add_to_temp_variable = { temp_total = temp_fascism }
-					set_temp_variable = { temp_nationalist = PREV.party_popularity@nationalist }
-					multiply_temp_variable = { temp_nationalist = 100 }
-					add_to_temp_variable = { temp_total = temp_nationalist }
-					subtract_from_temp_variable = { temp_total = 100 }
-					multiply_temp_variable = { temp_total = -1 }
-					add_to_temp_variable = { temp_nationalist = temp_total }
-
-					set_popularities = {
-						democratic = temp_democratic
-						communism = temp_communism
-						neutrality = temp_neutrality
-						fascism = temp_fascism
-						nationalist = temp_nationalist
-					}
-					add_popularity = {
-						ideology = communism
-						popularity = -0.1
-					}
-					start_politics_input = yes
-					#copy politics
-					for_loop_effect = {
-						end = party_pop_array^num
-						value = v
-						set_variable = { party_pop_array^v = PREV.party_pop_array^v }
-					}
-					add_to_array = { ruling_party = PREV.ruling_party^0 }
-					for_loop_effect = {
-						end = gov_coalition_array^num
-						value = v
-						add_to_array = { gov_coalition_array = PREV.gov_coalition_array^v }
-					}
-					set_variable = { party_pop_array^4 = 0.01 } #all moved to fight ;)
-					set_variable = { party_pop_elect_array^4 = 0 } #made illegal
-					add_up_party_totals = yes
-					set_party_positions = yes
-					startup_politics = yes
-
-					#VARIABLES
-					set_variable = { var = corporate_tax_rate value = PREV.corporate_tax_rate }
-					set_variable = { var = population_tax_rate value = PREV.population_tax_rate }
-					set_variable = { treasury = PREV.treasury }
-
-					#don't get values of original yet - REMINDER -> add it on_civil_war_end
-					set_variable = { debt = 0 }
-					set_variable = { int_investments = 0 }
-
-					#influence
-					set_variable = { domestic_influence_amount = PREV.domestic_influence_amount }
-					#just copy all
-					for_loop_effect = {
-						end = PREV.influence_array^num
-						value = v
-
-						add_to_array = { influence_array = PREV.influence_array^v }
-						add_to_array = { influence_array_val = PREV.influence_array_val^v }
-					}
-					recalculate_influence = yes
-
-					#GAME VARIABLES
-					add_political_power = PREV.political_power
-					add_political_power = 400 #bonus
-
-					#LAWS
-					set_variable = { gdp_per_capita = PREV.gdp_per_capita }
-					update_budget_laws_for_new_nation = yes
-
-					if = { limit = { PREV = { has_idea = depression } }
-						add_ideas = depression
-					}
-					else_if = { limit = { PREV = { has_idea = recession } }
-						add_ideas = recession
-					}
-					else_if = { limit = { PREV = { has_idea = stagnation } }
-						add_ideas = stagnation
-					}
-					else_if = { limit = { PREV = { has_idea = stable_growth } }
-						add_ideas = stable_growth
-					}
-					else_if = { limit = { PREV = { has_idea = fast_growth } }
-						add_ideas = fast_growth
-					}
-					else_if = { limit = { PREV = { has_idea = economic_boom } }
-						add_ideas = economic_boom
-					}
-
-					if = { limit = { PREV = { has_idea = paralyzing_corruption } }
-						add_ideas = paralyzing_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = crippling_corruption } }
-						add_ideas = crippling_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = rampant_corruption } }
-						add_ideas = rampant_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = unrestrained_corruption } }
-						add_ideas = unrestrained_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = systematic_corruption } }
-						add_ideas = systematic_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = widespread_corruption } }
-						add_ideas = widespread_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = medium_corruption } }
-						add_ideas = medium_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = modest_corruption } }
-						add_ideas = modest_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = slight_corruption } }
-						add_ideas = slight_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = negligible_corruption } }
-						add_ideas = negligible_corruption
-					}
-
-					if = { limit = { PREV = { has_idea = consumption_economy } }
-						add_ideas = consumption_economy
-					}
-					else_if = { limit = { PREV = { has_idea = mixed_economy } }
-						add_ideas = mixed_economy
-					}
-					else_if = { limit = { PREV = { has_idea = export_economy } }
-						add_ideas = export_economy
-					}
-
-					if = { limit = { PREV = { has_idea = no_military } }
-						add_ideas = no_military
-					}
-					else_if = { limit = { PREV = { has_idea = volunteer_army } }
-						add_ideas = volunteer_army
-					}
-					else_if = { limit = { PREV = { has_idea = partial_draft_army } }
-						add_ideas = partial_draft_army
-					}
-					else_if = { limit = { PREV = { has_idea = draft_army } }
-						add_ideas = draft_army
-					}
-
-					if = { limit = { PREV = { has_idea = no_women_in_military } }
-						add_ideas = no_women_in_military
-					}
-					else_if = { limit = { PREV = { has_idea = volunteer_women } }
-						add_ideas = volunteer_women
-					}
-					else_if = { limit = { PREV = { has_idea = drafted_women } }
-						add_ideas = drafted_women
-					}
-
-					if = { limit = { PREV = { has_idea = intervention_isolation } }
-						add_ideas = intervention_isolation
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_local_security } }
-						add_ideas = intervention_local_security
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_limited_interventionism } }
-						add_ideas = intervention_limited_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_regional_interventionism } }
-						add_ideas = intervention_regional_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_global_interventionism } }
-						add_ideas = intervention_global_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_neo_imperialism } }
-						add_ideas = intervention_neo_imperialism
-					}
-
-					if = { limit = { PREV = { has_idea = officer_baptism_by_fire } }
-						add_ideas = officer_baptism_by_fire
-					}
-					else_if = { limit = { PREV = { has_idea = officer_basic_training } }
-						add_ideas = officer_basic_training
-					}
-					else_if = { limit = { PREV = { has_idea = officer_advanced_training } }
-						add_ideas = officer_advanced_training
-					}
-					else_if = { limit = { PREV = { has_idea = officer_military_school } }
-						add_ideas = officer_military_school
-					}
-					else_if = { limit = { PREV = { has_idea = officer_military_academy } }
-						add_ideas = officer_military_academy
-					}
-					else_if = { limit = { PREV = { has_idea = officer_international_education } }
-						add_ideas = officer_international_education
-					}
-
-					### Internal factions
-					if = { limit = { PREV = { has_idea = small_medium_business_owners } }
-						add_ideas = small_medium_business_owners
-					}
-					if = { limit = { PREV = { has_idea = international_bankers } }
-						add_ideas = international_bankers
-					}
-					if = { limit = { PREV = { has_idea = fossil_fuel_industry } }
-						add_ideas = fossil_fuel_industry
-					}
-					if = { limit = { PREV = { has_idea = industrial_conglomerates } }
-						add_ideas = industrial_conglomerates
-					}
-					if = { limit = { PREV = { has_idea = oligarchs } }
-						add_ideas = oligarchs
-					}
-					if = { limit = { PREV = { has_idea = maritime_industry } }
-						add_ideas = maritime_industry
-					}
-					if = { limit = { PREV = { has_idea = defense_industry } }
-						add_ideas = defense_industry
-					}
-					if = { limit = { PREV = { has_idea = the_military } }
-						add_ideas = the_military
-					}
-					if = { limit = { PREV = { has_idea = intelligence_community } }
-						add_ideas = intelligence_community
-					}
-					if = { limit = { PREV = { has_idea = labour_unions } }
-						add_ideas = labour_unions
-					}
-					if = { limit = { PREV = { has_idea = landowners } }
-						add_ideas = landowners
-					}
-					if = { limit = { PREV = { has_idea = farmers } }
-						add_ideas = farmers
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = communist_cadres
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 4 }
-										is_in_array = { ruling_party = 19 }
-									}
-								}
-							}
-						}
-						add_ideas = communist_cadres
-					}
-					if = { limit = { PREV = { has_idea = the_priesthood } }
-						add_ideas = the_priesthood
-					}
-					if = { limit = { PREV = { has_idea = the_ulema } }
-						add_ideas = the_ulema
-					}
-					if = { limit = { PREV = { has_idea = the_clergy } }
-						add_ideas = the_clergy
-					}
-					if = { limit = { PREV = { has_idea = wahabi_ulema } }
-						add_ideas = wahabi_ulema
-					}
-					if = { limit = { PREV = { has_idea = the_donju } }
-						add_ideas = the_donju
-					}
-					if = { limit = { PREV = { has_idea = the_bazaar } }
-						add_ideas = the_bazaar
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = saudi_royal_family
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 10 }
-										is_in_array = { ruling_party = 23 }
-										is_in_array = { ruling_party = 0 }
-									}
-								}
-							}
-						}
-						add_ideas = saudi_royal_family
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = irgc
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = irgc
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = iranian_quds_force
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = iranian_quds_force
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = vevak
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = vevak
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = foreign_jihadis
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 11 }
-									}
-								}
-							}
-						}
-						add_ideas = foreign_jihadis
-					}
-					if = { limit = { PREV = { has_idea = wall_street } }
-						add_ideas = wall_street
-					}
-					if = { limit = { PREV = { has_idea = chaebols } }
-						add_ideas = chaebols
-					}
-
-					calculate_influence_percentage = yes #set alignment drifts from influence
-					ingame_update_setup = yes 	#money system
-					setup_init_factions = yes 	#flags for int. factions
-					update_neighbors_effects = yes # Updates Neighbor Effects
-					economic_cycle_drift_popularity = yes #drift from neighbor
-
-					country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
+					civil_war_replication_effect = yes
 				}
 
 				#copy leader throughput
-					set_variable = { Western_Autocracy_leader = PREV.Western_Autocracy_leader?0 }
-					set_variable = { conservatism_leader = PREV.conservatism_leader?0 }
-					set_variable = { liberalism_leader = PREV.liberalism_leader?0 }
-					set_variable = { socialism_leader = PREV.socialism_leader?0 }
-
-					set_variable = { Communist-State_leader = PREV.Communist-State_leader?0 }
-					set_variable = { anarchist_communism_leader = PREV.anarchist_communism_leader?0 }
-					set_variable = { Conservative_leader = PREV.Conservative_leader?0 }
-					set_variable = { Autocracy_leader = PREV.Autocracy_leader?0 }
-					set_variable = { Mod_Vilayat_e_Faqih_leader = PREV.Mod_Vilayat_e_Faqih_leader?0 }
-					set_variable = { Vilayat_e_Faqih_leader = PREV.Vilayat_e_Faqih_leader?0 }
-
-					set_variable = { Kingdom_leader = PREV.Kingdom_leader?0 }
-					set_variable = { Caliphate_leader = PREV.Caliphate_leader?0 }
-
-					set_variable = { Neutral_Muslim_Brotherhood_leader = PREV.Neutral_Muslim_Brotherhood_leader?0 }
-					set_variable = { Neutral_Autocracy_leader = PREV.Neutral_Autocracy_leader?0 }
-					set_variable = { Neutral_conservatism_leader = PREV.Neutral_conservatism_leader?0 }
-					set_variable = { oligarchism_leader = PREV.oligarchism_leader?0 }
-					set_variable = { Neutral_Libertarian_leader = PREV.Neutral_Libertarian_leader?0 }
-					set_variable = { Neutral_green_leader = PREV.Neutral_green_leader?0 }
-					set_variable = { neutral_Social_leader = PREV.neutral_Social_leader?0 }
-					set_variable = { Neutral_Communism_leader = PREV.Neutral_Communism_leader?0 }
-					set_variable = { Nat_Populism_leader = PREV.Nat_Populism_leader?0 }
-					set_variable = { Nat_Fascism_leader = PREV.Nat_Fascism_leader?0 }
-					set_variable = { Nat_Autocracy_leader = PREV.Nat_Autocracy_leader?0 }
-					set_variable = { Monarchist_leader = PREV.Monarchist_leader?0 }
+				set_temp_variable = { nation_to_copy_from = PREV }
+				copy_subideolgy_leader_throughput = yes
 
 				#For player:
 
@@ -3171,8 +1002,6 @@ generic_coalition_politics_decisions = {
 		icon = revolt
 
 		cost = 150
-		days_remove = 0
-		days_re_enable = 0
 
 		visible = {
 			check_variable = { party_pop_array^19 > 0.10 } #significant communism
@@ -3202,53 +1031,7 @@ generic_coalition_politics_decisions = {
 
 			hidden_effect = {
 				#Release copy of existing
-				set_country_flag = no_leader_change
-				if = {
-					limit = {
-						has_government = nationalist
-					}
-					start_civil_war = {
-						ideology = nationalist
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = communism
-					}
-					start_civil_war = {
-						ideology = communism
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = democratic
-					}
-					start_civil_war = {
-						ideology = democratic
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = neutrality
-					}
-					start_civil_war = {
-						ideology = neutrality
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = fascism
-					}
-					start_civil_war = {
-						ideology = fascism
-						size = 0.5
-					}
-				}
-				clr_country_flag = no_leader_change
+				start_civil_war_with_no_leader_change = yes
 
 				#replicating current politics
 				random_other_country = {
@@ -3256,385 +1039,7 @@ generic_coalition_politics_decisions = {
 						original_tag = PREV
 						NOT = { TAG = PREV }
 					}
-					set_temp_variable = { temp_democratic = PREV.party_popularity@democratic }
-					multiply_temp_variable = { temp_democratic = 100 }
-					set_temp_variable = { temp_total = temp_democratic }
-					set_temp_variable = { temp_communism = PREV.party_popularity@communism }
-					multiply_temp_variable = { temp_communism = 100 }
-					add_to_temp_variable = { temp_total = temp_communism }
-					set_temp_variable = { temp_neutrality = PREV.party_popularity@neutrality }
-					multiply_temp_variable = { temp_neutrality = 100 }
-					add_to_temp_variable = { temp_total = temp_neutrality }
-					set_temp_variable = { temp_fascism = PREV.party_popularity@fascism }
-					multiply_temp_variable = { temp_fascism = 100 }
-					add_to_temp_variable = { temp_total = temp_fascism }
-					set_temp_variable = { temp_nationalist = PREV.party_popularity@nationalist }
-					multiply_temp_variable = { temp_nationalist = 100 }
-					add_to_temp_variable = { temp_total = temp_nationalist }
-					subtract_from_temp_variable = { temp_total = 100 }
-					multiply_temp_variable = { temp_total = -1 }
-					add_to_temp_variable = { temp_nationalist = temp_total }
-
-					set_popularities = {
-						democratic = temp_democratic
-						communism = temp_communism
-						neutrality = temp_neutrality
-						fascism = temp_fascism
-						nationalist = temp_nationalist
-					}
-					add_popularity = {
-						ideology = neutrality
-						popularity = -0.2
-					}
-					start_politics_input = yes
-					#copy politics
-					for_loop_effect = {
-						end = party_pop_array^num
-						value = v
-						set_variable = { party_pop_array^v = PREV.party_pop_array^v }
-					}
-					add_to_array = { ruling_party = PREV.ruling_party^0 }
-					for_loop_effect = {
-						end = gov_coalition_array^num
-						value = v
-						add_to_array = { gov_coalition_array = PREV.gov_coalition_array^v }
-					}
-					set_variable = { party_pop_array^19 = 0.01 } #all moved to fight ;)
-					set_variable = { party_pop_elect_array^19 = 0 } #made illegal
-					add_up_party_totals = yes
-					set_party_positions = yes
-					startup_politics = yes
-
-					#VARIABLES
-					set_variable = { var = corporate_tax_rate value = PREV.corporate_tax_rate }
-					set_variable = { var = population_tax_rate value = PREV.population_tax_rate }
-					set_variable = { treasury = PREV.treasury }
-
-					#don't get values of original yet - REMINDER -> add it on_civil_war_end
-					set_variable = { debt = 0 }
-					set_variable = { int_investments = 0 }
-
-					#influence
-					set_variable = { domestic_influence_amount = PREV.domestic_influence_amount }
-					#just copy all
-					for_loop_effect = {
-						end = PREV.influence_array^num
-						value = v
-
-						add_to_array = { influence_array = PREV.influence_array^v }
-						add_to_array = { influence_array_val = PREV.influence_array_val^v }
-					}
-					recalculate_influence = yes
-
-					#GAME VARIABLES
-					add_political_power = PREV.political_power
-					add_political_power = 400 #bonus
-
-					#LAWS
-					set_variable = { gdp_per_capita = PREV.gdp_per_capita }
-					update_budget_laws_for_new_nation = yes
-
-					if = { limit = { PREV = { has_idea = depression } }
-						add_ideas = depression
-					}
-					else_if = { limit = { PREV = { has_idea = recession } }
-						add_ideas = recession
-					}
-					else_if = { limit = { PREV = { has_idea = stagnation } }
-						add_ideas = stagnation
-					}
-					else_if = { limit = { PREV = { has_idea = stable_growth } }
-						add_ideas = stable_growth
-					}
-					else_if = { limit = { PREV = { has_idea = fast_growth } }
-						add_ideas = fast_growth
-					}
-					else_if = { limit = { PREV = { has_idea = economic_boom } }
-						add_ideas = economic_boom
-					}
-
-					if = { limit = { PREV = { has_idea = paralyzing_corruption } }
-						add_ideas = paralyzing_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = crippling_corruption } }
-						add_ideas = crippling_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = rampant_corruption } }
-						add_ideas = rampant_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = unrestrained_corruption } }
-						add_ideas = unrestrained_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = systematic_corruption } }
-						add_ideas = systematic_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = widespread_corruption } }
-						add_ideas = widespread_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = medium_corruption } }
-						add_ideas = medium_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = modest_corruption } }
-						add_ideas = modest_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = slight_corruption } }
-						add_ideas = slight_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = negligible_corruption } }
-						add_ideas = negligible_corruption
-					}
-
-					if = { limit = { PREV = { has_idea = consumption_economy } }
-						add_ideas = consumption_economy
-					}
-					else_if = { limit = { PREV = { has_idea = mixed_economy } }
-						add_ideas = mixed_economy
-					}
-					else_if = { limit = { PREV = { has_idea = export_economy } }
-						add_ideas = export_economy
-					}
-
-					if = { limit = { PREV = { has_idea = no_military } }
-						add_ideas = no_military
-					}
-					else_if = { limit = { PREV = { has_idea = volunteer_army } }
-						add_ideas = volunteer_army
-					}
-					else_if = { limit = { PREV = { has_idea = partial_draft_army } }
-						add_ideas = partial_draft_army
-					}
-					else_if = { limit = { PREV = { has_idea = draft_army } }
-						add_ideas = draft_army
-					}
-
-					if = { limit = { PREV = { has_idea = no_women_in_military } }
-						add_ideas = no_women_in_military
-					}
-					else_if = { limit = { PREV = { has_idea = volunteer_women } }
-						add_ideas = volunteer_women
-					}
-					else_if = { limit = { PREV = { has_idea = drafted_women } }
-						add_ideas = drafted_women
-					}
-
-					if = { limit = { PREV = { has_idea = intervention_isolation } }
-						add_ideas = intervention_isolation
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_local_security } }
-						add_ideas = intervention_local_security
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_limited_interventionism } }
-						add_ideas = intervention_limited_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_regional_interventionism } }
-						add_ideas = intervention_regional_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_global_interventionism } }
-						add_ideas = intervention_global_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_neo_imperialism } }
-						add_ideas = intervention_neo_imperialism
-					}
-
-					if = { limit = { PREV = { has_idea = officer_baptism_by_fire } }
-						add_ideas = officer_baptism_by_fire
-					}
-					else_if = { limit = { PREV = { has_idea = officer_basic_training } }
-						add_ideas = officer_basic_training
-					}
-					else_if = { limit = { PREV = { has_idea = officer_advanced_training } }
-						add_ideas = officer_advanced_training
-					}
-					else_if = { limit = { PREV = { has_idea = officer_military_school } }
-						add_ideas = officer_military_school
-					}
-					else_if = { limit = { PREV = { has_idea = officer_military_academy } }
-						add_ideas = officer_military_academy
-					}
-					else_if = { limit = { PREV = { has_idea = officer_international_education } }
-						add_ideas = officer_international_education
-					}
-
-					### Internal factions
-					if = { limit = { PREV = { has_idea = small_medium_business_owners } }
-						add_ideas = small_medium_business_owners
-					}
-					if = { limit = { PREV = { has_idea = international_bankers } }
-						add_ideas = international_bankers
-					}
-					if = { limit = { PREV = { has_idea = fossil_fuel_industry } }
-						add_ideas = fossil_fuel_industry
-					}
-					if = { limit = { PREV = { has_idea = industrial_conglomerates } }
-						add_ideas = industrial_conglomerates
-					}
-					if = { limit = { PREV = { has_idea = oligarchs } }
-						add_ideas = oligarchs
-					}
-					if = { limit = { PREV = { has_idea = maritime_industry } }
-						add_ideas = maritime_industry
-					}
-					if = { limit = { PREV = { has_idea = defense_industry } }
-						add_ideas = defense_industry
-					}
-					if = { limit = { PREV = { has_idea = the_military } }
-						add_ideas = the_military
-					}
-					if = { limit = { PREV = { has_idea = intelligence_community } }
-						add_ideas = intelligence_community
-					}
-					if = { limit = { PREV = { has_idea = labour_unions } }
-						add_ideas = labour_unions
-					}
-					if = { limit = { PREV = { has_idea = landowners } }
-						add_ideas = landowners
-					}
-					if = { limit = { PREV = { has_idea = farmers } }
-						add_ideas = farmers
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = communist_cadres
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 4 }
-										is_in_array = { ruling_party = 19 }
-									}
-								}
-							}
-						}
-						add_ideas = communist_cadres
-					}
-					if = { limit = { PREV = { has_idea = the_priesthood } }
-						add_ideas = the_priesthood
-					}
-					if = { limit = { PREV = { has_idea = the_ulema } }
-						add_ideas = the_ulema
-					}
-					if = { limit = { PREV = { has_idea = the_clergy } }
-						add_ideas = the_clergy
-					}
-					if = { limit = { PREV = { has_idea = wahabi_ulema } }
-						add_ideas = wahabi_ulema
-					}
-					if = { limit = { PREV = { has_idea = the_donju } }
-						add_ideas = the_donju
-					}
-					if = { limit = { PREV = { has_idea = the_bazaar } }
-						add_ideas = the_bazaar
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = saudi_royal_family
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 10 }
-										is_in_array = { ruling_party = 23 }
-										is_in_array = { ruling_party = 0 }
-									}
-								}
-							}
-						}
-						add_ideas = saudi_royal_family
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = irgc
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = irgc
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = iranian_quds_force
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = iranian_quds_force
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = vevak
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = vevak
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = foreign_jihadis
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 11 }
-									}
-								}
-							}
-						}
-						add_ideas = foreign_jihadis
-					}
-					if = { limit = { PREV = { has_idea = wall_street } }
-						add_ideas = wall_street
-					}
-					if = { limit = { PREV = { has_idea = chaebols } }
-						add_ideas = chaebols
-					}
-
-					#copy leader throughput
-					set_variable = { Western_Autocracy_leader = PREV.Western_Autocracy_leader?0 }
-					set_variable = { conservatism_leader = PREV.conservatism_leader?0 }
-					set_variable = { liberalism_leader = PREV.liberalism_leader?0 }
-					set_variable = { socialism_leader = PREV.socialism_leader?0 }
-
-					set_variable = { Communist-State_leader = PREV.Communist-State_leader?0 }
-					set_variable = { anarchist_communism_leader = PREV.anarchist_communism_leader?0 }
-					set_variable = { Conservative_leader = PREV.Conservative_leader?0 }
-					set_variable = { Autocracy_leader = PREV.Autocracy_leader?0 }
-					set_variable = { Mod_Vilayat_e_Faqih_leader = PREV.Mod_Vilayat_e_Faqih_leader?0 }
-					set_variable = { Vilayat_e_Faqih_leader = PREV.Vilayat_e_Faqih_leader?0 }
-
-					set_variable = { Kingdom_leader = PREV.Kingdom_leader?0 }
-					set_variable = { Caliphate_leader = PREV.Caliphate_leader?0 }
-
-					set_variable = { Neutral_Muslim_Brotherhood_leader = PREV.Neutral_Muslim_Brotherhood_leader?0 }
-					set_variable = { Neutral_Autocracy_leader = PREV.Neutral_Autocracy_leader?0 }
-					set_variable = { Neutral_conservatism_leader = PREV.Neutral_conservatism_leader?0 }
-					set_variable = { oligarchism_leader = PREV.oligarchism_leader?0 }
-					set_variable = { Neutral_Libertarian_leader = PREV.Neutral_Libertarian_leader?0 }
-					set_variable = { Neutral_green_leader = PREV.Neutral_green_leader?0 }
-					set_variable = { neutral_Social_leader = PREV.neutral_Social_leader?0 }
-					set_variable = { Neutral_Communism_leader = PREV.Neutral_Communism_leader?0 }
-					set_variable = { Nat_Populism_leader = PREV.Nat_Populism_leader?0 }
-					set_variable = { Nat_Fascism_leader = PREV.Nat_Fascism_leader?0 }
-					set_variable = { Nat_Autocracy_leader = PREV.Nat_Autocracy_leader?0 }
-					set_variable = { Monarchist_leader = PREV.Monarchist_leader?0 }
-
-					calculate_influence_percentage = yes #set alignment drifts from influence
-					ingame_update_setup = yes 	#money system
-					setup_init_factions = yes 	#flags for int. factions
-					update_neighbors_effects = yes # Updates Neighbor Effects
-					economic_cycle_drift_popularity = yes #drift from neighbor
+					civil_war_replication_effect = yes
 				}
 
 				#For player:
@@ -3667,8 +1072,6 @@ generic_coalition_politics_decisions = {
 		icon = revolt
 
 		cost = 150
-		days_remove = 0
-		days_re_enable = 0
 
 		visible = {
 			check_variable = { party_pop_array^9 > 0.10 } #significant shiite theocracy
@@ -3715,53 +1118,7 @@ generic_coalition_politics_decisions = {
 
 			hidden_effect = {
 				#Release copy of existing
-				set_country_flag = no_leader_change
-				if = {
-					limit = {
-						has_government = nationalist
-					}
-					start_civil_war = {
-						ideology = nationalist
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = communism
-					}
-					start_civil_war = {
-						ideology = communism
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = democratic
-					}
-					start_civil_war = {
-						ideology = democratic
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = neutrality
-					}
-					start_civil_war = {
-						ideology = neutrality
-						size = 0.5
-					}
-				}
-				else_if = {
-					limit = {
-						has_government = fascism
-					}
-					start_civil_war = {
-						ideology = fascism
-						size = 0.5
-					}
-				}
-				clr_country_flag = no_leader_change
+				start_civil_war_with_no_leader_change = yes
 
 				#replicating current politics
 				random_other_country = {
@@ -3769,383 +1126,7 @@ generic_coalition_politics_decisions = {
 						original_tag = PREV
 						NOT = { TAG = PREV }
 					}
-					set_temp_variable = { temp_democratic = PREV.party_popularity@democratic }
-					multiply_temp_variable = { temp_democratic = 100 }
-					set_temp_variable = { temp_total = temp_democratic }
-					set_temp_variable = { temp_communism = PREV.party_popularity@communism }
-					multiply_temp_variable = { temp_communism = 100 }
-					add_to_temp_variable = { temp_total = temp_communism }
-					set_temp_variable = { temp_neutrality = PREV.party_popularity@neutrality }
-					multiply_temp_variable = { temp_neutrality = 100 }
-					add_to_temp_variable = { temp_total = temp_neutrality }
-					set_temp_variable = { temp_fascism = PREV.party_popularity@fascism }
-					multiply_temp_variable = { temp_fascism = 100 }
-					add_to_temp_variable = { temp_total = temp_fascism }
-					set_temp_variable = { temp_nationalist = PREV.party_popularity@nationalist }
-					multiply_temp_variable = { temp_nationalist = 100 }
-					add_to_temp_variable = { temp_total = temp_nationalist }
-					subtract_from_temp_variable = { temp_total = 100 }
-					multiply_temp_variable = { temp_total = -1 }
-					add_to_temp_variable = { temp_nationalist = temp_total }
-
-					set_popularities = {
-						democratic = temp_democratic
-						communism = temp_communism
-						neutrality = temp_neutrality
-						fascism = temp_fascism
-						nationalist = temp_nationalist
-					}
-					add_popularity = {
-						ideology = communism
-						popularity = -0.2
-					}
-					start_politics_input = yes
-					#copy politics
-					for_loop_effect = {
-						end = party_pop_array^num
-						value = v
-						set_variable = { party_pop_array^v = PREV.party_pop_array^v }
-					}
-					add_to_array = { ruling_party = PREV.ruling_party^0 }
-					for_loop_effect = {
-						end = gov_coalition_array^num
-						value = v
-						add_to_array = { gov_coalition_array = PREV.gov_coalition_array^v }
-					}
-					set_variable = { party_pop_array^9 = 0.01 } #all moved to fight ;)
-					set_variable = { party_pop_elect_array^9 = 0 } #made illegal
-					add_up_party_totals = yes
-					set_party_positions = yes
-					startup_politics = yes
-
-					#VARIABLES
-					set_variable = { var = corporate_tax_rate value = PREV.corporate_tax_rate }
-					set_variable = { var = population_tax_rate value = PREV.population_tax_rate }
-					set_variable = { treasury = PREV.treasury }
-
-					#don't get values of original yet - REMINDER -> add it on_civil_war_end
-					set_variable = { debt = 0 }
-					set_variable = { int_investments = 0 }
-
-					#influence
-					set_variable = { domestic_influence_amount = PREV.domestic_influence_amount }
-					#just copy all
-					for_loop_effect = {
-						end = PREV.influence_array^num
-						value = v
-
-						add_to_array = { influence_array = PREV.influence_array^v }
-						add_to_array = { influence_array_val = PREV.influence_array_val^v }
-					}
-					recalculate_influence = yes
-
-					#GAME VARIABLES
-					add_political_power = PREV.political_power
-					add_political_power = 400 #bonus
-
-					#LAWS
-					set_variable = { gdp_per_capita = PREV.gdp_per_capita }
-					update_budget_laws_for_new_nation = yes
-
-					if = { limit = { PREV = { has_idea = depression } }
-						add_ideas = depression
-					}
-					else_if = { limit = { PREV = { has_idea = recession } }
-						add_ideas = recession
-					}
-					else_if = { limit = { PREV = { has_idea = stagnation } }
-						add_ideas = stagnation
-					}
-					else_if = { limit = { PREV = { has_idea = stable_growth } }
-						add_ideas = stable_growth
-					}
-					else_if = { limit = { PREV = { has_idea = fast_growth } }
-						add_ideas = fast_growth
-					}
-					else_if = { limit = { PREV = { has_idea = economic_boom } }
-						add_ideas = economic_boom
-					}
-
-					if = { limit = { PREV = { has_idea = paralyzing_corruption } }
-						add_ideas = paralyzing_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = crippling_corruption } }
-						add_ideas = crippling_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = rampant_corruption } }
-						add_ideas = rampant_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = unrestrained_corruption } }
-						add_ideas = unrestrained_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = systematic_corruption } }
-						add_ideas = systematic_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = widespread_corruption } }
-						add_ideas = widespread_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = medium_corruption } }
-						add_ideas = medium_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = modest_corruption } }
-						add_ideas = modest_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = slight_corruption } }
-						add_ideas = slight_corruption
-					}
-					else_if = { limit = { PREV = { has_idea = negligible_corruption } }
-						add_ideas = negligible_corruption
-					}
-
-					if = { limit = { PREV = { has_idea = consumption_economy } }
-						add_ideas = consumption_economy
-					}
-					else_if = { limit = { PREV = { has_idea = mixed_economy } }
-						add_ideas = mixed_economy
-					}
-					else_if = { limit = { PREV = { has_idea = export_economy } }
-						add_ideas = export_economy
-					}
-
-					if = { limit = { PREV = { has_idea = no_military } }
-						add_ideas = no_military
-					}
-					else_if = { limit = { PREV = { has_idea = volunteer_army } }
-						add_ideas = volunteer_army
-					}
-					else_if = { limit = { PREV = { has_idea = partial_draft_army } }
-						add_ideas = partial_draft_army
-					}
-					else_if = { limit = { PREV = { has_idea = draft_army } }
-						add_ideas = draft_army
-					}
-
-					if = { limit = { PREV = { has_idea = no_women_in_military } }
-						add_ideas = no_women_in_military
-					}
-					else_if = { limit = { PREV = { has_idea = volunteer_women } }
-						add_ideas = volunteer_women
-					}
-					else_if = { limit = { PREV = { has_idea = drafted_women } }
-						add_ideas = drafted_women
-					}
-
-					if = { limit = { PREV = { has_idea = intervention_isolation } }
-						add_ideas = intervention_isolation
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_local_security } }
-						add_ideas = intervention_local_security
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_limited_interventionism } }
-						add_ideas = intervention_limited_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_regional_interventionism } }
-						add_ideas = intervention_regional_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_global_interventionism } }
-						add_ideas = intervention_global_interventionism
-					}
-					else_if = { limit = { PREV = { has_idea = intervention_neo_imperialism } }
-						add_ideas = intervention_neo_imperialism
-					}
-
-					if = { limit = { PREV = { has_idea = officer_baptism_by_fire } }
-						add_ideas = officer_baptism_by_fire
-					}
-					else_if = { limit = { PREV = { has_idea = officer_basic_training } }
-						add_ideas = officer_basic_training
-					}
-					else_if = { limit = { PREV = { has_idea = officer_advanced_training } }
-						add_ideas = officer_advanced_training
-					}
-					else_if = { limit = { PREV = { has_idea = officer_military_school } }
-						add_ideas = officer_military_school
-					}
-					else_if = { limit = { PREV = { has_idea = officer_military_academy } }
-						add_ideas = officer_military_academy
-					}
-					else_if = { limit = { PREV = { has_idea = officer_international_education } }
-						add_ideas = officer_international_education
-					}
-
-					### Internal factions
-					if = { limit = { PREV = { has_idea = small_medium_business_owners } }
-						add_ideas = small_medium_business_owners
-					}
-					if = { limit = { PREV = { has_idea = international_bankers } }
-						add_ideas = international_bankers
-					}
-					if = { limit = { PREV = { has_idea = fossil_fuel_industry } }
-						add_ideas = fossil_fuel_industry
-					}
-					if = { limit = { PREV = { has_idea = industrial_conglomerates } }
-						add_ideas = industrial_conglomerates
-					}
-					if = { limit = { PREV = { has_idea = oligarchs } }
-						add_ideas = oligarchs
-					}
-					if = { limit = { PREV = { has_idea = maritime_industry } }
-						add_ideas = maritime_industry
-					}
-					if = { limit = { PREV = { has_idea = defense_industry } }
-						add_ideas = defense_industry
-					}
-					if = { limit = { PREV = { has_idea = the_military } }
-						add_ideas = the_military
-					}
-					if = { limit = { PREV = { has_idea = intelligence_community } }
-						add_ideas = intelligence_community
-					}
-					if = { limit = { PREV = { has_idea = labour_unions } }
-						add_ideas = labour_unions
-					}
-					if = { limit = { PREV = { has_idea = landowners } }
-						add_ideas = landowners
-					}
-					if = { limit = { PREV = { has_idea = farmers } }
-						add_ideas = farmers
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = communist_cadres
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 4 }
-										is_in_array = { ruling_party = 19 }
-									}
-								}
-							}
-						}
-						add_ideas = communist_cadres
-					}
-					if = { limit = { PREV = { has_idea = the_priesthood } }
-						add_ideas = the_priesthood
-					}
-					if = { limit = { PREV = { has_idea = the_ulema } }
-						add_ideas = the_ulema
-					}
-					if = { limit = { PREV = { has_idea = the_clergy } }
-						add_ideas = the_clergy
-					}
-					if = { limit = { PREV = { has_idea = wahabi_ulema } }
-						add_ideas = wahabi_ulema
-					}
-					if = { limit = { PREV = { has_idea = the_donju } }
-						add_ideas = the_donju
-					}
-					if = { limit = { PREV = { has_idea = the_bazaar } }
-						add_ideas = the_bazaar
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = saudi_royal_family
-								ROOT = {
-									OR = {
-										is_in_array = { ruling_party = 10 }
-										is_in_array = { ruling_party = 23 }
-										is_in_array = { ruling_party = 0 }
-									}
-								}
-							}
-						}
-						add_ideas = saudi_royal_family
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = irgc
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = irgc
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = iranian_quds_force
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = iranian_quds_force
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = vevak
-								ROOT = {
-									NOT = {
-										has_government = democratic
-										has_government = fascism
-									}
-								}
-							}
-						}
-						add_ideas = vevak
-					}
-					if = {
-						limit = {
-							PREV = {
-								has_idea = foreign_jihadis
-								ROOT = {
-									is_in_array = { ruling_party = 11 }
-								}
-							}
-						}
-						add_ideas = foreign_jihadis
-					}
-					if = { limit = { PREV = { has_idea = wall_street } }
-						add_ideas = wall_street
-					}
-					if = { limit = { PREV = { has_idea = chaebols } }
-						add_ideas = chaebols
-					}
-
-					#copy leader throughput
-					set_variable = { Western_Autocracy_leader = PREV.Western_Autocracy_leader?0 }
-					set_variable = { conservatism_leader = PREV.conservatism_leader?0 }
-					set_variable = { liberalism_leader = PREV.liberalism_leader?0 }
-					set_variable = { socialism_leader = PREV.socialism_leader?0 }
-
-					set_variable = { Communist-State_leader = PREV.Communist-State_leader?0 }
-					set_variable = { anarchist_communism_leader = PREV.anarchist_communism_leader?0 }
-					set_variable = { Conservative_leader = PREV.Conservative_leader?0 }
-					set_variable = { Autocracy_leader = PREV.Autocracy_leader?0 }
-					set_variable = { Mod_Vilayat_e_Faqih_leader = PREV.Mod_Vilayat_e_Faqih_leader?0 }
-					set_variable = { Vilayat_e_Faqih_leader = PREV.Vilayat_e_Faqih_leader?0 }
-
-					set_variable = { Kingdom_leader = PREV.Kingdom_leader?0 }
-					set_variable = { Caliphate_leader = PREV.Caliphate_leader?0 }
-
-					set_variable = { Neutral_Muslim_Brotherhood_leader = PREV.Neutral_Muslim_Brotherhood_leader?0 }
-					set_variable = { Neutral_Autocracy_leader = PREV.Neutral_Autocracy_leader?0 }
-					set_variable = { Neutral_conservatism_leader = PREV.Neutral_conservatism_leader?0 }
-					set_variable = { oligarchism_leader = PREV.oligarchism_leader?0 }
-					set_variable = { Neutral_Libertarian_leader = PREV.Neutral_Libertarian_leader?0 }
-					set_variable = { Neutral_green_leader = PREV.Neutral_green_leader?0 }
-					set_variable = { neutral_Social_leader = PREV.neutral_Social_leader?0 }
-					set_variable = { Neutral_Communism_leader = PREV.Neutral_Communism_leader?0 }
-					set_variable = { Nat_Populism_leader = PREV.Nat_Populism_leader?0 }
-					set_variable = { Nat_Fascism_leader = PREV.Nat_Fascism_leader?0 }
-					set_variable = { Nat_Autocracy_leader = PREV.Nat_Autocracy_leader?0 }
-					set_variable = { Monarchist_leader = PREV.Monarchist_leader?0 }
-
-					calculate_influence_percentage = yes #set alignment drifts from influence
-					ingame_update_setup = yes 	#money system
-					setup_init_factions = yes 	#flags for int. factions
-					update_neighbors_effects = yes # Updates Neighbor Effects
-					economic_cycle_drift_popularity = yes #drift from neighbor
+					civil_war_replication_effect = yes
 				}
 
 				#For player:
@@ -5000,7 +1981,6 @@ generic_coalition_politics_decisions = {
 		icon = GFX_decision_democratic_button
 		days_remove = 120
 		days_re_enable = 30
-		fire_only_once = no
 
 		visible = {
 			if = {
@@ -5044,28 +2024,6 @@ generic_coalition_politics_decisions = {
 		icon = GFX_decision_emerging_button
 		days_remove = 120
 		days_re_enable = 30
-		fire_only_once = no
-
-		visible = {
-			if = {
-				limit = { tag = PER }
-				NOT = {
-					OR = {
-						emerging_moderate_shiite_are_in_power = yes
-						emerging_hardline_shiite_are_in_power = yes
-					}
-				}
-			}
-			if = {
-				limit = { tag = HEZ }
-				NOT = {
-					OR = {
-						emerging_hardline_shiite_are_in_power = yes
-						emerging_moderate_shiite_are_in_power = yes
-					}
-				}
-			}
-		}
 
 		modifier = {
 			communism_drift = 0.1
@@ -5088,7 +2046,6 @@ generic_coalition_politics_decisions = {
 		icon = GFX_decision_neutrality_button
 		days_remove = 120
 		days_re_enable = 30
-		fire_only_once = no
 
 		visible = {
 			if = {
@@ -5132,7 +2089,6 @@ generic_coalition_politics_decisions = {
 		icon = GFX_decision_nationalist_button
 		days_remove = 120
 		days_re_enable = 30
-		fire_only_once = no
 
 		visible = {
 			if = {
@@ -5176,7 +2132,6 @@ generic_coalition_politics_decisions = {
 		icon = GFX_decision_fascism_button
 		days_remove = 120
 		days_re_enable = 30
-		fire_only_once = no
 
 		visible = {
 			if = {
@@ -5274,10 +2229,10 @@ generic_coalition_politics_decisions = {
 
 	# Propaganda to Reduce Spending
 	promote_reduced_spending_campaigns = {
+		icon = GFX_decision_spending_lower_button
 		cost = 50
 		days_remove = 160
 		days_re_enable = 30
-		fire_only_once = no
 		fixed_random_seed = no
 
 		complete_effect = {
@@ -5307,7 +2262,7 @@ generic_coalition_politics_decisions = {
 
 	# Discourage Population Growth
 	discourage_population_growth_decision = {
-		icon = GFX_decision_generic_political_discourse
+		icon = GFX_decision_no_more_population_button
 		days_remove = 180
 		days_re_enable = 60
 
@@ -5323,48 +2278,6 @@ generic_coalition_politics_decisions = {
 		}
 	}
 
-	rebuild_bosphorus_strait = {
-
-		icon = GFX_decision_generic_special_project
-
-		available = {
-			has_full_control_of_state = 934
-			has_full_control_of_state = 155
-			num_of_civilian_factories > 2
-		}
-
-		visible = {
-			has_global_flag = BOSPHORUS_STRAIT_BLOCKED_FOR_COUNTRY
-			has_full_control_of_state = 934
-			has_full_control_of_state = 155
-		}
-
-		fire_only_once = yes
-
-		days_remove = 120
-
-		cost = 120
-
-		modifier = {
-			civilian_factory_use = 2
-		}
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove rebuild_bosphorus_strait"
-			if = {
-				limit = {
-					has_full_control_of_state = 934
-					has_full_control_of_state = 155
-				}
-				clr_global_flag = BOSPHORUS_STRAIT_BLOCKED_FOR_COUNTRY
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
 	##Generic Political Decisiosn
 	remove_usaid = {
 		icon = GFX_decision_usaidban_button
@@ -5374,10 +2287,6 @@ generic_coalition_politics_decisions = {
 		}
 
 		fire_only_once = yes
-
-		cost = 0
-		days_remove = 0
-		days_re_enable = 0
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove_usaid"
@@ -5393,6 +2302,127 @@ generic_coalition_politics_decisions = {
 					modifier = requested_remove_usaid
 				}
 			}
+		}
+	}
+	HOL_add_dutchaid = {
+		visible = {
+			HOL = { has_completed_focus = HOL_wic_dutch_aid_program }
+			OR = {
+				check_variable = { gdp_per_capita > 29.999 }
+				HOL_is_wic_country = yes
+				HOL_is_voc_country = yes
+			}
+		}
+
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HOL_add_dutchaid"
+			add_ideas = HOL_dutchaid
+		}
+	}
+	HOL_remove_dutchaid = {
+
+		visible = {
+			has_idea = HOL_dutchaid
+		}
+
+		fire_only_once = yes
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision HOL_remove_dutchaid"
+			remove_ideas = HOL_dutchaid
+		}
+	}
+
+	strategy_of_invigorating_through_STE = {
+
+		allowed = { original_tag = CHI }
+
+		icon = GFX_decision_generic_research
+
+		is_good = yes
+
+		days_mission_timeout = 730
+
+		days_remove = 730
+
+		fire_only_once = yes
+
+		activation = {
+			has_completed_focus = CHI_Invigorate_Country_Through_STE
+		}
+
+		available = {
+			has_completed_focus = CHI_Invigorate_Country_Through_STE
+		}
+
+		modifier = {
+			education_cost_multiplier_modifier = 0.05
+		}
+
+		timeout_effect = {
+			random_list = {
+				50 = {
+					add_tech_bonus = {
+						name = strategy_of_invigorating_through_STE
+						bonus = 0.3
+						uses = 1
+						category = CAT_internet_tech
+					}
+				}
+				50 = {
+					add_tech_bonus = {
+						name = strategy_of_invigorating_through_STE
+						bonus = 0.3
+						uses = 1
+						category = CAT_computing_tech
+					}
+				}
+			}
+		}
+	}
+
+	increase_research_funds = {
+		icon = GFX_decision_category_debt_payments
+
+		allowed = { original_tag = CHI }
+
+		icon = GFX_decision_generic_research
+
+		available = {
+			has_completed_focus = CHI_Invigorate_Country_Through_STE
+		}
+
+		activation = {
+			has_completed_focus = CHI_Invigorate_Country_Through_STE
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 3.49 }
+		}
+
+		custom_cost_text = cost_3_5
+
+		days_mission_timeout = 120
+
+		days_re_enable = 60
+
+		days_remove = 120
+
+		selectable_mission = no
+
+		is_good = yes
+
+		modifier = {
+			research_speed_factor = 0.05
+		}
+
+		timeout_effect = {
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
 		}
 	}
 
@@ -5444,8 +2474,6 @@ generic_coalition_politics_decisions = {
 
 		fire_only_once = yes
 
-
-
 		cost = 50
 
 		visible = {
@@ -5487,8 +2515,6 @@ generic_coalition_politics_decisions = {
 
 		fire_only_once = yes
 
-
-
 		cost = 50
 
 		visible = {
@@ -5512,8 +2538,6 @@ generic_coalition_politics_decisions = {
 		}
 
 		fire_only_once = yes
-
-
 
 		cost = 50
 
@@ -5552,8 +2576,6 @@ generic_coalition_politics_decisions = {
 
 		fire_only_once = yes
 
-
-
 		cost = 50
 
 		visible = {
@@ -5588,8 +2610,6 @@ generic_coalition_politics_decisions = {
 			check_variable = { protest_strength > 35 }
 			check_variable = { protest_radicalisation > 5 }
 		}
-
-		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision give_in_to_protestors"
@@ -5686,6 +2706,9 @@ generic_coalition_politics_decisions = {
 		days_re_enable = 45
 
 		visible = {
+			NOT = {
+				has_country_flag = F35_blacklist
+			}
 			USA = {
 				has_country_flag = USA_open_f35_program_world
 			}
@@ -5757,9 +2780,6 @@ generic_coalition_politics_decisions = {
 			set_country_flag = Major_Non_NATO_Ally
 			add_to_tech_sharing_group = Major_Non_NATO_Ally_Share
 
-			#news_event = { id = NATO.6 hours = 6 }
-
-			# Remove opinion modifiers.
 			every_other_country = {
 				limit = {
 					has_idea = NATO_member
@@ -5795,9 +2815,6 @@ generic_coalition_politics_decisions = {
 				add_opinion_modifier = { target = PREV modifier = left_alliance }
 			}
 
-			#news_event = { id = NATO.6 hours = 6 }
-
-			# Remove opinion modifiers.
 			every_other_country = {
 				limit = {
 					has_opinion_modifier = Major_Non_NATO_Ally
@@ -5808,6 +2825,559 @@ generic_coalition_politics_decisions = {
 					PREV = { remove_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally } }
 				}
 			}
+		}
+	}
+
+	denounce_status_as_the_commonwealth_of_nation_member = {
+		icon = GFX_decision_generic_leave_commonwealth_of_nation
+
+		visible = {
+			has_idea = commonwealth_of_nations_member
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision denounce_status_as_the_commonwealth_of_nation_member"
+			remove_ideas = commonwealth_of_nations_member
+
+			ENG = {
+				add_opinion_modifier = { target = PREV modifier = left_alliance }
+			}
+		}
+	}
+
+	BRICS_apply_to_join_brics = {
+		allowed = {
+			# Custom Nation block since these tags have a focus for this
+			NOT = {
+				original_tag = VEN
+				original_tag = DEN
+				original_tag = CUB
+			}
+		}
+		icon = emerging_button # TODO: Replace with a better icon
+
+		cost = 100
+
+		visible = {
+			RAJ = { has_completed_focus = RAJ_BRICS_integer }
+			NOT = { has_idea = RAJ_BRICS }
+		}
+		available = {
+			RAJ = {
+				has_idea = RAJ_BRICS
+				has_opinion = {
+					target = ROOT
+					value > 100
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRICS_apply_to_join_brics"
+			add_ideas = RAJ_BRICS
+			if = {
+				limit = { RAJ = { has_idea = RAJ_BRICS_bank } }
+				add_ideas = RAJ_BRICS_bank
+			}
+			if = {
+				limit = { RAJ = { has_idea = RAJ_BRICS_cur } }
+				add_ideas = RAJ_BRICS_cur
+			}
+		}
+	}
+
+	#GLOBAL REACTION CONTENT
+	#ARMENIA DEMAND NAKHICHEVAN FROM AZER
+	GLOBAL_armenia_demand_nachi_azer = {
+		icon = GFX_decision_negotiate_icon
+		cost = 75
+		days_remove = 20
+		fire_only_once = yes
+
+		visible = {
+			has_government = nationalist
+			original_tag = ARM
+			country_exists = AZE
+			AZE = {
+				owns_state = 711
+				NOT = { is_subject_of = ARM }
+				NOT = { is_in_faction_with = ARM }
+			}
+			ARM = {
+				owns_state = 1036
+				owns_state = 1037
+				owns_state = 710
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_armenia_demand_nachi_azer"
+			AZE = { country_event = SOV_Global.34 }
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				strength_ratio = {
+					tag = AZE
+					ratio < 1
+				}
+				add = 355
+			}
+		}
+	}
+	#ARMENIA DELETE DEBUFF RESISTANCE IN ABKHAZIA
+	GLOBAL_arm_delete_abk_resistan = {
+		icon = GFX_decision_negotiate_icon
+		cost = 75
+		days_remove = 20
+		fire_only_once = yes
+
+		visible = {
+			original_tag = ARM
+			706 = {
+				has_dynamic_modifier = {
+					modifier = GLOBAL_abk_resistance_modifier
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_arm_delete_abk_resistan"
+			706 = {
+				remove_dynamic_modifier = {
+					modifier = GLOBAL_abk_resistance_modifier
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#ARMENIA DELETE DEBUFF RESISTANCE IN AZERBAIJAN
+	GLOBAL_arm_delete_aze_resistan = {
+		icon = GFX_decision_negotiate_icon
+		cost = 75
+		days_remove = 20
+		fire_only_once = yes
+
+		visible = {
+			original_tag = ARM
+			713 = {
+				has_dynamic_modifier = {
+					modifier = GLOBAL_azer_resistance_modifier
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_arm_delete_abk_resistan"
+			713 = {
+				remove_dynamic_modifier = {
+					modifier = GLOBAL_azer_resistance_modifier
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#ARMENIA DELETE DEBUFF RESISTANCE IN GEORGIA
+	GLOBAL_arm_delete_geo_resistan = {
+		icon = GFX_decision_negotiate_icon
+		cost = 75
+		days_remove = 20
+		fire_only_once = yes
+
+		visible = {
+			original_tag = ARM
+			707 = {
+				has_dynamic_modifier = {
+					modifier = GLOBAL_geo_resistance_modifier
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_arm_delete_geo_resistan"
+			707 = {
+				remove_dynamic_modifier = {
+					modifier = GLOBAL_geo_resistance_modifier
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#AZERBAIJAN AND GEORGIA VS ARMENIA
+	GLOBAL_try_create_anti_armenian_alliance = {
+		icon = GFX_decision_negotiate_icon
+		cost = 75
+		days_remove = 20
+		fire_only_once = yes
+
+		visible = {
+			original_tag = AZE
+			country_exists = GEO
+			GEO = {
+				is_in_faction = no
+				is_subject = no
+			}
+			AZE = {
+				is_in_faction = no
+				is_subject = no
+			}
+			ARM = {
+				OR = {
+					owns_state = 710
+					owns_state = 1033
+					owns_state = 1036
+					owns_state = 1037
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_try_create_anti_armenian_alliance"
+			GEO = { country_event = SOV_Global.20 }
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#RUSSIA PUTIN START REBELLION IN ARMENIA
+	GLOBAL_putin_start_pro_russia_rebellion_arm = {
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			original_tag = SOV
+			emerging_reactionaries_are_in_power = yes
+			country_exists = ARM
+			ARM = {
+				owns_state = 1034
+				NOT = { is_subject_of = ARM }
+				NOT = { is_in_faction_with = ARM }
+				influence_higher_40 = yes
+				has_government = democratic
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_putin_start_pro_russia_rebellion_arm"
+			ARM = { country_event = SOV_Global.33 }
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#RUSSIA CREATE ANTI ARMENIAN RESISTANCE IN GEORGIA
+	GLOBAL_russia_create_resist_geo_anti_arm = {
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			original_tag = SOV
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			NOT = {
+				country_exists = GEO
+			}
+			ARM = {
+				owns_state = 707
+				NOT = { is_subject_of = SOV }
+				NOT = { is_in_faction_with = SOV }
+				influence_higher_40 = yes
+				NOT = { has_country_flag = GLOBAL_arm_geo_resistance }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_russia_create_resist_geo_anti_arm"
+			ARM = { country_event = SOV_Global.24 }
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#RUSSIA CREATE ANTI ARMENIAN COUP IN GEORGIA
+	GLOBAL_russia_create_coup_geo_anti_arm = {
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			original_tag = SOV
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			NOT = {
+				country_exists = GEO
+			}
+			ARM = {
+				owns_state = 707
+				NOT = { is_subject_of = SOV }
+				NOT = { is_in_faction_with = SOV }
+				influence_higher_40 = yes
+				has_country_flag = GLOBAL_arm_geo_resistance
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_russia_create_coup_geo_anti_arm"
+			ARM = { country_event = SOV_Global.18 }
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#RUSSIA CREATE ANTI ARMENIAN RESISTANCE IN AZERBAIJAN
+	GLOBAL_russia_create_resist_aze_anti_arm = {
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			original_tag = SOV
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			NOT = {
+				country_exists = AZE
+			}
+			ARM = {
+				owns_state = 713
+				NOT = { is_subject_of = SOV }
+				NOT = { is_in_faction_with = SOV }
+				influence_higher_40 = yes
+				NOT = { has_country_flag = GLOBAL_arm_aze_resistance }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_russia_create_resist_aze_anti_arm"
+			ARM = { country_event = SOV_Global.25 }
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#RUSSIA CREATE ANTI ARMENIAN COUP IN AZERBAIJAN
+	GLOBAL_russia_create_coup_aze_anti_arm = {
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			original_tag = SOV
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			NOT = {
+				country_exists = AZE
+			}
+			ARM = {
+				owns_state = 713
+				NOT = { is_subject_of = SOV }
+				NOT = { is_in_faction_with = SOV }
+				influence_higher_40 = yes
+				has_country_flag = GLOBAL_arm_aze_resistance
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_russia_create_coup_aze_anti_arm"
+			ARM = { country_event = SOV_Global.26 }
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#RUSSIA CREATE ANTI ARMENIAN RESISTANCE IN ABKHAZIA
+	GLOBAL_russia_create_resist_abk_anti_arm = {
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			original_tag = SOV
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			NOT = {
+				country_exists = ABK
+			}
+			ARM = {
+				owns_state = 706
+				NOT = { is_subject_of = SOV }
+				NOT = { is_in_faction_with = SOV }
+				influence_higher_40 = yes
+				NOT = { has_country_flag = GLOBAL_arm_abk_resistance }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_russia_create_resist_abk_anti_arm"
+			ARM = { country_event = SOV_Global.27 }
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#RUSSIA CREATE ANTI ARMENIAN COUP IN ABKHAZIA
+	GLOBAL_russia_create_coup_abk_anti_arm = {
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			original_tag = SOV
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			NOT = {
+				country_exists = ABK
+			}
+			ARM = {
+				owns_state = 706
+				NOT = { is_subject_of = SOV }
+				NOT = { is_in_faction_with = SOV }
+				influence_higher_40 = yes
+				has_country_flag = GLOBAL_arm_abk_resistance
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_russia_create_coup_abk_anti_arm"
+			ARM = { country_event = SOV_Global.28 }
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#TURKEY CREATE ANTI ARMENIAN COUP IN ADJARA
+	GLOBAL_turkey_create_coup_adj_anti_arm = {
+		icon = GFX_decision_message_receive_button
+		cost = 100
+		days_remove = 15
+		fire_only_once = yes
+
+		visible = {
+			original_tag = TUR
+			OR = {
+				has_government = democratic
+				has_government = nationalist
+			}
+			NOT = {
+				country_exists = ADJ
+			}
+			ARM = {
+				owns_state = 466
+				NOT = { is_subject_of = TUR }
+				NOT = { is_in_faction_with = TUR }
+				influence_higher_30 = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_turkey_create_coup_adj_anti_arm"
+			ARM = { country_event = SOV_Global.29 }
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#TURKEY SEND ADVISORS TO ADJARA
+	GLOBAL_turkey_send_advise_adj_anti_arm = {
+		icon = GFX_decision_message_receive_button
+		cost = 75
+		days_remove = 5
+		fire_only_once = yes
+
+		visible = {
+			original_tag = TUR
+			OR = {
+				has_government = democratic
+				has_government = nationalist
+			}
+			NOT = { is_subject_of = ARM }
+			NOT = { is_in_faction_with = ARM }
+			ADJ = {
+				has_war_with = ARM
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_turkey_send_advise_adj_anti_arm"
+			ADJ = { country_event = SOV_Global.30 }
+		}
+		ai_will_do = {
+			factor = 1
+		}
+	}
+	#TURKEY ANNEX NAKHICHEVAN FROM AZER WHEN THEY PUPPET ARM
+	GLOBAL_turkey_annex_nachi_azer = {
+		icon = GFX_decision_negotiate_icon
+		cost = 100
+		days_remove = 20
+		fire_only_once = yes
+
+		visible = {
+			original_tag = TUR
+			OR = {
+				has_government = communism
+				has_government = nationalist
+			}
+			country_exists = AZE
+			AZE = {
+				influence_higher_40 = yes
+				owns_state = 711
+				is_subject_of = ARM
+			}
+			ARM = {
+				owns_state = 1036
+				owns_state = 1037
+				owns_state = 710
+			}
+			TUR = {
+				owns_state = 935
+				owns_state = 163
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove GLOBAL_turkey_annex_nachi_azer"
+			transfer_state = 711
+			set_state_owner = 711
+			AZE = { country_event = SOV_Global.37 }
+			ARM = { country_event = SOV_Global.37 }
+			hidden_effect = {
+				set_temp_variable = { percent_change = -9 }
+				set_temp_variable = { tag_index = TUR }
+				set_temp_variable = { influence_target = AZE }
+				change_influence_percentage = yes
+			}
+		}
+		ai_will_do = {
+			factor = 0
 		}
 	}
 }

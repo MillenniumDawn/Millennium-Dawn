@@ -271,6 +271,10 @@ EU_update_AI_focus_EU202_voting_modifier = {
 	set_temp_variable = { value6 = -25 }
 	EU_law_party_value_weight = yes
 
+	if = { limit = { has_stability < 0.40 }
+		add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = 10 }
+	}
+
 	EU_update_AI_general_voting_modifiers = yes
 }
 EU_update_AI_focus_EU203_voting_modifier = {
@@ -283,6 +287,34 @@ EU_update_AI_focus_EU203_voting_modifier = {
 	set_temp_variable = { value5 = 25 }
 	set_temp_variable = { value6 = -25 }
 	EU_law_party_value_weight = yes
+
+	# Interest Rate Check
+	if = { limit = { check_variable = { interest_rate > 10 } }
+		add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = 10 }
+	}
+	if = { limit = { check_variable = { interest_rate > 12 } }
+		add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = 10 }
+	}
+	if = { limit = { check_variable = { interest_rate > 14 } }
+		add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = 10 }
+	}
+	if = { limit = { check_variable = { interest_rate > 16 } }
+		add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = 10 }
+	}
+	if = { limit = { check_variable = { interest_rate > 18 } }
+		add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = 10 }
+	}
+	if = { limit = { check_variable = { interest_rate > 20 } }
+		add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = 10 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { interest_rate > 5.5 }
+			check_variable = { interest_rate < 7.6 }
+		}
+		add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = -10 }
+	}
 
 	EU_update_AI_general_voting_modifiers = yes
 }
@@ -1617,11 +1649,6 @@ focus_EU111_QMV_result = {
 			remove_ideas = EU_member
 		}
 
-		for_each_scope_loop = {
-			array = global.EU_active_vote_rejecters
-			remove_ideas = EU_member
-		}
-
 		hidden_effect = {
 			every_country = {
 				limit = { has_idea = EU_member }
@@ -1887,12 +1914,26 @@ focus_EU611_QMV_result = {
 		SCL = { set_country_flag = EU_candidate }
 		SCO = { set_country_flag = EU_candidate }
 		WAS = { set_country_flag = EU_candidate }
+		GAL = { set_country_flag = EU_candidate }
+		SIL = { set_country_flag = EU_candidate }
+		SPA = { set_country_flag = EU_candidate }
+		CNR = { set_country_flag = EU_candidate }
+		NAV = { set_country_flag = EU_candidate }
+		BAY = { set_country_flag = EU_candidate }
+		GRL = { set_country_flag = EU_candidate }
 
 		add_to_array = { global.EU_candidates = CAT }
 		add_to_array = { global.EU_candidates = CRE }
 		add_to_array = { global.EU_candidates = SCL }
 		add_to_array = { global.EU_candidates = SCO }
 		add_to_array = { global.EU_candidates = WAS }
+		add_to_array = { global.EU_candidates = GAL }
+		add_to_array = { global.EU_candidates = SIL }
+		add_to_array = { global.EU_candidates = SPA }
+		add_to_array = { global.EU_candidates = CNR }
+		add_to_array = { global.EU_candidates = NAV }
+		add_to_array = { global.EU_candidates = BAY }
+		add_to_array = { global.EU_candidates = GRL }
 	}
 	else = { # QMV - no
 		set_country_flag = focus_EU611_QMV_no
@@ -2148,4 +2189,15 @@ EU_show_display_effects_for_law = {
 			custom_effect_tooltip = EU_show_display_effects_for_law_no_effect_tt
 		}
 	}
+}
+
+EU_emergency_vote_clear = {
+	set_variable = { global.EUU_recently_failed_vote = global.current_active_vote_disp }
+	set_variable = { global.current_active_vote_disp = 0 }
+	set_variable = { global.EU_active_vote_yes = 0 }
+	set_variable = { global.EU_active_Vote_no = 0 }
+	set_variable = { global.var_EUpopRatioNo = 0 }
+	set_variable = { global.var_EUpopRatioYes = 0 }
+	clear_array = global.EU_active_vote_supporters
+	clear_array = global.EU_active_vote_rejecters
 }

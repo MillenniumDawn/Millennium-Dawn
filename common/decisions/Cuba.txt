@@ -2,7 +2,6 @@
 CUB_ter_defence_category = {
 
 	CUB_ter_oboronaup_start = {
-		cost = 15
 		icon = CUB_traien_usa
 		days_remove = 10
 		fire_only_once = yes
@@ -15,6 +14,7 @@ CUB_ter_defence_category = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove CUB_ter_oboronaup_start"
+			add_political_power = -15
 			add_manpower = -5000
 			set_temp_variable = { treasury_change = -6 }
 			modify_treasury_effect = yes
@@ -61,6 +61,7 @@ CUB_ter_defence_category = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove CUB_ter_oboronaup_start"
+			add_political_power = -15
 			add_manpower = -5000
 			set_temp_variable = { treasury_change = -6 }
 			modify_treasury_effect = yes
@@ -101,14 +102,14 @@ CUB_blockade_fight_category = {
 		icon = GFX_decision_cub_health_button
 		days_remove = 105
 		fire_only_once = no
-		cost = 150
 		modifier = {
 			health_cost_multiplier_modifier = 0.05
 		}
 		ai_will_do = { factor = 355 }
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: CUB_us_citizens_propoganda"
-				add_stability = 0.05
+			add_political_power = -150
+			add_stability = 0.05
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
 			set_temp_variable = { percent_change = -5 }
@@ -943,7 +944,7 @@ CUB_confederation_category = {
 			tag = CUB
 			HAI = {
 				NOT = {
-					has_country_flag = antillies_conf_agree
+					has_country_flag = antilles_conf_agree
 				}
 			}
 		}
@@ -974,7 +975,7 @@ CUB_confederation_category = {
 			tag = CUB
 			DOM = {
 				NOT = {
-					has_country_flag = antillies_conf_agree
+					has_country_flag = antilles_conf_agree
 				}
 			}
 		}
@@ -1006,7 +1007,7 @@ CUB_confederation_category = {
 			country_exists = PTR
 			PTR = {
 				NOT = {
-					has_country_flag = antillies_conf_agree
+					has_country_flag = antilles_conf_agree
 				}
 			}
 		}
@@ -1015,7 +1016,7 @@ CUB_confederation_category = {
 			PTR = {	country_event = { id = CubaConf.50 days = 1 } }
 		}
 	}
-	CUB_invite_columbia = {
+	CUB_invite_colombia = {
 		icon = GFX_decision_cuba_antilean_button
 		cost = 80
 		fire_only_once = no
@@ -1033,12 +1034,12 @@ CUB_confederation_category = {
 			}
 		}
 		visible = {
-			CUB = { has_completed_focus = CUB_talsks_with_columbia }
+			CUB = { has_completed_focus = CUB_talks_with_colombia }
 			tag = CUB
 			country_exists = COL
 			COL = {
 				NOT = {
-					has_country_flag = antillies_conf_agree
+					has_country_flag = antilles_conf_agree
 				}
 			}
 		}
@@ -1065,12 +1066,12 @@ CUB_confederation_category = {
 			}
 		}
 		visible = {
-			CUB = { has_completed_focus = CUB_talsks_with_jamaica }
+			CUB = { has_completed_focus = CUB_talks_with_jamaica }
 			tag = CUB
 			country_exists = JAM
 			JAM = {
 				NOT = {
-					has_country_flag = antillies_conf_agree
+					has_country_flag = antilles_conf_agree
 				}
 			}
 		}
@@ -1089,7 +1090,7 @@ CUB_confederation_category = {
 		}
 		available = {
 			NOT = {
-			country_exists = PTR
+				country_exists = PTR
 			}
 		}
 		visible = {
@@ -1103,7 +1104,7 @@ CUB_confederation_category = {
 			}
 			PTR = {
 				NOT = {
-					has_country_flag = antillies_conf_agree
+					has_country_flag = antilles_conf_agree
 				}
 			}
 		}
@@ -1112,14 +1113,12 @@ CUB_confederation_category = {
 			USA = {	country_event = { id = cuba.40 days = 1 } }
 		}
 	}
+
 	CUB_form_confederation = {
 		cost = 80
 		fire_only_once = yes
 		icon = cuba_antileancreate_button
-		days_remove = 1
-		ai_will_do = {
-			factor = 355
-		}
+
 		available = {
 			country_exists = CUB
 			HAI = { is_subject_of = CUB }
@@ -1128,12 +1127,51 @@ CUB_confederation_category = {
 			JAM = { is_subject_of = CUB }
 			PTR = { is_subject_of = CUB }
 		}
-		visible = {
-			tag = CUB
-		}
-		remove_effect = {
+
+		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CUB_form_confederation"
-			confederation_creation = yes
+			# TODO: I don't get the point of this decision. if they're subjects they are already automagically added to a faction?
+			create_faction_from_template = faction_template_antillian_confederation
+			every_country = {
+				limit = {
+					has_country_flag = antilles_conf_agree
+				}
+				add_ideas = CUB_caribbean_nation
 			}
+			if = {
+				limit = {
+					COL = { has_country_flag = antilles_conf_agree }
+				}
+				CUB = { add_to_faction = COL }
+			}
+			if = {
+				limit = {
+					HAI = { has_country_flag = antilles_conf_agree }
+				}
+				CUB = { add_to_faction = HAI }
+			}
+			if = {
+				limit = {
+					DOM = { has_country_flag = antilles_conf_agree }
+				}
+				CUB = { add_to_faction = DOM }
+			}
+			if = {
+				limit = {
+					JAM = { has_country_flag = antilles_conf_agree }
+				}
+				CUB = { add_to_faction = JAM }
+			}
+			if = {
+				limit = {
+					PTR = { has_country_flag = antilles_conf_agree }
+				}
+				CUB = { add_to_faction = PTR }
+			}
+		}
+
+		ai_will_do = {
+			base = 500
+		}
 	}
 }

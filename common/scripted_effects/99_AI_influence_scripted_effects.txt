@@ -1,0 +1,283 @@
+AI_select_influence_target = {
+	# Find country with the best sore possible
+	set_temp_variable = { AI_best_country = 0 }
+	set_temp_variable = { AI_best_country_score = -1 }
+
+	# Difficulty Based Minimums for the AI to influence
+	if = {
+		limit = { difficulty < 1 }
+		set_temp_variable = { AI_minimum_influence = 50 }
+	}
+	else_if = {
+		limit = { difficulty > 1 } # Regular or higher
+		set_temp_variable = { AI_minimum_influence = 20 }
+	}
+	else_if = {
+		limit = { difficulty > 2 } # Veteran or higher
+		set_temp_variable = { AI_minimum_influence = 10 }
+	}
+
+	for_each_scope_loop = {
+		array = influence_targets
+		if = { limit = { THIS = { exists = yes } }
+
+			set_temp_variable = { AI_selected_country = THIS.id }
+			set_temp_variable = { AI_country_score = 0 }
+			AI_influence_country_selection_calculation = yes
+
+			# Check if this does not need to conduct influence condition
+			AI_do_not_conduct_influence_condition = yes
+
+			# Sets the new best country
+			if = { limit = { check_variable = { AI_country_score > AI_best_country_score } }
+				set_temp_variable = { AI_best_country_score = AI_country_score }
+				set_temp_variable = { AI_best_country = AI_selected_country }
+			}
+		}
+	}
+}
+
+AI_do_not_conduct_influence_condition = {
+	PREV = {
+		if = {
+			limit = { has_war = yes }
+			add_to_temp_variable = { AI_country_score = -50 }
+		}
+		if = { limit = { political_power_daily < 2 }
+			add_to_temp_variable = { AI_country_score = -200 }
+		}
+		else = {
+			if = {
+				limit = {
+					political_power_daily > 2
+				}
+				add_to_temp_variable = { AI_country_score = 5 }
+			}
+			if = {
+				limit = {
+					political_power_daily > 3
+				}
+				add_to_temp_variable = { AI_country_score = 10 }
+			}
+			if = {
+				limit = {
+					political_power_daily > 4
+				}
+				add_to_temp_variable = { AI_country_score = 15 }
+			}
+			if = {
+				limit = {
+					political_power_daily > 5
+				}
+				add_to_temp_variable = { AI_country_score = 20 }
+			}
+			if = {
+				limit = {
+					political_power_daily > 6
+				}
+				add_to_temp_variable = { AI_country_score = 20 }
+			}
+			if = {
+				limit = {
+					political_power_daily > 8
+				}
+				add_to_temp_variable = { AI_country_score = 20 }
+			}
+			if = {
+				limit = {
+					political_power_daily > 10
+				}
+				add_to_temp_variable = { AI_country_score = 50 }
+			}
+		}
+	}
+}
+
+AI_influence_country_selection_calculation = {
+	if = {
+		limit = {
+			is_ai = no
+			OR = {
+				difficulty > 2 # Veteran or higher
+				has_game_rule = {
+					rule = rule_god_of_war
+					option = yes
+				}
+			}
+		}
+		add_to_temp_variable = { AI_country_score = 30 }
+	}
+
+	# Check
+	if = { limit = { has_idea = Non_State_Actor }
+		add_to_temp_variable = { AI_country_score = -80 }
+	}
+
+	# Influence those who are in your faction or in your faction
+	if = { limit = { is_in_faction_with = PREV }
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	if = {
+		limit = {
+			PREV = {
+				any_enemy_country = { is_in_faction_with = PREV.PREV }
+			}
+		}
+		add_to_temp_variable = { AI_country_score = -25 }
+	}
+
+	if = {
+		limit = { is_guaranteed_by = PREV }
+		add_to_temp_variable = { AI_country_score = 20 }
+	}
+	if = {
+		limit = { is_embargoed_by = PREV }
+		add_to_temp_variable = { AI_country_score = -15 }
+	}
+
+	if = { limit = { has_country_flag = trade_agreement@PREV }
+		add_to_temp_variable = { AI_country_score = 35 }
+	}
+	if = {
+		limit = { has_country_flag = mutual_investment_treaty_@PREV }
+		add_to_temp_variable = { AI_country_score = 35 }
+	}
+
+	# If already an influencer do more influencing
+	for_each_scope_loop = {
+		array = influence_array
+		# Check if you're an influencer at ALL
+		if = { limit = { check_variable = { influence_array^i = PREV.id } }
+			add_to_temp_variable = { AI_country_score = 40 }
+
+			# If i is in one of the top three add more fluff
+			if = {
+				limit = { check_variable = { i = 0 } }
+				add_to_temp_variable = { AI_country_score = 25 }
+			}
+			if = {
+				limit = { check_variable = { i = 1 } }
+				add_to_temp_variable = { AI_country_score = 25 }
+			}
+			if = {
+				limit = { check_variable = { i = 2 } }
+				add_to_temp_variable = { AI_country_score = 25 }
+			}
+
+			# If i is greater than this in one of these slots then calculate that difference
+			if = {
+				limit = { check_variable = { influence_array_val^i > 24.99 } }
+				add_to_temp_variable = { AI_country_score = 5 }
+			}
+			if = {
+				limit = { check_variable = { influence_array_val^i > 34.99 } }
+				add_to_temp_variable = { AI_country_score = 5 }
+			}
+			if = {
+				limit = { check_variable = { influence_array_val^i > 49.99 } }
+				add_to_temp_variable = { AI_country_score = 5 }
+			}
+			if = {
+				limit = { check_variable = { influence_array_val^i > 54.99 } }
+				add_to_temp_variable = { AI_country_score = 5 }
+			}
+			if = {
+				limit = { check_variable = { influence_array_val^i > 75.99 } }
+				add_to_temp_variable = { AI_country_score = 5 }
+			}
+		}
+	}
+
+	# Same Outlook means they should influence more!
+	if = {
+		limit = {
+			has_government = democratic
+			PREV = { has_government = democratic }
+		}
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	else_if = {
+		limit = {
+			has_government = communism
+			PREV = { has_government = communism }
+		}
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	else_if = {
+		limit = {
+			has_government = neutrality
+			PREV = { has_government = neutrality }
+		}
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	else_if = {
+		limit = {
+			has_government = nationalist
+			PREV = { has_government = nationalist }
+		}
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+	else_if = {
+		limit = {
+			has_government = fascism
+			PREV = { has_government = fascism }
+		}
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+
+	# Opinion Calculator
+	set_temp_variable = { opinion_value = opinion@PREV }
+	multiply_temp_variable = { opinion_value = 0.30 }
+	clamp_temp_variable = { var = opinion_value min = -75 max = 100 }
+	add_to_temp_variable = { AI_country_score = opinion_value }
+
+	# Same continent same vibe
+	if = {
+		limit = {
+			PREV = { exists = yes }
+			PREV_is_on_same_continent = yes
+		}
+		add_to_temp_variable = { AI_country_score = 25 }
+	}
+
+	set_temp_variable_to_random = {
+		var = randomizer_country_score
+		min = 25
+		max = 75
+		integer = yes
+	}
+	subtract_from_temp_variable = { AI_country_score = randomizer_country_score }
+}
+
+add_permanent_investment_targets = {
+	for_each_scope_loop = {
+		array = PREV.permanent_influence_target
+		if = {
+			limit = { NOT = { is_in_array = { PREV.influence_targets = THIS } } }
+			add_to_array = { PREV.investment_targets = THIS }
+		}
+	}
+}
+
+# purpose: remove permanent_influence_target or add permanent_influence_target
+# target_nation - The nation that is the nation we want to impact their investment targets
+# adding_nation - The nation that is being added to the investment targeted
+# remove_nation - Executes the removal version of this script
+change_permanent_influence_target = {
+	if = {
+		limit = {
+			NOT = { var:target_nation = { is_in_array = { permanent_influence_target = var:adding_nation } } }
+			NOT = { check_variable = { adding_nation = 0 } }
+		}
+		custom_effect_tooltip = change_permanent_investment_target_tt
+		var:target_nation = {
+			add_to_array = { permanent_influence_target = var:adding_nation }
+		}
+	}
+	else = {
+		custom_effect_tooltip = change_permanent_investment_target_remove_tt
+		var:target_nation = {
+			remove_from_array = { permanent_influence_target = var:remove_nation }
+		}
+	}
+}
