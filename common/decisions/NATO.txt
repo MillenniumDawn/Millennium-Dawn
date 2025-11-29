@@ -1,5 +1,6 @@
+# Author(s): Kalkalash, AngriestBird, Droid
 NATO_decisions = {
-
+	# NATO - Join F35 Program
 	NATO_ask_to_join_f35_program = {
 		icon = GFX_decision_nato_f35_expansion_button
 
@@ -49,6 +50,7 @@ NATO_decisions = {
 		}
 	}
 
+	# Leave NATO
 	leave_NATO = {
 		icon = GFX_decision_generic_leave_nato
 
@@ -233,6 +235,36 @@ NATO_decisions = {
 		}
 	}
 
+	# Show Non-Ratified Countries
+	show_non_ratified_countries = {
+		icon = GFX_decision_generic_join_nato
+
+		visible = {
+			is_ai = no
+			has_country_flag = NATO_Accession_Voting
+		}
+
+		available = {
+			hidden_trigger = {
+				always = no
+			}
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				CONTROLLER = {
+					has_idea = NATO_member
+					NOT = { has_country_flag = NATO_Ratified_@ROOT }
+				}
+			}
+		}
+
+		complete_effect = {
+			NATO_show_non_ratified_countries = yes
+		}
+	}
+
+	# Joining NATO
 	become_NATO_aspirant = {
 
 		icon = GFX_decision_generic_join_nato
@@ -276,7 +308,8 @@ NATO_decisions = {
 		ai_will_do = {
 			base = 25
 			modifier = {
-				add = 100
+				add = 50
+				is_historical_focus_on = no
 				OR = {
 					AND = {
 						has_opinion = { target = USA value > 150 }
@@ -434,20 +467,22 @@ NATO_decisions = {
 					has_war = yes
 				}
 			}
-			# Russia is at war with European democratic nations
+			# Russia is at war with European nations on their border
 			modifier = {
 				factor = 2.5
-				SOV = { NOT = { has_government = democratic } }
-				OR = {
-					SOV = { has_war_with = UKR }
-					SOV = { has_war_with = FIN }
-					SOV = { has_war_with = LIT }
-					SOV = { has_war_with = LAT }
-					SOV = { has_war_with = EST }
-					SOV = { has_war_with = GEO }
-					SOV = { has_war_with = BLR }
-					SOV = { has_war_with = ABK }
-					SOV = { has_war_with = SOO }
+				SOV = {
+					NOT = { has_government = democratic }
+					OR = {
+						has_war_with = UKR
+						has_war_with = FIN
+						has_war_with = LIT
+						has_war_with = LAT
+						has_war_with = EST
+						has_war_with = GEO
+						has_war_with = BLR
+						has_war_with = ABK
+						has_war_with = SOO
+					}
 				}
 			}
 			# Microstates shouldn't join NATO. This is just pointless for them IMO
@@ -462,6 +497,52 @@ NATO_decisions = {
 
 					has_government = nationalist
 					has_government = fascism
+				}
+			}
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+				OR = {
+					AND = {
+						OR = {
+							original_tag = LAT
+							original_tag = LIT
+							original_tag = EST
+							original_tag = ROM
+							original_tag = SLO
+							original_tag = SLV
+							original_tag = BUL
+						}
+						date < 2003.1.1
+						NOT = { SOV = { has_added_tension_amount > 5 } }
+					}
+					AND = {
+						OR = {
+							original_tag = ALB
+							original_tag = CRO
+						}
+						date < 2008.1.1
+						NOT = { SOV = { has_added_tension_amount > 5 } }
+					}
+					AND = {
+						original_tag = MNT
+						date < 2016.1.1
+						NOT = { SOV = { has_added_tension_amount > 5 } }
+					}
+					AND = {
+						original_tag = FYR
+						date < 2018.1.1
+						NOT = { SOV = { has_added_tension_amount > 5 } }
+					}
+					AND = {
+						OR = {
+							original_tag = SWE
+							original_tag = FIN
+						}
+						date < 2019.1.1
+						NOT = { SOV = { has_added_tension_amount > 5 } }
+						NOT = { SOV = { has_war_with = UKR } }
+					}
 				}
 			}
 			modifier = {
@@ -833,49 +914,19 @@ NATO_decisions = {
 		}
 	}
 
-	show_non_ratified_countries = {
-		icon = GFX_decision_generic_join_nato
-
-		visible = {
-			is_ai = no
-			has_country_flag = NATO_Accession_Voting
-		}
-
-		available = {
-			hidden_trigger = {
-				always = no
-			}
-		}
-
-		highlight_states = {
-			highlight_states_trigger = {
-				CONTROLLER = {
-					has_idea = NATO_member
-					NOT = { has_country_flag = NATO_Ratified_@ROOT }
-				}
-			}
-		}
-
-		complete_effect = {
-			NATO_show_non_ratified_countries = yes
-		}
-	}
-
-	# Custom Decisions
+	# American Custom Decisions
 	nato_enhance_forward_presence_brigade = {
+		allowed = { original_tag = USA }
 		icon = GFX_decision_infiltrate_state
-		allowed = {
-			original_tag = USA
-		}
+
 		visible = {
-			original_tag = USA
-			USA = { has_idea = NATO_member }
+			has_idea = NATO_member
+		}
+		available = {
+			POL = { has_idea = NATO_member }
 			SOV = { controls_state = 669 }
 		}
-		available = {
-			original_tag = USA
-			POL = { has_idea = NATO_member }
-		}
+
 		fire_only_once = yes
 		cost = 100
 		days_remove = 80
@@ -884,25 +935,23 @@ NATO_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision nato_enhance_forward_presence_brigade"
 			country_event = { id = USA_FOCUS.2 days = 1 }
 		}
+
 		ai_will_do = {
-			factor = 355
+			base = 355
 		}
 	}
 
 	nato_deply_turkish_brigade = {
+		allowed = { original_tag = USA }
 		icon = GFX_decision_infiltrate_state
-		allowed = {
-			original_tag = USA
-		}
+
 		visible = {
-			original_tag = USA
-			USA = { has_idea = NATO_member }
-			SOV = { controls_state = 669 }
+			has_idea = NATO_member
 		}
 		available = {
-			original_tag = USA
 			TUR = { has_idea = NATO_member }
 		}
+
 		fire_only_once = yes
 		cost = 100
 		days_remove = 80
@@ -911,8 +960,9 @@ NATO_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision nato_enhance_forward_presence_brigade"
 			country_event = { id = USA_FOCUS.4 days = 1 }
 		}
+
 		ai_will_do = {
-			factor = 355
+			base = 355
 		}
 	}
 }
