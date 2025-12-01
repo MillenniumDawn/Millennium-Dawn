@@ -24,7 +24,8 @@ The following page is a non-exhaustive list of contributors from over the years 
 | Roseru | Roseru#5160 | Roseru1 | - | - |
 | crocomoth | crocomoth#9256 | crocomoth | - | - |
 | alexmarkel0v | alexmarkel0v#8167 | alexmarkel0v | - | alexandermarkel0v53@gmail.com |
-| BoNDeX | BoNDeX#4624 | BoNDeXx | - | jnothingtosay@gmail.com |
+| BoNDeX | BoNDeX#4624 | - | - | jnothingtosay@gmail.com |
+| Lord Bogdanoff | mdslordbatka | - | - | - |
 | Curious Beats | Curious Beats#2276 | CuriousBeats | Curious Beats | poonslyer6666669@gmail.com |
 | Patrador | Patrador#8249 | - | - | - |
 | Fire_hair | Fire_hair | Fire_hair | - | - |
@@ -164,8 +165,8 @@ The following page is a non-exhaustive list of contributors from over the years 
 
 # Fellow Modders/Teams
 
-- **swf**
-- **libra**
+- **swf** from the [Cold War: Iron Curtain](https://steamcommunity.com/sharedfiles/filedetails/?id=1458561226)
+- **libra** from the [Cold War: Iron Curtain](https://steamcommunity.com/sharedfiles/filedetails/?id=1458561226)
 - **Tallcastle** - Agency Submod creator
   *Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2428791468)*
 - **Orphanmaker** - Indian icons
