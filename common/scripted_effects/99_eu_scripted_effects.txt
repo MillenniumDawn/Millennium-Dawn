@@ -26,9 +26,6 @@ EU_clear_voting = {
 		clr_global_flag = EU_qualified_majority_voting_YES
 		clr_global_flag = EU_qualified_majority_voting_NO
 
-		clr_global_flag = focus_EU002_voted
-		clr_global_flag = focus_EU002_QMV_voted
-		clr_global_flag = focus_EU002_maj_voted
 		clr_global_flag = focus_EU101_voted
 		clr_global_flag = focus_EU101_QMV_voted
 		clr_global_flag = focus_EU101_maj_voted
@@ -158,10 +155,19 @@ EU_clear_voting = {
 		clr_global_flag = focus_EU611_voted
 		clr_global_flag = focus_EU611_QMV_voted
 		clr_global_flag = focus_EU611_maj_voted
+		clr_global_flag = focus_EU650_voted
+		clr_global_flag = focus_EU650_QMV_voted
+		clr_global_flag = focus_EU650_maj_voted
+		clr_global_flag = focus_EU651_voted
+		clr_global_flag = focus_EU651_QMV_voted
+		clr_global_flag = focus_EU651_maj_voted
+		clr_global_flag = focus_EU652_voted
+		clr_global_flag = focus_EU652_QMV_voted
+		clr_global_flag = focus_EU652_maj_voted
+		clr_global_flag = focus_EU653_voted
+		clr_global_flag = focus_EU653_QMV_voted
+		clr_global_flag = focus_EU653_maj_voted
 		###result flags
-		clr_global_flag = focus_EU002_result
-		clr_global_flag = focus_EU002_QMV_result
-		clr_global_flag = focus_EU002_maj_result
 		clr_global_flag = focus_EU101_result
 		clr_global_flag = focus_EU101_QMV_result
 		clr_global_flag = focus_EU101_maj_result
@@ -291,6 +297,18 @@ EU_clear_voting = {
 		clr_global_flag = focus_EU611_result
 		clr_global_flag = focus_EU611_QMV_result
 		clr_global_flag = focus_EU611_maj_result
+		clr_global_flag = focus_EU650_result
+		clr_global_flag = focus_EU650_QMV_result
+		clr_global_flag = focus_EU650_maj_result
+		clr_global_flag = focus_EU651_result
+		clr_global_flag = focus_EU651_QMV_result
+		clr_global_flag = focus_EU651_maj_result
+		clr_global_flag = focus_EU652_result
+		clr_global_flag = focus_EU652_QMV_result
+		clr_global_flag = focus_EU652_maj_result
+		clr_global_flag = focus_EU653_result
+		clr_global_flag = focus_EU653_QMV_result
+		clr_global_flag = focus_EU653_maj_result
 	}
 	update_eu_dirty_variable = yes
 }
@@ -319,19 +337,19 @@ EU_update_vars = {
 		divide_variable = { global.var_EUpopTotalDisplay = 10 }
 
 		# Sets the total number of EU Member States
-		set_variable = { var = global.var_EUmemberstatesTotal value = 0 }
+		set_variable = { var = global.EU_member_count value = 0 }
 		for_each_scope_loop = {
 			array = global.EU_member
-			add_to_variable = { global.var_EUmemberstatesTotal = 1 }
+			add_to_variable = { global.EU_member_count = 1 }
 		}
 
 		# Calculates Pop Ratio
 		for_each_scope_loop = {
 			array = global.EU_member
-			set_variable = { THIS.var_EUpopRatio = 0 }
-			add_to_variable = { THIS.var_EUpopRatio = THIS.max_manpower_k }
-			divide_variable = { THIS.var_EUpopRatio = 100 } # Converts to 100,000 to match the GDP
-			divide_variable = { THIS.var_EUpopRatio = global.var_EUpopTotal }
+			set_variable = { THIS.EU_pop_ratio = 0 }
+			add_to_variable = { THIS.EU_pop_ratio = THIS.max_manpower_k }
+			divide_variable = { THIS.EU_pop_ratio = 100 } # Converts to 100,000 to match the GDP
+			divide_variable = { THIS.EU_pop_ratio = global.var_EUpopTotal }
 		}
 		# End of EU Population Calculations
 
@@ -726,7 +744,6 @@ leaving_EU = {
 	}
 	EU_clear_voting = yes ### new one
 	remove_ideas = the_euro
-	clr_country_flag = EU_candidate
 	custom_effect_tooltip = tooltip_EU_remove_laws_and_offices
 	hidden_effect = {
 		every_other_country = {
@@ -806,20 +823,6 @@ leaving_EU = {
 			leave_faction = yes
 		}
 		### clear focus flags for leaving, set for remaining
-		if = { limit = { has_country_flag = focus_EU002_yes }
-			clr_country_flag = focus_EU002_yes
-			random_country = {
-				limit = { has_idea = EU_member }
-				set_country_flag = focus_EU002_yes
-			}
-		}
-		if = { limit = { has_country_flag = focus_EU002_QMV_yes }
-			clr_country_flag = focus_EU002_QMV_yes
-			random_country = {
-				limit = { has_idea = EU_member }
-				set_country_flag = focus_EU002_QMV_yes
-			}
-		}
 		if = { limit = { has_country_flag = focus_EU101_yes }
 			clr_country_flag = focus_EU101_yes
 			random_country = {
@@ -1414,6 +1417,62 @@ leaving_EU = {
 				set_country_flag = focus_EU611_QMV_yes
 			}
 		}
+		if = { limit = { has_country_flag = focus_EU650_yes }
+				 clr_country_flag = focus_EU650_yes
+				random_country = {
+					limit = { has_idea = EU_member }
+					set_country_flag = focus_EU650_yes
+				}
+		}
+		if = { limit = { has_country_flag = focus_EU650_QMV_yes }
+			clr_country_flag = focus_EU650_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU650_QMV_yes
+			}
+		}
+		if = { limit = { has_country_flag = focus_EU651_yes }
+				 clr_country_flag = focus_EU651_yes
+				random_country = {
+					limit = { has_idea = EU_member }
+					set_country_flag = focus_EU651_yes
+				}
+		}
+		if = { limit = { has_country_flag = focus_EU651_QMV_yes }
+			clr_country_flag = focus_EU651_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU651_QMV_yes
+			}
+		}
+		if = { limit = { has_country_flag = focus_EU652_yes }
+				 clr_country_flag = focus_EU652_yes
+				random_country = {
+					limit = { has_idea = EU_member }
+					set_country_flag = focus_EU652_yes
+				}
+		}
+		if = { limit = { has_country_flag = focus_EU652_QMV_yes }
+			clr_country_flag = focus_EU652_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU652_QMV_yes
+			}
+		}
+		if = { limit = { has_country_flag = focus_EU653_yes }
+				 clr_country_flag = focus_EU653_yes
+				random_country = {
+					limit = { has_idea = EU_member }
+					set_country_flag = focus_EU653_yes
+				}
+		}
+		if = { limit = { has_country_flag = focus_EU653_QMV_yes }
+			clr_country_flag = focus_EU653_QMV_yes
+			random_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = focus_EU653_QMV_yes
+			}
+		}
 
 		### end of focus flag clearing and setting
 	}
@@ -1641,6 +1700,15 @@ on_startup_euu_action = {
 		limit = {
 			has_game_rule = {
 				rule = rule_european_union_voting_limits
+				option = one
+			}
+		}
+		set_global_flag = GAME_RULE_eu_one_cooldown
+	}
+	if = {
+		limit = {
+			has_game_rule = {
+				rule = rule_european_union_voting_limits
 				option = sixty
 			}
 		}
@@ -1686,7 +1754,6 @@ on_startup_euu_action = {
 	# Configure European Union startup values and information
 	if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
 		EUU = {
-			add_to_array = { global.EU_potential_votes = 002 } # European Candidate
 			add_to_array = { global.EU_potential_votes = 101 } # Charter of Fundamental Rights of the EU
 			add_to_array = { global.EU_potential_votes = 102 } # European Convention
 			add_to_array = { global.EU_potential_votes = 103 } # European Constitution
@@ -1726,6 +1793,10 @@ on_startup_euu_action = {
 			add_to_array = { global.EU_potential_votes = 609 } # European Economic Area
 			add_to_array = { global.EU_potential_votes = 610 } # Belarus
 			add_to_array = { global.EU_potential_votes = 611 } # Internal Enlargement
+			add_to_array = { global.EU_potential_votes = 650 } # Extended Enlargement Framework
+			add_to_array = { global.EU_potential_votes = 651 } # Lisbon Treaty Amendment
+			add_to_array = { global.EU_potential_votes = 652 } # EU-Russia Partnership Treaty
+			add_to_array = { global.EU_potential_votes = 653 } # Russia
 			add_to_array = { global.EU_potential_votes = 110 } # Federalisation of the European Union
 			add_to_array = { global.EU_potential_votes = 111 } # United States of Europe
 			add_to_array = { global.EU_potential_votes = 112 } # European Federation
@@ -1791,11 +1862,13 @@ on_startup_euu_action = {
 			add_to_array = { global.EU_potential = POL }
 			add_to_array = { global.EU_potential = POR }
 			add_to_array = { global.EU_potential = ROM }
+			add_to_array = { global.EU_potential = RUS }
 			add_to_array = { global.EU_potential = SCL }
 			add_to_array = { global.EU_potential = SCO }
 			add_to_array = { global.EU_potential = SER }
 			add_to_array = { global.EU_potential = SLO }
 			add_to_array = { global.EU_potential = SLV }
+			add_to_array = { global.EU_potential = SOV }
 			add_to_array = { global.EU_potential = SPR }
 			add_to_array = { global.EU_potential = SWE }
 			add_to_array = { global.EU_potential = SWI }
@@ -1817,18 +1890,21 @@ on_startup_euu_action = {
 
 			country_event = { id = EUupdate.1 }
 
-			### EU_mff
 			EU_update_vars = yes
-
 			every_country = {
 				limit = { has_idea = EU_member }
-				activate_mission = EU_mff_preparations
-				activate_mission = EU_budget_preparations
+				activate_mission = EU_budget_draft_preparations
+				activate_mission = EU_mff_draft_preparations
+				set_country_flag = EU_budget_EP_block
 			}
-			set_variable = { global.EU_budget_call_rate = 1.00 }
+			for_each_scope_loop = {
+				array = global.EU_member
+				set_variable = { THIS.EU_budget_call_rate = 1 }
+			}
+			set_variable = { global.EU_budget_min_call_rate = 1 }
 			set_EU_gdp = yes
-			set_EU_total_budget = yes
-			update_EU_average_gdp_lvl = yes
+			EU_global_click_cost = yes
+			update_EU_budget_call_rate = yes 
 			update_EU_average_eco_lvl = yes
 			set_EU_expenditure = yes
 			distribute_EU_budget = yes
@@ -1846,11 +1922,49 @@ on_startup_euu_action = {
 		set_variable = { global.euambassador = EUU.id }
 		set_variable = { global.eupresfederation = EUU.id }
 	}
+
+	add_to_array = { global.EU_parl_party_number = 0 }
+	add_to_array = { global.EU_parl_party_number = 1 }
+	add_to_array = { global.EU_parl_party_number = 2 }
+	add_to_array = { global.EU_parl_party_number = 3 }
+	add_to_array = { global.EU_parl_party_number = 4 }
+	add_to_array = { global.EU_parl_party_number = 5 }
+	add_to_array = { global.EU_parl_party_number = 6 }
+	add_to_array = { global.EU_parl_party_number = 7 }
+	add_to_array = { global.EU_parl_party_number = 8 }
+	add_to_array = { global.EU_parl_party_number = 9 }
+	add_to_array = { global.EU_parl_party_number = 10 }
+	add_to_array = { global.EU_parl_party_number = 11 }
+	add_to_array = { global.EU_parl_party_number = 12 }
+	add_to_array = { global.EU_parl_party_number = 13 }
+	add_to_array = { global.EU_parl_party_number = 14 }
+	add_to_array = { global.EU_parl_party_number = 15 }
+	add_to_array = { global.EU_parl_party_number = 16 }
+	add_to_array = { global.EU_parl_party_number = 17 }
+	add_to_array = { global.EU_parl_party_number = 18 }
+	add_to_array = { global.EU_parl_party_number = 19 }
+	add_to_array = { global.EU_parl_party_number = 20 }
+	add_to_array = { global.EU_parl_party_number = 21 }
+	add_to_array = { global.EU_parl_party_number = 22 }
+	add_to_array = { global.EU_parl_party_number = 23 }
+
 	update_eu_dirty_variable = yes
 }
 
 set_the_eu_parliament_delay = {
 	hidden_effect = {
+		if = {
+			limit = { has_global_flag = GAME_RULE_eu_one_cooldown }
+			every_country = {
+				limit = { has_idea = EU_member }
+				set_country_flag = { flag = delay_next_parliament_vote value = 1 days = 1 }
+				if = {
+					limit = { is_ai = no }
+					country_event = { id = EUvote.3 days = 1 }
+				}
+			}
+			set_global_flag = { flag = EP_AI_hold_their_vote value = 1 days = 1 }
+		}
 		if = {
 			limit = { has_global_flag = GAME_RULE_eu_sixty_cooldown }
 			every_country = {
@@ -1917,6 +2031,16 @@ set_the_eu_parliament_delay = {
 
 set_the_eu_council_delay = {
 	hidden_effect = {
+		if = {
+			limit = { has_global_flag = GAME_RULE_eu_one_cooldown }
+			set_country_flag = { flag = delay_player_next_council_vote value = 1 days = 1 }
+			set_global_flag = { flag = delay_next_council_vote value = 1 days = 1 }
+			set_global_flag = { flag = delay_next_council_vote_ai value = 1 days = 1 }
+			if = {
+				limit = { is_ai = no }
+				country_event = { id = EUvote.4 days = 1 }
+			}
+		}
 		if = {
 			limit = { has_global_flag = GAME_RULE_eu_sixty_cooldown }
 			set_country_flag = { flag = delay_player_next_council_vote value = 1 days = 60 }
@@ -2192,13 +2316,13 @@ clear_potef_electoral_values = {
 	clear_variable = global.var_POTEF_nominee_23
 }
 
-update_EU_average_gdp_lvl = {
-	set_variable = { global.EU_average_gdp_lvl = 0 }
+update_EU_average_gdpc_lvl = { # For calcuations that don't have set_EU_gdp
+	set_variable = { global.EU_gdp_capita = 0 }
 	for_each_scope_loop = {
 		array = global.EU_member
-		add_to_variable = { global.EU_average_gdp_lvl = gdp_per_capita }
+		add_to_variable = { global.EU_gdp_capita = THIS.gdp_total}
 	}
-	divide_variable = { global.EU_average_gdp_lvl = global.var_EUmemberstatesTotal }
+	divide_variable = { global.EU_gdp_capita = global.var_EUpopTotalDisplay }
 	update_eu_dirty_variable = yes
 }
 
@@ -2231,7 +2355,7 @@ update_EU_average_eco_lvl = {
 			add_to_variable = { global.EU_average_eco_lvl = EU_average_eco_lvl }
 		}
 	}
-	divide_variable = { global.EU_average_eco_lvl = global.var_EUmemberstatesTotal }
+	divide_variable = { global.EU_average_eco_lvl = global.EU_member_count }
 	update_eu_dirty_variable = yes
 }
 
@@ -2255,63 +2379,87 @@ set_EU_gdp = {
 	}
 
 	# Calculate the EU GDP/C
-	set_variable = { global.EU_gdp_capita = temp_calc }
-	divide_variable = { global.EU_gdp_capita = global.var_EUpopTotalDisplay }
+	update_EU_average_gdpc_lvl = yes
+
 	update_eu_dirty_variable = yes
 }
 
-set_EU_total_budget = {
-	### EU Total Budget
-	set_variable = { global.EU_total_budget = global.EU_gdp }
-	multiply_variable = { global.EU_total_budget = global.EU_budget_call_rate }
-	divide_variable = { global.EU_total_budget = 100 }
-	set_variable = { global.EU_mff_total = global.EU_total_budget }
-	multiply_variable = { global.EU_mff_total = 5 }
-	### member state contribution
+EU_save_budget_values = {
+	set_variable = { global.EU_global_exp_saved = global.EU_global_exp_ratio }
+	set_variable = { global.EU_growth_exp_saved = global.EU_growth_exp_ratio }
+	set_variable = { global.EU_natural_exp_saved = global.EU_natural_exp_ratio }
+}
+
+EU_save_mff_values = {
+	set_variable = { global.EU_min_call_rate_saved = global.EU_budget_min_call_rate }
+	set_variable = { global.EU_global_call_rate_saved = global.EU_budget_call_rate }
 	for_each_scope_loop = {
 		array = global.EU_member
-		set_variable = { THIS.EU_budget_call_rate = global.EU_budget_call_rate }
-		set_variable = { THIS.EU_budget_contribution = THIS.gdp_total }
-		multiply_variable = { THIS.EU_budget_contribution = THIS.EU_budget_call_rate }
-		divide_variable = { THIS.EU_budget_contribution = 100 }
-		set_variable = { THIS.EU_budget_contribution_weekly = THIS.EU_budget_contribution }
-		divide_variable = { THIS.EU_budget_contribution_weekly = 52 } # weeks in a year
-		set_variable = { THIS.EU_budget_ratio = THIS.EU_budget_contribution }
-		divide_variable = { THIS.EU_budget_ratio = global.EU_total_budget }
+		set_variable = { THIS.EU_call_rate_saved = THIS.EU_budget_call_rate }
 	}
-	### budget of next year
-	update_eu_dirty_variable = yes
 }
 
-update_EU_total_budget = {
-	### EU Total Budget
-	set_variable = { global.EU_total_budget = global.EU_gdp }
-	multiply_variable = { global.EU_total_budget = global.EU_budget_call_rate }
-	divide_variable = { global.EU_total_budget = 100 }
-	set_variable = { global.EU_mff_total = global.EU_total_budget }
-	multiply_variable = { global.EU_mff_total = 5 }
+EU_rollback_budget_values = {
+	set_variable = { global.EU_global_exp_ratio = global.EU_global_exp_saved }
+	set_variable = { global.EU_growth_exp_ratio = global.EU_growth_exp_saved}
+	set_variable = { global.EU_natural_exp_ratio = global.EU_natural_exp_saved }
+	distribute_EU_budget = yes
+}
+
+EU_rollback_mff_values = {
+	set_variable = { global.EU_budget_min_call_rate = global.EU_min_call_rate_saved }
+	set_variable = { global.EU_budget_call_rate = global.EU_global_call_rate_saved }
+	for_each_scope_loop = {
+		array = global.EU_member
+		set_variable = { THIS.EU_budget_call_rate = THIS.EU_call_rate_saved }
+		update_EU_budget_call_rate = yes
+		distribute_EU_budget = yes
+	}
+}
+
+update_EU_budget_call_rate = {
+	set_variable = { global.EU_total_budget = 0 }
 	### member state contribution
 	for_each_scope_loop = {
 		array = global.EU_member
 		set_variable = { THIS.EU_budget_contribution = THIS.gdp_total }
 		multiply_variable = { THIS.EU_budget_contribution = THIS.EU_budget_call_rate }
 		divide_variable = { THIS.EU_budget_contribution = 100 }
+		add_to_variable = { global.EU_total_budget = THIS.EU_budget_contribution }
+	}
+	for_each_scope_loop = { # Needs to be seperate for the total budget to sum up first
+		array = global.EU_member
 		set_variable = { THIS.EU_budget_ratio = THIS.EU_budget_contribution }
 		set_variable = { THIS.EU_budget_contribution_weekly = THIS.EU_budget_contribution }
 		divide_variable = { THIS.EU_budget_contribution_weekly = 52 } #Weeks in a year
 		divide_variable = { THIS.EU_budget_ratio = global.EU_total_budget }
 	}
-	### budget of next year
+	### EU Total Budget
+	set_variable = { global.EU_mff_total = global.EU_total_budget }
+	multiply_variable = { global.EU_mff_total = 5 }
+
 	update_eu_dirty_variable = yes
 }
 
-update_EU_budget_call_rate = {
-	set_variable = { THIS.EU_budget_contribution = THIS.gdp_total }
-	multiply_variable = { THIS.EU_budget_contribution = THIS.EU_budget_call_rate }
-	divide_variable = { THIS.EU_budget_contribution = 100 }
-	set_variable = { THIS.EU_budget_ratio = THIS.EU_budget_contribution }
-	divide_variable = { THIS.EU_budget_ratio = global.EU_total_budget }
-	update_eu_dirty_variable = yes
+EU_global_click_cost = {
+	set_variable = { global.EU_10_per_member_cost = 10 }
+	multiply_variable = { global.EU_10_per_member_cost = global.EU_member_count }
+	set_variable = { global.EU_10_per_member_cost_minus = global.EU_10_per_member_cost }		
+	multiply_variable = { global.EU_10_per_member_cost_minus = -1 }
+	set_variable = { global.EU_15_per_member_cost = 15 }
+	multiply_variable = { global.EU_15_per_member_cost = global.EU_member_count }
+	set_variable = { global.EU_15_per_member_cost_minus = global.EU_15_per_member_cost }
+	multiply_variable = { global.EU_15_per_member_cost_minus = -1 }
+}
+
+EU_country_call_rate_cost_calc = {
+	for_each_scope_loop = {
+		array = global.EU_member
+		set_variable = { THIS.EU_mff_country_cost = 1000 }
+		multiply_variable = { THIS.EU_mff_country_cost = THIS.EU_budget_ratio }
+		set_variable = { THIS.EU_mff_country_cost_minus = THIS.EU_mff_country_cost }
+		multiply_variable = { THIS.EU_mff_country_cost_minus = -1 }
+	}
 }
 
 set_EU_expenditure = {
@@ -2368,32 +2516,32 @@ distribute_EU_growth_exp = {
 		array = global.EU_member
 		if = { limit = { has_idea = economic_boom }
 			set_variable = { THIS.EU_growth_subsidies = 1 }
-			multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_growth_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
 		}
 		else_if = { limit = { has_idea = fast_growth }
 			set_variable = { THIS.EU_growth_subsidies = 2 }
-			multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_growth_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
 		}
 		else_if = { limit = { has_idea = stable_growth }
 			set_variable = { THIS.EU_growth_subsidies = 3 }
-			multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_growth_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
 		}
 		else_if = { limit = { has_idea = stagnation }
 			set_variable = { THIS.EU_growth_subsidies = 4 }
-			multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_growth_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
 		}
 		else_if = { limit = { has_idea = recession }
 			set_variable = { THIS.EU_growth_subsidies = 5 }
-			multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_growth_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
 		}
 		else_if = { limit = { has_idea = depression }
 			set_variable = { THIS.EU_growth_subsidies = 6 }
-			multiply_variable = { THIS.EU_growth_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_growth_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_growth_subsidies_total = THIS.EU_growth_subsidies }
 		}
 	}
@@ -2411,7 +2559,7 @@ distribute_EU_natural_exp = {
 		array = global.EU_member
 		if = { limit = { check_variable = { gdp_per_capita > 199.999 } }
 			set_variable = { THIS.EU_natural_subsidies = 1 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
 		}
 		else_if = {
@@ -2420,7 +2568,7 @@ distribute_EU_natural_exp = {
 				check_variable = { gdp_per_capita > 139.999 }
 			}
 			set_variable = { THIS.EU_natural_subsidies = 2 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
 		}
 		else_if = {
@@ -2429,7 +2577,7 @@ distribute_EU_natural_exp = {
 				check_variable = { gdp_per_capita > 89.999 }
 			}
 			set_variable = { THIS.EU_natural_subsidies = 3 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
 		}
 		else_if = {
@@ -2438,7 +2586,7 @@ distribute_EU_natural_exp = {
 				check_variable = { gdp_per_capita > 49.999 }
 			}
 			set_variable = { THIS.EU_natural_subsidies = 4 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
 		}
 		else_if = {
@@ -2447,7 +2595,7 @@ distribute_EU_natural_exp = {
 				check_variable = { gdp_per_capita > 29.999 }
 			}
 			set_variable = { THIS.EU_natural_subsidies = 5 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
 		}
 		else_if = {
@@ -2456,7 +2604,7 @@ distribute_EU_natural_exp = {
 				check_variable = { gdp_per_capita > 19.999 }
 			}
 			set_variable = { THIS.EU_natural_subsidies = 6 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
 		}
 		else_if = {
@@ -2465,7 +2613,7 @@ distribute_EU_natural_exp = {
 				check_variable = { gdp_per_capita > 14.999 }
 			}
 			set_variable = { THIS.EU_natural_subsidies = 7 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
 		}
 		else_if = {
@@ -2474,7 +2622,7 @@ distribute_EU_natural_exp = {
 				check_variable = { gdp_per_capita > 9.999 }
 			}
 			set_variable = { THIS.EU_natural_subsidies = 8 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
 		}
 		else_if = {
@@ -2483,7 +2631,7 @@ distribute_EU_natural_exp = {
 				check_variable = { gdp_per_capita > 6.999 }
 			}
 			set_variable = { THIS.EU_natural_subsidies = 9 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
 		}
 		else_if = {
@@ -2492,7 +2640,7 @@ distribute_EU_natural_exp = {
 				check_variable = { gdp_per_capita > 3.999 }
 			}
 			set_variable = { THIS.EU_natural_subsidies = 10 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
 		}
 		else_if = {
@@ -2501,7 +2649,7 @@ distribute_EU_natural_exp = {
 				check_variable = { gdp_per_capita > 1.999 }
 			}
 			set_variable = { THIS.EU_natural_subsidies = 11 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
 		}
 		else_if = {
@@ -2509,7 +2657,7 @@ distribute_EU_natural_exp = {
 				check_variable = { gdp_per_capita < 2.00 }
 			}
 			set_variable = { THIS.EU_natural_subsidies = 12 }
-			multiply_variable = { THIS.EU_natural_subsidies = THIS.var_EUpopRatio }
+			multiply_variable = { THIS.EU_natural_subsidies = THIS.EU_pop_ratio }
 			add_to_variable = { global.EU_natural_subsidies_total = THIS.EU_natural_subsidies }
 		}
 	}
@@ -2600,4 +2748,664 @@ EU_budget_total_gain = {
 		subtract_from_variable = { THIS.EU_budget_net = THIS.EU_budget_contribution }
 	}
 	update_eu_dirty_variable = yes
+}
+
+######################
+######################
+### EU Parliament ####
+######################
+######################
+clear_EU_Parliament_MEP_THIS = {
+	### clear MEP vars
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { MEP_number = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				clear_variable = THIS.MEP_party_[MEP_n]
+			}
+			MEP_n = "[?MEP_number]"
+		}
+	}
+	update_eu_dirty_variable = yes
+}
+
+clear_EU_Parliament = {
+	### EU Parliament global flags
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { PG_party_number = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				clr_global_flag = EU_parl_PG_party_[PG_p_n]
+			}
+			PG_p_n = "[?PG_party_number]"
+		}
+	}
+	### EU Parliament global vars
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { MEP_PG_number = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				clear_variable = global.MEP_PG_party_[MEP_PG_n]
+			}
+			MEP_PG_n = "[?MEP_PG_number]"
+		}
+	}
+	#
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { MEP_Ratio_number = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				clear_variable = global.MEP_Ratio_PG_party_[MEP_Ratio_n]
+			}
+			MEP_Ratio_n = "[?MEP_Ratio_number]"
+		}
+	}
+	#
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { PI_PG_number = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				clear_variable = global.PI_PG_party_[PI_PG_n]
+			}
+			PI_PG_n = "[?PI_PG_number]"
+		}
+	}
+
+	for_each_scope_loop = {
+		array = global.EU_potential
+		clear_EU_Parliament_MEP_THIS = yes
+	}
+
+	clear_variable = global.MEP_Total
+	clear_variable = global.MEP_Majority
+	update_eu_dirty_variable = yes
+}
+
+election_EU_Parliament = {
+
+	# set max MEPs
+	if = {
+		limit = {
+			focus_EU651_accepted = yes 
+			focus_EU104_accepted = yes 
+		}
+		set_variable = { global.EU_Parliament_max_MEP = 1000 }
+	}
+	else_if = {
+		limit = {
+			NOT = { focus_EU651_accepted = yes }
+			focus_EU104_accepted = yes
+		}
+		set_variable = { global.EU_Parliament_max_MEP = 750 }
+	}
+	else = { set_variable = { global.EU_Parliament_max_MEP = 732 } }
+
+	# set MEP clamps for countries
+	if = {
+		limit = {
+			focus_EU651_accepted = yes
+			focus_EU104_accepted = yes
+		}
+		set_variable = { global.min_clamp_eu_mep = 8 }
+	}
+	else_if = {
+		limit = { 
+			NOT = { focus_EU651_accepted = yes }
+			focus_EU104_accepted = yes 
+		}
+		set_variable = { global.min_clamp_eu_mep = 6 }
+	}
+	else_if = {
+		limit = { 
+			NOT = { focus_EU651_accepted = yes }
+			NOT = { focus_EU104_accepted = yes }
+		}
+		set_variable = { global.min_clamp_eu_mep = 5 }
+	}
+	if = {
+		limit = {
+			focus_EU651_accepted = yes
+			focus_EU104_accepted = yes
+		}
+		set_variable = { global.max_clamp_eu_mep = 100 }
+	}
+	else_if = {
+		limit = { 
+			NOT = { focus_EU651_accepted = yes }
+			focus_EU104_accepted = yes 
+		}
+		set_variable = { global.max_clamp_eu_mep = 96 }
+	}
+	else_if = {
+		limit = { 
+			NOT = { focus_EU651_accepted = yes }
+			NOT = { focus_EU104_accepted = yes }
+		}
+		set_variable = { global.max_clamp_eu_mep = 99 }
+	}
+	
+	### Election in member_state
+	for_each_scope_loop = {
+		array = global.EU_member
+		election_EU_Parliament_in_member_state = yes
+	}
+
+	set_variable = { global.MEP_Total = 0 } # Recalculate to account for roundings
+	for_each_scope_loop = {
+		array = global.EU_member
+		add_to_variable = { global.MEP_Total = THIS.MEP_Total }
+	}
+
+	### check political groups
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { p_number = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				set_global_flag = EU_parl_PG_party_[p_n]
+				set_variable = { global.MEP_Ratio_PG_party_[p_n] = global.MEP_PG_party_[p_n] }
+				divide_variable = { global.MEP_Ratio_PG_party_[p_n] = global.MEP_Total }
+				add_to_array = { global.MEP_PG_array^[p_n] = global.MEP_PG_party_[p_n] }
+			}
+			p_n = "[?p_number]"
+		}
+	}
+	
+	set_variable = { global.MEP_Total = 0 } # Recalculate to account for more roundings
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { p_number2 = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				add_to_variable = { global.MEP_Total = global.MEP_PG_party_[p_n2] }
+			}
+			p_n2 = "[?p_number2]"
+		}
+	}
+
+	set_variable = { global.MEP_Majority = global.MEP_Total }
+	divide_variable = { global.MEP_Majority = 2 }
+	add_to_variable = { global.MEP_Majority = 1 }
+	
+}
+
+election_EU_Parliament_in_member_state = {
+	###  MEP for this member state
+	set_temp_variable = { temp1 = global.EU_Parliament_max_MEP }
+	multiply_temp_variable = { temp1 = THIS.EU_pop_ratio }
+	round_temp_variable = temp1
+	clamp_temp_variable = { 
+		var = temp1
+		min = global.min_clamp_eu_mep
+		max = global.max_clamp_eu_mep
+	}
+	set_variable = { THIS.MEP_Total = temp1 }
+	set_variable = { THIS.MEP_Total_target = THIS.MEP_Total }
+	### MEP per subideology
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { p_number3 = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				set_variable = { THIS.MEP_party_[p_n3] = party_pop_array^[p_n3] }
+				multiply_variable = { THIS.MEP_party_[p_n3] = THIS.MEP_Total }
+				round_variable = THIS.MEP_party_[p_n3]
+			}
+			p_n3 = "[?p_number3]"
+		}
+	}
+	set_variable = { THIS.MEP_Total = 0 }
+	### MEP per subideology # Recalc for roundings
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { p_number4 = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				add_to_variable = { THIS.MEP_Total = THIS.MEP_party_[p_n4] }
+				add_to_array = { THIS.MEP_party_array = THIS.MEP_party_[p_n4] }
+			}
+			p_n4 = "[?p_number4]"
+		}
+	}
+
+	set_temp_variable = { value_temp = 0 }
+	set_temp_variable = { index_temp = 0 }
+
+	find_highest_in_array = {
+		array = THIS.MEP_party_array
+		value = value_temp
+		index = index_temp
+	}
+	set_variable = { THIS.highest_MEP_party_value = value_temp }
+	set_variable = { THIS.highest_MEP_party_index = index_temp }
+	set_variable = { THIS.var77 = THIS.highest_MEP_party_value }
+
+	if = {
+		limit = { NOT = { check_variable = { THIS.MEP_Total_target = THIS.MEP_Total } } }
+
+		meta_effect = {
+			text = {
+				if = {
+					limit = { check_variable = { THIS.MEP_Total > THIS.MEP_Total_target } }
+					set_temp_variable = { subtraction_value = THIS.MEP_Total }
+					subtract_from_temp_variable = { subtraction_value = THIS.MEP_Total_target }
+					subtract_from_variable = { THIS.MEP_party_[highest_index_meta] = subtraction_value }
+				}
+				else_if = {
+					limit = { check_variable = { THIS.MEP_Total < THIS.MEP_Total_target } }
+					set_temp_variable = { addition_value = THIS.MEP_Total_target }
+					subtract_from_temp_variable = { addition_value = THIS.MEP_Total }
+					add_to_variable = { THIS.MEP_party_[highest_index_meta] = addition_value }
+				}
+			}
+			highest_index_meta = "[?THIS.highest_MEP_party_index]"
+		}
+	}
+
+	set_temp_variable = { value_temp = 0 }
+	set_temp_variable = { index_temp = 0 }
+
+	### Recalc total
+	set_variable = { THIS.MEP_Total = 0 }
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { p_number5 = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				add_to_variable = { THIS.MEP_Total = THIS.MEP_party_[p_n5] }
+			}
+			p_n5 = "[?p_number5]"
+		}
+	}
+	### Recalc PG
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { p_number6 = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				add_to_variable = { global.MEP_PG_party_[p_n6] = THIS.MEP_party_[p_n6] }
+			}
+			p_n6 = "[?p_number6]"
+		}
+	}
+	
+	update_eu_dirty_variable = yes
+}
+
+#################################
+### EU Parliament legislation ###
+#################################
+set_ruling_party_PG_support = {
+	log = "[GetDateText]: [THIS.GetName]: set_ruling_party_PG_support"
+	set_temp_variable = { indexed_addition = 0 }
+
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { rp_PG_number = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				if = { limit = { is_in_array = { ruling_party = [rp_PG_n] } }
+					set_global_flag = global.PG_party_[rp_PG_n]_support
+					set_temp_variable = { indexed_addition = global.MEP_PG_party_[rp_PG_n] }
+				}
+			}
+			rp_PG_n = "[?rp_PG_number]"
+		}
+	}
+
+	set_variable = { global.active_MEP_Support = indexed_addition }
+	meta_effect = {
+		text = {
+			set_variable = { global.focus_[EUXXX]_MEP_support = indexed_addition }
+		}
+		EUXXX = "[EUXXX_EP_agenda]"
+	}
+	update_eu_dirty_variable = yes
+}
+
+reset_MEP_support_party_x = {
+	set_variable = { global.EU_draft_party_0_variable = 0 }
+	set_variable = { global.EU_draft_party_1_variable = 0 }
+	set_variable = { global.EU_draft_party_2_variable = 0 }
+	set_variable = { global.EU_draft_party_3_variable = 0 }
+	set_variable = { global.EU_draft_party_4_variable = 0 }
+	set_variable = { global.EU_draft_party_5_variable = 0 }
+	set_variable = { global.EU_draft_party_6_variable = 0 }
+	set_variable = { global.EU_draft_party_7_variable = 0 }
+	set_variable = { global.EU_draft_party_8_variable = 0 }
+	set_variable = { global.EU_draft_party_9_variable = 0 }
+	set_variable = { global.EU_draft_party_10_variable = 0 }
+	set_variable = { global.EU_draft_party_11_variable = 0 }
+	set_variable = { global.EU_draft_party_12_variable = 0 }
+	set_variable = { global.EU_draft_party_13_variable = 0 }
+	set_variable = { global.EU_draft_party_14_variable = 0 }
+	set_variable = { global.EU_draft_party_15_variable = 0 }
+	set_variable = { global.EU_draft_party_16_variable = 0 }
+	set_variable = { global.EU_draft_party_17_variable = 0 }
+	set_variable = { global.EU_draft_party_18_variable = 0 }
+	set_variable = { global.EU_draft_party_19_variable = 0 }
+	set_variable = { global.EU_draft_party_20_variable = 0 }
+	set_variable = { global.EU_draft_party_21_variable = 0 }
+	set_variable = { global.EU_draft_party_22_variable = 0 }
+	set_variable = { global.EU_draft_party_23_variable = 0 }
+}
+
+all_MEP_support_draft = {
+	set_variable = { global.EU_draft_party_0_variable = 10 }
+	set_variable = { global.EU_draft_party_1_variable = 10 }
+	set_variable = { global.EU_draft_party_2_variable = 10 }
+	set_variable = { global.EU_draft_party_3_variable = 10 }
+	set_variable = { global.EU_draft_party_4_variable = 10 }
+	set_variable = { global.EU_draft_party_5_variable = 10 }
+	set_variable = { global.EU_draft_party_6_variable = 10 }
+	set_variable = { global.EU_draft_party_7_variable = 10 }
+	set_variable = { global.EU_draft_party_8_variable = 10 }
+	set_variable = { global.EU_draft_party_9_variable = 10 }
+	set_variable = { global.EU_draft_party_10_variable = 10 }
+	set_variable = { global.EU_draft_party_11_variable = 10 }
+	set_variable = { global.EU_draft_party_12_variable = 10 }
+	set_variable = { global.EU_draft_party_13_variable = 10 }
+	set_variable = { global.EU_draft_party_14_variable = 10 }
+	set_variable = { global.EU_draft_party_15_variable = 10 }
+	set_variable = { global.EU_draft_party_16_variable = 10 }
+	set_variable = { global.EU_draft_party_17_variable = 10 }
+	set_variable = { global.EU_draft_party_18_variable = 10 }
+	set_variable = { global.EU_draft_party_19_variable = 10 }
+	set_variable = { global.EU_draft_party_20_variable = 10 }
+	set_variable = { global.EU_draft_party_21_variable = 10 }
+	set_variable = { global.EU_draft_party_22_variable = 10 }
+	set_variable = { global.EU_draft_party_23_variable = 10 }
+}
+
+assess_MEP_support_party_x = {
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { MEP_sup_number = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				if = {
+					limit = { check_variable = { global.EU_draft_party_[MEP_sup_n]_variable > 0 } }
+					set_global_flag = global.PG_party_[MEP_sup_n]_support
+					add_to_variable = { global.active_MEP_Support = global.MEP_PG_party_[MEP_sup_n] }
+				}
+			}
+			MEP_sup_n = "[?MEP_sup_number]"
+		}
+	}
+	update_eu_dirty_variable = yes
+}
+
+####################################
+### clr_global_flag_PG_X_support ###
+####################################
+
+clr_global_flag_PG_X_support = {
+	for_each_loop = {
+		array = global.EU_parl_party_number
+		set_variable = { PG_ps_number = global.EU_parl_party_number^i }
+
+		meta_effect = {
+			text = {
+				clr_global_flag = global.PG_party_[PG_ps_n]_support
+			}
+			PG_ps_n = "[?PG_ps_number]"
+		}
+	}
+	update_eu_dirty_variable = yes
+}
+
+
+###############################
+### EU POTEF dynmod effects ###
+###############################
+
+update_POTEF_army_infantry_defence_factor = {
+	custom_effect_tooltip = POTEF_army_infantry_defence_factor_tt
+	add_to_variable = { POTEF_army_infantry_defence_factor = POTEF_army_infantry_defence_factor_change }
+}
+update_POTEF_terrain_penalty_reduction = {
+	custom_effect_tooltip = POTEF_terrain_penalty_reduction_tt
+	add_to_variable = { POTEF_terrain_penalty_reduction = POTEF_terrain_penalty_reduction_change }
+}
+update_POTEF_army_armor_attack_factor = {
+	custom_effect_tooltip = POTEF_army_armor_attack_factor_tt
+	add_to_variable = { POTEF_army_armor_attack_factor = POTEF_army_armor_attack_factor_change }
+}
+update_POTEF_army_armor_speed_factor = {
+	custom_effect_tooltip = POTEF_army_armor_speed_factor_tt
+	add_to_variable = { POTEF_army_armor_speed_factor = POTEF_army_armor_speed_factor_change }
+}
+update_POTEF_army_armor_defence_factor = {
+	custom_effect_tooltip = POTEF_army_armor_defence_factor_tt
+	add_to_variable = { POTEF_army_armor_defence_factor = POTEF_army_armor_defence_factor_change }
+}
+update_POTEF_recon_factor = {
+	custom_effect_tooltip = POTEF_recon_factor_tt
+	add_to_variable = { POTEF_recon_factor = POTEF_recon_factor_change }
+}
+update_POTEF_river_crossing_factor = {
+	custom_effect_tooltip = POTEF_river_crossing_factor_tt
+	add_to_variable = { POTEF_river_crossing_factor = POTEF_river_crossing_factor_change }
+}
+update_POTEF_paradrop_organization_factor = {
+	custom_effect_tooltip = POTEF_paradrop_organization_factor_tt
+	add_to_variable = { POTEF_paradrop_organization_factor = POTEF_paradrop_organization_factor_change }
+}
+update_POTEF_extra_paratrooper_supply_grace = {
+	custom_effect_tooltip = POTEF_extra_paratrooper_supply_grace_tt
+	add_to_variable = { POTEF_extra_paratrooper_supply_grace = POTEF_extra_paratrooper_supply_grace_change }
+}
+update_POTEF_experience_gain_navy = {
+	custom_effect_tooltip = POTEF_experience_gain_navy_tt
+	add_to_variable = { POTEF_experience_gain_navy = POTEF_experience_gain_navy_change }
+}
+update_POTEF_experience_gain_navy_factor = {
+	custom_effect_tooltip = POTEF_experience_gain_navy_factor_tt
+	add_to_variable = { POTEF_experience_gain_navy_factor = POTEF_experience_gain_navy_factor_change }
+}
+update_POTEF_navy_org_factor = {
+	custom_effect_tooltip = POTEF_navy_org_factor_tt
+	add_to_variable = { POTEF_navy_org_factor = POTEF_navy_org_factor_change }
+}
+update_POTEF_army_intel_factor = {
+	custom_effect_tooltip = POTEF_army_intel_factor_tt
+	add_to_variable = { POTEF_army_intel_factor = POTEF_army_intel_factor_change }
+}
+update_POTEF_navy_intel_factor = {
+	custom_effect_tooltip = POTEF_navy_intel_factor_tt
+	add_to_variable = { POTEF_navy_intel_factor = POTEF_navy_intel_factor_change }
+}
+update_POTEF_airforce_intel_factor = {
+	custom_effect_tooltip = POTEF_airforce_intel_factor_tt
+	add_to_variable = { POTEF_airforce_intel_factor = POTEF_airforce_intel_factor_change }
+}
+update_POTEF_winter_attrition_factor = {
+	custom_effect_tooltip = POTEF_winter_attrition_factor_tt
+	add_to_variable = { POTEF_winter_attrition_factor = POTEF_winter_attrition_factor_change }
+}
+update_POTEF_acclimatization_cold_climate_gain_factor = {
+	custom_effect_tooltip = POTEF_acclimatization_cold_climate_gain_factor_tt
+	add_to_variable = { POTEF_acclimatization_cold_climate_gain_factor = POTEF_acclimatization_cold_climate_gain_factor_change }
+}
+update_POTEF_mechanized_attack_factor = {
+	custom_effect_tooltip = POTEF_mechanized_attack_factor_tt
+	add_to_variable = { POTEF_mechanized_attack_factor = POTEF_mechanized_attack_factor_change }
+}
+update_POTEF_mechanized_defence_factor = {
+	custom_effect_tooltip = POTEF_mechanized_defence_factor_tt
+	add_to_variable = { POTEF_mechanized_defence_factor = POTEF_mechanized_defence_factor_change }
+}
+update_POTEF_motorized_attack_factor = {
+	custom_effect_tooltip = POTEF_motorized_attack_factor_tt
+	add_to_variable = { POTEF_motorized_attack_factor = POTEF_motorized_attack_factor_change }
+}
+update_POTEF_motorized_defence_factor = {
+	custom_effect_tooltip = POTEF_motorized_defence_factor_tt
+	add_to_variable = { POTEF_motorized_defence_factor = POTEF_motorized_defence_factor_change }
+}
+update_POTEF_max_planning = {
+	custom_effect_tooltip = POTEF_max_planning_tt
+	add_to_variable = { POTEF_max_planning = POTEF_max_planning_change }
+}
+update_POTEF_planning_speed = {
+	custom_effect_tooltip = POTEF_planning_speed_tt
+	add_to_variable = { POTEF_planning_speed = POTEF_planning_speed_change }
+}
+update_POTEF_political_power_factor = {
+	custom_effect_tooltip = POTEF_political_power_factor_tt
+	add_to_variable = { POTEF_political_power_factor = POTEF_political_power_factor_change }
+}
+update_POTEF_command_power_gain = {
+	custom_effect_tooltip = POTEF_command_power_gain_tt
+	add_to_variable = { POTEF_command_power_gain = POTEF_command_power_gain_change }
+}
+update_POTEF_monthly_population = {
+	custom_effect_tooltip = POTEF_monthly_population_tt
+	add_to_variable = { POTEF_monthly_population = POTEF_monthly_population_change }
+}
+update_POTEF_war_support_factor = {
+	custom_effect_tooltip = POTEF_war_support_factor_tt
+	add_to_variable = { POTEF_war_support_factor = POTEF_war_support_factor_change }
+}
+update_POTEF_trade_opinion_factor = {
+	custom_effect_tooltip = POTEF_trade_opinion_factor_tt
+	add_to_variable = { POTEF_trade_opinion_factor = POTEF_trade_opinion_factor_change }
+}
+update_POTEF_opinion_gain_monthly_factor = {
+	custom_effect_tooltip = POTEF_opinion_gain_monthly_factor_tt
+	add_to_variable = { POTEF_opinion_gain_monthly_factor = POTEF_opinion_gain_monthly_factor_change }
+}
+update_POTEF_consumer_goods_factor = {
+	custom_effect_tooltip = POTEF_consumer_goods_factor_tt
+	add_to_variable = { POTEF_consumer_goods_factor = POTEF_consumer_goods_factor_change }
+}
+update_POTEF_intel_network_gain_factor = {
+	custom_effect_tooltip = POTEF_intel_network_gain_factor_tt
+	add_to_variable = { POTEF_intel_network_gain_factor = POTEF_intel_network_gain_factor_change }
+}
+update_POTEF_send_volunteer_size = {
+	custom_effect_tooltip = POTEF_send_volunteer_size_tt
+	add_to_variable = { POTEF_send_volunteer_size = POTEF_send_volunteer_size_change }
+}
+update_POTEF_amphibious_invasion = {
+	custom_effect_tooltip = POTEF_amphibious_invasion_tt
+	add_to_variable = { POTEF_amphibious_invasion = POTEF_amphibious_invasion_change }
+}
+update_POTEF_amphibious_invasion_defence = {
+	custom_effect_tooltip = POTEF_amphibious_invasion_defence_tt
+	add_to_variable = { POTEF_amphibious_invasion_defence = POTEF_amphibious_invasion_defence_change }
+}
+update_POTEF_naval_invasion_penalty = {
+	custom_effect_tooltip = POTEF_naval_invasion_penalty_tt
+	add_to_variable = { POTEF_naval_invasion_penalty = POTEF_naval_invasion_penalty_change }
+}
+update_POTEF_naval_invasion_prep_speed = {
+	custom_effect_tooltip = POTEF_naval_invasion_prep_speed_tt
+	add_to_variable = { POTEF_naval_invasion_prep_speed = POTEF_naval_invasion_prep_speed_change }
+}
+update_POTEF_naval_invasion_capacity = {
+	custom_effect_tooltip = POTEF_naval_invasion_capacity_tt
+	add_to_variable = { POTEF_naval_invasion_capacity = POTEF_naval_invasion_capacity_change }
+}
+update_POTEF_invasion_preparation = {
+	custom_effect_tooltip = POTEF_invasion_preparation_tt
+	add_to_variable = { POTEF_invasion_preparation = POTEF_invasion_preparation_change }
+}
+update_POTEF_air_attack_factor = {
+	custom_effect_tooltip = POTEF_air_attack_factor_tt
+	add_to_variable = { POTEF_air_attack_factor = POTEF_air_attack_factor_change }
+}
+update_POTEF_cas_damage_reduction = {
+	custom_effect_tooltip = POTEF_cas_damage_reduction_tt
+	add_to_variable = { POTEF_cas_damage_reduction = POTEF_cas_damage_reduction_change }
+}
+update_POTEF_army_artillery_attack_factor = {
+	custom_effect_tooltip = POTEF_army_artillery_attack_factor_tt
+	add_to_variable = { POTEF_army_artillery_attack_factor = POTEF_army_artillery_attack_factor_change }
+}
+update_POTEF_army_artillery_defence_factor = {
+	custom_effect_tooltip = POTEF_army_artillery_defence_factor_tt
+	add_to_variable = { POTEF_army_artillery_defence_factor = POTEF_army_artillery_defence_factor_change }
+}
+update_POTEF_boost_resistance_factor = {
+	custom_effect_tooltip = POTEF_boost_resistance_factor_tt
+	add_to_variable = { POTEF_boost_resistance_factor = POTEF_boost_resistance_factor_change }
+}
+update_POTEF_root_out_resistance_effectiveness_factor = {
+	custom_effect_tooltip = POTEF_root_out_resistance_effectiveness_factor_tt
+	add_to_variable = { POTEF_root_out_resistance_effectiveness_factor = POTEF_root_out_resistance_effectiveness_factor_change }
+}
+update_POTEF_resistance_damage_to_garrison = {
+	custom_effect_tooltip = POTEF_resistance_damage_to_garrison_tt
+	add_to_variable = { POTEF_resistance_damage_to_garrison = POTEF_resistance_damage_to_garrison_change }
+}
+update_POTEF_resistance_target = {
+	custom_effect_tooltip =  POTEF_resistance_target_tt
+	add_to_variable = { POTEF_resistance_target = POTEF_resistance_target_change }
+}
+update_POTEF_max_dig_in_factor = {
+	custom_effect_tooltip = POTEF_max_dig_in_factor_tt
+	add_to_variable = { POTEF_max_dig_in_factor = POTEF_max_dig_in_factor_change }
+}
+update_POTEF_dig_in_speed_factor = {
+	custom_effect_tooltip = POTEF_dig_in_speed_factor_tt
+	add_to_variable = { POTEF_dig_in_speed_factor = POTEF_dig_in_speed_factor_change }
+}
+update_POTEF_defence = {
+	custom_effect_tooltip = POTEF_defence_tt
+	add_to_variable = { POTEF_defence = POTEF_defence_change }
+}
+update_POTEF_production_speed_bunker_factor = {
+	custom_effect_tooltip = POTEF_production_speed_bunker_factor_tt
+	add_to_variable = { POTEF_production_speed_bunker_factor = POTEF_production_speed_bunker_factor_change }
+}
+update_POTEF_special_forces_attack_factor = {
+	custom_effect_tooltip = POTEF_special_forces_attack_factor_tt
+	add_to_variable = { POTEF_special_forces_attack_factor = POTEF_special_forces_attack_factor_change }
+}
+update_POTEF_special_forces_defence_factor = {
+	custom_effect_tooltip = POTEF_special_forces_defence_factor_tt
+	add_to_variable = { POTEF_special_forces_defence_factor = POTEF_special_forces_defence_factor_change }
+}
+update_POTEF_special_forces_min = {
+	custom_effect_tooltip = POTEF_special_forces_min_tt
+	add_to_variable = { POTEF_special_forces_min = POTEF_special_forces_min_change }
+}
+update_POTEF_special_forces_cap = {
+	custom_effect_tooltip = POTEF_special_forces_cap_tt
+	add_to_variable = { POTEF_special_forces_cap = POTEF_special_forces_cap_change }
+}
+update_POTEF_army_infantry_attack_factor = {
+	custom_effect_tooltip = POTEF_army_infantry_attack_factor_tt
+	add_to_variable = { POTEF_army_infantry_attack_factor = POTEF_army_infantry_attack_factor_change }
+}
+update_POTEF_army_speed_factor = {
+	custom_effect_tooltip = POTEF_army_speed_factor_tt
+	add_to_variable = { POTEF_army_speed_factor = POTEF_army_speed_factor_change }
+}
+update_POTEF_stability_factor = {
+	custom_effect_tooltip = POTEF_stability_factor_tt
+	add_to_variable = { POTEF_stability_factor = POTEF_stability_factor_change }
+}
+update_POTEF_research_speed_factor = {
+	custom_effect_tooltip = POTEF_research_speed_factor_tt
+	add_to_variable = { POTEF_research_speed_factor = POTEF_research_speed_factor_change }
 }
