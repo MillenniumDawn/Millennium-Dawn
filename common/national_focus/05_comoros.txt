@@ -1,8 +1,8 @@
-# Author(s): Sheep, Bondex, AngriestBird
+# Author(s): AngriestBird, Sheep, Bondex
 # TODO: Refactor the Mayotte content so it's more interesting for Comoros
-# TODO: Remove the ability for France to become a puppet of France
 # TODO: Expand the political parties for Comoros to include additional parties and politicians
 # TODO: Add a section about the Comorian people their constitution and the autonomy degree for the islands
+# TODO: Add several decisions for Madagascar to exploit local resources such as technology metals and precious metals suhc as Gold
 focus_tree = {
 	id = comoros_focus
 
@@ -18,6 +18,7 @@ focus_tree = {
 
 	shared_focus = AFRICAN_UNION_shared_focus
 
+	# Military Tree
 	focus = {
 		id = COM_army
 		icon = Comorean_Army_1
@@ -37,8 +38,7 @@ focus_tree = {
 			increase_military_spending = yes
 
 			hidden_effect = {
-				if = {
-					limit = { is_ai = yes is_historical_focus_on = no }
+				if = { limit = { is_ai = yes is_historical_focus_on = no }
 					random_list = {
 						33 = {
 							set_country_flag = COM_army_route_1
@@ -414,6 +414,10 @@ focus_tree = {
 				set_temp_variable = { interest_rate_check = 7.99 }
 				calculate_ai_interest = yes
 			}
+			modifier = {
+				factor = 0
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
 		}
 	}
 
@@ -447,6 +451,10 @@ focus_tree = {
 				set_temp_variable = { input_cost = 7.50 }
 				set_temp_variable = { interest_rate_check = 7.99 }
 				calculate_ai_interest = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
 			}
 		}
 	}
@@ -524,12 +532,31 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_MILITARY_LAWS }
 
 		available = {
-			NOT = { has_country_flag = COM_disbanded_presidental_guard }
+			NOT = { has_country_flag = COM_disbanded_presidential_guard }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_expand_the_presidential_guard executed"
-			# TODO: Add a focus reward for this
+			custom_effect_tooltip = COM_expand_the_presidential_guard_tt
+			hidden_effect = {
+				division_template = {
+					name = "The Presidential Guard"
+					is_locked = yes
+					priority = 2
+					regiments = {
+						L_Inf_Bat = { x = 0 y = 0 }
+						L_Inf_Bat = { x = 0 y = 1 }
+						L_Inf_Bat = { x = 0 y = 2 }
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"1st Presidential Guard\" division_template = \"The Presidential Guard\" start_experience_factor = 1.0"
+						owner = COM
+						count = 1
+					}
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -760,6 +787,15 @@ focus_tree = {
 			modifier = {
 				factor = 1.5
 				check_variable = { maritime_industry_opinion < 50 }
+			}
+			modifier = {
+				factor = 1.5
+				any_enemy_country = {
+					naval_strength_ratio = {
+						tag = COM
+						ratio > 1
+					}
+				}
 			}
 		}
 	}
@@ -2188,7 +2224,6 @@ focus_tree = {
 					target = COM
 					modifier = declaration_of_friendship
 				}
-				country_event = comoros.2
 			}
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
@@ -3120,6 +3155,10 @@ focus_tree = {
 		prerequisite = { focus = COM_anti_colonialist_propaganda }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			NOT = { 940 = { is_owned_and_controlled_by = COM } }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_demand_mayotte executed"
@@ -4216,9 +4255,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_STABILITY }
 
 		available = {
-			NOT = {
-				has_idea = COM_poor_military_idea
-			}
+			COM_does_not_currently_have_corrupt_military = yes
 		}
 
 		completion_reward = {
