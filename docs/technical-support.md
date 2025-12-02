@@ -11,7 +11,7 @@ Purpose of this page is a more-generalized extension of the technical-support pa
 ## How do I download Millennium Dawn?
 
 **__Steam__**
-Current MD Version: ``v1.12.2``
+Current MD Version: ``v1.12.2a``
 HOI Version: ``1.17.*``
 Checksum: ``fc5c``
 https://steamcommunity.com/sharedfiles/filedetails/?id=2777392649
