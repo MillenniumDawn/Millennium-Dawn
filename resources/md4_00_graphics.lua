@@ -1,5 +1,5 @@
 NDefines_Graphics = {
-	
+
 NWiki = {
 	BASE_URL = "",
 	FORUM_URL = "https://modernday4.gitlab.io/"
@@ -60,7 +60,7 @@ NMapIcons = {
 		DEFAULT_PRIORITY_CAPITAL = 5,
 		DEFAULT_PRIORITY_PEACE_COST = 3,
 		DEFAULT_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		STATES_PRIORITY_UNITS_STACK = 10,
 		STATES_PRIORITY_UNITS_STACK_GROUP = 11,
 		STATES_PRIORITY_VICTORY_POINTS = 0, --5
@@ -78,7 +78,7 @@ NMapIcons = {
 		STATES_PRIORITY_CAPITAL = 5,
 		STATES_PRIORITY_PEACE_COST = 3,
 		STATES_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		SUPPLY_AREAS_PRIORITY_UNITS_STACK = 10,
 		SUPPLY_AREAS_PRIORITY_UNITS_STACK_GROUP = 11,
 		SUPPLY_AREAS_PRIORITY_VICTORY_POINTS = 5,
@@ -96,7 +96,7 @@ NMapIcons = {
 		SUPPLY_AREAS_PRIORITY_CAPITAL = 5,
 		SUPPLY_AREAS_PRIORITY_PEACE_COST = 3,
 		SUPPLY_AREAS_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		STRATEGIC_AIR_PRIORITY_UNITS_STACK = 10,
 		STRATEGIC_AIR_PRIORITY_UNITS_STACK_GROUP = 11,
 		STRATEGIC_AIR_PRIORITY_VICTORY_POINTS = 5,
@@ -114,7 +114,7 @@ NMapIcons = {
 		STRATEGIC_AIR_PRIORITY_CAPITAL = 5,
 		STRATEGIC_AIR_PRIORITY_PEACE_COST = 3,
 		STRATEGIC_AIR_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		STRATEGIC_NAVY_PRIORITY_UNITS_STACK = 10,
 		STRATEGIC_NAVY_PRIORITY_UNITS_STACK_GROUP = 11,
 		STRATEGIC_NAVY_PRIORITY_VICTORY_POINTS = 5,
@@ -132,7 +132,7 @@ NMapIcons = {
 		STRATEGIC_NAVY_PRIORITY_CAPITAL = 5,
 		STRATEGIC_NAVY_PRIORITY_PEACE_COST = 3,
 		STRATEGIC_NAVY_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		RESISTANCE_PRIORITY_UNITS_STACK = 10,
 		RESISTANCE_PRIORITY_UNITS_STACK_GROUP = 11,
 		RESISTANCE_PRIORITY_VICTORY_POINTS = 5,
@@ -150,7 +150,7 @@ NMapIcons = {
 		RESISTANCE_PRIORITY_CAPITAL = 5,
 		RESISTANCE_PRIORITY_PEACE_COST = 3,
 		RESISTANCE_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		RESOURCES_PRIORITY_UNITS_STACK = 10,
 		RESOURCES_PRIORITY_UNITS_STACK_GROUP = 11,
 		RESOURCES_PRIORITY_VICTORY_POINTS = 5,
@@ -168,7 +168,7 @@ NMapIcons = {
 		RESOURCES_PRIORITY_CAPITAL = 5,
 		RESOURCES_PRIORITY_PEACE_COST = 3,
 		RESOURCES_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		DIPLOMACY_PRIORITY_UNITS_STACK = 10,
 		DIPLOMACY_PRIORITY_UNITS_STACK_GROUP = 11,
 		DIPLOMACY_PRIORITY_VICTORY_POINTS = 5,
@@ -186,7 +186,7 @@ NMapIcons = {
 		DIPLOMACY_PRIORITY_CAPITAL = 5,
 		DIPLOMACY_PRIORITY_PEACE_COST = 3,
 		DIPLOMACY_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		FACTIONS_PRIORITY_UNITS_STACK = 10,
 		FACTIONS_PRIORITY_UNITS_STACK_GROUP = 11,
 		FACTIONS_PRIORITY_VICTORY_POINTS = 5,
@@ -204,7 +204,7 @@ NMapIcons = {
 		FACTIONS_PRIORITY_CAPITAL = 5,
 		FACTIONS_PRIORITY_PEACE_COST = 3,
 		FACTIONS_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		STRATEGIC_REGIONS_PRIORITY_UNITS_STACK = 10,
 		STRATEGIC_REGIONS_PRIORITY_UNITS_STACK_GROUP = 11,
 		STRATEGIC_REGIONS_PRIORITY_VICTORY_POINTS = 5,
@@ -222,7 +222,7 @@ NMapIcons = {
 		STRATEGIC_REGIONS_PRIORITY_CAPITAL = 5,
 		STRATEGIC_REGIONS_PRIORITY_PEACE_COST = 3,
 		STRATEGIC_REGIONS_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		DEPLOYMENT_AIR_PRIORITY_UNITS_STACK = 10,
 		DEPLOYMENT_AIR_PRIORITY_UNITS_STACK_GROUP = 11,
 		DEPLOYMENT_AIR_PRIORITY_VICTORY_POINTS = 5,
@@ -240,7 +240,7 @@ NMapIcons = {
 		DEPLOYMENT_AIR_PRIORITY_CAPITAL = 5,
 		DEPLOYMENT_AIR_PRIORITY_PEACE_COST = 3,
 		DEPLOYMENT_AIR_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		DEPLOYMENT_NAVY_PRIORITY_UNITS_STACK = 10,
 		DEPLOYMENT_NAVY_PRIORITY_UNITS_STACK_GROUP = 11,
 		DEPLOYMENT_NAVY_PRIORITY_VICTORY_POINTS = 5,
@@ -258,7 +258,7 @@ NMapIcons = {
 		DEPLOYMENT_NAVY_PRIORITY_CAPITAL = 5,
 		DEPLOYMENT_NAVY_PRIORITY_PEACE_COST = 3,
 		DEPLOYMENT_NAVY_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		DEPLOYMENT_MILITARY_PRIORITY_UNITS_STACK = 10,
 		DEPLOYMENT_MILITARY_PRIORITY_UNITS_STACK_GROUP = 11,
 		DEPLOYMENT_MILITARY_PRIORITY_VICTORY_POINTS = 5,
@@ -276,7 +276,7 @@ NMapIcons = {
 		DEPLOYMENT_MILITARY_PRIORITY_CAPITAL = 5,
 		DEPLOYMENT_MILITARY_PRIORITY_PEACE_COST = 3,
 		DEPLOYMENT_MILITARY_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		PEACE_CONFERENCE_PRIORITY_UNITS_STACK = 10,
 		PEACE_CONFERENCE_PRIORITY_UNITS_STACK_GROUP = 11,
 		PEACE_CONFERENCE_PRIORITY_VICTORY_POINTS = 5,
@@ -294,7 +294,7 @@ NMapIcons = {
 		PEACE_CONFERENCE_PRIORITY_CAPITAL = 5,
 		PEACE_CONFERENCE_PRIORITY_PEACE_COST = 3,
 		PEACE_CONFERENCE_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		INFRASTRUCTURE_PRIORITY_UNITS_STACK = 10,
 		INFRASTRUCTURE_PRIORITY_UNITS_STACK_GROUP = 11,
 		INFRASTRUCTURE_PRIORITY_VICTORY_POINTS = 5,
@@ -312,7 +312,7 @@ NMapIcons = {
 		INFRASTRUCTURE_PRIORITY_CAPITAL = 5,
 		INFRASTRUCTURE_PRIORITY_PEACE_COST = 3,
 		INFRASTRUCTURE_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		DIPLOMACY_FABRICATE_CLAIM_PRIORITY_UNITS_STACK = 10,
 		DIPLOMACY_FABRICATE_CLAIM_PRIORITY_UNITS_STACK_GROUP = 11,
 		DIPLOMACY_FABRICATE_CLAIM_PRIORITY_VICTORY_POINTS = 5,
@@ -330,7 +330,7 @@ NMapIcons = {
 		DIPLOMACY_FABRICATE_CLAIM_PRIORITY_CAPITAL = 5,
 		DIPLOMACY_FABRICATE_CLAIM_PRIORITY_PEACE_COST = 3,
 		DIPLOMACY_FABRICATE_CLAIM_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		MANPOWER_PRIORITY_UNITS_STACK = 10,
 		MANPOWER_PRIORITY_UNITS_STACK_GROUP = 11,
 		MANPOWER_PRIORITY_VICTORY_POINTS = 5,
@@ -348,7 +348,7 @@ NMapIcons = {
 		MANPOWER_PRIORITY_CAPITAL = 5,
 		MANPOWER_PRIORITY_PEACE_COST = 3,
 		MANPOWER_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		IDEOLOGY_PRIORITY_UNITS_STACK = 10,
 		IDEOLOGY_PRIORITY_UNITS_STACK_GROUP = 11,
 		IDEOLOGY_PRIORITY_VICTORY_POINTS = 5,
@@ -366,7 +366,7 @@ NMapIcons = {
 		IDEOLOGY_PRIORITY_CAPITAL = 5,
 		IDEOLOGY_PRIORITY_PEACE_COST = 3,
 		IDEOLOGY_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		START_CONSTRUCTION_PRIORITY_UNITS_STACK = 10,
 		START_CONSTRUCTION_PRIORITY_UNITS_STACK_GROUP = 11,
 		START_CONSTRUCTION_PRIORITY_VICTORY_POINTS = 5,
@@ -384,7 +384,7 @@ NMapIcons = {
 		START_CONSTRUCTION_PRIORITY_CAPITAL = 5,
 		START_CONSTRUCTION_PRIORITY_PEACE_COST = 3,
 		START_CONSTRUCTION_PRIORITY_ADJACENCY_RULE = 3,
-		
+
 		PLAYERS_PRIORITY_UNITS_STACK = 10,
 		PLAYERS_PRIORITY_UNITS_STACK_GROUP = 11,
 		PLAYERS_PRIORITY_VICTORY_POINTS = 5,
@@ -419,16 +419,16 @@ NAirGfx = {
 	AIRPLANES_SCENE_DIR_RAND_MIN_ANGLE = 10.0, 		-- World scene Y direction random angle bonus (min value)
 	AIRPLANES_SCENE_DIR_RAND_MAX_ANGLE = 40.0, 		-- World scene Y direction random angle bonus (max value)
 	AIRPLANES_GROUND_COLLISION_OFFSET_Y = -5.0, 		-- Lets the 3d airplanes disappear after going a bit under the ground.
-	AIRPLANES_1_FIGHTER_PATROL_ANIM = 1, 			-- Number of fighters needed for a single instance of this animation 
+	AIRPLANES_1_FIGHTER_PATROL_ANIM = 1, 			-- Number of fighters needed for a single instance of this animation
 	AIRPLANES_3_FIGHTER_PATROL_ANIM = 3, 			-- Number of fighters needed for a single instance of this animation
 	AIRPLANES_1_BOMBER_BOMBING_ANIM = 1, 			-- Number of bombers needed for a single instance of this animation
 	AIRPLANES_3_BOMBER_BOMBING_ANIM = 3, 			-- Number of bombers needed for a single instance of this animation
 	AIRPLANES_1_FIGHTER_VS_1_FIGHTER_ANIM = 1, 		-- Number of fighters needed per side for a single instance of this animation
 	AIRPLANES_3_FIGHTER_VS_3_FIGHTER_ANIM = 3,		-- Number of bombers needed per side for a single instance of this animation
 	AIRPLANES_1_TRANSPORT_SUPPLY_ANIM = 1,			-- Number of planes needed for a single instance of this animation
-	AIRPLANES_3_TRANSPORT_SUPPLY_ANIM = 3,			-- Number of planes needed for a single instance of this animation	
+	AIRPLANES_3_TRANSPORT_SUPPLY_ANIM = 3,			-- Number of planes needed for a single instance of this animation
 	ROCKET_SPEED = 15.0,							-- Speed of rockets launched from rocket sites
-	
+
 	BOMBERS_DIVISION_FACTOR = 60,					-- Number of effective bombers in a strategic region will be divided by this factor.
 	MISSILES_DIVISION_FACTOR = 60,					-- Number of missiles shown in a strategic region will be divided by this factor.
 	FIGHTERS_DIVISION_FACTOR = 60,					-- Number of missiles shown in a strategic region will be divided by this factor.
@@ -451,7 +451,7 @@ NGraphics = {
 	SHIP_POPUP_SCALE_DOWN_SPEED = 4.1,
 	PORT_SHIP_OFFSET = 2.0,
 	SHIP_IN_PORT_SCALE = 0.25,
-	MAP_BUILDINGS_SHRINK_DISTANCE = 180,				
+	MAP_BUILDINGS_SHRINK_DISTANCE = 180,
 	CITY_SPRAWL_SHRINK_DISTANCE = 220.0, 			-- Start shrinking at this distance
 	CITY_SPRAWL_DRAW_DISTANCE = 250.0, 				-- Remove at this distance
 	CITY_SPRAWL_AMOUNT = 50.0, 						-- Size of cities, higher gives larger cities #50
@@ -573,12 +573,12 @@ NGraphics = {
 	GRADIENT_BORDERS_OUTLINE_CUTOFF_RADARS = 0.973, -- (OBSOLETE)
 	GRADIENT_BORDERS_OUTLINE_CUTOFF_FACTIONS = 0.973,
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_COUNTRY = 0.0, -- 0 to 1 value for override filling when camera zooms in/out. 0 = override disabled
-	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_STATE = 0.4, 
-	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_SUPPLY_AREA = 1.0, 
-	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_STRATEGIC_REGIONS = 1.0, 
-	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_RESISTANCE = 0.0, 
+	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_STATE = 0.4,
+	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_SUPPLY_AREA = 1.0,
+	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_STRATEGIC_REGIONS = 1.0,
+	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_RESISTANCE = 0.0,
 	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_RADARS = 0.0, -- (OBSOLETE)
-	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_FACTIONS = 0.0, 
+	GRADIENT_BORDERS_CAMERA_DISTANCE_OVERRIDE_FACTIONS = 0.0,
 	GRADIENT_BORDERS_OPTIMIZATION_RANGE = 530.0, -- smaller value = faster gradient borders but may have artifacts on large provinces (value to balance)
 	GRADIENT_BORDERS_REFRESH_FREQ = 0.912, -- how frequent is gradient borders repainting (optimization for high-speed gameplay)
 	STRATEGIC_AIR_COLOR_BAD = {0.8, 0, 0, 1}, -- rgb
@@ -649,9 +649,9 @@ NGraphics = {
 	TOOLTIP_SHOW_DELAY = 0.05, 						--How long before showing delayed tooltip.
 	TOOLTIP_HIDE_DELAY = 0.05, 						--How long before showing delayed tooltip.
 	MAP_ORDERS_MIN_LINE_POINTS = 8, -- Minimum number of points that an arrow/line must have to be valid (it's a fix to avoid being able to draw empty invisible orders) - use debug_lines console command to debug it and tweak.
-	
+
 	DIVISION_NAMES_GROUP_MAX_TOOLTIP_ENTRIES = 15,	-- Max entries to display the names in the tooltip, when mouse over the division-names-group in the division template designer.
-	
+
 	WEATHER_DISTANCE_CUTOFF = 1500, -- At what distance weather effects are hidden
 	WEATHER_DISTANCE_FADE_LENGTH = 400, -- How far the fade out distance should be
 	WEATHER_ZOOM_IN_CUTOFF = 358, -- At what distance weather effects are faded out the most when zooming in
@@ -660,7 +660,7 @@ NGraphics = {
 	WEATHER_PLAYBACK_RATE = 0.15, -- Playback rate at maximum distance
 	WEATHER_PLAYBACK_RATE_CUTOFF = 500, -- Playback rate maximum distance
 	WEATHER_PLAYBACK_RATE_LENGTH = 200, -- For how long to fade between normal playback rate and maximum distance playback rate
-	
+
 	POSTEFFECT_PER_PROVINCE_MIN_SNOW = 0.05, -- 0.1
 	POSTEFFECT_PER_PROVINCE_MAX_SNOW = 0.2,
 	POSTEFFECT_TOTAL_MIN_SNOW = 0.0,
@@ -672,7 +672,7 @@ NGraphics = {
 
 	LAND_COMBAT_BALANCED_COLOR = { 1.0, 1.0, 0.0, 1.0 } ,
 	LAND_COMBAT_LOSING_COLOR = { 1.0, 0.0, 0.0, 1.0 } ,
-	LAND_COMBAT_WINNING_COLOR = { 0.0, 1.0, 0.0, 1.0 } ,	
+	LAND_COMBAT_WINNING_COLOR = { 0.0, 1.0, 0.0, 1.0 } ,
 	LAND_COMBAT_LOSING_COLOR_VALUE = 0.40,
 	LAND_COMBAT_WINNING_COLOR_VALUE = 0.70,
 
@@ -685,7 +685,7 @@ NGraphics = {
 	--BRIGHT_THRESHOLD = 0.9, -- night
 	EMISSIVE_BLOOM_STRENGTH = 0.85, --1.0
 	MIN_HDR_ADJUSTMENT = 0.55,	--0.18 0.5  är hur mkt den anpassar sig till mörka områden, mindre värde -> mer mörkerseen
-	MAX_HDR_ADJUSTMENT = 0.68,	 --0.8 0.8 jätte högt värde så ser du bra trots att du står inuti solen och tittar. 
+	MAX_HDR_ADJUSTMENT = 0.68,	 --0.8 0.8 jätte högt värde så ser du bra trots att du står inuti solen och tittar.
 	HDR_ADJUSTMENT_SPEED = 6.0, -- 6
 	TONE_MAP_MIDDLE_GREY = 0.7, --0.7 was 0.5
 	TONE_MAP_LUMINANCE_WHITE = 1.0, --
@@ -712,10 +712,10 @@ NGraphics = {
 	MOON_INTENSITY = 2.5;
 
 	CUBEMAP_INTENSITY = 1.0,
-	
+
 	TREE_FADE_NEAR = 250.0,
 	TREE_FADE_FAR = 350.0,
-	
+
 	TRADE_ROUTE_NUM_CONVOYS_SCALE_FACTOR = 0.3,
 	TRADE_ROUTE_MAX_NUM_CONVOYS = 4,
 	TRADE_ROUTE_CONVOY_SPEED = 0.6,
@@ -737,7 +737,7 @@ NGraphics = {
 	TRADE_ROUTE_RESOURCE_IMPORT_COLOR = { 0.5, 0.5, 1.0, 0.75 } ,
 	TRADE_ROUTE_LEND_LEASE_EXPORT_COLOR = { 0.5, 1.0, 0.0, 0.75 } ,
 	TRADE_ROUTE_LEND_LEASE_IMPORT_COLOR = { 0.5, 1.0, 0.0, 0.75 } ,
-	
+
 	TRAIT_GRID_COLUMN_SHIFTS = {
 		3,
 		211,
@@ -746,13 +746,13 @@ NGraphics = {
 		211
 	} ,
 	TRAIT_GRID_ROW_SHIFT = 48,
-	
+
 	TRAIT_LINE_ASSIGNED_COLOR = { 0.47, 0.93, 0.65 } ,
 	TRAIT_LINE_NON_ASSIGNED_COLOR = { 0.67, 0.75, 0.93 } ,
-	
+
 	-- unit on-map interface modulate colors
 	FRIEND_COLOR = { 0.7, 0.9, 0.7 } ,
-	ENEMY_COLOR = { 1.0, 0.7, 0.7 } , 
+	ENEMY_COLOR = { 1.0, 0.7, 0.7 } ,
 	NEUTRAL_COLOR = { 1.0, 1.0, 1.0 } ,
 
 	COUNTRY_COLOR_HUE_MODIFIER = 0.0, -- 0.0
@@ -761,7 +761,7 @@ NGraphics = {
 	COUNTRY_UI_COLOR_HUE_MODIFIER = 0.0,
 	COUNTRY_UI_COLOR_SATURATION_MODIFIER = 1.0,
 	COUNTRY_UI_COLOR_BRIGHTNESS_MODIFIER = 1.0,
-	
+
 	COMMANDGROUP_PRESET_COLORS_HSV = {
 		90.0/360.0, 0.95, 0.86,
 		60.0/360.0, 0.95, 0.86,
@@ -774,26 +774,26 @@ NGraphics = {
 		210.0/360.0, 0.95, 0.86,
 		180.0/360.0, 0.95, 0.86
 	} ,
-	
+
 	CAMERA_OUTSIDE_MAP_DISTANCE_TOP = 100.0, --200
 	CAMERA_OUTSIDE_MAP_DISTANCE_BOTTOM = 100.0, --200
 
 	CAMERA_ZOOM_SPEED = 12, --20
 	CAMERA_ZOOM_KEY_SCALE = 0.01,
 	CAMERA_ZOOM_SPEED_DISTANCE_MULT = 50.0,				-- 60 Zoom speed multiplier. When camera is max zoome out, the zooming in speed will get 100% of CAMERA_ZOOM_SPEED_DISTANCE_MULT zooming speed.
-	
+
 	ORDERS_MOUSE_INTERSECT_DISTANCE_MULT = 2.6, 		-- For balancing the collision distance with painted arrows and fronts.
 	FRONTS_MOUSE_INTERSECT_DISTANCE_MULT = 6.6, 		-- For balancing the collision distance with painted arrows and fronts.
 	MOVE_ORDERS_MOUSE_INTERSECT_DISTANCE_MULT = 0.5, 	-- For balancing the collision distance with painted arrows and fronts.
 	TRADE_ROUTE_INTERSECT_DISTANCE_MULT = 10.0,
 
 	MINIMUM_PROVINCE_SIZE_IN_PIXELS = 8,			-- Provinces that are smaller than that are just making the game unplayable. It doesn't affect the game, just informs in the error.log
-	
+
 	NATIONAL_FOCUS_SHINE_DISTANCE_SCALE = 0.03,
 	NATIONAL_FOCUS_PULSE_BASE =	10.0,
 	NATIONAL_FOCUS_PULSE_RANDOM = 10.0,
 	POLITICAL_GRID_SMALL_BOX_LIMIT = 6,				-- Limit for gridbox in political view before it will be replaced with extended gridbox
-	SETUP_SPIRIT_GRID_BOX_LIMIT = 3,					-- Limit for gridbox in game setup before it will be replaced with extended gridbox 
+	SETUP_SPIRIT_GRID_BOX_LIMIT = 3,					-- Limit for gridbox in game setup before it will be replaced with extended gridbox
 	POLITICAL_PULSE_BASE =	10.0,
 	POLITICAL_PULSE_RANDOM = 10.0,
 
@@ -803,7 +803,7 @@ NGraphics = {
 	ARROW_EXT_TEXT_POINTS_LIMIT = 20,				-- Amount of points when arrow gets extended detailed text
 	ARMY_DEFENSIVE_LINE_BUTTON_SIZE = 0.7,			-- The size of the "edit" button drawn at the endings of the def.lines (for army)
 	ARMY_GROUP_DEFENSIVE_LINE_BUTTON_SIZE = 0.9,	-- The size of the "edit" button drawn at the endings of the def.lines (for army group)
-	
+
 	SHOW_FOREIGN_SUPPLY_BELOW = 300.0,				-- Below this camera height all supply icons will be shown
 	SHOW_ONLY_PATH_ABOVE = 500.0,					-- Above this only supply icons in the currently shown path are shown
 
@@ -813,7 +813,7 @@ NGraphics = {
 
 NInterface = {
 	MAX_NO_FACTION_FILTER_BUTTONS = 40,			-- Max number of faction filter buttons that can be generated in diplomacy view.
-	
+
 	LOGISTICS_PAST_WEEK = 7,					-- Number of days from the past (including current day) we want logistics data for (Max 30 days)
 	LOGISTICS_PAST_MONTH = 30,
 
@@ -821,27 +821,27 @@ NInterface = {
 	COMBAT_GOOD_PIERCING = 0.8,					-- How many % of enemy units the unit have to pierce in order for the good piercing icon to be displayed
 	COMBAT_SOME_ARMOR = 0.4,					-- How many % of enemy units have to be unable to pierce the unit in order for the some armor icon to be displayed
 	COMBAT_GOOD_ARMOR = 0.8,					-- How many % of enemy units have to be unable to pierce the unit in order for the good armor icon to be displayed
-	
+
 	SWITCH_EQUIPMENT_DIALOG_TRESHOLD = 7,	  -- Confirm dialog that shows up when you switch equipment for a production line if you lose more than x days of progress.
-	
+
 	TOOLTIP_SCREEN_LEFT_OFFSET_X = 0,				-- Tooltip offset on x axis from left screen border
 	TOOLTIP_SCREEN_RIGHT_OFFSET_X = 0,				-- Tooltip offset on x axis from right screen border
 	TOOLTIP_SCREEN_TOP_OFFSET_Y = 0,				-- Tooltip offset on y axism from top screen border
 	TOOLTIP_SCREEN_BOTTOM_OFFSET_Y = 0,				-- Tooltip offset on y axis from bottom screen border
-	
+
 	NO_COMBATS_COLOR = { 0.0, 0.0, 0.8 } ,				-- Color for icons if all combats are successful
 	SUCCESFUL_COMBATS_COLOR = { 120.0/360.0, 0.95, 0.86 } ,				-- Color for icons if all combats are successful
 	MIN_NON_SUCCESSFUL_COMBAT_COLOR = { 100.0/360.0, 0.95, 0.86 } ,	-- Color for icons if some of combats are not successful
 	MID_NON_SUCCESSFUL_COMBAT_COLOR = { 50.0/360.0, 0.95, 0.86 } ,
-	MAX_NON_SUCCESSFUL_COMBAT_COLOR = { 00.0/360.0, 0.95, 0.86 } ,	-- Color for icons if all of combats are not successful	
-	
+	MAX_NON_SUCCESSFUL_COMBAT_COLOR = { 00.0/360.0, 0.95, 0.86 } ,	-- Color for icons if all of combats are not successful
+
 	UNIT_SELECT_DOUBLE_CLICK_TIME = 0.1,				-- Delay before double click event for unit selection
-	
+
 	MINIMAP_TOGGLE_DURATION = 0.5,				-- Delay for minimap toggle
 	MINIMAP_TOGGLE_SHIFT = 270,				-- horizontal shift for minimap to close it
-	
+
 	TIMED_MESSAGE_TIMEOUT = 0.35,					-- Timeout for timed message
-	
+
 	MINIMAP_PING_DURATION = 12.0, 				-- timeout for pings
 	MINIMAP_PING_SPEEDUP_ON_SCREEN = 2.0,		-- speed up for timeout if ping is visible on screen
 	MINIMAP_PING_DELAY_BETWEEN_PINGS = 0.3,	-- delay between consecative pings
@@ -852,7 +852,7 @@ NInterface = {
 	ARMY_GROUP_PORTRAIT_SPACING = 6,			-- Extra space added between portraits of different army groups
 	ARMY_GROUP_FIRST_MEMBER_SPACING = 5,		-- Extra spacing between the army group portrait and the first member of the army group
 	ARMY_GROUP_COLLAPSE_EXTRA_SPACING = 5,		-- Extra spacing between the army group portrait when army group is collapsed
-	
+
 	ARMY_LIST_BOTTOM_PADDING = 145,				-- Bottom padding for army list on left
 
 	MILITARY_FACTORIES_SCALE = { 1, 5, 10 }
@@ -881,49 +881,49 @@ NFrontend = {
 	CAMERA_SPEED_ROTATE = 0.04,						-- Rotation speed
 	CAMERA_SPEED_IN_MENUS = 0.1,
 	CAMERA_INTERPOLATION_SPEED = 0.19,
-	
+
 	FRONTEND_POS_X = 2958.0,
 	FRONTEND_POS_Y = 900.0,
 	FRONTEND_POS_Z = 1500.0,
 	FRONTEND_LOOK_X = 2958.0,
 	FRONTEND_LOOK_Y = 0.0,
 	FRONTEND_LOOK_Z = 1519.0,
-	
+
 	SETTINGS_POS_X = 2958.0,
 	SETTINGS_POS_Y = 922.0,
 	SETTINGS_POS_Z = 400.0,
 	SETTINGS_LOOK_X = 2958.0,
-	SETTINGS_LOOK_Y = 0.0,		
+	SETTINGS_LOOK_Y = 0.0,
 	SETTINGS_LOOK_Z = 1519.0,
-	
+
 	MP_OPTIONS_POS_X = 2958.0,
 	MP_OPTIONS_POS_Y = 922.0,
 	MP_OPTIONS_POS_Z = 848.0,
 	MP_OPTIONS_LOOK_X = 2958.0,
-	MP_OPTIONS_LOOK_Y = 0.0,	
+	MP_OPTIONS_LOOK_Y = 0.0,
 	MP_OPTIONS_LOOK_Z = 1519.0,
-	
+
 	TUTORIAL_POS_X = 2958.0,
 	TUTORIAL_POS_Y = 922.0,
 	TUTORIAL_POS_Z = 1248.0,
 	TUTORIAL_LOOK_X = 2958.0,
-	TUTORIAL_LOOK_Y = 0.0,	
+	TUTORIAL_LOOK_Y = 0.0,
 	TUTORIAL_LOOK_Z = 1519.0,
-	
+
 	CONTENT_POS_X = 2958.0,
 	CONTENT_POS_Y = 922.0,
 	CONTENT_POS_Z = 1308.0,
 	CONTENT_LOOK_X = 2958.0,
-	CONTENT_LOOK_Y = 0.0,	
+	CONTENT_LOOK_Y = 0.0,
 	CONTENT_LOOK_Z = 1519.0,
-	
+
 	CREDITS_POS_X = 2958.0,
 	CREDITS_POS_Y = 922.0,
 	CREDITS_POS_Z = 1308.0,
 	CREDITS_LOOK_X = 2958.0,
-	CREDITS_LOOK_Y = 0.0,	
+	CREDITS_LOOK_Y = 0.0,
 	CREDITS_LOOK_Z = 1519.0,
-} ,	
+} ,
 
 NSound = {
 	-- The volume of sounds in this category vary with camera altitude.
@@ -940,9 +940,9 @@ NSound = {
 	BATTLE_SOUND_MIN_UNIT_COUNT =   6,
 	BATTLE_SOUND_MIN_VOLUME_MUL = 0.2,
 	BATTLE_SOUND_MAX_VOLUME_MUL = 1.0,
-	
+
 	VOICE_OVER_CATEGORY = "Voices",
-	VOICE_OVER_COOL_DOWN = 2.8, -- Wait for this many seconds before playing another vo	
+	VOICE_OVER_COOL_DOWN = 2.8, -- Wait for this many seconds before playing another vo
 } ,
 
 }
