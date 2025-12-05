@@ -100,10 +100,47 @@ on_actions = {
 					clear_variable = lba_oil_nationalisation_temp
 					libya_update_nationalisation = yes
 
+					#Tribalism
 					set_variable = { tripolitania_loyalty = FROM.tripolitania_loyalty }
 					set_variable = { cyrenaica_loyalty = FROM.cyrenaica_loyalty }
 					set_variable = { fezzan_loyalty = FROM.fezzan_loyalty }
 					libya_update_tribalism_modifiers = yes
+
+					#Gaddafi stuff
+					if = {
+						limit = {
+							is_ruled_by_a_gaddafi = yes
+						}
+						set_variable = { gaddafi_family_stability_effect = FROM.gaddafi_family_instability }
+						add_dynamic_modifier = { modifier = libya_gaddafi_instability_dynamic_modifier }
+					}
+					libya_copy_gaddafi_flags = yes
+					update_gaddafi_family_ideas = yes
+
+					#Green Book
+					if = {
+						limit = { FROM = { has_dynamic_modifier = { modifier = LBA_new_green_book } } }
+						set_variable = { LBA_new_green_book_stability_effect = FROM.LBA_new_green_book_stability_effect }
+						set_variable = { LBA_new_green_book_political_power_effect = FROM.LBA_new_green_book_political_power_effect }
+						set_variable = { LBA_new_green_book_research_speed_effect = FROM.LBA_new_green_book_research_speed_effect }
+						set_variable = { LBA_new_green_book_drift_defence_effect = FROM.LBA_new_green_book_drift_defence_effect }
+						set_variable = { LBA_new_green_book_police_cost_effect = FROM.LBA_new_green_book_police_cost_effect }
+						set_variable = { LBA_new_green_book_influence_defence_effect = FROM.LBA_new_green_book_influence_defence_effect }
+						set_variable = { LBA_new_green_book_construction_speed_effect = FROM.LBA_new_green_book_construction_speed_effect }
+						set_variable = { LBA_new_green_book_building_slots_effect = FROM.LBA_new_green_book_building_slots_effect }
+						set_variable = { LBA_new_green_book_tax_gain_effect = FROM.LBA_new_green_book_tax_gain_effect }
+						set_variable = { LBA_new_green_book_productivity_growth_effect = FROM.LBA_new_green_book_productivity_growth_effect }
+						set_variable = { LBA_new_green_book_education_cost_effect = FROM.LBA_new_green_book_education_cost_effect }
+						set_variable = { LBA_new_green_book_population_effect = FROM.LBA_new_green_book_population_effect }
+						set_variable = { LBA_new_green_book_social_cost_effect = FROM.LBA_new_green_book_social_cost_effect }
+						set_variable = { LBA_new_green_book_health_cost_effect = FROM.LBA_new_green_book_health_cost_effect }
+						set_variable = { LBA_new_green_book_emerging_drift_effect = FROM.LBA_new_green_book_emerging_drift_effect }
+						set_variable = { LBA_new_green_book_migration_effect = FROM.LBA_new_green_book_migration_effect }
+						add_dynamic_modifier = { modifier = LBA_new_green_book }
+					}
+
+					#Flags
+					libya_copy_country_flags = yes
 				}
 			}
 		}
@@ -114,22 +151,89 @@ on_actions = {
 			ROOT = {
 				if = {
 					limit = {
-						original_tag = LBA
-						has_cosmetic_tag = GNA_NTC
+						has_global_flag = first_libyan_civil_war
+						NOT = { has_global_Flag = first_libyan_civil_war_over }
 					}
 					drop_cosmetic_tag = yes
-				}
-				if = {
-					limit = {
-						original_tag = LBA
-						has_country_flag = LBA_this_is_libyan_rebels
+					#If Gaddafi wins, remove the extra templates and units
+					#Rebels have content for how to deal with them
+					if = {
+						limit = {
+							tag = GAD
+						}
+						delete_unit_template_and_units = {
+							division_template = "Al-Milishiat Al-Qabalia"
+							disband = yes
+						}
+						delete_unit_template_and_units = {
+							division_template = "Al-Milishiat Al-Tawariq"
+							disband = yes
+						}
+						clr_country_flag = LBA_this_is_gaddafi
 					}
-					clr_country_flag = LBA_this_is_libyan_rebels
-				}
-				if = {
-					limit = {
-						has_global_flag = first_libyan_civil_war
+					#Copy status of Gaddafi's children so they don't come back from the dead
+					if = {
+						limit = {
+							tag = LRB
+						}
+						if = {
+							limit = {
+								GAD = { has_country_flag = muhammad_muammar_gaddafi_dead }
+							}
+							set_country_flag = muhammad_muammar_gaddafi_dead
+						}
+						if = {
+							limit = {
+								GAD = { has_country_flag = saif_al_islam_gaddafi_dead }
+							}
+							set_country_flag = saif_al_islam_gaddafi_dead
+						}
+						if = {
+							limit = {
+								GAD = { has_country_flag = al_saadi_gaddafi_dead }
+							}
+							set_country_flag = al_saadi_gaddafi_dead
+						}
+						if = {
+							limit = {
+								GAD = { has_country_flag = mutassim_gaddafi_dead }
+							}
+							set_country_flag = mutassim_gaddafi_dead
+						}
+						if = {
+							limit = {
+								GAD = { has_country_flag = hannibal_gaddafi_dead }
+							}
+							set_country_flag = hannibal_gaddafi_dead
+						}
+						if = {
+							limit = {
+								GAD = { has_country_flag = ayesha_gaddafi_dead }
+							}
+							set_country_flag = ayesha_gaddafi_dead
+						}
+						if = {
+							limit = {
+								GAD = { has_country_flag = saif_al_arab_gaddafi_dead }
+							}
+							set_country_flag = saif_al_arab_gaddafi_dead
+						}
+						if = {
+							limit = {
+								GAD = { has_country_flag = khamis_gaddafi_dead }
+							}
+							set_country_flag = khamis_gaddafi_dead
+						}
+						clr_country_flag = LBA_this_is_libyan_rebels
+						country_event = LibyaCivilWarContent.24
 					}
+					if = {
+						limit = {
+							391 = { is_capital = no }
+						}
+						set_capital = { state = 391 }
+					}
+					set_global_flag = first_libyan_civil_war_over
 					hidden_effect = { news_event = { id = LibyaFocusNews.15 hours = 6 } }
 				}
 			}
@@ -138,7 +242,7 @@ on_actions = {
 
 	on_monthly_LBA = {
 		random_events = {
-			6000 = 0
+			5400 = 0		#Was 6000
 
 			#Random Events
 			100 = LibyaRandomEvents.2	#Anti-Black riots
@@ -252,13 +356,29 @@ on_actions = {
 			50 = LibyaFamily.48		#Saif al-Arab's Ferrari is impounded
 			10 = LibyaFamily.49		#Saif al-Arab dies in prison
 			10 = LibyaFamily.51		#Khamis' helicopter crashes
+		}
 
+		#These events are meant for after the first civil war
+		random_events = {
+			1000 = 0
+
+			200 = LibyaCivilWarContent.26	#Derna Shura Council
+			200 = LibyaCivilWarContent.27	#Ajdabiya Shura Council
+			200 = LibyaCivilWarContent.28	#Rafallah al-Sahati Brigade is formed
+			200 = LibyaCivilWarContent.29	#Ansar al-Sharia takes control of Sirte
+			200 = LibyaCivilWarContent.30	#Ansar al-Sharia takes control of Sabha
+			300 = LibyaCivilWarContent.31	#Abdel-Hakim al-Hasidi runs for office in Derna
+			100 = LibyaCivilWarContent.32	#Choosing a defence minister
+			100 = LibyaCivilWarContent.33	#General abducted
+			100 = LibyaCivilWarContent.34	#Commander suspected of warcrimes
+			100 = LibyaCivilWarContent.35	#Commander retires
 		}
 	}
 
 	on_weekly = {
+		#These happen when the "Anti-Gaddafi Protests" is active
 		random_events = {
-			3000 = 0
+			2700 = 0	#Was 3000
 
 			100 = LibyaCivilWar.1 #Libyan National Democratic Front expands in Libya
 			100 = LibyaCivilWar.2 #Libyan Communist Party starts operations
@@ -274,6 +394,27 @@ on_actions = {
 			100 = LibyaCivilWar.12 #Rebels raid military stockpile
 			100 = LibyaCivilWar.13 #Pilots abandon the country
 			100 = LibyaCivilWar.14 #Sailors abandon the country
+		}
+		#These happen during the civil wars
+		random_events = {
+			4500 = 0	#Was 5000
+
+			#1st Libyan Civil War
+			100 = LibyaCivilWarContent.1	#Warfalla tribe mobilises
+			100 = LibyaCivilWarContent.2	#Qadhadhfa tribe mobilises
+			100 = LibyaCivilWarContent.3	#Berbers Join Rebels
+			100 = LibyaCivilWarContent.5	#Al-Mujabra tribe mobilises
+			100 = LibyaCivilWarContent.6	#Magarha tribe mobilises
+			100 = LibyaCivilWarContent.7	#Hassawna tribe mobilises
+			100 = LibyaCivilWarContent.8	#Tuaregs offer their services
+			100 = LibyaCivilWarContent.9	#Toubou tribes mobilise
+			100 = LibyaCivilWarContent.10	#Farjan tribes mobilise
+			100 = LibyaCivilWarContent.11	#Misurat tribes mobilise
+			100 = LibyaCivilWarContent.12	#Abaydat tribes mobilise
+			200 = LibyaCivilWarContent.20	#Jihadist militias
+			200 = LibyaCivilWarContent.21	#Islamist militias
+			200 = LibyaCivilWarContent.22	#Secularist militias
+			200 = LibyaCivilWarContent.23	#Reformist militias
 		}
 	}
 
@@ -325,14 +466,89 @@ on_actions = {
 					}
 				}
 			}
+			if = {
+				limit = { FROM = { original_tag = LBA has_global_flag = first_libyan_civil_war is_ruled_by_a_gaddafi = no NOT = { has_global_flag = second_libyan_civil_war_over } } }
+				character = {
+					ROOT = {
+						random_list = {
+							10 = {
+								add_unit_leader_trait = LBA_unit_leader_trait_tribal_commander
+							}
+							10 = {
+								add_unit_leader_trait = LBA_unit_leader_trait_jihadist_commander
+							}
+							10 = {
+								add_unit_leader_trait = LBA_unit_leader_trait_islamist_commander
+							}
+							10 = {
+								add_unit_leader_trait = LBA_unit_leader_trait_secularist_commander
+							}
+							10 = {
+								add_unit_leader_trait = LBA_unit_leader_trait_reformist_commander
+							}
+							10 = {
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
 	on_state_control_changed = {
 		effect = {
+			#Gaddafi can be killed by rebels (only 1st Libyan Civil War)
 			if = {
 				limit = {
-					FROM = { original_tag = LBA }
+					FROM = {
+						original_tag = LBA
+						has_country_leader = {
+							name = "Muammar Gaddafi"
+							ruling_only = yes
+						}
+					}
+					ROOT = {
+						tag = LRB
+						has_war_with = FROM
+					}
+					#Gaddafi only hangs out around the coast
+					FROM.FROM = {
+						OR = {
+							state = 391
+							state = 919
+							state = 397
+							state = 395
+							state = 396
+						}
+					}
+				}
+				random_list = {
+					15 = {
+						modifier = {
+							factor = 2
+							any_other_country = {
+								has_country_flag = intervene_in_libya
+							}
+						}
+						FROM = { country_event = LibyaFamily.75 }
+					}
+					85 = {
+						modifier = {
+							factor = 0.875
+							any_other_country = {
+								has_country_flag = intervene_in_libya
+							}
+						}
+					}
+				}
+			}
+			#Gaddafi's children can die in any civil war
+			if = {
+				limit = {
+					FROM = {
+						original_tag = LBA
+						is_ruled_by_a_gaddafi = yes
+					}
 					ROOT = { has_war_with = FROM }
 					OR = {
 						ROOT = { original_tag = LBA }
@@ -341,123 +557,124 @@ on_actions = {
 						ROOT = { original_tag = FEZ }
 					}
 				}
-				random = {
-					chance = 5
-					random_list = {
-						10 = {
-							modifier = {
-								factor = 0
-								OR = {
-									has_country_flag = muhammad_muammar_gaddafi_exile
-									has_country_flag = muhammad_muammar_gaddafi_dead
-									has_country_leader = {
-										name = "Muhammad Muammar Gaddafi"
-										ruling_only = yes
+				FROM = {
+					random = {
+						chance = 10
+						random_list = {
+							10 = {
+								modifier = {
+									factor = 0
+									OR = {
+										has_country_flag = muhammad_muammar_gaddafi_exile
+										has_country_flag = muhammad_muammar_gaddafi_dead
+										has_country_leader = {
+											name = "Muhammad Muammar Gaddafi"
+											ruling_only = yes
+										}
 									}
 								}
+								country_event = LibyaFamily.76
 							}
-							set_country_flag = kill_muhammad_muammar_gaddafi
-						}
-						10 = {
-							modifier = {
-								factor = 0
-								OR = {
-									has_country_flag = saif_al_islam_gaddafi_exile
-									has_country_flag = saif_al_islam_gaddafi_dead
-									has_country_leader = {
-										name = "Saif al-Islam Gaddafi"
-										ruling_only = yes
+							10 = {
+								modifier = {
+									factor = 0
+									OR = {
+										has_country_flag = saif_al_islam_gaddafi_exile
+										has_country_flag = saif_al_islam_gaddafi_dead
+										has_country_leader = {
+											name = "Saif al-Islam Gaddafi"
+											ruling_only = yes
+										}
 									}
 								}
+								country_event = LibyaFamily.77
 							}
-							set_country_flag = kill_saif_al_islam_gaddafi
-						}
-						10 = {
-							modifier = {
-								factor = 0
-								OR = {
-									has_country_flag = al_saadi_gaddafi_exile
-									has_country_flag = al_saadi_gaddafi_dead
-									has_country_leader = {
-										name = "Al-Saadi Gaddafi"
-										ruling_only = yes
+							10 = {
+								modifier = {
+									factor = 0
+									OR = {
+										has_country_flag = al_saadi_gaddafi_exile
+										has_country_flag = al_saadi_gaddafi_dead
+										has_country_leader = {
+											name = "Al-Saadi Gaddafi"
+											ruling_only = yes
+										}
 									}
 								}
+								country_event = LibyaFamily.78
 							}
-							set_country_flag = kill_al_saadi_gaddafi
-						}
-						10 = {
-							modifier = {
-								factor = 0
-								OR = {
-									has_country_flag = mutassim_gaddafi_exile
-									has_country_flag = mutassim_gaddafi_dead
-									has_country_leader = {
-										name = "Mutassim Gaddafi"
-										ruling_only = yes
+							10 = {
+								modifier = {
+									factor = 0
+									OR = {
+										has_country_flag = mutassim_gaddafi_exile
+										has_country_flag = mutassim_gaddafi_dead
+										has_country_leader = {
+											name = "Mutassim Gaddafi"
+											ruling_only = yes
+										}
 									}
 								}
+								country_event = LibyaFamily.79
 							}
-							set_country_flag = kill_mutassim_gaddafi
-						}
-						10 = {
-							modifier = {
-								factor = 0
-								OR = {
-									has_country_flag = hannibal_gaddafi_exile
-									has_country_flag = hannibal_gaddafi_dead
-									has_country_leader = {
-										name = "Hannibal Gaddafi"
-										ruling_only = yes
+							10 = {
+								modifier = {
+									factor = 0
+									OR = {
+										has_country_flag = hannibal_gaddafi_exile
+										has_country_flag = hannibal_gaddafi_dead
+										has_country_leader = {
+											name = "Hannibal Gaddafi"
+											ruling_only = yes
+										}
 									}
 								}
+								country_event = LibyaFamily.80
 							}
-							set_country_flag = kill_hannibal_gaddafi
-						}
-						10 = {
-							modifier = {
-								factor = 0
-								OR = {
-									has_country_flag = ayesha_gaddafi_exile
-									has_country_flag = ayesha_gaddafi_dead
-									has_country_leader = {
-										name = "Ayesha Gaddafi"
-										ruling_only = yes
+							10 = {
+								modifier = {
+									factor = 0
+									OR = {
+										has_country_flag = ayesha_gaddafi_exile
+										has_country_flag = ayesha_gaddafi_dead
+										has_country_leader = {
+											name = "Ayesha Gaddafi"
+											ruling_only = yes
+										}
 									}
 								}
+								country_event = LibyaFamily.81
 							}
-							set_country_flag = kill_ayesha_gaddafi
-						}
-						10 = {
-							modifier = {
-								factor = 0
-								OR = {
-									has_country_flag = saif_al_arab_gaddafi_exile
-									has_country_flag = saif_al_arab_gaddafi_dead
-									has_country_leader = {
-										name = "Saif al-Arab Gaddafi"
-										ruling_only = yes
+							10 = {
+								modifier = {
+									factor = 0
+									OR = {
+										has_country_flag = saif_al_arab_gaddafi_exile
+										has_country_flag = saif_al_arab_gaddafi_dead
+										has_country_leader = {
+											name = "Saif al-Arab Gaddafi"
+											ruling_only = yes
+										}
 									}
 								}
+								country_event = LibyaFamily.82
 							}
-							set_country_flag = kill_saif_al_arab_gaddafi
-						}
-						10 = {
-							modifier = {
-								factor = 0
-								OR = {
-									has_country_flag = khamis_gaddafi_exile
-									has_country_flag = khamis_gaddafi_dead
-									has_country_leader = {
-										name = "Khamis Gaddafi"
-										ruling_only = yes
+							10 = {
+								modifier = {
+									factor = 0
+									OR = {
+										has_country_flag = khamis_gaddafi_exile
+										has_country_flag = khamis_gaddafi_dead
+										has_country_leader = {
+											name = "Khamis Gaddafi"
+											ruling_only = yes
+										}
 									}
 								}
+								country_event = LibyaFamily.83
 							}
-							set_country_flag = kill_khamis_gaddafi
 						}
 					}
-					country_event = { id = LibyaFamily.52 hours = 6 }
 				}
 			}
 		}
