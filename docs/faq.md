@@ -6,11 +6,13 @@ permalink: /faq/
 
 # Frequently Asked Questions:
 
+For the [Troubleshooting Guide](https://millenniumdawn.github.io/Millennium-Dawn/player-tutorials/troubleshooting-guide).
+
 - **Why “insert country name” still doesn’t have a focus tree? I’ve been asking since dinosaurs!**
 First of all – we don’t accept suggestions about focus tree for countries. Eventually, it will happen at some point of time. Remember the devs are volunteer working professionals and they are doing it for free by sacrificing time from irl activities. We appreciate the hype but determining how long it will take or how much of it is done is hard to tell.
 
 - **I’ve found a bug, what do I do?**
-Go to [⁠report-a-bug](https://discord.com/channels/210890013334831104/1121827233120661556_⁠⁠ and inform us about it. If you report it anywhere else chances are it will be buried and forgotten.
+Go to [⁠report-a-bug](https://discord.com/channels/210890013334831104/1121827233120661556) and inform us about it. If you report it anywhere else chances are it will be buried and forgotten.
 
 - **Why won’t add the possibility of civilian casualties? Also why nukes don’t kill divisions?**
 
