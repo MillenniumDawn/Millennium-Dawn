@@ -16,9 +16,11 @@ Further, it offers a new and unique economic system, a new political system, nat
 
 ## Welcome to the Millennium Dawn Wiki!
 
-**Current Expected Checksum:** __fc5c__
+**Current Expected Checksum:** fc5c
 
 **The following Wiki is currently a work in progress. However, we will do our best to get meaningful content updated and placed on this page.**
+
+For the [Troubleshooting Guide](https://millenniumdawn.github.io/Millennium-Dawn/player-tutorials/troubleshooting-guide).
 
 ### Joining the Millennium Dawn Development Team
 
