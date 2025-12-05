@@ -46,7 +46,7 @@ mod = "Millennium_Dawn"
 
 def main():
     path = os.path.abspath(os.path.join(os.path.dirname(mod), ".."))
-    # country_tag_list = createcountrytaglist()
+    country_tag_list = createcountrytaglist()
 
     selection = int(
         input(
