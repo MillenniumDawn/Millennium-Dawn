@@ -40,7 +40,7 @@ country_tag_list = []
 
 # Modfolder = the mod folder name
 # mod = The mod name
-modfolder = 'Millennium_Dawn\\'
+modfolder = 'Millennium-Dawn\\'
 mod = 'Millennium_Dawn'
 
 def main():
