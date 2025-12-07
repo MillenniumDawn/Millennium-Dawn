@@ -57,31 +57,32 @@ on_actions = {
 				}
 			}
 
-			# Pay down debt automatically this weekly tick
-			if = {
-				limit = {
-					check_variable = { treasury_rate > 0 }
-					has_country_flag = automatically_pay_off_debt_enabled
-					check_variable = { debt > 0 }
-				}
-				set_temp_variable = { treasury_rate_debt_payment = treasury_rate }
-				multiply_temp_variable = { treasury_rate_debt_payment = 0.25 }
-				subtract_from_variable = { debt = treasury_rate_debt_payment }
-
+			if = { limit = { NOT = { has_country_flag = disabled_economic_system } }
+				# Pay down debt automatically this weekly tick
 				if = {
-					limit = { check_variable = { debt < 0.001 } }
-					set_variable = { debt = 0 }
-					clr_country_flag = automatically_pay_off_debt_enabled
+					limit = {
+						check_variable = { treasury_rate > 0 }
+						has_country_flag = automatically_pay_off_debt_enabled
+						check_variable = { debt > 0 }
+					}
+					set_temp_variable = { treasury_rate_debt_payment = treasury_rate }
+					multiply_temp_variable = { treasury_rate_debt_payment = 0.25 }
+					subtract_from_variable = { debt = treasury_rate_debt_payment }
+
+					if = {
+						limit = { check_variable = { debt < 0.001 } }
+						set_variable = { debt = 0 }
+						clr_country_flag = automatically_pay_off_debt_enabled
+					}
 				}
+
+				set_temp_variable = { treasury_rate_gain = treasury_rate }
+				subtract_from_temp_variable = { treasury_rate_gain = treasury_rate_debt_payment }
+
+				add_to_variable = { treasury = treasury_rate_gain }
+				#Automated taking debt - has calculate_interest_rate at the end
+				automated_debt_taker = yes
 			}
-
-			set_temp_variable = { treasury_rate_gain = treasury_rate }
-			subtract_from_temp_variable = { treasury_rate_gain = treasury_rate_debt_payment }
-
-			add_to_variable = { treasury = treasury_rate_gain }
-			#Automated taking debt - has calculate_interest_rate at the end
-			automated_debt_taker = yes
-
 
 			# Force Update Influencer Map Mode
 			recalculate_influence = yes
@@ -433,7 +434,7 @@ on_actions = {
 					log = "[GetDateText]: [ROOT.GetName]: on_annex EU Member"
 					meta_effect = {
 						text = {
-							every_country = { 
+							every_country = {
 								limit = { has_idea = EU_member }
 								clr_country_flag = focus_[EUXXX]_EP_agenda
 								clr_country_flag = focus_on_EP_agenda
@@ -457,7 +458,7 @@ on_actions = {
 								leaving_EU = yes
 							}
 						}
-						
+
 						EUXXX = "[EUXXX_EP_agenda]"
 						PG_X = "[PG_X_influence]"
 					}
