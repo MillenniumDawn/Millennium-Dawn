@@ -11,6 +11,7 @@ This is a list (not fully up-to-date) of MD unique modifiers, effects and tutori
 These can be used *anywhere* that a normal modifier can be used such as ``political_power_factor``.
 
 <details><summary>Economic Modifiers</summary>
+{% capture md %}
 
 | Modifier Name | Category | Description | Notes |
 | ------ | ------ | ------ |  ------ |
@@ -79,9 +80,13 @@ These can be used *anywhere* that a normal modifier can be used such as ``politi
 | internal_investments_pp_cost_modifier | Economic | Modifier to increase/decrease the amount of political power spent on Internal Investments | N/A |
 | internal_investments_money_cost_modifier | Economic | MModifier to increase/decrease the amount of money spent on Internal Investments | N/A |
 
+{% endcapture %}
+{{ md | markdownify }}
+
 </details>
 
 <details><summary>Law Modifiers</summary>
+{% capture md %}
 
 | Modifier Name | Category | Description | Notes |
 | ------ | ------ | ------ |  ------ |
@@ -111,9 +116,12 @@ These can be used *anywhere* that a normal modifier can be used such as ``politi
 | aircraft_manufacturer_cost_factor | Law | Modifies the political power cost of changing Aircraft Design Companies | This is used when you do not have Arms Against Tyranny enabled. |
 | naval_manufacturer_cost_factor | Law | Modifies the political power cost of changing Naval Design Companies | This is used when you do not have Arms Against Tyranny enabled. |
 
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>Influence Modifiers</summary>
+{% capture md %}
 
 | Modifier Name | Category | Description | Notes |
 | ------ | ------ | ------ |  ------ |
@@ -126,9 +134,12 @@ These can be used *anywhere* that a normal modifier can be used such as ``politi
 | foreign_influence_monthly_domestic_independence_gain_modifier | Influence | Increases the amount of the monthly Domestic Independence Gain |
 | foreign_influence_monthly_domestic_independence_gain_factor | Influence | Modifier that increases/decreases the effectiveness of foreign influence on other continents | Increases the amount of the monthly Domestic Independence Gain by this factor |
 
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>Energy Modifiers</summary>
+{% capture md %}
 
 | Modifier Name | Category | Description | Notes |
 | ------ | ------ | ------ |  ------ |
@@ -150,20 +161,27 @@ These can be used *anywhere* that a normal modifier can be used such as ``politi
 | heu_fuel_production_modifier | Energy | Modifies the amount of HEU fuel produced each week by enrichment facilities | N/A |
 | state_renewable_energy_generation_modifier | Energy | Modifies the amount of State Renewable Energy Generation | N/A |
 
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>Political Modifiers</summary>
+{% capture md %}
 
 | Modifier Name | Category | Description | Notes |
 | ------ | ------ | ------ |  ------ |
 | popularity_attack_modifier | Political | Modifier that increases the effectiveness of attacking political parties in the political GUI | The modifier is not percentual. EX: popularity_attack_modifier = 2.0 for 2x damage |
 | popularity_boost_modifier| Political | Modifier that increases the effectiveness of boosting political parties in the political GUI | The modifier is not percentual. EX: popularity_boost_modifier = 2.0 for 2x boost |
 
+{% endcapture %}
+{{ md | markdownify }}
+
 </details>
 
 ## Effects/Scripted Effects
 
 <details><summary>MD Building Costs</summary>
+{% capture md %}
 
 Each of the values for buildings that consume a building slot (i.e. Civilian Industry) has the building slot factored in.
 
@@ -215,9 +233,12 @@ set_temp_variable = { treasury_change = -3.75 }
 modify_treasury_effect = yes
 ```
 
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>MD Building Effects</summary>
+{% capture md %}
 
 If you are lazy to calculate cost for common effects with buildings, you can check common\scripted_effects\00_scripted_effects.txt<br><br>
 State Scope effects requires to put the effect inside a state. If the building cannot be added into a state, it will be added to any random owned state.<br>
@@ -352,9 +373,13 @@ one_state_nuclear_reactor = yes #add 1 nuclear reactor with slot and cost in a p
 two_state_nuclear_reactor = yes #add 2 nuclear reactors with slot and cost in a predefined state
 ```
 
+{% endcapture %}
+{{ md | markdownify }}
+
 </details>
 
 <details><summary>MD Economic Effects</summary>
+{% capture md %}
 
 All scripted effects provided *automatically* create tooltips for you. Do **NOT** localize additional tooltips.
 
@@ -578,13 +603,16 @@ increase_migration_law = yes
 decrease_migration_law = yes
 ```
 
-
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>MD Internal Faction Effects</summary>
+{% capture md %}
 
 **Internal Factions Code Snippet**
-```
+
+```python
 set_temp_variable = { temp_opinion = 5 }
 change_small_medium_business_owners_opinion = yes
 
@@ -595,6 +623,7 @@ change_industrial_conglomerates_opinion = yes
 ```
 
 <details><summary>Internal Faction Breakdown</summary>
+{% capture md %}
 
 ```
 # List of Factions sorted by category
@@ -611,10 +640,13 @@ change_industrial_conglomerates_opinion = yes
 # Nation Specific: The Donju, The Bazaar, Saudi Royal Family, IRGC, Iranian Quds Force,
 # Foreign Jihadis, Chaebols, Wall Street
 ```
+
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>Available Faction Commands</summary>
-
+{% capture md %}
 - change_small_medium_business_owners_opinion
 - change_industrial_conglomerates_opinion
 - change_fossil_fuel_industry_opinion
@@ -641,13 +673,17 @@ change_industrial_conglomerates_opinion = yes
 - change_chaebols_opinion -- Unique South Korean oligarchs
 - change_wall_street_opinion -- Unique American International Bankers
 
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 
-
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>MD Influence Effects</summary>
+{% capture md %}
 
 **Influence Action Examples**
 
@@ -676,6 +712,8 @@ i.e.
 change_influence_percentage = yes
 ```
 
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>MD Political Effects</summary>

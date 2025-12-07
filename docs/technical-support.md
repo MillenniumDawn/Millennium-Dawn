@@ -6,22 +6,25 @@ permalink: /technical-support/
 
 # Technical Support
 
-Purpose of this page is a more-generalized extension of the technical-support page that is available on our [Discord](https://discord.com/channels/210890013334831104/1017109886330470601)
+For the full [Troubleshooting Guide](https://millenniumdawn.github.io/Millennium-Dawn/player-tutorials/troubleshooting-guide).
 
 ## How do I download Millennium Dawn?
 
-**__Steam__**
+Any other source then the below are not official team builds and as such we cannot guarantee the quality or the safeness of those builds.
+Please ensure you are using the latest from one of the below versions.
+
+**_Steam_**
 Current MD Version: ``v1.12.2a``
 HOI Version: ``1.17.*``
 Checksum: ``fc5c``
 https://steamcommunity.com/sharedfiles/filedetails/?id=2777392649
 
-**__GitHub Releases__**
+**_GitHub Releases_**
 Historical Builds of MD are kept here.
 Available Versions are v1.12.2
 https://github.com/MillenniumDawn/Millennium-Dawn/releases
 
-**__GitLab Releases__**
+**_GitLab Releases_**
 Historical Builds of MD are kept here.
 Available Versions are v1.8.4+ to v1.12.1d
 https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/releases
