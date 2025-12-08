@@ -155,27 +155,109 @@ country_event = {
 	}
 }
 
+# Naval Base in Comoros
 country_event = {
 	id = comoros.7
 	title = comoros.7.t
 	desc = comoros.7.d
 	picture = GFX_handshake_black
-
-	fire_only_once = yes
 	is_triggered_only = yes
+	trigger = {
+		OR = {
+			original_tag = FRA
+			original_tag = CHI
+		}
+	}
 
+	# Accept the Naval Base
 	option = {
 		name = comoros.7.a
 		log = "[GetDateText]: [This.GetName]: comoros.7.a executed"
-		trigger = {
-			OR = {
-				tag = FRA
-				tag = CHI
+		if = { limit = { NOT = { has_guaranteed = COM } }
+			give_guarantee = COM
+		}
+		if = { limit = { NOT = { has_military_access_to = COM } }
+			COM = { give_military_access = PREV }
+		}
+		diplomatic_relation = {
+			country = COM
+			relation = docking_rights
+			active = yes
+		}
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = THIS }
+		set_temp_variable = { influence_target = COM }
+		change_influence_percentage = yes
+
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
+		COM = {
+			set_temp_variable = { treasury_change = 5 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { PREV = { original_tag = CHI } }
+				add_ideas = COM_naval_treaty_with_china_idea
+			}
+			if = {
+				limit = { PREV = { original_tag = FRA } }
+				add_ideas = COM_naval_treaty_with_france_idea
+			}
+			country_event = diplomatic_response.1
+		}
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 5
+				has_opinion = { target = COM value > 25 }
+			}
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { COM.influence_array^0 = THIS }
+					check_variable = { COM.influence_array^1 = THIS }
+					check_variable = { COM.influence_array^2 = THIS }
+				}
+			}
+			modifier = {
+				add = 5
+				any_enemy_country = {
+					capital_scope = {
+						is_on_continent = africa
+					}
+				}
+			}
+			modifier = {
+				add = 10
+				original_tag = FRA
+				NOT = { owns_state = 940 }
+			}
+		}
+	}
+
+	# Decline...
+	option = {
+		name = comoros.7.b
+		country_event = diplomatic_response.2
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = -15
+				has_opinion = { target = COM value < 15 }
+			}
+			modifier = {
+				add = 10
+				OR = {
+					has_government = nationalist
+					has_government = fascism
+				}
 			}
 		}
 	}
 }
 
+# Operation Democracy in Comoros
 country_event = {
 	id = comoros.8
 	title = comoros.8.t
@@ -211,26 +293,29 @@ country_event = {
 	}
 }
 
+# [COM.GetName] Requests Assistance
 country_event = {
 	id = comoros.9
 	title = comoros.9.t
 	desc = comoros.9.d
-	picture = GFX_puntland_police_force_ev
-
-	fire_only_once = yes
+	picture = GFX_puntland_police_force_ev # TODO: Replace with a proper picture
 	is_triggered_only = yes
 
 	option = {
 		name = comoros.9.a
 		log = "[GetDateText]: [This.GetName]: comoros.9.a executed"
+		send_equipment = {
+			equipment = Inf_equipment
+			amount = 250
+			target = COM
+		}
 		COM = {
 			add_manpower = 100
-			add_equipment_to_stockpile = {
-				type = infantry_weapons1
-				amount = 1000
-				producer = USA
-			}
 			set_country_flag = COM_got_support
+			country_event = diplomatic_response.1
+		}
+		ai_chance = {
+			base = 1
 		}
 	}
 
@@ -239,9 +324,15 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: comoros.9.b executed"
 		add_opinion_modifier = { modifier = drama target = COM }
 		reverse_add_opinion_modifier = { modifier = drama target = COM }
+
+		COM = { country_event = diplomatic_response.2 }
+		ai_chance = {
+			base = 1
+		}
 	}
 }
 
+# Successful Operation!
 country_event = {
 	id = comoros.10
 	title = comoros.10.t
@@ -259,13 +350,12 @@ country_event = {
 	}
 }
 
+# Anti-Colonialist Rallies
 country_event = {
 	id = comoros.11
 	title = comoros.11.t
 	desc = comoros.11.d
-	picture = GFX_red_guards
-
-	fire_only_once = yes
+	picture = GFX_red_guards # TODO: Replace with a proper picture
 	is_triggered_only = yes
 
 	option = {
@@ -277,13 +367,12 @@ country_event = {
 	}
 }
 
+# Comoros Demands Mayotte!
 country_event = {
 	id = comoros.12
 	title = comoros.12.t
 	desc = comoros.12.d
-	picture = GFX_red_guards
-
-	fire_only_once = yes
+	picture = GFX_red_guards # TODO: Replace with a proper picture
 	is_triggered_only = yes
 
 	option = {
@@ -309,7 +398,7 @@ country_event = {
 	id = comoros.13
 	title = comoros.13.t
 	desc = comoros.13.d
-	picture = GFX_african_union
+	picture = GFX_african_union # TODO: Replace with a proper event
 	is_triggered_only = yes
 	trigger = {
 		original_tag = FRA
@@ -362,9 +451,10 @@ country_event = {
 	title = comoros.14.t
 	desc = comoros.14.d
 	picture = GFX_african_union
-
-	fire_only_once = yes
 	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
 
 	option = {
 		name = comoros.14.a
@@ -381,14 +471,17 @@ country_event = {
 	}
 }
 
+# Politics in Comoros
+# INFO: Somewhat pointless event, but I'll keep it for now
 country_event = {
 	id = comoros.15
 	title = comoros.15.t
 	desc = comoros.15.d
 	picture = GFX_burkina_coast_protests
-
-	fire_only_once = yes
 	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
 
 	option = {
 		name = comoros.15.a
@@ -396,6 +489,7 @@ country_event = {
 	}
 }
 
+# Comoros Seeks Investments
 country_event = {
 	id = comoros.16
 	title = comoros.16.t
@@ -419,6 +513,7 @@ country_event = {
 
 		ai_chance = { base = 1 }
 	}
+
 	option = {
 		name = comoros.16.b
 		log = "[GetDateText]: [This.GetName]: comoros.16.b executed"
@@ -436,6 +531,7 @@ country_event = {
 
 		ai_chance = { base = 1 }
 	}
+
 	option = {
 		name = comoros.16.c
 		log = "[GetDateText]: [This.GetName]: comoros.16.c executed"
@@ -446,6 +542,7 @@ country_event = {
 	}
 }
 
+# [FROM.GetName] Agreed to the Industrial Plan
 country_event = {
 	id = comoros.17
 	title = comoros.17.t
@@ -461,6 +558,7 @@ country_event = {
 	}
 }
 
+# [FROM.GetName] Agreed to the Debt Refactor
 country_event = {
 	id = comoros.18
 	title = comoros.18.t
@@ -476,6 +574,7 @@ country_event = {
 	}
 }
 
+# [FROM.GetName] Declined the Deals
 country_event = {
 	id = comoros.19
 	title = comoros.19.t
@@ -685,7 +784,27 @@ country_event = {
 		hidden_effect = {
 			random_list = {
 				75 = { country_event = { id = comoros.28 random_days = 30 } }
-				25 = { country_event = { id = comoros.30 random_days = 30 } }
+				25 = {
+					modifier = {
+						factor = 0
+						has_game_rule = {
+							rule = COM_ai_behavior
+							option = COM_WARRIOR_KING
+						}
+					}
+					country_event = { id = comoros.30 random_days = 30 }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 100
+				has_game_rule = {
+					rule = COM_ai_behavior
+					option = COM_WARRIOR_KING
+				}
 			}
 		}
 	}
@@ -701,6 +820,16 @@ country_event = {
 				50 = { country_event = { id = comoros.29 random_days = 30 } }
 			}
 		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_game_rule = {
+					rule = COM_ai_behavior
+					option = COM_WARRIOR_KING
+				}
+			}
+		}
 	}
 
 	# Increase Guards at the Palace
@@ -712,6 +841,16 @@ country_event = {
 			random_list = {
 				25 = { country_event = { id = comoros.29 random_days = 30 } }
 				75 = { country_event = { id = comoros.30 random_days = 30 } }
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_game_rule = {
+					rule = COM_ai_behavior
+					option = COM_WARRIOR_KING
+				}
 			}
 		}
 	}
@@ -745,6 +884,7 @@ country_event = {
 			ideology = Nat_Autocracy
 			traits = {
 				nationalist_Nat_Autocracy
+				mercenary_leader
 			}
 		}
 
