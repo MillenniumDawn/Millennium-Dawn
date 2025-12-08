@@ -1,0 +1,77 @@
+on_actions = {
+	on_weekly_ZOM = {
+		random_events = {
+			1000 = 0
+
+			50 = zombie.1
+			50 = zombie.2
+			50 = zombie.3
+			50 = zombie.4
+			50 = zombie.5
+			50 = zombie.6
+			50 = zombie.7
+		}
+		effect = {
+			# Zombies do not believe in stocks bonds or your pitiful attempts at economy!
+			if = { limit = { check_variable = { treasury < 0 } }
+				set_variable = { treasury = 1000000 }
+			}
+
+			# Zombies Core What they control every week
+			every_controlled_state = {
+				limit = { NOT = { is_core_of = ZOM } }
+				add_core_of = ZOM
+			}
+
+			# Declare War on Neighbors
+			every_neighbor_country = {
+				limit = {
+					NOT = { has_war_with = ZOM }
+					NOT = { is_subject_of = ZOM }
+				}
+				if = {
+					limit = { is_in_faction = yes }
+					leave_faction = yes
+				}
+
+				random_country = {
+					limit = {
+						has_faction_template = faction_template_anti_zombie_coalition
+						is_faction_leader = yes
+					}
+					add_to_faction = PREV
+					PREV = {
+						add_to_war = {
+							targeted_alliance = PREV
+							enemy = ZOM
+							hostility_reason = the_horde_spreads
+						}
+					}
+				}
+			}
+
+			# Annex All Capitulated Enemies
+			every_enemy_country = {
+				limit = { has_capitulated = yes }
+				ZOM = { annex_country = { target = PREV transfer_troops = no } }
+			}
+
+			# Last Ditch Effort
+			if = {
+				limit = {
+					NOT = { has_country_flag = ZOM_last_ditch_effort }
+					has_capitulated = no
+					has_army_manpower = { size < 4000000 }
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
+						count = 15
+						owner = ZOM
+						prioritize_location = 1510
+					}
+				}
+			}
+		}
+	}
+}
