@@ -418,18 +418,20 @@ scripted_diplomatic_actions = {
 	diplo_action_assume_debt = {
 		allowed = { always = yes }
 		selectable = {
-			#selected country has lower GDP/C than us
-			custom_trigger_tooltip = {
-				set_temp_variable = { gdp_total_temp = ROOT.gdp_total }
-				multiply_temp_variable = { gdp_total_temp = 2 }
-				check_variable = { gdp_total_temp > THIS.gdp_total }
-				tooltip = gdp_total_cannot_be_double_ours
+			if = { limit = { NOT = { is_subject_of = ROOT } }
+				#selected country has lower GDP/C than us
+				custom_trigger_tooltip = {
+					set_temp_variable = { gdp_total_temp = ROOT.gdp_total }
+					multiply_temp_variable = { gdp_total_temp = 2 }
+					check_variable = { gdp_total_temp > THIS.gdp_total }
+					tooltip = gdp_total_cannot_be_double_ours
+				}
+				gdp_debt_ratio_higher_25 = yes
+				ROOT = {
+					gdp_debt_ratio_lower_75 = yes
+				}
+				NOT = { has_war_with = ROOT }
 			}
-			gdp_debt_ratio_higher_25 = yes
-			ROOT = {
-				gdp_debt_ratio_lower_75 = yes
-			}
-			NOT = { has_war_with = ROOT }
 			THIS = {
 				has_opinion = { target = ROOT value > 49 }
 			}
@@ -1505,7 +1507,6 @@ scripted_diplomatic_actions = {
 		reject_title = DIPLO_ACTION_NEGOTIATE_OPERATIVE_RELEASE_REJECT_TITLE
 		reject_description = DIPLO_ACTION_NEGOTIATE_OPERATIVE_RELEASE_REJECT_DESC
 
-
 		ai_acceptance = {
 			base_negotiate_operative_release = {
 				base = -50
@@ -1530,24 +1531,231 @@ scripted_diplomatic_actions = {
 					add = opinion_calculator
 				}
 			}
+			difference_in_power_ranking = {
+				base = 0
+				modifier = {
+					add = 5
+					OR = {
+						AND = {
+							THIS = { has_idea = non_power }
+							ROOT = { has_idea = minor_power }
+						}
+						AND = {
+							THIS = { has_idea = minor_power }
+							ROOT = { has_idea = regional_power }
+						}
+						AND = {
+							THIS = { has_idea = regional_power }
+							ROOT = { has_idea = large_power }
+						}
+						AND = {
+							THIS = { has_idea = large_power }
+							ROOT = { has_idea = great_power }
+						}
+						AND = {
+							THIS = { has_idea = great_power }
+							ROOT = { has_idea = superpower }
+						}
+					}
+				}
+				modifier = {
+					add = 15
+					OR = {
+						AND = {
+							OR = {
+								THIS = { has_idea = non_power }
+								THIS = { has_idea = minor_power }
+							}
+							ROOT = { has_idea = large_power }
+						}
+						AND = {
+							OR = {
+								THIS = { has_idea = minor_power }
+								THIS = { has_idea = regional_power }
+							}
+							ROOT = { has_idea = great_power }
+						}
+					}
+				}
+				modifier = {
+					add = 20
+					THIS = { has_idea = great_power }
+					ROOT = { has_idea = superpower }
+				}
+				modifier = {
+					add = 30
+					OR = {
+						THIS = { has_idea = non_power }
+						THIS = { has_idea = minor_power }
+						THIS = { has_idea = regional_power }
+						THIS = { has_idea = large_power }
+					}
+					ROOT = { has_idea = superpower }
+				}
+			}
 		}
 
 		ai_desire = {
 			base = 0
-			modifier = {
-				add = 5
-				THIS = {
-					has_captured_operative = ROOT
+		}
+	}
+
+	# Enforce Peace
+	enforce_peace_option = {
+		allowed = {
+			has_game_rule = {
+				rule = allow_forcing_a_white_peace
+				option = yes
+			}
+		}
+
+		visible = {
+			THIS = { has_war = yes }
+		}
+		selectable = {
+			influence_higher_60 = yes
+			has_opinion = {
+				target = THIS
+				value > 100
+			}
+			has_offensive_war = yes
+		}
+
+		cost = 50
+		icon = 21 # TODO: Add a new icon for this
+
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+
+		send_description = DIPLO_ACTION_ENFORCE_PEACE_OPTION_DESC
+
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect enforce_peace_option"
+			ROOT = { set_variable = { pending_enforce_peace_pending_offer = PREV.id } }
+			add_opinion_modifier = { target = ROOT modifier = forced_a_ceasefire_during_our_conflict }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect enforce_peace_option"
+			for_each_scope_loop = {
+				array = enemies
+				every_state = {
+					limit = {
+						is_owned_by = THIS
+						is_controlled_by = PREV.PREV
+					}
+					PREV.PREV = { transfer_state = PREV }
+				}
+				PREV = { white_peace = PREV }
+			}
+
+			set_temp_variable = { percent_change = -15 }
+			set_temp_variable = { tag_index = ROOT }
+			set_temp_variable = { influence_target = THIS }
+			change_influence_percentage = yes
+		}
+		reject_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect enforce_peace_option"
+			ROOT = {
+				clear_variable = pending_enforce_peace_pending_offer
+			}
+		}
+
+		accept_title = DIPLO_ACTION_ENFORCE_PEACE_OPTION_ACCEPT_TITLE
+		accept_description = DIPLO_ACTION_ENFORCE_PEACE_OPTION_ACCEPT_DESC
+		reject_title = DIPLO_ACTION_ENFORCE_PEACE_OPTION_REJECT_TITLE
+		reject_description = DIPLO_ACTION_ENFORCE_PEACE_OPTION_REJECT_DESC
+
+
+		ai_acceptance = {
+			base_enforce_peace_option = {
+				base = -50
+			}
+			condition_two = {
+				base = 0
+				modifier = {
+					add = 5
+					is_same_government_THIS_ROOT = yes
+				}
+				modifier = {
+					add = -50
+					THIS = { has_government = nationalist }
 				}
 			}
-			modifier = {
-				add = -25
-				has_government = nationalist
+			condition_three = {
+				base = 0
+				modifier = {
+					set_temp_variable = { opinion_calculator = opinion@ROOT }
+					multiply_temp_variable = { opinion_calculator = 0.05 }
+					check_variable = { opinion_calculator > -60 }
+					add = opinion_calculator
+				}
 			}
-			modifier = {
-				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
+			difference_in_power_ranking = {
+				base = 0
+				modifier = {
+					add = 5
+					OR = {
+						AND = {
+							THIS = { has_idea = non_power }
+							ROOT = { has_idea = minor_power }
+						}
+						AND = {
+							THIS = { has_idea = minor_power }
+							ROOT = { has_idea = regional_power }
+						}
+						AND = {
+							THIS = { has_idea = regional_power }
+							ROOT = { has_idea = large_power }
+						}
+						AND = {
+							THIS = { has_idea = large_power }
+							ROOT = { has_idea = great_power }
+						}
+						AND = {
+							THIS = { has_idea = great_power }
+							ROOT = { has_idea = superpower }
+						}
+					}
+				}
+				modifier = {
+					add = 15
+					OR = {
+						AND = {
+							OR = {
+								THIS = { has_idea = non_power }
+								THIS = { has_idea = minor_power }
+							}
+							ROOT = { has_idea = large_power }
+						}
+						AND = {
+							OR = {
+								THIS = { has_idea = minor_power }
+								THIS = { has_idea = regional_power }
+							}
+							ROOT = { has_idea = great_power }
+						}
+					}
+				}
+				modifier = {
+					add = 20
+					THIS = { has_idea = great_power }
+					ROOT = { has_idea = superpower }
+				}
+				modifier = {
+					add = 30
+					OR = {
+						THIS = { has_idea = non_power }
+						THIS = { has_idea = minor_power }
+						THIS = { has_idea = regional_power }
+						THIS = { has_idea = large_power }
+					}
+					ROOT = { has_idea = superpower }
+				}
 			}
+		}
+
+		ai_desire = {
+			base = 0
 		}
 	}
 }
