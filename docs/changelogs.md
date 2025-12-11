@@ -42,6 +42,10 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Fixed a bug where the Union of South American Nations required the Rhineland instead of Curaco
   - Actually fixed the Iranian and Lebanese support focuses for Hezbollah properly giving you money
   - Fixed a bug in the Indian tree for the national focus "Dealing with European Companies" to properly
+  - Fixed the major crash for games at high world tension (the issue was due to template failover from vanilla being missed in MD)
+  - Swedish MIO Ericsson now uses a modern icon
+  - Fixed a potential issue with the overflow of gdp/c and productivity due to divide by zero
+  - Fixed the faction button for NCNS owners not fitting properly
 
  Balance:
   - The Post-Crisis Fiscal Decisions event now makes the Labour Union unhappy instead of happy
@@ -57,6 +61,7 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Opened up the ability to use different types of missiles in raids
   - Rebalanced missile tech bonuses based on generation
   - Extended the length of time the state modifier Nuclear Fallout from 365 days to 1095 (shouldn't be so short term)
+  - Significantly reduced the bonuses Iraq receives from winning the 2nd Gulf War
 
  Content:
   - Added Latvian political parties with expanded descriptions and flavor text (thanks to Pakman who wrote these some time ago!)
@@ -80,6 +85,14 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Added an event for the canonization of the Romanov family as a nice little flavor event for Russia
   - Added a new opinion modifier for State Visit to Vietnam
   - Added an event for the crash of the Su-37 in Russia
+  - Hid additional national focuses custom factions behind visible always no so they don't show up when they're not supposed to
+  - Added a new game rule for gameplay "Zombie Mode" based off of the Doomsday Series submod for Millennium Dawn
+  - CV90 platform changes. CV9030 exists as license for Finland, Switzerland and Norway. CV9035 exists as license for Denmark and the Netherlands
+  - Two new Swedish events handling Visby Corvettes and CV90 BILL
+  - Sweden now starts with the Patria XA-185 and XA-203. Named Patgb 185 and Patgb 203.'
+  - Sweden has new MIOs. Alvis Hägglunds - Strv. Focused on MBTs and light tanks. Alvis Hägglunds - Strf. Focused on IFVs and APCs. Saab Bofors Dynamics AA manufacturer. Bofors Weapon Systems AT manufacturer. Saab Bofors Dynamics - Gevärsfaktoriet as Infantry manufacturer.
+  - Increased amount of Swedish cities across their states. Alongside changed resources and state buildings
+  - Made it so the German v fall decisions do not ensure you are unable to do nuclear things if you have done the focus "German Nuclear Program"
 
  Database:
   - Removed the ahistorical "7th MARDIV - 35th Marine Regiment" from the United States
@@ -96,11 +109,17 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Fixed the Isle of Mann not correctly starting with a religion idea when released
   - The Russian "Sierra" class is now properly a nuclear submarine
   - Added another enrichment facility to the United States to stabilize early game nuclear fuel production for the USA
+  - Changes for Sweden. Ikv 91 changed from HAT to light tank. Gripen no longer has A2A refueling. Gripen is now called Gripen A. No longer starts with Visby Class. Pbv 302 now has it's turret. 9 new characters. Piranha III APC's from Switzerland were removed. Stridsvagn 122 now uses level 3 smoke launchers. Stidsvagn 121 now starts with gen 1 thermals.
+	Bv 206 is now exclusively an APC. Changed order of utility vehicles, now it's Personlastterängbil 903 - Terrängbil 11/13 - Terrängbil 14 - Terrängbil 15. Land rover removed. Now has better represented HAT, with the Pvtrgb-B RBS-55 and Pvrbv-551. Now starts with Lvkv 9040A, Grkpbv 90 and the improved Strf 9040B. No longer starts with medium airframe techs.
+	No longer starts with Attack helicopter, both tech and Mo Bo-155 attack helicopter variants. Swedish equipment now starts with MIO's assigned to the things that can/should have it. Infantry equipment has been changed around to better represent their IRL equivalent.
+  - Sweden now uses the Regiment System. They still start with the same amount of units. But these are now more closely based on how Swedish units looked. Following "Battle Order"'s batallion breakdown of Swedish armored forces alongside existing documentation.
+  - Shifted all 3 variants of the Harrier to the Medium Hardpoint so they can be used as naval strike craft
 
  Game Rules:
   - Removed the "Change Legacy Doctrines" game rules since they no longer exist in the traditional manner
   - Set "Recall Volunteers" to default to yes since Paradox makes the recall actually take time for the troops to return now
   - Created a new game rule for "Allow Enforce Peace" diplomatic action
+  - Fixed a tooltip for the "Historical Event Trigger" to explain they are still randomized but not perfectly on time for specific events only
 
  Graphics:
   - Removed idea description images for now until we have a more consistent use case for them
@@ -110,6 +129,10 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Fixed the event "Nord Stream" and "Nord Stream 2" having two "agrees" instead of an agree and decline
   - Fixed a number of "Unknown promotion" errors in the error log during runtime
   - Renamed the religious idea "Christian" to "Western Christian" to more accurately portray it
+  - Changes made to Swedish MIO names. Aligning them more closely to what they were in 2000.
+  - Fixed some missing localization in the doctrines for some of the unit categories like Light Fighters and All Aircraft
+  - Fixed default focus tree search filter typo (`FOCUS_FILTER_MILITARY_EQUIPMENT` -> `FOCUS_FILTER_EQUIPMENT`).
+  - Added a tooltip for the V Fall events stating that if you do them you are unable to change your nuclear status
 
  Performance:
   - Reduced duplicate code across on actions which should hopefully optimize various actions throughout the game
@@ -120,6 +143,7 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Added an additional openable display to the EU UI, currently accessible only in the Parliament tab, which shows MEPs per country
   - EU Parliament Party Influence buttons are now green if they're available to click
   - Added an Average Economy display to the EU Budget window
+  - Added a new tooltip to the Satellite Orbit screen and tooltips to be more clear about hwo to change the satellite orbit view
 
 {% endcapture %}
 {{ md | markdownify }}
