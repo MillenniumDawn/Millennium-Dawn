@@ -33,3 +33,13 @@ Some computers may have performance issues with Millennium Dawn and as such we r
 - Try to run the mod on a SSD if possible. It runs much better and has a more smooth experience on more modern hardware
 
 **If none of the above relates to your current issues, please reach out on the Discord.**
+
+# Linux Users
+
+The Millennium Dawn team tries our best to provide a compatible experience with Linux users, but as the team is predominantly Windows we struggle to be as effective with Linux.
+
+## Help! My game crashes shortly after game start!
+
+This is a known issue with Linux as of the v1.17.* of Hearts of Iron IV. We have reached out to Paradox Interactive for support on this but until that time we are flying blind.
+
+You can easily fix this by switching to a different runtime in your compatibility tab. The team recommends Proton of some form for now as that has been tested and works with the OpenGL renderer.

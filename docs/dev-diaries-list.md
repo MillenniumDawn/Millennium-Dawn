@@ -6,6 +6,8 @@ permalink: /dev-diaries-list/
 
 # Dev Diary Lists
 
+The Millennium Dawn team rarely writes dev diaries due to our frequency of our update schedule. This is more of an archive of older dev diaries for past content.
+
 <details><summary>v1.11 Dev Diaries</summary>
 
 - [Dev Diary #52: Special Projects, Performances, Raids and Missiles](https://docs.google.com/document/d/1TeHUY7SBIVW2HOhaXEme1y1-UzFocmiMmvNAPMJMnCk/edit?usp=sharing)
