@@ -2026,13 +2026,7 @@ on_actions = {
 					}
 
 					# spawn some units in case there are too few
-					if = {
-						limit = {
-							FROM = {
-								check_variable = { num_divisions < 6 }
-							}
-						}
-
+					if = { limit = { FROM = { check_variable = { num_divisions < 6 } } }
 						FROM = {
 							set_country_flag = civil_war_units_spawned_flag
 
@@ -2067,13 +2061,7 @@ on_actions = {
 					}
 
 					# same for ROOT
-					if = {
-						limit = {
-							ROOT = {
-								check_variable = { num_divisions < 6 }
-							}
-						}
-
+					if = { limit = { ROOT = { check_variable = { num_divisions < 6 } } }
 						ROOT = {
 							set_country_flag = civil_war_units_spawned_flag
 
@@ -2478,6 +2466,7 @@ on_actions = {
 			if = {
 				limit = { ROOT = { tag = CHI } }
 				add_to_variable = { chinese_aggression = 1 }
+				clamp_variable = { var = chinese_aggression min = 0 }
 			}
 		}
 	}
@@ -2535,7 +2524,10 @@ on_actions = {
 		effect = {
 			if = {
 				limit = {
-					FROM = { tag = ITA }
+					OR = {
+						FROM = { tag = ITA }
+						ROOT = { tag = ITA }
+					}
 				}
 				FROM = {
 					remove_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
@@ -2552,6 +2544,8 @@ on_actions = {
 						air_ratio = 1
 					}
 				}
+			}
+			if = { limit = { FROM = { tag = ITA } }
 				ROOT = {
 					remove_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
 					delete_units = {
@@ -2564,27 +2558,7 @@ on_actions = {
 					change_tag_from = FROM
 				}
 			}
-			if = {
-				limit = {
-					ROOT = {
-						tag = ITA
-					}
-				}
-				FROM = {
-					remove_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
-					delete_units = {
-						division_template = "Volontari"
-						disband = yes
-					}
-					transfer_units_fraction = {
-						target = ROOT
-						size = 1
-						stockpile_ratio = 1
-						army_ratio = 1
-						navy_ratio = 1
-						air_ratio = 1
-					}
-				}
+			if = { limit = { ROOT = { tag = ITA } }
 				ROOT = {
 					remove_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
 					delete_units = {
@@ -3084,13 +3058,6 @@ on_actions = {
 				USA = {
 					USA_starting_mio_size = yes
 				}
-			}
-
-			ISR = {
-				ISR_startup = yes
-			}
-			BOS = {
-				BOS_startup_effect = yes
 			}
 
 			log = "[GetDateText]: [This.GetName]: on_startup init completed"
