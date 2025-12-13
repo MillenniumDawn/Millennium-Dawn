@@ -915,7 +915,7 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_SOO_farming_income_idea }
 		}
 	}
-##South KOREA
+	##South KOREA
 	if = {
 		limit = { original_tag = KOR  }
 		if = {
@@ -1433,7 +1433,7 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_SWE_Value_added_Tax }
 		}
 		if = {
-			set_variable = { additional_income_SWE_Social_insurance = welfare_gain}#gdp_per_capita }
+			set_variable = { additional_income_SWE_Social_insurance = welfare_gain } #gdp_per_capita
 			multiply_variable = { additional_income_SWE_Social_insurance = 0.08 } #30% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_Social_insurance }
 		}
@@ -1812,8 +1812,21 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = market_sold_cost }
 		set_variable = { market_sold_value_track = market_sold_cost }
 	}
-}
 
+	#Czech-Hungarian trade
+	if = {
+		limit = {
+			OR = {
+				has_idea = CZE_HUN_receive_additional_income_from_hungary_5
+				has_idea = CZE_HUN_receive_additional_income_from_hungary_3
+				has_idea = CZE_HUN_receive_additional_income_from_hungary_2
+				has_idea = CZE_HUN_receive_additional_income_from_hungary_1
+			}
+		}
+		CZE_HUN_gdp_stolen_calculation = yes
+		add_to_variable = { additional_income_rate = CZE_HUN_gain_income_trade }
+	}
+}
 #Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
 calculate_interest_rate = {
 	if = {			#if country has no debt and high interest national spirit (because they paid it off from having 15% debt interest to 0 within the same in-game day), it'll set all to 0 and remove high interest spirit, also skipping all other calculations to save on processing.
@@ -3590,6 +3603,24 @@ calculate_additional_expense_rate = {
 			set_variable = { CZE_increased_state_expenditure = gdp_total }
 			multiply_variable = { CZE_increased_state_expenditure = CZE.CZE_increased_state_expenditure_multiplier }
 			add_to_variable = { additional_expenses_rate = CZE_increased_state_expenditure }
+		}
+		if = {
+			limit = { has_idea = CZE_foreign_monarchy_intromision }
+			set_variable = { CZE_foreign_monarchy = 0.5 }
+			add_to_variable = { additional_expenses_rate = CZE_foreign_monarchy }
+		}
+	}
+
+	# Hungary
+	if = {
+		limit = { original_tag = HUN }
+		if = {
+			limit = {
+				has_idea = CZE_HUN_manipulating_our_commerce
+			}
+			set_variable = { CZE_HUN_stolen_income = resource_sale_rate }
+			multiply_variable = { CZE_HUN_stolen_income = 0.1 }
+			add_to_variable = { additional_expenses_rate = CZE_HUN_stolen_income }
 		}
 	}
 }
