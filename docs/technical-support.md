@@ -19,7 +19,7 @@ Current MD Version: ``v1.12.2a``
 
 HOI Version: ``1.17.*``
 
-Checksum: ``8ffb``
+Checksum: ``4588``
 
 [Steam Link](https://steamcommunity.com/sharedfiles/filedetails/?id=2777392649)
 

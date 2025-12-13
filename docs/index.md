@@ -18,7 +18,7 @@ Further, it offers a new and unique economic system, a new political system, nat
 
 **Current Expected Version:** v1.12.2a
 
-**Current Expected Checksum:** 8ffb
+**Current Expected Checksum:** 4588
 
 **The following Wiki is currently a work in progress. However, we will do our best to get meaningful content updated and placed on this page.**
 
