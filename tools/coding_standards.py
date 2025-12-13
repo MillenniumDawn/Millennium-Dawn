@@ -558,7 +558,7 @@ def main():
 
     tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
     allTriggers, allEffects = findPdxSyntax(
-        rootDir + "/Modding resources/List of triggers and effects 1_9_1.txt"
+        rootDir + "/resources/List of triggers and effects 1_9_1.txt"
     )
     countryTriggers = getCountryTriggers(allTriggers)
     stateTriggers = getStateTriggers(allTriggers)

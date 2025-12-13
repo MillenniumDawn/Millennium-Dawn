@@ -1,5 +1,6 @@
+# Author(s): Kalkalash, AngriestBird, Droid
 NATO_decisions = {
-
+	# NATO - Join F35 Program
 	NATO_ask_to_join_f35_program = {
 		icon = GFX_decision_nato_f35_expansion_button
 
@@ -49,6 +50,7 @@ NATO_decisions = {
 		}
 	}
 
+	# Leave NATO
 	leave_NATO = {
 		icon = GFX_decision_generic_leave_nato
 
@@ -94,6 +96,7 @@ NATO_decisions = {
 					AND = {
 						has_government = neutrality
 						NOT = { is_in_array = { ruling_party = 12 } }
+						NOT = { has_country_leader = { name = "Recep Tayyip Erdoğan" ruling_only = yes } }
 					}
 				}
 			}
@@ -232,6 +235,36 @@ NATO_decisions = {
 		}
 	}
 
+	# Show Non-Ratified Countries
+	show_non_ratified_countries = {
+		icon = GFX_decision_generic_join_nato
+
+		visible = {
+			is_ai = no
+			has_country_flag = NATO_Accession_Voting
+		}
+
+		available = {
+			hidden_trigger = {
+				always = no
+			}
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				CONTROLLER = {
+					has_idea = NATO_member
+					NOT = { has_country_flag = NATO_Ratified_@ROOT }
+				}
+			}
+		}
+
+		complete_effect = {
+			NATO_show_non_ratified_countries = yes
+		}
+	}
+
+	# Joining NATO
 	become_NATO_aspirant = {
 
 		icon = GFX_decision_generic_join_nato
@@ -275,7 +308,8 @@ NATO_decisions = {
 		ai_will_do = {
 			base = 25
 			modifier = {
-				add = 100
+				add = 50
+				is_historical_focus_on = no
 				OR = {
 					AND = {
 						has_opinion = { target = USA value > 150 }
@@ -433,20 +467,22 @@ NATO_decisions = {
 					has_war = yes
 				}
 			}
-			# Russia is at war with European democratic nations
+			# Russia is at war with European nations on their border
 			modifier = {
 				factor = 2.5
-				SOV = { NOT = { has_government = democratic } }
-				OR = {
-					SOV = { has_war_with = UKR }
-					SOV = { has_war_with = FIN }
-					SOV = { has_war_with = LIT }
-					SOV = { has_war_with = LAT }
-					SOV = { has_war_with = EST }
-					SOV = { has_war_with = GEO }
-					SOV = { has_war_with = BLR }
-					SOV = { has_war_with = ABK }
-					SOV = { has_war_with = SOO }
+				SOV = {
+					NOT = { has_government = democratic }
+					OR = {
+						has_war_with = UKR
+						has_war_with = FIN
+						has_war_with = LIT
+						has_war_with = LAT
+						has_war_with = EST
+						has_war_with = GEO
+						has_war_with = BLR
+						has_war_with = ABK
+						has_war_with = SOO
+					}
 				}
 			}
 			# Microstates shouldn't join NATO. This is just pointless for them IMO
@@ -461,6 +497,52 @@ NATO_decisions = {
 
 					has_government = nationalist
 					has_government = fascism
+				}
+			}
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+				OR = {
+					AND = {
+						OR = {
+							original_tag = LAT
+							original_tag = LIT
+							original_tag = EST
+							original_tag = ROM
+							original_tag = SLO
+							original_tag = SLV
+							original_tag = BUL
+						}
+						date < 2003.1.1
+						NOT = { SOV = { has_added_tension_amount > 5 } }
+					}
+					AND = {
+						OR = {
+							original_tag = ALB
+							original_tag = CRO
+						}
+						date < 2008.1.1
+						NOT = { SOV = { has_added_tension_amount > 5 } }
+					}
+					AND = {
+						original_tag = MNT
+						date < 2016.1.1
+						NOT = { SOV = { has_added_tension_amount > 5 } }
+					}
+					AND = {
+						original_tag = FYR
+						date < 2018.1.1
+						NOT = { SOV = { has_added_tension_amount > 5 } }
+					}
+					AND = {
+						OR = {
+							original_tag = SWE
+							original_tag = FIN
+						}
+						date < 2019.1.1
+						NOT = { SOV = { has_added_tension_amount > 5 } }
+						NOT = { SOV = { has_war_with = UKR } }
+					}
 				}
 			}
 			modifier = {
@@ -832,49 +914,19 @@ NATO_decisions = {
 		}
 	}
 
-	show_non_ratified_countries = {
-		icon = GFX_decision_generic_join_nato
-
-		visible = {
-			is_ai = no
-			has_country_flag = NATO_Accession_Voting
-		}
-
-		available = {
-			hidden_trigger = {
-				always = no
-			}
-		}
-
-		highlight_states = {
-			highlight_states_trigger = {
-				CONTROLLER = {
-					has_idea = NATO_member
-					NOT = { has_country_flag = NATO_Ratified_@ROOT }
-				}
-			}
-		}
-
-		complete_effect = {
-			NATO_show_non_ratified_countries = yes
-		}
-	}
-
-	# Custom Decisions
+	# American Custom Decisions
 	nato_enhance_forward_presence_brigade = {
+		allowed = { original_tag = USA }
 		icon = GFX_decision_infiltrate_state
-		allowed = {
-			original_tag = USA
-		}
+
 		visible = {
-			original_tag = USA
-			USA = { has_idea = NATO_member }
+			has_idea = NATO_member
+		}
+		available = {
+			POL = { has_idea = NATO_member }
 			SOV = { controls_state = 669 }
 		}
-		available = {
-			original_tag = USA
-			POL = { has_idea = NATO_member }
-		}
+
 		fire_only_once = yes
 		cost = 100
 		days_remove = 80
@@ -883,25 +935,23 @@ NATO_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision nato_enhance_forward_presence_brigade"
 			country_event = { id = USA_FOCUS.2 days = 1 }
 		}
+
 		ai_will_do = {
-			factor = 355
+			base = 355
 		}
 	}
 
 	nato_deply_turkish_brigade = {
+		allowed = { original_tag = USA }
 		icon = GFX_decision_infiltrate_state
-		allowed = {
-			original_tag = USA
-		}
+
 		visible = {
-			original_tag = USA
-			USA = { has_idea = NATO_member }
-			SOV = { controls_state = 669 }
+			has_idea = NATO_member
 		}
 		available = {
-			original_tag = USA
 			TUR = { has_idea = NATO_member }
 		}
+
 		fire_only_once = yes
 		cost = 100
 		days_remove = 80
@@ -910,8 +960,9 @@ NATO_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision nato_enhance_forward_presence_brigade"
 			country_event = { id = USA_FOCUS.4 days = 1 }
 		}
+
 		ai_will_do = {
-			factor = 355
+			base = 355
 		}
 	}
 }
@@ -1803,6 +1854,135 @@ NATO_ukraine_help = {
 				factor = 0
 				check_variable = { debt_ratio > 1 }
 			}
+		}
+	}
+}
+
+NATO_CSTO_agreement = {
+	propose_agreement_talks = {
+		icon = GFX_decision_generic_join_nato
+		fire_only_once = yes
+
+		visible = {
+			is_faction_leader = yes
+			NOT = { has_global_flag = NATO_CSTO_treaty_adandoned }
+			any_other_country = {
+				has_idea = CSTO_member
+			}
+		}
+
+		# available = {
+		# 	NOT = { has_global_flag = NATO_CSTO_treaty_ratified }
+		# }
+
+		complete_effect = {
+			random_other_country = {
+				limit = {
+					has_idea = CSTO_member
+					is_faction_leader = yes
+				}
+
+				country_event = { id = NATO_CSTO.1 days = 1 }
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	NATO_CSTO_AI_breach_fix = {
+		visible = {
+			is_ai = yes
+			has_country_flag = NATO_CSTO_agreement_breach_warning
+			NOT = { has_global_flag = NATO_CSTO_treaty_adandoned }
+		}
+
+		fire_only_once = no
+		days_re_enable = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NATO_CSTO_AI_breach_fix"
+			random_owned_controlled_state = {
+				PREV = {
+					delete_unit = {
+						state = PREV
+						disband = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				threat > 0.4
+			}
+		}
+	}
+
+	NATO_CSTO_breach_mission = {
+		available = { always = yes }
+		activation = { always = no }
+
+		days_mission_timeout = 120
+		selectable_mission = no
+		is_good = no
+		fire_only_once = no
+
+		cancel_trigger = {
+			if = {
+				limit = { has_idea = NATO_member }
+
+				custom_trigger_tooltip = {
+					tooltip = NATO_CSTO_violation_TT
+					check_variable = { global.var_nato_inf_count < 1000 }
+					check_variable = { global.var_nato_tank_count < 400 }
+				}
+			}
+			else = {
+				custom_trigger_tooltip = {
+					tooltip = NATO_CSTO_violation_TT
+					check_variable = { global.var_csto_inf_count < 1000 }
+					check_variable = { global.var_csto_tank_count < 400 }
+				}
+			}
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel effect NATO_CSTO_breach_mission"
+			if = {
+				limit = { has_idea = NATO_member }
+
+				every_country = {
+					limit = { has_idea = NATO_member }
+
+					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
+				}
+			}
+			else = {
+				every_country = {
+					limit = { has_idea = CSTO_member }
+
+					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
+				}
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout effect NATO_CSTO_breach_mission"
+			set_global_flag = NATO_CSTO_treaty_adandoned
+			if = {
+				limit = { has_idea = NATO_member }
+
+				news_event = { id = NATO_CSTO.103 days = 1 }
+			}
+			else = {
+				news_event = { id = NATO_CSTO.104 days = 1 }
+			}
+
+			add_threat = 10
 		}
 	}
 }

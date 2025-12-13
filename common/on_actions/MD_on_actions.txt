@@ -59,31 +59,32 @@ on_actions = {
 				}
 			}
 
-			# Pay down debt automatically this weekly tick
-			if = {
-				limit = {
-					check_variable = { treasury_rate > 0 }
-					has_country_flag = automatically_pay_off_debt_enabled
-					check_variable = { debt > 0 }
-				}
-				set_temp_variable = { treasury_rate_debt_payment = treasury_rate }
-				multiply_temp_variable = { treasury_rate_debt_payment = 0.25 }
-				subtract_from_variable = { debt = treasury_rate_debt_payment }
-
+			if = { limit = { NOT = { has_country_flag = disabled_economic_system } }
+				# Pay down debt automatically this weekly tick
 				if = {
-					limit = { check_variable = { debt < 0.001 } }
-					set_variable = { debt = 0 }
-					clr_country_flag = automatically_pay_off_debt_enabled
+					limit = {
+						check_variable = { treasury_rate > 0 }
+						has_country_flag = automatically_pay_off_debt_enabled
+						check_variable = { debt > 0 }
+					}
+					set_temp_variable = { treasury_rate_debt_payment = treasury_rate }
+					multiply_temp_variable = { treasury_rate_debt_payment = 0.25 }
+					subtract_from_variable = { debt = treasury_rate_debt_payment }
+
+					if = {
+						limit = { check_variable = { debt < 0.001 } }
+						set_variable = { debt = 0 }
+						clr_country_flag = automatically_pay_off_debt_enabled
+					}
 				}
+
+				set_temp_variable = { treasury_rate_gain = treasury_rate }
+				subtract_from_temp_variable = { treasury_rate_gain = treasury_rate_debt_payment }
+
+				add_to_variable = { treasury = treasury_rate_gain }
+				#Automated taking debt - has calculate_interest_rate at the end
+				automated_debt_taker = yes
 			}
-
-			set_temp_variable = { treasury_rate_gain = treasury_rate }
-			subtract_from_temp_variable = { treasury_rate_gain = treasury_rate_debt_payment }
-
-			add_to_variable = { treasury = treasury_rate_gain }
-			#Automated taking debt - has calculate_interest_rate at the end
-			automated_debt_taker = yes
-
 
 			# Force Update Influencer Map Mode
 			recalculate_influence = yes
@@ -370,6 +371,29 @@ on_actions = {
 					country_event = { id = jihadi.2 days = 3 random_days = 14 }
 				}
 			}
+
+			if = {
+				limit = {
+					has_global_flag = NATO_CSTO_treaty_ratified
+					NOT = { has_global_flag = NATO_CSTO_treaty_adandoned }
+				}
+
+				NATO_CSTO_calculate_number_of_batallions = yes
+			}
+
+			if = { limit = { is_ai = no }
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = rule_internal_faction_cost_reduction
+							option = yes
+						}
+						NOT = { has_idea = GAME_RULE_reduce_internal_factions_cost }
+					}
+					add_ideas = GAME_RULE_reduce_internal_factions_cost
+				}
+			}
+
 		}
 	}
 
@@ -409,17 +433,44 @@ on_actions = {
 			if = {
 				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
 				if = { limit = { FROM = { has_idea = EU_member } }
-					log = "[GetDateText]: [ROOT.GetName]: on_annex leaving_EU"
-					FROM = {
-						clr_country_flag = EU_voted
-						clr_country_flag = gov_strong_resist
-						clr_country_flag = gov_resist
-						clr_country_flag = gov_support
-						clr_country_flag = gov_strong_support
-						clr_country_flag = EU_voted_yes
-						clr_country_flag = EU_voted_no
+					log = "[GetDateText]: [ROOT.GetName]: on_annex EU Member"
+					meta_effect = {
+						text = {
+							every_country = {
+								limit = { has_idea = EU_member }
+								clr_country_flag = focus_[EUXXX]_EP_agenda
+								clr_country_flag = focus_on_EP_agenda
+								clr_country_flag = [PG_X]_influence
+								clr_country_flag = influence_PG
+								clr_global_flag_PG_X_support = yes
+								reset_MEP_support_party_x = yes
+								set_variable = { global.active_MEP_Support = 0 }
+								set_variable = { global.pass_vote_mission_ender = 0 }
+								set_variable = { global.current_active_agenda_disp = 0 }
+								clr_global_flag = focus_[index]_QMV_voted
+								clr_global_flag = EU_qualified_majority_voting
+								set_variable = { global.current_active_vote_disp = 0 }
+								set_variable = { global.EUXXX_council_agenda = global.current_active_vote_disp }
+								set_variable = { global.EU_active_vote_yes = 0 }
+								set_variable = { global.EU_active_vote_no = 0 }
+								clear_array = global.EU_active_vote_supporters
+								clear_array = global.EU_active_vote_rejecters
+								EU_emergency_vote_clear = yes
+								set_variable = { global.EUU_recently_failed_vote = -1 }
+								leaving_EU = yes
+							}
+						}
 
-						leaving_EU = yes
+						EUXXX = "[EUXXX_EP_agenda]"
+						PG_X = "[PG_X_influence]"
+					}
+					every_country = { limit = { has_idea = EU_member }
+						remove_mission = EU_parliament_focus_EUXXX_approve_timer
+						remove_mission = EU_voting_mission_focus_EUXXX_QMV_result_timer
+					}
+					every_country = { limit = { has_idea = EU_commission_president }
+						remove_mission = EU_parliament_focus_EUXXX_approve
+						remove_mission = EU_voting_mission_focus_EUXXX_QMV_result
 					}
 				}
 				if = { limit = { FROM = { has_idea = EUU_monitor } }
@@ -600,27 +651,6 @@ on_actions = {
 						if = { limit = { NOT = { check_variable = { influence_targets^0 = 0 } } }
 							country_event = influence.500
 						}
-
-						# TODO: Enable with additional development and testing
-						# if = {
-						# 	limit = {
-						# 		has_tech = OLV1
-						# 		OR = {
-						# 			has_tech = GNSS1
-						# 			has_tech = COMSAT1
-						# 			has_tech = SPYSAT1
-						# 		}
-						# 		NOT = { has_country_flag = doing_space_production }
-						# 	}
-						# 	basic_ai_space_program_production = yes
-						# }
-						# if = {
-						# 	limit = {
-						# 		#insert launch triggers here
-						# 		#require an OLV, and some stuff to send to space
-						# 	}
-						# 	basic_ai_space_launch = yes
-						# }
 					}
 
 					# Execute and Start the Yearly ETD Events
@@ -1709,84 +1739,6 @@ on_actions = {
 
 			}
 			productivity_growth_effect = yes
-
-			# American FP
-			if = {
-				limit = {
-					original_tag = USA
-					SOM = {
-						OR = {
-							has_war_with = JUB
-							has_war_with = SWS
-							has_war_with = PUN
-						}
-					}
-					USA = {
-						NOT = {
-							has_country_flag = USA_SOM_intervention
-						}
-					}
-				}
-				USA = {
-					random_list = {
-						35 = {
-							country_event = {
-								id = department_of_state.01
-								days = 20
-							}
-						}
-						65 = {
-							# Nothing
-						}
-					}
-				}
-			}
-
-			if = {
-				limit = {
-					original_tag = USA
-					has_idea = USA_afghan_mission_cost
-					NOT = {
-						has_country_flag = USA_disabled_casualty_report
-					}
-				}
-				USA = {
-					country_event = department_of_state.200
-				}
-			}
-			if = {
-				limit = {
-					original_tag = USA
-					has_idea = USA_afghan_mission_cost
-					has_country_flag = USA_disabled_casualty_report
-				}
-				USA = {
-					add_manpower = -75
-					random_list = {
-						10 = {
-							add_stability = -0.01
-						}
-						10 = {
-							set_temp_variable = { treasury_change = -4.54 }
-							modify_treasury_effect = yes
-						}
-						10 = {
-							set_party_index_to_ruling_party = yes
-							set_temp_variable = { party_popularity_increase = -0.02 }
-							add_relative_party_popularity = yes
-						}
-						10 = {
-							add_political_power = -200
-						}
-						10 = {
-							army_experience = -25
-						}
-						50 = {
-							# Nothing
-						}
-					}
-				}
-			}
 
 			# Research Configuration for AI
 			if = { limit = { is_ai = yes }
