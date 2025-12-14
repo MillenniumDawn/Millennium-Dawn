@@ -1,7 +1,7 @@
 ---
 layout: default
-title: "Millennium Dawn"
-description: "Documentation for the Millennium Dawn mod for Hearts of Iron IV"
+title: "Millennium Dawn: A Modern Day Mod"
+description: "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV."
 ---
 
 ![New2](uploads/main-menu.png) ![Introduction](uploads/Introduction.png)
@@ -16,7 +16,9 @@ Further, it offers a new and unique economic system, a new political system, nat
 
 ## Welcome to the Millennium Dawn Wiki!
 
-**Current Expected Checksum:** fc5c
+**Current Expected Version:** v1.12.2a
+
+**Current Expected Checksum:** 4588
 
 **The following Wiki is currently a work in progress. However, we will do our best to get meaningful content updated and placed on this page.**
 
@@ -69,7 +71,9 @@ The development team requires that you are at least 16 years of age and own a le
 A full list of credits for all of the models that are currently in use in-game: [Model Credit List](https://docs.google.com/spreadsheets/d/1ogWBBn-qooyQnjh-Tztnb2GDYhjCbAOtq_hpgwWDp58/edit#gid=0)
 
 Special thanks to Cyrus Jackson for sharing his models and [Cold War: Iron Curtain](https://steamcommunity.com/sharedfiles/filedetails/?id=1458561226).
-Special thanks to [url=https://steamcommunity.com/sharedfiles/filedetails/?id=1521695605]Kasirreich[/url] team for the focus and ideas gfx sharing!
-Special thanks to [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2076426030]KaiserRedux[/url] team for the focus and ideas gfx sharing!
+
+Special thanks to [Kasirreich](https://steamcommunity.com/sharedfiles/filedetails/?id=1521695605) team for the focus and ideas gfx sharing!
+
+Special thanks to [KaiserRedux](https://steamcommunity.com/sharedfiles/filedetails/?id=2076426030) team for the focus and ideas gfx sharing!
 
 Furthermore, a non-exhaustive list can be found here at at the [Authors](misc/authors)
