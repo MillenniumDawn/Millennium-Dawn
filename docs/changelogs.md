@@ -52,7 +52,6 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Fixed female leaders showing up with blank/no portrait (Thanks Davey!)
   - Fixed the Marine Commando special effect not properly working and applying damage to the state on naval invasions
   - Fixed the issue where if you changed away from a doctrine you were unable to pick that doctrine type again without manually clearing things
-    - There is a issue here due to the load order for Paradox. You will need to change away from the type, and then select another doctrine from another category for the flag to properly clear (or wait a month or run the command "effect has_doctrine_country_flag_type" after switching away)
 
  Balance:
   - The Post-Crisis Fiscal Decisions event now makes the Labour Union unhappy instead of happy
