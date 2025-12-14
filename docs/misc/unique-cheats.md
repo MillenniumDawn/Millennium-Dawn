@@ -43,7 +43,3 @@ This section handles all of our economic system cheats/debugging effects.
 ``set_var debt 0`` - Sets the countries current debt to 0
 
 ``set_var int_investments 10000`` - Sets the countries international investments to 10000
-
-## Support Tools
-
-``effect effect has_doctrine_country_flag_type`` - Clears the flags if you do not have the doctrine so you can rechoose doctrines types
