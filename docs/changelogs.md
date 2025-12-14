@@ -15,6 +15,7 @@ This page is a list of all MD's changelogs from our documentation. In case you w
 
  AI:
   - Improved the conditions for NATO joining on historical game mode so nations do not randomly join who shouldn't
+  - Improved the AI selection for their grand doctrines
 
  Bugfix:
   - Replaced Singapore's local_building_slots_factor with global_building_slots_factor allowing for the idea bonus to give a bonus
@@ -46,6 +47,11 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Swedish MIO Ericsson now uses a modern icon
   - Fixed a potential issue with the overflow of gdp/c and productivity due to divide by zero
   - Fixed the faction button for NCNS owners not fitting properly
+  - Fixed the Austro-Hungarian highlight state trigger not properly displaying all nations as they should be highlighted
+  - Fixed the Austro-Hungarian formable nation not being able to be properly annexed
+  - Fixed female leaders showing up with blank/no portrait (Thanks Davey!)
+  - Fixed the Marine Commando special effect not properly working and applying damage to the state on naval invasions
+  - Fixed the issue where if you changed away from a doctrine you were unable to pick that doctrine type again without manually clearing things
 
  Balance:
   - The Post-Crisis Fiscal Decisions event now makes the Labour Union unhappy instead of happy
@@ -62,6 +68,7 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Rebalanced missile tech bonuses based on generation
   - Extended the length of time the state modifier Nuclear Fallout from 365 days to 1095 (shouldn't be so short term)
   - Significantly reduced the bonuses Iraq receives from winning the 2nd Gulf War
+  - Set the base chance for female leaders to be 5% assuming your national laws support having female leaders
 
  Content:
   - Added Latvian political parties with expanded descriptions and flavor text (thanks to Pakman who wrote these some time ago!)
@@ -93,6 +100,13 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Sweden has new MIOs. Alvis Hägglunds - Strv. Focused on MBTs and light tanks. Alvis Hägglunds - Strf. Focused on IFVs and APCs. Saab Bofors Dynamics AA manufacturer. Bofors Weapon Systems AT manufacturer. Saab Bofors Dynamics - Gevärsfaktoriet as Infantry manufacturer.
   - Increased amount of Swedish cities across their states. Alongside changed resources and state buildings
   - Made it so the German v fall decisions do not ensure you are unable to do nuclear things if you have done the focus "German Nuclear Program"
+  - Modernized the Uzbek Karakalpakstan and adjusted some of the tooltips to display the current opinion of the Uzbek and Karakalpak
+  - Added the "Holy See" idea to the Papacy so they do not bankrupt themselves constantly and get income from the Christian nations of the world
+  - New monarchist branch for Czechia
+  - 2 new game rules for Czechia
+  - New monarchist party and its leaders for Czechia
+  - New alliance, The New Entente, possible to form by king-ruled Czechia
+  - Added the sale of the Kee-Lung Class Destroyer to Taiwan for the United States Foreign Policy decisions
 
  Database:
   - Removed the ahistorical "7th MARDIV - 35th Marine Regiment" from the United States
@@ -137,6 +151,7 @@ This page is a list of all MD's changelogs from our documentation. In case you w
  Performance:
   - Reduced duplicate code across on actions which should hopefully optimize various actions throughout the game
   - Removed a number of non-essential code from the Space System which should minimize the size of save game files
+  - Optimized the on startup scripts by removing unneeded every country calls reducing the load time for people
 
  User Interface:
   - Fixed some containers showing all 6 digits for the decimals (will be a overtime process)
