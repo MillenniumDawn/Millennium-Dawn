@@ -49,7 +49,7 @@ The development team requires that you are at least 16 years of age and own a le
 - [Economy Tutorial](/Millennium-Dawn/player-tutorials/economy-tutorial)
 - [European Union Tutorial](/Millennium-Dawn/player-tutorials/eu-tutorial)
 - [Millennium Dawn Tutorials](https://www.youtube.com/watch?v=9G6lYnP0knI&list=PL36TqZI0G592x3sYphwPHuMvobA6si543)
-- [List of Playable Countries](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/List-of-Countries)
+- [List of Playable Countries](https://millenniumdawn.github.io/Millennium-Dawn/countries-list/)
 
 
 ### Developer/Team Resources
