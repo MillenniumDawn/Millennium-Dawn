@@ -339,12 +339,11 @@ calculate_additional_income_rate = {
 	set_variable = { additional_income_rate = 0 }
 
 	# Additional incomes, set income amount as a variable (weekly gain)
-	if = {
-		limit = { original_tag = HEZ }
+	if = { limit = { original_tag = HEZ }
 		if = {
 			limit = { has_idea = HEZ_our_cartels_in_south_america }
-			set_variable = { HEZ_south_american_cartles_income = 0.250 }
-			add_to_variable = { additional_income_rate = HEZ_south_american_cartles_income }
+			set_variable = { HEZ_south_american_cartels_income = 0.250 }
+			add_to_variable = { additional_income_rate = HEZ_south_american_cartels_income }
 		}
 		if = {
 			limit = { has_completed_focus = HEZ_International_Hezbollah }
@@ -362,15 +361,48 @@ calculate_additional_income_rate = {
 				NOT = { has_war_with = LEB }
 			}
 			if = {
-				limit = { HEZ = { LEB = { influence_higher_50 = yes } } }
+				limit = {
+					HEZ = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = LEB }
+								check_variable = { influence_array_val^0 > 49.999 }
+							}
+							AND = {
+								check_variable = { influence_array^1 = LEB }
+								check_variable = { influence_array_val^1 > 49.999 }
+							}
+						}
+					}
+				}
+				set_variable = { HEZ_lebanese_support_money = 2.000 }
+			}
+			else_if = {
+				limit = {
+					HEZ = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = LEB }
+								check_variable = { influence_array_val^0 > 19.999 }
+							}
+							AND = {
+								check_variable = { influence_array^1 = LEB }
+								check_variable = { influence_array_val^1 > 19.999 }
+							}
+							AND = {
+								check_variable = { influence_array^2 = LEB }
+								check_variable = { influence_array_val^2 > 19.999 }
+							}
+							AND = {
+								check_variable = { influence_array^3 = LEB }
+								check_variable = { influence_array_val^3 > 19.999 }
+							}
+						}
+					}
+				}
 				set_variable = { HEZ_lebanese_support_money = 1.000 }
 			}
-			else_if = {
-				limit = { HEZ = { LEB = { influence_higher_20 = yes } } }
-				set_variable = { HEZ_lebanese_support_money = 0.500 }
-			}
-			else_if = {
-				limit = { HEZ = { LEB = { is_influencer = yes } } }
+			else = {
 				set_variable = { HEZ_lebanese_support_money = 0.250 }
 			}
 			add_to_variable = { additional_income_rate = HEZ_lebanese_support_money }
@@ -383,15 +415,48 @@ calculate_additional_income_rate = {
 				NOT = { has_war_with = PER }
 			}
 			if = {
-				limit = { HEZ = { PER = { influence_higher_50 = yes } } }
+				limit = {
+					HEZ = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = PER }
+								check_variable = { influence_array_val^0 > 49.999 }
+							}
+							AND = {
+								check_variable = { influence_array^1 = PER }
+								check_variable = { influence_array_val^1 > 49.999 }
+							}
+						}
+					}
+				}
 				set_variable = { HEZ_iranian_support_money = 2.000 }
 			}
 			else_if = {
-				limit = { HEZ = { PER = { influence_higher_20 = yes } } }
+				limit = {
+					HEZ = {
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = PER }
+								check_variable = { influence_array_val^0 > 19.999 }
+							}
+							AND = {
+								check_variable = { influence_array^1 = PER }
+								check_variable = { influence_array_val^1 > 19.999 }
+							}
+							AND = {
+								check_variable = { influence_array^2 = PER }
+								check_variable = { influence_array_val^2 > 19.999 }
+							}
+							AND = {
+								check_variable = { influence_array^3 = PER }
+								check_variable = { influence_array_val^3 > 19.999 }
+							}
+						}
+					}
+				}
 				set_variable = { HEZ_iranian_support_money = 1.000 }
 			}
-			else_if = {
-				limit = { HEZ = { PER = { is_influencer = yes } } }
+			else = {
 				set_variable = { HEZ_iranian_support_money = 0.250 }
 			}
 			add_to_variable = { additional_income_rate = HEZ_iranian_support_money }
@@ -850,7 +915,7 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_SOO_farming_income_idea }
 		}
 	}
-##South KOREA
+	##South KOREA
 	if = {
 		limit = { original_tag = KOR  }
 		if = {
@@ -1368,7 +1433,7 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_SWE_Value_added_Tax }
 		}
 		if = {
-			set_variable = { additional_income_SWE_Social_insurance = welfare_gain}#gdp_per_capita }
+			set_variable = { additional_income_SWE_Social_insurance = welfare_gain } #gdp_per_capita
 			multiply_variable = { additional_income_SWE_Social_insurance = 0.08 } #30% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_Social_insurance }
 		}
@@ -1580,10 +1645,26 @@ calculate_additional_income_rate = {
 				original_tag = CYR
 				original_tag = TRP
 			}
+			NOT = { has_country_flag = libya_noc_dismantled }
 		}
 		set_variable = { libya_oil_nationalisation_additional_income = resource_produced@oil }
 		multiply_variable = { libya_oil_nationalisation_additional_income = oil_nationalisation_income }
 		add_to_variable = { additional_income_rate = libya_oil_nationalisation_additional_income }
+	}
+	# Vatican City
+	if = { limit = { original_tag = HLS }
+		if = {
+			limit = { has_idea = HLS_idea_holy_see }
+			every_collection_element = {
+				input = {
+					input = collection:christian_countries_of_the_world
+				}
+				add_to_temp_variable = { gdp_total_temp = gdp_total }
+			}
+			multiply_temp_variable = { gdp_total_temp = 0.00002 }
+			set_variable = { HLS_holy_see_tithe_income = gdp_total_temp }
+			add_to_variable = { additional_income_rate = HLS_holy_see_tithe_income }
+		}
 	}
 	#Sold Equipment Tax Income
 	if = {
@@ -1692,32 +1773,32 @@ calculate_additional_income_rate = {
 		set_temp_variable = { temp_ballistic_missile_equipment_cost = global.base_unit_cost }
 		multiply_temp_variable = { temp_ballistic_missile_equipment_cost = global.missile_cost_mult }
 		multiply_temp_variable = { temp_ballistic_missile_equipment_cost = amount_ballistic_missile_equipment_sold }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_ballistic_missile_equipment_cost }
+		add_to_temp_variable = { market_sold_cost = temp_ballistic_missile_equipment_cost }
 
 		set_temp_variable = { temp_nuclear_ballistic_missile_equipment_cost = global.base_unit_cost }
 		multiply_temp_variable = { temp_nuclear_ballistic_missile_equipment_cost = global.missile_cost_mult }
 		multiply_temp_variable = { temp_nuclear_ballistic_missile_equipment_cost = amount_nuclear_ballistic_missile_equipment_sold }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_nuclear_ballistic_missile_equipment_cost }
+		add_to_temp_variable = { market_sold_cost = temp_nuclear_ballistic_missile_equipment_cost }
 
 		set_temp_variable = { temp_guided_missile_equipment_cost = global.base_unit_cost }
 		multiply_temp_variable = { temp_guided_missile_equipment_cost = global.missile_cost_mult }
 		multiply_temp_variable = { temp_guided_missile_equipment_cost = amount_guided_missile_equipment_sold }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_guided_missile_equipment_cost }
+		add_to_temp_variable = { market_sold_cost = temp_guided_missile_equipment_cost }
 
 		set_temp_variable = { temp_hypersonic_missile_equipment_cost = global.base_unit_cost }
 		multiply_temp_variable = { temp_hypersonic_missile_equipment_cost = global.missile_cost_mult }
 		multiply_temp_variable = { temp_hypersonic_missile_equipment_cost = amount_hypersonic_missile_equipment_sold }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_hypersonic_missile_equipment_cost }
+		add_to_temp_variable = { market_sold_cost = temp_hypersonic_missile_equipment_cost }
 
 		set_temp_variable = { temp_nuclear_missile_equipment_cost = global.base_unit_cost }
 		multiply_temp_variable = { temp_nuclear_missile_equipment_cost = global.missile_cost_mult }
 		multiply_temp_variable = { temp_nuclear_missile_equipment_cost = amount_nuclear_missile_equipment_sold }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_nuclear_missile_equipment_cost }
+		add_to_temp_variable = { market_sold_cost = temp_nuclear_missile_equipment_cost }
 
 		set_temp_variable = { temp_sam_missile_equipment_cost = global.base_unit_cost }
 		multiply_temp_variable = { temp_sam_missile_equipment_cost = global.missile_cost_mult }
 		multiply_temp_variable = { temp_sam_missile_equipment_cost = amount_sam_missile_equipment_sold }
-		add_to_temp_variable = { market_purchase_factories_cost = temp_sam_missile_equipment_cost }
+		add_to_temp_variable = { market_sold_cost = temp_sam_missile_equipment_cost }
 
 
 		set_temp_variable = { corporate_tax_cost_mult = corporate_tax_rate }
@@ -1731,8 +1812,21 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = market_sold_cost }
 		set_variable = { market_sold_value_track = market_sold_cost }
 	}
-}
 
+	#Czech-Hungarian trade
+	if = {
+		limit = {
+			OR = {
+				has_idea = CZE_HUN_receive_additional_income_from_hungary_5
+				has_idea = CZE_HUN_receive_additional_income_from_hungary_3
+				has_idea = CZE_HUN_receive_additional_income_from_hungary_2
+				has_idea = CZE_HUN_receive_additional_income_from_hungary_1
+			}
+		}
+		CZE_HUN_gdp_stolen_calculation = yes
+		add_to_variable = { additional_income_rate = CZE_HUN_gain_income_trade }
+	}
+}
 #Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
 calculate_interest_rate = {
 	if = {			#if country has no debt and high interest national spirit (because they paid it off from having 15% debt interest to 0 within the same in-game day), it'll set all to 0 and remove high interest spirit, also skipping all other calculations to save on processing.
@@ -2116,10 +2210,10 @@ update_military_rate = {
 	multiply_variable = { equipment_operative_cost = 0.001 } #from millions weekly to bilions weekly
 	if = { limit = { has_war = yes }
 		if = { limit = { is_ai = no }
-			multiply_variable = { equipment_operative_cost = 2.5 }
+			multiply_variable = { equipment_operative_cost = 2.25 }
 		}
 		else = {
-			multiply_variable = { equipment_operative_cost = 1.75 }
+			multiply_variable = { equipment_operative_cost = 1.45 }
 		}
 	}
 
@@ -2193,6 +2287,7 @@ update_military_rate = {
 	multiply_temp_variable = { frigate_count = 2 }
 	multiply_temp_variable = { corvette_count = 1 }
 	multiply_temp_variable = { patrol_boat_count = 0.25 }
+
 	set_temp_variable = { navy_count = 0 }
 	set_temp_variable = { navy_count = carrier_count }
 	add_to_temp_variable = { navy_count = capital_count }
@@ -2396,7 +2491,7 @@ update_military_rate = {
 
 	#Divide by control factors (same for all!) - Use this if you want to scale cost of military personnel in relation to defence industry
 	multiply_temp_variable = { land_count = 0.001 }
-	multiply_temp_variable = { land_count = 0.8 }
+	multiply_temp_variable = { land_count = 0.76 }
 	multiply_temp_variable = { navy_count = 0.001 }
 	multiply_temp_variable = { airforce_count = 0.001 }
 	multiply_temp_variable = { airforce_count = 0.667 }
@@ -3510,6 +3605,24 @@ calculate_additional_expense_rate = {
 			multiply_variable = { CZE_increased_state_expenditure = CZE.CZE_increased_state_expenditure_multiplier }
 			add_to_variable = { additional_expenses_rate = CZE_increased_state_expenditure }
 		}
+		if = {
+			limit = { has_idea = CZE_foreign_monarchy_intromision }
+			set_variable = { CZE_foreign_monarchy = 0.5 }
+			add_to_variable = { additional_expenses_rate = CZE_foreign_monarchy }
+		}
+	}
+
+	# Hungary
+	if = {
+		limit = { original_tag = HUN }
+		if = {
+			limit = {
+				has_idea = CZE_HUN_manipulating_our_commerce
+			}
+			set_variable = { CZE_HUN_stolen_income = resource_sale_rate }
+			multiply_variable = { CZE_HUN_stolen_income = 0.1 }
+			add_to_variable = { additional_expenses_rate = CZE_HUN_stolen_income }
+		}
 	}
 }
 
@@ -3993,10 +4106,12 @@ update_state_variables = {
 	# Population Total
 	set_variable = { population_total_m = population_total }
 	multiply_variable = { population_total_m = 0.1 }
+	clamp_variable = { var = population_total_m min = 0.0001 }
 
 	multiply_variable = { overall_productivity = 0.1 }
 	divide_variable = { overall_productivity = population_total_m }
 	multiply_variable = { overall_productivity = 1000 }
+	clamp_variable = { var = overall_productivity min = 0 max = 1000000 } # TODO: This is a workaround to prevent the overflow of produtcivity to 424 million.
 
 	calculate_gdp = yes
 }
@@ -4478,7 +4593,7 @@ calculate_gdp_modifiers = {
 }
 
 calculate_ai_taxes_desire = {
-	# Raise Taxes
+# Raise Taxes
 	if = { limit = { check_variable = { treasury_rate < 0 } }
 		set_temp_variable = { mather = treasury_rate } # -10.00
 		multiply_temp_variable = { mather = -2 } # 20.00
@@ -4536,13 +4651,27 @@ calculate_ai_taxes_desire = {
 		if = { limit = { has_stability < 0.05 }
 			multiply_temp_variable = { mather = 2 }
 		}
-		# Do not decrease lower than 20% personal taxes
+
+		if = { limit = { check_variable = { interest_rate < 3 } }
+			multiply_temp_variable = { mather = 1.15 }
+		}
+		if = { limit = { check_variable = { interest_rate < 5 } }
+			multiply_temp_variable = { mather = 1.15 }
+		}
+
+		if = { limit = { check_variable = { debt_ratio < 0.15 } }
+			multiply_temp_variable = { mather = 1.5 }
+		}
+		if = { limit = { check_variable = { debt_ratio < 0.25 } }
+			multiply_temp_variable = { mather = 1.5 }
+		}
+		# Do not decrease lower than 15% personal taxes
 		# Do not decrease personal if we can decrease corporate
 		if = {
 			limit = {
 				OR = {
-					check_variable = { population_tax_rate < 20 }
-					check_variable = { corporate_tax_rate > 20 }
+					check_variable = { population_tax_rate < 15 }
+					check_variable = { corporate_tax_rate > 9 }
 				}
 			}
 			multiply_temp_variable = { mather = 0 }
@@ -4582,12 +4711,8 @@ calculate_ai_taxes_desire = {
 			multiply_temp_variable = { mather = 2.50 }
 		}
 
-		# do not increase corporate taxes if we can increase personal taxes
-		if = {
-			limit = {
-				check_variable = { population_tax_rate < 30 }
-			}
-
+		# do not increase corporate taxes if we can still increase personal taxes
+		if = { limit = { check_variable = { population_tax_rate < 40 } }
 			multiply_temp_variable = { mather = 0 }
 		}
 
@@ -4609,11 +4734,22 @@ calculate_ai_taxes_desire = {
 			multiply_temp_variable = { mather = 0.5 }
 		}
 
+		if = { limit = { check_variable = { interest_rate < 3 } }
+			multiply_temp_variable = { mather = 1.15 }
+		}
+		if = { limit = { check_variable = { interest_rate < 5 } }
+			multiply_temp_variable = { mather = 1.15 }
+		}
+
+		if = { limit = { check_variable = { debt_ratio < 0.15 } }
+			multiply_temp_variable = { mather = 1.5 }
+		}
+		if = { limit = { check_variable = { debt_ratio < 0.25 } }
+			multiply_temp_variable = { mather = 1.5 }
+		}
+
 		# do not decrease lower than 15%
-		if = {
-			limit = {
-				check_variable = { corporate_tax_rate < 16 }
-			}
+		if = { limit = { check_variable = { corporate_tax_rate < 10 } }
 			multiply_temp_variable = { mather = 0 }
 		}
 

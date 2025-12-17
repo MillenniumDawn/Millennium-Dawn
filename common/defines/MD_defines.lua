@@ -143,8 +143,8 @@
 
 	-- NMarket Related Defines
 	NDefines.NProduction.CIC_BANK_SPEED_BOOST_FACTOR = 0 -- 0.25
-	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.5 -- 2.0
-	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 45 -- 30
+	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.85 -- 2.0
+	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 40 -- 30
 	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- 15
 	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 0.90 -- 0.75
 	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1.10 -- 1.25
@@ -204,8 +204,6 @@
 
 	NDefines.NProduction.MAX_EQUIPMENT_RESOURCES_NEED = 4
 	NDefines.NProduction.MAX_LINE_RESOURCE_PENALTY = 50
-	NDefines.NProduction.BASE_FACTORY_SPEED_MIL = 3
-	NDefines.NProduction.BASE_FACTORY_SPEED_NAV = 8
 	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 5
 	NDefines.NProduction.BASE_CONSUMER_GOODS_NEED_FACTOR = 0
 	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 1
@@ -404,6 +402,8 @@
 	NDefines.NMilitary.NUKE_MIN_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
 	NDefines.NMilitary.NUKE_MAX_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
 	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
+
+	NDefines.NMilitary.BASE_FEMALE_DIVISIONAL_COMMANDER_CHANCE = 0.05 -- Vanilla sets this to 0
 
 	NDefines.NAir.THRUST_WEIGHT_AGILITY_FACTOR = 0 -- 0.5
 	NDefines.NAir.ACCIDENT_CHANCE_RELIABILITY_MULT = 0.2 -- vanilla 2.0 Multiplier to accident chance per point of missing reliability.
@@ -1089,12 +1089,19 @@
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_ATTACH_POLICY_COOLDOWN = 180	-- 180
 	NDefines.NIndustrialOrganisation.LEGACY_COST_FACTOR_SCALE = 1.0					-- 1.0
 
-	NDefines.NProduction.RESOURCE_TO_ENERGY_COEFFICIENT = 1
-	NDefines.NProduction.ENERGY_SCALING_COST_BY_FACTORY_COUNT = 0.00001
-	NDefines.NProduction.BASE_ENERGY_COST = 0.0
-	NDefines.NProduction.BASE_COUNTRY_ENERGY_PRODUCTION = 100000
+	-- Disables the Energy system from vanilla. Thank you Paradox for making me waste so much of my time.
+	NDefines.NProduction.BASE_COUNTRY_ENERGY_PRODUCTION = 100.0 -- Base Energy Production
+	NDefines.NProduction.RESOURCE_TO_ENERGY_COEFFICIENT = 200.0 -- This is like 9 in the base game, but giving oil 200 energy should improve the ratio
+	NDefines.NProduction.ENERGY_SCALING_COST_BY_FACTORY_COUNT = 0.0001
+	NDefines.NProduction.BASE_ENERGY_COST = 0.01
+
+	-- Set the powered and the base to the same to ensure we aren't buffing them since technically your economy is forever powered.
 	NDefines.NProduction.BASE_FACTORY_SPEED = 4
-	NDefines.NProduction.POWERED_FACTORY_SPEED = 4 -- 5
+	NDefines.NProduction.BASE_FACTORY_SPEED_MIL = 3
+	NDefines.NProduction.BASE_FACTORY_SPEED_NAV = 8
+	NDefines.NProduction.POWERED_FACTORY_SPEED = 4 					--Powered factory speed multiplier.
+	NDefines.NProduction.POWERED_FACTORY_SPEED_MIL = 3 			--Powered factory speed multiplier.
+	NDefines.NProduction.POWERED_FACTORY_SPEED_NAV = 8 			--Powered factory speed multiplier.
 
 	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_PP_COST = 200				-- Political power cost to assume faction leadership
 	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_MIN_MANPOWER_RATIO = 2		-- The minimum ratio of manpower that a country must have compared to the current leader in order to assume leadership.

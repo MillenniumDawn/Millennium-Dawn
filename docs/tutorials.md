@@ -11,3 +11,4 @@ permalink: /tutorials/
 - [European Union Tutorial](/Millennium-Dawn/player-tutorials/eu-tutorial)
 - [Military Tutorial](/Millennium-Dawn/player-tutorials/military-tutorial)
 - [Troubleshooting Guide](/Millennium-Dawn/player-tutorials/troubleshooting-guide)
+- [Internal Faction Guide](/Millennium-Dawn/player-tutorials/internal-factions)

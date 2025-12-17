@@ -164,6 +164,11 @@ calculate_energy_use = {
 		add_to_temp_variable = { fossil_pp_fuel_consumption_multiplier = modifier@fossil_pp_fuel_consumption_modifier }
 		multiply_variable = { fossil_pp_fuel_consumption = fossil_pp_fuel_consumption_multiplier }
 		multiply_variable = { fossil_pp_fuel_consumption = -1 }
+
+		# Generation of Power per Fossil Power Plant
+		set_variable = { fossil_pp_energy_per_plant_display = 1 }
+		multiply_variable = { fossil_pp_energy_per_plant_display = fossil_pp_energy_generation_multiplier }
+		multiply_variable = { fossil_pp_energy_per_plant_display = temp_energy_gain_m }
 	}
 
 	# Implements the No Fuel Killswitch
@@ -224,6 +229,11 @@ calculate_energy_use = {
 
 		multiply_variable = { nuclear_energy_generation = temp_energy_gain_m }
 		add_to_variable = { energy_sum = nuclear_energy_generation }
+
+		# Generation of Power per Fossil Power Plant
+		set_variable = { nuclear_energy_per_reactor_display = 2 }
+		multiply_variable = { nuclear_energy_per_reactor_display = nuclear_energy_generation_multiplier }
+		multiply_variable = { nuclear_energy_per_reactor_display = temp_energy_gain_m }
 	}
 	else = {
 		set_variable = { nuclear_fuel_consumption = 0 }
@@ -333,10 +343,18 @@ energy_on_daily = {
 	set_temp_variable = { daily_energy_balance = energy_balance }
 	multiply_temp_variable = { daily_energy_balance = 24 } #gw to gwh
 	add_to_variable = { stored_energy = daily_energy_balance }
+
+	if = { limit = { check_variable = { ROOT.max_stored_energy = 0 } }
+		set_temp_variable = { temp_maximum = 1 }
+	}
+	else = {
+		set_temp_variable = { temp_maximum = ROOT.max_stored_energy }
+	}
+
 	clamp_variable = {
 		var = ROOT.stored_energy
 		min = 0
-		max = ROOT.max_stored_energy
+		max = temp_maximum
 	}
 }
 
