@@ -724,7 +724,6 @@
 	NDefines.NAI.EMBARGO_WORLD_TENSION_THREAT_DIVISOR = 3.0
 
 	-- NAI Defines
-	-- BAI fix test
 	NDefines.NAI.ASSIGN_FRONT_TERRAIN_ATTACK_FACTOR = 6.0                   -- Importance of unit's terrain adjusted attack stat when assigning to a front
 	NDefines.NAI.ASSIGN_FRONT_TERRAIN_DEFENSE_FACTOR = 2.0                  -- Importance of unit's terrain adjusted defense stat when assigning to a front
 	NDefines.NAI.ASSIGN_FRONT_TERRAIN_MOVEMENT_FACTOR = 3.0                 -- Importance of unit's terrain adjusted movement stat when assigning to a front
@@ -739,7 +738,7 @@
 	NDefines.NAI.MAX_FACTORY_TO_TRADE_FOR_FUEL_IN_PEACE = 0.45 -- percentage of factories traded away during peace time
 	NDefines.NAI.BASE_RELUCTANCE = 40 -- 20
 	NDefines.NAI.DIPLOMATIC_ACTION_PROPOSE_SCORE = 25 -- 50
-	NDefines.NAI.DILPOMATIC_ACTION_DECLARE_WAR_WARGOAL_BASE = 75 -- 50
+	NDefines.NAI.DILPOMATIC_ACTION_DECLARE_WAR_WARGOAL_BASE = 75 -- 50 this is actually misspelled in the game defines. lol
 	NDefines.NAI.DIPLOMACY_IMPROVE_RELATION_COST_FACTOR = 10.0 -- 5
 	NDefines.NAI.DIPLOMACY_ACCEPT_VOLUNTEERS_BASE = 75 -- 50
 	NDefines.NAI.DIPLOMACY_ACCEPT_ATTACHE_BASE = 75 -- 50
@@ -1126,8 +1125,9 @@
 	NDefines.NDiplomacy.FACTION_POWER_EFFECTS_WEIGHT = 1			--The weight of the faction's goal status on the faction's power projection
 
 	NDefines.NFactions.FACTION_INFLUENCE_INDUSTRIAL_CAPACITY_FACTOR = 0.5 --how much the country's industry affects its influence
-	NDefines.NFactions.FACTION_INFLUENCE_LEADER_BONUS = 50			-- How much influence we are giving a faction member for being the leader, vanilla 200
+	NDefines.NFactions.FACTION_INFLUENCE_LEADER_BONUS = 150			-- How much influence we are giving a faction member for being the leader, vanilla 200
 	NDefines.NFactions.MAX_NUM_SHORT_TERM_GOALS = 2						-- Maximum number of short term goals a faction can have at any one time, vanilla 1
 	NDefines.NFactions.MAX_NUM_MEDIUM_TERM_GOALS = 1						-- Maximum number of medium term goals a faction can have at any one time
 	NDefines.NFactions.MAX_NUM_LONG_TERM_GOALS = 1						-- Maximum number of long term goals a faction can have at any one time
 	NDefines.NFactions.FACTION_INITIATIVE_CHANGE_RULE_COST = 3 -- vanilla 1
+	NDefines.NFactions.FACTION_SCIENTIST_CONTRIBUTION_VALUE = 1.5 -- vanilla is 3
