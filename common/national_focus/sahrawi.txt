@@ -58,6 +58,7 @@ shared_focus = {
 		set_temp_variable = { party_popularity_increase = 0.015 }
 		add_relative_party_popularity = yes
 		add_political_power = 100
+		country_event = Sahrawi.1
 	}
 
 	ai_will_do = {
@@ -87,7 +88,11 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SHA_the_unthinkable_alliance"
-		 #add units and commanders
+		set_temp_variable = { party_index = 11 }
+		set_temp_variable = { party_popularity_increase = 0.15 }
+		set_temp_variable = { temp_outlook_increase = 0.15 }
+		add_relative_party_popularity = yes
+		#ADD gENERALS
 	}
 
 	ai_will_do = {
@@ -147,6 +152,9 @@ shared_focus = {
 	mutually_exclusive = { focus = SHA_invade_mauritania }
 
 	available = {
+		country_exists = MAU
+		NOT = { has_war_with = MAU }
+		is_neighbor_of = MAU
 	}
 
 	bypass = {
@@ -183,9 +191,53 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SHA_mauritanian_sponsorship"
-		 # add event about two people under the state
-		 # add event to keep one
-		 # 
+		MAU = {
+			country_event = Sahrawi.4
+		}
+		newline = yes
+		custom_effect_tooltip = SHA_effect_if_they_accept_TT
+		effect_tooltip = {
+			MAU= {
+				set_temp_variable = { treasury_change = -5 }
+				modify_treasury_effect = yes
+			}
+			add_equipment_to_stockpile = {
+				type = medium_tank_chassis_0
+				variant_name = "T-55"
+				amount = 25
+				producer = SOV
+			}
+			add_equipment_to_stockpile = {
+				type = medium_tank_flame_chassis_0
+				variant_name = "BMP-1"
+				amount = 50
+				producer = SOV
+			}
+			add_equipment_to_stockpile = {
+				type = artillery_0	#D-30
+				amount = 45
+				producer = SOV
+			}
+			add_equipment_to_stockpile = {
+				type = medium_tank_artillery_chassis_0
+				variant_name = "2S1 Gvozdika"
+				amount = 10
+				producer = SOV
+			}
+			add_equipment_to_stockpile = {
+				type = infantry_weapons
+				amount = 3500
+				producer = SOV
+			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = MAU }
+			set_temp_variable = { influence_target = SHA }
+			change_influence_percentage = yes
+			add_opinion_modifier = {
+				target = MAU
+				modifier = military_aid
+			}
+		}
 	}
 
 	ai_will_do = {
@@ -207,6 +259,13 @@ shared_focus = {
 	mutually_exclusive = { focus = SHA_establish_cross_border_bases }
 
 	available = {
+		country_exists = MAU
+		MAU = {
+			has_country_leader = {
+				name = "Maaouya Ould Sid Ahmed Taya"
+				ruling_only = yes
+			}
+		}
 	}
 
 	bypass = {
@@ -215,9 +274,55 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SHA_invade_mauritania"
-		 # add event about two people under the state
-		 # add event to keep one
-		 # 
+		country_event = Sahrawi.3
+		newline = yes
+		custom_effect_tooltip = SHA_effect_from_evemt_TT
+		effect_tooltip = {
+			SHA_saleh_ould_hanenna = {
+				set_nationality = SHA
+				add_corps_commander_role = {
+					traits = { combined_arms_expert }
+					skill = 2
+					attack_skill = 2
+					defense_skill = 1
+					planning_skill = 4
+					logistics_skill = 2
+				}
+			}
+			SHA_moulaye_ould_boukhreiss = {
+				set_nationality = SHA
+				add_corps_commander_role = {
+					traits = { scavenger }
+					skill = 2
+					attack_skill = 1
+					defense_skill = 1
+					planning_skill = 2
+					logistics_skill = 2
+				}
+			}
+			division_template = {
+				name = "Brigade d'Infanterie"
+				is_locked = yes
+				regiments = {
+					Mot_Militia_Bat = { x = 0 y = 0 }
+					Mot_Militia_Bat = { x = 0 y = 1 }
+					Mot_Militia_Bat = { x = 0 y = 2 }
+					L_Inf_Bat = { x = 1 y = 0 }
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name = \"Brigade d'Infanterie\" division_template = \"Brigade d'Infanterie\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
+					owner = ROOT
+					count = 2
+				}
+			}
+			newline = yes
+			declare_war_on = {
+				target = MAU
+				type = annex_everything
+			}
+		}
 	}
 
 	ai_will_do = {
@@ -245,9 +350,7 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SHA_our_sahara_is_homeland"
-		 # add event about two people under the state
-		 # add event to keep one
-		 # 
+		#AUTO COMPLETES
 	}
 
 	ai_will_do = {
@@ -267,6 +370,7 @@ shared_focus = {
 	relative_position_id = SHA_our_sahara_is_homeland
 
 	available = {
+		fascism > 0.2
 	}
 
 	bypass = {
@@ -275,18 +379,19 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SHA_show_its_hand"
-		set_temp_variable = { rul_party_temp = 11 }
-		set_temp_variable = { change_leader_temp = 1 }
-		change_ruling_party_effect = yes
-		set_politics = {
-			ruling_party = fascism
-			elections_allowed = no
-		}
-		set_temp_variable = { party_index = 11 }
-		set_temp_variable = { party_popularity_increase = 0.05 }
-		set_temp_variable = { temp_outlook_increase = 0.05 }
-		add_relative_party_popularity = yes
+		custom_effect_tooltip = SHA_flip_to_salafist_TT
 		hidden_effect = {
+			set_temp_variable = { rul_party_temp = 11 }
+			set_temp_variable = { change_leader_temp = 1 }
+			change_ruling_party_effect = yes
+			set_politics = {
+				ruling_party = fascism
+				elections_allowed = no
+			}
+			set_temp_variable = { party_index = 11 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
 			create_country_leader = {
 				name = "Mokhtar Belmokhtar"
 				picture = "SHA_mokhtar_belmokhtar.dds"
@@ -298,6 +403,7 @@ shared_focus = {
 					ruthless
 				}
 			}
+			set_cosmetic_tag = MAGHREB
 		}
 		#Tooltip this entire thing
 		#also add the Party & flags
@@ -320,6 +426,7 @@ shared_focus = {
 	relative_position_id = SHA_our_sahara_is_homeland
 
 	available = {
+		has_full_control_of_state = 1179
 	}
 
 	bypass = {
@@ -328,9 +435,28 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SHA_incorporate_the_teknad"
-		 # add event about two people under the state
-		 # add event to keep one
-		 # 
+		add_state_core = 1179
+		add_state_claim = 378
+		IF = {
+			Limit = {
+				SHA = {
+					NOT = {
+						has_full_control_of_state = 1179
+					}
+				}
+			}
+			1179 = {
+				OWNER = {
+					SHA = {
+						create_wargoal  = {
+							type = take_state_focus
+							target = PREV
+							generator = { 1179 378 }
+						}
+					}
+				}
+			}
+		}
 	}
 
 	ai_will_do = {
@@ -359,6 +485,7 @@ shared_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SHA_uphold_the_oil_contracts"
 		add_ideas = rentier_state
+		#ADD oIL 
 	}
 
 	ai_will_do = {
@@ -378,6 +505,7 @@ shared_focus = {
 	relative_position_id = SHA_show_its_hand
 
 	available = {
+		20_percent_government_popularity = yes
 	}
 
 	bypass = {
@@ -386,9 +514,7 @@ shared_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SHA_the_maghreb_insurgency"
-		 # add event about two people under the state
-		 # add event to keep one
-		 # 
+		 #gIVES wAR GOALS
 	}
 
 	ai_will_do = {
@@ -408,6 +534,7 @@ shared_focus = {
 	relative_position_id = SHA_show_its_hand
 
 	available = {
+		20_percent_government_popularity = yes
 	}
 
 	bypass = {
