@@ -1,4 +1,3 @@
-
 GER_Network_Infrastructure = {
 	Expand_Network_North = {
 		cost = 50
@@ -345,50 +344,6 @@ GER_Network_Infrastructure = {
 	}
 }
 GER_east_vs_west_divide = {
-	GER_end_the_divide = {
-		fire_only_once = yes
-		days_remove = 50
-		visible = {
-			check_variable = { 539.productivity_state_var > 999 }
-			check_variable = { 1079.productivity_state_var > 999 }
-			check_variable = { 44.productivity_state_var > 999 }
-			check_variable = { 972.productivity_state_var > 999 }
-			check_variable = { 545.productivity_state_var > 999 }
-			539 = {
-				infrastructure > 4
-			}
-			1079 = {
-				infrastructure > 4
-			}
-			44 = {
-				infrastructure > 4
-			}
-			972 = {
-				infrastructure > 4
-			}
-			545 = {
-				infrastructure > 4
-			}
-			has_country_flag = GER_its_over
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision GER_end_the_divide"
-			custom_effect_tooltip = GER_united_truly_TT
-			set_country_flag = GER_united
-			remove_ideas = GER_idea_germany_divided
-			hidden_effect = {
-				remove_ideas = GER_idea_east_german_debuff2
-				remove_ideas = GER_idea_east_german_debuff4
-				remove_ideas = GER_idea_east_german_debuff3
-				remove_ideas = GER_idea_east_german_debuff1
-			}
-		}
-
-		ai_will_do = {
-			factor = 1
-		}
-	}
-
 	GER_divide_open = {
 		visible = {
 			NOT = { has_country_flag = GER_open_divide }
@@ -857,40 +812,7 @@ GER_bavarian_nationalism = {
 			newline = yes
 			release = BAY
 			BAY = {
-				## Setup Values
-				hidden_effect = {
-					set_variable = { civilian_factory_employment_var = 1 }
-					set_variable = { naval_factory_employment_var = 1 }
-					set_variable = { military_factory_employment_var = 1 }
-					set_variable = { office_employment_var = 1 }
-					set_variable = { gdpc_converging_var = PREV.gdpc_converging_var }
-					inherit_technology = PREV
-					if = {
-						limit = {
-							NOT = { has_variable = domestic_influence_amount }
-						}
-						set_variable = { domestic_influence_amount = 100 }
-					}
-					if = {
-						limit = { NOT = { has_variable = corporate_tax_rate } }
-						set_variable = { var = corporate_tax_rate value = 20 }
-					}
-					if = {
-						limit = { NOT = { has_variable = population_tax_rate } }
-						set_variable = { var = population_tax_rate value = 20 }
-					}
-					ingame_init_investment_system = yes
-					init_auto_influence_array = yes
-					calculate_influence_percentage = yes #set alignment drifts from influence
-					startup_politics = yes
-					ingame_update_setup = yes 	#money system
-					setup_init_factions = yes 	#flags for int. factions
-					set_law_vars = yes 	#vars for change laws secondary effects
-					update_neighbors_effects = yes # Updates Neighbor Effects
-					economic_cycle_drift_popularity = yes #drift from neighbor
-					ai_update_build_units = yes
-					calculate_expected_spending = yes
-				}
+				ingame_startup_nations_effect = yes
 			}
 			hidden_effect = {
 				if = {
@@ -1165,7 +1087,7 @@ GER_the_false_state = {
 				amount = -7175
 			}
 			add_equipment_to_stockpile = {
-				type = inf_equipment
+				type = Inf_equipment
 				amount = -4550
 			}
 			newline = yes
@@ -1175,7 +1097,7 @@ GER_the_false_state = {
 					amount = 7175
 				}
 				add_equipment_to_stockpile = {
-					type = inf_equipment
+					type = Inf_equipment
 					amount = 4550
 				}
 			}
@@ -1862,7 +1784,6 @@ GER_imperial_bloc_invites = {
 GER_V_fall_Decision = {
 	GER_Declare_V_Fall = {
 		available = {
-			original_tag = GER
 			OR = {
 				has_defensive_war = yes
 				threat > 0.6
@@ -1877,7 +1798,11 @@ GER_V_fall_Decision = {
 			set_country_flag = GER_V_fall
 			remove_ideas = german_legacy
 			clr_country_flag = GER_Final_settlement
-			clr_country_flag = GER_no_nuclear
+			if = {
+				limit = { NOT = { has_completed_focus = GER_nuclear_rearmarment } }
+				clr_country_flag = GER_no_nuclear
+				custom_effect_tooltip = GER_start_V_Fall_nuclear_TT
+			}
 			add_stability = 0.1
 			add_war_support = 0.1
 			add_ideas = GER_idea_V_Fall
@@ -1924,7 +1849,7 @@ GER_V_fall_Decision = {
 	}
 	GER_Territorial_Defense = {
 		fire_only_once = yes
-		days_remove = 130
+		days_remove = 45
 		available = {
 			original_tag = GER
 		}
@@ -1937,43 +1862,54 @@ GER_V_fall_Decision = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_Territorial_Defense"
 			GER = {
 				division_template = {
-					name = "Wehrbereichskommando"
+					name = "Heimatschutzbrigade"
 					is_locked = yes
 
 					regiments = {
 						Mot_Inf_Bat = { x = 0 y = 0 }
 						Mot_Inf_Bat = { x = 0 y = 1 }
-						Arty_Bat = { x = 0 y = 2 }
-						Mot_Inf_Bat = { x = 1 y = 0 }
-						Mot_Inf_Bat = { x = 1 y = 1 }
+						Mot_Inf_Bat = { x = 0 y = 2 }
+						mech_Inf_Bat = { x = 1 y = 0 }
 					}
 					support = {
-						L_Engi_Comp = { x = 0 y = 0 }
-						Mot_Recce_Comp = { x = 0 y = 1 }
+						H_Engi_Comp = { x = 0 y = 0 }
+						mech_Recce_Comp = { x = 0 y = 1 }
+						armor_Comp = { x = 0 y = 2 }
+						SP_Arty_Battery = { x = 0 y = 3 }
 					}
 					priority = 0
 				}
 			}
 			capital_scope = {
 				create_unit = {
-					division = "name = \"Wehrbereichskommando I\" division_template = \"Wehrbereichskommando\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
+					division = "name = \"Heimatschutzbrigade 51\" division_template = \"Heimatschutzbrigade\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
 					owner = GER
-					prioritize_location = 6389
+					prioritize_location = 11331
 				}
 				create_unit = {
-					division = "name = \"Wehrbereichskommando II\" division_template = \"Wehrbereichskommando\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
+					division = "name = \"Heimatschutzbrigade 52\" division_template = \"Heimatschutzbrigade\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
 					owner = GER
-					prioritize_location = 11560
+					prioritize_location = 11388
 				}
 				create_unit = {
-					division = "name = \"Wehrbereichskommando III\" division_template = \"Wehrbereichskommando\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
+					division = "name = \"Heimatschutzbrigade 53\" division_template = \"Heimatschutzbrigade\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
 					owner = GER
-					prioritize_location = 6524
+					prioritize_location = 587
 				}
 				create_unit = {
-					division = "name = \"Wehrbereichskommando IV\" division_template = \"Wehrbereichskommando\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
+					division = "name = \"Heimatschutzbrigade 54\" division_template = \"Heimatschutzbrigade\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
 					owner = GER
-					prioritize_location = 692
+					prioritize_location = 3558
+				}
+				create_unit = {
+					division = "name = \"Heimatschutzbrigade 55\" division_template = \"Heimatschutzbrigade\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
+					owner = GER
+					prioritize_location = 519
+				}
+				create_unit = {
+					division = "name = \"Heimatschutzbrigade 56\" division_template = \"Heimatschutzbrigade\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
+					owner = GER
+					prioritize_location = 571
 				}
 			}
 		}
@@ -1998,24 +1934,50 @@ GER_V_fall_Decision = {
 		}
 		remove_effect = {
 
+			GER = {
+				division_template = {
+					name = "Inactive Brigade"
+
+				#	division_names_group = GER_MEC_02
+
+					regiments = {
+						armor_Bat = { x = 0 y = 0 }
+						Arm_Inf_Bat = { x = 0 y = 1 }
+						SP_Arty_Bat = { x = 0 y = 2 }
+
+						Mech_Inf_Bat = { x = 1 y = 0 }
+						Mech_Inf_Bat = { x = 1 y = 1 }
+						Arm_Inf_Bat = { x = 1 y = 2 }
+
+					}
+					support = {
+						H_Engi_Comp = { x = 0 y = 0 }
+						armor_Recce_comp = { x = 0 y = 1 }
+						SP_AA_Battery = { x = 0 y = 2 }
+						combat_service_support_company = { x = 0 y = 3 }
+					}
+					priority = 0
+				}
+			}
+
 			capital_scope = {
 				create_unit = {
-					division = "name = \"Panzerbrigade 8\" division_template = \"Panzerbrigade\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
+					division = "name = \"Panzerbrigade 8\" division_template = \"Inactive Brigade\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
 					owner = GER
 					prioritize_location = 6263
 				}
 				create_unit = {
-					division = "name = \"Panzergrenadierbrigade 32\" division_template = \"Panzergrenadierbrigade\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
+					division = "name = \"Panzergrenadierbrigade 32\" division_template = \"Inactive Brigade\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
 					owner = GER
 					prioritize_location = 3326
 				}
 				create_unit = {
-					division = "name = \"Panzergrenadierbrigade 5\" division_template = \"Panzergrenadierbrigade\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
+					division = "name = \"Panzergrenadierbrigade 5\" division_template = \"Inactive Brigade\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
 					owner = GER
 					prioritize_location = 11445
 				}
 				create_unit = {
-					division = "name = \"Panzergrenadierbrigade 2\" division_template = \"Panzergrenadierbrigade\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
+					division = "name = \"Panzergrenadierbrigade 2\" division_template = \"Inactive Brigade\" start_experience_factor = 0.5 start_equipment_factor = 0.01"
 					owner = GER
 					prioritize_location = 9375
 				}
@@ -2114,6 +2076,7 @@ GER_V_fall_Decision = {
 				}
 			}
 		}
+
 		ai_will_do = {
 			factor = 10
 		}
@@ -2194,10 +2157,15 @@ GER_V_fall_Decision = {
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision GER_New_Ammunition "
+			log = "[GetDateText]: [Root.GetName]: Decision GER_end_V_Fall"
 			clr_country_flag = GER_V_fall
 			add_ideas = german_legacy
-			set_country_flag = GER_no_nuclear
+			if = {
+				limit = { NOT = { has_completed_focus = GER_nuclear_rearmarment } }
+				set_country_flag = GER_no_nuclear
+				custom_effect_tooltip = GER_end_V_Fall_nuclear_TT
+				add_ideas = nuclear_energy
+			}
 			add_stability = 0.1
 			remove_ideas = GER_idea_V_Fall
 			if = {
@@ -2229,6 +2197,32 @@ GER_V_fall_Decision = {
 				swap_ideas = { remove_idea = police_04 add_idea = police_02 }
 			}
 			decrease_conscription_effect = yes
+			GER = {
+				every_country_division = {
+					limit = {
+						division_has_majority_template = Mot_Inf_Bat
+					}
+					PREV = {
+						delete_unit_template_and_units = {
+							division_template = "Heimatschutzbrigade"
+							disband = yes
+						}
+					}
+				}
+			}
+			GER = {
+				every_country_division = {
+					limit = {
+						division_has_majority_template = armor_Bat
+					}
+					PREV = {
+						delete_unit_template_and_units = {
+							division_template = "Inactive Brigade"
+							disband = yes
+						}
+					}
+				}
+			}
 		}
 		ai_will_do = {
 			factor = 100
@@ -2240,7 +2234,7 @@ GER_Officer_Training_Decisions = {
 	#German National courses
 	GER_General_Staff_Course_Hamburg = {
 		days_remove = 90
-		cost = 100
+		cost = 70
 		available = {
 			original_tag = GER
 		}
@@ -2291,7 +2285,7 @@ GER_Officer_Training_Decisions = {
 	GER_Leadership_course_for_officers_Koblenz = {
 
 		days_remove = 90
-		cost = 100
+		cost = 70
 		available = {
 			original_tag = GER
 		}
@@ -2342,7 +2336,7 @@ GER_Officer_Training_Decisions = {
 	GER_National_Defense_and_Armed_forces_Planning_Course = {
 
 		days_remove = 90
-		cost = 100
+		cost = 70
 		available = {
 			original_tag = GER
 		}
@@ -2393,7 +2387,7 @@ GER_Officer_Training_Decisions = {
 	GER_Operational_leadership_and_command_course = {
 
 		days_remove = 90
-		cost = 100
+		cost = 70
 		available = {
 			original_tag = GER
 		}
@@ -2444,7 +2438,7 @@ GER_Officer_Training_Decisions = {
 	GER_military_intelligence_course = {
 
 		days_remove = 90
-		cost = 100
+		cost = 70
 		available = {
 			original_tag = GER
 		}
@@ -2495,7 +2489,7 @@ GER_Officer_Training_Decisions = {
 	GER_multinational_planning_seminar = {
 
 		days_remove = 90
-		cost = 100
+		cost = 70
 		available = {
 			original_tag = GER
 		}
@@ -2547,7 +2541,7 @@ GER_Officer_Training_Decisions = {
 	GER_Admiral_staff_course = {
 
 		days_remove = 90
-		cost = 100
+		cost = 70
 		available = {
 			original_tag = GER
 		}
@@ -2592,7 +2586,7 @@ GER_Officer_Training_Decisions = {
 					}
 				}
 			}
-	   }
+	  }
 	   ai_will_do = {
 			factor = 1
 		}
@@ -2600,7 +2594,7 @@ GER_Officer_Training_Decisions = {
 	GER_Multi_national_Maritime_leadership_course = {
 
 		days_remove = 90
-		cost = 100
+		cost = 70
 		available = {
 			original_tag = GER
 		}
@@ -2655,7 +2649,7 @@ GER_Officer_Training_Decisions = {
 	GER_Launch_small_Trainings_exercise = {
 
 		days_remove = 365
-		cost = 100
+		cost = 70
 		available = {
 			original_tag = GER
 		}
@@ -2682,7 +2676,7 @@ GER_Officer_Training_Decisions = {
 	GER_Launch_big_Trainings_exercise = {
 
 		days_remove = 365
-		cost = 100
+		cost = 70
 		available = {
 			original_tag = GER
 		}
@@ -2713,22 +2707,25 @@ GER_Officer_Training_Decisions = {
 GER_balance_of_power_category = {
 
 	GER_Promote_Cultural_exchange_Programs = {
-
+		icon = GFX_decision_anti_nationalism
 		days_remove = 50
 		cost = 50
 
 		available = {
-			NOT = {
-				#has_decision = GER_Promote_Cultural_exchange_Programs
-				has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
-				has_decision = GER_Support_Multicultural_Art_and_literature_initiative
-				has_decision = GER_launch_multicultural_media_campain
-				has_decision = GER_Launch_Erinnerungskultur_campain
-				has_decision = GER_Revitalize_german_historical_Narratives_in_school
-				has_decision = GER_Promote_Traditional_german_values_in_media
-				has_decision = GER_Support_heimatvereine
-				has_decision = GER_Fund_national_Culture_festivals
-				has_decision = GER_Launch_national_identity_courses_for_migrants
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					#has_decision = GER_Promote_Cultural_exchange_Programs
+					has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
+					has_decision = GER_Support_Multicultural_Art_and_literature_initiative
+					has_decision = GER_launch_multicultural_media_campain
+					has_decision = GER_Launch_Erinnerungskultur_campain
+					has_decision = GER_Revitalize_german_historical_Narratives_in_school
+					has_decision = GER_Promote_Traditional_german_values_in_media
+					has_decision = GER_Support_heimatverein
+					has_decision = GER_Fund_national_Culture_festivals
+					has_decision = GER_Launch_national_identity_courses_for_migrants
+				}
 			}
 		}
 
@@ -2750,22 +2747,25 @@ GER_balance_of_power_category = {
 		}
 	}
 	GER_provide_federal_foundings_for_migration_cultural_centers = {
-
+		icon = GFX_decision_anti_nationalism
 		days_remove = 50
 		cost = 65
 
 		available = {
-			NOT = {
-				has_decision = GER_Promote_Cultural_exchange_Programs
-				#has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
-				has_decision = GER_Support_Multicultural_Art_and_literature_initiative
-				has_decision = GER_launch_multicultural_media_campain
-				has_decision = GER_Launch_Erinnerungskultur_campain
-				has_decision = GER_Revitalize_german_historical_Narratives_in_school
-				has_decision = GER_Promote_Traditional_german_values_in_media
-				has_decision = GER_Support_heimatvereine
-				has_decision = GER_Fund_national_Culture_festivals
-				has_decision = GER_Launch_national_identity_courses_for_migrants
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = GER_Promote_Cultural_exchange_Programs
+					#has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
+					has_decision = GER_Support_Multicultural_Art_and_literature_initiative
+					has_decision = GER_launch_multicultural_media_campain
+					has_decision = GER_Launch_Erinnerungskultur_campain
+					has_decision = GER_Revitalize_german_historical_Narratives_in_school
+					has_decision = GER_Promote_Traditional_german_values_in_media
+					has_decision = GER_Support_heimatverein
+					has_decision = GER_Fund_national_Culture_festivals
+					has_decision = GER_Launch_national_identity_courses_for_migrants
+				}
 			}
 		}
 		remove_effect = {
@@ -2786,22 +2786,25 @@ GER_balance_of_power_category = {
 		}
 	}
 	GER_Support_Multicultural_Art_and_literature_initiative = {
-
+		icon = GFX_decision_anti_nationalism
 		days_remove = 50
 		cost = 80
 
 		available = {
-			NOT = {
-				has_decision = GER_Promote_Cultural_exchange_Programs
-				has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
-				#has_decision = GER_Support_Multicultural_Art_and_literature_initiative
-				has_decision = GER_launch_multicultural_media_campain
-				has_decision = GER_Launch_Erinnerungskultur_campain
-				has_decision = GER_Revitalize_german_historical_Narratives_in_school
-				has_decision = GER_Promote_Traditional_german_values_in_media
-				has_decision = GER_Support_heimatvereine
-				has_decision = GER_Fund_national_Culture_festivals
-				has_decision = GER_Launch_national_identity_courses_for_migrants
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = GER_Promote_Cultural_exchange_Programs
+					has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
+					#has_decision = GER_Support_Multicultural_Art_and_literature_initiative
+					has_decision = GER_launch_multicultural_media_campain
+					has_decision = GER_Launch_Erinnerungskultur_campain
+					has_decision = GER_Revitalize_german_historical_Narratives_in_school
+					has_decision = GER_Promote_Traditional_german_values_in_media
+					has_decision = GER_Support_heimatverein
+					has_decision = GER_Fund_national_Culture_festivals
+					has_decision = GER_Launch_national_identity_courses_for_migrants
+				}
 			}
 		}
 		remove_effect = {
@@ -2822,22 +2825,25 @@ GER_balance_of_power_category = {
 		}
 	}
 	GER_launch_multicultural_media_campain = {
-
+		icon = GFX_decision_anti_nationalism
 		days_remove = 50
 		cost = 95
 
 		available = {
-			NOT = {
-				has_decision = GER_Promote_Cultural_exchange_Programs
-				has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
-				has_decision = GER_Support_Multicultural_Art_and_literature_initiative
-				#has_decision = GER_launch_multicultural_media_campain
-				has_decision = GER_Launch_Erinnerungskultur_campain
-				has_decision = GER_Revitalize_german_historical_Narratives_in_school
-				has_decision = GER_Promote_Traditional_german_values_in_media
-				has_decision = GER_Support_heimatvereine
-				has_decision = GER_Fund_national_Culture_festivals
-				has_decision = GER_Launch_national_identity_courses_for_migrants
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = GER_Promote_Cultural_exchange_Programs
+					has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
+					has_decision = GER_Support_Multicultural_Art_and_literature_initiative
+					#has_decision = GER_launch_multicultural_media_campain
+					has_decision = GER_Launch_Erinnerungskultur_campain
+					has_decision = GER_Revitalize_german_historical_Narratives_in_school
+					has_decision = GER_Promote_Traditional_german_values_in_media
+					has_decision = GER_Support_heimatverein
+					has_decision = GER_Fund_national_Culture_festivals
+					has_decision = GER_Launch_national_identity_courses_for_migrants
+				}
 			}
 		}
 		remove_effect = {
@@ -2862,22 +2868,25 @@ GER_balance_of_power_category = {
 		}
 	}
 	GER_Launch_Erinnerungskultur_campain = {
-
+		icon = GFX_decision_anti_nationalism
 		days_remove = 50
 		cost = 110
 
 		available = {
-			NOT = {
-				has_decision = GER_Promote_Cultural_exchange_Programs
-				has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
-				has_decision = GER_Support_Multicultural_Art_and_literature_initiative
-				has_decision = GER_launch_multicultural_media_campain
-				#has_decision = GER_Launch_Erinnerungskultur_campain
-				has_decision = GER_Revitalize_german_historical_Narratives_in_school
-				has_decision = GER_Promote_Traditional_german_values_in_media
-				has_decision = GER_Support_heimatvereine
-				has_decision = GER_Fund_national_Culture_festivals
-				has_decision = GER_Launch_national_identity_courses_for_migrants
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = GER_Promote_Cultural_exchange_Programs
+					has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
+					has_decision = GER_Support_Multicultural_Art_and_literature_initiative
+					has_decision = GER_launch_multicultural_media_campain
+					#has_decision = GER_Launch_Erinnerungskultur_campain
+					has_decision = GER_Revitalize_german_historical_Narratives_in_school
+					has_decision = GER_Promote_Traditional_german_values_in_media
+					has_decision = GER_Support_heimatverein
+					has_decision = GER_Fund_national_Culture_festivals
+					has_decision = GER_Launch_national_identity_courses_for_migrants
+				}
 			}
 		}
 		remove_effect = {
@@ -2906,22 +2915,25 @@ GER_balance_of_power_category = {
 	}
 	#no multi culti
 	GER_Revitalize_german_historical_Narratives_in_school = {
-
+		icon = GFX_decision_fascism
 		days_remove = 50
 		cost = 50
 
 		available = {
-			NOT = {
-				has_decision = GER_Promote_Cultural_exchange_Programs
-				has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
-				has_decision = GER_Support_Multicultural_Art_and_literature_initiative
-				has_decision = GER_launch_multicultural_media_campain
-				has_decision = GER_Launch_Erinnerungskultur_campain
-				#has_decision = GER_Revitalize_german_historical_Narratives_in_school
-				has_decision = GER_Promote_Traditional_german_values_in_media
-				has_decision = GER_Support_heimatvereine
-				has_decision = GER_Fund_national_Culture_festivals
-				has_decision = GER_Launch_national_identity_courses_for_migrants
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = GER_Promote_Cultural_exchange_Programs
+					has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
+					has_decision = GER_Support_Multicultural_Art_and_literature_initiative
+					has_decision = GER_launch_multicultural_media_campain
+					has_decision = GER_Launch_Erinnerungskultur_campain
+					#has_decision = GER_Revitalize_german_historical_Narratives_in_school
+					has_decision = GER_Promote_Traditional_german_values_in_media
+					has_decision = GER_Support_heimatverein
+					has_decision = GER_Fund_national_Culture_festivals
+					has_decision = GER_Launch_national_identity_courses_for_migrants
+				}
 			}
 		}
 		remove_effect = {
@@ -2947,22 +2959,25 @@ GER_balance_of_power_category = {
 		}
 	}
 	GER_Promote_Traditional_german_values_in_media = {
-
+		icon = GFX_decision_fascism
 		days_remove = 65
 		cost = 50
 
 		available = {
-			NOT = {
-				has_decision = GER_Promote_Cultural_exchange_Programs
-				has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
-				has_decision = GER_Support_Multicultural_Art_and_literature_initiative
-				has_decision = GER_launch_multicultural_media_campain
-				has_decision = GER_Launch_Erinnerungskultur_campain
-				has_decision = GER_Revitalize_german_historical_Narratives_in_school
-				#has_decision = GER_Promote_Traditional_german_values_in_media
-				has_decision = GER_Support_heimatvereine
-				has_decision = GER_Fund_national_Culture_festivals
-				has_decision = GER_Launch_national_identity_courses_for_migrants
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = GER_Promote_Cultural_exchange_Programs
+					has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
+					has_decision = GER_Support_Multicultural_Art_and_literature_initiative
+					has_decision = GER_launch_multicultural_media_campain
+					has_decision = GER_Launch_Erinnerungskultur_campain
+					has_decision = GER_Revitalize_german_historical_Narratives_in_school
+					#has_decision = GER_Promote_Traditional_german_values_in_media
+					has_decision = GER_Support_heimatverein
+					has_decision = GER_Fund_national_Culture_festivals
+					has_decision = GER_Launch_national_identity_courses_for_migrants
+				}
 			}
 		}
 		remove_effect = {
@@ -2987,27 +3002,30 @@ GER_balance_of_power_category = {
 			factor = 1
 		}
 	}
-	GER_Support_heimatvereine = {
-
+	GER_Support_heimatverein = {
+		icon = GFX_decision_fascism
 		days_remove = 50
 		cost = 80
 
 		available = {
-			NOT = {
-				has_decision = GER_Promote_Cultural_exchange_Programs
-				has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
-				has_decision = GER_Support_Multicultural_Art_and_literature_initiative
-				has_decision = GER_launch_multicultural_media_campain
-				has_decision = GER_Launch_Erinnerungskultur_campain
-				has_decision = GER_Revitalize_german_historical_Narratives_in_school
-				has_decision = GER_Promote_Traditional_german_values_in_media
-				#has_decision = GER_Support_heimatvereine
-				has_decision = GER_Fund_national_Culture_festivals
-				has_decision = GER_Launch_national_identity_courses_for_migrants
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = GER_Promote_Cultural_exchange_Programs
+					has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
+					has_decision = GER_Support_Multicultural_Art_and_literature_initiative
+					has_decision = GER_launch_multicultural_media_campain
+					has_decision = GER_Launch_Erinnerungskultur_campain
+					has_decision = GER_Revitalize_german_historical_Narratives_in_school
+					has_decision = GER_Promote_Traditional_german_values_in_media
+					#has_decision = GER_Support_heimatverein
+					has_decision = GER_Fund_national_Culture_festivals
+					has_decision = GER_Launch_national_identity_courses_for_migrants
+				}
 			}
 		}
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision GER_Support_heimatvereine"
+			log = "[GetDateText]: [Root.GetName]: Decision GER_Support_heimatverein"
 			add_power_balance_value = {
 				id = GER_power_balance
 				value = 0.1
@@ -3025,22 +3043,25 @@ GER_balance_of_power_category = {
 		}
 	}
 	GER_Fund_national_Culture_festivals = {
-
+		icon = GFX_decision_fascism
 		days_remove = 50
 		cost = 95
 
 		available = {
-			NOT = {
-				has_decision = GER_Promote_Cultural_exchange_Programs
-				has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
-				has_decision = GER_Support_Multicultural_Art_and_literature_initiative
-				has_decision = GER_launch_multicultural_media_campain
-				has_decision = GER_Launch_Erinnerungskultur_campain
-				has_decision = GER_Revitalize_german_historical_Narratives_in_school
-				has_decision = GER_Promote_Traditional_german_values_in_media
-				has_decision = GER_Support_heimatvereine
-				#has_decision = GER_Fund_national_Culture_festivals
-				has_decision = GER_Launch_national_identity_courses_for_migrants
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = GER_Promote_Cultural_exchange_Programs
+					has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
+					has_decision = GER_Support_Multicultural_Art_and_literature_initiative
+					has_decision = GER_launch_multicultural_media_campain
+					has_decision = GER_Launch_Erinnerungskultur_campain
+					has_decision = GER_Revitalize_german_historical_Narratives_in_school
+					has_decision = GER_Promote_Traditional_german_values_in_media
+					has_decision = GER_Support_heimatverein
+					#has_decision = GER_Fund_national_Culture_festivals
+					has_decision = GER_Launch_national_identity_courses_for_migrants
+				}
 			}
 		}
 		remove_effect = {
@@ -3061,22 +3082,25 @@ GER_balance_of_power_category = {
 		}
 	}
 	GER_Launch_national_identity_courses_for_migrants = {
-
+		icon = GFX_decision_fascism
 		days_remove = 50
 		cost = 110
 
 		available = {
-			NOT = {
-				has_decision = GER_Promote_Cultural_exchange_Programs
-				has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
-				has_decision = GER_Support_Multicultural_Art_and_literature_initiative
-				has_decision = GER_launch_multicultural_media_campain
-				has_decision = GER_Launch_Erinnerungskultur_campain
-				has_decision = GER_Revitalize_german_historical_Narratives_in_school
-				has_decision = GER_Promote_Traditional_german_values_in_media
-				has_decision = GER_Support_heimatvereine
-				has_decision = GER_Fund_national_Culture_festivals
-				#has_decision = GER_Launch_national_identity_courses_for_migrants
+			custom_trigger_tooltip = {
+				tooltip = PER_presidential_decisions_only_one_is_available_TT
+				NOT = {
+					has_decision = GER_Promote_Cultural_exchange_Programs
+					has_decision = GER_provide_federal_foundings_for_migration_cultural_centers
+					has_decision = GER_Support_Multicultural_Art_and_literature_initiative
+					has_decision = GER_launch_multicultural_media_campain
+					has_decision = GER_Launch_Erinnerungskultur_campain
+					has_decision = GER_Revitalize_german_historical_Narratives_in_school
+					has_decision = GER_Promote_Traditional_german_values_in_media
+					has_decision = GER_Support_heimatverein
+					has_decision = GER_Fund_national_Culture_festivals
+					#has_decision = GER_Launch_national_identity_courses_for_migrants
+				}
 			}
 		}
 		remove_effect = {
@@ -3128,25 +3152,10 @@ GER_SAPOS_decision = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_lease_acces_china"
 			GER = {
-				set_temp_variable = { treasury_change = CHI.gdp_per_capita }
-					multiply_temp_variable = { treasury_change = -1.00 }
-					modify_treasury_effect = yes
-				for_each_loop = {
-					array = GNSS_satellite_array
-					value = v
-					index = i
-					add_to_variable = {
-						GNSS_satellite_array^i = CHI.GNSS_satellite_array^i
-					}
-				}
-				for_each_loop = {
-					array = COM_satellite_array
-					value = v
-					index = i
-					add_to_variable = {
-						COM_satellite_array^i = CHI.COM_satellite_array^i
-					}
-				}
+				add_to_variable = { GNSS_satellite_array^3 = 5 }
+				add_to_variable = { GNSS_satellite_array^4 = 10 }
+				add_to_variable = { COM_satellite_array^4 = 8 }
+				add_to_variable = { COM_satellite_array^5 = 4 }
 				update_missile_satellite_inventory = yes
 			}
 			CHI = {
@@ -3154,26 +3163,18 @@ GER_SAPOS_decision = {
 				multiply_temp_variable = { treasury_change = 1.00 }
 				modify_treasury_effect = yes
 			}
+			custom_effect_tooltip = GER_SAPOS_CHI_I
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_lease_acces_china"
-			for_each_loop = {
-				array = GNSS_satellite_array
-				value = v
-				index = i
-				subtract_from_variable = {
-					GNSS_satellite_array^i = CHI.GNSS_satellite_array^i
-				}
-			}
-			for_each_loop = {
-				array = COM_satellite_array
-				value = v
-				index = i
-				subtract_from_variable = {
-					COM_satellite_array^i = CHI.COM_satellite_array^i
-				}
+			GER = {
+				subtract_from_variable = { GNSS_satellite_array^3 = 5 }
+				subtract_from_variable = { GNSS_satellite_array^4 = 10 }
+				subtract_from_variable = { COM_satellite_array^4 = 8 }
+				subtract_from_variable = { COM_satellite_array^5 = 4 }
 				update_missile_satellite_inventory = yes
 			}
+			custom_effect_tooltip = GER_SAPOS_CHI_II
 		}
 		ai_will_do = {
 			factor = 1
@@ -3205,25 +3206,11 @@ GER_SAPOS_decision = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_lease_acces_RUS"
 			GER = {
-				set_temp_variable = { treasury_change = SOV.gdp_per_capita }
-				multiply_temp_variable = { treasury_change = -0.30 }
-				modify_treasury_effect = yes
-				for_each_loop = {
-					array = GNSS_satellite_array
-					value = v
-					index = i
-					add_to_variable = {
-						GNSS_satellite_array^i = CHI.GNSS_satellite_array^i
-					}
-				}
-				for_each_loop = {
-					array = COM_satellite_array
-					value = v
-					index = i
-					add_to_variable = {
-						COM_satellite_array^i = CHI.COM_satellite_array^i
-					}
-				}
+				add_to_variable = { GNSS_satellite_array^3 = 15 }
+				add_to_variable = { GNSS_satellite_array^5 = 15 }
+				add_to_variable = { COM_satellite_array^3 = 5 }
+				add_to_variable = { COM_satellite_array^4 = 4 }
+				add_to_variable = { COM_satellite_array^5 = 3 }
 				update_missile_satellite_inventory = yes
 			}
 			SOV = {
@@ -3231,26 +3218,19 @@ GER_SAPOS_decision = {
 				multiply_temp_variable = { treasury_change = 0.30 }
 				modify_treasury_effect = yes
 			}
+			custom_effect_tooltip = GER_SAPOS_SOV_I
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_lease_acces_RUS"
-			for_each_loop = {
-				array = GNSS_satellite_array
-				value = v
-				index = i
-				subtract_from_variable = {
-					GNSS_satellite_array^i = SOV.GNSS_satellite_array^i
-				}
+			GER = {
+				subtract_from_variable = { GNSS_satellite_array^3 = 15 }
+				subtract_from_variable = { GNSS_satellite_array^5 = 15 }
+				subtract_from_variable = { COM_satellite_array^3 = 5 }
+				subtract_from_variable = { COM_satellite_array^4 = 4 }
+				subtract_from_variable = { COM_satellite_array^5 = 3 }
+				update_missile_satellite_inventory = yes
 			}
-			for_each_loop = {
-				array = COM_satellite_array
-				value = v
-				index = i
-				subtract_from_variable = {
-					COM_satellite_array^i = SOV.COM_satellite_array^i
-				}
-			}
-			update_missile_satellite_inventory = yes
+			custom_effect_tooltip = GER_SAPOS_SOV_II
 		}
 		ai_will_do = {
 			factor = 1
@@ -3282,25 +3262,14 @@ GER_SAPOS_decision = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_lease_acces_USA"
 			GER = {
-				set_temp_variable = { treasury_change = USA.gdp_per_capita }
-					multiply_temp_variable = { treasury_change = -0.20 }
-					modify_treasury_effect = yes
-				for_each_loop = {
-					array = GNSS_satellite_array
-					value = v
-					index = i
-					add_to_variable = {
-						GNSS_satellite_array^i = CHI.GNSS_satellite_array^i
-					}
-				}
-				for_each_loop = {
-					array = COM_satellite_array
-					value = v
-					index = i
-					add_to_variable = {
-						COM_satellite_array^i = CHI.COM_satellite_array^i
-					}
-				}
+				add_to_variable = { GNSS_satellite_array^2 = 5 }
+				add_to_variable = { GNSS_satellite_array^3 = 5 }
+				add_to_variable = { GNSS_satellite_array^4 = 3 }
+				add_to_variable = { GNSS_satellite_array^5 = 8 }
+				add_to_variable = { GNSS_satellite_array^6 = 1 }
+				add_to_variable = { COM_satellite_array^3 = 5 }
+				add_to_variable = { COM_satellite_array^4 = 5 }
+				add_to_variable = { COM_satellite_array^5 = 2 }
 				update_missile_satellite_inventory = yes
 			}
 			USA = {
@@ -3308,81 +3277,25 @@ GER_SAPOS_decision = {
 				multiply_temp_variable = { treasury_change = 0.20 }
 				modify_treasury_effect = yes
 			}
-			custom_effect_tooltip = GER_lease_acces_USA_TT
+			custom_effect_tooltip = GER_SAPOS_USA_I
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_lease_acces_USA"
-			for_each_loop = {
-				array = GNSS_satellite_array
-				value = v
-				index = i
-				subtract_from_variable = {
-					GNSS_satellite_array^i = USA.GNSS_satellite_array^i
-				}
+			GER = {
+				subtract_from_variable = { GNSS_satellite_array^2 = 5 }
+				subtract_from_variable = { GNSS_satellite_array^3 = 5 }
+				subtract_from_variable = { GNSS_satellite_array^4 = 3 }
+				subtract_from_variable = { GNSS_satellite_array^5 = 8 }
+				subtract_from_variable = { GNSS_satellite_array^6 = 1 }
+				subtract_from_variable = { COM_satellite_array^3 = 5 }
+				subtract_from_variable = { COM_satellite_array^4 = 5 }
+				subtract_from_variable = { COM_satellite_array^5 = 2 }
+				update_missile_satellite_inventory = yes
 			}
-			for_each_loop = {
-				array = COM_satellite_array
-				value = v
-				index = i
-				subtract_from_variable = {
-					COM_satellite_array^i = USA.COM_satellite_array^i
-				}
-			}
-			update_missile_satellite_inventory = yes
+			custom_effect_tooltip = GER_SAPOS_USA_II
 		}
 		ai_will_do = {
 			factor = 1
 		}
 	}
 }
-
-# GER_military_extremism = {
-# 	GER_announce_the_arrests = {
-
-# 		custom_cost_trigger = {
-# 			command_power > 19
-# 		}
-# 		custom_cost_text = command_power_more_than_20
-
-# 		fire_only_once = yes
-
-# 		days_remove = 50
-
-# 		available = {
-# 			NOT = {
-# 				has_active_mission = bankruptcy_incoming_collapse
-# 				has_idea = GER_idea_Cold_War_Army
-# 				has_idea = GER_idea_paper_army
-# 				hidden_trigger = {
-# 					has_idea = GER_idea_paper_army2
-# 					has_idea = GER_idea_paper_army3
-# 					has_idea = GER_idea_paper_army4
-# 				}
-# 				has_idea = depression
-# 				has_idea = recession
-# 				has_idea = stagnation
-# 			}
-# 			if = {
-# 				limit = {
-# 					NOT = {
-# 						has_country_flag = GER_BFV_GONE
-# 					}
-# 				}
-# 				custom_trigger_tooltip = {
-# 					tooltip = GER_rightwing_is_stable_TT
-# 					check_variable = { GER_rightwing_department_status > 44 }
-# 				}
-# 			}
-# 		}
-
-# 		remove_effect = {
-# 			log = "[GetDateText]: [Root.GetName]: Decision remove GER_announce_the_arrests"
-# 			custom_effect_tooltip = GER_end_mechanic_TT
-# 			set_country_flag = GER_extremists_sorted
-# 		}
-
-# 		ai_will_do = {
-# 			base = 25
-# 		}
-# 	}
-# }

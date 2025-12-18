@@ -183,11 +183,12 @@ BRA_acres_conserved_change_effect = {
 }
 
 # function: BRA_calculate_amazon_system
-# purpose: Calculates the penalties in the Amazon states.
+# purpose: Calculates the penalties in the Amazon states and at the Brazilian country level.
 # BRA_acres_current - The total Acreage in Brazil
 # BRA_acres_conserved - The total amount of Acreage in Brazil that is conserved
 # BRA_acres_wild - Total amount of Acreage in Brazil that is wild (untamed)
 # BRA_wild_acreage_ratio - The ratio of wild acreage
+# BRA_conserved_acreage_ratio - The ratio of conserved acreage
 # BRA_current_target_ratio - The ratio of total acreage we want
 # BRA_current_target - The total number of acres we want to have for the amazon
 # BRA_acres_conserved_change - The rate at which wild acres are converted to conserved acres
@@ -203,6 +204,10 @@ BRA_calculate_amazon_system = {
 	set_variable = { var = BRA_wild_acreage_ratio value = BRA_acres_wild }
 	divide_variable = { var = BRA_wild_acreage_ratio value = BRA_acres_current }
 
+	# Calculate Conserved Percentage (Used for Display only)
+	set_variable = { var = BRA_conserved_acreage_ratio value = BRA_acres_conserved }
+	divide_variable = { var = BRA_conserved_acreage_ratio value = BRA_acres_current }
+
 	# Calculate Target Ratio
 	set_variable = { var = BRA_current_target_ratio value = BRA_acres_current }
 	divide_variable = { var = BRA_current_target_ratio value = BRA_acres_target }
@@ -214,8 +219,7 @@ BRA_calculate_amazon_system = {
 	# Wild Acreage Causes the Most Penalties
 	set_temp_variable = { temp_ratio_penalties = BRA_wild_acreage_ratio }
 	multiply_temp_variable = { temp_ratio_penalties = -1 }
-	multiply_temp_variable = { temp_penalties = -1 }
-	set_variable = { BRA.BRA_amazon_penalties = temp_penalties }
+	set_variable = { BRA.BRA_amazon_penalties = temp_ratio_penalties }
 	set_variable = { BRA.BRA_building_slots_factor = temp_ratio_penalties }
 
 	clamp_variable = { var = BRA.BRA_building_slots_factor min = -1 max = 0 }
@@ -231,20 +235,35 @@ BRA_calculate_amazon_system = {
 		multiply_temp_variable = { tmp_neutral_drift = BRA_current_target_ratio }
 		multiply_temp_variable = { tmp_neutral_drift = 0.5 }
 	}
-	set_variable = { BRA_amazon_neutral_drift = tmp_neutral_drift }
-	set_variable = { BRA_amazon_stability_factor = tmp_stability }
-	set_variable = { BRA_amazon_research_speed_factor = tmp_stability }
-	set_variable = { BRA_amazon_political_power_factor = tmp_stability }
+	else = {
+		set_temp_variable = { tmp_stability = 0 }
+		set_temp_variable = { tmp_neutral_drift = 0 }
+	}
 
 	# Clamp Variables
 	clamp_variable = { var = BRA_acres_conserved min = 0 }
 	clamp_variable = { var = BRA_acres_wild min = 0 }
 	clamp_variable = { var = BRA_wild_acreage_ratio min = 0 }
+	clamp_variable = { var = BRA_conserved_acreage_ratio min = 0 }
 	clamp_variable = { var = BRA_current_target_ratio min = 0 }
 
-	# Update State Dynmods
+	# Update State Dynamic Modifiers
 	for_each_scope_loop = {
 		array = BRA.amazon_states
+		if = {
+			limit = { has_state_flag = improve_local_conservation_efforts }
+			set_temp_variable = { temp_ratio_penalties2 = temp_ratio_penalties }
+
+			multiply_temp_variable = { temp_ratio_penalties2 = 0.75 }
+
+			set_variable = { BRA_amazon_penalties = temp_ratio_penalties2 }
+			set_variable = { BRA_building_slots_factor = temp_ratio_penalties2 }
+		}
+		else = {
+			set_variable = { BRA_amazon_penalties = temp_ratio_penalties }
+			set_variable = { BRA_building_slots_factor = temp_ratio_penalties }
+		}
+
 		force_update_dynamic_modifier = yes
 	}
 }

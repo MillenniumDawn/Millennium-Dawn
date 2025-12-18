@@ -357,45 +357,6 @@ country_event = {
 }
 
 country_event = {
-	id = georg.3
-	title = georg.3.t
-	desc = georg.3.d
-	picture = GFX_southern_options
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = {
-		name = georg.3.a
-		log = "[GetDateText]: [This.GetName]: georg.3.a executed"
-		diplomatic_relation = { country = GEO relation = non_aggression_pact active = yes }
-		add_days_mission_timeout = {
-			mission = ARM_GEO_rebellion
-			days = 30
-		}
-		GEO = { country_event = georg.4 }
-	}
-	option = {
-		name = georg.3.b
-		log = "[GetDateText]: [This.GetName]: georg.3.b executed"
-		add_political_power = -500
-		add_days_mission_timeout = {
-			mission = ARM_GEO_rebellion
-			days = -30
-		}
-		add_opinion_modifier = {
-			modifier = drama
-			target = GEO
-		}
-		reverse_add_opinion_modifier = {
-			modifier = drama
-			target = GEO
-		}
-		GEO = { country_event = georg.5 }
-	}
-}
-
-country_event = {
 	id = georg.4
 	title = georg.4.t
 	desc = georg.4.d
@@ -458,7 +419,6 @@ country_event = {
 		recalculate_party = yes
 		create_country_leader = {
 			name = "Nino Burjanadze - Interim Government"
-			desc = "lolkek"
 			picture = "nino_burjanadze.dds"
 			expire = "2004.1.1"
 			ideology = Neutral_Autocracy
@@ -745,28 +705,20 @@ country_event = {
 	}
 }
 
+# Georgia Warns Us about Special Operation
 country_event = {
 	id = georg_war2008.6
 	title = georg_war2008.6.t
 	desc = georg_war2008.6.d
 	picture = GFX_medvedev_decision
-
 	fire_only_once = yes
 	is_triggered_only = yes
+	trigger = {
+		original_tag = SOV
+	}
 
 	option = {
 		name = georg_war2008.6.a
-		ai_chance = {
-			factor = 75
-			modifier = {
-				factor = 0.8
-				is_historical_focus_on = yes
-				tag = SOV
-			}
-		}
-		trigger = {
-			tag = SOV
-		}
 		log = "[GetDateText]: [This.GetName]: georg_war2008.6.a executed"
 		GEO = {
 			cancel_border_war = {
@@ -774,11 +726,12 @@ country_event = {
 				defender = 705
 				attacker = 707
 			}
-		}
-		GEO = {
-			declare_war_on = {
-				target = SOV
-				type = take_claimed_state
+			if = {
+				limit = { NOT = { has_war_with = SOV } }
+				declare_war_on = {
+					target = SOV
+					type = take_claimed_state
+				}
 			}
 			hidden_effect = {
 				SOV = {
@@ -786,13 +739,21 @@ country_event = {
 				}
 			}
 		}
+
+		ai_chance = {
+			base = 75
+			modifier = {
+				factor = 0.8
+				is_historical_focus_on = yes
+				tag = SOV
+			}
+		}
 	}
+
 	option = {
 		name = georg_war2008.6.b
-		trigger = {
-			tag = SOV
-		}
 		log = "[GetDateText]: [This.GetName]: georg_war2008.6.b executed"
+
 	}
 }
 
@@ -840,6 +801,17 @@ country_event = {
 			white_peace = SOO
 			set_country_flag = GEO_lost2008_war
 		}
+		if = {
+			limit = {
+				GEO = {
+					has_war_with = NKO
+				}
+			}
+			GEO = {
+				white_peace = NKO
+				set_country_flag = GEO_lost2008_war
+			}
+		}
 	}
 }
 
@@ -862,6 +834,17 @@ country_event = {
 			white_peace = SOO
 			set_country_flag = GEO_lost2008_war
 		}
+		if = {
+			limit = {
+				GEO = {
+					has_war_with = NKO
+				}
+			}
+			GEO = {
+				white_peace = NKO
+				set_country_flag = GEO_lost2008_war
+			}
+		}
 	}
 }
 
@@ -875,19 +858,31 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-		ai_chance = {
-			factor = 75
-			modifier = {
-				factor = 0.8
-				is_historical_focus_on = yes
-				tag = SOV
-			}
-		}
 		name = georg_war2008.10.a
 		log = "[GetDateText]: [This.GetName]: georg_war2008.10.a executed"
 		GEO = {
 			white_peace = SOV
 			set_country_flag = GEO_lost2008_war
+		}
+		if = {
+			limit = {
+				GEO = {
+					has_war_with = NKO
+				}
+			}
+			GEO = {
+				white_peace = NKO
+				set_country_flag = GEO_lost2008_war
+			}
+		}
+
+		ai_chance = {
+			base = 75
+			modifier = {
+				factor = 0.8
+				is_historical_focus_on = yes
+				tag = SOV
+			}
 		}
 	}
 
@@ -922,14 +917,14 @@ country_event = {
 	option = {
 		name = georg_war2008.11.a
 		log = "[GetDateText]: [This.GetName]: georg_war2008.11.a executed"
-		ai_chance = { factor = 1 }
+		ai_chance = { base = 1 }
 		USA = {
 			give_guarantee = GEO
 		}
 	}
 	option = {
 		name = georg_war2008.11.b
-		ai_chance = { factor = 1 }
+		ai_chance = { base = 1 }
 		log = "[GetDateText]: [This.GetName]: georg_war2008.11.b executed"
 	}
 }
@@ -943,7 +938,7 @@ country_event = {
 	picture = GFX_paris_convention
 	option = {
 		name = georg.21.a
-		ai_chance = { factor = 1 }
+		ai_chance = { base = 1 }
 		set_temp_variable = { int_investment_change = 10 }
 		modify_international_investment_effect = yes
 		log = "[GetDateText]: [This.GetName]: georg.21.a executed"
@@ -962,7 +957,7 @@ country_event = {
 	}
 	option = {
 		name = georg.21.b
-		ai_chance = { factor = 1 }
+		ai_chance = { base = 1 }
 		log = "[GetDateText]: [This.GetName]: georg.21.b executed"
 	}
 }
@@ -977,7 +972,7 @@ country_event = {
 	option = {
 		name = georg.22.a
 		log = "[GetDateText]: [This.GetName]: georg.22.a executed"
-		ai_chance = { factor = 1 }
+		ai_chance = { base = 1 }
 		GEO = {
 			set_country_flag = GEO_saakash_freed
 		}
@@ -986,7 +981,7 @@ country_event = {
 		name = georg.22.b
 		log = "[GetDateText]: [This.GetName]: georg.22.b executed"
 		ai_chance = {
-			factor = 75
+			base = 75
 			modifier = {
 				factor = 0.8
 				is_historical_focus_on = yes
@@ -1019,7 +1014,7 @@ country_event = {
 	picture = GFX_bosnia_gov_building_2
 	option = {
 		name = georg.24.a
-		ai_chance = { factor = 1 }
+		ai_chance = { base = 1 }
 		log = "[GetDateText]: [This.GetName]: georg.24.a executed"
 		if = {
 			limit = { NOT = { is_in_array = { ruling_party = 23 } } }
@@ -1033,7 +1028,7 @@ country_event = {
 	}
 	option = {
 		name = georg.24.b
-		ai_chance = { factor = 1 }
+		ai_chance = { base = 1 }
 		log = "[GetDateText]: [This.GetName]: georg.24.b executed"
 		create_country_leader = {
 			name = "Djaba The Great"
@@ -1054,7 +1049,7 @@ country_event = {
 	picture = GFX_paris_convention
 	option = {
 		name = georg.25.a
-		ai_chance = { factor = 1 }
+		ai_chance = { base = 1 }
 		GEO = {
 			add_to_faction = ROOT
 		}
@@ -1062,7 +1057,7 @@ country_event = {
 	}
 	option = {
 		name = georg.25.b
-		ai_chance = { factor = 1 }
+		ai_chance = { base = 1 }
 		hidden_effect = {
 			GEO = {
 				create_wargoal = {
@@ -1089,14 +1084,14 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: georg.26.a executed"
 		SOV = { give_guarantee = GEO }
 		GEO = { country_event = diplomatic_response.1 }
-		ai_chance = { factor = 3 }
+		ai_chance = { base = 3 }
 	}
 
 	option = {	#Decline
 		name = georg.26.b
 		log = "[GetDateText]: [This.GetName]: georg.26.b executed"
 		GEO = { country_event = diplomatic_response.2 }
-		ai_chance = { factor = 1 }
+		ai_chance = { base = 1 }
 	}
 }
 
@@ -1133,12 +1128,12 @@ country_event = {
 			relation = non_aggression_pact
 			active = yes
 		}
-		ai_chance = { factor = 3 }
+		ai_chance = { base = 3 }
 	}
 
 	option = {
 		name = geo_misc.3.b
-		ai_chance = { factor = 1 }
+		ai_chance = { base = 1 }
 		log = "[GetDateText]: [This.GetName]: geo_misc.3.b executed"
 		GEO = { country_event = geo_misc.4 }
 	}
@@ -1179,13 +1174,13 @@ country_event = {
 			active = yes
 		}
 		log = "[GetDateText]: [This.GetName]: geo_misc.5.a executed"
-		ai_chance = { factor = 3 }
+		ai_chance = { base = 3 }
 	}
 
 	option = {
 		name = geo_misc.5.b
 		trigger = { tag = SOO }
-		ai_chance = { factor = 1 }
+		ai_chance = { base = 1 }
 		GEO = {
 			country_event = geo_misc.6
 		}
@@ -1195,7 +1190,7 @@ country_event = {
 	option = {
 		name = geo_misc.5.c
 		trigger = { tag = ABK }
-		ai_chance = { factor = 1 }
+		ai_chance = { base = 1 }
 		GEO = {
 			country_event = geo_misc.7
 		}
@@ -1250,7 +1245,7 @@ country_event = {
 			puppet = ARM
 		}
 		ai_chance = {
-			factor = 1
+			base = 1
 			modifier = {
 				ARM = { has_communist_government = yes }
 				add = 10
@@ -1276,7 +1271,7 @@ country_event = {
 				}
 			}
 		}
-		ai_chance = { factor = 5 }
+		ai_chance = { base = 5 }
 		log = "[GetDateText]: [This.GetName]: geo_misc.8.b executed"
 	}
 
@@ -1296,7 +1291,7 @@ country_event = {
 			tag = ARM
 		}
 		log = "[GetDateText]: [This.GetName]: geo_misc.9.a executed"
-		ai_chance = { factor = 3 }
+		ai_chance = { base = 3 }
 		GEO = {
 			country_event = geo_misc.10
 		}
@@ -1307,11 +1302,7 @@ country_event = {
 		trigger = {
 			tag = ARM
 		}
-		ai_chance = { factor = 3 }
-		add_days_mission_timeout = {
-			mission = ARM_GEO_rebellion
-			days = -10
-		}
+		ai_chance = { base = 3 }
 		log = "[GetDateText]: [This.GetName]: geo_misc.9.b executed"
 	}
 
@@ -1320,7 +1311,7 @@ country_event = {
 		trigger = {
 			tag = GEO
 		}
-		ai_chance = { factor = 3 }
+		ai_chance = { base = 3 }
 		ARM = {
 			country_event = geo_misc.10
 		}
@@ -1332,11 +1323,7 @@ country_event = {
 		trigger = {
 			tag = GEO
 		}
-		ai_chance = { factor = 3 }
-		add_days_mission_timeout = {
-			mission = ARM_GEO_rebellion
-			days = -10
-		}
+		ai_chance = { base = 3 }
 		log = "[GetDateText]: [This.GetName]: geo_misc.9.d1 executed"
 	}
 
@@ -1356,10 +1343,9 @@ country_event = {
 			tag = ARM
 		}
 		log = "[GetDateText]: [This.GetName]: geo_misc.10.a executed"
-		ai_chance = { factor = 15 }
+		ai_chance = { base = 15 }
 
 		effect_tooltip = {
-			remove_mission = ARM_GEO_rebellion
 			1033 = {
 				remove_core_of = ARM
 			}
@@ -1382,8 +1368,7 @@ country_event = {
 		name = geo_misc.10.b
 		trigger = { tag = GEO }
 		log = "[GetDateText]: [This.GetName]: geo_misc.10.b executed"
-		ai_chance = { factor = 3 }
-		remove_mission = ARM_GEO_rebellion
+		ai_chance = { base = 3 }
 		1033 = {
 			remove_core_of = ARM
 		}
@@ -1413,7 +1398,7 @@ country_event = {
 	option = {
 		name = geo_misc.11.a
 		log = "[GetDateText]: [This.GetName]: geo_misc.11.a executed"
-		ai_chance = { factor = 15 }
+		ai_chance = { base = 15 }
 		add_opinion_modifier = {
 			modifier = hostile_status
 			target = GEO
@@ -1427,7 +1412,7 @@ country_event = {
 	option = {
 		name = geo_misc.11.b
 		log = "[GetDateText]: [This.GetName]: geo_misc.11.a executed"
-		ai_chance = { factor = 3 }
+		ai_chance = { base = 3 }
 		GEO = { puppet = ARM }
 	}
 }

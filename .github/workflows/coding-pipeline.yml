@@ -1,0 +1,115 @@
+name: Code Standards & Validation
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'common/**'
+      - 'events/**'
+      - 'gfx/**'
+      - 'history/**'
+      - 'localisation/**'
+      - 'map/**'
+      - 'music/**'
+      - 'portraits/**'
+      - 'sound/**'
+  push:
+    tags: [ 'v*' ]
+
+env:
+  INPUT_RULES: 'https://github.com/Kaiserreich/cwtools-hoi4-config.git'
+  INPUT_RULESREF: 'master'
+  INPUT_SUPPRESSEDOFFENCECATEGORIES: '{"failure":["CW226"], "warning":["CW251"], "notice":[]}'
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  coding-standards:
+    name: Coding Standards
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Run coding standards check
+      run: python tools/coding_standards.py ${{ secrets.BOT_TOKEN }}
+
+  cwtools-validation:
+    name: CWTools Validation
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
+    - uses: cwtools/cwtools-action@v1.1.0
+      with:
+        game: hoi4
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload CWTools output
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: cwtools-build-output
+        path: output.json
+
+  styling-check:
+    name: Style Check
+    runs-on: ubuntu-latest
+    needs: [coding-standards]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Run style check
+      run: |
+        python tools/check_basic_style.py ${{ secrets.BOT_TOKEN }}
+        python tools/check_basic_style_2.py ${{ secrets.BOT_TOKEN }}
+
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false

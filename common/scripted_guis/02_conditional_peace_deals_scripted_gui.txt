@@ -1,0 +1,126 @@
+scripted_gui = {
+	CPD_peace_deal_builder = {
+		# this seems to error in the log but doesn't crash, try later with other contexts
+		context_type = diplomatic_action
+		# context_type = player_context
+
+		window_name = "CPD_peace_deal_builder"
+
+		visible = {
+			always = yes
+			#	has_country_flag = CPD_considering_peace_deal
+		}
+
+		dynamic_lists = {
+			CPD_actionable_states_gridbox = {
+				array = ROOT.CPD_state_list
+				change_scope = yes
+				entry_container = "CPD_peace_deal_state_entry"
+			}
+			CPD_current_deal_gridbox = {
+				array = ROOT.CPD_current_deal_list
+				change_scope = yes
+				entry_container = "CPD_current_peace_deal_entry"
+			}
+			# work back and fix this if it turns out to be unoptimised
+		}
+
+		properties = {
+			# Single State Action
+			CPD_annex_state_button = { image = "[CPD_ANNEX_STATE_BUTTON_LOC]" }
+			CPD_make_puppet_in_state_button = { image = "[CPD_MAKE_PUPPET_IN_STATE_BUTTON_LOC]" }
+			CPD_demilitarise_state_button = { image = "[CPD_DEMILITARISE_STATE_BUTTON_LOC]" }
+			CPD_liberate_in_state_button = { image = "[CPD_LIBERATE_IN_STATE_BUTTON_LOC]" }
+			# Full Country Action
+			# CPD_full_puppet_button = { image = "[CPD_FULL_PUPPET_BUTTON_LOC]" }
+
+			# CPD_demands_tab_button = { frame = ROOT.CPD_selected_demands_frame_var }
+			# CPD_concessions_tab_button = { frame = ROOT.CPD_selected_concessions_frame_var }
+		}
+
+		effects = {
+			# Select Concessions/Demand Types
+			CPD_demands_tab_button_click = {
+				ROOT = {
+					# set_variable = { CPD_selected_demands_frame_var = 1 }
+					# set_variable = { CPD_selected_concessions_frame_var = 2 }
+					clr_country_flag = CPD_giving_concessions
+				}
+				CPD_demand_concede_switch = yes
+			}
+			CPD_concessions_tab_button_click = {
+				ROOT = {
+					# set_variable = { CPD_selected_demands_frame_var = 2 }
+					# set_variable = { CPD_selected_concessions_frame_var = 1 }
+					set_country_flag = CPD_giving_concessions
+				}
+				CPD_demand_concede_switch = yes
+			}
+
+			# Single State Action
+			CPD_annex_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 1 } }
+			CPD_make_puppet_in_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 2 } }
+			CPD_demilitarise_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 3 } }
+			CPD_liberate_in_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 4 } } # need to make this possible to select between multiple cores
+			# Full Country Action
+			# CPD_full_puppet_button_click = { CPD_fully_puppet = yes }
+
+			# ADD STATE TO PEACE DEAL BUILD WITH CURRENT PARAMETERS
+			CPD_add_state_with_parameters_button_click = { CPD_change_state_actions = yes }
+			CPD_clear_from_current_deal_button_click = { CPD_remove_from_deal = yes }
+		}
+		triggers = {
+			# CPD_demilitarise_state_button_visible = { has_country_flag = DREAD_HAS_FINISHED_THIS }
+			CPD_liberate_in_state_button_visible = { has_country_flag = DREAD_HAS_FINISHED_THIS }
+			#
+			CPD_add_state_with_parameters_button_click_enabled = { NOT = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } } }
+
+			CPD_AIA_acceptance_ICON_visible = {
+				is_ai = yes
+				CPD_AI_will_accept = yes
+			}
+			CPD_AIA_decline_ICON_visible = {
+				OR = {
+					is_ai = no
+					AND = {
+						is_ai = yes
+						CPD_AI_will_accept = no
+					}
+				}
+			}
+		}
+
+		ai_enabled = { always = no }
+	}
+
+	# Receiver Event
+	CPD_built_peace_deal = {
+		# this seems to error in the log but doesn't crash, try later with other contexts
+		context_type = diplomatic_action
+		# context_type = player_context
+
+		window_name = "CPD_built_peace_deal"
+
+		visible = { always = yes }
+
+		dynamic_lists = {
+			CPD_current_deal_gridbox_CONCESSIONS_TO_RECEIVER = {
+				array = ROOT.CPD_current_deal_list_CONCESSIONS
+				change_scope = yes
+				entry_container = "CPD_current_peace_deal_entry"
+			}
+			CPD_current_deal_gridbox_DEMANDS_TO_RECEIVER = {
+				array = ROOT.CPD_current_deal_list_DEMANDS
+				change_scope = yes
+				entry_container = "CPD_current_peace_deal_entry"
+			}
+		}
+
+		properties = {
+			CPD_built_peace_deal_flag_SENDER = { image = "[ROOT.GetFlag]" }
+			CPD_built_peace_deal_flag_RECEIVER = { image = "[THIS.GetFlag]" }
+		}
+
+		ai_enabled = { always = no }
+	}
+}

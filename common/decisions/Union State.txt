@@ -1,18 +1,165 @@
 ###########UNION STATE DECISIONS###########
 USR_Union_state_category = {
+	###########UNION STATE COMMON###########
+	#INTEGRATE IN RUSSIAN ECONOMIC
+	USR_economic_integrate_yes = {
+		allowed = { NOT = { original_tag = SOV } }
+		icon = GFX_decision_unionstate_button
+
+		days_remove = 85
+
+		visible = {
+			has_autonomy_state = autonomy_union_state
+			USR_union_state_economic_integration = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USR_economic_integrate_yes"
+			custom_effect_tooltip = SUB_sovfed_pmr_subject_economic_tt
+			hidden_effect = {
+				SOV = { country_event = { id = union_state.20 days = 1 } }
+				USR_union_state_integrate_economic_of_russia = yes
+			}
+		}
+		ai_will_do = { base = 355 }
+	}
+	#ADDITIONAL INVEST FROM UNION STATE BUDGET
+	USR_economic_additional_budget = {
+		allowed = { NOT = { original_tag = SOV } }
+		icon = GFX_decision_unionstate_button
+
+		days_remove = 190
+
+		visible = {
+			SOV = {
+				influence_higher_10 = yes
+			}
+			has_autonomy_state = autonomy_union_state
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USR_economic_additional_budget"
+			SOV = { country_event = { id = union_state.25 days = 1 } }
+		}
+		ai_will_do = { base = 355 }
+	}
+	#USE UNION STATE SATELLITES
+	USR_economic_use_satellites = {
+		allowed = { NOT = { original_tag = SOV } }
+		icon = GFX_decision_unionstate_button
+
+		days_remove = 365
+		visible = {
+			has_autonomy_state = autonomy_union_state
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USR_economic_use_satellites"
+			ROOT = {
+				add_to_variable = { GNSS_satellite_array^3 = 15 }
+				add_to_variable = { GNSS_satellite_array^5 = 15 }
+				add_to_variable = { COM_satellite_array^3 = 5 }
+				add_to_variable = { COM_satellite_array^4 = 4 }
+				add_to_variable = { COM_satellite_array^5 = 3 }
+				update_missile_satellite_inventory = yes
+			}
+			SOV = {
+				set_temp_variable = { treasury_change = SOV.gdp_per_capita }
+				multiply_temp_variable = { treasury_change = 0.30 }
+				modify_treasury_effect = yes
+				set_temp_variable = { percent_change = 0.5 }
+				set_temp_variable = { tag_index = SOV }
+				set_temp_variable = { influence_target = ROOT }
+				change_influence_percentage = yes
+			}
+			custom_effect_tooltip = GER_SAPOS_SOV_I
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USR_economic_use_satellites"
+			ROOT = {
+				subtract_from_variable = { GNSS_satellite_array^3 = 15 }
+				subtract_from_variable = { GNSS_satellite_array^5 = 15 }
+				subtract_from_variable = { COM_satellite_array^3 = 5 }
+				subtract_from_variable = { COM_satellite_array^4 = 4 }
+				subtract_from_variable = { COM_satellite_array^5 = 3 }
+				update_missile_satellite_inventory = yes
+			}
+			custom_effect_tooltip = GER_SAPOS_SOV_II
+		}
+		ai_will_do = { base = 355 }
+	}
+	#LEAVE UNION STATE
+	USR_leave_union_state = {
+		days_remove = 10
+		icon = GFX_decision_unionstate_button
+		visible = {
+			has_autonomy_state = autonomy_union_state
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USR_economic_integrate_yes"
+			SOV = { country_event = { id = union_state.21 } }
+			hidden_effect = {
+				USR_leave_union_state_script = yes
+				ROOT = {
+					clr_country_flag = BLR_unionstate_agree
+				}
+				SOV = {
+					set_autonomy = {
+						target = ROOT
+						autonomy_state = autonomy_free
+					}
+				}
+			}
+		}
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				add = 355
+				tag = BLR
+				OR = {
+					nationalist_right_wing_populists_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					has_government = democratic
+				}
+			}
+			modifier = {
+				add = 355
+				tag = SER
+				OR = {
+					has_government = democratic
+					neutrality_neutral_social_are_in_power = yes
+				}
+			}
+			modifier = {
+				add = 355
+				tag = UKR
+				OR = {
+					has_government = democratic
+					neutrality_neutral_libertarians_are_in_power = yes
+					nationalist_fascist_are_in_power = yes
+				}
+			}
+			modifier = {
+				add = 355
+				tag = ARM
+				has_government = democratic
+			}
+		}
+	}
 	###########UNION STATE WITH BELARUS###########
 	###########Union State with Belarus - Parlament###########
 	USR_create_parlament_blr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = BLR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 50
+
 		visible = {
-			tag = BLR
 			country_exists = SOV
 			NOT = {
 				has_war_with = SOV
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_parlament_idea
 				OR = {
 					nationalist_right_wing_populists_are_in_power = yes
@@ -21,6 +168,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_parlament_blr"
 			add_opinion_modifier = {
@@ -33,8 +181,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_parlament_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				has_global_flag = BLR_FOLLOW_UNION_STATE
@@ -50,16 +199,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Belarus - Main Gos Sovet###########
 	USR_create_gos_sovet_blr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = BLR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = BLR
 			country_exists = SOV
 			NOT = {
 				has_war_with = SOV
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_gos_sovet_idea
 				OR = {
 					nationalist_right_wing_populists_are_in_power = yes
@@ -68,6 +218,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_gos_sovet_blr"
 			add_opinion_modifier = {
@@ -80,8 +231,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_gos_sovet_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				has_global_flag = BLR_FOLLOW_UNION_STATE
@@ -97,16 +249,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Belarus - Council of Minister###########
 	USR_create_council_ministers_blr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = BLR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = BLR
 			country_exists = SOV
 			NOT = {
 				has_war_with = SOV
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_council_ministers_idea
 				OR = {
 					nationalist_right_wing_populists_are_in_power = yes
@@ -115,6 +268,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_council_ministers_blr"
 			add_opinion_modifier = {
@@ -127,8 +281,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_council_ministers_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				has_global_flag = BLR_FOLLOW_UNION_STATE
@@ -144,16 +299,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Belarus - Money palata###########
 	USR_create_money_palata_blr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = BLR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = BLR
 			country_exists = SOV
 			NOT = {
 				has_war_with = SOV
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_money_palata_idea
 				OR = {
 					nationalist_right_wing_populists_are_in_power = yes
@@ -174,8 +330,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_money_palata_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				has_global_flag = BLR_FOLLOW_UNION_STATE
@@ -191,16 +348,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Belarus - Eternal Commitie###########
 	USR_create_eternal_commitie_blr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = BLR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = BLR
 			country_exists = SOV
 			NOT = {
 				has_war_with = SOV
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_eternal_commitie_idea
 				OR = {
 					nationalist_right_wing_populists_are_in_power = yes
@@ -209,6 +367,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_eternal_commitie_blr"
 			add_opinion_modifier = {
@@ -221,8 +380,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_eternal_commitie_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				has_global_flag = BLR_FOLLOW_UNION_STATE
@@ -238,12 +398,13 @@ USR_Union_state_category = {
 	}
 	###########Union State with Belarus - Valute###########
 	USR_create_valute_blr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = BLR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 55
-		fire_only_once = no
 		days_remove = 80
+
 		visible = {
-			tag = BLR
 			country_exists = SOV
 			has_idea = USR_eternal_commitie_idea
 			has_idea = USR_money_palata_idea
@@ -261,6 +422,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_valute_blr"
 			add_opinion_modifier = {
@@ -273,8 +435,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_valute_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				has_global_flag = BLR_FOLLOW_UNION_STATE
@@ -290,12 +453,13 @@ USR_Union_state_category = {
 	}
 	###########Union State with Belarus - Civils###########
 	USR_create_civils_blr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = BLR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 55
-		fire_only_once = no
 		days_remove = 80
+
 		visible = {
-			tag = BLR
 			country_exists = SOV
 			has_idea = USR_eternal_commitie_idea
 			has_idea = USR_money_palata_idea
@@ -304,7 +468,7 @@ USR_Union_state_category = {
 			has_idea = USR_parlament_idea
 			NOT = {
 				has_war_with = SOV
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_civils_idea
 				OR = {
 					nationalist_right_wing_populists_are_in_power = yes
@@ -314,6 +478,7 @@ USR_Union_state_category = {
 			}
 
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_civils_blr"
 			add_opinion_modifier = {
@@ -326,8 +491,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_civils_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				has_global_flag = BLR_FOLLOW_UNION_STATE
@@ -343,19 +509,20 @@ USR_Union_state_category = {
 	}
 	###########Union State with Belarus - Economic Space###########
 	USR_create_economic_space_blr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = BLR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 75
-		fire_only_once = no
 		days_remove = 100
+
 		visible = {
-			tag = BLR
 			country_exists = SOV
 			has_idea = USR_valute_idea
 			has_idea = USR_civils_idea
 			NOT = {
 				has_war_with = SOV
 				has_idea = USR_economic_space_idea
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				OR = {
 					nationalist_right_wing_populists_are_in_power = yes
 					nationalist_monarchists_are_in_power = yes
@@ -363,6 +530,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_economic_space_blr"
 			add_opinion_modifier = {
@@ -375,8 +543,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_economic_space_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				has_global_flag = BLR_FOLLOW_UNION_STATE
@@ -392,12 +561,14 @@ USR_Union_state_category = {
 	}
 	###########Union State with Belarus - Nuclear to Belarus###########
 	USR_nuclear_to_blr = {
-		icon = GFX_decision_unionstate_nuclear
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_unionstate_button
+
 		cost = 65
 		days_remove = 30
 		fire_only_once = yes
+
 		visible = {
-			tag = SOV
 			country_exists = BLR
 			NOT = {
 				has_war_with = BLR
@@ -412,6 +583,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_nuclear_to_blr"
 			set_temp_variable = { treasury_change = -3 }
@@ -447,7 +619,7 @@ USR_Union_state_category = {
 			}
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 355
 				OR = {
@@ -465,35 +637,51 @@ USR_Union_state_category = {
 	}
 	###########Union State with Belarus - Russia Reunite with Belarus###########
 	USR_russia_reunite_with_belarus = {
-		icon = GFX_decision_unionstate_belarus_button
-		cost = 55
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_unionstate_button
+
+		cost = 400
 		days_remove = 100
-		available = {
-			BLR = {	
-				influence_higher_60 = yes
-				has_autonomy_state = autonomy_union_state 
-			}
-		}
+
 		visible = {
-			tag = SOV
 			country_exists = BLR
 		}
+		available = {
+			BLR = {
+				influence_higher_70 = yes
+				has_autonomy_state = autonomy_union_state
+			}
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_russia_reunite_with_belarus"
-			custom_effect_tooltip = SOV_union_state_create_nesc_TT
-			set_country_flag = luka_union_prezik
+			custom_effect_tooltip = USR_union_state_create_nesc_TT
 			add_stability = -0.15
 			add_war_support = 0.15
-			add_political_power = -400
 			hidden_effect = {
-				set_cosmetic_tag = BLR_UNS_Communism
-				clr_country_flag = dynamic_flag
+				if = {
+					limit = {
+						NOT = {
+							has_cosmetic_tag = BLR_UNS_great
+						}
+					}
+					set_cosmetic_tag = BLR_UNS_Communism
+					clr_country_flag = dynamic_flag
+				}
+				if = {
+					limit = {
+						UKR = { has_autonomy_state = autonomy_union_state }
+						SER = { has_autonomy_state = autonomy_union_state }
+						ARM = { has_autonomy_state = autonomy_union_state }
+					}
+					set_cosmetic_tag = BLR_UNS_great
+					clr_country_flag = dynamic_flag
+				}
 				BLR = {
 					every_core_state = { add_core_of = SOV }
 					every_unit_leader = { set_nationality = SOV	}
 				}
 				SOV = {
-					set_country_flag = putin_union_prezik
 					add_to_variable = { treasury = BLR.treasury }
 					add_to_variable = { debt = BLR.debt }
 					add_to_variable = { int_investments = BLR.int_investments }
@@ -504,59 +692,47 @@ USR_Union_state_category = {
 			}
 		}
 		ai_will_do = {
-			factor = 1
+			base = 0
 			modifier = {
-				add = 354
-				has_global_flag = BLR_FOLLOW_UNION_STATE
-			}
-			modifier = {
-				add = 355
-				OR = {
-					emerging_anarchist_communism_are_in_power = yes
-					emerging_autocracy_are_in_power = yes
-					emerging_reactionaries_are_in_power = yes
-					nationalist_monarchists_are_in_power = yes
-					nationalist_right_wing_populists_are_in_power = yes
-					nationalist_fascist_are_in_power = yes
-					emerging_communist_state_are_in_power = yes
-					neutrality_neutral_communism_are_in_power = yes
-				}
+				BLR = { is_ai = yes }
+				factor = 355
 			}
 		}
 	}
 	###########Union State with Belarus - Russia Create Union State###########
 	USR_russia_create_union_state_blr = {
-		icon = GFX_decision_unionstate_fist_button
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_unionstate_button
+
 		cost = 60
 		days_remove = 100
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = SOV_targeted_country_has_more_than_75_percent_influence_TT
-				BLR = { SOV_targeted_country_has_more_than_75_percent_influence = yes }
-			}
-			BLR = { 
-				is_subject = no	
-				has_idea = USR_valute_idea
-				has_idea = USR_civils_idea
-				has_idea = USR_economic_space_idea
-			}
-		}
+
 		visible = {
-			tag = SOV
 			country_exists = BLR
 			NOT = {
 				has_war_with = BLR
 			}
 		}
+		available = {
+			BLR = {
+				influence_higher_75 = yes
+				is_subject = no
+				has_idea = USR_valute_idea
+				has_idea = USR_civils_idea
+				has_idea = USR_economic_space_idea
+			}
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_russia_create_union_state_blr"
-			BLR = { 
+			BLR = {
 				country_event = union_state.3
 				set_country_flag = BLR_unionstate_agree
 			}
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				has_global_flag = BLR_FOLLOW_UNION_STATE
@@ -578,18 +754,14 @@ USR_Union_state_category = {
 	}
 	###########Union State with Belarus - Russia Start Pro-union state Revoult in Belarus###########
 	USR_pro_union_state_revout_blr = {
-		icon = GFX_decision_unionstate_fist_button
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_unionstate_button
+
 		cost = 180
 		days_remove = 10
 		fire_only_once = yes
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = SOV_targeted_country_has_more_than_60_percent_influence_TT
-				BLR = { SOV_targeted_country_has_more_than_60_percent_influence = yes }
-			}
-		}
+
 		visible = {
-			tag = SOV
 			country_exists = BLR
 			NOT = {
 				has_war_with = BLR
@@ -599,12 +771,19 @@ USR_Union_state_category = {
 				emerging_reactionaries_are_in_power = yes
 			}
 		}
+		available = {
+			BLR = {
+				influence_higher_60 = yes
+			}
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_pro_union_state_revout_blr"
-			SOV = { country_event = belarus_another.65 }
+			SOV = { country_event = union_state_belarus.1 }
 		}
+
 		ai_will_do = {
-			factor = 0
+			base = 0
 			modifier = {
 				add = 355
 				BLR = { is_ai = yes }
@@ -623,9 +802,18 @@ USR_Union_state_category = {
 	}
 	###########Union State with Belarus - Belarus create Union State###########
 	USR_belarus_create_union_state = {
-		icon = GFX_decision_unionstate_russia_button
+		allowed = { original_tag = BLR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 55
 		days_remove = 30
+
+		visible = {
+			country_exists = SOV
+			NOT = {
+				has_war_with = SOV
+			}
+		}
 		available = {
 			OR = {
 				is_subject = no
@@ -636,17 +824,13 @@ USR_Union_state_category = {
 			has_idea = USR_civils_idea
 			has_idea = USR_economic_space_idea
 		}
-		visible = {
-			tag = BLR
-			country_exists = SOV
-			NOT = {
-				has_war_with = SOV
-			}
-		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_belarus_create_union_state"
 			SOV = {	country_event = { id = union_state.1 days = 1 } }
-			set_country_flag = BLR_unionstate_agree
+			BLR = {
+				set_country_flag = BLR_unionstate_agree
+			}
 			hidden_effect = {
 				if = {
 					limit = {
@@ -685,8 +869,9 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 355
 				has_global_flag = BLR_FOLLOW_UNION_STATE
@@ -702,29 +887,30 @@ USR_Union_state_category = {
 	}
 	###########Union State with Belarus - Belarus annex Russia###########
 	USR_belarus_annex_russia = {
-		icon = GFX_decision_unionstate_russia_button
-		cost = 65
+		allowed = { original_tag = BLR }
+		icon = GFX_decision_unionstate_button
+
+		cost = 250
 		days_remove = 40
 		fire_only_once = yes
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = BLR_SOV_more_than_70_percent_influence_TT
-				SOV = { BLR_targeted_country_has_more_than_70_percent_influence = yes }
-			}
-		}
+
 		visible = {
-			tag = BLR
 			country_exists = SOV
 			has_autonomy_state = autonomy_union_state
 		}
+		available = {
+			SOV = {
+				influence_higher_80 = yes
+			}
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_belarus_annex_russia"
-			custom_effect_tooltip = BLR_Union_state_create_TT
-			set_country_flag = luka_union_prezik
-			SOV = { 
-				every_core_state = { 
-					add_core_of = BLR 
-				} 
+			custom_effect_tooltip = USR_Union_state_create_belarus_TT
+			SOV = {
+				every_core_state = {
+					add_core_of = BLR
+				}
 			}
 			set_capital = {
 				state = 652
@@ -732,7 +918,6 @@ USR_Union_state_category = {
 			}
 			add_stability = -0.10
 			add_war_support = -0.10
-			add_political_power = -200
 			hidden_effect = {
 				if = {
 					limit = { CHE = { is_subject_of = SOV } }
@@ -778,7 +963,7 @@ USR_Union_state_category = {
 			}
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 355
 				has_global_flag = BLR_FOLLOW_UNION_STATE
@@ -795,16 +980,17 @@ USR_Union_state_category = {
 	###########UNION STATE WITH SERBIA###########
 	###########Union State with Serbia - Parlament###########
 	USR_create_parlament_ser = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = SER }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 50
+
 		visible = {
-			tag = SER
 			country_exists = SOV
 			has_completed_focus = SER_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_parlament_idea
 				OR = {
 					has_government = democratic
@@ -812,6 +998,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_parlament_ser"
 			add_opinion_modifier = {
@@ -824,8 +1011,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_parlament_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -841,16 +1029,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Serbia - Main Gos Sovet###########
 	USR_create_gos_sovet_ser = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = SER }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = SER
 			country_exists = SOV
 			has_completed_focus = SER_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_gos_sovet_idea
 				OR = {
 					has_government = democratic
@@ -858,6 +1047,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_gos_sovet_ser"
 			add_opinion_modifier = {
@@ -870,8 +1060,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_gos_sovet_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -887,16 +1078,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Serbia - Council of Minister###########
 	USR_create_council_ministers_ser = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = SER }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = SER
 			country_exists = SOV
 			has_completed_focus = SER_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_council_ministers_idea
 				OR = {
 					has_government = democratic
@@ -904,6 +1096,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_council_ministers_ser"
 			add_opinion_modifier = {
@@ -916,8 +1109,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_council_ministers_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -933,16 +1127,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Serbia - Money palata###########
 	USR_create_money_palata_ser = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = SER }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = SER
 			country_exists = SOV
 			has_completed_focus = SER_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_money_palata_idea
 				OR = {
 					has_government = democratic
@@ -963,7 +1158,7 @@ USR_Union_state_category = {
 			add_ideas = USR_money_palata_idea
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -979,16 +1174,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Serbia - Eternal Commitie###########
 	USR_create_eternal_commitie_ser = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = SER }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = SER
 			country_exists = SOV
 			has_completed_focus = SER_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_eternal_commitie_idea
 				OR = {
 					has_government = democratic
@@ -996,6 +1192,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_eternal_commitie_ser"
 			add_opinion_modifier = {
@@ -1008,8 +1205,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_eternal_commitie_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1025,12 +1223,13 @@ USR_Union_state_category = {
 	}
 	###########Union State with Serbia - Valute###########
 	USR_create_valute_ser = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = SER }
+		icon = GFX_decision_unionstate_button
+
 		cost = 55
-		fire_only_once = no
 		days_remove = 80
+
 		visible = {
-			tag = SER
 			country_exists = SOV
 			has_idea = USR_eternal_commitie_idea
 			has_idea = USR_money_palata_idea
@@ -1059,8 +1258,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_valute_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1076,12 +1276,13 @@ USR_Union_state_category = {
 	}
 	###########Union State with Serbia - Civils###########
 	USR_create_civils_ser = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = SER }
+		icon = GFX_decision_unionstate_button
+
 		cost = 55
-		fire_only_once = no
 		days_remove = 80
+
 		visible = {
-			tag = SER
 			country_exists = SOV
 			has_idea = USR_eternal_commitie_idea
 			has_idea = USR_money_palata_idea
@@ -1090,15 +1291,15 @@ USR_Union_state_category = {
 			has_idea = USR_parlament_idea
 			has_completed_focus = SER_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_civils_idea
 				OR = {
 					has_government = democratic
 					neutrality_neutral_social_are_in_power = yes
 				}
 			}
-
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_civils_ser"
 			add_opinion_modifier = {
@@ -1111,8 +1312,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_civils_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1128,19 +1330,20 @@ USR_Union_state_category = {
 	}
 	###########Union State with Serbia - Economic Space###########
 	USR_create_economic_space_ser = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = SER }
+		icon = GFX_decision_unionstate_button
+
 		cost = 75
-		fire_only_once = no
 		days_remove = 100
+
 		visible = {
-			tag = SER
 			country_exists = SOV
 			has_idea = USR_valute_idea
 			has_idea = USR_civils_idea
 			has_completed_focus = SER_union_state
 			NOT = {
 				has_idea = USR_economic_space_idea
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				OR = {
 					has_government = democratic
 					neutrality_neutral_social_are_in_power = yes
@@ -1160,7 +1363,7 @@ USR_Union_state_category = {
 			add_ideas = USR_economic_space_idea
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1176,31 +1379,56 @@ USR_Union_state_category = {
 	}
 	###########Union State with Serbia - Russia Reunite with Serbia###########
 	USR_russia_reunite_with_serbia = {
-		icon = GFX_decision_unionstate_belarus_button
-		cost = 55
+		allowed = { original_tag = SER }
+		icon = GFX_decision_unionstate_button
+
+		cost = 400
 		days_remove = 100
-		available = {
-			SER = {	
-				influence_higher_60 = yes
-				has_autonomy_state = autonomy_union_state 
-			}
-		}
+
 		visible = {
-			tag = SOV
 			country_exists = SER
-			SER = {	
-				has_autonomy_state = autonomy_union_state 
+			SER = {
+				has_autonomy_state = autonomy_union_state
 			}
 		}
+		available = {
+			SER = {
+				influence_higher_60 = yes
+				has_autonomy_state = autonomy_union_state
+			}
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_russia_reunite_with_serbia"
-			custom_effect_tooltip = SOV_union_state_create_nesc_TT
+			custom_effect_tooltip = USR_union_state_create_nesc_TT
 			add_stability = -0.15
 			add_war_support = 0.15
-			add_political_power = -400
 			hidden_effect = {
-				set_cosmetic_tag = BLR_UNS_Communism
-				clr_country_flag = dynamic_flag
+				if = {
+					limit = {
+						NOT = {
+							has_cosmetic_tag = BLR_UNS_great
+						}
+					}
+					set_cosmetic_tag = BLR_UNS_Communism
+					clr_country_flag = dynamic_flag
+				}
+				if = {
+					limit = {
+
+						BLR = {
+							has_autonomy_state = autonomy_union_state
+						}
+						UKR = {
+							has_autonomy_state = autonomy_union_state
+						}
+						ARM = {
+							has_autonomy_state = autonomy_union_state
+						}
+					}
+					set_cosmetic_tag = BLR_UNS_great
+					clr_country_flag = dynamic_flag
+				}
 				SER = {
 					every_core_state = { add_core_of = SOV }
 					every_unit_leader = { set_nationality = SOV	}
@@ -1216,7 +1444,7 @@ USR_Union_state_category = {
 			}
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1232,26 +1460,16 @@ USR_Union_state_category = {
 	}
 	###########Union State with Serbia - Russia Create Union State###########
 	USR_russia_create_union_state_ser = {
-		icon = GFX_decision_unionstate_fist_button
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_unionstate_button
+
 		cost = 60
 		days_remove = 100
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = SOV_targeted_country_has_more_than_75_percent_influence_TT
-				SER = { SOV_targeted_country_has_more_than_75_percent_influence = yes }
-			}
-			SER = { 
-				is_subject = no	
-				has_idea = USR_valute_idea
-				has_idea = USR_civils_idea
-				has_idea = USR_economic_space_idea
-			}
-		}
+
 		visible = {
-			tag = SOV
 			country_exists = SER
-			SER = { 
-				is_subject = no	
+			SER = {
+				is_subject = no
 				has_idea = USR_valute_idea
 				has_idea = USR_civils_idea
 				has_idea = USR_economic_space_idea
@@ -1263,15 +1481,25 @@ USR_Union_state_category = {
 				}
 			}
 		}
+		available = {
+			SER = {
+				influence_higher_75 = yes
+				is_subject = no
+				has_idea = USR_valute_idea
+				has_idea = USR_civils_idea
+				has_idea = USR_economic_space_idea
+			}
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_russia_create_union_state_ser"
-			SER = { 
+			SER = {
 				country_event = union_state.6
 				set_country_flag = BLR_unionstate_agree
 			}
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 355
 				OR = {
@@ -1289,9 +1517,23 @@ USR_Union_state_category = {
 	}
 	###########Union State with Serbia - Serbia create Union State###########
 	USR_serbia_create_union_state = {
-		icon = GFX_decision_unionstate_russia_button
+		allowed = { original_tag = SER }
+		icon = GFX_decision_unionstate_button
+
 		cost = 55
 		days_remove = 30
+		days_re_enable = 180
+
+		visible = {
+			country_exists = SOV
+			has_completed_focus = SER_union_state
+			NOT = {
+				OR = {
+					has_government = democratic
+					neutrality_neutral_social_are_in_power = yes
+				}
+			}
+		}
 		available = {
 			OR = {
 				is_subject = no
@@ -1301,30 +1543,17 @@ USR_Union_state_category = {
 			has_idea = USR_valute_idea
 			has_idea = USR_civils_idea
 			has_idea = USR_economic_space_idea
-			has_completed_focus = SER_union_state
 		}
-		visible = {
-			tag = SER
-			country_exists = SOV
-			NOT = {
-				OR = {
-					has_government = democratic
-					neutrality_neutral_social_are_in_power = yes
-				}
-			}
-		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_serbia_create_union_state"
-			SOV = {	country_event = { id = union_state.7 days = 1 } }
 			SOV = {
-				set_autonomy = {
-					target = SER
-					autonomy_state = autonomy_union_state
-				}
+				country_event = { id = union_state.7 days = 1 }
 			}
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1341,16 +1570,17 @@ USR_Union_state_category = {
 	###########UNION STATE WITH UKRAINE###########
 	###########Union State with Ukraine - Parlament###########
 	USR_create_parlament_ukr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = UKR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 50
+
 		visible = {
-			tag = UKR
 			country_exists = SOV
 			has_completed_focus = UKR_apply_to_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_parlament_idea
 				OR = {
 					has_government = democratic
@@ -1359,6 +1589,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_parlament_ukr"
 			add_opinion_modifier = {
@@ -1371,8 +1602,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_parlament_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1390,16 +1622,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Ukraine - Main Gos Sovet###########
 	USR_create_gos_sovet_ukr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = UKR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = UKR
 			country_exists = SOV
 			has_completed_focus = UKR_apply_to_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_gos_sovet_idea
 				OR = {
 					has_government = democratic
@@ -1408,6 +1641,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_gos_sovet_ukr"
 			add_opinion_modifier = {
@@ -1421,7 +1655,7 @@ USR_Union_state_category = {
 			add_ideas = USR_gos_sovet_idea
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1439,16 +1673,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Ukraine - Council of Minister###########
 	USR_create_council_ministers_ukr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = UKR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = UKR
 			country_exists = SOV
 			has_completed_focus = UKR_apply_to_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_council_ministers_idea
 				OR = {
 					has_government = democratic
@@ -1457,6 +1692,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_council_ministers_ukr"
 			add_opinion_modifier = {
@@ -1470,7 +1706,7 @@ USR_Union_state_category = {
 			add_ideas = USR_council_ministers_idea
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1488,16 +1724,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Ukraine - Money palata###########
 	USR_create_money_palata_ukr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = UKR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = UKR
 			country_exists = SOV
 			has_completed_focus = UKR_apply_to_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_money_palata_idea
 				OR = {
 					has_government = democratic
@@ -1506,6 +1743,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_money_palata_ukr"
 			add_opinion_modifier = {
@@ -1519,7 +1757,7 @@ USR_Union_state_category = {
 			add_ideas = USR_money_palata_idea
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1537,16 +1775,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Ukraine - Eternal Commitie###########
 	USR_create_eternal_commitie_ukr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = UKR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = UKR
 			country_exists = SOV
 			has_completed_focus = UKR_apply_to_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_eternal_commitie_idea
 				OR = {
 					has_government = democratic
@@ -1555,6 +1794,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_eternal_commitie_ukr"
 			add_opinion_modifier = {
@@ -1567,8 +1807,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_eternal_commitie_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1586,12 +1827,13 @@ USR_Union_state_category = {
 	}
 	###########Union State with Ukraine - Valute###########
 	USR_create_valute_ukr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = UKR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 55
-		fire_only_once = no
 		days_remove = 80
+
 		visible = {
-			tag = UKR
 			country_exists = SOV
 			has_idea = USR_eternal_commitie_idea
 			has_idea = USR_money_palata_idea
@@ -1609,6 +1851,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_valute_ukr"
 			add_opinion_modifier = {
@@ -1622,7 +1865,7 @@ USR_Union_state_category = {
 			add_ideas = USR_valute_idea
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1640,12 +1883,13 @@ USR_Union_state_category = {
 	}
 	###########Union State with Ukraine - Civils###########
 	USR_create_civils_ukr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = UKR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 55
-		fire_only_once = no
 		days_remove = 80
+
 		visible = {
-			tag = UKR
 			country_exists = SOV
 			has_idea = USR_eternal_commitie_idea
 			has_idea = USR_money_palata_idea
@@ -1654,7 +1898,7 @@ USR_Union_state_category = {
 			has_idea = USR_parlament_idea
 			has_completed_focus = UKR_apply_to_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_civils_idea
 				OR = {
 					has_government = democratic
@@ -1662,8 +1906,8 @@ USR_Union_state_category = {
 					nationalist_fascist_are_in_power = yes
 				}
 			}
-
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_civils_ukr"
 			add_opinion_modifier = {
@@ -1676,8 +1920,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_civils_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1695,19 +1940,20 @@ USR_Union_state_category = {
 	}
 	###########Union State with Ukraine - Economic Space###########
 	USR_create_economic_space_ukr = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = UKR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 75
-		fire_only_once = no
 		days_remove = 100
+
 		visible = {
-			tag = UKR
 			country_exists = SOV
 			has_idea = USR_valute_idea
 			has_idea = USR_civils_idea
 			has_completed_focus = UKR_apply_to_union_state
 			NOT = {
 				has_idea = USR_economic_space_idea
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				OR = {
 					has_government = democratic
 					neutrality_neutral_libertarians_are_in_power = yes
@@ -1715,6 +1961,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_economic_space_ukr"
 			add_opinion_modifier = {
@@ -1727,8 +1974,9 @@ USR_Union_state_category = {
 			}
 			add_ideas = USR_economic_space_idea
 		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1746,31 +1994,55 @@ USR_Union_state_category = {
 	}
 	###########Union State with Ukraine - Russia Reunite with Ukraine###########
 	USR_russia_reunite_with_ukraine = {
-		icon = GFX_decision_unionstate_belarus_button
-		cost = 55
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_unionstate_button
+
+		cost = 400
 		days_remove = 100
-		available = {
-			UKR = {	
-				influence_higher_60 = yes
-				has_autonomy_state = autonomy_union_state 
-			}
-		}
+
 		visible = {
-			tag = SOV
 			country_exists = UKR
-			UKR = {	
-				has_autonomy_state = autonomy_union_state 
+			UKR = {
+				has_autonomy_state = autonomy_union_state
 			}
 		}
+		available = {
+			UKR = {
+				influence_higher_60 = yes
+				has_autonomy_state = autonomy_union_state
+			}
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_russia_reunite_with_ukraine"
-			custom_effect_tooltip = SOV_union_state_create_nesc_TT
+			custom_effect_tooltip = USR_union_state_create_nesc_TT
 			add_stability = -0.15
 			add_war_support = 0.15
-			add_political_power = -400
 			hidden_effect = {
-				set_cosmetic_tag = BLR_UNS_Communism
-				clr_country_flag = dynamic_flag
+				if = {
+					limit = {
+						NOT = {
+							has_cosmetic_tag = BLR_UNS_great
+						}
+					}
+					set_cosmetic_tag = BLR_UNS_Communism
+					clr_country_flag = dynamic_flag
+				}
+				if = {
+					limit = {
+						BLR = {
+							has_autonomy_state = autonomy_union_state
+						}
+						SER = {
+							has_autonomy_state = autonomy_union_state
+						}
+						ARM = {
+							has_autonomy_state = autonomy_union_state
+						}
+					}
+					set_cosmetic_tag = BLR_UNS_great
+					clr_country_flag = dynamic_flag
+				}
 				UKR = {
 					every_core_state = { add_core_of = SOV }
 					every_unit_leader = { set_nationality = SOV	}
@@ -1786,7 +2058,7 @@ USR_Union_state_category = {
 			}
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1802,26 +2074,16 @@ USR_Union_state_category = {
 	}
 	###########Union State with Ukraine - Russia Create Union State###########
 	USR_russia_create_union_state_ukr = {
-		icon = GFX_decision_unionstate_fist_button
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_unionstate_button
+
 		cost = 60
 		days_remove = 100
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = SOV_targeted_country_has_more_than_75_percent_influence_TT
-				UKR = { SOV_targeted_country_has_more_than_75_percent_influence = yes }
-			}
-			UKR = { 
-				is_subject = no	
-				has_idea = USR_valute_idea
-				has_idea = USR_civils_idea
-				has_idea = USR_economic_space_idea
-			}
-		}
+
 		visible = {
-			tag = SOV
 			country_exists = UKR
-			UKR = { 
-				is_subject = no	
+			UKR = {
+				is_subject = no
 				has_idea = USR_valute_idea
 				has_idea = USR_civils_idea
 				has_idea = USR_economic_space_idea
@@ -1834,15 +2096,25 @@ USR_Union_state_category = {
 				}
 			}
 		}
+		available = {
+			UKR = {
+				influence_higher_75 = yes
+				is_subject = no
+				has_idea = USR_valute_idea
+				has_idea = USR_civils_idea
+				has_idea = USR_economic_space_idea
+			}
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_russia_create_union_state_ukr"
-			UKR = { 
+			UKR = {
 				country_event = union_state.10
 				set_country_flag = BLR_unionstate_agree
 			}
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1858,9 +2130,23 @@ USR_Union_state_category = {
 	}
 	###########Union State with Ukraine - Ukraine create Union State###########
 	USR_ukraine_create_union_state = {
-		icon = GFX_decision_unionstate_russia_button
+		allowed = { original_tag = UKR }
+		icon = GFX_decision_unionstate_button
+
 		cost = 55
 		days_remove = 30
+
+		visible = {
+			country_exists = SOV
+			has_completed_focus = UKR_apply_to_union_state
+			NOT = {
+				OR = {
+					has_government = democratic
+					neutrality_neutral_libertarians_are_in_power = yes
+					nationalist_fascist_are_in_power = yes
+				}
+			}
+		}
 		available = {
 			OR = {
 				is_subject = no
@@ -1870,24 +2156,15 @@ USR_Union_state_category = {
 			has_idea = USR_valute_idea
 			has_idea = USR_civils_idea
 			has_idea = USR_economic_space_idea
-			has_completed_focus = UKR_apply_to_union_state
 		}
-		visible = {
-			tag = UKR
-			country_exists = SOV
-			NOT = {
-				OR = {
-					has_government = democratic
-					neutrality_neutral_libertarians_are_in_power = yes
-					nationalist_fascist_are_in_power = yes
-				}
-			}
-		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_ukraine_create_union_state"
-			SOV = {	country_event = { id = union_state.11 days = 1 } }
-			set_country_flag = BLR_unionstate_agree
+			UKR = {
+				set_country_flag = BLR_unionstate_agree
+			}
 			SOV = {
+				country_event = { id = union_state.11 days = 1 }
 				set_autonomy = {
 					target = UKR
 					autonomy_state = autonomy_union_state
@@ -1895,7 +2172,7 @@ USR_Union_state_category = {
 			}
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				OR = {
@@ -1914,16 +2191,17 @@ USR_Union_state_category = {
 	###########UNION STATE WITH ARMENIA###########
 	###########Union State with Armenia - Parlament###########
 	USR_create_parlament_arm = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 50
+
 		visible = {
-			tag = ARM
 			country_exists = SOV
 			has_country_flag = USR_armenia_create_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_parlament_idea
 				OR = {
 					has_government = democratic
@@ -1931,6 +2209,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_parlament_arm"
 			add_opinion_modifier = {
@@ -1944,7 +2223,7 @@ USR_Union_state_category = {
 			add_ideas = USR_parlament_idea
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				NOT = {
@@ -1958,16 +2237,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Armenia - Main Gos Sovet###########
 	USR_create_gos_sovet_arm = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = ARM
 			country_exists = SOV
 			has_country_flag = USR_armenia_create_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_gos_sovet_idea
 				OR = {
 					has_government = democratic
@@ -1975,6 +2255,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_gos_sovet_arm"
 			add_opinion_modifier = {
@@ -1988,7 +2269,7 @@ USR_Union_state_category = {
 			add_ideas = USR_gos_sovet_idea
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				NOT = {
@@ -2002,16 +2283,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Armenia - Council of Minister###########
 	USR_create_council_ministers_arm = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = ARM
 			country_exists = SOV
 			has_country_flag = USR_armenia_create_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_council_ministers_idea
 				OR = {
 					has_government = democratic
@@ -2032,7 +2314,7 @@ USR_Union_state_category = {
 			add_ideas = USR_council_ministers_idea
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				NOT = {
@@ -2046,16 +2328,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Armenia - Money palata###########
 	USR_create_money_palata_arm = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = ARM
 			country_exists = SOV
 			has_country_flag = USR_armenia_create_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_money_palata_idea
 				OR = {
 					has_government = democratic
@@ -2076,7 +2359,7 @@ USR_Union_state_category = {
 			add_ideas = USR_money_palata_idea
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				NOT = {
@@ -2090,16 +2373,17 @@ USR_Union_state_category = {
 	}
 	###########Union State with Armenia - Eternal Commitie###########
 	USR_create_eternal_commitie_arm = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_unionstate_button
+
 		cost = 35
-		fire_only_once = no
 		days_remove = 40
+
 		visible = {
-			tag = ARM
 			country_exists = SOV
 			has_country_flag = USR_armenia_create_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_eternal_commitie_idea
 				OR = {
 					has_government = democratic
@@ -2120,7 +2404,7 @@ USR_Union_state_category = {
 			add_ideas = USR_eternal_commitie_idea
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				NOT = {
@@ -2134,12 +2418,13 @@ USR_Union_state_category = {
 	}
 	###########Union State with Armenia - Valute###########
 	USR_create_valute_arm = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_unionstate_button
+
 		cost = 55
-		fire_only_once = no
 		days_remove = 80
+
 		visible = {
-			tag = ARM
 			country_exists = SOV
 			has_idea = USR_eternal_commitie_idea
 			has_idea = USR_money_palata_idea
@@ -2156,6 +2441,7 @@ USR_Union_state_category = {
 				}
 			}
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision USR_create_valute_arm"
 			add_opinion_modifier = {
@@ -2169,7 +2455,7 @@ USR_Union_state_category = {
 			add_ideas = USR_valute_idea
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				NOT = {
@@ -2183,12 +2469,13 @@ USR_Union_state_category = {
 	}
 	###########Union State with Armenia - Civils###########
 	USR_create_civils_arm = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_unionstate_button
+
 		cost = 55
-		fire_only_once = no
 		days_remove = 80
+
 		visible = {
-			tag = ARM
 			country_exists = SOV
 			has_idea = USR_eternal_commitie_idea
 			has_idea = USR_money_palata_idea
@@ -2197,7 +2484,7 @@ USR_Union_state_category = {
 			has_idea = USR_parlament_idea
 			has_country_flag = USR_armenia_create_union_state
 			NOT = {
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				has_idea = USR_civils_idea
 				OR = {
 					has_government = democratic
@@ -2219,7 +2506,7 @@ USR_Union_state_category = {
 			add_ideas = USR_civils_idea
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
 				add = 354
 				NOT = {
@@ -2233,19 +2520,20 @@ USR_Union_state_category = {
 	}
 	###########Union State with Armenia - Economic Space###########
 	USR_create_economic_space_arm = {
-		icon = GFX_decision_unionstate_migration_button
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_unionstate_button
+
 		cost = 75
-		fire_only_once = no
 		days_remove = 100
+
 		visible = {
-			tag = ARM
 			country_exists = SOV
 			has_idea = USR_valute_idea
 			has_idea = USR_civils_idea
 			has_country_flag = USR_armenia_create_union_state
 			NOT = {
 				has_idea = USR_economic_space_idea
-				has_autonomy_state = autonomy_union_state 
+				has_autonomy_state = autonomy_union_state
 				OR = {
 					has_government = democratic
 					neutrality_neutral_oligarch_are_in_power = yes
@@ -2265,7 +2553,60 @@ USR_Union_state_category = {
 			add_ideas = USR_economic_space_idea
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
+			modifier = {
+				add = 354
+				NOT = {
+					OR = {
+						has_government = democratic
+						neutrality_neutral_oligarch_are_in_power = yes
+					}
+				}
+			}
+		}
+	}
+	###########Union State with Armenia - Russia Create Union State###########
+	USR_russia_create_union_state_arm = {
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_unionstate_button
+
+		cost = 60
+		days_remove = 100
+
+		visible = {
+			country_exists = ARM
+			ARM = {
+				is_subject = no
+				has_idea = USR_valute_idea
+				has_idea = USR_civils_idea
+				has_idea = USR_economic_space_idea
+				NOT = {
+					OR = {
+						has_government = democratic
+						neutrality_neutral_oligarch_are_in_power = yes
+					}
+				}
+			}
+		}
+		available = {
+			ARM = {
+				influence_higher_75 = yes
+				is_subject = no
+				has_idea = USR_valute_idea
+				has_idea = USR_civils_idea
+				has_idea = USR_economic_space_idea
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USR_russia_create_union_state_arm"
+			ARM = {
+				country_event = union_state.14
+				set_country_flag = BLR_unionstate_agree
+			}
+		}
+		ai_will_do = {
+			base = 1
 			modifier = {
 				add = 354
 				NOT = {
@@ -2279,31 +2620,52 @@ USR_Union_state_category = {
 	}
 	###########Union State with Armenia - Russia Reunite with Armenia###########
 	USR_russia_reunite_with_armenia = {
-		icon = GFX_decision_unionstate_belarus_button
-		cost = 55
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_unionstate_button
+
+		cost = 400
 		days_remove = 100
-		available = {
-			ARM = {	
-				influence_higher_60 = yes
-				has_autonomy_state = autonomy_union_state 
-			}
-		}
+
 		visible = {
-			tag = SOV
 			country_exists = ARM
-			ARM = {	
-				has_autonomy_state = autonomy_union_state 
+		}
+		available = {
+			ARM = {
+				influence_higher_70 = yes
+				has_autonomy_state = autonomy_union_state
 			}
 		}
+
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision USR_russia_reunite_with_ukraine"
-			custom_effect_tooltip = SOV_union_state_create_nesc_TT
-			add_stability = -0.15
-			add_war_support = 0.15
-			add_political_power = -400
+			log = "[GetDateText]: [Root.GetName]: Decision USR_russia_reunite_with_armenia"
+			custom_effect_tooltip = USR_union_state_create_nesc_TT
+			add_stability = -0.10
+			add_war_support = 0.10
 			hidden_effect = {
-				set_cosmetic_tag = BLR_UNS_Communism
-				clr_country_flag = dynamic_flag
+				if = {
+					limit = {
+						NOT = {
+							has_cosmetic_tag = BLR_UNS_great
+						}
+					}
+					set_cosmetic_tag = BLR_UNS_Communism
+					clr_country_flag = dynamic_flag
+				}
+				if = {
+					limit = {
+						BLR = {
+							has_autonomy_state = autonomy_union_state
+						}
+						UKR = {
+							has_autonomy_state = autonomy_union_state
+						}
+						SER = {
+							has_autonomy_state = autonomy_union_state
+						}
+					}
+					set_cosmetic_tag = BLR_UNS_great
+					clr_country_flag = dynamic_flag
+				}
 				ARM = {
 					every_core_state = { add_core_of = SOV }
 					every_unit_leader = { set_nationality = SOV	}
@@ -2319,117 +2681,417 @@ USR_Union_state_category = {
 			}
 		}
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
-				add = 354
-				NOT = {
-					OR = {
-						has_government = democratic
-						neutrality_neutral_oligarch_are_in_power = yes
-					}
-				}
-			}
-		}
-	}
-	###########Union State with Armenia - Russia Create Union State###########
-	USR_russia_create_union_state_arm = {
-		icon = GFX_decision_unionstate_fist_button
-		cost = 60
-		days_remove = 100
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = SOV_targeted_country_has_more_than_75_percent_influence_TT
-				ARM = { SOV_targeted_country_has_more_than_75_percent_influence = yes }
-			}
-			ARM = { 
-				is_subject = no	
-				has_idea = USR_valute_idea
-				has_idea = USR_civils_idea
-				has_idea = USR_economic_space_idea
-			}
-		}
-		visible = {
-			tag = SOV
-			country_exists = ARM
-			ARM = { 
-				is_subject = no	
-				has_idea = USR_valute_idea
-				has_idea = USR_civils_idea
-				has_idea = USR_economic_space_idea
-				NOT = {
-					OR = {
-						has_government = democratic
-						neutrality_neutral_oligarch_are_in_power = yes
-					}
-				}
-			}
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision USR_russia_create_union_state_arm"
-			ARM = { 
-				country_event = union_state.10
-				set_country_flag = BLR_unionstate_agree
-			}
-		}
-		ai_will_do = {
-			factor = 1
-			modifier = {
-				add = 354
-				NOT = {
-					OR = {
-						has_government = democratic
-						neutrality_neutral_oligarch_are_in_power = yes
-					}
-				}
+				add = 355
+				ARM = { is_ai = yes }
 			}
 		}
 	}
 	###########Union State with Armenia - Armenia create Union State###########
 	USR_armenia_create_union_state = {
-		icon = GFX_decision_unionstate_russia_button
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_unionstate_button
+
 		cost = 55
 		days_remove = 30
-		available = {
+
+		visible = {
+			country_exists = SOV
 			OR = {
 				is_subject = no
 				is_subject_of = SOV
 			}
-			NOT = {	has_autonomy_state = autonomy_union_state }
+			NOT = {
+				has_autonomy_state = autonomy_union_state
+				OR = {
+					has_government = democratic
+					neutrality_neutral_oligarch_are_in_power = yes
+				}
+			}
+			has_country_flag = USR_armenia_create_union_state
+		}
+		available = {
 			has_idea = USR_valute_idea
 			has_idea = USR_civils_idea
 			has_idea = USR_economic_space_idea
-			has_country_flag = USR_armenia_create_union_state
 		}
-		visible = {
-			tag = ARM
-			country_exists = SOV
-			NOT = {
-				OR = {
-					has_government = democratic
-					neutrality_neutral_oligarch_are_in_power = yes
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USR_armenia_create_union_state"
+			SOV = {	country_event = { id = union_state.13 days = 1 } }
+			set_country_flag = BLR_unionstate_agree
+		}
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 354
+				NOT = {
+					OR = {
+						has_government = democratic
+						neutrality_neutral_oligarch_are_in_power = yes
+					}
 				}
+			}
+		}
+	}
+	###########Union State with Armenia - United Group of Troops with Russia###########
+	USR_united_group_troops_armenia = {
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_unionstate_button
+
+		cost = 75
+		days_remove = 30
+
+		visible = {
+			country_exists = SOV
+			USR_union_state_army_integration = yes
+			ARM = {
+				has_autonomy_state = autonomy_union_state
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USR_united_group_troops_armenia"
+			USR_union_state_integrate_army_of_russia = yes
+			SOV = {	country_event = { id = union_state.16 } }
+			ARM = {	country_event = { id = union_state.16 } }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 354
+				NOT = {
+					OR = {
+						has_government = democratic
+						neutrality_neutral_oligarch_are_in_power = yes
+					}
+				}
+			}
+		}
+	}
+	###########Union State with Armenia - United Special Servises  with Russia###########
+	USR_united_special_services_armenia = {
+		allowed = {
+			OR = {
+				original_tag = ARM
+				original_tag = SOV
+			}
+		}
+		icon = GFX_decision_unionstate_button
+
+		cost = 75
+		days_remove = 30
+
+		visible = {
+			country_exists = SOV
+			country_exists = ARM
+			SOV = {
+				NOT = {
+					has_country_flag = USR_special_services_active
+				}
+				has_idea = SOV_svr
+			}
+			ARM = {
+				has_autonomy_state = autonomy_union_state
+				NOT = {
+					has_country_flag = USR_special_services
+				}
+				has_idea = ARM_fis
+			}
+		}
+
+		complete_effect = {
+			SOV = {
+				set_country_flag = USR_special_services_active
 			}
 		}
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision USR_armenia_create_union_state"
-			ARM = {	country_event = { id = ukraine_union.2 days = 1 } }
-			set_country_flag = BLR_unionstate_agree
-			SOV = {
-				set_autonomy = {
-					target = ARM
-					autonomy_state = autonomy_union_state
+			log = "[GetDateText]: [Root.GetName]: Decision USR_united_special_services_armenia"
+			SOV = {	country_event = { id = union_state_armenia.12 } }
+			ARM = {	country_event = { id = union_state_armenia.12 } }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 354
+				NOT = {
+					OR = {
+						has_government = democratic
+						neutrality_neutral_oligarch_are_in_power = yes
+					}
 				}
 			}
 		}
+	}
+	###########Union State with Armenia - Nuclear to Armenia###########
+	USR_nuclear_to_arm = {
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_unionstate_button
+
+		cost = 75
+		days_remove = 10
+		fire_only_once = yes
+
+		visible = {
+			country_exists = SOV
+			ARM = {
+				has_autonomy_state = autonomy_union_state
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USR_nuclear_to_arm"
+			SOV = {	country_event = { id = union_state.17 } }
+		}
+
 		ai_will_do = {
-			factor = 1
+			base = 1
 			modifier = {
-				add = 354
+				add = 355
+				OR = {
+					emerging_anarchist_communism_are_in_power = yes
+					emerging_autocracy_are_in_power = yes
+					emerging_reactionaries_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					nationalist_right_wing_populists_are_in_power = yes
+					nationalist_fascist_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					neutrality_neutral_communism_are_in_power = yes
+				}
+			}
+		}
+	}
+	###########Union State with Armenia - Armenia ask attack Azerbaijan###########
+	USR_arm_ask_attack_azer = {
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_unionstate_button
+
+		cost = 75
+		days_remove = 10
+		fire_only_once = yes
+
+		visible = {
+			country_exists = SOV
+			country_exists = AZE
+			AZE = {
+				NOT = {
+					OR = {
+						is_in_faction_with = SOV
+						is_subject_of = SOV
+					}
+				}
+			}
+			ARM = {
+				has_autonomy_state = autonomy_union_state
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USR_arm_ask_attack_azer"
+			SOV = {	country_event = { id = union_state_armenia.1 } }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 355
+				OR = {
+					emerging_anarchist_communism_are_in_power = yes
+					emerging_autocracy_are_in_power = yes
+					emerging_reactionaries_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					nationalist_right_wing_populists_are_in_power = yes
+					nationalist_fascist_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					neutrality_neutral_communism_are_in_power = yes
+				}
+			}
+		}
+	}
+	###########Union State with Armenia - Russia Start Pro-union state Revoult in Armenia###########
+	USR_pro_union_state_revout_arm = {
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_unionstate_button
+
+		cost = 180
+		days_remove = 10
+		fire_only_once = yes
+
+		visible = {
+			country_exists = ARM
+			NOT = {
+				has_war_with = ARM
+			}
+			ARM = {
+				is_subject = no
 				OR = {
 					has_government = democratic
 					neutrality_neutral_oligarch_are_in_power = yes
 				}
 			}
+			SOV = {
+				OR = {
+					emerging_communist_state_are_in_power = yes
+					neutrality_neutral_communism_are_in_power = yes
+					has_government = nationalist
+				}
+			}
+		}
+		available = {
+			ARM = {
+				influence_higher_50 = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USR_pro_union_state_revout_blr"
+			SOV = { country_event = union_state_belarus.1 }
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 355
+				ARM = { is_ai = yes }
+				OR = {
+					emerging_anarchist_communism_are_in_power = yes
+					emerging_autocracy_are_in_power = yes
+					emerging_reactionaries_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					nationalist_right_wing_populists_are_in_power = yes
+					nationalist_fascist_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					neutrality_neutral_communism_are_in_power = yes
+				}
+			}
+		}
+	}
+	###########Union State with Armenia - Special Service Cooperation###########
+	###########Union State with Armenia - Armenia ask help Poland(Monarchists)###########
+	USR_arm_ask_help_poland = {
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_unionstate_button
+
+		days_remove = 5
+		fire_only_once = yes
+
+		visible = {
+			country_exists = SOV
+			POL = {
+				has_civil_war = yes
+				is_subject_of = ARM
+			}
+			ARM = {
+				nationalist_monarchists_are_in_power = yes
+				has_autonomy_state = autonomy_union_state
+				has_completed_focus = ARM_polish_hung_dilem
+			}
+			SOV = {
+				OR = {
+					has_idea = SOV_gru1
+					has_idea = SOV_wagner
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USR_arm_ask_help_poland"
+			SOV = {	country_event = { id = union_state_armenia.4 } }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 355
+				OR = {
+					emerging_anarchist_communism_are_in_power = yes
+					emerging_autocracy_are_in_power = yes
+					emerging_reactionaries_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					nationalist_right_wing_populists_are_in_power = yes
+					nationalist_fascist_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					neutrality_neutral_communism_are_in_power = yes
+				}
+			}
+		}
+	}
+	###########Union State with Armenia - Armenia ask help Italy(Monarchists)###########
+	USR_arm_ask_help_italy = {
+		allowed = { original_tag = ARM }
+		icon = GFX_decision_unionstate_button
+
+		days_remove = 5
+		fire_only_once = yes
+
+		visible = {
+			country_exists = SOV
+			ITA = {
+				has_civil_war = yes
+				is_subject_of = ARM
+			}
+			ARM = {
+				has_completed_focus = ARM_fate_of_italy
+				nationalist_monarchists_are_in_power = yes
+				has_autonomy_state = autonomy_union_state
+			}
+			SOV = {
+				OR = {
+					has_idea = SOV_gru1
+					has_idea = SOV_wagner
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USR_arm_ask_help_italy"
+			SOV = {	country_event = { id = union_state_armenia.7 } }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 355
+				OR = {
+					emerging_anarchist_communism_are_in_power = yes
+					emerging_autocracy_are_in_power = yes
+					emerging_reactionaries_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					nationalist_right_wing_populists_are_in_power = yes
+					nationalist_fascist_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					neutrality_neutral_communism_are_in_power = yes
+				}
+			}
+		}
+	}
+	###########Union State with Armenia - Russia Ask help with Separatism in Caucas###########
+	USR_sov_ask_arm_help_separatism = {
+		allowed = { original_tag = SOV }
+		icon = GFX_decision_unionstate_button
+
+		days_remove = 10
+		days_re_enable = 120
+
+		visible = {
+			country_exists = ARM
+			SOV = {
+				SOV_separatism_caucas_availables = yes
+			}
+			ARM = {
+				has_autonomy_state = autonomy_union_state
+				has_idea = ARM_nss_idea
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USR_sov_ask_arm_help_separatism"
+			ARM = {	country_event = { id = union_state_armenia.8 } }
+		}
+		ai_will_do = {
+			base = 1
 		}
 	}
 }

@@ -1,48 +1,23 @@
 # Written by Andreas "Cold Evul" Brostrom
 #Hezbollah support Shias
 HEZ_support_shias = {
-	allowed = {
-		original_tag = HEZ
-	}
-
-	reversed = yes
-
+	allowed = { NOT = { original_tag = HEZ } }
 	enable = {
 		has_idea = shia
+		HEZ = {
+			OR = {
+				is_in_array = { ruling_party = 8 }
+				is_in_array = { ruling_party = 9 }
+			}
+		}
 	}
-
 	abort_when_not_enabled = yes
 
-	ai_strategy = {
-		type = befriend
-		id = "HEZ"
-		value = 200
-	}
-
-	ai_strategy = {
-		type = protect
-		id = "HEZ"
-		value = 200
-	}
-
-	ai_strategy = {
-		type = support
-		id = "HEZ"
-		value = 200
-	}
-
-	ai_strategy = {
-		type = send_volunteers_desire
-		id = "HEZ"
-		value = 200
-	}
-
-	ai_strategy = {
-		type = influence
-		id = "HEZ"
-		value = 200
-	}
-
+	ai_strategy = { type = befriend id = "HEZ" value = 200 }
+	ai_strategy = { type = protect id = "HEZ" value = 200 }
+	ai_strategy = { type = support id = "HEZ" value = 200 }
+	ai_strategy = { type = send_volunteers_desire id = "HEZ" value = 200 }
+	ai_strategy = { type = influence id = "HEZ" value = 200 }
 }
 
 HEZ_support_lebanon = {
@@ -51,12 +26,7 @@ HEZ_support_lebanon = {
 		NOT = { has_war_with = LEB }
 		LEB = { NOT = { has_government = fascism } }
 	}
-	abort = {
-		OR = {
-			has_war_with = LEB
-			LEB = { has_government = fascism }
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "LEB" value = 200 }
 	ai_strategy = { type = protect id = "LEB" value = 200 }
@@ -67,7 +37,8 @@ HEZ_support_lebanon = {
 HEZ_kill_the_infidels = {
 	allowed = { original_tag = HEZ }
 	enable = {
-		country_exists = ISR #Israel
+		country_exists = ISR
+		NOT = { ISR = { is_subject_of = HEZ } }
 	}
 	abort_when_not_enabled = yes
 
@@ -107,6 +78,39 @@ HEZ_befriend_iran = {
 	ai_strategy = { type = alliance id = "PER" value = 50 }
 	ai_strategy = { type = support id = "PER" value = 200 }
 	ai_strategy = { type = contain id = "PER" value = -50 }
+}
+
+HEZ_do_no_volunteer_in_yemen_till_done_focus = {
+	allowed = { original_tag = HEZ }
+	enable = {
+		original_tag = HEZ
+		HOU = { has_war_with = YEM }
+		NOT = { has_completed_focus = HEZ_Houthi_brothers }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "HOU" value = -500 }
+}
+
+HEZ_do_no_volunteer_in_iraq_done_focus = {
+	allowed = { original_tag = HEZ }
+	enable = {
+		original_tag = HEZ
+		HOU = { has_war_with = YEM }
+		OR = {
+			IRQ = { has_country_leader = { name = "Hadi al-Amiri" ruling_only = yes } }
+			NOT = {
+				has_completed_focus = HEZ_Badr_in_the_shadows
+				AND = {
+					IRQ = { OR = { owns_state = 1142 owns_state = 14953 owns_state = 1124 } }
+					PER = { has_completed_focus = PER_descend_on_iraq }
+				}
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "HOU" value = -500 }
 }
 
 HEZ_rival_iran = {
