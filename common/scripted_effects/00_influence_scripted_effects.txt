@@ -979,6 +979,8 @@ change_influence_percentage = {
 				multiply_temp_variable = { percent_change = influence_change }
 			}
 
+			log = "Percent change: [?percent_change]"
+
 			if = {
 				limit = {
 					check_variable = { influence_array_val^6 > 0 }
@@ -989,34 +991,43 @@ change_influence_percentage = {
 				}
 
 				if = { limit = { check_variable = { percent_change > influence_array_val^6 } }
+					set_temp_variable = { old_top_influence = influence_array_val^6 }
+
 					set_variable = { influence_array^6 = var:tag_index }
 					set_variable = { influence_array_val^6 = percent_change }
 					set_temp_variable = { influencer_index = 6 }
 
+					# Calculate the total influence to redistribute
+					# This includes domestic influence + old top influence + all other influences (except new top)
 					set_temp_variable = { influence_outlook_amount = 0 }
 					add_to_temp_variable = { influence_outlook_amount = domestic_influence_amount }
+					add_to_temp_variable = { influence_outlook_amount = old_top_influence }
 
 					for_each_loop = {
 						array = influence_array_val
 						value = v
 						index = i
 
-						add_to_temp_variable = { influence_outlook_amount = v }
+						# Add all influences except the new top position (index 6)
+						if = { limit = { NOT = { check_variable = { i = 6 } } }
+							add_to_temp_variable = { influence_outlook_amount = v }
+						}
 					}
-					subtract_from_temp_variable = { influence_outlook_amount = influence_array_val^influencer_index }
 
-					add_to_variable = { influence_array_val^influencer_index = percent_change }
+					# Calculate redistribution multiplier
 					set_temp_variable = { temp_total = 100 }
-					subtract_from_temp_variable = { temp_total = influence_array_val^influencer_index }
+					subtract_from_temp_variable = { temp_total = percent_change }
 
 					divide_temp_variable = { temp_total = influence_outlook_amount }
+
+					# Apply redistribution to domestic and all other influences
 					multiply_variable = { domestic_influence_amount = temp_total }
 					for_each_loop = {
 						array = influence_array_val
 						value = v
 						index = i
 
-						if = { limit = { NOT = { check_variable = { i = 0 } } }
+						if = { limit = { NOT = { check_variable = { i = 6 } } }
 							multiply_variable = { influence_array_val^i = temp_total }
 						}
 					}
