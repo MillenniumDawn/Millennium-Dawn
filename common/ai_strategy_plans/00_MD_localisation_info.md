@@ -1,0 +1,1 @@
+FYI, names and descriptions of the strategy plans are not supposed to be localised. Player never is able to see it, and it's displayed only within the aiview console command, which tells info to the developer about what AI wants to prioritise.
