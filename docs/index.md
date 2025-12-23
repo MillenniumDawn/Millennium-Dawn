@@ -66,6 +66,13 @@ The development team requires that you are at least 16 years of age and own a le
 - [Localization Tool](/Millennium-Dawn/dev-resources/localization-tool)
 - [Logging Tool](/Millennium-Dawn/dev-resources/logging-tool)
 
+
+### Submods
+
+**DISCLAIMER** Any issues with a submod should be first reported to the submod you are playing with. Even something as simple as a graphics mod could break something in Millennium Dawn. Please try without submods if you encounter any issues.
+
+For a list of Known Submods follow this [link](misc/known-submods).
+
 ## **Credits**
 
 A full list of credits for all of the models that are currently in use in-game: [Model Credit List](https://docs.google.com/spreadsheets/d/1ogWBBn-qooyQnjh-Tztnb2GDYhjCbAOtq_hpgwWDp58/edit#gid=0)
