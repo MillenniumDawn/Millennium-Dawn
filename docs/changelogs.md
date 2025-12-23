@@ -16,6 +16,11 @@ This page is a list of all MD's changelogs from our documentation. In case you w
  AI:
   - Improved the conditions for NATO joining on historical game mode so nations do not randomly join who shouldn't
   - Improved the AI selection for their grand doctrines
+  - Improved the flow of the European Union law selection when on the "Historical Game Mode" option
+  - Improved the AI supporting or rejecting specific European Union measures when on the historical game rule
+  - Ensure the AI is more likely to reduce Population and Corporate tax if they have less than 25% GDP to Debt Ratio
+  - Ensure that the AI is more likely to reduce Population and Corporate tax if they have than 5% interest with positive income
+  - AI controlled US will now properly scrap the Iowa class battleships when playing on historical
 
  Bugfix:
   - Replaced Singapore's local_building_slots_factor with global_building_slots_factor allowing for the idea bonus to give a bonus
@@ -52,6 +57,15 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Fixed female leaders showing up with blank/no portrait (Thanks Davey!)
   - Fixed the Marine Commando special effect not properly working and applying damage to the state on naval invasions
   - Fixed the issue where if you changed away from a doctrine you were unable to pick that doctrine type again without manually clearing things
+  - Fixed a spamming issue in the doctrine menu when viewing the doctrine tracks
+  - Fixed an issue with the minimum default garrison law causing a small error in validation on game start
+  - Fixed the Iowa Class event not properly triggering for the United State
+  - Fixed the container not allowing you to add a "Faction Goal" due to a misconfiguration on a vanilla container
+  - Fixed the Influence decisions for attacking the largest influencer not working as expected causing some issues about not giving you the full -5%
+  - Fixed North Korea being double charged political power for decisions
+  - Fixed Chechnya not being puppeted by the AI Russia
+  - Fixed the Swedish getting an infinite money glitch when annexing Norway due to the code improperly referencing Norway instead of Sweden
+  - Fixed the event "Swedish Investment in Our Banking Sector" showing an error regarding influence
 
  Balance:
   - The Post-Crisis Fiscal Decisions event now makes the Labour Union unhappy instead of happy
@@ -69,6 +83,12 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Extended the length of time the state modifier Nuclear Fallout from 365 days to 1095 (shouldn't be so short term)
   - Significantly reduced the bonuses Iraq receives from winning the 2nd Gulf War
   - Set the base chance for female leaders to be 5% assuming your national laws support having female leaders
+  - Improve the balance of the Chinese tree with "The Military" and "Communist Cadres" internal faction so it doesn't soft-lock you out of content
+  - Slightly reduce the total equipment cost for all equipment types
+  - Slightly reduce the total time for equipment to get delivered across the board from the International Market
+  - Reduced the contribution gain for "Supporting with Scientists" for factions
+  - Increased the Faction contribution score for being the leader so it's more substantial
+  - Clamped the total amount of consumption if you manage to get over 100% bonuses to nuclear consumption so you don't get free fuel
 
  Content:
   - Added Latvian political parties with expanded descriptions and flavor text (thanks to Pakman who wrote these some time ago!)
@@ -107,6 +127,8 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - New monarchist party and its leaders for Czechia
   - New alliance, The New Entente, possible to form by king-ruled Czechia
   - Added the sale of the Kee-Lung Class Destroyer to Taiwan for the United States Foreign Policy decisions
+  - Internal Factions minimum opinion for monthly tick is now relative to your ideas (if an idea adds +10 opinion the monthly tick won't go below 60)
+  - Adjusted the number of dockyards, military factories and technologies start for North Korea so it is less awful then normal
 
  Database:
   - Removed the ahistorical "7th MARDIV - 35th Marine Regiment" from the United States
@@ -128,6 +150,12 @@ This page is a list of all MD's changelogs from our documentation. In case you w
 	No longer starts with Attack helicopter, both tech and Mo Bo-155 attack helicopter variants. Swedish equipment now starts with MIO's assigned to the things that can/should have it. Infantry equipment has been changed around to better represent their IRL equivalent.
   - Sweden now uses the Regiment System. They still start with the same amount of units. But these are now more closely based on how Swedish units looked. Following "Battle Order"'s batallion breakdown of Swedish armored forces alongside existing documentation.
   - Shifted all 3 variants of the Harrier to the Medium Hardpoint so they can be used as naval strike craft
+  - Converted the Ratel 90 from Light Tank to IFV
+  - Integrated the new Energy Infrastructure and Industrial Infrastructure buildings
+  - Enabled the "Support Ship" and "Repair Ship" from vanilla for better supporting units for the ships
+  - Added an opinion buff to the civil war that comes out of the influence coup mechanic
+  - Expanded the number of ship names for the United States Navy with a variety of additional ships such as decommissioned ships and otherwise
+  - Increased the size of your total amount of stockpile to 2 billion from 2 million due to backend upgrades from PDX
 
  Game Rules:
   - Removed the "Change Legacy Doctrines" game rules since they no longer exist in the traditional manner
@@ -159,6 +187,12 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - EU Parliament Party Influence buttons are now green if they're available to click
   - Added an Average Economy display to the EU Budget window
   - Added a new tooltip to the Satellite Orbit screen and tooltips to be more clear about hwo to change the satellite orbit view
+  - Removed all placeholders in the doctrine section and created unique GFX for each tab
+  - Increased the size of the buildings in the construction menu and added missing buildings GFX
+  - Added tooltips for buildings to see what their production speed modifier is in the construction menu.
+  - Changed state view to align new building state modifier with the dynamic modifiers.
+  - Added a display in the Energy screen to show you how much power the reactor or fossil fuel power plant will produce
+  - Added the "Stored Energy" to the Counter UI under the "Energy Balance" header
 
 {% endcapture %}
 {{ md | markdownify }}
