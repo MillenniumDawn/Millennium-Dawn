@@ -1421,6 +1421,7 @@ calculate_additional_income_rate = {
 	if = {
 		limit = { original_tag = SWE }
 		if = {
+			limit = { country_exists = NOR }
 			set_variable = { additional_income_SWE_border_trade = NOR.gdp_per_capita }
 			multiply_variable = { additional_income_SWE_border_trade = 0.01 } #2% of yearly GDP
 			multiply_variable = { additional_income_SWE_border_trade = 0.02 } #weekly
@@ -1433,6 +1434,7 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_SWE_Value_added_Tax }
 		}
 		if = {
+			limit = { NOT = { has_idea = social_01 } }
 			set_variable = { additional_income_SWE_Social_insurance = welfare_gain } #gdp_per_capita
 			multiply_variable = { additional_income_SWE_Social_insurance = 0.08 } #30% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_Social_insurance }
@@ -1440,11 +1442,9 @@ calculate_additional_income_rate = {
 		if = {
 			limit = {
 				has_country_flag = SWE_idea_tourist_industry_1
-				NOT = {
-					has_war = yes
-				}
+				NOT = { has_war = yes }
 			}
-			set_variable = { additional_income_SWE_tourism_1 = NOR.gdp_per_capita }
+			set_variable = { additional_income_SWE_tourism_1 = SWE.gdp_per_capita }
 			multiply_variable = { additional_income_SWE_tourism_1 = 0.01 } #1% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_tourism_1 }
 		}
@@ -1455,7 +1455,7 @@ calculate_additional_income_rate = {
 					has_war = yes
 				}
 			}
-			set_variable = { additional_income_SWE_tourism_2 = NOR.gdp_per_capita }
+			set_variable = { additional_income_SWE_tourism_2 = SWE.gdp_per_capita }
 			multiply_variable = { additional_income_SWE_tourism_2 = 0.02 } #2% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_tourism_2 }
 		}
@@ -1466,7 +1466,7 @@ calculate_additional_income_rate = {
 					has_war = yes
 				}
 			}
-			set_variable = { additional_income_SWE_tourism_3 = NOR.gdp_per_capita }
+			set_variable = { additional_income_SWE_tourism_3 = SWE.gdp_per_capita }
 			multiply_variable = { additional_income_SWE_tourism_3 = 0.03 } #3% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_tourism_3 }
 		}
@@ -1477,7 +1477,7 @@ calculate_additional_income_rate = {
 					has_war = yes
 				}
 			}
-			set_variable = { additional_income_SWE_tourism_4 = NOR.gdp_per_capita }
+			set_variable = { additional_income_SWE_tourism_4 = SWE.gdp_per_capita }
 			multiply_variable = { additional_income_SWE_tourism_4 = 0.04 } #3% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_tourism_4 }
 		}
@@ -2210,10 +2210,10 @@ update_military_rate = {
 	multiply_variable = { equipment_operative_cost = 0.001 } #from millions weekly to bilions weekly
 	if = { limit = { has_war = yes }
 		if = { limit = { is_ai = no }
-			multiply_variable = { equipment_operative_cost = 2.5 }
+			multiply_variable = { equipment_operative_cost = 2.25 }
 		}
 		else = {
-			multiply_variable = { equipment_operative_cost = 1.75 }
+			multiply_variable = { equipment_operative_cost = 1.45 }
 		}
 	}
 
@@ -2287,6 +2287,7 @@ update_military_rate = {
 	multiply_temp_variable = { frigate_count = 2 }
 	multiply_temp_variable = { corvette_count = 1 }
 	multiply_temp_variable = { patrol_boat_count = 0.25 }
+
 	set_temp_variable = { navy_count = 0 }
 	set_temp_variable = { navy_count = carrier_count }
 	add_to_temp_variable = { navy_count = capital_count }
@@ -2490,7 +2491,7 @@ update_military_rate = {
 
 	#Divide by control factors (same for all!) - Use this if you want to scale cost of military personnel in relation to defence industry
 	multiply_temp_variable = { land_count = 0.001 }
-	multiply_temp_variable = { land_count = 0.8 }
+	multiply_temp_variable = { land_count = 0.76 }
 	multiply_temp_variable = { navy_count = 0.001 }
 	multiply_temp_variable = { airforce_count = 0.001 }
 	multiply_temp_variable = { airforce_count = 0.667 }
@@ -4592,7 +4593,7 @@ calculate_gdp_modifiers = {
 }
 
 calculate_ai_taxes_desire = {
-	# Raise Taxes
+# Raise Taxes
 	if = { limit = { check_variable = { treasury_rate < 0 } }
 		set_temp_variable = { mather = treasury_rate } # -10.00
 		multiply_temp_variable = { mather = -2 } # 20.00
@@ -4650,13 +4651,27 @@ calculate_ai_taxes_desire = {
 		if = { limit = { has_stability < 0.05 }
 			multiply_temp_variable = { mather = 2 }
 		}
-		# Do not decrease lower than 20% personal taxes
+
+		if = { limit = { check_variable = { interest_rate < 3 } }
+			multiply_temp_variable = { mather = 1.15 }
+		}
+		if = { limit = { check_variable = { interest_rate < 5 } }
+			multiply_temp_variable = { mather = 1.15 }
+		}
+
+		if = { limit = { check_variable = { debt_ratio < 0.15 } }
+			multiply_temp_variable = { mather = 1.5 }
+		}
+		if = { limit = { check_variable = { debt_ratio < 0.25 } }
+			multiply_temp_variable = { mather = 1.5 }
+		}
+		# Do not decrease lower than 15% personal taxes
 		# Do not decrease personal if we can decrease corporate
 		if = {
 			limit = {
 				OR = {
-					check_variable = { population_tax_rate < 20 }
-					check_variable = { corporate_tax_rate > 20 }
+					check_variable = { population_tax_rate < 15 }
+					check_variable = { corporate_tax_rate > 9 }
 				}
 			}
 			multiply_temp_variable = { mather = 0 }
@@ -4696,12 +4711,8 @@ calculate_ai_taxes_desire = {
 			multiply_temp_variable = { mather = 2.50 }
 		}
 
-		# do not increase corporate taxes if we can increase personal taxes
-		if = {
-			limit = {
-				check_variable = { population_tax_rate < 30 }
-			}
-
+		# do not increase corporate taxes if we can still increase personal taxes
+		if = { limit = { check_variable = { population_tax_rate < 40 } }
 			multiply_temp_variable = { mather = 0 }
 		}
 
@@ -4723,11 +4734,22 @@ calculate_ai_taxes_desire = {
 			multiply_temp_variable = { mather = 0.5 }
 		}
 
+		if = { limit = { check_variable = { interest_rate < 3 } }
+			multiply_temp_variable = { mather = 1.15 }
+		}
+		if = { limit = { check_variable = { interest_rate < 5 } }
+			multiply_temp_variable = { mather = 1.15 }
+		}
+
+		if = { limit = { check_variable = { debt_ratio < 0.15 } }
+			multiply_temp_variable = { mather = 1.5 }
+		}
+		if = { limit = { check_variable = { debt_ratio < 0.25 } }
+			multiply_temp_variable = { mather = 1.5 }
+		}
+
 		# do not decrease lower than 15%
-		if = {
-			limit = {
-				check_variable = { corporate_tax_rate < 16 }
-			}
+		if = { limit = { check_variable = { corporate_tax_rate < 10 } }
 			multiply_temp_variable = { mather = 0 }
 		}
 
