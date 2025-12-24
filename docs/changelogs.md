@@ -10,7 +10,7 @@ This page is a list of all MD's changelogs from our documentation. In case you w
 
 ## v1.12.0 'Every Tank an Upgrade'
 
-<details><summary>v1.12.3</summary>
+<details><summary>v1.12.3a</summary>
 {% capture md %}
 
  Bugfix:
