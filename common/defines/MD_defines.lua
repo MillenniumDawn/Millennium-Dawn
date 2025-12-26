@@ -714,6 +714,7 @@
 
 	NDefines.NNavy.UNDERWAY_REPLENISHMENT_RANGE_FACTOR = 0.42 -- bonus factor applied to task force's range when underway replenishment is activated (e.g. 0.2 means +20%) -- 0.42 base game
 	NDefines.NNavy.UNDERWAY_REPLENISHMENT_CONVOY_COST_PER_FUEL = 0.42 -- Cost in convoys for underway replenishment multiplied by max daily fuel consumption (rounded up) -- 0.42 base game
+	NDefines.NNavy.MAX_ADMIRAL_HEADQUARTER_ASSIGNMENTS = 8 -- Extended from 3 Headquarter options
 
 	-- NTrade Defines
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
