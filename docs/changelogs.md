@@ -4,11 +4,11 @@ title: "Changelogs"
 description: "Changelogs for Millennium Dawn: A Modern Day Mod"
 ---
 
-### Purpose of this Page
+## Purpose of this Page
 
 This page is a list of all MD's changelogs from our documentation. In case you were looking to pull up stuff from forever ago.
 
-## v1.12.0 'Every Tank an Upgrade'
+### v1.12.0 'Every Tank an Upgrade'
 
 <details><summary>v1.12.3a</summary>
 {% capture md %}
@@ -1075,7 +1075,7 @@ v1.12.0
 
 </details>
 
-## v1.11.0 'Missiles, Holidays, and Snatch-and-Grabs'
+### v1.11.0 'Missiles, Holidays, and Snatch-and-Grabs'
 
 <details><summary>v1.11.2a - 2/20/25 Hotfix</summary>
 
@@ -1671,7 +1671,7 @@ v1.11.0
 
 </details>
 
-## v1.10.0 'The Lion of Brussels and Babylon'
+### v1.10.0 'The Lion of Brussels and Babylon'
 
 <details><summary>v1.10.5</summary>
 
@@ -2657,7 +2657,7 @@ Achievements:
 
 </details>
 
-## v1.9 'Top Gun' -- Nov 16th
+### v1.9 'Top Gun' -- Nov 16th
 
 <details><summary>v1.9.6</summary>
 
@@ -3533,7 +3533,7 @@ income is less than 30% of Pop and Corp taxes combined (and you're not at war). 
 
 </details>
 
-## v1.8 'The Tiger, The Rose, and the APCs'
+### v1.8 'The Tiger, The Rose, and the APCs'
 
 <details><summary>v1.8.8 - 1.13 Compatch</summary>
 
@@ -4382,7 +4382,7 @@ GUI
 
 </details>
 
-## v1.7 "Make Millennium Dawn Great Again"
+### v1.7 "Make Millennium Dawn Great Again"
 
 <details><summary>v1.7.5 - Hotfix</summary>
 
@@ -4948,7 +4948,7 @@ Quality of Life (QoL):
 
 </details>
 
-## v1.6 - 1.11 Compatibility and Economic Rework
+### v1.6 - 1.11 Compatibility and Economic Rework
 
 <details><summary>v1.6.3 Minor Patch</summary>
 
@@ -5590,7 +5590,7 @@ Techtree:
 
 </details>
 
-## v1.5 Changes
+### v1.5 Changes
 
 <details><summary>v1.5.1 Hotfix</summary>
 
@@ -5949,7 +5949,7 @@ Units
 
 </details>
 
-## v1.4 Changes
+### v1.4 Changes
 
 <details><summary>v1.4.0</summary>
 
@@ -6017,7 +6017,7 @@ Politics
 
 </details>
 
-## v1.3 Changes
+### v1.3 Changes
 
 <details><summary>v1.3.2 Hotfix</summary>
 
@@ -6218,7 +6218,7 @@ Music
 
 </details>
 
-## v1.2 Changes
+### v1.2 Changes
 
 <details><summary>v1.2.0 1.9 Patch and Content</summary>
 
@@ -6335,7 +6335,7 @@ Map
 
 </details>
 
-## v1.1 Changes
+### v1.1 Changes
 
 <details><summary>v1.1.1 Hotfix</summary>
 
@@ -6539,7 +6539,7 @@ Localisation
 
 </details>
 
-## v1.0 Changes
+### v1.0 Changes
 
 <details><summary>v1.0.1 Hotfix</summary>
 
