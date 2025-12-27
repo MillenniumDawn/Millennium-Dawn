@@ -36,7 +36,7 @@ The following countries are playable with unique focus trees:
 - Fiji
 - [France](/Millennium-Dawn/national-content/France)
 - Gagauzia
-- Georgia
+- [Georgia](/Millennium-Dawn/national-content/Georgia)
 - [Germany](/Millennium-Dawn/national-content/Germany)
 - [Greece](/Millennium-Dawn/national-content/Greece)
 - Gulf tree for BHR, KUW, OMA, QAT, SAU, UAE including shared GCC tree also available to EGY, IRQ, JOR, MOR, YEM
