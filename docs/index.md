@@ -4,7 +4,7 @@ title: "Millennium Dawn: A Modern Day Mod"
 description: "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV."
 ---
 
-![New2](uploads/main-menu.png) ![Introduction](uploads/Introduction.png)
+![New2](uploads/main-menu-2.png) ![Introduction](uploads/Introduction.png)
 
 With the dawn of a new millennium, a new chapter in human history will be written. Globalization continues to change the lives of countless billions while rising extremism is showing signs of igniting the fires of conflict. New powers begin to emerge, and not all believe their place in the global order, or that of some competitors is warranted. A struggle will soon begin, and it will likely change everything. Will you lead your Nation to prosperity and dominance in the decades ahead, or will your Nation fall victim to the defining moments of history?
 
@@ -16,9 +16,9 @@ Further, it offers a new and unique economic system, a new political system, nat
 
 ## Welcome to the Millennium Dawn Wiki!
 
-**Current Expected Version:** v1.12.2a
+**Current Expected Version:** v1.12.3a
 
-**Current Expected Checksum:** 4588
+**Current Expected Checksum:** 8830
 
 **The following Wiki is currently a work in progress. However, we will do our best to get meaningful content updated and placed on this page.**
 

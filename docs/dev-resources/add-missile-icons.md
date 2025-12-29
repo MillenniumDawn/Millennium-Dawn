@@ -20,7 +20,8 @@ spriteType = {
 }
 ```
 
-3. Create the sprite entries in ``interface/mdult_missiles.gfx``
+{:start="3"}
+3. Create the sprite entries in ``interface/mdult_missiles.gfx`` 
    - The following convention is the standard and the file is structured as countries -> missile types
 
 ```
