@@ -163,6 +163,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 | Lynxivium | @lynxivium | - | - | - |
 | RTmanfre | @RTmanfre | - | - | - |
 | JhonyGEM | @JhonyGEM | @JhonyGEM | - | - |
+| denzzerr | @denzzerr | - | - | - |
 
 # Fellow Modders/Teams
 
