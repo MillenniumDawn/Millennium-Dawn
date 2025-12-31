@@ -717,6 +717,7 @@ change_influence_percentage = yes
 </details>
 
 <details><summary>MD Political Effects</summary>
+{% capture md %}
 
 **Code Snippet to Add Party Popularity to Subideologies**
 
@@ -813,10 +814,12 @@ set_partyall_allowed = yes # Allows all the parties
 set_country_flag = free_ban_parties # Set this if you don't want a PP cost
 set_partyall_banned = yes # Bans all the parties
 ```
-
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>Counter Terror Effects</summary>
+{% capture md %}
 
 **Radicalization / Threat Level**
 
@@ -833,10 +836,12 @@ set_temp_variable = { threat_change = 2 }
 modify_terror_threat_effect = yes
 
 ```
-
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>MD Cartel Related Effects</summary>
+{% capture md %}
 
 modify_cartel_variables_effect
 Purpose: Handles the macro for needing to change any cartel strength or cartel political influence
@@ -849,10 +854,12 @@ set_temp_variable = { cart_influence_change = 2 }
 modify_cartel_variables_effect = yes
 ```
 
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>MD European Union Effects</summary>
-
+{% capture md %}
 **Euroscepticism Effects**
 
 To add/remove Euroscepticism all you need to do is:
@@ -883,11 +890,12 @@ And finally, for this effect to occur in *current* and *potential* EU member sta
 set_temp_variable = { modify_eurosceptic = -0.05 }
 EU_potential_eurosceptic_change = yes
 ```
-
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>Energy Effects</summary>
-
+{% capture md %}
 Constructs enrichment facilities for the nation. It costs 25.00 per. The scripted effect handles the cost. Just input a number.
 
 ```
@@ -901,11 +909,14 @@ modifiers to reduce or increase it.
 set_temp_variable = { temp_change = 2 }
 build_battery_park_effect = yes
 ```
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 ## Guides/How-To
 
 <details><summary>MD How-To-Add Subideology Parties</summary>
+{% capture md %}
 
 Adding political parties is a great way to add new flavor to nations without a lot of work!
 
@@ -1012,11 +1023,12 @@ if = { limit = { has_country_flag = set_Nat_Autocracy }
 		}
 	}
 ```
-
-
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>Historical Events/Exact Date Trigger (ETD) Events</summary>
+{% capture md %}
 
 File Path: ``common/scripted_effects/00_yearly_efffects``
 
@@ -1049,9 +1061,12 @@ trigger_year_2067_events = {
 }
 ```
 
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>Variable Guide/Explanation</summary>
+{% capture md %}
 
 There are a ton interesting and fun things you can accomplish using simple variables and other forms of variables that arent entirely possible using only in-game values. Variables open up a whole new world in terms of gameplay and design that is normally undervalued in a game that its primary focus is the military aspect.
 
@@ -1080,9 +1095,47 @@ The variables here are set in the United States history file and used for the Am
 
 This is a basic rundown of variables and the simplest way to begin and use them. There are many ways of using this flexible effects in both systems and in general effects.
 
+{% endcapture %}
+{{ md | markdownify }}
+</details>
+
+<details><summary>Hydroelectric/Geothermal/Renewable Configuration Guide</summary>
+{% capture md %}
+
+If you are looking to add additional values to the Hydroelectric/Geothermal or Renewable Hotspot capacity for a given state please follow these steps.
+
+The production var will be defined as the average power output in GW of all Hydropower Infrastructure in that state (you can convert it from annual TWH if you have that data as well)
+
+The storage var is the storage capacity in gwh which can be gained by diving the annual TWH by 8.760 to obtain the average power in in GW.
+
+This also applies to the geothermal which you can find example in the Italian states.
+
+Example:
+```python
+set_variable = { hydroelectric_energy_production_var = 5.636 }
+set_variable = { hydroelectric_energy_storage_var = 300 }
+add_dynamic_modifier = { modifier = hydroelectric_infrastructure_in_state }
+
+```
+
+Renewable capacity is slightly different since it use the [Global Wind Atlas](https://globalwindatlas.info/en) and the "Capacity Factor - IEC Class I" to determine the value of the states capacity factor.
+
+Once you are on the website you can look at your desired region and then hover over the area and it will provide you a value in the bottom right of the screen.
+co
+The equation for the capacity factor is (Atlas value) - 0.25 = Capacity Factor variable for that state. Using the Western Sahara as an example the Capacity Factor on the Atlas extends to 0.80 which means in MD the state would have a capacity factor of 0.50 with the dynamic modifier.
+
+Example:
+```python
+set_variable = { state_renewable_capacity_factor_modifier_var = 0.55 }
+add_dynamic_modifier = { modifier = renewable_capacity_factor_dyn_mod }
+```
+
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 <details><summary>Unique Terrain Photos Guide</summary>
+{% capture md %}
 
 **Step One: Create a Suitable Image Size & Put it in a Folder**
 
@@ -1140,6 +1193,9 @@ You'll find this entry for Brussels:
 }
 ```
 50 is the state ID, the level at which you place airbases and stuff like that, 516 is the accurate province within that state.
+
+{% endcapture %}
+{{ md | markdownify }}
 </details>
 
 Any additional questions please DM @AngriestBird on Discord.

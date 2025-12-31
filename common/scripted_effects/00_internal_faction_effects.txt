@@ -182,6 +182,101 @@ setup_init_factions = {
 		}
 		set_variable = { the_donju_opinion = 50 }
 	}
+
+	# Set minimum opinion values
+	if = {
+		limit = { has_idea = small_medium_business_owners }
+		set_variable = { small_medium_business_owners_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = international_bankers }
+		set_variable = { international_bankers_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = oligarchs }
+		set_variable = { oligarchs_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = industrial_conglomerates }
+		set_variable = { industrial_conglomerates_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = fossil_fuel_industry }
+		set_variable = { fossil_fuel_industry_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = intelligence_community }
+		set_variable = { intelligence_community_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = the_military }
+		set_variable = { the_military_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = defense_industry }
+		set_variable = { defense_industry_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = maritime_industry }
+		set_variable = { maritime_industry_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = wahabi_ulema }
+		set_variable = { wahabi_ulema_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = the_priesthood }
+		set_variable = { the_priesthood_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = the_ulema }
+		set_variable = { the_ulema_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = the_clergy }
+		set_variable = { the_clergy_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = communist_cadres }
+		set_variable = { communist_cadres_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = farmers }
+		set_variable = { farmers_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = landowners }
+		set_variable = { landowners_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = labour_unions }
+		set_variable = { labour_unions_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = foreign_jihadis }
+		set_variable = { foreign_jihadis_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = iranian_quds_force }
+		set_variable = { iranian_quds_force_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = saudi_royal_family }
+		set_variable = { saudi_royal_family_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = chaebols }
+		set_variable = { chaebols_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = wall_street }
+		set_variable = { wall_street_opinion_min = 50 }
+	}
+	if = {
+		limit = { has_idea = the_donju }
+		set_variable = { the_donju_opinion_min = 50 }
+	}
+
 	initialize_internal_faction_dynamic_modifiers = yes
 }
 
@@ -1621,6 +1716,23 @@ apply_chaebols_effect_DYNMOD = {
 	force_update_dynamic_modifier = yes
 }
 
+autocrats_opinion_change = {
+	#Autocrats get faction effects double
+	if = {
+		limit = {
+			OR = {
+				is_in_array = { ruling_party = 0 }	#Western Autocrats
+				is_in_array = { ruling_party = 7 }	#Emerging autocrats
+				is_in_array = { ruling_party = 13 }	#Neutral autocrats
+				is_in_array = { ruling_party = 21 }	#fascists
+				is_in_array = { ruling_party = 22 }	#military junta
+			}
+			check_variable = { temp_opinion > 0 }
+		}
+		multiply_temp_variable = { temp_opinion = 2 }
+	}
+}
+
 # Update Opinion
 # Methods for changing internal faction opinions
 # HOW TO USE:
@@ -1634,31 +1746,25 @@ apply_chaebols_effect_DYNMOD = {
 change_small_medium_business_owners_opinion = {
 	if = { limit = { has_idea = small_medium_business_owners }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { small_medium_business_owners_opinion = temp_opinion }
 
-		set_temp_variable = { small_medium_business_owners_min = 0 }
-		set_temp_variable = { small_medium_business_owners_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { defense_industry_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { small_medium_business_owners_min = min_opinion }
+		set_temp_variable = { small_medium_business_owners_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { small_medium_business_owners_opinion_min = 50 }
+		add_to_variable = { small_medium_business_owners_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = small_medium_business_owners_opinion
@@ -1669,8 +1775,7 @@ change_small_medium_business_owners_opinion = {
 		custom_effect_tooltip = display_small_medium_business_owners_opinion
 		# Updates the Dynamic Modifiers
 		apply_small_medium_business_owner_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -1679,31 +1784,25 @@ change_small_medium_business_owners_opinion = {
 change_industrial_conglomerates_opinion = {
 	if = { limit = { has_idea = industrial_conglomerates }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { industrial_conglomerates_opinion = temp_opinion }
 
-		set_temp_variable = { industrial_conglomerates_min = 0 }
-		set_temp_variable = { industrial_conglomerates_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { defense_industry_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { industrial_conglomerates_min = min_opinion }
+		set_temp_variable = { industrial_conglomerates_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { industrial_conglomerates_opinion_min = 50 }
+		add_to_variable = { industrial_conglomerates_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = industrial_conglomerates_opinion
@@ -1714,8 +1813,7 @@ change_industrial_conglomerates_opinion = {
 		custom_effect_tooltip = display_industrial_conglomerates_opinion
 		# Updates the Dynamic Modifiers
 		apply_industrial_conglomerates_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -1724,36 +1822,31 @@ change_industrial_conglomerates_opinion = {
 change_fossil_fuel_industry_opinion = {
 	if = { limit = { has_idea = fossil_fuel_industry }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { fossil_fuel_industry_opinion = temp_opinion }
 
-		set_temp_variable = { fossil_fuel_industry_min = 0 }
-		set_temp_variable = { fossil_fuel_industry_max = 100 }
+
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { defense_industry_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
 
 		if = {
 			limit = { has_idea = rentier_state }
-			add_to_temp_variable = { fossil_fuel_industry_min = 15 }
+			add_to_temp_variable = { min_opinion = 15 }
 		}
+
+		set_temp_variable = { fossil_fuel_industry_min = min_opinion }
+		set_temp_variable = { fossil_fuel_industry_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { fossil_fuel_industry_opinion_min = 50 }
+		add_to_variable = { fossil_fuel_industry_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = fossil_fuel_industry_opinion
@@ -1763,8 +1856,7 @@ change_fossil_fuel_industry_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_fossil_fuel_industry_opinion
 		apply_fossil_fuel_industry_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -1773,31 +1865,25 @@ change_fossil_fuel_industry_opinion = {
 change_defense_industry_opinion = {
 	if = { limit = { has_idea = defense_industry }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { defense_industry_opinion = temp_opinion }
 
-		set_temp_variable = { defense_industry_min = 0 }
-		set_temp_variable = { defense_industry_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { defense_industry_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { defense_industry_min = min_opinion }
+		set_temp_variable = { defense_industry_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { defense_industry_opinion_min = 50 }
+		add_to_variable = { defense_industry_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = defense_industry_opinion
@@ -1807,8 +1893,7 @@ change_defense_industry_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_defense_industry_opinion
 		apply_defense_industry_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -1817,31 +1902,25 @@ change_defense_industry_opinion = {
 change_maritime_industry_opinion = {
 	if = { limit = { has_idea = maritime_industry }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { maritime_industry_opinion = temp_opinion }
 
-		set_temp_variable = { maritime_industry_min = 0 }
-		set_temp_variable = { maritime_industry_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { maritime_industry_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { maritime_industry_min = min_opinion }
+		set_temp_variable = { maritime_industry_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { maritime_industry_opinion_min = 50 }
+		add_to_variable = { maritime_industry_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = maritime_industry_opinion
@@ -1851,8 +1930,7 @@ change_maritime_industry_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_maritime_industry_opinion
 		apply_maritime_industry_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -1861,31 +1939,25 @@ change_maritime_industry_opinion = {
 change_international_bankers_opinion = {
 	if = { limit = { has_idea = international_bankers }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { international_bankers_opinion = temp_opinion }
 
-		set_temp_variable = { international_bankers_min = 0 }
-		set_temp_variable = { international_bankers_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { international_bankers_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { international_bankers_min = min_opinion }
+		set_temp_variable = { international_bankers_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { international_bankers_opinion_min = 50 }
+		add_to_variable = { international_bankers_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = international_bankers_opinion
@@ -1895,8 +1967,7 @@ change_international_bankers_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_international_bankers_opinion
 		apply_international_bankers_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -1905,31 +1976,25 @@ change_international_bankers_opinion = {
 change_oligarchs_opinion = {
 	if = { limit = { has_idea = oligarchs }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { oligarchs_opinion = temp_opinion }
 
-		set_temp_variable = { oligarchs_min = 0 }
-		set_temp_variable = { oligarchs_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { oligarchs_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { oligarchs_min = min_opinion }
+		set_temp_variable = { oligarchs_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { oligarchs_opinion_min = 50 }
+		add_to_variable = { oligarchs_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = oligarchs_opinion
@@ -1939,8 +2004,7 @@ change_oligarchs_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_oligarchs_opinion
 		apply_oligarchs_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -1967,23 +2031,30 @@ change_farmers_opinion = {
 
 		add_to_variable = { farmers_opinion = temp_opinion }
 
-		set_temp_variable = { farmers_min = 0 }
-		set_temp_variable = { farmers_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { farmers_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
 
 		if = { limit = { tag = BRA }
 			if = { limit = { has_idea = BRA_idea_pro_farmers }
-				add_to_temp_variable = { farmers_min = 5 }
+				add_to_temp_variable = { min_opinion = 5 }
 			}
 			if = { limit = { has_idea = BRA_idea_pro_farmers_2 }
-				add_to_temp_variable = { farmers_min = 10 }
+				add_to_temp_variable = { min_opinion = 10 }
 			}
 		}
+
+		set_temp_variable = { farmers_min = min_opinion }
+		set_temp_variable = { farmers_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { farmers_opinion_min = 50 }
+		add_to_variable = { farmers_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = farmers_opinion
@@ -1993,8 +2064,7 @@ change_farmers_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_farmers_opinion
 		apply_farmers_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2003,54 +2073,46 @@ change_farmers_opinion = {
 change_landowners_opinion = {
 	if = { limit = { has_idea = landowners }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { landowners_opinion = temp_opinion }
 
-		set_temp_variable = { landsowners_min = 0 }
-		set_temp_variable = { landsowners_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { farmers_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
 		if = { limit = { tag = SPR }
 			if = { limit = { has_idea = SPR_the_hands_of_the_few_idea }
-				add_to_temp_variable = { landsowners_min = 15 }
+				add_to_temp_variable = { min_opinion = 15 }
 			}
 		}
 		if = {
 			limit = { tag = SIN }
 			if = { limit = { has_idea = SIN_support_for_the_business }
-				add_to_temp_variable = { landsowners_min = 10 }
+				add_to_temp_variable = { min_opinion = 10 }
 			}
 		}
 
+		set_temp_variable = { landowners_min = min_opinion }
+		set_temp_variable = { landowners_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { landowners_opinion_min = 50 }
+		add_to_variable = { landowners_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = landowners_opinion
-			min = landsowners_min
-			max = landsowners_max
+			min = landowners_min
+			max = landowners_max
 		}
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_landowners_opinion
 		apply_landowners_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2059,58 +2121,52 @@ change_landowners_opinion = {
 change_labour_unions_opinion = {
 	if = { limit = { has_idea = labour_unions }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { labour_unions_opinion = temp_opinion }
 
-		set_temp_variable = { labour_unions_min = 0 }
-		set_temp_variable = { labour_unions_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { farmers_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
 		if = { limit = { tag = SPR }
 			if = { limit = { has_idea = SPR_unionization_of_faith_idea }
-				add_to_temp_variable = { labour_unions_min = 15 }
+				add_to_temp_variable = { min_opinion = 15 }
 			}
 		}
 		if = {
 			limit = { tag = SIN }
 			if = { limit = { has_idea = SIN_support_for_the_workers }
-				add_to_temp_variable = { labour_unions_min = 10 }
+				add_to_temp_variable = { min_opinion = 10 }
 			}
 		}
 		if = {
 			limit = { tag = DEN }
 			if = { limit = { has_idea = DEN_in_need_of_banking_reforms_idea }
-				add_to_temp_variable = { labour_unions_max = -15 }
+				add_to_temp_variable = { max_opinion = -15 }
 			}
 			if = { limit = { has_idea = DEN_intensify_the_flexicurity_idea }
-				add_to_temp_variable = { labour_unions_min = 10 }
+				add_to_temp_variable = { min_opinion = 10 }
 			}
 		}
 		if = {
 			limit = { tag = BRA }
 			if = {
 				limit = { has_idea = BRA_idea_pro_unions }
-				add_to_temp_variable = { labour_unions_min = 15 }
+				add_to_temp_variable = { min_opinion = 15 }
 			}
 		}
+
+		set_temp_variable = { labour_unions_min = min_opinion }
+		set_temp_variable = { labour_unions_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { labour_unions_opinion_min = 50 }
+		add_to_variable = { labour_unions_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = labour_unions_opinion
@@ -2120,8 +2176,7 @@ change_labour_unions_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_labour_unions_opinion
 		apply_labour_unions_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2130,31 +2185,25 @@ change_labour_unions_opinion = {
 change_communist_cadres_opinion = {
 	if = { limit = { has_idea = communist_cadres }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { communist_cadres_opinion = temp_opinion }
 
-		set_temp_variable = { communist_cadres_min = 0 }
-		set_temp_variable = { communist_cadres_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { farmers_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { communist_cadres_min = min_opinion }
+		set_temp_variable = { communist_cadres_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { communist_cadres_opinion_min = 50 }
+		add_to_variable = { communist_cadres_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = communist_cadres_opinion
@@ -2164,8 +2213,7 @@ change_communist_cadres_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_communist_cadres_opinion
 		apply_communist_cadres_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2174,31 +2222,25 @@ change_communist_cadres_opinion = {
 change_the_clergy_opinion = {
 	if = { limit = { has_idea = the_clergy }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { the_clergy_opinion = temp_opinion }
 
-		set_temp_variable = { the_clergy_min = 0 }
-		set_temp_variable = { the_clergy_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { farmers_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { the_clergy_min = min_opinion }
+		set_temp_variable = { the_clergy_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { the_clergy_opinion_min = 50 }
+		add_to_variable = { the_clergy_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = the_clergy_opinion
@@ -2208,8 +2250,7 @@ change_the_clergy_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_the_clergy_opinion
 		apply_the_clergy_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2218,31 +2259,25 @@ change_the_clergy_opinion = {
 change_the_ulema_opinion = {
 	if = { limit = { has_idea = the_ulema }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { the_ulema_opinion = temp_opinion }
 
-		set_temp_variable = { the_ulema_min = 0 }
-		set_temp_variable = { the_ulema_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { farmers_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { the_ulema_min = min_opinion }
+		set_temp_variable = { the_ulema_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { the_ulema_opinion_min = 50 }
+		add_to_variable = { the_ulema_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = the_ulema_opinion
@@ -2252,8 +2287,7 @@ change_the_ulema_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_the_ulema_opinion
 		apply_the_ulema_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2262,31 +2296,25 @@ change_the_ulema_opinion = {
 change_the_priesthood_opinion = {
 	if = { limit = { has_idea = the_priesthood }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { the_priesthood_opinion = temp_opinion }
 
-		set_temp_variable = { the_priesthood_min = 0 }
-		set_temp_variable = { the_priesthood_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { farmers_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { the_priesthood_min = min_opinion }
+		set_temp_variable = { the_priesthood_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { the_priesthood_opinion_min = 50 }
+		add_to_variable = { the_priesthood_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = the_priesthood_opinion
@@ -2296,8 +2324,7 @@ change_the_priesthood_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_the_priesthood_opinion
 		apply_the_priesthood_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2306,31 +2333,25 @@ change_the_priesthood_opinion = {
 change_the_wahabi_ulema_opinion = {
 	if = { limit = { has_idea = wahabi_ulema }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { wahabi_ulema_opinion = temp_opinion }
 
-		set_temp_variable = { wahabi_ulema_min = 0 }
-		set_temp_variable = { wahabi_ulema_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { farmers_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { wahabi_ulema_min = min_opinion }
+		set_temp_variable = { wahabi_ulema_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { wahabi_ulema_opinion_min = 50 }
+		add_to_variable = { wahabi_ulema_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = wahabi_ulema_opinion
@@ -2340,8 +2361,7 @@ change_the_wahabi_ulema_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_wahabi_ulema_opinion
 		apply_wahabi_ulema_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2350,25 +2370,12 @@ change_the_wahabi_ulema_opinion = {
 change_the_military_opinion = {
 	if = { limit = { has_idea = the_military }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { the_military_opinion = temp_opinion }
 
-		set_temp_variable = { the_military_min = 0 }
-		set_temp_variable = { the_military_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
@@ -2377,36 +2384,43 @@ change_the_military_opinion = {
 		# }
 		if = {
 			limit = { has_idea = defence_03 }
-			add_to_temp_variable = { the_military_min = 5 }
+			add_to_temp_variable = { min_opinion = 5 }
 		}
 		else_if = {
 			limit = { has_idea = defence_04 }
-			add_to_temp_variable = { the_military_min = 10 }
+			add_to_temp_variable = { min_opinion = 10 }
 		}
 		else_if = {
 			limit = { has_idea = defence_05 }
-			add_to_temp_variable = { the_military_min = 15 }
+			add_to_temp_variable = { min_opinion = 15 }
 		}
 		else_if = {
 			limit = { has_idea = defence_06 }
-			add_to_temp_variable = { the_military_min = 20 }
+			add_to_temp_variable = { min_opinion = 20 }
 		}
 		else_if = {
 			limit = { has_idea = defence_07 }
-			add_to_temp_variable = { the_military_min = 25 }
+			add_to_temp_variable = { min_opinion = 25 }
 		}
 		else_if = {
 			limit = { has_idea = defence_08 }
-			add_to_temp_variable = { the_military_min = 30 }
+			add_to_temp_variable = { min_opinion = 30 }
 		}
 		else_if = {
 			limit = { has_idea = defence_09 }
-			add_to_temp_variable = { the_military_min = 35 }
+			add_to_temp_variable = { min_opinion = 35 }
 		}
 
 		if = { limit = { has_idea = internal_factions_allowed_foreign_nationals_military }
-			add_to_temp_variable = { the_military_max = -5 }
+			add_to_temp_variable = { max_opinion = -5 }
 		}
+
+		set_temp_variable = { the_military_min = min_opinion }
+		set_temp_variable = { the_military_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { the_military_opinion_min = 50 }
+		add_to_variable = { the_military_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = the_military_opinion
@@ -2417,8 +2431,7 @@ change_the_military_opinion = {
 		if = { limit = { original_tag = PER NOT = { has_country_flag = PER_turn_off_IR_stuff } } custom_effect_tooltip = display_the_irgc_opinion }
 		else = { custom_effect_tooltip = display_the_military_opinion }
 		apply_the_military_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2427,31 +2440,25 @@ change_the_military_opinion = {
 change_intelligence_community_opinion = {
 	if = { limit = { has_idea = intelligence_community }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { intelligence_community_opinion = temp_opinion }
 
-		set_temp_variable = { intelligence_community_min = 0 }
-		set_temp_variable = { intelligence_community_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { the_military_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { intelligence_community_min = min_opinion }
+		set_temp_variable = { intelligence_community_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { intelligence_community_opinion_min = 50 }
+		add_to_variable = { intelligence_community_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = intelligence_community_opinion
@@ -2461,8 +2468,7 @@ change_intelligence_community_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_intelligence_community_opinion
 		apply_intelligence_community_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2471,31 +2477,25 @@ change_intelligence_community_opinion = {
 change_the_donju_opinion = {
 	if = { limit = { has_idea = the_donju }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { the_donju_opinion = temp_opinion }
 
-		set_temp_variable = { the_donju_min = 0 }
-		set_temp_variable = { the_donju_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { the_military_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { the_donju_min = min_opinion }
+		set_temp_variable = { the_donju_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { the_donju_opinion_min = 50 }
+		add_to_variable = { the_donju_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = the_donju_opinion
@@ -2505,8 +2505,7 @@ change_the_donju_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_the_donju_opinion
 		apply_the_donju_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2515,31 +2514,25 @@ change_the_donju_opinion = {
 change_saudi_royal_family_opinion = {
 	if = { limit = { has_idea = saudi_royal_family }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { saudi_royal_family_opinion = temp_opinion }
 
-		set_temp_variable = { saudi_royal_family_min = 0 }
-		set_temp_variable = { saudi_royal_family_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { the_military_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { saudi_royal_family_min = min_opinion }
+		set_temp_variable = { saudi_royal_family_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { saudi_royal_family_opinion_min = 50 }
+		add_to_variable = { saudi_royal_family_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = saudi_royal_family_opinion
@@ -2549,8 +2542,7 @@ change_saudi_royal_family_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_saudi_royal_family_opinion
 		apply_saudi_royal_family_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2560,31 +2552,25 @@ change_saudi_royal_family_opinion = {
 change_foreign_jihadis_opinion = {
 	if = { limit = { has_idea = foreign_jihadis }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { foreign_jihadis_opinion = temp_opinion }
 
-		set_temp_variable = { foreign_jihadis_min = 0 }
-		set_temp_variable = { foreign_jihadis_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { the_military_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { foreign_jihadis_min = min_opinion }
+		set_temp_variable = { foreign_jihadis_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { foreign_jihadis_opinion_min = 50 }
+		add_to_variable = { foreign_jihadis_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = foreign_jihadis_opinion
@@ -2594,8 +2580,7 @@ change_foreign_jihadis_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_foreign_jihadis_opinion
 		apply_foreign_jihadis_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2604,31 +2589,16 @@ change_foreign_jihadis_opinion = {
 change_iranian_quds_force_opinion = {
 	if = { limit = { has_idea = iranian_quds_force }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { iranian_quds_force_opinion = temp_opinion }
 
-		set_temp_variable = { iranian_quds_force_min = 0 }
-		set_temp_variable = { iranian_quds_force_max = 100 }
+		set_temp_variable = { iranian_quds_force_min = min_opinion }
+		set_temp_variable = { iranian_quds_force_max = max_opinion }
 
-		# Custom Min/Max Opinion Instructions
-		# if = {
-		#	limit = { tag = TAG }
-		# 	set_variable = { the_military_min = x }
-		# }
+		# For the Minimum Opinion
+		set_variable = { iranian_quds_force_opinion_min = 50 }
+		add_to_variable = { iranian_quds_force_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = iranian_quds_force_opinion
@@ -2638,8 +2608,7 @@ change_iranian_quds_force_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_iranian_quds_force_opinion
 		apply_irgc_iranian_quds_force_dynamic_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2648,31 +2617,25 @@ change_iranian_quds_force_opinion = {
 change_chaebols_opinion = {
 	if = { limit = { has_idea = chaebols }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { chaebols_opinion = temp_opinion }
 
-		set_temp_variable = { chaebols_min = 0 }
-		set_temp_variable = { chaebols_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { the_military_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { chaebols_min = min_opinion }
+		set_temp_variable = { chaebols_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { chaebols_opinion_min = 50 }
+		add_to_variable = { chaebols_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = chaebols_opinion
@@ -2682,8 +2645,7 @@ change_chaebols_opinion = {
 		# THIS MUST STAY BETWEEN 0 - 100 pls. Makes my life easier
 		custom_effect_tooltip = display_chaebols_opinion
 		apply_chaebols_effect_DYNMOD = yes
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2692,31 +2654,25 @@ change_chaebols_opinion = {
 change_wall_street_opinion = {
 	if = { limit = { has_idea = wall_street }
 
-		#Autocrats get faction effects double
-		if = {
-			limit = {
-				OR = {
-					is_in_array = { ruling_party = 0 }	#Western Autocrats
-					is_in_array = { ruling_party = 7 }	#Emerging autocrats
-					is_in_array = { ruling_party = 13 }	#Neutral autocrats
-					is_in_array = { ruling_party = 21 }	#fascists
-					is_in_array = { ruling_party = 22 }	#military junta
-				}
-				check_variable = { temp_opinion > 0 }
-			}
-			multiply_temp_variable = { temp_opinion = 2 }
-		}
+		autocrats_opinion_change = yes
 
 		add_to_variable = { wall_street_opinion = temp_opinion }
 
-		set_temp_variable = { wall_street_min = 0 }
-		set_temp_variable = { wall_street_max = 100 }
+		set_temp_variable = { min_opinion = 0 }
+		set_temp_variable = { max_opinion = 100 }
 
 		# Custom Min/Max Opinion Instructions
 		# if = {
 		#	limit = { tag = TAG }
-		# 	set_variable = { the_military_min = x }
+		# 	add_to_temp_variable = { min_opinion = x }
 		# }
+
+		set_temp_variable = { wall_street_min = min_opinion }
+		set_temp_variable = { wall_street_max = max_opinion }
+
+		# For the Minimum Opinion
+		set_variable = { wall_street_opinion_min = 50 }
+		add_to_variable = { wall_street_opinion_min = min_opinion }
 
 		clamp_variable = {
 			var = wall_street_opinion
@@ -2743,8 +2699,7 @@ change_wall_street_opinion = {
 			set_temp_variable = { modify_wall_street = -2 }
 			USA_modify_strength_of_wall_street = yes
 		}
-		# Reset command in case there is a successive change
-		#set_temp_variable = { temp_opinion = 0 }
+
 	}
 }
 
@@ -2753,47 +2708,26 @@ change_wall_street_opinion = {
 change_all_internal_faction_opinion = {
 	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_small_medium_business_owners_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_industrial_conglomerates_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_fossil_fuel_industry_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_defense_industry_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_maritime_industry_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_international_bankers_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_oligarchs_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_farmers_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_landowners_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_labour_unions_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_communist_cadres_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_the_clergy_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_the_ulema_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_the_priesthood_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_the_wahabi_ulema_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_the_military_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_intelligence_community_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_the_donju_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_saudi_royal_family_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_foreign_jihadis_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_chaebols_opinion = yes
-	set_temp_variable = { temp_opinion = temp_all_opinion }
 	change_wall_street_opinion = yes
 }
 
@@ -2977,211 +2911,211 @@ monthly_tick_internal_factions_opinion = {
 	if = {
 		limit = {
 			has_idea = small_medium_business_owners
-			check_variable = { small_medium_business_owners_opinion > 49 }
+			check_variable = { small_medium_business_owners_opinion > small_medium_business_owners_opinion_min }
 		}
 		subtract_from_variable = { small_medium_business_owners_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = small_medium_business_owners_opinion min = 50 }
+		clamp_variable = { var = small_medium_business_owners_opinion min = small_medium_business_owners_opinion_min }
 		apply_small_medium_business_owner_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = international_bankers
-			check_variable = { international_bankers_opinion > 49 }
+			check_variable = { international_bankers_opinion > international_bankers_opinion_min }
 		}
 		subtract_from_variable = { international_bankers_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = international_bankers_opinion min = 50 }
+		clamp_variable = { var = international_bankers_opinion min = international_bankers_opinion_min }
 		apply_international_bankers_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = oligarchs
-			check_variable = { oligarchs_opinion > 49 }
+			check_variable = { oligarchs_opinion > oligarchs_opinion_min }
 		}
 		subtract_from_variable = { oligarchs_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = oligarchs_opinion min = 50 }
+		clamp_variable = { var = oligarchs_opinion min = oligarchs_opinion_min }
 		apply_oligarchs_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = industrial_conglomerates
-			check_variable = { industrial_conglomerates_opinion > 49 }
+			check_variable = { industrial_conglomerates_opinion > industrial_conglomerates_opinion_min }
 		}
 		subtract_from_variable = { industrial_conglomerates_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = industrial_conglomerates_opinion min = 50 }
+		clamp_variable = { var = industrial_conglomerates_opinion min = industrial_conglomerates_opinion_min }
 		apply_industrial_conglomerates_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = fossil_fuel_industry
-			check_variable = { fossil_fuel_industry_opinion > 49 }
+			check_variable = { fossil_fuel_industry_opinion > fossil_fuel_industry_opinion_min }
 		}
 		subtract_from_variable = { fossil_fuel_industry_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = fossil_fuel_industry_opinion min = 50 }
+		clamp_variable = { var = fossil_fuel_industry_opinion min = fossil_fuel_industry_opinion_min }
 		apply_fossil_fuel_industry_dynamic_effect_DYNMOD = yes
 	}
 	# Militaristic Factions
 	if = {
 		limit = {
 			has_idea = intelligence_community
-			check_variable = { intelligence_community_opinion > 49 }
+			check_variable = { intelligence_community_opinion > intelligence_community_opinion_min }
 		}
 		subtract_from_variable = { intelligence_community_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = intelligence_community_opinion min = 50 }
+		clamp_variable = { var = intelligence_community_opinion min = intelligence_community_opinion_min }
 		apply_intelligence_community_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = the_military
-			check_variable = { the_military_opinion > 49 }
+			check_variable = { the_military_opinion > the_military_opinion_min }
 		}
 		subtract_from_variable = { the_military_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = the_military_opinion min = 50 }
+		clamp_variable = { var = the_military_opinion min = the_military_opinion_min }
 		apply_the_military_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = defense_industry
-			check_variable = { defense_industry_opinion > 49 }
+			check_variable = { defense_industry_opinion > defense_industry_opinion_min }
 		}
 		subtract_from_variable = { defense_industry_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = defense_industry_opinion min = 50 }
+		clamp_variable = { var = defense_industry_opinion min = defense_industry_opinion_min }
 		apply_defense_industry_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = maritime_industry
-			check_variable = { maritime_industry_opinion > 49 }
+			check_variable = { maritime_industry_opinion > maritime_industry_opinion_min }
 		}
 		subtract_from_variable = { maritime_industry_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = maritime_industry_opinion min = 50 }
+		clamp_variable = { var = maritime_industry_opinion min = maritime_industry_opinion_min }
 		apply_maritime_industry_dynamic_effect_DYNMOD = yes
 	}
 	# Special Interest Groups
 	if = {
 		limit = {
 			has_idea = wahabi_ulema
-			check_variable = { wahabi_ulema_opinion > 49 }
+			check_variable = { wahabi_ulema_opinion > wahabi_ulema_opinion_min }
 		}
 		subtract_from_variable = { wahabi_ulema_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = wahabi_ulema_opinion min = 50 }
+		clamp_variable = { var = wahabi_ulema_opinion min = wahabi_ulema_opinion_min }
 		apply_wahabi_ulema_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = the_priesthood
-			check_variable = { the_priesthood_opinion > 49 }
+			check_variable = { the_priesthood_opinion > the_priesthood_opinion_min }
 		}
 		subtract_from_variable = { the_priesthood_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = the_priesthood_opinion min = 50 }
+		clamp_variable = { var = the_priesthood_opinion min = the_priesthood_opinion_min }
 		apply_the_priesthood_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = the_ulema
-			check_variable = { the_ulema_opinion > 49 }
+			check_variable = { the_ulema_opinion > the_ulema_opinion_min }
 		}
 		subtract_from_variable = { the_ulema_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = the_ulema_opinion min = 50 }
+		clamp_variable = { var = the_ulema_opinion min = the_ulema_opinion_min }
 		apply_the_ulema_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = the_clergy
-			check_variable = { the_clergy_opinion > 49 }
+			check_variable = { the_clergy_opinion > the_clergy_opinion_min }
 		}
 		subtract_from_variable = { the_clergy_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = the_clergy_opinion min = 50 }
+		clamp_variable = { var = the_clergy_opinion min = the_clergy_opinion_min }
 		apply_the_clergy_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = communist_cadres
-			check_variable = { communist_cadres_opinion > 49 }
+			check_variable = { communist_cadres_opinion > communist_cadres_opinion_min }
 		}
 		subtract_from_variable = { communist_cadres_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = communist_cadres_opinion min = 50 }
+		clamp_variable = { var = communist_cadres_opinion min = communist_cadres_opinion_min }
 		apply_communist_cadres_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = farmers
-			check_variable = { farmers_opinion > 49 }
+			check_variable = { farmers_opinion > farmers_opinion_min }
 		}
 		subtract_from_variable = { farmers_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = farmers_opinion min = 50 }
+		clamp_variable = { var = farmers_opinion min = farmers_opinion_min }
 		apply_farmers_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = landowners
-			check_variable = { landowners_opinion > 49 }
+			check_variable = { landowners_opinion > landowners_opinion_min }
 		}
 		subtract_from_variable = { landowners_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = landowners_opinion min = 50 }
+		clamp_variable = { var = landowners_opinion min = landowners_opinion_min }
 		apply_landowners_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = labour_unions
-			check_variable = { labour_unions_opinion > 49 }
+			check_variable = { labour_unions_opinion > labour_unions_opinion_min }
 		}
 		subtract_from_variable = { labour_unions_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = labour_unions_opinion min = 50 }
+		clamp_variable = { var = labour_unions_opinion min = labour_unions_opinion_min }
 		apply_labour_unions_dynamic_effect_DYNMOD = yes
 	}
 	# Nation Specific
 	if = {
 		limit = {
 			has_idea = foreign_jihadis
-			check_variable = { foreign_jihadis_opinion > 49 }
+			check_variable = { foreign_jihadis_opinion > foreign_jihadis_opinion_min }
 		}
 		subtract_from_variable = { foreign_jihadis_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = foreign_jihadis_opinion min = 50 }
+		clamp_variable = { var = foreign_jihadis_opinion min = foreign_jihadis_opinion_min }
 		apply_foreign_jihadis_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = iranian_quds_force
-			check_variable = { iranian_quds_force_opinion > 49 }
+			check_variable = { iranian_quds_force_opinion > iranian_quds_force_opinion_min }
 		}
 		subtract_from_variable = { iranian_quds_force_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = iranian_quds_force_opinion min = 50 }
+		clamp_variable = { var = iranian_quds_force_opinion min = iranian_quds_force_opinion_min }
 		apply_irgc_iranian_quds_force_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = saudi_royal_family
-			check_variable = { saudi_royal_family_opinion > 49 }
+			check_variable = { saudi_royal_family_opinion > saudi_royal_family_opinion_min }
 		}
 		subtract_from_variable = { saudi_royal_family_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = saudi_royal_family_opinion min = 50 }
+		clamp_variable = { var = saudi_royal_family_opinion min = saudi_royal_family_opinion_min }
 		apply_saudi_royal_family_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = chaebols
-			check_variable = { chaebols_opinion > 49 }
+			check_variable = { chaebols_opinion > chaebols_opinion_min }
 		}
 		subtract_from_variable = { chaebols_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = chaebols_opinion min = 50 }
+		clamp_variable = { var = chaebols_opinion min = chaebols_opinion_min }
 		apply_chaebols_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = wall_street
-			check_variable = { wall_street_opinion > 49 }
+			check_variable = { wall_street_opinion > wall_street_opinion_min }
 		}
 		subtract_from_variable = { wall_street_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = wall_street_opinion min = 50 }
+		clamp_variable = { var = wall_street_opinion min = wall_street_opinion_min }
 		apply_wall_street_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
 			has_idea = the_donju
-			check_variable = { the_donju_opinion > 49 }
+			check_variable = { the_donju_opinion > the_donju_opinion_min }
 		}
 		subtract_from_variable = { the_donju_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = the_donju_opinion min = 50 }
+		clamp_variable = { var = the_donju_opinion min = the_donju_opinion_min }
 		apply_the_donju_dynamic_effect_DYNMOD = yes
 	}
 }

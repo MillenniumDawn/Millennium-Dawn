@@ -915,7 +915,7 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_SOO_farming_income_idea }
 		}
 	}
-##South KOREA
+	##South KOREA
 	if = {
 		limit = { original_tag = KOR  }
 		if = {
@@ -1421,6 +1421,7 @@ calculate_additional_income_rate = {
 	if = {
 		limit = { original_tag = SWE }
 		if = {
+			limit = { country_exists = NOR }
 			set_variable = { additional_income_SWE_border_trade = NOR.gdp_per_capita }
 			multiply_variable = { additional_income_SWE_border_trade = 0.01 } #2% of yearly GDP
 			multiply_variable = { additional_income_SWE_border_trade = 0.02 } #weekly
@@ -1433,18 +1434,17 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_SWE_Value_added_Tax }
 		}
 		if = {
-			set_variable = { additional_income_SWE_Social_insurance = welfare_gain}#gdp_per_capita }
+			limit = { NOT = { has_idea = social_01 } }
+			set_variable = { additional_income_SWE_Social_insurance = welfare_gain } #gdp_per_capita
 			multiply_variable = { additional_income_SWE_Social_insurance = 0.08 } #30% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_Social_insurance }
 		}
 		if = {
 			limit = {
 				has_country_flag = SWE_idea_tourist_industry_1
-				NOT = {
-					has_war = yes
-				}
+				NOT = { has_war = yes }
 			}
-			set_variable = { additional_income_SWE_tourism_1 = NOR.gdp_per_capita }
+			set_variable = { additional_income_SWE_tourism_1 = SWE.gdp_per_capita }
 			multiply_variable = { additional_income_SWE_tourism_1 = 0.01 } #1% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_tourism_1 }
 		}
@@ -1455,7 +1455,7 @@ calculate_additional_income_rate = {
 					has_war = yes
 				}
 			}
-			set_variable = { additional_income_SWE_tourism_2 = NOR.gdp_per_capita }
+			set_variable = { additional_income_SWE_tourism_2 = SWE.gdp_per_capita }
 			multiply_variable = { additional_income_SWE_tourism_2 = 0.02 } #2% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_tourism_2 }
 		}
@@ -1466,7 +1466,7 @@ calculate_additional_income_rate = {
 					has_war = yes
 				}
 			}
-			set_variable = { additional_income_SWE_tourism_3 = NOR.gdp_per_capita }
+			set_variable = { additional_income_SWE_tourism_3 = SWE.gdp_per_capita }
 			multiply_variable = { additional_income_SWE_tourism_3 = 0.03 } #3% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_tourism_3 }
 		}
@@ -1477,7 +1477,7 @@ calculate_additional_income_rate = {
 					has_war = yes
 				}
 			}
-			set_variable = { additional_income_SWE_tourism_4 = NOR.gdp_per_capita }
+			set_variable = { additional_income_SWE_tourism_4 = SWE.gdp_per_capita }
 			multiply_variable = { additional_income_SWE_tourism_4 = 0.04 } #3% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_SWE_tourism_4 }
 		}
@@ -1651,6 +1651,21 @@ calculate_additional_income_rate = {
 		multiply_variable = { libya_oil_nationalisation_additional_income = oil_nationalisation_income }
 		add_to_variable = { additional_income_rate = libya_oil_nationalisation_additional_income }
 	}
+	# Vatican City
+	if = { limit = { original_tag = HLS }
+		if = {
+			limit = { has_idea = HLS_idea_holy_see }
+			every_collection_element = {
+				input = {
+					input = collection:christian_countries_of_the_world
+				}
+				add_to_temp_variable = { gdp_total_temp = gdp_total }
+			}
+			multiply_temp_variable = { gdp_total_temp = 0.00002 }
+			set_variable = { HLS_holy_see_tithe_income = gdp_total_temp }
+			add_to_variable = { additional_income_rate = HLS_holy_see_tithe_income }
+		}
+	}
 	#Sold Equipment Tax Income
 	if = {
 		limit = { check_variable = { market_sold_contracts > 0 } }
@@ -1797,8 +1812,21 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = market_sold_cost }
 		set_variable = { market_sold_value_track = market_sold_cost }
 	}
-}
 
+	#Czech-Hungarian trade
+	if = {
+		limit = {
+			OR = {
+				has_idea = CZE_HUN_receive_additional_income_from_hungary_5
+				has_idea = CZE_HUN_receive_additional_income_from_hungary_3
+				has_idea = CZE_HUN_receive_additional_income_from_hungary_2
+				has_idea = CZE_HUN_receive_additional_income_from_hungary_1
+			}
+		}
+		CZE_HUN_gdp_stolen_calculation = yes
+		add_to_variable = { additional_income_rate = CZE_HUN_gain_income_trade }
+	}
+}
 #Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
 calculate_interest_rate = {
 	if = {			#if country has no debt and high interest national spirit (because they paid it off from having 15% debt interest to 0 within the same in-game day), it'll set all to 0 and remove high interest spirit, also skipping all other calculations to save on processing.
@@ -2025,7 +2053,6 @@ update_military_rate = {
 
 	#Count number of elite units - Kal's note; set normal support battalions to be regular
 	set_temp_variable = { elite_btn = num_battalions_with_type@L_Air_assault_Bat }
-	add_to_temp_variable = { var = elite_btn value = num_battalions_with_type@L_Air_assault_Bat }
 	add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Air_Inf_Bat }
 	add_to_temp_variable = { elite_btn = num_battalions_with_type@Mot_Air_Inf_Bat }
 	add_to_temp_variable = { elite_btn = num_battalions_with_type@Mech_Air_Inf_Bat }
@@ -2034,6 +2061,7 @@ update_military_rate = {
 	add_to_temp_variable = { elite_btn = num_battalions_with_type@Mot_Marine_Bat }
 	add_to_temp_variable = { elite_btn = num_battalions_with_type@Mech_Marine_Bat }
 	add_to_temp_variable = { elite_btn = num_battalions_with_type@Arm_Marine_Bat }
+	add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Ranger_Bat }
 
 	#Count number of regular units
 	set_temp_variable = { regular_btn = num_battalions_with_type@L_Inf_Bat }
@@ -2046,7 +2074,6 @@ update_military_rate = {
 	add_to_temp_variable = { regular_btn = num_battalions_with_type@SP_Arty_Bat }
 	#These were previously elite - Kal
 	add_to_temp_variable = { regular_btn = num_battalions_with_type@SP_AA_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@L_arm_Bat }
 
 	#Count number of irregular units
 	set_temp_variable = { irregular_btn = num_battalions_with_type@Militia_Bat }
@@ -2182,10 +2209,10 @@ update_military_rate = {
 	multiply_variable = { equipment_operative_cost = 0.001 } #from millions weekly to bilions weekly
 	if = { limit = { has_war = yes }
 		if = { limit = { is_ai = no }
-			multiply_variable = { equipment_operative_cost = 2.5 }
+			multiply_variable = { equipment_operative_cost = 2.25 }
 		}
 		else = {
-			multiply_variable = { equipment_operative_cost = 1.75 }
+			multiply_variable = { equipment_operative_cost = 1.45 }
 		}
 	}
 
@@ -2197,12 +2224,10 @@ update_military_rate = {
 	#Count number of capital/large ships
 	set_temp_variable = { capital_count = num_ships_with_type@cruiser }
 	add_to_temp_variable = { capital_count = num_ships_with_type@battle_cruiser }
-	add_to_temp_variable = { capital_count = num_ships_with_type@battleship_hull_0 }
 	add_to_temp_variable = { capital_count = num_ships_with_type@helicopter_operator }
 	add_to_temp_variable = { capital_count = num_ships_with_type@attack_submarine }
 	add_to_temp_variable = { capital_count = num_ships_with_type@missile_submarine }
 	add_to_temp_variable = { capital_count = num_ships_with_type@battleship }
-	add_to_temp_variable = { capital_count = num_ships_with_type@battle_cruiser }
 
 	#Count number of destroyers and heavy frigates
 	set_temp_variable = { destroyer_count = num_ships_with_type@destroyer }
@@ -2211,8 +2236,12 @@ update_military_rate = {
 
 	#Count number of screens/small ships
 	set_temp_variable = { frigate_count = num_ships_with_type@frigate }
+	set_temp_variable = { frigate_count = num_ships_with_type@stealth_frigate }
 	set_temp_variable = { corvette_count = num_ships_with_type@corvette }
+	set_temp_variable = { corvette_count = num_ships_with_type@stealth_corvette }
 	set_temp_variable = { patrol_boat_count = num_ships_with_type@patrol_boat }
+	set_temp_variable = { patrol_boat_count = num_ships_with_type@repair_ship }
+	set_temp_variable = { patrol_boat_count = num_ships_with_type@support_ship }
 
 	#Add higher costs for nuclear weapons capability - Papinian7
 	# nuclear status 'Nuclear Navy' +30% ship costs
@@ -2259,6 +2288,7 @@ update_military_rate = {
 	multiply_temp_variable = { frigate_count = 2 }
 	multiply_temp_variable = { corvette_count = 1 }
 	multiply_temp_variable = { patrol_boat_count = 0.25 }
+
 	set_temp_variable = { navy_count = 0 }
 	set_temp_variable = { navy_count = carrier_count }
 	add_to_temp_variable = { navy_count = capital_count }
@@ -2278,7 +2308,6 @@ update_military_rate = {
 	add_to_temp_variable = { strategic_airforce = num_equipment@large_plane_airframe }
 	add_to_temp_variable = { strategic_airforce = num_equipment@large_plane_cas_airframe }
 	add_to_temp_variable = { strategic_airforce = num_equipment@large_plane_awacs_airframe }
-	add_to_temp_variable = { strategic_airforce = num_equipment@strategic_bomber_equipment }
 	multiply_temp_variable = { strategic_airforce = stockpiled_cost_multiplier }
 	# Deployed
 	add_to_temp_variable = { strategic_airforce = num_deployed_planes_with_type@large_plane_airframe }
@@ -2295,8 +2324,6 @@ update_military_rate = {
 	add_to_temp_variable = { expensive_airforce = num_equipment@medium_plane_air_transport_airframe }
 	add_to_temp_variable = { expensive_airforce = num_equipment@medium_plane_maritime_patrol_airframe }
 	add_to_temp_variable = { expensive_airforce = num_equipment@cv_medium_plane_scout_airframe }
-	add_to_temp_variable = { expensive_airforce = num_equipment@transport_plane_equipment }
-	add_to_temp_variable = { expensive_airforce = num_equipment@nav_plane_equipment }
 	multiply_temp_variable = { expensive_airforce = stockpiled_cost_multiplier }
 	# Deployed
 	add_to_temp_variable = { expensive_airforce = num_deployed_planes_with_type@large_plane_air_transport_airframe }
@@ -2317,12 +2344,6 @@ update_military_rate = {
 	add_to_temp_variable = { regular_airforce = num_equipment@small_plane_suicide_airframe }
 	add_to_temp_variable = { regular_airforce = num_equipment@medium_plane_cas_airframe }
 	add_to_temp_variable = { regular_airforce = num_equipment@cv_medium_plane_cas_airframe }
-	add_to_temp_variable = { regular_airforce = num_equipment@MR_Fighter_equipment }
-	add_to_temp_variable = { regular_airforce = num_equipment@CV_MR_Fighter_equipment }
-	add_to_temp_variable = { regular_airforce = num_equipment@AS_Fighter_equipment }
-	add_to_temp_variable = { regular_airforce = num_equipment@Strike_fighter_equipment }
-	add_to_temp_variable = { regular_airforce = num_equipment@Air_UAV_equipment }
-	add_to_temp_variable = { regular_airforce = num_equipment@CAS_equipment }
 	multiply_temp_variable = { regular_airforce = stockpiled_cost_multiplier }
 	# Deployed
 	add_to_temp_variable = { regular_airforce = num_deployed_planes_with_type@medium_plane_airframe }
@@ -2342,9 +2363,8 @@ update_military_rate = {
 	add_to_temp_variable = { cheap_airforce = num_equipment@cv_small_plane_airframe }
 	add_to_temp_variable = { cheap_airforce = num_equipment@cv_small_plane_cas_airframe }
 	add_to_temp_variable = { cheap_airforce = num_equipment@cv_small_plane_naval_bomber_airframe }
-	add_to_temp_variable = { cheap_airforce = num_equipment@heavy_tank_chassis }
-	add_to_temp_variable = { cheap_airforce = num_equipment@L_Strike_fighter_equipment }
-	add_to_temp_variable = { cheap_airforce = num_equipment@CV_L_Strike_fighter_equipment }
+	add_to_temp_variable = { cheap_airforce = num_equipment@small_plane_strike_airframe }
+	add_to_temp_variable = { cheap_airforce = num_equipment@cv_small_plane_strike_airframe }
 	multiply_temp_variable = { cheap_airforce = stockpiled_cost_multiplier }
 	# Deployed
 	add_to_temp_variable = { cheap_airforce = num_deployed_planes_with_type@small_plane_airframe }
@@ -2462,7 +2482,7 @@ update_military_rate = {
 
 	#Divide by control factors (same for all!) - Use this if you want to scale cost of military personnel in relation to defence industry
 	multiply_temp_variable = { land_count = 0.001 }
-	multiply_temp_variable = { land_count = 0.8 }
+	multiply_temp_variable = { land_count = 0.76 }
 	multiply_temp_variable = { navy_count = 0.001 }
 	multiply_temp_variable = { airforce_count = 0.001 }
 	multiply_temp_variable = { airforce_count = 0.667 }
@@ -3576,6 +3596,24 @@ calculate_additional_expense_rate = {
 			multiply_variable = { CZE_increased_state_expenditure = CZE.CZE_increased_state_expenditure_multiplier }
 			add_to_variable = { additional_expenses_rate = CZE_increased_state_expenditure }
 		}
+		if = {
+			limit = { has_idea = CZE_foreign_monarchy_intromision }
+			set_variable = { CZE_foreign_monarchy = 0.5 }
+			add_to_variable = { additional_expenses_rate = CZE_foreign_monarchy }
+		}
+	}
+
+	# Hungary
+	if = {
+		limit = { original_tag = HUN }
+		if = {
+			limit = {
+				has_idea = CZE_HUN_manipulating_our_commerce
+			}
+			set_variable = { CZE_HUN_stolen_income = resource_sale_rate }
+			multiply_variable = { CZE_HUN_stolen_income = 0.1 }
+			add_to_variable = { additional_expenses_rate = CZE_HUN_stolen_income }
+		}
 	}
 }
 
@@ -4546,7 +4584,7 @@ calculate_gdp_modifiers = {
 }
 
 calculate_ai_taxes_desire = {
-	# Raise Taxes
+# Raise Taxes
 	if = { limit = { check_variable = { treasury_rate < 0 } }
 		set_temp_variable = { mather = treasury_rate } # -10.00
 		multiply_temp_variable = { mather = -2 } # 20.00
@@ -4604,13 +4642,27 @@ calculate_ai_taxes_desire = {
 		if = { limit = { has_stability < 0.05 }
 			multiply_temp_variable = { mather = 2 }
 		}
-		# Do not decrease lower than 20% personal taxes
+
+		if = { limit = { check_variable = { interest_rate < 3 } }
+			multiply_temp_variable = { mather = 1.15 }
+		}
+		if = { limit = { check_variable = { interest_rate < 5 } }
+			multiply_temp_variable = { mather = 1.15 }
+		}
+
+		if = { limit = { check_variable = { debt_ratio < 0.15 } }
+			multiply_temp_variable = { mather = 1.5 }
+		}
+		if = { limit = { check_variable = { debt_ratio < 0.25 } }
+			multiply_temp_variable = { mather = 1.5 }
+		}
+		# Do not decrease lower than 15% personal taxes
 		# Do not decrease personal if we can decrease corporate
 		if = {
 			limit = {
 				OR = {
-					check_variable = { population_tax_rate < 20 }
-					check_variable = { corporate_tax_rate > 20 }
+					check_variable = { population_tax_rate < 15 }
+					check_variable = { corporate_tax_rate > 9 }
 				}
 			}
 			multiply_temp_variable = { mather = 0 }
@@ -4650,12 +4702,8 @@ calculate_ai_taxes_desire = {
 			multiply_temp_variable = { mather = 2.50 }
 		}
 
-		# do not increase corporate taxes if we can increase personal taxes
-		if = {
-			limit = {
-				check_variable = { population_tax_rate < 30 }
-			}
-
+		# do not increase corporate taxes if we can still increase personal taxes
+		if = { limit = { check_variable = { population_tax_rate < 40 } }
 			multiply_temp_variable = { mather = 0 }
 		}
 
@@ -4677,11 +4725,22 @@ calculate_ai_taxes_desire = {
 			multiply_temp_variable = { mather = 0.5 }
 		}
 
+		if = { limit = { check_variable = { interest_rate < 3 } }
+			multiply_temp_variable = { mather = 1.15 }
+		}
+		if = { limit = { check_variable = { interest_rate < 5 } }
+			multiply_temp_variable = { mather = 1.15 }
+		}
+
+		if = { limit = { check_variable = { debt_ratio < 0.15 } }
+			multiply_temp_variable = { mather = 1.5 }
+		}
+		if = { limit = { check_variable = { debt_ratio < 0.25 } }
+			multiply_temp_variable = { mather = 1.5 }
+		}
+
 		# do not decrease lower than 15%
-		if = {
-			limit = {
-				check_variable = { corporate_tax_rate < 16 }
-			}
+		if = { limit = { check_variable = { corporate_tax_rate < 10 } }
 			multiply_temp_variable = { mather = 0 }
 		}
 
@@ -4856,7 +4915,11 @@ update_employment_productivity_output_dynamic_modifier = {
 	subtract_from_temp_variable = { sum_of_agriculture_district_var_modifiers = preexisting_agriculture_district_output_var }
 	add_to_temp_variable = { sum_of_agriculture_district_var_modifiers = -2 }
 	multiply_variable = { agriculture_district_output_var = sum_of_agriculture_district_var_modifiers }
-
+	if = { limit = { has_country_flag = disabled_economic_system }
+		set_variable = { military_factories_output_var = 0 }
+		set_variable = { agriculture_district_output_var = 0 }
+		set_variable = { dockyards_output_var = 0 }
+	}
 	set_variable = { productivity_tax_effect_display = productivity_calculations_var }
 	add_to_variable = { productivity_tax_effect_display = -1 }
 
