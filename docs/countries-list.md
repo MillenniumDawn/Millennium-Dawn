@@ -36,7 +36,7 @@ The following countries are playable with unique focus trees:
 - Fiji
 - [France](/Millennium-Dawn/national-content/France)
 - Gagauzia
-- Georgia
+- [Georgia](/Millennium-Dawn/national-content/Georgia)
 - [Germany](/Millennium-Dawn/national-content/Germany)
 - [Greece](/Millennium-Dawn/national-content/Greece)
 - Gulf tree for BHR, KUW, OMA, QAT, SAU, UAE including shared GCC tree also available to EGY, IRQ, JOR, MOR, YEM
@@ -85,15 +85,15 @@ The following countries are playable with unique focus trees:
 | ------ | ------ | ------ | ------ | ------ |
 |Abkhazia|   ABK  |   Yes  |   Emerging Outlook (Communist State) | YES |
 |Aceh   |   ACE  |   Yes  |   Non-Aligned Outlook (Autocrat) | NO |
-|Afghanistan/Afghan Northern Alliance | AFG | Yes (as Afghan Northern Alliance) |   Non-Alligned Outlook (Moderate Islamist)        |   YES  |
+|Afghanistan / Afghan Northern Alliance | AFG | Yes (as Afghan Northern Alliance) |   Non-Alligned Outlook (Moderate Islamist)        |   YES  |
 |Al-Shabaab |          SHB | No (Available in 2017) |   N/A     | NO |
 |Alawite State |       ALA | No | N/A       | NO |
 |Albania |             ALB | YES |   Western Outlook (Social Democrat) | NO |
 |Algeria |             ALG | YES |   Emerging Outlook (Autocrat) | NO |
 |Angola |              AGL|	Yes|	Emerging Outlook (Autocrat)| NO |
-|Ansar al-Sharia|	AQY|	No(Available in 2017)|	Salafist Outlook (Salafi Jihadism)| NO |
-|Anti-Balaka|	        BAL|	No(Available in 2017)|	Non-Alligned Outlook (Autocrat)	| NO |
-|Anti-Governmental Forces of South Sudan| AGF |	No(Available in 2017)|	N/A	| NO |
+|Ansar al-Sharia|	AQY|	No (Available in 2017)|	Salafist Outlook (Salafi Jihadism)| NO |
+|Anti-Balaka|	        BAL|	No (Available in 2017)|	Non-Alligned Outlook (Autocrat)	| NO |
+|Anti-Governmental Forces of South Sudan| AGF |	No (Available in 2017)|	N/A	| NO |
 |Antigua and Barbuda|   ANT|	Yes|   Non-Aligned Outlook (Conservative)| NO |
 |Arabistan|	        ARA|	No| N/A	| NO |
 |Argentina|	        ARG|	Yes|	Western Outlook (Social Democrat)| NO |
@@ -140,7 +140,7 @@ The following countries are playable with unique focus trees:
 |Cuba	|       CUB|	Yes|   Emerging Outlook (Communist State)| YES |
 |Cyprus	|       CYP|	Yes|   Western Outlook (Conservatism)| NO |
 |Czechia|	CZE|	Yes|   Western Outlook (Social Democrat)| YES |
-|Darfur	 |      DAR|	No(Available in 2017)|    N/A| NO |
+|Darfur	 |      DAR|	No (Available in 2017)|    N/A| NO |
 |Denmark|       DEN|	Yes|   Western Outlook (Social Democrat)| YES |
 |Djibouti|	DJI|	Yes|   Non-Aligned Outlook (Social Democrat)| NO |
 |Dominica|	DMN|	Yes|   Non-Aligned Outlook (Conservative)| NO |
@@ -156,14 +156,14 @@ The following countries are playable with unique focus trees:
 |Fiji|          FIJ|	Yes|   Western Outlook (Social Democrat)| YES |
 |Finland|	        FIN|	Yes|   Western Outlook (Social Democrat)| YES |
 |France	 |      FRA|	Yes|   Western Outlook (Conservatism)| YES |
-|Free Syrian Army|	FSA|	No(Available in 2017)|   N/A| NO |
+|Free Syrian Army|	FSA|	No (Available in 2017)|   N/A| NO |
 |Gabon|         GAB|	Yes|   Western Outlook (Conservatism)| NO |
 |Gagauzia|      GGZ|	No|   Western Outlook (Conservatism)| YES |
 |Gambia|	GAM|	Yes|   Nationalist Outlook (Right Wing Populist)| NO |
 |Georgia|	GEO|	Yes|   Emerging Outlook (Autocracy)| NO |
 |Germany|	GER|	Yes|   Western Outlook (Social Democrat)| YES |
 |Ghana|	        GAH|	Yes|   Western Outlook (Social Democrat)| NO |
-|Government of National Accord|	GNA|	No(Available in 2017)|   N/A| NO |
+|Government of National Accord|	GNA|	No (Available in 2017)|   N/A| NO |
 |Greece|	GRE|	Yes|   Western Outlook (Social Democrat)| YES |
 |Grenada|	GRA|	Yes|   Western Outlook (Conservatism)| NO |
 |Guatemala|	GUA|	Yes|   Nationalist Outlook (Fascist)| NO |
@@ -171,12 +171,12 @@ The following countries are playable with unique focus trees:
 |Guinea-Bissau|	GUB|	Yes|   Western Outlook (Conservatism) | NO |
 |Guyana|	GUY|	Yes|   Emerging Outlook (Left-Wing Radical)| NO |
 |Haiti|	        HAI|	Yes|   Emerging Outlook (Left-Wing Radical)| NO |
-|Hamas|	        HAM|	No(Available in 2017)|    N/A| NO |
+|Hamas|	        HAM|	No (Available in 2017)|    N/A| NO |
 |Hejaz|	        HEJ|	No|   N/A| NO |
 |Hezbollah|	HEZ|	Yes|   Emerging Outlook (Hardline Shiite Revolutionary)| YES |
 |Honduras|	HON|	Yes|   Western Outlook (Liberalism)| NO |
 |Hong Kong (Puppet of PRC)|	HKG|	Yes| Emerging Outlook (Reactionary)| NO |
-|Houthi Yemen|	HOU|	No(Available in 2017)|   N/A| NO |
+|Houthi Yemen|	HOU|	No (Available in 2017)|   N/A| NO |
 |Hungary|	HUN|	Yes|   Non-Aligned Outlook (Conservative)| NO |
 |Iceland|	ICE|	Yes|   Western Outlook (Conservatism)| NO |
 |India|	        RAJ|	Yes|   Non-Aligned Outlook (Conservative)| YES |
@@ -185,7 +185,7 @@ The following countries are playable with unique focus trees:
 |Iraq|          IRQ|	Yes|   Nationalist Outlook (Military Junta)| YES(shared GCC tree) |
 |Ireland|	IRE|	Yes|   Western Outlook (Conservatism)| NO |
 |Islamic Emirate of Afghanistan| TAL | Yes |   Salafist Outlook (Caliphate)| NO |
-|Islamic State|	ISI|	No(Available in 2017)|   N/A| NO |
+|Islamic State|	ISI|	No (Available in 2017)|   N/A| NO |
 |Israel|	ISR|	Yes|   Western Outlook (Social Democrat)  | YES |
 |Italy|	        ITA|	Yes|   Western Outlook (Social Democrat)| YES |
 |Jabal Al-Druze|	DRU|	No|   N/A| NO |
@@ -211,7 +211,7 @@ The following countries are playable with unique focus trees:
 |Liberia|	LIB|	Yes|   Nationalist Outlook (Right Wing Populist)| NO |
 |Liberians United for Reconiliation and Democracy|	LUR|	Yes|   Non-Aligned Outlook (Social Democrat)| NO |
 |Libya|	        LBA|	Yes|   Emerging Outlook (Autocracy)| YES |
-|Libyan National Army|	HOR|	No(Available in 2017)|   N/A| NO |
+|Libyan National Army|	HOR|	No (Available in 2017)|   N/A| NO |
 |Liechtenstein| LIC|    Yes|   Western Outlook (Liberalism)| YES |
 |Lithuania|	LIT|	Yes|   Western Outlook (Conservatism)| NO |
 |Luristan|	LOR|	No|    N/A| NO |
@@ -230,13 +230,13 @@ The following countries are playable with unique focus trees:
 |Micronesia|	MIC|	Yes|   Western Outlook (Liberalism)| NO |
 |Moldova|	MLV|	Yes|   Non-Aligned Outlook (Social Democrat)| NO |
 |Mongolia|	MON|	Yes|   Emerging Outlook (Communist State)| NO |
-|Montenegro|	MNT|	No(Available in 2017)|    N/A| NO |
+|Montenegro|	MNT|	No (Available in 2017)|    N/A| NO |
 |Morocco|	MOR|	Yes|   Western Outlook (Social Democrat)| YES(shared GCC tree) |
 |Movement for the Liberation of the Congo|	MLC|	Yes|   Western Outlook (Liberalism)| NO |
 |Mozambique|	MOZ|	Yes|   Emerging Outlook (Left-Wing Radical)| NO |
 |Myammar|	BRM|	Yes|   Nationalist Outlook (Military Junta)| YES |
 |Namibia|	NAM|	Yes|   Emerging Outlook (Left-Wing Radical)| NO |
-|National Salvation Government of Libya|	GNC|	No(Available in 2017)|   N/A| NO |
+|National Salvation Government of Libya|	GNC|	No (Available in 2017)|   N/A| NO |
 |Nauru|         NAU|	Yes|   Western Outlook (Social Democrat)| NO |
 |Nejd|	       NEJ|	No|   N/A| NO |
 |Nepal|	        NEP|	Yes|   Nationalist Outlook (Monarchist)	| NO |
@@ -247,7 +247,7 @@ The following countries are playable with unique focus trees:
 |Nigeria|	NIG|	Yes|   Non-Aligned Outlook (Conservative)| YES |
 |Northern Cyprus|	NCY|	Yes|   Western Outlook (Conservatism)| NO |
 |Norway|	NOR|	Yes|   Non-Aligned Outlook (Conservative)| YES |
-|Novorossiya|	NOV|	No(Available in 2017) |   N/A| NO |
+|Novorossiya|	NOV|	No (Available in 2017) |   N/A| NO |
 |Oman|	        OMA|	Yes|   Non-Aligned Outlook (Autocracy)	| YES(Gulf tree) |
 |Pakistan|	PAK|	Yes|   Nationalist Outlook (Military Junta)| NO |
 |Palau|         PAU|	Yes|   Western Outlook (Social Democrat)| NO |
@@ -267,8 +267,8 @@ The following countries are playable with unique focus trees:
 |Quebec (Liberated from Canada)|	QUE|	No|   N/A| NO |
 |Rally for Congolese Democracy|	        RCD|	Yes|   Western Outlook (Liberalism)| NO |
 |Republic of China (Taiwan)|	        TAI|	Yes|    Western Outlook (Conservatism)| NO |
-|Republic of Dar El Kuti|	        LOG|	No(Available in 2017)|   N/A| NO |
-|Rojava|        ROJ|	No(Available in 2017)|   N/A| NO |
+|Republic of Dar El Kuti|	        LOG|	No (Available in 2017)|   N/A| NO |
+|Rojava|        ROJ|	No (Available in 2017)|   N/A| NO |
 |Romania|	ROM|	Yes|   Western Outlook (Conservatism)| YES |
 |Russia|	SOV|	Yes|   Emerging Outlook (Reactionary)| YES |
 |Rwanda|	RWA|	Yes|   Nationalist Outlook (Right Wing Populist)| NO |
@@ -283,9 +283,9 @@ The following countries are playable with unique focus trees:
 |São Tomé and Príncipe|	SAO|	Yes|   Western Outlook (Liberalism)| NO |
 |Saudi Arabia|	SAU|	Yes| Salafist Outlook (Pro-Establishment Salafism)| YES(Gulf tree) |
 |Scotland (Liberated from United Kingdom)|	SCO|	No|   N/A| NO |
-|Seleka|	SEL|	No(Available in 2017)|   N/A| NO |
+|Seleka|	SEL|	No (Available in 2017)|   N/A| NO |
 |Senegal|	SEN|	Yes|   Western Outlook (Liberalism)| NO |
-|Serbia/Yugoslavia|	SER|	Yes (as Yugoslovia)|   Nationalist Outlook (Right Wing Populist)| YES |
+|Serbia / Yugoslavia|	SER|	Yes (as Yugoslovia)|   Nationalist Outlook (Right Wing Populist)| YES |
 |Seychelles|	SEY|	Yes|   Emerging Outlook (Left-Wing Radical)| NO |
 |Shan State|	SHN|	Yes|   Non-Aligned Outlook (Autocracy)	| NO |
 |Sicily|	SCL|	No|   N/A| NO |
@@ -303,25 +303,25 @@ The following countries are playable with unique focus trees:
 |Spain|	        SPR|	Yes|   Western Outlook (Conservatism)| YES |
 |Sri Lanka|	SRI|	Yes|   Non-Aligned Outlook (Social Democrat)| NO |
 |Sudan|	        SUD|	Yes|   Non-Aligned Outlook (Moderate Islamist)| NO |
-|Sudan Revolutionary Front|	SRF|	No(Available in 2017)|   N/A| NO |
+|Sudan Revolutionary Front|	SRF|	No (Available in 2017)|   N/A| NO |
 |Suriname|	SUR|	Yes|   Non-Aligned Outlook (Social Democrat)| NO |
 |Swaziland|	SWA|	Yes|   Western Outlook (Conservatism)| NO |
 |Sweden|	SWE|	Yes|   Western Outlook (Social Democrat)| YES |
 |Switzerland|	SWI|	Yes|   Non-Aligned Outlook (Libertarian)| YES |
 |Syria| 	SYR|	Yes|   Emerging Outlook (Autocracy)| YES |
 |Tabaristan|	TAB|	No|   N/A| NO |
-|Tahrir al-Sham|	NUS|	No(Available in 2017)|   N/A| NO |
+|Tahrir al-Sham|	NUS|	No (Available in 2017)|   N/A| NO |
 |Tajikistan|	TAJ|	Yes|   Emerging Outlook (Reactionary)| YES |
 |Tanzania|	TNZ|	Yes|   Non-Aligned Outlook (Social Democrat)| NO |
-|Tehrik-i-Taliban|	TTP|	No(Available in 2017)|   N/A| NO |
+|Tehrik-i-Taliban|	TTP|	No (Available in 2017)|   N/A| NO |
 |Thailand|	SIA|	Yes|   Western Outlook (Conservatism)| NO |
 |Tibet (Liberated from PRC)|	TIB|	No|   N/A| NO |
-|Timor Leste|	TIM|	No(Available in 2017)|   N/A| NO |
+|Timor Leste|	TIM|	No (Available in 2017)|   N/A| NO |
 |Togo|	        TOG|	Yes|   Non-Aligned Outlook (Autocracy)| NO |
 |Tonga|        TON|	Yes|   Western Outlook (Social Democrat)| NO |
 |Transnistria|	PMR|	Yes|   Emerging Outlook (Communist State) | YES |
 |Trinidad and Tobago|	TRI|	Yes|   Non-Aligned Outlook (Social Democrat)| NO |
-|Tuaregs|	TUA|	No(Available in 2017)|   N/A| NO |
+|Tuaregs|	TUA|	No (Available in 2017)|   N/A| NO |
 |Tunisia|	TUN|	Yes|   Western Outlook (Pro-Western Autocrat)| NO |
 |Turkey|	TUR|	Yes|   Western Outlook (Social Democrat)| YES |
 |Turkmenistan|	TRK|	Yes|   Non-Aligned Outlook (Autocracy)| NO |
