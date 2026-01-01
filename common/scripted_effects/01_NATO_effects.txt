@@ -74,6 +74,24 @@ NATO_leave = {
 		remove_from_array = { global.nato_members = THIS }
 		remove_ideas = NATO_member
 		remove_from_tech_sharing_group = NATO_Tech_Share
+
+		# If we are the faction leader, transfer leadership before leaving
+		if = {
+			limit = { is_faction_leader = yes }
+			# Find another NATO member to transfer leadership to
+			random_country = {
+				limit = {
+					has_idea = NATO_member
+					NOT = { tag = ROOT }
+					is_in_faction_with = ROOT
+				}
+				# Transfer faction leadership
+				ROOT = {
+					set_faction_leader = PREV
+				}
+			}
+		}
+
 		leave_faction = yes
 
 		for_each_scope_loop = {
