@@ -15,11 +15,11 @@ Please ensure you are using the latest from one of the below versions.
 
 **_Steam_**
 
-Current MD Version: ``v1.12.3a``
+Current MD Version: ``v1.12.3b``
 
 HOI Version: ``1.17.*``
 
-Checksum: ``8830``
+Checksum: ``a842``
 
 [Steam Link](https://steamcommunity.com/sharedfiles/filedetails/?id=2777392649)
 
