@@ -25,6 +25,9 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Increased the AI priority for saving political power to join the European Union
   - Fixed the AI not properly expanding its research slots via the Research menu
   - AI democratic nations now should be less likely to raid other nations if they have added less than 5% world tension
+  - AI should no longer revoke satellite access within 6 months minimizing them from instantly rejecting
+  - Fixed the AI rejecting satellite access if Russia is in the EU and has satellite access to an EU member
+  - AI will be more likely to send satellites in the event they are an influencer in your nation
 
  Bugfix:
  - Fixed the Zombies not building units due to the productivity system
@@ -43,6 +46,12 @@ This page is a list of all MD's changelogs from our documentation. In case you w
  - Fixed people being double charged for Attack Helicopters, Tanks and Air Assault Battalions
  - Fixed Ranger unit not being counted for money system
  - Added missing ship types to be counted for money system
+ - Fixed the German event "Public Park Damaged by Armored Vehicles"
+ - Fixed CZE Skoda Superb bills ideas not properly removing themselves when paying off the bills
+ - Fixed CZE Increase Eastern Trade focus not possible to complete as Czechoslovakia
+ - Fixed the God of War not properly giving Army, Air, Naval Experience every month
+ - Fixed the weird gap in the "Pansarregementen" division template
+ - Fixed a handful of issues regarding female leaders of all types randomly bugging
 
  Balance:
   - Rebalanced the organization of the zombie units so they play a little differently rather then having permanent organization
@@ -61,6 +70,11 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Increased the multiplication cost of nuclear reactors as they're much stronger due to the naval dominance mechanic now
   - Reduced the amount paid in Raid Reparations to 2% from 3%
   - Clamped the total amount of billed reparations to $150 Billion
+  - Changed modules of Polish naval vessels to better reflect their real life counterparts from 2000
+  - All support companies should now impact speed as they should
+  - God of War now grants mastery for the AI when they have doctrines
+  - Non-AAT defense companies values are standardized at Level 5 bonus (7.5% of their respective bonus) while retaining their old custom bonus due to reducing the complexity of the old defense companies
+  - Made some non-AAT defense companies worth taking now that are at least as good as the generic ones
 
  Content:
   - Added a Zombie outbreak random event that triggers to spread Zombies around the world to make the game mode more interesting
@@ -69,6 +83,7 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Artillery Doctrine Track Mastery can also be gained by MLRS now
   - Changed Norway Mining Tooltips in the Focus Tree
   - Changed Events in Swedish focus tree to gain them instantly instead of 7 days
+  - Russia can actually see the focus tree for the European Union now
 
  Database:
   - Adjusted the F-15E Strike Eagle to have 2 Medium Hardpoints instead of 1 Medium Hardpoints and 1 CAS Hardpoint
@@ -80,6 +95,8 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Made some Swedish Equipment Obsolete to give the player a clearer start on equipment
   - Mechanised Marine gives mastery to the Mechanized doctrine track
   - Changed Israel's starting intervention law from limited to Regional
+  - AI, 3D Printing, and Nanofibers tech provide Civilian Specialization (breakthrough points) for researching those techs
+  - Removed all unused non-AAT designer companies traits that were not used
 
  Documentation:
   - Reformatted the Code Resource on the website to be more approachable for submodders and developers
@@ -89,6 +106,7 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Assigned the USA b6 icon temporarily to the Arsenal Bird
   - Assigned generic icons for the Arsenal Bird until we have more custom graphics created for them
   - Fixed a missing icon in Myanmar's tech tree for infantry equipment
+  - Fixed a missing icon for the Repair and Support ships when looking at them in the naval screen and on map
 
  Localization:
   - Fixed the "Canonization of the Romanov Family" having two identical text for options
@@ -97,6 +115,11 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Updated Swedish modifier localisation so the effects are more clear in the focus tree
   - Removed the work 'Factory' for Military and Civilian Research category
   - Fixed missing tooltip for "Strike Operations Focus" Swedish Focus
+
+ Map:
+  - Added a new state for the Australia Capital Territory
+  - Rebalanced Ukraine resources so it is more accurately represented with their resource placement
+  - Slightly reduced German starting steel to be more reliant on outsiders for resource requirements
 
  Performance:
   - Removed an every state call at the startup of the game to improve load time performance for the Hydroelectric configuration for the energy system
@@ -108,6 +131,8 @@ This page is a list of all MD's changelogs from our documentation. In case you w
   - Fixed conflicting UI in the ship menu with the new ship classes added
   - Fixed missing national spirit icons for Sweden
   - Added some spacing in Swedish focusses for better view at the focus rewards
+  - Fixed some issues with the Unit Leader interface namely around missing sorting buttons when promoting a unit leader
+  - Added the missing containers about factions commanders that was causing some issues
 
 {% endcapture %}
 {{ md | markdownify }}
