@@ -146,7 +146,21 @@ invest_biofuel_refinery = {
 
 # Building Type 1: Civilian industry
 AI_get_civilian_industry_score = {
-	if = { limit = { free_building_slots = { building = industrial_complex size > 0  include_locked = no } }
+	# Count pending civilian factory projects in this state
+	set_temp_variable = { pending_civs = 0 }
+	for_each_loop = {
+		array = project_type_in_state
+		value = v
+		index = i
+		if = { limit = { check_variable = { project_type_in_state^i = 1 } }
+			add_to_temp_variable = { pending_civs = 1 }
+		}
+	}
+	# Check if there are free slots after accounting for pending projects
+	set_temp_variable = { available_slots = free_building_slots@industrial_complex }
+	subtract_from_temp_variable = { available_slots = pending_civs }
+
+	if = { limit = { check_variable = { available_slots > 0 } }
 		# Score Modeling
 		set_temp_variable = { AI_score = 0 }
 
@@ -216,9 +230,24 @@ AI_get_civilian_industry_score = {
 
 # Building Type 2: Military Industry
 AI_get_military_industry_score = {
-	set_temp_variable = { AI_score = 0 }
+	# Count pending military factory projects in this state
+	set_temp_variable = { pending_mils = 0 }
+	for_each_loop = {
+		array = project_type_in_state
+		value = v
+		index = i
+		if = { limit = { check_variable = { project_type_in_state^i = 2 } }
+			add_to_temp_variable = { pending_mils = 1 }
+		}
+	}
+	# Check if there are free slots after accounting for pending projects
+	set_temp_variable = { available_slots = free_building_slots@arms_factory }
+	subtract_from_temp_variable = { available_slots = pending_mils }
 
-	set_temp_variable = { v1 = 150 }
+	if = { limit = { check_variable = { available_slots > 0 } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 150 }
 
 	# Increase Section
 	if = { limit = { date > 2004.1.1 }
@@ -292,19 +321,35 @@ AI_get_military_industry_score = {
 	subtract_from_temp_variable = { v1 = v2 }
 	add_to_temp_variable = { AI_score = v1 }
 
-	# AI_not_in_home_area = yes # Trigger doesn't work currently
-	if = { limit = { check_variable = { AI_score > AI_best_score } }
-		set_temp_variable = { AI_best_score = AI_score }
-		set_temp_variable = { AI_best_target = THIS.id }
-		set_temp_variable = { AI_best_type = 2 }
+		# AI_not_in_home_area = yes # Trigger doesn't work currently
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 2 }
+		}
 	}
 }
 
 # Building Type 3: Dockyards
 AI_get_dockyard_score = {
-	set_temp_variable = { AI_score = 0 }
+	# Count pending dockyard projects in this state
+	set_temp_variable = { pending_docks = 0 }
+	for_each_loop = {
+		array = project_type_in_state
+		value = v
+		index = i
+		if = { limit = { check_variable = { project_type_in_state^i = 3 } }
+			add_to_temp_variable = { pending_docks = 1 }
+		}
+	}
+	# Check if there are free slots after accounting for pending projects
+	set_temp_variable = { available_slots = free_building_slots@dockyard }
+	subtract_from_temp_variable = { available_slots = pending_docks }
 
-	set_temp_variable = { v1 = 170 } # Basis
+	if = { limit = { check_variable = { available_slots > 0 } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 170 } # Basis
 
 	# Increase Section
 	if = { limit = { CONTROLLER = { num_of_naval_factories < 15 } }
@@ -370,14 +415,15 @@ AI_get_dockyard_score = {
 		add_to_temp_variable = { v2 = 50 }
 	}
 
-	subtract_from_temp_variable = { v1 = v2 }
-	add_to_temp_variable = { AI_score = v1 }
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
 
-	# AI_not_in_home_area = yes # Trigger doesn't work currently
-	if = { limit = { check_variable = { AI_score > AI_best_score } }
-		set_temp_variable = { AI_best_score = AI_score }
-		set_temp_variable = { AI_best_target = THIS.id }
-		set_temp_variable = { AI_best_type = 3 }
+		# AI_not_in_home_area = yes # Trigger doesn't work currently
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 3 }
+		}
 	}
 }
 
@@ -443,16 +489,21 @@ AI_get_infrastructure_score = {
 				add_to_temp_variable = { differential_infra = 1 }
 			}
 		}
-		add_to_temp_variable = { differential_infra = remaining_level }
-		if = { limit = { check_variable = { differential_infra > 4 } }
-			add_to_temp_variable = { v2 = 100 }
-		}
-		subtract_from_temp_variable = { v1 = v2 }
-		add_to_temp_variable = { AI_score = v1 }
 
-		# Check to ensure they do not invest in infrastructure
+		# Check to ensure they do not invest in infrastructure when at max or when pending projects will reach max
 		if = { limit = { check_variable = { building_level@infrastructure = 5 } }
 			multiply_temp_variable = { AI_score = 0 }
+		}
+		else_if = { limit = { check_variable = { differential_infra > 4.999 } }
+			multiply_temp_variable = { AI_score = 0 }
+		}
+		else = {
+			add_to_temp_variable = { differential_infra = remaining_level }
+			if = { limit = { check_variable = { differential_infra > 4 } }
+				add_to_temp_variable = { v2 = 100 }
+			}
+			subtract_from_temp_variable = { v1 = v2 }
+			add_to_temp_variable = { AI_score = v1 }
 		}
 
 		# AI_not_in_home_area = yes # Trigger doesn't work currently
@@ -466,7 +517,21 @@ AI_get_infrastructure_score = {
 
 # Building Type 5: Offices
 AI_get_offices_score = {
-	if = { limit = { free_building_slots = { building = offices size > 0  include_locked = no } }
+	# Count pending office projects in this state
+	set_temp_variable = { pending_offices = 0 }
+	for_each_loop = {
+		array = project_type_in_state
+		value = v
+		index = i
+		if = { limit = { check_variable = { project_type_in_state^i = 5 } }
+			add_to_temp_variable = { pending_offices = 1 }
+		}
+	}
+	# Check if there are free slots after accounting for pending projects
+	set_temp_variable = { available_slots = free_building_slots@offices }
+	subtract_from_temp_variable = { available_slots = pending_offices }
+
+	if = { limit = { check_variable = { available_slots > 0 } }
 		set_temp_variable = { AI_score = 0 }
 
 		set_temp_variable = { v1 = 180 }
@@ -525,14 +590,15 @@ AI_get_offices_score = {
 			add_to_temp_variable = { v2 = 100 }
 		}
 
-		subtract_from_temp_variable = { v1 = v2 }
-		add_to_temp_variable = { AI_score = v1 }
+			subtract_from_temp_variable = { v1 = v2 }
+			add_to_temp_variable = { AI_score = v1 }
 
-		# AI_not_in_home_area = yes # Trigger doesn't work currently
-		if = { limit = { check_variable = { AI_score > AI_best_score } }
-			set_temp_variable = { AI_best_score = AI_score }
-			set_temp_variable = { AI_best_target = THIS.id }
-			set_temp_variable = { AI_best_type = 5 }
+			# AI_not_in_home_area = yes # Trigger doesn't work currently
+			if = { limit = { check_variable = { AI_score > AI_best_score } }
+				set_temp_variable = { AI_best_score = AI_score }
+				set_temp_variable = { AI_best_target = THIS.id }
+				set_temp_variable = { AI_best_type = 5 }
+			}
 		}
 	}
 }
