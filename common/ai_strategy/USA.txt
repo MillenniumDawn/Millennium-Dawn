@@ -866,21 +866,36 @@ USA_eu_relations = {
 }
 
 USA_support_somalia = {
-	allowed = { tag = USA }
+	allowed = { original_tag = USA }
 	enable = {
 		NOT = { has_war_with = SOM }
 		SOM = { NOT = { has_government = fascism } }
 	}
-	abort = {
-		OR = {
-			has_war_with = SOM
-			SOM = { has_government = fascism }
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "SOM" value = 100 }
 	ai_strategy = { type = protect id = "SOM" value = 50 }
 	ai_strategy = { type = support id = "SOM" value = 100 }
+}
+
+USA_support_somalia_intervention_forces = {
+	allowed = { original_tag = USA }
+	enable = {
+		SOM = {
+			OR = {
+				has_war_with = PUN
+				has_war_with = SNA
+				has_war_with = JUB
+				has_war_with = SWS
+				has_civil_war = yes
+			}
+		}
+		NOT = { has_war_with = SOM }
+		has_country_flag = USA_SOM_intervention
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "SOM" value = 500 }
 }
 
 USA_cuba_relations = {
@@ -888,9 +903,7 @@ USA_cuba_relations = {
 	enable = {
 		CUB = { NOT = { has_government = democratic } }
 	}
-	abort = {
-		CUB = { has_government = democratic }
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = contain id = "CUB" value = 100 }
 	ai_strategy = { type = antagonize id = "CUB" value = 50 }
@@ -903,12 +916,7 @@ USA_korea_relations = {
 		KOR = { has_government = democratic }
 		country_exists = NKO
 	}
-	abort = {
-		OR = {
-			NOT = { KOR = { has_government = democratic } }
-			NOT = { country_exists = NKO }
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "KOR" value = 50 }
 	ai_strategy = { type = protect id = "KOR" value = 100 }
@@ -921,9 +929,7 @@ USA_taiwan_relations = {
 	enable = {
 		TAI = { has_government = democratic }
 	}
-	abort = {
-		NOT = { TAI = { has_government = democratic } }
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "TAI" value = 50 }
 	ai_strategy = { type = protect id = "TAI" value = 100 }
@@ -959,12 +965,7 @@ USA_fsa = {
 		NOT = { has_war_with = FSA }
 		FSA = { NOT = { has_government = fascism } }
 	}
-	abort = {
-		OR = {
-			has_war_with = FSA
-			FSA = { has_government = fascism }
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "FSA" value = 200 }
 	ai_strategy = { type = protect id = "FSA" value = 200 }
@@ -1070,7 +1071,7 @@ USA_supply_botswana = {
 	allowed = { original_tag = USA }
 
 	enable = {
-		original_tag = USA
+		country_exists = BOT
 		BOT = { has_completed_focus = BOT_buy_hercules_c130 }
 	}
 	abort = {
@@ -1090,7 +1091,7 @@ USA_befriend_BOT = {
 	allowed = { original_tag = USA }
 
 	enable = {
-		original_tag = USA
+		country_exists = BOT
 		BOT = { has_completed_focus = BOT_us_relations }
 	}
 	abort = {
@@ -1245,46 +1246,24 @@ USA_support_afghanistan_enduring_freedom = {
 	ai_strategy = { type = send_volunteers_desire id = AFG value = 200 }
 	ai_strategy = { type = befriend id = AFG value = 200 }
 	ai_strategy = { type = support id = AFG value = 200 }
+	ai_strategy = { type = diplo_action_desire id = AFG value = 50 target = send_attache }
 }
 
 
 USA_protect_major_non_nato_allies = {
-	allowed = {
-		original_tag = USA
-	}
-
+	allowed = { original_tag = USA }
 	reversed = yes
 
 	enable = {
 		has_idea = Major_Non_NATO_Ally
 		USA = { has_idea = NATO_member }
 	}
-
 	abort_when_not_enabled = yes
 
-	ai_strategy = {
-		type = befriend
-		id = "USA"
-		value = 200
-	}
-
-	ai_strategy = {
-		type = protect
-		id = "USA"
-		value = 200
-	}
-
-	ai_strategy = {
-		type = support
-		id = "USA"
-		value = 200
-	}
-
-	ai_strategy = {
-		type = send_volunteers_desire
-		id = "USA"
-		value = 200
-	}
+	ai_strategy = { type = befriend id = "USA" value = 200 }
+	ai_strategy = { type = protect id = "USA" value = 200 }
+	ai_strategy = { type = support id = "USA" value = 200 }
+	ai_strategy = { type = send_volunteers_desire id = "USA" value = 200 }
 }
 
 USA_moldova_moves_in_on_PMR = {
@@ -1298,9 +1277,74 @@ USA_moldova_moves_in_on_PMR = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = {
-		type = send_volunteers_desire
-		id = "MLV"
-		value = 500
+	ai_strategy = { type = send_volunteers_desire id = "MLV" value = 500 }
+}
+
+USA_TNZ_KEN_support_for_ssu_during_war = {
+	allowed = {
+		OR = {
+			original_tag = USA
+			original_tag = KEN
+			original_tag = TNZ
+		}
 	}
+	enable = {
+		country_exists = SSU
+		has_relation_modifier = {
+			target = SSU
+			modifier = generic_increased_military_support
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "SSU" value = 500 }
+}
+
+USA_LBA_intervention_in_libya = {
+	allowed = { original_tag = USA }
+	enable = {
+		country_exists = LBA
+		has_country_flag = USA_intervention_in_libya
+		LBA = { emerging_autocracy_are_in_power = no }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "LBA" value = 500 }
+}
+
+USA_TRP_intervention_in_libya = {
+	allowed = { original_tag = USA }
+	enable = {
+		country_exists = TRP
+		has_country_flag = USA_intervention_in_libya
+		TRP = { emerging_autocracy_are_in_power = no }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "TRP" value = 500 }
+}
+
+USA_FEZ_intervention_in_libya = {
+	allowed = { original_tag = USA }
+	enable = {
+		country_exists = FEZ
+		has_country_flag = USA_intervention_in_libya
+		FEZ = { emerging_autocracy_are_in_power = no }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "FEZ" value = 500 }
+}
+
+
+USA_CYR_intervention_in_libya = {
+	allowed = { original_tag = USA }
+	enable = {
+		country_exists = CYR
+		has_country_flag = USA_intervention_in_libya
+		CYR = { emerging_autocracy_are_in_power = no }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "CYR" value = 500 }
 }

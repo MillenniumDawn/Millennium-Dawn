@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Spain"
+---
+
 ## Spain WIP
 
 ![Bandera_de_España.svg](uploads/36c0ebc9f350f917f6ae1085af7ee1f8/Bandera_de_España.svg.png)

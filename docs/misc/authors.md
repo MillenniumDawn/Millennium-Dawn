@@ -162,6 +162,9 @@ The following page is a non-exhaustive list of contributors from over the years 
 | BlackSyX | blacksyx | - | - | - |
 | Lynxivium | @lynxivium | - | - | - |
 | RTmanfre | @RTmanfre | - | - | - |
+| JhonyGEM | @JhonyGEM | @JhonyGEM | - | - |
+| denzzerr | @denzzerr | - | - | - |
+| 4RH1T3CT0R | - | @4RH1T3CT0R7 | - | - |
 
 # Fellow Modders/Teams
 

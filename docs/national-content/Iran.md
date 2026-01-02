@@ -135,15 +135,13 @@ Therefore:
 
 Note: If The Breaking Point is triggered while the protest event chain is active, the protests will subside, but the revolution event chain will still begin without any issues, so you can continue playing without concern.
 
-###　マジュレス
-イランの議会。一定期間ごとに選挙と討論が行われる。討論とは討論が終了すると、議会の政党からミッションを受けることができ、そのミッションを達成すれば褒美が、失敗すればペナルティがあるという要素。
+###　Majles
+The Iranian parliament. Elections and debates are held at regular intervals. When a debate concludes, the parties in parliament can assign missions. Completing these missions grants rewards, while failure results in penalties.
 
-討論でもらえるミッションの例
-ミッション　4つの特定州のネットワークインフラが2以上
-達成報酬　オフィス街+2、火力発電所+1（国庫の金は消費する）
-失敗時　オフィス街-2
+Examples of missions obtained through debates Mission:
+Network infrastructure level 2 or higher in four specific states Reward for completion: Office districts +2, Thermal power plants +1 (funds are taken from the national treasury) On failure: Office districts -2
 
-## 国家方針
+## National Focus
 <div align="center">
 ![スクリーンショット_2025-07-25_101334](uploads/f654db87d5494dca7ad069986957abbf/スクリーンショット_2025-07-25_101334.png)
 </div>
@@ -171,12 +169,13 @@ The tree extending downward from the center focuses on various Iranian instituti
 
 #### International Path
 
-イランの経済ツリーはいきなり択一式のルート選択から始まる。「Third Development Plan」から始まるツリーは国内各地の発展を重視したツリーで、インフラを始めとした各建設物や資源をバランスよくもらえるルートになっている。対して「Embracing the Open Market」から始まるツリーはより国際市場との結びつきを重視するツリーで各国のエネルギー企業との協力する方針などが含まれる。こちらも多くの施設を獲得できるが、より化石燃料にフォーカスした内容になっている。
-中央の共通ツリーは経済の直接的な発展というとりも国家として腐敗との戦いや影響力の大きな団体との関係、教育制度のあり方を決定するツリーだ。腐敗などいくつかのデバフを軽減することができるNFも多い。
+Iran’s economic tree begins with an immediate mutually exclusive route choice. The tree starting with “Third Development Plan” focuses on development across the country, offering a balanced route that provides infrastructure along with various buildings and resources. In contrast, the tree starting with “Embracing the Open Market” places greater emphasis on integration with international markets and includes policies such as cooperation with foreign energy companies. This path also grants many facilities, but its content is more heavily focused on fossil fuels.
 
-### 軍事ツリー
+The shared central tree is less about direct economic expansion and more about addressing corruption as a state, managing relationships with powerful interest groups, and determining the direction of the education system. Many of its National Focuses also reduce debuffs such as corruption.
 
-### 改革派・原理主義派ツリー
+### Military Tree
+
+### Reformist–Principlist Tree
 
 ## Q&A
 
@@ -247,18 +246,3 @@ Additionally, completing the national focus “The Grand Bargain” will also al
 * NF "No Islam Without Iran"
 ##### Iranian Armed Forces
 * NF "Maintain a Military Structure" （Mutually Exclusive）
-
-・核開発をしたい
-・民間研究開発施設が欲しい
-NF "Natanz Enrichment Complex", "IR-40"
-
-・核関連のバフ
-・Thermonuclear Bombs Production Rate
-NF "Mastering the Atom", "The Search for Uranium",
-
-
-
-国家方針「Whispers of Power」で始まる核開発ツリーを進めよう。研究に必要な民間研究開発施設を獲得できたり、核爆弾の生産率や研究速度を上げたりすることができる。
-
-・生産性成長のデバフをとるには？
-国家方針「Whispers of Power」

@@ -12,9 +12,9 @@ This tutorial will explain the economic elements of MD.
 ## UI
 To view a country’s economic information, click the graph icon in the bottom right to open the Economic Preview.
 
-<div align="center">
-![image](../uploads/c879c7b42f912b6b1d35abded05e9472/image.png){width=150 height=270}
-![image](../uploads/59eb30e670ca52ea37a12b8be1bd2b1c/image.png){width=396 height=490}
+<div align="center" markdown="1">
+![image](../uploads/c879c7b42f912b6b1d35abded05e9472/image.png){: width="150" height="270"}
+![image](../uploads/59eb30e670ca52ea37a12b8be1bd2b1c/image.png){: width="396" height="490"}
 </div>
 
 ## GDP and GDP per Capita
@@ -64,8 +64,8 @@ Electricity consumption is calculated based on active buildings and population. 
 
 You can view your country’s electricity situation by clicking the electricity icon in the construction window to open the Electricity Panel.
 
-<div align="center">
-![image](../uploads/e6ab55579206fe834fad873ef3d2d61d/image.png){width=931 height=325}
+<div align="center" markdown="1">
+![image](../uploads/e6ab55579206fe834fad873ef3d2d61d/image.png){: width="931" height="325"}
 </div>
 
 ## Economic Cycle
@@ -82,9 +82,9 @@ It requires spending treasury funds and takes time, but by making International 
 
 You can initiate International Investments by clicking on a foreign state, then clicking the arrow button to open the interface, from which you can proceed with the investment.
 
-<div align="center">
-![image](../uploads/image.png){width=906 height=567}
-![image](../uploads/image.png){width=313 height=453}
+<div align="center" markdown="1">
+![image](../uploads/image.png){: width="906" height="567"}
+![image](../uploads/image.png){: width="313" height="453"}
 </div>
 
 ## Internal Investment
