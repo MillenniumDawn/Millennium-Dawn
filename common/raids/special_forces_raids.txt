@@ -2100,6 +2100,285 @@ types = {
 			#do some checks for nations here, like someone going for nukes will likely be targeted by enemies
 		}
 	}
+	# [USA] Capture Venezuelan Leader
+	
+	USA_raid_venezuela = {
+		days_to_prepare = 30
+		days_re_enable = 120
+
+		category = special_forces_raids
+
+		command_power = 20
+
+		arrow = {
+			type = line
+		}
+
+		# Specific Target is visible
+		visible = {
+			original_tag = USA
+			has_country_flag = USA_operation_absolute_resolve
+		}
+		# Specific Target is visible
+		show_target = {
+			FROM = {
+				original_tag = VEN
+			}
+		}
+
+		# Can prepare
+		available = {
+			has_tech = special_forces
+			custom_trigger_tooltip = {
+				tooltip = has_spec_ops_4_TT
+				if = {
+					limit = {
+						NOT = {
+							has_tech = special_forces4
+						}
+					}
+					FROM = {
+						PREV_is_on_same_continent = yes
+					}
+				}
+			}
+		}
+
+		unit_requirements = {
+			battalion_types = {
+				Special_Forces = { min = 1  max = 5 }
+			}
+		}
+		target_icon = GFX_other_target_icon
+		launch_sound = raid_launch_marine
+
+		target_type = {
+			state = {
+				is_capital = yes
+				infrastructure > 0
+				is_owned_by = VEN
+			}
+		}
+
+		starting_point = {
+			types = { air_base naval_base }
+		}
+
+		success_factors = {
+			success = {
+				base = 0.05
+
+				# Raiding unit modifiers
+				experience = {
+					weight = 0.15
+					start_weight = -0.15
+					reference = 0.5
+				}
+				organisation = {
+					weight = 0.15
+					start_weight = -0.15
+					reference = 60
+				}
+				strength = {
+					weight = 0.05
+					start_weight = -0.05
+					reference = 1
+				}
+				recon = {
+					weight = 0.20
+					reference = 10
+				}
+
+				### Target Modifiers
+				resistance = {
+					reference = 100
+					start_reference = 20 # Resistance below 20 doesn't help
+					weight = 0.2
+				}
+				intel = {
+					weight = 0.3
+					#start_reference = 50
+					reference = 100
+				}
+			}
+			critical = {
+				base = 0.05
+			}
+			disaster = {
+				base = 0.25
+			}
+		}
+
+		success_levels = {
+			failure = {
+				victim_effects = {
+					var:target_state = {
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = air_base
+									damage = [DAM]
+								}
+								damage_building = {
+									type = naval_base
+									damage = [DAM]
+								}
+							}
+							DAM = "[?building_damage_by_missile]"
+						}
+						USA = {
+							country_event = department_of_state.96
+						}
+						VEN = {
+							country_event = department_of_state.97
+						}
+					}
+
+				}
+				actor_effects = {
+					raid_damage_units = {
+						org_damage = 0.30
+						str_damage = 0.15
+						ratio = yes
+					}
+					raid_add_unit_experience = 0.25
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 50
+				}
+			}
+			limited_success = {
+				victim_effects = { }
+				actor_effects = {
+					var:actor_country = {
+						add_timed_idea = {
+							idea = special_recon
+							days = 20
+						}
+					}
+
+					raid_damage_units = {
+						org_damage = 0.2
+						str_damage = 0.05
+						ratio = yes
+					}
+
+					raid_add_unit_experience = 0.25
+
+				}
+
+			}
+			success = {
+				victim_effects = {
+					var:target_state = {
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = air_base
+									damage = [DAM]
+								}
+								damage_building = {
+									type = naval_base
+									damage = [DAM]
+								}
+							}
+							DAM = "[?building_damage_by_missile]"
+						}
+						USA = {
+							country_event = department_of_state.96
+						}
+						VEN = {
+							country_event = department_of_state.97
+						}
+					}
+				}
+				actor_effects = {
+					raid_damage_units = {
+						org_damage = 0.2
+						str_damage = 0.02
+						ratio = yes
+					}
+
+					var:actor_country = {
+						add_timed_idea = {
+							idea = special_recon
+							days = 40
+						}
+					}
+
+					raid_add_unit_experience = 0.25
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 250
+					add_history_entry = {
+						key = commando_port_raid_history_entry
+						subject = "Test entry"
+						allow = yes
+					}
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					var:target_state = {
+						meta_effect = {
+							text = {
+								damage_building = {
+									type = air_base
+									damage = [DAM]
+								}
+								damage_building = {
+									type = naval_base
+									damage = [DAM]
+								}
+							}
+							DAM = "[?building_damage_by_missile]"
+						}
+						USA = {
+							country_event = department_of_state.96
+						}
+						VEN = {
+							country_event = department_of_state.97
+						}
+					}
+					var:victim_country = {
+
+					}
+				}
+				actor_effects = {
+					raid_damage_units = {
+						org_damage = 0.1
+						str_damage = 0
+						ratio = yes
+					}
+
+					var:actor_country = {
+						add_timed_idea = {
+							idea = special_recon
+							days = 60
+						}
+					}
+
+					# Unit Experience
+					raid_add_unit_experience = 0.25
+				}
+				# Other unit effects
+				division_effects = {
+					add_divisional_commander_xp = 500
+					add_history_entry = { #TODO change this into an effect that assigns the correct name automatically
+						key = commando_port_raid_history_entry
+						subject = "Test entry"
+						allow = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 50
+		}
+	}
 
 	#TODO: Add during the first hotfix, but let nations who hate each other and share a border do border skirmishes for funsies
 	# sf_incited_border_war = {
