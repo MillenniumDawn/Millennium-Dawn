@@ -165,6 +165,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 | JhonyGEM | @JhonyGEM | @JhonyGEM | - | - |
 | denzzerr | @denzzerr | - | - | - |
 | 4RH1T3CT0R | @4rh1t3ct0r | @4RH1T3CT0R7 | - | - |
+| ccfox | - | @ccfox | - | - |
 
 # Fellow Modders/Teams
 
