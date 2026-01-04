@@ -495,7 +495,7 @@
 	NDefines.NAir.BASE_UNIT_WEIGHT_IN_TRANSPORT_PLANES = 5 -- fuck this fucking define fuck you. 45 is vanilla
 	NDefines.NAir.MISSILE_LAUNCHER_CAPACITY = 50
 	NDefines.NAir.MISSILE_LAUNCHER_SLOTS = 10
-	NDefines.NAir.MAX_QUICK_WINGS_FOR_AIR_SUPERIORITY = 8 -- Thank you for the idea Ebby
+	NDefines.NAir.MAX_QUICK_WING_SELECTION = 8 -- Thank you for the idea Ebby
 	NDefines.NAir.MISSION_FUEL_COSTS = {
 		1.0, -- AIR_SUPERIORITY
 		1.0, -- CAS

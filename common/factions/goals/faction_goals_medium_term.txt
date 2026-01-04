@@ -80,7 +80,7 @@ faction_goal_high_seas_fleet = {
 		every_collection_element = {
 			input = {
 				input = game:scope
-				operators =  {
+				operators = {
 					faction_members
 				}
 				name = ALL_FACTION_MEMBERS
@@ -127,7 +127,7 @@ faction_goal_secure_the_oil_supply = {
 		every_collection_element = {
 			input = {
 				input = game:scope
-				operators =  {
+				operators = {
 					faction_members
 					limit = {
 						has_resources_in_country = {
@@ -221,6 +221,7 @@ faction_goal_crush_the_democracy = {
 		any_country = {
 			has_government = communism
 		}
+		has_elections = no
 	}
 	completed = {
 		collection_size = {
@@ -341,8 +342,9 @@ faction_goal_marine_corps = {
 				operators = { faction_members }
 				name = FACTION
 			}
-			unit = amphibious
-			size < 10
+			unit_category = { L_Marine_Bat L_Marine_Cdo_Bat Mot_Marine_Bat Mech_Marine_Bat Arm_Marine_Bat }
+			equipment_ratio = 0.9
+			size < 150
 		}
 	}
 	completed = {
@@ -352,8 +354,9 @@ faction_goal_marine_corps = {
 				operators = { faction_members }
 				name = FACTION
 			}
-			unit = amphibious
-			size > 9
+			unit_category = { L_Marine_Bat L_Marine_Cdo_Bat Mot_Marine_Bat Mech_Marine_Bat Arm_Marine_Bat }
+			equipment_ratio = 0.9
+			size > 149
 		}
 	}
 	complete_effect = {
@@ -364,12 +367,6 @@ faction_goal_marine_corps = {
 				input = game:scope
 				operators = {
 					faction_members
-					limit = {
-						has_army_size = {
-							size > 0
-							type = amphibious
-						}
-					}
 				}
 				name = ALL_FACTION_MEMBERS_WITH_1_AMPHIBIOUS
 			}
@@ -395,7 +392,7 @@ faction_goal_marine_corps = {
 				name = marine_corps_tech_bonus
 				bonus = 0.5
 				uses = 1
-				category = CAT_naval_doctrine
+				category = CAT_landing_craft
 			}
 		}
 	}
@@ -413,6 +410,87 @@ faction_goal_marine_corps = {
 			any_state = {
 				is_controlled_by = ROOT
 				is_coastal = yes
+			}
+		}
+	}
+}
+
+faction_goal_airborne_corps = {
+	name = airborne_corps_goal_name
+	description = airborne_corps_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_AIR_XP
+	available = {
+		count_in_collection = {
+			collection = {
+				input = game:scope
+				operators = { faction_members }
+				name = FACTION
+			}
+			unit_category = { Arm_Air_Inf_Bat Mech_Air_Inf_Bat Mot_Air_Inf_Bat L_Air_Inf_Bat }
+			equipment_ratio = 0.9
+			size < 100
+		}
+	}
+	completed = {
+		count_in_collection = {
+			collection = {
+				input = game:scope
+				operators = { faction_members }
+				name = FACTION
+			}
+			unit_category = { Arm_Air_Inf_Bat Mech_Air_Inf_Bat Mot_Air_Inf_Bat L_Air_Inf_Bat }
+			equipment_ratio = 0.9
+			size > 99
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		effect_tooltip = {
+			random_character = {
+				tooltip = ONE_GENERAL
+				visible_when_empty = yes
+				limit = {
+					is_army_leader = yes
+					is_field_marshal = no
+					NOT = { has_trait = cavalry_officer }
+					NOT = { has_trait = panzer_leader }
+					NOT = { has_trait = commando }
+				}
+				gain_xp = 400
+				add_attack = 1
+				add_trait = { trait = commando }
+			}
+		}
+		hidden_effect = {
+			every_faction_member = {
+				random_character = {
+					tooltip = ONE_GENERAL
+					visible_when_empty = yes
+					limit = {
+						is_army_leader = yes
+						is_field_marshal = no
+						NOT = { has_trait = cavalry_officer }
+						NOT = { has_trait = panzer_leader }
+						NOT = { has_trait = commando }
+					}
+					gain_xp = 400
+					add_attack = 1
+					add_trait = { trait = commando }
+				}
+			}
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 1
+			has_equipment = {
+				large_plane_air_transport_airframe > 0
 			}
 		}
 	}
