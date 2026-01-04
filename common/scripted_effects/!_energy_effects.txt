@@ -292,6 +292,11 @@ calculate_energy_use = {
 	add_to_variable = { unfulfilled_energy_demand_var = energy_fulfillment }
 	add_to_variable = { energy_sum = energy_withdrawal_from_storage } #for display purposes
 
+	set_variable = { energy_difference_variable = energy_sum }
+	subtract_from_variable = { energy_difference_variable = energy_consumption }
+	if = { limit = { has_variable = energy_load_sharing_gain_var }
+		subtract_from_variable = { energy_difference_variable = energy_load_sharing_gain_var }
+	}
 
 	# Caps penalty for unfulfilled at 50%, and multiples 100 to get a whole number to reduce to penalty scale
 	set_variable = { unfulfilled_energy_demand_dynmod_var = unfulfilled_energy_demand_var }
@@ -328,6 +333,61 @@ calculate_energy_use = {
 	multiply_variable = { non_electric_fuel_display = 24 }
 
 	force_update_dynamic_modifier = yes
+}
+
+# Effect: calculate_energy_load_sharing
+# Purpose: Calculates the Energy Load Sharing
+# TODO: This right now is limited to one way agreements for now. We can expand this to more bilateral agreements later on when we have more details on it.
+calculate_energy_load_sharing = {
+	if = { limit = { NOT = { check_variable = { energy_load_sharing_nations^0 = 0 } } }
+		# Reset the amount of energy load shared to 0
+		set_variable = { energy_load_sharing_use_var = 0 }
+		set_variable = { energy_load_sharing_gain_var = 0 }
+		set_temp_variable = { needed_energy_for_nations = 0 }
+		for_each_scope_loop = {
+			array = energy_load_sharing_nations
+			if = { limit = { check_variable = { energy_difference_variable < 0 } }
+				add_to_temp_variable = { PREV.needed_energy_for_nations = energy_difference_variable }
+			}
+		}
+
+		# Calculate the Energy Shared
+		# Assume that if you are sharing energy that you have to maintain more energy otherwise the loading sharing has gotta stop
+		if = { limit = { check_variable = { energy_difference_variable > needed_energy_for_nations } }
+			resize_array = { array = energy_load_sharing_nations_value size = energy_load_sharing_nations^num }
+
+			for_each_loop = {
+				array = energy_load_sharing_nations
+				var:v = {
+					set_temp_variable = { energy_lack = energy_difference_variable }
+					set_variable = { PREV.energy_load_sharing_nations_value^i = energy_lack }
+					set_variable = { energy_load_sharing_gain_var = energy_lack }
+					multiply_variable = { energy_load_sharing_gain_var = -1 }
+					force_update_dynamic_modifier = yes
+				}
+			}
+			set_temp_variable = { total_energy_required_to_share = 0 }
+			for_each_loop = {
+				array = energy_load_sharing_nations_value
+				add_to_temp_variable = { PREV.total_energy_required_to_share = v }
+			}
+			set_variable = { energy_load_sharing_use_var = total_energy_required_to_share }
+			multiply_variable = { energy_load_sharing_use_var = -1 }
+		}
+		else = {
+			for_each_loop = {
+				array = energy_load_sharing_nations
+				set_variable = { energy_load_sharing_gain_var = 0 }
+			}
+		}
+		force_update_dynamic_modifier = yes
+	}
+	else = {
+		# Garbage Collection - Only use these when actually sharing energy
+		clear_variable = energy_load_sharing_use_var
+		clear_variable = energy_load_sharing_gain_var
+		clear_variable = energy_load_sharing_income_var
+	}
 }
 
 # Effect: energy_on_daily
