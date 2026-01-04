@@ -518,6 +518,19 @@ country_event = {
 				factor = 0
 				has_country_flag = ZOM_rejected_to_join_the_initial_coalition
 			}
+			modifier = {
+				add = 2500
+				OR = {
+					is_major = yes
+					has_idea = superpower
+					has_idea = large_power
+					has_idea = great_power
+				}
+				has_game_rule = {
+					rule = zombie_faction_joining_rules
+					option = all_majors
+				}
+			}
 		}
 	}
 
@@ -530,8 +543,134 @@ country_event = {
 		ai_chance = {
 			base = 1
 			modifier = {
-				factor = 10
+				factor = 2
 				has_country_flag = ZOM_rejected_to_join_the_initial_coalition
+			}
+			modifier = {
+				add = 2500
+				OR = {
+					is_major = yes
+					has_idea = superpower
+					has_idea = large_power
+					has_idea = great_power
+				}
+				has_game_rule = {
+					rule = zombie_faction_joining_rules
+					option = no_majors
+				}
+			}
+		}
+	}
+}
+
+# Outbreak!
+country_event = {
+	id = zombie.10
+	title = zombie.10.t
+	desc = zombie.10.d
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = has_had_outbreak_event }
+	}
+	immediate = {
+		set_country_flag = has_had_outbreak_event
+		hidden_effect = {
+			random_owned_state = {
+				set_state_flag = outbreak_state
+			}
+		}
+	}
+
+	# Mobilize!
+	option = {
+		name = zombie.10.a
+		log = "[GetDateText]: [This.GetName]: zombie.10.a executed"
+		ZOM = {
+			declare_war_on = {
+				target = PREV
+				type = annex_everything
+			}
+		}
+		random_owned_state = {
+			limit = { has_state_flag = outbreak_state }
+			transfer_state_to = ZOM
+			create_unit = {
+				division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
+				count = 15
+				owner = ZOM
+			}
+			if = {
+				limit = {
+					has_game_rule = { rule = zombie_difficulty option = EXTREME }
+				}
+				create_unit = {
+					division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
+					count = 20
+					owner = ZOM
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						has_game_rule = { rule = zombie_difficulty option = INSANE }
+						has_game_rule = { rule = zombie_difficulty option = EXTREME }
+					}
+				}
+				create_unit = {
+					division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
+					count = 20
+					owner = ZOM
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						has_game_rule = { rule = zombie_difficulty option = HARD }
+						has_game_rule = { rule = zombie_difficulty option = EXTREME }
+						has_game_rule = { rule = zombie_difficulty option = INSANE }
+					}
+				}
+				create_unit = {
+					division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
+					count = 20
+					owner = ZOM
+				}
+			}
+		}
+		set_country_flag = has_had_outbreak_event
+		clear_variable = random_outbreak_state
+		news_event = zombie.11
+	}
+}
+
+news_event = {
+	id = zombie.11
+	title = zombie.11.t
+	desc = zombie.11.d
+	is_triggered_only = yes
+	major = yes
+
+	# Worrying...
+	option = {
+		name = zombie.11.a
+		trigger = {
+			NOT = { original_tag = ZOM }
+		}
+	}
+
+	# Raaargh
+	option = {
+		name = zombie.11.b
+		trigger = {
+			original_tag = ZOM
+		}
+
+		effect_tooltip = {
+			ZOM = {
+				declare_war_on = {
+					target = FROM
+					type = annex_everything
+				}
 			}
 		}
 	}

@@ -1582,7 +1582,11 @@ startup_politics = {
 	set_failsafe_values = yes #adds needed values if missing
 	add_up_party_totals = yes
 	set_party_positions = yes
-	setup_election_threshold = yes #adds election_threshold if not set
+
+	if = { limit = { NOT = { has_variable = election_threshold } }
+		set_variable = { election_threshold = 0.05 } #5% used as default
+	}
+
 	store_election_values = yes #add to election array
 	update_majority_threshold = yes
 	update_government_coalition_strength = yes
@@ -2294,23 +2298,15 @@ calculate_banned_parties = {
 }
 
 
-
-#only on startup
-setup_election_threshold = {
-	if = { limit = { NOT = { has_variable = election_threshold } }
-		set_variable = { election_threshold = 0.05 } #5% used as default
-	}
-}
-
 #only needed for elections
 update_majority_threshold = {
-		set_temp_variable = { sum = 0 }
-		for_each_loop = {
-			array = party_pop_elect_array
-			add_to_temp_variable = { sum = v }
-		}
-		set_variable = { majority_threshold = sum }
-		divide_variable = { majority_threshold = 2 }
+	set_temp_variable = { sum = 0 }
+	for_each_loop = {
+		array = party_pop_elect_array
+		add_to_temp_variable = { sum = v }
+	}
+	set_variable = { majority_threshold = sum }
+	divide_variable = { majority_threshold = 2 }
 }
 
 campaign_spending_initial = {

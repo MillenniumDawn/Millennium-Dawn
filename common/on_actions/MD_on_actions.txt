@@ -120,7 +120,7 @@ on_actions = {
 
 			# European Union Checks
 			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
-				if = { limit = { has_country_flag = EU_potential }
+				if = { limit = { is_EU_potential = yes }
 					if = { limit = { is_debug = yes }
 						log = "[GetDateText]: [ROOT.GetName]: on_weekly check_breach_of_EU_value"
 					}
@@ -391,7 +391,6 @@ on_actions = {
 					add_ideas = GAME_RULE_reduce_internal_factions_cost
 				}
 			}
-
 		}
 	}
 
@@ -455,8 +454,8 @@ on_actions = {
 								clear_array = global.EU_active_vote_rejecters
 								EU_emergency_vote_clear = yes
 								set_variable = { global.EUU_recently_failed_vote = -1 }
-								leaving_EU = yes
 							}
+							FROM = { leaving_EU = yes }
 						}
 
 						EUXXX = "[EUXXX_EP_agenda]"
@@ -475,7 +474,7 @@ on_actions = {
 					log = "[GetDateText]: [ROOT.GetName]: on_annex EUU_monitor change"
 					random_country = {
 						limit = {
-							has_country_flag = EU_potential
+							is_EU_potential = yes
 							is_ai = yes
 						}
 						add_ideas = EUU_monitor
@@ -594,9 +593,10 @@ on_actions = {
 
 	on_monthly = {
 		effect = {
-			# MD Custom On_Actions
+			# Triggers for one nation
 			if = { limit = { NOT = { has_global_flag = on_monthly_done } }
-				# Jan = 1, Feb = 2, March = 3, April = 4, May = 5,
+				# Jan = 1, Feb = 2, March = 3, April = 4, May = 5, June = 6, July = 7
+				# Aug = 8, Sep = 9, Oct = 10, Nov = 11, Dec = 12
 				if = { limit = { check_variable = { global.month < 12 } }
 					add_to_variable = { global.month = 1 }
 				}
@@ -863,7 +863,6 @@ on_actions = {
 					else = {
 						set_variable = { months_at_war = 0 }
 					}
-
 
 					# Check for Every Other Month
 					if = { limit = { check_variable = { every_other_month = 1 } }
@@ -1376,88 +1375,89 @@ on_actions = {
 						}
 					}
 
-					if = {
-						limit = {
-							is_ai = no
-							any_of = {
-								array = auto_influence_array
-								NOT = { check_variable = { v = 0 } }
-							}
-						}
-						set_variable = { nations_influenced = 0 }
-
-						set_temp_variable = { percent_change = global.percent_change_value }
-						set_temp_variable = { tag_index = THIS.id }
-						for_each_loop = {
-							array = auto_influence_array
-							index = i
-							value = v
-							if = {
-								limit = {
+					# Player only checks
+					if = { limit = { is_ai = no }
+						if = {
+							limit = {
+								any_of = {
+									array = auto_influence_array
 									NOT = { check_variable = { v = 0 } }
-									var:auto_influence_array^i = { var:tag_index = { NOT = { has_country_flag = spread_influence@PREV } } }
-									var:auto_influence_array^i = { exists = yes }
-								}
-								log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing [?var:auto_influence_array^i.GetName]"
-								set_temp_variable = { influence_target = v }
-								change_influence_percentage = yes
-								var:tag_index = {
-									add_to_variable = { nations_influenced = 1 }
 								}
 							}
-							else = {
-								log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing failed to influence on index [?i]"
-							}
+							set_variable = { nations_influenced = 0 }
 
-							# Clears Auto Influencer Who No Longer Exists
-							if = { limit = { var:auto_influence_array^i = { exists = no } }
-								log = "[GetDateText]: [ROOT.GetName]: [?var:auto_influence_array^i.GetName] var:auto_influence_array^i auto influencer removal request"
-								var:auto_influence_array^i = {
+							set_temp_variable = { percent_change = global.percent_change_value }
+							set_temp_variable = { tag_index = THIS.id }
+							for_each_loop = {
+								array = auto_influence_array
+								index = i
+								value = v
+								if = {
+									limit = {
+										NOT = { check_variable = { v = 0 } }
+										var:auto_influence_array^i = { var:tag_index = { NOT = { has_country_flag = spread_influence@PREV } } }
+										var:auto_influence_array^i = { exists = yes }
+									}
+									log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing [?var:auto_influence_array^i.GetName]"
+									set_temp_variable = { influence_target = v }
+									change_influence_percentage = yes
 									var:tag_index = {
-										remove_auto_influencer_request = yes
-										update_auto_influence_array = yes
-										update_dirty_influence_var = yes
+										add_to_variable = { nations_influenced = 1 }
 									}
 								}
-							}
-						}
-						for_each_loop = {
-							array = auto_influence_array
-							index = i
-							value = v
-							if = { limit = { check_variable = { i < nations_influenced } }
-								var:auto_influence_array^i = {
-									ROOT = {
-										if = { limit = { has_global_flag = GAME_RULE_spread_influence_14_days }
-											set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 }
-										}
-										if = { limit = { has_global_flag = GAME_RULE_spread_influence_60_days }
-											set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
-										}
-										if = { limit = { has_global_flag = GAME_RULE_spread_influence_30_days }
-											set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
-										}
-									}
+								else = {
+									log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing failed to influence on index [?i]"
 								}
-							}
-						}
-						update_dirty_influence_var = yes
 
-						if = { limit = { NOT = { has_country_flag = disable_auto_influence_notification } }
-							country_event = influence.54
+								# Clears Auto Influencer Who No Longer Exists
+								if = { limit = { var:auto_influence_array^i = { exists = no } }
+									log = "[GetDateText]: [ROOT.GetName]: [?var:auto_influence_array^i.GetName] var:auto_influence_array^i auto influencer removal request"
+									var:auto_influence_array^i = {
+										var:tag_index = {
+											remove_auto_influencer_request = yes
+											update_auto_influence_array = yes
+											update_dirty_influence_var = yes
+										}
+									}
+								}
+							}
+							for_each_loop = {
+								array = auto_influence_array
+								index = i
+								value = v
+								if = { limit = { check_variable = { i < nations_influenced } }
+									var:auto_influence_array^i = {
+										ROOT = {
+											if = { limit = { has_global_flag = GAME_RULE_spread_influence_14_days }
+												set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 }
+											}
+											if = { limit = { has_global_flag = GAME_RULE_spread_influence_60_days }
+												set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
+											}
+											if = { limit = { has_global_flag = GAME_RULE_spread_influence_30_days }
+												set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
+											}
+										}
+									}
+								}
+							}
+							update_dirty_influence_var = yes
+
+							if = { limit = { NOT = { has_country_flag = disable_auto_influence_notification } }
+								country_event = influence.54
+							}
 						}
-					}
-					if = {
-						limit = {
-							is_ai = no
-							has_political_power < -100
+						if = {
+							limit = {
+								has_political_power < -100
+							}
+							log = "[GetDateText]: [THIS.GetName]: Political Power is under -100. Clearing the auto-influence array"
+							clear_array = auto_influence_array
+							set_variable = { auto_influence_users = 0 }
+							resize_array = { array = auto_influence_array value = 0 size = 10 } # ONLY 4 MORE SLOTS ARE AVAILABLE
+							update_auto_influence_array = yes
+							update_dirty_influence_var = yes
 						}
-						log = "[GetDateText]: [THIS.GetName]: Political Power is under -100. Clearing the auto-influence array"
-						clear_array = auto_influence_array
-						set_variable = { auto_influence_users = 0 }
-						resize_array = { array = auto_influence_array value = 0 size = 10 } # ONLY 4 MORE SLOTS ARE AVAILABLE
-						update_auto_influence_array = yes
-						update_dirty_influence_var = yes
 					}
 
 					# Open Borders Impact
@@ -1472,7 +1472,6 @@ on_actions = {
 
 					calculate_expected_spending = yes
 					apply_protest_effects = yes
-					ai_weapon_dump = yes
 
 					# Monthly Foreign Influence Tick
 					if = { limit = { difficulty > 1 }
@@ -1570,6 +1569,79 @@ on_actions = {
 							country_event = { id = NATO.17 random_days = 7 }
 						}
 					}
+
+					# Arab Spring Monthly Tick
+					if = {
+						limit = {
+							is_arabic_nation = yes
+							NOT = { has_country_flag = AS_arab_spring_completed } # DO NOT INCREMENT IF YOU HAVE COMPLETED THE ARAB SPRING MINI GAME
+						}
+
+						increment_arab_spring_strength = yes
+					}
+
+					# Research Configuration for AI
+					if = { limit = { is_ai = yes }
+						ai_weapon_dump = yes
+
+						if = {
+							limit = {
+								check_variable = { next_slot_from_gdp < 10 }
+								NOT = { has_decision = gdp_gain_slot }
+								NOT = { has_country_flag = gdp_gain_industry_slot_flag }
+								check_variable = { gdp_total > GLOBAL.gdp_slot^next_slot_from_gdp }
+							}
+							set_country_flag = { flag = gdp_gain_industry_slot_flag value = 1 days = 240 }
+							activate_decision = gdp_gain_slot
+						}
+						if = {
+							limit = {
+								check_variable = { next_slot_from_gdp_c < 7 }
+								NOT = { has_decision = gdp_c_gain_slot }
+								NOT = { has_country_flag = gdp_gain_developmental_size_flag }
+								check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^next_slot_from_gdp_c }
+							}
+							set_country_flag = { flag = gdp_gain_developmental_size_flag value = 1 days = 240 }
+							activate_decision = gdp_c_gain_slot
+						}
+
+						if = {
+							limit = {
+								# with god of war on
+								has_game_rule = {
+									rule = rule_god_of_war
+									option = yes
+								}
+							}
+
+							ai_add_xp = yes
+
+							if = {
+								limit = {
+									# does not have player as ally
+									NOT = {
+										any_of = {
+											array = allies
+											is_ai = no
+										}
+									}
+									# Either WT > 30 OR Player is the enemy
+									OR = {
+										threat > 0.3
+										any_of = {
+											array = enemies
+											is_ai = no
+										}
+									}
+								}
+
+								ai_add_equipment = yes
+								ai_spawn_units = yes
+							}
+						}
+					}
+
+					productivity_growth_effect = yes
 				}
 
 				# Gulf Cooperation Council Unity Additions
@@ -1583,16 +1655,6 @@ on_actions = {
 					add_to_variable = { global.gcc_unity = 5 }
 				}
 				clamp_variable = { var = global.gcc_unity min = 0 max = 100 }
-
-				# Arab Spring Buildup Section
-				every_country = {
-					limit = {
-						is_arabic_nation = yes
-						NOT = { has_country_flag = AS_arab_spring_completed } # DO NOT INCREMENT IF YOU HAVE COMPLETED THE ARAB SPRING MINI GAME
-					}
-
-					increment_arab_spring_strength = yes
-				}
 
 				## This section is just for the instance where someone just need to have it started
 				if = { limit = { NOT = { has_global_flag = global_arab_spring_started } }
@@ -1735,107 +1797,6 @@ on_actions = {
 					log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
 				}
 
-			}
-			productivity_growth_effect = yes
-
-			# Research Configuration for AI
-			if = { limit = { is_ai = yes }
-				if = {
-					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^9 } }
-					set_temp_variable = { temp_research_slot = 9 }
-				}
-				else_if = {
-					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^8 } }
-					set_temp_variable = { temp_research_slot = 8 }
-				}
-				else_if = {
-					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^7 } }
-					set_temp_variable = { temp_research_slot = 7 }
-				}
-				else_if = {
-					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^6 } }
-					set_temp_variable = { temp_research_slot = 6 }
-				}
-				else_if = {
-					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^5 } }
-					set_temp_variable = { temp_research_slot = 5 }
-				}
-				else_if = {
-					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^4 } }
-					set_temp_variable = { temp_research_slot = 4 }
-				}
-				else_if = {
-					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^3 } }
-					set_temp_variable = { temp_research_slot = 3 }
-				}
-				else_if = {
-					limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^2 } }
-					set_temp_variable = { temp_research_slot = 2 }
-				}
-				else = {
-					set_temp_variable = { temp_research_slot = 1 }
-				}
-
-				if = {
-					limit = { check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^6 } }
-					add_to_temp_variable = { temp_research_slot = 6 }
-				}
-				else_if = {
-					limit = { check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^5 } }
-					add_to_temp_variable = { temp_research_slot = 5 }
-				}
-				else_if = {
-					limit = { check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^4 } }
-					add_to_temp_variable = { temp_research_slot = 4 }
-				}
-				else_if = {
-					limit = { check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^3 } }
-					add_to_temp_variable = { temp_research_slot = 3 }
-				}
-				else_if = {
-					limit = { check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^2 } }
-					add_to_temp_variable = { temp_research_slot = 2 }
-				}
-				else = {
-					add_to_temp_variable = { temp_research_slot = 1 }
-				}
-
-				set_research_slots = temp_research_slot
-
-				if = {
-					limit = {
-						# with god of war on
-						has_game_rule = {
-							rule = rule_god_of_war
-							option = yes
-						}
-					}
-
-					ai_add_xp = yes
-
-					if = {
-						limit = {
-							# does not have player as ally
-							NOT = {
-								any_of = {
-									array = allies
-									is_ai = no
-								}
-							}
-							# Either WT > 30 OR Player is the enemy
-							OR = {
-								threat > 0.3
-								any_of = {
-									array = enemies
-									is_ai = no
-								}
-							}
-						}
-
-						ai_add_equipment = yes
-						ai_spawn_units = yes
-					}
-				}
 			}
 		}
 	}

@@ -143,8 +143,8 @@
 
 	-- NMarket Related Defines
 	NDefines.NProduction.CIC_BANK_SPEED_BOOST_FACTOR = 0 -- 0.25
-	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.5 -- 2.0
-	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 45 -- 30
+	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.85 -- 2.0
+	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 40 -- 30
 	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- 15
 	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 0.90 -- 0.75
 	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1.10 -- 1.25
@@ -201,6 +201,16 @@
 	NDefines.NCountry.BASE_FUEL_GAIN_PER_OIL = 16						-- base amount of fuel gained hourly per excess oil
 	NDefines.NCountry.BASE_FUEL_GAIN = 0.1							-- base amount of fuel gained hourly, independent of excess oil
 	NDefines.NCountry.BASE_FUEL_CAPACITY = 750000
+	NDefines.NCountry.FEMALE_UNIT_LEADER_BASE_CHANCE = {
+		-- applies as a factor to female unit leader randomization
+		-- the values needs to be zero if you don't actually have random portraits
+		0.25, -- country leaders
+		0.05, -- army leaders
+		0.05, -- navy leaders
+		0.05, -- air leaders
+		0.25, -- operatives
+		0.25, -- scientists
+	}
 
 	NDefines.NProduction.MAX_EQUIPMENT_RESOURCES_NEED = 4
 	NDefines.NProduction.MAX_LINE_RESOURCE_PENALTY = 50
@@ -403,6 +413,8 @@
 	NDefines.NMilitary.NUKE_MAX_DAMAGE_PERCENT = 0.0					-- Minimum damage from nukes as a percentage of current strength/organisation
 	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
 
+	NDefines.NMilitary.BASE_FEMALE_DIVISIONAL_COMMANDER_CHANCE = 0.02 -- Vanilla sets this to 0
+
 	NDefines.NAir.THRUST_WEIGHT_AGILITY_FACTOR = 0 -- 0.5
 	NDefines.NAir.ACCIDENT_CHANCE_RELIABILITY_MULT = 0.2 -- vanilla 2.0 Multiplier to accident chance per point of missing reliability.
 	NDefines.NAir.ACCIDENT_EFFECT_MULT = 0.007 -- vanill 0.007
@@ -483,7 +495,7 @@
 	NDefines.NAir.BASE_UNIT_WEIGHT_IN_TRANSPORT_PLANES = 5 -- fuck this fucking define fuck you. 45 is vanilla
 	NDefines.NAir.MISSILE_LAUNCHER_CAPACITY = 50
 	NDefines.NAir.MISSILE_LAUNCHER_SLOTS = 10
-	NDefines.NAir.MAX_QUICK_WINGS_FOR_AIR_SUPERIORITY = 8 -- Thank you for the idea Ebby
+	NDefines.NAir.MAX_QUICK_WING_SELECTION = 8 -- Thank you for the idea Ebby
 	NDefines.NAir.MISSION_FUEL_COSTS = {
 		1.0, -- AIR_SUPERIORITY
 		1.0, -- CAS
@@ -712,6 +724,7 @@
 
 	NDefines.NNavy.UNDERWAY_REPLENISHMENT_RANGE_FACTOR = 0.42 -- bonus factor applied to task force's range when underway replenishment is activated (e.g. 0.2 means +20%) -- 0.42 base game
 	NDefines.NNavy.UNDERWAY_REPLENISHMENT_CONVOY_COST_PER_FUEL = 0.42 -- Cost in convoys for underway replenishment multiplied by max daily fuel consumption (rounded up) -- 0.42 base game
+	NDefines.NNavy.MAX_ADMIRAL_HEADQUARTER_ASSIGNMENTS = 8 -- Extended from 3 Headquarter options
 
 	-- NTrade Defines
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
@@ -722,7 +735,6 @@
 	NDefines.NAI.EMBARGO_WORLD_TENSION_THREAT_DIVISOR = 3.0
 
 	-- NAI Defines
-	-- BAI fix test
 	NDefines.NAI.ASSIGN_FRONT_TERRAIN_ATTACK_FACTOR = 6.0                   -- Importance of unit's terrain adjusted attack stat when assigning to a front
 	NDefines.NAI.ASSIGN_FRONT_TERRAIN_DEFENSE_FACTOR = 2.0                  -- Importance of unit's terrain adjusted defense stat when assigning to a front
 	NDefines.NAI.ASSIGN_FRONT_TERRAIN_MOVEMENT_FACTOR = 3.0                 -- Importance of unit's terrain adjusted movement stat when assigning to a front
@@ -737,7 +749,7 @@
 	NDefines.NAI.MAX_FACTORY_TO_TRADE_FOR_FUEL_IN_PEACE = 0.45 -- percentage of factories traded away during peace time
 	NDefines.NAI.BASE_RELUCTANCE = 40 -- 20
 	NDefines.NAI.DIPLOMATIC_ACTION_PROPOSE_SCORE = 25 -- 50
-	NDefines.NAI.DILPOMATIC_ACTION_DECLARE_WAR_WARGOAL_BASE = 75 -- 50
+	NDefines.NAI.DILPOMATIC_ACTION_DECLARE_WAR_WARGOAL_BASE = 75 -- 50 this is actually misspelled in the game defines. lol
 	NDefines.NAI.DIPLOMACY_IMPROVE_RELATION_COST_FACTOR = 10.0 -- 5
 	NDefines.NAI.DIPLOMACY_ACCEPT_VOLUNTEERS_BASE = 75 -- 50
 	NDefines.NAI.DIPLOMACY_ACCEPT_ATTACHE_BASE = 75 -- 50
@@ -1124,8 +1136,9 @@
 	NDefines.NDiplomacy.FACTION_POWER_EFFECTS_WEIGHT = 1			--The weight of the faction's goal status on the faction's power projection
 
 	NDefines.NFactions.FACTION_INFLUENCE_INDUSTRIAL_CAPACITY_FACTOR = 0.5 --how much the country's industry affects its influence
-	NDefines.NFactions.FACTION_INFLUENCE_LEADER_BONUS = 50			-- How much influence we are giving a faction member for being the leader, vanilla 200
+	NDefines.NFactions.FACTION_INFLUENCE_LEADER_BONUS = 150			-- How much influence we are giving a faction member for being the leader, vanilla 200
 	NDefines.NFactions.MAX_NUM_SHORT_TERM_GOALS = 2						-- Maximum number of short term goals a faction can have at any one time, vanilla 1
 	NDefines.NFactions.MAX_NUM_MEDIUM_TERM_GOALS = 1						-- Maximum number of medium term goals a faction can have at any one time
 	NDefines.NFactions.MAX_NUM_LONG_TERM_GOALS = 1						-- Maximum number of long term goals a faction can have at any one time
 	NDefines.NFactions.FACTION_INITIATIVE_CHANGE_RULE_COST = 3 -- vanilla 1
+	NDefines.NFactions.FACTION_SCIENTIST_CONTRIBUTION_VALUE = 1.5 -- vanilla is 3

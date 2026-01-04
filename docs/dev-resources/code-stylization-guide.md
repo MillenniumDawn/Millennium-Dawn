@@ -230,3 +230,113 @@ MOR.conservatism: "£MOR_NRI (RNI) - National Rally of Independents"
 MOR.conservatism_icon: "£MOR_NRI"
 MOR.conservatism_desc: "(Classic Liberalism) - National Rally of Independents (Arabic: Altajamue Alwataniu Lil'ahrar, French: Rassemblement National des Indépendants, Standard Moroccan Tamazight: Agraw Anamur y Insimann, RNI)\n\nNominally a social-democratic party, the party often cooperates with other parties with liberal orientation and is heavily described as pro-business and liberal. Formed in 1978 by then-Prime Minister Ahmed Osman the party has consistently remained a major player in Moroccan politics. Furthermore, the party is a national observer of the Liberal International and is affiliated with the Africa Liberal Network and the European People's Party."
 ```
+## Military-Industrial Organisations (MIO)
+
+### Guidelines on Companies
+- Use one company for multiple categories.
+- Add per category `5 OR 3 Task Capacity` if the company is not a national company but has factories in the country
+
+### Example MIO Company Structure
+```python
+CHI_norinco_manufacturer = {
+	allowed = { original_tag = CHI }
+	icon = GFX_idea_Norinco_CHI
+
+	task_capacity = 18
+
+	equipment_type = {
+		Inf_equipment
+		artillery_equipment
+		L_AT_Equipment
+		H_AT_Equipment
+		util_vehicle_equipment
+		mio_cat_all_armor
+		sam_missile_equipment
+		guided_missile_equipment
+	}
+
+	research_categories = {
+		CAT_infrastructure
+		CAT_excavation_tech
+		CAT_fuel_oil
+		CAT_missile
+		CAT_armor
+		CAT_artillery
+		CAT_inf
+	}
+
+	tree_header_text = {
+		text = "Infantry Equipment & Mobility"
+		x = 1
+	}
+	tree_header_text = {
+		text = "Armored Vehicles & AFV Systems"
+		x = 5
+	}
+	tree_header_text = {
+		text = "Missiles, Air Defence & Drones"
+		x = 8
+	}
+
+	initial_trait = {
+		name = CHI_norinco_company_trait
+
+		equipment_bonus = {
+			reliability = 0.03
+			build_cost_ic = -0.03
+		}
+
+		organization_modifier = {
+			military_industrial_organization_research_bonus = 0.08
+			military_industrial_organization_funds_gain = 0.02
+		}
+	}
+}
+```
+
+### Guidelines on Traits
+- The maximum grid is `y = 0 - 9` Don't forget this when you are using relative position.
+
+### Example MIO Trait Structure
+```python
+trait = {
+    token = CHI_norinco_trait_suppressed_pdw_systems
+    name = CHI_norinco_trait_suppressed_pdw_systems
+    icon = GFX_generic_mio_trait_icon_smallarms_attack
+
+    relative_position_id = CHI_norinco_trait_field_proven_rifle_design
+    position = { x = -1 y = 1 }
+    all_parents = { CHI_norinco_trait_field_proven_rifle_design }
+
+    limit_to_equipment_type = {
+        Inf_equipment
+    }
+
+    equipment_bonus = {
+        soft_attack = 0.06
+        reliability = 0.02
+    }
+
+    on_complete = {
+        if = {
+            limit = {
+                check_variable = { free_trait_picks > 0 }
+            }
+            add_to_variable = { free_trait_picks = -1 }
+        }
+        else = {
+            FROM = {
+                small_expenditure = yes
+            }
+        }
+    }
+
+    ai_will_do = {
+        base = 10
+        modifier = {
+            factor = 0
+            check_variable = { FROM.interest_rate > 8 }
+        }
+    }
+}
+```

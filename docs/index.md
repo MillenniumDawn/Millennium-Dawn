@@ -1,10 +1,10 @@
 ---
 layout: default
-title: "Millennium Dawn"
-description: "Documentation for the Millennium Dawn mod for Hearts of Iron IV"
+title: "Millennium Dawn: A Modern Day Mod"
+description: "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV."
 ---
 
-![New2](uploads/main-menu.png) ![Introduction](uploads/Introduction.png)
+![New2](uploads/main-menu-2.png) ![Introduction](uploads/Introduction.png)
 
 With the dawn of a new millennium, a new chapter in human history will be written. Globalization continues to change the lives of countless billions while rising extremism is showing signs of igniting the fires of conflict. New powers begin to emerge, and not all believe their place in the global order, or that of some competitors is warranted. A struggle will soon begin, and it will likely change everything. Will you lead your Nation to prosperity and dominance in the decades ahead, or will your Nation fall victim to the defining moments of history?
 
@@ -16,7 +16,9 @@ Further, it offers a new and unique economic system, a new political system, nat
 
 ## Welcome to the Millennium Dawn Wiki!
 
-**Current Expected Checksum:** fc5c
+**Current Expected Version:** v1.12.3b
+
+**Current Expected Checksum:** a842
 
 **The following Wiki is currently a work in progress. However, we will do our best to get meaningful content updated and placed on this page.**
 
@@ -47,7 +49,7 @@ The development team requires that you are at least 16 years of age and own a le
 - [Economy Tutorial](/Millennium-Dawn/player-tutorials/economy-tutorial)
 - [European Union Tutorial](/Millennium-Dawn/player-tutorials/eu-tutorial)
 - [Millennium Dawn Tutorials](https://www.youtube.com/watch?v=9G6lYnP0knI&list=PL36TqZI0G592x3sYphwPHuMvobA6si543)
-- [List of Playable Countries](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/List-of-Countries)
+- [List of Playable Countries](https://millenniumdawn.github.io/Millennium-Dawn/countries-list/)
 
 
 ### Developer/Team Resources
@@ -64,12 +66,21 @@ The development team requires that you are at least 16 years of age and own a le
 - [Localization Tool](/Millennium-Dawn/dev-resources/localization-tool)
 - [Logging Tool](/Millennium-Dawn/dev-resources/logging-tool)
 
+
+### Submods
+
+**DISCLAIMER** Any issues with a submod should be first reported to the submod you are playing with. Even something as simple as a graphics mod could break something in Millennium Dawn. Please try without submods if you encounter any issues.
+
+For a list of Known Submods follow this [link](misc/known-submods).
+
 ## **Credits**
 
 A full list of credits for all of the models that are currently in use in-game: [Model Credit List](https://docs.google.com/spreadsheets/d/1ogWBBn-qooyQnjh-Tztnb2GDYhjCbAOtq_hpgwWDp58/edit#gid=0)
 
 Special thanks to Cyrus Jackson for sharing his models and [Cold War: Iron Curtain](https://steamcommunity.com/sharedfiles/filedetails/?id=1458561226).
+
 Special thanks to [Kasirreich](https://steamcommunity.com/sharedfiles/filedetails/?id=1521695605) team for the focus and ideas gfx sharing!
+
 Special thanks to [KaiserRedux](https://steamcommunity.com/sharedfiles/filedetails/?id=2076426030) team for the focus and ideas gfx sharing!
 
 Furthermore, a non-exhaustive list can be found here at at the [Authors](misc/authors)
