@@ -13,9 +13,6 @@ calculate_energy_use = {
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = energy_dynamic_modifier } } } add_dynamic_modifier = { modifier = energy_dynamic_modifier } }
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = no_fuel_penalties_modifier } } } add_dynamic_modifier = { modifier = no_fuel_penalties_modifier } }
 
-	# No one should be load sharing at the start of the game but accounts for it in the next tick
-	calculate_energy_load_sharing = yes
-
 	#set temp vars for each multiplier and add 1 to the multipliers (which are percentages).
 	#IE: if energy_use_multiplier is modified to 40% (.4) it will be treated as a 140% (1.4) multiplication on its correlating modifier
 	# Energy Use Multiplier
@@ -297,6 +294,9 @@ calculate_energy_use = {
 
 	set_variable = { energy_difference_variable = energy_sum }
 	subtract_from_variable = { energy_difference_variable = energy_consumption }
+	if = { limit = { has_variable = energy_load_sharing_gain_var }
+		subtract_from_variable = { energy_difference_variable = energy_load_sharing_gain_var }
+	}
 
 	# Caps penalty for unfulfilled at 50%, and multiples 100 to get a whole number to reduce to penalty scale
 	set_variable = { unfulfilled_energy_demand_dynmod_var = unfulfilled_energy_demand_var }
@@ -338,17 +338,14 @@ calculate_energy_use = {
 # Effect: calculate_energy_load_sharing
 # Purpose: Calculates the Energy Load Sharing
 # TODO: This proof of concept works with the intention that you are 1 nation sharing to multiple and not a nation taking multiple nations
+# QUESTION: Do we event actually care? I think this is fine for a game balance you can only load share your grid as a reciever to one nation but you can load share to multiple people
 # TODO: Needs a scripted diplomatic action
 # TODO: Add some type of explanation of consumption information that you are sharing x to x
-setup_test_scenario = {
-	add_to_array = { energy_load_sharing_nations = BEL.id }
-}
-
 calculate_energy_load_sharing = {
 	if = { limit = { NOT = { check_variable = { energy_load_sharing_nations^0 = 0 } } }
+		# Reset the amount of energy load shared to 0
 		set_variable = { energy_load_sharing_use_var = 0 }
 		set_variable = { energy_load_sharing_gain_var = 0 }
-
 		set_temp_variable = { needed_energy_for_nations = 0 }
 		for_each_scope_loop = {
 			array = energy_load_sharing_nations
@@ -358,7 +355,7 @@ calculate_energy_load_sharing = {
 		}
 
 		# Calculate the Energy Shared
-		# Assume that if you are sharing energy that you have to maintain more energy otherwise the loading sharing is gotta stop
+		# Assume that if you are sharing energy that you have to maintain more energy otherwise the loading sharing has gotta stop
 		if = { limit = { check_variable = { energy_difference_variable > needed_energy_for_nations } }
 			resize_array = { array = energy_load_sharing_nations_value size = energy_load_sharing_nations^num }
 
@@ -372,13 +369,11 @@ calculate_energy_load_sharing = {
 					force_update_dynamic_modifier = yes
 				}
 			}
-
 			set_temp_variable = { total_energy_required_to_share = 0 }
 			for_each_loop = {
 				array = energy_load_sharing_nations_value
 				add_to_temp_variable = { PREV.total_energy_required_to_share = v }
 			}
-
 			set_variable = { energy_load_sharing_use_var = total_energy_required_to_share }
 			multiply_variable = { energy_load_sharing_use_var = -1 }
 		}
@@ -388,8 +383,13 @@ calculate_energy_load_sharing = {
 				set_variable = { energy_load_sharing_gain_var = 0 }
 			}
 		}
-
 		force_update_dynamic_modifier = yes
+	}
+	else = {
+		# Garbage Collection - Only use these when actually sharing energy
+		clear_variable = energy_load_sharing_use_var
+		clear_variable = energy_load_sharing_gain_var
+		clear_variable = energy_load_sharing_income_var
 	}
 }
 
