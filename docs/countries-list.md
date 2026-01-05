@@ -23,7 +23,7 @@ The following countries are playable with unique focus trees:
 - Bulgaria
 - [Canada](/Millennium-Dawn/national-content/Canada)
 - [China](/Millennium-Dawn/national-content/China)
-- Comoros
+- [Comoros](/Millennium-Dawn/national-content/Comoros)
 - Czechia
 - Cuba
 - [Denmark](/Millennium-Dawn/national-content/Denmark)
