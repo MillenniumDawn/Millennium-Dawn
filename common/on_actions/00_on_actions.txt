@@ -1139,28 +1139,29 @@ on_actions = {
 					}
 				}
 
-				if = {
-					limit = { is_in_array = { ROOT.energy_load_sharing_nations = FROM.id } }
-					clr_country_flag = energy_load_sharing_recipient
-					ROOT = {
-						remove_from_array = { energy_load_sharing_nations = FROM.id }
-						calculate_energy_load_sharing = yes
-						ingame_update_setup = yes
-					}
-					ingame_update_setup = yes
-				}
-				if = {
-					limit = { is_in_array = { FROM.energy_load_sharing_nations = FROM.id } }
-					FROM = {
-						remove_from_array = { energy_load_sharing_nations = FROM.id }
-						calculate_energy_load_sharing = yes
-						ingame_update_setup = yes
-					}
-					ROOT = {
-						clr_country_flag = energy_load_sharing_recipient
-						ingame_update_setup = yes
-					}
-				}
+				# FIXME: This crashes the game but is probably needed so you don't share to an enemy at war with you
+				# if = {
+				# 	limit = { is_in_array = { ROOT.energy_load_sharing_nations = FROM.id } }
+				# 	clr_country_flag = energy_load_sharing_recipient
+				# 	ROOT = {
+				# 		remove_from_array = { energy_load_sharing_nations = FROM.id }
+				# 		calculate_energy_load_sharing = yes
+				# 		ingame_update_setup = yes
+				# 	}
+				# 	ingame_update_setup = yes
+				# }
+				# if = {
+				# 	limit = { is_in_array = { FROM.energy_load_sharing_nations = FROM.id } }
+				# 	FROM = {
+				# 		remove_from_array = { energy_load_sharing_nations = FROM.id }
+				# 		calculate_energy_load_sharing = yes
+				# 		ingame_update_setup = yes
+				# 	}
+				# 	ROOT = {
+				# 		clr_country_flag = energy_load_sharing_recipient
+				# 		ingame_update_setup = yes
+				# 	}
+				# }
 
 				# Civil War Content
 				if = {
@@ -3367,28 +3368,27 @@ on_actions = {
 					add_opinion_modifier = { target = ARG modifier = Major_Non_NATO_Ally }
 					add_opinion_modifier = { target = USA modifier = Major_Non_NATO_Ally }
 				}
-			}
 
-			# Utility Tag
-			random_country = {
-				missile_ui_update = yes
+				if = { limit = { NOT = { has_global_flag = startup_configuration } }
+					missile_ui_update = yes
+					on_startup_euu_action = yes
+					on_startup_international = yes
 
-				# Configure Starting European Union Values
-				on_startup_euu_action = yes
-
-				on_startup_international = yes
-
-				set_power_ranking_ideas_for_every_country = yes
-
-				# Starting MIO Sizes
-				every_country = {
-					calculate_starting_mio_size = yes
+					set_global_flag = startup_configuration
 				}
 			}
 
-			log = "[GetDateText]: [This.GetName]: on_startup init completed"
-		}
+			random_country = {
+				set_power_ranking_ideas_for_every_country = yes
 
+				calculate_starting_mio_size = yes
+			}
+
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [This.GetName]: on_startup init completed"
+			}
+			clr_global_flag = startup_configuration
+		}
 	}
 
 	on_government_change = {
