@@ -1826,6 +1826,14 @@ calculate_additional_income_rate = {
 		CZE_HUN_gdp_stolen_calculation = yes
 		add_to_variable = { additional_income_rate = CZE_HUN_gain_income_trade }
 	}
+
+	# Energy Load Sharing Income
+	if = { limit = { NOT = { check_variable = { energy_load_sharing_nations^0 = 0 } } }
+		set_temp_variable = { income_from_gw_sold = energy_load_sharing_use_var }
+		multiply_temp_variable = { income_from_gw_sold = global.price_per_gw_for_els } # Fixed GW for testing - #TODO: Game rule this for players to configure
+		set_variable = { energy_load_sharing_income_var = income_from_gw_sold }
+		add_to_variable = { additional_income_rate = energy_load_sharing_income_var }
+	}
 }
 #Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
 calculate_interest_rate = {
@@ -3614,6 +3622,14 @@ calculate_additional_expense_rate = {
 			multiply_variable = { CZE_HUN_stolen_income = 0.1 }
 			add_to_variable = { additional_expenses_rate = CZE_HUN_stolen_income }
 		}
+	}
+
+	# Energy Load Sharing
+	if = { limit = { has_country_flag = energy_load_sharing_recipient }
+		set_temp_variable = { payment_from_gw_bought = energy_load_sharing_gain_var }
+		multiply_temp_variable = { payment_from_gw_bought = global.price_per_gw_for_els } # Fixed GW for testing - #TODO: Game rule this for players to configure
+		set_variable = { energy_load_sharing_payment_var = payment_from_gw_bought }
+		add_to_variable = { additional_expenses_rate = energy_load_sharing_payment_var }
 	}
 }
 
