@@ -78,7 +78,7 @@ The mod introduces several new mechanics:
 
 Once you're comfortable with the basics:
 
-- Explore the [Guides](/guides/) section for detailed strategies
+- Explore the [Tutorials](/tutorials/) section for detailed strategies
 - Check the [Changelog](/changelog/) for the latest updates
 - Join the community to share your experiences
 
