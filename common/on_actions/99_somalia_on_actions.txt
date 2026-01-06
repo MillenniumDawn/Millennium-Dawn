@@ -1,0 +1,79 @@
+on_actions = {
+	#Banked Effect for ICU attacked and stuff and puntland puppet state
+	on_state_control_changed = {
+		effect = {
+			if = {
+				limit = {
+					FROM.FROM = { state = 557 }
+					NOT = { has_global_flag = PER_iraqi_falling }
+				}
+				if = {
+					limit = {
+						original_tag = SOM
+					}
+					PER = { set_global_flag = PER_iraqi_falling }
+					ISI = {
+						country_event = { id = axis_of_resistance_events.29 hours = 0 }
+						set_country_flag = IRQ_anbar_tribal_council_trigger
+					}
+				}
+			}
+		}
+	}
+	#SNA & SOM Clean Up
+	on_capitulation = {
+		effect = {
+			if = {
+				limit = {
+					NOT = { has_global_flag = SOM_Mogadishu_cleanup }
+				}
+				if = {
+					limit = {
+						ROOT = { original_tag = SOM }
+						FROM = { original_tag = SNA }
+					}
+					SNA = {
+						country_event = { id = somalia.8 days = 15 }
+						set_global_flag = SOM_Mogadishu_cleanup
+						set_country_flag = Somalia_mantle_id
+						annex_country = {
+							target = SOM
+						}
+					}
+					SOM = {
+						every_unit_leader = {
+							set_nationality = SNA
+						}
+						every_core_state = { remove_core_of = SOM }
+					}
+					country_event = { id = somalia.4 days = 70 random_days = 20 }
+				}
+				if = {
+					limit = {
+						ROOT = { original_tag = SNA }
+						FROM = { original_tag = SOM }
+					}
+					SOM = {
+						country_event = { id = somalia.8 days = 15 }
+						set_global_flag = SOM_Mogadishu_cleanup
+						set_country_flag = Somalia_mantle_id
+						for_each_scope_loop = {
+							array = SOM.core_states
+							remove_core_of = SOM
+						}
+						annex_country = {
+							target = SNA
+						}
+					}
+					SNA = {
+						every_unit_leader = {
+							set_nationality = SOM
+						}
+						every_core_state = { remove_core_of = SNA }
+					}
+				}
+			}
+			
+		}
+	}
+}
