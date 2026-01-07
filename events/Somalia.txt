@@ -1098,7 +1098,7 @@ country_event = {
 
 # Moving the Capital https://en.wikipedia.org/wiki/Baidoa
 country_event = {
-	id = somalia.15 
+	id = somalia.15
 	title = somalia.15.t
 	desc = somalia.15.d
 	picture = GFX_politics_negotiations # TODO: Replace with better image
@@ -1106,15 +1106,36 @@ country_event = {
 	trigger = {
 		NOT = { TFG = { has_war_with = SHB } }
 		NOT = { TFG = { has_government = fascism } }
+		OR = {
+			240 = { is_controlled_by = TFG is_capital = no }
+			584 = { is_controlled_by = TFG is_capital = no }
+		}
 	}
 	#Jowhar
 	option = {
 		name = somalia.15.a
+		trigger = {
+			240 = { is_controlled_by = TFG is_capital = no }
+		}
+		set_capital = { state = 240 }
 		log = "[GetDateText]: [This.GetName]: somalia.15.a executed"
 	}
 	#Baidoa
 	option = {
 		name = somalia.15.b
+		trigger = {
+			584 = { is_controlled_by = TFG is_capital = no }
+		}
+		set_capital = { state = 584 }
+		log = "[GetDateText]: [This.GetName]: somalia.15.b executed"
+	}
+	#Mogadishu
+	option = {
+		name = somalia.15.c
+		trigger = {
+			593 = { is_controlled_by = TFG is_capital = no }
+		}
+		set_capital = { state = 593 }
 		log = "[GetDateText]: [This.GetName]: somalia.15.b executed"
 	}
 }
@@ -1129,15 +1150,26 @@ country_event = {
 		NOT = { TFG = { has_war_with = SHB } }
 		NOT = { TFG = { has_government = fascism } }
 	}
+	immediate = {
+		hidden_effect = { 
+			country_event = { id = somalia.21 days = 40 }
+		}
+	}
 	#This in Troubling
 	option = {
 		name = somalia.20.a
 		log = "[GetDateText]: [This.GetName]: somalia.20.a executed"
+		set_temp_variable = { party_index = 12 }
+		set_temp_variable = { party_popularity_increase = 0.04 }
+		add_relative_party_popularity = yes
 	}
 	#Send the Warlords After them.
 	option = {
 		name = somalia.20.b
 		log = "[GetDateText]: [This.GetName]: somalia.20.a executed"
+		set_temp_variable = { party_index = 11 }
+		set_temp_variable = { party_popularity_increase = 0.04 }
+		add_relative_party_popularity = yes
 	}
 }
 
@@ -1152,21 +1184,134 @@ country_event = {
 		NOT = { TFG = { has_war_with = SHB } }
 		NOT = { TFG = { has_government = fascism } }
 	}
+	immediate = {
+		hidden_effect = {
+			create_dynamic_country = {
+				original_tag = SNA
+				set_country_flag = Somalia_ARPCT
+				copy_tag = SNA
+				set_cosmetic_tag = SOM_ARPCT
+				retire_country_leader = yes
+				set_popularities = {
+					democratic = 70
+					neutrality = 30
+				}
+				set_politics = {
+					ruling_party = democratic
+					last_election = "1997.6.8"
+					election_frequency = 48
+					elections_allowed = no
+				}
+				start_politics_input = yes
+				set_variable = { party_pop_array^0 = 0.7 }
+				set_variable = { party_pop_array^14 = 0.3 }
+				add_to_array = { ruling_party = 0 }
+				startup_politics = yes
+				init_influence = yes
+				set_variable = { domestic_influence_amount = 27 }
+				add_to_array = { influence_array = USA.id }
+				add_to_array = { influence_array_val = 57 }
+				add_to_array = { influence_array = SOM.15 }
+				add_to_array = { influence_array_val = 17 }
+				add_to_array = { influence_array = SNA.12 }
+				add_to_array = { influence_array_val = 14 }
+				startup_influence = yes
+			}
+			WL1 = {
+				ingame_startup_nations_effect = yes
+				division_template = {
+					name = "ARPCT"
+					regiments = {
+						Mot_Militia_Bat = { x = 0 y = 0 }
+						Mot_Militia_Bat = { x = 0 y = 1 }
+						Special_Forces = { x = 1 y = 0 }
+						Militia_Bat = { x = 1 y = 1 }
+					}
+					priority = 2
+				}
+				transfer_state = 593
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"ARPCT\" division_template = \"ARPCT\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 1
+						owner = WL1
+					}
+				}
+				SOM = {
+					SOM_Mohamed_Qanyare_Afrah = {
+						set_nationality = WL1
+					}
+				}
+				SOM_Mohamed_Qanyare_Afrah = {
+					set_nationality = WL1
+					add_corps_commander_role = {
+						traits = { combined_arms_expert }
+						skill = 2
+						attack_skill = 2
+						defense_skill = 1
+						planning_skill = 4
+						logistics_skill = 2
+					}
+				}
+				create_country_leader = {
+					name = "Mohamed Qanyare Afrah"
+					picture = "gfx/leaders/SOM/SOM_Mohamed_Qanyare_Afrah.dds"
+					ideology = Western_Autocracy
+					traits = {
+						western_Western_Autocracy
+						ruthless
+						Police_Corporal
+						CIA_linked_leader
+					}
+				}
+			}
+		}
+	}
 	
 	#An Arm to Defeat the ICU Sets owner of the capital
 	option = {
 		name = somalia.21.a
 		log = "[GetDateText]: [This.GetName]: somalia.21.a executed"
+		hidden_effect = {
+			country_event = { id = somalia.26 days = 40 }
+			country_event = { id = somalia.24 days = 60 }
+		}
 	}
 	#We Wont Allow American Influnce here
 	option = {
 		name = somalia.21.b
 		log = "[GetDateText]: [This.GetName]: somalia.21.b executed"
+		start_border_war = {
+			change_state_after_war = no
+			attacker = {
+				state = 240
+				num_provinces = 1
+				on_win = somalia.24
+				on_lose = somalia.23
+			}
+			defender = {
+				state = 593
+				num_provinces = 1
+			}
+		}
+		hidden_effect = { 
+			country_event = { id = somalia.26 days = 40 }
+		}
 	}
 	#Who's Are CIA contect we would like some money as well
 	option = {
 		name = somalia.21.c
 		log = "[GetDateText]: [This.GetName]: somalia.21.b executed"
+		set_temp_variable = { treasury_change = 15.0 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = USA.id }
+		set_temp_variable = { influence_target = ROOT.id }
+		change_influence_percentage = yes
+		hidden_effect = {
+			country_event = { id = somalia.26 days = 40 }
+			country_event = { id = somalia.24 days = 60 }
+		}
 	}
 }
 
@@ -1184,26 +1329,8 @@ country_event = {
 	
 	option = {
 		name = somalia.26.a
+		add_political_power = -60
 		log = "[GetDateText]: [This.GetName]: somalia.26.a executed"
-	}
-}
-
-#Warlord Alliace takes over Mogisduiu somalia.21.b starts Border Conflict
-#Note A dynamic TAG
-country_event = {
-	id = somalia.22
-	title = somalia.22.t
-	desc = somalia.22.d
-	picture = GFX_politics_negotiations # TODO: Replace with better image
-	is_triggered_only = yes
-	trigger = {
-		NOT = { TFG = { has_war_with = SHB } }
-		NOT = { TFG = { has_government = fascism } }
-	}
-	
-	option = {
-		name = somalia.22.a
-		log = "[GetDateText]: [This.GetName]: somalia.22.a executed"
 	}
 }
 
@@ -1221,6 +1348,10 @@ country_event = {
 	
 	option = {
 		name = somalia.23.a
+		add_war_support = -0.10
+		hidden_effect = {
+			country_event = { id = somalia.24 days = 30 }
+		}
 		log = "[GetDateText]: [This.GetName]: somalia.23.a executed"
 	}
 }
@@ -1228,10 +1359,75 @@ country_event = {
 #ICU Pushes Back agaist the Warlords
 #Warlord Alliace Deafed in Mogisduiu
 country_event = {
-	id = somalia.24
+	id = somalia.24 #needs balace and flavour events 
 	title = somalia.24.t
 	desc = somalia.24.d
 	picture = GFX_politics_negotiations # TODO: Replace with better image
+	immediate = {
+		hidden_effect = {
+			ROOT = { every_core_state = { add_core_of  = SHB }}
+		}
+		SHB = {
+			set_global_flag = SOM_the_islamic_courts_union_offensive
+			hidden_effect = { set_cosmetic_tag = SHB_ICU }
+			declare_war_on = {
+				target = WL1
+				type = civil_war
+			}
+			declare_war_on = {
+				target = SOM
+				type = civil_war
+			}
+			hidden_effect = {
+				transfer_state = 593
+				division_template = {
+					name = "Milishia ICU"
+					regiments = {
+						Mot_Militia_Bat = { x = 0 y = 0 }
+						L_Inf_Bat = { x = 1 y = 0 }
+					}
+					priority = 2
+				}
+				division_template = {
+					name = "Milishia Al-Shabaab"
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+					}
+					priority = 2
+				}
+				division_template = {
+					name = "Milishia"
+					regiments = {
+						Mot_Militia_Bat = { x = 0 y = 0 }
+						Mot_Militia_Bat = { x = 0 y = 1 }
+					}
+					priority = 2
+				}
+				593 = {
+					create_unit = {
+						division = "name = \"Milishia ICU\" division_template = \"Milishia ICU\"start_experience_factor = 0.1 start_equipment_factor = 0.9"
+						count = 7
+						owner = SHB
+					}
+					create_unit = {
+						division = "name = \"Milishia\" division_template = \"Milishia\"start_experience_factor = 0.2 start_equipment_factor = 0.9"
+						count = 3
+						owner = SHB
+					}
+					create_unit = {
+						division = "name = \"Milishia Al-Shabaab\" division_template = \"Milishia Al-Shabaab\"start_experience_factor = 0.2 start_equipment_factor = 0.9"
+						count = 2
+						owner = SHB
+					}
+				}
+				declare_war_on = {
+					target = SOM
+					type = civil_war
+				}
+			}
+		}
+	}
 	is_triggered_only = yes
 	trigger = {
 		NOT = { TFG = { has_war_with = SHB } }
@@ -1240,30 +1436,16 @@ country_event = {
 	
 	option = {
 		name = somalia.24.a
+		add_political_power = -10
 		log = "[GetDateText]: [This.GetName]: somalia.24.a executed"
 	}
-}
-#Khartoum Talks
-country_event = {
-	id = somalia.28
-	title = somalia.28.t
-	desc = somalia.28.d
-	picture = GFX_politics_negotiations # TODO: Replace with better image
-	is_triggered_only = yes
-	trigger = {
-		NOT = { TFG = { has_war_with = SHB } }
-		NOT = { TFG = { has_government = fascism } }
-	}
-	
-	#Set of for the Talks
 	option = {
-		name = somalia.28.a
-		log = "[GetDateText]: [This.GetName]: somalia.27.a executed"
-	}
-	#Abandon the Talks
-	option = {
-		name = somalia.28.a
-		log = "[GetDateText]: [This.GetName]: somalia.27.a executed"
+		name = somalia.24.b
+		custom_effect_tooltip = SOM_Khartoum_Talks_TT
+		hidden_effect = {
+			country_event = { id = somalia.29 days = 40 }
+		}
+		log = "[GetDateText]: [This.GetName]: somalia.24.a executed"
 	}
 }
 #Ogaden National Liberation Front Shoot down Ethiopian helicopter
@@ -1281,6 +1463,7 @@ country_event = {
 	#ICU Abandons Talks
 	option = {
 		name = somalia.29.a
+		add_political_power = -75
 		log = "[GetDateText]: [This.GetName]: somalia.29.a executed"
 	}
 }
