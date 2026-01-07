@@ -3,7 +3,9 @@ microchip_startup = {
 	set_variable = { country_composite_production_var = 0 }
 	set_variable = { country_base_reducer_microchips_tracker_var = 0 }
 	set_variable = { country_base_reducer_composites_tracker_var = 0 }
+	set_variable = { country_base_civilian_microchip_consumption_var = 0 }
 	add_dynamic_modifier = { modifier = advanced_production_modifier }
+	add_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
 }
 
 #this auto-adds composites for nations that need only one building. This needs more work for nations that start w/ multiples
@@ -204,4 +206,42 @@ composite_update = {
 		#There should be no reduction here, because we have a surplus of all inputs
 		set_variable = { country_composite_production_var = 0 }
 	}
+}
+
+civilian_microchip_consumption = {
+	if = {
+		limit = {
+			NOT = {
+				has_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
+			}
+		}
+		add_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
+	}
+
+	#Set the basic population consumption numbers. This is based off the population total and GPD/C
+	#Higher GDP/C will increase the multipler applied to the population
+	#IE, high pop but low GDP/C should result in a lower consumption amount than a low pop, high GDP/C nation
+	#Since higher GDP/C = higher developed = higher population technology demand
+	set_temp_variable = { base_chip_consumption = population_total }
+	divide_temp_variable = { base_chip_consumption = 1000 }
+	multiply_temp_variable = { base_chip_consumption = gdp_per_capita }
+	divide_temp_variable = { base_chip_consumption = 4 }
+
+	set_temp_variable = { chip_mult_amount = base_chip_consumption }
+	multiply_temp_variable = { chip_mult_amount = modifier@civilian_chip_consumption_modifier }
+	add_to_temp_variable = { base_chip_consumption = chip_mult_amount }
+
+	set_temp_variable = { office_base_amount = office_park_total }
+	multiply_temp_variable = { office_base_amount = offices_manpower_fulfillment }
+	divide_temp_variable = { office_base_amount = 4 }
+	set_temp_variable = { office_chip_mult = office_base_amount }
+	multiply_temp_variable = { office_chip_mult = modifier@industry_chip_consumption_modifier }
+
+	add_to_temp_variable = { office_base_amount = office_chip_mult }
+
+	add_to_temp_variable = { base_chip_consumption = office_base_amount }
+
+	round_temp_variable = base_chip_consumption
+
+	set_variable = { country_base_civilian_microchip_consumption_var = base_chip_consumption }
 }
