@@ -201,6 +201,8 @@
 	NDefines.NCountry.BASE_FUEL_GAIN_PER_OIL = 16						-- base amount of fuel gained hourly per excess oil
 	NDefines.NCountry.BASE_FUEL_GAIN = 0.1							-- base amount of fuel gained hourly, independent of excess oil
 	NDefines.NCountry.BASE_FUEL_CAPACITY = 750000
+	NDefines.NCountry.POLITICAL_POWER_LOWER_CAP = -300
+	NDefines.NCountry.POLITICAL_POWER_UPPER_CAP = 2500
 	NDefines.NCountry.FEMALE_UNIT_LEADER_BASE_CHANCE = {
 		-- applies as a factor to female unit leader randomization
 		-- the values needs to be zero if you don't actually have random portraits
@@ -1141,4 +1143,6 @@
 	NDefines.NFactions.MAX_NUM_MEDIUM_TERM_GOALS = 1						-- Maximum number of medium term goals a faction can have at any one time
 	NDefines.NFactions.MAX_NUM_LONG_TERM_GOALS = 1						-- Maximum number of long term goals a faction can have at any one time
 	NDefines.NFactions.FACTION_INITIATIVE_CHANGE_RULE_COST = 3 -- vanilla 1
-	NDefines.NFactions.FACTION_SCIENTIST_CONTRIBUTION_VALUE = 1.5 -- vanilla is 3
+	NDefines.NFactions.FACTION_SCIENTIST_CONTRIBUTION_VALUE = 1.25 -- vanilla is 3
+	NDefines.NFactions.FACTION_TAKE_OVER_RELUCTANCE_VERSUS_HUMAN_INFLUENCE = 2.0
+	NDefines.NFactions.FACTION_ASSIGN_SCIENTIST_COST = 50
