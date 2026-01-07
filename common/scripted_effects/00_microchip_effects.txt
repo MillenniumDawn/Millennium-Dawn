@@ -4,8 +4,23 @@ microchip_startup = {
 	set_variable = { country_base_reducer_microchips_tracker_var = 0 }
 	set_variable = { country_base_reducer_composites_tracker_var = 0 }
 	set_variable = { country_base_civilian_microchip_consumption_var = 0 }
-	add_dynamic_modifier = { modifier = advanced_production_modifier }
-	add_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
+	set_variable = { country_base_microchip_civ_consumption_stab_var = 0 }
+	if = {
+		limit = {
+			NOT = {
+				has_dynamic_modifier = { modifier = advanced_production_modifier }
+			}
+		}
+		add_dynamic_modifier = { modifier = advanced_production_modifier }
+	}
+	if = {
+		limit = {
+			NOT = {
+				has_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
+			}
+		}
+		add_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
+	}
 }
 
 #this auto-adds composites for nations that need only one building. This needs more work for nations that start w/ multiples
@@ -68,9 +83,6 @@ give_me_resources = {
 	log = "Steel Number: [?global.steel] Alum Number: [?global.aluminium] Oil Number: [?global.oil] Tech Metal Number: [?global.tungsten] Rare Metal Number: [?global.chromium] Rubber Number: [?global.rubber] Microchips Number: [?global.microchips] Composites Number: [?global.composites]"
 }
 
-#TODO: use the production modifier for microchips so that if you are starved of them, you can still do SOME production, even if the microchip production is 0
-#Simulates the bare minimum production off repurposing / scraps that would occur, even if you don't have large level nationwide production
-#Restrict this on the GNSS modifier; that should have no effect
 microchip_update = {
 	if = {
 		limit = {
@@ -219,7 +231,7 @@ civilian_microchip_consumption = {
 	}
 
 	#Set the basic population consumption numbers. This is based off the population total and GPD/C
-	#Higher GDP/C will increase the multipler applied to the population
+	#Higher GDP/C will increase the multiplier applied to the population
 	#IE, high pop but low GDP/C should result in a lower consumption amount than a low pop, high GDP/C nation
 	#Since higher GDP/C = higher developed = higher population technology demand
 	set_temp_variable = { base_chip_consumption = population_total }
@@ -243,5 +255,57 @@ civilian_microchip_consumption = {
 
 	round_temp_variable = base_chip_consumption
 
+	set_temp_variable = { total_microchips = resource_produced@microchips }
+	subtract_from_temp_variable = { total_microchips = resource_exported@microchips }
+	add_to_temp_variable = { total_microchips = resource_imported@microchips }
+
+	#Check if at war. If at war, the military gets priority for the microchip demand
+	#If not at war, civs get priority
+	set_temp_variable = { base_stab_adjust = 0 }
+	if = {
+		limit = { has_war = yes }
+		subtract_from_temp_variable = { total_microchips = resource_consumed@microchips }
+
+		if = {
+			limit = { check_variable = { total_microchips < 1 } }
+			#Nothing left for civilians, since there is military deficit and we at war, yo
+			multiply_temp_variable = { base_chip_consumption = -1 }
+			set_temp_variable = { base_stab_adjust = base_chip_consumption }
+			set_temp_variable = { base_chip_consumption = 0 }
+		} else = {
+			set_temp_variable = { total_chip_buffer = total_microchips }
+			subtract_from_temp_variable = { total_chip_buffer = base_chip_consumption }
+
+			if = {
+				#total chip buffer here is how many in the hole we are
+				#this number now becomes the instability modifier, and add tos base_chip_consumption to remove the deficits
+				limit = { check_variable = { total_chip_buffer < 0 } }
+				#we have a deficit of chips after civ consumption, run the math
+				set_temp_variable = { base_stab_adjust = total_chip_buffer }
+				add_to_temp_variable = { base_chip_consumption = total_chip_buffer }
+
+			} else = {
+				#we have enough chips!
+				set_temp_variable = { base_stab_adjust = total_chip_buffer }
+			}
+		}
+	}else = {
+		#Civis get their chips first here, so we will allow a deficit during peacetime for mil production
+		#This can still lead to instability, if civ demand is not met, but if it is met, hey, we're happy!
+		subtract_from_temp_variable = { total_microchips = base_chip_consumption }
+		set_temp_variable = { base_stab_adjust = total_microchips }
+	}
+
+	divide_temp_variable = { base_stab_adjust = 1000 }
+	clamp_temp_variable = {
+		var = base_stab_adjust
+		min = -0.15
+		max = 0.15
+	}
+
+	#Set how much is consumed here. During military conflict, civs will just consume what is left
+	#this will prevent the civilian population from deficiting the military during wartime, at the cost of stability
+	#Insert other potential economic consequences here, but basically, you better have the chips
 	set_variable = { country_base_civilian_microchip_consumption_var = base_chip_consumption }
+	set_variable = { country_base_microchip_civ_consumption_stab_var = base_stab_adjust }
 }
