@@ -195,7 +195,7 @@ Each of the values for buildings that consume a building slot (i.e. Civilian Ind
 - Infrastructure (infrastructure) - $3.50
 - Air Base (air_base) - $2.50
 - Sam Site (anti_air_building) - $3.25
-- Renewable Energy Infrastructure (synthetic_refinery) - $8.50
+- Renewable Energy Infrastructure (renewable_energy_infra) - $8.50
 - Fuel Silo (fuel_silo) - $3.00
 - Radar Station (radar_station) - $1.75
 - Network Infrastructure (internet_station) - $3.00
@@ -352,16 +352,16 @@ two_radar_station = yes #add 2 radar stations in various states with cost
 one_state_radar_station = yes #add 1 radar station with cost in a predefined state
 two_state_radar_station = yes #add 2 radar stations with cost in a predefined state
 ```
-**Synthetic refinery (synthetic_refinery)**
+**Synthetic refinery (renewable_energy_infra)**
 ```
-one_random_synthetic_refinery = yes #add 1 Synthetic refinery with slot and cost
-two_random_synthetic_refinery = yes #add 2 Synthetic refineries in various states with slots and cost
-three_random_synthetic_refinery = yes #add 3 Synthetic refineries in various states with slots and cost
+one_random_renewable_energy_infra = yes #add 1 Synthetic refinery with slot and cost
+two_random_renewable_energy_infra = yes #add 2 Synthetic refineries in various states with slots and cost
+three_random_renewable_energy_infra = yes #add 3 Synthetic refineries in various states with slots and cost
 
 ~~State Scope~~
-one_state_synthetic_refinery = yes #add 1 Synthetic refinery with slot and cost in a predefined state
-two_state_synthetic_refinery = yes #add 2 Synthetic refineries with slot and cost in a predefined state
-three_state_synthetic_refinery = yes #add 3 Synthetic refineries with slot and cost in a predefined state
+one_state_renewable_energy_infra = yes #add 1 Synthetic refinery with slot and cost in a predefined state
+two_state_renewable_energy_infra = yes #add 2 Synthetic refineries with slot and cost in a predefined state
+three_state_renewable_energy_infra = yes #add 3 Synthetic refineries with slot and cost in a predefined state
 ```
 **Other buildings**
 ```
