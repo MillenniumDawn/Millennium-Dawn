@@ -743,17 +743,17 @@
 	NDefines.NNavy.MAX_ADMIRAL_HEADQUARTER_ASSIGNMENTS = 8 -- Extended from 3 Headquarter options
 
 	NDefines.NNavy.AGGRESION_MULTIPLIER_FOR_COMBAT = 4 -- 1.2 ships are more agressive in combat
-	NDefines.NNavy.AGGRESSION_ARMOR_EFFICIENCY_MULTIPLIER = 1.0,		-- armor to enemy piercing ratio is multiplied by this value, which will increase the strength of ships while considering them for aggression
-	NDefines.NNavy.AGGRESSION_MIN_ARMOR_EFFICIENCY = 0.9,              -- armor multiplier has a min and max caps while being factored in aggression
-	NDefines.NNavy.AGGRESSION_MAX_ARMOR_EFFICIENCY = 1.75,              -- armor multiplier has a min and max caps while being factored in aggression
+	NDefines.NNavy.AGGRESSION_ARMOR_EFFICIENCY_MULTIPLIER = 1.0		-- armor to enemy piercing ratio is multiplied by this value, which will increase the strength of ships while considering them for aggression
+	NDefines.NNavy.AGGRESSION_MIN_ARMOR_EFFICIENCY = 0.9              -- armor multiplier has a min and max caps while being factored in aggression
+	NDefines.NNavy.AGGRESSION_MAX_ARMOR_EFFICIENCY = 1.75             -- armor multiplier has a min and max caps while being factored in aggression
 
-	NDefines.NNavy.AGGRESSION_LIGHT_GUN_EFFICIENCY_ON_LIGHT_SHIPS = 0.05, -- ratio for scoring for different gun types against light ships
-	NDefines.NNavy.AGGRESSION_HEAVY_GUN_EFFICIENCY_ON_LIGHT_SHIPS = 1.0,-- ratio for scoring for different gun types against light ships
-	NDefines.NNavy.AGGRESSION_TORPEDO_EFFICIENCY_ON_LIGHT_SHIPS = 0.1,   -- ratio for scoring for different gun types against light ships
+	NDefines.NNavy.AGGRESSION_LIGHT_GUN_EFFICIENCY_ON_LIGHT_SHIPS = 0.05 -- ratio for scoring for different gun types against light ships
+	NDefines.NNavy.AGGRESSION_HEAVY_GUN_EFFICIENCY_ON_LIGHT_SHIPS = 1.0-- ratio for scoring for different gun types against light ships
+	NDefines.NNavy.AGGRESSION_TORPEDO_EFFICIENCY_ON_LIGHT_SHIPS = 0.1   -- ratio for scoring for different gun types against light ships
 
-	NDefines.NNavy.AGGRESSION_LIGHT_GUN_EFFICIENCY_ON_HEAVY_SHIPS = 0.05, -- ratio for scoring for different gun types against heavy ships
-	NDefines.NNavy.AGGRESSION_HEAVY_GUN_EFFICIENCY_ON_HEAVY_SHIPS = 1.15, -- ratio for scoring for different gun types against heavy ships
-	NDefines.NNavy.AGGRESSION_TORPEDO_EFFICIENCY_ON_HEAVY_SHIPS = 1.1,   -- ratio for scoring for different gun types against heavy ships
+	NDefines.NNavy.AGGRESSION_LIGHT_GUN_EFFICIENCY_ON_HEAVY_SHIPS = 0.05 -- ratio for scoring for different gun types against heavy ships
+	NDefines.NNavy.AGGRESSION_HEAVY_GUN_EFFICIENCY_ON_HEAVY_SHIPS = 1.15 -- ratio for scoring for different gun types against heavy ships
+	NDefines.NNavy.AGGRESSION_TORPEDO_EFFICIENCY_ON_HEAVY_SHIPS = 1.1   -- ratio for scoring for different gun types against heavy ships
 
 	-- NTrade Defines
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
