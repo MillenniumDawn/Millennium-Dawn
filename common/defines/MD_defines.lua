@@ -532,7 +532,7 @@
 		0,0, -- SAM
 	}
 
-	NDefines.NNavy.BEST_CAPITALS_TO_CARRIER_RATIO = 2 -- 1
+	NDefines.NNavy.BEST_CAPITALS_TO_CARRIER_RATIO = 4 -- 1
 	NDefines.NNavy.BEST_CAPITALS_TO_SCREENS_RATIO = 0.5 -- 0.25
 	NDefines.NNavy.DETECTION_CHANCE_BALANCE = 1.5 -- 2.5
 	NDefines.NNavy.DECRYPTION_SPOTTING_BONUS = 0.3 -- 0.2
@@ -620,7 +620,7 @@
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_EFFECT = 0.3 -- 0.5
 	NDefines.NNavy.SUB_DETECTION_CHANCE_SPOTTING_SPEED_EFFECT = 1.2 -- 2.0
 	NDefines.NNavy.SUB_DETECTION_CHANCE_BASE_SPOTTING_POW_EFFECT = 1.01
-	NDefines.NNavy.SHORE_BOMBARDMENT_CAP = 0.75 -- Reduced to 100% from 200% -- 25% is vanilla
+	NDefines.NNavy.SHORE_BOMBARDMENT_CAP = 1 -- Reduced to 100% from 200% -- 25% is vanilla
 	NDefines.NNavy.HEAVY_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.001
 	NDefines.NNavy.LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT = 0.85
 	NDefines.NNavy.COMBAT_MIN_HIT_CHANCE = 0.05	-- never less hit chance then this?
@@ -687,7 +687,7 @@
 	NDefines.NNavy.MAX_CAPITALS_PER_AUTO_TASK_FORCE = 6
 
 	NDefines.NNavy.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 4			-- carrier fleets will at least have this amount of capitals
-	NDefines.NNavy.CAPITALS_TO_CARRIER_RATIO = 1				-- capital to carrier count in carrier taskfoces
+	NDefines.NNavy.CAPITALS_TO_CARRIER_RATIO = 4				-- capital to carrier count in carrier taskfoces
 	NDefines.NNavy.SCREENS_TO_CAPITAL_RATIO = 2				-- screens to capital/carrier count in carrier & capital taskforces
 
 	NDefines.NNavy.BASE_POSITIONING = 0.70 -- 1.0
@@ -839,7 +839,7 @@
 	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_SHIP = 30 					--20 reduced by 50% to reduce the AI spamming planes over naval battles
 	NDefines.NAI.FOCUS_TREE_CONTINUE_FACTOR = 1		-- Factor for score of how likely the AI is to keep going down a focus tree rather than starting a new path.
 
-	NDefines.NAI.NAVY_PREFERED_MAX_SIZE = 50						-- 20 #Now AI like big fleet
+	NDefines.NAI.NAVY_PREFERED_MAX_SIZE = 999						-- 20 #Now AI like big fleet
 	NDefines.NAI.MAX_DISTANCE_NAVAL_INVASION = 400.0				-- 200.0
 	NDefines.NAI.INVASION_COASTAL_PROVS_PER_ORDER = 8				-- 12
 	NDefines.NAI.NAVAL_COMBAT_AIR_IMPORTANCE = 24.0					-- 12.0
@@ -850,9 +850,6 @@
 	NDefines.NAI.MINES_SWEEPING_PLANES_PER_MAX_MINES = 10				-- 150
 	NDefines.NAI.MINES_PLANTING_PLANES_PER_MAX_DESIRE = 5				-- 100
 
-	NDefines.NAI.ENEMY_PASSING_THROUGH_PLANES_PER_BOMBER = 0.5 -- 0.1
-	NDefines.NAI.ENEMY_PASSING_THROUGH_PLANES_PER_FIGHTER = 0.5 -- 0.1
-	NDefines.NAI.ENEMY_PASSING_THROUGH_PLANES_PER_SUPPORT = 0.25 -- 0.1
 
 	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 25				-- 20
 	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 30				-- 25
@@ -861,8 +858,8 @@
 	NDefines.NAI.RECON_PLANES_LAND_COMBAT = 5					-- 25
 	NDefines.NAI.RECON_PLANES_STRATEGIC = 5						-- 50
 	NDefines.NAI.MAX_CARRIER_OVERFILL = 1.50					-- 2.25 -- Reduced to 1.5 to hopefully stop the AI from overcrowding the Carriers
-	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 2				-- 4
-	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 3				-- 12
+	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 3				-- 4
+	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 16				-- 12
 	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 2				-- 12
 	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 3					-- 16
 	NDefines.NAI.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 4				-- 10
@@ -882,17 +879,17 @@
 		1000, -- NAVAL INVASION SUPPORT
 	}
 	NDefines.NAI.MAX_MISSION_PER_TASKFORCE = {
-        0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
-        3.5, -- PATROL
-        1, -- STRIKE FORCE
-        3, -- CONVOY RAIDING
-        4, -- CONVOY ESCORT
-        1, -- MINES PLANTING
-        1, -- MINES SWEEPING
-        1, -- TRAIN
-        0, -- RESERVE_FLEET
-        4, -- NAVAL INVASION SUPPORT
-    }
+		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
+		3.5, -- PATROL
+		1, -- STRIKE FORCE
+		3, -- CONVOY RAIDING
+		4, -- CONVOY ESCORT
+		1, -- MINES PLANTING
+		1, -- MINES SWEEPING
+		1, -- TRAIN
+		0, -- RESERVE_FLEET
+		4, -- NAVAL INVASION SUPPORT
+	}
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_LAND_FORT_LEVEL = 7			-- 15
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_COASTAL_FORT_LEVEL = 5		-- 10
 	NDefines.NAI.AIR_SCORE_DISTANCE_IMPACT = 0.4
@@ -1055,8 +1052,6 @@
 	NDefines.NIntel.RADAR_INTEL_STACKING_FACTOR = 0.6							-- (Normaly 0.5) Used when multiple radars cover the same province
 	NDefines.NIntel.RECON_PLANE_INTEL_BASE = 0.024								-- (normaly 0.02) intel base amount for a strategic area per plane
 
-
-
 	-- NChracter defines
 	NDefines.NCharacter.OFFICER_CORP_ADVISOR_ENTRIES_IN_MENU = { "high_command", "theorist", "army_chief", "air_chief", "navy_chief" }
 	NDefines.NCharacter.OFFICER_CORP_HIGH_COMMAND_SLOTS_IN_MENU = 3 --For Alert manager to count the number of High Command Slots in the UI
@@ -1070,10 +1065,6 @@
 	NDefines.NAI.PRODUCTION_MAX_PROGRESS_TO_SWITCH_NAVAL = 0.2		-- AI will not replace ships being built by newer types if progress is above this
 	NDefines.NAI.AREA_DEFENSE_SETTING_AIRBASES = true
 
-	NDefines.NAI.AI_MIN_DOMINANCE_MARGIN = 50 -- 200
-	NDefines.NAI.PATROL_FLEETS_PER_INVASION_REGION_ON_PATH = 1 -- 2
-
-	NDefines.NAI.MAX_PATROL_TO_STRIKE_FORCE_RATIO = 1 -- 4.0
 	NDefines.NAI.MIN_MAIN_SHIP_RATIO = 0.1                      -- if main ship ratio is below this, steal other ships.
 	NDefines.NAI.MIN_SUPPORT_SHIP_RATIO = 0.7                   -- if support ship ratio is below this, steal other ships.
 	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_REINFORCE = 0.5         -- the main ships will be tried to reinforce this level.
