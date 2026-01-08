@@ -125,17 +125,50 @@
 					limit = { THIS = { has_idea = CSTO_member } }
 					add_to_temp_variable = { CPD_FB_temp = -25 }
 				}
+				if = {
+					limit = { THIS = { has_idea = faction_resistance_axis_member } }
+					add_to_temp_variable = { CPD_FB_temp = -25 }
+				}
+				if = {
+					limit = { THIS = { is_sco = yes } }
+					add_to_temp_variable = { CPD_FB_temp = -25 }
+				}
 				add_to_temp_variable = { CPD_acceptance_temp = CPD_FB_temp }
 
 			# Time at War
-				set_temp_variable = { months_at_war_tmp = THIS.months_at_war }
-				multiply_temp_variable = { months_at_war_tmp = 2 }
-				add_to_temp_variable = { CPD_acceptance_temp = months_at_war_tmp }
+			set_temp_variable = { months_at_war_tmp = THIS.months_at_war }
+			multiply_temp_variable = { months_at_war_tmp = 2 }
+			add_to_temp_variable = { CPD_acceptance_temp = months_at_war_tmp }
 
+			if = { limit = { difficulty < 1 }
+				add_to_temp_variable = { CPD_acceptance_temp = -15 }
+			}
+			if = { limit = { difficulty > 1 }
+				add_to_temp_variable = { CPD_acceptance_temp = 15 }
+			}
+			if = { limit = { difficulty > 2 }
+				add_to_temp_variable = { CPD_acceptance_temp = 15 }
+			}
+
+			if = {
+				limit = {
+					any_of_scopes = {
+						array = ROOT.CPD_annex_state_DEMANDS
+						any_state = {
+							is_owned_by = ROOT
+							distance_to = {
+								target = PREV
+								value < 1500
+							}
+						}
+					}
+				}
+				add_to_temp_variable = { CPD_acceptance_temp = -1000 }
+			}
 			# Cost of Peace Deal
-				set_temp_variable = { v = ROOT.CPD_total_cost_of_built_peace_deal }
-				multiply_temp_variable = { v = -5 }
-				add_to_temp_variable = { CPD_acceptance_temp = v }
+			set_temp_variable = { v = ROOT.CPD_total_cost_of_built_peace_deal }
+			multiply_temp_variable = { v = -5 }
+			add_to_temp_variable = { CPD_acceptance_temp = v }
 		}
 		CPD_AI_will_accept = { # this is just for some display shit, will make this work later
 			CPD_AI_will_accept_calculation = yes
