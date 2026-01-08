@@ -923,12 +923,14 @@ AI_country_selection_calculation = {
 		limit = { has_country_flag = mutual_investment_treaty_@PREV }
 		add_to_temp_variable = { AI_country_score = 25 }
 	}
-	# Check if one of the projects in the other one is there
+	# Check if they have a project in one of their other states
 	if = { limit = { NOT = { check_variable = { PREV.project_array^0 = 0 } } }
 		for_each_scope_loop = {
 			array = PREV.project_array
-			if = { limit = { is_owned_and_controlled_by = PREV }
-				add_to_temp_variable = { AI_country_score = -35 }
+			THIS = {
+				if = { limit = { is_owned_and_controlled_by = PREV.PREV }
+					add_to_temp_variable = { AI_country_score = -35 }
+				}
 			}
 		}
 	}

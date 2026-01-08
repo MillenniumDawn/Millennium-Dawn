@@ -190,7 +190,7 @@ Each of the values for buildings that consume a building slot (i.e. Civilian Ind
 - Civilian Industry (industrial_complex) - $7.50
 - Military Industry (arms_factory) - $7.50
 - Dockyard (dockyard) - $7.50
-- Offices (offices) - $12
+- Offices (offices) - $12.00
 - Commercialized Agriculture District - $3.75
 - Infrastructure (infrastructure) - $3.50
 - Air Base (air_base) - $2.50
@@ -203,6 +203,11 @@ Each of the values for buildings that consume a building slot (i.e. Civilian Ind
 - Nuclear Reactor (nuclear_reactor) - $9.00
 - State-Wide Defensive Network (stronghold_network) - $8.00
 - Fossil Fuel Powerplant (fossil_powerplant) - $2.25
+- Microchip Plant (microchip_plant) - $10.50
+- Composite Plant (composite_plant) - $7.50
+- Synthetic Refinery (synthetic_refinery) - $5.00
+- Reinforced Electrical Grid (energy_infrastructure) - $5.50
+- High Capacity Electrical Grid (industrial_infrastructure) - $5.50
 - **Building Slots Minimum: $1.00 per slot**
 
 -- Provincial Buildings
