@@ -557,14 +557,14 @@ default_assign_supportive_scientist = {
 			can_assign_supportive_scientist_to_faction = specialization_naval
 			can_assign_supportive_scientist_to_faction = specialization_naval
 		}
-		has_political_power > 200  # mainly to add some time padding for the player to react, and to not spend pp on it if there are cheaper things that we could want to do
+		has_political_power > 250  # mainly to add some time padding for the player to react, and to not spend pp on it if there are cheaper things that we could want to do
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = {
 		type = pp_spend_priority
 		id = supportive_scientist
-		value = 25
+		value = 10
 	}
 }
 
@@ -655,9 +655,23 @@ default_become_supreme_commander = {
 
 default_become_faction_leader = {
 	enable = {
-		always = yes
+		is_major = yes
+		OR = {
+			any_allied_country = {
+				is_faction_leader = yes
+				check_variable = { gdp_total < PREV.gdp_total }
+			}
+			any_allied_country = {
+				is_faction_leader = yes
+				strength_ratio = {
+					tag = PREV
+					ratio < 1.0
+				}
+			}
+		}
 	}
 	abort_when_not_enabled = yes
+
 	ai_strategy = {
 		type = pp_spend_priority
 		id = become_faction_leader

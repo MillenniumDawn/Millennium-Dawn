@@ -1,0 +1,311 @@
+microchip_startup = {
+	set_variable = { country_microchip_production_var = 0 }
+	set_variable = { country_composite_production_var = 0 }
+	set_variable = { country_base_reducer_microchips_tracker_var = 0 }
+	set_variable = { country_base_reducer_composites_tracker_var = 0 }
+	set_variable = { country_base_civilian_microchip_consumption_var = 0 }
+	set_variable = { country_base_microchip_civ_consumption_stab_var = 0 }
+	if = {
+		limit = {
+			NOT = {
+				has_dynamic_modifier = { modifier = advanced_production_modifier }
+			}
+		}
+		add_dynamic_modifier = { modifier = advanced_production_modifier }
+	}
+	if = {
+		limit = {
+			NOT = {
+				has_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
+			}
+		}
+		add_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
+	}
+}
+
+#this auto-adds composites for nations that need only one building. This needs more work for nations that start w/ multiples
+composite_building_add = {
+	ingame_update_setup = yes
+	random_owned_controlled_state = {
+		add_building_construction = {
+			type = composite_plant
+			level = 1
+			instant_build = yes
+		}
+	}
+	ingame_update_setup = yes
+	if = { limit = { check_variable = { startup_composite_fac_needed > 0 } } composite_building_add_multi = yes }
+}
+
+composite_building_add_multi = {
+	ingame_update_setup = yes
+	while_loop_effect = {
+		limit = {
+			check_variable = { startup_composite_fac_needed > 0 }
+		}
+		random_owned_controlled_state = {
+			add_building_construction = {
+				type = composite_plant
+				level = 1
+				instant_build = yes
+			}
+		}
+		add_to_variable = { startup_composite_fac_needed = -1 }
+	}
+	clear_variable = startup_composite_fac_needed
+	ingame_update_setup = yes
+}
+
+#debug script for grabbing all resources. Not used in code, but used to get this number on game start
+give_me_resources = {
+	set_variable = { global.steel = 0 }
+	set_variable = { global.aluminium = 0 }
+	set_variable = { global.oil = 0 }
+	set_variable = { global.tungsten = 0 }
+	set_variable = { global.chromium = 0 }
+	set_variable = { global.rubber = 0 }
+	set_variable = { global.microchips = 0 }
+	set_variable = { global.composites = 0 }
+
+	for_each_scope_loop = {
+		array = global.countries
+
+		add_to_variable = { global.steel = resource_produced@steel }
+		add_to_variable = { global.aluminium = resource_produced@aluminium }
+		add_to_variable = { global.oil = resource_produced@oil }
+		add_to_variable = { global.tungsten = resource_produced@tungsten }
+		add_to_variable = { global.chromium = resource_produced@chromium }
+		add_to_variable = { global.rubber = resource_produced@rubber }
+		add_to_variable = { global.microchips = resource_produced@microchips }
+		add_to_variable = { global.composites = resource_produced@composites }
+	}
+
+	log = "Steel Number: [?global.steel] Alum Number: [?global.aluminium] Oil Number: [?global.oil] Tech Metal Number: [?global.tungsten] Rare Metal Number: [?global.chromium] Rubber Number: [?global.rubber] Microchips Number: [?global.microchips] Composites Number: [?global.composites]"
+}
+
+microchip_update = {
+	if = {
+		limit = {
+			NOT = {
+				has_dynamic_modifier = { modifier = advanced_production_modifier }
+			}
+		}
+		add_dynamic_modifier = { modifier = advanced_production_modifier }
+	}
+
+	#Gather total resources remaining
+	set_temp_variable = { country_tech_remaining = resource@tungsten }
+	set_temp_variable = { country_rare_remaining = resource@chromium }
+
+	#Starting produced needs to be set manually, else math has a seizure. Math will never be perfect, because it ignores all the stacked modifiers
+	#But I just don't care anymore, because I just want this to work, damnit
+	set_temp_variable = { country_microchip_produced = microchip_plant_total }
+	multiply_temp_variable = { country_microchip_produced = 18 }
+
+	set_temp_variable = { prod_reducer = var_GNSS_civ_local_resources_factor }
+	add_to_temp_variable = { prod_reducer = country_excavation_production_var }
+
+	set_temp_variable = { country_microchip_reducer = 0 }
+
+	#Gather overall production demand
+	#Math is here. Unless you know the math, PLEASE do not mess with these variables
+	set_temp_variable = { country_tech_demand = 2 }
+	multiply_temp_variable = { country_tech_demand = country_microchip_produced }
+
+	set_temp_variable = { country_rare_demand = 1 }
+	set_temp_variable = { total_rare_needed = country_microchip_produced }
+
+	#First, check if we even need to do all this. If there is a surplus of both tech and precious metals, there is no need to adjust production
+	if = {
+		limit = {
+			OR = {
+				check_variable = { country_tech_remaining < 0 }
+				check_variable = { country_rare_remaining < 0 }
+			}
+		}
+		#Invert the numbers here for a fast check. Surplus now can't be higher than demand, since it's negative
+		#Deficit now is positive, and can be used easily in the cost math since it's positive
+		multiply_temp_variable = { country_tech_remaining = -1 }
+		multiply_temp_variable = { country_rare_remaining = -1 }
+
+		if = {
+			limit = {
+				check_variable = { country_rare_remaining > 0 }
+			}
+			add_to_temp_variable = { country_microchip_reducer = country_rare_remaining }
+		}
+		if = {
+			limit = {
+				check_variable = { country_tech_remaining > 0 }
+			}
+			multiply_temp_variable = { country_tech_remaining = 1.25 }
+			round_temp_variable = country_tech_remaining
+			add_to_temp_variable = { country_microchip_reducer = country_tech_remaining }
+		}
+		set_variable = { country_microchip_production_var = country_microchip_reducer }
+		set_temp_variable = { country_microchip_reducer_max = country_microchip_produced }
+		multiply_temp_variable = { country_microchip_reducer_max = 0.95 }
+		round_temp_variable = country_microchip_reducer_max
+		clamp_variable = {
+			var = country_microchip_production_var
+			min = 0
+			max = country_microchip_reducer_max
+		}
+	}else = {
+		#There should be no reduction here, because we have a surplus of all inputs
+		set_variable = { country_microchip_production_var = 0 }
+	}
+}
+
+composite_update = {
+	#Gather total resources remaining
+	set_temp_variable = { country_rare_remaining = resource@chromium }
+	set_temp_variable = { country_rubber_remaining = resource@rubber }
+
+	set_temp_variable = { country_composite_produced = composite_plant_total }
+	multiply_temp_variable = { country_composite_produced = 16 }
+
+	set_temp_variable = { country_composite_reducer = 0 }
+
+	#Gather overall production demand
+	#Math is here. Unless you know the math, PLEASE do not mess with these variables
+
+	set_temp_variable = { country_rare_demand = 1 }
+	set_temp_variable = { country_rare_demand = country_composite_produced }
+
+	set_temp_variable = { country_rubber_demand = 2 }
+	set_temp_variable = { country_rubber_demand = country_composite_produced }
+
+
+	#First, check if we even need to do all this. If there is a surplus of both tech and precious metals, there is no need to adjust production
+	if = {
+		limit = {
+			OR = {
+				check_variable = { country_rare_remaining < 0 }
+				check_variable = { country_rubber_remaining < 0 }
+			}
+		}
+		#Invert the numbers here for a fast check. Surplus now can't be higher than demand, since it's negative
+		#Deficit now is positive, and can be used easily in the cost math since it's positive
+		multiply_temp_variable = { country_rare_remaining = -1 }
+		multiply_temp_variable = { country_rubber_remaining = -1 }
+
+		if = {
+			limit = {
+				check_variable = { country_rare_remaining > 0 }
+			}
+			add_to_temp_variable = { country_composite_reducer = country_rare_remaining }
+		}
+		if = {
+			limit = {
+				check_variable = { country_rubber_remaining > 0 }
+			}
+			multiply_temp_variable = { country_rubber_remaining = 1.5 }
+			round_temp_variable = country_rubber_remaining
+			add_to_temp_variable = { country_composite_reducer = country_rubber_remaining }
+		}
+		set_variable = { country_composite_production_var = country_composite_reducer }
+		set_temp_variable = { country_composite_reducer_max = country_composite_produced }
+		multiply_temp_variable = { country_composite_reducer_max = 0.95 }
+		round_temp_variable = country_composite_reducer_max
+		#Clamp the max at -90% of production, this number can be adjusted
+		clamp_variable = {
+			var = country_composite_production_var
+			min = 0
+			max = country_composite_reducer_max
+		}
+	}else = {
+		#There should be no reduction here, because we have a surplus of all inputs
+		set_variable = { country_composite_production_var = 0 }
+	}
+}
+
+civilian_microchip_consumption = {
+	if = {
+		limit = {
+			NOT = {
+				has_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
+			}
+		}
+		add_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
+	}
+
+	#Set the basic population consumption numbers. This is based off the population total and GPD/C
+	#Higher GDP/C will increase the multiplier applied to the population
+	#IE, high pop but low GDP/C should result in a lower consumption amount than a low pop, high GDP/C nation
+	#Since higher GDP/C = higher developed = higher population technology demand
+	set_temp_variable = { base_chip_consumption = population_total }
+	divide_temp_variable = { base_chip_consumption = 1000 }
+	multiply_temp_variable = { base_chip_consumption = gdp_per_capita }
+	divide_temp_variable = { base_chip_consumption = 4 }
+
+	set_temp_variable = { chip_mult_amount = base_chip_consumption }
+	multiply_temp_variable = { chip_mult_amount = modifier@civilian_chip_consumption_modifier }
+	add_to_temp_variable = { base_chip_consumption = chip_mult_amount }
+
+	set_temp_variable = { office_base_amount = office_park_total }
+	multiply_temp_variable = { office_base_amount = offices_manpower_fulfillment }
+	divide_temp_variable = { office_base_amount = 4 }
+	set_temp_variable = { office_chip_mult = office_base_amount }
+	multiply_temp_variable = { office_chip_mult = modifier@industry_chip_consumption_modifier }
+
+	add_to_temp_variable = { office_base_amount = office_chip_mult }
+
+	add_to_temp_variable = { base_chip_consumption = office_base_amount }
+
+	round_temp_variable = base_chip_consumption
+
+	set_temp_variable = { total_microchips = resource_produced@microchips }
+	subtract_from_temp_variable = { total_microchips = resource_exported@microchips }
+	add_to_temp_variable = { total_microchips = resource_imported@microchips }
+
+	#Check if at war. If at war, the military gets priority for the microchip demand
+	#If not at war, civs get priority
+	set_temp_variable = { base_stab_adjust = 0 }
+	if = {
+		limit = { has_war = yes }
+		subtract_from_temp_variable = { total_microchips = resource_consumed@microchips }
+
+		if = {
+			limit = { check_variable = { total_microchips < 1 } }
+			#Nothing left for civilians, since there is military deficit and we at war, yo
+			multiply_temp_variable = { base_chip_consumption = -1 }
+			set_temp_variable = { base_stab_adjust = base_chip_consumption }
+			set_temp_variable = { base_chip_consumption = 0 }
+		} else = {
+			set_temp_variable = { total_chip_buffer = total_microchips }
+			subtract_from_temp_variable = { total_chip_buffer = base_chip_consumption }
+
+			if = {
+				#total chip buffer here is how many in the hole we are
+				#this number now becomes the instability modifier, and add tos base_chip_consumption to remove the deficits
+				limit = { check_variable = { total_chip_buffer < 0 } }
+				#we have a deficit of chips after civ consumption, run the math
+				set_temp_variable = { base_stab_adjust = total_chip_buffer }
+				add_to_temp_variable = { base_chip_consumption = total_chip_buffer }
+
+			} else = {
+				#we have enough chips!
+				set_temp_variable = { base_stab_adjust = total_chip_buffer }
+			}
+		}
+	}else = {
+		#Civis get their chips first here, so we will allow a deficit during peacetime for mil production
+		#This can still lead to instability, if civ demand is not met, but if it is met, hey, we're happy!
+		subtract_from_temp_variable = { total_microchips = base_chip_consumption }
+		set_temp_variable = { base_stab_adjust = total_microchips }
+	}
+
+	divide_temp_variable = { base_stab_adjust = 1000 }
+	clamp_temp_variable = {
+		var = base_stab_adjust
+		min = -0.15
+		max = 0.15
+	}
+
+	#Set how much is consumed here. During military conflict, civs will just consume what is left
+	#this will prevent the civilian population from deficiting the military during wartime, at the cost of stability
+	#Insert other potential economic consequences here, but basically, you better have the chips
+	set_variable = { country_base_civilian_microchip_consumption_var = base_chip_consumption }
+	set_variable = { country_base_microchip_civ_consumption_stab_var = base_stab_adjust }
+}

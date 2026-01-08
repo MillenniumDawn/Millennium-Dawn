@@ -1139,28 +1139,29 @@ on_actions = {
 					}
 				}
 
-				if = {
-					limit = { is_in_array = { ROOT.energy_load_sharing_nations = FROM.id } }
-					clr_country_flag = energy_load_sharing_recipient
-					ROOT = {
-						remove_from_array = { energy_load_sharing_nations = FROM.id }
-						calculate_energy_load_sharing = yes
-						ingame_update_setup = yes
-					}
-					ingame_update_setup = yes
-				}
-				if = {
-					limit = { is_in_array = { FROM.energy_load_sharing_nations = FROM.id } }
-					FROM = {
-						remove_from_array = { energy_load_sharing_nations = FROM.id }
-						calculate_energy_load_sharing = yes
-						ingame_update_setup = yes
-					}
-					ROOT = {
-						clr_country_flag = energy_load_sharing_recipient
-						ingame_update_setup = yes
-					}
-				}
+				# FIXME: This crashes the game but is probably needed so you don't share to an enemy at war with you
+				# if = {
+				# 	limit = { is_in_array = { ROOT.energy_load_sharing_nations = FROM.id } }
+				# 	clr_country_flag = energy_load_sharing_recipient
+				# 	ROOT = {
+				# 		remove_from_array = { energy_load_sharing_nations = FROM.id }
+				# 		calculate_energy_load_sharing = yes
+				# 		ingame_update_setup = yes
+				# 	}
+				# 	ingame_update_setup = yes
+				# }
+				# if = {
+				# 	limit = { is_in_array = { FROM.energy_load_sharing_nations = FROM.id } }
+				# 	FROM = {
+				# 		remove_from_array = { energy_load_sharing_nations = FROM.id }
+				# 		calculate_energy_load_sharing = yes
+				# 		ingame_update_setup = yes
+				# 	}
+				# 	ROOT = {
+				# 		clr_country_flag = energy_load_sharing_recipient
+				# 		ingame_update_setup = yes
+				# 	}
+				# }
 
 				# Civil War Content
 				if = {
@@ -2949,7 +2950,10 @@ on_actions = {
 				set_variable = { naval_factory_employment_var = 1 }
 				set_variable = { military_factory_employment_var = 1 }
 				set_variable = { office_employment_var = 1 }
+				set_variable = { microchip_plants_employment_var = 1 }
+				set_variable = { composite_plants_employment_var = 1 }
 				set_variable = { agriculture_district_employment_var = 1 }
+				set_variable = { synthetic_refinery_employment_var = 1 }
 				setup_starting_world_productivity = yes
 				set_variable = { gdpc_converging_var = gdp_per_capita }
 				calculate_tax_rate = yes
@@ -2968,6 +2972,10 @@ on_actions = {
 				economic_cycle_drift_popularity = yes #drift from neighbor
 				calculate_expected_spending = yes
 				recalculate_law_desires = yes
+
+				#Sets modifiers for microchips and composites
+				add_dynamic_modifier = { modifier = advanced_production_modifier }
+				add_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
 
 				if = { limit = { check_variable = { gdp_total < 8 } }
 					divide_variable = { debt = 80 }
@@ -3061,6 +3069,12 @@ on_actions = {
 
 				setup_missile_configuration_effect = yes
 
+				if = {
+					limit = {
+						is_special_project_completed = sp:sp_composite_production
+					}
+					composite_building_add = yes
+				}
 				# Relation Starting Configuration
 				if = {		# Palestine: Palestine is not a recognized nation
 					limit = {
@@ -3367,28 +3381,29 @@ on_actions = {
 					add_opinion_modifier = { target = ARG modifier = Major_Non_NATO_Ally }
 					add_opinion_modifier = { target = USA modifier = Major_Non_NATO_Ally }
 				}
+
+				if = { limit = { NOT = { has_global_flag = startup_configuration } }
+					missile_ui_update = yes
+					on_startup_euu_action = yes
+					on_startup_international = yes
+
+					set_global_flag = startup_configuration
+				}
 			}
 
-			# Utility Tag
 			random_country = {
-				missile_ui_update = yes
-
-				# Configure Starting European Union Values
-				on_startup_euu_action = yes
-
-				on_startup_international = yes
-
 				set_power_ranking_ideas_for_every_country = yes
 
-				# Starting MIO Sizes
 				every_country = {
 					calculate_starting_mio_size = yes
 				}
 			}
 
-			log = "[GetDateText]: [This.GetName]: on_startup init completed"
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [This.GetName]: on_startup init completed"
+			}
+			clr_global_flag = startup_configuration
 		}
-
 	}
 
 	on_government_change = {
@@ -3599,6 +3614,69 @@ on_actions = {
 						update_neighbors_effects = yes # Updates Neighbor Effects
 						economic_cycle_drift_popularity = yes #drift from neighbor
 
+						set_variable = { civilian_factory_employment_var = PREV.civilian_factory_employment_var }
+						set_variable = { naval_factory_employment_var = PREV.naval_factory_employment_var }
+						set_variable = { military_factory_employment_var = PREV.military_factory_employment_var }
+						set_variable = { office_employment_var = PREV.office_employment_var }
+						set_variable = { microchip_plants_employment_var = PREV.microchip_plants_employment_var }
+						set_variable = { agriculture_district_employment_var = PREV.agriculture_district_employment_var }
+
+
+						# set religion
+						if = { limit = { PREV = { has_idea = sunni } }
+							add_ideas = sunni
+						}
+						else_if = {
+							limit = { PREV = { has_idea = shia } }
+							add_ideas = shia
+						}
+						else_if = {
+							limit = { PREV = { has_idea = sufi_islam } }
+							add_ideas = sufi_islam
+						}
+						else_if = {
+							limit = { PREV = { has_idea = ibadi } }
+							add_ideas = ibadi
+						}
+						else_if = {
+							limit = { PREV = { has_idea = christian } }
+							add_ideas = christian
+						}
+						else_if = {
+							limit = { PREV = { has_idea = orthodox_christian } }
+							add_ideas = orthodox_christian
+						}
+						else_if = {
+							limit = { PREV = { has_idea = buddism } }
+							add_ideas = buddism
+						}
+						else_if = {
+							limit = { PREV = { has_idea = hindu } }
+							add_ideas = hindu
+						}
+						else_if = {
+							limit = { PREV = { has_idea = judaism } }
+							add_ideas = judaism
+						}
+						else_if = {
+							limit = { PREV = { has_idea = shinto } }
+							add_ideas = shinto
+						}
+						else_if = {
+							limit = { PREV = { has_idea = cheondo } }
+							add_ideas = cheondo
+						}
+						else_if = {
+							limit = { PREV = { has_idea = uniate_church } }
+							add_ideas = uniate_church
+						}
+						else_if = {
+							limit = { PREV = { has_idea = zoroastrian } }
+							add_ideas = zoroastrian
+						}
+						else = {
+							add_ideas = pluralist
+						}
 						set_temp_variable = { nation_to_copy_from = PREV.id }
 						configure_religious_setup = yes
 
