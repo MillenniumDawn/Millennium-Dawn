@@ -1073,7 +1073,7 @@
 	NDefines.NAI.AI_MIN_DOMINANCE_MARGIN = 50 -- 200
 	NDefines.NAI.PATROL_FLEETS_PER_INVASION_REGION_ON_PATH = 1 -- 2
 
-	NDefines.NAI.MAX_PATROL_TO_STRIKE_FORCE_RATIO = 2.0 -- 4.0
+	NDefines.NAI.MAX_PATROL_TO_STRIKE_FORCE_RATIO = 2 -- 4.0
 	NDefines.NAI.MIN_MAIN_SHIP_RATIO = 0.1                      -- if main ship ratio is below this, steal other ships.
 	NDefines.NAI.MIN_SUPPORT_SHIP_RATIO = 0.7                   -- if support ship ratio is below this, steal other ships.
 	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_REINFORCE = 0.5         -- the main ships will be tried to reinforce this level.
