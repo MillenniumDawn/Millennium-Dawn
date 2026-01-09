@@ -190,12 +190,12 @@ Each of the values for buildings that consume a building slot (i.e. Civilian Ind
 - Civilian Industry (industrial_complex) - $7.50
 - Military Industry (arms_factory) - $7.50
 - Dockyard (dockyard) - $7.50
-- Offices (offices) - $12
+- Offices (offices) - $12.00
 - Commercialized Agriculture District - $3.75
 - Infrastructure (infrastructure) - $3.50
 - Air Base (air_base) - $2.50
 - Sam Site (anti_air_building) - $3.25
-- Renewable Energy Infrastructure (synthetic_refinery) - $8.50
+- Renewable Energy Infrastructure (renewable_energy_infra) - $8.50
 - Fuel Silo (fuel_silo) - $3.00
 - Radar Station (radar_station) - $1.75
 - Network Infrastructure (internet_station) - $3.00
@@ -203,6 +203,11 @@ Each of the values for buildings that consume a building slot (i.e. Civilian Ind
 - Nuclear Reactor (nuclear_reactor) - $9.00
 - State-Wide Defensive Network (stronghold_network) - $8.00
 - Fossil Fuel Powerplant (fossil_powerplant) - $2.25
+- Microchip Plant (microchip_plant) - $10.50
+- Composite Plant (composite_plant) - $7.50
+- Synthetic Refinery (synthetic_refinery) - $5.00
+- Reinforced Electrical Grid (energy_infrastructure) - $5.50
+- High Capacity Electrical Grid (industrial_infrastructure) - $5.50
 - **Building Slots Minimum: $1.00 per slot**
 
 -- Provincial Buildings
@@ -352,16 +357,16 @@ two_radar_station = yes #add 2 radar stations in various states with cost
 one_state_radar_station = yes #add 1 radar station with cost in a predefined state
 two_state_radar_station = yes #add 2 radar stations with cost in a predefined state
 ```
-**Synthetic refinery (synthetic_refinery)**
+**Synthetic refinery (renewable_energy_infra)**
 ```
-one_random_synthetic_refinery = yes #add 1 Synthetic refinery with slot and cost
-two_random_synthetic_refinery = yes #add 2 Synthetic refineries in various states with slots and cost
-three_random_synthetic_refinery = yes #add 3 Synthetic refineries in various states with slots and cost
+one_random_renewable_energy_infra = yes #add 1 Synthetic refinery with slot and cost
+two_random_renewable_energy_infra = yes #add 2 Synthetic refineries in various states with slots and cost
+three_random_renewable_energy_infra = yes #add 3 Synthetic refineries in various states with slots and cost
 
 ~~State Scope~~
-one_state_synthetic_refinery = yes #add 1 Synthetic refinery with slot and cost in a predefined state
-two_state_synthetic_refinery = yes #add 2 Synthetic refineries with slot and cost in a predefined state
-three_state_synthetic_refinery = yes #add 3 Synthetic refineries with slot and cost in a predefined state
+one_state_renewable_energy_infra = yes #add 1 Synthetic refinery with slot and cost in a predefined state
+two_state_renewable_energy_infra = yes #add 2 Synthetic refineries with slot and cost in a predefined state
+three_state_renewable_energy_infra = yes #add 3 Synthetic refineries with slot and cost in a predefined state
 ```
 **Other buildings**
 ```
