@@ -84,139 +84,150 @@ give_me_resources = {
 }
 
 microchip_update = {
+	set_temp_variable = { microchip_prod_check = resource_produced@microchips }
+
 	if = {
-		limit = {
-			NOT = {
-				has_dynamic_modifier = { modifier = advanced_production_modifier }
-			}
-		}
-		add_dynamic_modifier = { modifier = advanced_production_modifier }
-	}
-
-	#Gather total resources remaining
-	set_temp_variable = { country_tech_remaining = resource@tungsten }
-	set_temp_variable = { country_rare_remaining = resource@chromium }
-
-	#Starting produced needs to be set manually, else math has a seizure. Math will never be perfect, because it ignores all the stacked modifiers
-	#But I just don't care anymore, because I just want this to work, damnit
-	set_temp_variable = { country_microchip_produced = microchip_plant_total }
-	multiply_temp_variable = { country_microchip_produced = 18 }
-
-	set_temp_variable = { prod_reducer = var_GNSS_civ_local_resources_factor }
-	add_to_temp_variable = { prod_reducer = country_excavation_production_var }
-
-	set_temp_variable = { country_microchip_reducer = 0 }
-
-	#Gather overall production demand
-	#Math is here. Unless you know the math, PLEASE do not mess with these variables
-	set_temp_variable = { country_tech_demand = 2 }
-	multiply_temp_variable = { country_tech_demand = country_microchip_produced }
-
-	set_temp_variable = { country_rare_demand = 1 }
-	set_temp_variable = { total_rare_needed = country_microchip_produced }
-
-	#First, check if we even need to do all this. If there is a surplus of both tech and precious metals, there is no need to adjust production
-	if = {
-		limit = {
-			OR = {
-				check_variable = { country_tech_remaining < 0 }
-				check_variable = { country_rare_remaining < 0 }
-			}
-		}
-		#Invert the numbers here for a fast check. Surplus now can't be higher than demand, since it's negative
-		#Deficit now is positive, and can be used easily in the cost math since it's positive
-		multiply_temp_variable = { country_tech_remaining = -1 }
-		multiply_temp_variable = { country_rare_remaining = -1 }
-
+		limit = { check_variable = { microchip_prod_check > 0 } }
 		if = {
 			limit = {
-				check_variable = { country_rare_remaining > 0 }
+				NOT = {
+					has_dynamic_modifier = { modifier = advanced_production_modifier }
+				}
 			}
-			add_to_temp_variable = { country_microchip_reducer = country_rare_remaining }
+			add_dynamic_modifier = { modifier = advanced_production_modifier }
 		}
+
+		#Gather total resources remaining
+		set_temp_variable = { country_tech_remaining = resource@tungsten }
+		set_temp_variable = { country_rare_remaining = resource@chromium }
+
+		#Starting produced needs to be set manually, else math has a seizure. Math will never be perfect, because it ignores all the stacked modifiers
+		#But I just don't care anymore, because I just want this to work, damnit
+		set_temp_variable = { country_microchip_produced = microchip_plant_total }
+		multiply_temp_variable = { country_microchip_produced = 18 }
+
+		set_temp_variable = { prod_reducer = var_GNSS_civ_local_resources_factor }
+		add_to_temp_variable = { prod_reducer = country_excavation_production_var }
+
+		set_temp_variable = { country_microchip_reducer = 0 }
+
+		#Gather overall production demand
+		#Math is here. Unless you know the math, PLEASE do not mess with these variables
+		set_temp_variable = { country_tech_demand = 2 }
+		multiply_temp_variable = { country_tech_demand = country_microchip_produced }
+
+		set_temp_variable = { country_rare_demand = 1 }
+		set_temp_variable = { total_rare_needed = country_microchip_produced }
+
+		#First, check if we even need to do all this. If there is a surplus of both tech and precious metals, there is no need to adjust production
 		if = {
 			limit = {
-				check_variable = { country_tech_remaining > 0 }
+				OR = {
+					check_variable = { country_tech_remaining < 0 }
+					check_variable = { country_rare_remaining < 0 }
+				}
 			}
-			multiply_temp_variable = { country_tech_remaining = 1.25 }
-			round_temp_variable = country_tech_remaining
-			add_to_temp_variable = { country_microchip_reducer = country_tech_remaining }
+			#Invert the numbers here for a fast check. Surplus now can't be higher than demand, since it's negative
+			#Deficit now is positive, and can be used easily in the cost math since it's positive
+			multiply_temp_variable = { country_tech_remaining = -1 }
+			multiply_temp_variable = { country_rare_remaining = -1 }
+
+			if = {
+				limit = {
+					check_variable = { country_rare_remaining > 0 }
+				}
+				add_to_temp_variable = { country_microchip_reducer = country_rare_remaining }
+			}
+			if = {
+				limit = {
+					check_variable = { country_tech_remaining > 0 }
+				}
+				multiply_temp_variable = { country_tech_remaining = 1.25 }
+				round_temp_variable = country_tech_remaining
+				add_to_temp_variable = { country_microchip_reducer = country_tech_remaining }
+			}
+			set_variable = { country_microchip_production_var = country_microchip_reducer }
+			set_temp_variable = { country_microchip_reducer_max = country_microchip_produced }
+			multiply_temp_variable = { country_microchip_reducer_max = 0.95 }
+			round_temp_variable = country_microchip_reducer_max
+			clamp_variable = {
+				var = country_microchip_production_var
+				min = 0
+				max = country_microchip_reducer_max
+			}
+		}else = {
+			#There should be no reduction here, because we have a surplus of all inputs
+			set_variable = { country_microchip_production_var = 0 }
 		}
-		set_variable = { country_microchip_production_var = country_microchip_reducer }
-		set_temp_variable = { country_microchip_reducer_max = country_microchip_produced }
-		multiply_temp_variable = { country_microchip_reducer_max = 0.95 }
-		round_temp_variable = country_microchip_reducer_max
-		clamp_variable = {
-			var = country_microchip_production_var
-			min = 0
-			max = country_microchip_reducer_max
-		}
-	}else = {
-		#There should be no reduction here, because we have a surplus of all inputs
-		set_variable = { country_microchip_production_var = 0 }
 	}
 }
 
 composite_update = {
-	#Gather total resources remaining
-	set_temp_variable = { country_rare_remaining = resource@chromium }
-	set_temp_variable = { country_rubber_remaining = resource@rubber }
+	set_temp_variable = { composite_prod_check = resource_produced@composites }
 
-	set_temp_variable = { country_composite_produced = composite_plant_total }
-	multiply_temp_variable = { country_composite_produced = 16 }
-
-	set_temp_variable = { country_composite_reducer = 0 }
-
-	#Gather overall production demand
-	#Math is here. Unless you know the math, PLEASE do not mess with these variables
-
-	set_temp_variable = { country_rare_demand = 1 }
-	set_temp_variable = { country_rare_demand = country_composite_produced }
-
-	set_temp_variable = { country_rubber_demand = 2 }
-	set_temp_variable = { country_rubber_demand = country_composite_produced }
-
-
-	#First, check if we even need to do all this. If there is a surplus of both tech and precious metals, there is no need to adjust production
 	if = {
-		limit = {
-			OR = {
-				check_variable = { country_rare_remaining < 0 }
-				check_variable = { country_rubber_remaining < 0 }
-			}
-		}
-		#Invert the numbers here for a fast check. Surplus now can't be higher than demand, since it's negative
-		#Deficit now is positive, and can be used easily in the cost math since it's positive
-		multiply_temp_variable = { country_rare_remaining = -1 }
-		multiply_temp_variable = { country_rubber_remaining = -1 }
+		limit = { check_variable = { composite_prod_check > 0 } }
 
+		#Gather total resources remaining
+		set_temp_variable = { country_rare_remaining = resource@chromium }
+		set_temp_variable = { country_rubber_remaining = resource@rubber }
+
+		set_temp_variable = { country_composite_produced = composite_plant_total }
+		multiply_temp_variable = { country_composite_produced = 16 }
+
+		set_temp_variable = { country_composite_reducer = 0 }
+
+		#Gather overall production demand
+		#Math is here. Unless you know the math, PLEASE do not mess with these variables
+
+		set_temp_variable = { country_rare_demand = 1 }
+		set_temp_variable = { country_rare_demand = country_composite_produced }
+
+		set_temp_variable = { country_rubber_demand = 2 }
+		set_temp_variable = { country_rubber_demand = country_composite_produced }
+
+
+		#First, check if we even need to do all this. If there is a surplus of both tech and precious metals, there is no need to adjust production
 		if = {
 			limit = {
-				check_variable = { country_rare_remaining > 0 }
+				OR = {
+					check_variable = { country_rare_remaining < 0 }
+					check_variable = { country_rubber_remaining < 0 }
+				}
 			}
-			add_to_temp_variable = { country_composite_reducer = country_rare_remaining }
-		}
-		if = {
-			limit = {
-				check_variable = { country_rubber_remaining > 0 }
+			#Invert the numbers here for a fast check. Surplus now can't be higher than demand, since it's negative
+			#Deficit now is positive, and can be used easily in the cost math since it's positive
+			multiply_temp_variable = { country_rare_remaining = -1 }
+			multiply_temp_variable = { country_rubber_remaining = -1 }
+
+			if = {
+				limit = {
+					check_variable = { country_rare_remaining > 0 }
+				}
+				add_to_temp_variable = { country_composite_reducer = country_rare_remaining }
 			}
-			multiply_temp_variable = { country_rubber_remaining = 1.5 }
-			round_temp_variable = country_rubber_remaining
-			add_to_temp_variable = { country_composite_reducer = country_rubber_remaining }
+			if = {
+				limit = {
+					check_variable = { country_rubber_remaining > 0 }
+				}
+				multiply_temp_variable = { country_rubber_remaining = 1.5 }
+				round_temp_variable = country_rubber_remaining
+				add_to_temp_variable = { country_composite_reducer = country_rubber_remaining }
+			}
+			set_variable = { country_composite_production_var = country_composite_reducer }
+			set_temp_variable = { country_composite_reducer_max = country_composite_produced }
+			multiply_temp_variable = { country_composite_reducer_max = 0.95 }
+			round_temp_variable = country_composite_reducer_max
+			#Clamp the max at -90% of production, this number can be adjusted
+			clamp_variable = {
+				var = country_composite_production_var
+				min = 0
+				max = country_composite_reducer_max
+			}
+		}else = {
+			#There should be no reduction here, because we have a surplus of all inputs
+			set_variable = { country_composite_production_var = 0 }
 		}
-		set_variable = { country_composite_production_var = country_composite_reducer }
-		set_temp_variable = { country_composite_reducer_max = country_composite_produced }
-		multiply_temp_variable = { country_composite_reducer_max = 0.95 }
-		round_temp_variable = country_composite_reducer_max
-		#Clamp the max at -90% of production, this number can be adjusted
-		clamp_variable = {
-			var = country_composite_production_var
-			min = 0
-			max = country_composite_reducer_max
-		}
-	}else = {
-		#There should be no reduction here, because we have a surplus of all inputs
-		set_variable = { country_composite_production_var = 0 }
 	}
 }
 
