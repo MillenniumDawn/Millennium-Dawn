@@ -2349,7 +2349,7 @@ country_event = {
 	fire_only_once = yes
 	trigger = {
 		original_tag = USA
-		date > 2006.1.1
+		date > 2005.6.1
 		NOT = {
 			OR = {
 				has_country_flag = collapsed_nation
@@ -2382,6 +2382,10 @@ country_event = {
 		modifier = {
 			factor = 1.5
 			has_idea = wall_street
+		}
+		modifier = {
+			factor = 5
+			has_global_flag = USA_iraqi_energy_crisis
 		}
 		# Force it to trigger
 		modifier = {
@@ -2646,7 +2650,7 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 	picture = GFX_bearstearns
-	Trigger = {
+	trigger = {
 		Tag = USA
 		NOT = {
 			OR = {
@@ -2717,7 +2721,7 @@ country_event = {
 	fire_only_once = yes
 	picture = GFX_aig_headquarters
 	trigger = {
-		Tag = USA
+		tag = USA
 		NOT = {
 			OR = {
 				has_country_flag = collapsed_nation
@@ -2826,11 +2830,13 @@ country_event = {
 				}
 				country_event = { id = usa_economic_events.36 days = 1 random_days = 7 random_hours = 24 }
 			}
+			set_country_flag = USA_american_recession_occurred
+			set_country_flag = { flag = USA_great_recession_minimum_time value = 1 days = 180 } # Minimum 6 months
 		}
 	}
 	trigger = {
 		tag = USA
-		NOT = { has_country_flag = usa_american_recession_occurred }
+		NOT = { has_country_flag = USA_american_recession_occurred }
 	}
 
 	#So?
@@ -2854,7 +2860,10 @@ country_event = {
 					check_variable = { USA_economic_regulation_var < 40 }
 				}
 			}
-			add_ideas = USA_economic_crisis_light_idea
+			add_timed_idea = {
+				idea = USA_economic_crisis_light_idea
+				days = 180
+			}
 			add_political_power = 50
 		}
 		else_if = { #Bailout and Nationalization
@@ -2869,11 +2878,15 @@ country_event = {
 					has_country_flag = usa_bailout_three
 					has_country_flag = usa_bailout_two
 					has_country_flag = usa_bailout_one
+					has_global_flag = USA_iraqi_energy_crisis
 					check_variable = { USA_strength_of_wall_street_var > 10 }
 					check_variable = { USA_economic_regulation_var < 60 }
 				}
 			}
-			add_ideas = USA_economic_crisis_medium_idea
+			add_timed_idea = {
+				idea = USA_economic_crisis_medium_idea
+				days = 270
+			}
 			add_political_power = 100
 			add_stability = -0.025
 		}
@@ -2889,17 +2902,22 @@ country_event = {
 					has_country_flag = usa_nationalize_three
 					has_country_flag = usa_nationalize_two
 					has_country_flag = usa_nationalize_one
+					has_global_flag = USA_iraqi_energy_crisis
 					check_variable = { USA_strength_of_wall_street_var < 40 }
 					check_variable = { USA_economic_regulation_var < 90 }
 				}
 			}
-			add_ideas = USA_economic_crisis_severe_idea
+			add_timed_idea = {
+				idea = USA_economic_crisis_severe_idea
+				days = 365
+			}
 			add_political_power = 150
 			add_stability = -0.05
 		}
 		hidden_effect = {
 			country_event = { id = usa_economic_events.30 days = 70 random_hours = 35 }
 		}
+
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -2925,7 +2943,7 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.5.b"
 		set_temp_variable = { treasury_change = -150 }
 		modify_treasury_effect = yes
-		add_stability = 0.03
+		add_stability = 0.05
 		if = { #Bailout and Nationalization - Nationalization is the most unstable. It is very unpredictable
 			limit = {
 				count_triggers = {
@@ -2942,7 +2960,10 @@ country_event = {
 					check_variable = { USA_economic_regulation_var < 40 }
 				}
 			}
-			add_ideas = USA_economic_crisis_light_idea
+			add_timed_idea = {
+				idea = USA_economic_crisis_light_idea
+				days = 210
+			}
 			add_political_power = 200
 		}
 		else_if = { #Bailout and Nationalization
@@ -2957,11 +2978,15 @@ country_event = {
 					has_country_flag = usa_bailout_three
 					has_country_flag = usa_bailout_two
 					has_country_flag = usa_bailout_one
+					has_global_flag = USA_iraqi_energy_crisis
 					check_variable = { USA_strength_of_wall_street_var > 10 }
 					check_variable = { USA_economic_regulation_var < 60 }
 				}
 			}
-			add_ideas = USA_economic_crisis_medium_idea
+			add_timed_idea = {
+				idea = USA_economic_crisis_medium_idea
+				days = 250
+			}
 			add_political_power = 250
 			add_stability = -0.025
 		}
@@ -2977,18 +3002,19 @@ country_event = {
 					has_country_flag = usa_nationalize_three
 					has_country_flag = usa_nationalize_two
 					has_country_flag = usa_nationalize_one
+					has_global_flag = USA_iraqi_energy_crisis
 					check_variable = { USA_strength_of_wall_street_var < 40 }
 					check_variable = { USA_economic_regulation_var < 90 }
 				}
 			}
-			add_ideas = USA_economic_crisis_severe_idea
+			add_timed_idea = {
+				idea = USA_economic_crisis_severe_idea
+				days = 300
+			}
 			add_political_power = 350
 			add_stability = -0.05
 		}
 
-		hidden_effect = {
-			country_event = { id = usa_economic_events.30 days = 70 random_hours = 35 }
-		}
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -3014,44 +3040,6 @@ country_event = {
 }
 
 # Random Events Until Recession is Over
-# FIXME: Redo this so it's actually penalizing to the American player
-country_event = {
-	id = usa_economic_events.30
-	hidden = yes
-	is_triggered_only = yes
-
-	trigger = {
-		tag = USA
-		OR = {
-			has_idea = USA_economic_crisis_light_idea
-			has_idea = USA_economic_crisis_medium_idea
-			has_idea = USA_economic_crisis_severe_idea
-		}
-		NOT = { has_country_flag = usa_american_recession_occurred }
-	}
-	immediate = {
-		log = "[GetDateText]: [Root.GetName] event usa_economic_events.3"
-		random_list = {
-			# Military Industry Leave the USA
-			5 = {
-				country_event = { id = usa_economic_events.31 days = 100 random_hours = 35 }
-			}
-			# Civilian Factories Leave the USA
-			30 = {
-				country_event = { id = usa_economic_events.32 days = 100 random_hours = 35 }
-			}
-			# Company Collapse
-			15 = {
-				country_event = { id = usa_economic_events.33 days = 100 random_hours = 35 }
-			}
-			# Company Goes Bankrupt
-			50 = {
-				country_event = { id = usa_economic_events.34 days = 100 random_hours = 35 }
-			}
-		}
-	}
-}
-
 # Military Industry Leaves the USA
 country_event = {
 	id = usa_economic_events.31
@@ -3067,7 +3055,15 @@ country_event = {
 			has_idea = USA_economic_crisis_medium_idea
 			has_idea = USA_economic_crisis_severe_idea
 		}
-		NOT = { has_country_flag = usa_american_recession_occurred }
+		OR = {
+			check_variable = { global.month = 2 }
+			check_variable = { global.month = 4 }
+			check_variable = { global.month = 6 }
+			check_variable = { global.month = 8 }
+			check_variable = { global.month = 10 }
+			check_variable = { global.month = 12 }
+		}
+		has_country_flag = USA_american_recession_occurred
 	}
 
 	# Oh no
@@ -3116,8 +3112,15 @@ country_event = {
 			has_idea = USA_economic_crisis_medium_idea
 			has_idea = USA_economic_crisis_severe_idea
 		}
-		has_idea = recession
-		NOT = { has_country_flag = usa_american_recession_occurred }
+		OR = {
+			check_variable = { global.month = 2 }
+			check_variable = { global.month = 4 }
+			check_variable = { global.month = 6 }
+			check_variable = { global.month = 8 }
+			check_variable = { global.month = 10 }
+			check_variable = { global.month = 12 }
+		}
+		has_country_flag = USA_american_recession_occurred
 	}
 
 	#Oh no
@@ -3127,20 +3130,24 @@ country_event = {
 		set_temp_variable = { arg_popularity = -0.02 }
 		add_ruling_outlook_popularity = yes
 		random_owned_controlled_state = {
+			limit = {
+				check_variable = { building_level@industrial_complex > 0 }
+			}
 			remove_building = {
 				type = industrial_complex
 				level = 1
 			}
 		}
 		random_owned_controlled_state = {
+			limit = {
+				check_variable = { building_level@industrial_complex > 0 }
+			}
 			remove_building = {
 				type = industrial_complex
 				level = 1
 			}
 		}
-		hidden_effect = {
-			country_event = { id = usa_economic_events.30 days = 1 }
-		}
+
 		ai_chance = {
 			base = 1
 		}
@@ -3162,8 +3169,15 @@ country_event = {
 			has_idea = USA_economic_crisis_medium_idea
 			has_idea = USA_economic_crisis_severe_idea
 		}
-		has_idea = recession
-		NOT = { has_country_flag = usa_american_recession_occurred }
+		OR = {
+			check_variable = { global.month = 2 }
+			check_variable = { global.month = 4 }
+			check_variable = { global.month = 6 }
+			check_variable = { global.month = 8 }
+			check_variable = { global.month = 10 }
+			check_variable = { global.month = 12 }
+		}
+		has_country_flag = USA_american_recession_occurred
 	}
 
 	option = {
@@ -3172,12 +3186,20 @@ country_event = {
 		set_temp_variable = { arg_popularity = -0.025 }
 		add_ruling_outlook_popularity = yes
 		add_stability = -0.03
-		set_temp_variable = { temp_opinion = -5 }
+		set_temp_variable = { temp_opinion = -3 }
 		change_wall_street_opinion = yes
-		add_political_power = -100
-		hidden_effect = {
-			country_event = { id = usa_economic_events.30 days = 1 }
+
+		every_owned_state = {
+			limit = {
+				check_variable = { building_level@industrial_complex > 0 }
+			}
+			random_select_amount = 2
+			remove_building = {
+				type = industrial_complex
+				level = 1
+			}
 		}
+
 		ai_chance = {
 			base = 1
 		}
@@ -3194,21 +3216,25 @@ country_event = {
 	picture = GFX_foreclosure
 	trigger = {
 		tag = USA
-		has_idea = recession
-		NOT = { has_country_flag = usa_american_recession_occurred }
+		OR = {
+			check_variable = { global.month = 2 }
+			check_variable = { global.month = 4 }
+			check_variable = { global.month = 6 }
+			check_variable = { global.month = 8 }
+			check_variable = { global.month = 10 }
+			check_variable = { global.month = 12 }
+		}
+		has_country_flag = USA_american_recession_occurred
 	}
 
 	option = {
 		name = usa_economic_events.34.a
 		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.34.a"
-		add_stability = -0.02
-		set_temp_variable = { arg_popularity = -0.025 }
+		set_temp_variable = { arg_popularity = -0.03 }
 		add_ruling_outlook_popularity = yes
 		set_temp_variable = { temp_opinion = -5 }
 		change_wall_street_opinion = yes
-		hidden_effect = {
-			country_event = { id = usa_economic_events.30 days = 1 }
-		}
+
 		ai_chance = {
 			base = 1
 		}
@@ -3225,51 +3251,27 @@ country_event = {
 	trigger = {
 		original_tag = USA
 		NOT = { has_country_flag = USA_american_recession_over }
+		has_country_flag = USA_american_recession_occurred
 		has_global_flag = USA_great_financial_crisis
-		OR = {
-			has_idea = USA_economic_crisis_light_idea
-			has_idea = USA_economic_crisis_medium_idea
-			has_idea = USA_economic_crisis_severe_idea
-		}
 		OR = {
 			has_idea = stable_growth
 			has_idea = fast_growth
 			has_idea = economic_boom
-		}
-		NOT = {
-			has_country_flag = usa_american_recession_occurred
-			has_country_flag = USA_american_recession_over
 		}
 	}
 
 	mean_time_to_happen = {
 		modifier = {
 			factor = 5
-			has_idea = USA_economic_crisis_severe_idea
-		}
-		modifier = {
-			factor = 15
-			has_idea = USA_economic_crisis_medium_idea
-		}
-		modifier = {
-			factor = 25
-			has_idea = USA_economic_crisis_light_idea
-		}
-		modifier = {
-			factor = 500
-			OR = {
-				has_idea = recession
-				has_idea = depression
-				has_idea = stagnation
-			}
-		}
-		modifier = {
-			factor = 0.25
 			OR = {
 				has_idea = stable_growth
 				has_idea = fast_growth
 				has_idea = economic_boom
 			}
+		}
+		modifier = {
+			factor = 0.25
+			NOT = { has_country_flag = USA_great_recession_minimum_time }
 		}
 	}
 
@@ -3421,7 +3423,7 @@ country_event = {
 		}
 
 		set_temp_variable = { treasury_change = gdp_total }
-		multiply_temp_variable = { treasury_change = -0.10 }
+		multiply_temp_variable = { treasury_change = -0.07 }
 		modify_treasury_effect = yes
 
 		if = {
@@ -3605,17 +3607,94 @@ country_event = {
 	id = usa_economic_events.37
 	title = usa_economic_events.37.t
 	desc = usa_economic_events.37.d
-	picture = GFX_banking_crisis
+	picture = GFX_BMW_Car # FIXME: Replace with a proper icon for either Ford or Chrysler
 	is_triggered_only = yes
 
 	# Can this get any worse?
 	option = {
 		name = usa_economic_events.37.a
+		if = {
+			limit = { 777 = { check_variable = { building_level@industrial_complex > 1 } } }
+			777 = {
+				remove_building = {
+					type = industrial_complex
+					level = 2
+				}
+			}
+		}
+		if = {
+			limit = { 811 = { check_variable = { building_level@industrial_complex > 0 } } }
+			811 = {
+				remove_building = {
+					type = industrial_complex
+					level = 1
+				}
+			}
+		}
+		if = {
+			limit = { 800 = { check_variable = { building_level@industrial_complex > 0 } } }
+			800 = {
+				remove_building = {
+					type = industrial_complex
+					level = 1
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
 	}
 
 	# See if we can throw money at the problem...
 	option = {
 		name = usa_economic_events.37.b
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.04 }
+		modify_treasury_effect = yes
+		if = {
+			limit = { 777 = { check_variable = { building_level@industrial_complex > 1 } } }
+			777 = {
+				remove_building = {
+					type = industrial_complex
+					level = 1
+				}
+			}
+		}
+		if = {
+			limit = { 811 = { check_variable = { building_level@industrial_complex > 0 } } }
+			811 = {
+				remove_building = {
+					type = industrial_complex
+					level = 1
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+# The 2003 Oil Crisis
+country_event = {
+	id = usa_economic_events.38
+	title = usa_economic_events.38.t
+	desc = usa_economic_events.38.d
+	picture = GFX_oil_refinery # FIXME: Replace with a proper icon of an oil barrel w/ something in the background
+	is_triggered_only = yes
+
+	# Well, the price of gas will be over 2.25!
+	option = {
+		name = usa_economic_events.38.a
+		log = "[GetDateText]: [Root.GetName]: event usa_economic_events.38.a"
+		add_timed_idea = {
+			idea = USA_early_2000s_energy_crisis
+			days = 180
+		}
+
+		news_event = usa_economic_events_news.7
 	}
 }
 
@@ -3777,7 +3856,7 @@ news_event = {
 news_event = {
 	id = usa_economic_events_news.3
 	title = usa_economic_events_news.3.t
-	Trigger = {
+	trigger = {
 		NOT = {
 			OR = {
 				USA = {
@@ -3854,7 +3933,7 @@ news_event = {
 news_event = {
 	id = usa_economic_events_news.4
 	title = usa_economic_events_news.4.t
-	Trigger = {
+	trigger = {
 		NOT = {
 			OR = {
 				USA = {
@@ -3936,7 +4015,7 @@ news_event = {
 	fire_only_once = yes
 	picture = GFX_world_stockmarket
 	major = yes
-	Trigger = {
+	trigger = {
 		NOT = {
 			OR = {
 				USA = {
@@ -3950,7 +4029,6 @@ news_event = {
 	#Hecking Wall Street
 	option = {
 		name = usa_economic_events_news.6.a
-		log = "[GetDateText]: [Root.GetName]: event usa_economic_events_news.6.a"
 		trigger = {
 			tag = USA
 		}
@@ -3958,7 +4036,6 @@ news_event = {
 	#A Tragic Day
 	option = {
 		name = usa_economic_events_news.6.b
-		log = "[GetDateText]: [Root.GetName]: event usa_economic_events_news.6.b"
 		trigger = {
 			NOT = {
 				tag = USA
@@ -3973,7 +4050,6 @@ news_event = {
 	#Pathetic
 	option = {
 		name = usa_economic_events_news.6.c
-		log = "[GetDateText]: [Root.GetName]: event usa_economic_events_news.6.c"
 		trigger = {
 			NOT = {	tag = USA }
 			OR = {
@@ -3983,6 +4059,23 @@ news_event = {
 				is_in_faction_with = CHI
 				has_government = fascism
 			}
+		}
+	}
+}
+
+news_event = {
+	id = usa_economic_events_news.7
+	title = usa_economic_events_news.7.t
+	desc = usa_economic_events_news.7.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	picture = GFX_world_stockmarket
+	major = yes
+
+	option = {
+		name = usa_economic_events_news.7.a
+		trigger = {
+			tag = USA
 		}
 	}
 }
@@ -10519,11 +10612,11 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: USA_econ_event.100.o1 executed"
 		country_event = {
 			id = USA_econ_event.101
-			days = 61
+			days = 81
 		}
 
 		custom_effect_tooltip = USA_domestic_policies_tooltip
-		set_temp_variable = { temp_change = -0.02 }
+		set_temp_variable = { temp_change = -0.05 }
 		USA_change_domestic_political_power_change = yes
 
 		ai_chance = {
@@ -10535,12 +10628,13 @@ country_event = {
 		}
 	}
 
-	option = { #Ignore It
-	name = USA_econ_event.100.o2
-	log = "[GetDateText]: [This.GetName]: USA_econ_event.100.o2 executed"
+	# Ignore It
+	option = {
+		name = USA_econ_event.100.o2
+		log = "[GetDateText]: [This.GetName]: USA_econ_event.100.o2 executed"
 
 		custom_effect_tooltip = USA_domestic_policies_tooltip
-		set_temp_variable = { temp_change = 0.02 }
+		set_temp_variable = { temp_change = 0.04 }
 		USA_change_domestic_political_power_change = yes
 
 		ai_chance = {
@@ -10566,16 +10660,17 @@ country_event = {
 		NOT = { has_country_flag = collapsed_nation }
 	}
 
-	option = { #We Could Entertain This
+	# We Could Entertain This
+	option = {
 		name = USA_econ_event.101.o1
 		log = "[GetDateText]: [This.GetName]: USA_econ_event.101.o1 executed"
 		country_event = {
 			id = USA_econ_event.102
-			days = 61
+			days = 81
 		}
 
 		custom_effect_tooltip = USA_domestic_policies_tooltip
-		set_temp_variable = { temp_change = -0.02 }
+		set_temp_variable = { temp_change = -0.05 }
 		USA_change_domestic_political_power_change = yes
 
 		ai_chance = {
@@ -10587,12 +10682,13 @@ country_event = {
 		}
 	}
 
-	option = { #Ignore It
+	# Ignore It
+	option = {
 	name = USA_econ_event.101.o2
 	log = "[GetDateText]: [This.GetName]: USA_econ_event.101.o2 executed"
 
 		custom_effect_tooltip = USA_domestic_policies_tooltip
-		set_temp_variable = { temp_change = 0.02 }
+		set_temp_variable = { temp_change = 0.04 }
 		USA_change_domestic_political_power_change = yes
 
 		ai_chance = {
@@ -10618,14 +10714,15 @@ country_event = {
 		NOT = { has_country_flag = collapsed_nation }
 	}
 
-	option = { #We Could Entertain This
+	# We Could Entertain This
+	option = {
 		name = USA_econ_event.102.o1
 		log = "[GetDateText]: [This.GetName]: USA_econ_event.102.o1 executed"
 		set_country_flag = USA_housing_problems_detected
 
 		custom_effect_tooltip = USA_blank_space_tooltip
 		custom_effect_tooltip = USA_domestic_policies_tooltip
-		set_temp_variable = { temp_change = -0.02 }
+		set_temp_variable = { temp_change = -0.05 }
 		USA_change_domestic_political_power_change = yes
 		hidden_effect = {
 			set_country_flag = public_ignored1
