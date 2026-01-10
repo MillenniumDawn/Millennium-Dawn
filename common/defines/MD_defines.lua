@@ -684,11 +684,11 @@
 	NDefines.NNavy.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 6 		-- optimum capital count for capital taskforces
 	NDefines.NNavy.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 2			-- optimum screen count for screen taskforces
 	NDefines.NNavy.SUB_TASKFORCE_MAX_SHIP_COUNT = 4				-- optimum sub count for sub taskforces
-	NDefines.NNavy.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 4
-	NDefines.NNavy.MAX_CAPITALS_PER_AUTO_TASK_FORCE = 6
+	NDefines.NNavy.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 1
+	NDefines.NNavy.MAX_CAPITALS_PER_AUTO_TASK_FORCE = 2
 
-	NDefines.NNavy.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 4			-- carrier fleets will at least have this amount of capitals
-	NDefines.NNavy.CAPITALS_TO_CARRIER_RATIO = 4				-- capital to carrier count in carrier taskfoces
+	NDefines.NNavy.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 2			-- carrier fleets will at least have this amount of capitals
+	NDefines.NNavy.CAPITALS_TO_CARRIER_RATIO = 2				-- capital to carrier count in carrier taskfoces
 	NDefines.NNavy.SCREENS_TO_CAPITAL_RATIO = 2				-- screens to capital/carrier count in carrier & capital taskforces
 
 	NDefines.NNavy.BASE_POSITIONING = 0.70 -- 1.0
@@ -1079,15 +1079,15 @@
 	NDefines.NAI.PRODUCTION_MAX_PROGRESS_TO_SWITCH_NAVAL = 0.2		-- AI will not replace ships being built by newer types if progress is above this
 	NDefines.NAI.AREA_DEFENSE_SETTING_AIRBASES = true
 
-	NDefines.NAI.MIN_MAIN_SHIP_RATIO = 0.1                      -- if main ship ratio is below this, steal other ships.
+	NDefines.NAI.MIN_MAIN_SHIP_RATIO = 1                      -- if main ship ratio is below this, steal other ships.
 	NDefines.NAI.MIN_SUPPORT_SHIP_RATIO = 0.7                   -- if support ship ratio is below this, steal other ships.
-	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_REINFORCE = 0.5         -- the main ships will be tried to reinforce this level.
-	NDefines.NAI.MIN_SUPPORT_SHIP_RATIO_TO_REINFORCE = 0.9      -- the support ships will be tried to reinforce this level.
-	NDefines.NAI.MIN_MAIN_SHIP_TO_SPARE = 0.7                   -- can only steal ships from a task force if their main ship ratio is above this.
+	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_REINFORCE = 1         -- the main ships will be tried to reinforce this level.
+	NDefines.NAI.MIN_SUPPORT_SHIP_RATIO_TO_REINFORCE = 1      -- the support ships will be tried to reinforce this level.
+	NDefines.NAI.MIN_MAIN_SHIP_TO_SPARE = 1                   -- can only steal ships from a task force if their main ship ratio is above this.
 	NDefines.NAI.MIN_SUPPORT_SHIP_TO_SPARE = 1.0                -- can only steal ships from a task force if their support ship ratio is above this.
 	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_MERGE = 1.0             -- try merge task force if main ship ratio is lower than this.
-	NDefines.NAI.MAX_MAIN_SHIP_RATIO_TO_MERGE = 1.002           -- if resulting main ship ratio would be at most this, allow merging into this task force.
-	NDefines.NAI.MAIN_SHIP_RATIO_TO_SPLIT = 3.6                 -- if main ship ratio in a task force is larger than this, split it. (If a carrier TF wants 4 carriers (see defines above), but it has more than [this * 4] carriers, then we try to split the TF.)
+	NDefines.NAI.MAX_MAIN_SHIP_RATIO_TO_MERGE = 1.5           -- if resulting main ship ratio would be at most this, allow merging into this task force.
+	NDefines.NAI.MAIN_SHIP_RATIO_TO_SPLIT = 2                 -- if main ship ratio in a task force is larger than this, split it. (If a carrier TF wants 4 carriers (see defines above), but it has more than [this * 4] carriers, then we try to split the TF.)
 	NDefines.NAI.INDUSTRIAL_ORG_TRAIT_UNLOCK_RANDOMNESS = 3		-- AI will pick a random from N top traits when choosing a trait to unlock
 	NDefines.NAI.INDUSTRIAL_ORG_POLICY_CHANGE_RANDOMNESS = 3	-- AI will pick a random from N top policies when choosing a policy to attach to an MIO
 	NDefines.NAI.INDUSTRIAL_ORG_RESEARCH_ASSIGN_RANDOMNESS = 3	-- AI will pick a random from N top MIOs when choosing an MIO to assign to a research
