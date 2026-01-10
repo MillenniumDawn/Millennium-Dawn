@@ -368,6 +368,10 @@ calculate_energy_use = {
 	force_update_dynamic_modifier = yes
 }
 
+effect_to_update_sco = {
+	force_update_map_mode = { mapmode = SCO_map_mode }
+}
+
 # Effect: calculate_energy_load_sharing
 # Purpose: Calculates the Energy Load Sharing
 # TODO: This right now is limited to one way agreements for now. We can expand this to more bilateral agreements later on when we have more details on it.
@@ -427,10 +431,7 @@ calculate_energy_load_sharing = {
 # Purpose: applies the energy balance penalties
 energy_on_daily = {
 	set_variable = { no_fuel_penalties_var = 0 }
-	if = {
-		limit = {
-			check_variable = { fuel_k = 0 }
-		}
+	if = { limit = { check_variable = { fuel_k = 0 } }
 		set_variable = { no_fuel_penalties_var = -0.5 }
 		ingame_update_setup = yes
 	}
@@ -445,24 +446,16 @@ energy_on_daily = {
 		set_temp_variable = { temp_maximum = ROOT.max_stored_energy }
 	}
 
-	clamp_variable = {
-		var = ROOT.stored_energy
-		min = 0
-		max = temp_maximum
-	}
+	clamp_variable = { var = ROOT.stored_energy min = 0 max = temp_maximum }
 }
 
 # Effect: random_renewable_variable_calculation
 # Purpose: Calculates the randomized variable for the amount of energy gained from Renewable Energy from a specific state
 random_renewable_variable_calculation = {
-	every_controlled_state = {
-		set_variable_to_random = { var = renewable_energy_random_var min = 0 max = 1 }
-		set_variable_to_random = { var = renewable_energy_random_var2 min = 0 max = 1 }
-		multiply_variable = { renewable_energy_random_var = renewable_energy_random_var2 }
-		add_to_variable = { renewable_energy_random_var = modifier@state_renewable_capacity_factor_modifier }
-		clamp_variable = { var = renewable_energy_random_var min = 0 max = 1 }
-		clear_variable = renewable_energy_random_var2
-
+	for_each_scope_loop = {
+		array = global.states
+		set_variable_to_random = { var = renewable_energy_random_var min = modifier@state_renewable_capacity_factor_modifier max = 1 }
+		# Calculate the Min / Max
 		set_variable = { min_renewable_energy_var = modifier@state_renewable_capacity_factor_modifier }
 		set_variable = { max_renewable_energy_var = 1 }
 		add_to_variable = { max_renewable_energy_var = modifier@state_renewable_capacity_factor_modifier }
