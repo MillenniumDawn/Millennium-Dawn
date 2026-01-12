@@ -1089,7 +1089,7 @@
 	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_REINFORCE = 1         -- the main ships will be tried to reinforce this level.
 	NDefines.NAI.MIN_SUPPORT_SHIP_RATIO_TO_REINFORCE = 1      -- the support ships will be tried to reinforce this level.
 	NDefines.NAI.MIN_MAIN_SHIP_TO_SPARE = 0.2                   -- can only steal ships from a task force if their main ship ratio is above this.
-	NDefines.NAI.MIN_SUPPORT_SHIP_TO_SPARE = 0.5                -- can only steal ships from a task force if their support ship ratio is above this.
+	NDefines.NAI.MIN_SUPPORT_SHIP_TO_SPARE = 0.25                -- can only steal ships from a task force if their support ship ratio is above this.
 	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_MERGE = 1.0             -- try merge task force if main ship ratio is lower than this.
 	NDefines.NAI.MAX_MAIN_SHIP_RATIO_TO_MERGE = 2.5           -- if resulting main ship ratio would be at most this, allow merging into this task force.
 	NDefines.NAI.MAIN_SHIP_RATIO_TO_SPLIT = 3                 -- if main ship ratio in a task force is larger than this, split it. (If a carrier TF wants 4 carriers (see defines above), but it has more than [this * 4] carriers, then we try to split the TF.)
