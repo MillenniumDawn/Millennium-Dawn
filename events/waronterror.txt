@@ -763,6 +763,8 @@ country_event = {
 	option = {
 		name = wot.14.a
 		log = "[GetDateText]: [This.GetName]: wot.14.a executed"
+
+		set_country_flag = voted_in_favor_of_iraq_invasion
 		ai_chance = {
 			factor = 5
 			modifier = {
@@ -770,11 +772,13 @@ country_event = {
 				original_tag = ENG
 			}
 		}
-		set_country_flag = voted_in_favor_of_iraq_invasion
 	}
+
 	option = {
 		name = wot.14.b
 		log = "[GetDateText]: [This.GetName]: wot.14.b executed"
+		set_country_flag = voted_against_of_iraq_invasion
+
 		ai_chance = {
 			factor = 95
 			modifier = {
@@ -782,21 +786,23 @@ country_event = {
 				original_tag = ENG
 			}
 		}
-		set_country_flag = voted_against_of_iraq_invasion
 	}
 
 }
 
-#Petition denied
+# Petition denied
 country_event = {
 	id = wot.15
 	title = wot.15.t
 	desc = wot.15.d
 	picture = GFX_iraq_war3
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
+	immediate = {
+		set_country_flag = US_petition_denied_event
+	}
 	trigger = {
+		NOT = { has_country_flag = US_petition_denied_event }
 		has_country_flag = US_UN_vote_on_iraq
 		OR = {
 			ENG = { has_country_flag = voted_against_of_iraq_invasion }
@@ -806,22 +812,25 @@ country_event = {
 		}
 	}
 
-	mean_time_to_happen = {
-		days = 7
-	}
-
+	# Go Forward with the Invasion
 	option = {
 		name = wot.15.a
 		log = "[GetDateText]: [This.GetName]: wot.15.a executed"
 		ai_chance = { factor = 95 }
 		set_country_flag = us_prepare_for_iraq_invasion
+		activate_mission = USA_invasion_in_iraq_mission
 	}
+
+	# Decline the Iraq Invasion
 	option = {
 		name = wot.15.b
 		log = "[GetDateText]: [This.GetName]: wot.15.b executed"
 		ai_chance = { factor = 5 }
+		add_timed_idea = {
+			idea = USA_failed_to_invade_iraq_idea
+			days = 200
+		}
 	}
-
 }
 
 #Petition approved
@@ -830,10 +839,13 @@ country_event = {
 	title = wot.16.t
 	desc = wot.16.d
 	picture = GFX_iraq_war3
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
+	immediate = {
+		set_country_flag = US_petition_accepted_event
+	}
 	trigger = {
+		NOT = { has_country_flag = US_petition_accepted_event }
 		has_country_flag = US_UN_vote_on_iraq
 		ENG = { has_country_flag = voted_in_favor_of_iraq_invasion }
 		CHI = { has_country_flag = voted_in_favor_of_iraq_invasion }
@@ -841,10 +853,7 @@ country_event = {
 		FRA = { has_country_flag = voted_in_favor_of_iraq_invasion }
 	}
 
-	mean_time_to_happen = {
-		days = 7
-	}
-
+	# Approved the Petition
 	option = {
 		name = wot.16.a
 		log = "[GetDateText]: [This.GetName]: wot.16.a executed"
@@ -853,24 +862,20 @@ country_event = {
 		create_wargoal = {
 			type = puppet_wargoal_focus
 			target = IRQ
+			expire = 365
 		}
-		add_ai_strategy = {
-			type = declare_war
-			id = "IRQ"
-			value = 200
-		}
+		activate_mission = USA_invasion_in_iraq_mission
 		hidden_effect = { news_event = { id = wotnews.10 hours = 6 } }
 	}
 
 }
 
-#Asking countries to join Invasion of Iraq
+# Asking countries to join Invasion of Iraq
 country_event = {
 	id = wot.17
 	title = wot.17.t
 	desc = wot.17.d
 	picture = GFX_iraq_war3
-
 	is_triggered_only = yes
 
 	option = {
@@ -1093,19 +1098,32 @@ country_event = {
 	title = wot.22.t
 	desc = wot.22.d
 	picture = GFX_bin_laden
-
+	is_triggered_only = yes
+	fire_only_once = yes
+	immediate = {
+		set_country_flag = USA_bin_laden_found_by_security_services
+	}
 	trigger = {
-		original_tag = USA
+		NOT = { has_country_flag = USA_bin_laden_found_by_security_services }
 		any_country = {
 			exists = yes
 			has_country_flag = hideout_of_bin_laden
 		}
 	}
 
-	fire_only_once = yes
-
 	mean_time_to_happen = {
-		months = 144
+		modifier = {
+			factor = 1.5
+			date > 2001.1.1
+		}
+		modifier = {
+			factor = 1.5
+			date > 2002.1.1
+		}
+		modifier = {
+			factor = 1.5
+			date > 2003.1.1
+		}
 	}
 
 	option = {
