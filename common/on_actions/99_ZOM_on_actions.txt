@@ -50,10 +50,35 @@ on_actions = {
 				}
 			}
 
+			if = { limit = { has_war = no }
+				random_neighbor_country = {
+					limit = {
+						NOT = { has_war_with = ZOM }
+						NOT = { is_subject_of = ZOM }
+					}
+					ZOM = {
+						declare_war_on = {
+							target = PREV
+							type = annex_everything
+						}
+					}
+				}
+			}
+
 			# Annex All Capitulated Enemies
 			every_enemy_country = {
 				limit = { has_capitulated = yes }
 				ZOM = { annex_country = { target = PREV transfer_troops = no } }
+			}
+
+			# Annex All Subjects if we have subjects
+			if = {
+				limit = { num_subjects > 0 }
+				every_subject_country = {
+					ZOM = {
+						annex_country = { target = PREV transfer_troops = no }
+					}
+				}
 			}
 
 			# Last Ditch Effort
@@ -63,6 +88,35 @@ on_actions = {
 					has_capitulated = no
 					has_army_manpower = { size < 4000000 }
 				}
+				set_country_flag = ZOM_last_ditch_effort
+				capital_scope = {
+					create_unit = {
+						division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
+						count = 30
+						owner = ZOM
+						prioritize_location = 1510
+					}
+				}
+			}
+		}
+	}
+
+	on_monthly_ZOM = {
+		effect = {
+			add_manpower = -100000
+			capital_scope = {
+				create_unit = {
+					division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
+					count = 25
+					owner = ZOM
+					prioritize_location = 1510
+				}
+			}
+			if = {
+				limit = {
+					has_game_rule = { rule = zombie_difficulty option = HARD }
+				}
+				add_manpower = -100000
 				capital_scope = {
 					create_unit = {
 						division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
@@ -70,6 +124,65 @@ on_actions = {
 						owner = ZOM
 						prioritize_location = 1510
 					}
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						has_game_rule = { rule = zombie_difficulty option = HARD }
+						has_game_rule = { rule = zombie_difficulty option = EXTREME }
+					}
+				}
+				add_manpower = -100000
+				capital_scope = {
+					create_unit = {
+						division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
+						count = 15
+						owner = ZOM
+						prioritize_location = 1510
+					}
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						has_game_rule = { rule = zombie_difficulty option = HARD }
+						has_game_rule = { rule = zombie_difficulty option = EXTREME }
+						has_game_rule = { rule = zombie_difficulty option = INSANE }
+					}
+				}
+				add_manpower = -100000
+				capital_scope = {
+					create_unit = {
+						division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
+						count = 15
+						owner = ZOM
+						prioritize_location = 1510
+					}
+				}
+			}
+
+			# Outbreak Random Chance
+			if = {
+				limit = {
+					OR = {
+						check_variable = { global.month = 3 }
+						check_variable = { global.month = 6 }
+						check_variable = { global.month = 9 }
+						check_variable = { global.month = 12 }
+					}
+				}
+				random_list = {
+					25 = {
+						random_other_country = {
+							limit = {
+								NOT = { has_war_with = ZOM }
+								NOT = { has_country_flag = has_had_outbreak_event }
+							}
+							country_event = { id = zombie.10 days = 3 random_days = 3 }
+						}
+					}
+					75 = { }
 				}
 			}
 		}

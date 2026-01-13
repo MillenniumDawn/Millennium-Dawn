@@ -237,15 +237,16 @@ USA_strike_force_pacific = { #Essentially used to push out in the pacific
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = strike_force_home_base id = 105 } #Pearl Harbor - Should keep na
+	#ai_strategy = { type = strike_force_home_base id = 105 } #Pearl Harbor - Should keep na
 	ai_strategy = { type = area_priority id = pacific value = 50 }
 	ai_strategy = { type = area_priority id = asia value = 50 }
-	ai_strategy = { type = naval_avoid_region id = 88 value = 1000 } #Bering Straits -This is here to keep the AI protecting the cores regions
-	ai_strategy = { type = naval_avoid_region id = 171 value = 1000 } #Alaskan Coast
-	ai_strategy = { type = naval_avoid_region id = 32 value = 1000 }
-	ai_strategy = { type = naval_avoid_region id = 112 value = 1000 }
-	ai_strategy = { type = naval_avoid_region id = 179 value = 1000 }
-	ai_strategy = { type = naval_avoid_region id = 113 value = 1000 }
+	# ai_strategy = { type = naval_dominance id = pacific value = 90 }
+	# ai_strategy = { type = naval_avoid_region id = 88 value = 1000 } #Bering Straits -This is here to keep the AI protecting the cores regions
+	# ai_strategy = { type = naval_avoid_region id = 171 value = 1000 } #Alaskan Coast
+	# ai_strategy = { type = naval_avoid_region id = 32 value = 1000 }
+	# ai_strategy = { type = naval_avoid_region id = 112 value = 1000 }
+	# ai_strategy = { type = naval_avoid_region id = 179 value = 1000 }
+	# ai_strategy = { type = naval_avoid_region id = 113 value = 1000 }
 }
 
 USA_strike_force_europe = {
@@ -263,7 +264,7 @@ USA_strike_force_europe = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = strike_force_home_base id = 54 }
+	#ai_strategy = { type = strike_force_home_base id = 54 }
 	ai_strategy = { type = area_priority id = europe value = 250 }
 }
 
@@ -327,7 +328,7 @@ USA_attack_china = {
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = area_priority id = chinese_coast value = 100000 } #This should mega focus here
-	ai_strategy = { type = strike_force_home_base id = 76 } #Okinawa Base - Should be useful in keeping control
+	#ai_strategy = { type = strike_force_home_base id = 76 } #Okinawa Base - Should be useful in keeping control
 
 	ai_strategy = {
 		type = put_unit_buffers
@@ -866,21 +867,36 @@ USA_eu_relations = {
 }
 
 USA_support_somalia = {
-	allowed = { tag = USA }
+	allowed = { original_tag = USA }
 	enable = {
 		NOT = { has_war_with = SOM }
 		SOM = { NOT = { has_government = fascism } }
 	}
-	abort = {
-		OR = {
-			has_war_with = SOM
-			SOM = { has_government = fascism }
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "SOM" value = 100 }
 	ai_strategy = { type = protect id = "SOM" value = 50 }
 	ai_strategy = { type = support id = "SOM" value = 100 }
+}
+
+USA_support_somalia_intervention_forces = {
+	allowed = { original_tag = USA }
+	enable = {
+		SOM = {
+			OR = {
+				has_war_with = PUN
+				has_war_with = SNA
+				has_war_with = JUB
+				has_war_with = SWS
+				has_civil_war = yes
+			}
+		}
+		NOT = { has_war_with = SOM }
+		has_country_flag = USA_SOM_intervention
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "SOM" value = 500 }
 }
 
 USA_cuba_relations = {
@@ -888,9 +904,7 @@ USA_cuba_relations = {
 	enable = {
 		CUB = { NOT = { has_government = democratic } }
 	}
-	abort = {
-		CUB = { has_government = democratic }
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = contain id = "CUB" value = 100 }
 	ai_strategy = { type = antagonize id = "CUB" value = 50 }
@@ -900,33 +914,31 @@ USA_cuba_relations = {
 USA_korea_relations = {
 	allowed = { tag = USA }
 	enable = {
-		KOR = { has_government = democratic }
 		country_exists = NKO
+		NKO = { has_government = communism }
+		KOR = { has_government = democratic }
 	}
-	abort = {
-		OR = {
-			NOT = { KOR = { has_government = democratic } }
-			NOT = { country_exists = NKO }
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "KOR" value = 50 }
 	ai_strategy = { type = protect id = "KOR" value = 100 }
 	ai_strategy = { type = contain id = "NKO" value = 100 }
 	ai_strategy = { type = antagonize id = "NKO" value = 50 }
+	ai_strategy = { type = diplo_action_desire id = "KOR" value = 75 target = guarantee }
 }
 
 USA_taiwan_relations = {
 	allowed = { tag = USA }
 	enable = {
+		country_exists = TAI
+		CHI = { has_government = communism }
 		TAI = { has_government = democratic }
 	}
-	abort = {
-		NOT = { TAI = { has_government = democratic } }
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "TAI" value = 50 }
 	ai_strategy = { type = protect id = "TAI" value = 100 }
+	ai_strategy = { type = diplo_action_desire id = "TAI" value = 75 target = guarantee }
 }
 
 USA_saudi_relations = {
@@ -959,12 +971,7 @@ USA_fsa = {
 		NOT = { has_war_with = FSA }
 		FSA = { NOT = { has_government = fascism } }
 	}
-	abort = {
-		OR = {
-			has_war_with = FSA
-			FSA = { has_government = fascism }
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "FSA" value = 200 }
 	ai_strategy = { type = protect id = "FSA" value = 200 }
@@ -1070,7 +1077,7 @@ USA_supply_botswana = {
 	allowed = { original_tag = USA }
 
 	enable = {
-		original_tag = USA
+		country_exists = BOT
 		BOT = { has_completed_focus = BOT_buy_hercules_c130 }
 	}
 	abort = {
@@ -1090,7 +1097,7 @@ USA_befriend_BOT = {
 	allowed = { original_tag = USA }
 
 	enable = {
-		original_tag = USA
+		country_exists = BOT
 		BOT = { has_completed_focus = BOT_us_relations }
 	}
 	abort = {
@@ -1144,7 +1151,6 @@ USA_operation_enduring_freedom = {
 USA_operation_iraqi_campaign = {
 	allowed = { original_tag = USA }
 	enable = {
-		original_tag = USA
 		has_country_leader_with_trait = war_on_terror_leader
 		NOT = { has_country_flag = Operation_iraqi_freedom }
 		IRQ = { NOT = { has_country_flag = IRQ_victory_against_america } }
@@ -1159,6 +1165,17 @@ USA_operation_iraqi_campaign = {
 	ai_strategy = { type = pp_spend_priority id = idea value = -9999 } #Focus on Editing LAWS
 	ai_strategy = { type = pp_spend_priority id = decision value = 250 }
 	ai_strategy = { type = pp_spend_amount id = decision value = 250 }
+}
+
+USA_operation_iraqi_freedom = {
+	allowed = { original_tag = USA }
+	enable = {
+		has_country_flag = Operation_iraqi_freedom
+		has_wargoal_against = IRQ
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = "IRQ" value = 200 }
 }
 
 USA_army_focus = {
@@ -1277,4 +1294,73 @@ USA_moldova_moves_in_on_PMR = {
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = send_volunteers_desire id = "MLV" value = 500 }
+}
+
+USA_TNZ_KEN_support_for_ssu_during_war = {
+	allowed = {
+		OR = {
+			original_tag = USA
+			original_tag = KEN
+			original_tag = TNZ
+		}
+	}
+	enable = {
+		country_exists = SSU
+		has_relation_modifier = {
+			target = SSU
+			modifier = generic_increased_military_support
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "SSU" value = 500 }
+}
+
+USA_LBA_intervention_in_libya = {
+	allowed = { original_tag = USA }
+	enable = {
+		country_exists = LBA
+		has_country_flag = USA_intervention_in_libya
+		LBA = { emerging_autocracy_are_in_power = no }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "LBA" value = 500 }
+}
+
+USA_TRP_intervention_in_libya = {
+	allowed = { original_tag = USA }
+	enable = {
+		country_exists = TRP
+		has_country_flag = USA_intervention_in_libya
+		TRP = { emerging_autocracy_are_in_power = no }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "TRP" value = 500 }
+}
+
+USA_FEZ_intervention_in_libya = {
+	allowed = { original_tag = USA }
+	enable = {
+		country_exists = FEZ
+		has_country_flag = USA_intervention_in_libya
+		FEZ = { emerging_autocracy_are_in_power = no }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "FEZ" value = 500 }
+}
+
+
+USA_CYR_intervention_in_libya = {
+	allowed = { original_tag = USA }
+	enable = {
+		country_exists = CYR
+		has_country_flag = USA_intervention_in_libya
+		CYR = { emerging_autocracy_are_in_power = no }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "CYR" value = 500 }
 }
