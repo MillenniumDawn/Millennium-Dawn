@@ -152,12 +152,7 @@ scripted_gui = {
 			grant_recog_button_click_enabled = {
 				var:open_state = { has_idea = Lacks_International_Recognition }
 				country_exists = var:open_state
-				NOT = {
-					has_idea = Non_State_Actor
-					has_idea = Lacks_International_Recognition
-					has_idea = Lacks_International_Recognition_Taiwan
-					has_idea = rival_government
-				}
+				is_full_state = yes
 				meta_trigger = {
 					text = {
 						custom_trigger_tooltip = {
@@ -1268,14 +1263,29 @@ scripted_gui = {
 				}
 				update_international_system_gui = yes
 			}
+			# International System
 			grant_recog_button_click = {
 				add_political_power = -25
 				meta_effect = {
 					text = {
-						THIS = {
-							set_country_flag = Recognised_[stname]
-						}
+						THIS = { set_country_flag = Recognised_[stname] }
 
+						if = {
+							limit = {
+								NOT = { has_country_flag = original_owner_[stname] }
+							}
+							every_country = {
+								limit = {
+									has_country_flag = original_owner_[stname]
+									NOT = { has_country_flag = Recognised_[stname] }
+								}
+								add_opinion_modifier = {
+									target = ROOT
+									modifier = recognises_them
+								}
+								news_event = { id = recognition.1 }
+							}
+						}
 						if = {
 							limit = {
 								NOT = {
@@ -1285,39 +1295,13 @@ scripted_gui = {
 							}
 							every_country = {
 								limit = {
-									OR = {
-										has_country_flag = original_owner_[stname]
-										has_country_flag = supports_original_owner_[stname]
-									}
+									has_country_flag = supports_original_owner_[stname]
 									NOT = { has_country_flag = Recognised_[stname] }
 								}
 								add_opinion_modifier = {
 									target = ROOT
 									modifier = recognises_them
 								}
-							}
-							every_country = {
-								limit = {
-									has_country_flag = original_owner_[stname]
-									NOT = { has_country_flag = Recognised_[stname] }
-								}
-								news_event = { id = recognition.1 }
-							}
-						}
-						else_if = {
-							limit = {
-								has_country_flag = supports_original_owner_[stname]
-							}
-							every_country = {
-								limit = {
-									has_country_flag = original_owner_[stname]
-									NOT = { has_country_flag = Recognised_[stname] }
-								}
-								add_opinion_modifier = {
-									target = ROOT
-									modifier = recognises_them
-								}
-								news_event = { id = recognition.1 }
 							}
 						}
 					}
@@ -1392,21 +1376,18 @@ scripted_gui = {
 					if = {
 						limit = { original_tag = CHI }
 						CHI = {
-							remove_opinion_modifier = {
-								modifier = recognize_taiwan_chi
-								target = ROOT
-							}
+							remove_opinion_modifier = { target = ROOT modifier = recognize_taiwan_chi }
 						}
-						if = {
-							limit = { ROOT = { has_country_flag = loyal_to_ROC } }
-							CHI = {
-								remove_opinion_modifier = {
-									target = ROOT
-									modifier = harsh_sanctions
-								}
-							}
-							ROOT = { clr_country_flag = loyal_to_ROC }
+					}
+					if = {
+						limit = {
+							original_tag = CHI
+							ROOT = { has_country_flag = loyal_to_ROC }
 						}
+						CHI = {
+							remove_opinion_modifier = { target = ROOT modifier = harsh_sanctions }
+						}
+						ROOT = { clr_country_flag = loyal_to_ROC }
 					}
 					news_event = { id = recognition.5 }
 					clr_country_flag = recognised_opponent_@ROOT
@@ -1414,24 +1395,13 @@ scripted_gui = {
 				meta_effect = {
 					text = {
 						every_country = {
-							limit = {
-								has_country_flag = rival_government_[stname]
-							}
+							limit = { has_country_flag = rival_government_[stname] }
 							if = {
 								limit = { original_tag = TAI }
-								remove_opinion_modifier = {
-									modifier = recognize_taiwan
-									target = ROOT
-								}
+								remove_opinion_modifier = { target = ROOT modifier = recognize_taiwan }
 							}
-							add_opinion_modifier = {
-								target = ROOT
-								modifier = recognises_them_rival
-							}
-							subtract_from_variable = {
-								var = Granted_Recognition
-								value = 1
-							}
+							add_opinion_modifier = { target = ROOT modifier = recognises_them_rival }
+							subtract_from_variable = { var = Granted_Recognition value = 1 }
 							set_country_flag = recognised_opponent_[rname]
 							news_event = { id = recognition.6 }
 						}
@@ -2617,7 +2587,6 @@ scripted_gui = {
 					}
 				}
 			}
-
 		}
 
 		triggers = {
