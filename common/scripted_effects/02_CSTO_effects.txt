@@ -20,3 +20,43 @@ CSTO_leave = {
 	leave_faction = yes
 	hidden_effect = { news_event = { id = CSTO.5 hours = 6 } }
 }
+
+# Convert CSTO from defensive to offensive alliance
+# Must be called from Russia (SOV) scope
+CSTO_convert_to_offensive = {
+	log = "[GetDateText]: [Root.GetName]: Converting CSTO to offensive alliance"
+	set_country_flag = CSTO_is_offensive
+
+	# Store all current members temporarily
+	clear_array = global.CSTO_temp_members
+	for_each_scope_loop = {
+		array = global.CSTO_member
+		add_to_array = { global.CSTO_temp_members = THIS }
+	}
+
+	# All members leave the faction (except Russia who will dismantle it)
+	for_each_scope_loop = {
+		array = global.CSTO_temp_members
+		limit = { NOT = { tag = SOV } }
+		leave_faction = yes
+	}
+
+	# Dismantle old faction and create new offensive one
+	dismantle_faction = yes
+	create_faction_from_template = faction_template_csto_offensive
+
+	# Re-add all members to the new faction
+	for_each_scope_loop = {
+		array = global.CSTO_temp_members
+		limit = { NOT = { tag = SOV } }
+		SOV = { add_to_faction = PREV }
+	}
+
+	# Clean up temp array
+	clear_array = global.CSTO_temp_members
+
+	# Notify members
+	hidden_effect = {
+		news_event = { id = CSTO.6 hours = 6 }
+	}
+}
