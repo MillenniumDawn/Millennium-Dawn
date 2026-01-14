@@ -1,0 +1,152 @@
+# Productivity Transition System Effects
+# Part of Issue #271 - Productivity balanced around global average
+
+# Called at game start and when new nations spawn to assign appropriate transition ideas
+assign_productivity_transition_idea = {
+	# Skip if already has a transition idea (prevent duplicates)
+	if = {
+		limit = {
+			OR = {
+				has_idea = developed_economy_transition
+				has_idea = emerging_economy_transition
+				has_idea = developing_economy_catch_up
+			}
+		}
+		# Already has transition idea, skip
+	}
+	# Developed nations - HIGH GDP/C (>=25k) in developed regions
+	# Excludes Russia and Eastern Europe which are handled separately
+	else_if = {
+		limit = {
+			check_variable = { gdp_per_capita > 24.999 } # gdp >= 25
+			OR = {
+				# Western Europe (high GDP/C countries only)
+				AND = {
+					is_in_europe = yes
+					NOT = { original_tag = SOV } # Russia → emerging
+					NOT = { original_tag = UKR } # Ukraine → emerging
+					NOT = { original_tag = BLR } # Belarus → emerging
+					NOT = { original_tag = POL } # Poland → emerging (GDP/C ~17)
+					NOT = { original_tag = ROM } # Romania → emerging
+					NOT = { original_tag = BUL } # Bulgaria → emerging
+					NOT = { original_tag = SER } # Serbia → emerging
+					NOT = { original_tag = HUN } # Hungary → emerging
+					NOT = { original_tag = CZE } # Czechia → check GDP
+					NOT = { original_tag = SVK } # Slovakia → emerging
+					NOT = { original_tag = CRO } # Croatia → emerging
+					NOT = { original_tag = SLO } # Slovenia → check GDP
+					NOT = { original_tag = LIT } # Lithuania → emerging
+					NOT = { original_tag = LAT } # Latvia → emerging
+					NOT = { original_tag = EST } # Estonia → check GDP
+					NOT = { original_tag = MLD } # Moldova → developing
+					NOT = { original_tag = ALB } # Albania → emerging
+					NOT = { original_tag = MNT } # Montenegro → emerging
+					NOT = { original_tag = MCD } # North Macedonia → emerging (MCD not MAC)
+					NOT = { original_tag = BOS } # Bosnia → emerging
+					NOT = { original_tag = KOS } # Kosovo → emerging
+					NOT = { original_tag = GRE } # Greece → emerging (debt crisis)
+				}
+				# North America, Oceania, East Asian developed
+				original_tag = USA
+				original_tag = CAN
+				original_tag = AUS
+				original_tag = NZL
+				original_tag = JAP
+				original_tag = KOR
+				original_tag = SGP
+				original_tag = ISR
+				original_tag = HKG
+				original_tag = MAC # Macao (100 GDP/C)
+				original_tag = TAI
+				# Additional Western/Southern European developed nations
+				original_tag = LUX # Luxembourg (99 GDP/C)
+				original_tag = IRE # Ireland (48 GDP/C)
+				original_tag = ITA # Italy (43 GDP/C)
+				original_tag = ICE # Iceland (41 GDP/C)
+				original_tag = FIN # Finland (40 GDP/C)
+				original_tag = CYP # Cyprus (33 GDP/C)
+				original_tag = POR # Portugal (30 GDP/C)
+				original_tag = MLT # Malta (27 GDP/C)
+			}
+		}
+		log = "[GetDateText]: [Root.GetName]: Assigned developed_economy_transition (GDP/C: [?gdp_per_capita])"
+		add_ideas = developed_economy_transition
+	}
+	# Emerging economies - BRICS, major regional powers, Eastern Europe
+	# GDP/C between 3-25k OR specific important countries
+	else_if = {
+		limit = {
+			OR = {
+				# Specific emerging countries regardless of GDP
+				original_tag = CHI # China
+				original_tag = RAJ # India
+				original_tag = BRA # Brazil
+				original_tag = SOV # Russia
+				original_tag = MEX # Mexico
+				original_tag = TUR # Turkey
+				original_tag = IDN # Indonesia
+				original_tag = SAU # Saudi Arabia
+				original_tag = IRN # Iran
+				original_tag = EGY # Egypt
+				original_tag = PAK # Pakistan
+				original_tag = VIE # Vietnam
+				original_tag = THA # Thailand
+				original_tag = MYS # Malaysia
+				original_tag = PHL # Philippines
+				original_tag = ARG # Argentina
+				original_tag = COL # Colombia
+				original_tag = CHL # Chile
+				original_tag = PER # Peru
+				original_tag = NGA # Nigeria
+				original_tag = SAF # South Africa
+				original_tag = KEN # Kenya
+				original_tag = ETH # Ethiopia
+				original_tag = BAN # Bangladesh
+				original_tag = IRQ # Iraq
+				original_tag = UAE # UAE (high GDP but oil-dependent)
+				original_tag = QAT # Qatar
+				original_tag = KUW # Kuwait
+				# Eastern European countries
+				original_tag = POL # Poland
+				original_tag = UKR # Ukraine
+				original_tag = BLR # Belarus
+				original_tag = ROM # Romania
+				original_tag = BUL # Bulgaria
+				original_tag = SER # Serbia
+				original_tag = HUN # Hungary
+				original_tag = CZE # Czechia
+				original_tag = SVK # Slovakia
+				original_tag = CRO # Croatia
+				original_tag = SLO # Slovenia
+				original_tag = LIT # Lithuania
+				original_tag = LAT # Latvia
+				original_tag = EST # Estonia
+				original_tag = ALB # Albania
+				original_tag = MNT # Montenegro
+				original_tag = MCD # North Macedonia
+				original_tag = BOS # Bosnia
+				original_tag = KOS # Kosovo
+				original_tag = GRE # Greece (debt crisis)
+				# GDP/C based check for unlisted countries
+				AND = {
+					check_variable = { gdp_per_capita > 3 }
+					check_variable = { gdp_per_capita < 25 }
+				}
+			}
+			# Exclude if already developed
+			NOT = { has_idea = developed_economy_transition }
+		}
+		log = "[GetDateText]: [Root.GetName]: Assigned emerging_economy_transition (GDP/C: [?gdp_per_capita])"
+		add_ideas = emerging_economy_transition
+	}
+	# Least developed nations - low GDP/C countries
+	else_if = {
+		limit = {
+			check_variable = { gdp_per_capita < 5 }
+			NOT = { has_idea = developed_economy_transition }
+			NOT = { has_idea = emerging_economy_transition }
+		}
+		log = "[GetDateText]: [Root.GetName]: Assigned developing_economy_catch_up (GDP/C: [?gdp_per_capita])"
+		add_ideas = developing_economy_catch_up
+	}
+}
