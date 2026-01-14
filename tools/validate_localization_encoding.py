@@ -51,7 +51,7 @@ class LocalizationValidator:
                     return self._fix_file(file_path, content)
                 else:
                     self.errors.append(
-                        f"❌ {file_path}: Missing UTF-8 BOM (required for HOI4 localization)"
+                        f"{file_path}: Missing UTF-8 BOM (required for HOI4 localization)"
                     )
                     return False
 
@@ -59,15 +59,15 @@ class LocalizationValidator:
             try:
                 with open(file_path, "r", encoding="utf-8-sig") as f:
                     f.read()
-                self.valid.append(f"✅ {file_path}: Correct UTF-8 with BOM encoding")
+                self.valid.append(f"{file_path}: Correct UTF-8 with BOM encoding")
                 return True
 
             except UnicodeDecodeError as e:
-                self.errors.append(f"❌ {file_path}: Invalid UTF-8 encoding: {e}")
+                self.errors.append(f"{file_path}: Invalid UTF-8 encoding: {e}")
                 return False
 
         except Exception as e:
-            self.errors.append(f"❌ {file_path}: Unexpected error: {e}")
+            self.errors.append(f"{file_path}: Unexpected error: {e}")
             return False
 
     def _fix_file(self, file_path: Path, content: bytes) -> bool:
@@ -89,14 +89,14 @@ class LocalizationValidator:
             with open(file_path, "wb") as f:
                 f.write(codecs.BOM_UTF8 + content)
 
-            self.fixed.append(f"🔧 {file_path}: Added UTF-8 BOM")
+            self.fixed.append(f"{file_path}: Added UTF-8 BOM")
             return True
 
         except UnicodeDecodeError as e:
-            self.errors.append(f"❌ {file_path}: Cannot fix - invalid UTF-8: {e}")
+            self.errors.append(f"{file_path}: Cannot fix - invalid UTF-8: {e}")
             return False
         except Exception as e:
-            self.errors.append(f"❌ {file_path}: Error while fixing: {e}")
+            self.errors.append(f"{file_path}: Error while fixing: {e}")
             return False
 
     def validate_files(self, files: List[Path]) -> bool:
@@ -113,7 +113,7 @@ class LocalizationValidator:
 
         for file_path in files:
             if not file_path.exists():
-                self.errors.append(f"❌ {file_path}: File not found")
+                self.errors.append(f"{file_path}: File not found")
                 all_valid = False
                 continue
 
@@ -195,7 +195,7 @@ Examples:
     else:
         files = find_english_localization_files()
         if not files:
-            print("❌ No English localization files found", file=sys.stderr)
+            print("No English localization files found", file=sys.stderr)
             print(
                 "Expected patterns: localisation/english/*.yml or localisation/*_l_english.yml",
                 file=sys.stderr,
