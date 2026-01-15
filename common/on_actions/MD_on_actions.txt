@@ -864,6 +864,11 @@ on_actions = {
 					# Tick Internal Factions
 					monthly_tick_internal_factions_opinion = yes
 
+					# Space
+					# INFO: This was readded back to the monthly tick due to the nature of the content.
+					# tick speeds and otherwise should not be harmed.
+					update_space_system_values = yes
+
 					# Months at War Calculation
 					if = {
 						limit = { has_war = yes }
@@ -1455,6 +1460,35 @@ on_actions = {
 							resize_array = { array = auto_influence_array value = 0 size = 10 } # ONLY 4 MORE SLOTS ARE AVAILABLE
 							update_auto_influence_array = yes
 							update_dirty_influence_var = yes
+						}
+
+						if = { limit = { NOT = { has_global_flag = GAME_RULE_gdp_graph_enabled } }
+							gdp_graph_on_monthly = yes
+							# its a bit bad thing to do it here, but we need to smooth out "bumps" in gdp graph
+							# if gdp increases/drops by more then 5% in 1 month, take gdp value from 3 months back
+							# and use it to "smoothe out" the values between current and 3 months old gdp
+							if = {
+								# atleast couple of months in the game
+								limit = {
+									check_variable = { current_gdp_graph_end > 2 }
+								}
+
+								set_temp_variable = { temp_index = current_gdp_graph_end }
+								subtract_from_temp_variable = { temp_index = 1 }
+								set_temp_variable = { old_gdp = gdp_array^temp_index }
+
+								divide_temp_variable = { old_gdp = gdp_total }
+								if = {
+									limit = {
+										OR = {
+											check_variable = { old_gdp < 0.95 }
+											check_variable = { old_gdp > 1.05 }
+										}
+									}
+
+									correct_gdp_graph = yes
+								}
+							}
 						}
 					}
 
