@@ -4,15 +4,12 @@ on:
   pull_request:
     branches: [ main, master ]
     paths:
-      - 'common/**'
-      - 'events/**'
-      - 'gfx/**'
-      - 'history/**'
-      - 'localisation/**'
-      - 'map/**'
-      - 'music/**'
-      - 'portraits/**'
-      - 'sound/**'
+    - '**/*.txt'
+    - '**/*.yml'
+    - '**/*.gfx'
+    - '**/*.gui'
+    - '!tutorial/**'
+    - '!Changelog.txt'
   push:
     tags: [ 'v*' ]
 
@@ -30,7 +27,6 @@ jobs:
   coding-standards:
     name: Coding Standards
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -53,16 +49,15 @@ jobs:
   cwtools-validation:
     name: CWTools Validation
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 1
-
     - uses: cwtools/cwtools-action@v1.1.0
       with:
         game: hoi4
+        locLanguages: "english"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -96,8 +91,8 @@ jobs:
 
     - name: Run style check
       run: |
-        python tools/check_basic_style.py ${{ secrets.BOT_TOKEN }}
-        python tools/check_basic_style_2.py ${{ secrets.BOT_TOKEN }}
+        python tools/check_basic_style.py --mode diff ${{ secrets.BOT_TOKEN }}
+        python tools/check_basic_style_2.py --mode diff ${{ secrets.BOT_TOKEN }}
 
   create-release:
     name: Create Release

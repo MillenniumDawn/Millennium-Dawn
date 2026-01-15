@@ -92,11 +92,6 @@ on_actions = {
 		}
 	}
 
-	on_monthly = {
-		effect = {
-		}
-	}
-
 	on_thri_yearly_pulse = { }
 
 	on_four_year_pulse = { }
@@ -791,17 +786,18 @@ on_actions = {
 					clr_global_flag = IRQ_has_shia_civil_war
 				}
 			}
+			# Iraqi Forces Scatter
 			if = {
 				limit = {
 					has_country_flag = IRQ_war_with_america
-					ROOT = {
-						original_tag = IRQ
-					}
+					ROOT = { original_tag = IRQ }
+					FROM = { original_tag = USA }
 				}
 				IRQ = {
-					country_event = {
-						id = iraq_war.9
-						days = 1
+					if = {
+						limit = { NOT = { has_country_flag = IRQ_iraqi_forces_scatter } }
+						set_country_flag = IRQ_iraqi_forces_scatter
+						country_event = { id = iraq_war.9 days = 1 }
 					}
 				}
 			}
@@ -2161,14 +2157,21 @@ on_actions = {
 				# USA declares war on Iraq (OIF)
 				if = {
 					limit = {
-						USA = {
-							has_country_flag = Operation_iraqi_freedom
-						}
-						FROM = { original_tag = USA }
-						tag = IRQ
+						USA = { has_country_flag = Operation_iraqi_freedom }
+						ROOT = { original_tag = USA }
+						FROM = { tag = IRQ }
 					}
 					IRQ = {
 						set_country_flag = IRQ_iraq_war_ongoing
+					}
+					USA = {
+						if = {
+							limit = {
+								NOT = { has_country_flag = USA_triggered_early_oil_crisis }
+							}
+							set_country_flag = USA_triggered_early_oil_crisis
+							country_event = { id = usa_economic_events.38 days = 65 random_days = 80 }
+						}
 					}
 				}
 
@@ -2878,6 +2881,7 @@ on_actions = {
 				missile_ui_update = yes
 
 				set_up_starting_missile_configurations = yes
+				set_initial_cost_resources = yes
 
 				#Trigger on Startup Events
 				MD_event_on_startup_events = yes
@@ -3039,6 +3043,7 @@ on_actions = {
 				if = { limit = { is_ai = no }
 					set_country_flag = open_energy_screen
 					set_country_flag = open_research_screen
+					set_country_flag = construction_speeds_visible_in_menu
 
 					if = {
 						limit = {
@@ -3366,6 +3371,13 @@ on_actions = {
 				every_country = {
 					calculate_starting_mio_size = yes
 				}
+			}
+
+			every_country = {
+				limit = {
+					is_ai = no
+				}
+				graph_initial_setup = yes
 			}
 
 			if = { limit = { is_debug = yes }

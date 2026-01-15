@@ -864,6 +864,11 @@ on_actions = {
 					# Tick Internal Factions
 					monthly_tick_internal_factions_opinion = yes
 
+					# Space
+					# INFO: This was readded back to the monthly tick due to the nature of the content.
+					# tick speeds and otherwise should not be harmed.
+					update_space_system_values = yes
+
 					# Months at War Calculation
 					if = {
 						limit = { has_war = yes }
@@ -1456,6 +1461,35 @@ on_actions = {
 							update_auto_influence_array = yes
 							update_dirty_influence_var = yes
 						}
+
+						if = { limit = { NOT = { has_global_flag = GAME_RULE_gdp_graph_enabled } }
+							gdp_graph_on_monthly = yes
+							# its a bit bad thing to do it here, but we need to smooth out "bumps" in gdp graph
+							# if gdp increases/drops by more then 5% in 1 month, take gdp value from 3 months back
+							# and use it to "smoothe out" the values between current and 3 months old gdp
+							if = {
+								# atleast couple of months in the game
+								limit = {
+									check_variable = { current_gdp_graph_end > 2 }
+								}
+
+								set_temp_variable = { temp_index = current_gdp_graph_end }
+								subtract_from_temp_variable = { temp_index = 1 }
+								set_temp_variable = { old_gdp = gdp_array^temp_index }
+
+								divide_temp_variable = { old_gdp = gdp_total }
+								if = {
+									limit = {
+										OR = {
+											check_variable = { old_gdp < 0.95 }
+											check_variable = { old_gdp > 1.05 }
+										}
+									}
+
+									correct_gdp_graph = yes
+								}
+							}
+						}
 					}
 
 					# If child soldier thing
@@ -1804,7 +1838,23 @@ on_actions = {
 				# Set this to 27 days to time out so that way February isn't missed
 				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
 				if = { limit = { is_debug = yes }
-					log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
+						log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
+				}
+				if = {
+					limit = { NOT = { has_global_flag = yearly_export_tracker } }
+
+					set_global_flag = { flag = yearly_export_tracker value = 1 days = 365 }
+					yearly_global_export_normalization = yes
+				}
+				if = {
+					limit = { NOT = { has_global_flag = resource_prices_adjusted } }
+
+					set_global_flag = { flag = resource_prices_adjusted value = 1 days = 10 }
+					recalculate_resources_price = yes
+					if = {
+						limit = { is_debug = yes }
+						log = "Current resource prices: steel = [?global.steel_price] rubber = [?global.rubber_price] oil = [?global.oil_price] alum = [?global.aluminium_price] tungsten = [?global.tungsten_price] chromium = [?global.chromium_price] Resource coeff = [?global.resource_gdp_coeff]"
+					}
 				}
 			}
 		}
