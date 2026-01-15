@@ -1104,7 +1104,7 @@ This is a basic rundown of variables and the simplest way to begin and use them.
 {{ md | markdownify }}
 </details>
 
-<details><summary>Hydroelectric/Geothermal/Renewable Configuration Guide</summary>
+<details><summary>Hydroelectric/Geothermal/Renewable/Productivity Configuration Guide</summary>
 {% capture md %}
 
 If you are looking to add additional values to the Hydroelectric/Geothermal or Renewable Hotspot capacity for a given state please follow these steps.
@@ -1134,6 +1134,8 @@ Example:
 set_variable = { state_renewable_capacity_factor_modifier_var = 0.55 }
 add_dynamic_modifier = { modifier = renewable_capacity_factor_dyn_mod }
 ```
+
+Productivity is also set at the state level as well. Please refer to any of the state.
 
 {% endcapture %}
 {{ md | markdownify }}
