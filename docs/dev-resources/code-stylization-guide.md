@@ -152,6 +152,7 @@ URA_world_opr = {
 - Include proper logging
 - Use `major = yes` sparingly for news events
 - Structure events with clear options and effects
+- **Performance:** Any events that do not have an effects in their triggered or option block do not require a log. Only log if there is something in the event
 
 ### Example Event Structure
 ```python
@@ -174,6 +175,14 @@ country_event = {
             base = 1
         }
     }
+
+	option = {
+		name = france_md.504.b
+
+		ai_chance = {
+			base = 0
+		}
+	}
 }
 ```
 
@@ -185,13 +194,13 @@ country_event = {
 - Structure modifiers clearly
 - Implement balanced effects
 - **Performance**: Remove unnecessary `allowed = { always = no }` statements as they add drag to performance - since `always = no` is the default behavior, these lines provide no functional benefit while consuming processing resources
+- **Performance**: Remove all ``on_add`` logs unless you need to do something in the on add like math or otherwise
 
 ### Example Idea Structure
 ```python
 BRA_idea_higher_minimun_wage_1 = {
     name = BRA_idea_higher_minimun_wage
     allowed_civil_war = { always = yes }
-    on_add = { log = "[GetDateText]: [THIS.GetName]: add idea BRA_idea_higher_minimun_wage_1" }
 
     picture = gold
 
