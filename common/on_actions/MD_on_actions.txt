@@ -1838,7 +1838,23 @@ on_actions = {
 				# Set this to 27 days to time out so that way February isn't missed
 				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
 				if = { limit = { is_debug = yes }
-					log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
+						log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
+				}
+				if = {
+					limit = { NOT = { has_global_flag = yearly_export_tracker } }
+
+					set_global_flag = { flag = yearly_export_tracker value = 1 days = 365 }
+					yearly_global_export_normalization = yes
+				}
+				if = {
+					limit = { NOT = { has_global_flag = resource_prices_adjusted } }
+
+					set_global_flag = { flag = resource_prices_adjusted value = 1 days = 10 }
+					recalculate_resources_price = yes
+					if = {
+						limit = { is_debug = yes }
+						log = "Current resource prices: steel = [?global.steel_price] rubber = [?global.rubber_price] oil = [?global.oil_price] alum = [?global.aluminium_price] tungsten = [?global.tungsten_price] chromium = [?global.chromium_price] Resource coeff = [?global.resource_gdp_coeff]"
+					}
 				}
 			}
 		}
