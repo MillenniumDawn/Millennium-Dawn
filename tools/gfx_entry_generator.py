@@ -44,41 +44,42 @@ modfolder = 'Millennium-Dawn\\'
 mod = 'Millennium-Dawn'
 
 def main():
-	path = os.path.abspath(os.path.join(os.path.dirname(mod),'..'))
+	# Get the mod root directory (parent of the tools directory)
+	mod_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 	#country_tag_list = createcountrytaglist()
 
 	selection = int(input("Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_technologies.gfx (DO NOT USE. WIP)\n5. Retrieve and generate MD_parties_icons.gfx.\n6. Retrieve and generate intelligence agency icons\n7. Retrieve and generate MD_decisions.gfx\nPlease enter the number of the option you'd like: "))
 
 	if selection == 1:
-		path = os.path.abspath(os.path.join(os.path.dirname(mod),'gfx\\interface\\goals'))
+		path = os.path.join(mod_root, 'gfx', 'interface', 'goals')
 		print(path)
 		getfiles(path)
 	elif selection == 2:
-		path = os.path.abspath(os.path.join(os.path.dirname(mod),'gfx\\event_pictures'))
+		path = os.path.join(mod_root, 'gfx', 'event_pictures')
 		print(path)
 		getfiles(path)
 	elif selection == 3:
-		path = os.path.abspath(os.path.join(os.path.dirname(mod),'gfx\\interface\\ideas'))
+		path = os.path.join(mod_root, 'gfx', 'interface', 'ideas')
 		print(path)
 		getfiles(path)
 	elif selection == 4:
-		path = os.path.abspath(os.path.join(os.path.dirname(mod),'gfx\\interface\\technologies'))
+		path = os.path.join(mod_root, 'gfx', 'interface', 'technologies')
 
 
 		print(path)
 		getfiles(path)
 	elif selection == 5:
-		path = os.path.abspath(os.path.join(os.path.dirname(mod),'gfx\\texticons\\parties_icons'))
+		path = os.path.join(mod_root, 'gfx', 'texticons', 'parties_icons')
 
 		print(path)
 		getfiles(path)
 	elif selection == 6:
-		path = os.path.abspath(os.path.join(os.path.dirname(mod),'gfx\\interface\\operatives\\agencies'))
+		path = os.path.join(mod_root, 'gfx', 'interface', 'operatives', 'agencies')
 
 		print(path)
 		getfiles(path)
 	elif selection == 7:
-		path = os.path.abspath(os.path.join(os.path.dirname(mod),'gfx\\interface\\decisions'))
+		path = os.path.join(mod_root, 'gfx', 'interface', 'decisions')
 		print(path)
 		getfiles(path)
 	else:
@@ -356,8 +357,8 @@ def createitemcall(filecall, type=0):
 def createcountrytaglist():
 	temp_array = []
 	# Country Tag List Array Creation
-	tag_path = os.path.abspath(os.path.join(os.path.dirname(mod), '..\\common\\country_tags'))
-	tag_path = str(tag_path) + "\\00_countries.txt"
+	mod_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+	tag_path = os.path.join(mod_root, 'common', 'country_tags', '00_countries.txt')
 	read_tags = open(tag_path, 'r')
 	lines = read_tags.readlines()
 	bad_line = 0
