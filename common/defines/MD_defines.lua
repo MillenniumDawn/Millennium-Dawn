@@ -252,6 +252,12 @@
 		0.15,
 		0.25,	-- Size MUST be SCIENTIST_SKILL_LEVEL_THRESHOLDS's size + 1
 	}
+	NDefines.NProject.RECRUIT_SCIENTIST_COST = {
+		75,			-- pp cost if no available scientist
+		75,			-- pp cost if 1 available scientist
+		75,			-- pp cost if 2 available scientist
+		75			-- pp cost if more than 2 available scientist
+	}
 	NDefines.NProject.BREAKTHROUGH_DAILY_SCIENTIST_SKILL_GAIN = 15       -- Amount in 1/100th percentage gained per skill when doing basic research. E.g. 5 = 0.05% per skill level.
 	NDefines.NProject.BREAKTHROUGH_DAILY_TECHNOLOGY_GAIN = 10           -- Amount in 1/100th percentage. E.g. 25 = 0.25%
 	NDefines.NProject.BREAKTHROUGH_DAILY_ROCKET_SITE_GAIN = 0		   -- Amount in 1/100th percentage gained per rocket site level. E.g. 1 = 0.01% per rocket site level.
