@@ -1029,8 +1029,6 @@ change_influence_percentage = {
 							multiply_variable = { influence_array_val^i = temp_total }
 						}
 					}
-					recalculate_influence = yes
-
 					custom_effect_tooltip = change_influencer_tt
 				}
 				else = {
@@ -1055,7 +1053,6 @@ change_influence_percentage = {
 
 						multiply_variable = { influence_array_val^i = temp_total }
 					}
-					recalculate_influence = yes
 
 					custom_effect_tooltip = change_domestic_influence_percentage_tt
 				}
@@ -1088,8 +1085,58 @@ change_influence_percentage = {
 						multiply_variable = { influence_array_val^i = temp_total }
 					}
 				}
-				recalculate_influence = yes
 				custom_effect_tooltip = change_influencer_tt
+			}
+		}
+
+		recalculate_influence = yes
+
+		# Counter-terrorism state influencer tracking
+		if = {
+			limit = {
+				is_in_array = { global.ct_states = THIS.id }
+				no_jihadist_government = yes
+			}
+
+			# Check if influencer (tg) is in top 5 positions (indices 0-4)
+			set_temp_variable = { is_top_5_influencer = 0 }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { influence_array^0 = tg }
+						check_variable = { influence_array^1 = tg }
+						check_variable = { influence_array^2 = tg }
+						check_variable = { influence_array^3 = tg }
+						check_variable = { influence_array^4 = tg }
+					}
+				}
+				set_temp_variable = { is_top_5_influencer = 1 }
+			}
+
+			if = { limit = { check_variable = { is_top_5_influencer = 1 } }
+				var:tg = {
+					if = {
+						limit = {
+							PREV = { is_in_array = { global.middle_east_ct_states = THIS.id } }
+							NOT = { has_country_flag = middle_east_influencer }
+						}
+						set_country_flag = middle_east_influencer
+					}
+					if = {
+						limit = {
+							PREV = { is_in_array = { global.africa_ct_states = THIS.id } }
+							NOT = { has_country_flag = africa_influencer }
+						}
+						set_country_flag = africa_influencer
+					}
+					if = {
+						limit = {
+							PREV = { is_in_array = { global.asia_ct_states = THIS.id } }
+							NOT = { has_country_flag = asia_influencer }
+						}
+						set_country_flag = asia_influencer
+					}
+				}
 			}
 		}
 	}
