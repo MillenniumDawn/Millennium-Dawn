@@ -657,6 +657,13 @@ on_actions = {
 						}
 					}
 
+					if = {
+						limit = { NOT = { has_global_flag = yearly_export_tracker } }
+
+						set_global_flag = { flag = yearly_export_tracker value = 1 days = 365 }
+						yearly_global_export_normalization = yes
+					}
+
 					# Execute and Start the Yearly ETD Events
 					if = { limit = { is_debug = yes }
 						log = "[GetDateText]: [THIS.GetName]: Triggering [?global.year] events"
@@ -849,7 +856,6 @@ on_actions = {
 				# Monthly Single Fire Check
 				every_country = {
 					recalculate_party = yes
-					set_counter_terror_influencer = yes
 					ai_update_build_units = yes
 					recalculate_law_desires = yes
 					update_neighbors_effects = yes
@@ -878,18 +884,19 @@ on_actions = {
 						set_variable = { months_at_war = 0 }
 					}
 
-					# Check for Every Other Month
-					if = { limit = { check_variable = { every_other_month = 1 } }
+					# # Check for Every Other Month
+					if = {
+						limit = {
+							check_variable = { every_other_month = 1 }
+							is_in_array = { global.ct_states = THIS.id }
+						}
 						if = {
 							limit = {
-								is_in_array = { global.ct_states = THIS }
 								no_jihadist_government = yes
 							}
 							# Possibility of domestic terror attack - civilian
 							if = {
 								limit = {
-									is_in_array = { global.ct_states = THIS }
-									no_jihadist_government = yes
 									OR = {
 										has_country_flag = threat_level_low
 										has_country_flag = threat_level_moderate
@@ -961,8 +968,6 @@ on_actions = {
 							# Possibility of domestic terror attack - military
 							if = {
 								limit = {
-									is_in_array = { global.ct_states = THIS }
-									no_jihadist_government = yes
 									OR = {
 										has_country_flag = threat_level_severe
 										has_country_flag = threat_level_critical
@@ -1010,8 +1015,6 @@ on_actions = {
 							# Possibility of international terror attack - civilian
 							if = {
 								limit = {
-									is_in_array = { global.ct_states = THIS }
-									no_jihadist_government = yes
 									OR = {
 										has_country_flag = threat_level_moderate
 										has_country_flag = threat_level_substantial
@@ -1078,8 +1081,6 @@ on_actions = {
 							# Possibility of international terror attack - military
 							if = {
 								limit = {
-									is_in_array = { global.ct_states = THIS }
-									no_jihadist_government = yes
 									OR = {
 										has_country_flag = threat_level_severe
 										has_country_flag = threat_level_critical
@@ -1129,76 +1130,77 @@ on_actions = {
 									}
 								}
 							}
-							# Possibility of jihadists crossing the border
-							if = {
-								limit = {
-									OR = {
-										has_country_flag = threat_level_severe
-										has_country_flag = threat_level_critical
-									}
-								}
-								every_neighbor_country = {
-									limit = {
-										no_jihadist_government = yes
-										is_in_array = { global.ct_states = THIS }
-									}
-									random_owned_state = {
-										limit = {
-											any_neighbor_state = {
-												is_owned_by = ROOT
-											}
-											NOT = { state = 175 }
-										}
-										set_temp_variable = { temp1 = THIS }
-									}
-									random_list = {
-										1 = {
-											country_event = { id = terror.8 days = 45 random_hours = 2400 }
-											modifier = {
-												factor = 5
-												ROOT = { has_country_flag = threat_level_critical }
-											}
-											modifier = {
-												factor = 0.5
-												divisions_in_state = {
-													size > 0
-													state = temp1
-												}
-											}
-											modifier = {
-												factor = 0.5
-												divisions_in_state = {
-													size > 1
-													state = temp1
-												}
-											}
-											modifier = {
-												factor = 0.5
-												divisions_in_state = {
-													size > 2
-													state = temp1
-												}
-											}
-											modifier = {
-												factor = 0.5
-												divisions_in_state = {
-													size > 3
-													state = temp1
-												}
-											}
-											modifier = {
-												factor = 0.5
-												divisions_in_state = {
-													size > 4
-													state = temp1
-												}
-											}
-										}
-										99 = {
-										}
-									}
-								}
-							}
+							# # Possibility of jihadists crossing the border
+							# TODO: This is expensive and needs to be either A: removed or B: optimized
+							# if = {
+							# 	limit = {
+							# 		OR = {
+							# 			has_country_flag = threat_level_severe
+							# 			has_country_flag = threat_level_critical
+							# 		}
+							# 	}
+							# 	every_neighbor_country = {
+							# 		limit = {
+							# 			no_jihadist_government = yes
+							# 			is_in_array = { global.ct_states = THIS }
+							# 		}
+							# 		random_owned_state = {
+							# 			limit = {
+							# 				any_neighbor_state = {
+							# 					is_owned_by = ROOT
+							# 				}
+							# 				NOT = { state = 175 }
+							# 			}
+							# 			set_temp_variable = { temp1 = THIS }
+							# 		}
+							# 		random_list = {
+							# 			1 = {
+							# 				country_event = { id = terror.8 days = 45 random_hours = 2400 }
+							# 				modifier = {
+							# 					factor = 5
+							# 					ROOT = { has_country_flag = threat_level_critical }
+							# 				}
+							# 				modifier = {
+							# 					factor = 0.5
+							# 					divisions_in_state = {
+							# 						size > 0
+							# 						state = temp1
+							# 					}
+							# 				}
+							# 				modifier = {
+							# 					factor = 0.5
+							# 					divisions_in_state = {
+							# 						size > 1
+							# 						state = temp1
+							# 					}
+							# 				}
+							# 				modifier = {
+							# 					factor = 0.5
+							# 					divisions_in_state = {
+							# 						size > 2
+							# 						state = temp1
+							# 					}
+							# 				}
+							# 				modifier = {
+							# 					factor = 0.5
+							# 					divisions_in_state = {
+							# 						size > 3
+							# 						state = temp1
+							# 					}
+							# 				}
+							# 				modifier = {
+							# 					factor = 0.5
+							# 					divisions_in_state = {
+							# 						size > 4
+							# 						state = temp1
+							# 					}
+							# 				}
+							# 			}
+							# 			99 = {
+							# 			}
+							# 		}
+							# 	}
+							# }
 						}
 					}
 
@@ -1491,6 +1493,75 @@ on_actions = {
 							}
 						}
 					}
+					else = {
+						ai_weapon_dump = yes
+
+						# used in strategies, instead of checking it directly there
+						if = {
+							limit = {
+								has_war = no
+								any_country = { has_wargoal_against = ROOT }
+							}
+
+							set_country_flag = { flag = someone_has_wargoal_against_this_flag value = 1 days = 100 }
+						}
+
+						if = {
+							limit = {
+								check_variable = { next_slot_from_gdp < 10 }
+								NOT = { has_decision = gdp_gain_slot }
+								NOT = { has_country_flag = gdp_gain_industry_slot_flag }
+								check_variable = { gdp_total > GLOBAL.gdp_slot^next_slot_from_gdp }
+							}
+							set_country_flag = { flag = gdp_gain_industry_slot_flag value = 1 days = 240 }
+							activate_decision = gdp_gain_slot
+						}
+						if = {
+							limit = {
+								check_variable = { next_slot_from_gdp_c < 7 }
+								NOT = { has_decision = gdp_c_gain_slot }
+								NOT = { has_country_flag = gdp_gain_developmental_size_flag }
+								check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^next_slot_from_gdp_c }
+							}
+							set_country_flag = { flag = gdp_gain_developmental_size_flag value = 1 days = 240 }
+							activate_decision = gdp_c_gain_slot
+						}
+
+						if = {
+							limit = {
+								# with god of war on
+								has_game_rule = {
+									rule = rule_god_of_war
+									option = yes
+								}
+							}
+
+							ai_add_xp = yes
+
+							if = {
+								limit = {
+									# does not have player as ally
+									NOT = {
+										any_of = {
+											array = allies
+											is_ai = no
+										}
+									}
+									# Either WT > 30 OR Player is the enemy
+									OR = {
+										threat > 0.3
+										any_of = {
+											array = enemies
+											is_ai = no
+										}
+									}
+								}
+
+								ai_add_equipment = yes
+								ai_spawn_units = yes
+							}
+						}
+					}
 
 					# If child soldier thing
 					if = { limit = { has_idea = child_soldiers }
@@ -1525,16 +1596,6 @@ on_actions = {
 						add_to_temp_variable = { temp_percentage_modifier = modifier@foreign_influence_monthly_domestic_independence_gain_factor }
 						multiply_temp_variable = { percent_change = temp_percentage_modifier }
 						change_domestic_influence_percentage = yes
-					}
-
-					# used in strategies, instead of checking it directly there
-					if = {
-						limit = {
-							has_war = no
-							any_country = { has_wargoal_against = ROOT }
-						}
-
-						set_country_flag = { flag = someone_has_wargoal_against_this_flag value = 1 days = 100 }
 					}
 
 					# Muslim Brotherhood Stuff
@@ -1617,72 +1678,11 @@ on_actions = {
 					# Arab Spring Monthly Tick
 					if = {
 						limit = {
-							is_arabic_nation = yes
+							is_in_array = { global.arabic_countries = THIS.id }
 							NOT = { has_country_flag = AS_arab_spring_completed } # DO NOT INCREMENT IF YOU HAVE COMPLETED THE ARAB SPRING MINI GAME
 						}
 
 						increment_arab_spring_strength = yes
-					}
-
-					# Research Configuration for AI
-					if = { limit = { is_ai = yes }
-						ai_weapon_dump = yes
-
-						if = {
-							limit = {
-								check_variable = { next_slot_from_gdp < 10 }
-								NOT = { has_decision = gdp_gain_slot }
-								NOT = { has_country_flag = gdp_gain_industry_slot_flag }
-								check_variable = { gdp_total > GLOBAL.gdp_slot^next_slot_from_gdp }
-							}
-							set_country_flag = { flag = gdp_gain_industry_slot_flag value = 1 days = 240 }
-							activate_decision = gdp_gain_slot
-						}
-						if = {
-							limit = {
-								check_variable = { next_slot_from_gdp_c < 7 }
-								NOT = { has_decision = gdp_c_gain_slot }
-								NOT = { has_country_flag = gdp_gain_developmental_size_flag }
-								check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^next_slot_from_gdp_c }
-							}
-							set_country_flag = { flag = gdp_gain_developmental_size_flag value = 1 days = 240 }
-							activate_decision = gdp_c_gain_slot
-						}
-
-						if = {
-							limit = {
-								# with god of war on
-								has_game_rule = {
-									rule = rule_god_of_war
-									option = yes
-								}
-							}
-
-							ai_add_xp = yes
-
-							if = {
-								limit = {
-									# does not have player as ally
-									NOT = {
-										any_of = {
-											array = allies
-											is_ai = no
-										}
-									}
-									# Either WT > 30 OR Player is the enemy
-									OR = {
-										threat > 0.3
-										any_of = {
-											array = enemies
-											is_ai = no
-										}
-									}
-								}
-
-								ai_add_equipment = yes
-								ai_spawn_units = yes
-							}
-						}
 					}
 
 					productivity_growth_effect = yes
@@ -1778,74 +1778,6 @@ on_actions = {
 					}
 				}
 
-				# ISIS Spawns
-				if = {
-					limit = {
-						NOT = { has_global_flag = ISIL_declared }
-						has_global_flag = success_of_operation_iraqi_freedom
-						OR = {
-							check_variable = { global.month = 2 }
-							check_variable = { global.month = 4 }
-							check_variable = { global.month = 6 }
-							check_variable = { global.month = 8 }
-							check_variable = { global.month = 10 }
-							check_variable = { global.month = 12 }
-						}
-						SYR = {
-							OR = {
-								has_war_with = FSA
-								has_war_with = NUS
-							}
-						}
-						IRQ = { is_subject = no }
-					}
-
-					random_list = {
-						30 = {
-							modifier = {
-								factor = 1.25
-								date > 2011.1.1
-							}
-							modifier = {
-								factor = 1.5
-								date > 2012.1.1
-							}
-							modifier = {
-								factor = 1.75
-								date > 2013.1.1
-							}
-							modifier = {
-								factor = 2
-								date > 2014.1.1
-							}
-							modifier = {
-								factor = 2
-								SYR = { surrender_progress > 0.5 }
-							}
-							modifier = {
-								factor = 10
-								SYR = { has_country_flag = GAME_RULE_guarantee_islamic_state_spawn }
-							}
-							news_event = { id = arab_spring.15 }
-						}
-						70 = {
-							modifier = { factor = 0 date > 2015.1.1 }
-						}
-					}
-				}
-
-				# On Monthly Flag:
-				# Set this to 27 days to time out so that way February isn't missed
-				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
-				if = { limit = { is_debug = yes }
-						log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
-				}
-				if = {
-					limit = { NOT = { has_global_flag = yearly_export_tracker } }
-
-					set_global_flag = { flag = yearly_export_tracker value = 1 days = 365 }
-					yearly_global_export_normalization = yes
-				}
 				if = {
 					limit = { NOT = { has_global_flag = resource_prices_adjusted } }
 
@@ -1855,6 +1787,13 @@ on_actions = {
 						limit = { is_debug = yes }
 						log = "Current resource prices: steel = [?global.steel_price] rubber = [?global.rubber_price] oil = [?global.oil_price] alum = [?global.aluminium_price] tungsten = [?global.tungsten_price] chromium = [?global.chromium_price] Resource coeff = [?global.resource_gdp_coeff]"
 					}
+				}
+
+				# On Monthly Flag:
+				# Set this to 27 days to time out so that way February isn't missed
+				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
 				}
 			}
 		}
