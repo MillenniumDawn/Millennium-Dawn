@@ -571,68 +571,67 @@ quarterly_inflation_calculation = {
 	multiply_temp_variable = { gdpc_inflation_adjuster = 0.01 }
 	log = "Post GPD/C Adjuster Modified [?gdpc_inflation_adjuster]"
 
+	#Grab how big our budget is, adjust to the system, then apply this to the GPD/C modifier
+	#This should help super small, high value nations prevent insane inflation numbers due to size
 	log = "Pre GDP/C Inflation Adjusted - [?inflation_rate_adjuster]"
 	multiply_temp_variable = { inflation_rate_adjuster = gdpc_inflation_adjuster }
 	log = "Post GDP/C Inflation Adjusted - [?inflation_rate_adjuster]"
+
+	log = "Pre Total Government Spending"
 
 	#Adjust inflation by economic cycle
 	#Higher and faster production and growth means higher inflation
 	if = {
 		limit = { has_idea = depression }
-		set_temp_variable = { cycle_inflation_adjustment = -0.1 }
+		set_temp_variable = { cycle_inflation_adjustment = -0.035 }
 	}else_if = {
 		limit = { has_idea = recession }
-		set_temp_variable = { cycle_inflation_adjustment = -0.05 }
+		set_temp_variable = { cycle_inflation_adjustment = -0.025 }
 	}else_if = {
 		limit = { has_idea = stagnation }
-		set_temp_variable = { cycle_inflation_adjustment = -0.025 }
+		set_temp_variable = { cycle_inflation_adjustment = -0.015 }
 	}else_if = {
 		limit = { has_idea = stable_growth }
 		set_temp_variable = { cycle_inflation_adjustment = 0 }
 	}else_if = {
 		limit = { has_idea = fast_growth }
-		set_temp_variable = { cycle_inflation_adjustment = 0.035 }
+		set_temp_variable = { cycle_inflation_adjustment = 0.015 }
 	}else = {
-		set_temp_variable = { cycle_inflation_adjustment = 0.065 }
+		set_temp_variable = { cycle_inflation_adjustment = 0.025 }
 	}
-
-	log = "Pre GDP/C Econ Adjuster [?cycle_inflation_adjustment]"
-
-	multiply_temp_variable = { cycle_inflation_adjustment = gdpc_inflation_adjuster }
-
-	log = "Post GPD/C Econ Adjuster [?cycle_inflation_adjustment]"
 
 	log = "Pre Econ Cycle Inflation Adjustment [?inflation_rate_adjuster]"
 	add_to_temp_variable = { inflation_rate_adjuster = cycle_inflation_adjustment }
 	log = "Post Econ Cycle Inflation Adjustment [?inflation_rate_adjuster]"
 
+	#Calcuation of the quarterly rate finished, now move to calculate the yearly average off those numbers
+
+	#Check to make sure the array has only 4 items, and add up the value
+	set_temp_variable = { total_elements = year_quarter_inflation_tracker^num }
+	log = "Total elements in array [?total_elements]"
+
+	if = { limit = { check_variable = { total_elements > 3 } }
+		remove_from_array = {
+			array = year_quarter_inflation_tracker
+			index = 0
+		}
+	}
+
 	#Add this to the array, so we can average yearly inflation. this should stop rapid swings up and down, slowing movement
 	add_to_array = { year_quarter_inflation_tracker = inflation_rate_adjuster }
-	set_temp_variable = { loop_counter = 0 }
-	set_temp_variable = { inflation_rate_adjuster = 0 }
-	#Check to make sure the array has only 4 items, and add up the value
+	set_temp_variable = { new_inflation_rate = 0 }
+	#Reset the tracker here; this will prevent divide by 0, and give the most current number before division
+	set_temp_variable = { total_elements = year_quarter_inflation_tracker^num }
+
 	for_each_loop = {
 		array = year_quarter_inflation_tracker
 		value = v
-		index = i
 
-		set_temp_variable = { loop_counter = i }
-		add_to_temp_variable = { inflation_rate_adjuster = v }
+		add_to_temp_variable = { new_inflation_rate = v }
 	}
 
-	#If more than 4 items, remove the oldest, so it keeps the yearly average
-	if = {
-		limit = { check_variable = { loop_counter > 3 } }
-		subtract_from_temp_variable = { inflation_rate_adjuster = year_quarter_inflation_tracker^0 }
-		remove_from_array = { year_quarter_inflation_tracker = 0 }
-	}
-
-	#If the counter wasn't at 4 already due to the 5th index, add 1 to it so it gets the right number of variables in the math
-	if = { limit = { NOT = { check_variable = { loop_counter = 4 } } } add_to_temp_variable = { loop_counter = 1 } }
 	#Divide to get the average number
-	divide_temp_variable = { inflation_rate_adjuster = loop_counter }
-
-	#Further adjust inflation by budget here. If you spend barely any money but have high GDP/C, you shouldn't have high inflation
+	divide_temp_variable = { new_inflation_rate = total_elements }
 
 	#Maximum inflation movement per quarter of 10%. This means that the max you can move in a year is 40% in either direction
 	#This is a balance mechanic, both for gameplay, and for when you eat a whole country and your finances go crazy
@@ -642,12 +641,12 @@ quarterly_inflation_calculation = {
 	add_to_temp_variable = { inflation_rate_min = -0.1 }
 
 	clamp_temp_variable = {
-		var = inflation_rate_adjuster
+		var = new_inflation_rate
 		min = inflation_rate_min
 		max = inflation_rate_max
 	}
 
-	set_variable = { inflation_rate_var = inflation_rate_adjuster }
+	set_variable = { inflation_rate_var = new_inflation_rate }
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [THIS.GetName]: Inflation Update: Current Inflation Rate: [?THIS.inflation_rate_var|%] - Last Four Quarters: [?THIS.year_quarter_inflation_tracker^0|%] - [?THIS.year_quarter_inflation_tracker^1|%] - [?THIS.year_quarter_inflation_tracker^2|%] - [?THIS.year_quarter_inflation_tracker^3|%]"
 	}
