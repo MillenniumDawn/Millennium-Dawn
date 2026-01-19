@@ -72,7 +72,7 @@ ingame_update_setup = {
 	#Various
 	update_economic_cycle_cost = yes
 	update_cyber_cost = yes
-	hidden_effect = { productivity_growth_display_effect = yes }
+	update_employment_productivity_output_dynamic_modifier = yes
 	calculate_migration_mechanic_values = yes
 
 	## AI Section
@@ -3032,78 +3032,139 @@ calculate_additional_expense_rate = {
 	set_variable = { additional_expenses_rate = 0 }
 	# Additional expenses, set expense amount as a variable (weekly gain)
 	# Generic Propaganda Campaign Decisions
-	if = {
-		limit = { has_decision = promote_outlook_decision_support_pro_western_parties }
-		set_variable = { promote_outlook_western_costs = gdp_total }
-		multiply_variable = { promote_outlook_western_costs = 0.001 }
+	# AI do not use the propganda campaigns at all. Wrap them in a check to minimize checking.
+	if = { limit = { is_ai = no }
+		if = {
+			limit = { has_decision = promote_outlook_decision_support_pro_western_parties }
+			set_variable = { promote_outlook_western_costs = gdp_total }
+			multiply_variable = { promote_outlook_western_costs = 0.001 }
 
-		# Modifier
-		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
-		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
-		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@western_outlook_campaign_cost_modifier }
-		multiply_variable = { promote_outlook_western_costs = propaganda_campaign_cost_modifier }
+			# Modifier
+			set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+			add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+			add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@western_outlook_campaign_cost_modifier }
+			multiply_variable = { promote_outlook_western_costs = propaganda_campaign_cost_modifier }
 
-		add_to_variable = { additional_expenses_rate = promote_outlook_western_costs }
-	}
-	if = {
-		limit = { has_decision = promote_outlook_decision_support_emerging_parties }
-		set_variable = { promote_outlook_emerging_costs = gdp_total }
-		multiply_variable = { promote_outlook_emerging_costs = 0.001 }
+			add_to_variable = { additional_expenses_rate = promote_outlook_western_costs }
+		}
+		if = {
+			limit = { has_decision = promote_outlook_decision_support_emerging_parties }
+			set_variable = { promote_outlook_emerging_costs = gdp_total }
+			multiply_variable = { promote_outlook_emerging_costs = 0.001 }
 
-		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
-		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
-		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@emerging_outlook_campaign_cost_modifier }
-		multiply_variable = { promote_outlook_emerging_costs = propaganda_campaign_cost_modifier }
+			set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+			add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+			add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@emerging_outlook_campaign_cost_modifier }
+			multiply_variable = { promote_outlook_emerging_costs = propaganda_campaign_cost_modifier }
 
-		add_to_variable = { additional_expenses_rate = promote_outlook_emerging_costs }
-	}
-	if = {
-		limit = { has_decision = promote_outlook_decision_support_the_non_aligned_parties }
-		set_variable = { promote_outlook_nonaligned_costs = gdp_total }
-		multiply_variable = { promote_outlook_nonaligned_costs = 0.001 }
+			add_to_variable = { additional_expenses_rate = promote_outlook_emerging_costs }
+		}
+		if = {
+			limit = { has_decision = promote_outlook_decision_support_the_non_aligned_parties }
+			set_variable = { promote_outlook_nonaligned_costs = gdp_total }
+			multiply_variable = { promote_outlook_nonaligned_costs = 0.001 }
 
-		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
-		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
-		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@nonaligned_outlook_campaign_cost_modifier }
-		multiply_variable = { promote_outlook_nonaligned_costs = propaganda_campaign_cost_modifier }
+			set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+			add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+			add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@nonaligned_outlook_campaign_cost_modifier }
+			multiply_variable = { promote_outlook_nonaligned_costs = propaganda_campaign_cost_modifier }
 
-		add_to_variable = { additional_expenses_rate = promote_outlook_nonaligned_costs }
-	}
-	if = {
-		limit = { has_decision = promote_outlook_decision_support_the_nationalists }
-		set_variable = { promote_outlook_nationalist_costs = gdp_total }
-		multiply_variable = { promote_outlook_nationalist_costs = 0.001 }
+			add_to_variable = { additional_expenses_rate = promote_outlook_nonaligned_costs }
+		}
+		if = {
+			limit = { has_decision = promote_outlook_decision_support_the_nationalists }
+			set_variable = { promote_outlook_nationalist_costs = gdp_total }
+			multiply_variable = { promote_outlook_nationalist_costs = 0.001 }
 
-		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
-		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
-		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@nationalist_outlook_campaign_cost_modifier }
-		multiply_variable = { promote_outlook_nationalist_costs = propaganda_campaign_cost_modifier }
+			set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+			add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+			add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@nationalist_outlook_campaign_cost_modifier }
+			multiply_variable = { promote_outlook_nationalist_costs = propaganda_campaign_cost_modifier }
 
 
-		add_to_variable = { additional_expenses_rate = promote_outlook_nationalist_costs }
-	}
-	if = {
-		limit = { has_decision = promote_outlook_decision_support_the_salafists }
-		set_variable = { promote_outlook_salafist_costs = gdp_total }
-		multiply_variable = { promote_outlook_salafist_costs = 0.001 }
+			add_to_variable = { additional_expenses_rate = promote_outlook_nationalist_costs }
+		}
+		if = {
+			limit = { has_decision = promote_outlook_decision_support_the_salafists }
+			set_variable = { promote_outlook_salafist_costs = gdp_total }
+			multiply_variable = { promote_outlook_salafist_costs = 0.001 }
 
-		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
-		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
-		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@salafist_outlook_campaign_cost_modifier }
-		multiply_variable = { promote_outlook_salafist_costs = propaganda_campaign_cost_modifier }
+			set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+			add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+			add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@salafist_outlook_campaign_cost_modifier }
+			multiply_variable = { promote_outlook_salafist_costs = propaganda_campaign_cost_modifier }
 
-		add_to_variable = { additional_expenses_rate = promote_outlook_salafist_costs }
-	}
-	if = {
-		limit = { has_decision = propaganda_campaign_decision }
-		set_variable = { propaganda_campaign_influence_decision_costs = gdp_total }
-		multiply_variable = { propaganda_campaign_influence_decision_costs = 0.001 }
+			add_to_variable = { additional_expenses_rate = promote_outlook_salafist_costs }
+		}
+		if = {
+			limit = { has_decision = propaganda_campaign_decision }
+			set_variable = { propaganda_campaign_influence_decision_costs = gdp_total }
+			multiply_variable = { propaganda_campaign_influence_decision_costs = 0.001 }
 
-		set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
-		add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
-		multiply_variable = { propaganda_campaign_influence_decision_costs = propaganda_campaign_cost_modifier }
+			set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
+			add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
+			multiply_variable = { propaganda_campaign_influence_decision_costs = propaganda_campaign_cost_modifier }
 
-		add_to_variable = { additional_expenses_rate = propaganda_campaign_influence_decision_costs }
+			add_to_variable = { additional_expenses_rate = propaganda_campaign_influence_decision_costs }
+		}
+		# NOTE: For now the AI do not lease factories. Do not count these.
+		set_temp_variable = { gdp_per_capita_leasing_multiplier = gdp_per_capita }
+		multiply_temp_variable = { gdp_per_capita_leasing_multiplier = 0.001 }
+		if = {
+			limit = {
+				check_variable = { leased_civilian_factories > 0 }
+			}
+			set_temp_variable = { lease_civilian_factories_cost = lease_factories_cumulative_cost }
+			multiply_temp_variable = { lease_civilian_factories_cost = gdp_per_capita_leasing_multiplier }
+			set_temp_variable = { lease_civilian_factories_base_cost = lease_factories_cumulative_cost }
+			multiply_temp_variable = { lease_civilian_factories_base_cost = 0.1 }
+			add_to_temp_variable = { lease_civilian_factories_cost = lease_civilian_factories_base_cost }
+			multiply_temp_variable = { lease_civilian_factories_cost = leased_civilian_factories }
+			divide_temp_variable = { lease_civilian_factories_cost = leased_factories }
+			set_variable = { lease_civilian_factories_cost_display = lease_civilian_factories_cost }
+			add_to_variable = { additional_expenses_rate = lease_civilian_factories_cost }
+		}
+		if = { limit = { check_variable = { leased_military_factories > 0 } }
+			set_temp_variable = { lease_military_factories_cost = lease_factories_cumulative_cost }
+			multiply_temp_variable = { lease_military_factories_cost = gdp_per_capita_leasing_multiplier }
+			set_temp_variable = { lease_military_factories_base_cost = lease_factories_cumulative_cost }
+			multiply_temp_variable = { lease_military_factories_base_cost = 0.1 }
+			add_to_temp_variable = { lease_military_factories_cost = lease_military_factories_base_cost }
+			multiply_temp_variable = { lease_military_factories_cost = leased_military_factories }
+			divide_temp_variable = { lease_military_factories_cost = leased_factories }
+			set_variable = { lease_military_factories_cost_display = lease_military_factories_cost }
+			add_to_variable = { additional_expenses_rate = lease_military_factories_cost }
+		}
+		if = { limit = { check_variable = { leased_dockyards > 0 } }
+			set_temp_variable = { lease_naval_factories_cost = lease_factories_cumulative_cost }
+			multiply_temp_variable = { lease_naval_factories_cost = gdp_per_capita_leasing_multiplier }
+			set_temp_variable = { lease_naval_factories_base_cost = lease_factories_cumulative_cost }
+			multiply_temp_variable = { lease_naval_factories_base_cost = 0.1 }
+			add_to_temp_variable = { lease_naval_factories_cost = lease_naval_factories_base_cost }
+			multiply_temp_variable = { lease_naval_factories_cost = leased_dockyards }
+			divide_temp_variable = { lease_naval_factories_cost = leased_factories }
+			set_variable = { lease_naval_factories_cost_display = lease_naval_factories_cost }
+			add_to_variable = { additional_expenses_rate = lease_naval_factories_cost }
+		}
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = infrastructure_investiture_flag
+					has_country_flag = industrial_projects_flag
+					has_country_flag = service_constructions_flag
+					has_country_flag = arms_industry_stipends_flag
+					has_country_flag = retool_shipyards_flag
+				}
+			}
+			set_variable = { project_decisions_cost = gdp_total }
+			multiply_variable = { project_decisions_cost = 0.001 }
+
+			set_temp_variable = { project_cost_multiplier = 1 }
+			add_to_temp_variable = { project_cost_multiplier = modifier@projects_cost_modifier }
+			multiply_variable = { project_decisions_cost = project_cost_multiplier }
+
+			add_to_variable = { additional_expenses_rate = project_decisions_cost }
+		}
 	}
 	if = {
 		limit = { has_country_flag = large_company_subsidies }
@@ -3138,46 +3199,6 @@ calculate_additional_expense_rate = {
 		}
 		set_variable = { overlord_subsidies_total_cost = overlord_subsidies_cost }
 		add_to_variable = { additional_expenses_rate = overlord_subsidies_total_cost }
-	}
-
-	# Generic Economic Decisions
-	set_temp_variable = { gdp_per_capita_leasing_multiplier = gdp_per_capita }
-	multiply_temp_variable = { gdp_per_capita_leasing_multiplier = 0.001 }
-	if = {
-		limit = {
-			check_variable = { leased_civilian_factories > 0 }
-		}
-		set_temp_variable = { lease_civilian_factories_cost = lease_factories_cumulative_cost }
-		multiply_temp_variable = { lease_civilian_factories_cost = gdp_per_capita_leasing_multiplier }
-		set_temp_variable = { lease_civilian_factories_base_cost = lease_factories_cumulative_cost }
-		multiply_temp_variable = { lease_civilian_factories_base_cost = 0.1 }
-		add_to_temp_variable = { lease_civilian_factories_cost = lease_civilian_factories_base_cost }
-		multiply_temp_variable = { lease_civilian_factories_cost = leased_civilian_factories }
-		divide_temp_variable = { lease_civilian_factories_cost = leased_factories }
-		set_variable = { lease_civilian_factories_cost_display = lease_civilian_factories_cost }
-		add_to_variable = { additional_expenses_rate = lease_civilian_factories_cost }
-	}
-	if = { limit = { check_variable = { leased_military_factories > 0 } }
-		set_temp_variable = { lease_military_factories_cost = lease_factories_cumulative_cost }
-		multiply_temp_variable = { lease_military_factories_cost = gdp_per_capita_leasing_multiplier }
-		set_temp_variable = { lease_military_factories_base_cost = lease_factories_cumulative_cost }
-		multiply_temp_variable = { lease_military_factories_base_cost = 0.1 }
-		add_to_temp_variable = { lease_military_factories_cost = lease_military_factories_base_cost }
-		multiply_temp_variable = { lease_military_factories_cost = leased_military_factories }
-		divide_temp_variable = { lease_military_factories_cost = leased_factories }
-		set_variable = { lease_military_factories_cost_display = lease_military_factories_cost }
-		add_to_variable = { additional_expenses_rate = lease_military_factories_cost }
-	}
-	if = { limit = { check_variable = { leased_dockyards > 0 } }
-		set_temp_variable = { lease_naval_factories_cost = lease_factories_cumulative_cost }
-		multiply_temp_variable = { lease_naval_factories_cost = gdp_per_capita_leasing_multiplier }
-		set_temp_variable = { lease_naval_factories_base_cost = lease_factories_cumulative_cost }
-		multiply_temp_variable = { lease_naval_factories_base_cost = 0.1 }
-		add_to_temp_variable = { lease_naval_factories_cost = lease_naval_factories_base_cost }
-		multiply_temp_variable = { lease_naval_factories_cost = leased_dockyards }
-		divide_temp_variable = { lease_naval_factories_cost = leased_factories }
-		set_variable = { lease_naval_factories_cost_display = lease_naval_factories_cost }
-		add_to_variable = { additional_expenses_rate = lease_naval_factories_cost }
 	}
 	if = { limit = { check_variable = { market_purchase_factories > 0 } }
 		#start the math
@@ -3318,25 +3339,6 @@ calculate_additional_expense_rate = {
 		#assign the final cost
 		add_to_variable = { additional_expenses_rate = market_purchase_factories_cost }
 		set_variable = { market_purchase_factories_cost_track = market_purchase_factories_cost }
-	}
-	if = {
-		limit = {
-			OR = {
-				has_country_flag = infrastructure_investiture_flag
-				has_country_flag = industrial_projects_flag
-				has_country_flag = service_constructions_flag
-				has_country_flag = arms_industry_stipends_flag
-				has_country_flag = retool_shipyards_flag
-			}
-		}
-		set_variable = { project_decisions_cost = gdp_total }
-		multiply_variable = { project_decisions_cost = 0.001 }
-
-		set_temp_variable = { project_cost_multiplier = 1 }
-		add_to_temp_variable = { project_cost_multiplier = modifier@projects_cost_modifier }
-		multiply_variable = { project_decisions_cost = project_cost_multiplier }
-
-		add_to_variable = { additional_expenses_rate = project_decisions_cost }
 	}
 	if = {
 		limit = { has_idea = china_travel_ban }
@@ -4166,6 +4168,8 @@ update_state_variables = {
 	set_variable = { var = actual_consumer_goods_percent_display value = actual_consumer_goods_percent }
 
 	hidden_effect = {
+		productivity_growth_country_display_effect = yes
+
 		every_controlled_state = {
 			add_to_temp_variable = { PREV.num_missile_silo = building_level@rocket_site }
 			add_to_temp_variable = { PREV.num_anti_air_building = building_level@anti_air_building }
@@ -4224,6 +4228,8 @@ update_state_variables = {
 			multiply_temp_variable = { productivity_temp_state_var = 0.001 }
 			multiply_temp_variable = { productivity_temp_state_var = temp_pop }
 			add_to_variable = { PREV.overall_productivity = productivity_temp_state_var }
+
+			productivity_growth_controlled_display_effect = yes
 		}
 		add_to_variable = { total_spec_prod_plants = microchip_plant_total }
 		add_to_variable = { total_spec_prod_plants = composite_plant_total }
@@ -5016,7 +5022,57 @@ calculate_average_world_productivity = {
 	set_variable = { global.world_population = 0 }
 }
 
-productivity_growth_display_effect = {
+productivity_growth_controlled_display_effect = {
+	set_variable = { state_productivity_growth_scaled = PREV.productivity_growth_scaled }
+	if = {
+		limit = {
+			check_variable = { state_productivity_growth_scaled > 0 }
+		}
+		# Initial Calculation
+		set_temp_variable = { productivity_catch_up = global.average_world_productivity }
+		divide_temp_variable = { productivity_catch_up = productivity_state_var }
+		add_to_temp_variable = { productivity_catch_up = -1 }
+		multiply_temp_variable = { productivity_catch_up = state_productivity_growth_scaled }
+		multiply_temp_variable = { productivity_catch_up = 0.5 } #control factor for the catch up effect
+		add_to_variable = { state_productivity_growth_scaled = productivity_catch_up }
+		set_temp_variable = { state_productivity_growth_multiplier = 1 }
+		add_to_temp_variable = { state_productivity_growth_multiplier = modifier@state_productivity_growth_modifier }
+		set_temp_variable = { current_state = THIS.id }
+
+		# Railway Infrastructure Productivity Bonus
+		if = { limit = { has_railway_level = { state = current_state level = 1 } }
+			add_to_temp_variable = { state_productivity_growth_multiplier = 0.04 }
+		}
+		else_if = { limit = { has_railway_level = { state = current_state level = 2 } }
+			add_to_temp_variable = { state_productivity_growth_multiplier = 0.08 }
+		}
+		else_if = { limit = { has_railway_level = { state = current_state level = 3 } }
+			add_to_temp_variable = { state_productivity_growth_multiplier = 0.12 }
+		}
+		else_if = { limit = { has_railway_level = { state = current_state level = 4 } }
+			add_to_temp_variable = { state_productivity_growth_multiplier = 0.16 }
+		}
+		else_if = { limit = { has_railway_level = { state = current_state level = 5 } }
+			add_to_temp_variable = { state_productivity_growth_multiplier = 0.20 }
+		}
+		else_if = { limit = { has_railway_level = { state = current_state level = 6 } }
+			add_to_temp_variable = { state_productivity_growth_multiplier = 0.24 }
+		}
+
+		# Encourage Productivity from State Owned Investments
+		if = { limit = { has_state_flag = encourage_productivity_in_state }
+			add_to_temp_variable = { state_productivity_growth_multiplier = 0.20 }
+		}
+
+		multiply_variable = { state_productivity_growth_scaled = state_productivity_growth_multiplier }
+	}
+	else = {
+		multiply_variable = { state_productivity_growth_scaled = productivity_state_var }
+		divide_variable = { state_productivity_growth_scaled = global.average_world_productivity }
+	}
+}
+
+productivity_growth_country_display_effect = {
 	if = {
 		limit = {
 			NOT = {
@@ -5031,58 +5087,6 @@ productivity_growth_display_effect = {
 	set_temp_variable = { productivity_country_modifier = modifier@country_productivity_growth_modifier }
 	add_to_temp_variable = { productivity_country_modifier = 1 }
 	multiply_variable = { productivity_growth_scaled = productivity_country_modifier }
-
-	every_controlled_state = {
-		set_variable = { state_productivity_growth_scaled = PREV.productivity_growth_scaled }
-		if = {
-			limit = {
-				check_variable = { state_productivity_growth_scaled > 0 }
-			}
-			# Initial Calculation
-			set_temp_variable = { productivity_catch_up = global.average_world_productivity }
-			divide_temp_variable = { productivity_catch_up = productivity_state_var }
-			add_to_temp_variable = { productivity_catch_up = -1 }
-			multiply_temp_variable = { productivity_catch_up = state_productivity_growth_scaled }
-			multiply_temp_variable = { productivity_catch_up = 0.5 } #control factor for the catch up effect
-			add_to_variable = { state_productivity_growth_scaled = productivity_catch_up }
-			set_temp_variable = { state_productivity_growth_multiplier = 1 }
-			add_to_temp_variable = { state_productivity_growth_multiplier = modifier@state_productivity_growth_modifier }
-			set_temp_variable = { current_state = THIS.id }
-
-			# Railway Infrastructure Productivity Bonus
-			if = { limit = { has_railway_level = { state = current_state level = 1 } }
-				add_to_temp_variable = { state_productivity_growth_multiplier = 0.04 }
-			}
-			else_if = { limit = { has_railway_level = { state = current_state level = 2 } }
-				add_to_temp_variable = { state_productivity_growth_multiplier = 0.08 }
-			}
-			else_if = { limit = { has_railway_level = { state = current_state level = 3 } }
-				add_to_temp_variable = { state_productivity_growth_multiplier = 0.12 }
-			}
-			else_if = { limit = { has_railway_level = { state = current_state level = 4 } }
-				add_to_temp_variable = { state_productivity_growth_multiplier = 0.16 }
-			}
-			else_if = { limit = { has_railway_level = { state = current_state level = 5 } }
-				add_to_temp_variable = { state_productivity_growth_multiplier = 0.20 }
-			}
-			else_if = { limit = { has_railway_level = { state = current_state level = 6 } }
-				add_to_temp_variable = { state_productivity_growth_multiplier = 0.24 }
-			}
-
-			# Encourage Productivity from State Owned Investments
-			if = { limit = { has_state_flag = encourage_productivity_in_state }
-				add_to_temp_variable = { state_productivity_growth_multiplier = 0.20 }
-			}
-
-			multiply_variable = { state_productivity_growth_scaled = state_productivity_growth_multiplier }
-		}
-		else = {
-			multiply_variable = { state_productivity_growth_scaled = productivity_state_var }
-			divide_variable = { state_productivity_growth_scaled = global.average_world_productivity }
-		}
-	}
-
-	update_employment_productivity_output_dynamic_modifier = yes
 }
 
 update_employment_productivity_output_dynamic_modifier = {
@@ -5176,10 +5180,11 @@ update_employment_productivity_output_dynamic_modifier = {
 }
 
 productivity_growth_effect = {
-	productivity_growth_display_effect = yes
+	productivity_growth_country_display_effect = yes
 
 	#scales productivity growth based on comparison with global average and adds it to state productivity
 	every_controlled_state = {
+		productivity_growth_controlled_display_effect = yes
 		add_to_variable = { productivity_state_var = state_productivity_growth_scaled }
 		clamp_variable = { var = productivity_state_var min = 100 }
 	}

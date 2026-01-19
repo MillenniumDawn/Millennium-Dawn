@@ -5,42 +5,59 @@ Millennium Dawn Focus Tree Standardizer
 Simple approach: Only reformat focus blocks, leave everything else untouched
 """
 
-import re
-import sys
 import argparse
 import os
+import re
+import sys
 import time
 from datetime import datetime
 
+
 def log_message(level: str, message: str, verbose: bool = False):
     """Log a message with timestamp"""
-    if level == 'DEBUG' and not verbose:
+    if level == "DEBUG" and not verbose:
         return
 
     timestamp = datetime.now().strftime("%H:%M:%S")
 
     # Color coding for different log levels
     colors = {
-        'SUCCESS': '\033[92m',  # Green
-        'INFO': '\033[94m',     # Blue
-        'DEBUG': '\033[90m',    # Gray
-        'WARNING': '\033[93m',  # Yellow
-        'ERROR': '\033[91m'     # Red
+        "SUCCESS": "\033[92m",  # Green
+        "INFO": "\033[94m",  # Blue
+        "DEBUG": "\033[90m",  # Gray
+        "WARNING": "\033[93m",  # Yellow
+        "ERROR": "\033[91m",  # Red
     }
-    reset_color = '\033[0m'
+    reset_color = "\033[0m"
 
-    color = colors.get(level, '')
+    color = colors.get(level, "")
 
     formatted_message = f"{color}[{timestamp}] {level}: {message}{reset_color}"
     print(formatted_message, file=sys.stderr)
 
+
 def extract_focus_properties(focus_lines):
     """Extract properties from focus block lines"""
     props = {
-        'id': '', 'icon': '', 'x': '', 'y': '', 'relative_position_id': '', 'cost': '',
-        'prerequisites': [], 'mutually_exclusive': [], 'will_lead_to_war_with': [],
-        'available': [], 'bypass': [], 'cancel': [], 'completion_reward': [], 'ai_will_do': [],
-        'search_filters': '', 'allow_branch': [], 'select_effect': [], 'bypass_effect': [], 'other': []
+        "id": "",
+        "icon": "",
+        "x": "",
+        "y": "",
+        "relative_position_id": "",
+        "cost": "",
+        "prerequisites": [],
+        "mutually_exclusive": [],
+        "will_lead_to_war_with": [],
+        "available": [],
+        "bypass": [],
+        "cancel": [],
+        "completion_reward": [],
+        "ai_will_do": [],
+        "search_filters": "",
+        "allow_branch": [],
+        "select_effect": [],
+        "bypass_effect": [],
+        "other": [],
     }
 
     i = 1  # Skip opening brace
@@ -48,106 +65,107 @@ def extract_focus_properties(focus_lines):
         line = focus_lines[i].strip()
 
         # Single line properties
-        if line.startswith('id ='):
-            props['id'] = line
-        elif line.startswith('icon ='):
+        if line.startswith("id ="):
+            props["id"] = line
+        elif line.startswith("icon ="):
             # Check if this is a multi-line block or single line
-            if '{' in line:
+            if "{" in line:
                 # Multi-line block
                 block_lines, next_i = extract_block(focus_lines, i)
-                if isinstance(props['icon'], list):
+                if isinstance(props["icon"], list):
                     # Already have icon blocks, append to the list
-                    if not isinstance(props['icon'][0], list):
+                    if not isinstance(props["icon"][0], list):
                         # Convert single icon to list format
-                        props['icon'] = [props['icon']]
-                    props['icon'].append(block_lines)
+                        props["icon"] = [props["icon"]]
+                    props["icon"].append(block_lines)
                 else:
                     # First icon block
-                    props['icon'] = [block_lines]
+                    props["icon"] = [block_lines]
                 i = next_i  # Set i to the position after the block
                 continue  # Skip the i += 1 at the end of the loop
             else:
                 # Single line
-                if isinstance(props['icon'], list):
+                if isinstance(props["icon"], list):
                     # Already have icon blocks, append to the list
-                    props['icon'].append(line)
+                    props["icon"].append(line)
                 else:
                     # First icon
-                    props['icon'] = [line]
-        elif line.startswith('x ='):
-            props['x'] = line
-        elif line.startswith('y ='):
-            props['y'] = line
-        elif line.startswith('relative_position_id ='):
-            props['relative_position_id'] = line
-        elif line.startswith('cost ='):
-            props['cost'] = line
-        elif line.startswith('search_filters ='):
+                    props["icon"] = [line]
+        elif line.startswith("x ="):
+            props["x"] = line
+        elif line.startswith("y ="):
+            props["y"] = line
+        elif line.startswith("relative_position_id ="):
+            props["relative_position_id"] = line
+        elif line.startswith("cost ="):
+            props["cost"] = line
+        elif line.startswith("search_filters ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props['search_filters'] = block_lines
+            props["search_filters"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith('will_lead_to_war_with ='):
-            props['will_lead_to_war_with'] = line
+        elif line.startswith("will_lead_to_war_with ="):
+            props["will_lead_to_war_with"] = line
 
         # Multi-line blocks
-        elif line.startswith('prerequisite ='):
+        elif line.startswith("prerequisite ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props['prerequisites'].append(block_lines)
+            props["prerequisites"].append(block_lines)
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith('mutually_exclusive ='):
+        elif line.startswith("mutually_exclusive ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props['mutually_exclusive'].append(block_lines)
+            props["mutually_exclusive"].append(block_lines)
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith('available ='):
+        elif line.startswith("available ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props['available'] = block_lines
+            props["available"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith('bypass ='):
+        elif line.startswith("bypass ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props['bypass'] = block_lines
+            props["bypass"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith('cancel ='):
+        elif line.startswith("cancel ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props['cancel'] = block_lines
+            props["cancel"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith('completion_reward ='):
+        elif line.startswith("completion_reward ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props['completion_reward'] = block_lines
+            props["completion_reward"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith('ai_will_do ='):
+        elif line.startswith("ai_will_do ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props['ai_will_do'] = block_lines
+            props["ai_will_do"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith('allow_branch ='):
+        elif line.startswith("allow_branch ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props['allow_branch'] = block_lines
+            props["allow_branch"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith('select_effect ='):
+        elif line.startswith("select_effect ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props['select_effect'] = block_lines
+            props["select_effect"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith('bypass_effect ='):
+        elif line.startswith("bypass_effect ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props['bypass_effect'] = block_lines
+            props["bypass_effect"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
         else:
             # Other content
-            props['other'].append(focus_lines[i])
+            props["other"].append(focus_lines[i])
 
         i += 1
 
     return props
+
 
 def extract_block(lines, start_index):
     """Extract a multi-line block by counting braces"""
@@ -163,9 +181,9 @@ def extract_block(lines, start_index):
         block_lines.append(line)
 
         # Count braces
-        brace_count += line.count('{') - line.count('}')
+        brace_count += line.count("{") - line.count("}")
 
-        if brace_count == 0 and '{' in lines[start_index]:
+        if brace_count == 0 and "{" in lines[start_index]:
             # We've closed all braces, block is complete
             i += 1
             break
@@ -177,16 +195,18 @@ def extract_block(lines, start_index):
 
     return block_lines, i  # Return the position AFTER the block (not i-1)
 
+
 def clean_block_lines(block_lines):
     """Remove trailing blank lines from a block and return cleaned lines"""
     if not block_lines:
         return block_lines
 
     # Remove trailing blank lines
-    while block_lines and block_lines[-1].strip() == '':
+    while block_lines and block_lines[-1].strip() == "":
         block_lines.pop()
 
     return block_lines
+
 
 def compact_block(block_lines):
     """Completely compact a block by removing all internal blank lines"""
@@ -202,6 +222,7 @@ def compact_block(block_lines):
 
     return compacted
 
+
 def compact_search_filters(block_lines):
     """Compact search_filters block into a single line with spaces between entities, supporting both single-line and multi-line formats."""
     if not block_lines:
@@ -210,16 +231,16 @@ def compact_search_filters(block_lines):
     entities = []
     for line in block_lines:
         # Find everything between { and } (or after {, or before })
-        if 'search_filters' in line and '{' in line:
+        if "search_filters" in line and "{" in line:
             # Get everything after the first '{'
-            after_brace = line.split('{', 1)[1]
+            after_brace = line.split("{", 1)[1]
             # Remove everything after '}' if present
-            after_brace = after_brace.split('}', 1)[0]
+            after_brace = after_brace.split("}", 1)[0]
             tokens = after_brace.strip().split()
             entities.extend(tokens)
-        elif '}' in line:
+        elif "}" in line:
             # Get everything before '}'
-            before_brace = line.split('}', 1)[0]
+            before_brace = line.split("}", 1)[0]
             tokens = before_brace.strip().split()
             entities.extend(tokens)
         else:
@@ -229,6 +250,7 @@ def compact_search_filters(block_lines):
     # Remove empty tokens
     entities = [e for e in entities if e]
     return f"search_filters = {{ {' '.join(entities)} }}"
+
 
 def compact_icon(block_lines):
     """Compact icon block into a single line, handling both simple strings and multi-line blocks"""
@@ -245,207 +267,228 @@ def compact_icon(block_lines):
         if line.strip():  # Only keep non-empty lines
             compacted_lines.append(line.rstrip())
 
-    return '\n'.join(compacted_lines)
+    return "\n".join(compacted_lines)
+
 
 def format_focus_block(props):
     """Format focus according to Millennium Dawn standard"""
     lines = []
-    lines.append('\tfocus = {')
+    lines.append("\tfocus = {")
 
     # 1. ID and icon (no blank line between them)
-    if props['id']:
+    if props["id"]:
         lines.append(f'\t\t{props["id"]}')
-    if props['icon']:
+    if props["icon"]:
         # Handle multiple icon blocks
-        if isinstance(props['icon'], list) and len(props['icon']) > 0:
+        if isinstance(props["icon"], list) and len(props["icon"]) > 0:
             # Check if it's a list of icon blocks or a single block
-            if isinstance(props['icon'][0], list):
+            if isinstance(props["icon"][0], list):
                 # Multiple icon blocks
-                for icon_block in props['icon']:
+                for icon_block in props["icon"]:
                     icon_lines = compact_icon(icon_block)
-                    if '\n' in icon_lines:
+                    if "\n" in icon_lines:
                         # Multi-line output - split and add each line with proper indentation
-                        for icon_line in icon_lines.split('\n'):
+                        for icon_line in icon_lines.split("\n"):
                             if icon_line.strip():  # Only add non-empty lines
                                 lines.append(icon_line)
                     else:
                         # Single line output
-                        lines.append(f'\t\t{icon_lines}')
+                        lines.append(f"\t\t{icon_lines}")
             else:
                 # Single icon block
-                icon_lines = compact_icon(props['icon'])
-                if '\n' in icon_lines:
+                icon_lines = compact_icon(props["icon"])
+                if "\n" in icon_lines:
                     # Multi-line output - split and add each line with proper indentation
-                    for icon_line in icon_lines.split('\n'):
+                    for icon_line in icon_lines.split("\n"):
                         if icon_line.strip():  # Only add non-empty lines
                             lines.append(icon_line)
                 else:
                     # Single line output
-                    lines.append(f'\t\t{icon_lines}')
+                    lines.append(f"\t\t{icon_lines}")
         else:
             # Single line - use as-is
             lines.append(f'\t\t{props["icon"]}')
 
     # 2. Blank line before position group
-    lines.append('')
+    lines.append("")
 
     # 3. Position group (x, y, relative_position_id - no blank lines between them)
-    if props['x']:
+    if props["x"]:
         lines.append(f'\t\t{props["x"]}')
-    if props['y']:
+    if props["y"]:
         lines.append(f'\t\t{props["y"]}')
-    if props['relative_position_id']:
+    if props["relative_position_id"]:
         lines.append(f'\t\t{props["relative_position_id"]}')
 
     # 4. Blank line before cost
-    lines.append('')
+    lines.append("")
 
     # 5. Cost
-    if props['cost']:
+    if props["cost"]:
         lines.append(f'\t\t{props["cost"]}')
 
     # 6. Blank line before prerequisites/conditions
-    lines.append('')
+    lines.append("")
 
     # 7. Allow branch (before prerequisites)
-    if props['allow_branch']:
-        compacted_allow_branch = compact_block(props['allow_branch'][:])  # Remove all internal blank lines
+    if props["allow_branch"]:
+        compacted_allow_branch = compact_block(
+            props["allow_branch"][:]
+        )  # Remove all internal blank lines
         for line in compacted_allow_branch:
             lines.append(line)
-        lines.append('')  # Add blank line after allow_branch
+        lines.append("")  # Add blank line after allow_branch
 
     # 8. Prerequisites and related conditions (grouped together without internal spacing)
     condition_group_added = False
 
     # Add all prerequisites
-    for prereq in props['prerequisites']:
+    for prereq in props["prerequisites"]:
         compacted_prereq = compact_block(prereq[:])  # Remove all internal blank lines
         for line in compacted_prereq:
             lines.append(line)
         condition_group_added = True
 
     # Add all mutually_exclusive (no spacing between these and prerequisites)
-    for mutex in props['mutually_exclusive']:
+    for mutex in props["mutually_exclusive"]:
         compacted_mutex = compact_block(mutex[:])
         for line in compacted_mutex:
             lines.append(line)
         condition_group_added = True
 
     # Add will_lead_to_war_with as single-line property
-    if props['will_lead_to_war_with']:
+    if props["will_lead_to_war_with"]:
         lines.append(f'\t\t{props["will_lead_to_war_with"]}')
         condition_group_added = True
 
     # Only add blank line after the entire condition group (if any conditions were added)
     if condition_group_added:
-        lines.append('')
+        lines.append("")
 
     # 9. Search filters (right after condition group, before available)
-    if props['search_filters']:
+    if props["search_filters"]:
         # Compact search_filters into a single line with spaces between entities
-        search_filters_line = compact_search_filters(props['search_filters'])
-        lines.append(f'\t\t{search_filters_line}')
-        lines.append('')
+        search_filters_line = compact_search_filters(props["search_filters"])
+        lines.append(f"\t\t{search_filters_line}")
+        lines.append("")
 
     # 10. Available block
-    if props['available']:
-        compacted_available = compact_block(props['available'][:])  # Completely remove internal blank lines
+    if props["available"]:
+        compacted_available = compact_block(
+            props["available"][:]
+        )  # Completely remove internal blank lines
         for line in compacted_available:
             lines.append(line)
-        lines.append('')  # Always add exactly one blank line after
+        lines.append("")  # Always add exactly one blank line after
 
     # 11. Bypass block (positioned after available)
-    if props['bypass']:
-        compacted_bypass = compact_block(props['bypass'][:])  # Completely remove internal blank lines
+    if props["bypass"]:
+        compacted_bypass = compact_block(
+            props["bypass"][:]
+        )  # Completely remove internal blank lines
         for line in compacted_bypass:
             lines.append(line)
-        lines.append('')  # Always add exactly one blank line after
+        lines.append("")  # Always add exactly one blank line after
 
     # 12. Cancel block (positioned after bypass)
-    if props['cancel']:
-        compacted_cancel = compact_block(props['cancel'][:])  # Completely remove internal blank lines
+    if props["cancel"]:
+        compacted_cancel = compact_block(
+            props["cancel"][:]
+        )  # Completely remove internal blank lines
         for line in compacted_cancel:
             lines.append(line)
-        lines.append('')  # Always add exactly one blank line after
+        lines.append("")  # Always add exactly one blank line after
 
     # 13. Other properties (preserve as-is, but ensure spacing)
-    if props['other']:
-        for line in props['other']:
+    if props["other"]:
+        for line in props["other"]:
             if line.strip():  # Only add non-empty lines
                 lines.append(line)
-        if props['other']:  # Add blank line after other properties if they exist
-            lines.append('')
+        if props["other"]:  # Add blank line after other properties if they exist
+            lines.append("")
 
     # 14. Completion reward (add log if missing)
-    if props['completion_reward']:
+    if props["completion_reward"]:
         # Check if log exists
-        has_log = any('log =' in line for line in props['completion_reward'])
-        if not has_log and props['id']:
+        has_log = any("log =" in line for line in props["completion_reward"])
+        if not has_log and props["id"]:
             # Add log after opening brace
-            focus_id = props['id'].split('=')[1].strip()
+            focus_id = props["id"].split("=")[1].strip()
             modified_reward = []
-            for i, line in enumerate(props['completion_reward']):
+            for i, line in enumerate(props["completion_reward"]):
                 modified_reward.append(line)
-                if i == 0 and '{' in line:  # After opening brace
-                    modified_reward.append(f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"')
-            props['completion_reward'] = modified_reward
+                if i == 0 and "{" in line:  # After opening brace
+                    modified_reward.append(
+                        f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"'
+                    )
+            props["completion_reward"] = modified_reward
 
-        compacted_reward = compact_block(props['completion_reward'][:])  # Completely remove internal blank lines
+        compacted_reward = compact_block(
+            props["completion_reward"][:]
+        )  # Completely remove internal blank lines
         for line in compacted_reward:
             lines.append(line)
-        lines.append('')  # Always add exactly one blank line after
+        lines.append("")  # Always add exactly one blank line after
 
     # 15. Select effect (add log if missing)
-    if props['select_effect']:
+    if props["select_effect"]:
         # Check if log exists
-        has_log = any('log =' in line for line in props['select_effect'])
-        if not has_log and props['id']:
+        has_log = any("log =" in line for line in props["select_effect"])
+        if not has_log and props["id"]:
             # Add log after opening brace
-            focus_id = props['id'].split('=')[1].strip()
+            focus_id = props["id"].split("=")[1].strip()
             modified_effect = []
-            for i, line in enumerate(props['select_effect']):
+            for i, line in enumerate(props["select_effect"]):
                 modified_effect.append(line)
-                if i == 0 and '{' in line:  # After opening brace
-                    modified_effect.append(f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"')
-            props['select_effect'] = modified_effect
+                if i == 0 and "{" in line:  # After opening brace
+                    modified_effect.append(
+                        f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"'
+                    )
+            props["select_effect"] = modified_effect
 
-        compacted_effect = compact_block(props['select_effect'][:])  # Completely remove internal blank lines
+        compacted_effect = compact_block(
+            props["select_effect"][:]
+        )  # Completely remove internal blank lines
         for line in compacted_effect:
             lines.append(line)
-        lines.append('')  # Always add exactly one blank line after
+        lines.append("")  # Always add exactly one blank line after
 
     # 16. Bypass effect (add log if missing)
-    if props['bypass_effect']:
+    if props["bypass_effect"]:
         # Check if log exists
-        has_log = any('log =' in line for line in props['bypass_effect'])
-        if not has_log and props['id']:
+        has_log = any("log =" in line for line in props["bypass_effect"])
+        if not has_log and props["id"]:
             # Add log after opening brace
-            focus_id = props['id'].split('=')[1].strip()
+            focus_id = props["id"].split("=")[1].strip()
             modified_effect = []
-            for i, line in enumerate(props['bypass_effect']):
+            for i, line in enumerate(props["bypass_effect"]):
                 modified_effect.append(line)
-                if i == 0 and '{' in line:  # After opening brace
-                    modified_effect.append(f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"')
-            props['bypass_effect'] = modified_effect
+                if i == 0 and "{" in line:  # After opening brace
+                    modified_effect.append(
+                        f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"'
+                    )
+            props["bypass_effect"] = modified_effect
 
-        compacted_effect = compact_block(props['bypass_effect'][:])  # Completely remove internal blank lines
+        compacted_effect = compact_block(
+            props["bypass_effect"][:]
+        )  # Completely remove internal blank lines
         for line in compacted_effect:
             lines.append(line)
-        lines.append('')  # Always add exactly one blank line after
+        lines.append("")  # Always add exactly one blank line after
 
     # 17. AI will do (always last, always multi-line)
-    if props['ai_will_do']:
+    if props["ai_will_do"]:
         # Check if ai_will_do is on a single line and reformat it
-        ai_lines = props['ai_will_do']
-        if len(ai_lines) == 1 and 'ai_will_do = {' in ai_lines[0]:
+        ai_lines = props["ai_will_do"]
+        if len(ai_lines) == 1 and "ai_will_do = {" in ai_lines[0]:
             # Single line format, extract the factor value and reformat
             line = ai_lines[0]
-            factor_match = re.search(r'factor\s*=\s*(\d+)', line)
+            factor_match = re.search(r"factor\s*=\s*(\d+)", line)
             if factor_match:
                 factor_value = factor_match.group(1)
-                lines.append('\t\tai_will_do = {')
-                lines.append(f'\t\t\tfactor = {factor_value}')
-                lines.append('\t\t}')
+                lines.append("\t\tai_will_do = {")
+                lines.append(f"\t\t\tfactor = {factor_value}")
+                lines.append("\t\t}")
             else:
                 # Fallback to original if no factor found
                 compacted_ai = compact_block(ai_lines[:])
@@ -457,18 +500,18 @@ def format_focus_block(props):
             for line in compacted_ai:
                 lines.append(line)
     else:
-        lines.append('\t\tai_will_do = {')
-        lines.append('\t\t\tfactor = 1')
-        lines.append('\t\t}')
+        lines.append("\t\tai_will_do = {")
+        lines.append("\t\t\tfactor = 1")
+        lines.append("\t\t}")
 
-    lines.append('\t}')
+    lines.append("\t}")
 
     # Clean up excessive blank lines
     cleaned_lines = []
     blank_count = 0
 
     for line in lines:
-        if line.strip() == '':
+        if line.strip() == "":
             blank_count += 1
             if blank_count <= 1:  # Only allow 1 consecutive blank line
                 cleaned_lines.append(line)
@@ -477,6 +520,7 @@ def format_focus_block(props):
             cleaned_lines.append(line)
 
     return cleaned_lines
+
 
 def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = False):
     """Standardize focus tree by only reformatting focus blocks"""
@@ -489,7 +533,7 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
         return False
 
     try:
-        with open(input_file, 'r', encoding='utf-8') as f:
+        with open(input_file, "r", encoding="utf-8") as f:
             lines = f.readlines()
         log_message("INFO", f"Read {len(lines)} lines from {input_file}", verbose)
     except Exception as e:
@@ -504,7 +548,7 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
     while i < len(lines):
         line = lines[i].rstrip()
 
-        if re.match(r'\s*focus\s*=\s*{', line):
+        if re.match(r"\s*focus\s*=\s*{", line):
             log_message("DEBUG", f"Found focus block at line {i+1}", verbose)
 
             focus_block, next_i = extract_block(lines, i)
@@ -516,7 +560,11 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
                 output_lines.extend(formatted_lines)
                 focus_count += 1
 
-                log_message("DEBUG", f"Processed focus block {focus_count}: {props.get('id', 'unknown')}", verbose)
+                log_message(
+                    "DEBUG",
+                    f"Processed focus block {focus_count}: {props.get('id', 'unknown')}",
+                    verbose,
+                )
 
             i = next_i
         else:
@@ -524,9 +572,9 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
             i += 1
 
     try:
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             for line in output_lines:
-                f.write(line + '\n')
+                f.write(line + "\n")
 
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -548,34 +596,40 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
 
     return True
 
+
 def create_backup(filename: str) -> str:
     """Create a backup of the input file"""
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_filename = f"{filename}.backup.{timestamp}"
 
     try:
-        with open(filename, 'r', encoding='utf-8') as src:
-            with open(backup_filename, 'w', encoding='utf-8') as dst:
+        with open(filename, "r", encoding="utf-8") as src:
+            with open(backup_filename, "w", encoding="utf-8") as dst:
                 dst.write(src.read())
-        log_message('INFO', f'Backup created: {backup_filename}')
+        log_message("INFO", f"Backup created: {backup_filename}")
         return backup_filename
     except Exception as e:
-        log_message('ERROR', f'Failed to create backup: {str(e)}')
+        log_message("ERROR", f"Failed to create backup: {str(e)}")
         return ""
+
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Standardize HOI4 focus tree files - only reformats focus blocks'
+        description="Standardize HOI4 focus tree files - only reformats focus blocks"
     )
-    parser.add_argument('input_file', help='Input focus tree file')
-    parser.add_argument('-o', '--output', help='Output file (default: overwrites input)')
-    parser.add_argument('-b', '--backup', action='store_true', help='Create backup before modifying')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
+    parser.add_argument("input_file", help="Input focus tree file")
+    parser.add_argument(
+        "-o", "--output", help="Output file (default: overwrites input)"
+    )
+    parser.add_argument(
+        "-b", "--backup", action="store_true", help="Create backup before modifying"
+    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
     if not os.path.exists(args.input_file):
-        log_message('ERROR', f"File '{args.input_file}' does not exist")
+        log_message("ERROR", f"File '{args.input_file}' does not exist")
         sys.exit(1)
 
     output_file = args.output if args.output else args.input_file
@@ -585,13 +639,18 @@ def main():
         if not backup_file:
             sys.exit(1)
 
-    log_message('INFO', f'Starting focus block standardization of {args.input_file}', args.verbose)
+    log_message(
+        "INFO",
+        f"Starting focus block standardization of {args.input_file}",
+        args.verbose,
+    )
 
     if standardize_focus_tree(args.input_file, output_file, args.verbose):
-        log_message('SUCCESS', f'Standardization completed: {output_file}')
+        log_message("SUCCESS", f"Standardization completed: {output_file}")
     else:
-        log_message('ERROR', 'Standardization failed')
+        log_message("ERROR", "Standardization failed")
         sys.exit(1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
