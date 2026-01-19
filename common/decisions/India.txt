@@ -3168,6 +3168,130 @@ maoist_decision_category = {
 			factor = 100
 		}
 	}
+
+	# Salwa Judum - Controversial civilian militia program (2005-2011)
+	RAJ_salwa_judum = {
+		icon = GFX_decision_generic_prepare_civil_war_new
+		allowed = { original_tag = RAJ }
+
+		cost = 40
+		days_remove = 180
+
+		available = {
+			date > 2005.1.1
+			date < 2012.1.1
+			NOT = { has_idea = RAJ_salwa_judum_active }
+			456 = { # Chhattisgarh
+				is_controlled_by = RAJ
+				OR = {
+					has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+					has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+					has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+				}
+			}
+		}
+
+		visible = {
+			tag = RAJ
+			date > 2004.1.1
+			date < 2012.1.1
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision RAJ_salwa_judum"
+			add_stability = -0.02
+			add_ideas = RAJ_salwa_judum_active
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision RAJ_salwa_judum removed"
+			subtract_from_variable = { strength_of_maoists = 8 }
+			456 = {
+				if = {
+					limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+					add_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+				}
+				else_if = {
+					limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 } }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+					add_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+				}
+			}
+			random_list = {
+				60 = { # Controversy
+					add_stability = -0.03
+					add_political_power = -25
+				}
+				40 = { # Success
+					add_stability = 0.01
+				}
+			}
+			remove_ideas = RAJ_salwa_judum_active
+		}
+
+		ai_will_do = {
+			factor = 50
+			modifier = {
+				factor = 2
+				check_variable = { strength_of_maoists > 35 }
+			}
+		}
+	}
+
+	# Road Connectivity Program for Red Corridor
+	RAJ_road_connectivity_program = {
+		icon = GFX_decision_generic_construction
+		allowed = { original_tag = RAJ }
+
+		cost = 60
+		days_remove = 120
+
+		available = {
+			num_of_civilian_factories > 30
+		}
+
+		visible = {
+			tag = RAJ
+			any_controlled_state = {
+				OR = {
+					has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+					has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+					has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+					has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision RAJ_road_connectivity_program"
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision RAJ_road_connectivity_program removed"
+			subtract_from_variable = { maoist_political_influence = 3 }
+			random_controlled_state = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+						has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+						has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+						has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
+					}
+				}
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			add_stability = 0.01
+		}
+
+		ai_will_do = {
+			factor = 30
+		}
+	}
 }
 
 RAJ_central_asian_salaf_revolution = {
