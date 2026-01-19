@@ -77,6 +77,9 @@ country_event = {
 	}
 	immediate = {
 		set_country_flag = COM_constitutional_referendum_active
+		hidden_effect = {
+			activate_mission = COM_the_constitutional_referendum_mission
+		}
 	}
 
 	# Support the Pro-Federalist Movement
@@ -84,6 +87,7 @@ country_event = {
 		name = comoros.4.a
 		log = "[GetDateText]: [This.GetName]: comoros.4.a executed"
 
+		custom_effect_tooltip = COM_federalist_supported_tt
 		set_variable = { COM_federalist_constitutional_support = 0.55 }
 		set_variable = { COM_anti_federalist_constitutional_support = 0.45 }
 
@@ -97,6 +101,7 @@ country_event = {
 		name = comoros.4.b
 		log = "[GetDateText]: [This.GetName]: comoros.4.b executed"
 
+		custom_effect_tooltip = COM_constitutionalists_supported_tt
 		set_variable = { COM_federalist_constitutional_support = 0.45 }
 		set_variable = { COM_anti_federalist_constitutional_support = 0.55 }
 
@@ -116,19 +121,23 @@ country_event = {
 	title = comoros.5.t
 	desc = comoros.5.d
 	picture = GFX_ivory_coast_protest_supressed
-
-	fire_only_once = yes
 	is_triggered_only = yes
+	trigger = {
+		OR = {
+			original_tag = FRA
+			original_tag = MAD
+		}
+	}
 
 	option = {
 		name = comoros.5.a
-		trigger = { tag = FRA }
+		trigger = { original_tag = FRA }
 		log = "[GetDateText]: [This.GetName]: comoros.5.a executed"
 	}
 
 	option = {
 		name = comoros.5.b
-		trigger = { tag = MAD }
+		trigger = { original_tag = MAD }
 		log = "[GetDateText]: [This.GetName]: comoros.5.b executed"
 	}
 }
@@ -361,8 +370,27 @@ country_event = {
 	option = {
 		name = comoros.11.a
 		log = "[GetDateText]: [This.GetName]: comoros.11.a executed"
-		FRA = {
-			remove_state_core = 940
+		effect_tooltip = {
+			custom_effect_tooltip = COM_mayotte_referendum_starting_chance_tt
+			effect_tooltip = {
+				set_temp_variable = { temp_change = 6 }
+				COM_mayotte_referendum_independence_effect = yes
+				set_temp_variable = { temp_change = -3 }
+				COM_mayotte_referendum_france_effect = yes
+				set_temp_variable = { temp_change = -3 }
+				COM_mayotte_referendum_comoros_effect = yes
+			}
+			hidden_effect = {
+				if = {
+					limit = { has_active_mission = COM_mayotte_referendum_mission }
+					set_temp_variable = { temp_change = 6 }
+					COM_mayotte_referendum_independence_effect = yes
+					set_temp_variable = { temp_change = -3 }
+					COM_mayotte_referendum_france_effect = yes
+					set_temp_variable = { temp_change = -3 }
+					COM_mayotte_referendum_comoros_effect = yes
+				}
+			}
 		}
 	}
 }
@@ -379,6 +407,13 @@ country_event = {
 		name = comoros.12.a
 		log = "[GetDateText]: [This.GetName]: comoros.12.a executed"
 		940 = { transfer_state_to = COM }
+
+		COM = {
+			country_event = diplomatic_response.1
+		}
+		ai_chance = {
+			base = 1
+		}
 	}
 
 	option = {
@@ -386,9 +421,18 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: comoros.12.b executed"
 		COM = {
 			create_wargoal = {
-				type = puppet_wargoal_focus
 				target = FRA
+				type = take_core_state
+				generator = {
+					940
+				}
+				expire = 365
 			}
+
+			country_event = diplomatic_response.2
+		}
+		ai_chance = {
+			base = 1
 		}
 	}
 }
