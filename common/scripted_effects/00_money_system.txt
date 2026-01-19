@@ -5583,6 +5583,15 @@ set_initial_cost_resources = {
 	set_variable = { global.microchip_price = 8 }
 	set_variable = { global.composite_price = 7.4 }
 
+	set_variable = { global.starting_oil_price = 6.8 } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
+	set_variable = { global.starting_steel_price = 0.024 } #Based on steel price
+	set_variable = { global.starting_aluminium_price = 0.21 }	#Based on aluminium price
+	set_variable = { global.starting_tungsten_price = 0.28 }	#Based on copper price
+	set_variable = { global.starting_chromium_price = 0.18 }	#Based on gold price
+	set_variable = { global.starting_rubber_price = 0.09 }	#Based on rubber price
+	set_variable = { global.starting_microchip_price = 8 }
+	set_variable = { global.starting_composite_price = 7.4 }
+
 	set_variable = { global.oil_export = 3381 }
 	set_variable = { global.steel_export = 2537 }
 	set_variable = { global.alum_export = 1519 }
@@ -5618,7 +5627,7 @@ yearly_global_export_normalization = {
 }
 
 recalculate_resources_price = {
-	#steel = 2030 rubber = 738 oil = 2737 alum = 1225 tungsten = 1102 chromium = 907
+	#Set the empty temp variables here, just to make sure it starts right
 	set_temp_variable = { sum_steel = 0 }
 	set_temp_variable = { sum_rubber = 0 }
 	set_temp_variable = { sum_oil = 0 }
@@ -5628,6 +5637,16 @@ recalculate_resources_price = {
 	set_temp_variable = { sum_microchips = 0 }
 	set_temp_variable = { sum_composites = 0 }
 
+	set_temp_variable = { sum_import_steel = 0 }
+	set_temp_variable = { sum_import_rubber = 0 }
+	set_temp_variable = { sum_import_oil = 0 }
+	set_temp_variable = { sum_import_alum = 0 }
+	set_temp_variable = { sum_import_tungsten = 0 }
+	set_temp_variable = { sum_import_chromium = 0 }
+	set_temp_variable = { sum_import_microchips = 0 }
+	set_temp_variable = { sum_import_composites = 0 }
+
+	#Set the current global supply + demand
 	every_country = {
 		add_to_temp_variable = { sum_steel = resource_exported@steel }
 		add_to_temp_variable = { sum_rubber = resource_exported@rubber }
@@ -5637,80 +5656,105 @@ recalculate_resources_price = {
 		add_to_temp_variable = { sum_chromium = resource_exported@chromium }
 		add_to_temp_variable = { sum_microchips = resource_exported@microchips }
 		add_to_temp_variable = { sum_composites = resource_exported@composites }
+
+		add_to_temp_variable = { sum_import_steel = resource_imported@steel }
+		add_to_temp_variable = { sum_import_rubber = resource_imported@rubber }
+		add_to_temp_variable = { sum_import_oil = resource_imported@oil }
+		add_to_temp_variable = { sum_import_alum = resource_imported@aluminium }
+		add_to_temp_variable = { sum_import_tungsten = resource_imported@tungsten }
+		add_to_temp_variable = { sum_import_chromium = resource_imported@chromium }
+		add_to_temp_variable = { sum_import_microchips = resource_imported@microchips }
+		add_to_temp_variable = { sum_import_composites = resource_imported@composites }
 	}
 
-	#steel = 2511 rubber = 961 oil = 3404 alum = 1535 tungsten = 1485 chromium = 1322
-	set_temp_variable = { default_steel = global.steel_export }
-	set_temp_variable = { default_rubber = global.rubber_export }
-	set_temp_variable = { default_oil = global.oil_export }
-	set_temp_variable = { default_alum = global.alum_export }
-	set_temp_variable = { default_tungsten = global.tungsten_export }
-	set_temp_variable = { default_chromium = global.chromium_export }
-	set_temp_variable = { default_microchips = global.microchip_export }
-	set_temp_variable = { default_composites = global.composite_export }
+	#Set the % of supply used by doing demand / supply
+	#If using > 50% of supply, price should go up
+	#If using < 50% of supply, price should go down
+	#Average this around the base price, so that we dont end with constant rising / falling prices
+	divide_temp_variable = { sum_import_steel = sum_steel }
+	divide_temp_variable = { sum_import_rubber = sum_rubber }
+	divide_temp_variable = { sum_import_oil = sum_oil }
+	divide_temp_variable = { sum_import_alum = sum_alum }
+	divide_temp_variable = { sum_import_tungsten = sum_tungsten }
+	divide_temp_variable = { sum_import_chromium = sum_chromium }
+	divide_temp_variable = { sum_import_microchips = sum_microchips }
+	divide_temp_variable = { sum_import_composites = sum_chromium }
 
-	divide_temp_variable = { default_steel = sum_steel }
-	divide_temp_variable = { default_rubber = sum_rubber }
-	divide_temp_variable = { default_oil = sum_oil }
-	divide_temp_variable = { default_alum = sum_alum }
-	divide_temp_variable = { default_tungsten = sum_tungsten }
-	divide_temp_variable = { default_chromium = sum_chromium }
-	divide_temp_variable = { default_microchips = sum_microchips }
-	divide_temp_variable = { default_composites = sum_chromium }
+	multiply_temp_variable = { sum_import_steel = 2 }
+	multiply_temp_variable = { sum_import_rubber = 2 }
+	multiply_temp_variable = { sum_import_oil = 2 }
+	multiply_temp_variable = { sum_import_alum = 2 }
+	multiply_temp_variable = { sum_import_tungsten = 2 }
+	multiply_temp_variable = { sum_import_chromium = 2 }
+	multiply_temp_variable = { sum_import_microchips = 2 }
+	multiply_temp_variable = { sum_import_composites = 2 }
 
-	multiply_variable = { global.oil_price = default_oil }
+	set_temp_variable = { oil_price_adjuster = global.starting_oil_price }
+	set_temp_variable = { steel_price_adjuster = global.starting_steel_price }
+	set_temp_variable = { rubber_price_adjuster = global.starting_rubber_price }
+	set_temp_variable = { alum_price_adjuster = global.starting_alum_price }
+	set_temp_variable = { tungsten_price_adjuster = global.starting_tungsten_price }
+	set_temp_variable = { chromium_price_adjuster = global.starting_chromium_price }
+	set_temp_variable = { microchips_price_adjuster = global.starting_microchips_price }
+	set_temp_variable = { composites_price_adjuster = global.starting_composites_price }
+
+	multiply_temp_variable = { oil_price_adjuster = sum_import_oil }
+	multiply_temp_variable = { steel_price_adjuster = sum_import_steel }
+	multiply_temp_variable = { rubber_price_adjuster = sum_import_rubber }
+	multiply_temp_variable = { alum_price_adjuster = sum_import_alum }
+	multiply_temp_variable = { tungsten_price_adjuster = sum_import_tungsten }
+	multiply_temp_variable = { chromium_price_adjuster = sum_import_chromium }
+	multiply_temp_variable = { microchips_price_adjuster = sum_import_microchips }
+	multiply_temp_variable = { composites_price_adjuster = sum_import_composites }
+
+	#Clamp the prices at their min / max after adjusting them for supply & demand
 	clamp_variable = {
-		var = global.oil_price
-		min = 1.36
-		max = 34
-	}
-
-	multiply_variable = { global.steel_price = default_steel }
-	clamp_variable = {
-		var = global.steel_price
+		var = steel_price_adjuster
 		min = 0.005
 		max = 0.120
 	}
-
-	multiply_variable = { global.rubber_price = default_rubber }
 	clamp_variable = {
-		var = global.rubber_price
+		var = oil_price_adjuster
+		min = 1.36
+		max = 34
+	}
+	clamp_variable = {
+		var = rubber_price_adjuster
 		min = 0.018
 		max = 0.45
 	}
-
-	multiply_variable = { global.aluminium_price = default_alum }
 	clamp_variable = {
-		var = global.aluminium_price
+		var = alum_price_adjuster
 		min = 0.042
 		max = 1.05
 	}
-
-	multiply_variable = { global.tungsten_price = default_tungsten }
 	clamp_variable = {
-		var = global.tungsten_price
+		var = tungsten_price_adjuster
 		min = 0.056
 		max = 1.4
 	}
-
-	multiply_variable = { global.chromium_price = default_chromium }
 	clamp_variable = {
-		var = global.chromium_price
+		var = chromium_price_adjuster
 		min = 0.036
 		max = 0.9
 	}
-
-	multiply_variable = { global.microchip_price = default_microchips }
 	clamp_variable = {
-		var = global.microchip_price
+		var = microchips_price_adjuster
 		min = 1.58
 		max = 36.2
 	}
-
-	multiply_variable = { global.composite_price = default_composites }
 	clamp_variable = {
-		var = global.composite_price
+		var = composites_price_adjuster
 		min = 1.42
 		max = 35.4
 	}
+
+	set_variable = { global.oil_price = oil_price_adjuster } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
+	set_variable = { global.steel_price = steel_price_adjuster } #Based on steel price
+	set_variable = { global.aluminium_price = alum_price_adjuster }	#Based on aluminium price
+	set_variable = { global.tungsten_price = tungsten_price_adjuster }	#Based on copper price
+	set_variable = { global.chromium_price = chromium_price_adjuster }	#Based on gold price
+	set_variable = { global.rubber_price = rubber_price_adjuster }	#Based on rubber price
+	set_variable = { global.microchip_price = microchips_price_adjuster }
+	set_variable = { global.composite_price = composites_price_adjuster }
 }
