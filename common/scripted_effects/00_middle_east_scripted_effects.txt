@@ -1540,3 +1540,62 @@ update_social_conservatism_idea = {
 		}
 	}
 }
+
+# On Actions
+on_weekly_gcc_dominant_member_check = {
+	if = { limit = { has_country_flag = gcc_dominant_member }
+
+		if = {
+			limit = {
+				has_idea = idea_gcc_member_state
+				has_completed_focus = GCC_limited_unified_command
+				NOT = { has_completed_focus = GCC_a_robust_alliance }
+				is_in_faction = no
+				has_defensive_war = yes
+				all_enemy_country = {
+					NOT = { has_idea = idea_gcc_member_state }
+				}
+			}
+			create_faction_from_template = faction_template_gcc
+			# Add to Faction
+			for_each_scope_loop = {
+				array = global.gcc_members
+				PREV = { add_to_faction = PREV }
+			}
+			set_country_flag = gcc_formed
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					any_of_scopes = {
+						array = global.gcc_member_state
+						OR = {
+							has_war = yes
+							has_completed_focus = GCC_a_robust_alliance
+						}
+					}
+				}
+				any_of_scopes = {
+					array = global.gcc_member_state
+					has_war = no
+					has_country_flag = gcc_formed
+				}
+			}
+			if = { limit = { is_faction_leader = yes }
+				dismantle_faction = yes
+			}
+			# Add to Faction
+			for_each_scope_loop = {
+				array = global.gcc_members
+				if = { limit = { has_completed_focus = GCC_joint_defense_agreement }
+					for_each_scope_loop = {
+						array = global.gcc_members
+						if = { limit = { NOT = { tag = PREV } }
+							give_guarantee = PREV
+						}
+					}
+				}
+			}
+		}
+	}
+}
