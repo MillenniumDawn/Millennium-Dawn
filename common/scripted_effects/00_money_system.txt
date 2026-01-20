@@ -2064,6 +2064,10 @@ update_military_rate = {
 	# Recreate the Array
 	resize_array = { array = array_defence_spend size = 10 value = 0 }
 
+	#Inflation additive modifier
+	set_temp_variable = { inflation_multiplier = 1 }
+	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
+
 	#A variable that stores the current military law the player has
 	if = { limit = { has_idea = defence_00 }
 		set_temp_variable = { def_index = 0 }
@@ -2118,6 +2122,14 @@ update_military_rate = {
 	multiply_variable = { array_defence_spend^7 = 0.05 }
 	multiply_variable = { array_defence_spend^8 = 0.063 }
 	multiply_variable = { array_defence_spend^9 = 0.1 }
+
+	#increase the defence industry cost via inflation
+	for_each_loop = {
+		array = array_defence_spend
+		value = v
+		index = i
+		multiply_variable = { array_defence_spend^i = inflation_multiplier }
+	}
 
 	#Update each item in the defence spending array based on your gdp/c, having a higher GDP/c makes defence more expensive
 	set_temp_variable = { gdp_defence_modifier_industry = gdp_per_capita }
@@ -2543,6 +2555,7 @@ update_military_rate = {
 	multiply_temp_variable = { airforce_count = airforce_personnel_cost_multiplier }
 	#Modify equipment cost with modifier
 	multiply_variable = { equipment_operative_cost = equipment_cost_multiplier }
+	multiply_variable = { equipment_operative_cost = inflation_multiplier }
 
 	#Multiply personnel costs basde on GDP/c, higher GDP makes things more expensive (linear approximation 0.003 * gdp/c + 0.129)
 	set_temp_variable = { gdp_defence_modifier_personnel = gdp_per_capita }
@@ -2645,6 +2658,10 @@ update_bureaucracy_rate = {
 	set_variable = { bureaucracy_cost_multiplier_display = bureaucracy_cost_multiplier }
 	subtract_from_variable = { bureaucracy_cost_multiplier_display = 1 }
 
+	#Inflation additive modifier
+	set_temp_variable = { inflation_multiplier = 1 }
+	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
+
 	#Set the base cost of bureaucracy (billion $ per 10 000 000 people)
 	set_temp_variable = { bureaucracy_base_cost = 0.010 }
 
@@ -2658,6 +2675,7 @@ update_bureaucracy_rate = {
 		value = v
 		add_to_variable = { var = array_bureaucracy_spend^i value = population_total }	#Unit 100 000
 		multiply_variable = { array_bureaucracy_spend^i = bureaucracy_cost_multiplier }
+		multiply_variable = { array_bureaucracy_spend^i = inflation_multiplier }
 		multiply_variable = { array_bureaucracy_spend^i = gdp_bureaucracy_cost_modifier }
 		multiply_variable = { array_bureaucracy_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
 		multiply_variable = { var = array_bureaucracy_spend^i value = bureaucracy_base_cost }
@@ -2710,6 +2728,9 @@ update_police_rate = {
 	set_variable = { police_cost_multiplier_display = police_cost_multiplier }
 	subtract_from_variable = { police_cost_multiplier_display = 1 }
 
+	set_temp_variable = { inflation_multiplier = 1 }
+	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
+
 	# Recreate the Array
 	resize_array = { array = array_security_spend size = 5 value = 0 }
 
@@ -2720,6 +2741,7 @@ update_police_rate = {
 		value = v
 		add_to_variable = { array_security_spend^i = population_total }	#Unit 100 000
 		multiply_variable = { array_security_spend^i = police_cost_multiplier }
+		multiply_variable = { array_security_spend^i = inflation_multiplier }
 		multiply_variable = { array_security_spend^i = gdp_police_cost_modifier }
 		multiply_variable = { array_security_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
 		multiply_variable = { array_security_spend^i = police_base_cost }
@@ -2761,6 +2783,10 @@ update_education_rate = {
 
 	#Set the base cost of education (billion $ per 10 000 000 people)
 	set_temp_variable = { education_base_cost = 0.036 }
+
+	#Inflation additive modifier
+	set_temp_variable = { inflation_multiplier = 1 }
+	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
 
 	#Education spending is more expensive the more research slots a country has
 	set_temp_variable = { research_slot_initial = -0.2 }
@@ -2852,6 +2878,7 @@ update_education_rate = {
 		add_to_variable = { array_education_spend^i = population_total }	#Unit 100 000
 		multiply_variable = { array_education_spend^i = gdp_education_cost_modifier }
 		multiply_variable = { array_education_spend^i = education_cost_multiplier }
+		multiply_variable = { array_education_spend^i = inflation_multiplier }
 		multiply_variable = { array_education_spend^i = 0.01 }	#Unit 10 000 000
 		multiply_variable = { array_education_spend^i = education_base_cost }
 
@@ -2902,6 +2929,10 @@ update_health_rate = {
 	#Set the base cost of health (billion $ per 10 000 000 people)
 	set_temp_variable = { health_base_cost = 0.01 }
 
+	#Inflation additive modifier
+	set_temp_variable = { inflation_multiplier = 1 }
+	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
+
 	# # Bird Note: Ported Education Spending Logic 07-14
 	set_temp_variable = { gdp_health_cost_modifier = gdp_per_capita }
 	multiply_temp_variable = { gdp_health_cost_modifier = @spending_laws_gdp_scaling }
@@ -2924,6 +2955,7 @@ update_health_rate = {
 		add_to_variable = { var = array_health_spend^i value = population_total }	#Unit 100 000
 		multiply_variable = { array_health_spend^i = gdp_health_cost_modifier }
 		multiply_variable = { var = array_health_spend^i value = health_cost_multiplier }
+		multiply_variable = { array_health_spend^i = inflation_multiplier }
 		multiply_variable = { array_health_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
 		multiply_variable = { var = array_health_spend^i value = health_base_cost }
 		clamp_variable = { var = array_health_spend^i min = 0 }
@@ -2969,6 +3001,10 @@ update_social_rate = {
 	#Set the base cost of welfare (billion $ per 10 000 000 people)
 	set_temp_variable = { social_base_cost = 0.019 }
 
+	#Inflation additive modifier
+	set_temp_variable = { inflation_multiplier = 1 }
+	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
+
 	# # Bird Note: Ported Education Spending Logic 07-14
 	set_temp_variable = { gdp_social_cost_modifier = gdp_per_capita }
 	multiply_temp_variable = { gdp_social_cost_modifier = @spending_laws_gdp_scaling }
@@ -2991,6 +3027,7 @@ update_social_rate = {
 		add_to_variable = { var = array_social_spend^i value = population_total }	#Unit 100 000
 		multiply_variable = { var = array_social_spend^i value = gdp_social_cost_modifier }
 		multiply_variable = { var = array_social_spend^i value = social_cost_multiplier }
+		multiply_variable = { var = array_social_spend^i value = inflation_multiplier }
 		multiply_variable = { array_social_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
 		multiply_variable = { var = array_social_spend^i value = social_base_cost }
 		clamp_variable = { var = array_social_spend^i min = 0 }
@@ -3110,6 +3147,8 @@ calculate_additional_expense_rate = {
 		# NOTE: For now the AI do not lease factories. Do not count these.
 		set_temp_variable = { gdp_per_capita_leasing_multiplier = gdp_per_capita }
 		multiply_temp_variable = { gdp_per_capita_leasing_multiplier = 0.001 }
+		set_temp_variable = { inflation_on_leases = 1 }
+		add_to_temp_variable = { inflation_on_leases = modifier@inflation_cost_multiplier_modifier }
 		if = {
 			limit = {
 				check_variable = { leased_civilian_factories > 0 }
@@ -3118,6 +3157,7 @@ calculate_additional_expense_rate = {
 			multiply_temp_variable = { lease_civilian_factories_cost = gdp_per_capita_leasing_multiplier }
 			set_temp_variable = { lease_civilian_factories_base_cost = lease_factories_cumulative_cost }
 			multiply_temp_variable = { lease_civilian_factories_base_cost = 0.1 }
+			multiply_temp_variable = { lease_civilian_factories_base_cost = inflation_on_leases }
 			add_to_temp_variable = { lease_civilian_factories_cost = lease_civilian_factories_base_cost }
 			multiply_temp_variable = { lease_civilian_factories_cost = leased_civilian_factories }
 			divide_temp_variable = { lease_civilian_factories_cost = leased_factories }
@@ -3129,6 +3169,7 @@ calculate_additional_expense_rate = {
 			multiply_temp_variable = { lease_military_factories_cost = gdp_per_capita_leasing_multiplier }
 			set_temp_variable = { lease_military_factories_base_cost = lease_factories_cumulative_cost }
 			multiply_temp_variable = { lease_military_factories_base_cost = 0.1 }
+			multiply_temp_variable = { lease_military_factories_base_cost = inflation_on_leases }
 			add_to_temp_variable = { lease_military_factories_cost = lease_military_factories_base_cost }
 			multiply_temp_variable = { lease_military_factories_cost = leased_military_factories }
 			divide_temp_variable = { lease_military_factories_cost = leased_factories }
@@ -3140,6 +3181,7 @@ calculate_additional_expense_rate = {
 			multiply_temp_variable = { lease_naval_factories_cost = gdp_per_capita_leasing_multiplier }
 			set_temp_variable = { lease_naval_factories_base_cost = lease_factories_cumulative_cost }
 			multiply_temp_variable = { lease_naval_factories_base_cost = 0.1 }
+			multiply_temp_variable = { lease_naval_factories_base_cost = inflation_on_leases }
 			add_to_temp_variable = { lease_naval_factories_cost = lease_naval_factories_base_cost }
 			multiply_temp_variable = { lease_naval_factories_cost = leased_dockyards }
 			divide_temp_variable = { lease_naval_factories_cost = leased_factories }
@@ -3728,6 +3770,11 @@ calculate_additional_expense_rate = {
 		clamp_variable = { var = energy_load_sharing_payment_var min = 0 }
 		add_to_variable = { additional_expenses_rate = energy_load_sharing_payment_var }
 	}
+
+	#Compensate for inflation on the final value
+	set_temp_variable = { additional_expenses_inflation = 1 }
+	add_to_temp_variable = { additional_expenses_inflation = modifier@inflation_cost_multiplier_modifier }
+	multiply_variable = { additional_expenses_rate = addition_expenses_inflation }
 }
 
 #Income Related Stuff --- International Investments and Calculated Resource Sale Rate
@@ -4259,8 +4306,19 @@ update_state_variables = {
 	calculate_gdp = yes
 }
 
+set_starting_gdp_gdpc = {
+	set_variable = { last_quarter_gdp_total = gdp_total }
+	set_variable = { last_quarter_gdpc_total = gdp_per_capita }
+}
+
 #Calculate GDP/C
 calculate_gdp = {
+	if = {
+		limit = { check_variable = { starting_gdp_week_ticker < 9 } }
+		set_starting_gdp_gdpc = yes
+		add_to_variable = { starting_gdp_week_ticker = 1 }
+	}
+
 	# Calculate Last Quarter's GDP
 	if = {
 		limit = {
@@ -4282,7 +4340,22 @@ calculate_gdp = {
 
 		set_variable = { last_quarter_gdp_total = gdp_total }
 		add_to_array = { quarterly_gdp_growth_rate = last_quarter_gdp_growth_rate }
+
+		#GDP/C Quarterly Growth
+		set_temp_variable = { last_quarter_gdpc_total_temp = last_quarter_gdpc_total }
+		set_temp_variable = { this_quarter_gdpc_total_temp = gdp_per_capita }
+
+		set_variable = { last_quarter_gdpc_growth_rate = this_quarter_gdpc_total_temp }
+		divide_variable = { last_quarter_gdpc_growth_rate = last_quarter_gdpc_total_temp }
+		add_to_variable = { last_quarter_gdpc_growth_rate = -1 }
+		clamp_variable = { var = last_quarter_gdpc_growth_rate min = -1 }
+
+		set_variable = { last_quarter_gdpc_total = gdp_per_capita }
+		add_to_array = { quarterly_gdpc_growth_rate = last_quarter_gdpc_growth_rate }
+
 		set_country_flag = { flag = calculated_quarterly_gdp days = 85 value = 1 }
+
+		quarterly_inflation_calculation = yes
 	}
 
 	# Reset the Gross Domestic Payment
@@ -5287,6 +5360,7 @@ calculate_migration_mechanic_values = {
 		value = v
 		add_to_variable = { array_border_control_spend^i = population_total }	#Unit 100 000
 		multiply_variable = { array_border_control_spend^i = border_cost_multiplier }
+		multiply_variable = { array_border_control_spend^i = inflation_multiplier }
 		multiply_variable = { array_border_control_spend^i = gdp_border_cost_modifier }
 		multiply_variable = { array_border_control_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
 		multiply_variable = { array_border_control_spend^i = border_control_base_cost }
@@ -5514,6 +5588,15 @@ set_initial_cost_resources = {
 	set_variable = { global.microchip_price = 8 }
 	set_variable = { global.composite_price = 7.4 }
 
+	set_variable = { global.starting_oil_price = 6.8 } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
+	set_variable = { global.starting_steel_price = 0.024 } #Based on steel price
+	set_variable = { global.starting_aluminium_price = 0.21 }	#Based on aluminium price
+	set_variable = { global.starting_tungsten_price = 0.28 }	#Based on copper price
+	set_variable = { global.starting_chromium_price = 0.18 }	#Based on gold price
+	set_variable = { global.starting_rubber_price = 0.09 }	#Based on rubber price
+	set_variable = { global.starting_microchip_price = 8 }
+	set_variable = { global.starting_composite_price = 7.4 }
+
 	set_variable = { global.oil_export = 3381 }
 	set_variable = { global.steel_export = 2537 }
 	set_variable = { global.alum_export = 1519 }
@@ -5549,7 +5632,7 @@ yearly_global_export_normalization = {
 }
 
 recalculate_resources_price = {
-	#steel = 2030 rubber = 738 oil = 2737 alum = 1225 tungsten = 1102 chromium = 907
+	#Set the empty temp variables here, just to make sure it starts right
 	set_temp_variable = { sum_steel = 0 }
 	set_temp_variable = { sum_rubber = 0 }
 	set_temp_variable = { sum_oil = 0 }
@@ -5559,6 +5642,16 @@ recalculate_resources_price = {
 	set_temp_variable = { sum_microchips = 0 }
 	set_temp_variable = { sum_composites = 0 }
 
+	set_temp_variable = { sum_import_steel = 0 }
+	set_temp_variable = { sum_import_rubber = 0 }
+	set_temp_variable = { sum_import_oil = 0 }
+	set_temp_variable = { sum_import_alum = 0 }
+	set_temp_variable = { sum_import_tungsten = 0 }
+	set_temp_variable = { sum_import_chromium = 0 }
+	set_temp_variable = { sum_import_microchips = 0 }
+	set_temp_variable = { sum_import_composites = 0 }
+
+	#Set the current global supply + demand
 	every_country = {
 		add_to_temp_variable = { sum_steel = resource_exported@steel }
 		add_to_temp_variable = { sum_rubber = resource_exported@rubber }
@@ -5568,80 +5661,105 @@ recalculate_resources_price = {
 		add_to_temp_variable = { sum_chromium = resource_exported@chromium }
 		add_to_temp_variable = { sum_microchips = resource_exported@microchips }
 		add_to_temp_variable = { sum_composites = resource_exported@composites }
+
+		add_to_temp_variable = { sum_import_steel = resource_imported@steel }
+		add_to_temp_variable = { sum_import_rubber = resource_imported@rubber }
+		add_to_temp_variable = { sum_import_oil = resource_imported@oil }
+		add_to_temp_variable = { sum_import_alum = resource_imported@aluminium }
+		add_to_temp_variable = { sum_import_tungsten = resource_imported@tungsten }
+		add_to_temp_variable = { sum_import_chromium = resource_imported@chromium }
+		add_to_temp_variable = { sum_import_microchips = resource_imported@microchips }
+		add_to_temp_variable = { sum_import_composites = resource_imported@composites }
 	}
 
-	#steel = 2511 rubber = 961 oil = 3404 alum = 1535 tungsten = 1485 chromium = 1322
-	set_temp_variable = { default_steel = global.steel_export }
-	set_temp_variable = { default_rubber = global.rubber_export }
-	set_temp_variable = { default_oil = global.oil_export }
-	set_temp_variable = { default_alum = global.alum_export }
-	set_temp_variable = { default_tungsten = global.tungsten_export }
-	set_temp_variable = { default_chromium = global.chromium_export }
-	set_temp_variable = { default_microchips = global.microchip_export }
-	set_temp_variable = { default_composites = global.composite_export }
+	#Set the % of supply used by doing demand / supply
+	#If using > 50% of supply, price should go up
+	#If using < 50% of supply, price should go down
+	#Average this around the base price, so that we dont end with constant rising / falling prices
+	divide_temp_variable = { sum_import_steel = sum_steel }
+	divide_temp_variable = { sum_import_rubber = sum_rubber }
+	divide_temp_variable = { sum_import_oil = sum_oil }
+	divide_temp_variable = { sum_import_alum = sum_alum }
+	divide_temp_variable = { sum_import_tungsten = sum_tungsten }
+	divide_temp_variable = { sum_import_chromium = sum_chromium }
+	divide_temp_variable = { sum_import_microchips = sum_microchips }
+	divide_temp_variable = { sum_import_composites = sum_chromium }
 
-	divide_temp_variable = { default_steel = sum_steel }
-	divide_temp_variable = { default_rubber = sum_rubber }
-	divide_temp_variable = { default_oil = sum_oil }
-	divide_temp_variable = { default_alum = sum_alum }
-	divide_temp_variable = { default_tungsten = sum_tungsten }
-	divide_temp_variable = { default_chromium = sum_chromium }
-	divide_temp_variable = { default_microchips = sum_microchips }
-	divide_temp_variable = { default_composites = sum_chromium }
+	multiply_temp_variable = { sum_import_steel = 2 }
+	multiply_temp_variable = { sum_import_rubber = 2 }
+	multiply_temp_variable = { sum_import_oil = 2 }
+	multiply_temp_variable = { sum_import_alum = 2 }
+	multiply_temp_variable = { sum_import_tungsten = 2 }
+	multiply_temp_variable = { sum_import_chromium = 2 }
+	multiply_temp_variable = { sum_import_microchips = 2 }
+	multiply_temp_variable = { sum_import_composites = 2 }
 
-	multiply_variable = { global.oil_price = default_oil }
+	set_temp_variable = { oil_price_adjuster = global.starting_oil_price }
+	set_temp_variable = { steel_price_adjuster = global.starting_steel_price }
+	set_temp_variable = { rubber_price_adjuster = global.starting_rubber_price }
+	set_temp_variable = { alum_price_adjuster = global.starting_alum_price }
+	set_temp_variable = { tungsten_price_adjuster = global.starting_tungsten_price }
+	set_temp_variable = { chromium_price_adjuster = global.starting_chromium_price }
+	set_temp_variable = { microchips_price_adjuster = global.starting_microchips_price }
+	set_temp_variable = { composites_price_adjuster = global.starting_composites_price }
+
+	multiply_temp_variable = { oil_price_adjuster = sum_import_oil }
+	multiply_temp_variable = { steel_price_adjuster = sum_import_steel }
+	multiply_temp_variable = { rubber_price_adjuster = sum_import_rubber }
+	multiply_temp_variable = { alum_price_adjuster = sum_import_alum }
+	multiply_temp_variable = { tungsten_price_adjuster = sum_import_tungsten }
+	multiply_temp_variable = { chromium_price_adjuster = sum_import_chromium }
+	multiply_temp_variable = { microchips_price_adjuster = sum_import_microchips }
+	multiply_temp_variable = { composites_price_adjuster = sum_import_composites }
+
+	#Clamp the prices at their min / max after adjusting them for supply & demand
 	clamp_variable = {
-		var = global.oil_price
-		min = 1.36
-		max = 34
-	}
-
-	multiply_variable = { global.steel_price = default_steel }
-	clamp_variable = {
-		var = global.steel_price
+		var = steel_price_adjuster
 		min = 0.005
 		max = 0.120
 	}
-
-	multiply_variable = { global.rubber_price = default_rubber }
 	clamp_variable = {
-		var = global.rubber_price
+		var = oil_price_adjuster
+		min = 1.36
+		max = 34
+	}
+	clamp_variable = {
+		var = rubber_price_adjuster
 		min = 0.018
 		max = 0.45
 	}
-
-	multiply_variable = { global.aluminium_price = default_alum }
 	clamp_variable = {
-		var = global.aluminium_price
+		var = alum_price_adjuster
 		min = 0.042
 		max = 1.05
 	}
-
-	multiply_variable = { global.tungsten_price = default_tungsten }
 	clamp_variable = {
-		var = global.tungsten_price
+		var = tungsten_price_adjuster
 		min = 0.056
 		max = 1.4
 	}
-
-	multiply_variable = { global.chromium_price = default_chromium }
 	clamp_variable = {
-		var = global.chromium_price
+		var = chromium_price_adjuster
 		min = 0.036
 		max = 0.9
 	}
-
-	multiply_variable = { global.microchip_price = default_microchips }
 	clamp_variable = {
-		var = global.microchip_price
+		var = microchips_price_adjuster
 		min = 1.58
 		max = 36.2
 	}
-
-	multiply_variable = { global.composite_price = default_composites }
 	clamp_variable = {
-		var = global.composite_price
+		var = composites_price_adjuster
 		min = 1.42
 		max = 35.4
 	}
+
+	set_variable = { global.oil_price = oil_price_adjuster } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
+	set_variable = { global.steel_price = steel_price_adjuster } #Based on steel price
+	set_variable = { global.aluminium_price = alum_price_adjuster }	#Based on aluminium price
+	set_variable = { global.tungsten_price = tungsten_price_adjuster }	#Based on copper price
+	set_variable = { global.chromium_price = chromium_price_adjuster }	#Based on gold price
+	set_variable = { global.rubber_price = rubber_price_adjuster }	#Based on rubber price
+	set_variable = { global.microchip_price = microchips_price_adjuster }
+	set_variable = { global.composite_price = composites_price_adjuster }
 }

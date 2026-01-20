@@ -547,3 +547,177 @@ set_improved_trade_agreement = {
 	}
 }
 
+quarterly_inflation_calculation = {
+	#Get and set the basic civilian economic growth for this quarter, and grab our old inflation rate
+	set_temp_variable = { last_inflation_rate = inflation_rate_var }
+	set_temp_variable = { gdpc_growth_inflation_adjuster = last_quarter_gdpc_growth_rate }
+
+	#Grab the tax rate, and shift it to where it'll do the math right for us
+	set_temp_variable = { tax_rate_modifier = tax_rate }
+	multiply_temp_variable = { tax_rate_modifier = 0.01 }
+
+	#Adjust the inflation rate based on GDP/C + Taxes
+	set_temp_variable = { inflation_rate_adjuster = gdpc_growth_inflation_adjuster }
+	log = "Pre Tax Rate Inflation Adjusted [?inflation_rate_adjuster]"
+	multiply_temp_variable = { gdpc_growth_inflation_adjuster = tax_rate_modifier }
+	subtract_from_temp_variable = { inflation_rate_adjuster = gdpc_growth_inflation_adjuster }
+	log = "Post Tax Rate Inflation Adjusted [?inflation_rate_adjuster]"
+
+	#Adjust inflation further by the base GDP/C Amount
+	#Take the GDP/C and multiply it by the growth rate
+	#This means that insanely high growth can springboard inflation, but slower / steadier growth raises it in a controlled manner
+	set_temp_variable = { gdpc_inflation_adjuster = gdp_per_capita }
+	multiply_temp_variable = { gdpc_inflation_adjuster = 0.01 }
+	multiply_temp_variable = { gdpc_inflation_adjuster = last_quarter_gdpc_growth_rate }
+
+	log = "Pre GDP/C Inflation Adjusted - [?inflation_rate_adjuster]"
+	add_to_temp_variable = { inflation_rate_adjuster = gdpc_inflation_adjuster }
+	log = "Post GDP/C Inflation Adjusted - [?inflation_rate_adjuster]"
+
+	#Adjust inflation by economic cycle
+	#Faster economic growth means more money and spending, which drives up the price of goods
+	#This in turn pushes inflation. This should also scale on economic size
+	if = {
+		limit = { has_idea = depression }
+		set_temp_variable = { cycle_inflation_adjustment = -0.035 }
+	}else_if = {
+		limit = { has_idea = recession }
+		set_temp_variable = { cycle_inflation_adjustment = -0.025 }
+	}else_if = {
+		limit = { has_idea = stagnation }
+		set_temp_variable = { cycle_inflation_adjustment = -0.015 }
+	}else_if = {
+		limit = { has_idea = stable_growth }
+		set_temp_variable = { cycle_inflation_adjustment = 0 }
+	}else_if = {
+		limit = { has_idea = fast_growth }
+		set_temp_variable = { cycle_inflation_adjustment = 0.015 }
+	}else = {
+		set_temp_variable = { cycle_inflation_adjustment = 0.025 }
+	}
+
+	set_temp_variable = { economic_expense_multiplier = display_expense }
+	multiply_temp_variable = { economic_expense_multiplier = 0.01 }
+	multiply_temp_variable = { cycle_inflation_adjustment = economic_expense_multiplier }
+
+	log = "Pre Econ Cycle Inflation Adjustment [?inflation_rate_adjuster]"
+	add_to_temp_variable = { inflation_rate_adjuster = cycle_inflation_adjustment }
+	log = "Post Econ Cycle Inflation Adjustment [?inflation_rate_adjuster]"
+
+	#Finally, adjust inflation based on the budget deficit. Larger deficit means more government effort in the economy
+	#Typically, this would be by passively printing money/removing currency, which this system uses the deficit / surplus to simulate
+	set_temp_variable = { treasury_inflation_adjust = treasury_rate }
+	#Multiply here to get the proper addition state; negative budget increases inflation, positive budget decreases it
+	#Then reduce it to the proper spot for the math
+	multiply_temp_variable = { treasury_inflation_adjust = -1 }
+	multiply_temp_variable = { treasury_inflation_adjust = 0.01 }
+	#Reduce the GDP/C Modifier further here, this is just to help keep the math sane
+	multiply_temp_variable = { gdpc_inflation_adjuster = 0.01 }
+	multiply_temp_variable = { treasury_inflation_adjust = gdpc_inflation_adjuster }
+
+	add_to_temp_variable = { inflation_rate_adjuster = treasury_inflation_adjust }
+
+	#Apply External Modifiers Here
+	#If you've printed money, increase inflation, scaled by how many times you printed it + how much money it was
+	#This is not perfect math, but it simply increases whatever economic state you are in, so it can make inflation or deflation worse
+	set_temp_variable = { print_money_base_multiplier = 1 }
+	add_to_temp_variable = { print_money_base_multiplier = print_money_base_add }
+	set_variable = { print_money_base_add = 0 }
+
+	multiply_temp_variable = { inflation_rate_adjuster = print_money_base_multiplier }
+
+	#Calcuation of the quarterly rate finished, now move to calculate the yearly average off those numbers
+	#Check to make sure the array has only 4 items, and add up the value
+	set_temp_variable = { total_elements = year_quarter_inflation_tracker^num }
+
+	if = { limit = { check_variable = { total_elements > 3 } }
+		remove_from_array = {
+			array = year_quarter_inflation_tracker
+			index = 0
+		}
+	}
+
+	#Add this to the array, so we can average yearly inflation. this should stop rapid swings up and down, slowing movement
+	add_to_array = { year_quarter_inflation_tracker = inflation_rate_adjuster }
+	set_temp_variable = { new_inflation_rate = 0 }
+	#Reset the tracker here; this will prevent divide by 0, and give the most current number before division
+	set_temp_variable = { total_elements = year_quarter_inflation_tracker^num }
+
+	for_each_loop = {
+		array = year_quarter_inflation_tracker
+		value = v
+
+		add_to_temp_variable = { new_inflation_rate = v }
+	}
+
+	#Divide to get the average number
+	divide_temp_variable = { new_inflation_rate = total_elements }
+
+	#Maximum inflation movement per quarter of 10%. This means that the max you can move in a year is 40% in either direction
+	#This is a balance mechanic, both for gameplay, and for when you eat a whole country and your finances go crazy. On quick quarterly spike, and then back down
+	set_temp_variable = { inflation_rate_max = last_inflation_rate }
+	add_to_temp_variable = { inflation_rate_max = 0.1 }
+	set_temp_variable = { inflation_rate_min = last_inflation_rate }
+	add_to_temp_variable = { inflation_rate_min = -0.1 }
+
+	clamp_temp_variable = {
+		var = new_inflation_rate
+		min = inflation_rate_min
+		max = inflation_rate_max
+	}
+
+	set_variable = { inflation_rate_var = new_inflation_rate }
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [THIS.GetName]: Inflation Update: Current Inflation Rate: [?THIS.inflation_rate_var|%] - Last Four Quarters: [?THIS.year_quarter_inflation_tracker^0|%] - [?THIS.year_quarter_inflation_tracker^1|%] - [?THIS.year_quarter_inflation_tracker^2|%] - [?THIS.year_quarter_inflation_tracker^3|%]"
+	}
+	calculate_inflation_effects = yes
+}
+
+test_add = {
+	add_dynamic_modifier = { modifier = tsmc_modifier }
+}
+
+calculate_inflation_effects = {
+	set_temp_variable = { inflation_rate_start = inflation_rate_var }
+	set_temp_variable = { inflation_rate_buildings = inflation_rate_start }
+	multiply_temp_variable = { inflation_rate_buildings = 1.15 }
+
+	set_variable = { inflation_rate_buildings_var = inflation_rate_buildings }
+
+	set_temp_variable = { inflation_rate_production = inflation_rate_start }
+	multiply_temp_variable = { inflation_rate_production = 1.3 }
+	set_variable = { inflation_rate_prod_var = inflation_rate_production }
+
+	set_temp_variable = { inflation_rate_econ = inflation_rate_start }
+	multiply_temp_variable = { inflation_rate_econ = 1.25 }
+	set_variable = { inflation_rate_econ_var = inflation_rate_econ }
+
+	set_temp_variable = { inflation_rate_construction = inflation_rate_start }
+	multiply_temp_variable = { inflation_rate_construction = 2 }
+	set_variable = { inflation_construction_speed_var = inflation_rate_construction }
+
+	set_temp_variable = { inflation_rate_output = inflation_rate_start }
+	multiply_temp_variable = { inflation_rate_output = 1.25 }
+	multiply_temp_variable = { inflation_rate_output = -1 }
+	set_variable = { inflation_rate_output_var = inflation_rate_output }
+
+	set_temp_variable = { inflation_rate_pp = inflation_rate_var }
+	multiply_temp_variable = { inflation_rate_pp = 1.3 }
+	multiply_temp_variable = { inflation_rate_pp = -1 }
+	set_variable = { inflation_rate_pp_var = inflation_rate_pp }
+
+	set_variable = { inflation_corruption_var = inflation_rate_start }
+
+	set_temp_variable = { inflation_trade_law = inflation_rate_start }
+	multiply_temp_variable = { inflation_trade_law = 1.5 }
+	set_variable = { trade_law_cost_var = inflation_trade_law }
+
+	set_temp_variable = { inflation_roi = inflation_rate_start }
+	multiply_temp_variable = { inflation_roi = -1 }
+	set_variable = { inflation_roi_var = inflation_roi }
+
+	set_temp_variable = { inflation_goods = inflation_rate_start }
+	divide_temp_variable = { inflation_goods = 2 }
+	multiply_temp_variable = { inflation_goods = -1 }
+	set_variable = { inflation_goods_var = inflation_goods }
+}
