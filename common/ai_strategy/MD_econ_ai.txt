@@ -670,10 +670,8 @@ AI_major_production_of_dockyard2 = {
 }
 
 AI_idea_focus = {
-	allowed = {
-		check_variable = { treasury_rate > 5.00 }
-	}
 	enable = {
+		check_variable = { treasury_rate > 5.00 }
 		NOT = {
 			has_idea = social_06
 			has_idea = health_06
@@ -697,7 +695,7 @@ AI_idea_focus = {
 # Energy AI
 AI_fuel_power_plant_focuses = {
 	enable = {
-		check_variable = { energy_sum < energy_consumption }
+		has_an_energy_deficit = yes
 	}
 	abort_when_not_enabled = yes
 
@@ -718,7 +716,7 @@ AI_build_fuel_silos = {
 	ai_strategy = {
 		type = building_target
 		id = fuel_silo
-		value = 10
+		value = 50
 	}
 }
 
@@ -734,7 +732,7 @@ AI_build_nuclear_reactors = {
 	ai_strategy = {
 		type = building_target
 		id = nuclear_reactor
-		value = 3
+		value = 5
 	}
 }
 
@@ -789,9 +787,7 @@ AI_stop_building_civilian_industry = {
 
 AI_build_agricultural_districts = {
 	enable = {
-		check_variable = {
-			overall_productivity < 850
-		}
+		check_variable = { overall_productivity < 850 }
 		num_of_available_civilian_factories > 10
 	}
 	abort_when_not_enabled = yes
@@ -891,6 +887,31 @@ AI_internet_station_level_five = {
 }
 
 #Microchip & Composite AI
+default_build_chip_and_composite = {
+	enable = {
+		OR = {
+			has_idea = large_power
+			has_idea = regional_power
+			has_idea = superpower
+			has_idea = great_power
+			is_major = yes
+
+			AND = {
+				check_variable = { resource_consumed@microchips > resource_produced@microchips }
+				check_variable = { resource_imported@microchips > resource_produced@microchips }
+			}
+			AND = {
+				check_variable = { resource_consumed@composites > resource_produced@composites }
+				check_variable = { resource_imported@composites > resource_produced@composites }
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = build_building id = microchip_plant value = 5 }
+	ai_strategy = { type = build_building id = composite_plant value = 5 }
+}
+
 want_chip_factories = {
 	enable = {
 		#If we both import AND consume more than we produce, we need more internal production
@@ -904,7 +925,8 @@ want_chip_factories = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = build_building id = microchip_plant value = 30 }
+	ai_strategy = { type = building_target id = microchip_plant value = 75 }
+	ai_strategy = { type = build_building id = microchip_plant value = 25 }
 }
 
 want_comp_factories = {
@@ -923,5 +945,6 @@ want_comp_factories = {
 
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = build_building id = composite_plant value = 30 }
+	ai_strategy = { type = building_target id = composite_plant value = 75 }
+	ai_strategy = { type = build_building id = composite_plant value = 25 }
 }

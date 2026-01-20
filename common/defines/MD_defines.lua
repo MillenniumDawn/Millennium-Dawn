@@ -252,6 +252,12 @@
 		0.15,
 		0.25,	-- Size MUST be SCIENTIST_SKILL_LEVEL_THRESHOLDS's size + 1
 	}
+	NDefines.NProject.RECRUIT_SCIENTIST_COST = {
+		75,			-- pp cost if no available scientist
+		75,			-- pp cost if 1 available scientist
+		75,			-- pp cost if 2 available scientist
+		75			-- pp cost if more than 2 available scientist
+	}
 	NDefines.NProject.BREAKTHROUGH_DAILY_SCIENTIST_SKILL_GAIN = 15       -- Amount in 1/100th percentage gained per skill when doing basic research. E.g. 5 = 0.05% per skill level.
 	NDefines.NProject.BREAKTHROUGH_DAILY_TECHNOLOGY_GAIN = 10           -- Amount in 1/100th percentage. E.g. 25 = 0.25%
 	NDefines.NProject.BREAKTHROUGH_DAILY_ROCKET_SITE_GAIN = 0		   -- Amount in 1/100th percentage gained per rocket site level. E.g. 1 = 0.01% per rocket site level.
@@ -967,7 +973,7 @@
 	NDefines.NAI.AI_FRACTION_OF_FIGHTERS_RESERVED_FOR_INTERCEPTION = 0.10
 	NDefines.NAI.WANTED_LAND_PLANES_PER_DIVISION = 30
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of priority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
-		'fossil_powerplant', 'industrial_complex', 'internet_station', 'renewable_energy_infra', 'nuclear_reactor', 'fuel_silo','microchip_plant', 'composite_plant', 'offices', 'synthetic_refinery', 'infrastructure', 'agriculture_district', 'arms_factory'
+		'fossil_powerplant', 'industrial_complex', 'internet_station', 'microchip_plant', 'renewable_energy_infra', 'nuclear_reactor', 'fuel_silo', 'composite_plant', 'offices', 'synthetic_refinery', 'infrastructure', 'agriculture_district', 'arms_factory'
 	}
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.2
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_NAVY_TRAINING = 0.2
