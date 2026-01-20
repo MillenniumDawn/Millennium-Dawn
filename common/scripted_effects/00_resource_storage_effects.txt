@@ -4,14 +4,14 @@
 resource_storage_system = {
 	resource_storage_steel_calc_effect = yes
 	resource_storage_rubber_calc_effect = yes
-	resource_storage_aluminium_calc_effect = yes
+	resource_storage_light_calc_effect = yes
 	resource_storage_tech_calc_effect = yes
 	resource_storage_precious_calc_effect = yes
 
 	set_temp_variable = { storage_clamp = modifier@resource_storage_gain }
 
 	clamp_variable = { var = rubber_in_storage min = 0 max = storage_clamp }
-	clamp_variable = { var = aluminium_in_storage min = 0 max = storage_clamp }
+	clamp_variable = { var = light_in_storage min = 0 max = storage_clamp }
 	clamp_variable = { var = precious_in_storage min = 0 max = storage_clamp }
 	clamp_variable = { var = tech_in_storage min = 0 max = storage_clamp }
 	clamp_variable = { var = steel_in_storage min = 0 max = storage_clamp }
@@ -65,21 +65,21 @@ resource_storage_steel_calc_effect = {
 	}
 }
 
-resource_storage_aluminium_calc_effect = {
+resource_storage_light_calc_effect = {
 	#This should include all the steel that the nation has left, *including* the buff
 	set_temp_variable = { resource_base_value = resource@aluminium }
 	set_temp_variable = { resource_base_consumed_value = resource_consumed@aluminium }
-	set_temp_variable = { old_resource_draw_value = aluminium_from_storage }
+	set_temp_variable = { old_resource_draw_value = light_from_storage }
 	subtract_from_temp_variable = { resource_base_value = old_resource_draw_value }
 
 	if = {
 		#Only draw resources if we have a deficit, want to draw, and have the resources to draw
 		limit = {
 			check_variable = { resource_base_value < 1 }
-			check_variable = { aluminium_in_storage > 0 }
+			check_variable = { light_in_storage > 0 }
 			OR = {
 				is_ai = yes
-				has_country_flag = alum_storage_draw
+				has_country_flag = light_storage_draw
 			}
 		}
 		#How much total we need is the consumed amount + deficit
@@ -87,28 +87,28 @@ resource_storage_aluminium_calc_effect = {
 		subtract_from_temp_variable = { ideal_resource_number = resource_base_value }
 
 		multiply_temp_variable = { resource_base_value = -1 }
-		subtract_from_variable = { aluminium_in_storage = resource_base_value }
+		subtract_from_variable = { light_in_storage = resource_base_value }
 
-		if = { limit = { check_variable = { aluminium_in_storage < 0 } }
+		if = { limit = { check_variable = { light_in_storage < 0 } }
 			#We overdrew and don't have enough in storage anymore, so reduce the amount taken
-			add_to_temp_variable = { resource_base_value = aluminium_in_storage }
+			add_to_temp_variable = { resource_base_value = light_in_storage }
 		}
-		set_variable = { aluminium_from_storage = resource_base_value }
-		set_variable = { aluminium_storage_display = resource_base_value }
+		set_variable = { light_from_storage = resource_base_value }
+		set_variable = { light_storage_display = resource_base_value }
 		set_temp_variable = { resource_base_value = 0 }
 	} else = {
 		if = {
 			#check if we ran out. if we ran out, stop pulling
-			limit = { check_variable = { aluminium_in_storage = 0 } }
-			set_variable = { aluminium_from_storage = 0 }
-			set_variable = { aluminium_storage_display = 0 }
+			limit = { check_variable = { light_in_storage = 0 } }
+			set_variable = { light_from_storage = 0 }
+			set_variable = { light_storage_display = 0 }
 		}
 	}
 	if = {
 		limit = { check_variable = { resource_base_value > 0 } }
-		add_to_variable = { aluminium_in_storage = resource_base_value }
-		set_variable = { aluminium_from_storage = 0 }
-		set_variable = { aluminium_storage_display = resource_base_value }
+		add_to_variable = { light_in_storage = resource_base_value }
+		set_variable = { light_from_storage = 0 }
+		set_variable = { light_storage_display = resource_base_value }
 	}
 }
 
@@ -254,7 +254,7 @@ resource_storage_precious_calc_effect = {
 
 get_total_storage = {
 	log = "Rubber Storage: [?THIS.rubber_in_storage] - Rubber From Storage: [?THIS.rubber_from_storage] - Rubber Total: [?THIS.resource@rubber]"
-	log = "Aluminium Storage: [?THIS.aluminium_in_storage] - Aluminium From Storage: [?THIS.aluminium_from_storage] - Aluminium Total: [?THIS.resource@aluminium]"
+	log = "Light Metals Storage: [?THIS.light_in_storage] - Light Metals From Storage: [?THIS.light_from_storage] - Light Metals Total: [?THIS.resource@aluminium]"
 	log = "Precious Metals Storage: [?THIS.precious_in_storage] - Precious Metals From Storage: [?THIS.precious_from_storage] - Precious Metals Total: [?THIS.resource@chromium]"
 	log = "Tech Metals Storage: [?THIS.tech_in_storage] - Tech Metals From Storage: [?THIS.tech_from_storage] - Tech Metals Total: [?THIS.resource@tungsten]"
 	log = "Steel Storage: [?THIS.steel_in_storage] - Steel From Storage: [?THIS.steel_from_storage] - Steel Total: [?THIS.resource@steel]"
@@ -262,7 +262,7 @@ get_total_storage = {
 
 set_max_storage = {
 	set_variable = { rubber_in_storage = rubber_capacity }
-	set_variable = { aluminium_in_storage = aluminum_capacity }
+	set_variable = { aluminium_in_storage = light_capacity }
 	set_variable = { precious_in_storage = precious_capacity }
 	set_variable = { tech_in_storage = tech_capacity }
 	set_variable = { steel_in_storage = steel_capacity }
