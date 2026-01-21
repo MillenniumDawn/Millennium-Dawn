@@ -139,7 +139,8 @@ def main():
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace("gfx\\interface\\goals\\", "")
                     file_utility = file_utility.replace("gfx/interface/goals/", "")
-                    file_utility = file_utility.split("\\")
+                    # Split by both types of separators
+                    file_utility = file_utility.replace("\\", "/").split("/")
 
                     texture_name = createitemcall(file_utility)
 
@@ -181,7 +182,8 @@ def main():
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace("gfx\\interface\\goals\\", "")
                     file_utility = file_utility.replace("gfx/interface/goals/", "")
-                    file_utility = file_utility.split("\\")
+                    # Split by both types of separators
+                    file_utility = file_utility.replace("\\", "/").split("/")
 
                     texture_name = createitemcall(file_utility)
 
@@ -234,7 +236,8 @@ def main():
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace("gfx\\event_pictures\\", "")
                     file_utility = file_utility.replace("gfx/event_pictures/", "")
-                    file_utility = file_utility.split("\\")
+                    # Split by both types of separators
+                    file_utility = file_utility.replace("\\", "/").split("/")
 
                     texture_name = createitemcall(file_utility)
 
@@ -281,7 +284,8 @@ def main():
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace("gfx\\interface\\ideas\\", "")
                     file_utility = file_utility.replace("gfx/interface/ideas/", "")
-                    file_utility = file_utility.split("\\")
+                    # Split by both types of separators
+                    file_utility = file_utility.replace("\\", "/").split("/")
 
                     if "traits_strip" in fname:
                         print("Utility Idea GFX... skipping")
@@ -336,7 +340,8 @@ def main():
                         file_utility = file_utility.replace(
                             "gfx/interface/technologies/", ""
                         )
-                        file_utility = file_utility.split("\\")
+                        # Split by both types of separators
+                        file_utility = file_utility.replace("\\", "/").split("/")
 
                         texture_name = createitemcall(file_utility)
 
@@ -386,7 +391,8 @@ def main():
                     file_utility = file_utility.replace(
                         "gfx/texticons/parties_icons/", ""
                     )
-                    file_utility = file_utility.split("\\")
+                    # Split by both types of separators
+                    file_utility = file_utility.replace("\\", "/").split("/")
 
                     texture_name = createitemcall(file_utility)
 
@@ -425,7 +431,8 @@ def main():
                     file_utility = file_utility.replace(
                         "gfx/interface/operatives/agencies", ""
                     )
-                    file_utility = file_utility.split("\\")
+                    # Split by both types of separators
+                    file_utility = file_utility.replace("\\", "/").split("/")
 
                     texture_name = createitemcall(file_utility)
                     texture_tuple = tuple(map(str, texture_name.split("_")))
@@ -464,7 +471,8 @@ def main():
                         "gfx\\interface\\decisions\\", ""
                     )
                     file_utility = file_utility.replace("gfx/interface/decisions/", "")
-                    file_utility = file_utility.split("\\")
+                    # Split by both types of separators
+                    file_utility = file_utility.replace("\\", "/").split("/")
 
                     texture_name = createitemcall(file_utility)
 
