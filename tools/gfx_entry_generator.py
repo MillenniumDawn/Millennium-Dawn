@@ -129,11 +129,16 @@ def main():
                 )
                 for fname in ddsdict:
                     file_location = fname
-                    file_location = file_location.split(modfolder)
-                    texture_path = file_location[1]  # Should Retrieve the Path
+                    # Find the gfx folder in the path to extract the relative path
+                    if "gfx" in file_location:
+                        gfx_index = file_location.find("gfx")
+                        texture_path = file_location[gfx_index:]
+                    else:
+                        continue  # Skip if no gfx folder found
                     file_utility = texture_path
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace("gfx\\interface\\goals\\", "")
+                    file_utility = file_utility.replace("gfx/interface/goals/", "")
                     file_utility = file_utility.split("\\")
 
                     texture_name = createitemcall(file_utility)
@@ -166,11 +171,16 @@ def main():
                 )
                 for fname in ddsdict:
                     file_location = fname
-                    file_location = file_location.split(modfolder)
-                    texture_path = file_location[1]  # Should Retrieve the Path
+                    # Find the gfx folder in the path to extract the relative path
+                    if "gfx" in file_location:
+                        gfx_index = file_location.find("gfx")
+                        texture_path = file_location[gfx_index:]
+                    else:
+                        continue  # Skip if no gfx folder found
                     file_utility = texture_path
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace("gfx\\interface\\goals\\", "")
+                    file_utility = file_utility.replace("gfx/interface/goals/", "")
                     file_utility = file_utility.split("\\")
 
                     texture_name = createitemcall(file_utility)
@@ -214,11 +224,16 @@ def main():
                 ffile.write("spriteTypes = {\n")
                 for fname in ddsdict:
                     file_location = fname
-                    file_location = file_location.split(modfolder)
-                    texture_path = file_location[1]  # Should Retrieve the Path
+                    # Find the gfx folder in the path to extract the relative path
+                    if "gfx" in file_location:
+                        gfx_index = file_location.find("gfx")
+                        texture_path = file_location[gfx_index:]
+                    else:
+                        continue  # Skip if no gfx folder found
                     file_utility = texture_path
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace("gfx\\event_pictures\\", "")
+                    file_utility = file_utility.replace("gfx/event_pictures/", "")
                     file_utility = file_utility.split("\\")
 
                     texture_name = createitemcall(file_utility)
@@ -256,11 +271,16 @@ def main():
                 )
                 for fname in ddsdict:
                     file_location = fname
-                    file_location = file_location.split(modfolder)
-                    texture_path = file_location[1]  # Should Retrieve the Path
+                    # Find the gfx folder in the path to extract the relative path
+                    if "gfx" in file_location:
+                        gfx_index = file_location.find("gfx")
+                        texture_path = file_location[gfx_index:]
+                    else:
+                        continue  # Skip if no gfx folder found
                     file_utility = texture_path
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace("gfx\\interface\\ideas\\", "")
+                    file_utility = file_utility.replace("gfx/interface/ideas/", "")
                     file_utility = file_utility.split("\\")
 
                     if "traits_strip" in fname:
@@ -302,12 +322,19 @@ def main():
                             # DEBUG: print("Match:" + match)
                             tag_of_nation = match
                         file_location = fname
-                        file_location = file_location.split(modfolder)
-                        texture_path = file_location[1]  # Should Retrieve the Path
+                        # Find the gfx folder in the path to extract the relative path
+                        if "gfx" in file_location:
+                            gfx_index = file_location.find("gfx")
+                            texture_path = file_location[gfx_index:]
+                        else:
+                            continue  # Skip if no gfx folder found
                         file_utility = texture_path
                         texture_path = texture_path.replace("\\", "/")
                         file_utility = file_utility.replace(
                             "gfx\\interface\\technologies\\", ""
+                        )
+                        file_utility = file_utility.replace(
+                            "gfx/interface/technologies/", ""
                         )
                         file_utility = file_utility.split("\\")
 
@@ -345,12 +372,19 @@ def main():
                 ffile.write("spriteTypes = {\n")
                 for fname in ddsdict:
                     file_location = fname
-                    file_location = file_location.split(modfolder)
-                    texture_path = file_location[1]  # Should Retrieve the Path
+                    # Find the gfx folder in the path to extract the relative path
+                    if "gfx" in file_location:
+                        gfx_index = file_location.find("gfx")
+                        texture_path = file_location[gfx_index:]
+                    else:
+                        continue  # Skip if no gfx folder found
                     file_utility = texture_path
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace(
                         "gfx\\texticons\\parties_icons\\", ""
+                    )
+                    file_utility = file_utility.replace(
+                        "gfx/texticons/parties_icons/", ""
                     )
                     file_utility = file_utility.split("\\")
 
@@ -377,12 +411,19 @@ def main():
                 ffile.write("spriteTypes = {\n")
                 for fname in ddsdict:
                     file_location = fname
-                    file_location = file_location.split(modfolder)
-                    texture_path = file_location[1]  # Should Retrieve the Path
+                    # Find the gfx folder in the path to extract the relative path
+                    if "gfx" in file_location:
+                        gfx_index = file_location.find("gfx")
+                        texture_path = file_location[gfx_index:]
+                    else:
+                        continue  # Skip if no gfx folder found
                     file_utility = texture_path
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace(
                         "gfx\\interface\\operatives\\agencies", ""
+                    )
+                    file_utility = file_utility.replace(
+                        "gfx/interface/operatives/agencies", ""
                     )
                     file_utility = file_utility.split("\\")
 
@@ -411,13 +452,18 @@ def main():
                 ffile.write("\n\t### categories\n\n\n")
                 for fname in ddsdict:
                     file_location = fname
-                    file_location = file_location.split(modfolder)
-                    texture_path = file_location[1]  # Should Retrieve the Path
+                    # Find the gfx folder in the path to extract the relative path
+                    if "gfx" in file_location:
+                        gfx_index = file_location.find("gfx")
+                        texture_path = file_location[gfx_index:]
+                    else:
+                        continue  # Skip if no gfx folder found
                     file_utility = texture_path
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace(
                         "gfx\\interface\\decisions\\", ""
                     )
+                    file_utility = file_utility.replace("gfx/interface/decisions/", "")
                     file_utility = file_utility.split("\\")
 
                     texture_name = createitemcall(file_utility)
