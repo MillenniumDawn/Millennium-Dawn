@@ -4,6 +4,25 @@ title: "Code Stylization Guide"
 description: "Millennium Dawn's Code Stylization Guide"
 ---
 
+# Table of Contents
+
+- [Performance Tips](#performance)
+- [Focus Trees](#focus-trees)
+- [Decisions](#decisions)
+- [Events](#events)
+- [Ideas](#ideas)
+- [Code Formatting Rules](#code-formatting-rules)
+- [Military-Industrial Organisations (MIO)](#military-industrial-organisations-mio)
+
+
+## Performance Tips
+
+- **Division**: Division is inherently more expensive than multiplication. If you do not need to divide, use multiplication instead. (Ex: Instead of dividing by 100, multiply by 0.01)
+- **Logging**: Avoid excessive logging in events. Logging causes I/O overhead which can degrade performance on lower-end machines. Only log when there are meaningful effects being executed.
+- **Checks**: Use simpler checks and early exit patterns to prevent unnecessarily complex evaluations. Structure conditions so that the most likely-to-fail or cheapest checks execute first.
+- **Mean Time to Happen (MTTH)**: MTTH events without `is_triggered_only = yes` continuously evaluate and are extremely detrimental to performance. Avoid open-fire MTTH events unless specifically approved and necessary.
+- **On Actions**: Ensure on actions are properly scoped using tag-specific variants (e.g., `on_daily_TAG` or `on_weekly_TAG`) rather than global triggers. Keep trigger conditions as simple and efficient as possible.
+
 ## Focus Trees
 
 The following section delineates a stylization guide for Millennium Dawn and coding best practices for the Hearts of Iron IV feature "Focus Trees".
