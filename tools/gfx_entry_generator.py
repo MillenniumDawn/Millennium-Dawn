@@ -21,7 +21,7 @@ from tokenize import Ignore
 ### Follow the prompts from there. This script will not function properly if it is not sitting in the proper folder.
 ###
 ### Given an input selection number of 1 through 4 recurisvely search and save path for graphical assets.
-### It then generates the requires .gfx code and ports it into readable script for the game.
+### It then generates the requires _alt.gfx code and ports it into readable script for the game.
 ###
 ###
 ###########################
@@ -40,47 +40,65 @@ country_tag_list = []
 
 # Modfolder = the mod folder name
 # mod = The mod name
-modfolder = "Millennium-Dawn\\"
-mod = "Millennium-Dawn"
+modfolder = "mdredux\\"
+mod = "mdredux"
 
 
 def main():
-    # Get the mod root directory (parent of the tools directory)
-    mod_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    # country_tag_list = createcountrytaglist()
+    path = os.path.abspath(os.path.join(os.path.dirname(mod), ".."))
+    country_tag_list = createcountrytaglist()
 
     selection = int(
         input(
-            "Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_technologies.gfx (DO NOT USE. WIP)\n5. Retrieve and generate MD_parties_icons.gfx.\n6. Retrieve and generate intelligence agency icons\n7. Retrieve and generate MD_decisions.gfx\nPlease enter the number of the option you'd like: "
+            "Main Menu:\n1. Retrieve and generate goals_alt.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas_alt.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_technologies_alt.gfx (DO NOT USE. WIP)\n5. Retrieve and generate MD_parties_icons_alt.gfx.\n6. Retrieve and generate intelligence agency icons\n7. Retrieve and generate MD_decisions_alt.gfx\nPlease enter the number of the option you'd like: "
         )
     )
 
     if selection == 1:
-        path = os.path.join(mod_root, "gfx", "interface", "goals")
+        path = os.path.abspath(
+            os.path.join(os.path.dirname(mod), "..\\gfx\\interface\\goals")
+        )
         print(path)
         getfiles(path)
     elif selection == 2:
-        path = os.path.join(mod_root, "gfx", "event_pictures")
+        path = os.path.abspath(
+            os.path.join(os.path.dirname(mod), "..\\gfx\\event_pictures")
+        )
         print(path)
         getfiles(path)
     elif selection == 3:
-        path = os.path.join(mod_root, "gfx", "interface", "ideas")
+        path = os.path.abspath(
+            os.path.join(os.path.dirname(mod), "..\\gfx\\interface\\ideas")
+        )
         print(path)
         getfiles(path)
     elif selection == 4:
-        path = os.path.join(mod_root, "gfx", "interface", "technologies")
+        path = os.path.abspath(
+            os.path.join(os.path.dirname(mod), "..\\gfx\\interface\\technologies")
+        )
+
         print(path)
         getfiles(path)
     elif selection == 5:
-        path = os.path.join(mod_root, "gfx", "texticons", "parties_icons")
+        path = os.path.abspath(
+            os.path.join(os.path.dirname(mod), "..\\gfx\\texticons\\parties_icons")
+        )
+
         print(path)
         getfiles(path)
     elif selection == 6:
-        path = os.path.join(mod_root, "gfx", "interface", "operatives", "agencies")
+        path = os.path.abspath(
+            os.path.join(
+                os.path.dirname(mod), "..\\gfx\\interface\\operatives\\agencies"
+            )
+        )
+
         print(path)
         getfiles(path)
     elif selection == 7:
-        path = os.path.join(mod_root, "gfx", "interface", "decisions")
+        path = os.path.abspath(
+            os.path.join(os.path.dirname(mod), "..\\gfx\\interface\\decisions")
+        )
         print(path)
         getfiles(path)
     else:
@@ -111,7 +129,7 @@ def main():
     )
     tag_of_nation = ""  # Tag of the Nation: Country Tag Use
 
-    # Creation of the .gfx files
+    # Creation of the _alt.gfx files
     while selection != 0:
         if selection == 1:
             gfxbool = int(
@@ -120,8 +138,8 @@ def main():
                 )
             )
 
-            print(f"{bcolors.OK}Generating goals.gfx...{bcolors.RESET}\n")
-            with open("goals.gfx", "w") as ffile:
+            print(f"{bcolors.OK}Generating goals_alt.gfx...{bcolors.RESET}\n")
+            with open("goals_alt.gfx", "w") as ffile:
                 ffile.write("spriteTypes = {\n")
                 ffile.write("\t#Vanilla DO NOT DELETE\n")
                 ffile.write(
@@ -129,18 +147,12 @@ def main():
                 )
                 for fname in ddsdict:
                     file_location = fname
-                    # Find the gfx folder in the path to extract the relative path
-                    if "gfx" in file_location:
-                        gfx_index = file_location.find("gfx")
-                        texture_path = file_location[gfx_index:]
-                    else:
-                        continue  # Skip if no gfx folder found
+                    file_location = file_location.split(modfolder)
+                    texture_path = file_location[1]  # Should Retrieve the Path
                     file_utility = texture_path
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace("gfx\\interface\\goals\\", "")
-                    file_utility = file_utility.replace("gfx/interface/goals/", "")
-                    # Split by both types of separators
-                    file_utility = file_utility.replace("\\", "/").split("/")
+                    file_utility = file_utility.split("\\")
 
                     texture_name = createitemcall(file_utility)
 
@@ -162,9 +174,9 @@ def main():
                         )
                 ffile.write("}")
             print(
-                "Generation of goals.gfx is complete.\n\nGenerating goals_shine.gfx...\n"
+                "Generation of goals_alt.gfx is complete.\n\nGenerating goals_shine_alt.gfx...\n"
             )
-            with open("goals_shine.gfx", "w") as ffile:
+            with open("goals_shine_alt.gfx", "w") as ffile:
                 ffile.write("spriteTypes = {\n")
                 ffile.write("\t#Vanilla DO NOT DELETE \n")
                 ffile.write(
@@ -172,18 +184,12 @@ def main():
                 )
                 for fname in ddsdict:
                     file_location = fname
-                    # Find the gfx folder in the path to extract the relative path
-                    if "gfx" in file_location:
-                        gfx_index = file_location.find("gfx")
-                        texture_path = file_location[gfx_index:]
-                    else:
-                        continue  # Skip if no gfx folder found
+                    file_location = file_location.split(modfolder)
+                    texture_path = file_location[1]  # Should Retrieve the Path
                     file_utility = texture_path
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace("gfx\\interface\\goals\\", "")
-                    file_utility = file_utility.replace("gfx/interface/goals/", "")
-                    # Split by both types of separators
-                    file_utility = file_utility.replace("\\", "/").split("/")
+                    file_utility = file_utility.split("\\")
 
                     texture_name = createitemcall(file_utility)
 
@@ -212,32 +218,26 @@ def main():
                             + '"\n\t\t\tanimationtexturefile = "gfx/interface/goals/shine_overlay.tga"\n\t\t\tanimationrotation = 90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tlegacy_lazy_load = no\n\t}\n'
                         )
                 ffile.write("}")
-            print("Generation of goals_shine.gfx is complete.\n")
-            movefilestointerface("goals.gfx", "goals_shine.gfx")
+            print("Generation of goals_shine_alt.gfx is complete.\n")
+            movefilestointerface("goals_alt.gfx", "goals_shine_alt.gfx")
             print(
-                "goals.gfx and goals_shine.gfx have been generated for "
+                "goals_alt.gfx and goals_shine_alt.gfx have been generated for "
                 + str(len(ddslist))
                 + " icons.\n\nThe files have been outputted into the interface files."
             )
             return
         elif selection == 2:
-            print("Generating event_pictures.gfx...")
-            with open("MD_eventpictures.gfx", "w") as ffile:
+            print("Generating event_pictures_alt.gfx...")
+            with open("MD_eventpictures_alt.gfx", "w") as ffile:
                 ffile.write("spriteTypes = {\n")
                 for fname in ddsdict:
                     file_location = fname
-                    # Find the gfx folder in the path to extract the relative path
-                    if "gfx" in file_location:
-                        gfx_index = file_location.find("gfx")
-                        texture_path = file_location[gfx_index:]
-                    else:
-                        continue  # Skip if no gfx folder found
+                    file_location = file_location.split(modfolder)
+                    texture_path = file_location[1]  # Should Retrieve the Path
                     file_utility = texture_path
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace("gfx\\event_pictures\\", "")
-                    file_utility = file_utility.replace("gfx/event_pictures/", "")
-                    # Split by both types of separators
-                    file_utility = file_utility.replace("\\", "/").split("/")
+                    file_utility = file_utility.split("\\")
 
                     texture_name = createitemcall(file_utility)
 
@@ -259,33 +259,27 @@ def main():
                         )
 
                 ffile.write("}")
-            print("Generation of event_pictures.gfx is complete.")
-            movefilestointerface("MD_eventpictures.gfx")
+            print("Generation of event_pictures_alt.gfx is complete.")
+            movefilestointerface("MD_eventpictures_alt.gfx")
             print(
-                f'\neventpictures.gfx has been generated for {len(ddslist)} event pictures.\n\nThe file "MD_eventpictures.gfx" has been outputted to the interface directory.'
+                f'\neventpictures_alt.gfx has been generated for {len(ddslist)} event pictures.\n\nThe file "MD_eventpictures_alt.gfx" has been outputted to the interface directory.'
             )
             return
         elif selection == 3:
-            print("Generating MD_ideas.gfx...")
-            with open("MD_ideas.gfx", "w") as ffile:
+            print("Generating MD_ideas_alt.gfx...")
+            with open("MD_ideas_alt.gfx", "w") as ffile:
                 ffile.write("spriteTypes = {\n")
                 ffile.write(
                     '\n\t## DO NOT REMOVE\n\tspriteType={\n\t\tname = "GFX_idea_traits_strip"\n\t\ttexturefile = "gfx/interface/ideas/idea_traits_strip.dds"\n\t\tnoOfFrames = 18\n\t}\n'
                 )
                 for fname in ddsdict:
                     file_location = fname
-                    # Find the gfx folder in the path to extract the relative path
-                    if "gfx" in file_location:
-                        gfx_index = file_location.find("gfx")
-                        texture_path = file_location[gfx_index:]
-                    else:
-                        continue  # Skip if no gfx folder found
+                    file_location = file_location.split(modfolder)
+                    texture_path = file_location[1]  # Should Retrieve the Path
                     file_utility = texture_path
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace("gfx\\interface\\ideas\\", "")
-                    file_utility = file_utility.replace("gfx/interface/ideas/", "")
-                    # Split by both types of separators
-                    file_utility = file_utility.replace("\\", "/").split("/")
+                    file_utility = file_utility.split("\\")
 
                     if "traits_strip" in fname:
                         print("Utility Idea GFX... skipping")
@@ -299,17 +293,17 @@ def main():
                             + '"\n\t}\n'
                         )
                 ffile.write("}")
-            print("Generation of the MD_ideas.gfx...")
-            movefilestointerface("MD_ideas.gfx")
+            print("Generation of the MD_ideas_alt.gfx...")
+            movefilestointerface("MD_ideas_alt.gfx")
             print(
-                "\nMD_ideas.gfx has been generated for "
+                "\nMD_ideas_alt.gfx has been generated for "
                 + str(len(ddslist))
                 + " idea pictures.\n\nThe files have been outputted into the interface files."
             )
             return
         elif selection == 4:  # Technology Icons
-            print("Generating technologies.gfx...")
-            with open("technologies.gfx", "w") as ffile:
+            print("Generating technologies_alt.gfx...")
+            with open("technologies_alt.gfx", "w") as ffile:
                 # Overarching Clause
                 count = 0
                 ffile.write("spriteTypes = {\n")
@@ -326,22 +320,14 @@ def main():
                             # DEBUG: print("Match:" + match)
                             tag_of_nation = match
                         file_location = fname
-                        # Find the gfx folder in the path to extract the relative path
-                        if "gfx" in file_location:
-                            gfx_index = file_location.find("gfx")
-                            texture_path = file_location[gfx_index:]
-                        else:
-                            continue  # Skip if no gfx folder found
+                        file_location = file_location.split(modfolder)
+                        texture_path = file_location[1]  # Should Retrieve the Path
                         file_utility = texture_path
                         texture_path = texture_path.replace("\\", "/")
                         file_utility = file_utility.replace(
                             "gfx\\interface\\technologies\\", ""
                         )
-                        file_utility = file_utility.replace(
-                            "gfx/interface/technologies/", ""
-                        )
-                        # Split by both types of separators
-                        file_utility = file_utility.replace("\\", "/").split("/")
+                        file_utility = file_utility.split("\\")
 
                         texture_name = createitemcall(file_utility)
 
@@ -369,30 +355,22 @@ def main():
             print(
                 f"{bcolors.INFO} {count} files were skipped due to being generic or module files.{bcolors.RESET}"
             )
-            print("Generation of the technologies.gfx...")
+            print("Generation of the technologies_alt.gfx...")
             return
         elif selection == 5:  # Party Icons
-            print("Generating MD_parties_icons.gfx...")
-            with open("MD_parties_icons.gfx", "w") as ffile:
+            print("Generating MD_parties_icons_alt.gfx...")
+            with open("MD_parties_icons_alt.gfx", "w") as ffile:
                 ffile.write("spriteTypes = {\n")
                 for fname in ddsdict:
                     file_location = fname
-                    # Find the gfx folder in the path to extract the relative path
-                    if "gfx" in file_location:
-                        gfx_index = file_location.find("gfx")
-                        texture_path = file_location[gfx_index:]
-                    else:
-                        continue  # Skip if no gfx folder found
+                    file_location = file_location.split(modfolder)
+                    texture_path = file_location[1]  # Should Retrieve the Path
                     file_utility = texture_path
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace(
                         "gfx\\texticons\\parties_icons\\", ""
                     )
-                    file_utility = file_utility.replace(
-                        "gfx/texticons/parties_icons/", ""
-                    )
-                    # Split by both types of separators
-                    file_utility = file_utility.replace("\\", "/").split("/")
+                    file_utility = file_utility.split("\\")
 
                     texture_name = createitemcall(file_utility)
 
@@ -406,33 +384,25 @@ def main():
 
                 ffile.write("}")
             print("Generation of MD_parties_icons is complete.")
-            movefilestointerface("MD_parties_icons.gfx")
+            movefilestointerface("MD_parties_icons_alt.gfx")
             print(
-                f'\nMD_parties_icons.gfx has been generated for {len(ddslist)} party icons.\n\nThe file "MD_parties_icons.gfx" has been outputted to the interface directory.'
+                f'\nMD_parties_icons_alt.gfx has been generated for {len(ddslist)} party icons.\n\nThe file "MD_parties_icons_alt.gfx" has been outputted to the interface directory.'
             )
             return
         elif selection == 6:  # Intelligence Agency
-            print("Generating MD_intelligence_icons.gfx...")
-            with open("MD_intelligence_icons.gfx", "w") as ffile:
+            print("Generating MD_intelligence_icons_alt.gfx...")
+            with open("MD_intelligence_icons_alt.gfx", "w") as ffile:
                 ffile.write("spriteTypes = {\n")
                 for fname in ddsdict:
                     file_location = fname
-                    # Find the gfx folder in the path to extract the relative path
-                    if "gfx" in file_location:
-                        gfx_index = file_location.find("gfx")
-                        texture_path = file_location[gfx_index:]
-                    else:
-                        continue  # Skip if no gfx folder found
+                    file_location = file_location.split(modfolder)
+                    texture_path = file_location[1]  # Should Retrieve the Path
                     file_utility = texture_path
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace(
                         "gfx\\interface\\operatives\\agencies", ""
                     )
-                    file_utility = file_utility.replace(
-                        "gfx/interface/operatives/agencies", ""
-                    )
-                    # Split by both types of separators
-                    file_utility = file_utility.replace("\\", "/").split("/")
+                    file_utility = file_utility.split("\\")
 
                     texture_name = createitemcall(file_utility)
                     texture_tuple = tuple(map(str, texture_name.split("_")))
@@ -447,32 +417,26 @@ def main():
 
                 ffile.write("}")
             print("Generation of MD_intelligence_icons is complete.")
-            movefilestointerface("MD_intelligence_icons.gfx")
+            movefilestointerface("MD_intelligence_icons_alt.gfx")
             print(
-                f'\nMD_intelligence_icons.gfx has been generated for {len(ddslist)} intelligence agencies.\n\nThe file "MD_intelligence_icons.gfx" has been outputted to the interface directory.'
+                f'\nMD_intelligence_icons_alt.gfx has been generated for {len(ddslist)} intelligence agencies.\n\nThe file "MD_intelligence_icons_alt.gfx" has been outputted to the interface directory.'
             )
             return
         elif selection == 7:  # Decisions
-            print("Generating MD_decisions.gfx...")
-            with open("MD_decisions.gfx", "w") as ffile:
+            print("Generating MD_decisions_alt.gfx...")
+            with open("MD_decisions_alt.gfx", "w") as ffile:
                 ffile.write("spriteTypes = {\n")
                 ffile.write("\n\t### categories\n\n\n")
                 for fname in ddsdict:
                     file_location = fname
-                    # Find the gfx folder in the path to extract the relative path
-                    if "gfx" in file_location:
-                        gfx_index = file_location.find("gfx")
-                        texture_path = file_location[gfx_index:]
-                    else:
-                        continue  # Skip if no gfx folder found
+                    file_location = file_location.split(modfolder)
+                    texture_path = file_location[1]  # Should Retrieve the Path
                     file_utility = texture_path
                     texture_path = texture_path.replace("\\", "/")
                     file_utility = file_utility.replace(
                         "gfx\\interface\\decisions\\", ""
                     )
-                    file_utility = file_utility.replace("gfx/interface/decisions/", "")
-                    # Split by both types of separators
-                    file_utility = file_utility.replace("\\", "/").split("/")
+                    file_utility = file_utility.split("\\")
 
                     texture_name = createitemcall(file_utility)
 
@@ -498,10 +462,10 @@ def main():
                             + '"\n\t}\n\n'
                         )
                 ffile.write("}")
-            print("Generation of the MD_decisions.gfx...")
-            movefilestointerface("MD_decisions.gfx")
+            print("Generation of the MD_decisions_alt.gfx...")
+            movefilestointerface("MD_decisions_alt.gfx")
             print(
-                "\nMD_decisions.gfx has been generated for "
+                "\nMD_decisions_alt.gfx has been generated for "
                 + str(len(ddslist))
                 + " decision pictures.\n\nThe files have been outputted into the interface files."
             )
@@ -570,8 +534,10 @@ def createitemcall(filecall, type=0):
 def createcountrytaglist():
     temp_array = []
     # Country Tag List Array Creation
-    mod_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    tag_path = os.path.join(mod_root, "common", "country_tags", "00_countries.txt")
+    tag_path = os.path.abspath(
+        os.path.join(os.path.dirname(mod), "..\\common\\country_tags")
+    )
+    tag_path = str(tag_path) + "\\00_countries.txt"
     read_tags = open(tag_path, "r")
     lines = read_tags.readlines()
     bad_line = 0
