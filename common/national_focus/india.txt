@@ -3397,6 +3397,69 @@ focus_tree = {
 		}
 	}
 	focus = {
+		id = RAJ_counter_insurgency_operations
+		icon = terrorism
+		x = 3
+		y = 4
+		relative_position_id = RAJ_forces_of_india
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MILITARY_LAWS }
+		prerequisite = { focus = RAJ_threat_of_terror_mil }
+		available = {
+			has_variable = strength_of_maoists
+			check_variable = { strength_of_maoists > 10 }
+		}
+		bypass = {
+			has_variable = strength_of_maoists
+			check_variable = { strength_of_maoists < 5 }
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: RAJ_counter_insurgency_operations"
+			add_political_power = -50
+			add_stability = 0.03
+			subtract_from_variable = { strength_of_maoists = 10 }
+			subtract_from_variable = { maoist_political_influence = 5 }
+			add_timed_idea = {
+				idea = RAJ_operation_green_hunt_active
+				days = 365
+			}
+			every_controlled_state = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+						has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+						has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+					}
+				}
+				custom_effect_tooltip = RAJ_reduce_naxalite_level_tt
+				hidden_effect = {
+					if = {
+						limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
+						remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+						add_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+					}
+					else_if = {
+						limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 } }
+						remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+						add_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+					}
+					else_if = {
+						limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 } }
+						remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+						add_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
+					}
+				}
+			}
+		}
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 3
+				check_variable = { strength_of_maoists > 30 }
+			}
+		}
+	}
+	focus = {
 		id = RAJ_threat_of_the_dragon
 		icon = attack_china
 		x = 1
@@ -8410,10 +8473,10 @@ focus_tree = {
 			set_cosmetic_tag = RAJ_AUTH_S_communism
 			hidden_effect = {
 				every_controlled_state = {
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel }
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel1 }
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel2 }
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel3 }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
 				}
 			}
 		}
@@ -8444,10 +8507,10 @@ focus_tree = {
 			set_cosmetic_tag = RAJ_AUTH_S_neutrality
 			hidden_effect = {
 				every_controlled_state = {
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel }
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel1 }
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel2 }
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel3 }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
 				}
 			}
 		}
@@ -13422,6 +13485,7 @@ focus_tree = {
 		relative_position_id = RAJ_indian_minist_of_foreign_affairs
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: RAJ_BRICS_integer"
+			set_global_flag = BRICS_has_formed
 			news_event = { id = RAJ_eastas.2 }
 			add_ideas = RAJ_BRICS
 			BRA = {
