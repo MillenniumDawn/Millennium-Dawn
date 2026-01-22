@@ -267,6 +267,17 @@ scripted_gui = {
 				ROOT = {
 					if = { limit = { NOT = { is_in_array = { auto_influence_array = PREV.id } } }
 						create_new_auto_influencer_request = yes
+						# Set spread_influence cooldown on activation to prevent monthly exploit
+						# (activating late in month to get free influence when month ticks)
+						if = { limit = { has_global_flag = GAME_RULE_spread_influence_14_days }
+							set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 }
+						}
+						else_if = { limit = { has_global_flag = GAME_RULE_spread_influence_60_days }
+							set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
+						}
+						else = {
+							set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
+						}
 					}
 					else = {
 						remove_auto_influencer_request = yes
