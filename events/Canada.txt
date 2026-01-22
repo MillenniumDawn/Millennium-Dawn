@@ -2226,103 +2226,74 @@ country_event = {
 	}
 }
 
-#Generic Country Events
-##CAN NA OIL Treaty
+# The New North American Oil Deal
 country_event = {
 	id = canada.20
 	title = canada.20.t
 	desc = canada.20.d
-	is_triggered_only = yes
-	fire_only_once = yes
 	picture = GFX_CAN_generic
+	is_triggered_only = yes
 	trigger = {
-		tag = CAN
+		original_tag = USA
 	}
 
+	# Accept the Deal
 	option = {
 		name = canada.20.a
 		log = "[GetDateText]: [Root.GetName]: event canada.20.a"
+		add_ideas = na_oil_treaty_idea
+		CAN = {
+			add_ideas = na_oil_treaty_idea
+		}
+
+		reverse_add_opinion_modifier = { target = CAN modifier = CAN_america_accepts_treaty }
+		add_opinion_modifier = { target = CAN modifier = CAN_na_oil_treaty }
+		reverse_add_opinion_modifier = { target = CAN modifier = CAN_na_oil_treaty }
+		news_event = canada_news.1
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Reject the Deal
+	option = {
+		name = canada.20.b
+		log = "[GetDateText]: [Root.GetName]: event canada.20.b"
+
+		reverse_add_opinion_modifier = { target = CAN modifier = CAN_america_rejects_treaty }
+
+		CAN = { country_event = diplomatic_response.2 }
+
+		ai_chance = {
+			base = 0
+		}
 	}
 }
 
-country_event = {
-	id = canada.21
-	title = canada.21.t
-	desc = canada.21.d
-	is_triggered_only = yes
-	fire_only_once = yes
-	picture = GFX_CAN_generic
-	trigger = {
-		tag = CAN
-	}
-
-	option = {
-		name = canada.21.a
-		log = "[GetDateText]: [Root.GetName]: event canada.21.a"
-		news_event = { id = canada_news.1 days = 1 }
-	}
-	option = {
-		name = canada.21.b
-		log = "[GetDateText]: [Root.GetName]: event canada.21.b"
-		CAN = { country_event = { id = canada.22 days = 1 } }
-	}
-}
-
-#America Rejects the NA Oil Treaty
-country_event = {
-	id = canada.22
-	title = canada.22.t
-	desc = canada.22.d
-	is_triggered_only = yes
-	fire_only_once = yes
-	trigger = {
-		tag = CAN
-	}
-
-	option = {
-		name = canada.22.a
-		log = "[GetDateText]: [This.GetName]: canada.22.a executed"
-		add_opinion_modifier = { target = USA modifier = CAN_america_rejects_treaty }
-	}
-}
-
-
-##News
-#American Accepts the Deal
+# The New North American Oil Deal
 news_event = {
 	id = canada_news.1
 	title = canada_news.1.t
 	desc = canada_news.1.d
+	picture = GFX_trade_agreement
 	is_triggered_only = yes
 	major = yes
 
 	option = {
-		trigger = {
-			tag = CAN
-		}
 		name = canada_news.1.a
-		log = "[GetDateText]: [This.GetName]: canada_news.1.a executed"
-		add_opinion_modifier = { target = USA modifier = CAN_america_accepts_treaty }
-		add_opinion_modifier = { target = USA modifier = CAN_na_oil_treaty }
-		reverse_add_opinion_modifier = { target = USA modifier = CAN_na_oil_treaty }
+		trigger = { tag = CAN }
 	}
+
 	option = {
-		trigger = {
-			tag = USA
-		}
 		name = canada_news.1.b
-		log = "[GetDateText]: [This.GetName]: canada_news.1.b executed"
-		effect_tooltip = {
-			add_opinion_modifier = { target = USA modifier = CAN_america_accepts_treaty }
-			add_opinion_modifier = { target = USA modifier = CAN_na_oil_treaty }
-			reverse_add_opinion_modifier = { target = USA modifier = CAN_na_oil_treaty }
-		}
+		trigger = { tag = USA }
 	}
+
 	option = {
+		name = canada_news.1.c
 		trigger = {
 			NOT = { tag = USA tag = CAN }
 		}
-		name = canada_news.1.c
-		log = "[GetDateText]: [This.GetName]: canada_news.1.c executed"
 	}
 }
