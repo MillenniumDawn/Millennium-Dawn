@@ -1,0 +1,450 @@
+preah_vihear_decisions_category = {
+
+	# Thailand escalates border tensions
+	SIA_escalate_preah_vihear_tensions = {
+		icon = GFX_decision_generic_territorial_pressure
+		cost = 25
+		days_remove = 60
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		visible = {
+			NOT = { has_global_flag = preah_vihear_resolved }
+		}
+
+		available = {
+			NOT = {
+				has_country_flag = preah_vihear_escalation_recent
+				has_war_with = CBD
+			}
+			date > 2007.1.1
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_escalate_preah_vihear_tensions"
+			add_political_power = -25
+			add_war_support = 0.03
+			set_country_flag = {
+				flag = preah_vihear_escalation_recent
+				days = 180
+				value = 1
+			}
+			add_to_variable = { preah_vihear_tension = 10 }
+			CBD = {
+				country_event = preah_vihear.1
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 3
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 2
+				date > 2008.1.1
+				date < 2012.1.1
+			}
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
+	}
+
+	# Cambodia responds to Thai provocation
+	CBD_protest_thai_actions = {
+		icon = GFX_decision_generic_diplomacy
+		cost = 25
+		days_remove = 30
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		visible = {
+			NOT = { has_global_flag = preah_vihear_resolved }
+		}
+
+		available = {
+			NOT = {
+				has_country_flag = preah_vihear_protest_recent
+				has_war_with = SIA
+			}
+			check_variable = { SIA.preah_vihear_tension > 0 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_protest_thai_actions"
+			add_political_power = 25
+			set_country_flag = {
+				flag = preah_vihear_protest_recent
+				days = 120
+				value = 1
+			}
+			SIA = {
+				subtract_from_variable = { preah_vihear_tension = 5 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+	# Thailand initiates border clash
+	SIA_attack_preah_vihear = {
+		icon = GFX_decision_generic_military
+		cost = 50
+		days_remove = 14
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		visible = {
+			NOT = { has_global_flag = preah_vihear_resolved }
+		}
+
+		available = {
+			NOT = {
+				has_country_flag = preah_vihear_attack_recent
+				has_war_with = CBD
+			}
+			check_variable = { preah_vihear_tension > 15 }
+			OR = {
+				has_government = nationalist
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_attack_preah_vihear"
+			add_threat = 1
+			set_country_flag = {
+				flag = preah_vihear_attack_recent
+				days = 200
+				value = 1
+			}
+			CBD = {
+				country_event = preah_vihear.5
+			}
+			news_event = preah_vihear_news.3
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = 506
+					num_provinces = 1
+					on_win = preah_vihear.10
+					on_lose = preah_vihear.11
+					on_cancel = preah_vihear.12
+					dig_in_factor = 1
+					terrain_factor = 1
+				}
+				defender = {
+					state = 512
+					num_provinces = 1
+					on_win = preah_vihear.11
+					on_lose = preah_vihear.10
+					on_cancel = preah_vihear.12
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 3
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 2
+				date > 2008.1.1
+				date < 2012.1.1
+			}
+			modifier = {
+				factor = 0.1
+				has_war = yes
+			}
+		}
+	}
+
+	# Cambodia retaliates with border clash
+	CBD_attack_border_region = {
+		icon = GFX_decision_generic_military
+		cost = 50
+		days_remove = 14
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		visible = {
+			NOT = { has_global_flag = preah_vihear_resolved }
+		}
+
+		available = {
+			NOT = {
+				has_country_flag = preah_vihear_attack_recent
+				has_war_with = SIA
+			}
+			has_country_flag = preah_vihear_attacked_by_sia
+			OR = {
+				has_government = nationalist
+				has_government = communism
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_attack_border_region"
+			add_threat = 1
+			set_country_flag = {
+				flag = preah_vihear_attack_recent
+				days = 200
+				value = 1
+			}
+			SIA = {
+				country_event = preah_vihear.6
+			}
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = 512
+					num_provinces = 1
+					on_win = preah_vihear.13
+					on_lose = preah_vihear.14
+					on_cancel = preah_vihear.12
+					dig_in_factor = 1
+					terrain_factor = 1
+				}
+				defender = {
+					state = 506
+					num_provinces = 1
+					on_win = preah_vihear.14
+					on_lose = preah_vihear.13
+					on_cancel = preah_vihear.12
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 2
+			modifier = {
+				factor = 0.1
+				has_war = yes
+			}
+		}
+	}
+
+	# ASEAN Mediation
+	SIA_request_asean_mediation = {
+		icon = GFX_decision_generic_diplomacy
+		cost = 75
+		fire_only_once = yes
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		visible = {
+			NOT = { has_global_flag = preah_vihear_resolved }
+			has_idea = ASEAN_Member
+		}
+
+		available = {
+			NOT = {
+				has_war_with = CBD
+			}
+			check_variable = { preah_vihear_tension > 20 }
+			CBD = { has_idea = ASEAN_Member }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_request_asean_mediation"
+			add_political_power = -50
+			set_global_flag = preah_vihear_asean_mediation
+			CBD = {
+				country_event = preah_vihear.20
+			}
+		}
+
+		ai_will_do = {
+			factor = 3
+			modifier = {
+				factor = 2
+				NOT = { has_government = nationalist }
+			}
+		}
+	}
+
+	CBD_request_asean_mediation = {
+		icon = GFX_decision_generic_diplomacy
+		cost = 75
+		fire_only_once = yes
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		visible = {
+			NOT = { has_global_flag = preah_vihear_resolved }
+			has_idea = ASEAN_Member
+		}
+
+		available = {
+			NOT = {
+				has_war_with = SIA
+			}
+			check_variable = { SIA.preah_vihear_tension > 20 }
+			SIA = { has_idea = ASEAN_Member }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_request_asean_mediation"
+			add_political_power = -50
+			set_global_flag = preah_vihear_asean_mediation
+			SIA = {
+				country_event = preah_vihear.21
+			}
+		}
+
+		ai_will_do = {
+			factor = 5
+		}
+	}
+
+	# Appeal to International Court of Justice
+	CBD_appeal_to_icj = {
+		icon = GFX_decision_generic_form_nation
+		cost = 100
+		fire_only_once = yes
+
+		allowed = {
+			original_tag = CBD
+		}
+
+		visible = {
+			NOT = { has_global_flag = preah_vihear_resolved }
+		}
+
+		available = {
+			NOT = {
+				has_war_with = SIA
+			}
+			date > 2010.1.1
+			has_country_flag = preah_vihear_attacked_by_sia
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CBD_appeal_to_icj"
+			add_political_power = -75
+			set_global_flag = preah_vihear_icj_appeal
+			SIA = {
+				country_event = preah_vihear.30
+			}
+			hidden_effect = {
+				country_event = { id = preah_vihear.31 days = 365 }
+			}
+		}
+
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	# Accept ICJ ruling
+	SIA_accept_icj_ruling = {
+		icon = GFX_decision_generic_diplomacy
+		cost = 50
+		fire_only_once = yes
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		visible = {
+			has_global_flag = preah_vihear_icj_ruling
+			NOT = { has_global_flag = preah_vihear_resolved }
+		}
+
+		available = {
+			NOT = {
+				has_war_with = CBD
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_accept_icj_ruling"
+			add_political_power = -100
+			add_stability = -0.05
+			set_global_flag = preah_vihear_resolved
+			set_variable = { preah_vihear_tension = 0 }
+			remove_opinion_modifier = { target = CBD modifier = minor_border_dispute }
+			CBD = {
+				remove_opinion_modifier = { target = SIA modifier = minor_border_dispute }
+				country_event = preah_vihear.35
+			}
+			news_event = preah_vihear_news.1
+		}
+
+		ai_will_do = {
+			factor = 5
+			modifier = {
+				factor = 3
+				NOT = { has_government = nationalist }
+			}
+		}
+	}
+
+	# Reject ICJ ruling (escalation path)
+	SIA_reject_icj_ruling = {
+		icon = GFX_decision_generic_break_treaty
+		cost = 25
+		fire_only_once = yes
+
+		allowed = {
+			original_tag = SIA
+		}
+
+		visible = {
+			has_global_flag = preah_vihear_icj_ruling
+			NOT = { has_global_flag = preah_vihear_resolved }
+		}
+
+		available = {
+			NOT = {
+				has_war_with = CBD
+			}
+			OR = {
+				has_government = nationalist
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_reject_icj_ruling"
+			add_political_power = 50
+			add_war_support = 0.1
+			add_threat = 3
+			add_to_variable = { preah_vihear_tension = 30 }
+			CBD = {
+				country_event = preah_vihear.36
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 5
+				has_government = nationalist
+			}
+		}
+	}
+}
