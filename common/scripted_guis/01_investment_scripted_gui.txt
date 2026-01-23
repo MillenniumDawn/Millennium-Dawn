@@ -90,7 +90,27 @@ scripted_gui = {
 			}
 			# Begins project or cancels the project if you have one active in a given state
 			AC_build_button_click = {
-				if = { limit = { NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } } }
+				# Runtime validation to prevent exploit when game is paused (issue #374)
+				# These checks mirror the trigger conditions but are enforced at execution time
+				if = {
+					limit = {
+						NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } }
+						ROOT = {
+							has_available_treasury_investment = yes
+							NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+							# Game rule check for bankruptcy collapse lock
+							# Either the rule is disabled, OR (if enabled) no collapse mission is active
+							OR = {
+								NOT = {
+									has_game_rule = {
+										rule = rule_enable_investment_collapse_lock
+										option = yes
+									}
+								}
+								NOT = { has_active_mission = bankruptcy_incoming_collapse }
+							}
+						}
+					}
 					# PREV is the state target
 					THIS = {
 						set_variable = { ROOT.AC_state_target = THIS.id }

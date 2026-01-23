@@ -17,11 +17,14 @@ description: "Millennium Dawn's Code Stylization Guide"
 
 ## Performance Tips
 
+Generalized performance tips for the Millennium Dawn modding team.
+
 - **Division**: Division is inherently more expensive than multiplication. If you do not need to divide, use multiplication instead. (Ex: Instead of dividing by 100, multiply by 0.01)
 - **Logging**: Avoid excessive logging in events. Logging causes I/O overhead which can degrade performance on lower-end machines. Only log when there are meaningful effects being executed.
 - **Checks**: Use simpler checks and early exit patterns to prevent unnecessarily complex evaluations. Structure conditions so that the most likely-to-fail or cheapest checks execute first.
 - **Mean Time to Happen (MTTH)**: MTTH events without `is_triggered_only = yes` continuously evaluate and are extremely detrimental to performance. Avoid open-fire MTTH events unless specifically approved and necessary.
 - **On Actions**: Ensure on actions are properly scoped using tag-specific variants (e.g., `on_daily_TAG` or `on_weekly_TAG`) rather than global triggers. Keep trigger conditions as simple and efficient as possible.
+- **Cleanup**: If you are doing any work and you are not using something. Delete it. Don't just leave trash around in your code.
 
 ## Focus Trees
 
@@ -171,7 +174,8 @@ URA_world_opr = {
 - Include proper logging
 - Use `major = yes` sparingly for news events
 - Structure events with clear options and effects
-- **Performance:** Any events that do not have an effects in their triggered or option block do not require a log. Only log if there is something in the event
+- **Performance:** Any events that do not have an effects in their triggered or option block do not require a log. Only log if there is something actually happening in the event.
+- **Performance:** Any event that needs to be triggered by a date should be triggered via `00_yearly_effects.txt`.
 
 ### Example Event Structure
 ```python

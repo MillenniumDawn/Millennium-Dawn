@@ -147,14 +147,27 @@ microchip_update = {
 			set_temp_variable = { country_microchip_reducer_max = country_microchip_produced }
 			multiply_temp_variable = { country_microchip_reducer_max = 0.95 }
 			round_temp_variable = country_microchip_reducer_max
-			clamp_variable = {
-				var = country_microchip_production_var
-				min = 0
-				max = country_microchip_reducer_max
-			}
 		}else = {
 			#There should be no reduction here, because we have a surplus of all inputs
 			set_variable = { country_microchip_production_var = 0 }
+		}
+
+		#If running a power deficit, reduce the amount of chips made for power loss
+		if = {
+			limit = {
+				check_variable = { energy_difference_variable < 0 }
+			}
+			set_temp_variable = { starting_chip_amount = country_microchip_produced }
+			subtract_from_temp_variable = { starting_chip_amount = country_microchip_production_var }
+			multiply_temp_variable = { starting_chip_amount = unfulfilled_energy_demand_dynmod_var }
+			add_to_variable = { country_microchip_production_var = starting_chip_amount }
+			round_variable = country_microchip_production_var
+		}
+
+		clamp_variable = {
+			var = country_microchip_production_var
+			min = 0
+			max = country_microchip_reducer_max
 		}
 
 		if = {
