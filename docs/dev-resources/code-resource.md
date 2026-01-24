@@ -6,6 +6,32 @@ description: "Millennium Dawn unique modifiers, effects and tutorials for modder
 
 This is a list (not fully up-to-date) of MD unique modifiers, effects and tutorials to assist modders and submodders to create content for our mod.
 
+# Table of Contents
+
+- [Modifiers](#modifiers)
+  - [Economic Modifiers](#economic-modifiers)
+  - [Law Modifiers](#law-modifiers)
+  - [Influence Modifiers](#influence-modifiers)
+  - [Energy Modifiers](#energy-modifiers)
+  - [Political Modifiers](#political-modifiers)
+- [Effects/Scripted Effects](#effectsscripted-effects)
+  - [MD Building Costs](#md-building-costs)
+  - [MD Building Effects](#md-building-effects)
+  - [MD Economic Effects](#md-economic-effects)
+  - [MD Internal Faction Effects](#md-internal-faction-effects)
+  - [MD Influence Effects](#md-influence-effects)
+  - [MD Political Effects](#md-political-effects)
+  - [Counter Terror Effects](#counter-terror-effects)
+  - [MD Cartel Related Effects](#md-cartel-related-effects)
+  - [MD European Union Effects](#md-european-union-effects)
+  - [Energy Effects](#energy-effects)
+- [Guides/How-To](#guideshow-to)
+  - [MD How-To-Add Subideology Parties](#md-how-to-add-subideology-parties)
+  - [Historical Events/Exact Date Trigger (ETD) Events](#historical-eventsexact-date-trigger-etd-events)
+  - [Variable Guide/Explanation](#variable-guideexplanation)
+  - [Hydroelectric/Geothermal/Renewable/Productivity Configuration Guide](#hydroelectricgeothermalrenewableproductivity-configuration-guide)
+  - [Unique Terrain Photos Guide](#unique-terrain-photos-guide)
+
 ## Modifiers
 
 These can be used *anywhere* that a normal modifier can be used such as ``political_power_factor``.
