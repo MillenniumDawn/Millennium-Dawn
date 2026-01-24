@@ -26,7 +26,7 @@ generic_taskforce_1 = {
 		light_cruiser = 1
 		destroyer = 1
 	}
-
+	
 	optimal_composition = { # The maximum composition this taskforce will have
 		carrier = 2
 		battleship = 2

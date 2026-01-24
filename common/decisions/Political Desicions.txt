@@ -627,6 +627,35 @@ generic_coalition_politics_decisions = {
 		}
 	}
 
+	# Block Foreign Election Notification
+	block_foreign_election_notification = {
+		icon = GFX_decision_message_decline_button
+
+		visible = {
+			NOT = {
+				has_country_flag = block_foreign_election_notification
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision block_foreign_election_notification"
+			set_country_flag = block_foreign_election_notification
+		}
+	}
+
+	lift_block_foreign_election_notification = {
+		icon = GFX_decision_message_receive_button
+
+		visible = {
+			has_country_flag = block_foreign_election_notification
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision lift_block_foreign_election_notification"
+			clr_country_flag = block_foreign_election_notification
+		}
+	}
+
 	### Extremist Civil Wars
 
 	fascism_extremist_civil_war = {
@@ -2575,8 +2604,14 @@ generic_coalition_politics_decisions = {
 			NOT = {
 				has_country_flag = F35_blacklist
 			}
-			USA = {
-				has_country_flag = USA_open_f35_program_world
+			OR = {
+				# Allies mode: require Major Non-NATO Ally status
+				AND = {
+					USA = { has_country_flag = USA_open_f35_program_allies }
+					has_idea = Major_Non_NATO_Ally
+				}
+				# World mode: any country can apply
+				USA = { has_country_flag = USA_open_f35_program_world }
 			}
 			country_exists = USA
 			USA = {
@@ -2588,7 +2623,6 @@ generic_coalition_politics_decisions = {
 				has_country_flag = USA_f35_legacy_members
 				has_country_flag = USA_f35_program_member_new
 			}
-			has_idea = Major_Non_NATO_Ally
 		}
 
 		remove_effect = {
@@ -2619,8 +2653,8 @@ generic_coalition_politics_decisions = {
 				}
 			}
 			else = {
-				any_country = {
-					has_idea = NATO_member
+				any_of_scopes = {
+					array = global.nato_members
 					is_faction_leader = yes
 
 					has_opinion = { target = ROOT value > 100 }

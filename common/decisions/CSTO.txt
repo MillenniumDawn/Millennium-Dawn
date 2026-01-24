@@ -1,0 +1,49 @@
+CSTO_management = {
+	SOV_convert_csto_to_offensive = {
+		icon = GFX_faction_icon_csto
+
+		allowed = {
+			original_tag = SOV
+		}
+
+		fire_only_once = yes
+		cost = 100
+		days_remove = 60
+
+		visible = {
+			is_faction_leader = yes
+			has_idea = CSTO_member
+			NOT = { has_country_flag = CSTO_is_offensive }
+		}
+
+		available = {
+			is_faction_leader = yes
+			has_war = no
+			custom_trigger_tooltip = {
+				tooltip = SOV_csto_has_at_least_one_member_tt
+				check_variable = { global.CSTO_member^num > 1 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_convert_csto_to_offensive"
+			CSTO_convert_to_offensive = yes
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 10
+				threat > 0.25
+				has_war_support > 0.5
+				any_neighbor_country = {
+					NOT = { is_in_faction_with = ROOT }
+					has_opinion = {
+						target = ROOT
+						value < -50
+					}
+				}
+			}
+		}
+	}
+}
