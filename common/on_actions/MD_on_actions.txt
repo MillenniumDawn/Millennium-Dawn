@@ -307,23 +307,21 @@ on_actions = {
 			# Grab your Nuclear Reactor Enrichment Facilities
 			add_to_variable = { ROOT.enrichment_facilities = FROM.enrichment_facilities }
 
-			# Cleanup Auto-Influence Arrays
-			if = { limit = { ROOT = { is_ai = no } }
-				ROOT = {
-					for_each_loop = {
-						array = auto_influence_array
-						index = i
-						value = v
+			every_country = {
+				limit = { check_variable = { auto_influence_array^num > 0 } }
+				set_temp_variable = { scoped_nation = THIS.id }
+				for_each_loop = {
+					array = auto_influence_array
+					index = i
+					value = v
 
-						# Clears Auto Influencer Who No Longer Exists
-						if = { limit = { var:auto_influence_array^i = { exists = no } }
-							log = "[GetDateText]: [ROOT.GetName]: [?var:auto_influence_array^i.GetName] var:auto_influence_array^i auto influencer removal request"
-							var:auto_influence_array^i = {
-								ROOT = {
-									remove_auto_influencer_request = yes
-									update_auto_influence_array = yes
-									update_dirty_influence_var = yes
-								}
+					# Clears Auto Influencer Who No Longer Exists
+					if = { limit = { var:auto_influence_array^i = { exists = no } }
+						var:auto_influence_array^i = {
+							var:scoped_nation = {
+								remove_auto_influencer_request = yes
+								update_auto_influence_array = yes
+								update_dirty_influence_var = yes
 							}
 						}
 					}
@@ -1369,18 +1367,6 @@ on_actions = {
 								}
 								else = {
 									log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing failed to influence on index [?i]"
-								}
-
-								# Clears Auto Influencer Who No Longer Exists
-								if = { limit = { var:auto_influence_array^i = { exists = no } }
-									log = "[GetDateText]: [ROOT.GetName]: [?var:auto_influence_array^i.GetName] var:auto_influence_array^i auto influencer removal request"
-									var:auto_influence_array^i = {
-										var:tag_index = {
-											remove_auto_influencer_request = yes
-											update_auto_influence_array = yes
-											update_dirty_influence_var = yes
-										}
-									}
 								}
 							}
 							for_each_loop = {

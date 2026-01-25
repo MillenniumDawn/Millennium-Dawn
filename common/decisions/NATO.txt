@@ -260,7 +260,17 @@ NATO_decisions = {
 		}
 
 		complete_effect = {
-			NATO_show_non_ratified_countries = yes
+			every_country = {
+				limit = {
+					has_idea = NATO_member
+					NOT = { has_country_flag = NATO_Ratified_@ROOT }
+				}
+				display_individual_scopes = yes
+
+				set_temp_variable = { selected_tag = THIS.id }
+				TAG_get_name_with_flag = yes
+				newline = yes
+			}
 		}
 	}
 
@@ -699,10 +709,10 @@ NATO_decisions = {
 			}
 		}
 
+		cost = 20
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ratify_country_accession target: [From.GetName]"
-			add_political_power = -20
 			hidden_effect = {
 				set_country_flag = NATO_Ratified_@FROM
 			}
@@ -803,10 +813,8 @@ NATO_decisions = {
 				# Check if all members in nato has ratified the accession.
 				all_of_scopes = {
 					array = global.nato_members
-					if = {
-						limit = { THIS = { exists = yes } }
-						has_country_flag = NATO_Ratified_@ROOT
-					}
+					exists = yes
+					has_country_flag = NATO_Ratified_@ROOT
 				}
 			}
 		}
@@ -820,9 +828,7 @@ NATO_decisions = {
 			# Remove the candidate stuff.
 			hidden_effect = {
 				clr_country_flag = NATO_Accession_Voting
-				remove_from_array = {
-					global.NATO_Accession_Candidates = THIS
-				}
+				remove_from_array = { global.NATO_Accession_Candidates = THIS }
 				clr_country_flag = NATO_Aspirant
 
 				for_each_scope_loop = {
