@@ -3955,6 +3955,12 @@ country_event = {
 		name = egypt.166.a
 		set_country_flag = EGY_aswan_historical_choice
 
+		add_stability = -0.03
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		set_temp_variable = { temp_outlook_increase = -0.03 }
+		add_relative_party_popularity = yes
+
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -3964,11 +3970,26 @@ country_event = {
 		}
 	}
 
-	# The Nubians
+	# The Arabs
 	option = {
 		name = egypt.166.b
 		set_country_flag = EGY_aswan_nubian_choice
 
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		newline = yes
+		set_temp_variable = { party_index = 21 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+
+		hidden_effect = {
+			SUD = {
+				country_event = { id = egypt.168 days = 3 random_hours = 24 }
+			}
+		}
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -4005,6 +4026,8 @@ country_event = {
 				add_state_core = 1198
 				add_state_core = 590
 				add_state_core = 219
+				transfer_state = 217
+				EGY = { set_state_controller = 217 }
 				set_capital = { state = 217 }
 
 				set_popularities = {
@@ -4045,18 +4068,164 @@ country_event = {
 				set_province_controller = 6217
 				set_province_controller = 12771
 				set_province_controller = 9891
+				declare_war_on = {
+					target = EGY
+					type = civil_war
+				}
 				217 = {
 					create_unit = {
 						division = "name = \"Aswan Rebel Forces\" division_template = \"Aswan Rebel Forces\" start_experience_factor = 0.6"
 						owner = ASW
-						count = 2
+						count = 3
 						prioritize_location = 6217
+					}
+					if = {
+						limit = {
+							SUD = {
+								OR = {
+									has_country_flag = ASW_supported_the_nubian_people
+									has_country_flag = ASW_intervention_in_aswan_conflict
+								}
+							}
+						}
+						create_unit = {
+							division = "name = \"Aswan Rebel Forces\" division_template = \"Aswan Rebel Forces\" start_experience_factor = 0.6"
+							owner = ASW
+							count = 2
+							prioritize_location = 6217
+						}
+						set_temp_variable = { treasury_change = 6.00 }
+						modify_treasury_effect = yes
+					}
+					if = {
+						limit = { SUD = { has_country_flag = ASW_intervention_in_aswan_conflict } }
+						SUD = { country_event = { id = egypt.169 days = 2 } }
 					}
 				}
 			}
-			declare_war_on = {
-				target = ASW
-				type = civil_war
+		}
+	}
+}
+
+# Support the Nubian People?
+country_event = {
+	id = egypt.168
+	title = egypt.168.t
+	desc = egypt.168.d
+	picture = GFX_israeli_soldiers_injured # FIXME: Replace with a proper event picture
+	is_triggered_only = yes
+
+	# Material Support
+	option = {
+		name = egypt.168.a
+		set_country_flag = ASW_supported_the_nubian_people
+
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				OR = {
+					is_historical_focus_on = yes
+					has_country_leader = { name = "Omar al-Bashir" ruling_only = yes }
+					neutrality_neutral_muslim_brotherhood_are_in_power = yes
+				}
+			}
+		}
+	}
+
+	# Intervention if it Escalates + Material Support
+	option = {
+		name = egypt.168.b
+		set_country_flag = ASW_intervention_in_aswan_conflict
+
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
+
+		custom_effect_tooltip = ASW_we_will_be_called_to_war_tt
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				OR = {
+					is_historical_focus_on = yes
+					has_country_leader = { name = "Omar al-Bashir" ruling_only = yes }
+					neutrality_neutral_muslim_brotherhood_are_in_power = yes
+				}
+			}
+		}
+	}
+
+	# Ignore Their Plight
+	option = {
+		name = egypt.168.c
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+# Intervention in the Conflict
+country_event = {
+	id = egypt.169
+	title = egypt.169.t
+	desc = egypt.169.d
+	picture = GFX_israeli_soldiers_injured # FIXME: Replace with a proper event picture
+	is_triggered_only = yes
+
+	# Intervene!
+	option = {
+		name = egypt.169.a
+
+		effect_tooltip = {
+			add_to_war = {
+				targeted_alliance = ASW
+				enemy = EGY
+				hostility_reason = supporting_the_cause
+			}
+		}
+
+		EGY = { country_event = { id = egypt.170 days = 2 } }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Back out of the Conflict
+	option = {
+		name = egypt.169.b
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Sudan Supports the Nubians
+country_event = {
+	id = egypt.170
+	title = egypt.170.t
+	desc = egypt.170.d
+	picture = GFX_israeli_soldiers_injured # FIXME: Replace with a proper event picture
+	is_triggered_only = yes
+
+	# Oh no...
+	option = {
+		name = egypt.170.a
+
+		SUD = {
+			add_to_war = {
+				targeted_alliance = ASW
+				enemy = EGY
+				hostility_reason = supporting_the_cause
 			}
 		}
 	}
