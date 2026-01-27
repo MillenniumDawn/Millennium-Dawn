@@ -482,9 +482,7 @@ EGY_coptic_decision = {
 			modify_coptic_opinion_effect = yes
 		}
 	}
-	#
 	EGY_promote_coptic_politicians = {
-		visible = { original_tag = EGY }
 		icon = GFX_decision_copts_propa_button
 		cost = 45
 		days_remove = 73
@@ -504,7 +502,6 @@ EGY_coptic_decision = {
 	}
 	#
 	EGY_raids_on_coptic_people = {
-		visible = { original_tag = EGY }
 		icon = GFX_decision_copts_raid_button
 		cost = 55
 		days_remove = 67
@@ -524,7 +521,6 @@ EGY_coptic_decision = {
 	}
 	#
 	EGY_governmental_pressure = {
-		visible = { original_tag = EGY }
 		icon = GFX_decision_copts_pressure_button
 		cost = 60
 		days_remove = 75
@@ -545,7 +541,6 @@ EGY_coptic_decision = {
 		}
 	}
 	EGY_copt_coalition = {
-		visible = { original_tag = EGY }
 		icon = GFX_decision_copts_govern_button
 		cost = 60
 		days_remove = 75
@@ -600,7 +595,6 @@ EGY_coptic_decision = {
 EGY_slums_decision = {
 	EGY_remove_slums_in_alexandria = {
 		visible = {
-			original_tag = EGY
 			owns_state = 216
 			216 = {
 				OR = {
@@ -658,6 +652,7 @@ EGY_slums_decision = {
 			add_stability = 0.005
 			hidden_effect = { country_event = egypt.149 }
 		}
+
 		ai_will_do = {
 			factor = 10
 			modifier = {
@@ -678,9 +673,9 @@ EGY_slums_decision = {
 			}
 		}
 	}
+
 	EGY_remove_slums_in_cairo = {
 		visible = {
-			original_tag = EGY
 			owns_state = 215
 			215 = {
 				OR = {
@@ -770,7 +765,6 @@ EGY_slums_decision = {
 	}
 	EGY_remove_slums_in_suez = {
 		visible = {
-			original_tag = EGY
 			owns_state = 214
 			214 = {
 				OR = {
@@ -850,7 +844,6 @@ EGY_slums_decision = {
 	}
 	EGY_remove_slums_in_nile_valley = {
 		visible = {
-			original_tag = EGY
 			owns_state = 217
 			217 = {
 				OR = {
@@ -916,6 +909,103 @@ EGY_slums_decision = {
 			modifier = {
 				217 = { has_dynamic_modifier = { modifier = EGY_slums_3_level } }
 				add = 20
+			}
+		}
+	}
+}
+
+EGY_aswan_tribal_clashes_category = {
+	EGY_tribal_conflict_escalation_mission = {
+		icon = GFX_decision_bancru_collapse_button # FIXME: Replace with a proper icon
+		available = {
+			NOT = { has_country_flag = EGY_aswan_tribal_conflict_resolved }
+			NOT = { has_country_flag = EGY_aswan_tribal_conflict_escalated }
+			has_country_flag = EGY_aswan_tribal_conflict
+			hidden_trigger = {
+				has_country_flag = EGY_aswan_deployed_military
+				has_country_flag = EGY_aswan_historical_choice
+			}
+		}
+
+		activation = {
+			has_country_flag = EGY_aswan_tribal_conflict
+		}
+
+		is_good = no
+
+		days_mission_timeout = 30
+
+		timeout_effect = {
+			add_stability = -0.03
+
+			country_event = egypt.167
+		}
+
+		complete_effect = {
+			add_stability = 0.03
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+
+			country_event = egypt.164
+		}
+	}
+
+	EGY_deploy_military_police_to_the_region_decision = {
+		icon = GFX_decision_bancru_collapse_button # FIXME: Replace with a proper icon
+
+		visible = {
+			has_active_mission = EGY_tribal_conflict_escalation_mission
+			NOT = { has_country_flag = EGY_aswan_deployed_military }
+		}
+		available = {
+			has_active_mission = EGY_tribal_conflict_escalation_mission
+			divisions_in_state = {
+				size > 2
+				state = 217
+			}
+		}
+
+		cost = 25
+
+		days_remove = 7
+
+		remove_effect = {
+			set_country_flag = EGY_aswan_deployed_military
+		}
+
+		ai_will_do = {
+			base = 35
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	EGY_choose_a_side_decision = {
+		icon = GFX_decision_bancru_collapse_button # FIXME: Replace with a proper icon
+
+		visible = {
+			has_active_mission = EGY_tribal_conflict_escalation_mission
+			NOT = { has_country_flag = EGY_chosen_a_side_in_the_fighting }
+		}
+
+		cost = 25
+
+		days_remove = 7
+
+		remove_effect = {
+			set_country_flag = EGY_chosen_a_side_in_the_fighting
+			country_event = { id = egypt.166 days = 2 }
+		}
+
+		ai_will_do = {
+			base = 35
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
 			}
 		}
 	}
