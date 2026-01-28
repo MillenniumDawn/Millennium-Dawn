@@ -577,7 +577,7 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = additional_income_pmc }
 	}
 	if = {
-		limit = { is_cartel_nation = yes }
+		limit = { has_country_flag = is_cartel_nation }
 		if = {
 			limit = { has_country_flag = CARTEL_deal_with_the_devil_flag }
 			set_variable = { cartel_deal_with_the_devil = gdp_total }
@@ -1592,7 +1592,7 @@ calculate_additional_income_rate = {
 			set_variable = { additional_income_FRA_cfa_franc_custodian = 0 }
 			set_variable = { FRA_cfa_franc_gdp_total = 0 }
 			hidden_effect = {
-				every_country = {
+				every_other_country = {
 					limit = {
 						is_french_africa_nation = yes
 						OR = {
@@ -1643,14 +1643,6 @@ calculate_additional_income_rate = {
 			limit = { has_idea = RAJ_Local_markets }
 			set_variable = { RAJ_Local_markets_income = 0.08 }
 			add_to_variable = { additional_income_rate = RAJ_Local_markets_income }
-		}
-	}
-	#Comoros
-	if = { limit = { original_tag = COM }
-		if = {
-			limit = { has_idea = COM_export_vanilla_idea }
-			set_variable = { COM_export_vanilla_idea_income = 0.08 }
-			add_to_variable = { additional_income_rate = COM_export_vanilla_idea_income }
 		}
 	}
 	# Gulf
@@ -1931,36 +1923,31 @@ calculate_additional_income_rate = {
 }
 #Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
 calculate_interest_rate = {
-	if = {			#if country has no debt and high interest national spirit (because they paid it off from having 15% debt interest to 0 within the same in-game day), it'll set all to 0 and remove high interest spirit, also skipping all other calculations to save on processing.
-		limit = {
-			check_variable = { debt = 0 }
-			has_dynamic_modifier = { modifier = very_high_interest_country_modifiers }
-		}
+	# Handle no debt case - skip all debt calculations
+	if = {
+		limit = { check_variable = { debt = 0 } }
 
 		set_variable = { interest_rate = 0 }
 		set_variable = { debt_rate = 0 }
 		set_variable = { debt_ratio = 0 }
 
-		remove_dynamic_modifier = { modifier = very_high_interest_country_modifiers }		#removing high interest national spirit in case they sold all their debt when they had 15%+ interest rate all at once.
-		clear_variable = production_speed_buildings_factor_very_high_interest_modifier
-		clear_variable = industrial_capacity_factory_very_high_interest_modifier
-		clear_variable = industrial_capacity_dockyard_very_high_interest_modifier
-		clear_variable = stability_factor_very_high_interest_modifier
-		clear_variable = western_drift_very_high_interest_modifier
-		clear_variable = emerging_drift_very_high_interest_modifier
-		clear_variable = nonaligned_drift_very_high_interest_modifier
-		clear_variable = salafist_drift_very_high_interest_modifier
-		clear_variable = nationalist_drift_very_high_interest_modifier
-
-		if = {			#if country has no debt and no high interest national spirit, it will set them all to 0 and skip the typical debt related calculations (just the above but without removing high-interest stuff)
-			limit = { check_variable = { debt = 0 } }
-
-			set_variable = { interest_rate = 0 }
-			set_variable = { debt_rate = 0 }
-			set_variable = { debt_ratio = 0 }
+		# Remove high interest modifier if present (happens when country paid off all debt in same day)
+		if = {
+			limit = { has_dynamic_modifier = { modifier = very_high_interest_country_modifiers } }
+			remove_dynamic_modifier = { modifier = very_high_interest_country_modifiers }
+			clear_variable = production_speed_buildings_factor_very_high_interest_modifier
+			clear_variable = industrial_capacity_factory_very_high_interest_modifier
+			clear_variable = industrial_capacity_dockyard_very_high_interest_modifier
+			clear_variable = stability_factor_very_high_interest_modifier
+			clear_variable = western_drift_very_high_interest_modifier
+			clear_variable = emerging_drift_very_high_interest_modifier
+			clear_variable = nonaligned_drift_very_high_interest_modifier
+			clear_variable = salafist_drift_very_high_interest_modifier
+			clear_variable = nationalist_drift_very_high_interest_modifier
 		}
 	}
-	else = {			#normal interest rate, debt_rate, and debt_ratio calculations when country didn't meet previous 2 if's (basically if they have any amount of debt)
+	else = {
+		# Country has debt - calculate interest rate, debt_rate, and debt_ratio
 		#Base value comes from debt/gdp ratio
 		set_variable = { interest_rate = debt }
 		divide_variable = { interest_rate = gdp_total }
@@ -2032,6 +2019,7 @@ calculate_interest_rate = {
 			}
 			force_update_dynamic_modifier = yes
 		}
+		# Remove high interest modifier if interest rate dropped below 15%
 		if = {
 			limit = {
 				check_variable = { interest_rate < 15 }
@@ -2039,6 +2027,8 @@ calculate_interest_rate = {
 			}
 			remove_dynamic_modifier = { modifier = very_high_interest_country_modifiers }
 			clear_variable = production_speed_buildings_factor_very_high_interest_modifier
+			clear_variable = industrial_capacity_factory_very_high_interest_modifier
+			clear_variable = industrial_capacity_dockyard_very_high_interest_modifier
 			clear_variable = stability_factor_very_high_interest_modifier
 			clear_variable = western_drift_very_high_interest_modifier
 			clear_variable = emerging_drift_very_high_interest_modifier
