@@ -129,7 +129,6 @@ AGRI_monthly_changes_math = {
 }
 
 AGRI_update_math_variables = {
-	log = "[GetDateText]: [ROOT.GetName]: Running Effect: AGRI_update_math_variables"
 	# CROP OUTPUT
 	set_variable = { basic_crop_output = agriculture_workers }
 	multiply_variable = { basic_crop_output = agri_crop_allocation^0 }
@@ -140,28 +139,22 @@ AGRI_update_math_variables = {
 	multiply_variable = { basic_crop_total_value = agri_crop_price^0 }
 	set_variable = { cash_crop_total_value = cash_crop_output }
 	multiply_variable = { cash_crop_total_value = agri_crop_price^1 }
-	# TOTAL CROP INCOME
+	# TOTAL CROP INCOME (multiplied by 1.85 constant)
 	set_variable = { combined_crop_value = basic_crop_total_value }
 	add_to_variable = { combined_crop_value = cash_crop_total_value }
-	# Before working out math from literacy rate, it multiplies by 1.75
 	multiply_variable = { combined_crop_value = 1.85 }
-	# YEARLY HARVEST
+	# YEARLY HARVEST (combined_crop_value / literacy_rate)
 	set_variable = { yearly_harvest_value = combined_crop_value }
 	divide_variable = { yearly_harvest_value = literacy_rate }
-	# ADDITIONAL INCOME
-	set_variable = { weekly_harvest_value = yearly_harvest_value }
-	divide_variable = { weekly_harvest_value = 52 }
-	# BILLION CONVERTER
-	set_variable = { weekly_harvest_billion = weekly_harvest_value }
-	multiply_variable = { weekly_harvest_billion = 0.01 }
-	# VARIABLE DISPLAY MATH
-	# ANNUAL HARVEST DISPLAY
+	# WEEKLY HARVEST BILLION (yearly / 52 / 100 = yearly * 0.00019)
+	set_variable = { weekly_harvest_billion = yearly_harvest_value }
+	multiply_variable = { weekly_harvest_billion = 0.00019 }
+	# ANNUAL HARVEST DISPLAY (yearly * 0.1)
 	set_variable = { annual_harvest_display = yearly_harvest_value }
 	multiply_variable = { annual_harvest_display = 0.1 }
-	# WEEKLY HARVEST DISPLAY
-	set_variable = { weekly_harvest_display = weekly_harvest_value }
-	multiply_variable = { weekly_harvest_display = 100 }
-	log = "[GetDateText]: [ROOT.GetName]: Effect Completed: AGRI_update_math_variables"
+	# WEEKLY HARVEST DISPLAY (yearly / 52 * 100 = yearly * 1.92308)
+	set_variable = { weekly_harvest_display = yearly_harvest_value }
+	multiply_variable = { weekly_harvest_display = 1.92308 }
 }
 
 AGRI_plow_the_fields = {
@@ -180,13 +173,3 @@ AGRI_plow_the_fields = {
 		AGRI_allocation_change_effect = yes
 	}
 }
-
-# AGRI_drought_check = {
-# 	if = {
-# 		limit = {
-# 			ROOT = {
-# 				is_neighbor_of = THIS
-# 			}
-# 		}
-# 	}
-# }
