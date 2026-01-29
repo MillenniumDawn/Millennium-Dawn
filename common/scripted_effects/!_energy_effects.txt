@@ -26,77 +26,80 @@ calculate_energy_use = {
 
 	# Energy Consumption Calculations #
 	# --------------------------------#
-	# Add pop energy use, and factor it by its multiplier
-	# Multiply the energy use per person by the population to model the amount the population is using as a whole.
+	# Population Energy Use Calculation
+	# Base formula: population_total * 0.001 * temp_pop_use_m * gdp_per_capita * 0.025 * @population_energy_use_balance_value
 	set_temp_variable = { population_energy_use = population_total }
 	multiply_temp_variable = { population_energy_use = 0.001 }
 	multiply_temp_variable = { population_energy_use = temp_pop_use_m }
 
-	# GDP/c Multiplication Section
+	# GDP/c scaling factor (40k GDP/c is considered the middle ground)
 	set_temp_variable = { temp_gdp_per_capita = gdp_per_capita }
 	clamp_temp_variable = { var = temp_gdp_per_capita min = 1 }
-	# 40 is considered our middle ground of the GDP/c or the "average" turnstile
 	multiply_temp_variable = { temp_gdp_per_capita = 0.025 }
 	multiply_temp_variable = { population_energy_use = temp_gdp_per_capita }
 
-	# Tweak this number to change population consumption relative to other sources of consumption
+	# Balance multiplier to adjust population consumption relative to other sources
 	multiply_temp_variable = { population_energy_use = @population_energy_use_balance_value }
 
 	# Add energy_use (static use from special decisions/events)
 	set_temp_variable = { other_energy_use = modifier@energy_use }
 
 	# Energy Use from Buildings
-	set_temp_variable = { energy_use_base_civs = 0.5 }
-	set_temp_variable = { energy_use_base_offices = 0.25 }
-	set_temp_variable = { energy_use_base_agriculture_district = 0.10 }
-	set_temp_variable = { energy_use_base_mils = 0.5 }
-	set_temp_variable = { energy_use_base_microchip_plant = 0.75 }
-	set_temp_variable = { energy_use_base_composite_plant = 0.8 }
-	set_temp_variable = { energy_use_base_synthetic_refinery = 0.2 }
+	# Building base energy use constants (will be factored into unified multipliers)
+	# Civs: 0.5, Offices: 0.25, Agriculture: 0.10, Mils: 0.5
+	# Microchip: 0.75, Composite: 0.8, Synthetic Refinery: 0.2
 
-	# Modifier Calculations for Energy Use from Buildings
-	set_temp_variable = { energy_use_multiplier_civs = 1 }
-	set_temp_variable = { energy_use_multiplier_offices = 1 }
-	set_temp_variable = { energy_use_multiplier_agriculture_district = 1 }
-	set_temp_variable = { energy_use_multiplier_mils = 1 }
-	set_temp_variable = { energy_use_multiplier_microchip_plant = 1 }
-	set_temp_variable = { energy_use_multiplier_composite_plant = 1 }
+	# Build unified multipliers incorporating base energy use values
+	# Format: (1 + modifier) * base_energy_use
 	set_temp_variable = { energy_use_multiplier_synthetic_refinery = 1 }
-
-	set_temp_variable = { energy_use_synthetic_refinery = synthetic_refinery_total }
-	multiply_temp_variable = { energy_use_synthetic_refinery = energy_use_base_synthetic_refinery }
 	add_to_temp_variable = { energy_use_multiplier_synthetic_refinery = modifier@energy_use_modifier_synthetic_refinery }
+	multiply_temp_variable = { energy_use_multiplier_synthetic_refinery = 0.2 }
+
+	set_temp_variable = { energy_use_multiplier_composite_plant = 1 }
+	add_to_temp_variable = { energy_use_multiplier_composite_plant = modifier@energy_use_modifier_composite_plants }
+	multiply_temp_variable = { energy_use_multiplier_composite_plant = 0.8 }
+
+	set_temp_variable = { energy_use_multiplier_microchip_plant = 1 }
+	add_to_temp_variable = { energy_use_multiplier_microchip_plant = modifier@energy_use_modifier_microchip_plants }
+	multiply_temp_variable = { energy_use_multiplier_microchip_plant = 0.75 }
+
+	set_temp_variable = { energy_use_multiplier_civs = 1 }
+	add_to_temp_variable = { energy_use_multiplier_civs = modifier@energy_use_modifier_civs }
+	multiply_temp_variable = { energy_use_multiplier_civs = 0.5 }
+
+	set_temp_variable = { energy_use_multiplier_offices = 1 }
+	add_to_temp_variable = { energy_use_multiplier_offices = modifier@energy_use_modifier_offices }
+	multiply_temp_variable = { energy_use_multiplier_offices = 0.25 }
+
+	set_temp_variable = { energy_use_multiplier_agriculture_district = 1 }
+	add_to_temp_variable = { energy_use_multiplier_agriculture_district = modifier@energy_use_modifier_agriculture_district }
+	multiply_temp_variable = { energy_use_multiplier_agriculture_district = 0.10 }
+
+	set_temp_variable = { energy_use_multiplier_mils = 1 }
+	add_to_temp_variable = { energy_use_multiplier_mils = modifier@energy_use_modifier_mils }
+	multiply_temp_variable = { energy_use_multiplier_mils = 0.5 }
+
+	# Apply unified multipliers to building counts
+	set_temp_variable = { energy_use_synthetic_refinery = synthetic_refinery_total }
 	multiply_temp_variable = { energy_use_synthetic_refinery = energy_use_multiplier_synthetic_refinery }
 
 	set_temp_variable = { energy_use_composite_plants = composite_plant_total }
-	multiply_temp_variable = { energy_use_composite_plants = energy_use_base_composite_plant }
-	add_to_temp_variable = { energy_use_multiplier_composite_plant = modifier@energy_use_modifier_composite_plants }
 	multiply_temp_variable = { energy_use_composite_plants = energy_use_multiplier_composite_plant }
 
 	set_temp_variable = { energy_use_microchip_plants = microchip_plant_total }
-	multiply_temp_variable = { energy_use_microchip_plants = energy_use_base_microchip_plant }
-	add_to_temp_variable = { energy_use_multiplier_microchip_plant = modifier@energy_use_modifier_microchip_plants }
 	multiply_temp_variable = { energy_use_microchip_plants = energy_use_multiplier_microchip_plant }
 
 	set_temp_variable = { energy_use_civs = industrial_complex_total }
-	multiply_temp_variable = { energy_use_civs = energy_use_base_civs }
-	add_to_temp_variable = { energy_use_multiplier_civs = modifier@energy_use_modifier_civs }
 	multiply_temp_variable = { energy_use_civs = energy_use_multiplier_civs }
 
 	set_temp_variable = { energy_use_offices = office_park_total }
-	multiply_temp_variable = { energy_use_offices = energy_use_base_offices }
-	add_to_temp_variable = { energy_use_multiplier_offices = modifier@energy_use_modifier_offices }
 	multiply_temp_variable = { energy_use_offices = energy_use_multiplier_offices }
 
 	set_temp_variable = { energy_use_agriculture_district = agriculture_district_total }
-	multiply_temp_variable = { energy_use_agriculture_district = energy_use_base_agriculture_district }
-	add_to_temp_variable = { energy_use_multiplier_agriculture_district = modifier@energy_use_modifier_agriculture_district }
 	multiply_temp_variable = { energy_use_agriculture_district = energy_use_multiplier_agriculture_district }
 
 	set_temp_variable = { energy_use_mils = military_fac }
 	add_to_temp_variable = { energy_use_mils = num_of_naval_factories }
-	multiply_temp_variable = { energy_use_mils = energy_use_base_mils }
-	add_to_temp_variable = { energy_use_multiplier_mils = modifier@energy_use_modifier_mils }
 	multiply_temp_variable = { energy_use_mils = energy_use_multiplier_mils }
 
 	set_temp_variable = { energy_use_buildings = energy_use_civs }
@@ -120,27 +123,20 @@ calculate_energy_use = {
 	clamp_temp_variable = { var = temp_total_energy_use min = 0.001 }
 
 	# Modify Display Variables
-	multiply_temp_variable = { population_energy_use = temp_energy_use_m }
-	multiply_temp_variable = { energy_use_buildings = temp_energy_use_m }
-	multiply_temp_variable = { other_energy_use = temp_energy_use_m }
-	multiply_temp_variable = { energy_use_civs = temp_energy_use_m }
-	multiply_temp_variable = { energy_use_offices = temp_energy_use_m }
-	multiply_temp_variable = { energy_use_agriculture_district = temp_energy_use_m }
-	multiply_temp_variable = { energy_use_mils = temp_energy_use_m }
-	multiply_temp_variable = { energy_use_microchip_plants = temp_energy_use_m }
-	multiply_temp_variable = { energy_use_composite_plants = temp_energy_use_m }
-	multiply_temp_variable = { energy_use_synthetic_refinery = temp_energy_use_m }
+	# Consolidate display multiplier: temp_energy_use_m * @energy_use_balance_multiplier
+	set_temp_variable = { display_multiplier = temp_energy_use_m }
+	multiply_temp_variable = { display_multiplier = @energy_use_balance_multiplier }
 
-	multiply_temp_variable = { population_energy_use = @energy_use_balance_multiplier }
-	multiply_temp_variable = { energy_use_buildings = @energy_use_balance_multiplier }
-	multiply_temp_variable = { other_energy_use = @energy_use_balance_multiplier }
-	multiply_temp_variable = { energy_use_civs = @energy_use_balance_multiplier }
-	multiply_temp_variable = { energy_use_offices = @energy_use_balance_multiplier }
-	multiply_temp_variable = { energy_use_agriculture_district = @energy_use_balance_multiplier }
-	multiply_temp_variable = { energy_use_mils = @energy_use_balance_multiplier }
-	multiply_temp_variable = { energy_use_microchip_plants = @energy_use_balance_multiplier }
-	multiply_temp_variable = { energy_use_composite_plants = @energy_use_balance_multiplier }
-	multiply_temp_variable = { energy_use_synthetic_refinery = @energy_use_balance_multiplier }
+	multiply_temp_variable = { population_energy_use = display_multiplier }
+	multiply_temp_variable = { energy_use_buildings = display_multiplier }
+	multiply_temp_variable = { other_energy_use = display_multiplier }
+	multiply_temp_variable = { energy_use_civs = display_multiplier }
+	multiply_temp_variable = { energy_use_offices = display_multiplier }
+	multiply_temp_variable = { energy_use_agriculture_district = display_multiplier }
+	multiply_temp_variable = { energy_use_mils = display_multiplier }
+	multiply_temp_variable = { energy_use_microchip_plants = display_multiplier }
+	multiply_temp_variable = { energy_use_composite_plants = display_multiplier }
+	multiply_temp_variable = { energy_use_synthetic_refinery = display_multiplier }
 
 	# Display Variables for the Energy Consumption per Type
 	set_variable = { population_energy_use_display_var = population_energy_use }
@@ -159,11 +155,11 @@ calculate_energy_use = {
 	set_variable = { energy_sum = state_renewable_energy_var }
 	set_temp_variable = { temp_renewable_energy_gain_m = 1 }
 	add_to_temp_variable = { temp_renewable_energy_gain_m = modifier@renewable_energy_gain_multiplier }
+	multiply_temp_variable = { temp_renewable_energy_gain_m = temp_energy_gain_m }
+
 	multiply_variable = { energy_sum = temp_renewable_energy_gain_m }
 	multiply_variable = { minimum_renewable_energy_var = temp_renewable_energy_gain_m }
 	multiply_variable = { maximum_renewable_energy_var = temp_renewable_energy_gain_m }
-	multiply_variable = { minimum_renewable_energy_var = temp_energy_gain_m }
-	multiply_variable = { maximum_renewable_energy_var = temp_energy_gain_m }
 
 	set_variable = { renewable_energy_display_var = energy_sum }
 
@@ -368,10 +364,6 @@ calculate_energy_use = {
 	multiply_variable = { non_electric_fuel_display = 24 }
 
 	force_update_dynamic_modifier = yes
-}
-
-effect_to_update_sco = {
-	force_update_map_mode = { mapmode = SCO_map_mode }
 }
 
 # Effect: calculate_energy_load_sharing
