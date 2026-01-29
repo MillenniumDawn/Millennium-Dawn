@@ -406,15 +406,24 @@ calculate_energy_load_sharing = {
 			multiply_variable = { energy_load_sharing_use_var = -1 }
 		}
 		else = {
+			# Provider doesn't have enough energy to share
+			set_variable = { energy_load_sharing_use_var = 0 }
 			for_each_loop = {
 				array = energy_load_sharing_nations
-				set_variable = { energy_load_sharing_gain_var = 0 }
+				var:v = {
+					set_variable = { energy_load_sharing_gain_var = 0 }
+					force_update_dynamic_modifier = yes
+				}
 			}
 		}
 		force_update_dynamic_modifier = yes
 	}
-	else = {
-		# Garbage Collection - Only use these when actually sharing energy
+	# Clear variables if you're neither a provider nor a recipient
+	if = {
+		limit = {
+			check_variable = { energy_load_sharing_nations^0 = 0 }
+			NOT = { has_country_flag = energy_load_sharing_recipient }
+		}
 		clear_variable = energy_load_sharing_use_var
 		clear_variable = energy_load_sharing_gain_var
 		clear_variable = energy_load_sharing_income_var

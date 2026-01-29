@@ -1138,29 +1138,20 @@ on_actions = {
 					}
 				}
 
-				# FIXME: This crashes the game but is probably needed so you don't share to an enemy at war with you
-				# if = {
-				# 	limit = { is_in_array = { ROOT.energy_load_sharing_nations = FROM.id } }
-				# 	clr_country_flag = energy_load_sharing_recipient
-				# 	ROOT = {
-				# 		remove_from_array = { energy_load_sharing_nations = FROM.id }
-				# 		calculate_energy_load_sharing = yes
-				# 		ingame_update_setup = yes
-				# 	}
-				# 	ingame_update_setup = yes
-				# }
-				# if = {
-				# 	limit = { is_in_array = { FROM.energy_load_sharing_nations = FROM.id } }
-				# 	FROM = {
-				# 		remove_from_array = { energy_load_sharing_nations = FROM.id }
-				# 		calculate_energy_load_sharing = yes
-				# 		ingame_update_setup = yes
-				# 	}
-				# 	ROOT = {
-				# 		clr_country_flag = energy_load_sharing_recipient
-				# 		ingame_update_setup = yes
-				# 	}
-				# }
+				# Clears the Energy Load Share
+				if = {
+					limit = { NOT = { has_global_flag = GAME_RULE_disable_energy_load_sharing } }
+					if = {
+						limit = { is_in_array = { ROOT.energy_load_sharing_nations = FROM.id } }
+						FROM = { clr_country_flag = energy_load_sharing_recipient }
+						ROOT = { remove_from_array = { energy_load_sharing_nations = FROM.id } }
+					}
+					if = {
+						limit = { is_in_array = { FROM.energy_load_sharing_nations = ROOT.id } }
+						FROM = { remove_from_array = { energy_load_sharing_nations = FROM.id } }
+						ROOT = { clr_country_flag = energy_load_sharing_recipient }
+					}
+				}
 
 				# Civil War Content
 				if = {
