@@ -86,7 +86,6 @@ The repository should include a `.pre-commit-config.yaml` file. If it doesn't ex
 
 ## Contributing
 
-test
 When contributing to Millennium Dawn:
 
 1. Ensure Python and pre-commit are installed
