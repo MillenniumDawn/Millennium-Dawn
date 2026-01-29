@@ -163,114 +163,38 @@ calculate_tax_gain = {
 
 	# Subsistence Agriculture Tax Gain Income
 	set_variable = { agriculture_tax_gain = gdp_from_agriculture }
-	multiply_variable = { agriculture_tax_gain = 0.019 }
-	set_temp_variable = { agriculture_tax_rate = corporate_tax_rate }
-	multiply_temp_variable = { agriculture_tax_rate = 0.01 }
-	multiply_variable = { agriculture_tax_gain = agriculture_tax_rate }
+	# Build unified agriculture multiplier: 0.019 * corporate_tax_rate * 0.01 * (agricolture_productivity_modifier * agriculture_tax_modifier + 1)
 	set_temp_variable = { agriculture_tax_gain_multiplier = modifier@agricolture_productivity_modifier }
 	multiply_temp_variable = { agriculture_tax_gain_multiplier = modifier@agriculture_tax_modifier }
 	add_to_temp_variable = { agriculture_tax_gain_multiplier = 1 }
+	multiply_temp_variable = { agriculture_tax_gain_multiplier = corporate_tax_rate }
+	multiply_temp_variable = { agriculture_tax_gain_multiplier = 0.00019 } # 0.019 * 0.01 pre-computed
 	multiply_variable = { agriculture_tax_gain = agriculture_tax_gain_multiplier }
 	clamp_variable = { var = agriculture_tax_gain min = 0.001 }
 
-	# Buildings Base Tax Values
-	# Civilian Factories - (Civ Industries) * 2.5
-	# Military Factories - (Mil Industries) * 0.2
-	# Naval Dockyards - (Naval Industries) * 0.2
-	# Commercialized Agriculture Districts - (Agricultural Districts) * 2.25
-	# Offices - (Offices) * 5
-	# Microchip Plants - * 4
-	# Composites Plants - * 3.5
-	# Synthetic Refineries - * 3
+	# Set base building counts (base tax constants will be factored into building-specific unified multipliers)
+	# Civilian Factories - base constant 2.5
+	# Military Factories - base constant 0.2
+	# Naval Dockyards - base constant 0.2
+	# Offices - base constant 5
+	# Microchip Plants - base constant 4
+	# Composites Plants - base constant 3.5
+	# Synthetic Refineries - base constant 3
+	# Agriculture Districts - base constant 2.60
 	set_variable = { civil_fac_tax = industrial_complex_total }
-	multiply_variable = { civil_fac_tax = 2.5 }
 	set_variable = { military_fac_tax = military_fac }
-	multiply_variable = { military_fac_tax = 0.2 }
 	set_variable = { dockyard_tax = dockyard_fac }
-	multiply_variable = { dockyard_tax = 0.2 }
 	set_variable = { office_tax = office_park_total }
-	multiply_variable = { office_tax = 5 }
 	set_variable = { microchip_plant_tax = microchip_plant_total }
-	multiply_variable = { microchip_plant_tax = 4 }
 	set_variable = { composite_plant_tax = composite_plant_total }
-	multiply_variable = { composite_plant_tax = 3.5 }
 	set_variable = { synthetic_refinery_tax = synthetic_refinery_total }
-	multiply_variable = { synthetic_refinery_tax = 3 }
-
 	set_variable = { agriculture_district_tax = agriculture_district_total }
-	multiply_variable = { agriculture_district_tax = 2.60 }
 
-	# Control factors
-	multiply_variable = { civil_fac_tax = @money_control_factor_scaling }
-	multiply_variable = { military_fac_tax = @money_control_factor_scaling }
-	multiply_variable = { dockyard_tax = @money_control_factor_scaling }
-	multiply_variable = { office_tax = @money_control_factor_scaling }
-	multiply_variable = { agriculture_district_tax = @money_control_factor_scaling }
-	multiply_variable = { microchip_plant_tax = @money_control_factor_scaling }
-	multiply_variable = { composite_plant_tax = @money_control_factor_scaling }
-	multiply_variable = { synthetic_refinery_tax = @money_control_factor_scaling }
+	# Calculate unified building tax multiplier (applied once at the end)
+	# This combines: control_factor, corporate_tax_rate, tax_gain_multiplier,
+	# 7-day display (0.007), corporate_tax_gain_multiplier, and overall_productivity
 
-	# Tax Income Gained
-	multiply_variable = { civil_fac_tax = corporate_tax_rate }
-	multiply_variable = { military_fac_tax = corporate_tax_rate }
-	multiply_variable = { dockyard_tax = corporate_tax_rate }
-	multiply_variable = { office_tax = corporate_tax_rate }
-	multiply_variable = { agriculture_district_tax = corporate_tax_rate }
-	multiply_variable = { microchip_plant_tax = corporate_tax_rate }
-	multiply_variable = { composite_plant_tax = corporate_tax_rate }
-	multiply_variable = { synthetic_refinery_tax = corporate_tax_rate }
-
-	# Modifier Section
-	set_temp_variable = { civil_modifier = 1 }
-	add_to_temp_variable = { civil_modifier = modifier@civilian_industry_tax_modifier }
-	multiply_variable = { civil_fac_tax = civil_modifier }
-
-	set_temp_variable = { military_modifier = 1 }
-	add_to_temp_variable = { military_modifier = modifier@military_industry_tax_modifier }
-	multiply_variable = { military_fac_tax = military_modifier }
-
-	set_temp_variable = { dockyard_modifier = 1 }
-	add_to_temp_variable = { dockyard_modifier = modifier@dockyard_income_tax_modifier }
-	multiply_variable = { dockyard_tax = dockyard_modifier }
-
-	set_temp_variable = { office_modifier = 1 }
-	add_to_temp_variable = { office_modifier = modifier@office_park_income_tax_modifier }
-	multiply_variable = { office_tax = office_modifier }
-
-	set_temp_variable = { agriculture_district_modifier = 1 }
-	add_to_temp_variable = { agriculture_district_modifier = modifier@agriculture_district_income_tax_modifier }
-	multiply_variable = { agriculture_district_tax = agriculture_district_modifier }
-
-	set_temp_variable = { microchip_plant_modifier = 1 }
-	add_to_temp_variable = { microchip_plant_modifier = modifier@microchip_plant_income_tax_modifier }
-	multiply_variable = { microchip_plant_tax = microchip_plant_modifier }
-
-	set_temp_variable = { composite_plant_modifier = 1 }
-	add_to_temp_variable = { composite_plant_modifier = modifier@composite_plant_income_tax_modifier }
-	multiply_variable = { composite_plant_tax = composite_plant_modifier }
-
-	set_temp_variable = { synthetic_refinery_modifier = 1 }
-	add_to_temp_variable = { synthetic_refinery_modifier = modifier@synthetic_refinery_income_tax_modifier }
-	multiply_variable = { synthetic_refinery_tax = synthetic_refinery_modifier }
-
-	##POP
-	set_variable = { var = population_tax value = population_total_m }
-	multiply_variable = { var = population_tax value = population_tax_rate }
-	multiply_variable = { population_tax = 0.45 } #Gives TOTAL potential tax assuming 100%
-
-	#gdp/c scaling
-	set_temp_variable = { pop_tax_gdp_c_multiplier = gdp_per_capita } #could use gdpc_converging_var instead
-	multiply_temp_variable = { pop_tax_gdp_c_multiplier = 0.005 } #linear scaling y = 0.005x + 0.75
-	add_to_temp_variable = { pop_tax_gdp_c_multiplier = 0.75 }
-	multiply_variable = { population_tax = pop_tax_gdp_c_multiplier }
-
-	# Population Tax Modifier
-	set_temp_variable = { population_tax_income_multiplier_modifier = 1 }
-	add_to_temp_variable = { population_tax_income_multiplier_modifier = modifier@population_tax_income_multiplier_modifier }
-
-	multiply_variable = { population_tax = population_tax_income_multiplier_modifier }
-
-	# Additional additive modifiers
+	# Additional additive modifiers (used for both buildings and population)
 	set_temp_variable = { tax_gain_multiplier = 1 }
 	add_to_temp_variable = { tax_gain_multiplier = modifier@tax_gain_multiplier_modifier }
 
@@ -278,90 +202,149 @@ calculate_tax_gain = {
 	set_variable = { tax_gain_multiplier_display = tax_gain_multiplier }
 	subtract_from_variable = { tax_gain_multiplier_display = 1 }
 
-	#Modify Taxgain by multiplier
-	multiply_variable = { civil_fac_tax = tax_gain_multiplier }
-	multiply_variable = { military_fac_tax = tax_gain_multiplier }
-	multiply_variable = { dockyard_tax = tax_gain_multiplier }
-	multiply_variable = { office_tax = tax_gain_multiplier }
-	multiply_variable = { population_tax = tax_gain_multiplier }
-	multiply_variable = { agriculture_district_tax = tax_gain_multiplier }
-	multiply_variable = { microchip_plant_tax = tax_gain_multiplier }
-	multiply_variable = { composite_plant_tax = tax_gain_multiplier }
-	multiply_variable = { synthetic_refinery_tax = tax_gain_multiplier }
-
-	#Show income for 7 days
-	#Cleanup rounding errors
-	multiply_variable = { civil_fac_tax = 0.007 }
-	multiply_variable = { military_fac_tax = 0.007 }
-	multiply_variable = { dockyard_tax = 0.007 }
-	multiply_variable = { office_tax = 0.007 }
-	multiply_variable = { agriculture_district_tax = 0.007 }
-	multiply_variable = { microchip_plant_tax = 0.007 }
-	multiply_variable = { composite_plant_tax = 0.007 }
-	multiply_variable = { synthetic_refinery_tax = 0.007 }
-	multiply_variable = { population_tax = 0.007 }
-
-	set_temp_variable = { civil_fac_tax_gain_multiplier = 1 }
-	set_temp_variable = { military_fac_tax_gain_multiplier = 1 }
-	set_temp_variable = { dockyard_tax_gain_multiplier = 1 }
-	set_temp_variable = { office_tax_gain_multiplier = 1 }
-	set_temp_variable = { agriculture_district_tax_multiplier = 1 }
-	set_temp_variable = { microchip_plant_tax_multiplier = 1 }
-	set_temp_variable = { composite_plant_tax_multiplier = 1 }
-	set_temp_variable = { synthetic_refinery_tax_multiplier = 1 }
-
-	add_to_temp_variable = { civil_fac_tax_gain_multiplier = modifier@civilian_factories_productivity }
-	add_to_temp_variable = { military_fac_tax_gain_multiplier = modifier@military_factories_productivity }
-	add_to_temp_variable = { dockyard_tax_gain_multiplier = modifier@dockyard_productivity }
-	add_to_temp_variable = { office_tax_gain_multiplier = modifier@offices_productivity }
-	add_to_temp_variable = { agriculture_district_tax_multiplier = modifier@agricolture_productivity_modifier }
-	add_to_temp_variable = { microchip_plant_tax_multiplier = modifier@microchip_plants_productivity_modifier }
-	add_to_temp_variable = { composite_plant_tax_multiplier = modifier@composite_plants_productivity_modifier }
-	add_to_temp_variable = { synthetic_refinery_tax_multiplier = modifier@synthetic_refinery_productivity_modifier }
-
-	multiply_variable = { civil_fac_tax = civil_fac_tax_gain_multiplier }
-	multiply_variable = { military_fac_tax = military_fac_tax_gain_multiplier }
-	multiply_variable = { dockyard_tax = dockyard_tax_gain_multiplier }
-	multiply_variable = { office_tax = office_tax_gain_multiplier }
-	multiply_variable = { agriculture_district_tax = agriculture_district_tax_multiplier }
-	multiply_variable = { microchip_plant_tax = microchip_plant_tax_multiplier }
-	multiply_variable = { composite_plant_tax = composite_plant_tax_multiplier }
-	multiply_variable = { synthetic_refinery_tax = synthetic_refinery_tax_multiplier }
-
-	#scale buildings tax based on employment level
-	multiply_variable = { civil_fac_tax = civilian_factories_manpower_fulfillment }
-	multiply_variable = { military_fac_tax = military_factories_manpower_fulfillment }
-	multiply_variable = { dockyard_tax = naval_factories_manpower_fulfillment }
-	multiply_variable = { office_tax = offices_manpower_fulfillment }
-	multiply_variable = { agriculture_district_tax = agriculture_district_manpower_fulfillment }
-	multiply_variable = { microchip_plant_tax = microchip_plants_manpower_fulfillment }
-	multiply_variable = { composite_plant_tax = composite_plants_manpower_fulfillment }
-	multiply_variable = { synthetic_refinery_tax = synthetic_refinery_manpower_fulfillment }
+	# Build the unified multiplier
+	set_temp_variable = { unified_building_multiplier = @money_control_factor_scaling }
+	multiply_temp_variable = { unified_building_multiplier = corporate_tax_rate }
+	multiply_temp_variable = { unified_building_multiplier = tax_gain_multiplier }
+	multiply_temp_variable = { unified_building_multiplier = 0.007 } # 7-day display
 
 	# Corporate Tax Modifier
 	set_temp_variable = { corporate_tax_gain_multiplier = 1 }
 	add_to_temp_variable = { corporate_tax_gain_multiplier = modifier@corporate_tax_income_multiplier_modifier }
+	multiply_temp_variable = { unified_building_multiplier = corporate_tax_gain_multiplier }
 
-	multiply_variable = { civil_fac_tax = corporate_tax_gain_multiplier }
-	multiply_variable = { military_fac_tax = corporate_tax_gain_multiplier }
-	multiply_variable = { dockyard_tax = corporate_tax_gain_multiplier }
-	multiply_variable = { office_tax = corporate_tax_gain_multiplier }
-	multiply_variable = { agriculture_district_tax = corporate_tax_gain_multiplier }
-	multiply_variable = { microchip_plant_tax = corporate_tax_gain_multiplier }
-	multiply_variable = { composite_plant_tax = corporate_tax_gain_multiplier }
-	multiply_variable = { synthetic_refinery_tax = corporate_tax_gain_multiplier }
-
+	# Overall productivity
 	set_temp_variable = { productivity_calculations_var = overall_productivity }
 	multiply_temp_variable = { productivity_calculations_var = 0.001 }
+	multiply_temp_variable = { unified_building_multiplier = productivity_calculations_var }
 
-	multiply_variable = { civil_fac_tax = productivity_calculations_var }
-	multiply_variable = { military_fac_tax = productivity_calculations_var }
-	multiply_variable = { dockyard_tax = productivity_calculations_var }
-	multiply_variable = { office_tax = productivity_calculations_var }
-	multiply_variable = { agriculture_district_tax = productivity_calculations_var }
-	multiply_variable = { microchip_plant_tax = productivity_calculations_var }
-	multiply_variable = { composite_plant_tax = productivity_calculations_var }
-	multiply_variable = { synthetic_refinery_tax = productivity_calculations_var }
+	# Create building-specific unified multipliers (includes base tax constant for each building type)
+	set_temp_variable = { civil_unified = unified_building_multiplier }
+	multiply_temp_variable = { civil_unified = 2.5 }
+
+	set_temp_variable = { military_unified = unified_building_multiplier }
+	multiply_temp_variable = { military_unified = 0.2 }
+
+	set_temp_variable = { dockyard_unified = unified_building_multiplier }
+	multiply_temp_variable = { dockyard_unified = 0.2 }
+
+	set_temp_variable = { office_unified = unified_building_multiplier }
+	multiply_temp_variable = { office_unified = 5 }
+
+	set_temp_variable = { agriculture_district_unified = unified_building_multiplier }
+	multiply_temp_variable = { agriculture_district_unified = 2.60 }
+
+	set_temp_variable = { microchip_unified = unified_building_multiplier }
+	multiply_temp_variable = { microchip_unified = 4 }
+
+	set_temp_variable = { composite_unified = unified_building_multiplier }
+	multiply_temp_variable = { composite_unified = 3.5 }
+
+	set_temp_variable = { synthetic_unified = unified_building_multiplier }
+	multiply_temp_variable = { synthetic_unified = 3 }
+
+	# Apply building-specific modifiers, productivity, employment, then building-specific unified multiplier
+	# Each building: base_count * (1 + tax_modifier) * (1 + productivity_modifier) * employment * building_unified
+
+	# Civilian Factories
+	set_temp_variable = { building_final_modifier = 1 }
+	add_to_temp_variable = { building_final_modifier = modifier@civilian_industry_tax_modifier }
+	set_temp_variable = { temp_prod_mod = 1 }
+	add_to_temp_variable = { temp_prod_mod = modifier@civilian_factories_productivity }
+	multiply_temp_variable = { building_final_modifier = temp_prod_mod }
+	multiply_temp_variable = { building_final_modifier = civilian_factories_manpower_fulfillment }
+	multiply_temp_variable = { building_final_modifier = civil_unified }
+	multiply_variable = { civil_fac_tax = building_final_modifier }
+
+	# Military Factories
+	set_temp_variable = { building_final_modifier = 1 }
+	add_to_temp_variable = { building_final_modifier = modifier@military_industry_tax_modifier }
+	set_temp_variable = { temp_prod_mod = 1 }
+	add_to_temp_variable = { temp_prod_mod = modifier@military_factories_productivity }
+	multiply_temp_variable = { building_final_modifier = temp_prod_mod }
+	multiply_temp_variable = { building_final_modifier = military_factories_manpower_fulfillment }
+	multiply_temp_variable = { building_final_modifier = military_unified }
+	multiply_variable = { military_fac_tax = building_final_modifier }
+
+	# Dockyards
+	set_temp_variable = { building_final_modifier = 1 }
+	add_to_temp_variable = { building_final_modifier = modifier@dockyard_income_tax_modifier }
+	set_temp_variable = { temp_prod_mod = 1 }
+	add_to_temp_variable = { temp_prod_mod = modifier@dockyard_productivity }
+	multiply_temp_variable = { building_final_modifier = temp_prod_mod }
+	multiply_temp_variable = { building_final_modifier = naval_factories_manpower_fulfillment }
+	multiply_temp_variable = { building_final_modifier = dockyard_unified }
+	multiply_variable = { dockyard_tax = building_final_modifier }
+
+	# Offices
+	set_temp_variable = { building_final_modifier = 1 }
+	add_to_temp_variable = { building_final_modifier = modifier@office_park_income_tax_modifier }
+	set_temp_variable = { temp_prod_mod = 1 }
+	add_to_temp_variable = { temp_prod_mod = modifier@offices_productivity }
+	multiply_temp_variable = { building_final_modifier = temp_prod_mod }
+	multiply_temp_variable = { building_final_modifier = offices_manpower_fulfillment }
+	multiply_temp_variable = { building_final_modifier = office_unified }
+	multiply_variable = { office_tax = building_final_modifier }
+
+	# Agriculture Districts
+	set_temp_variable = { building_final_modifier = 1 }
+	add_to_temp_variable = { building_final_modifier = modifier@agriculture_district_income_tax_modifier }
+	set_temp_variable = { temp_prod_mod = 1 }
+	add_to_temp_variable = { temp_prod_mod = modifier@agricolture_productivity_modifier }
+	multiply_temp_variable = { building_final_modifier = temp_prod_mod }
+	multiply_temp_variable = { building_final_modifier = agriculture_district_manpower_fulfillment }
+	multiply_temp_variable = { building_final_modifier = agriculture_district_unified }
+	multiply_variable = { agriculture_district_tax = building_final_modifier }
+
+	# Microchip Plants
+	set_temp_variable = { building_final_modifier = 1 }
+	add_to_temp_variable = { building_final_modifier = modifier@microchip_plant_income_tax_modifier }
+	set_temp_variable = { temp_prod_mod = 1 }
+	add_to_temp_variable = { temp_prod_mod = modifier@microchip_plants_productivity_modifier }
+	multiply_temp_variable = { building_final_modifier = temp_prod_mod }
+	multiply_temp_variable = { building_final_modifier = microchip_plants_manpower_fulfillment }
+	multiply_temp_variable = { building_final_modifier = microchip_unified }
+	multiply_variable = { microchip_plant_tax = building_final_modifier }
+
+	# Composite Plants
+	set_temp_variable = { building_final_modifier = 1 }
+	add_to_temp_variable = { building_final_modifier = modifier@composite_plant_income_tax_modifier }
+	set_temp_variable = { temp_prod_mod = 1 }
+	add_to_temp_variable = { temp_prod_mod = modifier@composite_plants_productivity_modifier }
+	multiply_temp_variable = { building_final_modifier = temp_prod_mod }
+	multiply_temp_variable = { building_final_modifier = composite_plants_manpower_fulfillment }
+	multiply_temp_variable = { building_final_modifier = composite_unified }
+	multiply_variable = { composite_plant_tax = building_final_modifier }
+
+	# Synthetic Refineries
+	set_temp_variable = { building_final_modifier = 1 }
+	add_to_temp_variable = { building_final_modifier = modifier@synthetic_refinery_income_tax_modifier }
+	set_temp_variable = { temp_prod_mod = 1 }
+	add_to_temp_variable = { temp_prod_mod = modifier@synthetic_refinery_productivity_modifier }
+	multiply_temp_variable = { building_final_modifier = temp_prod_mod }
+	multiply_temp_variable = { building_final_modifier = synthetic_refinery_manpower_fulfillment }
+	multiply_temp_variable = { building_final_modifier = synthetic_unified }
+	multiply_variable = { synthetic_refinery_tax = building_final_modifier }
+
+	##POP
+	set_variable = { var = population_tax value = population_total_m }
+	multiply_variable = { var = population_tax value = population_tax_rate }
+	multiply_variable = { population_tax = 0.45 } #Gives TOTAL potential tax assuming 100%
+
+	# Build unified population tax multiplier: gdp/c_scaling * (1 + pop_tax_modifier) * tax_gain_multiplier * 0.007
+	set_temp_variable = { pop_tax_gdp_c_multiplier = gdp_per_capita } #could use gdpc_converging_var instead
+	multiply_temp_variable = { pop_tax_gdp_c_multiplier = 0.005 } #linear scaling y = 0.005x + 0.75
+	add_to_temp_variable = { pop_tax_gdp_c_multiplier = 0.75 }
+
+	set_temp_variable = { population_tax_income_multiplier_modifier = 1 }
+	add_to_temp_variable = { population_tax_income_multiplier_modifier = modifier@population_tax_income_multiplier_modifier }
+	multiply_temp_variable = { pop_tax_gdp_c_multiplier = population_tax_income_multiplier_modifier }
+	multiply_temp_variable = { pop_tax_gdp_c_multiplier = tax_gain_multiplier }
+	multiply_temp_variable = { pop_tax_gdp_c_multiplier = 0.007 }
+
+	# Apply consolidated multiplier
+	multiply_variable = { population_tax = pop_tax_gdp_c_multiplier }
+
 
 	# Clamp the component values to 0 so we don't have our government gifting back tax money to the people
 	clamp_variable = { var = agriculture_district_tax min = 0 }
@@ -4625,32 +4608,38 @@ calculate_gdp = {
 	multiply_temp_variable = { gdp_from_synthetic_refinery = 10 }
 	multiply_temp_variable = { gdp_from_agriculture_district = 25 }	#was 26, original 38.8
 
-	set_temp_variable = { gdp_from_civs_multiplier = 1 }
-	set_temp_variable = { gdp_from_mils_multiplier = 1 }
-	set_temp_variable = { gdp_from_dockyards_multiplier = 1 }
-	set_temp_variable = { gdp_from_offices_multiplier = 1 }
-	set_temp_variable = { gdp_from_agriculture_district_multiplier = 1 }
-	set_temp_variable = { gdp_from_microchip_plants_multiplier = 1 }
-	set_temp_variable = { gdp_from_composite_plants_multiplier = 1 }
-	set_temp_variable = { gdp_from_synthetic_refinery_multiplier = 1 }
-
-	add_to_temp_variable = { gdp_from_civs_multiplier = modifier@civilian_factories_productivity }
-	add_to_temp_variable = { gdp_from_mils_multiplier = modifier@military_factories_productivity }
-	add_to_temp_variable = { gdp_from_dockyards_multiplier = modifier@dockyard_productivity }
-	add_to_temp_variable = { gdp_from_offices_multiplier = modifier@offices_productivity }
-	add_to_temp_variable = { gdp_from_agriculture_district_multiplier = modifier@agricolture_productivity_modifier }
-	add_to_temp_variable = { gdp_from_microchip_plants_multiplier = modifier@microchip_plants_productivity_modifier }
-	add_to_temp_variable = { gdp_from_composite_plants_multiplier = modifier@composite_plants_productivity_modifier }
-	add_to_temp_variable = { gdp_from_synthetic_refinery_multiplier = modifier@synthetic_refinery_productivity_modifier }
-
-	multiply_temp_variable = { gdp_from_civs = gdp_from_civs_multiplier }
-	multiply_temp_variable = { gdp_from_mils = gdp_from_mils_multiplier }
-	multiply_temp_variable = { gdp_from_dockyards = gdp_from_dockyards_multiplier }
-	multiply_temp_variable = { gdp_from_offices = gdp_from_offices_multiplier }
-	multiply_temp_variable = { gdp_from_agriculture_district = gdp_from_agriculture_district_multiplier }
-	multiply_temp_variable = { gdp_from_microchip_plants = gdp_from_microchip_plants_multiplier }
-	multiply_temp_variable = { gdp_from_composite_plants = gdp_from_composite_plants_multiplier }
-	multiply_temp_variable = { gdp_from_synthetic_refinery = gdp_from_synthetic_refinery_multiplier }
+	set_temp_variable = { temp_productivity_contribution = industrial_complex_total }
+	multiply_temp_variable = { temp_productivity_contribution = 20 }
+	multiply_temp_variable = { temp_productivity_contribution = modifier@civilian_factories_productivity }
+	add_to_temp_variable = { gdp_from_civs = temp_productivity_contribution }
+	set_temp_variable = { temp_productivity_contribution = military_fac }
+	multiply_temp_variable = { temp_productivity_contribution = 1 }
+	multiply_temp_variable = { temp_productivity_contribution = modifier@military_factories_productivity }
+	add_to_temp_variable = { gdp_from_mils = temp_productivity_contribution }
+	set_temp_variable = { temp_productivity_contribution = dockyard_fac }
+	multiply_temp_variable = { temp_productivity_contribution = 1 }
+	multiply_temp_variable = { temp_productivity_contribution = modifier@dockyard_productivity }
+	add_to_temp_variable = { gdp_from_dockyards = temp_productivity_contribution }
+	set_temp_variable = { temp_productivity_contribution = office_park_total }
+	multiply_temp_variable = { temp_productivity_contribution = 50 }
+	multiply_temp_variable = { temp_productivity_contribution = modifier@offices_productivity }
+	add_to_temp_variable = { gdp_from_offices = temp_productivity_contribution }
+	set_temp_variable = { temp_productivity_contribution = agriculture_district_total }
+	multiply_temp_variable = { temp_productivity_contribution = 25 }
+	multiply_temp_variable = { temp_productivity_contribution = modifier@agricolture_productivity_modifier }
+	add_to_temp_variable = { gdp_from_agriculture_district = temp_productivity_contribution }
+	set_temp_variable = { temp_productivity_contribution = microchip_plant_total }
+	multiply_temp_variable = { temp_productivity_contribution = 35 }
+	multiply_temp_variable = { temp_productivity_contribution = modifier@microchip_plants_productivity_modifier }
+	add_to_temp_variable = { gdp_from_microchip_plants = temp_productivity_contribution }
+	set_temp_variable = { temp_productivity_contribution = composite_plant_total }
+	multiply_temp_variable = { temp_productivity_contribution = 30 }
+	multiply_temp_variable = { temp_productivity_contribution = modifier@composite_plants_productivity_modifier }
+	add_to_temp_variable = { gdp_from_composite_plants = temp_productivity_contribution }
+	set_temp_variable = { temp_productivity_contribution = synthetic_refinery_total }
+	multiply_temp_variable = { temp_productivity_contribution = 10 }
+	multiply_temp_variable = { temp_productivity_contribution = modifier@synthetic_refinery_productivity_modifier }
+	add_to_temp_variable = { gdp_from_synthetic_refinery = temp_productivity_contribution }
 
 	multiply_temp_variable = { gdp_from_civs = civilian_factories_manpower_fulfillment }
 	multiply_temp_variable = { gdp_from_mils = military_factories_manpower_fulfillment }
@@ -5081,11 +5070,11 @@ update_employment_productivity_output_dynamic_modifier = {
 	set_temp_variable = { productivity_calculations_var = overall_productivity }
 	multiply_temp_variable = { productivity_calculations_var = 0.001 }
 
-	set_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = civilian_factories_manpower_fulfillment }
 	#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
+	set_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = industrial_complex_total }
+	multiply_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = civilian_factories_manpower_fulfillment }
 	set_temp_variable = { factories_from_other_sources = num_of_civilian_factories }
 	subtract_from_temp_variable = { factories_from_other_sources = industrial_complex_total }
-	multiply_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = industrial_complex_total }
 	add_to_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = factories_from_other_sources }
 	divide_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = num_of_civilian_factories }
 
@@ -5097,11 +5086,11 @@ update_employment_productivity_output_dynamic_modifier = {
 	add_to_temp_variable = { sum_of_construction_speed_modifiers = 1 }
 	multiply_variable = { construction_speed_output_var = sum_of_construction_speed_modifiers }
 
-	set_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_factories_manpower_fulfillment }
 	#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
+	set_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_fac }
+	multiply_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_factories_manpower_fulfillment }
 	set_temp_variable = { mil_factories_from_other_sources = num_of_military_factories }
 	subtract_from_temp_variable = { mil_factories_from_other_sources = military_fac }
-	multiply_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_fac }
 	add_to_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = mil_factories_from_other_sources }
 	divide_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = num_of_military_factories }
 
@@ -5113,11 +5102,11 @@ update_employment_productivity_output_dynamic_modifier = {
 	add_to_temp_variable = { sum_of_military_output_modifiers = 1 }
 	multiply_variable = { military_factories_output_var = sum_of_military_output_modifiers }
 
-	set_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = naval_factories_manpower_fulfillment }
 	#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
+	set_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = dockyard_fac }
+	multiply_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = naval_factories_manpower_fulfillment }
 	set_temp_variable = { nav_factories_from_other_sources = num_of_naval_factories }
 	subtract_from_temp_variable = { nav_factories_from_other_sources = dockyard_fac }
-	multiply_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = dockyard_fac }
 	add_to_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = nav_factories_from_other_sources }
 	divide_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = num_of_naval_factories }
 
@@ -5480,6 +5469,9 @@ setup_employment_variables = {
 			set_variable = { var = PREV.population_tax_rate value = 20 }
 		}
 	}
+
+	# Set for the power ranking system
+	set_continent_nation_flag = yes
 }
 
 set_initial_cost_resources = {
