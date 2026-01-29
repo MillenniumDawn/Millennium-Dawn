@@ -113,10 +113,10 @@ calculate_tax_rate = {
 			add_dynamic_modifier = { modifier = corporate_tax_consumer_goods_hit }
 		}
 		set_variable = { consumer_goods_from_corporate_tax = corporate_tax_rate }
+		multiply_variable = { consumer_goods_from_corporate_tax = 0.015 } # Doubles the Consumer Goods Penalty
+
 		set_variable = { receiving_investment_cost_form_corporate_tax = corporate_tax_rate }
-		multiply_variable = { consumer_goods_from_corporate_tax = 0.01 }
 		multiply_variable = { receiving_investment_cost_form_corporate_tax = 0.01 }
-		multiply_variable = { consumer_goods_from_corporate_tax = 1.5 } # Doubles the Consumer Goods Penalty
 
 		# Productivity
 		set_temp_variable = { base_modifier = corporate_tax_rate }
@@ -167,12 +167,10 @@ calculate_tax_gain = {
 	set_temp_variable = { agriculture_tax_rate = corporate_tax_rate }
 	multiply_temp_variable = { agriculture_tax_rate = 0.01 }
 	multiply_variable = { agriculture_tax_gain = agriculture_tax_rate }
-	set_temp_variable = { agriculture_tax_gain_multiplier = 1 }
-	add_to_temp_variable = { agriculture_tax_gain_multiplier = modifier@agricolture_productivity_modifier }
+	set_temp_variable = { agriculture_tax_gain_multiplier = modifier@agricolture_productivity_modifier }
+	multiply_temp_variable = { agriculture_tax_gain_multiplier = modifier@agriculture_tax_modifier }
+	add_to_temp_variable = { agriculture_tax_gain_multiplier = 1 }
 	multiply_variable = { agriculture_tax_gain = agriculture_tax_gain_multiplier }
-	set_temp_variable = { ag_tax_gain = 1 }
-	add_to_temp_variable = { ag_tax_gain = modifier@agriculture_tax_modifier }
-	multiply_variable = { agriculture_tax_gain = ag_tax_gain }
 	clamp_variable = { var = agriculture_tax_gain min = 0.001 }
 
 	# Buildings Base Tax Values
@@ -577,7 +575,7 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = additional_income_pmc }
 	}
 	if = {
-		limit = { is_cartel_nation = yes }
+		limit = { has_country_flag = is_cartel_nation }
 		if = {
 			limit = { has_country_flag = CARTEL_deal_with_the_devil_flag }
 			set_variable = { cartel_deal_with_the_devil = gdp_total }
@@ -706,24 +704,21 @@ calculate_additional_income_rate = {
 			limit = { has_idea = AFG_idea_Opium_Economy }
 			set_variable = { additional_income_AFG_idea_Opium_Economy = population_total }
 			multiply_variable = { additional_income_AFG_idea_Opium_Economy = 0.1 }	#Millions of people
-			multiply_variable = { additional_income_AFG_idea_Opium_Economy = 0.15 } #per million
-			multiply_variable = { additional_income_AFG_idea_Opium_Economy = 0.25 }	#weekly
+			multiply_variable = { additional_income_AFG_idea_Opium_Economy = 0.0375 } #per million
 			add_to_variable = { additional_income_rate = additional_income_AFG_idea_Opium_Economy }
 		}
 		if = {
 			limit = { has_idea = AFG_idea_Opium_barons }
 			set_variable = { additional_income_AFG_idea_Opium_barons = population_total }
 			multiply_variable = { additional_income_AFG_idea_Opium_barons = 0.1 }	#Millions of people
-			multiply_variable = { additional_income_AFG_idea_Opium_barons = 0.25 } #per million
-			multiply_variable = { additional_income_AFG_idea_Opium_barons = 0.25 }	#weekly
+			multiply_variable = { additional_income_AFG_idea_Opium_barons = 0.0625 } #per million of people
 			add_to_variable = { additional_income_rate = additional_income_AFG_idea_Opium_barons }
 		}
 		if = {
 			limit = { has_idea = AFG_idea_state_sponsored_opium_industry }
 			set_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = population_total }
 			multiply_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = 0.1 }	#Millions of people
-			multiply_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = 0.35 } #per million
-			multiply_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = 0.25 }	#weekly
+			multiply_variable = { additional_income_AFG_idea_state_sponsored_opium_industry = 0.0875 } #per million of people
 			add_to_variable = { additional_income_rate = additional_income_AFG_idea_state_sponsored_opium_industry }
 		}
 		if = {
@@ -823,26 +818,6 @@ calculate_additional_income_rate = {
 			limit = { has_idea = BOS_EUFOR }
 			set_variable = { BOS_EUFOR_aid_money = 0.2 }
 			add_to_variable = { additional_income_rate = BOS_EUFOR_aid_money }
-		}
-		if = {
-			limit = { has_idea = bos_cards_program }
-			set_variable = { BOS_cards_programs = 0.5 }
-			add_to_variable = { additional_income_rate = BOS_cards_programs }
-		}
-		if = {
-			limit = { has_idea = bos_international_funding }
-			set_variable = { Bosnia_united_nations_aid = 0.4 }
-			add_to_variable = { additional_income_rate = Bosnia_united_nations_aid }
-		}
-		if = {
-			limit = { has_idea = BOS_EUFOR }
-			set_variable = { BOS_EUFOR_aid_money = 0.2 }
-			add_to_variable = { additional_income_rate = BOS_EUFOR_aid_money }
-		}
-		if = {
-			limit = { has_idea = bos_cards_program }
-			set_variable = { Bosnia_united_nations_aid = 0.5 }
-			add_to_variable = { additional_income_rate = Bosnia_united_nations_aid }
 		}
 	}
 	# Kosovo
@@ -1386,15 +1361,13 @@ calculate_additional_income_rate = {
 		if = {
 			limit = { has_idea = PER_irgc_black_market_exploits }
 			set_variable = { additional_income_irgc_black_market = gdp_total }
-			multiply_variable = { additional_income_irgc_black_market = 0.10 }	#10% of GDP yearly
-			multiply_variable = { additional_income_irgc_black_market = 0.02 }	#weekly
+			multiply_variable = { additional_income_irgc_black_market = 0.002 }	#10% of GDP yearly estimated weekly
 			add_to_variable = { additional_income_rate = additional_income_irgc_black_market }
 		}
 		if = {
 			limit = { has_idea = PER_redirecting_money_from_proxies }
 			set_variable = { additional_income_redirection_money_from_proxies = gdp_total }
-			multiply_variable = { additional_income_redirection_money_from_proxies = 0.02 }	#2% of GDP yearly
-			multiply_variable = { additional_income_redirection_money_from_proxies = 0.02 }	#weekly
+			multiply_variable = { additional_income_redirection_money_from_proxies = 0.0004 }	#2% of GDP yearly estimated weekly
 			add_to_variable = { additional_income_rate = additional_income_redirection_money_from_proxies }
 		}
 		if = {
@@ -1419,8 +1392,7 @@ calculate_additional_income_rate = {
 		if = {
 			limit = { has_idea = VEN_iron_control_vdp }
 			set_variable = { additional_income_iron_control_vdp = gdp_total }
-			multiply_variable = { additional_income_iron_control_vdp = 0.10 }	#10% of GDP yearly
-			multiply_variable = { additional_income_iron_control_vdp = 0.02 }	#weekly
+			multiply_variable = { additional_income_iron_control_vdp = 0.002 }	#10% of GDP yearly estimated weekly
 			add_to_variable = { additional_income_rate = additional_income_iron_control_vdp }
 		}
 	}
@@ -1430,29 +1402,25 @@ calculate_additional_income_rate = {
 		if = {
 			limit = { has_idea = GER_russian_buddies }
 			set_variable = { additional_income_GER_russian_buddies = gdp_total }
-			multiply_variable = { additional_income_GER_russian_buddies = 0.02 } #2% of yearly GDP
-			multiply_variable = { additional_income_GER_russian_buddies = 0.02 } #weekly
+			multiply_variable = { additional_income_GER_russian_buddies = 0.0004 } #2% of yearly GDP yearly estimated weekly
 			add_to_variable = { additional_income_rate = additional_income_GER_russian_buddies }
 		}
 		if = {
 			limit = { has_idea = GER_idea_okosteuer }
 			set_variable = { additional_income_GER_Ökosteuer = GER.gdp_per_capita }
-			multiply_variable = { additional_income_GER_Ökosteuer = 0.45 } #2% of yearly GDP
-			multiply_variable = { additional_income_GER_Ökosteuer = 0.02 } #weekly
+			multiply_variable = { additional_income_GER_Ökosteuer = 0.009 } #2% of yearly GDP estimated weekly
 			add_to_variable = { additional_income_rate = additional_income_GER_Ökosteuer }
 		}
 		if = {
 			limit = { has_country_flag = GER_Solidaritatszuschlag }
 			set_variable = { additional_income_GER_Solidaritatszuschlag = GER.gdp_per_capita }
-			multiply_variable = { additional_income_GER_Solidaritatszuschlag = 0.22 } #2% of yearly GDP
-			multiply_variable = { additional_income_GER_Solidaritatszuschlag = 0.02 } #weekly
+			multiply_variable = { additional_income_GER_Solidaritatszuschlag = 0.0044 } #2% of yearly GDP estimated weekly
 			add_to_variable = { additional_income_rate = additional_income_GER_Solidaritatszuschlag }
 		}
 		if = {
 			limit = { has_country_flag = GER_Mehrwertsteuer }
 			set_variable = { additional_income_GER_Mehrwertsteuer = GER.gdp_per_capita }
-			multiply_variable = { additional_income_GER_Mehrwertsteuer = 2.6 } #8% of yearly GDP
-			multiply_variable = { additional_income_GER_Mehrwertsteuer = 0.02 } #weekly
+			multiply_variable = { additional_income_GER_Mehrwertsteuer = 0.052 } #8% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_GER_Mehrwertsteuer }
 		}
 	}
@@ -1462,15 +1430,13 @@ calculate_additional_income_rate = {
 		if = {
 			limit = { has_country_flag = HOL_BOT }
 			set_variable = { additional_income_HOL_BOT = HOL.gdp_per_capita }
-			multiply_variable = { additional_income_HOL_BOT = 0.02 } #2% of yearly GDP
-			multiply_variable = { additional_income_HOL_BOT = 0.02 } #weekly
+			multiply_variable = { additional_income_HOL_BOT = 0.0004 } #2% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_HOL_BOT }
 		}
 		if = {
 			limit = { has_idea = HOL_Weed_Center1 }
 			set_variable = { additional_income_HOL_Weed_Center1 = HOL.gdp_per_capita }
-			multiply_variable = { additional_income_HOL_Weed_Center1 = 0.10 } #10% of yearly GDP
-			multiply_variable = { additional_income_HOL_Weed_Center1 = 0.02 } #weekly
+			multiply_variable = { additional_income_HOL_Weed_Center1 = 0.002 } #10% of yearly GDP
 			add_to_variable = { additional_income_rate = additional_income_HOL_Weed_Center1 }
 		}
 	}
@@ -1480,8 +1446,7 @@ calculate_additional_income_rate = {
 		if = {
 			limit = { has_idea = TUR_taxing_bosphor }
 			set_variable = { TUR_taxing_bosphorus = gdp_total }
-			multiply_variable = { TUR_taxing_bosphorus = 0.10 }	#10% of GDP yearly
-			multiply_variable = { TUR_taxing_bosphorus = 0.02 }	#weekly
+			multiply_variable = { TUR_taxing_bosphorus = 0.002 }	#10% of GDP yearly
 			add_to_variable = { additional_income_rate = TUR_taxing_bosphorus }
 		}
 		if = {
@@ -1592,7 +1557,7 @@ calculate_additional_income_rate = {
 			set_variable = { additional_income_FRA_cfa_franc_custodian = 0 }
 			set_variable = { FRA_cfa_franc_gdp_total = 0 }
 			hidden_effect = {
-				every_country = {
+				every_other_country = {
 					limit = {
 						is_french_africa_nation = yes
 						OR = {
@@ -1643,14 +1608,6 @@ calculate_additional_income_rate = {
 			limit = { has_idea = RAJ_Local_markets }
 			set_variable = { RAJ_Local_markets_income = 0.08 }
 			add_to_variable = { additional_income_rate = RAJ_Local_markets_income }
-		}
-	}
-	#Comoros
-	if = { limit = { original_tag = COM }
-		if = {
-			limit = { has_idea = COM_export_vanil }
-			set_variable = { COM_export_vanil_income = 0.08 }
-			add_to_variable = { additional_income_rate = COM_export_vanil_income }
 		}
 	}
 	# Gulf
@@ -1931,36 +1888,31 @@ calculate_additional_income_rate = {
 }
 #Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
 calculate_interest_rate = {
-	if = {			#if country has no debt and high interest national spirit (because they paid it off from having 15% debt interest to 0 within the same in-game day), it'll set all to 0 and remove high interest spirit, also skipping all other calculations to save on processing.
-		limit = {
-			check_variable = { debt = 0 }
-			has_dynamic_modifier = { modifier = very_high_interest_country_modifiers }
-		}
+	# Handle no debt case - skip all debt calculations
+	if = {
+		limit = { check_variable = { debt = 0 } }
 
 		set_variable = { interest_rate = 0 }
 		set_variable = { debt_rate = 0 }
 		set_variable = { debt_ratio = 0 }
 
-		remove_dynamic_modifier = { modifier = very_high_interest_country_modifiers }		#removing high interest national spirit in case they sold all their debt when they had 15%+ interest rate all at once.
-		clear_variable = production_speed_buildings_factor_very_high_interest_modifier
-		clear_variable = industrial_capacity_factory_very_high_interest_modifier
-		clear_variable = industrial_capacity_dockyard_very_high_interest_modifier
-		clear_variable = stability_factor_very_high_interest_modifier
-		clear_variable = western_drift_very_high_interest_modifier
-		clear_variable = emerging_drift_very_high_interest_modifier
-		clear_variable = nonaligned_drift_very_high_interest_modifier
-		clear_variable = salafist_drift_very_high_interest_modifier
-		clear_variable = nationalist_drift_very_high_interest_modifier
-
-		if = {			#if country has no debt and no high interest national spirit, it will set them all to 0 and skip the typical debt related calculations (just the above but without removing high-interest stuff)
-			limit = { check_variable = { debt = 0 } }
-
-			set_variable = { interest_rate = 0 }
-			set_variable = { debt_rate = 0 }
-			set_variable = { debt_ratio = 0 }
+		# Remove high interest modifier if present (happens when country paid off all debt in same day)
+		if = {
+			limit = { has_dynamic_modifier = { modifier = very_high_interest_country_modifiers } }
+			remove_dynamic_modifier = { modifier = very_high_interest_country_modifiers }
+			clear_variable = production_speed_buildings_factor_very_high_interest_modifier
+			clear_variable = industrial_capacity_factory_very_high_interest_modifier
+			clear_variable = industrial_capacity_dockyard_very_high_interest_modifier
+			clear_variable = stability_factor_very_high_interest_modifier
+			clear_variable = western_drift_very_high_interest_modifier
+			clear_variable = emerging_drift_very_high_interest_modifier
+			clear_variable = nonaligned_drift_very_high_interest_modifier
+			clear_variable = salafist_drift_very_high_interest_modifier
+			clear_variable = nationalist_drift_very_high_interest_modifier
 		}
 	}
-	else = {			#normal interest rate, debt_rate, and debt_ratio calculations when country didn't meet previous 2 if's (basically if they have any amount of debt)
+	else = {
+		# Country has debt - calculate interest rate, debt_rate, and debt_ratio
 		#Base value comes from debt/gdp ratio
 		set_variable = { interest_rate = debt }
 		divide_variable = { interest_rate = gdp_total }
@@ -1969,16 +1921,11 @@ calculate_interest_rate = {
 		#Additional additive modifiers
 		set_variable = { interest_rate_multiplier = modifier@interest_rate_multiplier_modifier }
 		add_to_variable = { interest_rate = interest_rate_multiplier }
-		clamp_variable = {
-			var = interest_rate
-			min = 0.8
-			max = 50
-		} #Min is 0.8% on debt max is 50%
+		clamp_variable = { var = interest_rate min = 0.8 max = 50 } #Min is 0.8% on debt max is 50%
 
 		#Calculate debt rate based on interest
 		set_variable = { debt_rate = debt }
-		multiply_variable = { debt_rate = 0.01 }
-		multiply_variable = { debt_rate = 0.019 }	#Weekly interest rate, 52 weeks in a year
+		multiply_variable = { debt_rate = 0.00019 }	#Weekly interest rate, 52 weeks in a year
 		multiply_variable = { debt_rate = interest_rate }	#Yearly interest rate
 
 		#If interest rate is really high, add additional modifier
@@ -2032,6 +1979,7 @@ calculate_interest_rate = {
 			}
 			force_update_dynamic_modifier = yes
 		}
+		# Remove high interest modifier if interest rate dropped below 15%
 		if = {
 			limit = {
 				check_variable = { interest_rate < 15 }
@@ -2039,6 +1987,8 @@ calculate_interest_rate = {
 			}
 			remove_dynamic_modifier = { modifier = very_high_interest_country_modifiers }
 			clear_variable = production_speed_buildings_factor_very_high_interest_modifier
+			clear_variable = industrial_capacity_factory_very_high_interest_modifier
+			clear_variable = industrial_capacity_dockyard_very_high_interest_modifier
 			clear_variable = stability_factor_very_high_interest_modifier
 			clear_variable = western_drift_very_high_interest_modifier
 			clear_variable = emerging_drift_very_high_interest_modifier
@@ -2193,7 +2143,8 @@ update_military_rate = {
 	set_temp_variable = { irregular_btn = num_battalions_with_type@Militia_Bat }
 	add_to_temp_variable = { irregular_btn = num_battalions_with_type@Mot_Militia_Bat }
 
-	#Multiply each category with a weight value, and then add up categories together (eg. one special forces battalion is worth 1 militia battalion etc). Use these if you want to control costs of different land units to each other
+	# Multiply each category with a weight value, and then add up categories together (eg. one special forces battalion is worth 1 militia battalion etc).
+	# Use these if you want to control costs of different land units to each other
 	multiply_temp_variable = { special_btn = 5 }
 	multiply_temp_variable = { elite_btn = 3 }
 	multiply_temp_variable = { regular_btn = 2 }
@@ -2206,12 +2157,11 @@ update_military_rate = {
 
 	#available manpower
 	set_temp_variable = { available_manpower_cost = manpower }
-	multiply_temp_variable = { available_manpower_cost = 0.001 }
-	multiply_temp_variable = { available_manpower_cost = 0.2 }
+	multiply_temp_variable = { available_manpower_cost = 0.0002 }
 	add_to_temp_variable = { land_count = available_manpower_cost }
 
 	#Land equipment
-		#num_equipment is for stockpile, num_equipment_in_armies is for deployed, num_equipment_in_armies_k is for small arms and support eq (1 = 1000 eq)
+	#num_equipment is for stockpile, num_equipment_in_armies is for deployed, num_equipment_in_armies_k is for small arms and support eq (1 = 1000 eq)
 	#deployed equipment
 	set_temp_variable = { Inf_equipment_deployed_count = num_equipment_in_armies_k@Inf_equipment }
 	set_temp_variable = { cnc_equipment_deployed_count = num_equipment_in_armies_k@cnc_equipment }
@@ -2403,7 +2353,6 @@ update_military_rate = {
 	multiply_temp_variable = { corvette_count = 1 }
 	multiply_temp_variable = { patrol_boat_count = 0.25 }
 
-	set_temp_variable = { navy_count = 0 }
 	set_temp_variable = { navy_count = carrier_count }
 	add_to_temp_variable = { navy_count = capital_count }
 	add_to_temp_variable = { navy_count = destroyer_count }
@@ -2520,10 +2469,10 @@ update_military_rate = {
 
 	# Naval Forces - Cost weights per ship:
 	#   - Carrier:   40
-	#   - Capital:	8
-	#   - Destroyer:  6
-	#   - Frigate:	4
-	#   - Corvette:   2
+	#   - Capital:   8
+	#   - Destroyer: 6
+	#   - Frigate:   4
+	#   - Corvette:  2
 	multiply_temp_variable = { navy_count = 1 }
 
 	# Air Forces - Cost weights per aircraft:
@@ -2596,8 +2545,7 @@ update_military_rate = {
 	}
 
 	#Divide by control factors (same for all!) - Use this if you want to scale cost of military personnel in relation to defence industry
-	multiply_temp_variable = { land_count = 0.001 }
-	multiply_temp_variable = { land_count = 0.76 }
+	multiply_temp_variable = { land_count = 0.00076 }
 	multiply_temp_variable = { navy_count = 0.001 }
 	multiply_temp_variable = { airforce_count = 0.001 }
 	multiply_temp_variable = { airforce_count = 0.667 }
@@ -3912,25 +3860,15 @@ calculate_resource_sale_rate = {
 	set_variable = { resource_export_multiplier_display = resource_export_multiplier }
 	subtract_from_variable = { resource_export_multiplier_display = 1 }
 
-	#Income for 7 days
-	multiply_variable = { oil_exports = 0.007 }
-	multiply_variable = { steel_exports = 0.007 }
-	multiply_variable = { aluminium_exports = 0.007 }
-	multiply_variable = { tungsten_exports = 0.007 }
-	multiply_variable = { chromium_exports = 0.007 }
-	multiply_variable = { rubber_exports = 0.007 }
-	multiply_variable = { microchip_exports = 0.007 }
-	multiply_variable = { composite_exports = 0.007 }
-
-	#Scale factors
-	multiply_variable = { oil_exports = 0.526 }
-	multiply_variable = { steel_exports = 0.526 }
-	multiply_variable = { aluminium_exports = 0.526 }
-	multiply_variable = { tungsten_exports = 0.526 }
-	multiply_variable = { chromium_exports = 0.526 }
-	multiply_variable = { rubber_exports = 0.526 }
-	multiply_variable = { microchip_exports = 0.526 }
-	multiply_variable = { composite_exports = 0.526 }
+	#Income for 7 days with scale factors (0.007 * 0.526 = 0.003682)
+	multiply_variable = { oil_exports = 0.00368 }
+	multiply_variable = { steel_exports = 0.00368 }
+	multiply_variable = { aluminium_exports = 0.00368 }
+	multiply_variable = { tungsten_exports = 0.00368 }
+	multiply_variable = { chromium_exports = 0.00368 }
+	multiply_variable = { rubber_exports = 0.00368 }
+	multiply_variable = { microchip_exports = 0.00368 }
+	multiply_variable = { composite_exports = 0.00368 }
 
 	# Clamp Export Values at 0 so Luigi's massive negatives don't break my shit
 	clamp_variable = { var = oil_exports min = 0 }
@@ -4043,107 +3981,66 @@ update_economic_cycle_cost = {
 
 update_cyber_cost = {
 	if = {
-		limit = {
-			check_variable = { gdp_total < 501 }
-		}
+		limit = { check_variable = { gdp_total < 501 } }
 		set_variable = { treasury_cyber_small = gdp_total }
 		multiply_variable = { treasury_cyber_small = 0.006 }
 		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.011 }
-		multiply_variable = { treasury_cyber_medium = 0.85 }
+		multiply_variable = { treasury_cyber_medium = 0.00935 } # 0.011 * 0.85
 		set_variable = { treasury_cyber_large = gdp_total }
 		multiply_variable = { treasury_cyber_large = 0.015 }
 	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 500 }
-			check_variable = { gdp_total < 1001 }
-		}
+	else_if = {
+		limit = { check_variable = { gdp_total < 1001 } }
 		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.005 }
-		multiply_variable = { treasury_cyber_small = 0.85 }
+		multiply_variable = { treasury_cyber_small = 0.00425 } # 0.005 * 0.85
 		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.009 }
-		multiply_variable = { treasury_cyber_medium = 0.85 }
+		multiply_variable = { treasury_cyber_medium = 0.00765 } # 0.009 * 0.85
 		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.015 }
-		multiply_variable = { treasury_cyber_large = 0.90 }
+		multiply_variable = { treasury_cyber_large = 0.0135 } # 0.015 * 0.90
 	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 1000 }
-			check_variable = { gdp_total < 2001 }
-		}
+	else_if = {
+		limit = { check_variable = { gdp_total < 2001 } }
 		set_variable = { treasury_cyber_small = gdp_total }
 		multiply_variable = { treasury_cyber_small = 0.004 }
 		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.007 }
-		multiply_variable = { treasury_cyber_medium = 0.85 }
+		multiply_variable = { treasury_cyber_medium = 0.00595 } # 0.007 * 0.85
 		set_variable = { treasury_cyber_large = gdp_total }
 		multiply_variable = { treasury_cyber_large = 0.01 }
 	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 2000 }
-			check_variable = { gdp_total < 5001 }
-		}
+	else_if = {
+		limit = { check_variable = { gdp_total < 5001 } }
 		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.003 }
-		multiply_variable = { treasury_cyber_small = 0.85 }
+		multiply_variable = { treasury_cyber_small = 0.00255 } # 0.003 * 0.85
 		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.005 }
-		multiply_variable = { treasury_cyber_medium = 0.75 }
+		multiply_variable = { treasury_cyber_medium = 0.00375 } # 0.005 * 0.75
 		set_variable = { treasury_cyber_large = gdp_total }
 		multiply_variable = { treasury_cyber_large = 0.005 }
 	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 5000 }
-			check_variable = { gdp_total < 10001 }
-		}
+	else_if = {
+		limit = { check_variable = { gdp_total < 10001 } }
 		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.002 }
-		multiply_variable = { treasury_cyber_small = 0.85 }
+		multiply_variable = { treasury_cyber_small = 0.0017 } # 0.002 * 0.85
 		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.003 }
-		multiply_variable = { treasury_cyber_medium = 0.90 }
+		multiply_variable = { treasury_cyber_medium = 0.0027 } # 0.003 * 0.90
 		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.005 }
-		multiply_variable = { treasury_cyber_large = 0.80 }
+		multiply_variable = { treasury_cyber_large = 0.004 } # 0.005 * 0.80
 	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 10000 }
-			check_variable = { gdp_total < 30001 }
-		}
+	else_if = {
+		limit = { check_variable = { gdp_total < 30001 } }
 		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.002 }
-		multiply_variable = { treasury_cyber_small = 0.70 }
+		multiply_variable = { treasury_cyber_small = 0.0014 } # 0.002 * 0.70
 		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.003 }
-		multiply_variable = { treasury_cyber_medium = 0.65 }
+		multiply_variable = { treasury_cyber_medium = 0.00195 } # 0.003 * 0.65
 		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.003 }
-		multiply_variable = { treasury_cyber_large = 0.85 }
+		multiply_variable = { treasury_cyber_large = 0.00255 } # 0.003 * 0.85
 	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 30000 }
-		}
+	else = {
 		set_variable = { treasury_cyber_small = gdp_total }
 		multiply_variable = { treasury_cyber_small = 0.001 }
 		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.002 }
-		multiply_variable = { treasury_cyber_medium = 0.70 }
+		multiply_variable = { treasury_cyber_medium = 0.0014 } # 0.002 * 0.70
 		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.002 }
-		multiply_variable = { treasury_cyber_large = 0.87 }
+		multiply_variable = { treasury_cyber_large = 0.00174 } # 0.002 * 0.87
 	}
 
 	#Additional additive modifiers
@@ -4159,10 +4056,9 @@ update_cyber_cost = {
 automated_debt_taker = { # Checks to see if treasury is negative at the same time as weekly balance adds or removes from treasury, borrowing debt automatically if treasury is negative (to make it positive).
 	if = { limit = { check_variable = { treasury < 0 } }
 		set_temp_variable = { treasury_temp = treasury }
-		multiply_temp_variable = { treasury_temp = -1 }
-		multiply_temp_variable = { treasury_temp = 1.25 }
+		multiply_temp_variable = { treasury_temp = -1.25 }
 		set_temp_variable = { gdp_adder = gdp_total }
-		multiply_temp_variable = { gdp_adder = 0.01 } # 0.1% of GDP
+		multiply_temp_variable = { gdp_adder = 0.01 } # 1% of GDP
 		add_to_temp_variable = { treasury_temp = gdp_adder }
 		set_temp_variable = { debt_temp = treasury_temp }
 		multiply_temp_variable = { debt_temp = 1.01 } # adding 1% fee to debt autmoatically taken out (manual borrowing also has this)
@@ -4875,8 +4771,7 @@ calculate_gdp_modifiers = {
 	# Clamped at 0%
 	set_variable = { monthly_population_gdp_modifier = 60 }
 	subtract_from_variable = { monthly_population_gdp_modifier = gdp_per_capita }
-	multiply_variable = { monthly_population_gdp_modifier = 0.001 }
-	multiply_variable = { monthly_population_gdp_modifier = 20 } # Was 0.05 division but should yield the same modifier
+	multiply_variable = { monthly_population_gdp_modifier = 0.02 }
 	clamp_variable = { var = monthly_population_gdp_modifier min = 0 }
 
 	#Research speed factor
@@ -4902,9 +4797,8 @@ calculate_gdp_modifiers = {
 
 	#fossil powerplants construction speed
 	set_variable = { fossil_pp_construction_gdp_c_modifier_var = gdp_per_capita }
-	multiply_variable = { fossil_pp_construction_gdp_c_modifier_var = 0.02 }
+	multiply_variable = { fossil_pp_construction_gdp_c_modifier_var = -0.02 }
 	add_to_variable = { fossil_pp_construction_gdp_c_modifier_var = -0.5 }
-	multiply_variable = { fossil_pp_construction_gdp_c_modifier_var = -1 }
 	clamp_variable = { var = fossil_pp_construction_gdp_c_modifier_var min = -0.75 }
 
 	# Determine energy use per pop

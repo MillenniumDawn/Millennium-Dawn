@@ -1,11 +1,14 @@
-# Author(s): Sheep, Bondex
+# Author(s): AngriestBird, Sheep, Bondex
+# TODO: Refactor the Mayotte content so it's more interesting for Comoros
+# TODO: Expand the political parties for Comoros to include additional parties and politicians
+# TODO: Add a section about the Comorian people their constitution and the autonomy degree for the islands
 focus_tree = {
 	id = comoros_focus
 
 	country = {
 		base = 0
 		modifier = {
-			add = 5
+			add = 10
 			original_tag = COM
 		}
 	}
@@ -14,13 +17,13 @@ focus_tree = {
 
 	shared_focus = AFRICAN_UNION_shared_focus
 
-	#Army Tree
+	# Military Tree
 	focus = {
 		id = COM_army
 		icon = Comorean_Army_1
 
-		x = 12
-		y = 9
+		x = 4
+		y = 0
 
 		cost = 5
 
@@ -28,15 +31,30 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_army executed"
-			army_experience = 10
-			navy_experience = 5
-			air_experience = 5
-			add_war_support = 0.05
+			army_experience = 50
+			navy_experience = 25
+			air_experience = 25
 			increase_military_spending = yes
+
+			hidden_effect = {
+				if = { limit = { is_ai = yes is_historical_focus_on = no }
+					random_list = {
+						33 = {
+							set_country_flag = COM_army_route_1
+						}
+						33 = {
+							set_country_flag = COM_army_route_2
+						}
+						33 = {
+							set_country_flag = COM_army_route_3
+						}
+					}
+				}
+			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -44,29 +62,73 @@ focus_tree = {
 		id = COM_mission_from_unrec
 		icon = align_to_united_nations
 
-		x = -1
+		x = -3
 		y = 1
 		relative_position_id = COM_army
 
-		cost = 3
+		cost = 4
 
 		prerequisite = { focus = COM_army }
 		mutually_exclusive = { focus = COM_african_mercenaries }
+		mutually_exclusive = { focus = COM_our_own_path }
 
-		search_filters = { FOCUS_FILTER_MANPOWER }
+		search_filters = { FOCUS_FILTER_INFLUENCE }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_mission_from_unrec executed"
-			custom_effect_tooltip = COM_unrec_TT
-			set_temp_variable = { percent_change = -5 }
+			set_temp_variable = { percent_change = 7.5 }
 			change_domestic_influence_percentage = yes
-			army_experience = 10
-			air_experience = 10
-			add_manpower = 1000
+			add_stability = 0.05
+
+			clr_country_flag = COM_army_route_1
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 2
+				has_country_flag = COM_army_route_1
+			}
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	focus = {
+		id = COM_our_own_path
+		icon = align_to_united_nations
+
+		x = 0
+		y = 1
+		relative_position_id = COM_army
+
+		cost = 4
+
+		prerequisite = { focus = COM_army }
+		mutually_exclusive = { focus = COM_african_mercenaries }
+		mutually_exclusive = { focus = COM_mission_from_unrec }
+
+		search_filters = { FOCUS_FILTER_ARMY_XP FOCUS_FILTER_NAVY_XP FOCUS_FILTER_AIR_XP FOCUS_FILTER_WAR_SUPPORT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_our_own_path executed"
+			army_experience = 75
+			navy_experience = 75
+			air_experience = 75
+
+			add_war_support = 0.05
+
+			clr_country_flag = COM_army_route_2
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 2
+				has_country_flag = COM_army_route_2
+			}
 		}
 	}
 
@@ -74,261 +136,436 @@ focus_tree = {
 		id = COM_african_mercenaries
 		icon = Generic_Soldier_Aiming
 
-		x = 1
+		x = 3
 		y = 1
 		relative_position_id = COM_army
 
-		cost = 2
+		cost = 4
 
 		prerequisite = { focus = COM_army }
 		mutually_exclusive = { focus = COM_mission_from_unrec }
+		mutually_exclusive = { focus = COM_our_own_path }
 
 		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_african_mercenaries executed"
-			custom_effect_tooltip = COM_mercs_TT
 			add_stability = -0.05
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
-			army_experience = 5
-			division_template = {
-				name = "AFRIKA-TDL PMC"
-				regiments = {
-					Militia_Bat = { x = 0 y = 0 }
-					Militia_Bat = { x = 0 y = 1 }
-					Militia_Bat = { x = 1 y = 0 }
-					Militia_Bat = { x = 1 y = 1 }
+
+			custom_override_tooltip = {
+				tooltip = COM_african_mercenaries_tt
+				division_template = {
+					name = "AFRIKA-TDL PMC"
+					is_locked = yes
+					regiments = {
+						L_Inf_Bat = { x = 0 y = 0 }
+						L_Inf_Bat = { x = 0 y = 1 }
+						L_Inf_Bat = { x = 1 y = 0 }
+						L_Inf_Bat = { x = 1 y = 1 }
+					}
+					priority = 2
 				}
-				priority = 2
-			}
-			random_owned_controlled_state = {
-				limit = { ROOT = { has_full_control_of_state = PREV } }
-				prioritize = { 46 }
-				create_unit = {
-					division = "name = \"AFRIKA-TDL PMC\" division_template = \"AFRIKA-TDL PMC\" start_experience_factor = 0.4"
-					owner = COM
+				capital_scope = {
+					create_unit = {
+						division = "name = \"AFRIKA-TDL PMC\" division_template = \"AFRIKA-TDL PMC\" start_experience_factor = 0.4"
+						owner = COM
+					}
 				}
 			}
+			clr_country_flag = COM_army_route_3
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 2
+				has_country_flag = COM_army_route_3
+			}
+			modifier = {
+				factor = 0
+				has_stability < 0.25
+			}
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 
 	focus = {
-		id = COM_modernize_the_army
-		icon = forces_comoros
+		id = COM_peaceful_disarmament
+		icon = confirm_non_block_status
 
-		x = 0
+		x = -2
 		y = 2
 		relative_position_id = COM_army
 
 		cost = 5
 
-		prerequisite = { focus = COM_mission_from_unrec focus = COM_african_mercenaries }
+		prerequisite = { focus = COM_our_own_path focus = COM_mission_from_unrec }
+
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_MILITARY_LAWS }
+
+		bypass = {
+			has_idea = no_military
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_peaceful_disarmament executed"
+			set_no_military_effect = yes
+			if = { limit = { has_stability < 0.80 }
+				add_stability = 0.05
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 1.25
+				has_stability < 0.60
+			}
+			modifier = {
+				factor = 1.25
+				has_stability < 0.45
+			}
+			modifier = {
+				factor = 1.25
+				has_stability < 0.30
+			}
+		}
+	}
+
+	focus = {
+		id = COM_total_ban_on_personal_weapons
+		icon = lend_lease
+
+		x = -2
+		y = 3
+		relative_position_id = COM_army
+
+		cost = 5
+
+		prerequisite = { focus = COM_peaceful_disarmament }
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_MILITARY_LAWS }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_total_ban_on_personal_weapons executed"
+			add_ideas = COM_total_ban_on_personal_weapons_idea
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_homegrown_military_manufacturing
+		icon = army_military_industryy
+
+		x = 0
+		y = 3
+		relative_position_id = COM_army
+
+		cost = 5
+
+		prerequisite = {
+			focus = COM_expanded_military_industries
+			focus = COM_peaceful_disarmament
+		}
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_MILITARY_LAWS }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_homegrown_military_manufacturing executed"
+			one_random_arms_factory = yes
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_idea = no_military
+			}
+			modifier = {
+				factor = 0
+				set_temp_variable = { input_cost = 7.50 }
+				set_temp_variable = { interest_rate_check = 7.99 }
+				calculate_ai_interest = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
+		}
+	}
+
+	focus = {
+		id = COM_expanded_military_industries
+		icon = industry4
+
+		x = 1
+		y = 2
+		relative_position_id = COM_army
+
+		cost = 5
+
+		prerequisite = { focus = COM_our_own_path focus = COM_african_mercenaries }
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_MILITARY_LAWS }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_expanded_military_industries executed"
+			one_random_arms_factory = yes
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_idea = no_military
+			}
+			modifier = {
+				factor = 0
+				set_temp_variable = { input_cost = 7.50 }
+				set_temp_variable = { interest_rate_check = 7.99 }
+				calculate_ai_interest = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
+		}
+	}
+
+	focus = {
+		id = COM_modernize_the_army
+		icon = Focus_Mobile_Warfare_Doctrine
+
+		x = 3
+		y = 2
+		relative_position_id = COM_army
+
+		cost = 5
+
+		prerequisite = { focus = COM_our_own_path focus = COM_african_mercenaries }
 
 		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_MILITARY_LAWS }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_modernize_the_army executed"
-			increase_officer_training_level = yes
-			add_tech_bonus = {
-				name = COM_modernize_the_army
-				bonus = 0.5
-				uses = 3
-				category = CAT_inf
+			swap_ideas = {
+				remove_idea = COM_poor_military_idea
+				add_idea = COM_poor_military_idea2
 			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_invite_the_pmcs
+		icon = army_invite_pmc
+
+		x = 5
+		y = 2
+		relative_position_id = COM_army
+
+		cost = 5
+
+		prerequisite = { focus = COM_african_mercenaries }
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_MILITARY_LAWS }
+
+		available = {
+			OR = {
+				has_country_flag = COM_expanded_private_military_operations
+				has_country_leader = { name = "Robert Denard" ruling_only = yes }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_invite_the_pmcs executed"
+			add_ideas = COM_comorosian_private_military_companies
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_expand_the_presidential_guard
+		icon = army_mobilisation
+
+		x = 4
+		y = 3
+		relative_position_id = COM_army
+
+		cost = 5
+
+		prerequisite = { focus = COM_modernize_the_army focus = COM_invite_the_pmcs }
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_MILITARY_LAWS }
+
+		available = {
+			NOT = { has_country_flag = COM_disbanded_presidential_guard }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_expand_the_presidential_guard executed"
+			custom_effect_tooltip = COM_expand_the_presidential_guard_tt
+			hidden_effect = {
+				if = {
+					limit = { NOT = { has_template = "The Presidential Guard" } }
+					division_template = {
+						name = "The Presidential Guard"
+						is_locked = yes
+						priority = 2
+						regiments = {
+							Special_Forces = { x = 0 y = 0 }
+						}
+					}
+				}
+
+				capital_scope = {
+					create_unit = {
+						division = "name = \"2nd Presidential Guard\" division_template = \"The Presidential Guard\" start_experience_factor = 0.3"
+						owner = COM
+						count = 1
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_reform_defunct_pmc_units
+		icon = invite_pmcs
+
+		x = 6
+		y = 3
+		relative_position_id = COM_army
+
+		cost = 5
+
+		prerequisite = { focus = COM_invite_the_pmcs }
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_MILITARY_LAWS }
+
+		available = {
+			OR = {
+				has_country_flag = COM_expanded_private_military_operations
+				has_country_leader = { name = "Robert Denard" ruling_only = yes }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_reform_defunct_pmc_units executed"
+			custom_effect_tooltip = COM_reform_defunct_pmc_units_tt
+		}
+
+		ai_will_do = {
+			base = 10
 		}
 	}
 
 	focus = {
 		id = COM_expand_the_police_force
-		icon = BRA_funds_to_rj_police
+		icon = Generic_Policeman
 
-		x = 0
+		x = 2
 		y = 3
 		relative_position_id = COM_army
 
 		cost = 4
 
 		prerequisite = { focus = COM_modernize_the_army }
+		prerequisite = { focus = COM_expanded_military_industries }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_expand_the_police_force executed"
+			add_ideas = COM_militarized_police_force_idea
 			increase_policing_budget = yes
-			add_tech_bonus = {
-				name = COM_expand_the_police_force
-				bonus = 1
-				uses = 1
-				category = CAT_support_weapons
-			}
-			add_stability = 0.01
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
 	focus = {
-		id = COM_expand_the_defence_force
+		id = COM_expand_the_defense_force
 		icon = new_com_military
 
-		x = 0
+		x = 3
 		y = 4
 		relative_position_id = COM_army
 
 		cost = 5
 
-		prerequisite = { focus = COM_expand_the_police_force }
+		prerequisite = { focus = COM_expand_the_police_force focus = COM_expand_the_presidential_guard }
 
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_STABILITY FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_expand_the_defence_force executed"
+			log = "[GetDateText]: [Root.GetName]: Focus COM_expand_the_defense_force executed"
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
-			remove_ideas = COM_poor_military
+			remove_ideas = COM_poor_military_idea
 			add_stability = 0.02
 		}
 
 		ai_will_do = {
-			factor = 10
-		}
-	}
-
-	focus = {
-		id = COM_network_warfare
-		icon = soldiers
-
-		x = -2
-		y = 5
-		relative_position_id = COM_army
-
-		cost = 5
-
-		prerequisite = { focus = COM_expand_the_defence_force }
-		mutually_exclusive = { focus = COM_decentralized_warfare focus = COM_guerilla_warfare }
-
-		search_filters = { FOCUS_FILTER_RESEARCH }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_network_warfare executed"
-			add_tech_bonus = {
-				name = COM_network_warfare
-				bonus = 1
-				uses = 2
-				category = CAT_land_doctrine
+			base = 10
+			modifier = {
+				factor = 2.5
+				has_stability < 0.25
 			}
 		}
-
-		ai_will_do = {
-			factor = 10
-		}
 	}
-
-	focus = {
-		id = COM_decentralized_warfare
-		icon = Generic_Colonial_Army
-
-		x = 0
-		y = 5
-		relative_position_id = COM_army
-
-		cost = 5
-
-		prerequisite = { focus = COM_expand_the_defence_force }
-		mutually_exclusive = { focus = COM_network_warfare focus = COM_guerilla_warfare }
-
-		search_filters = { FOCUS_FILTER_RESEARCH }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_decentralized_warfare executed"
-			add_tech_bonus = {
-				name = COM_decentralized_warfare
-				bonus = 1
-				uses = 2
-				category = CAT_land_doctrine
-			}
-		}
-
-		ai_will_do = {
-			factor = 10
-		}
-	}
-
-	focus = {
-		id = COM_guerilla_warfare
-		icon = Generic_Barricade
-
-		x = 2
-		y = 5
-		relative_position_id = COM_army
-
-		cost = 5
-
-		prerequisite = { focus = COM_expand_the_defence_force }
-		mutually_exclusive = { focus = COM_network_warfare focus = COM_decentralized_warfare }
-
-		search_filters = { FOCUS_FILTER_RESEARCH }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_guerilla_warfare executed"
-			add_tech_bonus = {
-				name = COM_guerilla_warfare
-				bonus = 1
-				uses = 2
-				category = CAT_unconventional
-			}
-		}
-
-		ai_will_do = {
-			factor = 10
-		}
-	}
-
-	#Navy Tree
 
 	focus = {
 		id = COM_naval_treaty_with_france
 		icon = align_to_france
 
-		x = 21
-		y = 9
+		x = 7
+		y = 6
 
-		cost = 5
+		cost = 7.14
 
 		mutually_exclusive = { focus = COM_naval_treaty_with_china }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		bypass = {
-			has_war_with = FRA
+		available = {
+			country_exists = FRA
+			NOT = { has_war_with = FRA }
+			OR = {
+				is_subject = yes
+				NOT = { is_subject_of = FRA }
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_naval_treaty_with_france executed"
-			navy_experience = 25
-			give_military_access = FRA
-			set_temp_variable = { percent_change = 2 }
-			set_temp_variable = { tag_index = FRA }
-			set_temp_variable = { influence_target = COM }
-			change_influence_percentage = yes
 			FRA = {
-				country_event = comor.7
+				COM_establish_naval_base_effect = yes
 			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -336,34 +573,34 @@ focus_tree = {
 		id = COM_naval_treaty_with_china
 		icon = align_to_china
 
-		x = 23
-		y = 9
+		x = 2
+		y = 0
+		relative_position_id = COM_naval_treaty_with_france
 
-		cost = 5
+		cost = 7.14
 
 		mutually_exclusive = { focus = COM_naval_treaty_with_france }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		bypass = {
-			has_war_with = CHI
+		available = {
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+			OR = {
+				is_subject = yes
+				NOT = { is_subject_of = CHI }
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_naval_treaty_with_china executed"
-			navy_experience = 25
-			give_military_access = CHI
-			set_temp_variable = { percent_change = 2 }
-			set_temp_variable = { tag_index = CHI }
-			set_temp_variable = { influence_target = COM }
-			change_influence_percentage = yes
 			CHI = {
-				country_event = comor.7
+				COM_establish_naval_base_effect = yes
 			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -371,15 +608,13 @@ focus_tree = {
 		id = COM_modernize_the_patrol_boats
 		icon = longboat
 
-		x = 21
-		y = 10
+		x = 0
+		y = 1
+		relative_position_id = COM_naval_treaty_with_france
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_naval_treaty_with_france
-			focus = COM_naval_treaty_with_china
-		}
+		prerequisite = { focus = COM_naval_treaty_with_france focus = COM_naval_treaty_with_china }
 		mutually_exclusive = { focus = COM_buy_patrol_boats }
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
@@ -401,7 +636,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -415,21 +650,31 @@ focus_tree = {
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_naval_treaty_with_france
-			focus = COM_naval_treaty_with_china
-		}
+		prerequisite = { focus = COM_naval_treaty_with_france focus = COM_naval_treaty_with_china }
 		mutually_exclusive = { focus = COM_modernize_the_patrol_boats }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_buy_patrol_boats executed"
-			add_ideas = ENG_small_ship_project
+			add_ideas = COM_small_ship_project_idea
 			set_temp_variable = { temp_opinion = 5 }
 			change_maritime_industry_opinion = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 1.5
+				check_variable = { maritime_industry_opinion < 50 }
+			}
+			modifier = {
+				factor = 1.5
+				any_enemy_country = {
+					naval_strength_ratio = {
+						tag = COM
+						ratio > 1
+					}
+				}
+			}
 		}
 	}
 
@@ -443,10 +688,7 @@ focus_tree = {
 
 		cost = 8
 
-		prerequisite = {
-			focus = COM_modernize_the_patrol_boats
-			focus = COM_buy_patrol_boats
-		}
+		prerequisite = { focus = COM_modernize_the_patrol_boats focus = COM_buy_patrol_boats }
 
 		available = {
 			269 = { is_controlled_by = ROOT }
@@ -467,7 +709,29 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_the_eastern_african_entrepot
+		icon = ENG_Expand_Trade_Fleet
+
+		x = 1
+		y = 2
+		relative_position_id = COM_modernize_the_patrol_boats
+
+		cost = 8
+
+		prerequisite = { focus = COM_expand_the_dockyards }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_the_eastern_african_entrepot executed"
+			add_ideas = COM_the_east_africa_entrepot_idea
+		}
+
+		ai_will_do = {
+			base = 10
 		}
 	}
 
@@ -475,17 +739,17 @@ focus_tree = {
 		id = COM_fortress_comoros
 		icon = Comorean_Coast_Guard_1
 
-		x = -7
-		y = 1
+		x = -6
+		y = 0
 		relative_position_id = COM_expand_the_dockyards
 
 		cost = 10
 
-		prerequisite = { focus = COM_expand_the_dockyards }
+		prerequisite = { focus = COM_expand_the_prince_said_irabhim_airport }
 		prerequisite = { focus = COM_new_aircraft_purchases }
 
 		available = {
-			269 = { is_controlled_by = ROOT }
+			269 = { is_owned_and_controlled_by = COM }
 		}
 
 		completion_reward = {
@@ -512,23 +776,36 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			if = {
-				limit = { 940 = { is_controlled_by = ROOT } }
-				set_temp_variable = { treasury_change = -1 }
-				modify_treasury_effect = yes
-				940 = {
-					add_building_construction = {
-						type = coastal_bunker
-						province = 13285
-						level = 2
-						instant_build = yes
+			custom_effect_tooltip = COM_if_controls_mayotte_tt
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+			940 = {
+				add_building_construction = {
+					type = coastal_bunker
+					province = 13285
+					level = 2
+					instant_build = yes
+				}
+			}
+			hidden_effect = {
+				if = {
+					limit = { 940 = { is_controlled_by = ROOT } }
+					set_temp_variable = { treasury_change = -1 }
+					modify_treasury_effect = yes
+					940 = {
+						add_building_construction = {
+							type = coastal_bunker
+							province = 13285
+							level = 2
+							instant_build = yes
+						}
 					}
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -536,8 +813,8 @@ focus_tree = {
 		id = COM_air_force
 		icon = Comorean_Air_Force_1
 
-		x = -7
-		y = -1
+		x = -6
+		y = -2
 		relative_position_id = COM_expand_the_dockyards
 
 		cost = 5
@@ -556,7 +833,44 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_expand_the_prince_said_irabhim_airport
+		icon = build_airport
+
+		x = 1
+		y = 1
+		relative_position_id = COM_air_force
+
+		cost = 5
+
+		prerequisite = { focus = COM_air_force }
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT }
+
+		available = {
+			269 = { is_owned_and_controlled_by = COM }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_expand_the_prince_said_irabhim_airport executed"
+			set_temp_variable = { treasury_change = -2.5 }
+			modify_treasury_effect = yes
+
+			269 = {
+				add_building_construction = {
+					type = air_base
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
 		}
 	}
 
@@ -565,7 +879,7 @@ focus_tree = {
 		icon = african_planes
 
 		x = -7
-		y = 0
+		y = -1
 		relative_position_id = COM_expand_the_dockyards
 
 		cost = 7
@@ -608,54 +922,60 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
 	focus = {
-		id = COM_diplomacy
+		id = COM_expand_available_helicopters
+		icon = african_planes
+
+		x = -8
+		y = 0
+		relative_position_id = COM_expand_the_dockyards
+
+		cost = 7
+
+		prerequisite = { focus = COM_new_aircraft_purchases }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_expand_available_helicopters executed"
+			add_equipment_to_stockpile = {
+				type = transport_helicopter1
+				amount = 5
+				producer = SWI
+			}
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_comorian_politics
 		icon = Comoros_coa
 
-		x = 20
+		x = 23
 		y = 0
 
-		cost = 2
+		cost = 5
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_diplomacy executed"
-			country_event = comor.15
+			log = "[GetDateText]: [Root.GetName]: Focus COM_comorian_politics executed"
+			country_event = comoros.15
+
+			add_political_power = 125
 		}
 
 		ai_will_do = {
-			factor = 10
-		}
-	}
-
-	focus = {
-		id = COM_ideological_drift
-		icon = improve_relations_green
-
-		x = -1
-		y = 1
-		relative_position_id = COM_diplomacy
-
-		cost = 3
-
-		prerequisite = {
-			focus = COM_diplomacy
-		}
-
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_ideological_drift executed"
-			add_political_power = 150
-		}
-
-		ai_will_do = {
-			factor = 10
+			base = 15
 		}
 	}
 
@@ -663,14 +983,16 @@ focus_tree = {
 		id = COM_introduce_democracy
 		icon = democratic_stability
 
-		x = -2
-		y = 2
-		relative_position_id = COM_diplomacy
+		x = 0
+		y = 1
+		relative_position_id = COM_comorian_politics
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_ideological_drift
+		prerequisite = { focus = COM_comorian_politics }
+
+		available = {
+			has_country_flag = COM_constitutional_government
 		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
@@ -685,7 +1007,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -694,18 +1016,17 @@ focus_tree = {
 		icon = azali_com
 
 		x = -2
-		y = 3
-		relative_position_id = COM_diplomacy
+		y = 1
+		relative_position_id = COM_introduce_democracy
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_introduce_democracy
-		}
+		prerequisite = { focus = COM_introduce_democracy }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
+			NOT = { has_country_flag = COM_robert_denard_seized_power }
 			democratic > 0.4
 		}
 
@@ -715,12 +1036,12 @@ focus_tree = {
 				idea = generic_western_boost_idea
 				days = 400
 			}
-			remove_ideas = COM_dictators
+			remove_ideas = COM_dictators_idea
 			add_popularity = { ideology = democratic popularity = 0.10 }
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -729,18 +1050,17 @@ focus_tree = {
 		icon = daudou_com
 
 		x = -8
-		y = 3
-		relative_position_id = COM_diplomacy
+		y = 2
+		relative_position_id = COM_comorian_politics
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_introduce_democracy
-		}
+		prerequisite = { focus = COM_introduce_democracy }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
+			NOT = { has_country_flag = COM_robert_denard_seized_power }
 			western_conservatism_are_in_power = yes
 		}
 
@@ -758,14 +1078,14 @@ focus_tree = {
 				idea = generic_western_boost_idea2
 				days = 365
 			}
-			remove_ideas = COM_dictators
+			remove_ideas = COM_dictators_idea
 			set_temp_variable = { party_index = 1 }
 			set_temp_variable = { party_popularity_increase = 0.1 }
 			add_relative_party_popularity = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -779,9 +1099,7 @@ focus_tree = {
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_orange_party
-		}
+		prerequisite = { focus = COM_orange_party }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -791,29 +1109,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_radical_stance_on_trafficking"
-			TAL = {
-				add_opinion_modifier = {
-					target = COM
-					modifier = declaration_of_hostility
-				}
-			}
-			ALB = {
-				add_opinion_modifier = {
-					target = COM
-					modifier = declaration_of_hostility
-				}
-			}
-			ERI = {
-				add_opinion_modifier = {
-					target = COM
-					modifier = declaration_of_hostility
-				}
-			}
+			TAL = { add_opinion_modifier = { target = COM modifier = declaration_of_hostility } }
+			ALB = { add_opinion_modifier = { target = COM modifier = declaration_of_hostility } }
+			ERI = { add_opinion_modifier = { target = COM modifier = declaration_of_hostility } }
 			decrease_corruption = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -822,14 +1125,12 @@ focus_tree = {
 		icon = authoritarian_democracy2
 
 		x = -6
-		y = 5
-		relative_position_id = COM_diplomacy
+		y = 4
+		relative_position_id = COM_comorian_politics
 
 		cost = 8
 
-		prerequisite = {
-			focus = COM_radical_stance_on_trafficking
-		}
+		prerequisite = { focus = COM_radical_stance_on_trafficking }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 
@@ -840,7 +1141,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_efficient_governmental_apparatus"
 			add_ideas = BRA_idea_tax_reformation
-			add_political_power = -100
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
 			change_international_bankers_opinion = yes
@@ -849,7 +1149,14 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 1.5
+				OR = {
+					check_variable = { international_bankers_opinion < 50 }
+					check_variable = { small_medium_business_owners_opinion < 50 }
+				}
+			}
 		}
 	}
 
@@ -858,14 +1165,12 @@ focus_tree = {
 		icon = focus_generic_national_security
 
 		x = -8
-		y = 5
-		relative_position_id = COM_diplomacy
+		y = 4
+		relative_position_id = COM_comorian_politics
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_radical_stance_on_trafficking
-		}
+		prerequisite = { focus = COM_radical_stance_on_trafficking }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -884,7 +1189,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -893,17 +1198,13 @@ focus_tree = {
 		icon = Focus_Generic_Labour_Camps
 
 		x = -9
-		y = 6
-		relative_position_id = COM_diplomacy
+		y = 5
+		relative_position_id = COM_comorian_politics
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_meritocracy
-		}
-		mutually_exclusive = {
-			focus = COM_balancing
-		}
+		prerequisite = { focus = COM_meritocracy }
+		mutually_exclusive = { focus = COM_balancing }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -920,7 +1221,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -929,14 +1230,12 @@ focus_tree = {
 		icon = MEX_Political_corruption
 
 		x = -9
-		y = 7
-		relative_position_id = COM_diplomacy
+		y = 6
+		relative_position_id = COM_comorian_politics
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_push_it_to_the_limit
-		}
+		prerequisite = { focus = COM_push_it_to_the_limit }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -953,7 +1252,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -962,15 +1261,12 @@ focus_tree = {
 		icon = CNPC
 
 		x = -8
-		y = 8
-		relative_position_id = COM_diplomacy
+		y = 7
+		relative_position_id = COM_comorian_politics
 
 		cost = 10
 
-		prerequisite = {
-			focus = COM_absolute_employment
-			focus = COM_state_run_capitalism
-		}
+		prerequisite = { focus = COM_absolute_employment focus = COM_state_run_capitalism }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 
@@ -980,7 +1276,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_daudouism"
-			remove_ideas = COM_big_problems
+			remove_ideas = COM_big_problems_idea
 			add_ideas = BRA_revitalize_economy
 			set_temp_variable = { temp_opinion = 5 }
 			change_international_bankers_opinion = yes
@@ -988,7 +1284,14 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 1.5
+				OR = {
+					check_variable = { maritime_industry_opinion < 50 }
+					check_variable = { international_bankers_opinion < 50 }
+				}
+			}
 		}
 	}
 
@@ -997,14 +1300,12 @@ focus_tree = {
 		icon = Generic_Corporatism
 
 		x = -7
-		y = 7
-		relative_position_id = COM_diplomacy
+		y = 6
+		relative_position_id = COM_comorian_politics
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_balancing
-		}
+		prerequisite = { focus = COM_balancing }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -1022,7 +1323,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -1031,17 +1332,13 @@ focus_tree = {
 		icon = pass_legislation
 
 		x = -7
-		y = 6
-		relative_position_id = COM_diplomacy
+		y = 5
+		relative_position_id = COM_comorian_politics
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_meritocracy
-		}
-		mutually_exclusive = {
-			focus = COM_push_it_to_the_limit
-		}
+		prerequisite = { focus = COM_meritocracy }
+		mutually_exclusive = { focus = COM_push_it_to_the_limit }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -1058,7 +1355,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -1072,9 +1369,7 @@ focus_tree = {
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_radical_stance_on_trafficking
-		}
+		prerequisite = { focus = COM_radical_stance_on_trafficking }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 
@@ -1093,26 +1388,22 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
 	focus = {
-		id = COM_social_democracy_in_afrika
+		id = COM_social_democracy_in_africa
 		icon = social_dem_est_alt_dds_file
 
 		x = -4
-		y = 4
-		relative_position_id = COM_diplomacy
+		y = 3
+		relative_position_id = COM_comorian_politics
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_convention_renewal_party
-		}
-		mutually_exclusive = {
-			focus = COM_maintain_dictatorship
-		}
+		prerequisite = { focus = COM_convention_renewal_party }
+		mutually_exclusive = { focus = COM_maintain_dictatorship }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
@@ -1121,7 +1412,7 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_social_democracy_in_afrika"
+			log = "[GetDateText]: [Root.GetName]: Focus COM_social_democracy_in_africa"
 			add_ideas = FRA_administrative_reforms_1
 			add_stability = 0.05
 			add_country_leader_trait = democratic_reformer
@@ -1130,23 +1421,21 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
 	focus = {
-		id = COM_a_true_deocracy
+		id = COM_a_true_democracy
 		icon = democracy6
 
 		x = -4
-		y = 5
-		relative_position_id = COM_diplomacy
+		y = 4
+		relative_position_id = COM_comorian_politics
 
 		cost = 6
 
-		prerequisite = {
-			focus = COM_social_democracy_in_afrika
-		}
+		prerequisite = { focus = COM_social_democracy_in_africa }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 
@@ -1155,7 +1444,7 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_a_true_deocracy"
+			log = "[GetDateText]: [Root.GetName]: Focus COM_a_true_democracy"
 			add_timed_idea = {
 				idea = IND_fighting_corrupt_members
 				days = 400
@@ -1173,7 +1462,14 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 1.5
+				OR = {
+					check_variable = { maritime_industry_opinion < 50 }
+					check_variable = { international_bankers_opinion < 50 }
+				}
+			}
 		}
 	}
 
@@ -1182,15 +1478,12 @@ focus_tree = {
 		icon = confirm_non_block_status
 
 		x = -2
-		y = 5
-		relative_position_id = COM_diplomacy
+		y = 4
+		relative_position_id = COM_comorian_politics
 
 		cost = 6
 
-		prerequisite = {
-			focus = COM_social_democracy_in_afrika
-			focus = COM_maintain_dictatorship
-		}
+		prerequisite = { focus = COM_social_democracy_in_africa focus = COM_maintain_dictatorship }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
 
@@ -1203,14 +1496,20 @@ focus_tree = {
 			add_ideas = BRA_idea_agrarian_reform
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
-			set_temp_variable = { temp_opinion = 5 }
-			change_farmers_opinion = yes
 			set_temp_variable = { temp_opinion = 10 }
+			change_farmers_opinion = yes
 			change_maritime_industry_opinion = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 1.5
+				OR = {
+					check_variable = { maritime_industry_opinion < 50 }
+					check_variable = { farmers_opinion < 50 }
+				}
+			}
 		}
 	}
 
@@ -1219,14 +1518,12 @@ focus_tree = {
 		icon = BRA_appease_the_congress
 
 		x = -2
-		y = 6
-		relative_position_id = COM_diplomacy
+		y = 5
+		relative_position_id = COM_comorian_politics
 
 		cost = 6
 
-		prerequisite = {
-			focus = COM_stabilizing_society
-		}
+		prerequisite = { focus = COM_stabilizing_society }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
 
@@ -1244,7 +1541,11 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 1.5
+				check_variable = { international_bankers_opinion < 50 }
+			}
 		}
 	}
 
@@ -1253,14 +1554,12 @@ focus_tree = {
 		icon = communist_purge
 
 		x = -2
-		y = 7
-		relative_position_id = COM_diplomacy
+		y = 6
+		relative_position_id = COM_comorian_politics
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_assembly_of_union
-		}
+		prerequisite = { focus = COM_assembly_of_union }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -1283,25 +1582,21 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
 	focus = {
-		id = COM_our_pertnership
+		id = COM_our_partnership
 		icon = focus_usaid
 
 		x = -2
-		y = 8
-		relative_position_id = COM_diplomacy
+		y = 7
+		relative_position_id = COM_comorian_politics
 
 		cost = 10
 
-		prerequisite = {
-			focus = COM_purging_dissidents
-			focus = COM_form_tanzancom
-			focus = COM_social_agenda
-		}
+		prerequisite = { focus = COM_purging_dissidents focus = COM_form_tanzancom focus = COM_social_agenda }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -1310,17 +1605,17 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_our_pertnership"
+			log = "[GetDateText]: [Root.GetName]: Focus COM_our_partnership"
 			USA = {
-				country_event = { id = comor.16 days = 1 }
+				country_event = { id = comoros.16 days = 1 }
 			}
 			add_ideas = USA_usaid
-			remove_ideas = COM_big_problems
+			remove_ideas = COM_big_problems_idea
 			ingame_update_setup = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -1329,14 +1624,12 @@ focus_tree = {
 		icon = free_higher_education
 
 		x = -4
-		y = 6
-		relative_position_id = COM_diplomacy
+		y = 5
+		relative_position_id = COM_comorian_politics
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_a_true_deocracy
-		}
+		prerequisite = { focus = COM_a_true_democracy }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -1353,7 +1646,11 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 1.5
+				check_variable = { farmers_opinion < 50 }
+			}
 		}
 	}
 
@@ -1362,14 +1659,12 @@ focus_tree = {
 		icon = generic_embrace_agrarian_society
 
 		x = -4
-		y = 7
-		relative_position_id = COM_diplomacy
+		y = 6
+		relative_position_id = COM_comorian_politics
 
 		cost = 8
 
-		prerequisite = {
-			focus = COM_subsidies_for_education
-		}
+		prerequisite = { focus = COM_subsidies_for_education }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 
@@ -1389,7 +1684,11 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 1.5
+				check_variable = { maritime_industry_opinion < 50 }
+			}
 		}
 	}
 
@@ -1397,15 +1696,13 @@ focus_tree = {
 		id = COM_befriend_the_west
 		icon = western_alignment
 
-		x = 3
-		y = 0
-		relative_position_id = COM_fortress_comoros
+		x = -2
+		y = 1
+		relative_position_id = COM_naval_treaty_with_france
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_naval_treaty_with_france
-		}
+		prerequisite = { focus = COM_naval_treaty_with_france }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -1427,7 +1724,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -1435,32 +1732,38 @@ focus_tree = {
 		id = COM_buy_missile_defences
 		icon = air_defense
 
-		x = 2
+		x = -1
 		y = 1
-		relative_position_id = COM_fortress_comoros
+		relative_position_id = COM_befriend_the_west
 
 		cost = 6
 
-		prerequisite = {
-			focus = COM_fortress_comoros
-		}
-		prerequisite = {
-			focus = COM_befriend_the_west
-		}
+		prerequisite = { focus = COM_befriend_the_west }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_befriend_the_west executed"
-			add_equipment_to_stockpile = {
-				type = SP_Anti_Air_0
-				amount = 75
-				producer = FRA
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_to_stockpile = {
+					type = medium_tank_aa_chassis_0
+					amount = 75
+					producer = FRA
+					variant_name = "Roland II"
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = SP_Anti_Air_0
+					amount = 75
+					producer = FRA
+				}
 			}
 			set_temp_variable = { treasury_change = -1.2 }
 			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -1468,18 +1771,13 @@ focus_tree = {
 		id = COM_tighter_edf_cooperation
 		icon = Provincial_Funding_for_Roads
 
-		x = 4
+		x = 1
 		y = 1
-		relative_position_id = COM_fortress_comoros
+		relative_position_id = COM_befriend_the_west
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_fortress_comoros
-		}
-		prerequisite = {
-			focus = COM_befriend_the_west
-		}
+		prerequisite = { focus = COM_befriend_the_west }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INFLUENCE FOCUS_FILTER_STABILITY }
 
@@ -1495,7 +1793,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -1503,18 +1801,14 @@ focus_tree = {
 		id = COM_non_nato_ally
 		icon = blr_nato_cooperation
 
-		x = 3
+		x = 0
 		y = 2
-		relative_position_id = COM_fortress_comoros
+		relative_position_id = COM_befriend_the_west
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_tighter_edf_cooperation
-		}
-		prerequisite = {
-			focus = COM_buy_missile_defences
-		}
+		prerequisite = { focus = COM_tighter_edf_cooperation }
+		prerequisite = { focus = COM_buy_missile_defences }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INFLUENCE }
 
@@ -1535,7 +1829,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -1543,15 +1837,13 @@ focus_tree = {
 		id = COM_befriend_the_east
 		icon = eastern_alignment
 
-		x = 11
-		y = 0
-		relative_position_id = COM_fortress_comoros
+		x = 2
+		y = 1
+		relative_position_id = COM_naval_treaty_with_china
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_naval_treaty_with_china
-		}
+		prerequisite = { focus = COM_naval_treaty_with_china }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -1570,7 +1862,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -1578,32 +1870,38 @@ focus_tree = {
 		id = COM_buy_missile_defences_rus
 		icon = russianZSU
 
-		x = 10
+		x = -1
 		y = 1
-		relative_position_id = COM_fortress_comoros
+		relative_position_id = COM_befriend_the_east
 
 		cost = 6
 
-		prerequisite = {
-			focus = COM_fortress_comoros
-		}
-		prerequisite = {
-			focus = COM_befriend_the_east
-		}
+		prerequisite = { focus = COM_befriend_the_east }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_befriend_the_west executed"
-			add_equipment_to_stockpile = {
-				type = SP_Anti_Air_0
-				amount = 75
-				producer = SOV
+			log = "[GetDateText]: [Root.GetName]: Focus COM_buy_missile_defences_rus executed"
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_to_stockpile = {
+					type = medium_tank_aa_chassis_0
+					amount = 75
+					producer = SOV
+					variant_name = "ZSU-23-4 Shilka"
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = SP_Anti_Air_0
+					amount = 75
+					producer = SOV
+				}
 			}
 			set_temp_variable = { treasury_change = -1.2 }
 			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -1611,18 +1909,13 @@ focus_tree = {
 		id = COM_tighter_chi_cooperation
 		icon = roads_extend_plan
 
-		x = 12
+		x = 1
 		y = 1
-		relative_position_id = COM_fortress_comoros
+		relative_position_id = COM_befriend_the_east
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_fortress_comoros
-		}
-		prerequisite = {
-			focus = COM_befriend_the_east
-		}
+		prerequisite = { focus = COM_befriend_the_east }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INFLUENCE FOCUS_FILTER_STABILITY }
 
@@ -1638,30 +1931,28 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
 	focus = {
-		id = COM_anri_nato_ally
+		id = COM_anti_nato_ally
 		icon = BLR_pro_russian_army_experince
 
-		x = 11
+		x = 0
 		y = 2
-		relative_position_id = COM_fortress_comoros
+		relative_position_id = COM_befriend_the_east
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_tighter_chi_cooperation
-		}
-		prerequisite = {
-			focus = COM_buy_missile_defences_rus
-		}
+		prerequisite = { focus = COM_tighter_chi_cooperation }
+		prerequisite = { focus = COM_buy_missile_defences_rus }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INFLUENCE }
 
-		available = { SOV = { has_completed_focus = SOV_slavic_corps } }
+		available = {
+			SOV = { has_completed_focus = SOV_slavic_corps }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_non_nato_ally executed"
@@ -1699,13 +1990,13 @@ focus_tree = {
 			set_temp_variable = { influence_target = COM }
 			change_influence_percentage = yes
 			SOV = {
-			set_country_flag = SOV_comoros_wagner_placed
-			clr_country_flag = SOV_comoros_wagner_notplaced
+				set_country_flag = SOV_comoros_wagner_placed
+				clr_country_flag = SOV_comoros_wagner_notplaced
 			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -1714,17 +2005,13 @@ focus_tree = {
 		icon = focus_generic_military_dictatorship
 
 		x = 0
-		y = 4
-		relative_position_id = COM_diplomacy
+		y = 3
+		relative_position_id = COM_comorian_politics
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_convention_renewal_party
-		}
-		mutually_exclusive = {
-			focus = COM_social_democracy_in_afrika
-		}
+		prerequisite = { focus = COM_convention_renewal_party }
+		mutually_exclusive = { focus = COM_social_democracy_in_africa }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
 
@@ -1755,7 +2042,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -1769,9 +2056,7 @@ focus_tree = {
 
 		cost = 6
 
-		prerequisite = {
-			focus = COM_maintain_dictatorship
-		}
+		prerequisite = { focus = COM_maintain_dictatorship }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -1783,14 +2068,14 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_draw_closer_to_the_au executed"
 			add_political_power = 100
 			every_country = {
-					limit = {
-						has_idea = AU_member
-					}
-					add_opinion_modifier = {
-						target = COM
-						modifier = declaration_of_friendship
-					}
+				limit = {
+					has_idea = AU_member
 				}
+				add_opinion_modifier = {
+					target = COM
+					modifier = declaration_of_friendship
+				}
+			}
 			add_timed_idea = {
 				idea = AZE_trade_idea
 				days = 365
@@ -1798,7 +2083,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -1812,9 +2097,7 @@ focus_tree = {
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_draw_closer_to_the_au
-		}
+		prerequisite = { focus = COM_draw_closer_to_the_au }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INFLUENCE }
 
@@ -1833,12 +2116,18 @@ focus_tree = {
 			}
 			set_temp_variable = { temp_opinion = 10 }
 			change_the_military_opinion = yes
-			set_temp_variable = { temp_opinion = 5 }
 			change_maritime_industry_opinion = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 1.5
+				OR = {
+					check_variable = { maritime_industry_opinion < 50 }
+					check_variable = { the_military_opinion < 50 }
+				}
+			}
 		}
 	}
 
@@ -1852,9 +2141,7 @@ focus_tree = {
 
 		cost = 8
 
-		prerequisite = {
-			focus = COM_ohada
-		}
+		prerequisite = { focus = COM_ohada }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 
@@ -1864,13 +2151,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_form_tanzancom executed"
-			TNZ = {
-				add_opinion_modifier = {
-					target = COM
-					modifier = declaration_of_friendship
-				}
-				country_event = comor.2
-			}
+			add_opinion_modifier = { target = TNZ modifier = declaration_of_friendship }
+			reverse_add_opinion_modifier = { target = TNZ modifier = declaration_of_friendship }
+
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
 			set_temp_variable = { temp_opinion = -5 }
@@ -1878,7 +2161,15 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 1.5
+				check_variable = { maritime_industry_opinion < 50 }
+			}
+			modifier = {
+				factor = 0.25
+				check_variable = { farmers_opinion < 35 }
+			}
 		}
 	}
 
@@ -1886,25 +2177,24 @@ focus_tree = {
 		id = COM_influence_of_islam
 		icon = muslim_arab_world
 
-		x = 6
+		x = 4
 		y = 1
 		relative_position_id = COM_introduce_democracy
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_introduce_democracy
-		}
+		prerequisite = { focus = COM_introduce_democracy }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
-			available = {
-				OR = {
-					communism > 0.4
-					nationalist > 0.4
-					fascism > 0.4
-				}
+		available = {
+			NOT = { has_country_flag = COM_robert_denard_seized_power }
+			OR = {
+				communism > 0.4
+				nationalist > 0.4
+				fascism > 0.4
 			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_influence_of_islam executed"
@@ -1924,7 +2214,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -1938,9 +2228,7 @@ focus_tree = {
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_influence_of_islam
-		}
+		prerequisite = { focus = COM_influence_of_islam }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 
@@ -1975,7 +2263,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -1989,9 +2277,7 @@ focus_tree = {
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_closer_ties_with_arab_league
-		}
+		prerequisite = { focus = COM_closer_ties_with_arab_league }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -2001,7 +2287,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_seek_help_from_the_saudis executed"
-			add_political_power = -100
 			remove_ideas = IND_islamic_schools
 			add_timed_idea = {
 				idea = IND_islamic_schools_2
@@ -2021,12 +2306,12 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
 	focus = {
-		id = COM_clearing_the_nomenlclature
+		id = COM_clearing_the_nomenclature
 		icon = BLR_Democratic_clean
 
 		x = 0
@@ -2035,10 +2320,7 @@ focus_tree = {
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_closer_ties_with_arab_league
-			focus = COM_befriend_baath
-		}
+		prerequisite = { focus = COM_closer_ties_with_arab_league focus = COM_befriend_baath }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -2051,8 +2333,7 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_clearing_the_nomenlclature executed"
-			add_political_power = -100
+			log = "[GetDateText]: [Root.GetName]: Focus COM_clearing_the_nomenclature executed"
 			increase_military_spending = yes
 			set_temp_variable = { party_index = 3 }
 			set_temp_variable = { party_popularity_increase = -0.04 }
@@ -2061,7 +2342,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2075,9 +2356,7 @@ focus_tree = {
 
 		cost = 10
 
-		prerequisite = {
-			focus = COM_clearing_the_nomenlclature
-		}
+		prerequisite = { focus = COM_clearing_the_nomenclature }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INFLUENCE }
 
@@ -2091,7 +2370,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_nationalization_of_capital executed"
-			add_political_power = -500
 			FRA = {
 				add_opinion_modifier = {
 					target = COM
@@ -2124,7 +2402,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2138,9 +2416,7 @@ focus_tree = {
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_nationalization_of_capital
-		}
+		prerequisite = { focus = COM_nationalization_of_capital }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -2159,7 +2435,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2173,9 +2449,7 @@ focus_tree = {
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_seek_help_from_the_saudis
-		}
+		prerequisite = { focus = COM_seek_help_from_the_saudis }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
 
@@ -2197,12 +2471,12 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
 	focus = {
-		id = COM_panarabism
+		id = COM_pan_arabism
 		icon = islamic_militarism
 
 		x = -2
@@ -2221,7 +2495,7 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_panarabism executed"
+			log = "[GetDateText]: [Root.GetName]: Focus COM_pan_arabism executed"
 			swap_ideas = {
 				remove_idea = IND_sharia
 				add_idea = IND_sharia_2
@@ -2232,12 +2506,12 @@ focus_tree = {
 			}
 			add_stability = -0.15
 			add_political_power = 100
-			remove_ideas = COM_big_problems
+			remove_ideas = COM_big_problems_idea
 			set_cosmetic_tag = COM_AUTH_S_fascism
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2251,9 +2525,7 @@ focus_tree = {
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_influence_of_islam
-		}
+		prerequisite = { focus = COM_influence_of_islam }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 
@@ -2262,7 +2534,7 @@ focus_tree = {
 				has_government = nationalist
 				has_government = communism
 			}
-			NOT = { has_completed_focus = COM_greater_interisland_cooperation }
+			NOT = { has_completed_focus = COM_greater_inter_island_cooperation }
 		}
 
 		completion_reward = {
@@ -2291,7 +2563,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2324,12 +2596,12 @@ focus_tree = {
 					modifier = declaration_of_friendship
 				}
 			}
-			country_event = comor.1
+			country_event = comoros.1
 			custom_effect_tooltip = COM_dd_TT
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2369,7 +2641,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2398,14 +2670,281 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_declare_islamic_republic executed"
 			add_ideas = BRA_idea_harsher_conscription
-			add_political_power = -100
 			add_stability = 0.15
-			remove_ideas = COM_big_problems
+			remove_ideas = COM_big_problems_idea
 			set_cosmetic_tag = UAR_12_democratic
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+		}
+	}
+
+	# Denard - The Warrior King
+	focus = {
+		id = COM_the_warrior_king
+		icon = Generic_Ultranationalist_Government
+
+		x = 9
+		y = 0
+		relative_position_id = COM_introduce_democracy
+
+		cost = 5
+
+		prerequisite = { focus = COM_comorian_politics }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			has_country_flag = COM_robert_denard_seized_power
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_the_warrior_king executed"
+			# TODO: Add a focus reward for this
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_the_consolidation_of_power
+		icon = focus_consolidat
+
+		x = -1
+		y = 1
+		relative_position_id = COM_the_warrior_king
+
+		cost = 5
+
+		prerequisite = { focus = COM_the_warrior_king }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			has_country_flag = COM_robert_denard_seized_power
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_the_warrior_king executed"
+			# TODO: Add a focus reward for this
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_legitimize_our_rule
+		icon = focus_generic_improve_the_administration
+
+		x = 1
+		y = 1
+		relative_position_id = COM_the_warrior_king
+
+		cost = 5
+
+		prerequisite = { focus = COM_the_warrior_king }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			has_country_flag = COM_robert_denard_seized_power
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_the_warrior_king executed"
+			# TODO: Add a focus reward for this
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_declare_the_state_of_pmcs
+		icon = focus_ARG_keep_it_in_the_party
+
+		x = 0
+		y = 2
+		relative_position_id = COM_the_warrior_king
+
+		cost = 5
+
+		prerequisite = { focus = COM_legitimize_our_rule }
+		prerequisite = { focus = COM_the_consolidation_of_power }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			has_country_flag = COM_robert_denard_seized_power
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_the_warrior_king executed"
+			# TODO: Add a focus reward for this
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_a_rifle_for_hire
+		icon = army_marching
+
+		x = -1
+		y = 3
+		relative_position_id = COM_the_warrior_king
+
+		cost = 5
+
+		prerequisite = { focus = COM_declare_the_state_of_pmcs }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			has_country_flag = COM_robert_denard_seized_power
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_the_warrior_king executed"
+			# TODO: Add a focus reward for this
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_expanded_regional_operations
+		icon = Focus_Expedition_to_the_South
+
+		x = 1
+		y = 3
+		relative_position_id = COM_the_warrior_king
+
+		cost = 5
+
+		prerequisite = { focus = COM_declare_the_state_of_pmcs }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			has_country_flag = COM_robert_denard_seized_power
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_the_warrior_king executed"
+			# TODO: Add a focus reward for this
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_expanded_global_operations
+		icon = global_community
+
+		x = 0
+		y = 4
+		relative_position_id = COM_the_warrior_king
+
+		cost = 5
+
+		prerequisite = { focus = COM_a_rifle_for_hire }
+		prerequisite = { focus = COM_expanded_regional_operations }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			has_country_flag = COM_robert_denard_seized_power
+			nationalist_military_junta_are_in_power = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_the_warrior_king executed"
+			# TODO: Add a focus reward for this
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_the_zanzibar_agreement
+		icon = align_to_tanzania
+
+		x = 11
+		y = 1
+		relative_position_id = COM_comorian_politics
+
+		cost = 5
+
+		prerequisite = { focus = COM_comorian_politics }
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				has_completed_focus = COM_influence_of_islam
+				has_completed_focus = COM_convention_renewal_party
+				has_completed_focus = COM_orange_party
+			}
+			has_completed_focus = COM_a_common_destiny
+			NOT = { owns_state = 253 }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_ghost_of_colonialism executed"
+			if = {
+				limit = { TNZ = { owns_state = 253 } }
+				TNZ = { country_event = { id = comoros.33 days = 1 } }
+			}
+			else = {
+				random_country = {
+					limit = { owns_state = 253 }
+					country_event = { id = comoros.33 days = 1 }
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				TNZ = {
+					253 = { transfer_state_to = COM }
+					set_country_flag = { flag = COM_the_zanzibar_agreement_payee value = 1 days = 730 }
+					set_temp_variable = { additional_income_change = 0.25 }
+					custom_effect_tooltip = additional_income_rate_percent_tt
+				}
+				COM = {
+					custom_effect_tooltip = COM_the_zanzibar_agreement_tt
+					set_temp_variable = { additional_expense_change = 0.25 }
+					custom_effect_tooltip = additional_expense_rate_percent_tt
+					set_country_flag = { flag = COM_the_zanzibar_agreement_pay value = 1 days = 730 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 
@@ -2413,12 +2952,13 @@ focus_tree = {
 		id = COM_ghost_of_colonialism
 		icon = colonial_league
 
-		x = 2
-		y = 12
-		relative_position_id = COM_diplomacy
+		x = 13
+		y = 1
+		relative_position_id = COM_comorian_politics
 
 		cost = 5
 
+		prerequisite = { focus = COM_comorian_politics }
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
@@ -2427,7 +2967,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2442,30 +2982,20 @@ focus_tree = {
 		cost = 5
 
 		prerequisite = { focus = COM_ghost_of_colonialism }
-		prerequisite = { focus = COM_befriend_the_west }
 		mutually_exclusive = { focus = COM_antagonize_france }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			OR = {
-				has_completed_focus = COM_maintain_dictatorship
-				has_completed_focus = COM_introduce_democracy
-				has_completed_focus = COM_orange_party
-			}
-			has_completed_focus = COM_a_federal_union
+			is_subject = no
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_embrace_francafrique executed"
-			FRA = {
-				add_opinion_modifier = {
-					target = COM
-					modifier = declaration_of_friendship
-				}
-			}
-			add_political_power = -100
-			add_stability = 0.05
+			set_temp_variable = { percent_change = -3 }
+			change_domestic_influence_percentage = yes
+			reverse_add_opinion_modifier = { target = FRA modifier = embraced_french_africa }
+			unlock_decision_tooltip = AFRICA_adopt_the_cfa_franc
 		}
 
 		ai_will_do = {
@@ -2495,7 +3025,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2514,19 +3044,35 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
-			has_completed_focus = COM_non_nato_ally
+			is_subject = no
+			has_completed_focus = COM_naval_treaty_with_france
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_rejoin_france executed"
-			custom_effect_tooltip = com_join_fra_TT
 			FRA = {
-				country_event = comor.13
+				country_event = comoros.13
+			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				FRA = {
+					set_autonomy = {
+						target = COM
+						autonomous_state = autonomy_french_overseas_department
+						end_wars = no
+						end_civil_wars = no
+					}
+				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 
@@ -2540,45 +3086,33 @@ focus_tree = {
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_ghost_of_colonialism
-		}
-		prerequisite = {
-			focus = COM_befriend_the_east
-		}
-		mutually_exclusive = {
-			focus = COM_embrace_francafrique
-		}
+		prerequisite = { focus = COM_ghost_of_colonialism }
+		mutually_exclusive = { focus = COM_embrace_francafrique }
 
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INFLUENCE }
 
 		available = {
-			OR = {
-				has_completed_focus = COM_influence_of_islam
-				has_completed_focus = COM_orange_party
-			}
-			has_completed_focus = COM_centralize_power
+			is_subject = no
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_antagonize_france executed"
-			FRA = {
-				add_opinion_modifier = {
-					target = COM
-					modifier = declaration_of_hostility
-				}
-			}
-			add_political_power = 100
-			add_stability = -0.05
+			set_temp_variable = { percent_change = 3 }
+			change_domestic_influence_percentage = yes
+			reverse_add_opinion_modifier = { target = FRA modifier = rejected_french_imperialism }
 		}
 
 		ai_will_do = {
-			factor = 0
+			base = 10
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 
 	focus = {
-		id = COM_anticolonialist_propaganda
+		id = COM_anti_colonialist_propaganda
 		icon = FRA_phalanstere
 
 		x = 1
@@ -2587,25 +3121,46 @@ focus_tree = {
 
 		cost = 6
 
-		prerequisite = {
-			focus = COM_antagonize_france
-		}
+		prerequisite = { focus = COM_antagonize_france }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_anticolonialist_propaganda executed"
-			set_temp_variable = { treasury_change = -10 }
+			log = "[GetDateText]: [Root.GetName]: Focus COM_anti_colonialist_propaganda executed"
+			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
-			add_war_support = 0.2
-			add_political_power = -50
 			FRA = {
-				country_event = comor.11
+				country_event = comoros.11
+			}
+			newline = yes
+			custom_effect_tooltip = COM_mayotte_referendum_starting_chance_tt
+			effect_tooltip = {
+				set_temp_variable = { temp_change = 6 }
+				COM_mayotte_referendum_independence_effect = yes
+				set_temp_variable = { temp_change = -3 }
+				COM_mayotte_referendum_france_effect = yes
+				set_temp_variable = { temp_change = -3 }
+				COM_mayotte_referendum_comoros_effect = yes
+			}
+			hidden_effect = {
+				if = {
+					limit = { has_active_mission = COM_mayotte_referendum_mission }
+					set_temp_variable = { temp_change = 6 }
+					COM_mayotte_referendum_independence_effect = yes
+					set_temp_variable = { temp_change = -3 }
+					COM_mayotte_referendum_france_effect = yes
+					set_temp_variable = { temp_change = -3 }
+					COM_mayotte_referendum_comoros_effect = yes
+				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 
@@ -2619,51 +3174,71 @@ focus_tree = {
 
 		cost = 10
 
-		prerequisite = {
-			focus = COM_anticolonialist_propaganda
-		}
+		prerequisite = { focus = COM_anti_colonialist_propaganda }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			NOT = { 940 = { is_owned_and_controlled_by = COM } }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_demand_mayotte executed"
 			FRA = {
-				country_event = comor.12
+				country_event = comoros.12
+			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				940 = { transfer_state_to = COM }
+			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					target = FRA
+					type = take_core_state
+					generator = {
+						940
+					}
+					expire = 365
+				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 	}
 
-	#Member of African Development Bank.
-
 	focus = {
-		id = COM_the_2001_referendum
+		id = COM_the_constitutional_referendum
 		icon = eac_democracy
 
-		x = 29
+		x = 40
 		y = 1
 
 		cost = 3
 
-		prerequisite = {
-			focus = COM_diplomacy
-		}
+		prerequisite = { focus = COM_comorian_politics }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_the_2001_referendum executed"
-			add_stability = 0.05
-			add_political_power = 50
-			country_event = comor.4
-			custom_effect_tooltip = COM_referendum_TT
+			log = "[GetDateText]: [Root.GetName]: Focus COM_the_constitutional_referendum executed"
+			country_event = comoros.4
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
 		}
 	}
 
@@ -2673,34 +3248,30 @@ focus_tree = {
 
 		x = -1
 		y = 1
-		relative_position_id = COM_the_2001_referendum
+		relative_position_id = COM_the_constitutional_referendum
 
 		cost = 6
 
-		prerequisite = {
-			focus = COM_the_2001_referendum
-		}
-		mutually_exclusive = {
-			focus = COM_centralize_power
-		}
+		prerequisite = { focus = COM_the_constitutional_referendum }
+		mutually_exclusive = { focus = COM_centralize_power }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
-			has_country_flag = COM_pro_fed
+			has_country_flag = COM_pro_federalist
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_a_federal_union executed"
 			add_political_power = 100
 			swap_ideas = {
-				remove_idea = COM_anjouan
-				add_idea = COM_anjouan4
+				remove_idea = COM_anjouan_idea
+				add_idea = COM_anjouan_idea4
 			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2710,13 +3281,11 @@ focus_tree = {
 
 		x = -1
 		y = 2
-		relative_position_id = COM_the_2001_referendum
+		relative_position_id = COM_the_constitutional_referendum
 
 		cost = 10
 
-		prerequisite = {
-			focus = COM_a_federal_union
-		}
+		prerequisite = { focus = COM_a_federal_union }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INFLUENCE FOCUS_FILTER_STABILITY }
 
@@ -2745,7 +3314,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2755,52 +3324,47 @@ focus_tree = {
 
 		x = -1
 		y = 3
-		relative_position_id = COM_the_2001_referendum
+		relative_position_id = COM_the_constitutional_referendum
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_Loi_des_competences
-		}
+		prerequisite = { focus = COM_Loi_des_competences }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_operation_democracy_in_comoros executed"
-			country_event = comor.8
-			add_political_power = -50
+			country_event = comoros.8
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
 	focus = {
-		id = COM_greater_interisland_cooperation
+		id = COM_greater_inter_island_cooperation
 		icon = diplomatic_treaty
 
 		x = -1
 		y = 4
-		relative_position_id = COM_the_2001_referendum
+		relative_position_id = COM_the_constitutional_referendum
 
 		cost = 6
 
-		prerequisite = {
-			focus = COM_operation_democracy_in_comoros
-		}
+		prerequisite = { focus = COM_operation_democracy_in_comoros }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
-			has_country_flag = COM_succ_oper
+			has_country_flag = COM_successful_operation
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_greater_interisland_cooperation executed"
+			log = "[GetDateText]: [Root.GetName]: Focus COM_greater_inter_island_cooperation executed"
 			swap_ideas = {
-				remove_idea = COM_anjouan4
-				add_idea = COM_anjouan5
+				remove_idea = COM_anjouan_idea4
+				add_idea = COM_anjouan_idea5
 			}
 			custom_effect_tooltip = COM_led_new_TT
 			recalculate_party = yes
@@ -2821,7 +3385,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2831,33 +3395,29 @@ focus_tree = {
 
 		x = 1
 		y = 1
-		relative_position_id = COM_the_2001_referendum
+		relative_position_id = COM_the_constitutional_referendum
 
 		cost = 6
 
-		prerequisite = {
-			focus = COM_the_2001_referendum
-		}
-		mutually_exclusive = {
-			focus = COM_a_federal_union
-		}
+		prerequisite = { focus = COM_the_constitutional_referendum }
+		mutually_exclusive = { focus = COM_a_federal_union }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
-			has_country_flag = COM_anti_fed
+			has_country_flag = COM_anti_federalist
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_centralize_power executed"
 			swap_ideas = {
-				remove_idea = COM_anjouan
-				add_idea = COM_anjouan2
+				remove_idea = COM_anjouan_idea
+				add_idea = COM_anjouan_idea2
 			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
@@ -2871,33 +3431,25 @@ focus_tree = {
 
 		x = 1
 		y = 2
-		relative_position_id = COM_the_2001_referendum
+		relative_position_id = COM_the_constitutional_referendum
 
 		cost = 10
 
-		prerequisite = {
-			focus = COM_centralize_power
-		}
+		prerequisite = { focus = COM_centralize_power }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_claim_banc_du_geyser executed"
 			COM = {
-				add_opinion_modifier = {
-					target = FRA
-					modifier = declaration_of_hostility
-				}
-				add_opinion_modifier = {
-					target = MAD
-					modifier = declaration_of_hostility
-				}
+				add_opinion_modifier = { target = FRA modifier = declaration_of_hostility }
+				add_opinion_modifier = { target = MAD modifier = declaration_of_hostility }
 			}
 			MAD = {
-				country_event = comor.5
+				country_event = comoros.5
 			}
 			FRA = {
-				country_event = comor.5
+				country_event = comoros.5
 			}
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
@@ -2910,7 +3462,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2920,25 +3472,23 @@ focus_tree = {
 
 		x = 1
 		y = 3
-		relative_position_id = COM_the_2001_referendum
+		relative_position_id = COM_the_constitutional_referendum
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_claim_banc_du_geyser
-		}
+		prerequisite = { focus = COM_claim_banc_du_geyser }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_WAR_SUPPORT FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_claim_the_glorioso_islands executed"
-			country_event = comor.6
+			country_event = comoros.6
 			add_war_support = 0.1
 			add_stability = -0.05
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2948,29 +3498,26 @@ focus_tree = {
 
 		x = 1
 		y = 4
-		relative_position_id = COM_the_2001_referendum
+		relative_position_id = COM_the_constitutional_referendum
 
 		cost = 6
 
-		prerequisite = {
-			focus = COM_claim_the_glorioso_islands
-		}
+		prerequisite = { focus = COM_claim_the_glorioso_islands }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_no_more_coups executed"
 			swap_ideas = {
-				remove_idea = COM_anjouan2
-				add_idea = COM_anjouan3
+				remove_idea = COM_anjouan_idea2
+				add_idea = COM_anjouan_idea3
 			}
 			add_stability = 0.03
-			add_political_power = -250
 			one_random_arms_factory = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -2980,14 +3527,11 @@ focus_tree = {
 
 		x = 0
 		y = 5
-		relative_position_id = COM_the_2001_referendum
+		relative_position_id = COM_the_constitutional_referendum
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_greater_interisland_cooperation
-			focus = COM_no_more_coups
-		}
+		prerequisite = { focus = COM_greater_inter_island_cooperation focus = COM_no_more_coups }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
@@ -3003,15 +3547,17 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
+
+	# Economic Section
 	focus = {
 		id = COM_kickstart_economy
 		icon = BRA_economic_liberalization
 
-		x = 29
-		y = 7
+		x = 48
+		y = 0
 
 		cost = 6
 
@@ -3021,32 +3567,130 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				add = 15
+				has_idea = depression
+			}
+			modifier = {
+				add = 10
+				has_idea = recession
+			}
+			modifier = {
+				add = 5
+				has_idea = stagnation
+			}
 		}
 	}
 
 	focus = {
-		id = COM_vanilla_exports
-		icon = export_bakdash
+		id = COM_the_tourism_industry
+		icon = economic_tourism
 
-		x = 4
+		x = 3
 		y = 1
 		relative_position_id = COM_kickstart_economy
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_kickstart_economy
-		}
+		prerequisite = { focus = COM_kickstart_economy }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus COM_vanilla_exports executed"
-			add_ideas = COM_export_vanil
-			increase_exports = yes
+			log = "[GetDateText]: [Root.GetName]: Focus COM_the_tourism_industry executed"
+			add_ideas = COM_the_comoros_tourism_industry
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_agricultural_developments
+		icon = export_bakdash
+
+		x = 5
+		y = 1
+		relative_position_id = COM_kickstart_economy
+
+		cost = 7
+
+		prerequisite = { focus = COM_kickstart_economy }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_agricultural_developments executed"
+			increase_exports = yes
+			add_ideas = COM_pro_farmers_idea
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_vanilla_exports
+		icon = generic_vanilla_sprouts
+
+		x = 5
+		y = 2
+		relative_position_id = COM_kickstart_economy
+
+		cost = 7
+
+		prerequisite = { focus = COM_agricultural_developments }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_vanilla_exports executed"
+			COM_update_agricultural_development_ideas = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_fishery_industry_investment
+		icon = generic_vanilla_sprouts
+
+		x = 3
+		y = 2
+		relative_position_id = COM_kickstart_economy
+
+		cost = 7
+
+		prerequisite = { focus = COM_agricultural_developments }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_fishery_industry_investment executed"
+			COM_update_agricultural_development_ideas = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_comorian_forestry
+		icon = lumber_industry
+
+		x = 7
+		y = 2
+		relative_position_id = COM_kickstart_economy
+
+		cost = 7
+
+		prerequisite = { focus = COM_agricultural_developments }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_vanilla_exports executed"
+			COM_update_agricultural_development_ideas = yes
+		}
+
+		ai_will_do = {
+			base = 10
 		}
 	}
 
@@ -3060,21 +3704,27 @@ focus_tree = {
 
 		cost = 8
 
-		prerequisite = {
-			focus = COM_vanilla_exports
-		}
+		prerequisite = { focus = COM_vanilla_exports }
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_ylang_ylang executed"
-			add_ideas = BRA_idea_pro_farmers
+			COM_update_agricultural_development_ideas = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_farmers_opinion = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				add = 10
+				check_variable = { farmers_opinion < 50 }
+			}
+			modifier = {
+				add = 10
+				check_variable = { farmers_opinion < 30 }
+			}
 		}
 	}
 
@@ -3082,33 +3732,77 @@ focus_tree = {
 		id = COM_expand_on_moheli
 		icon = develop_polish_shipbuilding
 
-		x = 4
+		x = 2
 		y = 3
 		relative_position_id = COM_kickstart_economy
 
 		cost = 6
 
-		prerequisite = {
-			focus = COM_expand_on_anjouan
-			focus = COM_ylang_ylang
-		}
+		prerequisite = { focus = COM_expand_on_anjouan focus = COM_fishery_industry_investment focus = COM_vanilla_exports }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = COM_expand_on_moheli_tt
-				check_variable = { maritime_industry_opinion > 69 }
+				tooltip = maritime_industry_opinion_at_least_positive_tt
+				check_variable = { maritime_industry_opinion > 51 }
 			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_expand_on_moheli executed"
 			one_random_dockyard = yes
+			if = {
+				limit = { check_variable = { maritime_industry_opinion > 74 } }
+				custom_effect_tooltip = if_maritime_industry_opinion_at_least_enthusiastic_tt
+				add_timed_idea = {
+					idea = internal_factions_maritime_industry_dockyard_paying_dividends
+					days = 180
+				}
+			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+			modifier = {
+				add = 10
+				check_variable = { maritime_industry_opinion > 51 }
+			}
+			modifier = {
+				add = 15
+				check_variable = { maritime_industry_opinion > 74 }
+			}
+		}
+	}
+
+	focus = {
+		id = COM_join_the_world_trade_organization
+		icon = wto
+
+		x = 0
+		y = 3
+		relative_position_id = COM_kickstart_economy
+
+		cost = 5.8
+
+		prerequisite = { focus = COM_trade_deals_with_tanzania focus = COM_expand_on_anjouan }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			is_subject = no
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_expand_on_moheli executed"
+			add_timed_idea = {
+				idea = recently_acceded_to_wto
+				days = 365
+			}
+		}
+
+		ai_will_do = {
+			base = 10
 		}
 	}
 
@@ -3116,31 +3810,33 @@ focus_tree = {
 		id = COM_expand_on_anjouan
 		icon = BRA_mensalao_new
 
-		x = 2
+		x = 1
 		y = 2
 		relative_position_id = COM_kickstart_economy
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_expand_moroni
-		}
+		prerequisite = { focus = COM_expand_moroni }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			has_full_control_of_state = 1214
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_expand_on_anjouan executed"
 			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
-			capital_scope = {
+			1214 = {
 				add_extra_state_shared_building_slots = 2
 			}
-			set_temp_variable = { temp_opinion = 5 }
+			set_temp_variable = { temp_opinion = 10 }
 			change_maritime_industry_opinion = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -3148,15 +3844,13 @@ focus_tree = {
 		id = COM_expand_moroni
 		icon = money
 
-		x = 2
+		x = 1
 		y = 1
 		relative_position_id = COM_kickstart_economy
 
 		cost = 6
 
-		prerequisite = {
-			focus = COM_kickstart_economy
-		}
+		prerequisite = { focus = COM_kickstart_economy }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
@@ -3166,7 +3860,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -3174,17 +3868,20 @@ focus_tree = {
 		id = COM_trade_deals_with_india
 		icon = indian_rupee
 
-		x = 0
+		x = -3
 		y = 1
 		relative_position_id = COM_kickstart_economy
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_kickstart_economy
-		}
+		prerequisite = { focus = COM_kickstart_economy }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_STABILITY }
+
+		available = {
+			country_exists = RAJ
+			NOT = { has_war_with = RAJ }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_trade_deals_with_india executed"
@@ -3194,21 +3891,54 @@ focus_tree = {
 			set_temp_variable = { tag_index = RAJ }
 			set_temp_variable = { influence_target = COM }
 			change_influence_percentage = yes
-			add_opinion_modifier = {
-				target = RAJ
-				modifier = improve_trade
-			}
-			reverse_add_opinion_modifier = {
-				target = RAJ
-				modifier = improve_trade
-			}
+			add_opinion_modifier = { target = RAJ modifier = improve_trade }
+			reverse_add_opinion_modifier = { target = RAJ modifier = improve_trade }
 			set_temp_variable = { receiver_nation = RAJ.id }
 			set_temp_variable = { sender_nation = COM.id }
 			set_improved_trade_agreement = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_trade_deals_with_madagascar
+		icon = trade_with_madagascar
+
+		x = -1
+		y = 1
+		relative_position_id = COM_kickstart_economy
+
+		cost = 5
+
+		prerequisite = { focus = COM_kickstart_economy }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_STABILITY }
+
+		available = {
+			country_exists = MAD
+			NOT = { has_war_with = MAD }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_trade_deals_with_india executed"
+			set_temp_variable = { treasury_change = 2.45 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = MAD }
+			set_temp_variable = { influence_target = COM }
+			change_influence_percentage = yes
+			add_opinion_modifier = { target = MAD modifier = improve_trade }
+			reverse_add_opinion_modifier = { target = MAD modifier = improve_trade }
+			set_temp_variable = { receiver_nation = MAD.id }
+			set_temp_variable = { sender_nation = COM.id }
+			set_improved_trade_agreement = yes
+		}
+
+		ai_will_do = {
+			base = 10
 		}
 	}
 
@@ -3216,17 +3946,20 @@ focus_tree = {
 		id = COM_trade_deals_with_singapore
 		icon = trade_with_singapore
 
-		x = 0
+		x = -3
 		y = 2
 		relative_position_id = COM_kickstart_economy
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_trade_deals_with_india
-		}
+		prerequisite = { focus = COM_trade_deals_with_india }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_STABILITY }
+
+		available = {
+			country_exists = SIN
+			NOT = { has_war_with = SIN }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_trade_deals_with_singapore executed"
@@ -3236,21 +3969,54 @@ focus_tree = {
 			set_temp_variable = { tag_index = SIN }
 			set_temp_variable = { influence_target = COM }
 			change_influence_percentage = yes
-			add_opinion_modifier = {
-				target = SIN
-				modifier = improve_trade
-			}
-			reverse_add_opinion_modifier = {
-				target = SIN
-				modifier = improve_trade
-			}
+			add_opinion_modifier = { target = SIN modifier = improve_trade }
+			reverse_add_opinion_modifier = { target = SIN modifier = improve_trade }
 			set_temp_variable = { receiver_nation = SIN.id }
 			set_temp_variable = { sender_nation = COM.id }
 			set_improved_trade_agreement = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
+		}
+	}
+
+	focus = {
+		id = COM_trade_deals_with_tanzania
+		icon = trade
+
+		x = -1
+		y = 2
+		relative_position_id = COM_kickstart_economy
+
+		cost = 5
+
+		prerequisite = { focus = COM_trade_deals_with_madagascar }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_STABILITY }
+
+		available = {
+			country_exists = SIN
+			NOT = { has_war_with = SIN }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus COM_trade_deals_with_singapore executed"
+			set_temp_variable = { treasury_change = 2.45 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = SIN }
+			set_temp_variable = { influence_target = COM }
+			change_influence_percentage = yes
+			add_opinion_modifier = { target = SIN modifier = improve_trade }
+			reverse_add_opinion_modifier = { target = SIN modifier = improve_trade }
+			set_temp_variable = { receiver_nation = SIN.id }
+			set_temp_variable = { sender_nation = COM.id }
+			set_improved_trade_agreement = yes
+		}
+
+		ai_will_do = {
+			base = 10
 		}
 	}
 
@@ -3258,24 +4024,20 @@ focus_tree = {
 		id = COM_ministry_of_economy
 		icon = sing_on_rise
 
-		x = 1
+		x = -2
 		y = 3
 		relative_position_id = COM_kickstart_economy
 
 		cost = 7
 
-		prerequisite = {
-			focus = COM_trade_deals_with_singapore
-		}
-		prerequisite = {
-			focus = COM_expand_on_anjouan
-		}
+		prerequisite = { focus = COM_trade_deals_with_singapore }
+		prerequisite = { focus = COM_expand_on_anjouan }
+		prerequisite = { focus = COM_trade_deals_with_tanzania }
 
 		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_ministry_of_economy executed"
-			add_political_power = -150
 			add_stability = 0.05
 			add_tech_bonus = {
 				name = CAT_3d
@@ -3292,72 +4054,70 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
 	focus = {
 		id = COM_trading_with_west
-		icon = DAH_Fra_Cop
+		icon = trade_with_europe
 
-		x = 0
+		x = -3
 		y = 4
 		relative_position_id = COM_kickstart_economy
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_ministry_of_economy
-		}
-		mutually_exclusive = {
-			focus = COM_trading_with_east
+		prerequisite = { focus = COM_ministry_of_economy }
+		mutually_exclusive = { focus = COM_trading_with_east }
+
+		available = {
+			country_exists = FRA
+			NOT = { has_war_with = FRA }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_trade_deals_with_india executed"
-			add_opinion_modifier = {
-				target = FRA
-				modifier = improve_trade
-			}
-			reverse_add_opinion_modifier = {
-				target = FRA
-				modifier = improve_trade
-			}
+			add_opinion_modifier = { target = FRA modifier = improve_trade }
+			reverse_add_opinion_modifier = { target = FRA modifier = improve_trade }
 			set_temp_variable = { receiver_nation = FRA.id }
 			set_temp_variable = { sender_nation = COM.id }
 			set_improved_trade_agreement = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
 	focus = {
 		id = COM_french_investments
-		icon = total_sa
+		icon = euro
 
-		x = 0
+		x = -3
 		y = 5
 		relative_position_id = COM_kickstart_economy
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_trading_with_west
-		}
+		prerequisite = { focus = COM_trading_with_west }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			country_exists = FRA
+			NOT = { has_war_with = FRA }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_trade_deals_with_india executed"
 			FRA = {
-				country_event = { id = comor.16 days = 1 }
+				country_event = { id = comoros.16 days = 1 }
 			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -3365,27 +4125,30 @@ focus_tree = {
 		id = COM_russian_investments
 		icon = russian_investments
 
-		x = 2
+		x = -1
 		y = 5
 		relative_position_id = COM_kickstart_economy
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_trading_with_east
-		}
+		prerequisite = { focus = COM_trading_with_east }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			country_exists = SOV
+			NOT = { has_war_with = SOV }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_russian_investments executed"
 			SOV = {
-				country_event = { id = comor.16 days = 1 }
+				country_event = { id = comoros.16 days = 1 }
 			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -3393,105 +4156,96 @@ focus_tree = {
 		id = COM_trading_with_east
 		icon = Trade_with_the_east
 
-		x = 2
+		x = -1
 		y = 4
 		relative_position_id = COM_kickstart_economy
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_ministry_of_economy
-		}
-		mutually_exclusive = {
-			focus = COM_trading_with_west
+		prerequisite = { focus = COM_ministry_of_economy }
+		mutually_exclusive = { focus = COM_trading_with_west }
+
+		available = {
+			country_exists = SOV
+			NOT = { has_war_with = SOV }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_trading_with_east executed"
-			add_opinion_modifier = {
-				target = SOV
-				modifier = improve_trade
-			}
-			reverse_add_opinion_modifier = {
-				target = SOV
-				modifier = improve_trade
-			}
+			add_opinion_modifier = { target = SOV modifier = improve_trade }
+			reverse_add_opinion_modifier = { target = SOV modifier = improve_trade }
 			set_temp_variable = { receiver_nation = SOV.id }
 			set_temp_variable = { sender_nation = COM.id }
 			set_improved_trade_agreement = yes
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
 	focus = {
-		id = COM_cooperation_with_eastafrica
+		id = COM_cooperation_with_east_africa
 		icon = align_to_east_africa
 
-		x = 4
+		x = 2
 		y = 4
 		relative_position_id = COM_kickstart_economy
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_ministry_of_economy
-		}
+		prerequisite = { focus = COM_ministry_of_economy }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_trade_deals_with_india executed"
-			add_political_power = 50
-			every_country = {
-					limit = {
-						has_idea = AU_member
-					}
-					add_opinion_modifier = {
-						target = COM
-						modifier = improve_trade
-					}
+			add_political_power = 75
+			every_other_country = {
+				limit = {
+					is_east_african_nation = yes
+					NOT = { has_war_with = COM }
 				}
+				add_opinion_modifier = { target = COM modifier = improve_trade }
+				reverse_add_opinion_modifier = { target = COM modifier = improve_trade }
+			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
 	focus = {
-		id = COM_trading_with_eastafrica
+		id = COM_trading_with_east_africa
 		icon = trade_with_east_africa
 
-		x = 4
+		x = 1
 		y = 5
 		relative_position_id = COM_kickstart_economy
 
 		cost = 5
 
-		prerequisite = {
-			focus = COM_cooperation_with_eastafrica
-		}
+		prerequisite = { focus = COM_cooperation_with_east_africa }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_trade_deals_with_india executed"
-			every_country = {
+			every_other_country = {
 				limit = {
-					has_idea = AU_member
+					is_east_african_nation = yes
+					NOT = { has_war_with = COM }
 				}
 				set_temp_variable = { percent_change = -5 }
 				change_domestic_influence_percentage = yes
-				set_temp_variable = { treasury_change = 2.45 }
+				set_temp_variable = { treasury_change = 10 }
 				modify_treasury_effect = yes
 			}
 		}
 
 		ai_will_do = {
-			factor = 10
+			base = 10
 		}
 	}
 
@@ -3499,22 +4253,18 @@ focus_tree = {
 		id = COM_military_coop_easaf
 		icon = east_african_forces
 
-		x = 6
+		x = 3
 		y = 5
 		relative_position_id = COM_kickstart_economy
 
 		cost = 6
 
-		prerequisite = {
-			focus = COM_cooperation_with_eastafrica
-		}
+		prerequisite = { focus = COM_cooperation_with_east_africa }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_STABILITY }
 
 		available = {
-			NOT = {
-				has_idea = COM_poor_military
-			}
+			COM_does_not_currently_have_corrupt_military = yes
 		}
 
 		completion_reward = {
@@ -3564,9 +4314,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			factor = 10
-		}
+			base = 10
+ 		}
 	}
-
 }
-
