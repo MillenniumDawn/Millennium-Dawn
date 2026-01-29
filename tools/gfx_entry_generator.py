@@ -1,4 +1,4 @@
-#!/user/bin/python
+#!/usr/bin/python
 import os
 import shutil
 from tokenize import Ignore
@@ -49,11 +49,25 @@ def main():
     mod_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     # country_tag_list = createcountrytaglist()
 
-    selection = int(
-        input(
-            "Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_technologies.gfx (DO NOT USE. WIP)\n5. Retrieve and generate MD_parties_icons.gfx.\n6. Retrieve and generate intelligence agency icons\n7. Retrieve and generate MD_decisions.gfx\nPlease enter the number of the option you'd like: "
-        )
-    )
+    while True:
+        try:
+            selection_input = input(
+                "Main Menu:\n1. Retrieve and generate goals.gfx\n2. Retrieve and generate event pictures\n3. Retrieve and generate MD_ideas.gfx. This also generates defence company entries.\n4. Retrieve and generate MD_technologies.gfx (DO NOT USE. WIP)\n5. Retrieve and generate MD_parties_icons.gfx.\n6. Retrieve and generate intelligence agency icons\n7. Retrieve and generate MD_decisions.gfx\nPlease enter the number of the option you'd like: "
+            ).strip()
+
+            if not selection_input:
+                print(
+                    f"{bcolors.WARNING}Input cannot be empty. Please enter a number between 1 and 7.{bcolors.RESET}\n"
+                )
+                continue
+
+            selection = int(selection_input)
+            break
+        except ValueError:
+            print(
+                f"{bcolors.WARNING}Invalid input. Please enter a number between 1 and 7.{bcolors.RESET}\n"
+            )
+            continue
 
     if selection == 1:
         path = os.path.join(mod_root, "gfx", "interface", "goals")
@@ -114,11 +128,30 @@ def main():
     # Creation of the .gfx files
     while selection != 0:
         if selection == 1:
-            gfxbool = int(
-                input(
-                    'Would you like me to append "GFX_" to the front of the icon?\n1 for yes, 0 for no.\n'
-                )
-            )
+            while True:
+                try:
+                    gfxbool_input = input(
+                        'Would you like me to append "GFX_" to the front of the icon?\n1 for yes, 0 for no.\n'
+                    ).strip()
+
+                    if not gfxbool_input:
+                        print(
+                            f"{bcolors.WARNING}Input cannot be empty. Please enter 1 or 0.{bcolors.RESET}\n"
+                        )
+                        continue
+
+                    gfxbool = int(gfxbool_input)
+                    if gfxbool not in [0, 1]:
+                        print(
+                            f"{bcolors.WARNING}Please enter either 1 or 0.{bcolors.RESET}\n"
+                        )
+                        continue
+                    break
+                except ValueError:
+                    print(
+                        f"{bcolors.WARNING}Invalid input. Please enter 1 or 0.{bcolors.RESET}\n"
+                    )
+                    continue
 
             print(f"{bcolors.OK}Generating goals.gfx...{bcolors.RESET}\n")
             with open("goals.gfx", "w") as ffile:
