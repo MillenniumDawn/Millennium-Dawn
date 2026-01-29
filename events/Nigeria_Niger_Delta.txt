@@ -1,0 +1,932 @@
+# Niger Delta Revolt Event Chain
+# Covers MEND insurgency (2006-2009), Presidential Amnesty Program (2009), and Niger Delta Avengers (2015-2016)
+
+add_namespace = nigeria_delta
+
+# Formation of MEND - ~2006
+country_event = {
+	id = nigeria_delta.1
+	title = nigeria_delta.1.t
+	desc = nigeria_delta.1.d
+	picture = GFX_port_harcourt_attack
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = NIG
+		has_full_control_of_state = 332
+		NOT = { has_country_flag = NIG_niger_delta_started }
+	}
+
+	# Military Response
+	option = {
+		name = nigeria_delta.1.a
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.1.a executed"
+
+		add_political_power = -75
+		add_war_support = 0.03
+
+		if = {
+			limit = { NOT = { has_idea = NIG_niger_delta_crisis_1 } }
+			add_ideas = NIG_niger_delta_crisis_1
+		}
+
+		set_country_flag = NIG_niger_delta_military_response
+
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_war_support > 0.30
+			}
+		}
+	}
+
+	# Negotiate with Militants
+	option = {
+		name = nigeria_delta.1.b
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.1.b executed"
+
+		add_political_power = -50
+		add_stability = -0.02
+
+		if = {
+			limit = { NOT = { has_idea = NIG_niger_delta_crisis_1 } }
+			add_ideas = NIG_niger_delta_crisis_1
+		}
+
+		set_country_flag = NIG_niger_delta_negotiation_path
+
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	# Ignore the Problem
+	option = {
+		name = nigeria_delta.1.c
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.1.c executed"
+
+		add_stability = -0.05
+
+		if = {
+			limit = { NOT = { has_idea = NIG_niger_delta_crisis_1 } }
+			add_ideas = NIG_niger_delta_crisis_1
+		}
+
+		hidden_effect = {
+			country_event = { id = nigeria_delta.2 days = 60 random_days = 30 }
+		}
+
+		ai_chance = {
+			base = 20
+		}
+	}
+
+	# Set flag and trigger news event
+	immediate = {
+		set_country_flag = NIG_niger_delta_started
+		hidden_effect = {
+			news_event = { id = nigeria_delta.100 hours = 6 }
+		}
+	}
+}
+
+# Oil Platform Attack - Random during crisis
+country_event = {
+	id = nigeria_delta.2
+	title = nigeria_delta.2.t
+	desc = nigeria_delta.2.d
+	picture = GFX_lagos_pipeline
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = NIG
+		has_full_control_of_state = 332
+		OR = {
+			has_idea = NIG_niger_delta_crisis_1
+			has_idea = NIG_niger_delta_crisis_2
+			has_idea = NIG_niger_delta_crisis_3
+			has_idea = NIG_niger_delta_avengers_idea
+		}
+	}
+
+	# Increase Security at Oil Facilities
+	option = {
+		name = nigeria_delta.2.a
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.2.a executed"
+
+		set_temp_variable = { treasury_change = -2 }
+		modify_treasury_effect = yes
+
+		add_political_power = -25
+
+		332 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.15
+			}
+		}
+
+		ai_chance = {
+			base = 60
+		}
+	}
+
+	# Let the Companies Handle It
+	option = {
+		name = nigeria_delta.2.b
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.2.b executed"
+
+		add_stability = -0.03
+
+		332 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.25
+			}
+		}
+
+		# Escalate crisis
+		if = {
+			limit = { has_idea = NIG_niger_delta_crisis_1 }
+			swap_ideas = {
+				remove_idea = NIG_niger_delta_crisis_1
+				add_idea = NIG_niger_delta_crisis_2
+			}
+		}
+
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
+# Foreign Worker Kidnapping - Random during crisis
+country_event = {
+	id = nigeria_delta.3
+	title = nigeria_delta.3.t
+	desc = nigeria_delta.3.d
+	picture = GFX_terrorist_attack
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = NIG
+		has_full_control_of_state = 332
+		OR = {
+			has_idea = NIG_niger_delta_crisis_1
+			has_idea = NIG_niger_delta_crisis_2
+			has_idea = NIG_niger_delta_crisis_3
+		}
+	}
+
+	# Pay Ransom
+	option = {
+		name = nigeria_delta.3.a
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.3.a executed"
+
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
+
+		add_stability = 0.01
+
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Rescue Operation
+	option = {
+		name = nigeria_delta.3.b
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.3.b executed"
+
+		add_political_power = -50
+
+		random_list = {
+			60 = {
+				add_stability = 0.02
+				add_war_support = 0.02
+			}
+			40 = {
+				add_stability = -0.05
+				add_war_support = -0.03
+				# Escalate crisis
+				if = {
+					limit = { has_idea = NIG_niger_delta_crisis_1 }
+					swap_ideas = {
+						remove_idea = NIG_niger_delta_crisis_1
+						add_idea = NIG_niger_delta_crisis_2
+					}
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_country_flag = NIG_niger_delta_military_response
+			}
+		}
+	}
+
+	# Negotiate Release
+	option = {
+		name = nigeria_delta.3.c
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.3.c executed"
+
+		set_temp_variable = { treasury_change = -2 }
+		modify_treasury_effect = yes
+
+		add_political_power = -25
+
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_country_flag = NIG_niger_delta_negotiation_path
+			}
+		}
+	}
+}
+
+# Pipeline Sabotage - Random during crisis
+country_event = {
+	id = nigeria_delta.4
+	title = nigeria_delta.4.t
+	desc = nigeria_delta.4.d
+	picture = GFX_lagos_pipeline
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = NIG
+		has_full_control_of_state = 332
+		OR = {
+			has_idea = NIG_niger_delta_crisis_1
+			has_idea = NIG_niger_delta_crisis_2
+			has_idea = NIG_niger_delta_crisis_3
+			has_idea = NIG_niger_delta_avengers_idea
+		}
+	}
+
+	# Deploy Military to Protect Pipelines
+	option = {
+		name = nigeria_delta.4.a
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.4.a executed"
+
+		add_political_power = -75
+
+		332 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.20
+			}
+		}
+
+		ai_chance = {
+			base = 60
+		}
+	}
+
+	# Focus on Repairs
+	option = {
+		name = nigeria_delta.4.b
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.4.b executed"
+
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+
+		332 = {
+			damage_building = {
+				type = infrastructure
+				damage = 0.30
+			}
+		}
+
+		# Escalate crisis
+		if = {
+			limit = { has_idea = NIG_niger_delta_crisis_2 }
+			swap_ideas = {
+				remove_idea = NIG_niger_delta_crisis_2
+				add_idea = NIG_niger_delta_crisis_3
+			}
+		}
+		else_if = {
+			limit = { has_idea = NIG_niger_delta_crisis_1 }
+			swap_ideas = {
+				remove_idea = NIG_niger_delta_crisis_1
+				add_idea = NIG_niger_delta_crisis_2
+			}
+		}
+
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
+# International Pressure - High crisis level
+country_event = {
+	id = nigeria_delta.5
+	title = nigeria_delta.5.t
+	desc = nigeria_delta.5.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = NIG
+		OR = {
+			has_idea = NIG_niger_delta_crisis_2
+			has_idea = NIG_niger_delta_crisis_3
+		}
+	}
+
+	# Accept International Assistance
+	option = {
+		name = nigeria_delta.5.a
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.5.a executed"
+
+		set_temp_variable = { treasury_change = 5 }
+		modify_treasury_effect = yes
+
+		add_political_power = 50
+
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = USA.id }
+		set_temp_variable = { influence_target = NIG.id }
+		change_influence_percentage = yes
+
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = ENG.id }
+		change_influence_percentage = yes
+
+		set_country_flag = NIG_accepted_international_help
+
+		ai_chance = {
+			base = 70
+		}
+	}
+
+	# Handle It Ourselves
+	option = {
+		name = nigeria_delta.5.b
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.5.b executed"
+
+		add_political_power = -50
+		add_stability = -0.02
+
+		ai_chance = {
+			base = 30
+		}
+	}
+}
+
+# The Amnesty Offer - 2009 Historical Event
+country_event = {
+	id = nigeria_delta.10
+	title = nigeria_delta.10.t
+	desc = nigeria_delta.10.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = NIG
+		has_full_control_of_state = 332
+		has_country_flag = NIG_niger_delta_started
+		NOT = { has_country_flag = NIG_amnesty_offered }
+		OR = {
+			has_idea = NIG_niger_delta_crisis_1
+			has_idea = NIG_niger_delta_crisis_2
+			has_idea = NIG_niger_delta_crisis_3
+		}
+	}
+
+	# Set flag and trigger news event
+	immediate = {
+		set_country_flag = NIG_amnesty_offered
+		hidden_effect = {
+			news_event = { id = nigeria_delta.101 hours = 6 }
+		}
+	}
+
+	# Blanket Amnesty (Historical)
+	option = {
+		name = nigeria_delta.10.a
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.10.a executed"
+
+		set_temp_variable = { treasury_change = -15 }
+		modify_treasury_effect = yes
+
+		add_political_power = -100
+
+		# Replace crisis with amnesty program
+		if = {
+			limit = { has_idea = NIG_niger_delta_crisis_3 }
+			swap_ideas = {
+				remove_idea = NIG_niger_delta_crisis_3
+				add_idea = NIG_amnesty_program_idea
+			}
+		}
+		else_if = {
+			limit = { has_idea = NIG_niger_delta_crisis_2 }
+			swap_ideas = {
+				remove_idea = NIG_niger_delta_crisis_2
+				add_idea = NIG_amnesty_program_idea
+			}
+		}
+		else_if = {
+			limit = { has_idea = NIG_niger_delta_crisis_1 }
+			swap_ideas = {
+				remove_idea = NIG_niger_delta_crisis_1
+				add_idea = NIG_amnesty_program_idea
+			}
+		}
+
+		set_country_flag = NIG_amnesty_blanket
+		set_country_flag = NIG_amnesty_active
+
+		hidden_effect = {
+			country_event = { id = nigeria_delta.11 days = 180 }
+		}
+
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	# Conditional Amnesty
+	option = {
+		name = nigeria_delta.10.b
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.10.b executed"
+
+		set_temp_variable = { treasury_change = -8 }
+		modify_treasury_effect = yes
+
+		add_political_power = -50
+
+		# Reduce crisis by one level
+		if = {
+			limit = { has_idea = NIG_niger_delta_crisis_3 }
+			swap_ideas = {
+				remove_idea = NIG_niger_delta_crisis_3
+				add_idea = NIG_niger_delta_crisis_2
+			}
+		}
+		else_if = {
+			limit = { has_idea = NIG_niger_delta_crisis_2 }
+			swap_ideas = {
+				remove_idea = NIG_niger_delta_crisis_2
+				add_idea = NIG_niger_delta_crisis_1
+			}
+		}
+
+		add_ideas = NIG_amnesty_program_idea
+
+		set_country_flag = NIG_amnesty_conditional
+		set_country_flag = NIG_amnesty_active
+
+		hidden_effect = {
+			country_event = { id = nigeria_delta.11 days = 365 }
+		}
+
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Continue Military Operations
+	option = {
+		name = nigeria_delta.10.c
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.10.c executed"
+
+		add_political_power = -25
+		add_war_support = 0.05
+
+		add_ideas = NIG_joint_task_force_idea
+
+		set_country_flag = NIG_niger_delta_military_continued
+
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Militants Surrender - During amnesty
+country_event = {
+	id = nigeria_delta.11
+	title = nigeria_delta.11.t
+	desc = nigeria_delta.11.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = NIG
+		has_country_flag = NIG_amnesty_active
+	}
+
+	# Amnesty Succeeds
+	option = {
+		name = nigeria_delta.11.a
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.11.a executed"
+		trigger = {
+			OR = {
+				has_country_flag = NIG_amnesty_blanket
+				AND = {
+					has_country_flag = NIG_amnesty_conditional
+					has_stability > 0.40
+				}
+			}
+		}
+
+		add_stability = 0.10
+		add_political_power = 100
+
+		if = {
+			limit = { has_idea = NIG_amnesty_program_idea }
+			remove_ideas = NIG_amnesty_program_idea
+		}
+
+		# Remove any remaining crisis ideas
+		if = {
+			limit = { has_idea = NIG_niger_delta_crisis_1 }
+			remove_ideas = NIG_niger_delta_crisis_1
+		}
+		if = {
+			limit = { has_idea = NIG_niger_delta_crisis_2 }
+			remove_ideas = NIG_niger_delta_crisis_2
+		}
+		if = {
+			limit = { has_idea = NIG_niger_delta_crisis_3 }
+			remove_ideas = NIG_niger_delta_crisis_3
+		}
+
+		set_country_flag = NIG_amnesty_succeeded
+		clr_country_flag = NIG_amnesty_active
+
+		custom_effect_tooltip = NIG_amnesty_success_tt
+
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	# Amnesty Partially Succeeds
+	option = {
+		name = nigeria_delta.11.b
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.11.b executed"
+		trigger = {
+			has_country_flag = NIG_amnesty_conditional
+			has_stability < 0.41
+			has_stability > 0.25
+		}
+
+		add_stability = 0.03
+		add_political_power = 25
+
+		# Reduce to lowest crisis level
+		if = {
+			limit = { has_idea = NIG_niger_delta_crisis_2 }
+			swap_ideas = {
+				remove_idea = NIG_niger_delta_crisis_2
+				add_idea = NIG_niger_delta_crisis_1
+			}
+		}
+		else_if = {
+			limit = { has_idea = NIG_niger_delta_crisis_3 }
+			swap_ideas = {
+				remove_idea = NIG_niger_delta_crisis_3
+				add_idea = NIG_niger_delta_crisis_1
+			}
+		}
+
+		if = {
+			limit = { has_idea = NIG_amnesty_program_idea }
+			remove_ideas = NIG_amnesty_program_idea
+		}
+
+		set_country_flag = NIG_amnesty_partial
+		clr_country_flag = NIG_amnesty_active
+
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	# Amnesty Fails
+	option = {
+		name = nigeria_delta.11.c
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.11.c executed"
+		trigger = {
+			OR = {
+				has_stability < 0.26
+				NOT = {
+					OR = {
+						has_country_flag = NIG_amnesty_blanket
+						has_country_flag = NIG_amnesty_conditional
+					}
+				}
+			}
+		}
+
+		add_stability = -0.05
+
+		if = {
+			limit = { has_idea = NIG_amnesty_program_idea }
+			swap_ideas = {
+				remove_idea = NIG_amnesty_program_idea
+				add_idea = NIG_failed_amnesty_idea
+			}
+		}
+		else = {
+			add_ideas = NIG_failed_amnesty_idea
+		}
+
+		set_country_flag = NIG_amnesty_failed
+		clr_country_flag = NIG_amnesty_active
+
+		# Set up NDA emergence
+		hidden_effect = {
+			country_event = { id = nigeria_delta.20 days = 730 random_days = 365 }
+		}
+
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+# Amnesty Program Failure - Conditions not met
+country_event = {
+	id = nigeria_delta.12
+	title = nigeria_delta.12.t
+	desc = nigeria_delta.12.d
+	picture = GFX_terrorist_attack
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = NIG
+		has_country_flag = NIG_amnesty_active
+		has_stability < 0.25
+	}
+
+	option = {
+		name = nigeria_delta.12.a
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.12.a executed"
+
+		if = {
+			limit = { has_idea = NIG_amnesty_program_idea }
+			swap_ideas = {
+				remove_idea = NIG_amnesty_program_idea
+				add_idea = NIG_failed_amnesty_idea
+			}
+		}
+
+		clr_country_flag = NIG_amnesty_active
+		set_country_flag = NIG_amnesty_failed
+
+		# Set up NDA emergence
+		hidden_effect = {
+			country_event = { id = nigeria_delta.20 days = 730 random_days = 365 }
+		}
+
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+# Niger Delta Avengers Emerge - 2015-16 or amnesty failure
+country_event = {
+	id = nigeria_delta.20
+	title = nigeria_delta.20.t
+	desc = nigeria_delta.20.d
+	picture = GFX_port_harcourt_attack
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = NIG
+		has_full_control_of_state = 332
+		NOT = { has_country_flag = NIG_nda_emerged }
+		NOT = { has_country_flag = NIG_niger_delta_resolved }
+		NOT = { has_idea = NIG_niger_delta_resolved_idea }
+		OR = {
+			has_country_flag = NIG_amnesty_succeeded
+			has_country_flag = NIG_amnesty_failed
+		}
+	}
+
+	# Set flag and trigger news event
+	immediate = {
+		set_country_flag = NIG_nda_emerged
+		hidden_effect = {
+			news_event = { id = nigeria_delta.102 hours = 6 }
+		}
+	}
+
+	# Deploy Joint Task Force
+	option = {
+		name = nigeria_delta.20.a
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.20.a executed"
+
+		add_political_power = -100
+		add_war_support = 0.05
+
+		if = {
+			limit = { has_idea = NIG_failed_amnesty_idea }
+			swap_ideas = {
+				remove_idea = NIG_failed_amnesty_idea
+				add_idea = NIG_niger_delta_avengers_idea
+			}
+		}
+		else = {
+			add_ideas = NIG_niger_delta_avengers_idea
+		}
+
+		if = {
+			limit = { NOT = { has_idea = NIG_joint_task_force_idea } }
+			add_ideas = NIG_joint_task_force_idea
+		}
+
+		set_country_flag = NIG_nda_military_response
+
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Attempt Dialogue
+	option = {
+		name = nigeria_delta.20.b
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.20.b executed"
+
+		add_political_power = -50
+		add_stability = -0.03
+
+		if = {
+			limit = { has_idea = NIG_failed_amnesty_idea }
+			swap_ideas = {
+				remove_idea = NIG_failed_amnesty_idea
+				add_idea = NIG_niger_delta_avengers_idea
+			}
+		}
+		else = {
+			add_ideas = NIG_niger_delta_avengers_idea
+		}
+
+		set_country_flag = NIG_nda_dialogue_path
+
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+# State of Emergency - Critical crisis
+country_event = {
+	id = nigeria_delta.21
+	title = nigeria_delta.21.t
+	desc = nigeria_delta.21.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = NIG
+		has_idea = NIG_niger_delta_crisis_3
+		has_stability < 0.30
+	}
+
+	# Declare State of Emergency
+	option = {
+		name = nigeria_delta.21.a
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.21.a executed"
+
+		add_war_support = 0.10
+		add_political_power = -150
+
+		set_country_flag = NIG_niger_delta_state_of_emergency
+
+		ai_chance = {
+			base = 80
+		}
+	}
+
+	# Continue Normal Operations
+	option = {
+		name = nigeria_delta.21.b
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.21.b executed"
+
+		add_stability = -0.05
+
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+# Niger Delta Crisis Resolved - Through focus tree
+country_event = {
+	id = nigeria_delta.30
+	title = nigeria_delta.30.t
+	desc = nigeria_delta.30.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = NIG
+	}
+
+	option = {
+		name = nigeria_delta.30.a
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.30.a executed"
+
+		add_stability = 0.15
+		add_political_power = 200
+
+		# Remove all crisis ideas
+		if = {
+			limit = { has_idea = NIG_niger_delta_crisis_1 }
+			remove_ideas = NIG_niger_delta_crisis_1
+		}
+		if = {
+			limit = { has_idea = NIG_niger_delta_crisis_2 }
+			remove_ideas = NIG_niger_delta_crisis_2
+		}
+		if = {
+			limit = { has_idea = NIG_niger_delta_crisis_3 }
+			remove_ideas = NIG_niger_delta_crisis_3
+		}
+		if = {
+			limit = { has_idea = NIG_niger_delta_avengers_idea }
+			remove_ideas = NIG_niger_delta_avengers_idea
+		}
+		if = {
+			limit = { has_idea = NIG_failed_amnesty_idea }
+			remove_ideas = NIG_failed_amnesty_idea
+		}
+		if = {
+			limit = { has_idea = NIG_amnesty_program_idea }
+			remove_ideas = NIG_amnesty_program_idea
+		}
+
+		add_ideas = NIG_niger_delta_resolved_idea
+
+		set_country_flag = NIG_niger_delta_resolved
+
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+# News Event - MEND Formation
+news_event = {
+	id = nigeria_delta.100
+	title = nigeria_delta.100.t
+	desc = nigeria_delta.100.d
+	picture = GFX_port_harcourt_attack
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = nigeria_delta.100.a
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.100.a executed"
+	}
+}
+
+# News Event - Amnesty Program Announcement
+news_event = {
+	id = nigeria_delta.101
+	title = nigeria_delta.101.t
+	desc = nigeria_delta.101.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = nigeria_delta.101.a
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.101.a executed"
+	}
+}
+
+# News Event - Niger Delta Avengers Emergence
+news_event = {
+	id = nigeria_delta.102
+	title = nigeria_delta.102.t
+	desc = nigeria_delta.102.d
+	picture = GFX_port_harcourt_attack
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = nigeria_delta.102.a
+		log = "[GetDateText]: [This.GetName]: nigeria_delta.102.a executed"
+	}
+}

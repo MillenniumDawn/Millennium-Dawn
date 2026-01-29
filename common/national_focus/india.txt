@@ -1217,7 +1217,7 @@ focus_tree = {
 		mutually_exclusive = { focus = RAJ_indian_rice_bowl }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: RAJ_leaving_as_it_is"
-			two_random_synthetic_refinery = yes
+			two_random_renewable_energy_infra = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_fossil_fuel_industry_opinion = yes
 		}
@@ -3394,6 +3394,69 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
+		}
+	}
+	focus = {
+		id = RAJ_counter_insurgency_operations
+		icon = terrorism
+		x = 3
+		y = 4
+		relative_position_id = RAJ_forces_of_india
+		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MILITARY_LAWS }
+		prerequisite = { focus = RAJ_threat_of_terror_mil }
+		available = {
+			has_variable = strength_of_maoists
+			check_variable = { strength_of_maoists > 10 }
+		}
+		bypass = {
+			has_variable = strength_of_maoists
+			check_variable = { strength_of_maoists < 5 }
+		}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: RAJ_counter_insurgency_operations"
+			add_political_power = -50
+			add_stability = 0.03
+			subtract_from_variable = { strength_of_maoists = 10 }
+			subtract_from_variable = { maoist_political_influence = 5 }
+			add_timed_idea = {
+				idea = RAJ_operation_green_hunt_active
+				days = 365
+			}
+			every_controlled_state = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+						has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+						has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+					}
+				}
+				custom_effect_tooltip = RAJ_reduce_naxalite_level_tt
+				hidden_effect = {
+					if = {
+						limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
+						remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+						add_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+					}
+					else_if = {
+						limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 } }
+						remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+						add_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+					}
+					else_if = {
+						limit = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 } }
+						remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+						add_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
+					}
+				}
+			}
+		}
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 3
+				check_variable = { strength_of_maoists > 30 }
+			}
 		}
 	}
 	focus = {
@@ -7770,7 +7833,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: RAJ_free_liq_gas"
 			country_event = indian_event.29
-			one_random_synthetic_refinery = yes
+			one_random_renewable_energy_infra = yes
 		}
 		ai_will_do = {
 			base = 1
@@ -8278,7 +8341,7 @@ focus_tree = {
 		relative_position_id = RAJ_bharatiya_janata_party
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: RAJ_schwach_bharat"
-			one_random_synthetic_refinery = yes
+			one_random_renewable_energy_infra = yes
 			random_owned_controlled_state = {
 				add_extra_state_shared_building_slots = 3
 			}
@@ -8410,10 +8473,10 @@ focus_tree = {
 			set_cosmetic_tag = RAJ_AUTH_S_communism
 			hidden_effect = {
 				every_controlled_state = {
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel }
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel1 }
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel2 }
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel3 }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
 				}
 			}
 		}
@@ -8444,10 +8507,10 @@ focus_tree = {
 			set_cosmetic_tag = RAJ_AUTH_S_neutrality
 			hidden_effect = {
 				every_controlled_state = {
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel }
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel1 }
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel2 }
-					remove_dynamic_modifier = { modifier = RAJ_hoxaists_rebel3 }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+					remove_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
 				}
 			}
 		}
@@ -8789,10 +8852,10 @@ focus_tree = {
 					set_temp_variable = { rul_party_temp = 4 }
 					if = {
 						limit = { has_elections = no }
-						set_temp_variable = { enable_elections = 1 }
+						set_temp_variable = { disable_elections = 1 }
 					}
 					else = {
-						set_temp_variable = { enable_elections = 0 }
+						set_temp_variable = { disable_elections = 0 }
 					}
 					change_ruling_party_effect = yes
 
@@ -8869,10 +8932,10 @@ focus_tree = {
 					set_temp_variable = { rul_party_temp = 4 }
 					if = {
 						limit = { has_elections = no }
-						set_temp_variable = { enable_elections = 1 }
+						set_temp_variable = { disable_elections = 1 }
 					}
 					else = {
-						set_temp_variable = { enable_elections = 0 }
+						set_temp_variable = { disable_elections = 0 }
 					}
 					change_ruling_party_effect = yes
 
@@ -11397,10 +11460,9 @@ focus_tree = {
 		relative_position_id = RAJ_hindutva_front
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: RAJ_antiwestern_propaganda"
-			every_country = {
+			every_other_country = {
 				limit = {
 					has_government = democratic
-					NOT = { tag = RAJ }
 				}
 				add_opinion_modifier = {
 					target = ROOT
@@ -11734,10 +11796,10 @@ focus_tree = {
 				set_temp_variable = { rul_party_temp = 20 }
 				if = {
 					limit = { has_elections = no }
-					set_temp_variable = { enable_elections = 1 }
+					set_temp_variable = { disable_elections = 1 }
 				}
 				else = {
-					set_temp_variable = { enable_elections = 0 }
+					set_temp_variable = { disable_elections = 0 }
 				}
 				change_ruling_party_effect = yes
 			}
@@ -11776,10 +11838,10 @@ focus_tree = {
 				set_temp_variable = { rul_party_temp = 23 }
 				if = {
 					limit = { has_elections = no }
-					set_temp_variable = { enable_elections = 1 }
+					set_temp_variable = { disable_elections = 1 }
 				}
 				else = {
-					set_temp_variable = { enable_elections = 0 }
+					set_temp_variable = { disable_elections = 0 }
 				}
 				change_ruling_party_effect = yes
 			}
@@ -11819,10 +11881,10 @@ focus_tree = {
 				set_temp_variable = { rul_party_temp = 22 }
 				if = {
 					limit = { has_elections = no }
-					set_temp_variable = { enable_elections = 1 }
+					set_temp_variable = { disable_elections = 1 }
 				}
 				else = {
-					set_temp_variable = { enable_elections = 0 }
+					set_temp_variable = { disable_elections = 0 }
 				}
 				change_ruling_party_effect = yes
 			}
@@ -12949,7 +13011,7 @@ focus_tree = {
 		relative_position_id = RAJ_indian_minist_of_foreign_affairs
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: RAJ_gulf_oil_deal"
-			one_random_synthetic_refinery = yes
+			one_random_renewable_energy_infra = yes
 			every_country = {
 				limit = { has_idea = idea_gcc_member_state }
 				add_opinion_modifier = {
@@ -12960,7 +13022,7 @@ focus_tree = {
 					target = RAJ
 					modifier = improve_trade
 				}
-				one_random_synthetic_refinery = yes
+				one_random_renewable_energy_infra = yes
 			}
 		}
 		ai_will_do = {
@@ -13423,6 +13485,7 @@ focus_tree = {
 		relative_position_id = RAJ_indian_minist_of_foreign_affairs
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: RAJ_BRICS_integer"
+			set_global_flag = BRICS_has_formed
 			news_event = { id = RAJ_eastas.2 }
 			add_ideas = RAJ_BRICS
 			BRA = {
@@ -15257,10 +15320,10 @@ focus_tree = {
 					set_temp_variable = { rul_party_temp = 6 }
 					if = {
 						limit = { has_elections = no }
-						set_temp_variable = { enable_elections = 1 }
+						set_temp_variable = { disable_elections = 1 }
 					}
 					else = {
-						set_temp_variable = { enable_elections = 0 }
+						set_temp_variable = { disable_elections = 0 }
 					}
 					change_ruling_party_effect = yes
 				}

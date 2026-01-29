@@ -1341,6 +1341,121 @@ country_event = {
 	}
 }
 
+# The Mahoran Status Referendum
+country_event = {
+	id = france_md.110
+	title = france_md.110.t
+	desc = france_md.110.d
+	picture = GFX_france_mayotte_referendum
+	is_triggered_only = yes
+	trigger = {
+		original_tag = FRA
+	}
+
+	# Allow the Referendum
+	option = {
+		name = france_md.110.a
+		log = "[GetDateText]: [This.GetName]: france_md.110.a executed"
+		effect_tooltip = {
+			activate_mission = COM_mayotte_referendum_mission
+		}
+
+		hidden_effect = {
+			set_country_flag = COM_mayotte_referendum_active
+			COM = {
+				set_country_flag = COM_mayotte_referendum_active
+
+				# Current Expected Vote Share
+				if = { limit = { NOT = { has_completed_focus = COM_anti_colonialist_propaganda } }
+					set_variable = { COM.mayotte_referendum_france = 75 }
+					set_variable = { COM.mayotte_referendum_comoros = 10 }
+					set_variable = { COM.mayotte_referendum_independence = 15 }
+				}
+				else = {
+					set_variable = { COM.mayotte_referendum_france = 60 }
+					set_variable = { COM.mayotte_referendum_comoros = 25 }
+					set_variable = { COM.mayotte_referendum_independence = 15 }
+				}
+
+			}
+		}
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 10
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	# Deny the Referendum
+	option = {
+		name = france_md.110.b
+		log = "[GetDateText]: [This.GetName]: france_md.110.b executed"
+
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.04 }
+		set_temp_variable = { temp_outlook_increase = 0.04 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 0
+		}
+	}
+
+	# Make Mayotte an Overseas Department
+	option = {
+		name = france_md.110.c
+		log = "[GetDateText]: [This.GetName]: france_md.110.c executed"
+		set_country_flag = FRA_MTE_overseas_department
+
+		release = MTE
+
+		set_autonomy = {
+			target = MTE
+			autonomous_state = autonomy_french_overseas_department
+			end_wars = no
+			end_civil_wars = no
+		}
+
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+# The Mahoran Status Referendum Results
+country_event = {
+	id = france_md.111
+	title = france_md.111.t
+	desc = france_md.111.d
+	picture = GFX_france_mayotte_referendum
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			original_tag = FRA
+			original_tag = COM
+		}
+	}
+
+	# Perfection
+	option = {
+		name = france_md.111.a
+		log = "[GetDateText]: [This.GetName]: france_md.111.a executed"
+		if = {
+			limit = { original_tag = FRA }
+			FRA = {
+				add_stability = 0.02
+			}
+		}
+		else = {
+			effect_tooltip = {
+
+			}
+		}
+	}
+}
 
 # ETD Flavor Events:
 # 2000

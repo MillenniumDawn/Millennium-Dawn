@@ -1,11 +1,10 @@
 RAJ_china_is_a_threat = {
 	allowed = { original_tag = RAJ }
 	enable = {
-		original_tag = RAJ
 		country_exists = CHI
-		CHI = { check_variable = { chinese_aggression > 2 } }
-		CHI = { is_subject = no }
 		CHI = {
+			check_variable = { chinese_aggression > 2 }
+			is_subject = no
 			OR = {
 				has_government = nationalist
 				has_government = communism
@@ -66,9 +65,8 @@ RAJ_entrench_against_china = {
 RAJ_contain_pakistan = {
 	allowed = { original_tag = RAJ }
 	enable = {
-		original_tag = RAJ
 		country_exists = PAK
-
+		PAK = { NOT = { is_subject_of = RAJ } }
 	}
 	abort_when_not_enabled = yes
 
@@ -608,4 +606,68 @@ RAJ_USA_strategic_assistance_to_us = {
 
 	ai_strategy = { type = befriend id = RAJ value = 15 }
 	ai_strategy = { type = support id = RAJ value = 25 }
+}
+
+# ============================================
+# NAXALITE-MAOIST INSURGENCY AI HANDLING
+# ============================================
+
+RAJ_handle_naxalite_insurgency = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		any_controlled_state = {
+			OR = {
+				has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+				has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+				has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_2 }
+				has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_3 }
+				has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_4 }
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	# Prioritize suppression decisions
+	ai_strategy = { type = pp_spend_priority id = decision value = 100 }
+
+	# Avoid unnecessary wars while dealing with insurgency
+	ai_strategy = { type = avoid_starting_wars value = 20 }
+}
+
+RAJ_prioritize_insurgency_severe = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		count_triggers = {
+			amount = 3
+			456 = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
+			459 = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
+			451 = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
+			458 = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
+			991 = { has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency } }
+		}
+	}
+	abort_when_not_enabled = yes
+
+	# Very high priority when multiple states are at severe level
+	ai_strategy = { type = pp_spend_priority id = decision value = 200 }
+	ai_strategy = { type = pp_spend_amount id = decision value = 100 }
+	ai_strategy = { type = avoid_starting_wars value = 50 }
+}
+
+RAJ_operation_green_hunt_priority = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		date > 2009.1.1
+		check_variable = { strength_of_maoists > 30 }
+		any_controlled_state = {
+			OR = {
+				has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency }
+				has_dynamic_modifier = { modifier = RAJ_naxalite_insurgency_1 }
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	# Prioritize Operation Green Hunt after 2009
+	ai_strategy = { type = pp_spend_priority id = decision value = 150 }
 }

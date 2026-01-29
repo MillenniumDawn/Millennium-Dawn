@@ -627,6 +627,35 @@ generic_coalition_politics_decisions = {
 		}
 	}
 
+	# Block Foreign Election Notification
+	block_foreign_election_notification = {
+		icon = GFX_decision_message_decline_button
+
+		visible = {
+			NOT = {
+				has_country_flag = block_foreign_election_notification
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision block_foreign_election_notification"
+			set_country_flag = block_foreign_election_notification
+		}
+	}
+
+	lift_block_foreign_election_notification = {
+		icon = GFX_decision_message_receive_button
+
+		visible = {
+			has_country_flag = block_foreign_election_notification
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision lift_block_foreign_election_notification"
+			clr_country_flag = block_foreign_election_notification
+		}
+	}
+
 	### Extremist Civil Wars
 
 	fascism_extremist_civil_war = {
@@ -1873,7 +1902,6 @@ generic_coalition_politics_decisions = {
 			has_country_flag = BRA_CT_MON
 		}
 
-		available = { }
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRA_nationalist_claims_URG"
 			add_state_claim = 894
@@ -2194,11 +2222,9 @@ generic_coalition_politics_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision promote_outlook_decision_support_the_salafists"
 			custom_effect_tooltip = propaganda_campaign_costs_tt
 			ingame_update_setup = yes
-			random_list = {
-				25 = {
-					increase_corruption = yes
-				}
-				75 = { }
+			random = {
+				chance = 25
+				increase_corruption = yes
 			}
 		}
 		remove_effect = {
@@ -2488,6 +2514,123 @@ generic_coalition_politics_decisions = {
 	}
 
 	# Generic Country Unique
+	AFRICA_adopt_the_cfa_franc = {
+		allowed = { is_french_africa_nation = yes }
+		icon = generic_civil_support
+
+		visible = {
+			NOT = {
+				OR = {
+					has_idea = cfa_franc
+					has_idea = cfa_franc_2
+				}
+			}
+			if = {
+				limit = { original_tag = COM }
+				has_completed_focus = COM_embrace_francafrique
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = france_has_fifteen_influence_in_us_tt
+				OR = {
+					AND = {
+						check_variable = { influence_array^0 = FRA }
+						check_variable = { influence_array_val^0 > 14.999 }
+					}
+					AND = {
+						check_variable = { influence_array^1 = FRA }
+						check_variable = { influence_array_val^1 > 14.999 }
+					}
+					AND = {
+						check_variable = { influence_array^2 = FRA }
+						check_variable = { influence_array_val^2 > 14.999 }
+					}
+					AND = {
+						check_variable = { influence_array^3 = FRA }
+						check_variable = { influence_array_val^3 > 14.999 }
+					}
+					AND = {
+						check_variable = { influence_array^4 = FRA }
+						check_variable = { influence_array_val^4 > 14.999 }
+					}
+					AND = {
+						check_variable = { influence_array^5 = FRA }
+						check_variable = { influence_array_val^5 > 14.999 }
+					}
+				}
+			}
+			NOT = { has_war_with = FRA }
+			NOT = { has_government = nationalist }
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFRICA_adopt_the_cfa_franc"
+			if = {
+				limit = {
+					FRA = { has_completed_focus = FRA_introduce_the_eco }
+				}
+				add_ideas = cfa_franc_2
+			}
+			else = {
+				add_ideas = CFA_franc
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = {
+				factor = 0
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 1.5
+				is_subject_of = FRA
+			}
+			modifier = {
+				factor = 0
+				has_war_with = FRA
+			}
+			modifier = {
+				factor = 0.75
+				check_variable = { domestic_influence_amount > 50 }
+			}
+			modifier = {
+				factor = 1.5
+				OR = {
+					AND = {
+						FRA = { has_government = democratic }
+						has_government = democratic
+					}
+					AND = {
+						FRA = { has_government = neutrality }
+						has_government = neutrality
+					}
+					AND = {
+						FRA = { has_government = communism }
+						has_government = communism
+					}
+				}
+			}
+			modifier = {
+				factor = 1.5
+				has_opinion = {
+					target = FRA
+					value > 50
+				}
+			}
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = FRA
+					value < 0
+				}
+			}
+		}
+	}
 	AFRICA_remove_the_cfa_franc = {
 		allowed = { is_french_africa_nation = yes }
 		icon = generic_civil_support
@@ -2503,9 +2646,35 @@ generic_coalition_politics_decisions = {
 			OR = {
 				has_war_with = FRA
 				has_government = nationalist
-				FRA = {
-					NOT = {
-						influence_higher_15 = yes
+				NOT = {
+					custom_trigger_tooltip = {
+						tooltip = france_has_fifteen_influence_in_us_tt
+						OR = {
+							AND = {
+								check_variable = { influence_array^0 = FRA }
+								check_variable = { influence_array_val^0 > 14.999 }
+							}
+							AND = {
+								check_variable = { influence_array^1 = FRA }
+								check_variable = { influence_array_val^1 > 14.999 }
+							}
+							AND = {
+								check_variable = { influence_array^2 = FRA }
+								check_variable = { influence_array_val^2 > 14.999 }
+							}
+							AND = {
+								check_variable = { influence_array^3 = FRA }
+								check_variable = { influence_array_val^3 > 14.999 }
+							}
+							AND = {
+								check_variable = { influence_array^4 = FRA }
+								check_variable = { influence_array_val^4 > 14.999 }
+							}
+							AND = {
+								check_variable = { influence_array^5 = FRA }
+								check_variable = { influence_array_val^5 > 14.999 }
+							}
+						}
 					}
 				}
 			}
@@ -2559,6 +2728,20 @@ generic_coalition_politics_decisions = {
 					}
 				}
 			}
+			modifier = {
+				factor = 1.25
+				has_opinion = {
+					target = FRA
+					value < 0
+				}
+			}
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = FRA
+					value > 50
+				}
+			}
 		}
 	}
 
@@ -2575,8 +2758,14 @@ generic_coalition_politics_decisions = {
 			NOT = {
 				has_country_flag = F35_blacklist
 			}
-			USA = {
-				has_country_flag = USA_open_f35_program_world
+			OR = {
+				# Allies mode: require Major Non-NATO Ally status
+				AND = {
+					USA = { has_country_flag = USA_open_f35_program_allies }
+					has_idea = Major_Non_NATO_Ally
+				}
+				# World mode: any country can apply
+				USA = { has_country_flag = USA_open_f35_program_world }
 			}
 			country_exists = USA
 			USA = {
@@ -2588,7 +2777,6 @@ generic_coalition_politics_decisions = {
 				has_country_flag = USA_f35_legacy_members
 				has_country_flag = USA_f35_program_member_new
 			}
-			has_idea = Major_Non_NATO_Ally
 		}
 
 		remove_effect = {
@@ -2619,8 +2807,8 @@ generic_coalition_politics_decisions = {
 				}
 			}
 			else = {
-				any_country = {
-					has_idea = NATO_member
+				any_of_scopes = {
+					array = global.nato_members
 					is_faction_leader = yes
 
 					has_opinion = { target = ROOT value > 100 }
