@@ -1,57 +1,9 @@
 ﻿add_namespace = Egypt
 add_namespace = egypt
 add_namespace = egypt_evergreen
-add_namespace = Egypt_news
+add_namespace = egypt_news
 add_namespace = egypt_copts
 add_namespace = egypt_sahar
-
-news_event = {
-	id = Egypt_news.1
-	title = Egypt_news.1.t
-	desc = Egypt_news.1.d
-	picture = GFX_news_peninsula_shield_intervention
-	is_triggered_only = yes
-	option = {
-		name = Egypt_news.1.a
-		log = "[GetDateText]: [This.GetName]: Egypt_news.1.a executed"
-	}
-}
-
-news_event = {
-	id = Egypt_news.2
-	title = Egypt_news.2.t
-	desc = Egypt_news.2.d
-	picture = GFX_african_union_news
-	is_triggered_only = yes
-	option = {
-		name = Egypt_news.2.a
-		log = "[GetDateText]: [This.GetName]: Egypt_news.2.a executed"
-	}
-}
-
-news_event = {
-	id = Egypt_news.3
-	title = Egypt_news.3.t
-	desc = Egypt_news.3.d
-	picture = GFX_trade_agreement
-	is_triggered_only = yes
-	option = {
-		name = Egypt_news.3.a
-		log = "[GetDateText]: [This.GetName]: Egypt_news.3.a executed"
-	}
-}
-
-news_event = {
-	id = Egypt_news.4
-	title = Egypt_news.4.t
-	desc = Egypt_news.4.d
-	picture = GFX_trade_agreement
-	is_triggered_only = yes
-	option = {
-		name = Egypt_news.4.a
-		log = "[GetDateText]: [This.GetName]: Egypt_news.4.a executed"
-	}
-}
 
 #They agree callback
 country_event = {
@@ -3919,5 +3871,502 @@ country_event = {
 		name = egypt.161.a
 		log = "[GetDateText]: [This.GetName]: egypt.162.a executed"
 		ai_chance = { base = 1 }
+	}
+}
+
+# The Aswan Tribal Clashes
+country_event = {
+	id = egypt.163
+	title = egypt.163.t
+	desc = egypt.163.d
+	picture = GFX_israeli_soldiers_injured # FIXME: Replace with a proper event picture
+	is_triggered_only = yes
+	trigger = {
+		original_tag = EGY
+	}
+
+	# Worrying...
+	option = {
+		name = egypt.163.a
+		set_country_flag = EGY_aswan_tribal_conflict
+		activate_mission = EGY_tribal_conflict_escalation_mission
+		unlock_decision_category_tooltip = EGY_aswan_tribal_clashes_category
+		news_event = egypt_news.5
+
+		hidden_effect = {
+			country_event = { id = egypt.165 days = 2 random_hours = 48 }
+		}
+	}
+}
+
+# The Tribal Conflicts Resolved
+country_event = {
+	id = egypt.164
+	title = egypt.164.t
+	desc = egypt.164.d
+	picture = GFX_israeli_soldiers_injured # FIXME: Replace with a proper event picture
+	is_triggered_only = yes
+	trigger = {
+		original_tag = EGY
+	}
+
+	# The Conflict Resolved
+	option = {
+		name = egypt.164.a
+		set_country_flag = EGY_aswan_tribal_conflict_resolved
+	}
+}
+
+# Dozens Dead or Wounded
+country_event = {
+	id = egypt.165
+	title = egypt.165.t
+	desc = egypt.165.d
+	picture = GFX_israeli_soldiers_injured # FIXME: Replace with a proper event picture
+	is_triggered_only = yes
+	trigger = {
+		original_tag = EGY
+		has_active_mission = EGY_tribal_conflict_escalation_mission
+	}
+
+	# Devastating...
+	option = {
+		name = egypt.165.a
+		217 = {
+			add_manpower = -26
+		}
+	}
+}
+
+# Choosing a Side
+country_event = {
+	id = egypt.166
+	title = egypt.166.t
+	desc = egypt.166.d
+	picture = GFX_israeli_soldiers_injured # FIXME: Replace with a proper event picture
+	is_triggered_only = yes
+	trigger = {
+		original_tag = EGY
+		has_active_mission = EGY_tribal_conflict_escalation_mission
+	}
+
+	# Neutrality
+	option = {
+		name = egypt.166.a
+		set_country_flag = EGY_aswan_historical_choice
+
+		add_stability = -0.03
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		set_temp_variable = { temp_outlook_increase = -0.03 }
+		add_relative_party_popularity = yes
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 1.5
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	# The Arabs
+	option = {
+		name = egypt.166.b
+		set_country_flag = EGY_aswan_nubian_choice
+
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+		newline = yes
+		set_temp_variable = { party_index = 21 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		add_relative_party_popularity = yes
+
+		hidden_effect = {
+			SUD = {
+				country_event = { id = egypt.168 days = 3 random_hours = 24 }
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 25
+				OR = {
+					has_government = nationalist
+					has_government = fascism
+					is_neo_baathist_uar = yes
+					is_baathist_uar = yes
+				}
+			}
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+# The Tribal Conflict Escalates
+country_event = {
+	id = egypt.167
+	title = egypt.167.t
+	desc = egypt.167.d
+	picture = GFX_israeli_soldiers_injured # FIXME: Replace with a proper event picture
+	is_triggered_only = yes
+	trigger = {
+		original_tag = EGY
+	}
+
+	# The Conflict Escalated
+	option = {
+		name = egypt.167.a
+		set_country_flag = EGY_aswan_tribal_conflict_escalated
+
+		hidden_effect = {
+			create_dynamic_country = {
+				original_tag = EGY
+				set_country_flag = EGY_aswan_breakaway
+				copy_tag = EGY
+				set_cosmetic_tag = EGY_ASW
+				add_state_core = 217
+				add_state_core = 1198
+				add_state_core = 590
+				add_state_core = 219
+				transfer_state = 217
+				EGY = { set_state_controller = 217 }
+				set_capital = { state = 217 }
+
+				set_popularities = {
+					neutrality = 100
+				}
+				set_politics = {
+					ruling_party = neutrality
+					last_election = "1997.6.8"
+					election_frequency = 48
+					elections_allowed = no
+				}
+				start_politics_input = yes
+				set_variable = { party_pop_array^12 = 1.00 } #Neutral_Muslim_Brotherhood
+				add_to_array = { ruling_party = 12 }
+				startup_politics = yes
+				setup_employment_variables = yes
+				ingame_update_setup = yes
+
+				set_variable = { domestic_influence_amount = 100 }
+				startup_influence = yes
+
+				set_variable = { treasury = 5 }
+
+				division_template = {
+					name = "Aswan Rebel Forces"
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 1 y = 0 }
+						Militia_Bat = { x = 2 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 1 y = 1 }
+					}
+					priority = 0
+				}
+			}
+			ASW = {
+				ingame_startup_nations_effect = yes
+				set_province_controller = 6217
+				set_province_controller = 12771
+				set_province_controller = 9891
+				add_ideas = EGY_aswan_rebel_forces_escalation
+				declare_war_on = {
+					target = EGY
+					type = civil_war
+				}
+				217 = {
+					create_unit = {
+						division = "name = \"Aswan Rebel Forces\" division_template = \"Aswan Rebel Forces\" start_experience_factor = 0.6"
+						owner = ASW
+						count = 3
+						prioritize_location = 6217
+					}
+					if = {
+						limit = {
+							SUD = {
+								OR = {
+									has_country_flag = ASW_supported_the_nubian_people
+									has_country_flag = ASW_intervention_in_aswan_conflict
+								}
+							}
+						}
+						create_unit = {
+							division = "name = \"Aswan Rebel Forces\" division_template = \"Aswan Rebel Forces\" start_experience_factor = 0.6"
+							owner = ASW
+							count = 2
+							prioritize_location = 6217
+						}
+						set_temp_variable = { treasury_change = 6.00 }
+						modify_treasury_effect = yes
+					}
+					if = {
+						limit = { SUD = { has_country_flag = ASW_intervention_in_aswan_conflict } }
+						SUD = { country_event = { id = egypt.169 days = 2 } }
+					}
+				}
+			}
+		}
+	}
+}
+
+# Support the Nubian People?
+country_event = {
+	id = egypt.168
+	title = egypt.168.t
+	desc = egypt.168.d
+	picture = GFX_israeli_soldiers_injured # FIXME: Replace with a proper event picture
+	is_triggered_only = yes
+
+	# Material Support
+	option = {
+		name = egypt.168.a
+		set_country_flag = ASW_supported_the_nubian_people
+
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 5
+				SUD = {
+					has_opinion = {
+						target = EGY
+						value < -50
+					}
+				}
+			}
+			modifier = {
+				add = 5
+				SUD = {
+					has_opinion = {
+						target = EGY
+						value < -100
+					}
+				}
+			}
+			modifier = {
+				add = 5
+				NOT = {
+					OR = {
+						has_country_leader = { name = "Omar al-Bashir" ruling_only = yes }
+						neutrality_neutral_muslim_brotherhood_are_in_power = yes
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					is_historical_focus_on = yes
+					has_country_leader = { name = "Omar al-Bashir" ruling_only = yes }
+					neutrality_neutral_muslim_brotherhood_are_in_power = yes
+				}
+			}
+		}
+	}
+
+	# Intervention if it Escalates + Material Support
+	option = {
+		name = egypt.168.b
+		set_country_flag = ASW_intervention_in_aswan_conflict
+
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
+
+		custom_effect_tooltip = ASW_we_will_be_called_to_war_tt
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 5
+				SUD = {
+					has_opinion = {
+						target = EGY
+						value < -50
+					}
+				}
+			}
+			modifier = {
+				add = 5
+				SUD = {
+					has_opinion = {
+						target = EGY
+						value < -100
+					}
+				}
+			}
+			modifier = {
+				add = 5
+				NOT = {
+					OR = {
+						has_country_leader = { name = "Omar al-Bashir" ruling_only = yes }
+						neutrality_neutral_muslim_brotherhood_are_in_power = yes
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					is_historical_focus_on = yes
+					has_country_leader = { name = "Omar al-Bashir" ruling_only = yes }
+					neutrality_neutral_muslim_brotherhood_are_in_power = yes
+				}
+			}
+		}
+	}
+
+	# Ignore Their Plight
+	option = {
+		name = egypt.168.c
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 5
+				SUD = {
+					has_opinion = {
+						target = EGY
+						value > 50
+					}
+				}
+			}
+			modifier = {
+				add = 5
+				SUD = {
+					has_opinion = {
+						target = EGY
+						value > 100
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+# Intervention in the Conflict
+country_event = {
+	id = egypt.169
+	title = egypt.169.t
+	desc = egypt.169.d
+	picture = GFX_israeli_soldiers_injured # FIXME: Replace with a proper event picture
+	is_triggered_only = yes
+
+	# Intervene!
+	option = {
+		name = egypt.169.a
+
+		effect_tooltip = {
+			add_to_war = {
+				targeted_alliance = ASW
+				enemy = EGY
+				hostility_reason = supporting_the_cause
+			}
+		}
+
+		EGY = { country_event = { id = egypt.170 days = 2 } }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Back out of the Conflict
+	option = {
+		name = egypt.169.b
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Sudan Supports the Nubians
+country_event = {
+	id = egypt.170
+	title = egypt.170.t
+	desc = egypt.170.d
+	picture = GFX_israeli_soldiers_injured # FIXME: Replace with a proper event picture
+	is_triggered_only = yes
+
+	# Oh no...
+	option = {
+		name = egypt.170.a
+
+		SUD = {
+			add_to_war = {
+				targeted_alliance = ASW
+				enemy = EGY
+				hostility_reason = supporting_the_cause
+			}
+		}
+	}
+}
+
+# News Events
+news_event = {
+	id = egypt_news.1
+	title = egypt_news.1.t
+	desc = egypt_news.1.d
+	picture = GFX_news_peninsula_shield_intervention
+	is_triggered_only = yes
+	option = {
+		name = egypt_news.1.a
+	}
+}
+
+news_event = {
+	id = egypt_news.2
+	title = egypt_news.2.t
+	desc = egypt_news.2.d
+	picture = GFX_african_union_news
+	is_triggered_only = yes
+	option = {
+		name = egypt_news.2.a
+	}
+}
+
+news_event = {
+	id = egypt_news.3
+	title = egypt_news.3.t
+	desc = egypt_news.3.d
+	picture = GFX_trade_agreement
+	is_triggered_only = yes
+	option = {
+		name = egypt_news.3.a
+	}
+}
+
+news_event = {
+	id = egypt_news.4
+	title = egypt_news.4.t
+	desc = egypt_news.4.d
+	picture = GFX_trade_agreement
+	is_triggered_only = yes
+	option = {
+		name = egypt_news.4.a
+	}
+}
+
+news_event = {
+	id = egypt_news.5
+	title = egypt_news.5.t
+	desc = egypt_news.5.d
+	picture = GFX_trade_agreement # FIXME: Replace with a proper event picture
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = egypt_news.5.a
 	}
 }

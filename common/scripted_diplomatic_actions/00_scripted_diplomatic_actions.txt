@@ -79,6 +79,7 @@ scripted_diplomatic_actions = {
 					}
 				}
 			}
+			embassy_with_root_closed = no
 			ERI_is_not_transitional_government = yes
 		}
 		cost = 75
@@ -487,6 +488,7 @@ scripted_diplomatic_actions = {
 					tooltip = treasury_more_than_25_debt_tt
 				}
 			}
+			embassy_with_root_closed = no
 			ERI_is_not_transitional_government = yes
 		}
 
@@ -881,6 +883,7 @@ scripted_diplomatic_actions = {
 					NOT = { has_war_with = ROOT }
 				}
 			}
+			embassy_with_root_closed = no
 			ERI_is_not_transitional_government = yes
 		}
 
@@ -1850,6 +1853,7 @@ scripted_diplomatic_actions = {
 				has_an_energy_deficit = yes
 				NOT = { has_country_flag = energy_load_sharing_recipient }
 			}
+			embassy_with_root_closed = no
 			ERI_is_not_transitional_government = yes
 		}
 
@@ -1935,13 +1939,14 @@ scripted_diplomatic_actions = {
 				has_an_energy_deficit = yes
 				NOT = { has_country_flag = energy_load_sharing_recipient }
 			}
+			embassy_with_root_closed = no
 			ERI_is_not_transitional_government = yes
 		}
 
 		cost = 50
 		icon = 24
 
-		requires_acceptance = no
+		requires_acceptance = yes
 		show_acceptance_on_action_button = yes
 
 		send_description = DIPLO_ACTION_REQUEST_ENERGY_LOAD_SHARING_DESC
@@ -1953,21 +1958,17 @@ scripted_diplomatic_actions = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect request_energy_load_sharing"
 			# In this scope, the nation requesting is ROOT
+			add_to_array = { energy_load_sharing_nations = ROOT.id }
+			calculate_energy_load_sharing = yes
 			ROOT = {
 				set_country_flag = energy_load_sharing_recipient
-				add_to_array = { PREV.energy_load_sharing_nations = THIS.id }
-			}
-			calculate_energy_load_sharing = yes
-			ingame_update_setup = yes
-			ROOT = {
 				ingame_update_setup = yes
 			}
+			ingame_update_setup = yes
 		}
 		reject_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect request_energy_load_sharing"
-			ROOT = {
-				clear_variable = pending_request_to_energy_load_share
-			}
+			ROOT = { clear_variable = pending_request_to_energy_load_share }
 		}
 
 		accept_title = DIPLO_ACTION_ENERGY_LOAD_SHARING_ACCEPT_TITLE
@@ -2031,6 +2032,9 @@ scripted_diplomatic_actions = {
 				limit = { THIS = { has_country_flag = energy_load_sharing_recipient } }
 				clr_country_flag = energy_load_sharing_recipient
 				remove_from_array = { ROOT.energy_load_sharing_nations = THIS.id }
+				clear_variable = energy_load_sharing_use_var
+				clear_variable = energy_load_sharing_gain_var
+				clear_variable = energy_load_sharing_income_var
 				ROOT = {
 					calculate_energy_load_sharing = yes
 					ingame_update_setup = yes
@@ -2040,6 +2044,9 @@ scripted_diplomatic_actions = {
 			else = {
 				ROOT = {
 					clr_country_flag = energy_load_sharing_recipient
+					clear_variable = energy_load_sharing_use_var
+					clear_variable = energy_load_sharing_gain_var
+					clear_variable = energy_load_sharing_income_var
 					remove_from_array = { PREV.energy_load_sharing_nations = THIS.id }
 				}
 				calculate_energy_load_sharing = yes
@@ -2052,6 +2059,159 @@ scripted_diplomatic_actions = {
 
 		ai_desire = {
 			base = 0
+		}
+	}
+
+	# Close/Reopen Embassy
+	close_embassy_action = {
+		visible = {
+			THIS = {
+				embassy_with_root_closed = no
+			}
+		}
+		selectable = {
+			embassy_with_root_closed = no
+			ERI_is_not_transitional_government = yes
+		}
+
+		cost = 50
+		icon = 26 # FIXME: Replace with a different icon
+
+		requires_acceptance = no
+		show_acceptance_on_action_button = no
+
+		send_description = DIPLO_ACTION_CLOSE_EMBASSY_ACTION_DESC
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect close_embassy_action"
+			THIS = {
+				add_opinion_modifier = { target = ROOT modifier = embassy_closed }
+				reverse_add_opinion_modifier = { target = ROOT modifier = embassy_closed }
+
+				add_opinion_modifier = { target = ROOT modifier = embassy_recently_closed }
+				set_country_flag = closed_embassy_@ROOT
+				set_country_flag = { flag = recently_closed_embassy_@ROOT days = 90 value = 1 }
+				ROOT = {
+					set_country_flag = recently_closed_embassy_@PREV
+					set_country_flag = { flag = recently_closed_embassy_@PREV days = 90 value = 1 }
+				}
+			}
+		}
+
+		accept_title = DIPLO_ACTION_CLOSE_EMBASSY_ACCEPT_TITLE
+		accept_description = DIPLO_ACTION_CLOSE_EMBASSY_ACCEPT_DESC
+		reject_title = DIPLO_ACTION_CLOSE_EMBASSY_REJECT_TITLE
+		reject_description = DIPLO_ACTION_CLOSE_EMBASSY_REJECT_DESC
+
+		ai_acceptance = {
+			base_close_embassy = {
+				base = -50
+			}
+		}
+
+		ai_desire = {
+			base = 0
+		}
+	}
+
+	reopen_embassy_action = {
+		visible = {
+			THIS = {
+				embassy_with_root_closed = yes
+			}
+		}
+		selectable = {
+			embassy_with_root_closed = yes
+			ERI_is_not_transitional_government = yes
+		}
+
+		cost = 50
+		icon = 26 # FIXME: Replace with a different icon
+
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+
+		send_description = DIPLO_ACTION_REOPEN_EMBASSY_ACTION_DESC
+
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect reopen_embassy_action"
+			ROOT = { set_variable = { pending_reopen_embassy_option = PREV.id } }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect reopen_embassy_action"
+			THIS = {
+				add_opinion_modifier = { target = ROOT modifier = embassy_recently_reopened }
+				reverse_add_opinion_modifier = { target = ROOT modifier = embassy_recently_reopened }
+
+				remove_opinion_modifier = { target = ROOT modifier = embassy_closed }
+				ROOT = { remove_opinion_modifier = { target = PREV modifier = embassy_closed } }
+				clr_country_flag = closed_embassy_@ROOT
+				ROOT = {
+					clr_country_flag = closed_embassy_@PREV
+				}
+			}
+		}
+		reject_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect reopen_embassy_action"
+			ROOT = { clear_variable = pending_reopen_embassy_option }
+		}
+
+		accept_title = DIPLO_ACTION_REOPEN_EMBASSY_ACCEPT_TITLE
+		accept_description = DIPLO_ACTION_REOPEN_EMBASSY_ACCEPT_DESC
+		reject_title = DIPLO_ACTION_REOPEN_EMBASSY_REJECT_TITLE
+		reject_description = DIPLO_ACTION_REOPEN_EMBASSY_REJECT_DESC
+
+		ai_acceptance = {
+			base_reopen_embassy = {
+				base = -50
+			}
+			condition_two = {
+				base = 0
+				modifier = {
+					add = 5
+					is_same_government_THIS_ROOT = yes
+				}
+				modifier = {
+					add = -50
+					THIS = { has_government = nationalist }
+				}
+			}
+			condition_three = {
+				base = 0
+				modifier = {
+					set_temp_variable = { opinion_calculator = opinion@ROOT }
+					multiply_temp_variable = { opinion_calculator = 0.05 }
+					check_variable = { opinion_calculator > -60 }
+					add = opinion_calculator
+				}
+			}
+		}
+
+		ai_desire = {
+			base = 20
+			modifier = {
+				ROOT = { has_opinion = { target = PREV value > 49 } }
+				add = 2
+			}
+			modifier = {
+				ROOT = { has_opinion = { target = PREV value > 75 } }
+				add = 5
+			}
+			modifier = {
+				ROOT = { has_opinion = { target = PREV value > 99 } }
+				add = 5
+			}
+			modifier = {
+				add = -15
+				ROOT = { has_opinion = { target = PREV value < 0 } }
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					ROOT = { NOT = { has_country_flag = recently_closed_embassy_@PREV } }
+					ROOT = { NOT = { check_variable = { pending_reopen_embassy_option = 0 } } }
+				}
+			}
 		}
 	}
 }
