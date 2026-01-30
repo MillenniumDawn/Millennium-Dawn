@@ -12862,48 +12862,48 @@ focus_tree = {
 	}
 	#
 	focus = { #STRAY FROM REPUBLIC
-	id = GER_stray_from_the_republic
-	icon = attack_democracy2
-	search_filters = { FOCUS_FILTER_POLITICAL }
-	x = 42
-	y = 0
-	cost = 4.3
-	available = {
-		has_civil_war = no
-		has_completed_focus = GER_will_of_the_people
-	}
-	completion_reward = {
-		log = "[GetDateText]: [Root.GetName]: Focus GER_german_politics"
-		country_event = {
-			id = Germany.236
+		id = GER_stray_from_the_republic
+		icon = attack_democracy2
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		x = 42
+		y = 0
+		cost = 4.3
+		available = {
+			has_civil_war = no
+			has_completed_focus = GER_will_of_the_people
 		}
-		hidden_effect = {
-			every_country = {
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GER_german_politics"
+			country_event = {
+				id = Germany.236
+			}
+			hidden_effect = {
+				every_country = {
+					limit = {
+						is_in_europe = yes
+					}
+					country_event = {
+						id = Germany.237
+					}
+				}
+			}
+			if = {
 				limit = {
-					is_in_europe = yes
+					NOT = {
+						has_dynamic_modifier = { modifier = GER_generic_spending_laws }
+					}
 				}
-				country_event = {
-					id = Germany.237
-				}
+				add_dynamic_modifier = { modifier = GER_generic_spending_laws }
 			}
+			force_update_dynamic_modifier = yes
+			newline = yes
+			custom_effect_tooltip = GER_how_to_overthrow_TT
 		}
-		if = {
-			limit = {
-				NOT = {
-					has_dynamic_modifier = { modifier = GER_generic_spending_laws }
-				}
-			}
-			add_dynamic_modifier = { modifier = GER_generic_spending_laws }
-		}
-		force_update_dynamic_modifier = yes
-		newline = yes
-		custom_effect_tooltip = GER_how_to_overthrow_TT
-	}
 
-	ai_will_do = {
-		factor = 1
+		ai_will_do = {
+			factor = 1
+		}
 	}
-}
 	#
 	#SPD Tree
 	focus = { #Capitalize on the donations scandal
@@ -14057,17 +14057,30 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_european_ties"
-			set_temp_variable = { modify_eurosceptic = -0.03 }
-			set_temp_variable = { modify_eurosceptic_target = ROOT }
-			eurosceptic_change = yes
-			set_temp_variable = { percent_change = 1.2 }
-			set_temp_variable = { tag_index = GER }
-			every_country = {
-				limit = {
-					has_idea = EU_member
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				set_temp_variable = { modify_eurosceptic = -0.03 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
+				newline = yes
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
 				}
-				set_temp_variable = { influence_target = THIS }
-				change_influence_percentage = yes
+				hidden_effect = {
+					set_temp_variable = { percent_change = 1.2 }
+					set_temp_variable = { tag_index = GER }
+					for_each_scope_loop = {
+						array = global.EU_member
+						set_temp_variable = { influence_target = THIS }
+						change_influence_percentage = yes
+					}
+				}
+			}
+			else = {
+				add_political_power = 150
+				add_stability = 0.02
 			}
 		}
 		ai_will_do = {
@@ -20470,12 +20483,9 @@ focus_tree = {
 		prerequisite = { focus = GER_german_irredentism }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_german_europe"
-			every_country = {
+			every_other_country = {
 				limit = {
 					is_in_europe = yes
-					NOT = {
-						original_tag = GER
-					}
 				}
 				set_temp_variable = { percent_change = -5 }
 				change_domestic_influence_percentage = yes

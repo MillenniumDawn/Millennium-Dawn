@@ -1088,18 +1088,26 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus EST_little_man executed"
-			set_temp_variable = { modify_eurosceptic = -0.05 }
-			EU_eurosceptic_change = yes
-			every_country = {
-				limit = {
-					has_idea = EU_member
-					NOT = { original_tag = EST }
-					NOT = { has_war_with = EST }
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				set_temp_variable = { modify_eurosceptic = -0.05 }
+				EU_eurosceptic_change = yes
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = EST modifier = european_commitment }
 				}
-				add_opinion_modifier = {
-					target = EST
-					modifier = european_commitment
+				hidden_effect = {
+					for_each_scope_loop = {
+						array = global.EU_member
+						if = {
+							limit = { NOT = { original_tag = EST } }
+							add_opinion_modifier = { target = EST modifier = european_commitment }
+						}
+					}
 				}
+			}
+			else = {
+				add_political_power = 150
 			}
 		}
 
