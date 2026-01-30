@@ -1670,14 +1670,24 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus KHM_reconst_eu"
 			set_temp_variable = { treasury_change = -0.5 }
 			modify_treasury_effect = yes
-			every_country = {
-				limit = {
-					has_idea = EU_member
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					set_temp_variable = { percent_change = 0.5 }
+					set_temp_variable = { tag_index = ROOT }
+					set_temp_variable = { influence_target = KHM }
+					change_influence_percentage = yes
 				}
-				set_temp_variable = { percent_change = 0.5 }
-				set_temp_variable = { tag_index = ROOT }
-				set_temp_variable = { influence_target = KHM }
-				change_influence_percentage = yes
+				hidden_effect = {
+					for_each_scope_loop = {
+						array = global.EU_member
+						set_temp_variable = { percent_change = 0.5 }
+						set_temp_variable = { tag_index = ROOT }
+						set_temp_variable = { influence_target = KHM }
+						change_influence_percentage = yes
+					}
+				}
 			}
 			random_owned_controlled_state = { add_extra_state_shared_building_slots = 1 }
 		}
@@ -1861,21 +1871,31 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KHM_euro"
-			every_other_country = {
-				limit = {
-					has_idea = EU_member
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					set_temp_variable = { percent_change = 0.5 }
+					set_temp_variable = { tag_index = ROOT }
+					set_temp_variable = { influence_target = KHM }
+					change_influence_percentage = yes
+					add_opinion_modifier = { target = KHM modifier = diplomatic_support }
+					reverse_add_opinion_modifier = { target = KHM modifier = diplomatic_support }
 				}
-				add_opinion_modifier = { target = KHM modifier = diplomatic_support }
-				reverse_add_opinion_modifier = { target = KHM modifier = diplomatic_support }
+				hidden_effect = {
+					for_each_scope_loop = {
+						array = global.EU_member
+						set_temp_variable = { percent_change = 0.5 }
+						set_temp_variable = { tag_index = ROOT }
+						set_temp_variable = { influence_target = KHM }
+						change_influence_percentage = yes
+						add_opinion_modifier = { target = KHM modifier = diplomatic_support }
+						reverse_add_opinion_modifier = { target = KHM modifier = diplomatic_support }
+					}
+				}
 			}
-			every_country = {
-				limit = {
-					has_idea = EU_member
-				}
-				set_temp_variable = { percent_change = 0.5 }
-				set_temp_variable = { tag_index = ROOT }
-				set_temp_variable = { influence_target = KHM }
-				change_influence_percentage = yes
+			else = {
+				add_political_power = 150
 			}
 		}
 		ai_will_do = { factor = 100 }
