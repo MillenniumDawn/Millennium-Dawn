@@ -54,8 +54,8 @@ on_actions = {
 				# Pay down debt automatically this weekly tick
 				if = {
 					limit = {
-						check_variable = { treasury_rate > 0 }
 						has_country_flag = automatically_pay_off_debt_enabled
+						check_variable = { treasury_rate > 0 }
 						check_variable = { debt > 0 }
 					}
 					set_temp_variable = { treasury_rate_debt_payment = treasury_rate }
@@ -195,19 +195,6 @@ on_actions = {
 
 				NATO_CSTO_calculate_number_of_batallions = yes
 			}
-
-			if = { limit = { is_ai = no }
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = rule_internal_faction_cost_reduction
-							option = yes
-						}
-						NOT = { has_idea = GAME_RULE_reduce_internal_factions_cost }
-					}
-					add_ideas = GAME_RULE_reduce_internal_factions_cost
-				}
-			}
 		}
 	}
 
@@ -251,8 +238,8 @@ on_actions = {
 					log = "[GetDateText]: [ROOT.GetName]: on_annex EU Member"
 					meta_effect = {
 						text = {
-							every_country = {
-								limit = { has_idea = EU_member }
+							for_each_scope_loop = {
+								array = global.EU_member
 								clr_country_flag = focus_[EUXXX]_EP_agenda
 								clr_country_flag = focus_on_EP_agenda
 								clr_country_flag = [PG_X]_influence
@@ -279,11 +266,12 @@ on_actions = {
 						EUXXX = "[EUXXX_EP_agenda]"
 						PG_X = "[PG_X_influence]"
 					}
-					every_country = { limit = { has_idea = EU_member }
+					for_each_scope_loop = {
+						array = global.EU_member
 						remove_mission = EU_parliament_focus_EUXXX_approve_timer
 						remove_mission = EU_voting_mission_focus_EUXXX_QMV_result_timer
 					}
-					every_country = { limit = { has_idea = EU_commission_president }
+					var:global.eucomission = {
 						remove_mission = EU_parliament_focus_EUXXX_approve
 						remove_mission = EU_voting_mission_focus_EUXXX_QMV_result
 					}
@@ -300,6 +288,19 @@ on_actions = {
 						activate_mission = EU_clear_voting_mission
 					}
 				}
+			}
+
+			if = {
+				limit = { is_in_array = { global.AU_member = FROM.id } }
+				remove_from_array = { global.AU_member = FROM.id }
+			}
+			if = {
+				limit = { is_in_array = { global.nato_members = FROM.id } }
+				remove_from_array = { global.nato_members = FROM.id }
+			}
+			if = {
+				limit = { is_in_array = { global.CSTO_member = FROM.id } }
+				remove_from_array = { global.CSTO_member = FROM.id }
 			}
 
 			EDU_learn_to_annex_your_neighbours = yes # LITERACY RATE STUFF
@@ -1585,11 +1586,9 @@ on_actions = {
 								NOT = { has_idea = muslim_brotherhood_crackdown }
 								neutrality > 0.35
 							}
-							random_list = {
-								40 = {
-									country_event = { id = brotherhood.6 }
-								}
-								60 = { }
+							random = {
+								chance = 40
+								country_event = { id = brotherhood.6 }
 							}
 						}
 
@@ -1600,9 +1599,9 @@ on_actions = {
 								NOT = { has_war = yes }
 								neutrality > 0.5
 							}
-							random_list = {
-								35 = { country_event = { id = brotherhood.10 } }
-								65 = { }
+							random = {
+								chance = 35
+								country_event = { id = brotherhood.10 }
 							}
 						}
 					}

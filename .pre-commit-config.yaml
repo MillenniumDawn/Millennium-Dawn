@@ -19,15 +19,13 @@ repos:
         files: '\.json$'
       - id: check-merge-conflict
       - id: check-added-large-files
-        args: ['--maxkb=10000']  # Prevent files larger than 10MB
+        args: ['--maxkb=100000']  # Prevent files larger than 100MB
       - id: check-case-conflict
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
       - id: fix-encoding-pragma
         args: [--remove]
         exclude: 'localisation/.*\.yml$'
-
-      # Python-specific checks for tools directory
       - id: check-ast
         files: '\.py$'
       - id: debug-statements
@@ -50,6 +48,20 @@ repos:
         files: '^tools/.*\.py$'
         args: [--profile=black]
 
+  # Markdown and Jekyll documentation formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        name: Format Markdown files
+        files: '\.md$'
+        args: [--prose-wrap=preserve, --print-width=120]
+      - id: prettier
+        name: Format Jekyll configuration
+        types: [yaml]
+        files: '^docs/.*\.yml$'
+        args: [--print-width=120]
+
   # Custom hooks for HOI4 mod-specific validation
   - repo: local
     hooks:
@@ -61,7 +73,6 @@ repos:
         files: '\.(txt)$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
-
       - id: md-basic-style-check-2
         name: MD Basic Style Check 2 (Advanced)
         entry: python3 tools/check_basic_style_2.py --mode staged
@@ -70,7 +81,6 @@ repos:
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
         args: ["dummy_token"]
-
       - id: md-coding-standards
         name: MD Coding Standards
         entry: python3 tools/coding_standards.py
@@ -79,32 +89,31 @@ repos:
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
         args: ["dummy_token"]
-
-      # Validate English localization files have UTF-8 with BOM
       - id: validate-localization-encoding
         name: Validate HOI4 localization UTF-8 with BOM
         entry: python3 tools/validate_localization_encoding.py
         language: system
         files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
         pass_filenames: true
-
-      # Auto-fix UTF-8 BOM for English localization files (optional)
       - id: fix-localization-encoding
         name: Auto-fix HOI4 localization UTF-8 BOM
         entry: python3 tools/validate_localization_encoding.py --fix
         language: system
         files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
         pass_filenames: true
-
-      # Validate .mod file UTF-8 encoding
       - id: check-mod-file-encoding
         name: Check .mod file UTF-8 encoding
         entry: python3 tools/validate_mod_encoding.py
         language: system
         files: '\.mod$'
         pass_filenames: true
-
-# Configuration for specific hooks
+      - id: check-braces
+        name: Check for missing braces
+        entry: python3 tools/check_braces.py
+        language: system
+        files: '\.(txt)$'
+        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
+        pass_filenames: true
 ci:
   autofix_commit_msg: |
     [pre-commit.ci] auto fixes from pre-commit.com hooks

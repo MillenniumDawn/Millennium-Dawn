@@ -1,0 +1,1069 @@
+add_namespace = comoros
+
+# Loyalty Question
+country_event = {
+	id = comoros.1
+	title = comoros.1.t
+	desc = comoros.1.d
+	picture = GFX_arab_spring_defection
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	option = {
+		name = comoros.1.a
+		log = "[GetDateText]: [This.GetName]: comoros.1.a executed"
+		add_equipment_to_stockpile = {
+			type = infantry_weapons1
+			amount = 4000
+			producer = SOV
+		}
+		add_ideas = generic_emerging_boost_idea2
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = SYR }
+		set_temp_variable = { influence_target = COM }
+		change_influence_percentage = yes
+		add_ideas = shia_movement
+		hidden_effect = {
+			create_country_leader = {
+				name = "Ahmed Abdallah Mohamed Sambi"
+				picture = "sambi_abdallah.dds"
+				ideology = Autocracy
+				traits = {
+					emerging_Autocracy
+				}
+			}
+		}
+	}
+
+	option = {
+		name = comoros.1.b
+		log = "[GetDateText]: [This.GetName]: comoros.1.b executed"
+		add_equipment_to_stockpile = {
+			type = infantry_weapons1
+			amount = 4000
+			producer = IRQ
+		}
+		add_ideas = generic_nationalist_boost_idea2
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = IRQ }
+		set_temp_variable = { influence_target = COM }
+		change_influence_percentage = yes
+		add_ideas = baath_movement
+		hidden_effect = {
+			create_country_leader = {
+				name = "Said Ahmed Said Ali"
+				picture = "said_ahmed.dds"
+				ideology = Nat_Autocracy
+				traits = {
+					nationalist_Nat_Autocracy
+				}
+			}
+		}
+	}
+
+}
+
+# The 2001 Constitutional Referendum
+country_event = {
+	id = comoros.4
+	title = comoros.4.t
+	desc = comoros.4.d
+	picture = GFX_ivory_coast_protest_supressed
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+	immediate = {
+		set_country_flag = COM_constitutional_referendum_active
+		hidden_effect = {
+			activate_mission = COM_the_constitutional_referendum_mission
+		}
+	}
+
+	# Support the Pro-Federalist Movement
+	option = {
+		name = comoros.4.a
+		log = "[GetDateText]: [This.GetName]: comoros.4.a executed"
+
+		custom_effect_tooltip = COM_federalist_supported_tt
+		set_variable = { COM_federalist_constitutional_support = 0.55 }
+		set_variable = { COM_anti_federalist_constitutional_support = 0.45 }
+
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Support the Anti-Federalist Movement
+	option = {
+		name = comoros.4.b
+		log = "[GetDateText]: [This.GetName]: comoros.4.b executed"
+
+		custom_effect_tooltip = COM_constitutionalists_supported_tt
+		set_variable = { COM_federalist_constitutional_support = 0.45 }
+		set_variable = { COM_anti_federalist_constitutional_support = 0.55 }
+
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
+	}
+}
+
+# The Comoros Claims Banc du Geyser
+country_event = {
+	id = comoros.5
+	title = comoros.5.t
+	desc = comoros.5.d
+	picture = GFX_ivory_coast_protest_supressed
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			original_tag = FRA
+			original_tag = MAD
+		}
+	}
+
+	option = {
+		name = comoros.5.a
+		trigger = { original_tag = FRA }
+		log = "[GetDateText]: [This.GetName]: comoros.5.a executed"
+	}
+
+	option = {
+		name = comoros.5.b
+		trigger = { original_tag = MAD }
+		log = "[GetDateText]: [This.GetName]: comoros.5.b executed"
+	}
+}
+
+# The Comoros Claim the Glorioso Islands
+country_event = {
+	id = comoros.6
+	title = comoros.6.t
+	desc = comoros.6.d
+	picture = GFX_ETH_ELF
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	option = {
+		name = comoros.6.a
+		log = "[GetDateText]: [This.GetName]: comoros.6.a executed"
+
+		add_opinion_modifier = { target = COM modifier = drama }
+		COM = {
+			add_war_support = 0.10
+		}
+	}
+}
+
+# Naval Base in Comoros
+country_event = {
+	id = comoros.7
+	title = comoros.7.t
+	desc = comoros.7.d
+	picture = GFX_handshake_black
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			original_tag = FRA
+			original_tag = CHI
+		}
+	}
+
+	# Accept the Naval Base
+	option = {
+		name = comoros.7.a
+		log = "[GetDateText]: [This.GetName]: comoros.7.a executed"
+		if = { limit = { NOT = { has_guaranteed = COM } }
+			give_guarantee = COM
+		}
+		if = { limit = { NOT = { has_military_access_to = COM } }
+			COM = { give_military_access = PREV }
+		}
+		diplomatic_relation = {
+			country = COM
+			relation = docking_rights
+			active = yes
+		}
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = THIS }
+		set_temp_variable = { influence_target = COM }
+		change_influence_percentage = yes
+
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
+		COM = {
+			set_temp_variable = { treasury_change = 5 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { PREV = { original_tag = CHI } }
+				add_ideas = COM_naval_treaty_with_china_idea
+			}
+			if = {
+				limit = { PREV = { original_tag = FRA } }
+				add_ideas = COM_naval_treaty_with_france_idea
+			}
+			country_event = diplomatic_response.1
+		}
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 5
+				has_opinion = { target = COM value > 25 }
+			}
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { COM.influence_array^0 = THIS }
+					check_variable = { COM.influence_array^1 = THIS }
+					check_variable = { COM.influence_array^2 = THIS }
+				}
+			}
+			modifier = {
+				add = 5
+				any_enemy_country = {
+					capital_scope = {
+						is_on_continent = africa
+					}
+				}
+			}
+			modifier = {
+				add = 10
+				original_tag = FRA
+				NOT = { owns_state = 940 }
+			}
+		}
+	}
+
+	# Decline...
+	option = {
+		name = comoros.7.b
+		country_event = diplomatic_response.2
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = -15
+				has_opinion = { target = COM value < 15 }
+			}
+			modifier = {
+				add = 10
+				OR = {
+					has_government = nationalist
+					has_government = fascism
+				}
+			}
+		}
+	}
+}
+
+# Operation Democracy in Comoros
+country_event = {
+	id = comoros.8
+	title = comoros.8.t
+	desc = comoros.8.d
+	picture = GFX_weapons_arms1
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	option = {
+		name = comoros.8.a
+		log = "[GetDateText]: [This.GetName]: comoros.8.a executed"
+		SEN = {
+			country_event = comoros.9
+		}
+		SUD = {
+			country_event = comoros.9
+		}
+		TNZ = {
+			country_event = comoros.9
+		}
+		FRA = {
+			country_event = comoros.9
+		}
+		USA = {
+			country_event = comoros.9
+		}
+		LBA = {
+			country_event = comoros.9
+		}
+		country_event = { id = comoros.10 days = 20 }
+	}
+}
+
+# [COM.GetName] Requests Assistance
+country_event = {
+	id = comoros.9
+	title = comoros.9.t
+	desc = comoros.9.d
+	picture = GFX_puntland_police_force_ev # TODO: Replace with a proper picture
+	is_triggered_only = yes
+
+	option = {
+		name = comoros.9.a
+		log = "[GetDateText]: [This.GetName]: comoros.9.a executed"
+		send_equipment = {
+			equipment = Inf_equipment
+			amount = 250
+			target = COM
+		}
+		COM = {
+			add_manpower = 100
+			set_country_flag = COM_got_support
+			country_event = diplomatic_response.1
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = comoros.9.b
+		log = "[GetDateText]: [This.GetName]: comoros.9.b executed"
+		add_opinion_modifier = { modifier = drama target = COM }
+		reverse_add_opinion_modifier = { modifier = drama target = COM }
+
+		COM = { country_event = diplomatic_response.2 }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Successful Operation!
+country_event = {
+	id = comoros.10
+	title = comoros.10.t
+	desc = comoros.10.d
+	picture = GFX_puntland_police_force_ev
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = comoros.10.a
+		log = "[GetDateText]: [This.GetName]: comoros.10.a executed"
+		set_country_flag = COM_successful_operation
+		add_stability = 0.05
+	}
+}
+
+# Anti-Colonialist Rallies
+country_event = {
+	id = comoros.11
+	title = comoros.11.t
+	desc = comoros.11.d
+	picture = GFX_red_guards # TODO: Replace with a proper picture
+	is_triggered_only = yes
+
+	option = {
+		name = comoros.11.a
+		log = "[GetDateText]: [This.GetName]: comoros.11.a executed"
+		effect_tooltip = {
+			custom_effect_tooltip = COM_mayotte_referendum_starting_chance_tt
+			effect_tooltip = {
+				set_temp_variable = { temp_change = 6 }
+				COM_mayotte_referendum_independence_effect = yes
+				set_temp_variable = { temp_change = -3 }
+				COM_mayotte_referendum_france_effect = yes
+				set_temp_variable = { temp_change = -3 }
+				COM_mayotte_referendum_comoros_effect = yes
+			}
+			hidden_effect = {
+				if = {
+					limit = { has_active_mission = COM_mayotte_referendum_mission }
+					set_temp_variable = { temp_change = 6 }
+					COM_mayotte_referendum_independence_effect = yes
+					set_temp_variable = { temp_change = -3 }
+					COM_mayotte_referendum_france_effect = yes
+					set_temp_variable = { temp_change = -3 }
+					COM_mayotte_referendum_comoros_effect = yes
+				}
+			}
+		}
+	}
+}
+
+# Comoros Demands Mayotte!
+country_event = {
+	id = comoros.12
+	title = comoros.12.t
+	desc = comoros.12.d
+	picture = GFX_red_guards # TODO: Replace with a proper picture
+	is_triggered_only = yes
+
+	option = {
+		name = comoros.12.a
+		log = "[GetDateText]: [This.GetName]: comoros.12.a executed"
+		940 = { transfer_state_to = COM }
+
+		COM = {
+			country_event = diplomatic_response.1
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = comoros.12.b
+		log = "[GetDateText]: [This.GetName]: comoros.12.b executed"
+		COM = {
+			create_wargoal = {
+				target = FRA
+				type = take_core_state
+				generator = {
+					940
+				}
+				expire = 365
+			}
+
+			country_event = diplomatic_response.2
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# The Overseas Territory of Comoros
+country_event = {
+	id = comoros.13
+	title = comoros.13.t
+	desc = comoros.13.d
+	picture = GFX_african_union # TODO: Replace with a proper event
+	is_triggered_only = yes
+	trigger = {
+		original_tag = FRA
+	}
+
+	option = {
+		name = comoros.13.a
+		log = "[GetDateText]: [This.GetName]: comoros.13.a executed"
+		effect_tooltip = {
+			FRA = {
+				set_autonomy = {
+					target = COM
+					autonomous_state = autonomy_french_overseas_department
+					end_wars = no
+					end_civil_wars = no
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 10
+				has_opinion = { target = COM value > 30 }
+			}
+		}
+	}
+
+	option = {
+		name = comoros.13.b
+		log = "[GetDateText]: [This.GetName]: comoros.13.b executed"
+
+		COM = {
+			country_event = comoros.14
+		}
+
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = -10
+				has_opinion = { target = COM value < -30 }
+			}
+		}
+	}
+}
+
+# France Accepts the Deal
+country_event = {
+	id = comoros.14
+	title = comoros.14.t
+	desc = comoros.14.d
+	picture = GFX_african_union
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	option = {
+		name = comoros.14.a
+		log = "[GetDateText]: [This.GetName]: comoros.14.a executed"
+
+		FRA = {
+			set_autonomy = {
+				target = COM
+				autonomous_state = autonomy_french_overseas_department
+				end_wars = no
+				end_civil_wars = no
+			}
+		}
+	}
+}
+
+# Politics in Comoros
+# INFO: Somewhat pointless event, but I'll keep it for now
+country_event = {
+	id = comoros.15
+	title = comoros.15.t
+	desc = comoros.15.d
+	picture = GFX_burkina_coast_protests
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	option = {
+		name = comoros.15.a
+		log = "[GetDateText]: [This.GetName]: comoros.15.a executed"
+	}
+}
+
+# Comoros Seeks Investments
+country_event = {
+	id = comoros.16
+	title = comoros.16.t
+	desc = comoros.16.d
+	is_triggered_only = yes
+	fire_only_once = yes
+	picture = GFX_CAN_cptpp_trade_agreement
+	option = {
+		name = comoros.16.a
+		log = "[GetDateText]: [This.GetName]: comoros.16.a executed"
+		set_temp_variable = { int_investment_change = 12 }
+		modify_international_investment_effect = yes
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { tag_index = ROOT }
+		set_temp_variable = { influence_target = COM }
+		change_influence_percentage = yes
+		COM = {
+			add_offsite_building = { type = industrial_complex level = 1 }
+			country_event = { id = comoros.17 days = 1 }
+		}
+
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = comoros.16.b
+		log = "[GetDateText]: [This.GetName]: comoros.16.b executed"
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = ROOT }
+		set_temp_variable = { influence_target = COM }
+		change_influence_percentage = yes
+		set_temp_variable = { int_investment_change = 3 }
+		modify_international_investment_effect = yes
+		COM = {
+			set_temp_variable = { debt_change = -10 }
+			modify_debt_effect = yes
+			country_event = { id = comoros.18 days = 1 }
+		}
+
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = comoros.16.c
+		log = "[GetDateText]: [This.GetName]: comoros.16.c executed"
+		COM = {
+			country_event = { id = comoros.19 days = 1 }
+		}
+		ai_chance = { base = 1 }
+	}
+}
+
+# [FROM.GetName] Agreed to the Industrial Plan
+country_event = {
+	id = comoros.17
+	title = comoros.17.t
+	desc = comoros.17.d
+	picture = GFX_CAN_cptpp_trade_agreement
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = comoros.17.a
+		log = "[GetDateText]: [This.GetName]: comoros.17.a executed"
+	}
+}
+
+# [FROM.GetName] Agreed to the Debt Refactor
+country_event = {
+	id = comoros.18
+	title = comoros.18.t
+	desc = comoros.18.d
+	picture = GFX_CAN_cptpp_trade_agreement
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = comoros.18.a
+		log = "[GetDateText]: [This.GetName]: comoros.18.a executed"
+	}
+}
+
+# [FROM.GetName] Declined the Deals
+country_event = {
+	id = comoros.19
+	title = comoros.19.t
+	desc = comoros.19.d
+	picture = GFX_CAN_cptpp_trade_agreement
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = comoros.19.a
+		log = "[GetDateText]: [This.GetName]: comoros.19.a executed"
+	}
+}
+
+# Foiled Coup Plot
+country_event = {
+	id = comoros.20
+	title = comoros.20.t
+	desc = comoros.20.d
+	#picture
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+		has_country_leader = {
+			name = "Azali Assoumani"
+			ruling_only = yes
+		}
+	}
+
+	# That was close
+	option = {
+		name = comoros.20.a
+		log = "[GetDateText]: [This.GetName]: comoros.20.a executed"
+		add_stability = -0.02
+		add_political_power = -25
+	}
+}
+
+# Eruption of Mount Karthala
+country_event = {
+	id = comoros.21
+	title = comoros.21.t
+	desc = comoros.21.d
+	picture = GFX_volcano
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	# Launch Emergency Response
+	option = {
+		name = comoros.21.a
+		log = "[GetDateText]: [This.GetName]: comoros.21.a executed"
+		add_stability = -0.03
+		add_political_power = -25
+		set_temp_variable = { treasury_change = -0.05 }
+		modify_treasury_effect = yes
+		add_timed_idea = {
+				idea = COM_volcano_idea
+				days = 180
+		}
+	}
+}
+
+# Mount Karthala Erupts Again
+country_event = {
+	id = comoros.22
+	title = comoros.22.t
+	desc = comoros.22.d
+	picture = GFX_volcano
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	# Not again...
+	option = {
+		name = comoros.22.a
+		log = "[GetDateText]: [This.GetName]: comoros.22.a executed"
+		add_stability = -0.02
+		add_political_power = -15
+		set_temp_variable = { treasury_change = -0.03 }
+		modify_treasury_effect = yes
+		add_timed_idea = {
+			idea = COM_volcano_idea
+			days = 180
+		}
+	}
+}
+
+# Yemenia Airways Plane Crashes
+country_event = {
+	id = comoros.23
+	title = comoros.23.t
+	desc = comoros.23.d
+	picture = GFX_passenger_plane
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	# Mourn the Victims
+	option = {
+		name = comoros.23.a
+		log = "[GetDateText]: [This.GetName]: comoros.23.a executed"
+		add_stability = -0.02
+		add_political_power = -10
+	}
+}
+
+# Cyclone Kenneth Strikes the Comoros
+country_event = {
+	id = comoros.24
+	title = comoros.24.t
+	desc = comoros.24.d
+	picture = GFX_typhoon
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	option = {
+		name = comoros.24.a
+		log = "[GetDateText]: [This.GetName]: comoros.24.a executed"
+		add_stability = -0.04
+		add_political_power = -20
+		set_temp_variable = { treasury_change = -0.08 }
+		modify_treasury_effect = yes
+		add_timed_idea = { idea = COM_typhoon_idea days = 180 }
+	}
+}
+
+# Mass Escape from Moroni Prison
+country_event = {
+	id = comoros.25
+	title = comoros.25.t
+	desc = comoros.25.d
+	#picture
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+		NOT = { has_idea = police_05 }
+	}
+
+	option = {
+		name = comoros.25.a
+		log = "[GetDateText]: [This.GetName]: comoros.25.a executed"
+		add_political_power = -10
+		increase_policing_budget = yes
+		block_police_decrease = yes
+	}
+
+	option = {
+		name = comoros.25.b
+		log = "[GetDateText]: [This.GetName]: comoros.25.b executed"
+		add_stability = -0.02
+		add_political_power = -20
+	}
+}
+
+# President Azali Assoumani Stabbed!
+country_event = {
+	id = comoros.26
+	title = comoros.26.t
+	desc = comoros.26.d
+	#picture
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+		has_country_leader = { name = "Azali Assoumani" ruling_only = yes }
+	}
+
+	option = {
+		name = comoros.26.a
+		log = "[GetDateText]: [This.GetName]: comoros.26.a executed"
+		add_stability = -0.02
+		add_political_power = -15
+		set_temp_variable = { treasury_change = -0.01 }
+		modify_treasury_effect = yes
+	}
+
+	option = {
+		name = comoros.26.b
+		log = "[GetDateText]: [This.GetName]: comoros.26.b executed"
+		add_stability = -0.04
+		add_political_power = -25
+	}
+}
+
+# Robert Denard Released
+country_event = {
+	id = comoros.27
+	title = comoros.27.t
+	desc = comoros.27.d
+	picture = GFX_report_event_Protest_ITA_1 # TODO: Add a new picture for this
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	# Worrying...
+	option = {
+		name = comoros.27.a
+		log = "[GetDateText]: [This.GetName]: comoros.27.a executed"
+
+		hidden_effect = {
+			random_list = {
+				75 = { country_event = { id = comoros.28 random_days = 30 } }
+				25 = {
+					modifier = {
+						factor = 0
+						has_game_rule = {
+							rule = COM_ai_behavior
+							option = COM_WARRIOR_KING
+						}
+					}
+					country_event = { id = comoros.30 random_days = 30 }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 100
+				has_game_rule = {
+					rule = COM_ai_behavior
+					option = COM_WARRIOR_KING
+				}
+			}
+		}
+	}
+
+	# Work with the French to Arrest Him
+	option = {
+		name = comoros.27.b
+		log = "[GetDateText]: [This.GetName]: comoros.27.b executed"
+
+		hidden_effect = {
+			random_list = {
+				50 = { country_event = { id = comoros.28 random_days = 30 } }
+				50 = { country_event = { id = comoros.29 random_days = 30 } }
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_game_rule = {
+					rule = COM_ai_behavior
+					option = COM_WARRIOR_KING
+				}
+			}
+		}
+	}
+
+	# Increase Guards at the Palace
+	option = {
+		name = comoros.27.c
+		log = "[GetDateText]: [This.GetName]: comoros.27.c executed"
+
+		hidden_effect = {
+			random_list = {
+				25 = { country_event = { id = comoros.29 random_days = 30 } }
+				75 = { country_event = { id = comoros.30 random_days = 30 } }
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_game_rule = {
+					rule = COM_ai_behavior
+					option = COM_WARRIOR_KING
+				}
+			}
+		}
+	}
+}
+
+# Robert Denard Coups the Government
+country_event = {
+	id = comoros.28
+	title = comoros.28.t
+	desc = comoros.28.d
+	picture = GFX_report_event_Protest_ITA_1 # TODO: Add a new picture for this
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	# A Warrior King!
+	option = {
+		name = comoros.28.a
+		log = "[GetDateText]: [This.GetName]: comoros.28.a executed"
+		set_temp_variable = { party_index = 22 }
+		set_temp_variable = { party_popularity_increase = 0.15 }
+		set_temp_variable = { temp_outlook_increase = 0.15 }
+		add_relative_party_popularity = yes
+
+		set_temp_variable = { rul_party_temp = 22 }
+		change_ruling_party_effect = yes
+		create_country_leader = {
+			name = "Robert Denard"
+			picture = "bob_denard.dds"
+			ideology = Nat_Autocracy
+			traits = {
+				nationalist_Nat_Autocracy
+				mercenary_leader
+			}
+		}
+
+		add_stability = -0.15
+
+		add_timed_idea = {
+			idea = COM_unstable_government_idea
+			days = 730
+		}
+
+		set_country_flag = COM_robert_denard_seized_power
+	}
+}
+
+# Robert Denard is Captured by the French
+country_event = {
+	id = comoros.29
+	title = comoros.29.t
+	desc = comoros.29.d
+	picture = GFX_report_event_Protest_ITA_1 # TODO: Add a new picture for this
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	# Finally good riddance!
+	option = {
+		name = comoros.29.a
+		log = "[GetDateText]: [This.GetName]: comoros.29.a executed"
+	}
+}
+
+# Robert Denard Fails to Coup the Government
+country_event = {
+	id = comoros.30
+	title = comoros.30.t
+	desc = comoros.30.d
+	picture = GFX_report_event_Protest_ITA_1 # TODO: Add a new picture for this
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	# A Major Setback
+	option = {
+		name = comoros.30.a
+		log = "[GetDateText]: [This.GetName]: comoros.30.a executed"
+	}
+}
+
+# The Constitutional Referendum Results
+country_event = {
+	id = comoros.31
+	title = comoros.31.t
+	desc = comoros.31.d
+	picture = GFX_report_event_Protest_ITA_1 # TODO: Add a new picture for this
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	# The Results Are In
+	option = {
+		name = comoros.31.a
+		log = "[GetDateText]: [This.GetName]: comoros.30.a executed"
+		if = { limit = { check_variable = { COM_federalist_constitutional_support > COM_anti_federalist_constitutional_support } }
+			set_country_flag = COM_pro_federalist
+		}
+		else = {
+			set_country_flag = COM_anti_federalist
+		}
+	}
+}
+
+# Death of Former President Massounde
+country_event = {
+	id = comoros.32
+	title = comoros.32.t
+	desc = comoros.32.d
+	# picture FIXME: add a event picture here
+	is_triggered_only = yes
+	trigger = {
+		original_tag = COM
+	}
+
+	# X to Pay Respects
+	option = {
+		name = comoros.32.a
+		log = "[GetDateText]: [This.GetName]: comoros.32.a executed"
+		add_stability = 0.01
+	}
+}
+
+# The Zanzibar Agreement
+country_event = {
+	id = comoros.33
+	title = comoros.33.t
+	desc = comoros.33.d
+	# picture FIXME: add a event picture here
+	is_triggered_only = yes
+	trigger = {
+		owns_state = 253
+	}
+
+	# Accept the Deal
+	option = {
+		name = comoros.33.a
+
+		253 = { transfer_state_to = COM }
+		set_country_flag = { flag = COM_the_zanzibar_agreement_payee value = 1 days = 730 }
+		set_temp_variable = { additional_income_change = 0.25 }
+		custom_effect_tooltip = additional_income_rate_percent_tt
+		set_cosmetic_tag = TNZ_NOZAN
+		COM = {
+			custom_effect_tooltip = COM_the_zanzibar_agreement_tt
+			set_temp_variable = { additional_expense_change = 0.25 }
+			custom_effect_tooltip = additional_expense_rate_percent_tt
+			set_country_flag = { flag = COM_the_zanzibar_agreement_pay value = 1 days = 730 }
+		}
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.10
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	# Reject the Deal
+	option = {
+		name = comoros.33.b
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}

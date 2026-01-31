@@ -1239,7 +1239,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_EDU_nanyang_technological_university"
 			add_tech_bonus = {
-				name = CAT_Civilian
+				name = SIN_EDU_nanyang_technological_university
 				bonus = 0.20
 				uses = 2
 				category = CAT_Civilian
@@ -1278,7 +1278,7 @@ focus_tree = {
 			set_temp_variable = { temp_productivity_change = 15 }
 			flat_productivity_change_effect = yes
 			add_tech_bonus = {
-				name = CAT_industry
+				name = SIN_EDU_university_patent_and_journal
 				bonus = 0.70
 				uses = 3
 				category = CAT_industry
@@ -1789,19 +1789,19 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_navy_corvettes"
 			add_tech_bonus = {
-				name = CAT_corvette
+				name = SIN_navy_corvettes
 				bonus = 0.25
 				uses = 1
 				category = CAT_corvette
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_corvette
+				name = SIN_navy_corvettes
 				category = CAT_corvette
 				uses = 1
 				cost_reduction = 0.3
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_naval_all
+				name = SIN_navy_corvettes
 				category = CAT_naval_all
 				uses = 1
 				cost_reduction = 0.5
@@ -1835,19 +1835,19 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_navy_frigate"
 			add_tech_bonus = {
-				name = CAT_frigate
+				name = SIN_navy_corvettes
 				bonus = 0.230
 				uses = 2
 				category = CAT_frigate
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_frigate
+				name = SIN_navy_corvettes
 				category = CAT_frigate
 				uses = 1
 				cost_reduction = 0.3
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_naval_all
+				name = SIN_navy_corvettes
 				category = CAT_naval_all
 				uses = 1
 				cost_reduction = 0.5
@@ -2052,13 +2052,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_army_infantry_equipment"
 			add_tech_bonus = {
-				name = CAT_inf
+				name = SIN_army_infantry_equipment
 				bonus = 0.30
 				uses = 1
 				category = CAT_inf
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_inf
+				name = SIN_army_infantry_equipment
 				category = CAT_inf
 				uses = 1
 				cost_reduction = 0.3
@@ -2379,19 +2379,19 @@ focus_tree = {
 			set_temp_variable = { temp_change = -0.005 }
 			SIN_change_singapore_military_personnel_cost_change = yes
 			add_tech_bonus = {
-				name = CAT_heli
+				name = SIN_air_force_helicopter
 				bonus = 0.30
 				uses = 1
 				category = CAT_heli
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_heli
+				name = SIN_air_force_helicopter
 				category = CAT_heli
 				uses = 2
 				cost_reduction = 0.3
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_air_eqp
+				name = SIN_air_force_helicopter
 				category = CAT_air_eqp
 				uses = 1
 				cost_reduction = 0.30
@@ -2423,7 +2423,7 @@ focus_tree = {
 			set_temp_variable = { temp_change = -0.01 }
 			SIN_change_singapore_military_personnel_cost_change = yes
 			add_tech_bonus = {
-				name = CAT_mr_fighter
+				name = SIN_air_force_fighter
 				bonus = 0.40
 				uses = 1
 				category = CAT_mr_fighter
@@ -2453,13 +2453,13 @@ focus_tree = {
 			set_temp_variable = { temp_change = -0.15 }
 			SIN_change_singapore_airforce_personnel_cost_multiplier_modifier_change = yes
 			add_tech_bonus = {
-				name = CAT_drones
+				name = SIN_air_force_drone
 				bonus = 0.50
 				uses = 1
 				category = CAT_drones
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_drones
+				name = SIN_air_force_drone
 				category = CAT_drones
 				uses = 1
 				cost_reduction = 0.3
@@ -2847,7 +2847,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_SSA_space_technology_effort"
 			add_tech_bonus = {
-				name = CAT_space
+				name = SIN_SSA_space_technology_effort
 				bonus = 0.50
 				uses = 8
 				category = CAT_space
@@ -5148,13 +5148,27 @@ focus_tree = {
 		prerequisite = { focus = SIN_allow_foreign_media }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_greater_ties_with_europe"
-			set_temp_variable = { tag_index = SIN.id }
-			set_temp_variable = { percent_change = 1 }
-			every_country = {
-				limit = { has_idea = EU_member }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
-				add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				set_temp_variable = { tag_index = SIN.id }
+				set_temp_variable = { percent_change = 1 }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+					add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
+				}
+				hidden_effect = {
+					for_each_scope_loop = {
+						array = global.EU_member
+						set_temp_variable = { influence_target = THIS.id }
+						change_influence_percentage = yes
+						add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
+					}
+				}
+			}
+			else = {
+				add_political_power = 125
 			}
 		}
 
@@ -5656,13 +5670,11 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_prioritize_diplomacy"
 			set_temp_variable = { tag_index = SIN.id }
 			set_temp_variable = { percent_change = 1.5 }
-			every_country = {
+			every_other_country = {
 				limit = {
 					NOT = {
-						original_tag = SIN
 						has_war_with = SIN
 					}
-
 				}
 				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes

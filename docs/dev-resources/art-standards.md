@@ -16,8 +16,8 @@ https://developer.nvidia.com/nvidia-texture-tools-exporter
 
 The app will be brought up when saving a copy of a file when using it as a plugin for Photoshop. Select the correct format (usually RGB or RGBA, depending on the transparency) when exporting with the highest compression quality before you save.
 
-
 ### File Formats
+
 - Leader Portraits - DXT1 (BC1) - No Mipmaps
 - Leader Portraits Small - B8R8A8G8 (Linear A8R8G8B8) - No Mipmaps
 - Event Pictures - DXT5 (BC3) - No Mipmaps
