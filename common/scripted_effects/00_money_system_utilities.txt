@@ -1,0 +1,89 @@
+# INFO: The file is a series of other effects to interact with the money system
+flat_productivity_change_effect = {
+	every_controlled_state = {
+		add_to_variable = { productivity_state_var = temp_productivity_change }
+		clamp_variable = {
+			var = productivity_state_var
+			min = 100
+		}
+		custom_effect_tooltip = flat_productivity_change_effect_TT
+	}
+	ingame_update_setup = yes
+}
+
+state_flat_productivity_change_effect = {
+	add_to_variable = { productivity_state_var = temp_productivity_change }
+	clamp_variable = {
+		var = productivity_state_var
+		min = 100
+	}
+	custom_effect_tooltip = flat_productivity_change_effect_TT
+	hidden_effect = {
+		CONTROLLER = {
+			ingame_update_setup = yes
+		}
+	}
+}
+
+setup_starting_world_productivity = {
+	add_dynamic_modifier = { modifier = productivity_and_employment_modifier }
+	if = {
+		limit = { NOT = { has_variable = overall_productivity } }
+		every_controlled_state = {
+			if = { limit = { PREV = { is_in_africa = yes } }
+				set_variable = { productivity_state_var = 550 }
+				set_variable = { PREV.overall_productivity = 550 }
+			}
+			else_if = { limit = { PREV = { OR = { is_in_asia = yes is_in_oceania = yes } } }
+				set_variable = { productivity_state_var = 650 }
+				set_variable = { PREV.overall_productivity = 650 }
+			}
+			else_if = { limit = { PREV = { is_in_europe = yes } }
+				set_variable = { productivity_state_var = 1000 }
+				set_variable = { PREV.overall_productivity = 1000 }
+			}
+			else_if = { limit = { PREV = { OR = { is_in_the_middle_east = yes is_in_south_america = yes is_in_north_america = yes } } }
+				set_variable = { productivity_state_var = 550 }
+				set_variable = { PREV.overall_productivity = 550 }
+			}
+		}
+	}
+	update_employment_productivity_output_dynamic_modifier = yes
+}
+
+#Weekly tick action
+automated_debt_taker = { # Checks to see if treasury is negative at the same time as weekly balance adds or removes from treasury, borrowing debt automatically if treasury is negative (to make it positive).
+	if = { limit = { check_variable = { treasury < 0 } }
+		set_temp_variable = { treasury_temp = treasury }
+		multiply_temp_variable = { treasury_temp = -1.25 }
+		set_temp_variable = { gdp_adder = gdp_total }
+		multiply_temp_variable = { gdp_adder = 0.01 } # 1% of GDP
+		add_to_temp_variable = { treasury_temp = gdp_adder }
+		set_temp_variable = { debt_temp = treasury_temp }
+		multiply_temp_variable = { debt_temp = 1.01 } # adding 1% fee to debt autmoatically taken out (manual borrowing also has this)
+
+		add_to_variable = { treasury = treasury_temp }
+		add_to_variable = { debt = debt_temp }
+		calculate_interest_rate = yes
+	}
+}
+
+
+# Enable/Disable Personal Tax Rate Change
+disable_personal_tax_rate_change = {
+	set_country_flag = { flag = no_personal_tax_rate_change days = 365 value = 1 }
+	custom_effect_tooltip = disables_personal_tax_rate_change
+}
+enable_personal_tax_rate_change = {
+	clr_country_flag = no_personal_tax_rate_change
+	custom_effect_tooltip = enables_personal_tax_rate_change
+}
+# Enable/Disable Corporate Tax Rate Change
+disable_corporate_tax_rate_change = {
+	set_country_flag = { flag = no_corporate_tax_rate_change days = 365 value = 1 }
+	custom_effect_tooltip = disables_corporate_tax_rate_change
+}
+enable_corporate_tax_rate_change = {
+	clr_country_flag = no_corporate_tax_rate_change
+	custom_effect_tooltip = enables_corporate_tax_rate_change
+}

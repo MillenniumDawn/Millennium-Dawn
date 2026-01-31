@@ -4045,23 +4045,6 @@ update_cyber_cost = {
 	multiply_variable = { treasury_cyber_large = cyber_cost_multiplier }
 }
 
-#Weekly tick action
-automated_debt_taker = { # Checks to see if treasury is negative at the same time as weekly balance adds or removes from treasury, borrowing debt automatically if treasury is negative (to make it positive).
-	if = { limit = { check_variable = { treasury < 0 } }
-		set_temp_variable = { treasury_temp = treasury }
-		multiply_temp_variable = { treasury_temp = -1.25 }
-		set_temp_variable = { gdp_adder = gdp_total }
-		multiply_temp_variable = { gdp_adder = 0.01 } # 1% of GDP
-		add_to_temp_variable = { treasury_temp = gdp_adder }
-		set_temp_variable = { debt_temp = treasury_temp }
-		multiply_temp_variable = { debt_temp = 1.01 } # adding 1% fee to debt autmoatically taken out (manual borrowing also has this)
-
-		add_to_variable = { treasury = treasury_temp }
-		add_to_variable = { debt = debt_temp }
-		calculate_interest_rate = yes
-	}
-}
-
 update_state_variables = {
 	# Global State Variables
 	set_variable = { var = population_total value = 0 }
@@ -4722,25 +4705,6 @@ calculate_gdp = {
 	force_update_dynamic_modifier = yes
 }
 
-# Enable/Disable Personal Tax Rate Change
-disable_personal_tax_rate_change = {
-	set_country_flag = { flag = no_personal_tax_rate_change days = 365 value = 1 }
-	custom_effect_tooltip = disables_personal_tax_rate_change
-}
-enable_personal_tax_rate_change = {
-	clr_country_flag = no_personal_tax_rate_change
-	custom_effect_tooltip = enables_personal_tax_rate_change
-}
-# Enable/Disable Corporate Tax Rate Change
-disable_corporate_tax_rate_change = {
-	set_country_flag = { flag = no_corporate_tax_rate_change days = 365 value = 1 }
-	custom_effect_tooltip = disables_corporate_tax_rate_change
-}
-enable_corporate_tax_rate_change = {
-	clr_country_flag = no_corporate_tax_rate_change
-	custom_effect_tooltip = enables_corporate_tax_rate_change
-}
-
 #Calculate modifiers associated with GDP/C
 calculate_gdp_modifiers = {
 	#Add the modifier if not existing
@@ -5165,63 +5129,11 @@ productivity_growth_effect = {
 	add_to_variable = { global.world_population = population_total_m }
 }
 
-flat_productivity_change_effect = {
-	every_controlled_state = {
-		add_to_variable = { productivity_state_var = temp_productivity_change }
-		clamp_variable = {
-			var = productivity_state_var
-			min = 100
-		}
-		custom_effect_tooltip = flat_productivity_change_effect_TT
-	}
-	ingame_update_setup = yes
-}
-
-state_flat_productivity_change_effect = {
-	add_to_variable = { productivity_state_var = temp_productivity_change }
-	clamp_variable = {
-		var = productivity_state_var
-		min = 100
-	}
-	custom_effect_tooltip = flat_productivity_change_effect_TT
-	hidden_effect = {
-		CONTROLLER = {
-			ingame_update_setup = yes
-		}
-	}
-}
-
 worker_requirements_variable_gdpc_converging = {
 	set_temp_variable = { temp_difference = gdp_per_capita }
 	subtract_from_temp_variable = { temp_difference = gdpc_converging_var }
 	multiply_temp_variable = { temp_difference = 0.25 }
 	add_to_variable = { gdpc_converging_var = temp_difference }
-}
-
-setup_starting_world_productivity = {
-	add_dynamic_modifier = { modifier = productivity_and_employment_modifier }
-	if = {
-		limit = { NOT = { has_variable = overall_productivity } }
-		every_controlled_state = {
-			if = { limit = { PREV = { is_in_africa = yes } }
-				set_variable = { productivity_state_var = 550 }
-				set_variable = { PREV.overall_productivity = 550 }
-			}
-			else_if = { limit = { PREV = { OR = { is_in_asia = yes is_in_oceania = yes } } }
-				set_variable = { productivity_state_var = 650 }
-				set_variable = { PREV.overall_productivity = 650 }
-			}
-			else_if = { limit = { PREV = { is_in_europe = yes } }
-				set_variable = { productivity_state_var = 1000 }
-				set_variable = { PREV.overall_productivity = 1000 }
-			}
-			else_if = { limit = { PREV = { OR = { is_in_the_middle_east = yes is_in_south_america = yes is_in_north_america = yes } } }
-				set_variable = { productivity_state_var = 550 }
-				set_variable = { PREV.overall_productivity = 550 }
-			}
-		}
-	}
-	update_employment_productivity_output_dynamic_modifier = yes
 }
 
 # Effect: calculate_migration_mechanic_values
@@ -5399,45 +5311,45 @@ calculate_migration_mechanic_values = {
 }
 
 calculate_cost_pp_economic_cycles = {
-	set_variable = { pp_cost_economic = 0 }
 	set_temp_variable = { tmp_tax_gain_multiplier_modifier = modifier@tax_gain_multiplier_modifier }
 	set_temp_variable = { tmp_production_speed_buildings_factor = modifier@production_speed_buildings_factor }
 	set_temp_variable = { tmp_stability_factor = modifier@stability_factor }
 	set_temp_variable = { tmp_political_power_gain = modifier@political_power_gain }
+
 	if = { limit = { has_idea = recession }
-		add_to_variable = { pp_cost_economic = 150 }
-		subtract_from_temp_variable = { tmp_tax_gain_multiplier_modifier = -0.20 }
+		set_variable = { pp_cost_economic = 150 }
+		add_to_temp_variable = { tmp_tax_gain_multiplier_modifier = 0.20 }
 		add_to_temp_variable = { tmp_production_speed_buildings_factor = 0.15 }
-		subtract_from_temp_variable = { tmp_stability_factor = -0.05 }
+		add_to_temp_variable = { tmp_stability_factor = 0.05 }
 	}
 	else_if = { limit = { has_idea = stagnation }
-		add_to_variable = { pp_cost_economic = 200 }
-		subtract_from_temp_variable = { tmp_tax_gain_multiplier_modifier = -0.10 }
-		add_to_variable = { tmp_production_speed_buildings_factor = 0.40 }
-		subtract_from_temp_variable = { tmp_stability_factor = -0.02 }
+		set_variable = { pp_cost_economic = 200 }
+		add_to_temp_variable = { tmp_tax_gain_multiplier_modifier = 0.10 }
+		add_to_temp_variable = { tmp_production_speed_buildings_factor = 0.40 }
+		add_to_temp_variable = { tmp_stability_factor = 0.02 }
 	}
 	else_if = { limit = { has_idea = stable_growth }
-		add_to_variable = { pp_cost_economic = 250 }
+		set_variable = { pp_cost_economic = 250 }
 		add_to_temp_variable = { tmp_production_speed_buildings_factor = 0.65 }
 	}
 	else_if = { limit = { has_idea = fast_growth }
-		add_to_variable = { pp_cost_economic = 300 }
+		set_variable = { pp_cost_economic = 300 }
 		add_to_temp_variable = { tmp_tax_gain_multiplier_modifier = 0.05 }
 		add_to_temp_variable = { tmp_production_speed_buildings_factor = 0.90 }
 		add_to_temp_variable = { tmp_stability_factor = 0.02 }
 	}
 	else_if = { limit = { has_idea = economic_boom }
-		add_to_variable = { pp_cost_economic = 350 }
+		set_variable = { pp_cost_economic = 350 }
 		add_to_temp_variable = { tmp_tax_gain_multiplier_modifier = 0.10 }
 		add_to_temp_variable = { tmp_production_speed_buildings_factor = 1.10 }
 		add_to_temp_variable = { tmp_stability_factor = 0.04 }
 	}
+
 	multiply_variable = { pp_cost_economic = tmp_tax_gain_multiplier_modifier }
 	multiply_variable = { pp_cost_economic = tmp_production_speed_buildings_factor }
 	multiply_variable = { pp_cost_economic = tmp_stability_factor }
 	divide_variable = { pp_cost_economic = tmp_political_power_gain }
 
-	# Log only if we need to debug stuff
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [THIS.GetName]: Next Cycle Political Power Cost: [?pp_cost_economic]"
 	}
