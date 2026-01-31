@@ -6,14 +6,14 @@ description: "Millennium Dawn's Code Stylization Guide"
 
 # Table of Contents
 
-- [Performance Tips](#performance)
+- [Performance Tips](#performance-tips)
 - [Focus Trees](#focus-trees)
 - [Decisions](#decisions)
 - [Events](#events)
 - [Ideas](#ideas)
 - [Code Formatting Rules](#code-formatting-rules)
+- [Subideology Localization Format](#subideology-localization-format)
 - [Military-Industrial Organisations (MIO)](#military-industrial-organisations-mio)
-
 
 ## Performance Tips
 
@@ -33,6 +33,7 @@ The following section delineates a stylization guide for Millennium Dawn and cod
 [Link to Focus Tree Modding Wiki](https://hoi4.paradoxwikis.com/National_focus_modding)
 
 ### Best Practices
+
 - Use `relative_position_id` for focus alignment and tree positioning
 - Implement logging in completion rewards: `log = "[GetDateText]: [Root.GetName]: Focus TAG_your_focus"`
 - Avoid empty `mutually_exclusive` and `available` blocks
@@ -50,10 +51,11 @@ The following section delineates a stylization guide for Millennium Dawn and cod
 - Balance focus trees for flavor, not overpowering nations
 
 ### Millennium Dawn Specific Code Styling Requirements
+
 - The focus tree file should start with one of the following requirements:
-  - 00_<name> for system requirements. This should only be reserved for specific contexts such as the titlebar_styles.txt file
-  - 01/02/03/04_<name> for shared or joint focus tress such as the European Union or the African Union
-  - 05_<name> for country specific focus trees
+  - 00\_<name> for system requirements. This should only be reserved for specific contexts such as the titlebar_styles.txt file
+  - 01/02/03/04\_<name> for shared or joint focus tress such as the European Union or the African Union
+  - 05\_<name> for country specific focus trees
   - NOTE: The number does not mean anything, but it helps the team understand and forces a specific load order for focus trees. I.e. we can load all of the shared ones, but we cannot load country specific ones
 - The ID of a focus should be the first line of the focus. It should also follow the standard `<TAG>_focus_name_here` pattern
 - The icon should be second line of the of the focus
@@ -65,7 +67,10 @@ The following section delineates a stylization guide for Millennium Dawn and cod
 - `select_effect`, `completion_reward` and `bypass_effect` should be grouped together as these are specific to the effects of a focus tree
 - `ai_will_do` is and always should be the last definition of the focus tree
 
+Focus trees can be standardized using the script in tools using `standardize_focus_tree.py`.
+
 ### Example Focus Tree Structure
+
 ```python
 focus_tree = {
     id = greece_focus
@@ -130,12 +135,14 @@ The following section delineates a stylization guide for the Millennium Dawn and
 [Link to Decision/Modding Wiki](https://hoi4.paradoxwikis.com/Decision_modding)
 
 ### Best Practices
+
 - Use `fire_only_once` only when necessary
 - Include proper logging in effects
 - Structure decisions with clear visibility and availability conditions
 - Implement proper AI behavior
 
 ### Example Decision Structure
+
 ```python
 URA_world_opr = {
     allowed = { original_tag = URA }
@@ -170,14 +177,16 @@ URA_world_opr = {
 ## Events
 
 ### Best Practices
+
 - Use `is_triggered_only` for triggered events
 - Include proper logging
-- Use `major = yes` sparingly for news events
+- Use `major = yes` sparingly for news events when you want them to truly be shown to the whole wide world.
 - Structure events with clear options and effects
 - **Performance:** Any events that do not have an effects in their triggered or option block do not require a log. Only log if there is something actually happening in the event.
 - **Performance:** Any event that needs to be triggered by a date should be triggered via `00_yearly_effects.txt`.
 
 ### Example Event Structure
+
 ```python
 country_event = {
     id = france_md.504
@@ -212,14 +221,20 @@ country_event = {
 ## Ideas
 
 ### Best Practices
+
 - Include `allowed_civil_war` for civil war tags
-- Use proper logging in `on_add`
+  - **NOTE**: `allowed_civil_war = { always = no }` is the default. There is no reason to add this since this is how they natively operate. Just dead code including it.
+- Use proper logging in `on_add` where you are actually making changes via the on_add
+  - You can exclude simple actions like adding or removing from an array unless you wish to log it for debug purposes
 - Structure modifiers clearly
 - Implement balanced effects
 - **Performance**: Remove unnecessary `allowed = { always = no }` statements as they add drag to performance - since `always = no` is the default behavior, these lines provide no functional benefit while consuming processing resources
-- **Performance**: Remove all ``on_add`` logs unless you need to do something in the on add like math or otherwise
+  - **NOTE**: This is still needed for any ideas that are not in the `country` or `hidden_ideas` idea categories
+- **Performance**: Remove all `on_add` logs unless you need to do something in the on add like math or otherwise
+- **Performance**: Do not add `cancel = { always = no }` in your ideas. This is checked hourly and will never be true.
 
-### Example Idea Structure
+### Example Country Idea Structure
+
 ```python
 BRA_idea_higher_minimun_wage_1 = {
     name = BRA_idea_higher_minimun_wage
@@ -239,17 +254,20 @@ BRA_idea_higher_minimun_wage_1 = {
 ## Code Formatting Rules
 
 ### Indentation
+
 - Increase tabulation by 1 when entering a new scope `{`
 - Decrease tabulation by 1 when leaving a scope `}`
 - Use tabs, not spaces
 - Maintain consistent indentation
 
 ### Brackets
+
 - Place closing brackets on the same line as the starting word
 - Avoid excessive whitespace
 - Keep simple checks on one line when appropriate
 
-### Subideology Localization Format
+## Subideology Localization Format
+
 ```python
 TAG.conservatism: "£PARTY_ICON (ABBRV) - NAME OF PARTY"
 TAG.conservatism_icon: "£PARTY_ICON"
@@ -257,18 +275,22 @@ TAG.conservatism_desc: "(Dominant Ideology of the Party) - NAME OF PARTY (NAME O
 ```
 
 Example:
+
 ```python
 MOR.conservatism: "£MOR_NRI (RNI) - National Rally of Independents"
 MOR.conservatism_icon: "£MOR_NRI"
 MOR.conservatism_desc: "(Classic Liberalism) - National Rally of Independents (Arabic: Altajamue Alwataniu Lil'ahrar, French: Rassemblement National des Indépendants, Standard Moroccan Tamazight: Agraw Anamur y Insimann, RNI)\n\nNominally a social-democratic party, the party often cooperates with other parties with liberal orientation and is heavily described as pro-business and liberal. Formed in 1978 by then-Prime Minister Ahmed Osman the party has consistently remained a major player in Moroccan politics. Furthermore, the party is a national observer of the Liberal International and is affiliated with the Africa Liberal Network and the European People's Party."
 ```
+
 ## Military-Industrial Organisations (MIO)
 
 ### Guidelines on Companies
+
 - Use one company for multiple categories.
 - Add per category `5 OR 3 Task Capacity` if the company is not a national company but has factories in the country
 
 ### Example MIO Company Structure
+
 ```python
 CHI_norinco_manufacturer = {
 	allowed = { original_tag = CHI }
@@ -327,9 +349,11 @@ CHI_norinco_manufacturer = {
 ```
 
 ### Guidelines on Traits
+
 - The maximum grid is `y = 0 - 9` Don't forget this when you are using relative position.
 
 ### Example MIO Trait Structure
+
 ```python
 trait = {
     token = CHI_norinco_trait_suppressed_pdw_systems
