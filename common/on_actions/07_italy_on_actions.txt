@@ -92,45 +92,79 @@ on_actions = {
 			recalculate_party = yes
 			if = { #infiltrations_var increase state construction time
 				limit = { has_idea = ITA_mafia }
-					update_police_effectiveness = yes
-					mafia_event_counters = yes
-					pizzo_decisions_effect = yes
-					multiply_variable = { lega_weekly_drift_store = party_popularity@neutrality }
-					multiply_variable = { lega_weekly_drift_store = 0.035 } #halved for balanced
-					add_to_variable = { party_pop_array^14 = lega_weekly_drift_store }
-					set_variable = { lega_weekly_drift_store = 0 }
-					83 = {
-						set_variable = { cosa_nostra_infiltrations_var = ROOT.cosa_nostra_strength }
-						multiply_variable = { cosa_nostra_infiltrations_var = -1 }
+				update_police_effectiveness = yes
+				mafia_event_counters = yes
+				pizzo_decisions_effect = yes
+				multiply_variable = { lega_weekly_drift_store = party_popularity@neutrality }
+				multiply_variable = { lega_weekly_drift_store = 0.035 } #halved for balanced
+				add_to_variable = { party_pop_array^14 = lega_weekly_drift_store }
+				set_variable = { lega_weekly_drift_store = 0 }
+				83 = {
+					set_variable = { cosa_nostra_infiltrations_var = ROOT.cosa_nostra_strength }
+					multiply_variable = { cosa_nostra_infiltrations_var = -1 }
+				}
+				82 = {
+					set_variable = { camorra_infiltrations_var = ROOT.camorra_strength }
+					multiply_variable = { camorra_infiltrations_var = -1 }
+				}
+				956 = {
+					set_variable = { ndrangheta_infiltrations_var = ROOT.ndrangheta_strength }
+					multiply_variable = { ndrangheta_infiltrations_var = -1 }
+				}
+				957 = {
+					set_variable = { sacra_corona_unita_infiltrations_var = ROOT.sacra_corona_unita_strength }
+					multiply_variable = { sacra_corona_unita_infiltrations_var = -1 }
+				}
+				if = {
+					limit = { check_variable = { mafia_strength < 0.1 } }
+					add_to_variable = { mafia_defeat_counter = 1 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { mafia_strength > 0.099 }
+						check_variable = { mafia_defeat_counter > 0 }
 					}
-					82 = {
-						set_variable = { camorra_infiltrations_var = ROOT.camorra_strength }
-						multiply_variable = { camorra_infiltrations_var = -1 }
-					}
-					956 = {
-						set_variable = { ndrangheta_infiltrations_var = ROOT.ndrangheta_strength }
-						multiply_variable = { ndrangheta_infiltrations_var = -1 }
-					}
-					957 = {
-						set_variable = { sacra_corona_unita_infiltrations_var = ROOT.sacra_corona_unita_strength }
-						multiply_variable = { sacra_corona_unita_infiltrations_var = -1 }
-					}
-					if = {
-						limit = { check_variable = { mafia_strength < 0.1 } }
-						add_to_variable = { mafia_defeat_counter = 1 }
-					}
-					else_if = {
-						limit = {
-							check_variable = { mafia_strength > 0.099 }
-							check_variable = { mafia_defeat_counter > 0 }
+					add_to_variable = { mafia_defeat_counter = -1 }
+				}
+				if = {
+					limit = { check_variable = { mafia_defeat_counter > 99 } }
+					country_event = italy_md.32
+					clear_variable = mafia_defeat_counter
+				}
+
+				# Mafia Sabotages
+				if = {
+					limit = {
+						NOT = { has_country_flag = ITA_mafia_sabotages_1 }
+						has_country_flag = ITA_attacked_hideouts
+						any_owned_state = {
+							industrial_complex > 0
 						}
-						add_to_variable = { mafia_defeat_counter = -1 }
+						any_owned_state = {
+							infrastructure > 0
+						}
 					}
-					if = {
-						limit = { check_variable = { mafia_defeat_counter > 99 } }
-						country_event = italy_md.32
-						clear_variable = mafia_defeat_counter
+					random = {
+						chance = 50
+						country_event = { id = italy_md.28 days = 3 random_days = 3 }
 					}
+				}
+				if = {
+					limit = {
+						NOT = { has_country_flag = ITA_mafia_sabotages_2 }
+						has_country_flag = ITA_deployed_army_against_mafia
+						any_owned_state = {
+							arms_factory > 0
+						}
+						any_owned_state = {
+							industrial_complex > 0
+						}
+					}
+					random = {
+						chance = 50
+						country_event = { id = italy_md.29 days = 3 random_days = 3 }
+					}
+				}
 			}
 			if = {
 				limit = {
@@ -168,45 +202,9 @@ on_actions = {
 					}
 				}
 				low_stability_protests_effect = yes
-			}
-			if = {
-				limit = {
-					has_country_flag = low_stability_protests_flag
-				}
-				lsp_popularity_effect = yes
-			}
 
-			# Mafia Sabotages
-			if = {
-				limit = {
-					NOT = { has_country_flag = ITA_mafia_sabotages_1 }
-					has_country_flag = ITA_attacked_hideouts
-					any_owned_state = {
-						industrial_complex > 0
-					}
-					any_owned_state = {
-						infrastructure > 0
-					}
-				}
-				random = {
-					chance = 50
-					country_event = { id = italy_md.28 days = 3 random_days = 3 }
-				}
-			}
-			if = {
-				limit = {
-					NOT = { has_country_flag = ITA_mafia_sabotages_2 }
-					has_country_flag = ITA_deployed_army_against_mafia
-					any_owned_state = {
-						arms_factory > 0
-					}
-					any_owned_state = {
-						industrial_complex > 0
-					}
-				}
-				random = {
-					chance = 50
-					country_event = { id = italy_md.29 days = 3 random_days = 3 }
+				else = {
+					lsp_popularity_effect = yes
 				}
 			}
 		}
