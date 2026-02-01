@@ -798,10 +798,20 @@ focus_tree = {
 		relative_position_id = EGY_egyptian_politics
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_squash_diplo"
-			every_country = {
-				limit = { has_idea = NATO_member }
-				add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
-				reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_nato_disabled } }
+				custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = USA modifier = diplomatic_support }
+					reverse_add_opinion_modifier = { target = USA modifier = diplomatic_support }
+				}
+				hidden_effect = {
+					for_each_scope_loop = {
+						array = global.nato_members
+						add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
+						reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
+					}
+				}
 			}
 			set_temp_variable = { percent_change = 5 }
 			change_domestic_influence_percentage = yes
@@ -2595,19 +2605,21 @@ focus_tree = {
 			set_temp_variable = { receiver_nation = EGY.id }
 			set_temp_variable = { sender_nation = SOV.id }
 			set_improved_trade_agreement = yes
-			every_country = {
-				limit = { has_idea = CSTO_member }
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = improve_trade
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_csto_disabled } }
+				custom_effect_tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = SOV modifier = improve_trade }
+					add_opinion_modifier = { target = SOV modifier = diplomatic_support }
+					reverse_add_opinion_modifier = { target = SOV modifier = diplomatic_support }
 				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = diplomatic_support
-				}
-				reverse_add_opinion_modifier = {
-					target = ROOT
-					modifier = diplomatic_support
+				hidden_effect = {
+					for_each_scope_loop = {
+						array = global.CSTO_member
+						add_opinion_modifier = { target = ROOT modifier = improve_trade }
+						add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
+						reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
+					}
 				}
 			}
 		}
@@ -4078,15 +4090,15 @@ focus_tree = {
 			set_temp_variable = { receiver_nation = EGY.id }
 			set_temp_variable = { sender_nation = SOV.id }
 			set_improved_trade_agreement = yes
-			every_country = {
-				limit = { has_idea = AU_member }
+			custom_effect_tooltip = TT_ALL_AU_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
 				add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 				reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 			}
 			hidden_effect = {
 				SOV = {
-					every_country = {
-						limit = { has_idea = AU_member }
+					for_each_scope_loop = {
+						array = global.AU_member
 						add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 						reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 					}
@@ -4135,8 +4147,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_us_mil_support"
 			hidden_effect = { add_ideas = EGY_us_helps }
 			set_temp_variable = { additional_income_change = gdp_total }
-			multiply_temp_variable = { additional_income_change = 0.02 } #2% of yearly GDP
-			multiply_temp_variable = { additional_income_change = 0.02 } #weekly
+			multiply_temp_variable = { additional_income_change = 0.0004 } #2% of yearly GDP
 			custom_effect_tooltip = additional_income_rate_percent_tt
 			set_temp_variable = { percent_change = 3 }
 			set_temp_variable = { tag_index = USA }
@@ -6421,7 +6432,7 @@ focus_tree = {
 			set_temp_variable = { percent_change = 5 }
 			change_domestic_influence_percentage = yes
 			add_tech_bonus = {
-				name = CAT_fuel_oil
+				name = EGY_gas_exports
 				bonus = 1
 				uses = 2
 				category = CAT_fuel_oil
@@ -6962,7 +6973,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_napi_pharma"
 			add_tech_bonus = {
-				name = CAT_genes
+				name = EGY_napi_pharma
 				bonus = 0.25
 				uses = 2
 				category = CAT_genes
@@ -7060,13 +7071,13 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_energetics"
 			add_stability = 0.05
 			add_tech_bonus = {
-				name = CAT_3d
+				name = EGY_energetics
 				bonus = 0.25
 				uses = 1
 				category = CAT_3d
 			}
 			add_tech_bonus = {
-				name = CAT_construction_tech
+				name = EGY_energetics
 				bonus = 0.25
 				uses = 1
 				category = CAT_construction_tech
@@ -7141,13 +7152,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_electrify_cities"
 			add_tech_bonus = {
-				name = CAT_3d
+				name = EGY_electrify_cities
 				bonus = 0.25
 				uses = 1
 				category = CAT_3d
 			}
 			add_tech_bonus = {
-				name = CAT_construction_tech
+				name = EGY_electrify_cities
 				bonus = 0.25
 				uses = 1
 				category = CAT_construction_tech
@@ -7808,7 +7819,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
 			add_tech_bonus = {
-				name = CAT_nvg
+				name = EGY_visions
 				bonus = 0.5
 				uses = 1
 				category = CAT_nvg
@@ -7853,7 +7864,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_def"
 			add_tech_bonus = {
-				name = CAT_support_weapons
+				name = EGY_def
 				bonus = 0.35
 				uses = 1
 				category = CAT_support_weapons
@@ -8800,7 +8811,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -3.5 }
 			modify_treasury_effect = yes
 			add_tech_bonus = {
-				name = CAT_missile
+				name = EGY_roc
 				bonus = 0.3
 				uses = 1
 				category = CAT_missile

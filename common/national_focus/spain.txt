@@ -5140,12 +5140,25 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_eu_spanish_alignment"
-			set_temp_variable = { percent_change = 2 }
-			set_temp_variable = { tag_index = SPR }
-			every_country = {
-				limit = { has_idea = EU_member }
-				set_temp_variable = { influence_target = THIS }
-				change_influence_percentage = yes
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = SPR }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+				hidden_effect = {
+					for_each_scope_loop = {
+						array = global.EU_member
+						set_temp_variable = { influence_target = THIS }
+						change_influence_percentage = yes
+					}
+				}
+			}
+			else = {
+				add_political_power = 75
 			}
 		}
 
@@ -5251,7 +5264,7 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			every_country = {
+			every_other_country = {
 				limit = {
 					has_government = democratic
 				}
@@ -7788,15 +7801,27 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_the_european_upheaval"
 			increase_intervention_law_effect = yes
-			every_country = {
-				limit = {
-					is_in_array = { global.EU_potential = THIS.id }
-					NOT = { tag = SPR }
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_POTENTIAL_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					set_temp_variable = { party_index = 21 }
+					set_temp_variable = { party_popularity_increase = 0.025 }
+					set_temp_variable = { temp_outlook_increase = 0.025 }
+					add_relative_party_popularity = yes
 				}
-				set_temp_variable = { party_index = 21 }
-				set_temp_variable = { party_popularity_increase = 0.025 }
-				set_temp_variable = { temp_outlook_increase = 0.025 }
-				add_relative_party_popularity = yes
+				for_each_scope_loop = {
+					array = global.EU_potential
+					if = { limit = { NOT = { original_tag = ROOT } }
+						set_temp_variable = { party_index = 21 }
+						set_temp_variable = { party_popularity_increase = 0.025 }
+						set_temp_variable = { temp_outlook_increase = 0.025 }
+						add_relative_party_popularity = yes
+					}
+				}
+				newline = yes
+				set_temp_variable = { modify_eurosceptic = 0.05 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
 			}
 		}
 
@@ -8708,16 +8733,17 @@ focus_tree = {
 			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
 				set_temp_variable = { modify_eurosceptic = -0.03 }
 				EU_eurosceptic_change = yes
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = SPR_spain_fosters_support_in_eu }
+				}
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = SPR modifier = SPR_spain_fosters_support_in_eu }
+				}
 			}
 			else = {
 				add_political_power = 100
-			}
-			every_country = {
-				limit = { is_in_array = { global.EU_member = THIS.id } }
-				add_opinion_modifier = {
-					target = SPR
-					modifier = SPR_spain_fosters_support_in_eu
-				}
 			}
 		}
 
@@ -10325,10 +10351,9 @@ focus_tree = {
 			multiply_temp_variable = { treasury_change = 0.05 }
 			modify_treasury_effect = yes
 			reverse_add_opinion_modifier = { target = HLS modifier = SPR_dissolved_monasteries_HLS }
-			every_country = {
+			every_other_country = {
 				limit = {
 					has_idea = christian
-					NOT = { tag = SPR }
 					NOT = { tag = HLS }
 				}
 				add_opinion_modifier = { target = SPR modifier = SPR_dissolved_monasteries }
@@ -10871,18 +10896,20 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_spread_the_word"
-			every_country = {
-				limit = {
-					has_idea = EU_member
-					NOT = { tag = SPR }
-				}
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
 				set_temp_variable = { party_index = 4 }
-				set_temp_variable = { party_popularity_increase = 0.02 }
-				set_temp_variable = { temp_outlook_increase = 0.02 }
 				add_relative_party_popularity = yes
 				set_temp_variable = { party_index = 19 }
-				set_temp_variable = { party_popularity_increase = 0.02 }
-				set_temp_variable = { temp_outlook_increase = 0.02 }
+				add_relative_party_popularity = yes
+			}
+			for_each_scope_loop = {
+				array = global.EU_member
+				set_temp_variable = { party_index = 4 }
+				add_relative_party_popularity = yes
+				set_temp_variable = { party_index = 19 }
 				add_relative_party_popularity = yes
 			}
 		}
@@ -11139,19 +11166,19 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_industria_espanola"
 
 			add_tech_bonus = {
-				name = CAT_excavation_tech
+				name = SPR_industria_espanola
 				bonus = 0.25
 				uses = 1
 				category = CAT_excavation_tech
 			}
 			add_tech_bonus = {
-				name = industry
+				name = SPR_industria_espanola
 				bonus = 0.25
 				uses = 1
 				category = CAT_industry
 			}
 			add_tech_bonus = {
-				name = CAT_construction_tech
+				name = SPR_industria_espanola
 				bonus = 0.25
 				uses = 1
 				category = CAT_construction_tech
@@ -11301,7 +11328,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 
 			add_tech_bonus = {
-				name = CAT_genes
+				name = SPR_bio_azul
 				bonus = 0.50
 				uses = 1
 				category = CAT_genes
@@ -11345,7 +11372,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 
 			add_tech_bonus = {
-				name = CAT_genes
+				name = SPR_idai_nature
 				bonus = 0.50
 				uses = 1
 				category = CAT_genes
@@ -11599,7 +11626,7 @@ focus_tree = {
 			add_political_power = 50
 
 			add_tech_bonus = {
-				name = CAT_excavation_tech
+				name = SPR_mineria_espanola
 				bonus = 0.50
 				uses = 1
 				category = CAT_excavation_tech
@@ -12107,7 +12134,7 @@ focus_tree = {
 			change_international_bankers_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_excavation_tech
+				name = SPR_modernize_mining_operations
 				bonus = 1.00
 				uses = 2
 				category = CAT_excavation_tech
@@ -12143,14 +12170,14 @@ focus_tree = {
 			change_communist_cadres_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_3d
+				name = SPR_fabricacion_espanola
 				bonus = 0.15
 				uses = 1
 				category = CAT_3d
 			}
 
 			add_tech_bonus = {
-				name = CAT_nfibers
+				name = SPR_fabricacion_espanola
 				bonus = 0.15
 				uses = 1
 				category = CAT_nfibers
@@ -12187,7 +12214,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_grupo_antolin"
 
 			add_tech_bonus = {
-				name = CAT_util
+				name = SPR_grupo_antolin
 				bonus = 0.25
 				uses = 1
 				category = CAT_util
@@ -12225,7 +12252,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_grifols"
 
 			add_tech_bonus = {
-				name = CAT_genes
+				name = SPR_grifols
 				bonus = 0.25
 				uses = 1
 				category = CAT_genes
@@ -12263,14 +12290,14 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_kemira_iberica"
 
 			add_tech_bonus = {
-				name = CAT_artillery
+				name = SPR_kemira_iberica
 				bonus = 0.15
 				uses = 1
 				category = CAT_artillery
 			}
 
 			add_tech_bonus = {
-				name = CAT_nfibers
+				name = SPR_kemira_iberica
 				bonus = 0.15
 				uses = 1
 				category = CAT_nfibers
@@ -12410,7 +12437,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_court_lilly"
 
 			add_tech_bonus = {
-				name = CAT_genes
+				name = SPR_court_lilly
 				bonus = 0.25
 				uses = 1
 				category = CAT_genes
@@ -12448,14 +12475,14 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_ercros"
 
 			add_tech_bonus = {
-				name = CAT_artillery
+				name = SPR_ercros
 				bonus = 0.15
 				uses = 1
 				category = CAT_artillery
 			}
 
 			add_tech_bonus = {
-				name = CAT_nfibers
+				name = SPR_ercros
 				bonus = 0.15
 				uses = 1
 				category = CAT_nfibers
@@ -12535,7 +12562,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_seat"
 
 			add_tech_bonus = {
-				name = CAT_util
+				name = SPR_seat
 				bonus = 0.25
 				uses = 1
 				category = CAT_util
@@ -12573,7 +12600,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_court_novartis"
 
 			add_tech_bonus = {
-				name = CAT_genes
+				name = SPR_court_novartis
 				bonus = 0.25
 				uses = 1
 				category = CAT_genes
@@ -12603,14 +12630,14 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_basf_espanola"
 
 			add_tech_bonus = {
-				name = CAT_artillery
+				name = SPR_basf_espanola
 				bonus = 0.15
 				uses = 1
 				category = CAT_artillery
 			}
 
 			add_tech_bonus = {
-				name = CAT_nfibers
+				name = SPR_basf_espanola
 				bonus = 0.15
 				uses = 1
 				category = CAT_nfibers
@@ -12690,7 +12717,7 @@ focus_tree = {
 			change_landowners_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_fuel_oil
+				name = SPR_energia_espanola
 				bonus = 0.25
 				uses = 1
 				category = CAT_fuel_oil
@@ -12727,7 +12754,7 @@ focus_tree = {
 			change_fossil_fuel_industry_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_fuel_oil
+				name = SPR_improve_our_refineries
 				bonus = 0.25
 				uses = 1
 				category = CAT_fuel_oil
@@ -12881,20 +12908,24 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_el_oro_negro"
-
-			every_country = {
-				limit = {
-					is_in_array = { global.EU_member = THIS.id }
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = small_decrease }
 				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = small_decrease
+				for_each_scope_loop = {
+					array = global.EU_member
+					if = {
+						limit = { NOT = { original_tag = ROOT } }
+						add_opinion_modifier = { target = ROOT modifier = small_decrease }
+					}
 				}
+				set_temp_variable = { modify_eurosceptic = 0.05 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
 			}
-			set_temp_variable = { modify_eurosceptic = 0.05 }
-			set_temp_variable = { modify_eurosceptic_target = ROOT }
-			eurosceptic_change = yes
 
+			newline = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_fossil_fuel_industry_opinion = yes
 
@@ -12929,27 +12960,28 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_va_verde"
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = medium_increase }
+				}
+				for_each_scope_loop = {
+					array = global.EU_member
+					if = {
+						limit = { NOT = { original_tag = ROOT } }
+						add_opinion_modifier = { target = ROOT modifier = medium_increase }
+					}
+				}
+				newline = yes
+				set_temp_variable = { modify_eurosceptic = -0.05 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
+			}
 
 			set_temp_variable = { party_index = 17 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-
-			every_country = {
-					limit = {
-						OR = {
-							has_idea = EU_member
-						}
-					}
-					add_opinion_modifier = {
-						target = ROOT
-						modifier = medium_increase
-					}
-			}
-
-			set_temp_variable = { modify_eurosceptic = -0.05 }
-			set_temp_variable = { modify_eurosceptic_target = ROOT }
-			eurosceptic_change = yes
 			add_ideas = SPR_idea_green_revolution_1
 		}
 
@@ -12983,26 +13015,27 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.04 }
 			add_relative_party_popularity = yes
-
-			every_country = {
-				limit = {
-					has_idea = EU_member
-				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = small_decrease
-				}
-			}
-			set_temp_variable = { modify_eurosceptic = 0.05 }
-			set_temp_variable = { modify_eurosceptic_target = ROOT }
-			eurosceptic_change = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_fossil_fuel_industry_opinion = yes
-
 			add_stability = -0.02
 
 			swap_ideas = {
 				remove_idea = SPR_idea_spanish_oil_fever_1 add_idea = SPR_idea_spanish_oil_fever_2
+			}
+			newline = yes
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = small_decrease }
+				}
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = ROOT modifier = small_decrease }
+				}
+				newline = yes
+				set_temp_variable = { modify_eurosceptic = 0.05 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
 			}
 		}
 
@@ -13036,7 +13069,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 
 			add_tech_bonus = {
-				name = CAT_fuel_oil
+				name = SPR_increase_refining_capacity
 				bonus = 0.25
 				uses = 1
 				category = CAT_fuel_oil
@@ -13072,20 +13105,20 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_remove_brussels_shackles"
-
-			every_country = {
-				limit = {
-					has_idea = EU_member
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = small_decrease }
 				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = small_decrease
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = ROOT modifier = small_decrease }
 				}
+				newline = yes
+				set_temp_variable = { modify_eurosceptic = 0.05 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
 			}
-
-			set_temp_variable = { modify_eurosceptic = 0.05 }
-			set_temp_variable = { modify_eurosceptic_target = ROOT }
-			eurosceptic_change = yes
 			add_stability = -0.02
 
 			swap_ideas = {
@@ -13214,7 +13247,7 @@ focus_tree = {
 			change_fossil_fuel_industry_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_fuel_oil
+				name = SPR_oil_independence
 				bonus = 1.00
 				uses = 1
 				category = CAT_fuel_oil
@@ -13409,19 +13442,19 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-
-			every_country = {
-				limit = {
-					has_idea = EU_member
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = FROM modifier = medium_increase }
 				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = medium_increase
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = FROM modifier = medium_increase }
 				}
+				set_temp_variable = { modify_eurosceptic = -0.05 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
 			}
-			set_temp_variable = { modify_eurosceptic = -0.05 }
-			set_temp_variable = { modify_eurosceptic_target = ROOT }
-			eurosceptic_change = yes
 
 		}
 
@@ -13485,7 +13518,7 @@ focus_tree = {
 			}
 
 			add_tech_bonus = {
-				name = CAT_genes
+				name = SPR_Armonia_con_la_naturaleza
 				bonus = 0.50
 				uses = 2
 				category = CAT_genes
@@ -13555,7 +13588,7 @@ focus_tree = {
 			change_small_medium_business_owners_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_construction_tech
+				name = SPR_sector_servicios_espanol
 				bonus = 0.25
 				uses = 1
 				category = CAT_construction_tech
@@ -13610,7 +13643,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_world_renowned_infrastructure"
 
 			add_tech_bonus = {
-				name = CAT_construction_tech
+				name = SPR_world_renowned_infrastructure
 				bonus = 0.25
 				uses = 1
 				category = CAT_construction_tech
@@ -15083,7 +15116,7 @@ focus_tree = {
 			change_the_military_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_tanks
+				name = SPR_programa_coraza_2000
 				bonus = 0.50
 				uses = 1
 				category = CAT_tanks
@@ -15114,7 +15147,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_german_designs"
 
 			add_tech_bonus = {
-				name = CAT_tanks
+				name = SPR_german_designs
 				bonus = 0.25
 				uses = 2
 				category = CAT_tanks
@@ -15182,7 +15215,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_american_designs"
 
 			add_tech_bonus = {
-				name = CAT_tanks
+				name = SPR_american_designs
 				bonus = 0.25
 				uses = 2
 				category = CAT_tanks
@@ -15255,7 +15288,7 @@ focus_tree = {
 			change_defense_industry_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_tanks
+				name = SPR_domestic_designs
 				bonus = 1.00
 				uses = 1
 				category = CAT_tanks
@@ -15288,7 +15321,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 
 			add_tech_bonus = {
-				name = CAT_tanks
+				name = SPR_learn_from_the_lince
 				bonus = 1.00
 				uses = 2
 				category = CAT_tanks
@@ -15371,7 +15404,7 @@ focus_tree = {
 			change_the_military_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_ifv
+				name = SPR_spanish_ifv_programme
 				bonus = 0.25
 				uses = 1
 				category = CAT_ifv
@@ -15401,7 +15434,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_reafirm_the_ascod_project"
 
 			add_tech_bonus = {
-				name = CAT_ifv
+				name = SPR_reafirm_the_ascod_project
 				bonus = 0.25
 				uses = 1
 				category = CAT_ifv
@@ -15504,7 +15537,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_pull_out_of_the_ascod_project"
 
 			add_tech_bonus = {
-				name = CAT_ifv
+				name = SPR_pull_out_of_the_ascod_project
 				bonus = 0.50
 				uses = 1
 				category = CAT_ifv
@@ -15553,7 +15586,7 @@ focus_tree = {
 			change_defense_industry_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_ifv
+				name = SPR_a_new_ifv_enters_the_scene
 				bonus = 1.00
 				uses = 1
 				category = CAT_ifv
@@ -15583,7 +15616,7 @@ focus_tree = {
 			change_the_military_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_apc
+				name = SPR_apc_modernization
 				bonus = 0.25
 				uses = 1
 				category = CAT_apc
@@ -15613,7 +15646,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_mowag"
 
 			add_tech_bonus = {
-				name = CAT_apc
+				name = SPR_mowag
 				bonus = 0.25
 				uses = 1
 				category = CAT_apc
@@ -15680,7 +15713,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_general_dynamics_land_systems"
 
 			add_tech_bonus = {
-				name = CAT_apc
+				name = SPR_general_dynamics_land_systems
 				bonus = 0.25
 				uses = 1
 				category = CAT_apc
@@ -15805,7 +15838,7 @@ focus_tree = {
 			change_defense_industry_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_apc
+				name = SPR_revive_enasa
 				bonus = 0.50
 				uses = 1
 				category = CAT_apc
@@ -15839,7 +15872,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 
 			add_tech_bonus = {
-				name = CAT_apc
+				name = SPR_a_new_pegaso
 				bonus = 0.50
 				uses = 1
 				category = CAT_apc
@@ -15964,14 +15997,14 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_mobility_warfare"
 
 			add_tech_bonus = {
-				name = CAT_sp_arty
+				name = SPR_mobility_warfare
 				bonus = 0.50
 				uses = 1
 				category = CAT_sp_arty
 			}
 
 			add_tech_bonus = {
-				name = CAT_util
+				name = SPR_mobility_warfare
 				bonus = 0.50
 				uses = 1
 				category = CAT_util
@@ -16349,7 +16382,7 @@ focus_tree = {
 			change_the_military_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_heli
+				name = SPR_fuerzas_aeromoviles_del_ejercito_de_tierra
 				bonus = 0.25
 				uses = 1
 				category = CAT_heli
@@ -16378,7 +16411,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_eurocopter_tigre"
 
 			add_tech_bonus = {
-				name = CAT_atk_heli
+				name = SPR_eurocopter_tigre
 				bonus = 0.25
 				uses = 1
 				category = CAT_atk_heli
@@ -16430,7 +16463,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_a_deal_for_apaches"
 
 			add_tech_bonus = {
-				name = CAT_atk_heli
+				name = SPR_a_deal_for_apaches
 				bonus = 0.25
 				uses = 1
 				category = CAT_atk_heli
@@ -16536,7 +16569,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 
 			add_tech_bonus = {
-				name = CAT_atk_heli
+				name = SPR_cantabrico_programme
 				bonus = 1.00
 				uses = 1
 				category = CAT_atk_heli
@@ -16569,7 +16602,7 @@ focus_tree = {
 			change_defense_industry_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_atk_heli
+				name = SPR_the_corocotta_attack_helicopter
 				bonus = 1.00
 				uses = 1
 				category = CAT_atk_heli
@@ -16596,7 +16629,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_eurocopter_cougar"
 
 			add_tech_bonus = {
-				name = CAT_trans_heli
+				name = SPR_eurocopter_cougar
 				bonus = 0.25
 				uses = 1
 				category = CAT_trans_heli
@@ -16648,7 +16681,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_a_deal_for_chinooks"
 
 			add_tech_bonus = {
-				name = CAT_trans_heli
+				name = SPR_a_deal_for_chinooks
 				bonus = 0.25
 				uses = 1
 				category = CAT_trans_heli
@@ -16754,7 +16787,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 
 			add_tech_bonus = {
-				name = CAT_trans_heli
+				name = SPR_babieca_programme
 				bonus = 1.00
 				uses = 1
 				category = CAT_trans_heli
@@ -16786,7 +16819,7 @@ focus_tree = {
 			change_defense_industry_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_trans_heli
+				name = SPR_the_babieca_transport_helicopter
 				bonus = 1.00
 				uses = 1
 				category = CAT_trans_heli
@@ -16939,14 +16972,14 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_guard_our_coasts"
 
 			add_tech_bonus = {
-				name = CAT_corvette
+				name = SPR_guard_our_coasts
 				bonus = 0.25
 				uses = 1
 				category = CAT_corvette
 			}
 
 			add_tech_bonus = {
-				name = CAT_frigate
+				name = SPR_guard_our_coasts
 				bonus = 0.25
 				uses = 1
 				category = CAT_frigate
@@ -16972,7 +17005,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_flosub"
 
 			add_tech_bonus = {
-				name = CAT_atk_sub
+				name = SPR_flosub
 				bonus = 0.50
 				uses = 1
 				category = CAT_atk_sub
@@ -17025,7 +17058,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_floan"
 
 			add_tech_bonus = {
-				name = CAT_lha
+				name = SPR_floan
 				bonus = 0.50
 				uses = 1
 				category = CAT_lha
@@ -17051,7 +17084,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_floans_dream"
 
 			add_tech_bonus = {
-				name = CAT_cv
+				name = SPR_floans_dream
 				bonus = 0.50
 				uses = 1
 				category = CAT_cv
@@ -17157,7 +17190,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_calm_before_the_typhoon"
 
 			add_tech_bonus = {
-				name = CAT_fighter
+				name = SPR_calm_before_the_typhoon
 				bonus = 0.25
 				uses = 2
 				category = CAT_fighter
@@ -17219,7 +17252,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_hug_the_hornets_nest"
 
 			add_tech_bonus = {
-				name = CAT_fighter
+				name = SPR_hug_the_hornets_nest
 				bonus = 0.25
 				uses = 2
 				category = CAT_fighter
@@ -17338,7 +17371,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 
 			add_tech_bonus = {
-				name = CAT_fighter
+				name = SPR_reverse_engineering_fighters
 				bonus = 0.50
 				uses = 2
 				category = CAT_fighter
@@ -17368,7 +17401,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 
 			add_tech_bonus = {
-				name = CAT_naval_air
+				name = SPR_floan_r_and_d
 				bonus = 0.50
 				uses = 1
 				category = CAT_naval_air
@@ -17402,14 +17435,14 @@ focus_tree = {
 			change_defense_industry_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_naval_air
+				name = SPR_playing_catch_up
 				bonus = 0.50
 				uses = 1
 				category = CAT_naval_air
 			}
 
 			add_tech_bonus = {
-				name = CAT_fighter
+				name = SPR_playing_catch_up
 				bonus = 0.50
 				uses = 1
 				category = CAT_fighter
@@ -17439,7 +17472,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 
 			add_tech_bonus = {
-				name = CAT_str_bomber
+				name = SPR_start_a_bomber_fleet
 				bonus = 0.50
 				uses = 1
 				category = CAT_str_bomber
@@ -17469,7 +17502,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 
 			add_tech_bonus = {
-				name = CAT_cas
+				name = SPR_close_air_support
 				bonus = 0.50
 				uses = 1
 				category = CAT_cas
@@ -17502,14 +17535,14 @@ focus_tree = {
 			change_defense_industry_opinion = yes
 
 			add_tech_bonus = {
-				name = CAT_str_bomber
+				name = SPR_death_from_above
 				bonus = 0.50
 				uses = 1
 				category = CAT_str_bomber
 			}
 
 			add_tech_bonus = {
-				name = CAT_cas
+				name = SPR_death_from_above
 				bonus = 0.50
 				uses = 1
 				category = CAT_cas
