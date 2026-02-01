@@ -278,11 +278,9 @@ on_actions = {
 				}
 				if = { limit = { FROM = { has_idea = EUU_monitor } }
 					log = "[GetDateText]: [ROOT.GetName]: on_annex EUU_monitor change"
-					random_country = {
-						limit = {
-							is_EU_potential = yes
-							is_ai = yes
-						}
+					random_scope_in_array = {
+						array = global.EU_potential
+						limit = { is_ai = yes }
 						add_ideas = EUU_monitor
 						activate_mission = EU_update_vars_mission
 						activate_mission = EU_clear_voting_mission
@@ -301,6 +299,10 @@ on_actions = {
 			if = {
 				limit = { is_in_array = { global.CSTO_member = FROM.id } }
 				remove_from_array = { global.CSTO_member = FROM.id }
+			}
+			if = {
+				limit = { is_in_array = { SIN.SIN_singaporean_trade_agreement = FROM.id } }
+				remove_from_array = { SIN.SIN_singaporean_trade_agreement = FROM.id }
 			}
 
 			EDU_learn_to_annex_your_neighbours = yes # LITERACY RATE STUFF
@@ -463,13 +465,68 @@ on_actions = {
 				set_temp_variable = { every_other_month = global.month }
 				modulo_temp_variable = { every_other_month = 2 }
 
-				if = {
-					limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
-					random_country = {
-						limit = { has_idea = EU_member NOT = { has_global_flag = EU_gdp_updated } }
+				# European Union Checks
+				if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+					random_scope_in_array = {
+						array = global.EU_member
+						limit = { NOT = { has_global_flag = EU_gdp_updated } }
+
 						set_EU_gdp = yes
-						set_global_flag = { flag = EU_gdp_updated value = 1 }
+						set_global_flag = { flag = EU_gdp_updated value = 1 days = 1 }
 					}
+
+					if = { limit = { check_variable = { global.EU_potential^num > 0 } }
+						for_each_scope_loop = {
+							array = global.EU_potential
+							check_breach_of_EU_value = yes
+						}
+					}
+
+					# Calculate the Migrant Trigger
+					if = { limit = { NOT = { has_global_flag = EUU_migrant_crisis_triggered } }
+						set_temp_variable = { total_population_refugees = 0 }
+						every_country = {
+							limit = {
+								OR = {
+									is_in_africa = yes
+									is_in_the_middle_east = yes
+								}
+								OR = {
+									has_war = yes
+									has_civil_war = yes
+									salafist_caliphate_are_in_power = yes
+								}
+							}
+							set_temp_variable = { population_refugees = population_total }
+							multiply_temp_variable = { population_refugees = 0.025 }
+							add_to_temp_variable = { PREV.total_population_refugees = population_refugees }
+						}
+
+						if = { limit = { check_variable = { total_population_refugees > 65 } }
+							set_global_flag = EUU_migrant_crisis_triggered
+							if = {
+								limit = {
+									any_of_scopes = {
+										array = global.EU_member
+										is_ai = no
+									}
+								}
+								random_scope_in_array = {
+									array = global.EU_member
+									limit = { is_ai = no }
+
+									country_event = { id = EUevent.22 }
+								}
+							}
+							else = {
+								random_scope_in_array = {
+									array = global.EU_member
+									country_event = { id = EUevent.22 }
+								}
+							}
+						}
+					}
+
 				}
 
 				calculate_average_world_productivity = yes
@@ -762,51 +819,6 @@ on_actions = {
 					update_international_system_gui = yes
 				}
 
-				# Calculate the Migrant Trigger
-				if = { limit = { NOT = { has_global_flag = EUU_migrant_crisis_triggered } }
-					set_temp_variable = { total_population_refugees = 0 }
-					every_country = {
-						limit = {
-							OR = {
-								is_african_nation = yes
-								is_middle_eastern_nation = yes
-							}
-							OR = {
-								has_war = yes
-								has_civil_war = yes
-								salafist_caliphate_are_in_power = yes
-							}
-						}
-						set_temp_variable = { population_refugees = population_total }
-						multiply_temp_variable = { population_refugees = 0.025 }
-						add_to_temp_variable = { PREV.total_population_refugees = population_refugees }
-					}
-
-					if = { limit = { check_variable = { total_population_refugees > 65 } }
-						set_global_flag = EUU_migrant_crisis_triggered
-						if = {
-							limit = {
-								any_of_scopes = {
-									array = global.EU_member
-									is_ai = no
-								}
-							}
-							random_scope_in_array = {
-								array = global.EU_member
-								limit = { is_ai = no }
-
-								country_event = { id = EUevent.22 }
-							}
-						}
-						else = {
-							random_scope_in_array = {
-								array = global.EU_member
-								country_event = { id = EUevent.22 }
-							}
-						}
-					}
-				}
-
 				random_renewable_variable_calculation = yes
 
 				# Monthly Single Fire Check
@@ -830,6 +842,10 @@ on_actions = {
 					# INFO: This was readded back to the monthly tick due to the nature of the content.
 					# tick speeds and otherwise should not be harmed.
 					update_space_system_values = yes
+
+					calculate_expected_spending = yes
+					apply_protest_effects = yes
+
 
 					# Months at War Calculation
 					if = {
@@ -1522,16 +1538,6 @@ on_actions = {
 						set_variable = { months_at_open_borders = 1 }
 					}
 
-					# EU Values Check Monthly
-					if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
-						if = { limit = { is_in_array = { global.EU_potential = THIS.id } }
-							check_breach_of_EU_value = yes
-						}
-					}
-
-					calculate_expected_spending = yes
-					apply_protest_effects = yes
-
 					# Monthly Foreign Influence Tick
 					if = { limit = { difficulty > 1 }
 						set_temp_variable = { percent_change = global.rule_monthly_domestic_independence_gain_amount }
@@ -1606,8 +1612,108 @@ on_actions = {
 						}
 					}
 
-					# NATO Event
-					if = { limit = { has_idea = NATO_member }
+					productivity_growth_effect = yes
+				}
+
+				# Arab Spring Monthly Tick
+				# DO NOT INCREMENT IF YOU HAVE COMPLETED THE ARAB SPRING MINI GAME
+				if = { limit = { check_variable = { global.arabic_countries^num > 0 } }
+					for_each_scope_loop = {
+						array = global.arabic_countries
+						if = {
+							limit = { NOT = { has_country_flag = AS_arab_spring_completed } }
+							increment_arab_spring_strength = yes
+						}
+					}
+
+					## This section is just for the instance where someone just need to have it started
+					if = { limit = { NOT = { has_global_flag = global_arab_spring_started } }
+						random_scope_in_array = {
+							array = global.arabic_countries
+							limit = {
+								check_variable = { arab_spring > 199 }
+								date > 2010.1.1
+								NOT = {
+									any_of_scopes = {
+										array = global.arabic_countries
+										has_country_flag = arab_spring_active
+									}
+								}
+								NOT = { is_in_array = { ruling_party = 12 } }
+								has_war = no
+							}
+
+							set_country_flag = arab_spring_active
+							random_list = {
+								90 = {
+									modifier = {
+										factor = 2
+										has_elections = yes
+										NOT = {
+											has_idea = hybrid_regime_emerging
+											has_idea = hybrid_regime_western
+										}
+									}
+									modifier = {
+										factor = 2
+										check_variable = { arab_spring < 200 }
+									}
+								}
+								10 = {
+									modifier = {
+										factor = 1.25
+										date > 2011.1.1
+									}
+									modifier = {
+										factor = 1.5
+										date > 2012.1.1
+									}
+									modifier = {
+										factor = 1.75
+										date > 2013.1.1
+									}
+									modifier = {
+										factor = 2
+										date > 2014.1.1
+									}
+									modifier = {
+										factor = 2
+										check_variable = { arab_spring > 225 }
+									}
+									modifier = {
+										factor = 2
+										check_variable = { arab_spring > 250 }
+									}
+									modifier = {
+										factor = 2
+										check_variable = { arab_spring > 275 }
+									}
+									modifier = {
+										factor = 2
+										check_variable = { arab_spring > 300 }
+									}
+									modifier = {
+										factor = 2
+										check_variable = { arab_spring > 400 }
+									}
+									modifier = {
+										factor = 2
+										check_variable = { arab_spring > 500 }
+									}
+									modifier = {
+										factor = 2
+										check_variable = { arab_spring > 600 }
+									}
+									country_event = { id = arab_spring.0 days = 1 random_days = 15 }
+								}
+							}
+						}
+					}
+				}
+
+				if = { limit = { NOT = { has_global_flag = GAME_RULE_nato_disabled } check_variable = { global.nato_members^num > 0 } }
+					for_each_scope_loop = {
+						array = global.nato_members
 						if = {
 							limit = {
 								has_elections = no
@@ -1616,108 +1722,20 @@ on_actions = {
 							country_event = { id = NATO.17 random_days = 7 }
 						}
 					}
+				}
 
-					# Arab Spring Monthly Tick
-					if = {
-						limit = {
-							is_in_array = { global.arabic_countries = THIS.id }
-							NOT = { has_country_flag = AS_arab_spring_completed } # DO NOT INCREMENT IF YOU HAVE COMPLETED THE ARAB SPRING MINI GAME
-						}
-
-						increment_arab_spring_strength = yes
+				if = { limit = { check_variable = { global.gcc_member_state^num > 0 } }
+					# Gulf Cooperation Council Unity Additions
+					if = { limit = { threat > 0.25 }
+						add_to_variable = { global.gcc_unity = 1 }
 					}
-
-					productivity_growth_effect = yes
-				}
-
-				# Gulf Cooperation Council Unity Additions
-				if = { limit = { threat > 0.25 }
-					add_to_variable = { global.gcc_unity = 1 }
-				}
-				if = { limit = { threat > 0.50 }
-					add_to_variable = { global.gcc_unity = 2 }
-				}
-				if = { limit = { threat > 0.75 }
-					add_to_variable = { global.gcc_unity = 5 }
-				}
-				clamp_variable = { var = global.gcc_unity min = 0 max = 100 }
-
-				## This section is just for the instance where someone just need to have it started
-				if = { limit = { NOT = { has_global_flag = global_arab_spring_started } }
-					random_country = {
-						limit = {
-							check_variable = { arab_spring > 199 }
-							date > 2010.1.1
-							NOT = { any_country = { has_country_flag = arab_spring_active } }
-							NOT = { is_in_array = { ruling_party = 12 } }
-							has_war = no
-						}
-
-						set_country_flag = arab_spring_active
-						random_list = {
-							90 = {
-								modifier = {
-									factor = 2
-									has_elections = yes
-									NOT = {
-										has_idea = hybrid_regime_emerging
-										has_idea = hybrid_regime_western
-									}
-								}
-								modifier = {
-									factor = 2
-									check_variable = { arab_spring < 200 }
-								}
-							}
-							10 = {
-								modifier = {
-									factor = 1.25
-									date > 2011.1.1
-								}
-								modifier = {
-									factor = 1.5
-									date > 2012.1.1
-								}
-								modifier = {
-									factor = 1.75
-									date > 2013.1.1
-								}
-								modifier = {
-									factor = 2
-									date > 2014.1.1
-								}
-								modifier = {
-									factor = 2
-									check_variable = { arab_spring > 225 }
-								}
-								modifier = {
-									factor = 2
-									check_variable = { arab_spring > 250 }
-								}
-								modifier = {
-									factor = 2
-									check_variable = { arab_spring > 275 }
-								}
-								modifier = {
-									factor = 2
-									check_variable = { arab_spring > 300 }
-								}
-								modifier = {
-									factor = 2
-									check_variable = { arab_spring > 400 }
-								}
-								modifier = {
-									factor = 2
-									check_variable = { arab_spring > 500 }
-								}
-								modifier = {
-									factor = 2
-									check_variable = { arab_spring > 600 }
-								}
-								country_event = { id = arab_spring.0 days = 1 random_days = 15 }
-							}
-						}
+					if = { limit = { threat > 0.50 }
+						add_to_variable = { global.gcc_unity = 2 }
 					}
+					if = { limit = { threat > 0.75 }
+						add_to_variable = { global.gcc_unity = 3 }
+					}
+					clamp_variable = { var = global.gcc_unity min = 0 max = 100 }
 				}
 
 				if = {
