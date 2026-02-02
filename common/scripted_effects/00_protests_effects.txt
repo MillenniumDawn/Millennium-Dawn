@@ -49,13 +49,20 @@ calculate_protest_drift = {
 			has_fuel < 1
 		}
 
-		add_to_temp_variable = { protest_drift = 3 }
+		add_to_temp_variable = { protest_drift = 1 }
 	}
 	if = {
 		limit = {
 			check_variable = { THIS.expected_welfare_spending > THIS.social_budget }
 		}
 
+		set_temp_variable = { buf = THIS.expected_welfare_spending }
+		subtract_from_temp_variable = { buf = THIS.social_budget }
+		add_to_temp_variable = { protest_drift = buf }
+	}else_if = {
+		limit = {
+			check_variable = { THIS.social_budget > THIS.expected_welfare_spending }
+		}
 		set_temp_variable = { buf = THIS.expected_welfare_spending }
 		subtract_from_temp_variable = { buf = THIS.social_budget }
 		add_to_temp_variable = { protest_drift = buf }
@@ -68,12 +75,26 @@ calculate_protest_drift = {
 		set_temp_variable = { buf = THIS.expected_health_spending }
 		subtract_from_temp_variable = { buf = THIS.health_budget }
 		add_to_temp_variable = { protest_drift = buf }
+	}else_if = {
+		limit = {
+			check_variable = { THIS.health_budget > THIS.expected_health_spending }
+		}
+		set_temp_variable = { buf = THIS.expected_health_spending }
+		subtract_from_temp_variable = { buf = THIS.health_budget }
+		add_to_temp_variable = { protest_drift = buf }
 	}
 	if = {
 		limit = {
 			check_variable = { THIS.expected_edu_spending > THIS.education_budget }
 		}
 
+		set_temp_variable = { buf = THIS.expected_edu_spending }
+		subtract_from_temp_variable = { buf = THIS.education_budget }
+		add_to_temp_variable = { protest_drift = buf }
+	}else_if = {
+		limit = {
+			check_variable = { THIS.education_budget > THIS.expected_edu_spending }
+		}
 		set_temp_variable = { buf = THIS.expected_edu_spending }
 		subtract_from_temp_variable = { buf = THIS.education_budget }
 		add_to_temp_variable = { protest_drift = buf }
@@ -86,12 +107,26 @@ calculate_protest_drift = {
 		set_temp_variable = { buf = THIS.expected_police_spending }
 		subtract_from_temp_variable = { buf = THIS.crime_fighting }
 		add_to_temp_variable = { protest_drift = buf }
+	}else_if = {
+		limit = {
+			check_variable = { THIS.crime_fighting > THIS.expected_police_spending }
+		}
+		set_temp_variable = { buf = THIS.expected_police_spending }
+		subtract_from_temp_variable = { buf = THIS.crime_fighting }
+		add_to_temp_variable = { protest_drift = buf }
 	}
 	if = {
 		limit = {
 			check_variable = { THIS.expected_adm_spending > THIS.bureaucracy }
 		}
 
+		set_temp_variable = { buf = THIS.expected_adm_spending }
+		subtract_from_temp_variable = { buf = THIS.bureaucracy }
+		add_to_temp_variable = { protest_drift = buf }
+	}else_if = {
+		limit = {
+			check_variable = { THIS.bureaucracy > THIS.expected_adm_spending }
+		}
 		set_temp_variable = { buf = THIS.expected_adm_spending }
 		subtract_from_temp_variable = { buf = THIS.bureaucracy }
 		add_to_temp_variable = { protest_drift = buf }
@@ -104,7 +139,15 @@ calculate_protest_drift = {
 		set_temp_variable = { buf = THIS.expected_military_sp }
 		subtract_from_temp_variable = { buf = THIS.Military_Spending }
 		add_to_temp_variable = { protest_drift = buf }
+	}else_if = {
+		limit = {
+			check_variable = { THIS.Military_Spending > THIS.expected_military_sp }
+		}
+		set_temp_variable = { buf = THIS.expected_military_sp }
+		subtract_from_temp_variable = { buf = THIS.Military_Spending }
+		add_to_temp_variable = { protest_drift = buf }
 	}
+	multiply_temp_variable = { protest_drift = 0.5 }
 }
 
 roll_protest_chance = {
@@ -186,49 +229,149 @@ roll_protest_chance = {
 	}
 }
 
-# arg1ument - buf, used as return value of relative protest chance
-calculate_basic_chance_for_protest = {
-	if = {
-		limit = { has_idea = police_01 }
-		subtract_from_temp_variable = { buf = 35 }
-	}
-	else_if = {
-		limit = { has_idea = police_02 }
-		subtract_from_temp_variable = { buf = 20 }
-	}
-	else_if = {
-		limit = { has_idea = police_04 }
-		add_to_temp_variable = { buf = 20 }
-	}
-	else_if = {
-		limit = { has_idea = police_05 }
-		add_to_temp_variable = { buf = 35 }
-	}
-}
+calculate_unrest_growth = {
+	#Grab our old protest strength
+	set_temp_variable = { start_protest_str = protest_strength }
+	#Calculate based off economics how much the protests should drift
+	calculate_protest_drift = yes
+	add_to_variable = { protest_strength = protest_drift }
 
-# argument - arg1
-increase_radicalisation = {
-	add_to_variable = { THIS.protest_radicalisation = arg1 }
+	#low stability in elected government = unrest
+	if = {
+		limit = {
+			has_stability < 0.2
+			has_elections = yes
+		}
+		set_temp_variable = { stab_hold = stability }
+		set_temp_variable = { protest_add = 0.2 }
+		subtract_from_temp_variable = { protest_add = stab_hold }
+		add_to_variable = { protest_strength = protest_add }
+	}
+	#High interest = unrest
+	if = {
+		limit = { check_variable = { interest_rate > 8.9 } }
+		set_temp_variable = { rate_hold = interest_rate }
+		subtract_from_temp_variable = { rate_hold = 8.9 }
+		add_to_variable = { protest_strength = protest_drift }
+	}
+
+	if = {
+		limit = { has_idea = recession }
+		randomize_temp_variable = {
+			var = protest_drift
+			distribution = poisson
+			min = 0.5
+			lambda = 3
+		}
+		add_to_variable = { protest_strength = protest_drift }
+	}
+
+	if = {
+		limit = { has_idea = depression }
+		randomize_temp_variable = {
+			var = protest_drift
+			distribution = poisson
+			min = 0.5
+			lambda = 4
+		}
+		add_to_variable = { protest_strength = protest_drift }
+	}
+
+	#Long wars = unrest
+	if = {
+		limit = { check_variable = { months_at_war > 36 } }
+		set_temp_variable = { months_hold = months_at_war }
+		divide_temp_variable = { months_hold = 24 }
+		add_to_variable = { protest_strength = months_hold }
+	}
+
+	#If goverment popularity is less than 30%, check for needing elections or corruption
+	if = {
+		limit = {
+			check_variable = { government_coalition_strength < 0.3 }
+			OR = {
+				has_elections = no
+				OR = {
+					has_idea = paralyzing_corruption
+					has_idea = crippling_corruption
+					has_idea = rampant_corruption
+					has_idea = unrestrained_corruption
+					has_idea = systematic_corruption
+					has_idea = widespread_corruption
+				}
+			}
+		}
+
+		set_temp_variable = { protest_drift = 0.3 }
+		set_temp_variable = { gov_pop_hold = government_coalition_strength }
+		subtract_from_temp_variable = { protest_drift = government_coalition_strength }
+		add_to_variable = { protest_strength = protest_drift }
+	}
+
+	if = {
+		limit = {
+			check_variable = { protest_strength > 0 }
+			check_variable = { start_protest_str = protest_strength }
+		}
+
+		randomize_temp_variable = {
+			var = protest_reduction
+			distribution = poisson
+			min = 0.5
+			lambda = 3
+		}
+
+		subtract_from_variable = { protest_strength = protest_reduction }
+	}
+
+	round_variable = protest_strength
 
 	clamp_variable = {
-		var = THIS.protest_radicalisation
+		var = protest_strength
 		min = 0
-		max = 10
+	}
+
+	check_protest_trigger = yes
+}
+
+check_protest_trigger = {
+	if = {
+		limit = { NOT = { has_country_flag = MD_protests_began } check_variable = { protest_strength > 49 } }
+
+		set_temp_variable = { protest_roll = protest_strength }
+		round_temp_variable = protest_roll
+		subtract_from_temp_variable = { protest_roll = 49 }
+
+		clamp_variable = { var = protest_roll max = 100 }
+
+		random = {
+			chance = var:protest_roll
+			country_event = { id = protests.200 days = 1 }
+			activate_mission = MD_incoming_protest_movement
+		}
 	}
 }
 
-# argument - arg1
-increase_protest_strength = {
-	add_to_variable = { THIS.protest_strength = arg1 }
-
-	clamp_variable = { var = protest_strength min = 0 max = 100 }
-}
-
-randomly_increase_radicalisation = {
-	random = {
-		chance = 50
-		add_to_variable = { THIS.protest_radicalisation = 1 }
+random_protest_events = {
+	if = {
+		limit = {
+			has_country_flag = MD_protests_began
+		}
+		country_event = { id = protests.101 days = 30 }
+		country_event = protests.102
+		random_list = {
+			50 = {
+				# Nothing happens
+			}
+			20 = {
+				country_event = { id = protests.104 days = 30 }
+			}
+			20 = {
+				country_event = { id = protests.105 days = 30 }
+			}
+			10 = {
+				country_event = { id = protests.106 days = 30 }
+			}
+		}
 	}
-
-	clamp_variable = { var = protest_radicalisation min = 0 max = 10 }
 }

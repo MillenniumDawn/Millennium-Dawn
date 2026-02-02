@@ -3047,24 +3047,6 @@ on_actions = {
 				# Set Continent
 				set_continent_nation_flag = yes
 
-				# Sets the Screens to Open by Default
-				if = { limit = { is_ai = no }
-					set_country_flag = open_energy_screen
-					set_country_flag = open_research_screen
-					set_country_flag = construction_speeds_visible_in_menu
-					set_country_flag = open_storage_screen
-
-					if = {
-						limit = {
-							has_game_rule = {
-								rule = rule_internal_faction_cost_reduction
-								option = yes
-							}
-						}
-						add_ideas = GAME_RULE_reduce_internal_factions_cost
-					}
-				}
-
 				# Calculate Utilities
 				calculate_starting_utility_stockpile = yes
 
@@ -3373,8 +3355,7 @@ on_actions = {
 				}
 			}
 
-			# FIXME: circular dependency here. We need to execute the power ranking ideas in a tag, but we need to be after the above block which means we have a nested series of every countries here
-			random_country = {
+			ABK = {
 				set_power_ranking_ideas_for_every_country = yes
 
 				every_country = {
@@ -3383,10 +3364,20 @@ on_actions = {
 			}
 
 			every_country = {
-				limit = {
-					is_ai = no
-				}
+				limit = { is_ai = no }
 				graph_initial_setup = yes
+
+				country_event = systems.1
+
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = rule_internal_faction_cost_reduction
+							option = yes
+						}
+					}
+					add_ideas = GAME_RULE_reduce_internal_factions_cost
+				}
 			}
 
 			if = { limit = { is_debug = yes }
