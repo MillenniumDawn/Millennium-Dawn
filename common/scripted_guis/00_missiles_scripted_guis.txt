@@ -2756,6 +2756,8 @@ scripted_gui = {
 				add_political_power = -50
 				set_temp_variable = { base_detect_adjust = 0.5 }
 				set_temp_variable = { base_cost_adjust = 0.01 }
+				set_temp_variable = { defense_var = 0.5 }
+				add_to_variable = { ct_home_defense_var = defense_var }
 				add_to_variable = { ct_global_base_detect_var = base_detect_adjust }
 				add_to_variable = { ct_police_cost_var = base_cost_adjust }
 				custom_effect_tooltip = is_ct_adjust_funding
@@ -2765,6 +2767,8 @@ scripted_gui = {
 				add_political_power = -50
 				set_temp_variable = { base_detect_adjust = -0.5 }
 				set_temp_variable = { base_cost_adjust = -0.01 }
+				set_temp_variable = { defense_var = -0.5 }
+				add_to_variable = { ct_home_defense_var = defense_var }
 				add_to_variable = { ct_global_base_detect_var = base_detect_adjust }
 				add_to_variable = { ct_police_cost_var = base_cost_adjust }
 				custom_effect_tooltip = is_ct_adjust_funding
@@ -2822,9 +2826,9 @@ scripted_gui = {
 				set_temp_variable = { party_popularity_increase = -0.02 }
 				add_relative_party_popularity = yes
 
-				set_temp_variable = { defense_var = 2 }
+				set_temp_variable = { defense_var = 1 }
 				add_to_variable = { ct_home_defense_var = defense_var }
-				set_temp_variable = { intel_gain_var = 2 }
+				set_temp_variable = { intel_gain_var = 1 }
 				add_to_variable = { ct_global_base_detect_var = intel_gain_var }
 				custom_effect_tooltip = is_ct_dom_suv_tt
 				missile_ui_update = yes
@@ -2835,15 +2839,14 @@ scripted_gui = {
 				set_temp_variable = { party_popularity_increase = 0.02 }
 				add_relative_party_popularity = yes
 
-				set_temp_variable = { defense_var = -2 }
+				set_temp_variable = { defense_var = -1}
 				add_to_variable = { ct_home_defense_var = defense_var }
-				set_temp_variable = { intel_gain_var = -2 }
+				set_temp_variable = { intel_gain_var = -1 }
 				add_to_variable = { ct_global_base_detect_var = intel_gain_var }
 				custom_effect_tooltip = is_ct_dom_suv_tt
 				missile_ui_update = yes
 			}
 			mass_gathering_button_click = {
-				#TODO: Add a random event here that can cause the people to be angy about mass intel gathering
 				add_political_power = -100
 				custom_effect_tooltip = is_ct_mass_gather_tt
 				randomize_temp_variable = {
@@ -2859,6 +2862,12 @@ scripted_gui = {
 					days = 210
 					value = 1
 				}
+				random = {
+					chance = 50
+					country_event = {
+						id = MD_terror.5
+					}
+				}
 				missile_ui_update = yes
 			}
 			exploit_intelligence_button_click = {
@@ -2873,7 +2882,35 @@ scripted_gui = {
 			infil_agent_button_click = {
 				add_political_power = -50
 				custom_effect_tooltip = is_ct_infil_agent_tt
-				#TODO: Randomize the chance based off our intel accuracy + agent deveopment
+				set_temp_variable = { fail_chance = 100 }
+				set_temp_variable = { success_chance = international_terror_org_intel^selected_org }
+				add_to_temp_variable = { success_chance = ct_intel_agency_value }
+				subtract_from_temp_variable = { fail_chance = success_chance }
+
+				random_list = {
+					success_chance = {
+						country_event = {
+							id = MD_terror.7
+						}
+						set_temp_variable_to_random = {
+							var = random_add
+							min = 2
+							max = 8
+						}
+						add_to_variable = { international_terror_org_specific_intel^selected_org = random_add }
+					}
+					fail_chance = {
+						country_event = {
+							id = MD_Terror.8
+						}
+						set_temp_variable_to_random = {
+							var = random_add
+							min = -8
+							max = -2
+						}
+						add_to_variable = { international_terror_org_specific_intel^selected_org = random_add }
+					}
+				}
 				missile_ui_update = yes
 			}
 			arrest_sympathizers_button_click = {
@@ -2896,7 +2933,9 @@ scripted_gui = {
 				subtract_from_temp_variable = { random_bad_luck = ct_intel_agency_value }
 				random = {
 					chance = random_bad_luck
-					#TODO: Fire the negative event here
+					country_event = {
+						id = MD_terror.6
+					}
 				}
 				missile_ui_update = yes
 			}

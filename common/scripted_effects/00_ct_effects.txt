@@ -389,6 +389,10 @@ calculate_national_global_threat_detection = {
 	add_to_variable = { ct_defense_total = ct_home_defense_var }
 	multiply_variable = { ct_defense_total = base_mod }
 
+	set_temp_variable = { foreign_ct_mod = foreign_counter_terror_support }
+	multiply_temp_variable = { foreign_ct_mod = 0.01 }
+	add_to_temp_variable = { foreign_ct_mod = 1 }
+
 	for_each_loop = {
 		array = international_terror_org_intel
 		value = v
@@ -410,6 +414,12 @@ calculate_national_global_threat_detection = {
 		}
 
 		multiply_variable = { international_terror_org_intel^i = 0.4 }
+		if = {
+			limit = {
+				check_variable = { foreign_counter_terror_support > 0 }
+			}
+			multiply_variable = { international_terror_org_intel^i = foreign_ct_mod }
+		}
 		multiply_variable = { international_terror_org_intel^i = base_mod }
 	}
 
@@ -855,6 +865,7 @@ global_attack_roll = {
 				log = "[GetDateText]: [THIS.GetName] Was hit by an international terror attack"
 				add_to_variable = { global.active_terror_org_vis_lvl^cur_attack_index = 5 }
 				subtract_from_variable = { global.active_terror_org_threat_lvl^cur_attack_index = 5 }
+				set_variable = { attacking_org = cur_attack_index }
 				clamp_variable = {
 					var = global.active_terror_org_vis_lvl^cur_attack_index
 					min = 0
@@ -867,6 +878,7 @@ global_attack_roll = {
 				}
 				country_event = {
 					id = MD_terror.1
+					random_days = 27
 				}
 			}
 
@@ -877,6 +889,7 @@ global_attack_roll = {
 				add_to_variable = { international_terror_org_temp_specific_intel^cur_attack_index = 5 }
 				add_to_variable = { global.active_terror_org_vis_lvl^cur_attack_index = 10 }
 				subtract_from_variable = { global.active_terror_org_threat_lvl^cur_attack_index = 15 }
+				set_variable = { attacking_org = cur_attack_index }
 				clamp_variable = {
 					var = global.active_terror_org_vis_lvl^cur_attack_index
 					min = 0
@@ -891,6 +904,7 @@ global_attack_roll = {
 				log = "[GetDateText]: [THIS.GetName] prevented an international terror attack"
 				country_event = {
 					id = MD_terror.2
+					random_days = 27
 				}
 			}
 		}
