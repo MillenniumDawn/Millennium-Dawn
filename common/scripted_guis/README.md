@@ -8,7 +8,6 @@ This directory contains Millennium Dawn's scripted GUI definitions.
 
 - **Use dirty variables**: Implement dirty variables to prevent unnecessary GUI updates. Only recalculate values when the underlying data has actually changed, not on every frame.
 - **Minimize update frequency**: Follow best practices to reduce performance impact, as scripted GUIs can be resource-intensive on lower-end systems.
-- **Profile your changes**: Test GUI performance, especially for elements that update frequently or display complex calculations.
 
 ### AI Compatibility
 
