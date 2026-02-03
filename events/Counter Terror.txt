@@ -156,6 +156,9 @@ country_event = {
 }
 
 #New Country Events
+#TODO: Add responses to the terror attacks / successes
+#TODO: Add more random terror attack events that can be rolled
+#This is mostly just for flavor, the events function can be the same
 #Terror Attack Happened
 country_event = {
 
@@ -327,6 +330,212 @@ country_event = {
 	option = {
 		name = MD_terror.8.a
 		add_manpower = -1
+	}
+}
+
+#Event fires due to anger about increased domestic security
+country_event = {
+	id = MD_terror.9
+	title = MD_terror.9.t
+	desc = MD_terror.9.d
+
+	picture = GFX_CTC.4
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_terror.9.a
+		add_timed_idea = {
+			idea = CT_internet_monitoring
+			days = 200
+		}
+	}
+	option = {
+		name = MD_terror.9.b
+		set_temp_variable = { defense_var = -1}
+		add_to_variable = { ct_home_defense_var = defense_var }
+		set_temp_variable = { intel_gain_var = -1 }
+		add_to_variable = { ct_global_base_detect_var = intel_gain_var }
+		custom_effect_tooltip = is_ct_dom_suv_tt
+		missile_ui_update = yes
+	}
+}
+
+#Event to trigger proper scoping for joint exercises
+country_event = {
+	id = MD_terror.10
+	title = MD_terror.10.t
+	desc = MD_terror.10.d
+
+	picture = GFX_CTC.4
+
+	is_triggered_only = yes
+
+	immediate = {
+		var:selected_ct_nation = {
+			country_event = {
+				id = MD_terror.11
+			}
+		}
+	}
+}
+
+#Event to accept or deny counter-terror training exercises
+country_event = {
+	id = MD_terror.11
+	title = MD_terror.11.t
+	desc = MD_terror.11.d
+
+	picture = GFX_CTC.2
+
+	is_triggered_only = yes
+
+	option = { #Do the exercises
+		name = MD_terror.11.a
+		army_experience = 10
+		small_expenditure = yes
+		set_country_flag = {
+			flag = has_recent_joint_exercise@FROM
+			days = 190
+			value = 1
+		}
+		missile_ui_update = yes
+		FROM = {
+			army_experience = 10
+			small_expenditure = yes
+			set_country_flag = {
+				flag = has_recent_joint_exercise@PREV
+				days = 190
+				value = 1
+			}
+			missile_ui_update = yes
+		}
+	}
+
+	option = { #Refuse the exercises
+		name = MD_terror.11.b
+		reverse_add_opinion_modifier = {
+			target = FROM
+			modifier = rejected_joint_ct_training
+		}
+		set_country_flag = {
+			flag = refused_joint_exercises@FROM
+			days = 190
+			value = 1
+		}
+		missile_ui_update = yes
+		FROM = {
+			army_experience = 10
+			small_expenditure = yes
+			set_country_flag = {
+				flag = refused_joint_exercises@PREV
+				days = 190
+				value = 1
+			}
+			missile_ui_update = yes
+		}
+	}
+}
+
+#Event to trigger proper scoping for foreign advisors
+country_event = {
+	id = MD_terror.12
+	title = MD_terror.12.t
+	desc = MD_terror.12.d
+
+	picture = GFX_CTC.4
+
+	is_triggered_only = yes
+
+	immediate = {
+		var:selected_ct_nation = {
+			country_event = {
+				id = MD_terror.13
+			}
+		}
+	}
+}
+
+#Event to accept or reject foreign advisors
+country_event = {
+	id = MD_terror.13
+	title = MD_terror.13.t
+	desc = MD_terror.13.d
+
+	picture = GFX_CTC.4
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_terror.13.a
+		set_country_flag = has_ct_advisor_from@FROM
+		add_to_variable = { foreign_counter_terror_support = 1 }
+		FROM = {
+			country_event = {
+				id = MD_terror.15
+			}
+			add_operation_token = {
+				tag = PREV
+				token = token_foreign_advisors
+			}
+		}
+	}
+	option = {
+		name = MD_terror.13.b
+		reverse_add_opinion_modifier = {
+			target = FROM
+			modifier = rejected_ct_advisors
+		}
+		FROM = {
+			country_event = {
+				id = MD_terror.16
+			}
+		}
+	}
+}
+
+#Remove CT advisors
+country_event = {
+	id = MD_terror.14
+	title = MD_terror.14.t
+	desc = MD_terror.14.d
+
+	picture = GFX_CTC.4
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_terror.14.a
+	}
+}
+
+#Advisors Accepted
+country_event = {
+	id = MD_terror.15
+	title = MD_terror.15t
+	desc = MD_terror.15.d
+
+	picture = GFX_CTC.4
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_terror.15.a
+	}
+}
+
+#Advisors Rejected
+country_event = {
+	id = MD_terror.16
+	title = MD_terror.16.t
+	desc = MD_terror.16.d
+
+	picture = GFX_CTC.4
+
+	is_triggered_only = yes
+
+	option = {
+		name = MD_terror.16.a
 	}
 }
 
