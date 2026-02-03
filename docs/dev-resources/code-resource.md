@@ -1322,13 +1322,12 @@ Renewable capacity is slightly different since it use the [Global Wind Atlas](ht
 
 Once you are on the website you can look at your desired region and then hover over the area and it will provide you a value in the bottom right of the screen.
 co
-The equation for the capacity factor is (Atlas value) - 0.25 = Capacity Factor variable for that state. Using the Western Sahara as an example the Capacity Factor on the Atlas extends to 0.80 which means in MD the state would have a capacity factor of 0.50 with the dynamic modifier.
+The equation for the capacity factor is (Atlas value) - 0.25 = Capacity Factor variable for that state. Using the Western Sahara as an example the Capacity Factor on the Atlas extends to 0.80 which means in MD the state would have a capacity factor of 0.50. This is done via a static state modifier handled on game start.
 
 Example:
 
 ```python
 set_variable = { state_renewable_capacity_factor_modifier_var = 0.55 }
-add_dynamic_modifier = { modifier = renewable_capacity_factor_dyn_mod }
 ```
 
 Productivity is also set at the state level as well. Please refer to any of the state.
