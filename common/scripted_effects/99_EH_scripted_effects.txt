@@ -652,12 +652,12 @@ EH_calculate_randallite_mech_production_cost_effect = {
     if = {
         limit = {
             check_variable = {
-                var = EH_decreased_hacs_cost_var
+                var = EH_changed_hacs_cost_var
                 value = 0
                 compare = not_equals
             }
         }
-        multiply_variable = { EH_mech_production_randallite_cost_var = EH_decreased_hacs_cost_var }
+        multiply_variable = { EH_mech_production_randallite_cost_var = EH_changed_hacs_cost_var }
     }
     multiply_variable = { EH_mech_production_randallite_cost_var = EH_selected_mechs_var }
     round_variable = EH_mech_production_randallite_cost_var
@@ -681,6 +681,7 @@ EH_start_mech_production_factory_1_effect = {
     }
     set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
     multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+    set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
 	EH_add_randallite_effect = yes
     custom_effect_tooltip = EH_mech_production_effects_TT
 	EH_refresh_gui = yes
@@ -703,6 +704,7 @@ EH_start_mech_production_factory_2_effect = {
     }
     set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
     multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+    set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
 	EH_add_randallite_effect = yes
     custom_effect_tooltip = EH_mech_production_effects_TT
 	EH_refresh_gui = yes
@@ -725,6 +727,7 @@ EH_start_mech_production_factory_3_effect = {
     }
     set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
     multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+    set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
 	EH_add_randallite_effect = yes
     custom_effect_tooltip = EH_mech_production_effects_TT
 	EH_refresh_gui = yes
@@ -747,6 +750,7 @@ EH_start_mech_production_factory_4_effect = {
     }
     set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
     multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+    set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
 	EH_add_randallite_effect = yes
     custom_effect_tooltip = EH_mech_production_effects_TT
 	EH_refresh_gui = yes
@@ -769,6 +773,7 @@ EH_start_mech_production_factory_5_effect = {
     }
     set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
     multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+    set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
 	EH_add_randallite_effect = yes
     custom_effect_tooltip = EH_mech_production_effects_TT
 	EH_refresh_gui = yes
@@ -782,4 +787,44 @@ EH_refresh_gui = {
     else = {
         set_variable = { EH_refresh_gui_dirty = 0 }
     }
+}
+
+EH_change_hacs_cost_effect = { # Percentual. If x < 0, makes abs(x). If provided 0 < x < 1, reduces by x. If x > 1, increases by x.
+    # If provided x = 0.8, it will decrease cost by 20%, if provided x = 1.2, it will increase cost by 20%
+    set_temp_variable = { EH_change_hacs_cost_temp = EH_change_hacs_cost_var }
+
+    # Abs(x)
+    if = {
+        limit = { check_variable = { EH_change_hacs_cost_temp < 0 } }
+        multiply_temp_variable = { EH_change_hacs_cost_temp = -1 }
+    }
+
+    # Calculate the multiplier and display percentage
+    # 0 < x < 1
+    if = {
+        limit = { check_variable = { EH_change_hacs_cost_temp < 1 } }
+        set_temp_variable = { EH_multiplier = EH_change_hacs_cost_temp }
+        set_temp_variable = { EH_temp_loc_var = EH_change_hacs_cost_temp }
+        subtract_from_temp_variable = { EH_temp_loc_var = 1 }
+    }
+    # x >= 1
+    else = {
+        set_temp_variable = { EH_multiplier = EH_change_hacs_cost_temp }
+        set_temp_variable = { EH_temp_loc_var = EH_change_hacs_cost_temp }
+        subtract_from_temp_variable = { EH_temp_loc_var = 1 }
+    }
+    custom_effect_tooltip = EH_changed_hacs_cost_TT
+
+    if = {
+        limit = {
+            check_variable = {
+                var = EH_changed_hacs_cost_var
+                value = 0
+                compare = equals
+            }
+        }
+        set_variable = { EH_changed_hacs_cost_var = 1 }
+    }
+
+    multiply_variable = { EH_changed_hacs_cost_var = EH_multiplier }
 }
