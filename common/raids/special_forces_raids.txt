@@ -2101,7 +2101,6 @@ types = {
 		}
 	}
 	# [USA] Capture Venezuelan Leader
-
 	USA_raid_venezuela = {
 		days_to_prepare = 30
 		days_re_enable = 120
@@ -2381,7 +2380,7 @@ types = {
 	}
 	#Counter-Terror Simple Raid
 	counter_terror_region_raid = {
-		days_to_prepare = 30
+		days_to_prepare = 14
 		days_re_enable = 30
 
 		category = special_forces_raids
@@ -2451,9 +2450,11 @@ types = {
 			}
 		}
 
+		speed_multiplier = 20
+
 		unit_requirements = {
 			battalion_types = {
-				Special_Forces = { min = 5 }
+				Special_Forces = { min = 2 }
 			}
 		}
 
@@ -2490,13 +2491,6 @@ types = {
 					start_weight = -0.25
 					reference = 10
 				}
-
-				### Target Modifiers
-				resistance = {
-					reference = 100
-					start_reference = 20 # Resistance below 20 doesn't help
-					weight = 0.2
-				}
 				intel = {
 					weight = 0.5
 					start_weight = -0.1
@@ -2518,6 +2512,7 @@ types = {
 			failure = {
 				victim_effects = {
 					send_raid_event_to_victim = yes
+					send_ct_raid_events_to_victim = yes
 				}
 				actor_effects = {
 					var:target_state = {
@@ -2526,15 +2521,16 @@ types = {
 					}
 					var:actor_country = {
 						randomize_temp_variable = {
-							var = intel_gain
+							var = threat_loss
+							distribution = poisson
 							min = 1
 							lambda = 10
-							distribution = poisson
 						}
 						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
 					}
+					missile_ui_update = yes
 				}
 				# Other unit effects
 				division_effects = {
@@ -2544,6 +2540,7 @@ types = {
 			limited_success = {
 				victim_effects = {
 					send_raid_event_to_victim = yes
+					send_ct_raid_events_to_victim = yes
 				}
 				actor_effects = {
 					var:target_state = {
@@ -2553,26 +2550,28 @@ types = {
 					var:actor_country = {
 						randomize_temp_variable = {
 							var = intel_gain
+							distribution = poisson
 							min = 1
 							lambda = 5
-							distribution = poisson
 						}
-						add_to_variable = { international_terror_org_temp_specific_intel^targeted_org }
+						add_to_variable = { international_terror_org_temp_specific_intel^targeted_org = intel_gain }
 						randomize_temp_variable = {
 							var = threat_loss
+							distribution = poisson
 							min = -5
 							lambda = -1
-							distribution = poisson
 						}
 						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
+						missile_ui_update = yes
 					}
 				}
 			}
 			success = {
 				victim_effects = {
 					send_raid_event_to_victim = yes
+					send_ct_raid_events_to_victim = yes
 				}
 				actor_effects = {
 					var:target_state = {
@@ -2582,20 +2581,21 @@ types = {
 					var:actor_country = {
 						randomize_temp_variable = {
 							var = intel_gain
+							distribution = poisson
 							min = 1
 							lambda = 10
-							distribution = poisson
 						}
-						add_to_variable = { international_terror_org_temp_specific_intel^targeted_org }
+						add_to_variable = { international_terror_org_temp_specific_intel^targeted_org = intel_gain }
 						randomize_temp_variable = {
 							var = threat_loss
+							distribution = poisson
 							min = -10
 							lambda = -1
-							distribution = poisson
 						}
 						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
+						missile_ui_update = yes
 					}
 				}
 				# Other unit effects
@@ -2611,6 +2611,7 @@ types = {
 			critical_success = {
 				victim_effects = {
 					send_raid_event_to_victim = yes
+					send_ct_raid_events_to_victim = yes
 				}
 				actor_effects = {
 					var:target_state = {
@@ -2620,20 +2621,21 @@ types = {
 					var:actor_country = {
 						randomize_temp_variable = {
 							var = intel_gain
-							min = 1
-							lambda = 15
 							distribution = poisson
+							min = 5
+							lambda = 15
 						}
-						add_to_variable = { international_terror_org_temp_specific_intel^targeted_org }
+						add_to_variable = { international_terror_org_temp_specific_intel^targeted_org = intel_gain }
 						randomize_temp_variable = {
 							var = threat_loss
+							distribution = poisson
 							min = -15
 							lambda = -1
-							distribution = poisson
 						}
 						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
 						multiply_temp_variable = { threat_loss = -1 }
 						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
+						missile_ui_update = yes
 					}
 				}
 				# Other unit effects
@@ -2785,7 +2787,7 @@ types = {
 	}
 	#Counter-Terror Org elimination raid
 	counter_terror_elimination_raid = {
-		days_to_prepare = 30
+		days_to_prepare = 14
 		days_re_enable = 30
 
 		category = special_forces_raids
@@ -2855,9 +2857,11 @@ types = {
 			}
 		}
 
+		speed_multiplier = 20
+
 		unit_requirements = {
 			battalion_types = {
-				Special_Forces = { min = 5 }
+				Special_Forces = { min = 2 }
 			}
 		}
 
@@ -2922,9 +2926,12 @@ types = {
 			failure = {
 				victim_effects = {
 					send_raid_event_to_victim = yes
+					send_ct_raid_events_to_victim = yes
 				}
 				actor_effects = {
-
+					var:target_state = {
+						relocate_terror_org = yes
+					}
 				}
 				# Other unit effects
 				division_effects = {
@@ -2934,20 +2941,58 @@ types = {
 			limited_success = {
 				victim_effects = {
 					send_raid_event_to_victim = yes
-
+					send_ct_raid_events_to_victim = yes
 				}
 				actor_effects = {
-
+					var:target_state = {
+						relocate_terror_org = yes
+					}
+					var:actor_country = {
+						randomize_temp_variable = {
+							var = intel_gain
+							distribution = poisson
+							min = 5
+							lambda = 15
+						}
+						add_to_variable = { international_terror_org_temp_specific_intel^targeted_org = intel_gain }
+						randomize_temp_variable = {
+							var = threat_loss
+							distribution = poisson
+							min = 1
+							lambda = 5
+						}
+						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
+						multiply_temp_variable = { threat_loss = -1 }
+						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
+					}
 				}
 
 			}
 			success = {
 				victim_effects = {
 					send_raid_event_to_victim = yes
+					send_ct_raid_events_to_victim = yes
 				}
 				actor_effects = {
-					# Damage to unit
+					var:target_state = {
+						clr_state_flag = is_regional_terror_base
+						for_each_loop = {
+							array = global.active_terror_hq
+							value = v
+							index = i
 
+							if = {
+								limit = {
+									check_variable = { v = THIS }
+								}
+								set_temp_variable = { targeted_org = i }
+							}
+						}
+						remove_org = yes
+					}
+					var:actor_country = {
+
+					}
 				}
 				# Other unit effects
 				division_effects = {
@@ -2962,10 +3007,28 @@ types = {
 			critical_success = {
 				victim_effects = {
 					send_raid_event_to_victim = yes
-
+					send_ct_raid_events_to_victim = yes
 				}
 				actor_effects = {
+					var:target_state = {
+						clr_state_flag = is_regional_terror_base
+						for_each_loop = {
+							array = global.active_terror_hq
+							value = v
+							index = i
 
+							if = {
+								limit = {
+									check_variable = { v = THIS }
+								}
+								set_temp_variable = { targeted_org = i }
+							}
+						}
+						remove_org = yes
+					}
+					var:actor_country = {
+
+					}
 				}
 				# Other unit effects
 				division_effects = {

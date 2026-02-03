@@ -172,29 +172,15 @@ add_new_org = {
 #Call this in the same effect where you set the remove_org temp_variable, so it passes
 #that then pulls the correct terror org, AND the correct info, out of the active array
 remove_org = {
-	for_each_loop = {
-		array = global.active_terror_orgs
-		value = v
-		index = i
-		break = b
-
-		if = {
-			limit = {
-				check_variable = { v = remove_org }
-			}
-			set_temp_variable = { remove_index = i }
-			set_temp_variable = { b = 1 }
-		}
-	}
-
-	remove_from_array = { global.active_terror_orgs = global.active_terror_orgs^remove_index }
-	remove_from_array = { global.active_terror_org_threat_lvl = global.active_terror_org_threat_lvl^remove_index }
-	remove_from_array = { global.active_terror_org_vis_lvl = global.active_terror_org_vis_lvl^remove_index }
+	remove_from_array = { array = global.active_terror_orgs index = targeted_org }
+	remove_from_array = { array = global.active_terror_org_threat_lvl index = targeted_org }
+	remove_from_array = { array = global.active_terror_org_vis_lvl index = targeted_org }
 
 	every_country = {
-		remove_from_array = { international_terror_org_intel^remove_index = 0 }
-		remove_from_array = { international_terror_org_specific_intel^remove_index = 0 }
-		remove_from_array = { international_terror_org_temp_specific_intel^remove_index = 0 }
+		remove_from_array = { array = international_terror_org_intel index = targeted_org }
+		remove_from_array = { array = international_terror_org_specific_intel index = targeted_org }
+		remove_from_array = { array = international_terror_org_temp_specific_intel index = targeted_org }
+		remove_from_array = { array = ct_mass_gather_store_var index = targeted_org }
 	}
 
 	missile_ui_update = yes
@@ -802,6 +788,54 @@ check_for_global_attacks = {
 			check_variable = { global.current_terror_attackers^num > 0 }
 		}
 		global_attack_roll = yes
+	}
+}
+
+relocate_terror_org = {
+	for_each_loop = {
+		array = global.active_terror_hq
+		value = v
+		index = i
+
+		if = {
+			limit = {
+				check_variable = { v = THIS }
+			}
+			set_temp_variable = { targeted_org = i }
+		}
+	}
+
+	clr_state_flag = is_regional_terror_base
+
+	every_neighbor_state = {
+		add_to_temp_array = { move_state_list = THIS }
+	}
+
+	set_temp_variable = { max_stop = move_state_list^num }
+	subtract_from_temp_variable = { max_stop = 1 }
+
+	set_temp_variable_to_random = {
+		var = new_state
+		min = 0
+		max = max_stop
+		integer = yes
+	}
+
+	set_temp_variable = { new_state_open = move_state_list^new_state }
+
+	var:new_state_open = {
+		set_state_flag = is_regional_terror_base
+	}
+
+	remove_from_array = {
+		array = global.active_terror_hq
+		index = targeted_org
+	}
+
+	add_to_array = {
+		array = global.active_terror_hq
+		value = new_state_open
+		index = targeted_org
 	}
 }
 
