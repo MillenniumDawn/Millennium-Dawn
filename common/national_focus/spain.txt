@@ -7801,15 +7801,27 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_the_european_upheaval"
 			increase_intervention_law_effect = yes
-			every_country = {
-				limit = {
-					is_in_array = { global.EU_potential = THIS.id }
-					NOT = { tag = SPR }
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_POTENTIAL_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					set_temp_variable = { party_index = 21 }
+					set_temp_variable = { party_popularity_increase = 0.025 }
+					set_temp_variable = { temp_outlook_increase = 0.025 }
+					add_relative_party_popularity = yes
 				}
-				set_temp_variable = { party_index = 21 }
-				set_temp_variable = { party_popularity_increase = 0.025 }
-				set_temp_variable = { temp_outlook_increase = 0.025 }
-				add_relative_party_popularity = yes
+				for_each_scope_loop = {
+					array = global.EU_potential
+					if = { limit = { NOT = { original_tag = ROOT } }
+						set_temp_variable = { party_index = 21 }
+						set_temp_variable = { party_popularity_increase = 0.025 }
+						set_temp_variable = { temp_outlook_increase = 0.025 }
+						add_relative_party_popularity = yes
+					}
+				}
+				newline = yes
+				set_temp_variable = { modify_eurosceptic = 0.05 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
 			}
 		}
 
@@ -8721,16 +8733,17 @@ focus_tree = {
 			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
 				set_temp_variable = { modify_eurosceptic = -0.03 }
 				EU_eurosceptic_change = yes
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = SPR_spain_fosters_support_in_eu }
+				}
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = SPR modifier = SPR_spain_fosters_support_in_eu }
+				}
 			}
 			else = {
 				add_political_power = 100
-			}
-			every_country = {
-				limit = { is_in_array = { global.EU_member = THIS.id } }
-				add_opinion_modifier = {
-					target = SPR
-					modifier = SPR_spain_fosters_support_in_eu
-				}
 			}
 		}
 
@@ -10338,10 +10351,9 @@ focus_tree = {
 			multiply_temp_variable = { treasury_change = 0.05 }
 			modify_treasury_effect = yes
 			reverse_add_opinion_modifier = { target = HLS modifier = SPR_dissolved_monasteries_HLS }
-			every_country = {
+			every_other_country = {
 				limit = {
 					has_idea = christian
-					NOT = { tag = SPR }
 					NOT = { tag = HLS }
 				}
 				add_opinion_modifier = { target = SPR modifier = SPR_dissolved_monasteries }
@@ -10884,18 +10896,20 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_spread_the_word"
-			every_country = {
-				limit = {
-					has_idea = EU_member
-					NOT = { tag = SPR }
-				}
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			set_temp_variable = { temp_outlook_increase = 0.02 }
+			custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
 				set_temp_variable = { party_index = 4 }
-				set_temp_variable = { party_popularity_increase = 0.02 }
-				set_temp_variable = { temp_outlook_increase = 0.02 }
 				add_relative_party_popularity = yes
 				set_temp_variable = { party_index = 19 }
-				set_temp_variable = { party_popularity_increase = 0.02 }
-				set_temp_variable = { temp_outlook_increase = 0.02 }
+				add_relative_party_popularity = yes
+			}
+			for_each_scope_loop = {
+				array = global.EU_member
+				set_temp_variable = { party_index = 4 }
+				add_relative_party_popularity = yes
+				set_temp_variable = { party_index = 19 }
 				add_relative_party_popularity = yes
 			}
 		}
@@ -12894,20 +12908,24 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_el_oro_negro"
-
-			every_country = {
-				limit = {
-					is_in_array = { global.EU_member = THIS.id }
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = small_decrease }
 				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = small_decrease
+				for_each_scope_loop = {
+					array = global.EU_member
+					if = {
+						limit = { NOT = { original_tag = ROOT } }
+						add_opinion_modifier = { target = ROOT modifier = small_decrease }
+					}
 				}
+				set_temp_variable = { modify_eurosceptic = 0.05 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
 			}
-			set_temp_variable = { modify_eurosceptic = 0.05 }
-			set_temp_variable = { modify_eurosceptic_target = ROOT }
-			eurosceptic_change = yes
 
+			newline = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_fossil_fuel_industry_opinion = yes
 
@@ -12942,27 +12960,28 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_va_verde"
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = medium_increase }
+				}
+				for_each_scope_loop = {
+					array = global.EU_member
+					if = {
+						limit = { NOT = { original_tag = ROOT } }
+						add_opinion_modifier = { target = ROOT modifier = medium_increase }
+					}
+				}
+				newline = yes
+				set_temp_variable = { modify_eurosceptic = -0.05 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
+			}
 
 			set_temp_variable = { party_index = 17 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-
-			every_country = {
-					limit = {
-						OR = {
-							has_idea = EU_member
-						}
-					}
-					add_opinion_modifier = {
-						target = ROOT
-						modifier = medium_increase
-					}
-			}
-
-			set_temp_variable = { modify_eurosceptic = -0.05 }
-			set_temp_variable = { modify_eurosceptic_target = ROOT }
-			eurosceptic_change = yes
 			add_ideas = SPR_idea_green_revolution_1
 		}
 
@@ -12996,26 +13015,27 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = -0.04 }
 			set_temp_variable = { temp_outlook_increase = -0.04 }
 			add_relative_party_popularity = yes
-
-			every_country = {
-				limit = {
-					has_idea = EU_member
-				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = small_decrease
-				}
-			}
-			set_temp_variable = { modify_eurosceptic = 0.05 }
-			set_temp_variable = { modify_eurosceptic_target = ROOT }
-			eurosceptic_change = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_fossil_fuel_industry_opinion = yes
-
 			add_stability = -0.02
 
 			swap_ideas = {
 				remove_idea = SPR_idea_spanish_oil_fever_1 add_idea = SPR_idea_spanish_oil_fever_2
+			}
+			newline = yes
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = small_decrease }
+				}
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = ROOT modifier = small_decrease }
+				}
+				newline = yes
+				set_temp_variable = { modify_eurosceptic = 0.05 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
 			}
 		}
 
@@ -13085,20 +13105,20 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_remove_brussels_shackles"
-
-			every_country = {
-				limit = {
-					has_idea = EU_member
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = small_decrease }
 				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = small_decrease
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = ROOT modifier = small_decrease }
 				}
+				newline = yes
+				set_temp_variable = { modify_eurosceptic = 0.05 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
 			}
-
-			set_temp_variable = { modify_eurosceptic = 0.05 }
-			set_temp_variable = { modify_eurosceptic_target = ROOT }
-			eurosceptic_change = yes
 			add_stability = -0.02
 
 			swap_ideas = {
@@ -13422,19 +13442,19 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-
-			every_country = {
-				limit = {
-					has_idea = EU_member
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = FROM modifier = medium_increase }
 				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = medium_increase
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = FROM modifier = medium_increase }
 				}
+				set_temp_variable = { modify_eurosceptic = -0.05 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
 			}
-			set_temp_variable = { modify_eurosceptic = -0.05 }
-			set_temp_variable = { modify_eurosceptic_target = ROOT }
-			eurosceptic_change = yes
 
 		}
 

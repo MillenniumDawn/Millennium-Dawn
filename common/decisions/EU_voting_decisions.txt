@@ -1266,11 +1266,11 @@ EU_fiscal_category = {
 		fire_only_once = yes
 
 		timeout_effect = {
-			### European debt crisis
+			custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 			effect_tooltip = {
-				country_event = { id = EUevent.5 }
-				every_country = {
-					limit = { has_idea = EU_member }
+				country_event = EUevent.5
+				for_each_scope_loop = {
+					array = global.EU_member
 					add_ideas = european_debt_crisis
 					if = {
 						limit = {
@@ -1293,7 +1293,7 @@ EU_fiscal_category = {
 						array = global.EU_member
 						limit = { is_ai = no }
 
-						country_event = { id = EUevent.5 }
+						country_event = EUevent.5
 					}
 				}
 				else = {
@@ -1310,7 +1310,6 @@ EU_fiscal_category = {
 		}
 
 		complete_effect = {
-			# Eurozone Reforms
 			custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 			effect_tooltip = {
 				country_event = { id = EUevent.6 }
@@ -2022,32 +2021,30 @@ EU_defense_category = {
 		}
 
 		complete_effect = {
-			every_country = {
+			random_country = {
 				limit = {
 					has_country_flag = control_euroarmy_force
 				}
 				clr_country_flag = control_euroarmy_force
 			}
-			every_country = {
+			for_each_scope_loop = {
+				array = global.EU_member
+				if = {
 					limit = {
-						has_idea = EU_member
-					}
-					if = {
-						limit = {
-							any_of_scopes = {
-								array = global.EU_member
-								NOT = { has_template = "EuroArmy Brigade" }
-							}
+						any_of_scopes = {
+							array = global.EU_member
+							NOT = { has_template = "EuroArmy Brigade" }
 						}
-						add_manpower = -1000
-						subtract_from_variable = { treasury = 0.1 }
 					}
-					delete_unit_template_and_units = {
-						division_template = "EuroArmy Brigade"
-					}
-					give_military_access = ROOT
+					add_manpower = -1000
+					subtract_from_variable = { treasury = 0.1 }
 				}
-				load_oob = "EU_EuroArmy_basic_2000"
+				delete_unit_template_and_units = {
+					division_template = "EuroArmy Brigade"
+				}
+				give_military_access = ROOT
+			}
+			load_oob = "EU_EuroArmy_basic_2000"
 			set_country_flag = control_euroarmy_force
 		}
 	}
@@ -2071,18 +2068,16 @@ EU_defense_category = {
 
 		complete_effect = {
 			set_global_flag = EDU
-			every_country = {
-				limit = {
-					has_idea = EU_member
-					has_idea = NATO_member
+			for_each_scope_loop = {
+				array = global.EU_member
+				if = {
+					limit = { has_idea = NATO_member }
+					remove_ideas = NATO_member
 				}
-				remove_ideas = NATO_member
 			}
 			create_faction_from_template = faction_template_edu
-			every_country = {
-				limit = {
-					has_idea = EU_member
-				}
+			for_each_scope_loop = {
+				array = global.EU_member
 				FROM = {
 					add_to_faction = PREV
 				}
