@@ -185,9 +185,9 @@ These can be used _anywhere_ that a normal modifier can be used such as `politic
 | energy_use                                 | Energy   | Modifies energy use as a flat amount                                                       | 10 = 10 more energy consumption |
 | energy_use_multiplier                      | Energy   | Modifies energy consumption as a percentage, modifies all sources of energy consumption    | N/A                             |
 | battery_park_construction_cost             | Energy   | Modifies the cost of building a battery park                                               | N/A                             |
-| leu_fuel_production_modifier               | Energy   | Modifies the amount of LEU fuel produced each week by enrichment facilities                | N/A                             |
-| heu_fuel_production_modifier               | Energy   | Modifies the amount of HEU fuel produced each week by enrichment facilities                | N/A                             |
 | state_renewable_energy_generation_modifier | Energy   | Modifies the amount of State Renewable Energy Generation                                   | N/A                             |
+| hydroelectric_power_generation_modifier    | Energy   | Modifies the amount of Hydroelectric Power Energy Generation                               | N/A                             |
+| geothermal_power_generation_modifier       | Energy   | Modifies the amount of Geothermal Power Energy Generation                                  | N/A                             |
 
 {% endcapture %}
 {{ md | markdownify }}
