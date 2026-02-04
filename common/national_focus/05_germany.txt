@@ -9998,7 +9998,7 @@ focus_tree = {
 			newline = yes
 			create_corps_commander = {
 				name = "Heinrich Fischer"
-				GFX = "GFX_Heinrich_Fischer"
+				gfx = "GFX_Heinrich_Fischer"
 				traits = { artillery_expert combined_arms_expert }
 				skill = 3
 				attack_skill = 3
@@ -12862,48 +12862,46 @@ focus_tree = {
 	}
 	#
 	focus = { #STRAY FROM REPUBLIC
-	id = GER_stray_from_the_republic
-	icon = attack_democracy2
-	search_filters = { FOCUS_FILTER_POLITICAL }
-	x = 42
-	y = 0
-	cost = 4.3
-	available = {
-		has_civil_war = no
-		has_completed_focus = GER_will_of_the_people
-	}
-	completion_reward = {
-		log = "[GetDateText]: [Root.GetName]: Focus GER_german_politics"
-		country_event = {
-			id = Germany.236
+		id = GER_stray_from_the_republic
+		icon = attack_democracy2
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		x = 42
+		y = 0
+		cost = 4.3
+		available = {
+			has_civil_war = no
+			has_completed_focus = GER_will_of_the_people
 		}
-		hidden_effect = {
-			every_country = {
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GER_german_politics"
+			country_event = Germany.236
+			hidden_effect = {
+				every_country = {
+					limit = {
+						is_in_europe = yes
+					}
+					country_event = {
+						id = Germany.237
+					}
+				}
+			}
+			if = {
 				limit = {
-					is_in_europe = yes
+					NOT = {
+						has_dynamic_modifier = { modifier = GER_generic_spending_laws }
+					}
 				}
-				country_event = {
-					id = Germany.237
-				}
+				add_dynamic_modifier = { modifier = GER_generic_spending_laws }
 			}
+			force_update_dynamic_modifier = yes
+			newline = yes
+			custom_effect_tooltip = GER_how_to_overthrow_TT
 		}
-		if = {
-			limit = {
-				NOT = {
-					has_dynamic_modifier = { modifier = GER_generic_spending_laws }
-				}
-			}
-			add_dynamic_modifier = { modifier = GER_generic_spending_laws }
-		}
-		force_update_dynamic_modifier = yes
-		newline = yes
-		custom_effect_tooltip = GER_how_to_overthrow_TT
-	}
 
-	ai_will_do = {
-		factor = 1
+		ai_will_do = {
+			factor = 1
+		}
 	}
-}
 	#
 	#SPD Tree
 	focus = { #Capitalize on the donations scandal
@@ -14057,17 +14055,30 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_european_ties"
-			set_temp_variable = { modify_eurosceptic = -0.03 }
-			set_temp_variable = { modify_eurosceptic_target = ROOT }
-			eurosceptic_change = yes
-			set_temp_variable = { percent_change = 1.2 }
-			set_temp_variable = { tag_index = GER }
-			every_country = {
-				limit = {
-					has_idea = EU_member
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				set_temp_variable = { modify_eurosceptic = -0.03 }
+				set_temp_variable = { modify_eurosceptic_target = ROOT }
+				eurosceptic_change = yes
+				newline = yes
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
 				}
-				set_temp_variable = { influence_target = THIS }
-				change_influence_percentage = yes
+				hidden_effect = {
+					set_temp_variable = { percent_change = 1.2 }
+					set_temp_variable = { tag_index = GER }
+					for_each_scope_loop = {
+						array = global.EU_member
+						set_temp_variable = { influence_target = THIS }
+						change_influence_percentage = yes
+					}
+				}
+			}
+			else = {
+				add_political_power = 150
+				add_stability = 0.02
 			}
 		}
 		ai_will_do = {
@@ -14738,7 +14749,7 @@ focus_tree = {
 		prerequisite = {
 			focus = GER_german_politics
 		}
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_green_are_in_power = yes }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_green_alliance"
 			set_temp_variable = { party_index = 17 }
@@ -14766,7 +14777,7 @@ focus_tree = {
 		prerequisite = {
 			focus = GER_green_alliance
 		}
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_green_are_in_power = yes }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_idea_sustainable_development"
 			add_ideas = GER_idea_sustainable_development
@@ -14786,7 +14797,7 @@ focus_tree = {
 		prerequisite = {
 			focus = GER_sustainable_development
 		}
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_green_are_in_power = yes }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_support_for_ev"
 			swap_ideas = {
@@ -14809,7 +14820,7 @@ focus_tree = {
 		prerequisite = {
 			focus = GER_sustainable_development
 		}
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_green_are_in_power = yes }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_halt_nuclear_expansion"
 			random_core_state = {
@@ -14844,7 +14855,7 @@ focus_tree = {
 		prerequisite = {
 			focus = GER_support_for_ev
 		}
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_green_are_in_power = yes }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_eu_green_deal"
 			swap_ideas = {
@@ -14870,7 +14881,7 @@ focus_tree = {
 		prerequisite = {
 			focus = GER_green_alliance
 		}
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_green_are_in_power = yes }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_progressive_taxation"
 			set_temp_variable = { corp_change = 5 }
@@ -14894,7 +14905,7 @@ focus_tree = {
 		prerequisite = {
 			focus = GER_green_alliance
 		}
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_green_are_in_power = yes }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_eastward_expansion_nato"
 			increase_intervention_law_effect = yes
@@ -14929,7 +14940,7 @@ focus_tree = {
 			focus = GER_eastward_expansion_nato
 		}
 		available = {
-			neutrality_neutral_libertarians_are_in_power = yes
+			neutrality_neutral_green_are_in_power = yes
 			country_exists = JAP
 			NOT = {
 				has_war_with = JAP
@@ -14971,7 +14982,7 @@ focus_tree = {
 			967 = {
 				is_owned_and_controlled_by = GER
 			}
-			neutrality_neutral_libertarians_are_in_power = yes
+			neutrality_neutral_green_are_in_power = yes
 			country_exists = CHI
 		}
 		bypass = {
@@ -15049,7 +15060,7 @@ focus_tree = {
 			focus = GER_a_hand_to_japan
 		}
 		available = {
-			neutrality_neutral_libertarians_are_in_power = yes
+			neutrality_neutral_green_are_in_power = yes
 			country_exists = SOV
 		}
 		bypass = {
@@ -15105,7 +15116,7 @@ focus_tree = {
 		prerequisite = {
 			focus = GER_progressive_taxation
 		}
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_green_are_in_power = yes }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_tighter_regulations"
 			add_ideas = GER_idea_greater_regulations
@@ -15125,7 +15136,7 @@ focus_tree = {
 		prerequisite = {
 			focus = GER_tighter_regulations
 		}
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_green_are_in_power = yes }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_rent_regulations"
 			swap_ideas = {
@@ -15148,7 +15159,7 @@ focus_tree = {
 		prerequisite = {
 			focus = GER_tighter_regulations
 		}
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_green_are_in_power = yes }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_a_better_minimum_wage"
 			set_temp_variable = { temp_opinion = 5 }
@@ -15176,7 +15187,7 @@ focus_tree = {
 		prerequisite = {
 			focus = GER_rent_regulations
 		}
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_green_are_in_power = yes }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_the_peoples_germany"
 			add_country_leader_trait = peoples_leader
@@ -15196,7 +15207,7 @@ focus_tree = {
 		prerequisite = {
 			focus = GER_the_peoples_germany
 		}
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_green_are_in_power = yes }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_equal_work_equal_pay"
 			swap_ideas = {
@@ -15222,7 +15233,7 @@ focus_tree = {
 		prerequisite = {
 			focus = GER_the_peoples_germany
 		}
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_green_are_in_power = yes }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_sanctuary_for_lgbt"
 			country_event = {
@@ -15244,7 +15255,7 @@ focus_tree = {
 		prerequisite = {
 			focus = GER_the_peoples_germany
 		}
-		available = { neutrality_neutral_libertarians_are_in_power = yes }
+		available = { neutrality_neutral_green_are_in_power = yes }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_partial_retirement_benefits"
 			custom_effect_tooltip = GER_change_public_budget
@@ -16870,15 +16881,18 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_campaign_against_nato"
-			every_country = {
-				limit = {
-					has_idea = NATO_member
-				}
-				decrease_intervention_law_effect = yes
+			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
 				add_popularity = {
 					ideology = nationalist
 					popularity = 0.05
 				}
+				add_war_support = -0.10
+				add_stability = -0.05
+			}
+			for_each_scope_loop = {
+				array = global.nato_members
+				add_popularity = { ideology = nationalist popularity = 0.05 }
 				add_war_support = -0.10
 				add_stability = -0.05
 			}
@@ -20470,12 +20484,9 @@ focus_tree = {
 		prerequisite = { focus = GER_german_irredentism }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GER_german_europe"
-			every_country = {
+			every_other_country = {
 				limit = {
 					is_in_europe = yes
-					NOT = {
-						original_tag = GER
-					}
 				}
 				set_temp_variable = { percent_change = -5 }
 				change_domestic_influence_percentage = yes

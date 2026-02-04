@@ -4862,6 +4862,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_nationalize_foreign_companies"
 			random_owned_state = {
+				limit = {
+					free_building_slots = {
+						size > 0
+						include_locked = no
+						building = offices
+					}
+				}
 				add_building_construction = {
 					type = offices
 					instant_build = yes
@@ -5148,13 +5155,27 @@ focus_tree = {
 		prerequisite = { focus = SIN_allow_foreign_media }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_greater_ties_with_europe"
-			set_temp_variable = { tag_index = SIN.id }
-			set_temp_variable = { percent_change = 1 }
-			every_country = {
-				limit = { has_idea = EU_member }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
-				add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				set_temp_variable = { tag_index = SIN.id }
+				set_temp_variable = { percent_change = 1 }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+					add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
+				}
+				hidden_effect = {
+					for_each_scope_loop = {
+						array = global.EU_member
+						set_temp_variable = { influence_target = THIS.id }
+						change_influence_percentage = yes
+						add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
+					}
+				}
+			}
+			else = {
+				add_political_power = 125
 			}
 		}
 
@@ -5656,13 +5677,11 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_prioritize_diplomacy"
 			set_temp_variable = { tag_index = SIN.id }
 			set_temp_variable = { percent_change = 1.5 }
-			every_country = {
+			every_other_country = {
 				limit = {
 					NOT = {
-						original_tag = SIN
 						has_war_with = SIN
 					}
-
 				}
 				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
@@ -7301,9 +7320,7 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_gi_invest_to_csto_nation"
 			every_country = {
 				limit = {
-					OR = {
-						has_idea = CSTO_member
-					}
+					has_idea = CSTO_member
 					NOT = { original_tag = SIN }
 				}
 				set_temp_variable = { receiver_nation = THIS.id }
@@ -7319,13 +7336,12 @@ focus_tree = {
 				}
 			}
 			set_temp_variable = { percent_change = 1 }
-			every_country = {
+			every_other_country = {
 				limit = {
 					OR = {
 						is_neighbor_of = SIN
 						has_idea = CSTO_Member
 					}
-					NOT = { original_tag = SIN }
 				}
 				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
