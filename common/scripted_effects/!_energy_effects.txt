@@ -173,6 +173,15 @@ calculate_energy_use = {
 
 	multiply_variable = { hydroelectric_energy_generation = temp_energy_gain_m }
 	multiply_variable = { geothermal_energy_generation = temp_energy_gain_m }
+
+	set_temp_variable = { hydroelectric_generation_multiplier_modifier = 1 }
+	multiply_temp_variable = { hydroelectric_generation_multiplier_modifier = modifier@hydroelectric_power_generation_modifier }
+	multiply_variable = { hydroelectric_energy_generation = hydroelectric_generation_multiplier_modifier }
+
+	set_temp_variable = { geothermal_generation_multiplier_modifier = 1 }
+	multiply_temp_variable = { geothermal_generation_multiplier_modifier = modifier@geothermal_power_generation_modifier }
+	multiply_variable = { hydroelectric_energy_generation = geothermal_generation_multiplier_modifier }
+
 	add_to_variable = { energy_sum = hydroelectric_energy_generation }
 	add_to_variable = { energy_sum = geothermal_energy_generation }
 
@@ -532,10 +541,14 @@ build_battery_park_effect = {
 	custom_effect_tooltip = build_battery_park_effect_TT
 	set_temp_variable = { battery_cost_multiplier = modifier@battery_park_construction_cost }
 	add_to_temp_variable = { battery_cost_multiplier = 1 }
-	set_temp_variable = { treasury_change = temp_change }
-	multiply_temp_variable = { treasury_change = -100 } #starts at 1000$/kwh in 2000, goes down to 100$/kwh with techs
-	multiply_temp_variable = { treasury_change = battery_cost_multiplier }
-	modify_treasury_effect = yes
+
+	if = {
+		limit = { NOT = { check_variable = { skip_payment = 1 } } }
+		set_temp_variable = { treasury_change = temp_change }
+		multiply_temp_variable = { treasury_change = -100 } #starts at 1000$/kwh in 2000, goes down to 100$/kwh with techs
+		multiply_temp_variable = { treasury_change = battery_cost_multiplier }
+		modify_treasury_effect = yes
+	}
 	hidden_effect = {
 		random_owned_controlled_state = {
 			add_to_variable = { number_of_battery_parks_state_var = temp_change }
