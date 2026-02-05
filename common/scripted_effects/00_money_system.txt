@@ -4786,145 +4786,144 @@ calculate_gdp_modifiers = {
 }
 
 calculate_ai_taxes_desire = {
-	set_temp_variable = { pop_tax_change = 0 }
-	set_temp_variable = { corp_tax_change = 0 }
-
-	# POPULATION TAX
-	if = {
-		limit = {
-			check_variable = { treasury_rate < 0 }
-			check_variable = { population_tax_rate < 40 }
-		}
-		set_temp_variable = { pop_tax_change = 1 }
-
-		if = { limit = { check_variable = { treasury_rate > -5 } }
-			set_temp_variable = { pop_tax_change = 0 }
-		}
-
+	if = { limit = { has_political_power > 200 }
+		# POPULATION TAX
 		if = {
 			limit = {
-				has_stability < 0.25
-				check_variable = { treasury_rate > -10 }
-			}
-			set_temp_variable = { pop_tax_change = 0 }
-		}
-
-		if = {
-			limit = {
-				check_variable = { pop_tax_change = 1 }
-				OR = {
-					original_tag = CHI
-					original_tag = RAJ
-					original_tag = DRC
-					original_tag = IND
-					original_tag = JAP
-					original_tag = NIG
-					original_tag = EGY
-					original_tag = BRA
-				}
-				check_variable = { treasury_rate < -2 }
+				check_variable = { treasury_rate < 0 }
+				check_variable = { population_tax_rate < 40 }
 			}
 			set_temp_variable = { pop_tax_change = 1 }
-		}
 
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Population Tax +[?pop_tax_change] (Current: [?population_tax_rate]%, Treasury: [?treasury_rate])"
+			if = { limit = { check_variable = { treasury_rate > -5 } }
+				set_temp_variable = { pop_tax_change = 0 }
+			}
+
+			if = {
+				limit = {
+					has_stability < 0.25
+					check_variable = { treasury_rate > -10 }
+				}
+				set_temp_variable = { pop_tax_change = 0 }
+			}
+
+			if = {
+				limit = {
+					check_variable = { pop_tax_change = 1 }
+					OR = {
+						original_tag = CHI
+						original_tag = RAJ
+						original_tag = DRC
+						original_tag = IND
+						original_tag = JAP
+						original_tag = NIG
+						original_tag = EGY
+						original_tag = BRA
+					}
+					check_variable = { treasury_rate < -2 }
+				}
+				set_temp_variable = { pop_tax_change = 1 }
+			}
+
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetName]: AI Population Tax +[?pop_tax_change] (Current: [?population_tax_rate]%, Treasury: [?treasury_rate])"
+			}
 		}
-	}
-	else_if = {
-		limit = {
-			check_variable = { treasury_rate > 0 }
-			check_variable = { population_tax_rate > 15 }
-			OR = {
-				has_stability < 0.35
-				AND = {
-					check_variable = { debt_ratio < 0.25 }
-					check_variable = { interest_rate < 5 }
+		else_if = {
+			limit = {
+				check_variable = { treasury_rate > 0 }
+				check_variable = { population_tax_rate > 15 }
+				OR = {
+					has_stability < 0.35
+					AND = {
+						check_variable = { debt_ratio < 0.25 }
+						check_variable = { interest_rate < 5 }
+					}
 				}
 			}
-		}
-		set_temp_variable = { pop_tax_change = -1 }
+			set_temp_variable = { pop_tax_change = -1 }
 
-		if = { limit = { check_variable = { treasury_rate < 3 } }
-			set_temp_variable = { pop_tax_change = 0 }
-		}
+			if = { limit = { check_variable = { treasury_rate < 3 } }
+				set_temp_variable = { pop_tax_change = 0 }
+			}
 
-		if = { limit = { check_variable = { corporate_tax_rate > 10 } }
-			set_temp_variable = { pop_tax_change = 0 }
-		}
+			if = { limit = { check_variable = { corporate_tax_rate > 10 } }
+				set_temp_variable = { pop_tax_change = 0 }
+			}
 
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Population Tax [?pop_tax_change] (Current: [?population_tax_rate]%, Treasury: [?treasury_rate])"
-		}
-	}
-
-	# CORPORATE TAX
-	if = {
-		limit = {
-			check_variable = { treasury_rate < 0 }
-			check_variable = { population_tax_rate > 39 }
-			check_variable = { corporate_tax_rate < 50 }
-		}
-		set_temp_variable = { corp_tax_change = 1 }
-
-		if = { limit = { check_variable = { treasury_rate > -5 } }
-			set_temp_variable = { corp_tax_change = 0 }
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetName]: AI Population Tax [?pop_tax_change] (Current: [?population_tax_rate]%, Treasury: [?treasury_rate])"
+			}
 		}
 
+		# CORPORATE TAX
 		if = {
 			limit = {
-				check_variable = { office_park_total > 30 }
-				check_variable = { treasury_rate < -3 }
+				check_variable = { treasury_rate < 0 }
+				check_variable = { population_tax_rate > 39 }
+				check_variable = { corporate_tax_rate < 50 }
 			}
 			set_temp_variable = { corp_tax_change = 1 }
-		}
 
-		if = {
+			if = { limit = { check_variable = { treasury_rate > -5 } }
+				set_temp_variable = { corp_tax_change = 0 }
+			}
+
+			if = {
+				limit = {
+					check_variable = { office_park_total > 30 }
+					check_variable = { treasury_rate < -3 }
+				}
+				set_temp_variable = { corp_tax_change = 1 }
+			}
+
+			if = {
+				limit = {
+					num_of_factories > 20
+					check_variable = { treasury_rate < -3 }
+				}
+				set_temp_variable = { corp_tax_change = 1 }
+			}
+
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetName]: AI Corporate Tax +[?corp_tax_change] (Current: [?corporate_tax_rate]%, Treasury: [?treasury_rate])"
+			}
+		}
+		else_if = {
 			limit = {
-				num_of_factories > 20
-				check_variable = { treasury_rate < -3 }
-			}
-			set_temp_variable = { corp_tax_change = 1 }
-		}
-
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Corporate Tax +[?corp_tax_change] (Current: [?corporate_tax_rate]%, Treasury: [?treasury_rate])"
-		}
-	}
-	else_if = {
-		limit = {
-			check_variable = { treasury_rate > 0 }
-			check_variable = { corporate_tax_rate > 10 }
-			OR = {
-				num_of_available_civilian_factories < 10
-				AND = {
-					check_variable = { debt_ratio < 0.25 }
-					check_variable = { interest_rate < 5 }
+				check_variable = { treasury_rate > 0 }
+				check_variable = { corporate_tax_rate > 10 }
+				OR = {
+					num_of_available_civilian_factories < 10
+					AND = {
+						check_variable = { debt_ratio < 0.25 }
+						check_variable = { interest_rate < 5 }
+					}
 				}
 			}
-		}
-		set_temp_variable = { corp_tax_change = -1 }
-
-		if = { limit = { check_variable = { treasury_rate < 5 } }
-			set_temp_variable = { corp_tax_change = 0 }
-		}
-
-		if = { limit = { num_of_available_civilian_factories < 15 }
 			set_temp_variable = { corp_tax_change = -1 }
+
+			if = { limit = { check_variable = { treasury_rate < 5 } }
+				set_temp_variable = { corp_tax_change = 0 }
+			}
+
+			if = { limit = { num_of_available_civilian_factories < 15 }
+				set_temp_variable = { corp_tax_change = -1 }
+			}
+
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetName]: AI Corporate Tax [?corp_tax_change] (Current: [?corporate_tax_rate]%, Treasury: [?treasury_rate])"
+			}
 		}
 
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Corporate Tax [?corp_tax_change] (Current: [?corporate_tax_rate]%, Treasury: [?treasury_rate])"
+		if = { limit = { NOT = { check_variable = { pop_tax_change = 0 } } }
+			add_to_variable = { population_tax_rate = pop_tax_change }
+			add_political_power = -15
 		}
-	}
-
-	if = { limit = { NOT = { check_variable = { pop_tax_change = 0 } } has_political_power > 200 }
-		add_to_variable = { population_tax_rate = pop_tax_change }
-		add_political_power = -15
-	}
-	if = { limit = { NOT = { check_variable = { corp_tax_change = 0 } } has_political_power > 200 }
-		add_to_variable = { corporate_tax_rate = corp_tax_change }
-		add_political_power = -15
+		if = { limit = { NOT = { check_variable = { corp_tax_change = 0 } } }
+			add_to_variable = { corporate_tax_rate = corp_tax_change }
+			add_political_power = -15
+		}
 	}
 }
 
