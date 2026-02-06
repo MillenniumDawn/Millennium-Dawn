@@ -1391,14 +1391,14 @@ on_actions = {
 								if = { limit = { check_variable = { i < nations_influenced } }
 									var:auto_influence_array^i = {
 										ROOT = {
-											if = { limit = { has_global_flag = GAME_RULE_spread_influence_14_days }
+											if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_14_days } }
 												set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 }
 											}
-											if = { limit = { has_global_flag = GAME_RULE_spread_influence_60_days }
-												set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
-											}
-											if = { limit = { has_global_flag = GAME_RULE_spread_influence_30_days }
+											else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_30_days } }
 												set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
+											}
+											else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_60_days } }
+												set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
 											}
 										}
 									}
@@ -1549,7 +1549,11 @@ on_actions = {
 					}
 
 					# Monthly Foreign Influence Tick
-					if = { limit = { difficulty > 1 }
+					if = {
+						limit = {
+							difficulty > 1
+							has_game_rule = { rule = rule_monthly_domestic_independence_tick option = yes }
+						}
 						set_temp_variable = { percent_change = global.rule_monthly_domestic_independence_gain_amount }
 						add_to_temp_variable = { percent_change = modifier@foreign_influence_monthly_domestic_independence_gain_modifier }
 						set_temp_variable = { temp_percentage_modifier = 1 }
@@ -1562,7 +1566,7 @@ on_actions = {
 				}
 
 				if = {
-					limit = { NOT = { has_global_flag = GAME_RULE_disable_muslim_brotherhood } }
+					limit = { has_game_rule = { rule = rule_disable_muslim_brotherhood_civil_war option = no } }
 					for_each_scope_loop = {
 						array = global.possible_muslim_brotherhood_nation
 						if = {

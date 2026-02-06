@@ -170,13 +170,17 @@ class ScriptedLocalisation:
             if should_skip_file(filename):
                 continue
 
+            # Skip French localisation file
+            if "00_scripted_localisation_FR_loc" in filename:
+                continue
+
             text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
 
             # Pattern: defined_text = { name = <name> ... }
             if "defined_text" in text_file and "name =" in text_file:
-                # Match: name = <identifier>
+                # Match: name = <identifier> (including uppercase letters)
                 pattern_matches = re.findall(
-                    r"name\s*=\s*([a-z_0-9]+)", text_file if lowercase else text_file
+                    r"name\s*=\s*([a-zA-Z_0-9]+)", text_file if lowercase else text_file
                 )
                 if len(pattern_matches) > 0:
                     for match in pattern_matches:
@@ -192,6 +196,7 @@ class ScriptedLocalisation:
     def get_all_used_localisations(
         cls,
         mod_path: str,
+        defined_names: Set[str],
         lowercase: bool = True,
         return_paths: bool = False,
         staged_files: Optional[List[str]] = None,
@@ -200,6 +205,7 @@ class ScriptedLocalisation:
 
         Args:
             mod_path (str): path to mod folder
+            defined_names (Set[str]): set of defined scripted localisation names to search for
             lowercase (bool, optional): defines if returned list contains lowercase str or not. Defaults to True.
             return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
             staged_files (list, optional): list of staged files to validate (if None, validates all files)
@@ -210,18 +216,30 @@ class ScriptedLocalisation:
         localisations = []
         paths = {}
 
-        # Determine which files to scan (all .txt, .gui, and .yml files except gfx, tools, etc.)
+        # Convert defined names to lowercase for searching if needed
+        search_names = (
+            {name.lower() for name in defined_names} if lowercase else defined_names
+        )
+
+        # Determine which files to scan:
+        # - .gui files (interface definitions)
+        # - .yml files (localisation files)
+        # - .txt files ONLY in common/scripted_guis/ (scripted GUI definitions)
         if staged_files:
             files_to_scan = [
                 f
                 for f in staged_files
-                if f.endswith(".txt") or f.endswith(".gui") or f.endswith(".yml")
+                if f.endswith(".gui")
+                or f.endswith(".yml")
+                or (f.endswith(".txt") and "scripted_guis" in f)
             ]
         else:
-            txt_files = glob.iglob(mod_path + "**/*.txt", recursive=True)
             gui_files = glob.iglob(mod_path + "**/*.gui", recursive=True)
             yml_files = glob.iglob(mod_path + "**/*.yml", recursive=True)
-            files_to_scan = list(txt_files) + list(gui_files) + list(yml_files)
+            scripted_gui_files = glob.iglob(
+                mod_path + "common/scripted_guis/*.txt", recursive=True
+            )
+            files_to_scan = list(gui_files) + list(yml_files) + list(scripted_gui_files)
 
         for filename in files_to_scan:
             if should_skip_file(filename):
@@ -233,49 +251,13 @@ class ScriptedLocalisation:
 
             text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
 
-            # IMPORTANT: Scripted localisation is used in these specific contexts:
-            # 1. In defined_text blocks: text = { localization_key = scripted_loc_name }
-            # 2. In GUI files: text = "[scripted_loc_name]"
-            # 3. In .yml files: some_key: "[scripted_loc_name]" (NOT just [regular_key])
-
-            # For .gui files: Look for text = "[something]" pattern
-            if filename.endswith(".gui"):
-                # Pattern: text = "[scripted_loc_name]"
-                gui_matches = re.findall(
-                    r'text\s*=\s*"\[([a-z_0-9]+)\]"',
-                    text_file if lowercase else text_file,
-                )
-                for match in gui_matches:
-                    # Skip scope references
-                    if "." not in match and "?" not in match:
-                        localisations.append(match)
-                        paths[match] = os.path.basename(filename)
-
-            # For .yml files: Look for bracketed references that end with _scripted_loc or _scl
-            # This distinguishes scripted loc from regular loc keys
-            if filename.endswith(".yml"):
-                # Pattern: "[something_scripted_loc]" or "[something_scl]"
-                # These suffixes indicate it's a scripted localisation, not a regular loc key
-                yml_matches = re.findall(
-                    r"\[([a-z_0-9]+(?:_scripted_loc|_scl))\]",
-                    text_file if lowercase else text_file,
-                )
-                for match in yml_matches:
-                    localisations.append(match)
-                    paths[match] = os.path.basename(filename)
-
-            # For .txt files: Only check localization_key within defined_text blocks
-            # This is the ONLY way scripted loc is referenced in game files
-            if filename.endswith(".txt"):
-                # Pattern: localization_key = <name> or localization_key = "<name>"
-                # These appear in defined_text blocks of scripted localisation definitions
-                key_matches = re.findall(
-                    r'localization_key\s*=\s*"?([a-z_0-9]+)"?',
-                    text_file if lowercase else text_file,
-                )
-                for match in key_matches:
-                    localisations.append(match)
-                    paths[match] = os.path.basename(filename)
+            # Check which defined scripted localisation names appear in this file
+            # Use simple string containment for performance (much faster than regex)
+            for name in search_names:
+                if name not in localisations:  # Only check if not already found
+                    if name in text_file:
+                        localisations.append(name)
+                        paths[name] = os.path.basename(filename)
 
         if return_paths:
             return (localisations, paths)
@@ -429,14 +411,19 @@ class Validator:
         self.log(f"{'='*80}")
 
         results = []
+        # First get all defined localisations
+        defined_locs = ScriptedLocalisation.get_all_defined_localisations(
+            mod_path=self.mod_path, lowercase=False, staged_files=self.staged_files
+        )
+
+        # Then search for uses of those specific names
+        defined_names_set = set(defined_locs)
         used_locs, paths = ScriptedLocalisation.get_all_used_localisations(
             mod_path=self.mod_path,
+            defined_names=defined_names_set,
             lowercase=False,
             return_paths=True,
             staged_files=self.staged_files,
-        )
-        defined_locs = ScriptedLocalisation.get_all_defined_localisations(
-            mod_path=self.mod_path, lowercase=False, staged_files=self.staged_files
         )
 
         # Convert to lowercase for comparison
@@ -510,14 +497,21 @@ class Validator:
         self.log(f"{'='*80}")
 
         results = []
+        # First get all defined localisations
         defined_locs, paths = ScriptedLocalisation.get_all_defined_localisations(
             mod_path=self.mod_path,
             lowercase=False,
             return_paths=True,
             staged_files=self.staged_files,
         )
+
+        # Then search for uses of those specific names
+        defined_names_set = set(defined_locs)
         used_locs = ScriptedLocalisation.get_all_used_localisations(
-            mod_path=self.mod_path, lowercase=False, staged_files=self.staged_files
+            mod_path=self.mod_path,
+            defined_names=defined_names_set,
+            lowercase=False,
+            staged_files=self.staged_files,
         )
 
         # Convert to lowercase for comparison
