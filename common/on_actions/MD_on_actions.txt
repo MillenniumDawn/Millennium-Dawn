@@ -541,123 +541,34 @@ on_actions = {
 					state_init_setup = yes
 
 					every_country = {
-						if = {
-							limit = {
-								is_ai = yes
-								OR = {
-									has_idea = regional_power
-									has_idea = large_power
-									has_idea = great_power
-									has_idea = superpower
-								}
-							}
-
-							yearly_investment_targets_routine = yes
-						}
-
-						if = {
-							limit = {
-								OR = {
-									has_idea = low_level_of_aids
-									has_idea = rising_level_of_aids
-									has_idea = high_level_of_aids
-									has_idea = very_high_level_of_aids
-									has_idea = critical_level_of_aids
-								}
-							}
-							if = { limit = { has_idea = health_01 }
-								random_list = {
-									50 = {
-										country_event = { id = AIDS_events.1 }
-									}
-									50 = {
-										country_event = { id = AIDS_events.2 }
-									}
-									0 = {
-										country_event = { id = AIDS_events.3 }
-									}
-								}
-							}
-							else_if = { limit = { has_idea = health_02 }
-								random_list = {
-									40 = {
-										country_event = { id = AIDS_events.1 }
-									}
-									50 = {
-										country_event = { id = AIDS_events.2 }
-									}
-									10 = {
-										country_event = { id = AIDS_events.3 }
-									}
-								}
-							}
-							else_if = { limit = { has_idea = health_03 }
-								random_list = {
-									30 = {
-										country_event = { id = AIDS_events.1 }
-									}
-									50 = {
-										country_event = { id = AIDS_events.2 }
-									}
-									20 = {
-										country_event = { id = AIDS_events.3 }
-									}
-								}
-							}
-							else_if = { limit = { has_idea = health_04 }
-								random_list = {
-									20 = {
-										country_event = { id = AIDS_events.1 }
-									}
-									50 = {
-										country_event = { id = AIDS_events.2 }
-									}
-									30 = {
-										country_event = { id = AIDS_events.3 }
-									}
-								}
-							}
-							else_if = { limit = { has_idea = health_05 }
-								random_list = {
-									10 = {
-										country_event = { id = AIDS_events.1 }
-									}
-									50 = {
-										country_event = { id = AIDS_events.2 }
-									}
-									40 = {
-										country_event = { id = AIDS_events.3 }
-									}
-								}
-							}
-							else_if = { limit = { has_idea = health_06 }
-								random_list = {
-									0 = {
-										country_event = { id = AIDS_events.1 }
-									}
-									50 = {
-										country_event = { id = AIDS_events.2 }
-									}
-									50 = {
-										country_event = { id = AIDS_events.3 }
-									}
-								}
+						limit = {
+							is_ai = yes
+							OR = {
+								has_idea = regional_power
+								has_idea = large_power
+								has_idea = great_power
+								has_idea = superpower
 							}
 						}
-						if = { limit = { NOT = { has_dlc = "La Resistance" } }
-							random_list = {
-								90 = {
+						yearly_investment_targets_routine = yes
+					}
 
-								}
-								10 = {
-									modifier = {
-										factor = 1.30
-										has_idea = robust_cyber_security_infrastructure
-									}
-									country_event = cyber.1
-								}
-							}
+					if = {
+						limit = { check_variable = { global.OAU_member^num > 0 } }
+						for_each_scope_loop = {
+							array = global.OAU_member
+							HIV_aids_monthly_mechanic = yes
 						}
+					}
+					else_if = {
+						limit = { check_variable = { global.AU_member^num > 0 } }
+						for_each_scope_loop = {
+							array = global.AU_member
+							HIV_aids_monthly_mechanic = yes
+						}
+					}
+
+					every_country = {
 						# Reduce the Printing Money Var
 						if = { limit = { check_variable = { printing_money_var > 0 } }
 							subtract_from_variable = { printing_money_var = 1 }
@@ -1450,6 +1361,11 @@ on_actions = {
 								}
 							}
 						}
+
+						if = { limit = { NOT = { has_country_flag = MD_protest_cooldown } }
+							calculate_unrest_growth = yes
+							random_protest_events = yes
+						}
 					}
 					else = {
 						ai_weapon_dump = yes
@@ -1536,17 +1452,7 @@ on_actions = {
 						set_variable = { months_at_open_borders = 1 }
 					}
 
-
 					calculate_expected_spending = yes
-
-					if = {
-						limit = {
-							is_ai = no
-							NOT = { has_country_flag = MD_protest_cooldown }
-						}
-						calculate_unrest_growth = yes
-						random_protest_events = yes
-					}
 
 					# Monthly Foreign Influence Tick
 					if = {
@@ -1771,6 +1677,21 @@ on_actions = {
 				set_global_flag = { flag = on_monthly_done value = 1 days = 27 }
 				if = { limit = { is_debug = yes }
 					log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
+				}
+			}
+
+			if = { limit = { NOT = { has_dlc = "La Resistance" } }
+				if = { limit = { NOT = { has_idea = robust_cyber_security_infrastructure } }
+					random = {
+						chance = 10
+						country_event = cyber.1
+					}
+				}
+				else = {
+					random = {
+						chance = 15
+						country_event = cyber.1
+					}
 				}
 			}
 		}
