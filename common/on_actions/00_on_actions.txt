@@ -1255,22 +1255,8 @@ on_actions = {
 						}
 
 						#Recognition
-						if = {
-							limit = {
-								NOT = {
-									has_government = fascism
-									FROM = { has_government = fascism }
-								}
-							}
-							add_ideas = { rival_government }
-							add_to_array = { global.rival_governments = THIS }
-							set_country_flag = rival_government_@FROM
-							FROM = {
-								add_to_array = { global.rival_governments = THIS }
-								set_country_flag = rival_government_@ROOT
-								add_to_variable = { var = Granted_Recognition value = 193 }
-							}
-						}
+						add_ideas = { Lacks_International_Recognition }
+
 						#Jihadist uprising
 						if = {
 							limit = {
@@ -2769,22 +2755,6 @@ on_actions = {
 						elections_allowed = no
 					}
 				}
-				# Recognition
-				if = { limit = { has_idea = rival_government }
-					remove_ideas = rival_government
-				}
-				if = { limit = { has_country_flag = rival_government_@FROM }
-					clr_country_flag = rival_government_@FROM
-				}
-				if = { limit = { is_in_array = { global.rival_governments = THIS.id } }
-					remove_from_array = { global.rival_governments = THIS.id }
-				}
-				# Counter Terror
-				if = {
-					limit = { is_in_array = { global.ct_states = THIS.id } }
-					subtract_from_variable = { threat_level = 30 }
-					clamp_threat = yes
-				}
 			}
 
 			if = {
@@ -2965,6 +2935,8 @@ on_actions = {
 				recalculate_law_desires = yes
 				resource_storage_system_setup = yes
 				counter_terror_nation_startup = yes #sets up the basic CT stuff
+				#Make sure all nations are setup for international systems
+				un_recog_setup_check = yes
 
 				set_static_state_modifier_on_game_start = yes
 
@@ -3467,9 +3439,11 @@ on_actions = {
 				limit = { FROM = { tag = CHI } }
 				add_to_variable = { chinese_aggression = 5 }
 			}
-			if = { limit = { has_idea = Lacks_International_Recognition }
-				swap_ideas = { remove_idea = Lacks_International_Recognition add_idea = Non_State_Actor }
-				remove_from_array = { global.Unrecognised_States = THIS }
+			if = {
+				limit = {
+					FROM = { has_idea = Lacks_International_Recognition }
+				}
+				FROM = { remove_ideas = Lacks_International_Recognition }
 			}
 			if = {
 				limit = {
@@ -3482,14 +3456,6 @@ on_actions = {
 					set_cosmetic_tag = PMR_ROM_democratic_subject
 					add_state_claim = 695
 				}
-			}
-			# Counter Terror
-			if = {
-				limit = {
-					is_in_array = { global.ct_states = ROOT }
-					FROM = { NOT = { has_idea = sunni } }
-				}
-				ROOT = { add_to_variable = { threat_level = 30 } clamp_threat = yes }
 			}
 			if = {
 				limit = {
