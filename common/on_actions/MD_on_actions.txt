@@ -243,14 +243,12 @@ on_actions = {
 								clr_country_flag = focus_[EUXXX]_EP_agenda
 								clr_country_flag = focus_on_EP_agenda
 								clr_country_flag = [PG_X]_influence
-								clr_country_flag = influence_PG
 								clr_global_flag_PG_X_support = yes
 								reset_MEP_support_party_x = yes
 								set_variable = { global.active_MEP_Support = 0 }
 								set_variable = { global.pass_vote_mission_ender = 0 }
 								set_variable = { global.current_active_agenda_disp = 0 }
 								clr_global_flag = focus_[index]_QMV_voted
-								clr_global_flag = EU_qualified_majority_voting
 								set_variable = { global.current_active_vote_disp = 0 }
 								set_variable = { global.EUXXX_council_agenda = global.current_active_vote_disp }
 								set_variable = { global.EU_active_vote_yes = 0 }
@@ -1560,71 +1558,74 @@ on_actions = {
 						change_domestic_influence_percentage = yes
 					}
 
-					# Muslim Brotherhood Stuff
-					if = {
-						limit = {
-							NOT = { has_global_flag = GAME_RULE_disable_muslim_brotherhood }
-							Is_Possible_Muslim_Brotherhood = yes
-							NOT = {
-								has_government = neutrality
-								Is_Muslim_Brotherhood = yes
-								has_country_flag = BROTHER_civil_war_has_started
-							}
-							has_elections = no
-						}
+					productivity_growth_effect = yes
+				}
+
+				if = {
+					limit = { NOT = { has_global_flag = GAME_RULE_disable_muslim_brotherhood } }
+					for_each_scope_loop = {
+						array = global.possible_muslim_brotherhood_nation
 						if = {
 							limit = {
-								has_idea = muslim_brotherhood_crackdown
-								neutrality > 0.2
+								NOT = {
+									has_government = neutrality
+									Is_Muslim_Brotherhood = yes
+									has_country_flag = BROTHER_civil_war_has_started
+								}
+								has_elections = no
+							}
+							if = {
+								limit = {
+									has_idea = muslim_brotherhood_crackdown
+									neutrality > 0.2
+								}
+
+								random_list = {
+									25 = {
+										# Brutality of Crackdown Backfires
+										country_event = { id = brotherhood.7 }
+									}
+									25 = {
+										# Muslim Brotherhood Terrorists Raid Prison
+										country_event = { id = brotherhood.8 }
+									}
+									25 = {
+										# Muslim Brotherhood Terror-Cell Dismantled
+										country_event = { id = brotherhood.9 }
+									}
+									25 = {
+
+									}
+								}
 							}
 
-							random_list = {
-								25 = {
-									# Brutality of Crackdown Backfires
-									country_event = { id = brotherhood.7 }
+							# Muslim Brotherhood Protestors Demand Elections
+							if = {
+								limit = {
+									NOT = { has_country_flag = recently_had_muslim_brotherhood_demanded_election }
+									NOT = { has_idea = muslim_brotherhood_crackdown }
+									neutrality > 0.35
 								}
-								25 = {
-									# Muslim Brotherhood Terrorists Raid Prison
-									country_event = { id = brotherhood.8 }
+								random = {
+									chance = 40
+									country_event = { id = brotherhood.6 }
 								}
-								25 = {
-									# Muslim Brotherhood Terror-Cell Dismantled
-									country_event = { id = brotherhood.9 }
-								}
-								25 = {
+							}
 
+							# Muslim Brotherhood Insurgency Turns Civil War
+							if = {
+								limit = {
+									has_idea = muslim_brotherhood_crackdown
+									NOT = { has_war = yes }
+									neutrality > 0.5
 								}
-							}
-						}
-
-						# Muslim Brotherhood Protestors Demand Elections
-						if = {
-							limit = {
-								NOT = { has_country_flag = recently_had_muslim_brotherhood_demanded_election }
-								NOT = { has_idea = muslim_brotherhood_crackdown }
-								neutrality > 0.35
-							}
-							random = {
-								chance = 40
-								country_event = { id = brotherhood.6 }
-							}
-						}
-
-						# Muslim Brotherhood Insurgency Turns Civil War
-						if = {
-							limit = {
-								has_idea = muslim_brotherhood_crackdown
-								NOT = { has_war = yes }
-								neutrality > 0.5
-							}
-							random = {
-								chance = 35
-								country_event = { id = brotherhood.10 }
+								random = {
+									chance = 35
+									country_event = { id = brotherhood.10 }
+								}
 							}
 						}
 					}
-
-					productivity_growth_effect = yes
 				}
 
 				# Arab Spring Monthly Tick
