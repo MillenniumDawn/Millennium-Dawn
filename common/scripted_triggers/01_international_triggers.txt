@@ -55,6 +55,36 @@ has_support_of_p5 = {
 	}
 }
 
+is_on_un_sec_council = {
+	OR = {
+		is_in_array = { global.p5_sc_members = THIS }
+		is_in_array = { global.security_council_members = THIS }
+	}
+}
+
+EU_voting_decision_result_trigger = {
+	check_variable = { global.EU_pop_ratio_yes > 0.65 }
+	set_temp_variable = { total_eu_members = global.EU_active_vote_yes }
+	add_to_temp_variable = { total_eu_members = global.EU_active_vote_no }
+	set_temp_variable = { vote_numbers = global.EU_active_vote_yes }
+	divide_temp_variable = { vote_numbers = total_eu_members }
+	check_variable = { vote_numbers > 0.55 }
+}
+
+un_sc_voting_result_trigger = {
+	check_variable = { global.security_council_vote_yes > 8 }
+	NOT = { has_global_flag = security_council_veto }
+}
+
+un_ga_voting_result_trigger = {
+	set_temp_variable = { cur_assembly_target = global.UN_general_assembly }
+	multiply_temp_variable = { cur_assembly_target = 0.66 }
+	round_temp_variable = cur_assembly_target
+	subtract_from_temp_variable = cur_assembly_target
+
+	check_variable = { global.general_assembly_vote_yes^num > cur_assembly_target }
+}
+
 is_full_state = {
 	custom_trigger_tooltip = {
 		tooltip = is_un_is_recognized_nation
