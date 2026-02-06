@@ -260,7 +260,17 @@ NATO_decisions = {
 		}
 
 		complete_effect = {
-			NATO_show_non_ratified_countries = yes
+			every_country = {
+				limit = {
+					has_idea = NATO_member
+					NOT = { has_country_flag = NATO_Ratified_@ROOT }
+				}
+				display_individual_scopes = yes
+
+				set_temp_variable = { selected_tag = THIS.id }
+				TAG_get_name_with_flag = yes
+				newline = yes
+			}
 		}
 	}
 
@@ -295,6 +305,12 @@ NATO_decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision become_NATO_aspirant"
+			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
+				add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
+				reverse_add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
+				country_event = NATO.7
+			}
 			for_each_scope_loop = {
 				array = global.nato_members
 				add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
@@ -585,6 +601,11 @@ NATO_decisions = {
 					}
 				}
 			}
+			modifier = {
+				factor = 0
+				original_tag = FRA
+				has_completed_focus = FRA_renounce_nato
+			}
 		}
 	}
 
@@ -699,10 +720,10 @@ NATO_decisions = {
 			}
 		}
 
+		cost = 20
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ratify_country_accession target: [From.GetName]"
-			add_political_power = -20
 			hidden_effect = {
 				set_country_flag = NATO_Ratified_@FROM
 			}
@@ -803,10 +824,8 @@ NATO_decisions = {
 				# Check if all members in nato has ratified the accession.
 				all_of_scopes = {
 					array = global.nato_members
-					if = {
-						limit = { THIS = { exists = yes } }
-						has_country_flag = NATO_Ratified_@ROOT
-					}
+					exists = yes
+					has_country_flag = NATO_Ratified_@ROOT
 				}
 			}
 		}
@@ -820,9 +839,7 @@ NATO_decisions = {
 			# Remove the candidate stuff.
 			hidden_effect = {
 				clr_country_flag = NATO_Accession_Voting
-				remove_from_array = {
-					global.NATO_Accession_Candidates = THIS
-				}
+				remove_from_array = { global.NATO_Accession_Candidates = THIS }
 				clr_country_flag = NATO_Aspirant
 
 				for_each_scope_loop = {
@@ -910,6 +927,11 @@ NATO_decisions = {
 					SOV = { has_added_tension_amount > 5 }
 					SOV = { has_war_with = UKR }
 				}
+			}
+			modifier = {
+				factor = 0
+				original_tag = FRA
+				has_completed_focus = FRA_renounce_nato
 			}
 		}
 	}
@@ -1958,16 +1980,23 @@ NATO_CSTO_agreement = {
 			log = "[GetDateText]: [Root.GetName]: Decision cancel effect NATO_CSTO_breach_mission"
 			if = {
 				limit = { has_idea = NATO_member }
-
-				every_country = {
-					limit = { has_idea = NATO_member }
+				custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
+				}
+				for_each_scope_loop = {
+					array = global.nato_members
 
 					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
 				}
 			}
 			else = {
-				every_country = {
-					limit = { has_idea = CSTO_member }
+				custom_effect_tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
+				}
+				for_each_scope_loop = {
+					array = global.CSTO_member
 
 					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
 				}

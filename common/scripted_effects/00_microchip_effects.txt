@@ -104,10 +104,7 @@ microchip_update = {
 		#Starting produced needs to be set manually, else math has a seizure. Math will never be perfect, because it ignores all the stacked modifiers
 		#But I just don't care anymore, because I just want this to work, damnit
 		set_temp_variable = { country_microchip_produced = microchip_plant_total }
-		multiply_temp_variable = { country_microchip_produced = 18 }
-
-		set_temp_variable = { prod_reducer = var_GNSS_civ_local_resources_factor }
-		add_to_temp_variable = { prod_reducer = country_excavation_production_var }
+		multiply_temp_variable = { country_microchip_produced = 24 }
 
 		set_temp_variable = { country_microchip_reducer = 0 }
 
@@ -150,14 +147,42 @@ microchip_update = {
 			set_temp_variable = { country_microchip_reducer_max = country_microchip_produced }
 			multiply_temp_variable = { country_microchip_reducer_max = 0.95 }
 			round_temp_variable = country_microchip_reducer_max
+		}else = {
+			#There should be no reduction here, because we have a surplus of all inputs
+			set_variable = { country_microchip_production_var = 0 }
+		}
+
+		#If running a power deficit, reduce the amount of chips made for power loss
+		if = {
+			limit = {
+				check_variable = { energy_difference_variable < 0 }
+			}
+			set_temp_variable = { starting_chip_amount = country_microchip_produced }
+			subtract_from_temp_variable = { starting_chip_amount = country_microchip_production_var }
+			multiply_temp_variable = { starting_chip_amount = unfulfilled_energy_demand_dynmod_var }
+			add_to_variable = { country_microchip_production_var = starting_chip_amount }
+			round_variable = country_microchip_production_var
+		}
+
+		clamp_variable = {
+			var = country_microchip_production_var
+			min = 0
+			max = country_microchip_reducer_max
+		}
+
+		if = {
+			limit = { original_tag = TAI }
+			if = {
+				limit = { check_variable = { country_microchip_production_var > 0 } }
+			}
+
+			subtract_from_variable = { country_microchip_production_var = tai_chip_resource_use_improvements }
+
 			clamp_variable = {
 				var = country_microchip_production_var
 				min = 0
 				max = country_microchip_reducer_max
 			}
-		}else = {
-			#There should be no reduction here, because we have a surplus of all inputs
-			set_variable = { country_microchip_production_var = 0 }
 		}
 	}
 }
@@ -246,9 +271,8 @@ civilian_microchip_consumption = {
 	#IE, high pop but low GDP/C should result in a lower consumption amount than a low pop, high GDP/C nation
 	#Since higher GDP/C = higher developed = higher population technology demand
 	set_temp_variable = { base_chip_consumption = population_total }
-	divide_temp_variable = { base_chip_consumption = 1000 }
 	multiply_temp_variable = { base_chip_consumption = gdp_per_capita }
-	divide_temp_variable = { base_chip_consumption = 4 }
+	multiply_temp_variable = { base_chip_consumption = 0.00025 }
 
 	set_temp_variable = { chip_mult_amount = base_chip_consumption }
 	multiply_temp_variable = { chip_mult_amount = modifier@civilian_chip_consumption_modifier }
@@ -256,7 +280,7 @@ civilian_microchip_consumption = {
 
 	set_temp_variable = { office_base_amount = office_park_total }
 	multiply_temp_variable = { office_base_amount = offices_manpower_fulfillment }
-	divide_temp_variable = { office_base_amount = 4 }
+	multiply_temp_variable = { office_base_amount = 0.25 }
 	set_temp_variable = { office_chip_mult = office_base_amount }
 	multiply_temp_variable = { office_chip_mult = modifier@industry_chip_consumption_modifier }
 
@@ -307,7 +331,7 @@ civilian_microchip_consumption = {
 		set_temp_variable = { base_stab_adjust = total_microchips }
 	}
 
-	divide_temp_variable = { base_stab_adjust = 1000 }
+	multiply_temp_variable = { base_stab_adjust = 0.001 }
 	clamp_temp_variable = {
 		var = base_stab_adjust
 		min = -0.15

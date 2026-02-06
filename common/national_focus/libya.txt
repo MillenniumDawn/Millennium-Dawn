@@ -1749,8 +1749,7 @@ focus_tree = {
 			has_government = fascism
 			OR = {
 				is_neighbor_of = NIG
-				any_country = {
-					is_subject_of = ROOT
+				any_subject_country = {
 					is_neighbor_of = NIG
 				}
 			}
@@ -1919,8 +1918,7 @@ focus_tree = {
 			has_government = fascism
 			OR = {
 				is_neighbor_of = MAL
-				any_country = {
-					is_subject_of = ROOT
+				any_subject_country = {
 					is_neighbor_of = MAL
 				}
 			}
@@ -2024,8 +2022,7 @@ focus_tree = {
 			has_government = fascism
 			OR = {
 				is_neighbor_of = MAU
-				any_country = {
-					is_subject_of = ROOT
+				any_subject_country = {
 					is_neighbor_of = MAU
 				}
 			}
@@ -4289,27 +4286,26 @@ focus_tree = {
 
 		available = {
 			nationalist_monarchists_are_in_power = yes
-			any_country = { has_idea = NATO_member }
+			NATO_currently_exists = yes
 		}
 
 		bypass = {
-			NOT = { any_country = { has_idea = NATO_member } }
+			NATO_currently_exists = no
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_approach_nato"
 			add_ideas = Major_Non_NATO_Ally
 			add_to_tech_sharing_group = NATO_Tech_Share
-			every_country = {
-				limit = { has_idea = NATO_member }
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = Major_Non_NATO_Ally
-				}
-				reverse_add_opinion_modifier = {
-					target = ROOT
-					modifier = Major_Non_NATO_Ally
-				}
+			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
+				add_opinion_modifier = { target = ROOT modifier = Major_Non_NATO_Ally }
+				reverse_add_opinion_modifier = { target = ROOT modifier = Major_Non_NATO_Ally }
+			}
+			for_each_scope_loop = {
+				array = global.nato_members
+				add_opinion_modifier = { target = ROOT modifier = Major_Non_NATO_Ally }
+				reverse_add_opinion_modifier = { target = ROOT modifier = Major_Non_NATO_Ally }
 			}
 		}
 
@@ -4465,7 +4461,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_join_war_on_terror"
-			add_ideas = Enduring_Freedom
+			# FIXME: Needs to be replaced with something actually substantial
+			# add_ideas = Enduring_Freedom
 		}
 
 	}
@@ -11243,11 +11240,12 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_humanitarian_aid_to_chad"
 			CHA = { country_event = { id = LibyaFocus.99 } }
 			set_temp_variable = { treasury_change = CHA.gdp_total }
-			multiply_temp_variable = { treasury_change = -1 }
+			multiply_temp_variable = { treasury_change = -0.50 }
 			modify_treasury_effect = yes
 			effect_tooltip = {
 				CHA = {
 					set_temp_variable = { treasury_change = CHA.gdp_total }
+					multiply_temp_variable = { treasury_change = 0.50 }
 					modify_treasury_effect = yes
 					add_stability = 0.10
 				}
@@ -13844,15 +13842,21 @@ focus_tree = {
 				threat = 5
 				name = LBA_expand_tribes_threat
 			}
-			every_state = {
-				limit = {
-					OR = {
-						is_core_of = TIE
-						is_core_of = TUA
+			TUA = {
+				every_core_state = {
+					limit = {
+						NOT = { is_core_of = ROOT }
 					}
-					NOT = { is_core_of = ROOT }
+					add_claim_by = ROOT
 				}
-				add_claim_by = ROOT
+			}
+			TIE = {
+				every_core_state = {
+					limit = {
+						NOT = { is_core_of = ROOT }
+					}
+					add_claim_by = ROOT
+				}
 			}
 		}
 
@@ -14168,8 +14172,8 @@ focus_tree = {
 			OR = {
 				AND = {
 					has_government = democratic
-					any_country = {
-						has_idea = NATO_member
+					any_of_scopes = {
+						array = global.nato_members
 						is_faction_leader = yes
 						has_opinion = {
 							target = ROOT
@@ -14177,8 +14181,8 @@ focus_tree = {
 						}
 					}
 				}
-				any_country = {
-					has_idea = NATO_member
+				any_of_scopes = {
+					array = global.nato_members
 					is_faction_leader = yes
 					has_opinion = {
 						target = ROOT
@@ -14211,20 +14215,19 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_ties_with_nato"
 			add_ideas = Major_Non_NATO_Ally
 			add_to_tech_sharing_group = NATO_Tech_Share
-			every_country = {
-				limit = { has_idea = NATO_member }
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = Major_Non_NATO_Ally
-				}
-				reverse_add_opinion_modifier = {
-					target = ROOT
-					modifier = Major_Non_NATO_Ally
-				}
+			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
+				add_opinion_modifier = { target = ROOT modifier = Major_Non_NATO_Ally }
+				reverse_add_opinion_modifier = { target = ROOT modifier = Major_Non_NATO_Ally }
+			}
+			for_each_scope_loop = {
+				array = global.nato_members
+				add_opinion_modifier = { target = ROOT modifier = Major_Non_NATO_Ally }
+				reverse_add_opinion_modifier = { target = ROOT modifier = Major_Non_NATO_Ally }
 			}
 		}
-
 	}
+
 	focus = {
 		id = LBA_ties_with_csto
 		icon = eastern_doctrine
@@ -14329,15 +14332,21 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_new_libyan_nation"
-			every_state = {
-				limit = {
-					OR = {
-						is_core_of = TUA
-						is_core_of = TIE
+			TUA = {
+				every_core_state = {
+					limit = {
+						NOT = { is_core_of = ROOT }
 					}
-					NOT = { is_core_of = ROOT }
+					add_core_of = ROOT
 				}
-				add_core_of = ROOT
+			}
+			TIE = {
+				every_core_state = {
+					limit = {
+						NOT = { is_core_of = ROOT }
+					}
+					add_core_of = ROOT
+				}
 			}
 		}
 
@@ -19461,7 +19470,7 @@ focus_tree = {
 			every_other_country = {
 				limit = {
 					Is_Muslim_Brotherhood = no
-					Is_Possible_Muslim_Brotherhood = yes
+					has_country_flag = is_possible_muslim_brotherhood
 				}
 				set_temp_variable = { influence_target = THIS }
 				set_temp_variable = { percent_change = 3 }
@@ -19469,7 +19478,5 @@ focus_tree = {
 				change_influence_percentage = yes
 			}
 		}
-
 	}
-
 }

@@ -185,7 +185,9 @@ The following page is a non-exhaustive list of contributors from over the years 
 - **Millennium Dawn: Director's Cut (MD:DC)**
   *Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3543352335)*
 - **Doomsday Series: Zombies modern day subnmod**
-* *Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=1204955863)
+  *Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=1204955863)
+- **AIGFX: Visible Railroads: Supply Map Mode**
+  *Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2698816291)
 
 # Voice Lines
 
