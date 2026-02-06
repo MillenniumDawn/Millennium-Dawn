@@ -726,3 +726,130 @@ country_event = {
 		}
 	}
 }
+
+country_event = {
+	id = recognition.9
+
+	title = recognition.9.t
+	desc = recognition.9.d
+	picture = GFX_politics_talks
+
+	is_triggered_only = yes
+
+	option = {
+		name = recognition.9.a
+		log = "[GetDateText]: [This.GetName]: recognition.9.a executed"
+	}
+}
+
+#Scoping Event to prompt UN votes
+country_event = {
+	id = recognition.10
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		every_country = {
+			limit = { has_country_flag = original_owner_@PREV }
+			country_event = recognition.11
+		}
+	}
+}
+
+country_event = {
+	id = recognition.11
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		for_each_scope_loop = {
+			array = global.p5_sc_members
+
+			country_event = recognition.12
+		}
+
+		for_each_scope_loop = {
+			array = global.security_council_members
+
+			country_event = recognition.13
+		}
+	}
+}
+
+#Security Council VETO Rolls
+country_event = {
+	id = recognition.12
+	title = recognition.12.t
+	desc = recognition.12.d
+	picture = GFA_politics_talks
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		log = "[ROOT.GetName] is the base of the event chain"
+		log = "[FROM.GetName] is the sender of this event"
+		log = "[FROM.FROM.GetName] is the sender of the event before this."
+	}
+
+	option = {
+		name = recognition.12.a
+
+		add_to_array = { global.active_security_council_vote_yes = THIS }
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = recognition.12.b
+
+		set_global_flag = security_council_veto
+		add_to_array = { global.active_security_council_vote_no = THIS }
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#Regular Security council
+country_event = {
+	id = recognition.13
+	title = recognition.13.t
+	desc = recognition.13.d
+	picture = GFA_politics_talks
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = recognition.13.a
+
+		add_to_array = { global.active_security_council_vote_yes = THIS }
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 100
+				has_country_flag = Recognised_@FROM
+			}
+		}
+	}
+
+	option = {
+		name = recognition.13.b
+
+		add_to_array = { global.active_security_council_vote_yes = NO }
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_country_flag = Recognised_@FROM
+			}
+		}
+	}
+}

@@ -3895,38 +3895,12 @@ scripted_gui = {
 				has_idea = Lacks_International_Recognition
 			}
 			un_ascension_button_click_enabled = {
-				custom_trigger_tooltip = {
-					tooltip = two_thirds_tt
-					check_variable = {
-						var = Granted_Recognition
-						value = 120
-						compare = greater_than
-					}
-				}
-				meta_trigger = {
-					text = {
-						custom_trigger_tooltip = {
-							tooltip = security_council_support_tt
-							USA = {
-								has_country_flag = Recognised_[thname]
-							}
-							ENG = {
-								has_country_flag = Recognised_[thname]
-							}
-							FRA = {
-								has_country_flag = Recognised_[thname]
-							}
-							SOV = {
-								has_country_flag = Recognised_[thname]
-							}
-							CHI = {
-								has_country_flag = Recognised_[thname]
-							}
-						}
-					}
-					thname = "[?THIS.GetTag]"
-				}
-
+				# custom_trigger_tooltip = {
+				# 	tooltip = is_un_ascension_warning_tt
+				# 	NOT = {
+				# 		has_country_flag = recent_un_ascension_attempt
+				# 	}
+				# }
 				has_political_power > 100
 			}
 		}
@@ -3960,11 +3934,17 @@ scripted_gui = {
 
 						if = {
 							limit = {
-								NOT = { has_country_flag = original_owner_[stname] }
+								NOT = {
+									has_country_flag = original_owner_[stname]
+									has_country_flag = supports_original_owner_[stname]
+								}
 							}
 							every_country = {
 								limit = {
-									has_country_flag = original_owner_[stname]
+									OR = {
+										has_country_flag = original_owner_[stname]
+										has_country_flag = supports_original_owner_[stname]
+									}
 									NOT = { has_country_flag = Recognised_[stname] }
 								}
 								add_opinion_modifier = {
@@ -3973,23 +3953,14 @@ scripted_gui = {
 								}
 								news_event = { id = recognition.1 }
 							}
-						}
-						if = {
-							limit = {
-								NOT = {
-									has_country_flag = original_owner_[stname]
-									has_country_flag = supports_original_owner_[stname]
-								}
-							}
 							every_country = {
-								limit = {
-									has_country_flag = supports_original_owner_[stname]
-									NOT = { has_country_flag = Recognised_[stname] }
-								}
+								limit = { has_country_flag = Recognised_[stname] }
+
 								add_opinion_modifier = {
 									target = ROOT
-									modifier = recognises_them
+									modifier = supporting_recognized_ally
 								}
+								news_event = { id = recognition.9 }
 							}
 						}
 					}
@@ -4116,19 +4087,27 @@ scripted_gui = {
 				missile_ui_update = yes
 			}
 			un_ascension_button_click = {
-				log = "[GetDateText]: [Root.GetName]: Decision un_ascension_button_click"
-				remove_ideas = Lacks_International_Recognition
-				remove_from_array = {
-					global.Unrecognised_States = THIS
-				}
-				set_temp_variable = { percent_change = 5 }
-				change_domestic_influence_percentage = yes
-				every_country = {
-					news_event = { id = recognition.7 }
+				set_country_flag = {
+					flag = recent_un_ascension_attempt
+					days = 365
+					value = 1
 				}
 
-				add_political_power = -100
-				missile_ui_update = yes
+				hidden_effect = {
+					country_event = recognition.10
+				}
+				# remove_ideas = Lacks_International_Recognition
+				# remove_from_array = {
+				# 	global.Unrecognised_States = THIS
+				# }
+				# set_temp_variable = { percent_change = 5 }
+				# change_domestic_influence_percentage = yes
+				# every_country = {
+				# 	news_event = { id = recognition.7 }
+				# }
+
+				# add_political_power = -100
+				# missile_ui_update = yes
 			}
 		}
 
