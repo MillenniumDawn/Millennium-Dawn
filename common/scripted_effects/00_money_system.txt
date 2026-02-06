@@ -62,6 +62,7 @@ ingame_update_setup = {
 	calculate_additional_income_rate = yes
 
 	#Expenses
+	expense_modifier_calculations = yes
 	update_military_rate = yes
 	update_bureaucracy_rate = yes
 	update_police_rate = yes
@@ -114,6 +115,18 @@ update_money_dirty_variable = {
 	}
 
 	add_to_variable = { global.research_screen_ui = 1 }
+}
+
+expense_modifier_calculations = {
+	set_temp_variable = { inflation_multiplier = 1 }
+	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
+
+	set_temp_variable = { gdp_scaling_modifier = gdp_per_capita }
+	multiply_temp_variable = { gdp_scaling_modifier = @spending_laws_gdp_scaling }
+	add_to_temp_variable = { gdp_scaling_modifier = 1 }
+
+	set_temp_variable = { common_money_modifier = inflation_multiplier }
+	multiply_temp_variable = { common_money_modifier = gdp_scaling_modifier }
 }
 
 # Effect: calculate_tax_rate
@@ -2011,10 +2024,6 @@ update_military_rate = {
 	# Recreate the Array
 	resize_array = { array = array_defence_spend size = 10 value = 0 }
 
-	#Inflation additive modifier
-	set_temp_variable = { inflation_multiplier = 1 }
-	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
-
 	#A variable that stores the current military law the player has
 	if = { limit = { has_idea = defence_00 }
 		set_temp_variable = { def_index = 0 }
@@ -2108,37 +2117,38 @@ update_military_rate = {
 	## Calculate the cost of fielded military ##
 	### Land ###
 	#Below sets up the personnel cost for mil spending based on how many battalions a country has (divided into special, elite, regular and irregular units)
+	if = { limit = { check_variable = { num_battalions > 0 } }
+		#Count number of special units
+		set_temp_variable = { special_btn = num_battalions_with_type@Special_Forces }
 
-	#Count number of special units
-	set_temp_variable = { special_btn = num_battalions_with_type@Special_Forces }
+		#Count number of elite units - Kal's note; set normal support battalions to be regular
+		set_temp_variable = { elite_btn = num_battalions_with_type@L_Air_assault_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Air_Inf_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@Mot_Air_Inf_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@Mech_Air_Inf_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@Arm_Air_Inf_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Marine_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@Mot_Marine_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@Mech_Marine_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@Arm_Marine_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Ranger_Bat }
 
-	#Count number of elite units - Kal's note; set normal support battalions to be regular
-	set_temp_variable = { elite_btn = num_battalions_with_type@L_Air_assault_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Air_Inf_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@Mot_Air_Inf_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@Mech_Air_Inf_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@Arm_Air_Inf_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Marine_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@Mot_Marine_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@Mech_Marine_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@Arm_Marine_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Ranger_Bat }
+		#Count number of regular units
+		set_temp_variable = { regular_btn = num_battalions_with_type@L_Inf_Bat }
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@Mot_Inf_Bat }
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@Mech_Inf_Bat }
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@Arm_Inf_Bat }
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@armor_Bat }
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@L_arm_Bat }
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@Arty_Bat }
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@SP_Arty_Bat }
+		#These were previously elite - Kal
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@SP_AA_Bat }
 
-	#Count number of regular units
-	set_temp_variable = { regular_btn = num_battalions_with_type@L_Inf_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@Mot_Inf_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@Mech_Inf_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@Arm_Inf_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@armor_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@L_arm_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@Arty_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@SP_Arty_Bat }
-	#These were previously elite - Kal
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@SP_AA_Bat }
-
-	#Count number of irregular units
-	set_temp_variable = { irregular_btn = num_battalions_with_type@Militia_Bat }
-	add_to_temp_variable = { irregular_btn = num_battalions_with_type@Mot_Militia_Bat }
+		#Count number of irregular units
+		set_temp_variable = { irregular_btn = num_battalions_with_type@Militia_Bat }
+		add_to_temp_variable = { irregular_btn = num_battalions_with_type@Mot_Militia_Bat }
+	}
 
 	# Multiply each category with a weight value, and then add up categories together (eg. one special forces battalion is worth 1 militia battalion etc).
 	# Use these if you want to control costs of different land units to each other
@@ -2592,23 +2602,14 @@ update_bureaucracy_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_bureaucracy_spend
 
-	#gdp scaling
-	set_temp_variable = { gdp_bureaucracy_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_bureaucracy_cost_modifier = @spending_laws_gdp_scaling }
-	add_to_temp_variable = { gdp_bureaucracy_cost_modifier = 1 }
+	#Set the base cost of bureaucracy (billion $ per 10 000 000 people)
+	set_temp_variable = { bureaucracy_base_cost = 0.0007 }
 
-	#Additional additive modifiers
+	# Additional additive modifiers
 	set_temp_variable = { bureaucracy_cost_multiplier = 1 }
 	add_to_temp_variable = { bureaucracy_cost_multiplier = modifier@bureaucracy_cost_multiplier_modifier }
-	set_variable = { bureaucracy_cost_multiplier_display = bureaucracy_cost_multiplier }
-	subtract_from_variable = { bureaucracy_cost_multiplier_display = 1 }
-
-	#Inflation additive modifier
-	set_temp_variable = { inflation_multiplier = 1 }
-	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
-
-	#Set the base cost of bureaucracy (billion $ per 10 000 000 people)
-	set_temp_variable = { bureaucracy_base_cost = 0.010 }
+	multiply_temp_variable = { bureaucracy_cost_multiplier = common_money_modifier }
+	multiply_temp_variable = { bureaucracy_cost_multiplier = bureaucracy_base_cost }
 
 	# Recreate the Array
 	resize_array = { array = array_bureaucracy_spend size = 5 value = 0 }
@@ -2618,12 +2619,8 @@ update_bureaucracy_rate = {
 		array = array_bureaucracy_spend
 		index = i
 		value = v
-		add_to_variable = { var = array_bureaucracy_spend^i value = population_total }	#Unit 100 000
+		add_to_variable = { var = array_bureaucracy_spend^i value = population_total }
 		multiply_variable = { array_bureaucracy_spend^i = bureaucracy_cost_multiplier }
-		multiply_variable = { array_bureaucracy_spend^i = inflation_multiplier }
-		multiply_variable = { array_bureaucracy_spend^i = gdp_bureaucracy_cost_modifier }
-		multiply_variable = { array_bureaucracy_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
-		multiply_variable = { var = array_bureaucracy_spend^i value = bureaucracy_base_cost }
 		clamp_variable = { var = array_bureaucracy_spend^i min = 0 }
 	}
 
@@ -2660,21 +2657,13 @@ update_police_rate = {
 	clear_array = array_security_spend
 
 	#Set the base cost of policing (billion $ per 10 000 000 people)
-	set_temp_variable = { police_base_cost = 0.014 }
-
-	#gdp scaling
-	set_temp_variable = { gdp_police_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_police_cost_modifier = @spending_laws_gdp_scaling }
-	add_to_temp_variable = { gdp_police_cost_modifier = 1 }
+	set_temp_variable = { police_base_cost = 0.00098 }
 
 	#Additional additive modifiers
 	set_temp_variable = { police_cost_multiplier = 1 }
 	add_to_temp_variable = { police_cost_multiplier = modifier@police_cost_multiplier_modifier }
-	set_variable = { police_cost_multiplier_display = police_cost_multiplier }
-	subtract_from_variable = { police_cost_multiplier_display = 1 }
-
-	set_temp_variable = { inflation_multiplier = 1 }
-	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
+	multiply_temp_variable = { police_cost_multiplier = common_money_modifier }
+	multiply_temp_variable = { police_cost_multiplier = police_base_cost }
 
 	# Recreate the Array
 	resize_array = { array = array_security_spend size = 5 value = 0 }
@@ -2686,10 +2675,6 @@ update_police_rate = {
 		value = v
 		add_to_variable = { array_security_spend^i = population_total }	#Unit 100 000
 		multiply_variable = { array_security_spend^i = police_cost_multiplier }
-		multiply_variable = { array_security_spend^i = inflation_multiplier }
-		multiply_variable = { array_security_spend^i = gdp_police_cost_modifier }
-		multiply_variable = { array_security_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
-		multiply_variable = { array_security_spend^i = police_base_cost }
 		clamp_variable = { var = array_security_spend^i min = 0 }
 	}
 
@@ -2727,11 +2712,7 @@ update_education_rate = {
 	clear_array = array_education_spend
 
 	#Set the base cost of education (billion $ per 10 000 000 people)
-	set_temp_variable = { education_base_cost = 0.036 }
-
-	#Inflation additive modifier
-	set_temp_variable = { inflation_multiplier = 1 }
-	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
+	set_temp_variable = { education_base_cost = 0.00036 }
 
 	#Education spending is more expensive the more research slots a country has
 	set_temp_variable = { research_slot_initial = -0.2 }
@@ -2744,18 +2725,17 @@ update_education_rate = {
 	#helps balance large countries (china/india/ecc) and represents poor countries setting up infrastructure that western countries already have
 	#but this was scrapped because poor countries were struggling with high tax rates despite very low spending levels
 	#now spending cost increases with gdpc
-	set_temp_variable = { gdp_education_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_education_cost_modifier = @spending_laws_gdp_scaling }
-	add_to_temp_variable = { gdp_education_cost_modifier = 1 }
-	set_variable = { education_cost_gdp_multiplier_display = gdp_education_cost_modifier }
+	set_variable = { education_cost_gdp_multiplier_display = gdp_scaling_modifier }
 	subtract_from_variable = { education_cost_gdp_multiplier_display = 1 }
 
-	#Additional additive modifiers
+	# Calculate Base Cost + Modifiers
 	set_temp_variable = { education_cost_multiplier = 1 }
 	add_to_temp_variable = { education_cost_multiplier = modifier@education_cost_multiplier_modifier }
 	add_to_temp_variable = { education_cost_multiplier = research_slot_modifier }
+	multiply_temp_variable = { education_cost_multiplier = common_money_modifier }
 	set_variable = { education_cost_multiplier_display = education_cost_multiplier }
 	subtract_from_variable = { education_cost_multiplier_display = 1 }
+	multiply_temp_variable = { education_cost_multiplier = education_base_cost }
 
 	# Recreate the Array
 	resize_array = { array = array_education_spend size = 5 value = 0 }
@@ -2820,15 +2800,9 @@ update_education_rate = {
 		array = array_education_spend
 		index = i
 		value = v
-		add_to_variable = { array_education_spend^i = population_total }	#Unit 100 000
-		multiply_variable = { array_education_spend^i = gdp_education_cost_modifier }
+		add_to_variable = { array_education_spend^i = population_total } #Unit 100 000
 		multiply_variable = { array_education_spend^i = education_cost_multiplier }
-		multiply_variable = { array_education_spend^i = inflation_multiplier }
-		multiply_variable = { array_education_spend^i = 0.01 }	#Unit 10 000 000
-		multiply_variable = { array_education_spend^i = education_base_cost }
-
 		add_to_variable = { array_education_spend^i = THIS.total_facilities_spending_display_var }
-
 		clamp_variable = { var = array_education_spend^i min = 0 }
 	}
 
@@ -2872,22 +2846,13 @@ update_health_rate = {
 	clear_array = array_health_spend
 
 	#Set the base cost of health (billion $ per 10 000 000 people)
-	set_temp_variable = { health_base_cost = 0.01 }
-
-	#Inflation additive modifier
-	set_temp_variable = { inflation_multiplier = 1 }
-	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
-
-	# # Bird Note: Ported Education Spending Logic 07-14
-	set_temp_variable = { gdp_health_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_health_cost_modifier = @spending_laws_gdp_scaling }
-	add_to_temp_variable = { gdp_health_cost_modifier = 1 }
+	set_temp_variable = { health_base_cost = 0.0007 }
 
 	#Additional additive modifiers
 	set_temp_variable = { health_cost_multiplier = 1 }
 	add_to_temp_variable = { health_cost_multiplier = modifier@health_cost_multiplier_modifier }
-	set_variable = { health_cost_multiplier_display = health_cost_multiplier }
-	subtract_from_variable = { health_cost_multiplier_display = 1 }
+	multiply_temp_variable = { health_cost_multiplier = common_money_modifier }
+	multiply_temp_variable = { health_cost_multiplier = health_base_cost }
 
 	# Recreate the Array
 	resize_array = { array = array_health_spend size = 6 value = 0 }
@@ -2898,11 +2863,7 @@ update_health_rate = {
 		index = i
 		value = v
 		add_to_variable = { var = array_health_spend^i value = population_total }	#Unit 100 000
-		multiply_variable = { array_health_spend^i = gdp_health_cost_modifier }
 		multiply_variable = { var = array_health_spend^i value = health_cost_multiplier }
-		multiply_variable = { array_health_spend^i = inflation_multiplier }
-		multiply_variable = { array_health_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
-		multiply_variable = { var = array_health_spend^i value = health_base_cost }
 		clamp_variable = { var = array_health_spend^i min = 0 }
 	}
 
@@ -2944,22 +2905,13 @@ update_social_rate = {
 	clear_array = array_social_spend
 
 	#Set the base cost of welfare (billion $ per 10 000 000 people)
-	set_temp_variable = { social_base_cost = 0.019 }
-
-	#Inflation additive modifier
-	set_temp_variable = { inflation_multiplier = 1 }
-	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
-
-	# # Bird Note: Ported Education Spending Logic 07-14
-	set_temp_variable = { gdp_social_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_social_cost_modifier = @spending_laws_gdp_scaling }
-	add_to_temp_variable = { gdp_social_cost_modifier = 1 }
+	set_temp_variable = { social_base_cost = 0.00133 }
 
 	#Additional additive modifiers
 	set_temp_variable = { social_cost_multiplier = 1 }
 	add_to_temp_variable = { social_cost_multiplier = modifier@social_cost_multiplier_modifier }
-	set_variable = { social_cost_multiplier_display = social_cost_multiplier }
-	subtract_from_variable = { social_cost_multiplier_display = 1 }
+	multiply_temp_variable = { social_cost_multiplier = common_money_modifier }
+	multiply_temp_variable = { social_cost_multiplier = social_base_cost }
 
 	# Recreate the Array
 	resize_array = { array = array_social_spend size = 6 value = 0 }
@@ -2970,11 +2922,7 @@ update_social_rate = {
 		index = i
 		value = v
 		add_to_variable = { var = array_social_spend^i value = population_total }	#Unit 100 000
-		multiply_variable = { var = array_social_spend^i value = gdp_social_cost_modifier }
 		multiply_variable = { var = array_social_spend^i value = social_cost_multiplier }
-		multiply_variable = { var = array_social_spend^i value = inflation_multiplier }
-		multiply_variable = { array_social_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
-		multiply_variable = { var = array_social_spend^i value = social_base_cost }
 		clamp_variable = { var = array_social_spend^i min = 0 }
 	}
 
@@ -5080,6 +5028,12 @@ update_employment_productivity_output_dynamic_modifier = {
 	set_temp_variable = { productivity_calculations_var = overall_productivity }
 	multiply_temp_variable = { productivity_calculations_var = 0.001 }
 
+	# Cache expensive modifier reads upfront
+	set_temp_variable = { cached_construction_modifier = modifier@production_speed_buildings_factor }
+	set_temp_variable = { cached_military_modifier = modifier@industrial_capacity_factory }
+	set_temp_variable = { cached_dockyard_modifier = modifier@industrial_capacity_dockyard }
+	set_temp_variable = { cached_agriculture_modifier = modifier@production_speed_agriculture_district_factor }
+
 	#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
 	set_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = industrial_complex_total }
 	multiply_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = civilian_factories_manpower_fulfillment }
@@ -5091,7 +5045,7 @@ update_employment_productivity_output_dynamic_modifier = {
 	set_variable = { construction_speed_output_var = productivity_calculations_var }
 	multiply_variable = { construction_speed_output_var = civilian_factories_manpower_fulfillment_dyn_mod_var }
 	add_to_variable = { construction_speed_output_var = -1 } #to be used as malus in the dynamic modifier
-	set_temp_variable = { sum_of_construction_speed_modifiers = modifier@production_speed_buildings_factor }
+	set_temp_variable = { sum_of_construction_speed_modifiers = cached_construction_modifier }
 	subtract_from_temp_variable = { sum_of_construction_speed_modifiers = preexisting_construction_speed_output_var }
 	add_to_temp_variable = { sum_of_construction_speed_modifiers = 1 }
 	multiply_variable = { construction_speed_output_var = sum_of_construction_speed_modifiers }
@@ -5107,7 +5061,7 @@ update_employment_productivity_output_dynamic_modifier = {
 	set_variable = { military_factories_output_var = productivity_calculations_var }
 	multiply_variable = { military_factories_output_var = military_factories_manpower_fulfillment_dyn_mod_var }
 	add_to_variable = { military_factories_output_var = -1 } #to be used as malus in the dynamic modifier
-	set_temp_variable = { sum_of_military_output_modifiers = modifier@industrial_capacity_factory }
+	set_temp_variable = { sum_of_military_output_modifiers = cached_military_modifier }
 	subtract_from_temp_variable = { sum_of_military_output_modifiers = preexisting_military_factories_output_var }
 	add_to_temp_variable = { sum_of_military_output_modifiers = 1 }
 	multiply_variable = { military_factories_output_var = sum_of_military_output_modifiers }
@@ -5123,7 +5077,7 @@ update_employment_productivity_output_dynamic_modifier = {
 	set_variable = { dockyards_output_var = productivity_calculations_var }
 	multiply_variable = { dockyards_output_var = naval_factories_manpower_fulfillment_dyn_mod_var }
 	add_to_variable = { dockyards_output_var = -1 } #to be used as malus in the dynamic modifier
-	set_temp_variable = { sum_of_dockyard_output_modifiers = modifier@industrial_capacity_dockyard }
+	set_temp_variable = { sum_of_dockyard_output_modifiers = cached_dockyard_modifier }
 	subtract_from_temp_variable = { sum_of_dockyard_output_modifiers = preexisting_dockyards_output_var }
 	add_to_temp_variable = { sum_of_dockyard_output_modifiers = 1 }
 	multiply_variable = { dockyards_output_var = sum_of_dockyard_output_modifiers }
@@ -5131,7 +5085,7 @@ update_employment_productivity_output_dynamic_modifier = {
 	# Agricultural District Section
 	set_variable = { agriculture_district_output_var = productivity_calculations_var }
 	add_to_variable = { agriculture_district_output_var = -1 } #to be used as malus in the dynamic modifier
-	set_temp_variable = { sum_of_agriculture_district_var_modifiers = modifier@production_speed_agriculture_district_factor }
+	set_temp_variable = { sum_of_agriculture_district_var_modifiers = cached_agriculture_modifier }
 	subtract_from_temp_variable = { sum_of_agriculture_district_var_modifiers = preexisting_agriculture_district_output_var }
 	add_to_temp_variable = { sum_of_agriculture_district_var_modifiers = -2 }
 	multiply_variable = { agriculture_district_output_var = sum_of_agriculture_district_var_modifiers }
@@ -5283,15 +5237,11 @@ calculate_migration_mechanic_values = {
 	add_to_variable = { max_net_immigration_rate = immigration_government_factor }
 	add_to_variable = { max_net_immigration_rate = modifier@maximum_migration_rate_value }
 
-	# War Refugees Section
+	# War Refugees Section (optimized to avoid nested neighbor checks)
 	hidden_effect = {
 		set_temp_variable = { neighbouring_war_refugees = 0 }
 		every_neighbor_country = {
-			limit = {
-				any_neighbor_country = {
-					has_war_with = PREV
-				}
-			}
+			limit = { has_war = yes }
 			add_to_temp_variable = { PREV.neighbouring_war_refugees = THIS.population_total_m }
 			multiply_temp_variable = { PREV.neighbouring_war_refugees = @refugee_percentage_adjuster }
 		}
