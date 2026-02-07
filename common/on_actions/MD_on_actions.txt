@@ -1632,6 +1632,32 @@ on_actions = {
 							}
 						}
 					}
+
+					if = { limit = { any_arabic_country_formed_the_uar = yes }
+						random_scope_in_array = {
+							array = global.arabic_countries
+							limit = {
+								OR = {
+									is_neo_baathist_uar = yes
+									is_baathist_uar = yes
+								}
+								NOT = { has_country_flag = united_neo_baathist_uar }
+								NOT = { has_country_flag = united_baathist_uar }
+							}
+							#Calculate the total GDP of all Arabic countries
+							set_variable = { total_arabic_gdp = 0 }
+							for_each_scope_loop = {
+								array = global.arabic_countries
+								add_to_variable = { ROOT.total_arabic_gdp = THIS.gdp_total }
+							}
+							#Calculate the GDP of UAR and their puppets
+							set_variable = { total_uar_gdp = gdp_total }
+							for_each_scope_loop = {
+								array = ROOT.subjects
+								add_to_variable = { ROOT.total_uar_gdp = THIS.gdp_total }
+							}
+						}
+					}
 				}
 
 				if = { limit = { NOT = { has_global_flag = GAME_RULE_nato_disabled } check_variable = { global.nato_members^num > 0 } }
@@ -1671,6 +1697,8 @@ on_actions = {
 						log = "Current resource prices: steel = [?global.steel_price] rubber = [?global.rubber_price] oil = [?global.oil_price] alum = [?global.aluminium_price] tungsten = [?global.tungsten_price] chromium = [?global.chromium_price] Resource coeff = [?global.resource_gdp_coeff]"
 					}
 				}
+
+
 
 				# On Monthly Flag:
 				# Set this to 27 days to time out so that way February isn't missed
