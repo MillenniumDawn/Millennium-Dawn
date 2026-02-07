@@ -5005,7 +5005,6 @@ productivity_growth_country_display_effect = {
 }
 
 update_employment_productivity_output_dynamic_modifier = {
-
 	# productivity (P) and employment level (E) are supposed to behave as multiplicative factors of factories outputs (O)
 	# (Outputs being counstruction speed for civilian factories, military output for mils and dockyard output for docks)
 	# So if B is the base output and M the ingame modifier (production_speed_buildings_factor in the case of construction speed, for example)
@@ -5019,85 +5018,109 @@ update_employment_productivity_output_dynamic_modifier = {
 	# We group the -1: P * E * (1 + S) -1 * (1 + S) = X
 	# And finally group the (1 + S): X = (1 + S) * (P*E - 1)
 	# This value of X we found is then applied to a dynamic modifier
+	if = {
+		limit = {
+			OR = {
+				NOT = { check_variable = { overall_productivity = last_productivity_check } }
+				NOT = { check_variable = { industrial_complex_total = last_industrial_complex_total } }
+			}
+		}
 
-	set_temp_variable = { preexisting_construction_speed_output_var = construction_speed_output_var }
-	set_temp_variable = { preexisting_military_factories_output_var = military_factories_output_var }
-	set_temp_variable = { preexisting_dockyards_output_var = dockyards_output_var }
-	set_temp_variable = { preexisting_agriculture_district_output_var = agriculture_district_output_var }
+		set_variable = { last_productivity_check = overall_productivity }
+		set_variable = { last_industrial_complex_total = industrial_complex_total }
 
-	set_temp_variable = { productivity_calculations_var = overall_productivity }
-	multiply_temp_variable = { productivity_calculations_var = 0.001 }
+		set_temp_variable = { preexisting_construction_speed_output_var = construction_speed_output_var }
+		set_temp_variable = { preexisting_military_factories_output_var = military_factories_output_var }
+		set_temp_variable = { preexisting_dockyards_output_var = dockyards_output_var }
+		set_temp_variable = { preexisting_agriculture_district_output_var = agriculture_district_output_var }
 
-	# Cache expensive modifier reads upfront
-	set_temp_variable = { cached_construction_modifier = modifier@production_speed_buildings_factor }
-	set_temp_variable = { cached_military_modifier = modifier@industrial_capacity_factory }
-	set_temp_variable = { cached_dockyard_modifier = modifier@industrial_capacity_dockyard }
-	set_temp_variable = { cached_agriculture_modifier = modifier@production_speed_agriculture_district_factor }
 
-	#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
-	set_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = industrial_complex_total }
-	multiply_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = civilian_factories_manpower_fulfillment }
-	set_temp_variable = { factories_from_other_sources = num_of_civilian_factories }
-	subtract_from_temp_variable = { factories_from_other_sources = industrial_complex_total }
-	add_to_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = factories_from_other_sources }
-	divide_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = num_of_civilian_factories }
+		set_temp_variable = { productivity_calculations_var = overall_productivity }
+		multiply_temp_variable = { productivity_calculations_var = 0.001 }
 
-	set_variable = { construction_speed_output_var = productivity_calculations_var }
-	multiply_variable = { construction_speed_output_var = civilian_factories_manpower_fulfillment_dyn_mod_var }
-	add_to_variable = { construction_speed_output_var = -1 } #to be used as malus in the dynamic modifier
-	set_temp_variable = { sum_of_construction_speed_modifiers = cached_construction_modifier }
-	subtract_from_temp_variable = { sum_of_construction_speed_modifiers = preexisting_construction_speed_output_var }
-	add_to_temp_variable = { sum_of_construction_speed_modifiers = 1 }
-	multiply_variable = { construction_speed_output_var = sum_of_construction_speed_modifiers }
+		# Cache expensive modifier reads upfront
+		set_temp_variable = { cached_construction_modifier = modifier@production_speed_buildings_factor }
+		set_temp_variable = { cached_military_modifier = modifier@industrial_capacity_factory }
+		set_temp_variable = { cached_dockyard_modifier = modifier@industrial_capacity_dockyard }
+		set_temp_variable = { cached_agriculture_modifier = modifier@production_speed_agriculture_district_factor }
 
-	#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
-	set_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_fac }
-	multiply_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_factories_manpower_fulfillment }
-	set_temp_variable = { mil_factories_from_other_sources = num_of_military_factories }
-	subtract_from_temp_variable = { mil_factories_from_other_sources = military_fac }
-	add_to_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = mil_factories_from_other_sources }
-	divide_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = num_of_military_factories }
+		#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
+		set_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = industrial_complex_total }
+		multiply_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = civilian_factories_manpower_fulfillment }
+		set_temp_variable = { factories_from_other_sources = num_of_civilian_factories }
+		subtract_from_temp_variable = { factories_from_other_sources = industrial_complex_total }
+		add_to_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = factories_from_other_sources }
+		divide_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = num_of_civilian_factories }
 
-	set_variable = { military_factories_output_var = productivity_calculations_var }
-	multiply_variable = { military_factories_output_var = military_factories_manpower_fulfillment_dyn_mod_var }
-	add_to_variable = { military_factories_output_var = -1 } #to be used as malus in the dynamic modifier
-	set_temp_variable = { sum_of_military_output_modifiers = cached_military_modifier }
-	subtract_from_temp_variable = { sum_of_military_output_modifiers = preexisting_military_factories_output_var }
-	add_to_temp_variable = { sum_of_military_output_modifiers = 1 }
-	multiply_variable = { military_factories_output_var = sum_of_military_output_modifiers }
+		set_variable = { construction_speed_output_var = productivity_calculations_var }
+		multiply_variable = { construction_speed_output_var = civilian_factories_manpower_fulfillment_dyn_mod_var }
+		add_to_variable = { construction_speed_output_var = -1 } #to be used as malus in the dynamic modifier
+		set_temp_variable = { sum_of_construction_speed_modifiers = cached_construction_modifier }
+		subtract_from_temp_variable = { sum_of_construction_speed_modifiers = preexisting_construction_speed_output_var }
+		add_to_temp_variable = { sum_of_construction_speed_modifiers = 1 }
+		multiply_variable = { construction_speed_output_var = sum_of_construction_speed_modifiers }
 
-	#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
-	set_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = dockyard_fac }
-	multiply_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = naval_factories_manpower_fulfillment }
-	set_temp_variable = { nav_factories_from_other_sources = num_of_naval_factories }
-	subtract_from_temp_variable = { nav_factories_from_other_sources = dockyard_fac }
-	add_to_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = nav_factories_from_other_sources }
-	divide_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = num_of_naval_factories }
+		if = {
+			limit = { num_of_military_factories > 0 }
+			#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
+			set_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_fac }
+			multiply_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_factories_manpower_fulfillment }
+			set_temp_variable = { mil_factories_from_other_sources = num_of_military_factories }
+			subtract_from_temp_variable = { mil_factories_from_other_sources = military_fac }
+			add_to_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = mil_factories_from_other_sources }
+			divide_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = num_of_military_factories }
 
-	set_variable = { dockyards_output_var = productivity_calculations_var }
-	multiply_variable = { dockyards_output_var = naval_factories_manpower_fulfillment_dyn_mod_var }
-	add_to_variable = { dockyards_output_var = -1 } #to be used as malus in the dynamic modifier
-	set_temp_variable = { sum_of_dockyard_output_modifiers = cached_dockyard_modifier }
-	subtract_from_temp_variable = { sum_of_dockyard_output_modifiers = preexisting_dockyards_output_var }
-	add_to_temp_variable = { sum_of_dockyard_output_modifiers = 1 }
-	multiply_variable = { dockyards_output_var = sum_of_dockyard_output_modifiers }
+			set_variable = { military_factories_output_var = productivity_calculations_var }
+			multiply_variable = { military_factories_output_var = military_factories_manpower_fulfillment_dyn_mod_var }
+			add_to_variable = { military_factories_output_var = -1 } #to be used as malus in the dynamic modifier
+			set_temp_variable = { sum_of_military_output_modifiers = cached_military_modifier }
+			subtract_from_temp_variable = { sum_of_military_output_modifiers = preexisting_military_factories_output_var }
+			add_to_temp_variable = { sum_of_military_output_modifiers = 1 }
+			multiply_variable = { military_factories_output_var = sum_of_military_output_modifiers }
+		}
+		else = {
+			set_variable = { military_factories_output_var = 0 }
+		}
 
-	# Agricultural District Section
-	set_variable = { agriculture_district_output_var = productivity_calculations_var }
-	add_to_variable = { agriculture_district_output_var = -1 } #to be used as malus in the dynamic modifier
-	set_temp_variable = { sum_of_agriculture_district_var_modifiers = cached_agriculture_modifier }
-	subtract_from_temp_variable = { sum_of_agriculture_district_var_modifiers = preexisting_agriculture_district_output_var }
-	add_to_temp_variable = { sum_of_agriculture_district_var_modifiers = -2 }
-	multiply_variable = { agriculture_district_output_var = sum_of_agriculture_district_var_modifiers }
-	if = { limit = { has_country_flag = disabled_economic_system }
-		set_variable = { military_factories_output_var = 0 }
-		set_variable = { agriculture_district_output_var = 0 }
-		set_variable = { dockyards_output_var = 0 }
+		if = {
+			limit = { num_of_naval_factories > 0 }
+			#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
+			set_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = dockyard_fac }
+			multiply_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = naval_factories_manpower_fulfillment }
+			set_temp_variable = { nav_factories_from_other_sources = num_of_naval_factories }
+			subtract_from_temp_variable = { nav_factories_from_other_sources = dockyard_fac }
+			add_to_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = nav_factories_from_other_sources }
+			divide_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = num_of_naval_factories }
+
+			set_variable = { dockyards_output_var = productivity_calculations_var }
+			multiply_variable = { dockyards_output_var = naval_factories_manpower_fulfillment_dyn_mod_var }
+			add_to_variable = { dockyards_output_var = -1 } #to be used as malus in the dynamic modifier
+			set_temp_variable = { sum_of_dockyard_output_modifiers = cached_dockyard_modifier }
+			subtract_from_temp_variable = { sum_of_dockyard_output_modifiers = preexisting_dockyards_output_var }
+			add_to_temp_variable = { sum_of_dockyard_output_modifiers = 1 }
+			multiply_variable = { dockyards_output_var = sum_of_dockyard_output_modifiers }
+		}
+		else = {
+			set_variable = { dockyards_output_var = 0 }
+		}
+
+		# Agricultural District Section
+		set_variable = { agriculture_district_output_var = productivity_calculations_var }
+		add_to_variable = { agriculture_district_output_var = -1 } #to be used as malus in the dynamic modifier
+		set_temp_variable = { sum_of_agriculture_district_var_modifiers = cached_agriculture_modifier }
+		subtract_from_temp_variable = { sum_of_agriculture_district_var_modifiers = preexisting_agriculture_district_output_var }
+		add_to_temp_variable = { sum_of_agriculture_district_var_modifiers = -2 }
+		multiply_variable = { agriculture_district_output_var = sum_of_agriculture_district_var_modifiers }
+		if = { limit = { has_country_flag = disabled_economic_system }
+			set_variable = { military_factories_output_var = 0 }
+			set_variable = { agriculture_district_output_var = 0 }
+			set_variable = { dockyards_output_var = 0 }
+		}
+		set_variable = { productivity_tax_effect_display = productivity_calculations_var }
+		add_to_variable = { productivity_tax_effect_display = -1 }
+
+		force_update_dynamic_modifier = yes
 	}
-	set_variable = { productivity_tax_effect_display = productivity_calculations_var }
-	add_to_variable = { productivity_tax_effect_display = -1 }
-
-	force_update_dynamic_modifier = yes
 }
 
 productivity_growth_effect = {
