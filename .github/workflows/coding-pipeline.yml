@@ -13,6 +13,10 @@ on:
   push:
     tags: [ 'v*' ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   INPUT_RULES: 'https://github.com/Kaiserreich/cwtools-hoi4-config.git'
   INPUT_RULESREF: 'master'
@@ -75,7 +79,6 @@ jobs:
   validate-variables:
     name: Validate Flags and Event Targets
     runs-on: ubuntu-latest
-    needs: [coding-standards]
 
     steps:
     - name: Checkout code
@@ -94,7 +97,6 @@ jobs:
   validate-set-variables:
     name: Validate set_variable Usage
     runs-on: ubuntu-latest
-    needs: [coding-standards]
 
     steps:
     - name: Checkout code
@@ -113,7 +115,6 @@ jobs:
   validate-scripted-localisation:
     name: Validate Scripted Localisation
     runs-on: ubuntu-latest
-    needs: [coding-standards]
 
     steps:
     - name: Checkout code
