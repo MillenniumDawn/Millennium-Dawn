@@ -195,6 +195,10 @@ on_actions = {
 
 				NATO_CSTO_calculate_number_of_batallions = yes
 			}
+			if = {
+				limit = { is_ai = no }
+				force_update_dynamic_modifier = yes
+			}
 		}
 	}
 
@@ -309,7 +313,7 @@ on_actions = {
 			add_to_variable = { ROOT.enrichment_facilities = FROM.enrichment_facilities }
 
 			every_country = {
-				limit = { check_variable = { auto_influence_array^num > 0 } }
+				limit = { is_ai = no }
 				set_temp_variable = { scoped_nation = THIS.id }
 				for_each_loop = {
 					array = auto_influence_array
@@ -569,6 +573,8 @@ on_actions = {
 					}
 
 					every_country = {
+						# LITERACY STUFF
+						EDU_annual_pulse_for_learning_stuff = yes
 						# Reduce the Printing Money Var
 						if = { limit = { check_variable = { printing_money_var > 0 } }
 							subtract_from_variable = { printing_money_var = 1 }
@@ -586,10 +592,6 @@ on_actions = {
 						yearly_global_export_normalization = yes
 					}
 
-					# Execute and Start the Yearly ETD Events
-					if = { limit = { is_debug = yes }
-						log = "[GetDateText]: [THIS.GetName]: Triggering [?global.year] events"
-					}
 					meta_effect = {
 						text = {
 							trigger_year_[year]_events = yes
@@ -733,17 +735,13 @@ on_actions = {
 				# Monthly Single Fire Check
 				every_country = {
 					recalculate_party = yes
-					ai_update_build_units = yes
 					recalculate_law_desires = yes
 					update_neighbors_effects = yes
-					update_auto_influence_array = yes
 
 					civilian_microchip_consumption = yes
 
 					# AGRI SHIT
 					AGRI_plow_the_fields = yes
-					# LITERACY STUFF
-					EDU_annual_pulse_for_learning_stuff = yes
 					# Tick Internal Factions
 					monthly_tick_internal_factions_opinion = yes
 
@@ -754,7 +752,6 @@ on_actions = {
 
 					calculate_expected_spending = yes
 					apply_protest_effects = yes
-
 
 					# Months at War Calculation
 					if = {
@@ -1263,74 +1260,64 @@ on_actions = {
 
 					# Player only checks
 					if = { limit = { is_ai = no }
-						if = {
-							limit = {
-								any_of = {
-									array = auto_influence_array
-									NOT = { check_variable = { v = 0 } }
-								}
-							}
-							set_variable = { nations_influenced = 0 }
-
+						update_auto_influence_array = yes
+						if = { limit = { NOT = { check_variable = { auto_influence_array^0 = 0 } } }
 							set_temp_variable = { percent_change = global.percent_change_value }
 							set_temp_variable = { tag_index = THIS.id }
+							set_temp_variable = { nations_influenced = 0 }
+
 							for_each_loop = {
 								array = auto_influence_array
-								index = i
 								value = v
 								if = {
 									limit = {
 										NOT = { check_variable = { v = 0 } }
-										var:auto_influence_array^i = { var:tag_index = { NOT = { has_country_flag = spread_influence@PREV } } }
-										var:auto_influence_array^i = { exists = yes }
+										var:v = { exists = yes }
+										NOT = { has_country_flag = spread_influence@var:v }
 									}
-									log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing [?var:auto_influence_array^i.GetName]"
+									log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing [?var:v.GetName]"
 									set_temp_variable = { influence_target = v }
 									change_influence_percentage = yes
-									var:tag_index = {
-										add_to_variable = { nations_influenced = 1 }
-									}
+									add_to_temp_variable = { nations_influenced = 1 }
 								}
 								else = {
 									log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing failed to influence on index [?i]"
 								}
 							}
-							for_each_loop = {
-								array = auto_influence_array
-								index = i
-								value = v
-								if = { limit = { check_variable = { i < nations_influenced } }
-									var:auto_influence_array^i = {
-										ROOT = {
-											if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_14_days } }
-												set_country_flag = { flag = spread_influence@PREV value = 1 days = 14 }
-											}
-											else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_30_days } }
-												set_country_flag = { flag = spread_influence@PREV value = 1 days = 30 }
-											}
-											else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_60_days } }
-												set_country_flag = { flag = spread_influence@PREV value = 1 days = 60 }
-											}
+
+							if = { limit = { check_variable = { nations_influenced > 0 } }
+								for_each_loop = {
+									array = auto_influence_array
+									value = v
+									if = {
+										limit = {
+											check_variable = { i < nations_influenced }
+											NOT = { check_variable = { v = 0 } }
+										}
+										if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_14_days } }
+											set_country_flag = { flag = spread_influence@var:v value = 1 days = 14 }
+										}
+										else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_30_days } }
+											set_country_flag = { flag = spread_influence@var:v value = 1 days = 30 }
+										}
+										else_if = { limit = { has_game_rule = { rule = rule_spread_influence_cooldown_limits option = spread_influence_60_days } }
+											set_country_flag = { flag = spread_influence@var:v value = 1 days = 60 }
 										}
 									}
 								}
-							}
-							update_dirty_influence_var = yes
 
-							if = { limit = { NOT = { has_country_flag = disable_auto_influence_notification } }
-								country_event = influence.54
+								if = { limit = { NOT = { has_country_flag = disable_auto_influence_notification } }
+									country_event = influence.54
+								}
 							}
 						}
-						if = {
-							limit = {
-								has_political_power < -100
-							}
+
+						if = { limit = { has_political_power < -100 }
 							log = "[GetDateText]: [THIS.GetName]: Political Power is under -100. Clearing the auto-influence array"
 							clear_array = auto_influence_array
 							set_variable = { auto_influence_users = 0 }
-							resize_array = { array = auto_influence_array value = 0 size = 10 } # ONLY 4 MORE SLOTS ARE AVAILABLE
+							resize_array = { array = auto_influence_array value = 0 size = 10 }
 							update_auto_influence_array = yes
-							update_dirty_influence_var = yes
 						}
 
 						if = { limit = { NOT = { has_global_flag = GAME_RULE_gdp_graph_enabled } }
@@ -1368,6 +1355,7 @@ on_actions = {
 						}
 					}
 					else = {
+						ai_update_build_units = yes
 						ai_weapon_dump = yes
 
 						# used in strategies, instead of checking it directly there
@@ -1401,31 +1389,21 @@ on_actions = {
 							activate_decision = gdp_c_gain_slot
 						}
 
-						if = {
-							limit = {
-								# with god of war on
-								has_game_rule = {
-									rule = rule_god_of_war
-									option = yes
-								}
-							}
-
+						if = { limit = { has_game_rule = { rule = rule_god_of_war option = yes } }
 							ai_add_xp = yes
 
 							if = {
 								limit = {
 									# does not have player as ally
 									NOT = {
-										any_of = {
-											array = allies
+										any_allied_country = {
 											is_ai = no
 										}
 									}
 									# Either WT > 30 OR Player is the enemy
 									OR = {
 										threat > 0.3
-										any_of = {
-											array = enemies
+										any_enemy_country = {
 											is_ai = no
 										}
 									}
@@ -1471,8 +1449,7 @@ on_actions = {
 					productivity_growth_effect = yes
 				}
 
-				if = {
-					limit = { has_game_rule = { rule = rule_disable_muslim_brotherhood_civil_war option = no } }
+				if = { limit = { has_game_rule = { rule = rule_disable_muslim_brotherhood_civil_war option = no } }
 					for_each_scope_loop = {
 						array = global.possible_muslim_brotherhood_nation
 						if = {
@@ -1660,6 +1637,8 @@ on_actions = {
 					}
 				}
 
+				AU_monthly_update = yes
+
 				if = { limit = { NOT = { has_global_flag = GAME_RULE_nato_disabled } check_variable = { global.nato_members^num > 0 } }
 					for_each_scope_loop = {
 						array = global.nato_members
@@ -1673,22 +1652,7 @@ on_actions = {
 					}
 				}
 
-				if = { limit = { check_variable = { global.gcc_member_state^num > 0 } }
-					# Gulf Cooperation Council Unity Additions
-					if = { limit = { threat > 0.25 }
-						add_to_variable = { global.gcc_unity = 1 }
-					}
-					if = { limit = { threat > 0.50 }
-						add_to_variable = { global.gcc_unity = 2 }
-					}
-					if = { limit = { threat > 0.75 }
-						add_to_variable = { global.gcc_unity = 3 }
-					}
-					clamp_variable = { var = global.gcc_unity min = 0 max = 100 }
-				}
-
-				if = {
-					limit = { NOT = { has_global_flag = resource_prices_adjusted } }
+				if = { limit = { NOT = { has_global_flag = resource_prices_adjusted } }
 
 					set_global_flag = { flag = resource_prices_adjusted value = 1 days = 10 }
 					recalculate_resources_price = yes
@@ -1697,8 +1661,6 @@ on_actions = {
 						log = "Current resource prices: steel = [?global.steel_price] rubber = [?global.rubber_price] oil = [?global.oil_price] alum = [?global.aluminium_price] tungsten = [?global.tungsten_price] chromium = [?global.chromium_price] Resource coeff = [?global.resource_gdp_coeff]"
 					}
 				}
-
-
 
 				# On Monthly Flag:
 				# Set this to 27 days to time out so that way February isn't missed
@@ -1722,6 +1684,9 @@ on_actions = {
 					}
 				}
 			}
+
+			# 1 Force update
+			force_update_dynamic_modifier = yes
 		}
 	}
 }

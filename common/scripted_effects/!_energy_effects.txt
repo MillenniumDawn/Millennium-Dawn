@@ -371,9 +371,18 @@ calculate_energy_use = {
 
 	set_variable = { non_electric_fuel_display = non_electric_fuel_consumption }
 	multiply_variable = { non_electric_fuel_display = 24 }
-
 	force_update_dynamic_modifier = yes
-	add_to_variable = { global.energy_ui = 1 }
+	update_global_energy_ui = yes
+}
+
+update_global_energy_ui = {
+	if = {
+		limit = { check_variable = { global.energy_ui > 1000000 } }
+		set_variable = { global.energy_ui = 1 }
+	}
+	else = {
+		add_to_variable = { global.energy_ui = 1 }
+	}
 }
 
 # Effect: calculate_energy_load_sharing
@@ -404,7 +413,6 @@ calculate_energy_load_sharing = {
 					set_variable = { PREV.energy_load_sharing_nations_value^i = energy_lack }
 					set_variable = { energy_load_sharing_gain_var = energy_lack }
 					multiply_variable = { energy_load_sharing_gain_var = -1 }
-					force_update_dynamic_modifier = yes
 				}
 			}
 			set_temp_variable = { total_energy_required_to_share = 0 }
@@ -422,11 +430,9 @@ calculate_energy_load_sharing = {
 				array = energy_load_sharing_nations
 				var:v = {
 					set_variable = { energy_load_sharing_gain_var = 0 }
-					force_update_dynamic_modifier = yes
 				}
 			}
 		}
-		force_update_dynamic_modifier = yes
 	}
 	# Clear variables if you're neither a provider nor a recipient
 	if = {
