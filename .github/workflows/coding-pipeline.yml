@@ -13,6 +13,10 @@ on:
   push:
     tags: [ 'v*' ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   INPUT_RULES: 'https://github.com/Kaiserreich/cwtools-hoi4-config.git'
   INPUT_RULESREF: 'master'
@@ -22,6 +26,8 @@ env:
 permissions:
   checks: write
   contents: read
+  pull-requests: write
+  issues: write
 
 jobs:
   coding-standards:
@@ -71,6 +77,102 @@ jobs:
       run: |
         python tools/check_basic_style.py --mode diff ${{ secrets.BOT_TOKEN }}
         python tools/check_basic_style_2.py --mode diff ${{ secrets.BOT_TOKEN }}
+
+  validate-variables:
+    name: Validate Flags and Event Targets
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Run variable validation
+      run: |
+        python3 tools/validation/validate_variables.py --strict --no-color --workers 4 | tee validation-variables.log
+
+    - name: Upload validation results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: validation-variables-results
+        path: validation-variables.log
+        retention-days: 7
+
+  validate-scripted-localisation:
+    name: Validate Scripted Localisation
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Run scripted localisation validation
+      run: |
+        python3 tools/validation/validate_scripted_localisation.py --strict --no-color --workers 4 | tee validation-scripted-localisation.log
+
+    - name: Upload validation results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: validation-scripted-localisation-results
+        path: validation-scripted-localisation.log
+        retention-days: 7
+
+  validation-report:
+    name: Generate Validation Report
+    runs-on: ubuntu-latest
+    needs: [validate-variables, validate-scripted-localisation]
+    if: always() && github.event_name == 'pull_request'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Download all validation results
+      uses: actions/download-artifact@v4
+      with:
+        path: validation-results
+
+    - name: Generate and post validation report
+      run: |
+        python3 tools/generate_validation_report.py \
+          --results-dir validation-results \
+          --output report.md \
+          --pr-number "${{ github.event.pull_request.number }}" \
+          --commit-sha "${{ github.sha }}" \
+          --github-token "${{ secrets.GITHUB_TOKEN }}" \
+          --github-repository "${{ github.repository }}" \
+          --post-comment \
+          --print
+
+    - name: Upload combined report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: validation-report
+        path: report.md
+        retention-days: 30
 
   create-release:
     name: Create Release

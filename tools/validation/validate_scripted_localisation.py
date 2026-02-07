@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 ##########################
-# Scripted Localisation Validation Script
+# Scripted Localisation Validation Script (Multiprocessing Optimized)
 # Validates scripted localisation definitions and usage
 # Checks for: used but not defined, defined but not used
 # Based on Millennium Dawn validation framework
+# Optimized with multiprocessing for significantly faster execution
 ##########################
 import argparse
 import glob
@@ -12,6 +13,8 @@ import os
 import re
 import subprocess
 import sys
+from functools import partial
+from multiprocessing import Pool, cpu_count
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -140,6 +143,7 @@ class ScriptedLocalisation:
         lowercase: bool = True,
         return_paths: bool = False,
         staged_files: Optional[List[str]] = None,
+        workers: int = None,
     ) -> Tuple[List[str], Dict[str, str]]:
         """Parse all files and return list with all defined scripted localisations
 
@@ -148,6 +152,7 @@ class ScriptedLocalisation:
             lowercase (bool, optional): defines if returned list contains lowercase str or not. Defaults to True.
             return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
             staged_files (list, optional): list of staged files to validate (if None, validates all files)
+            workers (int, optional): number of worker processes (defaults to half CPU count)
 
         Returns:
             tuple or list: (localisations, paths) if return_paths else localisations
@@ -166,26 +171,21 @@ class ScriptedLocalisation:
             pattern = os.path.join(mod_path, "common", "scripted_localisation", "*.txt")
             files_to_scan = glob.glob(pattern)
 
-        for filename in files_to_scan:
-            if should_skip_file(filename):
-                continue
+        # Use multiprocessing for parallel file processing
+        if workers is None:
+            workers = max(1, cpu_count() // 2)
 
-            # Skip French localisation file
-            if "00_scripted_localisation_FR_loc" in filename:
-                continue
+        args_list = [(f, lowercase) for f in files_to_scan]
 
-            text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+        with Pool(processes=workers) as pool:
+            results = pool.map(
+                process_file_for_defined_localisations, args_list, chunksize=10
+            )
 
-            # Pattern: defined_text = { name = <name> ... }
-            if "defined_text" in text_file and "name =" in text_file:
-                # Match: name = <identifier> (including uppercase letters)
-                pattern_matches = re.findall(
-                    r"name\s*=\s*([a-zA-Z_0-9]+)", text_file if lowercase else text_file
-                )
-                if len(pattern_matches) > 0:
-                    for match in pattern_matches:
-                        localisations.append(match)
-                        paths[match] = os.path.basename(filename)
+        # Merge results
+        for locs_list, paths_dict in results:
+            localisations.extend(locs_list)
+            paths.update(paths_dict)
 
         if return_paths:
             return (localisations, paths)
@@ -200,6 +200,7 @@ class ScriptedLocalisation:
         lowercase: bool = True,
         return_paths: bool = False,
         staged_files: Optional[List[str]] = None,
+        workers: int = None,
     ) -> Tuple[List[str], Dict[str, str]]:
         """Parse all files and return list with all used scripted localisations
 
@@ -209,6 +210,7 @@ class ScriptedLocalisation:
             lowercase (bool, optional): defines if returned list contains lowercase str or not. Defaults to True.
             return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
             staged_files (list, optional): list of staged files to validate (if None, validates all files)
+            workers (int, optional): number of worker processes (defaults to half CPU count)
 
         Returns:
             tuple or list: (localisations, paths) if return_paths else localisations
@@ -234,30 +236,32 @@ class ScriptedLocalisation:
                 or (f.endswith(".txt") and "scripted_guis" in f)
             ]
         else:
-            gui_files = glob.iglob(mod_path + "**/*.gui", recursive=True)
-            yml_files = glob.iglob(mod_path + "**/*.yml", recursive=True)
-            scripted_gui_files = glob.iglob(
-                mod_path + "common/scripted_guis/*.txt", recursive=True
+            gui_files = list(glob.iglob(mod_path + "**/*.gui", recursive=True))
+            yml_files = list(glob.iglob(mod_path + "**/*.yml", recursive=True))
+            scripted_gui_files = list(
+                glob.iglob(mod_path + "common/scripted_guis/*.txt", recursive=True)
             )
-            files_to_scan = list(gui_files) + list(yml_files) + list(scripted_gui_files)
+            files_to_scan = gui_files + yml_files + scripted_gui_files
 
-        for filename in files_to_scan:
-            if should_skip_file(filename):
-                continue
+        # Use multiprocessing for parallel file processing
+        if workers is None:
+            workers = max(1, cpu_count() // 2)
 
-            # Skip the scripted localisation definition files themselves
-            if "scripted_localisation" in filename:
-                continue
+        args_list = [(f, search_names, lowercase) for f in files_to_scan]
 
-            text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+        with Pool(processes=workers) as pool:
+            results = pool.map(
+                process_file_for_used_localisations, args_list, chunksize=50
+            )
 
-            # Check which defined scripted localisation names appear in this file
-            # Use simple string containment for performance (much faster than regex)
-            for name in search_names:
-                if name not in localisations:  # Only check if not already found
-                    if name in text_file:
-                        localisations.append(name)
-                        paths[name] = os.path.basename(filename)
+        # Merge results - need to deduplicate since multiple files might find the same name
+        found_names = set()
+        for locs_list, paths_dict in results:
+            for loc in locs_list:
+                if loc not in found_names:
+                    localisations.append(loc)
+                    paths[loc] = paths_dict[loc]
+                    found_names.add(loc)
 
         if return_paths:
             return (localisations, paths)
@@ -306,6 +310,82 @@ class DataCleaner:
             return input_iter
 
 
+# Multiprocessing helper functions
+def process_file_for_defined_localisations(
+    args: Tuple[str, bool]
+) -> Tuple[List[str], Dict[str, str]]:
+    """Process a single file to extract defined scripted localisations
+
+    Args:
+        args: Tuple of (filename, lowercase)
+
+    Returns:
+        Tuple of (localisations list, paths dict)
+    """
+    filename, lowercase = args
+
+    if should_skip_file(filename):
+        return ([], {})
+
+    # Skip French localisation file
+    if "00_scripted_localisation_FR_loc" in filename:
+        return ([], {})
+
+    localisations = []
+    paths = {}
+    basename = os.path.basename(filename)
+
+    text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+
+    # Pattern: defined_text = { name = <name> ... }
+    if "defined_text" in text_file and "name =" in text_file:
+        # Match: name = <identifier> (including uppercase letters)
+        pattern_matches = re.findall(
+            r"name\s*=\s*([a-zA-Z_0-9]+)", text_file if lowercase else text_file
+        )
+        if len(pattern_matches) > 0:
+            for match in pattern_matches:
+                localisations.append(match)
+                paths[match] = basename
+
+    return (localisations, paths)
+
+
+def process_file_for_used_localisations(
+    args: Tuple[str, Set[str], bool]
+) -> Tuple[List[str], Dict[str, str]]:
+    """Process a single file to find used scripted localisations
+
+    Args:
+        args: Tuple of (filename, search_names, lowercase)
+
+    Returns:
+        Tuple of (localisations list, paths dict)
+    """
+    filename, search_names, lowercase = args
+
+    if should_skip_file(filename):
+        return ([], {})
+
+    # Skip the scripted localisation definition files themselves
+    if "scripted_localisation" in filename:
+        return ([], {})
+
+    localisations = []
+    paths = {}
+    basename = os.path.basename(filename)
+
+    text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+
+    # Check which defined scripted localisation names appear in this file
+    for name in search_names:
+        if name in text_file:
+            localisations.append(name)
+            paths[name] = basename
+
+    return (localisations, paths)
+
+
 class Validator:
     """Main validation class that runs all checks"""
 
@@ -315,6 +395,7 @@ class Validator:
         output_file: Optional[str] = None,
         use_colors: bool = True,
         staged_only: bool = False,
+        workers: int = None,
     ):
         """Initialize validator with mod path
 
@@ -323,6 +404,7 @@ class Validator:
             output_file (str, optional): path to output file for results
             use_colors (bool): whether to use ANSI colors in output
             staged_only (bool): only validate git staged files
+            workers (int, optional): number of worker processes (defaults to half CPU count)
         """
         if not mod_path.endswith("/"):
             mod_path += "/"
@@ -331,6 +413,7 @@ class Validator:
         self.output_file = output_file
         self.use_colors = use_colors
         self.staged_only = staged_only
+        self.workers = workers if workers else max(1, cpu_count() // 2)
         self.staged_files = None
         self.output_lines = []
 
@@ -413,7 +496,10 @@ class Validator:
         results = []
         # First get all defined localisations
         defined_locs = ScriptedLocalisation.get_all_defined_localisations(
-            mod_path=self.mod_path, lowercase=False, staged_files=self.staged_files
+            mod_path=self.mod_path,
+            lowercase=False,
+            staged_files=self.staged_files,
+            workers=self.workers,
         )
 
         # Then search for uses of those specific names
@@ -424,6 +510,7 @@ class Validator:
             lowercase=False,
             return_paths=True,
             staged_files=self.staged_files,
+            workers=self.workers,
         )
 
         # Convert to lowercase for comparison
@@ -503,6 +590,7 @@ class Validator:
             lowercase=False,
             return_paths=True,
             staged_files=self.staged_files,
+            workers=self.workers,
         )
 
         # Then search for uses of those specific names
@@ -512,6 +600,7 @@ class Validator:
             defined_names=defined_names_set,
             lowercase=False,
             staged_files=self.staged_files,
+            workers=self.workers,
         )
 
         # Convert to lowercase for comparison
@@ -594,6 +683,7 @@ class Validator:
         )
         self.log(f"{'#'*80}")
         self.log(f"Mod path: {self.mod_path}")
+        self.log(f"Worker processes: {self.workers}")
         if self.staged_only:
             self.log(
                 f"{Colors.CYAN if self.use_colors else ''}Mode: Git staged files only{Colors.ENDC if self.use_colors else ''}"
@@ -703,6 +793,12 @@ Examples:
         action="store_true",
         help="Only validate git staged files (for pre-commit hook)",
     )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=None,
+        help=f"Number of worker processes (default: {max(1, cpu_count() // 2)} = half CPU count)",
+    )
 
     args = parser.parse_args()
 
@@ -722,6 +818,7 @@ Examples:
         output_file=args.output,
         use_colors=not args.no_color,
         staged_only=args.staged,
+        workers=args.workers,
     )
     errors_found = validator.run_all_validations()
 
