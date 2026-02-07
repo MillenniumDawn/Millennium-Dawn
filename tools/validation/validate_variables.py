@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 ##########################
-# Comprehensive Variable and Event Target Validation Script
+# Comprehensive Variable and Event Target Validation Script (Multiprocessing Optimized)
 # Validates flags (country/state/global) and event targets
 # Checks for: cleared but not set, used but not set, and unused items
 # Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
+# Optimized with multiprocessing for significantly faster execution
 ##########################
 import argparse
 import glob
@@ -12,6 +13,8 @@ import os
 import re
 import subprocess
 import sys
+from functools import partial
+from multiprocessing import Pool, cpu_count
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -171,6 +174,154 @@ class DataCleaner:
             return input_iter
 
 
+# Multiprocessing helper functions
+def process_file_for_flags(
+    args: Tuple[str, bool, str]
+) -> Tuple[List[str], Dict[str, str], str]:
+    """Process a single file to extract used/set/cleared flags
+
+    Args:
+        args: Tuple of (filename, lowercase, flag_type, operation)
+
+    Returns:
+        Tuple of (flags list, paths dict, operation type)
+    """
+    filename, lowercase, flag_type, operation = args
+
+    if should_skip_file(filename):
+        return ([], {}, operation)
+
+    flags = []
+    paths = {}
+    basename = os.path.basename(filename)
+    text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+
+    if operation == "used":
+        if (
+            f"has_{flag_type}_flag =" in text_file
+            or f"modify_{flag_type}_flag =" in text_file
+        ):
+            pattern_matches = re.findall(
+                r"has_" + flag_type + r"_flag = ([^ \t\n]+)", text_file
+            )
+            for match in pattern_matches:
+                flags.append(match)
+                paths[match] = basename
+
+            pattern_matches = re.findall(
+                r"[y|s]_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
+                text_file,
+                flags=re.MULTILINE | re.DOTALL,
+            )
+            for match in pattern_matches:
+                flags.append(match)
+                paths[match] = basename
+
+    elif operation == "set":
+        if f"set_{flag_type}_flag =" in text_file:
+            pattern_matches = re.findall(
+                r"set_" + flag_type + r"_flag = ([^ \t\n]+)", text_file
+            )
+            for match in pattern_matches:
+                flags.append(match)
+                paths[match] = basename
+
+            pattern_matches = re.findall(
+                r"set_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
+                text_file,
+                flags=re.MULTILINE | re.DOTALL,
+            )
+            for match in pattern_matches:
+                flags.append(match)
+                paths[match] = basename
+
+    elif operation == "cleared":
+        if f"clr_{flag_type}_flag =" in text_file:
+            pattern_matches = re.findall(
+                r"clr_" + flag_type + r"_flag = ([^ \t\n]+)", text_file
+            )
+            for match in pattern_matches:
+                flags.append(match)
+                paths[match] = basename
+
+    return (flags, paths, operation)
+
+
+def process_file_for_targets(
+    args: Tuple[str, bool, str]
+) -> Tuple[List[str], Dict[str, str], str]:
+    """Process a single file to extract used/set/cleared event targets
+
+    Args:
+        args: Tuple of (filename, lowercase, operation)
+
+    Returns:
+        Tuple of (targets list, paths dict, operation type)
+    """
+    filename, lowercase, operation = args
+
+    if should_skip_file(filename):
+        return ([], {}, operation)
+
+    targets = []
+    paths = {}
+    basename = os.path.basename(filename)
+    text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+
+    if operation == "used":
+        if "tag_aliases" in filename:
+            if "global_event_target =" in text_file:
+                pattern_matches = re.findall(
+                    r'global_event_target = ([^ \n\t\#"]+)', text_file
+                )
+                for match in pattern_matches:
+                    targets.append(match)
+                    paths[match] = basename
+        else:
+            if "event_target:" in text_file:
+                pattern_matches = re.findall(r'event_target:([^ \n\t\#"]+)', text_file)
+                for match in pattern_matches:
+                    targets.append(match)
+                    paths[match] = basename
+
+            if "has_event_target =" in text_file:
+                pattern_matches = re.findall(
+                    r'has_event_target = ([^ \n\t"]+)', text_file
+                )
+                for match in pattern_matches:
+                    targets.append(match)
+                    paths[match] = basename
+
+    elif operation == "set":
+        if "tag_aliases" not in filename:
+            if "save_global_event_target_as =" in text_file:
+                pattern_matches = re.findall(
+                    r'save_global_event_target_as = ([^ \n\t\#"]+)', text_file
+                )
+                for match in pattern_matches:
+                    targets.append(match)
+                    paths[match] = basename
+
+            if "save_event_target_as =" in text_file:
+                pattern_matches = re.findall(
+                    r'save_event_target_as = ([^ \n\t\#"]+)', text_file
+                )
+                for match in pattern_matches:
+                    targets.append(match)
+                    paths[match] = basename
+
+    elif operation == "cleared":
+        if "clear_global_event_target =" in text_file:
+            pattern_matches = re.findall(
+                r'clear_global_event_target = ([^ \n\t\#"]+)', text_file
+            )
+            for match in pattern_matches:
+                targets.append(match)
+                paths[match] = basename
+
+    return (targets, paths, operation)
+
+
 class Variables:
     """Class for handling flag validation"""
 
@@ -182,6 +333,7 @@ class Variables:
         flag_type: str = "country",
         return_paths: bool = False,
         staged_files: Optional[List[str]] = None,
+        workers: int = None,
     ):
         """Parse all files and return list with all used flags
 
@@ -191,6 +343,7 @@ class Variables:
             flag_type (str, optional): type of flag (country/state/global). Defaults to "country".
             return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
             staged_files (list, optional): list of staged files to validate (if None, validates all files)
+            workers (int, optional): number of worker processes (defaults to half CPU count)
 
         Returns:
             tuple or list: (flags, paths) if return_paths else flags
@@ -206,34 +359,21 @@ class Variables:
         if staged_files:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = glob.iglob(mod_path + "**/*.txt", recursive=True)
+            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
 
-        for filename in files_to_scan:
-            if should_skip_file(filename):
-                continue
-            text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+        # Use multiprocessing for parallel file processing
+        if workers is None:
+            workers = max(1, cpu_count() // 2)
 
-            if (
-                f"has_{flag_type}_flag =" in text_file
-                or f"modify_{flag_type}_flag =" in text_file
-            ):
-                pattern_matches = re.findall(
-                    r"has_" + flag_type + r"_flag = ([^ \t\n]+)", text_file
-                )
-                if len(pattern_matches) > 0:
-                    for match in pattern_matches:
-                        flags.append(match)
-                        paths[match] = os.path.basename(filename)
+        args_list = [(f, lowercase, flag_type, "used") for f in files_to_scan]
 
-                pattern_matches = re.findall(
-                    r"[y|s]_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
-                    text_file,
-                    flags=re.MULTILINE | re.DOTALL,
-                )
-                if len(pattern_matches) > 0:
-                    for match in pattern_matches:
-                        flags.append(match)
-                        paths[match] = os.path.basename(filename)
+        with Pool(processes=workers) as pool:
+            results = pool.map(process_file_for_flags, args_list, chunksize=50)
+
+        # Merge results
+        for flags_list, paths_dict, _ in results:
+            flags.extend(flags_list)
+            paths.update(paths_dict)
 
         if return_paths:
             return (flags, paths)
@@ -248,6 +388,7 @@ class Variables:
         flag_type: str = "country",
         return_paths: bool = False,
         staged_files: Optional[List[str]] = None,
+        workers: int = None,
     ):
         """Parse all files and return list with all set flags
 
@@ -256,6 +397,7 @@ class Variables:
             lowercase (bool, optional): defines if returned list contains lowercase str or not. Defaults to True.
             flag_type (str, optional): type of flag (country/state/global). Defaults to "country".
             return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
+            workers (int, optional): number of worker processes (defaults to half CPU count)
 
         Returns:
             tuple or list: (flags, paths) if return_paths else flags
@@ -271,31 +413,21 @@ class Variables:
         if staged_files:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = glob.iglob(mod_path + "**/*.txt", recursive=True)
+            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
 
-        for filename in files_to_scan:
-            if should_skip_file(filename):
-                continue
-            text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+        # Use multiprocessing for parallel file processing
+        if workers is None:
+            workers = max(1, cpu_count() // 2)
 
-            if f"set_{flag_type}_flag =" in text_file:
-                pattern_matches = re.findall(
-                    r"set_" + flag_type + r"_flag = ([^ \t\n]+)", text_file
-                )
-                if len(pattern_matches) > 0:
-                    for match in pattern_matches:
-                        flags.append(match)
-                        paths[match] = os.path.basename(filename)
+        args_list = [(f, lowercase, flag_type, "set") for f in files_to_scan]
 
-                pattern_matches = re.findall(
-                    r"set_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
-                    text_file,
-                    flags=re.MULTILINE | re.DOTALL,
-                )
-                if len(pattern_matches) > 0:
-                    for match in pattern_matches:
-                        flags.append(match)
-                        paths[match] = os.path.basename(filename)
+        with Pool(processes=workers) as pool:
+            results = pool.map(process_file_for_flags, args_list, chunksize=50)
+
+        # Merge results
+        for flags_list, paths_dict, _ in results:
+            flags.extend(flags_list)
+            paths.update(paths_dict)
 
         if return_paths:
             return (flags, paths)
@@ -310,6 +442,7 @@ class Variables:
         flag_type: str = "country",
         return_paths: bool = False,
         staged_files: Optional[List[str]] = None,
+        workers: int = None,
     ):
         """Parse all files and return list with all cleared flags
 
@@ -318,6 +451,7 @@ class Variables:
             lowercase (bool, optional): defines if returned list contains lowercase str or not. Defaults to True.
             flag_type (str, optional): type of flag (country/state/global). Defaults to "country".
             return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
+            workers (int, optional): number of worker processes (defaults to half CPU count)
 
         Returns:
             tuple or list: (flags, paths) if return_paths else flags
@@ -333,21 +467,21 @@ class Variables:
         if staged_files:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = glob.iglob(mod_path + "**/*.txt", recursive=True)
+            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
 
-        for filename in files_to_scan:
-            if should_skip_file(filename):
-                continue
-            text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+        # Use multiprocessing for parallel file processing
+        if workers is None:
+            workers = max(1, cpu_count() // 2)
 
-            if f"clr_{flag_type}_flag =" in text_file:
-                pattern_matches = re.findall(
-                    r"clr_" + flag_type + r"_flag = ([^ \t\n]+)", text_file
-                )
-                if len(pattern_matches) > 0:
-                    for match in pattern_matches:
-                        flags.append(match)
-                        paths[match] = os.path.basename(filename)
+        args_list = [(f, lowercase, flag_type, "cleared") for f in files_to_scan]
+
+        with Pool(processes=workers) as pool:
+            results = pool.map(process_file_for_flags, args_list, chunksize=50)
+
+        # Merge results
+        for flags_list, paths_dict, _ in results:
+            flags.extend(flags_list)
+            paths.update(paths_dict)
 
         if return_paths:
             return (flags, paths)
@@ -365,6 +499,7 @@ class EventTargets:
         lowercase: bool = True,
         return_paths: bool = False,
         staged_files: Optional[List[str]] = None,
+        workers: int = None,
     ):
         """Parse all files and return list with all used event targets
 
@@ -372,6 +507,7 @@ class EventTargets:
             mod_path (str): path to mod folder
             lowercase (bool, optional): defines if returned list contains lowercase str or not. Defaults to True.
             return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
+            workers (int, optional): number of worker processes (defaults to half CPU count)
 
         Returns:
             tuple or list: (targets, paths) if return_paths else targets
@@ -383,39 +519,21 @@ class EventTargets:
         if staged_files:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = glob.iglob(mod_path + "**/*.txt", recursive=True)
+            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
 
-        for filename in files_to_scan:
-            if should_skip_file(filename):
-                continue
-            text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
-            if "tag_aliases" in filename:
-                if "global_event_target =" in text_file:
-                    pattern_matches = re.findall(
-                        r'global_event_target = ([^ \n\t\#"]+)', text_file
-                    )
-                    if len(pattern_matches) > 0:
-                        for match in pattern_matches:
-                            targets.append(match)
-                            paths[match] = os.path.basename(filename)
-            else:
-                if "event_target:" in text_file:
-                    pattern_matches = re.findall(
-                        r'event_target:([^ \n\t\#"]+)', text_file
-                    )
-                    if len(pattern_matches) > 0:
-                        for match in pattern_matches:
-                            targets.append(match)
-                            paths[match] = os.path.basename(filename)
+        # Use multiprocessing for parallel file processing
+        if workers is None:
+            workers = max(1, cpu_count() // 2)
 
-                if "has_event_target =" in text_file:
-                    pattern_matches = re.findall(
-                        r'has_event_target = ([^ \n\t"]+)', text_file
-                    )
-                    if len(pattern_matches) > 0:
-                        for match in pattern_matches:
-                            targets.append(match)
-                            paths[match] = os.path.basename(filename)
+        args_list = [(f, lowercase, "used") for f in files_to_scan]
+
+        with Pool(processes=workers) as pool:
+            results = pool.map(process_file_for_targets, args_list, chunksize=50)
+
+        # Merge results
+        for targets_list, paths_dict, _ in results:
+            targets.extend(targets_list)
+            paths.update(paths_dict)
 
         if return_paths:
             return (targets, paths)
@@ -429,6 +547,7 @@ class EventTargets:
         lowercase: bool = True,
         return_paths: bool = False,
         staged_files: Optional[List[str]] = None,
+        workers: int = None,
     ):
         """Parse all files and return list with all set event targets
 
@@ -436,6 +555,7 @@ class EventTargets:
             mod_path (str): path to mod folder
             lowercase (bool, optional): defines if returned list contains lowercase str or not. Defaults to True.
             return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
+            workers (int, optional): number of worker processes (defaults to half CPU count)
 
         Returns:
             tuple or list: (targets, paths) if return_paths else targets
@@ -447,32 +567,21 @@ class EventTargets:
         if staged_files:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = glob.iglob(mod_path + "**/*.txt", recursive=True)
+            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
 
-        for filename in files_to_scan:
-            if should_skip_file(filename):
-                continue
-            if "tag_aliases" in filename:
-                continue
-            text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+        # Use multiprocessing for parallel file processing
+        if workers is None:
+            workers = max(1, cpu_count() // 2)
 
-            if "save_global_event_target_as =" in text_file:
-                pattern_matches = re.findall(
-                    r'save_global_event_target_as = ([^ \n\t\#"]+)', text_file
-                )
-                if len(pattern_matches) > 0:
-                    for match in pattern_matches:
-                        targets.append(match)
-                        paths[match] = os.path.basename(filename)
+        args_list = [(f, lowercase, "set") for f in files_to_scan]
 
-            if "save_event_target_as =" in text_file:
-                pattern_matches = re.findall(
-                    r'save_event_target_as = ([^ \n\t\#"]+)', text_file
-                )
-                if len(pattern_matches) > 0:
-                    for match in pattern_matches:
-                        targets.append(match)
-                        paths[match] = os.path.basename(filename)
+        with Pool(processes=workers) as pool:
+            results = pool.map(process_file_for_targets, args_list, chunksize=50)
+
+        # Merge results
+        for targets_list, paths_dict, _ in results:
+            targets.extend(targets_list)
+            paths.update(paths_dict)
 
         if return_paths:
             return (targets, paths)
@@ -486,6 +595,7 @@ class EventTargets:
         lowercase: bool = True,
         return_paths: bool = False,
         staged_files: Optional[List[str]] = None,
+        workers: int = None,
     ):
         """Parse all files and return list with all cleared event targets
 
@@ -493,6 +603,7 @@ class EventTargets:
             mod_path (str): path to mod folder
             lowercase (bool, optional): defines if returned list contains lowercase str or not. Defaults to True.
             return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
+            workers (int, optional): number of worker processes (defaults to half CPU count)
 
         Returns:
             tuple or list: (targets, paths) if return_paths else targets
@@ -504,21 +615,21 @@ class EventTargets:
         if staged_files:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = glob.iglob(mod_path + "**/*.txt", recursive=True)
+            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
 
-        for filename in files_to_scan:
-            if should_skip_file(filename):
-                continue
-            text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+        # Use multiprocessing for parallel file processing
+        if workers is None:
+            workers = max(1, cpu_count() // 2)
 
-            if "clear_global_event_target =" in text_file:
-                pattern_matches = re.findall(
-                    r'clear_global_event_target = ([^ \n\t\#"]+)', text_file
-                )
-                if len(pattern_matches) > 0:
-                    for match in pattern_matches:
-                        targets.append(match)
-                        paths[match] = os.path.basename(filename)
+        args_list = [(f, lowercase, "cleared") for f in files_to_scan]
+
+        with Pool(processes=workers) as pool:
+            results = pool.map(process_file_for_targets, args_list, chunksize=50)
+
+        # Merge results
+        for targets_list, paths_dict, _ in results:
+            targets.extend(targets_list)
+            paths.update(paths_dict)
 
         if return_paths:
             return (targets, paths)
@@ -535,6 +646,7 @@ class Validator:
         output_file: Optional[str] = None,
         use_colors: bool = True,
         staged_only: bool = False,
+        workers: int = None,
     ):
         """Initialize validator with mod path
 
@@ -543,6 +655,7 @@ class Validator:
             output_file (str, optional): path to output file for results
             use_colors (bool): whether to use ANSI colors in output
             staged_only (bool): only validate git staged files
+            workers (int, optional): number of worker processes (defaults to half CPU count)
         """
         if not mod_path.endswith("/"):
             mod_path += "/"
@@ -551,6 +664,7 @@ class Validator:
         self.output_file = output_file
         self.use_colors = use_colors
         self.staged_only = staged_only
+        self.workers = workers if workers else max(1, cpu_count() // 2)
         self.staged_files = None
         self.output_lines = []
 
@@ -636,12 +750,14 @@ class Validator:
             flag_type=flag_type,
             return_paths=True,
             staged_files=self.staged_files,
+            workers=self.workers,
         )
         set_flags = Variables.get_all_set_flags(
             mod_path=self.mod_path,
             flag_type=flag_type,
             lowercase=False,
             staged_files=self.staged_files,
+            workers=self.workers,
         )
         cleared_flags = DataCleaner.clear_false_positives_partial_match(
             cleared_flags, tuple(false_positives)
@@ -706,12 +822,14 @@ class Validator:
             flag_type=flag_type,
             return_paths=True,
             staged_files=self.staged_files,
+            workers=self.workers,
         )
         set_flags = Variables.get_all_set_flags(
             mod_path=self.mod_path,
             lowercase=False,
             flag_type=flag_type,
             staged_files=self.staged_files,
+            workers=self.workers,
         )
         used_flags = DataCleaner.clear_false_positives_partial_match(
             used_flags, tuple(false_positives)
@@ -776,12 +894,14 @@ class Validator:
             flag_type=flag_type,
             return_paths=True,
             staged_files=self.staged_files,
+            workers=self.workers,
         )
         used_flags = Variables.get_all_used_flags(
             mod_path=self.mod_path,
             lowercase=False,
             flag_type=flag_type,
             staged_files=self.staged_files,
+            workers=self.workers,
         )
         set_flags = DataCleaner.clear_false_positives_partial_match(
             set_flags, tuple(false_positives)
@@ -840,9 +960,13 @@ class Validator:
             lowercase=False,
             return_paths=True,
             staged_files=self.staged_files,
+            workers=self.workers,
         )
         set_targets = EventTargets.get_all_set_targets(
-            mod_path=self.mod_path, lowercase=False, staged_files=self.staged_files
+            mod_path=self.mod_path,
+            lowercase=False,
+            staged_files=self.staged_files,
+            workers=self.workers,
         )
 
         for target in cleared_targets:
@@ -903,9 +1027,13 @@ class Validator:
             lowercase=False,
             return_paths=True,
             staged_files=self.staged_files,
+            workers=self.workers,
         )
         set_targets = EventTargets.get_all_set_targets(
-            mod_path=self.mod_path, lowercase=False, staged_files=self.staged_files
+            mod_path=self.mod_path,
+            lowercase=False,
+            staged_files=self.staged_files,
+            workers=self.workers,
         )
         used_targets = DataCleaner.clear_false_positives_partial_match(
             used_targets, tuple(FALSE_POSITIVES)
@@ -974,9 +1102,13 @@ class Validator:
             lowercase=False,
             return_paths=True,
             staged_files=self.staged_files,
+            workers=self.workers,
         )
         used_targets = EventTargets.get_all_used_targets(
-            mod_path=self.mod_path, lowercase=False, staged_files=self.staged_files
+            mod_path=self.mod_path,
+            lowercase=False,
+            staged_files=self.staged_files,
+            workers=self.workers,
         )
         set_targets = DataCleaner.clear_false_positives_partial_match(
             set_targets, tuple(FALSE_POSITIVES)
@@ -1070,6 +1202,7 @@ class Validator:
         )
         self.log(f"{'#'*80}")
         self.log(f"Mod path: {self.mod_path}")
+        self.log(f"Worker processes: {self.workers}")
         if self.staged_only:
             self.log(
                 f"{Colors.CYAN if self.use_colors else ''}Mode: Git staged files only{Colors.ENDC if self.use_colors else ''}"
@@ -1216,6 +1349,12 @@ Examples:
         action="store_true",
         help="Only validate git staged files (for pre-commit hook)",
     )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=None,
+        help=f"Number of worker processes (default: {max(1, cpu_count() // 2)} = half CPU count)",
+    )
 
     args = parser.parse_args()
 
@@ -1235,6 +1374,7 @@ Examples:
         output_file=args.output,
         use_colors=not args.no_color,
         staged_only=args.staged,
+        workers=args.workers,
     )
     errors_found = validator.run_all_validations()
 
