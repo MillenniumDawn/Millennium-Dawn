@@ -191,6 +191,70 @@ on_actions = {
 		}
 	}
 
+	#ROOT = attacking side
+	#FROM = defending side
+	on_war_relation_added = { # ---> Fires in 2nd place (1st is on_declare_war) -> This one is triggered ALWAYS
+		effect = {
+			if = {
+				limit = {
+					NOT = { is_in_array = { global.sc_pressure_at_war = ROOT } }
+				}
+				add_to_array = { global.sc_pressure_at_war = ROOT }
+			}
+			if = {
+				limit = {
+					NOT = { is_in_array = { global.sc_pressure_at_war = FROM } }
+				}
+				add_to_array = { global.sc_pressure_at_war = FROM }
+			}
+		}
+	}
+	on_declare_war = {
+		effect = {
+			if = {
+				limit = {
+					NOT = { is_in_array = { global.sc_pressure_at_war = ROOT } }
+				}
+				add_to_array = { global.sc_pressure_at_war = ROOT }
+			}
+			if = {
+				limit = {
+					NOT = { is_in_array = { global.sc_pressure_at_war = FROM } }
+				}
+				add_to_array = { global.sc_pressure_at_war = FROM }
+			}
+		}
+	}
+	#ROOT - Winner
+	#FROM - Loser
+	#FIRES FOR ALL SIDES
+	on_peaceconference_ended = {
+		effect = {
+			if = {
+				limit = {
+					NOT = {
+						ROOT = {
+							has_war = yes
+						}
+					}
+					is_in_array = { global.sc_pressure_at_war = ROOT }
+				}
+				remove_from_array = { global.sc_pressure_at_war = ROOT }
+			}
+			if = {
+				limit = {
+					NOT = {
+						FROM = {
+							has_war = yes
+						}
+					}
+					is_in_array = { global.sc_pressure_at_war = FROM }
+				}
+				remove_from_array = { global.sc_pressure_at_war = FROM }
+			}
+		}
+	}
+
 	on_wargoal_expire = { }
 
 	#FROM is state #ROOT is broken as hell
@@ -2940,6 +3004,8 @@ on_actions = {
 				un_recog_setup_check = yes
 
 				set_static_state_modifier_on_game_start = yes
+
+				un_on_game_start_war_add = yes
 
 				#Sets modifiers for microchips and composites
 				add_dynamic_modifier = { modifier = advanced_production_modifier }

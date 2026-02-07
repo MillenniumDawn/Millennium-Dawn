@@ -168,7 +168,10 @@ set_sel_pmc_units = {
 un_recog_setup_check = {
 	if = {
 		limit = {
-			has_idea = Lacks_International_Recognition
+			OR = {
+				has_idea = Lacks_International_Recognition
+				has_idea = Non_State_Actor
+			}
 		}
 		if = {
 			limit = {
@@ -183,21 +186,59 @@ un_recog_setup_check = {
 	}
 }
 
+un_check_if_valid_for_sanctions = {
+	clear_array = global.can_be_sc_sanctioned
+	if = {
+		limit = {
+			check_variable = { has_added_tension_amount > 0 }
+		}
+		if = {
+			limit = {
+				NOT = { is_in_array = { global.can_be_sc_sanctioned = THIS } }
+				NOT = { has_idea = sc_economic_sanctions }
+			}
+			add_to_array = { global.can_be_sc_sanctioned = THIS }
+		}
+	}
+}
+
+un_on_game_start_war_add = {
+	if = {
+		limit = {
+			has_war = yes
+		}
+		add_to_array = { global.un_sc_pressure_end_war = THIS }
+	}
+}
+
 security_council_vote_finished = {
 	#Do the actions based on the type of vote
-	#Economic Sanctions
+	#Pressure to End War
 	if = {
 		limit = { check_variable = { global.current_sc_vote_type = 1 } }
 	}
-	#Arms Embargo
+	#Economic Sanctions due to Tension
 	if = {
 		limit = { check_variable = { global.current_sc_vote_type = 2 } }
 	}
-	#Add nation to the UN
+	#Regulate Volunteers
 	if = {
 		limit = { check_variable = { global.current_sc_vote_type = 3 } }
 	}
+	#Arms Embargo
+	if = {
+		limit = { check_variable = { global.current_sc_vote_type = 4 } }
+	}
+	#Add nation to the UN
+	if = {
+		limit = { check_variable = { global.current_sc_vote_type = 5 } }
+		set_variable = { global.current_ga_vote_type = 5 }
+		set_variable = { global.current_ga_vote_nation = global.current_sc_vote_nation }
 
+		var:global.current_sc_vote_nation = {
+			country_event = recognition.13
+		}
+	}
 
 	#clear all arrays and variables
 	clear_array = global.security_council_vote_yes
@@ -206,6 +247,7 @@ security_council_vote_finished = {
 	clear_variable = global.current_sc_vote_type
 	clear_variable = global.current_sc_vote_nation
 	clr_global_flag = current_ongoing_sc_vote
+
 	missile_ui_update = yes
 }
 
@@ -213,7 +255,7 @@ general_assembly_vote_finished = {
 	#Do the actions based on the type of vote
 	#Add nation to the UN
 	if = {
-		limit = { check_variable = { global.current_ga_vote_type = 0 } }
+		limit = { check_variable = { global.current_ga_vote_type = 5 } }
 	}
 	#Propose non-binding resolution
 	#This will be an idea that players, after voting, can choose to accept or not
@@ -223,8 +265,15 @@ general_assembly_vote_finished = {
 	#clear all arrays and variables
 	clear_array = global.general_assembly_vote_yes
 	clear_array = global.general_assembly_vote_no
+	clear_array = global.general_assembly_vote_abstain
 	clear_variable = global.current_ga_vote_type
 	clear_variable = global.current_ga_vote_nation
 	clr_global_flag = current_ongoing_ga_vote
+
+	set_global_flag = {
+		flag = un_ga_vote_cooldown
+		days = 60
+		value = 1
+	}
 	missile_ui_update = yes
 }
