@@ -1,0 +1,190 @@
+MD_protests_forming = {
+	MD_incoming_protest_movement = {
+		activation = {
+			always = no
+		}
+		available = {
+
+			if = {
+				limit = {
+					OR = {
+						check_variable = { government_coalition_strength < 0.3 }
+						check_variable = { interest_rate > 8.9 }
+						has_idea = stagnation
+						has_idea = recession
+						has_idea = depression
+						OR = {
+							has_idea = paralyzing_corruption
+							has_idea = crippling_corruption
+							has_idea = rampant_corruption
+							has_idea = unrestrained_corruption
+							has_idea = systematic_corruption
+							has_idea = widespread_corruption
+						}
+					}
+				}
+				MD_has_fixed_econ = yes
+			}
+
+			if = {
+				limit = {
+					OR = {
+						has_elections = no
+						check_variable = { months_at_war > 36 }
+						check_variable = { government_coalition_strength < 0.3 }
+						OR = {
+							has_idea = paralyzing_corruption
+							has_idea = crippling_corruption
+							has_idea = rampant_corruption
+							has_idea = unrestrained_corruption
+							has_idea = systematic_corruption
+							has_idea = widespread_corruption
+						}
+					}
+				}
+				MD_has_fixed_political = yes
+			}
+		}
+
+		days_mission_timeout = 180
+		is_good = no
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout MD_incoming_protest_movement"
+			add_stability = 0.02
+		}
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout MD_incoming_protest_movement"
+			country_event = protests.100
+		}
+	}
+
+	MD_incoming_revolt = {
+		activation = {
+			always = no
+		}
+
+		available = {
+			all_core_state = {
+				has_resistance = no
+			}
+		}
+
+		days_mission_timeout = 850
+		is_good = no
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout MD_incoming_revolt"
+			country_event = protests.103
+		}
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout MD_incoming_revolt"
+			start_civil_war_with_no_leader_change = yes
+			hidden_effect = {
+				every_owned_state = {
+					limit = {
+						has_resistance = yes
+					}
+					cancel_resistance = yes
+					clr_state_flag = MD_dont_protest_again
+				}
+				clr_country_flag = MD_protests_began
+				set_country_flag = {
+					flag = MD_protest_cooldown
+					days = 1000
+					value = 1
+				}
+			}
+		}
+	}
+
+	# Decisions
+
+	MD_appease_protesters = {
+		fire_only_once = yes
+		cost = 100
+		visible = {
+			has_active_mission = MD_incoming_revolt
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MD_appease_protesters"
+			add_days_mission_timeout = {
+				mission = MD_incoming_revolt
+				days = 180
+			}
+		}
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	MD_hearts_and_minds_campaign = {
+		days_remove = 60
+		days_re_enable = 30
+		visible = {
+			has_active_mission = MD_incoming_revolt
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MD_hearts_and_minds_campaign"
+			add_stability = 0.01
+		}
+		modifier = {
+			political_power_factor = -0.25
+			conscription_factor = 0.05
+			compliance_growth = 0.15
+		}
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	MD_extended_crackdown = {
+		days_remove = 60
+		days_re_enable = 30
+		visible = {
+			has_active_mission = MD_incoming_revolt
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MD_extended_crackdown"
+			add_stability = 0.01
+		}
+		modifier = {
+			political_power_factor = -0.25
+			resistance_damage_to_garrison = -0.50
+			resistance_growth = -0.25
+		}
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	MD_activate_riot_police = {
+		days_remove = 30
+		visible = {
+			has_active_mission = MD_incoming_revolt
+			NOT = {
+				has_idea = protests_garrison_damage
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MD_activate_riot_police"
+			add_ideas = protests_garrison_damage
+		}
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	MD_deactivate_riot_police = {
+		days_remove = 30
+		visible = {
+			has_active_mission = MD_incoming_revolt
+			has_idea = protests_garrison_damage
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MD_deactivate_riot_police"
+			remove_ideas = protests_garrison_damage
+		}
+		ai_will_do = {
+			factor = 10
+		}
+	}
+}

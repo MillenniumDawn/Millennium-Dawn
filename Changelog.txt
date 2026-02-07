@@ -197,6 +197,9 @@ v2.0.0
   - You can no longer take more debt than you have GDP fixing debt exploits where you have low GDP and could take 100b in debt despite having less than that in GDP
   - The Military Internal Faction now provides a reduction to required tension for generating a wargoal by up -25% at 100 opinion
   - Reduced the cost of convoys by 400 IC from 1500 IC
+  - CUB AI should no longer try bakrupting itself via focus tree
+  - Reduced the base cost of railways to 3750 per additional level instead of 5000
+  - Softened the workforce modifiers curve when exceeding 100k GDP/c debuff to total workforce to -50% at 200k GDP/c instead of -85% at 100k GDP/c
 
  Bugfix:
   - Fixed influence monthly exploit - auto-influence now applies cooldown on activation to prevent abuse of late-month toggle (Issue #378)
@@ -313,6 +316,14 @@ v2.0.0
   - Fixed German Modernise Equipment decision not giving random rewards
   - Fixed a Belarusian focus being hidden behind the "Church Reforms" focus
   - Fixed a Lichtenstein bug where you would get scammed out of 3.5 billion
+  - Fixed Iraqi civil war tags not being properly setup on release
+  - Iraq can no longer vote to join the invasion against itself in the post 9/11 content
+  - Fixed a display issue with the Arab Spring not showing you the government popularity impact on the growth of the Arab Spring
+  - Fixed a screwed up trigger for the "Prominence in Flanders" decisions for the Dutch mechanic not properly switching to toggled
+  - Fixed a Libyan unit parsing error where they are not correctly referencing a division template that it should be
+  - Fixed an overflow bug with workers at very high GDP/c causing your economy to constantly be in flux (thank you wandoubill)
+  - Added a minimum clamp of 0.00001 to workers to prevent extreme casing where you could end up with negative people employed (even your baby was employed!)
+  - Fixed an issue where Serbia was trying to double non-aggression pact causing errors in the log
 
  Content:
   - [RAJ] Added new Naxalite-Maoist insurgency mechanics (Issue #330)
@@ -413,11 +424,13 @@ v2.0.0
   - Adjusted the F4 models so that they aren't the same size as aircraft carriers
   - Integrated the colored railways for the supply map mode so they're easier to discern the railways
     - Credits to jumpropeTravesty1974 for their mod that we integrated.
+  - Added additional portraits for generic scientists and otherwise
 
  Game Rules:
   - Added a new game rule for Enabling/Disabling Energy Load Sharing system
   - Added a new game rule for the price per GW for the Energy Load Sharing system
   - The Game Rule annex microstates for the Oceania tags will now annex into Fiji so you can play w/ the tree (yes I know this is a buff to them)
+  - Fixed the Game Rule for disabling "Domestic Independence" not working as expected
 
  Localization:
   - Adjusted some of the wording in the Serbia joins the United Nation event so it doesn't say Yugoslavia when Serbia still exists
@@ -427,15 +440,17 @@ v2.0.0
   - Fixed the tooltips for the Bulgarian Energy Companies focuses showing that they are giving a debuff when they're giving a bonus
   - Introduced more flavorful text for the satellite access diplomatic actions
   - Removed the weird gap in additional income or additional expenses that came from the market contracts
+  - Fixed a number of missing additional income and additional expenses that were missing from the tooltips so you can actually see those bonuses
 
  Map:
   - HMNB Clyde is now properly represented with a Level 8 Naval Base + Naval Headquarters for the UK's Nuclear Submarines deployment
   - Updated the tech metals available on game start for Armenia from 7 to 20
-  - Regroup Jubaland
+  - Regroup Jubaland into a several states and provinces to support new Somali content
+  - Added a new state for Guadalcanal, Timor Leste and renamed Timor Leste to Loro Munu in support of the Timor Leste Crisis content
 
  Map Modes:
   - Reworked the coloring of the SCO map modes to have distinct colors for each type (observers purple, possible non-member or observers are yellow) for easier view
-  - Removed junk map modes that were lingering in the files
+  - Removed junk map modes that were lingering in the files and not adding anything
 
  Performance:
   - Converted more add AI strategy to save performance in the long term and reduce the save games
@@ -455,11 +470,22 @@ v2.0.0
   - Moved all productivity state variables into the history/states so as to not do additional scope expansion
   - Removed logs for unneeded functions such as news events, technologies, and other redundant logging
   - Removed redundant sort influence and applied the error correction at the beginning prior to sort
+  - Improved optimization of custom guis by adding dirty vars to ensure they're not constantly refreshing
+  - Reduced a significant number of weekly/monthly math and replaced with more performant streamlined math to allow for faster ticks
+  - Replaced inline every_country, random_country with more performance freidnly alternatives where applicable
+  - Simplified scripted localization calls in the background to support faster running tick rates
+  - Refactored the map mode colorization math to improve the speed at which they're rendered for users
+  - Disabled the calculation for workers if you don't have a building (displays are still calculated). Crazy how if you have no workers you don't need to calculate 0.
+  - Adjusted math for productivity modifiers to calculate as they need to rather than every tick
+  - Converted country group triggers to script constant checks for better performance
 
  Quality of Life:
   - You can now push your Election Threshold to 0% instead of the minimum 1% in the Subideology screen
   - Disabled the XP cost for assigning MIOs to design team so you can use the update automatically button
   - Added a political decision to block only foreign election notifications so you don't need to block all news events
+  - Added shortcuts to MD specific menus in various menus to be more accessible
+  - Added a startup event to help direct and support new players (simple for now will likely be redone into a proper helper)
+  - Added a container as part of the topbar to show a percentage of energy unfufillment
 
  Sound:
   - Ensured that voicelines for various nations are saved in the proper format as to prevent nonsense errors in the logs
@@ -467,8 +493,9 @@ v2.0.0
  User Interface:
   - Fixed the doctrine's text being unreadable due to a black font on a black interface
   - Fixed the Faction Goal popup being off center and weird in the UI
+  - Modernized the trade GUI to MD's stylization
 
-v2.0.0
+v1.12.3b
 
  AI:
   - The Zombie AI should now properly build Zombie units ontop of their spawning numbers

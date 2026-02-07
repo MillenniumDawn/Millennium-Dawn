@@ -185,9 +185,9 @@ These can be used _anywhere_ that a normal modifier can be used such as `politic
 | energy_use                                 | Energy   | Modifies energy use as a flat amount                                                       | 10 = 10 more energy consumption |
 | energy_use_multiplier                      | Energy   | Modifies energy consumption as a percentage, modifies all sources of energy consumption    | N/A                             |
 | battery_park_construction_cost             | Energy   | Modifies the cost of building a battery park                                               | N/A                             |
-| leu_fuel_production_modifier               | Energy   | Modifies the amount of LEU fuel produced each week by enrichment facilities                | N/A                             |
-| heu_fuel_production_modifier               | Energy   | Modifies the amount of HEU fuel produced each week by enrichment facilities                | N/A                             |
 | state_renewable_energy_generation_modifier | Energy   | Modifies the amount of State Renewable Energy Generation                                   | N/A                             |
+| hydroelectric_power_generation_modifier    | Energy   | Modifies the amount of Hydroelectric Power Energy Generation                               | N/A                             |
+| geothermal_power_generation_modifier       | Energy   | Modifies the amount of Geothermal Power Energy Generation                                  | N/A                             |
 
 {% endcapture %}
 {{ md | markdownify }}
@@ -1322,13 +1322,12 @@ Renewable capacity is slightly different since it use the [Global Wind Atlas](ht
 
 Once you are on the website you can look at your desired region and then hover over the area and it will provide you a value in the bottom right of the screen.
 co
-The equation for the capacity factor is (Atlas value) - 0.25 = Capacity Factor variable for that state. Using the Western Sahara as an example the Capacity Factor on the Atlas extends to 0.80 which means in MD the state would have a capacity factor of 0.50 with the dynamic modifier.
+The equation for the capacity factor is (Atlas value) - 0.25 = Capacity Factor variable for that state. Using the Western Sahara as an example the Capacity Factor on the Atlas extends to 0.80 which means in MD the state would have a capacity factor of 0.50. This is done via a static state modifier handled on game start.
 
 Example:
 
 ```python
 set_variable = { state_renewable_capacity_factor_modifier_var = 0.55 }
-add_dynamic_modifier = { modifier = renewable_capacity_factor_dyn_mod }
 ```
 
 Productivity is also set at the state level as well. Please refer to any of the state.

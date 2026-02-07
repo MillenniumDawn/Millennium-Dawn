@@ -46,6 +46,8 @@
 @money_control_factor_scaling = 0.238
 # Adjusts the percentage of refugees off of your total population
 @refugee_percentage_adjuster = 0.005
+# Minimum workers per building
+@minimum_workers_per_building = 0.00001
 
 # ingame_update_setup
 # This function is used to update the economic setup mid game
@@ -60,6 +62,7 @@ ingame_update_setup = {
 	calculate_additional_income_rate = yes
 
 	#Expenses
+	expense_modifier_calculations = yes
 	update_military_rate = yes
 	update_bureaucracy_rate = yes
 	update_police_rate = yes
@@ -71,9 +74,11 @@ ingame_update_setup = {
 
 	#Various
 	update_economic_cycle_cost = yes
-	update_cyber_cost = yes
 	update_employment_productivity_output_dynamic_modifier = yes
 	calculate_migration_mechanic_values = yes
+	if = { limit = { NOT = { has_dlc = "La Resistance" } }
+		update_cyber_cost = yes
+	}
 
 	## AI Section
 	# This is for calculating the AIs desired economic tax law
@@ -95,18 +100,37 @@ ingame_update_setup = {
 		log = "[GetDateText]: [THIS.GetName]: Weekly Economic Update: Treasury: [?THIS.treasury] Treasury Rate: [?THIS.treasury_rate] Debt: [?THIS.debt] Interest Rate: [?THIS.interest_rate] Population Tax Rate: [?THIS.population_tax_rate] Corporate Tax Rate: [?THIS.corporate_tax_rate]"
 	}
 
-	# Dirty UI
+	update_money_dirty_variable = yes
+	refresh_investment_gui = yes
+}
+
+# Effect: update_money_dirty_variable
+# Purpose: Updates the dirty variable which in turn updates the money UI and the research screen
+update_money_dirty_variable = {
 	if = { limit = { NOT = { has_variable = global.update_monie_ui } }
 		set_variable = { global.update_monie_ui = 0 }
 	}
 	else = {
 		add_to_variable = { global.update_monie_ui = 1 }
 	}
-	refresh_gui = yes
+
+	add_to_variable = { global.research_screen_ui = 1 }
 }
 
-# calculate_tax_rate
-# Calculates the tax rate of a given nation where you flow in the corporate_tax_rate of a given nation
+expense_modifier_calculations = {
+	set_temp_variable = { inflation_multiplier = 1 }
+	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
+
+	set_temp_variable = { gdp_scaling_modifier = gdp_per_capita }
+	multiply_temp_variable = { gdp_scaling_modifier = @spending_laws_gdp_scaling }
+	add_to_temp_variable = { gdp_scaling_modifier = 1 }
+
+	set_temp_variable = { common_money_modifier = inflation_multiplier }
+	multiply_temp_variable = { common_money_modifier = gdp_scaling_modifier }
+}
+
+# Effect: calculate_tax_rate
+# Purpose: Calculates the tax rate of a given nation where you flow in the corporate_tax_rate of a given nation
 calculate_tax_rate = {
 	hidden_effect = {
 		if = { limit = { NOT = { has_dynamic_modifier = { modifier = corporate_tax_consumer_goods_hit } } }
@@ -585,10 +609,7 @@ calculate_additional_income_rate = {
 	# EU
 	if = {
 		limit = {
-			OR = {
-				is_in_array = { global.EU_member = THIS }
-				has_idea = EU_member
-			}
+			is_in_array = { global.EU_member = THIS }
 			NOT = { has_idea = EUU_subsidies_suspended }
 		}
 		set_variable = { EU_subsidies = THIS.EU_natural_subsidies }
@@ -646,7 +667,7 @@ calculate_additional_income_rate = {
 	}
 
 	# Country Specific Income
-	##Abkhazia
+	# Abkhazia
 	if = {
 		limit = { original_tag = ABK }
 		if = {
@@ -660,7 +681,7 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_ABK_tourism2 }
 		}
 	}
-	##Armenia
+	# Armenia
 	if = {
 		limit = { original_tag = ARM }
 		if = {
@@ -718,6 +739,28 @@ calculate_additional_income_rate = {
 		limit = { has_idea = AZE_indian_ports_idea }
 		set_variable = { AZE_indian_ports_idea_gain = 0.25 }
 		add_to_variable = { additional_income_rate = AZE_indian_ports_idea_gain }
+	}
+	# Bosnia
+	if = { limit = { original_tag = BOS }
+		if = {
+			limit = { has_idea = bos_international_funding }
+			set_variable = { Bosnia_united_nations_aid = 0.4 }
+			add_to_variable = { additional_income_rate = Bosnia_united_nations_aid }
+		}
+		if = {
+			limit = { has_idea = BOS_EUFOR }
+			set_variable = { BOS_EUFOR_aid_money = 0.2 }
+			add_to_variable = { additional_income_rate = BOS_EUFOR_aid_money }
+		}
+	}
+	# Bolivia
+	if = {
+		limit = { original_tag = BOL }
+		if = {
+			limit = { OR = { has_idea = BOL_tourism has_idea = BOL_tourism2 } }
+			set_variable = { additional_income_BOL_tourism = 0.50 }
+			add_to_variable = { additional_income_rate = additional_income_BOL_tourism }
+		}
 	}
 	##DPR
 	if = {
@@ -780,18 +823,6 @@ calculate_additional_income_rate = {
 		set_variable = { additional_income_WAA_Narcotics_Producer = 0.08 }
 		add_to_variable = { additional_income_rate = additional_income_WAA_Narcotics_Producer }
 	}
-	if = { limit = { original_tag = BOS }
-		if = {
-			limit = { has_idea = bos_international_funding }
-			set_variable = { Bosnia_united_nations_aid = 0.4 }
-			add_to_variable = { additional_income_rate = Bosnia_united_nations_aid }
-		}
-		if = {
-			limit = { has_idea = BOS_EUFOR }
-			set_variable = { BOS_EUFOR_aid_money = 0.2 }
-			add_to_variable = { additional_income_rate = BOS_EUFOR_aid_money }
-		}
-	}
 	# Kosovo
 	if = { limit = { original_tag = KOS }
 		if = {
@@ -851,15 +882,6 @@ calculate_additional_income_rate = {
 			limit = { has_idea = CRM_naval }
 			set_variable = { additional_income_CRM_naval = 0.045 }
 			add_to_variable = { additional_income_rate = additional_income_CRM_naval }
-		}
-	}
-	#Bolivia
-	if = {
-		limit = { original_tag = BOL }
-		if = {
-			limit = { OR = { has_idea = BOL_tourism has_idea = BOL_tourism2 } }
-			set_variable = { additional_income_BOL_tourism = 0.50 }
-			add_to_variable = { additional_income_rate = additional_income_BOL_tourism }
 		}
 	}
 	#Yugra
@@ -971,7 +993,7 @@ calculate_additional_income_rate = {
 	}
 
 
-	##Botswana
+	# Botswana
 	if = {
 		limit = { original_tag = BOT }
 		if = {
@@ -1187,7 +1209,6 @@ calculate_additional_income_rate = {
 			set_variable = { additional_income_SOV_korean_stream_sov_idea = 0.375 }
 			add_to_variable = { additional_income_rate = additional_income_SOV_korean_stream_sov_idea }
 		}
-
 	}
 	# Kazakhstan
 	if = {
@@ -1247,6 +1268,12 @@ calculate_additional_income_rate = {
 			limit = { has_idea = IRQ_party_coffers2 }
 			set_variable = { additional_income_IRQ_party_coffers_2 = 0.300 }
 			add_to_variable = { additional_income_rate = additional_income_IRQ_party_coffers_2 }
+		}
+		if = {
+			limit = { has_idea = PER_irgc_black_market_exploits }
+			set_variable = { additional_income_irgc_black_market = gdp_total }
+			multiply_variable = { additional_income_irgc_black_market = 0.002 }	#10% of GDP yearly estimated weekly
+			add_to_variable = { additional_income_rate = additional_income_irgc_black_market }
 		}
 	}
 	# Norway
@@ -1325,18 +1352,18 @@ calculate_additional_income_rate = {
 		}
 		if = {
 			limit = { has_country_flag = PER_iraq_accepted_to_pay_half_billion_weekly }
-			set_variable = { additional_income_iran_war_compensation_half = 0.5 }
-			add_to_variable = { additional_income_rate = additional_income_iran_war_compensation_half }
+			set_variable = { additional_income_iran_war_compensation = 0.5 }
+			add_to_variable = { additional_income_rate = additional_income_iran_war_compensation }
 		}
 		if = {
 			limit = { has_country_flag = PER_iraq_accepted_to_pay_one_billion_weekly }
-			set_variable = { additional_income_iran_war_compensation_one = 1.0 }
-			add_to_variable = { additional_income_rate = additional_income_iran_war_compensation_one }
+			set_variable = { additional_income_iran_war_compensation = 1.0 }
+			add_to_variable = { additional_income_rate = additional_income_iran_war_compensation }
 		}
 		if = {
 			limit = { has_country_flag = PER_iraq_accepted_to_pay_two_billion_weekly }
-			set_variable = { additional_income_iran_war_compensation_two = 2.0 }
-			add_to_variable = { additional_income_rate = additional_income_iran_war_compensation_two }
+			set_variable = { additional_income_iran_war_compensation = 2.0 }
+			add_to_variable = { additional_income_rate = additional_income_iran_war_compensation }
 		}
 	}
 	#Venezuela
@@ -1831,6 +1858,15 @@ calculate_additional_income_rate = {
 		limit = { original_tag = COM }
 		if = {
 			limit = {
+				has_completed_focus = COM_african_mercenaries
+				has_completed_focus = COM_a_rifle_for_hire
+			}
+			set_variable = { additional_income_COM_african_mercenaries = 0.500 }
+			multiply_variable = { additional_income_COM_african_mercenaries = COM_volunteer_nations^num }
+			add_to_variable = { additional_income_rate = additional_income_COM_african_mercenaries }
+		}
+		else_if = {
+			limit = {
 				OR = {
 					has_completed_focus = COM_african_mercenaries
 					has_completed_focus = COM_a_rifle_for_hire
@@ -1840,19 +1876,19 @@ calculate_additional_income_rate = {
 			multiply_variable = { additional_income_COM_african_mercenaries = COM_volunteer_nations^num }
 			add_to_variable = { additional_income_rate = additional_income_COM_african_mercenaries }
 		}
+	}
+	# Georgia
+	if = {
+		limit = { original_tag = GEO }
 		if = {
-			limit = {
-				has_completed_focus = COM_african_mercenaries
-				has_completed_focus = COM_a_rifle_for_hire
-			}
-			set_variable = { additional_income_COM_african_mercenaries = 0.500 }
-			multiply_variable = { additional_income_COM_african_mercenaries = COM_volunteer_nations^num }
-			add_to_variable = { additional_income_rate = additional_income_COM_african_mercenaries }
+			limit = { has_idea = GEO_nationalized_gold_reserves_idea }
+			set_variable = { additional_income_GEO_nationalized_gold_reserves = 0.175 }
+			add_to_variable = { additional_income_rate = additional_income_GEO_nationalized_gold_reserves }
 		}
 	}
 
 	# Energy Load Sharing Income
-	if = { limit = { NOT = { check_variable = { energy_load_sharing_nations^0 = 0 } } }
+	if = { limit = { check_variable = { energy_load_sharing_nations^num > 0  } }
 		set_temp_variable = { income_from_gw_sold = energy_load_sharing_use_var }
 		multiply_temp_variable = { income_from_gw_sold = global.price_per_gw_for_els }
 		set_variable = { energy_load_sharing_income_var = income_from_gw_sold }
@@ -1988,10 +2024,6 @@ update_military_rate = {
 	# Recreate the Array
 	resize_array = { array = array_defence_spend size = 10 value = 0 }
 
-	#Inflation additive modifier
-	set_temp_variable = { inflation_multiplier = 1 }
-	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
-
 	#A variable that stores the current military law the player has
 	if = { limit = { has_idea = defence_00 }
 		set_temp_variable = { def_index = 0 }
@@ -2085,37 +2117,38 @@ update_military_rate = {
 	## Calculate the cost of fielded military ##
 	### Land ###
 	#Below sets up the personnel cost for mil spending based on how many battalions a country has (divided into special, elite, regular and irregular units)
+	if = { limit = { check_variable = { num_battalions > 0 } }
+		#Count number of special units
+		set_temp_variable = { special_btn = num_battalions_with_type@Special_Forces }
 
-	#Count number of special units
-	set_temp_variable = { special_btn = num_battalions_with_type@Special_Forces }
+		#Count number of elite units - Kal's note; set normal support battalions to be regular
+		set_temp_variable = { elite_btn = num_battalions_with_type@L_Air_assault_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Air_Inf_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@Mot_Air_Inf_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@Mech_Air_Inf_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@Arm_Air_Inf_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Marine_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@Mot_Marine_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@Mech_Marine_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@Arm_Marine_Bat }
+		add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Ranger_Bat }
 
-	#Count number of elite units - Kal's note; set normal support battalions to be regular
-	set_temp_variable = { elite_btn = num_battalions_with_type@L_Air_assault_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Air_Inf_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@Mot_Air_Inf_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@Mech_Air_Inf_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@Arm_Air_Inf_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Marine_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@Mot_Marine_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@Mech_Marine_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@Arm_Marine_Bat }
-	add_to_temp_variable = { elite_btn = num_battalions_with_type@L_Ranger_Bat }
+		#Count number of regular units
+		set_temp_variable = { regular_btn = num_battalions_with_type@L_Inf_Bat }
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@Mot_Inf_Bat }
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@Mech_Inf_Bat }
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@Arm_Inf_Bat }
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@armor_Bat }
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@L_arm_Bat }
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@Arty_Bat }
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@SP_Arty_Bat }
+		#These were previously elite - Kal
+		add_to_temp_variable = { regular_btn = num_battalions_with_type@SP_AA_Bat }
 
-	#Count number of regular units
-	set_temp_variable = { regular_btn = num_battalions_with_type@L_Inf_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@Mot_Inf_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@Mech_Inf_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@Arm_Inf_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@armor_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@L_arm_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@Arty_Bat }
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@SP_Arty_Bat }
-	#These were previously elite - Kal
-	add_to_temp_variable = { regular_btn = num_battalions_with_type@SP_AA_Bat }
-
-	#Count number of irregular units
-	set_temp_variable = { irregular_btn = num_battalions_with_type@Militia_Bat }
-	add_to_temp_variable = { irregular_btn = num_battalions_with_type@Mot_Militia_Bat }
+		#Count number of irregular units
+		set_temp_variable = { irregular_btn = num_battalions_with_type@Militia_Bat }
+		add_to_temp_variable = { irregular_btn = num_battalions_with_type@Mot_Militia_Bat }
+	}
 
 	# Multiply each category with a weight value, and then add up categories together (eg. one special forces battalion is worth 1 militia battalion etc).
 	# Use these if you want to control costs of different land units to each other
@@ -2569,23 +2602,14 @@ update_bureaucracy_rate = {
 	#clear the array that stores the law cost
 	clear_array = array_bureaucracy_spend
 
-	#gdp scaling
-	set_temp_variable = { gdp_bureaucracy_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_bureaucracy_cost_modifier = @spending_laws_gdp_scaling }
-	add_to_temp_variable = { gdp_bureaucracy_cost_modifier = 1 }
+	#Set the base cost of bureaucracy (billion $ per 10 000 000 people)
+	set_temp_variable = { bureaucracy_base_cost = 0.0007 }
 
-	#Additional additive modifiers
+	# Additional additive modifiers
 	set_temp_variable = { bureaucracy_cost_multiplier = 1 }
 	add_to_temp_variable = { bureaucracy_cost_multiplier = modifier@bureaucracy_cost_multiplier_modifier }
-	set_variable = { bureaucracy_cost_multiplier_display = bureaucracy_cost_multiplier }
-	subtract_from_variable = { bureaucracy_cost_multiplier_display = 1 }
-
-	#Inflation additive modifier
-	set_temp_variable = { inflation_multiplier = 1 }
-	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
-
-	#Set the base cost of bureaucracy (billion $ per 10 000 000 people)
-	set_temp_variable = { bureaucracy_base_cost = 0.010 }
+	multiply_temp_variable = { bureaucracy_cost_multiplier = common_money_modifier }
+	multiply_temp_variable = { bureaucracy_cost_multiplier = bureaucracy_base_cost }
 
 	# Recreate the Array
 	resize_array = { array = array_bureaucracy_spend size = 5 value = 0 }
@@ -2595,12 +2619,8 @@ update_bureaucracy_rate = {
 		array = array_bureaucracy_spend
 		index = i
 		value = v
-		add_to_variable = { var = array_bureaucracy_spend^i value = population_total }	#Unit 100 000
+		add_to_variable = { var = array_bureaucracy_spend^i value = population_total }
 		multiply_variable = { array_bureaucracy_spend^i = bureaucracy_cost_multiplier }
-		multiply_variable = { array_bureaucracy_spend^i = inflation_multiplier }
-		multiply_variable = { array_bureaucracy_spend^i = gdp_bureaucracy_cost_modifier }
-		multiply_variable = { array_bureaucracy_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
-		multiply_variable = { var = array_bureaucracy_spend^i value = bureaucracy_base_cost }
 		clamp_variable = { var = array_bureaucracy_spend^i min = 0 }
 	}
 
@@ -2637,21 +2657,13 @@ update_police_rate = {
 	clear_array = array_security_spend
 
 	#Set the base cost of policing (billion $ per 10 000 000 people)
-	set_temp_variable = { police_base_cost = 0.014 }
-
-	#gdp scaling
-	set_temp_variable = { gdp_police_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_police_cost_modifier = @spending_laws_gdp_scaling }
-	add_to_temp_variable = { gdp_police_cost_modifier = 1 }
+	set_temp_variable = { police_base_cost = 0.00098 }
 
 	#Additional additive modifiers
 	set_temp_variable = { police_cost_multiplier = 1 }
 	add_to_temp_variable = { police_cost_multiplier = modifier@police_cost_multiplier_modifier }
-	set_variable = { police_cost_multiplier_display = police_cost_multiplier }
-	subtract_from_variable = { police_cost_multiplier_display = 1 }
-
-	set_temp_variable = { inflation_multiplier = 1 }
-	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
+	multiply_temp_variable = { police_cost_multiplier = common_money_modifier }
+	multiply_temp_variable = { police_cost_multiplier = police_base_cost }
 
 	# Recreate the Array
 	resize_array = { array = array_security_spend size = 5 value = 0 }
@@ -2663,10 +2675,6 @@ update_police_rate = {
 		value = v
 		add_to_variable = { array_security_spend^i = population_total }	#Unit 100 000
 		multiply_variable = { array_security_spend^i = police_cost_multiplier }
-		multiply_variable = { array_security_spend^i = inflation_multiplier }
-		multiply_variable = { array_security_spend^i = gdp_police_cost_modifier }
-		multiply_variable = { array_security_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
-		multiply_variable = { array_security_spend^i = police_base_cost }
 		clamp_variable = { var = array_security_spend^i min = 0 }
 	}
 
@@ -2704,11 +2712,7 @@ update_education_rate = {
 	clear_array = array_education_spend
 
 	#Set the base cost of education (billion $ per 10 000 000 people)
-	set_temp_variable = { education_base_cost = 0.036 }
-
-	#Inflation additive modifier
-	set_temp_variable = { inflation_multiplier = 1 }
-	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
+	set_temp_variable = { education_base_cost = 0.00036 }
 
 	#Education spending is more expensive the more research slots a country has
 	set_temp_variable = { research_slot_initial = -0.2 }
@@ -2721,18 +2725,17 @@ update_education_rate = {
 	#helps balance large countries (china/india/ecc) and represents poor countries setting up infrastructure that western countries already have
 	#but this was scrapped because poor countries were struggling with high tax rates despite very low spending levels
 	#now spending cost increases with gdpc
-	set_temp_variable = { gdp_education_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_education_cost_modifier = @spending_laws_gdp_scaling }
-	add_to_temp_variable = { gdp_education_cost_modifier = 1 }
-	set_variable = { education_cost_gdp_multiplier_display = gdp_education_cost_modifier }
+	set_variable = { education_cost_gdp_multiplier_display = gdp_scaling_modifier }
 	subtract_from_variable = { education_cost_gdp_multiplier_display = 1 }
 
-	#Additional additive modifiers
+	# Calculate Base Cost + Modifiers
 	set_temp_variable = { education_cost_multiplier = 1 }
 	add_to_temp_variable = { education_cost_multiplier = modifier@education_cost_multiplier_modifier }
 	add_to_temp_variable = { education_cost_multiplier = research_slot_modifier }
+	multiply_temp_variable = { education_cost_multiplier = common_money_modifier }
 	set_variable = { education_cost_multiplier_display = education_cost_multiplier }
 	subtract_from_variable = { education_cost_multiplier_display = 1 }
+	multiply_temp_variable = { education_cost_multiplier = education_base_cost }
 
 	# Recreate the Array
 	resize_array = { array = array_education_spend size = 5 value = 0 }
@@ -2797,15 +2800,9 @@ update_education_rate = {
 		array = array_education_spend
 		index = i
 		value = v
-		add_to_variable = { array_education_spend^i = population_total }	#Unit 100 000
-		multiply_variable = { array_education_spend^i = gdp_education_cost_modifier }
+		add_to_variable = { array_education_spend^i = population_total } #Unit 100 000
 		multiply_variable = { array_education_spend^i = education_cost_multiplier }
-		multiply_variable = { array_education_spend^i = inflation_multiplier }
-		multiply_variable = { array_education_spend^i = 0.01 }	#Unit 10 000 000
-		multiply_variable = { array_education_spend^i = education_base_cost }
-
 		add_to_variable = { array_education_spend^i = THIS.total_facilities_spending_display_var }
-
 		clamp_variable = { var = array_education_spend^i min = 0 }
 	}
 
@@ -2849,22 +2846,13 @@ update_health_rate = {
 	clear_array = array_health_spend
 
 	#Set the base cost of health (billion $ per 10 000 000 people)
-	set_temp_variable = { health_base_cost = 0.01 }
-
-	#Inflation additive modifier
-	set_temp_variable = { inflation_multiplier = 1 }
-	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
-
-	# # Bird Note: Ported Education Spending Logic 07-14
-	set_temp_variable = { gdp_health_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_health_cost_modifier = @spending_laws_gdp_scaling }
-	add_to_temp_variable = { gdp_health_cost_modifier = 1 }
+	set_temp_variable = { health_base_cost = 0.0007 }
 
 	#Additional additive modifiers
 	set_temp_variable = { health_cost_multiplier = 1 }
 	add_to_temp_variable = { health_cost_multiplier = modifier@health_cost_multiplier_modifier }
-	set_variable = { health_cost_multiplier_display = health_cost_multiplier }
-	subtract_from_variable = { health_cost_multiplier_display = 1 }
+	multiply_temp_variable = { health_cost_multiplier = common_money_modifier }
+	multiply_temp_variable = { health_cost_multiplier = health_base_cost }
 
 	# Recreate the Array
 	resize_array = { array = array_health_spend size = 6 value = 0 }
@@ -2875,11 +2863,7 @@ update_health_rate = {
 		index = i
 		value = v
 		add_to_variable = { var = array_health_spend^i value = population_total }	#Unit 100 000
-		multiply_variable = { array_health_spend^i = gdp_health_cost_modifier }
 		multiply_variable = { var = array_health_spend^i value = health_cost_multiplier }
-		multiply_variable = { array_health_spend^i = inflation_multiplier }
-		multiply_variable = { array_health_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
-		multiply_variable = { var = array_health_spend^i value = health_base_cost }
 		clamp_variable = { var = array_health_spend^i min = 0 }
 	}
 
@@ -2921,22 +2905,13 @@ update_social_rate = {
 	clear_array = array_social_spend
 
 	#Set the base cost of welfare (billion $ per 10 000 000 people)
-	set_temp_variable = { social_base_cost = 0.019 }
-
-	#Inflation additive modifier
-	set_temp_variable = { inflation_multiplier = 1 }
-	add_to_temp_variable = { inflation_multiplier = modifier@inflation_cost_multiplier_modifier }
-
-	# # Bird Note: Ported Education Spending Logic 07-14
-	set_temp_variable = { gdp_social_cost_modifier = gdp_per_capita }
-	multiply_temp_variable = { gdp_social_cost_modifier = @spending_laws_gdp_scaling }
-	add_to_temp_variable = { gdp_social_cost_modifier = 1 }
+	set_temp_variable = { social_base_cost = 0.00133 }
 
 	#Additional additive modifiers
 	set_temp_variable = { social_cost_multiplier = 1 }
 	add_to_temp_variable = { social_cost_multiplier = modifier@social_cost_multiplier_modifier }
-	set_variable = { social_cost_multiplier_display = social_cost_multiplier }
-	subtract_from_variable = { social_cost_multiplier_display = 1 }
+	multiply_temp_variable = { social_cost_multiplier = common_money_modifier }
+	multiply_temp_variable = { social_cost_multiplier = social_base_cost }
 
 	# Recreate the Array
 	resize_array = { array = array_social_spend size = 6 value = 0 }
@@ -2947,11 +2922,7 @@ update_social_rate = {
 		index = i
 		value = v
 		add_to_variable = { var = array_social_spend^i value = population_total }	#Unit 100 000
-		multiply_variable = { var = array_social_spend^i value = gdp_social_cost_modifier }
 		multiply_variable = { var = array_social_spend^i value = social_cost_multiplier }
-		multiply_variable = { var = array_social_spend^i value = inflation_multiplier }
-		multiply_variable = { array_social_spend^i = 0.07 } #Multiply each index by 7 days #Unit 10 000 000
-		multiply_variable = { var = array_social_spend^i value = social_base_cost }
 		clamp_variable = { var = array_social_spend^i min = 0 }
 	}
 
@@ -3534,18 +3505,18 @@ calculate_additional_expense_rate = {
 		limit = { original_tag = IRQ }
 		if = {
 			limit = { has_country_flag = IRQ_iraq_accepted_to_pay_half_billion_weekly }
-			set_variable = { additional_expense_iraq_war_compensation_half = 0.5 }
-			add_to_variable = { additional_expenses_rate = additional_expense_iraq_war_compensation_half }
+			set_variable = { additional_expense_iraq_war_compensation = 0.5 }
+			add_to_variable = { additional_expenses_rate = additional_expense_iraq_war_compensation }
 		}
 		if = {
 			limit = { has_country_flag = IRQ_iraq_accepted_to_pay_one_billion_weekly }
-			set_variable = { additional_expense_iraq_war_compensation_one = 1.0 }
-			add_to_variable = { additional_expenses_rate = additional_expense_iraq_war_compensation_one }
+			set_variable = { additional_expense_iraq_war_compensation = 1.0 }
+			add_to_variable = { additional_expenses_rate = additional_expense_iraq_war_compensation }
 		}
 		if = {
 			limit = { has_country_flag = IRQ_iraq_accepted_to_pay_two_billion_weekly }
-			set_variable = { additional_expense_iraq_war_compensation_two = 2.0 }
-			add_to_variable = { additional_expenses_rate = additional_expense_iraq_war_compensation_two }
+			set_variable = { additional_expense_iraq_war_compensation = 2.0 }
+			add_to_variable = { additional_expenses_rate = additional_expense_iraq_war_compensation }
 		}
 	}
 	# Belarus
@@ -3818,7 +3789,7 @@ calculate_resource_sale_rate = {
 	multiply_variable = { chromium_exports = global.chromium_price }
 	multiply_variable = { rubber_exports = global.rubber_price }
 	multiply_variable = { microchip_exports = global.microchip_price }
-	multiply_variable = { composite_exports = global.microchip_price }
+	multiply_variable = { composite_exports = global.composite_price }
 
 	#Additional additive modifiers
 	set_temp_variable = { resource_export_multiplier = 1 }
@@ -4347,48 +4318,51 @@ calculate_gdp = {
 	add_to_temp_variable = { mil_facs_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
 	clamp_temp_variable = { var = mil_facs_worker_requirement_multiplier min = 0.10 }
 
-	multiply_temp_variable = { workers_per_mil_fac = mil_facs_worker_requirement_multiplier }
-	set_variable = { workers_per_mil_fac_display = workers_per_mil_fac }
-	multiply_variable = { workers_per_mil_fac_display = 1000 }
-
-	set_temp_variable = { max_workers_in_mil_facs = military_fac }
-	multiply_temp_variable = { max_workers_in_mil_facs = workers_per_mil_fac }
-	set_variable = { workers_in_mil_facs = max_workers_in_mil_facs }
-	clamp_variable = {
-		var = workers_in_mil_facs
-		max = workforce_total
-	}
-	multiply_variable = { workers_in_mil_facs = military_factory_employment_var }
-	set_variable = { military_factories_manpower_fulfillment = workers_in_mil_facs }
-	divide_variable = { military_factories_manpower_fulfillment = max_workers_in_mil_facs }
-	subtract_from_temp_variable = { workforce_total = workers_in_mil_facs }
 	if = { limit = { check_variable = { military_fac = 0 } }
 		set_variable = { military_factories_manpower_fulfillment = 1 }
 	}
+	else = {
+		multiply_temp_variable = { workers_per_mil_fac = mil_facs_worker_requirement_multiplier }
+		set_variable = { workers_per_mil_fac_display = workers_per_mil_fac }
+		multiply_variable = { workers_per_mil_fac_display = 1000 }
 
-	multiply_temp_variable = { workers_per_dockyard = mil_facs_worker_requirement_multiplier }
-	set_variable = { workers_per_dockyard_display = workers_per_dockyard }
-	multiply_variable = { workers_per_dockyard_display = 1000 }
-
-	set_temp_variable = { max_workers_in_dockyards = dockyard_fac }
-	multiply_temp_variable = { max_workers_in_dockyards = workers_per_dockyard }
-	set_variable = { workers_in_dockyards = max_workers_in_dockyards }
-	clamp_variable = {
-		var = workers_in_dockyards
-		max = workforce_total
+		set_temp_variable = { max_workers_in_mil_facs = military_fac }
+		multiply_temp_variable = { max_workers_in_mil_facs = workers_per_mil_fac }
+		set_variable = { workers_in_mil_facs = max_workers_in_mil_facs }
+		clamp_variable = {
+			var = workers_in_mil_facs
+			max = workforce_total
+		}
+		multiply_variable = { workers_in_mil_facs = military_factory_employment_var }
+		set_variable = { military_factories_manpower_fulfillment = workers_in_mil_facs }
+		divide_variable = { military_factories_manpower_fulfillment = max_workers_in_mil_facs }
+		subtract_from_temp_variable = { workforce_total = workers_in_mil_facs }
 	}
-	multiply_variable = { workers_in_dockyards = naval_factory_employment_var }
-	set_variable = { naval_factories_manpower_fulfillment = workers_in_dockyards }
-	divide_variable = { naval_factories_manpower_fulfillment = max_workers_in_dockyards }
-	subtract_from_temp_variable = { workforce_total = workers_in_dockyards }
+
 	if = { limit = { check_variable = { dockyard_fac = 0 } }
 		set_variable = { naval_factories_manpower_fulfillment = 1 }
+	}
+	else = {
+		multiply_temp_variable = { workers_per_dockyard = mil_facs_worker_requirement_multiplier }
+		set_variable = { workers_per_dockyard_display = workers_per_dockyard }
+		multiply_variable = { workers_per_dockyard_display = 1000 }
+
+		set_temp_variable = { max_workers_in_dockyards = dockyard_fac }
+		multiply_temp_variable = { max_workers_in_dockyards = workers_per_dockyard }
+		set_variable = { workers_in_dockyards = max_workers_in_dockyards }
+		clamp_variable = {
+			var = workers_in_dockyards
+			max = workforce_total
+		}
+		multiply_variable = { workers_in_dockyards = naval_factory_employment_var }
+		set_variable = { naval_factories_manpower_fulfillment = workers_in_dockyards }
+		divide_variable = { naval_factories_manpower_fulfillment = max_workers_in_dockyards }
+		subtract_from_temp_variable = { workforce_total = workers_in_dockyards }
 	}
 
 	set_temp_variable = { worker_requirement_gdp_multiplier = 3 }
 	divide_temp_variable = { worker_requirement_gdp_multiplier = temp_gdp_per_capita }
 	add_to_temp_variable = { worker_requirement_gdp_multiplier = 1 }
-	set_variable = { workers_requirement_gdp_multiplier_display = worker_requirement_gdp_multiplier }
 	multiply_temp_variable = { workers_per_civ_fac = worker_requirement_gdp_multiplier }
 	multiply_temp_variable = { workers_per_office = worker_requirement_gdp_multiplier }
 	multiply_temp_variable = { workers_per_agriculture_district = worker_requirement_gdp_multiplier }
@@ -4396,152 +4370,161 @@ calculate_gdp = {
 	multiply_temp_variable = { workers_per_composite_plant = worker_requirement_gdp_multiplier }
 	multiply_temp_variable = { workers_per_synthetic_refinery = worker_requirement_gdp_multiplier }
 
-	set_temp_variable = { civ_facs_worker_requirement_multiplier = 1 }
-	add_to_temp_variable = { civ_facs_worker_requirement_multiplier = modifier@civ_facs_worker_requirement_modifier }
-	add_to_temp_variable = { civ_facs_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-	clamp_temp_variable = { var = civ_facs_worker_requirement_multiplier min = 0.10 }
-
-	multiply_temp_variable = { workers_per_civ_fac = civ_facs_worker_requirement_multiplier }
-	set_variable = { workers_per_civ_fac_display = workers_per_civ_fac }
-	multiply_variable = { workers_per_civ_fac_display = 1000 }
-
-	set_temp_variable = { max_workers_in_civ_facs = industrial_complex_total }
-	multiply_temp_variable = { max_workers_in_civ_facs = workers_per_civ_fac }
-	set_variable = { workers_in_civ_facs = max_workers_in_civ_facs }
-	clamp_variable = {
-		var = workers_in_civ_facs
-		max = workforce_total
-	}
-	multiply_variable = { workers_in_civ_facs = civilian_factory_employment_var }
-	set_variable = { civilian_factories_manpower_fulfillment = workers_in_civ_facs }
-	divide_variable = { civilian_factories_manpower_fulfillment = max_workers_in_civ_facs }
-	subtract_from_temp_variable = { workforce_total = workers_in_civ_facs }
 	if = { limit = { check_variable = { industrial_complex_total = 0 } }
 		set_variable = { civilian_factories_manpower_fulfillment = 1 }
 	}
+	else = {
+		set_temp_variable = { civ_facs_worker_requirement_multiplier = 1 }
+		add_to_temp_variable = { civ_facs_worker_requirement_multiplier = modifier@civ_facs_worker_requirement_modifier }
+		add_to_temp_variable = { civ_facs_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
+		clamp_temp_variable = { var = civ_facs_worker_requirement_multiplier min = 0.10 }
 
-	set_temp_variable = { offices_worker_requirement_multiplier = 1 }
-	add_to_temp_variable = { offices_worker_requirement_multiplier = modifier@offices_worker_requirement_modifier }
-	add_to_temp_variable = { offices_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-	clamp_temp_variable = { var = offices_worker_requirement_multiplier min = 0.10 }
+		multiply_temp_variable = { workers_per_civ_fac = civ_facs_worker_requirement_multiplier }
+		set_variable = { workers_per_civ_fac_display = workers_per_civ_fac }
+		multiply_variable = { workers_per_civ_fac_display = 1000 }
 
-	multiply_temp_variable = { workers_per_office = offices_worker_requirement_multiplier }
-	set_variable = { workers_per_office_display = workers_per_office }
-	multiply_variable = { workers_per_office_display = 1000 }
-
-	set_temp_variable = { max_workers_in_offices = office_park_total }
-	multiply_temp_variable = { max_workers_in_offices = workers_per_office }
-	set_variable = { workers_in_offices = max_workers_in_offices }
-	clamp_variable = {
-		var = workers_in_offices
-		max = workforce_total
+		set_temp_variable = { max_workers_in_civ_facs = industrial_complex_total }
+		multiply_temp_variable = { max_workers_in_civ_facs = workers_per_civ_fac }
+		set_variable = { workers_in_civ_facs = max_workers_in_civ_facs }
+		clamp_variable = { var = workers_in_civ_facs max = workforce_total }
+		multiply_variable = { workers_in_civ_facs = civilian_factory_employment_var }
+		set_variable = { civilian_factories_manpower_fulfillment = workers_in_civ_facs }
+		divide_variable = { civilian_factories_manpower_fulfillment = max_workers_in_civ_facs }
+		subtract_from_temp_variable = { workforce_total = workers_in_civ_facs }
 	}
-	multiply_variable = { workers_in_offices = office_employment_var }
-	set_variable = { offices_manpower_fulfillment = workers_in_offices }
-	divide_variable = { offices_manpower_fulfillment = max_workers_in_offices }
-	subtract_from_temp_variable = { workforce_total = workers_in_offices }
+
 	if = { limit = { check_variable = { office_park_total = 0 } }
 		set_variable = { offices_manpower_fulfillment = 1 }
 	}
+	else = {
+		set_temp_variable = { offices_worker_requirement_multiplier = 1 }
+		add_to_temp_variable = { offices_worker_requirement_multiplier = modifier@offices_worker_requirement_modifier }
+		add_to_temp_variable = { offices_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
+		clamp_temp_variable = { var = offices_worker_requirement_multiplier min = 0.10 }
 
-	set_temp_variable = { agriculture_district_worker_requirement_multiplier = 1 }
-	add_to_temp_variable = { agriculture_district_worker_requirement_multiplier = modifier@agriculture_district_worker_requirement_modifier }
-	add_to_temp_variable = { agriculture_district_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-	clamp_temp_variable = { var = agriculture_district_worker_requirement_multiplier min = 0.10 }
+		multiply_temp_variable = { workers_per_office = offices_worker_requirement_multiplier }
+		set_variable = { workers_per_office_display = workers_per_office }
+		multiply_variable = { workers_per_office_display = 1000 }
 
-	multiply_temp_variable = { workers_per_agriculture_district = agriculture_district_worker_requirement_multiplier }
-	set_variable = { workers_per_agriculture_district_display = workers_per_agriculture_district }
-	multiply_variable = { workers_per_agriculture_district_display = 1000 }
-
-	set_temp_variable = { max_workers_in_agriculture_district = agriculture_district_total }
-	multiply_temp_variable = { max_workers_in_agriculture_district = workers_per_agriculture_district }
-
-	set_variable = { workers_in_agriculture_district = max_workers_in_agriculture_district }
-	clamp_variable = {
-		var = workers_in_agriculture_district
-		max = workforce_total
+		set_temp_variable = { max_workers_in_offices = office_park_total }
+		multiply_temp_variable = { max_workers_in_offices = workers_per_office }
+		set_variable = { workers_in_offices = max_workers_in_offices }
+		clamp_variable = {
+			var = workers_in_offices
+			max = workforce_total
+		}
+		multiply_variable = { workers_in_offices = office_employment_var }
+		set_variable = { offices_manpower_fulfillment = workers_in_offices }
+		divide_variable = { offices_manpower_fulfillment = max_workers_in_offices }
+		subtract_from_temp_variable = { workforce_total = workers_in_offices }
 	}
-	multiply_variable = { workers_in_agriculture_district = agriculture_district_employment_var }
-	set_variable = { agriculture_district_manpower_fulfillment = workers_in_agriculture_district }
-	divide_variable = { agriculture_district_manpower_fulfillment = max_workers_in_agriculture_district }
-	subtract_from_temp_variable = { workforce_total = workers_in_agriculture_district }
+
 	if = { limit = { check_variable = { agriculture_district_total = 0 } }
 		set_variable = { agriculture_district_manpower_fulfillment = 1 }
 	}
+	else = {
+		set_temp_variable = { agriculture_district_worker_requirement_multiplier = 1 }
+		add_to_temp_variable = { agriculture_district_worker_requirement_multiplier = modifier@agriculture_district_worker_requirement_modifier }
+		add_to_temp_variable = { agriculture_district_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
+		clamp_temp_variable = { var = agriculture_district_worker_requirement_multiplier min = 0.10 }
 
-	set_temp_variable = { microchip_plant_worker_requirement_multiplier = 1 }
-	add_to_temp_variable = { microchip_plant_worker_requirement_multiplier = modifier@microchip_plant_worker_requirement_modifier }
-	add_to_temp_variable = { microchip_plant_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-	clamp_temp_variable = { var = microchip_plant_worker_requirement_multiplier min = 0.10 }
+		multiply_temp_variable = { workers_per_agriculture_district = agriculture_district_worker_requirement_multiplier }
+		set_variable = { workers_per_agriculture_district_display = workers_per_agriculture_district }
+		multiply_variable = { workers_per_agriculture_district_display = 1000 }
 
-	multiply_temp_variable = { workers_per_microchip_plant = microchip_plant_worker_requirement_multiplier }
-	set_variable = { workers_per_microchip_plant_display = workers_per_microchip_plant }
-	multiply_variable = { workers_per_microchip_plant_display = 1000 }
+		set_temp_variable = { max_workers_in_agriculture_district = agriculture_district_total }
+		multiply_temp_variable = { max_workers_in_agriculture_district = workers_per_agriculture_district }
 
-	set_temp_variable = { max_workers_in_microchip_plants = microchip_plant_total }
-	multiply_temp_variable = { max_workers_in_microchip_plants = workers_per_microchip_plant }
-
-	set_variable = { workers_in_microchip_plants = max_workers_in_microchip_plants }
-	clamp_variable = {
-		var = workers_in_microchip_plants
-		max = workforce_total
+		set_variable = { workers_in_agriculture_district = max_workers_in_agriculture_district }
+		clamp_variable = {
+			var = workers_in_agriculture_district
+			max = workforce_total
+		}
+		multiply_variable = { workers_in_agriculture_district = agriculture_district_employment_var }
+		set_variable = { agriculture_district_manpower_fulfillment = workers_in_agriculture_district }
+		divide_variable = { agriculture_district_manpower_fulfillment = max_workers_in_agriculture_district }
+		subtract_from_temp_variable = { workforce_total = workers_in_agriculture_district }
 	}
-	multiply_variable = { workers_in_microchip_plants = microchip_plants_employment_var }
-	set_variable = { microchip_plants_manpower_fulfillment = workers_in_microchip_plants }
-	divide_variable = { microchip_plants_manpower_fulfillment = max_workers_in_microchip_plants }
-	subtract_from_temp_variable = { workforce_total = workers_in_microchip_plants }
+
 	if = { limit = { check_variable = { microchip_plant_total = 0 } }
 		set_variable = { microchip_plants_manpower_fulfillment = 1 }
 	}
+	else = {
+		set_temp_variable = { microchip_plant_worker_requirement_multiplier = 1 }
+		add_to_temp_variable = { microchip_plant_worker_requirement_multiplier = modifier@microchip_plant_worker_requirement_modifier }
+		add_to_temp_variable = { microchip_plant_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
+		clamp_temp_variable = { var = microchip_plant_worker_requirement_multiplier min = 0.10 }
 
-	set_temp_variable = { composite_plant_worker_requirement_multiplier = 1 }
-	add_to_temp_variable = { composite_plant_worker_requirement_multiplier = modifier@composite_plant_worker_requirement_modifier }
-	add_to_temp_variable = { composite_plant_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-	clamp_temp_variable = { var = composite_plant_worker_requirement_multiplier min = 0.10 }
+		multiply_temp_variable = { workers_per_microchip_plant = microchip_plant_worker_requirement_multiplier }
+		set_variable = { workers_per_microchip_plant_display = workers_per_microchip_plant }
+		multiply_variable = { workers_per_microchip_plant_display = 1000 }
 
-	multiply_temp_variable = { workers_per_composite_plant = composite_plant_worker_requirement_multiplier }
-	set_variable = { workers_per_composite_plant_display = workers_per_composite_plant }
-	multiply_variable = { workers_per_composite_plant_display = 1000 }
+		set_temp_variable = { max_workers_in_microchip_plants = microchip_plant_total }
+		multiply_temp_variable = { max_workers_in_microchip_plants = workers_per_microchip_plant }
 
-	set_temp_variable = { max_workers_in_composite_plants = composite_plant_total }
-	multiply_temp_variable = { max_workers_in_composite_plants = workers_per_composite_plant }
-
-	set_variable = { workers_in_composite_plants = max_workers_in_composite_plants }
-	clamp_variable = {
-		var = workers_in_composite_plants
-		max = workforce_total
+		set_variable = { workers_in_microchip_plants = max_workers_in_microchip_plants }
+		clamp_variable = {
+			var = workers_in_microchip_plants
+			max = workforce_total
+		}
+		multiply_variable = { workers_in_microchip_plants = microchip_plants_employment_var }
+		set_variable = { microchip_plants_manpower_fulfillment = workers_in_microchip_plants }
+		divide_variable = { microchip_plants_manpower_fulfillment = max_workers_in_microchip_plants }
+		subtract_from_temp_variable = { workforce_total = workers_in_microchip_plants }
 	}
-	multiply_variable = { workers_in_composite_plants = composite_plants_employment_var }
-	set_variable = { composite_plants_manpower_fulfillment = workers_in_composite_plants }
-	divide_variable = { composite_plants_manpower_fulfillment = max_workers_in_composite_plants }
-	subtract_from_temp_variable = { workforce_total = workers_in_composite_plants }
+
 	if = { limit = { check_variable = { composite_plant_total = 0 } }
 		set_variable = { composite_plants_manpower_fulfillment = 1 }
 	}
+	else = {
+		set_temp_variable = { composite_plant_worker_requirement_multiplier = 1 }
+		add_to_temp_variable = { composite_plant_worker_requirement_multiplier = modifier@composite_plant_worker_requirement_modifier }
+		add_to_temp_variable = { composite_plant_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
+		clamp_temp_variable = { var = composite_plant_worker_requirement_multiplier min = 0.10 }
 
-	set_temp_variable = { synthetic_refinery_worker_requirement_multiplier = 1 }
-	add_to_temp_variable = { synthetic_refinery_worker_requirement_multiplier = modifier@synthetic_refinery_worker_requirement_modifier }
-	add_to_temp_variable = { synthetic_refinery_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-	clamp_temp_variable = { var = synthetic_refinery_worker_requirement_multiplier min = 0.10 }
+		multiply_temp_variable = { workers_per_composite_plant = composite_plant_worker_requirement_multiplier }
+		set_variable = { workers_per_composite_plant_display = workers_per_composite_plant }
+		multiply_variable = { workers_per_composite_plant_display = 1000 }
 
-	multiply_temp_variable = { workers_per_synthetic_refinery = synthetic_refinery_worker_requirement_multiplier }
-	set_variable = { workers_per_synthetic_refinery_display = workers_per_synthetic_refinery }
-	multiply_variable = { workers_per_synthetic_refinery_display = 1000 }
+		set_temp_variable = { max_workers_in_composite_plants = composite_plant_total }
+		multiply_temp_variable = { max_workers_in_composite_plants = workers_per_composite_plant }
 
-	set_temp_variable = { max_workers_in_synthetic_refinery = synthetic_refinery_total }
-	multiply_temp_variable = { max_workers_in_synthetic_refinery = workers_per_synthetic_refinery }
-
-	set_variable = { workers_in_synthetic_refinery = max_workers_in_synthetic_refinery }
-	clamp_variable = {
-		var = workers_in_synthetic_refinery
-		max = workforce_total
+		set_variable = { workers_in_composite_plants = max_workers_in_composite_plants }
+		clamp_variable = {
+			var = workers_in_composite_plants
+			max = workforce_total
+		}
+		multiply_variable = { workers_in_composite_plants = composite_plants_employment_var }
+		set_variable = { composite_plants_manpower_fulfillment = workers_in_composite_plants }
+		divide_variable = { composite_plants_manpower_fulfillment = max_workers_in_composite_plants }
+		subtract_from_temp_variable = { workforce_total = workers_in_composite_plants }
 	}
-	multiply_variable = { workers_in_synthetic_refinery = synthetic_refinery_employment_var }
-	set_variable = { synthetic_refinery_manpower_fulfillment = workers_in_synthetic_refinery }
-	divide_variable = { synthetic_refinery_manpower_fulfillment = max_workers_in_synthetic_refinery }
-	subtract_from_temp_variable = { workforce_total = workers_in_synthetic_refinery }
+
 	if = { limit = { check_variable = { synthetic_refinery_total = 0 } }
 		set_variable = { synthetic_refinery_manpower_fulfillment = 1 }
+	}
+	else = {
+		set_temp_variable = { synthetic_refinery_worker_requirement_multiplier = 1 }
+		add_to_temp_variable = { synthetic_refinery_worker_requirement_multiplier = modifier@synthetic_refinery_worker_requirement_modifier }
+		add_to_temp_variable = { synthetic_refinery_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
+		clamp_temp_variable = { var = synthetic_refinery_worker_requirement_multiplier min = 0.10 }
+
+		multiply_temp_variable = { workers_per_synthetic_refinery = synthetic_refinery_worker_requirement_multiplier }
+		set_variable = { workers_per_synthetic_refinery_display = workers_per_synthetic_refinery }
+		multiply_variable = { workers_per_synthetic_refinery_display = 1000 }
+
+		set_temp_variable = { max_workers_in_synthetic_refinery = synthetic_refinery_total }
+		multiply_temp_variable = { max_workers_in_synthetic_refinery = workers_per_synthetic_refinery }
+
+		set_variable = { workers_in_synthetic_refinery = max_workers_in_synthetic_refinery }
+		clamp_variable = {
+			var = workers_in_synthetic_refinery
+			max = workforce_total
+		}
+		multiply_variable = { workers_in_synthetic_refinery = synthetic_refinery_employment_var }
+		set_variable = { synthetic_refinery_manpower_fulfillment = workers_in_synthetic_refinery }
+		divide_variable = { synthetic_refinery_manpower_fulfillment = max_workers_in_synthetic_refinery }
+		subtract_from_temp_variable = { workforce_total = workers_in_synthetic_refinery }
 	}
 
 	# Average Worker Fulfillment
@@ -4752,11 +4735,11 @@ calculate_gdp_modifiers = {
 	add_to_variable = { stability_factor_gdp_modifier = -0.1 }
 
 	#max workforce
-	#0.100 - 0.002 * GDP/C
+	#0.100 - 0.0015 * GDP/C
 	set_variable = { total_workforce_gdp_c_modifier_var = gdp_per_capita }
-	multiply_variable = { total_workforce_gdp_c_modifier_var = -0.002 }
+	multiply_variable = { total_workforce_gdp_c_modifier_var = -0.0015 }
 	add_to_variable = { total_workforce_gdp_c_modifier_var = 0.1 }
-	clamp_variable = { var = total_workforce_gdp_c_modifier_var min = -0.85 }
+	clamp_variable = { var = total_workforce_gdp_c_modifier_var min = -0.50 }
 
 	#fossil powerplants construction speed
 	set_variable = { fossil_pp_construction_gdp_c_modifier_var = gdp_per_capita }
@@ -5021,7 +5004,6 @@ productivity_growth_country_display_effect = {
 }
 
 update_employment_productivity_output_dynamic_modifier = {
-
 	# productivity (P) and employment level (E) are supposed to behave as multiplicative factors of factories outputs (O)
 	# (Outputs being counstruction speed for civilian factories, military output for mils and dockyard output for docks)
 	# So if B is the base output and M the ingame modifier (production_speed_buildings_factor in the case of construction speed, for example)
@@ -5035,79 +5017,109 @@ update_employment_productivity_output_dynamic_modifier = {
 	# We group the -1: P * E * (1 + S) -1 * (1 + S) = X
 	# And finally group the (1 + S): X = (1 + S) * (P*E - 1)
 	# This value of X we found is then applied to a dynamic modifier
+	if = {
+		limit = {
+			OR = {
+				NOT = { check_variable = { overall_productivity = last_productivity_check } }
+				NOT = { check_variable = { industrial_complex_total = last_industrial_complex_total } }
+			}
+		}
 
-	set_temp_variable = { preexisting_construction_speed_output_var = construction_speed_output_var }
-	set_temp_variable = { preexisting_military_factories_output_var = military_factories_output_var }
-	set_temp_variable = { preexisting_dockyards_output_var = dockyards_output_var }
-	set_temp_variable = { preexisting_agriculture_district_output_var = agriculture_district_output_var }
+		set_variable = { last_productivity_check = overall_productivity }
+		set_variable = { last_industrial_complex_total = industrial_complex_total }
 
-	set_temp_variable = { productivity_calculations_var = overall_productivity }
-	multiply_temp_variable = { productivity_calculations_var = 0.001 }
+		set_temp_variable = { preexisting_construction_speed_output_var = construction_speed_output_var }
+		set_temp_variable = { preexisting_military_factories_output_var = military_factories_output_var }
+		set_temp_variable = { preexisting_dockyards_output_var = dockyards_output_var }
+		set_temp_variable = { preexisting_agriculture_district_output_var = agriculture_district_output_var }
 
-	#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
-	set_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = industrial_complex_total }
-	multiply_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = civilian_factories_manpower_fulfillment }
-	set_temp_variable = { factories_from_other_sources = num_of_civilian_factories }
-	subtract_from_temp_variable = { factories_from_other_sources = industrial_complex_total }
-	add_to_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = factories_from_other_sources }
-	divide_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = num_of_civilian_factories }
 
-	set_variable = { construction_speed_output_var = productivity_calculations_var }
-	multiply_variable = { construction_speed_output_var = civilian_factories_manpower_fulfillment_dyn_mod_var }
-	add_to_variable = { construction_speed_output_var = -1 } #to be used as malus in the dynamic modifier
-	set_temp_variable = { sum_of_construction_speed_modifiers = modifier@production_speed_buildings_factor }
-	subtract_from_temp_variable = { sum_of_construction_speed_modifiers = preexisting_construction_speed_output_var }
-	add_to_temp_variable = { sum_of_construction_speed_modifiers = 1 }
-	multiply_variable = { construction_speed_output_var = sum_of_construction_speed_modifiers }
+		set_temp_variable = { productivity_calculations_var = overall_productivity }
+		multiply_temp_variable = { productivity_calculations_var = 0.001 }
 
-	#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
-	set_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_fac }
-	multiply_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_factories_manpower_fulfillment }
-	set_temp_variable = { mil_factories_from_other_sources = num_of_military_factories }
-	subtract_from_temp_variable = { mil_factories_from_other_sources = military_fac }
-	add_to_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = mil_factories_from_other_sources }
-	divide_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = num_of_military_factories }
+		# Cache expensive modifier reads upfront
+		set_temp_variable = { cached_construction_modifier = modifier@production_speed_buildings_factor }
+		set_temp_variable = { cached_military_modifier = modifier@industrial_capacity_factory }
+		set_temp_variable = { cached_dockyard_modifier = modifier@industrial_capacity_dockyard }
+		set_temp_variable = { cached_agriculture_modifier = modifier@production_speed_agriculture_district_factor }
 
-	set_variable = { military_factories_output_var = productivity_calculations_var }
-	multiply_variable = { military_factories_output_var = military_factories_manpower_fulfillment_dyn_mod_var }
-	add_to_variable = { military_factories_output_var = -1 } #to be used as malus in the dynamic modifier
-	set_temp_variable = { sum_of_military_output_modifiers = modifier@industrial_capacity_factory }
-	subtract_from_temp_variable = { sum_of_military_output_modifiers = preexisting_military_factories_output_var }
-	add_to_temp_variable = { sum_of_military_output_modifiers = 1 }
-	multiply_variable = { military_factories_output_var = sum_of_military_output_modifiers }
+		#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
+		set_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = industrial_complex_total }
+		multiply_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = civilian_factories_manpower_fulfillment }
+		set_temp_variable = { factories_from_other_sources = num_of_civilian_factories }
+		subtract_from_temp_variable = { factories_from_other_sources = industrial_complex_total }
+		add_to_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = factories_from_other_sources }
+		divide_temp_variable = { civilian_factories_manpower_fulfillment_dyn_mod_var = num_of_civilian_factories }
 
-	#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
-	set_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = dockyard_fac }
-	multiply_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = naval_factories_manpower_fulfillment }
-	set_temp_variable = { nav_factories_from_other_sources = num_of_naval_factories }
-	subtract_from_temp_variable = { nav_factories_from_other_sources = dockyard_fac }
-	add_to_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = nav_factories_from_other_sources }
-	divide_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = num_of_naval_factories }
+		set_variable = { construction_speed_output_var = productivity_calculations_var }
+		multiply_variable = { construction_speed_output_var = civilian_factories_manpower_fulfillment_dyn_mod_var }
+		add_to_variable = { construction_speed_output_var = -1 } #to be used as malus in the dynamic modifier
+		set_temp_variable = { sum_of_construction_speed_modifiers = cached_construction_modifier }
+		subtract_from_temp_variable = { sum_of_construction_speed_modifiers = preexisting_construction_speed_output_var }
+		add_to_temp_variable = { sum_of_construction_speed_modifiers = 1 }
+		multiply_variable = { construction_speed_output_var = sum_of_construction_speed_modifiers }
 
-	set_variable = { dockyards_output_var = productivity_calculations_var }
-	multiply_variable = { dockyards_output_var = naval_factories_manpower_fulfillment_dyn_mod_var }
-	add_to_variable = { dockyards_output_var = -1 } #to be used as malus in the dynamic modifier
-	set_temp_variable = { sum_of_dockyard_output_modifiers = modifier@industrial_capacity_dockyard }
-	subtract_from_temp_variable = { sum_of_dockyard_output_modifiers = preexisting_dockyards_output_var }
-	add_to_temp_variable = { sum_of_dockyard_output_modifiers = 1 }
-	multiply_variable = { dockyards_output_var = sum_of_dockyard_output_modifiers }
+		if = {
+			limit = { num_of_military_factories > 0 }
+			#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
+			set_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_fac }
+			multiply_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = military_factories_manpower_fulfillment }
+			set_temp_variable = { mil_factories_from_other_sources = num_of_military_factories }
+			subtract_from_temp_variable = { mil_factories_from_other_sources = military_fac }
+			add_to_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = mil_factories_from_other_sources }
+			divide_temp_variable = { military_factories_manpower_fulfillment_dyn_mod_var = num_of_military_factories }
 
-	# Agricultural District Section
-	set_variable = { agriculture_district_output_var = productivity_calculations_var }
-	add_to_variable = { agriculture_district_output_var = -1 } #to be used as malus in the dynamic modifier
-	set_temp_variable = { sum_of_agriculture_district_var_modifiers = modifier@production_speed_agriculture_district_factor }
-	subtract_from_temp_variable = { sum_of_agriculture_district_var_modifiers = preexisting_agriculture_district_output_var }
-	add_to_temp_variable = { sum_of_agriculture_district_var_modifiers = -2 }
-	multiply_variable = { agriculture_district_output_var = sum_of_agriculture_district_var_modifiers }
-	if = { limit = { has_country_flag = disabled_economic_system }
-		set_variable = { military_factories_output_var = 0 }
-		set_variable = { agriculture_district_output_var = 0 }
-		set_variable = { dockyards_output_var = 0 }
+			set_variable = { military_factories_output_var = productivity_calculations_var }
+			multiply_variable = { military_factories_output_var = military_factories_manpower_fulfillment_dyn_mod_var }
+			add_to_variable = { military_factories_output_var = -1 } #to be used as malus in the dynamic modifier
+			set_temp_variable = { sum_of_military_output_modifiers = cached_military_modifier }
+			subtract_from_temp_variable = { sum_of_military_output_modifiers = preexisting_military_factories_output_var }
+			add_to_temp_variable = { sum_of_military_output_modifiers = 1 }
+			multiply_variable = { military_factories_output_var = sum_of_military_output_modifiers }
+		}
+		else = {
+			set_variable = { military_factories_output_var = 0 }
+		}
+
+		if = {
+			limit = { num_of_naval_factories > 0 }
+			#this section calculates the employment level assuming that all factories you receive from trade, leasing and other sources are at 100% employment
+			set_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = dockyard_fac }
+			multiply_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = naval_factories_manpower_fulfillment }
+			set_temp_variable = { nav_factories_from_other_sources = num_of_naval_factories }
+			subtract_from_temp_variable = { nav_factories_from_other_sources = dockyard_fac }
+			add_to_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = nav_factories_from_other_sources }
+			divide_temp_variable = { naval_factories_manpower_fulfillment_dyn_mod_var = num_of_naval_factories }
+
+			set_variable = { dockyards_output_var = productivity_calculations_var }
+			multiply_variable = { dockyards_output_var = naval_factories_manpower_fulfillment_dyn_mod_var }
+			add_to_variable = { dockyards_output_var = -1 } #to be used as malus in the dynamic modifier
+			set_temp_variable = { sum_of_dockyard_output_modifiers = cached_dockyard_modifier }
+			subtract_from_temp_variable = { sum_of_dockyard_output_modifiers = preexisting_dockyards_output_var }
+			add_to_temp_variable = { sum_of_dockyard_output_modifiers = 1 }
+			multiply_variable = { dockyards_output_var = sum_of_dockyard_output_modifiers }
+		}
+		else = {
+			set_variable = { dockyards_output_var = 0 }
+		}
+
+		# Agricultural District Section
+		set_variable = { agriculture_district_output_var = productivity_calculations_var }
+		add_to_variable = { agriculture_district_output_var = -1 } #to be used as malus in the dynamic modifier
+		set_temp_variable = { sum_of_agriculture_district_var_modifiers = cached_agriculture_modifier }
+		subtract_from_temp_variable = { sum_of_agriculture_district_var_modifiers = preexisting_agriculture_district_output_var }
+		add_to_temp_variable = { sum_of_agriculture_district_var_modifiers = -2 }
+		multiply_variable = { agriculture_district_output_var = sum_of_agriculture_district_var_modifiers }
+		if = { limit = { has_country_flag = disabled_economic_system }
+			set_variable = { military_factories_output_var = 0 }
+			set_variable = { agriculture_district_output_var = 0 }
+			set_variable = { dockyards_output_var = 0 }
+		}
+		set_variable = { productivity_tax_effect_display = productivity_calculations_var }
+		add_to_variable = { productivity_tax_effect_display = -1 }
+
+		force_update_dynamic_modifier = yes
 	}
-	set_variable = { productivity_tax_effect_display = productivity_calculations_var }
-	add_to_variable = { productivity_tax_effect_display = -1 }
-
-	force_update_dynamic_modifier = yes
 }
 
 productivity_growth_effect = {
@@ -5247,15 +5259,11 @@ calculate_migration_mechanic_values = {
 	add_to_variable = { max_net_immigration_rate = immigration_government_factor }
 	add_to_variable = { max_net_immigration_rate = modifier@maximum_migration_rate_value }
 
-	# War Refugees Section
+	# War Refugees Section (optimized to avoid nested neighbor checks)
 	hidden_effect = {
 		set_temp_variable = { neighbouring_war_refugees = 0 }
 		every_neighbor_country = {
-			limit = {
-				any_neighbor_country = {
-					has_war_with = PREV
-				}
-			}
+			limit = { has_war = yes }
 			add_to_temp_variable = { PREV.neighbouring_war_refugees = THIS.population_total_m }
 			multiply_temp_variable = { PREV.neighbouring_war_refugees = @refugee_percentage_adjuster }
 		}

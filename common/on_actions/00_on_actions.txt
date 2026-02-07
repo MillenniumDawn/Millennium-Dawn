@@ -874,7 +874,7 @@ on_actions = {
 
 			if = {
 				limit = {
-					has_global_flag = MD_RULE_OPTION_ANNEX
+					has_game_rule = { rule = rule_md_annex option = yes }
 				}
 				country_event = {
 					id = annex_game_rule.3
@@ -2863,11 +2863,8 @@ on_actions = {
 				setup_initial_expected_spending_by_party = yes
 				# Using Simone's Shit as a Utility to config this
 				initialize_state_provincial_images = yes
-				# Set Law Attitudes
-				set_law_attitudes = yes
 				# Init Global Variables
 				setup_global_arrays = yes
-
 				# PMC Setup
 				pmc_variables_setup = yes
 
@@ -2944,6 +2941,8 @@ on_actions = {
 			# Initialize On Startup
 			set_variable = { global.average_world_productivity = 650 }
 
+			# Intelligence advisors are selected via faction intelligence tab popup - do not pre-activate
+
 			every_country = {
 				setup_employment_variables = yes
 				setup_starting_world_productivity = yes
@@ -2963,6 +2962,8 @@ on_actions = {
 				calculate_expected_spending = yes
 				recalculate_law_desires = yes
 				resource_storage_system_setup = yes
+
+				set_static_state_modifier_on_game_start = yes
 
 				#Sets modifiers for microchips and composites
 				add_dynamic_modifier = { modifier = advanced_production_modifier }
@@ -3044,24 +3045,6 @@ on_actions = {
 
 				# Set Continent
 				set_continent_nation_flag = yes
-
-				# Sets the Screens to Open by Default
-				if = { limit = { is_ai = no }
-					set_country_flag = open_energy_screen
-					set_country_flag = open_research_screen
-					set_country_flag = construction_speeds_visible_in_menu
-					set_country_flag = open_storage_screen
-
-					if = {
-						limit = {
-							has_game_rule = {
-								rule = rule_internal_faction_cost_reduction
-								option = yes
-							}
-						}
-						add_ideas = GAME_RULE_reduce_internal_factions_cost
-					}
-				}
 
 				# Calculate Utilities
 				calculate_starting_utility_stockpile = yes
@@ -3376,12 +3359,30 @@ on_actions = {
 
 				every_country = {
 					calculate_starting_mio_size = yes
+
+					if = {
+						limit = { Is_Possible_Muslim_Brotherhood = yes }
+						set_country_flag = is_possible_muslim_brotherhood
+						add_to_array = { global.possible_muslim_brotherhood_nation = THIS.id }
+					}
 				}
 			}
 
 			every_country = {
 				limit = { is_ai = no }
 				graph_initial_setup = yes
+
+				country_event = systems.1
+
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = rule_internal_faction_cost_reduction
+							option = yes
+						}
+					}
+					add_ideas = GAME_RULE_reduce_internal_factions_cost
+				}
 			}
 
 			if = { limit = { is_debug = yes }
@@ -3433,7 +3434,7 @@ on_actions = {
 			}
 			if = {
 				limit = {
-					Is_Possible_Muslim_Brotherhood = yes
+					has_country_flag = is_possible_muslim_brotherhood
 					Is_Muslim_Brotherhood = yes
 					NOT = { has_opinion_modifier = Muslim_Brotherhood_Relations }
 				}
