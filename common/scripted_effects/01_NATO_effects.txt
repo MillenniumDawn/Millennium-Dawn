@@ -134,26 +134,26 @@ NATO_CSTO_calculate_number_of_batallions = {
 	set_variable = { global.var_nato_tank_count = 0 }
 	set_variable = { global.var_csto_tank_count = 0 }
 
-	every_country = {
-		limit = {
-			has_idea = NATO_member
-			is_european_nation = yes
+	for_each_scope_loop = {
+		array = global.nato_members
+		if = {
+			limit = { capital_scope = { is_on_continent = europe } }
+
+			set_temp_variable = { inf_bat = 0 }
+			add_to_temp_variable = { inf_bat = num_battalions_with_type@Mech_Air_Inf_Bat }
+			add_to_temp_variable = { inf_bat = num_battalions_with_type@Mech_Marine_Bat }
+			add_to_temp_variable = { inf_bat = num_battalions_with_type@Arm_Air_Inf_Bat }
+			add_to_temp_variable = { inf_bat = num_battalions_with_type@Arm_Marine_Bat }
+			add_to_temp_variable = { inf_bat = num_battalions_with_type@Mech_Inf_Bat }
+			add_to_temp_variable = { inf_bat = num_battalions_with_type@Arm_Inf_Bat }
+
+			set_temp_variable = { tank_bat = 0 }
+			add_to_temp_variable = { tank_bat = num_battalions_with_type@armor_Bat }
+			add_to_temp_variable = { tank_bat = num_battalions_with_type@L_arm_Bat }
+
+			add_to_variable = { global.var_nato_inf_count = inf_bat }
+			add_to_variable = { global.var_nato_tank_count = tank_bat }
 		}
-
-		set_temp_variable = { inf_bat = 0 }
-		add_to_temp_variable = { inf_bat = num_battalions_with_type@Mech_Air_Inf_Bat }
-		add_to_temp_variable = { inf_bat = num_battalions_with_type@Mech_Marine_Bat }
-		add_to_temp_variable = { inf_bat = num_battalions_with_type@Arm_Air_Inf_Bat }
-		add_to_temp_variable = { inf_bat = num_battalions_with_type@Arm_Marine_Bat }
-		add_to_temp_variable = { inf_bat = num_battalions_with_type@Mech_Inf_Bat }
-		add_to_temp_variable = { inf_bat = num_battalions_with_type@Arm_Inf_Bat }
-
-		set_temp_variable = { tank_bat = 0 }
-		add_to_temp_variable = { tank_bat = num_battalions_with_type@armor_Bat }
-		add_to_temp_variable = { tank_bat = num_battalions_with_type@L_arm_Bat }
-
-		add_to_variable = { global.var_nato_inf_count = inf_bat }
-		add_to_variable = { global.var_nato_tank_count = tank_bat }
 	}
 
 	if = {
@@ -164,27 +164,25 @@ NATO_CSTO_calculate_number_of_batallions = {
 			}
 		}
 
-		every_country = {
-			limit = {
-				has_idea = NATO_member
-				is_european_nation = yes
+		for_each_scope_loop = {
+			array = global.nato_members
+			if = {
+				limit = { capital_scope = { is_on_continent = europe } }
+				set_country_flag = NATO_CSTO_agreement_breach_warning
 			}
+		}
 
-			set_country_flag = NATO_CSTO_agreement_breach_warning
-			random_scope_in_array = {
-				array = global.nato_members
-				limit = {
-					is_faction_leader = yes
-				}
-				activate_mission = NATO_CSTO_breach_mission
+		random_scope_in_array = {
+			array = global.nato_members
+			limit = {
+				is_faction_leader = yes
 			}
+			activate_mission = NATO_CSTO_breach_mission
 		}
 	}
 
-	every_country = {
-		limit = {
-			has_idea = CSTO_member
-		}
+	for_each_scope_loop = {
+		array = global.CSTO_member
 
 		set_temp_variable = { inf_bat = 0 }
 		add_to_temp_variable = { inf_bat = num_battalions_with_type@Mech_Air_Inf_Bat }
@@ -210,21 +208,20 @@ NATO_CSTO_calculate_number_of_batallions = {
 			}
 		}
 
-		every_country = {
+		for_each_scope_loop = {
+			array = global.CSTO_member
+			if = {
+				limit = { capital_scope = { is_on_continent = europe } }
+				set_country_flag = NATO_CSTO_agreement_breach_warning
+			}
+		}
+		random_scope_in_array = {
+			array = global.CSTO_member
 			limit = {
-				has_idea = CSTO_member
-				is_european_nation = yes
+				is_faction_leader = yes
 			}
 
-			set_country_flag = NATO_CSTO_agreement_breach_warning
-			random_scope_in_array = {
-				array = global.CSTO_member
-				limit = {
-					is_faction_leader = yes
-				}
-
-				activate_mission = NATO_CSTO_breach_mission
-			}
+			activate_mission = NATO_CSTO_breach_mission
 		}
 	}
 }
