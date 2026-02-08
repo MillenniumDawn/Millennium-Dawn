@@ -25,6 +25,8 @@ Generalized performance tips for the Millennium Dawn modding team.
 - **Mean Time to Happen (MTTH)**: MTTH events without `is_triggered_only = yes` continuously evaluate and are extremely detrimental to performance. Avoid open-fire MTTH events unless specifically approved and necessary.
 - **On Actions**: Ensure on actions are properly scoped using tag-specific variants (e.g., `on_daily_TAG` or `on_weekly_TAG`) rather than global triggers. Keep trigger conditions as simple and efficient as possible.
 - **Cleanup**: If you are doing any work and you are not using something. Delete it. Don't just leave trash around in your code.
+- **Dynamic Modifiers**: Use dynamic modifiers sparingly where possible. If you do not need it to be dynamic, do not use it.
+  - **NOTE:** Minimize use of `force_update_dynamic_modifier` where possible as it can cause a significant lag when used extremely frequently as it force updates all dynamic modifier within a nation.
 
 ## Focus Trees
 
