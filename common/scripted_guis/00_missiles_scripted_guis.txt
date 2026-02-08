@@ -4367,6 +4367,26 @@ scripted_gui = {
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 		}
+
+		triggers = {
+			GA_name_list_window_visible = {
+				has_country_flag = show_full_ga_list
+			}
+		}
+
+		effects = {
+			un_ga_show_all_nations_button_click = {
+				if = {
+					limit = {
+						has_country_flag = show_full_ga_list
+					}
+					clr_country_flag = show_full_ga_list
+				} else = {
+					set_country_flag = show_full_ga_list
+				}
+				missile_ui_update = yes
+			}
+		}
 	}
 
 	MD_UN_aid_gui = {
@@ -6465,10 +6485,10 @@ scripted_gui = {
 		}
 	}
 
-	is_un_ga_dynamic_lists = {
+	is_un_ga_yes_lists = {
 		context_type = player_context
 		parent_scripted_gui = MD_UN_GA_gui
-		window_name = "IS_UN_GA_container"
+		window_name = "IS_UN_GA_yes_vote_container"
 
 		dirty = global.missile_ui_updated
 
@@ -6478,46 +6498,89 @@ scripted_gui = {
 		}
 
 		dynamic_lists = {
-			list_of_council_members = {
-				array = global.security_council_members
-				entry_container = IS_UN_SC_members_list
-			}
-			list_of_permanant_members = {
-				array = global.p5_sc_members
-				entry_container = IS_UN_SC_permanant_members_list
-			}
-			list_of_sc_yes_votes = {
-				array = global.security_council_vote_yes
-				entry_container = IS_UN_SC_yes_vote_list
-			}
-			list_of_sc_no_votes = {
-				array = global.security_council_vote_no
-				entry_container = IS_UN_SC_no_vote_list
-			}
-			list_of_sc_abstain = {
-				array = global.security_council_vote_abstain
-				entry_container = IS_UN_SC_abstain_list
-			}
-		}
-
-		triggers = {
-			name_of_nation_button_visible = {
-				NOT = { is_in_array = { global.p5_sc_members = v } }
+			list_of_ga_yes_votes = {
+				array = global.general_assembly_vote_yes
+				entry_container = IS_UN_GA_yes_vote_list
 			}
 		}
 
 		properties = {
-			un_name_of_nation_button = {
-				image = "[?global.UN_general_assembly^i.GetFlag]"
-			}
 			is_un_ga_vote_yes_button = {
 				image = "[?global.general_assembly_vote_yes^i.GetFlag]"
 			}
+		}
+	}
+
+	is_un_ga_no_lists = {
+		context_type = player_context
+		parent_scripted_gui = MD_UN_GA_gui
+		window_name = "IS_UN_GA_no_vote_container"
+
+		dirty = global.missile_ui_updated
+
+		visible = {
+			check_variable = { var_open_MD_UN_gui = 2 }
+			has_country_flag = open_MD_countrymissilesview
+		}
+
+		dynamic_lists = {
+			list_of_ga_no_votes = {
+				array = global.general_assembly_vote_no
+				entry_container = IS_UN_GA_no_vote_list
+			}
+		}
+
+		properties = {
 			is_un_ga_vote_no_button = {
 				image = "[?global.general_assembly_vote_no^i.GetFlag]"
 			}
+		}
+	}
+
+	is_un_ga_abstain_lists = {
+		context_type = player_context
+		parent_scripted_gui = MD_UN_GA_gui
+		window_name = "IS_UN_GA_abstain_container"
+
+		dirty = global.missile_ui_updated
+
+		visible = {
+			check_variable = { var_open_MD_UN_gui = 2 }
+			has_country_flag = open_MD_countrymissilesview
+		}
+
+		dynamic_lists = {
+			list_of_ga_abstain = {
+				array = global.general_assembly_vote_abstain
+				entry_container = IS_UN_GA_abstain_list
+			}
+		}
+
+		properties = {
 			is_un_ga_vote_abstain_button = {
 				image = "[?global.general_assembly_vote_abstain^i.GetFlag]"
+			}
+		}
+	}
+
+	is_un_ga_nation_dynamic_lists = {
+		context_type = player_context
+		parent_scripted_gui = MD_UN_GA_gui
+		window_name = "IS_UN_GA_member_container"
+
+		dirty = global.missile_ui_updated
+
+		visible = {
+			check_variable = { var_open_MD_UN_gui = 2 }
+			has_country_flag = open_MD_countrymissilesview
+			has_country_flag = show_full_ga_list
+		}
+
+		dynamic_lists = {
+			list_of_ga_members = {
+				array = global.UN_general_assembly
+				entry_container = IS_UN_GA_members_list
+				change_scope = yes
 			}
 		}
 	}
@@ -6542,6 +6605,9 @@ scripted_gui = {
 		}
 
 		triggers = {
+			name_of_state_button_visible = {
+				var:v = { has_idea = Lacks_International_Recognition }
+			}
 			name_of_state_button_click_enabled = {
 				NOT = { has_war_with = var:v }
 			}
