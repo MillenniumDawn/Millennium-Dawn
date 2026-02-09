@@ -27,6 +27,9 @@ Generalized performance tips for the Millennium Dawn modding team.
 - **Cleanup**: If you are doing any work and you are not using something. Delete it. Don't just leave trash around in your code.
 - **Dynamic Modifiers**: Use dynamic modifiers sparingly where possible. If you do not need it to be dynamic, do not use it.
   - **NOTE:** Minimize use of `force_update_dynamic_modifier` where possible as it can cause a significant lag when used extremely frequently as it force updates all dynamic modifier within a nation.
+- **Effects**: Replace things like `every_country` or `random_country` with the specific arrays you can use to better optimize and reduce effect references
+- **Triggers**: Do not use stuff like `any_country` or `any_other_country` if you can replace with array scoped triggers
+  - For more information regarding available [array triggers](https://hoi4.paradoxwikis.com/Data_structures)
 
 ## Focus Trees
 

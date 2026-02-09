@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
+import argparse
 import fnmatch
 import os
 import re
 import sys
 import time
+from multiprocessing import Pool
 
 import requests
 from path_utils import clean_filepath
 
 startTime = time.time()
 
-__version__ = 1.0
+__version__ = 1.1
 
 
 def get_tags(rootDir):
@@ -18,8 +20,8 @@ def get_tags(rootDir):
     with open(rootDir, "r", encoding="utf-8", errors="ignore") as file:
         content = file.readlines()
         for line in content:
-            if not line.startswith("#") or line.startswith(
-                ""
+            if (
+                not line.startswith("#") and line.strip()
             ):  # If the line doesn't start with a comment or blank
                 hasTag = re.match(r"^[A-Z]{3}", line, re.M | re.I)  # If it's a tag
                 if hasTag:
@@ -27,8 +29,20 @@ def get_tags(rootDir):
     return tags
 
 
+# Shared focus tree prefixes that don't follow the standard TAG_ format
+SHARED_FOCUS_PREFIXES = [
+    "USoE",  # United States of Europe shared tree
+    "POTEF",  # EU POTEF shared tree
+    "AFRICAN_UNION",  # African Union shared tree
+]
+
+
 def hasFocusFormat(focus_id):
     """Check if focus ID follows the correct format TAG_focus_name"""
+    # Allow shared tree prefixes
+    for prefix in SHARED_FOCUS_PREFIXES:
+        if focus_id.startswith(prefix):
+            return True
     return re.match(r"^[A-Z]{3}_[a-zA-Z0-9_-]+$", focus_id, re.M | re.U) is not None
 
 
@@ -147,8 +161,8 @@ def check_ideas(filepath):
         braces = 0
         for line in content:
             lineNum += 1
-            if not line.startswith("#") or line.startswith(
-                ""
+            if (
+                not line.startswith("#") and line.strip()
             ):  # If the line doesn't start with a comment or blank
                 if "{" in line:
                     braces += 1
@@ -190,15 +204,31 @@ def check_event_for_logs(filepath):
     optionFound = 0
     optionName = ""
     hasOtherDefinitions = 0
+    inNewsEvent = False
+    eventBraces = 0
 
     with open(filepath, "r", encoding="utf-8", errors="ignore") as file:
         content = file.readlines()
         braces = 0
         for line in content:
             lineNum += 1
-            if not line.startswith("#") or line.startswith(
-                ""
+            if (
+                not line.startswith("#") and line.strip()
             ):  # If the line doesn't start with a comment or blank
+                # Track news_event blocks to skip them
+                stripped = line.strip()
+                if re.match(r"news_event\s*=\s*\{", stripped):
+                    inNewsEvent = True
+                    eventBraces = 1
+                elif inNewsEvent:
+                    eventBraces += line.count("{")
+                    eventBraces -= line.count("}")
+                    if eventBraces <= 0:
+                        inNewsEvent = False
+                        eventBraces = 0
+                    continue
+                if inNewsEvent:
+                    continue
                 if "option" in line and "{" in line and "=" in line:
                     optionFound = 1
                     optionLine = lineNum
@@ -228,11 +258,11 @@ def check_event_for_logs(filepath):
                         braces = 0
                     if "}" in line:
                         braces -= line.count("}")
-                    if braces == 0 and hasLog == 0 and hasOtherDefinitions == 1:
+                    if braces == 0 and hasLog == 0 and hasOtherDefinitions == 0:
                         print(
-                            "WARNING: Event "
+                            "WARNING: Event option "
                             + optionName
-                            + " doesn't have logging in {0} Line number: {1}".format(
+                            + " has no effects and no logging in {0} Line number: {1}".format(
                                 clean_filepath(filepath), optionLine
                             )
                         )
@@ -263,8 +293,8 @@ def check_Flags(filepath):
         globalFlags = []
         for line in content:
             lineNum += 1
-            if not line.startswith("#") or line.startswith(
-                ""
+            if (
+                not line.startswith("#") and line.strip()
             ):  # If the line doesn't start with a comment or blank
                 if (
                     "set_country_flag" in line
@@ -291,7 +321,7 @@ def check_Flags(filepath):
                                 line,
                                 re.M | re.I,
                             )
-                            if not hasSimpleFlag:
+                            if not simpleFlagFormat:
                                 print(
                                     "ERROR: "
                                     + hasSimpleFlag.group(1)
@@ -306,7 +336,7 @@ def check_Flags(filepath):
                                 else:
                                     countryFlags.append(hasSimpleFlag.group(1))
 
-                if advFlag == 1 and ("flag=" or "flag =" in line):
+                if advFlag == 1 and ("flag=" in line or "flag =" in line):
                     hasAdvFlag2 = re.search(
                         r"flag\s?=\s([a-zA-Z0-9\-\_]+)", line, re.M
                     )  # If it's a tag
@@ -330,10 +360,10 @@ def check_Flags(filepath):
                             error_count_file += 1
                         else:
                             if isGlobalFlag == 1:
-                                globalFlags.append(hasSimpleFlag.group(1))
+                                globalFlags.append(hasAdvFlag2.group(1))
                                 isGlobalFlag = 0
                             else:
-                                countryFlags.append(hasSimpleFlag.group(1))
+                                countryFlags.append(hasAdvFlag2.group(1))
     return error_count_file, globalFlags, countryFlags
 
 
@@ -542,15 +572,25 @@ def getUnkownEffects(allEffects):
 
 
 def main():
-    print("Validating Basic Style - Secondary Check")
-    message = "Validating Basic Style - Secondary Check\n"
+    parser = argparse.ArgumentParser(
+        description="Validate Coding Standards for HOI4 mod files"
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=os.cpu_count() or 4,
+        help="Number of parallel workers (default: CPU count)",
+    )
+    parser.add_argument(
+        "private_token", nargs="?", help="GitLab private token for posting results"
+    )
+    args = parser.parse_args()
 
-    files_list = []
-    nation_focus_files = []
-    idea_files = []
+    print("Validating Coding Standards")
+    message = "Validating Coding Standards\n"
+
     error_count = 0
     warning_count = 0
-    tags = []
 
     # Allow running from root directory as well as from inside the tools directory
     scriptDir = os.path.realpath(__file__)
@@ -560,72 +600,29 @@ def main():
     allTriggers, allEffects = findPdxSyntax(
         rootDir + "/resources/List of triggers and effects 1_9_1.txt"
     )
-    countryTriggers = getCountryTriggers(allTriggers)
-    stateTriggers = getStateTriggers(allTriggers)
-    unkownTriggers = getUnkownTriggers(allTriggers)
-    countryEffects = getCountryEffects(allEffects)
-    stateEffects = getStateEffects(allEffects)
-    unkownEffects = getUnkownEffects(allEffects)
-    globalFlags = []
-    countryFlags = []
 
+    # Collect focus files (excluding generic.txt)
+    focus_files = []
     for root, dirnames, filenames in os.walk(
         rootDir + "/" + "common" + "/national_focus" + "/"
     ):
         for filename in fnmatch.filter(filenames, "*.txt"):
             if filename != "generic.txt":
-                warning_count = warning_count + checkFocuses(
-                    os.path.join(root, filename)
-                )
-                files_list.append(os.path.join(root, filename))
+                focus_files.append(os.path.join(root, filename))
 
-    # for root, dirnames, filenames in os.walk(rootDir + '/' + 'common' + '/ideas' + '/'):
-    #     for filename in fnmatch.filter(filenames, '*.txt'):
-    #         error_count = error_count + check_ideas(os.path.join(root, filename))
-    #         files_list.append(os.path.join(root, filename))
-
-    # for root, dirnames, filenames in os.walk(rootDir + '/' + 'common/'):
-    # for filename in fnmatch.filter(filenames, '*.txt'):
-    # temp, temp1, temp2 = check_Flags(os.path.join(root, filename))
-    # error_count += temp
-    # globalFlags += temp1
-    # countryFlags += temp1
-    # for root, dirnames, filenames in os.walk(rootDir + '/' + 'events/'):
-    # for filename in fnmatch.filter(filenames, '*.txt'):
-    # temp, temp1, temp2 = check_Flags(os.path.join(root, filename))
-
-    # globalFlags += temp1
-    # countryFlags += temp1
-    # for root, dirnames, filenames in os.walk(rootDir + '/' + 'history/'):
-    # for filename in fnmatch.filter(filenames, '*.txt'):
-    # temp, temp1, temp2 = check_Flags(os.path.join(root, filename))
-    # error_count += temp
-    # globalFlags += temp1
-    # countryFlags += temp1
+    # Collect event files
+    event_files = []
     for root, dirnames, filenames in os.walk(rootDir + "/" + "events/"):
         for filename in fnmatch.filter(filenames, "*.txt"):
-            warning_count = warning_count + check_event_for_logs(
-                os.path.join(root, filename)
-            )
-            files_list.append(os.path.join(root, filename))
+            event_files.append(os.path.join(root, filename))
 
-    # for root, dirnames, filenames in os.walk(rootDir + '/'+ 'common' + '/' + 'national_focus' + '/'):
-    #    for filename in fnmatch.filter(filenames, '*.txt'):
-    #       files_list.append(os.path.join(root, filename))
-    # for root, dirnames, filenames in os.walk(rootDir + '/'+ 'common' + '/' + 'national_focus' + '/'):
-    #   for filename in fnmatch.filter(filenames, '*.txt'):
-    #       files_list.append(os.path.join(root, filename))
+    # Check focus files and event files in parallel
+    with Pool(processes=args.workers) as pool:
+        focus_results = pool.map(checkFocuses, focus_files)
+        event_results = pool.map(check_event_for_logs, event_files)
 
-    # for root, dirnames, filenames in os.walk(rootDir + '/'+ 'events' + '/'):
-    #    for filename in fnmatch.filter(filenames, '*.txt'):
-    #        files_list.append(os.path.join(root, filename))
-
-    # for root, dirnames, filenames in os.walk(rootDir + '/'+ 'history' + '/'):
-    #   for filename in fnmatch.filter(filenames, '*.txt'):
-    #       files_list.append(os.path.join(root, filename))
-
-    # for filename in files_list:
-    #    error_count = error_count + check_basic_style(filename)
+    warning_count = sum(focus_results) + sum(event_results)
+    files_list = focus_files + event_files
 
     total_issues = error_count + warning_count
     print(
@@ -657,11 +654,13 @@ def main():
 
     try:
         projectId = os.environ["CI_PROJECT_ID"]
-        privateToken = privateToken = sys.argv[1]
+        privateToken = args.private_token or (
+            sys.argv[1] if len(sys.argv) > 1 else None
+        )
         headers = {"PRIVATE-TOKEN": privateToken}
         payload = {"body": message}
 
-        if postResults == True:
+        if postResults and privateToken:
             if "CI_MERGE_REQUEST_IID" in os.environ:
                 mergeRequestId = os.environ["CI_MERGE_REQUEST_IID"]
                 r = requests.post(
@@ -687,12 +686,14 @@ def main():
                     headers=headers,
                 )
                 print("Posted results to commit")
-        else:
+        elif not postResults:
             print("File validation passed Coding Standards: SUCCESS")
-    except:
+    except KeyError:
+        pass  # Not in GitLab CI environment
+    except Exception:
         print("Couldn't post results to gitlab")
 
-    # return total_issues
+    return error_count
 
 
 if __name__ == "__main__":
