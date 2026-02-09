@@ -224,6 +224,136 @@ un_on_game_start_war_add = {
 	}
 }
 
+un_check_for_next_queued_vote = {
+	if = {
+		limit = {
+			NOT = {
+				has_global_flag = current_ongoing_sc_vote
+				has_global_flag = un_sc_vote_cooldown
+			}
+			check_variable = { global.sc_vote_type_tracker^num > 0 }
+		}
+		#start the next queued vote!
+		set_variable = { global.current_sc_vote_type = global.sc_vote_type_tracker^0 }
+		set_variable = { global.current_sc_vote_nation = global.sc_vote_nation_tracker^0 }
+
+		remove_from_array = {
+			array = global.sc_vote_type_tracker
+			index = 0
+		}
+
+		remove_from_array = {
+			array = global.sc_vote_nation_tracker
+			index = 0
+		}
+
+		if = {
+			limit = {
+				check_variable = { global.current_sc_vote_type = 1 }
+			}
+			var:global.current_sc_vote_nation = {
+
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { global.current_sc_vote_type = 2 }
+			}
+			var:global.current_sc_vote_nation = {
+
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { global.current_sc_vote_type = 3 }
+			}
+			var:global.current_sc_vote_nation = {
+
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { global.current_sc_vote_type = 4 }
+			}
+			var:global.current_sc_vote_nation = {
+
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { global.current_sc_vote_type = 5 }
+			}
+			var:global.current_sc_vote_nation = {
+				country_event = recognition.10
+			}
+		}
+	}
+
+	if = {
+		limit = {
+			NOT = {
+				has_global_flag = current_ongoing_ga_vote
+				has_global_flag = un_ga_vote_cooldown
+			}
+			check_variable = { global.ga_vote_type_tracker^num > 0 }
+		}
+		#start the next queued vote!
+		set_variable = { global.current_ga_vote_type = global.ga_vote_type_tracker^0 }
+		set_variable = { global.current_ga_vote_nation = global.ga_vote_nation_tracker^0 }
+
+		remove_from_array = {
+			array = global.ga_vote_type_tracker
+			index = 0
+		}
+
+		remove_from_array = {
+			array = global.ga_vote_nation_tracker
+			index = 0
+		}
+
+		if = {
+			limit = {
+				check_variable = { global.current_ga_vote_type = 1 }
+			}
+			var:global.current_ga_vote_nation = {
+
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { global.current_ga_vote_type = 2 }
+			}
+			var:global.current_ga_vote_nation = {
+
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { global.current_ga_vote_type = 3 }
+			}
+			var:global.current_ga_vote_nation = {
+
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { global.current_ga_vote_type = 4 }
+			}
+			var:global.current_ga_vote_nation = {
+
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { global.current_ga_vote_type = 5 }
+			}
+			var:global.current_ga_vote_nation = {
+				country_event = recognition.13
+			}
+		}
+	}
+}
+
 security_council_vote_finished = {
 	#Do the actions based on the type of vote
 	#Pressure to End War
@@ -245,11 +375,19 @@ security_council_vote_finished = {
 	#Add nation to the UN
 	if = {
 		limit = { check_variable = { global.current_sc_vote_type = 5 } }
-		set_variable = { global.current_ga_vote_type = 5 }
-		set_variable = { global.current_ga_vote_nation = global.current_sc_vote_nation }
+		if = {
+			limit = {
+				NOT = { has_global_flag = security_council_veto }
+				check_variable = { global.security_council_vote_yes^num > 8 }
+			}
+			set_variable = { global.current_ga_vote_type = 5 }
+			set_variable = { global.current_ga_vote_nation = global.current_sc_vote_nation }
 
-		var:global.current_sc_vote_nation = {
-			country_event = recognition.13
+			var:global.current_sc_vote_nation = {
+				country_event = recognition.13
+			}
+		} else = {
+			news_event = recognition.122
 		}
 	}
 
@@ -261,6 +399,13 @@ security_council_vote_finished = {
 	clear_variable = global.current_sc_vote_nation
 	clr_global_flag = current_ongoing_sc_vote
 
+	if = {
+		limit = {
+			has_global_flag = security_council_veto
+		}
+		clr_global_flag = security_council_veto
+	}
+
 	missile_ui_update = yes
 }
 
@@ -269,6 +414,22 @@ general_assembly_vote_finished = {
 	#Add nation to the UN
 	if = {
 		limit = { check_variable = { global.current_ga_vote_type = 5 } }
+		set_temp_variable = { pass_vote_required = global.UN_general_assembly^num }
+		multiply_temp_variable = { pass_vote_required = 0.66 }
+		round_temp_variable = pass_vote_required
+
+		if = {
+			limit = {
+				check_temp_variable = { global.general_assembly_vote_yes^num > pass_vote_required }
+			}
+			var:global.current_ga_vote_nation = {
+				country_event = recognition.71
+			}
+		} else = {
+			var:global.current_ga_vote_nation = {
+				country_event = recognition.72
+			}
+		}
 	}
 	#Propose non-binding resolution
 	#This will be an idea that players, after voting, can choose to accept or not
