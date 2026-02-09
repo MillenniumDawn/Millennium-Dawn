@@ -7,9 +7,23 @@ description: "Tutorial explaining the economic elements of Millennium Dawn"
 Millennium Dawn includes unique economic features that reflect the modern economy.
 This tutorial will explain the economic elements of MD.
 
+## Table of Contents
+
+- [Overview](#overview)
+  - [UI](#ui)
+  - [GDP and GDP per Capita](#gdp-and-gdp-per-capita)
+  - [Finance](#finance)
+  - [Employment](#employment)
+  - [Immigration](#immigration)
+  - [Electricity](#electricity)
+  - [Economic Cycle](#economic-cycle)
+  - [International Investments](#international-investments)
+  - [Internal Investment](#internal-investment)
+
 # Overview
 
 ## UI
+
 To view a country’s economic information, click the graph icon in the bottom right to open the Economic Preview.
 
 <div align="center" markdown="1">
@@ -18,6 +32,7 @@ To view a country’s economic information, click the graph icon in the bottom r
 </div>
 
 ## GDP and GDP per Capita
+
 In MD, a country’s GDP is calculated based on active buildings and other factors. GDP per Capita is also calculated by dividing GDP by the population.
 
 GDP represents the size of a country’s economy and affects various aspects, such as determining the national spirit for country rank (e.g., Superpower, Minor Power, etc.) that is applied to all nations and provides various modifiers, influencing research slots, and determining interest rates based on the ratio to national debt (explained later).
@@ -25,6 +40,7 @@ GDP represents the size of a country’s economy and affects various aspects, su
 GDP per Capita indicates the wealth of a nation’s population. Like GDP, it affects research slots, but it also influences major modifiers such as construction speed, stability, population growth, and research speed.
 
 ## Finance
+
 Players must manage their country’s finances. This primarily involves handling revenue, such as tax income that provides funds but also applies debuffs, and six types of government expenditures, which grant buffs the more you spend.
 
 If your weekly balance is negative, or if a national focus or event causes you to spend more than your current funds, debt will automatically be issued. When you have debt, the Debt-to-GDP Ratio—calculated from your total debt and GDP—determines your Interest Rate, and you must pay interest accordingly.
@@ -32,6 +48,7 @@ If your weekly balance is negative, or if a national focus or event causes you t
 If debt increases and interest rates rise too high, managing the national budget may become more difficult, construction speed and factory output may receive debuffs, and bad events may occur. In extreme cases, this can ultimately lead to serious consequences such as debtor nations gaining a war justification against you for defaulting, demands for elections, or even civil war.
 
 ## Employment
+
 In MD, buildings do not produce output simply by being constructed—there is also the concept of buildings employing workers.
 Each facility has a required number of workers, and you must allocate worker population (a certain percentage of the national population) to each facility up to that value.
 
@@ -43,18 +60,20 @@ Conversely, if all national buildings have sufficient workers and there is still
 If this unemployment rate exceeds the Unemployment Threshold value listed in the Economy window, debuffs will be applied—such as a stability penalty and an increase in social spending. These debuffs grow stronger as the unemployment rate increases.
 
 ## Immigration
+
 In MD, one way to increase your population is by accepting immigrants. Migration happens automatically, but you can change the level of acceptance by adjusting the stages of “Migration Laws” (found at the far right of Policies in the Politics window).
 
 Immigration control costs money, and the stricter the immigration restrictions, the higher the expenses. The immigration mechanics are calculated based on factors such as national productivity, unemployment rate, and war status, and are also affected by modifiers from national spirits and other sources.
 
 ## Electricity
+
 In MD, you also need to supply electricity as part of your country’s infrastructure. You can generate power by constructing buildings such as Fossil Fuel Powerplant, Nuclear Reactor, and Renewable Energy Infrastructure.
 
-* A Fossil Fuel Powerplant consumes fuel and produces 1 GW of electricity.
+- A Fossil Fuel Powerplant consumes fuel and produces 1 GW of electricity.
 
-* A Nuclear Reactor consumes Reactor-Grade Material and produces 2 GW of electricity.
+- A Nuclear Reactor consumes Reactor-Grade Material and produces 2 GW of electricity.
 
-* Renewable Energy Infrastructure consumes nothing and produces 0.5 GW of electricity.
+- Renewable Energy Infrastructure consumes nothing and produces 0.5 GW of electricity.
 
 (All values are for the initial state with no modifiers.)
 
@@ -69,6 +88,7 @@ You can view your country’s electricity situation by clicking the electricity 
 </div>
 
 ## Economic Cycle
+
 The Economic Cycle represents the state of a country’s economy and is displayed as the second icon from the left in the National Statistics and Internal Factions section of the Politics window.
 
 There are six stages of the Economic Cycle. The better the stage, the more buffs the country receives to stability, construction speed, immigration rate, and productivity growth. The Economic Cycle can be changed manually by spending political power and treasury funds to upgrade it. Some countries also have national focuses that increase the Economic Cycle.
@@ -76,6 +96,7 @@ There are six stages of the Economic Cycle. The better the stage, the more buffs
 In addition, random events can raise the Economic Cycle, and such events are more likely to occur when the country’s GDP growth rate is high. Conversely, negative random events—such as a bubble burst—can occur, lowering the Economic Cycle.
 
 ## International Investments
+
 In MD, you can construct buildings not only domestically but also abroad. This is called International Investments.
 
 It requires spending treasury funds and takes time, but by making International Investments, you can gain influence over the country receiving the investment and receive weekly investment income (6% annually, subject to change based on national spirits and other factors). However, depending on the target country, some may refuse International Investments. Additionally, AI-controlled countries may also offer to make International Investments in your country.
@@ -88,6 +109,7 @@ You can initiate International Investments by clicking on a foreign state, then 
 </div>
 
 ## Internal Investment
+
 Just like with International Investments, you can also invest in your own domestic states. To do so, click on a state and then click the arrow button to open the interface, from which you can proceed with the investment.
 
 With Internal Investment, by spending political power and treasury funds, you can provide buffs such as increasing the state’s productivity growth rate or adding building slots, as well as apply temporary modifiers for a limited period of time.
