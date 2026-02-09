@@ -4156,6 +4156,7 @@ scripted_gui = {
 					limit = {
 						OR = {
 							has_global_flag = current_ongoing_sc_vote
+							has_global_flag = un_sc_vote_cooldown
 							check_variable = { global.sc_vote_type_tracker^num > 0 }
 						}
 					}
@@ -4168,6 +4169,7 @@ scripted_gui = {
 						country_event = recognition.10
 					}
 				}
+				missile_ui_update = yes
 			}
 		}
 
@@ -4193,6 +4195,9 @@ scripted_gui = {
 		}
 
 		triggers = {
+			un_sc_pop_out_window_visible = {
+				has_country_flag = show_sc_vote_view
+			}
 			unsc_actions_text_visible = {
 				is_on_un_sec_council = yes
 			}
@@ -4285,8 +4290,10 @@ scripted_gui = {
 
 		triggers = {
 			un_ga_pop_out_window_visible = {
-				has_country_flag = show_full_ga_list
-				has_country_flag = show_ga_vote_list
+				OR = {
+					has_country_flag = show_full_ga_list
+					has_country_flag = show_ga_vote_list
+				}
 			}
 		}
 
@@ -4327,7 +4334,6 @@ scripted_gui = {
 			}
 		}
 	}
-
 	MD_UN_aid_gui = {
 		window_name = MD_UN_aid_window
 		context_type = player_context
@@ -6368,6 +6374,20 @@ scripted_gui = {
 			}
 		}
 
+		effects = {
+			un_sc_show_pending_votes_button_click = {
+				if = {
+					limit = {
+						has_country_flag = show_sc_vote_view
+					}
+					clr_country_flag = show_sc_vote_view
+				} else = {
+					set_country_flag = show_sc_vote_view
+				}
+				missile_ui_update = yes
+			}
+		}
+
 		properties = {
 			name_of_nation_button = {
 				image = "[?global.security_council_members^i.GetFlag]"
@@ -6419,6 +6439,65 @@ scripted_gui = {
 
 		effects = {
 			is_un_sc_propose_action_button_click = {
+
+			}
+		}
+	}
+
+	is_un_sc_pending_vote_dynamic_lists = {
+		context_type = player_context
+		parent_scripted_gui = MD_UN_SC_gui
+		window_name = "IS_UN_SC_pending_votes_container"
+
+		dirty = global.missile_ui_updated
+
+		visible = {
+			check_variable = { var_open_MD_UN_gui = 2 }
+			has_country_flag = open_MD_countrymissilesview
+			has_country_flag = show_sc_vote_view
+		}
+		dynamic_lists = {
+			list_of_pending_sc_votes = {
+				array = global.sc_vote_nation_tracker
+				entry_container = IS_UN_SC_pending_vote_list
+			}
+		}
+
+		triggers = {
+
+		}
+
+		effects = {
+			is_un_sc_manipulate_vote_button_click = {
+
+			}
+		}
+	}
+	is_un_ga_pending_vote_dynamic_lists = {
+		context_type = player_context
+		parent_scripted_gui = MD_UN_GA_gui
+		window_name = "IS_UN_GA_pending_votes_container"
+
+		dirty = global.missile_ui_updated
+
+		visible = {
+			check_variable = { var_open_MD_UN_gui = 2 }
+			has_country_flag = open_MD_countrymissilesview
+			has_country_flag = show_ga_vote_list
+		}
+		dynamic_lists = {
+			list_of_pending_sc_votes = {
+				array = global.ga_vote_nation_tracker
+				entry_container = IS_UN_GA_pending_vote_list
+			}
+		}
+
+		triggers = {
+
+		}
+
+		effects = {
+			is_un_ga_manipulate_vote_button_click = {
 
 			}
 		}
