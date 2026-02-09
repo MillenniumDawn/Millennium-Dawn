@@ -124,6 +124,22 @@ def generate_report(results_dir, pr_number=None, commit_sha=None):
             "Scripted Localisation Validation",
             "validation-scripted-localisation-results/validation-scripted-localisation.log",
         ),
+        (
+            "Cosmetic Tag Validation",
+            "validation-cosmetic-tags-results/validation-cosmetic-tags.log",
+        ),
+        (
+            "Decision Validation",
+            "validation-decisions-results/validation-decisions.log",
+        ),
+        (
+            "Localisation Validation",
+            "validation-localisation-results/validation-localisation.log",
+        ),
+        (
+            "Event Validation",
+            "validation-events-results/validation-events.log",
+        ),
     ]
 
     # Add each validation section
