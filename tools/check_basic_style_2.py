@@ -9,13 +9,14 @@ import re
 import subprocess
 import sys
 import time
+from multiprocessing import Pool
 
 import requests
 from path_utils import clean_filepath
 
 startTime = time.time()
 
-__version__ = 1.1
+__version__ = 1.2
 
 
 def get_git_diff_files(base_branch="main", staged_only=False):
@@ -56,8 +57,9 @@ def get_git_diff_files(base_branch="main", staged_only=False):
 
 # Function: check_basic_style
 # Purpose: Validates files to ensure the basic stylization of MD is ensured.
-def check_basic_style(filepath, bad_count, warningErrors, message):
-    fixedErrors = 0
+def check_basic_style(filepath):
+    error_count = 0
+    warning_count = 0
     with open(filepath, "r", encoding="utf-8", errors="ignore") as file:
         content = file.readlines()
         lineNum = 0
@@ -92,7 +94,7 @@ def check_basic_style(filepath, bad_count, warningErrors, message):
                                         clean_filepath(filepath), lineNum
                                     )
                                 )
-                                warningErrors += 1
+                                warning_count += 1
                 if "}" in line:  # if there is an close brace in this line
                     hasComment = re.search(
                         r"#.*[{}]+", line, re.M | re.I
@@ -119,7 +121,7 @@ def check_basic_style(filepath, bad_count, warningErrors, message):
                                         clean_filepath(filepath), lineNum
                                     )
                                 )
-                                warningErrors += 1
+                                warning_count += 1
                 if '"' in line:  # if the line has a qoute
                     if (
                         line.count('"') % 2
@@ -133,7 +135,7 @@ def check_basic_style(filepath, bad_count, warningErrors, message):
                                     clean_filepath(filepath), lineNum
                                 )
                             )
-                            warningErrors += 1
+                            warning_count += 1
 
                 if "=" in line:  # if the line has an equal sign
                     equalSign = 0
@@ -147,7 +149,7 @@ def check_basic_style(filepath, bad_count, warningErrors, message):
                             )
                         )
                         equalSign = equalSign - line.count("  =") - line.count("=  ")
-                        warningErrors += 1
+                        warning_count += 1
                     if (
                         equalSign != 0
                     ):  # if there are equal signs that aren't used correctly
@@ -156,26 +158,24 @@ def check_basic_style(filepath, bad_count, warningErrors, message):
                                 clean_filepath(filepath), lineNum
                             )
                         )
-                        warningErrors += 1
+                        warning_count += 1
                 if "    " in line:  # if 4 spaces in the line
                     print(
                         "WARNING: spaces indent (4) detected instead of tab at {0} Line number: {1}".format(
                             clean_filepath(filepath), lineNum
                         )
                     )
-                    warningErrors += 1
+                    warning_count += 1
                 if openBraces[0] <= -1:
                     print(
-                        "ERROR: A possible missing curly brace {{ in file {} {{line {1}}}".format(
+                        "ERROR: A possible missing curly brace {{ in file {0} {{line {1}}}".format(
                             clean_filepath(filepath), lineNum
                         )
                     )
                     openBraces[0] = 0
-                    fixedErrors += 1
+                    error_count += 1
 
-    file.close()
-
-    return bad_count + fixedErrors, warningErrors, message
+    return (error_count, warning_count)
 
 
 def get_all_files(rootDir):
@@ -212,6 +212,12 @@ def main():
         "--no-gitlab",
         action="store_true",
         help="Disable GitLab integration even if environment variables are set",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=os.cpu_count() or 4,
+        help="Number of parallel workers (default: CPU count)",
     )
     parser.add_argument(
         "filenames",
@@ -277,31 +283,31 @@ def main():
         logger.info(f"Checking all files: {len(files_list)} files")
         print(f"Checking all files: {len(files_list)} files")
 
-    # Check each file
+    # Filter to existing files
+    existing_files = []
     for filename in files_list:
         if os.path.exists(filename):
-            try:
-                bad_count, warningErrors, message = check_basic_style(
-                    filename, bad_count, warningErrors, message
-                )
-            except:
-                print(
-                    f"{clean_filepath(filename)} has a potentially broken curly brace or some other fixes..."
-                )
-                bad_count += 1
+            existing_files.append(filename)
         else:
             logger.warning(f"File not found: {filename}")
             print(f"WARNING: File not found: {filename}")
 
+    # Check files in parallel
+    with Pool(processes=args.workers) as pool:
+        results = pool.map(check_basic_style, existing_files)
+
+    bad_count = sum(r[0] for r in results)
+    warningErrors = sum(r[1] for r in results)
+
     logger.info(
         "------\nChecked {0} files\nTotal Errors detected: {1}\nTotal Warnings detected: {2}".format(
-            len(files_list), bad_count, warningErrors
+            len(existing_files), bad_count, warningErrors
         )
     )
     message = (
         message
         + "------\nChecked {0} files\nTotal Errors detected: {1}\nTotal Warnings Detected: {2}\n".format(
-            len(files_list), bad_count, warningErrors
+            len(existing_files), bad_count, warningErrors
         )
     )
 
@@ -362,7 +368,7 @@ def main():
                 print("File validation passed Coding Standards: SUCCESS")
         except KeyError:
             logger.info("Not in GitLab CI environment, skipping GitLab integration")
-        except:
+        except Exception:
             print("Couldn't post results to gitlab")
 
     return bad_count

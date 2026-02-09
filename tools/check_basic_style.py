@@ -5,10 +5,11 @@ import os
 import subprocess
 import sys
 import time
+from multiprocessing import Pool
 
 from path_utils import clean_filepath
 
-__version__ = 1.1
+__version__ = 1.2
 
 
 def get_git_diff_files(base_branch="main", staged_only=False):
@@ -80,7 +81,7 @@ def check_basic_style(filepath):
             if c != " ":
                 indent_List = []
             # if we are not in a comment block, we will check if we are at the start of one or count the () {} and []
-            elif checkIfInComment == False:
+            if checkIfInComment == False:
                 if (
                     ignoreTillEndOfLine
                 ):  # we are in a line comment, just continue going through the characters until we find an end of line
@@ -199,6 +200,12 @@ def main():
     parser.add_argument(
         "--files", nargs="+", help="Specific files to check (overrides mode)"
     )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=os.cpu_count() or 4,
+        help="Number of parallel workers (default: CPU count)",
+    )
 
     args = parser.parse_args()
 
@@ -237,12 +244,18 @@ def main():
         files_list = get_all_files(rootDir)
         print(f"Checking all files: {len(files_list)} files")
 
-    # Check each file
+    # Filter to existing files
+    existing_files = []
     for filename in files_list:
         if os.path.exists(filename):
-            bad_count = bad_count + check_basic_style(filename)
+            existing_files.append(filename)
         else:
             print(f"WARNING: File not found: {filename}")
+
+    # Check files in parallel
+    with Pool(processes=args.workers) as pool:
+        results = pool.map(check_basic_style, existing_files)
+    bad_count = sum(results)
 
     # Print summary
     print(
