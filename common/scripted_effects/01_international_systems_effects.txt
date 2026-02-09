@@ -355,40 +355,38 @@ un_check_for_next_queued_vote = {
 }
 
 security_council_vote_finished = {
-	#Do the actions based on the type of vote
-	#Pressure to End War
 	if = {
-		limit = { check_variable = { global.current_sc_vote_type = 1 } }
-	}
-	#Economic Sanctions due to Tension
-	if = {
-		limit = { check_variable = { global.current_sc_vote_type = 2 } }
-	}
-	#Regulate Volunteers
-	if = {
-		limit = { check_variable = { global.current_sc_vote_type = 3 } }
-	}
-	#Arms Embargo
-	if = {
-		limit = { check_variable = { global.current_sc_vote_type = 4 } }
-	}
-	#Add nation to the UN
-	if = {
-		limit = { check_variable = { global.current_sc_vote_type = 5 } }
+		limit = {
+			has_passed_sc_vote = yes
+		}
 		if = {
 			limit = {
-				NOT = { has_global_flag = security_council_veto }
-				check_variable = { global.security_council_vote_yes^num > 8 }
+				check_variable = { global.current_sc_vote_type = 5 }
 			}
-			set_variable = { global.current_ga_vote_type = 5 }
-			set_variable = { global.current_ga_vote_nation = global.current_sc_vote_nation }
-
-			var:global.current_sc_vote_nation = {
-				country_event = recognition.13
-			}
-		} else = {
-			news_event = recognition.122
+			push_next_vote_to_ga = yes
 		}
+		if = {
+			limit = {
+				check_variable = { global.current_sc_vote_type = 1 }
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { global.current_sc_vote_type = 2 }
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { global.current_sc_vote_type = 3 }
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { global.current_sc_vote_type = 4 }
+			}
+		}
+	} else = {
+		news_event = recognition.122
 	}
 
 	#clear all arrays and variables
@@ -406,7 +404,38 @@ security_council_vote_finished = {
 		clr_global_flag = security_council_veto
 	}
 
+	set_global_flag = {
+		flag = un_sc_vote_cooldown
+		days = 20
+		value = 1
+	}
+
 	missile_ui_update = yes
+}
+
+push_next_vote_to_ga = {
+	if = {
+		limit = {
+			OR = {
+				has_global_flag = current_ongoing_ga_vote
+				check_variable = { global.ga_vote_type_tracker^num > 0 }
+			}
+		}
+		add_to_array = { global.ga_vote_type_tracker = global.current_sc_vote_type }
+		add_to_array = { global.ga_vote_nation_tracker = global.current_sc_vote_nation }
+	} else = {
+		set_variable = { global.current_ga_vote_type = global.current_sc_vote_type }
+		set_variable = { global.current_ga_vote_nation = global.current_sc_vote_nation }
+
+		if = {
+			limit = {
+				check_variable = { global.current_ga_vote_type = 5 }
+			}
+			var:global.current_ga_vote_nation = {
+				country_event = recognition.13
+			}
+		}
+	}
 }
 
 general_assembly_vote_finished = {
@@ -420,7 +449,7 @@ general_assembly_vote_finished = {
 
 		if = {
 			limit = {
-				check_temp_variable = { global.general_assembly_vote_yes^num > pass_vote_required }
+				check_variable = { global.general_assembly_vote_yes^num > pass_vote_required }
 			}
 			var:global.current_ga_vote_nation = {
 				country_event = recognition.71
