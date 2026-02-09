@@ -164,22 +164,15 @@ division_limiter_potato_edition = {
 }
 
 ai_default_no_build_units = {
-	allowed = {
-		ai_for_units_is_not_disabled = yes
-	}
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
+		has_war = no
 		NOT = {
 			has_country_flag = ai_yes_unit_build
 			has_country_flag = AI_is_threatened
 		}
 	}
-	abort = {
-		OR = {
-			has_country_flag = ai_yes_unit_build
-			has_country_flag = AI_is_threatened
-			has_war = yes
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = role_ratio id = L_Inf value = -500 }
 	ai_strategy = { type = role_ratio id = infantry value = -500 }
@@ -204,20 +197,13 @@ ai_build_units = {
 			has_country_flag = AI_is_threatened
 		}
 	}
-	abort = {
-		OR = {
-			NOT = { has_country_flag = ai_yes_unit_build }
-			NOT = { has_country_flag = AI_is_threatened }
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = force_build_armies value = 100 }
 }
 
 MD_spare_unit_factor = {
-	allowed = {
-		ai_for_units_is_not_disabled = yes
-	}
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = { always = yes }
 	abort_when_not_enabled = yes
 
@@ -226,6 +212,7 @@ MD_spare_unit_factor = {
 
 hate_terrorists = {
 	allowed = {
+		ai_for_units_is_not_disabled = yes
 		NOT = {
 			original_tag = AQY
 			original_tag = TAL
@@ -239,12 +226,10 @@ hate_terrorists = {
 			original_tag = AQY
 			original_tag = TAL
 			original_tag = TTP
-			original_tag = NUS
 		}
 	}
-	abort = {
-		NOT = { has_opinion_modifier = AlQaida_Are_Terrorists }
-	}
+	abort_when_not_enabled = yes
+
 	ai_strategy = { type = antagonize id = "AQY" value = 100 }
 	ai_strategy = { type = antagonize id = "TAL" value = 100 }
 	ai_strategy = { type = antagonize id = "TTP" value = 100 }
@@ -341,13 +326,119 @@ UNAMSIL_equipment = {
 	ai_strategy = { type = support id = "SIE" value = 100 }
 }
 
-everyone_hates_isis = {
+#CONSOLIDATED STRATEGIES - Moved from individual country files to reduce duplication
+
+#Baltic and Eastern European states alliance with USA
+baltic_eastern_europe_alliance_with_usa = {
+	allowed = {
+		OR = {
+			original_tag = EST
+			original_tag = LAT
+			original_tag = LIT
+			original_tag = ALB
+			original_tag = BLR
+			original_tag = BUL
+			original_tag = ROM
+			original_tag = UKR
+			original_tag = MNT
+		}
+	}
 	enable = {
-		has_opinion_modifier = ISIS_Are_Terrorists
+		OR = {
+			has_government = democratic
+			has_government = neutrality
+		}
+		NOT = { has_war_with = USA }
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = antagonize id = "ISI" value = 100 }
-	ai_strategy = { type = contain id = "ISI" value = 100 }
-	ai_strategy = { type = alliance id = "ISI" value = -100 }
+	ai_strategy = { type = befriend id = "USA" value = 200 }
+	ai_strategy = { type = support id = "USA" value = 200 }
+}
+
+#Baltic inter-state cooperation
+baltic_states_cooperation = {
+	allowed = {
+		OR = {
+			original_tag = EST
+			original_tag = LAT
+			original_tag = LIT
+		}
+	}
+	enable = {
+		OR = {
+			AND = {
+				original_tag = EST
+				OR = {
+					country_exists = LAT
+					country_exists = LIT
+				}
+			}
+			AND = {
+				original_tag = LAT
+				OR = {
+					country_exists = EST
+					country_exists = LIT
+				}
+			}
+			AND = {
+				original_tag = LIT
+				OR = {
+					country_exists = EST
+					country_exists = LAT
+				}
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "EST" value = 150 }
+	ai_strategy = { type = befriend id = "LAT" value = 150 }
+	ai_strategy = { type = befriend id = "LIT" value = 150 }
+	ai_strategy = { type = alliance id = "EST" value = 150 }
+	ai_strategy = { type = alliance id = "LAT" value = 150 }
+	ai_strategy = { type = alliance id = "LIT" value = 150 }
+}
+
+#US Civil War - International Support
+us_civil_war_international_support = {
+	allowed = {
+		OR = {
+			original_tag = CHI
+			original_tag = ENG
+			original_tag = FRA
+			original_tag = GER
+			original_tag = GRE
+			original_tag = HEZ
+			original_tag = IRE
+			original_tag = ITA
+			original_tag = PER
+			original_tag = RAJ
+			original_tag = SOV
+			original_tag = SPR
+			original_tag = VEN
+		}
+	}
+	enable = {
+		has_war = no
+		OR = {
+			country_exists = CAL
+			country_exists = NYK
+			country_exists = TEX
+			country_exists = FLA
+			country_exists = CAS
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "CAL" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "CAL" value = 400 }
+	ai_strategy = { type = send_volunteers_desire id = "NYK" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "NYK" value = 400 }
+	ai_strategy = { type = send_volunteers_desire id = "TEX" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "TEX" value = 400 }
+	ai_strategy = { type = send_volunteers_desire id = "FLA" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "FLA" value = 400 }
+	ai_strategy = { type = send_volunteers_desire id = "CAS" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "CAS" value = 400 }
 }
