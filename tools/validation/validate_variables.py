@@ -6,186 +6,27 @@
 # Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
 # Optimized with multiprocessing for significantly faster execution
 ##########################
-import argparse
 import glob
-import logging
 import os
 import re
-import subprocess
-import sys
-from functools import partial
-from multiprocessing import Pool, cpu_count
-from pathlib import Path
+from multiprocessing import Pool
 from typing import Dict, List, Optional, Tuple
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-
-# Directories to ignore during validation
-IGNORED_DIRS = ["gfx", "tools", "resources", "docs", "map"]
-
-
-# ANSI color codes for terminal output
-class Colors:
-    HEADER = "\033[95m"
-    BLUE = "\033[94m"
-    CYAN = "\033[96m"
-    GREEN = "\033[92m"
-    YELLOW = "\033[93m"
-    RED = "\033[91m"
-    ENDC = "\033[0m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
-
-
-def should_skip_file(filename: str) -> bool:
-    """Check if file should be skipped based on ignored directories
-
-    Args:
-        filename (str): path to file
-
-    Returns:
-        bool: True if file should be skipped
-    """
-    normalized_path = filename.replace("\\", "/")
-    for ignored_dir in IGNORED_DIRS:
-        if f"/{ignored_dir}/" in normalized_path or normalized_path.startswith(
-            f"{ignored_dir}/"
-        ):
-            return True
-    return False
-
-
-def get_staged_files(mod_path: str) -> Optional[List[str]]:
-    """Get list of staged .txt and .yml files from git
-
-    Args:
-        mod_path (str): path to mod folder
-
-    Returns:
-        List of staged file paths, or None if not a git repo
-    """
-    try:
-        result = subprocess.run(
-            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
-            cwd=mod_path,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        files = result.stdout.strip().split("\n")
-        # Filter for .txt and .yml files only
-        staged_files = [
-            os.path.join(mod_path, f)
-            for f in files
-            if f and (f.endswith(".txt") or f.endswith(".yml"))
-        ]
-        return staged_files if staged_files else None
-    except subprocess.CalledProcessError:
-        return None
-
-
-def find_line_number(filename: str, pattern: str, lowercase: bool = True) -> int:
-    """Find the line number where a pattern first occurs in a file
-
-    Args:
-        filename (str): path to file
-        pattern (str): pattern to search for
-        lowercase (bool): whether to search case-insensitively
-
-    Returns:
-        int: line number (1-indexed) or 0 if not found
-    """
-    try:
-        with open(filename, "r", encoding="utf-8-sig") as f:
-            for line_num, line in enumerate(f, 1):
-                search_line = line.lower() if lowercase else line
-                search_pattern = pattern.lower() if lowercase else pattern
-                if search_pattern in search_line:
-                    return line_num
-    except Exception:
-        pass
-    return 0
-
-
-class FileOpener:
-    """Utility class for file operations"""
-
-    @classmethod
-    def open_text_file(cls, filename: str, lowercase: bool = True) -> str:
-        """Opens and returns text file in utf-8-sig encoding
-
-        Args:
-            filename (str): text file to open
-            lowercase (bool): defines if returned str is converted to lowercase or not. Default - True
-
-        Returns:
-            str: contents of the text file
-        """
-        try:
-            with open(filename, "r", encoding="utf-8-sig") as text_file:
-                if lowercase:
-                    return text_file.read().lower()
-                else:
-                    return text_file.read()
-        except Exception as ex:
-            logging.warning(f"Skipping the file {filename}, {ex}")
-            return ""
-
-
-class DataCleaner:
-    """Utility class for cleaning data and removing false positives"""
-
-    @classmethod
-    def clear_false_positives_partial_match(
-        cls, input_iter, false_positives: tuple = ()
-    ):
-        """Removes items from iterable based on partial match
-
-        Args:
-            input_iter: dict/list to remove items from
-            false_positives (tuple, optional): iterable with patterns to remove
-
-        Returns:
-            dict or list: cleaned input_iter
-        """
-        if isinstance(input_iter, dict):
-            if len(false_positives) > 0:
-                skip_list = []
-                for k in input_iter:
-                    for f in false_positives:
-                        if f in k:
-                            skip_list.append(k)
-
-                for i in skip_list:
-                    if i in input_iter:
-                        input_iter.pop(i)
-            return input_iter
-
-        elif isinstance(input_iter, list):
-            if len(false_positives) > 0:
-                skip_list = []
-                for k in input_iter:
-                    for f in false_positives:
-                        if f in k:
-                            skip_list.append(k)
-
-                input_iter = [i for i in input_iter if i not in skip_list]
-            return input_iter
+from validator_common import (
+    BaseValidator,
+    Colors,
+    DataCleaner,
+    FileOpener,
+    find_line_number,
+    run_validator_main,
+    should_skip_file,
+)
 
 
 # Multiprocessing helper functions
 def process_file_for_flags(
-    args: Tuple[str, bool, str]
+    args: Tuple[str, bool, str, str]
 ) -> Tuple[List[str], Dict[str, str], str]:
-    """Process a single file to extract used/set/cleared flags
-
-    Args:
-        args: Tuple of (filename, lowercase, flag_type, operation)
-
-    Returns:
-        Tuple of (flags list, paths dict, operation type)
-    """
     filename, lowercase, flag_type, operation = args
 
     if should_skip_file(filename):
@@ -250,14 +91,6 @@ def process_file_for_flags(
 def process_file_for_targets(
     args: Tuple[str, bool, str]
 ) -> Tuple[List[str], Dict[str, str], str]:
-    """Process a single file to extract used/set/cleared event targets
-
-    Args:
-        args: Tuple of (filename, lowercase, operation)
-
-    Returns:
-        Tuple of (targets list, paths dict, operation type)
-    """
     filename, lowercase, operation = args
 
     if should_skip_file(filename):
@@ -323,420 +156,174 @@ def process_file_for_targets(
 
 
 class Variables:
-    """Class for handling flag validation"""
+    @classmethod
+    def _get_flags(
+        cls, mod_path, lowercase, flag_type, operation, staged_files, workers
+    ):
+        flags = []
+        paths = {}
+        if flag_type not in ["country", "state", "global"]:
+            raise ValueError(
+                "Unsupported flag value passed. Expected country, state, global"
+            )
+
+        if staged_files:
+            files_to_scan = [f for f in staged_files if f.endswith(".txt")]
+        else:
+            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
+
+        args_list = [(f, lowercase, flag_type, operation) for f in files_to_scan]
+        with Pool(processes=workers) as pool:
+            results = pool.map(process_file_for_flags, args_list, chunksize=50)
+
+        for flags_list, paths_dict, _ in results:
+            flags.extend(flags_list)
+            paths.update(paths_dict)
+
+        return (flags, paths)
 
     @classmethod
     def get_all_used_flags(
         cls,
-        mod_path: str,
-        lowercase: bool = True,
-        flag_type: str = "country",
-        return_paths: bool = False,
-        staged_files: Optional[List[str]] = None,
-        workers: int = None,
+        mod_path,
+        lowercase=True,
+        flag_type="country",
+        return_paths=False,
+        staged_files=None,
+        workers=None,
     ):
-        """Parse all files and return list with all used flags
-
-        Args:
-            mod_path (str): path to mod folder
-            lowercase (bool, optional): defines if returned list contains lowercase str or not. Defaults to True.
-            flag_type (str, optional): type of flag (country/state/global). Defaults to "country".
-            return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
-            staged_files (list, optional): list of staged files to validate (if None, validates all files)
-            workers (int, optional): number of worker processes (defaults to half CPU count)
-
-        Returns:
-            tuple or list: (flags, paths) if return_paths else flags
-        """
-        flags = []
-        paths = {}
-        if flag_type not in ["country", "state", "global"]:
-            raise ValueError(
-                "Unsupported flag value passed. Expected country, state, global"
-            )
-
-        # Determine which files to scan
-        if staged_files:
-            files_to_scan = [f for f in staged_files if f.endswith(".txt")]
-        else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
-
-        # Use multiprocessing for parallel file processing
-        if workers is None:
-            workers = max(1, cpu_count() // 2)
-
-        args_list = [(f, lowercase, flag_type, "used") for f in files_to_scan]
-
-        with Pool(processes=workers) as pool:
-            results = pool.map(process_file_for_flags, args_list, chunksize=50)
-
-        # Merge results
-        for flags_list, paths_dict, _ in results:
-            flags.extend(flags_list)
-            paths.update(paths_dict)
-
-        if return_paths:
-            return (flags, paths)
-        else:
-            return flags
+        flags, paths = cls._get_flags(
+            mod_path, lowercase, flag_type, "used", staged_files, workers
+        )
+        return (flags, paths) if return_paths else flags
 
     @classmethod
     def get_all_set_flags(
         cls,
-        mod_path: str,
-        lowercase: bool = True,
-        flag_type: str = "country",
-        return_paths: bool = False,
-        staged_files: Optional[List[str]] = None,
-        workers: int = None,
+        mod_path,
+        lowercase=True,
+        flag_type="country",
+        return_paths=False,
+        staged_files=None,
+        workers=None,
     ):
-        """Parse all files and return list with all set flags
-
-        Args:
-            mod_path (str): path to mod folder
-            lowercase (bool, optional): defines if returned list contains lowercase str or not. Defaults to True.
-            flag_type (str, optional): type of flag (country/state/global). Defaults to "country".
-            return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
-            workers (int, optional): number of worker processes (defaults to half CPU count)
-
-        Returns:
-            tuple or list: (flags, paths) if return_paths else flags
-        """
-        flags = []
-        paths = {}
-        if flag_type not in ["country", "state", "global"]:
-            raise ValueError(
-                "Unsupported flag value passed. Expected country, state, global"
-            )
-
-        # Determine which files to scan
-        if staged_files:
-            files_to_scan = [f for f in staged_files if f.endswith(".txt")]
-        else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
-
-        # Use multiprocessing for parallel file processing
-        if workers is None:
-            workers = max(1, cpu_count() // 2)
-
-        args_list = [(f, lowercase, flag_type, "set") for f in files_to_scan]
-
-        with Pool(processes=workers) as pool:
-            results = pool.map(process_file_for_flags, args_list, chunksize=50)
-
-        # Merge results
-        for flags_list, paths_dict, _ in results:
-            flags.extend(flags_list)
-            paths.update(paths_dict)
-
-        if return_paths:
-            return (flags, paths)
-        else:
-            return flags
+        flags, paths = cls._get_flags(
+            mod_path, lowercase, flag_type, "set", staged_files, workers
+        )
+        return (flags, paths) if return_paths else flags
 
     @classmethod
     def get_all_cleared_flags(
         cls,
-        mod_path: str,
-        lowercase: bool = True,
-        flag_type: str = "country",
-        return_paths: bool = False,
-        staged_files: Optional[List[str]] = None,
-        workers: int = None,
+        mod_path,
+        lowercase=True,
+        flag_type="country",
+        return_paths=False,
+        staged_files=None,
+        workers=None,
     ):
-        """Parse all files and return list with all cleared flags
+        flags, paths = cls._get_flags(
+            mod_path, lowercase, flag_type, "cleared", staged_files, workers
+        )
+        return (flags, paths) if return_paths else flags
 
-        Args:
-            mod_path (str): path to mod folder
-            lowercase (bool, optional): defines if returned list contains lowercase str or not. Defaults to True.
-            flag_type (str, optional): type of flag (country/state/global). Defaults to "country".
-            return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
-            workers (int, optional): number of worker processes (defaults to half CPU count)
 
-        Returns:
-            tuple or list: (flags, paths) if return_paths else flags
-        """
-        flags = []
+class EventTargets:
+    @classmethod
+    def _get_targets(cls, mod_path, lowercase, operation, staged_files, workers):
+        targets = []
         paths = {}
-        if flag_type not in ["country", "state", "global"]:
-            raise ValueError(
-                "Unsupported flag value passed. Expected country, state, global"
-            )
 
-        # Determine which files to scan
         if staged_files:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
             files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
 
-        # Use multiprocessing for parallel file processing
-        if workers is None:
-            workers = max(1, cpu_count() // 2)
-
-        args_list = [(f, lowercase, flag_type, "cleared") for f in files_to_scan]
-
+        args_list = [(f, lowercase, operation) for f in files_to_scan]
         with Pool(processes=workers) as pool:
-            results = pool.map(process_file_for_flags, args_list, chunksize=50)
+            results = pool.map(process_file_for_targets, args_list, chunksize=50)
 
-        # Merge results
-        for flags_list, paths_dict, _ in results:
-            flags.extend(flags_list)
+        for targets_list, paths_dict, _ in results:
+            targets.extend(targets_list)
             paths.update(paths_dict)
 
-        if return_paths:
-            return (flags, paths)
-        else:
-            return flags
-
-
-class EventTargets:
-    """Class for handling event target validation"""
+        return (targets, paths)
 
     @classmethod
     def get_all_used_targets(
         cls,
-        mod_path: str,
-        lowercase: bool = True,
-        return_paths: bool = False,
-        staged_files: Optional[List[str]] = None,
-        workers: int = None,
+        mod_path,
+        lowercase=True,
+        return_paths=False,
+        staged_files=None,
+        workers=None,
     ):
-        """Parse all files and return list with all used event targets
-
-        Args:
-            mod_path (str): path to mod folder
-            lowercase (bool, optional): defines if returned list contains lowercase str or not. Defaults to True.
-            return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
-            workers (int, optional): number of worker processes (defaults to half CPU count)
-
-        Returns:
-            tuple or list: (targets, paths) if return_paths else targets
-        """
-        targets = []
-        paths = {}
-
-        # Determine which files to scan
-        if staged_files:
-            files_to_scan = [f for f in staged_files if f.endswith(".txt")]
-        else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
-
-        # Use multiprocessing for parallel file processing
-        if workers is None:
-            workers = max(1, cpu_count() // 2)
-
-        args_list = [(f, lowercase, "used") for f in files_to_scan]
-
-        with Pool(processes=workers) as pool:
-            results = pool.map(process_file_for_targets, args_list, chunksize=50)
-
-        # Merge results
-        for targets_list, paths_dict, _ in results:
-            targets.extend(targets_list)
-            paths.update(paths_dict)
-
-        if return_paths:
-            return (targets, paths)
-        else:
-            return targets
+        targets, paths = cls._get_targets(
+            mod_path, lowercase, "used", staged_files, workers
+        )
+        return (targets, paths) if return_paths else targets
 
     @classmethod
     def get_all_set_targets(
         cls,
-        mod_path: str,
-        lowercase: bool = True,
-        return_paths: bool = False,
-        staged_files: Optional[List[str]] = None,
-        workers: int = None,
+        mod_path,
+        lowercase=True,
+        return_paths=False,
+        staged_files=None,
+        workers=None,
     ):
-        """Parse all files and return list with all set event targets
-
-        Args:
-            mod_path (str): path to mod folder
-            lowercase (bool, optional): defines if returned list contains lowercase str or not. Defaults to True.
-            return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
-            workers (int, optional): number of worker processes (defaults to half CPU count)
-
-        Returns:
-            tuple or list: (targets, paths) if return_paths else targets
-        """
-        targets = []
-        paths = {}
-
-        # Determine which files to scan
-        if staged_files:
-            files_to_scan = [f for f in staged_files if f.endswith(".txt")]
-        else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
-
-        # Use multiprocessing for parallel file processing
-        if workers is None:
-            workers = max(1, cpu_count() // 2)
-
-        args_list = [(f, lowercase, "set") for f in files_to_scan]
-
-        with Pool(processes=workers) as pool:
-            results = pool.map(process_file_for_targets, args_list, chunksize=50)
-
-        # Merge results
-        for targets_list, paths_dict, _ in results:
-            targets.extend(targets_list)
-            paths.update(paths_dict)
-
-        if return_paths:
-            return (targets, paths)
-        else:
-            return targets
+        targets, paths = cls._get_targets(
+            mod_path, lowercase, "set", staged_files, workers
+        )
+        return (targets, paths) if return_paths else targets
 
     @classmethod
     def get_all_cleared_targets(
         cls,
-        mod_path: str,
-        lowercase: bool = True,
-        return_paths: bool = False,
-        staged_files: Optional[List[str]] = None,
-        workers: int = None,
+        mod_path,
+        lowercase=True,
+        return_paths=False,
+        staged_files=None,
+        workers=None,
     ):
-        """Parse all files and return list with all cleared event targets
-
-        Args:
-            mod_path (str): path to mod folder
-            lowercase (bool, optional): defines if returned list contains lowercase str or not. Defaults to True.
-            return_paths (bool, optional): defines if paths dict is returned. Defaults to False.
-            workers (int, optional): number of worker processes (defaults to half CPU count)
-
-        Returns:
-            tuple or list: (targets, paths) if return_paths else targets
-        """
-        targets = []
-        paths = {}
-
-        # Determine which files to scan
-        if staged_files:
-            files_to_scan = [f for f in staged_files if f.endswith(".txt")]
-        else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
-
-        # Use multiprocessing for parallel file processing
-        if workers is None:
-            workers = max(1, cpu_count() // 2)
-
-        args_list = [(f, lowercase, "cleared") for f in files_to_scan]
-
-        with Pool(processes=workers) as pool:
-            results = pool.map(process_file_for_targets, args_list, chunksize=50)
-
-        # Merge results
-        for targets_list, paths_dict, _ in results:
-            targets.extend(targets_list)
-            paths.update(paths_dict)
-
-        if return_paths:
-            return (targets, paths)
-        else:
-            return targets
-
-
-class Validator:
-    """Main validation class that runs all checks"""
-
-    def __init__(
-        self,
-        mod_path: str,
-        output_file: Optional[str] = None,
-        use_colors: bool = True,
-        staged_only: bool = False,
-        workers: int = None,
-    ):
-        """Initialize validator with mod path
-
-        Args:
-            mod_path (str): path to mod folder (must end with /)
-            output_file (str, optional): path to output file for results
-            use_colors (bool): whether to use ANSI colors in output
-            staged_only (bool): only validate git staged files
-            workers (int, optional): number of worker processes (defaults to half CPU count)
-        """
-        if not mod_path.endswith("/"):
-            mod_path += "/"
-        self.mod_path = mod_path
-        self.errors_found = 0
-        self.output_file = output_file
-        self.use_colors = use_colors
-        self.staged_only = staged_only
-        self.workers = workers if workers else max(1, cpu_count() // 2)
-        self.staged_files = None
-        self.output_lines = []
-
-        if staged_only:
-            self.staged_files = get_staged_files(mod_path)
-            if not self.staged_files:
-                logging.warning("No staged .txt or .yml files found")
-
-    def log(self, message: str, level: str = "info"):
-        """Log message and optionally store for file output
-
-        Args:
-            message (str): message to log
-            level (str): log level (info, warning, error)
-        """
-        # Strip ANSI codes if not using colors
-        display_msg = (
-            message if self.use_colors else re.sub(r"\033\[[0-9;]+m", "", message)
+        targets, paths = cls._get_targets(
+            mod_path, lowercase, "cleared", staged_files, workers
         )
+        return (targets, paths) if return_paths else targets
 
-        if level == "info":
-            logging.info(display_msg)
-        elif level == "warning":
-            logging.warning(display_msg)
-        elif level == "error":
-            logging.error(display_msg)
 
-        # Store for file output (without colors)
-        file_msg = re.sub(r"\033\[[0-9;]+m", "", message)
-        self.output_lines.append(file_msg)
+class Validator(BaseValidator):
+    TITLE = "VARIABLE AND EVENT TARGET VALIDATION"
+    STAGED_EXTENSIONS = [".txt", ".yml"]
 
-    def get_full_path(self, basename: str, item: str) -> Optional[str]:
-        """Find full path for a file given its basename and search item
-
-        Args:
-            basename (str): file basename
-            item (str): item to search for in the file (case-sensitive)
-
-        Returns:
-            Full file path or None
-        """
-        for filename in glob.iglob(self.mod_path + "**/*.txt", recursive=True):
-            if os.path.basename(filename) == basename:
-                if should_skip_file(filename):
-                    continue
-                # Quick check if this might be the right file (case-sensitive)
-                try:
-                    with open(filename, "r", encoding="utf-8-sig") as f:
-                        content = f.read()
-                        if item in content:
-                            return filename
-                except:
-                    pass
-        return None
-
-    def save_output(self):
-        """Save output to file if output_file is specified"""
-        if self.output_file and self.output_lines:
-            try:
-                with open(self.output_file, "w", encoding="utf-8") as f:
-                    f.write("\n".join(self.output_lines))
-                logging.info(f"Results saved to: {self.output_file}")
-            except Exception as e:
-                logging.error(f"Failed to save output to {self.output_file}: {e}")
+    def _report_with_locations(self, results: list, ok_msg: str, fail_msg: str):
+        if len(results) > 0:
+            self.log(
+                f"{Colors.RED if self.use_colors else ''}{fail_msg}{Colors.ENDC if self.use_colors else ''}",
+                "error",
+            )
+            for result in results:
+                if result["line"] > 0:
+                    self.log(
+                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}:{result['line']}{Colors.ENDC if self.use_colors else ''} - {result.get('flag', result.get('target', ''))}",
+                        "error",
+                    )
+                else:
+                    self.log(
+                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}{Colors.ENDC if self.use_colors else ''} - {result.get('flag', result.get('target', ''))}",
+                        "error",
+                    )
+            self.log(
+                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
+                "error",
+            )
+            self.errors_found += len(results)
+        else:
+            self.log(
+                f"{Colors.GREEN if self.use_colors else ''}{ok_msg}{Colors.ENDC if self.use_colors else ''}"
+            )
 
     def validate_cleared_flags(self, flag_type: str, false_positives: list):
-        """Validate flags that are cleared but never set
-
-        Args:
-            flag_type (str): type of flag (country/state/global)
-            false_positives (list): list of patterns to skip
-        """
         self.log(f"\n{'='*80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking cleared {flag_type} flags that are never set...{Colors.ENDC if self.use_colors else ''}"
@@ -776,39 +363,13 @@ class Validator:
                     )
                     results.append({"flag": flag, "file": rel_path, "line": line_num})
 
-        if len(results) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Cleared {flag_type} flags that are never set were encountered. Flags with @ are skipped.{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for result in results:
-                if result["line"] > 0:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}:{result['line']}{Colors.ENDC if self.use_colors else ''} - {result['flag']}",
-                        "error",
-                    )
-                else:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}{Colors.ENDC if self.use_colors else ''} - {result['flag']}",
-                        "error",
-                    )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(results)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No issues found with cleared {flag_type} flags{Colors.ENDC if self.use_colors else ''}"
-            )
+        self._report_with_locations(
+            results,
+            f"✓ No issues found with cleared {flag_type} flags",
+            f"Cleared {flag_type} flags that are never set were encountered. Flags with @ are skipped.",
+        )
 
     def validate_missing_flags(self, flag_type: str, false_positives: list):
-        """Validate flags that are used but never set
-
-        Args:
-            flag_type (str): type of flag (country/state/global)
-            false_positives (list): list of patterns to skip
-        """
         self.log(f"\n{'='*80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking missing {flag_type} flags (used but not set)...{Colors.ENDC if self.use_colors else ''}"
@@ -848,39 +409,13 @@ class Validator:
                     )
                     results.append({"flag": flag, "file": rel_path, "line": line_num})
 
-        if len(results) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Missing {flag_type} flags were encountered - they are not set via 'set_{flag_type}_flag'. Flags with @ are skipped.{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for result in results:
-                if result["line"] > 0:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}:{result['line']}{Colors.ENDC if self.use_colors else ''} - {result['flag']}",
-                        "error",
-                    )
-                else:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}{Colors.ENDC if self.use_colors else ''} - {result['flag']}",
-                        "error",
-                    )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(results)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No issues found with missing {flag_type} flags{Colors.ENDC if self.use_colors else ''}"
-            )
+        self._report_with_locations(
+            results,
+            f"✓ No issues found with missing {flag_type} flags",
+            f"Missing {flag_type} flags were encountered - they are not set via 'set_{flag_type}_flag'. Flags with @ are skipped.",
+        )
 
     def validate_unused_flags(self, flag_type: str, false_positives: list):
-        """Validate flags that are set but never used
-
-        Args:
-            flag_type (str): type of flag (country/state/global)
-            false_positives (list): list of patterns to skip
-        """
         self.log(f"\n{'='*80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking unused {flag_type} flags (set but not used)...{Colors.ENDC if self.use_colors else ''}"
@@ -920,34 +455,13 @@ class Validator:
                     )
                     results.append({"flag": flag, "file": rel_path, "line": line_num})
 
-        if len(results) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Unused {flag_type} flags were encountered - they are not used via 'has_{flag_type}_flag' at least once. Flags with @ are skipped.{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for result in results:
-                if result["line"] > 0:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}:{result['line']}{Colors.ENDC if self.use_colors else ''} - {result['flag']}",
-                        "error",
-                    )
-                else:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}{Colors.ENDC if self.use_colors else ''} - {result['flag']}",
-                        "error",
-                    )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(results)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No issues found with unused {flag_type} flags{Colors.ENDC if self.use_colors else ''}"
-            )
+        self._report_with_locations(
+            results,
+            f"✓ No issues found with unused {flag_type} flags",
+            f"Unused {flag_type} flags were encountered - they are not used via 'has_{flag_type}_flag' at least once. Flags with @ are skipped.",
+        )
 
     def validate_cleared_event_targets(self):
-        """Validate event targets that are cleared but not set"""
         self.log(f"\n{'='*80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking cleared event targets that are not set...{Colors.ENDC if self.use_colors else ''}"
@@ -986,34 +500,13 @@ class Validator:
                         {"target": target, "file": rel_path, "line": line_num}
                     )
 
-        if len(results) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Cleared event targets that are not set were encountered.{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for result in results:
-                if result["line"] > 0:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}:{result['line']}{Colors.ENDC if self.use_colors else ''} - {result['target']}",
-                        "error",
-                    )
-                else:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}{Colors.ENDC if self.use_colors else ''} - {result['target']}",
-                        "error",
-                    )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(results)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No issues found with cleared event targets{Colors.ENDC if self.use_colors else ''}"
-            )
+        self._report_with_locations(
+            results,
+            "✓ No issues found with cleared event targets",
+            "Cleared event targets that are not set were encountered.",
+        )
 
     def validate_missing_event_targets(self):
-        """Validate event targets that are used but not set"""
         self.log(f"\n{'='*80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking missing event targets (used but not set)...{Colors.ENDC if self.use_colors else ''}"
@@ -1060,34 +553,13 @@ class Validator:
                         {"target": target, "file": rel_path, "line": line_num}
                     )
 
-        if len(results) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Used event targets that are not set were encountered.{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for result in results:
-                if result["line"] > 0:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}:{result['line']}{Colors.ENDC if self.use_colors else ''} - {result['target']}",
-                        "error",
-                    )
-                else:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}{Colors.ENDC if self.use_colors else ''} - {result['target']}",
-                        "error",
-                    )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(results)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No issues found with missing event targets{Colors.ENDC if self.use_colors else ''}"
-            )
+        self._report_with_locations(
+            results,
+            "✓ No issues found with missing event targets",
+            "Used event targets that are not set were encountered.",
+        )
 
     def validate_unused_event_targets(self):
-        """Validate event targets that are set but never used"""
         self.log(f"\n{'='*80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking unused event targets (set but not used)...{Colors.ENDC if self.use_colors else ''}"
@@ -1118,10 +590,7 @@ class Validator:
             if target not in used_targets:
                 potential_results.append(target)
 
-        # Additionally checking yml files for loc functions
         targets_used_in_loc = []
-
-        # Determine which yml files to scan
         if self.staged_files:
             yml_files_to_scan = [f for f in self.staged_files if f.endswith(".yml")]
         else:
@@ -1168,49 +637,13 @@ class Validator:
                         {"target": target, "file": rel_path, "line": line_num}
                     )
 
-        if len(results) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Unused event targets were encountered.{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for result in results:
-                if result["line"] > 0:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}:{result['line']}{Colors.ENDC if self.use_colors else ''} - {result['target']}",
-                        "error",
-                    )
-                else:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}{Colors.ENDC if self.use_colors else ''} - {result['target']}",
-                        "error",
-                    )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(results)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No issues found with unused event targets{Colors.ENDC if self.use_colors else ''}"
-            )
-
-    def run_all_validations(self):
-        """Run all validation checks"""
-        self.log(f"\n{'#'*80}")
-        self.log(
-            f"{Colors.BOLD if self.use_colors else ''}MILLENNIUM DAWN VARIABLE AND EVENT TARGET VALIDATION{Colors.ENDC if self.use_colors else ''}"
+        self._report_with_locations(
+            results,
+            "✓ No issues found with unused event targets",
+            "Unused event targets were encountered.",
         )
-        self.log(f"{'#'*80}")
-        self.log(f"Mod path: {self.mod_path}")
-        self.log(f"Worker processes: {self.workers}")
-        if self.staged_only:
-            self.log(
-                f"{Colors.CYAN if self.use_colors else ''}Mode: Git staged files only{Colors.ENDC if self.use_colors else ''}"
-            )
-        if self.output_file:
-            self.log(f"Output file: {self.output_file}")
 
-        # Define false positives for each flag type
+    def run_validations(self):
         FALSE_POSITIVES_GENERIC = ["@", "[", "{"]
         FALSE_POSITIVES_COUNTRY = [
             "@",
@@ -1254,7 +687,6 @@ class Validator:
             "recognised_opponent_",
         ]
 
-        # Run flag validations
         for flag_type, fp_cleared, fp_missing, fp_unused in [
             (
                 "country",
@@ -1279,111 +711,12 @@ class Validator:
             self.validate_missing_flags(flag_type, fp_missing)
             self.validate_unused_flags(flag_type, fp_unused)
 
-        # Run event target validations
         self.validate_cleared_event_targets()
         self.validate_missing_event_targets()
         self.validate_unused_event_targets()
 
-        # Final summary
-        self.log(f"\n{'#'*80}")
-        if self.errors_found == 0:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC if self.use_colors else ''}"
-            )
-        else:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}✗ VALIDATION COMPLETE - {self.errors_found} TOTAL ISSUES FOUND{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-        self.log(f"{'#'*80}\n")
-
-        # Save output if requested
-        self.save_output()
-
-        return self.errors_found
-
-
-def main():
-    """Main entry point"""
-    parser = argparse.ArgumentParser(
-        description="Validate variables and event targets in Millennium Dawn mod",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Validate current directory
-  python validate_variables.py
-
-  # Validate specific mod directory
-  python validate_variables.py --path /path/to/mod
-
-  # Exit with error code on issues (useful for CI/CD)
-  python validate_variables.py --strict
-
-  # Save output to file
-  python validate_variables.py --output report.txt
-
-  # Validate only git staged files (for pre-commit hook)
-  python validate_variables.py --staged --strict
-
-  # Disable colors
-  python validate_variables.py --no-color
-        """,
-    )
-    parser.add_argument(
-        "--path",
-        type=str,
-        default=".",
-        help="Path to the mod folder (default: current directory)",
-    )
-    parser.add_argument(
-        "--strict", action="store_true", help="Exit with error code if issues are found"
-    )
-    parser.add_argument(
-        "--output", "-o", type=str, help="Save validation results to file"
-    )
-    parser.add_argument(
-        "--no-color", action="store_true", help="Disable ANSI color codes in output"
-    )
-    parser.add_argument(
-        "--staged",
-        action="store_true",
-        help="Only validate git staged files (for pre-commit hook)",
-    )
-    parser.add_argument(
-        "--workers",
-        type=int,
-        default=None,
-        help=f"Number of worker processes (default: {max(1, cpu_count() // 2)} = half CPU count)",
-    )
-
-    args = parser.parse_args()
-
-    # Resolve and validate path
-    mod_path = Path(args.path).resolve()
-    if not mod_path.exists():
-        logging.error(f"Error: Path does not exist: {mod_path}")
-        sys.exit(1)
-
-    if not mod_path.is_dir():
-        logging.error(f"Error: Path is not a directory: {mod_path}")
-        sys.exit(1)
-
-    # Run validation
-    validator = Validator(
-        str(mod_path),
-        output_file=args.output,
-        use_colors=not args.no_color,
-        staged_only=args.staged,
-        workers=args.workers,
-    )
-    errors_found = validator.run_all_validations()
-
-    # Exit with appropriate code
-    if args.strict and errors_found > 0:
-        sys.exit(1)
-    else:
-        sys.exit(0)
-
 
 if __name__ == "__main__":
-    main()
+    run_validator_main(
+        Validator, "Validate variables and event targets in Millennium Dawn mod"
+    )
