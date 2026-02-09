@@ -5,8 +5,9 @@ microchip_startup = {
 	set_variable = { country_base_microchip_civ_consumption_stab_var = 0 }
 	if = {
 		limit = {
-			NOT = {
-				has_dynamic_modifier = { modifier = advanced_production_modifier }
+			OR = {
+				check_variable = { resource_produced@microchips > 0 }
+				check_variable = { resource_produced@composites > 0 }
 			}
 		}
 		add_dynamic_modifier = { modifier = advanced_production_modifier }
@@ -82,16 +83,8 @@ give_me_resources = {
 }
 
 microchip_update = {
-	set_temp_variable = { microchip_prod_check = resource_produced@microchips }
-
-	if = {
-		limit = { check_variable = { microchip_prod_check > 0 } }
-		if = {
-			limit = {
-				NOT = {
-					has_dynamic_modifier = { modifier = advanced_production_modifier }
-				}
-			}
+	if = { limit = { check_variable = { resource_produced@microchips > 0 } }
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = advanced_production_modifier } } }
 			add_dynamic_modifier = { modifier = advanced_production_modifier }
 		}
 
@@ -162,6 +155,11 @@ microchip_update = {
 			round_variable = country_microchip_production_var
 		}
 
+		if = {
+			limit = { check_variable = { country_microchip_reducer_max = 0 } }
+			set_temp_variable = { country_microchip_reducer_max = country_microchip_produced }
+		}
+
 		clamp_variable = {
 			var = country_microchip_production_var
 			min = 0
@@ -186,10 +184,10 @@ microchip_update = {
 }
 
 composite_update = {
-	set_temp_variable = { composite_prod_check = resource_produced@composites }
-
-	if = {
-		limit = { check_variable = { composite_prod_check > 0 } }
+	if = { limit = { check_variable = { resource_produced@composites > 0 } }
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = advanced_production_modifier } } }
+			add_dynamic_modifier = { modifier = advanced_production_modifier }
+		}
 
 		#Gather total resources remaining
 		set_temp_variable = { country_rare_remaining = resource@chromium }

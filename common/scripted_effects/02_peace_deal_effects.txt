@@ -87,8 +87,7 @@ CPD_demand_concede_switch = {
 						OR = {
 							controls_state = v
 							ROOT = { controls_state = v }
-							any_country = {
-								is_in_faction_with = THIS
+							any_allied_country = {
 								has_war_with = ROOT
 								controls_state = v
 							}
@@ -120,8 +119,8 @@ CPD_demand_concede_switch = {
 						OR = {
 							controls_state = v
 							ROOT = { controls_state = v }
-							any_country = {
-								is_in_faction_with = ROOT
+							any_of_scopes = {
+								array = ROOT.allies
 								has_war_with = PREV
 								controls_state = v
 							}
@@ -353,14 +352,13 @@ CPD_clear_victory_points = {
 				NOT = { is_faction_leader = yes }
 			}
 		}
-		random_country = {
-			limit = {
-				is_in_faction_with = ROOT
-				is_faction_leader = yes
+		ROOT = {
+			random_allied_country = {
+				limit = { is_faction_leader = yes }
+				multiply_temp_variable = { CPD_TBW = 0.5 }
+				round_temp_variable = CPD_TBW
+				subtract_from_temp_variable = { PREV.CPD_VP@THIS = CPD_TBW }
 			}
-			multiply_temp_variable = { CPD_TBW = 0.5 }
-			round_temp_variable = CPD_TBW
-			subtract_from_temp_variable = { PREV.CPD_VP@THIS = CPD_TBW }
 		}
 	}
 	else_if = {
@@ -368,14 +366,13 @@ CPD_clear_victory_points = {
 			is_in_faction = yes
 			NOT = { is_faction_leader = yes }
 		}
-		random_country = {
-			limit = {
-				is_in_faction_with = PREV
-				is_faction_leader = yes
+		PREV = {
+			random_allied_country = {
+				limit = { is_faction_leader = yes }
+				multiply_temp_variable = { CPD_RBW = 0.5 }
+				round_temp_variable = CPD_RBW
+				subtract_from_temp_variable = { ROOT.CPD_VP@THIS = CPD_RBW }
 			}
-			multiply_temp_variable = { CPD_RBW = 0.5 }
-			round_temp_variable = CPD_RBW
-			subtract_from_temp_variable = { ROOT.CPD_VP@THIS = CPD_RBW }
 		}
 	}
 	# CLEARANCES
@@ -662,17 +659,19 @@ CPD_make_puppet_in_state_effect = {
 
 	if = {
 		limit = {
-			any_country = {
-				original_tag = var:CPD_rumped_state
-				is_subject_of = var:CPD_taker
+			var:CPD_taker = {
+				any_subject_country = {
+					original_tag = var:CPD_rumped_state
+				}
 			}
 		}
-		random_country = {
-			limit = {
-				original_tag = var:CPD_rumped_state
-				is_subject_of = var:CPD_taker
+		var:CPD_taker = {
+			random_subject_country = {
+				limit = {
+					original_tag = var:CPD_rumped_state
+				}
+				transfer_state = var:CPD_new_state
 			}
-			transfer_state = var:CPD_new_state
 		}
 	}
 	else = {
