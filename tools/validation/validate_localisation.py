@@ -95,7 +95,7 @@ def process_yml_for_mandatory(args: Tuple[str]) -> List[str]:
     lines = text_file.split("\n")
     if lines == [""]:
         return results
-    if "l_english:" not in lines:
+    if not any("l_english:" in line for line in lines):
         results.append(f"{os.path.basename(filename)} - l_english: line is absent")
     return results
 

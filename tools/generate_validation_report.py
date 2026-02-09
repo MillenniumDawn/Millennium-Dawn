@@ -33,14 +33,11 @@ def determine_status(content):
     content_lower = content.lower()
 
     # Check for failures/errors
-    if any(
-        marker in content
-        for marker in ["ERROR", "FAILED", "✗", "error:", "failed:", "Error:"]
-    ):
+    if any(marker in content_lower for marker in ["error", "failed", "✗"]):
         return "❌ **Status:** Failed"
 
     # Check for warnings
-    if any(marker in content for marker in ["WARNING", "⚠", "warning:", "Warning:"]):
+    if any(marker in content_lower for marker in ["warning", "⚠"]):
         return "⚠️  **Status:** Passed with warnings"
 
     # Assume passed

@@ -81,7 +81,7 @@ def check_basic_style(filepath):
             if c != " ":
                 indent_List = []
             # if we are not in a comment block, we will check if we are at the start of one or count the () {} and []
-            elif checkIfInComment == False:
+            if checkIfInComment == False:
                 if (
                     ignoreTillEndOfLine
                 ):  # we are in a line comment, just continue going through the characters until we find an end of line

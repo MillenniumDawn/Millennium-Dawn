@@ -25,7 +25,7 @@ from validator_common import (
 
 # Multiprocessing helper functions
 def process_file_for_flags(
-    args: Tuple[str, bool, str]
+    args: Tuple[str, bool, str, str]
 ) -> Tuple[List[str], Dict[str, str], str]:
     filename, lowercase, flag_type, operation = args
 

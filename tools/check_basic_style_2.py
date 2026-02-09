@@ -168,7 +168,7 @@ def check_basic_style(filepath):
                     warning_count += 1
                 if openBraces[0] <= -1:
                     print(
-                        "ERROR: A possible missing curly brace {{ in file {} {{line {1}}}".format(
+                        "ERROR: A possible missing curly brace {{ in file {0} {{line {1}}}".format(
                             clean_filepath(filepath), lineNum
                         )
                     )
@@ -368,7 +368,7 @@ def main():
                 print("File validation passed Coding Standards: SUCCESS")
         except KeyError:
             logger.info("Not in GitLab CI environment, skipping GitLab integration")
-        except:
+        except Exception:
             print("Couldn't post results to gitlab")
 
     return bad_count

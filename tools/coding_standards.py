@@ -20,8 +20,8 @@ def get_tags(rootDir):
     with open(rootDir, "r", encoding="utf-8", errors="ignore") as file:
         content = file.readlines()
         for line in content:
-            if not line.startswith("#") or line.startswith(
-                ""
+            if (
+                not line.startswith("#") and line.strip()
             ):  # If the line doesn't start with a comment or blank
                 hasTag = re.match(r"^[A-Z]{3}", line, re.M | re.I)  # If it's a tag
                 if hasTag:
@@ -161,8 +161,8 @@ def check_ideas(filepath):
         braces = 0
         for line in content:
             lineNum += 1
-            if not line.startswith("#") or line.startswith(
-                ""
+            if (
+                not line.startswith("#") and line.strip()
             ):  # If the line doesn't start with a comment or blank
                 if "{" in line:
                     braces += 1
@@ -212,8 +212,8 @@ def check_event_for_logs(filepath):
         braces = 0
         for line in content:
             lineNum += 1
-            if not line.startswith("#") or line.startswith(
-                ""
+            if (
+                not line.startswith("#") and line.strip()
             ):  # If the line doesn't start with a comment or blank
                 # Track news_event blocks to skip them
                 stripped = line.strip()
@@ -293,8 +293,8 @@ def check_Flags(filepath):
         globalFlags = []
         for line in content:
             lineNum += 1
-            if not line.startswith("#") or line.startswith(
-                ""
+            if (
+                not line.startswith("#") and line.strip()
             ):  # If the line doesn't start with a comment or blank
                 if (
                     "set_country_flag" in line
@@ -321,7 +321,7 @@ def check_Flags(filepath):
                                 line,
                                 re.M | re.I,
                             )
-                            if not hasSimpleFlag:
+                            if not simpleFlagFormat:
                                 print(
                                     "ERROR: "
                                     + hasSimpleFlag.group(1)
@@ -336,7 +336,7 @@ def check_Flags(filepath):
                                 else:
                                     countryFlags.append(hasSimpleFlag.group(1))
 
-                if advFlag == 1 and ("flag=" or "flag =" in line):
+                if advFlag == 1 and ("flag=" in line or "flag =" in line):
                     hasAdvFlag2 = re.search(
                         r"flag\s?=\s([a-zA-Z0-9\-\_]+)", line, re.M
                     )  # If it's a tag
@@ -360,10 +360,10 @@ def check_Flags(filepath):
                             error_count_file += 1
                         else:
                             if isGlobalFlag == 1:
-                                globalFlags.append(hasSimpleFlag.group(1))
+                                globalFlags.append(hasAdvFlag2.group(1))
                                 isGlobalFlag = 0
                             else:
-                                countryFlags.append(hasSimpleFlag.group(1))
+                                countryFlags.append(hasAdvFlag2.group(1))
     return error_count_file, globalFlags, countryFlags
 
 
@@ -690,8 +690,10 @@ def main():
             print("File validation passed Coding Standards: SUCCESS")
     except KeyError:
         pass  # Not in GitLab CI environment
-    except:
+    except Exception:
         print("Couldn't post results to gitlab")
+
+    return error_count
 
 
 if __name__ == "__main__":
