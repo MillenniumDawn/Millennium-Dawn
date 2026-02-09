@@ -3,7 +3,15 @@ microchip_startup = {
 	set_variable = { country_composite_production_var = 0 }
 	set_variable = { country_base_civilian_microchip_consumption_var = 0 }
 	set_variable = { country_base_microchip_civ_consumption_stab_var = 0 }
-	advanced_production_dynamic_modifier = yes
+	if = {
+		limit = {
+			OR = {
+				check_variable = { resource_produced@microchips > 0 }
+				check_variable = { resource_produced@composites > 0 }
+			}
+		}
+		add_dynamic_modifier = { modifier = advanced_production_modifier }
+	}
 	if = {
 		limit = {
 			NOT = {
@@ -11,33 +19,6 @@ microchip_startup = {
 			}
 		}
 		add_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
-	}
-}
-
-advanced_production_update = {
-	advanced_production_dynamic_modifier = yes
-	microchip_update = yes
-	composite_update = yes
-}
-
-advanced_production_dynamic_modifier = {
-	if = {
-		limit = {
-			NOT = { has_dynamic_modifier = { modifier = advanced_production_modifier } }
-			OR = {
-				check_variable = { resource_produced@composites > 0 }
-				check_variable = { resource_produced@microchips > 0 }
-			}
-		}
-		add_dynamic_modifier = { modifier = advanced_production_modifier }
-	}
-	else_if = {
-		limit = {
-			has_dynamic_modifier = { modifier = advanced_production_modifier }
-			check_variable = { resource_produced@composites < 1 }
-			check_variable = { resource_produced@microchips < 1 }
-		}
-		remove_dynamic_modifier = { modifier = advanced_production_modifier  }
 	}
 }
 
@@ -103,6 +84,9 @@ give_me_resources = {
 
 microchip_update = {
 	if = { limit = { check_variable = { resource_produced@microchips > 0 } }
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = advanced_production_modifier } } }
+			add_dynamic_modifier = { modifier = advanced_production_modifier }
+		}
 
 		#Gather total resources remaining
 		set_temp_variable = { country_tech_remaining = resource@tungsten }
@@ -196,6 +180,9 @@ microchip_update = {
 
 composite_update = {
 	if = { limit = { check_variable = { resource_produced@composites > 0 } }
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = advanced_production_modifier } } }
+			add_dynamic_modifier = { modifier = advanced_production_modifier }
+		}
 
 		#Gather total resources remaining
 		set_temp_variable = { country_rare_remaining = resource@chromium }
