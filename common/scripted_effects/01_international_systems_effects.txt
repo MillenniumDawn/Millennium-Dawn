@@ -442,14 +442,13 @@ general_assembly_vote_finished = {
 	#Do the actions based on the type of vote
 	#Add nation to the UN
 	if = {
-		limit = { check_variable = { global.current_ga_vote_type = 5 } }
-		set_temp_variable = { pass_vote_required = global.UN_general_assembly^num }
-		multiply_temp_variable = { pass_vote_required = 0.66 }
-		round_temp_variable = pass_vote_required
-
+		limit = {
+			check_variable = { global.general_assembly_vote_yes^num > global.general_assembly_vote_no^num }
+		}
 		if = {
 			limit = {
-				check_variable = { global.general_assembly_vote_yes^num > pass_vote_required }
+				check_variable = { global.current_ga_vote_type = 5 }
+				un_ga_2_3_required = yes
 			}
 			var:global.current_ga_vote_nation = {
 				country_event = recognition.71
@@ -459,6 +458,8 @@ general_assembly_vote_finished = {
 				country_event = recognition.72
 			}
 		}
+	} else = {
+		news_event = recognition.73
 	}
 	#Propose non-binding resolution
 	#This will be an idea that players, after voting, can choose to accept or not
