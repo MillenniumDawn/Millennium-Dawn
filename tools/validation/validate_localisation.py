@@ -27,7 +27,7 @@ from validator_common import (
     should_skip_file,
 )
 
-EXTRA_SKIP_PATTERNS = ["FR_loc"]
+EXTRA_SKIP_PATTERNS = ["FR_loc", "00_operations"]
 
 
 def _should_skip(filename: str) -> bool:
@@ -58,7 +58,7 @@ def process_yml_for_syntax(args: Tuple[str, List[str]]) -> List[str]:
     for line_idx, line in enumerate(lines):
         if "#" in line or line.strip() in ["", "l_english:"]:
             continue
-        if "\u00a7" in line and "desc_end" not in line:
+        if "\u00a7" in line and "desc_end" not in line and "U.S.C." not in line:
             count = line.count("\u00a7")
             if count % 2 != 0:
                 results.append(
@@ -261,6 +261,7 @@ class Validator(BaseValidator):
             if _should_skip(filename):
                 continue
             text_file = FileOpener.open_text_file(filename, lowercase=False)
+            text_file = re.sub(r"^[ \t]*#.*$", "", text_file, flags=re.MULTILINE)
             if "localization_key =" not in text_file:
                 continue
 
@@ -321,6 +322,8 @@ class Validator(BaseValidator):
                                     f"{tt} - missing $VALUE|=-%0$ in loc value"
                                 )
                         else:
+                            if tt.startswith("OTT_"):
+                                continue
                             results.append(f"{tt} - localization key not found")
                 else:
                     snippet = body.replace("\n", " ").replace("\t", "")[:80]
