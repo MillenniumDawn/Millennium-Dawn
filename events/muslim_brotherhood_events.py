@@ -1,13 +1,11 @@
-def setup_muslim_brotherhood_relations():
-    # Define a single function to manage all opinion modifiers for the Muslim Brotherhood
-    opinion_modifiers = {
-        'country1': 15,
-        'country2': -10,
-        'country3': 5,
-    }
-    for country, modifier in opinion_modifiers.items():
-        set_opinion_modifier('Muslim Brotherhood', country, modifier)
+# This file will handle relations more efficiently
+from common import opinion_modifiers
 
-def set_opinion_modifier(group_name, country, modifier):
-    # This function sets a specific opinion modifier for a country
-    print(f"Setting opinion modifier for {country} towards {group_name} to {modifier}")
+def update_muslim_brotherhood_relations(countries):
+    for country in countries:
+        # Assume `base_opinion` is a predefined function
+        country.opinion_modifiers.append(opinion_modifiers.muslim_brotherhood)
+
+def on_game_start():
+    countries = get_all_countries()
+    update_muslim_brotherhood_relations(countries)
