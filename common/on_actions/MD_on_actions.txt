@@ -333,11 +333,7 @@ on_actions = {
 			}
 		}
 
-		# === Inflation Spike Prevention on Annexation ===
-		# When annexing, GDP spikes but it's an accounting change, not organic growth.
-		# Reset GDP tracking variables and blend inflation rates to prevent artificial inflation spikes.
-
-		# Step 1: Estimate post-annexation GDP and GDP/C
+		# Weighted GDP + Inflation Correction
 		set_temp_variable = { estimated_new_gdp = ROOT.gdp_total }
 		add_to_temp_variable = { estimated_new_gdp = FROM.gdp_total }
 
@@ -347,14 +343,10 @@ on_actions = {
 
 		set_temp_variable = { estimated_new_gdpc = estimated_new_gdp }
 		divide_temp_variable = { estimated_new_gdpc = estimated_new_pop }
-
-		# Step 2: Reset GDP tracking so next quarterly growth rate calculation sees ~0% growth from annexation
 		ROOT = {
 			set_variable = { last_quarter_gdpc_total = estimated_new_gdpc }
 			set_variable = { last_quarter_gdp_total = estimated_new_gdp }
 		}
-
-		# Step 3: GDP-weighted inflation blending
 		set_temp_variable = { root_weighted_inflation = ROOT.inflation_rate_var }
 		multiply_temp_variable = { root_weighted_inflation = ROOT.gdp_total }
 
@@ -364,8 +356,6 @@ on_actions = {
 		set_temp_variable = { blended_inflation = root_weighted_inflation }
 		add_to_temp_variable = { blended_inflation = from_weighted_inflation }
 		divide_temp_variable = { blended_inflation = estimated_new_gdp }
-
-		# Step 4: Apply blended inflation and reset quarterly tracker
 		ROOT = {
 			set_variable = { inflation_rate_var = blended_inflation }
 
