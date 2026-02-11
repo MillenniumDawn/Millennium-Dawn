@@ -1,4 +1,6 @@
 # Author(s): Yard1, AngriestBird
+
+# STARTUP ONLY: Full clear + build + sort (called once at game start from 00_on_actions.txt)
 set_power_ranking_ideas_for_every_country = {
 	# Initialize all global variables and arrays first
 	clear_array = global.european_nations
@@ -11,12 +13,12 @@ set_power_ranking_ideas_for_every_country = {
 	every_country = {
 		clr_country_flag = regional_power
 
-		set_variable = { global.tmp = gdp_total }
+		set_variable = { power_ranking_contribution = gdp_total }
 		set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
 		multiply_temp_variable = { domestic_influence_amount_temp = 0.01 }
-		multiply_variable = { global.tmp = domestic_influence_amount_temp?0.5 }
-		multiply_variable = { global.tmp = 0.01 }
-		add_to_variable = { global.global_num_of_factories = global.tmp }
+		multiply_variable = { power_ranking_contribution = domestic_influence_amount_temp?0.5 }
+		multiply_variable = { power_ranking_contribution = 0.01 }
+		add_to_variable = { global.global_num_of_factories = power_ranking_contribution }
 
 		if = {
 			limit = { has_country_flag = european_nation_flag }
@@ -26,12 +28,7 @@ set_power_ranking_ideas_for_every_country = {
 				if = {
 					limit = {
 						var:v = {
-							set_temp_variable = { num_of_factories_tmp = gdp_total }
-							set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
-							multiply_temp_variable = { domestic_influence_amount_temp = 0.01 }
-							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_temp?0.5 }
-							multiply_temp_variable = { num_of_factories_tmp = 0.01 }
-							check_variable = { global.tmp > num_of_factories_tmp }
+							check_variable = { PREV.power_ranking_contribution > power_ranking_contribution }
 						}
 					}
 					set_variable = { global.idx = i }
@@ -48,12 +45,7 @@ set_power_ranking_ideas_for_every_country = {
 				if = {
 					limit = {
 						var:v = {
-							set_temp_variable = { num_of_factories_tmp = gdp_total }
-							set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
-							multiply_temp_variable = { domestic_influence_amount_temp = 0.01 }
-							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_temp?0.5 }
-							multiply_temp_variable = { num_of_factories_tmp = 0.01 }
-							check_variable = { global.tmp > num_of_factories_tmp }
+							check_variable = { PREV.power_ranking_contribution > power_ranking_contribution }
 						}
 					}
 					set_variable = { global.idx = i }
@@ -70,12 +62,7 @@ set_power_ranking_ideas_for_every_country = {
 				if = {
 					limit = {
 						var:v = {
-							set_temp_variable = { num_of_factories_tmp = gdp_total }
-							set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
-							multiply_temp_variable = { domestic_influence_amount_temp = 0.01 }
-							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_temp?0.5 }
-							multiply_temp_variable = { num_of_factories_tmp = 0.01 }
-							check_variable = { global.tmp > num_of_factories_tmp }
+							check_variable = { PREV.power_ranking_contribution > power_ranking_contribution }
 						}
 					}
 					set_variable = { global.idx = i }
@@ -92,12 +79,7 @@ set_power_ranking_ideas_for_every_country = {
 				if = {
 					limit = {
 						var:v = {
-							set_temp_variable = { num_of_factories_tmp = gdp_total }
-							set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
-							multiply_temp_variable = { domestic_influence_amount_temp = 0.01 }
-							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_temp?0.5 }
-							multiply_temp_variable = { num_of_factories_tmp = 0.01 }
-							check_variable = { global.tmp > num_of_factories_tmp }
+							check_variable = { PREV.power_ranking_contribution > power_ranking_contribution }
 						}
 					}
 					set_variable = { global.idx = i }
@@ -114,12 +96,7 @@ set_power_ranking_ideas_for_every_country = {
 				if = {
 					limit = {
 						var:v = {
-							set_temp_variable = { num_of_factories_tmp = gdp_total }
-							set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
-							multiply_temp_variable = { domestic_influence_amount_temp = 0.01 }
-							multiply_temp_variable = { num_of_factories_tmp = domestic_influence_amount_temp?0.5 }
-							multiply_temp_variable = { num_of_factories_tmp = 0.01 }
-							check_variable = { global.tmp > num_of_factories_tmp }
+							check_variable = { PREV.power_ranking_contribution > power_ranking_contribution }
 						}
 					}
 					set_variable = { global.idx = i }
@@ -131,21 +108,16 @@ set_power_ranking_ideas_for_every_country = {
 	}
 
 	clear_variable = global.idx
-	clear_variable = global.tmp
 
 	determine_regional_powers = yes
 	continent_check_for_hegemon = yes
 
 	every_country = {
-		# Calculate percentage (formerly get_percentage_of_global_factories)
-		set_variable = { percentage_of_global_factories = gdp_total }
-		set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
-		multiply_temp_variable = { domestic_influence_amount_temp = 0.01 }
-		multiply_variable = { percentage_of_global_factories = domestic_influence_amount_temp?0.5 }
-		multiply_variable = { percentage_of_global_factories = 0.01 }
+		# Calculate percentage from stored contribution
+		set_variable = { percentage_of_global_factories = power_ranking_contribution }
 		divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
 
-		# Determine ranking (formerly determine_power_ranking)
+		# Determine ranking
 		remove_ideas = {
 			superpower
 			great_power
@@ -188,6 +160,225 @@ set_power_ranking_ideas_for_every_country = {
 			add_ideas = naval_power_of_the_continent
 		}
 	}
+}
+
+# MONTH 4/10: Calculate contribution per country and accumulate global total
+calculate_power_ranking_contributions = {
+	set_variable = { global.global_num_of_factories = 0 }
+
+	every_country = {
+		set_variable = { power_ranking_contribution = gdp_total }
+		set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
+		multiply_temp_variable = { domestic_influence_amount_temp = 0.01 }
+		multiply_variable = { power_ranking_contribution = domestic_influence_amount_temp?0.5 }
+		multiply_variable = { power_ranking_contribution = 0.01 }
+		add_to_variable = { global.global_num_of_factories = power_ranking_contribution }
+	}
+}
+
+# MONTH 5/11: Sort arrays by pre-calculated contribution, then assign power ranking ideas
+sort_and_assign_power_rankings = {
+	every_country = {
+		clr_country_flag = regional_power
+	}
+
+	# Sort each regional array (descending by power_ranking_contribution)
+	set_variable = { global.pr_sort_id = 1 }
+	power_ranking_quicksort = yes
+	set_variable = { global.pr_sort_id = 2 }
+	power_ranking_quicksort = yes
+	set_variable = { global.pr_sort_id = 3 }
+	power_ranking_quicksort = yes
+	set_variable = { global.pr_sort_id = 4 }
+	power_ranking_quicksort = yes
+	set_variable = { global.pr_sort_id = 5 }
+	power_ranking_quicksort = yes
+
+	clear_variable = global.pr_sort_id
+
+	determine_regional_powers = yes
+	continent_check_for_hegemon = yes
+
+	every_country = {
+		# Calculate percentage from stored contribution
+		set_variable = { percentage_of_global_factories = power_ranking_contribution }
+		divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
+
+		# Determine ranking
+		remove_ideas = {
+			superpower
+			great_power
+			large_power
+			regional_power
+			minor_power
+			non_power
+			naval_power_of_the_continent
+		}
+		if = { limit = { check_variable = { percentage_of_global_factories < 0.002 } }
+			add_ideas = non_power
+		}
+		else_if = { limit = { check_variable = { percentage_of_global_factories > 0.15 } }
+			add_ideas = superpower
+		}
+		else_if = { limit = { check_variable = { percentage_of_global_factories > 0.065 } }
+			add_ideas = great_power
+		}
+		else_if = { limit = { check_variable = { percentage_of_global_factories > 0.025 } }
+			add_ideas = large_power
+		}
+		else_if = { limit = { has_country_flag = regional_power }
+			add_ideas = regional_power
+			clr_country_flag = regional_power
+		}
+		else = {
+			add_ideas = minor_power
+		}
+
+		if = {
+			limit = {
+				OR = {
+					check_variable = { largest_european_navy = THIS.id }
+					check_variable = { largest_sub_saharan_nations = THIS.id }
+					check_variable = { largest_asian_navy = THIS.id }
+					check_variable = { largest_middle_east_navy = THIS.id }
+					check_variable = { largest_american_navy = THIS.id }
+				}
+			}
+			add_ideas = naval_power_of_the_continent
+		}
+	}
+}
+
+# Iterative quicksort for power ranking arrays
+# Sorts descending by power_ranking_contribution
+# Set global.pr_sort_id (1-5) before calling to select which regional array to sort
+power_ranking_quicksort = {
+	meta_effect = {
+		text = {
+			# Skip if array has fewer than 2 elements
+			if = {
+				limit = { check_variable = { global.[ARRAY]^num > 1 } }
+
+				set_variable = { global.pr_qs_high = global.[ARRAY]^num }
+				subtract_from_variable = { global.pr_qs_high = 1 }
+				set_variable = { global.pr_qs_low = 0 }
+
+				# Initialize stack
+				set_temp_variable = { stack_size = global.pr_qs_high }
+				subtract_from_temp_variable = { stack_size = global.pr_qs_low }
+				add_to_temp_variable = { stack_size = 1 }
+				resize_temp_array = {
+					array = pr_qs_stack
+					value = 0
+					size = stack_size
+				}
+
+				set_temp_variable = { pr_qs_top = 0 }
+				set_temp_variable = { pr_qs_stack^pr_qs_top = global.pr_qs_low }
+				add_to_temp_variable = { pr_qs_top = 1 }
+				set_temp_variable = { pr_qs_stack^pr_qs_top = global.pr_qs_high }
+
+				while_loop_effect = {
+					limit = {
+						check_variable = {
+							var = pr_qs_top
+							value = 0
+							compare = greater_than_or_equals
+						}
+					}
+
+					set_variable = { global.pr_qs_high = pr_qs_stack^pr_qs_top }
+					subtract_from_temp_variable = { pr_qs_top = 1 }
+					set_variable = { global.pr_qs_low = pr_qs_stack^pr_qs_top }
+					subtract_from_temp_variable = { pr_qs_top = 1 }
+
+					##### PARTITION #####
+					# Random pivot selection
+					set_variable = { global.pr_qs_pivot = random }
+					multiply_variable = { global.pr_qs_pivot = global.pr_qs_high }
+					round_variable = global.pr_qs_pivot
+					add_to_variable = { global.pr_qs_pivot = global.pr_qs_low }
+					clamp_variable = {
+						var = global.pr_qs_pivot
+						min = global.pr_qs_low
+						max = global.pr_qs_high
+					}
+
+					# Swap pivot element to end
+					set_temp_variable = { swap = global.[ARRAY]^global.pr_qs_high }
+					set_variable = { global.[ARRAY]^global.pr_qs_high = global.[ARRAY]^global.pr_qs_pivot }
+					set_variable = { global.[ARRAY]^global.pr_qs_pivot = swap }
+
+					set_temp_variable = { pr_qs_idx = global.pr_qs_low }
+					subtract_from_temp_variable = { pr_qs_idx = 1 }
+
+					# Get pivot's contribution value
+					var:global.[ARRAY]^global.pr_qs_high = {
+						set_variable = { global.pr_qs_min = power_ranking_contribution }
+					}
+
+					# Compare each element against pivot (descending: >= moves left)
+					for_loop_effect = {
+						start = global.pr_qs_low
+						end = global.pr_qs_high
+						var:global.[ARRAY]^v = {
+							set_variable = { global.pr_qs_tmp = power_ranking_contribution }
+						}
+						if = {
+							limit = {
+								check_variable = {
+									var = global.pr_qs_tmp
+									value = global.pr_qs_min
+									compare = greater_than_or_equals
+								}
+							}
+							add_to_temp_variable = { pr_qs_idx = 1 }
+							set_temp_variable = { swap = global.[ARRAY]^pr_qs_idx }
+							set_variable = { global.[ARRAY]^pr_qs_idx = global.[ARRAY]^v }
+							set_variable = { global.[ARRAY]^v = swap }
+						}
+					}
+
+					# Place pivot in correct position
+					add_to_temp_variable = { pr_qs_idx = 1 }
+					set_temp_variable = { swap = global.[ARRAY]^pr_qs_idx }
+					set_variable = { global.[ARRAY]^pr_qs_idx = global.[ARRAY]^global.pr_qs_high }
+					set_variable = { global.[ARRAY]^global.pr_qs_high = swap }
+
+					set_temp_variable = { pr_qs_part = pr_qs_idx }
+					#####
+
+					set_temp_variable = { pr_qs_part_plus = pr_qs_part }
+					set_temp_variable = { pr_qs_part_minus = pr_qs_part }
+					add_to_temp_variable = { pr_qs_part_plus = 1 }
+					subtract_from_temp_variable = { pr_qs_part_minus = 1 }
+
+					if = {
+						limit = { check_variable = { pr_qs_part_minus > global.pr_qs_low } }
+						add_to_temp_variable = { pr_qs_top = 1 }
+						set_temp_variable = { pr_qs_stack^pr_qs_top = global.pr_qs_low }
+						add_to_temp_variable = { pr_qs_top = 1 }
+						set_temp_variable = { pr_qs_stack^pr_qs_top = pr_qs_part_minus }
+					}
+
+					if = {
+						limit = { check_variable = { pr_qs_part_plus < global.pr_qs_high } }
+						add_to_temp_variable = { pr_qs_top = 1 }
+						set_temp_variable = { pr_qs_stack^pr_qs_top = pr_qs_part_plus }
+						add_to_temp_variable = { pr_qs_top = 1 }
+						set_temp_variable = { pr_qs_stack^pr_qs_top = global.pr_qs_high }
+					}
+				}
+			}
+		}
+		ARRAY = "[ROOT.PRGetArrayName]"
+	}
+
+	clear_variable = global.pr_qs_high
+	clear_variable = global.pr_qs_low
+	clear_variable = global.pr_qs_pivot
+	clear_variable = global.pr_qs_min
+	clear_variable = global.pr_qs_tmp
 }
 
 determine_regional_powers = {
