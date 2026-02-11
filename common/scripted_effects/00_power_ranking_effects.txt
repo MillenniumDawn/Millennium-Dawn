@@ -2,7 +2,6 @@
 
 # STARTUP ONLY: Full clear + build + sort (called once at game start from 00_on_actions.txt)
 set_power_ranking_ideas_for_every_country = {
-	# Initialize all global variables and arrays first
 	clear_array = global.european_nations
 	clear_array = global.sub_saharan_nations
 	clear_array = global.middle_eastern_nations
@@ -111,55 +110,7 @@ set_power_ranking_ideas_for_every_country = {
 
 	determine_regional_powers = yes
 	continent_check_for_hegemon = yes
-
-	every_country = {
-		# Calculate percentage from stored contribution
-		set_variable = { percentage_of_global_factories = power_ranking_contribution }
-		divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
-
-		# Determine ranking
-		remove_ideas = {
-			superpower
-			great_power
-			large_power
-			regional_power
-			minor_power
-			non_power
-			naval_power_of_the_continent
-		}
-		if = { limit = { check_variable = { percentage_of_global_factories < 0.002 } }
-			add_ideas = non_power
-		}
-		else_if = { limit = { check_variable = { percentage_of_global_factories > 0.15 } }
-			add_ideas = superpower
-		}
-		else_if = { limit = { check_variable = { percentage_of_global_factories > 0.065 } }
-			add_ideas = great_power
-		}
-		else_if = { limit = { check_variable = { percentage_of_global_factories > 0.025 } }
-			add_ideas = large_power
-		}
-		else_if = { limit = { has_country_flag = regional_power }
-			add_ideas = regional_power
-			clr_country_flag = regional_power
-		}
-		else = {
-			add_ideas = minor_power
-		}
-
-		if = {
-			limit = {
-				OR = {
-					check_variable = { largest_european_navy = THIS.id }
-					check_variable = { largest_sub_saharan_nations = THIS.id }
-					check_variable = { largest_asian_navy = THIS.id }
-					check_variable = { largest_middle_east_navy = THIS.id }
-					check_variable = { largest_american_navy = THIS.id }
-				}
-			}
-			add_ideas = naval_power_of_the_continent
-		}
-	}
+	assign_power_ranking_ideas = yes
 }
 
 # MONTH 4/10: Calculate contribution per country and accumulate global total
@@ -167,6 +118,8 @@ calculate_power_ranking_contributions = {
 	set_variable = { global.global_num_of_factories = 0 }
 
 	every_country = {
+		clr_country_flag = regional_power
+
 		set_variable = { power_ranking_contribution = gdp_total }
 		set_temp_variable = { domestic_influence_amount_temp = domestic_influence_amount }
 		multiply_temp_variable = { domestic_influence_amount_temp = 0.01 }
@@ -178,10 +131,6 @@ calculate_power_ranking_contributions = {
 
 # MONTH 5/11: Sort arrays by pre-calculated contribution, then assign power ranking ideas
 sort_and_assign_power_rankings = {
-	every_country = {
-		clr_country_flag = regional_power
-	}
-
 	# Sort each regional array (descending by power_ranking_contribution)
 	set_variable = { global.pr_sort_id = 1 }
 	power_ranking_quicksort = yes
@@ -198,13 +147,15 @@ sort_and_assign_power_rankings = {
 
 	determine_regional_powers = yes
 	continent_check_for_hegemon = yes
+	assign_power_ranking_ideas = yes
+}
 
+# Shared: Calculate percentage and assign power ranking ideas to every country
+assign_power_ranking_ideas = {
 	every_country = {
-		# Calculate percentage from stored contribution
 		set_variable = { percentage_of_global_factories = power_ranking_contribution }
 		divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
 
-		# Determine ranking
 		remove_ideas = {
 			superpower
 			great_power
