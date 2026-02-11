@@ -75,9 +75,6 @@ ingame_update_setup = {
 	update_economic_cycle_cost = yes
 	update_employment_productivity_output_dynamic_modifier = yes
 	calculate_migration_mechanic_values = yes
-	if = { limit = { NOT = { has_dlc = "La Resistance" } }
-		update_cyber_cost = yes
-	}
 
 	## AI Section
 	# This is for calculating the AIs desired economic tax law
@@ -85,11 +82,6 @@ ingame_update_setup = {
 		calculate_ai_taxes_desire = yes
 
 		clear_variable = ledger_open
-	}
-	else = {
-		force_update_map_mode = { mapmode = gdp_c_map_mode }
-		force_update_map_mode = { mapmode = energy_consumption_map_mode }
-		force_update_map_mode = { mapmode = productivity_map_mode }
 	}
 
 	#Visuals
@@ -105,14 +97,20 @@ ingame_update_setup = {
 # Effect: update_money_dirty_variable
 # Purpose: Updates the dirty variable which in turn updates the money UI and the research screen
 update_money_dirty_variable = {
-	if = { limit = { NOT = { has_variable = global.update_monie_ui } }
-		set_variable = { global.update_monie_ui = 0 }
-	}
-	else = {
-		add_to_variable = { global.update_monie_ui = 1 }
-	}
+	if = { limit = { is_ai = no }
+		if = { limit = { NOT = { has_variable = global.update_monie_ui } }
+			set_variable = { global.update_monie_ui = 0 }
+		}
+		else = {
+			add_to_variable = { global.update_monie_ui = 1 }
+		}
 
-	add_to_variable = { global.research_screen_ui = 1 }
+		add_to_variable = { global.research_screen_ui = 1 }
+
+		force_update_map_mode = { mapmode = gdp_c_map_mode }
+		force_update_map_mode = { mapmode = energy_consumption_map_mode }
+		force_update_map_mode = { mapmode = productivity_map_mode }
+	}
 }
 
 expense_modifier_calculations = {
@@ -579,7 +577,7 @@ calculate_additional_income_rate = {
 	}
 	if = {
 		limit = { has_idea = iranian_aid_custom }
-		set_variable = { additional_income_iranian_aid = gdp_total }
+		set_variable = { additional_income_iranian_aid_custom = gdp_total }
 		multiply_variable = { additional_income_iranian_aid_custom = 0.004 }	#20% of GDP yearly
 		add_to_variable = { additional_income_rate = additional_income_iranian_aid_custom }
 	}
@@ -1942,23 +1940,15 @@ calculate_interest_rate = {
 				}
 				add_dynamic_modifier = { modifier = very_high_interest_country_modifiers }
 			}
-			#Construction speed
-			set_variable = { production_speed_buildings_factor_very_high_interest_modifier = interest_rate }
-			subtract_from_variable = { production_speed_buildings_factor_very_high_interest_modifier = 15 }
-			multiply_variable = { production_speed_buildings_factor_very_high_interest_modifier = -0.05 }
-			# Production speed
-			set_variable = { industrial_capacity_factory_very_high_interest_modifier = interest_rate }
-			subtract_from_variable = { industrial_capacity_factory_very_high_interest_modifier = 15 }
-			multiply_variable = { industrial_capacity_factory_very_high_interest_modifier = -0.05 }
-			# Production speed - docks
-			set_variable = { industrial_capacity_dockyard_very_high_interest_modifier = interest_rate }
-			subtract_from_variable = { industrial_capacity_dockyard_very_high_interest_modifier = 15 }
-			multiply_variable = { industrial_capacity_dockyard_very_high_interest_modifier = -0.05 }
-			#Stability
+			# Construction/factories/dockyard speed
+			set_variable = { high_interest_penalty_modifier = interest_rate }
+			subtract_from_variable = { high_interest_penalty_modifier = 15 }
+			multiply_variable = { high_interest_penalty_modifier = -0.05 }
+			# Stability
 			set_variable = { stability_factor_very_high_interest_modifier = interest_rate }
 			subtract_from_variable = { stability_factor_very_high_interest_modifier = 15 }
 			multiply_variable = { stability_factor_very_high_interest_modifier = -0.02 }
-			#Popularity
+			# Popularity
 			##Set all to 0 in case an Outlook change between weeklys
 			clear_variable = western_drift_very_high_interest_modifier
 			clear_variable = emerging_drift_very_high_interest_modifier
@@ -1999,9 +1989,7 @@ calculate_interest_rate = {
 			has_dynamic_modifier = { modifier = very_high_interest_country_modifiers }
 		}
 		remove_dynamic_modifier = { modifier = very_high_interest_country_modifiers }
-		clear_variable = production_speed_buildings_factor_very_high_interest_modifier
-		clear_variable = industrial_capacity_factory_very_high_interest_modifier
-		clear_variable = industrial_capacity_dockyard_very_high_interest_modifier
+		clear_variable = high_interest_penalty_modifier
 		clear_variable = stability_factor_very_high_interest_modifier
 		clear_variable = western_drift_very_high_interest_modifier
 		clear_variable = emerging_drift_very_high_interest_modifier
@@ -3910,79 +3898,6 @@ update_economic_cycle_cost = {
 	multiply_variable = { econ_cycle_upg_cost = econ_cycle_upg_cost_multiplier }
 }
 
-update_cyber_cost = {
-	if = {
-		limit = { check_variable = { gdp_total < 501 } }
-		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.006 }
-		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.00935 } # 0.011 * 0.85
-		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.015 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_total < 1001 } }
-		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.00425 } # 0.005 * 0.85
-		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.00765 } # 0.009 * 0.85
-		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.0135 } # 0.015 * 0.90
-	}
-	else_if = {
-		limit = { check_variable = { gdp_total < 2001 } }
-		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.004 }
-		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.00595 } # 0.007 * 0.85
-		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.01 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_total < 5001 } }
-		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.00255 } # 0.003 * 0.85
-		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.00375 } # 0.005 * 0.75
-		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.005 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_total < 10001 } }
-		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.0017 } # 0.002 * 0.85
-		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.0027 } # 0.003 * 0.90
-		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.004 } # 0.005 * 0.80
-	}
-	else_if = {
-		limit = { check_variable = { gdp_total < 30001 } }
-		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.0014 } # 0.002 * 0.70
-		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.00195 } # 0.003 * 0.65
-		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.00255 } # 0.003 * 0.85
-	}
-	else = {
-		set_variable = { treasury_cyber_small = gdp_total }
-		multiply_variable = { treasury_cyber_small = 0.001 }
-		set_variable = { treasury_cyber_medium = gdp_total }
-		multiply_variable = { treasury_cyber_medium = 0.0014 } # 0.002 * 0.70
-		set_variable = { treasury_cyber_large = gdp_total }
-		multiply_variable = { treasury_cyber_large = 0.00174 } # 0.002 * 0.87
-	}
-
-	#Additional additive modifiers
-	set_temp_variable = { cyber_cost_multiplier = 1 }
-	add_to_temp_variable = { cyber_cost_multiplier = modifier@cyber_cost_multiplier_modifier }
-
-	multiply_variable = { treasury_cyber_small = cyber_cost_multiplier }
-	multiply_variable = { treasury_cyber_medium = cyber_cost_multiplier }
-	multiply_variable = { treasury_cyber_large = cyber_cost_multiplier }
-}
-
 update_state_variables = {
 	# Global State Variables
 	set_variable = { var = population_total value = 0 }
@@ -4031,9 +3946,8 @@ update_state_variables = {
 		every_controlled_state = {
 			add_to_temp_variable = { PREV.num_missile_silo = building_level@rocket_site }
 			add_to_temp_variable = { PREV.num_anti_air_building = building_level@anti_air_building }
-			add_to_variable = { PREV.total_number_of_controlled_states = 1 }
 			add_to_variable = { PREV.rocket_sites = building_level@rocket_site }
-			add_to_variable = { PREV.anti_air_building = buildling_level@anti_air_building }
+			add_to_variable = { PREV.anti_air_building = building_level@anti_air_building }
 			add_to_variable = { PREV.agriculture_district_total = building_level@agriculture_district }
 			add_to_variable = { PREV.office_park_total = building_level@offices }
 			add_to_variable = { PREV.industrial_complex_total = building_level@industrial_complex }
