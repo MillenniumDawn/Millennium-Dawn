@@ -108,6 +108,81 @@ set_power_ranking_ideas_for_every_country = {
 
 	clear_variable = global.idx
 
+	for_each_loop = {
+		array = global.european_nations
+		value = v
+		var:v = {
+			set_variable = { percentage_of_global_factories = power_ranking_contribution }
+			divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
+
+			if = { limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
+				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
+				set_temp_variable = { largest_european_navy = THIS.id }
+			}
+		}
+	}
+	var:largest_european_navy = { add_ideas = naval_power_of_the_continent }
+
+	for_each_loop = {
+		array = global.sub_saharan_nations
+		value = v
+		var:v = {
+			set_variable = { percentage_of_global_factories = power_ranking_contribution }
+			divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
+
+			if = { limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
+				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
+				set_temp_variable = { largest_sub_saharan_nations = THIS.id }
+			}
+		}
+	}
+	var:largest_sub_saharan_nations = { add_ideas = naval_power_of_the_continent }
+
+	for_each_loop = {
+		array = global.middle_eastern_nations
+		value = v
+		var:v = {
+			set_variable = { percentage_of_global_factories = power_ranking_contribution }
+			divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
+
+			if = { limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
+				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
+				set_temp_variable = { largest_middle_east_navy = THIS.id }
+			}
+		}
+	}
+	var:largest_middle_east_navy = { add_ideas = naval_power_of_the_continent }
+
+	for_each_loop = {
+		array = global.asian_nations
+		value = v
+		var:v = {
+			set_variable = { percentage_of_global_factories = power_ranking_contribution }
+			divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
+
+			if = { limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
+				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
+				set_temp_variable = { largest_asian_navy = THIS.id }
+			}
+		}
+	}
+	var:largest_asian_navy = { add_ideas = naval_power_of_the_continent }
+
+	for_each_loop = {
+		array = global.american_nations
+		value = v
+		var:v = {
+			set_variable = { percentage_of_global_factories = power_ranking_contribution }
+			divide_variable = { percentage_of_global_factories = global.global_num_of_factories }
+
+			if = { limit = { check_variable = { deployed_navy_manpower_k > largest_value } }
+				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
+				set_temp_variable = { largest_american_navy = THIS.id }
+			}
+		}
+	}
+	var:largest_american_navy = { add_ideas = naval_power_of_the_continent }
+
 	determine_regional_powers = yes
 }
 
@@ -228,8 +303,7 @@ sort_and_assign_power_rankings = {
 	determine_regional_powers = yes
 }
 
-# Shared: Calculate percentage and assign power ranking ideas to every country
-assign_power_ranking_ideas = {
+remove_power_ideas = {
 	remove_ideas = {
 		superpower
 		great_power
@@ -239,24 +313,34 @@ assign_power_ranking_ideas = {
 		non_power
 		naval_power_of_the_continent
 	}
-	if = { limit = { check_variable = { percentage_of_global_factories < 0.002 } }
+}
+
+# Shared: Calculate percentage and assign power ranking ideas to every country
+assign_power_ranking_ideas = {
+	if = { limit = { check_variable = { percentage_of_global_factories < 0.002 } NOT = { has_idea = non_power } }
+		remove_power_ideas = yes
 		add_ideas = non_power
 	}
 	else = {
-		if = { limit = { check_variable = { percentage_of_global_factories > 0.15 } }
+		if = { limit = { check_variable = { percentage_of_global_factories > 0.15 } NOT = { has_idea = superpower } }
+			remove_power_ideas = yes
 			add_ideas = superpower
 		}
-		else_if = { limit = { check_variable = { percentage_of_global_factories > 0.065 } }
+		else_if = { limit = { check_variable = { percentage_of_global_factories > 0.065 } NOT = { has_idea = great_power } }
+			remove_power_ideas = yes
 			add_ideas = great_power
 		}
-		else_if = { limit = { check_variable = { percentage_of_global_factories > 0.025 } }
+		else_if = { limit = { check_variable = { percentage_of_global_factories > 0.025 } NOT = { has_idea = large_power } }
+			remove_power_ideas = yes
 			add_ideas = large_power
 		}
-		else_if = { limit = { has_country_flag = regional_power }
+		else_if = { limit = { has_country_flag = regional_power NOT = { has_idea = regional_power } }
+			remove_power_ideas = yes
 			add_ideas = regional_power
 			clr_country_flag = regional_power
 		}
-		else = {
+		else_if = { limit = { NOT = { has_idea = minor_power } }
+			remove_power_ideas = yes
 			add_ideas = minor_power
 		}
 	}
