@@ -129,32 +129,7 @@ on_actions = {
 				}
 			}
 
-			# Cancel Invalid Projects
-			if = { limit = { check_variable = { active_projects > 0 } }
-				# Project loop.
-				for_each_loop = { array = project_array
-
-					if = { limit = { check_variable = { v < 0 } }
-
-						set_variable = { project_type = i }
-
-						if = {
-							limit = {
-								OR = {
-									CONTROLLER = { has_war_with = ROOT } # target state controller at war with project owner
-									var:v = { NOT = { investment_building_slot_available = yes } } # building slot unavailable in target state
-								}
-							}
-
-							set_variable = { project = i }
-							log = "AC Project Deletion - [GetDate] [This.GetTag] - on_weekly - deleted invalid project [?project] in [?project_array^project] [?project_array^project.GetName] [?project_array^project.GetName]"
-							end_project = yes
-						}
-					}
-				}
-
-				clear_variable = project_type
-			}
+			# Cancel Invalid Projects - moved to on_monthly for performance (on_state_control_changed handles state capture case)
 
 			if = { limit = { is_in_array = { global.ct_states = THIS } }
 				if = {
@@ -312,31 +287,35 @@ on_actions = {
 			# Grab your Nuclear Reactor Enrichment Facilities
 			add_to_variable = { ROOT.enrichment_facilities = FROM.enrichment_facilities }
 
+			# Merged influence cleanup — single every_country pass instead of two
 			every_country = {
-				limit = { is_ai = no }
-				set_temp_variable = { scoped_nation = THIS.id }
-				for_each_loop = {
-					array = auto_influence_array
-					index = i
-					value = v
+				# Auto influence cleanup (human players only)
+				if = {
+					limit = { is_ai = no }
+					set_temp_variable = { scoped_nation = THIS.id }
+					for_each_loop = {
+						array = auto_influence_array
+						index = i
+						value = v
 
-					# Clears Auto Influencer Who No Longer Exists
-					if = { limit = { var:auto_influence_array^i = { exists = no } }
-						var:auto_influence_array^i = {
-							var:scoped_nation = {
-								remove_auto_influencer_request = yes
-								update_auto_influence_array = yes
-								update_dirty_influence_var = yes
+						# Clears Auto Influencer Who No Longer Exists
+						if = { limit = { var:auto_influence_array^i = { exists = no } }
+							var:auto_influence_array^i = {
+								var:scoped_nation = {
+									remove_auto_influencer_request = yes
+									update_auto_influence_array = yes
+									update_dirty_influence_var = yes
+								}
 							}
 						}
 					}
 				}
-			}
 
-			# Remove Annexed Nation from Influence Arrays
-			every_country = {
-				limit = { is_in_array = { influence_array = FROM.id } }
-				recalculate_influence = yes
+				# Remove Annexed Nation from Influence Arrays
+				if = {
+					limit = { is_in_array = { influence_array = FROM.id } }
+					recalculate_influence = yes
+				}
 			}
 
 			FROM = {
@@ -533,8 +512,18 @@ on_actions = {
 
 				calculate_average_world_productivity = yes
 
-				# National Updates:
-				set_power_ranking_ideas_for_every_country = yes
+				# National Updates (quarterly — months 1, 4, 7, 10):
+				if = {
+					limit = {
+						OR = {
+							check_variable = { global.month = 1 }
+							check_variable = { global.month = 4 }
+							check_variable = { global.month = 7 }
+							check_variable = { global.month = 10 }
+						}
+					}
+					set_power_ranking_ideas_for_every_country = yes
+				}
 
 				# Trigger Events for this year
 				if = { limit = { check_variable = { global.month = 1 } }
