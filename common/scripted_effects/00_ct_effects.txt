@@ -45,37 +45,41 @@ create_staggered_cycle = {
 	set_variable = { global.staggered_setup_tracker = 0 }
 	set_variable = { global.week = 1 }
 
-	for_each_scope_loop = {
+	for_each_loop = {
 		array = global.countries
+		value = v
 
-		if = {
-			limit = {
-				check_variable = { global.staggered_setup_tracker = 0 }
-				country_exists = THIS
+		var:v = {
+			if = {
+				limit = {
+					check_variable = { global.staggered_setup_tracker = 0 }
+					country_exists = THIS
+				}
+				add_to_variable = { global.staggered_setup_tracker = 1 }
+				add_to_array = { global.ct_first_week = THIS }
+			}else_if = {
+				limit = {
+					check_variable = { global.staggered_setup_tracker = 1 }
+					country_exists = THIS
+				}
+				add_to_variable = { global.staggered_setup_tracker = 1 }
+				add_to_array = { global.ct_second_week = THIS }
+			}else_if = {
+				limit = {
+					check_variable = { global.staggered_setup_tracker = 2 }
+					country_exists = THIS
+				}
+				add_to_variable = { global.staggered_setup_tracker = 1 }
+				add_to_array = { global.ct_third_week = THIS }
+			}else_if = {
+				limit = {
+					country_exists = THIS
+				}
+				set_variable = { global.staggered_setup_tracker = 0 }
+				add_to_array = { global.ct_last_week = THIS }
 			}
-			add_to_variable = { global.staggered_setup_tracker = 1 }
-			add_to_array = { global.ct_first_week = THIS }
-		}else_if = {
-			limit = {
-				check_variable = { global.staggered_setup_tracker = 1 }
-				country_exists = THIS
-			}
-			add_to_variable = { global.staggered_setup_tracker = 1 }
-			add_to_array = { global.ct_second_week = THIS }
-		}else_if = {
-			limit = {
-				check_variable = { global.staggered_setup_tracker = 2 }
-				country_exists = THIS
-			}
-			add_to_variable = { global.staggered_setup_tracker = 1 }
-			add_to_array = { global.ct_third_week = THIS }
-		}else_if = {
-			limit = {
-				country_exists = THIS
-			}
-			set_variable = { global.staggered_setup_tracker = 0 }
-			add_to_array = { global.ct_last_week = THIS }
 		}
+
 	}
 }
 
