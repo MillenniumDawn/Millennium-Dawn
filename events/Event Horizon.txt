@@ -262,15 +262,29 @@ country_event = { # Formation of USN
 	option = {
 		name = EH_event.401.a
 		# FORMING NORTH AMERICA
-		every_country = {
+		if = {
 			limit = {
-				is_in_north_america = yes
-				NOT = {
-					original_tag = ALN
+				any_country = {
+					is_in_north_america = yes
+					is_ai = no
 				}
 			}
-			country_event = {
-				id = EH_event.402
+			random_country = {
+				limit = {
+					is_in_north_america = yes
+					is_ai = no
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.402 }
+			}
+		}
+		else = {
+			random_country = {
+				limit = {
+					is_in_north_america = yes
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.402 }
 			}
 		}
 		hidden_effect = {
@@ -280,9 +294,6 @@ country_event = { # Formation of USN
 				}
 				country_event = { id = EH_event.403 days = 3 random_days = 3 }
 				news_event = { id = EH_event.423 days = 1 }
-				RCA = {
-					inherit_technology = PREV
-				}
 			}
 		}
 	}
@@ -299,34 +310,43 @@ country_event = { # Formation of USN
 	option = {
 		name = EH_event.402.a
 		# FORMING NORTH AMERICA
-		hidden_effect = {
-			if = {
-				limit = {
-					ROOT = {
-						is_ai = no
-					}
-				}
-				hidden_effect = {
-					70 = {
-						transfer_state_to = USN
-					}
-				}
-				USN = {
-					change_tag_from = ROOT
-				}
+		set_cosmetic_tag = EH_USN
+		kill_country_leader = yes
+		set_politics = {
+			ruling_party = neutrality
+			elections_allowed = no
+		}
+		create_country_leader = {
+			name = "Council of National Preservation"
+			picture = "GFX_EH_USN_HQ"
+			ideology = neutral_Social
+			traits = {
+				neutrality_neutral_Social
+				defender_of_democracy
+				ruthless
+				rational
+				army_general
+				hands_that_crafted_the_nation
+				megaproject_maniac
 			}
 		}
-		USN = {
-			annex_country = {
-				target = ROOT
-				transfer_troops = yes
+		every_other_country = {
+			limit = {
+				is_in_north_america = yes
+				is_ai = yes
+				NOT = { original_tag = ALN }
 			}
-		}
-		ROOT = {
+			ROOT = {
+				annex_country = {
+					target = PREV
+					transfer_troops = yes
+				}
+			}
 			every_owned_state = {
-				add_core_of = USN
+				add_core_of = ROOT
 			}
 		}
+		EH_chimera_declares_war = yes
 	}
 }
 
@@ -343,12 +363,29 @@ country_event = { # Formation of RCA
 	option = {
 		name = EH_event.403.a
 		# FORMING REPUBLICA DE CENTRO AMERICA
-		every_country = {
+		if = {
 			limit = {
-				is_central_american_country = yes
+				any_country = {
+					is_central_american_country = yes
+					is_ai = no
+				}
 			}
-			country_event = {
-				id = EH_event.404
+			random_country = {
+				limit = {
+					is_central_american_country = yes
+					is_ai = no
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.404 }
+			}
+		}
+		else = {
+			random_country = {
+				limit = {
+					is_central_american_country = yes
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.404 }
 			}
 		}
 		hidden_effect = {
@@ -358,9 +395,6 @@ country_event = { # Formation of RCA
 				}
 				country_event = { id = EH_event.405 days = 2 random_days = 2 }
 				news_event = { id = EH_event.424 days = 1 }
-				USM = {
-					inherit_technology = PREV
-				}
 			}
 		}
 	}
@@ -377,49 +411,42 @@ country_event = { # Formation of RCA
 	option = {
 		name = EH_event.404.a
 		# FORMING REPUBLICA DE CENTRO AMERICA
-		hidden_effect = {
-			if = {
-				limit = {
-					ROOT = {
-						is_ai = no
-					}
-				}
-				hidden_effect = {
-					70 = {
-						transfer_state_to = RCA
-					}
-				}
-				RCA = {
-					change_tag_from = ROOT
-				}
-			}
-			if = {
-				limit = {
-					NOT = {
-						USN = {
-							has_war_with = ALN
-						}
-					}
-				}
-				ALN = {
-					declare_war_on = {
-						target = USN
-						type = annex_everything
-					}
-				}
+		set_cosmetic_tag = EH_RCA
+		kill_country_leader = yes
+		set_politics = {
+			ruling_party = neutrality
+			elections_allowed = no
+		}
+		create_country_leader = {
+			name = "Liderazgo de la República de Centroamérica"
+			picture = "GFX_EH_RCA_HQ"
+			ideology = neutral_Social
+			traits = {
+				neutrality_neutral_Social
+				rational
+				capable
+				army_general
+				hands_that_crafted_the_nation
+				logistical_tunnel_vision
 			}
 		}
-		RCA = {
-			annex_country = {
-				target = ROOT
-				transfer_troops = yes
+		every_other_country = {
+			limit = {
+				is_central_american_country = yes
+				is_ai = yes
+				NOT = { original_tag = ALN }
 			}
-		}
-		ROOT = {
+			ROOT = {
+				annex_country = {
+					target = PREV
+					transfer_troops = yes
+				}
+			}
 			every_owned_state = {
-				add_core_of = RCA
+				add_core_of = ROOT
 			}
 		}
+		EH_chimera_declares_war = yes
 	}
 }
 
@@ -431,20 +458,32 @@ country_event = { # Formation of USM
 	picture = GFX_political_deal
 
 	is_triggered_only = yes
-	trigger = {
-		NOT = {
-			original_tag = RCA
-		}
-	}
 	option = {
 		name = EH_event.405.a
 		# FORMING SOUTH AMERICA
-		every_country = {
+		if = {
 			limit = {
-				is_south_american_alliance_country = yes
+				any_country = {
+					is_south_american_alliance_country = yes
+					is_ai = no
+				}
 			}
-			country_event = {
-				id = EH_event.406
+			random_country = {
+				limit = {
+					is_south_american_alliance_country = yes
+					is_ai = no
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.406 }
+			}
+		}
+		else = {
+			random_country = {
+				limit = {
+					is_south_american_alliance_country = yes
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.406 }
 			}
 		}
 		hidden_effect = {
@@ -454,9 +493,6 @@ country_event = { # Formation of USM
 				}
 				country_event = { id = EH_event.407 days = 3 random_days = 3 }
 				news_event = { id = EH_event.425 days = 1 }
-				EUF = {
-					inherit_technology = PREV
-				}
 			}
 		}
 	}
@@ -469,57 +505,45 @@ country_event = { # Formation of USM
 	picture = GFX_political_deal
 
 	is_triggered_only = yes
-	trigger = {
-		NOT = {
-			original_tag = RCA
-		}
-	}
 	option = {
 		name = EH_event.406.a
 		# FORMING SOUTH AMERICA
-		hidden_effect = {
-			if = {
-				limit = {
-					ROOT = {
-						is_ai = no
-					}
-				}
-				hidden_effect = {
-					70 = {
-						transfer_state_to = USM
-					}
-				}
-				USM = {
-					change_tag_from = ROOT
-				}
-			}
-			if = {
-				limit = {
-					NOT = {
-						RCA = {
-							has_war_with = ALN
-						}
-					}
-				}
-				ALN = {
-					declare_war_on = {
-						target = RCA
-						type = annex_everything
-					}
-				}
+		set_cosmetic_tag = EH_USM
+		kill_country_leader = yes
+		set_politics = {
+			ruling_party = neutrality
+			elections_allowed = no
+		}
+		create_country_leader = {
+			name = "UNASUR Headquarters"
+			picture = "GFX_EH_USM_HQ"
+			ideology = neutral_Social
+			traits = {
+				neutrality_neutral_Social
+				rational
+				capable
+				army_general
+				hands_that_crafted_the_nation
+				cornered_fox
 			}
 		}
-		USM = {
-			annex_country = {
-				target = ROOT
-				transfer_troops = yes
+		every_other_country = {
+			limit = {
+				is_south_american_alliance_country = yes
+				is_ai = yes
+				NOT = { original_tag = ALN }
 			}
-		}
-		ROOT = {
+			ROOT = {
+				annex_country = {
+					target = PREV
+					transfer_troops = yes
+				}
+			}
 			every_owned_state = {
-				add_core_of = USM
+				add_core_of = ROOT
 			}
 		}
+		EH_chimera_declares_war = yes
 	}
 }
 
@@ -536,12 +560,29 @@ country_event = { # Formation of EUF
 	option = {
 		name = EH_event.407.a
 		# FORMING EUROPEAN FEDERATION
-		every_country = {
+		if = {
 			limit = {
-				is_european_federation_country = yes
+				any_country = {
+					is_european_federation_country = yes
+					is_ai = no
+				}
 			}
-			country_event = {
-				id = EH_event.408
+			random_country = {
+				limit = {
+					is_european_federation_country = yes
+					is_ai = no
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.408 }
+			}
+		}
+		else = {
+			random_country = {
+				limit = {
+					is_european_federation_country = yes
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.408 }
 			}
 		}
 		hidden_effect = {
@@ -551,9 +592,6 @@ country_event = { # Formation of EUF
 				}
 				country_event = { id = EH_event.409 days = 2 random_days = 2 }
 				news_event = { id = EH_event.426 days = 1 }
-				AFD = {
-					inherit_technology = PREV
-				}
 			}
 		}
 	}
@@ -570,47 +608,44 @@ country_event = { # Formation of EUF
 	option = {
 		name = EH_event.408.a
 		# FORMING EUROPEAN FEDERATION
-		hidden_effect = {
-			if = {
-				limit = {
-					ROOT = {
-						is_ai = no
-					}
-				}
-				70 = {
-					transfer_state_to = EUF
-				}
-				EUF = {
-					change_tag_from = ROOT
-				}
-			}
-			if = {
-				limit = {
-					NOT = {
-						USM = {
-							has_war_with = ALN
-						}
-					}
-				}
-				ALN = {
-					declare_war_on = {
-						target = USM
-						type = annex_everything
-					}
-				}
+		set_cosmetic_tag = EH_EUF
+		kill_country_leader = yes
+		set_politics = {
+			ruling_party = neutrality
+			elections_allowed = no
+		}
+		create_country_leader = {
+			name = "European Federation Headquarters"
+			picture = "GFX_EH_EUF_HQ"
+			ideology = neutral_Social
+			traits = {
+				neutrality_neutral_Social
+				defender_of_democracy
+				rational
+				capable
+				army_general
+				hands_that_crafted_the_nation
+				megaproject_maniac
+				ecological_economist
 			}
 		}
-		EUF = {
-			annex_country = {
-				target = ROOT
-				transfer_troops = yes
+		every_other_country = {
+			limit = {
+				is_european_federation_country = yes
+				is_ai = yes
+				NOT = { original_tag = ALN }
 			}
-		}
-		ROOT = {
+			ROOT = {
+				annex_country = {
+					target = PREV
+					transfer_troops = yes
+				}
+			}
 			every_owned_state = {
-				add_core_of = EUF
+				add_core_of = ROOT
 			}
 		}
+		EH_chimera_declares_war = yes
 	}
 }
 
@@ -627,12 +662,29 @@ country_event = { # Formation of ADF
 	option = {
 		name = EH_event.409.a
 		# FORMING AFRICAN DEFENSE FRONT
-		every_country = {
+		if = {
 			limit = {
-				is_african_defense_front_country = yes
+				any_country = {
+					is_african_defense_front_country = yes
+					is_ai = no
+				}
 			}
-			country_event = {
-				id = EH_event.410
+			random_country = {
+				limit = {
+					is_african_defense_front_country = yes
+					is_ai = no
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.410 }
+			}
+		}
+		else = {
+			random_country = {
+				limit = {
+					is_african_defense_front_country = yes
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.410 }
 			}
 		}
 		hidden_effect = {
@@ -642,9 +694,6 @@ country_event = { # Formation of ADF
 				}
 				country_event = { id = EH_event.411 days = 2 random_days = 2 }
 				news_event = { id = EH_event.427 days = 1 }
-				CRU = {
-					inherit_technology = PREV
-				}
 			}
 		}
 	}
@@ -661,47 +710,42 @@ country_event = { # Formation of AFD
 	option = {
 		name = EH_event.410.a
 		# FORMING AFRICAN DEFENSE FRONT
-		hidden_effect = {
-			if = {
-				limit = {
-					ROOT = {
-						is_ai = no
-					}
-				}
-				70 = {
-					transfer_state_to = AFD
-				}
-				AFD = {
-					change_tag_from = ROOT
-				}
-			}
-			if = {
-				limit = {
-					NOT = {
-						EUF = {
-							has_war_with = ALN
-						}
-					}
-				}
-				ALN = {
-					declare_war_on = {
-						target = EUF
-						type = annex_everything
-					}
-				}
+		set_cosmetic_tag = EH_AFD
+		kill_country_leader = yes
+		set_politics = {
+			ruling_party = neutrality
+			elections_allowed = no
+		}
+		create_country_leader = {
+			name = "The Government of African Defense Point"
+			picture = "GFX_EH_AFD_HQ"
+			ideology = neutral_Social
+			traits = {
+				neutrality_neutral_Social
+				cautious
+				rational
+				army_general
+				hands_that_crafted_the_nation
+				general_secretary
 			}
 		}
-		AFD = {
-			annex_country = {
-				target = ROOT
-				transfer_troops = yes
+		every_other_country = {
+			limit = {
+				is_african_defense_front_country = yes
+				is_ai = yes
+				NOT = { original_tag = ALN }
 			}
-		}
-		ROOT = {
+			ROOT = {
+				annex_country = {
+					target = PREV
+					transfer_troops = yes
+				}
+			}
 			every_owned_state = {
-				add_core_of = AFD
+				add_core_of = ROOT
 			}
 		}
+		EH_chimera_declares_war = yes
 	}
 }
 
@@ -718,12 +762,29 @@ country_event = { # Formation of CRU
 	option = {
 		name = EH_event.411.a
 		# FORMING EASTERN CONTINENTAL UNION
-		every_country = {
+		if = {
 			limit = {
-				is_crescent_union_country = yes
+				any_country = {
+					is_crescent_union_country = yes
+					is_ai = no
+				}
 			}
-			country_event = {
-				id = EH_event.412
+			random_country = {
+				limit = {
+					is_crescent_union_country = yes
+					is_ai = no
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.412 }
+			}
+		}
+		else = {
+			random_country = {
+				limit = {
+					is_crescent_union_country = yes
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.412 }
 			}
 		}
 		hidden_effect = {
@@ -733,9 +794,6 @@ country_event = { # Formation of CRU
 				}
 				country_event = { id = EH_event.413 days = 2 random_days = 2 }
 				news_event = { id = EH_event.428 days = 1 }
-				ERF = {
-					inherit_technology = PREV
-				}
 			}
 		}
 	}
@@ -752,49 +810,43 @@ country_event = { # Formation of CRU
 	option = {
 		name = EH_event.412.a
 		# FORMING CRESCENT UNION
-		hidden_effect = {
-			if = {
-				limit = {
-					ROOT = {
-						is_ai = no
-					}
-				}
-				hidden_effect = {
-					70 = {
-						transfer_state_to = CRU
-					}
-				}
-				CRU = {
-					change_tag_from = ROOT
-				}
-			}
-			if = {
-				limit = {
-					NOT = {
-						AFD = {
-							has_war_with = ALN
-						}
-					}
-				}
-				ALN = {
-					declare_war_on = {
-						target = AFD
-						type = annex_everything
-					}
-				}
+		set_cosmetic_tag = EH_CRU
+		kill_country_leader = yes
+		set_politics = {
+			ruling_party = neutrality
+			elections_allowed = no
+		}
+		create_country_leader = {
+			name = "The Leadership of the Eastern Continental Union"
+			picture = "GFX_EH_CRU_HQ"
+			ideology = neutral_Social
+			traits = {
+				neutrality_neutral_Social
+				zealous
+				capable
+				army_general
+				hands_that_crafted_the_nation
+				leader_of_arab_world
+				supreme_leader_of_iran
 			}
 		}
-		CRU = {
-			annex_country = {
-				target = ROOT
-				transfer_troops = yes
+		every_other_country = {
+			limit = {
+				is_crescent_union_country = yes
+				is_ai = yes
+				NOT = { original_tag = ALN }
 			}
-		}
-		ROOT = {
+			ROOT = {
+				annex_country = {
+					target = PREV
+					transfer_troops = yes
+				}
+			}
 			every_owned_state = {
-				add_core_of = CRU
+				add_core_of = ROOT
 			}
 		}
+		EH_chimera_declares_war = yes
 	}
 }
 
@@ -809,12 +861,29 @@ country_event = { # Formation of ERF
 	option = {
 		name = EH_event.413.a
 		# FORMING EUROASIAN FEDERATION
-		every_country = {
+		if = {
 			limit = {
-				is_eurasian_federation_country = yes
+				any_country = {
+					is_eurasian_federation_country = yes
+					is_ai = no
+				}
 			}
-			country_event = {
-				id = EH_event.414
+			random_country = {
+				limit = {
+					is_eurasian_federation_country = yes
+					is_ai = no
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.414 }
+			}
+		}
+		else = {
+			random_country = {
+				limit = {
+					is_eurasian_federation_country = yes
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.414 }
 			}
 		}
 		hidden_effect = {
@@ -824,9 +893,6 @@ country_event = { # Formation of ERF
 				}
 				country_event = { id = EH_event.415 days = 2 random_days = 2 }
 				news_event = { id = EH_event.429 days = 1 }
-				CHN = {
-					inherit_technology = PREV
-				}
 			}
 		}
 	}
@@ -843,49 +909,44 @@ country_event = { # Formation of ERF
 	option = {
 		name = EH_event.414.a
 		# FORMING EUROASIAN FEDERATION
-		hidden_effect = {
-			if = {
-				limit = {
-					ROOT = {
-						is_ai = no
-					}
-				}
-				hidden_effect = {
-					70 = {
-						transfer_state_to = ERF
-					}
-				}
-				ERF = {
-					change_tag_from = ROOT
-				}
-			}
-			if = {
-				limit = {
-					NOT = {
-						CRU = {
-							has_war_with = ALN
-						}
-					}
-				}
-				ALN = {
-					declare_war_on = {
-						target = CRU
-						type = annex_everything
-					}
-				}
+		set_cosmetic_tag = EH_ERF
+		kill_country_leader = yes
+		set_politics = {
+			ruling_party = neutrality
+			elections_allowed = no
+		}
+		create_country_leader = {
+			name = "Eurasian Federation Headquarters"
+			picture = "GFX_EH_ERF_HQ"
+			ideology = neutral_Social
+			traits = {
+				neutrality_neutral_Social
+				ruthless
+				capable
+				army_general
+				hands_that_crafted_the_nation
+				peoples_leader
+				prince_of_terror
+				captain_of_industry
 			}
 		}
-		ERF = {
-			annex_country = {
-				target = ROOT
-				transfer_troops = yes
+		every_other_country = {
+			limit = {
+				is_eurasian_federation_country = yes
+				is_ai = yes
+				NOT = { original_tag = ALN }
 			}
-		}
-		ROOT = {
+			ROOT = {
+				annex_country = {
+					target = PREV
+					transfer_troops = yes
+				}
+			}
 			every_owned_state = {
-				add_core_of = ERF
+				add_core_of = ROOT
 			}
 		}
+		EH_chimera_declares_war = yes
 	}
 }
 
@@ -900,12 +961,29 @@ country_event = { # Formation of CHN
 	option = {
 		name = EH_event.415.a
 		# FORMING CHINA
-		every_country = {
+		if = {
 			limit = {
-				is_china_alliance_country = yes
+				any_country = {
+					is_china_alliance_country = yes
+					is_ai = no
+				}
 			}
-			country_event = {
-				id = EH_event.416
+			random_country = {
+				limit = {
+					is_china_alliance_country = yes
+					is_ai = no
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.416 }
+			}
+		}
+		else = {
+			random_country = {
+				limit = {
+					is_china_alliance_country = yes
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.416 }
 			}
 		}
 		hidden_effect = {
@@ -915,9 +993,6 @@ country_event = { # Formation of CHN
 				}
 				country_event = { id = EH_event.417 days = 2 random_days = 2 }
 				news_event = { id = EH_event.430 days = 1 }
-				ASE = {
-					inherit_technology = PREV
-				}
 			}
 		}
 	}
@@ -934,49 +1009,45 @@ country_event = { # Formation of CHN
 	option = {
 		name = EH_event.416.a
 		# FORMING CHINA
-		hidden_effect = {
-			if = {
-				limit = {
-					ROOT = {
-						is_ai = no
-					}
-				}
-				hidden_effect = {
-					70 = {
-						transfer_state_to = CHN
-					}
-				}
-				CHN = {
-					change_tag_from = ROOT
-				}
-			}
-			if = {
-				limit = {
-					NOT = {
-						ERF = {
-							has_war_with = ALN
-						}
-					}
-				}
-				ALN = {
-					declare_war_on = {
-						target = ERF
-						type = annex_everything
-					}
-				}
+		set_cosmetic_tag = EH_CHN
+		kill_country_leader = yes
+		set_politics = {
+			ruling_party = neutrality
+			elections_allowed = no
+		}
+		create_country_leader = {
+			name = "Great Hall Council"
+			picture = "GFX_EH_CHN_HQ"
+			expire = "2050.1.1"
+			ideology = neutral_Social
+			traits = {
+				neutrality_neutral_Social
+				rational
+				capable
+				army_general
+				hands_that_crafted_the_nation
+				peoples_leader
+				quartermaster_general
+				captain_of_industry
 			}
 		}
-		CHN = {
-			annex_country = {
-				target = ROOT
-				transfer_troops = yes
+		every_other_country = {
+			limit = {
+				is_china_alliance_country = yes
+				is_ai = yes
+				NOT = { original_tag = ALN }
 			}
-		}
-		ROOT = {
+			ROOT = {
+				annex_country = {
+					target = PREV
+					transfer_troops = yes
+				}
+			}
 			every_owned_state = {
-				add_core_of = CHN
+				add_core_of = ROOT
 			}
 		}
+		EH_chimera_declares_war = yes
 	}
 }
 
@@ -991,12 +1062,29 @@ country_event = { # Formation of ASE
 	option = {
 		name = EH_event.417.a
 		# FORMING ASEAN
-		every_country = {
+		if = {
 			limit = {
-				is_asian_southeast_coalition_country = yes
+				any_country = {
+					is_asian_southeast_coalition_country = yes
+					is_ai = no
+				}
 			}
-			country_event = {
-				id = EH_event.418
+			random_country = {
+				limit = {
+					is_asian_southeast_coalition_country = yes
+					is_ai = no
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.418 }
+			}
+		}
+		else = {
+			random_country = {
+				limit = {
+					is_asian_southeast_coalition_country = yes
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.418 }
 			}
 		}
 		hidden_effect = {
@@ -1006,9 +1094,6 @@ country_event = { # Formation of ASE
 				}
 				country_event = { id = EH_event.419 days = 2 random_days = 2 }
 				news_event = { id = EH_event.431 days = 1 }
-				EAC = {
-					inherit_technology = PREV
-				}
 			}
 		}
 	}
@@ -1025,49 +1110,42 @@ country_event = { # Formation of ASE
 	option = {
 		name = EH_event.418.a
 		# FORMING ASEAN
-		hidden_effect = {
-			if = {
-				limit = {
-					ROOT = {
-						is_ai = no
-					}
-				}
-				hidden_effect = {
-					70 = {
-						transfer_state_to = ASE
-					}
-				}
-				ASE = {
-					change_tag_from = ROOT
-				}
-			}
-			if = {
-				limit = {
-					NOT = {
-						CHN = {
-							has_war_with = ALN
-						}
-					}
-				}
-				ALN = {
-					declare_war_on = {
-						target = CHN
-						type = annex_everything
-					}
-				}
+		set_cosmetic_tag = EH_ASE
+		kill_country_leader = yes
+		set_politics = {
+			ruling_party = neutrality
+			elections_allowed = no
+		}
+		create_country_leader = {
+			name = "ASEAN Headquarters"
+			picture = "GFX_EH_ASE_HQ"
+			ideology = neutral_Social
+			traits = {
+				neutrality_neutral_Social
+				rational
+				army_general
+				hands_that_crafted_the_nation
+				internationally_decorated_commander
+				staunch_personalist
 			}
 		}
-		ASE = {
-			annex_country = {
-				target = ROOT
-				transfer_troops = yes
+		every_other_country = {
+			limit = {
+				is_asian_southeast_coalition_country = yes
+				is_ai = yes
+				NOT = { original_tag = ALN }
 			}
-		}
-		ROOT = {
+			ROOT = {
+				annex_country = {
+					target = PREV
+					transfer_troops = yes
+				}
+			}
 			every_owned_state = {
-				add_core_of = ASE
+				add_core_of = ROOT
 			}
 		}
+		EH_chimera_declares_war = yes
 	}
 }
 
@@ -1082,12 +1160,29 @@ country_event = { # Formation of EAC
 	option = {
 		name = EH_event.419.a
 		# FORMING EAST ASIAN COALITION
-		every_country = {
+		if = {
 			limit = {
-				is_east_asian_coalition_country = yes
+				any_country = {
+					is_east_asian_coalition_country = yes
+					is_ai = no
+				}
 			}
-			country_event = {
-				id = EH_event.420
+			random_country = {
+				limit = {
+					is_east_asian_coalition_country = yes
+					is_ai = no
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.420 }
+			}
+		}
+		else = {
+			random_country = {
+				limit = {
+					is_east_asian_coalition_country = yes
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.420 }
 			}
 		}
 		hidden_effect = {
@@ -1097,9 +1192,6 @@ country_event = { # Formation of EAC
 				}
 				country_event = { id = EH_event.421 days = 2 random_days = 2 }
 				news_event = { id = EH_event.432 days = 1 }
-				ODU = {
-					inherit_technology = PREV
-				}
 			}
 		}
 	}
@@ -1116,49 +1208,45 @@ country_event = { # Formation of EAC
 	option = {
 		name = EH_event.420.a
 		# FORMING EAST ASIAN COALITION
-		hidden_effect = {
-			if = {
-				limit = {
-					ROOT = {
-						is_ai = no
-					}
-				}
-				hidden_effect = {
-					70 = {
-						transfer_state_to = EAC
-					}
-				}
-				EAC = {
-					change_tag_from = ROOT
-				}
-			}
-			if = {
-				limit = {
-					NOT = {
-						ASE = {
-							has_war_with = ALN
-						}
-					}
-				}
-				ALN = {
-					declare_war_on = {
-						target = ASE
-						type = annex_everything
-					}
-				}
+		set_cosmetic_tag = EH_EAC
+		kill_country_leader = yes
+		set_politics = {
+			ruling_party = neutrality
+			elections_allowed = no
+		}
+		create_country_leader = {
+			name = "East Asian Coalition Headquarters"
+			picture = "GFX_EH_EAC_HQ"
+			ideology = neutral_Social
+			traits = {
+				neutrality_neutral_Social
+				likeable
+				rational
+				army_general
+				hands_that_crafted_the_nation
+				megaproject_maniac
+				technocrat
+				emperor_of_japan
+				tech_savy
 			}
 		}
-		EAC = {
-			annex_country = {
-				target = ROOT
-				transfer_troops = yes
+		every_other_country = {
+			limit = {
+				is_east_asian_coalition_country = yes
+				is_ai = yes
+				NOT = { original_tag = ALN }
 			}
-		}
-		ROOT = {
+			ROOT = {
+				annex_country = {
+					target = PREV
+					transfer_troops = yes
+				}
+			}
 			every_owned_state = {
-				add_core_of = EAC
+				add_core_of = ROOT
 			}
 		}
+		EH_chimera_declares_war = yes
 	}
 }
 
@@ -1173,12 +1261,29 @@ country_event = { # Formation of ODU
 	option = {
 		name = EH_event.421.a
 		# FORMING OCEANIC DEFENSE UNION
-		every_country = {
+		if = {
 			limit = {
-				is_oceanic_defense_union_country = yes
+				any_country = {
+					is_oceanic_defense_union_country = yes
+					is_ai = no
+				}
 			}
-			country_event = {
-				id = EH_event.422
+			random_country = {
+				limit = {
+					is_oceanic_defense_union_country = yes
+					is_ai = no
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.422 }
+			}
+		}
+		else = {
+			random_country = {
+				limit = {
+					is_oceanic_defense_union_country = yes
+					NOT = { original_tag = ALN }
+				}
+				country_event = { id = EH_event.422 }
 			}
 		}
 		hidden_effect = {
@@ -1204,49 +1309,45 @@ country_event = { # Formation of ODU
 	option = {
 		name = EH_event.422.a
 		# FORMING OCEANIC DEFENSE UNION
-		hidden_effect = {
-			if = {
-				limit = {
-					ROOT = {
-						is_ai = no
-					}
-				}
-				hidden_effect = {
-					70 = {
-						transfer_state_to = ODU
-					}
-				}
-				ODU = {
-					change_tag_from = ROOT
-				}
+		set_cosmetic_tag = EH_ODU
+		kill_country_leader = yes
+		set_politics = {
+			ruling_party = neutrality
+			elections_allowed = no
+		}
+		create_country_leader = {
+			name = "The Capital of the Oceanic Defense Union"
+			picture = "GFX_EH_ODU_HQ"
+			ideology = neutral_Social
+			traits = {
+				neutrality_neutral_Social
+				likeable
+				cautious
+				rational
+				army_general
+				hands_that_crafted_the_nation
+				island_warlord
 			}
-			if = {
-				limit = {
-					NOT = {
-						EAC = {
-							has_war_with = ALN
-						}
-					}
-				}
-				ALN = {
-					declare_war_on = {
-						target = EAC
-						type = annex_everything
-					}
+		}
+		every_country = {
+			limit = {
+				is_oceanic_defense_union_country = yes
+				is_ai = yes
+				NOT = { original_tag = ALN }
+			}
+			ROOT = {
+				annex_country = {
+					target = PREV
+					transfer_troops = yes
 				}
 			}
 		}
-		ODU = {
-			annex_country = {
-				target = ROOT
-				transfer_troops = yes
-			}
-		}
-		ROOT = {
+		every_country = {
 			every_owned_state = {
-				add_core_of = ODU
+				add_core_of = PREV
 			}
 		}
+		EH_chimera_declares_war = yes
 	}
 }
 
@@ -1402,21 +1503,6 @@ news_event = { # Oceanic Defense Union Formed
 	option = {
 		name = EH_event.433.a
 		hidden_effect = {
-			if = {
-				limit = {
-					NOT = {
-						ODU = {
-							has_war_with = ALN
-						}
-					}
-				}
-				ALN = {
-					declare_war_on = {
-						target = ODU
-						type = annex_everything
-					}
-				}
-			}
 			ALN = {
 				news_event = { id = EH_event.434 days = 5 random_days = 3 }
 			}
