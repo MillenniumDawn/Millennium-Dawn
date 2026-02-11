@@ -129,8 +129,6 @@ on_actions = {
 				}
 			}
 
-			# Cancel Invalid Projects - moved to on_monthly for performance (on_state_control_changed handles state capture case)
-
 			if = { limit = { is_in_array = { global.ct_states = THIS } }
 				if = {
 					limit = {
@@ -269,26 +267,32 @@ on_actions = {
 				limit = { is_in_array = { global.AU_member = FROM.id } }
 				remove_from_array = { global.AU_member = FROM.id }
 			}
+
 			if = {
 				limit = { is_in_array = { global.nato_members = FROM.id } }
 				remove_from_array = { global.nato_members = FROM.id }
 			}
-			if = {
+			else_if = {
 				limit = { is_in_array = { global.CSTO_member = FROM.id } }
 				remove_from_array = { global.CSTO_member = FROM.id }
 			}
+
 			if = {
 				limit = { is_in_array = { SIN.SIN_singaporean_trade_agreement = FROM.id } }
 				remove_from_array = { SIN.SIN_singaporean_trade_agreement = FROM.id }
 			}
 
-			EDU_learn_to_annex_your_neighbours = yes # LITERACY RATE STUFF
+			EDU_learn_to_annex_your_neighbours = yes
 
-			# Grab your Nuclear Reactor Enrichment Facilities
 			add_to_variable = { ROOT.enrichment_facilities = FROM.enrichment_facilities }
 
-			# Merged influence cleanup — single every_country pass instead of two
 			every_country = {
+				limit = {
+					OR = {
+						is_ai = no
+						is_in_array = { influence_array = FROM.id }
+					}
+				}
 				# Auto influence cleanup (human players only)
 				if = {
 					limit = { is_ai = no }
@@ -298,7 +302,6 @@ on_actions = {
 						index = i
 						value = v
 
-						# Clears Auto Influencer Who No Longer Exists
 						if = { limit = { var:auto_influence_array^i = { exists = no } }
 							var:auto_influence_array^i = {
 								var:scoped_nation = {
@@ -311,7 +314,7 @@ on_actions = {
 					}
 				}
 
-				# Remove Annexed Nation from Influence Arrays
+				# Remove Annexed Nation from Influence Arrays (all countries)
 				if = {
 					limit = { is_in_array = { influence_array = FROM.id } }
 					recalculate_influence = yes
@@ -737,14 +740,8 @@ on_actions = {
 						remove_dynamic_modifier = { modifier = no_fuel_penalties_modifier }
 					}
 
-					# AGRI SHIT
 					AGRI_plow_the_fields = yes
-					# Tick Internal Factions
 					monthly_tick_internal_factions_opinion = yes
-
-					# Space
-					# INFO: This was readded back to the monthly tick due to the nature of the content.
-					# tick speeds and otherwise should not be harmed.
 					update_space_system_values = yes
 
 					calculate_expected_spending = yes
@@ -1005,77 +1002,6 @@ on_actions = {
 									}
 								}
 							}
-							# # Possibility of jihadists crossing the border
-							# TODO: This is expensive and needs to be either A: removed or B: optimized
-							# if = {
-							# 	limit = {
-							# 		OR = {
-							# 			has_country_flag = threat_level_severe
-							# 			has_country_flag = threat_level_critical
-							# 		}
-							# 	}
-							# 	every_neighbor_country = {
-							# 		limit = {
-							# 			no_jihadist_government = yes
-							# 			is_in_array = { global.ct_states = THIS }
-							# 		}
-							# 		random_owned_state = {
-							# 			limit = {
-							# 				any_neighbor_state = {
-							# 					is_owned_by = ROOT
-							# 				}
-							# 				NOT = { state = 175 }
-							# 			}
-							# 			set_temp_variable = { temp1 = THIS }
-							# 		}
-							# 		random_list = {
-							# 			1 = {
-							# 				country_event = { id = terror.8 days = 45 random_hours = 2400 }
-							# 				modifier = {
-							# 					factor = 5
-							# 					ROOT = { has_country_flag = threat_level_critical }
-							# 				}
-							# 				modifier = {
-							# 					factor = 0.5
-							# 					divisions_in_state = {
-							# 						size > 0
-							# 						state = temp1
-							# 					}
-							# 				}
-							# 				modifier = {
-							# 					factor = 0.5
-							# 					divisions_in_state = {
-							# 						size > 1
-							# 						state = temp1
-							# 					}
-							# 				}
-							# 				modifier = {
-							# 					factor = 0.5
-							# 					divisions_in_state = {
-							# 						size > 2
-							# 						state = temp1
-							# 					}
-							# 				}
-							# 				modifier = {
-							# 					factor = 0.5
-							# 					divisions_in_state = {
-							# 						size > 3
-							# 						state = temp1
-							# 					}
-							# 				}
-							# 				modifier = {
-							# 					factor = 0.5
-							# 					divisions_in_state = {
-							# 						size > 4
-							# 						state = temp1
-							# 					}
-							# 				}
-							# 			}
-							# 			99 = {
-							# 			}
-							# 		}
-							# 	}
-							# }
 						}
 					}
 
