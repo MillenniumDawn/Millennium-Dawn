@@ -129,33 +129,6 @@ on_actions = {
 				}
 			}
 
-			# Cancel Invalid Projects
-			if = { limit = { check_variable = { active_projects > 0 } }
-				# Project loop.
-				for_each_loop = { array = project_array
-
-					if = { limit = { check_variable = { v < 0 } }
-
-						set_variable = { project_type = i }
-
-						if = {
-							limit = {
-								OR = {
-									CONTROLLER = { has_war_with = ROOT } # target state controller at war with project owner
-									var:v = { NOT = { investment_building_slot_available = yes } } # building slot unavailable in target state
-								}
-							}
-
-							set_variable = { project = i }
-							log = "AC Project Deletion - [GetDate] [This.GetTag] - on_weekly - deleted invalid project [?project] in [?project_array^project] [?project_array^project.GetName] [?project_array^project.GetName]"
-							end_project = yes
-						}
-					}
-				}
-
-				clear_variable = project_type
-			}
-
 			if = { limit = { is_in_array = { global.ct_states = THIS } }
 				if = {
 					limit = {
@@ -205,23 +178,17 @@ on_actions = {
 	#ROOT is winner #FROM gets annexed - For civil wars on_civil_war_end is also fired
 	on_annex = {
 		effect = {
-			if = {
-				limit = {
-					ROOT = { original_tag = ARM }
-					FROM = { original_tag = GEO }
+			if = { limit = { ROOT = { original_tag = ARM } }
+				if = { limit = { FROM = { original_tag = GEO } }
+					ROOT = {
+						add_ideas = ARM_GEO_religion_problem
+						add_ideas = ARM_GEO_language
+					}
 				}
-				ROOT = {
-					add_ideas = ARM_GEO_religion_problem
-					add_ideas = ARM_GEO_language
-				}
-			}
-			if = {
-				limit = {
-					ROOT = { original_tag = ARM }
-					FROM = { original_tag = AZE }
-				}
-				ROOT = {
-					add_ideas = ARM_AZE_small_people
+				if = { limit = { FROM = { original_tag = AZE } }
+					ROOT = {
+						add_ideas = ARM_AZE_small_people
+					}
 				}
 			}
 			if = {
@@ -294,49 +261,58 @@ on_actions = {
 				limit = { is_in_array = { global.AU_member = FROM.id } }
 				remove_from_array = { global.AU_member = FROM.id }
 			}
+
 			if = {
 				limit = { is_in_array = { global.nato_members = FROM.id } }
 				remove_from_array = { global.nato_members = FROM.id }
 			}
-			if = {
+			else_if = {
 				limit = { is_in_array = { global.CSTO_member = FROM.id } }
 				remove_from_array = { global.CSTO_member = FROM.id }
 			}
+
 			if = {
 				limit = { is_in_array = { SIN.SIN_singaporean_trade_agreement = FROM.id } }
 				remove_from_array = { SIN.SIN_singaporean_trade_agreement = FROM.id }
 			}
 
-			EDU_learn_to_annex_your_neighbours = yes # LITERACY RATE STUFF
+			EDU_learn_to_annex_your_neighbours = yes
 
-			# Grab your Nuclear Reactor Enrichment Facilities
 			add_to_variable = { ROOT.enrichment_facilities = FROM.enrichment_facilities }
 
 			every_country = {
-				limit = { is_ai = no }
-				set_temp_variable = { scoped_nation = THIS.id }
-				for_each_loop = {
-					array = auto_influence_array
-					index = i
-					value = v
+				limit = {
+					OR = {
+						is_ai = no
+						is_in_array = { influence_array = FROM.id }
+					}
+				}
+				# Auto influence cleanup (human players only)
+				if = {
+					limit = { is_ai = no }
+					set_temp_variable = { scoped_nation = THIS.id }
+					for_each_loop = {
+						array = auto_influence_array
+						index = i
+						value = v
 
-					# Clears Auto Influencer Who No Longer Exists
-					if = { limit = { var:auto_influence_array^i = { exists = no } }
-						var:auto_influence_array^i = {
-							var:scoped_nation = {
-								remove_auto_influencer_request = yes
-								update_auto_influence_array = yes
-								update_dirty_influence_var = yes
+						if = { limit = { var:auto_influence_array^i = { exists = no } }
+							var:auto_influence_array^i = {
+								var:scoped_nation = {
+									remove_auto_influencer_request = yes
+									update_auto_influence_array = yes
+									update_dirty_influence_var = yes
+								}
 							}
 						}
 					}
 				}
-			}
 
-			# Remove Annexed Nation from Influence Arrays
-			every_country = {
-				limit = { is_in_array = { influence_array = FROM.id } }
-				recalculate_influence = yes
+				# Remove Annexed Nation from Influence Arrays (all countries)
+				if = {
+					limit = { is_in_array = { influence_array = FROM.id } }
+					recalculate_influence = yes
+				}
 			}
 
 			FROM = {
@@ -528,13 +504,20 @@ on_actions = {
 							}
 						}
 					}
-
 				}
 
 				calculate_average_world_productivity = yes
 
-				# National Updates:
-				set_power_ranking_ideas_for_every_country = yes
+				# National Updates (quarterly — months 5, 11):
+				if = {
+					limit = {
+						OR = {
+							check_variable = { global.month = 5 }
+							check_variable = { global.month = 11 }
+						}
+					}
+					set_power_ranking_ideas_for_every_country = yes
+				}
 
 				# Trigger Events for this year
 				if = { limit = { check_variable = { global.month = 1 } }
@@ -748,14 +731,8 @@ on_actions = {
 						remove_dynamic_modifier = { modifier = no_fuel_penalties_modifier }
 					}
 
-					# AGRI SHIT
 					AGRI_plow_the_fields = yes
-					# Tick Internal Factions
 					monthly_tick_internal_factions_opinion = yes
-
-					# Space
-					# INFO: This was readded back to the monthly tick due to the nature of the content.
-					# tick speeds and otherwise should not be harmed.
 					update_space_system_values = yes
 
 					calculate_expected_spending = yes
@@ -1016,77 +993,6 @@ on_actions = {
 									}
 								}
 							}
-							# # Possibility of jihadists crossing the border
-							# TODO: This is expensive and needs to be either A: removed or B: optimized
-							# if = {
-							# 	limit = {
-							# 		OR = {
-							# 			has_country_flag = threat_level_severe
-							# 			has_country_flag = threat_level_critical
-							# 		}
-							# 	}
-							# 	every_neighbor_country = {
-							# 		limit = {
-							# 			no_jihadist_government = yes
-							# 			is_in_array = { global.ct_states = THIS }
-							# 		}
-							# 		random_owned_state = {
-							# 			limit = {
-							# 				any_neighbor_state = {
-							# 					is_owned_by = ROOT
-							# 				}
-							# 				NOT = { state = 175 }
-							# 			}
-							# 			set_temp_variable = { temp1 = THIS }
-							# 		}
-							# 		random_list = {
-							# 			1 = {
-							# 				country_event = { id = terror.8 days = 45 random_hours = 2400 }
-							# 				modifier = {
-							# 					factor = 5
-							# 					ROOT = { has_country_flag = threat_level_critical }
-							# 				}
-							# 				modifier = {
-							# 					factor = 0.5
-							# 					divisions_in_state = {
-							# 						size > 0
-							# 						state = temp1
-							# 					}
-							# 				}
-							# 				modifier = {
-							# 					factor = 0.5
-							# 					divisions_in_state = {
-							# 						size > 1
-							# 						state = temp1
-							# 					}
-							# 				}
-							# 				modifier = {
-							# 					factor = 0.5
-							# 					divisions_in_state = {
-							# 						size > 2
-							# 						state = temp1
-							# 					}
-							# 				}
-							# 				modifier = {
-							# 					factor = 0.5
-							# 					divisions_in_state = {
-							# 						size > 3
-							# 						state = temp1
-							# 					}
-							# 				}
-							# 				modifier = {
-							# 					factor = 0.5
-							# 					divisions_in_state = {
-							# 						size > 4
-							# 						state = temp1
-							# 					}
-							# 				}
-							# 			}
-							# 			99 = {
-							# 			}
-							# 		}
-							# 	}
-							# }
 						}
 					}
 
@@ -1440,8 +1346,6 @@ on_actions = {
 						limit = { NOT = { has_idea = open_borders } }
 						set_variable = { months_at_open_borders = 1 }
 					}
-
-					calculate_expected_spending = yes
 
 					# Monthly Foreign Influence Tick
 					if = {
