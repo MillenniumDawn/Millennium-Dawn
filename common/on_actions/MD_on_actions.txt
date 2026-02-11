@@ -332,6 +332,53 @@ on_actions = {
 				}
 			}
 		}
+
+		# === Inflation Spike Prevention on Annexation ===
+		# When annexing, GDP spikes but it's an accounting change, not organic growth.
+		# Reset GDP tracking variables and blend inflation rates to prevent artificial inflation spikes.
+
+		# Step 1: Estimate post-annexation GDP and GDP/C
+		set_temp_variable = { estimated_new_gdp = ROOT.gdp_total }
+		add_to_temp_variable = { estimated_new_gdp = FROM.gdp_total }
+
+		set_temp_variable = { estimated_new_pop = ROOT.population_total_m }
+		add_to_temp_variable = { estimated_new_pop = FROM.population_total_m }
+		clamp_temp_variable = { var = estimated_new_pop min = 0.001 }
+
+		set_temp_variable = { estimated_new_gdpc = estimated_new_gdp }
+		divide_temp_variable = { estimated_new_gdpc = estimated_new_pop }
+
+		# Step 2: Reset GDP tracking so next quarterly growth rate calculation sees ~0% growth from annexation
+		ROOT = {
+			set_variable = { last_quarter_gdpc_total = estimated_new_gdpc }
+			set_variable = { last_quarter_gdp_total = estimated_new_gdp }
+		}
+
+		# Step 3: GDP-weighted inflation blending
+		set_temp_variable = { root_weighted_inflation = ROOT.inflation_rate_var }
+		multiply_temp_variable = { root_weighted_inflation = ROOT.gdp_total }
+
+		set_temp_variable = { from_weighted_inflation = FROM.inflation_rate_var }
+		multiply_temp_variable = { from_weighted_inflation = FROM.gdp_total }
+
+		set_temp_variable = { blended_inflation = root_weighted_inflation }
+		add_to_temp_variable = { blended_inflation = from_weighted_inflation }
+		divide_temp_variable = { blended_inflation = estimated_new_gdp }
+
+		# Step 4: Apply blended inflation and reset quarterly tracker
+		ROOT = {
+			set_variable = { inflation_rate_var = blended_inflation }
+
+			clear_array = year_quarter_inflation_tracker
+			add_to_array = { year_quarter_inflation_tracker = blended_inflation }
+			add_to_array = { year_quarter_inflation_tracker = blended_inflation }
+			add_to_array = { year_quarter_inflation_tracker = blended_inflation }
+			add_to_array = { year_quarter_inflation_tracker = blended_inflation }
+
+			calculate_inflation_effects = yes
+		}
+
+		log = "[GetDateText]: [ROOT.GetName] annexed [FROM.GetName] - Inflation blended to [?blended_inflation|%], GDP/C tracker reset to [?estimated_new_gdpc]"
 	}
 
 	on_peaceconference_ended = {
