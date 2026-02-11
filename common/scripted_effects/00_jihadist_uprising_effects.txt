@@ -1,0 +1,265 @@
+# Extracted from on_declare_war to deduplicate ROOT/FROM jihadist uprising logic
+# and consolidate multiple every_country loops into single passes
+
+# Common setup applied to a country undergoing jihadist conversion
+# Scope: country being converted
+# FROM context: the country being fought against (use set_temp_variable to pass fighting_target before calling)
+jihadist_conversion_setup = {
+	add_named_threat = {
+		threat = 5
+		name = terror.threat
+	}
+	add_ideas = Non_State_Actor
+	if = {
+		limit = { has_idea = saudi_royal_family }
+		swap_ideas = {
+			remove_idea = saudi_royal_family
+			add_idea = foreign_jihadis
+		}
+	}
+	if = {
+		limit = { has_idea = the_military }
+		swap_ideas = {
+			remove_idea = the_military
+			add_idea = foreign_jihadis
+		}
+	}
+	every_other_country = {
+		limit = { has_military_access_to = PREV }
+		diplomatic_relation = {
+			country = PREV
+			relation = military_access
+			active = no
+		}
+	}
+	every_other_country = {
+		limit = { has_guaranteed = PREV }
+		diplomatic_relation = {
+			country = PREV
+			relation = guarantee
+			active = no
+		}
+	}
+	if = {
+		limit = { is_in_faction = yes }
+		leave_faction = yes
+	}
+	set_political_party = {
+		ideology = fascism
+		popularity = 100
+	}
+	set_variable = { party_pop_array^11 = 1 }
+	recalculate_party = yes
+	clear_array = ruling_party
+	clear_array = gov_coalition_array
+	add_to_array = { ruling_party = 11 }
+	update_government_coalition_strength = yes
+	update_party_name = yes
+	set_coalition_drift = yes
+	set_ruling_leader = yes
+	set_leader = yes
+	#Influence system
+	init_influence = yes
+	set_variable = { domestic_influence_amount = 200 }
+	startup_influence = yes
+	if = {
+		limit = { country_exists = AQY }
+		remove_opinion_modifier = {
+			target = AQY
+			modifier = AlQaida_Are_Terrorists
+		}
+		remove_opinion_modifier = {
+			target = AQY
+			modifier = AlQaida_Are_Terrorists_Trade
+		}
+	}
+	if = {
+		limit = { country_exists = TAL }
+		remove_opinion_modifier = {
+			target = TAL
+			modifier = AlQaida_Are_Terrorists
+		}
+		remove_opinion_modifier = {
+			target = TAL
+			modifier = AlQaida_Are_Terrorists_Trade
+		}
+	}
+	if = {
+		limit = { country_exists = TTP }
+		remove_opinion_modifier = {
+			target = TTP
+			modifier = AlQaida_Are_Terrorists
+		}
+		remove_opinion_modifier = {
+			target = TTP
+			modifier = AlQaida_Are_Terrorists_Trade
+		}
+	}
+	add_ideas = intervention_neo_imperialism
+	add_equipment_to_stockpile = {
+		type = infantry_weapons
+		amount = 2000
+		producer = SOV
+	}
+	set_variable = { radicalization = 100 }
+	set_variable = { social_conservatism_government = 100 }
+	set_variable = { social_conservatism_society = 100 }
+}
+
+# Regional war declarations for jihadist uprising — deduplicated from ROOT and FROM blocks
+# Scope: the jihadist country declaring wars
+jihadist_regional_war_declarations = {
+	if = { limit = { original_tag = SUD }
+		if = {
+			limit = { SUD = { has_war_with = SSU } }
+			declare_war_on = {
+				target = SSU
+				type = annex_everything
+			}
+		}
+		if = {
+			limit = { SUD = { has_war_with = DAR } }
+			declare_war_on = {
+				target = DAR
+				type = annex_everything
+			}
+		}
+	}
+	else_if = {
+		limit = { original_tag = SYR }
+		if = {
+			limit = { country_exists = FSA }
+			declare_war_on = {
+				target = FSA
+				type = annex_everything
+			}
+		}
+		if = {
+			limit = { country_exists = ROJ }
+			declare_war_on = {
+				target = ROJ
+				type = annex_everything
+			}
+		}
+	}
+	else_if = {
+		limit = { original_tag = FSA }
+		if = {
+			limit = { country_exists = SYR }
+			declare_war_on = {
+				target = SYR
+				type = annex_everything
+			}
+		}
+		if = {
+			limit = { country_exists = ROJ }
+			declare_war_on = {
+				target = ROJ
+				type = annex_everything
+			}
+		}
+	}
+	else_if = {
+		limit = { original_tag = IRQ }
+		if = {
+			limit = { country_exists = KUR }
+			declare_war_on = {
+				target = KUR
+				type = annex_everything
+			}
+		}
+	}
+	else_if = {
+		limit = { original_tag = GNA }
+		if = {
+			limit = { country_exists = GNC }
+			declare_war_on = {
+				target = GNC
+				type = annex_everything
+			}
+		}
+		if = {
+			limit = { country_exists = HOR }
+			declare_war_on = {
+				target = HOR
+				type = annex_everything
+			}
+		}
+		if = {
+			limit = { country_exists = TUA }
+			declare_war_on = {
+				target = TUA
+				type = annex_everything
+			}
+		}
+	}
+	else_if = {
+		limit = { original_tag = GNC }
+		if = {
+			limit = { country_exists = GNA }
+			declare_war_on = {
+				target = GNA
+				type = annex_everything
+			}
+		}
+		if = {
+			limit = { country_exists = HOR }
+			declare_war_on = {
+				target = HOR
+				type = annex_everything
+			}
+		}
+		if = {
+			limit = { country_exists = TUA }
+			declare_war_on = {
+				target = TUA
+				type = annex_everything
+			}
+		}
+	}
+	else_if = {
+		limit = { original_tag = HOR }
+		if = {
+			limit = { country_exists = GNC }
+			declare_war_on = {
+				target = GNC
+				type = annex_everything
+			}
+		}
+		if = {
+			limit = { country_exists = GNA }
+			declare_war_on = {
+				target = GNA
+				type = annex_everything
+			}
+		}
+		if = {
+			limit = { country_exists = TUA }
+			declare_war_on = {
+				target = TUA
+				type = annex_everything
+			}
+		}
+	}
+	else_if = {
+		limit = { original_tag = YEM }
+		if = {
+			limit = { country_exists = HOU }
+			declare_war_on = {
+				target = HOU
+				type = annex_everything
+			}
+		}
+	}
+}
+
+# Apply terrorism opinion modifiers — consolidated from 4+ separate every_country loops
+# Scope: any scope (uses global iteration)
+# Expects: jihadist_target_country temp variable set to the country ID to target
+apply_terrorism_opinion_to_world = {
+	every_country = {
+		limit = { no_jihadist_government = yes }
+		add_opinion_modifier = { target = PREV modifier = terrorism_is_no_no }
+		add_opinion_modifier = { target = PREV modifier = terrorism_is_no_no_trade }
+	}
+}
