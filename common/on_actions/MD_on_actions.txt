@@ -463,21 +463,19 @@ on_actions = {
 					# Calculate the Migrant Trigger
 					if = { limit = { NOT = { has_global_flag = EUU_migrant_crisis_triggered } }
 						set_temp_variable = { total_population_refugees = 0 }
-						every_country = {
-							limit = {
-								OR = {
-									is_in_africa = yes
-									is_in_the_middle_east = yes
+						for_each_scope_loop = {
+							array = global.is_middle_eastern_africa_nations
+							if = {
+								limit = {
+									OR = {
+										has_war = yes
+										salafist_caliphate_are_in_power = yes
+									}
 								}
-								OR = {
-									has_war = yes
-									has_civil_war = yes
-									salafist_caliphate_are_in_power = yes
-								}
+								set_temp_variable = { population_refugees = population_total }
+								multiply_temp_variable = { population_refugees = 0.025 }
+								add_to_temp_variable = { PREV.total_population_refugees = population_refugees }
 							}
-							set_temp_variable = { population_refugees = population_total }
-							multiply_temp_variable = { population_refugees = 0.025 }
-							add_to_temp_variable = { PREV.total_population_refugees = population_refugees }
 						}
 
 						if = { limit = { check_variable = { total_population_refugees > 65 } }
@@ -540,15 +538,13 @@ on_actions = {
 						yearly_investment_targets_routine = yes
 					}
 
-					if = {
-						limit = { check_variable = { global.OAU_member^num > 0 } }
+					if = { limit = { check_variable = { global.OAU_member^num > 0 } }
 						for_each_scope_loop = {
 							array = global.OAU_member
 							HIV_aids_monthly_mechanic = yes
 						}
 					}
-					else_if = {
-						limit = { check_variable = { global.AU_member^num > 0 } }
+					else_if = { limit = { check_variable = { global.AU_member^num > 0 } }
 						for_each_scope_loop = {
 							array = global.AU_member
 							HIV_aids_monthly_mechanic = yes
@@ -561,10 +557,6 @@ on_actions = {
 						# Reduce the Printing Money Var
 						if = { limit = { check_variable = { printing_money_var > 0 } }
 							subtract_from_variable = { printing_money_var = 1 }
-						}
-
-						if = { limit = { NOT = { check_variable = { influence_targets^0 = 0 } } }
-							country_event = influence.500
 						}
 					}
 
@@ -737,6 +729,10 @@ on_actions = {
 
 					calculate_expected_spending = yes
 					apply_protest_effects = yes
+
+					if = { limit = { NOT = { check_variable = { influence_targets^0 = 0 } } }
+						country_event = influence.500
+					}
 
 					# Months at War Calculation
 					if = {
