@@ -220,7 +220,7 @@ un_check_if_valid_for_sanctions = {
 un_on_game_start_war_add = {
 	if = {
 		limit = {
-			has_war = yes
+			has_offensive_war = yes
 		}
 		add_to_array = { global.un_sc_pressure_end_war = THIS }
 	}
@@ -251,7 +251,7 @@ update_sc_vote = {
 			}
 		} else = {
 			var:sc_new_vote_nation = {
-				#fire the starting normal vote route here!
+				country_event = UNSC.1
 			}
 		}
 	}
@@ -266,8 +266,17 @@ update_ga_vote = {
 				check_variable = { global.ga_vote_type_tracker^num > 0 }
 			}
 		}
-		add_to_array = { global.ga_vote_type_tracker = ga_new_vote_type }
-		add_to_array = { global.ga_vote_nation_tracker = ga_new_vote_nation }
+		#if is a new UNSC member vote, front-load it!
+		if = {
+			limit = {
+				check_variable = { ga_new_vote_type = 6 }
+			}
+			add_to_array = { array = global.ga_vote_type_tracker value = ga_new_vote_type index = 0 }
+			add_to_array = { array = global.ga_vote_nation_tracker value = ga_new_vote_nation index = 0 }
+		} else = {
+			add_to_array = { global.ga_vote_type_tracker = ga_new_vote_type }
+			add_to_array = { global.ga_vote_nation_tracker = ga_new_vote_nation }
+		}
 	} else = {
 		set_variable = { global.current_ga_vote_type = ga_new_vote_type }
 		set_variable = { global.current_ga_vote_nation = ga_new_vote_nation }
@@ -280,7 +289,7 @@ update_ga_vote = {
 			}
 		} else = {
 			var:global.current_ga_vote_nation = {
-				#fire the starting vote event here, using the scripted loc aboose!
+				country_event = UN.1
 			}
 		}
 	}
@@ -316,6 +325,7 @@ start_unsc_next_term_voting = {
 				array = global.asian_nations
 				limit = {
 					NOT = { is_in_array = { global.security_council_members = THIS } }
+					NOT = { has_idea = Lacks_International_Recognition has_idea = Non_State_Actor }
 				}
 				add_to_array = { global.new_council_members = THIS }
 			}
@@ -328,6 +338,7 @@ start_unsc_next_term_voting = {
 					array = global.sub_saharan_nations
 					limit = {
 						NOT = { is_in_array = { global.security_council_members = THIS } }
+						NOT = { has_idea = Lacks_International_Recognition has_idea = Non_State_Actor }
 					}
 					add_to_array = { global.new_council_members = THIS }
 				}
@@ -336,6 +347,7 @@ start_unsc_next_term_voting = {
 					array = global.middle_eastern_nations
 					limit = {
 						NOT = { is_in_array = { global.security_council_members = THIS } }
+						NOT = { has_idea = Lacks_International_Recognition has_idea = Non_State_Actor }
 					}
 					add_to_array = { global.new_council_members = THIS }
 				}
@@ -350,6 +362,7 @@ start_unsc_next_term_voting = {
 			array = global.sc_updates_euro_america
 			limit = {
 				NOT = { is_in_array = { global.security_council_members = THIS } }
+				NOT = { has_idea = Lacks_International_Recognition has_idea = Non_State_Actor }
 			}
 			add_to_array = { global.new_council_members = THIS }
 		}
@@ -361,6 +374,7 @@ start_unsc_next_term_voting = {
 			array = global.american_nations
 			limit = {
 				NOT = { is_in_array = { global.security_council_members = THIS } }
+				NOT = { has_idea = Lacks_International_Recognition has_idea = Non_State_Actor }
 				capital_scope = {
 					is_on_continent = south_america
 				}
@@ -392,7 +406,7 @@ update_security_council_peeps = {
 	set_temp_variable = { set_index = 5 }
 	for_loop_effect = {
 		end = 5
-		set_variable = { global.security_council_members^set_index = global.new_council_members^set }
+		set_variable = { global.security_council_members^set_index = global.confirmed_new_council_members^set }
 		add_to_temp_variable = { set = 1 }
 		add_to_temp_variable = { set_index = 1 }
 	}
@@ -455,6 +469,7 @@ un_sc_new_members_re_roll = {
 						is_in_array = { global.security_council_members = THIS }
 					}
 				}
+				log = "[THIS.GetName] is the current scope inside the random scope in array"
 				set_variable = { global.new_council_members^0 = THIS }
 			}
 		}else = {
@@ -465,6 +480,7 @@ un_sc_new_members_re_roll = {
 						is_in_array = { global.security_council_members = THIS }
 					}
 				}
+				log = "[THIS.GetName] is the current scope inside the random scope in array"
 				set_variable = { global.new_council_members^0 = THIS }
 			}
 		}
@@ -503,7 +519,7 @@ un_check_for_next_queued_vote = {
 				check_variable = { global.current_sc_vote_type = 1 }
 			}
 			var:global.current_sc_vote_nation = {
-
+				country_event = UNSC.1
 			}
 		}
 		else_if = {
@@ -511,7 +527,7 @@ un_check_for_next_queued_vote = {
 				check_variable = { global.current_sc_vote_type = 2 }
 			}
 			var:global.current_sc_vote_nation = {
-
+				country_event = UNSC.1
 			}
 		}
 		else_if = {
@@ -519,7 +535,7 @@ un_check_for_next_queued_vote = {
 				check_variable = { global.current_sc_vote_type = 3 }
 			}
 			var:global.current_sc_vote_nation = {
-
+				country_event = UNSC.1
 			}
 		}
 		else_if = {
@@ -527,7 +543,7 @@ un_check_for_next_queued_vote = {
 				check_variable = { global.current_sc_vote_type = 4 }
 			}
 			var:global.current_sc_vote_nation = {
-
+				country_event = UNSC.1
 			}
 		}
 		else_if = {
@@ -574,7 +590,7 @@ un_check_for_next_queued_vote = {
 				check_variable = { global.current_ga_vote_type = 1 }
 			}
 			var:global.current_ga_vote_nation = {
-
+				country_event = UN.1
 			}
 		}
 		else_if = {
@@ -582,7 +598,7 @@ un_check_for_next_queued_vote = {
 				check_variable = { global.current_ga_vote_type = 2 }
 			}
 			var:global.current_ga_vote_nation = {
-
+				country_event = UN.1
 			}
 		}
 		else_if = {
@@ -590,7 +606,7 @@ un_check_for_next_queued_vote = {
 				check_variable = { global.current_ga_vote_type = 3 }
 			}
 			var:global.current_ga_vote_nation = {
-
+				country_event = UN.1
 			}
 		}
 		else_if = {
@@ -598,7 +614,7 @@ un_check_for_next_queued_vote = {
 				check_variable = { global.current_ga_vote_type = 4 }
 			}
 			var:global.current_ga_vote_nation = {
-
+				country_event = UN.1
 			}
 		}
 		else_if = {
@@ -614,7 +630,7 @@ un_check_for_next_queued_vote = {
 				check_variable = { global.current_ga_vote_type = 6 }
 			}
 			var:global.current_ga_vote_nation = {
-				#fire the vote event here!
+				country_event = UN.1
 			}
 		}
 	}
@@ -716,12 +732,18 @@ general_assembly_vote_finished = {
 			}
 		}
 	} else = {
-		news_event = recognition.73
+		if = {
+			limit = {
+				check_variable = { global.current_ga_vote_type = 5 }
+			}
+			news_event = recognition.73
+		}else_if = {
+			limit = {
+				check_variable = { global.current_ga_vote_type = 6 }
+			}
+			un_sc_new_members_re_roll = yes
+		}
 	}
-	#Propose non-binding resolution
-	#This will be an idea that players, after voting, can choose to accept or not
-	#NO votes who accept will get an opinion boost, those who refuse get debuffs
-
 
 	#clear all arrays and variables
 	clear_array = global.general_assembly_vote_yes

@@ -807,9 +807,17 @@ country_event = {
 
 	immediate = {
 		#TODO: work with bird to optimize this somehow
-		every_country = {
-			limit = { has_country_flag = original_owner_@PREV }
-			country_event = recognition.11
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = {
+						has_country_flag = original_owner_@PREV
+					}
+					country_event = recognition.11
+				}
+			}
 		}
 	}
 }
@@ -826,15 +834,18 @@ country_event = {
 			set_country_flag = has_sc_mission
 			activate_mission = UN_SC_voting_mission
 		}
-		for_each_scope_loop = {
+		for_each_loop = {
 			array = global.security_council_members
+			value = v
 
-			country_event = recognition.12
-			if = {
-				limit ={
-					NOT = { has_country_flag = has_sc_mission }
+			var:v = {
+				country_event = recognition.12
+				if = {
+					limit ={
+						NOT = { has_country_flag = has_sc_mission }
+					}
+					activate_mission = UN_SC_voting_mission_result_timer
 				}
-				activate_mission = UN_SC_voting_mission_result_timer
 			}
 		}
 	}
