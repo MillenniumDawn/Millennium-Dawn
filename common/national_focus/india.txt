@@ -7489,6 +7489,7 @@ focus_tree = {
 			base = 1
 		}
 	}
+
 	focus = {
 		id = RAJ_crusing_indian_antires_protests
 		icon = azad_hind_arrest
@@ -10232,13 +10233,20 @@ focus_tree = {
 		relative_position_id = RAJ_samajwadi_party
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: RAJ_new_indian_democracy"
-			every_country = {
-				limit = {
-					OR = {
-						has_idea = EU_member
-						has_idea = NATO_member
-					}
-				}
+			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
+				add_opinion_modifier = { target = ROOT modifier = supports_us }
+			}
+			for_each_scope_loop = {
+				array = global.nato_members
+				add_opinion_modifier = { target = ROOT modifier = supports_us }
+			}
+			custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
+				add_opinion_modifier = { target = ROOT modifier = supports_us }
+			}
+			for_each_scope_loop = {
+				array = global.EU_member
 				add_opinion_modifier = { target = ROOT modifier = supports_us }
 			}
 			increase_centralization = yes
@@ -12150,8 +12158,13 @@ focus_tree = {
 		relative_position_id = RAJ_indian_minist_of_foreign_affairs
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: RAJ_looking_west"
-			every_country = {
-				limit = { has_idea = NATO_member }
+			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
+				add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
+				reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
+			}
+			for_each_scope_loop = {
+				array = global.nato_members
 				add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 				reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 			}
@@ -12249,14 +12262,8 @@ focus_tree = {
 		relative_position_id = RAJ_indian_minist_of_foreign_affairs
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: RAJ_friendship_with_china"
-			add_opinion_modifier = {
-				modifier = declaration_of_friendship
-				target = CHI
-			}
-			reverse_add_opinion_modifier = {
-				modifier = declaration_of_friendship
-				target = CHI
-			}
+			add_opinion_modifier = { modifier = declaration_of_friendship target = CHI }
+			reverse_add_opinion_modifier = { modifier = declaration_of_friendship target = CHI }
 			set_temp_variable = { percent_change = 3 }
 			set_temp_variable = { tag_index = RAJ }
 			set_temp_variable = { influence_target = CHI }
@@ -14070,8 +14077,12 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: RAJ_become_major_non_nato_allies"
 			add_ideas = Major_Non_NATO_Ally
 			set_country_flag = Major_Non_NATO_Ally
-			every_country = {
-				limit = { has_idea = NATO_member }
+			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
+				add_opinion_modifier = { target = CAN modifier = diplomatic_support }
+			}
+			for_each_scope_loop = {
+				array = global.nato_members
 				add_opinion_modifier = { target = CAN modifier = diplomatic_support }
 			}
 		}
@@ -14101,8 +14112,13 @@ focus_tree = {
 				dismantle_faction = yes
 			}
 			add_to_tech_sharing_group = Major_Non_NATO_Ally_Share
-			every_country = {
-				limit = { has_idea = NATO_member }
+			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
+				add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+				reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+			}
+			for_each_scope_loop = {
+				array = global.nato_members
 				add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
 				reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
 			}
@@ -15378,9 +15394,8 @@ focus_tree = {
 				leave_faction = yes
 			}
 			create_faction_from_template = faction_template_islamic_ulema
-			every_country = {
+			every_other_country = {
 				limit = {
-					NOT = { original_tag = RAJ }
 					OR = {
 						salafist_kingdom_are_in_power = yes
 						salafist_caliphate_are_in_power = yes
@@ -15591,14 +15606,27 @@ focus_tree = {
 				threat = 25
 				name = RAJ_main_enemies_of_islamism
 			}
-			every_country = {
-				limit = {
-					OR = {
-						has_idea = EU_member
-						has_idea = NATO_member
-					}
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_nato_disabled } }
+				custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = major_breach_of_trust }
 				}
-				add_opinion_modifier = { target = ROOT modifier = major_breach_of_trust }
+				for_each_scope_loop = {
+					array = global.nato_members
+					add_opinion_modifier = { target = ROOT modifier = major_breach_of_trust }
+				}
+			}
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = major_breach_of_trust }
+				}
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = ROOT modifier = major_breach_of_trust }
+				}
 			}
 			every_country = {
 				limit = {

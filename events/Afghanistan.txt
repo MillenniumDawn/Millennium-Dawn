@@ -1286,14 +1286,22 @@ country_event = {
 
 					modifier = {
 						factor = 3
-						any_country = {
-							OR = {
-								has_idea = large_power
-								has_idea = great_power
-								has_idea = superpower
+						OR = {
+							any_of_scopes = {
+								array = global.PR_superpowers
+								no_jihadist_government = yes
+								has_military_access_to = AFG
 							}
-							no_jihadist_government = yes
-							has_military_access_to = AFG
+							any_of_scopes = {
+								array = global.PR_great_powers
+								no_jihadist_government = yes
+								has_military_access_to = AFG
+							}
+							any_of_scopes = {
+								array = global.PR_large_powers
+								no_jihadist_government = yes
+								has_military_access_to = AFG
+							}
 						}
 					}
 
@@ -1949,7 +1957,7 @@ country_event = {
 			add_to_variable = { var = taliban_attack_strength value = 0.05 }
 			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
-		random_country = {
+		every_country = {
 			limit = {
 				OR = {
 					is_in_array = { FROM.influence_array = THIS.id }
@@ -1957,19 +1965,7 @@ country_event = {
 				}
 				is_full_state = yes
 			}
-			news_event = {
-				id = TalibanAttack.3
-				hours = 1
-			}
-		}
-		random_country = {
-			limit = {
-				OR = {
-					is_in_array = { FROM.influence_array = THIS.id }
-					has_military_access_to = AFG
-				}
-				is_full_state = yes
-			}
+			random_select_amount = 2
 			news_event = {
 				id = TalibanAttack.3
 				hours = 1
@@ -2702,21 +2698,12 @@ country_event = {
 			add_to_variable = { var = taliban_attack_strength value = 0.05 }
 			clamp_variable = { var = taliban_attack_strength min = 0 max = 1 }
 		}
-		random_country = {
+		every_country = {
 			limit = {
 				is_in_array = { FROM.influence_array = THIS.id }
 				is_full_state = yes
 			}
-			news_event = {
-				id = TalibanAttack.13
-				hours = 1
-			}
-		}
-		random_country = {
-			limit = {
-				is_in_array = { FROM.influence_array = THIS.id }
-				is_full_state = yes
-			}
+			random_select_amount = 2
 			news_event = {
 				id = TalibanAttack.13
 				hours = 1
@@ -3421,35 +3408,7 @@ country_event = {
 	desc = Afghanistan.18.d
 	picture = GFX_AFG_Anti_Taliban_Uprising2
 
-	fire_only_once = yes
-	#is_triggered_only = yes
-
-	trigger = {
-		tag = AFG
-		AFG = {
-			has_war_with = TAL
-			NOT = { has_country_flag = afg_active_taliban_insurgency }
-		}
-		TAL = {
-			has_idea = anti_taliban_guerrillas
-		}
-		#USA = {
-		#	has_country_flag = Operation_enduring_freedom
-		#}
-		OR = {
-			has_volunteers_amount_from = {
-				tag = USA
-				count > 0
-			}
-			has_volunteers_amount_from = {
-				tag = PER
-				count > 0
-			}
-			#AFG = {controls_province = 10737}
-		}
-		#date > 2000.1.11
-		date < 2006.1.1
-	}
+	is_triggered_only = yes
 
 	option = {
 		name = Afghanistan.18.a
@@ -4486,23 +4445,8 @@ country_event = {
 	title = AfghanistanHostageCrisis.1.t
 	desc = AfghanistanHostageCrisis.1.d
 	picture = GFX_afghan_sk_hostage_crisis
-
+	is_triggered_only = yes
 	fire_only_once = yes
-
-	trigger = {
-		original_tag = AFG
-		AFG = {
-			check_variable = {
-				var = taliban_strength
-				value = 5
-				compare = greater_than_or_equals
-			}
-			has_country_flag = afg_active_taliban_insurgency
-			gives_military_access_to = KOR
-			gives_military_access_to = USA
-			date > 2007.7.19
-		}
-	}
 
 	#Attemp to release hostages
 	option = {
@@ -5755,33 +5699,7 @@ country_event = {
 		ai_chance = { base = 100 }
 	}
 }
-#country_event = { # Feeding loop phase one
-#	id = Afghanistan.54
-#
-#	trigger = {
-#		has_war_with = TAL
-#		has_global_flag = afg_active_taliban_insurgency_global_phase_one
-#	}
-#
-#	is_triggered_only = yes
-#	hidden = yes
-#
-#	immediate = {
-#		if = { #able To break the loop + need to add to it
-#			limit = {
-#				AFG = {
-#					has_global_flag = afg_active_taliban_insurgency_global_phase_one
-#				}
-#			}
-#			country_event = { id = Afghanistan.54 hours = 24 }
-#		}
-#	}
-#
-#	option = {
-#		log = "[GetLogInfo]: event Afghanistan.54"
-#		AFG_kick_out_units_from_tal_lands_phase_one = yes
-#	}
-#}
+
 #dont link these up
 country_event = {
 	id = Afghanistan.56 #establish diplo recon over tal
@@ -6319,9 +6237,9 @@ country_event = {
 			target = event_target:AFG_ATTACKER
 			type = annex_everything
 		}
-		random_country = {
+		random_country_with_original_tag = {
+			original_tag_to_check = PAK
 			limit = {
-				original_tag = PAK
 				NOT = { tag = event_target:AFG_ATTACKER }
 			}
 			declare_war_on = {
@@ -6433,31 +6351,32 @@ country_event = {
 	}
 }
 
-country_event = { # Taliban Moves To Occupy Tribal Areas
+# Taliban Moves To Occupy Tribal Areas
+country_event = {
 	id = AfghanistanBorderWars.5
 	title = AfghanistanBorderWars.5.t
 	desc = AfghanistanBorderWars.5.d
 	is_triggered_only = yes
 
-	option = { # Okay
+	# Okay
+	option = {
 		name = AfghanistanBorderWars.5.a
-		log = "[GetDateText]: [This.GetName]: AfghanistanBorderWars.5.a executed"
 		ai_chance = {
 			base = 1
 		}
 	}
 }
 
-
-country_event = { # Taliban Ignores Us
+# Taliban Ignores Us
+country_event = {
 	id = AfghanistanBorderWars.6
 	title = AfghanistanBorderWars.6.t
 	desc = AfghanistanBorderWars.6.d
 	is_triggered_only = yes
 
-	option = { # Okay
+	# Okay
+	option = {
 		name = AfghanistanBorderWars.6.a
-		log = "[GetDateText]: [This.GetName]: AfghanistanBorderWars.6.a executed"
 		create_wargoal = {
 			target = TAL
 			type = liberate_wargoal
@@ -6468,7 +6387,8 @@ country_event = { # Taliban Ignores Us
 	}
 }
 
-country_event = { # Afghan Victory
+# Afghan Victory
+country_event = {
 	id = AfghanistanBorderWars.7
 	title = AfghanistanBorderWars.7.t
 	desc = AfghanistanBorderWars.7.d
@@ -6537,7 +6457,8 @@ country_event = { # Afghan Victory
 	}
 }
 
-country_event = { # Taliban Victory
+# Taliban Victory
+country_event = {
 	id = AfghanistanBorderWars.8
 	title = AfghanistanBorderWars.8.t
 	desc = AfghanistanBorderWars.8.d
@@ -6598,7 +6519,8 @@ country_event = { # Taliban Victory
 	}
 }
 
-country_event = { # Inconclusive Battle
+# Inconclusive Battle
+country_event = {
 	id = AfghanistanBorderWars.9
 	title = AfghanistanBorderWars.9.t
 	desc = AfghanistanBorderWars.9.d
@@ -6606,7 +6528,6 @@ country_event = { # Inconclusive Battle
 
 	option = {
 		name = AfghanistanBorderWars.9.a
-		log = "[GetDateText]: [This.GetName]: AfghanistanBorderWars.9.a executed"
 		ai_chance = {
 			base = 1
 		}

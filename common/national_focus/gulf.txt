@@ -200,25 +200,22 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			every_country = {
-				limit = { OR = { tag = ENG tag = HOL } }
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = large_commercial_relations
+			log = "[GetDateText]: [This.GetName]: focus GCC_royal_dutch_shell executed"
+			if = {
+				limit = {
+					country_exists = ENG
 				}
+				add_opinion_modifier = { target = ENG modifier = large_commercial_relations }
+				reverse_add_opinion_modifier = { target = ENG modifier = large_commercial_relations }
 			}
-			ROOT = {
-				add_opinion_modifier = {
-					target = ENG
-					modifier = large_commercial_relations
+			if = {
+				limit = {
+					country_exists = HOL
 				}
-				add_opinion_modifier = {
-					target = HOL
-					modifier = large_commercial_relations
-				}
+				add_opinion_modifier = { target = HOL modifier = large_commercial_relations }
+				reverse_add_opinion_modifier = { target = HOL modifier = large_commercial_relations }
 			}
 			two_fuel_reserve = yes
-			log = "[GetDateText]: [This.GetName]: focus GCC_royal_dutch_shell executed"
 		}
 
 		ai_will_do = { base = 1 }
@@ -3306,7 +3303,7 @@ focus_tree = {
 				}
 			}
 			hidden_effect = {
-				every_other_country = { news_event = { days = 1 id = gulf.13 } }
+				news_event = { days = 1 id = gulf.13 }
 			}
 			if = {
 				limit = { has_idea = idea_gcc_member_state }
@@ -4360,17 +4357,7 @@ focus_tree = {
 						active = no
 					}
 				}
-				every_country = {
-					limit = { no_jihadist_government = yes }
-					add_opinion_modifier = {
-						target = ROOT
-						modifier = terrorism_is_no_no
-					}
-					add_opinion_modifier = {
-						target = ROOT
-						modifier = terrorism_is_no_no_trade
-					}
-				}
+				apply_terrorism_opinion_to_world = yes
 			}
 			if = {
 				limit = { tag = QAT }
@@ -4415,17 +4402,7 @@ focus_tree = {
 						active = no
 					}
 				}
-				every_country = {
-					limit = { no_jihadist_government = yes }
-					add_opinion_modifier = {
-						target = ROOT
-						modifier = terrorism_is_no_no
-					}
-					add_opinion_modifier = {
-						target = ROOT
-						modifier = terrorism_is_no_no_trade
-					}
-				}
+				apply_terrorism_opinion_to_world = yes
 			}
 			if = {
 				limit = { has_idea = SAU_ailing_king }
@@ -5679,9 +5656,8 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			every_country = {
-				news_event = { days = 45 id = gulf.14 }
-			}
+			log = "[GetDateText]: [This.GetName]: focus GCC_befriend_the_turks executed"
+			news_event = { days = 45 id = gulf.14 }
 			add_ai_strategy = { type = support id = "TUR" value = 20 }
 			add_ai_strategy = { type = befriend id = "TUR" value = 20 }
 			TUR = {
@@ -5693,7 +5669,6 @@ focus_tree = {
 				add_ai_strategy = { type = support id = ROOT value = 20 }
 				add_ai_strategy = { type = befriend id = ROOT value = 20 }
 			}
-			log = "[GetDateText]: [This.GetName]: focus GCC_befriend_the_turks executed"
 		}
 
 		ai_will_do = {
@@ -5875,8 +5850,8 @@ focus_tree = {
 
 		available = {
 			country_exists = TUR
-			any_country = {
-				is_middle_eastern_nation = yes
+			any_of_scopes = {
+				array = global.is_middle_eastern_nation
 				OR = {
 					gives_military_access_to = TUR
 					is_subject_of = TUR
@@ -5891,9 +5866,7 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			every_country = {
-				news_event = { days = 1 id = gulf.15 }
-			}
+			news_event = { days = 1 id = gulf.15 }
 			TUR = {
 				add_opinion_modifier = {
 					target = ROOT
@@ -6063,8 +6036,8 @@ focus_tree = {
 
 		available = {
 			country_exists = TUR
-			any_country = {
-				is_middle_eastern_nation = yes
+			any_of_scopes = {
+				array = global.is_middle_eastern_nation
 				OR = {
 					gives_military_access_to = TUR
 					is_subject_of = TUR
@@ -6583,6 +6556,7 @@ focus_tree = {
 		}
 
 		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus GCC_pressure_lebanon executed"
 			LEB = {
 				add_opinion_modifier = {
 					target = ROOT
@@ -6594,7 +6568,7 @@ focus_tree = {
 			add_ai_strategy = { type = antagonize id = "LEB" value = 20 }
 			if = {
 				limit = { original_tag = SAU }
-				every_country = { news_event = { days = 1 id = SAU.1 } }
+				news_event = { days = 1 id = SAU.1 }
 			}
 			if = {
 				limit = {
@@ -6609,7 +6583,6 @@ focus_tree = {
 				custom_effect_tooltip = MBS_strengthened_tt
 				add_to_variable = { mbs = 1 }
 			}
-			log = "[GetDateText]: [This.GetName]: focus GCC_pressure_lebanon executed"
 		}
 
 		ai_will_do = {
@@ -6745,8 +6718,13 @@ focus_tree = {
 			country_exists = HEZ
 			NOT = { has_war_with = HEZ }
 			if = {
-				limit = { any_country = { has_completed_focus = GCC_war_with_hezbollah } }
-				any_country = { has_war_with = HEZ }
+				limit = {
+					any_of_scopes = {
+						array = global.gcc_member_state
+						has_completed_focus = GCC_war_with_hezbollah
+					}
+				}
+				HEZ = { has_war = yes }
 			}
 		}
 
@@ -6754,7 +6732,7 @@ focus_tree = {
 
 		completion_reward = {
 			if = {
-				limit = { NOT = { any_country = { has_completed_focus = GCC_war_with_hezbollah } } }
+				limit = { NOT = { any_of_scopes = { array = global.gcc_member_state has_completed_focus = GCC_war_with_hezbollah } } }
 				ISR = { country_event = { days = 1 id = gulf.22 } }
 			}
 			else = {
@@ -6905,7 +6883,7 @@ focus_tree = {
 			base = 0
 			modifier = {
 				add = 1
-				NOT = { any_country = { has_completed_focus = GCC_host_talks } }
+				NOT = { any_of_scopes = { array = global.gcc_member_state has_completed_focus = GCC_host_talks } }
 			}
 			modifier = {
 				factor = 0
@@ -7179,9 +7157,8 @@ focus_tree = {
 		available = { ISR = { has_idea = palestinian_resistance } }
 
 		completion_reward = {
-			every_country = {
-				news_event = { days = 1 id = gulf.28 }
-			}
+			log = "[GetDateText]: [This.GetName]: focus GCC_combat_saudi_influence executed"
+			news_event = { days = 1 id = gulf.28 }
 			ISR = {
 				add_opinion_modifier = {
 					target = ROOT
@@ -7195,7 +7172,6 @@ focus_tree = {
 			subtract_from_variable = { isreali_support = 2 }
 			add_to_variable = { palestinian_support = 2 }
 			add_political_power = 100
-			log = "[GetDateText]: [This.GetName]: focus GCC_combat_saudi_influence executed"
 		}
 
 		ai_will_do = {
@@ -7771,8 +7747,9 @@ focus_tree = {
 		available = {
 			NOT = { has_government = communism }
 			country_exists = PER
-			any_country = {
-				is_middle_eastern_nation = yes
+			# FIXME: Add a tooltip here if this doesn't tooltip
+			any_of_scopes = {
+				array = global.is_middle_eastern_nation
 				OR = {
 					gives_military_access_to = PER
 					is_subject_of = PER
@@ -7787,6 +7764,7 @@ focus_tree = {
 		}
 
 		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus GCC_denounce_iranian_meddling executed"
 			PER = {
 				add_opinion_modifier = {
 					target = ROOT
@@ -7795,7 +7773,7 @@ focus_tree = {
 				custom_effect_tooltip = strategic_reasons_contain_tt
 				add_ai_strategy = { type = contain id = ROOT value = 20 }
 			}
-			every_country = { news_event = { days = 1 id = gulf.29 } }
+			news_event = { days = 1 id = gulf.29 }
 			set_temp_variable = { temp_opinion = 5 }
 			if = {
 				limit = { has_idea = saudi_royal_family NOT = { has_government = neutrality } }
@@ -7810,7 +7788,7 @@ focus_tree = {
 				limit = {
 					has_idea = idea_gcc_member_state
 					any_of_scopes = {
-						array = global.gcc_members
+						array = global.gcc_member_state
 						has_country_flag = gcc_dominant_member
 						OR = {
 							has_global_flag = gcc_pro_iranian
@@ -7834,7 +7812,6 @@ focus_tree = {
 				custom_effect_tooltip = MBS_strengthened_tt
 				add_to_variable = { mbs = 1 }
 			}
-			log = "[GetDateText]: [This.GetName]: focus GCC_denounce_iranian_meddling executed"
 		}
 
 		ai_will_do = { base = 1 }
@@ -7930,7 +7907,9 @@ focus_tree = {
 		available = {
 			NOT = { has_government = communism }
 			NOT = { has_completed_focus = GCC_strategic_hedging }
-			any_country = {
+			# FIXME: Add a tooltip for this
+			any_of_scopes = {
+				array = global.gcc_member_state
 				has_completed_focus = GCC_improve_relations_with_iran
 			}
 		}
@@ -8679,7 +8658,8 @@ focus_tree = {
 		}
 
 		completion_reward = {
-			every_country = { news_event = { days = 1 id = gulf.33 } }
+			log = "[GetDateText]: [This.GetName]: focus GCC_reject_foreign_interference executed"
+			news_event = { days = 1 id = gulf.33 }
 			every_country = {
 				limit = {
 					OR = {
@@ -8723,7 +8703,8 @@ focus_tree = {
 			if = {
 				limit = {
 					has_idea = idea_gcc_member_state
-					any_country = {
+					any_of_scopes = {
+						array = global.gcc_member_state
 						has_country_flag = gcc_dominant_member
 						NOT = { has_completed_focus = GCC_increase_autonomy }
 					}
@@ -8736,7 +8717,6 @@ focus_tree = {
 				set_temp_variable = { rad_change = -5 }
 				modify_radicalization_effect = yes
 			}
-			log = "[GetDateText]: [This.GetName]: focus GCC_reject_foreign_interference executed"
 		}
 
 		ai_will_do = { base = 1 }
@@ -9528,6 +9508,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_INFLUENCE }
 		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus GCC_influence_south_asia executed"
 			if = {
 				limit = {
 					OR = {
@@ -9536,38 +9517,53 @@ focus_tree = {
 						original_tag = QAT
 					}
 				}
-				every_country = {
-					limit = {
-						OR = {
-							original_tag = BAN
-							original_tag = RAJ
-							original_tag = PAK
-							original_tag = SRI
-						}
-					}
-					set_temp_variable = { percent_change = 2 }
-					set_temp_variable = { tag_index = ROOT.id }
-					set_temp_variable = { influence_target = THIS.id }
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = ROOT.id }
+				if = {
+					limit = { country_exists = BAN }
+					set_temp_variable = { influence_target = BAN.id }
+					change_influence_percentage = yes
+				}
+				if = {
+					limit = { country_exists = RAJ }
+					set_temp_variable = { influence_target = RAJ.id }
+					change_influence_percentage = yes
+				}
+				if = {
+					limit = { country_exists = PAK }
+					set_temp_variable = { influence_target = PAK.id }
+					change_influence_percentage = yes
+				}
+				if = {
+					limit = { country_exists = SRI }
+					set_temp_variable = { influence_target = SRI.id }
 					change_influence_percentage = yes
 				}
 			}
 			else = {
-				every_country = {
-					limit = {
-						OR = {
-							original_tag = BAN
-							original_tag = RAJ
-							original_tag = PAK
-							original_tag = SRI
-						}
-					}
-					set_temp_variable = { percent_change = 1 }
-					set_temp_variable = { tag_index = ROOT.id }
-					set_temp_variable = { influence_target = THIS.id }
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = ROOT.id }
+				if = {
+					limit = { country_exists = BAN }
+					set_temp_variable = { influence_target = BAN.id }
+					change_influence_percentage = yes
+				}
+				if = {
+					limit = { country_exists = RAJ }
+					set_temp_variable = { influence_target = RAJ.id }
+					change_influence_percentage = yes
+				}
+				if = {
+					limit = { country_exists = PAK }
+					set_temp_variable = { influence_target = PAK.id }
+					change_influence_percentage = yes
+				}
+				if = {
+					limit = { country_exists = SRI }
+					set_temp_variable = { influence_target = SRI.id }
 					change_influence_percentage = yes
 				}
 			}
-			log = "[GetDateText]: [This.GetName]: focus GCC_influence_south_asia executed"
 		}
 
 		ai_will_do = { base = 1 }

@@ -161,8 +161,6 @@ calculate_influence_percentage = {
 	multiply_variable = { neutrality_drift_influence_var = 0.001 }
 	multiply_variable = { communism_drift_influence_var = 0.001 }
 	multiply_variable = { democratic_drift_influence_var = 0.001 }
-
-	force_update_dynamic_modifier = yes
 }
 
 # Influence AI Section:
@@ -973,6 +971,13 @@ change_influence_percentage = {
 					add_to_temp_variable = { influence_change = 0.10 }
 				}
 
+				# Intel on Target
+				if = { limit = { has_dlc = "La Resistance" }
+					if = { limit = { var:tag_index = { check_variable = { civilian_intel@PREV > 75 } } }
+						add_to_temp_variable = { influence_change = 0.10 }
+					}
+				}
+
 				add_to_temp_variable = { influence_change = 1 }
 				multiply_temp_variable = { percent_change = influence_change }
 			}
@@ -1164,9 +1169,6 @@ update_auto_influence_array = {
 		log = "[GetDateText]: [THIS.GetName]: auto_influence_cap [?auto_influence_cap]"
 	}
 	set_variable = { auto_influence_cost = 0 }
-	if = { limit = { NOT = { has_dynamic_modifier = { modifier = auto_influencer_cost_effect } } }
-		add_dynamic_modifier = { modifier = auto_influencer_cost_effect }
-	}
 
 	for_each_loop = {
 		array = auto_influence_array
@@ -1181,15 +1183,20 @@ update_auto_influence_array = {
 				}
 			}
 		}
-		if = {
-			limit = { NOT = { check_variable = { v = 0 } } }
+		if = { limit = { NOT = { check_variable = { v = 0 } } }
 			add_to_variable = { auto_influence_cost = 1.50 }
 		}
 	}
 
-	if = {
-		limit = { check_variable = { auto_influence_array^0 = 0 } }
-		remove_dynamic_modifier = { modifier = auto_influencer_cost_effect }
+	if = { limit = { check_variable = { auto_influence_cost > 0 } }
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = auto_influencer_cost_effect } } }
+			add_dynamic_modifier = { modifier = auto_influencer_cost_effect }
+		}
+	}
+	else = {
+		if = { limit = { has_dynamic_modifier = { modifier = auto_influencer_cost_effect } }
+			remove_dynamic_modifier = { modifier = auto_influencer_cost_effect }
+		}
 	}
 
 	clamp_variable = { var = ROOT.auto_influence_users min = 0 max = 10 }

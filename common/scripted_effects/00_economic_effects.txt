@@ -580,19 +580,19 @@ quarterly_inflation_calculation = {
 	if = {
 		limit = { has_idea = depression }
 		set_temp_variable = { cycle_inflation_adjustment = -0.035 }
-	}else_if = {
+	} else_if = {
 		limit = { has_idea = recession }
 		set_temp_variable = { cycle_inflation_adjustment = -0.025 }
-	}else_if = {
+	} else_if = {
 		limit = { has_idea = stagnation }
 		set_temp_variable = { cycle_inflation_adjustment = -0.015 }
-	}else_if = {
+	} else_if = {
 		limit = { has_idea = stable_growth }
 		set_temp_variable = { cycle_inflation_adjustment = 0 }
-	}else_if = {
+	} else_if = {
 		limit = { has_idea = fast_growth }
 		set_temp_variable = { cycle_inflation_adjustment = 0.015 }
-	}else = {
+	} else = {
 		set_temp_variable = { cycle_inflation_adjustment = 0.025 }
 	}
 
@@ -668,6 +668,7 @@ quarterly_inflation_calculation = {
 		max = inflation_rate_max
 	}
 
+	clamp_temp_variable = { var = new_inflation_rate min = -2 max = 2 } #Hard cap inflation at -200% to 200%
 	set_variable = { inflation_rate_var = new_inflation_rate }
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [THIS.GetName]: Inflation Update: Current Inflation Rate: [?THIS.inflation_rate_var|%] - Last Four Quarters: [?THIS.year_quarter_inflation_tracker^0|%] - [?THIS.year_quarter_inflation_tracker^1|%] - [?THIS.year_quarter_inflation_tracker^2|%] - [?THIS.year_quarter_inflation_tracker^3|%]"
@@ -675,16 +676,8 @@ quarterly_inflation_calculation = {
 	calculate_inflation_effects = yes
 }
 
-test_add = {
-	add_dynamic_modifier = { modifier = tsmc_modifier }
-}
-
 calculate_inflation_effects = {
 	set_temp_variable = { inflation_rate_start = inflation_rate_var }
-	set_temp_variable = { inflation_rate_buildings = inflation_rate_start }
-	multiply_temp_variable = { inflation_rate_buildings = 1.15 }
-
-	set_variable = { inflation_rate_buildings_var = inflation_rate_buildings }
 
 	set_temp_variable = { inflation_rate_production = inflation_rate_start }
 	multiply_temp_variable = { inflation_rate_production = 1.3 }
@@ -711,10 +704,6 @@ calculate_inflation_effects = {
 	set_temp_variable = { inflation_trade_law = inflation_rate_start }
 	multiply_temp_variable = { inflation_trade_law = 1.5 }
 	set_variable = { trade_law_cost_var = inflation_trade_law }
-
-	set_temp_variable = { inflation_roi = inflation_rate_start }
-	multiply_temp_variable = { inflation_roi = -1 }
-	set_variable = { inflation_roi_var = inflation_roi }
 
 	set_temp_variable = { inflation_goods = inflation_rate_start }
 	multiply_temp_variable = { inflation_goods = -0.5 }

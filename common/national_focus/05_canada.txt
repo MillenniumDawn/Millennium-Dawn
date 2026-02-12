@@ -1,0 +1,8917 @@
+﻿# Author(s): Angriest Bird
+focus_tree = {
+	id = canada_focus
+	country = {
+		factor = 0
+		modifier = {
+			add = 100
+			tag = CAN
+		}
+	}
+	continuous_focus_position = { x = 300 y = 1400 }
+
+	# Focus Shortcuts
+	shortcut = {
+		name = CAN_Canadian_Economy
+		target = CAN_Canadian_Economy
+		scroll_wheel_factor = 0.80
+	}
+	shortcut = {
+		name = CAN_Focus_On_Political_Spectrum
+		target = CAN_Focus_On_Political_Spectrum
+		scroll_wheel_factor = 0.80
+	}
+	shortcut = {
+		name = CAN_Canadian_Armed_Forces
+		target = CAN_Canadian_Armed_Forces
+		scroll_wheel_factor = 0.80
+	}
+
+	##The Canadian Economy
+	focus = {
+		id = CAN_Canadian_Economy
+		icon = The_Canadian_Economy
+
+		x = 12
+		y = 0
+
+		cost = 1.5
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Canadian_Economy"
+			custom_effect_tooltip = CAN_economy_tt
+			hidden_effect = {
+				set_variable = { CAN_stability_factor_var = 0.01 }
+				set_variable = { CAN_industrial_capacity_factory_var = 0.01 }
+				set_variable = { CAN_production_speed_buildings_var = 0.01 }
+				set_variable = { CAN_production_speed_infrastructure_factor_var = 0.01 }
+				set_variable = { CAN_production_oil_var = 0.01 }
+				set_variable = { CAN_subsidy_total = 0.25 }
+				ingame_update_setup = yes
+			}
+			add_dynamic_modifier = { modifier = CAN_canadian_economy_dynamic_modifier }
+			unlock_decision_category_tooltip = CAN_canadian_subsidies_projects
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				add = 5
+				has_war = no
+			}
+			modifier = {
+				factor = 1
+				NOT = {
+					has_idea = stable_growth
+					has_idea = fast_growth
+					has_idea = economic_boom
+				}
+			}
+			modifier = {
+				factor = 1.5
+				has_idea = stagnation
+			}
+		}
+	}
+
+	#Oil Section
+	focus = {
+		id = CAN_Prospects_Oil
+		icon = oil_trade
+
+		x = -6
+		y = 1
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Canadian_Economy }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = {
+			NOT = { has_active_mission = debt_default_main_mission } ##Can't expand your economy while Bankruptcy
+		}
+
+		cancel = {
+			has_active_mission = debt_default_main_mission ##Cancels if we go bankrupt
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Prospects_Oil"
+			add_ideas = CAN_oil_prospects_idea1
+			country_event = { id = canada.502 days = 1 }
+			set_temp_variable = { temp_opinion = 5 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0 #Reduce spending when possible
+				has_active_mission = debt_default_main_mission
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_National_Companies
+		icon = industry_democratic
+
+		x = -9
+		y = 2
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Prospects_Oil }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = {
+			NOT = { has_active_mission = debt_default_main_mission } ##Can't expand your economy while Bankruptcy
+		}
+
+		cancel = {
+			has_active_mission = debt_default_main_mission ##Cancels if we go bankrupt
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_National_Companies"
+			set_temp_variable = { subsidy_change_tmp = 0.1 }
+			CAN_modify_subsidy_changes = yes
+			random_owned_controlled_state = {
+				limit = {
+					has_resources_amount = {
+						resource = oil
+						amount > 9
+					}
+				}
+				add_resource = {
+					type = oil
+					amount = 10
+				}
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				has_active_mission = debt_default_main_mission
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_Suncor_Energy
+		icon = Suncor
+
+		x = -10
+		y = 3
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_National_Companies }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESOURCE }
+
+		available = {
+			NOT = { has_active_mission = debt_default_main_mission } ##Can't expand your economy while Bankruptcy
+		}
+
+		cancel = {
+			has_active_mission = debt_default_main_mission ##Cancels if we go bankrupt
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Suncor_Energy"
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes #Subsidizes the company
+			set_temp_variable = { percent_change = 3 }
+			change_domestic_influence_percentage = yes
+			if = {
+				limit = { has_idea = CAN_national_companies_subsidies }
+				swap_ideas = {
+					remove_idea = CAN_national_companies_subsidies
+					add_idea = CAN_national_companies_subsidies1
+				}
+			}
+			else = {
+				add_ideas = CAN_national_companies_subsidies
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				has_active_mission = debt_default_main_mission
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_Oil_Sands
+		icon = oil_sands
+
+		x = -10
+		y = 6
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Suncor_Energy }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = {
+			NOT = { has_active_mission = debt_default_main_mission } ##Can't expand your economy while Bankruptcy
+		}
+
+		cancel = {
+			has_active_mission = debt_default_main_mission ##Cancels if we go bankrupt
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Oil_Sands"
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+			swap_ideas = {
+				remove_idea = CAN_oil_prospects_idea1
+				add_idea = CAN_oil_prospects_idea2
+			}
+			set_temp_variable = { temp_opinion = 3 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				has_active_mission = debt_default_main_mission
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_Alberta
+		icon = alberta
+
+		x = -11
+		y = 7
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Oil_Sands }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = {
+			NOT = { has_active_mission = debt_default_main_mission } ##Can't expand your economy while Bankruptcy
+		}
+
+		cancel = {
+			has_active_mission = debt_default_main_mission ##Cancels if we go bankrupt
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Alberta"
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			755 = {
+				add_extra_state_shared_building_slots = 2
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				has_active_mission = debt_default_main_mission
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_Athabasca_Oil_Refineries
+		icon = industry3
+
+		x = -12
+		y = 8
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Alberta }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = {
+			NOT = { has_active_mission = debt_default_main_mission } ##Can't expand your economy while Bankruptcy
+		}
+
+		cancel = {
+			has_active_mission = debt_default_main_mission ##Cancels if we go bankrupt
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Athabasca_Oil_Refineries"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			755 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = fuel_silo
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				has_active_mission = debt_default_main_mission
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_Saskatchewan
+		icon = saskatchewan
+
+		x = -9
+		y = 7
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Oil_Sands }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = {
+			NOT = { has_active_mission = debt_default_main_mission } ##Can't expand your economy while Bankruptcy
+		}
+
+		cancel = {
+			has_active_mission = debt_default_main_mission ##Cancels if we go bankrupt
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Saskatchewan"
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			756 = {
+				add_extra_state_shared_building_slots = 2
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				has_active_mission = debt_default_main_mission
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_Bakken_Shale_Refineries
+		icon = industry3
+
+		x = -8
+		y = 8
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Saskatchewan }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = {
+			NOT = { has_active_mission = debt_default_main_mission } ##Can't expand your economy while Bankruptcy
+		}
+
+		cancel = {
+			has_active_mission = debt_default_main_mission ##Cancels if we go bankrupt
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Bakken_Shale_Refineries"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			756 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = fuel_silo
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				has_active_mission = debt_default_main_mission
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_Keystone_Pipeline
+		icon = oil_trade
+
+		x = -10
+		y = 8
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 10
+
+		prerequisite = { focus = CAN_Alberta }
+		prerequisite = { focus = CAN_Saskatchewan }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = {
+			NOT = { has_active_mission = debt_default_main_mission } ##Can't expand your economy while Bankruptcy
+		}
+
+		cancel = {
+			has_active_mission = debt_default_main_mission ##Cancels if we go bankrupt
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Keystone_Pipeline"
+			custom_effect_tooltip = CAN_keystone_pipeline_event_tt
+			country_event = { id = keystonepipeline_can.0 days = 7 }
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				has_active_mission = debt_default_main_mission
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_Imperial_Oil
+		icon = Imperial_oil
+
+		x = -8
+		y = 3
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_National_Companies }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESOURCE }
+
+		available = {
+			NOT = { has_active_mission = debt_default_main_mission } ##Can't expand your economy while Bankruptcy
+		}
+
+		cancel = {
+			has_active_mission = debt_default_main_mission ##Cancels if we go bankrupt
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Imperial_Oil"
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 3 }
+			change_domestic_influence_percentage = yes
+			if = {
+				limit = { has_idea = CAN_national_companies_subsidies }
+				swap_ideas = {
+					remove_idea = CAN_national_companies_subsidies
+					add_idea = CAN_national_companies_subsidies1
+				}
+			}
+			else = {
+				add_ideas = CAN_national_companies_subsidies
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				has_active_mission = debt_default_main_mission
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_International_Companies
+		icon = ExpandTrade
+
+		x = -4
+		y = 2
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Prospects_Oil }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = {
+			NOT = { has_active_mission = debt_default_main_mission } ##Can't expand your economy while Bankruptcy
+		}
+
+		cancel = {
+			has_active_mission = debt_default_main_mission ##Cancels if we go bankrupt
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_International_Companies"
+			add_ideas = CAN_international_companies_idea
+			set_temp_variable = { temp_opinion = 5 }
+			change_international_bankers_opinion = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_small_medium_business_owners_opinion = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				has_active_mission = debt_default_main_mission
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_Exxon_Mobile
+		icon = Exxon
+
+		x = -6
+		y = 3
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_International_Companies }
+		mutually_exclusive = { focus = CAN_Saudi_Aramco focus = CAN_Rosneft }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = {
+			country_exists = USA
+			USA = { has_opinion = { target = CAN value > 25 } }
+			NOT = {	has_war_with = USA }
+		}
+
+		bypass = {
+			NOT = { country_exists = USA }
+		}
+
+		cancel = {
+			NOT = {
+				country_exists = USA
+				USA = { has_opinion = { target = CAN value > 25 } }
+			}
+			has_war_with = USA
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Exxon_Mobile"
+			hidden_effect = {
+				remove_opinion_modifier = { target = USA modifier = large_commercial_relations }
+				USA = { remove_opinion_modifier = { target = CAN modifier = large_commercial_relations } }
+			}
+			add_opinion_modifier = { target = USA modifier = massive_commercial_relations }
+			reverse_add_opinion_modifier = { target = USA modifier = massive_commercial_relations }
+			add_opinion_modifier = { target = USA modifier = CAN_EXXON_MOBILE }
+			reverse_add_opinion_modifier = { target = USA modifier = CAN_EXXON_MOBILE }
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = USA.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_NA_Oil_Treaty
+		icon = align_to_america
+
+		x = -7
+		y = 4
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 10
+
+		prerequisite = { focus = CAN_Imperial_Oil }
+		prerequisite = { focus = CAN_Exxon_Mobile }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = {
+			country_exists = USA
+			USA = { has_opinion = { target = CAN value > 25 } }
+			NOT = {	has_war_with = USA }
+		}
+
+		bypass = {
+			NOT = { country_exists = USA }
+		}
+
+		cancel = {
+			NOT = {
+				country_exists = USA
+				USA = { has_opinion = { target = CAN value > 25 } }
+			}
+			has_war_with = USA
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_NA_Oil_Treaty"
+			USA = { country_event = { id = canada.20 days = 1 } }
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_ideas = na_oil_treaty_idea
+				CAN = {
+					add_ideas = na_oil_treaty_idea
+				}
+				add_opinion_modifier = { target = USA modifier = CAN_america_accepts_treaty }
+				add_opinion_modifier = { target = USA modifier = CAN_na_oil_treaty }
+				reverse_add_opinion_modifier = { target = USA modifier = CAN_na_oil_treaty }
+				news_event = canada_news.1
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Increase_Local_Refining
+		icon = oil_companies
+
+		x = -6
+		y = 5
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_NA_Oil_Treaty focus = CAN_Refineries_Abroad }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Increase_Local_Refining"
+			set_temp_variable = { treasury_change = -7.50 }
+			modify_treasury_effect = yes
+			if = {
+				limit = {
+					has_full_control_of_state = 756
+				}
+				add_resource = {
+					type = oil
+					amount = 12
+					state = 756
+				}
+			}
+			else = { ##If for whatever reason you lose control of 756 you can get oil
+				random_controlled_state = {
+					add_resource = {
+						type = oil
+						amount = 12
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Mutual_Extraction_Research
+		icon = oil_production2
+
+		x = -6
+		y = 6
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Increase_Local_Refining }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Mutual_Extraction_Research"
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			add_resource = {
+				type = oil
+				amount = 8
+				state = 756
+			}
+			add_resource = {
+				type = oil
+				amount = 8
+				state = 755
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Saudi_Aramco
+		icon = Saudi
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_International_Companies
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_International_Companies }
+		mutually_exclusive = { focus = CAN_Rosneft focus = CAN_Exxon_Mobile }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_RESOURCE }
+
+		available = {
+			country_exists = SAU
+			SAU = { has_opinion = { target = CAN value > 25 } }
+			NOT = {	has_war_with = SAU }
+		}
+
+		bypass = {
+			NOT = { country_exists = SAU }
+		}
+
+		cancel = {
+			NOT = {
+				country_exists = SAU
+				SAU = { has_opinion = { target = CAN value > 25 } }
+			}
+			has_war_with = SAU
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Saudi_Aramco"
+			add_opinion_modifier = { target = SAU modifier = large_commercial_relations }
+			reverse_add_opinion_modifier = { target = SAU modifier = large_commercial_relations }
+			add_opinion_modifier = { target = SAU modifier = CAN_SAUDI_ARAMCO }
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = SAU.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			hidden_effect = {
+				set_country_flag = CAN_saudi_done
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Rosneft
+		icon = Rosneft
+
+		x = 2
+		y = 1
+		relative_position_id = CAN_International_Companies
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_International_Companies }
+		mutually_exclusive = { focus = CAN_Saudi_Aramco focus = CAN_Exxon_Mobile }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_RESOURCE }
+
+		available = {
+			country_exists = SOV
+			SOV = { has_opinion = { target = CAN value > 25 } }
+			NOT = {	has_war_with = SOV }
+		}
+
+		bypass = {
+			NOT = { country_exists = SOV }
+		}
+
+		cancel = {
+			NOT = {
+				country_exists = SOV
+				SOV = { has_opinion = { target = CAN value > 25 } }
+			}
+			has_war_with = SOV
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Rosneft"
+			hidden_effect = {
+				remove_opinion_modifier = { target = SOV modifier = large_commercial_relations }
+				USA = { remove_opinion_modifier = { target = SOV modifier = large_commercial_relations } }
+			}
+			add_opinion_modifier = { target = SOV modifier = massive_commercial_relations }
+			reverse_add_opinion_modifier = { target = SOV modifier = massive_commercial_relations }
+			add_opinion_modifier = { target = SOV modifier = CAN_ROSNEFT }
+			reverse_add_opinion_modifier = { target = SOV modifier = CAN_ROSNEFT }
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = SOV.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			hidden_effect = {
+				set_country_flag = CAN_rosneft_done
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Refineries_Abroad
+		icon = refineries_abroad
+
+		x = 1
+		y = 2
+		relative_position_id = CAN_International_Companies
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Saudi_Aramco focus = CAN_Rosneft }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_RESOURCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Refineries_Abroad"
+			custom_effect_tooltip = CAN_Refineries_Abroad_tt
+			set_temp_variable = { percent_change = 2 }
+			if = {
+				limit = { has_country_flag = CAN_rosneft_done }
+				set_temp_variable = { treasury_change = -2.6 }
+				modify_treasury_effect = yes
+				add_resource = {
+					type = oil
+					amount = 10
+					state = 688
+				}
+				set_temp_variable = { tag_index = CAN.id }
+				set_temp_variable = { influence_target = SOV }
+				change_influence_percentage = yes
+			}
+			if = {
+				limit = { has_country_flag = CAN_saudi_done }
+				set_temp_variable = { treasury_change = -1.8 }
+				modify_treasury_effect = yes
+				add_resource = {
+					type = oil
+					amount = 8
+					state = 176
+				}
+				set_temp_variable = { tag_index = CAN.id }
+				set_temp_variable = { influence_target = SAU }
+				change_influence_percentage = yes
+			}
+			set_temp_variable = { temp_opinion = 3 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Local_Investing
+		icon = industry2
+
+		x = 3
+		y = 4
+		relative_position_id = CAN_Prospects_Oil
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Refineries_Abroad }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = {
+			owns_state = 756
+			controls_state = 756
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Local_Investing"
+			set_temp_variable = { treasury_change = -0.25 }
+			modify_treasury_effect = yes
+			add_resource = {
+				type = oil
+				amount = 3
+				state = 756
+			}
+			set_temp_variable = { temp_opinion = 3 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Abqaiq_Refineries
+		icon = abqaiq_refineries
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_Local_Investing
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Local_Investing }
+		mutually_exclusive = { focus = CAN_Volgograd_Refineries }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_RESOURCE }
+
+		available = {
+			if = {
+				limit = { 174 = { is_owned_by = SAU } }
+				country_exists = SAU
+				SAU = { has_opinion = { target = CAN value > 25 } }
+				NOT = {	has_war_with = SAU }
+			}
+			else = {
+				174 = {
+					CONTROLLER = {
+						exists = yes
+						has_opinion = { target = CAN value > 25 }
+						has_war_with = CAN
+					}
+				}
+			}
+		}
+
+		cancel = {
+			if = {
+				limit = { 174 = { is_owned_by = SAU } }
+				has_war_with = SAU
+				NOT = {
+					country_exists = SAU
+					SAU = { has_opinion = { target = CAN value > 25 } }
+				}
+			}
+			else = {
+				174 = {
+					CONTROLLER = {
+						exists = no
+						NOT = {
+							has_opinion = { target = CAN value > 25 }
+							has_war_with = CAN
+						}
+					}
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Abqaiq_Refineries"
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 1 }
+			if = {
+				limit = { 174 = { is_owned_by = SAU } }
+				SAU = {
+					174 = {
+						add_building_construction = {
+							type = renewable_energy_infra
+							level = 2
+							instant_build = yes
+						}
+					}
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+				}
+			}
+			else = {
+				random_country = {
+					limit = { owns_state = 174 }
+					174 = {
+						add_building_construction = {
+							type = renewable_energy_infra
+							level = 2
+							instant_build = yes
+						}
+					}
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Volgograd_Refineries
+		icon = volgograd_refineries
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_Local_Investing
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Local_Investing }
+		mutually_exclusive = { focus = CAN_Abqaiq_Refineries }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_RESOURCE }
+
+		available = {
+			if = {
+				limit = { 665 = { is_owned_by = SOV } }
+				country_exists = SOV
+				SOV = { has_opinion = { target = CAN value > 25 } }
+				NOT = {	has_war_with = SOV }
+			}
+			else = {
+				665 = {
+					CONTROLLER = {
+						exists = yes
+						has_opinion = { target = CAN value > 25 }
+						has_war_with = CAN
+					}
+				}
+			}
+		}
+
+		cancel = {
+			if = {
+				limit = { 665 = { is_owned_by = SOV } }
+				has_war_with = SOV
+				NOT = {
+					country_exists = SOV
+					SOV = { has_opinion = { target = CAN value > 25 } }
+				}
+			}
+			else = {
+				665 = {
+					CONTROLLER = {
+						exists = no
+						NOT = {
+							has_opinion = { target = CAN value > 25 }
+							has_war_with = CAN
+						}
+					}
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Volgograd_Refineries"
+			set_temp_variable = { treasury_change = -7 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { 665 = { is_owned_by = SOV } }
+				SOV = {
+					665 = {
+						add_building_construction = {
+							type = renewable_energy_infra
+							level = 2
+							instant_build = yes
+						}
+					}
+					set_temp_variable = { percent_change = 1 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+				}
+			}
+			else = {
+				random_country = {
+					limit = { owns_state = 665 }
+					665 = {
+						add_building_construction = {
+							type = renewable_energy_infra
+							level = 2
+							instant_build = yes
+						}
+					}
+					set_temp_variable = { percent_change = 1 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Focus_Oil_Sands
+		icon = oil_sands
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_Abqaiq_Refineries
+
+		cost = 7.9
+
+		prerequisite = {
+			focus = CAN_Volgograd_Refineries
+			focus = CAN_Mutual_Extraction_Research
+			focus = CAN_Abqaiq_Refineries
+		}
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_RESOURCE }
+
+		available = {
+			NOT = { has_active_mission = debt_default_main_mission }
+		}
+
+		cancel = {
+			has_active_mission = debt_default_main_mission
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Focus_Oil_Sands"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			add_ideas = CAN_Focus_Oil_Sands_research_boost
+			set_temp_variable = { temp_opinion = 3 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Focus_Oil_Shales
+		icon = oil_shales
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_Abqaiq_Refineries
+
+		cost = 7.9
+
+		prerequisite = {
+			focus = CAN_Volgograd_Refineries
+			focus = CAN_Abqaiq_Refineries
+			focus = CAN_Mutual_Extraction_Research
+		}
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_RESOURCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Focus_Oil_Shales"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			add_ideas = CAN_Focus_Oil_Shales_research_boost
+			set_temp_variable = { temp_opinion = 3 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Efficient_Oil_Production
+		icon = oil_production
+
+		x = 0
+		y = 2
+		relative_position_id = CAN_Abqaiq_Refineries
+
+		cost = 7.9
+
+		prerequisite = {
+			focus = CAN_Focus_Oil_Sands
+			focus = CAN_Focus_Oil_Shales
+		}
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Efficient_Oil_Production"
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+			swap_ideas = {
+				remove_idea = CAN_oil_prospects_idea2
+				add_idea = CAN_oil_prospects_idea3
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Oil_Expansion_Expertise
+		icon = oil
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_Bakken_Shale_Refineries
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Athabasca_Oil_Refineries }
+		prerequisite = { focus = CAN_Bakken_Shale_Refineries }
+		prerequisite = { focus = CAN_Efficient_Oil_Production }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Oil_Expansion_Expertise"
+			set_temp_variable = { subsidy_change_tmp = 0.200 }
+			CAN_modify_subsidy_changes = yes
+			swap_ideas = {
+				remove_idea = CAN_oil_prospects_idea3
+				add_idea = CAN_oil_prospects_idea4
+			}
+			CAN_update_overburdened_economy = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##CANADIAN MINING
+	focus = {
+		id = CAN_mining
+		icon = mining
+
+		x = -15
+		y = 1
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 10
+
+		prerequisite = { focus = CAN_Canadian_Economy }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = { NOT = { has_active_mission = debt_default_main_mission } }
+
+		cancel = { has_active_mission = debt_default_main_mission }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_mining"
+			add_ideas = CAN_mines
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_mining_expansion
+		icon = construction3
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_mining
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_mining }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = { NOT = { has_active_mission = debt_default_main_mission } }
+
+		cancel = { has_active_mission = debt_default_main_mission }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_mining_expansion"
+			set_temp_variable = { treasury_change = -14 }
+			modify_treasury_effect = yes
+			add_political_power = 100
+			758 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 2
+				}
+			}
+			753 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 2
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_quebec_mines
+		icon = factory_planning
+
+		x = 2
+		y = 1
+		relative_position_id = CAN_mining_expansion
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_mining_expansion }
+		mutually_exclusive = { focus = CAN_north_mines }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS FOCUS_FILTER_STABILITY }
+
+		available = { NOT = { has_active_mission = debt_default_main_mission } }
+
+		cancel = { has_active_mission = debt_default_main_mission }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_quebec_mines"
+			set_temp_variable = { subsidy_change_tmp = 0.1 }
+			CAN_modify_subsidy_changes = yes
+			add_stability = 0.05
+			set_temp_variable = { modify_que_happy = 5 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_quebec_steel
+		icon = steel_production2
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_quebec_mines
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_quebec_mines }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS FOCUS_FILTER_RESOURCE }
+
+		available = { NOT = { has_active_mission = debt_default_main_mission } }
+
+		cancel = { has_active_mission = debt_default_main_mission }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_quebec_steel"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			add_resource = {
+				type = steel
+				amount = 20
+				state = 762
+			}
+			set_temp_variable = { modify_que_happy = 3 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_quebec_aluminium
+		icon = construction
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_quebec_mines
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_quebec_mines }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS FOCUS_FILTER_RESOURCE }
+
+		available = { NOT = { has_active_mission = debt_default_main_mission } }
+
+		cancel = { has_active_mission = debt_default_main_mission }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_quebec_aluminium"
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+			add_resource = {
+				type = aluminium
+				amount = 15
+				state = 762
+			}
+			set_temp_variable = { modify_que_happy = 2 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_quebec_steel_exports
+		icon = maritime_trade
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_quebec_steel
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_quebec_steel }
+		prerequisite = { focus = CAN_quebec_aluminium }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS FOCUS_FILTER_RESOURCE }
+
+		available = { NOT = { has_active_mission = debt_default_main_mission } }
+
+		cancel = { has_active_mission = debt_default_main_mission }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_quebec_steel_exports"
+			set_temp_variable = { modify_que_happy = 2 }
+			CAN_modify_french_happiness = yes
+			add_ideas = CAN_exports_steel_quebec
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_north_mines
+		icon = coal_mining
+
+		x = -2
+		y = 1
+		relative_position_id = CAN_mining_expansion
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_mining_expansion }
+		mutually_exclusive = { focus = CAN_quebec_mines }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS FOCUS_FILTER_RESOURCE }
+
+		available = { NOT = { has_active_mission = debt_default_main_mission } }
+
+		cancel = { has_active_mission = debt_default_main_mission }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_north_mines"
+			set_temp_variable = { subsidy_change_tmp = 0.200 }
+			CAN_modify_subsidy_changes = yes
+			add_resource = {
+				type = aluminium
+				amount = 15
+				state = 753
+			}
+			add_resource = {
+				type = aluminium
+				amount = 5
+				state = 758
+			}
+			set_temp_variable = { modify_que_happy = -5 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_north_tungsten
+		icon = resource_extraction
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_north_mines
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_north_mines }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = { NOT = { has_active_mission = debt_default_main_mission } }
+
+		cancel = { has_active_mission = debt_default_main_mission }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_north_aluminium"
+			set_temp_variable = { treasury_change = -9 }
+			modify_treasury_effect = yes
+			add_resource = {
+				type = tungsten
+				amount = 20
+				state = 753
+			}
+			add_resource = {
+				type = tungsten
+				amount = 20
+				state = 758
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_north_steel
+		icon = steel_production
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_north_mines
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_north_mines }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = {
+			NOT = { has_active_mission = debt_default_main_mission }
+		}
+
+		cancel = { has_active_mission = debt_default_main_mission }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_north_steel"
+			set_temp_variable = { treasury_change = -7 }
+			modify_treasury_effect = yes
+			add_resource = {
+				type = steel
+				amount = 20
+				state = 753
+			}
+			add_resource = {
+				type = steel
+				amount = 20
+				state = 758
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_north_steel_exports
+		icon = export_economy
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_north_steel
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_north_steel }
+		prerequisite = { focus = CAN_north_tungsten }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = { NOT = { has_active_mission = debt_default_main_mission } }
+
+		cancel = { has_active_mission = debt_default_main_mission }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_north_steel_exports"
+			add_ideas = CAN_exports_north
+			set_temp_variable = { modify_que_happy = -5 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_mine_expert
+		icon = mining_truck
+
+		x = 2
+		y = 1
+		relative_position_id = CAN_north_steel_exports
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_north_steel_exports focus = CAN_quebec_steel_exports }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		available = { NOT = { has_active_mission = debt_default_main_mission } }
+
+		cancel = { has_active_mission = debt_default_main_mission }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_mine_expert"
+			if = {
+				limit = {
+					has_idea = CAN_exports_north
+				}
+				swap_ideas = {
+					remove_idea = CAN_exports_north
+					add_idea = CAN_mines_experts_northern
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = CAN_exports_steel_quebec
+				}
+				swap_ideas = {
+					remove_idea = CAN_exports_steel_quebec
+					add_idea = CAN_mines_experts_quebec
+				}
+			}
+			else = {
+				custom_effect_tooltip = CAN_effect_warning_tt
+			}
+			CAN_update_overburdened_economy = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##Canadian Infrastructure
+	focus = {
+		id = CAN_Canadian_Infrastructure
+		icon = canadian_highway
+
+		x = 2
+		y = 1
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Canadian_Economy }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Canadian_Infrastructure"
+			country_event = { id = canada.504 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Provincial_Funding_Of_Road_Infrastructure
+		icon = Provincial_Funding_for_Roads
+
+		x = 0
+		y = 2
+		relative_position_id = CAN_Canadian_Infrastructure
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Canadian_Infrastructure }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Provincial_Funding_Of_Road_Infrastructure"
+			set_temp_variable = { treasury_change = 15 }
+			modify_treasury_effect = yes
+			unlock_decision_category_tooltip = CAN_provincial_infrastructure
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Federal_Gas_Tax_Fund
+		icon = Federal_Gas_Tax_Fund
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_Provincial_Funding_Of_Road_Infrastructure
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Provincial_Funding_Of_Road_Infrastructure }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Federal_Gas_Tax_Fund"
+			set_temp_variable = { subsidy_change_tmp = 0.1 }
+			CAN_modify_subsidy_changes = yes
+			custom_effect_tooltip = CAN_canadian_economy_dynamic_modifier_modify_tt
+			set_temp_variable = { CAN_value_change = 0.05 }
+			CAN_change_synthetic_oil = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Provincial_Territorial_Base_Fund
+		icon = Provincial_Territorial_Base_Fund
+
+		x = -1
+		y = 2
+		relative_position_id = CAN_Provincial_Funding_Of_Road_Infrastructure
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Federal_Gas_Tax_Fund }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Provincial_Territorial_Base_Fund"
+			set_temp_variable = { subsidy_change_tmp = 0.200 }
+			CAN_modify_subsidy_changes = yes
+			add_timed_idea = {
+				idea = CAN_production
+				days = 730
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Building_Canada_Fund
+		icon = building_canada_fund
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_Provincial_Funding_Of_Road_Infrastructure
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Provincial_Funding_Of_Road_Infrastructure }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Building_Canada_Fund"
+			set_temp_variable = { subsidy_change_tmp = 0.1 }
+			CAN_modify_subsidy_changes = yes
+			add_timed_idea = {
+				idea = CAN_build
+				days = 730
+			}
+			custom_effect_tooltip = CAN_canadian_economy_dynamic_modifier_modify_tt
+			set_temp_variable = { CAN_value_change = -0.05 }
+			CAN_change_stability_factor = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Canada_Strategic_Infrastructure_Fund
+		icon = Canada_Strategic_Infrastructure_Fund
+
+		x = 1
+		y = 2
+		relative_position_id = CAN_Provincial_Funding_Of_Road_Infrastructure
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Building_Canada_Fund }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Canada_Strategic_Infrastructure_Fund"
+			set_temp_variable = { subsidy_change_tmp = 0.1 }
+			CAN_modify_subsidy_changes = yes
+			custom_effect_tooltip = CAN_canadian_economy_dynamic_modifier_modify_tt
+			set_temp_variable = { CAN_value_change = 0.05 }
+			CAN_change_infrastructure = yes
+			set_temp_variable = { CAN_value_change = -0.03 }
+			CAN_change_stability_factor = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_P3_Projects
+		icon = p3_projects
+
+		x = 0
+		y = 3
+		relative_position_id = CAN_Provincial_Funding_Of_Road_Infrastructure
+
+		cost = 10
+
+		prerequisite = { focus = CAN_Canada_Strategic_Infrastructure_Fund }
+		prerequisite = { focus = CAN_Provincial_Territorial_Base_Fund }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_P3_Projects"
+			set_temp_variable = { subsidy_change_tmp = 0.750 }
+			CAN_modify_subsidy_changes = yes
+			custom_effect_tooltip = CAN_canadian_economy_dynamic_modifier_modify_tt
+			set_temp_variable = { CAN_value_change = 0.15 }
+			CAN_change_building_speed_factor = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Trans_Canada_Highway_Expansion
+		icon = canadian_highway
+
+		x = 0
+		y = 4
+		relative_position_id = CAN_Provincial_Funding_Of_Road_Infrastructure
+
+		cost = 15
+
+		prerequisite = { focus = CAN_P3_Projects }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Trans_Canada_Highway_Expansion"
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+			every_owned_state = {
+				limit = {
+					free_building_slots = {
+						building = infrastructure
+						size > 0
+					}
+				}
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Heavy_Industries_Focus
+		icon = factory_planning
+
+		x = 8
+		y = 1
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 10
+
+		prerequisite = { focus = CAN_Canadian_Economy }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Heavy_Industries_Focus"
+			add_timed_idea = {
+				idea = CAN_heavy
+				days = 200
+			}
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Centralized_Industry
+		icon = central_planned_economy3
+
+		x = -3
+		y = 1
+		relative_position_id = CAN_Heavy_Industries_Focus
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Heavy_Industries_Focus }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Centralized_Industry"
+			add_tech_bonus = {
+				name = industry
+				bonus = 0.50
+				uses = 2
+				category = CAT_industry
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_AECON_Industries
+		icon = generic_solar
+
+		x = -3
+		y = 2
+		relative_position_id = CAN_Heavy_Industries_Focus
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Centralized_Industry }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_AECON_Industries"
+			set_temp_variable = { subsidy_change_tmp = 0.1 }
+			CAN_modify_subsidy_changes = yes
+			add_timed_idea = {
+				idea = CAN_aecon
+				days = 730
+			}
+			one_random_renewable_energy_infra = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Petrochemical_Industrialization
+		icon = oil_trade
+
+		x = -3
+		y = 3
+		relative_position_id = CAN_Heavy_Industries_Focus
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_AECON_Industries }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Petrochemical_Industrialization"
+			add_tech_bonus = {
+				name = CAN_Petrochemical_Industrialization
+				bonus = 0.50
+				uses = 2
+				category = CAT_fuel_oil
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Nuclear_Energy_Developments
+		icon = nuclear_bomb
+
+		x = -3
+		y = 4
+		relative_position_id = CAN_Heavy_Industries_Focus
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Petrochemical_Industrialization }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Nuclear_Energy_Developments"
+			add_ideas = CAN_nuclear
+			one_random_nuclear_reactor = yes
+			set_temp_variable = { change_resource = 1500 }
+			change_reactor_grade_material_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Allow_Foreign_Companies
+		icon = ExpandTrade
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_Heavy_Industries_Focus
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Heavy_Industries_Focus }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_STABILITY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Allow_Foreign_Companies"
+			add_political_power = 100
+			add_stability = 0.05
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Seek_US_Companies
+		icon = trade_with_america
+
+		x = 0
+		y = 2
+		relative_position_id = CAN_Heavy_Industries_Focus
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Allow_Foreign_Companies }
+		mutually_exclusive = { focus = CAN_seek_british_companies }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Seek_US_Companies"
+			add_opinion_modifier = { target = USA modifier = usa_companies }
+			USA = {
+				set_temp_variable = { int_investment_change = 25 }
+				modify_international_investment_effect = yes
+			}
+			set_temp_variable = { treasury_change = 25 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Strengthen_NA_Agreements
+		icon = nafta
+
+		x = 0
+		y = 3
+		relative_position_id = CAN_Heavy_Industries_Focus
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Seek_US_Companies }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Strengthen_NA_Agreements"
+			add_opinion_modifier = {
+				target = USA
+				modifier = na_agreements
+			}
+			add_opinion_modifier = {
+				target = MEX
+				modifier = na_agreements
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Expand_Automobile_Manufactoring
+		icon = industrial_complexes
+
+		x = 0
+		y = 4
+		relative_position_id = CAN_Heavy_Industries_Focus
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Strengthen_NA_Agreements }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Expand_Automobile_Manufactoring"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			763 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_industrial_conglomerates_opinion = yes
+			change_small_medium_business_owners_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_seek_british_companies
+		icon = trade_with_britain
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_Allow_Foreign_Companies
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Allow_Foreign_Companies }
+		mutually_exclusive = { focus = CAN_Seek_US_Companies }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Seek_French_Companies"
+			add_opinion_modifier = { target = ENG modifier = french_companies }
+			ENG = {
+				set_temp_variable = { int_investment_change = 25 }
+				modify_international_investment_effect = yes
+			}
+			set_temp_variable = { treasury_change = 25 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Strengthen_EU_Cooperations
+		icon = euro
+
+		x = 1
+		y = 2
+		relative_position_id = CAN_Allow_Foreign_Companies
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_seek_british_companies }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Strengthen_EU_Cooperations"
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = eu_companies }
+				}
+				hidden_effect = {
+					for_each_scope_loop = {
+						array = global.EU_member
+						add_opinion_modifier = { target = ROOT modifier = eu_companies }
+					}
+				}
+			}
+			else = {
+				add_political_power = 125
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Expand_Shipbuilding
+		icon = naval_industry
+
+		x = 1
+		y = 3
+		relative_position_id = CAN_Allow_Foreign_Companies
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Strengthen_EU_Cooperations }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Expand_Shipbuilding"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			760 = {
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { temp_opinion = 3 }
+			change_maritime_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Industrial_Expertise
+		icon = economic_prosperity
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_Expand_Automobile_Manufactoring
+
+		cost = 10
+
+		prerequisite = { focus = CAN_Nuclear_Energy_Developments }
+		prerequisite = {
+			focus = CAN_Expand_Automobile_Manufactoring
+			focus = CAN_Expand_Shipbuilding
+		}
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Industrial_Expertise"
+			add_ideas = CAN_expertise
+			CAN_update_overburdened_economy = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_industrial_conglomerates_opinion = yes
+			change_small_medium_business_owners_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##Renewable Energy Projects -- MAKE CANADA GREEN AGAIN
+	focus = {
+		id = CAN_renewable_energy_projects
+		icon = hydroelectric2
+
+		x = 3
+		y = 1
+		relative_position_id = CAN_P3_Projects
+
+		cost = 15
+
+		prerequisite = { focus = CAN_P3_Projects }
+		prerequisite = { focus = CAN_Nuclear_Energy_Developments }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_renewable_energy_projects"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_fossil_fuel_industry_opinion = yes
+			set_temp_variable = { party_index = 17 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_clean_energy
+		icon = oil_green
+
+		x = 1
+		y = 2
+		relative_position_id = CAN_P3_Projects
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_renewable_energy_projects }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_clean_energy "
+			if = {
+				limit = {
+					NOT = {
+						has_idea = CAN_renewable_energy_focus1
+						has_idea = CAN_renewable_energy_focus2
+						has_idea = CAN_renewable_energy_focus3
+					}
+				}
+				add_ideas = CAN_renewable_energy_focus1
+			}
+			else_if = {
+				limit = { has_idea = CAN_renewable_energy_focus1 }
+				swap_ideas = {
+					remove_idea = CAN_renewable_energy_focus1
+					add_idea = CAN_renewable_energy_focus2
+				}
+			}
+			else_if = {
+				limit = { has_idea = CAN_renewable_energy_focus2 }
+				swap_ideas = {
+					remove_idea = CAN_renewable_energy_focus2
+					add_idea = CAN_renewable_energy_focus3
+				}
+			}
+			set_temp_variable = { temp_opinion = -10 }
+			change_fossil_fuel_industry_opinion = yes
+			set_temp_variable = { party_index = 17 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_clean_vehicles
+		icon = electric_car
+
+		x = 3
+		y = 2
+		relative_position_id = CAN_P3_Projects
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_renewable_energy_projects }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_clean_vehicles"
+			add_tech_bonus = {
+				name = CAN_clean_vehicles
+				bonus = 0.50
+				uses = 2
+				category = CAT_computing_tech
+			}
+			add_tech_bonus = {
+				name = CAN_clean_vehicles
+				bonus = 0.50
+				uses = 2
+				category = CAT_fuel_oil
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_co2_tax
+		icon = better_money_on_fire
+
+		x = 5
+		y = 2
+		relative_position_id = CAN_P3_Projects
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_renewable_energy_projects }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_co2_tax"
+			if = {
+				limit = {
+					NOT = {
+						has_idea = CAN_renewable_energy_focus1
+						has_idea = CAN_renewable_energy_focus2
+						has_idea = CAN_renewable_energy_focus3
+					}
+				}
+				add_ideas = CAN_renewable_energy_focus1
+			}
+			else_if = {
+				limit = { has_idea = CAN_renewable_energy_focus1 }
+				swap_ideas = {
+					remove_idea = CAN_renewable_energy_focus1
+					add_idea = CAN_renewable_energy_focus2
+				}
+			}
+			else_if = {
+				limit = { has_idea = CAN_renewable_energy_focus2 }
+				swap_ideas = {
+					remove_idea = CAN_renewable_energy_focus2
+					add_idea = CAN_renewable_energy_focus3
+				}
+			}
+			set_temp_variable = { temp_opinion = -10 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_carbon_negative
+		icon = sustainable_development
+
+		x = 3
+		y = 3
+		relative_position_id = CAN_P3_Projects
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_clean_energy }
+		prerequisite = { focus = CAN_clean_vehicles }
+		prerequisite = { focus = CAN_co2_tax }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_carbon_negative"
+			if = {
+				limit = {
+					NOT = {
+						has_idea = CAN_renewable_energy_focus1
+						has_idea = CAN_renewable_energy_focus2
+						has_idea = CAN_renewable_energy_focus3
+					}
+				}
+				add_ideas = CAN_renewable_energy_focus1
+			}
+			else_if = {
+				limit = { has_idea = CAN_renewable_energy_focus1 }
+				swap_ideas = {
+					remove_idea = CAN_renewable_energy_focus1
+					add_idea = CAN_renewable_energy_focus2
+				}
+			}
+			else_if = {
+				limit = { has_idea = CAN_renewable_energy_focus2 }
+				swap_ideas = {
+					remove_idea = CAN_renewable_energy_focus2
+					add_idea = CAN_renewable_energy_focus3
+				}
+			}
+			set_temp_variable = { party_index = 17 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	#Global Developmentalism
+	focus = {
+		id = CAN_economy
+		icon = liberalization
+
+		x = 19
+		y = 1
+		relative_position_id = CAN_Canadian_Economy
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Canadian_Economy }
+		prerequisite = { focus = CAN_Focus_On_Political_Spectrum }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_economy "
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_project_canadian_influence
+		icon = align_to_canada
+
+		x = 4
+		y = 1
+		relative_position_id = CAN_economy
+
+		cost = 5
+
+		prerequisite = { focus = CAN_economy }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_POLITICAL }
+
+		available = {
+			is_subject = no
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_project_canadian_influence"
+			add_political_power = 150
+			set_temp_variable = { percent_change = 3 }
+			change_domestic_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_to_belize
+		icon = align_to_belize
+
+		x = 2
+		y = 2
+		relative_position_id = CAN_economy
+
+		cost = 3.6
+
+		prerequisite = { focus = CAN_project_canadian_influence }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = BLZ
+			BLZ = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = BLZ }
+		}
+
+		cancel = {
+			BLZ = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = BLZ }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_align_to_belize"
+			BLZ = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_saint_kitts
+		icon = align_to_saint_kitts
+
+		x = 1
+		y = 3
+		relative_position_id = CAN_economy
+
+		cost = 3.6
+
+		prerequisite = { focus = CAN_align_to_belize }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = STK
+			STK = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = STK }
+		}
+
+		cancel = {
+			STK = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = STK }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_align_saint_kitts "
+			STK = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_barbados
+		icon = align_to_barbados
+
+		x = 3
+		y = 3
+		relative_position_id = CAN_economy
+
+		cost = 3.6
+
+		prerequisite = { focus = CAN_align_to_belize }
+		prerequisite = { focus = CAN_align_the_americans }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = BAR
+			BAR = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = BAR }
+		}
+
+		cancel = {
+			BAR = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = BAR }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_saskatchawan_invest "
+			BAR = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_grenada
+		icon = align_to_grenada
+
+		x = 2
+		y = 4
+		relative_position_id = CAN_economy
+
+		cost = 3.6
+
+		prerequisite = { focus = CAN_align_to_belize }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = GRA
+			GRA = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = GRA }
+		}
+
+		cancel = {
+			GRA = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = GRA }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_saskatchawan_invest "
+			GRA = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_dominica
+		icon = align_to_dominica
+
+		x = 4
+		y = 4
+		relative_position_id = CAN_economy
+
+		cost = 3.6
+
+		prerequisite = { focus = CAN_align_the_americans }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = DMI
+			DMI = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = DMI }
+		}
+
+		cancel = {
+			DMI = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = DMI }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_saskatchawan_invest "
+			DMI = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_guyana
+		icon = align_to_guyana
+
+		x = 6
+		y = 4
+		relative_position_id = CAN_economy
+
+		cost = 3.6
+
+		prerequisite = { focus = CAN_align_the_bahamas }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = GUY
+			GUY = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = GUY }
+		}
+
+		cancel = {
+			GUY = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = GUY }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_saskatchawan_invest "
+			GUY = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_jamaica
+		icon = align_to_jamaica
+
+		x = 2
+		y = 5
+		relative_position_id = CAN_economy
+
+		cost = 3.6
+
+		prerequisite = { focus = CAN_align_grenada }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = JAM
+			JAM = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = JAM }
+		}
+
+		cancel = {
+			JAM = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = JAM }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_saskatchawan_invest "
+			JAM = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_saint_lucia
+		icon = align_to_saint_lucia
+
+		x = 4
+		y = 5
+		relative_position_id = CAN_economy
+
+		cost = 3.6
+
+		prerequisite = { focus = CAN_align_to_belize }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = STL
+			STL = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = STL }
+		}
+
+		cancel = {
+			STL = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = STL }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_saskatchawan_invest "
+			STL = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = CAN.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_suriname
+		icon = align_to_suriname
+
+		x = 6
+		y = 5
+		relative_position_id = CAN_economy
+
+		cost = 3.6
+
+		prerequisite = { focus = CAN_align_guyana }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = SUR
+			SUR = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = SUR }
+		}
+
+		cancel = {
+			SUR = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = SUR }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_saskatchawan_invest "
+			SUR = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = CAN.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_st_vincent
+		icon = align_to_saint_vincent
+
+		x = 3
+		y = 6
+		relative_position_id = CAN_economy
+
+		cost = 3.6
+
+		prerequisite = { focus = CAN_align_barbados }
+		prerequisite = { focus = CAN_align_saint_lucia }
+		prerequisite = { focus = CAN_align_jamaica }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = STV
+			STV = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = STV }
+		}
+
+		cancel = {
+			STV = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = STV }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_saskatchawan_invest "
+			STV = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_trindad
+		icon = align_to_trinidad
+
+		x = 5
+		y = 6
+		relative_position_id = CAN_economy
+
+		cost = 3.6
+
+		prerequisite = { focus = CAN_align_cuba }
+		prerequisite = { focus = CAN_align_saint_lucia }
+		prerequisite = { focus = CAN_align_suriname }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = TRI
+			TRI = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = TRI }
+		}
+
+		cancel = {
+			TRI = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = TRI }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_saskatchawan_invest "
+			TRI = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_the_americans
+		icon = align_to_america
+
+		x = 4
+		y = 2
+		relative_position_id = CAN_economy
+
+		cost = 5
+
+		prerequisite = { focus = CAN_project_canadian_influence }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = USA
+			USA = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = USA }
+		}
+
+		cancel = {
+			USA = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = USA }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_align_the_americans"
+			USA = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = CAN.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_cuba
+		icon = align_to_cuba
+
+		x = 5
+		y = 3
+		relative_position_id = CAN_economy
+
+		cost = 3.6
+
+		prerequisite = { focus = CAN_align_the_americans }
+		prerequisite = { focus = CAN_align_the_bahamas }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = CUB
+			CUB = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = CUB }
+		}
+
+		cancel = {
+			CUB = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = CUB }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_align_cuba"
+			CUB = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_haiti
+		icon = align_to_haiti
+
+		x = 7
+		y = 3
+		relative_position_id = CAN_economy
+
+		cost = 3.6
+
+		prerequisite = { focus = CAN_align_the_bahamas }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = HAI
+			HAI = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = HAI }
+		}
+
+		cancel = {
+			HAI = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = HAI }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_align_cuba"
+			HAI = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_align_the_bahamas
+		icon = align_to_bahamas
+
+		x = 6
+		y = 2
+		relative_position_id = CAN_economy
+
+		cost = 3.6
+
+		prerequisite = { focus = CAN_project_canadian_influence }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			country_exists = BAH
+			BAH = { has_opinion = { target = CAN value > 25 } }
+			NOT = { has_war_with = CAN }
+			is_subject = no
+		}
+
+		bypass = {
+			NOT = { country_exists = BAH }
+		}
+
+		cancel = {
+			BAH = { has_opinion = { target = CAN value < 24 } }
+			has_war_with = CAN
+			NOT = { country_exists = BAH }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_align_the_english"
+			BAH = {
+				add_opinion_modifier = { target = CAN modifier = CAN_canadian_influence }
+				set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_strength_in_the_americas
+		icon = demand_territory
+
+		x = 4
+		y = 7
+		relative_position_id = CAN_economy
+
+		cost = 10
+
+		prerequisite = { focus = CAN_align_saint_lucia }
+		prerequisite = {
+			focus = CAN_align_st_vincent
+			focus = CAN_align_trindad
+		}
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_strength_in_the_americas"
+			every_other_country = {
+				limit = {
+					capital_scope = {
+						OR = {
+							is_on_continent = north_america
+							is_on_continent = south_america
+						}
+					}
+				}
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = CAN.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##Economic Investments
+	focus = {
+		id = CAN_economy_investments_global
+		icon = market_economy
+
+		x = -4
+		y = 1
+		relative_position_id = CAN_economy
+
+		cost = 5
+
+		prerequisite = { focus = CAN_economy }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_economy_investments_global"
+			add_political_power = 150
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_europe_invest
+		icon = europe
+
+		x = -6
+		y = 2
+		relative_position_id = CAN_economy
+
+		cost = 5
+
+		prerequisite = { focus = CAN_economy_investments_global }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_europe_invest"
+			add_political_power = 100
+			set_temp_variable = { treasury_change = 10 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_asia_invest
+		icon = asia
+
+		x = -2
+		y = 2
+		relative_position_id = CAN_economy
+
+		cost = 5
+
+		prerequisite = { focus = CAN_economy_investments_global }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_asia_invest"
+			add_political_power = 100
+			set_temp_variable = { treasury_change = 10 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_greece_invest
+		icon = align_to_greece
+
+		x = -6
+		y = 4
+		relative_position_id = CAN_economy
+
+		cost = 10
+
+		prerequisite = { focus = CAN_europe_invest }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		available = {
+			GRE = {
+				OR = {
+					influence_higher_15 = yes
+					CAN = { is_ai = yes }
+				}
+				NOT = { has_war_with = CAN }
+				has_opinion = { target = CAN value > 0 }
+				if = {
+					limit = { is_subject = yes }
+					is_subject_of = CAN
+				}
+				if = {
+					limit = { is_in_faction = yes }
+					is_in_faction_with = CAN
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_greece_invest"
+			GRE = {
+				random_owned_state = {
+					invest_cic = yes
+				}
+			}
+			custom_effect_tooltip = CAN_canadian_investments_tt
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_norway_invest
+		icon = align_to_norway
+
+		x = -7
+		y = 3
+		relative_position_id = CAN_economy
+
+		cost = 10
+
+		prerequisite = { focus = CAN_europe_invest }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		available = {
+			NOR = {
+				OR = {
+					influence_higher_15 = yes
+					CAN = { is_ai = yes }
+				}
+				NOT = { has_war_with = CAN }
+				has_opinion = { target = CAN value > 0 }
+				if = {
+					limit = { is_subject = yes }
+					is_subject_of = CAN
+				}
+				if = {
+					limit = { is_in_faction = yes }
+					is_in_faction_with = CAN
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_norway_invest"
+			NOR = {
+				random_owned_state = {
+					invest_cic = yes
+				}
+			}
+			custom_effect_tooltip = CAN_canadian_investments_tt
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_estonian_invest
+		icon = align_to_estonia
+
+		x = -5
+		y = 3
+		relative_position_id = CAN_economy
+
+		cost = 10
+
+		prerequisite = { focus = CAN_europe_invest }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		available = {
+			EST = {
+				OR = {
+					influence_higher_15 = yes
+					CAN = { is_ai = yes }
+				}
+				NOT = { has_war_with = CAN }
+				has_opinion = { target = CAN value > 0 }
+				if = {
+					limit = { is_subject = yes }
+					is_subject_of = CAN
+				}
+				if = {
+					limit = { is_in_faction = yes }
+					is_in_faction_with = CAN
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_estonian_invest"
+			EST = {
+				random_owned_state = {
+					invest_cic = yes
+				}
+			}
+			custom_effect_tooltip = CAN_canadian_investments_tt
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_vietnam_invest
+		icon = align_to_vietnam
+
+		x = -3
+		y = 3
+		relative_position_id = CAN_economy
+
+		cost = 10
+
+		prerequisite = { focus = CAN_asia_invest }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		available = {
+			VIE = {
+				OR = {
+					influence_higher_15 = yes
+					CAN = { is_ai = yes }
+				}
+				NOT = { has_war_with = CAN }
+				has_opinion = { target = CAN value > 0 }
+				if = {
+					limit = { is_subject = yes }
+					is_subject_of = CAN
+				}
+				if = {
+					limit = { is_in_faction = yes }
+					is_in_faction_with = CAN
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_vietnam_invest"
+			VIE = {
+				random_owned_state = {
+					invest_cic = yes
+				}
+			}
+			custom_effect_tooltip = CAN_canadian_investments_tt
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_southkor_invest
+		icon = align_to_south_korea
+
+		x = -1
+		y = 3
+		relative_position_id = CAN_economy
+
+		cost = 10
+
+		prerequisite = { focus = CAN_asia_invest }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		available = {
+			KOR = {
+				OR = {
+					influence_higher_15 = yes
+					CAN = { is_ai = yes }
+				}
+				NOT = { has_war_with = CAN }
+				has_opinion = { target = CAN value > 0 }
+				if = {
+					limit = { is_subject = yes }
+					is_subject_of = CAN
+				}
+				if = {
+					limit = { is_in_faction = yes }
+					is_in_faction_with = CAN
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: CAN_south_korea_invest"
+			KOR = {
+				random_owned_state = {
+					invest_cic = yes
+				}
+			}
+			custom_effect_tooltip = CAN_canadian_investments_tt
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_indonesia_invest
+		icon = align_to_indonesia
+
+		x = -2
+		y = 4
+		relative_position_id = CAN_economy
+
+		cost = 10
+
+		prerequisite = { focus = CAN_asia_invest }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		available = {
+			IND = {
+				OR = {
+					influence_higher_15 = yes
+					CAN = { is_ai = yes }
+				}
+				NOT = { has_war_with = CAN }
+				has_opinion = { target = CAN value > 0 }
+				if = {
+					limit = { is_subject = yes }
+					is_subject_of = CAN
+				}
+				if = {
+					limit = { is_in_faction = yes }
+					is_in_faction_with = CAN
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: focus CAN_indonesia_invest"
+			IND = {
+				random_owned_state = {
+					invest_cic = yes
+				}
+			}
+			custom_effect_tooltip = CAN_canadian_investments_tt
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##Political/Foreign Policy Branch
+	focus = {
+		id = CAN_Focus_On_Political_Spectrum
+		icon = The_Canadian_Political_Spectrum
+
+		x = 50
+		y = 0
+
+		cost = 1.5
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Focus_On_Political_Spectrum"
+			add_political_power = 100
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##Cultural Language Shit
+	focus = {
+		id = CAN_Ministry_Of_Culture
+		icon = propaganda
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_Focus_On_Political_Spectrum
+
+		cost = 10
+
+		prerequisite = { focus = CAN_Focus_On_Political_Spectrum }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Ministry_Of_Culture"
+			country_event = { id = canada.501 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##French - English Coexistence
+	focus = {
+		id = CAN_Two_Language_State
+		icon = two_language_state
+
+		x = -6
+		y = 1
+		relative_position_id = CAN_Ministry_Of_Culture
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_Ministry_Of_Culture }
+		mutually_exclusive = { focus = CAN_One_Language_State }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Two_Language_State"
+			set_temp_variable = { modify_que_happy = 4 }
+			CAN_modify_french_happiness = yes
+			country_event = { id = canada.520 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_maintain_the_status_quo
+		icon = national_unity_red
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_Two_Language_State
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Two_Language_State }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS FOCUS_FILTER_STABILITY }
+
+		available = { NOT = { country_exists = QUE } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_maintain_the_status_quo"
+			set_temp_variable = { modify_que_happy = 2 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_crush_anti_quebecois_movements
+		icon = break_free
+
+		x = 2
+		y = 1
+		relative_position_id = CAN_Two_Language_State
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Two_Language_State }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS }
+
+		available = { NOT = { country_exists = QUE } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_crush_anti_quebecois_movements"
+			add_popularity = { ideology = nationalist popularity = -0.10 }
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { modify_que_happy = 3 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_educational_focuses
+		icon = examine_foreign_laws
+
+		x = -2
+		y = 1
+		relative_position_id = CAN_Two_Language_State
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Two_Language_State }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
+
+		available = { NOT = { country_exists = QUE } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Autonomie_Quebecoise"
+			increase_education_budget = yes
+			set_temp_variable = { desire_change = 0.5 }
+			change_expected_education_spending = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_restore_quebec_to_glory
+		icon = quebec_deal
+
+		x = 0
+		y = 2
+		relative_position_id = CAN_Two_Language_State
+
+		cost = 5
+
+		prerequisite = { focus = CAN_maintain_the_status_quo }
+		prerequisite = { focus = CAN_crush_anti_quebecois_movements }
+		prerequisite = { focus = CAN_educational_focuses }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS }
+
+		available = { NOT = { country_exists = QUE } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Autonomie_Quebecoise"
+			add_stability = 0.03
+			set_temp_variable = { modify_que_happy = 5 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_redraft_langauge_laws
+		icon = education_reform
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_restore_quebec_to_glory
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_restore_quebec_to_glory }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = { NOT = { country_exists = QUE } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Autonomie_Quebecois e"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			add_ideas = CAN_multi_ethnic_nation_1
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_multi_language_forces
+		icon = pass_legislation
+
+		x = -2
+		y = 2
+		relative_position_id = CAN_restore_quebec_to_glory
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_redraft_langauge_laws }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = { NOT = { country_exists = QUE } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Autonomie_Quebecoise"
+			if = {
+				limit = {
+					has_idea = CAN_multi_ethnic_nation_1
+				}
+				swap_ideas = {
+					remove_idea = CAN_multi_ethnic_nation_1
+					add_idea = CAN_multi_ethnic_nation_2
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = CAN_multi_ethnic_nation_2
+				}
+				swap_ideas = {
+					remove_idea = CAN_multi_ethnic_nation_2
+					add_idea = CAN_multi_ethnic_nation_3
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = CAN_multi_ethnic_nation_3
+				}
+				swap_ideas = {
+					remove_idea = CAN_multi_ethnic_nation_3
+					add_idea = CAN_multi_ethnic_nation_4
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_a_nation_of_culture
+		icon = treaty2
+
+		x = 0
+		y = 2
+		relative_position_id = CAN_restore_quebec_to_glory
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_redraft_langauge_laws }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = { NOT = { country_exists = QUE } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Autonomie_Quebecoise"
+			if = {
+				limit = {
+					has_idea = CAN_multi_ethnic_nation_1
+				}
+				swap_ideas = {
+					remove_idea = CAN_multi_ethnic_nation_1
+					add_idea = CAN_multi_ethnic_nation_2
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = CAN_multi_ethnic_nation_2
+				}
+				swap_ideas = {
+					remove_idea = CAN_multi_ethnic_nation_2
+					add_idea = CAN_multi_ethnic_nation_3
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = CAN_multi_ethnic_nation_3
+				}
+				swap_ideas = {
+					remove_idea = CAN_multi_ethnic_nation_3
+					add_idea = CAN_multi_ethnic_nation_4
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_reoriented_vision
+		icon = military_mission
+
+		x = 2
+		y = 2
+		relative_position_id = CAN_restore_quebec_to_glory
+
+		cost = 10
+
+		prerequisite = { focus = CAN_redraft_langauge_laws }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = { NOT = { country_exists = QUE } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Autonomie_Quebecoise"
+			increase_military_spending = yes
+			increase_intervention_law_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_a_nation_of_diversity
+		icon = national_unity
+
+		x = -1
+		y = 3
+		relative_position_id = CAN_restore_quebec_to_glory
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_multi_language_forces }
+		prerequisite = { focus = CAN_a_nation_of_culture }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = { NOT = { country_exists = QUE } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Autonomie_Quebecoise"
+			add_stability = 0.02
+			if = {
+				limit = {
+					has_idea = CAN_multi_ethnic_nation_1
+				}
+				swap_ideas = {
+					remove_idea = CAN_multi_ethnic_nation_1
+					add_idea = CAN_multi_ethnic_nation_2
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = CAN_multi_ethnic_nation_2
+				}
+				swap_ideas = {
+					remove_idea = CAN_multi_ethnic_nation_2
+					add_idea = CAN_multi_ethnic_nation_3
+				}
+			}
+			else_if = {
+				limit = {
+					has_idea = CAN_multi_ethnic_nation_3
+				}
+				swap_ideas = {
+					remove_idea = CAN_multi_ethnic_nation_3
+					add_idea = CAN_multi_ethnic_nation_4
+				}
+			}
+			remove_ideas = large_far_right_movement
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_federal_reorganization
+		icon = race_relations2
+
+		x = 1
+		y = 3
+		relative_position_id = CAN_restore_quebec_to_glory
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_a_nation_of_culture }
+		prerequisite = { focus = CAN_reoriented_vision }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS }
+
+		available = { NOT = { country_exists = QUE } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Autonomie_Quebecoise"
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { modify_que_happy = 6 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_the_new_order
+		icon = align_to_canada
+
+		x = 0
+		y = 4
+		relative_position_id = CAN_restore_quebec_to_glory
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_a_nation_of_diversity }
+		prerequisite = { focus = CAN_federal_reorganization }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = { NOT = { country_exists = QUE } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Autonomie_Quebecoise"
+			swap_ideas = {
+				remove_idea = CAN_multi_ethnic_nation_4
+				add_idea = CAN_multi_ethnic_nation_5
+			}
+			custom_effect_tooltip = CAN_quebec_calm_down_tt
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_One_Language_State
+		icon = one_language_state
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_Ministry_Of_Culture
+
+		cost = 10
+
+		prerequisite = { focus = CAN_Ministry_Of_Culture }
+		mutually_exclusive = { focus = CAN_Two_Language_State }
+
+		search_filters = { FOCUS_FILTER_STABILITY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_One_Language_State"
+			add_stability = -0.15
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = CAN_NORTH_AMERICAN_STATUS_QUO
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_French_Government
+		icon = french_government
+
+		x = 0
+		y = 2
+		relative_position_id = CAN_Ministry_Of_Culture
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_One_Language_State }
+		mutually_exclusive = { focus = CAN_English_Government }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_French_Government"
+			add_stability = -0.10
+			add_timed_idea = {
+				idea = CAN_a_culture_shift
+				days = 365
+			}
+			country_event = { id = canada.522 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Glorification_Of_Quebec
+		icon = quebec_deal
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_French_Government
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_French_Government }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS }
+
+		available = { NOT = { country_exists = QUE } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Glorification_Of_Quebec"
+			add_ideas = CAN_glorification_of_quebec
+			set_temp_variable = { modify_que_happy = 5 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_french_schools
+		icon = university
+
+		x = 0
+		y = 2
+		relative_position_id = CAN_French_Government
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_Glorification_Of_Quebec }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			NOT = { country_exists = QUE }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_french_schools "
+			increase_education_budget = yes
+			set_temp_variable = { desire_change = 0.5 }
+			change_expected_education_spending = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_move_capital
+		icon = parliament_box
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_french_schools
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_french_schools }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_move_capital "
+			set_temp_variable = { modify_que_happy = 2 }
+			CAN_modify_french_happiness = yes
+			set_capital = { state = 762 }
+			add_political_power = -50
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_reclaim_canada
+		icon = grand_battleplan
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_french_schools
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_french_schools }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_reclaim_canada "
+			add_political_power = 100
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_new_charter
+		icon = equality
+
+		x = -2
+		y = 2
+		relative_position_id = CAN_french_schools
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_move_capital }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_new_charter"
+			add_ideas = CAN_charter
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_quebec_conscription
+		icon = volunteers
+
+		x = 2
+		y = 2
+		relative_position_id = CAN_french_schools
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_reclaim_canada }
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_quebec_conscription "
+			add_ideas = CAN_quebec_conscripts
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_french_companies
+		icon = total_sa
+
+		x = 0
+		y = 2
+		relative_position_id = CAN_french_schools
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_move_capital }
+		prerequisite = { focus = CAN_reclaim_canada }
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_french_companies"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = industry
+				bonus = 0.50
+				uses = 2
+				category = CAT_industry
+			}
+			762 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_enforce_language
+		icon = literacy_rate_improvment
+
+		x = -2
+		y = 3
+		relative_position_id = CAN_french_schools
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_new_charter }
+
+		search_filters = { FOCUS_FILTER_STABILITY }
+
+		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_enforce_language"
+			add_stability = -0.05
+			set_temp_variable = { modify_que_happy = 5 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_tax_english_companies
+		icon = radical_tax_reform
+
+		x = -2
+		y = 4
+		relative_position_id = CAN_french_schools
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_enforce_language }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_tax_english_companies "
+			add_ideas = CAN_tax_english
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_new_sectors
+		icon = coins
+
+		x = 0
+		y = 3
+		relative_position_id = CAN_french_schools
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_french_companies }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_new_sectors "
+			add_tech_bonus = {
+				name = industry
+				bonus = 0.50
+				uses = 2
+				category = CAT_industry
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_french_industry
+		icon = construction4
+
+		x = 0
+		y = 4
+		relative_position_id = CAN_french_schools
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_new_sectors }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_french_industry"
+			set_temp_variable = { treasury_change = -14 }
+			modify_treasury_effect = yes
+			762 = {
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+			762 = {
+				add_building_construction = {
+					type = infrastructure
+					level = 2
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_discharge_generals
+		icon = examine_foreign_small_arms
+
+		x = 2
+		y = 3
+		relative_position_id = CAN_french_schools
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_quebec_conscription }
+
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_discharge_generals"
+			army_experience = -100
+			add_war_support = 0.15
+			increase_officer_training_level = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_ccp_military
+		icon = anti_democracy3
+
+		x = 2
+		y = 4
+		relative_position_id = CAN_french_schools
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_discharge_generals }
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_ccp_military "
+			hidden_effect = {
+				division_template = {
+					name = "Québécois Infanterie"
+					regiments = {
+						L_Inf_Bat = { x = 0 y = 0 }
+						L_Inf_Bat = { x = 0 y = 1 }
+						L_Inf_Bat = { x = 0 y = 2 }
+						L_Inf_Bat = { x = 0 y = 3 }
+					}
+					priority = 1
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "division_template = \"Québécois Infanterie\" start_experience_factor = 0.75 start_equipment_factor = 1"
+					owner = CAN
+					count = 5
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_nation_divided
+		icon = aristocratic_funding
+
+		x = 0
+		y = 5
+		relative_position_id = CAN_french_schools
+
+		cost = 10
+
+		prerequisite = { focus = CAN_tax_english_companies }
+		prerequisite = { focus = CAN_french_industry }
+		prerequisite = { focus = CAN_ccp_military }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_nation_divided "
+			increase_military_spending = yes
+			increase_policing_budget = yes
+			set_temp_variable = { desire_change = 0.5 }
+			change_expected_police_spending = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##English Government
+	focus = {
+		id = CAN_English_Government
+		icon = english_government
+
+		x = 3
+		y = 2
+		relative_position_id = CAN_Ministry_Of_Culture
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_One_Language_State }
+		mutually_exclusive = { focus = CAN_French_Government }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS FOCUS_FILTER_STABILITY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_English_Government"
+			add_stability = -0.05
+			add_political_power = 100
+			country_event = { id = canada.522 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Integration_Of_Quebec
+		icon = quebec_conflict
+
+		x = 3
+		y = 3
+		relative_position_id = CAN_Ministry_Of_Culture
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_English_Government }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS FOCUS_FILTER_STABILITY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Integration_Of_Quebec"
+			add_stability = -0.10
+			set_temp_variable = { modify_que_happy = -5 }
+			CAN_modify_french_happiness = yes
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.06 }
+			set_temp_variable = { temp_outlook_increase = 0.06 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_forced_integration
+		icon = bloody_purge
+
+		x = 3
+		y = 4
+		relative_position_id = CAN_Ministry_Of_Culture
+
+		cost = 6.43
+
+		prerequisite = { focus = CAN_Integration_Of_Quebec }
+		mutually_exclusive = { focus = CAN_treaty_of_quebec }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS }
+
+		available = {
+			NOT = { country_exists = QUE }
+			nationalist > 0.10
+		}
+
+		bypass = {
+			NOT = { 762 = { is_core_of = QUE } }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_forced_integration "
+			every_owned_state = {
+				limit = {
+					is_core_of = QUE
+				}
+				remove_core_of = QUE
+			}
+			set_temp_variable = { modify_que_happy = -20 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Address_Native_Question
+		icon = native_americans
+
+		x = 6
+		y = 1
+		relative_position_id = CAN_Ministry_Of_Culture
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Ministry_Of_Culture }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Address_Native_Question"
+			add_political_power = 100
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Continue_Societal_Integration
+		icon = national_unity
+
+		x = 5
+		y = 2
+		relative_position_id = CAN_Ministry_Of_Culture
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Address_Native_Question }
+		mutually_exclusive = { focus = CAN_shred_the_constitution_act }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Continue_Societal_Integration"
+			swap_ideas = {
+				add_idea = CAN_native_policy_society_idea
+				remove_idea = CAN_native_policy_idea
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Native_Peoples_Act
+		icon = concessions2
+
+		x = 5
+		y = 3
+		relative_position_id = CAN_Ministry_Of_Culture
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Continue_Societal_Integration }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Native_Peoples_Act"
+			swap_ideas = {
+				add_idea = CAN_native_policy_society_idea_2
+				remove_idea = CAN_native_policy_society_idea
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_treaty_of_quebec
+		icon = pass_legislation
+
+		x = 5
+		y = 4
+		relative_position_id = CAN_Ministry_Of_Culture
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Integration_Of_Quebec focus = CAN_Native_Peoples_Act }
+		mutually_exclusive = { focus = CAN_forced_integration }
+
+		search_filters = { FOCUS_FILTER_FRENCH_CANADIAN_HAPPINESS }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_treaty_of_quebec "
+			add_stability = 0.10
+			set_temp_variable = { modify_que_happy = 5 }
+			CAN_modify_french_happiness = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_shred_the_constitution_act
+		icon = deadly_deal
+
+		x = 7
+		y = 2
+		relative_position_id = CAN_Ministry_Of_Culture
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Address_Native_Question }
+		mutually_exclusive = { focus = CAN_Continue_Societal_Integration }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_shred_the_constitution_act"
+			swap_ideas = {
+				remove_idea = CAN_native_policy_idea
+				add_idea = CAN_native_policy_destroy_idea
+			}
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = CAN_NORTH_AMERICAN_STATUS_QUO
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_destroy_reservations
+		icon = executions
+
+		x = 7
+		y = 3
+		relative_position_id = CAN_Ministry_Of_Culture
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_shred_the_constitution_act }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_destroy_reservations"
+			swap_ideas = {
+				remove_idea = CAN_native_policy_destroy_idea
+				add_idea = CAN_native_policy_destroy_idea_2
+			}
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_State_Of_Terror
+		icon = gunpoint_diplomacy
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_destroy_reservations
+
+		cost = 10
+
+		prerequisite = { focus = CAN_destroy_reservations }
+		prerequisite = { focus = CAN_Stand_Alone }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			nationalist > 0.05
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_State_Of_Terror"
+			add_ideas = CAN_terror
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##Stand Alone Branch
+	focus = {
+		id = CAN_Focus_On_Canada
+		icon = stolen_papers2
+
+		x = 13
+		y = 1
+		relative_position_id = CAN_Focus_On_Political_Spectrum
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Focus_On_Political_Spectrum }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Focus_On_Canada"
+			set_temp_variable = { party_index = 14 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 16 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 17 }
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Canada_First
+		icon = generic_canadian_flag
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_Focus_On_Canada
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Focus_On_Canada }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Canada_First"
+			add_ideas = CAN_canada_first
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_a_neutral_rhetoric
+		icon = democracy3
+
+		x = -2
+		y = 2
+		relative_position_id = CAN_Focus_On_Canada
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Canada_First }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_a_neutral_rhetoric"
+			set_temp_variable = { party_index = 14 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 16 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 17 }
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_discredit_western_identitiy
+		icon = anti_democracy3
+
+		x = 2
+		y = 2
+		relative_position_id = CAN_Focus_On_Canada
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Canada_First }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Canada_First"
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_Variable = { temp_outlook_increase = -0.10 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_NA_Proposal
+		icon = nafta
+
+		x = 0
+		y = 2
+		relative_position_id = CAN_Focus_On_Canada
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Canada_First }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_NA_Proposal"
+			USA = {
+				set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+			}
+			MEX = {
+				set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = CAN.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+			}
+			add_opinion_modifier = { target = USA modifier = na_agreements2 }
+			add_opinion_modifier = { target = MEX modifier = na_agreements2 }
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Stand_Alone
+		icon = reactionary
+
+		x = 0
+		y = 3
+		relative_position_id = CAN_Focus_On_Canada
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_NA_Proposal }
+		prerequisite = { focus = CAN_a_neutral_rhetoric }
+		prerequisite = { focus = CAN_discredit_western_identitiy }
+		mutually_exclusive = { focus = CAN_Strengthen_Position_In_Nato }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Stand_Alone"
+			NATO_leave = yes
+			set_temp_variable = { party_index = 14 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 16 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 17 }
+			set_temp_variable = { party_popularity_increase = 0.01 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = CAN_NORTH_AMERICAN_STATUS_QUO
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_strength_at_home
+		icon = stability
+
+		x = -2
+		y = 1
+		relative_position_id = CAN_Stand_Alone
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Stand_Alone }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_strength_at_home"
+			one_random_industrial_complex = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_end_foriegn_entanglment
+		icon = anti_monarchism
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_Stand_Alone
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Stand_Alone }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_end_foriegn_entanglment"
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_military_autarky
+		icon = draw_up_war_plans
+
+		x = 2
+		y = 1
+		relative_position_id = CAN_Stand_Alone
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Stand_Alone }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Stand_Alone"
+			one_random_arms_factory = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_a_redefinition
+		icon = conservative
+
+		x = -1
+		y = 2
+		relative_position_id = CAN_Stand_Alone
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_end_foriegn_entanglment }
+		prerequisite = { focus = CAN_strength_at_home }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Stand_Alone"
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_Variable = { temp_outlook_increase = -0.10 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_canadian_isolationism
+		icon = rearmament
+
+		x = 1
+		y = 2
+		relative_position_id = CAN_Stand_Alone
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_end_foriegn_entanglment }
+		prerequisite = { focus = CAN_military_autarky }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Stand_Alone"
+			decrease_intervention_law_effect = yes
+			add_ideas = neutrality_idea
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_revised_foreign_policy
+		icon = forceful_treaty
+
+		x = 0
+		y = 3
+		relative_position_id = CAN_Stand_Alone
+
+		cost = 10
+
+		prerequisite = { focus = CAN_canadian_isolationism }
+		prerequisite = { focus = CAN_a_redefinition }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = {
+			is_in_faction = no
+			is_subject = no
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Stand_Alone"
+			swap_ideas = {
+				remove_idea = neutrality_idea
+				add_idea = CAN_true_neutrality
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_industrial_might
+		icon = construction_engineering
+
+		x = -2
+		y = 4
+		relative_position_id = CAN_Stand_Alone
+
+		cost = 15
+
+		prerequisite = { focus = CAN_revised_foreign_policy }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			num_of_factories > 75
+			has_war = no
+			is_in_faction = no
+			is_subject = no
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Stand_Alone"
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
+			random_owned_controlled_state = {
+				prioritize = { 762 761 760 }
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}
+			random_owned_controlled_state = {
+				prioritize = { 754 755 756 }
+				limit = {
+					free_building_slots = {
+						building = industrial_complex
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_bureaucracy
+		icon = government_beu
+
+		x = 0
+		y = 4
+		relative_position_id = CAN_Stand_Alone
+
+		cost = 5
+
+		prerequisite = { focus = CAN_revised_foreign_policy }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			has_war = no
+			is_in_faction = no
+			is_subject = no
+			NOT = { has_idea = bureau_05 }
+		}
+
+		bypass = {
+			has_idea = bureau_05
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Stand_Alone"
+			increase_centralization = yes
+			set_temp_variable = { desire_change = 0.5 }
+			change_expected_bureaucracy_spending = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_domestic
+		icon = self_management
+
+		x = 2
+		y = 4
+		relative_position_id = CAN_Stand_Alone
+
+		cost = 8
+
+		prerequisite = { focus = CAN_revised_foreign_policy }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			has_war = no
+			is_in_faction = no
+			is_subject = no
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Stand_Alone"
+			set_temp_variable = { percent_change = 8 }
+			change_domestic_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_redistribution_of_balance
+		icon = money_on_fire
+
+		x = -1
+		y = 5
+		relative_position_id = CAN_Stand_Alone
+
+		cost = 5
+
+		prerequisite = { focus = CAN_bureaucracy }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Stand_Alone"
+			increase_social_spending = yes
+			increase_education_budget = yes
+			decrease_military_spending = yes
+			set_temp_variable = { desire_change = 0.5 }
+			change_expected_education_spending = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_tax_cuts
+		icon = economic_prosperity
+
+		x = 1
+		y = 5
+		relative_position_id = CAN_Stand_Alone
+
+		cost = 5
+
+		prerequisite = { focus = CAN_bureaucracy }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = "Population and Corporate Tax Rate Higher than 10%"
+				check_variable = { population_tax_rate > 10 }
+				check_variable = { corporate_tax_rate > 10 }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Stand_Alone"
+			set_temp_variable = { pop_change = -2 }
+			modify_population_tax_rate_effect = yes
+			set_temp_variable = { corp_change = -2 }
+			modify_corporate_tax_rate_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+
+	##Western Shift
+	focus = {
+		id = CAN_Western_Shift
+		icon = nato2
+
+		x = 20
+		y = 1
+		relative_position_id = CAN_Focus_On_Political_Spectrum
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Focus_On_Political_Spectrum }
+		mutually_exclusive = { focus = CAN_Eastern_Shift }
+
+		search_filters = { FOCUS_FILTER_NATO }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Western_Shift"
+			add_popularity = { ideology = democratic popularity = 0.05 }
+			recalculate_party = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 1
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_Strengthen_Ties_With_Nato
+		icon = align_to_nato
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_Western_Shift
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Western_Shift }
+
+		search_filters = { FOCUS_FILTER_NATO }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Strengthen_Ties_With_Nato"
+			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
+				add_opinion_modifier = { target = CAN modifier = diplomatic_support }
+			}
+			for_each_scope_loop = {
+				array = global.nato_members
+				add_opinion_modifier = { target = CAN modifier = diplomatic_support }
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_european_military
+		icon = little_entente
+
+		x = -3
+		y = 2
+		relative_position_id = CAN_Western_Shift
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Strengthen_Ties_With_Nato }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_European_Investments"
+			increase_military_spending = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_European_Investments
+		icon = align_to_europe
+
+		x = -1
+		y = 2
+		relative_position_id = CAN_Western_Shift
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Strengthen_Ties_With_Nato }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_European_Investments"
+			if = {
+				limit = {
+					country_exists = FRA
+					NOT = { has_war_with = FRA }
+				}
+				hidden_effect = {
+					FRA = { country_event = { id = canada.800 days = 2 } }
+				}
+				custom_effect_tooltip = CAN_request_fra_investment_tt
+			}
+			if = {
+				limit = {
+					country_exists = ENG
+					NOT = { has_war_with = ENG }
+				}
+				hidden_effect = {
+					ENG = { country_event = { id = canada.800 days = 2 } }
+				}
+				custom_effect_tooltip = CAN_request_uk_investment_tt
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Propose_NAFTA_Improvements
+		icon = nafta
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_Western_Shift
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Western_Shift }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Propose_NAFTA_Improvements"
+			CAN = {
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = MEX.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+				set_temp_variable = { tag_index = USA.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			add_opinion_modifier = { target = USA modifier = na_agreements2 }
+			add_opinion_modifier = { target = MEX modifier = na_agreements2 }
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_US_Investments
+		icon = align_to_america
+
+		x = 1
+		y = 2
+		relative_position_id = CAN_Western_Shift
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Propose_NAFTA_Improvements }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_US_Investments"
+			if = {
+				limit = {
+					country_exists = USA
+					NOT = { has_war_with = USA }
+				}
+				hidden_effect = {
+					USA = { country_event = { id = canada.800 days = 2 } }
+				}
+				custom_effect_tooltip = CAN_request_usa_investment_tt
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_american_canadian_military
+		icon = small_arms_west
+
+		x = 3
+		y = 2
+		relative_position_id = CAN_Western_Shift
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Propose_NAFTA_Improvements }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_US_Investments"
+			add_tech_bonus = {
+				name = CAN_american_canadian_military
+				uses = 1
+				bonus = 0.50
+				category = CAT_mbt
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Strengthen_Position_In_Nato
+		icon = nato3
+
+		x = 0
+		y = 3
+		relative_position_id = CAN_Western_Shift
+
+		cost = 10
+
+		prerequisite = { focus = CAN_European_Investments }
+		prerequisite = { focus = CAN_US_Investments }
+		prerequisite = { focus = CAN_european_military }
+		prerequisite = { focus = CAN_american_canadian_military }
+		mutually_exclusive = { focus = CAN_Stand_Alone }
+
+		search_filters = { FOCUS_FILTER_NATO FOCUS_FILTER_INFLUENCE FOCUS_FILTER_WAR_SUPPORT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Strengthen_Position_In_Nato"
+			every_other_country = {
+				limit = {
+					has_idea = NATO_member
+				}
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = CAN.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			add_war_support = 0.10
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_nato_research
+		icon = examine_foreign_science
+
+		x = -1
+		y = 4
+		relative_position_id = CAN_Western_Shift
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Strengthen_Position_In_Nato }
+
+		search_filters = { FOCUS_FILTER_NATO FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_research "
+			army_experience = 35
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_nato_exercises
+		icon = nato
+
+		x = 1
+		y = 4
+		relative_position_id = CAN_Western_Shift
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Strengthen_Position_In_Nato }
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_exercises "
+			army_experience = 40
+			every_other_country = {
+				limit = {
+					has_idea = NATO_member
+				}
+				army_experience = 40
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_greater_military_cooperation
+		icon = infantry_allies
+
+		x = -2
+		y = 2
+		relative_position_id = CAN_Strengthen_Position_In_Nato
+
+		cost = 5
+
+		prerequisite = { focus = CAN_nato_research }
+
+		search_filters = { FOCUS_FILTER_NATO FOCUS_FILTER_EXPENDITURE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_research "
+			increase_military_spending = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_investments_in_nato
+		icon = generic_banks
+
+		x = 0
+		y = 2
+		relative_position_id = CAN_Strengthen_Position_In_Nato
+
+		cost = 10
+
+		prerequisite = { focus = CAN_Strengthen_Position_In_Nato }
+
+		search_filters = { FOCUS_FILTER_NATO FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_research "
+			if = {
+				limit = {
+					FRA = { has_idea = NATO_member }
+					has_idea = NATO_member
+					country_exists = FRA
+					NOT = { has_war_with = FRA }
+				}
+				FRA = {
+					random_owned_state = {
+						invest_cic = yes
+					}
+					custom_effect_tooltip = CAN_invest_in_PREV_tt
+				}
+			}
+			if = {
+				limit = {
+					FRA = { has_idea = NATO_member }
+					has_idea = NATO_member
+					country_exists = ENG
+					NOT = { has_war_with = ENG }
+				}
+				ENG = {
+					random_owned_state = {
+						invest_cic = yes
+					}
+					custom_effect_tooltip = CAN_invest_in_PREV_tt
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_reinforce_western_ideals
+		icon = democracy
+
+		x = 2
+		y = 2
+		relative_position_id = CAN_Strengthen_Position_In_Nato
+
+		cost = 5
+
+		prerequisite = { focus = CAN_nato_exercises }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_research"
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_Variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_study_american_war_doctrine
+		icon = align_to_america
+
+		x = -1
+		y = 3
+		relative_position_id = CAN_Strengthen_Position_In_Nato
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_greater_military_cooperation }
+
+		search_filters = { FOCUS_FILTER_NATO FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_research "
+			add_doctrine_cost_reduction = {
+				name = CAN_study_american_war_doctrine
+				category = CAT_land_doctrine
+				uses = 1
+				cost_reduction = 0.5
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_canadian_peacekeepers
+		icon = un_pko
+
+		x = -1
+		y = 4
+		relative_position_id = CAN_Strengthen_Position_In_Nato
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_study_american_war_doctrine }
+
+		search_filters = { FOCUS_FILTER_NATO FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_research "
+			add_ideas = idea_focus_volunteer_corps
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_support_the_mutual_defense
+		icon = defense
+
+		x = 1
+		y = 3
+		relative_position_id = CAN_Strengthen_Position_In_Nato
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_greater_military_cooperation }
+		prerequisite = { focus = CAN_reinforce_western_ideals }
+		prerequisite = { focus = CAN_investments_in_nato }
+
+		search_filters = { FOCUS_FILTER_NATO FOCUS_FILTER_WAR_SUPPORT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_research "
+			add_war_support = 0.05
+			add_stability = 0.05
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+
+	focus = {
+		id = CAN_draw_in_mexico
+		icon = align_to_mexico
+
+		x = 1
+		y = 4
+		relative_position_id = CAN_Strengthen_Position_In_Nato
+
+		cost = 10
+
+		prerequisite = { focus = CAN_support_the_mutual_defense }
+
+		search_filters = { FOCUS_FILTER_NATO FOCUS_FILTER_RESEARCH }
+
+		available = {
+			NOT = { MEX = { has_idea = NATO_member } }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_research "
+			MEX = { add_ideas = NATO_member }
+			add_to_faction = MEX
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+
+	##Eastern Shift
+	focus = {
+		id = CAN_Eastern_Shift
+		icon = align_to_russia
+
+		x = 32
+		y = 1
+		relative_position_id = CAN_Focus_On_Political_Spectrum
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Focus_On_Political_Spectrum }
+		mutually_exclusive = { focus = CAN_Western_Shift }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Eastern_Shift"
+			NATO_leave = yes
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
+			add_relative_party_popularity = yes
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
+			}
+			modifier = {
+				factor = 0
+				has_global_flag = CAN_NORTH_AMERICAN_STATUS_QUO
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_Russian_Cooperationism
+		icon = align_to_russia2
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_Eastern_Shift
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Eastern_Shift }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Russian_Cooperationism"
+			add_opinion_modifier = { target = SOV modifier = supports_us }
+			reverse_add_opinion_modifier = { target = SOV modifier = supports_us }
+			SOV = {
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = CAN.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = SOV.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Chinese_Agreements
+		icon = align_to_china
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_Eastern_Shift
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Eastern_Shift }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Chinese_Agreements"
+			add_opinion_modifier = { target = CHI modifier = supports_us }
+			reverse_add_opinion_modifier = { target = CHI modifier = supports_us }
+			CHI = {
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = CAN.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = CHI.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Investments_From_East
+		icon = tripartite_pact
+
+		x = 0
+		y = 2
+		relative_position_id = CAN_Eastern_Shift
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Chinese_Agreements }
+		prerequisite = { focus = CAN_Russian_Cooperationism }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Investments_From_East"
+			if = {
+				limit = {
+					country_exists = CHI
+					NOT = { has_war_with = CHI }
+				}
+				hidden_effect = {
+					CHI = { country_event = { id = canada.800 days = 2 } }
+				}
+				custom_effect_tooltip = CAN_request_chi_investment_tt
+			}
+			if = {
+				limit = {
+					country_exists = SOV
+					NOT = { has_war_with = SOV }
+				}
+				hidden_effect = {
+					country_event = { id = canada.800 days = 2 }
+				}
+				custom_effect_tooltip = CAN_request_sov_investment_tt
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Expand_Arctic_Routes
+		icon = treaty3
+
+		x = -1
+		y = 3
+		relative_position_id = CAN_Eastern_Shift
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Investments_From_East }
+
+		search_filters = { FOCUS_FILTER_NAVY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Expand_Arctic_Routes"
+			add_political_power = 100
+			add_tech_bonus = {
+				name = CAN_Expand_Arctic_Routes
+				bonus = 0.50
+				uses = 1
+				category = CAT_sub
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Russo_Canadian_Trade_Agreement
+		icon = trade_with_russia
+
+		x = 1
+		y = 3
+		relative_position_id = CAN_Eastern_Shift
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Investments_From_East }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESEARCH }
+
+		available = {
+			SOV = { has_opinion = { target = CAN value > 50 } }
+			NOT = {
+				has_war_with = SOV
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = SOV
+			}
+		}
+
+		cancel = {
+			OR = {
+				SOV = { has_opinion = { target = CAN value < 50 } }
+				has_war_with = SOV
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Russo_Canadian_Trade_Agreement"
+			add_opinion_modifier = { target = SOV modifier = global_trade }
+			reverse_add_opinion_modifier = { target = SOV modifier = global_trade }
+			add_tech_bonus = {
+				name = CAN_Russo_Canadian_Trade_Agreement
+				bonus = 0.50
+				uses = 2
+				category = CAT_fuel_oil
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_fossil_fuel_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_China_Canada_Commerce_Council
+		icon = trade_with_china
+
+		x = 2
+		y = 2
+		relative_position_id = CAN_Eastern_Shift
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Chinese_Agreements }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_RESEARCH }
+
+		available = {
+			CHI = { has_opinion = { target = CAN value > 50 } }
+			NOT = {
+				has_war_with = CHI
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = CHI
+			}
+		}
+
+		cancel = {
+			OR = {
+				CHI = { has_opinion = { target = CAN value < 50 } }
+				has_war_with = CHI
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_China_Canada_Commerce_Council"
+			add_opinion_modifier = {
+				target = CHI
+				modifier = global_trade
+			}
+			add_tech_bonus = {
+				name = industry
+				bonus = 0.50
+				uses = 2
+				category = CAT_industry
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_small_medium_business_owners_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_Russo_Chinese_Canadian_Sphere
+		icon = global_community
+
+		x = 2
+		y = 4
+		relative_position_id = CAN_Eastern_Shift
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Russo_Canadian_Trade_Agreement }
+		prerequisite = { focus = CAN_China_Canada_Commerce_Council }
+
+		search_filters = { FOCUS_FILTER_INFLUENCE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Russo_Chinese_Canadian_Sphere"
+			CHI = {
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = CAN.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+				set_temp_variable = { tag_index = SOV.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			SOV = {
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = CAN.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+				set_temp_variable = { tag_index = SHI.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = CHI.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			set_temp_variable = { tag_index = SOV.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_rus_training
+		icon = russian_armed_forces
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Russo_Chinese_Canadian_Sphere }
+
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+
+		available = {
+			SOV = { has_opinion = { target = CAN value > 50 } }
+			NOT = {
+				has_war_with = SOV
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = SOV
+			}
+		}
+
+		cancel = {
+			OR = {
+				SOV = { has_opinion = { target = CAN value < 50 } }
+				has_war_with = SOV
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_rus_training "
+			army_experience = 25
+			air_experience = 25
+			navy_experience = 25
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_chinese_industry
+		icon = better_money_on_fire
+
+		x = -3
+		y = 1
+		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_Russo_Chinese_Canadian_Sphere }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		available = {
+			CHI = { has_opinion = { target = CAN value > 50 } }
+			NOT = {
+				has_war_with = CHI
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = CHI
+			}
+		}
+
+		cancel = {
+			OR = {
+				CHI = { has_opinion = { target = CAN value < 50 } }
+				has_war_with = CHI
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_chinese_industry"
+			add_ideas = CAN_chi_industry
+			hidden_effect = {
+				CHI = { country_event = { id = canada.800 days = 2 } }
+			}
+			custom_effect_tooltip = CAN_request_chi_investment_tt
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_chinese_lavs
+		icon = industry_military
+
+		x = -5
+		y = 1
+		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Russo_Chinese_Canadian_Sphere }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		available = {
+			CHI = { has_opinion = { target = CAN value > 50 } }
+			NOT = {
+				has_war_with = CHI
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = CHI
+			}
+		}
+
+		cancel = {
+			OR = {
+				CHI = { has_opinion = { target = CAN value < 50 } }
+				has_war_with = CHI
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_chinese_lavs "
+			add_tech_bonus = {
+				name = CAN_chinese_lavs
+				bonus = 0.50
+				uses = 1
+				category = CAT_ifv
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_rus_dockyards
+		icon = naval_industry
+
+		x = 3
+		y = 1
+		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Russo_Chinese_Canadian_Sphere }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		available = {
+			SOV = { has_opinion = { target = CAN value > 50 } }
+			NOT = {
+				has_war_with = SOV
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = SOV
+			}
+		}
+
+		cancel = {
+			OR = {
+				SOV = { has_opinion = { target = CAN value < 50 } }
+				has_war_with = SOV
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_rus_dockyards "
+			add_opinion_modifier = {
+				target = SOV
+				modifier = free_trade_agreement
+			}
+			add_tech_bonus = {
+				name = CAN_rus_dockyards
+				bonus = 0.50
+				uses = 1
+				category = CAT_sub
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_bc_ports
+		icon = navy
+
+		x = 4
+		y = 2
+		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_rus_dockyards }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_NAVY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_bc_ports "
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			754 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = naval_base
+					level = 2
+					instant_build = yes
+					province = 4428
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_naval_investments
+		icon = construction
+
+		x = 2
+		y = 2
+		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_rus_dockyards }
+
+		search_filters = { FOCUS_FILTER_NAVY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_naval_investments "
+			one_random_dockyard = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_increase_ship_production
+		icon = battleships2
+
+		x = 2
+		y = 3
+		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		cost = 5
+
+		prerequisite = { focus = CAN_naval_investments }
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_NAVY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CCAN_increase_ship_production "
+			add_tech_bonus = {
+				name = CAN_increase_ship_production
+				bonus = 0.50
+				uses = 2
+				category = CAT_naval_all
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_naval_investments2
+		icon = naval_dockyard
+
+		x = 4
+		y = 3
+		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_bc_ports }
+
+		search_filters = { FOCUS_FILTER_NAVY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_naval_investments2 "
+			set_temp_variable = { treasury_change = -12 }
+			modify_treasury_effect = yes
+			760 = {
+				add_building_construction = {
+					type = naval_base
+					level = 2
+					instant_build = yes
+					province = 4623
+				}
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+				add_extra_state_shared_building_slots = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_tank_facilities
+		icon = m1a1_abrams
+
+		x = -5
+		y = 2
+		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_chinese_lavs }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_tank_facilities "
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			760 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_heavy_industry
+		icon = central_planned_economy
+
+		x = -3
+		y = 2
+		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_chinese_industry }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_heavy_industry"
+			swap_ideas = {
+				remove_idea = CAN_chi_industry
+				add_idea = CAN_chi_industry2
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_russian_military
+		icon = winter_warfare
+
+		x = 0
+		y = 2
+		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_rus_training }
+
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+
+		available = {
+			SOV = { has_opinion = { target = CAN value > 50 } }
+			NOT = {
+				has_war_with = SOV
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = SOV
+			}
+		}
+
+		cancel = {
+			OR = {
+				SOV = { has_opinion = { target = CAN value < 50 } }
+				has_war_with = SOV
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_russian_military "
+			add_ideas = CAN_russian_training
+			if = {
+				limit = { has_war_support < 0.70 }
+				add_war_support = 0.05
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_global_army
+		icon = combined_arms
+
+		x = 0
+		y = 3
+		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		cost = 5
+
+		prerequisite = { focus = CAN_russian_military }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_global_army "
+			add_tech_bonus = {
+				name = CAN_global_army
+				bonus = 0.50
+				uses = 2
+				category = CAT_inf
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_railway_projects
+		icon = construct_infrastructure
+
+		x = -2
+		y = 3
+		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_heavy_industry }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_railway_projects "
+			add_timed_idea = {
+				idea = CAN_rail_project
+				days = 180
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_industry_projects
+		icon = mining_truck
+
+		x = -4
+		y = 3
+		relative_position_id = CAN_Russo_Chinese_Canadian_Sphere
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_heavy_industry }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_industry_projects "
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			763 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##Shared Between NATO/Eastern Shift
+	focus = {
+		id = CAN_global_companys
+		icon = liberalization
+
+		x = -5
+		y = 1
+		relative_position_id = CAN_Eastern_Shift
+
+		cost = 1.5
+
+		prerequisite = {
+			focus = CAN_Western_Shift
+			focus = CAN_Eastern_Shift
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_global_companys"
+			custom_effect_tooltip = CAN_global_company_effect_tt
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_huawai
+		icon = huawei
+
+		x = -2
+		y = 1
+		relative_position_id = CAN_global_companys
+
+		cost = 10
+
+		prerequisite = { focus = CAN_global_companys }
+		mutually_exclusive = { focus = CAN_hyundai }
+		mutually_exclusive = { focus = CAN_ak }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_huawai "
+			add_ideas = CAN_huawei
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_hyundai
+		icon = hyundai
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_global_companys
+
+		cost = 10
+
+		prerequisite = { focus = CAN_global_companys }
+		mutually_exclusive = { focus = CAN_huawai }
+		mutually_exclusive = { focus = CAN_ak }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_hyundai"
+			add_ideas = CAN_hyundai
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_ak
+		icon = small_arms_east
+
+		x = 2
+		y = 1
+		relative_position_id = CAN_global_companys
+
+		cost = 10
+
+		prerequisite = { focus = CAN_global_companys }
+		mutually_exclusive = { focus = CAN_huawai }
+		mutually_exclusive = { focus = CAN_hyundai }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_ak "
+			add_ideas = CAN_kalashnikov
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_weapons_expert
+		icon = market_economy
+
+		x = 2
+		y = 2
+		relative_position_id = CAN_global_companys
+
+		cost = 10
+
+		prerequisite = { focus = CAN_ak }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_weapons_expert "
+			add_tech_bonus = {
+				name = CAN_weapons_expert
+				bonus = 0.50
+				uses = 2
+				category = CAT_support_weapons
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_airburst_weapons
+		icon = zh05
+
+		x = 2
+		y = 3
+		relative_position_id = CAN_global_companys
+
+		cost = 10
+
+		prerequisite = { focus = CAN_weapons_expert }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_airburst_weapons "
+			add_tech_bonus = {
+				name = CAN_airburst_weapons
+				bonus = 0.50
+				uses = 2
+				category = CAT_inf_wep
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_vehicle_industry
+		icon = tank_destroyer_doctrine
+
+		x = 0
+		y = 2
+		relative_position_id = CAN_global_companys
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_hyundai }
+
+		search_Filters = { FOCUS_FILTER_RESEARCH }
+
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_vehicle_industry "
+			add_tech_bonus = {
+				name = CAN_vehicle_industry
+				bonus = 0.50
+				uses = 2
+				category = CAT_ifv
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_advanced_ultility_vehicle
+		icon = apc
+
+		x = 0
+		y = 3
+		relative_position_id = CAN_global_companys
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_vehicle_industry }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_advanced_ultility_vehicle "
+			add_tech_bonus = {
+				name = CAN_advanced_ultility_vehicle
+				bonus = 0.50
+				uses = 2
+				category = CAT_util
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_sat_tech
+		icon = weaponized_satellites
+
+		x = -2
+		y = 2
+		relative_position_id = CAN_global_companys
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_huawai }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_sat_tech "
+			add_tech_bonus = {
+				name = CAN_sat_tech
+				bonus = 0.50
+				uses = 2
+				category = CAT_computing_tech
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_advanced_radar
+		icon = radar
+
+		x = -2
+		y = 3
+		relative_position_id = CAN_global_companys
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_sat_tech }
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_advanced_radar "
+			add_tech_bonus = {
+				name = CAN_advanced_radar
+				bonus = 0.50
+				uses = 2
+				category = CAT_internet_tech
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##Military Tree
+	focus = {
+		id = CAN_Canadian_Armed_Forces
+		icon = canadian_armed_forces
+
+		x = 99
+		y = 1
+
+		cost = 3.6
+
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+
+		available = {
+			NOT = { has_idea = no_military }
+			NOT = { has_idea = defence_00 }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_Canadian_Armed_Forces"
+			add_war_support = 0.05
+			army_experience = 50
+			navy_experience = 50
+			air_experience = 50
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_the_infantry
+		icon = canadian_army
+
+		x = -6
+		y = 1
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Canadian_Armed_Forces }
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_the_infantry"
+			add_ideas = CAN_ground_military_one
+			increase_military_spending = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_new_rifles
+		icon = small_arms3
+
+		x = -6
+		y = 2
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 5
+
+		prerequisite = { focus = CAN_the_infantry }
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_new_rifles"
+			add_tech_bonus = {
+				name = infantry_weapons
+				bonus = 0.50
+				uses = 1
+				category = CAT_inf_wep
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_new_manufacturers
+		icon = Royal_Canadian_Army
+
+		x = -6
+		y = 3
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 5
+
+		prerequisite = { focus = CAN_new_rifles }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_new_manufacturers"
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+			random_owned_controlled_state = {
+				prioritize = { 763 762 }
+				limit = {
+					free_building_slots = {
+						building = arms_factory
+						size > 0
+						include_locked = yes
+					}
+				}
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_manufacturer_companys
+		icon = small_arms_east
+
+		x = -8
+		y = 4
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 10
+
+		prerequisite = { focus = CAN_new_manufacturers }
+		mutually_exclusive = { focus = CAN_manufacturer_companys_2 }
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT }
+
+		available = {
+			has_completed_focus = CAN_Eastern_Shift
+			NOT = { has_war_with = SOV }
+			if = {
+				limit = { is_ai = no }
+				SOV = { has_opinion = { target = CAN value > 50 } }
+			}
+			else = {
+				hidden_trigger = {
+					is_ai = yes
+				}
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = SOV
+			}
+		}
+
+		cancel = {
+			OR = {
+				has_war_with = SOV
+				SOV = { has_opinion = { target = CAN value < 50 } }
+				AND = {
+					is_subject = yes
+					NOT = { is_subject_of = SOV }
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_manufacturer_companys"
+			if = {
+				limit = { SOV = { has_tech = infantry_weapons1 } }
+				SOV = {
+					create_production_license = {
+						target = CAN
+						equipment = {
+							type = infantry_weapons1 #Su-24
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			else_if = {
+				limit = { SOV = { has_tech = infantry_weapons2 } }
+				SOV = {
+					create_production_license = {
+						target = CAN
+						equipment = {
+							type = infantry_weapons2 #Su-24
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			else_if = {
+				limit = { SOV = { has_tech = infantry_weapons3 } }
+				SOV = {
+					create_production_license = {
+						target = CAN
+						equipment = {
+							type = infantry_weapons3 #Su-24
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			else_if = {
+				limit = { SOV = { has_tech = infantry_weapons4 } }
+				SOV = {
+					create_production_license = {
+						target = CAN
+						equipment = {
+							type = infantry_weapons4 #Su-24
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			else_if = {
+				limit = { SOV = { has_tech = infantry_weapons5 } }
+				SOV = {
+					create_production_license = {
+						target = CAN
+						equipment = {
+							type = infantry_weapons5 #Su-24
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			else_if = {
+				limit = { SOV = { has_tech = infantry_weapons6 } }
+				SOV = {
+					create_production_license = {
+						target = CAN
+						equipment = {
+							type = infantry_weapons6 #Su-24
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			else_if = {
+				limit = { SOV = { has_tech = infantry_weapons7 } }
+				SOV = {
+					create_production_license = {
+						target = CAN
+						equipment = {
+							type = infantry_weapons7 #Su-24
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = SOV.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			add_ideas = CAN_russian_arms_deal_idea
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+
+	focus = {
+		id = CAN_manufacturer_companys_2
+		icon = small_arms_west
+
+		x = -4
+		y = 4
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 10
+
+		prerequisite = { focus = CAN_new_manufacturers }
+		mutually_exclusive = { focus = CAN_manufacturer_companys }
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT }
+
+		available = {
+			NOT = { has_completed_focus = CAN_Eastern_Shift }
+			NOT = { has_war_with = USA }
+			if = {
+				limit = { is_ai = no }
+				USA = { has_opinion = { target = CAN value > 50 } }
+			}
+			else = {
+				hidden_trigger = {
+					is_ai = yes
+				}
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject_of = USA
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_manufacturer_companys_2"
+			if = {
+				limit = { USA = { has_tech = infantry_weapons1 } }
+				USA = {
+					create_production_license = {
+						target = CAN
+						equipment = {
+							type = infantry_weapons1 #Su-24
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			else_if = {
+				limit = { USA = { has_tech = infantry_weapons2 } }
+				USA = {
+					create_production_license = {
+						target = CAN
+						equipment = {
+							type = infantry_weapons2 #Su-24
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			else_if = {
+				limit = { USA = { has_tech = infantry_weapons3 } }
+				USA = {
+					create_production_license = {
+						target = CAN
+						equipment = {
+							type = infantry_weapons3 #Su-24
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			else_if = {
+				limit = { USA = { has_tech = infantry_weapons4 } }
+				USA = {
+					create_production_license = {
+						target = CAN
+						equipment = {
+							type = infantry_weapons4 #Su-24
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			else_if = {
+				limit = { USA = { has_tech = infantry_weapons5 } }
+				USA = {
+					create_production_license = {
+						target = CAN
+						equipment = {
+							type = infantry_weapons5 #Su-24
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			else_if = {
+				limit = { USA = { has_tech = infantry_weapons6 } }
+				USA = {
+					create_production_license = {
+						target = CAN
+						equipment = {
+							type = infantry_weapons6 #Su-24
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			else_if = {
+				limit = { USA = { has_tech = infantry_weapons7 } }
+				USA = {
+					create_production_license = {
+						target = CAN
+						equipment = {
+							type = infantry_weapons7 #Su-24
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = USA.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			add_ideas = CAN_american_arms_deal_idea
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_mechanized
+		icon = tanks5
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_manufacturer_companys_2
+
+		cost = 5
+
+		prerequisite = {
+			focus = CAN_manufacturer_companys
+			focus = CAN_manufacturer_companys_2
+		}
+		mutually_exclusive = { focus = CAN_infantry_focus }
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_mechanized"
+			add_tech_bonus = {
+				name = CAN_mechanized
+				bonus = 1.00
+				uses = 1
+				category = CAT_ifv
+			}
+			add_tech_bonus = {
+				name = CAN_mechanized
+				bonus = 1.00
+				uses = 1
+				category = CAT_apc
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_infantry_focus
+		icon = general_staff
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_manufacturer_companys
+
+		cost = 5
+
+		prerequisite = {
+			focus = CAN_manufacturer_companys
+			focus = CAN_manufacturer_companys_2
+		}
+		mutually_exclusive = { focus = CAN_mechanized }
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_mechanized"
+			add_tech_bonus = {
+				name = CAN_infantry_focus
+				bonus = 1.0
+				uses = 2
+				category = CAT_inf
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_specops
+		icon = recon
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_infantry_focus
+
+		cost = 10
+
+		prerequisite = { focus = CAN_infantry_focus }
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_specops"
+			add_tech_bonus = {
+				name = CAN_specops
+				bonus = 0.50
+				uses = 1
+				category = CAT_special_forces
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_recruits
+		icon = recruitment
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_infantry_focus
+
+		cost = 10
+
+		prerequisite = { focus = CAN_infantry_focus }
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_MANPOWER }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_recruits"
+			swap_ideas = {
+				remove_idea = CAN_ground_military_one
+				add_idea = CAN_ground_military_two_infantry
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_profesional_army
+		icon = military_planning
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_recruits
+
+		cost = 10
+
+		prerequisite = { focus = CAN_recruits }
+		prerequisite = { focus = CAN_specops }
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_MANPOWER }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_recruits"
+			swap_ideas = {
+				remove_idea = CAN_ground_military_two_infantry
+				add_idea = CAN_ground_military_three_infantry
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_tanks
+		icon = tanks4
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_mechanized
+
+		cost = 5
+
+		prerequisite = { focus = CAN_mechanized }
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_tanks"
+			add_tech_bonus = {
+				name = CAN_tanks
+				bonus = 1.0
+				uses = 1
+				category = CAT_mbt
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_motorized
+		icon = apc
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_mechanized
+
+		cost = 5
+
+		prerequisite = { focus = CAN_mechanized }
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_motorized"
+			swap_ideas = {
+				remove_idea = CAN_ground_military_one
+				add_idea = CAN_ground_military_two_armored
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_armed
+		icon = draw_up_war_plans
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_tanks
+
+		cost = 10
+
+		prerequisite = { focus = CAN_motorized }
+		prerequisite = { focus = CAN_tanks }
+
+		search_filters = { FOCUS_FILTER_EQUIPMENT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_recruits"
+			swap_ideas = {
+				remove_idea = CAN_ground_military_two_armored
+				add_idea = CAN_ground_military_three_armored
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##Canadian Air Force
+	focus = {
+		id = CAN_rcaf
+		icon = canadian_air_force
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 5
+
+		prerequisite = { focus = CAN_Canadian_Armed_Forces }
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_rcaf"
+			add_ideas = CAN_air
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_air_focus
+		icon = modern_bomber
+
+		x = 0
+		y = 2
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 10
+
+		prerequisite = { focus = CAN_rcaf }
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_air_focus"
+			add_tech_bonus = {
+				name = CAN_air_focus
+				bonus = 0.50
+				uses = 2
+				category = CAT_fighter
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_air_model_us
+		icon = align_to_america
+
+		x = -1
+		y = 3
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 10
+
+		prerequisite = { focus = CAN_air_focus }
+		mutually_exclusive = { focus = CAN_air_model_uk }
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_air_model_us"
+			add_tech_bonus = {
+				name = CAN_air_model_us
+				bonus = 0.50
+				uses = 2
+				category = CAT_str_bomber
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_air_model_uk
+		icon = align_to_britain
+
+		x = 1
+		y = 3
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 10
+
+		prerequisite = { focus = CAN_air_focus }
+		mutually_exclusive = { focus = CAN_air_model_us }
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_air_model_uk"
+			add_tech_bonus = {
+				name = CAN_air_model_uk
+				bonus = 0.50
+				uses = 2
+				category = CAT_mr_fighter
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_air_factories
+		icon = Royal_Canadian_Air_Force
+
+		x = 0
+		y = 4
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 10
+
+		prerequisite = {
+			focus = CAN_air_model_uk
+			focus = CAN_air_model_us
+		}
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_air_factories"
+			set_temp_variable = { treasury_change = -12.5 }
+			modify_treasury_effect = yes
+			763 = {
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = air_base
+					level = 2
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_nato_air
+		icon = bombs3
+
+		x = 4
+		y = 1
+		relative_position_id = CAN_air_factories
+
+		cost = 10
+
+		prerequisite = { focus = CAN_air_factories }
+		mutually_exclusive = { focus = CAN_new_doctrine }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_air"
+			add_tech_bonus = {
+				name = CAN_nato_air
+				bonus = 0.1
+				uses = 1
+				category = CAT_battlefield_support_tree
+			}
+			add_ideas = CAN_air_nato
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_nato_train
+		icon = escort_fighters
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_nato_air
+
+		cost = 10
+
+		prerequisite = { focus = CAN_nato_air }
+
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_train"
+			add_doctrine_cost_reduction = {
+				name = CAN_nato_train
+				category = CAT_air_doctrine
+				uses = 1
+				cost_reduction = 0.25
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_us_planes
+		icon = f35
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_nato_air
+
+		cost = 10
+
+		prerequisite = { focus = CAN_nato_air }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_train"
+			add_tech_bonus = {
+				name = CAN_us_planes
+				bonus = 0.1
+				uses = 1
+				category = CAT_as_fighter
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_new_helicopters
+		icon = ka_heli
+
+		x = -2
+		y = 2
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 10
+
+		prerequisite = { focus = CAN_rcaf }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_new_helicopters"
+			add_tech_bonus = {
+				name = CAN_new_helicopters
+				bonus = 0.50
+				uses = 2
+				category = CAT_heli
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_new_doctrine
+		icon = f35
+
+		x = 0
+		y = 1
+		relative_position_id = CAN_air_factories
+
+		cost = 10
+
+		prerequisite = { focus = CAN_air_factories }
+		mutually_exclusive = { focus = CAN_nato_air }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_nato_train"
+			add_tech_bonus = {
+				name = CAN_new_doctrine
+				bonus = 0.25
+				uses = 1
+				category = CAT_as_fighter
+			}
+			add_ideas = CAN_air_new
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_russia_train
+		icon = fighters2
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_new_doctrine
+
+		cost = 10
+
+		prerequisite = { focus = CAN_new_doctrine }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_russia_train"
+			add_doctrine_cost_reduction = {
+				name = CAN_russia_train
+				category = CAT_air_doctrine
+				uses = 1
+				cost_reduction = 0.1
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_russia_planes
+		icon = yak_fighter
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_new_doctrine
+
+		cost = 10
+
+		prerequisite = { focus = CAN_new_doctrine }
+
+		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_russia_planes"
+			add_tech_bonus = {
+				name = CAN_russia_planes
+				bonus = 0.1
+				uses = 1
+				category = CAT_str_bomber
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_air_force
+		icon = fighter_plane
+
+		x = 3
+		y = 1
+		relative_position_id = CAN_russia_planes
+
+		cost = 10
+
+		prerequisite = { focus = CAN_russia_planes focus = CAN_russia_train focus = CAN_us_planes focus = CAN_nato_train }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_air_force"
+			add_ideas = CAN_force_air
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##International Wargames Section
+	focus = {
+		id = CAN_international_wargames
+		icon = tanks4
+
+		x = -4
+		y = 1
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 10
+
+		prerequisite = { focus = CAN_Canadian_Armed_Forces }
+
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_international_wargames "
+			army_experience = 50
+			air_experience = 50
+			navy_experience = 50
+			add_war_support = 0.05
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##Military - Naval Branch
+	focus = {
+		id = CAN_navy
+		icon = canadian_navy
+
+		x = 6
+		y = 1
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 10
+
+		prerequisite = { focus = CAN_Canadian_Armed_Forces }
+
+		search_filters = { FOCUS_FILTER_MANPOWER }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_navy"
+			add_ideas = CAN_navy_idea
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_navy_carrier
+		icon = carriers
+
+		x = 1
+		y = 1
+		relative_position_id = CAN_navy
+
+		cost = 10
+
+		prerequisite = { focus = CAN_navy }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_navy_carrier"
+			add_tech_bonus = {
+				name = CAN_navy_carrier
+				bonus = 0.50
+				uses = 1
+				category = CAT_carrier
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_destroyers
+		icon = no_blueprint_ship
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_navy
+
+		cost = 10
+
+		prerequisite = { focus = CAN_navy }
+
+		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_destroyers"
+			add_tech_bonus = {
+				name = CAN_destroyers
+				bonus = 0.50
+				uses = 2
+				category = CAT_destroyer
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_ship_training
+		icon = naval_doctrine
+
+		x = 6
+		y = 3
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 10
+
+		prerequisite = { focus = CAN_navy }
+
+		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_ship_training "
+			navy_experience = 100
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_naval_aircraft
+		icon = bombs2
+
+		x = 8
+		y = 3
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 10
+
+		prerequisite = { focus = CAN_navy_carrier }
+
+		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_naval_aircraft "
+			add_tech_bonus = {
+				name = CAN_naval_aircraft
+				bonus = 0.50
+				uses = 2
+				category = CAT_cv_l_s_fighter
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_naval_doctrines
+		icon = Royal_Canadian_Navy
+
+		x = 6
+		y = 4
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 10
+
+		prerequisite = { focus = CAN_ship_training }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_naval_doctrines"
+			add_doctrine_cost_reduction = {
+				name = CAN_naval_doctrines
+				category = CAT_naval_doctrine
+				uses = 2
+				cost_reduction = 0.5
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_naval_dockyards
+		icon = navy
+
+		x = 4
+		y = 3
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 10
+
+		prerequisite = { focus = CAN_destroyers }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_naval_dockyards"
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			760 = {
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}
+			763 = {
+				add_building_construction = {
+					type = dockyard
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_maritime_industry_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_bluewater
+		icon = wolfpacks
+
+		x = 6
+		y = 5
+		relative_position_id = CAN_Canadian_Armed_Forces
+
+		cost = 10
+
+		prerequisite = { focus = CAN_naval_dockyards }
+		prerequisite = { focus = CAN_naval_doctrines }
+		prerequisite = { focus = CAN_naval_aircraft }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_bluewater"
+			add_ideas = CAN_bluwater_navy
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	##English Nationalist Section -- Requires Destroy Reservations and NOT TAKING WESTERN OR EASTERN
+	focus = {
+		id = CAN_national
+		icon = Canada_CUF
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_State_Of_Terror
+
+		cost = 10
+
+		prerequisite = { focus = CAN_State_Of_Terror }
+		prerequisite = { focus = CAN_forced_integration }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			nationalist > 0.40
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_national"
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 20 }
+				add_to_array = { gov_coalition_array = 21 }
+				update_government_coalition_strength = yes
+				update_party_name = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+			}
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
+			}
+		}
+	}
+
+	focus = {
+		id = CAN_global_influence
+		icon = global_hegemony
+
+		x = -1
+		y = 1
+		relative_position_id = CAN_national
+
+		cost = 10
+
+		prerequisite = { focus = CAN_national }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_global_influence "
+			add_political_power = 100
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_regional_diplomacy
+		icon = north_america
+
+		x = 2
+		y = 1
+		relative_position_id = CAN_national
+
+		cost = 5
+
+		prerequisite = { focus = CAN_national }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_regional_diplomacy "
+			add_political_power = 100
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_fortify_the_borders
+		icon = demand_territory3
+
+		x = 3
+		y = 2
+		relative_position_id = CAN_national
+
+		cost = 10
+
+		prerequisite = { focus = CAN_regional_diplomacy }
+
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_fortify_the_borders "
+			add_timed_idea = {
+				idea = defensive_constructions3
+				days = 730
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_greenland
+		icon = attack_greenland
+
+		x = 1
+		y = 2
+		relative_position_id = CAN_national
+
+		cost = 5
+
+		prerequisite = { focus = CAN_regional_diplomacy }
+		will_lead_to_war_with = DEN
+
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+
+		available = {
+			DEN = { owns_state = 1 }
+		}
+
+		bypass = {
+			owns_state = 1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_greenland "
+			1 = { add_core_of = CAN }
+			create_wargoal = {
+				target = DEN
+				type = annex_everything
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_dominate_america
+		icon = attack_america
+
+		x = 3
+		y = 3
+		relative_position_id = CAN_national
+
+		cost = 10
+
+		prerequisite = { focus = CAN_greenland }
+		prerequisite = { focus = CAN_fortify_the_borders }
+		will_lead_to_war_with = USA
+
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+
+		available = {
+			NOT = {
+				USA = { is_subject_of = CAN }
+			}
+			country_exists = USA
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_dominate_america "
+			add_war_support = 0.10
+			create_wargoal = {
+				type = annex_everything
+				target = USA
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_decimate_mexico
+		icon = attack_mexico
+
+		x = 3
+		y = 4
+		relative_position_id = CAN_national
+
+		cost = 10
+
+		prerequisite = { focus = CAN_dominate_america }
+		will_lead_to_war_with = MEX
+
+		search_filters = { FOCUS_FILTER_WAR_SUPPORT }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_golden_circle "
+			reverse_add_opinion_modifier = { target = MEX modifier = imminent_danger_to_national_security }
+			create_wargoal = {
+				type = annex_everything
+				target = MEX
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_opposition
+		icon = political_arrests
+
+		x = -1
+		y = 2
+		relative_position_id = CAN_national
+
+		cost = 10
+
+		prerequisite = { focus = CAN_global_influence }
+
+		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_opposition "
+			add_popularity = {
+				ideology = communism
+				popularity = -0.10
+			}
+			add_popularity = {
+				ideology = neutrality
+				popularity = -0.10
+			}
+			add_popularity = {
+				ideology = democratic
+				popularity = -0.10
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_nationlist_agenda
+		icon = nationalist_constiution
+
+		x = -1
+		y = 3
+		relative_position_id = CAN_national
+
+		cost = 10
+
+		prerequisite = { focus = CAN_opposition }
+
+		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_nationlist_agenda "
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.10
+			}
+			add_war_support = 0.05
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_destroy_charter
+		icon = reactionary
+
+		x = 1
+		y = 3
+		relative_position_id = CAN_national
+
+		cost = 10
+
+		prerequisite = { focus = CAN_opposition }
+
+		completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus CAN_destroy_charter "
+			add_political_power = 200
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_secret_police
+		icon = espionage3
+
+		x = -1
+		y = 4
+		relative_position_id = CAN_national
+
+		cost = 10
+
+		prerequisite = { focus = CAN_nationlist_agenda }
+
+		search_filters = { FOCUS_FILTER_EXPENDITURE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_secret_police "
+			add_ideas = CAN_secret_police
+			increase_policing_budget = yes
+			set_temp_variable = { desire_change = 0.5 }
+			change_expected_police_spending = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_isolation
+		icon = gentleman_officers
+
+		x = 1
+		y = 4
+		relative_position_id = CAN_national
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_destroy_charter }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_isolation "
+			increase_intervention_law_effect = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_expel_us
+		icon = mass_assault
+
+		x = 1
+		y = 5
+		relative_position_id = CAN_national
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_isolation }
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_EXPENDITURE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_expel_us"
+			add_opinion_modifier = { target = USA modifier = imminent_danger_to_national_security }
+			increase_military_spending = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_iron_curtain
+		icon = cctv2
+
+		x = -1
+		y = 5
+		relative_position_id = CAN_national
+
+		cost = 7.9
+
+		prerequisite = { focus = CAN_secret_police }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_iron_curtain "
+			add_ideas = CAN_curtain
+			increase_policing_budget = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = CAN_the_state
+		icon = conscription
+
+		x = 1
+		y = 6
+		relative_position_id = CAN_national
+
+		cost = 10
+
+		prerequisite = { focus = CAN_iron_curtain }
+		prerequisite = { focus = CAN_expel_us }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+
+		available = {
+			OR = {
+				nationalist_military_junta_are_in_power = yes
+				nationalist_fascist_are_in_power = yes
+				nationalist_right_wing_populists_are_in_power = yes
+				nationalist_monarchists_are_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus CAN_the_state "
+			add_ideas = CAN_new_canada
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+}
