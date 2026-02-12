@@ -487,27 +487,33 @@ on_actions = {
 					}
 
 					if = { limit = { check_variable = { global.EU_potential^num > 0 } }
-						for_each_scope_loop = {
+						for_each_loop = {
 							array = global.EU_potential
-							check_breach_of_EU_value = yes
+							value = v
+							var:v = {
+								check_breach_of_EU_value = yes
+							}
 						}
 					}
 
 					# Calculate the Migrant Trigger
 					if = { limit = { NOT = { has_global_flag = EUU_migrant_crisis_triggered } }
 						set_temp_variable = { total_population_refugees = 0 }
-						for_each_scope_loop = {
+						for_each_loop = {
 							array = global.is_middle_eastern_africa_nations
-							if = {
-								limit = {
-									OR = {
-										has_war = yes
-										salafist_caliphate_are_in_power = yes
+							value = v
+							var:v = {
+								if = {
+									limit = {
+										OR = {
+											has_war = yes
+											salafist_caliphate_are_in_power = yes
+										}
 									}
+									set_temp_variable = { population_refugees = population_total }
+									multiply_temp_variable = { population_refugees = 0.025 }
+									add_to_temp_variable = { PREV.total_population_refugees = population_refugees }
 								}
-								set_temp_variable = { population_refugees = population_total }
-								multiply_temp_variable = { population_refugees = 0.025 }
-								add_to_temp_variable = { PREV.total_population_refugees = population_refugees }
 							}
 						}
 
@@ -1394,65 +1400,68 @@ on_actions = {
 				}
 
 				if = { limit = { has_game_rule = { rule = rule_disable_muslim_brotherhood_civil_war option = no } }
-					for_each_scope_loop = {
+					for_each_loop = {
 						array = global.possible_muslim_brotherhood_nation
-						if = {
-							limit = {
-								NOT = {
-									has_government = neutrality
-									Is_Muslim_Brotherhood = yes
-									has_country_flag = BROTHER_civil_war_has_started
-								}
-								has_elections = no
-							}
+						value = v
+						var:v = {
 							if = {
 								limit = {
-									has_idea = muslim_brotherhood_crackdown
-									neutrality > 0.2
+									NOT = {
+										has_government = neutrality
+										Is_Muslim_Brotherhood = yes
+										has_country_flag = BROTHER_civil_war_has_started
+									}
+									has_elections = no
+								}
+								if = {
+									limit = {
+										has_idea = muslim_brotherhood_crackdown
+										neutrality > 0.2
+									}
+
+									random_list = {
+										25 = {
+											# Brutality of Crackdown Backfires
+											country_event = { id = brotherhood.7 }
+										}
+										25 = {
+											# Muslim Brotherhood Terrorists Raid Prison
+											country_event = { id = brotherhood.8 }
+										}
+										25 = {
+											# Muslim Brotherhood Terror-Cell Dismantled
+											country_event = { id = brotherhood.9 }
+										}
+										25 = {
+
+										}
+									}
 								}
 
-								random_list = {
-									25 = {
-										# Brutality of Crackdown Backfires
-										country_event = { id = brotherhood.7 }
+								# Muslim Brotherhood Protestors Demand Elections
+								if = {
+									limit = {
+										NOT = { has_country_flag = recently_had_muslim_brotherhood_demanded_election }
+										NOT = { has_idea = muslim_brotherhood_crackdown }
+										neutrality > 0.35
 									}
-									25 = {
-										# Muslim Brotherhood Terrorists Raid Prison
-										country_event = { id = brotherhood.8 }
+									random = {
+										chance = 40
+										country_event = { id = brotherhood.6 }
 									}
-									25 = {
-										# Muslim Brotherhood Terror-Cell Dismantled
-										country_event = { id = brotherhood.9 }
-									}
-									25 = {
+								}
 
+								# Muslim Brotherhood Insurgency Turns Civil War
+								if = {
+									limit = {
+										has_idea = muslim_brotherhood_crackdown
+										NOT = { has_war = yes }
+										neutrality > 0.5
 									}
-								}
-							}
-
-							# Muslim Brotherhood Protestors Demand Elections
-							if = {
-								limit = {
-									NOT = { has_country_flag = recently_had_muslim_brotherhood_demanded_election }
-									NOT = { has_idea = muslim_brotherhood_crackdown }
-									neutrality > 0.35
-								}
-								random = {
-									chance = 40
-									country_event = { id = brotherhood.6 }
-								}
-							}
-
-							# Muslim Brotherhood Insurgency Turns Civil War
-							if = {
-								limit = {
-									has_idea = muslim_brotherhood_crackdown
-									NOT = { has_war = yes }
-									neutrality > 0.5
-								}
-								random = {
-									chance = 35
-									country_event = { id = brotherhood.10 }
+									random = {
+										chance = 35
+										country_event = { id = brotherhood.10 }
+									}
 								}
 							}
 						}
@@ -1462,11 +1471,14 @@ on_actions = {
 				# Arab Spring Monthly Tick
 				# DO NOT INCREMENT IF YOU HAVE COMPLETED THE ARAB SPRING MINI GAME
 				if = { limit = { check_variable = { global.arabic_countries^num > 0 } }
-					for_each_scope_loop = {
+					for_each_loop = {
 						array = global.arabic_countries
-						if = {
-							limit = { NOT = { has_country_flag = AS_arab_spring_completed } }
-							increment_arab_spring_strength = yes
+						value = v
+						var:v = {
+							if = {
+								limit = { NOT = { has_country_flag = AS_arab_spring_completed } }
+								increment_arab_spring_strength = yes
+							}
 						}
 					}
 
