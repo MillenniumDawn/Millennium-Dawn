@@ -4165,23 +4165,10 @@ scripted_gui = {
 					value = 1
 				}
 
-				if = {
-					limit = {
-						OR = {
-							has_global_flag = current_ongoing_sc_vote
-							has_global_flag = un_sc_vote_cooldown
-							check_variable = { global.sc_vote_type_tracker^num > 0 }
-						}
-					}
-					add_to_array = { global.sc_vote_type_tracker = 5 }
-					add_to_array = { global.sc_vote_nation_tracker = THIS }
-				} else = {
-					hidden_effect = {
-						set_variable = { global.current_sc_vote_type = 5 }
-						set_variable = { global.current_sc_vote_nation = THIS }
-						country_event = recognition.10
-					}
-				}
+				set_temp_variable = { sc_new_vote_type = 5 }
+				set_temp_variable = { sc_new_vote_nation = THIS }
+				update_sc_vote = yes
+
 				missile_ui_update = yes
 			}
 		}
@@ -6472,7 +6459,11 @@ scripted_gui = {
 		}
 
 		triggers = {
-
+			#disable vote manipulation during vote confirmation
+			#this is so the system functions *properly*
+			is_un_sc_manipulate_vote_button_click_enabled = {
+				NOT = { has_global_flag = electing_new_unsc_members }
+			}
 		}
 
 		effects = {
