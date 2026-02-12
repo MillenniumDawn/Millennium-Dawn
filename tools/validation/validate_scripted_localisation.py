@@ -139,17 +139,13 @@ class ScriptedLocalisation:
             files_to_scan = [
                 f
                 for f in staged_files
-                if f.endswith(".gui")
-                or f.endswith(".yml")
-                or (f.endswith(".txt") and "scripted_guis" in f)
+                if f.endswith(".gui") or f.endswith(".yml") or f.endswith(".txt")
             ]
         else:
             gui_files = list(glob.iglob(mod_path + "**/*.gui", recursive=True))
             yml_files = list(glob.iglob(mod_path + "**/*.yml", recursive=True))
-            scripted_gui_files = list(
-                glob.iglob(mod_path + "common/scripted_guis/*.txt", recursive=True)
-            )
-            files_to_scan = gui_files + yml_files + scripted_gui_files
+            txt_files = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
+            files_to_scan = gui_files + yml_files + txt_files
 
         args_list = [(f, search_names, lowercase) for f in files_to_scan]
         with Pool(processes=workers) as pool:
