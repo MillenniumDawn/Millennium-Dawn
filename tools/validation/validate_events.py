@@ -34,11 +34,6 @@ def _should_skip(filename: str) -> bool:
 # --- Event parsing ---
 
 
-def _strip_comments(text: str) -> str:
-    """Remove lines that are entirely comments (starting with optional whitespace then #)."""
-    return re.sub(r"^[ \t]*#.*$", "", text, flags=re.MULTILINE)
-
-
 def parse_all_events(
     mod_path: str, lowercase: bool = False
 ) -> Tuple[List[str], Dict[str, str]]:
@@ -50,8 +45,8 @@ def parse_all_events(
     paths = {}
 
     for filename in glob.iglob(events_path + "**/*.txt", recursive=True):
-        text_file = _strip_comments(
-            FileOpener.open_text_file(filename, lowercase=lowercase)
+        text_file = FileOpener.open_text_file(
+            filename, lowercase=lowercase, strip_comments_flag=True
         )
         matches = pattern.findall(text_file)
         for match in matches:
@@ -69,8 +64,8 @@ def process_file_for_events(args: Tuple[str, bool]) -> Tuple[List[str], Dict[str
     events = []
     paths = {}
 
-    text_file = _strip_comments(
-        FileOpener.open_text_file(filename, lowercase=lowercase)
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
     )
     matches = pattern.findall(text_file)
     for match in matches:
