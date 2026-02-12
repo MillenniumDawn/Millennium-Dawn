@@ -85,15 +85,43 @@ def find_line_number(filename: str, pattern: str, lowercase: bool = True) -> int
     return 0
 
 
+def strip_comments(text: str) -> str:
+    """Remove comment-only lines (lines starting with optional whitespace then #)
+    and inline comments (everything after # that is not inside quotes) from text."""
+    lines = text.split("\n")
+    result = []
+    for line in lines:
+        # Check if line is entirely a comment
+        stripped = line.lstrip()
+        if stripped.startswith("#"):
+            result.append("")
+            continue
+        # Strip inline comments (# not inside quotes)
+        in_quote = False
+        for i, ch in enumerate(line):
+            if ch == '"':
+                in_quote = not in_quote
+            elif ch == "#" and not in_quote:
+                line = line[:i]
+                break
+        result.append(line)
+    return "\n".join(result)
+
+
 class FileOpener:
     @classmethod
-    def open_text_file(cls, filename: str, lowercase: bool = True) -> str:
+    def open_text_file(
+        cls, filename: str, lowercase: bool = True, strip_comments_flag: bool = False
+    ) -> str:
         try:
             with open(filename, "r", encoding="utf-8-sig") as text_file:
+                content = text_file.read()
+                if strip_comments_flag:
+                    content = strip_comments(content)
                 if lowercase:
-                    return text_file.read().lower()
+                    return content.lower()
                 else:
-                    return text_file.read()
+                    return content
         except Exception as ex:
             logging.warning(f"Skipping the file {filename}, {ex}")
             return ""

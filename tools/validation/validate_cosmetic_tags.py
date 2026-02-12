@@ -50,7 +50,9 @@ def process_file_for_has_cosmetic_tag(
     filename, lowercase = args
     if _should_skip(filename):
         return ({}, {})
-    text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
     tags = {}
     paths = {}
     if "has_cosmetic_tag =" in text_file:
@@ -66,7 +68,9 @@ def process_file_for_set_cosmetic_tag(args: Tuple[str, bool]) -> Dict[str, int]:
     filename, lowercase, tags_to_find = args
     if _should_skip(filename):
         return {}
-    text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
     counts = {}
     if "set_cosmetic_tag =" in text_file:
         for tag in tags_to_find:
@@ -82,7 +86,9 @@ def process_file_for_set_cosmetic_tag_defined(
     filename, lowercase = args
     if _should_skip(filename):
         return ({}, {})
-    text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
     tags = {}
     paths = {}
     if "set_cosmetic_tag =" in text_file:
@@ -198,7 +204,9 @@ class Validator(BaseValidator):
 
         cosmetic_file = Path(self.mod_path) / "common" / "countries" / "cosmetic.txt"
         if cosmetic_file.exists():
-            text_file = FileOpener.open_text_file(str(cosmetic_file), lowercase=False)
+            text_file = FileOpener.open_text_file(
+                str(cosmetic_file), lowercase=False, strip_comments_flag=True
+            )
             for tag in list(cosmetic_tags.keys()):
                 if cosmetic_tags[tag] == 0 and f"{tag} =" in text_file:
                     cosmetic_tags[tag] += 1
@@ -221,7 +229,9 @@ class Validator(BaseValidator):
         for filename in files:
             if _should_skip(filename):
                 continue
-            text_file = FileOpener.open_text_file(filename, lowercase=False)
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
             not_found = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
             if "has_cosmetic_tag =" in text_file:
                 all_matches = re.findall(r"has_cosmetic_tag = \S*", text_file)
@@ -232,7 +242,9 @@ class Validator(BaseValidator):
         for filename in yml_files:
             if _should_skip(filename):
                 continue
-            text_file = FileOpener.open_text_file(filename, lowercase=False)
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
             not_found = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
             for tag in not_found:
                 if tag in text_file:
@@ -282,7 +294,9 @@ class Validator(BaseValidator):
             )
             return
 
-        text_file = FileOpener.open_text_file(str(cosmetic_file), lowercase=False)
+        text_file = FileOpener.open_text_file(
+            str(cosmetic_file), lowercase=False, strip_comments_flag=True
+        )
         pattern_matches = re.findall(r"^(\S+) = \{", text_file, flags=re.MULTILINE)
         cosmetic_tags = {}
         for match in pattern_matches:
@@ -303,7 +317,9 @@ class Validator(BaseValidator):
         for filename in files:
             if _should_skip(filename):
                 continue
-            text_file = FileOpener.open_text_file(filename, lowercase=False)
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
             if "set_cosmetic_tag =" in text_file:
                 not_found = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
                 for tag in not_found:

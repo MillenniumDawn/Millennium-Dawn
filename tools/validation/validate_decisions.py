@@ -90,7 +90,9 @@ def parse_all_decisions(
     for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
         if "categories" in filename:
             continue
-        text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+        text_file = FileOpener.open_text_file(
+            filename, lowercase=lowercase, strip_comments_flag=True
+        )
         matches = pattern.findall(text_file)
         for match in matches:
             decisions.append(match)
@@ -122,7 +124,9 @@ def parse_decision_categories(
     name_pattern = re.compile(r"^(.*) = \{")
 
     for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
-        text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+        text_file = FileOpener.open_text_file(
+            filename, lowercase=lowercase, strip_comments_flag=True
+        )
         matches = re.findall(cat_pattern, text_file)
         for match in matches:
             if not visible_when_empty and "visible_when_empty = yes" in match:
@@ -147,7 +151,9 @@ def parse_categories_with_decisions(
     for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
         if "categories" in filename:
             continue
-        text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+        text_file = FileOpener.open_text_file(
+            filename, lowercase=lowercase, strip_comments_flag=True
+        )
         for category in category_names:
             if f"{category} = {{" in text_file:
                 pattern = r"^" + re.escape(category) + r" = \{.*?^\}"
@@ -202,7 +208,9 @@ class Validator(BaseValidator):
         for filename in glob.iglob(self.mod_path + "**/*.txt", recursive=True):
             if _should_skip(filename):
                 continue
-            text_file = FileOpener.open_text_file(filename, lowercase=False)
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
             if "activate_targeted_decision =" in text_file:
                 remaining = {k: v for k, v in manual_decisions.items() if v == 0}
                 all_matches = pattern_decision.findall(text_file)
@@ -249,7 +257,9 @@ class Validator(BaseValidator):
         found_files = False
         for filename in glob.iglob(bop_path + "/**/*.txt", recursive=True):
             found_files = True
-            text_file = FileOpener.open_text_file(filename, lowercase=False)
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
             not_found = [c for c in cats_to_validate if cats_to_validate[c] == 0]
             for cat in not_found:
                 if f"decision_category = {cat}" in text_file:
