@@ -119,6 +119,8 @@ set_power_ranking_ideas_for_every_country = {
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_european_navy = THIS.id }
 			}
+
+			assign_power_ranking_value = yes
 		}
 	}
 	var:largest_european_navy = { add_ideas = naval_power_of_the_continent }
@@ -134,6 +136,8 @@ set_power_ranking_ideas_for_every_country = {
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_sub_saharan_nations = THIS.id }
 			}
+
+			assign_power_ranking_value = yes
 		}
 	}
 	var:largest_sub_saharan_nations = { add_ideas = naval_power_of_the_continent }
@@ -149,6 +153,8 @@ set_power_ranking_ideas_for_every_country = {
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_middle_east_navy = THIS.id }
 			}
+
+			assign_power_ranking_value = yes
 		}
 	}
 	var:largest_middle_east_navy = { add_ideas = naval_power_of_the_continent }
@@ -164,6 +170,8 @@ set_power_ranking_ideas_for_every_country = {
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_asian_navy = THIS.id }
 			}
+
+			assign_power_ranking_value = yes
 		}
 	}
 	var:largest_asian_navy = { add_ideas = naval_power_of_the_continent }
@@ -179,11 +187,15 @@ set_power_ranking_ideas_for_every_country = {
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_american_navy = THIS.id }
 			}
+
+			assign_power_ranking_value = yes
 		}
 	}
 	var:largest_american_navy = { add_ideas = naval_power_of_the_continent }
 
 	determine_regional_powers = yes
+
+	game_startup_idea_set = yes
 }
 
 # MONTH 4/10: Calculate contribution per country and accumulate global total
@@ -213,6 +225,8 @@ calculate_power_ranking_contributions = {
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_european_navy = THIS.id }
 			}
+
+			assign_power_ranking_value = yes
 		}
 	}
 	var:largest_european_navy = { add_ideas = naval_power_of_the_continent }
@@ -228,6 +242,8 @@ calculate_power_ranking_contributions = {
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_sub_saharan_nations = THIS.id }
 			}
+
+			assign_power_ranking_value = yes
 		}
 	}
 	var:largest_sub_saharan_nations = { add_ideas = naval_power_of_the_continent }
@@ -243,6 +259,8 @@ calculate_power_ranking_contributions = {
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_middle_east_navy = THIS.id }
 			}
+
+			assign_power_ranking_value = yes
 		}
 	}
 	var:largest_middle_east_navy = { add_ideas = naval_power_of_the_continent }
@@ -258,6 +276,8 @@ calculate_power_ranking_contributions = {
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_asian_navy = THIS.id }
 			}
+
+			assign_power_ranking_value = yes
 		}
 	}
 	var:largest_asian_navy = { add_ideas = naval_power_of_the_continent }
@@ -273,9 +293,30 @@ calculate_power_ranking_contributions = {
 				set_temp_variable = { largest_value = THIS.deployed_navy_manpower_k }
 				set_temp_variable = { largest_american_navy = THIS.id }
 			}
+
+			assign_power_ranking_value = yes
 		}
 	}
 	var:largest_american_navy = { add_ideas = naval_power_of_the_continent }
+}
+
+assign_power_ranking_value = {
+	if = { limit = { check_variable = { percentage_of_global_factories < 0.002 } }
+		set_variable = { power_ranking_name_var = 1 }
+	}
+	else = {
+		if = { limit = { check_variable = { percentage_of_global_factories > 0.15 } }
+			set_variable = { power_ranking_name_var = 2 }
+		}
+		else_if = { limit = { check_variable = { percentage_of_global_factories > 0.065 } }
+			set_variable = { power_ranking_name_var = 3 }
+		}
+		else_if = { limit = { check_variable = { percentage_of_global_factories > 0.025 } }
+			set_variable = { power_ranking_name_var = 4 }
+		} else_if = { limit = { always = yes }
+			set_variable = { power_ranking_name_var = 5 }
+		}
+	}
 }
 
 # MONTH 5/11: Sort arrays by pre-calculated contribution, then assign power ranking ideas
@@ -315,34 +356,64 @@ remove_power_ideas = {
 	}
 }
 
+game_startup_idea_set = {
+	for_each_loop = {
+		array = global.european_nations
+		value = v
+		var:v = {
+			assign_power_ranking_ideas = yes
+		}
+	}
+
+	# Sub-Saharan Africa (top 3 regional, find naval hegemon)
+	for_each_loop = {
+		array = global.sub_saharan_nations
+		value = v
+		var:v = {
+			assign_power_ranking_ideas = yes
+		}
+	}
+
+	# Middle East (top 3 regional, find naval hegemon)
+	for_each_loop = {
+		array = global.middle_eastern_nations
+		value = v
+		var:v = {
+			assign_power_ranking_ideas = yes
+		}
+	}
+
+	# Asia (top 7 regional, find naval hegemon)
+	for_each_loop = {
+		array = global.asian_nations
+		value = v
+		var:v = {
+			assign_power_ranking_ideas = yes
+		}
+	}
+
+	# Americas (top 4 regional, find naval hegemon)
+	for_each_loop = {
+		array = global.american_nations
+		value = v
+		var:v = {
+			assign_power_ranking_ideas = yes
+		}
+	}
+}
+
 # Shared: Calculate percentage and assign power ranking ideas to every country
 assign_power_ranking_ideas = {
-	if = { limit = { check_variable = { percentage_of_global_factories < 0.002 } NOT = { has_idea = non_power } }
-		remove_power_ideas = yes
-		add_ideas = non_power
-	}
-	else = {
-		if = { limit = { check_variable = { percentage_of_global_factories > 0.15 } NOT = { has_idea = superpower } }
-			remove_power_ideas = yes
-			add_ideas = superpower
+	set_variable = { global.cur_nation_idea_pull = power_ranking_name_var }
+	meta_effect = {
+		text = {
+			if = {
+				limit = { NOT = { has_idea = [IDEA] } }
+				remove_power_ideas = yes
+				add_ideas = [IDEA]
+			}
 		}
-		else_if = { limit = { check_variable = { percentage_of_global_factories > 0.065 } NOT = { has_idea = great_power } }
-			remove_power_ideas = yes
-			add_ideas = great_power
-		}
-		else_if = { limit = { check_variable = { percentage_of_global_factories > 0.025 } NOT = { has_idea = large_power } }
-			remove_power_ideas = yes
-			add_ideas = large_power
-		}
-		else_if = { limit = { has_country_flag = regional_power NOT = { has_idea = regional_power } }
-			remove_power_ideas = yes
-			add_ideas = regional_power
-			clr_country_flag = regional_power
-		}
-		else_if = { limit = { NOT = { has_idea = minor_power } }
-			remove_power_ideas = yes
-			add_ideas = minor_power
-		}
+		IDEA = "[THIS.PRGetIdeaName]"
 	}
 }
 
@@ -475,7 +546,6 @@ power_ranking_quicksort = {
 # Combined: Set regional power flags (top N) and find naval hegemons in one pass per array
 determine_regional_powers = {
 	# Europe (top 7 regional, find naval hegemon)
-	set_temp_variable = { largest_value = 0 }
 	for_each_loop = {
 		array = global.european_nations
 		value = v
@@ -483,12 +553,10 @@ determine_regional_powers = {
 			if = { limit = { check_variable = { i < 7 } }
 				set_country_flag = regional_power
 			}
-			#assign_power_ranking_ideas = yes
 		}
 	}
 
 	# Sub-Saharan Africa (top 3 regional, find naval hegemon)
-	set_temp_variable = { largest_value = 0 }
 	for_each_loop = {
 		array = global.sub_saharan_nations
 		value = v
@@ -496,12 +564,10 @@ determine_regional_powers = {
 			if = { limit = { check_variable = { i < 3 } }
 				set_country_flag = regional_power
 			}
-			#assign_power_ranking_ideas = yes
 		}
 	}
 
 	# Middle East (top 3 regional, find naval hegemon)
-	set_temp_variable = { largest_value = 0 }
 	for_each_loop = {
 		array = global.middle_eastern_nations
 		value = v
@@ -509,12 +575,10 @@ determine_regional_powers = {
 			if = { limit = { check_variable = { i < 3 } }
 				set_country_flag = regional_power
 			}
-			#assign_power_ranking_ideas = yes
 		}
 	}
 
 	# Asia (top 7 regional, find naval hegemon)
-	set_temp_variable = { largest_value = 0 }
 	for_each_loop = {
 		array = global.asian_nations
 		value = v
@@ -522,12 +586,10 @@ determine_regional_powers = {
 			if = { limit = { check_variable = { i < 7 } }
 				set_country_flag = regional_power
 			}
-			#assign_power_ranking_ideas = yes
 		}
 	}
 
 	# Americas (top 4 regional, find naval hegemon)
-	set_temp_variable = { largest_value = 0 }
 	for_each_loop = {
 		array = global.american_nations
 		value = v
@@ -535,7 +597,6 @@ determine_regional_powers = {
 			if = { limit = { check_variable = { i < 7 } }
 				set_country_flag = regional_power
 			}
-			assign_power_ranking_ideas = yes
 		}
 	}
 }
