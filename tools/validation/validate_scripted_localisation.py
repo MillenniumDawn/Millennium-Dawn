@@ -40,7 +40,9 @@ def process_file_for_defined_localisations(
     paths = {}
     basename = os.path.basename(filename)
 
-    text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
 
     if "defined_text" in text_file and "name =" in text_file:
         pattern_matches = re.findall(
@@ -69,7 +71,9 @@ def process_file_for_used_localisations(
     paths = {}
     basename = os.path.basename(filename)
 
-    text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
 
     for name in search_names:
         if name in text_file:
@@ -347,7 +351,9 @@ class Validator(BaseValidator):
         gfx_path = str(Path(self.mod_path) / "interface") + "/"
         defined_gfx = set()
         for filename in glob.iglob(gfx_path + "**/*.gfx", recursive=True):
-            text_file = FileOpener.open_text_file(filename, lowercase=False)
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
             matches = re.findall(r'name\s*=\s*"(GFX_[^"]+)"', text_file)
             for m in matches:
                 defined_gfx.add(m)
@@ -368,7 +374,9 @@ class Validator(BaseValidator):
         results = []
         reported = set()
         for filename in files_to_scan:
-            text_file = FileOpener.open_text_file(filename, lowercase=False)
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
             matches = re.findall(r"localization_key\s*=\s*(GFX_[^\s\}]+)", text_file)
             for gfx_name in matches:
                 if gfx_name not in defined_gfx and gfx_name not in reported:
