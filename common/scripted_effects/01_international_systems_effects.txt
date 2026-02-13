@@ -238,20 +238,22 @@ update_sc_vote = {
 		add_to_array = { global.sc_vote_type_tracker = sc_new_vote_type }
 		add_to_array = { global.sc_vote_nation_tracker = sc_new_vote_nation }
 	} else = {
+		set_variable = { global.current_sc_vote_type = sc_new_vote_type }
+		set_variable = { global.current_sc_vote_nation = sc_new_vote_nation }
 		if = {
 			limit = {
-				check_variable = { sc_new_vote_type = 5 }
+				check_variable = { global.current_sc_vote_type = 5 }
 			}
-			var:sc_new_vote_nation = {
+			var:global.current_sc_vote_nation = {
 				hidden_effect = {
-					set_variable = { global.current_sc_vote_type = sc_new_vote_type }
-					set_variable = { global.current_sc_vote_nation = sc_new_vote_nation }
 					country_event = recognition.10
 				}
 			}
 		} else = {
-			var:sc_new_vote_nation = {
-				country_event = UNSC.1
+			var:global.current_sc_vote_nation = {
+				hidden_effect = {
+					country_event = UNSC.1
+				}
 			}
 		}
 	}
@@ -266,10 +268,13 @@ update_ga_vote = {
 				check_variable = { global.ga_vote_type_tracker^num > 0 }
 			}
 		}
-		#if is a new UNSC member vote, front-load it!
+		#if is a new UNSC member vote or non-binding raid vote, front-load it!
 		if = {
 			limit = {
-				check_variable = { ga_new_vote_type = 6 }
+				OR = {
+					check_variable = { ga_new_vote_type = 6 }
+					check_variable = { ga_new_vote_type = 7 }
+				}
 			}
 			add_to_array = { array = global.ga_vote_type_tracker value = ga_new_vote_type index = 0 }
 			add_to_array = { array = global.ga_vote_nation_tracker value = ga_new_vote_nation index = 0 }
@@ -285,11 +290,15 @@ update_ga_vote = {
 				check_variable = { global.current_ga_vote_type = 5 }
 			}
 			var:global.current_ga_vote_nation = {
-				country_event = recognition.13
+				hidden_effect = {
+					country_event = recognition.13
+				}
 			}
 		} else = {
 			var:global.current_ga_vote_nation = {
-				country_event = UN.1
+				hidden_effect = {
+					country_event = UN.1
+				}
 			}
 		}
 	}
@@ -654,20 +663,38 @@ security_council_vote_finished = {
 			limit = {
 				check_variable = { global.current_sc_vote_type = 1 }
 			}
+			var:global.current_sc_vote_nation = {
+				set_country_flag = has_end_war_mission
+				active_mission = UNSC_end_all_offensive_wars
+			}
 		}
 		else_if = {
 			limit = {
 				check_variable = { global.current_sc_vote_type = 2 }
+			}
+			var:global.current_sc_vote_nation = {
+				set_variable = { security_council_trade_sanctions_var = global.UN_general_assembly^num }
+				set_variable = { security_council_research_sanctions_var = global.UN_general_assembly^num }
+
+				multiply_variable = { security_council_trade_sanctions_var = 0.35 }
+				multiply_variable = { security_council_research_sanctions_var = 0.15 }
+				add_dynamic_modifier = { modifier = united_nations_security_council_sanctions }
 			}
 		}
 		else_if = {
 			limit = {
 				check_variable = { global.current_sc_vote_type = 3 }
 			}
+			var:global.current_sc_vote_nation = {
+				add_ideas = unsc_restricted_volunteers_too
+			}
 		}
 		else_if = {
 			limit = {
 				check_variable = { global.current_sc_vote_type = 4 }
+			}
+			var:global.current_sc_vote_nation = {
+				add_ideas = unsc_arms_embargo
 			}
 		}
 	} else = {
@@ -708,17 +735,20 @@ general_assembly_vote_finished = {
 		if = {
 			limit = {
 				check_variable = { global.current_ga_vote_type = 5 }
-				un_ga_2_3_required = yes
 			}
-			var:global.current_ga_vote_nation = {
-				country_event = recognition.71
+			if = {
+				limit = {
+					un_ga_2_3_required = yes
+				}
+				var:global.current_ga_vote_nation = {
+					country_event = recognition.71
+				}
+			}else = {
+				var:global.current_ga_vote_nation = {
+					country_event = recognition.72
+				}
 			}
-		} else = {
-			var:global.current_ga_vote_nation = {
-				country_event = recognition.72
-			}
-		}
-		if = {
+		} else_if = {
 			limit = {
 				check_variable = { global.current_ga_vote_type = 6 }
 			}
@@ -730,8 +760,11 @@ general_assembly_vote_finished = {
 			} else = {
 				un_sc_new_members_re_roll = yes
 			}
+		} else = {
+			#all other votes that pass dump here!
 		}
 	} else = {
+		#anything down here failed to pass
 		if = {
 			limit = {
 				check_variable = { global.current_ga_vote_type = 5 }
@@ -742,6 +775,39 @@ general_assembly_vote_finished = {
 				check_variable = { global.current_ga_vote_type = 6 }
 			}
 			un_sc_new_members_re_roll = yes
+		}
+	}
+
+	if = {
+		limit = {
+			check_variable = { global.current_ga_vote_type = 7 }
+		}
+		var:global.current_ga_vote_nation = {
+			if = {
+				limit = {
+					NOT = { has_country_flag = refused_payment_got_sanctioned_no_raids }
+				}
+				set_country_flag = {
+					flag = refused_payment_got_sanctioned_no_raids
+					days = 365
+					value = 1
+				}
+			} else = {
+				clr_country_flag = refused_payment_got_sanctioned_no_raids
+				set_country_flag = {
+					flag = refused_payment_got_sanctioned_no_raids
+					days = 450
+					value = 1
+				}
+			}
+
+			set_variable = { international_trade_sanctions = global.general_assembly_vote_yes }
+			set_variable = { international_research_sanctions = global.general_assembly_vote_yes }
+			multiply_variable = { international_trade_sanctions = -0.005 }
+			multiply_variable = { international_research_sanctions = -0.001 }
+			add_dynamic_modifier = {
+				modifier = united_nations_non_binding_sanctions
+			}
 		}
 	}
 
