@@ -2373,7 +2373,7 @@ country_event = {
 	id = devolution.2
 	title = devolution.2.t
 	desc = devolution.2.d
-	picture = GFX_france_mcdonalds_bombing
+
 	is_triggered_only = yes
 
 	immediate = { log = "[GetDateText]: [Root.GetName]: event devolution.2" }
@@ -2408,7 +2408,7 @@ country_event = {
 	id = devolution.3
 	title = devolution.3.t
 	desc = devolution.3.d
-	picture = GFX_france_mcdonalds_bombing
+
 	is_triggered_only = yes
 
 	immediate = { log = "[GetDateText]: [Root.GetName]: event devolution.3" }
@@ -2443,7 +2443,7 @@ country_event = {
 	id = devolution.4
 	title = devolution.4.t
 	desc = devolution.4.d
-	picture = GFX_france_mcdonalds_bombing
+
 	is_triggered_only = yes
 
 	immediate = { log = "[GetDateText]: [Root.GetName]: event devolution.4" }
@@ -2479,10 +2479,8 @@ country_event = {
 	id = devolution.5
 	title = devolution.5.t
 	desc = devolution.5.d
-	picture = GFX_france_mcdonalds_bombing
-	is_triggered_only = yes
 
-	immediate = { log = "[GetDateText]: [Root.GetName]: event devolution.5" }
+	is_triggered_only = yes
 
 	# Okay, Fine
 	option = {
@@ -2497,7 +2495,694 @@ country_event = {
 	option = {
 		name = devolution.5.b
 		log = "[GetDateText]: [This.GetName]: devolution.5.b executed"
+		set_country_flag = ENG_scottish_rejected
+		add_stability = -0.10
+		every_owned_state = {
+			limit = {
+				is_core_of = SCO
+			}
+			add_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
+		}
+		# Set a state modifier that'll rape productivity in Scotland & a decision to release them if player is fed up
+		# Alternatively, if they don't want to do allat, player can take a major temporary debuff to reintegrate Scotland
+		ai_chance = {
+			base = 1
+		}
+	}
+}
 
+# North Irish Referendum
+country_event = {
+	id = devolution.6
+	title = devolution.6.t
+	desc = devolution.6.d
+
+	is_triggered_only = yes
+
+	# Okay, Fine
+	option = {
+		name = devolution.6.a
+		log = "[GetDateText]: [This.GetName]: devolution.6.a executed"
+		activate_mission = ENG_irish_referendum
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No, Veto it
+	option = {
+		name = devolution.6.b
+		log = "[GetDateText]: [This.GetName]: devolution.6.b executed"
+		set_country_flag = ENG_irish_rejected
+		add_stability = -0.10
+		17 = {
+			add_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
+		}
+		# Set a state modifier that'll rape productivity in North Ireland & a decision to release them if player is fed up
+		# Alternatively, if they don't want to do allat, player can take a major temporary debuff to reintegrate North Ireland
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Welsh Referendum
+country_event = {
+	id = devolution.7
+	title = devolution.7.t
+	desc = devolution.7.d
+
+	is_triggered_only = yes
+
+	# Okay, Fine
+	option = {
+		name = devolution.7.a
+		log = "[GetDateText]: [This.GetName]: devolution.7.a executed"
+		activate_mission = ENG_welsh_referendum
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No, Veto it
+	option = {
+		name = devolution.7.b
+		log = "[GetDateText]: [This.GetName]: devolution.7.b executed"
+		set_country_flag = ENG_welsh_rejected
+		add_stability = -0.10
+		every_owned_state = {
+			limit = {
+				is_core_of = WAS
+			}
+			add_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
+		}
+		# Set a state modifier that'll rape productivity in Wales & a decision to release them if player is fed up
+		# Alternatively, if they don't want to do allat, player can take a major temporary debuff to reintegrate Wales
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Constituent Elections
+
+country_event = {
+	id = devolution.10
+	title = devolution.10.t
+	desc = devolution.10.d
+
+	is_triggered_only = yes
+	trigger = {
+		# Don't trigger if no one is in the Union anymore
+		NOT = {
+			AND = {
+				country_exists = SCO
+				country_exists = NIR
+				country_exists = WAS
+			}
+		}
+	}
+	# Okay, Fine
+	option = {
+		name = devolution.10.a
+		log = "[GetDateText]: [This.GetName]: devolution.10.a executed"
+		if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation < 19
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 5
+				min = -5 # Scotland has higher natural agitation
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 19
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 5
+				min = 0
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 29
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 10
+				min = 0
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 39
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 10
+				min = 5
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 39
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 15
+				min = 5
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 49
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 15
+				min = 10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 59
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 20
+				min = 10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 69
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 25
+				min = 15
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 79
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 30
+				min = 15
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 79
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 35
+				min = 20
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 89
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 45
+				min = 20
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 99
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 50
+				min = 25
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		# Wales
+		if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation < 19
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 5
+				min = -10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 19
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 5
+				min = 0
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 29
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 10
+				min = 0
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 39
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 10
+				min = 5
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 39
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 15
+				min = 5
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 49
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 15
+				min = 10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 59
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 20
+				min = 10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 69
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 25
+				min = 15
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 79
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 30
+				min = 15
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 79
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 35
+				min = 20
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 89
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 45
+				min = 20
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 99
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 50
+				min = 25
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		# North Ireland
+				if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation < 19
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 5
+				min = -10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 19
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 5
+				min = 0
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 29
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 10
+				min = 0
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 39
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 10
+				min = 5
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 39
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 15
+				min = 5
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 49
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 15
+				min = 10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 59
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 20
+				min = 10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 69
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 25
+				min = 15
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 79
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 30
+				min = 15
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 79
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 35
+				min = 20
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 89
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 45
+				min = 20
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 99
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 50
+				min = 25
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		ENG_var_cap = yes
 		ai_chance = {
 			base = 1
 		}
