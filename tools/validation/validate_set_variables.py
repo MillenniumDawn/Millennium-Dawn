@@ -34,7 +34,9 @@ def process_file_for_set_variables(
     paths = {}
     basename = os.path.basename(filename)
 
-    text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
 
     if "set_variable =" in text_file:
         pattern_matches = re.findall(r"set_variable = ([^ \t\n\}]+)", text_file)
@@ -77,7 +79,9 @@ def count_variable_references_wrapper(
             continue
 
         search_var = variable_name.lower() if lowercase else variable_name
-        text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+        text_file = FileOpener.open_text_file(
+            filename, lowercase=lowercase, strip_comments_flag=True
+        )
 
         total_count = text_file.count(search_var)
         set_count = text_file.count(f"set_variable = {search_var}")
