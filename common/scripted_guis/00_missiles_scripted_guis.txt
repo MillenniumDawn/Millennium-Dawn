@@ -6429,23 +6429,26 @@ scripted_gui = {
 
 		triggers = {
 			is_un_sc_propose_action_button_click_enabled = {
-				has_political_power > 150
 				ROOT = {
+					has_political_power > 150
 					has_offensive_war = no
-				}
-				NOT = {
-					has_war_with = THIS
+					NOT = {
+						has_war_with = PREV
+					}
 				}
 			}
 		}
 
 		effects = {
 			is_un_sc_propose_action_button_click = {
-				add_political_power = -150
+				ROOT = {
+					add_political_power = -150
 
-				set_temp_variable = { sc_new_vote_type = sc_selected_action }
-				set_temp_variable = { sc_new_vote_nation = THIS }
-				update_sc_vote = yes
+					set_temp_variable = { sc_new_vote_type = sc_selected_action }
+					set_temp_variable = { sc_new_vote_nation = PREV }
+					update_sc_vote = yes
+				}
+				missile_ui_update = yes
 			}
 		}
 	}
@@ -6473,13 +6476,81 @@ scripted_gui = {
 			#disable vote manipulation during vote confirmation
 			#this is so the system functions *properly*
 			is_un_sc_manipulate_vote_button_click_enabled = {
-
+				set_temp_variable = { disp_var = global.sc_vote_type_tracker^i }
+				meta_trigger = {
+					text = {
+						custom_trigger_tooltip = {
+							tooltip = un_sc_vote_track_[DISP]
+							always = yes
+						}
+					}
+					DISP = "[?disp_var]"
+				}
+				has_political_power > 150
 			}
 		}
 
 		effects = {
 			is_un_sc_manipulate_vote_button_click = {
+				custom_effect_tooltip = un_sc_manipulate_vote_tt
 
+				set_temp_variable = { nation_hold = global.sc_vote_nation_tracker^i }
+				set_temp_variable = { type_hold = global.sc_vote_type_tracker^i }
+				set_temp_variable = { index_track = i }
+
+				remove_from_array = {
+					array = global.sc_vote_nation_tracker
+					index = index_track
+				}
+
+				remove_from_array = {
+					array = global.sc_vote_type_tracker
+					index = index_track
+				}
+
+				add_to_array = {
+					array = global.sc_vote_nation_tracker
+					value = nation_hold
+					index = 0
+				}
+
+				add_to_array = {
+					array = global.sc_vote_type_tracker
+					value = type_hold
+					index = 0
+				}
+
+				missile_ui_update = yes
+			}
+
+			is_un_sc_manipulate_vote_button_right_click = {
+				custom_effect_tooltip = un_sc_manipulate_vote_tt
+
+				set_temp_variable = { nation_hold = global.sc_vote_nation_tracker^i }
+				set_temp_variable = { type_hold = global.sc_vote_type_tracker^i }
+				set_temp_variable = { index_track = i }
+
+				remove_from_array = {
+					array = global.sc_vote_nation_tracker
+					index = index_track
+				}
+
+				remove_from_array = {
+					array = global.sc_vote_type_tracker
+					index = index_track
+				}
+
+				add_to_array = {
+					array = global.sc_vote_nation_tracker
+					value = nation_hold
+				}
+
+				add_to_array = {
+					array = global.sc_vote_type_tracker
+					value = type_hold
+				}
+
+				missile_ui_update = yes
 			}
 		}
 	}
