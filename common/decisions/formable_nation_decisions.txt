@@ -1119,9 +1119,7 @@ form_SCA_category = {
 						is_subject_of = ROOT
 						has_war = no
 					}
-					all_core_state = {
-						is_owned_and_controlled_by = ROOT
-					}
+					ROOT = { is_sweden_state_owned = yes }
 				}
 			}
 			NOR = {
@@ -1130,9 +1128,7 @@ form_SCA_category = {
 						is_subject_of = ROOT
 						has_war = no
 					}
-					all_core_state = {
-						is_owned_and_controlled_by = ROOT
-					}
+					ROOT = { is_norway_state_owned = yes }
 				}
 			}
 			DEN = {
@@ -1141,9 +1137,7 @@ form_SCA_category = {
 						is_subject_of = ROOT
 						has_war = no
 					}
-					all_core_state = {
-						is_owned_and_controlled_by = ROOT
-					}
+					ROOT = { is_denmark_state_owned = yes }
 				}
 			}
 			FIN = {
@@ -1152,9 +1146,7 @@ form_SCA_category = {
 						is_subject_of = ROOT
 						has_war = no
 					}
-					all_core_state = {
-						is_owned_and_controlled_by = ROOT
-					}
+					ROOT = { is_finland_state_owned = yes }
 				}
 			}
 			ICE = {
@@ -1163,9 +1155,7 @@ form_SCA_category = {
 						is_subject_of = ROOT
 						has_war = no
 					}
-					all_core_state = {
-						is_owned_and_controlled_by = ROOT
-					}
+					ROOT = { owns_state = 7 }
 				}
 			}
 		}
@@ -9480,6 +9470,212 @@ form_PBL_category = {
 				}
 				set_cosmetic_tag = PBL_AUTH_SS
 			}
+		}
+	}
+}
+
+#Union of African States
+form_UAS_category = {
+	### Integrate ###
+	# Start integrate
+	UAS_integrate_start = {
+		icon = GFX_decision_generic_form_nation
+		ai_will_do = { factor = 10 }
+		visible = {
+			NOT = { has_country_flag = is_UAS }
+		}
+		highlight_states = {
+			highlight_state_targets = {
+				state = 345 #Volta
+				state = 346 #Coastal Ghana
+				state = 347 #Ashanti
+				state = 348 #Upper Ghana
+				state = 359 #Haute-Guinee
+				state = 360 #Guinee-Maritime
+				state = 187 #Malian Sahara
+				state = 366 #Tombouctou
+				state = 367 #Sikasso
+				state = 368 #Koulikoro
+				state = 1163 #Kidal
+				state = 1164 #Gao
+				state = 1165 #Menaka
+				state = 1166 #Kayes
+				state = 1167 #Ansongo
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UAS_integrate_trigger_tt
+				OR = {
+					GAH = {
+						is_subject_of = ROOT
+						has_war = no
+					}
+					is_ghana_states_owned = yes
+				}
+				OR = {
+					GUI = {
+						is_subject_of = ROOT
+						has_war = no
+					}
+					is_guinea_states_owned = yes
+				}
+				OR = {
+					MAL = {
+						is_subject_of = ROOT
+						has_war = no
+					}
+					is_malian_states_owned = yes
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UAS_integrate_start"
+			if = {
+				limit = { NOT = { has_country_flag = is_UAS } }
+				set_country_flag = is_UAS
+				set_global_flag = UAS_exists
+				clr_country_flag = dynamic_flag
+				clr_country_flag = dynamic_rebel_flag
+			}
+			set_country_flag = integrated_@ROOT
+			custom_effect_tooltip = UAS_start_integrate_tt
+			custom_effect_tooltip = general_integrate_tt
+			hidden_effect = { set_cosmetic_tag = UAS }
+		}
+	}
+	#GAH
+	UAS_integrate_GAH = {
+		icon = GFX_decision_generic_form_nation
+		cost = 200
+		days_remove = 365
+		ai_will_do = { factor = 10 }
+		allowed = { NOT = { tag = GAH } }
+		visible = {
+			has_country_flag = is_UAS
+			NOT = { has_country_flag = integrated_GAH }
+		}
+		available = {
+			set_temp_variable = { tag_check = GAH.id }
+			formable_nation_check = yes
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UAS_integrate_GAH"
+			every_state = {
+				limit = { is_ghana_states = yes }
+				add_core_of = ROOT
+			}
+			if = {
+				limit = { country_exists = GAH }
+				annex_country = {
+					target = GAH
+					transfer_troops = yes
+				}
+				GAH = {
+					every_unit_leader = {
+						set_nationality = ROOT
+					}
+				}
+			}
+			clr_country_flag = dynamic_flag
+			clr_country_flag = dynamic_rebel_flag
+			set_country_flag = integrated_GAH
+		}
+	}
+	#GUI
+	UAS_integrate_GUI = {
+		icon = GFX_decision_generic_form_nation
+		cost = 200
+		days_remove = 365
+		ai_will_do = { factor = 10 }
+		allowed = { NOT = { tag = GUI } }
+		visible = {
+			has_country_flag = is_UAS
+			NOT = { has_country_flag = integrated_GUI }
+		}
+		available = {
+			set_temp_variable = { tag_check = GUI.id }
+			formable_nation_check = yes
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UAS_integrate_GUI"
+			every_state = {
+				limit = { is_guinea_states = yes }
+				add_core_of = ROOT
+			}
+			if = {
+				limit = { country_exists = GUI }
+				annex_country = {
+					target = GUI
+					transfer_troops = yes
+				}
+				GUI = {
+					every_unit_leader = {
+						set_nationality = ROOT
+					}
+				}
+			}
+			clr_country_flag = dynamic_flag
+			clr_country_flag = dynamic_rebel_flag
+			set_country_flag = integrated_GUI
+		}
+	}
+	#MAL
+	UAS_integrate_MAL = {
+		icon = GFX_decision_generic_form_nation
+		cost = 300
+		days_remove = 365
+		ai_will_do = { factor = 10 }
+		allowed = { NOT = { tag = MAL } }
+		visible = {
+			has_country_flag = is_UAS
+			NOT = { has_country_flag = integrated_MAL }
+		}
+		available = {
+			set_temp_variable = { tag_check = MAL.id }
+			formable_nation_check = yes
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UAS_integrate_MAL"
+			every_state = {
+				limit = { is_malian_states = yes }
+				add_core_of = ROOT
+			}
+			if = {
+				limit = { country_exists = MAL }
+				annex_country = {
+					target = MAL
+					transfer_troops = yes
+				}
+				MAL = {
+					every_unit_leader = {
+						set_nationality = ROOT
+					}
+				}
+			}
+			clr_country_flag = dynamic_flag
+			clr_country_flag = dynamic_rebel_flag
+			set_country_flag = integrated_MAL
+		}
+	}
+	# Update flag
+	UAS_update_flag = {
+		icon = GFX_decision_generic_form_nation
+		cost = 0
+		ai_will_do = { factor = 10000 }
+		visible = {
+			has_country_flag = is_UAS
+			has_country_flag = integrated_GAH
+			has_country_flag = integrated_GUI
+			has_country_flag = integrated_MAL
+			NOT = {
+				has_cosmetic_tag = UAS
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UAS_update_flag"
+			set_cosmetic_tag = UAS
 		}
 	}
 }
