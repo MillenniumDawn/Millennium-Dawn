@@ -8017,6 +8017,7 @@ remove_coalition_members_effect = {
 # set_temp_variable = { col_one = 0 - 23 }  -- Optional
 # set_temp_variable = { col_two = 0 - 23 }  -- Optional
 # set_temp_variable = { col_three = 0 - 23 }  -- Optional
+# set_temp_variable = { col_four = 0 - 23 }  -- Optional
 # set_temp_variable = { change_leader_temp = 0-1 } -- Optional
 # set_temp_variable = { disable_elections = 0-1 } -- Optional
 change_ruling_party_effect = {
@@ -8030,26 +8031,25 @@ change_ruling_party_effect = {
 	clear_array = gov_coalition_array
 
 	# Rul Party Addition
-	set_temp_variable = { add_col_one = rul_party_temp }
 	custom_effect_tooltip = ruling_party_changed_tt
-
-	add_to_array = { ruling_party = add_col_one }
+	add_to_array = { ruling_party = rul_party_temp }
 
 	# Coalition Array Parameters
 	if = { limit = { has_variable = col_one }
-		set_temp_variable = { add_col_one = col_one }
 		custom_effect_tooltip = add_coalition_members_effect_TT
-		add_to_array = { gov_coalition_array = add_col_one }
+		add_to_array = { gov_coalition_array = col_one }
 	}
 	if = { limit = { has_variable = col_two }
-		set_temp_variable = { add_col_one = col_two }
 		custom_effect_tooltip = add_coalition_members_effect_TT
-		add_to_array = { gov_coalition_array = add_col_one }
+		add_to_array = { gov_coalition_array = col_two }
 	}
 	if = { limit = { has_variable = col_three }
-		set_temp_variable = { add_col_one = col_three }
 		custom_effect_tooltip = add_coalition_members_effect_TT
-		add_to_array = { gov_coalition_array = add_col_one }
+		add_to_array = { gov_coalition_array = col_three }
+	}
+	if = { limit = { has_variable = col_four }
+		custom_effect_tooltip = add_coalition_members_effect_TT
+		add_to_array = { gov_coalition_array = col_four }
 	}
 
 	# Disable Elections of 0 means that they have elections
@@ -8562,7 +8562,7 @@ set_election_year_60_months = {
 			MONTH = global.month
 		}
 	}
-	if = { limit = { has_government = neutrality }
+	else_if = { limit = { has_government = neutrality }
 		meta_effect = {
 			text = {
 				set_politics = {
@@ -8576,21 +8576,7 @@ set_election_year_60_months = {
 			MONTH = global.month
 		}
 	}
-	if = { limit = { has_government = fascism }
-		meta_effect = {
-			text = {
-				set_politics = {
-					ruling_party = fascism
-					elections_allowed = yes
-					last_election = "[YEAR].[MONTH].1"
-					election_frequency = 60
-				}
-			}
-			YEAR = election_year
-			MONTH = global.month
-		}
-	}
-	if = { limit = { has_government = nationalist }
+	else_if = { limit = { has_government = nationalist }
 		meta_effect = {
 			text = {
 				set_politics = {
@@ -8604,11 +8590,25 @@ set_election_year_60_months = {
 			MONTH = global.month
 		}
 	}
-	if = { limit = { has_government = communism }
+	else_if = { limit = { has_government = communism }
 		meta_effect = {
 			text = {
 				set_politics = {
 					ruling_party = communism
+					elections_allowed = yes
+					last_election = "[YEAR].[MONTH].1"
+					election_frequency = 60
+				}
+			}
+			YEAR = election_year
+			MONTH = global.month
+		}
+	}
+	else_if = { limit = { has_government = fascism }
+		meta_effect = {
+			text = {
+				set_politics = {
+					ruling_party = fascism
 					elections_allowed = yes
 					last_election = "[YEAR].[MONTH].1"
 					election_frequency = 60
@@ -8638,7 +8638,7 @@ set_elections_72_months = {
 			MONTH = "[?global.month|0]"
 		}
 	}
-	if = {
+	else_if = {
 		limit = { has_government = nationalist }
 		meta_effect = {
 			text = {
@@ -8653,7 +8653,7 @@ set_elections_72_months = {
 			MONTH = "[?global.month|0]"
 		}
 	}
-	if = {
+	else_if = {
 		limit = { has_government = neutrality }
 		meta_effect = {
 			text = {
@@ -8668,12 +8668,12 @@ set_elections_72_months = {
 			MONTH = "[?global.month|0]"
 		}
 	}
-	if = {
-		limit = { has_government = fascism }
+	else_if = {
+		limit = { has_government = communism }
 		meta_effect = {
 			text = {
 				set_politics = {
-					ruling_party = fascism
+					ruling_party = communism
 					elections_allowed = yes
 					last_election = "[YEAR].[MONTH].1"
 					election_frequency = 72
@@ -8683,12 +8683,12 @@ set_elections_72_months = {
 			MONTH = "[?global.month|0]"
 		}
 	}
-	if = {
-		limit = { has_government = communism }
+	else_if = {
+		limit = { has_government = fascism }
 		meta_effect = {
 			text = {
 				set_politics = {
-					ruling_party = communism
+					ruling_party = fascism
 					elections_allowed = yes
 					last_election = "[YEAR].[MONTH].1"
 					election_frequency = 72
@@ -8718,7 +8718,7 @@ set_elections_60_months = {
 			MONTH = "[?global.month|0]"
 		}
 	}
-	if = {
+	else_if = {
 		limit = { has_government = nationalist }
 		meta_effect = {
 			text = {
@@ -8733,7 +8733,7 @@ set_elections_60_months = {
 			MONTH = "[?global.month|0]"
 		}
 	}
-	if = {
+	else_if = {
 		limit = { has_government = neutrality }
 		meta_effect = {
 			text = {
@@ -8748,12 +8748,12 @@ set_elections_60_months = {
 			MONTH = "[?global.month|0]"
 		}
 	}
-	if = {
-		limit = { has_government = fascism }
+	else_if = {
+		limit = { has_government = communism }
 		meta_effect = {
 			text = {
 				set_politics = {
-					ruling_party = fascism
+					ruling_party = communism
 					elections_allowed = yes
 					last_election = "[YEAR].[MONTH].1"
 					election_frequency = 60
@@ -8763,12 +8763,12 @@ set_elections_60_months = {
 			MONTH = "[?global.month|0]"
 		}
 	}
-	if = {
-		limit = { has_government = communism }
+	else_if = {
+		limit = { has_government = fascism }
 		meta_effect = {
 			text = {
 				set_politics = {
-					ruling_party = communism
+					ruling_party = fascism
 					elections_allowed = yes
 					last_election = "[YEAR].[MONTH].1"
 					election_frequency = 60
