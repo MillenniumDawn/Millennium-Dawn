@@ -94,7 +94,6 @@ on_actions = {
 	}
 
 	on_new_term_election = {
-		effect = { }
 		random_events = {
 			100 = MD4_election_campaign.0
 
@@ -167,37 +166,6 @@ on_actions = {
 		}
 	}
 
-	# During justifying wargoals
-	# triggered daily, so make sure there is a sink somewhere not firing events
-	# country, FROM = target nation
-	on_justifying_wargoal_pulse = {
-		effect = {
-			FROM = {
-				if = { limit = { is_ai = yes }
-					ai_update_build_units = yes
-				}
-			}
-
-			# reset every day, stays lingering for some time after justification is finished
-			set_country_flag = { flag = country_is_justified_on_flag value = 1 days = 70 }
-		}
-	}
-
-	on_wargoal_expire = { }
-
-	#FROM is state #ROOT is broken as hell
-	on_nuke_drop = { }
-
-	on_border_war_lost = { }
-
-	on_leave_faction = { }
-
-	#FROM is the one that joins the faction
-	on_create_faction = { }
-
-	#FROM is country getting invited.
-	on_offer_join_faction = { }
-
 	#FROM is faction leader on join faction requests.
 	on_join_faction = {
 		effect = {
@@ -247,7 +215,6 @@ on_actions = {
 					FROM = { has_idea = CSTO_member }
 				}
 				add_ideas = CSTO_member
-				add_to_array = { global.CSTO_member = THIS }
 				ROOT = { add_to_tech_sharing_group = CSTO_Tech_Share }
 			}
 			if = {
@@ -298,7 +265,6 @@ on_actions = {
 				}
 				FROM = {
 					add_ideas = CSTO_member
-					add_to_array = { global.CSTO_member = THIS }
 					add_to_tech_sharing_group = CSTO_Tech_Share
 				}
 			}
@@ -330,7 +296,6 @@ on_actions = {
 			if = {
 				limit = { has_idea = CSTO_member }
 				remove_ideas = CSTO_member
-				remove_from_array = { global.CSTO_member = THIS }
 				ROOT = { remove_from_tech_sharing_group = CSTO_Tech_Share }
 			}
 		}
@@ -339,14 +304,26 @@ on_actions = {
 	# ROOT is capitulated country, FROM is winner
 	on_capitulation = {
 		effect = {
-			if = {
-				limit = {
-					ROOT = { original_tag = SOV }
-				}
+			if = { limit = { ROOT = { original_tag = SOV } }
 				FROM = {
 					country_event = {
 						id = department_of_state.42
 						days = 2
+					}
+				}
+				if = {
+					limit = {
+						country_exists = CHI
+						CHI = { is_subject = no }
+						547 = { # Checking to see if China controls Beijing
+							is_owned_and_controlled_by = CHI
+						}
+					}
+					CHI = {
+						country_event = {
+							id = department_of_state.35
+							days = 20
+						}
 					}
 				}
 			}
@@ -399,27 +376,6 @@ on_actions = {
 						id = Solomon_IslandsNews.1004
 						days = 1
 						random_hours = 6
-					}
-				}
-			}
-
-			if = {
-				limit = {
-					ROOT = { original_tag = SOV }
-					country_exists = CHI
-					NOT = {
-						CHI = {
-							is_subject = yes
-						}
-					}
-					547 = { # Checking to see if China controls Beijing
-						is_owned_and_controlled_by = CHI
-					}
-				}
-				CHI = {
-					country_event = {
-						id = department_of_state.35
-						days = 20
 					}
 				}
 			}
@@ -986,11 +942,7 @@ on_actions = {
 			}
 
 			#Special capitulation for ISIS
-			if = {
-				limit = {
-					original_tag = ISI
-					has_start_date > 2016.1.1
-				}
+			if = { limit = { original_tag = ISI }
 				# Give Iraqi states first Kurdistan if they've capture them, otherwise return to Iraq
 				every_owned_state = {
 					limit = {
@@ -1035,22 +987,21 @@ on_actions = {
 	# ROOT is capitulated country, FROM is winner
 	on_capitulation_immediate = {
 		effect = {
-			if = {
-				limit = {
-					ROOT = { original_tag = MON }
-					FROM = { original_tag = CHI }
+			if = { limit = { FROM = { original_tag = CHI } }
+				if = {
+					limit = {
+						ROOT = { original_tag = MON }
+					}
+					CHI = { country_event = { id = china.56 days = 1 } }
 				}
-				CHI = { country_event = { id = china.56 days = 1 } }
-			}
-			if = {
-				limit = {
-					ROOT = { original_tag = TAI }
-					FROM = { original_tag = CHI }
+				if = {
+					limit = {
+						ROOT = { original_tag = TAI }
+					}
+					CHI = { country_event = { id = china.54 days = 1 } }
 				}
-				CHI = { country_event = { id = china.54 days = 1 } }
 			}
-			if = {
-				limit = { FROM = { original_tag = ZOM } }
+			if = { limit = { FROM = { original_tag = ZOM } }
 				FROM = {
 					ROOT = {
 						if = { limit = { is_faction_leader = yes }
@@ -2111,26 +2062,7 @@ on_actions = {
 	on_coup_succeeded = {
 		effect = {
 			ROOT = {
-				calculate_influence_percentage = yes #set alignment drifts from influence
-				startup_politics = yes
-				ingame_update_setup = yes 	#money system
-				setup_init_factions = yes 	#flags for int. factions
-				set_law_vars = yes 	#vars for change laws secondary effects
-				update_neighbors_effects = yes # Updates Neighbor Effects
-				economic_cycle_drift_popularity = yes #drift from neighbor
-				if = { limit = { is_ai = yes }
-					ai_update_build_units = yes
-				}
-
-				country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
-				if = {
-					limit = {
-						NOT = { has_variable = domestic_influence_amount }
-					}
-					set_variable = { domestic_influence_amount = 100 }
-				}
-				recalculate_influence = yes
-
+				ingame_startup_nations_effect = yes
 			}
 		}
 	}
@@ -2205,17 +2137,7 @@ on_actions = {
 	#ROOT is winner #FROM gets annexed
 	on_civil_war_end = {
 		effect = {
-			every_state = {
-				limit = { has_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity } }
-
-				remove_dynamic_modifier = { modifier = ITA_civil_war_partisan_activity }
-			}
-			if = {
-				limit = {
-					ROOT = {
-						original_tag = ITA
-					}
-				}
+			if = { limit = { ROOT = { original_tag = ITA } }
 				ROOT = {
 					set_temp_variable = { ITA_stability_factor_change = 0.6 }
 					modify_stability_factor_effect = yes
@@ -2238,10 +2160,9 @@ on_actions = {
 			}
 
 			ROOT = {
-
 				if = {
 					limit = {
-						check_variable = { debt < FROM.debt } #less than
+						check_variable = { debt < FROM.debt }
 					}
 					add_to_variable = { debt = FROM.debt }
 				}
@@ -3129,9 +3050,7 @@ on_actions = {
 				random_other_country = {
 					limit = {
 						is_dynamic_country = no
-						ROOT = {
-							original_tag = PREV
-						}
+						ROOT = { original_tag = PREV }
 					}
 
 					ROOT = {
