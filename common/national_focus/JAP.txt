@@ -675,6 +675,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_housing_support"
+			set_temp_variable = { JAP_redistribution_stability_factor_change = 0.05 }
+			update_JAP_redistribution_stability_factor = yes
+			set_temp_variable = { JAP_redistribution_social_cost_multiplier_modifier_change = 0.05 }
+			update_JAP_redistribution_social_cost_multiplier_modifier = yes
 		}
 
 		ai_will_do = {
@@ -700,6 +704,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_student_loans"
+			set_temp_variable = { JAP_redistribution_research_speed_factor_change = 0.05 }
+			update_JAP_redistribution_research_speed_factor = yes
+			set_temp_variable = { JAP_redistribution_education_cost_multiplier_modifier_change = 0.05 }
+			update_JAP_redistribution_education_cost_multiplier_modifier = yes
 		}
 
 		ai_will_do = {
@@ -725,6 +733,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_focusing_renewable_energy"
+			add_tech_bonus = {
+				name = JAP_focusing_renewable_energy
+				category = CAT_renewable
+				uses = 1
+				bonus = 1
+			}
 		}
 
 		ai_will_do = {
@@ -750,6 +764,18 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_renewable_energy_feed_in_tariffs"
+			if = {
+				limit = {
+					NOT = {
+						has_dynamic_modifier = JAP_focusing_renewable_energy_modifier
+					}
+				 }
+				 add_dynamic_modifier = {
+					modifier = JAP_focusing_renewable_energy_modifier
+				 }
+			}
+			set_temp_variable = { JAP_focusing_renewable_energy_production_speed_renewable_energy_infra_factor_change = 0.15 }
+			update_JAP_focusing_renewable_energy_production_speed_renewable_energy_infra_factor = yes
 		}
 
 		ai_will_do = {
@@ -775,6 +801,18 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_energy_efficiency"
+			if = {
+				limit = {
+					NOT = {
+						has_dynamic_modifier = JAP_focusing_renewable_energy_modifier
+					}
+				 }
+				 add_dynamic_modifier = {
+					modifier = JAP_focusing_renewable_energy_modifier
+				 }
+			}
+			set_temp_variable = { JAP_focusing_renewable_energy_pop_energy_use_multiplier_change = -0.05 }
+			update_JAP_focusing_renewable_energy_pop_energy_use_multiplier = yes
 		}
 
 		ai_will_do = {
@@ -801,6 +839,20 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_nuclear_phaseout"
+			if = {
+				limit = { has_idea = nuclear_energy }
+				swap_ideas = { remove_idea = nuclear_energy add_idea = non_nuclear_power }
+			}
+			else_if = {
+				limit = { has_idea = nuclear_power_def }
+				swap_ideas = { remove_idea = nuclear_power_def add_idea = non_nuclear_power }
+			}
+			else_if = {
+				limit = { has_idea = nuclear_power_off }
+				swap_ideas = { remove_idea = nuclear_power_off add_idea = non_nuclear_power }
+			}
+			set_temp_variable = { JAP_focusing_renewable_energy_production_speed_renewable_energy_infra_factor_change = 0.15 }
+			update_JAP_focusing_renewable_energy_production_speed_renewable_energy_infra_factor = yes
 		}
 
 		ai_will_do = {
@@ -826,6 +878,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_leading_disarmament"
+			add_ideas = JAP_leading_disarmament_idea
 		}
 
 		ai_will_do = {
@@ -851,6 +904,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_restricting_arms_exports"
+			add_ideas = JAP_restricting_arms_exports_idea
 		}
 
 		ai_will_do = {
@@ -874,10 +928,17 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
+			has_power_balance = {
+				id = JAP_article_nine
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_principle_of_no_armed_forces"
+			add_power_balance_value = {
+				id = JAP_article_nine
+				value = -0.20
+			}
 		}
 
 		ai_will_do = {
@@ -899,10 +960,23 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
+			NOT = {	has_completed_focus = JAP_enhancement_exercises	}
+			has_power_balance = {
+				id = JAP_article_nine
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_abrogating_us_japan_security_treaty"
+			USA = {
+				diplomatic_relation = {
+					country = JAP
+					relation = guarantee
+					active = no
+				}
+			}
+			set_temp_variable = { percent_change = 30 }
+			change_domestic_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -924,10 +998,23 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
+			has_power_balance = {
+				id = JAP_article_nine
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_dissolving_sdf"
+			remove_power_balance = {
+				id = JAP_article_nine
+			}
+			newline = yes
+			delete_unit = {	disband = yes }
+			custom_effect_tooltip = JAP_army_delete_TT
+			newline = yes
+			country_lock_all_division_template = yes
+			newline = yes
+			add_ideas = JAP_development_peaceful_nation_idea
 		}
 
 		ai_will_do = {
@@ -953,6 +1040,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_right"
+			add_political_power = 100
 		}
 
 		ai_will_do = {
@@ -974,10 +1062,17 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
+			has_power_balance = {
+				id = JAP_article_nine
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_strengthen_military_power"
+			add_power_balance_value = {
+				id = JAP_article_nine
+				value = 0.10
+			}
 		}
 
 		ai_will_do = {
@@ -999,10 +1094,17 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
+			has_power_balance = {
+				id = JAP_article_nine
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_allow_overseas_deployment"
+			add_power_balance_value = {
+				id = JAP_article_nine
+				value = 0.10
+			}
 		}
 
 		ai_will_do = {
@@ -1024,10 +1126,17 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
+			has_power_balance = {
+				id = JAP_article_nine
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_international_missions"
+			add_power_balance_value = {
+				id = JAP_article_nine
+				value = 0.10
+			}
 		}
 
 		ai_will_do = {
@@ -1050,10 +1159,17 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
+			has_power_balance = {
+				id = JAP_article_nine
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_revising_use_weapons"
+			add_power_balance_value = {
+				id = JAP_article_nine
+				value = 0.10
+			}
 		}
 
 		ai_will_do = {
@@ -1080,10 +1196,39 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
+			has_power_balance = {
+				id = JAP_article_nine
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_exclusive_defense"
+			if = {
+				limit = {
+					power_balance_value = {
+						id = JAP_article_nine
+						value < -0.40
+					}
+				 }
+				add_power_balance_value = {
+					id = JAP_article_nine
+					value = 0.20
+				}
+			}
+			else_if = {
+				limit = { 
+					power_balance_value = {
+						id = JAP_article_nine
+						value > -0.40
+					}
+				}
+				add_power_balance_value = {
+					id = JAP_article_nine
+					value = -0.20
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = JAP_exclusive_defense_TT
 		}
 
 		ai_will_do = {
@@ -1107,10 +1252,17 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
+			has_power_balance = {
+				id = JAP_article_nine
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_collective_self_defense"
+			add_power_balance_value = {
+				id = JAP_article_nine
+				value = 0.20
+			}
 		}
 
 		ai_will_do = {
@@ -1135,10 +1287,16 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
+			has_power_balance = {
+				id = JAP_article_nine
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_public_support_constitutional_revision"
+			unlock_decision_tooltip = JAP_constitutional_revision_propaganda_decision
+			newline = yes
+			custom_effect_tooltip = JAP_public_support_constitutional_revision_TT
 		}
 
 		ai_will_do = {
@@ -1161,10 +1319,18 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
+			custom_trigger_tooltip = {
+				tooltip = absolute_majority_popularity_66_TT
+				check_variable = { government_coalition_strength > 0.66 }
+			}
+			has_power_balance = {
+				id = JAP_article_nine
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_explicitly_stipulating_sdf"
+			#TODO While keeping Stability, grant an Article 9 national spirit with a mild military debuff; values need adjustment.
 		}
 
 		ai_will_do = {
@@ -1187,10 +1353,22 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
+			custom_trigger_tooltip = {
+				tooltip = absolute_majority_popularity_66_TT
+				check_variable = { government_coalition_strength > 0.66 }
+			}
+			has_power_balance = {
+				id = JAP_article_nine
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus JAP_repealing_article_9"
+			remove_power_balance = {
+				id = JAP_article_nine
+			}
+			newline = yes
+			custom_effect_tooltip = JAP_remove_article_nine_TT
 		}
 
 		ai_will_do = {
@@ -4276,6 +4454,7 @@ focus = {
 	available = {
 		country_exists = USA
 		NOT = { has_war_with = USA }
+		NOT = {	has_completed_focus = JAP_abrogating_us_japan_security_treaty}
 		#TODO tero
 	}
 
