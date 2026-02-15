@@ -4742,11 +4742,11 @@ focus_tree = {
 			384 = {
 				create_unit = {
 					division = "name = \"Armoured Brigade\" division_template = \"Armoured Brigade\" start_experience_base = 0.5"
-					owner = BOL
+					owner = ALG
 				}
 				create_unit = {
 					division = "name = \"Armoured Brigade\" division_template = \"Armoured Brigade\" start_experience_base = 0.5"
-					owner = BOL
+					owner = ALG
 				}
 			}
 		}
@@ -7914,13 +7914,17 @@ focus_tree = {
 
 		cost = 6
 
-	prerequisite = { focus = ALG_support_polisario_struggle }
-	prerequisite = { focus = ALG_border_security_investments }
+		prerequisite = { focus = ALG_support_polisario_struggle }
+		prerequisite = { focus = ALG_border_security_investments }
 
-	completion_reward = {
-		log = "[GetDateText]: [Root.GetName]: Focus ALG_internationalize_conflict"
-		country_event = { id = ALG_morocco.1 days = 1 }
-	}
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_internationalize_conflict"
+			# unlock the Casablanca mission/decision
+			set_country_flag = algeria_casablanca_unlocked
+			set_variable = { algeria_casablanca_approach = 0 }
+			set_variable = { algeria_casablanca_result = 0 }
+			country_event = { id = ALG_morocco.1 days = 1 }
+		}
 
 		ai_will_do = {
 			factor = 1
@@ -7937,24 +7941,34 @@ focus_tree = {
 
 		cost = 6
 
-	prerequisite = { focus = ALG_internationalize_conflict }
+		prerequisite = { focus = ALG_internationalize_conflict }
 
-	completion_reward = {
-		log = "[GetDateText]: [Root.GetName]: Focus ALG_african_union_pressure"
-		add_ideas = ALG_AU_pressure_idea
-		swap_ideas = {
-			remove_idea = ALG_moroccan_rivalry_A2
-			add_idea = ALG_moroccan_rivalry_A_final
-		}
-		373 = { remove_claim_by = MOR }
-		372 = { remove_claim_by = MOR }
-		372 = {
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ALG_african_union_pressure"
+			add_timed_idea = {
+				idea = ALG_AU_pressure_idea
+				days = 356
+			}
+			swap_ideas = {
+				remove_idea = ALG_moroccan_rivalry_A2
+				add_idea = ALG_moroccan_rivalry_A_final
+			}
+
+
 			if = {
-				limit = { is_core_of = MOR }
-				remove_core_of = MOR
+				limit = { check_variable = algeria_casablanca_result value = 1 compare = greater_than_or_equals }
+				373 = { remove_claim_by = MOR }
+				372 = { remove_claim_by = MOR }
+			}
+
+			if = {
+				limit = { check_variable = { variable = algeria_casablanca_result value = 2 compare = greater_than_or_equals } }
+				372 = {
+					if = { limit = { is_core_of = MOR } remove_core_of = MOR }
+				}
 			}
 		}
-	}
+
 
 		ai_will_do = {
 			factor = 1

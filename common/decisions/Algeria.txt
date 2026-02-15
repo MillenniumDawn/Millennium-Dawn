@@ -3228,3 +3228,244 @@ ALG_tamazgha_cultural_revival_category = {
 		}
 	}
 }
+ALG_casablanca_decisions = {
+	ALG_casablanca_mission = {
+		icon = GFX_west_sahara2
+
+		visible = { has_country_flag = algeria_casablanca_unlocked }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_casablanca_mission_tt
+				check_variable = { algeria_casablanca_result = 0 }
+				NOT = { check_variable = { algeria_casablanca_approach = 0 } } 
+			}
+		}
+
+		days_mission_timeout = 180
+		cancel_if_not_visible = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_casablanca_mission"
+			# if approach = 1 (great powers) -> best odds
+			if = {
+				limit = { check_variable = { variable = algeria_casablanca_approach value = 1 compare = greater_than_or_equals } }
+				random_list = {
+					60 = { set_variable = { algeria_casablanca_result = 2 } } # high success
+					30 = { set_variable = { algeria_casablanca_result = 1 } } # medium
+					10 = { set_variable = { algeria_casablanca_result = 0 } } # low
+				}
+			}
+
+			# approach = 3 (mixed) -> balanced odds
+			if = {
+				limit = { check_variable = { variable = algeria_casablanca_approach value = 3 compare = greater_than_or_equals } }
+				random_list = {
+					40 = { set_variable = { algeria_casablanca_result = 2 } }
+					40 = { set_variable = { algeria_casablanca_result = 1 } }
+					20 = { set_variable = { algeria_casablanca_result = 0 } }
+				}
+			}
+
+			# approach = 2 (regional) -> worst odds
+			if = {
+				limit = { check_variable = { variable = algeria_casablanca_approach value = 2 compare = greater_than_or_equals } }
+				random_list = {
+					10 = { set_variable = { algeria_casablanca_result = 2 } }
+					30 = { set_variable = { algeria_casablanca_result = 1 } }
+					60 = { set_variable = { algeria_casablanca_result = 0 } }
+				}
+			}
+
+			# fallback (no approach set) - treat as regional
+			if = {
+				limit = {
+					NOT = {
+						OR = {
+							check_variable = { variable = algeria_casablanca_approach value = 1 compare = greater_than_or_equals }
+							check_variable = { variable = algeria_casablanca_approach value = 2 compare = greater_than_or_equals }
+							check_variable = { variable = algeria_casablanca_approach value = 3 compare = greater_than_or_equals }
+						}
+					}
+				}
+				random_list = {
+					10 = { set_variable = { algeria_casablanca_result = 2 } }
+					30 = { set_variable = { algeria_casablanca_result = 1 } }
+					60 = { set_variable = { algeria_casablanca_result = 0 } }
+				}
+			}
+
+			# Rewards: PP & stability only
+			if = {
+				limit = { check_variable = { variable = algeria_casablanca_result value = 2 compare = greater_than_or_equals } }
+				add_political_power = 100
+				add_stability = 0.03
+				hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_result_high hours = 6 } }
+			}
+			if = {
+				limit = { check_variable = { variable = algeria_casablanca_result value = 1 compare = greater_than_or_equals } }
+				add_political_power = 50
+				add_stability = 0.02
+				hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_result_med hours = 6 } }
+			}
+			if = {
+				limit = { check_variable = { variable = algeria_casablanca_result value = 0 compare = greater_than_or_equals } }
+				add_political_power = 20
+				add_stability = 0.01
+				hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_result_low hours = 6 } }
+			}
+
+			# clear unlock flag so player can't spam decisions immediately
+			remove_country_flag = algeria_casablanca_unlocked
+		}
+
+		timeout_effect = {
+			# mission timed out: failure
+			set_variable = { algeria_casablanca_result = 0 }
+			add_stability = -0.03
+			hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_timeout hours = 6 } }
+			remove_country_flag = algeria_casablanca_unlocked
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+	ALG_casablanca_approach_great_powers = {
+		icon = GFX_generic_meeting
+
+		visible = { has_country_flag = algeria_casablanca_unlocked }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_casablanca_approach_tt
+				check_variable = { algeria_casablanca_approach = 0 }
+				check_variable = { algeria_casablanca_result = 0 }
+			}
+		}
+		
+		cost = 50
+
+
+
+		complete_effect = {
+            log = "[GetDateText]: [Root.GetName]: Decision ALG_casablanca_approach_great_powers"
+            set_variable = { algeria_casablanca_approach = 3 }
+            add_stability = -0.03
+            set_country_flag = algeria_casablanca_mission_active
+			set_temp_variable = { percent_change = 10 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 8 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 7 }
+			set_temp_variable = { tag_index = SPR }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+            hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_court_great_powers hours = 6 } }
+        }
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+	ALG_casablanca_approach_regional = {
+		icon = GFX_generic_meeting
+
+		visible = { has_country_flag = algeria_casablanca_unlocked }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_casablanca_approach_tt
+				check_variable = { algeria_casablanca_approach = 0 }
+				check_variable = { algeria_casablanca_result = 0 }
+			}
+		}
+		cost = 50
+
+		complete_effect = {
+            log = "[GetDateText]: [Root.GetName]: Decision ALG_casablanca_approach_regional"
+            set_variable = { algeria_casablanca_approach = 2 }
+            add_stability = -0.02
+            set_country_flag = algeria_casablanca_mission_active
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = MAU }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = TUN }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = LBA }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = MOR }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+            hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_regional_approach hours = 6 } }
+        }
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+	ALG_casablanca_approach_mixed = {
+		icon = GFX_generic_meeting
+
+		visible = { has_country_flag = algeria_casablanca_unlocked }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_casablanca_approach_tt
+				check_variable = { algeria_casablanca_approach = 0 }
+				check_variable = { algeria_casablanca_result = 0 }
+			}
+		}
+		cost = 50
+
+		complete_effect = {
+            log = "[GetDateText]: [Root.GetName]: Decision ALG_casablanca_approach_mixed"
+            set_variable = { algeria_casablanca_approach = 1 }
+            add_stability = -0.01
+            set_country_flag = algeria_casablanca_mission_active
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = SPR }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = MAU }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = TUN }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = LBA }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = MOR }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+            hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_mixed_strategy hours = 6 } }
+        }
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+}
