@@ -1,8 +1,46 @@
 ---
 layout: default
-title: "Internal Faction Tutorial"
-description: "Tutorial for the Internal Factions for Millennium Dawn: A Modern Day mod."
+title: "Internal Faction Guide"
+description: "Guide for the Internal Factions for Millennium Dawn: A Modern Day mod."
 ---
+
+# Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [Internal Factions Guide](#internal-factions-guide)
+  - [Overview](#overview)
+  - [How Opinion Works](#how-opinion-works)
+  - [Economic Factions](#economic-factions)
+    - [Small \& Medium Business Owners](#small--medium-business-owners)
+    - [International Bankers](#international-bankers)
+    - [Fossil Fuel Industry](#fossil-fuel-industry)
+    - [Industrial Conglomerates](#industrial-conglomerates)
+    - [Oligarchs](#oligarchs)
+  - [Militaristic Factions](#militaristic-factions)
+    - [Maritime Industry](#maritime-industry)
+    - [Defense Industry (Military-Industrial Complex)](#defense-industry-military-industrial-complex)
+    - [The Military](#the-military)
+    - [Intelligence Community](#intelligence-community)
+  - [Special Interest Factions](#special-interest-factions)
+    - [Labour Unions](#labour-unions)
+    - [Landowners](#landowners)
+    - [Farmers](#farmers)
+    - [Communist Cadres](#communist-cadres)
+  - [Religious Factions](#religious-factions)
+    - [The Priesthood](#the-priesthood)
+    - [The Ulema](#the-ulema)
+    - [The Clergy](#the-clergy)
+    - [Wahabi Ulema](#wahabi-ulema)
+  - [Nation-Specific Factions](#nation-specific-factions)
+    - [The Donju (North Korea)](#the-donju-north-korea)
+    - [Saudi Royal Family](#saudi-royal-family)
+    - [Iranian Quds Force](#iranian-quds-force)
+    - [Foreign Jihadis](#foreign-jihadis)
+    - [Wall Street (USA)](#wall-street-usa)
+    - [Chaebols (South Korea)](#chaebols-south-korea)
+  - [Strategic Tips](#strategic-tips)
+  - [Common Event Chains](#common-event-chains)
+  - [Quick Reference Table](#quick-reference-table)
 
 # Internal Factions Guide
 
@@ -32,7 +70,9 @@ Opinion represents how happy the current internal faction is with the ruling par
 ## Economic Factions
 
 ### Small & Medium Business Owners
+
 **Dynamic Bonuses** (scale with opinion):
+
 - Industrial Complex construction speed (max +15%)
 - Stability (max +10%)
 - Consumer goods factor (max -10%)
@@ -41,6 +81,7 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Civilian factory productivity (max +15%)
 
 **Events**:
+
 - Tax cut demands (if opinion >60)
 - Foreign company buyouts
 - Bureaucracy complaints
@@ -52,17 +93,21 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Religious day business conflicts
 
 **Decisions**:
+
 - **Raise Wages**: +5 opinion (also affects Labour Unions, Communist Cadres)
 - **Subsidize Small Businesses**: +5 opinion, -4% corporate tax income for 120 days
 
 ---
 
 ### International Bankers
+
 **Static Bonuses**:
+
 - Interest rate multiplier: -1
 - Expected education modifier: +0.5
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Office construction speed (max +15%)
 - Local resources factor (max +10%)
 - Trade opinion factor (max +20%)
@@ -73,17 +118,21 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Office park tax income (max +15%)
 
 **Events**:
+
 - Refusing loans to small businesses
 - Foreign company buyouts
 - Grain silo purchases by bankers
 
 **Decisions**:
+
 - **Cut Taxes on the Rich**: +5 opinion (also affects Landowners, Oligarchs)
 
 ---
 
 ### Fossil Fuel Industry
+
 **Dynamic Bonuses** (scale with opinion):
+
 - Local resources factor (max +20%)
 - Fuel gain factor (max +25%)
 - Justify war goal time (max -15%)
@@ -91,11 +140,13 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Fuel silo construction speed (max +15%)
 
 **Events**:
+
 - Clean energy campaigns
 - Biofuel investment conflicts with Farmers
 - Fuel silo proposals
 
 **Decisions**:
+
 - **Encourage Additional Resource Production**: +5 opinion, +15% local resources, -5% corporate tax income for 90 days
 - **Cut Backs on Regulations**: +5 opinion, +30% resource export multiplier, -0.001 stability/week for 180 days
 - **Cut Taxes on Industry**: +5 opinion (also affects Defense Industry, Maritime Industry, Industrial Conglomerates)
@@ -103,11 +154,14 @@ Opinion represents how happy the current internal faction is with the ruling par
 ---
 
 ### Industrial Conglomerates
+
 **Static Bonuses**:
+
 - Investment duration: -25%
 - Expected administration modifier: +0.5
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Infrastructure construction speed (max +15%)
 - Local resources factor (max +10%)
 - Communist acceptance (max +25)
@@ -115,6 +169,7 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Civilian factory tax income (max +20%)
 
 **Events**:
+
 - Foreign company buyouts
 - Harassment of small businesses
 - Labor union disputes
@@ -122,6 +177,7 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Agricultural complex conversions
 
 **Decisions**:
+
 - **Raise Wages**: +5 opinion (shared with SMBO)
 - **Subsidize Small Businesses**: +5 opinion (shared with SMBO)
 - **Cut Taxes on Industry**: +5 opinion
@@ -129,17 +185,21 @@ Opinion represents how happy the current internal faction is with the ruling par
 ---
 
 ### Oligarchs
+
 **Static Bonuses**:
+
 - Corruption cost factor: +25%
 - Expected education modifier: -0.5
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Industrial complex construction speed (max +15%)
 - Local resources factor (max +20%)
 - Communist acceptance (max +25)
 - Communist drift (max +0.05)
 
 **Events**:
+
 - Foreign company buyouts
 - Harassment of small businesses
 - Intelligence service investigations
@@ -147,6 +207,7 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Migrant labor abuse
 
 **Decisions**:
+
 - **Cut Taxes on the Rich**: +5 opinion
 - **Encourage Additional Resource Production**: +5 opinion
 - **Sell Political Positions**: +5 opinion, gain treasury income, risk increasing corruption
@@ -156,10 +217,13 @@ Opinion represents how happy the current internal faction is with the ruling par
 ## Militaristic Factions
 
 ### Maritime Industry
+
 **Static Bonus**:
+
 - Expected military budget modifier: +0.5
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Dockyard construction speed (max +20%)
 - Naval base construction speed (max +20%)
 - Dockyard industrial capacity (max +20%)
@@ -168,20 +232,25 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Dockyard tax income (max +20%)
 
 **Events**:
+
 - Subsidy requests
 - Convoy production subsidies
 - Warehouse purchases in coastal areas
 
 **Decisions**:
+
 - **Cut Taxes on Industry**: +5 opinion
 
 ---
 
 ### Defense Industry (Military-Industrial Complex)
+
 **Static Bonus**:
+
 - Expected military budget modifier: +0.5
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Military factory construction speed (max +10%)
 - Factory efficiency gain (max +15%)
 - Factory base efficiency (max +15%)
@@ -189,21 +258,26 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Military factory tax income (max +20%)
 
 **Events**:
+
 - SAM site demands after border incursions
 - Military industry thriving (if opinion >80)
 - Labor union disputes
 
 **Decisions**:
+
 - **Cut Taxes on Industry**: +5 opinion
 
 ---
 
 ### The Military
+
 **Static Bonuses**:
+
 - Nationalist drift: +0.02
 - Expected military budget modifier: +0.5
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Army organization (max +5%)
 - Army morale (max +10%)
 - Training time (max -20%)
@@ -211,25 +285,31 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Personnel cost multiplier (max -25%)
 
 **Minimum Opinion Bonuses**:
+
 - Defense spending level increases minimum opinion (+5% per tier from "Reasonable Defense" to "Total War Economy")
 
 **Events**:
+
 - SAM site demands
 - Government opposition (if you're liberal/progressive)
 - Ideological conflicts with Communist Cadres
 - Foreign nationals in military
 
 **Decisions**:
+
 - **Allow Foreign Nationals**: -5 opinion, +5% conscription factor, +15% migration rate
 - **Repeal Foreign Nationals**: +5 opinion
 
 ---
 
 ### Intelligence Community
+
 **Static Bonus**:
+
 - Expected police budget modifier: +0.5
 
 **Dynamic Bonuses** (scale with opinion):
+
 - **With La Resistance DLC**: Civilian/Army/Navy/Airforce intel factor (max +15% each)
 - **Without DLC**: Decryption/Encryption factor (max +20% each)
 - Radar station construction speed (max +25%)
@@ -237,6 +317,7 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Foreign influence effectiveness (max +15%)
 
 **Events**:
+
 - Citizen surveillance scandals
 - Oligarch investigations
 - Religious institution surveillance
@@ -246,11 +327,14 @@ Opinion represents how happy the current internal faction is with the ruling par
 ## Special Interest Factions
 
 ### Labour Unions
+
 **Static Bonuses**:
+
 - Expected military budget modifier: -0.5
 - Expected healthcare modifier: +0.5
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Factory start efficiency (max +10%)
 - Factory efficiency gain (max +10%)
 - Political power factor (max +25%)
@@ -258,6 +342,7 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Social spending cost multiplier (max -15%)
 
 **Events**:
+
 - Work contract disputes
 - Pay increase demands from businesses
 - Healthcare spending requests
@@ -265,17 +350,21 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Migration protests
 
 **Decisions**:
+
 - **Tax Labour Unions**: -10 opinion, -10% consumer goods, +5% population tax income for 90 days
 - **Raise Wages**: +10 opinion (also affects SMBO and Industrial Conglomerates)
 
 ---
 
 ### Landowners
+
 **Static Bonuses**:
+
 - Corruption cost factor: +15%
 - Expected welfare modifier: -0.5
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Local resources factor (max +15%)
 - Conscription factor (max +15%)
 - Industrial complex construction speed (max +15%)
@@ -283,12 +372,14 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Political power factor (max +15%)
 
 **Events**:
+
 - Tax cut demands
 - Agrarian change resistance
 - Religious institution funding
 - Migrant labor abuse
 
 **Decisions**:
+
 - **Cut Taxes on the Rich**: +5 opinion
 - **Encourage Additional Resource Production**: +5 opinion
 - **Sell Political Positions**: +5 opinion
@@ -296,11 +387,14 @@ Opinion represents how happy the current internal faction is with the ruling par
 ---
 
 ### Farmers
+
 **Static Bonuses**:
+
 - Agriculture workers modifier: +5%
 - Agriculture district worker requirement: +5%
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Conscription factor (max +10%)
 - Consumer goods factor (max -10%)
 - Monthly population growth (max +20%)
@@ -310,6 +404,7 @@ Opinion represents how happy the current internal faction is with the ruling par
 **Special**: Opinion changes are **doubled** if you have increased agricultural subsidies (Syria-specific)
 
 **Events**:
+
 - Agrarian change resistance
 - Losing ground / subsidy requests
 - Biofuel investment proposals
@@ -318,15 +413,19 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Agricultural complex conversions
 
 **Decisions**:
+
 - **Agricultural District Tax Credits**: +5 opinion, -10% agriculture district tax income for 120 days
 
 ---
 
 ### Communist Cadres
+
 **Static Bonus**:
+
 - Expected administration modifier: +0.5
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Army organization regain (max +20%)
 - Consumer goods factor (max -5%)
 - Army core defense factor (max +10%)
@@ -334,11 +433,13 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Bureaucracy cost multiplier (max -15%)
 
 **Events**:
+
 - Ideological conflicts with Military
 - Governmental concession requests
 - Taxing religious institutions (positive)
 
 **Decisions**:
+
 - **Encourage Party Propaganda**: +5 opinion (doubled if no elections), costs 0.2% of GDP
 - **Sell Political Positions**: +5 opinion
 - **Raise Wages**: +5 opinion (shared with Labour Unions)
@@ -348,10 +449,13 @@ Opinion represents how happy the current internal faction is with the ruling par
 ## Religious Factions
 
 ### The Priesthood
+
 **Static Bonus**:
+
 - Expected military budget modifier: -0.5
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Stability factor (max +15%)
 - Monthly population growth (max +25%)
 - Political power (max +30%)
@@ -360,11 +464,13 @@ Opinion represents how happy the current internal faction is with the ruling par
 **Available for**: Buddhism, Hinduism, Shinto, Cheondo
 
 **Events**:
+
 - Business on religious days
 - Representation requests
 - Education board input requests
 
 **Decisions**:
+
 - **Encourage Religion in Government**: +5 opinion, +5% ruling outlook popularity
 - **Impose Taxes on Religious Institutions**: -15 opinion, +10 opinion for Communist Cadres
 - **Repeal Religious Taxes**: +5 opinion
@@ -372,7 +478,9 @@ Opinion represents how happy the current internal faction is with the ruling par
 ---
 
 ### The Ulema
+
 **Static Bonus**:
+
 - Expected military budget modifier: -0.5
 
 **Dynamic Bonuses** (same as The Priesthood)
@@ -380,6 +488,7 @@ Opinion represents how happy the current internal faction is with the ruling par
 **Available for**: Sunni, Ibadi, Sufi Islam, Shia
 
 **Events**:
+
 - Friday sermon political debates
 - Education system disputes
 - Mosque funding requests
@@ -391,7 +500,9 @@ Opinion represents how happy the current internal faction is with the ruling par
 ---
 
 ### The Clergy
+
 **Static Bonus**:
+
 - Expected military budget modifier: -0.5
 
 **Dynamic Bonuses** (same as The Priesthood)
@@ -405,10 +516,13 @@ Opinion represents how happy the current internal faction is with the ruling par
 ---
 
 ### Wahabi Ulema
+
 **Static Bonus**:
+
 - Expected military budget modifier: +0.5 (opposite of other religious factions)
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Stability factor (max +15%)
 - Monthly population growth (max +25%)
 - Political power (max +30%)
@@ -418,6 +532,7 @@ Opinion represents how happy the current internal faction is with the ruling par
 **Available for**: Saudi Arabia, Qatar, UAE, certain Islamic extremist nations
 
 **Events**:
+
 - Shia/Sufi crackdown demands
 - Anti-women work policies
 - Morality patrol requests
@@ -429,11 +544,14 @@ Opinion represents how happy the current internal faction is with the ruling par
 ## Nation-Specific Factions
 
 ### The Donju (North Korea)
+
 **Static Bonuses**:
+
 - Corruption cost factor: +30%
 - Interest rate multiplier: -1
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Industrial complex construction speed (max +15%)
 - Stability (max +15%)
 - Consumer goods factor (max -5%)
@@ -444,14 +562,17 @@ Opinion represents how happy the current internal faction is with the ruling par
 ---
 
 ### Saudi Royal Family
+
 **Available for**: Saudi Arabia, Qatar, Bahrain, Oman, Kuwait
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Political power factor (max +25%)
 - Ideology drift defense (max +25%)
 - Stability factor (max +15%)
 
 **Events**:
+
 - Extended family jet airliner requests
 - Prince arguments
 - Prince defections
@@ -459,11 +580,14 @@ Opinion represents how happy the current internal faction is with the ruling par
 ---
 
 ### Iranian Quds Force
+
 **Static Bonus**:
+
 - Send volunteer size: +2
 - Expected military budget modifier: +0.5
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Communist drift (max +0.10%)
 - Offensive influence operations (max +1.75%)
 
@@ -474,7 +598,9 @@ Opinion represents how happy the current internal faction is with the ruling par
 ---
 
 ### Foreign Jihadis
+
 **Static Bonuses**:
+
 - Send volunteer size: +1
 - Surrender limit: +0.2
 - Expected military budget modifier: +0.5
@@ -482,6 +608,7 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Adds 7,500 manpower on activation
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Fascism drift (max +0.10%)
 - Non-core manpower (max +10%)
 - Special forces cap (max +20%)
@@ -491,7 +618,9 @@ Opinion represents how happy the current internal faction is with the ruling par
 ---
 
 ### Wall Street (USA)
+
 **Static Bonuses**:
+
 - Economic cycles cost factor: -25%
 - Democratic drift: +0.02
 - Interest rate multiplier: -1
@@ -499,6 +628,7 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Expected healthcare modifier: -0.25
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Local resources factor (max +5%)
 - Trade opinion factor (max +20%)
 - Industrial complex construction speed (max +10%)
@@ -511,12 +641,15 @@ Opinion represents how happy the current internal faction is with the ruling par
 ---
 
 ### Chaebols (South Korea)
+
 **Static Bonuses**:
+
 - Corruption cost factor: +25%
 - Receiving investment duration: -25%
 - Interest rate multiplier: -1
 
 **Dynamic Bonuses** (scale with opinion):
+
 - Industrial complex construction speed (max +15%)
 - Infrastructure construction speed (max +15%)
 - Local resources factor (max +15%)
@@ -565,23 +698,23 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 ## Quick Reference Table
 
-| Faction | Best For | Key Bonus | Cost |
-|---------|----------|-----------|------|
-| Small & Medium Business Owners | Civilian economy | +15% civ construction | 1500 PP |
-| International Bankers | Trade & investment | -1 interest rate | 1500 PP |
-| Fossil Fuel Industry | Resource production | +25% fuel gain | 1500 PP |
-| Industrial Conglomerates | Infrastructure | +15% infra construction | 1500 PP |
-| Oligarchs | Communist nations | +20% local resources | 1500 PP |
-| Maritime Industry | Naval powers | +20% dockyard speed | 1500 PP |
-| Defense Industry | Military production | +15% mil factory productivity | 1500 PP |
-| The Military | Combat effectiveness | +10% army morale | 1500 PP |
-| Intelligence Community | Espionage | +15% intel factors | 1500 PP |
-| Labour Unions | Social policies | +25% political power | 1500 PP |
-| Landowners | Resource exploitation | +15% local resources | 1500 PP |
-| Farmers | Agriculture | +20% population growth | 1500 PP |
-| Communist Cadres | Communist nations | +25% mobilization speed | 1500 PP |
-| Religious Factions | Stability & growth | +30% political power | 1500 PP |
+| Faction                        | Best For              | Key Bonus                     | Cost    |
+| ------------------------------ | --------------------- | ----------------------------- | ------- |
+| Small & Medium Business Owners | Civilian economy      | +15% civ construction         | 1500 PP |
+| International Bankers          | Trade & investment    | -1 interest rate              | 1500 PP |
+| Fossil Fuel Industry           | Resource production   | +25% fuel gain                | 1500 PP |
+| Industrial Conglomerates       | Infrastructure        | +15% infra construction       | 1500 PP |
+| Oligarchs                      | Communist nations     | +20% local resources          | 1500 PP |
+| Maritime Industry              | Naval powers          | +20% dockyard speed           | 1500 PP |
+| Defense Industry               | Military production   | +15% mil factory productivity | 1500 PP |
+| The Military                   | Combat effectiveness  | +10% army morale              | 1500 PP |
+| Intelligence Community         | Espionage             | +15% intel factors            | 1500 PP |
+| Labour Unions                  | Social policies       | +25% political power          | 1500 PP |
+| Landowners                     | Resource exploitation | +15% local resources          | 1500 PP |
+| Farmers                        | Agriculture           | +20% population growth        | 1500 PP |
+| Communist Cadres               | Communist nations     | +25% mobilization speed       | 1500 PP |
+| Religious Factions             | Stability & growth    | +30% political power          | 1500 PP |
 
 ---
 
-*Last Updated: December 2025 (Based on mod version)*
+_Last Updated: December 2025 (Based on mod version)_
