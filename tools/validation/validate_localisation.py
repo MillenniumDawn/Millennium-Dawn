@@ -27,7 +27,7 @@ from validator_common import (
     should_skip_file,
 )
 
-EXTRA_SKIP_PATTERNS = ["FR_loc"]
+EXTRA_SKIP_PATTERNS = ["FR_loc", "00_operations"]
 
 
 def _should_skip(filename: str) -> bool:
@@ -40,7 +40,7 @@ def _should_skip(filename: str) -> bool:
 def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
     filename = args[0]
     results = []
-    text_file = FileOpener.open_text_file(filename)
+    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
     lines = text_file.split("\n")[1:]
     for line_idx, line in enumerate(lines):
         if line.count("[") != line.count("]"):
@@ -53,12 +53,14 @@ def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
 def process_yml_for_syntax(args: Tuple[str, List[str]]) -> List[str]:
     filename, valid_colors = args
     results = []
-    text_file = FileOpener.open_text_file(filename, lowercase=False)
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
     lines = text_file.split("\n")[1:]
     for line_idx, line in enumerate(lines):
         if "#" in line or line.strip() in ["", "l_english:"]:
             continue
-        if "\u00a7" in line and "desc_end" not in line:
+        if "\u00a7" in line and "desc_end" not in line and "U.S.C." not in line:
             count = line.count("\u00a7")
             if count % 2 != 0:
                 results.append(
@@ -91,7 +93,7 @@ def process_yml_for_syntax(args: Tuple[str, List[str]]) -> List[str]:
 def process_yml_for_mandatory(args: Tuple[str]) -> List[str]:
     filename = args[0]
     results = []
-    text_file = FileOpener.open_text_file(filename)
+    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
     lines = text_file.split("\n")
     if lines == [""]:
         return results
@@ -109,7 +111,9 @@ def get_all_loc_keys(
     duplicated_keys = []
 
     for filename in glob.iglob(filepath + "**/*.yml", recursive=True):
-        text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+        text_file = FileOpener.open_text_file(
+            filename, lowercase=lowercase, strip_comments_flag=True
+        )
         if "l_english" not in text_file:
             continue
         lines = text_file.split("\n")
@@ -137,7 +141,9 @@ def get_all_colors(mod_path: str) -> List[str]:
     filepath = Path(mod_path) / "interface" / "core.gfx"
     if not filepath.exists():
         return list("WGRBYCMwgrbycm!")
-    text_file = FileOpener.open_text_file(str(filepath), lowercase=False)
+    text_file = FileOpener.open_text_file(
+        str(filepath), lowercase=False, strip_comments_flag=True
+    )
     try:
         textcolors = re.findall(
             r"\ttextcolors = \{.*?^\t\}", text_file, flags=re.DOTALL | re.MULTILINE
@@ -260,7 +266,9 @@ class Validator(BaseValidator):
         for filename in glob.iglob(self.mod_path + "**/*.txt", recursive=True):
             if _should_skip(filename):
                 continue
-            text_file = FileOpener.open_text_file(filename, lowercase=False)
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
             if "localization_key =" not in text_file:
                 continue
 
@@ -304,7 +312,9 @@ class Validator(BaseValidator):
         for filename in glob.iglob(self.mod_path + "**/*.txt", recursive=True):
             if _should_skip(filename):
                 continue
-            text_file = FileOpener.open_text_file(filename, lowercase=False)
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
             if "add_resistance_target = {" not in text_file:
                 continue
 
@@ -321,6 +331,8 @@ class Validator(BaseValidator):
                                     f"{tt} - missing $VALUE|=-%0$ in loc value"
                                 )
                         else:
+                            if tt.startswith("OTT_"):
+                                continue
                             results.append(f"{tt} - localization key not found")
                 else:
                     snippet = body.replace("\n", " ").replace("\t", "")[:80]

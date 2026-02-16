@@ -38,12 +38,16 @@ def parse_all_events(
     mod_path: str, lowercase: bool = False
 ) -> Tuple[List[str], Dict[str, str]]:
     events_path = str(Path(mod_path) / "events") + "/"
-    pattern = re.compile(r"^country_event = \{(.*?)^\}", flags=re.DOTALL | re.MULTILINE)
+    pattern = re.compile(
+        r"^(?:country_event|news_event) = \{(.*?)^\}", flags=re.DOTALL | re.MULTILINE
+    )
     events = []
     paths = {}
 
     for filename in glob.iglob(events_path + "**/*.txt", recursive=True):
-        text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+        text_file = FileOpener.open_text_file(
+            filename, lowercase=lowercase, strip_comments_flag=True
+        )
         matches = pattern.findall(text_file)
         for match in matches:
             events.append(match)
@@ -54,11 +58,15 @@ def parse_all_events(
 
 def process_file_for_events(args: Tuple[str, bool]) -> Tuple[List[str], Dict[str, str]]:
     filename, lowercase = args
-    pattern = re.compile(r"^country_event = \{(.*?)^\}", flags=re.DOTALL | re.MULTILINE)
+    pattern = re.compile(
+        r"^(?:country_event|news_event) = \{(.*?)^\}", flags=re.DOTALL | re.MULTILINE
+    )
     events = []
     paths = {}
 
-    text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
     matches = pattern.findall(text_file)
     for match in matches:
         events.append(match)
