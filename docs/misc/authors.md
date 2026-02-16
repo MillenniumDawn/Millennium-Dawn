@@ -6,6 +6,16 @@ description: "Authors & Credits for Millennium Dawn: A Modern Day Mod"
 
 The following page is a non-exhaustive list of contributors from over the years who have worked on the mod in some capacity.
 
+# Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [Individuals](#individuals)
+- [Fellow Modders/Teams](#fellow-moddersteams)
+- [Voice Lines](#voice-lines)
+- [3D Models](#3d-models)
+- [Musicians](#musicians)
+  - [Asia Radio Station](#asia-radio-station)
+
 # Individuals
 
 | Name                 | Discord                         | GitHub         | PDX           | Email                         |
@@ -168,6 +178,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 | ccfox                | -                               | @ccfox         | -             | -                             |
 | 81_evan              | -                               | @81_evan       | -             | -                             |
 | BigRobbo             | @BigRobbo                       | @BigRobbo919   | -             | -                             |
+
 # Fellow Modders/Teams
 
 - **swf** from the [Cold War: Iron Curtain](https://steamcommunity.com/sharedfiles/filedetails/?id=1458561226)

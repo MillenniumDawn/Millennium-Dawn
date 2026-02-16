@@ -14,3 +14,4 @@ The following is a non-exhaustive list of tutorials or guides that are available
 - [Military Tutorial](/Millennium-Dawn/player-tutorials/military-tutorial)
 - [Troubleshooting Guide](/Millennium-Dawn/player-tutorials/troubleshooting-guide)
 - [Internal Faction Guide](/Millennium-Dawn/player-tutorials/internal-factions)
+- [Game Rules](/Millennium-Dawn/player-tutorials/game-rules)
