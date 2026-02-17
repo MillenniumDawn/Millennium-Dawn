@@ -47,21 +47,7 @@ invest_infra = {
 
 # Building Type 1: Civilian industry
 AI_get_civilian_industry_score = {
-	# Count pending civilian factory projects in this state
-	set_temp_variable = { pending_civs = 0 }
-	for_each_loop = {
-		array = project_type_in_state
-		value = v
-		index = i
-		if = { limit = { check_variable = { project_type_in_state^i = 1 } }
-			add_to_temp_variable = { pending_civs = 1 }
-		}
-	}
-	# Check if there are free slots after accounting for pending projects
-	set_temp_variable = { available_slots = free_building_slots@industrial_complex }
-	subtract_from_temp_variable = { available_slots = pending_civs }
-
-	if = { limit = { check_variable = { available_slots > 0 } }
+	if = { limit = { free_building_slots = { building = industrial_complex size > 0 include_locked = no } }
 		# Score Modeling
 		set_temp_variable = { AI_score = 0 }
 
@@ -124,6 +110,10 @@ AI_get_civilian_industry_score = {
 			add_to_temp_variable = { v2 = 100 }
 		}
 
+		if = { limit = { check_variable = { pending_shared_slot_building > 0 } }
+			add_to_temp_variable = { v2 = 15 }
+		}
+
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
@@ -147,103 +137,93 @@ AI_get_civilian_industry_score = {
 
 # Building Type 2: Military Industry
 AI_get_military_industry_score = {
-	# Count pending military factory projects in this state
-	set_temp_variable = { pending_mils = 0 }
-	for_each_loop = {
-		array = project_type_in_state
-		value = v
-		index = i
-		if = { limit = { check_variable = { project_type_in_state^i = 2 } }
-			add_to_temp_variable = { pending_mils = 1 }
-		}
-	}
-	# Check if there are free slots after accounting for pending projects
-	set_temp_variable = { available_slots = free_building_slots@arms_factory }
-	subtract_from_temp_variable = { available_slots = pending_mils }
-
-	if = { limit = { check_variable = { available_slots > 0 } }
+	if = { limit = { free_building_slots = { building = arms_factory size > 0 include_locked = no } }
 		set_temp_variable = { AI_score = 0 }
 
 		set_temp_variable = { v1 = 150 }
 
-	# Increase Section
-	if = { limit = { date > 2004.1.1 }
-		add_to_temp_variable = { v1 = 10 }
-	}
-	if = { limit = { date > 2006.1.1 }
-		add_to_temp_variable = { v1 = 10 }
-	}
-	if = { limit = { threat > 10 }
-		add_to_temp_variable = { v1 = 10 }
-	}
-	if = { limit = { threat > 20 }
-		add_to_temp_variable = { v1 = 10 }
-	}
-	if = { limit = { threat > 40 }
-		add_to_temp_variable = { v1 = 10 }
-	}
-	if = { limit = { CONTROLLER = { num_of_military_factories < 15 } }
-		add_to_temp_variable = { v1 = 10 }
-	}
-	if = { limit = { CONTROLLER = { num_of_military_factories < 10 } }
-		add_to_temp_variable = { v1 = 10 }
-	}
-	if = { limit = { CONTROLLER = { num_of_military_factories < 5 } }
-		add_to_temp_variable = { v1 = 10 }
-	}
-	if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
-		add_to_temp_variable = { v1 = 15 }
-	}
-	if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
-		add_to_temp_variable = { v1 = 15 }
-	}
-
-	# Reduction Section
-	# Ensures Military Industry is Evenly Distributed Across Country
-	# Strong penalty per existing building to spread investments across states (Issue #114)
-	set_temp_variable = { v2 = building_level@arms_factory }
-	multiply_temp_variable = { v2 = 25 } # Strong multiplier to discourage stacking in one state
-
-	# Strong penalty for pending projects in this state to prevent spam-investing same region
-	set_temp_variable = { pending_penalty = pending_mils }
-	multiply_temp_variable = { pending_penalty = 40 }
-	add_to_temp_variable = { v2 = pending_penalty }
-
-	if = { limit = { CONTROLLER = { has_war = no } }
-		add_to_temp_variable = { v2 = 20 }
-	}
-	## Do not cripple your economy
-	if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 15 } }
-		add_to_temp_variable = { v2 = 10 }
-	}
-	if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
-		add_to_temp_variable = { v2 = 10 }
-	}
-	if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 5 } }
-		add_to_temp_variable = { v2 = 10 }
-	}
-
-	# Lowers score if target country has too many mils in relation to civs and docks
-	if = { limit = { CONTROLLER = { num_of_factories > 0 } }
-		if = {
-			limit = {
-				CONTROLLER = {
-					set_temp_variable = { mils_fo_factories_ratio = num_of_factories }
-					multiply_temp_variable = { mils_to_factories_ratio = 0.45 }
-					check_variable = { num_of_military_factories > mils_to_factories_ratio }
-				}
-			}
-			add_to_temp_variable = { v2 = 70 }
+		# Increase Section
+		if = { limit = { date > 2004.1.1 }
+			add_to_temp_variable = { v1 = 10 }
 		}
-	}
+		if = { limit = { date > 2006.1.1 }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { threat > 10 }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { threat > 20 }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { threat > 40 }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { CONTROLLER = { num_of_military_factories < 15 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { CONTROLLER = { num_of_military_factories < 10 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { CONTROLLER = { num_of_military_factories < 5 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+			add_to_temp_variable = { v1 = 15 }
+		}
 
-	# No point in investing mils if almost no employees are available
-	if = { limit = { CONTROLLER = { check_variable = { total_unemployed_percentage_display < 0.001 } } } # 0.1% unemployment
-		add_to_temp_variable = { v2 = 50 }
-	}
+		# Reduction Section
+		# Ensures Military Industry is Evenly Distributed Across Country
+		# Strong penalty per existing building to spread investments across states (Issue #114)
+		set_temp_variable = { v2 = building_level@arms_factory }
+		multiply_temp_variable = { v2 = 25 } # Strong multiplier to discourage stacking in one state
 
-	subtract_from_temp_variable = { v1 = v2 }
-	add_to_temp_variable = { AI_score = v1 }
+		# Strong penalty for pending projects in this state to prevent spam-investing same region
+		set_temp_variable = { pending_penalty = pending_mils }
+		multiply_temp_variable = { pending_penalty = 40 }
+		add_to_temp_variable = { v2 = pending_penalty }
+
+		if = { limit = { CONTROLLER = { has_war = no } }
+			add_to_temp_variable = { v2 = 20 }
+		}
+		## Do not cripple your economy
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 15 } }
+			add_to_temp_variable = { v2 = 10 }
+		}
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+			add_to_temp_variable = { v2 = 10 }
+		}
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 5 } }
+			add_to_temp_variable = { v2 = 10 }
+		}
+
+		# Lowers score if target country has too many mils in relation to civs and docks
+		if = { limit = { CONTROLLER = { num_of_factories > 0 } }
+			if = {
+				limit = {
+					CONTROLLER = {
+						set_temp_variable = { mils_fo_factories_ratio = num_of_factories }
+						multiply_temp_variable = { mils_to_factories_ratio = 0.45 }
+						check_variable = { num_of_military_factories > mils_to_factories_ratio }
+					}
+				}
+				add_to_temp_variable = { v2 = 70 }
+			}
+		}
+
+		if = { limit = { check_variable = { pending_shared_slot_building > 0 } }
+			add_to_temp_variable = { v2 = 15 }
+		}
+
+		# No point in investing mils if almost no employees are available
+		if = { limit = { CONTROLLER = { check_variable = { total_unemployed_percentage_display < 0.001 } } } # 0.1% unemployment
+			add_to_temp_variable = { v2 = 50 }
+		}
+
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
 
 		# Add randomization to prevent always picking the same "best" state (Issue #114)
 		set_temp_variable_to_random = {
@@ -265,95 +245,85 @@ AI_get_military_industry_score = {
 
 # Building Type 3: Dockyards
 AI_get_dockyard_score = {
-	# Count pending dockyard projects in this state
-	set_temp_variable = { pending_docks = 0 }
-	for_each_loop = {
-		array = project_type_in_state
-		value = v
-		index = i
-		if = { limit = { check_variable = { project_type_in_state^i = 3 } }
-			add_to_temp_variable = { pending_docks = 1 }
-		}
-	}
-	# Check if there are free slots after accounting for pending projects
-	set_temp_variable = { available_slots = free_building_slots@dockyard }
-	subtract_from_temp_variable = { available_slots = pending_docks }
-
-	if = { limit = { check_variable = { available_slots > 0 } }
+	if = { limit = { free_building_slots = { building = dockyard size > 0 include_locked = no } }
 		set_temp_variable = { AI_score = 0 }
 
 		set_temp_variable = { v1 = 170 } # Basis
 
-	# Increase Section
-	if = { limit = { CONTROLLER = { num_of_naval_factories < 15 } }
-		add_to_temp_variable = { v1 = 10 }
-	}
-	if = { limit = { CONTROLLER = { num_of_naval_factories < 10 } }
-		add_to_temp_variable = { v1 = 10 }
-	}
-	if = { limit = { CONTROLLER = { num_of_naval_factories < 5 } }
-		add_to_temp_variable = { v1 = 10 }
-	}
-	if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
-		add_to_temp_variable = { v1 = 15 }
-	}
-	if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
-		add_to_temp_variable = { v1 = 15 }
-	}
+		# Increase Section
+		if = { limit = { CONTROLLER = { num_of_naval_factories < 15 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { CONTROLLER = { num_of_naval_factories < 10 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { CONTROLLER = { num_of_naval_factories < 5 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+			add_to_temp_variable = { v1 = 15 }
+		}
 
-	# Reduction Section
-	# Strong penalty per existing building to spread investments across states (Issue #114)
-	set_temp_variable = { v2 = building_level@dockyard }
-	multiply_temp_variable = { v2 = 25 } # Strong multiplier to discourage stacking in one state
+		# Reduction Section
+		# Strong penalty per existing building to spread investments across states (Issue #114)
+		set_temp_variable = { v2 = building_level@dockyard }
+		multiply_temp_variable = { v2 = 25 } # Strong multiplier to discourage stacking in one state
 
-	# Strong penalty for pending projects in this state to prevent spam-investing same region
-	set_temp_variable = { pending_penalty = pending_docks }
-	multiply_temp_variable = { pending_penalty = 40 }
-	add_to_temp_variable = { v2 = pending_penalty }
+		# Strong penalty for pending projects in this state to prevent spam-investing same region
+		set_temp_variable = { pending_penalty = pending_docks }
+		multiply_temp_variable = { pending_penalty = 40 }
+		add_to_temp_variable = { v2 = pending_penalty }
 
-	if = { limit = { CONTROLLER = { has_war = no } }
-		add_to_temp_variable = { v2 = 35 }
-	}
+		if = { limit = { CONTROLLER = { has_war = no } }
+			add_to_temp_variable = { v2 = 35 }
+		}
 
-	## Do not try to invest in a non-coastal state
-	if = { limit = { is_coastal = no }
-		add_to_temp_variable = { v2 = 100 }
-	}
+		## Do not try to invest in a non-coastal state
+		if = { limit = { is_coastal = no }
+			add_to_temp_variable = { v2 = 100 }
+		}
 
-	# Reduce if nation can't support building a navy resource wise
-	if = { limit = { CONTROLLER = { check_variable = { resource_produced@steel < 200 } } }
-		add_to_temp_variable = { v2 = 20 }
-	}
-	if = { limit = { CONTROLLER = { check_variable = { resource_produced@steel < 100 } } }
-		add_to_temp_variable = { v2 = 40 }
-	}
+		# Reduce if nation can't support building a navy resource wise
+		if = { limit = { CONTROLLER = { check_variable = { resource_produced@steel < 200 } } }
+			add_to_temp_variable = { v2 = 20 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { resource_produced@steel < 100 } } }
+			add_to_temp_variable = { v2 = 40 }
+		}
 
-	# Reduce if nation can't support building a navy money wise
-	if = { limit = { CONTROLLER = { check_variable = { gdp_total < 1000 } } }
-	add_to_temp_variable = { v2 = 100 }
-	}
-	if = { limit = { CONTROLLER = { check_variable = { interest_rate > 10.5 } } }
-	add_to_temp_variable = { v2 = 40 }
-	}
+		# Reduce if nation can't support building a navy money wise
+		if = { limit = { CONTROLLER = { check_variable = { gdp_total < 1000 } } }
+			add_to_temp_variable = { v2 = 100 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { interest_rate > 10.5 } } }
+			add_to_temp_variable = { v2 = 40 }
+		}
 
-	# Lowers score if target country has too many docks in relation to civs and mils
-	if = { limit = { CONTROLLER = { num_of_factories > 0 } }
-		if = {
-			limit = {
-				CONTROLLER = {
-					set_temp_variable = { docks_to_factories_ratio = num_of_naval_factories }
-					divide_temp_variable = { docks_to_factories_ratio = num_of_factories }
-					check_variable = { docks_to_factories_ratio > 0.20 } # when docks make up more than 20% of total factories (excluding offices)
+		# Lowers score if target country has too many docks in relation to civs and mils
+		if = { limit = { CONTROLLER = { num_of_factories > 0 } }
+			if = {
+				limit = {
+					CONTROLLER = {
+						set_temp_variable = { docks_to_factories_ratio = num_of_naval_factories }
+						divide_temp_variable = { docks_to_factories_ratio = num_of_factories }
+						check_variable = { docks_to_factories_ratio > 0.20 } # when docks make up more than 20% of total factories (excluding offices)
+					}
 				}
+				add_to_temp_variable = { v2 = 50 }
 			}
+		}
+
+		# No point in investing docks if almost no employees are available
+		if = { limit = { CONTROLLER = { check_variable = { total_unemployed_percentage_display < 0.001 } } } # 0.1% unemployment
 			add_to_temp_variable = { v2 = 50 }
 		}
-	}
 
-	# No point in investing docks if almost no employees are available
-	if = { limit = { CONTROLLER = { check_variable = { total_unemployed_percentage_display < 0.001 } } } # 0.1% unemployment
-		add_to_temp_variable = { v2 = 50 }
-	}
+		if = { limit = { check_variable = { pending_shared_slot_building > 0 } }
+			add_to_temp_variable = { v2 = 15 }
+		}
 
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
@@ -466,21 +436,7 @@ AI_get_infrastructure_score = {
 
 # Building Type 5: Offices
 AI_get_offices_score = {
-	# Count pending office projects in this state
-	set_temp_variable = { pending_offices = 0 }
-	for_each_loop = {
-		array = project_type_in_state
-		value = v
-		index = i
-		if = { limit = { check_variable = { project_type_in_state^i = 5 } }
-			add_to_temp_variable = { pending_offices = 1 }
-		}
-	}
-	# Check if there are free slots after accounting for pending projects
-	set_temp_variable = { available_slots = free_building_slots@offices }
-	subtract_from_temp_variable = { available_slots = pending_offices }
-
-	if = { limit = { check_variable = { available_slots > 0 } }
+	if = { limit = { free_building_slots = { building = offices size > 0 include_locked = no } }
 		set_temp_variable = { AI_score = 0 }
 
 		set_temp_variable = { v1 = 180 }
@@ -546,6 +502,10 @@ AI_get_offices_score = {
 			add_to_temp_variable = { v2 = 100 }
 		}
 
+		if = { limit = { check_variable = { pending_shared_slot_building > 0 } }
+			add_to_temp_variable = { v2 = 15 }
+		}
+
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
@@ -575,6 +535,7 @@ AI_count_pending_projects = {
 	set_temp_variable = { pending_airbases = 0 }
 	set_temp_variable = { pending_fuel_silos = 0 }
 	set_temp_variable = { pending_internet = 0 }
+	set_temp_variable = { pending_shared_slot_building = 0 }
 	for_each_loop = {
 		array = project_type_in_state
 		value = v
@@ -593,6 +554,18 @@ AI_count_pending_projects = {
 		}
 		if = { limit = { check_variable = { project_type_in_state^i = 10 } }
 			add_to_temp_variable = { pending_internet = 1 }
+		}
+		if = { limit = { check_variable = { project_type_in_state^i = 1 } }
+			add_to_temp_variable = { pending_shared_slot_building = 1 }
+		}
+		if = { limit = { check_variable = { project_type_in_state^i = 2 } }
+			add_to_temp_variable = { pending_shared_slot_building = 1 }
+		}
+		if = { limit = { check_variable = { project_type_in_state^i = 3 } }
+			add_to_temp_variable = { pending_shared_slot_building = 1 }
+		}
+		if = { limit = { check_variable = { project_type_in_state^i = 5 } }
+			add_to_temp_variable = { pending_shared_slot_building = 1 }
 		}
 	}
 }
