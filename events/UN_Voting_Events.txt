@@ -1,6 +1,9 @@
 add_namespace = UN
 add_namespace = UNSC
 
+#100 series events - trigger events for voting
+#200 series events - events for swaying nations to vote
+
 #event to scope SC votes
 country_event = {
 	id = UNSC.100
@@ -22,7 +25,14 @@ country_event = {
 			var:v = {
 				meta_effect = {
 					text = {
-						country_event = UNSC.[ID]
+						if = {
+							limit = {
+								NOT = { has_country_flag = auto_accept_all_sc_votes }
+							}
+							country_event = UNSC.[ID]
+						} else = {
+							add_to_array = { global.security_council_vote_yes = THIS }
+						}
 					}
 					ID = "[?global.current_sc_vote_type]"
 				}
@@ -45,7 +55,34 @@ country_event = {
 	picture = GFX_UN_gen_assembly
 
 	is_triggered_only = yes
+	timeout_days = 4
 
+	#Abstain
+	option = {
+		name = UNSC.1.c
+		add_to_array = { global.security_council_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < 5
+				}
+				has_opinion = {
+					target = FROM
+					value > -5
+				}
+			}
+			modifier = {
+				add = 1000
+				has_war_with = FROM
+			}
+		}
+	}
 	#Yes
 	option = {
 		name = UNSC.1.a
@@ -60,7 +97,7 @@ country_event = {
 				add = 20
 				has_opinion = {
 					target = FROM
-					value < -20
+					value < -5
 				}
 			}
 			modifier = {
@@ -115,7 +152,7 @@ country_event = {
 				add = 20
 				has_opinion = {
 					target = FROM
-					value > 20
+					value > 5
 				}
 			}
 
@@ -145,9 +182,20 @@ country_event = {
 			}
 		}
 	}
+}
+#Sanction for tension
+country_event = {
+	id = UNSC.2
+	title = UNSC.2.t
+	desc = UNSC.2.d
+	picture = GFX_UN_gen_assembly
+
+	is_triggered_only = yes
+	timeout_days = 4
+
 	#Abstain
 	option = {
-		name = UNSC.1.c
+		name = UNSC.2.c
 		add_to_array = { global.security_council_vote_abstain = THIS }
 		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
 
@@ -171,16 +219,6 @@ country_event = {
 			}
 		}
 	}
-}
-#Sanction for tension
-country_event = {
-	id = UNSC.2
-	title = UNSC.2.t
-	desc = UNSC.2.d
-	picture = GFX_UN_gen_assembly
-
-	is_triggered_only = yes
-
 	#Yes
 	option = {
 		name = UNSC.2.a
@@ -280,9 +318,20 @@ country_event = {
 			}
 		}
 	}
+}
+#Regulate volunteers
+country_event = {
+	id = UNSC.3
+	title = UNSC.3.t
+	desc = UNSC.3.d
+	picture = GFX_UN_gen_assembly
+
+	is_triggered_only = yes
+	timeout_days = 4
+
 	#Abstain
 	option = {
-		name = UNSC.2.c
+		name = UNSC.3.c
 		add_to_array = { global.security_council_vote_abstain = THIS }
 		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
 
@@ -306,16 +355,6 @@ country_event = {
 			}
 		}
 	}
-}
-#Regulate volunteers
-country_event = {
-	id = UNSC.3
-	title = UNSC.3.t
-	desc = UNSC.3.d
-	picture = GFX_UN_gen_assembly
-
-	is_triggered_only = yes
-
 	#Yes
 	option = {
 		name = UNSC.3.a
@@ -415,9 +454,20 @@ country_event = {
 			}
 		}
 	}
+}
+#Arms embargo
+country_event = {
+	id = UNSC.4
+	title = UNSC.4.t
+	desc = UNSC.4.d
+	picture = GFX_UN_gen_assembly
+	timeout_days = 4
+
+	is_triggered_only = yes
+
 	#Abstain
 	option = {
-		name = UNSC.3.c
+		name = UNSC.4.c
 		add_to_array = { global.security_council_vote_abstain = THIS }
 		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
 
@@ -441,16 +491,6 @@ country_event = {
 			}
 		}
 	}
-}
-#Arms embargo
-country_event = {
-	id = UNSC.4
-	title = UNSC.4.t
-	desc = UNSC.4.d
-	picture = GFX_UN_gen_assembly
-
-	is_triggered_only = yes
-
 	#Yes
 	option = {
 		name = UNSC.4.a
@@ -550,32 +590,6 @@ country_event = {
 			}
 		}
 	}
-	#Abstain
-	option = {
-		name = UNSC.4.c
-		add_to_array = { global.security_council_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		missile_ui_update = yes
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 5
-				has_opinion = {
-					target = FROM
-					value < 20
-				}
-				has_opinion = {
-					target = FROM
-					value > -20
-				}
-			}
-			modifier = {
-				add = 1000
-				has_war_with = FROM
-			}
-		}
-	}
 }
 
 #event to scope GA votes
@@ -597,11 +611,28 @@ country_event = {
 			value = v
 
 			var:v = {
-				meta_effect = {
-					text = {
-						country_event = UN.[ID]
+				if = {
+					limit = {
+						NOT = { has_country_flag = auto_accept_all_ga_votes has_country_flag = auto_reject_all_ga_votes }
 					}
-					ID = "[?global.current_ga_vote_type]"
+					meta_effect = {
+						text = {
+							country_event = UN.[ID]
+						}
+						ID = "[?global.current_ga_vote_type]"
+					}
+				}else = {
+					if = {
+						limit = {
+							has_country_flag = auto_accept_all_ga_votes
+						}
+						add_to_array = { global.general_assembly_vote_yes = THIS }
+					}else_if = {
+						limit = {
+							has_country_flag = auto_reject_all_ga_votes
+						}
+						add_to_array = { global.general_assembly_vote_no = THIS }
+					}
 				}
 				if = {
 					limit ={
@@ -625,7 +656,23 @@ country_event = {
 	picture = GFX_UN_gen_assembly
 
 	is_triggered_only = yes
+	timeout_days = 4
 
+	#Abstain
+	option = {
+		name = UN.6.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 1000
+				tag = FROM
+			}
+		}
+	}
 	#Yes
 	option = {
 		name = UN.6.a
@@ -734,21 +781,6 @@ country_event = {
 			}
 		}
 	}
-	#Abstain
-	option = {
-		name = UN.6.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
-
-		missile_ui_update = yes
-		ai_chance = {
-			base = 0
-			modifier = {
-				add = 1000
-				tag = FROM
-			}
-		}
-	}
 }
 #raid non-binding sanctions event
 country_event = {
@@ -761,7 +793,19 @@ country_event = {
 	picture = GFX_UN_gen_assembly
 
 	is_triggered_only = yes
+	timeout_days = 4
 
+	#Abstain
+	option = {
+		name = UN.7.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 1
+		}
+	}
 	#Yes
 	option = {
 		name = UN.7.a
@@ -830,15 +874,31 @@ country_event = {
 			}
 		}
 	}
-	#Abstain
-	option = {
-		name = UN.7.c
-		add_to_array = { global.general_assembly_vote_abstain = THIS }
-		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+}
 
-		missile_ui_update = yes
-		ai_chance = {
-			base = 1
-		}
-	}
+#Sway events
+#UNSC sway scoping event
+country_event = {
+	id = UNSC.200
+	is_triggered_only = yes
+
+	#Make offer here
+}
+#Sway Event
+country_event = {
+	id = UNSC.201
+	is_triggered_only = yes
+}
+#UNGA sway scoping event
+country_event = {
+	id = UN.200
+
+	is_triggered_only = yes
+
+	#Make offer here
+}
+#UNGA Sway Event
+country_event = {
+	id = UN.201
+	is_triggered_only = yes
 }

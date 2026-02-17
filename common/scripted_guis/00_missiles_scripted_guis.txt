@@ -4226,7 +4226,15 @@ scripted_gui = {
 					array = global.un_sc_pressure_end_war
 					value = v
 
-					add_to_array = { sc_selected_nations_list = v }
+					var:v = {
+						if = {
+							limit = {
+								NOT = { has_active_mission = UNSC_end_all_offensive_wars }
+								NOT = { has_dynamic_modifier = { modifier = united_nations_security_council_sanctions } }
+							}
+							add_to_array = { ROOT.sc_selected_nations_list = v }
+						}
+					}
 				}
 				set_variable = { sc_selected_action = 1 }
 				missile_ui_update = yes
@@ -4238,7 +4246,14 @@ scripted_gui = {
 					array = global.can_be_sc_sanctioned
 					value = v
 
-					add_to_array = { sc_selected_nations_list = v }
+					var:v = {
+						if = {
+							limit = {
+								NOT = { has_dynamic_modifier = { modifier = united_nations_security_council_sanctions } }
+							}
+							add_to_array = { ROOT.sc_selected_nations_list = v }
+						}
+					}
 				}
 				set_variable = { sc_selected_action = 2 }
 				missile_ui_update = yes
@@ -4250,7 +4265,14 @@ scripted_gui = {
 					array = global.un_sc_pressure_end_war
 					value = v
 
-					add_to_array = { sc_selected_nations_list = v }
+					var:v = {
+						if = {
+							limit = {
+								NOT = { has_idea = unsc_restricted_volunteers_too }
+							}
+						}
+						add_to_array = { ROOT.sc_selected_nations_list = v }
+					}
 				}
 				set_variable = { sc_selected_action = 3 }
 				missile_ui_update = yes
@@ -4262,13 +4284,27 @@ scripted_gui = {
 					array = global.can_be_sc_sanctioned
 					value = v
 
-					add_to_array = { sc_selected_nations_list = v }
+					var:v = {
+						if = {
+							limit = {
+								NOT = { has_idea = unsc_arms_embargo }
+							}
+						}
+						add_to_array = { ROOT.sc_selected_nations_list = v }
+					}
 				}
 				for_each_loop = {
 					array = global.un_sc_pressure_end_war
 					value = v
 
-					add_to_array = { sc_selected_nations_list = v }
+					var:v = {
+						if = {
+							limit = {
+								NOT = { has_idea = unsc_arms_embargo }
+							}
+						}
+						add_to_array = { ROOT.sc_selected_nations_list = v }
+					}
 				}
 				set_variable = { sc_selected_action = 4 }
 				missile_ui_update = yes
@@ -4331,6 +4367,25 @@ scripted_gui = {
 					clr_country_flag = show_full_ga_list
 				}
 				missile_ui_update = yes
+			}
+			un_ga_auto_accept_button_click = {
+				if = {
+					limit = {
+						has_country_flag = auto_accept_all_ga_votes
+					}
+					clr_country_flag = auto_accept_all_ga_votes
+					set_variable = { UN_GA_auto_accept_frame_var = 1 }
+				}else = {
+					set_country_flag = auto_accept_all_ga_votes
+					set_variable = { UN_GA_auto_accept_frame_var = 2 }
+				}
+				missile_ui_update = yes
+			}
+		}
+
+		properties = {
+			un_ga_auto_accept_button = {
+				frame = UN_GA_auto_accept_frame_var
 			}
 		}
 	}
@@ -6357,20 +6412,64 @@ scripted_gui = {
 			list_of_sc_yes_votes = {
 				array = global.security_council_vote_yes
 				entry_container = IS_UN_SC_yes_vote_list
+				change_scope = yes
 			}
 			list_of_sc_no_votes = {
 				array = global.security_council_vote_no
 				entry_container = IS_UN_SC_no_vote_list
+				change_scope = yes
 			}
 			list_of_sc_abstain = {
 				array = global.security_council_vote_abstain
 				entry_container = IS_UN_SC_abstain_list
+				change_scope = yes
 			}
 		}
 
 		triggers = {
 			name_of_nation_button_visible = {
 				NOT = { is_in_array = { global.p5_sc_members = v } }
+			}
+			is_un_sc_vote_yes_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = un_sc_not_abstaining_tt
+					NOT = { is_in_array = { global.security_council_vote_abstain = ROOT } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = un_sc_nation_not_in_array_tt
+					NOT = { is_in_array = { global.security_council_vote_yes = ROOT } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = un_voting_has_not_been_swayed
+					NOT = { has_country_flag = has_had_current_un_sc_vote_swayed }
+				}
+				influence_higher_40 = yes
+			}
+			is_un_sc_vote_no_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = un_sc_not_abstaining_tt
+					NOT = { is_in_array = { global.security_council_vote_abstain = ROOT } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = un_sc_nation_not_in_array_tt
+					NOT = { is_in_array = { global.security_council_vote_no = ROOT } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = un_voting_has_not_been_swayed
+					NOT = { has_country_flag = has_had_current_un_sc_vote_swayed }
+				}
+				influence_higher_40 = yes
+			}
+			is_un_sc_vote_abstain_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = un_sc_nation_not_in_array_tt
+					NOT = { is_in_array = { global.security_council_vote_abstain = ROOT } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = un_voting_has_not_been_swayed
+					NOT = { has_country_flag = has_had_current_un_sc_vote_swayed }
+				}
+				influence_higher_40 = yes
 			}
 		}
 
@@ -6384,6 +6483,96 @@ scripted_gui = {
 				} else = {
 					set_country_flag = show_sc_vote_view
 				}
+				missile_ui_update = yes
+			}
+			is_un_sc_vote_yes_button_click = {
+				set_temp_variable = { percent_change = -10 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+
+				set_country_flag = has_had_current_un_sc_vote_swayed
+
+				remove_from_array = { global.security_council_vote_yes = THIS }
+				add_to_array = { global.security_council_vote_no = THIS }
+
+				custom_effect_tooltip = un_sc_sway_vote_no_tt
+
+				missile_ui_update = yes
+			}
+			is_un_sc_vote_yes_button_right_click = {
+				set_temp_variable = { percent_change = -5 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+
+				change_influence_percentage = yes
+
+				remove_from_array = { global.security_council_vote_yes = THIS }
+				add_to_array = { global.security_council_vote_abstain = THIS }
+
+				custom_effect_tooltip = un_sc_sway_vote_abstain_tt
+
+				missile_ui_update = yes
+			}
+			is_un_sc_vote_no_button_click = {
+				set_temp_variable = { percent_change = -10 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+
+				set_country_flag = has_had_current_un_sc_vote_swayed
+
+				remove_from_array = { global.security_council_vote_no = THIS }
+				add_to_array = { global.security_council_vote_yes = THIS }
+
+				custom_effect_tooltip = un_sc_sway_vote_yes_tt
+
+				missile_ui_update = yes
+			}
+			is_un_sc_vote_no_button_right_click = {
+				set_temp_variable = { percent_change = -5 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+
+				change_influence_percentage = yes
+
+				remove_from_array = { global.security_council_vote_no = THIS }
+				add_to_array = { global.security_council_vote_abstain = THIS }
+
+				custom_effect_tooltip = un_sc_sway_vote_abstain_tt
+
+				missile_ui_update = yes
+			}
+			is_un_sc_vote_abstain_button_click = {
+				set_temp_variable = { percent_change = -10 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+
+				change_influence_percentage = yes
+
+				remove_from_array = { global.security_council_vote_abstain = THIS }
+				add_to_array = { global.security_council_vote_yes = THIS }
+
+				set_country_flag = has_had_current_un_sc_vote_swayed
+
+				custom_effect_tooltip = un_sc_sway_vote_yes_tt
+
+				missile_ui_update = yes
+			}
+			is_un_sc_vote_abstain_button_right_click = {
+				set_temp_variable = { percent_change = -10 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+
+				change_influence_percentage = yes
+
+				remove_from_array = { global.security_council_vote_abstain = THIS }
+				add_to_array = { global.security_council_vote_no = THIS }
+
+				set_country_flag = has_had_current_un_sc_vote_swayed
+
+				custom_effect_tooltip = un_sc_sway_vote_no_tt
+
 				missile_ui_update = yes
 			}
 		}
@@ -6436,6 +6625,9 @@ scripted_gui = {
 						has_war_with = PREV
 					}
 				}
+				NOT = {
+					has_global_flag = sc_action_against@THIS
+				}
 			}
 		}
 
@@ -6446,6 +6638,7 @@ scripted_gui = {
 
 					set_temp_variable = { sc_new_vote_type = sc_selected_action }
 					set_temp_variable = { sc_new_vote_nation = PREV }
+					set_global_flag = sc_action_against@PREV
 					update_sc_vote = yes
 				}
 				missile_ui_update = yes
@@ -6473,8 +6666,6 @@ scripted_gui = {
 		}
 
 		triggers = {
-			#disable vote manipulation during vote confirmation
-			#this is so the system functions *properly*
 			is_un_sc_manipulate_vote_button_click_enabled = {
 				set_temp_variable = { disp_var = global.sc_vote_type_tracker^i }
 				meta_trigger = {
@@ -6498,27 +6689,9 @@ scripted_gui = {
 				set_temp_variable = { type_hold = global.sc_vote_type_tracker^i }
 				set_temp_variable = { index_track = i }
 
-				remove_from_array = {
-					array = global.sc_vote_nation_tracker
-					index = index_track
-				}
+				manipulate_sc_vote_front = yes
 
-				remove_from_array = {
-					array = global.sc_vote_type_tracker
-					index = index_track
-				}
-
-				add_to_array = {
-					array = global.sc_vote_nation_tracker
-					value = nation_hold
-					index = 0
-				}
-
-				add_to_array = {
-					array = global.sc_vote_type_tracker
-					value = type_hold
-					index = 0
-				}
+				add_political_power = -150
 
 				missile_ui_update = yes
 			}
@@ -6530,25 +6703,9 @@ scripted_gui = {
 				set_temp_variable = { type_hold = global.sc_vote_type_tracker^i }
 				set_temp_variable = { index_track = i }
 
-				remove_from_array = {
-					array = global.sc_vote_nation_tracker
-					index = index_track
-				}
+				manipulate_sc_vote_rear = yes
 
-				remove_from_array = {
-					array = global.sc_vote_type_tracker
-					index = index_track
-				}
-
-				add_to_array = {
-					array = global.sc_vote_nation_tracker
-					value = nation_hold
-				}
-
-				add_to_array = {
-					array = global.sc_vote_type_tracker
-					value = type_hold
-				}
+				add_political_power = -150
 
 				missile_ui_update = yes
 			}
@@ -6575,12 +6732,48 @@ scripted_gui = {
 		}
 
 		triggers = {
-
+			is_un_ga_manipulate_vote_button_click_enabled = {
+				set_temp_variable = { disp_var = global.ga_vote_type_tracker^i }
+				meta_trigger = {
+					text = {
+						custom_trigger_tooltip = {
+							tooltip = un_ga_vote_track_[DISP]
+							always = yes
+						}
+					}
+					DISP = "[?disp_var]"
+				}
+				has_political_power > 150
+			}
 		}
 
 		effects = {
 			is_un_ga_manipulate_vote_button_click = {
+				custom_effect_tooltip = un_ga_manipulate_vote_tt
 
+				set_temp_variable = { nation_hold = global.ga_vote_nation_tracker^i }
+				set_temp_variable = { type_hold = global.ga_vote_type_tracker^i }
+				set_temp_variable = { index_track = i }
+
+				manipulate_ga_vote_front = yes
+
+				add_political_power = -150
+
+				missile_ui_update = yes
+			}
+
+			is_un_sc_manipulate_vote_button_right_click = {
+				custom_effect_tooltip = un_ga_manipulate_vote_tt
+
+				set_temp_variable = { nation_hold = global.ga_vote_nation_tracker^i }
+				set_temp_variable = { type_hold = global.ga_vote_type_tracker^i }
+				set_temp_variable = { index_track = i }
+
+				manipulate_ga_vote_rear = yes
+
+				add_political_power = -150
+
+				missile_ui_update = yes
 			}
 		}
 	}
