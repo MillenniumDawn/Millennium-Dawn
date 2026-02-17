@@ -4,950 +4,333 @@ title: "Code Resources"
 description: "Millennium Dawn unique modifiers, effects and tutorials for modders"
 ---
 
-This is a list (not fully up-to-date) of MD unique modifiers, effects and tutorials to assist modders and submodders to create content for our mod.
+This document provides reference documentation for Millennium Dawn's unique systems, including custom modifiers, scripted effects, and how-to guides for common modding tasks.
 
-# Table of Contents
+> **Note**: This is not fully up-to-date. For the latest systems, check the codebase directly.
 
-- [Modifiers](#modifiers)
-  - [Economic Modifiers](#economic-modifiers)
-  - [Law Modifiers](#law-modifiers)
-  - [Influence Modifiers](#influence-modifiers)
-  - [Energy Modifiers](#energy-modifiers)
-  - [Political Modifiers](#political-modifiers)
-- [Effects/Scripted Effects](#effectsscripted-effects)
-  - [MD Building Costs](#md-building-costs)
-  - [MD Building Effects](#md-building-effects)
-  - [MD Economic Effects](#md-economic-effects)
-  - [MD Internal Faction Effects](#md-internal-faction-effects)
-  - [MD Influence Effects](#md-influence-effects)
-  - [MD Political Effects](#md-political-effects)
-  - [Counter Terror Effects](#counter-terror-effects)
-  - [MD Cartel Related Effects](#md-cartel-related-effects)
-  - [MD European Union Effects](#md-european-union-effects)
-  - [Energy Effects](#energy-effects)
-- [Guides/How-To](#guideshow-to)
-  - [MD How-To-Add Subideology Parties](#md-how-to-add-subideology-parties)
-  - [Historical Events/Exact Date Trigger (ETD) Events](#historical-eventsexact-date-trigger-etd-events)
-  - [Variable Guide/Explanation](#variable-guideexplanation)
-  - [Hydroelectric/Geothermal/Renewable/Productivity Configuration Guide](#hydroelectricgeothermalrenewableproductivity-configuration-guide)
-  - [Unique Terrain Photos Guide](#unique-terrain-photos-guide)
+---
 
-## Modifiers
+# Quick Reference
 
-These can be used _anywhere_ that a normal modifier can be used such as `political_power_factor`.
+## Custom Modifier Categories
 
-<details><summary>Economic Modifiers</summary>
-{% capture md %}
+- [Economic Modifiers](#economic-modifiers) - Money, taxes, productivity, trade
+- [Law Modifiers](#law-modifiers) - Government spending, law costs
+- [Influence Modifiers](#influence-modifiers) - Foreign influence mechanics
+- [Energy Modifiers](#energy-modifiers) - Power generation and consumption
+- [Political Modifiers](#political-modifiers) - Party popularity mechanics
 
-| Modifier Name                                    | Category  | Description                                                                                                 | Notes                                        |
-| ------------------------------------------------ | --------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| interest_rate_multiplier_modifier                | Economic  | Modifies the country's interest rate                                                                        | This is whole number ( i.e. -1 )             |
-| personnel_cost_multiplier_modifier               | Economic  | Modifies the country's military wages                                                                       | N/A                                          |
-| army_personnel_cost_multiplier_modifier          | Economic  | Modifies the country's land forces wages                                                                    | N/A                                          |
-| navy_personnel_cost_multiplier_modifier          | Economic  | Modifies the country's naval forces wages                                                                   | N/A                                          |
-| airforce_personnel_cost_multiplier_modifier      | Economic  | Modifies the country's air forces wages                                                                     | N/A                                          |
-| equipment_cost_multiplier_modifier               | Economic  | Modifies the country's equipment upkeep                                                                     | N/A                                          |
-| bureaucracy_cost_multiplier_modifier             | Economic  | Modifies the country's bureaucracy spending cost                                                            | N/A                                          |
-| police_cost_multiplier_modifier                  | Economic  | Modifies the country's internal security spending cost                                                      | N/A                                          |
-| education_cost_multiplier_modifier               | Economic  | Modifies the country's internal security spending cost                                                      | N/A                                          |
-| health_cost_multiplier_modifier                  | Economic  | Modifies the country's health care spending cost                                                            | N/A                                          |
-| social_cost_multiplier_modifier                  | Economic  | Modifies the country's welfare spending cost                                                                | N/A                                          |
-| econ_cycle_upg_cost_multiplier_modifier          | Economic  | Modifies the economic cycle upgrade cost                                                                    | N/A                                          |
-| tax_rate_change_multiplier_modifier              | Economic  | Modifies the tax rate law change pp cost                                                                    | N/A                                          |
-| propaganda_campaign_cost_modifier                | Economic  | Modifies all propaganda campaign decision monetary cost                                                     | N/A                                          |
-| projects_cost_modifier                           | Economic  | Modifies the economic projects (the project section in the Economic Preview tab)                            | N/A                                          |
-| salafist_outlook_campaign_cost_modifier          | Economic  | Modifies the Salafi Indoctrination campaign decision monetary cost                                          | N/A                                          |
-| nonaligned_outlook_campaign_cost_modifier        | Economic  | Modifies the Non-Aligned campaign decision monetary cost                                                    | N/A                                          |
-| western_outlook_campaign_cost_modifier           | Economic  | Modifies the Western Outlook campaign decision monetary cost                                                | N/A                                          |
-| emerging_outlook_campaign_cost_modifier          | Economic  | Modifies the Emerging Outlook campaign decision monetary cost                                               | N/A                                          |
-| nationalist_outlook_campaign_cost_modifier       | Economic  | Modifies the Nationalist Outlook campaign decision monetary cost                                            | N/A                                          |
-| receiving_investment_duration_modifier           | Economic  | Modifies the duration of incoming International Investment projects                                         | N/A                                          |
-| receiving_investment_cost_modifier               | Economic  | Modifies the cost of incoming International Investment projects                                             | N/A                                          |
-| investment_duration_modifier                     | Economic  | Modifies the duration of an outgoing International Investment project                                       | N/A                                          |
-| investment_cost_modifier                         | Economic  | Modifies the cost of an outgoing International Investment project                                           | N/A                                          |
-| civ_facs_worker_requirement_modifier             | Economic  | Modifies the number of workers required by a Civilian Factory                                               | N/A                                          |
-| mil_facs_worker_requirement_modifier             | Economic  | Modifies the number of workers required by a Military Factory and Dockyard                                  | N/A                                          |
-| offices_worker_requirement_modifier              | Economic  | Modifies the number of workers required by an Office Park                                                   | N/A                                          |
-| buildings_worker_requirement_modifier            | Economic  | Modifies the number of workers required by all buildings                                                    | N/A                                          |
-| agriculture_workers_modifier                     | Economic  | Modifies the number of workers required by agriculture                                                      | N/A                                          |
-| agriculture_district_worker_requirement_modifier | Economic  | Modifies the number of workers required by Commercialized Agriculture Districts                             | N/A                                          |
-| resource_sector_workers_modifier                 | Economic  | Modifies the number of workers required by the resource sectors                                             | N/A                                          |
-| tax_gain_multiplier_modifier                     | Economic  | Modifies the amount of money gained from all taxes (Population and Corporate)                               | N/A                                          |
-| population_tax_income_multiplier_modifier        | Economic  | Modifies the amount of money gained from population taxes                                                   | N/A                                          |
-| corporate_tax_income_multiplier_modifier         | Economic  | Modifies the amount of money gained from corporate taxes                                                    | N/A                                          |
-| office_park_income_tax_modifier                  | Economic  | Modifies the amount of money gained from Office Parks                                                       | N/A                                          |
-| dockyard_income_tax_modifier                     | Economic  | Modifies the amount of money gained from Naval Yards                                                        | N/A                                          |
-| military_industry_tax_modifier                   | Economic  | Modifies the amount of money gained from Military Industry                                                  | N/A                                          |
-| civilian_industry_tax_modifier                   | Economic  | Modifies the amount of money gained from Civilian Industry                                                  | N/A                                          |
-| agriculture_tax_modifier                         | Economic  | Modifies the amount of money gained from Agriculture                                                        | N/A                                          |
-| agriculture_district_income_tax_modifier         | Economic  | Modifies the amount of money gained from Commercialized Agriculture Districts                               | N/A                                          |
-| resource_export_multiplier_modifier              | Economic  | Modifies the amount of money gained from all Resource Exports                                               | N/A                                          |
-| oil_export_multiplier_modifier                   | Economic  | Modifies the amount of money gained from Fossil Fuel Exports                                                | N/A                                          |
-| steel_export_multiplier_modifier                 | Economic  | Modifies the amount of money gained from Steel Exports                                                      | N/A                                          |
-| tungsten_export_multiplier_modifier              | Economic  | Modifies the amount of money gained from Technology Metal Exports                                           | N/A                                          |
-| aluminium_export_multiplier_modifier             | Economic  | Modifies the amount of money gained from Light Metal Exports                                                | N/A                                          |
-| chromium_export_multiplier_modifier              | Economic  | Modifies the amount of money gained from Precious Metal Exports                                             | N/A                                          |
-| rubber_export_multiplier_modifier                | Economic  | Modifies the amount of money gained from Rubber Exports                                                     | N/A                                          |
-| return_on_investment_modifier                    | Economic  | Modifies the return rate on International Investment                                                        | 0.02 will add 2% to your ROI rate            |
-| productivity_growth_modifier                     | Economic  | Modifies the productivity growth of a nation                                                                | Keep this small or else it quickly snowballs |
-| state_productivity_growth_modifier               | Economic  | State level modifier to increase/decrease the productivity growth of a state                                | N/A                                          |
-| country_productivity_growth_modifier             | Economic  | Country level modifier increase/decrease the productivity growth of a state                                 | N/A                                          |
-| agricolture_productivity_modifier                | Economic  | Modifier to increase/decrease the productivity generate from agriculture                                    | N/A                                          |
-| civilian_factories_productivity                  | Economic  | Modifier to increase/decrease the productivity generate from civilian factories                             | N/A                                          |
-| military_factories_productivity                  | Economic  | Modifier to increase/decrease the productivity generate from mil factories                                  | N/A                                          |
-| dockyard_prodctivity                             | Economic  | Modifier to increase/decrease the productivity generate from dockyards                                      | N/A                                          |
-| offices_productivity                             | Economic  | Modifier to increase/decrease the productivity generated from offices                                       | N/A                                          |
-| total_workforce_modifier                         | Economic  | Modifier to increase/decrease the amount of your workforce for buildings                                    | N/A                                          |
-| high_unemployment_threshold_modifier             | Economic  | Modifier to increase/decrease the limit before you suffer penalties from high unemployment                  | N/A                                          |
-| gdp_from_resource_sector_modifier                | Economic  | Modifier to increase/decrease the gdp from the resource sector                                              | N/A                                          |
-| international_market_income_modifier             | Economic  | Modifier to increase/decrease the amount of money gained from selling equipment on the international market | N/A                                          |
-| international_market_purchase_modifier           | Economic  | Modifier to increase/decrease the cost of buying equipment from the international market                    | N/A                                          |
-| migration_rate_value_factor                      | Migration | Modifier to increase/decrease the amount of net migration into your country                                 | N/A                                          |
-| internal_investments_pp_cost_modifier            | Economic  | Modifier to increase/decrease the amount of political power spent on Internal Investments                   | N/A                                          |
-| internal_investments_money_cost_modifier         | Economic  | MModifier to increase/decrease the amount of money spent on Internal Investments                            | N/A                                          |
+## Scripted Effects Categories
 
-{% endcapture %}
-{{ md | markdownify }}
+- [Building Effects](#md-building-effects) - Add buildings with costs
+- [Economic Effects](#md-economic-effects) - Treasury, debt, productivity
+- [Internal Faction Effects](#md-internal-faction-effects) - Faction opinions
+- [Influence Effects](#md-influence-effects) - Influence actions
+- [Political Effects](#md-political-effects) - Party management
+- [Special System Effects](#special-system-effects) - EU, Energy, Counter-Terror, Cartels
 
-</details>
+## How-To Guides
 
-<details><summary>Law Modifiers</summary>
-{% capture md %}
+- [Add Subideology Parties](#md-how-to-add-subideology-parties)
+- [Historical Events](#historical-eventsexact-date-trigger-etd-events)
+- [Variables](#variable-guideexplanation)
+- [Energy Configuration](#hydroelectricgeothermalrenewableproductivity-configuration-guide)
+- [Unique Terrain Photos](#unique-terrain-photos)
 
-| Modifier Name                        | Category | Description                                                                                          | Notes                                                           |
-| ------------------------------------ | -------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| expected_adm_modifier                | Law      | Modifier that increases/decreases the expected government spending on Bureau (Laws)                  | N/A                                                             |
-| expected_police_modifier             | Law      | Modifier that increases/decreases the expected government spending on Police/Internal Security (Law) | N/A                                                             |
-| expected_education_modifier          | Law      | Modifier that increases/decreases the expected government spending on Education (Law)                | N/A                                                             |
-| expected_healthcare_modifier         | Law      | Modifier that increases/decreases the expected government spending on Healthcare (Law)               | N/A                                                             |
-| expected_welfare_modifier            | Law      | Modifier that increases/decreases the expected government spending on Social Spending (Law)          | N/A                                                             |
-| expected_mil_modifier                | Law      | Modifier that increases/decreases the expected government spending on Military (Law)                 | N/A                                                             |
-| corruption_cost_factor               | Law      | Modifies the political power cost of changing Corruption                                             | N/A                                                             |
-| economic_cycles_cost_factor          | Law      | Modifies the political power cost of changing Economic Cycles                                        | N/A                                                             |
-| internal_factions_cost_factor        | Law      | Modifies the political power cost of changing Internal Factions                                      | N/A                                                             |
-| bureaucracy_cost_factor              | Law      | Modifies the political power cost of changing Bureaucracy Spending                                   | N/A                                                             |
-| Military_Spending_cost_factor        | Law      | Modifies the political power cost of changing Military Spending                                      | N/A                                                             |
-| crime_fighting_cost_factor           | Law      | Modifies the political power cost of changing Police/Internal Security Spending                      | N/A                                                             |
-| education_budget_cost_factor         | Law      | Modifies the political power cost of changing Education Spending                                     | N/A                                                             |
-| health_budget_cost_factor            | Law      | Modifies the political power cost of changing Healthcare Spending                                    | N/A                                                             |
-| social_budget_cost_factor            | Law      | Modifies the political power cost of changing Welfare Spending                                       | N/A                                                             |
-| trade_laws_cost_factor               | Law      | Modifies the political power cost of changing Trade Law                                              | N/A                                                             |
-| Conscription_Law_cost_factor         | Law      | Modifies the political power cost of changing Conscription Law                                       | N/A                                                             |
-| Military_Status_Women_cost_factor    | Law      | Modifies the political power cost of changing Military Status of Women Law                           | N/A                                                             |
-| Foreign_Intervention_Law_cost_factor | Law      | Modifies the political power cost of changing Foreign Intervention Law                               | N/A                                                             |
-| Officer_Training_Law_cost_factor     | Law      | Modifies the political power cost of changing Officer Training Law                                   | N/A                                                             |
-| migration_rate_value_factor          | Law      | Modifies net migration rate                                                                          | N/A                                                             |
-| materiel_manufacturer_cost_factor    | Law      | Modifies the political power cost of changing Infantry/Other Design Companies                        | This is used when you do not have Arms Against Tyranny enabled. |
-| tank_manufacturer_cost_factor        | Law      | Modifies the political power cost of changing Armour Design Companies                                | This is used when you do not have Arms Against Tyranny enabled. |
-| aircraft_manufacturer_cost_factor    | Law      | Modifies the political power cost of changing Aircraft Design Companies                              | This is used when you do not have Arms Against Tyranny enabled. |
-| naval_manufacturer_cost_factor       | Law      | Modifies the political power cost of changing Naval Design Companies                                 | This is used when you do not have Arms Against Tyranny enabled. |
+---
 
-{% endcapture %}
-{{ md | markdownify }}
+# Modifiers
 
-</details>
+Modifiers in Millennium Dawn follow standard HOI4 syntax but include many unique economic, political, and energy systems.
 
-<details><summary>Influence Modifiers</summary>
-{% capture md %}
+## Economic Modifiers
 
-| Modifier Name                                                 | Category  | Description                                                                                    | Notes                                                                         |
-| ------------------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| foreign_influence_modifier                                    | Influence | Modifier that increases the effectiveness of your influence actions                            | N/A                                                                           |
-| foreign_influence_defense_modifier                            | Influence | Modifier that decreases the effectiveness of foreign influence actions in our country          | N/A                                                                           |
-| foreign_influence_auto_influence_cap_modifier                 | Influence | Modifier that increases the number of Auto-Influence slots a tag has available                 | N/A                                                                           |
-| influence_coup_modifier                                       | Influence | Modifier that increase/decreases the success rate of a coup                                    | N/A                                                                           |
-| foreign_influence_continent_modifier                          | Influence | Modifier that increase/decreases the effectiveness of foreign influence on other continents    | This modifier is a negative modifier.                                         |
-| foreign_influence_home_continent_modifier                     | Influence | Modifier that increase/decreases the effectiveness of foreign influence on our home continents | This modifier is a negative modifier.                                         |
-| foreign_influence_monthly_domestic_independence_gain_modifier | Influence | Increases the amount of the monthly Domestic Independence Gain                                 |
-| foreign_influence_monthly_domestic_independence_gain_factor   | Influence | Modifier that increases/decreases the effectiveness of foreign influence on other continents   | Increases the amount of the monthly Domestic Independence Gain by this factor |
+These modifiers affect the economy, taxes, trade, and productivity.
 
-{% endcapture %}
-{{ md | markdownify }}
+| Modifier                                                                  | Category  | Description                  | Notes                           |
+| ------------------------------------------------------------------------- | --------- | ---------------------------- | ------------------------------- |
+| `interest_rate_multiplier_modifier`                                       | Economic  | Adjusts interest rate        | Whole numbers only              |
+| `personnel_cost_multiplier_modifier`                                      | Economic  | Military wages               |                                 |
+| `army/navy/airforce_personnel_cost_multiplier_modifier`                   | Economic  | Branch-specific wages        |                                 |
+| `equipment_cost_multiplier_modifier`                                      | Economic  | Equipment upkeep             |                                 |
+| `bureaucracy_cost_multiplier_modifier`                                    | Economic  | Bureaucracy spending         |                                 |
+| `tax_rate_change_multiplier_modifier`                                     | Economic  | Tax law change PP cost       |                                 |
+| `projects_cost_modifier`                                                  | Economic  | Economic project costs       |                                 |
+| `civ_facs_worker_requirement_modifier`                                    | Economic  | Civilian factory workers     |                                 |
+| `mil_facs_worker_requirement_modifier`                                    | Economic  | Military factory workers     |                                 |
+| `tax_gain_multiplier_modifier`                                            | Economic  | All tax income               |                                 |
+| `population_tax_income_multiplier_modifier`                               | Economic  | Population taxes             |                                 |
+| `corporate_tax_income_multiplier_modifier`                                | Economic  | Corporate taxes              |                                 |
+| `resource_export_multiplier_modifier`                                     | Economic  | All resource exports         |                                 |
+| `oil/steel/tungsten/aluminium/chromium/rubber_export_multiplier_modifier` | Economic  | Specific exports             |                                 |
+| `return_on_investment_modifier`                                           | Economic  | International investment ROI | Use decimals (0.02 = 2%)        |
+| `productivity_growth_modifier`                                            | Economic  | National productivity        | Keep small to avoid snowballing |
+| `state_productivity_growth_modifier`                                      | Economic  | Per-state productivity       |                                 |
+| `migration_rate_value_factor`                                             | Migration | Net migration rate           |                                 |
+| `international_market_income_modifier`                                    | Economic  | Equipment sales income       |                                 |
+| `international_market_purchase_modifier`                                  | Economic  | Equipment purchase costs     |                                 |
 
-</details>
+## Law Modifiers
 
-<details><summary>Energy Modifiers</summary>
-{% capture md %}
+These modify political power costs for changing government laws.
 
-| Modifier Name                              | Category | Description                                                                                | Notes                           |
-| ------------------------------------------ | -------- | ------------------------------------------------------------------------------------------ | ------------------------------- |
-| energy_gain                                | Energy   | Modifies energy gain as a flat amount                                                      | 10 = 10 more energy gain        |
-| energy_gain_multiplier                     | Energy   | Modifies energy gain as a percentage, modifies all sources of energy gain                  | N/A                             |
-| renewable_energy_gain                      | Energy   | Modifies energy gain from renewable                                                        | N/A                             |
-| renewable_energy_gain_multiplier           | Energy   | Modifies energy gain from renewable as a modifier                                          | N/A                             |
-| pop_energy_use_multiplier                  | Energy   | Modifies the amount of energy used by the population                                       | N/A                             |
-| fossil_pp_energy_generation_modifier       | Energy   | Modifies the energy generated by a Fossil Fuel Powerplant                                  | N/A                             |
-| nuclear_energy_generation_modifier         | Energy   | Modifies energy generated by a Nuclear Reactor                                             | N/A                             |
-| hydroelectric_energy_storage               | Energy   | Used for basic static energy use/storage for hydroelectric modifiers in a particular state | N/A                             |
-| nuclear_fuel_consumption_modifier          | Energy   | Modifies the consumption of LEU fuel by Nuclear Reactors                                   | N/A                             |
-| fossil_pp_fuel_consumption_modifier        | Energy   | Modifies the consumption of fuel by Fossil Fuel Powerplant                                 | N/A                             |
-| non_electric_fuel_consumption_modifier     | Energy   | Modifies the consumption of fuel by a countries population                                 | N/A                             |
-| energy_use                                 | Energy   | Modifies energy use as a flat amount                                                       | 10 = 10 more energy consumption |
-| energy_use_multiplier                      | Energy   | Modifies energy consumption as a percentage, modifies all sources of energy consumption    | N/A                             |
-| battery_park_construction_cost             | Energy   | Modifies the cost of building a battery park                                               | N/A                             |
-| state_renewable_energy_generation_modifier | Energy   | Modifies the amount of State Renewable Energy Generation                                   | N/A                             |
-| hydroelectric_power_generation_modifier    | Energy   | Modifies the amount of Hydroelectric Power Energy Generation                               | N/A                             |
-| geothermal_power_generation_modifier       | Energy   | Modifies the amount of Geothermal Power Energy Generation                                  | N/A                             |
+| Modifier                        | Description                  |
+| ------------------------------- | ---------------------------- |
+| `expected_adm_modifier`         | Bureau/Government spending   |
+| `expected_police_modifier`      | Internal Security spending   |
+| `expected_education_modifier`   | Education spending           |
+| `expected_healthcare_modifier`  | Healthcare spending          |
+| `expected_welfare_modifier`     | Social Spending              |
+| `expected_mil_modifier`         | Military spending            |
+| `corruption_cost_factor`        | Corruption change cost       |
+| `economic_cycles_cost_factor`   | Economic cycle change cost   |
+| `internal_factions_cost_factor` | Internal faction change cost |
+| `bureaucracy_cost_factor`       | Bureaucracy change cost      |
+| `trade_laws_cost_factor`        | Trade law change cost        |
+| `Conscription_Law_cost_factor`  | Conscription change cost     |
+| `migration_rate_value_factor`   | Migration law cost           |
 
-{% endcapture %}
-{{ md | markdownify }}
+## Influence Modifiers
 
-</details>
+These affect the foreign influence system.
 
-<details><summary>Political Modifiers</summary>
-{% capture md %}
+| Modifier                                                        | Description                    |
+| --------------------------------------------------------------- | ------------------------------ |
+| `foreign_influence_modifier`                                    | Influence action effectiveness |
+| `foreign_influence_defense_modifier`                            | Defense against influence      |
+| `foreign_influence_auto_influence_cap_modifier`                 | Auto-influence slots           |
+| `influence_coup_modifier`                                       | Coup success rate              |
+| `foreign_influence_continent_modifier`                          | Cross-continent influence      |
+| `foreign_influence_home_continent_modifier`                     | Home continent influence       |
+| `foreign_influence_monthly_domestic_independence_gain_modifier` | Monthly independence gain      |
 
-| Modifier Name              | Category  | Description                                                                                   | Notes                                                                              |
-| -------------------------- | --------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| popularity_attack_modifier | Political | Modifier that increases the effectiveness of attacking political parties in the political GUI | The modifier is not percentual. EX: popularity_attack_modifier = 2.0 for 2x damage |
-| popularity_boost_modifier  | Political | Modifier that increases the effectiveness of boosting political parties in the political GUI  | The modifier is not percentual. EX: popularity_boost_modifier = 2.0 for 2x boost   |
+## Energy Modifiers
 
-{% endcapture %}
-{{ md | markdownify }}
+These control power generation and consumption.
 
-</details>
+| Modifier                                  | Description                   |
+| ----------------------------------------- | ----------------------------- |
+| `energy_gain`                             | Flat energy gain              |
+| `energy_gain_multiplier`                  | Percentage energy gain        |
+| `renewable_energy_gain`                   | Renewable energy specifically |
+| `pop_energy_use_multiplier`               | Population energy use         |
+| `fossil_pp_energy_generation_modifier`    | Fossil fuel plant output      |
+| `nuclear_energy_generation_modifier`      | Nuclear reactor output        |
+| `hydroelectric_power_generation_modifier` | Hydroelectric output          |
+| `geothermal_power_generation_modifier`    | Geothermal output             |
+| `energy_use_multiplier`                   | Total energy consumption      |
+| `battery_park_construction_cost`          | Battery park costs            |
 
-## Effects/Scripted Effects
+## Political Modifiers
 
-<details><summary>MD Building Costs</summary>
-{% capture md %}
+These affect internal politics.
 
-Each of the values for buildings that consume a building slot (i.e. Civilian Industry) has the building slot factored in.
+| Modifier                     | Description                | Notes                     |
+| ---------------------------- | -------------------------- | ------------------------- |
+| `popularity_attack_modifier` | Party attack effectiveness | Not percentage (2.0 = 2x) |
+| `popularity_boost_modifier`  | Party boost effectiveness  | Not percentage (2.0 = 2x) |
 
--- State Buildings:
+---
 
-- Civilian Industry (industrial_complex) - $7.50
-- Military Industry (arms_factory) - $7.50
-- Dockyard (dockyard) - $7.50
-- Offices (offices) - $12.00
-- Commercialized Agriculture District - $3.75
-- Infrastructure (infrastructure) - $3.50
-- Air Base (air_base) - $2.50
-- Sam Site (anti_air_building) - $3.25
-- Renewable Energy Infrastructure (renewable_energy_infra) - $8.50
-- Fuel Silo (fuel_silo) - $3.00
-- Radar Station (radar_station) - $1.75
-- Network Infrastructure (internet_station) - $3.00
-- Missile Launch Site (rocket_site) - $3.00
-- Nuclear Reactor (nuclear_reactor) - $9.00
-- State-Wide Defensive Network (stronghold_network) - $8.00
-- Fossil Fuel Powerplant (fossil_powerplant) - $2.25
-- Microchip Plant (microchip_plant) - $10.50
-- Composite Plant (composite_plant) - $7.50
-- Synthetic Refinery (synthetic_refinery) - $5.00
-- Reinforced Electrical Grid (energy_infrastructure) - $5.50
-- High Capacity Electrical Grid (industrial_infrastructure) - $5.50
-- **Building Slots Minimum: $1.00 per slot**
+# Scripted Effects
 
--- Provincial Buildings
+All scripted effects automatically generate tooltips. **Do not** add extra localization for these.
 
-- Naval Engineering Facility (naval_facility) - $15.00
-- Land Warfare Facility (land_facility) - $15.00
-- Aerodynamics & Avionics Facility (air_facility) - $15.00
-- Civilian R&D Facility (nuclear_facility) - $15.00
-- Naval Base (naval_base) - $0.50 per level
-- Land Fort (bunker) - $0.50 per level
-- Coastal Bunker (coastal_bunker) - $0.50 per level
-- Supply Hub (supply_node) - $2.50
-- Railways (rail_way) - $0.01 per province
+## Building Effects
 
--- Resources:
+> **Location**: `common/scripted_effects/00_scripted_effects.txt`
 
-Resources in MD translates to a 8 resources to one civilian factory. Therefore, if you were to add 1 steel it would cost the nation $0.938 Billion in MD standard. The below example illustrates how you should balance out resource costs.
+Buildings can be added using state scope or random scope:
 
-Example:
+### State Scope (Predefined State)
 
-```
-capital_scope = {
-	add_resource = {
-		type = steel
-		amount = 4
-	}
-}
-set_temp_variable = { treasury_change = -3.75 }
-modify_treasury_effect = yes
-```
-
-{% endcapture %}
-{{ md | markdownify }}
-
-</details>
-
-<details><summary>MD Building Effects</summary>
-{% capture md %}
-
-If you are lazy to calculate cost for common effects with buildings, you can check common\scripted_effects\00_scripted_effects.txt<br><br>
-State Scope effects requires to put the effect inside a state. If the building cannot be added into a state, it will be added to any random owned state.<br>
-Example:
-
-```
+```hoiscript
 117 = {
-	one_state_industrial_complex = yes
+    one_state_industrial_complex = yes
 }
 ```
 
-Also try to use as more as possible these effects.
+### Random Scope (Any Owned State)
 
-**Civilian Factory**
-
-```
-one_random_industrial_complex = yes #add 1 civ with slot and cost
-two_random_industrial_complex = yes #add 2 civs with slots and cost
-three_random_industrial_complex = yes #add 3 civs (2 in 1st random state and 3rd in another one) with slots and cost
-four_random_industrial_complex = yes #add 4 civs (2 in 1st random state and 2 in another one) with slots and cost
-
-~~State Scope~~
-one_state_industrial_complex = yes #add 1 civ with slot and cost in a predefined state
-two_state_industrial_complex = yes #add 2 civs with slot and cost in a predefined state
-three_state_industrial_complex = yes #add 3 civs with slot and cost in a predefined state
-four_state_industrial_complex = yes #add 4 civs with slot and cost in a predefined state
+```hoiscript
+one_random_industrial_complex = yes
+two_random_industrial_complex = yes
+three_random_industrial_complex = yes
+four_random_industrial_complex = yes
 ```
 
-**Military Factory**
+### Available Building Effects
 
-```
-one_random_arms_factory = yes #add 1 military factory with slot and cost
-two_random_arms_factory = yes #add 2 military factories with slots and cost
-three_random_arms_factory = yes #add 3 military factories (2 in 1st random state and 3rd in another one) with slots and cost
-four_random_arms_factory = yes #add 4 military factories (2 in 1st random state and 2 in another one) with slots and cost
+| Building               | Random Effects                      | State Scope Effects                |
+| ---------------------- | ----------------------------------- | ---------------------------------- |
+| Civilian Factory       | `one_random_industrial_complex`     | `one_state_industrial_complex`     |
+| Military Factory       | `one_random_arms_factory`           | `one_state_arms_factory`           |
+| Dockyard               | `one_random_dockyard`               | `one_state_dockyard`               |
+| Offices                | `one_office_construction`           | `one_state_office_construction`    |
+| Infrastructure         | `one_random_infrastructure`         | `one_state_infrastructure`         |
+| Air Base               | `one_air_base`                      | `one_state_air_base`               |
+| Network Infrastructure | `one_random_network_infrastructure` | `one_state_network_infrastructure` |
+| Anti-Air/SAM           | `one_anti_air`                      | `one_state_anti_air`               |
+| Radar                  | `one_radar_station`                 | `one_state_radar_station`          |
+| Nuclear Reactor        | `one_random_nuclear_reactor`        | `one_state_nuclear_reactor`        |
+| Agriculture District   | `one_random_agriculture_district`   | `one_state_agriculture_district`   |
 
-~~State Scope~~
-one_state_arms_factory = yes #add 1 military factory with slot and cost in a predefined state
-two_state_arms_factory = yes #add 2 military factories with slot and cost in a predefined state
-three_state_arms_factory = yes #add 3 military factories with slot and cost in a predefined state
-four_state_arms_factory = yes #add 4 military factories with slot and cost in a predefined state
-```
+### Building Costs (State-Level)
 
-**Infrastructure**
+| Building                            | Cost   |
+| ----------------------------------- | ------ |
+| Civilian/Military Factory, Dockyard | $7.50  |
+| Offices                             | $12.00 |
+| Commercialized Agriculture          | $3.75  |
+| Infrastructure                      | $3.50  |
+| Air Base                            | $2.50  |
+| SAM Site                            | $3.25  |
+| Renewable Infrastructure            | $8.50  |
+| Fuel Silo                           | $3.00  |
+| Radar                               | $1.75  |
+| Network Infrastructure              | $3.00  |
+| Missile Site                        | $3.00  |
+| Nuclear Reactor                     | $9.00  |
+| Fossil Powerplant                   | $2.25  |
+| Microchip Plant                     | $10.50 |
+| Composite Plant                     | $7.50  |
 
-```
-one_random_infrastructure = yes #add 1 infrastructure with cost
-two_random_infrastructure = yes #add 2 infrastructure in 2 random states with cost
-three_random_infrastructure = yes #add 3 infrastructure in 3 random states with cost
+## Economic Effects
 
-~~State Scope~~
-one_state_infrastructure = yes #add 1 infrastructure with cost in a predefined state
-two_state_infrastructure = yes #add 2 infrastructure with cost in a predefined state
-three_state_infrastructure = yes #add 3 infrastructure with cost in a predefined state
-```
+### Treasury Management
 
-**Dockyards**
-
-```
-one_random_dockyard = yes #add 1 dockyard with slot and cost
-two_random_dockyards = yes #add 2 dockyards with slots and cost
-
-~~State Scope~~
-one_state_dockyard = yes #add 1 dockyard with slot and cost in a predefined state
-two_state_dockyard = yes #add 2 dockyards with slot and cost in a predefined state
-```
-
-**Offices**
-
-The following also give a fossil fuel power plant.
-
-```
-one_office_construction = yes #add 1 office construction with slot and cost
-two_office_construction = yes #add 2 office constructions with slots and cost
-three_office_construction = yes #add 3 office constructions (2 in 1st random state and 3rd in another one state) with slots and cost
-
-~~State Scope~~
-one_state_office_construction = yes #add 1 office construction with slot and cost in a predefined state
-two_state_office_construction = yes #add 2 office constructions with slots and cost in a predefined state
-three_state_office_construction = yes #add 3 office constructions with slots and cost in a predefined state
-```
-
-**Commercialized Agriculture District**
-
-```
-one_random_agriculture_district = yes #add 1 agriculture district construction with slot and cost
-
-~~State Scope~~
-one_state_agriculture_district = yes #add 1 agriculture district construction with slot and cost in a predefined state
-```
-
-**Air bases (air_base)**
-
-```
-one_air_base = yes #add 1 air base with cost
-two_air_base = yes #add 2 air bases in various states with cost
-
-~~State Scope~~
-one_state_air_base = yes #add 1 air base with cost in a predefined state
-two_state_air_base = yes #add 2 air bases with cost in a predefined state
-```
-
-**Network Infrastructure (internet_station)**
-
-```
-one_random_network_infrastructure = yes #add 1 network infrastructure with cost
-two_random_network_infrastructure = yes #add 2 network infrastructure in various states with cost
-
-~~State Scope~~
-one_state_network_infrastructure = yes #add 1 network infrastructure with cost in a predefined state
-two_state_network_infrastructure = yes #add 2 network infrastructure with cost in a predefined state
-```
-
-**Anti Air | Sam Site (anti_air_building)**
-
-```
-one_anti_air = yes #add 1 anti air with cost
-two_anti_air = yes #add 2 anti airs in various states with cost
-
-~~State Scope~~
-one_state_anti_air = yes #add 1 anti air with cost in a predefined state
-two_state_anti_air = yes #add 2 anti airs with cost in a predefined state
-```
-
-**Radar Station (radar_station)**
-
-```
-one_radar_station = yes #add 1 radar station with cost
-two_radar_station = yes #add 2 radar stations in various states with cost
-
-~~State Scope~~
-one_state_radar_station = yes #add 1 radar station with cost in a predefined state
-two_state_radar_station = yes #add 2 radar stations with cost in a predefined state
-```
-
-**Synthetic refinery (renewable_energy_infra)**
-
-```
-one_random_renewable_energy_infra = yes #add 1 Synthetic refinery with slot and cost
-two_random_renewable_energy_infra = yes #add 2 Synthetic refineries in various states with slots and cost
-three_random_renewable_energy_infra = yes #add 3 Synthetic refineries in various states with slots and cost
-
-~~State Scope~~
-one_state_renewable_energy_infra = yes #add 1 Synthetic refinery with slot and cost in a predefined state
-two_state_renewable_energy_infra = yes #add 2 Synthetic refineries with slot and cost in a predefined state
-three_state_renewable_energy_infra = yes #add 3 Synthetic refineries with slot and cost in a predefined state
-```
-
-**Other buildings**
-
-```
-one_random_nuclear_reactor = yes #add 1 nuclear reactor with slot and cost
-two_random_nuclear_reactor = yes #add 2 nuclear reactors with slot and cost
-
-~~State Scope~~
-one_state_nuclear_reactor = yes #add 1 nuclear reactor with slot and cost in a predefined state
-two_state_nuclear_reactor = yes #add 2 nuclear reactors with slot and cost in a predefined state
-```
-
-{% endcapture %}
-{{ md | markdownify }}
-
-</details>
-
-<details><summary>MD Economic Effects</summary>
-{% capture md %}
-
-All scripted effects provided _automatically_ create tooltips for you. Do **NOT** localize additional tooltips.
-
-**How to Modify Treasury**
-
-```
-# - reduces the treasury
+```hoiscript
+# Modify treasury
 set_temp_variable = { treasury_change = -10.00 }
 modify_treasury_effect = yes
 
+# Preset expenditures
 small_expenditure = yes
 medium_expenditure = yes
 large_expenditure = yes
 ```
 
-**Other Economic Effects**
+### Debt Management
 
-```
+```hoiscript
 set_temp_variable = { debt_change = 0.1 }
 modify_debt_effect = yes
 ```
 
-```
-set_temp_variable = { int_investment_change = 0.1 }
-modify_international_investment_effect = yes
-```
+### Productivity
 
-```
-set_temp_variable = { corp_change = 2 }
-modify_corporate_tax_rate_effect = yes
-```
-
-```
-set_temp_variable = { pop_change = 2 }
-modify_population_tax_rate_effect = yes
-```
-
-```
-# - Adjusting the productivity of a number as a flat value
+```hoiscript
+# Adjust productivity (flat value)
 set_temp_variable = { temp_productivity_change = 0.025 }
 flat_productivity_change_effect = yes
 ```
 
-**Guide on How To-Do Additional Income/Additional Expenses**
+### Economic Cycles
 
-**IMPORTANT:** If your country will have **more than ONE** additional income/expense, use the **Nested Scripted Localization** method below for better performance. If you only have a single entry, you can use the simple method.
-
-## Simple Method (Single Entry Only)
-
-```
-Step One: go to common/scripted_effects/00_money_system.txt
-Step Two: look for calculate_additional_income_rate
-Step Three: In that section there should be a noted one that says Country Specific. Throw it in there.
-if = {
-  limit = { original_tag = TAG  }
-  if = {
-    limit = { has_idea = whatever }
-    set_variable = { whatever_gain = 0.05 }
-    add_to_variable = { additional_income_rate = whatever_gain }
-  }
-}
-Step Four: go to common/scripted_localization/01_money_scripted_localisation.txt. Find your country's section or create one.
-defined_text = {
-    name = additional_income_summary_whatever
-    text = {
-        trigger = { has_idea = whatever }
-        localization_key = "whatever_TT" #define this summary "$$[?whatever_gain|+3] from §Y$whatever$§!\n"
-    }
-}
-Step Five: go to MD_money_l_english.yml (localisation/english). Look up ADDITIONAL_INCOME_REVENUES_TOOLTIP
-Then at the end or somewhere in it just put [additional_income_summary_whatever]
-Step Six: Go back to your original idea file this should show you the amount in the spirits modifiers
-```
-
-## Nested Scripted Localization Method (Multiple Entries - RECOMMENDED)
-
-**Use this method if your country has 2+ additional income/expense sources. This significantly improves performance by reducing unnecessary checks.**
-
-```
-Step One: go to common/scripted_effects/00_money_system.txt
-Step Two: look for calculate_additional_income_rate
-Step Three: Add all your country's additional income sources in the Country Specific section:
-if = {
-  limit = { original_tag = TAG }
-  if = {
-    limit = { has_idea = whatever_1 }
-    set_variable = { whatever_1_gain = 0.05 }
-    add_to_variable = { additional_income_rate = whatever_1_gain }
-  }
-  if = {
-    limit = { has_idea = whatever_2 }
-    set_variable = { whatever_2_gain = 0.03 }
-    add_to_variable = { additional_income_rate = whatever_2_gain }
-  }
-  # Add more entries as needed
-}
-
-Step Four: go to common/scripted_localization/01_money_scripted_localisation.txt
-Find your country's section (e.g., "# Germany") or create one. Add the following structure:
-
-# Your Country Name
-## Additional Incomes
-defined_text = {
-    name = TAG_additional_incomes
-    text = {
-        trigger = { original_tag = TAG }
-        localization_key = TAG_additional_incomes
-    }
-}
-defined_text = {
-    name = additional_income_summary_whatever_1
-    text = {
-        trigger = { has_idea = whatever_1 }
-        localization_key = "whatever_1_TT"
-    }
-}
-defined_text = {
-    name = additional_income_summary_whatever_2
-    text = {
-        trigger = { has_idea = whatever_2 }
-        localization_key = "whatever_2_TT"
-    }
-}
-# Add more individual scripted locs as needed
-
-Step Five: go to MD_money_l_english.yml (localisation/english)
-Find your country's section (look for "# Country Name Additional Income") or create one after the other country sections (around line 300+).
-Add the nested definition and individual tooltips:
-
-# Your Country Name
-TAG_additional_incomes: "[additional_income_summary_whatever_1][additional_income_summary_whatever_2]"
-whatever_1_TT: "$$[?whatever_1_gain|+3] from §Y$whatever_1$§!\n"
-whatever_2_TT: "$$[?whatever_2_gain|+3] from §Y$whatever_2$§!\n"
-
-Step Six: In ADDITIONAL_INCOME_REVENUES_TOOLTIP (around line 103), add [TAG_additional_incomes] to the end:
-ADDITIONAL_INCOME_REVENUES_TOOLTIP: "Additional Income:\n[...][TAG_additional_incomes]"
-
-Step Seven: Go back to your original idea file to add the modifier tooltips
-```
-
-**Performance Note:** The nested method reduces checks from N per refresh to 1 tag check + conditional N. For non-TAG countries, this eliminates all N checks entirely, significantly improving tooltip performance.
-
-**NOTE** Variable displays will not work in this section. You will need to create seperate tooltip that states expclitly what you want or added the localization into the \_desc of the idea.
-
-Do this in the modifiers:
-
-modifiers = {
-custom_modifier_tooltip = whatever_TT
-}
-
-**For Additional Expenses:** Use the same method but replace:
-
-- `calculate_additional_income_rate` → `calculate_additional_expense_rate`
-- `additional_income_rate` → `additional_expenses_rate`
-- `TAG_additional_incomes` → `TAG_additional_expenses`
-- `ADDITIONAL_INCOME_REVENUES_TOOLTIP` → `ADDITIONAL_EXPENSES_TOOLTIP`
-- `## Additional Incomes` → `## Additional Expenses`
-
-```
-
-**Set/Remove Trade Agreement**
-
-Creates or removes a trade agreement
-
-- sender_nation --- The nation sending the agreement
-- receiver_nation --- Nation retrieving the agreement
-- remove_agreement --- Optional (Set to 1)
-
-```
-
-set_temp_variable = { receiver_nation = RAJ.id }
-set_temp_variable = { sender_nation = SIN.id }
-set_improved_trade_agreement = yes
-
-```
-**Set/Remove Permanent Investment Targets**
-
-Creates or removes adding_nation to another AI's investment pool
-
-- target_nation --- The nation sending the agreement
-- adding_nation --- Nation retrieving the agreement
-- remove_nation --- Optional (Set to 1)
-
-```
-
-set_temp_variable = { target_nation = RAJ.id }
-set_temp_variable = { adding_nation = SIN.id }
-change_permanent_investment_target = yes
-
-```
-
-**Increase/Decrease Economic Growth**
-
-Increases or decreases the nation's current economic cycle
-
-```
-
+```hoiscript
 increase_economic_growth = yes
 decrease_economic_growth = yes
-increase_two_level_economic_growth = yes
-decrease_two_level_economic_growth = yes
 depression = yes
 recession = yes
 stagnation = yes
 stable_growth = yes
 fast_growth = yes
 economic_boom = yes
-
 ```
 
-**Increase/Decrease Bureaucracy Law**
+### Government Spending Laws
 
-Increases or decreases the nation's current Bureaucracy Spending Law
-
-```
-
-decrease_centralization = yes
-decrease_centralization_2 = yes
-decrease_centralization_3 = yes
+```hoiscript
+# Bureaucracy
 increase_centralization = yes
-increase_centralization_2 = yes
-increase_centralization_3 = yes
-increase_centralization_4 = yes
+decrease_centralization = yes
 
-```
-
-**Increase/Decrease Social Spending**
-
-Increase or decreases the nation's current Social Spending Law
-
-```
-
+# Social Spending
 increase_social_spending = yes
-increase_social_spending_2 = yes
-increase_social_spending_3 = yes
-increase_social_spending_4 = yes
 decrease_social_spending = yes
-decrease_social_spending_2 = yes
-max_social_spending = yes
 
-```
-
-**Increase/Decrease Education Spending**
-
-Increase or decreases the nation's current Education Spending Law
-
-```
-
+# Education
 increase_education_budget = yes
-increase_education_budget_2 = yes
-increase_education_budget_3 = yes
-increase_education_budget_4 = yes
 decrease_education_budget = yes
-decrease_education_budget_2 = yes
-max_education_budget = yes
 
-```
-
-**Increase/Decrease Health Spending**
-
-Increase or decreases the nation's current Education Spending Law
-
-```
-
+# Healthcare
 increase_healthcare_budget = yes
-increase_healthcare_budget_2 = yes
-increase_healthcare_budget_3 = yes
-increase_healthcare_budget_4 = yes
 decrease_healthcare_budget = yes
-decrease_healthcare_budget_2 = yes
-max_healthcare_budget = yes
 
-```
-
-**Increase/Decrease Police Spending**
-
-Increase or decreases the nation's current Police Spending Law
-
-```
-
+# Policing
 increase_policing_budget = yes
-increase_policing_budget_2 = yes
-increase_policing_budget_2 = yes
-increase_policing_budget_4 = yes
 decrease_policing_budget = yes
-decrease_policing_budget_2 = yes
 
-```
-
-
-**Increase/Decrease Trade Law**
-
-The following are for increasing and decreasing the "Trade Law" of your nation:
-
-```
-
+# Trade Law
 increase_exports = yes
 decrease_exports = yes
-set_exports_to_min = yes
-set_exports_to_max = yes
 
-```
-
-**Increase/Decrease Military Spending Law**
-
-The following are for increasing your military spending law.
-
-```
-
+# Military Spending
 increase_military_spending = yes
 decrease_military_spending = yes
-decrease_military_spending_2 = yes
-sizeable_military_spending = yes # Sets your military spending to sizeable
-
 ```
 
-**Increase/Decrease Migration Law**
+## Internal Faction Effects
 
-The following are for increasing and decreasing your Migration and Border Regulations laws
+### Changing Faction Opinions
 
-```
-
-increase_migration_law = yes
-decrease_migration_law = yes
-
-````
-
-{% endcapture %}
-{{ md | markdownify }}
-</details>
-
-<details><summary>MD Internal Faction Effects</summary>
-{% capture md %}
-
-**Internal Factions Code Snippet**
-
-```python
+```hoiscript
 set_temp_variable = { temp_opinion = 5 }
 change_small_medium_business_owners_opinion = yes
-
-If you want industrial_conglomerates opinion to be improved.
-
-set_temp_variable = { temp_opinion = 5 }
-change_industrial_conglomerates_opinion = yes
-````
-
-<details><summary>Internal Faction Breakdown</summary>
-{% capture md %}
-
-```
-# List of Factions sorted by category
-# ----------------------------------
-# Economic Type: Small & Medium Business Owners, International Bankers, Fossil Fuel Industry
-# Industrial Conglomerates, Oligarchs
-#
-# Militaristic: Maritime Industry, Military-Industrial Complex, The Military, Intelligence Community
-#
-# Special Interest: Labour Unions, Landowners, Farmers, Communist Cadres
-#
-# Religious Factions: Wahhabi Ulema, The Ulema, The Clergy, The Priesthood
-#
-# Nation Specific: The Donju, The Bazaar, Saudi Royal Family, IRGC, Iranian Quds Force,
-# Foreign Jihadis, Chaebols, Wall Street
 ```
 
-{% endcapture %}
-{{ md | markdownify }}
+### Available Faction Effects
 
-</details>
+| Category         | Effects                                                                                                                                                                                                               |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Economic         | `change_small_medium_business_owners_opinion`, `change_industrial_conglomerates_opinion`, `change_fossil_fuel_industry_opinion`, `change_international_bankers_opinion`, `change_oligarchs_opinion`                   |
+| Militaristic     | `change_defense_industry_opinion`, `change_maritime_industry_opinion`, `change_the_military_opinion`, `change_intelligence_community_opinion`                                                                         |
+| Special Interest | `change_labour_unions_opinion`, `change_landowners_opinion`, `change_farmers_opinion`, `change_communist_cadres_opinion`                                                                                              |
+| Religious        | `change_the_clergy_opinion`, `change_the_ulema_opinion`, `change_the_priesthood_opinion`, `change_the_wahabi_ulema_opinion`                                                                                           |
+| Nation-Specific  | `change_the_bazaar_opinion` (Iran), `change_the_donju_opinion` (North Korea), `change_saudi_royal_family_opinion`, `change_irgc_opinion`, `change_chaebols_opinion` (South Korea), `change_wall_street_opinion` (USA) |
 
-<details><summary>Available Faction Commands</summary>
-{% capture md %}
-- change_small_medium_business_owners_opinion
-- change_industrial_conglomerates_opinion
-- change_fossil_fuel_industry_opinion
-- change_defense_industry_opinion
-- change_maritime_industry_opinion
-- change_international_bankers_opinion
-- change_oligarchs_opinion
-- change_farmers_opinion
-- change_landowners_opinion
-- change_labour_unions_opinion
-- change_communist_cadres_opinion
-- change_the_clergy_opinion
-- change_the_ulema_opinion
-- change_the_priesthood_opinion
-- change_the_wahabi_ulema_opinion
-- change_the_military_opinion
-- change_intelligence_community_opinion
-- change_the_bazaar_opinion -- Iranian Unique Small Medium Business Owners
-- change_the_donju_opinion -- North Korean Oligarchs
-- change_saudi_royal_family_opinion -- Unique Faction for Gulf States
-- change_foreign_jihadis_opinion -- Unique Faction for Fascist States (Al-Shabaab i.e.)
-- change_irgc_opinion -- Unique Faction for Iran
-- change_iranian_quds_force_opinion -- Unique Faction for Iranian Proxy States
-- change_chaebols_opinion -- Unique South Korean oligarchs
-- change_wall_street_opinion -- Unique American International Bankers
+## Influence Effects
 
-{% endcapture %}
-{{ md | markdownify }}
+### Basic Influence
 
-</details>
-
-{% endcapture %}
-{{ md | markdownify }}
-
-</details>
-
-<details><summary>MD Influence Effects</summary>
-{% capture md %}
-
-**Influence Action Examples**
-
-Percent Change is given in a whole number increment (i.e. 10 = 10%)
-
-- Domestic Influence
-
-```
-# set_temp_variable = { percent_change = +-x }
+```hoiscript
+# Domestic influence
+set_temp_variable = { percent_change = 10 }
 change_domestic_influence_percentage = yes
-```
 
-- Change Index Influencers
-
-```
-# set_temp_variable = { percent_change = +-x }
-# set_temp_variable = { influencer_index = 0-6 }
-change_current_influencer_index_percentage = yes
-```
-
-- General Influence Change
-  -- Keep in mind if the 7th influencer has more influence then your percent_change the target nation will gain domestic influence instead of you gaining influence.
-
-i.e.
-7th Influencer has 5% influence and you are influencing by 3%. The target nation gains domestic influence instead.
-
-```
-# set_temp_variable = { percent_change = -+ x }
-# set_temp_variable = { tag_index = SCOPE }
-# set_temp_variable = { influence_target = SCOPE }
-# Supported Scope: FROM, ROOT, PREV, TAG
+# General influence (requires target)
+set_temp_variable = { percent_change = 5 }
+set_temp_variable = { tag_index = ROOT }
+set_temp_variable = { influence_target = GER }
 change_influence_percentage = yes
 ```
 
-{% endcapture %}
-{{ md | markdownify }}
+### Index-Based Influence
 
-</details>
-
-<details><summary>MD Political Effects</summary>
-{% capture md %}
-
-**Code Snippet to Add Party Popularity to Subideologies**
-
-- set_temp_variable = { party_index = X } #Index of party to be changed 0-23
-- set_party_index_to_ruling_party = yes -- automatically sets index to ruling party
-- set_temp_variable = { party_popularity_increase = Y } #How much party popularity is changed, must be in decimals so 2% is 0.02
-- set_temp_variable = { temp_outlook_increase = Z } #OPTIONAL PARAMETER -- Must be in decimals so 2% is 0.02
-- add_relative_party_popularity = yes
-
+```hoiscript
+set_temp_variable = { percent_change = 5 }
+set_temp_variable = { influencer_index = 0 }
+change_current_influencer_index_percentage = yes
 ```
+
+## Political Effects
+
+### Party Popularity
+
+```hoiscript
+# Set party index (0-23) and change popularity
 set_temp_variable = { party_index = 2 }
-set_temp_variable = { party_popularity_increase = 0.10 }
-set_temp_variable = { temp_outlook_increase = 0.10 } -- OPTIONAL
+set_temp_variable = { party_popularity_increase = 0.10 }  # 10% = 0.10
 add_relative_party_popularity = yes
+
+# Or set to ruling party automatically
+set_party_index_to_ruling_party = yes
 ```
 
-**_Modify Ruling Outlook Popularity:_**
+### Ruling Party Changes
 
-Purpose: Modifies the ruling outlook only by `arg_popularity`
-
-```
-set_temp_variable = { arg_popularity = +- }
-add_ruling_outlook_popularity = yes
-```
-
-**_Add a Party to Coalition_**
-
-Purpose: Lightweight script to dynamically localize the addition of members into coalition.
-
-```
-set_temp_variable = { add_col_one = 0-23 }
-add_coalition_members_effect = yes
-```
-
-**_Remove a Party from Coalition_**
-
-Purpose: Lightweight script to dynamically localize the removal of members into coalition.
-
-```
-set_temp_variable = { remove_col_one = 0-23 }
-remove_coalition_members_effect = yes
-```
-
-**_Set the Ruling Party Via Effect_**
-
-Purpose: Set the ruling party via scripted effect to some subideology. You need to still do the set_politics as I cannot parameterize it.
-
-```
-# set_temp_variable = { rul_party_temp = 0-23 }
-# set_temp_variable = { col_one = 0 - 23 }  -- Optional: This sets the first coalition member
-# set_temp_variable = { col_two = 0 - 23 }  -- Optional: This sets the second coalition member
-# set_temp_variable = { col_three = 0 - 23 }  -- Optional: This sets the third coalition member
-# set_temp_variable = { change_leader_temp = 0-1 } -- Optional: If you do not want to change the ruling leader then set this value to 1
-# It's imperative you put the set_politics second! Else it doesn't properly update the set_party_name
-
-
+```hoiscript
+# Set ruling party
 set_temp_variable = { rul_party_temp = 20 }
 change_ruling_party_effect = yes
 set_politics = {
@@ -956,409 +339,173 @@ set_politics = {
 }
 ```
 
-**_Modifying Election Threshold:_**
+### Coalition Management
 
-Purpose: Modifies the Election Threshold (minimum value a party needs to be considered for coalitions).
+```hoiscript
+# Add to coalition
+set_temp_variable = { add_col_one = 5 }
+add_coalition_members_effect = yes
 
+# Remove from coalition
+set_temp_variable = { remove_col_one = 5 }
+remove_coalition_members_effect = yes
 ```
-set_temp_variable = { threshold_change = 0.03 }
-modify_election_threshold = yes
-```
 
-**_Allow/Ban Parties_**
+### Ban/Allow Parties
 
-Bans the provided party index for elections
-
-```
-set_temp_variable = { party_index = 1-24 }
+```hoiscript
+# Ban party
+set_temp_variable = { party_index = 1 }
 ban_party_scripted_call = yes
-```
 
-Allows the provided party index for elections
-
-```
-set_temp_variable = { party_index = 1-24 }
+# Allow party
+set_temp_variable = { party_index = 1 }
 unban_party_scripted_call = yes
 ```
 
+## Special System Effects
+
+### Euroscepticism (EU)
+
+```hoiscript
+# Single country
+set_temp_variable = { modify_eurosceptic = 0.05 }
+set_temp_variable = { modify_eurosceptic_target = GER }
+eurosceptic_change = yes
+
+# All EU members
+set_temp_variable = { modify_eurosceptic = -0.05 }
+EU_eurosceptic_change = yes
 ```
-set_country_flag = free_allow_parties # Set this if you don't want a PP cost
-set_partyall_allowed = yes # Allows all the parties
+
+### Energy Systems
+
+```hoiscript
+# Build enrichment facilities (cost: 25.00 each)
+set_temp_variable = { temp_change = 2 }
+build_enrichment_facilities_effect = yes
+
+# Build battery parks (cost: 100.00 each)
+set_temp_variable = { temp_change = 2 }
+build_battery_park_effect = yes
 ```
 
-```
-set_country_flag = free_ban_parties # Set this if you don't want a PP cost
-set_partyall_banned = yes # Bans all the parties
-```
+### Counter-Terror (Radicalization)
 
-{% endcapture %}
-{{ md | markdownify }}
-
-</details>
-
-<details><summary>Counter Terror Effects</summary>
-{% capture md %}
-
-**Radicalization / Threat Level**
-
-Only Counter Terror nations can use this. For a full list of tags go to common -> on_actions.txt and look for \_ct_states.
-
-```
+```hoiscript
 set_temp_variable = { rad_change = -5 }
 modify_radicalization_effect = yes
 
-```
-
-```
 set_temp_variable = { threat_change = 2 }
 modify_terror_threat_effect = yes
-
 ```
 
-{% endcapture %}
-{{ md | markdownify }}
+### Cartel Effects
 
-</details>
+Handles cartel strength and political influence changes.
 
-<details><summary>MD Cartel Related Effects</summary>
-{% capture md %}
-
-modify_cartel_variables_effect
-Purpose: Handles the macro for needing to change any cartel strength or cartel political influence
-set_temp_variable = { cart_strength_change = +- x }
-set_temp_variable = { cart_influence_change = +- x }
-
-```
+```hoiscript
+# Modify cartel variables
 set_temp_variable = { cart_strength_change = 2 }
 set_temp_variable = { cart_influence_change = 2 }
 modify_cartel_variables_effect = yes
 ```
 
-{% endcapture %}
-{{ md | markdownify }}
+---
 
-</details>
+# How-To Guides
 
-<details><summary>MD European Union Effects</summary>
-{% capture md %}
-**Euroscepticism Effects**
+## Adding Subideology Parties
 
-To add/remove Euroscepticism all you need to do is:
+Political parties require edits to multiple files:
 
-```
-set_temp_variable = { modify_eurosceptic = 0.05 }
-set_temp_variable = { modify_eurosceptic_target = THIS }
-eurosceptic_change = yes
-```
+1. **Party Definition**: `localisation/english/MD_subideology_parties_l_english.yml`
+2. **Icons**: `interface/MD_parties_icons.gfx` + `gfx/texticons/parties_icons/{tag}/`
+3. **Localization**: `common/scripted_localisation/subideology_scripted_localization.txt`
+4. **Leaders** (optional): `common/scripted_effects/{TAG}_political_leaders.txt`
 
-"THIS" can use any of the following:
+### Subideology Slots
 
-- THIS
-- ROOT
-- PREV
-- FROM
-- Any country tag (such as GER)
+| Ideology Group | Available Slots                                                 |
+| -------------- | --------------------------------------------------------------- |
+| Western        | `conservatism`, `liberalism`, `socialism`                       |
+| Emerging       | `Communist-State`, `anarchist_communism`, `Mod_Vilayat_e_Faqih` |
+| Salafism       | `Kingdom`, `Caliphate`                                          |
+| Non-Aligned    | `oligarchism`, `Neutral_Libertarian`, `Neutral_green`           |
+| Nationalist    | `Nat_Populism`, `Nat_Fascism`, `Nat_Autocracy`, `Monarchist`    |
 
-For this effect to occur in _all_ current EU states:
+## Historical Events (ETD System)
 
-```
-set_temp_variable = { modify_eurosceptic = -0.05 }
-EU_eurosceptic_change = yes
-```
+Events should use the yearly effects system in `common/scripted_effects/00_yearly_effects.txt`:
 
-And finally, for this effect to occur in _current_ and _potential_ EU member states:
-
-```
-set_temp_variable = { modify_eurosceptic = -0.05 }
-EU_potential_eurosceptic_change = yes
-```
-
-{% endcapture %}
-{{ md | markdownify }}
-
-</details>
-
-<details><summary>Energy Effects</summary>
-{% capture md %}
-Constructs enrichment facilities for the nation. It costs 25.00 per. The scripted effect handles the cost. Just input a number.
-
-```
-set_temp_variable = { temp_change = 2 }
-build_enrichment_facilities_effect = yes
-```
-
-Constructs a battery park as part of an effect. It costs 100.00 per unless you have
-modifiers to reduce or increase it.
-
-```
-set_temp_variable = { temp_change = 2 }
-build_battery_park_effect = yes
-```
-
-{% endcapture %}
-{{ md | markdownify }}
-
-</details>
-
-## Guides/How-To
-
-<details><summary>MD How-To-Add Subideology Parties</summary>
-{% capture md %}
-
-Adding political parties is a great way to add new flavor to nations without a lot of work!
-
-There are several files you need to edit to get the parties to show up in Millennium Dawn.
-
-- `common/scripted_lozalition/subideology_scripted_localization.txt`
-- `localisation/english/MD_subideology_parties_l_english.yml`
-- `interface/MD_parties_icons.gfx`
-- Party icons are stored in `gfx/texticons/parties_icons/nation_name`
-- Custom Leaders are stored in `common/scripted_effects/[TAG]_political_leaders.txt`
-
-It is fairly straightforward, but you will need to follow the tags exactly as they are written.
-
-List of Subideology Slots:
-
-_THESE CANNOT BE USED FOR CONSOLE COMMANDS_
-
-**Western**
-
-- Western_Autocracy - Pro-Western Autocrats
-- conservatism - Conservatives
-- liberalism - Liberals
-- socialism - Social Democrats
-
-**Emerging**
-
-- Communist-State - Emerging Communists
-- anarchist_communism - Left-Wing Radicalism
-- Conservative - Reactionaries
-- Autocracy - Emerging Autocrats
-- Mod_Vilayat_e_Faqih - Moderate Shiite Revolutionaries
-- Vilayat_e_Faqih - Hardline Shiite Revolutionaries
-
-**Salafism**
-
-- Kingdom - Wahhabi Monarchist
-- Caliphate - Saafi Jihadism
-
-**Non-Aligned**
-
-- Neutral_Muslim_Brotherhood - Moderate Islamist
-- Neutral_Autocracy - Non-Aligned Autocrats
-- Neutral_conservatism - Conservatives
-- oligarchism - Oligarchs
-- Neutral_Libertarian - Libertarians
-- Neutral_green - Greens
-- neutral_Social - Socialist Democrats
-- Neutral_Communism - Communists
-
-**Nationalist**
-
-- Nat_Populism - Right Wing Popluists
-- Nat_Fascism - Fascists
-- Nat_Autocracy - Military Junta
-- Monarchist - Absolutist Monarchist
-
-**_THE HOW TO_**
-
-To start you need to define the political party in the MD_subideology_parties_l_english.yml. Here we are using Armenia as our example. Please keep the same stylization here, where you only replace conservatism with the given ideologies.
-![image](../uploads/image.png)
-
-The next place is to implement the icons in `interface/MD_parties_icons.gfx`. You must first save your party icons in .dds format in `gfx/texticons/parties_icons/{tag}`. This is where the image of the icon is stored. You then move onto `interface/MD_parties_icons.gfx` and implement them following the thousands of other spriteType examples.
-
-![image](../uploads/image.png)
-
-Once you have completed that portion it is now time to move on to the implementation of the localization keys. From here, we move to the file `common/scripted_localisation/subideology_scripted_localisation.txt`. There are three places you need to add for the individual localization keys. The first is {subideology}\_L which is the party's title with its icon. The second is {subideology}\_L_desc where the description is stored, and finally, {subideology}\_L_icon where the icon is stored.
-![image](../uploads/image.png)
-
-If you have done these steps correctly your parties should now be correctly displayed in the game. You can give these any kind of conditional if you want dynamics. ARM, SPR, and FRA all have examples of doing this dynamically using other triggers.
-
-New political leaders are a bit more complicated and require some more details to ensure they are correctly configured in-game. To begin, you must have stored your portraits in `gfx/leaders/{tag}` in .dds format or .tga format. Once that is complete we then move on to `common/scripted_effects/{tag}_political_leaders.txt`.
-
-There are some notes to keep track of. Depending on the ideology of the leader, you need to set it by replacing the set*Nat_Autocracy with set*{subideology}. This classifies it to the proper sub ideology that a specific character belongs to. The only thing that needs to be added if a leader shouldn't be available after a certain condition or date is
-`if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017`. This line determines whether the leader is skipped the next time the leader comes to power.
-
-```
-if = { limit = { has_country_flag = set_Nat_Autocracy }
-		if = { limit = { check_variable = { Nat_Autocracy_leader = 0 } }
-			add_to_variable = { Nat_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
-			create_country_leader = {
-				name = "Clifford Husbands"
-				picture = "generic.dds"
-				ideology = Nat_Autocracy
-				traits = {
-					nationalist_Nat_Autocracy
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Autocracy_leader = 1 } }
-			if = { limit = { date < 2016.1.2 } set_temp_variable = { b = 1 } } #skip if 2017
-		}
-		if = { limit = { check_variable = { Nat_Autocracy_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Nat_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
-			create_country_leader = {
-				name = "Sandra Mason"
-				picture = "sandra_mason.dds"
-				ideology = Nat_Autocracy
-				traits = {
-					nationalist_Nat_Autocracy
-				}
-			}
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
-	}
-```
-
-{% endcapture %}
-{{ md | markdownify }}
-
-</details>
-
-<details><summary>Historical Events/Exact Date Trigger (ETD) Events</summary>
-{% capture md %}
-
-File Path: `common/scripted_effects/00_yearly_efffects`
-
-Historical events for MD should be triggered using the new system in common/scripted_effects/00_yearly_effects.txt
-
-These are "container" effects triggered once a year by one country to trigger all historical scripted content for each country. You can put an event in two places, either in a "year" effect or in the on_startup effect at the top of the file. If you wish to have the event fire in 2000 (or 2017 if you still want content support for that start date). Add the event in the on-startup with the days until it should fire in the game's first year. Outside of that, if you wish to fire an event in a specific year, find the event and then add the day counters as you otherwise would for a normal event.
-
-Example A:
-
-```python
+```hoiscript
+# First year events
 MD_event_on_startup_events = {
-	# Events with known dates that should fire within the first year
-	CAM = {
-		country_event = { id = Cameroon.1 days = 50 random_days = 50 }
-	}
+    CAM = { country_event = { id = Cameroon.1 days = 50 random_days = 50 } }
 }
-```
 
-Example B:
-
-```python
+# Specific year events
 trigger_year_2067_events = {
-	USA = {
-		country_event = { id = collapse_event.1 days = 30 random_days = 336 }
-	}
+    USA = { country_event = { id = collapse_event.1 days = 30 random_days = 336 } }
 }
 ```
 
-{% endcapture %}
-{{ md | markdownify }}
+## Variable Basics
 
-</details>
+```hoiscript
+# Set variable
+set_variable = { var = example_var value = 1 }
 
-<details><summary>Variable Guide/Explanation</summary>
-{% capture md %}
+# Add to variable
+add_to_variable = { var = example_var value = 1 }
 
-There are a ton interesting and fun things you can accomplish using simple variables and other forms of variables that arent entirely possible using only in-game values. Variables open up a whole new world in terms of gameplay and design that is normally undervalued in a game that its primary focus is the military aspect.
-
-# Basic Commands for Variables
-
-#set_variable = { var = example value = 1 } - Sets the Variable (can be used anywhere executing a script) to a value and also sets a variable with a name. Creates the variable if it doesnt exist before, OR sets it to a new value if already present somewhere.
-#add_to_variable { var = example value = 1 } - this is the long way of adding to a variable but it just adds one so now the variable is valued at 2.
-#subtract_from_variable { var = example value = 2 } - subtracts yields 0 from the current running script.
-
-You can also multiple, divide, round, and a few other functions depending on the situation you are using the variables.
-
-# Basic Setting Example:
-
-Example:
-
-```
-	####American Economic Variables Pre-Set###
-	###Regulatory Variable
-	set_variable = { var = USA_economic_regulation_var value = 45 }
-	set_variable = { var = USA_economic_regulation_var max = 100 }
-	set_variable = { var = USA_economic_regulation_var min = 0 }
-	###Strength of Wall Street
-	set_variable = { var = USA_strength_of_wall_street_var value = 17 }
-	set_variable = { var = USA_strength_of_wall_street_var max = 50 }
-	set_variable = { var = USA_strength_of_wall_street_var min = 0 }
+# Set bounds
+set_variable = { var = example_var value = 50 max = 100 min = 0 }
 ```
 
-The variables here are set in the United States history file and used for the American Economy decisions and effects that occur with every one of the American economy focuses, events or decisions. There are two new topics here in the set_variable which is min and max. They simply set the max possible value and the minimum possible value for the given variable.
+## Energy Configuration
 
-This is a basic rundown of variables and the simplest way to begin and use them. There are many ways of using this flexible effects in both systems and in general effects.
+### Hydroelectric/Geothermal
 
-{% endcapture %}
-{{ md | markdownify }}
-
-</details>
-
-<details><summary>Hydroelectric/Geothermal/Renewable/Productivity Configuration Guide</summary>
-{% capture md %}
-
-If you are looking to add additional values to the Hydroelectric/Geothermal or Renewable Hotspot capacity for a given state please follow these steps.
-
-The production var will be defined as the average power output in GW of all Hydropower Infrastructure in that state (you can convert it from annual TWH if you have that data as well)
-
-The storage var is the storage capacity in gwh which can be gained by diving the annual TWH by 8.760 to obtain the average power in in GW.
-
-This also applies to the geothermal which you can find example in the Italian states.
-
-Example:
-
-```python
+```hoiscript
 set_variable = { hydroelectric_energy_production_var = 5.636 }
 set_variable = { hydroelectric_energy_storage_var = 300 }
 add_dynamic_modifier = { modifier = hydroelectric_infrastructure_in_state }
-
 ```
 
-Renewable capacity is slightly different since it use the [Global Wind Atlas](https://globalwindatlas.info/en) and the "Capacity Factor - IEC Class I" to determine the value of the states capacity factor.
+### Renewable Capacity (from Global Wind Atlas)
 
-Once you are on the website you can look at your desired region and then hover over the area and it will provide you a value in the bottom right of the screen.
-co
-The equation for the capacity factor is (Atlas value) - 0.25 = Capacity Factor variable for that state. Using the Western Sahara as an example the Capacity Factor on the Atlas extends to 0.80 which means in MD the state would have a capacity factor of 0.50. This is done via a static state modifier handled on game start.
-
-Example:
-
-```python
+```hoiscript
+# Capacity factor = (Atlas value) - 0.25
 set_variable = { state_renewable_capacity_factor_modifier_var = 0.55 }
 ```
 
-Productivity is also set at the state level as well. Please refer to any of the state.
+## Unique Terrain Photos
 
-{% endcapture %}
-{{ md | markdownify }}
+Adds custom terrain photos to specific provinces.
 
-</details>
+### Step 1: Create Image
 
-<details><summary>Unique Terrain Photos Guide</summary>
-{% capture md %}
+- Size: **413x70px**
+- Format: DDS
+- Location: `gfx/interface/terrain/`
 
-**Step One: Create a Suitable Image Size & Put it in a Folder**
+### Step 2: Register in GFX File
 
-Terrain photos need to be 413x70px in size. After selecting your image and sizing it, save the image as DDS. Then drop your photos in \mod\Millennium_Dawn\gfx\interface\terrain.
+File: `interface/MD_terrain_cities.gfx`
 
-**Step Two: Edit MD_terrain_cities.gfx Code**
-
-File Path: `Millennium_Dawn\gfx\interface\terrain`
-Then you need to tell the game to load your new .dds file. The code can be found in this file MD_terrain_cities.gfx found in this folder Millennium_Dawn\interface\MD_terrain_cities.gfx. The entry looks like this:
-
-```
+```hoiscript
 spriteType = {
     name = "GFX_terrain_brussels"
-    textureFile = "gfx/interface/terrain/BAN_chittagong.dds"
+    textureFile = "gfx/interface/terrain/your_image.dds"
 }
-
 ```
 
-**Step Three: Edit countrystateview.gui Code**
+### Step 3: Create GUI Icon
 
-File Path: `countrystateview.gui`
-From there, you need to create an entry in the same folder in this file: countrystateview.gui. The entry looks like this
+File: `interface/countrystateview.gui`
 
-```
+```hoiscript
 iconType = {
     name = "terrain_brussels_icon"
     spriteType = "GFX_terrain_brussels"
@@ -1366,40 +513,34 @@ iconType = {
 }
 ```
 
-**Step Four: Edit 01_province_modifiers Code**
-File Path: `Millennium_Dawn\common\modifiers in this file: 01_province_modifiers.txt`
-With all that done, you need two more things. 1. Add an empty modifier (the thing that will stick to your province) 2. Tell the game to attach your modifier to the province at game start. Empty modifiers can be found here:
+### Step 4: Create Empty Modifier
 
-```
+File: `common/modifiers/01_province_modifiers.txt`
+
+```hoiscript
 terrain_brussels = { }
 ```
 
-**Step Five: Edit 00_startup_effects.txt Code**
+### Step 5: Add to Startup Effects
 
-This phase is the most code intensive, because it adjusts which map points will have the terrain photos that you will add, it is advised to have the game and an editing tool (like Visual Studio Code) open, where one screen contains the code and the other runs the game. You can find all state ID's through debug mode, or typing `Tdebug` in the console command.
+File: `common/scripted_effects/00_startup_effects.txt`
 
-File Path: `Millennium_Dawn\common\scripted_effects\00_startup_effects.txt`
-And finally to make it spawn at game start, go here: Millennium_Dawn\common\scripted_effects in this file: 00_startup_effects.txt
-You'll find this entry for Brussels:
-
-```
+```hoiscript
+# State ID 50, province ID 516
 50 = {
     add_province_modifier = {
         static_modifiers = { terrain_brussels }
         province = { id = 516 }
     }
-    add_province_modifier = {
-        static_modifiers = { terrain_antwerp }
-        province = { id = 6598 }
-    }
 }
 ```
 
-50 is the state ID, the level at which you place airbases and stuff like that, 516 is the accurate province within that state.
+> **Tip**: Use `Tdebug` console command in-game to find state and province IDs.
 
-{% endcapture %}
-{{ md | markdownify }}
+---
 
-</details>
+# Additional Resources
 
-Any additional questions please DM @AngriestBird on Discord.
+- **Discord**: @AngriestBird for questions
+- **Error Codes**: See `docs/dev-resources/error-debug-codes.md`
+- **Focus Trees**: See `.cursor/.ai-guides/code_styling.md`
