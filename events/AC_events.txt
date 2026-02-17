@@ -550,7 +550,7 @@ country_event = {
 		is_ai = yes
 		check_variable = { active_projects < 15 }
 		check_variable = { debt_ratio < 2.50 }
-		check_variable = { interest_rate < 6.000 }
+		check_variable = { interest_rate < 8.000 }
 	}
 
 	immediate = {
@@ -596,6 +596,23 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: Investment Country Succeeded. [?var:AI_best_country.GetName] scored a [?AI_best_country_score]"
 			var:AI_best_country = {
 				set_temp_variable = { target_nation = THIS.id }
+				if = { limit = { ROOT = { OR = { has_idea = defense_industry has_idea = the_military } } }
+					set_temp_variable = { AI_has_military_ideas = 1 }
+				}
+				if = { limit = { ROOT = { has_tech = radar } }
+					set_temp_variable = { AI_has_radar_tech = 1 }
+				}
+				if = { limit = { ROOT = { has_tech = fuel_silos } }
+					set_temp_variable = { AI_has_fuel_silo_tech = 1 }
+				}
+				if = { limit = { ROOT = { has_tech = reactor1 } }
+					set_temp_variable = { AI_has_reactor_tech = 1 }
+				}
+				if = { limit = { check_variable = { energy_consumption > 0 } }
+					set_temp_variable = { energy_balance_ratio = energy_sum }
+					divide_temp_variable = { energy_balance_ratio = energy_consumption }
+				}
+
 				for_each_scope_loop = {
 					array = controlled_states
 
@@ -614,6 +631,9 @@ country_event = {
 							}
 							# TODO: Add a check here at some point to make sure they're not a subject, if they are only invest if they are an allies subject or if they're your subject
 						}
+
+
+						AI_count_pending_projects = yes
 
 						# Free Building Slot Buildings
 						if = { limit = { free_building_slots = { building = industrial_complex size > 0 include_locked = no } }
@@ -634,14 +654,32 @@ country_event = {
 						}
 						# Infrastructure - Building Type - 4
 						AI_get_infrastructure_score = yes
+						# Surface to Air Missiles - Building Type - 6
+						if = { limit = { check_variable = { AI_has_military_ideas = 1 } }
+							AI_get_antiair_score = yes
+						}
+						# Radar Stations - Building Type - 7
+						if = { limit = { OR = { check_variable = { AI_has_military_ideas = 1 } check_variable = { AI_has_radar_tech = 1 } } }
+							AI_get_radar_score = yes
+						}
+						# Air Bases - Building Type - 8
+						if = { limit = { check_variable = { AI_has_military_ideas = 1 } }
+							AI_get_airbase_score = yes
+						}
 						# Fuel Silos - Building Type - 9
 						AI_get_fuel_silo_score = yes
 						# Network Infrastructure - Building Type - 10
 						AI_get_network_infrastructure_score = yes
 						# Renewable Powerplant - Building Type - 11
-						AI_get_renewable_energy_score = yes
+						if = { limit = { check_variable = { AI_has_fuel_silo_tech = 1 } }
+							AI_get_renewable_energy_score = yes
+						}
 						# Fossil Fuel Powerplant - Building Type - 12
 						AI_get_fossil_powerplant_score = yes
+						# Nuclear Reactor - Building Type - 13
+						if = { limit = { check_variable = { AI_has_reactor_tech = 1 } }
+							AI_get_nuclear_reactor_score = yes
+						}
 
 						# Outside of Calculation
 						AI_edge_case_calculations = yes
