@@ -596,6 +596,30 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: Investment Country Succeeded. [?var:AI_best_country.GetName] scored a [?AI_best_country_score]"
 			var:AI_best_country = {
 				set_temp_variable = { target_nation = THIS.id }
+				# Pre-compute country-level checks once to avoid repeated evaluation per state
+				set_temp_variable = { AI_has_military_ideas = 0 }
+				if = { limit = { ROOT = { OR = { has_idea = defense_industry has_idea = the_military } } }
+					set_temp_variable = { AI_has_military_ideas = 1 }
+				}
+				set_temp_variable = { AI_has_radar_tech = 0 }
+				if = { limit = { ROOT = { has_tech = radar } }
+					set_temp_variable = { AI_has_radar_tech = 1 }
+				}
+				set_temp_variable = { AI_has_fuel_silo_tech = 0 }
+				if = { limit = { ROOT = { has_tech = fuel_silos } }
+					set_temp_variable = { AI_has_fuel_silo_tech = 1 }
+				}
+				set_temp_variable = { AI_has_reactor_tech = 0 }
+				if = { limit = { ROOT = { has_tech = reactor1 } }
+					set_temp_variable = { AI_has_reactor_tech = 1 }
+				}
+				# Pre-compute energy balance ratio for nuclear reactor scoring
+				set_temp_variable = { energy_balance_ratio = 1 }
+				if = { limit = { check_variable = { energy_consumption > 0 } }
+					set_temp_variable = { energy_balance_ratio = energy_sum }
+					divide_temp_variable = { energy_balance_ratio = energy_consumption }
+				}
+
 				for_each_scope_loop = {
 					array = controlled_states
 
@@ -634,16 +658,18 @@ country_event = {
 						}
 						# Infrastructure - Building Type - 4
 						AI_get_infrastructure_score = yes
+						# Count pending projects once per state for types 6-10
+						AI_count_pending_projects = yes
 						# Surface to Air Missiles - Building Type - 6
-						if = { limit = { ROOT = { OR = { has_idea = defense_industry has_idea = the_military } } }
+						if = { limit = { check_variable = { AI_has_military_ideas = 1 } }
 							AI_get_antiair_score = yes
 						}
 						# Radar Stations - Building Type - 7
-						if = { limit = { ROOT = { OR = { has_idea = defense_industry has_idea = the_military } has_tech = radar } }
+						if = { limit = { OR = { check_variable = { AI_has_military_ideas = 1 } check_variable = { AI_has_radar_tech = 1 } } }
 							AI_get_radar_score = yes
 						}
 						# Air Bases - Building Type - 8
-						if = { limit = { ROOT = { OR = { has_idea = defense_industry has_idea = the_military } } }
+						if = { limit = { check_variable = { AI_has_military_ideas = 1 } }
 							AI_get_airbase_score = yes
 						}
 						# Fuel Silos - Building Type - 9
@@ -651,13 +677,13 @@ country_event = {
 						# Network Infrastructure - Building Type - 10
 						AI_get_network_infrastructure_score = yes
 						# Renewable Powerplant - Building Type - 11
-						if = { limit = { ROOT = { has_tech = fuel_silos } }
+						if = { limit = { check_variable = { AI_has_fuel_silo_tech = 1 } }
 							AI_get_renewable_energy_score = yes
 						}
 						# Fossil Fuel Powerplant - Building Type - 12
 						AI_get_fossil_powerplant_score = yes
 						# Nuclear Reactor - Building Type - 13
-						if = { limit = { ROOT = { has_tech = reactor1 } }
+						if = { limit = { check_variable = { AI_has_reactor_tech = 1 } }
 							AI_get_nuclear_reactor_score = yes
 						}
 						# Agriculture District - Building Type - 14

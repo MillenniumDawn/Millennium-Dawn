@@ -567,10 +567,14 @@ AI_get_offices_score = {
 	}
 }
 
-# Building Type 6: Surface to Air Missiles (SAM/Antiair)
-AI_get_antiair_score = {
-	# Count pending antiair projects in this state
+# Shared helper: counts pending projects of types 6-10 for the current state
+# Call once per state before the individual scoring effects
+AI_count_pending_projects = {
 	set_temp_variable = { pending_antiair = 0 }
+	set_temp_variable = { pending_radar = 0 }
+	set_temp_variable = { pending_airbases = 0 }
+	set_temp_variable = { pending_fuel_silos = 0 }
+	set_temp_variable = { pending_internet = 0 }
 	for_each_loop = {
 		array = project_type_in_state
 		value = v
@@ -578,7 +582,23 @@ AI_get_antiair_score = {
 		if = { limit = { check_variable = { project_type_in_state^i = 6 } }
 			add_to_temp_variable = { pending_antiair = 1 }
 		}
+		if = { limit = { check_variable = { project_type_in_state^i = 7 } }
+			add_to_temp_variable = { pending_radar = 1 }
+		}
+		if = { limit = { check_variable = { project_type_in_state^i = 8 } }
+			add_to_temp_variable = { pending_airbases = 1 }
+		}
+		if = { limit = { check_variable = { project_type_in_state^i = 9 } }
+			add_to_temp_variable = { pending_fuel_silos = 1 }
+		}
+		if = { limit = { check_variable = { project_type_in_state^i = 10 } }
+			add_to_temp_variable = { pending_internet = 1 }
+		}
 	}
+}
+
+# Building Type 6: Surface to Air Missiles (SAM/Antiair)
+AI_get_antiair_score = {
 	# Check if there are free slots after accounting for pending projects
 	set_temp_variable = { available_slots = free_building_slots@anti_air_building }
 	subtract_from_temp_variable = { available_slots = pending_antiair }
@@ -657,16 +677,6 @@ AI_get_antiair_score = {
 
 # Building Type 7: Radar Stations
 AI_get_radar_score = {
-	# Count pending radar projects in this state
-	set_temp_variable = { pending_radar = 0 }
-	for_each_loop = {
-		array = project_type_in_state
-		value = v
-		index = i
-		if = { limit = { check_variable = { project_type_in_state^i = 7 } }
-			add_to_temp_variable = { pending_radar = 1 }
-		}
-	}
 	# Check if there are free slots after accounting for pending projects
 	set_temp_variable = { available_slots = free_building_slots@radar_station }
 	subtract_from_temp_variable = { available_slots = pending_radar }
@@ -746,16 +756,6 @@ AI_get_radar_score = {
 
 # Building Type 8: Air Bases
 AI_get_airbase_score = {
-	# Count pending airbase projects in this state
-	set_temp_variable = { pending_airbases = 0 }
-	for_each_loop = {
-		array = project_type_in_state
-		value = v
-		index = i
-		if = { limit = { check_variable = { project_type_in_state^i = 8 } }
-			add_to_temp_variable = { pending_airbases = 1 }
-		}
-	}
 	# Check if there are free slots after accounting for pending projects
 	set_temp_variable = { available_slots = free_building_slots@air_base }
 	subtract_from_temp_variable = { available_slots = pending_airbases }
@@ -844,16 +844,6 @@ AI_get_airbase_score = {
 
 # Building Type 9: Fuel Silo
 AI_get_fuel_silo_score = {
-	# Count pending fuel silo projects in this state
-	set_temp_variable = { pending_fuel_silos = 0 }
-	for_each_loop = {
-		array = project_type_in_state
-		value = v
-		index = i
-		if = { limit = { check_variable = { project_type_in_state^i = 9 } }
-			add_to_temp_variable = { pending_fuel_silos = 1 }
-		}
-	}
 	# Check if there are free slots after accounting for pending projects
 	set_temp_variable = { available_slots = free_building_slots@fuel_silo }
 	subtract_from_temp_variable = { available_slots = pending_fuel_silos }
@@ -950,16 +940,6 @@ AI_get_fuel_silo_score = {
 
 # Building Type 10: Network Infrastructure
 AI_get_network_infrastructure_score = {
-	# Count pending network infrastructure projects in this state
-	set_temp_variable = { pending_internet = 0 }
-	for_each_loop = {
-		array = project_type_in_state
-		value = v
-		index = i
-		if = { limit = { check_variable = { project_type_in_state^i = 10 } }
-			add_to_temp_variable = { pending_internet = 1 }
-		}
-	}
 	# Check if there are free slots after accounting for pending projects
 	set_temp_variable = { available_slots = free_building_slots@internet_station }
 	subtract_from_temp_variable = { available_slots = pending_internet }
@@ -1182,10 +1162,7 @@ AI_get_nuclear_reactor_score = {
 
 		# Increase Section
 		# Energy deficit is the primary driver
-		CONTROLLER = {
-			set_temp_variable = { energy_balance_ratio = energy_sum }
-			divide_temp_variable = { energy_balance_ratio = energy_consumption }
-		}
+		# energy_balance_ratio pre-computed at country scope before the state loop
 		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
 			add_to_temp_variable = { v1 = 15 }
 		}
@@ -1288,20 +1265,6 @@ AI_get_agriculture_district_score = {
 		set_temp_variable = { v1 = 125 }
 
 		# Increase Section
-		# Food deficit is the primary driver
-		if = { limit = { CONTROLLER = { check_variable = { resource_consumed@food > resource_produced@food } } }
-			add_to_temp_variable = { v1 = 30 }
-		}
-		# Strong bonus for food importing countries
-		if = { limit = { CONTROLLER = { check_variable = { resource_imported@food > 0 } } }
-			add_to_temp_variable = { v1 = 40 }
-		}
-		if = { limit = { CONTROLLER = { check_variable = { resource_imported@food > 100 } } }
-			add_to_temp_variable = { v1 = 20 }
-		}
-		if = { limit = { CONTROLLER = { check_variable = { resource_imported@food > 250 } } }
-			add_to_temp_variable = { v1 = 20 }
-		}
 		# Growing populations need more food
 		if = { limit = { CONTROLLER = { check_variable = { population_total_m > 50 } } }
 			add_to_temp_variable = { v1 = 10 }
@@ -1337,17 +1300,6 @@ AI_get_agriculture_district_score = {
 		}
 		if = { limit = { check_variable = { THIS.state_population_k > 5000 } }
 			add_to_temp_variable = { v2 = 40 }
-		}
-		# Don't build if already food positive
-		if = { limit = { CONTROLLER = { check_variable = { resource_produced@food > resource_consumed@food } } }
-			set_temp_variable = { food_surplus_ratio = resource_produced@food }
-			divide_temp_variable = { food_surplus_ratio = resource_consumed@food }
-			if = { limit = { check_variable = { food_surplus_ratio > 1.20 } }
-				add_to_temp_variable = { v2 = 50 }
-			}
-			if = { limit = { check_variable = { food_surplus_ratio > 1.50 } }
-				add_to_temp_variable = { v2 = 100 }
-			}
 		}
 		# Low priority if economy is struggling
 		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
