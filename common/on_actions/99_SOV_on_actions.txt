@@ -8,60 +8,57 @@ on_actions = {
 				}
 				add_ideas = landmark_ICBMsiloyasny_hidden
 			}
-			if = {
+			else_if = {
 				limit = {
 					NOT = { has_full_control_of_state = 1118 }
 					has_idea = landmark_ICBMsiloyasny_hidden
 				}
 				remove_ideas = landmark_ICBMsiloyasny_hidden
 			}
-			for_each_scope_loop = {
+
+			for_each_loop = {
 				array = SOV.subjects
-				if = {
-					limit = {
-						OR = {
-							has_autonomy_state = autonomy_state_rf
-							has_autonomy_state = autonomy_republic_rf
-							has_autonomy_state = autonomy_kray_rf
-							has_autonomy_state = autonomy_oblast_rf
-							has_autonomy_state = autonomy_okrug_rf
-						}
-					}
-					if = {
-						limit = { NOT = { has_idea = CHE_republic_rf } }
-						add_ideas = CHE_republic_rf
-					}
+				value = v
+				index = i
+				var:v = {
 					if = {
 						limit = {
-							SOV = { has_country_flag = SOV_united_russia }
-							NOT = { has_country_flag = SUB_united_russia }
+							OR = {
+								has_autonomy_state = autonomy_state_rf
+								has_autonomy_state = autonomy_republic_rf
+								has_autonomy_state = autonomy_kray_rf
+								has_autonomy_state = autonomy_oblast_rf
+								has_autonomy_state = autonomy_okrug_rf
+							}
 						}
-						set_country_flag = SUB_united_russia
+						if = {
+							limit = { NOT = { has_idea = CHE_republic_rf } }
+							add_ideas = CHE_republic_rf
+						}
+						if = {
+							limit = {
+								SOV = { has_country_flag = SOV_united_russia }
+								NOT = { has_country_flag = SUB_united_russia }
+							}
+							set_country_flag = SUB_united_russia
+						}
+						set_temp_variable = { modify_subjectavtoritet = 2 }
+						modify_subjectavtoritet_support = yes
 					}
-					if = {
-						limit = { NOT = { has_idea = CHE_republic_rf } }
-						add_ideas = CHE_republic_rf
-					}
-					set_temp_variable = { modify_subjectavtoritet = 2 }
-					modify_subjectavtoritet_support = yes
 				}
 			}
 
 			if = {
 				limit = {
+					SOV = { has_idea = faction_warsaw_pact_idea }
 					GER = { has_country_flag = raskol }
 					any_of_scopes = {
 						array = GER.enemies
-						NOT = {
-							has_country_flag = WP_escaped
-						}
+						NOT = { has_country_flag = WP_escaped }
 						has_autonomy_state = autonomy_warsaw
 						has_country_flag = GDR_test
 					}
 					NOT = { has_country_flag = reistablish_frg_raskol }
-					SOV = {
-						has_idea = SOV_warsaw_pact_idea
-					}
 				}
 				set_country_flag = reistablish_frg_raskol
 				SOV = { country_event = sov_warsaw_pact.17 }
