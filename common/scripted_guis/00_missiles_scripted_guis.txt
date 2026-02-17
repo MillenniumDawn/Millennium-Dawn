@@ -4331,6 +4331,15 @@ scripted_gui = {
 					has_country_flag = show_ga_vote_list
 				}
 			}
+			unga_yes_text_visible = {
+				has_global_flag = current_ongoing_ga_vote
+			}
+			unga_no_text_visible = {
+				has_global_flag = current_ongoing_ga_vote
+			}
+			unga_abstain_text_visible = {
+				has_global_flag = current_ongoing_ga_vote
+			}
 		}
 
 		effects = {
@@ -6653,14 +6662,17 @@ scripted_gui = {
 		triggers = {
 			is_un_sc_propose_action_button_click_enabled = {
 				ROOT = {
-					has_political_power > 150
+					has_political_power > 250
 					has_offensive_war = no
 					NOT = {
 						has_war_with = PREV
 					}
 				}
-				NOT = {
-					has_global_flag = sc_action_against@THIS
+				custom_trigger_tooltip = {
+					tooltip = no_pending_unsc_actions_against_tt
+					NOT = {
+						has_global_flag = sc_action_against@THIS
+					}
 				}
 			}
 		}
@@ -6668,7 +6680,7 @@ scripted_gui = {
 		effects = {
 			is_un_sc_propose_action_button_click = {
 				ROOT = {
-					add_political_power = -150
+					add_political_power = -250
 
 					set_temp_variable = { sc_new_vote_type = sc_selected_action }
 					set_temp_variable = { sc_new_vote_nation = PREV }
@@ -6829,6 +6841,57 @@ scripted_gui = {
 			list_of_ga_yes_votes = {
 				array = global.general_assembly_vote_yes
 				entry_container = IS_UN_GA_yes_vote_list
+				change_scope = yes
+			}
+		}
+
+		triggers = {
+			is_un_ga_vote_yes_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = un_sc_not_abstaining_tt
+					NOT = { is_in_array = { global.general_assembly_vote_abstain = ROOT } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = un_sc_nation_not_in_array_tt
+					NOT = { is_in_array = { global.general_assembly_vote_yes = ROOT } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = un_voting_has_not_been_swayed
+					NOT = { has_country_flag = has_had_current_un_sc_vote_swayed }
+				}
+				influence_higher_15 = yes
+			}
+		}
+
+		effects = {
+			is_un_ga_vote_yes_button_click = {
+				set_temp_variable = { percent_change = -10 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+
+				set_country_flag = has_had_current_un_sc_vote_swayed
+
+				remove_from_array = { global.general_assembly_vote_yes = THIS }
+				add_to_array = { global.general_assembly_vote_no = THIS }
+
+				custom_effect_tooltip = un_sc_sway_vote_no_tt
+
+				missile_ui_update = yes
+			}
+			is_un_ga_vote_yes_button_right_click = {
+				set_temp_variable = { percent_change = -5 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+
+				change_influence_percentage = yes
+
+				remove_from_array = { global.general_assembly_vote_yes = THIS }
+				add_to_array = { global.general_assembly_vote_abstain = THIS }
+
+				custom_effect_tooltip = un_sc_sway_vote_abstain_tt
+
+				missile_ui_update = yes
 			}
 		}
 
@@ -6852,10 +6915,61 @@ scripted_gui = {
 			has_global_flag = current_ongoing_ga_vote
 		}
 
+		triggers = {
+			is_un_ga_vote_no_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = un_sc_not_abstaining_tt
+					NOT = { is_in_array = { global.general_assembly_vote_abstain = ROOT } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = un_sc_nation_not_in_array_tt
+					NOT = { is_in_array = { global.general_assembly_vote_no = ROOT } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = un_voting_has_not_been_swayed
+					NOT = { has_country_flag = has_had_current_un_sc_vote_swayed }
+				}
+				influence_higher_15 = yes
+			}
+		}
+
+		effects = {
+			is_un_ga_vote_no_button_click = {
+				set_temp_variable = { percent_change = -10 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+
+				set_country_flag = has_had_current_un_sc_vote_swayed
+
+				remove_from_array = { global.general_assembly_vote_no = THIS }
+				add_to_array = { global.general_assembly_vote_yes = THIS }
+
+				custom_effect_tooltip = un_sc_sway_vote_yes_tt
+
+				missile_ui_update = yes
+			}
+			is_un_ga_vote_no_button_right_click = {
+				set_temp_variable = { percent_change = -5 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+
+				change_influence_percentage = yes
+
+				remove_from_array = { global.general_assembly_vote_no = THIS }
+				add_to_array = { global.general_assembly_vote_abstain = THIS }
+
+				custom_effect_tooltip = un_sc_sway_vote_abstain_tt
+
+				missile_ui_update = yes
+			}
+		}
+
 		dynamic_lists = {
 			list_of_ga_no_votes = {
 				array = global.general_assembly_vote_no
 				entry_container = IS_UN_GA_no_vote_list
+				change_scope = yes
 			}
 		}
 
@@ -6879,10 +6993,59 @@ scripted_gui = {
 			has_global_flag = current_ongoing_ga_vote
 		}
 
+		triggers = {
+			is_un_ga_vote_abstain_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = un_sc_nation_not_in_array_tt
+					NOT = { is_in_array = { global.general_assembly_vote_abstain = ROOT } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = un_voting_has_not_been_swayed
+					NOT = { has_country_flag = has_had_current_un_sc_vote_swayed }
+				}
+				influence_higher_15 = yes
+			}
+		}
+
+		effects = {
+			is_un_ga_vote_abstain_button_click = {
+				set_temp_variable = { percent_change = -10 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+
+				set_country_flag = has_had_current_un_sc_vote_swayed
+
+				remove_from_array = { global.general_assembly_vote_abstain = THIS }
+				add_to_array = { global.general_assembly_vote_yes = THIS }
+
+				custom_effect_tooltip = un_sc_sway_vote_yes_tt
+
+				missile_ui_update = yes
+			}
+			is_un_ga_vote_abstain_button_right_click = {
+				set_temp_variable = { percent_change = -10 }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = THIS.id }
+
+				change_influence_percentage = yes
+
+				set_country_flag = has_had_current_un_sc_vote_swayed
+
+				remove_from_array = { global.general_assembly_vote_abstain = THIS }
+				add_to_array = { global.general_assembly_vote_no = THIS }
+
+				custom_effect_tooltip = un_sc_sway_vote_no_tt
+
+				missile_ui_update = yes
+			}
+		}
+
 		dynamic_lists = {
 			list_of_ga_abstain = {
 				array = global.general_assembly_vote_abstain
 				entry_container = IS_UN_GA_abstain_list
+				change_scope = yes
 			}
 		}
 
