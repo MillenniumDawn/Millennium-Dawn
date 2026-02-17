@@ -67,6 +67,105 @@ invest_offices = {
 	}
 }
 
+invest_antiair = {
+	ROOT = {
+		set_variable = { project_building_type^-1 = 6 }
+		set_variable = { project_build_amount^-1 = 1 }
+		update_gui = yes
+		PREV = {
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_radar = {
+	ROOT = {
+		set_variable = { project_building_type^-1 = 7 }
+		set_variable = { project_build_amount^-1 = 1 }
+		update_gui = yes
+		PREV = {
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_airbase = {
+	ROOT = {
+		set_variable = { project_building_type^-1 = 8 }
+		set_variable = { project_build_amount^-1 = 1 }
+		update_gui = yes
+		PREV = {
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_fuel_silo = {
+	ROOT = {
+		set_variable = { project_building_type^-1 = 9 }
+		set_variable = { project_build_amount^-1 = 1 }
+		update_gui = yes
+		PREV = {
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_internet_station = {
+	ROOT = {
+		set_variable = { project_building_type^-1 = 10 }
+		set_variable = { project_build_amount^-1 = 1 }
+		update_gui = yes
+		PREV = {
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_renewable_energy = {
+	ROOT = {
+		set_variable = { project_building_type^-1 = 11 }
+		set_variable = { project_build_amount^-1 = 1 }
+		update_gui = yes
+		PREV = {
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_fossil_powerplant = {
+	ROOT = {
+		set_variable = { project_building_type^-1 = 12 }
+		set_variable = { project_build_amount^-1 = 1 }
+		update_gui = yes
+		PREV = {
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_nuclear_reactor = {
+	ROOT = {
+		set_variable = { project_building_type^-1 = 13 }
+		set_variable = { project_build_amount^-1 = 1 }
+		update_gui = yes
+		PREV = {
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
+invest_agriculture_district = {
+	ROOT = {
+		set_variable = { project_building_type^-1 = 14 }
+		set_variable = { project_build_amount^-1 = 1 }
+		update_gui = yes
+		PREV = {
+			CONTROLLER = { country_event = { id = AC_event.10 } }
+		}
+	}
+}
+
 # Building Type 1: Civilian industry
 AI_get_civilian_industry_score = {
 	# Count pending civilian factory projects in this state
@@ -589,33 +688,379 @@ AI_get_offices_score = {
 	}
 }
 
-# Building Type 9: Fuel Silo
-# AI Currently do not make any investments fuel silo investments
-AI_get_fuel_silo_score = {
-	if = { limit = { free_building_slots = { building = fuel_silo size > 0 include_locked = no } }
+# Building Type 6: Surface to Air Missiles (SAM/Antiair)
+AI_get_antiair_score = {
+	# Count pending antiair projects in this state
+	set_temp_variable = { pending_antiair = 0 }
+	for_each_loop = {
+		array = project_type_in_state
+		value = v
+		index = i
+		if = { limit = { check_variable = { project_type_in_state^i = 6 } }
+			add_to_temp_variable = { pending_antiair = 1 }
+		}
+	}
+	# Check if there are free slots after accounting for pending projects
+	set_temp_variable = { available_slots = free_building_slots@anti_air_building }
+	subtract_from_temp_variable = { available_slots = pending_antiair }
+
+	if = { limit = { check_variable = { available_slots > 0 } }
 		set_temp_variable = { AI_score = 0 }
 
-		set_temp_variable = { v1 = 170 }
-		set_temp_variable = { v2 = 10 }
+		set_temp_variable = { v1 = 120 }
 
+		# Increase Section
+		# Threat-based scoring
+		if = { limit = { threat > 10 }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { threat > 25 }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		if = { limit = { threat > 50 }
+			add_to_temp_variable = { v1 = 25 }
+		}
+		# War and threat flags
+		if = { limit = { CONTROLLER = { has_war = yes } }
+			add_to_temp_variable = { v1 = 40 }
+		}
+		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+			add_to_temp_variable = { v1 = 25 }
+		}
 		if = { limit = { CONTROLLER = { any_neighbor_country = { has_war_with = PREV } } }
-			add_to_temp_variable = { v1 = 25 }
+			add_to_temp_variable = { v1 = 30 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k < 250 } } }
-			add_to_temp_variable = { v1 = 25 }
+		# Strategic locations
+		if = { limit = { is_coastal = yes }
+			add_to_temp_variable = { v1 = 10 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k < 500 } } }
-			add_to_temp_variable = { v1 = 25 }
-		}
-		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k < 750 } } }
-			add_to_temp_variable = { v1 = 25 }
+		if = { limit = { is_capital = yes }
+			add_to_temp_variable = { v1 = 15 }
 		}
 
-		multiply_temp_variable = { v2 = 10 }
+		# Reduction Section
+		set_temp_variable = { v2 = building_level@anti_air_building }
+		multiply_temp_variable = { v2 = 30 } # Strong penalty for existing AA to spread coverage
+
+		# Strong penalty for pending projects
+		set_temp_variable = { pending_penalty = pending_antiair }
+		multiply_temp_variable = { pending_penalty = 45 }
+		add_to_temp_variable = { v2 = pending_penalty }
+
+		# Reduce priority in peacetime
+		if = { limit = { CONTROLLER = { has_war = no threat < 5 } }
+			add_to_temp_variable = { v2 = 50 }
+		}
+		# Don't build if economy is struggling
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+			add_to_temp_variable = { v2 = 30 }
+		}
+
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
-		# AI_not_in_home_area = yes # Trigger doesn't work currently
+		# Add randomization
+		set_temp_variable_to_random = {
+			var = state_randomizer
+			min = -15
+			max = 15
+			integer = yes
+		}
+		add_to_temp_variable = { AI_score = state_randomizer }
+
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 6 }
+		}
+	}
+}
+
+# Building Type 7: Radar Stations
+AI_get_radar_score = {
+	# Count pending radar projects in this state
+	set_temp_variable = { pending_radar = 0 }
+	for_each_loop = {
+		array = project_type_in_state
+		value = v
+		index = i
+		if = { limit = { check_variable = { project_type_in_state^i = 7 } }
+			add_to_temp_variable = { pending_radar = 1 }
+		}
+	}
+	# Check if there are free slots after accounting for pending projects
+	set_temp_variable = { available_slots = free_building_slots@radar_station }
+	subtract_from_temp_variable = { available_slots = pending_radar }
+
+	if = { limit = { check_variable = { available_slots > 0 } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 115 }
+
+		# Increase Section
+		# Threat-based scoring
+		if = { limit = { threat > 10 }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { threat > 25 }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		if = { limit = { threat > 50 }
+			add_to_temp_variable = { v1 = 25 }
+		}
+		# War and strategic importance
+		if = { limit = { CONTROLLER = { has_war = yes } }
+			add_to_temp_variable = { v1 = 35 }
+		}
+		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		# Border and coastal states get priority for early warning
+		if = { limit = { is_coastal = yes }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		if = { limit = { is_capital = yes }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		# Naval powers benefit more from coastal radar
+		if = { limit = { CONTROLLER = { has_idea = maritime_industry } is_coastal = yes }
+			add_to_temp_variable = { v1 = 15 }
+		}
+
+		# Reduction Section
+		set_temp_variable = { v2 = building_level@radar_station }
+		multiply_temp_variable = { v2 = 35 } # Strong penalty for existing radar to spread coverage
+
+		# Strong penalty for pending projects
+		set_temp_variable = { pending_penalty = pending_radar }
+		multiply_temp_variable = { pending_penalty = 45 }
+		add_to_temp_variable = { v2 = pending_penalty }
+
+		# Reduce priority in peacetime
+		if = { limit = { CONTROLLER = { has_war = no threat < 5 } }
+			add_to_temp_variable = { v2 = 45 }
+		}
+		# Don't build if economy is struggling
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+			add_to_temp_variable = { v2 = 25 }
+		}
+
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		# Add randomization
+		set_temp_variable_to_random = {
+			var = state_randomizer
+			min = -15
+			max = 15
+			integer = yes
+		}
+		add_to_temp_variable = { AI_score = state_randomizer }
+
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 7 }
+		}
+	}
+}
+
+# Building Type 8: Air Bases
+AI_get_airbase_score = {
+	# Count pending airbase projects in this state
+	set_temp_variable = { pending_airbases = 0 }
+	for_each_loop = {
+		array = project_type_in_state
+		value = v
+		index = i
+		if = { limit = { check_variable = { project_type_in_state^i = 8 } }
+			add_to_temp_variable = { pending_airbases = 1 }
+		}
+	}
+	# Check if there are free slots after accounting for pending projects
+	set_temp_variable = { available_slots = free_building_slots@air_base }
+	subtract_from_temp_variable = { available_slots = pending_airbases }
+
+	if = { limit = { check_variable = { available_slots > 0 } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 130 }
+
+		# Increase Section
+		if = { limit = { CONTROLLER = { has_war = yes } }
+			add_to_temp_variable = { v1 = 40 }
+		}
+		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+			add_to_temp_variable = { v1 = 25 }
+		}
+		if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		# Threat-based scoring
+		if = { limit = { threat > 15 }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { threat > 30 }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { threat > 50 }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		# Strategic locations
+		if = { limit = { is_coastal = yes }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { is_capital = yes }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		# Countries with air force doctrine benefit more
+		if = { limit = { CONTROLLER = { num_of_military_factories > 20 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+
+		# Reduction Section
+		set_temp_variable = { v2 = building_level@air_base }
+		multiply_temp_variable = { v2 = 25 } # Penalty for existing air bases
+
+		# Strong penalty for pending projects
+		set_temp_variable = { pending_penalty = pending_airbases }
+		multiply_temp_variable = { pending_penalty = 40 }
+		add_to_temp_variable = { v2 = pending_penalty }
+
+		# Reduce priority in peacetime
+		if = { limit = { CONTROLLER = { has_war = no } }
+			add_to_temp_variable = { v2 = 30 }
+		}
+		# Don't build if economy is struggling
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 15 } }
+			add_to_temp_variable = { v2 = 20 }
+		}
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+			add_to_temp_variable = { v2 = 30 }
+		}
+		# Reduce if low fuel capacity (can't support air force)
+		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k < 100 } } }
+			add_to_temp_variable = { v2 = 40 }
+		}
+
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		# Add randomization
+		set_temp_variable_to_random = {
+			var = state_randomizer
+			min = -15
+			max = 15
+			integer = yes
+		}
+		add_to_temp_variable = { AI_score = state_randomizer }
+
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 8 }
+		}
+	}
+}
+
+# Building Type 9: Fuel Silo
+AI_get_fuel_silo_score = {
+	# Count pending fuel silo projects in this state
+	set_temp_variable = { pending_fuel_silos = 0 }
+	for_each_loop = {
+		array = project_type_in_state
+		value = v
+		index = i
+		if = { limit = { check_variable = { project_type_in_state^i = 9 } }
+			add_to_temp_variable = { pending_fuel_silos = 1 }
+		}
+	}
+	# Check if there are free slots after accounting for pending projects
+	set_temp_variable = { available_slots = free_building_slots@fuel_silo }
+	subtract_from_temp_variable = { available_slots = pending_fuel_silos }
+
+	if = { limit = { check_variable = { available_slots > 0 } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 140 }
+
+		# Increase Section
+		# War and threat significantly increase fuel needs
+		if = { limit = { CONTROLLER = { has_war = yes } }
+			add_to_temp_variable = { v1 = 40 }
+		}
+		if = { limit = { CONTROLLER = { any_neighbor_country = { has_war_with = PREV } } }
+			add_to_temp_variable = { v1 = 30 }
+		}
+		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		# Low fuel capacity countries need storage
+		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k < 250 } } }
+			add_to_temp_variable = { v1 = 30 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k < 500 } } }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k < 750 } } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		# Countries with large militaries need fuel storage
+		if = { limit = { CONTROLLER = { num_of_military_factories > 20 } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { CONTROLLER = { num_of_military_factories > 40 } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		# Strategic locations
+		if = { limit = { is_coastal = yes }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+
+		# Reduction Section
+		set_temp_variable = { v2 = 0 }
+
+		# Spread fuel silos across states
+		set_temp_variable = { existing_silos = building_level@fuel_silo }
+		multiply_temp_variable = { existing_silos = 30 }
+		add_to_temp_variable = { v2 = existing_silos }
+
+		# Penalty for pending projects
+		set_temp_variable = { pending_penalty = pending_fuel_silos }
+		multiply_temp_variable = { pending_penalty = 40 }
+		add_to_temp_variable = { v2 = pending_penalty }
+
+		# Don't build if already have high fuel capacity
+		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k > 1500 } } }
+			add_to_temp_variable = { v2 = 40 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k > 2500 } } }
+			add_to_temp_variable = { v2 = 60 }
+		}
+		# Low priority in peacetime
+		if = { limit = { CONTROLLER = { has_war = no threat < 10 } }
+			add_to_temp_variable = { v2 = 30 }
+		}
+		# Don't build if economy is struggling
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+			add_to_temp_variable = { v2 = 25 }
+		}
+
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		# Add randomization
+		set_temp_variable_to_random = {
+			var = state_randomizer
+			min = -15
+			max = 15
+			integer = yes
+		}
+		add_to_temp_variable = { AI_score = state_randomizer }
+
 		if = { limit = { check_variable = { AI_score > AI_best_score } }
 			set_temp_variable = { AI_best_score = AI_score }
 			set_temp_variable = { AI_best_target = THIS.id }
@@ -626,15 +1071,31 @@ AI_get_fuel_silo_score = {
 
 # Building Type 10: Network Infrastructure
 AI_get_network_infrastructure_score = {
-	if = { limit = { free_building_slots = { building = internet_station size > 0  include_locked = no } }
+	# Count pending network infrastructure projects in this state
+	set_temp_variable = { pending_internet = 0 }
+	for_each_loop = {
+		array = project_type_in_state
+		value = v
+		index = i
+		if = { limit = { check_variable = { project_type_in_state^i = 10 } }
+			add_to_temp_variable = { pending_internet = 1 }
+		}
+	}
+	# Check if there are free slots after accounting for pending projects
+	set_temp_variable = { available_slots = free_building_slots@internet_station }
+	subtract_from_temp_variable = { available_slots = pending_internet }
+
+	if = { limit = { check_variable = { available_slots > 0 } }
 		set_temp_variable = { AI_score = 0 }
 
 		set_temp_variable = { v1 = 130 }
 
 		# Increase Section
+		# Prefer states with good infrastructure already
 		if = { limit = { check_variable = { building_level@infrastructure = 5 } }
 			add_to_temp_variable = { v1 = 50 }
 		}
+		# Population-based scoring - higher population benefits more
 		if = { limit = { check_variable = { THIS.state_population_k > 100 } }
 			add_to_temp_variable = { v1 = 5 }
 		}
@@ -653,18 +1114,47 @@ AI_get_network_infrastructure_score = {
 		if = { limit = { check_variable = { THIS.state_population_k > 6000 } }
 			add_to_temp_variable = { v1 = 15 }
 		}
+		# Advanced economies benefit more
+		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita > 20 } } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita > 30 } } }
+			add_to_temp_variable = { v1 = 10 }
+		}
 
 		# Reduction Section
 		set_temp_variable = { v2 = 0 }
 
+		# Spread network infrastructure across states
+		set_temp_variable = { existing_internet = building_level@internet_station }
+		multiply_temp_variable = { existing_internet = 25 }
+		add_to_temp_variable = { v2 = existing_internet }
+
+		# Penalty for pending projects
+		set_temp_variable = { pending_penalty = pending_internet }
+		multiply_temp_variable = { pending_penalty = 40 }
+		add_to_temp_variable = { v2 = pending_penalty }
+
+		# Poor countries can't afford/utilize it
 		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita < 9.999 } } }
-			add_to_temp_variable = { v2 = 25 }
+			add_to_temp_variable = { v2 = 50 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita < 5.000 } } }
+			add_to_temp_variable = { v2 = 100 }
 		}
 
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
-		# AI_not_in_home_area = yes # Trigger doesn't work currently
+		# Add randomization
+		set_temp_variable_to_random = {
+			var = state_randomizer
+			min = -10
+			max = 10
+			integer = yes
+		}
+		add_to_temp_variable = { AI_score = state_randomizer }
+
 		if = { limit = { check_variable = { AI_score > AI_best_score } }
 			set_temp_variable = { AI_best_score = AI_score }
 			set_temp_variable = { AI_best_target = THIS.id }
@@ -800,6 +1290,207 @@ AI_get_fossil_powerplant_score = {
 			set_temp_variable = { AI_best_score = AI_score }
 			set_temp_variable = { AI_best_target = THIS.id }
 			set_temp_variable = { AI_best_type = 12 }
+		}
+	}
+}
+
+# Building Type 13: Nuclear Reactor
+AI_get_nuclear_reactor_score = {
+	if = { limit = { free_building_slots = { building = nuclear_reactor size > 0 include_locked = no } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 110 }
+
+		# Increase Section
+		# Energy deficit is the primary driver
+		CONTROLLER = {
+			set_temp_variable = { energy_balance_ratio = energy_sum }
+			divide_temp_variable = { energy_balance_ratio = energy_consumption }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.95 } }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.90 } }
+			add_to_temp_variable = { v1 = 25 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.85 } }
+			add_to_temp_variable = { v1 = 30 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.80 } }
+			add_to_temp_variable = { v1 = 35 }
+		}
+		if = { limit = { check_variable = { energy_balance_ratio < 0.70 } }
+			add_to_temp_variable = { v1 = 45 }
+		}
+		# Advanced economies can afford nuclear
+		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita > 25 } } }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita > 35 } } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita > 45 } } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		# High population states benefit more
+		if = { limit = { check_variable = { THIS.state_population_k > 2000 } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { check_variable = { THIS.state_population_k > 4000 } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { check_variable = { THIS.state_population_k > 6000 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		# Environmental concerns for oil importing
+		if = { limit = { CONTROLLER = { check_variable = { resource_imported@oil > 0 } } }
+			add_to_temp_variable = { v1 = 25 }
+		}
+		# Power restrictions indicate urgent need
+		if = { limit = { CONTROLLER = { has_idea = heavy_power_restrictions_spirit } }
+			add_to_temp_variable = { v1 = 30 }
+		}
+		if = { limit = { CONTROLLER = { has_idea = some_power_restrictions_spirit } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+
+		# Reduction Section
+		set_temp_variable = { v2 = 0 }
+
+		# Nuclear is expensive - don't build if economy is weak
+		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita < 20 } } }
+			add_to_temp_variable = { v2 = 100 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { gdp_total < 500 } } }
+			add_to_temp_variable = { v2 = 75 }
+		}
+		# High interest rates mean country can't afford it
+		if = { limit = { CONTROLLER = { check_variable = { interest_rate > 8.5 } } }
+			add_to_temp_variable = { v2 = 60 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { interest_rate > 10.5 } } }
+			add_to_temp_variable = { v2 = 40 }
+		}
+		# Don't build if already energy positive
+		if = { limit = { check_variable = { energy_balance_ratio > 1.15 } }
+			add_to_temp_variable = { v2 = 1000 }
+		}
+		# Limit existing nuclear reactors per state
+		set_temp_variable = { existing_reactors = building_level@nuclear_reactor }
+		multiply_temp_variable = { existing_reactors = 50 }
+		add_to_temp_variable = { v2 = existing_reactors }
+		# Countries being reckless with power consumption
+		if = { limit = { CONTROLLER = { has_idea = heavy_additional_consumption_spirit } }
+			add_to_temp_variable = { v2 = 30 }
+		}
+		if = { limit = { CONTROLLER = { has_idea = some_additional_consumption_spirit } }
+			add_to_temp_variable = { v2 = 20 }
+		}
+
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 13 }
+		}
+	}
+}
+
+# Building Type 14: Agriculture District
+AI_get_agriculture_district_score = {
+	if = { limit = { free_building_slots = { building = agriculture_district size > 0 include_locked = no } }
+		set_temp_variable = { AI_score = 0 }
+
+		set_temp_variable = { v1 = 125 }
+
+		# Increase Section
+		# Food deficit is the primary driver
+		if = { limit = { CONTROLLER = { check_variable = { resource_consumed@food > resource_produced@food } } }
+			add_to_temp_variable = { v1 = 30 }
+		}
+		# Strong bonus for food importing countries
+		if = { limit = { CONTROLLER = { check_variable = { resource_imported@food > 0 } } }
+			add_to_temp_variable = { v1 = 40 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { resource_imported@food > 100 } } }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { resource_imported@food > 250 } } }
+			add_to_temp_variable = { v1 = 20 }
+		}
+		# Growing populations need more food
+		if = { limit = { CONTROLLER = { check_variable = { population_total_m > 50 } } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { population_total_m > 100 } } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { CONTROLLER = { check_variable = { population_total_m > 200 } } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		# Rural states are better for agriculture
+		if = { limit = { check_variable = { THIS.state_population_k < 1000 } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { check_variable = { THIS.state_population_k < 500 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		# States with existing agriculture benefit more
+		if = { limit = { check_variable = { building_level@agri_district > 0 } }
+			add_to_temp_variable = { v1 = 15 }
+		}
+
+		# Reduction Section
+		set_temp_variable = { v2 = 0 }
+
+		# Don't overbuild in one state
+		set_temp_variable = { existing_agri = building_level@agri_district }
+		multiply_temp_variable = { existing_agri = 20 }
+		add_to_temp_variable = { v2 = existing_agri }
+		# Urban states are poor for agriculture
+		if = { limit = { check_variable = { THIS.state_population_k > 3000 } }
+			add_to_temp_variable = { v2 = 30 }
+		}
+		if = { limit = { check_variable = { THIS.state_population_k > 5000 } }
+			add_to_temp_variable = { v2 = 40 }
+		}
+		# Don't build if already food positive
+		if = { limit = { CONTROLLER = { check_variable = { resource_produced@food > resource_consumed@food } } }
+			set_temp_variable = { food_surplus_ratio = resource_produced@food }
+			divide_temp_variable = { food_surplus_ratio = resource_consumed@food }
+			if = { limit = { check_variable = { food_surplus_ratio > 1.20 } }
+				add_to_temp_variable = { v2 = 50 }
+			}
+			if = { limit = { check_variable = { food_surplus_ratio > 1.50 } }
+				add_to_temp_variable = { v2 = 100 }
+			}
+		}
+		# Low priority if economy is struggling
+		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+			add_to_temp_variable = { v2 = 20 }
+		}
+
+		subtract_from_temp_variable = { v1 = v2 }
+		add_to_temp_variable = { AI_score = v1 }
+
+		# Add randomization
+		set_temp_variable_to_random = {
+			var = state_randomizer
+			min = -10
+			max = 10
+			integer = yes
+		}
+		add_to_temp_variable = { AI_score = state_randomizer }
+
+		if = { limit = { check_variable = { AI_score > AI_best_score } }
+			set_temp_variable = { AI_best_score = AI_score }
+			set_temp_variable = { AI_best_target = THIS.id }
+			set_temp_variable = { AI_best_type = 14 }
 		}
 	}
 }
