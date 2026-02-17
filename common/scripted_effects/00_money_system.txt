@@ -3238,15 +3238,33 @@ calculate_additional_expense_rate = {
 	}
 	# United Nations Contribution Expenses
 	if = { limit = { has_idea = united_nations_member }
-		set_variable = { united_nations_base_expenses = gdp_total }
-		multiply_temp_variable = { united_nations_base_expenses = 0.0001 }
+		if = {
+			limit = {
+				NOT = { has_country_flag = yearly_un_budget_calculated }
+			}
+			set_country_flag = {
+				flag = yearly_un_budget_calculated
+				days = 365
+				value = 1
+			}
+			set_variable = { united_nations_base_expenses = gdp_total }
+			multiply_variable = { united_nations_base_expenses = 0.0001 }
 
-		set_temp_variable = { un_expenses_inflation = 1 }
-		add_to_temp_variable = { un_expenses_inflation = modifier@inflation_cost_multiplier_modifier }
-		multiply_variable = { united_nations_base_expenses = un_expenses_inflation }
+			set_temp_variable = { un_expenses_inflation = 1 }
+			add_to_temp_variable = { un_expenses_inflation = modifier@inflation_cost_multiplier_modifier }
+			multiply_variable = { united_nations_base_expenses = un_expenses_inflation }
+			set_variable = { united_nations_expenses = united_nations_base_expenses }
+			set_variable = { united_nations_old_aid_expenses = 0 }
+		}
 
-		add_to_variable = { united_nations_expenses = united_nations_base_expenses }
-		add_to_variable = { united_nations_expenses = united_nations_aid_expenses }
+		if = {
+			limit = {
+				NOT = { check_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses } }
+			}
+			set_variable = { united_nations_expenses = united_nations_base_expenses }
+			add_to_variable = { united_nations_expenses = united_nations_aid_expenses }
+			set_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses }
+		}
 	}
 	# European Union Contribution Expenses
 	if = { limit = { has_idea = EU_member }
@@ -3842,10 +3860,11 @@ update_display = {
 	}
 	add_to_variable = { display_expense = additional_expenses_rate }
 	add_to_variable = { display_expense = border_control_gain }
+	add_to_variable = { display_expense = united_nations_expenses }
 
 	# Giving it to Global Nations
 	if = { limit = { is_debug = yes }
-		resize_temp_array = { array = budget_array value = 0 size = 9 }
+		resize_temp_array = { array = budget_array value = 0 size = 10 }
 		set_temp_variable = { budget_array^0 = bureaucracy_gain }
 		set_temp_variable = { budget_array^1 = defence_gain }
 		set_temp_variable = { budget_array^2 = security_gain }
@@ -3855,6 +3874,7 @@ update_display = {
 		set_temp_variable = { budget_array^6 = debt_rate }
 		set_temp_variable = { budget_array^7 = additional_expenses_rate }
 		set_temp_variable = { budget_array^8 = border_control_gain }
+		set_temp_variable = { budget_array^9 = united_nations_expenses }
 		find_highest_in_array = {
 			array = budget_array
 			value = value_highest_cost_temp
