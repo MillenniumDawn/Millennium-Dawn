@@ -891,35 +891,41 @@ country_event = {
 		name = UNSC.200.a
 		var:sway_target = {
 			country_event = UNSC.201
+			set_variable = { current_sway_type = 1 }
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
 		}
 		clear_variable = sway_target
+		clear_variable = current_vote_sway
 	}
 	option = {
 		name = UNSC.200.b
 		var:sway_target = {
 			country_event = UNSC.201
+			set_variable = { current_sway_type = 2 }
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
 		}
 		clear_variable = sway_target
+		clear_variable = current_vote_sway
 	}
 	option = {
 		name = UNSC.200.c
 		var:sway_target = {
 			country_event = UNSC.201
+			set_variable = { current_sway_type = 3 }
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
 		}
 		clear_variable = sway_target
+		clear_variable = current_vote_sway
 	}
 	option = {
 		name = UNSC.200.d
 		var:sway_target = {
 			country_event = UNSC.201
+			set_variable = { current_sway_type = 4 }
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
 		}
 		clear_variable = sway_target
-	}
-	option = {
-		name = UNSC.200.e
-		var:sway_target = {
-			country_event = USNC.201
-		}
+		clear_variable = current_vote_sway
 	}
 }
 #Sway Event
@@ -933,30 +939,62 @@ country_event = {
 	title = UNSC.201.t
 	desc = UNSC.201.d
 
+	timeout_days = 2
+
 	option = {
-		name = UNSC.201.a
+		name = UNSC.201.b
+
+		clear_variable = current_sway_direction
+		clear_variable = current_sway_type
+		#Apply penalties for refusing here
+
 		ai_chance = {
 			base = 0
 			modifier = {
 				add = 5
-				FROM = {
-					check_variable = { current_vote_sway = 3 }
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
 				}
 			}
 		}
 	}
+
 	option = {
-		name = UNSC.201.b
+		name = UNSC.201.a
+
+		set_country_flag = has_had_current_un_sc_vote_swayed
+
+		if = {
+			limit = { is_in_array = { global.security_council_vote_yes = THIS } }
+			remove_from_array = { global.security_council_vote_yes = THIS }
+		}else_if = {
+			limit = { is_in_array = { global.security_council_vote_no = THIS } }
+			remove_from_array = { global.security_council_vote_no = THIS }
+		}else = {
+			remove_from_array = { global.security_council_vote_abstain = THIS }
+		}
+
+		if = {
+			limit = { check_variable = { current_sway_direction = 1 } }
+			add_to_array = { global.security_council_vote_yes = THIS }
+		}else_if = {
+			limit = { check_variable = { current_sway_direction = 2 } }
+			add_to_array = { global.security_council_vote_no = THIS }
+		}else = {
+			add_to_array = { global.security_council_vote_abstain = THIS }
+		}
+
+		clear_variable = current_sway_direction
+
+		missile_ui_update = yes
+
+		#Apply the agreed upon deal here
 		ai_chance = {
 			base = 0
 			modifier = {
 				add = 5
-				FROM = {
-					OR = {
-						check_variable = { current_vote_sway = 1 }
-						check_variable = { current_vote_sway = 2 }
-					}
-				}
+				check_variable = { current_sway_direction = 3 }
 			}
 		}
 	}
@@ -972,15 +1010,27 @@ country_event = {
 
 	option = {
 		name = UN.200.a
+		var:sway_target = {
+			country_event = UN.201
+		}
 	}
 	option = {
 		name = UN.200.b
+		var:sway_target = {
+			country_event = UN.201
+		}
 	}
 	option = {
 		name = UN.200.c
+		var:sway_target = {
+			country_event = UN.201
+		}
 	}
 	option = {
 		name = UN.200.d
+		var:sway_target = {
+			country_event = UN.201
+		}
 	}
 
 	#Make offer here
@@ -989,4 +1039,67 @@ country_event = {
 country_event = {
 	id = UN.201
 	is_triggered_only = yes
+
+	title = UN.201.t
+	desc = UN.201.d
+
+	timeout_days = 2
+
+	option = {
+		name = UN.201.b
+
+		#Apply penalties for refusing here
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				FROM = {
+					OR = {
+						check_variable = { current_vote_sway = 1 }
+						check_variable = { current_vote_sway = 2 }
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = UN.201.a
+
+		set_country_flag = has_had_current_un_sc_vote_swayed
+
+		if = {
+			limit = { is_in_array = { global.general_assembly_vote_yes = THIS } }
+			remove_from_array = { global.general_assembly_vote_yes = THIS }
+		}else_if = {
+			limit = { is_in_array = { global.general_assembly_vote_no = THIS } }
+			remove_from_array = { global.general_assembly_vote_no = THIS }
+		}else = {
+			remove_from_array = { global.general_assembly_vote_abstain = THIS }
+		}
+
+		if = {
+			limit = { FROM = { check_variable = { current_vote_sway = 1 } } }
+			add_to_array = { global.general_assembly_vote_yes = THIS }
+		}else_if = {
+			limit = { FROM = { check_variable = { current_vote_sway = 2 } } }
+			add_to_array = { global.general_assembly_vote_no = THIS }
+		}else = {
+			add_to_array = { global.general_assembly_vote_abstain = THIS }
+		}
+
+		missile_ui_update = yes
+
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				FROM = {
+					check_variable = { current_vote_sway = 3 }
+				}
+			}
+		}
+	}
 }
