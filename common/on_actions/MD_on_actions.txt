@@ -81,21 +81,12 @@ on_actions = {
 				# Initialize the Investment Pulse for this Week
 				if = {
 					limit = {
-						check_variable = { interest_rate < 8.000 }
-						OR = {
-							has_idea = regional_power
-							has_idea = large_power
-							has_idea = great_power
-							has_idea = superpower
-						}
-					}
-					if = {
-						limit = { NOT = { has_country_flag = investment_targets_are_set_up } }
-						yearly_investment_targets_routine = yes
+						check_variable = { interest_rate < 9.000 }
+						is_in_array = { global.PR_regional_or_greater_powers = THIS.id }
 					}
 
 					# Check whether the larger nation has an investment target in scope 0
-					if = { limit = { NOT = { check_variable = { investment_targets^0 = 0 } } }
+					if = { limit = { check_variable = { investment_targets^num > 0 } }
 						country_event = AC_event.500
 					}
 				}
@@ -563,38 +554,51 @@ on_actions = {
 
 					state_init_setup = yes
 
-					every_country = {
-						limit = {
-							is_ai = yes
-							OR = {
-								has_idea = regional_power
-								has_idea = large_power
-								has_idea = great_power
-								has_idea = superpower
+					for_each_loop = {
+						array = global.PR_regional_or_greater_powers
+						value = v
+						var:v = {
+							if = {
+								limit = { is_ai = yes }
+								yearly_investment_targets_routine = yes
 							}
 						}
-						yearly_investment_targets_routine = yes
 					}
 
 					if = { limit = { check_variable = { global.OAU_member^num > 0 } }
-						for_each_scope_loop = {
+						for_each_loop = {
 							array = global.OAU_member
-							HIV_aids_monthly_mechanic = yes
+							value = v
+							var:v = {
+								HIV_aids_monthly_mechanic = yes
+							}
 						}
 					}
 					else_if = { limit = { check_variable = { global.AU_member^num > 0 } }
-						for_each_scope_loop = {
+						for_each_loop = {
 							array = global.AU_member
-							HIV_aids_monthly_mechanic = yes
+							value = v
+							var:v = {
+								HIV_aids_monthly_mechanic = yes
+							}
 						}
 					}
 
-					every_country = {
-						# LITERACY STUFF
-						EDU_annual_pulse_for_learning_stuff = yes
-						# Reduce the Printing Money Var
-						if = { limit = { check_variable = { printing_money_var > 0 } }
-							subtract_from_variable = { printing_money_var = 1 }
+					for_each_loop = {
+						array = global.literacy_rate_nation
+						value = v
+						var:v = {
+							EDU_annual_pulse_for_learning_stuff = yes
+						}
+					}
+
+					for_each_loop = {
+						array = global.printing_money_nations
+						value = v
+						var:v = {
+							if = { limit = { check_variable = { printing_money_var > 0 } }
+								subtract_from_variable = { printing_money_var = 1 }
+							}
 						}
 					}
 
@@ -1590,14 +1594,18 @@ on_actions = {
 				AU_monthly_update = yes
 
 				if = { limit = { check_variable = { global.nato_members^num > 0 } }
-					for_each_scope_loop = {
+					for_each_loop = {
 						array = global.nato_members
-						if = {
-							limit = {
-								has_elections = no
-								NOT = { has_government = fascism }
+						value = v
+						index = i
+						var:v = {
+							if = {
+								limit = {
+									has_elections = no
+									NOT = { has_government = fascism }
+								}
+								country_event = { id = NATO.17 random_days = 7 }
 							}
-							country_event = { id = NATO.17 random_days = 7 }
 						}
 					}
 				}
