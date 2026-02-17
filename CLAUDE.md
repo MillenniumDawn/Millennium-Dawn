@@ -95,7 +95,7 @@ python3 tools/standardize_focus_tree.py      # Format focus trees
 
 ## Important Resources
 
-- [Game Rules Reference](./docs/dev-resources/game-rules.md) - Complete guide to all game rules
+- [Game Rules Reference](./docs/player-tutorials/game-rules.md) - Complete guide to all game rules
 - [Code Resources](./docs/dev-resources/code-resource.md) - Modifiers, effects, and how-to guides
 - [Focus Tree Styling Guide](./.cursor/.ai-guides/code_styling.md)
 - [Error Debug Codes](./docs/dev-resources/error-debug-codes.md)
