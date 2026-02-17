@@ -27,6 +27,7 @@ This document provides reference documentation for Millennium Dawn's unique syst
 - [Internal Faction Effects](#md-internal-faction-effects) - Faction opinions
 - [Influence Effects](#md-influence-effects) - Influence actions
 - [Political Effects](#md-political-effects) - Party management
+- [Special System Effects](#special-system-effects) - EU, Energy, Counter-Terror, Cartels
 
 ## How-To Guides
 
@@ -34,6 +35,7 @@ This document provides reference documentation for Millennium Dawn's unique syst
 - [Historical Events](#historical-eventsexact-date-trigger-etd-events)
 - [Variables](#variable-guideexplanation)
 - [Energy Configuration](#hydroelectricgeothermalrenewableproductivity-configuration-guide)
+- [Unique Terrain Photos](#unique-terrain-photos)
 
 ---
 
@@ -398,6 +400,17 @@ set_temp_variable = { threat_change = 2 }
 modify_terror_threat_effect = yes
 ```
 
+### Cartel Effects
+
+Handles cartel strength and political influence changes.
+
+```hoiscript
+# Modify cartel variables
+set_temp_variable = { cart_strength_change = 2 }
+set_temp_variable = { cart_influence_change = 2 }
+modify_cartel_variables_effect = yes
+```
+
 ---
 
 # How-To Guides
@@ -466,6 +479,63 @@ add_dynamic_modifier = { modifier = hydroelectric_infrastructure_in_state }
 # Capacity factor = (Atlas value) - 0.25
 set_variable = { state_renewable_capacity_factor_modifier_var = 0.55 }
 ```
+
+## Unique Terrain Photos
+
+Adds custom terrain photos to specific provinces.
+
+### Step 1: Create Image
+
+- Size: **413x70px**
+- Format: DDS
+- Location: `gfx/interface/terrain/`
+
+### Step 2: Register in GFX File
+
+File: `interface/MD_terrain_cities.gfx`
+
+```hoiscript
+spriteType = {
+    name = "GFX_terrain_brussels"
+    textureFile = "gfx/interface/terrain/your_image.dds"
+}
+```
+
+### Step 3: Create GUI Icon
+
+File: `interface/countrystateview.gui`
+
+```hoiscript
+iconType = {
+    name = "terrain_brussels_icon"
+    spriteType = "GFX_terrain_brussels"
+    alwaystransparent = yes
+}
+```
+
+### Step 4: Create Empty Modifier
+
+File: `common/modifiers/01_province_modifiers.txt`
+
+```hoiscript
+terrain_brussels = { }
+```
+
+### Step 5: Add to Startup Effects
+
+File: `common/scripted_effects/00_startup_effects.txt`
+
+```hoiscript
+# State ID 50, province ID 516
+50 = {
+    add_province_modifier = {
+        static_modifiers = { terrain_brussels }
+        province = { id = 516 }
+    }
+}
+```
+
+> **Tip**: Use `Tdebug` console command in-game to find state and province IDs.
 
 ---
 
