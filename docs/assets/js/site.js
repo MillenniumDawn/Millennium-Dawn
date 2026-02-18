@@ -259,10 +259,26 @@
         });
     }
 
+    function initResponsiveTables() {
+        var content = document.querySelector('.main-content');
+        if (!content) return;
+
+        var tables = content.querySelectorAll('table');
+        tables.forEach(function (table) {
+            if (table.closest('.table-wrapper') || !table.parentNode) return;
+
+            var wrapper = document.createElement('div');
+            wrapper.className = 'table-wrapper';
+            table.parentNode.insertBefore(wrapper, table);
+            wrapper.appendChild(table);
+        });
+    }
+
     function init() {
         initHeaderHeightSync();
         initDarkModeToggle();
         initMobileNavigation();
+        initResponsiveTables();
         initBackToTop();
     }
 
