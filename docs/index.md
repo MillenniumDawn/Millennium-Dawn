@@ -1,6 +1,5 @@
 ---
 layout: default
-title: "Millennium Dawn: A Modern Day Mod"
 description: "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV."
 ---
 

@@ -1,6 +1,7 @@
 ---
 layout: default
 title: "List of Countries"
+description: "Full list of playable countries available in Millennium Dawn: A Modern Day mod for Hearts of Iron IV."
 permalink: /countries-list/
 ---
 

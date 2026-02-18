@@ -1,6 +1,7 @@
 ---
 layout: default
 title: "Tutorials"
+description: "Guides and tutorials for playing Millennium Dawn: A Modern Day mod for Hearts of Iron IV."
 permalink: /tutorials/
 ---
 

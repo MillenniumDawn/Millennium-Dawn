@@ -1,6 +1,7 @@
 ---
 layout: default
 title: "Dev Diaries"
+description: "Development diaries from the Millennium Dawn mod team, covering new features, changes, and updates."
 permalink: /dev-diaries-list/
 ---
 

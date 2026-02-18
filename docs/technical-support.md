@@ -1,6 +1,7 @@
 ---
 layout: default
 title: "Technical Support"
+description: "Technical support and troubleshooting help for Millennium Dawn: A Modern Day mod for Hearts of Iron IV."
 permalink: /technical-support/
 ---
 
