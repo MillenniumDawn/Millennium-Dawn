@@ -24,89 +24,229 @@
     </button>
 
     <script>
-        // Dark mode toggle
-        (function() {
-            var html = document.documentElement;
-            var btn = document.querySelector('.dark-mode-button');
-            if (!btn) return;
+    // ================================================================
+    // Coordinated header behaviour
+    //
+    // Two features share the header:
+    //   1. Mobile nav toggle  →  adds .is-open / .nav-is-open
+    //   2. Condensed scroll   →  adds .site-header--condensed
+    //
+    // They coordinate through:
+    //   • .nav-is-open on <header>  (CSS guard + JS check)
+    //   • Custom event "navstatechange" for re-evaluation
+    // ================================================================
 
-            function updateAria() {
-                var isDark = html.classList.contains('dark-mode');
-                btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    // Dark mode toggle
+    (function () {
+        var html = document.documentElement;
+        var btn  = document.querySelector('.dark-mode-button');
+        if (!btn) return;
+
+        function updateAria() {
+            btn.setAttribute('aria-pressed',
+                html.classList.contains('dark-mode') ? 'true' : 'false');
+        }
+
+        updateAria();
+
+        btn.addEventListener('click', function () {
+            var wasDark = html.classList.contains('dark-mode');
+            html.classList.toggle('dark-mode');
+            html.classList.remove('light-mode');
+            if (wasDark) {
+                localStorage.setItem('theme', 'light');
+                html.classList.add('light-mode');
+            } else {
+                localStorage.setItem('theme', 'dark');
             }
-
             updateAria();
+        });
+    })();
 
-            btn.addEventListener('click', function() {
-                var wasDark = html.classList.contains('dark-mode');
-                html.classList.toggle('dark-mode');
-                html.classList.remove('light-mode');
+    // ────────────────────────────────────────────────────────────
+    // Mobile navigation toggle
+    // ────────────────────────────────────────────────────────────
+    (function () {
+        var toggle  = document.querySelector('.nav-toggle');
+        var nav     = document.getElementById('main-nav');
+        var header  = document.querySelector('.site-header');
+        if (!toggle || !nav || !header) return;
 
-                if (wasDark) {
-                    localStorage.setItem('theme', 'light');
-                    html.classList.add('light-mode');
-                } else {
-                    localStorage.setItem('theme', 'dark');
-                }
+        var desktopMQ = window.matchMedia('(min-width: 769px)');
 
-                updateAria();
-            });
-        })();
+        function openNav() {
+            nav.classList.add('is-open');
+            header.classList.add('nav-is-open');
+            document.body.classList.add('nav-lock');
+            toggle.setAttribute('aria-expanded', 'true');
+            toggle.setAttribute('aria-label', 'Close navigation menu');
+            // Tell condensed logic that state changed
+            header.dispatchEvent(new CustomEvent('navstatechange'));
+        }
 
-        // Mobile navigation toggle
-        (function() {
-            var toggle = document.querySelector('.nav-toggle');
-            var nav = document.getElementById('main-nav');
-            if (!toggle || !nav) return;
+        function closeNav(restoreFocus) {
+            nav.classList.remove('is-open');
+            header.classList.remove('nav-is-open');
+            document.body.classList.remove('nav-lock');
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.setAttribute('aria-label', 'Open navigation menu');
+            if (restoreFocus) toggle.focus();
+            header.dispatchEvent(new CustomEvent('navstatechange'));
+        }
 
-            toggle.addEventListener('click', function() {
-                var isOpen = nav.classList.toggle('is-open');
-                toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-                toggle.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
-            });
+        function isOpen() {
+            return nav.classList.contains('is-open');
+        }
 
-            // Close on Escape
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && nav.classList.contains('is-open')) {
-                    nav.classList.remove('is-open');
-                    toggle.setAttribute('aria-expanded', 'false');
-                    toggle.setAttribute('aria-label', 'Open navigation menu');
-                    toggle.focus();
-                }
-            });
+        // Toggle button
+        toggle.addEventListener('click', function () {
+            isOpen() ? closeNav(false) : openNav();
+        });
 
-            // Close when clicking outside
-            document.addEventListener('click', function(e) {
-                if (nav.classList.contains('is-open') &&
-                    !nav.contains(e.target) &&
-                    !toggle.contains(e.target)) {
-                    nav.classList.remove('is-open');
-                    toggle.setAttribute('aria-expanded', 'false');
-                    toggle.setAttribute('aria-label', 'Open navigation menu');
-                }
-            });
-        })();
+        // Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && isOpen()) {
+                closeNav(true);
+            }
+        });
 
-        // Back to top button
-        (function() {
-            var btn = document.querySelector('.back-to-top');
-            if (!btn) return;
+        // Click outside
+        document.addEventListener('click', function (e) {
+            if (isOpen() &&
+                !nav.contains(e.target) &&
+                !toggle.contains(e.target)) {
+                closeNav(false);
+            }
+        });
 
-            function checkScroll() {
-                if (window.scrollY > 400) {
-                    btn.classList.add('is-visible');
-                } else {
-                    btn.classList.remove('is-visible');
-                }
+        // Close nav when a link inside it is clicked (anchor / page nav)
+        nav.addEventListener('click', function (e) {
+            if (e.target.closest('a') && isOpen()) {
+                closeNav(false);
+            }
+        });
+
+        // ── Breakpoint guard ──
+        // Auto-close mobile nav when viewport crosses to desktop
+        function onBreakpoint() {
+            if (desktopMQ.matches && isOpen()) {
+                closeNav(false);
+            }
+        }
+
+        if (typeof desktopMQ.addEventListener === 'function') {
+            desktopMQ.addEventListener('change', onBreakpoint);
+        } else if (typeof desktopMQ.addListener === 'function') {
+            desktopMQ.addListener(onBreakpoint);
+        }
+    })();
+
+    // ────────────────────────────────────────────────────────────
+    // Condensed header on scroll (desktop only)
+    // ────────────────────────────────────────────────────────────
+    (function () {
+        var header      = document.querySelector('.site-header');
+        var headerTop   = document.querySelector('.header-top');
+        var mainContent = document.getElementById('main-content');
+        if (!header || !headerTop) return;
+
+        var lastState   = null;
+        var threshold   = 12;   // px — treat as "at top" when <= threshold
+        var cooldown    = 100;  // ms debounce for slow scroll
+        var timeoutId   = null;
+        var desktopMQ   = window.matchMedia('(min-width: 769px)');
+
+        function applyState(condensed) {
+            if (condensed === lastState) return;
+
+            // ── Conflict guard ──
+            // Never condense while mobile nav is open
+            if (condensed && header.classList.contains('nav-is-open')) return;
+
+            header.classList.toggle('site-header--condensed', condensed);
+            headerTop.setAttribute('aria-hidden', condensed ? 'true' : 'false');
+
+            // Move focus out of hidden region
+            if (condensed && headerTop.contains(document.activeElement)) {
+                if (mainContent) mainContent.focus();
             }
 
-            window.addEventListener('scroll', checkScroll, { passive: true });
-            checkScroll();
+            lastState = condensed;
+        }
 
-            btn.addEventListener('click', function() {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+        function evaluate() {
+            // Only condense on desktop
+            if (!desktopMQ.matches) {
+                applyState(false);
+                return;
+            }
+
+            // Never condense with nav open
+            if (header.classList.contains('nav-is-open')) return;
+
+            var y = Math.max(0, window.scrollY || window.pageYOffset);
+            var shouldCondense = y > threshold;
+
+            if (shouldCondense !== lastState) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(function () {
+                    applyState(shouldCondense);
+                }, cooldown);
+            }
+        }
+
+        // Throttle via rAF
+        var rafPending = false;
+        function onScroll() {
+            if (rafPending) return;
+            rafPending = true;
+            requestAnimationFrame(function () {
+                rafPending = false;
+                evaluate();
             });
-        })();
+        }
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', evaluate);
+
+        if (typeof desktopMQ.addEventListener === 'function') {
+            desktopMQ.addEventListener('change', evaluate);
+        } else if (typeof desktopMQ.addListener === 'function') {
+            desktopMQ.addListener(evaluate);
+        }
+
+        // ── Coordination with mobile nav ──
+        // Re-evaluate when nav opens/closes so condensed state
+        // is restored correctly after the nav overlay is dismissed
+        header.addEventListener('navstatechange', function () {
+            // Small delay lets the nav close animation settle before
+            // we potentially re-condense the header
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(evaluate, 60);
+        });
+
+        // Initial evaluation
+        evaluate();
+    })();
+
+    // ────────────────────────────────────────────────────────────
+    // Back to top button
+    // ────────────────────────────────────────────────────────────
+    (function () {
+        var btn = document.querySelector('.back-to-top');
+        if (!btn) return;
+
+        function check() {
+            btn.classList.toggle('is-visible', window.scrollY > 400);
+        }
+
+        window.addEventListener('scroll', check, { passive: true });
+        check();
+
+        btn.addEventListener('click', function () {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    })();
     </script>
 </body>
 </html>
