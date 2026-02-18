@@ -316,6 +316,5 @@ CHI_norinco_manufacturer = {
 
 # Related Resources
 
-- [Focus Tree Styling](./.cursor/.ai-guides/code_styling.md) - Detailed focus tree reference
-- [Code Resources](./code-resource.md) - Modifiers and effects
-- [Game Rules](./game-rules.md) - Game rule reference
+- [Code Resources]({{ '/dev-resources/code-resource' | relative_url }}) - Modifiers and effects
+- [Game Rules]({{ '/player-tutorials/game-rules' | relative_url }}) - Game rule reference

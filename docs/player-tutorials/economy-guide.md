@@ -299,7 +299,7 @@ Buildings require workers to function at full efficiency:
 
 ## Related Documentation
 
-- [UI Guide](./game-ui.md)
-- [Economic Cycle](./economic-cycle.md)
-- [International Investments](./investments.md)
-- [Game Rules](./game-rules.md)
+- UI Guide (coming soon)
+- Economic Cycle (coming soon)
+- International Investments (coming soon)
+- [Game Rules]({{ '/player-tutorials/game-rules' | relative_url }})

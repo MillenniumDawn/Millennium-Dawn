@@ -1,6 +1,11 @@
+---
+layout: default
+title: "National Content - Canada"
+---
+
 ## Canada WIP
 
-![Canada](/Millennium-Dawn/uploads/flags/canada.png)
+![Canada]({{ '/uploads/flags/canada.png' | relative_url }}){: .country-flag}
 
 Canada is a country surrounded by the US from the west, Alaska, and the south.
 
@@ -31,3 +36,4 @@ Canada starts with 11 Factories: 5 Military Industries, 4 Civilian Industries an
 ## Economy
 
 Canada starts with $47 Billions in the Treasury, $804 Billions in Debt and $289 Billions in International Investments
+
