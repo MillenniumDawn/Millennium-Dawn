@@ -1,5 +1,5 @@
 // ==========================================================================
-// Layout — Container, Header, Main, Footer
+// Layout — Container, Header, Page Layout, Main, Footer
 // ==========================================================================
 
 // Container
@@ -10,18 +10,35 @@
 }
 
 // ──────────────────────────────────────────────────────────────
-// Header
+// Page layout wrapper — flex context for sidebar + main
+// Without TOC: transparent block wrapper, no effect
+// With TOC on desktop: flex row (sidebar | main)
 // ──────────────────────────────────────────────────────────────
+.page-layout {
+  display: block;
+  width: 100%;
+  min-height: calc(100vh - var(--header-height, 4rem));
+}
+
+@media (min-width: 1100px) {
+  body.has-toc .page-layout {
+    display: flex;
+    // align-items: stretch (default) — aside matches main height for sticky
+  }
+
+  body.has-toc .page-layout > .main-content {
+    flex: 1 1 0%;
+    min-width: 0;   // prevent flex item blowout from wide content
+  }
+}
+
+// Header
 .site-header {
   position: sticky;
   top: 0;
   z-index: 1000;
   width: 100%;
-  background: linear-gradient(
-    135deg,
-    var(--color-header-bg),
-    var(--color-header-bg-end)
-  );
+  background: linear-gradient(135deg, var(--color-header-bg), var(--color-header-bg-end));
   color: #fff;
   padding: var(--space-md) 0;
   box-shadow: var(--shadow-md);
@@ -33,15 +50,11 @@
     padding 220ms var(--transition-fn);
 }
 
-/* Condensed header state (used while scrolling on desktop) */
 .site-header--condensed {
   padding: 0;
   box-shadow: var(--shadow-sm);
 }
 
-// ──────────────────────────────────────────────────────────────
-// Header content wrapper
-// ──────────────────────────────────────────────────────────────
 .header-content {
   display: flex;
   flex-direction: column;
@@ -49,19 +62,14 @@
   gap: var(--space-sm);
 }
 
-// ──────────────────────────────────────────────────────────────
-// Header top (logo + actions)
-// Uses max-height for animatable collapse instead of display:none
-// ──────────────────────────────────────────────────────────────
 .header-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
 
-  // Transition-ready properties (no display:none!)
   overflow: hidden;
-  max-height: 10rem; // generous ceiling — fits any content height
+  max-height: 10rem;
   opacity: 1;
   transform: translateY(0);
   visibility: visible;
@@ -70,13 +78,10 @@
     max-height 250ms var(--transition-fn),
     opacity 180ms var(--transition-fn),
     transform 220ms var(--transition-fn),
-    visibility 0s 0s; // visible immediately on expand
+    visibility 0s 0s;
   will-change: max-height, opacity, transform;
 }
 
-// ──────────────────────────────────────────────────────────────
-// Desktop-only condensed collapse
-// ──────────────────────────────────────────────────────────────
 @media (min-width: 769px) {
   .header-top {
     justify-content: center;
@@ -90,14 +95,12 @@
     margin-left: var(--space-md);
   }
 
-  /* Animate header-top out when condensed */
   .site-header--condensed .header-top {
     max-height: 0;
     opacity: 0;
     transform: translateY(-1rem);
     pointer-events: none;
     visibility: hidden;
-    // Delay visibility:hidden until transitions finish
     transition:
       max-height 250ms var(--transition-fn),
       opacity 180ms var(--transition-fn),
@@ -105,15 +108,10 @@
       visibility 0s 250ms;
   }
 
-  /* Keep navigation compact when condensed */
   .site-header--condensed .main-nav ul {
     gap: var(--space-xs);
   }
 
-  // ────────────────────────────────────────────────────────────
-  // CONFLICT GUARD: if mobile nav is somehow open at desktop
-  // width (e.g. resize race), force header-top visible
-  // ────────────────────────────────────────────────────────────
   .site-header.nav-is-open.site-header--condensed .header-top {
     max-height: 10rem;
     opacity: 1;
@@ -128,13 +126,9 @@
   }
 }
 
-// ──────────────────────────────────────────────────────────────
-// Mobile: prevent condensed from doing anything
-// (condensed is purely a desktop-scroll feature)
-// ──────────────────────────────────────────────────────────────
 @media (max-width: 768px) {
   .site-header--condensed {
-    padding: var(--space-md) 0; // keep normal padding on mobile
+    padding: var(--space-md) 0;
     box-shadow: var(--shadow-md);
   }
 
@@ -147,20 +141,12 @@
   }
 }
 
-// ──────────────────────────────────────────────────────────────
-// Body scroll lock when mobile nav is open
-// ──────────────────────────────────────────────────────────────
 body.nav-lock {
   overflow: hidden;
-
-  @media (min-width: 769px) {
-    overflow: auto; // never lock on desktop
-  }
+  @media (min-width: 769px) { overflow: auto; }
 }
 
-// ──────────────────────────────────────────────────────────────
 // Logo
-// ──────────────────────────────────────────────────────────────
 .logo {
   max-width: 100%;
   flex: none;
@@ -189,16 +175,10 @@ body.nav-lock {
   color: #fff;
   text-decoration: none;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-
-  &:hover {
-    color: #fff;
-    text-decoration: none;
-  }
+  &:hover { color: #fff; text-decoration: none; }
 }
 
-// ──────────────────────────────────────────────────────────────
 // Main content
-// ──────────────────────────────────────────────────────────────
 .main-content {
   min-height: calc(100vh - 200px);
   padding: var(--space-xl) 0;
@@ -210,9 +190,7 @@ body.nav-lock {
   }
 }
 
-// ──────────────────────────────────────────────────────────────
 // Footer
-// ──────────────────────────────────────────────────────────────
 .site-footer {
   background-color: var(--color-footer-bg);
   color: #fff;
@@ -228,29 +206,14 @@ body.nav-lock {
 }
 
 .footer-section {
-  h3 {
-    color: #ecf0f1;
-    margin-bottom: var(--space-md);
-    font-size: 1.1rem;
-  }
-
-  ul {
-    list-style: none;
-    margin-left: 0;
-  }
-
-  li {
-    margin-bottom: var(--space-sm);
-  }
-
+  h3 { color: #ecf0f1; margin-bottom: var(--space-md); font-size: 1.1rem; }
+  ul { list-style: none; margin-left: 0; }
+  li { margin-bottom: var(--space-sm); }
   a {
     color: var(--color-footer-text);
     text-decoration: none;
     transition: color var(--transition-speed) var(--transition-fn);
-
-    &:hover {
-      color: #fff;
-    }
+    &:hover { color: #fff; }
   }
 }
 

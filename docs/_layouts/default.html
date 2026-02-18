@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 {% include head.html %}
-<body class="{{ page.title | slugify }}">
+<body class="{{ page.title | slugify }}{% unless page.toc == false %} has-toc{% endunless %}">
     {% include skip-link.html %}
     {% include header.html %}
 
-    <main class="main-content" id="main-content" tabindex="-1">
-        <div class="container">
-            {% include breadcrumbs.html %}
-            {{ content }}
-        </div>
-    </main>
+    <!-- Page layout: flex wrapper for sidebar + main content -->
+    <div class="page-layout" id="page-layout">
+        {% include toc-sidebar.html %}
+
+        <main class="main-content" id="main-content" tabindex="-1">
+            <div class="container">
+                {% include breadcrumbs.html %}
+                {{ content }}
+            </div>
+        </main>
+    </div>
 
     {% include footer.html %}
 
@@ -26,15 +31,28 @@
     <script>
     // ================================================================
     // Coordinated header behaviour
-    //
-    // Two features share the header:
-    //   1. Mobile nav toggle  →  adds .is-open / .nav-is-open
-    //   2. Condensed scroll   →  adds .site-header--condensed
-    //
-    // They coordinate through:
-    //   • .nav-is-open on <header>  (CSS guard + JS check)
-    //   • Custom event "navstatechange" for re-evaluation
     // ================================================================
+
+    // Keep --header-height in sync with actual header size
+    (function () {
+        var root   = document.documentElement;
+        var header = document.querySelector('.site-header');
+        if (!root || !header) return;
+
+        function update() {
+            var h = Math.ceil(header.getBoundingClientRect().height);
+            if (h > 0) root.style.setProperty('--header-height', h + 'px');
+        }
+
+        update();
+        window.addEventListener('load', update);
+        window.addEventListener('resize', update);
+        header.addEventListener('navstatechange', update);
+
+        if (typeof ResizeObserver !== 'undefined') {
+            new ResizeObserver(update).observe(header);
+        }
+    })();
 
     // Dark mode toggle
     (function () {
@@ -46,7 +64,6 @@
             btn.setAttribute('aria-pressed',
                 html.classList.contains('dark-mode') ? 'true' : 'false');
         }
-
         updateAria();
 
         btn.addEventListener('click', function () {
@@ -63,9 +80,7 @@
         });
     })();
 
-    // ────────────────────────────────────────────────────────────
     // Mobile navigation toggle
-    // ────────────────────────────────────────────────────────────
     (function () {
         var toggle  = document.querySelector('.nav-toggle');
         var nav     = document.getElementById('main-nav');
@@ -80,7 +95,6 @@
             document.body.classList.add('nav-lock');
             toggle.setAttribute('aria-expanded', 'true');
             toggle.setAttribute('aria-label', 'Close navigation menu');
-            // Tell condensed logic that state changed
             header.dispatchEvent(new CustomEvent('navstatechange'));
         }
 
@@ -94,46 +108,29 @@
             header.dispatchEvent(new CustomEvent('navstatechange'));
         }
 
-        function isOpen() {
-            return nav.classList.contains('is-open');
-        }
+        function isOpen() { return nav.classList.contains('is-open'); }
 
-        // Toggle button
         toggle.addEventListener('click', function () {
             isOpen() ? closeNav(false) : openNav();
         });
 
-        // Escape key
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && isOpen()) {
-                closeNav(true);
-            }
+            if (e.key === 'Escape' && isOpen()) closeNav(true);
         });
 
-        // Click outside
         document.addEventListener('click', function (e) {
-            if (isOpen() &&
-                !nav.contains(e.target) &&
-                !toggle.contains(e.target)) {
+            if (isOpen() && !nav.contains(e.target) && !toggle.contains(e.target)) {
                 closeNav(false);
             }
         });
 
-        // Close nav when a link inside it is clicked (anchor / page nav)
         nav.addEventListener('click', function (e) {
-            if (e.target.closest('a') && isOpen()) {
-                closeNav(false);
-            }
+            if (e.target.closest('a') && isOpen()) closeNav(false);
         });
 
-        // ── Breakpoint guard ──
-        // Auto-close mobile nav when viewport crosses to desktop
         function onBreakpoint() {
-            if (desktopMQ.matches && isOpen()) {
-                closeNav(false);
-            }
+            if (desktopMQ.matches && isOpen()) closeNav(false);
         }
-
         if (typeof desktopMQ.addEventListener === 'function') {
             desktopMQ.addEventListener('change', onBreakpoint);
         } else if (typeof desktopMQ.addListener === 'function') {
@@ -141,47 +138,34 @@
         }
     })();
 
-    // ────────────────────────────────────────────────────────────
     // Condensed header on scroll (desktop only)
-    // ────────────────────────────────────────────────────────────
     (function () {
         var header      = document.querySelector('.site-header');
         var headerTop   = document.querySelector('.header-top');
         var mainContent = document.getElementById('main-content');
         if (!header || !headerTop) return;
 
-        var lastState   = null;
-        var threshold   = 12;   // px — treat as "at top" when <= threshold
-        var cooldown    = 100;  // ms debounce for slow scroll
-        var timeoutId   = null;
-        var desktopMQ   = window.matchMedia('(min-width: 769px)');
+        var lastState  = null;
+        var threshold  = 12;
+        var cooldown   = 100;
+        var timeoutId  = null;
+        var desktopMQ  = window.matchMedia('(min-width: 769px)');
 
         function applyState(condensed) {
             if (condensed === lastState) return;
-
-            // ── Conflict guard ──
-            // Never condense while mobile nav is open
             if (condensed && header.classList.contains('nav-is-open')) return;
 
             header.classList.toggle('site-header--condensed', condensed);
             headerTop.setAttribute('aria-hidden', condensed ? 'true' : 'false');
 
-            // Move focus out of hidden region
             if (condensed && headerTop.contains(document.activeElement)) {
                 if (mainContent) mainContent.focus();
             }
-
             lastState = condensed;
         }
 
         function evaluate() {
-            // Only condense on desktop
-            if (!desktopMQ.matches) {
-                applyState(false);
-                return;
-            }
-
-            // Never condense with nav open
+            if (!desktopMQ.matches) { applyState(false); return; }
             if (header.classList.contains('nav-is-open')) return;
 
             var y = Math.max(0, window.scrollY || window.pageYOffset);
@@ -189,21 +173,15 @@
 
             if (shouldCondense !== lastState) {
                 clearTimeout(timeoutId);
-                timeoutId = setTimeout(function () {
-                    applyState(shouldCondense);
-                }, cooldown);
+                timeoutId = setTimeout(function () { applyState(shouldCondense); }, cooldown);
             }
         }
 
-        // Throttle via rAF
         var rafPending = false;
         function onScroll() {
             if (rafPending) return;
             rafPending = true;
-            requestAnimationFrame(function () {
-                rafPending = false;
-                evaluate();
-            });
+            requestAnimationFrame(function () { rafPending = false; evaluate(); });
         }
 
         window.addEventListener('scroll', onScroll, { passive: true });
@@ -215,23 +193,15 @@
             desktopMQ.addListener(evaluate);
         }
 
-        // ── Coordination with mobile nav ──
-        // Re-evaluate when nav opens/closes so condensed state
-        // is restored correctly after the nav overlay is dismissed
         header.addEventListener('navstatechange', function () {
-            // Small delay lets the nav close animation settle before
-            // we potentially re-condense the header
             clearTimeout(timeoutId);
             timeoutId = setTimeout(evaluate, 60);
         });
 
-        // Initial evaluation
         evaluate();
     })();
 
-    // ────────────────────────────────────────────────────────────
     // Back to top button
-    // ────────────────────────────────────────────────────────────
     (function () {
         var btn = document.querySelector('.back-to-top');
         if (!btn) return;
