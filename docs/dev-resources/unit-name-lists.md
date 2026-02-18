@@ -15,7 +15,7 @@ When creating name lists, the name of the namelist should be in English while th
 File Path: common/units/names_divisions
 
 This is the location for storing division name lists. The lists for a single country are stored in the country's own file. Name lists that are shared between countries can be in a common file. Once name lists have been created, they also need to be assigned to units. The below picture should provide all the necessary information. Explanation for the different elements is described below the picture.
-![unit_namelist](uploads/c38eaab4cff489578c4f7949665ed4c6/unit_namelist.png)
+[Image unavailable: unit_namelist]
 
 The top left section is something you will find in the division name list file (in this case FIN_names_divisions.txt). This is a single entry, and a single file can have multiple entries. This is how an entry is built:
 1) The token for the name list. This must be unique for each name list and it something the game uses to recognise the name list

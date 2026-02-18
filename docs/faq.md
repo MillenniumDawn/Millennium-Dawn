@@ -1,12 +1,13 @@
 ---
 layout: default
 title: "FAQ"
+description: "Frequently asked questions about Millennium Dawn: A Modern Day mod for Hearts of Iron IV."
 permalink: /faq/
 ---
 
 # Frequently Asked Questions
 
-For the [Troubleshooting Guide](player-tutorials/troubleshooting-guide).
+For the [Troubleshooting Guide]({{ '/player-tutorials/troubleshooting-guide' | relative_url }}).
 
 ## General Questions
 

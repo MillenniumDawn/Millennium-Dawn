@@ -57,13 +57,13 @@ A tutorial to convert old generals/admirals into the new style:
 1. Start the 2000 bookmark as the country you're working on (I'm using Abkhazia as example)
 
 2. Open the console and type "imgui on" and "imgui show characters". You should get a bar with the text "Characters" on it on your screen. By clicking the arrow you get a  window like below. If nothing happens, type "imgui off" and then "imgui on"
-![hoi4_12](/Millennium-Dawn/uploads/hoi4_12.png)
+[Image unavailable: character window screenshot]
 
 1. Click the "Write Current Nation Characters" button
 
 2. This will create two files in your HoI4 documents folder (the same folder that has your HoI4 mod folder). Copy the file from character_export/characters/ folder into Millennium_Dawn/common/characters folder. Copy the "recruit_character" lines from character_export/history/country file into the country's history file in Millennium_Dawn/history/countries folder. Place the lines below the create_country_leader entry of the 2000 bookmark
 
-![image](/Millennium-Dawn/uploads/image.png)
+[Image unavailable: export files screenshot]
 
 1. The exported files will have entries for the starting political leaders and the generic leaders for other Outlooks. Remove these entries from the character file and the recruit_character lines for them from the country history file. Leave only the entries for generals/admirals into the files.
 
@@ -80,7 +80,7 @@ From the exported generals, choose the amount of generals and field marshals nee
 * 5-6: Western countries
 
 The total amount of skill points (attack_skill etc.) the general should have in total is (level - 1) * 3 + 4, with every skill being at least 1. Also assign traits to the generals if you want (these are all listed in the Trait List tab of the Generals_worksheet file).
-![image](/Millennium-Dawn/uploads/image.png)
+[Image unavailable: skill point distribution screenshot]
 
 Here, Abkhazia's general is level 4, so the total amount of skill points is (4 - 1) * 3 + 4 = 13. I've also given him the mountaineer trait.
 
@@ -94,7 +94,7 @@ Here, Abkhazia's general is level 4, so the total amount of skill points is (4 -
 
 Below is an example of what the advisor entry looks like in a file
 
-![image](/Millennium-Dawn/uploads/image.png)
+[Image unavailable: advisor entry screenshot]
 
 Anatoly Zaitsev has been made a possible member of High Command in addition to being a general
 
@@ -115,7 +115,7 @@ ai_will_do_factor = add to all entries, can just use factor = 1 in all
 You can also use visible = { } for the advisors. This means that the character will only become visible in game after certain triggers. For example I made Anatoly Khrulyov as an Army Chief for Abkhazia, but he will only be visible if Abkhazia is a subject of Russia. You can also use available = { } if you want the character to be visible to the player but can't be chosen until certain conditions are met
 
 1.  Make sure that each character has a small and large portrait defined. Use pathing similar to the Abkhazia example. The large portrait is 156x210 (same as any leader portrait), the small portrait is 38x51 and can be made just by scaling the large portrait down.
-![image](/Millennium-Dawn/uploads/image.png)
+[Image unavailable: portrait sizing screenshot]
 
 1.  After creating all advisors, add their recruit_character entries into the country history file 2000 bookmark (unless you want to have different characters for different bookmarks).
 

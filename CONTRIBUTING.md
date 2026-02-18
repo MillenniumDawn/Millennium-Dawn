@@ -49,6 +49,12 @@ pre-commit autoupdate
 - Include `ai_will_do` in focuses
 - Remove redundant code (`allowed = { always = no }`)
 
+### Docs Link Rules (`docs/`)
+
+- Do not hardcode `"/Millennium-Dawn/..."` in markdown links.
+- Use Liquid + `relative_url`, for example: `[Tutorial]({{ '/tutorials/' | relative_url }})`
+- Apply the same pattern to image links: `![Alt]({{ '/uploads/file.png' | relative_url }})`
+
 See [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) for details.
 
 ## Pull Request Process

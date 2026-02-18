@@ -1,6 +1,11 @@
+---
+layout: default
+title: "National Content - North Korea"
+---
+
 ## North Korea WIP
 
-![Flag_of_North_Korea.svg](uploads/513bc13428e26689c90a47380f6c6534/Flag_of_North_Korea.svg.png)
+[Image unavailable: Flag_of_North_Korea.svg]
 
 North Korea is a country surrounded by South Korea from the South, China from the North and Russia from the North-East. It starts with a Population of 22.86 Millions.
 
@@ -36,3 +41,4 @@ North Korea starts with 2 Factories; 1 Civilian Industry and 1 Military Industry
 ## Economy
 
 North Korea starts with $3 Billions in the Treasury, $20 Billions in Debt and $0 Billions in International Investments.
+

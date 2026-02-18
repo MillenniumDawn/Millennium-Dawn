@@ -1,10 +1,9 @@
 ---
 layout: default
-title: "Millennium Dawn: A Modern Day Mod"
 description: "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV."
 ---
 
-![New2](uploads/main-menu-2.png) ![Introduction](uploads/Introduction.png)
+![New2]({{ '/uploads/main-menu-2.png' | relative_url }}) ![Introduction]({{ '/uploads/Introduction.png' | relative_url }})
 
 With the dawn of a new millennium, a new chapter in human history will be written. Globalization continues to change the lives of countless billions while rising extremism is showing signs of igniting the fires of conflict. New powers begin to emerge, and not all believe their place in the global order, or that of some competitors is warranted. A struggle will soon begin, and it will likely change everything. Will you lead your Nation to prosperity and dominance in the decades ahead, or will your Nation fall victim to the defining moments of history?
 
@@ -22,13 +21,13 @@ Further, it offers a new and unique economic system, a new political system, nat
 
 **The following Wiki is currently a work in progress. However, we will do our best to get meaningful content updated and placed on this page.**
 
-See the [Troubleshooting Guide](https://millenniumdawn.github.io/Millennium-Dawn/player-tutorials/troubleshooting-guide) for common issues.
+See the [Troubleshooting Guide]({{ '/player-tutorials/troubleshooting-guide' | relative_url }}) for common issues.
 
 ## Roadmap Images
 
 ### Map of Current Focus Trees
 
-![Map of current focus trees](uploads/roadmaps/current-focus-tree.png)
+![Map of current focus trees]({{ '/uploads/roadmaps/current-focus-tree.png' | relative_url }})
 
 ### Roadmap for Future National Focus Trees and Custom Mechanics
 
@@ -40,13 +39,13 @@ The "x" means that content may not arrive until a patch.
 
 Tentative means we have the intention to start or complete this content, but it may or may not be in the mentioned version. It depends on work load and whether the developer is able to complete it. This should give us a more accurate viewing of our progress and what our expectations are for our completion.
 
-![Roadmap for National Focus Trees](uploads/roadmaps/upcoming-content.png)
+![Roadmap for National Focus Trees]({{ '/uploads/roadmaps/upcoming-content.png' | relative_url }})
 
 ### Roadmap for Military Industrial Organisation (MIO) Content
 
 Map is currently showing which countries have a fully custom MIO content and which ones are planned. The new additions get positive feedback so we want to share which countries are currently planned.
 
-![Roadmap for MIO content](uploads/roadmaps/custom-mio.png)
+![Roadmap for MIO content]({{ '/uploads/roadmaps/custom-mio.png' | relative_url }})
 
 ### Joining the Millennium Dawn Development Team
 
@@ -71,30 +70,30 @@ The development team requires that you are at least 16 years of age and own a le
 
 ### Tutorials
 
-- [Economy Tutorial](/Millennium-Dawn/player-tutorials/economy-tutorial)
-- [European Union Tutorial](/Millennium-Dawn/player-tutorials/eu-tutorial)
+- [Economy Tutorial]({{ '/player-tutorials/economy-tutorial' | relative_url }})
+- [European Union Tutorial]({{ '/player-tutorials/eu-tutorial' | relative_url }})
 - [Millennium Dawn Tutorials](https://www.youtube.com/watch?v=9G6lYnP0knI&list=PL36TqZI0G592x3sYphwPHuMvobA6si543)
-- [List of Playable Countries](https://millenniumdawn.github.io/Millennium-Dawn/countries-list/)
+- [List of Playable Countries]({{ '/countries-list/' | relative_url }})
 
 ### Developer/Team Resources
 
-- [Knowledge Based Resources](/Millennium-Dawn/dev-resources/knowledge-based-resources)
-- [MD Code Resource](/Millennium-Dawn/dev-resources/code-resource)
+- [Knowledge Based Resources]({{ '/dev-resources/knowledge-based-resources' | relative_url }})
+- [MD Code Resource]({{ '/dev-resources/code-resource' | relative_url }})
 - [How to get setup with Gitlab & Github](https://docs.google.com/document/d/1V8DLowqEOSmlgazlHeC-hLZzLki5e6cWhQO_ZK6HVYs/edit?usp=sharing)
 - [Politics list](https://docs.google.com/spreadsheets/d/1nv8FgVKC5xVwZyKaFjXsqF37P8LyKU8UvzxFkZnnT_o/edit?usp=sharing)
-- [Help! I get an "Authentication failed" error when trying to clone the repo!](/Millennium-Dawn/dev-resources/authentication-failed-cloning-repo)
+- [Help! I get an "Authentication failed" error when trying to clone the repo!]({{ '/dev-resources/authentication-failed-cloning-repo' | relative_url }})
 
 ### Open Source Resources
 
-- [Focus Tree Tool](/Millennium-Dawn/dev-resources/focus-tree-tool)
-- [Localization Tool](/Millennium-Dawn/dev-resources/localization-tool)
-- [Logging Tool](/Millennium-Dawn/dev-resources/logging-tool)
+- [Focus Tree Tool]({{ '/dev-resources/focus-tree-tool' | relative_url }})
+- [Localization Tool]({{ '/dev-resources/localization-tool' | relative_url }})
+- [Logging Tool]({{ '/dev-resources/logging-tool' | relative_url }})
 
 ### Submods
 
 **DISCLAIMER** Any issues with a submod should be first reported to the submod you are playing with. Even something as simple as a graphics mod could break something in Millennium Dawn. Please try without submods if you encounter any issues.
 
-For a list of Known Submods follow this [link](misc/known-submods).
+For a list of Known Submods follow this [link]({{ '/misc/known-submods' | relative_url }}).
 
 ## Credits
 
@@ -106,4 +105,4 @@ Special thanks to [Kasirreich](https://steamcommunity.com/sharedfiles/filedetail
 
 Special thanks to [KaiserRedux](https://steamcommunity.com/sharedfiles/filedetails/?id=2076426030) team for the focus and ideas gfx sharing!
 
-Furthermore, a non-exhaustive list can be found at the [Authors](misc/authors).
+Furthermore, a non-exhaustive list can be found at the [Authors]({{ '/misc/authors' | relative_url }}).

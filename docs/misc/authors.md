@@ -20,6 +20,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 
 | Name                 | Discord                         | GitHub         | PDX           | Email                         |
 | -------------------- | ------------------------------- | -------------- | ------------- | ----------------------------- |
+| kotru21              | -                               | @kotru21       | -             | -                             |
 | Ted52                | @Ted52                          | @Ted52         | -             | -                             |
 | Angriest Bird        | @Angriest Bird                  | @AngriestBird  | -             | -                             |
 | Brostrom.A \| Evul   | -                               | @ColdEvul      | Cold Evil     | andreas.brostrom.ce@gmail.com |
