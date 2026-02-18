@@ -3680,6 +3680,9 @@ scripted_gui = {
 			campaign_SOV_button_visible = {
 				has_idea = Lacks_International_Recognition
 			}
+			ir_nation_unre_guide_visible = {
+				has_idea = Lacks_International_Recognition
+			}
 			campaign_SOV_button_click_enabled = {
 				SOV = {
 					has_opinion = {
@@ -4443,6 +4446,82 @@ scripted_gui = {
 			check_variable = { var_open_MD_un_aid = 2 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
+		}
+
+		triggers = {
+			cancel_all_contributions_button_click_enabled = {
+				has_political_power > 500
+				custom_trigger_tooltip = {
+					tooltip = is_spending_additional_money_on_aid_tooltip
+					OR = {
+						check_variable = { united_nations_uncdf_funding > 0 }
+						check_variable = { united_nations_unido_funding > 0 }
+						check_variable = { united_nations_unescoe_funding > 0 }
+					}
+				}
+			}
+			decrease_base_budget_vote_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = not_had_unga_budget_vote_in_past_year
+					NOT = { has_global_flag = unga_budget_adjustment_vote }
+				}
+				custom_trigger_tooltip = {
+					tooltip = unga_budget_is_not_too_low
+					NOT = { check_variable = { global.general_operating_budget_contribute_percent < 0.0002 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = unga_current_budget_contributor
+					is_in_array = { global.UN_budget_contribution_tracker = THIS }
+				}
+				has_political_power > 200
+			}
+			increase_base_budget_vote_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = not_had_unga_budget_vote_in_past_year
+					NOT = { has_global_flag = unga_budget_adjustment_vote }
+				}
+				custom_trigger_tooltip = {
+					tooltip = unga_budget_is_not_too_high
+					NOT = { check_variable = { global.general_operating_budget_contribute_percent > 0.0009 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = unga_current_budget_contributor
+					is_in_array = { global.UN_budget_contribution_tracker = THIS }
+				}
+				has_political_power > 200
+			}
+		}
+
+		effects = {
+			cancel_all_contributions_button_click = {
+				add_political_power = -500
+
+				subtract_from_variable = { global.unescoe_additional_contribution = united_nations_unescoe_funding }
+				subtract_from_variable = { global.undio_additional_contribution = united_nations_unido_funding }
+				subtract_from_variable = { global.uncdf_additional_contribution = united_nations_unescoe_funding }
+
+				set_variable = { united_nations_uncdf_funding = 0 }
+				set_variable = { united_nations_unido_funding = 0 }
+				set_variable = { united_nations_unescoe_funding = 0 }
+
+				custom_effect_tooltip = is_cut_all_additional_money_on_programs
+
+				calculate_un_program_budgets = yes
+			}
+			decrease_base_budget_vote_button_click = {
+				set_temp_variable = { ga_new_vote_type = 8 }
+				set_temp_variable = { ga_new_vote_nation = THIS }
+				update_ga_vote = yes
+
+				add_political_power = -200
+			}
+			increase_base_budget_vote_button_click = {
+				set_temp_variable = { ga_new_vote_type = 9 }
+				set_temp_variable = { ga_new_vote_nation = THIS }
+				update_ga_vote = yes
+
+				add_political_power = -200
+			}
 		}
 	}
 	#Dynamic Lists
@@ -7105,6 +7184,28 @@ scripted_gui = {
 			list_of_ga_members = {
 				array = global.UN_general_assembly
 				entry_container = IS_UN_GA_members_list
+				change_scope = yes
+			}
+		}
+	}
+
+	is_un_aid_contribution_dynamic_lists = {
+		context_type = player_context
+		parent_scripted_gui = MD_UN_aid_gui
+		window_name = "IS_UN_aid_contribution_container"
+
+		dirty = global.missile_ui_updated
+
+		visible = {
+			has_country_flag = open_MD_countrymissilesview
+			check_variable = { var_open_MD_UN_gui = 2 }
+			check_variable = { var_open_MD_un_aid = 2 }
+		}
+
+		dynamic_lists = {
+			list_of_aid_contributors = {
+				array = global.UN_budget_contribution_tracker
+				entry_container = IS_UN_aid_contribution_list
 				change_scope = yes
 			}
 		}

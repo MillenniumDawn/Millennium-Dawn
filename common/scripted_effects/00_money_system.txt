@@ -3246,9 +3246,6 @@ calculate_additional_expense_rate = {
 			add_to_variable = { united_nations_expenses = united_nations_aid_expenses }
 			set_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses }
 		}
-
-		set_variable = { united_nations_contribution_percent = united_nations_base_expenses }
-		divide_variable = { united_nations_contribution_percent = global.un_operating_budget_base }
 	}
 	# European Union Contribution Expenses
 	if = { limit = { has_idea = EU_member }
@@ -5480,6 +5477,12 @@ recalculate_resources_price = {
 
 calculate_united_nations_base_budget = {
 	set_variable = { global.un_operating_budget_base = 0 }
+	clear_array = global.UN_budget_contribution_tracker
+	clear_variable = global.target_const_speed_mod
+	clear_variable = global.target_research_speed_mod
+
+	set_temp_variable = { peak_const_speed_mod = 0 }
+	set_temp_variable = { peak_research_speed_mod = 0 }
 
 	for_each_loop = {
 		array = global.UN_general_assembly
@@ -5487,20 +5490,122 @@ calculate_united_nations_base_budget = {
 
 		var:v = {
 			set_variable = { united_nations_base_expenses = gdp_total }
-			multiply_variable = { united_nations_base_expenses = 0.0001 }
+			multiply_variable = { united_nations_base_expenses = global.general_operating_budget_contribute_percent }
 
-			add_to_variable = { global.un_operating_budget_base = united_nations_base_expenses }
+			if = {
+				limit = {
+					check_variable = { united_nations_base_expenses > 0.001 }
+				}
+				add_to_variable = { global.un_operating_budget_base = united_nations_base_expenses }
+				add_to_array = { global.un_operating_budget_contributors = THIS }
 
-			#Add inflation *after* application, to represnt our inflated money being worth less
-			#This means less money goes to the UN, while we have to pay *more* to represent less value
-			set_temp_variable = { un_expenses_inflation = 1 }
-			add_to_temp_variable = { un_expenses_inflation = modifier@inflation_cost_multiplier_modifier }
-			multiply_variable = { united_nations_base_expenses = un_expenses_inflation }
+				#Add inflation *after* application, to represnt our inflated money being worth less
+				#This means less money goes to the UN, while we have to pay *more* to represent less value
+				set_temp_variable = { un_expenses_inflation = 1 }
+				add_to_temp_variable = { un_expenses_inflation = modifier@inflation_cost_multiplier_modifier }
+				multiply_variable = { united_nations_base_expenses = un_expenses_inflation }
 
-			set_variable = { united_nations_expenses = united_nations_base_expenses }
-			set_variable = { united_nations_old_aid_expenses = 0 }
+				set_variable = { united_nations_expenses = united_nations_base_expenses }
+				set_variable = { united_nations_old_aid_expenses = 0 }
+			}
+
+			add_to_variable = { global.target_const_speed_mod = modifier@production_speed_buildings_factor }
+			add_to_variable = { global.target_research_speed_mod = modifier@research_speed_factor }
+
+			set_temp_variable = { const_mod_check = modifier@production_speed_buildings_factor }
+			set_temp_variable = { research_mod_check = modifier@research_speed_factor }
+
+			if = {
+				limit = {
+					check_variable = { peak_const_speed_mod < const_mod_check }
+				}
+				set_temp_variable = { peak_const_speed_mod = modifier@production_speed_buildings_factor }
+			}
+
+			if = {
+				limit = {
+					check_variable = { peak_research_speed_mod < research_mod_check }
+				}
+				set_temp_variable = { peak_research_speed_mod = modifier@research_speed_factor }
+			}
 		}
 	}
-	set_variable = { global.un_yearly_operating_budget = global.un_operating_budget_base }
-	multiply_variable = { global.un_yearly_operating_budget = 52 }
+
+	divide_variable = { global.target_const_speed_mod = global.UN_general_assembly^num }
+	divide_variable = { global.target_research_speed_mod = global.UN_general_assembly^num }
+
+	multiply_temp_variable = { peak_const_speed_mod = 0.4 }
+	multiply_temp_variable = { peak_research_speed_mod = 0.4 }
+
+	add_to_variable = { global.target_const_speed_mod = peak_const_speed_mod }
+	add_to_variable = { global.target_research_speed_mod = peak_research_speed_mod }
+
+	for_each_loop = {
+		array = global.un_operating_budget_contributors
+		value = v
+
+		var:v = {
+			set_variable = { united_nations_contribution_percent = united_nations_base_expenses }
+			divide_variable = { united_nations_contribution_percent = global.un_operating_budget_base }
+			add_to_temp_array = { temp_array_mover = united_nations_base_expenses }
+			add_to_temp_array = { nation_tracker = THIS }
+		}
+	}
+
+	set_temp_variable = { end_number = temp_array_mover^num }
+
+	for_loop_effect = {
+		end = end_number
+		value = temp
+
+		find_highest_in_array = {
+			array = temp_array_mover
+			value = var_tracker
+			index = temp_index_track
+		}
+
+		set_temp_variable = { nation_adder = nation_tracker^temp_index_track }
+		add_to_array = { global.UN_budget_contribution_tracker = nation_adder }
+
+		remove_from_temp_array = {
+			array = nation_tracker
+			index = temp_index_track
+		}
+
+		remove_from_temp_array = {
+			array = temp_array_mover
+			index = temp_index_track
+		}
+	}
+
+	clear_array = global.un_operating_budget_contributors
+
+	calculate_un_program_budgets = yes
+}
+
+#Calculates how much money the program has after additional contributions are made
+calculate_un_program_budgets = {
+	set_variable = { global.unescoe_budget = 0 }
+	set_variable = { global.undio_budget = 0 }
+	set_variable = { global.uncdf_budget = 0 }
+
+	set_temp_variable = { base_budget_number = global.un_operating_budget_base }
+	divide_temp_variable = { base_budget_number = 3 }
+
+	add_to_variable = { global.unescoe_budget = base_budget_number }
+	add_to_variable = { global.undio_budget = base_budget_number }
+	add_to_variable = { global.uncdf_budget = base_budget_number }
+
+	add_to_variable = { global.unescoe_budget = global.unescoe_additional_contribution }
+	add_to_variable = { global.undio_budget = global.undio_additional_contribution }
+	add_to_variable = { global.uncdf_budget = global.uncdf_additional_contribution }
+
+	missile_ui_update = yes
+
+	update_un_program_budgets = yes
+}
+
+#updates how much is going into each nation that is receiving benifits
+update_un_program_budgets = {
+
 }
