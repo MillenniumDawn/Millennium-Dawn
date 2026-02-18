@@ -5,7 +5,7 @@ title: "National Content - Nigeria"
 
 ## Nigeria WIP
 
-![Flag_of_Nigeria.svg](uploads/639d24843015ffd66e01a5d9fe25a1e5/Flag_of_Nigeria.svg.png)
+[Image unavailable: Flag_of_Nigeria.svg]
 
 Nigeria is a country surrounded by Benin from the West, Niger from the North, Chad from the North-East and Cameroon from the East. It starts with a population of 123.66 Millions.
 

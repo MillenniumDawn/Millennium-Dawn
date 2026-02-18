@@ -5,7 +5,7 @@ title: "National Content - South Korea"
 
 ## South Korea WIP
 
-![Flag_of_South_Korea.svg](uploads/c43f1842ea70be60768696acfbaf96d5/Flag_of_South_Korea.svg.png)
+[Image unavailable: Flag_of_South_Korea.svg]
 
 South Korea is a country that borders only North Korea. It starts with a Population of 47.06 Millions.
 

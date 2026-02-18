@@ -5,7 +5,7 @@ title: "National Content - China"
 
 ## China WIP
 
-![Flag_of_the_People_s_Republic_of_China.svg](uploads/180d912b82392463193c278dbb27fa9c/Flag_of_the_People_s_Republic_of_China.svg.png)
+[Image unavailable: Flag_of_the_People_s_Republic_of_China.svg]
 
 China is a country surrounded by Mongolia from the North, Russia from the North-North East, Korea DPR from the "East", Kazakhstan from the North-West, Kyrgyzstan, Tajikistan, The Afghan Northern Alliance and Pakistan from the West, India from the South-South West and Nepal, Bhutan, Kachin State, Wa State, Myanmar, Laos and Vietnam from the South. It starts with a Population of 1.27 Billions.
 

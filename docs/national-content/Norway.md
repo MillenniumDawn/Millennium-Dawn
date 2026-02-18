@@ -5,7 +5,7 @@ title: "National Content - Norway"
 
 ## Norway WIP
 
-![Flag_of_Norway.svg](uploads/d9e8dc5934f03481ff4f5cf4ecc5c5f8/Flag_of_Norway.svg.png)
+[Image unavailable: Flag_of_Norway.svg]
 
 Norway is a country surrounded by Sweden from the East and Finland and Russia from the North-East. It starts with a Population of 4.50 Millions.
 

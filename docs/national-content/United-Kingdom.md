@@ -5,7 +5,7 @@ title: "National Content - United Kingdom"
 
 ## United Kingdom WIP
 
-![Flag_of_the_United_Kingdom](/Millennium-Dawn/uploads/flags/united_kingdom.png)
+![Flag_of_the_United_Kingdom]({{ '/uploads/flags/united_kingdom.png' | relative_url }}){: .country-flag}
 
 The United Kingdom is a country surrounded mainly by water. Its only borders are Ireland and Spain. It starts with a Population of 58.98 Millions.
 

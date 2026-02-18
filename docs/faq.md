@@ -7,7 +7,7 @@ permalink: /faq/
 
 # Frequently Asked Questions
 
-For the [Troubleshooting Guide](player-tutorials/troubleshooting-guide).
+For the [Troubleshooting Guide]({{ '/player-tutorials/troubleshooting-guide' | relative_url }}).
 
 ## General Questions
 

@@ -22,7 +22,7 @@ description: "Step-by-step checklist for focus tree development lifecycle"
 
 <input type="checkbox"> Focus tree layout is transferred to hoi4
 
-  - This can be either via [Croc's Focus Tree Tool](focus-tree-tool) or via manually scripting it
+  - This can be either via [Croc's Focus Tree Tool]({{ '/dev-resources/focus-tree-tool' | relative_url }}) or via manually scripting it
 
 <input type="checkbox"> Focus tree completion rewards are set (create stubs if decisions/ideas are mentioned)
 
@@ -78,7 +78,7 @@ This section is a subsection of coding. It is is mostly for visual and quality a
 
 <input type="checkbox"> Draft is reported as done to lead dev and confirmed to be ready for testing
 
-<input type="checkbox"> Verify all effects match up with the standards in [MD Code Resource](code-resource)
+<input type="checkbox"> Verify all effects match up with the standards in [MD Code Resource]({{ '/dev-resources/code-resource' | relative_url }})
 
 ### Playtest Phase
 <input type="checkbox"> Tester task is written and provided to the playtesters

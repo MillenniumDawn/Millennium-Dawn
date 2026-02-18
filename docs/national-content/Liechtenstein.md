@@ -5,7 +5,7 @@ title: "National Content - Liechtenstein"
 
 ## Liechtenstein WIP
 
-![Flag_of_Liechtenstein.svg](uploads/5fde18a16f68ba004018fa2cf1ef7b40/Flag_of_Liechtenstein.svg.png)
+[Image unavailable: Flag_of_Liechtenstein.svg]
 
 Liechtenstein is a country surrounded by Switzerland from the North, West and South, and Austria from the East. It starts with a Population of 33.32K.
 

@@ -5,7 +5,7 @@ title: "National Content - North Korea"
 
 ## North Korea WIP
 
-![Flag_of_North_Korea.svg](uploads/513bc13428e26689c90a47380f6c6534/Flag_of_North_Korea.svg.png)
+[Image unavailable: Flag_of_North_Korea.svg]
 
 North Korea is a country surrounded by South Korea from the South, China from the North and Russia from the North-East. It starts with a Population of 22.86 Millions.
 

@@ -5,7 +5,7 @@ title: "National Content - Japan"
 
 ## Japan WIP
 
-![Flag_of_Japan.svg](uploads/ac92bf81132dd43b01ce68381919ceee/Flag_of_Japan.svg.png)
+[Image unavailable: Flag_of_Japan.svg]
 
 Japan is a country surrounded only by water, its only border is Okinawa Base owned by the US. It starts with a Population of 126.93 Millions.
 

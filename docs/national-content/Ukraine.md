@@ -5,7 +5,7 @@ title: "National Content - Ukraine"
 
 ## Ukraine WIP
 
-![Flag_of_Ukraine.svg](uploads/81223a378279d07f25dc542ba0d5ff17/Flag_of_Ukraine.svg.png)
+[Image unavailable: Flag_of_Ukraine.svg]
 
 Ukraine is a country surrounded by Poland, Slovakia and Hungary from the West, Romania, Transnistria and Moldova from the South, Belarus from the North and Russia from the East. It starts with a Population of 50.84 Millions.
 

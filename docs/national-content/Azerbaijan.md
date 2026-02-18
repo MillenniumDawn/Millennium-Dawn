@@ -5,7 +5,7 @@ title: "National Content - Azerbaijan"
 
 ## Azerbaijan WIP
 
-![Flag_of_Azerbaijan.svg](uploads/e042594f7ab506aa3c3b5ad658735eea/Flag_of_Azerbaijan.svg.png)
+[Image unavailable: Flag_of_Azerbaijan.svg]
 
 Azerbaijan is a country surrounded by Russia from the north, Georgia, Armenia and Artsakh from the West, Iran from the South and the Caspian Sea from the East. It starts with a Population of 10.6 millions.
 

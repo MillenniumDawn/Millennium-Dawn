@@ -5,7 +5,7 @@ title: "National Content - Ethiopia"
 
 ## Ethiopia WIP
 
-![Flag_of_Ethiopia.svg](uploads/09aa49ffecb0f73840b6d43d5ed38f89/Flag_of_Ethiopia.svg.png)
+[Image unavailable: Flag_of_Ethiopia.svg]
 
 Ethiopia is a country surrounded by Eritrea from the North, Djibouti and Somaliland from the North-East, Puntland and Somalia from the East, The Southwestern State of Somalia, Somalia and Kenya from the South and South Sudan and Sudan from the West. It starts with a Population of 65.43 Millions.
 

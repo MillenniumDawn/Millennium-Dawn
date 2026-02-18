@@ -5,7 +5,7 @@ title: "National Content - Sweden"
 
 ## Sweden WIP
 
-![Flag_of_Sweden.svg](uploads/3c48e18fb4d0337370f7dbcb0f82970c/Flag_of_Sweden.svg.png)
+[Image unavailable: Flag_of_Sweden.svg]
 
 Sweden is a country surrounded by Denmark from the South, Norway from the West and Finland from the East. It starts with a Population of 9.08 Millions.
 

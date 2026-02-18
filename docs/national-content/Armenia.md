@@ -3,7 +3,9 @@ layout: default
 title: "National Content - Armenia"
 ---
 
-## Armenia WIP ![Flag_of_Armenia.svg](uploads/53862e6f3c953dd5d3788debd28c2754/Flag_of_Armenia.svg.png)
+## Armenia WIP
+
+[Image unavailable: Flag_of_Armenia.svg]
 
 
 Armenia is a landlocked nation surrounded by Turkey from the west, Iran from the south, Artsakh from the east, Azerbaijan from the east and south, and Georgia from the North. Armenia has a starting population of 3.06 million.

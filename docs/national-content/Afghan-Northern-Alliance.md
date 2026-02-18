@@ -5,7 +5,7 @@ title: "National Content - Afghan Northern Alliance"
 
 ## Afghan Northern Alliance WIP
 
-![2560px-Flag_of_Afghanistan__1992_2001_.svg](/Millennium-Dawn/uploads/flags/united_kingdom.png)
+![2560px-Flag_of_Afghanistan__1992_2001_.svg]({{ '/uploads/flags/united_kingdom.png' | relative_url }}){: .country-flag}
 
 The Afghan Northern Alliance is a country surrounded by Tajikistan in the north, Pakistan from the East and the Islamic Emirate of Afghanistan, its enemy, from the south and the West. It starts with a population of 4.76 millions.
 

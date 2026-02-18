@@ -7,7 +7,7 @@ permalink: /technical-support/
 
 # Technical Support
 
-For the full [Troubleshooting Guide](https://millenniumdawn.github.io/Millennium-Dawn/player-tutorials/troubleshooting-guide).
+For the full [Troubleshooting Guide]({{ '/player-tutorials/troubleshooting-guide' | relative_url }}).
 
 ## How do I download Millennium Dawn?
 

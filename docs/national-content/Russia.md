@@ -5,7 +5,7 @@ title: "National Content - Russia"
 
 ## Russia WIP
 
-![Flag_of_Russia.svg](uploads/c724ab9b8d25c2ebead8ce02183fda85/Flag_of_Russia.svg.png)
+[Image unavailable: Flag_of_Russia.svg]
 
 Russia is a country surrounded by Finland and Norway from the North-West, Estonia, Latvia, Belarus and Ukraine from the West, Abkhazia, Georgia, South Ossetia, Chechnya and Azerbaijan from the South-West and Kazakhstan, China, Mongolia and Korea DPR from the South. It starts with a Population of 147.08 Millions.
 

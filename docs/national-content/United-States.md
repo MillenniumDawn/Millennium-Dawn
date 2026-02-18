@@ -5,7 +5,7 @@ title: "National Content - United States"
 
 ## United States WIP
 
-![125px-Flag_of_the_United_States.svg](uploads/11d7693fd2ade1c4a913e5c4b7e7d0ea/125px-Flag_of_the_United_States.svg.png)
+[Image unavailable: 125px-Flag_of_the_United_States.svg]
 
 The United States are a country surrounded by water from the West and the East. Its only borders are Canada from the North, Mexico from the South and Japan from the Okinawa Base. It starts with a Population of 283.06 Millions.
 

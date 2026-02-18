@@ -5,7 +5,7 @@ title: "National Content - Switzerland"
 
 ## Switzerland WIP
 
-![Flag_of_Switzerland.svg](uploads/41fa4f9a59b3e981dd9d80ab43fd729f/Flag_of_Switzerland.svg.png)
+[Image unavailable: Flag_of_Switzerland.svg]
 
 Switzerland is a country surrounded by Italy from the South, France from the West, Germany from the North and Liechtenstein and Austria from the East. It starts with a Population of 7.19 Millions.
 

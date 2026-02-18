@@ -5,7 +5,7 @@ title: "National Content - Canada"
 
 ## Canada WIP
 
-![Canada](/Millennium-Dawn/uploads/flags/canada.png)
+![Canada]({{ '/uploads/flags/canada.png' | relative_url }}){: .country-flag}
 
 Canada is a country surrounded by the US from the west, Alaska, and the south.
 

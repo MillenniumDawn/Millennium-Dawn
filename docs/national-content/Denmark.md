@@ -5,7 +5,7 @@ title: "National Content - Denmark"
 
 ## Denmark WIP
 
-![Denmark](/Millennium-Dawn/uploads/flags/denmark.png)
+![Denmark]({{ '/uploads/flags/denmark.png' | relative_url }}){: .country-flag}
 
 
 Denmark is a country surrounded by Sweden from the East and Germany from the South. It starts with a Population of 5.35 Millions.

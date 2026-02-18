@@ -5,7 +5,7 @@ title: "National Content - Syria"
 
 ## Syria WIP
 
-![Syria](/Millennium-Dawn/uploads/flags/syria.png)
+![Syria]({{ '/uploads/flags/syria.png' | relative_url }}){: .country-flag}
 
 Syria is a country surrounded by Turkey from the North, Iraq from the East and South-East, Jordan from the South, Israel from the South-West and Lebanon and Hezbollah from the West. It starts with a Population of 16.01 Millions.
 
