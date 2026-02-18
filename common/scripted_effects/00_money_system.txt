@@ -3904,7 +3904,7 @@ update_state_variables = {
 	set_variable = { var = office_park_total value = 0 }
 	set_variable = { var = agriculture_district_total value = 0 }
 	set_variable = { var = industrial_complex_total value = 0 }
-	set_variable = { var = biofuel_refineries value = 0 }
+	set_variable = { var = renewable_energy_infra value = 0 }
 	set_variable = { var = nuclear_reactors value = 0 }
 	set_variable = { var = rocket_sites value = 0 }
 	set_variable = { var = military_fac value = 0 }
@@ -3953,7 +3953,7 @@ update_state_variables = {
 			add_to_variable = { PREV.industrial_complex_total = building_level@industrial_complex }
 			add_to_variable = { PREV.military_fac = building_level@arms_factory }
 			add_to_variable = { PREV.dockyard_fac = building_level@dockyard }
-			add_to_variable = { PREV.biofuel_refineries = building_level@renewable_energy_infra }
+			add_to_variable = { PREV.renewable_energy_infra = building_level@renewable_energy_infra }
 			add_to_variable = { PREV.nuclear_reactors = building_level@nuclear_reactor }
 			add_to_variable = { PREV.hydroelectric_energy_generation = hydroelectric_energy_production_var }
 			add_to_variable = { PREV.geothermal_energy_generation = geothermal_energy_production_var }
@@ -4073,7 +4073,7 @@ calculate_gdp = {
 		set_variable = { last_quarter_gdpc_growth_rate = this_quarter_gdpc_total_temp }
 		divide_variable = { last_quarter_gdpc_growth_rate = last_quarter_gdpc_total_temp }
 		add_to_variable = { last_quarter_gdpc_growth_rate = -1 }
-		clamp_variable = { var = last_quarter_gdpc_growth_rate min = -1 }
+		clamp_variable = { var = last_quarter_gdpc_growth_rate min = -1 max = 0.5 } #Cap at +50% per quarter to prevent annexation-driven inflation spikes
 
 		set_variable = { last_quarter_gdpc_total = gdp_per_capita }
 		add_to_array = { quarterly_gdpc_growth_rate = last_quarter_gdpc_growth_rate }
@@ -5468,4 +5468,9 @@ recalculate_resources_price = {
 	set_variable = { global.rubber_price = rubber_price_adjuster }	#Based on rubber price
 	set_variable = { global.microchip_price = microchips_price_adjuster }
 	set_variable = { global.composite_price = composites_price_adjuster }
+
+	if = {
+		limit = { is_debug = yes }
+		log = "Current resource prices: steel = [?global.steel_price] rubber = [?global.rubber_price] oil = [?global.oil_price] alum = [?global.aluminium_price] tungsten = [?global.tungsten_price] chromium = [?global.chromium_price] Resource coeff = [?global.resource_gdp_coeff]"
+	}
 }
