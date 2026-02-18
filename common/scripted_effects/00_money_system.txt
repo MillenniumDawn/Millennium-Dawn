@@ -3240,25 +3240,6 @@ calculate_additional_expense_rate = {
 	if = { limit = { has_idea = united_nations_member }
 		if = {
 			limit = {
-				NOT = { has_country_flag = yearly_un_budget_calculated }
-			}
-			set_country_flag = {
-				flag = yearly_un_budget_calculated
-				days = 365
-				value = 1
-			}
-			set_variable = { united_nations_base_expenses = gdp_total }
-			multiply_variable = { united_nations_base_expenses = 0.0001 }
-
-			set_temp_variable = { un_expenses_inflation = 1 }
-			add_to_temp_variable = { un_expenses_inflation = modifier@inflation_cost_multiplier_modifier }
-			multiply_variable = { united_nations_base_expenses = un_expenses_inflation }
-			set_variable = { united_nations_expenses = united_nations_base_expenses }
-			set_variable = { united_nations_old_aid_expenses = 0 }
-		}
-
-		if = {
-			limit = {
 				NOT = { check_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses } }
 			}
 			set_variable = { united_nations_expenses = united_nations_base_expenses }
@@ -5491,5 +5472,30 @@ recalculate_resources_price = {
 	if = {
 		limit = { is_debug = yes }
 		log = "Current resource prices: steel = [?global.steel_price] rubber = [?global.rubber_price] oil = [?global.oil_price] alum = [?global.aluminium_price] tungsten = [?global.tungsten_price] chromium = [?global.chromium_price] Resource coeff = [?global.resource_gdp_coeff]"
+	}
+}
+
+calculate_united_nations_base_budget = {
+	set_variable = { global.un_operating_budget_base = 0 }
+
+	for_each_loop = {
+		array = global.UN_general_assembly
+		value = v
+
+		var:v = {
+			set_variable = { united_nations_base_expenses = gdp_total }
+			multiply_variable = { united_nations_base_expenses = 0.0001 }
+
+			add_to_variable = { global.un_operating_budget_base = united_nations_base_expenses }
+
+			#Add inflation *after* application, to represnt our inflated money being worth less
+			#This means less money goes to the UN, while we have to pay *more* to represent less value
+			set_temp_variable = { un_expenses_inflation = 1 }
+			add_to_temp_variable = { un_expenses_inflation = modifier@inflation_cost_multiplier_modifier }
+			multiply_variable = { united_nations_base_expenses = un_expenses_inflation }
+
+			set_variable = { united_nations_expenses = united_nations_base_expenses }
+			set_variable = { united_nations_old_aid_expenses = 0 }
+		}
 	}
 }
