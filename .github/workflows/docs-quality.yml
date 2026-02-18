@@ -1,0 +1,39 @@
+name: Docs Quality
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "docs/**"
+      - "docs/scripts/**"
+      - ".github/workflows/docs-quality.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+
+      - name: Install docs dependencies
+        working-directory: docs
+        run: bundle install
+
+      - name: Build docs site
+        working-directory: docs
+        run: bundle exec jekyll build --source . --destination ../_site_docs
+
+      - name: Validate internal links and local assets
+        run: python3 docs/scripts/check_site_links.py --site-dir _site_docs --baseurl /Millennium-Dawn
