@@ -103,5 +103,5 @@ Debug codes are defined in these common files:
 
 # Related Resources
 
-- [Code Resources](./code-resource.md) - Modifiers and effects
-- [Code Stylization](./code-stylization-guide.md) - Best practices
+- [Code Resources]({{ '/dev-resources/code-resource' | relative_url }}) - Modifiers and effects
+- [Code Stylization]({{ '/dev-resources/code-stylization-guide' | relative_url }}) - Best practices

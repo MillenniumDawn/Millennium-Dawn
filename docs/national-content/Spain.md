@@ -5,7 +5,7 @@ title: "National Content - Spain"
 
 ## Spain WIP
 
-![Bandera_de_España.svg](uploads/36c0ebc9f350f917f6ae1085af7ee1f8/Bandera_de_España.svg.png)
+[Image unavailable: Bandera_de_España.svg]
 
 Spain is a country surrounded by Portugal from the West, France and Andorra from the North and the United Kingdom from the South. For its territory in Africa it borders with Marocco from the South. It starts with a Population of 41.70 Millions.
 
