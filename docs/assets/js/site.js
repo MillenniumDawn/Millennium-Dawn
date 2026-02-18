@@ -273,7 +273,6 @@
             wrapper.appendChild(table);
         });
     }
-
     function init() {
         initHeaderHeightSync();
         initDarkModeToggle();
