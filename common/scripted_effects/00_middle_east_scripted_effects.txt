@@ -218,7 +218,6 @@ IRQ_MNF_setup = {
 			}
 			171 = {
 				transfer_state_to = MNF
-				set_state_flag = MNF_starting_state_setup
 			}
 		}
 
@@ -367,9 +366,6 @@ syrian_civil_war_setup = {
 						elections_allowed = no
 					}
 				}
-
-				add_to_array = { global.rival_governments = THIS }
-				set_country_flag = rival_government_SYR
 
 				set_global_flag = FSA_free_syrian_army_active_flag
 
@@ -583,11 +579,7 @@ AS_spawn_isis_into_game = {
 				threat = 5
 				name = ISIS.threat
 			}
-			every_country = {
-				limit = { no_jihadist_government = yes }
-				add_opinion_modifier = { target = ISI modifier = terrorism_is_no_no }
-				add_opinion_modifier = { target = ISI modifier = terrorism_is_no_no_trade }
-			}
+			apply_terrorism_opinion_to_world = yes
 		}
 	}
 }
@@ -1305,7 +1297,7 @@ calculate_monthly_arab_spring_change = {
 		add_to_variable = { arab_spring_change = 2 }
 	}
 	else_if = { limit = { has_idea = widespread_corruption }
-		add_to_variable = { arab_spring_change = 2 }
+		add_to_variable = { arab_spring_change = 1 }
 	}
 	else_if = { limit = { has_idea = modest_corruption }
 		add_to_variable = { arab_spring_change = -1 }
@@ -1419,9 +1411,16 @@ calculate_monthly_arab_spring_change = {
 	}
 	else_if = {
 		limit = {
-			check_variable = { government_coalition_strength > 0.899 }
+			check_variable = { government_coalition_strength > 0.799 }
+			check_variable = { government_coalition_strength < 0.899 }
 		}
 		add_to_variable = { arab_spring_change = -4 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { government_coalition_strength > 0.899 }
+		}
+		add_to_variable = { arab_spring_change = -5 }
 	}
 }
 
@@ -1543,6 +1542,17 @@ update_social_conservatism_idea = {
 # On Actions
 on_weekly_gcc_dominant_member_check = {
 	if = { limit = { has_country_flag = gcc_dominant_member }
+		# Gulf Cooperation Council Unity Additions
+		if = { limit = { threat > 0.75 }
+			add_to_variable = { global.gcc_unity = 0.75 }
+		}
+		else_if = { limit = { threat > 0.50 }
+			add_to_variable = { global.gcc_unity = 0.50 }
+		}
+		else_if = { limit = { threat > 0.25 }
+			add_to_variable = { global.gcc_unity = 0.25 }
+		}
+		clamp_variable = { var = global.gcc_unity min = 0 max = 100 }
 
 		if = {
 			limit = {
@@ -1558,7 +1568,7 @@ on_weekly_gcc_dominant_member_check = {
 			create_faction_from_template = faction_template_gcc
 			# Add to Faction
 			for_each_scope_loop = {
-				array = global.gcc_members
+				array = global.gcc_member_state
 				PREV = { add_to_faction = PREV }
 			}
 			set_country_flag = gcc_formed
@@ -1585,10 +1595,10 @@ on_weekly_gcc_dominant_member_check = {
 			}
 			# Add to Faction
 			for_each_scope_loop = {
-				array = global.gcc_members
+				array = global.gcc_member_state
 				if = { limit = { has_completed_focus = GCC_joint_defense_agreement }
 					for_each_scope_loop = {
-						array = global.gcc_members
+						array = global.gcc_member_state
 						if = { limit = { NOT = { tag = PREV } }
 							give_guarantee = PREV
 						}

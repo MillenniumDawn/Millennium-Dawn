@@ -1,17 +1,6 @@
 on_actions = {
-
-	on_daily_TUR = {
-		effect = {
-			if = { #limiting Mafia to 100
-				limit = { check_variable = { TUR_mafia_influence > 100 } }
-				set_variable = { TUR_mafia_influence = 100 }
-			}
-		}
-	}
-
 	on_weekly_TUR = {
 		effect = {
-
 			set_variable = { kurdish_resistance_cap = TUR_PKK_strength }
 			multiply_variable = { kurdish_resistance_cap = 0.005 }
 			set_variable = { kurdish_resistance_garrison_requirement = TUR_PKK_strength }
@@ -20,60 +9,41 @@ on_actions = {
 			multiply_variable = { kurdish_resistance_garrison_damage = 0.019 }
 			subtract_from_variable = { kurdish_resistance_garrison_damage = 0.999 }
 
-			if = {
-				limit = { check_variable = { TUR_military_standing_value > 0.01 } has_idea = the_military }
-				add_ideas = TUR_military_happy
-				remove_ideas = TUR_military_anger1
-				remove_ideas = TUR_military_anger2
-				remove_ideas = TUR_military_anger3
-				remove_ideas = TUR_military_anger4
-				remove_ideas = TUR_military_anger5
-			}
-			if = {
-				limit = { check_variable = { TUR_military_standing_value < -1 } has_idea = the_military }
-				add_ideas = TUR_military_anger1
-				remove_ideas = TUR_military_happy
-				remove_ideas = TUR_military_anger2
-				remove_ideas = TUR_military_anger3
-				remove_ideas = TUR_military_anger4
-				remove_ideas = TUR_military_anger5
-			}
-			if = {
-				limit = { check_variable = { TUR_military_standing_value < -49 } has_idea = the_military }
-				add_ideas = TUR_military_anger2
-				remove_ideas = TUR_military_happy
-				remove_ideas = TUR_military_anger1
-				remove_ideas = TUR_military_anger3
-				remove_ideas = TUR_military_anger4
-				remove_ideas = TUR_military_anger5
-			}
-			if = {
-				limit = { check_variable = { TUR_military_standing_value < -99 } has_idea = the_military }
-				add_ideas = TUR_military_anger3
-				remove_ideas = TUR_military_happy
-				remove_ideas = TUR_military_anger1
-				remove_ideas = TUR_military_anger2
-				remove_ideas = TUR_military_anger4
-				remove_ideas = TUR_military_anger5
-			}
-			if = {
-				limit = { check_variable = { TUR_military_standing_value < -149 } has_idea = the_military }
-				add_ideas = TUR_military_anger4
-				remove_ideas = TUR_military_happy
-				remove_ideas = TUR_military_anger1
-				remove_ideas = TUR_military_anger2
-				remove_ideas = TUR_military_anger3
-				remove_ideas = TUR_military_anger5
-			}
-			if = {
-				limit = { check_variable = { TUR_military_standing_value < -199 } has_idea = the_military }
-				add_ideas = TUR_military_anger5
-				remove_ideas = TUR_military_happy
-				remove_ideas = TUR_military_anger1
-				remove_ideas = TUR_military_anger2
-				remove_ideas = TUR_military_anger3
-				remove_ideas = TUR_military_anger4
-				TUR = { remove_ideas = the_military }
+			if = { limit = { has_idea = the_military }
+				remove_ideas = {
+					TUR_military_happy
+					TUR_military_anger1
+					TUR_military_anger2
+					TUR_military_anger3
+					TUR_military_anger4
+					TUR_military_anger5
+				}
+
+				if = {
+					limit = { check_variable = { TUR_military_standing_value < -199 } }
+					add_ideas = TUR_military_anger5
+					remove_ideas = the_military
+				}
+				else_if = {
+					limit = { check_variable = { TUR_military_standing_value < -149 } }
+					add_ideas = TUR_military_anger4
+				}
+				else_if = {
+					limit = { check_variable = { TUR_military_standing_value < -99 } }
+					add_ideas = TUR_military_anger3
+				}
+				else_if = {
+					limit = { check_variable = { TUR_military_standing_value < -49 } }
+					add_ideas = TUR_military_anger2
+				}
+				else_if = {
+					limit = { check_variable = { TUR_military_standing_value < -1 } }
+					add_ideas = TUR_military_anger1
+				}
+				else_if = {
+					limit = { check_variable = { TUR_military_standing_value > 0.01 } }
+					add_ideas = TUR_military_happy
+				}
 			}
 			TUR_update_military_standing = yes
 			TUR_mafia_events_random = yes
@@ -81,6 +51,7 @@ on_actions = {
 			if = {
 				limit = { check_variable = { TUR_mafia_influence > 59 } has_idea = TUR_mafia_weak }
 				add_to_variable = { TUR_mafia_influence = 0.5 }
+				clamp_variable = { var = TUR_mafia_influence min = 0 max = 100 }
 			}
 			if = {
 				limit = { check_variable = { TUR_mafia_influence < 30 } has_idea = TUR_mafia_weak }
@@ -226,7 +197,6 @@ on_actions = {
 				}
 				if = { # Will lose Neo-Ottoman State cosmetic tag if not Ottomans
 					limit = {
-						original_tag = TUR
 						has_cosmetic_tag = TUR_NEW_TURKIC_STATE
 						NOT = {
 							nationalist_monarchists_are_in_power = yes

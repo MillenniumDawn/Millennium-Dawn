@@ -5,7 +5,7 @@ title: "National Content - Georgia"
 
 # Georgia
 
-![georgia.svg.png](uploads/flags/georgia.svg.png)
+![georgia.svg.png]({{ '/uploads/flags/georgia.svg.png' | relative_url }}){: .country-flag}
 
 # Starting Position
 

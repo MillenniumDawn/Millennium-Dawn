@@ -1,14 +1,13 @@
 microchip_startup = {
 	set_variable = { country_microchip_production_var = 0 }
 	set_variable = { country_composite_production_var = 0 }
-	set_variable = { country_base_reducer_microchips_tracker_var = 0 }
-	set_variable = { country_base_reducer_composites_tracker_var = 0 }
 	set_variable = { country_base_civilian_microchip_consumption_var = 0 }
 	set_variable = { country_base_microchip_civ_consumption_stab_var = 0 }
 	if = {
 		limit = {
-			NOT = {
-				has_dynamic_modifier = { modifier = advanced_production_modifier }
+			OR = {
+				check_variable = { resource_produced@microchips > 0 }
+				check_variable = { resource_produced@composites > 0 }
 			}
 		}
 		add_dynamic_modifier = { modifier = advanced_production_modifier }
@@ -25,7 +24,6 @@ microchip_startup = {
 
 #this auto-adds composites for nations that need only one building. This needs more work for nations that start w/ multiples
 composite_building_add = {
-	ingame_update_setup = yes
 	random_owned_controlled_state = {
 		add_building_construction = {
 			type = composite_plant
@@ -38,7 +36,6 @@ composite_building_add = {
 }
 
 composite_building_add_multi = {
-	ingame_update_setup = yes
 	while_loop_effect = {
 		limit = {
 			check_variable = { startup_composite_fac_needed > 0 }
@@ -52,48 +49,13 @@ composite_building_add_multi = {
 		}
 		add_to_variable = { startup_composite_fac_needed = -1 }
 	}
-	clear_variable = startup_composite_fac_needed
 	ingame_update_setup = yes
-}
-
-#debug script for grabbing all resources. Not used in code, but used to get this number on game start
-give_me_resources = {
-	set_variable = { global.steel = 0 }
-	set_variable = { global.aluminium = 0 }
-	set_variable = { global.oil = 0 }
-	set_variable = { global.tungsten = 0 }
-	set_variable = { global.chromium = 0 }
-	set_variable = { global.rubber = 0 }
-	set_variable = { global.microchips = 0 }
-	set_variable = { global.composites = 0 }
-
-	for_each_scope_loop = {
-		array = global.countries
-
-		add_to_variable = { global.steel = resource_produced@steel }
-		add_to_variable = { global.aluminium = resource_produced@aluminium }
-		add_to_variable = { global.oil = resource_produced@oil }
-		add_to_variable = { global.tungsten = resource_produced@tungsten }
-		add_to_variable = { global.chromium = resource_produced@chromium }
-		add_to_variable = { global.rubber = resource_produced@rubber }
-		add_to_variable = { global.microchips = resource_produced@microchips }
-		add_to_variable = { global.composites = resource_produced@composites }
-	}
-
-	log = "Steel Number: [?global.steel] Alum Number: [?global.aluminium] Oil Number: [?global.oil] Tech Metal Number: [?global.tungsten] Rare Metal Number: [?global.chromium] Rubber Number: [?global.rubber] Microchips Number: [?global.microchips] Composites Number: [?global.composites]"
+	clear_variable = startup_composite_fac_needed
 }
 
 microchip_update = {
-	set_temp_variable = { microchip_prod_check = resource_produced@microchips }
-
-	if = {
-		limit = { check_variable = { microchip_prod_check > 0 } }
-		if = {
-			limit = {
-				NOT = {
-					has_dynamic_modifier = { modifier = advanced_production_modifier }
-				}
-			}
+	if = { limit = { check_variable = { resource_produced@microchips > 0 } }
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = advanced_production_modifier } } }
 			add_dynamic_modifier = { modifier = advanced_production_modifier }
 		}
 
@@ -109,13 +71,6 @@ microchip_update = {
 		set_temp_variable = { country_microchip_reducer = 0 }
 
 		#Gather overall production demand
-		#Math is here. Unless you know the math, PLEASE do not mess with these variables
-		set_temp_variable = { country_tech_demand = 2 }
-		multiply_temp_variable = { country_tech_demand = country_microchip_produced }
-
-		set_temp_variable = { country_rare_demand = 1 }
-		set_temp_variable = { total_rare_needed = country_microchip_produced }
-
 		#First, check if we even need to do all this. If there is a surplus of both tech and precious metals, there is no need to adjust production
 		if = {
 			limit = {
@@ -147,7 +102,7 @@ microchip_update = {
 			set_temp_variable = { country_microchip_reducer_max = country_microchip_produced }
 			multiply_temp_variable = { country_microchip_reducer_max = 0.95 }
 			round_temp_variable = country_microchip_reducer_max
-		}else = {
+		} else = {
 			#There should be no reduction here, because we have a surplus of all inputs
 			set_variable = { country_microchip_production_var = 0 }
 		}
@@ -164,34 +119,29 @@ microchip_update = {
 			round_variable = country_microchip_production_var
 		}
 
-		clamp_variable = {
-			var = country_microchip_production_var
-			min = 0
-			max = country_microchip_reducer_max
+		if = {
+			limit = { check_variable = { country_microchip_reducer_max = 0 } }
+			set_temp_variable = { country_microchip_reducer_max = country_microchip_produced }
 		}
 
-		if = {
-			limit = { original_tag = TAI }
+		if = { limit = { original_tag = TAI }
 			if = {
 				limit = { check_variable = { country_microchip_production_var > 0 } }
-			}
 
-			subtract_from_variable = { country_microchip_production_var = tai_chip_resource_use_improvements }
+				subtract_from_variable = { country_microchip_production_var = tai_chip_resource_use_improvements }
 
-			clamp_variable = {
-				var = country_microchip_production_var
-				min = 0
-				max = country_microchip_reducer_max
 			}
 		}
+
+		clamp_variable = { var = country_microchip_production_var min = 0 max = country_microchip_reducer_max }
 	}
 }
 
 composite_update = {
-	set_temp_variable = { composite_prod_check = resource_produced@composites }
-
-	if = {
-		limit = { check_variable = { composite_prod_check > 0 } }
+	if = { limit = { check_variable = { resource_produced@composites > 0 } }
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = advanced_production_modifier } } }
+			add_dynamic_modifier = { modifier = advanced_production_modifier }
+		}
 
 		#Gather total resources remaining
 		set_temp_variable = { country_rare_remaining = resource@chromium }
@@ -204,14 +154,6 @@ composite_update = {
 
 		#Gather overall production demand
 		#Math is here. Unless you know the math, PLEASE do not mess with these variables
-
-		set_temp_variable = { country_rare_demand = 1 }
-		set_temp_variable = { country_rare_demand = country_composite_produced }
-
-		set_temp_variable = { country_rubber_demand = 2 }
-		set_temp_variable = { country_rubber_demand = country_composite_produced }
-
-
 		#First, check if we even need to do all this. If there is a surplus of both tech and precious metals, there is no need to adjust production
 		if = {
 			limit = {
@@ -249,7 +191,7 @@ composite_update = {
 				min = 0
 				max = country_composite_reducer_max
 			}
-		}else = {
+		} else = {
 			#There should be no reduction here, because we have a surplus of all inputs
 			set_variable = { country_composite_production_var = 0 }
 		}
@@ -324,7 +266,7 @@ civilian_microchip_consumption = {
 				set_temp_variable = { base_stab_adjust = total_chip_buffer }
 			}
 		}
-	}else = {
+	} else = {
 		#Civis get their chips first here, so we will allow a deficit during peacetime for mil production
 		#This can still lead to instability, if civ demand is not met, but if it is met, hey, we're happy!
 		subtract_from_temp_variable = { total_microchips = base_chip_consumption }

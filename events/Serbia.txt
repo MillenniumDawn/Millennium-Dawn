@@ -722,7 +722,7 @@ country_event = {
 		SER = {
 			create_wargoal = {
 				target = ROOT
-			 	type = annex_everything
+				 type = annex_everything
 			}
 		}
 		SER = {
@@ -949,6 +949,21 @@ country_event = {
 				autonomy_state = autonomy_balkan_federation
 			}
 		}
+		# Grant ideas if SER already completed the relevant focuses
+		if = {
+			limit = {
+				SER = { has_completed_focus = SER_confederation_created }
+				NOT = { has_idea = SER_subject_federation }
+			}
+			add_ideas = SER_subject_federation
+		}
+		if = {
+			limit = {
+				SER = { has_completed_focus = SER_south_european_balkan_confederation }
+				NOT = { has_idea = SER_balkan_nation1 }
+			}
+			add_ideas = SER_balkan_nation1
+		}
 	}
 }
 #
@@ -1154,13 +1169,24 @@ country_event = {
 	option = {
 		name = SerbiaFocus.99.a
 		log = "[GetDateText]: [This.GetName]: SerbiaFocus.99.a executed"
+		# Clean up ideas before freeing VOJ
+		if = {
+			limit = { has_idea = SER_subject_idea }
+			remove_ideas = SER_subject_idea
+		}
+		if = {
+			limit = { has_idea = SER_republic_ser }
+			remove_ideas = SER_republic_ser
+		}
 		SER = {
+			if = {
+				limit = { has_idea = SER_confederation_idea }
+				remove_ideas = SER_confederation_idea
+			}
 			set_autonomy = {
 				target = VOJ
 				autonomy_state = autonomy_free
 			}
-		}
-		SER = {
 			country_event = {
 				id = SerbiaFocus.100
 				days = 1
@@ -1237,6 +1263,24 @@ country_event = {
 		VOJ = {
 			set_country_flag = our_federation
 		}
+		# If VOJ already has upgraded autonomy, grant ideas
+		if = {
+			limit = {
+				VOJ = { has_autonomy_state = autonomy_autonomous_province1 }
+			}
+			SER = {
+				if = {
+					limit = { NOT = { has_idea = SER_confederation_idea } }
+					add_ideas = SER_confederation_idea
+				}
+			}
+			VOJ = {
+				if = {
+					limit = { NOT = { has_idea = SER_republic_ser } }
+					add_ideas = SER_republic_ser
+				}
+			}
+		}
 	}
 }
 #Vojvodina not take Federation
@@ -1297,7 +1341,11 @@ country_event = {
 		name = SerbiaFocus.105.a
 		log = "[GetDateText]: [This.GetName]: SerbiaFocus.105.a executed"
 		VOJ = {
-			set_country_flag = our_military
+			# Military autonomy replaces basic subject idea
+			if = {
+				limit = { has_idea = SER_subject_idea }
+				remove_ideas = SER_subject_idea
+			}
 		}
 	}
 }
@@ -1324,11 +1372,29 @@ country_event = {
 	option = {
 		name = SerbiaFocus.107.a
 		log = "[GetDateText]: [This.GetName]: SerbiaFocus.107.a executed"
-		set_country_flag = VOJ_new_autonomy
 		SER = {
 			set_autonomy = {
 				target = VOJ
 				autonomy_state = autonomy_autonomous_province1
+			}
+		}
+		# Remove province idea since we're upgrading to province1
+		if = {
+			limit = { has_idea = SER_subject_idea }
+			remove_ideas = SER_subject_idea
+		}
+		# If VOJ already has federation flag, grant ideas
+		if = {
+			limit = { has_country_flag = our_federation }
+			if = {
+				limit = { NOT = { has_idea = SER_republic_ser } }
+				add_ideas = SER_republic_ser
+			}
+			SER = {
+				if = {
+					limit = { NOT = { has_idea = SER_confederation_idea } }
+					add_ideas = SER_confederation_idea
+				}
 			}
 		}
 	}
@@ -1752,6 +1818,21 @@ country_event = {
 				target = ROOT
 				autonomy_state = autonomy_balkan_federation
 			}
+		}
+		# Grant ideas if SER already completed the relevant focuses
+		if = {
+			limit = {
+				SER = { has_completed_focus = SER_confederation_created }
+				NOT = { has_idea = SER_subject_federation }
+			}
+			add_ideas = SER_subject_federation
+		}
+		if = {
+			limit = {
+				SER = { has_completed_focus = SER_south_european_balkan_confederation }
+				NOT = { has_idea = SER_balkan_nation1 }
+			}
+			add_ideas = SER_balkan_nation1
 		}
 		country_event = { id = Serbia.27 days = 1 }
 		set_temp_variable = { percent_change = -2 }
@@ -2223,6 +2304,21 @@ country_event = {
 		name = ser_voj.1.a
 		log = "[GetDateText]: [This.GetName]: ser_voj.1.a executed"
 		ai_chance = { base = 100 }
+		# Clean up province-related ideas since autonomy is changing
+		VOJ = {
+			if = {
+				limit = { has_idea = SER_subject_idea }
+				remove_ideas = SER_subject_idea
+			}
+			if = {
+				limit = { has_idea = SER_republic_ser }
+				remove_ideas = SER_republic_ser
+			}
+		}
+		if = {
+			limit = { has_idea = SER_confederation_idea }
+			remove_ideas = SER_confederation_idea
+		}
 		if = {
 			limit = {
 				has_global_flag = GAME_RULE_allow_colored_puppets
@@ -3439,7 +3535,6 @@ country_event = {
 		ai_chance = { base = 50 }
 		SER = {
 			add_stability = -0.09
-			set_country_flag = Ser_stop_war
 		}
 	}
 }
@@ -3487,17 +3582,15 @@ country_event = { #Kosovo wants to ease tensions
 			country_event = {
 				id = kosovo.5
 			}
-		}
-		SER = {
-			diplomatic_relation = {
-				country = KOS
-				relation = non_aggression_pact
-			}
-		}
-		KOS = {
-			diplomatic_relation = {
-				country = SER
-				relation = non_aggression_pact
+			if = {
+				limit = {
+					NOT = { has_non_aggression_pact_with = SER }
+				}
+				diplomatic_relation = {
+					country = SER
+					relation = non_aggression_pact
+					active = yes
+				}
 			}
 		}
 		ai_chance = {

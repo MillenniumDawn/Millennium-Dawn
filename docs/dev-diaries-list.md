@@ -1,6 +1,7 @@
 ---
 layout: default
 title: "Dev Diaries"
+description: "Development diaries from the Millennium Dawn mod team, covering new features, changes, and updates."
 permalink: /dev-diaries-list/
 ---
 
@@ -8,11 +9,15 @@ permalink: /dev-diaries-list/
 
 The Millennium Dawn team rarely writes dev diaries due to our frequency of our update schedule. This is more of an archive of older dev diaries for past content.
 
+## v1.11 Dev Diaries
+
 <details markdown="1"><summary>v1.11 Dev Diaries</summary>
 
 - [Dev Diary #52: Special Projects, Performances, Raids and Missiles](https://docs.google.com/document/d/1TeHUY7SBIVW2HOhaXEme1y1-UzFocmiMmvNAPMJMnCk/edit?usp=sharing)
 
 </details>
+
+## v1.10 Dev Diaries
 
 <details markdown="1"><summary>v1.10 Dev Diaries</summary>
 
@@ -20,6 +25,8 @@ The Millennium Dawn team rarely writes dev diaries due to our frequency of our u
 - [Dev Diary: Romania](https://www.reddit.com/r/MillenniumDawn/comments/1ezzk0t/dev_diary_romania/)
 
 </details>
+
+## v1.9 Dev Diaries
 
 <details markdown="1"><summary>v1.9 Dev Diaries</summary>
 
@@ -40,6 +47,8 @@ The Millennium Dawn team rarely writes dev diaries due to our frequency of our u
 
 </details>
 
+## v1.8 Dev Diaries
+
 <details markdown="1"><summary>v1.8 Dev Diaries</summary>
 
 - [Dev Diary #37: Слово "дневник" и слово "обнова" для вас означает... Одно и тоже](https://www.reddit.com/r/MillenniumDawn/comments/13rsbpd/dev_diary_37_%D1%81%D0%BB%D0%BE%D0%B2%D0%BE_%D0%B4%D0%BD%D0%B5%D0%B2%D0%BD%D0%B8%D0%BA_%D0%B8_%D1%81%D0%BB%D0%BE%D0%B2%D0%BE_%D0%BE%D0%B1%D0%BD%D0%BE%D0%B2%D0%B0_%D0%B4%D0%BB%D1%8F_%D0%B2%D0%B0%D1%81/)
@@ -57,6 +66,8 @@ The Millennium Dawn team rarely writes dev diaries due to our frequency of our u
 </details>
 
 
+## v1.7 Dev Diaries
+
 <details markdown="1"><summary>v1.7 Dev Diaries</summary>
 
 - [Dev Diary #28: The American Overhaul - Phase One](https://www.reddit.com/r/MillenniumDawn/comments/x5sj3m/dev_diary_28_the_american_overhaul_phase_one/)
@@ -70,6 +81,8 @@ The Millennium Dawn team rarely writes dev diaries due to our frequency of our u
 - [Dev Diary #17: Designing Tanks](https://www.reddit.com/r/MillenniumDawn/comments/twvkf3/dev_diary_17_designing_tanks/)
 
 </details>
+
+## Pre v1.7 Dev Diaries
 
 <details markdown="1"><summary>Pre v1.7 Dev Diaries</summary>
 
