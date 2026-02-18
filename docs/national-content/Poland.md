@@ -1,6 +1,11 @@
+---
+layout: default
+title: "National Content - Poland"
+---
+
 ## Poland WIP
 
-![Flag_of_Poland.svg](uploads/30da0f4499b9c6c8d57e36aceb59b409/Flag_of_Poland.svg.png)
+[Image unavailable: Flag_of_Poland.svg]
 
 Poland is a country surrounded by Germany from the West, Czech Republic and Slovakia from the South, Ukraine from the South-East, Belarus from the East and Russia and Lithuania from the North. It starts with a Population of 38.47 Millions.
 
@@ -27,3 +32,4 @@ Poland starts with 15 Factories; 9 Civilian Industries, 5 Military Industries an
 ## Economy
 
 Poland starts with $43 Billions in the Treasury, $222 Billions in Debt and $0 Billions in International Investments.
+

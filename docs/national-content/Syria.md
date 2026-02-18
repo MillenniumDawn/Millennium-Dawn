@@ -1,6 +1,11 @@
+---
+layout: default
+title: "National Content - Syria"
+---
+
 ## Syria WIP
 
-![Syria](/Millennium-Dawn/uploads/flags/syria.png)
+![Syria]({{ '/uploads/flags/syria.png' | relative_url }}){: .country-flag}
 
 Syria is a country surrounded by Turkey from the North, Iraq from the East and South-East, Jordan from the South, Israel from the South-West and Lebanon and Hezbollah from the West. It starts with a Population of 16.01 Millions.
 
@@ -34,3 +39,4 @@ Syria starts with 3 Factories; 2 Military Industries and 1 Civilian Industry.
 ## Economy
 
 Syria starts with $10 Billions in the Treasury, $64 Billions in Debt and $0 in International Investments.
+

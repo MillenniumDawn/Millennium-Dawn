@@ -1,6 +1,11 @@
+---
+layout: default
+title: "National Content - Iran"
+---
+
 # Iran WIP
 
-![Flag_of_Iran.svg](uploads/c275018a9a0c1fe71509fa500a0e33bb/Flag_of_Iran.svg.png)
+[Image unavailable: Flag_of_Iran.svg]
 
 Iran is a country surrounded by Iraq, Kurdistan and Turkey from the West, Armenia, Azerbaijan and Artsakh from the North-West, Turkmenistan from the North-East and The Islamic Emirate of Afghanistan and Pakistan from the East. It starts with a Population of 63.24 M. The nation's initial Power Ranking is Regional Power.
 
@@ -143,7 +148,7 @@ Network infrastructure level 2 or higher in four specific states Reward for comp
 
 ## National Focus
 <div align="center">
-![スクリーンショット_2025-07-25_101334](uploads/f654db87d5494dca7ad069986957abbf/スクリーンショット_2025-07-25_101334.png)
+[Image unavailable: スクリーンショット_2025-07-25_101334]
 </div>
 
 ### Nuclear Development Tree

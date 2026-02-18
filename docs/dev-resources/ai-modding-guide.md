@@ -6,7 +6,7 @@ description: "Self-host local AI models to assist with Millennium Dawn mod devel
 
 This guide covers setting up Ollama, a local AI runtime, to assist with modding tasks like code generation, debugging, and documentation.
 
-> **Note**: Using AI for code generation is subject to the mod's [AI Policy](../CONTRIBUTING.md#ai-policy).
+> **Note**: Using AI for code generation is subject to the mod's [AI Policy](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md#ai-policy).
 
 ---
 
@@ -313,5 +313,5 @@ ollama list
 
 - [Ollama Documentation](https://github.com/ollama/ollama)
 - [HOI4 Modding Wiki](https://hoi4.paradoxwikis.com/Modding)
-- [Code Stylization Guide](./code-stylization-guide.md)
-- [Code Resources](./code-resource.md)
+- [Code Stylization Guide]({{ '/dev-resources/code-stylization-guide' | relative_url }})
+- [Code Resources]({{ '/dev-resources/code-resource' | relative_url }})

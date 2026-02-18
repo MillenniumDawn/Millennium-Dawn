@@ -1,6 +1,11 @@
+---
+layout: default
+title: "National Content - Italy"
+---
+
 ## Italy WIP
 
-![Flag_of_Italy.svg](uploads/594462e9833b0904d27fa6462f456d9e/Flag_of_Italy.svg.png)
+[Image unavailable: Flag_of_Italy.svg]
 
 Italy is a country surrounded by France from the North-West, Switzerland from the North, Austria from the North-East and Slovenia and Croatia from the East. Inside its borders there are two microstates, San Marino and Vatican City. It starts with a Population of 57.11 Millions.
 
@@ -48,3 +53,4 @@ Italy starts with 56 Factories; 32 Civilian Industries, 15 Military Industries a
 ## Economy
 
 Italy starts with $69 Billions in the Treasury, $1419 Billions in Debt and $100 Billions in International Investments.
+

@@ -1,6 +1,11 @@
+---
+layout: default
+title: "National Content - France"
+---
+
 ## France WIP
 
-![Flag_of_France.svg](uploads/81f96c6ae1e36bdd02de47c48793c982/Flag_of_France.svg.png)
+[Image unavailable: Flag_of_France.svg]
 
 France is a country surrounded by Belgium and Luxembourg from the North, Germany, Switzerland, Italy and Monaco from the East and Spain and Andorra from the South. Its territory in South America borders with Brazil and Suriname. France starts off with a Population of 62.34 Millions.
 
@@ -27,3 +32,4 @@ France starts with 50 Factories; 27 Civilian Industries, 17 Military Industries 
 ## Economy
 
 France starts with $93 Billions in the Treasury, $1412 Billions in Debt and $637 Billions in International Investments
+
