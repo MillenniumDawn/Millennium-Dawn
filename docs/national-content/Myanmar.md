@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Myanmar"
+---
+
 ## Myanmar WIP
 
 ![Myanmar](/Millennium-Dawn/uploads/flags/myanmar.png)
@@ -35,3 +40,4 @@ Myanmar starts with 3 Factories; 2 Civilian Industries and 1 Military Industry
 ## Economy
 
 Myanmar starts with $3 Billions in the Treasury, $151 Billions in Debt and $0.01 Billions in International Investments
+

@@ -1,5 +1,4 @@
-{% unless page.toc == false %}
-<aside class="toc-sidebar" id="toc-sidebar" aria-labelledby="toc-heading">
+<aside class="toc-sidebar" id="toc-sidebar" aria-labelledby="toc-heading" hidden>
 
     <!-- Mobile FAB toggle -->
     <button class="toc-sidebar__toggle" id="toc-toggle"
@@ -58,7 +57,6 @@
     }
 
     function initToc() {
-        var MIN_HEADINGS  = 2;
         var SCROLL_OFFSET = 120;
         var DRAWER_ANIM   = 280;
 
@@ -78,16 +76,13 @@
 
         var headings = content.querySelectorAll('h2, h3, h4');
 
-        // ── Guard: not enough headings → hide sidebar + remove layout class ──
-        if (headings.length < MIN_HEADINGS) {
-            sidebar.hidden = true;
-            sidebar.setAttribute('aria-hidden', 'true');
-            // Remove has-toc from BODY (template added it)
+        // Keep TOC hidden on pages without section headings.
+        if (!headings.length) {
             document.body.classList.remove('has-toc');
             return;
         }
 
-        // Ensure has-toc is on body (belt + suspenders)
+        sidebar.hidden = false;
         document.body.classList.add('has-toc');
 
         // Ensure every heading has an id
@@ -454,4 +449,5 @@
     }
 })();
 </script>
-{% endunless %}
+
+

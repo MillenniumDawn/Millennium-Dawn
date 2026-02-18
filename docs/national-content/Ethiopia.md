@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Ethiopia"
+---
+
 ## Ethiopia WIP
 
 ![Flag_of_Ethiopia.svg](uploads/09aa49ffecb0f73840b6d43d5ed38f89/Flag_of_Ethiopia.svg.png)
@@ -31,3 +36,4 @@ Ethiopia starts with 2 Military Factories
 ## Economy
 
 Ethiopia starts with $1 Billion in the Treasury, $29 Billions in Debt and $0 Billions in International Investments.
+

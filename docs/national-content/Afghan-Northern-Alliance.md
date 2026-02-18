@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Afghan Northern Alliance"
+---
+
 ## Afghan Northern Alliance WIP
 
 ![2560px-Flag_of_Afghanistan__1992_2001_.svg](/Millennium-Dawn/uploads/flags/united_kingdom.png)
@@ -32,3 +37,4 @@ The Afghan Northern Alliance starts with 0 Factories.
 ## Economy
 
 The Afghan Northern Alliance starts with $0.2 Billions in the Treasury, $1 Billion in Debt and $0 in International Investments
+

@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Switzerland"
+---
+
 ## Switzerland WIP
 
 ![Flag_of_Switzerland.svg](uploads/41fa4f9a59b3e981dd9d80ab43fd729f/Flag_of_Switzerland.svg.png)
@@ -30,3 +35,4 @@ Switzerland starts with 8 Factories: 6 Civilian Industries and 2 Military Indust
 ## Economy
 
 Switzerland starts with $78 Billions in the Treasury, $225 Billions in Debt and $165 Billions in International Investments.
+

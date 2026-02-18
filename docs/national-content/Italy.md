@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Italy"
+---
+
 ## Italy WIP
 
 ![Flag_of_Italy.svg](uploads/594462e9833b0904d27fa6462f456d9e/Flag_of_Italy.svg.png)
@@ -48,3 +53,4 @@ Italy starts with 56 Factories; 32 Civilian Industries, 15 Military Industries a
 ## Economy
 
 Italy starts with $69 Billions in the Treasury, $1419 Billions in Debt and $100 Billions in International Investments.
+

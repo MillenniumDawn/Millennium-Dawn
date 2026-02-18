@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Brazil"
+---
+
 ## Brazil WIP
 
 ![Flag_of_Brazil.svg](uploads/1291cfbc93367ded8bc307e01efec733/Flag_of_Brazil.svg.png)
@@ -30,3 +35,4 @@ Brazil starts with 24 Factories, 13 Military Industries, 8 Civilian Industries a
 ## Economy
 
 Brazil starts with $48 Billions in the Treasury, $1053 Billions in Debt and $16.6 Billions in International Investments
+

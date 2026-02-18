@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - United Kingdom"
+---
+
 ## United Kingdom WIP
 
 ![Flag_of_the_United_Kingdom](/Millennium-Dawn/uploads/flags/united_kingdom.png)
@@ -30,3 +35,4 @@ The United Kingdom starts with 60 Factories; 27 Civilian Industries, 24 Military
 ## Economy
 
 The United Kingdom starts with $74 Billions in the Treasury, $879 Billions in Debt and $1239 Billions in International Investments.
+

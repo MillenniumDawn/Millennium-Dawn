@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Greece"
+---
+
 ## Greece WIP
 
 ![Greece](/Millennium-Dawn/uploads/flags/greece.png)
@@ -29,3 +34,4 @@ Greece starts with 8 Factories; 4 Military Industries, 3 Civilian Industries and
 ## Economy
 
 Greece starts with $21 Billions in the Treasury, $318 Billions in Debt and $1 Billion in International Investments.
+

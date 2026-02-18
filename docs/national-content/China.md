@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - China"
+---
+
 ## China WIP
 
 ![Flag_of_the_People_s_Republic_of_China.svg](uploads/180d912b82392463193c278dbb27fa9c/Flag_of_the_People_s_Republic_of_China.svg.png)
@@ -38,3 +43,4 @@ China starts with 129 Factories: 90 Civilian Industries, 28 Military Industries 
 ## Economy
 
 China starts with $252 Billions in the Treasury, $1066 Billions in Debt and $36.8 Billions in International Investments.
+

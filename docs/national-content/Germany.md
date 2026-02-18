@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Germany"
+---
+
 ## Germany WIP
 
 ![2560px-Flag_of_Germany.svg](uploads/c48421f011248f282f3ceed80cd6e8dc/2560px-Flag_of_Germany.svg.png)
@@ -29,3 +34,4 @@ Germany starts with 72 Factories; 50 Civilian Industries, 17 Military Industries
 ## Economy
 
 Germany starts with $128 Billions in the Treasury, $2096 in Debt and $112 in International Investments
+

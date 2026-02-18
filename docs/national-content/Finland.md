@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Finland"
+---
+
 ## Finland WIP
 
 ![Flag_of_Finland.svg](uploads/d98cbcf58dd726cbf75495403ea2fecd/Flag_of_Finland.svg.png)
@@ -31,3 +36,4 @@ Finland starts with 6 Factories; 4 Civilian Industries, 1 Military Industry and 
 ## Economy
 
 Finland starts with $12 Billions in the Treasury, $95 Billions in Debt and $83.9 Billions in International Investments.
+

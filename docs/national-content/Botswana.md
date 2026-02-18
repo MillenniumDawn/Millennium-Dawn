@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Botswana"
+---
+
 ## Botswana WIP
 
 ![Flag_of_Botswana.svg](uploads/dc44187c66117db185e980c1ef37e013/Flag_of_Botswana.svg.png)
@@ -36,3 +41,4 @@ Botswana starts with 1 Civilian Factory.
 ## Economy
 
 Botswana starts with $9 Billions in the Treasury, $3 Billions in Debt and $0.03 in International Investments.
+

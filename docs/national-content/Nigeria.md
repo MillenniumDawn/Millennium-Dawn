@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Nigeria"
+---
+
 ## Nigeria WIP
 
 ![Flag_of_Nigeria.svg](uploads/639d24843015ffd66e01a5d9fe25a1e5/Flag_of_Nigeria.svg.png)
@@ -37,3 +42,4 @@ Nigeria starts with 2 Factories; 1 Civilian Industry and 1 Military Industry
 ## Economy
 
 Nigeria starts with $5 Billions in the Treasury, $291 Billions in Debt and $3 Billions in International Investments
+

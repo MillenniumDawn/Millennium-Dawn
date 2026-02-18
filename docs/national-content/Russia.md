@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Russia"
+---
+
 ## Russia WIP
 
 ![Flag_of_Russia.svg](uploads/c724ab9b8d25c2ebead8ce02183fda85/Flag_of_Russia.svg.png)
@@ -31,3 +36,4 @@ Russia starts with 35 Factories; 26 Military Industries, 7 Naval Dockyards and 2
 ## Economy
 
 Russia starts with $40 Billions in the Treasury, $1349 Billions in Debt and $12 Billions in International Investments
+

@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Norway"
+---
+
 ## Norway WIP
 
 ![Flag_of_Norway.svg](uploads/d9e8dc5934f03481ff4f5cf4ecc5c5f8/Flag_of_Norway.svg.png)
@@ -27,3 +32,4 @@ Norway starts with 7 Factories; 4 Civilian Industries, 2 Military Industries and
 ## Economy
 
 Norway starts with $40.74 Billions in the Treasury, $76 Billions in Debt and $48 Billions in International Investments.
+

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 {% include head.html %}
-<body class="{{ page.title | slugify }}{% unless page.toc == false %} has-toc{% endunless %}">
+<body class="{{ page.title | slugify }}">
     {% include skip-link.html %}
     {% include header.html %}
 
@@ -138,68 +138,7 @@
         }
     })();
 
-    // Condensed header on scroll (desktop only)
-    (function () {
-        var header      = document.querySelector('.site-header');
-        var headerTop   = document.querySelector('.header-top');
-        var mainContent = document.getElementById('main-content');
-        if (!header || !headerTop) return;
-
-        var lastState  = null;
-        var threshold  = 12;
-        var cooldown   = 100;
-        var timeoutId  = null;
-        var desktopMQ  = window.matchMedia('(min-width: 769px)');
-
-        function applyState(condensed) {
-            if (condensed === lastState) return;
-            if (condensed && header.classList.contains('nav-is-open')) return;
-
-            header.classList.toggle('site-header--condensed', condensed);
-            headerTop.setAttribute('aria-hidden', condensed ? 'true' : 'false');
-
-            if (condensed && headerTop.contains(document.activeElement)) {
-                if (mainContent) mainContent.focus();
-            }
-            lastState = condensed;
-        }
-
-        function evaluate() {
-            if (!desktopMQ.matches) { applyState(false); return; }
-            if (header.classList.contains('nav-is-open')) return;
-
-            var y = Math.max(0, window.scrollY || window.pageYOffset);
-            var shouldCondense = y > threshold;
-
-            if (shouldCondense !== lastState) {
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(function () { applyState(shouldCondense); }, cooldown);
-            }
-        }
-
-        var rafPending = false;
-        function onScroll() {
-            if (rafPending) return;
-            rafPending = true;
-            requestAnimationFrame(function () { rafPending = false; evaluate(); });
-        }
-
-        window.addEventListener('scroll', onScroll, { passive: true });
-        window.addEventListener('resize', evaluate);
-
-        if (typeof desktopMQ.addEventListener === 'function') {
-            desktopMQ.addEventListener('change', evaluate);
-        } else if (typeof desktopMQ.addListener === 'function') {
-            desktopMQ.addListener(evaluate);
-        }
-
-        header.addEventListener('navstatechange', function () {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(evaluate, 60);
-        });
-
-        evaluate();
-    })();
+    // Collapsing header behaviour removed — header is now static (no JS-driven condensing).
 
     // Back to top button
     (function () {
@@ -220,3 +159,4 @@
     </script>
 </body>
 </html>
+

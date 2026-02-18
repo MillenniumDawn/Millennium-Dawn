@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Ukraine"
+---
+
 ## Ukraine WIP
 
 ![Flag_of_Ukraine.svg](uploads/81223a378279d07f25dc542ba0d5ff17/Flag_of_Ukraine.svg.png)
@@ -33,3 +38,4 @@ Ukraine starts with 13 Factories; 8 Civilian Industries, 3 Military Industries a
 ## Economy
 
 Ukraine starts with $2 Billions in the Treasury, $158 Billions in Debt and $0 Billions in International Investments.
+

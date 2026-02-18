@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - North Korea"
+---
+
 ## North Korea WIP
 
 ![Flag_of_North_Korea.svg](uploads/513bc13428e26689c90a47380f6c6534/Flag_of_North_Korea.svg.png)
@@ -36,3 +41,4 @@ North Korea starts with 2 Factories; 1 Civilian Industry and 1 Military Industry
 ## Economy
 
 North Korea starts with $3 Billions in the Treasury, $20 Billions in Debt and $0 Billions in International Investments.
+

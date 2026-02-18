@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - France"
+---
+
 ## France WIP
 
 ![Flag_of_France.svg](uploads/81f96c6ae1e36bdd02de47c48793c982/Flag_of_France.svg.png)
@@ -27,3 +32,4 @@ France starts with 50 Factories; 27 Civilian Industries, 17 Military Industries 
 ## Economy
 
 France starts with $93 Billions in the Treasury, $1412 Billions in Debt and $637 Billions in International Investments
+

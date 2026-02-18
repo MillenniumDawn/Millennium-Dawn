@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Syria"
+---
+
 ## Syria WIP
 
 ![Syria](/Millennium-Dawn/uploads/flags/syria.png)
@@ -34,3 +39,4 @@ Syria starts with 3 Factories; 2 Military Industries and 1 Civilian Industry.
 ## Economy
 
 Syria starts with $10 Billions in the Treasury, $64 Billions in Debt and $0 in International Investments.
+

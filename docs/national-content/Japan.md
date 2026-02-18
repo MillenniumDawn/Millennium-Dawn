@@ -1,3 +1,8 @@
+---
+layout: default
+title: "National Content - Japan"
+---
+
 ## Japan WIP
 
 ![Flag_of_Japan.svg](uploads/ac92bf81132dd43b01ce68381919ceee/Flag_of_Japan.svg.png)
@@ -31,3 +36,4 @@ Japan starts with 97 Factories: 77 Civilian Industries, 12 Military Industries a
 ## Economy
 
 Japan starts with $528 Billions in the Treasury, $6627 in Debt and $497 in International Investments.
+
