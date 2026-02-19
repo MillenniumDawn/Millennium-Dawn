@@ -6,7 +6,7 @@ description: "Self-host local AI models to assist with Millennium Dawn mod devel
 
 This guide covers setting up Ollama, a local AI runtime, to assist with modding tasks like code generation, debugging, and documentation.
 
-> **Note**: Using AI for code generation is subject to the mod's [AI Policy](../CONTRIBUTING.md#ai-policy).
+> **Note**: Using AI for code generation is subject to the mod's [AI Policy](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md#ai-policy).
 
 ---
 
@@ -148,6 +148,83 @@ EOF
   ]
 }
 ```
+
+### Using Cline Extension
+
+1. Install [Cline](https://marketplace.visualstudio.com/items?itemName=cline.cline) VS Code extension
+2. Configure in VS Code settings (`Ctrl/Cmd + ,` → Settings → Extensions → Cline):
+
+```json
+{
+  "cline.models": [
+    {
+      "name": "codellama",
+      "provider": "ollama",
+      "baseUrl": "http://localhost:11434",
+      "model": "codellama"
+    }
+  ],
+  "cline.defaultModel": "codellama"
+}
+```
+
+3. Alternative: Create `.cline/config.json` in your project root:
+
+```json
+{
+  "models": [
+    {
+      "name": "codellama",
+      "provider": "ollama",
+      "baseUrl": "http://localhost:11434",
+      "model": "codellama"
+    }
+  ],
+  "defaultModel": "codellama"
+}
+```
+
+**Cline vs Continue Differences:**
+
+- **Cline**: More lightweight, direct Ollama integration, simpler configuration
+- **Continue**: More features, multi-model support, advanced context management
+- **Performance**: Cline typically faster for local models
+- **Setup**: Cline requires less configuration for basic Ollama usage
+
+**Cline Usage:**
+
+- Use `Ctrl/Cmd + Shift + P` → "Cline: Ask" for quick queries
+- Select text and use `Ctrl/Cmd + Shift + P` → "Cline: Ask about selection"
+- Configure custom prompts in `.cline/prompts.json`
+
+**Millennium Dawn Project Setup with Cline:**
+
+Create `.cline/prompts.json` in your Millennium Dawn project root:
+
+```json
+{
+  "prompts": [
+    {
+      "name": "MD Code Review",
+      "prompt": "Review this Millennium Dawn code for:\n1. Style compliance (1 tab indent, logging)\n2. Performance issues (avoid every_country)\n3. MD-specific scripted effects usage\n4. Common HOI4 modding errors\n\nCode:\n{selection}"
+    },
+    {
+      "name": "MD Focus Tree Generator",
+      "prompt": "Generate a Millennium Dawn focus tree for {country}.\nRules:\n- File: 05_{country}_focus.txt\n- Use relative_position_id\n- Include ai_will_do with game rules\n- Add completion_reward with logging\n- Use search_filters\n\nContext: {context}"
+    },
+    {
+      "name": "MD Debug Script",
+      "prompt": "Debug this HOI4 script error:\nError: {error}\n\nCode:\n{selection}\n\nCheck for:\n- Invalid triggers/effects\n- Missing semicolons\n- Incorrect scope usage\n- MD-specific requirements"
+    }
+  ]
+}
+```
+
+**Project-Specific Cline Commands:**
+
+- `Cline: Ask about selection` → Use "MD Code Review" prompt
+- `Cline: Ask` → Use "MD Focus Tree Generator" for new focuses
+- `Cline: Ask` → Use "MD Debug Script" for troubleshooting
 
 ### Using Claude Code with Ollama
 
@@ -313,5 +390,5 @@ ollama list
 
 - [Ollama Documentation](https://github.com/ollama/ollama)
 - [HOI4 Modding Wiki](https://hoi4.paradoxwikis.com/Modding)
-- [Code Stylization Guide](./code-stylization-guide.md)
-- [Code Resources](./code-resource.md)
+- [Code Stylization Guide]({{ '/dev-resources/code-stylization-guide' | relative_url }})
+- [Code Resources]({{ '/dev-resources/code-resource' | relative_url }})

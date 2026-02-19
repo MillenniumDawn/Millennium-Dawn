@@ -8,7 +8,7 @@ description: "Changelogs for Millennium Dawn: A Modern Day Mod"
 
 This page is a list of all MD's changelogs from our documentation. In case you were looking to pull up stuff from forever ago.
 
-For the [BETA test changes](/Millennium-Dawn/misc/beta-changelogs) click the link.
+For the [BETA test changes]({{ '/misc/beta-changelogs' | relative_url }}) click the link.
 
 ### v1.12.0 'Every Tank an Upgrade'
 
