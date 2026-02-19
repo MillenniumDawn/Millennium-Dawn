@@ -1,7 +1,19 @@
 <!DOCTYPE html>
 <html lang="{{ site.lang | default: 'en' }}">
 {% include head.html %}
-<body class="{{ page.title | slugify }}">
+{% assign page_slug = page.page_id | default: page.title | default: page.url | slugify %}
+{% assign toc_mode = page.toc %}
+{% if toc_mode == nil or toc_mode == '' %}
+{% assign toc_mode = 'auto' %}
+{% endif %}
+{% if toc_mode == false %}
+{% assign toc_mode = 'off' %}
+{% endif %}
+{% assign body_classes = page.body_class | default: page_slug %}
+{% if toc_mode != 'off' %}
+{% assign body_classes = body_classes | append: ' has-toc' %}
+{% endif %}
+<body class="{{ body_classes }}" data-page="{{ page_slug }}" data-toc="{{ toc_mode }}">
     {% include skip-link.html %}
     {% include header.html %}
 
