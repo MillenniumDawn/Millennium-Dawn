@@ -99,6 +99,10 @@ docs/            - Development documentation
 
 See [LICENSE](./LICENSE) file for details.
 
+## Security
+
+See [SECURITY](./SECURITY.md) file for security details.
+
 ---
 
 _Created by the Millennium Dawn Development Team_
