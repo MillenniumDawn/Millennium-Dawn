@@ -40,7 +40,7 @@ pip install -r tools/requirements.txt
 # Common tools
 python3 tools/gfx_entry_generator.py          # Generate GFX entries for UI
 python3 tools/logging_tool.py                # Logging utilities
-python3 tools/standardize_focus_tree.py      # Format focus trees
+python3 tools/standardize/standardize_focus_tree.py      # Format focus trees
 ```
 
 ## Code Architecture
