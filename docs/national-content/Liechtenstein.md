@@ -1,6 +1,11 @@
+---
+layout: default
+title: "National Content - Liechtenstein"
+---
+
 ## Liechtenstein WIP
 
-![Flag_of_Liechtenstein.svg](uploads/5fde18a16f68ba004018fa2cf1ef7b40/Flag_of_Liechtenstein.svg.png)
+[Image unavailable: Flag_of_Liechtenstein.svg]
 
 Liechtenstein is a country surrounded by Switzerland from the North, West and South, and Austria from the East. It starts with a Population of 33.32K.
 
@@ -30,3 +35,4 @@ Liechtenstein starts with 0 Factories.
 ## Economy
 
 Liechtenstein starts with $5 Billions in the Treasury, $0 Billions in Debt and $19.85 Billions in International Investments.
+

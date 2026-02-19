@@ -1,0 +1,618 @@
+// ==========================================================================
+// Components — Cards, Buttons, Callouts, Breadcrumbs
+// ==========================================================================
+@use "variables" as vars;
+
+// Buttons
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0.75rem 1.5rem;
+  background-color: var(--color-primary);
+  color: #fff;
+  text-decoration: none;
+  border-radius: var(--border-radius);
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  min-height: 44px;
+  transition: background-color var(--transition-speed) var(--transition-fn),
+              box-shadow var(--transition-speed) var(--transition-fn);
+
+  &:hover {
+    background-color: var(--color-primary-hover);
+    color: #fff;
+    text-decoration: none;
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.btn-secondary {
+  background-color: var(--color-text-muted);
+
+  &:hover {
+    background-color: var(--color-text-secondary);
+  }
+}
+
+// Cards
+.card {
+  background: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--color-primary);
+  transition: box-shadow var(--transition-speed) var(--transition-fn);
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+// Callouts
+.callout {
+  border-radius: var(--border-radius);
+  padding: var(--space-md) var(--space-lg);
+  margin: var(--space-lg) 0;
+  border-left: 4px solid var(--color-info);
+  background-color: var(--color-callout-info-bg);
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.callout--info {
+  border-left-color: var(--color-info);
+  background-color: var(--color-callout-info-bg);
+}
+
+.callout--warning {
+  border-left-color: var(--color-warning);
+  background-color: var(--color-callout-warning-bg);
+}
+
+.callout--danger {
+  border-left-color: var(--color-danger);
+  background-color: var(--color-callout-danger-bg);
+}
+
+.callout--tip {
+  border-left-color: var(--color-success);
+  background-color: var(--color-callout-tip-bg);
+}
+
+/* =========================================================================
+   Details / Collapsible — Enhanced
+   
+   Supports three markup patterns:
+
+   1) Wrapped content (recommended — smooth open + close animation):
+      <details>
+        <summary>Title</summary>
+        <div class="details__body">…content…</div>
+      </details>
+
+   2) Direct content (fallback — open animation only):
+      <details>
+        <summary>Title</summary>
+        <p>Content…</p>
+      </details>
+
+   3) Grouped accordion:
+      <div class="details-group">
+        <details>…</details>
+        <details>…</details>
+      </div>
+
+   Variants:
+      .details--info   .details--warning   .details--danger   .details--tip
+   ========================================================================= */
+
+// ── Base ──
+details {
+  --_details-accent: var(--color-primary);
+
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  margin: var(--space-md) 0;
+  box-shadow: var(--shadow-sm);
+  // Don't use overflow:hidden here — it clips the focus ring
+  transition:
+    box-shadow var(--transition-speed) var(--transition-fn),
+    border-color var(--transition-speed) var(--transition-fn);
+}
+
+details:hover {
+  border-color: var(--color-text-muted);
+}
+
+details[open] {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-text-muted);
+}
+
+// ── Summary (trigger) ──
+details summary {
+  // Reset browser defaults
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+
+  padding: var(--space-md) var(--space-lg);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  border-radius: var(--border-radius-lg);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 150ms var(--transition-fn),
+    border-color 200ms var(--transition-fn),
+    color 200ms var(--transition-fn);
+}
+
+// Remove default marker — all browsers
+details summary::-webkit-details-marker { display: none; }
+details summary::marker { content: ''; display: none; }
+
+// Open state: bottom border visible, corners squared at bottom
+details[open] > summary {
+  border-bottom-color: var(--color-border);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  color: var(--_details-accent);
+}
+
+// Hover
+details summary:hover {
+  background: rgba(0, 0, 0, 0.025);
+}
+
+.dark-mode details summary:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+// Active / pressed
+details summary:active {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode details summary:active {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+// Focus — visible only for keyboard navigation
+details summary:focus-visible {
+  outline: var(--focus-ring-width, 3px) solid var(--focus-ring-color, #4a90d9);
+  outline-offset: 2px; // outside the element, never clipped
+  z-index: 1;
+}
+
+details summary:focus:not(:focus-visible) {
+  outline: none;
+}
+
+// ── Chevron indicator ──
+details summary::after {
+  content: '';
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-left: auto; // push to far right
+  border-right: 2px solid var(--color-text-muted);
+  border-bottom: 2px solid var(--color-text-muted);
+  transform: rotate(-45deg);
+  transform-origin: 60% 60%;
+  transition:
+    transform 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 200ms var(--transition-fn);
+}
+
+details[open] > summary::after {
+  transform: rotate(45deg);
+  border-color: var(--_details-accent);
+}
+
+// ── Content body — wrapper approach (recommended) ──
+// Wrap content in <div class="details__body"> for smooth open + close
+.details__body {
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+  // Clip content during animation without clipping the focus ring on summary
+  overflow: hidden;
+}
+
+// Open animation
+details[open] > .details__body {
+  animation: details-slide-in 280ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+// Closing animation (class toggled by JS — see below)
+details.is-closing > .details__body {
+  animation: details-slide-out 200ms cubic-bezier(0.4, 0, 0.6, 1) both;
+}
+
+@keyframes details-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes details-slide-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+// ── Content body — fallback (no wrapper) ──
+// When content is bare children like <p>, <ul>, etc.
+details > :not(summary):not(.details__body) {
+  padding-left: var(--space-lg);
+  padding-right: var(--space-lg);
+}
+
+// First content element — top spacing
+details > summary + :not(.details__body) {
+  padding-top: var(--space-md);
+}
+
+// Last content element — bottom spacing + reset margin
+details > :last-child:not(summary):not(.details__body) {
+  padding-bottom: var(--space-lg);
+  margin-bottom: 0;
+}
+
+// Fade-in for non-wrapped content (open only — close is instant)
+details[open] > :not(summary):not(.details__body) {
+  animation: details-fade-in 250ms var(--transition-fn) both;
+}
+
+@keyframes details-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// ── Clean up trailing margins inside details ──
+details p:last-child,
+details ul:last-child,
+details ol:last-child,
+details blockquote:last-child,
+details pre:last-child {
+  margin-bottom: 0;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Variants — accent colour + tinted summary background
+// Add class to <details>: .details--info, --warning, --danger, --tip
+// ──────────────────────────────────────────────────────────────
+details[class*="details--"] {
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: var(--_details-accent);
+}
+
+// Individual colour overrides
+.details--info {
+  --_details-accent: var(--color-info);
+
+  > summary {
+    background: var(--color-callout-info-bg);
+
+    &:hover { background: var(--color-callout-info-bg); filter: brightness(0.97); }
+  }
+}
+
+.details--warning {
+  --_details-accent: var(--color-warning);
+
+  > summary {
+    background: var(--color-callout-warning-bg);
+
+    &:hover { background: var(--color-callout-warning-bg); filter: brightness(0.97); }
+  }
+}
+
+.details--danger {
+  --_details-accent: var(--color-danger);
+
+  > summary {
+    background: var(--color-callout-danger-bg);
+
+    &:hover { background: var(--color-callout-danger-bg); filter: brightness(0.97); }
+  }
+}
+
+.details--tip {
+  --_details-accent: var(--color-success);
+
+  > summary {
+    background: var(--color-callout-tip-bg);
+
+    &:hover { background: var(--color-callout-tip-bg); filter: brightness(0.97); }
+  }
+}
+
+.dark-mode details[class*="details--"] > summary:hover {
+  filter: brightness(1.1); // invert for dark
+}
+
+// ──────────────────────────────────────────────────────────────
+// Grouped details — accordion layout
+// Wrap consecutive <details> in <div class="details-group">
+// ──────────────────────────────────────────────────────────────
+.details-group {
+  margin: var(--space-md) 0;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden; // safe here — clips children's outer corners
+  box-shadow: var(--shadow-sm);
+
+  > details {
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: none;
+
+    &:first-child {
+      border-top-left-radius: var(--border-radius-lg);
+      border-top-right-radius: var(--border-radius-lg);
+    }
+
+    &:last-child {
+      border-bottom-left-radius: var(--border-radius-lg);
+      border-bottom-right-radius: var(--border-radius-lg);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    &:only-child {
+      border-radius: var(--border-radius-lg);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    // All summaries inside group have square corners
+    > summary {
+      border-radius: 0;
+    }
+
+    // First summary keeps top corners
+    &:first-child > summary {
+      border-top-left-radius: var(--border-radius-lg);
+      border-top-right-radius: var(--border-radius-lg);
+    }
+
+    // Last closed details — summary keeps bottom corners
+    &:last-child:not([open]) > summary {
+      border-bottom-left-radius: var(--border-radius-lg);
+      border-bottom-right-radius: var(--border-radius-lg);
+    }
+  }
+
+  // Hover on grouped — subtler, no border-color change
+  > details:hover {
+    border-color: var(--color-border);
+  }
+
+  // Open item in group
+  > details[open] {
+    box-shadow: none;
+    border-color: var(--color-border);
+  }
+}
+
+// ── Adjacent details without group wrapper ──
+// Tighten spacing between consecutive standalone details
+details + details {
+  margin-top: calc(var(--space-md) * 0.25);
+}
+
+// ──────────────────────────────────────────────────────────────
+// Nested details
+// ──────────────────────────────────────────────────────────────
+details details {
+  margin: var(--space-sm) 0;
+  border-radius: var(--border-radius);
+  box-shadow: none;
+  border-color: var(--color-border);
+  background: rgba(0, 0, 0, 0.012);
+
+  > summary {
+    font-size: 0.92em;
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .details__body {
+    padding: var(--space-sm) var(--space-md) var(--space-md);
+  }
+
+  // Fallback padding for nested non-wrapped content
+  > :not(summary):not(.details__body) {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+}
+
+.dark-mode details details {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+// ──────────────────────────────────────────────────────────────
+// Reduced motion — disable all animations
+// ──────────────────────────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  details[open] > .details__body,
+  details.is-closing > .details__body,
+  details[open] > :not(summary):not(.details__body) {
+    animation: none !important;
+  }
+
+  details summary::after {
+    transition: none !important;
+  }
+
+  details,
+  details summary {
+    transition: none !important;
+  }
+}
+
+// Breadcrumbs
+.breadcrumbs {
+  padding: var(--space-md) 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+
+  ol {
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: var(--space-xs);
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin: 0;
+    font-size: 0.875rem;
+
+    &:not(:last-child)::after {
+      content: "/";
+      color: var(--color-border);
+      margin-left: var(--space-xs);
+    }
+  }
+
+  a {
+    color: var(--color-primary);
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  [aria-current="page"] {
+    color: var(--color-text-secondary);
+    font-weight: 600;
+  }
+}
+
+// Back to top button
+.back-to-top {
+  position: fixed;
+  bottom: var(--space-xl);
+  right: var(--space-xl);
+  background-color: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+  transition: background-color var(--transition-speed) var(--transition-fn),
+              opacity var(--transition-speed) var(--transition-fn);
+  z-index: var(--z-back-to-top);
+
+  &:hover {
+    background-color: var(--color-primary-hover);
+  }
+
+  &.is-visible {
+    display: flex;
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+}
+
+@media (max-width: #{vars.$bp-wide-min - 1px}) {
+  .back-to-top {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+    right: var(--space-lg);
+    bottom: calc(var(--space-xl, 2rem) + 60px);
+    background: linear-gradient(135deg, var(--color-header-bg), var(--color-header-bg-end));
+    box-shadow: var(--shadow-md);
+    transition:
+      background 200ms var(--transition-fn),
+      transform 200ms var(--transition-fn),
+      opacity var(--transition-speed) var(--transition-fn);
+  }
+
+  .back-to-top:hover {
+    background: linear-gradient(135deg, var(--color-header-bg-end), var(--color-header-bg));
+    transform: scale(1.06);
+  }
+
+  .back-to-top:active {
+    transform: scale(0.95);
+  }
+
+  .back-to-top:focus-visible {
+    outline: 3px solid var(--focus-ring-color, #4a90d9);
+    outline-offset: 3px;
+  }
+}
+// Utility
+.text-center { text-align: center; }
+.text-muted { color: var(--color-text-muted); }
+.mt-2 { margin-top: var(--space-md); }
+.mb-2 { margin-bottom: var(--space-md); }
+
+// National content flag images
+.country-flag {
+  width: clamp(160px, 22vw, 320px);
+  min-width: 160px;
+  max-width: 320px;
+  min-height: 90px;
+  max-height: 210px;
+  height: auto;
+  object-fit: contain;
+}
+
+// 404 page
+.error-page {
+  padding: 4rem 0;
+}
+
+.error-page__title {
+  font-size: 4rem;
+  border: none;
+  margin-bottom: 0.5rem;
+}
+
+.error-page__subtitle {
+  margin-top: 0;
+}

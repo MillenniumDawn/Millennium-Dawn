@@ -17,4 +17,4 @@ How to use:
 * Check readme file
 * Use exe file
 
-[CrocsLoggerTool.zip](/Millennium-Dawn/uploads/CrocsLoggerTool.zip)
+[CrocsLoggerTool.zip]({{ '/uploads/CrocsLoggerTool.zip' | relative_url }})
