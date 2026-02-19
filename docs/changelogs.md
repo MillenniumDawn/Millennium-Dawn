@@ -17,7 +17,7 @@ For the [BETA test changes]({{ '/misc/beta-changelogs' | relative_url }}) click 
 {% include searchable-content-index.html
   items=sections
   aria_label="Changelog section index"
-  page_size=6
+  page_size=8
   filter_label="Search"
   filter_placeholder="Type to filter..."
   empty_text="No changelog sections matched your search."

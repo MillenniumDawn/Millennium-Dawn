@@ -27,8 +27,8 @@ function initCardIndex() {
         var prevBtn = getFirst(root, ['[data-card-prev]', '[data-changelog-prev]']);
         var nextBtn = getFirst(root, ['[data-card-next]', '[data-changelog-next]']);
         var status = getFirst(root, ['[data-card-status]', '[data-changelog-status]']);
-        var pageSize = parseInt(root.getAttribute('data-page-size') || '6', 10);
-        if (!Number.isFinite(pageSize) || pageSize < 1) pageSize = 6;
+        var pageSize = parseInt(root.getAttribute('data-page-size') || '8', 10);
+        if (!Number.isFinite(pageSize) || pageSize < 1) pageSize = 8;
 
         var currentPage = 1;
         var activeQuery = '';
