@@ -1,6 +1,8 @@
 ---
 layout: default
 title: "Tutorials"
+page_id: tutorials
+toc: "off"
 description: "Guides and tutorials for playing Millennium Dawn: A Modern Day mod for Hearts of Iron IV."
 permalink: /tutorials/
 ---
@@ -9,10 +11,11 @@ permalink: /tutorials/
 
 The following is a non-exhaustive list of tutorials or guides that are available on the website. The guides are always work-in-progress and you can contribute to expand them by creating a fork of [Millennium Dawn](https://github.com/MillenniumDawn/Millennium-Dawn) and submit new guides and information.
 
-- [Economy Tutorial]({{ '/player-tutorials/economy-tutorial' | relative_url }})
-- [European Union Law Flowchart]({{ '/player-tutorials/eu-law-flowchart' | relative_url }})
-- [European Union Tutorial]({{ '/player-tutorials/eu-tutorial' | relative_url }})
-- [Military Tutorial]({{ '/player-tutorials/military-tutorial' | relative_url }})
-- [Troubleshooting Guide]({{ '/player-tutorials/troubleshooting-guide' | relative_url }})
-- [Internal Faction Guide]({{ '/player-tutorials/internal-factions' | relative_url }})
-- [Game Rules]({{ '/player-tutorials/game-rules' | relative_url }})
+{% include searchable-content-index.html
+  items=site.data.tutorials
+  aria_label="Player tutorials"
+  page_size=8
+  filter_label="Search"
+  filter_placeholder="Type to filter..."
+  empty_text="No tutorials matched your search."
+%}
