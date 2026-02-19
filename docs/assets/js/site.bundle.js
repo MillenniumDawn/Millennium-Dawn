@@ -66,12 +66,12 @@ async function init() {
             );
         }
 
-        if (document.querySelector('[data-changelog-index]')) {
+        if (document.querySelector('[data-card-index], [data-changelog-index]')) {
             lazyTasks.push(
                 importAndInit(
-                    'changelog.index',
+                    'card.index',
                     function () { return import('./modules/changelog-index.js'); },
-                    'initChangelogIndex'
+                    'initCardIndex'
                 )
             );
         }
