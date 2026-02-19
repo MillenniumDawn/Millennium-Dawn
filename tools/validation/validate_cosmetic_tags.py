@@ -214,7 +214,7 @@ class Validator(BaseValidator):
         country_flags = []
         flag_path = str(Path(self.mod_path) / "gfx" / "flags" / "**/*.tga")
         for filename in glob.iglob(flag_path, recursive=True):
-            country_flags.append(os.path.basename(filename.lower())[:-4])
+            country_flags.append(os.path.basename(filename)[:-4])
 
         for tag in list(cosmetic_tags.keys()):
             if cosmetic_tags[tag] == 0:

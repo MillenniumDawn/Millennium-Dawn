@@ -8,16 +8,25 @@ import glob
 import logging
 import os
 import re
-import subprocess
 import sys
 from multiprocessing import cpu_count
 from pathlib import Path
 from typing import Dict, List, Optional
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from shared_utils import (
+    DataCleaner,
+    FileOpener,
+    create_validation_parser,
+    find_line_number,
+    get_staged_files,
+    log_message,
+    run_validator_main,
+    should_skip_file,
+    strip_comments,
+)
 
-IGNORED_DIRS = ["gfx", "tools", "resources", "docs", "map"]
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 
 class Colors:
@@ -30,143 +39,6 @@ class Colors:
     ENDC = "\033[0m"
     BOLD = "\033[1m"
     UNDERLINE = "\033[4m"
-
-
-def should_skip_file(
-    filename: str, extra_skip_patterns: Optional[List[str]] = None
-) -> bool:
-    normalized_path = filename.replace("\\", "/")
-    for ignored_dir in IGNORED_DIRS:
-        if f"/{ignored_dir}/" in normalized_path or normalized_path.startswith(
-            f"{ignored_dir}/"
-        ):
-            return True
-    if extra_skip_patterns:
-        for pattern in extra_skip_patterns:
-            if pattern in filename:
-                return True
-    return False
-
-
-def get_staged_files(
-    mod_path: str, extensions: Optional[List[str]] = None
-) -> Optional[List[str]]:
-    if extensions is None:
-        extensions = [".txt"]
-    try:
-        result = subprocess.run(
-            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
-            cwd=mod_path,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        files = result.stdout.strip().split("\n")
-        staged_files = [
-            os.path.join(mod_path, f)
-            for f in files
-            if f and any(f.endswith(ext) for ext in extensions)
-        ]
-        return staged_files if staged_files else None
-    except subprocess.CalledProcessError:
-        return None
-
-
-def find_line_number(filename: str, pattern: str, lowercase: bool = True) -> int:
-    try:
-        with open(filename, "r", encoding="utf-8-sig") as f:
-            for line_num, line in enumerate(f, 1):
-                search_line = line.lower() if lowercase else line
-                search_pattern = pattern.lower() if lowercase else pattern
-                if search_pattern in search_line:
-                    return line_num
-    except Exception:
-        pass
-    return 0
-
-
-def strip_comments(text: str) -> str:
-    """Remove comment-only lines (lines starting with optional whitespace then #)
-    and inline comments (everything after # that is not inside quotes) from text."""
-    lines = text.split("\n")
-    result = []
-    for line in lines:
-        # Check if line is entirely a comment
-        stripped = line.lstrip()
-        if stripped.startswith("#"):
-            result.append("")
-            continue
-        # Strip inline comments (# not inside quotes)
-        in_quote = False
-        for i, ch in enumerate(line):
-            if ch == '"':
-                in_quote = not in_quote
-            elif ch == "#" and not in_quote:
-                line = line[:i]
-                break
-        result.append(line)
-    return "\n".join(result)
-
-
-class FileOpener:
-    @classmethod
-    def open_text_file(
-        cls, filename: str, lowercase: bool = True, strip_comments_flag: bool = False
-    ) -> str:
-        try:
-            with open(filename, "r", encoding="utf-8-sig") as text_file:
-                content = text_file.read()
-                if strip_comments_flag:
-                    content = strip_comments(content)
-                if lowercase:
-                    return content.lower()
-                else:
-                    return content
-        except Exception as ex:
-            logging.warning(f"Skipping the file {filename}, {ex}")
-            return ""
-
-
-class DataCleaner:
-    @classmethod
-    def clear_false_positives(cls, input_iter, false_positives: tuple = ()):
-        if isinstance(input_iter, dict):
-            if len(false_positives) > 0:
-                for key in false_positives:
-                    try:
-                        input_iter.pop(key)
-                    except KeyError:
-                        continue
-            return input_iter
-        elif isinstance(input_iter, list):
-            if len(false_positives) > 0:
-                return [i for i in input_iter if i not in false_positives]
-            return input_iter
-
-    @classmethod
-    def clear_false_positives_partial_match(
-        cls, input_iter, false_positives: tuple = ()
-    ):
-        if isinstance(input_iter, dict):
-            if len(false_positives) > 0:
-                skip_list = []
-                for k in input_iter:
-                    for f in false_positives:
-                        if f in k:
-                            skip_list.append(k)
-                for i in skip_list:
-                    if i in input_iter:
-                        input_iter.pop(i)
-            return input_iter
-        elif isinstance(input_iter, list):
-            if len(false_positives) > 0:
-                skip_list = []
-                for k in input_iter:
-                    for f in false_positives:
-                        if f in k:
-                            skip_list.append(k)
-                input_iter = [i for i in input_iter if i not in skip_list]
-            return input_iter
 
 
 class BaseValidator:
@@ -352,7 +224,6 @@ def run_validator_main(
         staged_only=args.staged,
         workers=args.workers,
     )
-    # Pass any extra args as kwargs
     if extra_args_fn:
         for key in vars(args):
             if key not in ("path", "strict", "output", "no_color", "staged", "workers"):
