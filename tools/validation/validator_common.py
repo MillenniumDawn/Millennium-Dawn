@@ -13,7 +13,6 @@ from multiprocessing import cpu_count
 from pathlib import Path
 from typing import Dict, List, Optional
 
-# Import shared utilities
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import (
     DataCleaner,
@@ -27,7 +26,6 @@ from shared_utils import (
     strip_comments,
 )
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 
@@ -226,7 +224,6 @@ def run_validator_main(
         staged_only=args.staged,
         workers=args.workers,
     )
-    # Pass any extra args as kwargs
     if extra_args_fn:
         for key in vars(args):
             if key not in ("path", "strict", "output", "no_color", "staged", "workers"):

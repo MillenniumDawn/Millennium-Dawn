@@ -13,7 +13,6 @@ import time
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple
 
-# Import shared utilities
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import (
     compact_block,
@@ -31,7 +30,6 @@ def compact_search_filters(block_lines: List[str]) -> str:
 
     entities = []
     for line in block_lines:
-        # Find everything between { and } (or after {, or before })
         if "search_filters" in line and "{" in line:
             # Get everything after the first '{'
             after_brace = line.split("{", 1)[1]
@@ -48,7 +46,6 @@ def compact_search_filters(block_lines: List[str]) -> str:
             tokens = line.strip().split()
             entities.extend(tokens)
 
-    # Remove empty tokens
     entities = [e for e in entities if e]
     return f"search_filters = {{ {' '.join(entities)} }}"
 
@@ -58,11 +55,9 @@ def compact_icon(block_lines: List[str]) -> str:
     if not block_lines:
         return "icon = GFX_goal_generic_support_the_left_wing"  # Default fallback
 
-    # If it's already a single line (simple icon)
     if len(block_lines) == 1:
         return block_lines[0].strip()
 
-    # For complex multi-line blocks, just remove blank lines and preserve original indentation
     compacted_lines = []
     for line in block_lines:
         if line.strip():  # Only keep non-empty lines
@@ -112,7 +107,6 @@ class BaseStandardizer(ABC):
             log_message("ERROR", f"Failed to read {input_file}: {e}")
             return False
 
-        # Process the file
         output_lines = []
         i = 0
         self.processed_count = 0

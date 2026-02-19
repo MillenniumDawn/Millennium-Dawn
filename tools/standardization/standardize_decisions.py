@@ -38,7 +38,6 @@ class DecisionStandardizer(BaseStandardizer):
         while i < len(block_lines) - 1:  # Skip closing brace
             line = block_lines[i].strip()
 
-            # Single line properties
             if line.startswith("cost ="):
                 props["cost"] = line
             elif line.startswith("days_remove ="):
@@ -48,7 +47,6 @@ class DecisionStandardizer(BaseStandardizer):
             elif line.startswith("icon ="):
                 props["icon"] = line
 
-            # Multi-line blocks
             elif line.startswith("allowed ="):
                 block_lines_block, next_i = self.extract_block(block_lines, i)
                 props["allowed"].append(block_lines_block)
@@ -100,7 +98,6 @@ class DecisionStandardizer(BaseStandardizer):
             line = lines[i]
             block_lines.append(line)
 
-            # Count braces
             brace_count += line.count("{") - line.count("}")
 
             if brace_count == 0 and "{" in lines[start_index]:
@@ -162,7 +159,6 @@ class DecisionStandardizer(BaseStandardizer):
 
         # 6. Complete effect (add log if missing)
         for complete_effect in props["complete_effect"]:
-            # Check if log exists
             has_log = any("log =" in line for line in complete_effect)
 
             if not has_log and props["id"]:
@@ -197,9 +193,9 @@ class DecisionStandardizer(BaseStandardizer):
         # 9. Other properties
         if props["other"]:
             for line in props["other"]:
-                if line.strip():  # Only add non-empty lines
+                if line.strip():
                     lines.append(line)
-            if props["other"]:  # Add blank line after other properties if they exist
+            if props["other"]:
                 lines.append("")
 
         lines.append("\t}")
@@ -227,8 +223,7 @@ class DecisionStandardizer(BaseStandardizer):
         compacted = []
         for line in block_lines:
             stripped = line.strip()
-            if stripped:  # Only keep non-empty lines
-                # Preserve the original indentation structure
+            if stripped:
                 compacted.append(line.rstrip())
 
         return compacted

@@ -49,7 +49,6 @@ class EventStandardizer(BaseStandardizer):
         while i < len(block_lines) - 1:  # Skip closing brace
             line = block_lines[i].strip()
 
-            # Single line properties
             if line.startswith("id ="):
                 props["id"] = line
             elif line.startswith("title ="):
@@ -74,7 +73,6 @@ class EventStandardizer(BaseStandardizer):
             elif line.startswith("fire_only_once ="):
                 props["fire_only_once"] = line
 
-            # Multi-line blocks
             elif line.startswith("mean_time_to_happen ="):
                 block_lines_block, next_i = self.extract_block(block_lines, i)
                 props["mean_time_to_happen"].append(block_lines_block)
@@ -96,7 +94,6 @@ class EventStandardizer(BaseStandardizer):
                 i = next_i
                 continue
             else:
-                # Other content
                 props["other"].append(block_lines[i])
 
             i += 1
@@ -118,7 +115,6 @@ class EventStandardizer(BaseStandardizer):
             line = lines[i]
             block_lines.append(line)
 
-            # Count braces
             brace_count += line.count("{") - line.count("}")
 
             if brace_count == 0 and "{" in lines[start_index]:
@@ -147,12 +143,10 @@ class EventStandardizer(BaseStandardizer):
             lines.append(f'\t{props["title"]}')
         if props["desc"]:
             if isinstance(props["desc"], list):
-                # Multi-line description block
                 compacted_desc = self.compact_block(props["desc"][:])
                 for line in compacted_desc:
                     lines.append(line)
             else:
-                # Single line description
                 lines.append(f'\t{props["desc"]}')
 
         # 3. Picture
@@ -163,7 +157,6 @@ class EventStandardizer(BaseStandardizer):
         if props["is_triggered_only"]:
             lines.append(f'\t{props["is_triggered_only"]}')
         else:
-            # Add default if not present
             lines.append("\tis_triggered_only = yes")
 
         # 5. major flag (use sparingly)
@@ -199,7 +192,6 @@ class EventStandardizer(BaseStandardizer):
 
         # 10. Options
         for option in props["option"]:
-            # Check if log exists in option
             has_log = any("log =" in line for line in option)
 
             # Only add log if there are actual effects in the option
@@ -238,9 +230,9 @@ class EventStandardizer(BaseStandardizer):
         # 11. Other properties
         if props["other"]:
             for line in props["other"]:
-                if line.strip():  # Only add non-empty lines
+                if line.strip():
                     lines.append(line)
-            if props["other"]:  # Add blank line after other properties if they exist
+            if props["other"]:
                 lines.append("")
 
         lines.append("}")
@@ -268,8 +260,7 @@ class EventStandardizer(BaseStandardizer):
         compacted = []
         for line in block_lines:
             stripped = line.strip()
-            if stripped:  # Only keep non-empty lines
-                # Preserve the original indentation structure
+            if stripped:
                 compacted.append(line.rstrip())
 
         return compacted

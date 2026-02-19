@@ -10,7 +10,6 @@ import os
 import sys
 from pathlib import Path
 
-# Add the tools directory to the path so we can import our modules
 sys.path.insert(0, str(Path(__file__).parent))
 
 from standardize_decisions import main as decision_main
@@ -37,7 +36,6 @@ Examples:
         dest="command", help="Type of file to standardize"
     )
 
-    # Focus tree standardizer
     focus_parser = subparsers.add_parser("focus", help="Standardize focus tree files")
     focus_parser.add_argument("input_file", help="Input focus tree file")
     focus_parser.add_argument(
@@ -50,7 +48,6 @@ Examples:
         "-v", "--verbose", action="store_true", help="Verbose output"
     )
 
-    # Event standardizer
     event_parser = subparsers.add_parser("event", help="Standardize event files")
     event_parser.add_argument("input_file", help="Input event file")
     event_parser.add_argument(
@@ -63,7 +60,6 @@ Examples:
         "-v", "--verbose", action="store_true", help="Verbose output"
     )
 
-    # Decision standardizer
     decision_parser = subparsers.add_parser(
         "decision", help="Standardize decision files"
     )
@@ -78,7 +74,6 @@ Examples:
         "-v", "--verbose", action="store_true", help="Verbose output"
     )
 
-    # Idea standardizer
     idea_parser = subparsers.add_parser("idea", help="Standardize idea files")
     idea_parser.add_argument("input_file", help="Input idea file")
     idea_parser.add_argument(
@@ -97,12 +92,10 @@ Examples:
         parser.print_help()
         sys.exit(1)
 
-    # Check if input file exists
     if not os.path.exists(args.input_file):
         print(f"Error: File '{args.input_file}' does not exist", file=sys.stderr)
         sys.exit(1)
 
-    # Route to appropriate standardizer
     if args.command == "focus":
         focus_main()
     elif args.command == "event":

@@ -35,13 +35,11 @@ class IdeaStandardizer(BaseStandardizer):
         while i < len(block_lines) - 1:  # Skip closing brace
             line = block_lines[i].strip()
 
-            # Single line properties
             if line.startswith("name ="):
                 props["name"] = line
             elif line.startswith("picture ="):
                 props["picture"] = line
 
-            # Multi-line blocks
             elif line.startswith("allowed_civil_war ="):
                 block_lines_block, next_i = self.extract_block(block_lines, i)
                 props["allowed_civil_war"].append(block_lines_block)
@@ -88,7 +86,6 @@ class IdeaStandardizer(BaseStandardizer):
             line = lines[i]
             block_lines.append(line)
 
-            # Count braces
             brace_count += line.count("{") - line.count("}")
 
             if brace_count == 0 and "{" in lines[start_index]:
@@ -141,7 +138,6 @@ class IdeaStandardizer(BaseStandardizer):
 
         # 5. on_add (log only when making changes)
         for on_add in props["on_add"]:
-            # Check if log exists and if there are actual effects
             has_log = any("log =" in line for line in on_add)
             has_effects = any(
                 line.strip()
@@ -150,7 +146,6 @@ class IdeaStandardizer(BaseStandardizer):
                 for line in on_add
             )
 
-            # Only keep on_add if it has effects, remove empty ones
             if has_effects:
                 if not has_log and props["id"]:
                     # Add log after opening brace if there are effects
@@ -171,7 +166,6 @@ class IdeaStandardizer(BaseStandardizer):
 
         # 6. on_remove (log only when making changes)
         for on_remove in props["on_remove"]:
-            # Check if log exists and if there are actual effects
             has_log = any("log =" in line for line in on_remove)
             has_effects = any(
                 line.strip()
@@ -180,7 +174,6 @@ class IdeaStandardizer(BaseStandardizer):
                 for line in on_remove
             )
 
-            # Only keep on_remove if it has effects, remove empty ones
             if has_effects:
                 if not has_log and props["id"]:
                     # Add log after opening brace if there are effects
@@ -257,8 +250,7 @@ class IdeaStandardizer(BaseStandardizer):
         compacted = []
         for line in block_lines:
             stripped = line.strip()
-            if stripped:  # Only keep non-empty lines
-                # Preserve the original indentation structure
+            if stripped:
                 compacted.append(line.rstrip())
 
         return compacted
