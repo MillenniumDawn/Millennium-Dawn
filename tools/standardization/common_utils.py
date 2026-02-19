@@ -177,10 +177,10 @@ def create_standardizer_parser(description: str) -> argparse.ArgumentParser:
     return parser
 
 
-def run_standardizer(standardizer_class, description: str):
+def run_standardizer(standardizer_class, description: str, argv=None):
     """Run a standardizer with standard command line interface"""
     parser = create_standardizer_parser(description)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if not os.path.exists(args.input_file):
         log_message("ERROR", f"File '{args.input_file}' does not exist")

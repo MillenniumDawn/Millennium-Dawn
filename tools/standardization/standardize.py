@@ -12,10 +12,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from standardize_decisions import main as decision_main
-from standardize_events import main as event_main
-from standardize_focus_tree import main as focus_main
-from standardize_ideas import main as idea_main
+from common_utils import run_standardizer
+from standardize_decisions import DecisionStandardizer
+from standardize_events import EventStandardizer
+from standardize_focus_tree import standardize_focus_tree
+from standardize_ideas import IdeaStandardizer
 
 
 def main():
@@ -96,14 +97,35 @@ Examples:
         print(f"Error: File '{args.input_file}' does not exist", file=sys.stderr)
         sys.exit(1)
 
+    sub_argv = [args.input_file]
+    if args.output:
+        sub_argv += ["--output", args.output]
+    if args.backup:
+        sub_argv += ["--backup"]
+    if args.verbose:
+        sub_argv += ["--verbose"]
+
     if args.command == "focus":
-        focus_main()
+        output_file = args.output if args.output else args.input_file
+        standardize_focus_tree(args.input_file, output_file, args.verbose)
     elif args.command == "event":
-        event_main()
+        run_standardizer(
+            EventStandardizer,
+            "Standardize HOI4 event files according to Millennium Dawn coding standards",
+            argv=sub_argv,
+        )
     elif args.command == "decision":
-        decision_main()
+        run_standardizer(
+            DecisionStandardizer,
+            "Standardize HOI4 decision files according to Millennium Dawn coding standards",
+            argv=sub_argv,
+        )
     elif args.command == "idea":
-        idea_main()
+        run_standardizer(
+            IdeaStandardizer,
+            "Standardize HOI4 idea files according to Millennium Dawn coding standards",
+            argv=sub_argv,
+        )
     else:
         parser.print_help()
         sys.exit(1)

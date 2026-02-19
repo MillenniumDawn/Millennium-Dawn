@@ -44,6 +44,8 @@ class EventStandardizer(BaseStandardizer):
             props["event_type"] = "province_event"
         elif "unit_leader_event" in first_line:
             props["event_type"] = "unit_leader_event"
+        elif "news_event" in first_line:
+            props["event_type"] = "news_event"
 
         i = 1  # Skip opening brace
         while i < len(block_lines) - 1:  # Skip closing brace
@@ -156,7 +158,7 @@ class EventStandardizer(BaseStandardizer):
         # 4. is_triggered_only (required for triggered events)
         if props["is_triggered_only"]:
             lines.append(f'\t{props["is_triggered_only"]}')
-        else:
+        elif not props["mean_time_to_happen"]:
             lines.append("\tis_triggered_only = yes")
 
         # 5. major flag (use sparingly)
@@ -197,6 +199,7 @@ class EventStandardizer(BaseStandardizer):
             # Only add log if there are actual effects in the option
             has_effects = any(
                 line.strip()
+                and line.strip() not in ("{", "}")
                 and not line.strip().startswith("#")
                 and not line.strip().startswith("name =")
                 and not line.strip().startswith("ai_chance =")

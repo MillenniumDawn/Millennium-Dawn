@@ -141,6 +141,7 @@ class IdeaStandardizer(BaseStandardizer):
             has_log = any("log =" in line for line in on_add)
             has_effects = any(
                 line.strip()
+                and line.strip() not in ("{", "}")
                 and not line.strip().startswith("#")
                 and not line.strip().startswith("log =")
                 for line in on_add
@@ -169,6 +170,7 @@ class IdeaStandardizer(BaseStandardizer):
             has_log = any("log =" in line for line in on_remove)
             has_effects = any(
                 line.strip()
+                and line.strip() not in ("{", "}")
                 and not line.strip().startswith("#")
                 and not line.strip().startswith("log =")
                 for line in on_remove
