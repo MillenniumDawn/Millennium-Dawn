@@ -6,7 +6,12 @@ description: "Millennium Dawn's Code Stylization Guide"
 
 This guide covers coding standards, best practices, and formatting rules for Millennium Dawn mod development.
 
-> **Quick Tool**: Run `python3 tools/standardize_focus_tree.py` to auto-format focus trees.
+> **Quick Tools**:
+>
+> - Run `python3 tools/standardization/standardize.py focus` to auto-format focus trees
+> - Run `python3 tools/standardization/standardize.py event` to auto-format events
+> - Run `python3 tools/standardization/standardize.py decision` to auto-format decisions
+> - Run `python3 tools/standardization/standardize.py idea` to auto-format ideas
 
 ---
 
