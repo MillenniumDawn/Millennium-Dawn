@@ -1,9 +1,11 @@
 ---
 layout: default
+page_id: home
 description: "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV."
 ---
 
-![New2]({{ '/uploads/main-menu-2.png' | relative_url }}) ![Introduction]({{ '/uploads/Introduction.png' | relative_url }})
+{% include responsive-image.html src="/uploads/main-menu-2.png" alt="Millennium Dawn logo banner" width="1440" height="191" loading="eager" fetchpriority="high" %}
+{% include responsive-image.html src="/uploads/Introduction.png" alt="Millennium Dawn introduction banner" width="1440" height="144" loading="eager" %}
 
 With the dawn of a new millennium, a new chapter in human history will be written. Globalization continues to change the lives of countless billions while rising extremism is showing signs of igniting the fires of conflict. New powers begin to emerge, and not all believe their place in the global order, or that of some competitors is warranted. A struggle will soon begin, and it will likely change everything. Will you lead your Nation to prosperity and dominance in the decades ahead, or will your Nation fall victim to the defining moments of history?
 
@@ -27,7 +29,7 @@ See the [Troubleshooting Guide]({{ '/player-tutorials/troubleshooting-guide' | r
 
 ### Map of Current Focus Trees
 
-![Map of current focus trees]({{ '/uploads/roadmaps/current-focus-tree.png' | relative_url }})
+{% include responsive-image.html src="/uploads/roadmaps/current-focus-tree.png" alt="Map of current focus trees" width="6400" height="3549" loading="lazy" %}
 
 ### Roadmap for Future National Focus Trees and Custom Mechanics
 
@@ -39,13 +41,13 @@ The "x" means that content may not arrive until a patch.
 
 Tentative means we have the intention to start or complete this content, but it may or may not be in the mentioned version. It depends on work load and whether the developer is able to complete it. This should give us a more accurate viewing of our progress and what our expectations are for our completion.
 
-![Roadmap for National Focus Trees]({{ '/uploads/roadmaps/upcoming-content.png' | relative_url }})
+{% include responsive-image.html src="/uploads/roadmaps/upcoming-content.png" alt="Roadmap for National Focus Trees" width="6400" height="3275" loading="lazy" %}
 
 ### Roadmap for Military Industrial Organisation (MIO) Content
 
 Map is currently showing which countries have a fully custom MIO content and which ones are planned. The new additions get positive feedback so we want to share which countries are currently planned.
 
-![Roadmap for MIO content]({{ '/uploads/roadmaps/custom-mio.png' | relative_url }})
+{% include responsive-image.html src="/uploads/roadmaps/custom-mio.png" alt="Roadmap for MIO content" width="6460" height="3403" loading="lazy" %}
 
 ### Joining the Millennium Dawn Development Team
 
