@@ -273,28 +273,37 @@ on_actions = {
 			every_country = {
 				limit = {
 					OR = {
-						is_ai = no
+						NOT = { check_variable = { auto_influence_array^0 = 0 } }
 						is_in_array = { influence_array = FROM.id }
 					}
 				}
-				# Auto influence cleanup (human players only)
-				if = {
-					limit = { is_ai = no }
+				if = { limit = { NOT = { check_variable = { auto_influence_array^0 = 0 } } }
+					set_temp_variable = { removed_count = 0 }
 					for_each_loop = {
 						array = auto_influence_array
 						index = i
 						value = v
 
-						if = { limit = { var:auto_influence_array^i = { exists = no } }
-							var:auto_influence_array^i = {
+						if = {
+							limit = {
+								NOT = { check_variable = { v = 0 } }
+								NOT = { country_exists = var:v }
+							}
+							set_temp_variable = { removed_country = v }
+							set_variable = { auto_influence_array^i = 0 }
+							subtract_from_variable = { auto_influence_users = 1 }
+							var:removed_country = {
 								PREV = {
 									remove_auto_influencer_request = yes
 								}
 							}
+							add_to_temp_variable = { removed_count = 1 }
 						}
 					}
-					update_auto_influence_array = yes
-					update_dirty_influence_var = yes
+					if = { limit = { check_variable = { removed_count > 0 } }
+						update_auto_influence_array = yes
+						update_dirty_influence_var = yes
+					}
 				}
 
 				# Remove Annexed Nation from Influence Arrays (all countries)
