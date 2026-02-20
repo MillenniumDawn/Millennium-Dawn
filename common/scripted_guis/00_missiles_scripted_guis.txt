@@ -4490,7 +4490,7 @@ scripted_gui = {
 				}
 				has_political_power > 200
 			}
-			is_un_aid_request_join_esco_button_click_enabled = {
+			is_un_aid_request_subsidies_esco_button_click_enabled = {
 				custom_trigger_tooltip = {
 					tooltip = is_un_research_speed_less_than_global_target
 					check_variable = { modifier@research_speed_factor < global.target_research_speed_mod }
@@ -4500,7 +4500,7 @@ scripted_gui = {
 					check_variable = { political_power_daily < 7 }
 				}
 			}
-			is_un_aid_request_join_ido_button_click_enabled = {
+			is_un_aid_request_subsidies_ido_button_click_enabled = {
 				custom_trigger_tooltip = {
 					tooltip = is_un_construction_speed_less_than_global_target
 					check_variable = { modifier@production_speed_buildings_factor < global.target_const_speed_mod }
@@ -4511,7 +4511,7 @@ scripted_gui = {
 					NOT = { check_variable = { total_unemployed_percentage_display < 0.05 } }
 				}
 			}
-			is_un_aid_request_join_cdf_button_click_enabled = {
+			is_un_aid_request_subsidies_cdf_button_click_enabled = {
 				custom_trigger_tooltip = {
 					tooltip = is_producitivty_less_than_global_target
 					check_variable = { overall_productivity < global.world_productivity_target }
@@ -4520,6 +4520,18 @@ scripted_gui = {
 					tooltip = is_can_gain_from_financial_aid
 					check_variable = { gdp_total < 1000 }
 				}
+			}
+			is_un_aid_request_join_esco_button_click_enabled = {
+				has_political_power > 100
+				has_dynamic_modifier = { modifier = united_nations_member }
+			}
+			is_un_aid_request_join_ido_button_click_enabled = {
+				has_political_power > 100
+				has_dynamic_modifier = { modifier = united_nations_member }
+			}
+			is_un_aid_request_join_cdf_button_click_enabled = {
+				has_political_power > 100
+				has_dynamic_modifier = { modifier = united_nations_member }
 			}
 		}
 
@@ -4538,6 +4550,7 @@ scripted_gui = {
 				custom_effect_tooltip = is_cut_all_additional_money_on_programs
 
 				calculate_un_program_budgets = yes
+				missile_ui_update = yes
 			}
 			decrease_base_budget_vote_button_click = {
 				set_temp_variable = { ga_new_vote_type = 8 }
@@ -4545,6 +4558,7 @@ scripted_gui = {
 				update_ga_vote = yes
 
 				add_political_power = -200
+				missile_ui_update = yes
 			}
 			increase_base_budget_vote_button_click = {
 				set_temp_variable = { ga_new_vote_type = 9 }
@@ -4552,15 +4566,156 @@ scripted_gui = {
 				update_ga_vote = yes
 
 				add_political_power = -200
+				missile_ui_update = yes
+			}
+			is_un_aid_request_subsidies_esco_button_click = {
+				add_to_array = { global.unesco_recipients = THIS }
+				missile_ui_update = yes
+			}
+			is_un_aid_request_subsidies_ido_button_click = {
+				add_to_array = { global.unido_recipients = THIS }
+				missile_ui_update = yes
+			}
+			is_un_aid_request_subsidies_cdf_button_click = {
+				add_to_array = { global.uncdf_recipients = THIS }
+				missile_ui_update = yes
 			}
 			is_un_aid_request_join_esco_button_click = {
+				if = {
+					limit = {
+						has_idea = un_aid_esco_member
+					}
+					remove_ideas = un_aid_esco_member
+					custom_effect_tooltip = TT_ALL_UN_MEMBER_NATIONS_GAIN
+					effect_tooltip = {
+						add_opinion_modifier = { target = GHA modifier = left_un_esco }
+					}
+					for_each_loop = {
+						array = global.UN_general_assembly
+						value = v
 
+						var:v = {
+							add_opinion_modifier = {
+								target = ROOT
+								modifier = left_un_esco
+							}
+							remove_opinion_modifier = {
+								target = ROOT
+								modifier = un_esco_member
+							}
+						}
+					}
+				}else = {
+					add_ideas = un_aid_esco_member
+					custom_effect_tooltip = TT_ALL_UN_MEMBER_NATIONS_GAIN
+					effect_tooltip = {
+						add_opinion_modifier = { target = GHA modifier = un_esco_member }
+					}
+					for_each_loop = {
+						array = global.UN_general_assembly
+						value = v
+
+						var:v = {
+							add_opinion_modifier = {
+								target = ROOT
+								modifier = un_esco_member
+							}
+						}
+					}
+				}
+				add_political_power = -100
+				missile_ui_update = yes
 			}
 			is_un_aid_request_join_ido_button_click = {
+				if = {
+					limit = {
+						has_idea = un_aid_ido_member
+					}
+					remove_ideas = un_aid_ido_member
+					custom_effect_tooltip = TT_ALL_UN_MEMBER_NATIONS_GAIN
+					effect_tooltip = {
+						add_opinion_modifier = { target = GHA modifier = left_un_ido }
+					}
+					for_each_loop = {
+						array = global.UN_general_assembly
+						value = v
 
+						var:v = {
+							add_opinion_modifier = {
+								target = ROOT
+								modifier = left_un_ido
+							}
+							remove_opinion_modifier = {
+								target = ROOT
+								modifier = un_ido_member
+							}
+						}
+					}
+				}else = {
+					add_ideas = un_aid_ido_member
+					custom_effect_tooltip = TT_ALL_UN_MEMBER_NATIONS_GAIN
+					effect_tooltip = {
+						add_opinion_modifier = { target = GHA modifier = un_ido_member }
+					}
+					for_each_loop = {
+						array = global.UN_general_assembly
+						value = v
+						var:v = {
+							add_opinion_modifier = {
+								target = ROOT
+								modifier = un_ido_member
+							}
+						}
+					}
+				}
+				add_political_power = -100
+				missile_ui_update = yes
 			}
 			is_un_aid_request_join_cdf_button_click = {
+				if = {
+					limit = {
+						has_idea = un_aid_cdf_member
+					}
+					remove_ideas = un_aid_cdf_member
+					custom_effect_tooltip = TT_ALL_UN_MEMBER_NATIONS_GAIN
+					effect_tooltip = {
+						add_opinion_modifier = { target = GHA modifier = left_un_cdf }
+					}
+					for_each_loop = {
+						array = global.UN_general_assembly
+						value = v
 
+						var:v = {
+							add_opinion_modifier = {
+								target = ROOT
+								modifier = left_un_cdf
+							}
+							remove_opinion_modifier = {
+								target = ROOT
+								modifier = un_cdf_member
+							}
+						}
+					}
+				}else = {
+					add_ideas = un_aid_cdf_member
+					custom_effect_tooltip = TT_ALL_UN_MEMBER_NATIONS_GAIN
+					effect_tooltip = {
+						add_opinion_modifier = { target = GHA modifier = un_cdf_member }
+					}
+					for_each_loop = {
+						array = global.UN_general_assembly
+						value = v
+
+						var:v = {
+							add_opinion_modifier = {
+								target = ROOT
+								modifier = un_cdf_member
+							}
+						}
+					}
+				}
+				add_political_power = -100
+				missile_ui_update = yes
 			}
 		}
 	}
