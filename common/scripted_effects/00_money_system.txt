@@ -3247,6 +3247,40 @@ calculate_additional_expense_rate = {
 	}
 	# United Nations Contribution Expenses
 	if = { limit = { has_dynamic_modifier = { modifier = united_nations_member } }
+		set_variable = { united_nations_aid_expenses = 0 }
+		if = {
+			limit = {
+				has_idea = un_aid_esco_member
+			}
+			set_variable = { united_nations_unescoe_funding = united_nations_esco_mandatory_funding }
+			add_to_variable = { united_nations_unescoe_funding = united_nations_esco_optional_funding }
+			add_to_variable = { united_nations_aid_expenses = united_nations_unescoe_funding }
+		}else = {
+			set_variable = { united_nations_esco_optional_funding = 0 }
+		}
+
+		if = {
+			limit = {
+				has_idea = un_aid_ido_member
+			}
+			set_variable = { united_nations_unido_funding = united_nations_ido_mandatory_funding }
+			add_to_variable = { united_nations_unido_funding = united_nations_ido_optional_funding }
+			add_to_variable = { united_nations_aid_expenses = united_nations_unido_funding }
+		}else = {
+			set_variable = { united_nations_ido_optional_funding = 0 }
+		}
+
+		if = {
+			limit = {
+				has_idea = un_aid_cdf_member
+			}
+			set_variable = { united_nations_uncdf_funding = united_nations_cdf_mandatory_funding }
+			add_to_variable = { united_nations_uncdf_funding = united_nations_cdf_optional_funding }
+			add_to_variable = { united_nations_aid_expenses = united_nations_uncdf_funding }
+		}else = {
+			set_variable = { united_nations_cdf_optional_funding = 0 }
+		}
+
 		if = {
 			limit = {
 				NOT = { check_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses } }
@@ -5558,6 +5592,10 @@ calculate_united_nations_base_budget = {
 				}
 				set_temp_variable = { peak_prod_mod = overall_productivity }
 			}
+			set_country_flag = update_cdf
+			set_country_flag = update_ido
+			set_country_flag = update_esco
+			calculate_base_program_contributions = yes
 		}
 	}
 
@@ -5633,16 +5671,68 @@ calculate_un_program_budgets = {
 	add_to_variable = { global.undio_budget = base_budget_number }
 	add_to_variable = { global.uncdf_budget = base_budget_number }
 
-	add_to_variable = { global.unescoe_budget = global.unescoe_additional_contribution }
-	add_to_variable = { global.undio_budget = global.undio_additional_contribution }
-	add_to_variable = { global.uncdf_budget = global.uncdf_additional_contribution }
+	for_each_loop = {
+		array = global.UN_general_assembly
+		value = v
+
+		var:v = {
+			add_to_variable = { global.unescoe_budget = united_nations_unescoe_funding }
+			add_to_variable = { global.undio_budget = united_nations_unido_funding }
+			add_to_variable = { global.uncdf_budget = united_nations_uncdf_funding }
+		}
+	}
 
 	missile_ui_update = yes
-
-	update_un_program_budgets = yes
 }
 
-#updates how much is going into each nation that is receiving benifits
-update_un_program_budgets = {
+calculate_base_program_contributions = {
+	if = {
+		limit = {
+			has_idea = un_aid_esco_member
+			has_country_flag = update_esco
+		}
+		set_temp_variable = { income_calc = display_income }
+		multiply_temp_variable = { income_calc = 0.01 }
+		set_variable = { united_nations_esco_mandatory_funding = income_calc }
+		add_to_variable = { united_nations_unescoe_funding = united_nations_esco_mandatory_funding }
+		clr_country_flag = update_esco
+	}else_if = {
+		limit = { NOT = { has_idea = un_aid_esco_member } }
+		set_variable = { united_nations_esco_mandatory_funding = 0 }
+		set_variable = { united_nations_unescoe_funding = 0 }
+	}
 
+	if = {
+		limit = {
+			has_idea = un_aid_ido_member
+			has_country_flag = update_ido
+		}
+		set_temp_variable = { income_calc = display_income }
+		multiply_temp_variable = { income_calc = 0.01 }
+		set_variable = { united_nations_ido_mandatory_funding = income_calc }
+		add_to_variable = { united_nations_unido_funding = united_nations_ido_mandatory_funding }
+		clr_country_flag = update_ido
+	}else_if = {
+		limit = { NOT = { has_idea = un_aid_ido_member } }
+		set_variable = { united_nations_ido_mandatory_funding = 0 }
+		set_variable = { united_nations_unido_funding = 0 }
+	}
+
+	if = {
+		limit = {
+			has_idea = un_aid_cdf_member
+			has_country_flag = update_cdf
+		}
+		set_temp_variable = { income_calc = display_income }
+		multiply_temp_variable = { income_calc = 0.02 }
+		set_variable = { united_nations_cdf_mandatory_funding = income_calc }
+		add_to_variable = { united_nations_uncdf_funding = united_nations_cdf_mandatory_funding }
+		clr_country_flag = update_cdf
+	}else_if = {
+		limit = { NOT = { has_idea = un_aid_cdf_member } }
+		set_variable = { united_nations_cdf_mandatory_funding = 0 }
+		set_variable = { united_nations_uncdf_funding = 0 }
+	}
+
+	calculate_un_program_budgets = yes
 }
