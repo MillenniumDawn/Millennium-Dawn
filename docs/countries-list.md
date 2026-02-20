@@ -6,6 +6,8 @@ description: "Full list of playable countries available in Millennium Dawn: A Mo
 permalink: /countries-list/
 ---
 
+{% assign focus_countries = site.countries | where: "unique_focus_tree", true | sort: "grid_order" %}
+
 The following countries are playable in Millennium Dawn: Modern Day Mod:
 
 ## Unique Focus Trees
@@ -13,24 +15,20 @@ The following countries are playable in Millennium Dawn: Modern Day Mod:
 The following countries are playable with unique focus trees:
 
 <div class="country-focus-grid" role="list" aria-label="Countries with unique focus trees">
-  {% for item in site.data.unique_focus_trees %}
-  <article class="country-focus-card"
-           role="listitem"
-           {% if item.flag_image %}style="--country-flag-image: url('{{ item.flag_image | relative_url }}');"{% endif %}>
-    {% if item.flag_image %}
+  {% for country in focus_countries %}
+  {% assign flag_asset = nil %}
+  {% if country.flag_image %}
+    {% assign flag_asset = site.static_files | where: "path", country.flag_image | first %}
+  {% endif %}
+  <article class="country-focus-card" role="listitem"{% if country.flag_image and flag_asset %} style="--country-flag-image: url('{{ country.flag_image | relative_url }}');"{% endif %}>
+    {% if country.flag_image and flag_asset %}
     <span class="country-focus-card__flag-image" aria-hidden="true"></span>
-    {% elsif item.flag %}
-    <span class="country-focus-card__flag" aria-hidden="true">{{ item.flag }}</span>
     {% endif %}
     <p class="country-focus-card__title">
-      {% if item.url %}
-      <a href="{{ item.url | relative_url }}">{{ item.name }}</a>
-      {% else %}
-      <span>{{ item.name }}</span>
-      {% endif %}
+      <a href="{{ country.url | relative_url }}">{{ country.title }}</a>
     </p>
-    {% if item.note %}
-    <p class="country-focus-card__note">{{ item.note }}</p>
+    {% if country.grid_note %}
+    <p class="country-focus-card__note">{{ country.grid_note }}</p>
     {% endif %}
   </article>
   {% endfor %}
