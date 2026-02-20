@@ -2,7 +2,7 @@
 
 """
 Millennium Dawn Focus Tree Standardizer
-Simple approach: Only reformat focus blocks, leave everything else untouched
+Reformats focus blocks and focus tree properties (shortcuts, inlay windows, offsets, positions), leaving everything else untouched
 """
 
 import argparse
@@ -490,8 +490,231 @@ def format_focus_block(props):
     return cleaned_lines
 
 
+def format_shortcut_block(block_lines):
+    """Format shortcut block according to standard"""
+    lines = []
+    lines.append("\tshortcut = {")
+
+    # Extract properties
+    name = ""
+    target = ""
+    scroll_wheel_factor = ""
+    trigger_lines = []
+    other_lines = []
+
+    i = 1  # Skip opening brace
+    while i < len(block_lines) - 1:  # Skip closing brace
+        line = block_lines[i].strip()
+
+        if line.startswith("name ="):
+            name = line
+        elif line.startswith("target ="):
+            target = line
+        elif line.startswith("scroll_wheel_factor ="):
+            scroll_wheel_factor = line
+        elif line.startswith("trigger ="):
+            trigger_block, next_i = extract_block(block_lines, i)
+            trigger_lines = trigger_block
+            i = next_i
+            continue
+        else:
+            other_lines.append(block_lines[i])
+
+        i += 1
+
+    # Format output
+    if name:
+        lines.append(f"\t\t{name}")
+    if target:
+        lines.append(f"\t\t{target}")
+    if scroll_wheel_factor:
+        lines.append(f"\t\t{scroll_wheel_factor}")
+
+    if trigger_lines:
+        compacted_trigger = compact_block(trigger_lines[:])
+        for line in compacted_trigger:
+            lines.append(line)
+
+    for line in other_lines:
+        if line.strip():
+            lines.append(line)
+
+    lines.append("\t}")
+    return lines
+
+
+def format_inlay_window_block(block_lines):
+    """Format inlay_window block according to standard"""
+    lines = []
+    lines.append("\tinlay_window = {")
+
+    # Extract properties
+    window_id = ""
+    position_lines = []
+    other_lines = []
+
+    i = 1  # Skip opening brace
+    while i < len(block_lines) - 1:  # Skip closing brace
+        line = block_lines[i].strip()
+
+        if line.startswith("id ="):
+            window_id = line
+        elif line.startswith("position ="):
+            position_block, next_i = extract_block(block_lines, i)
+            position_lines = position_block
+            i = next_i
+            continue
+        else:
+            other_lines.append(block_lines[i])
+
+        i += 1
+
+    # Format output
+    if window_id:
+        lines.append(f"\t\t{window_id}")
+
+    if position_lines:
+        compacted_position = compact_block(position_lines[:])
+        for line in compacted_position:
+            lines.append(line)
+
+    for line in other_lines:
+        if line.strip():
+            lines.append(line)
+
+    lines.append("\t}")
+    return lines
+
+
+def format_offset_block(block_lines):
+    """Format offset block according to standard"""
+    lines = []
+    lines.append("\toffset = {")
+
+    # Extract properties
+    x_val = ""
+    y_val = ""
+    trigger_lines = []
+    other_lines = []
+
+    i = 1  # Skip opening brace
+    while i < len(block_lines) - 1:  # Skip closing brace
+        line = block_lines[i].strip()
+
+        if line.startswith("x ="):
+            x_val = line
+        elif line.startswith("y ="):
+            y_val = line
+        elif line.startswith("trigger ="):
+            trigger_block, next_i = extract_block(block_lines, i)
+            trigger_lines = trigger_block
+            i = next_i
+            continue
+        else:
+            other_lines.append(block_lines[i])
+
+        i += 1
+
+    # Format output
+    if x_val:
+        lines.append(f"\t\t{x_val}")
+    if y_val:
+        lines.append(f"\t\t{y_val}")
+
+    if trigger_lines:
+        compacted_trigger = compact_block(trigger_lines[:])
+        for line in compacted_trigger:
+            lines.append(line)
+
+    for line in other_lines:
+        if line.strip():
+            lines.append(line)
+
+    lines.append("\t}")
+    return lines
+
+
+def format_continuous_focus_position_block(block_lines):
+    """Format continuous_focus_position block according to standard"""
+    # Extract x and y values
+    x_val = ""
+    y_val = ""
+
+    for line in block_lines:
+        stripped = line.strip()
+        if stripped.startswith("x ="):
+            x_val = stripped.split("=")[1].strip()
+        elif stripped.startswith("y ="):
+            y_val = stripped.split("=")[1].strip()
+
+    # Format as single line
+    if x_val and y_val:
+        return [f"\tcontinuous_focus_position = {{ x = {x_val} y = {y_val} }}"]
+    else:
+        # Fallback to original if parsing fails
+        return block_lines
+
+
+def format_initial_show_position_block(block_lines):
+    """Format initial_show_position block according to standard"""
+    lines = []
+    lines.append("\tinitial_show_position = {")
+
+    # Extract properties
+    x_val = ""
+    y_val = ""
+    focus_val = ""
+    offset_lines = []
+    other_lines = []
+
+    i = 1  # Skip opening brace
+    while i < len(block_lines) - 1:  # Skip closing brace
+        line = block_lines[i].strip()
+
+        if line.startswith("x ="):
+            x_val = line
+        elif line.startswith("y ="):
+            y_val = line
+        elif line.startswith("focus ="):
+            focus_val = line
+        elif line.startswith("offset ="):
+            offset_block, next_i = extract_block(block_lines, i)
+            offset_lines = offset_block
+            i = next_i
+            continue
+        else:
+            other_lines.append(block_lines[i])
+
+        i += 1
+
+    # Format output - prefer single line if simple
+    if focus_val and not x_val and not y_val and not offset_lines and not other_lines:
+        # Simple case: just focus reference
+        return [f"\tinitial_show_position = {{ {focus_val} }}"]
+
+    # Multi-line format
+    if x_val:
+        lines.append(f"\t\t{x_val}")
+    if y_val:
+        lines.append(f"\t\t{y_val}")
+    if focus_val:
+        lines.append(f"\t\t{focus_val}")
+
+    if offset_lines:
+        compacted_offset = compact_block(offset_lines[:])
+        for line in compacted_offset:
+            lines.append(line)
+
+    for line in other_lines:
+        if line.strip():
+            lines.append(line)
+
+    lines.append("\t}")
+    return lines
+
+
 def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = False):
-    """Standardize focus tree by only reformatting focus blocks"""
+    """Standardize focus tree by reformatting focus blocks and all focus tree properties"""
     start_time = time.time()
 
     log_message("INFO", f"Starting standardization of {input_file}", verbose)
@@ -511,6 +734,11 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
     output_lines = []
     i = 0
     focus_count = 0
+    shortcut_count = 0
+    inlay_count = 0
+    offset_count = 0
+    continuous_pos_count = 0
+    initial_pos_count = 0
 
     while i < len(lines):
         line = lines[i].rstrip()
@@ -534,6 +762,81 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
                 )
 
             i = next_i
+        elif re.match(r"\s*shortcut\s*=\s*{", line):
+            log_message("DEBUG", f"Found shortcut block at line {i+1}", verbose)
+
+            shortcut_block, next_i = extract_block(lines, i)
+
+            if shortcut_block:
+                formatted_lines = format_shortcut_block(shortcut_block)
+                output_lines.extend(formatted_lines)
+                shortcut_count += 1
+
+                log_message(
+                    "DEBUG", f"Processed shortcut block {shortcut_count}", verbose
+                )
+
+            i = next_i
+        elif re.match(r"\s*inlay_window\s*=\s*{", line):
+            log_message("DEBUG", f"Found inlay_window block at line {i+1}", verbose)
+
+            inlay_block, next_i = extract_block(lines, i)
+
+            if inlay_block:
+                formatted_lines = format_inlay_window_block(inlay_block)
+                output_lines.extend(formatted_lines)
+                inlay_count += 1
+
+                log_message(
+                    "DEBUG", f"Processed inlay_window block {inlay_count}", verbose
+                )
+
+            i = next_i
+        elif re.match(r"\s*offset\s*=\s*{", line):
+            log_message("DEBUG", f"Found offset block at line {i+1}", verbose)
+
+            offset_block, next_i = extract_block(lines, i)
+
+            if offset_block:
+                formatted_lines = format_offset_block(offset_block)
+                output_lines.extend(formatted_lines)
+                offset_count += 1
+
+                log_message("DEBUG", f"Processed offset block {offset_count}", verbose)
+
+            i = next_i
+        elif re.match(r"\s*continuous_focus_position\s*=\s*{", line):
+            log_message(
+                "DEBUG", f"Found continuous_focus_position block at line {i+1}", verbose
+            )
+
+            block, next_i = extract_block(lines, i)
+
+            if block:
+                formatted_lines = format_continuous_focus_position_block(block)
+                output_lines.extend(formatted_lines)
+                continuous_pos_count += 1
+
+                log_message(
+                    "DEBUG", f"Processed continuous_focus_position block", verbose
+                )
+
+            i = next_i
+        elif re.match(r"\s*initial_show_position\s*=\s*{", line):
+            log_message(
+                "DEBUG", f"Found initial_show_position block at line {i+1}", verbose
+            )
+
+            block, next_i = extract_block(lines, i)
+
+            if block:
+                formatted_lines = format_initial_show_position_block(block)
+                output_lines.extend(formatted_lines)
+                initial_pos_count += 1
+
+                log_message("DEBUG", f"Processed initial_show_position block", verbose)
+
+            i = next_i
         else:
             output_lines.append(line)
             i += 1
@@ -555,6 +858,21 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
 
         log_message("SUCCESS", f"Standardization completed in {time_str}")
         log_message("SUCCESS", f"Processed {focus_count} focus blocks")
+        if continuous_pos_count > 0:
+            log_message(
+                "SUCCESS",
+                f"Processed {continuous_pos_count} continuous_focus_position blocks",
+            )
+        if initial_pos_count > 0:
+            log_message(
+                "SUCCESS", f"Processed {initial_pos_count} initial_show_position blocks"
+            )
+        if shortcut_count > 0:
+            log_message("SUCCESS", f"Processed {shortcut_count} shortcut blocks")
+        if inlay_count > 0:
+            log_message("SUCCESS", f"Processed {inlay_count} inlay_window blocks")
+        if offset_count > 0:
+            log_message("SUCCESS", f"Processed {offset_count} offset blocks")
         log_message("SUCCESS", f"Output written to: {output_file}")
 
     except Exception as e:
@@ -582,7 +900,7 @@ def create_backup(filename: str) -> str:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Standardize HOI4 focus tree files - only reformats focus blocks"
+        description="Standardize HOI4 focus tree files - reformats focus blocks and all focus tree properties"
     )
     parser.add_argument("input_file", help="Input focus tree file")
     parser.add_argument(

@@ -218,9 +218,10 @@ country_event = {
 ```hoiscript
 BRA_idea_higher_minimum_wage_1 = {
     name = BRA_idea_higher_minimum_wage
+	picture = gold
+    allowed = { always = no }
     allowed_civil_war = { always = yes }
-
-    picture = gold
+	cancel = { always = no }
 
     modifier = {
         political_power_factor = 0.1
