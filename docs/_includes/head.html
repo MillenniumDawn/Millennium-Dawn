@@ -3,20 +3,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- SEO: title, description, og:*, twitter:* -->
+    {% unless page.seo == false %}
     {% seo %}
+    {% endunless %}
+    {% if page.robots %}
+    <meta name="robots" content="{{ page.robots }}">
+    {% endif %}
+
+    <!-- Theme class bootstrap to prevent FOUC -->
+    <script>
+        (function () {
+            var doc = document.documentElement;
+            var stored = null;
+
+            try {
+                stored = localStorage.getItem('theme');
+            } catch (e) {
+                stored = null;
+            }
+
+            var prefersDark = window.matchMedia
+                && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            if (stored === 'dark' || (!stored && prefersDark)) {
+                doc.classList.add('dark-mode');
+            } else if (stored === 'light') {
+                doc.classList.add('light-mode');
+            }
+        })();
+    </script>
 
     <!-- CSS -->
     <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
 
     <!-- JS -->
-    <script defer src="{{ '/assets/js/site-theme.js' | relative_url }}"></script>
-    <script defer src="{{ '/assets/js/site-header-nav.js' | relative_url }}"></script>
-    <script defer src="{{ '/assets/js/site-ui-helpers.js' | relative_url }}"></script>
-    <script defer src="{{ '/assets/js/site-code-highlight.js' | relative_url }}"></script>
-    <script defer src="{{ '/assets/js/site.js' | relative_url }}"></script>
-    <script defer src="{{ '/assets/js/site-toc-render.js' | relative_url }}"></script>
-    <script defer src="{{ '/assets/js/site-toc-runtime.js' | relative_url }}"></script>
-    <script defer src="{{ '/assets/js/toc.js' | relative_url }}"></script>
+    <script type="module" src="{{ '/assets/js/site.bundle.js' | relative_url }}"></script>
+    {% if page.page_assets %}
+    {% for asset in page.page_assets %}
+    <script type="module" src="{{ asset | relative_url }}"></script>
+    {% endfor %}
+    {% endif %}
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ '/assets/images/favicon.png' | relative_url }}">

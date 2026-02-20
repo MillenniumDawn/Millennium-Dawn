@@ -1,0 +1,159 @@
+@layer components {
+  // ── Scoped design tokens ──
+  .toc-sidebar {
+    --toc-width: 260px;
+    --toc-top-gap: 1rem;
+    --toc-bg: var(--color-surface);
+    --toc-border: var(--color-border-light, var(--color-border));
+    --toc-text: var(--color-text-secondary);
+    --toc-text-hover: var(--color-text);
+    --toc-accent: var(--color-header-bg-end);
+    --toc-accent-strong: var(--color-header-bg);
+    --toc-active: var(--toc-accent);
+    --toc-active-bg: color-mix(in srgb, var(--toc-active) 12%, transparent);
+    --toc-hover-bg: color-mix(in srgb, var(--toc-active) 7%, transparent);
+    --toc-indent: 0.85rem;
+    --toc-link-py: 0.4rem;
+    --toc-link-px: 0.85rem;
+    --toc-header-h: 3rem;
+    --toc-radius: var(--border-radius, 6px);
+    --toc-speed: var(--duration-toc-drawer, 280ms);
+    --toc-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --toc-line-clamp: 3;
+
+    @supports not (color: color-mix(in srgb, red 50%, blue)) {
+      --toc-active-bg: var(--color-toc-active-bg-fallback);
+      --toc-hover-bg: var(--color-toc-hover-bg-fallback);
+    }
+  }
+
+  // MOBILE (default) — fixed overlay drawer
+  .toc-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: var(--z-toc);
+    width: 0;
+    height: 100vh;
+    height: 100dvh;
+    pointer-events: none;
+  }
+
+  .toc-sidebar__toggle {
+    display: flex;
+    position: fixed;
+    bottom: calc(var(--space-xl, 2rem) + 60px);
+    left: var(--space-lg, 1.5rem);
+    z-index: var(--z-toc-fab);
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--color-header-bg), var(--color-header-bg-end));
+    color: var(--color-text-inverse);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    pointer-events: auto;
+    transition:
+      background 200ms var(--toc-ease),
+      transform 200ms var(--toc-ease),
+      opacity 200ms var(--toc-ease);
+
+    &:hover {
+      background: linear-gradient(135deg, var(--color-header-bg-end), var(--color-header-bg));
+      transform: scale(1.06);
+    }
+
+    &:active { transform: scale(0.95); }
+
+    &:focus-visible {
+      outline: 3px solid var(--focus-ring-color);
+      outline-offset: 3px;
+    }
+
+    &:focus:not(:focus-visible) { outline: none; }
+
+    svg {
+      width: 20px;
+      height: 20px;
+      position: absolute;
+      transition: opacity 200ms var(--toc-ease), transform 200ms var(--toc-ease);
+    }
+  }
+
+  .toc-sidebar__toggle-icon--close {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.6);
+  }
+
+  .toc-sidebar__toggle[aria-expanded="true"] {
+    .toc-sidebar__toggle-icon--open {
+      opacity: 0;
+      transform: rotate(-90deg) scale(0.6);
+    }
+
+    .toc-sidebar__toggle-icon--close {
+      opacity: 1;
+      transform: rotate(0) scale(1);
+    }
+  }
+
+  .site-header.nav-is-open ~ .page-layout .toc-sidebar__toggle,
+  .site-header.nav-is-open + .page-layout .toc-sidebar__toggle {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .toc-sidebar__backdrop {
+    display: block;
+    position: fixed;
+    inset: var(--header-height, 4rem) 0 0 0;
+    background: var(--color-overlay-scrim-45);
+    z-index: var(--z-toc-fab);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--toc-speed) var(--toc-ease);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .toc-sidebar__panel {
+    position: fixed;
+    top: var(--header-height, 4rem);
+    left: 0;
+    width: var(--toc-width);
+    height: calc(100vh - var(--header-height, 4rem));
+    height: calc(100dvh - var(--header-height, 4rem));
+    background: var(--toc-bg);
+    border-right: 1px solid var(--toc-border);
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+    transform: translateX(-100%);
+    box-shadow: none;
+    z-index: var(--z-toc-panel);
+    transition:
+      transform var(--toc-speed) var(--toc-ease),
+      box-shadow var(--toc-speed) var(--toc-ease);
+  }
+
+  .toc-sidebar.is-open {
+    .toc-sidebar__panel {
+      transform: translateX(0);
+      box-shadow: var(--shadow-lg, var(--shadow-lg-fallback));
+    }
+
+    .toc-sidebar__backdrop {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  .toc-sidebar.is-closing {
+    .toc-sidebar__backdrop {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+}
