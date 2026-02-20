@@ -1,6 +1,7 @@
 ---
 layout: default
 title: "Focus Tree Lifecycle Checklist"
+page_id: focus-tree-lifecycle-checklist
 description: "Step-by-step checklist for focus tree development lifecycle"
 ---
 
