@@ -5,9 +5,7 @@ title: "National Content - Denmark"
 
 ## Denmark WIP
 
-![Denmark]({{ '/uploads/flags/denmark.png' | relative_url }}){: .country-flag}
-
-
+![Flag_of_Denmark]({ '/uploads/flags/denmark.png' | relative_url }){: .country-flag}
 Denmark is a country surrounded by Sweden from the East and Germany from the South. It starts with a Population of 5.35 Millions.
 
 ## Ideology
@@ -33,4 +31,3 @@ Denmark starts with 6 Factories; 4 Civilian Industries, 1 Military Industry and 
 ## Economy
 
 Denmark starts with $23 Billions in the Treasury, $149 Billions in Debt and $77.4 Billions in International Investments
-

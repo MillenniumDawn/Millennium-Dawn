@@ -5,6 +5,7 @@ title: "National Content - Germany"
 
 ## Germany WIP
 
+![Flag_of_Germany]({ '/uploads/flags/germany.png' | relative_url }){: .country-flag}
 [Image unavailable: 2560px-Flag_of_Germany.svg]
 
 Germany is a country surrounded by The Netherlands and Belgium from the North-West, Luxembourg and France from the West, Switzerland from the South, Austria from the South-South East, Czech Republic and Poland from the East and Denmark from the North. It starts with a Population of 85.75 Millions.
@@ -34,4 +35,3 @@ Germany starts with 72 Factories; 50 Civilian Industries, 17 Military Industries
 ## Economy
 
 Germany starts with $128 Billions in the Treasury, $2096 in Debt and $112 in International Investments
-

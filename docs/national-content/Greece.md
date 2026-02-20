@@ -5,8 +5,7 @@ title: "National Content - Greece"
 
 ## Greece WIP
 
-![Greece]({{ '/uploads/flags/greece.png' | relative_url }}){: .country-flag}
-
+![Flag_of_Greece]({ '/uploads/flags/greece.png' | relative_url }){: .country-flag}
 Greece is a country surrounded by Albania from the North-West, Macedonia and Bulgaria from the North and Turkey from the East. It starts with a Population of 10.91 Millions.
 
 ## Ideology
@@ -34,4 +33,3 @@ Greece starts with 8 Factories; 4 Military Industries, 3 Civilian Industries and
 ## Economy
 
 Greece starts with $21 Billions in the Treasury, $318 Billions in Debt and $1 Billion in International Investments.
-

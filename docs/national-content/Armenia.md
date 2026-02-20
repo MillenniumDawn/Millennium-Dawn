@@ -5,6 +5,7 @@ title: "National Content - Armenia"
 
 ## Armenia WIP
 
+![Flag_of_Armenia]({ '/uploads/flags/armenia.png' | relative_url }){: .country-flag}
 [Image unavailable: Flag_of_Armenia.svg]
 
 
@@ -42,4 +43,3 @@ Armenia starts with 0 Factories.
 ## Economy
 
 Armenia starts with $3 Billion both in the Treasury and in Debt while $0 in International Investment
-

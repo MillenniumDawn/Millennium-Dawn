@@ -5,6 +5,7 @@ title: "National Content - Ethiopia"
 
 ## Ethiopia WIP
 
+![Flag_of_Ethiopia]({ '/uploads/flags/ethiopia.png' | relative_url }){: .country-flag}
 [Image unavailable: Flag_of_Ethiopia.svg]
 
 Ethiopia is a country surrounded by Eritrea from the North, Djibouti and Somaliland from the North-East, Puntland and Somalia from the East, The Southwestern State of Somalia, Somalia and Kenya from the South and South Sudan and Sudan from the West. It starts with a Population of 65.43 Millions.
@@ -36,4 +37,3 @@ Ethiopia starts with 2 Military Factories
 ## Economy
 
 Ethiopia starts with $1 Billion in the Treasury, $29 Billions in Debt and $0 Billions in International Investments.
-

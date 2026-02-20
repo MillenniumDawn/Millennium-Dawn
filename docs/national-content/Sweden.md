@@ -5,6 +5,7 @@ title: "National Content - Sweden"
 
 ## Sweden WIP
 
+![Flag_of_Sweden]({ '/uploads/flags/sweden.png' | relative_url }){: .country-flag}
 [Image unavailable: Flag_of_Sweden.svg]
 
 Sweden is a country surrounded by Denmark from the South, Norway from the West and Finland from the East. It starts with a Population of 9.08 Millions.
@@ -31,4 +32,3 @@ Sweden starts with 13 Factories: 7 Civilian Industries, 3 Military Industries an
 ## Economy
 
 Sweden starts with $24 Billions in the Treasury, $234 Billions in Debt and $40 Billions in International Investments.
-

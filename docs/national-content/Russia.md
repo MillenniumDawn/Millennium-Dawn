@@ -5,6 +5,7 @@ title: "National Content - Russia"
 
 ## Russia WIP
 
+![Flag_of_Russia]({ '/uploads/flags/russia.png' | relative_url }){: .country-flag}
 [Image unavailable: Flag_of_Russia.svg]
 
 Russia is a country surrounded by Finland and Norway from the North-West, Estonia, Latvia, Belarus and Ukraine from the West, Abkhazia, Georgia, South Ossetia, Chechnya and Azerbaijan from the South-West and Kazakhstan, China, Mongolia and Korea DPR from the South. It starts with a Population of 147.08 Millions.
@@ -36,4 +37,3 @@ Russia starts with 35 Factories; 26 Military Industries, 7 Naval Dockyards and 2
 ## Economy
 
 Russia starts with $40 Billions in the Treasury, $1349 Billions in Debt and $12 Billions in International Investments
-

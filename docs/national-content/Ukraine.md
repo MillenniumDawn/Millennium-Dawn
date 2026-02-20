@@ -5,6 +5,7 @@ title: "National Content - Ukraine"
 
 ## Ukraine WIP
 
+![Flag_of_Ukraine]({ '/uploads/flags/ukraine.png' | relative_url }){: .country-flag}
 [Image unavailable: Flag_of_Ukraine.svg]
 
 Ukraine is a country surrounded by Poland, Slovakia and Hungary from the West, Romania, Transnistria and Moldova from the South, Belarus from the North and Russia from the East. It starts with a Population of 50.84 Millions.
@@ -38,4 +39,3 @@ Ukraine starts with 13 Factories; 8 Civilian Industries, 3 Military Industries a
 ## Economy
 
 Ukraine starts with $2 Billions in the Treasury, $158 Billions in Debt and $0 Billions in International Investments.
-

@@ -4,6 +4,9 @@ title: "National Content - Comoros"
 description: "Information regarding the Comoros and its national content."
 ---
 
+## Comoros WIP
+
+![Flag_of_Comoros]({ '/uploads/flags/comoros.png' | relative_url }){: .country-flag}
 # Comoros
 
 The Comoros is am Island nation in East Africa between Madagascar, Tanzania and near the French overseas territory of Mayotte.

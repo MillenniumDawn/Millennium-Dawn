@@ -5,6 +5,7 @@ title: "National Content - South Korea"
 
 ## South Korea WIP
 
+![Flag_of_South_Korea]({ '/uploads/flags/south_korea.png' | relative_url }){: .country-flag}
 [Image unavailable: Flag_of_South_Korea.svg]
 
 South Korea is a country that borders only North Korea. It starts with a Population of 47.06 Millions.
@@ -42,4 +43,3 @@ South Korea has 32 Factories; 20 Civilian Industries, 9 Military Industries and 
 ## Economy
 
 South Korea starts with $141 Billions in the Treasury, $196 Billions in Debt and $140 Billions in International Investments.
-

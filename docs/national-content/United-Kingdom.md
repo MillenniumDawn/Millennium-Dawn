@@ -5,8 +5,7 @@ title: "National Content - United Kingdom"
 
 ## United Kingdom WIP
 
-![Flag_of_the_United_Kingdom]({{ '/uploads/flags/united_kingdom.png' | relative_url }}){: .country-flag}
-
+![Flag_of_United_Kingdom]({ '/uploads/flags/united_kingdom.png' | relative_url }){: .country-flag}
 The United Kingdom is a country surrounded mainly by water. Its only borders are Ireland and Spain. It starts with a Population of 58.98 Millions.
 
 ## Ideology
@@ -35,4 +34,3 @@ The United Kingdom starts with 60 Factories; 27 Civilian Industries, 24 Military
 ## Economy
 
 The United Kingdom starts with $74 Billions in the Treasury, $879 Billions in Debt and $1239 Billions in International Investments.
-

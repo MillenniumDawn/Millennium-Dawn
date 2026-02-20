@@ -3,6 +3,9 @@ layout: default
 title: "National Content - Iran"
 ---
 
+## Iran WIP
+
+![Flag_of_Iran]({ '/uploads/flags/iran.png' | relative_url }){: .country-flag}
 # Iran WIP
 
 [Image unavailable: Flag_of_Iran.svg]

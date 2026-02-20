@@ -5,6 +5,7 @@ title: "National Content - Japan"
 
 ## Japan WIP
 
+![Flag_of_Japan]({ '/uploads/flags/japan.png' | relative_url }){: .country-flag}
 [Image unavailable: Flag_of_Japan.svg]
 
 Japan is a country surrounded only by water, its only border is Okinawa Base owned by the US. It starts with a Population of 126.93 Millions.
@@ -36,4 +37,3 @@ Japan starts with 97 Factories: 77 Civilian Industries, 12 Military Industries a
 ## Economy
 
 Japan starts with $528 Billions in the Treasury, $6627 in Debt and $497 in International Investments.
-

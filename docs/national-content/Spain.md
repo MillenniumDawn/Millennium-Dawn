@@ -5,6 +5,7 @@ title: "National Content - Spain"
 
 ## Spain WIP
 
+![Flag_of_Spain]({ '/uploads/flags/spain.png' | relative_url }){: .country-flag}
 [Image unavailable: Bandera_de_España.svg]
 
 Spain is a country surrounded by Portugal from the West, France and Andorra from the North and the United Kingdom from the South. For its territory in Africa it borders with Marocco from the South. It starts with a Population of 41.70 Millions.

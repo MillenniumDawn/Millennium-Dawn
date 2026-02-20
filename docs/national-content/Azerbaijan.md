@@ -5,6 +5,7 @@ title: "National Content - Azerbaijan"
 
 ## Azerbaijan WIP
 
+![Flag_of_Azerbaijan]({ '/uploads/flags/azerbaijan.png' | relative_url }){: .country-flag}
 [Image unavailable: Flag_of_Azerbaijan.svg]
 
 Azerbaijan is a country surrounded by Russia from the north, Georgia, Armenia and Artsakh from the West, Iran from the South and the Caspian Sea from the East. It starts with a Population of 10.6 millions.
@@ -39,4 +40,3 @@ Azerbaijan starts with 0 Factories.
 ## Economy
 
 Azerbaijan starts with $1 Billion in the Treasury, $13 Billions in Debt and $0 in International Investments.
-

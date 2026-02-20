@@ -5,6 +5,7 @@ title: "National Content - Brazil"
 
 ## Brazil WIP
 
+![Flag_of_Brazil]({ '/uploads/flags/brazil.png' | relative_url }){: .country-flag}
 [Image unavailable: Flag_of_Brazil.svg]
 
 Brazil is a country surrounded by French Guyana, Suriname, Guyana and Venezuela from the North, Colombia from the North-West, Peru and Bolivia from the West, Paraguay and Uruguay from the South and from the North-West-South. It starts with a Population of 177.95 Millions.
@@ -35,4 +36,3 @@ Brazil starts with 24 Factories, 13 Military Industries, 8 Civilian Industries a
 ## Economy
 
 Brazil starts with $48 Billions in the Treasury, $1053 Billions in Debt and $16.6 Billions in International Investments
-
