@@ -1,1 +1,1314 @@
-#EMPTY for FUTURE USES
+# Space Event Chain
+ENG_advance_moon_base = {
+	hidden_effect = {
+		random_list = {
+			40 = {
+				modifier = {
+					factor = 0
+					has_country_flag = ENG_moon_base_first_progression
+				}
+				set_country_flag = ENG_moon_base_first_progression
+				country_event = { id = ENG_military.009 days = 30 random_hours = 480 } #First progression
+			}
+			40 = {
+				modifier = {
+					factor = 0
+					OR = {
+						has_country_flag = ENG_moon_base_second_progression
+						NOT = {
+							has_country_flag = ENG_moon_base_first_progression
+						}
+					}
+				}
+				set_country_flag = ENG_moon_base_second_progression
+				country_event = { id = ENG_military.011 days = 30 random_hours = 480 } #Second progression
+			}
+			40 = {
+				modifier = {
+					factor = 0
+					has_country_flag = ENG_moon_base_first_crisis
+				}
+				set_country_flag = ENG_moon_base_first_crisis
+				country_event = { id = ENG_military.010 days = 30 random_hours = 480 } #First crisis
+			}
+			40 = {
+				modifier = {
+					factor = 0
+					OR = {
+						has_country_flag = ENG_moon_base_second_crisis
+						NOT = {
+							has_country_flag = ENG_moon_base_first_crisis
+						}
+					}
+				}
+				set_country_flag = ENG_moon_base_second_crisis
+				country_event = { id = ENG_military.012 days = 30 random_hours = 480 } #Second crisis
+			}
+			20 = {
+				modifier = {
+					factor = 0
+					NOT = {
+						has_country_flag = ENG_moon_base_second_progression
+					}
+				}
+				set_country_flag = ENG_moonbase_beta_completed
+				country_event = { id = ENG_military.013 days = 15 random_hours = 240 } #Moonbase Beta
+			}
+		}
+	}
+}
+# Devolution Mechanic:
+# Agitation = how annoying they are, basically, higher agitation means more harsher punishments for when they go against you
+# -------------- HOW AGITATION WORKS -------------- #
+# [-] Agitation will grow from certain focuses/events/decisions etc
+# - Agitation will be lowered over time naturally
+# - If you maintain a high level of agitation for a while, you'll get random events that increase nationalism
+# - Coupled with random naitonalism events, you get debuffs anytime they are pissed
+# - If nationalism is above 85% for too long, Agitation will start growing randomly anywhere between 1-3 every month
+# - Agitation can be lowered by a lot by lower their dependency
+# -------------- HOW DEPENDENCY WORKS -------------- #
+# [-] Dependency is lower or increased via the focus tree (A Variable out of 100 with 3 stages)
+# - In the focus tree, there will be 2 trees, 1 for pro-devolve and 1 for against per region
+# - The paths are made available based on party ideology
+# - Focuses will unlock decisions that count as laws that you could pass (Either pro or anti devolution laws)
+# - Some of these decisions are permanent/irreversable laws, EX: Reducing Scottish parliament seats (Will get to this later)
+# - Will have 1 for Scots, Welsh, and Irish
+# --- Government Change in the middle of devolution ---
+# [-] Gives Spirit "Promises of Devolution"
+# --- What if you change governments from anti-devolution party to pro-devolution? --- #
+# - After change of govt. If you already went down dickstomping devolution, it gives you an event that pops up and says:
+# "Scottish seats will support you if you revert the fuck up of previous administration" (Halting Devolution). If you say accept,
+# But continue devolved policies, then the Scots agitation will increase by 2X anytime they get pissed (EX: 1 agitation is now 2)
+# But if you keep your promise, it will bring their agitation down and you get support from them.
+# You will also get decisions to repeal certain laws that will decrease their dependency on the U.K.
+# If you reject their request, you can just go down the devolution path the previous admininistration started
+# If you for some reason bring back the anti-devolution party, you then get those laws (decisions) you got from focuses
+# You will NOT get the decisions for the permanent decisions, this goes for both pro and anti devolution parties
+# --- What if you change governments from pro-devolution party to anti-devolution? --- #
+# - Gets event that lets you make a promise that you won't clamp down on progress made on devolution
+# - You will be able to repeal certain laws as stated from before, as mentioned before if you decide to clamp down
+# If promise is granted and you don't reverse devolution, agitation will decrease BUT it will give an equilibrium toward devolution
+# If you decide to continue going the route of dick-stomping devolution, then you will start losing party popularity
+# Dependency levels will decide independence levels
+# - Dependent is when the constituent is in your land (not on the game map)
+# - Semi - Dependent is any of the 4 autonomy levels (on the map, but they are a puppet)
+# The autonomy levels will dynamically shift as the player goes deeper into devolution
+# Idea is to encourage as low as possible on devolution to maximize bonuses towards the player
+# Bonuses include %'s of GDP and Commonwealth nation member states which will ultimately help the U.K.
+# Will also give option to force Wales & Northern Ireland to use the British Pound
+# - Independent is idk take a wild guess
+# -------------- HOW NATIONALISM WORKS -------------- #
+# [-] Nationalism will decide whether or not the constituent will declare a referendum
+# - Nationalism will grow upon doing moves that anger the constituent
+# - Possible causes for nationalism are:
+# Certain events/focuses/decisions that may cause harm to that constituent
+# Beginning to back peddle on devolution or trying to curb it entirely
+# Going to War
+# - If nationalism hits 100, they will run a referendum that you then have to ratify
+# Agitation will decide their reaction to your decision on referendum
+# Low agitation if Rejected: non-violent protest movements (damage to economy basically)
+# high agitation if rejected: Car bombings every other day & chance of revolt upon rejection (car bombings still follow)
+# Low agitation if accepted: Devolve with a lot of control (This is basically outcome if u just do everything to devolve)
+# High agitation if accepted: Devolve with less control (this is if they hit u w/the referendum and u accept)
+# -------------- Focus Tree -------------- #
+# Once someone goes down the path of either devolving or not, if they decide to nothing and edge the system, they'll get devolution fallout spirit x10
+# -------------- MISC -------------- #
+# [-] Add game rule that lets you spell Scotland will let you spell Scotland with 2 T's
+# - If made available, all your leaders and generals get renamed to "Scott"
+
+# Westmister Mechanic
+# Main Parties: Conservatives, labour, Lib-Dem
+# Smaller parties: Commie Coalition, UKIP, Greens, BNP & SNP
+# Elections
+# Hung Parliament if majority is not met
+# Have the 650 seats and then figure out %'s of how much each party got in each election to figure out winner
+# Divide 650 by party pop by each slot
+# Wales and scotland: Take Party Pop, but then you take away the nationalists % Variable and then the remainder of the % left are given to the nationalist parties
+# - Change the GUI for NIR to split nationalism into 3 bars, Unionism, Non-Sectarianism, & Republicanism
+# - Make 3 seperate variables.
+# If you go against devolution you support unionists
+# If you go further devolution you can support the Republicans & Non Sectarians
+# These 3 seperate variables will decide end state for NIR
+# 18 NIR Seats, and take 3 variables and divide them against 18 (Based on actual variables)
+# 59 Scottish (Based on actual nationalism VAR)
+# 40 Welsh (Based on actual nationalism VAR)
+# Whoever wins the election loses one seat as they get a speaker
+# English seats: (Take Party Popularity variable) (if minor -, if major +) ( random variable selected from range of 0-10)
+# (Take Party Popularity of Labour,Tories,LibDems,Greens) (then Combine) (then add Nationalist Percentage) (remainder randomly distributed)
+# FUTURE ADDITIONS: Good to get UI to expand to states within England
+ENG_lower_dependence_1 = {
+	custom_effect_tooltip = ENG_lower_dependence_1_TT
+	add_to_variable = { ENG_scottish_dependency = -1 }
+	add_to_variable = { ENG_north_irish_dependency = -1 }
+	add_to_variable = { ENG_wales_dependency = -1 }
+}
+ENG_lower_dependence_2 = {
+	custom_effect_tooltip = ENG_lower_dependence_2_TT
+	add_to_variable = { ENG_scottish_dependency = -2 }
+	add_to_variable = { ENG_north_irish_dependency = -2 }
+	add_to_variable = { ENG_wales_dependency = -2 }
+}
+ENG_lower_dependence_3 = {
+	custom_effect_tooltip = ENG_lower_dependence_3_TT
+	add_to_variable = { ENG_scottish_dependency = -3 }
+	add_to_variable = { ENG_north_irish_dependency = -3 }
+	add_to_variable = { ENG_wales_dependency = -3 }
+}
+ENG_lower_dependence_4 = {
+	custom_effect_tooltip = ENG_lower_dependence_4_TT
+	add_to_variable = { ENG_scottish_dependency = -4 }
+	add_to_variable = { ENG_north_irish_dependency = -4 }
+	add_to_variable = { ENG_wales_dependency = -4 }
+}
+ENG_lower_dependence_5 = {
+	custom_effect_tooltip = ENG_lower_dependence_5_TT
+	add_to_variable = { ENG_scottish_dependency = -5 }
+	add_to_variable = { ENG_north_irish_dependency = -5 }
+	add_to_variable = { ENG_wales_dependency = -5 }
+}
+# Lower dependence + agitation
+ENG_lower_dependence_1x = {
+	custom_effect_tooltip = ENG_lower_dependence_1_TT
+	custom_effect_tooltip = ENG_lower_agitation_1_TT
+	add_to_variable = { ENG_scottish_dependency = -1 }
+	add_to_variable = { ENG_north_irish_dependency = -1 }
+	add_to_variable = { ENG_wales_dependency = -1 }
+	# Agitation
+	add_to_variable = { ENG_scottish_agitation = -1 }
+	add_to_variable = { ENG_north_irish_agitation = -1 }
+	add_to_variable = { ENG_wales_agitation = -1 }
+}
+ENG_lower_dependence_2x = {
+	custom_effect_tooltip = ENG_lower_dependence_2_TT
+	custom_effect_tooltip = ENG_lower_agitation_2_TT
+	add_to_variable = { ENG_scottish_dependency = -2 }
+	add_to_variable = { ENG_north_irish_dependency = -2 }
+	add_to_variable = { ENG_wales_dependency = -2 }
+	# Agitation
+	add_to_variable = { ENG_scottish_agitation = -2 }
+	add_to_variable = { ENG_north_irish_agitation = -2 }
+	add_to_variable = { ENG_wales_agitation = -2 }
+}
+ENG_lower_dependence_3x = {
+	custom_effect_tooltip = ENG_lower_dependence_3_TT
+	custom_effect_tooltip = ENG_lower_agitation_3_TT
+	add_to_variable = { ENG_scottish_dependency = -3 }
+	add_to_variable = { ENG_north_irish_dependency = -3 }
+	add_to_variable = { ENG_wales_dependency = -3 }
+	# Agitation
+	add_to_variable = { ENG_scottish_agitation = -3 }
+	add_to_variable = { ENG_north_irish_agitation = -3 }
+	add_to_variable = { ENG_wales_agitation = -3 }
+}
+ENG_lower_dependence_4x = {
+	custom_effect_tooltip = ENG_lower_dependence_4_TT
+	custom_effect_tooltip = ENG_lower_agitation_4_TT
+	add_to_variable = { ENG_scottish_dependency = -4 }
+	add_to_variable = { ENG_north_irish_dependency = -4 }
+	add_to_variable = { ENG_wales_dependency = -4 }
+	# Agitation
+	add_to_variable = { ENG_scottish_agitation = -4 }
+	add_to_variable = { ENG_north_irish_agitation = -4 }
+	add_to_variable = { ENG_wales_agitation = -4 }
+}
+ENG_lower_dependence_5x = {
+	custom_effect_tooltip = ENG_lower_dependence_5_TT
+	custom_effect_tooltip = ENG_lower_agitation_5_TT
+	add_to_variable = { ENG_scottish_dependency = -5 }
+	add_to_variable = { ENG_north_irish_dependency = -5 }
+	add_to_variable = { ENG_wales_dependency = -5 }
+	# Agitation
+	add_to_variable = { ENG_scottish_agitation = -5 }
+	add_to_variable = { ENG_north_irish_agitation = -5 }
+	add_to_variable = { ENG_wales_agitation = -5 }
+}
+# Increase Dependence
+ENG_increase_dependence_1 = {
+	custom_effect_tooltip = ENG_increase_dependence_1_TT
+	add_to_variable = { ENG_scottish_dependency = 1 }
+	add_to_variable = { ENG_north_irish_dependency = 1 }
+	add_to_variable = { ENG_wales_dependency = 1 }
+}
+ENG_increase_dependence_2 = {
+	custom_effect_tooltip = ENG_increase_dependence_2_TT
+	add_to_variable = { ENG_scottish_dependency = 2 }
+	add_to_variable = { ENG_north_irish_dependency = 2 }
+	add_to_variable = { ENG_wales_dependency = 2 }
+}
+ENG_increase_dependence_3 = {
+	custom_effect_tooltip = ENG_increase_dependence_3_TT
+	add_to_variable = { ENG_scottish_dependency = 3 }
+	add_to_variable = { ENG_north_irish_dependency = 3 }
+	add_to_variable = { ENG_wales_dependency = 3 }
+}
+ENG_increase_dependence_4 = {
+	custom_effect_tooltip = ENG_increase_dependence_4_TT
+	add_to_variable = { ENG_scottish_dependency = 4 }
+	add_to_variable = { ENG_north_irish_dependency = 4 }
+	add_to_variable = { ENG_wales_dependency = 4 }
+}
+ENG_increase_dependence_5 = {
+	custom_effect_tooltip = ENG_increase_dependence_5_TT
+	add_to_variable = { ENG_scottish_dependency = 5 }
+	add_to_variable = { ENG_north_irish_dependency = 5 }
+	add_to_variable = { ENG_wales_dependency = 5 }
+}
+# Increase Agitation
+ENG_increase_agitation_1 = {
+	custom_effect_tooltip = ENG_increase_agitation_1_TT
+	add_to_variable = { ENG_scottish_agitation = 1 }
+	add_to_variable = { ENG_north_irish_agitation = 1 }
+	add_to_variable = { ENG_wales_agitation = 1 }
+}
+ENG_increase_agitation_2 = {
+	custom_effect_tooltip = ENG_increase_agitation_2_TT
+	add_to_variable = { ENG_scottish_agitation = 2 }
+	add_to_variable = { ENG_north_irish_agitation = 2 }
+	add_to_variable = { ENG_wales_agitation = 2 }
+}
+ENG_increase_agitation_3 = {
+	custom_effect_tooltip = ENG_increase_agitation_3_TT
+	add_to_variable = { ENG_scottish_agitation = 3 }
+	add_to_variable = { ENG_north_irish_agitation = 3 }
+	add_to_variable = { ENG_wales_agitation = 3 }
+}
+ENG_increase_agitation_4 = {
+	custom_effect_tooltip = ENG_increase_agitation_4_TT
+	add_to_variable = { ENG_scottish_agitation = 4 }
+	add_to_variable = { ENG_north_irish_agitation = 4 }
+	add_to_variable = { ENG_wales_agitation = 4 }
+}
+ENG_increase_agitation_5 = {
+	custom_effect_tooltip = ENG_increase_agitation_5_TT
+	add_to_variable = { ENG_scottish_agitation = 5 }
+	add_to_variable = { ENG_north_irish_agitation = 5 }
+	add_to_variable = { ENG_wales_agitation = 5 }
+}
+
+ENG_var_cap = {
+	if = {
+		limit = { check_variable = { ENG_scottish_agitation > 100 } }
+		set_variable = { ENG_scottish_agitation = 100 }
+	}
+	if = {
+		limit = { check_variable = { ENG_scottish_dependency > 100 } }
+		set_variable = { ENG_scottish_dependency = 100 }
+	}
+	if = {
+		limit = { check_variable = { ENG_scottish_nationalists > 100 } }
+		set_variable = { ENG_scottish_nationalists = 100 }
+	}
+	if = {
+		limit = { check_variable = { ENG_scottish_agitation < 0 } }
+		set_variable = { ENG_scottish_agitation = 0 }
+	}
+	if = {
+		limit = { check_variable = { ENG_scottish_dependency < 0 } }
+		set_variable = { ENG_scottish_dependency = 0 }
+	}
+	if = {
+		limit = { check_variable = { ENG_scottish_nationalists < 0 } }
+		set_variable = { ENG_scottish_nationalists = 0 }
+	}
+	# Ireland
+	if = {
+		limit = { check_variable = { ENG_north_irish_agitation > 100 } }
+		set_variable = { ENG_north_irish_agitation = 100 }
+	}
+	if = {
+		limit = { check_variable = { ENG_north_irish_dependency > 100 } }
+		set_variable = { ENG_north_irish_dependency = 100 }
+	}
+	if = {
+		limit = { check_variable = { ENG_north_irish_nationalists > 100 } }
+		set_variable = { ENG_north_irish_nationalists = 100 }
+	}
+	if = {
+		limit = { check_variable = { ENG_north_irish_agitation < 0 } }
+		set_variable = { ENG_north_irish_agitation = 0 }
+	}
+	if = {
+		limit = { check_variable = { ENG_north_irish_dependency < 0 } }
+		set_variable = { ENG_north_irish_dependency = 0 }
+	}
+	if = {
+		limit = { check_variable = { ENG_north_irish_nationalists < 0 } }
+		set_variable = { ENG_north_irish_nationalists = 0 }
+	}
+	# Wales
+	if = {
+		limit = { check_variable = { ENG_wales_agitation > 100 } }
+		set_variable = { ENG_wales_agitation = 100 }
+	}
+	if = {
+		limit = { check_variable = { ENG_wales_dependency > 100 } }
+		set_variable = { ENG_wales_dependency = 100 }
+	}
+	if = {
+		limit = { check_variable = { ENG_wales_nationalists > 100 } }
+		set_variable = { ENG_wales_nationalists = 100 }
+	}
+	if = {
+		limit = { check_variable = { ENG_wales_agitation < 0 } }
+		set_variable = { ENG_wales_agitation = 0 }
+	}
+	if = {
+		limit = { check_variable = { ENG_wales_dependency < 0 } }
+		set_variable = { ENG_wales_dependency = 0 }
+	}
+	if = {
+		limit = { check_variable = { ENG_wales_nationalists < 0 } }
+		set_variable = { ENG_wales_nationalists = 0 }
+	}
+}
+
+### Inner Circle
+
+ENG_inner_circle_set_ascension_cd = {
+	set_country_flag = {
+		flag = ENG_inner_circle_cd_flag
+		days = 365
+		value = 1
+	}
+}
+
+ENG_remove_replaced_advisor_1_effects = {
+	custom_effect_tooltip = {
+		localization_key = replace_ascended_advisor_tt
+		CHARACTER = [ENGGetAscendedAdvisorName1]
+		TRAIT = [ENGGetAscendedAdvisorTrait1]
+	}
+	hidden_effect = {
+		if = { # CHARLES REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_1 = 1 }
+			}
+			ENG_remove_charles_effects = yes
+		}
+		else_if = { # ANDREW REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_1 = 2 }
+			}
+			ENG_remove_andrew_effects = yes
+		}
+		else_if = { # ANNE REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_1 = 3 }
+			}
+			ENG_remove_anne_effects = yes
+		}
+		else_if = { # EDWARD REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_1 = 4 }
+			}
+			ENG_remove_edward_effects = yes
+		}
+		else_if = { # PHILLIP REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_1 = 5 }
+			}
+			ENG_remove_phillip_effects = yes
+		}
+		else_if = { # WILLIAM REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_1 = 6 }
+			}
+			ENG_remove_william_effects = yes
+		}
+		else = {
+			log = "Something bad happened trying to remove advisor [?ENG_ascended_advisor_1] effects."
+		}
+	}
+}
+
+ENG_remove_replaced_advisor_2_effects = {
+	custom_effect_tooltip = {
+		localization_key = replace_ascended_advisor_tt
+		CHARACTER = [ENGGetAscendedAdvisorName2]
+		TRAIT = [ENGGetAscendedAdvisorTrait2]
+	}
+	hidden_effect = {
+		if = { # CHARLES REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_2 = 1 }
+			}
+			ENG_remove_charles_effects = yes
+		}
+		else_if = { # ANDREW REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_2 = 2 }
+			}
+			ENG_remove_andrew_effects = yes
+		}
+		else_if = { # ANNE REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_2 = 3 }
+			}
+			ENG_remove_anne_effects = yes
+		}
+		else_if = { # EDWARD REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_2 = 4 }
+			}
+			ENG_remove_edward_effects = yes
+		}
+		else_if = { # PHILLIP REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_2 = 5 }
+			}
+			ENG_remove_phillip_effects = yes
+		}
+		else_if = { # WILLIAM REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_2 = 6 }
+			}
+			ENG_remove_william_effects = yes
+		}
+		else = {
+			log = "Something bad happened trying to remove advisor [?ENG_ascended_advisor_2] effects."
+		}
+	}
+}
+
+ENG_remove_replaced_advisor_3_effects = {
+	custom_effect_tooltip = {
+		localization_key = replace_ascended_advisor_tt
+		CHARACTER = [ENGGetAscendedAdvisorName3]
+		TRAIT = [ENGGetAscendedAdvisorTrait3]
+	}
+	hidden_effect = {
+		if = { # CHARLES REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_3 = 1 }
+			}
+			ENG_remove_charles_effects = yes
+		}
+		else_if = { # ANDREW REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_3 = 2 }
+			}
+			ENG_remove_andrew_effects = yes
+		}
+		else_if = { # ANNE REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_3 = 3 }
+			}
+			ENG_remove_anne_effects = yes
+		}
+		else_if = { # EDWARD REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_3 = 4 }
+			}
+			ENG_remove_edward_effects = yes
+		}
+		else_if = { # PHILLIP REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_3 = 5 }
+			}
+			ENG_remove_phillip_effects = yes
+		}
+		else_if = { # WILLIAM REPLACED
+			limit = {
+				check_variable = { ENG_ascended_advisor_3 = 6 }
+			}
+			ENG_remove_william_effects = yes
+		}
+		else = {
+			log = "Something bad happened trying to remove advisor [?ENG_ascended_advisor_3] effects."
+		}
+	}
+}
+
+# Adding the new advisor effects after having replaced someone else
+ENG_add_replacing_advisor_effects = {
+	if = { # CHARLES ADDED
+		limit = {
+			check_variable = { ENG_ascending_advisor = 1 }
+		}
+		ENG_add_charles_effects = yes
+	}
+	else_if = { # ANDREW ADDED
+		limit = {
+			check_variable = { ENG_ascending_advisor = 2 }
+		}
+		ENG_add_andrew_effects = yes
+	}
+	else_if = { # ANNE ADDED
+		limit = {
+			check_variable = { ENG_ascending_advisor = 3 }
+		}
+		ENG_add_anne_effects = yes
+	}
+	else_if = { # EDWARD ADDED
+		limit = {
+			check_variable = { ENG_ascending_advisor = 4 }
+		}
+		ENG_add_edward_effects = yes
+	}
+	else_if = { # PHILLIP ADDED
+		limit = {
+			check_variable = { ENG_ascending_advisor = 5 }
+		}
+		ENG_add_phillip_effects = yes
+	}
+	else_if = { # WILLIAM ADDED
+		limit = {
+			check_variable = { ENG_ascending_advisor = 6 }
+		}
+		ENG_add_william_effects = yes
+	}
+	else = {
+		log = "Something bad happened trying to add advisor [?ENG_ascending_advisor] effects."
+	}
+}
+
+# ADD/REMOVE CHARLES EFFECTS
+ENG_add_charles_effects = {
+	if = {
+		limit = {
+			has_completed_focus = ENG_heir_of_the_realm
+		}
+		add_ideas = ENG_charles_4_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_duchy_originals
+		}
+		add_ideas = ENG_charles_3_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_climate_alarm_bell
+		}
+		add_ideas = ENG_charles_2_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_the_prince_trust
+		}
+		add_ideas = ENG_charles_1_idea
+	}
+}
+
+ENG_remove_charles_effects = {
+	if = {
+		limit = {
+			has_idea = ENG_charles_4_idea
+		}
+		remove_ideas = ENG_charles_4_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_charles_3_idea
+		}
+		remove_ideas = ENG_charles_3_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_charles_2_idea
+		}
+		remove_ideas = ENG_charles_2_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_charles_1_idea
+		}
+		remove_ideas = ENG_charles_1_idea
+	}
+	else = {
+		log = "NOTHING TO REMOVE FROM CHARLES"
+	}
+
+	if = { #STOP ANY FOCUS IN-PROGRESS (WITH SHINY EFFECT)
+		limit = {
+			has_shine_effect_on_focus = ENG_harmony_doctrine
+		}
+		deactivate_shine_on_focus = ENG_harmony_doctrine
+		clr_country_flag = ENG_harmony_doctrine_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_climate_alarm_bell
+		}
+		deactivate_shine_on_focus = ENG_climate_alarm_bell
+		clr_country_flag = ENG_climate_alarm_bell_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_duchy_originals
+		}
+		deactivate_shine_on_focus = ENG_duchy_originals
+		clr_country_flag = ENG_duchy_originals_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_heir_of_the_realm
+		}
+		deactivate_shine_on_focus = ENG_heir_of_the_realm
+		clr_country_flag = ENG_heir_of_the_realm_in_progress_flag
+	}
+
+	#Uncomplete Ascension focus so that he can be picked later on
+	uncomplete_national_focus = {
+		focus = ENG_the_prince_trust
+		uncomplete_children = no
+		refund_political_power = no
+	}
+
+	if = { # REMOVE CHARLES FROM ASCENDED ADVISOR
+		limit = {
+			check_variable = { ENG_ascended_advisor_1 = 1 }
+		}
+		set_variable = { ENG_ascended_advisor_1 = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ENG_ascended_advisor_2 = 1 }
+		}
+		set_variable = { ENG_ascended_advisor_2 = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ENG_ascended_advisor_3 = 1 }
+		}
+		set_variable = { ENG_ascended_advisor_3 = 0 }
+	}
+}
+
+# ADD/REMOVE ADNREW EFFECTS
+ENG_add_andrew_effects = {
+	if = {
+		limit = {
+			has_completed_focus = ENG_duty_of_the_crown
+		}
+		add_ideas = ENG_andrew_5_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_digital_enterprise_patronage
+		}
+		add_ideas = ENG_andrew_4_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_emerging_markets_circuit
+		}
+		add_ideas = ENG_andrew_3_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_appoint_trade_representative
+		}
+		add_ideas = ENG_andrew_2_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_naval_prince
+		}
+		add_ideas = ENG_andrew_1_idea
+	}
+}
+
+ENG_remove_andrew_effects = {
+	if = {
+		limit = {
+			has_idea = ENG_andrew_5_idea
+		}
+		remove_ideas = ENG_andrew_5_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_andrew_4_idea
+		}
+		remove_ideas = ENG_andrew_4_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_andrew_3_idea
+		}
+		remove_ideas = ENG_andrew_3_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_andrew_2_idea
+		}
+		remove_ideas = ENG_andrew_2_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_andrew_1_idea
+		}
+		remove_ideas = ENG_andrew_1_idea
+	}
+
+	if = { #STOP ANY FOCUS IN-PROGRESS (WITH SHINY EFFECT)
+		limit = {
+			has_shine_effect_on_focus = ENG_appoint_trade_representative
+		}
+		deactivate_shine_on_focus = ENG_appoint_trade_representative
+		clr_country_flag = ENG_appoint_trade_representative_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_emerging_markets_circuit
+		}
+		deactivate_shine_on_focus = ENG_emerging_markets_circuit
+		clr_country_flag = ENG_emerging_markets_circuit_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_digital_enterprise_patronage
+		}
+		deactivate_shine_on_focus = ENG_digital_enterprise_patronage
+		clr_country_flag = ENG_digital_enterprise_patronage_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_duty_of_the_crown
+		}
+		deactivate_shine_on_focus = ENG_duty_of_the_crown
+		clr_country_flag = ENG_duty_of_the_crown_in_progress_flag
+	}
+
+	#Uncomplete Ascension focus so that he can be picked later on
+	uncomplete_national_focus = {
+		focus = ENG_naval_prince
+		uncomplete_children = no
+		refund_political_power = no
+	}
+
+	if = { # REMOVE ANDREW FROM ASCENDED ADVISOR
+		limit = {
+			check_variable = { ENG_ascended_advisor_1 = 2 }
+		}
+		set_variable = { ENG_ascended_advisor_1 = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ENG_ascended_advisor_2 = 2 }
+		}
+		set_variable = { ENG_ascended_advisor_2 = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ENG_ascended_advisor_3 = 2 }
+		}
+		set_variable = { ENG_ascended_advisor_3 = 0 }
+	}
+}
+
+# ADD/REMOVE ANNE EFFECTS
+ENG_add_anne_effects = {
+	if = {
+		limit = {
+			has_completed_focus = ENG_quiet_professionalism
+			has_country_flag = ENG_anne_navy
+		}
+		add_ideas = ENG_anne_4b_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_quiet_professionalism
+			has_country_flag = ENG_anne_army
+		}
+		add_ideas = ENG_anne_4a_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_colonel_of_horse_logistics
+		}
+		add_ideas = ENG_anne_3b_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_princess_admiral_royal_navy
+		}
+		add_ideas = ENG_anne_3a_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_discipline_service
+		}
+		add_ideas = ENG_anne_2_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_workhorse_of_the_crown
+		}
+		add_ideas = ENG_anne_1_idea
+	}
+}
+
+ENG_remove_anne_effects = {
+	if = {
+		limit = {
+			has_idea = ENG_anne_4b_idea
+		}
+		remove_ideas = ENG_anne_4b_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_anne_4a_idea
+		}
+		remove_ideas = ENG_anne_4a_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_anne_3a_idea
+		}
+		remove_ideas = ENG_anne_3a_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_anne_3b_idea
+		}
+		remove_ideas = ENG_anne_3b_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_anne_2_idea
+		}
+		remove_ideas = ENG_anne_2_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_anne_1_idea
+		}
+		remove_ideas = ENG_anne_1_idea
+	}
+
+	if = { #STOP ANY FOCUS IN-PROGRESS (WITH SHINY EFFECT)
+		limit = {
+			has_shine_effect_on_focus = ENG_carers_recognition_campaign
+		}
+		deactivate_shine_on_focus = ENG_carers_recognition_campaign
+		clr_country_flag = ENG_carers_recognition_campaign_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_discipline_service
+		}
+		deactivate_shine_on_focus = ENG_discipline_service
+		clr_country_flag = ENG_discipline_service_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_princess_admiral_royal_navy
+		}
+		deactivate_shine_on_focus = ENG_princess_admiral_royal_navy
+		clr_country_flag = ENG_princess_admiral_royal_navy_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_colonel_of_horse_logistics
+		}
+		deactivate_shine_on_focus = ENG_colonel_of_horse_logistics
+		clr_country_flag = ENG_colonel_of_horse_logistics_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_quiet_professionalism
+		}
+		deactivate_shine_on_focus = ENG_quiet_professionalism
+		clr_country_flag = ENG_quiet_professionalism_in_progress_flag
+	}
+
+	#Uncomplete Ascension focus so that he can be picked later on
+	uncomplete_national_focus = {
+		focus = ENG_workhorse_of_the_crown
+		uncomplete_children = no
+		refund_political_power = no
+	}
+
+	if = { # REMOVE NNE FROM ASCENDED ADVISOR
+		limit = {
+			check_variable = { ENG_ascended_advisor_1 = 3 }
+		}
+		set_variable = { ENG_ascended_advisor_1 = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ENG_ascended_advisor_2 = 3 }
+		}
+		set_variable = { ENG_ascended_advisor_2 = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ENG_ascended_advisor_3 = 3 }
+		}
+		set_variable = { ENG_ascended_advisor_3 = 0 }
+	}
+}
+
+# ADD/REMOVE EDWARD EFFECTS
+ENG_add_edward_effects = {
+	log ="ADDING EDWARD"
+	if = {
+		limit = {
+			has_completed_focus = ENG_steady_hand
+		}
+		add_ideas = ENG_edward_4_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_production_guild_patronage
+		}
+		add_ideas = ENG_edward_3_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_trustee_network
+		}
+		add_ideas = ENG_edward_2_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_chairman_international_award
+		}
+		add_ideas = ENG_edward_1_idea
+	}
+}
+
+ENG_remove_edward_effects = {
+	if = {
+		limit = {
+			has_idea = ENG_edward_4_idea
+		}
+		remove_ideas = ENG_edward_4_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_edward_3_idea
+		}
+		remove_ideas = ENG_edward_3_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_edward_2_idea
+		}
+		remove_ideas = ENG_edward_2_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_edward_1_idea
+		}
+		remove_ideas = ENG_edward_1_idea
+	}
+
+	if = { #STOP ANY FOCUS IN-PROGRESS (WITH SHINY EFFECT)
+		limit = {
+			has_shine_effect_on_focus = ENG_trustee_network
+		}
+		deactivate_shine_on_focus = ENG_trustee_network
+		clr_country_flag = ENG_trustee_network_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_commonwealth_youth_outreach
+		}
+		deactivate_shine_on_focus = ENG_commonwealth_youth_outreach
+		clr_country_flag = ENG_commonwealth_youth_outreach_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_production_guild_patronage
+		}
+		deactivate_shine_on_focus = ENG_production_guild_patronage
+		clr_country_flag = ENG_production_guild_patronage_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_steady_hand
+		}
+		deactivate_shine_on_focus = ENG_steady_hand
+		clr_country_flag = ENG_steady_hand_in_progress_flag
+	}
+
+	#Uncomplete Ascension focus so that he can be picked later on
+	uncomplete_national_focus = {
+		focus = ENG_chairman_international_award
+		uncomplete_children = no
+		refund_political_power = no
+	}
+
+	if = { # REMOVE EDWARD FROM ASCENDED ADVISOR
+		limit = {
+			check_variable = { ENG_ascended_advisor_1 = 4 }
+		}
+		set_variable = { ENG_ascended_advisor_1 = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ENG_ascended_advisor_2 = 4 }
+		}
+		set_variable = { ENG_ascended_advisor_2 = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ENG_ascended_advisor_3 = 4 }
+		}
+		set_variable = { ENG_ascended_advisor_3 = 0 }
+	}
+}
+
+# ADD/REMOVE PHILLIP EFFECTS
+ENG_add_phillip_effects = {
+	if = {
+		limit = {
+			has_completed_focus = ENG_strength_and_stay
+		}
+		add_ideas = ENG_phillip_5_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_prince_phillip_medal
+		}
+		add_ideas = ENG_phillip_4_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_wwf_president_emeritus
+		}
+		add_ideas = ENG_phillip_3_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_international_award_conference
+		}
+		add_ideas = ENG_phillip_2_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_duke_charities
+		}
+		add_ideas = ENG_phillip_1_idea
+	}
+}
+
+ENG_remove_phillip_effects = {
+	if = {
+		limit = {
+			has_idea = ENG_phillip_5_idea
+		}
+		remove_ideas = ENG_phillip_5_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_phillip_4_idea
+		}
+		remove_ideas = ENG_phillip_4_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_phillip_3_idea
+		}
+		remove_ideas = ENG_phillip_3_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_phillip_2_idea
+		}
+		remove_ideas = ENG_phillip_2_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_phillip_1_idea
+		}
+		remove_ideas = ENG_phillip_1_idea
+	}
+
+	if = { #STOP ANY FOCUS IN-PROGRESS (WITH SHINY EFFECT)
+		limit = {
+			has_shine_effect_on_focus = ENG_international_award_conference
+		}
+		deactivate_shine_on_focus = ENG_international_award_conference
+		clr_country_flag = ENG_international_award_conference_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_wwf_president_emeritus
+		}
+		deactivate_shine_on_focus = ENG_wwf_president_emeritus
+		clr_country_flag = ENG_wwf_president_emeritus_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_prince_phillip_medal
+		}
+		deactivate_shine_on_focus = ENG_prince_phillip_medal
+		clr_country_flag = ENG_prince_phillip_medal_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_strength_and_stay
+		}
+		deactivate_shine_on_focus = ENG_strength_and_stay
+		clr_country_flag = ENG_strength_and_stay_in_progress_flag
+	}
+
+	#Uncomplete Ascension focus so that he can be picked later on
+	uncomplete_national_focus = {
+		focus = ENG_duke_charities
+		uncomplete_children = no
+		refund_political_power = no
+	}
+
+	if = { # REMOVE PHILLIP FROM ASCENDED ADVISOR
+		limit = {
+			check_variable = { ENG_ascended_advisor_1 = 5 }
+		}
+		set_variable = { ENG_ascended_advisor_1 = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ENG_ascended_advisor_2 = 5 }
+		}
+		set_variable = { ENG_ascended_advisor_2 = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ENG_ascended_advisor_3 = 5 }
+		}
+		set_variable = { ENG_ascended_advisor_3 = 0 }
+	}
+}
+
+# ADD/REMOVE WILLIAM EFFECTS
+ENG_add_william_effects = {
+	if = {
+		limit = {
+			has_completed_focus = ENG_bridge_to_the_future
+		}
+		add_ideas = ENG_william_5_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_veteran_armed_forces_support
+		}
+		add_ideas = ENG_william_4_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_heads_together
+		}
+		add_ideas = ENG_william_3_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_royal_foundation
+		}
+		add_ideas = ENG_william_2_idea
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = ENG_from_sandhurst_to_service
+		}
+		add_ideas = ENG_william_1_idea
+	}
+}
+
+ENG_remove_william_effects = {
+	if = {
+		limit = {
+			has_idea = ENG_william_5_idea
+		}
+		remove_ideas = ENG_william_5_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_william_4_idea
+		}
+		remove_ideas = ENG_william_4_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_william_3_idea
+		}
+		remove_ideas = ENG_william_3_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_william_2_idea
+		}
+		remove_ideas = ENG_william_2_idea
+	}
+	else_if = {
+		limit = {
+			has_idea = ENG_william_1_idea
+		}
+		remove_ideas = ENG_william_1_idea
+	}
+
+	if = { #STOP ANY FOCUS IN-PROGRESS (WITH SHINY EFFECT)
+		limit = {
+			has_shine_effect_on_focus = ENG_bridge_to_the_future
+		}
+		deactivate_shine_on_focus = ENG_bridge_to_the_future
+		clr_country_flag = ENG_bridge_to_the_future_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_veteran_armed_forces_support
+		}
+		deactivate_shine_on_focus = ENG_veteran_armed_forces_support
+		clr_country_flag = ENG_veteran_armed_forces_support_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_heads_together
+		}
+		deactivate_shine_on_focus = ENG_heads_together
+		clr_country_flag = ENG_heads_together_in_progress_flag
+	}
+	else_if = {
+		limit = {
+			has_shine_effect_on_focus = ENG_royal_foundation
+		}
+		deactivate_shine_on_focus = ENG_royal_foundation
+		clr_country_flag = ENG_royal_foundation_in_progress_flag
+	}
+
+	#Uncomplete Ascension focus so that he can be picked later on
+	uncomplete_national_focus = {
+		focus = ENG_from_sandhurst_to_service
+		uncomplete_children = no
+		refund_political_power = no
+	}
+
+	if = { # REMOVE WILLIAM FROM ASCENDED ADVISOR
+		limit = {
+			check_variable = { ENG_ascended_advisor_1 = 6 }
+		}
+		set_variable = { ENG_ascended_advisor_1 = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ENG_ascended_advisor_2 = 6 }
+		}
+		set_variable = { ENG_ascended_advisor_2 = 0 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ENG_ascended_advisor_3 = 6 }
+		}
+		set_variable = { ENG_ascended_advisor_3 = 0 }
+	}
+}
+
+ENG_run_agendas = {
+	hidden_effect = {
+		if = {
+			limit = {
+				original_tag = ENG
+			}
+		}
+		country_event = {
+			id = britain_md.24
+			days = 14
+		}
+	}
+}
+
+ENG_devolution_bills_event = {
+	country_event = { id = devolution.1 days = 1 random_days = 40 }
+}
