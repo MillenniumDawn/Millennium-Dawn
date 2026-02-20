@@ -14,24 +14,51 @@ from common_utils import BaseStandardizer, run_standardizer
 class IdeaStandardizer(BaseStandardizer):
     """Standardizer for HOI4 ideas"""
 
+    # Wrapper blocks that should be preserved, not processed
+    WRAPPER_BLOCKS = {
+        "ideas",
+        "country",
+        "hidden_ideas",
+        "political_advisor",
+        "theorist",
+        "army_chief",
+        "navy_chief",
+        "air_chief",
+        "high_command",
+        "tank_manufacturer",
+        "naval_manufacturer",
+        "aircraft_manufacturer",
+        "materiel_manufacturer",
+        "industrial_concern",
+    }
+
     def get_block_pattern(self) -> str:
         """Return regex pattern to identify idea blocks"""
-        return r"\s*\w+_idea\s*=\s*{"
+        # Match any idea block (ID is extracted from the block name, not the pattern)
+        return r"\s*[\w_]+\s*=\s*{"
 
     def extract_properties(self, block_lines: List[str]) -> Dict[str, Any]:
         """Extract properties from idea block lines"""
         props = {
             "id": "",
             "name": "",
+            "allowed": [],
             "allowed_civil_war": [],
             "picture": "",
+            "cancel": [],
             "modifier": [],
+            "equipment_bonus": [],
             "on_add": [],
             "on_remove": [],
             "other": [],
         }
 
-        i = 1  # Skip opening brace
+        # Extract ID from the opening line (e.g., "BRA_idea_higher_minimum_wage_1 = {")
+        first_line = block_lines[0].strip()
+        if "=" in first_line:
+            props["id"] = first_line.split("=")[0].strip()
+
+        i = 1  # Skip opening brace line
         while i < len(block_lines) - 1:  # Skip closing brace
             line = block_lines[i].strip()
 
@@ -39,15 +66,33 @@ class IdeaStandardizer(BaseStandardizer):
                 props["name"] = line
             elif line.startswith("picture ="):
                 props["picture"] = line
-
+            elif line.startswith("allowed ="):
+                block_lines_block, next_i = self.extract_block(block_lines, i)
+                # Skip performance-hurting allowed = { always = no }
+                if not self.is_performance_hurting_block(block_lines_block, "allowed"):
+                    props["allowed"].append(block_lines_block)
+                i = next_i
+                continue
             elif line.startswith("allowed_civil_war ="):
                 block_lines_block, next_i = self.extract_block(block_lines, i)
                 props["allowed_civil_war"].append(block_lines_block)
                 i = next_i
                 continue
+            elif line.startswith("cancel ="):
+                block_lines_block, next_i = self.extract_block(block_lines, i)
+                # Skip performance-hurting cancel = { always = no }
+                if not self.is_performance_hurting_block(block_lines_block, "cancel"):
+                    props["cancel"].append(block_lines_block)
+                i = next_i
+                continue
             elif line.startswith("modifier ="):
                 block_lines_block, next_i = self.extract_block(block_lines, i)
                 props["modifier"].append(block_lines_block)
+                i = next_i
+                continue
+            elif line.startswith("equipment_bonus ="):
+                block_lines_block, next_i = self.extract_block(block_lines, i)
+                props["equipment_bonus"].append(block_lines_block)
                 i = next_i
                 continue
             elif line.startswith("on_add ="):
@@ -61,11 +106,12 @@ class IdeaStandardizer(BaseStandardizer):
                 i = next_i
                 continue
             else:
-                # Other content (including the idea ID which is the first word)
-                if not props["id"] and line and not line.startswith("#"):
-                    # Extract idea ID from the first non-comment line
-                    props["id"] = line.split()[0] if line.split() else ""
-                props["other"].append(block_lines[i])
+                # Store other properties
+                if line and not line.startswith("#"):
+                    props["other"].append(block_lines[i])
+                elif line.startswith("#"):
+                    # Keep comments
+                    props["other"].append(block_lines[i])
 
             i += 1
 
@@ -100,52 +146,173 @@ class IdeaStandardizer(BaseStandardizer):
 
         return block_lines, i
 
-    def format_block(self, props: Dict[str, Any]) -> List[str]:
+    def is_empty_log_block(self, block_lines: List[str]) -> bool:
+        """Check if a block is an empty log-only block (performance issue)"""
+        if not block_lines:
+            return True
+
+        for line in block_lines:
+            stripped = line.strip()
+            # Skip opening/closing braces and whitespace
+            if stripped in ("{", "}", "") or not stripped:
+                continue
+            # Skip comments
+            if stripped.startswith("#"):
+                continue
+            # Check if it's just an empty log
+            if 'log = ""' in stripped or "log = ''" in stripped:
+                continue
+            # If we find any other content, it's not an empty log block
+            return False
+
+        # If we only found empty logs, opening/closing braces, it's an empty log block
+        return True
+
+    def has_meaningful_effects(self, block_lines: List[str]) -> bool:
+        """Check if a block has meaningful effects beyond just logging"""
+        if not block_lines:
+            return False
+
+        for line in block_lines:
+            stripped = line.strip()
+            # Skip opening/closing braces, whitespace, comments, and log statements
+            if (
+                stripped in ("{", "}", "")
+                or not stripped
+                or stripped.startswith("#")
+                or stripped.startswith("log =")
+            ):
+                continue
+            # Found a meaningful effect
+            return True
+
+        return False
+
+    def is_performance_hurting_block(
+        self, block_lines: List[str], property_name: str
+    ) -> bool:
+        """Check if a block matches performance-hurting patterns to be removed"""
+        if not block_lines:
+            return False
+
+        # Check for allowed = { always = no } (default, hurts performance)
+        if property_name == "allowed":
+            for line in block_lines:
+                stripped = line.strip()
+                if "always = no" in stripped or "always=no" in stripped:
+                    return True
+
+        # Check for cancel = { always = no } (checked hourly, never true)
+        if property_name == "cancel":
+            for line in block_lines:
+                stripped = line.strip()
+                if "always = no" in stripped or "always=no" in stripped:
+                    return True
+
+        return False
+
+    def compact_block(
+        self, block_lines: List[str], base_indent: str = "\t\t"
+    ) -> List[str]:
+        """Compact a block by removing blank lines and comments, properly nesting by brace depth"""
+        if not block_lines:
+            return block_lines
+
+        compacted = []
+        depth = 0
+
+        for i, line in enumerate(block_lines):
+            stripped = line.strip()
+            # Skip blank lines
+            if not stripped:
+                continue
+            # Skip commented-out code (but keep inline comments)
+            if stripped.startswith("#") and i > 0:
+                continue
+
+            # Calculate indentation based on brace depth
+            # First, determine the indent for this line (before processing braces)
+            line_indent = base_indent + ("\t" * depth)
+
+            # If this is a closing brace, decrease depth first
+            if stripped == "}":
+                depth = max(0, depth - 1)
+                line_indent = base_indent + ("\t" * depth)
+
+            # Add the line with proper indentation
+            new_line = line_indent + stripped
+            compacted.append(new_line)
+
+            # Update depth based on braces in this line
+            if i == 0 and "{" in stripped:
+                # First line with opening brace - increase depth for next lines
+                depth += 1
+            elif i > 0 and stripped.endswith("{"):
+                # A line that opens a new block
+                depth += 1
+
+        return compacted
+
+    def format_block(self, props: Dict[str, Any], base_indent: str = "\t") -> List[str]:
         """Format idea according to Millennium Dawn standard"""
         lines = []
 
-        # Idea ID (first line)
+        # Idea ID (first line) - use base indent
         if props["id"]:
-            lines.append(f"\t{props['id']} = {{")
+            lines.append(base_indent + props["id"] + " = {")
         else:
-            lines.append("\tidea = {")
+            lines.append(base_indent + "idea = {")
 
-        lines.append("")
+        # Property indent is one level deeper
+        prop_indent = base_indent + "\t"
 
-        # 1. Name (first property)
+        # 1. Name (optional, first property if present)
         if props["name"]:
-            lines.append(f'\t\t{props["name"]}')
-            lines.append("")
+            lines.append(prop_indent + props["name"])
 
-        # 2. allowed_civil_war (include for civil war tags)
-        for allowed_civil_war in props["allowed_civil_war"]:
-            compacted_allowed = self.compact_block(allowed_civil_war[:])
+        # 2. Picture
+        if props["picture"]:
+            lines.append(prop_indent + props["picture"])
+
+        # 3. allowed (only if not performance-hurting)
+        for allowed in props["allowed"]:
+            compacted_allowed = self.compact_block(allowed[:], prop_indent)
             for line in compacted_allowed:
                 lines.append(line)
-            lines.append("")
 
-        # 3. Picture
-        if props["picture"]:
-            lines.append(f'\t\t{props["picture"]}')
-            lines.append("")
+        # 4. allowed_civil_war (include for civil war tags)
+        for allowed_civil_war in props["allowed_civil_war"]:
+            compacted_civil_war = self.compact_block(allowed_civil_war[:], prop_indent)
+            for line in compacted_civil_war:
+                lines.append(line)
 
-        # 4. Modifier block
+        # 5. cancel (only if not performance-hurting)
+        for cancel in props["cancel"]:
+            compacted_cancel = self.compact_block(cancel[:], prop_indent)
+            for line in compacted_cancel:
+                lines.append(line)
+
+        # 6. Modifier block
         for modifier in props["modifier"]:
-            compacted_modifier = self.compact_block(modifier[:])
+            compacted_modifier = self.compact_block(modifier[:], prop_indent)
             for line in compacted_modifier:
                 lines.append(line)
-            lines.append("")
 
-        # 5. on_add (log only when making changes)
+        # 7. Equipment bonus (for MIO ideas)
+        for equipment_bonus in props["equipment_bonus"]:
+            compacted_equipment = self.compact_block(equipment_bonus[:], prop_indent)
+            for line in compacted_equipment:
+                lines.append(line)
+
+        # 8. on_add (log only when making changes)
         for on_add in props["on_add"]:
+            # Check if this is an empty log-only block (performance issue)
+            is_empty_log = self.is_empty_log_block(on_add)
+            if is_empty_log:
+                continue  # Skip empty log-only blocks
+
             has_log = any("log =" in line for line in on_add)
-            has_effects = any(
-                line.strip()
-                and line.strip() not in ("{", "}")
-                and not line.strip().startswith("#")
-                and not line.strip().startswith("log =")
-                for line in on_add
-            )
+            has_effects = self.has_meaningful_effects(on_add)
 
             if has_effects:
                 if not has_log and props["id"]:
@@ -156,25 +323,23 @@ class IdeaStandardizer(BaseStandardizer):
                         modified_on_add.append(line)
                         if j == 0 and "{" in line:  # After opening brace
                             modified_on_add.append(
-                                f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Idea {idea_id} added"'
+                                f'{prop_indent}\tlog = "[GetDateText]: [Root.GetName]: Idea {idea_id} added"'
                             )
                     on_add = modified_on_add
 
-                compacted_on_add = self.compact_block(on_add[:])
+                compacted_on_add = self.compact_block(on_add[:], prop_indent)
                 for line in compacted_on_add:
                     lines.append(line)
-                lines.append("")
 
-        # 6. on_remove (log only when making changes)
+        # 9. on_remove (log only when making changes)
         for on_remove in props["on_remove"]:
+            # Check if this is an empty log-only block (performance issue)
+            is_empty_log = self.is_empty_log_block(on_remove)
+            if is_empty_log:
+                continue  # Skip empty log-only blocks
+
             has_log = any("log =" in line for line in on_remove)
-            has_effects = any(
-                line.strip()
-                and line.strip() not in ("{", "}")
-                and not line.strip().startswith("#")
-                and not line.strip().startswith("log =")
-                for line in on_remove
-            )
+            has_effects = self.has_meaningful_effects(on_remove)
 
             if has_effects:
                 if not has_log and props["id"]:
@@ -185,77 +350,190 @@ class IdeaStandardizer(BaseStandardizer):
                         modified_on_remove.append(line)
                         if j == 0 and "{" in line:  # After opening brace
                             modified_on_remove.append(
-                                f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Idea {idea_id} removed"'
+                                f'{prop_indent}\tlog = "[GetDateText]: [Root.GetName]: Idea {idea_id} removed"'
                             )
                     on_remove = modified_on_remove
 
-                compacted_on_remove = self.compact_block(on_remove[:])
+                compacted_on_remove = self.compact_block(on_remove[:], prop_indent)
                 for line in compacted_on_remove:
                     lines.append(line)
-                lines.append("")
 
-        # 7. Other properties (remove performance-hurting ones)
+        # 10. Other properties (filter out commented code)
         if props["other"]:
             for line in props["other"]:
                 line_stripped = line.strip()
-                # Remove performance-hurting properties
-                if (
-                    line_stripped.startswith("allowed = { always = no }")
-                    or line_stripped.startswith("cancel = { always = no }")
-                    or (
-                        line_stripped.startswith("on_add = {")
-                        and 'log = ""' in line_stripped
-                    )
-                ):
-                    continue  # Skip these performance-hurting properties
+                # Skip commented-out code
+                if line_stripped.startswith("#"):
+                    continue
+                # Only add non-empty lines
+                if line.strip():
+                    # Re-indent the line to match our base indent
+                    lines.append(prop_indent + line_stripped)
 
-                if line.strip():  # Only add non-empty lines
-                    lines.append(line)
+        # Don't add allowed = { always = no } (it's the default and hurts performance)
+        # This is now filtered in the extraction phase
 
-            # Add blank line after other properties if they exist and we kept any
-            if any(
-                line.strip()
-                and not (
-                    line.strip().startswith("allowed = { always = no }")
-                    or line.strip().startswith("cancel = { always = no }")
-                    or (
-                        line.strip().startswith("on_add = {")
-                        and 'log = ""' in line.strip()
-                    )
-                )
-                for line in props["other"]
-            ):
-                lines.append("")
+        # Don't add cancel = { always = no } (checked hourly, never true)
+        # This is now filtered in the extraction phase
 
-        lines.append("\t}")
+        lines.append(base_indent + "}")
 
-        # Clean up excessive blank lines
+        # Clean up excessive blank lines - ensure exactly 1 blank line between sections
         cleaned_lines = []
-        blank_count = 0
+        prev_line_blank = False
 
-        for line in lines:
-            if line.strip() == "":
-                blank_count += 1
-                if blank_count <= 1:  # Only allow 1 consecutive blank line
+        for i, line in enumerate(lines):
+            is_blank = line.strip() == ""
+            is_first_line = i == 0
+            is_last_line = i == len(lines) - 1
+
+            # Don't add blank lines at the start or end
+            if is_first_line or is_last_line:
+                if not is_blank:
                     cleaned_lines.append(line)
+                    prev_line_blank = False
+            # Only add one blank line between sections
+            elif is_blank:
+                if not prev_line_blank:
+                    cleaned_lines.append("")
+                prev_line_blank = True
             else:
-                blank_count = 0
                 cleaned_lines.append(line)
+                prev_line_blank = False
 
         return cleaned_lines
 
-    def compact_block(self, block_lines: List[str]) -> List[str]:
-        """Completely compact a block by removing all internal blank lines"""
-        if not block_lines:
-            return block_lines
+    def standardize_file(self, input_file: str, output_file: str) -> bool:
+        """Standardize ideas file by handling nested structure properly"""
+        import os
+        import re
+        import time
 
-        compacted = []
-        for line in block_lines:
+        from shared_utils import extract_block, log_message
+
+        self.start_time = time.time()
+        log_message("INFO", f"Starting standardization of {input_file}", self.verbose)
+
+        if not os.path.exists(input_file):
+            log_message("ERROR", f"Input file not found: {input_file}")
+            return False
+
+        try:
+            with open(input_file, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+            log_message(
+                "INFO", f"Read {len(lines)} lines from {input_file}", self.verbose
+            )
+        except Exception as e:
+            log_message("ERROR", f"Failed to read {input_file}: {e}")
+            return False
+
+        output_lines = self._process_lines(lines, depth=0)
+
+        try:
+            with open(output_file, "w", encoding="utf-8") as f:
+                for line in output_lines:
+                    f.write(line + "\n")
+
+            end_time = time.time()
+            elapsed_time = end_time - self.start_time
+
+            if elapsed_time < 60:
+                time_str = f"{elapsed_time:.2f} seconds"
+            else:
+                minutes = int(elapsed_time // 60)
+                seconds = elapsed_time % 60
+                time_str = f"{minutes}m {seconds:.2f}s"
+
+            log_message("SUCCESS", f"Standardization completed in {time_str}")
+            log_message("SUCCESS", f"Processed {self.processed_count} ideas")
+            log_message("SUCCESS", f"Output written to: {output_file}")
+
+        except Exception as e:
+            log_message("ERROR", f"Failed to write {output_file}: {e}")
+            return False
+
+        return True
+
+    def _process_lines(self, lines: List[str], depth: int) -> List[str]:
+        """Recursively process lines, handling nested structures"""
+        import re
+
+        from shared_utils import extract_block, log_message
+
+        output_lines = []
+        i = 0
+
+        while i < len(lines):
+            line = lines[i].rstrip()
             stripped = line.strip()
-            if stripped:
-                compacted.append(line.rstrip())
 
-        return compacted
+            # Check if this line starts a block
+            if re.match(r"\s*[\w_]+\s*=\s*{", line):
+                # Extract the block name
+                block_name = line.split("=")[0].strip()
+
+                # Check if this is a wrapper block or an actual idea
+                if block_name in self.WRAPPER_BLOCKS:
+                    # This is a wrapper block - preserve it and process its contents
+                    log_message(
+                        "DEBUG",
+                        f"Found wrapper block: {block_name} at line {i+1}",
+                        self.verbose,
+                    )
+
+                    # Add the opening line
+                    output_lines.append(line)
+
+                    # Extract the block content (without the opening/closing braces)
+                    block_lines, next_i = extract_block(lines, i)
+
+                    # Process the inner content recursively
+                    inner_lines = block_lines[
+                        1:-1
+                    ]  # Skip opening and closing brace lines
+                    processed_inner = self._process_lines(inner_lines, depth + 1)
+
+                    # Add processed inner content
+                    output_lines.extend(processed_inner)
+
+                    # Add the closing brace (from the original)
+                    if block_lines:
+                        output_lines.append(block_lines[-1].rstrip())
+
+                    i = next_i
+                else:
+                    # This is an actual idea - process it
+                    log_message(
+                        "DEBUG", f"Found idea: {block_name} at line {i+1}", self.verbose
+                    )
+
+                    block_lines, next_i = extract_block(lines, i)
+
+                    if block_lines:
+                        props = self.extract_properties(block_lines)
+
+                        # Calculate base indentation from depth
+                        # depth=2 means we're inside ideas{} and country{}, so use 2 tabs
+                        base_indent = "\t" * depth
+                        formatted_lines = self.format_block(props, base_indent)
+
+                        output_lines.extend(formatted_lines)
+                        self.processed_count += 1
+
+                        log_message(
+                            "DEBUG",
+                            f"Processed idea {self.processed_count}: {props.get('id', 'unknown')}",
+                            self.verbose,
+                        )
+
+                    i = next_i
+            else:
+                # Not a block start - preserve the line as-is
+                output_lines.append(line)
+                i += 1
+
+        return output_lines
 
 
 def main():
