@@ -4,26 +4,15 @@ page_id: home
 description: "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV."
 ---
 
-{% include responsive-image.html src="/uploads/main-menu-2.png" alt="Millennium Dawn logo banner" width="1440" height="191" loading="eager" fetchpriority="high" %}
-{% include responsive-image.html src="/uploads/Introduction.png" alt="Millennium Dawn introduction banner" width="1440" height="144" loading="eager" %}
+{% include hero.html %}
 
-With the dawn of a new millennium, a new chapter in human history will be written. Globalization continues to change the lives of countless billions while rising extremism is showing signs of igniting the fires of conflict. New powers begin to emerge, and not all believe their place in the global order, or that of some competitors is warranted. A struggle will soon begin, and it will likely change everything. Will you lead your Nation to prosperity and dominance in the decades ahead, or will your Nation fall victim to the defining moments of history?
-
-**Welcome to Millennium Dawn.**
-
-Millennium Dawn is a multi-mod project set in the year 2000 and carries forward to the modern day. The mod boasts new and unique tech trees, focus trees, events, and decisions to immerse you in the intricacies of the modern era.
-
-Further, it offers a new and unique economic system, a new political system, national taxation and debt, custom internal political factions, international influence mechanics, custom 3D models, a custom soundtrack, and much more!
-
-## Welcome to the Millennium Dawn Wiki!
+# Welcome to the MD Wiki
 
 **Current Expected Version:** v1.12.3b
 
 **Current Expected Checksum:** a842
 
-**The following Wiki is currently a work in progress. However, we will do our best to get meaningful content updated and placed on this page.**
-
-See the [Troubleshooting Guide]({{ '/player-tutorials/troubleshooting-guide' | relative_url }}) for common issues.
+**Note:** The following Wiki is currently a work in progress. However, we will do our best to get meaningful content updated and placed on this page.
 
 ## Roadmap Images
 
@@ -55,7 +44,7 @@ The development team requires that you are at least 16 years of age and own a le
 
 ### Translations
 
-**Paratranz Projects**
+#### Paratranz Projects
 
 - [Brazilian Portuguese](https://paratranz.cn/projects/10699)
 - [Korean](https://paratranz.cn/projects/3830)
