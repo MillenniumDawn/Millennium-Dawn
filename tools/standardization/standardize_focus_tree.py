@@ -269,6 +269,58 @@ def compact_icon(block_lines):
     return "\n".join(compacted_lines)
 
 
+def format_focus_offset_block(block_lines):
+    """Format offset block within a focus (with 2-tab base indentation)"""
+    lines = []
+    lines.append("\t\toffset = {")
+
+    # Extract properties
+    x_val = ""
+    y_val = ""
+    trigger_lines = []
+    other_lines = []
+
+    i = 1  # Skip opening brace
+    while i < len(block_lines) - 1:  # Skip closing brace
+        line = block_lines[i].strip()
+
+        if line.startswith("x ="):
+            x_val = line
+        elif line.startswith("y ="):
+            y_val = line
+        elif line.startswith("trigger ="):
+            trigger_block, next_i = extract_block(block_lines, i)
+            trigger_lines = trigger_block
+            i = next_i
+            continue
+        else:
+            other_lines.append(block_lines[i])
+
+        i += 1
+
+    # Format output with 3-tab indentation for properties
+    if x_val:
+        lines.append(f"\t\t\t{x_val}")
+    if y_val:
+        lines.append(f"\t\t\t{y_val}")
+
+    if trigger_lines:
+        # Reformat trigger block with proper indentation (3 tabs base, 4 tabs for content)
+        lines.append("\t\t\ttrigger = {")
+        for trigger_line in trigger_lines[1:-1]:  # Skip opening/closing braces
+            stripped = trigger_line.strip()
+            if stripped:
+                lines.append(f"\t\t\t\t{stripped}")
+        lines.append("\t\t\t}")
+
+    for line in other_lines:
+        if line.strip():
+            lines.append(line)
+
+    lines.append("\t\t}")
+    return lines
+
+
 def format_focus_block(props):
     """Format focus according to Millennium Dawn standard"""
     lines = []
@@ -319,8 +371,8 @@ def format_focus_block(props):
     if props["relative_position_id"]:
         lines.append(f'\t\t{props["relative_position_id"]}')
     if props["offset"]:
-        compacted_offset = compact_block(props["offset"][:])
-        for line in compacted_offset:
+        formatted_offset = format_focus_offset_block(props["offset"][:])
+        for line in formatted_offset:
             lines.append(line)
 
     # 4. Blank line before cost
