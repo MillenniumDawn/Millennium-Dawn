@@ -1,0 +1,6510 @@
+﻿add_namespace = United_Kingdom
+add_namespace = britain_md
+add_namespace = United_Kingdom_News
+add_namespace = devolution
+add_namespace = ENG_military
+add_namespace = ENG_parliament
+add_namespace = british_flavor
+
+
+#### Inner Circle
+# CONSTANT FOR INNER CIRCLE TIMES (These needs to be x7 compared to the Focus cost in the focus file) - NEEDS TO MATCH THE SAME CONSTANTS USED IN THE FOCUS FILE x7
+@inner_circle_time_tier_1 = 140
+@inner_circle_time_tier_2 = 280
+@inner_circle_time_tier_3 = 560
+@inner_circle_time_tier_4 = 700
+# FLAG CONSTANTS (It is 1 day more so the tooltip and days shown in the focus about Focus Progress match exactly the moment when the focus is completed)
+@inner_circle_time_tier_1_flag = 141
+@inner_circle_time_tier_2_flag = 281
+@inner_circle_time_tier_3_flag = 561
+@inner_circle_time_tier_4_flag = 701
+
+add_namespace = ENG_inner_circle
+add_namespace = ENG_inner_circle_charles
+add_namespace = ENG_inner_circle_andrew
+add_namespace = ENG_inner_circle_anne
+add_namespace = ENG_inner_circle_edward
+add_namespace = ENG_inner_circle_philip
+add_namespace = ENG_inner_circle_william
+
+
+
+########################## Asteroid Mining Event Chain #########################
+#Launching the Asteroid Mining Initiative
+country_event = {
+	id = ENG_military.001
+	title = ENG_military.001.t
+	desc = ENG_military.001.d
+	picture = GFX_trump_announcement
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #Just need to wait for an asteroid...
+		name = ENG_military.001.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.001.a executed"
+		custom_effect_tooltip = ENG_dependency_gui_tooltip2
+	}
+}
+#Asteroid Spotted
+country_event = {
+	id = ENG_military.002
+	title = ENG_military.002.t
+	desc = ENG_military.002.d
+	picture = GFX_asteroid
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #Let's get that baby into orbit
+		name = ENG_military.002.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.002.a executed"
+		hidden_effect = {
+			country_event = {
+				id = ENG_military.003
+				days = 50
+				random_hours = 1200
+			}
+		}
+		custom_effect_tooltip = asteroid_mining_spotted_tt
+	}
+}
+#Asteroid in Orbit
+country_event = {
+	id = ENG_military.003
+	title = ENG_asteroid_mining.t
+	desc = ENG_asteroid_mining.d
+	picture = GFX_asteroid_in_orbit
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #Mining shall begin
+		name = ENG_military.003.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.003.a executed"
+		hidden_effect = {
+			country_event = {
+				id = ENG_military.004
+				days = 100
+				random_hours = 2400
+			}
+		}
+		custom_effect_tooltip = asteroid_mining_orbit_tt
+		add_to_variable = { asteroid_mining_rate = 2 } #It's set here so the next event's localization isn't screwed up
+		add_to_variable = { global.asteroid_mining_rate = 2 }
+	}
+}
+#Profits from Mining Start Pouring in
+country_event = {
+	id = ENG_military.004
+	title = ENG_military.004.t
+	desc = ENG_military.004.d
+	picture = GFX_asteroid_in_orbit
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #Huzzah!
+		name = ENG_military.004.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.004.a executed"
+		set_temp_variable = { party_index = 20 }
+		set_temp_variable = { party_popularity_increase = 0.002 }
+		add_relative_party_popularity = yes
+		capital_scope = {
+			add_resource = {
+				type = tungsten
+				amount = 1
+			}
+			add_resource = {
+				type = steel
+				amount = 2
+			}
+		}
+		add_to_variable = { global.asteroid_mineral_count = 100 }
+		custom_effect_tooltip = asteroid_mining_mined_tt
+		add_to_variable = { treasury = asteroid_mining_rate }
+		custom_effect_tooltip = asteroid_mining_revenue_tt
+		set_country_flag = asteroid_mining
+		news_event = donald_trump_news.3
+	}
+}
+#Profits from Asteroid Mining
+country_event = {
+	id = ENG_military.005
+	title = ENG_military.005.t
+	desc = ENG_military.005.d
+	picture = GFX_asteroid_in_orbit
+
+	is_triggered_only = yes
+
+	option = { #Excellent!
+		name = ENG_military.005.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.005.a executed"
+		if = {
+			limit = {
+				check_variable = {
+					var = global.asteroid_mineral_count
+					value = asteroid_mining_rate
+					compare = greater_than_or_equals
+				}
+			}
+			custom_effect_tooltip = asteroid_mining_mined_tt
+			add_to_variable = { treasury = asteroid_mining_rate }
+			subtract_from_variable = { global.asteroid_mineral_count = asteroid_mining_rate }
+			custom_effect_tooltip = asteroid_mining_revenue_tt
+		}
+		else = {
+			custom_effect_tooltip = asteroid_mining_not_enough_tt
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					NOT = { has_global_flag = asteroid_mining_start }
+				}
+				set_global_flag = asteroid_mining_start
+				every_country = {
+					limit = {
+						num_of_factories > 40
+					}
+					country_event = { days = 20 id = ENG_military.006 }
+				}
+			}
+		}
+	}
+}
+#Potential for Asteroid Mining
+country_event = {
+	id = ENG_military.006
+	title = ENG_military.006.t
+	desc = ENG_military.006.d
+	picture = GFX_asteroid_in_orbit
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = { #Invest in Asteroid Mining
+		name = ENG_military.006.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.006.a executed"
+		add_political_power = -50
+		set_temp_variable = { treasury_change = -25 }
+		modify_treasury_effect = yes
+		add_to_variable = { asteroid_mining_rate = 1 }
+		add_to_variable = { global.asteroid_mining_rate = 1 }
+		capital_scope = {
+			add_resource = {
+				type = steel
+				amount = 1
+			}
+		}
+		custom_effect_tooltip = asteroid_mining_opportunity_tt
+		set_country_flag = asteroid_mining
+		set_global_flag = asteroid_mining
+	}
+	option = { #Too expensive and a waste of our time!
+		name = ENG_military.006.b
+		log = "[GetDateText]: [This.GetName]: ENG_military.006.b executed"
+	}
+}
+########################## Moon And Space Event Chain #########################
+#Moon Outpost
+country_event = {
+	id = ENG_military.007
+	title = ENG_military.007.t
+	desc = ENG_military.007.d
+	picture = GFX_ENG_generic
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.007.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.007.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.008 days = 20 random_hours = 480 }
+		}
+	}
+}
+
+#Moonbase Alpha
+country_event = {
+	id = ENG_military.008
+	title = ENG_military.008.t
+	desc = ENG_military.008.d
+	picture = GFX_moonbase_construction
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Science!
+		name = ENG_military.008.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.008.a executed"
+		add_political_power = 50
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		ENG_advance_moon_base = yes
+	}
+}
+
+#Colony Progresses
+country_event = {
+	id = ENG_military.009
+	title = ENG_military.009.t
+	desc = ENG_military.009.d
+	picture = GFX_moonbase_construction
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #We're good at being pioneers
+		name = ENG_military.009.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.009.a executed"
+		add_political_power = 20
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		ENG_advance_moon_base = yes
+		swap_ideas = {
+			remove_idea = continued_space_efforts5
+			add_idea = continued_space_efforts6
+		}
+	}
+}
+
+#Crisis on the Moon
+country_event = {
+	id = ENG_military.010
+	title = ENG_military.010.t
+	desc = ENG_military.010.d
+	picture = GFX_moonbase
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Send emergency aid!
+		name = ENG_military.010.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.010.a executed"
+		add_political_power = -75
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		ENG_advance_moon_base = yes
+	}
+	option = { #Abandon the project. It's not meant for us
+		name = ENG_military.010.b
+		log = "[GetDateText]: [This.GetName]: ENG_military.010.b executed"
+		add_political_power = -125
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			country_event = { id = ENG_military.008 days = 20 random_hours = 480 }
+		}
+	}
+}
+
+#Colony Progresses Further
+country_event = {
+	id = ENG_military.011
+	title = ENG_military.011.t
+	desc = ENG_military.011.d
+	picture = GFX_moonbase_construction
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Life continues on
+		name = ENG_military.011.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.011.a executed"
+		add_political_power = 30
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		ENG_advance_moon_base = yes
+		swap_ideas = {
+			remove_idea = continued_space_efforts6
+			add_idea = continued_space_efforts7
+		}
+	}
+}
+
+#Another Crisis on the Moon
+country_event = {
+	id = ENG_military.012
+	title = ENG_military.012.t
+	desc = ENG_military.012.d
+	picture = GFX_moonbase
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Send more emergency aid!
+		name = ENG_military.012.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.012.a executed"
+		add_political_power = -100
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		ENG_advance_moon_base = yes
+	}
+	option = { #We can't continue doing things like this.
+		name = ENG_military.012.b
+		log = "[GetDateText]: [This.GetName]: ENG_military.012.b executed"
+		add_political_power = -150
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = -0.05 }
+		add_relative_party_popularity = yes
+		hidden_effect = {
+			country_event = { id = ENG_military.011 days = 20 random_hours = 480 }
+		}
+	}
+}
+
+#Moonbase Beta
+country_event = {
+	id = ENG_military.013
+	title = ENG_military.013.t
+	desc = ENG_military.013.d
+	picture = GFX_moonbase
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Huzzah!
+		name = ENG_military.013.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.013.a executed"
+		add_political_power = 150
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		add_relative_party_popularity = yes
+		swap_ideas = {
+			remove_idea = continued_space_efforts7
+			add_idea = continued_space_efforts8
+		}
+		custom_effect_tooltip = moonbase_chain_end_tt
+	}
+}
+
+
+#Rover Mars Mission
+country_event = {
+	id = ENG_military.014
+	title = ENG_military.014.t
+	desc = ENG_military.014.d
+	picture = GFX_mars_mission
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.014.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.014.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.015 days = 20 random_hours = 480 }
+		}
+	}
+}
+
+#Mars Colony Event Chain
+#Launch
+country_event = {
+	id = ENG_military.015
+	title = ENG_military.015.t
+	desc = ENG_military.015.d
+	picture = GFX_mars_colony_2
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.015.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.015.a executed"
+		hidden_effect = {
+		random_list = {
+			60 = {
+			hidden_effect = {
+			country_event = { id = ENG_military.016 days = 20 random_hours = 480 }
+					}
+				}
+			40 = {
+			hidden_effect = {
+			country_event = { id = ENG_military.019 days = 20 random_hours = 480 }
+					}
+				}
+			}
+		}
+	}
+}
+country_event = {
+	id = ENG_military.016
+	title = ENG_military.016.t
+	desc = ENG_military.016.d
+	picture = GFX_mars_colony_3
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #
+		name = ENG_military.016.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.016.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.017 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.017
+	title = ENG_military.017.t
+	desc = ENG_military.017.d
+	picture = GFX_mars_colony_4
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.017.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.017.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.018 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.018
+	title = ENG_military.018.t
+	desc = ENG_military.018.d
+	picture = GFX_mars_colony_5
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.018.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.018.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.021 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.019
+	title = ENG_military.019.t
+	desc = ENG_military.019.d
+	picture = GFX_mars_colony_6
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.019.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.019.1.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.020 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.020
+	title = ENG_military.020.t
+	desc = ENG_military.020.d
+	picture = GFX_mars_colony_7
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.020.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.020.1.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.021 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.021
+	title = ENG_military.021.t
+	desc = ENG_military.021.d
+	picture = GFX_mars_colony_8
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.021.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.021.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.022 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.022
+	title = ENG_military.022.t
+	desc = ENG_military.022.d
+	picture = GFX_mars_colony_9
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.022.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.022.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.023 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.023
+	title = ENG_military.023.t
+	desc = ENG_military.023.d
+	picture = GFX_mars_colony_10
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.023.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.023.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.024 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.024
+	title = ENG_military.024.t
+	desc = ENG_military.024.d
+	picture = GFX_mars_colony_11
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.024.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.024.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.025 days = 20 random_hours = 480 }
+		}
+	}
+
+}
+country_event = {
+	id = ENG_military.025
+	title = ENG_military.025.t
+	desc = ENG_military.025.d
+	picture = GFX_mars_colony_12
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Evacuate
+		name = ENG_military.025.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.025.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.026 days = 20 random_hours = 480 }
+		}
+	}
+	option = { #Fix Base
+		name = ENG_military.025.b
+		log = "[GetDateText]: [This.GetName]: ENG_military.025.b executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.027 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.026
+	title = ENG_military.026.t
+	desc = ENG_military.026.d
+	picture = GFX_mars_colony_13
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.026.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.026.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.015 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.027
+	title = ENG_military.027.t
+	desc = ENG_military.027.d
+	picture = GFX_mars_colony_14
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.027.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.027.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.028 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.028
+	title = ENG_military.028.t
+	desc = ENG_military.028.d
+	picture = GFX_mars_colony_15
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Yes
+		name = ENG_military.028.a
+		set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+		log = "[GetDateText]: [This.GetName]: ENG_military.028.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.029 days = 20 random_hours = 480 }
+		}
+	}
+	option = { #No
+		name = ENG_military.028.b
+		log = "[GetDateText]: [This.GetName]: ENG_military.028.b executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.030 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.029
+	title = ENG_military.029.t
+	desc = ENG_military.029.d
+	picture = GFX_mars_colony_16
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.029.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.029.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.031 days = 20 random_hours = 480 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.030
+	title = ENG_military.030.t
+	desc = ENG_military.030.d
+	picture = GFX_mars_colony_17
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.030.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.030.a executed"
+		hidden_effect = {
+			country_event = { id = ENG_military.028 days = 120 random_hours = 3200 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.031
+	title = ENG_military.031.t
+	desc = ENG_military.031.d
+	picture = GFX_mars_colony_18
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.031.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.031.a executed"
+		hidden_effect = {
+			set_country_flag = mars_city_building_completed
+		}
+	}
+}
+country_event = {
+	id = ENG_military.032
+	title = ENG_military.032.t
+	desc = ENG_military.032.d
+	picture = GFX_mars_colony_19
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.032.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.032.a executed"
+		hidden_effect = {
+			add_political_power = 100
+			country_event = { id = ENG_military.033 days = 720 random_hours = 16384 }
+		}
+	}
+}
+country_event = {
+	id = ENG_military.033
+	title = ENG_military.033.t
+	desc = ENG_military.033.d
+	picture = GFX_mars_colony_20
+
+	fire_only_once = yes
+
+	is_triggered_only = yes
+
+	option = { #Launch!
+		name = ENG_military.033.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.033.a executed"
+		hidden_effect = {
+			add_political_power = 200
+		}
+	}
+}
+########################## Foreign Policies #########################
+#Future of the Falklands
+country_event = {
+	id = United_Kingdom.1
+	title = United_Kingdom.1.t
+	desc = United_Kingdom.1.d
+	picture = GFX_falkland_islands
+
+	is_triggered_only = yes
+
+	option = {	#No need to change.
+		name = United_Kingdom.1.a
+		log = "[GetDateText]: [This.GetName]: United_Kingdom.1.a executed"
+		ai_chance = {
+			base = 90
+			# Give it to the subject maybe
+			modifier = {
+				factor = 0.5
+				ARG = { is_subject_of = ENG }
+			}
+		}
+	}
+
+	option = {	#Return the Falklands
+		name = United_Kingdom.1.b
+		log = "[GetDateText]: [This.GetName]: United_Kingdom.1.b executed"
+		add_war_support = -0.05
+		news_event = { id = United_Kingdom_News.1 days = 1 }
+		if = {
+			limit = { has_full_control_of_state = 26 }
+			ARG = { transfer_state = 26 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				is_historical_focus_on = yes
+				factor = 0
+			}
+		}
+	}
+}
+country_event = {
+	id = United_Kingdom.002
+	title = United_Kingdom.002.t
+	desc = United_Kingdom.002.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = United_Kingdom.002.a
+		log = "[GetDateText]: [This.GetName]: United_Kingdom.002.a executed"
+		random_list = {
+			33 = {
+				add_tech_bonus = {
+					name = ENG_sillicon_glenn
+					category = CAT_computing_tech
+					uses = 1
+					bonus = 0.15
+				}
+			}
+			33 = {
+				add_tech_bonus = {
+					name = ENG_sillicon_glenn
+					category = CAT_internet_tech
+					uses = 1
+					bonus = 0.15
+				}
+			}
+			33 = {
+				add_tech_bonus = {
+					name = ENG_sillicon_glenn
+					category = CAT_ai
+					uses = 1
+					bonus = 0.15
+				}
+			}
+		}
+		hidden_effect = {
+			9 = {
+				owner = {
+					country_event = {
+						id = United_Kingdom.002
+						days = 365
+					}
+				}
+			}
+		}
+	}
+}
+country_event = {
+    id = United_Kingdom.003
+    title = United_Kingdom.003.t
+    desc = United_Kingdom.003.d
+
+    is_triggered_only = yes
+
+    option = {
+        name = United_Kingdom.003.a
+        log = "[GetDateText]: [This.GetName]: United_Kingdom.003.a executed"
+		add_ideas = ENG_ireland_border_cooperation_idea_IRE
+        ENG = { country_event = United_Kingdom.004 }
+    }
+
+    option = {
+        name = United_Kingdom.003.b
+        log = "[GetDateText]: [This.GetName]: United_Kingdom.003.b executed"
+        ENG = { country_event = United_Kingdom.005 }
+    }
+}
+country_event = {
+    id = United_Kingdom.004
+    title = United_Kingdom.004.t
+    desc = United_Kingdom.004.d
+
+    is_triggered_only = yes
+
+    option = {
+        name = United_Kingdom.004.a
+        log = "[GetDateText]: [This.GetName]: United_Kingdom.004.a executed"
+    	add_ideas = ENG_ireland_border_cooperation_idea_ENG
+    }
+}
+country_event = {
+    id = United_Kingdom.005
+    title = United_Kingdom.005.t
+    desc = United_Kingdom.005.d
+
+    is_triggered_only = yes
+
+    option = {
+        name = United_Kingdom.005.a
+        log = "[GetDateText]: [This.GetName]: United_Kingdom.005.a executed"
+    }
+}
+
+
+#Britain returns the Falklands
+news_event = {
+	id = United_Kingdom_News.1
+	title = United_Kingdom_News.1.t
+	desc = United_Kingdom_News.1.d
+	picture = GFX_argentinian_flag
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = United_Kingdom_News.1.a
+		log = "[GetDateText]: [This.GetName]: United_Kingdom_News.1.a executed"
+	}
+}
+
+news_event = {
+	id = United_Kingdom_News.2
+	title = United_Kingdom_News.2.t
+	desc = United_Kingdom_News.2.d
+	picture = GFX_ENG_riot
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = United_Kingdom_News.2.a
+		log = "[GetDateText]: [This.GetName]: United_Kingdom_News.2.a executed"
+	}
+}
+
+news_event = {
+	id = United_Kingdom_News.3
+	title = United_Kingdom_News.3.t
+	desc = United_Kingdom_News.3.d
+	picture = GFX_monarch_abolish
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = United_Kingdom_News.3.a
+		log = "[GetDateText]: [This.GetName]: United_Kingdom_News.3.a executed"
+	}
+}
+
+news_event = {
+	id = United_Kingdom_News.4
+	title = United_Kingdom_News.4.t
+	desc = United_Kingdom_News.4.d
+	picture = GFX_ENG_british_collapse
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = United_Kingdom_News.4.a
+		log = "[GetDateText]: [This.GetName]: United_Kingdom_News.4.a executed"
+	}
+}
+########################## Political #########################
+
+########################## Economy #########################
+
+########################## Military #########################
+country_event = {
+	id = ENG_military.034
+	title = Mobile_Fires_Platorm_Program.1.t
+	desc = Mobile_Fires_Platorm_Program.1.d
+	picture = GFX_ENG_generic
+
+	is_triggered_only = yes
+
+option = {
+	name = ENG_military.034.a
+	log = "[GetDateText]: [This.GetName]: ENG_military.034.a executed"
+	ai_chance = {
+		base = 90
+	}
+		set_temp_variable = { temp_opinion = 10 }
+		change_defense_industry_opinion = yes
+		add_ideas = ENG_archer_artillery_alliance
+		SWE = {
+			add_opinion_modifier = {
+				target = ENG
+				modifier = ENG_Archer_Alliance
+			}
+		}
+		ENG = {
+			add_opinion_modifier = {
+				target = SWE
+				modifier = ENG_Archer_Alliance
+			}
+		}
+	}
+	option = {
+		name = ENG_military.034.b
+		log = "[GetDateText]: [This.GetName]: ENG_military.034.b executed"
+		ai_chance = {
+			base = 90
+		}
+			KOR = {
+				add_opinion_modifier = {
+					target = ENG
+					modifier = ENG_K9A1_Order
+				}
+			}
+			ENG = {
+				add_opinion_modifier = {
+					target = KOR
+					modifier = ENG_K9A1_Order
+				}
+			}
+		}
+	option = {
+		name = ENG_military.034.c
+		log = "[GetDateText]: [This.GetName]: ENG_military.034.c executed"
+		ai_chance = {
+			base = 90
+		}
+			GER = {
+				add_opinion_modifier = {
+					target = ENG
+					modifier = ENG_Boxer_Development
+				}
+			}
+			GER = {
+				add_opinion_modifier = {
+					target = HOL
+					modifier = ENG_Boxer_Development
+				}
+			}
+			HOL = {
+				add_opinion_modifier = {
+					target = ENG
+					modifier = ENG_Boxer_Development
+				}
+			}
+			HOL = {
+				add_opinion_modifier = {
+					target = GER
+					modifier = ENG_Boxer_Development
+				}
+			}
+			ENG = {
+				add_opinion_modifier = {
+					target = GER
+					modifier = ENG_Boxer_Development
+				}
+			}
+			ENG = {
+				add_opinion_modifier = {
+					target = HOL
+					modifier = ENG_Boxer_Development
+				}
+			}
+		}
+	option = {
+		name = ENG_military.034.e
+		log = "[GetDateText]: [This.GetName]: ENG_military.034.e executed"
+		ai_chance = {
+			base = 90
+		}
+			FRA = {
+				add_opinion_modifier = {
+					target = ENG
+					modifier = ENG_Archer_Alliance
+				}
+			}
+			ENG = {
+				add_opinion_modifier = {
+					target = FRA
+					modifier = ENG_Archer_Alliance
+				}
+			}
+		}
+}
+country_event = {
+	id = ENG_military.035
+	title = ENG_military.035.t
+	desc = ENG_military.035.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.035.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.035.a executed"
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.2
+				has_opinion = {
+					target = ENG
+					value > 50
+				}
+			}
+		}
+		air_experience = 25
+		army_experience = 25
+		navy_experience = 25
+		ENG = { country_event = ENG_military.036 }
+	}
+	option = {
+		name = ENG_military.035.b
+		log = "[GetDateText]: [This.GetName]: ENG_military.035.b executed"
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.2
+				has_opinion = {
+					target = ENG
+					value < 50
+				}
+			}
+		}
+		ENG = { country_event = ENG_military.037 }
+		}
+	}
+country_event = {
+	id = ENG_military.036
+	title = ENG_military.036.t
+	desc = ENG_military.036.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.036.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.036.a executed"
+		air_experience = 25
+		army_experience = 25
+		navy_experience = 25
+	}
+}
+country_event = {
+	id = ENG_military.037
+	title = ENG_military.037.t
+	desc = ENG_military.037.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.037.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.037.a executed"
+	}
+}
+country_event = {
+	id = ENG_military.038
+	title = ENG_military.038.t
+	desc = ENG_military.038.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.038.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.038.a executed"
+		swap_ideas = {
+			remove_idea = ENG_royal_navy_Idea1
+			add_idea = ENG_royal_navy_Idea2
+		}
+	}
+	option = {
+		name = ENG_military.038.b
+		log = "[GetDateText]: [This.GetName]: ENG_military.038.b executed"
+		swap_ideas = {
+			remove_idea = ENG_royal_navy_Idea1
+			add_idea = ENG_royal_navy_Idea3
+		}
+	}
+}
+country_event = {
+	id = ENG_military.039
+	title = ENG_military.039.t
+	desc = ENG_military.039.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.039.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.039.a executed"
+		add_timed_idea = {
+			idea = ENG_army_specialization_army
+			days = 3600
+		}
+	}
+	option = {
+		name = ENG_military.039.b
+		log = "[GetDateText]: [This.GetName]: ENG_military.039.b executed"
+		add_timed_idea = {
+			idea = ENG_army_specialization_air
+			days = 3600
+		}
+	}
+	option = {
+		name = ENG_military.039.c
+		log = "[GetDateText]: [This.GetName]: ENG_military.039.c executed"
+		add_timed_idea = {
+			idea = ENG_army_specialization_navy
+			days = 3600
+		}
+	}
+	option = {
+		name = ENG_military.039.e
+		log = "[GetDateText]: [This.GetName]: ENG_military.039.e executed"
+		add_timed_idea = {
+			idea = ENG_army_specialization_staff
+			days = 3600
+		}
+	}
+}
+country_event = {
+	id = ENG_military.040
+	title = ENG_military.040.t
+	desc = ENG_military.040.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.040.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.040.a executed"
+		add_timed_idea = {
+			idea = ENG_typhoon_debate1
+			days = 360
+		}
+		set_temp_variable = { treasury_change = -15}
+		modify_treasury_effect = yes
+	}
+	option = {
+		name = ENG_military.040.b
+		log = "[GetDateText]: [This.GetName]: ENG_military.040.b executed"
+		add_tech_bonus = {
+			name = ENG_Typhoon_Bonus
+			uses = 1
+			bonus = 0.25
+			category = Cat_FIGHTER
+		}
+		set_temp_variable = { treasury_change = -8}
+		modify_treasury_effect = yes
+	}
+	option = {
+		name = ENG_military.040.c
+		log = "[GetDateText]: [This.GetName]: ENG_military.040.c executed"
+		add_equipment_to_stockpile = {
+			type = medium_plane_fighter_airframe_2
+			amount = -100
+		}
+		set_temp_variable = { treasury_change = 12}
+		modify_treasury_effect = yes
+	}
+}
+country_event = {
+	id = ENG_military.041
+	title = ENG_military.041.t
+	desc = ENG_military.041.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.041.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.041.a executed"
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.2
+				has_opinion = {
+					target = ENG
+					value > 50
+				}
+			}
+		}
+		USA = {
+			add_ideas = ENG_homegrown_innovation_us1
+			set_temp_variable = { treasury_change = -15}
+			modify_treasury_effect = yes
+		}
+		ENG = {
+		set_temp_variable = { treasury_change = 15}
+		modify_treasury_effect = yes
+		country_event = ENG_military.043
+		}
+	}
+	option = {
+		name = ENG_military.041.b
+		log = "[GetDateText]: [This.GetName]: ENG_military.041.b executed"
+		ENG = { country_event = ENG_military.044 }
+	}
+}
+country_event = {
+	id = ENG_military.042
+	title = ENG_military.042.t
+	desc = ENG_military.042.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.042.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.042.a executed"
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.2
+				has_opinion = {
+					target = ENG
+					value > 50
+				}
+			}
+		}
+		USA = {
+			add_ideas = ENG_joint_strike_fighter_project_US1
+			set_temp_variable = { treasury_change = -15}
+			modify_treasury_effect = yes
+		}
+		ENG = {
+		set_temp_variable = { treasury_change = 15}
+		modify_treasury_effect = yes
+		country_event = ENG_military.043
+		}
+	}
+	option = {
+		name = ENG_military.042.b
+		log = "[GetDateText]: [This.GetName]: ENG_military.042.b executed"
+		ENG = { country_event = ENG_military.044 }
+	}
+}
+country_event = {
+	id = ENG_military.043
+	title = ENG_military.043.t
+	desc = ENG_military.043.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.043.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.043.a executed"
+	}
+}
+country_event = {
+	id = ENG_military.044
+	title = ENG_military.044.t
+	desc = ENG_military.044.d
+	picture = GFX_ENG_generic
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.044.a
+		log = "[GetDateText]: [This.GetName]: ENG_military.044.a executed"
+	}
+}
+country_event = {
+	id = ENG_military.045
+	title = ENG_military.045.t
+	desc = ENG_military.045.d
+	#picture = x # TODO: Replace me with an image
+
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_military.045.a # Accept
+		log = "[GetDateText]: [Root.GetName]: ENG_military.045.a executed"
+		HOL = { country_event = { id = HOL_monarchy.38 days = 1 } }
+
+		ai_chance = {
+			base = 60
+			modifier = {
+				has_opinion = {
+					target = ENG
+					value > 75
+				}
+				factor = 2
+			}
+		}
+	}
+
+	option = {
+		name = ENG_military.045.b # Refuse
+		log = "[GetDateText]: [Root.GetName]: ENG_military.045.b executed"
+		HOL = { country_event = { id = HOL_monarchy.39 days = 1 } }
+
+		ai_chance = { base = 40 }
+	}
+}
+
+# Political Events
+
+country_event = {
+	id = britain_md.1
+	title = britain_md.1.t
+	desc = britain_md.1.d
+	is_triggered_only = yes
+	picture = GFX_2001_labour_victory
+	option = {
+		name = britain_md.1.a
+		log = "[GetDateText]: [This.GetName]: britain_md.1.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.2
+	title = britain_md.2.t
+	desc = britain_md.2.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.2.a
+		log = "[GetDateText]: [This.GetName]: britain_md.2.a executed"
+		random_list = {
+			50 = {
+				increase_economic_growth = yes
+			}
+			50 = {
+				decrease_economic_growth = yes
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = britain_md.2.b
+		log = "[GetDateText]: [This.GetName]: britain_md.2.b executed"
+		set_temp_variable = { party_index = 2 }
+		set_temp_variable = { party_popularity_increase = 0.025 }
+		set_temp_variable = { temp_outlook_increase = 0.015 }
+		add_relative_party_popularity = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.3
+	title = britain_md.3.t
+	desc = britain_md.3.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.3.a
+		log = "[GetDateText]: [This.GetName]: britain_md.3.a executed"
+		activate_mission = ENG_promise_labour
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = britain_md.3.b
+		log = "[GetDateText]: [This.GetName]: britain_md.3.b executed"
+		activate_mission = ENG_promise_military
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = britain_md.3.c
+		log = "[GetDateText]: [This.GetName]: britain_md.3.c executed"
+		activate_mission = ENG_promise_fossil_fuel
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.4
+	title = britain_md.4.t
+	desc = britain_md.4.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.4.a
+		log = "[GetDateText]: [This.GetName]: britain_md.4.a executed"
+		custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = ENG_economy_modifier
+			}
+		add_to_variable = { ENG_civilian_industry_tax_modifier = 0.05 tooltip = civilian_industry_tax_modifier_tt }
+		newline = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_labour_unions_opinion = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = britain_md.4.b
+		log = "[GetDateText]: [This.GetName]: britain_md.4.b executed"
+		custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = ENG_economy_modifier
+			}
+		add_to_variable = { ENG_military_industry_tax_modifier = 0.05 tooltip = military_industry_tax_modifier_tt }
+		set_temp_variable = { temp_opinion = -5 }
+		change_defense_industry_opinion = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = britain_md.4.c
+		log = "[GetDateText]: [This.GetName]: britain_md.4.c executed"
+		custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = ENG_economy_modifier
+			}
+		add_to_variable = { ENG_oil_export_multiplier_modifier = 0.05 tooltip = oil_export_multiplier_modifier_tt }
+		newline = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_fossil_fuel_industry_opinion = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = britain_md.4.d1
+		log = "[GetDateText]: [This.GetName]: britain_md.4.d1 executed"
+		set_temp_variable = { temp_opinion = 5 }
+		change_labour_unions_opinion = yes
+		newline = yes
+		change_defense_industry_opinion = yes
+		newline = yes
+		change_fossil_fuel_industry_opinion = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Second labor branch
+country_event = {
+	id = britain_md.5
+	title = britain_md.5.t
+	desc = britain_md.5.d
+	is_triggered_only = yes
+	picture = GFX_2005_labour_victory
+	option = {
+		name = britain_md.5.a
+		log = "[GetDateText]: [This.GetName]: britain_md.5.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.6
+	title = britain_md.6.t
+	desc = britain_md.6.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.6.a
+		log = "[GetDateText]: [This.GetName]: britain_md.6.a executed"
+		set_temp_variable = { needed_money = 0 }
+		if = {
+			limit = {
+				437 = { is_owned_and_controlled_by = ENG }
+				437 = { infrastructure < 5 }
+			}
+			437 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			subtract_from_temp_variable = { needed_money = 4.5 }
+			newline = yes
+		}
+		if = {
+			limit = {
+				1195 = { is_owned_and_controlled_by = ENG }
+				1195 = { infrastructure < 5 }
+			}
+			1195 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			subtract_from_temp_variable = { needed_money = 4.5 }
+			newline = yes
+		}
+		if = {
+			limit = {
+				9 = { is_owned_and_controlled_by = ENG }
+				9 = { infrastructure < 5 }
+			}
+			9 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			subtract_from_temp_variable = { needed_money = 4.5 }
+			newline = yes
+		}
+		set_temp_variable = { treasury_change = needed_money }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = britain_md.6.b
+		log = "[GetDateText]: [This.GetName]: britain_md.6.b executed"
+		set_temp_variable = { needed_money = 0 }
+		if = {
+			limit = {
+				1193 = { is_owned_and_controlled_by = ENG }
+				1193 = { infrastructure < 5 }
+			}
+			1193 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			subtract_from_temp_variable = { needed_money = 4.5 }
+			newline = yes
+		}
+		if = {
+			limit = {
+				11 = { is_owned_and_controlled_by = ENG }
+				11 = { infrastructure < 5 }
+			}
+			11 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			subtract_from_temp_variable = { needed_money = 4.5 }
+			newline = yes
+		}
+		if = {
+			limit = {
+				10 = { is_owned_and_controlled_by = ENG }
+				10 = { infrastructure < 5 }
+			}
+			10 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			subtract_from_temp_variable = { needed_money = 4.5 }
+			newline = yes
+		}
+		set_temp_variable = { treasury_change = needed_money }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = britain_md.6.c
+		log = "[GetDateText]: [This.GetName]: britain_md.6.c executed"
+		set_temp_variable = { needed_money = 0 }
+		if = {
+			limit = {
+				16 = { is_owned_and_controlled_by = ENG }
+				16 = { infrastructure < 5 }
+			}
+			16 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			subtract_from_temp_variable = { needed_money = 4.5 }
+			newline = yes
+		}
+		if = {
+			limit = {
+				973 = { is_owned_and_controlled_by = ENG }
+				973 = { infrastructure < 5 }
+			}
+			973 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			subtract_from_temp_variable = { needed_money = 4.5 }
+			newline = yes
+		}
+		if = {
+			limit = {
+				15 = { is_owned_and_controlled_by = ENG }
+				15 = { infrastructure < 5 }
+			}
+			15 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = infrastructure
+					level = 1
+					instant_build = yes
+				}
+			}
+			subtract_from_temp_variable = { needed_money = 4.5 }
+			newline = yes
+		}
+		set_temp_variable = { treasury_change = needed_money }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Third Labor Branch
+country_event = {
+	id = britain_md.7
+	title = britain_md.7.t
+	desc = britain_md.7.d
+	is_triggered_only = yes
+	picture = GFX_2010_labour_victory
+	option = {
+		name = britain_md.7.a
+		log = "[GetDateText]: [This.GetName]: britain_md.7.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.8
+	title = britain_md.8.t
+	desc = britain_md.8.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.8.a
+		log = "[GetDateText]: [This.GetName]: britain_md.8.a executed"
+		custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = ENG_political_modifier
+			}
+		add_to_variable = { ENG_migration_rate_value_factor = 0.10 tooltip = migration_rate_value_factor_tt }
+		add_to_variable = { ENG_police_cost_multiplier_modifier = 0.025 tooltip = police_cost_multiplier_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = britain_md.8.b
+		log = "[GetDateText]: [This.GetName]: britain_md.8.b executed"
+		custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = ENG_political_modifier
+			}
+		add_to_variable = { ENG_migration_rate_value_factor = -0.10 tooltip = migration_rate_value_factor_tt }
+		add_to_variable = { ENG_police_cost_multiplier_modifier = -0.025 tooltip = police_cost_multiplier_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.9
+	title = britain_md.9.t
+	desc = britain_md.9.d
+	is_triggered_only = yes
+	picture = GFX_2015_labour_victory
+	option = {
+		name = britain_md.9.a
+		log = "[GetDateText]: [This.GetName]: britain_md.9.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.10
+	title = britain_md.10.t
+	desc = britain_md.10.d
+	is_triggered_only = yes
+	option = {
+		name = britain_md.10.a
+		log = "[GetDateText]: [This.GetName]: britain_md.10.a executed"
+		random_list = {
+			25 = {
+
+			}
+			75 = {
+				increase_corruption = yes
+			}
+		}
+		newline = yes
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		newline = yes
+		custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = ENG_political_modifier
+			}
+		add_to_variable = { ENG_popularity_attack_modifier = 2 tooltip = popularity_attack_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = britain_md.10.b
+		log = "[GetDateText]: [This.GetName]: britain_md.10.b executed"
+		add_stability = 0.05
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.11
+	title = britain_md.11.t
+	desc = britain_md.11.d
+	is_triggered_only = yes
+	picture = GFX_ENG_generic
+	option = {
+		name = britain_md.11.a
+		log = "[GetDateText]: [This.GetName]: britain_md.11.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.12
+	title = britain_md.12.t
+	desc = britain_md.12.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.12.a
+		log = "[GetDateText]: [This.GetName]: britain_md.12.a executed"
+		diplomatic_relation = {
+			country = ENG
+			relation = military_access
+			active = yes
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = ENG
+					value > 20
+				}
+			}
+		}
+	}
+	option = {
+		name = britain_md.12.b
+		log = "[GetDateText]: [This.GetName]: britain_md.12.b executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+
+country_event = {
+	id = britain_md.13
+	title = britain_md.13.t
+	desc = britain_md.13.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.13.a
+		log = "[GetDateText]: [This.GetName]: britain_md.13.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.14
+	title = britain_md.14.t
+	desc = britain_md.14.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.14.a
+		log = "[GetDateText]: [This.GetName]: britain_md.14.a executed"
+		effect_tooltip = {
+			SIE = {
+				give_resource_rights = { receiver = ENG state = 358 }
+			}
+		}
+		hidden_effect = {
+			ENG = {
+				country_event = {
+					id = britain_md.15
+					days = 500
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.15
+	title = britain_md.15.t
+	desc = britain_md.15.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.15.a
+		log = "[GetDateText]: [This.GetName]: britain_md.15.a executed"
+		ENG = { remove_resource_rights = 358 }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.16
+	title = britain_md.16.t
+	desc = britain_md.16.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.16.a
+		log = "[GetDateText]: [This.GetName]: britain_md.16.a executed"
+		random_list = {
+			75 = {
+				country_event = {
+					id = britain_md.17
+					days = 2
+				}
+			}
+			25 = {
+				country_event = {
+					id = britain_md.18
+					days = 2
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = britain_md.16.b
+		log = "[GetDateText]: [This.GetName]: britain_md.16.b executed"
+		random_list = {
+			50 = {
+				country_event = {
+					id = britain_md.19
+					days = 2
+				}
+			}
+			50 = {
+				country_event = {
+					id = britain_md.18
+					days = 2
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Successful Coup in Gambia
+country_event = {
+	id = britain_md.17
+	title = britain_md.17.t
+	desc = britain_md.17.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.17.a
+		log = "[GetDateText]: [This.GetName]: britain_md.17.a executed"
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = ENG }
+		set_temp_variable = { influence_target = GAM }
+		change_influence_percentage = yes
+		hidden_effect = {
+			GAM = {
+				set_temp_variable = { party_index = 1 }
+				set_temp_variable = { party_popularity_increase = 0.35 }
+				set_temp_variable = { temp_outlook_increase = 0.35 }
+				add_relative_party_popularity = yes
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 1 }
+					update_government_coalition_strength = yes
+					set_coalition_drift = yes
+					set_ruling_leader = yes
+					set_leader = yes
+					set_politics = {
+						ruling_party = democratic
+						elections_allowed = no
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Failed Coup in Gambia
+country_event = {
+	id = britain_md.18
+	title = britain_md.18.t
+	desc = britain_md.18.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.18.a
+		log = "[GetDateText]: [This.GetName]: britain_md.18.a executed"
+		add_stability = -0.05
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Incredibly Successful Coup in Gambia
+country_event = {
+	id = britain_md.19
+	title = britain_md.19.t
+	desc = britain_md.19.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.19.a
+		log = "[GetDateText]: [This.GetName]: britain_md.19.a executed"
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = ENG }
+		set_temp_variable = { influence_target = GAM }
+		change_influence_percentage = yes
+		if = {
+			limit = {
+				has_global_flag = GAME_RULE_allow_colored_puppets
+			}
+			set_autonomy = {
+				target = GAM
+				autonomy_state = autonomy_associated_state_colored
+			}
+		}
+		else = {
+			set_autonomy = {
+				target = GAM
+				autonomy_state = autonomy_associated_state
+			}
+		}
+		hidden_effect = {
+			GAM = {
+				set_temp_variable = { party_index = 1 }
+				set_temp_variable = { party_popularity_increase = 0.35 }
+				set_temp_variable = { temp_outlook_increase = 0.35 }
+				add_relative_party_popularity = yes
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 1 }
+					update_government_coalition_strength = yes
+					set_coalition_drift = yes
+					set_ruling_leader = yes
+					set_leader = yes
+					set_politics = {
+						ruling_party = democratic
+						elections_allowed = no
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Sucessful in Taking Nigerian Oil
+country_event = {
+	id = britain_md.20
+	title = britain_md.20.t
+	desc = britain_md.20.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.20.a
+		log = "[GetDateText]: [This.GetName]: britain_md.20.a executed"
+		NIG = {
+			give_resource_rights = { receiver = ENG state = 332 }
+			country_event = {
+				id = britain_md.21
+				days = 5
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.21
+	title = britain_md.21.t
+	desc = britain_md.21.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.21.a
+		log = "[GetDateText]: [This.GetName]: britain_md.21.a executed"
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	option = {
+		name = britain_md.21.b
+		log = "[GetDateText]: [This.GetName]: britain_md.21.b executed"
+		custom_effect_tooltip = ENG_hold_for_280_TT
+		declare_war_on = {
+			target = ENG
+			type = liberate_wargoal
+		}
+		ENG = {
+			country_event = britain_md.22
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.22
+	title = britain_md.22.t
+	desc = britain_md.22.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.22.a
+		log = "[GetDateText]: [This.GetName]: britain_md.22.a executed"
+		activate_mission = ENG_war_for_delta
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = britain_md.22.b
+		log = "[GetDateText]: [This.GetName]: britain_md.22.b executed"
+		NIG = {
+			country_event = {
+				id = britain_md.23
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.23
+	title = britain_md.23.t
+	desc = britain_md.23.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.23.a
+		log = "[GetDateText]: [This.GetName]: britain_md.23.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Selecting An Agenda
+country_event = {
+	id = britain_md.24
+	title = britain_md.24.t
+	desc = britain_md.24.d
+	is_triggered_only = yes
+	trigger = {
+		OR = {
+			western_conservatism_are_in_power = yes
+			western_social_democrats_are_in_power = yes
+		}
+	}
+	# Labour agendas
+	option = {
+		name = britain_md.24.a
+		log = "[GetDateText]: [This.GetName]: britain_md.24.a executed"
+		trigger = {
+			western_social_democrats_are_in_power = yes
+			NOT = {
+				has_completed_focus = ENG_ambitions_for_britain
+			}
+		}
+		complete_national_focus = ENG_ambitions_for_britain
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = britain_md.24.b
+		log = "[GetDateText]: [This.GetName]: britain_md.24.a executed"
+		trigger = {
+			western_social_democrats_are_in_power = yes
+			NOT = {
+				has_completed_focus = ENG_britain_forward_not_back
+			}
+		}
+		complete_national_focus = ENG_britain_forward_not_back
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = britain_md.24.c
+		log = "[GetDateText]: [This.GetName]: britain_md.24.a executed"
+		trigger = {
+			western_social_democrats_are_in_power = yes
+			NOT = {
+				has_completed_focus = ENG_a_future_fair_for_all
+			}
+		}
+		complete_national_focus = ENG_a_future_fair_for_all
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Conservatives
+	option = {
+		name = britain_md.24.a1
+		log = "[GetDateText]: [This.GetName]: britain_md.24.a executed"
+		trigger = {
+			western_conservatism_are_in_power = yes
+			NOT = {
+				has_completed_focus = ENG_time_for_common_sense
+			}
+		}
+		complete_national_focus = ENG_time_for_common_sense
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = britain_md.24.b1
+		log = "[GetDateText]: [This.GetName]: britain_md.24.a executed"
+		trigger = {
+			western_conservatism_are_in_power = yes
+			NOT = {
+				has_completed_focus = ENG_are_you_thinking_what_were_thinking
+			}
+		}
+		complete_national_focus = ENG_are_you_thinking_what_were_thinking
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = {
+		name = britain_md.24.c1
+		log = "[GetDateText]: [This.GetName]: britain_md.24.a executed"
+		trigger = {
+			western_conservatism_are_in_power = yes
+			NOT = {
+				has_completed_focus = ENG_invitation_to_the_government_of_britain
+			}
+		}
+		complete_national_focus = ENG_invitation_to_the_government_of_britain
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.25
+	title = britain_md.25.t
+	desc = britain_md.25.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.25.a
+		log = "[GetDateText]: [This.GetName]: britain_md.25.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# # # # # # # # # # # # DEVOLUTION DO NOT TOUCH # # # # # # # # # # # #
+# # # # # # # # ## # # # TOUCH ME PLEASE # # # # # # # # # # # #
+# The Constituents Want to Further Devolve Matters
+# TODO: AI WEIGHTING & GAME RULE FOR DEVOLUTION
+country_event = {
+	id = devolution.1
+	title = devolution.1.t
+	desc = devolution.1.d
+
+	is_triggered_only = yes
+
+	immediate = { set_country_flag = { flag = ENG_devolution_event_cooldown days = 90 value = 1 } }
+
+	# Okay, Fine
+	option = {
+		name = devolution.1.a
+		log = "[GetDateText]: [This.GetName]: devolution.1.a executed"
+		ENG_lower_dependence_1 = yes
+		ENG_var_cap = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No, Veto them
+	option = {
+		name = devolution.1.b
+		log = "[GetDateText]: [This.GetName]: devolution.1.b executed"
+		ENG_increase_agitation_2 = yes
+		ENG_var_cap = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# Show Ne the Individual Bills
+	option = {
+		name = devolution.1.c
+		log = "[GetDateText]: [This.GetName]: devolution.1.c executed"
+		country_event = {
+			id = devolution.2
+			days = 1
+		}
+		country_event = {
+			id = devolution.3
+			days = 2
+		}
+		country_event = {
+			id = devolution.4
+			days = 3
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Scotland Bill
+
+country_event = {
+	id = devolution.2
+	title = devolution.2.t
+	desc = devolution.2.d
+
+	is_triggered_only = yes
+
+	immediate = { log = "[GetDateText]: [Root.GetName]: event devolution.2" }
+
+	# Okay, Fine
+	option = {
+		name = devolution.2.a
+		log = "[GetDateText]: [This.GetName]: devolution.2.a executed"
+		add_to_variable = { ENG_scottish_dependency = -1 }
+		custom_effect_tooltip = ENG_decrease_dependence_1_alt_TT
+		ENG_var_cap = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No, Veto it
+	option = {
+		name = devolution.2.b
+		log = "[GetDateText]: [This.GetName]: devolution.2.b executed"
+		add_to_variable = { ENG_scottish_agitation = 1 }
+		custom_effect_tooltip = ENG_increase_agitation_1_alt_TT
+		ENG_var_cap = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Northern Ireland Bill
+
+country_event = {
+	id = devolution.3
+	title = devolution.3.t
+	desc = devolution.3.d
+
+	is_triggered_only = yes
+
+	immediate = { log = "[GetDateText]: [Root.GetName]: event devolution.3" }
+
+	# Okay, Fine
+	option = {
+		name = devolution.3.a
+		log = "[GetDateText]: [This.GetName]: devolution.3.a executed"
+		add_to_variable = { ENG_north_irish_dependency = -1 }
+		custom_effect_tooltip = ENG_decrease_dependence_1_alt_TT
+		ENG_var_cap = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No, Veto it
+	option = {
+		name = devolution.3.b
+		log = "[GetDateText]: [This.GetName]: devolution.3.b executed"
+		add_to_variable = { ENG_north_irish_agitation = 1 }
+		custom_effect_tooltip = ENG_increase_agitation_1_alt_TT
+		ENG_var_cap = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Wales
+
+country_event = {
+	id = devolution.4
+	title = devolution.4.t
+	desc = devolution.4.d
+
+	is_triggered_only = yes
+
+	immediate = { log = "[GetDateText]: [Root.GetName]: event devolution.4" }
+
+	# Okay, Fine
+	option = {
+		name = devolution.4.a
+		log = "[GetDateText]: [This.GetName]: devolution.4.a executed"
+		add_to_variable = { ENG_wales_dependency = -1 }
+		custom_effect_tooltip = ENG_decrease_dependence_1_alt_TT
+		ENG_var_cap = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No, Veto it
+	option = {
+		name = devolution.4.b
+		log = "[GetDateText]: [This.GetName]: devolution.4.b executed"
+		add_to_variable = { ENG_wales_agitation = 1 }
+		custom_effect_tooltip = ENG_increase_agitation_1_alt_TT
+		ENG_var_cap = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Referendum(s)
+
+# Scottish Referendum
+country_event = {
+	id = devolution.5
+	title = devolution.5.t
+	desc = devolution.5.d
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	# Okay, Fine
+	option = {
+		name = devolution.5.a
+		log = "[GetDateText]: [This.GetName]: devolution.5.a executed"
+		activate_mission = ENG_scottish_referendum
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No, Veto it
+	option = {
+		name = devolution.5.b
+		log = "[GetDateText]: [This.GetName]: devolution.5.b executed"
+		set_country_flag = ENG_scottish_rejected
+		add_stability = -0.10
+		every_owned_state = {
+			limit = {
+				is_core_of = SCO
+			}
+			add_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
+		}
+		# Set a state modifier that'll rape productivity in Scotland & a decision to release them if player is fed up
+		# Alternatively, if they don't want to do allat, player can take a major temporary debuff to reintegrate Scotland
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# North Irish Referendum
+country_event = {
+	id = devolution.6
+	title = devolution.6.t
+	desc = devolution.6.d
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	# Okay, Fine
+	option = {
+		name = devolution.6.a
+		log = "[GetDateText]: [This.GetName]: devolution.6.a executed"
+		activate_mission = ENG_irish_referendum
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No, Veto it
+	option = {
+		name = devolution.6.b
+		log = "[GetDateText]: [This.GetName]: devolution.6.b executed"
+		set_country_flag = ENG_irish_rejected
+		add_stability = -0.10
+		17 = {
+			add_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
+		}
+		# Set a state modifier that'll rape productivity in North Ireland & a decision to release them if player is fed up
+		# Alternatively, if they don't want to do allat, player can take a major temporary debuff to reintegrate North Ireland
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Welsh Referendum
+country_event = {
+	id = devolution.7
+	title = devolution.7.t
+	desc = devolution.7.d
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	# Okay, Fine
+	option = {
+		name = devolution.7.a
+		log = "[GetDateText]: [This.GetName]: devolution.7.a executed"
+		activate_mission = ENG_welsh_referendum
+		ai_chance = {
+			base = 1
+		}
+	}
+	# No, Veto it
+	option = {
+		name = devolution.7.b
+		log = "[GetDateText]: [This.GetName]: devolution.7.b executed"
+		set_country_flag = ENG_welsh_rejected
+		add_stability = -0.10
+		every_owned_state = {
+			limit = {
+				is_core_of = WAS
+			}
+			add_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
+		}
+		# Set a state modifier that'll rape productivity in Wales & a decision to release them if player is fed up
+		# Alternatively, if they don't want to do allat, player can take a major temporary debuff to reintegrate Wales
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Constituent Elections
+
+country_event = {
+	id = devolution.10
+	title = devolution.10.t
+	desc = devolution.10.d
+
+	is_triggered_only = yes
+	trigger = {
+		# Don't trigger if no one is in the Union anymore
+		NOT = {
+			AND = {
+				country_exists = SCO
+				country_exists = NIR
+				country_exists = WAS
+			}
+			has_country_flag = ENG_devolution_purged
+		}
+	}
+	# Okay, Fine
+	option = {
+		name = devolution.10.a
+		log = "[GetDateText]: [This.GetName]: devolution.10.a executed"
+		if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation < 19
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 5
+				min = -5 # Scotland has higher natural agitation
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 19
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 5
+				min = 0
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 29
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 10
+				min = 0
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 39
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 10
+				min = 5
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 39
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 15
+				min = 5
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 49
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 15
+				min = 10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 59
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 20
+				min = 10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 69
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 25
+				min = 15
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 79
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 30
+				min = 15
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 79
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 35
+				min = 20
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 89
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 45
+				min = 20
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_scottish_agitation > 99
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_scottish_nationalists_election
+				max = 50
+				min = 25
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_scottish_nationalists = ENG_scottish_nationalists_election
+			}
+		}
+		# Wales
+		if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation < 19
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 5
+				min = -10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 19
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 5
+				min = 0
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 29
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 10
+				min = 0
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 39
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 10
+				min = 5
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 39
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 15
+				min = 5
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 49
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 15
+				min = 10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 59
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 20
+				min = 10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 69
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 25
+				min = 15
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 79
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 30
+				min = 15
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 79
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 35
+				min = 20
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 89
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 45
+				min = 20
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_wales_agitation > 99
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_wales_nationalists_election
+				max = 50
+				min = 25
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_wales_nationalists = ENG_wales_nationalists_election
+			}
+		}
+		# North Ireland
+				if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation < 19
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 5
+				min = -10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 19
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 5
+				min = 0
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 29
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 10
+				min = 0
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 39
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 10
+				min = 5
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 39
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 15
+				min = 5
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 49
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 15
+				min = 10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 59
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 20
+				min = 10
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 69
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 25
+				min = 15
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 79
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 30
+				min = 15
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 79
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 35
+				min = 20
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 89
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 45
+				min = 20
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					ENG_north_irish_agitation > 99
+				}
+			}
+			set_variable_to_random = {
+				var = ENG_north_irish_nationalists_election
+				max = 50
+				min = 25
+				integer = yes
+			}
+			add_to_variable = {
+				ENG_north_irish_nationalists = ENG_north_irish_nationalists_election
+			}
+		}
+		ENG_var_cap = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+######### Inner Circle #########
+# ADVISOR ORDER
+# 1 = Charles
+# 2 = Andrew
+# 3 = Anne
+# 4 = Edward
+# 5 = Phillip
+# 6 = William
+
+country_event = {
+	id = ENG_inner_circle.01
+	title = ENG_inner_circle.01.t
+	desc = ENG_inner_circle.01.desc
+	picture = "[ENGGetAscendingAdvisorPortrait]"
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			set_country_flag = ENG_inner_circle_event_pending_flag
+		}
+	}
+
+	option = { #Replace Ascended Advisor 1
+		name = ENG_inner_circle.01.a
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 100
+				check_variable = { ENG_ascending_advisor = 4 }
+				check_variable = { ENG_ascended_advisor_1 = 7 }
+			}
+		}
+
+		ENG_remove_replaced_advisor_1_effects = yes
+
+		custom_effect_tooltip = generic_skip_one_line_tt
+
+		set_variable = { ENG_ascended_advisor_1 = ENG_ascending_advisor }
+		ENG_add_replacing_advisor_effects = yes
+
+		hidden_effect = {
+			#Cleaning vars / flags / etc
+			clear_variable = ENG_ascending_advisor
+			clr_country_flag = ENG_inner_circle_event_pending_flag
+		}
+	}
+
+	option = { #Replace Ascended Advisor 2
+		name = ENG_inner_circle.01.b
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 100
+				check_variable = { ENG_ascending_advisor = 4 }
+				check_variable = { ENG_ascended_advisor_2 = 7 }
+			}
+		}
+
+		ENG_remove_replaced_advisor_2_effects = yes
+
+		custom_effect_tooltip = generic_skip_one_line_tt
+
+		set_variable = { ENG_ascended_advisor_2 = ENG_ascending_advisor }
+		ENG_add_replacing_advisor_effects = yes
+
+		hidden_effect = {
+			#Cleaning vars / flags / etc
+			clear_variable = ENG_ascending_advisor
+			clr_country_flag = ENG_inner_circle_event_pending_flag
+		}
+	}
+
+	option = { #Replace Ascended Advisor 3
+		name = ENG_inner_circle.01.c
+
+		ai_chance = {
+			base = 1
+			modifier = { #Himmler should replace Bormann on Historical when he ascends
+				factor = 100
+				check_variable = { ENG_ascending_advisor = 4 } #Himmler Ascending
+				check_variable = { ENG_ascended_advisor_3 = 7 } #Bormann ascended in this slot
+			}
+		}
+
+		ENG_remove_replaced_advisor_3_effects = yes
+
+		custom_effect_tooltip = generic_skip_one_line_tt
+
+		set_variable = { ENG_ascended_advisor_3 = ENG_ascending_advisor }
+		ENG_add_replacing_advisor_effects = yes
+
+		hidden_effect = {
+			#Cleaning vars / flags / etc
+			clear_variable = ENG_ascending_advisor
+			clr_country_flag = ENG_inner_circle_event_pending_flag
+		}
+	}
+
+	option = { # Abort - Ditch this advisor
+		name = ENG_inner_circle.01.d
+
+		ai_chance = { #AI "knows" what its doing (pffff)
+			base = 0
+		}
+
+		if = {
+			limit = {
+				check_variable = { ENG_ascending_advisor = 1 }
+			}
+			uncomplete_national_focus = {
+				focus = ENG_the_prince_trust
+				uncomplete_children = no
+				refund_political_power = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { ENG_ascending_advisor = 2 }
+			}
+			uncomplete_national_focus = {
+				focus = ENG_naval_prince
+				uncomplete_children = no
+				refund_political_power = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { ENG_ascending_advisor = 3 }
+			}
+			uncomplete_national_focus = {
+				focus = ENG_workhorse_of_the_crown
+				uncomplete_children = no
+				refund_political_power = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { ENG_ascending_advisor = 4 }
+			}
+			uncomplete_national_focus = {
+				focus = ENG_chairman_international_award
+				uncomplete_children = no
+				refund_political_power = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { ENG_ascending_advisor = 5 }
+			}
+			uncomplete_national_focus = {
+				focus = ENG_duke_charities
+				uncomplete_children = no
+				refund_political_power = yes
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { ENG_ascending_advisor = 6 }
+			}
+			uncomplete_national_focus = {
+				focus = ENG_from_sandhurst_to_service
+				uncomplete_children = no
+				refund_political_power = yes
+			}
+		}
+		else = {
+			log = "Something went terribly wrong with your royals (no wonder)"
+		}
+
+		hidden_effect = {
+			#Cleaning vars / flags / etc
+			clear_variable = ENG_ascending_advisor
+			clr_country_flag = ENG_inner_circle_event_pending_flag
+
+			clr_country_flag = GER_inner_circle_cd_flag
+		}
+	}
+}
+
+country_event = {
+	id = ENG_inner_circle_charles.01
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_the_prince_trust
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 1 }
+			check_variable = { ENG_ascended_advisor_2 = 1 }
+			check_variable = { ENG_ascended_advisor_3 = 1 }
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_harmony_doctrine }
+			}
+			activate_shine_on_focus = ENG_harmony_doctrine
+			set_country_flag = { flag = ENG_harmony_doctrine_in_progress_flag days = @inner_circle_time_tier_1_flag value = 1 }
+			country_event = { id = ENG_inner_circle_charles.02 days = @inner_circle_time_tier_1 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_climate_alarm_bell }
+			}
+			activate_shine_on_focus = ENG_climate_alarm_bell
+			set_country_flag = { flag = ENG_climate_alarm_bell_in_progress_flag days = @inner_circle_time_tier_2_flag value = 1 }
+			country_event = { id = ENG_inner_circle_charles.02 days = @inner_circle_time_tier_2 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_duchy_originals }
+			}
+			activate_shine_on_focus = ENG_duchy_originals
+			set_country_flag = { flag = ENG_duchy_originals_in_progress_flag days = @inner_circle_time_tier_3_flag value = 1 }
+			country_event = { id = ENG_inner_circle_charles.02 days = @inner_circle_time_tier_3 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_heir_of_the_realm }
+			}
+			activate_shine_on_focus = ENG_heir_of_the_realm
+			set_country_flag = { flag = ENG_heir_of_the_realm_in_progress_flag days = @inner_circle_time_tier_4_flag value = 1 }
+			country_event = { id = ENG_inner_circle_charles.02 days = @inner_circle_time_tier_4 }
+		}
+		else = { #Debug logs
+			log = "SOMETHING WENT WRONG WITH CHARLES's FOCUS BRANCH - Cannot start new focus"
+		}
+	}
+}
+country_event = {
+	id = ENG_inner_circle_charles.02
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_the_prince_trust
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 1 }
+			check_variable = { ENG_ascended_advisor_2 = 1 }
+			check_variable = { ENG_ascended_advisor_3 = 1 }
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_harmony_doctrine
+			}
+			complete_national_focus = {
+				focus = ENG_harmony_doctrine
+				use_side_message = yes
+				originator_name = ENG_prince_charles
+			}
+			clr_country_flag = ENG_harmony_doctrine_in_progress_flag
+			country_event = { id = ENG_inner_circle_charles.01 days = 180 random_days = 50 }
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_climate_alarm_bell
+			}
+			complete_national_focus = {
+				focus = ENG_climate_alarm_bell
+				use_side_message = yes
+				originator_name = ENG_prince_charles
+			}
+			clr_country_flag = ENG_climate_alarm_bell_in_progress_flag
+			country_event = { id = ENG_inner_circle_charles.01 days = 180 random_days = 50 }
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_duchy_originals
+			}
+			complete_national_focus = {
+				focus = ENG_duchy_originals
+				use_side_message = yes
+				originator_name = ENG_prince_charles
+			}
+			clr_country_flag = ENG_duchy_originals_in_progress_flag
+			country_event = { id = ENG_inner_circle_charles.01 days = 180 random_days = 50 }
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_heir_of_the_realm
+			}
+			complete_national_focus = {
+				focus = ENG_heir_of_the_realm
+				use_side_message = yes
+				originator_name = ENG_prince_charles
+			}
+			clr_country_flag = ENG_heir_of_the_realm_in_progress_flag
+			country_event = { id = ENG_inner_circle_charles.01 days = 180 random_days = 50 }
+		}
+		else = { #Debug logs
+			#log = "SOMETHING WENT WRONG WITH TODT's FOCUS BRANCH - Cannot complete focus"
+		}
+	}
+}
+country_event = {
+    id = ENG_inner_circle_charles.03
+    title = ENG_inner_circle_charles.03.t
+    desc = ENG_inner_circle_charles.03.desc
+    picture = x
+
+    is_triggered_only = yes
+
+    option = {
+        name = ENG_inner_circle_charles.03.a
+        add_opinion_modifier = {
+			target = ENG
+			modifier = ENG_charles_harmony
+		}
+		reverse_add_opinion_modifier = {
+			target = THIS
+			modifier = ENG_charles_harmony
+		}
+		random_owned_state = {
+			add_building_construction = {
+				type = renewable_energy_infra
+				level = 1
+				instant_build = yes
+			}
+		}
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = ENG }
+		set_temp_variable = { influence_target = THIS }
+		change_influence_percentage = yes
+    }
+}
+country_event = {
+    id = ENG_inner_circle_charles.04
+    title = ENG_inner_circle_charles.04.t
+    desc = ENG_inner_circle_charles.04.desc
+    picture = x
+
+    is_triggered_only = yes
+
+    option = {
+        name = ENG_inner_circle_charles.04.a
+        add_opinion_modifier = {
+			target = ENG
+			modifier = ENG_charles_rainforest
+		}
+		reverse_add_opinion_modifier = {
+			target = THIS
+			modifier = ENG_charles_rainforest
+		}
+		random_owned_state = {
+			add_resource = {
+				type = rubber
+				amount = 1
+			}
+		}
+    }
+}
+country_event = {
+    id = ENG_inner_circle_charles.05
+    title = ENG_inner_circle_charles.05.t
+    desc = ENG_inner_circle_charles.05.desc
+    picture = x
+
+    is_triggered_only = yes
+
+    option = {
+        name = ENG_inner_circle_charles.05.a
+        add_opinion_modifier = {
+			target = ENG
+			modifier = ENG_charles_environmental_tour
+		}
+		reverse_add_opinion_modifier = {
+			target = THIS
+			modifier = ENG_charles_environmental_tour
+		}
+		add_tech_bonus = {
+			name = ENG_charles_environmental_diplomacy_tour
+			uses = 1
+			bonus = 0.10
+			category = CAT_renewable
+		}
+    }
+}
+country_event = {
+    id = ENG_inner_circle_charles.06
+    title = ENG_inner_circle_charles.06.t
+    desc = ENG_inner_circle_charles.06.desc
+    picture = x
+
+    is_triggered_only = yes
+
+    option = {
+        name = ENG_inner_circle_charles.06.a
+        add_opinion_modifier = {
+			target = ENG
+			modifier = ENG_charles_agriculture_development
+		}
+		reverse_add_opinion_modifier = {
+			target = THIS
+			modifier = ENG_charles_agriculture_development
+		}
+		add_tech_bonus = {
+			name = ENG_charles_agriculture_development
+			uses = 1
+			bonus = 0.10
+			category = CAT_agriculture_tech
+		}
+    }
+}
+country_event = {
+    id = ENG_inner_circle_charles.07
+    hidden = yes
+
+    is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_the_prince_trust
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 1 }
+			check_variable = { ENG_ascended_advisor_2 = 1 }
+			check_variable = { ENG_ascended_advisor_3 = 1 }
+		}
+	}
+
+    immediate = {
+		if = {
+			limit = {
+				has_completed_focus = ENG_the_prince_trust
+			}
+			activate_decision = ENG_charles_charities_network_decision
+		}
+		else_if = {
+			limit = {
+				has_completed_focus = ENG_harmony_doctrine
+			}
+			random_list = {
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_charities_network_decision_activated
+					}
+					activate_decision = ENG_charles_charities_network_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_harmony_tour_decision_activated
+					}
+					activate_decision = ENG_charles_harmony_tour_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_environmental_diplomacy_tour_decision_activated
+					}
+					activate_decision = ENG_charles_environmental_diplomacy_tour_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_sustainable_urban_planning_decision_activated
+					}
+					activate_decision = ENG_charles_sustainable_urban_planning_decision
+				}
+			}
+		}
+		else_if = {
+			limit = { has_completed_focus = ENG_climate_alarm_bell }
+			random_list = {
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_charities_network_decision_activated
+					}
+					activate_decision = ENG_charles_charities_network_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_harmony_tour_decision_activated
+					}
+					activate_decision = ENG_charles_harmony_tour_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_environmental_diplomacy_tour_decision_activated
+					}
+					activate_decision = ENG_charles_environmental_diplomacy_tour_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_sustainable_urban_planning_decision_activated
+					}
+					activate_decision = ENG_charles_sustainable_urban_planning_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_rainforest_help_decision_activated
+					}
+					activate_decision = ENG_charles_rainforest_help_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_youth_sustainability_decision_activated
+					}
+					activate_decision = ENG_charles_youth_sustainability_decision
+				}
+			}
+		}
+		else_if = {
+			limit = { has_completed_focus = ENG_duchy_originals }
+			random_list = {
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_charities_network_decision_activated
+					}
+					activate_decision = ENG_charles_charities_network_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_harmony_tour_decision_activated
+					}
+					activate_decision = ENG_charles_harmony_tour_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_environmental_diplomacy_tour_decision_activated
+					}
+					activate_decision = ENG_charles_environmental_diplomacy_tour_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_sustainable_urban_planning_decision_activated
+					}
+					activate_decision = ENG_charles_sustainable_urban_planning_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_rainforest_help_decision_activated
+					}
+					activate_decision = ENG_charles_rainforest_help_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_youth_sustainability_decision_activated
+					}
+					activate_decision = ENG_charles_youth_sustainability_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_charles_organic_agriculture_decision_activated
+					}
+					activate_decision = ENG_charles_organic_agriculture_decision
+				}
+			}
+		}
+		country_event = {
+			id = ENG_inner_circle_charles.07
+			days = 150
+			random_days = 50
+		}
+	}
+}
+country_event = {
+	id = ENG_inner_circle_andrew.01
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_naval_prince
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 2 }
+			check_variable = { ENG_ascended_advisor_2 = 2 }
+			check_variable = { ENG_ascended_advisor_3 = 2 }
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_appoint_trade_representative }
+			}
+			activate_shine_on_focus = ENG_appoint_trade_representative
+			set_country_flag = { flag = ENG_appoint_trade_representative_in_progress_flag days = @inner_circle_time_tier_1_flag value = 1 }
+			country_event = { id = ENG_inner_circle_andrew.02 days = @inner_circle_time_tier_1 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_emerging_markets_circuit }
+			}
+			activate_shine_on_focus = ENG_emerging_markets_circuit
+			set_country_flag = { flag = ENG_emerging_markets_circuit_in_progress_flag days = @inner_circle_time_tier_2_flag value = 1 }
+			country_event = { id = ENG_inner_circle_andrew.02 days = @inner_circle_time_tier_2 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_digital_enterprise_patronage }
+			}
+			activate_shine_on_focus = ENG_digital_enterprise_patronage
+			set_country_flag = { flag = ENG_digital_enterprise_patronage_in_progress_flag days = @inner_circle_time_tier_3_flag value = 1 }
+			country_event = { id = ENG_inner_circle_andrew.02 days = @inner_circle_time_tier_3 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_duty_of_the_crown }
+			}
+			activate_shine_on_focus = ENG_duty_of_the_crown
+			set_country_flag = { flag = ENG_duty_of_the_crown_in_progress_flag days = @inner_circle_time_tier_4_flag value = 1 }
+			country_event = { id = ENG_inner_circle_andrew.02 days = @inner_circle_time_tier_4 }
+		}
+		else = { #Debug logs
+			log = "SOMETHING WENT WRONG WITH ANDREW's FOCUS BRANCH - Cannot start new focus"
+		}
+	}
+}
+country_event = {
+	id = ENG_inner_circle_andrew.02
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_naval_prince
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 2 }
+			check_variable = { ENG_ascended_advisor_2 = 2 }
+			check_variable = { ENG_ascended_advisor_3 = 2 }
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_appoint_trade_representative
+			}
+			complete_national_focus = {
+				focus = ENG_appoint_trade_representative
+				use_side_message = yes
+				originator_name = ENG_prince_andrew
+			}
+			clr_country_flag = ENG_appoint_trade_representative_in_progress_flag
+			country_event = { id = ENG_inner_circle_andrew.01 days = 180 random_days = 50 }
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_emerging_markets_circuit
+			}
+			complete_national_focus = {
+				focus = ENG_emerging_markets_circuit
+				use_side_message = yes
+				originator_name = ENG_prince_andrew
+			}
+			clr_country_flag = ENG_emerging_markets_circuit_in_progress_flag
+			country_event = { id = ENG_inner_circle_andrew.01 days = 180 random_days = 50 }
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_digital_enterprise_patronage
+			}
+			complete_national_focus = {
+				focus = ENG_digital_enterprise_patronage
+				use_side_message = yes
+				originator_name = ENG_prince_andrew
+			}
+			clr_country_flag = ENG_digital_enterprise_patronage_in_progress_flag
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_duty_of_the_crown
+			}
+			complete_national_focus = {
+				focus = ENG_duty_of_the_crown
+				use_side_message = yes
+				originator_name = ENG_prince_andrew
+			}
+			clr_country_flag = ENG_duty_of_the_crown_in_progress_flag
+			country_event = { id = ENG_inner_circle_andrew.01 days = 180 random_days = 50 }
+		}
+		else = { #Debug logs
+			#log = "SOMETHING WENT WRONG WITH TODT's FOCUS BRANCH - Cannot complete focus"
+		}
+	}
+}
+country_event = {
+    id = ENG_inner_circle_andrew.03
+    hidden = yes
+
+    is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_naval_prince
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 2 }
+			check_variable = { ENG_ascended_advisor_2 = 2 }
+			check_variable = { ENG_ascended_advisor_3 = 2 }
+		}
+	}
+
+    immediate = {
+		if = {
+			limit = {
+				has_completed_focus = ENG_naval_prince
+			}
+			random_list = {
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_andrew_naval_haritage_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_naval_prince }
+					}
+					activate_decision = ENG_andrew_naval_haritage_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_andrew_trade_representive_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_appoint_trade_representative }
+					}
+					activate_decision = ENG_andrew_trade_representive_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_andrew_emerging_trade_agreement_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_emerging_markets_circuit }
+					}
+					activate_decision = ENG_andrew_emerging_trade_agreement_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_andrew_emerging_economy_benefits_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_emerging_markets_circuit }
+					}
+					activate_decision = ENG_andrew_emerging_economy_benefits_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_andrew_digital_enterprise_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_digital_enterprise_patronage }
+					}
+					activate_decision = ENG_andrew_emerging_economy_benefits_decision
+				}
+			}
+		}
+		country_event = {
+			id = ENG_inner_circle_andrew.03
+			days = 150
+			random_days = 50
+		}
+	}
+}
+country_event = {
+    id = ENG_inner_circle_andrew.04
+    title = ENG_inner_circle_andrew.04.t
+    desc = ENG_inner_circle_andrew.04.desc
+    picture = x
+
+    is_triggered_only = yes
+
+    option = {
+        name = ENG_inner_circle_andrew.04.a
+        add_opinion_modifier = {
+			target = ENG
+			modifier = ENG_andrew_trade_representative
+		}
+		reverse_add_opinion_modifier = {
+			target = THIS
+			modifier = ENG_andrew_trade_representative
+		}
+    }
+}
+country_event = {
+    id = ENG_inner_circle_andrew.05
+    title = ENG_inner_circle_andrew.05.t
+    desc = ENG_inner_circle_andrew.05.desc
+    picture = x
+
+    is_triggered_only = yes
+
+    option = {
+        name = ENG_inner_circle_andrew.04.a
+		set_temp_variable = { receiver_nation = ROOT.id }
+		set_temp_variable = { sender_nation = ENG.id }
+		set_improved_trade_agreement = yes
+    }
+}
+country_event = {
+	id = ENG_inner_circle_anne.01
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_workhorse_of_the_crown
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 3 }
+			check_variable = { ENG_ascended_advisor_2 = 3 }
+			check_variable = { ENG_ascended_advisor_3 = 3 }
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_carers_recognition_campaign }
+			}
+			activate_shine_on_focus = ENG_carers_recognition_campaign
+			set_country_flag = { flag = ENG_carers_recognition_campaign_in_progress_flag days = @inner_circle_time_tier_1_flag value = 1 }
+			country_event = { id = ENG_inner_circle_anne.02 days = @inner_circle_time_tier_1 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_discipline_service }
+			}
+			activate_shine_on_focus = ENG_discipline_service
+			set_country_flag = { flag = ENG_discipline_service_in_progress_flag days = @inner_circle_time_tier_2_flag value = 1 }
+			country_event = { id = ENG_inner_circle_anne.02 days = @inner_circle_time_tier_2 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_princess_admiral_royal_navy }
+				has_country_flag = ENG_anne_navy
+			}
+			activate_shine_on_focus = ENG_princess_admiral_royal_navy
+			set_country_flag = { flag = ENG_princess_admiral_royal_navy_in_progress_flag days = @inner_circle_time_tier_3_flag value = 1 }
+			country_event = { id = ENG_inner_circle_anne.02 days = @inner_circle_time_tier_3 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_colonel_of_horse_logistics }
+				has_country_flag = ENG_anne_army
+			}
+			activate_shine_on_focus = ENG_colonel_of_horse_logistics
+			set_country_flag = { flag = ENG_colonel_of_horse_logistics_in_progress_flag days = @inner_circle_time_tier_3_flag value = 1 }
+			country_event = { id = ENG_inner_circle_anne.02 days = @inner_circle_time_tier_3 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_quiet_professionalism }
+			}
+			activate_shine_on_focus = ENG_quiet_professionalism
+			set_country_flag = { flag = ENG_quiet_professionalism_in_progress_flag days = @inner_circle_time_tier_4_flag value = 1 }
+			country_event = { id = ENG_inner_circle_anne.02 days = @inner_circle_time_tier_4 }
+		}
+		else = { #Debug logs
+			log = "SOMETHING WENT WRONG WITH ANNE's FOCUS BRANCH - Cannot start new focus"
+		}
+	}
+}
+country_event = {
+	id = ENG_inner_circle_anne.02
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_workhorse_of_the_crown
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 3 }
+			check_variable = { ENG_ascended_advisor_2 = 3 }
+			check_variable = { ENG_ascended_advisor_3 = 3 }
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_carers_recognition_campaign
+			}
+			complete_national_focus = {
+				focus = ENG_carers_recognition_campaign
+				use_side_message = yes
+				originator_name = ENG_princess_anne
+			}
+			clr_country_flag = ENG_carers_recognition_campaign_in_progress_flag
+			country_event = { id = ENG_inner_circle_anne.01 days = 180 random_days = 50 }
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_discipline_service
+			}
+			complete_national_focus = {
+				focus = ENG_discipline_service
+				use_side_message = yes
+				originator_name = ENG_princess_anne
+			}
+			clr_country_flag = ENG_discipline_service_in_progress_flag
+			country_event = { id = ENG_inner_circle_anne.01 days = 180 random_days = 50 }
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_princess_admiral_royal_navy
+			}
+			complete_national_focus = {
+				focus = ENG_princess_admiral_royal_navy
+				use_side_message = yes
+				originator_name = ENG_princess_anne
+			}
+			clr_country_flag = ENG_princess_admiral_royal_navy_in_progress_flag
+			country_event = { id = ENG_inner_circle_anne.01 days = 180 random_days = 50 }
+
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_colonel_of_horse_logistics
+			}
+			complete_national_focus = {
+				focus = ENG_colonel_of_horse_logistics
+				use_side_message = yes
+				originator_name = ENG_princess_anne
+			}
+			clr_country_flag = ENG_colonel_of_horse_logistics_in_progress_flag
+			country_event = { id = ENG_inner_circle_anne.01 days = 180 random_days = 50 }
+
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_quiet_professionalism
+			}
+			complete_national_focus = {
+				focus = ENG_quiet_professionalism
+				use_side_message = yes
+				originator_name = ENG_princess_anne
+			}
+			clr_country_flag = ENG_quiet_professionalism_in_progress_flag
+			country_event = { id = ENG_inner_circle_anne.01 days = 180 random_days = 50 }
+		}
+		else = {
+			log = "SOMETHING WENT WRONG WITH ANNE's FOCUS BRANCH - Cannot complete focus"
+		}
+	}
+}
+country_event = {
+    id = ENG_inner_circle_anne.03
+    hidden = yes
+
+    is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_naval_prince
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 3 }
+			check_variable = { ENG_ascended_advisor_2 = 3 }
+			check_variable = { ENG_ascended_advisor_3 = 3 }
+		}
+	}
+
+    immediate = {
+		if = {
+			limit = {
+				has_completed_focus = ENG_workhorse_of_the_crown
+			}
+			random_list = {
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_anne_national_charity_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_workhorse_of_the_crown }
+					}
+					activate_decision = ENG_anne_national_charity_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_anne_carers_promotion_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_carers_recognition_campaign }
+					}
+					activate_decision = ENG_anne_carers_promotion_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_anne_military_readiness_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_colonel_of_horse_logistics }
+					}
+					activate_decision = ENG_anne_military_readiness_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_anne_navy_readiness_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_princess_admiral_royal_navy }
+					}
+					activate_decision = ENG_anne_navy_readiness_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_anne_tourism_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_quiet_professionalism }
+					}
+					activate_decision = ENG_anne_tourism_decision
+				}
+			}
+		}
+		country_event = {
+			id = ENG_inner_circle_anne.03
+			days = 150
+			random_days = 50
+		}
+	}
+}
+country_event = {
+	id = ENG_inner_circle_edward.01
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_chairman_international_award
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 4 }
+			check_variable = { ENG_ascended_advisor_2 = 4 }
+			check_variable = { ENG_ascended_advisor_3 = 4 }
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_trustee_network }
+			}
+			activate_shine_on_focus = ENG_trustee_network
+			set_country_flag = { flag = ENG_trustee_network_in_progress_flag days = @inner_circle_time_tier_1_flag value = 1 }
+			country_event = { id = ENG_inner_circle_edward.02 days = @inner_circle_time_tier_1 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_commonwealth_youth_outreach }
+			}
+			activate_shine_on_focus = ENG_commonwealth_youth_outreach
+			set_country_flag = { flag = ENG_commonwealth_youth_outreach_in_progress_flag days = @inner_circle_time_tier_2_flag value = 1 }
+			country_event = { id = ENG_inner_circle_edward.02 days = @inner_circle_time_tier_2 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_production_guild_patronage }
+			}
+			activate_shine_on_focus = ENG_production_guild_patronage
+			set_country_flag = { flag = ENG_production_guild_patronage_in_progress_flag days = @inner_circle_time_tier_3_flag value = 1 }
+			country_event = { id = ENG_inner_circle_edward.02 days = @inner_circle_time_tier_3 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_steady_hand }
+			}
+			activate_shine_on_focus = ENG_steady_hand
+			set_country_flag = { flag = ENG_steady_hand_in_progress_flag days = @inner_circle_time_tier_4_flag value = 1 }
+			country_event = { id = ENG_inner_circle_edward.02 days = @inner_circle_time_tier_4 }
+		}
+		else = { #Debug logs
+			log = "SOMETHING WENT WRONG WITH EDWARD's FOCUS BRANCH - Cannot start new focus"
+		}
+	}
+}
+country_event = {
+	id = ENG_inner_circle_edward.02
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_chairman_international_award
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 4 }
+			check_variable = { ENG_ascended_advisor_2 = 4 }
+			check_variable = { ENG_ascended_advisor_3 = 4 }
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_trustee_network
+			}
+			complete_national_focus = {
+				focus = ENG_trustee_network
+				use_side_message = yes
+				originator_name = ENG_prince_edward
+			}
+			clr_country_flag = ENG_trustee_network_in_progress_flag
+			country_event = { id = ENG_inner_circle_edward.01 days = 180 random_days = 50 }
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_commonwealth_youth_outreach
+			}
+			complete_national_focus = {
+				focus = ENG_commonwealth_youth_outreach
+				use_side_message = yes
+				originator_name = ENG_prince_edward
+			}
+			clr_country_flag = ENG_commonwealth_youth_outreach_in_progress_flag
+			country_event = { id = ENG_inner_circle_edward.01 days = 180 random_days = 50 }
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_production_guild_patronage
+			}
+			complete_national_focus = {
+				focus = ENG_production_guild_patronage
+				use_side_message = yes
+				originator_name = ENG_prince_edward
+			}
+			clr_country_flag = ENG_production_guild_patronage_in_progress_flag
+			country_event = { id = ENG_inner_circle_edward.01 days = 180 random_days = 50 }
+
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_steady_hand
+			}
+			complete_national_focus = {
+				focus = ENG_steady_hand
+				use_side_message = yes
+				originator_name = ENG_prince_edward
+			}
+			clr_country_flag = ENG_steady_hand_in_progress_flag
+			country_event = { id = ENG_inner_circle_edward.01 days = 180 random_days = 50 }
+		}
+		else = {
+			log = "SOMETHING WENT WRONG WITH EDWARD's FOCUS BRANCH - Cannot complete focus"
+		}
+	}
+}
+country_event = {
+    id = ENG_inner_circle_edward.03
+    hidden = yes
+
+    is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_chairman_international_award
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 4 }
+			check_variable = { ENG_ascended_advisor_2 = 4 }
+			check_variable = { ENG_ascended_advisor_3 = 4 }
+		}
+	}
+
+    immediate = {
+		if = {
+			limit = {
+				has_completed_focus = ENG_chairman_international_award
+			}
+			random_list = {
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_edward_beach_youth_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_chairman_international_award }
+					}
+					activate_decision = ENG_edward_beach_youth_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_edward_global_youth_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_commonwealth_youth_outreach }
+					}
+					activate_decision = ENG_edward_global_youth_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_edward_arts_culture_patronage_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_trustee_network }
+					}
+					activate_decision = ENG_edward_arts_culture_patronage_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_edward_production_guild_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_production_guild_patronage }
+					}
+					activate_decision = ENG_edward_production_guild_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_edward_veteran_support_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_steady_hand }
+					}
+					activate_decision = ENG_edward_veteran_support_decision
+				}
+			}
+		}
+		country_event = {
+			id = ENG_inner_circle_edward.03
+			days = 150
+			random_days = 50
+		}
+	}
+}
+country_event = {
+	id = ENG_inner_circle_philip.01
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_duke_charities
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 5 }
+			check_variable = { ENG_ascended_advisor_2 = 5 }
+			check_variable = { ENG_ascended_advisor_3 = 5 }
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_international_award_conference }
+			}
+			activate_shine_on_focus = ENG_international_award_conference
+			set_country_flag = { flag = ENG_international_award_conference_in_progress_flag days = @inner_circle_time_tier_1_flag value = 1 }
+			country_event = { id = ENG_inner_circle_philip.02 days = @inner_circle_time_tier_1 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_wwf_president_emeritus }
+			}
+			activate_shine_on_focus = ENG_wwf_president_emeritus
+			set_country_flag = { flag = ENG_wwf_president_emeritus_in_progress_flag days = @inner_circle_time_tier_2_flag value = 1 }
+			country_event = { id = ENG_inner_circle_philip.02 days = @inner_circle_time_tier_2 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_prince_phillip_medal }
+			}
+			activate_shine_on_focus = ENG_prince_phillip_medal
+			set_country_flag = { flag = ENG_prince_phillip_medal_in_progress_flag days = @inner_circle_time_tier_3_flag value = 1 }
+			country_event = { id = ENG_inner_circle_philip.02 days = @inner_circle_time_tier_3 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_strength_and_stay }
+			}
+			activate_shine_on_focus = ENG_strength_and_stay
+			set_country_flag = { flag = ENG_strength_and_stay_in_progress_flag days = @inner_circle_time_tier_4_flag value = 1 }
+			country_event = { id = ENG_inner_circle_philip.02 days = @inner_circle_time_tier_4 }
+		}
+		else = { #Debug logs
+			log = "SOMETHING WENT WRONG WITH EDWARD's FOCUS BRANCH - Cannot start new focus"
+		}
+	}
+}
+country_event = {
+	id = ENG_inner_circle_philip.02
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_chairman_international_award
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 5 }
+			check_variable = { ENG_ascended_advisor_2 = 5 }
+			check_variable = { ENG_ascended_advisor_3 = 5 }
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_international_award_conference
+			}
+			complete_national_focus = {
+				focus = ENG_international_award_conference
+				use_side_message = yes
+				originator_name = ENG_prince_phillip
+			}
+			clr_country_flag = ENG_international_award_conference_in_progress_flag
+			country_event = { id = ENG_inner_circle_philip.01 days = 180 random_days = 50 }
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_wwf_president_emeritus
+			}
+			complete_national_focus = {
+				focus = ENG_wwf_president_emeritus
+				use_side_message = yes
+				originator_name = ENG_prince_phillip
+			}
+			clr_country_flag = ENG_wwf_president_emeritus_in_progress_flag
+			country_event = { id = ENG_inner_circle_philip.01 days = 180 random_days = 50 }
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_prince_phillip_medal
+			}
+			complete_national_focus = {
+				focus = ENG_prince_phillip_medal
+				use_side_message = yes
+				originator_name = ENG_prince_phillip
+			}
+			clr_country_flag = ENG_prince_phillip_medal_in_progress_flag
+			country_event = { id = ENG_inner_circle_philip.01 days = 180 random_days = 50 }
+
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_strength_and_stay
+			}
+			complete_national_focus = {
+				focus = ENG_strength_and_stay
+				use_side_message = yes
+				originator_name = ENG_prince_phillip
+			}
+			clr_country_flag = ENG_strength_and_stay_in_progress_flag
+			country_event = { id = ENG_inner_circle_philip.01 days = 180 random_days = 50 }
+		}
+		else = {
+			log = "SOMETHING WENT WRONG WITH PHILIP's FOCUS BRANCH - Cannot complete focus"
+		}
+	}
+}
+country_event = {
+    id = ENG_inner_circle_philip.03
+    hidden = yes
+
+    is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_duke_charities
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 5 }
+			check_variable = { ENG_ascended_advisor_2 = 5 }
+			check_variable = { ENG_ascended_advisor_3 = 5 }
+		}
+	}
+
+    immediate = {
+		if = {
+			limit = {
+				has_completed_focus = ENG_duke_charities
+			}
+			random_list = {
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_philip_award_medal_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_prince_phillip_medal }
+					}
+					activate_decision = ENG_philip_award_medal_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_philip_award_expansion_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_prince_phillip_medal }
+					}
+					activate_decision = ENG_philip_award_expansion_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_philip_trust_funds_grants_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_duke_charities }
+					}
+					activate_decision = ENG_philip_trust_funds_grants_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_philip_faith_conservation_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_wwf_president_emeritus }
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_idea = the_clergy }
+					}
+					activate_decision = ENG_philip_faith_conservation_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_philip_innovation_recognition_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_strength_and_stay }
+					}
+					activate_decision = ENG_philip_innovation_recognition_decision
+				}
+			}
+		}
+		country_event = {
+			id = ENG_inner_circle_philip.03
+			days = 150
+			random_days = 50
+		}
+	}
+}
+country_event = {
+	id = ENG_inner_circle_william.01
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_from_sandhurst_to_service
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 6 }
+			check_variable = { ENG_ascended_advisor_2 = 6 }
+			check_variable = { ENG_ascended_advisor_3 = 6 }
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_royal_foundation }
+			}
+			activate_shine_on_focus = ENG_royal_foundation
+			set_country_flag = { flag = ENG_royal_foundation_in_progress_flag days = @inner_circle_time_tier_1_flag value = 1 }
+			country_event = { id = ENG_inner_circle_william.02 days = @inner_circle_time_tier_1 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_heads_together }
+			}
+			activate_shine_on_focus = ENG_heads_together
+			set_country_flag = { flag = ENG_heads_together_in_progress_flag days = @inner_circle_time_tier_2_flag value = 1 }
+			country_event = { id = ENG_inner_circle_william.02 days = @inner_circle_time_tier_2 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_veteran_armed_forces_support }
+			}
+			activate_shine_on_focus = ENG_veteran_armed_forces_support
+			set_country_flag = { flag = ENG_veteran_armed_forces_support_in_progress_flag days = @inner_circle_time_tier_3_flag value = 1 }
+			country_event = { id = ENG_inner_circle_william.02 days = @inner_circle_time_tier_3 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_completed_focus = ENG_bridge_to_the_future }
+			}
+			activate_shine_on_focus = ENG_bridge_to_the_future
+			set_country_flag = { flag = ENG_bridge_to_the_future_in_progress_flag days = @inner_circle_time_tier_4_flag value = 1 }
+			country_event = { id = ENG_inner_circle_william.02 days = @inner_circle_time_tier_4 }
+		}
+		else = { #Debug logs
+			log = "SOMETHING WENT WRONG WITH WILLIAMS's FOCUS BRANCH - Cannot start new focus"
+		}
+	}
+}
+country_event = {
+	id = ENG_inner_circle_william.02
+
+	hidden = yes
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_from_sandhurst_to_service
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 6 }
+			check_variable = { ENG_ascended_advisor_2 = 6 }
+			check_variable = { ENG_ascended_advisor_3 = 6 }
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_royal_foundation
+			}
+			complete_national_focus = {
+				focus = ENG_royal_foundation
+				use_side_message = yes
+				originator_name = ENG_prince_william
+			}
+			clr_country_flag = ENG_royal_foundation_in_progress_flag
+			country_event = { id = ENG_inner_circle_william.01 days = 180 random_days = 50 }
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_heads_together
+			}
+			complete_national_focus = {
+				focus = ENG_heads_together
+				use_side_message = yes
+				originator_name = ENG_prince_william
+			}
+			clr_country_flag = ENG_heads_together_in_progress_flag
+			country_event = { id = ENG_inner_circle_william.01 days = 180 random_days = 50 }
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_veteran_armed_forces_support
+			}
+			complete_national_focus = {
+				focus = ENG_veteran_armed_forces_support
+				use_side_message = yes
+				originator_name = ENG_prince_william
+			}
+			clr_country_flag = ENG_veteran_armed_forces_support_in_progress_flag
+			country_event = { id = ENG_inner_circle_william.01 days = 180 random_days = 50 }
+
+		}
+		else_if = {
+			limit = {
+				has_shine_effect_on_focus = ENG_bridge_to_the_future
+			}
+			complete_national_focus = {
+				focus = ENG_bridge_to_the_future
+				use_side_message = yes
+				originator_name = ENG_prince_william
+			}
+			clr_country_flag = ENG_bridge_to_the_future_in_progress_flag
+			country_event = { id = ENG_inner_circle_william.01 days = 180 random_days = 50 }
+		}
+		else = {
+			log = "SOMETHING WENT WRONG WITH WILLIAMS's FOCUS BRANCH - Cannot complete focus"
+		}
+	}
+}
+country_event = {
+    id = ENG_inner_circle_william.03
+    hidden = yes
+
+    is_triggered_only = yes
+
+	trigger = {
+		has_completed_focus = ENG_from_sandhurst_to_service
+		OR = {
+			check_variable = { ENG_ascended_advisor_1 = 6 }
+			check_variable = { ENG_ascended_advisor_2 = 6 }
+			check_variable = { ENG_ascended_advisor_3 = 6 }
+		}
+	}
+
+    immediate = {
+		if = {
+			limit = {
+				has_completed_focus = ENG_from_sandhurst_to_service
+			}
+			random_list = {
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_william_air_ambulance_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_from_sandhurst_to_service }
+					}
+					activate_decision = ENG_william_air_ambulance_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_william_mental_health_at_work_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_heads_together }
+					}
+					activate_decision = ENG_william_mental_health_at_work_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_william_mental_health_at_work_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_heads_together }
+					}
+					activate_decision = ENG_william_step_into_health_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_william_early_years_forum_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_royal_foundation }
+					}
+					activate_decision = ENG_william_early_years_forum_decision
+				}
+				25 = {
+					modifier = {
+						factor = 0
+						has_country_flag = ENG_william_early_years_forum_decision_activated
+					}
+					modifier = {
+						factor = 0
+						NOT = { has_completed_focus = ENG_bridge_to_the_future }
+					}
+					activate_decision = ENG_william_chogm_youth_decision
+				}
+			}
+		}
+		country_event = {
+			id = ENG_inner_circle_william.03
+			days = 150
+			random_days = 50
+		}
+	}
+}
+
+country_event = { # Approaching Operation Dagger
+	id = britain_md.100
+	title = britain_md.100.t
+	desc = britain_md.100.d
+	is_triggered_only = yes
+
+	option = { # Negotiate With Them
+		name = britain_md.100.a
+		log = "[GetDateText]: [This.GetName]: britain_md.100.a executed"
+		OMA = {
+			country_event = {
+				id = britain_md.101
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = { # Move In, Fuck the Omani's
+		name = britain_md.100.b
+		log = "[GetDateText]: [This.GetName]: britain_md.100.b executed"
+		activate_mission = ENG_operation_dagger
+		newline = yes
+		425 = {
+			add_claim_by = ENG
+		}
+		newline = yes
+		declare_war_on = {
+			target = OMA
+			type = take_claimed_state
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # United Kingdom Approaches Us for Musandam
+	id = britain_md.101
+	title = britain_md.101.t
+	desc = britain_md.101.d
+	is_triggered_only = yes
+
+	option = { # Never!
+		name = britain_md.101.a
+		log = "[GetDateText]: [This.GetName]: britain_md.101.a executed"
+		ENG = {
+			country_event = {
+				id = britain_md.102
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = { # Well, it's not free....
+		name = britain_md.101.b
+		log = "[GetDateText]: [This.GetName]: britain_md.101.b executed"
+		ENG = {
+			country_event = {
+				id = britain_md.103
+				days = 1
+			}
+		}
+		newline = yes
+		effect_tooltip = {
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.05 }
+			modify_treasury_effect = yes
+			newline = yes
+			OMA = {
+				set_temp_variable = { treasury_change = ENG.gdp_total }
+				multiply_temp_variable = { treasury_change = 0.05 }
+				modify_treasury_effect = yes
+			}
+			newline = yes
+			425 = {
+				transfer_state_to = ENG
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Oman Rejects Negotiations
+	id = britain_md.102
+	title = britain_md.102.t
+	desc = britain_md.102.d
+	is_triggered_only = yes
+
+	option = { # They've left us with no choice
+		name = britain_md.102.a
+		log = "[GetDateText]: [This.GetName]: britain_md.102.a executed"
+		activate_mission = ENG_operation_dagger
+		newline = yes
+		425 = {
+			add_claim_by = ENG
+		}
+		newline = yes
+		declare_war_on = {
+			target = OMA
+			type = take_claimed_state
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = { # Just forget it
+		name = britain_md.102.b
+		log = "[GetDateText]: [This.GetName]: britain_md.102.b executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Oman Gives Us Terms
+	id = britain_md.103
+	title = britain_md.103.t
+	desc = britain_md.103.d
+	is_triggered_only = yes
+
+	option = { # Fine
+		name = britain_md.103.a
+		log = "[GetDateText]: [This.GetName]: britain_md.103.a executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.05 }
+		modify_treasury_effect = yes
+		newline = yes
+		OMA = {
+			set_temp_variable = { treasury_change = ENG.gdp_total }
+			multiply_temp_variable = { treasury_change = 0.05 }
+			modify_treasury_effect = yes
+		}
+		newline = yes
+		425 = {
+			transfer_state_to = ENG
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = { # This is an insult!
+		name = britain_md.103.b
+		log = "[GetDateText]: [This.GetName]: britain_md.103.b executed"
+		activate_mission = ENG_operation_dagger
+		newline = yes
+		425 = {
+			add_claim_by = ENG
+		}
+		newline = yes
+		declare_war_on = {
+			target = OMA
+			type = take_claimed_state
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+	option = { # Just forget it
+		name = britain_md.103.c
+		log = "[GetDateText]: [This.GetName]: britain_md.103.c executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.26
+	title = britain_md.26.t
+	desc = britain_md.26.d
+	is_triggered_only = yes
+	option = {
+		name = britain_md.26.a
+		log = "[GetDateText]: [This.GetName]: britain_md.26.a executed"
+		26 = {
+			add_core_of = ENG
+		}
+		newline = yes
+		custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = ENG_political_modifier
+			}
+		add_to_variable = { ENG_political_power_factor = -0.01 tooltip = political_power_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = britain_md.26.b
+		log = "[GetDateText]: [This.GetName]: britain_md.26.b executed"
+		457 = {
+			add_claim_by = ENG
+		}
+		newline = yes
+		declare_war_on = {
+			target = ARG
+			type = take_state_focus
+		}
+		newline = yes
+		activate_mission = ENG_end_of_the_world
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = britain_md.26.c
+		log = "[GetDateText]: [This.GetName]: britain_md.26.c executed"
+		26 = {
+			transfer_state_to = ARG
+		}
+		newline = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = ENG }
+		set_temp_variable = { influence_target = ARG }
+		change_influence_percentage = yes
+		newline = yes
+		custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = ENG_political_modifier
+			}
+		add_to_variable = { ENG_political_power_factor = 0.01 tooltip = political_power_factor_tt }
+		newline = yes
+		ARG = {
+			country_event = {
+				id = britain_md.27
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Britain Returns the Falklands
+	id = britain_md.27
+	title = britain_md.27.t
+	desc = britain_md.27.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.27.a
+		log = "[GetDateText]: [This.GetName]: britain_md.27.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = { # Successful Regime Change Operation Against Zimbabwe!
+	id = britain_md.28
+	title = britain_md.28.t
+	desc = britain_md.28.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.28.a
+		log = "[GetDateText]: [This.GetName]: britain_md.28.a executed"
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = ENG }
+		set_temp_variable = { influence_target = ZIM }
+		change_influence_percentage = yes
+		hidden_effect = {
+			GAM = {
+				set_temp_variable = { party_index = 3 }
+				set_temp_variable = { party_popularity_increase = 0.35 }
+				set_temp_variable = { temp_outlook_increase = 0.35 }
+				add_relative_party_popularity = yes
+				hidden_effect = {
+					clear_array = ruling_party
+					clear_array = gov_coalition_array
+					add_to_array = { ruling_party = 3 }
+					update_government_coalition_strength = yes
+					set_coalition_drift = yes
+					set_ruling_leader = yes
+					set_leader = yes
+					set_politics = {
+						ruling_party = democratic
+						elections_allowed = no
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.29
+	title = britain_md.29.t
+	desc = britain_md.29.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.29.a
+		log = "[GetDateText]: [This.GetName]: britain_md.29.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.30
+	title = britain_md.30.t
+	desc = britain_md.30.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.30.a
+		log = "[GetDateText]: [This.GetName]: britain_md.30.a executed"
+		EGY = {
+			country_event = {
+				id = britain_md.31
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = britain_md.30.b
+		log = "[GetDateText]: [This.GetName]: britain_md.30.b executed"
+		custom_effect_tooltip = ENG_raid_enabled_3_TT
+		set_country_flag = ENG_raid_Egypt
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.31
+	title = britain_md.31.t
+	desc = britain_md.31.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.31.a
+		log = "[GetDateText]: [This.GetName]: britain_md.31.a executed"
+		ENG = {
+			country_event = {
+				id = britain_md.32
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = britain_md.31.b
+		log = "[GetDateText]: [This.GetName]: britain_md.31.b executed"
+		ENG = {
+			country_event = {
+				id = britain_md.33
+				days = 1
+			}
+		}
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.02 }
+			modify_treasury_effect = yes
+			newline = yes
+			EGY = {
+				set_temp_variable = { treasury_change = ENG.gdp_total }
+				multiply_temp_variable = { treasury_change = 0.02 }
+				modify_treasury_effect = yes
+			}
+			newline = yes
+			set_temp_variable = { percent_change = 7 }
+			set_temp_variable = { tag_index = ENG }
+			set_temp_variable = { influence_target = EGY }
+			change_influence_percentage = yes
+			newline = yes
+			EGY = {
+				give_military_access = ENG
+				diplomatic_relation = {
+					country = ENG
+					relation = docking_rights
+					active = yes
+				}
+			}
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.32
+	title = britain_md.32.t
+	desc = britain_md.32.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.32.a
+		log = "[GetDateText]: [This.GetName]: britain_md.32.a executed"
+		custom_effect_tooltip = ENG_raid_enabled_3_TT
+		set_country_flag = ENG_raid_Egypt
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Do nothing
+		name = britain_md.32.b
+		log = "[GetDateText]: [This.GetName]: britain_md.32.b executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.33
+	title = britain_md.33.t
+	desc = britain_md.33.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.33.a
+		log = "[GetDateText]: [This.GetName]: britain_md.33.a executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.02 }
+		modify_treasury_effect = yes
+		newline = yes
+		EGY = {
+			set_temp_variable = { treasury_change = ENG.gdp_total }
+			multiply_temp_variable = { treasury_change = 0.02 }
+			modify_treasury_effect = yes
+		}
+		newline = yes
+		set_temp_variable = { percent_change = 7 }
+		set_temp_variable = { tag_index = ENG }
+		set_temp_variable = { influence_target = EGY }
+		change_influence_percentage = yes
+		newline = yes
+		EGY = {
+			give_military_access = ENG
+			diplomatic_relation = {
+				country = ENG
+				relation = docking_rights
+				active = yes
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = britain_md.33.b
+		log = "[GetDateText]: [This.GetName]: britain_md.33.b executed"
+		custom_effect_tooltip = ENG_raid_enabled_3_TT
+		set_country_flag = ENG_raid_Egypt
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.34
+	title = britain_md.34.t
+	desc = britain_md.34.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.34.a
+		log = "[GetDateText]: [This.GetName]: britain_md.34.a executed"
+		213 = {
+			add_claim_by = ENG
+		}
+		newline = yes
+		ENG = {
+			declare_war_on = {
+				target = EGY
+				type = liberate_wargoal
+			}
+		}
+		newline = yes
+		ENG = {
+			set_province_controller = 4161
+		}
+		hidden_effect = {
+			division_template = {
+				name = "Suez Special Forces Brigade"
+				regiments = {
+					Special_Forces = { x = 0 y = 0 }
+					Special_Forces = { x = 0 y = 1 }
+					Special_Forces = { x = 0 y = 2 }
+					Special_Forces = { x = 0 y = 3 }
+					Special_Forces = { x = 1 y = 0 }
+					Special_Forces = { x = 1 y = 1 }
+					Special_Forces = { x = 1 y = 2 }
+					Special_Forces = { x = 1 y = 3 }
+				}
+				priority = 2
+			}
+			213 = {
+				create_unit = {
+					division = "name = \"1st. Suez Special Forces Brigade\" division_template = \"Suez Special Forces Brigade\" start_experience_factor = 1.0"
+					owner = ROOT
+					prioritize_location = 4161
+				}
+				create_unit = {
+					division = "name = \"2nd. Suez Special Forces Brigade\" division_template = \"Suez Special Forces Brigade\" start_experience_factor = 1.0"
+					owner = ROOT
+					prioritize_location = 4161
+				}
+				create_unit = {
+					division = "name = \"3rd. Suez Special Forces Brigade\" division_template = \"Suez Special Forces Brigade\" start_experience_factor = 1.0"
+					owner = ROOT
+					prioritize_location = 4161
+				}
+			}
+			goto_province = 4161
+		}
+		newline = yes
+		activate_mission = ENG_operation_eastern_divide
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = britain_md.35
+	title = britain_md.35.t
+	desc = britain_md.35.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.35.a
+		log = "[GetDateText]: [This.GetName]: britain_md.35.a executed"
+		ENG = {
+			country_event = {
+				id = britain_md.36
+				days = 2
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				has_opinion = {
+					target = ENG
+					value > 50
+				}
+				add = 10
+			}
+			modifier = {
+				ENG = {
+					has_war = no
+				}
+				add = 10
+			}
+		}
+	}
+
+	option = {
+		name = britain_md.35.b
+		log = "[GetDateText]: [This.GetName]: britain_md.35.b executed"
+		ENG = {
+			country_event = {
+				id = britain_md.37
+				days = 2
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				has_opinion = {
+					target = ENG
+					value < 50
+				}
+				add = 10
+			}
+			modifier = {
+				ENG = {
+					has_war = yes
+				}
+				add = 10
+			}
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.36
+	title = britain_md.36.t
+	desc = britain_md.36.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.36.a
+		log = "[GetDateText]: [This.GetName]: britain_md.36.a executed"
+		set_autonomy = {
+			target = FROM
+			autonomy_state = autonomy_constituent_country_very_low_devolution
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.37
+	title = britain_md.37.t
+	desc = britain_md.37.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.37.a
+		log = "[GetDateText]: [This.GetName]: britain_md.37.a executed"
+		custom_effect_tooltip = ENG_still_can_TT
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.38
+	title = britain_md.38.t
+	desc = britain_md.38.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.38.a
+		log = "[GetDateText]: [This.GetName]: britain_md.38.a executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = britain_md.38.b
+		log = "[GetDateText]: [This.GetName]: britain_md.38.b executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = britain_md.38.c
+		log = "[GetDateText]: [This.GetName]: britain_md.38.c executed"
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = britain_md.39
+	title = britain_md.39.t
+	desc = britain_md.39.d
+	is_triggered_only = yes
+
+	option = {
+		name = britain_md.39.a
+		log = "[GetDateText]: [This.GetName]: britain_md.39.a executed"
+		create_country_leader = {
+			name = "Nigel Farage "
+			picture = "Nigel_Farage.dds"
+			ideology = Nat_Autocracy
+			traits = {
+				nationalist_Nat_Populism
+				businessman
+				puppet_ruler
+				rash
+				stubborn
+				emotional
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = britain_md.39.b
+		log = "[GetDateText]: [This.GetName]: britain_md.39.b executed"
+		create_country_leader = {
+			name = "Nick Griffin "
+			picture = "Nick_Griffin.dds"
+			ideology = Nat_Autocracy
+			traits = {
+				nationalist_Nat_Fascism
+				puppet_ruler
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = britain_md.39.c
+		log = "[GetDateText]: [This.GetName]: britain_md.39.c executed"
+		create_country_leader = {
+			name = "Michael Holmes "
+			picture = "Michael_Holmes.dds"
+			ideology = Nat_Autocracy
+			traits = {
+				nationalist_Nat_Populism
+				puppet_ruler
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = britain_md.39.41
+		log = "[GetDateText]: [This.GetName]: britain_md.39.41 executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Bri'ish Flavor
+
+# Jan 2000
+
+# Nissan Seeks To Open New Factory
+country_event = {
+	id = british_flavor.1
+	title = british_flavor.1.t
+	desc = british_flavor.1.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.1.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.1.a executed"
+		1193 = {
+			add_building_construction = {
+				type = industrial_complex
+				level = 1
+			}
+		}
+		newline = yes
+		set_temp_variable = { treasury_change = -7.50 }
+		modify_treasury_effect = yes
+		newline = yes
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { tag_index = JAP }
+		set_temp_variable = { influence_target = ENG }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.1.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.1.b executed"
+		set_temp_variable = { treasury_change = 7.50 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Extradition of Pinochet
+country_event = {
+	id = british_flavor.2
+	title = british_flavor.2.t
+	desc = british_flavor.2.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.2.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.2.a executed"
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { tag_index = ENG }
+		set_temp_variable = { influence_target = CHl }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.2.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.2.b executed"
+		add_stability = 0.01
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Solway Harvester Sinks
+country_event = {
+	id = british_flavor.3
+	title = british_flavor.3.t
+	desc = british_flavor.3.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.3.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.3.a executed"
+		add_to_variable = { ENG_scottish_agitation = 2 }
+		ENG_var_cap = yes
+		SCO = {
+			custom_effect_tooltip = ENG_increase_agitation_2_alt_TT
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.3.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.3.b executed"
+		set_temp_variable = { treasury_change = -7.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Feb 2000
+
+# Ariana Afghan Airways Hijacked
+country_event = {
+	id = british_flavor.4
+	title = british_flavor.4.t
+	desc = british_flavor.4.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.4.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.4.a executed"
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { tag_index = ENG }
+		set_temp_variable = { influence_target = AFG }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.4.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.4.b executed"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.025 }
+		set_temp_variable = { temp_outlook_increase = 0.015 }
+		add_relative_party_popularity = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Hostile Takeover of NatWest Bank
+country_event = {
+	id = british_flavor.5
+	title = british_flavor.5.t
+	desc = british_flavor.5.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.5.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.5.a executed"
+		add_to_variable = { ENG_scottish_dependency = -2 }
+		ENG_var_cap = yes
+		SCO = {
+			custom_effect_tooltip = ENG_decrease_dependence_2_alt_TT
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.5.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.5.b executed"
+		add_to_variable = { ENG_scottish_agitation = 2 }
+		ENG_var_cap = yes
+		SCO = { custom_effect_tooltip = ENG_increase_agitation_2_alt_TT }
+		newline = yes
+		custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = ENG_economy_modifier
+			}
+		add_to_variable = { ENG_interest_rate_multiplier_modifier = -0.025 tooltip = interest_rate_multiplier_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# March 2000
+
+
+# BMW Announces Plans to Sell the Rover GRoup
+country_event = {
+	id = british_flavor.6
+	title = british_flavor.6.t
+	desc = british_flavor.6.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.6.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.6.a executed"
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = ENG }
+		set_temp_variable = { influence_target = GER }
+		change_influence_percentage = yes
+		newline = yes
+		custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = ENG_economy_modifier
+			}
+		add_to_variable = { ENG_office_park_income_tax_modifier = 0.02 tooltip = office_park_income_tax_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.6.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.6.b executed"
+		custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = ENG_economy_modifier
+			}
+		add_to_variable = { ENG_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# David Trimble Wins Leadership Election of the Ulster Unionist Party
+country_event = {
+	id = british_flavor.7
+	title = british_flavor.7.t
+	desc = british_flavor.7.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.7.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.7.a executed"
+		add_to_variable = { ENG_north_irish_agitation = 2 }
+		ENG_var_cap = yes
+		NIR = {
+			custom_effect_tooltip = ENG_increase_agitation_2_alt_TT
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# April 2000
+
+country_event = {
+	id = british_flavor.8
+	title = british_flavor.8.t
+	desc = british_flavor.8.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.8.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.8.a executed"
+		custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = ENG_economy_modifier
+			}
+		add_to_variable = { ENG_population_tax_income_multiplier_modifier = -0.025 tooltip = population_tax_income_multiplier_modifier_tt }
+		newline = yes
+		add_stability = 0.01
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.8.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.8.b executed"
+		add_to_variable = { ENG_wales_agitation = 2 }
+		ENG_var_cap = yes
+		WAS = {
+			custom_effect_tooltip = ENG_increase_agitation_2_alt_TT
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# May 2000
+
+country_event = {
+	id = british_flavor.9
+	title = british_flavor.9.t
+	desc = british_flavor.9.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.9.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.9.a executed"
+		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		set_temp_variable = { temp_outlook_increase = 0.055 }
+		add_relative_party_popularity = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.9.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.9.b executed"
+		set_temp_variable = { treasury_change = -12.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# June 2000
+
+# Blaire Heckled
+country_event = {
+	id = british_flavor.10
+	title = british_flavor.10.t
+	desc = british_flavor.10.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.10.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.10.a executed"
+		release_autonomy = {
+				target = SCO
+				autonomy_state = autonomy_constituent_country_very_low_devolution
+			}
+			hidden_effect = {
+				SCO = {
+					ingame_startup_nations_effect = yes
+				}
+			}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.10.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.10.b executed"
+		add_political_power = -200
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = british_flavor.11
+	title = british_flavor.11.t
+	desc = british_flavor.11.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.11.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.11.a executed"
+		add_to_variable = { ENG_scottish_agitation = 2 }
+		ENG_var_cap = yes
+		SCO = {
+			custom_effect_tooltip = ENG_increase_agitation_2_alt_TT
+		}
+		newline	= yes
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.11.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.11.b executed"
+		add_to_variable = { ENG_scottish_dependency = -2 }
+		ENG_var_cap = yes
+		SCO = {
+			custom_effect_tooltip = ENG_decrease_dependence_2_alt_TT
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# July 2000
+
+# Alex Salmond Resigns
+country_event = {
+	id = british_flavor.12
+	title = british_flavor.12.t
+	desc = british_flavor.12.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.12.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.12.a executed"
+		add_to_variable = { ENG_scottish_agitation = 2 }
+		ENG_var_cap = yes
+		SCO = {
+			custom_effect_tooltip = ENG_increase_agitation_2_alt_TT
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.12.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.12.b executed"
+		add_to_variable = { ENG_scottish_dependency = -2 }
+		ENG_var_cap = yes
+		SCO = {
+			custom_effect_tooltip = ENG_decrease_dependence_2_alt_TT
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# The Final Eighty
+country_event = {
+	id = british_flavor.13
+	title = british_flavor.13.t
+	desc = british_flavor.13.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.13.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.13.a executed"
+		add_to_variable = { ENG_north_irish_agitation = 4 }
+		ENG_var_cap = yes
+		NIR = {
+			custom_effect_tooltip = ENG_increase_agitation_4_alt_TT
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.13.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.13.b executed"
+		add_stability = -0.04
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# August 2000
+
+country_event = {
+	id = british_flavor.14
+	title = british_flavor.14.t
+	desc = british_flavor.14.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.14.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.14.a executed"
+		15 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1
+			}
+		}
+		newline = yes
+		set_temp_variable = { treasury_change = -4.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.14.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.14.b executed"
+		custom_effect_tooltip = {
+			localization_key = modifies_dynamic_modifier_tt
+			MODIFIER = ENG_political_modifier
+		}
+		add_to_variable = { ENG_police_cost_multiplier_modifier = 0.01 tooltip = police_cost_multiplier_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# September 2000
+
+country_event = {
+	id = british_flavor.15
+	title = british_flavor.15.t
+	desc = british_flavor.15.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.15.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.15.a executed"
+		set_temp_variable = { temp_opinion = -15 }
+		change_fossil_fuel_industry_opinion = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.15.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.15.b executed"
+		set_temp_variable = { temp_opinion = 10 }
+		change_fossil_fuel_industry_opinion = yes
+		newline = yes
+		custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = ENG_economy_modifier
+			}
+		add_to_variable = { ENG_max_fuel_factor = -0.05 tooltip = max_fuel_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# option = {
+	# 	name = british_flavor.15.c
+	# 	log = "[GetDateText]: [This.GetName]: british_flavor.15.c executed"
+	# 	custom_effect_tooltip = ENG_collapse_of_society_TT
+	# 	hidden_effect = {
+	# 		country_event = {
+	# 			id = british_flavor.151
+	# 			days = 4
+	# 		}
+	# 	}
+	# 	ai_chance = {
+	# 		base = 1
+	# 	}
+	# }
+}
+
+country_event = {
+	id = british_flavor.151
+	title = british_flavor.151.t
+	desc = british_flavor.151.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.151.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.151.a executed"
+		add_stability = -0.03
+		hidden_effect = {
+			country_event = {
+				id = british_flavor.152
+				days = 4
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = british_flavor.152
+	title = british_flavor.152.t
+	desc = british_flavor.152.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.152.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.152.a executed"
+		add_stability = -0.02
+		hidden_effect = {
+			country_event = {
+				id = british_flavor.153
+				days = 4
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = british_flavor.153
+	title = british_flavor.153.t
+	desc = british_flavor.153.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.153.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.153.a executed"
+		add_stability = -0.02
+		hidden_effect = {
+			country_event = {
+				id = british_flavor.154
+				days = 6
+			}
+			news_event = United_Kingdom_News.2
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = british_flavor.154
+	title = british_flavor.154.t
+	desc = british_flavor.154.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.154.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.154.a executed"
+		add_stability = -0.02
+		hidden_effect = {
+			country_event = {
+				id = british_flavor.155
+				days = 4
+			}
+			news_event = United_Kingdom_News.3
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = british_flavor.155
+	title = british_flavor.155.t
+	desc = british_flavor.155.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.155.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.155.a executed"
+		add_stability = -0.05
+		hidden_effect = {
+			country_event = {
+				id = british_flavor.156
+				days = 4
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = british_flavor.156
+	title = british_flavor.156.t
+	desc = british_flavor.156.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.156.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.156.a executed"
+		add_stability = -0.02
+		hidden_effect = {
+			news_event = United_Kingdom_News.4
+			news_event = {
+				id = british_flavor.157
+				days = 1
+			}
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.35 }
+			set_temp_variable = { temp_outlook_increase = 0.35 }
+			add_relative_party_popularity = yes
+			hidden_effect = {
+				clear_array = ruling_party
+				clear_array = gov_coalition_array
+				add_to_array = { ruling_party = 22 }
+				update_government_coalition_strength = yes
+				set_coalition_drift = yes
+				set_ruling_leader = yes
+				set_leader = yes
+				set_politics = {
+					ruling_party = nationalist
+					elections_allowed = no
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = british_flavor.157
+	title = british_flavor.157.t
+	desc = british_flavor.157.d
+	picture = GFX_british_military
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.157.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.157.a executed"
+		hidden_effect = {
+			set_cosmetic_tag = ENG_evil_britain
+			set_country_flag = ENG_overthrown
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+
+
+country_event = {
+	id = british_flavor.16
+	title = british_flavor.16.t
+	desc = british_flavor.16.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.16.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.16.a executed"
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.075 }
+		add_relative_party_popularity = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = british_flavor.17
+	title = british_flavor.17.t
+	desc = british_flavor.17.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.17.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.17.a executed"
+		12 = {
+			damage_building = {
+				type = infrastructure
+				damage = 2
+			}
+			damage_building = {
+				type = industrial_complex
+				damage = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.17.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.17.b executed"
+		12 = {
+			damage_building = {
+				type = infrastructure
+				damage = 1
+			}
+		}
+		newline = yes
+		set_temp_variable = { treasury_change = -8.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# October 2000
+
+country_event = {
+	id = british_flavor.18
+	title = british_flavor.18.t
+	desc = british_flavor.18.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = british_flavor.18.a
+		log = "[GetDateText]: [This.GetName]: british_flavor.18.a executed"
+		add_to_variable = { ENG_scottish_agitation = 2 }
+		ENG_var_cap = yes
+		SCO = {
+			custom_effect_tooltip = ENG_increase_agitation_2_alt_TT
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = british_flavor.18.b
+		log = "[GetDateText]: [This.GetName]: british_flavor.18.b executed"
+		custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = ENG_economy_modifier
+			}
+		add_to_variable = { ENG_health_cost = 0.015 tooltip = health_cost_multiplier_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}

@@ -16,23 +16,19 @@
                 {% assign page_hit = site.pages | where: "url", candidate_path %}
                 {% assign page_hit_slash = site.pages | where: "url", candidate_path_slash %}
                 {% assign page_hit_html = site.pages | where: "url", candidate_path_html %}
+                {% assign section_meta = site.data.sections[crumb] %}
                 {% assign fallback_url = "" %}
-                {% case crumb %}
-                    {% when "player-tutorials" %}
-                        {% assign fallback_url = "/tutorials/" %}
-                    {% when "dev-resources" %}
-                        {% assign fallback_url = "/team-resources/" %}
-                    {% when "national-content" %}
-                        {% assign fallback_url = "/countries-list/" %}
-                    {% when "misc" %}
-                        {% assign fallback_url = "/changelogs/" %}
-                {% endcase %}
+                {% assign crumb_title = crumb | replace: "-", " " | capitalize %}
+                {% if section_meta %}
+                    {% assign fallback_url = section_meta.url %}
+                    {% assign crumb_title = section_meta.title %}
+                {% endif %}
                 {% if page_hit.size > 0 or page_hit_slash.size > 0 or page_hit_html.size > 0 %}
-                <li><a href="{{ path | relative_url }}">{{ crumb | replace: "-", " " | capitalize }}</a></li>
+                <li><a href="{{ path | relative_url }}">{{ crumb_title }}</a></li>
                 {% elsif fallback_url != "" %}
-                <li><a href="{{ fallback_url | relative_url }}">{{ crumb | replace: "-", " " | capitalize }}</a></li>
+                <li><a href="{{ fallback_url | relative_url }}">{{ crumb_title }}</a></li>
                 {% else %}
-                <li><span>{{ crumb | replace: "-", " " | capitalize }}</span></li>
+                <li><span>{{ crumb_title }}</span></li>
                 {% endif %}
                 {% endif %}
             {% endunless %}

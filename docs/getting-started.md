@@ -2,6 +2,7 @@
 layout: default
 title: "Getting Started"
 permalink: /getting-started/
+description: "Step-by-step installation and setup guide for playing Millennium Dawn."
 ---
 
 # Getting Started with Millennium Dawn
