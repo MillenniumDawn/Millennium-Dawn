@@ -5480,11 +5480,14 @@ calculate_united_nations_base_budget = {
 	clear_array = global.UN_budget_contribution_tracker
 	clear_variable = global.target_const_speed_mod
 	clear_variable = global.target_research_speed_mod
-	clear_variable = global.average_civ_count
+	clear_variable = global.target_civ_count
+	clear_variable = global.average_gdp_capita
 
 	set_temp_variable = { peak_const_speed_mod = 0 }
 	set_temp_variable = { peak_research_speed_mod = 0 }
 	set_temp_variable = { peak_civ_count = 0 }
+	set_temp_variable = { average_gdp_capita = 0 }
+	set_temp_variable = { peak_prod_mod = 0 }
 
 	for_each_loop = {
 		array = global.UN_general_assembly
@@ -5513,7 +5516,8 @@ calculate_united_nations_base_budget = {
 
 			add_to_variable = { global.target_const_speed_mod = modifier@production_speed_buildings_factor }
 			add_to_variable = { global.target_research_speed_mod = modifier@research_speed_factor }
-			add_to_variable = { global.average_civ_count = industrial_complex_total }
+			add_to_variable = { global.target_civ_count = industrial_complex_total }
+			add_to_variable = { global.average_gdp_capita = gdp_per_capita }
 
 			set_temp_variable = { const_mod_check = modifier@production_speed_buildings_factor }
 			set_temp_variable = { research_mod_check = modifier@research_speed_factor }
@@ -5538,20 +5542,31 @@ calculate_united_nations_base_budget = {
 				}
 				set_temp_variable = { peak_civ_count = industrial_complex_total }
 			}
+
+			if = {
+				limit = {
+					check_variable = { peak_prod_mod < overall_productivity }
+				}
+				set_temp_variable = { peak_prod_mod = overall_productivity }
+			}
 		}
 	}
 
 	divide_variable = { global.target_const_speed_mod = global.UN_general_assembly^num }
 	divide_variable = { global.target_research_speed_mod = global.UN_general_assembly^num }
-	divide_variable = { global.average_civ_count = global.UN_general_assembly^num }
+	divide_variable = { global.target_civ_count = global.UN_general_assembly^num }
+	divide_variable = { global.average_gdp_capita = global.UN_general_assembly^num }
 
 	multiply_temp_variable = { peak_const_speed_mod = 0.6 }
 	multiply_temp_variable = { peak_civ_count = 0.05 }
 	multiply_temp_variable = { peak_research_speed_mod = 0.4 }
+	multiply_temp_variable = { peak_prod_mod = 0.1 }
 
+	set_variable = { global.world_productivity_target = global.average_world_productivity }
+	add_to_variable = { global.world_productivity_target = peak_prod_mod }
 	add_to_variable = { global.target_const_speed_mod = peak_const_speed_mod }
 	add_to_variable = { global.target_research_speed_mod = peak_research_speed_mod }
-	add_to_variable = { global.average_civ_count = peak_civ_count }
+	add_to_variable = { global.target_civ_count = peak_civ_count }
 
 	for_each_loop = {
 		array = global.un_operating_budget_contributors
