@@ -44,6 +44,7 @@ def extract_focus_properties(focus_lines):
         "y": "",
         "relative_position_id": "",
         "cost": "",
+        "offset": [],
         "prerequisites": [],
         "mutually_exclusive": [],
         "will_lead_to_war_with": [],
@@ -97,6 +98,11 @@ def extract_focus_properties(focus_lines):
             props["relative_position_id"] = line
         elif line.startswith("cost ="):
             props["cost"] = line
+        elif line.startswith("offset ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["offset"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("search_filters ="):
             block_lines, next_i = extract_block(focus_lines, i)
             props["search_filters"] = block_lines
@@ -312,6 +318,10 @@ def format_focus_block(props):
         lines.append(f'\t\t{props["y"]}')
     if props["relative_position_id"]:
         lines.append(f'\t\t{props["relative_position_id"]}')
+    if props["offset"]:
+        compacted_offset = compact_block(props["offset"][:])
+        for line in compacted_offset:
+            lines.append(line)
 
     # 4. Blank line before cost
     lines.append("")
@@ -551,6 +561,7 @@ def format_inlay_window_block(block_lines):
     # Extract properties
     window_id = ""
     position_lines = []
+    override_position_lines = []
     other_lines = []
 
     i = 1  # Skip opening brace
@@ -562,6 +573,11 @@ def format_inlay_window_block(block_lines):
         elif line.startswith("position ="):
             position_block, next_i = extract_block(block_lines, i)
             position_lines = position_block
+            i = next_i
+            continue
+        elif line.startswith("override_position ="):
+            override_block, next_i = extract_block(block_lines, i)
+            override_position_lines = override_block
             i = next_i
             continue
         else:
@@ -576,6 +592,11 @@ def format_inlay_window_block(block_lines):
     if position_lines:
         compacted_position = compact_block(position_lines[:])
         for line in compacted_position:
+            lines.append(line)
+
+    if override_position_lines:
+        compacted_override = compact_block(override_position_lines[:])
+        for line in compacted_override:
             lines.append(line)
 
     for line in other_lines:
