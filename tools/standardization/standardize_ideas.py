@@ -47,6 +47,9 @@ class IdeaStandardizer(BaseStandardizer):
             "picture": "",
             "cancel": [],
             "modifier": [],
+            "targeted_modifier": [],
+            "research_bonus": [],
+            "rule": [],
             "equipment_bonus": [],
             "on_add": [],
             "on_remove": [],
@@ -88,6 +91,21 @@ class IdeaStandardizer(BaseStandardizer):
             elif line.startswith("modifier ="):
                 block_lines_block, next_i = self.extract_block(block_lines, i)
                 props["modifier"].append(block_lines_block)
+                i = next_i
+                continue
+            elif line.startswith("targeted_modifier ="):
+                block_lines_block, next_i = self.extract_block(block_lines, i)
+                props["targeted_modifier"].append(block_lines_block)
+                i = next_i
+                continue
+            elif line.startswith("research_bonus ="):
+                block_lines_block, next_i = self.extract_block(block_lines, i)
+                props["research_bonus"].append(block_lines_block)
+                i = next_i
+                continue
+            elif line.startswith("rule ="):
+                block_lines_block, next_i = self.extract_block(block_lines, i)
+                props["rule"].append(block_lines_block)
                 i = next_i
                 continue
             elif line.startswith("equipment_bonus ="):
@@ -298,13 +316,31 @@ class IdeaStandardizer(BaseStandardizer):
             for line in compacted_modifier:
                 lines.append(line)
 
-        # 7. Equipment bonus (for MIO ideas)
+        # 7. Targeted modifier block
+        for targeted_modifier in props["targeted_modifier"]:
+            compacted_targeted = self.compact_block(targeted_modifier[:], prop_indent)
+            for line in compacted_targeted:
+                lines.append(line)
+
+        # 8. Research bonus block
+        for research_bonus in props["research_bonus"]:
+            compacted_research = self.compact_block(research_bonus[:], prop_indent)
+            for line in compacted_research:
+                lines.append(line)
+
+        # 9. Rule block
+        for rule in props["rule"]:
+            compacted_rule = self.compact_block(rule[:], prop_indent)
+            for line in compacted_rule:
+                lines.append(line)
+
+        # 10. Equipment bonus (for MIO ideas)
         for equipment_bonus in props["equipment_bonus"]:
             compacted_equipment = self.compact_block(equipment_bonus[:], prop_indent)
             for line in compacted_equipment:
                 lines.append(line)
 
-        # 8. on_add (log only when making changes)
+        # 11. on_add (log only when making changes)
         for on_add in props["on_add"]:
             # Check if this is an empty log-only block (performance issue)
             is_empty_log = self.is_empty_log_block(on_add)
@@ -331,7 +367,7 @@ class IdeaStandardizer(BaseStandardizer):
                 for line in compacted_on_add:
                     lines.append(line)
 
-        # 9. on_remove (log only when making changes)
+        # 12. on_remove (log only when making changes)
         for on_remove in props["on_remove"]:
             # Check if this is an empty log-only block (performance issue)
             is_empty_log = self.is_empty_log_block(on_remove)
@@ -358,7 +394,7 @@ class IdeaStandardizer(BaseStandardizer):
                 for line in compacted_on_remove:
                     lines.append(line)
 
-        # 10. Other properties (filter out commented code)
+        # 13. Other properties (filter out commented code)
         if props["other"]:
             for line in props["other"]:
                 line_stripped = line.strip()

@@ -7,6 +7,7 @@ The following section delineates a stylization guide for Millennium Dawn and cod
 [Link to Focus Tree Modding Wiki](https://hoi4.paradoxwikis.com/National_focus_modding)
 
 ### Best Practices
+
 - Use `relative_position_id` for focus alignment and tree positioning
 - Implement logging in completion rewards: `log = "[GetDateText]: [Root.GetName]: Focus TAG_your_focus"`
 - Avoid empty `mutually_exclusive` and `available` blocks
@@ -24,10 +25,11 @@ The following section delineates a stylization guide for Millennium Dawn and cod
 - Balance focus trees for flavor, not overpowering nations
 
 ### Millennium Dawn Specific Code Styling Requirements
+
 - The focus tree file should start with one of the following requirements:
-  - 00_<name> for system requirements. This should only be reserved for specific contexts such as the titlebar_styles.txt file
-  - 01/02/03/04_<name> for shared or joint focus tress such as the European Union or the African Union
-  - 05_<name> for country specific focus trees
+  - 00\_<name> for system requirements. This should only be reserved for specific contexts such as the titlebar_styles.txt file
+  - 01/02/03/04\_<name> for shared or joint focus tress such as the European Union or the African Union
+  - 05\_<name> for country specific focus trees
   - NOTE: The number does not mean anything, but it helps the team understand and forces a specific load order for focus trees. I.e. we can load all of the shared ones, but we cannot load country specific ones
 - The ID of a focus should be the first line of the focus. It should also follow the standard `<TAG>_focus_name_here` pattern
 - The icon should be second line of the of the focus
@@ -40,6 +42,7 @@ The following section delineates a stylization guide for Millennium Dawn and cod
 - `ai_will_do` is and always should be the last definition of the focus tree
 
 ### Example Focus Tree Structure
+
 ```plaintext
 focus_tree = {
     id = greece_focus
@@ -104,12 +107,14 @@ The following section delineates a stylization guide for the Millennium Dawn and
 [Link to Decision/Modding Wiki](https://hoi4.paradoxwikis.com/Decision_modding)
 
 ### Best Practices
+
 - Use `fire_only_once` only when necessary
 - Include proper logging in effects
 - Structure decisions with clear visibility and availability conditions
 - Implement proper AI behavior
 
 ### Example Decision Structure
+
 ```plaintext
 URA_world_opr = {
     allowed = { original_tag = URA }
@@ -144,12 +149,14 @@ URA_world_opr = {
 ## Events
 
 ### Best Practices
+
 - Use `is_triggered_only` for triggered events
 - Include proper logging
 - Use `major = yes` sparingly for news events
 - Structure events with clear options and effects
 
 ### Example Event Structure
+
 ```plaintext
 country_event = {
     id = france_md.504
@@ -176,6 +183,7 @@ country_event = {
 ## Ideas
 
 ### Best Practices
+
 - Include `allowed_civil_war` for civil war tags
 - Use proper logging in `on_add`
 - Structure modifiers clearly
@@ -184,11 +192,11 @@ country_event = {
 - **Performance**: Remove unnecessary `on_add = { log = "" }` when you are not actually doing anything in there
 
 ### Example Idea Structure
+
 ```plaintext
 BRA_idea_higher_minimun_wage_1 = {
     name = BRA_idea_higher_minimun_wage
     allowed_civil_war = { always = yes }
-
 
     picture = gold
 
@@ -204,17 +212,20 @@ BRA_idea_higher_minimun_wage_1 = {
 ## Code Formatting Rules
 
 ### Indentation
+
 - Increase tabulation by 1 when entering a new scope `{`
 - Decrease tabulation by 1 when leaving a scope `}`
 - Use tabs, not spaces
 - Maintain consistent indentation
 
 ### Brackets
+
 - Place closing brackets on the same line as the starting word
 - Avoid excessive whitespace
 - Keep simple checks on one line when appropriate
 
 ### Subideology Localization Format
+
 ```plaintext
 TAG.conservatism: "£PARTY_ICON (ABBRV) - NAME OF PARTY"
 TAG.conservatism_icon: "£PARTY_ICON"
@@ -222,6 +233,7 @@ TAG.conservatism_desc: "(Dominant Ideology of the Party) - NAME OF PARTY (NAME O
 ```
 
 Example:
+
 ```plaintext
 MOR.conservatism: "£MOR_NRI (RNI) - National Rally of Independents"
 MOR.conservatism_icon: "£MOR_NRI"
