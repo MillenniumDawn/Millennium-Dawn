@@ -5476,6 +5476,7 @@ recalculate_resources_price = {
 
 calculate_united_nations_base_budget = {
 	set_variable = { global.un_operating_budget_base = 0 }
+	set_variable = { global.total_aid_expenses_sum = 0 }
 	clear_array = global.UN_budget_contribution_tracker
 	clear_variable = global.target_const_speed_mod
 	clear_variable = global.target_research_speed_mod
@@ -5552,6 +5553,7 @@ calculate_united_nations_base_budget = {
 			set_country_flag = update_ido
 			set_country_flag = update_esco
 			calculate_base_program_contributions = yes
+			add_to_variable = { global.total_aid_expenses_sum = united_nations_aid_expenses }
 		}
 	}
 
@@ -5726,6 +5728,10 @@ calculate_un_program_budgets = {
 	add_to_variable = { global.undio_budget = base_budget_number }
 	add_to_variable = { global.uncdf_budget = base_budget_number }
 
+	#Pre-compute total: base budget + all country aid contributions
+	set_temp_variable = { total_un_programs = global.un_operating_budget_base }
+	add_to_temp_variable = { total_un_programs = global.total_aid_expenses_sum }
+
 	for_each_loop = {
 		array = global.UN_general_assembly
 		value = v
@@ -5734,18 +5740,6 @@ calculate_un_program_budgets = {
 			add_to_variable = { global.unescoe_budget = united_nations_unescoe_funding }
 			add_to_variable = { global.undio_budget = united_nations_unido_funding }
 			add_to_variable = { global.uncdf_budget = united_nations_uncdf_funding }
-		}
-	}
-
-	set_temp_variable = { total_un_programs = global.unescoe_budget }
-	add_to_temp_variable = { total_un_programs = global.undio_budget }
-	add_to_temp_variable = { total_un_programs = global.uncdf_budget }
-
-	for_each_loop = {
-		array = global.UN_general_assembly
-		value = v
-
-		var:v = {
 			set_variable = { united_nations_aid_program_contribution_percent = united_nations_aid_expenses }
 			divide_variable = { united_nations_aid_program_contribution_percent = total_un_programs }
 			check_for_subsidy_expiration = yes
@@ -5804,7 +5798,7 @@ calcluate_program_distributions = {
 				set_temp_variable = { building_holder = un_ido_building_count }
 				subtract_from_temp_variable = { building_holder = un_ido_old_building_count }
 				add_offsite_building = { type = industrial_complex level = building_holder }
-				set_variable = { un_ido_old_bulding_count = un_ido_building_count }
+				set_variable = { un_ido_old_building_count = un_ido_building_count }
 			}
 		}
 	}
