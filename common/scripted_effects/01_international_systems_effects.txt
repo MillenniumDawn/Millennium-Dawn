@@ -1011,7 +1011,7 @@ calculate_final_un_benefits = {
 	#add up everything we are receiving aid wise
 	set_temp_variable = { current_receiving_budget_tracker = un_esco_political_power_var }
 	add_to_temp_variable = { current_receiving_budget_tracker = un_esco_research_speed_var }
-	add_to_temp_variable = { current_receiving_budget_tracker = construction_speed_buffs }
+	add_to_temp_variable = { current_receiving_budget_tracker = un_ido_construction_speed_var }
 
 	set_temp_variable = { current_factory_lease_money = un_ido_current_building_count }
 	multiply_temp_variable = { current_factory_lease_money = 0.14 }
@@ -1058,6 +1058,9 @@ calculate_final_un_benefits = {
 	set_temp_variable = { aid_program_adder = united_nations_aid_program_contribution_percent }
 	multiply_temp_variable = { aid_program_adder = contribution_multiplier }
 
+	set_variable = { united_nations_political_power_var = aid_program_adder }
+	multiply_variable = { united_nations_political_power_var = 0.5 }
+
 	set_variable = { united_nations_influence_gain_var = united_nations_contribution_percent }
 	add_to_variable = { united_nations_influence_gain_var = aid_program_adder }
 	add_to_variable = { united_nations_influence_gain_var = current_receiving_budget_tracker }
@@ -1076,11 +1079,13 @@ calculate_final_un_benefits = {
 }
 
 check_for_subsidy_expiration = {
+	set_temp_variable = { research_check = modifier@research_speed_factor }
+	subtract_from_temp_variable = { research_check = un_esco_research_speed_var }
 	if = {
 		limit = {
 			has_country_flag = is_getting_esco_subsidies
 			OR = {
-				check_variable = { modifier@research_speed_factor > global.target_research_speed_mod }
+				check_variable = { research_check > global.target_research_speed_mod }
 				check_variable = { political_power_daily > 7 }
 			}
 		}
@@ -1088,11 +1093,13 @@ check_for_subsidy_expiration = {
 		remove_from_array = { global.unesco_recipients = THIS }
 		#TODO: Add warning events here that fire to tell you you have been removed
 	}
+	set_temp_variable = { construction_check = modifier@production_speed_buildings_factor }
+	subtract_from_temp_variable = { construction_check = un_ido_construction_speed_var }
 	if = {
 		limit = {
 			has_country_flag = is_getting_ido_subsidies
 			OR = {
-				check_variable = { modifier@production_speed_buildings_factor > global.target_const_speed_mod }
+				check_variable = { construction_check > global.target_const_speed_mod }
 				check_variable = { industrial_complex_total > global.target_civ_count }
 			}
 		}
