@@ -38,7 +38,7 @@ sections:
       It's Ruling party is Emerging Communism which starts out with 53% of popularity. The second closest party is Non-Aligned Neutral Social Democrat, which has 12.1%. The third closest party is Emerging Autocracy with 11.6%. The rest of the pie-chart goes to Nationalistic Parties with a combined total of 2% and Western Outlook with a combined total of 15%.
   - heading: "Diplomacy"
     body: |
-      China is a member of the SCO. China starts with the Xinjiang situation, the Cross-Strait Relations and The South China Sea Decisions. China guarantees the independence of Korea DPR and Pakistan. It has one puppet, Hong Kong.
+      China is a member of the SCO. China starts with the Xinjiang situation, the Cross-Strait Relations and The South China Sea Decisions. China guarantees the independence of Korea DPR and Pakistan. It has two puppet, Hong Kong and Macau.
   - heading: "Military"
     body: |
       China start with 90 Divisions.
@@ -56,11 +56,11 @@ sections:
         type: neutral
       - name: "Water Shortages"
         type: neutral
-      - name: "Party Before Country"
+      - name: "The Party Commands The Gun"
         type: neutral
       - name: "PLA Business Ventures"
         type: neutral
-      - name: "Chabuduo"
+      - name: "Low-end Manufacturing of China"
         type: neutral
       - name: "One-Child Policy"
         type: neutral
