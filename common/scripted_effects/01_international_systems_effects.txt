@@ -1065,31 +1065,52 @@ calculate_final_un_benefits = {
 	set_variable = { united_nations_influence_defense_var = united_nations_contribution_percent }
 	add_to_variable = { united_nations_influence_defense_var = aid_program_adder }
 	add_to_variable = { united_nations_influence_defense_var = current_receiving_budget_tracker }
-
-	check_all_nations_for_subsidy_expiration = yes
 }
 
-check_all_nations_for_subsidy_expiration = {
+check_for_subsidy_expiration = {
 	if = {
 		limit = {
 			has_country_flag = is_getting_esco_subsidies
+			OR = {
+				check_variable = { modifier@research_speed_factor > global.target_research_speed_mod }
+				check_variable = { political_power_daily > 7 }
+			}
 		}
+		clr_country_flag = is_getting_esco_subsidies
+		remove_from_array = { global.unesco_recipients = THIS }
+		#TODO: Add warning events here that fire to tell you you have been removed
 	}
 	if = {
 		limit = {
 			has_country_flag = is_getting_ido_subsidies
+			OR = {
+				check_variable = { modifier@production_speed_buildings_factor > global.target_const_speed_mod }
+				check_variable = { industrial_complex_total > global.target_civ_count }
+			}
 		}
+		clr_country_flag = is_getting_ido_subsidies
+		remove_from_array = { global.unido_recipients = THIS }
 	}
 	if = {
 		limit = {
 			has_country_flag = is_getting_cdf_subsidies
+			OR = {
+				check_variable = { gdp_total > 1000 }
+				check_variable = { overall_productivity > global.world_productivity_target }
+			}
 		}
+		clr_country_flag = is_getting_cdf_subsidies
+		remove_from_array = { global.uncdf_recipients = THIS }
 	}
-}
-
-recp_test = {
-	add_to_array = { global.uncdf_recipients = SOV }
-	add_to_array = { global.unido_recipients = SOV }
-	add_to_array = { global.unesco_recipients = SOV }
-	missile_ui_update = yes
+	if = {
+		limit = {
+			has_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
+			NOT = {
+				has_country_flag = is_getting_esco_subsidies
+				has_country_flag = is_getting_ido_subsidies
+				has_country_flag = is_getting_cdf_subsidies
+			}
+		}
+		remove_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
+	}
 }
