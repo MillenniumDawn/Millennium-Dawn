@@ -1005,6 +1005,88 @@ full_satellite_system_access = {
 	}
 }
 
+#This makes it so that receiving money reduces your benefits from the main UN modifier
+#While spending a higher percentage will increase your benefits
+calculate_final_un_benefits = {
+	#add up everything we are receiving aid wise
+	set_temp_variable = { current_receiving_budget_tracker = un_esco_political_power_var }
+	add_to_temp_variable = { current_receiving_budget_tracker = un_esco_research_speed_var }
+	add_to_temp_variable = { current_receiving_budget_tracker = construction_speed_buffs }
+
+	set_temp_variable = { current_factory_lease_money = un_ido_current_building_count }
+	multiply_temp_variable = { current_factory_lease_money = 0.14 }
+
+	add_to_temp_variable = { current_receiving_budget_tracker = current_factory_lease_money }
+	add_to_temp_variable = { current_receiving_budget_tracker = un_cdf_productivity_var }
+
+	set_temp_variable = { current_const_cost_bonus = un_cdf_construction_cost_var }
+
+	add_to_temp_variable = { current_receiving_budget_tracker = current_const_cost_bonus }
+
+	set_variable = { tester = current_receiving_budget_tracker }
+
+	#Divide here to see how much % of the money we are getting
+	#then flip it to negative; we need to add this back into the nations that are getting benefits
+	divide_temp_variable = { current_receiving_budget_tracker = global.full_aid_budget_calculator }
+	multiply_temp_variable = { current_receiving_budget_tracker = -1 }
+	multiply_temp_variable = { current_receiving_budget_tracker = 2 }
+
+	#if you receive aid, you begin to lose some of the gains from giving aid
+	set_temp_variable = { reducer = 0 }
+	if = {
+		limit = {
+			has_country_flag = is_getting_ido_subsidies
+		}
+		add_to_temp_variable = { reducer = 0.2 }
+	}
+	if = {
+		limit = {
+			has_country_flag = is_getting_cdf_subsidies
+		}
+		add_to_temp_variable = { reducer = 0.2 }
+	}
+	if = {
+		limit = {
+			has_country_flag = is_getting_esco_subsidies
+		}
+		add_to_temp_variable = { reducer = 0.2 }
+	}
+
+	set_temp_variable = { contribution_multiplier = 1 }
+	subtract_from_temp_variable = { contribution_multiplier = reducer }
+
+	set_temp_variable = { aid_program_adder = united_nations_aid_program_contribution_percent }
+	multiply_temp_variable = { aid_program_adder = contribution_multiplier }
+
+	set_variable = { united_nations_influence_gain_var = united_nations_contribution_percent }
+	add_to_variable = { united_nations_influence_gain_var = aid_program_adder }
+	add_to_variable = { united_nations_influence_gain_var = current_receiving_budget_tracker }
+
+	set_variable = { united_nations_influence_defense_var = united_nations_contribution_percent }
+	add_to_variable = { united_nations_influence_defense_var = aid_program_adder }
+	add_to_variable = { united_nations_influence_defense_var = current_receiving_budget_tracker }
+
+	check_all_nations_for_subsidy_expiration = yes
+}
+
+check_all_nations_for_subsidy_expiration = {
+	if = {
+		limit = {
+			has_country_flag = is_getting_esco_subsidies
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = is_getting_ido_subsidies
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = is_getting_cdf_subsidies
+		}
+	}
+}
+
 recp_test = {
 	add_to_array = { global.uncdf_recipients = SOV }
 	add_to_array = { global.unido_recipients = SOV }
