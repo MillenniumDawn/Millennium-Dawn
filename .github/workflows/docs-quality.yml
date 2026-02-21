@@ -1,0 +1,51 @@
+name: Docs Quality
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "docs/**"
+      - "docs/scripts/**"
+      - ".github/workflows/docs-quality.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler: "2.7.2"
+
+      - name: Install docs dependencies (locked)
+        working-directory: docs
+        run: |
+          bundle config set deployment true
+          bundle install --jobs 4 --retry 3
+
+      - name: Build docs site
+        working-directory: docs
+        run: bundle exec jekyll build --source . --destination ../_site_docs
+
+      - name: Docs hygiene checks
+        run: python3 docs/scripts/check_docs_hygiene.py --repo-root . --docs-dir docs
+
+      - name: Validate internal links and local assets
+        run: python3 docs/scripts/check_site_links.py --site-dir _site_docs --baseurl /Millennium-Dawn
+
+      - name: Accessibility baseline checks
+        run: python3 docs/scripts/check_accessibility_basics.py --site-dir _site_docs
+
+      - name: Performance budget checks
+        run: python3 docs/scripts/check_perf_budgets.py --site-dir _site_docs
