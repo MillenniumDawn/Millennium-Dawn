@@ -4499,6 +4499,12 @@ scripted_gui = {
 					tooltip = is_un_political_power_gain_less_than_7
 					check_variable = { political_power_daily < 7 }
 				}
+				custom_trigger_tooltip = {
+					tooltip = is_un_is_already_receiving_subsidiy
+					NOT = {
+						is_in_array = { global.unesco_recipients = THIS }
+					}
+				}
 			}
 			is_un_aid_request_subsidies_ido_button_click_enabled = {
 				custom_trigger_tooltip = {
@@ -4510,6 +4516,12 @@ scripted_gui = {
 					check_variable = { industrial_complex_total < global.average_civ_count }
 					NOT = { check_variable = { total_unemployed_percentage_display < 0.05 } }
 				}
+				custom_trigger_tooltip = {
+					tooltip = is_un_is_already_receiving_subsidiy
+					NOT = {
+						is_in_array = { global.unido_recipients = THIS }
+					}
+				}
 			}
 			is_un_aid_request_subsidies_cdf_button_click_enabled = {
 				custom_trigger_tooltip = {
@@ -4519,6 +4531,12 @@ scripted_gui = {
 				custom_trigger_tooltip = {
 					tooltip = is_can_gain_from_financial_aid
 					check_variable = { gdp_total < 1000 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = is_un_is_already_receiving_subsidiy
+					NOT = {
+						is_in_array = { global.uncdf_recipients = THIS }
+					}
 				}
 			}
 			is_un_aid_request_join_esco_button_click_enabled = {
@@ -4532,6 +4550,54 @@ scripted_gui = {
 			is_un_aid_request_join_cdf_button_click_enabled = {
 				has_political_power > 100
 				has_dynamic_modifier = { modifier = united_nations_member }
+			}
+			is_un_increase_esco_contribution_button_click_enabled = {
+				has_idea = un_aid_esco_member
+			}
+			is_un_increase_ido_contribution_button_click_enabled = {
+				has_idea = un_aid_ido_member
+			}
+			is_un_increase_cdf_contribution_button_click_enabled = {
+				has_idea = un_aid_cdf_member
+			}
+			is_un_decrease_esco_contribution_button_click_enabled = {
+				check_variable = { united_nations_esco_optional_funding > 0 }
+				has_idea = un_aid_esco_member
+			}
+			is_un_decrease_ido_contribution_button_click_enabled = {
+				check_variable = { united_nations_ido_optional_funding > 0 }
+				has_idea = un_aid_ido_member
+			}
+			is_un_decrease_cdf_contribution_button_click_enabled = {
+				check_variable = { united_nations_cdf_optional_funding > 0 }
+				has_idea = un_aid_cdf_member
+			}
+			is_un_decrease_esco_contribution_button_shift_click_enabled = {
+				check_variable = { united_nations_esco_optional_funding > 0.999 }
+			}
+			is_un_decrease_ido_contribution_button_shift_click_enabled = {
+				check_variable = { united_nations_ido_optional_funding > 0.999 }
+			}
+			is_un_decrease_cdf_contribution_button_shift_click_enabled = {
+				check_variable = { united_nations_cdf_optional_funding > 0.999 }
+			}
+			is_un_decrease_esco_contribution_button_control_click_enabled = {
+				check_variable = { united_nations_esco_optional_funding > 0.249 }
+			}
+			is_un_decrease_ido_contribution_button_control_click_enabled = {
+				check_variable = { united_nations_ido_optional_funding > 0.249 }
+			}
+			is_un_decrease_cdf_contribution_button_control_click_enabled = {
+				check_variable = { united_nations_cdf_optional_funding > 0.249 }
+			}
+			is_un_decrease_esco_contribution_button_alt_click_enabled = {
+				check_variable = { united_nations_esco_optional_funding > 0.499 }
+			}
+			is_un_decrease_ido_contribution_button_alt_click_enabled = {
+				check_variable = { united_nations_ido_optional_funding > 0.499 }
+			}
+			is_un_decrease_cdf_contribution_button_alt_click_enabled = {
+				check_variable = { united_nations_cdf_optional_funding > 0.499 }
 			}
 		}
 
@@ -4573,14 +4639,32 @@ scripted_gui = {
 			}
 			is_un_aid_request_subsidies_esco_button_click = {
 				add_to_array = { global.unesco_recipients = THIS }
+				if = {
+					limit = {
+						NOT = { has_dynamic_modifier = { modifier = un_aid_subsidies_modifier } }
+					}
+					add_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
+				}
 				missile_ui_update = yes
 			}
 			is_un_aid_request_subsidies_ido_button_click = {
 				add_to_array = { global.unido_recipients = THIS }
+				if = {
+					limit = {
+						NOT = { has_dynamic_modifier = { modifier = un_aid_subsidies_modifier } }
+					}
+					add_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
+				}
 				missile_ui_update = yes
 			}
 			is_un_aid_request_subsidies_cdf_button_click = {
 				add_to_array = { global.uncdf_recipients = THIS }
+				if = {
+					limit = {
+						NOT = { has_dynamic_modifier = { modifier = un_aid_subsidies_modifier } }
+					}
+					add_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
+				}
 				missile_ui_update = yes
 			}
 			is_un_aid_request_join_esco_button_click = {
@@ -4725,6 +4809,102 @@ scripted_gui = {
 
 				set_country_flag = update_cdf
 				calculate_base_program_contributions = yes
+			}
+			is_un_increase_esco_contribution_button_click = {
+				add_to_variable = { united_nations_esco_optional_funding = 0.1 }
+				missile_ui_update = yes
+			}
+			is_un_decrease_esco_contribution_button_click = {
+				add_to_variable = { united_nations_esco_optional_funding = -0.1 }
+				missile_ui_update = yes
+			}
+			is_un_increase_ido_contribution_button_click = {
+				add_to_variable = { united_nations_ido_optional_funding = 0.1 }
+				missile_ui_update = yes
+			}
+			is_un_decrease_ido_contribution_button_click = {
+				add_to_variable = { united_nations_ido_optional_funding = -0.1 }
+				missile_ui_update = yes
+			}
+			is_un_increase_cdf_contribution_button_click = {
+				add_to_variable = { united_nations_cdf_optional_funding = 0.1 }
+				missile_ui_update = yes
+			}
+			is_un_decrease_cdf_contribution_button_click = {
+				add_to_variable = { united_nations_cdf_optional_funding = -0.1 }
+				missile_ui_update = yes
+			}
+			is_un_increase_esco_contribution_button_control_click = {
+				add_to_variable = { united_nations_esco_optional_funding = 0.25 }
+				missile_ui_update = yes
+			}
+			is_un_decrease_esco_contribution_button_control_click = {
+				add_to_variable = { united_nations_esco_optional_funding = -0.25 }
+				missile_ui_update = yes
+			}
+			is_un_increase_ido_contribution_button_control_click = {
+				add_to_variable = { united_nations_ido_optional_funding = 0.25 }
+				missile_ui_update = yes
+			}
+			is_un_decrease_ido_contribution_button_control_click = {
+				add_to_variable = { united_nations_ido_optional_funding = -0.25 }
+				missile_ui_update = yes
+			}
+			is_un_increase_cdf_contribution_button_control_click = {
+				add_to_variable = { united_nations_cdf_optional_funding = 0.25 }
+				missile_ui_update = yes
+			}
+			is_un_decrease_cdf_contribution_button_control_click = {
+				add_to_variable = { united_nations_cdf_optional_funding = -0.25 }
+				missile_ui_update = yes
+			}
+			is_un_increase_esco_contribution_button_alt_click = {
+				add_to_variable = { united_nations_esco_optional_funding = 0.5 }
+				missile_ui_update = yes
+			}
+			is_un_decrease_esco_contribution_button_alt_click = {
+				add_to_variable = { united_nations_esco_optional_funding = -0.5 }
+				missile_ui_update = yes
+			}
+			is_un_increase_ido_contribution_button_alt_click = {
+				add_to_variable = { united_nations_ido_optional_funding = 0.5 }
+				missile_ui_update = yes
+			}
+			is_un_decrease_ido_contribution_button_alt_click = {
+				add_to_variable = { united_nations_ido_optional_funding = -0.5 }
+				missile_ui_update = yes
+			}
+			is_un_increase_cdf_contribution_button_alt_click = {
+				add_to_variable = { united_nations_cdf_optional_funding = 0.5 }
+				missile_ui_update = yes
+			}
+			is_un_decrease_cdf_contribution_button_alt_click = {
+				add_to_variable = { united_nations_cdf_optional_funding = -0.5 }
+				missile_ui_update = yes
+			}
+			is_un_increase_esco_contribution_button_shift_click = {
+				add_to_variable = { united_nations_esco_optional_funding = 1.0 }
+				missile_ui_update = yes
+			}
+			is_un_decrease_esco_contribution_button_shift_click = {
+				add_to_variable = { united_nations_esco_optional_funding = -1.0 }
+				missile_ui_update = yes
+			}
+			is_un_increase_ido_contribution_button_shift_click = {
+				add_to_variable = { united_nations_ido_optional_funding = 1.0 }
+				missile_ui_update = yes
+			}
+			is_un_decrease_ido_contribution_button_shift_click = {
+				add_to_variable = { united_nations_ido_optional_funding = -1.0 }
+				missile_ui_update = yes
+			}
+			is_un_increase_cdf_contribution_button_shift_click = {
+				add_to_variable = { united_nations_cdf_optional_funding = 1.0 }
+				missile_ui_update = yes
+			}
+			is_un_decrease_cdf_contribution_button_shift_click = {
+				add_to_variable = { united_nations_cdf_optional_funding = -1.0 }
+				missile_ui_update = yes
 			}
 		}
 	}

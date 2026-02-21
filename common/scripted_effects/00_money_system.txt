@@ -5682,7 +5682,65 @@ calculate_un_program_budgets = {
 		}
 	}
 
+	calcluate_program_distributions = yes
+
 	missile_ui_update = yes
+}
+
+calcluate_program_distributions = {
+	set_temp_variable = { esco_political_budget = global.unescope_budget }
+	set_temp_variable = { esco_research_budget = global.unescope_budget}
+
+	multiply_temp_variable = { esco_political_budget = 0.25 }
+	multiply_temp_variable = { esco_research_budget = 0.75 }
+
+	divide_temp_variable = { esco_political_budget = global.unesco_recipients^num }
+	divide_temp_variable = { esco_research_budget = global.unesco_recipients^num }
+
+	for_each_loop = {
+		array = global.unesco_recipients
+		value = v
+
+		var:v = {
+			set_variable = { un_esco_political_power_var = esco_political_budget }
+			set_variable = { un_esco_research_speed_var = esco_research_budget }
+		}
+	}
+
+	set_temp_variable = { construction_speed_buffs = global.undio_budget }
+	set_temp_variable = { factory_lease_amounts = global.undio_budget }
+
+	multiply_temp_variable = { construction_speed_buffs = 0.25 }
+	multiply_temp_variable = { factory_lease_amounts = 0.75 }
+
+	divide_temp_variable = { construction_speed_buffs = global.unido_recipients^num }
+	divide_temp_variable = { factory_lease_amounts = global.unido_recipients^num }
+
+	divide_temp_variable = { factory_lease_amounts = 0.14 }
+	round_temp_variable = factory_lease_amounts
+
+	set_variable = { un_ido_building_count = factory_lease_amounts }
+
+	for_each_loop = {
+		array = global.unido_recipients
+		value = v
+
+		var:v = {
+			set_variable = { un_ido_construction_speed_var = construction_speed_buffs }
+			if = {
+				limit = {
+					NOT = { check_variable = { un_ido_old_building_count = un_ido_building_count } }
+				}
+
+				set_temp_variable = { building_holder = un_ido_building_count }
+				subtract_from_temp_variable = { building_holder = un_ido_old_building_count }
+				add_offsite_building = { type = industrial_complex level = building_holder }
+				set_temp_variable = { un_ido_old_bulding_count = un_ido_building_count }
+			}
+		}
+	}
+
+
 }
 
 calculate_base_program_contributions = {
@@ -5694,7 +5752,7 @@ calculate_base_program_contributions = {
 		set_temp_variable = { income_calc = display_income }
 		multiply_temp_variable = { income_calc = 0.01 }
 		set_variable = { united_nations_esco_mandatory_funding = income_calc }
-		add_to_variable = { united_nations_unescoe_funding = united_nations_esco_mandatory_funding }
+		set_variable = { united_nations_unescoe_funding = united_nations_esco_mandatory_funding }
 		clr_country_flag = update_esco
 	}else_if = {
 		limit = { NOT = { has_idea = un_aid_esco_member } }
@@ -5708,9 +5766,9 @@ calculate_base_program_contributions = {
 			has_country_flag = update_ido
 		}
 		set_temp_variable = { income_calc = display_income }
-		multiply_temp_variable = { income_calc = 0.01 }
+		multiply_temp_variable = { income_calc = 0.015 }
 		set_variable = { united_nations_ido_mandatory_funding = income_calc }
-		add_to_variable = { united_nations_unido_funding = united_nations_ido_mandatory_funding }
+		set_variable = { united_nations_unido_funding = united_nations_ido_mandatory_funding }
 		clr_country_flag = update_ido
 	}else_if = {
 		limit = { NOT = { has_idea = un_aid_ido_member } }
@@ -5724,9 +5782,9 @@ calculate_base_program_contributions = {
 			has_country_flag = update_cdf
 		}
 		set_temp_variable = { income_calc = display_income }
-		multiply_temp_variable = { income_calc = 0.02 }
+		multiply_temp_variable = { income_calc = 0.025 }
 		set_variable = { united_nations_cdf_mandatory_funding = income_calc }
-		add_to_variable = { united_nations_uncdf_funding = united_nations_cdf_mandatory_funding }
+		set_variable = { united_nations_uncdf_funding = united_nations_cdf_mandatory_funding }
 		clr_country_flag = update_cdf
 	}else_if = {
 		limit = { NOT = { has_idea = un_aid_cdf_member } }
