@@ -1,43 +1,13 @@
 ---
 layout: default
-title: "Technical Support"
-description: "Technical support and troubleshooting help for Millennium Dawn: A Modern Day mod for Hearts of Iron IV."
+title: "Support Redirect"
 permalink: /technical-support/
+toc: "off"
+robots: "noindex, nofollow"
+seo: false
 ---
 
-# Technical Support
+<meta http-equiv="refresh" content="0; url={{ '/support/' | relative_url }}">
+<link rel="canonical" href="{{ '/support/' | absolute_url }}">
 
-For the full [Troubleshooting Guide]({{ '/player-tutorials/troubleshooting-guide' | relative_url }}).
-
-## How do I download Millennium Dawn?
-
-Any other source then the below are not official team builds and as such we cannot guarantee the quality or the safeness of those builds.
-Please ensure you are using the latest from one of the below versions.
-
-**_Steam_**
-
-Current MD Version: ``v1.12.3b``
-
-HOI Version: ``1.17.*``
-
-Checksum: ``a842``
-
-[Steam Link](https://steamcommunity.com/sharedfiles/filedetails/?id=2777392649)
-
-**_GitHub Releases_**
-
-Historical Builds of MD are kept here.
-
-Available Versions are v1.12.2+
-
-[GitHub Releases](https://github.com/MillenniumDawn/Millennium-Dawn/releases)
-
-**_GitLab Releases_**
-
-Historical Builds of MD are kept here.
-Available Versions are v1.8.4+ to v1.12.1d
-
-[GitLab](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/releases)
-
-
-[How to Instal HOI4 Mods Manually](https://www.youtube.com/watch?v=Ww8D_xbPSpY)
+This page has moved to [Support]({{ '/support/' | relative_url }}).
