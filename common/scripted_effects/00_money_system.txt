@@ -3245,51 +3245,7 @@ calculate_additional_expense_rate = {
 		set_variable = { additional_expense_china_travel_ban = 0.5 }
 		add_to_variable = { additional_expenses_rate = additional_expense_china_travel_ban }
 	}
-	# United Nations Contribution Expenses
-	if = { limit = { has_dynamic_modifier = { modifier = united_nations_member } }
-		set_variable = { united_nations_aid_expenses = 0 }
-		if = {
-			limit = {
-				has_idea = un_aid_esco_member
-			}
-			set_variable = { united_nations_unescoe_funding = united_nations_esco_mandatory_funding }
-			add_to_variable = { united_nations_unescoe_funding = united_nations_esco_optional_funding }
-			add_to_variable = { united_nations_aid_expenses = united_nations_unescoe_funding }
-		}else = {
-			set_variable = { united_nations_esco_optional_funding = 0 }
-		}
 
-		if = {
-			limit = {
-				has_idea = un_aid_ido_member
-			}
-			set_variable = { united_nations_unido_funding = united_nations_ido_mandatory_funding }
-			add_to_variable = { united_nations_unido_funding = united_nations_ido_optional_funding }
-			add_to_variable = { united_nations_aid_expenses = united_nations_unido_funding }
-		}else = {
-			set_variable = { united_nations_ido_optional_funding = 0 }
-		}
-
-		if = {
-			limit = {
-				has_idea = un_aid_cdf_member
-			}
-			set_variable = { united_nations_uncdf_funding = united_nations_cdf_mandatory_funding }
-			add_to_variable = { united_nations_uncdf_funding = united_nations_cdf_optional_funding }
-			add_to_variable = { united_nations_aid_expenses = united_nations_uncdf_funding }
-		}else = {
-			set_variable = { united_nations_cdf_optional_funding = 0 }
-		}
-
-		if = {
-			limit = {
-				NOT = { check_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses } }
-			}
-			set_variable = { united_nations_expenses = united_nations_base_expenses }
-			add_to_variable = { united_nations_expenses = united_nations_aid_expenses }
-			set_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses }
-		}
-	}
 	# European Union Contribution Expenses
 	if = { limit = { has_idea = EU_member }
 		add_to_variable = { additional_expenses_rate = EU_budget_contribution_weekly }
@@ -5658,127 +5614,6 @@ calculate_united_nations_base_budget = {
 	calculate_un_program_budgets = yes
 }
 
-#Calculates how much money the program has after additional contributions are made
-calculate_un_program_budgets = {
-	set_variable = { global.unescoe_budget = 0 }
-	set_variable = { global.undio_budget = 0 }
-	set_variable = { global.uncdf_budget = 0 }
-
-	set_temp_variable = { base_budget_number = global.un_operating_budget_base }
-	divide_temp_variable = { base_budget_number = 3 }
-
-	add_to_variable = { global.unescoe_budget = base_budget_number }
-	add_to_variable = { global.undio_budget = base_budget_number }
-	add_to_variable = { global.uncdf_budget = base_budget_number }
-
-	for_each_loop = {
-		array = global.UN_general_assembly
-		value = v
-
-		var:v = {
-			add_to_variable = { global.unescoe_budget = united_nations_unescoe_funding }
-			add_to_variable = { global.undio_budget = united_nations_unido_funding }
-			add_to_variable = { global.uncdf_budget = united_nations_uncdf_funding }
-		}
-	}
-
-	set_temp_variable = { total_un_programs = global.unescoe_budget }
-	add_to_temp_variable = { total_un_programs = global.undio_budget }
-	add_to_temp_variable = { total_un_programs = global.uncdf_budget }
-
-	for_each_loop = {
-		array = global.UN_general_assembly
-		value = v
-
-		var:v = {
-			set_variable = { united_nations_aid_program_contribution_percent = united_nations_aid_expenses }
-			divide_variable = { united_nations_aid_program_contribution_percent = total_un_programs }
-		}
-	}
-
-	calcluate_program_distributions = yes
-
-	missile_ui_update = yes
-}
-
-calcluate_program_distributions = {
-	set_temp_variable = { esco_political_budget = global.unescope_budget }
-	set_temp_variable = { esco_research_budget = global.unescope_budget}
-
-	multiply_temp_variable = { esco_political_budget = 0.25 }
-	multiply_temp_variable = { esco_research_budget = 0.75 }
-
-	divide_temp_variable = { esco_political_budget = global.unesco_recipients^num }
-	divide_temp_variable = { esco_research_budget = global.unesco_recipients^num }
-
-	for_each_loop = {
-		array = global.unesco_recipients
-		value = v
-
-		var:v = {
-			set_variable = { un_esco_political_power_var = esco_political_budget }
-			set_variable = { un_esco_research_speed_var = esco_research_budget }
-		}
-	}
-
-	set_temp_variable = { construction_speed_buffs = global.undio_budget }
-	set_temp_variable = { factory_lease_amounts = global.undio_budget }
-
-	multiply_temp_variable = { construction_speed_buffs = 0.25 }
-	multiply_temp_variable = { factory_lease_amounts = 0.75 }
-
-	divide_temp_variable = { construction_speed_buffs = global.unido_recipients^num }
-	divide_temp_variable = { factory_lease_amounts = global.unido_recipients^num }
-
-	divide_temp_variable = { factory_lease_amounts = 0.14 }
-	round_temp_variable = factory_lease_amounts
-
-	set_variable = { un_ido_building_count = factory_lease_amounts }
-
-	for_each_loop = {
-		array = global.unido_recipients
-		value = v
-
-		var:v = {
-			set_variable = { un_ido_construction_speed_var = construction_speed_buffs }
-			if = {
-				limit = {
-					NOT = { check_variable = { un_ido_old_building_count = un_ido_building_count } }
-				}
-
-				set_temp_variable = { building_holder = un_ido_building_count }
-				subtract_from_temp_variable = { building_holder = un_ido_old_building_count }
-				add_offsite_building = { type = industrial_complex level = building_holder }
-				set_temp_variable = { un_ido_old_bulding_count = un_ido_building_count }
-			}
-		}
-	}
-
-	set_temp_variable = { prod_var = global.uncdf_budget }
-	set_temp_variable = { cost_var = global.uncdf_budget }
-
-	multiply_temp_variable = { prod_var = 0.4 }
-	multiply_temp_variable = { cost_var = 0.3 }
-	#TODO: Add straight additional spending here as well, the remaining budget going to plan money for the nation to have
-	#Use this as additional income, alongside the other benefits
-
-	divide_temp_variable = { prod_var = global.uncdf_budget^num }
-	divide_temp_variable = { cost_var = global.uncdf_budget^num }
-
-	multiply_temp_variable = { cost_var = -1 }
-
-	for_each_loop = {
-		array = global.uncdf_recipients
-		value = v
-
-		var:v = {
-			set_variable = { un_cdf_productivity_var = prod_var }
-			set_variable = { un_cdf_construction_cost_far = cost_var }
-		}
-	}
-
-}
-
 calculate_base_program_contributions = {
 	if = {
 		limit = {
@@ -5827,6 +5662,173 @@ calculate_base_program_contributions = {
 		set_variable = { united_nations_cdf_mandatory_funding = 0 }
 		set_variable = { united_nations_uncdf_funding = 0 }
 	}
+	update_optional_contributions = yes
+}
 
-	calculate_un_program_budgets = yes
+update_optional_contributions = {
+	# United Nations Contribution Expenses
+	if = { limit = { has_dynamic_modifier = { modifier = united_nations_member } }
+		set_variable = { united_nations_aid_expenses = 0 }
+		if = {
+			limit = {
+				has_idea = un_aid_esco_member
+			}
+			set_variable = { united_nations_unescoe_funding = united_nations_esco_mandatory_funding }
+			add_to_variable = { united_nations_unescoe_funding = united_nations_esco_optional_funding }
+			add_to_variable = { united_nations_aid_expenses = united_nations_unescoe_funding }
+		}else = {
+			set_variable = { united_nations_esco_optional_funding = 0 }
+		}
+
+		if = {
+			limit = {
+				has_idea = un_aid_ido_member
+			}
+			set_variable = { united_nations_unido_funding = united_nations_ido_mandatory_funding }
+			add_to_variable = { united_nations_unido_funding = united_nations_ido_optional_funding }
+			add_to_variable = { united_nations_aid_expenses = united_nations_unido_funding }
+		}else = {
+			set_variable = { united_nations_ido_optional_funding = 0 }
+		}
+
+		if = {
+			limit = {
+				has_idea = un_aid_cdf_member
+			}
+			set_variable = { united_nations_uncdf_funding = united_nations_cdf_mandatory_funding }
+			add_to_variable = { united_nations_uncdf_funding = united_nations_cdf_optional_funding }
+			add_to_variable = { united_nations_aid_expenses = united_nations_uncdf_funding }
+		}else = {
+			set_variable = { united_nations_cdf_optional_funding = 0 }
+		}
+
+		if = {
+			limit = {
+				NOT = { check_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses } }
+			}
+			set_variable = { united_nations_expenses = united_nations_base_expenses }
+			add_to_variable = { united_nations_expenses = united_nations_aid_expenses }
+			set_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses }
+		}
+	}
+}
+
+#Calculates how much money the program has after additional contributions are made
+calculate_un_program_budgets = {
+	set_variable = { global.unescoe_budget = 0 }
+	set_variable = { global.undio_budget = 0 }
+	set_variable = { global.uncdf_budget = 0 }
+
+	set_temp_variable = { base_budget_number = global.un_operating_budget_base }
+	divide_temp_variable = { base_budget_number = 3 }
+
+	add_to_variable = { global.unescoe_budget = base_budget_number }
+	add_to_variable = { global.undio_budget = base_budget_number }
+	add_to_variable = { global.uncdf_budget = base_budget_number }
+
+	for_each_loop = {
+		array = global.UN_general_assembly
+		value = v
+
+		var:v = {
+			add_to_variable = { global.unescoe_budget = united_nations_unescoe_funding }
+			add_to_variable = { global.undio_budget = united_nations_unido_funding }
+			add_to_variable = { global.uncdf_budget = united_nations_uncdf_funding }
+		}
+	}
+
+	set_temp_variable = { total_un_programs = global.unescoe_budget }
+	add_to_temp_variable = { total_un_programs = global.undio_budget }
+	add_to_temp_variable = { total_un_programs = global.uncdf_budget }
+
+	for_each_loop = {
+		array = global.UN_general_assembly
+		value = v
+
+		var:v = {
+			set_variable = { united_nations_aid_program_contribution_percent = united_nations_aid_expenses }
+			divide_variable = { united_nations_aid_program_contribution_percent = total_un_programs }
+		}
+	}
+
+	calcluate_program_distributions = yes
+}
+
+calcluate_program_distributions = {
+	set_temp_variable = { esco_political_budget = global.unescoe_budget }
+	set_temp_variable = { esco_research_budget = global.unescoe_budget}
+
+	multiply_temp_variable = { esco_political_budget = 0.35 }
+	multiply_temp_variable = { esco_research_budget = 0.65 }
+
+	divide_temp_variable = { esco_political_budget = global.unesco_recipients^num }
+	divide_temp_variable = { esco_research_budget = global.unesco_recipients^num }
+
+	for_each_loop = {
+		array = global.unesco_recipients
+		value = v
+
+		var:v = {
+			set_variable = { un_esco_political_power_var = esco_political_budget }
+			set_variable = { un_esco_research_speed_var = esco_research_budget }
+		}
+	}
+
+	set_temp_variable = { construction_speed_buffs = global.undio_budget }
+	set_temp_variable = { factory_lease_amounts = global.undio_budget }
+
+	multiply_temp_variable = { construction_speed_buffs = 0.25 }
+	multiply_temp_variable = { factory_lease_amounts = 0.75 }
+
+	divide_temp_variable = { construction_speed_buffs = global.unido_recipients^num }
+	divide_temp_variable = { factory_lease_amounts = global.unido_recipients^num }
+
+	divide_temp_variable = { factory_lease_amounts = 0.14 }
+	round_temp_variable = factory_lease_amounts
+
+	set_temp_variable = { un_ido_building_count = factory_lease_amounts }
+
+	for_each_loop = {
+		array = global.unido_recipients
+		value = v
+
+		var:v = {
+			set_variable = { un_ido_current_building_count = un_ido_building_count }
+			set_variable = { un_ido_construction_speed_var = construction_speed_buffs }
+			if = {
+				limit = {
+					NOT = { check_variable = { un_ido_old_building_count = un_ido_building_count } }
+				}
+
+				set_temp_variable = { building_holder = un_ido_building_count }
+				subtract_from_temp_variable = { building_holder = un_ido_old_building_count }
+				add_offsite_building = { type = industrial_complex level = building_holder }
+				set_variable = { un_ido_old_bulding_count = un_ido_building_count }
+			}
+		}
+	}
+
+	set_temp_variable = { prod_var = global.uncdf_budget }
+	set_temp_variable = { cost_var = global.uncdf_budget }
+
+	multiply_temp_variable = { prod_var = 0.3 }
+	multiply_temp_variable = { cost_var = 0.35 }
+	#TODO: Add straight additional spending here as well, the remaining budget going to plan money for the nation to have
+	#Use this as additional income, alongside the other benefits
+
+	divide_temp_variable = { prod_var = global.uncdf_recipients^num }
+	divide_temp_variable = { cost_var = global.uncdf_recipients^num }
+
+	multiply_temp_variable = { cost_var = -1 }
+
+	for_each_loop = {
+		array = global.uncdf_recipients
+		value = v
+
+		var:v = {
+			set_variable = { un_cdf_productivity_var = prod_var }
+			set_variable = { un_cdf_construction_cost_var = cost_var }
+		}
+	}
+	missile_ui_update = yes
 }
