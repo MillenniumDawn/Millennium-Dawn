@@ -4,7 +4,7 @@ title: "United Kingdom"
 slug: united-kingdom
 unique_focus_tree: true
 grid_order: 63
-flag_image: /uploads/flags/united_kingdom.png
+flag_image: /assets/images/flags/united_kingdom.png
 lead: |
   The United Kingdom is a country surrounded mainly by water. Its only borders are Ireland and Spain. It starts with a Population of 58.98 Millions.
 infobox:
@@ -57,3 +57,5 @@ sections:
     body: |
       The United Kingdom starts with $74 Billions in the Treasury, $879 Billions in Debt and $1239 Billions in International Investments.
 ---
+
+

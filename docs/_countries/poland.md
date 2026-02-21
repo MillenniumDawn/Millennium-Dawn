@@ -4,7 +4,7 @@ title: "Poland"
 slug: poland
 unique_focus_tree: true
 grid_order: 48
-flag_image: /uploads/flags/poland.png
+flag_image: /assets/images/flags/poland.png
 lead: |
   Poland is a country surrounded by Germany from the West, Czech Republic and Slovakia from the South, Ukraine from the South-East, Belarus from the East and Russia and Lithuania from the North. It starts with a Population of 38.47 Millions.
 infobox:
@@ -52,3 +52,5 @@ sections:
     body: |
       Poland starts with $43 Billions in the Treasury, $222 Billions in Debt and $0 Billions in International Investments.
 ---
+
+

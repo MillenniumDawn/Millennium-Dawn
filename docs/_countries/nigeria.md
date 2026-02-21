@@ -4,7 +4,7 @@ title: "Nigeria"
 slug: nigeria
 unique_focus_tree: true
 grid_order: 45
-flag_image: /uploads/flags/nigeria.png
+flag_image: /assets/images/flags/nigeria.png
 lead: |
   Nigeria is a country surrounded by Benin from the West, Niger from the North, Chad from the North-East and Cameroon from the East. It starts with a population of 123.66 Millions.
 infobox:
@@ -69,3 +69,5 @@ sections:
     body: |
       Nigeria starts with $5 Billions in the Treasury, $291 Billions in Debt and $3 Billions in International Investments
 ---
+
+

@@ -4,7 +4,7 @@ title: "Botswana"
 slug: botswana
 unique_focus_tree: true
 grid_order: 8
-flag_image: /uploads/flags/botswana.png
+flag_image: /assets/images/flags/botswana.png
 lead: |
   Botswana is a country surroundend by South Africa in the south, Namibia from the West and the North and Zimbabwe from the East. It starts with a Population of 1.73 Millions.
 infobox:
@@ -63,3 +63,5 @@ sections:
     body: |
       Botswana starts with $9 Billions in the Treasury, $3 Billions in Debt and $0.03 in International Investments.
 ---
+
+

@@ -4,7 +4,7 @@ title: "Norway"
 slug: norway
 unique_focus_tree: true
 grid_order: 46
-flag_image: /uploads/flags/norway.png
+flag_image: /assets/images/flags/norway.png
 lead: |
   Norway is a country surrounded by Sweden from the East and Finland and Russia from the North-East. It starts with a Population of 4.50 Millions.
 infobox:
@@ -52,3 +52,5 @@ sections:
     body: |
       Norway starts with $40.74 Billions in the Treasury, $76 Billions in Debt and $48 Billions in International Investments.
 ---
+
+

@@ -4,7 +4,7 @@ title: "Brazil"
 slug: brazil
 unique_focus_tree: true
 grid_order: 9
-flag_image: /uploads/flags/brazil.png
+flag_image: /assets/images/flags/brazil.png
 lead: |
   Brazil is a country surrounded by French Guyana, Suriname, Guyana and Venezuela from the North, Colombia from the North-West, Peru and Bolivia from the West, Paraguay and Uruguay from the South and from the North-West-South. It starts with a Population of 177.95 Millions.
 infobox:
@@ -57,3 +57,5 @@ sections:
     body: |
       Brazil starts with $48 Billions in the Treasury, $1053 Billions in Debt and $16.6 Billions in International Investments
 ---
+
+

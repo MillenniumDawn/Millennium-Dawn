@@ -1,6 +1,7 @@
 ---
 layout: default
 page_id: home
+permalink: /
 description: "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV."
 ---
 
@@ -8,8 +9,8 @@ description: "Documentation for the Millennium Dawn: A Modern Day mod for the ga
 
 # Welcome to the MD Wiki
 
-{% assign release = site.data.release.current %}
-{% assign home = site.data.home %}
+{% assign release = site.data.site.release.current %}
+{% assign home = site.data.content.home %}
 
 **Current Expected Version:** {{ release.md_version }}
 

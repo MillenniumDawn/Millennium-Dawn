@@ -4,7 +4,7 @@ title: "Azerbaijan"
 slug: azerbaijan
 unique_focus_tree: true
 grid_order: 4
-flag_image: /uploads/flags/azerbaijan.png
+flag_image: /assets/images/flags/azerbaijan.png
 lead: |
   Azerbaijan is a country surrounded by Russia from the north, Georgia, Armenia and Artsakh from the West, Iran from the South and the Caspian Sea from the East. It starts with a Population of 10.6 millions.
 infobox:
@@ -59,3 +59,5 @@ sections:
     body: |
       Azerbaijan starts with $1 Billion in the Treasury, $13 Billions in Debt and $0 in International Investments.
 ---
+
+

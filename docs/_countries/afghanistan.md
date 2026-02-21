@@ -5,7 +5,7 @@ slug: afghanistan
 unique_focus_tree: true
 grid_order: 3
 grid_note: "Afghan Northern Alliance in 2000"
-flag_image: /uploads/flags/afghan_northern_alliance.png
+flag_image: /assets/images/flags/afghan_northern_alliance.png
 lead: |
   The Afghan Northern Alliance is a country surrounded by Tajikistan in the north, Pakistan from the East and the Islamic Emirate of Afghanistan, its enemy, from the south and the West. It starts with a population of 4.76 millions.
 infobox:
@@ -56,3 +56,5 @@ sections:
     body: |
       The Afghan Northern Alliance starts with $0.2 Billions in the Treasury, $1 Billion in Debt and $0 in International Investments
 ---
+
+

@@ -4,7 +4,7 @@ title: "South Korea"
 slug: south-korea
 unique_focus_tree: true
 grid_order: 56
-flag_image: /uploads/flags/south_korea.png
+flag_image: /assets/images/flags/south_korea.png
 lead: |
   South Korea is a country that borders only North Korea. It starts with a Population of 47.06 Millions.
 infobox:
@@ -71,3 +71,5 @@ sections:
     body: |
       South Korea starts with $141 Billions in the Treasury, $196 Billions in Debt and $140 Billions in International Investments.
 ---
+
+

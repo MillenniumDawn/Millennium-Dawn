@@ -4,7 +4,7 @@ title: "China"
 slug: china
 unique_focus_tree: true
 grid_order: 12
-flag_image: /uploads/flags/china.png
+flag_image: /assets/images/flags/china.png
 lead: |
   China is a country surrounded by Mongolia from the North, Russia from the North-North East, Korea DPR from the "East", Kazakhstan from the North-West, Kyrgyzstan, Tajikistan, The Afghan Northern Alliance and Pakistan from the West, India from the South-South West and Nepal, Bhutan, Kachin State, Wa State, Myanmar, Laos and Vietnam from the South. It starts with a Population of 1.27 Billions.
 infobox:
@@ -71,3 +71,5 @@ sections:
     body: |
       China starts with $252 Billions in the Treasury, $1066 Billions in Debt and $36.8 Billions in International Investments.
 ---
+
+

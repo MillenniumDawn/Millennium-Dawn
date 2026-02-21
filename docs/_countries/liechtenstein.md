@@ -4,7 +4,7 @@ title: "Liechtenstein"
 slug: liechtenstein
 unique_focus_tree: true
 grid_order: 42
-flag_image: /uploads/flags/liechtenstein.png
+flag_image: /assets/images/flags/liechtenstein.png
 lead: |
   Liechtenstein is a country surrounded by Switzerland from the North, West and South, and Austria from the East. It starts with a Population of 33.32K.
 infobox:
@@ -51,3 +51,5 @@ sections:
     body: |
       Liechtenstein starts with $5 Billions in the Treasury, $0 Billions in Debt and $19.85 Billions in International Investments.
 ---
+
+

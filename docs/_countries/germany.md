@@ -4,7 +4,7 @@ title: "Germany"
 slug: germany
 unique_focus_tree: true
 grid_order: 27
-flag_image: /uploads/flags/germany.png
+flag_image: /assets/images/flags/germany.png
 lead: |
   Germany is a country surrounded by The Netherlands and Belgium from the North-West, Luxembourg and France from the West, Switzerland from the South, Austria from the South-South East, Czech Republic and Poland from the East and Denmark from the North. It starts with a Population of 85.75 Millions.
 infobox:
@@ -55,3 +55,5 @@ sections:
     body: |
       Germany starts with $128 Billions in the Treasury, $2096 in Debt and $112 in International Investments
 ---
+
+

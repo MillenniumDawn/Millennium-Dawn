@@ -4,7 +4,7 @@ title: "France"
 slug: france
 unique_focus_tree: true
 grid_order: 24
-flag_image: /uploads/flags/france.png
+flag_image: /assets/images/flags/france.png
 lead: |
   France is a country surrounded by Belgium and Luxembourg from the North, Germany, Switzerland, Italy and Monaco from the East and Spain and Andorra from the South. Its territory in South America borders with Brazil and Suriname. France starts off with a Population of 62.34 Millions.
 infobox:
@@ -52,3 +52,5 @@ sections:
     body: |
       France starts with $93 Billions in the Treasury, $1412 Billions in Debt and $637 Billions in International Investments
 ---
+
+

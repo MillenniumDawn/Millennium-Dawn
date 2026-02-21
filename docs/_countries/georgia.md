@@ -4,7 +4,7 @@ title: "Georgia"
 slug: georgia
 unique_focus_tree: true
 grid_order: 26
-flag_image: /uploads/flags/georgia.svg.png
+flag_image: /assets/images/flags/georgia.svg.png
 lead: |
   WIP
 infobox:
@@ -21,3 +21,5 @@ sections:
   - heading: "Economy"
   - heading: "Unique National Features"
 ---
+
+

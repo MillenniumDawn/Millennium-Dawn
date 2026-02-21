@@ -5,7 +5,7 @@ slug: ethiopia
 unique_focus_tree: true
 grid_order: 19
 grid_note: "Eritrea puppet shared"
-flag_image: /uploads/flags/ethiopia.png
+flag_image: /assets/images/flags/ethiopia.png
 lead: |
   Ethiopia is a country surrounded by Eritrea from the North, Djibouti and Somaliland from the North-East, Puntland and Somalia from the East, The Southwestern State of Somalia, Somalia and Kenya from the South and South Sudan and Sudan from the West. It starts with a Population of 65.43 Millions.
 infobox:
@@ -52,3 +52,5 @@ sections:
     body: |
       Ethiopia starts with $1 Billion in the Treasury, $29 Billions in Debt and $0 Billions in International Investments.
 ---
+
+

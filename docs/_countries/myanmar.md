@@ -4,7 +4,7 @@ title: "Myanmar"
 slug: myanmar
 unique_focus_tree: true
 grid_order: 43
-flag_image: /uploads/flags/myanmar.png
+flag_image: /assets/images/flags/myanmar.png
 lead: |
   Myanmar is a country surrounded by India and Bangladesh from the West, Kachin State from the North, Wa State from the North-East, China, Laos, Shan State, Karen State from the East and Thailand from the South. It starts with a Population of 39.51 Millions.
 infobox:
@@ -65,3 +65,5 @@ sections:
     body: |
       Myanmar starts with $3 Billions in the Treasury, $151 Billions in Debt and $0.01 Billions in International Investments
 ---
+
+

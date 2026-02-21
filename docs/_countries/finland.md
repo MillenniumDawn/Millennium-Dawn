@@ -4,7 +4,7 @@ title: "Finland"
 slug: finland
 unique_focus_tree: true
 grid_order: 22
-flag_image: /uploads/flags/finland.png
+flag_image: /assets/images/flags/finland.png
 lead: |
   Finland its a country surrounded by Russia from the East, Norway from the North and Sweden from the West. It starts off with a population of 5.24 Millions.
 infobox:
@@ -57,3 +57,5 @@ sections:
     body: |
       Finland starts with $12 Billions in the Treasury, $95 Billions in Debt and $83.9 Billions in International Investments.
 ---
+
+

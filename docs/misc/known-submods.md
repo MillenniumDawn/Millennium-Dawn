@@ -11,7 +11,7 @@ As such we do not take bug reports when you are using a known submod. Please rep
 
 If you encounter an issue, PLEASE, try to make sure you have tested without the submod.
 
-{% for group in site.data.known_submods.groups %}
+{% for group in site.data.content.known_submods.groups %}
 ## {{ group.title }}
 
 {% if group.note %}

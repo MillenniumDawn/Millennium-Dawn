@@ -4,7 +4,7 @@ title: "Sweden"
 slug: sweden
 unique_focus_tree: true
 grid_order: 54
-flag_image: /uploads/flags/sweden.png
+flag_image: /assets/images/flags/sweden.png
 lead: |
   Sweden is a country surrounded by Denmark from the South, Norway from the West and Finland from the East. It starts with a Population of 9.08 Millions.
 infobox:
@@ -52,3 +52,5 @@ sections:
     body: |
       Sweden starts with $24 Billions in the Treasury, $234 Billions in Debt and $40 Billions in International Investments.
 ---
+
+

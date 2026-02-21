@@ -4,7 +4,7 @@ title: "Switzerland"
 slug: switzerland
 unique_focus_tree: true
 grid_order: 55
-flag_image: /uploads/flags/switzerland.png
+flag_image: /assets/images/flags/switzerland.png
 lead: |
   Switzerland is a country surrounded by Italy from the South, France from the West, Germany from the North and Liechtenstein and Austria from the East. It starts with a Population of 7.19 Millions.
 infobox:
@@ -55,3 +55,5 @@ sections:
     body: |
       Switzerland starts with $78 Billions in the Treasury, $225 Billions in Debt and $165 Billions in International Investments.
 ---
+
+

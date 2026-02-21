@@ -4,7 +4,7 @@ title: "Syria"
 slug: syria
 unique_focus_tree: true
 grid_order: 58
-flag_image: /uploads/flags/syria.png
+flag_image: /assets/images/flags/syria.png
 lead: |
   Syria is a country surrounded by Turkey from the North, Iraq from the East and South-East, Jordan from the South, Israel from the South-West and Lebanon and Hezbollah from the West. It starts with a Population of 16.01 Millions.
 infobox:
@@ -63,3 +63,5 @@ sections:
     body: |
       Syria starts with $10 Billions in the Treasury, $64 Billions in Debt and $0 in International Investments.
 ---
+
+

@@ -4,7 +4,7 @@ title: "Armenia"
 slug: armenia
 unique_focus_tree: true
 grid_order: 1
-flag_image: /uploads/flags/armenia.png
+flag_image: /assets/images/flags/armenia.png
 lead: |
   Armenia is a landlocked nation surrounded by Turkey from the west, Iran from the south, Artsakh from the east, Azerbaijan from the east and south, and Georgia from the North. Armenia has a starting population of 3.06 million.
 infobox:
@@ -55,3 +55,5 @@ sections:
     body: |
       Armenia starts with $3 Billion both in the Treasury and in Debt while $0 in International Investment
 ---
+
+

@@ -4,7 +4,7 @@ title: "Ukraine"
 slug: ukraine
 unique_focus_tree: true
 grid_order: 62
-flag_image: /uploads/flags/ukraine.png
+flag_image: /assets/images/flags/ukraine.png
 lead: |
   Ukraine is a country surrounded by Poland, Slovakia and Hungary from the West, Romania, Transnistria and Moldova from the South, Belarus from the North and Russia from the East. It starts with a Population of 50.84 Millions.
 infobox:
@@ -63,3 +63,5 @@ sections:
     body: |
       Ukraine starts with $2 Billions in the Treasury, $158 Billions in Debt and $0 Billions in International Investments.
 ---
+
+

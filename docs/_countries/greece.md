@@ -4,7 +4,7 @@ title: "Greece"
 slug: greece
 unique_focus_tree: true
 grid_order: 28
-flag_image: /uploads/flags/greece.png
+flag_image: /assets/images/flags/greece.png
 lead: |
   Greece is a country surrounded by Albania from the North-West, Macedonia and Bulgaria from the North and Turkey from the East. It starts with a Population of 10.91 Millions.
 infobox:
@@ -55,3 +55,5 @@ sections:
     body: |
       Greece starts with $21 Billions in the Treasury, $318 Billions in Debt and $1 Billion in International Investments.
 ---
+
+

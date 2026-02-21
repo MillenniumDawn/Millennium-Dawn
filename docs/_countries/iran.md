@@ -4,7 +4,7 @@ title: "Iran"
 slug: iran
 unique_focus_tree: true
 grid_order: 33
-flag_image: /uploads/flags/iran.png
+flag_image: /assets/images/flags/iran.png
 lead: |
   Iran is a country surrounded by Iraq, Kurdistan and Turkey from the West, Armenia, Azerbaijan and Artsakh from the North-West, Turkmenistan from the North-East and The Islamic Emirate of Afghanistan and Pakistan from the East. It starts with a Population of 63.24 M. The nation's initial Power Ranking is Regional Power.
 infobox:
@@ -270,3 +270,5 @@ sections:
       ##### Iranian Armed Forces
       * NF "Maintain a Military Structure" （Mutually Exclusive）
 ---
+
+

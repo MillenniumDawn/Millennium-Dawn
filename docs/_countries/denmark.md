@@ -4,7 +4,7 @@ title: "Denmark"
 slug: denmark
 unique_focus_tree: true
 grid_order: 16
-flag_image: /uploads/flags/denmark.png
+flag_image: /assets/images/flags/denmark.png
 lead: |
   Denmark is a country surrounded by Sweden from the East and Germany from the South. It starts with a Population of 5.35 Millions.
 infobox:
@@ -52,3 +52,5 @@ sections:
     body: |
       Denmark starts with $23 Billions in the Treasury, $149 Billions in Debt and $77.4 Billions in International Investments
 ---
+
+

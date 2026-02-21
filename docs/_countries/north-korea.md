@@ -4,7 +4,7 @@ title: "North Korea"
 slug: north-korea
 unique_focus_tree: true
 grid_order: 47
-flag_image: /uploads/flags/north_korea.png
+flag_image: /assets/images/flags/north_korea.png
 lead: |
   North Korea is a country surrounded by South Korea from the South, China from the North and Russia from the North-East. It starts with a Population of 22.86 Millions.
 infobox:
@@ -67,3 +67,5 @@ sections:
     body: |
       North Korea starts with $3 Billions in the Treasury, $20 Billions in Debt and $0 Billions in International Investments.
 ---
+
+

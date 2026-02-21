@@ -4,7 +4,7 @@ title: "United States"
 slug: united-states
 unique_focus_tree: true
 grid_order: 64
-flag_image: /uploads/flags/united_states.png
+flag_image: /assets/images/flags/united_states.png
 lead: |
   The United States are a country surrounded by water from the West and the East. Its only borders are Canada from the North, Mexico from the South and Japan from the Okinawa Base. It starts with a Population of 283.06 Millions.
 infobox:
@@ -73,3 +73,5 @@ sections:
     body: |
       The US starts with $187 Billions in the Treasury, $8033 Billions in Debt and $405 Billions in International Investments.
 ---
+
+

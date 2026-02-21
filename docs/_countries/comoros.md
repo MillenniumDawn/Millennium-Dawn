@@ -4,7 +4,7 @@ title: "Comoros"
 slug: comoros
 unique_focus_tree: true
 grid_order: 13
-flag_image: /uploads/flags/comoros.png
+flag_image: /assets/images/flags/comoros.png
 lead: |
   The Comoros is am Island nation in East Africa between Madagascar, Tanzania and near the French overseas territory of Mayotte.
   Comoros has a starting population of 548k.
@@ -46,3 +46,5 @@ sections:
       Comoros starts the game with $0.01 in the treasury, $1 billion in Debt and no international investments. They have a starting GDP of $2.0 billion, a GDP/c of $3.831k and a productivity rating of 429.640. Furthermore, they have a Population and Corporate tax rate of 12%.
   - heading: "National Content"
 ---
+
+

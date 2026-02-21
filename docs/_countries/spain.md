@@ -4,7 +4,7 @@ title: "Spain"
 slug: spain
 unique_focus_tree: true
 grid_order: 53
-flag_image: /uploads/flags/spain.png
+flag_image: /assets/images/flags/spain.png
 lead: |
   Spain is a country surrounded by Portugal from the West, France and Andorra from the North and the United Kingdom from the South. For its territory in Africa it borders with Marocco from the South. It starts with a Population of 41.70 Millions.
 infobox:
@@ -61,3 +61,5 @@ sections:
     body: |
       Spain starts with $52 Billions in the Treasury, $828 Billions in Debt and $98 Billions in International Investments.
 ---
+
+

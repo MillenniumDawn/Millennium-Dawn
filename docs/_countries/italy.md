@@ -4,7 +4,7 @@ title: "Italy"
 slug: italy
 unique_focus_tree: true
 grid_order: 36
-flag_image: /uploads/flags/italy.png
+flag_image: /assets/images/flags/italy.png
 lead: |
   Italy is a country surrounded by France from the North-West, Switzerland from the North, Austria from the North-East and Slovenia and Croatia from the East. Inside its borders there are two microstates, San Marino and Vatican City. It starts with a Population of 57.11 Millions.
 infobox:
@@ -91,3 +91,5 @@ sections:
     body: |
       Italy starts with $69 Billions in the Treasury, $1419 Billions in Debt and $100 Billions in International Investments.
 ---
+
+

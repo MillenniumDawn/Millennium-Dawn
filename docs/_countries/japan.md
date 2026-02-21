@@ -4,7 +4,7 @@ title: "Japan"
 slug: japan
 unique_focus_tree: true
 grid_order: 37
-flag_image: /uploads/flags/japan.png
+flag_image: /assets/images/flags/japan.png
 lead: |
   Japan is a country surrounded only by water, its only border is Okinawa Base owned by the US. It starts with a Population of 126.93 Millions.
 infobox:
@@ -59,3 +59,5 @@ sections:
     body: |
       Japan starts with $528 Billions in the Treasury, $6627 in Debt and $497 in International Investments.
 ---
+
+

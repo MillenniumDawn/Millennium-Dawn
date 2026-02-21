@@ -1,22 +1,13 @@
 ---
 layout: default
-title: "Dev Diaries"
-description: "Development diaries from the Millennium Dawn mod team, covering new features, changes, and updates."
+title: "Dev Diaries Redirect"
 permalink: /dev-diaries-list/
+toc: "off"
+robots: "noindex, nofollow"
+seo: false
 ---
 
-# Dev Diary Lists
+<meta http-equiv="refresh" content="0; url={{ '/dev-diaries/' | relative_url }}">
+<link rel="canonical" href="{{ '/dev-diaries/' | absolute_url }}">
 
-The Millennium Dawn team rarely writes dev diaries due to our frequency of our update schedule. This is more of an archive of older dev diaries for past content.
-
-{% for group in site.data.dev_diaries %}
-## {{ group.title }}
-
-<details markdown="1"><summary>{{ group.title }}</summary>
-
-{% for entry in group.entries %}
-- [{{ entry.title }}]({{ entry.url }}){% if entry.note %} ({{ entry.note }}){% endif %}
-{% endfor %}
-
-</details>
-{% endfor %}
+This page has moved to [Dev Diaries]({{ '/dev-diaries/' | relative_url }}).

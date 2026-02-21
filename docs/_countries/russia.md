@@ -4,7 +4,7 @@ title: "Russia"
 slug: russia
 unique_focus_tree: true
 grid_order: 50
-flag_image: /uploads/flags/russia.png
+flag_image: /assets/images/flags/russia.png
 lead: |
   Russia is a country surrounded by Finland and Norway from the North-West, Estonia, Latvia, Belarus and Ukraine from the West, Abkhazia, Georgia, South Ossetia, Chechnya and Azerbaijan from the South-West and Kazakhstan, China, Mongolia and Korea DPR from the South. It starts with a Population of 147.08 Millions.
 infobox:
@@ -59,3 +59,5 @@ sections:
     body: |
       Russia starts with $40 Billions in the Treasury, $1349 Billions in Debt and $12 Billions in International Investments
 ---
+
+
