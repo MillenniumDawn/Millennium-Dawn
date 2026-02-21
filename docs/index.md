@@ -8,9 +8,11 @@ description: "Documentation for the Millennium Dawn: A Modern Day mod for the ga
 
 # Welcome to the MD Wiki
 
-**Current Expected Version:** v1.12.3b
+{% assign release = site.data.release.current %}
 
-**Current Expected Checksum:** a842
+**Current Expected Version:** {{ release.md_version }}
+
+**Current Expected Checksum:** {{ release.checksum }}
 
 **Note:** The following Wiki is currently a work in progress. However, we will do our best to get meaningful content updated and placed on this page.
 

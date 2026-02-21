@@ -9,6 +9,9 @@ permalink: /technical-support/
 
 For the full [Troubleshooting Guide]({{ '/player-tutorials/troubleshooting-guide' | relative_url }}).
 
+{% assign release = site.data.release.current %}
+{% assign release_links = site.data.release.links %}
+
 ## How do I download Millennium Dawn?
 
 Any other source then the below are not official team builds and as such we cannot guarantee the quality or the safeness of those builds.
@@ -16,13 +19,13 @@ Please ensure you are using the latest from one of the below versions.
 
 **_Steam_**
 
-Current MD Version: ``v1.12.3b``
+Current MD Version: `{{ release.md_version }}`
 
-HOI Version: ``1.17.*``
+HOI Version: `{{ release.hoi_version }}`
 
-Checksum: ``a842``
+Checksum: `{{ release.checksum }}`
 
-[Steam Link](https://steamcommunity.com/sharedfiles/filedetails/?id=2777392649)
+[{{ release_links.steam.label }}]({{ release_links.steam.url }})
 
 **_GitHub Releases_**
 
@@ -30,14 +33,13 @@ Historical Builds of MD are kept here.
 
 Available Versions are v1.12.2+
 
-[GitHub Releases](https://github.com/MillenniumDawn/Millennium-Dawn/releases)
+[{{ release_links.github_releases.label }}]({{ release_links.github_releases.url }})
 
 **_GitLab Releases_**
 
 Historical Builds of MD are kept here.
 Available Versions are v1.8.4+ to v1.12.1d
 
-[GitLab](https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/releases)
+[{{ release_links.gitlab_releases.label }}]({{ release_links.gitlab_releases.url }})
 
-
-[How to Instal HOI4 Mods Manually](https://www.youtube.com/watch?v=Ww8D_xbPSpY)
+[{{ release_links.manual_install.label }}]({{ release_links.manual_install.url }})
