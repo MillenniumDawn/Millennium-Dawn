@@ -815,8 +815,56 @@ general_assembly_vote_finished = {
 				}
 				add_to_variable = { global.general_operating_budget_contribute_percent = 0.0001 }
 			}
-		} else = {
+		} else_if = {
+			limit = {
+				check_variable = { global.current_ga_vote_type > 9 }
+				check_variable = { global.current_ga_vote_type < 22 }
+			}
+			#UNGA Non-Binding Resolutions - apply idea to all yes-voting nations
+			for_each_loop = {
+				array = global.general_assembly_vote_yes
+				value = v
 
+				var:v = {
+					if = {
+						limit = { check_variable = { global.current_ga_vote_type = 10 } }
+						add_ideas = unga_resolution_poverty_reduction
+					} else_if = {
+						limit = { check_variable = { global.current_ga_vote_type = 11 } }
+						add_ideas = unga_resolution_food_security
+					} else_if = {
+						limit = { check_variable = { global.current_ga_vote_type = 12 } }
+						add_ideas = unga_resolution_global_health
+					} else_if = {
+						limit = { check_variable = { global.current_ga_vote_type = 13 } }
+						add_ideas = unga_resolution_education_initiative
+					} else_if = {
+						limit = { check_variable = { global.current_ga_vote_type = 14 } }
+						add_ideas = unga_resolution_clean_energy
+					} else_if = {
+						limit = { check_variable = { global.current_ga_vote_type = 15 } }
+						add_ideas = unga_resolution_economic_growth
+					} else_if = {
+						limit = { check_variable = { global.current_ga_vote_type = 16 } }
+						add_ideas = unga_resolution_infrastructure
+					} else_if = {
+						limit = { check_variable = { global.current_ga_vote_type = 17 } }
+						add_ideas = unga_resolution_reduced_inequality
+					} else_if = {
+						limit = { check_variable = { global.current_ga_vote_type = 18 } }
+						add_ideas = unga_resolution_climate_action
+					} else_if = {
+						limit = { check_variable = { global.current_ga_vote_type = 19 } }
+						add_ideas = unga_resolution_peace_institutions
+					} else_if = {
+						limit = { check_variable = { global.current_ga_vote_type = 20 } }
+						add_ideas = unga_resolution_trade_partnerships
+					} else_if = {
+						limit = { check_variable = { global.current_ga_vote_type = 21 } }
+						add_ideas = unga_resolution_digital_development
+					}
+				}
+			}
 		}
 	} else = {
 		#anything down here failed to pass
@@ -866,14 +914,7 @@ general_assembly_vote_finished = {
 		}
 	}
 
-	for_each_loop = {
-		array = global.UN_general_assembly
-		value = v
-
-		var:v = {
-			clr_country_flag = has_had_current_un_sc_vote_swayed
-		}
-	}
+	clr_country_flag = has_had_current_un_sc_vote_swayed
 
 	#clear all arrays and variables
 	clear_array = global.general_assembly_vote_yes
