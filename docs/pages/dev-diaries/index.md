@@ -16,7 +16,14 @@ The Millennium Dawn team rarely writes dev diaries due to our frequency of our u
 <details markdown="1"><summary>{{ group.title }}</summary>
 
 {% for entry in group.entries %}
-- [{{ entry.title }}]({{ entry.url }}){% if entry.note %} ({{ entry.note }}){% endif %}
+{% assign diary_url = entry.url | default: '' %}
+{% if diary_url == '' %}
+- {{ entry.title }}{% if entry.note %} ({{ entry.note }}){% endif %}
+{% elsif diary_url contains '://' %}
+- [{{ entry.title }}]({{ diary_url }}){% if entry.note %} ({{ entry.note }}){% endif %}
+{% else %}
+- [{{ entry.title }}]({{ diary_url | relative_url }}){% if entry.note %} ({{ entry.note }}){% endif %}
+{% endif %}
 {% endfor %}
 
 </details>
