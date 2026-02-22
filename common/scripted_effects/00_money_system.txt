@@ -1375,6 +1375,15 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_iran_war_compensation }
 		}
 	}
+	#UK
+	if = {
+		limit = { original_tag = ADS }
+		if = {
+			limit = { has_idea = ENG_ADS_money }
+			set_variable = { additional_income_ENG_ADS_money = 2.0 }	#10% of GDP yearly estimated weekly
+			add_to_variable = { additional_income_rate = additional_income_ENG_ADS_money }
+		}
+	}
 	#Venezuela
 	if = {
 		limit = { original_tag = VEN }
@@ -3236,6 +3245,7 @@ calculate_additional_expense_rate = {
 		set_variable = { additional_expense_china_travel_ban = 0.5 }
 		add_to_variable = { additional_expenses_rate = additional_expense_china_travel_ban }
 	}
+
 	# European Union Contribution Expenses
 	if = { limit = { has_idea = EU_member }
 		add_to_variable = { additional_expenses_rate = EU_budget_contribution_weekly }
@@ -3830,10 +3840,11 @@ update_display = {
 	}
 	add_to_variable = { display_expense = additional_expenses_rate }
 	add_to_variable = { display_expense = border_control_gain }
+	add_to_variable = { display_expense = united_nations_expenses }
 
 	# Giving it to Global Nations
 	if = { limit = { is_debug = yes }
-		resize_temp_array = { array = budget_array value = 0 size = 9 }
+		resize_temp_array = { array = budget_array value = 0 size = 10 }
 		set_temp_variable = { budget_array^0 = bureaucracy_gain }
 		set_temp_variable = { budget_array^1 = defence_gain }
 		set_temp_variable = { budget_array^2 = security_gain }
@@ -3843,6 +3854,7 @@ update_display = {
 		set_temp_variable = { budget_array^6 = debt_rate }
 		set_temp_variable = { budget_array^7 = additional_expenses_rate }
 		set_temp_variable = { budget_array^8 = border_control_gain }
+		set_temp_variable = { budget_array^9 = united_nations_expenses }
 		find_highest_in_array = {
 			array = budget_array
 			value = value_highest_cost_temp
@@ -4633,169 +4645,143 @@ calculate_gdp_modifiers = {
 }
 
 calculate_ai_taxes_desire = {
-	# Raise Taxes
-	if = { limit = { check_variable = { treasury_rate < 0 } }
-		set_temp_variable = { mather = treasury_rate } # -10.00
-		multiply_temp_variable = { mather = -2 } # 20.00
-		if = { limit = { num_of_available_civilian_factories < 15 }
-			multiply_temp_variable = { mather = 5 }
-		}
-		if = { limit = { num_of_available_civilian_factories < 30 }
-			multiply_temp_variable = { mather = 5 }
-		}
-		if = { limit = { has_stability < 0.50 }
-			multiply_temp_variable = { mather = 0.75 }
-		}
-		if = { limit = { has_stability < 0.25 }
-			multiply_temp_variable = { mather = 0.75 }
-		}
-		# do not increase over 40%
-		if = { limit = { check_variable = { population_tax_rate > 39 } }
-			multiply_temp_variable = { mather = 0 }
-		}
-
-		# Custom: These are high pop nation should raise population tax
+	if = { limit = { has_political_power > 200 }
+		# POPULATION TAX
 		if = {
 			limit = {
+				check_variable = { treasury_rate < 0 }
+				check_variable = { population_tax_rate < 40 }
+			}
+			set_temp_variable = { pop_tax_change = 1 }
+
+			if = { limit = { check_variable = { treasury_rate > -5 } }
+				set_temp_variable = { pop_tax_change = 0 }
+			}
+
+			if = {
+				limit = {
+					has_stability < 0.25
+					check_variable = { treasury_rate > -10 }
+				}
+				set_temp_variable = { pop_tax_change = 0 }
+			}
+
+			if = {
+				limit = {
+					check_variable = { pop_tax_change = 1 }
+					OR = {
+						original_tag = CHI
+						original_tag = RAJ
+						original_tag = DRC
+						original_tag = IND
+						original_tag = JAP
+						original_tag = NIG
+						original_tag = EGY
+						original_tag = BRA
+					}
+					check_variable = { treasury_rate < -2 }
+				}
+				set_temp_variable = { pop_tax_change = 1 }
+			}
+
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetName]: AI Population Tax +[?pop_tax_change] (Current: [?population_tax_rate]%, Treasury: [?treasury_rate])"
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { treasury_rate > 0 }
+				check_variable = { population_tax_rate > 15 }
 				OR = {
-					original_tag = CHI
-					original_tag = RAJ
-					original_tag = DRC
-					original_tag = IND
-					original_tag = JAP
-					original_tag = NIG
-					original_tag = EGY
-					original_tag = BRA
+					has_stability < 0.35
+					AND = {
+						check_variable = { debt_ratio < 0.25 }
+						check_variable = { interest_rate < 5 }
+					}
 				}
 			}
-			multiply_temp_variable = { mather = 4 }
+			set_temp_variable = { pop_tax_change = -1 }
+
+			if = { limit = { check_variable = { treasury_rate < 3 } }
+				set_temp_variable = { pop_tax_change = 0 }
+			}
+
+			if = { limit = { check_variable = { corporate_tax_rate > 10 } }
+				set_temp_variable = { pop_tax_change = 0 }
+			}
+
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetName]: AI Population Tax [?pop_tax_change] (Current: [?population_tax_rate]%, Treasury: [?treasury_rate])"
+			}
 		}
 
-		set_variable = { ai_change_population_taxes = mather }
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Population Raise Desire [?ai_change_population_taxes] Current Population Tax: [?population_tax_rate] Current Treasury Rate: [?treasury_rate]"
-		}
-	}
-	else = { # Lower Taxes
-		set_temp_variable = { mather = treasury_rate } # 5
-		multiply_temp_variable = { mather = 1.50 } # 2.5
-		if = { limit = { has_stability < 0.50 }
-			multiply_temp_variable = { mather = 2 }
-		}
-		if = { limit = { has_stability < 0.35 }
-			multiply_temp_variable = { mather = 2 }
-		}
-		if = { limit = { has_stability < 0.15 }
-			multiply_temp_variable = { mather = 2 }
-		}
-		if = { limit = { has_stability < 0.05 }
-			multiply_temp_variable = { mather = 2 }
-		}
-
-		if = { limit = { check_variable = { interest_rate < 3 } }
-			multiply_temp_variable = { mather = 1.15 }
-		}
-		if = { limit = { check_variable = { interest_rate < 5 } }
-			multiply_temp_variable = { mather = 1.15 }
-		}
-
-		if = { limit = { check_variable = { debt_ratio < 0.15 } }
-			multiply_temp_variable = { mather = 1.5 }
-		}
-		if = { limit = { check_variable = { debt_ratio < 0.25 } }
-			multiply_temp_variable = { mather = 1.5 }
-		}
-		# Do not decrease lower than 15% personal taxes
-		# Do not decrease personal if we can decrease corporate
+		# CORPORATE TAX
 		if = {
 			limit = {
+				check_variable = { treasury_rate < 0 }
+				check_variable = { population_tax_rate > 39 }
+				check_variable = { corporate_tax_rate < 50 }
+			}
+			set_temp_variable = { corp_tax_change = 1 }
+
+			if = { limit = { check_variable = { treasury_rate > -5 } }
+				set_temp_variable = { corp_tax_change = 0 }
+			}
+
+			if = {
+				limit = {
+					check_variable = { office_park_total > 30 }
+					check_variable = { treasury_rate < -3 }
+				}
+				set_temp_variable = { corp_tax_change = 1 }
+			}
+
+			if = {
+				limit = {
+					num_of_factories > 20
+					check_variable = { treasury_rate < -3 }
+				}
+				set_temp_variable = { corp_tax_change = 1 }
+			}
+
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetName]: AI Corporate Tax +[?corp_tax_change] (Current: [?corporate_tax_rate]%, Treasury: [?treasury_rate])"
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { treasury_rate > 0 }
+				check_variable = { corporate_tax_rate > 10 }
 				OR = {
-					check_variable = { population_tax_rate < 15 }
-					check_variable = { corporate_tax_rate > 9 }
+					num_of_available_civilian_factories < 10
+					AND = {
+						check_variable = { debt_ratio < 0.25 }
+						check_variable = { interest_rate < 5 }
+					}
 				}
 			}
-			multiply_temp_variable = { mather = 0 }
+			set_temp_variable = { corp_tax_change = -1 }
+
+			if = { limit = { check_variable = { treasury_rate < 5 } }
+				set_temp_variable = { corp_tax_change = 0 }
+			}
+
+			if = { limit = { num_of_available_civilian_factories < 15 }
+				set_temp_variable = { corp_tax_change = -1 }
+			}
+
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetName]: AI Corporate Tax [?corp_tax_change] (Current: [?corporate_tax_rate]%, Treasury: [?treasury_rate])"
+			}
 		}
 
-		set_variable = { ai_change_population_taxes = mather }
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Population Lower Desire [?ai_change_population_taxes] Current Population Tax: [?population_tax_rate] Current Treasury Rate: [?treasury_rate]"
+		if = { limit = { NOT = { check_variable = { pop_tax_change = 0 } } }
+			add_to_variable = { population_tax_rate = pop_tax_change }
+			add_political_power = -15
 		}
-	}
-
-	if = { limit = { check_variable = { treasury_rate < 0 } }
-		set_temp_variable = { mather = treasury_rate } # -2.0
-		multiply_temp_variable = { mather = -2.5 } # -2.0 * -5 = 10
-		if = { limit = { has_stability < 0.50 } # Should force the AI to raise corporate tax on low stability
-			multiply_temp_variable = { mather = 2 }
-		}
-		if = { limit = { check_variable = { office_park_total > 20 } }
-			multiply_temp_variable = { mather = 2.5 }
-		}
-		if = { limit = { check_variable = { office_park_total > 40 } }
-			multiply_temp_variable = { mather = 2.5 }
-		}
-		if = { limit = { check_variable = { office_park_total > 60 } }
-			multiply_temp_variable = { mather = 2.5 }
-		}
-		if = { limit = { num_of_available_civilian_factories < 15 }
-			multiply_temp_variable = { mather = 0.05 }
-		}
-		if = { limit = { num_of_factories > 5 }
-			multiply_temp_variable = { mather = 1.25 }
-		}
-		if = { limit = { num_of_factories > 15 }
-			multiply_temp_variable = { mather = 1.75 }
-		}
-		if = { limit = { num_of_factories > 25 }
-			multiply_temp_variable = { mather = 2.50 }
-		}
-
-		# do not increase corporate taxes if we can still increase personal taxes
-		if = { limit = { check_variable = { population_tax_rate < 40 } }
-			multiply_temp_variable = { mather = 0 }
-		}
-
-		set_variable = { ai_change_corporate_taxes = mather }
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Corporate Raise Desire: [?ai_change_corporate_taxes] Current Corporate Tax: [?corporate_tax_rate] Current Treasury Rate: [?treasury_rate]"
-		}
-	}
-	else = {
-		set_temp_variable = { mather = treasury_rate } # 5
-		multiply_temp_variable = { mather = 0.50 } # 2.5
-		if = { limit = { num_of_available_civilian_factories < 15 }
-			multiply_temp_variable = { mather = 3 }
-		}
-		if = { limit = { num_of_available_civilian_factories < 5 }
-			multiply_temp_variable = { mather = 3 }
-		}
-		if = { limit = { num_of_available_civilian_factories > 30 }
-			multiply_temp_variable = { mather = 0.5 }
-		}
-
-		if = { limit = { check_variable = { interest_rate < 3 } }
-			multiply_temp_variable = { mather = 1.15 }
-		}
-		if = { limit = { check_variable = { interest_rate < 5 } }
-			multiply_temp_variable = { mather = 1.15 }
-		}
-
-		if = { limit = { check_variable = { debt_ratio < 0.15 } }
-			multiply_temp_variable = { mather = 1.5 }
-		}
-		if = { limit = { check_variable = { debt_ratio < 0.25 } }
-			multiply_temp_variable = { mather = 1.5 }
-		}
-
-		# do not decrease lower than 15%
-		if = { limit = { check_variable = { corporate_tax_rate < 10 } }
-			multiply_temp_variable = { mather = 0 }
-		}
-
-		set_variable = { ai_change_corporate_taxes = mather }
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Corporate Lower Desire: [?ai_change_corporate_taxes] Current Corporate Tax: [?corporate_tax_rate] Current Treasury Rate: [?treasury_rate]"
+		if = { limit = { NOT = { check_variable = { corp_tax_change = 0 } } }
+			add_to_variable = { corporate_tax_rate = corp_tax_change }
+			add_political_power = -15
 		}
 	}
 }
@@ -5274,8 +5260,8 @@ setup_employment_variables = {
 			set_variable = { PREV.composite_plants_employment_var = composite_plants_employment_var }
 			set_variable = { PREV.agriculture_district_employment_var = agriculture_district_employment_var }
 			set_variable = { PREV.synthetic_refinery_employment_var = synthetic_refinery_employment_var }
-			set_variable = { var = PREV.corporate_tax_rate value = 20 }
-			set_variable = { var = PREV.population_tax_rate value = 20 }
+			set_variable = { var = PREV.corporate_tax_rate value = corporate_tax_rate }
+			set_variable = { var = PREV.population_tax_rate value = population_tax_rate }
 		}
 	}
 
@@ -5378,6 +5364,9 @@ recalculate_resources_price = {
 		add_to_temp_variable = { sum_import_composites = resource_imported@composites }
 	}
 
+	log = "[?sum_microchips]"
+	log = "[?sum_import_microchips]"
+
 	#Set the % of supply used by doing demand / supply
 	#If using > 50% of supply, price should go up
 	#If using < 50% of supply, price should go down
@@ -5391,6 +5380,8 @@ recalculate_resources_price = {
 	divide_temp_variable = { sum_import_microchips = sum_microchips }
 	divide_temp_variable = { sum_import_composites = sum_chromium }
 
+	log = "[?sum_import_microchips] after divide check"
+
 	multiply_temp_variable = { sum_import_steel = 2 }
 	multiply_temp_variable = { sum_import_rubber = 2 }
 	multiply_temp_variable = { sum_import_oil = 2 }
@@ -5399,6 +5390,8 @@ recalculate_resources_price = {
 	multiply_temp_variable = { sum_import_chromium = 2 }
 	multiply_temp_variable = { sum_import_microchips = 2 }
 	multiply_temp_variable = { sum_import_composites = 2 }
+
+	log = "[?sum_import_microchips] after multiply check"
 
 	set_temp_variable = { oil_price_adjuster = global.starting_oil_price }
 	set_temp_variable = { steel_price_adjuster = global.starting_steel_price }
@@ -5409,6 +5402,8 @@ recalculate_resources_price = {
 	set_temp_variable = { microchips_price_adjuster = global.starting_microchips_price }
 	set_temp_variable = { composites_price_adjuster = global.starting_composites_price }
 
+	log = "[?microchips_price_adjuster] starting price point "
+
 	multiply_temp_variable = { oil_price_adjuster = sum_import_oil }
 	multiply_temp_variable = { steel_price_adjuster = sum_import_steel }
 	multiply_temp_variable = { rubber_price_adjuster = sum_import_rubber }
@@ -5417,6 +5412,8 @@ recalculate_resources_price = {
 	multiply_temp_variable = { chromium_price_adjuster = sum_import_chromium }
 	multiply_temp_variable = { microchips_price_adjuster = sum_import_microchips }
 	multiply_temp_variable = { composites_price_adjuster = sum_import_composites }
+
+	log = "[?microchips_price_adjuster] after price change"
 
 	#Clamp the prices at their min / max after adjusting them for supply & demand
 	clamp_variable = {
@@ -5460,6 +5457,8 @@ recalculate_resources_price = {
 		max = 35.4
 	}
 
+	log = "[?microchips_price_adjuster] after clamp"
+
 	set_variable = { global.oil_price = oil_price_adjuster } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
 	set_variable = { global.steel_price = steel_price_adjuster } #Based on steel price
 	set_variable = { global.aluminium_price = alum_price_adjuster }	#Based on aluminium price
@@ -5472,5 +5471,457 @@ recalculate_resources_price = {
 	if = {
 		limit = { is_debug = yes }
 		log = "Current resource prices: steel = [?global.steel_price] rubber = [?global.rubber_price] oil = [?global.oil_price] alum = [?global.aluminium_price] tungsten = [?global.tungsten_price] chromium = [?global.chromium_price] Resource coeff = [?global.resource_gdp_coeff]"
+	}
+}
+
+calculate_united_nations_base_budget = {
+	set_variable = { global.un_operating_budget_base = 0 }
+	set_variable = { global.total_aid_expenses_sum = 0 }
+	clear_array = global.UN_budget_contribution_tracker
+	clear_variable = global.target_const_speed_mod
+	clear_variable = global.target_research_speed_mod
+	clear_variable = global.target_civ_count
+	clear_variable = global.average_gdp_capita
+
+	set_temp_variable = { peak_const_speed_mod = 0 }
+	set_temp_variable = { peak_research_speed_mod = 0 }
+	set_temp_variable = { peak_civ_count = 0 }
+	set_temp_variable = { average_gdp_capita = 0 }
+	set_temp_variable = { peak_prod_mod = 0 }
+
+	for_each_loop = {
+		array = global.UN_general_assembly
+		value = v
+
+		var:v = {
+			set_variable = { united_nations_base_expenses = gdp_total }
+			multiply_variable = { united_nations_base_expenses = global.general_operating_budget_contribute_percent }
+
+			if = {
+				limit = {
+					check_variable = { united_nations_base_expenses > 0.001 }
+				}
+				add_to_variable = { global.un_operating_budget_base = united_nations_base_expenses }
+				add_to_array = { global.un_operating_budget_contributors = THIS }
+
+				#Add inflation *after* application, to represnt our inflated money being worth less
+				#This means less money goes to the UN, while we have to pay *more* to represent less value
+				set_temp_variable = { un_expenses_inflation = 1 }
+				add_to_temp_variable = { un_expenses_inflation = modifier@inflation_cost_multiplier_modifier }
+				multiply_variable = { united_nations_base_expenses = un_expenses_inflation }
+
+				set_variable = { united_nations_expenses = united_nations_base_expenses }
+				set_variable = { united_nations_old_aid_expenses = 0 }
+			}
+
+			add_to_variable = { global.target_const_speed_mod = modifier@production_speed_buildings_factor }
+			add_to_variable = { global.target_research_speed_mod = modifier@research_speed_factor }
+			add_to_variable = { global.target_civ_count = industrial_complex_total }
+			add_to_variable = { global.average_gdp_capita = gdp_per_capita }
+
+			set_temp_variable = { const_mod_check = modifier@production_speed_buildings_factor }
+			set_temp_variable = { research_mod_check = modifier@research_speed_factor }
+
+			if = {
+				limit = {
+					check_variable = { peak_const_speed_mod < const_mod_check }
+				}
+				set_temp_variable = { peak_const_speed_mod = modifier@production_speed_buildings_factor }
+			}
+
+			if = {
+				limit = {
+					check_variable = { peak_research_speed_mod < research_mod_check }
+				}
+				set_temp_variable = { peak_research_speed_mod = modifier@research_speed_factor }
+			}
+
+			if = {
+				limit = {
+					check_variable = { peak_civ_count < industrial_complex_total }
+				}
+				set_temp_variable = { peak_civ_count = industrial_complex_total }
+			}
+
+			if = {
+				limit = {
+					check_variable = { peak_prod_mod < overall_productivity }
+				}
+				set_temp_variable = { peak_prod_mod = overall_productivity }
+			}
+			set_country_flag = update_cdf
+			set_country_flag = update_ido
+			set_country_flag = update_esco
+			calculate_base_program_contributions = yes
+			add_to_variable = { global.total_aid_expenses_sum = united_nations_aid_expenses }
+		}
+	}
+
+	divide_variable = { global.target_const_speed_mod = global.UN_general_assembly^num }
+	divide_variable = { global.target_research_speed_mod = global.UN_general_assembly^num }
+	divide_variable = { global.target_civ_count = global.UN_general_assembly^num }
+	divide_variable = { global.average_gdp_capita = global.UN_general_assembly^num }
+
+	multiply_temp_variable = { peak_const_speed_mod = 0.6 }
+	multiply_temp_variable = { peak_civ_count = 0.05 }
+	multiply_temp_variable = { peak_research_speed_mod = 0.4 }
+	multiply_temp_variable = { peak_prod_mod = 0.1 }
+
+	set_variable = { global.world_productivity_target = global.average_world_productivity }
+	add_to_variable = { global.world_productivity_target = peak_prod_mod }
+	add_to_variable = { global.target_const_speed_mod = peak_const_speed_mod }
+	add_to_variable = { global.target_research_speed_mod = peak_research_speed_mod }
+	add_to_variable = { global.target_civ_count = peak_civ_count }
+
+	for_each_loop = {
+		array = global.un_operating_budget_contributors
+		value = v
+
+		var:v = {
+			set_variable = { united_nations_contribution_percent = united_nations_base_expenses }
+			divide_variable = { united_nations_contribution_percent = global.un_operating_budget_base }
+			add_to_temp_array = { temp_array_mover = united_nations_base_expenses }
+			add_to_temp_array = { nation_tracker = THIS }
+		}
+	}
+
+	set_temp_variable = { end_number = temp_array_mover^num }
+
+	for_loop_effect = {
+		end = end_number
+		value = temp
+
+		find_highest_in_array = {
+			array = temp_array_mover
+			value = var_tracker
+			index = temp_index_track
+		}
+
+		set_temp_variable = { nation_adder = nation_tracker^temp_index_track }
+		add_to_array = { global.UN_budget_contribution_tracker = nation_adder }
+
+		remove_from_temp_array = {
+			array = nation_tracker
+			index = temp_index_track
+		}
+
+		remove_from_temp_array = {
+			array = temp_array_mover
+			index = temp_index_track
+		}
+	}
+
+	clear_array = global.un_operating_budget_contributors
+
+	calculate_un_program_budgets = yes
+}
+
+calculate_base_program_contributions = {
+	if = {
+		limit = {
+			has_idea = un_aid_esco_member
+			has_country_flag = update_esco
+		}
+		set_temp_variable = { income_calc = display_income }
+		multiply_temp_variable = { income_calc = 0.01 }
+		set_variable = { united_nations_esco_mandatory_funding = income_calc }
+		set_variable = { united_nations_unescoe_funding = united_nations_esco_mandatory_funding }
+		clr_country_flag = update_esco
+	}else_if = {
+		limit = { NOT = { has_idea = un_aid_esco_member } }
+		set_variable = { united_nations_esco_mandatory_funding = 0 }
+		set_variable = { united_nations_unescoe_funding = 0 }
+	}
+
+	if = {
+		limit = {
+			has_idea = un_aid_ido_member
+			has_country_flag = update_ido
+		}
+		set_temp_variable = { income_calc = display_income }
+		multiply_temp_variable = { income_calc = 0.015 }
+		set_variable = { united_nations_ido_mandatory_funding = income_calc }
+		set_variable = { united_nations_unido_funding = united_nations_ido_mandatory_funding }
+		clr_country_flag = update_ido
+	}else_if = {
+		limit = { NOT = { has_idea = un_aid_ido_member } }
+		set_variable = { united_nations_ido_mandatory_funding = 0 }
+		set_variable = { united_nations_unido_funding = 0 }
+	}
+
+	if = {
+		limit = {
+			has_idea = un_aid_cdf_member
+			has_country_flag = update_cdf
+		}
+		set_temp_variable = { income_calc = display_income }
+		multiply_temp_variable = { income_calc = 0.025 }
+		set_variable = { united_nations_cdf_mandatory_funding = income_calc }
+		set_variable = { united_nations_uncdf_funding = united_nations_cdf_mandatory_funding }
+		clr_country_flag = update_cdf
+	}else_if = {
+		limit = { NOT = { has_idea = un_aid_cdf_member } }
+		set_variable = { united_nations_cdf_mandatory_funding = 0 }
+		set_variable = { united_nations_uncdf_funding = 0 }
+	}
+	update_optional_contributions = yes
+}
+
+update_optional_contributions = {
+	# United Nations Contribution Expenses
+	if = { limit = { has_dynamic_modifier = { modifier = united_nations_member } }
+		set_variable = { united_nations_aid_expenses = 0 }
+		if = {
+			limit = {
+				has_idea = un_aid_esco_member
+			}
+			set_variable = { united_nations_unescoe_funding = united_nations_esco_mandatory_funding }
+			add_to_variable = { united_nations_unescoe_funding = united_nations_esco_optional_funding }
+			add_to_variable = { united_nations_aid_expenses = united_nations_unescoe_funding }
+		}else = {
+			set_variable = { united_nations_esco_optional_funding = 0 }
+		}
+
+		if = {
+			limit = {
+				has_idea = un_aid_ido_member
+			}
+			set_variable = { united_nations_unido_funding = united_nations_ido_mandatory_funding }
+			add_to_variable = { united_nations_unido_funding = united_nations_ido_optional_funding }
+			add_to_variable = { united_nations_aid_expenses = united_nations_unido_funding }
+		}else = {
+			set_variable = { united_nations_ido_optional_funding = 0 }
+		}
+
+		if = {
+			limit = {
+				has_idea = un_aid_cdf_member
+			}
+			set_variable = { united_nations_uncdf_funding = united_nations_cdf_mandatory_funding }
+			add_to_variable = { united_nations_uncdf_funding = united_nations_cdf_optional_funding }
+			add_to_variable = { united_nations_aid_expenses = united_nations_uncdf_funding }
+		}else = {
+			set_variable = { united_nations_cdf_optional_funding = 0 }
+		}
+
+		if = {
+			limit = {
+				NOT = { check_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses } }
+			}
+			set_variable = { united_nations_expenses = united_nations_base_expenses }
+			add_to_variable = { united_nations_expenses = united_nations_aid_expenses }
+			set_variable = { united_nations_old_aid_expenses = united_nations_aid_expenses }
+		}
+	}
+}
+
+#Calculates how much money the program has after additional contributions are made
+calculate_un_program_budgets = {
+	set_variable = { global.unescoe_budget = 0 }
+	set_variable = { global.undio_budget = 0 }
+	set_variable = { global.uncdf_budget = 0 }
+
+	set_temp_variable = { base_budget_number = global.un_operating_budget_base }
+	divide_temp_variable = { base_budget_number = 3 }
+
+	add_to_variable = { global.unescoe_budget = base_budget_number }
+	add_to_variable = { global.undio_budget = base_budget_number }
+	add_to_variable = { global.uncdf_budget = base_budget_number }
+
+	#Pre-compute total: base budget + all country aid contributions
+	set_temp_variable = { total_un_programs = global.un_operating_budget_base }
+	add_to_temp_variable = { total_un_programs = global.total_aid_expenses_sum }
+
+	for_each_loop = {
+		array = global.UN_general_assembly
+		value = v
+
+		var:v = {
+			add_to_variable = { global.unescoe_budget = united_nations_unescoe_funding }
+			add_to_variable = { global.undio_budget = united_nations_unido_funding }
+			add_to_variable = { global.uncdf_budget = united_nations_uncdf_funding }
+			set_variable = { united_nations_aid_program_contribution_percent = united_nations_aid_expenses }
+			divide_variable = { united_nations_aid_program_contribution_percent = total_un_programs }
+			check_for_subsidy_expiration = yes
+		}
+	}
+
+	calcluate_program_distributions = yes
+}
+
+calcluate_program_distributions = {
+	set_temp_variable = { esco_political_budget = global.unescoe_budget }
+	set_temp_variable = { esco_research_budget = global.unescoe_budget }
+
+	multiply_temp_variable = { esco_political_budget = 0.35 }
+	multiply_temp_variable = { esco_research_budget = 0.65 }
+
+	divide_temp_variable = { esco_political_budget = global.unesco_recipients^num }
+	divide_temp_variable = { esco_research_budget = global.unesco_recipients^num }
+
+	for_each_loop = {
+		array = global.unesco_recipients
+		value = v
+
+		var:v = {
+			set_variable = { un_esco_political_power_var = esco_political_budget }
+			set_variable = { un_esco_research_speed_var = esco_research_budget }
+		}
+	}
+
+	set_temp_variable = { construction_speed_buffs = global.undio_budget }
+	set_temp_variable = { factory_lease_amounts = global.undio_budget }
+
+	multiply_temp_variable = { construction_speed_buffs = 0.25 }
+	multiply_temp_variable = { factory_lease_amounts = 0.75 }
+
+	divide_temp_variable = { construction_speed_buffs = global.unido_recipients^num }
+	divide_temp_variable = { factory_lease_amounts = global.unido_recipients^num }
+
+	divide_temp_variable = { factory_lease_amounts = 0.14 }
+	round_temp_variable = factory_lease_amounts
+
+	set_temp_variable = { un_ido_building_count = factory_lease_amounts }
+
+	for_each_loop = {
+		array = global.unido_recipients
+		value = v
+
+		var:v = {
+			set_variable = { un_ido_current_building_count = un_ido_building_count }
+			set_variable = { un_ido_construction_speed_var = construction_speed_buffs }
+			if = {
+				limit = {
+					NOT = { check_variable = { un_ido_old_building_count = un_ido_building_count } }
+				}
+
+				set_temp_variable = { building_holder = un_ido_building_count }
+				subtract_from_temp_variable = { building_holder = un_ido_old_building_count }
+				add_offsite_building = { type = industrial_complex level = building_holder }
+				set_variable = { un_ido_old_building_count = un_ido_building_count }
+			}
+		}
+	}
+
+	set_temp_variable = { prod_var = global.uncdf_budget }
+	set_temp_variable = { cost_var = global.uncdf_budget }
+
+	multiply_temp_variable = { prod_var = 0.3 }
+	multiply_temp_variable = { cost_var = 0.35 }
+
+	divide_temp_variable = { prod_var = global.uncdf_recipients^num }
+	divide_temp_variable = { cost_var = global.uncdf_recipients^num }
+
+	multiply_temp_variable = { cost_var = -1 }
+
+	for_each_loop = {
+		array = global.uncdf_recipients
+		value = v
+
+		var:v = {
+			set_variable = { un_cdf_productivity_var = prod_var }
+			set_variable = { un_cdf_construction_cost_var = cost_var }
+		}
+	}
+	set_variable = { global.full_aid_budget_calculator = global.uncdf_budget }
+	add_to_variable = { global.full_aid_budget_calculator = global.undio_budget }
+	add_to_variable = { global.full_aid_budget_calculator = global.unescoe_budget }
+
+	for_each_loop = {
+		array = global.UN_general_assembly
+		value = v
+
+		var:v = {
+			calculate_final_un_benefits = yes
+		}
+	}
+
+	sort_un_aid_contributor_arrays = yes
+	missile_ui_update = yes
+}
+
+sort_un_aid_contributor_arrays = {
+	#Sort ESCO contributors by united_nations_unescoe_funding (highest first)
+	for_each_loop = {
+		array = global.un_aid_esco_contributor
+		value = v
+
+		var:v = {
+			add_to_temp_array = { esco_sort_values = united_nations_unescoe_funding }
+			add_to_temp_array = { esco_sort_nations = THIS }
+		}
+	}
+
+	clear_array = global.un_aid_esco_contributor
+	set_temp_variable = { esco_sort_end = esco_sort_values^num }
+	for_loop_effect = {
+		end = esco_sort_end
+
+		find_highest_in_array = {
+			array = esco_sort_values
+			index = esco_sort_idx
+		}
+
+		set_temp_variable = { esco_sort_nation = esco_sort_nations^esco_sort_idx }
+		add_to_array = { global.un_aid_esco_contributor = esco_sort_nation }
+
+		remove_from_temp_array = { array = esco_sort_nations index = esco_sort_idx }
+		remove_from_temp_array = { array = esco_sort_values index = esco_sort_idx }
+	}
+
+	#Sort IDO contributors by united_nations_unido_funding (highest first)
+	for_each_loop = {
+		array = global.un_aid_ido_contributor
+		value = v
+
+		var:v = {
+			add_to_temp_array = { ido_sort_values = united_nations_unido_funding }
+			add_to_temp_array = { ido_sort_nations = THIS }
+		}
+	}
+
+	clear_array = global.un_aid_ido_contributor
+	set_temp_variable = { ido_sort_end = ido_sort_values^num }
+	for_loop_effect = {
+		end = ido_sort_end
+
+		find_highest_in_array = {
+			array = ido_sort_values
+			index = ido_sort_idx
+		}
+
+		set_temp_variable = { ido_sort_nation = ido_sort_nations^ido_sort_idx }
+		add_to_array = { global.un_aid_ido_contributor = ido_sort_nation }
+
+		remove_from_temp_array = { array = ido_sort_nations index = ido_sort_idx }
+		remove_from_temp_array = { array = ido_sort_values index = ido_sort_idx }
+	}
+
+	#Sort CDF contributors by united_nations_uncdf_funding (highest first)
+	for_each_loop = {
+		array = global.un_aid_cdf_contributor
+		value = v
+
+		var:v = {
+			add_to_temp_array = { cdf_sort_values = united_nations_uncdf_funding }
+			add_to_temp_array = { cdf_sort_nations = THIS }
+		}
+	}
+
+	clear_array = global.un_aid_cdf_contributor
+	set_temp_variable = { cdf_sort_end = cdf_sort_values^num }
+	for_loop_effect = {
+		end = cdf_sort_end
+
+		find_highest_in_array = {
+			array = cdf_sort_values
+			index = cdf_sort_idx
+		}
+
+		set_temp_variable = { cdf_sort_nation = cdf_sort_nations^cdf_sort_idx }
+		add_to_array = { global.un_aid_cdf_contributor = cdf_sort_nation }
+
+		remove_from_temp_array = { array = cdf_sort_nations index = cdf_sort_idx }
+		remove_from_temp_array = { array = cdf_sort_values index = cdf_sort_idx }
 	}
 }
