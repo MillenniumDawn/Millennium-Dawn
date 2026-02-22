@@ -306,6 +306,13 @@ country_event = {
 	option = {
 		name = MD_raid.1.c
 		log = "[GetDateText]: [This.GetName]: MD_raid.1.c executed"
+		trigger = {
+			OR = {
+				NOT = { has_idea = Non_State_Actor }
+				NOT = { original_tag = ISI }
+				salafist_caliphate_are_in_power = no
+			}
+		}
 		if = {
 			limit = {
 				has_country_flag = conceded_to@FROM
@@ -603,44 +610,9 @@ country_event = {
 			}
 		}
 
-		FROM = {
-			if = {
-				limit = {
-					NOT = {
-						has_country_flag = refused_payment_got_sanctioned_no_raids
-					}
-				}
-				set_country_flag = {
-					flag = refused_payment_got_sanctioned_no_raids
-					days = 365
-					value = 1
-				}
-				set_variable = { raid_international_trade_sanctions = -0.005 }
-				set_variable = { raid_international_research_sanctions = -0.001 }
-				add_dynamic_modifier = {
-					modifier = raiding_economic_sanctions
-				}
-			}
-			if = { # Sanction Time Increases
-				limit = {
-					has_country_flag = refused_payment_got_sanctioned_no_raids
-				}
-				clr_country_flag = refused_payment_got_sanctioned_no_raids
-				set_country_flag = {
-					flag = refused_payment_got_sanctioned_no_raids
-					days = 450
-					value = 1
-				}
-			}
-			else = {
-				add_to_variable = { raid_international_trade_sanctions = -0.005 }
-				add_to_variable = { raid_international_research_sanctions = -0.001 }
-			}
-
-			country_event = {
-				id = MD_raid.13
-			}
-		}
+		set_temp_variable = { ga_new_vote_type = 7 }
+		set_temp_variable = { ga_new_vote_nation = FROM }
+		update_ga_vote = yes
 
 		set_country_flag = {
 			flag = is_raid_sanctioning@FROM
@@ -934,139 +906,6 @@ country_event = {
 		}
 	}
 }
-
-#Event to host nation after international sanctions are requested
-country_event = {
-	id = MD_raid.13
-	title = MD_raid.13.t
-	desc = MD_raid.13.d
-	picture = GFX_raid_international_sanctions_b
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: MD_raid.13 executed"
-		hidden_effect = {
-			every_country = {
-				limit = {
-					NOT = {
-						original_tag = FROM
-						original_tag = FROM.FROM
-					}
-				}
-				country_event = {
-					id = MD_raid.14
-				}
-			}
-		}
-	}
-
-	option = {
-		name = MD_raid.13.a
-		log = "[GetDateText]: [This.GetName]: MD_raid.13.a executed"
-		custom_effect_tooltip = MD_sanctioned_TT
-	}
-}
-
-#Sanctions event to all nations that lets them decide if they want to sanction the agressor nation or not
-country_event = {
-	id = MD_raid.14
-	title = MD_raid.14.t
-	desc = MD_raid.14.d
-	picture = GFX_raid_international_sanctions
-	is_triggered_only = yes
-
-	option = {
-		name = MD_raid.14.a
-		log = "[GetDateText]: [This.GetName]: MD_raid.14.a executed"
-
-		trigger = {
-			NOT = {
-				has_country_flag = is_raid_sanctioning@FROM
-			}
-		}
-
-		FROM = {
-			add_to_variable = { raid_international_trade_sanctions = -0.005 }
-			add_to_variable = { raid_international_research_sanctions = -0.001 }
-		}
-
-		set_country_flag = {
-			flag = is_raid_sanctioning@FROM
-			days = 365
-			value = 1
-		}
-
-		ai_chance = {
-			base = 20
-			modifier = {
-				factor = 10
-				is_in_array = {
-					array = potential_and_current_enemies
-					value = FROM
-				}
-			}
-			modifier = {
-				factor = 2
-				has_opinion = {
-					target = FROM
-					value < 0
-				}
-			}
-			modifier = {
-				factor = 5
-				has_opinion = {
-					target = FROM
-					value < -100
-				}
-			}
-			modifier = {
-				factor = 10
-				is_in_array = {
-					array = allies
-					value = FROM.FROM
-				}
-			}
-			modifier = {
-				factor = 0
-				is_in_faction_with = FROM
-			}
-			modifier = {
-				factor = 0
-				is_in_array = {
-					array = allies
-					value = FROM
-				}
-			}
-			modifier = {
-				factor = 0
-				has_opinion = {
-					target = FROM
-					value > 10
-				}
-			}
-			modifier = {
-				factor = 0
-				FROM = {
-					has_idea = superpower
-				}
-				OR = {
-					has_idea = regional_power
-					has_idea = minor_power
-					has_idea = non_power
-				}
-			}
-		}
-	}
-
-	option = {
-		name = MD_raid.14.b
-		log = "[GetDateText]: [This.GetName]: MD_raid.14.b executed"
-
-		ai_chance = {
-			base = 40
-		}
-	}
-}
-
 
 country_event = { # I will bite your fucking ear off if you touch this
 	id = MD_raid.15 #*Touch* - Doolittle
