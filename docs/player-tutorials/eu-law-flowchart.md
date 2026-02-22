@@ -6,4 +6,4 @@ description: "Flowchart for all of the European Union Laws available in the Euro
 
 Flowchart for all of the European Union Laws available in the European Parliament.
 
-![image]({{ '/uploads/European_Union_Diagram.drawio_6_-temp.png' | relative_url }})
+![image]({{ '/assets/images/tutorials/eu-law-flowchart.png' | relative_url }})
