@@ -766,3 +766,177 @@ update_ALG_military_cost = {
 	custom_effect_tooltip = ALG_military_cost_tt
 	add_to_variable = { ALG_military_cost = ALG_military_cost_change }
 }
+ALG_update_ethnic_modifiers = {
+	hidden_effect = {
+		remove_ideas = ALG_arab_content
+		remove_ideas = ALG_arab_discontent
+		remove_ideas = ALG_arab_unrest
+		remove_ideas = ALG_kabyle_content
+		remove_ideas = ALG_kabyle_discontent
+		remove_ideas = ALG_kabyle_unrest
+		remove_ideas = ALG_chaoui_content
+		remove_ideas = ALG_chaoui_discontent
+		remove_ideas = ALG_tuareg_content
+		remove_ideas = ALG_tuareg_discontent
+		remove_ideas = ALG_tuareg_unrest
+		remove_ideas = ALG_mozabite_content
+		remove_ideas = ALG_mozabite_discontent
+		remove_ideas = ALG_ethnic_harmony
+		remove_ideas = ALG_ethnic_tension
+	}
+	
+	# ARAB
+	if = {
+		limit = { check_variable = { arab_satisfaction > 69 } }
+		add_ideas = ALG_arab_content
+	}
+	else_if = {
+		limit = { check_variable = { arab_satisfaction < 25 } }
+		add_ideas = ALG_arab_unrest
+	}
+	else_if = {
+		limit = { check_variable = { arab_satisfaction < 40 } }
+		add_ideas = ALG_arab_discontent
+	}
+	
+	# KABYLE
+	if = {
+		limit = { check_variable = { kabyle_satisfaction > 69 } }
+		add_ideas = ALG_kabyle_content
+	}
+	else_if = {
+		limit = { check_variable = { kabyle_satisfaction < 25 } }
+		add_ideas = ALG_kabyle_unrest
+	}
+	else_if = {
+		limit = { check_variable = { kabyle_satisfaction < 40 } }
+		add_ideas = ALG_kabyle_discontent
+	}
+	
+	# CHAOUI
+	if = {
+		limit = { check_variable = { chaoui_satisfaction > 69 } }
+		add_ideas = ALG_chaoui_content
+	}
+	else_if = {
+		limit = { check_variable = { chaoui_satisfaction < 40 } }
+		add_ideas = ALG_chaoui_discontent
+	}
+	
+	# TUAREG
+	if = {
+		limit = { check_variable = { tuareg_satisfaction > 69 } }
+		add_ideas = ALG_tuareg_content
+	}
+	else_if = {
+		limit = { check_variable = { tuareg_satisfaction < 25 } }
+		add_ideas = ALG_tuareg_unrest
+	}
+	else_if = {
+		limit = { check_variable = { tuareg_satisfaction < 40 } }
+		add_ideas = ALG_tuareg_discontent
+	}
+	
+	# MOZABITE
+	if = {
+		limit = { check_variable = { mozabite_satisfaction > 69 } }
+		add_ideas = ALG_mozabite_content
+	}
+	else_if = {
+		limit = { check_variable = { mozabite_satisfaction < 40 } }
+		add_ideas = ALG_mozabite_discontent
+	}
+	
+	# OVERALL HARMONY/TENSION
+	if = {
+		limit = {
+			check_variable = { arab_satisfaction > 59 }
+			check_variable = { kabyle_satisfaction > 59 }
+			check_variable = { chaoui_satisfaction > 59 }
+			check_variable = { tuareg_satisfaction > 59 }
+			check_variable = { mozabite_satisfaction > 59 }
+		}
+		add_ideas = ALG_ethnic_harmony
+	}
+	else_if = {
+		limit = {
+			OR = {
+				check_variable = { arab_satisfaction < 30 }
+				check_variable = { kabyle_satisfaction < 30 }
+				check_variable = { tuareg_satisfaction < 30 }
+			}
+		}
+		add_ideas = ALG_ethnic_tension
+	}
+}
+
+ALG_monthly_ethnic_decay = {
+	# Arabs - slow decay (majority, more stable)
+	if = {
+		limit = { 
+			check_variable = { ALG_arab_favor_counter < 1 }
+			check_variable = { arab_satisfaction > 10 }
+		}
+		subtract_from_variable = { arab_satisfaction = 1 }
+	}
+	
+	# Kabyle - faster decay (historically very sensitive, Black Spring legacy)
+	if = {
+		limit = { 
+			check_variable = { ALG_kabyle_favor_counter < 1 }
+			check_variable = { kabyle_satisfaction > 10 }
+		}
+		subtract_from_variable = { kabyle_satisfaction = 2 }
+	}
+	
+	# Chaoui - medium decay
+	if = {
+		limit = { 
+			check_variable = { ALG_chaoui_favor_counter < 1 }
+			check_variable = { chaoui_satisfaction > 10 }
+		}
+		subtract_from_variable = { chaoui_satisfaction = 1 }
+	}
+	
+	# Tuareg - faster decay (isolated Saharan communities, regional instability)
+	if = {
+		limit = { 
+			check_variable = { ALG_tuareg_favor_counter < 1 }
+			check_variable = { tuareg_satisfaction > 10 }
+		}
+		subtract_from_variable = { tuareg_satisfaction = 2 }
+	}
+	
+	# Mozabite - medium decay
+	if = {
+		limit = { 
+			check_variable = { ALG_mozabite_favor_counter < 1 }
+			check_variable = { mozabite_satisfaction > 10 }
+		}
+		subtract_from_variable = { mozabite_satisfaction = 1 }
+	}
+	
+	# Reset counters
+	set_variable = { ALG_arab_favor_counter = 0 }
+	set_variable = { ALG_kabyle_favor_counter = 0 }
+	set_variable = { ALG_chaoui_favor_counter = 0 }
+	set_variable = { ALG_tuareg_favor_counter = 0 }
+	set_variable = { ALG_mozabite_favor_counter = 0 }
+	
+	# Clamp values
+	clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+	clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+	clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+	clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+	clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+	
+	ALG_update_ethnic_modifiers = yes
+}
+
+ALG_init_favor_counters = {
+	set_variable = { ALG_arab_favor_counter = 0 }
+	set_variable = { ALG_kabyle_favor_counter = 0 }
+	set_variable = { ALG_chaoui_favor_counter = 0 }
+	set_variable = { ALG_tuareg_favor_counter = 0 }
+	set_variable = { ALG_mozabite_favor_counter = 0 }
+}

@@ -1133,6 +1133,29 @@ ALG_reconciliation_path_category = {
 	}
 }
 ALG_ethnic_data_category = {
+	ALG_init_ethnic_data = {
+		icon = GFX_decisions_religion_government_button
+		allowed = {
+			original_tag = ALG
+		}
+
+		visible = {
+			has_country_flag = ALG_ethnic_question_raised
+			NOT = { has_country_flag = ALG_ethnic_data_initialized }
+		}
+		
+		available = {
+			is_subject = no
+		}
+
+		complete_effect = {
+			country_event = { id = ALG_ethnic_data.1 }
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
 	ALG_show_ethnic_data = {
 		icon = GFX_decisions_religion_government_button
 
@@ -1147,43 +1170,277 @@ ALG_ethnic_data_category = {
 		days_remove = 0
 
 		complete_effect = {
-			custom_effect_tooltip = ALG_ethnic_data_tooltip
-			custom_effect_tooltip = ALG_ethnic_arab_display
-			custom_effect_tooltip = ALG_ethnic_kabyle_display
-			custom_effect_tooltip = ALG_ethnic_chaoui_display
-			custom_effect_tooltip = ALG_ethnic_tuareg_display
-			custom_effect_tooltip = ALG_ethnic_other_display
-
-			hidden_effect = {
-				set_variable = { ALG_ethnic_arab_display = ALG_ethnic_arab }
-				set_variable = { ALG_ethnic_kabyle_display = ALG_ethnic_kabyle }
-				set_variable = { ALG_ethnic_chaoui_display = ALG_ethnic_chaoui }
-				set_variable = { ALG_ethnic_tuareg_display = ALG_ethnic_tuareg }
-				set_variable = { ALG_ethnic_other_display = ALG_ethnic_other }
-			}
+			custom_effect_tooltip = ALG_ethnic_overview_full_tt
 		}
 
 		ai_will_do = {
 			factor = 0
 		}
 	}
-
-	ALG_init_ethnic_data = {
-		icon = GFX_decisions_religion_government_button
-		allowed = {
-			original_tag = ALG
-		}
-
+	ALG_favor_arab_policies = {
+		icon = GFX_decision_generic_political_discourse
+		
 		visible = {
-			NOT = { has_country_flag = ALG_ethnic_data_initialized }
+			has_country_flag = ALG_ethnic_data_initialized
 		}
-
+		
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = ALG_recent_ethnic_policy }
+		}
+		
+		cost = 50
+		days_remove = 30
+		
+		modifier = {
+			political_power_gain = 0.05
+		}
+		
 		complete_effect = {
-			country_event = { id = ALG_ethnic_data.1 }
+			custom_effect_tooltip = ALG_favor_arab_tt
+			hidden_effect = {
+				add_to_variable = { arab_satisfaction = 10 }
+				add_to_variable = { ALG_arab_favor_counter = 1 }
+				subtract_from_variable = { kabyle_satisfaction = 5 }
+				subtract_from_variable = { chaoui_satisfaction = 3 }
+				subtract_from_variable = { tuareg_satisfaction = 3 }
+				subtract_from_variable = { mozabite_satisfaction = 3 }
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+				set_country_flag = { flag = ALG_recent_ethnic_policy days = 60 value = 1 }
+			}
 		}
-
+		
+		remove_effect = {
+			ALG_update_ethnic_modifiers = yes
+		}
+		
 		ai_will_do = {
-			factor = 0
+			factor = 0.2
+			modifier = {
+				factor = 2
+				check_variable = { arab_satisfaction < 40 }
+			}
+		}
+	}
+	ALG_favor_kabyle_policies = {
+		icon = GFX_decision_generic_nationalism
+		
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+		}
+		
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = ALG_recent_ethnic_policy }
+		}
+		
+		cost = 50
+		days_remove = 30
+		
+		modifier = {
+			research_speed_factor = 0.02
+		}
+		
+		complete_effect = {
+			custom_effect_tooltip = ALG_favor_kabyle_tt
+			hidden_effect = {
+				add_to_variable = { kabyle_satisfaction = 10 }
+				add_to_variable = { ALG_kabyle_favor_counter = 1 }
+				subtract_from_variable = { arab_satisfaction = 5 }
+				subtract_from_variable = { chaoui_satisfaction = 2 }
+				clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+				set_country_flag = { flag = ALG_recent_ethnic_policy days = 60 value = 1 }
+			}
+		}
+		
+		remove_effect = {
+			ALG_update_ethnic_modifiers = yes
+		}
+		
+		ai_will_do = {
+			factor = 0.2
+			modifier = {
+				factor = 2
+				check_variable = { kabyle_satisfaction < 40 }
+			}
+		}
+	}
+	ALG_favor_chaoui_policies = {
+		icon = GFX_decision_generic_construction
+		
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+		}
+		
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = ALG_recent_ethnic_policy }
+		}
+		
+		cost = 50
+		days_remove = 30
+		
+		modifier = {
+			production_speed_buildings_factor = 0.03
+		}
+		
+		complete_effect = {
+			custom_effect_tooltip = ALG_favor_chaoui_tt
+			hidden_effect = {
+				add_to_variable = { chaoui_satisfaction = 10 }
+				add_to_variable = { ALG_chaoui_favor_counter = 1 }
+				subtract_from_variable = { arab_satisfaction = 3 }
+				subtract_from_variable = { kabyle_satisfaction = 2 }
+				clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+				set_country_flag = { flag = ALG_recent_ethnic_policy days = 60 value = 1 }
+			}
+		}
+		
+		remove_effect = {
+			ALG_update_ethnic_modifiers = yes
+		}
+		
+		ai_will_do = {
+			factor = 0.2
+			modifier = {
+				factor = 2
+				check_variable = { chaoui_satisfaction < 40 }
+			}
+		}
+	}
+	ALG_favor_tuareg_policies = {
+		icon = GFX_decision_generic_military
+		
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+		}
+		
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = ALG_recent_ethnic_policy }
+		}
+		
+		cost = 50
+		days_remove = 30
+		
+		modifier = {
+			army_org_factor = 0.02
+		}
+		
+		complete_effect = {
+			custom_effect_tooltip = ALG_favor_tuareg_tt
+			hidden_effect = {
+				add_to_variable = { tuareg_satisfaction = 10 }
+				add_to_variable = { ALG_tuareg_favor_counter = 1 }
+				subtract_from_variable = { arab_satisfaction = 3 }
+				clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				set_country_flag = { flag = ALG_recent_ethnic_policy days = 60 value = 1 }
+			}
+		}
+		
+		remove_effect = {
+			ALG_update_ethnic_modifiers = yes
+		}
+		
+		ai_will_do = {
+			factor = 0.2
+			modifier = {
+				factor = 2
+				check_variable = { tuareg_satisfaction < 40 }
+			}
+		}
+	}
+	ALG_favor_mozabite_policies = {
+		icon = GFX_decision_generic_industry
+		
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+		}
+		
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = ALG_recent_ethnic_policy }
+		}
+		
+		cost = 50
+		days_remove = 30
+		
+		modifier = {
+			consumer_goods_factor = -0.02
+		}
+		
+		complete_effect = {
+			custom_effect_tooltip = ALG_favor_mozabite_tt
+			hidden_effect = {
+				add_to_variable = { mozabite_satisfaction = 10 }
+				add_to_variable = { ALG_mozabite_favor_counter = 1 }
+				subtract_from_variable = { arab_satisfaction = 2 }
+				clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				set_country_flag = { flag = ALG_recent_ethnic_policy days = 60 value = 1 }
+			}
+		}
+		
+		remove_effect = {
+			ALG_update_ethnic_modifiers = yes
+		}
+		
+		ai_will_do = {
+			factor = 0.2
+			modifier = {
+				factor = 2
+				check_variable = { mozabite_satisfaction < 40 }
+			}
+		}
+	}
+	ALG_national_unity_initiative = {
+		icon = GFX_decision_generic_form_nation
+		
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+		}
+		
+		available = {
+			has_political_power > 100
+			NOT = { has_country_flag = ALG_recent_unity_policy }
+		}
+		
+		cost = 100
+		days_remove = 90
+		
+		complete_effect = {
+			custom_effect_tooltip = ALG_unity_policy_tt
+			hidden_effect = {
+				add_to_variable = { arab_satisfaction = 5 }
+				add_to_variable = { kabyle_satisfaction = 5 }
+				add_to_variable = { chaoui_satisfaction = 5 }
+				add_to_variable = { tuareg_satisfaction = 5 }
+				add_to_variable = { mozabite_satisfaction = 5 }
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+				set_country_flag = { flag = ALG_recent_unity_policy days = 180 value = 1 }
+			}
+		}
+		
+		remove_effect = {
+			ALG_update_ethnic_modifiers = yes
+			add_stability = 0.03
+		}
+		
+		ai_will_do = {
+			factor = 0.5
 		}
 	}
 	ALG_conduct_national_census = {
@@ -1193,7 +1450,7 @@ ALG_ethnic_data_category = {
 
 		available = {
 			has_country_flag = ALG_ethnic_data_initialized
-			has_political_power > 100
+			has_political_power > 75
 		}
 
 		visible = {
@@ -1201,34 +1458,145 @@ ALG_ethnic_data_category = {
 			NOT = { has_country_flag = ALG_census_conducted }
 		}
 
-		cost = 100
+		cost = 75
 		days_remove = 60
 		fire_only_once = yes
 
 		complete_effect = {
 			custom_effect_tooltip = ALG_census_tt
-
-			add_political_power = -50
-			set_country_flag = ALG_census_conducted
-
-			# Slight variable adjustments to simulate demographic shift discovery
-			random_list = {
-				40 = {
-					add_to_variable = { var = ALG_ethnic_kabyle value = 1 }
-					subtract_from_variable = { var = ALG_ethnic_arab value = 1 }
+			hidden_effect = {
+				set_country_flag = ALG_census_conducted
+				random_list = {
+					30 = {
+						add_to_variable = { ALG_ethnic_kabyle = 1 }
+						subtract_from_variable = { ALG_ethnic_arab = 1 }
+						add_to_variable = { kabyle_satisfaction = 5 }
+					}
+					30 = {
+						add_to_variable = { ALG_ethnic_chaoui = 1 }
+						subtract_from_variable = { ALG_ethnic_other = 0.5 }
+						subtract_from_variable = { ALG_ethnic_arab = 0.5 }
+						add_to_variable = { chaoui_satisfaction = 5 }
+					}
+					20 = {
+						add_to_variable = { ALG_ethnic_tuareg = 0.5 }
+						subtract_from_variable = { ALG_ethnic_other = 0.5 }
+						add_to_variable = { tuareg_satisfaction = 5 }
+					}
+					20 = { }
 				}
-				40 = {
-					add_to_variable = { var = ALG_ethnic_arab value = 1 }
-					subtract_from_variable = { var = ALG_ethnic_other value = 1 }
-				}
-				20 = { }
+				country_event = { id = ALG_ethnic_data.2 days = 5 }
 			}
-
-			# Unlock ethnic-focused policies
-			country_event = { id = ALG_ethnic_data.2 days = 5 }
 		}
 
-		ai_will_do = { factor = 0.3 }
+		ai_will_do = { factor = 0.5 }
+	}
+	ALG_suppress_ethnic_unrest = {
+		icon = GFX_decision_generic_ignite_civil_war
+		
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+			OR = {
+				check_variable = { arab_satisfaction < 25 }
+				check_variable = { kabyle_satisfaction < 25 }
+				check_variable = { tuareg_satisfaction < 25 }
+				check_variable = { chaoui_satisfaction < 25 }
+				check_variable = { mozabite_satisfaction < 25 }
+			}
+		}
+		
+		available = {
+			has_political_power > 75
+			NOT = { has_country_flag = ALG_recent_suppression }
+		}
+		
+		cost = 75
+		days_remove = 30
+		
+		complete_effect = {
+			custom_effect_tooltip = ALG_suppress_unrest_tt
+			add_stability = -0.05
+			add_war_support = -0.03
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { arab_satisfaction < 25 } }
+					add_to_variable = { arab_satisfaction = 15 }
+				}
+				if = {
+					limit = { check_variable = { kabyle_satisfaction < 25 } }
+					add_to_variable = { kabyle_satisfaction = 15 }
+				}
+				if = {
+					limit = { check_variable = { tuareg_satisfaction < 25 } }
+					add_to_variable = { tuareg_satisfaction = 15 }
+				}
+				if = {
+					limit = { check_variable = { chaoui_satisfaction < 25 } }
+					add_to_variable = { chaoui_satisfaction = 15 }
+				}
+				if = {
+					limit = { check_variable = { mozabite_satisfaction < 25 } }
+					add_to_variable = { mozabite_satisfaction = 15 }
+				}
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+				set_country_flag = { flag = ALG_recent_suppression days = 120 value = 1 }
+			}
+		}
+		
+		remove_effect = {
+			ALG_update_ethnic_modifiers = yes
+		}
+		
+		ai_will_do = {
+			factor = 0.8
+		}
+	}
+	ALG_recognize_tamazight_1 = {
+		icon = GFX_decision_generic_nationalism
+		
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+			NOT = { has_country_flag = ALG_tamazight_recognized }
+		}
+		
+		available = {
+			has_political_power > 150
+			date > 2002.1.1
+		}
+		
+		cost = 150
+		fire_only_once = yes
+		
+		complete_effect = {
+			custom_effect_tooltip = ALG_recognize_tamazight_tt
+			add_stability = 0.05
+			hidden_effect = {
+				add_to_variable = { kabyle_satisfaction = 20 }
+				add_to_variable = { chaoui_satisfaction = 15 }
+				add_to_variable = { tuareg_satisfaction = 10 }
+				add_to_variable = { mozabite_satisfaction = 10 }
+				subtract_from_variable = { arab_satisfaction = 10 }
+				clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				set_country_flag = ALG_tamazight_recognized
+				ALG_update_ethnic_modifiers = yes
+			}
+		}
+		
+		ai_will_do = {
+			factor = 0.5
+			modifier = {
+				factor = 2
+				check_variable = { kabyle_satisfaction < 30 }
+			}
+		}
 	}
 }
 ALG_political_struggle = {

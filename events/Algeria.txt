@@ -184,41 +184,6 @@ country_event = {
 	}
 }
 
-
-country_event = {
-	id = ALG_ethnic_data.2
-	title = ALG_ethnic_data.2.t
-	desc = ALG_ethnic_data.2.d
-	picture = GFX_alg_hirak
-
-	is_triggered_only = yes
-
-	option = {  # Emphasize Arab-Islamic identity
-		name = ALG_ethnic_data.2.a
-		add_popularity = {
-			ideology = nationalist
-			popularity = 0.03
-		}
-		385 = { add_resistance = 5 }  # Kabylia unhappy
-		add_stability = 0.02
-	}
-
-	option = {  # Promote multicultural identity
-		name = ALG_ethnic_data.2.b
-		add_stability = 0.03
-		add_popularity = {
-			ideology = nationalist
-			popularity = -0.02
-		}
-		385 = { add_resistance = -5 }
-	}
-
-	option = {  # Remain neutral
-		name = ALG_ethnic_data.2.c
-		add_political_power = 25
-	}
-}
-
 # Protest event after arresting opponents
 country_event = {
 	id = alg_crackdown.1
@@ -1552,11 +1517,17 @@ country_event = {
 		if = {
 			limit = { NOT = { has_opinion_modifier = { target = MOR modifier = border_conflict_started } } }
 			add_opinion_modifier = { target = MOR modifier = border_conflict_started }
+			# choose the "court great powers" approach: costs PP, sets approach flag
+			add_political_power = -50
+			set_variable = { algeria_casablanca_approach = 1 }
+			hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_court_great_powers hours = 6 } }
 		}
-		# choose the "court great powers" approach: costs PP, sets approach flag
-		add_political_power = -50
-		set_variable = { algeria_casablanca_approach = 1 }
-		hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_court_great_powers hours = 6 } }
+		else = {
+			# choose the "court great powers" approach: costs PP, sets approach flag
+			add_political_power = -50
+			set_variable = { algeria_casablanca_approach = 1 }
+			hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_court_great_powers hours = 6 } }
+		}
 	}
 
 	option = {
@@ -2284,7 +2255,7 @@ country_event = {
 	desc = ALG_black_spring.1.d
 	picture = GFX_indians_riot_thing
 	fire_only_once = yes
-	mean_time_to_happen = { days = 1 }
+	mean_time_to_happen = { days = 4 }
 
 	trigger = {
 		tag = ALG
@@ -2292,7 +2263,18 @@ country_event = {
 		has_idea = ALG_kabylia_unrest
 	}
 
-	immediate = { add_ideas = ALG_kabylia_unrest }
+	immediate = { 
+		add_ideas = ALG_kabylia_unrest
+		# If ethnic system is active, affect satisfaction
+		if = {
+			limit = { has_country_flag = ALG_ethnic_data_initialized }
+			subtract_from_variable = { kabyle_satisfaction = 15 }
+			subtract_from_variable = { chaoui_satisfaction = 5 }
+			clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+			ALG_update_ethnic_modifiers = yes
+		}
+	}
 
 	option = {
 		name = ALG_black_spring.1.a
@@ -2535,6 +2517,39 @@ country_event = {
 		ai_chance = {
 			base = 1
 		}
+	}
+}
+country_event = {
+	id = Algeria_events.5
+	title = Algeria_events.5.t
+	desc = Algeria_events.5.desc
+
+	picture = GFX_illegal_poaching
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Algeria_events.5.a executed"
+		name = Algeria_events.5.a
+		set_temp_variable = { poachers_killed = no_of_poachers }
+		multiply_temp_variable = { poachers_killed = 0.5 }
+		round_temp_variable = poachers_killed
+		subtract_from_variable = { no_of_poachers = poachers_killed }
+		custom_effect_tooltip = ALG_eliminate_half_of_poachers
+	}
+}
+country_event = {
+	id = Algeria_events.6
+	title = Algeria_events.6.t
+	desc = Algeria_events.6.desc
+
+	picture = GFX_illegal_poaching
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: Algeria_events.6.a executed"
+		name = Algeria_events.6.a
 	}
 }
 country_event = {
@@ -4990,7 +5005,6 @@ country_event = {
 		has_completed_focus = ALG_east_west_highway
 	}
 
-	mean_time_to_happen = { days = 30 }
 
 	option = {
 		name = algeria_proj.1.a  # Approve the Highway Project
@@ -5046,7 +5060,6 @@ country_event = {
 		has_completed_focus = ALG_north_south_highway
 	}
 
-	mean_time_to_happen = { days = 30 }
 
 	option = {
 		name = algeria_proj.2.a  # Launch the North–South Highway
@@ -5107,7 +5120,6 @@ country_event = {
 		has_completed_focus = ALG_aadl_housing_projects
 	}
 
-	mean_time_to_happen = { days = 45 }
 
 	option = {
 		name = algeria_proj.3.a  # Launch AADL Housing Program
@@ -5456,7 +5468,6 @@ country_event = {
 		has_completed_focus = ALG_auto_scandal
 	}
 
-	mean_time_to_happen = { days = 5 }
 
 	option = {
 		name = alg.1000.a
@@ -5486,7 +5497,6 @@ country_event = {
 		NOT = { has_country_flag = alg_political_struggle_unlocked }
 	}
 
-	mean_time_to_happen = { days = 3 }
 	option = {
 		name = "alg_political_struggle_event_option"
 		set_country_flag = alg_political_struggle_unlocked
@@ -6996,28 +7006,287 @@ country_event = {
 		}
 	}
 }
+# Auto-trigger event - Post Civil War / Pre-Black Spring context
+country_event = {
+	id = ALG_ethnic_data.0
+	title = ALG_ethnic_data.0.t
+	desc = ALG_ethnic_data.0.d
+	picture = GFX_alg_flag
+
+
+	trigger = {
+		original_tag = ALG
+		is_subject = no
+		NOT = { has_country_flag = ALG_ethnic_question_raised }
+		NOT = { has_country_flag = ALG_ethnic_data_initialized }
+	}
+	
+	mean_time_to_happen = {
+		days = 180
+		modifier = {
+			factor = 0.5
+			date > 2001.1.1
+		}
+		modifier = {
+			factor = 0.3
+			date > 2001.4.1  # Black Spring approaching
+		}
+		modifier = {
+			factor = 0.5
+			stability < 0.5
+		}
+		modifier = {
+			factor = 0.5
+			check_variable = { kabyle_satisfaction < 40 }
+		}
+	}
+
+	option = {
+		name = ALG_ethnic_data.0.a
+		# Acknowledge the issue - unlocks decision
+		custom_effect_tooltip = ALG_ethnic_decision_unlocked_tt
+		set_country_flag = ALG_ethnic_question_raised
+	}
+	
+	option = {
+		name = ALG_ethnic_data.0.b
+		# Try to ignore - but it comes back
+		custom_effect_tooltip = ALG_ethnic_delay_warning_tt
+		add_political_power = -10
+		hidden_effect = {
+			country_event = { id = ALG_ethnic_data.0 days = 90 random_days = 30 }
+		}
+	}
+}
+
+# Main initialization event
 country_event = {
 	id = ALG_ethnic_data.1
-	title = "ALG_ethnic_data.1.t"
-	desc = "ALG_ethnic_data.1.d"
-	picture = GFX_internal_faction_religion
+	title = ALG_ethnic_data.1.t
+	desc = ALG_ethnic_data.1.d
+	picture = GFX_alg_flag
 
 	is_triggered_only = yes
 
 	immediate = {
-		set_variable = { var = arab_pop_percent value = ALG_ethnic_arab }
-		divide_variable = { var = arab_pop_percent value = 100 }
-		set_variable = { var = kabyle_pop_percent value = ALG_ethnic_kabyle }
-		divide_variable = { var = kabyle_pop_percent value = 100 }
-		set_variable = { var = tuareg_pop_percent value = ALG_ethnic_tuareg }
-		divide_variable = { var = tuareg_pop_percent value = 100 }
-		set_variable = { var = christian_pop_percent value = 0.02 }
-		set_country_flag = ALG_ethnic_data_initialized
+		hidden_effect = {
+			set_variable = { var = arab_pop_percent value = ALG_ethnic_arab }
+			divide_variable = { var = arab_pop_percent value = 100 }
+			set_variable = { var = kabyle_pop_percent value = ALG_ethnic_kabyle }
+			divide_variable = { var = kabyle_pop_percent value = 100 }
+			set_variable = { var = tuareg_pop_percent value = ALG_ethnic_tuareg }
+			divide_variable = { var = tuareg_pop_percent value = 100 }
+			set_variable = { var = chaoui_pop_percent value = ALG_ethnic_chaoui }
+			divide_variable = { var = chaoui_pop_percent value = 100 }
+			set_variable = { var = mozabite_pop_percent value = ALG_ethnic_mozabite }
+			divide_variable = { var = mozabite_pop_percent value = 100 }
+			set_variable = { var = christian_pop_percent value = 0.01 }
+			
+			ALG_init_favor_counters = yes
+			set_country_flag = ALG_ethnic_data_initialized
+		}
 	}
 
 	option = {
 		name = ALG_ethnic_data.1.a
+		custom_effect_tooltip = ALG_ethnic_system_active_tt
+		ALG_update_ethnic_modifiers = yes
+	}
+}
 
+# Census event
+country_event = {
+	id = ALG_ethnic_data.2
+	title = ALG_ethnic_data.2.t
+	desc = ALG_ethnic_data.2.d
+	picture = GFX_alg_hirak
+
+	is_triggered_only = yes
+
+	option = {
+		name = ALG_ethnic_data.2.a
+		custom_effect_tooltip = ALG_census_arab_focus_tt
+		hidden_effect = {
+			add_to_variable = { arab_satisfaction = 15 }
+			subtract_from_variable = { kabyle_satisfaction = 10 }
+			subtract_from_variable = { chaoui_satisfaction = 5 }
+			subtract_from_variable = { tuareg_satisfaction = 5 }
+			subtract_from_variable = { mozabite_satisfaction = 5 }
+			clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+			ALG_update_ethnic_modifiers = yes
+		}
+		add_political_power = 50
+	}
+	
+	option = {
+		name = ALG_ethnic_data.2.b
+		custom_effect_tooltip = ALG_census_balanced_tt
+		hidden_effect = {
+			add_to_variable = { arab_satisfaction = 5 }
+			add_to_variable = { kabyle_satisfaction = 10 }
+			add_to_variable = { chaoui_satisfaction = 8 }
+			add_to_variable = { tuareg_satisfaction = 5 }
+			add_to_variable = { mozabite_satisfaction = 5 }
+			clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+			ALG_update_ethnic_modifiers = yes
+		}
+		add_stability = 0.03
+	}
+	
+	option = {
+		name = ALG_ethnic_data.2.c
+		custom_effect_tooltip = ALG_census_neutral_tt
+		add_political_power = 25
+	}
+}
+# Warning event - tensions rising
+country_event = {
+	id = ALG_ethnic_data.10
+	title = ALG_ethnic_data.10.t
+	desc = ALG_ethnic_data.10.d
+	picture = GFX_alg_hirak4
+	
+	trigger = {
+		original_tag = ALG
+		has_country_flag = ALG_ethnic_data_initialized
+		OR = {
+			check_variable = { arab_satisfaction < 30 }
+			check_variable = { kabyle_satisfaction < 25 }
+			check_variable = { tuareg_satisfaction < 25 }
+			check_variable = { chaoui_satisfaction < 30 }
+			check_variable = { mozabite_satisfaction < 30 }
+		}
+		NOT = { has_country_flag = ALG_ethnic_warning_recent }
+	}
+	
+	mean_time_to_happen = {
+		days = 45
+		modifier = {
+			factor = 0.5
+			OR = {
+				check_variable = { arab_satisfaction < 20 }
+				check_variable = { kabyle_satisfaction < 20 }
+				check_variable = { tuareg_satisfaction < 20 }
+			}
+		}
+	}
+	
+	option = {
+		name = ALG_ethnic_data.10.a
+		add_stability = -0.03
+		set_country_flag = { flag = ALG_ethnic_warning_recent days = 60 value = 1 }
+	}
+	
+	option = {
+		name = ALG_ethnic_data.10.b
+		add_political_power = -50
+		hidden_effect = {
+			if = {
+				limit = { check_variable = { arab_satisfaction < 30 } }
+				add_to_variable = { arab_satisfaction = 8 }
+			}
+			if = {
+				limit = { check_variable = { kabyle_satisfaction < 25 } }
+				add_to_variable = { kabyle_satisfaction = 8 }
+			}
+			if = {
+				limit = { check_variable = { tuareg_satisfaction < 25 } }
+				add_to_variable = { tuareg_satisfaction = 8 }
+			}
+			if = {
+				limit = { check_variable = { chaoui_satisfaction < 30 } }
+				add_to_variable = { chaoui_satisfaction = 8 }
+			}
+			if = {
+				limit = { check_variable = { mozabite_satisfaction < 30 } }
+				add_to_variable = { mozabite_satisfaction = 8 }
+			}
+			ALG_update_ethnic_modifiers = yes
+		}
+		set_country_flag = { flag = ALG_ethnic_warning_recent days = 90 value = 1 }
+	}
+}
+
+# Ghardaia Clashes (Historical - 2013-2015, Mozabite-Arab tensions)
+country_event = {
+	id = ALG_ethnic_data.20
+	title = ALG_ethnic_data.20.t
+	desc = ALG_ethnic_data.20.d
+	picture = GFX_alg_hirak6
+
+	fire_only_once = yes
+	
+	trigger = {
+		original_tag = ALG
+		has_country_flag = ALG_ethnic_data_initialized
+		date > 2013.1.1
+		NOT = { has_country_flag = ALG_ghardaia_clashes_happened }
+		check_variable = { mozabite_satisfaction < 45 }
+	}
+	
+	mean_time_to_happen = {
+		days = 180
+		modifier = {
+			factor = 0.5
+			check_variable = { mozabite_satisfaction < 30 }
+		}
+	}
+
+	immediate = {
+		hidden_effect = {
+			set_country_flag = ALG_ghardaia_clashes_happened
+		}
+	}
+
+	option = {
+		name = ALG_ethnic_data.20.a
+		# Side with Arabs
+		custom_effect_tooltip = ALG_ghardaia_arab_side_tt
+		add_stability = -0.05
+		hidden_effect = {
+			subtract_from_variable = { mozabite_satisfaction = 20 }
+			add_to_variable = { arab_satisfaction = 5 }
+			clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+			ALG_update_ethnic_modifiers = yes
+		}
+	}
+	
+	option = {
+		name = ALG_ethnic_data.20.b
+		# Protect Mozabites
+		custom_effect_tooltip = ALG_ghardaia_mozabite_side_tt
+		add_political_power = -75
+		hidden_effect = {
+			subtract_from_variable = { mozabite_satisfaction = 5 }
+			subtract_from_variable = { arab_satisfaction = 10 }
+			clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+			ALG_update_ethnic_modifiers = yes
+		}
+	}
+	
+	option = {
+		name = ALG_ethnic_data.20.c
+		# Neutral mediation
+		custom_effect_tooltip = ALG_ghardaia_neutral_tt
+		add_political_power = -50
+		add_stability = -0.03
+		hidden_effect = {
+			subtract_from_variable = { mozabite_satisfaction = 10 }
+			subtract_from_variable = { arab_satisfaction = 3 }
+			clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+			ALG_update_ethnic_modifiers = yes
+		}
 	}
 }
 country_event = {
