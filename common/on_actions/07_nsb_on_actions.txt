@@ -5,7 +5,8 @@ on_actions = {
 	#ROOT is winner #FROM gets annexed - This will also fire on_annex
 	on_civil_war_end = {
 	}
-
+	#TODO: Check on this - it might need to be opposite ideologies only
+	#Is this part of why the guarantees just randomly disappear with no warning?
 	on_ruling_party_change = {
 		effect = {
 			#Nullify all guarantees
@@ -399,6 +400,28 @@ on_actions = {
 		}
 	}
 
+	on_recall_volunteers = {
+		effect = {
+			FROM = {
+				if = {
+					limit = {
+						has_idea = unsc_restricted_volunteers_too
+					}
+					ROOT = {
+						add_to_variable = { sent_to_sanctioned_nations = -1 }
+						if = {
+							limit = {
+								check_variable = { sent_to_sanctioned_nations < 1 }
+							}
+							clr_country_flag = has_sent_volunteers_to_restricted_nation
+							clear_variable = sent_to_sanctioned_nations
+						}
+					}
+				}
+			}
+		}
+	}
+
 	# called when a country send volunteers to another
 	# ROOT is sender, FROM is receiver
 	on_send_volunteers = {
@@ -411,6 +434,25 @@ on_actions = {
 				for_each_scope_loop = {
 					array = allies
 					add_opinion_modifier = { target = ROOT modifier = sent_allied_nation_intervention_forces }
+				}
+				if = {
+					limit = {
+						has_idea = unsc_restricted_volunteers_too
+					}
+					ROOT = {
+						add_to_variable = { sent_to_sanctioned_nations = 1 }
+
+						set_country_flag = has_sent_volunteers_to_restricted_nation
+
+						set_variable = { security_council_trade_sanctions_var = global.UN_general_assembly^num }
+						set_variable = { security_council_research_sanctions_var = global.UN_general_assembly^num }
+
+						multiply_variable = { security_council_trade_sanctions_var = 0.35 }
+						multiply_variable = { security_council_research_sanctions_var = 0.15 }
+						add_dynamic_modifier = { modifier = united_nations_security_council_sanctions }
+						#sanction the nation for sending volunteers
+						#sanctions get removed when the volunteers are removed
+					}
 				}
 			}
 

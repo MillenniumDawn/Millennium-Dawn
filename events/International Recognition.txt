@@ -241,6 +241,45 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: recognition.6.a executed"
 	}
 }
+#We did it!
+country_event = {
+	id = recognition.71
+
+	title = recognition.71.t
+	desc = recognition.71.d
+	picture = GFX_trade_agreement
+
+	is_triggered_only = yes
+
+	immediate = {
+		news_event = recognition.7
+	}
+
+	option = {
+		name = recognition.71.a
+		log = "[GetDateText]: [This.GetName]: recognition.71.a executed"
+		remove_ideas = Lacks_International_Recognition
+		add_to_array = { global.UN_general_assembly = THIS }
+		missile_ui_update = yes
+	}
+}
+
+#No, we failed!
+country_event = {
+	id = recognition.72
+
+	title = recognition.72.t
+	desc = recognition.72.d
+	picture = GFX_trade_agreement
+
+	is_triggered_only = yes
+
+	option = {
+		name = recognition.72.a
+		log = "[GetDateText]: [This.GetName]: recognition.72.a executed"
+		news_event = recognition.73
+	}
+}
 
 ### [FROM.GetName] Joins the United Nations!
 news_event = {
@@ -248,13 +287,31 @@ news_event = {
 
 	title = recognition.7.t
 	desc = recognition.7.d
-	picture = GFX_trade_agreement
+	picture = GFX_UN_event_global_1
 
 	is_triggered_only = yes
+	major = yes
 
 	option = {
 		name = recognition.7.a #The [FROM.GetAdjective] people join the international community.
 		log = "[GetDateText]: [This.GetName]: recognition.7.a executed"
+	}
+}
+
+### [FROM.GetName] Failed to join the UN!
+news_event = {
+	id = recognition.73
+
+	title = recognition.73.t
+	desc = recognition.73.d
+	picture = GFX_UN_event_global_1
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = recognition.73.a #[FROM.GetAdjective] failed to join the international community.
+		log = "[GetDateText]: [This.GetName]: recognition.73.a executed"
 	}
 }
 
@@ -722,6 +779,346 @@ country_event = {
 						}
 					}
 				}
+			}
+		}
+	}
+}
+
+#Event allies get when a state they are supporting gets supported
+country_event = {
+	id = recognition.9
+
+	title = recognition.9.t
+	desc = recognition.9.d
+	picture = GFX_politics_talks
+
+	is_triggered_only = yes
+
+	option = {
+		name = recognition.9.a
+		log = "[GetDateText]: [This.GetName]: recognition.9.a executed"
+	}
+}
+
+#Scoping Events to prompt UN SC votes for International Recog
+country_event = {
+	id = recognition.10
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		#TODO: work with bird to optimize this somehow
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = {
+						has_country_flag = original_owner_@PREV
+					}
+					country_event = recognition.11
+				}
+			}
+		}
+	}
+}
+#Scope event to get proper nation info
+country_event = {
+	id = recognition.11
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		random_scope_in_array = {
+			array = global.security_council_members
+			set_global_flag = current_ongoing_sc_vote
+			set_country_flag = has_sc_mission
+			activate_mission = UN_SC_voting_mission
+		}
+		for_each_loop = {
+			array = global.security_council_members
+			value = v
+
+			var:v = {
+				country_event = recognition.12
+				if = {
+					limit = {
+						NOT = { has_country_flag = has_sc_mission }
+					}
+					activate_mission = UN_SC_voting_mission_result_timer
+				}
+			}
+		}
+	}
+}
+
+#Security Council Vote
+country_event = {
+	id = recognition.12
+	title = recognition.12.t
+	desc = recognition.12.d
+	picture = GFX_UN_gen_assembly
+
+	is_triggered_only = yes
+
+	#Yes
+	option = {
+		name = recognition.12.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.security_council_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 50
+				has_country_flag = Recognised_@FROM
+			}
+			modifier = {
+				factor = 10
+				check_variable = { opinion@FROM.FROM > opinion@FROM }
+			}
+			modifier = {
+				add = 15
+				check_variable = { opinion@FROM.FROM > 0 }
+			}
+			modifier = {
+				add = 50
+				has_guaranteed = FROM.FROM
+			}
+			modifier = {
+				add = 50
+				is_ally_with = FROM.FROM
+			}
+		}
+	}
+	#No
+	option = {
+		name = recognition.12.b
+		add_to_array = { global.security_council_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+		if = {
+			limit = {
+				is_in_array = { global.p5_sc_members = THIS }
+			}
+			set_global_flag = security_council_veto
+		}
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_country_flag = Recognised_@FROM
+			}
+			modifier = {
+				factor = 10
+				check_variable = { opinion@FROM.FROM < opinion@FROM }
+			}
+			modifier = {
+				add = 15
+				check_variable = { opinion@FROM > 0 }
+			}
+			modifier = {
+				add = 50
+				has_guaranteed = FROM
+			}
+			modifier = {
+				add = 50
+				is_ally_with = FROM
+			}
+		}
+	}
+	#Abstain
+	option = {
+		name = recognition.12.c
+		add_to_array = { global.security_council_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_country_flag = Recognised_@FROM
+			}
+		}
+	}
+}
+
+#Scoping Events to prompt UN GA votes for International Recog
+country_event = {
+	id = recognition.13
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		news_event = recognition.121
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+
+			var:v = {
+				if = {
+					limit = {
+						has_country_flag = original_owner_@PREV
+					}
+				}
+				country_event = recognition.14
+			}
+		}
+	}
+}
+
+### [FROM.GetName] gets SC recomendation
+news_event = {
+	id = recognition.121
+
+	title = recognition.121.t
+	desc = recognition.121.d
+	picture = GFX_UN_event_global_2
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = recognition.121.a
+		log = "[GetDateText]: [This.GetName]: recognition.121.a executed"
+	}
+}
+
+#Fails to pass the SC
+news_event = {
+	id = recognition.122
+
+	title = recognition.122.t
+	desc = recognition.122.d
+	picture = GFX_UN_event_global_2
+
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = recognition.122.a
+		log = "[GetDateText]: [This.GetName]: recognition.122.a executed"
+	}
+}
+
+country_event = {
+	id = recognition.14
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		random_scope_in_array = {
+			array = global.UN_general_assembly
+			set_global_flag = current_ongoing_ga_vote
+			set_country_flag = has_ga_mission
+			activate_mission = UN_GA_voting_mission
+		}
+		for_each_scope_loop = {
+			array = global.UN_general_assembly
+
+			country_event = recognition.15
+			if = {
+				limit = {
+					NOT = { has_country_flag = has_ga_mission }
+				}
+				activate_mission = UN_GA_voting_mission_result_timer
+			}
+		}
+	}
+}
+#General Assembly Vote
+country_event = {
+	id = recognition.15
+	title = recognition.15.t
+	desc = recognition.15.d
+	picture = GFX_UN_gen_assembly
+
+	is_triggered_only = yes
+
+	#Yes
+	option = {
+		name = recognition.15.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 50
+				has_country_flag = Recognised_@FROM
+			}
+			modifier = {
+				factor = 10
+				check_variable = { opinion@FROM.FROM > opinion@FROM }
+			}
+			modifier = {
+				add = 15
+				check_variable = { opinion@FROM.FROM > 0 }
+			}
+			modifier = {
+				add = 50
+				has_guaranteed = FROM.FROM
+			}
+			modifier = {
+				add = 50
+				is_ally_with = FROM.FROM
+			}
+		}
+	}
+	#No
+	option = {
+		name = recognition.15.b
+		add_to_array = { global.general_assembly_vote_no = THIS } #testing, vote no after test
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 10
+				check_variable = { opinion@FROM.FROM < opinion@FROM }
+			}
+			modifier = {
+				add = 15
+				check_variable = { opinion@FROM > 0 }
+			}
+			modifier = {
+				add = 50
+				has_guaranteed = FROM
+			}
+			modifier = {
+				add = 50
+				is_ally_with = FROM
+			}
+			modifier = {
+				factor = 0
+				has_country_flag = Recognised_@FROM
+			}
+		}
+	}
+	#Abstain
+	option = {
+		name = recognition.15.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 1
+
+			modifier = {
+				factor = 0
+				has_country_flag = Recognised_@FROM
 			}
 		}
 	}

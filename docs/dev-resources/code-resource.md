@@ -390,16 +390,6 @@ set_temp_variable = { temp_change = 2 }
 build_battery_park_effect = yes
 ```
 
-### Counter-Terror (Radicalization)
-
-```hoiscript
-set_temp_variable = { rad_change = -5 }
-modify_radicalization_effect = yes
-
-set_temp_variable = { threat_change = 2 }
-modify_terror_threat_effect = yes
-```
-
 ### Cartel Effects
 
 Handles cartel strength and political influence changes.
