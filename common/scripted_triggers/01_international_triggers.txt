@@ -29,12 +29,78 @@ is_major_company = {
 	}
 }
 
+has_support_of_p5 = {
+	meta_trigger = {
+		text = {
+			custom_trigger_tooltip = {
+				tooltip = security_council_support_tt
+				USA = {
+					has_country_flag = Recognised_[thname]
+				}
+				ENG = {
+					has_country_flag = Recognised_[thname]
+				}
+				FRA = {
+					has_country_flag = Recognised_[thname]
+				}
+				SOV = {
+					has_country_flag = Recognised_[thname]
+				}
+				CHI = {
+					has_country_flag = Recognised_[thname]
+				}
+			}
+		}
+		thname = "[?FROM.GetTag]"
+	}
+}
+
+has_passed_sc_vote = {
+	NOT = { has_global_flag = security_council_veto }
+	check_variable = { global.security_council_vote_yes^num > 8 }
+}
+
+is_on_un_sec_council = {
+	OR = {
+		is_in_array = { global.p5_sc_members = THIS }
+		is_in_array = { global.security_council_members = THIS }
+	}
+}
+
+EU_voting_decision_result_trigger = {
+	check_variable = { global.EU_pop_ratio_yes > 0.65 }
+	set_temp_variable = { total_eu_members = global.EU_active_vote_yes }
+	add_to_temp_variable = { total_eu_members = global.EU_active_vote_no }
+	set_temp_variable = { vote_numbers = global.EU_active_vote_yes }
+	divide_temp_variable = { vote_numbers = total_eu_members }
+	check_variable = { vote_numbers > 0.55 }
+}
+
+un_sc_voting_result_trigger = {
+	custom_trigger_tooltip = {
+		tooltip = ongoing_sc_vote_tt
+		check_variable = { global.security_council_vote_yes > 8 }
+		NOT = { has_global_flag = security_council_veto }
+	}
+}
+
+un_ga_2_3_required = {
+	set_temp_variable = { cur_assembly_target = global.UN_general_assembly^num }
+	multiply_temp_variable = { cur_assembly_target = 0.66 }
+	round_temp_variable = cur_assembly_target
+	subtract_from_temp_variable = { cur_assembly_target = 1 }
+
+	check_variable = { global.general_assembly_vote_yes^num > cur_assembly_target }
+}
+
 is_full_state = {
-	NOT = {
-		has_idea = Non_State_Actor
-		has_idea = Lacks_International_Recognition
-		has_idea = Lacks_International_Recognition_Taiwan
-		has_idea = rival_government
+	custom_trigger_tooltip = {
+		tooltip = is_un_is_recognized_nation
+		NOT = {
+			has_idea = Non_State_Actor
+			has_idea = Lacks_International_Recognition
+			has_idea = Lacks_International_Recognition_Taiwan
+		}
 	}
 }
 
@@ -63,5 +129,96 @@ pmc_can_recruit = {
 				compare = greater_than_or_equals
 			}
 		}
+	}
+}
+
+has_target_in_region = {
+	var:global.active_terror_hq^selected_org = {
+		set_temp_variable = { region_check_nation = controller }
+	}
+	OR = {
+		var:selected_ct_nation = { is_neighbor_of = var:region_check_nation }
+		AND = {
+			var:region_check_nation = { capital_scope = { is_on_continent = europe } }
+			var:selected_ct_nation = { capital_scope = { is_on_continent = europe } }
+		}
+		AND = {
+			var:region_check_nation = { capital_scope = { is_on_continent = africa } }
+			var:selected_ct_nation = { capital_scope = { is_on_continent = africa } }
+		}
+		AND = {
+			var:region_check_nation = { capital_scope = { is_on_continent = asia } }
+			var:selected_ct_nation = { capital_scope = { is_on_continent = asia } }
+		}
+		AND = {
+			var:region_check_nation = { capital_scope = { is_on_continent = south_america } }
+			var:selected_ct_nation = { capital_scope = { is_on_continent = south_america } }
+		}
+		AND = {
+			var:region_check_nation = { capital_scope = { is_on_continent = north_america } }
+			var:selected_ct_nation = { capital_scope = { is_on_continent = north_america } }
+		}
+		AND = {
+			var:region_check_nation = { capital_scope = { is_on_continent = middle_east } }
+			var:selected_ct_nation = { capital_scope = { is_on_continent = middle_east } }
+		}
+		AND = {
+			var:region_check_nation = { capital_scope = { is_on_continent = australia } }
+			var:selected_ct_nation = { capital_scope = { is_on_continent = australia } }
+		}
+	}
+}
+
+has_target_in_region_intel = {
+	country_exists = FROM
+	var:global.active_terror_hq^selected_org = {
+		set_temp_variable = { test_checker = controller }
+		OR = {
+			FROM = { is_neighbor_of = var:test_checker }
+			AND = {
+				var:test_checker = { capital_scope = { is_on_continent = europe } }
+				FROM = { capital_scope = { is_on_continent = europe } }
+			}
+			AND = {
+				var:test_checker = { capital_scope = { is_on_continent = africa } }
+				FROM = { capital_scope = { is_on_continent = africa } }
+			}
+			AND = {
+				var:test_checker = { capital_scope = { is_on_continent = asia } }
+				FROM = { capital_scope = { is_on_continent = asia } }
+			}
+			AND = {
+				var:test_checker = { capital_scope = { is_on_continent = south_america } }
+				FROM = { capital_scope = { is_on_continent = south_america } }
+			}
+			AND = {
+				var:test_checker = { capital_scope = { is_on_continent = north_america } }
+				FROM = { capital_scope = { is_on_continent = north_america } }
+			}
+			AND = {
+				var:test_checker = { capital_scope = { is_on_continent = middle_east } }
+				FROM = { capital_scope = { is_on_continent = middle_east } }
+			}
+			AND = {
+				var:test_checker = { capital_scope = { is_on_continent = australia } }
+				FROM = { capital_scope = { is_on_continent = australia } }
+			}
+		}
+	}
+}
+
+has_target_in_country = {
+	set_temp_variable = { current_target = global.active_terror_hq^selected_org }
+
+	var:selected_ct_nation = {
+		controls_state = var:current_target
+	}
+}
+
+has_target_in_country_intel = {
+	set_temp_variable = { current_target = global.active_terror_hq^selected_org }
+
+	FROM = {
+		controls_state = var:current_target
 	}
 }
