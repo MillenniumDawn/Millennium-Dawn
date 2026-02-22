@@ -17,6 +17,8 @@ SECTION_DEFAULT_SUBTITLE = {
 SOURCE_PATTERNS = (
     "pages/**/*.md",
     "pages/**/*.html",
+    "dev-diaries/**/*.md",
+    "dev-diaries/**/*.html",
     "player-tutorials/**/*.md",
     "player-tutorials/**/*.html",
     "dev-resources/**/*.md",
