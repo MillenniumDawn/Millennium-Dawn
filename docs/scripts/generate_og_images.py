@@ -258,6 +258,53 @@ def is_seo_enabled(data: dict[str, object]) -> bool:
     return str(seo).strip().lower() != "false"
 
 
+def normalize_permalink(value: str) -> str:
+    value = value.strip()
+    if not value:
+        return "/"
+    if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*://", value):
+        return value
+    if not value.startswith("/"):
+        value = "/" + value
+    value = re.sub(r"/{2,}", "/", value)
+    if value != "/" and not value.endswith("/") and not value.endswith(".html"):
+        value += "/"
+    return value
+
+
+def page_path_for_og(rel_path: Path, data: dict[str, object]) -> str:
+    permalink = str(data.get("permalink") or "").strip()
+    if permalink:
+        return normalize_permalink(permalink)
+
+    stem = rel_path.stem
+    first = rel_path.parts[0] if rel_path.parts else ""
+
+    if first == "_countries":
+        slug = str(data.get("slug") or stem).strip() or stem
+        return f"/countries/{slug}/"
+
+    if first == "_changelog_sections":
+        return f"/changelogs/{stem}/"
+
+    if first == "pages":
+        sub = Path(*rel_path.parts[1:]).with_suffix("")
+        if sub.as_posix() == "index":
+            return "/"
+        clean_parts = [part for part in sub.parts if part != "index"]
+        if not clean_parts:
+            return "/"
+        return "/" + "/".join(clean_parts) + "/"
+
+    sub = rel_path.with_suffix("")
+    clean_parts = list(sub.parts)
+    if clean_parts and clean_parts[-1] == "index":
+        clean_parts = clean_parts[:-1]
+    if not clean_parts:
+        return "/"
+    return "/" + "/".join(clean_parts) + "/"
+
+
 # ── Background composition ──────────────────────────────────────────
 
 
@@ -495,11 +542,26 @@ def draw_logo(image: Image.Image, logo: Image.Image) -> None:
     image.alpha_composite(resized, dest=(x, y))
 
 
+def draw_centered_logo(image: Image.Image, logo: Image.Image) -> None:
+    if logo.width <= 0 or logo.height <= 0:
+        return
+
+    target_height = 210
+    ratio = target_height / logo.height
+    target_width = max(1, int(logo.width * ratio))
+    resized = logo.resize((target_width, target_height), resample=Image.Resampling.LANCZOS)
+
+    x = (image.width - target_width) // 2
+    y = int(image.height * 0.5) - (target_height // 2) - 40
+    image.alpha_composite(resized, dest=(x, y))
+
+
 def render_card(
     base_bg: Image.Image,
     logo: Image.Image,
     title: str,
     subtitle: str,
+    page_path: str,
     output_path: Path,
 ) -> None:
     canvas = base_bg.copy()
@@ -526,11 +588,21 @@ def render_card(
         sub_box = draw.textbbox((0, 0), "Ag", font=subtitle_font)
         subtitle_height = sub_box[3] - sub_box[1]
 
+    path_font = load_font(22, bold=False)
+    path_text = truncate_to_width(draw, page_path, path_font, max_width=text_max_width)
+    path_gap = 20
+    path_height = 0
+    if path_text:
+        path_box = draw.textbbox((0, 0), "Ag", font=path_font)
+        path_height = path_box[3] - path_box[1]
+
     total_text_block_height = title_height
     if subtitle_text:
         total_text_block_height += subtitle_gap + subtitle_height
+    if path_text:
+        total_text_block_height += path_gap + path_height
 
-    bottom_padding = 86
+    bottom_padding = 75
     min_top_padding = 116
     block_top = canvas.height - bottom_padding - total_text_block_height
     if block_top < min_top_padding:
@@ -549,8 +621,33 @@ def render_card(
             fill=(203, 213, 224, 255),
             font=subtitle_font,
         )
+        path_anchor_y = subtitle_y + subtitle_height
+    else:
+        path_anchor_y = current_y - title_gap
+
+    if path_text:
+        path_y = path_anchor_y + path_gap
+        draw.text(
+            (text_left, path_y),
+            path_text,
+            fill=(148, 163, 184, 255),
+            font=path_font,
+        )
 
     draw_logo(canvas, logo)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    canvas.convert("RGB").save(output_path, format="PNG", optimize=True)
+
+
+def render_home_card(
+    base_bg: Image.Image,
+    logo: Image.Image,
+    output_path: Path,
+) -> None:
+    canvas = base_bg.copy()
+
+    draw_centered_logo(canvas, logo)
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     canvas.convert("RGB").save(output_path, format="PNG", optimize=True)
 
@@ -604,8 +701,10 @@ def main() -> int:
             skipped_seo_disabled += 1
             continue
 
+        page_path = page_path_for_og(rel, data)
+        is_home_page = page_path == "/" or str(data.get("page_id") or "").strip().lower() == "home"
         title = str(data.get("title") or "").strip()
-        if not title:
+        if not title and not is_home_page:
             skipped_no_title += 1
             continue
 
@@ -621,13 +720,21 @@ def main() -> int:
             )
         seen_ids[og_id] = rel
 
-        render_card(
-            base_bg=base_bg,
-            logo=logo,
-            title=title,
-            subtitle=subtitle,
-            output_path=output_path,
-        )
+        if is_home_page:
+            render_home_card(
+                base_bg=base_bg,
+                logo=logo,
+                output_path=output_path,
+            )
+        else:
+            render_card(
+                base_bg=base_bg,
+                logo=logo,
+                title=title,
+                subtitle=subtitle,
+                page_path=page_path,
+                output_path=output_path,
+            )
         generated += 1
 
     print(
