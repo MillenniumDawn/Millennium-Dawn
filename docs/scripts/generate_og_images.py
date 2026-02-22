@@ -9,7 +9,7 @@ import shutil
 from pathlib import Path
 
 try:
-    from PIL import Image, ImageDraw, ImageFont
+    from PIL import Image, ImageChops, ImageDraw, ImageFont, ImageOps
 except ImportError as exc:  # pragma: no cover - import guard
     raise SystemExit(
         "Pillow is required. Install with: python3 -m pip install pillow"
@@ -44,6 +44,24 @@ SOURCE_PATTERNS = (
     "*.html",
 )
 
+# ── Visual tuning ────────────────────────────────────────────────────
+# Hero background
+HERO_OPACITY = 150  # 0-255  (~83 %).  Lower = more transparent hero.
+
+# Corner gradient (bottom-left → top-right) for text legibility
+GRADIENT_FADE_START = 0.35  # Vertical fade begins at 35 % from top
+GRADIENT_VERT_WEIGHT = 0.78  # How much the vertical axis contributes
+GRADIENT_HORIZ_WEIGHT = 0.22  # How much the horizontal axis contributes
+GRADIENT_CURVE = 1.2  # Power-curve exponent (>1 = darker near corner)
+GRADIENT_MAX_ALPHA = 235  # Peak darkness at the corner (0-255)
+# Token used to tint the legibility gradient.
+GRADIENT_COLOR_TOKEN = "color-header-bg"
+TOKEN_HEADER_BG = "color-header-bg"
+TOKEN_HEADER_BG_END = "color-header-bg-end"
+
+
+# ── CLI ──────────────────────────────────────────────────────────────
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -61,7 +79,15 @@ def parse_args() -> argparse.Namespace:
         default="docs/assets/images/branding/main-menu.png",
         help="Path to logo image",
     )
+    parser.add_argument(
+        "--hero-bg-path",
+        default="docs/assets/images/branding/hero.jpeg",
+        help="Path to hero background image",
+    )
     return parser.parse_args()
+
+
+# ── Front-matter / config helpers ────────────────────────────────────
 
 
 def load_site_description(config_path: Path) -> str:
@@ -116,7 +142,6 @@ def parse_front_matter(text: str) -> dict[str, object]:
         key = match.group(1)
         raw_value = match.group(2).strip()
 
-        # Multiline YAML block scalars are rare for the fields we need.
         if raw_value in {"|", ">"}:
             i += 1
             while i < len(front_lines):
@@ -143,6 +168,25 @@ def parse_front_matter(text: str) -> dict[str, object]:
         i += 1
 
     return data
+
+
+def load_css_hex_tokens(variables_scss_path: Path) -> dict[str, tuple[int, int, int]]:
+    tokens: dict[str, tuple[int, int, int]] = {}
+    if not variables_scss_path.exists():
+        return tokens
+
+    pattern = re.compile(r"^\s*--([a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{6})\s*;")
+    for line in variables_scss_path.read_text(encoding="utf-8", errors="replace").splitlines():
+        match = pattern.match(line)
+        if not match:
+            continue
+        name = match.group(1)
+        hex_value = match.group(2).lstrip("#")
+        r = int(hex_value[0:2], 16)
+        g = int(hex_value[2:4], 16)
+        b = int(hex_value[4:6], 16)
+        tokens[name] = (r, g, b)
+    return tokens
 
 
 def iter_source_files(docs_dir: Path) -> list[Path]:
@@ -184,14 +228,8 @@ def section_for_path(rel_path: Path) -> str | None:
         return "resources"
     if first == "pages" and len(rel_path.parts) > 1:
         second = rel_path.parts[1]
-        if second == "tutorials":
-            return "tutorials"
-        if second == "resources":
-            return "resources"
-        if second == "countries":
-            return "countries"
-        if second == "changelogs":
-            return "changelogs"
+        if second in SECTION_DEFAULT_SUBTITLE:
+            return second
     return None
 
 
@@ -220,34 +258,102 @@ def is_seo_enabled(data: dict[str, object]) -> bool:
     return str(seo).strip().lower() != "false"
 
 
-def create_base_background(width: int, height: int) -> Image.Image:
-    color_start = (44, 62, 80)  # --color-header-bg
-    color_end = (52, 73, 94)  # --color-header-bg-end
+# ── Background composition ──────────────────────────────────────────
 
-    base = Image.new("RGBA", (width, height))
-    px = base.load()
+
+def create_token_background(
+    width: int,
+    height: int,
+    color_start: tuple[int, int, int],
+    color_end: tuple[int, int, int],
+) -> Image.Image:
+    """Subtle diagonal gradient using the site header colours."""
+
+    bg = Image.new("RGBA", (width, height), (0, 0, 0, 255))
+    px = bg.load()
     for y in range(height):
         y_ratio = y / max(height - 1, 1)
         for x in range(width):
             x_ratio = x / max(width - 1, 1)
-            t = (0.65 * x_ratio) + (0.35 * y_ratio)
-            t = max(0.0, min(1.0, t))
+            t = max(0.0, min(1.0, 0.62 * x_ratio + 0.38 * y_ratio))
             r = int(color_start[0] + (color_end[0] - color_start[0]) * t)
             g = int(color_start[1] + (color_end[1] - color_start[1]) * t)
             b = int(color_start[2] + (color_end[2] - color_start[2]) * t)
             px[x, y] = (r, g, b, 255)
+    return bg
 
-    overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay, "RGBA")
 
-    accent_primary = (52, 152, 219, 85)  # --color-primary
-    accent_secondary = (52, 152, 219, 45)
-    draw.ellipse((-200, -200, 700, 700), fill=accent_primary)
-    draw.ellipse((width - 520, 40, width + 260, 760), fill=accent_secondary)
-    draw.ellipse((width - 340, -160, width + 120, 300), fill=(255, 255, 255, 26))
-    draw.rectangle((0, height - 180, width, height), fill=(0, 0, 0, 56))
+def create_corner_gradient(
+    width: int,
+    height: int,
+    gradient_rgb: tuple[int, int, int],
+) -> Image.Image:
+    """Dark gradient radiating from the bottom-left corner.
 
-    return Image.alpha_composite(base, overlay).convert("RGBA")
+    Strongest where text is rendered (bottom / bottom-left), fading
+    diagonally towards the top-right so the hero image stays visible.
+    Built from two 1-D strips resized to full canvas – O(W+H) Python
+    work instead of O(W×H).
+    """
+    # ── vertical strip: transparent at top, opaque at bottom ────────
+    vert_strip = Image.new("L", (1, height), 0)
+    vert_px = vert_strip.load()
+    for y in range(height):
+        t = (y / max(height - 1, 1) - GRADIENT_FADE_START) / (1.0 - GRADIENT_FADE_START)
+        vert_px[0, y] = int(255 * max(0.0, t))
+    vert = vert_strip.resize((width, height), Image.Resampling.BILINEAR)
+
+    # ── horizontal strip: opaque at left, transparent at right ──────
+    horiz_strip = Image.new("L", (width, 1), 0)
+    horiz_px = horiz_strip.load()
+    for x in range(width):
+        horiz_px[x, 0] = int(255 * (1.0 - x / max(width - 1, 1)))
+    horiz = horiz_strip.resize((width, height), Image.Resampling.BILINEAR)
+
+    # ── weighted blend (vertical-dominant) ──────────────────────────
+    vert_w = vert.point(lambda v: int(v * GRADIENT_VERT_WEIGHT))
+    horiz_w = horiz.point(lambda v: int(v * GRADIENT_HORIZ_WEIGHT))
+    combined = ImageChops.add(vert_w, horiz_w)
+
+    # ── apply easing curve → alpha channel ──────────────────────────
+    lut = [min(255, int((v / 255.0) ** GRADIENT_CURVE * GRADIENT_MAX_ALPHA)) for v in range(256)]
+    alpha_channel = combined.point(lut)
+
+    layer = Image.new("RGBA", (width, height), (gradient_rgb[0], gradient_rgb[1], gradient_rgb[2], 255))
+    layer.putalpha(alpha_channel)
+    return layer
+
+
+def create_base_background(
+    width: int,
+    height: int,
+    hero_bg_path: Path,
+    css_tokens: dict[str, tuple[int, int, int]],
+) -> Image.Image:
+    """Compose the card background: token base → hero overlay → corner gradient."""
+    header_bg = css_tokens.get(TOKEN_HEADER_BG, (44, 62, 80))
+    gradient_color = css_tokens.get(GRADIENT_COLOR_TOKEN, header_bg)
+
+    # 1. Base color behind hero matches the gradient color token exactly.
+    base = create_token_background(width, height, gradient_color, gradient_color)
+
+    # 2. Hero photograph with reduced opacity
+    hero_raw = Image.open(hero_bg_path).convert("RGB")
+    hero = ImageOps.fit(
+        hero_raw,
+        (width, height),
+        method=Image.Resampling.LANCZOS,
+        centering=(0.5, 0.5),
+    ).convert("RGBA")
+    hero.putalpha(HERO_OPACITY)
+    base = Image.alpha_composite(base, hero)
+
+    # 3. Corner gradient overlay for text legibility
+    gradient = create_corner_gradient(width, height, gradient_color)
+    return Image.alpha_composite(base, gradient).convert("RGBA")
+
+
+# ── Typography helpers ───────────────────────────────────────────────
 
 
 def load_font(size: int, bold: bool = False) -> ImageFont.ImageFont:
@@ -370,6 +476,9 @@ def choose_title_layout(
     return font, lines, line_height
 
 
+# ── Card rendering ───────────────────────────────────────────────────
+
+
 def draw_logo(image: Image.Image, logo: Image.Image) -> None:
     if logo.width <= 0 or logo.height <= 0:
         return
@@ -398,25 +507,46 @@ def render_card(
 
     text_left = 78
     text_right = 78
-    title_top = 172
     text_max_width = canvas.width - text_left - text_right
 
     title_font, title_lines, title_line_height = choose_title_layout(
         draw, title, max_width=text_max_width, max_lines=3
     )
-    current_y = title_top
-    for line in title_lines:
-        draw.text((text_left, current_y), line, fill=(255, 255, 255, 255), font=title_font)
-        current_y += title_line_height + 10
+
+    title_gap = 10
+    title_height = title_line_height * len(title_lines)
+    if len(title_lines) > 1:
+        title_height += title_gap * (len(title_lines) - 1)
 
     subtitle_font = load_font(34, bold=False)
     subtitle_text = truncate_to_width(draw, subtitle, subtitle_font, max_width=text_max_width)
+    subtitle_gap = 24
+    subtitle_height = 0
     if subtitle_text:
-        subtitle_y = min(current_y + 28, canvas.height - 94)
+        sub_box = draw.textbbox((0, 0), "Ag", font=subtitle_font)
+        subtitle_height = sub_box[3] - sub_box[1]
+
+    total_text_block_height = title_height
+    if subtitle_text:
+        total_text_block_height += subtitle_gap + subtitle_height
+
+    bottom_padding = 86
+    min_top_padding = 116
+    block_top = canvas.height - bottom_padding - total_text_block_height
+    if block_top < min_top_padding:
+        block_top = min_top_padding
+
+    current_y = block_top
+    for line in title_lines:
+        draw.text((text_left, current_y), line, fill=(255, 255, 255, 255), font=title_font)
+        current_y += title_line_height + title_gap
+
+    if subtitle_text:
+        subtitle_y = current_y - title_gap + subtitle_gap
         draw.text(
             (text_left, subtitle_y),
             subtitle_text,
-            fill=(203, 213, 224, 255),  # --color-footer-text
+            fill=(203, 213, 224, 255),
             font=subtitle_font,
         )
 
@@ -425,12 +555,16 @@ def render_card(
     canvas.convert("RGB").save(output_path, format="PNG", optimize=True)
 
 
+# ── Entry point ──────────────────────────────────────────────────────
+
+
 def main() -> int:
     args = parse_args()
     repo_root = Path(args.repo_root).resolve()
     docs_dir = (repo_root / args.docs_dir).resolve()
     output_dir = (repo_root / args.output_dir).resolve()
     logo_path = (repo_root / args.logo_path).resolve()
+    hero_bg_path = (repo_root / args.hero_bg_path).resolve()
 
     if not docs_dir.exists():
         print(f"ERROR: docs directory not found: {docs_dir}")
@@ -438,14 +572,23 @@ def main() -> int:
     if not logo_path.exists():
         print(f"ERROR: logo image not found: {logo_path}")
         return 2
+    if not hero_bg_path.exists():
+        print(f"ERROR: hero background image not found: {hero_bg_path}")
+        return 2
 
     shutil.rmtree(output_dir, ignore_errors=True)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     site_description = load_site_description(docs_dir / "_config.yml")
+    css_tokens = load_css_hex_tokens(docs_dir / "_sass" / "_variables.scss")
 
     logo = Image.open(logo_path).convert("RGBA")
-    base_bg = create_base_background(width=args.width, height=args.height)
+    base_bg = create_base_background(
+        width=args.width,
+        height=args.height,
+        hero_bg_path=hero_bg_path,
+        css_tokens=css_tokens,
+    )
 
     generated = 0
     skipped_no_title = 0
@@ -473,11 +616,18 @@ def main() -> int:
         existing = seen_ids.get(og_id)
         if existing and existing != rel:
             print(
-                f"WARNING: duplicate og id '{og_id}' for {rel.as_posix()} and {existing.as_posix()}; using latest."
+                f"WARNING: duplicate og id '{og_id}' for {rel.as_posix()} "
+                f"and {existing.as_posix()}; using latest."
             )
         seen_ids[og_id] = rel
 
-        render_card(base_bg=base_bg, logo=logo, title=title, subtitle=subtitle, output_path=output_path)
+        render_card(
+            base_bg=base_bg,
+            logo=logo,
+            title=title,
+            subtitle=subtitle,
+            output_path=output_path,
+        )
         generated += 1
 
     print(
