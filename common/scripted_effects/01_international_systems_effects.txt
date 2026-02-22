@@ -1180,3 +1180,302 @@ check_for_subsidy_expiration = {
 		remove_dynamic_modifier = { modifier = un_aid_subsidies_modifier }
 	}
 }
+
+# ============================================================
+# UN AI System
+# Called from on_monthly in MD_on_actions.txt
+# Picks one random SC member and one random GA member each month
+# to evaluate whether to propose UN actions, without using the GUI
+# ============================================================
+
+un_ai_evaluate_actions = {
+	# Guard: Don't run if vote queues are already full
+	if = {
+		limit = {
+			check_variable = { global.sc_vote_type_tracker^num < 3 }
+			check_variable = { global.ga_vote_type_tracker^num < 3 }
+		}
+
+		# ---- SECURITY COUNCIL AI ----
+		# Pick one random SC member to evaluate proposing an action
+		random_scope_in_array = {
+			array = global.security_council_members
+			limit = {
+				is_ai = yes
+				NOT = { has_country_flag = un_ai_sc_cooldown }
+			}
+
+			set_country_flag = { flag = un_ai_sc_cooldown days = 90 value = 1 }
+			un_ai_sc_consider_action = yes
+		}
+
+		# ---- GENERAL ASSEMBLY AI ----
+		# Pick one random GA member to evaluate proposing a resolution
+		random_scope_in_array = {
+			array = global.UN_general_assembly
+			limit = {
+				is_ai = yes
+				NOT = { has_country_flag = un_ai_ga_cooldown }
+				has_political_power > 250
+			}
+
+			set_country_flag = { flag = un_ai_ga_cooldown days = 120 value = 1 }
+			un_ai_ga_consider_resolution = yes
+		}
+	}
+}
+
+# ============================================================
+# SC AI: Evaluate whether to propose a Security Council action
+# Scope: the SC member nation (ROOT)
+# ============================================================
+un_ai_sc_consider_action = {
+	if = {
+		limit = {
+			check_variable = { global.can_be_sc_sanctioned^num > 0 }
+			NOT = { has_global_flag = current_ongoing_sc_vote }
+		}
+
+		# Pick a random sanctionable nation
+		random_scope_in_array = {
+			array = global.can_be_sc_sanctioned
+			limit = {
+				NOT = { has_global_flag = sc_action_against@THIS }
+			}
+
+			ROOT = {
+				set_temp_variable = { sc_ai_target = PREV.id }
+			}
+		}
+
+		if = {
+			limit = {
+				check_variable = { sc_ai_target > 0 }
+			}
+
+			# Determine action type based on target's situation
+			var:sc_ai_target = {
+				# Priority 1: Pressure to end war (type 1)
+				if = {
+					limit = {
+						has_offensive_war = yes
+						is_in_array = { global.un_sc_pressure_end_war = THIS }
+					}
+					ROOT = { set_temp_variable = { sc_ai_action_type = 1 } }
+				}
+				# Priority 2: Sanctions for tension (type 2)
+				else_if = {
+					limit = {
+						check_variable = { has_added_tension_amount > 10 }
+					}
+					ROOT = { set_temp_variable = { sc_ai_action_type = 2 } }
+				}
+				# Priority 3: Arms embargo (type 4)
+				else_if = {
+					limit = {
+						check_variable = { has_added_tension_amount > 20 }
+						NOT = { has_idea = unsc_arms_embargo }
+					}
+					ROOT = { set_temp_variable = { sc_ai_action_type = 4 } }
+				}
+				# Priority 4: Restrict volunteers (type 3)
+				# else_if = {
+				# 	limit = {
+				# 		has_volunteers_amount_from_non_subject > 0
+				# 		NOT = { has_idea = unsc_restricted_volunteers_too }
+				# 	}
+				# 	ROOT = { set_temp_variable = { sc_ai_action_type = 3 } }
+				# }
+			}
+
+			# Weighted random - don't always propose
+			if = {
+				limit = {
+					check_variable = { sc_ai_action_type > 0 }
+				}
+
+				random_list = {
+					40 = {
+						set_temp_variable = { sc_new_vote_type = sc_ai_action_type }
+						set_temp_variable = { sc_new_vote_nation = sc_ai_target }
+						set_global_flag = sc_action_against@var:sc_ai_target
+						update_sc_vote = yes
+					}
+					60 = { }
+				}
+			}
+		}
+	}
+}
+
+# ============================================================
+# GA AI: Evaluate whether to propose a General Assembly resolution
+# Scope: the GA member nation (ROOT)
+# ============================================================
+un_ai_ga_consider_resolution = {
+	if = {
+		limit = {
+			is_in_array = { global.UN_general_assembly = THIS }
+			NOT = { has_global_flag = current_ongoing_ga_vote }
+		}
+
+		random_list = {
+			# Type 10: Poverty Reduction
+			10 = {
+				modifier = {
+					factor = 0
+					has_global_flag = proposed_ga_resolution_10
+				}
+				modifier = {
+					factor = 3
+					check_variable = { gdp_per_capita < 10 }
+				}
+				set_temp_variable = { ga_ai_resolution_type = 10 }
+			}
+
+			# Type 11: Food Security
+			10 = {
+				modifier = {
+					factor = 0
+					has_global_flag = proposed_ga_resolution_11
+				}
+				modifier = {
+					factor = 2
+					check_variable = { gdp_per_capita < 15 }
+				}
+				set_temp_variable = { ga_ai_resolution_type = 11 }
+			}
+
+			# Type 12: Global Health
+			10 = {
+				modifier = {
+					factor = 0
+					has_global_flag = proposed_ga_resolution_12
+				}
+				set_temp_variable = { ga_ai_resolution_type = 12 }
+			}
+
+			# Type 13: Education Initiative
+			10 = {
+				modifier = {
+					factor = 0
+					has_global_flag = proposed_ga_resolution_13
+				}
+				set_temp_variable = { ga_ai_resolution_type = 13 }
+			}
+
+			# Type 14: Clean Energy
+			8 = {
+				modifier = {
+					factor = 0
+					has_global_flag = proposed_ga_resolution_14
+				}
+				modifier = {
+					factor = 2
+					is_in_faction_with = USA
+				}
+				set_temp_variable = { ga_ai_resolution_type = 14 }
+			}
+
+			# Type 15: Economic Growth
+			12 = {
+				modifier = {
+					factor = 0
+					has_global_flag = proposed_ga_resolution_15
+				}
+				modifier = {
+					factor = 2
+					check_variable = { gdp_per_capita > 20 }
+				}
+				set_temp_variable = { ga_ai_resolution_type = 15 }
+			}
+
+			# Type 16: Infrastructure Development
+			10 = {
+				modifier = {
+					factor = 0
+					has_global_flag = proposed_ga_resolution_16
+				}
+				modifier = {
+					factor = 3
+					check_variable = { gdp_per_capita < 10 }
+				}
+				set_temp_variable = { ga_ai_resolution_type = 16 }
+			}
+
+			# Type 17: Reduced Inequality
+			8 = {
+				modifier = {
+					factor = 0
+					has_global_flag = proposed_ga_resolution_17
+				}
+				set_temp_variable = { ga_ai_resolution_type = 17 }
+			}
+
+			# Type 18: Climate Action
+			6 = {
+				modifier = {
+					factor = 0
+					has_global_flag = proposed_ga_resolution_18
+				}
+				set_temp_variable = { ga_ai_resolution_type = 18 }
+			}
+
+			# Type 19: Peace and Institutions
+			8 = {
+				modifier = {
+					factor = 0
+					has_global_flag = proposed_ga_resolution_19
+				}
+				modifier = {
+					factor = 3
+					has_war = no
+				}
+				set_temp_variable = { ga_ai_resolution_type = 19 }
+			}
+
+			# Type 20: Trade Partnerships
+			10 = {
+				modifier = {
+					factor = 0
+					has_global_flag = proposed_ga_resolution_20
+				}
+				modifier = {
+					factor = 2
+					check_variable = { gdp_per_capita > 15 }
+				}
+				set_temp_variable = { ga_ai_resolution_type = 20 }
+			}
+
+			# Type 21: Digital Development
+			6 = {
+				modifier = {
+					factor = 0
+					has_global_flag = proposed_ga_resolution_21
+				}
+				modifier = {
+					factor = 2
+					check_variable = { gdp_per_capita > 25 }
+				}
+				set_temp_variable = { ga_ai_resolution_type = 21 }
+			}
+
+			# Do nothing - most months the AI shouldn't propose
+			#80 = { }
+		}
+
+		if = {
+			limit = {
+				check_variable = { ga_ai_resolution_type > 0 }
+			}
+
+			add_political_power = -200
+
+			set_temp_variable = { ga_new_vote_type = ga_ai_resolution_type }
+			set_temp_variable = { ga_new_vote_nation = THIS }
+			update_ga_vote = yes
+
+			set_global_flag = { flag = proposed_ga_resolution_@var:ga_ai_resolution_type days = 365 value = 1 }
+		}
+	}
+}
