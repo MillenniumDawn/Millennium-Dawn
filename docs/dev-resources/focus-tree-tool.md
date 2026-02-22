@@ -4,9 +4,9 @@ title: "Focus Tree Tool"
 description: "Tool to generate focus tree skeletons using Diagram.net"
 ---
 
-This is a tool to generate focus tree skeletons using Diagram.net [CrocsFocusTreeTool.zip]({{ '/uploads/CrocsFocusTreeTool.zip' | relative_url }})
+This is a tool to generate focus tree skeletons using Diagram.net [CrocsFocusTreeTool.zip]({{ '/assets/downloads/tools/CrocsFocusTreeTool.zip' | relative_url }})
 
-ver 0.2: [CrocsFocusTreeTool.zip]({{ '/uploads/CrocsFocusTreeTool.zip' | relative_url }})
+ver 0.2: [CrocsFocusTreeTool.zip]({{ '/assets/downloads/tools/CrocsFocusTreeTool.zip' | relative_url }})
 
 Unpack the archive.
 It might require .NET 6.0 runtime to run
@@ -31,7 +31,8 @@ Tool should generate you a file, just close it when you are done!
 Examples:
 mutually exclusive line
 [Image unavailable: exclusive]
-![example1]({{ '/uploads/example1.jpg' | relative_url }})
+![example1]({{ '/assets/images/tutorials/example1.jpg' | relative_url }})
 
 Be aware that some complex line collisions are stored weirdly in document, and app may process them incorrectly
 use x-del and y-del to make your tree better spaced out
+
