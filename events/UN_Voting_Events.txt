@@ -1,0 +1,4353 @@
+add_namespace = UN
+add_namespace = UNSC
+
+#1-100 series events - events for voting
+#200 series events - events for swaying nations during
+#300 series events - events for warnings about UN programs or other changes
+#400 series events - events that fire after a UN GA Vote is held over implementing something
+#400 series events are used to let nations either reject or accept a non-binding vote
+
+#event to scope SC votes
+country_event = {
+	id = UNSC.100
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		random_scope_in_array = {
+			array = global.security_council_members
+			set_global_flag = current_ongoing_sc_vote
+			set_country_flag = has_sc_mission
+			activate_mission = UN_SC_voting_mission
+		}
+		for_each_loop = {
+			array = global.security_council_members
+			value = v
+
+			var:v = {
+				meta_effect = {
+					text = {
+						country_event = UNSC.[ID]
+					}
+					ID = "[?global.current_sc_vote_type]"
+				}
+				if = {
+					limit ={
+						NOT = { has_country_flag = has_sc_mission }
+					}
+					activate_mission = UN_SC_voting_mission_result_timer
+				}
+			}
+		}
+	}
+}
+#event for SC votes
+#Pressure to end war
+country_event = {
+	id = UNSC.1
+	title = UNSC.1.t
+	desc = UNSC.1.d
+	picture = GFX_UN_gen_assembly
+
+	is_triggered_only = yes
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UNSC.1.c
+		add_to_array = { global.security_council_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < 5
+				}
+				has_opinion = {
+					target = FROM
+					value > -5
+				}
+			}
+			modifier = {
+				add = 1000
+				has_war_with = FROM
+			}
+		}
+	}
+	#Yes
+	option = {
+		name = UNSC.1.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.security_council_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_opinion = {
+					target = FROM
+					value < -5
+				}
+			}
+			modifier = {
+				add = 20
+				is_embargoed_by = FROM
+			}
+			modifier = {
+				add = 30
+				is_neighbor_of = FROM
+			}
+			modifier = {
+				add = 50
+				is_in_array = { potential_and_current_enemies = FROM }
+			}
+		}
+	}
+	#No
+	option = {
+		name = UNSC.1.b
+		add_to_array = { global.security_council_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+		if = {
+			limit = {
+				is_in_array = { global.p5_sc_members = THIS }
+			}
+			set_global_flag = security_council_veto
+		}
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+
+			modifier = {
+				add = 10
+				is_in_faction_with = FROM
+			}
+
+			modifier = {
+				add = 10
+				FROM = {
+					has_same_ideology = yes
+				}
+			}
+
+			modifier = {
+				add = 20
+				has_opinion = {
+					target = FROM
+					value > 5
+				}
+			}
+
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+
+			modifier = {
+				add = 200
+				is_puppet_of = FROM
+			}
+
+			modifier = {
+				add = 20
+				is_guaranteed_by = FROM
+			}
+
+			modifier = {
+				add = 10
+				has_non_aggression_pact_with = FROM
+			}
+
+			modifier = {
+				add = 10
+				has_guaranteed = FROM
+			}
+		}
+	}
+}
+#Sanction for tension
+country_event = {
+	id = UNSC.2
+	title = UNSC.2.t
+	desc = UNSC.2.d
+	picture = GFX_UN_gen_assembly
+
+	is_triggered_only = yes
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UNSC.2.c
+		add_to_array = { global.security_council_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < 20
+				}
+				has_opinion = {
+					target = FROM
+					value > -20
+				}
+			}
+			modifier = {
+				add = 1000
+				has_war_with = FROM
+			}
+		}
+	}
+	#Yes
+	option = {
+		name = UNSC.2.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.security_council_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+			modifier = {
+				add = 20
+				is_embargoed_by = FROM
+			}
+			modifier = {
+				add = 30
+				is_neighbor_of = FROM
+			}
+			modifier = {
+				add = 50
+				is_in_array = { potential_and_current_enemies = FROM }
+			}
+		}
+	}
+	#No
+	option = {
+		name = UNSC.2.b
+		add_to_array = { global.security_council_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+		if = {
+			limit = {
+				is_in_array = { global.p5_sc_members = THIS }
+			}
+			set_global_flag = security_council_veto
+		}
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+
+			modifier = {
+				add = 10
+				is_in_faction_with = FROM
+			}
+
+			modifier = {
+				add = 10
+				FROM = {
+					has_same_ideology = yes
+				}
+			}
+
+			modifier = {
+				add = 20
+				has_opinion = {
+					target = FROM
+					value > 20
+				}
+			}
+
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+
+			modifier = {
+				add = 200
+				is_puppet_of = FROM
+			}
+
+			modifier = {
+				add = 20
+				is_guaranteed_by = FROM
+			}
+
+			modifier = {
+				add = 10
+				has_non_aggression_pact_with = FROM
+			}
+
+			modifier = {
+				add = 10
+				has_guaranteed = FROM
+			}
+		}
+	}
+}
+#Regulate volunteers
+country_event = {
+	id = UNSC.3
+	title = UNSC.3.t
+	desc = UNSC.3.d
+	picture = GFX_UN_gen_assembly
+
+	is_triggered_only = yes
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UNSC.3.c
+		add_to_array = { global.security_council_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < 20
+				}
+				has_opinion = {
+					target = FROM
+					value > -20
+				}
+			}
+			modifier = {
+				add = 1000
+				has_war_with = FROM
+			}
+		}
+	}
+	#Yes
+	option = {
+		name = UNSC.3.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.security_council_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+			modifier = {
+				add = 20
+				is_embargoed_by = FROM
+			}
+			modifier = {
+				add = 30
+				is_neighbor_of = FROM
+			}
+			modifier = {
+				add = 50
+				is_in_array = { potential_and_current_enemies = FROM }
+			}
+		}
+	}
+	#No
+	option = {
+		name = UNSC.3.b
+		add_to_array = { global.security_council_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+		if = {
+			limit = {
+				is_in_array = { global.p5_sc_members = THIS }
+			}
+			set_global_flag = security_council_veto
+		}
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+
+			modifier = {
+				add = 10
+				is_in_faction_with = FROM
+			}
+
+			modifier = {
+				add = 10
+				FROM = {
+					has_same_ideology = yes
+				}
+			}
+
+			modifier = {
+				add = 20
+				has_opinion = {
+					target = FROM
+					value > 20
+				}
+			}
+
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+
+			modifier = {
+				add = 200
+				is_puppet_of = FROM
+			}
+
+			modifier = {
+				add = 20
+				is_guaranteed_by = FROM
+			}
+
+			modifier = {
+				add = 10
+				has_non_aggression_pact_with = FROM
+			}
+
+			modifier = {
+				add = 10
+				has_guaranteed = FROM
+			}
+		}
+	}
+}
+#Arms embargo
+country_event = {
+	id = UNSC.4
+	title = UNSC.4.t
+	desc = UNSC.4.d
+	picture = GFX_UN_gen_assembly
+	timeout_days = 4
+
+	is_triggered_only = yes
+
+	#Abstain
+	option = {
+		name = UNSC.4.c
+		add_to_array = { global.security_council_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < 20
+				}
+				has_opinion = {
+					target = FROM
+					value > -20
+				}
+			}
+			modifier = {
+				add = 1000
+				has_war_with = FROM
+			}
+		}
+	}
+	#Yes
+	option = {
+		name = UNSC.4.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.security_council_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+			modifier = {
+				add = 20
+				is_embargoed_by = FROM
+			}
+			modifier = {
+				add = 30
+				is_neighbor_of = FROM
+			}
+			modifier = {
+				add = 50
+				is_in_array = { potential_and_current_enemies = FROM }
+			}
+		}
+	}
+	#No
+	option = {
+		name = UNSC.4.b
+		add_to_array = { global.security_council_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+		if = {
+			limit = {
+				is_in_array = { global.p5_sc_members = THIS }
+			}
+			set_global_flag = security_council_veto
+		}
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+
+			modifier = {
+				add = 10
+				is_in_faction_with = FROM
+			}
+
+			modifier = {
+				add = 10
+				FROM = {
+					has_same_ideology = yes
+				}
+			}
+
+			modifier = {
+				add = 20
+				has_opinion = {
+					target = FROM
+					value > 20
+				}
+			}
+
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+
+			modifier = {
+				add = 200
+				is_puppet_of = FROM
+			}
+
+			modifier = {
+				add = 20
+				is_guaranteed_by = FROM
+			}
+
+			modifier = {
+				add = 10
+				has_non_aggression_pact_with = FROM
+			}
+
+			modifier = {
+				add = 10
+				has_guaranteed = FROM
+			}
+		}
+	}
+}
+
+#event to scope GA votes
+country_event = {
+	id = UN.100
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		random_scope_in_array = {
+			array = global.UN_general_assembly
+			set_global_flag = current_ongoing_ga_vote
+			set_country_flag = has_ga_mission
+			activate_mission = UN_GA_voting_mission
+		}
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+
+			var:v = {
+				if = {
+					limit = {
+						NOT = {
+							has_country_flag = auto_accept_all_ga_votes
+							has_country_flag = auto_reject_all_ga_votes
+						}
+					}
+					meta_effect = {
+						text = {
+							country_event = UN.[ID]
+						}
+						ID = "[?global.current_ga_vote_type]"
+					}
+				}else = {
+					if = {
+						limit = {
+							has_country_flag = auto_accept_all_ga_votes
+						}
+						add_to_array = { global.general_assembly_vote_yes = THIS }
+					}else_if = {
+						limit = {
+							has_country_flag = auto_reject_all_ga_votes
+						}
+						add_to_array = { global.general_assembly_vote_no = THIS }
+					}
+				}
+				if = {
+					limit ={
+						NOT = { has_country_flag = has_ga_mission }
+					}
+					activate_mission = UN_GA_voting_mission_result_timer
+				}
+			}
+		}
+	}
+}
+#events for GA votes
+#security council seat confirmation event
+country_event = {
+	id = UN.6
+
+	is_triggered_only = yes
+
+	title = UN.6.t
+	desc = UN.6.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.6.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 1000
+				tag = FROM
+			}
+		}
+	}
+	#Yes
+	option = {
+		name = UN.6.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 200
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				is_in_faction_with = FROM
+			}
+			modifier = {
+				add = 20
+				is_guaranteed_by = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+			modifier = {
+				add = 10
+				is_on_same_continent_as = FROM
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.6.b
+		add_to_array = { global.general_assembly_vote_no = THIS } #testing, vote no after test
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = -10
+				has_non_aggression_pact_with = FROM
+			}
+			modifier = {
+				add = 50
+				is_in_array = { potential_and_current_enemies = FROM }
+			}
+			modifier = {
+				add = 50
+				FROM = {
+					has_war = yes
+				}
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+				FROM = {
+					has_same_ideology = yes
+				}
+			}
+			modifier = {
+				add = 10
+				is_on_same_continent_as = FROM
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 20
+				any_of_scopes = {
+					array = allies
+					has_opinion = {
+						target = FROM
+						value < -10
+					}
+				}
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -11
+				}
+			}
+			modifier = {
+				add = 100
+				has_war_with = FROM
+			}
+		}
+	}
+}
+#raid non-binding sanctions event
+country_event = {
+	id = UN.7
+
+	is_triggered_only = yes
+
+	title = UN.7.t
+	desc = UN.7.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.7.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.7.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				has_war_with = FROM
+			}
+			modifier = {
+				add = 10
+				is_embargoed_by = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+				FROM = {
+					has_same_ideology = yes
+				}
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.7.b
+		add_to_array = { global.general_assembly_vote_no = THIS } #testing, vote no after test
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 100
+				is_guaranteed_by = FROM
+			}
+			modifier = {
+				add = 10
+				has_war = yes
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+}
+#decrease budget event
+country_event = {
+	id = UN.8
+
+	is_triggered_only = yes
+
+	title = UN.8.t
+	desc = UN.8.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.8.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.8.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				has_war_with = FROM
+			}
+			modifier = {
+				add = 10
+				is_embargoed_by = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+				FROM = {
+					has_same_ideology = yes
+				}
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.8.b
+		add_to_array = { global.general_assembly_vote_no = THIS } #testing, vote no after test
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 100
+				is_guaranteed_by = FROM
+			}
+			modifier = {
+				add = 10
+				has_war = yes
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+}
+#increase budget event
+country_event = {
+	id = UN.9
+
+	is_triggered_only = yes
+
+	title = UN.9.t
+	desc = UN.9.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.9.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.9.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				has_war_with = FROM
+			}
+			modifier = {
+				add = 10
+				is_embargoed_by = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+				FROM = {
+					has_same_ideology = yes
+				}
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.9.b
+		add_to_array = { global.general_assembly_vote_no = THIS } #testing, vote no after test
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 100
+				is_guaranteed_by = FROM
+			}
+			modifier = {
+				add = 10
+				has_war = yes
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+}
+
+#UNGA Non-Binding Resolution Events
+#poverty reduction resolution
+#Modifiers: stability_factor +3%, consumer_goods_factor +4%
+#Benefit: stability boost. Cost: consumer goods increase.
+#AI: peaceful nations lean yes, nations at war or needing military output lean no.
+country_event = {
+	id = UN.10
+
+	is_triggered_only = yes
+
+	title = UN.10.t
+	desc = UN.10.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.10.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.10.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 20
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				has_stability < 0.5
+			}
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.10.b
+		add_to_array = { global.general_assembly_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 10
+				has_stability > 0.7
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+}
+#food security resolution
+#Modifiers: agriculture +5%, ag construction +5%, consumer_goods +2%, factory output -2%
+#Benefit: agriculture boost. Cost: factory output reduction.
+#AI: agricultural/developing nations lean yes, industrialized/wartime nations lean no.
+country_event = {
+	id = UN.11
+
+	is_triggered_only = yes
+
+	title = UN.11.t
+	desc = UN.11.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.11.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.11.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 15
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				num_of_civilian_factories < 30
+			}
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.11.b
+		add_to_array = { global.general_assembly_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 15
+				num_of_military_factories > 50
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+}
+#global health resolution
+#Modifiers: stability +3%, health cost -10%, consumer_goods +3%
+#Benefit: stability and cheaper healthcare. Cost: consumer goods increase.
+#AI: peacetime nations with low stability lean yes, wartime nations lean no.
+country_event = {
+	id = UN.12
+
+	is_triggered_only = yes
+
+	title = UN.12.t
+	desc = UN.12.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.12.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.12.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 20
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				has_stability < 0.5
+			}
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.12.b
+		add_to_array = { global.general_assembly_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 10
+				has_stability > 0.7
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+}
+#education initiative resolution
+#Modifiers: research +3%, education cost -10%, consumer_goods +2%, construction speed -2%
+#Benefit: research and education boost. Cost: slower construction.
+#AI: tech-focused peaceful nations lean yes, nations building up or at war lean no.
+country_event = {
+	id = UN.13
+
+	is_triggered_only = yes
+
+	title = UN.13.t
+	desc = UN.13.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.13.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.13.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 15
+				has_war = no
+			}
+			modifier = {
+				add = 15
+				num_of_available_research_slots > 3
+			}
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.13.b
+		add_to_array = { global.general_assembly_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 15
+				num_of_civilian_factories > 50
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+}
+#clean energy resolution
+#Modifiers: renewable construction +10%, renewable cost -5%, fossil construction -10%, factory output -2%
+#Benefit: renewable energy boost. Cost: fossil fuel and factory penalties.
+#AI: controversial - heavily industrialized nations lean no, smaller/peaceful nations lean yes.
+country_event = {
+	id = UN.14
+
+	is_triggered_only = yes
+
+	title = UN.14.t
+	desc = UN.14.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.14.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.14.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				num_of_civilian_factories < 30
+			}
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.14.b
+		add_to_array = { global.general_assembly_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 15
+				has_war = yes
+			}
+			modifier = {
+				add = 20
+				num_of_military_factories > 50
+			}
+			modifier = {
+				add = 15
+				num_of_civilian_factories > 50
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+}
+#economic growth resolution
+#Modifiers: productivity +0.5, factory output +3%, consumer_goods +3%, PP -5%
+#Benefit: productivity and factory boost. Cost: PP reduction and consumer goods.
+#AI: industrial nations lean yes since factory output offsets costs, small nations lean no due to PP loss.
+country_event = {
+	id = UN.15
+
+	is_triggered_only = yes
+
+	title = UN.15.t
+	desc = UN.15.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.15.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.15.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 20
+				num_of_civilian_factories > 30
+			}
+			modifier = {
+				add = 10
+				num_of_military_factories > 30
+			}
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.15.b
+		add_to_array = { global.general_assembly_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 15
+				has_war = yes
+			}
+			modifier = {
+				add = 20
+				num_of_civilian_factories < 15
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+}
+#infrastructure development resolution
+#Modifiers: infra construction +10%, civ factory construction +5%, arms factory construction -5%, consumer_goods +2%
+#Benefit: faster civilian building. Cost: slower arms factories.
+#AI: peacetime builders lean yes, nations at war or militarizing lean no.
+country_event = {
+	id = UN.16
+
+	is_triggered_only = yes
+
+	title = UN.16.t
+	desc = UN.16.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.16.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.16.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 20
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				num_of_civilian_factories < 30
+			}
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.16.b
+		add_to_array = { global.general_assembly_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 25
+				has_war = yes
+			}
+			modifier = {
+				add = 20
+				num_of_military_factories > 30
+			}
+			modifier = {
+				add = 10
+				has_offensive_war = yes
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+}
+#reduced inequality resolution
+#Modifiers: stability +5%, consumer_goods +4%, PP -5%
+#Benefit: strong stability boost. Cost: PP and consumer goods increase.
+#AI: unstable nations lean yes, nations needing PP (at war, major powers) lean no.
+country_event = {
+	id = UN.17
+
+	is_triggered_only = yes
+
+	title = UN.17.t
+	desc = UN.17.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.17.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.17.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 20
+				has_stability < 0.5
+			}
+			modifier = {
+				add = 15
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.17.b
+		add_to_array = { global.general_assembly_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 15
+				has_stability > 0.7
+			}
+			modifier = {
+				add = 15
+				is_major = yes
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+}
+#climate action resolution
+#Modifiers: renewable construction +5%, fossil construction -15%, factory output -3%, stability +2%
+#Benefit: small stability and renewable boost. Cost: heavy fossil and factory penalties.
+#AI: most controversial - heavy industry nations strongly oppose, small peaceful nations lean yes.
+country_event = {
+	id = UN.18
+
+	is_triggered_only = yes
+
+	title = UN.18.t
+	desc = UN.18.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.18.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.18.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				num_of_civilian_factories < 20
+			}
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.18.b
+		add_to_array = { global.general_assembly_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 25
+				num_of_military_factories > 50
+			}
+			modifier = {
+				add = 20
+				num_of_civilian_factories > 50
+			}
+			modifier = {
+				add = 15
+				is_major = yes
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+}
+#peace and institutions resolution
+#Modifiers: PP +0.5, drift defence +10%, foreign subversive -10%, consumer_goods +2%, arms factory construction -5%
+#Benefit: PP gain and ideology protection. Cost: slower arms factories.
+#AI: peaceful nations lean yes, wartime/militaristic nations lean no since arms factory penalty hurts them.
+country_event = {
+	id = UN.19
+
+	is_triggered_only = yes
+
+	title = UN.19.t
+	desc = UN.19.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.19.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.19.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 25
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				has_offensive_war = no
+			}
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.19.b
+		add_to_array = { global.general_assembly_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 25
+				has_war = yes
+			}
+			modifier = {
+				add = 20
+				has_offensive_war = yes
+			}
+			modifier = {
+				add = 15
+				num_of_military_factories > 30
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+}
+#trade partnerships resolution
+#Modifiers: trade opinion +10%, trade cost -5%, PP -3%, consumer_goods +1%
+#Benefit: better trade deals. Cost: small PP reduction.
+#AI: trade-oriented peaceful nations lean yes, isolationist/wartime nations lean no.
+country_event = {
+	id = UN.20
+
+	is_triggered_only = yes
+
+	title = UN.20.t
+	desc = UN.20.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.20.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.20.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 20
+				has_war = no
+			}
+			modifier = {
+				add = 15
+				is_in_faction_with = FROM
+			}
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.20.b
+		add_to_array = { global.general_assembly_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 15
+				has_offensive_war = yes
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+}
+#digital development resolution
+#Modifiers: internet construction +10%, microchip construction +5%, research +2%, consumer_goods +3%, infra construction -3%
+#Benefit: tech infrastructure and research boost. Cost: consumer goods and slower basic infra.
+#AI: tech-capable nations lean yes, developing nations needing basic infra lean no.
+country_event = {
+	id = UN.21
+
+	is_triggered_only = yes
+
+	title = UN.21.t
+	desc = UN.21.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 4
+
+	#Abstain
+	option = {
+		name = UN.21.c
+		add_to_array = { global.general_assembly_vote_abstain = THIS }
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting"
+
+		missile_ui_update = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+	#Yes
+	option = {
+		name = UN.21.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes"
+		add_to_array = { global.general_assembly_vote_yes = THIS }
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 500
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 15
+				has_war = no
+			}
+			modifier = {
+				add = 20
+				num_of_available_research_slots > 3
+			}
+			modifier = {
+				add = 10
+				num_of_civilian_factories > 30
+			}
+			modifier = {
+				add = 10
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+		}
+	}
+	#No
+	option = {
+		name = UN.21.b
+		add_to_array = { global.general_assembly_vote_no = THIS }
+		log = "[GetDateText]: [THIS.GetName] has voted no"
+
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 15
+				num_of_civilian_factories < 15
+			}
+			modifier = {
+				add = 10
+				num_of_available_research_slots < 3
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+		}
+	}
+}
+
+#400 series events - events that fire after a UN GA Vote is held over implementing something
+#Nations that voted no or abstained on a passed non-binding resolution get a chance to accept it
+#Each resolution type dispatches to its own event via meta_effect: UN.410-UN.421
+
+#poverty reduction - accept/reject
+#Modifiers: stability +3%, consumer_goods +2%, PP +0.25
+country_event = {
+	id = UN.410
+
+	is_triggered_only = yes
+
+	title = UN.410.t
+	desc = UN.410.d
+	picture = GFX_UN_gen_assembly
+
+	#Accept the Resolution
+	option = {
+		name = UN.410.a
+		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Poverty Reduction resolution"
+		add_timed_idea = { idea = unga_resolution_poverty_reduction days = 365 }
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 15
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				has_stability < 0.5
+			}
+		}
+	}
+
+	#Reject the Resolution
+	option = {
+		name = UN.410.b
+		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Poverty Reduction resolution"
+
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = { has_idea = unga_resolution_poverty_reduction }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 10
+				has_stability > 0.7
+			}
+		}
+	}
+}
+
+#food security - accept/reject
+#Modifiers: agriculture +5%, ag construction +5%, consumer_goods +2%, factory output -2%
+country_event = {
+	id = UN.411
+
+	is_triggered_only = yes
+
+	title = UN.411.t
+	desc = UN.411.d
+	picture = GFX_UN_gen_assembly
+
+	#Accept the Resolution
+	option = {
+		name = UN.411.a
+		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Food Security resolution"
+		add_timed_idea = { idea = unga_resolution_food_security days = 365 }
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 15
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				num_of_civilian_factories < 30
+			}
+		}
+	}
+
+	#Reject the Resolution
+	option = {
+		name = UN.411.b
+		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Food Security resolution"
+
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = { has_idea = unga_resolution_food_security }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 15
+				num_of_military_factories > 50
+			}
+		}
+	}
+}
+
+#global health - accept/reject
+#Modifiers: stability +3%, health cost -10%, consumer_goods +3%
+country_event = {
+	id = UN.412
+
+	is_triggered_only = yes
+
+	title = UN.412.t
+	desc = UN.412.d
+	picture = GFX_UN_gen_assembly
+
+	#Accept the Resolution
+	option = {
+		name = UN.412.a
+		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Global Health resolution"
+		add_timed_idea = { idea = unga_resolution_global_health days = 365 }
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 15
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				has_stability < 0.5
+			}
+		}
+	}
+
+	#Reject the Resolution
+	option = {
+		name = UN.412.b
+		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Global Health resolution"
+
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = { has_idea = unga_resolution_global_health }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 10
+				has_stability > 0.7
+			}
+		}
+	}
+}
+
+#education initiative - accept/reject
+#Modifiers: research +3%, education cost -10%, consumer_goods +2%, construction speed -2%
+country_event = {
+	id = UN.413
+
+	is_triggered_only = yes
+
+	title = UN.413.t
+	desc = UN.413.d
+	picture = GFX_UN_gen_assembly
+
+	#Accept the Resolution
+	option = {
+		name = UN.413.a
+		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Education Initiative resolution"
+		add_timed_idea = { idea = unga_resolution_education_initiative days = 365 }
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 15
+				has_war = no
+			}
+			modifier = {
+				add = 15
+				num_of_available_research_slots > 3
+			}
+		}
+	}
+
+	#Reject the Resolution
+	option = {
+		name = UN.413.b
+		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Education Initiative resolution"
+
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = { has_idea = unga_resolution_education_initiative }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 15
+				num_of_civilian_factories > 50
+			}
+		}
+	}
+}
+
+#clean energy - accept/reject
+#Modifiers: renewable construction +10%, renewable cost -5%, fossil construction -10%, factory output -2%
+country_event = {
+	id = UN.414
+
+	is_triggered_only = yes
+
+	title = UN.414.t
+	desc = UN.414.d
+	picture = GFX_UN_gen_assembly
+
+	#Accept the Resolution
+	option = {
+		name = UN.414.a
+		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Clean Energy resolution"
+		add_timed_idea = { idea = unga_resolution_clean_energy days = 365 }
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				num_of_civilian_factories < 30
+			}
+		}
+	}
+
+	#Reject the Resolution
+	option = {
+		name = UN.414.b
+		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Clean Energy resolution"
+
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = { has_idea = unga_resolution_clean_energy }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 15
+				has_war = yes
+			}
+			modifier = {
+				add = 20
+				num_of_military_factories > 50
+			}
+			modifier = {
+				add = 15
+				num_of_civilian_factories > 50
+			}
+		}
+	}
+}
+
+#economic growth - accept/reject
+#Modifiers: productivity +0.5, factory output +3%, consumer_goods +3%, PP -5%
+country_event = {
+	id = UN.415
+
+	is_triggered_only = yes
+
+	title = UN.415.t
+	desc = UN.415.d
+	picture = GFX_UN_gen_assembly
+
+	#Accept the Resolution
+	option = {
+		name = UN.415.a
+		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Economic Growth resolution"
+		add_timed_idea = { idea = unga_resolution_economic_growth days = 365 }
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				num_of_civilian_factories > 30
+			}
+			modifier = {
+				add = 10
+				num_of_military_factories > 30
+			}
+		}
+	}
+
+	#Reject the Resolution
+	option = {
+		name = UN.415.b
+		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Economic Growth resolution"
+
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = { has_idea = unga_resolution_economic_growth }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 15
+				has_war = yes
+			}
+			modifier = {
+				add = 20
+				num_of_civilian_factories < 15
+			}
+		}
+	}
+}
+
+#infrastructure development - accept/reject
+#Modifiers: infra construction +10%, civ factory construction +5%, arms factory construction -5%, consumer_goods +2%
+country_event = {
+	id = UN.416
+
+	is_triggered_only = yes
+
+	title = UN.416.t
+	desc = UN.416.d
+	picture = GFX_UN_gen_assembly
+
+	#Accept the Resolution
+	option = {
+		name = UN.416.a
+		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Infrastructure Development resolution"
+		add_timed_idea = { idea = unga_resolution_infrastructure days = 365 }
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				num_of_civilian_factories < 30
+			}
+		}
+	}
+
+	#Reject the Resolution
+	option = {
+		name = UN.416.b
+		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Infrastructure Development resolution"
+
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = { has_idea = unga_resolution_infrastructure }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 25
+				has_war = yes
+			}
+			modifier = {
+				add = 20
+				num_of_military_factories > 30
+			}
+			modifier = {
+				add = 10
+				has_offensive_war = yes
+			}
+		}
+	}
+}
+
+#reduced inequality - accept/reject
+#Modifiers: stability +5%, consumer_goods +4%, PP -5%
+country_event = {
+	id = UN.417
+
+	is_triggered_only = yes
+
+	title = UN.417.t
+	desc = UN.417.d
+	picture = GFX_UN_gen_assembly
+
+	#Accept the Resolution
+	option = {
+		name = UN.417.a
+		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Reduced Inequality resolution"
+		add_timed_idea = { idea = unga_resolution_reduced_inequality days = 365 }
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_stability < 0.5
+			}
+			modifier = {
+				add = 15
+				has_war = no
+			}
+		}
+	}
+
+	#Reject the Resolution
+	option = {
+		name = UN.417.b
+		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Reduced Inequality resolution"
+
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = { has_idea = unga_resolution_reduced_inequality }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 15
+				has_stability > 0.7
+			}
+			modifier = {
+				add = 15
+				is_major = yes
+			}
+		}
+	}
+}
+
+#climate action - accept/reject
+#Modifiers: renewable construction +5%, fossil construction -15%, factory output -3%, stability +2%
+country_event = {
+	id = UN.418
+
+	is_triggered_only = yes
+
+	title = UN.418.t
+	desc = UN.418.d
+	picture = GFX_UN_gen_assembly
+
+	#Accept the Resolution
+	option = {
+		name = UN.418.a
+		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Climate Action resolution"
+		add_timed_idea = { idea = unga_resolution_climate_action days = 365 }
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 10
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				num_of_civilian_factories < 20
+			}
+		}
+	}
+
+	#Reject the Resolution
+	option = {
+		name = UN.418.b
+		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Climate Action resolution"
+
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = { has_idea = unga_resolution_climate_action }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 25
+				num_of_military_factories > 50
+			}
+			modifier = {
+				add = 20
+				num_of_civilian_factories > 50
+			}
+			modifier = {
+				add = 15
+				is_major = yes
+			}
+		}
+	}
+}
+
+#peace and institutions - accept/reject
+#Modifiers: PP +0.5, drift defence +10%, foreign subversive -10%, consumer_goods +2%, arms factory construction -5%
+country_event = {
+	id = UN.419
+
+	is_triggered_only = yes
+
+	title = UN.419.t
+	desc = UN.419.d
+	picture = GFX_UN_gen_assembly
+
+	#Accept the Resolution
+	option = {
+		name = UN.419.a
+		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Peace & Institutions resolution"
+		add_timed_idea = { idea = unga_resolution_peace_institutions days = 365 }
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 25
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				has_offensive_war = no
+			}
+		}
+	}
+
+	#Reject the Resolution
+	option = {
+		name = UN.419.b
+		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Peace & Institutions resolution"
+
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = { has_idea = unga_resolution_peace_institutions }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 25
+				has_war = yes
+			}
+			modifier = {
+				add = 20
+				has_offensive_war = yes
+			}
+			modifier = {
+				add = 15
+				num_of_military_factories > 30
+			}
+		}
+	}
+}
+
+#trade partnerships - accept/reject
+#Modifiers: trade opinion +10%, trade cost -5%, PP -3%, consumer_goods +1%
+country_event = {
+	id = UN.420
+
+	is_triggered_only = yes
+
+	title = UN.420.t
+	desc = UN.420.d
+	picture = GFX_UN_gen_assembly
+
+	#Accept the Resolution
+	option = {
+		name = UN.420.a
+		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Trade Partnerships resolution"
+		add_timed_idea = { idea = unga_resolution_trade_partnerships days = 365 }
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = no
+			}
+			modifier = {
+				add = 15
+				is_in_faction = yes
+			}
+		}
+	}
+
+	#Reject the Resolution
+	option = {
+		name = UN.420.b
+		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Trade Partnerships resolution"
+
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = { has_idea = unga_resolution_trade_partnerships }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 15
+				has_offensive_war = yes
+			}
+		}
+	}
+}
+
+#digital development - accept/reject
+#Modifiers: internet construction +10%, microchip construction +5%, research +2%, consumer_goods +3%, infra construction -3%
+country_event = {
+	id = UN.421
+
+	is_triggered_only = yes
+
+	title = UN.421.t
+	desc = UN.421.d
+	picture = GFX_UN_gen_assembly
+
+	#Accept the Resolution
+	option = {
+		name = UN.421.a
+		log = "[GetDateText]: [THIS.GetName] has accepted the UNGA Digital Development resolution"
+		add_timed_idea = { idea = unga_resolution_digital_development days = 365 }
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 15
+				has_war = no
+			}
+			modifier = {
+				add = 20
+				num_of_available_research_slots > 3
+			}
+			modifier = {
+				add = 10
+				num_of_civilian_factories > 30
+			}
+		}
+	}
+
+	#Reject the Resolution
+	option = {
+		name = UN.421.b
+		log = "[GetDateText]: [THIS.GetName] has rejected the UNGA Digital Development resolution"
+
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = { has_idea = unga_resolution_digital_development }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
+					add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 15
+				num_of_civilian_factories < 15
+			}
+			modifier = {
+				add = 10
+				num_of_available_research_slots < 3
+			}
+		}
+	}
+}
+
+#UNSC sway scoping event
+country_event = {
+	id = UNSC.200
+	is_triggered_only = yes
+
+	title = UNSC.200.t
+	desc = UNSC.200.d
+	picture = GFX_UN_gen_assembly
+
+	option = {
+		name = UNSC.200.a
+		var:sway_target = {
+			country_event = UNSC.201
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+		}
+		custom_effect_tooltip = un_change_vote_too_offer_1
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = {
+			base = 0
+		}
+	}
+	option = {
+		name = UNSC.200.b
+		var:sway_target = {
+			country_event = UNSC.202
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+		}
+		custom_effect_tooltip = un_change_vote_too_offer_2
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = {
+			base = 0
+		}
+	}
+	option = {
+		name = UNSC.200.c
+		var:sway_target = {
+			country_event = UNSC.203
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+		}
+		custom_effect_tooltip = un_change_vote_too_offer_3
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = {
+			base = 0
+		}
+	}
+	option = {
+		name = UNSC.200.e
+
+		trigger = {
+			NOT = { has_idea = un_vote_sway_cost }
+		}
+		custom_effect_tooltip = un_change_vote_too_offer_4
+
+		var:sway_target = {
+			country_event = UNSC.204
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+			custom_effect_tooltip = nation_will_receive_tt
+			effect_tooltip = {
+				add_ideas = un_vote_sway_assistance
+			}
+		}
+		custom_effect_tooltip = nation_will_receive_tt
+		effect_tooltip = {
+			add_ideas = un_vote_sway_cost
+		}
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = {
+			base = 1000
+		}
+	}
+}
+#UNSC Sway Events
+country_event = {
+	id = UNSC.201
+	is_triggered_only = yes
+
+	title = UNSC.201.t
+	desc = UNSC.201.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 2
+
+	option = {
+		name = UNSC.201.b
+
+		clear_variable = current_sway_direction
+
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+
+		if = {
+			limit = {
+				sender_influence_higher_50 = yes
+			}
+			add_political_power = -250
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 5
+				sender_influence_higher_50 = no
+			}
+			modifier = {
+				add = 5
+				has_country_flag = trade_agreement@FROM
+			}
+			modifier = {
+				add = 5
+				has_country_flag = mutual_investment_treaty_@FROM
+			}
+			modifier = {
+				add = 5
+				NOT = { is_embargoed_by = FROM }
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+		}
+	}
+
+	option = {
+		name = UNSC.201.a
+
+		set_country_flag = has_had_current_un_sc_vote_swayed
+
+		if = {
+			limit = { is_in_array = { global.security_council_vote_yes = THIS } }
+			remove_from_array = { global.security_council_vote_yes = THIS }
+		}else_if = {
+			limit = { is_in_array = { global.security_council_vote_no = THIS } }
+			remove_from_array = { global.security_council_vote_no = THIS }
+		}else = {
+			remove_from_array = { global.security_council_vote_abstain = THIS }
+		}
+
+		if = {
+			limit = { check_variable = { current_sway_direction = 1 } }
+			add_to_array = { global.security_council_vote_yes = THIS }
+		}else_if = {
+			limit = { check_variable = { current_sway_direction = 2 } }
+			add_to_array = { global.security_council_vote_no = THIS }
+		}else = {
+			add_to_array = { global.security_council_vote_abstain = THIS }
+		}
+
+		if = {
+			limit = {
+				has_dlc = "By Blood Alone"
+				is_embargoed_by = FROM
+			}
+			FROM = {
+				diplomatic_relation = {
+					country = PREV
+					relation = embargo
+					active = no
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				NOT = { has_country_flag = trade_agreement@FROM }
+			}
+			FROM = {
+				set_country_flag = trade_agreement@PREV
+
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = PREV.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+				add_to_variable = { signed_trade_agreements = 1 }
+			}
+			set_country_flag = trade_agreement@FROM
+
+			add_opinion_modifier = { target = FROM modifier = mutual_trade_agreement }
+			add_opinion_modifier = { target = FROM modifier = mutual_trade_opinion }
+			reverse_add_opinion_modifier = { target = FROM modifier = mutual_trade_opinion }
+			reverse_add_opinion_modifier = { target = FROM modifier = mutual_trade_agreement }
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = FROM.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			add_to_variable = { signed_trade_agreements = 1 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_country_flag = mutual_investment_treaty_@FROM }
+			}
+			FROM = {
+				set_country_flag = mutual_investment_treaty_@PREV
+
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = PREV.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+
+				# Permanent Investment Targets
+				set_temp_variable = { target_nation = THIS.id }
+				set_temp_variable = { adding_nation = PREV.id }
+				change_permanent_investment_target = yes
+			}
+
+			set_country_flag = mutual_investment_treaty_@FROM
+
+			add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_opinion }
+			add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_trade_opinion }
+			reverse_add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_opinion }
+			reverse_add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_trade_opinion }
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = FROM.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+
+			# Permanent Investment Targets
+			set_temp_variable = { target_nation = THIS.id }
+			set_temp_variable = { adding_nation = FROM.id }
+			change_permanent_investment_target = yes
+		}
+
+		clear_variable = current_sway_direction
+
+		missile_ui_update = yes
+
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 15
+				sender_influence_higher_50 = yes
+			}
+			modifier = {
+				add = 5
+				NOT = { has_country_flag = trade_agreement@FROM }
+			}
+			modifier = {
+				add = 5
+				NOT = { has_country_flag = mutual_investment_treaty_@FROM }
+			}
+			modifier = {
+				add = 5
+				is_embargoed_by = FROM
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+		}
+	}
+}
+country_event = {
+	id = UNSC.202
+	is_triggered_only = yes
+
+	title = UNSC.202.t
+	desc = UNSC.202.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 2
+
+	option = {
+		name = UNSC.202.b
+
+		clear_variable = current_sway_direction
+
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+
+		if = {
+			limit = {
+				sender_influence_higher_50 = yes
+			}
+			add_political_power = -250
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 5
+				sender_influence_higher_50 = no
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 15
+				check_variable = { treasury_rate > 0 }
+			}
+		}
+	}
+
+	option = {
+		name = UNSC.202.a
+
+		set_country_flag = has_had_current_un_sc_vote_swayed
+
+		if = {
+			limit = { is_in_array = { global.security_council_vote_yes = THIS } }
+			remove_from_array = { global.security_council_vote_yes = THIS }
+		}else_if = {
+			limit = { is_in_array = { global.security_council_vote_no = THIS } }
+			remove_from_array = { global.security_council_vote_no = THIS }
+		}else = {
+			remove_from_array = { global.security_council_vote_abstain = THIS }
+		}
+
+		if = {
+			limit = { check_variable = { current_sway_direction = 1 } }
+			add_to_array = { global.security_council_vote_yes = THIS }
+		}else_if = {
+			limit = { check_variable = { current_sway_direction = 2 } }
+			add_to_array = { global.security_council_vote_no = THIS }
+		}else = {
+			add_to_array = { global.security_council_vote_abstain = THIS }
+		}
+
+		set_temp_variable = { gdp_value_tracker = gdp_total }
+		multiply_temp_variable = { gdp_value_tracker = 0.0025 }
+		set_temp_variable = { treasury_change = gdp_value_tracker }
+		modify_treasury_effect = yes
+
+		multiply_temp_variable = { treasury_change = -1 }
+
+		FROM = {
+			modify_treasury_effect = yes
+		}
+
+		clear_variable = current_sway_direction
+
+		missile_ui_update = yes
+
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 15
+				sender_influence_higher_50 = yes
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+			modifier = {
+				add = 15
+				check_variable = { treasury_rate < 0.001 }
+			}
+		}
+	}
+}
+country_event = {
+	id = UNSC.203
+	is_triggered_only = yes
+
+	title = UNSC.203.t
+	desc = UNSC.203.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 2
+
+	option = {
+		name = UNSC.203.b
+
+		clear_variable = current_sway_direction
+
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+
+		if = {
+			limit = {
+				sender_influence_higher_50 = yes
+			}
+			add_political_power = -250
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 5
+				has_military_access_to = FROM
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.GNSS_mil_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.GNSS_civ_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.COM_mil_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.COM_civ_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < 1
+				}
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = no
+			}
+		}
+	}
+
+	option = {
+		name = UNSC.203.a
+
+		set_country_flag = has_had_current_un_sc_vote_swayed
+
+		if = {
+			limit = { is_in_array = { global.security_council_vote_yes = THIS } }
+			remove_from_array = { global.security_council_vote_yes = THIS }
+		}else_if = {
+			limit = { is_in_array = { global.security_council_vote_no = THIS } }
+			remove_from_array = { global.security_council_vote_no = THIS }
+		}else = {
+			remove_from_array = { global.security_council_vote_abstain = THIS }
+		}
+
+		if = {
+			limit = { check_variable = { current_sway_direction = 1 } }
+			add_to_array = { global.security_council_vote_yes = THIS }
+		}else_if = {
+			limit = { check_variable = { current_sway_direction = 2 } }
+			add_to_array = { global.security_council_vote_no = THIS }
+		}else = {
+			add_to_array = { global.security_council_vote_abstain = THIS }
+		}
+
+		clear_variable = current_sway_direction
+
+		missile_ui_update = yes
+
+		if = {
+			limit = {
+				NOT = {
+					has_military_access_to = FROM
+				}
+			}
+			FROM = {
+				give_military_access = PREV
+			}
+		}
+
+		FROM = {
+			diplomatic_relation = {
+				country = PREV
+				relation = OFFER_AIR_BASE_ACCESS
+				active = yes
+			}
+		}
+
+		full_satellite_system_access = yes
+
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 5
+				NOT = { has_military_access_to = FROM }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.GNSS_mil_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.GNSS_civ_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.COM_mil_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.COM_civ_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = yes
+			}
+		}
+	}
+}
+country_event = {
+	id = UNSC.204
+	is_triggered_only = yes
+
+	title = UNSC.204.t
+	desc = UNSC.204.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 2
+
+	option = {
+		name = UNSC.204.b
+
+		clear_variable = current_sway_direction
+
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+
+		if = {
+			limit = {
+				sender_influence_higher_50 = yes
+			}
+			add_political_power = -250
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < 1
+				}
+			}
+			modifier = {
+				add = 5
+				has_idea = un_vote_sway_assistance
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = no
+			}
+		}
+	}
+
+	option = {
+		name = UNSC.204.a
+
+		set_country_flag = has_had_current_un_sc_vote_swayed
+
+		if = {
+			limit = { is_in_array = { global.security_council_vote_yes = THIS } }
+			remove_from_array = { global.security_council_vote_yes = THIS }
+		}else_if = {
+			limit = { is_in_array = { global.security_council_vote_no = THIS } }
+			remove_from_array = { global.security_council_vote_no = THIS }
+		}else = {
+			remove_from_array = { global.security_council_vote_abstain = THIS }
+		}
+
+		if = {
+			limit = { check_variable = { current_sway_direction = 1 } }
+			add_to_array = { global.security_council_vote_yes = THIS }
+		}else_if = {
+			limit = { check_variable = { current_sway_direction = 2 } }
+			add_to_array = { global.security_council_vote_no = THIS }
+		}else = {
+			add_to_array = { global.security_council_vote_abstain = THIS }
+		}
+
+		clear_variable = current_sway_direction
+
+		add_timed_idea = {
+			idea = un_vote_sway_assistance
+			days = 365
+		}
+
+		FROM = {
+			if = {
+				limit = {
+					has_idea = un_vote_sway_cost
+				}
+				modify_timed_idea = {
+					idea = un_vote_sway_cost
+					days = 365
+				}
+			}else = {
+				add_timed_idea = {
+					idea = un_vote_sway_cost
+					days = 365
+				}
+			}
+		}
+
+		missile_ui_update = yes
+
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+			modifier = {
+				add = 5
+				NOT = { has_idea = un_vote_sway_assistance }
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = yes
+			}
+		}
+	}
+}
+
+#UNGA sway scoping event
+country_event = {
+	id = UN.200
+	is_triggered_only = yes
+
+	title = UN.200.t
+	desc = UN.200.d
+	picture = GFX_UN_gen_assembly
+
+	option = {
+		name = UN.200.a
+		var:sway_target = {
+			country_event = UN.201
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+		}
+		custom_effect_tooltip = un_change_vote_too_offer_1
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = {
+			base = 0
+		}
+	}
+	option = {
+		name = UN.200.b
+		var:sway_target = {
+			country_event = UN.202
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+		}
+		custom_effect_tooltip = un_change_vote_too_offer_2
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = {
+			base = 0
+		}
+	}
+	option = {
+		name = UN.200.c
+		var:sway_target = {
+			country_event = UN.203
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+		}
+		custom_effect_tooltip = un_change_vote_too_offer_3
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = {
+			base = 0
+		}
+	}
+	option = {
+		name = UN.200.e
+
+		trigger = {
+			NOT = { has_idea = un_vote_sway_cost }
+		}
+		custom_effect_tooltip = un_change_vote_too_offer_4
+
+		var:sway_target = {
+			country_event = UN.204
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+			custom_effect_tooltip = nation_will_receive_tt
+			effect_tooltip = {
+				add_ideas = un_vote_sway_assistance
+			}
+		}
+		custom_effect_tooltip = nation_will_receive_tt
+		effect_tooltip = {
+			add_ideas = un_vote_sway_cost
+		}
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = {
+			base = 1000
+		}
+	}
+}
+#UNGA Sway Events
+country_event = {
+	id = UN.201
+	is_triggered_only = yes
+
+	title = UN.201.t
+	desc = UN.201.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 2
+
+	option = {
+		name = UN.201.b
+
+		clear_variable = current_sway_direction
+
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+
+		if = {
+			limit = {
+				sender_influence_higher_50 = yes
+			}
+			add_political_power = -250
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 5
+				sender_influence_higher_50 = no
+			}
+			modifier = {
+				add = 5
+				has_country_flag = trade_agreement@FROM
+			}
+			modifier = {
+				add = 5
+				has_country_flag = mutual_investment_treaty_@FROM
+			}
+			modifier = {
+				add = 5
+				NOT = { is_embargoed_by = FROM }
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+		}
+	}
+
+	option = {
+		name = UN.201.a
+
+		set_country_flag = has_had_current_un_ga_vote_swayed
+
+		if = {
+			limit = { is_in_array = { global.general_assembly_vote_yes = THIS } }
+			remove_from_array = { global.general_assembly_vote_yes = THIS }
+		}else_if = {
+			limit = { is_in_array = { global.general_assembly_vote_no = THIS } }
+			remove_from_array = { global.general_assembly_vote_no = THIS }
+		}else = {
+			remove_from_array = { global.general_assembly_vote_abstain = THIS }
+		}
+
+		if = {
+			limit = { check_variable = { current_sway_direction = 1 } }
+			add_to_array = { global.general_assembly_vote_yes = THIS }
+		}else_if = {
+			limit = { check_variable = { current_sway_direction = 2 } }
+			add_to_array = { global.general_assembly_vote_no = THIS }
+		}else = {
+			add_to_array = { global.general_assembly_vote_abstain = THIS }
+		}
+
+		if = {
+			limit = {
+				has_dlc = "By Blood Alone"
+				is_embargoed_by = FROM
+			}
+			FROM = {
+				diplomatic_relation = {
+					country = PREV
+					relation = embargo
+					active = no
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				NOT = { has_country_flag = trade_agreement@FROM }
+			}
+			FROM = {
+				set_country_flag = trade_agreement@PREV
+
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = PREV.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+				add_to_variable = { signed_trade_agreements = 1 }
+			}
+			set_country_flag = trade_agreement@FROM
+
+			add_opinion_modifier = { target = FROM modifier = mutual_trade_agreement }
+			add_opinion_modifier = { target = FROM modifier = mutual_trade_opinion }
+			reverse_add_opinion_modifier = { target = FROM modifier = mutual_trade_opinion }
+			reverse_add_opinion_modifier = { target = FROM modifier = mutual_trade_agreement }
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = FROM.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			add_to_variable = { signed_trade_agreements = 1 }
+		}
+
+		if = {
+			limit = {
+				NOT = { has_country_flag = mutual_investment_treaty_@FROM }
+			}
+			FROM = {
+				set_country_flag = mutual_investment_treaty_@PREV
+
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = PREV.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+
+				# Permanent Investment Targets
+				set_temp_variable = { target_nation = THIS.id }
+				set_temp_variable = { adding_nation = PREV.id }
+				change_permanent_investment_target = yes
+			}
+
+			set_country_flag = mutual_investment_treaty_@FROM
+
+			add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_opinion }
+			add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_trade_opinion }
+			reverse_add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_opinion }
+			reverse_add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_trade_opinion }
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = FROM.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+
+			# Permanent Investment Targets
+			set_temp_variable = { target_nation = THIS.id }
+			set_temp_variable = { adding_nation = FROM.id }
+			change_permanent_investment_target = yes
+		}
+
+		clear_variable = current_sway_direction
+
+		missile_ui_update = yes
+
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 15
+				sender_influence_higher_50 = yes
+			}
+			modifier = {
+				add = 5
+				NOT = { has_country_flag = trade_agreement@FROM }
+			}
+			modifier = {
+				add = 5
+				NOT = { has_country_flag = mutual_investment_treaty_@FROM }
+			}
+			modifier = {
+				add = 5
+				is_embargoed_by = FROM
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+		}
+	}
+}
+country_event = {
+	id = UN.202
+	is_triggered_only = yes
+
+	title = UN.202.t
+	desc = UN.202.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 2
+
+	option = {
+		name = UN.202.b
+
+		clear_variable = current_sway_direction
+
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+
+		if = {
+			limit = {
+				sender_influence_higher_50 = yes
+			}
+			add_political_power = -250
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 5
+				sender_influence_higher_50 = no
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 15
+				check_variable = { treasury_rate > 0 }
+			}
+		}
+	}
+
+	option = {
+		name = UN.202.a
+
+		set_country_flag = has_had_current_un_ga_vote_swayed
+
+		if = {
+			limit = { is_in_array = { global.general_assembly_vote_yes = THIS } }
+			remove_from_array = { global.general_assembly_vote_yes = THIS }
+		}else_if = {
+			limit = { is_in_array = { global.general_assembly_vote_no = THIS } }
+			remove_from_array = { global.general_assembly_vote_no = THIS }
+		}else = {
+			remove_from_array = { global.general_assembly_vote_abstain = THIS }
+		}
+
+		if = {
+			limit = { check_variable = { current_sway_direction = 1 } }
+			add_to_array = { global.general_assembly_vote_yes = THIS }
+		}else_if = {
+			limit = { check_variable = { current_sway_direction = 2 } }
+			add_to_array = { global.general_assembly_vote_no = THIS }
+		}else = {
+			add_to_array = { global.general_assembly_vote_abstain = THIS }
+		}
+
+		set_temp_variable = { gdp_value_tracker = gdp_total }
+		multiply_temp_variable = { gdp_value_tracker = 0.0025 }
+		set_temp_variable = { treasury_change = gdp_value_tracker }
+		modify_treasury_effect = yes
+
+		multiply_temp_variable = { treasury_change = -1 }
+
+		FROM = {
+			modify_treasury_effect = yes
+		}
+
+		clear_variable = current_sway_direction
+
+		missile_ui_update = yes
+
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 15
+				sender_influence_higher_50 = yes
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+			modifier = {
+				add = 15
+				check_variable = { treasury_rate < 0.001 }
+			}
+		}
+	}
+}
+country_event = {
+	id = UN.203
+	is_triggered_only = yes
+
+	title = UN.203.t
+	desc = UN.203.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 2
+
+	option = {
+		name = UN.203.b
+
+		clear_variable = current_sway_direction
+
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+
+		if = {
+			limit = {
+				sender_influence_higher_50 = yes
+			}
+			add_political_power = -250
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 5
+				has_military_access_to = FROM
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.GNSS_mil_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.GNSS_civ_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.COM_mil_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.COM_civ_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < 1
+				}
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = no
+			}
+		}
+	}
+
+	option = {
+		name = UN.203.a
+
+		set_country_flag = has_had_current_un_ga_vote_swayed
+
+		if = {
+			limit = { is_in_array = { global.general_assembly_vote_yes = THIS } }
+			remove_from_array = { global.general_assembly_vote_yes = THIS }
+		}else_if = {
+			limit = { is_in_array = { global.general_assembly_vote_no = THIS } }
+			remove_from_array = { global.general_assembly_vote_no = THIS }
+		}else = {
+			remove_from_array = { global.general_assembly_vote_abstain = THIS }
+		}
+
+		if = {
+			limit = { check_variable = { current_sway_direction = 1 } }
+			add_to_array = { global.general_assembly_vote_yes = THIS }
+		}else_if = {
+			limit = { check_variable = { current_sway_direction = 2 } }
+			add_to_array = { global.general_assembly_vote_no = THIS }
+		}else = {
+			add_to_array = { global.general_assembly_vote_abstain = THIS }
+		}
+
+		clear_variable = current_sway_direction
+
+		missile_ui_update = yes
+
+		if = {
+			limit = {
+				NOT = {
+					has_military_access_to = FROM
+				}
+			}
+			FROM = {
+				give_military_access = PREV
+			}
+		}
+
+		FROM = {
+			diplomatic_relation = {
+				country = PREV
+				relation = OFFER_AIR_BASE_ACCESS
+				active = yes
+			}
+		}
+
+		full_satellite_system_access = yes
+
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 5
+				NOT = { has_military_access_to = FROM }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.GNSS_mil_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.GNSS_civ_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.COM_mil_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.COM_civ_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = yes
+			}
+		}
+	}
+}
+country_event = {
+	id = UN.204
+	is_triggered_only = yes
+
+	title = UN.204.t
+	desc = UN.204.d
+	picture = GFX_UN_gen_assembly
+
+	timeout_days = 2
+
+	option = {
+		name = UN.204.b
+
+		clear_variable = current_sway_direction
+
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+
+		if = {
+			limit = {
+				sender_influence_higher_50 = yes
+			}
+			add_political_power = -250
+		}
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < 1
+				}
+			}
+			modifier = {
+				add = 5
+				has_idea = un_vote_sway_assistance
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = no
+			}
+		}
+	}
+
+	option = {
+		name = UN.204.a
+
+		set_country_flag = has_had_current_un_ga_vote_swayed
+
+		if = {
+			limit = { is_in_array = { global.general_assembly_vote_yes = THIS } }
+			remove_from_array = { global.general_assembly_vote_yes = THIS }
+		}else_if = {
+			limit = { is_in_array = { global.general_assembly_vote_no = THIS } }
+			remove_from_array = { global.general_assembly_vote_no = THIS }
+		}else = {
+			remove_from_array = { global.general_assembly_vote_abstain = THIS }
+		}
+
+		if = {
+			limit = { check_variable = { current_sway_direction = 1 } }
+			add_to_array = { global.general_assembly_vote_yes = THIS }
+		}else_if = {
+			limit = { check_variable = { current_sway_direction = 2 } }
+			add_to_array = { global.general_assembly_vote_no = THIS }
+		}else = {
+			add_to_array = { global.general_assembly_vote_abstain = THIS }
+		}
+
+		clear_variable = current_sway_direction
+
+		add_timed_idea = {
+			idea = un_vote_sway_assistance
+			days = 365
+		}
+
+		FROM = {
+			if = {
+				limit = {
+					has_idea = un_vote_sway_cost
+				}
+				modify_timed_idea = {
+					idea = un_vote_sway_cost
+					days = 365
+				}
+			}else = {
+				add_timed_idea = {
+					idea = un_vote_sway_cost
+					days = 365
+				}
+			}
+		}
+
+		missile_ui_update = yes
+
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+			modifier = {
+				add = 5
+				NOT = { has_idea = un_vote_sway_assistance }
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = yes
+			}
+		}
+	}
+}
+
+#Removed from Programs for Requirements
+country_event = {
+	id = UN.300
+	is_triggered_only = yes
+
+	title = UN.300.t
+	desc = UN.300.d
+
+	option = {
+		name = UN.300.a
+	}
+}
+
+country_event = {
+	id = UN.301
+	is_triggered_only = yes
+
+	title = UN.301.t
+	desc = UN.301.d
+
+	option = {
+		name = UN.301.a
+	}
+}
+
+country_event = {
+	id = UN.302
+	is_triggered_only = yes
+
+	title = UN.302.t
+	desc = UN.302.d
+
+	option = {
+		name = UN.302.a
+	}
+}
