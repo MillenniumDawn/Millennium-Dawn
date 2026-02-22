@@ -32,7 +32,7 @@ SOURCE_PATTERNS = (
 )
 
 # Visual tuning
-HERO_OPACITY = 150  # 0-255. Lower = more transparent hero.
+HERO_OPACITY = 140  # 0-255. Lower = more transparent hero.
 GRADIENT_FADE_START = 0.35
 GRADIENT_VERT_WEIGHT = 0.78
 GRADIENT_HORIZ_WEIGHT = 0.22
