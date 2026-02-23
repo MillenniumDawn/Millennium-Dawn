@@ -3817,783 +3817,128 @@ country_event = {
 #----------------------------------------------------------------
 #Events for Demographic Crisis
 #----------------------------------------------------------------
-#Initial Prompt (2000)
 country_event = {
-	id = Japan_Demographic.100000100
-	title = Japan_Demographic.100000100.t
-	desc = Japan_Demographic.100000100.d
-	picture = GFX_JAP_traffic
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	#OK
-	option = {
-		name = Japan_Demographic.100000100.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000100.oA"
-		activate_mission = JAP_demographic_checkup_initial
-		#country_event = { id = Japan_Demographic.100001001 } # Demographic Crisis Policy Choice #I commented it out because I couldn’t find the definition.
-	}
-}
-
-#First Choice (2000)
-country_event = {
-	id = Japan_Demographic.100000101
-	title = Japan_Demographic.100000101.t
-	desc = Japan_Demographic.100000101.d
-	picture = GFX_JAP_diet_address
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	#Support for families
-	option = {
-		name = Japan_Demographic.100000101.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000101.oA"
-		set_country_flag = JAP_DEMOGRAPHICS_CHAIN_APPEALED_CONSERVATIVES
-		add_political_power = 50
-		increase_social_spending = yes
-		block_social_decrease = yes
-		if = {
-			limit = { has_socialist_government = yes }
-			steal_popularity_from_conservatives = yes
-		}
-		else = {
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.03 }
-			set_temp_variable = { temp_outlook_increase = 0.03 }
-			add_relative_party_popularity = yes
-		}
-
-		ai_chance = {
-			base = 10
-		}
-	}
-
-	#Talk up workers' rights
-	option = {
-		name = Japan_Demographic.100000101.oB
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000101.oB"
-		set_country_flag = JAP_DEMOGRAPHICS_CHAIN_APPEALED_PROGRESSIVES
-		add_political_power = -50
-		add_stability = -0.02
-		if = {
-			limit = { has_economically_liberal_government = yes }
-			steal_popularity_from_progressives = yes
-			set_temp_variable = { temp_opinion = -5 }
-			change_small_medium_business_owners_opinion = yes
-			change_industrial_conglomerates_opinion = yes
-			change_international_bankers_opinion = yes
-		}
-		else = {
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.03 }
-			set_temp_variable = { temp_outlook_increase = 0.03 }
-			add_relative_party_popularity = yes
-		}
-
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-#Conservatives Demand More
-country_event = {
-	id = Japan_Demographic.100000102
-	title = Japan_Demographic.100000102.t
-	desc = Japan_Demographic.100000102.d
-	picture = GFX_JAP_small_shop
-
-	fire_only_once = yes
-
-	trigger = {
-		tag = JAP
-		has_economically_liberal_government = yes
-		has_country_flag = JAP_DEMOGRAPHICS_CHAIN_APPEALED_CONSERVATIVES
-		NOT = {
-			OR = {
-				has_idea = fast_growth
-				has_idea = economic_boom
-			}
-		}
-	}
-
-	mean_time_to_happen = {
-		days = 365
-		modifier = {
-			has_stability < 0.5
-			factor = 0.2
-		}
-		modifier = { # if economy stays healthy, stay off player's back
-			has_idea = fast_growth
-			factor = 3
-		}
-		modifier = { # if economy stays healthy, stay off player's back
-			has_idea = economic_boom
-			factor = 5
-		}
-	}
-
-	#Accept
-	option = {
-		name = Japan_Demographic.100000102.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000102.oA"
-		set_temp_variable = { corp_change = -3 }
-		modify_corporate_tax_rate_effect = yes
-		set_temp_variable = { temp_opinion = 5 }
-		change_small_medium_business_owners_opinion = yes
-		change_industrial_conglomerates_opinion = yes
-		change_international_bankers_opinion = yes
-
-		ai_chance = {
-			base = 10
-		}
-	}
-
-	#Stuff it!
-	option = {
-		name = Japan_Demographic.100000102.oB
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000102.oB"
-		add_political_power = -150
-		set_temp_variable = { temp_opinion = -10 }
-		change_small_medium_business_owners_opinion = yes
-		change_industrial_conglomerates_opinion = yes
-		change_international_bankers_opinion = yes
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = -0.01 }
-		set_temp_variable = { temp_outlook_increase = -0.01 }
-		add_relative_party_popularity = yes
-
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-#Progressives Demand More
-country_event = {
-	id = Japan_Demographic.100000103
-	title = Japan_Demographic.100000103.t
-	desc = Japan_Demographic.100000103.d
-	#picture = GFX_JAP_labor_protest #not found
-
-	fire_only_once = yes
-
-	trigger = {
-		tag = JAP
-		has_economically_liberal_government = yes
-		has_country_flag = JAP_DEMOGRAPHICS_CHAIN_APPEALED_PROGRESSIVES
-		NOT = {
-			has_completed_focus = JAP_protect_worker_rights
-		}
-	}
-
-	mean_time_to_happen = {
-		days = 365
-		modifier = {
-			has_stability < 0.5
-			factor = 0.6
-		}
-	}
-
-	#No way!
-	option = {
-		name = Japan_Demographic.100000103.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000103.oA"
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = -0.10 }
-		set_temp_variable = { temp_outlook_increase = -0.10 }
-		add_relative_party_popularity = yes
-		set_country_flag = JAP_DEMOGRAPHICS_CHAIN_REFUSED_PROGRESSIVES
-
-		ai_chance = {
-			base = 10
-		}
-	}
-
-	#Accept union interests
-	option = {
-		name = Japan_Demographic.100000103.oB
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000103.oB"
-		add_political_power = -300
-		if = {
-			limit = {
-				has_idea = industrial_conglomerates
-			}
-			swap_ideas = {
-				remove_idea = industrial_conglomerates
-				add_idea = labour_unions
-			}
-		}
-		set_temp_variable = { party_index = 0 }
-		set_temp_variable = { party_popularity_increase = 0.03 }
-		add_relative_party_popularity = yes
-		set_temp_variable = { party_index = 7 }
-		set_temp_variable = { party_popularity_increase = 0.02 }
-		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
-		set_temp_variable = { party_index = 15 }
-		set_temp_variable = { party_popularity_increase = 0.02 }
-		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
-		set_temp_variable = { party_index = 20 }
-		set_temp_variable = { party_popularity_increase = 0.03 }
-		set_temp_variable = { temp_outlook_increase = 0.03 }
-		add_relative_party_popularity = yes
-		set_temp_variable = { party_index = 21 }
-		set_temp_variable = { party_popularity_increase = 0.03 }
-		set_temp_variable = { temp_outlook_increase = 0.03 }
-		add_relative_party_popularity = yes
-
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-#First Reminder, Fix Depopulation! (2001)
-country_event = {
-	id = Japan_Demographic.100000203
-	title = Japan_Demographic.100000203.t
-	desc = Japan_Demographic.100000203.d
-	picture = GFX_JAP_elderly
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	#Make Promises
-	option = {
-		name = Japan_Demographic.100000203.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000203.oA"
-		add_political_power = -50
-		activate_mission = JAP_demographic_checkup_initial
-
-		ai_chance = {
-			base = 10
-		}
-	}
-
-	#Immediate Action
-	option = {
-		name = Japan_Demographic.100000203.oB
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000203.oB"
-		increase_social_spending = yes
-		block_social_decrease = yes
-		activate_mission = JAP_demographic_checkup_initial
-
-		ai_chance = {
-			base = 30
-		}
-	}
-
-	#Opposition Attacks Us
-	option = {
-		name = Japan_Demographic.100000203.oC
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000203.oC"
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = -0.02 }
-		set_temp_variable = { temp_outlook_increase = -0.02 }
-		add_relative_party_popularity = yes
-		activate_mission = JAP_demographic_checkup_initial
-
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-#First Reminder, Doing Great! (2001)
-country_event = {
-	id = Japan_Demographic.100000205
-	title = Japan_Demographic.100000205.t
-	desc = Japan_Demographic.100000205.d
-	picture = GFX_JAP_prosperous_asakusa
-
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	#Speech in Diet
-	option = {
-		name = Japan_Demographic.100000205.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000205.oA"
-		add_political_power = 50
-		activate_mission = JAP_demographic_checkup_initial
-
-		ai_chance = {
-			base = 10
-		}
-	}
-
-	#Opposition Attacks Fall Flat!
-	option = {
-		name = Japan_Demographic.100000205.oB
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000205.oB"
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = 0.02 }
-		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
-		activate_mission = JAP_demographic_checkup_initial
-
-		ai_chance = {
-			base = 50
-		}
-	}
-}
-
-#First Depopulation Checkup Gate (2002)
-#This is more gentle in consequences than the main sequence checkups
-country_event = {
-	id = Japan_Demographic.100000320
+	id = Japan_Demographic.002
 	hidden = yes
-
-	fire_only_once = yes
 	is_triggered_only = yes
 
-	option = {
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000320.oA"
-		if = { #You blew it!!
+	immediate = {
+		set_temp_variable = { jap_birth_measures = modifier@JAP_declining_birthrate_measures_modifier }
+		if = {
 			limit = {
-				check_variable = { jap_demographics_depopulation_reform < 1 }
+				check_variable = { jap_birth_measures > 13 }
+				has_idea = JAP_depopulation_0	
 			}
-			JAP = { country_event = Japan_Demographic.100000321 }
-		} else_if = { #Problems ahead!
+			JAP = { country_event = Japan_Demographic.006 }
+		}
+		else_if = { 
 			limit = {
-				check_variable = { jap_demographics_depopulation_reform < 2 }
+				check_variable = { jap_birth_measures < 7 }
 			}
-			JAP = { country_event = Japan_Demographic.100000322 }
-		} else = { #Doing great!
-			JAP = { country_event = Japan_Demographic.100000323 }
+			JAP = { 
+				country_event = Japan_Demographic.003
+				country_event = {
+					id = Japan_Demographic.002
+					days = 730
+					random_days = 730
+				}
+			}
+		} 
+		else_if = { 
+			limit = {
+				check_variable = { jap_birth_measures < 14 }
+			}
+			JAP = {
+				country_event = Japan_Demographic.004
+				country_event = {
+					id = Japan_Demographic.002
+					days = 730
+					random_days = 730
+				}
+			}
+		} 
+		else = { 
+			JAP = { 
+				country_event = Japan_Demographic.005
+				country_event = {
+					id = Japan_Demographic.002
+					days = 730
+					random_days = 730
+				} 
+			}
 		}
 	}
 }
 
-#First Depopulation Checkup, Big Problems!
 country_event = {
-	id = Japan_Demographic.100000321
-	title = Japan_Demographic.100000321.t
-	desc = Japan_Demographic.100000321.d
-	picture = GFX_JAP_hikikomori
+	id = Japan_Demographic.003
+	title = Japan_Demographic.003.t
+	desc = Japan_Demographic.003.d
 
-	fire_only_once = yes
 	is_triggered_only = yes
 
-	#These things take time...
 	option = {
-		name = Japan_Demographic.100000321.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000321.oA"
-		add_political_power = -300
+		name = Japan_Demographic.003.a
+		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.003.a"
 		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
 		add_relative_party_popularity = yes
 		JAP_demographics_depopulation_increase_1 = yes
-		activate_mission = JAP_demographic_main_reminder
-
-		ai_chance = {
-			base = 10
-		}
-	}
-
-	#Make some immediate changes
-	option = {
-		name = Japan_Demographic.100000321.oB
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000321.oB"
-		add_political_power = -100
-		set_temp_variable = { treasury_change = -30 }
-		modify_treasury_effect = yes
-		increase_social_spending = yes
-		block_social_decrease = yes
-		JAP_demographics_depopulation_increase_1 = yes
-		activate_mission = JAP_demographic_main_reminder
-
-		ai_chance = {
-			base = 30
-		}
-	}
-
-	#Opposition offers solutions!
-	option = {
-		name = Japan_Demographic.100000321.oC
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000321.oC"
-		add_political_power = -100
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = -0.10 }
-		set_temp_variable = { temp_outlook_increase = -0.10 }
-		add_relative_party_popularity = yes
-		JAP_demographics_depopulation_increase_1 = yes
-		activate_mission = JAP_demographic_main_reminder
-
-		ai_chance = {
-			base = 10
-		}
 	}
 }
 
-#First Depopulation Checkup, Some Problems
 country_event = {
-	id = Japan_Demographic.100000322
-	title = Japan_Demographic.100000322.t
-	desc = Japan_Demographic.100000322.d
-	picture = GFX_JAP_hikikomori
+	id = Japan_Demographic.004
+	title = Japan_Demographic.004.t
+	desc = Japan_Demographic.004.d
 
-	fire_only_once = yes
 	is_triggered_only = yes
 
-	#Just pay out
 	option = {
-		name = Japan_Demographic.100000322.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000322.oA"
-		set_temp_variable = { treasury_change = -30 }
-		modify_treasury_effect = yes
-		activate_mission = JAP_demographic_main_reminder
-
-		ai_chance = {
-			base = 10
-		}
-	}
-
-	#Pay out, promise more
-	option = {
-		name = Japan_Demographic.100000322.oB
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000322.oB"
-		set_temp_variable = { treasury_change = -30 }
-		modify_treasury_effect = yes
-		add_political_power = -50
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = 0.02 }
-		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
-		activate_mission = JAP_demographic_main_reminder
-
-		ai_chance = {
-			base = 30
-		}
-	}
-
-	#Don't pay out
-	option = {
-		name = Japan_Demographic.100000322.oC
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000322.oC"
+		name = Japan_Demographic.004.a
+		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.004.a"
 		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = -0.02 }
 		set_temp_variable = { temp_outlook_increase = -0.02 }
 		add_relative_party_popularity = yes
-		activate_mission = JAP_demographic_main_reminder
-
-		ai_chance = {
-			base = 10
-		}
 	}
 }
 
-#First Depopulation Checkup, No Problems
 country_event = {
-	id = Japan_Demographic.100000323
-	title = Japan_Demographic.100000323.t
-	desc = Japan_Demographic.100000323.d
-	picture = GFX_JAP_prosperous_asakusa
+	id = Japan_Demographic.005
+	title = Japan_Demographic.005.t
+	desc = Japan_Demographic.005.d
 
-	fire_only_once = yes
 	is_triggered_only = yes
 
-	#Great!
 	option = {
-		name = Japan_Demographic.100000323.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000323.oA"
-		add_political_power = 50
+		name = Japan_Demographic.005.a
+		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.005.a"
 		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.05 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
 		add_relative_party_popularity = yes
-		activate_mission = JAP_demographic_main_reminder
-
-		ai_chance = {
-			base = 50
-		}
-	}
-
-	#Extend our program!
-	option = {
-		name = Japan_Demographic.100000323.oB
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000323.oB"
-		increase_social_spending = yes
-		set_temp_variable = { corp_change = 2 }
-		modify_corporate_tax_rate_effect = yes
-		set_temp_variable = { pop_change = 2 }
-		modify_population_tax_rate_effect = yes
-		if = { #only if eco conservative
-			limit = { has_economically_liberal_government = yes }
-			steal_popularity_from_progressives = yes
-		}
-		else = {
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.03 }
-			set_temp_variable = { temp_outlook_increase = 0.03 }
-			add_relative_party_popularity = yes
-		}
-		activate_mission = JAP_demographic_main_reminder
-
-		ai_chance = {
-			base = 10
-		}
-	}
-
-	#Amend the budget
-	option = {
-		name = Japan_Demographic.100000323.oC
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000323.oC"
-		add_political_power = 100
-		set_temp_variable = { corp_change = -3 }
-		modify_corporate_tax_rate_effect = yes
-		set_temp_variable = { treasury_change = 50 }
-		modify_treasury_effect = yes
-		if = { #only if not already conservative
-			limit = { has_socialist_government = yes }
-			steal_popularity_from_conservatives = yes
-		}
-		else = {
-			set_party_index_to_ruling_party = yes
-			set_temp_variable = { party_popularity_increase = 0.03 }
-			set_temp_variable = { temp_outlook_increase = 0.03 }
-			add_relative_party_popularity = yes
-		}
-		activate_mission = JAP_demographic_main_reminder
-
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-#Main Sequence Reminder, Fix Depopulation! (Every odd year after 2002)
-country_event = {
-	id = Japan_Demographic.100000403
-	title = Japan_Demographic.100000403.t
-	desc = Japan_Demographic.100000403.d
-	picture = GFX_JAP_elderly
-
-	is_triggered_only = yes
-
-	#Make Promises
-	option = {
-		name = Japan_Demographic.100000403.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000403.oA"
-		add_political_power = -50
-		activate_mission = JAP_demographic_main_checkup
-
-		ai_chance = {
-			base = 50
-		}
-	}
-
-	#Immediate Action
-	option = {
-		name = Japan_Demographic.100000403.oB
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000403.oB"
-		increase_social_spending = yes
-		block_social_decrease = yes
-		activate_mission = JAP_demographic_main_checkup
-
-		ai_chance = {
-			base = 10
-		}
-	}
-
-	#Opposition Attacks Us
-	option = {
-		name = Japan_Demographic.100000403.oC
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000403.oC"
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = -0.02 }
-		set_temp_variable = { temp_outlook_increase = -0.02 }
-		add_relative_party_popularity = yes
-		activate_mission = JAP_demographic_main_checkup
-
-		ai_chance = {
-			base = 30
-		}
-	}
-}
-
-#Main Sequence Reminder, Doing Great! (Every odd year after 2002)
-country_event = {
-	id = Japan_Demographic.100000405
-	title = Japan_Demographic.100000405.t
-	desc = Japan_Demographic.100000405.d
-	picture = GFX_JAP_diet_address
-
-	is_triggered_only = yes
-
-	#Speech in Diet
-	option = {
-		name = Japan_Demographic.100000405.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000405.oA"
-		add_political_power = 50
-		activate_mission = JAP_demographic_main_checkup
-
-		ai_chance = {
-			base = 10
-		}
-	}
-
-	#Opposition Attacks Fall Flat!
-	option = {
-		name = Japan_Demographic.100000405.oB
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000405.oB"
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = 0.02 }
-		set_temp_variable = { temp_outlook_increase = 0.02 }
-		add_relative_party_popularity = yes
-		activate_mission = JAP_demographic_main_checkup
-
-		ai_chance = {
-			base = 50
-		}
-	}
-}
-
-#Main Sequence Depopulation Checkup, Scandal!
-country_event = {
-	id = Japan_Demographic.100000521
-	title = Japan_Demographic.100000521.t
-	desc = Japan_Demographic.100000521.d
-	picture = GFX_JAP_diet_address
-
-	is_triggered_only = yes
-
-	#Damn!
-	option = {
-		name = Japan_Demographic.100000521.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000521.oA"
-		increase_corruption = yes
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = -0.05 }
-		set_temp_variable = { temp_outlook_increase = -0.05 }
-		add_relative_party_popularity = yes
-		JAP_demographics_depopulation_increase_2 = yes
-		activate_mission = JAP_demographic_main_reminder
-
-		ai_chance = {
-			base = 10
-		}
-	}
-
-	#Purge the party!
-	option = {
-		name = Japan_Demographic.100000521.oB
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000521.oB"
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = -0.10 }
-		set_temp_variable = { temp_outlook_increase = -0.10 }
-		add_relative_party_popularity = yes
-		JAP_demographics_depopulation_increase_2 = yes
-		activate_mission = JAP_demographic_main_reminder
-
-		ai_chance = {
-			base = 10
-		}
-	}
-
-	#Oversight committee
-	option = {
-		name = Japan_Demographic.100000521.oC
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000521.oC"
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = -0.03 }
-		set_temp_variable = { temp_outlook_increase = -0.03 }
-		add_relative_party_popularity = yes
-		set_temp_variable = { treasury_change = -40 }
-		modify_treasury_effect = yes
-		JAP_demographics_depopulation_increase_1 = yes
-		activate_mission = JAP_demographic_main_reminder
-
-		ai_chance = {
-			base = 30
-		}
-	}
-}
-
-#Main Sequence Depopulation Checkup, Worsening
-country_event = {
-	id = Japan_Demographic.100000522
-	title = Japan_Demographic.100000522.t
-	desc = Japan_Demographic.100000522.d
-	picture = GFX_JAP_hikikomori
-
-	is_triggered_only = yes
-
-	#Damn!
-	option = {
-		name = Japan_Demographic.100000522.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000522.oA"
-		JAP_demographics_depopulation_increase_1 = yes
-		activate_mission = JAP_demographic_main_reminder
-	}
-
-}
-
-#Main Sequence Depopulation Checkup, Improving (2002)
-country_event = {
-	id = Japan_Demographic.100000523
-	title = Japan_Demographic.100000523.t
-	desc = Japan_Demographic.100000523.d
-	picture = GFX_JAP_prosperous_asakusa
-
-	is_triggered_only = yes
-
-	#Great!
-	option = {
-		name = Japan_Demographic.100000523.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000523.oA"
 		JAP_demographics_depopulation_decrease_1 = yes
-		activate_mission = JAP_demographic_main_reminder
 	}
 }
 
-#Demographics Resolution, Depopulation Done
 country_event = {
-	id = Japan_Demographic.100000602
-	title = Japan_Demographic.100000602.t
-	desc = Japan_Demographic.100000602.d
-	picture = GFX_JAP_diet_address
+	id = Japan_Demographic.006
+	title = Japan_Demographic.006.t
+	desc = Japan_Demographic.006.d
 
-	fire_only_once = yes
-
-	trigger = {
-		tag = JAP
-		has_idea = JAP_depopulation_0
-	}
-
-	#Optimize our reform policies!
-	option = {
-		name = Japan_Demographic.100000602.oB
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000602.oB"
-		JAP = { country_event = Japan_Demographic.100000603 }
-
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-#Demographics Resolution, Finished
-country_event = {
-	id = Japan_Demographic.100000603
-	title = Japan_Demographic.100000603.t
-	desc = Japan_Demographic.100000603.d
-	picture = GFX_JAP_banzai_modern
-
-	fire_only_once = yes
 	is_triggered_only = yes
 
-	#Banzai!
 	option = {
-		name = Japan_Demographic.100000603.oA
-		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.100000603.oA"
-		add_stability = 0.05
+		name = Japan_Demographic.006.a
+		log = "[GetDateText]: [Root.GetName]: Japan_Demographic.006.a"
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.10 }
+		set_temp_variable = { temp_outlook_increase = 0.10 }
+		add_relative_party_popularity = yes
+		newline = yes
 		remove_ideas = JAP_depopulation_0
-		add_ideas = JAP_demographics_finished
 	}
 }
 
