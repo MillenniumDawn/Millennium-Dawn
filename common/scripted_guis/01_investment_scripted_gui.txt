@@ -28,7 +28,7 @@ scripted_gui = {
 
 		parent_window_token = selected_state_view
 
-		dirty = global.refresh_gui
+		dirty = global.refresh_investment_gui
 
 		visible = {
 			OR = {
@@ -41,7 +41,7 @@ scripted_gui = {
 		effects = {
 			AC_up_arrow_click = {
 				ROOT = { clr_country_flag = AC_hide_investment_window }
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 		}
 	}
@@ -52,7 +52,7 @@ scripted_gui = {
 		window_name = "AC_allied_construction_window"
 		parent_window_token = selected_state_view
 
-		dirty = global.refresh_gui
+		dirty = global.refresh_investment_gui
 
 		visible = {
 			OR = {
@@ -86,11 +86,31 @@ scripted_gui = {
 			AC_down_arrow_click = {
 				# ROOT is the investor nation
 				ROOT = { set_country_flag = AC_hide_investment_window }
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			# Begins project or cancels the project if you have one active in a given state
 			AC_build_button_click = {
-				if = { limit = { NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } } }
+				# Runtime validation to prevent exploit when game is paused (issue #374)
+				# These checks mirror the trigger conditions but are enforced at execution time
+				if = {
+					limit = {
+						NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } }
+						ROOT = {
+							has_available_treasury_investment = yes
+							NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+							# Game rule check for bankruptcy collapse lock
+							# Either the rule is disabled, OR (if enabled) no collapse mission is active
+							OR = {
+								NOT = {
+									has_game_rule = {
+										rule = rule_enable_investment_collapse_lock
+										option = yes
+									}
+								}
+								NOT = { has_active_mission = bankruptcy_incoming_collapse }
+							}
+						}
+					}
 					# PREV is the state target
 					THIS = {
 						set_variable = { ROOT.AC_state_target = THIS.id }
@@ -102,7 +122,7 @@ scripted_gui = {
 					}
 					ROOT = {
 						update_gui = yes
-						refresh_gui = yes
+						refresh_investment_gui = yes
 						country_event = { id = AC_event.3 }
 					}
 				}
@@ -110,12 +130,15 @@ scripted_gui = {
 					ROOT = {
 						set_variable = { project = PREV.project_target_state_@ROOT }
 						end_project = yes
-						refresh_gui = yes
-						if = { limit = { has_global_flag = GAME_RULE_gain_0_5_percent_invest }
-							set_temp_variable = { percent_change = -1.0 }
+						refresh_investment_gui = yes
+						if = { limit = { has_game_rule = { rule = rule_invest_influence_amount_gain option = gain_0_5_percent_invest } }
+							set_temp_variable = { percent_change = -0.5 }
 						}
-						else_if = { limit = { has_global_flag = GAME_RULE_gain_2_percent_invest }
-							set_temp_variable = { percent_change = -2.50 }
+						else_if = { limit = { has_game_rule = { rule = rule_invest_influence_amount_gain option = gain_1_percent_invest } }
+							set_temp_variable = { percent_change = -1.00 }
+						}
+						else_if = { limit = { has_game_rule = { rule = rule_invest_influence_amount_gain option = gain_2_percent_invest } }
+							set_temp_variable = { percent_change = -2.00 }
 						}
 						else = {
 							set_temp_variable = { percent_change = -1.50 }
@@ -172,7 +195,7 @@ scripted_gui = {
 					}
 					update_gui = yes
 				}
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			AC_building_amount_decrease_button_click = { ##decreases AC_build_amount & update build time/cost
 				ROOT = {
@@ -213,7 +236,7 @@ scripted_gui = {
 					}
 					update_gui = yes
 				}
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 
 			# Button Indexes and Positions
@@ -241,7 +264,7 @@ scripted_gui = {
 						set_variable = { constructable_buildings = 1 }
 					}
 				}
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 
 			# Investable Buildings
@@ -252,7 +275,7 @@ scripted_gui = {
 					set_variable = { project_building_type^-1 = 1 }
 					update_gui = yes
 				}
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			# Index 2: MIC
 			AC_building_mic_button_click = {
@@ -262,7 +285,7 @@ scripted_gui = {
 					update_gui = yes
 				}
 
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			# Index 3: NIC
 			AC_building_nic_button_click = {
@@ -272,7 +295,7 @@ scripted_gui = {
 					update_gui = yes
 				}
 
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			# Index 4: Infrastructure
 			AC_building_infra_button_click = {
@@ -282,7 +305,7 @@ scripted_gui = {
 					update_gui = yes
 				}
 
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			# Index 5: Offices
 			AC_building_offices_button_click = {
@@ -292,7 +315,7 @@ scripted_gui = {
 					update_gui = yes
 				}
 
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			# Index 6: SAM
 			AC_building_antiair_button_click = {
@@ -302,7 +325,7 @@ scripted_gui = {
 					update_gui = yes
 				}
 
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			# Index 7: Radar
 			AC_building_radar_button_click = {
@@ -312,7 +335,7 @@ scripted_gui = {
 					update_gui = yes
 				}
 
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			# Index 8: Air Bases
 			AC_building_airbase_button_click = {
@@ -322,7 +345,7 @@ scripted_gui = {
 					update_gui = yes
 				}
 
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			#Index 9: Fuel Silos
 			AC_building_fuel_silos_button_click = {
@@ -332,7 +355,7 @@ scripted_gui = {
 					update_gui = yes
 				}
 
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			#Index 10: Internet Station
 			AC_building_internet_station_button_click = {
@@ -342,7 +365,7 @@ scripted_gui = {
 					update_gui = yes
 				}
 
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			#Index 11: Renewable Energy Infrastructure
 			AC_building_ref_button_click = {
@@ -352,7 +375,7 @@ scripted_gui = {
 					update_gui = yes
 				}
 
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			#Index 12: Biofuel Refineries
 			AC_building_power_plant_button_click = {
@@ -362,7 +385,7 @@ scripted_gui = {
 					update_gui = yes
 				}
 
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			#Index 13: Nuclear Reactor
 			AC_building_nuclear_reactor_button_click = {
@@ -372,7 +395,7 @@ scripted_gui = {
 					update_gui = yes
 				}
 
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 			#Index 13: Nuclear Reactor
 			AC_building_agriculture_district_button_click = {
@@ -382,7 +405,7 @@ scripted_gui = {
 					update_gui = yes
 				}
 
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 		}
 
@@ -601,7 +624,7 @@ scripted_gui = {
 
 		parent_window_token = selected_state_view
 
-		dirty = global.refresh_gui
+		dirty = global.refresh_investment_gui
 
 		visible = {
 			OR = {
@@ -614,7 +637,7 @@ scripted_gui = {
 		effects = {
 			show_owned_state_investment_button_click = {
 				ROOT = { clr_country_flag = AC_hide_owned_investment_window }
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 		}
 	}
@@ -624,7 +647,7 @@ scripted_gui = {
 		window_name = "owned_state_investment_menu"
 		parent_window_token = selected_state_view
 
-		dirty = global.refresh_gui
+		dirty = global.refresh_investment_gui
 
 		visible = {
 			OR = {
@@ -640,7 +663,7 @@ scripted_gui = {
 				check_for_investment_project_limits = yes
 				NOT = { has_state_flag = currently_encouraged_investments }
 				ROOT = {
-					has_political_power > 100
+					has_political_power > 75
 					NOT = { has_active_mission = bankruptcy_incoming_collapse }
 				}
 			}
@@ -649,7 +672,7 @@ scripted_gui = {
 				check_for_investment_project_limits = yes
 				NOT = { has_state_flag = encourage_productivity_in_state }
 				ROOT = {
-					has_political_power > 100
+					has_political_power > 75
 					NOT = { has_active_mission = bankruptcy_incoming_collapse }
 				}
 			}
@@ -660,7 +683,7 @@ scripted_gui = {
 				NOT = { has_state_flag = block_future_expand_local_building_capacity }
 
 				ROOT = {
-					has_political_power > 100
+					has_political_power > 75
 					NOT = { has_active_mission = bankruptcy_incoming_collapse }
 				}
 			}
@@ -669,7 +692,7 @@ scripted_gui = {
 				check_for_investment_project_limits = yes
 				NOT = { has_state_flag = expand_local_renewable_capacity }
 				ROOT = {
-					has_political_power > 100
+					has_political_power > 75
 					NOT = { has_active_mission = bankruptcy_incoming_collapse }
 				}
 			}
@@ -678,7 +701,7 @@ scripted_gui = {
 				check_for_investment_project_limits = yes
 				NOT = { has_state_flag = expand_local_infrastructure }
 				ROOT = {
-					has_political_power > 100
+					has_political_power > 75
 					NOT = { has_active_mission = bankruptcy_incoming_collapse }
 				}
 			}
@@ -687,7 +710,7 @@ scripted_gui = {
 				check_for_investment_project_limits = yes
 				NOT = { has_state_flag = expand_local_military_infrastructure }
 				ROOT = {
-					has_political_power > 100
+					has_political_power > 75
 					NOT = { has_active_mission = bankruptcy_incoming_collapse }
 				}
 			}
@@ -696,7 +719,7 @@ scripted_gui = {
 				check_for_investment_project_limits = yes
 				NOT = { has_state_flag = expand_local_energy_infrastructure }
 				ROOT = {
-					has_political_power > 100
+					has_political_power > 75
 					NOT = { has_active_mission = bankruptcy_incoming_collapse }
 				}
 			}
@@ -705,7 +728,7 @@ scripted_gui = {
 				check_for_investment_project_limits = yes
 				NOT = { has_state_flag = build_forward_logistics_base }
 				ROOT = {
-					has_political_power > 100
+					has_political_power > 75
 					NOT = { has_active_mission = bankruptcy_incoming_collapse }
 				}
 			}
@@ -714,7 +737,7 @@ scripted_gui = {
 				check_for_investment_project_limits = yes
 				NOT = { has_state_flag = improve_rebuilding_efforts }
 				ROOT = {
-					has_political_power > 100
+					has_political_power > 75
 					NOT = { has_active_mission = bankruptcy_incoming_collapse }
 				}
 			}
@@ -723,7 +746,26 @@ scripted_gui = {
 				check_for_investment_project_limits = yes
 				NOT = { has_state_flag = hire_extra_primary_sector_workers }
 				ROOT = {
-					has_political_power > 100
+					has_political_power > 75
+					NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				}
+			}
+
+			expand_local_coastal_infrastructure_click_enabled = {
+				check_for_investment_project_limits = yes
+				NOT = { has_state_flag = expand_local_coastal_infrastructure }
+				is_coastal = yes
+				ROOT = {
+					has_political_power > 75
+					NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				}
+			}
+
+			expand_local_fortification_efforts_click_enabled = {
+				check_for_investment_project_limits = yes
+				NOT = { has_state_flag = expand_local_fortification_efforts }
+				ROOT = {
+					has_political_power > 75
 					NOT = { has_active_mission = bankruptcy_incoming_collapse }
 				}
 			}
@@ -735,8 +777,9 @@ scripted_gui = {
 			improve_local_conservation_efforts_click_enabled = {
 				check_for_investment_project_limits = yes
 				NOT = { has_state_flag = improve_local_conservation_efforts }
+				has_dynamic_modifier = { modifier = BRA_amazon_modifier }
 				ROOT = {
-					has_political_power > 100
+					has_political_power > 75
 					NOT = { has_active_mission = bankruptcy_incoming_collapse }
 				}
 			}
@@ -747,24 +790,24 @@ scripted_gui = {
 			hide_owned_state_investment_button_click = {
 				# ROOT is the investor nation
 				ROOT = { set_country_flag = AC_hide_owned_investment_window }
-				refresh_gui = yes
+				refresh_investment_gui = yes
 			}
 
 			# State Options
 			encourage_investments_in_state_click = {
 				custom_effect_tooltip = encourage_investments_in_state_click_tt
-				set_state_flag = { flag = currently_encouraged_investments value = 1 days = 120 }
+				set_state_flag = { flag = currently_encouraged_investments value = 1 days = 160 }
 
-				set_temp_variable = { ii_cost = 0.007 }
-				set_temp_variable = { pp_cost_temp = 100 }
+				set_temp_variable = { ii_cost = 0.006 }
+				set_temp_variable = { pp_cost_temp = 75 }
 				calculate_internal_investments_costs = yes
 			}
 
 			encourage_productivity_in_state_click = {
 				custom_effect_tooltip = encourage_productivity_in_state_click_tt
-				set_state_flag = { flag = encourage_productivity_in_state value = 1 days = 120 }
+				set_state_flag = { flag = encourage_productivity_in_state value = 1 days = 160 }
 
-				set_temp_variable = { ii_cost = 0.012 }
+				set_temp_variable = { ii_cost = 0.009 }
 
 				# Millions of People
 				set_temp_variable = { var = temp_pop value = state_population_k } #in thousands
@@ -774,7 +817,7 @@ scripted_gui = {
 				# Scale Against Population
 				multiply_temp_variable = { ii_cost = temp_pop }
 
-				set_temp_variable = { pp_cost_temp = 150 }
+				set_temp_variable = { pp_cost_temp = 75 }
 				calculate_internal_investments_costs = yes
 			}
 
@@ -784,12 +827,12 @@ scripted_gui = {
 				add_extra_state_shared_building_slots = 1
 
 
-				set_temp_variable = { ii_cost = 0.01 }
+				set_temp_variable = { ii_cost = 0.007 }
 				set_temp_variable = { ii_cost_multiplier = expanded_building_slot_times }
 				add_to_temp_variable = { ii_cost_multiplier = 1 }
 
 				multiply_temp_variable = { ii_cost = ii_cost_multiplier }
-				set_temp_variable = { pp_cost_temp = 100 }
+				set_temp_variable = { pp_cost_temp = 75 }
 				calculate_internal_investments_costs = yes
 
 				add_to_variable = { expanded_building_slot_times = 1 }
@@ -801,14 +844,14 @@ scripted_gui = {
 
 			expand_local_renewable_capacity_click = {
 				custom_effect_tooltip = expand_local_renewable_capacity_click_tt
-				set_state_flag = { flag = expand_local_renewable_capacity value = 1 days = 120 }
+				set_state_flag = { flag = expand_local_renewable_capacity value = 1 days = 180 }
 
 				add_dynamic_modifier = {
 					modifier = state_owned_local_renewable_capacity_modifier
-					days = 120
+					days = 180
 				}
-				set_temp_variable = { ii_cost = 0.004 }
-				set_temp_variable = { pp_cost_temp = 100 }
+				set_temp_variable = { ii_cost = 0.001 }
+				set_temp_variable = { pp_cost_temp = 75 }
 				calculate_internal_investments_costs = yes
 
 				ROOT = {
@@ -819,27 +862,27 @@ scripted_gui = {
 
 			expand_local_infrastructure_click = {
 				custom_effect_tooltip = expand_local_renewable_capacity_click_tt
-				set_state_flag = { flag = expand_local_infrastructure value = 1 days = 120 }
+				set_state_flag = { flag = expand_local_infrastructure value = 1 days = 180 }
 
 				add_dynamic_modifier = {
 					modifier = state_owned_local_infrastructure_modifier
-					days = 120
+					days = 180
 				}
-				set_temp_variable = { ii_cost = 0.004 }
-				set_temp_variable = { pp_cost_temp = 100 }
+				set_temp_variable = { ii_cost = 0.002 }
+				set_temp_variable = { pp_cost_temp = 75 }
 				calculate_internal_investments_costs = yes
 			}
 
 			expand_local_military_infrastructure_click = {
 				custom_effect_tooltip = expand_local_military_infrastructure_click_tt
-				set_state_flag = { flag = expand_local_military_infrastructure value = 1 days = 120 }
+				set_state_flag = { flag = expand_local_military_infrastructure value = 1 days = 180 }
 
 				add_dynamic_modifier = {
 					modifier = state_owned_local_military_infrastructure_modifier
-					days = 120
+					days = 180
 				}
-				set_temp_variable = { ii_cost = 0.004 }
-				set_temp_variable = { pp_cost_temp = 100 }
+				set_temp_variable = { ii_cost = 0.002 }
+				set_temp_variable = { pp_cost_temp = 75 }
 				calculate_internal_investments_costs = yes
 
 				ROOT = {
@@ -851,14 +894,14 @@ scripted_gui = {
 
 			expand_local_energy_infrastructure_click = {
 				custom_effect_tooltip = expand_local_energy_infrastructure_click_tt
-				set_state_flag = { flag = expand_local_energy_infrastructure value = 1 days = 120 }
+				set_state_flag = { flag = expand_local_energy_infrastructure value = 1 days = 180 }
 
 				add_dynamic_modifier = {
 					modifier = state_owned_local_energy_infrastructure_modifier
-					days = 120
+					days = 180
 				}
-				set_temp_variable = { ii_cost = 0.005 }
-				set_temp_variable = { pp_cost_temp = 100 }
+				set_temp_variable = { ii_cost = 0.003 }
+				set_temp_variable = { pp_cost_temp = 75 }
 				calculate_internal_investments_costs = yes
 
 				ROOT = {
@@ -869,27 +912,27 @@ scripted_gui = {
 
 			build_forward_logistics_base_click = {
 				custom_effect_tooltip = build_forward_logistics_base_click_tt
-				set_state_flag = { flag = build_forward_logistics_base value = 1 days = 120 }
+				set_state_flag = { flag = build_forward_logistics_base value = 1 days = 180 }
 
 				add_dynamic_modifier = {
 					modifier = state_owned_build_forward_logistics_base_modifier
-					days = 120
+					days = 180
 				}
-				set_temp_variable = { ii_cost = 0.006 }
-				set_temp_variable = { pp_cost_temp = 100 }
+				set_temp_variable = { ii_cost = 0.004 }
+				set_temp_variable = { pp_cost_temp = 75 }
 				calculate_internal_investments_costs = yes
 			}
 
 			improve_rebuilding_efforts_click = {
 				custom_effect_tooltip = improve_rebuilding_efforts_click_tt
-				set_state_flag = { flag = improve_rebuilding_efforts value = 1 days = 120 }
+				set_state_flag = { flag = improve_rebuilding_efforts value = 1 days = 180 }
 
 				add_dynamic_modifier = {
 					modifier = state_owned_improve_rebuilding_efforts_modifier
-					days = 120
+					days = 180
 				}
 
-				set_temp_variable = { ii_cost = 0.006 }
+				set_temp_variable = { ii_cost = 0.004 }
 				set_temp_variable = { var = temp_pop value = state_population_k } #in thousands
 				multiply_temp_variable = { var = temp_pop value = 0.01 } # 100 in hundred thousands
 				multiply_temp_variable = { var = temp_pop value = 0.01 }
@@ -897,31 +940,68 @@ scripted_gui = {
 				# Scale Against Population
 				multiply_temp_variable = { ii_cost = temp_pop }
 
-				set_temp_variable = { pp_cost_temp = 100 }
+				set_temp_variable = { pp_cost_temp = 75 }
 				calculate_internal_investments_costs = yes
 			}
 
 			hire_extra_primary_sector_workers_click = {
 				custom_effect_tooltip = hire_extra_primary_sector_workers_click_tt
-				set_state_flag = { flag = hire_extra_primary_sector_workers value = 1 days = 120 }
+				set_state_flag = { flag = hire_extra_primary_sector_workers value = 1 days = 180 }
 
 				add_dynamic_modifier = {
 					modifier = state_owned_hire_extra_primary_sector_workers_modifier
-					days = 120
+					days = 180
 				}
-				set_temp_variable = { ii_cost = 0.008 }
-				set_temp_variable = { pp_cost_temp = 100 }
+				set_temp_variable = { ii_cost = 0.006 }
+				set_temp_variable = { pp_cost_temp = 75 }
 				calculate_internal_investments_costs = yes
+			}
+
+			expand_local_coastal_infrastructure_click = {
+				custom_effect_tooltip = expand_local_coastal_infrastructure_click_tt
+				set_state_flag = { flag = expand_local_coastal_infrastructure value = 1 days = 180 }
+
+				add_dynamic_modifier = {
+					modifier = state_owned_local_naval_infrastructure_modifier
+					days = 180
+				}
+				set_temp_variable = { ii_cost = 0.005 }
+				set_temp_variable = { pp_cost_temp = 75 }
+				calculate_internal_investments_costs = yes
+
+				ROOT = {
+					set_temp_variable = { temp_opinion = 5 }
+					change_maritime_industry_opinion = yes
+					change_the_military_opinion = yes
+				}
+			}
+
+			expand_local_fortification_efforts_click = {
+				custom_effect_tooltip = expand_local_fortification_efforts_click_tt
+				set_state_flag = { flag = expand_local_fortification_efforts value = 1 days = 180 }
+
+				add_dynamic_modifier = {
+					modifier = state_owned_local_fortification_efforts_modifier
+					days = 180
+				}
+				set_temp_variable = { ii_cost = 0.005 }
+				set_temp_variable = { pp_cost_temp = 75 }
+				calculate_internal_investments_costs = yes
+
+				ROOT = {
+					set_temp_variable = { temp_opinion = 5 }
+					change_the_military_opinion = yes
+				}
 			}
 
 			# Custom National Content
 			# Brazil
 			improve_local_conservation_efforts_click = {
 				custom_effect_tooltip = improve_local_conservation_efforts_click_tt
-				set_state_flag = { flag = improve_local_conservation_efforts value = 1 days = 120 }
+				set_state_flag = { flag = improve_local_conservation_efforts value = 1 days = 180 }
 
-				set_temp_variable = { ii_cost = 0.005 }
-				set_temp_variable = { pp_cost_temp = 100 }
+				set_temp_variable = { ii_cost = 0.002 }
+				set_temp_variable = { pp_cost_temp = 75 }
 				calculate_internal_investments_costs = yes
 
 				hidden_effect = {

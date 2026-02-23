@@ -35,13 +35,10 @@ update_dirty_influence_var = {
 # Purpose: This is the main effect that is used to recalculate the influence
 recalculate_influence = {
 	hidden_effect = {
-		sort_influence = yes
-		calculate_influence_percentage = yes
 		delete_influencer_check = yes
 		sort_influence = yes
-
-		# Updated Influencer for CT
-		set_counter_terror_influencer = yes
+		calculate_influence_percentage = yes
+		force_update_map_mode = { mapmode = influence_map_mode }
 		update_dirty_influence_var = yes
 	}
 }
@@ -163,8 +160,6 @@ calculate_influence_percentage = {
 	multiply_variable = { neutrality_drift_influence_var = 0.001 }
 	multiply_variable = { communism_drift_influence_var = 0.001 }
 	multiply_variable = { democratic_drift_influence_var = 0.001 }
-
-	force_update_dynamic_modifier = yes
 }
 
 # Influence AI Section:
@@ -975,6 +970,13 @@ change_influence_percentage = {
 					add_to_temp_variable = { influence_change = 0.10 }
 				}
 
+				# Intel on Target
+				if = { limit = { has_dlc = "La Resistance" }
+					if = { limit = { var:tag_index = { check_variable = { civilian_intel@PREV > 75 } } }
+						add_to_temp_variable = { influence_change = 0.10 }
+					}
+				}
+
 				add_to_temp_variable = { influence_change = 1 }
 				multiply_temp_variable = { percent_change = influence_change }
 			}
@@ -1029,8 +1031,6 @@ change_influence_percentage = {
 							multiply_variable = { influence_array_val^i = temp_total }
 						}
 					}
-					recalculate_influence = yes
-
 					custom_effect_tooltip = change_influencer_tt
 				}
 				else = {
@@ -1055,7 +1055,6 @@ change_influence_percentage = {
 
 						multiply_variable = { influence_array_val^i = temp_total }
 					}
-					recalculate_influence = yes
 
 					custom_effect_tooltip = change_domestic_influence_percentage_tt
 				}
@@ -1088,10 +1087,11 @@ change_influence_percentage = {
 						multiply_variable = { influence_array_val^i = temp_total }
 					}
 				}
-				recalculate_influence = yes
 				custom_effect_tooltip = change_influencer_tt
 			}
 		}
+
+		recalculate_influence = yes
 	}
 	set_temp_variable = { percent_change = percent_change_temp }
 }
@@ -1119,26 +1119,37 @@ update_auto_influence_array = {
 		log = "[GetDateText]: [THIS.GetName]: auto_influence_cap [?auto_influence_cap]"
 	}
 	set_variable = { auto_influence_cost = 0 }
-	if = { limit = { NOT = { has_dynamic_modifier = { modifier = auto_influencer_cost_effect } } }
-		add_dynamic_modifier = { modifier = auto_influencer_cost_effect }
-	}
 
 	for_each_loop = {
 		array = auto_influence_array
+		value = v
+		index = i
 		if = { limit = { check_variable = { i > auto_influence_cap } NOT = { check_variable = { v = 0 } } }
 			if = { limit = { is_debug = yes }
 				log = "[GetDateText]: [THIS.GetName]: Index [?i] is greater than the auto_influence_cap. Removing [?auto_influence_array^i.GetName] from auto influence list"
 			}
+			set_temp_variable = { removed_country = v }
 			set_variable = { auto_influence_array^i = 0 }
-			var:auto_influence_array^i = {
+			subtract_from_variable = { auto_influence_users = 1 }
+			var:removed_country = {
 				PREV = {
 					remove_auto_influencer_request = yes
 				}
 			}
 		}
-		if = {
-			limit = { NOT = { check_variable = { v = 0 } } }
+		if = { limit = { NOT = { check_variable = { v = 0 } } }
 			add_to_variable = { auto_influence_cost = 1.50 }
+		}
+	}
+
+	if = { limit = { check_variable = { auto_influence_cost > 0 } }
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = auto_influencer_cost_effect } } }
+			add_dynamic_modifier = { modifier = auto_influencer_cost_effect }
+		}
+	}
+	else = {
+		if = { limit = { has_dynamic_modifier = { modifier = auto_influencer_cost_effect } }
+			remove_dynamic_modifier = { modifier = auto_influencer_cost_effect }
 		}
 	}
 
@@ -1174,17 +1185,29 @@ create_new_auto_influencer_request = {
 # Effect: remove_auto_influencer_request
 # Purpose: This is the main effect that is used to remove an auto-influencer request
 remove_auto_influencer_request = {
-	log = "[GetDateText]: [Root.GetName]: Removal of Auto-Influencer Request. Influencing Nation: [PREV.GetName]"
-	set_temp_variable = { index = 0 }
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [Root.GetName]: Removal of Auto-Influencer Request. Influencing Nation: [PREV.GetName]"
+	}
+	set_temp_variable = { index = -1 }
+	set_temp_variable = { found_match = 0 }
 	for_each_loop = {
 		array = auto_influence_array
-		if = { limit = { check_variable = { v = PREV.id } }
+		index = i
+		value = v
+		if = {
+			limit = {
+				check_variable = { v = PREV.id }
+				check_variable = { found_match = 0 }
+			}
 			set_temp_variable = { index = i }
+			set_temp_variable = { found_match = 1 }
 		}
 	}
 
-	set_variable = { auto_influence_array^index = 0 }
-	subtract_from_variable = { auto_influence_users = 1 }
-	clamp_variable = { var = auto_influence_users min = 0 max = 10 }
+	if = { limit = { check_variable = { index > -1 } }
+		set_variable = { auto_influence_array^index = 0 }
+		subtract_from_variable = { auto_influence_users = 1 }
+		clamp_variable = { var = auto_influence_users min = 0 max = 10 }
+	}
 	custom_effect_tooltip = influence_remove_auto_request_TT
 }

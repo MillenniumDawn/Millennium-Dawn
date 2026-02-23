@@ -1,88 +1,99 @@
-# Style Guide
+# Contributing to Millennium Dawn
 
-It helps to read code if it is written in a consistent style. Contributors to Millennium Dawn should agree to and adhere to our stylization and keep files consistent.
+Thank you for your interest in contributing to Millennium Dawn!
 
-Stylization and other clean up contributions are more than welcome if they fix inconsistencies. The Millennium Dawn team does run CWTools and pipeline formatters that keep stylization consistent for the team.
+## Quick Links
 
-## Development Environment Setup
+- [Documentation](https://millenniumdawn.github.io/Millennium-Dawn/)
+- [Discord](http://discord.gg/millenniumdawn)
+- [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md)
+- [Code Resources](./docs/dev-resources/code-resource.md)
 
-### Python Installation
+## Development Setup
 
-Python is required for running pre-commit hooks and other development tools.
+### Python (Required for Tools)
 
-**Windows:**
-1. Download Python from [python.org](https://www.python.org/downloads/)
-2. During installation, check "Add Python to PATH"
-3. Verify installation by opening Command Prompt and running:
-   ```bash
-   python --version
-   ```
-
-**macOS:**
-1. Install using Homebrew (recommended):
-   ```bash
-   brew install python
-   ```
-2. Or download from [python.org](https://www.python.org/downloads/)
-3. Verify installation:
-   ```bash
-   python3 --version
-   ```
-
-**Linux (Ubuntu/Debian):**
 ```bash
-sudo apt update
-sudo apt install python3 python3-pip
-```
-
-### Pre-commit Setup
-
-Pre-commit helps automatically format code and catch issues before commits.
-
-**Installation:**
-```bash
-# Install pre-commit
 pip install pre-commit
-
-# Navigate to your Millennium Dawn repository
-cd /path/to/millennium-dawn
-
-# Install the pre-commit hooks
 pre-commit install
 ```
 
-**Configuration:**
-The repository should include a `.pre-commit-config.yaml` file. If it doesn't exist, create one with appropriate hooks for your file types.
+### Pre-commit Usage
 
-**Usage:**
-- Pre-commit will automatically run on each commit
-- To manually run on all files: `pre-commit run --all-files`
-- To update hooks: `pre-commit autoupdate`
+```bash
+# Run all hooks
+pre-commit run --all-files
 
-## Code Style Guidelines
+# Update hooks
+pre-commit autoupdate
+```
 
-### Localization files (.yml)
-- indent 1 space
-- Remove all 0/1 after the : in string pairs
+## Code Standards
 
-### Code/Script Files
-- indent: 1 tab (4 spaces)
-- Comments go above or below the code
+### Localization (.yml)
 
-### Changelog
-- All changes should be documented in the changelog where applicable
+- 1-space indentation
+- UTF-8 with BOM encoding
+- Remove trailing 0/1 after colons
 
-### Resources
-- Resources or useful PDFs can be stored in Modding Resources for all Millennium Dawn team members
+### Script Files (.txt)
 
-## Contributing
+- 1 tab indentation
+- Comments above/below code blocks
+- Include logging in effects
+- Follow naming conventions: `TAG_name_here`
 
-When contributing to Millennium Dawn:
+### Key Rules
 
-1. Ensure Python and pre-commit are installed
-2. Follow the established code style guidelines
-3. Run pre-commit hooks before submitting
-4. Document changes in the changelog
-5. Keep stylization consistent across files
+- Use `is_triggered_only = yes` for events
+- Include `ai_will_do` in focuses
+- Remove redundant code (`allowed = { always = no }`)
 
-For questions about style or setup, consult the team or refer to the Modding Resources.
+### Docs Link Rules (`docs/`)
+
+- Do not hardcode `"/Millennium-Dawn/..."` in markdown links.
+- Use Liquid + `relative_url`, for example: `[Tutorial]({{ '/tutorials/' | relative_url }})`
+- Apply the same pattern to image links: `![Alt]({{ '/uploads/file.png' | relative_url }})`
+
+See [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) for details.
+
+## Pull Request Process
+
+1. Fork the repository
+2. Create a feature branch
+3. Make changes following style guidelines
+4. Run pre-commit hooks
+5. Update [Changelog.txt](./Changelog.txt)
+6. Add yourself to [AUTHORS.md](./docs/misc/authors.md)
+7. Submit a pull request
+
+## Changelog Guidelines
+
+- Write full sentences describing changes
+- No internal code references (e.g., "ENG_ideas")
+- Jokes allowed if in good taste
+- Document all significant changes
+
+## AI Policy
+
+### AI-Assisted Code
+
+- AI-generated code is allowed with human review
+- Must include personal stylization
+- Cannot be pure generated content without review
+
+### AI-Generated Art
+
+- **Not allowed** under any circumstances
+- All artwork must be human-created
+- Exception: Reference images for artists (must be converted/stylized)
+
+## Resources
+
+- [Dev Resources](./docs/dev-resources/) - Tools and guides
+- [Focus Tree Lifecycle](./docs/dev-resources/focus-tree-lifecycle-checklist.md)
+- [Game Rules Reference](./docs/dev-resources/game-rules.md)
+
+---
+
+For questions, join the [Discord](http://discord.gg/millenniumdawn) or open an issue.

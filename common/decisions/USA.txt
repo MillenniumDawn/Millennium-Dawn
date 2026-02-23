@@ -52,11 +52,6 @@ USA_american_economic_decisions_category = {
 			political_power_gain = -0.50
 		}
 
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision USA_resource_steel_factories_decision"
-			set_country_flag = USA_expanding_steel_flag
-		}
-
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_resource_steel_factories_decision"
 			random_owned_controlled_state = {
@@ -83,7 +78,6 @@ USA_american_economic_decisions_category = {
 				clr_state_flag = USA_expanding_states_steel_production
 			}
 			USA_scaling_resource_production_cost_effect = yes
-			clr_country_flag = USA_expanding_steel_flag
 			set_temp_variable = { temp_opinion = 1 }
 			change_wall_street_opinion = yes
 		}
@@ -164,11 +158,6 @@ USA_american_economic_decisions_category = {
 			political_power_gain = -0.50
 		}
 
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision USA_resource_aluminimum_prospecting_decision"
-			set_country_flag = USA_expanding_aluminium_flag
-		}
-
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_resource_aluminimum_prospecting_decision"
 			random_owned_controlled_state = {
@@ -194,7 +183,6 @@ USA_american_economic_decisions_category = {
 				clr_state_flag = USA_expanding_states_aluminium_production
 			}
 			USA_scaling_resource_production_cost_effect = yes
-			clr_country_flag = USA_expanding_aluminium_flag
 			set_temp_variable = { temp_opinion = 1 }
 			change_wall_street_opinion = yes
 		}
@@ -272,11 +260,6 @@ USA_american_economic_decisions_category = {
 			political_power_gain = -0.50
 		}
 
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision USA_resource_techmetals_prospecting_decision"
-			set_country_flag = USA_expanding_states_tungsten_production
-		}
-
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_resource_techmetals_prospecting_decision"
 			random_owned_controlled_state = {
@@ -302,7 +285,6 @@ USA_american_economic_decisions_category = {
 				clr_state_flag = USA_expanding_states_tungsten_production
 			}
 			USA_scaling_resource_production_cost_effect = yes
-			clr_country_flag = USA_expanding_states_tungsten_production
 			set_temp_variable = { temp_opinion = 1 }
 			change_wall_street_opinion = yes
 		}
@@ -422,8 +404,10 @@ USA_american_economic_decisions_category = {
 	}
 
 	USA_bring_microsoft_to_court_decision = {
-		visible = {
+		allowed = {
 			original_tag = USA
+		}
+		visible = {
 			has_country_flag = USA_allowed_microsoft_merger
 			NOT = { has_country_flag = collapsed_nation }
 		}
@@ -642,8 +626,20 @@ USA_congress_md = {
 			always = yes
 		}
 		custom_cost_text = [USA_lobbying_cost]
+
+		days_remove = 61
+		days_re_enable = 61
+		modifier = {
+			political_power_factor = -0.15
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_medium_lobby_effort"
+			USA_congress_medium_support = yes
+			USA_scaling_lobbying_effort_cost_effect = yes
+		}
+
 		ai_will_do = {
-			factor = 10
+			factor = 25
 			modifier = {
 				congress_medium_support_trigger = yes
 				factor = 0.5
@@ -656,16 +652,6 @@ USA_congress_md = {
 				congress_high_support_trigger = yes
 				factor = 0
 			}
-		}
-		days_remove = 61
-		days_re_enable = 61
-		modifier = {
-			political_power_factor = -0.15
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove USA_medium_lobby_effort"
-			USA_congress_medium_support = yes
-			USA_scaling_lobbying_effort_cost_effect = yes
 		}
 	}
 	USA_special_measures = {
@@ -889,20 +875,25 @@ USA_congress_md = {
 		visible = {
 			NOT = { has_country_flag = collapsed_nation }
 		}
-		cost = 25
+		cost = 50
 		days_remove = 90
 		days_re_enable = 275
+
+		modifier = {
+			population_tax_income_multiplier_modifier = -0.05
+			consumer_goods_factor = -0.08
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove USA_amend_the_budget"
+			USA_congress_medium_opposition = yes
+		}
+
 		ai_will_do = {
 			factor = 0.25
 			modifier = {
 				congress_low_support_trigger = yes
 				factor = 0
 			}
-		}
-		modifier = { consumer_goods_factor = -0.05 }
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove USA_amend_the_budget"
-			USA_congress_medium_opposition = yes
 		}
 	}
 	USA_research_grants = {
@@ -999,207 +990,6 @@ USA_congress_md = {
 			set_country_flag = flag_update_required
 			USA_congress_add_state = yes
 			USA_congress_medium_opposition = yes
-		}
-	}
-	USA_invest_in_state_factory = {
-		icon = generic_construction
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = USA_congress_invest_in_state_factory_tt
-				any_owned_state = {
-					has_state_flag = USA_congress_build_factory
-					check_variable = { factory_goal = industrial_complex_level }
-				}
-			}
-		}
-		highlight_states = {
-			highlight_states_trigger = {
-				has_state_flag = USA_congress_build_factory
-			}
-		}
-
-		days_mission_timeout = 360
-		is_good = no
-		activation = {
-			any_owned_state = {
-				has_state_flag = USA_congress_build_factory
-			}
-		}
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout USA_invest_in_state_factory"
-			random_owned_state = {
-				limit = {
-					has_state_flag = USA_congress_build_factory
-				}
-				clr_state_flag = USA_congress_build_factory
-				clear_variable = factory_goal
-			}
-
-			USA_congress_small_opposition = yes
-			clr_country_flag = USA_congress_investment
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision USA_invest_in_state_factory"
-			random_owned_state = {
-				limit = {
-					has_state_flag = USA_congress_build_factory
-				}
-				clr_state_flag = USA_congress_build_factory
-				clear_variable = factory_goal
-			}
-			ROOT = {
-				USA_congress_medium_support = yes
-				clr_country_flag = USA_congress_investment
-			}
-
-		}
-	}
-	USA_invest_in_state_arms_factory = {
-		icon = generic_construction
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = USA_congress_invest_in_state_arms_factory_tt
-				any_owned_state = {
-					has_state_flag = USA_congress_build_arms_factory
-					check_variable = { arms_factory_goal = arms_factory_level }
-				}
-			}
-		}
-		highlight_states = {
-			highlight_states_trigger = {
-				has_state_flag = USA_congress_build_arms_factory
-			}
-		}
-
-		days_mission_timeout = 360
-		is_good = no
-		activation = {
-			any_owned_state = {
-				has_state_flag = USA_congress_build_arms_factory
-			}
-		}
-		timeout_effect = {
-			random_owned_state = {
-				limit = {
-					has_state_flag = USA_congress_build_arms_factory
-				}
-				clr_state_flag = USA_congress_build_arms_factory
-				clear_variable = arms_factory_goal
-			}
-			USA_congress_small_opposition = yes
-			clr_country_flag = USA_congress_investment
-		}
-		complete_effect = {
-			random_owned_state = {
-				limit = {
-					has_state_flag = USA_congress_build_arms_factory
-				}
-				clr_state_flag = USA_congress_build_arms_factory
-				clear_variable = arms_factory_goal
-			}
-			ROOT = {
-				USA_congress_medium_support = yes
-				clr_country_flag = USA_congress_investment
-			}
-		}
-	}
-	USA_invest_in_state_dockyard = {
-		icon = generic_construction
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = USA_congress_invest_in_dockyard_tooltip
-				any_owned_state = {
-					has_state_flag = USA_congress_build_dockyard
-					check_variable = { dockyard_goal = building_level@dockyard }
-				}
-			}
-		}
-		highlight_states = {
-			highlight_states_trigger = {
-				has_state_flag = USA_congress_build_dockyard
-			}
-		}
-		days_mission_timeout = 360
-		is_good = no
-		activation = {
-			any_owned_state = {
-				has_state_flag = USA_congress_build_dockyard
-			}
-		}
-		timeout_effect = {
-			random_owned_state = {
-				limit = {
-					has_state_flag = USA_congress_build_dockyard
-				}
-				clr_state_flag = USA_congress_build_dockyard
-				clear_variable = dockyard_goal
-			}
-			USA_congress_small_opposition = yes
-			clr_country_flag = USA_congress_investment
-		}
-		complete_effect = {
-			random_owned_state = {
-				limit = {
-					has_state_flag = USA_congress_build_dockyard
-				}
-				clr_state_flag = USA_congress_build_dockyard
-				clear_variable = dockyard_goal
-			}
-			ROOT = {
-				USA_congress_medium_support = yes
-				clr_country_flag = USA_congress_investment
-			}
-		}
-	}
-	USA_invest_in_state_infrastructure = {
-		icon = generic_construction
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = USA_congress_invest_in_state_infrastructure_tt
-				any_owned_state = {
-					has_state_flag = USA_congress_build_infrastructure
-					check_variable = { infrastructure_goal = infrastructure_level }
-				}
-			}
-		}
-		highlight_states = {
-			highlight_states_trigger = {
-				has_state_flag = USA_congress_build_infrastructure
-			}
-		}
-
-		days_mission_timeout = 360
-		is_good = no
-		activation = {
-			any_owned_state = {
-				has_state_flag = USA_congress_build_infrastructure
-			}
-		}
-		timeout_effect = {
-			random_owned_state = {
-				limit = {
-					has_state_flag = USA_congress_build_infrastructure
-				}
-				clr_state_flag = USA_congress_build_infrastructure
-				clear_variable = infrastructure_goal
-			}
-
-			USA_congress_small_opposition = yes
-			clr_country_flag = USA_congress_investment
-		}
-		complete_effect = {
-			random_owned_state = {
-				limit = {
-					has_state_flag = USA_congress_build_infrastructure
-				}
-				clr_state_flag = USA_congress_build_infrastructure
-				clear_variable = infrastructure_goal
-			}
-			ROOT = {
-				USA_congress_medium_support = yes
-				clr_country_flag = USA_congress_investment
-			}
-
 		}
 	}
 	USA_communist_state_renaming = {
@@ -1442,14 +1232,12 @@ USA_asteroid_mining_decision = {
 							amount > 0
 						}
 					}
-					random_list = {
-						50 = {
-							add_resource = {
-								type = tungsten
-								amount = -1
-							}
+					random = {
+						chance = 50
+						add_resource = {
+							type = tungsten
+							amount = -1
 						}
-						50 = { }
 					}
 				}
 				if = {
@@ -1459,14 +1247,12 @@ USA_asteroid_mining_decision = {
 							amount > 0
 						}
 					}
-					random_list = {
-						75 = {
-							add_resource = {
-								type = steel
-								amount = -1
-							}
+					random = {
+						chance = 75
+						add_resource = {
+							type = steel
+							amount = -1
 						}
-						25 = { }
 					}
 				}
 				if = {
@@ -1476,14 +1262,12 @@ USA_asteroid_mining_decision = {
 							amount > 0
 						}
 					}
-					random_list = {
-						50 = {
-							add_resource = {
-								type = aluminium
-								amount = -1
-							}
+					random = {
+						chance = 50
+						add_resource = {
+							type = aluminium
+							amount = -1
 						}
-						50 = { }
 					}
 				}
 			}
@@ -3224,7 +3008,7 @@ USA_f35_program_decisions = {
 			}
 		}
 
-		visible = {
+		allowed = {
 			original_tag = USA
 		}
 
@@ -3299,7 +3083,7 @@ USA_f35_program_decisions = {
 	USA_expansion_of_the_program = {
 		icon = GFX_decision_nato_f35_expansion_button
 		days_remove = 60
-		visible = {
+		allowed = {
 			original_tag = USA
 		}
 		fire_only_once = yes
@@ -3719,10 +3503,11 @@ USA_f35_program_decisions = {
 	}
 	USA_kick_out_of_program = {
 		icon = GFX_decision_nato_f35_go_away_button
-		allowed = { always = yes }
 
-		visible = {
+		allowed = {
 			original_tag = USA
+		}
+		visible = {
 			if = {
 				limit = {
 					is_ai = no
@@ -4314,7 +4099,7 @@ USA_foreign_policy = {
 						parent_version = 1
 						modules = {
 							fixed_ship_engine_slot = module_surface_jet_turbine_power
-							fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
+							fixed_ship_fire_control_system_slot = module_capital_digital_integrated_fire_control
 							fixed_ship_radar_slot = module_radar_3
 							fixed_ship_auxillary_slot_3 = module_torpedoes_2
 							fixed_ship_auxillary_slot_2 = module_aa_missiles_3
@@ -4384,7 +4169,7 @@ USA_foreign_policy = {
 		available = {
 			country_exists = BRA
 			country_exists = COL
-			country_exists = ARG
+			country_exists = CHL
 			NOT = {
 				has_country_flag = USA_doing_decision
 			}
@@ -4415,7 +4200,7 @@ USA_foreign_policy = {
 					days = 2
 				}
 			}
-			ARG = {
+			CHL = {
 				country_event = {
 					id = department_of_state.14
 					days = 2
@@ -5090,7 +4875,6 @@ USA_foreign_policy = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_push_iran"
 			clr_country_flag = USA_doing_decision
-			set_country_flag = USA_pressured_iran
 			PER = {
 				country_event = {
 					id = department_of_state.59
@@ -5412,12 +5196,9 @@ USA_foreign_policy = {
 				days = 730
 			}
 			newline = yes
-			every_country = {
+			every_other_country = {
 				limit = {
 					has_government = democratic
-					NOT = {
-						original_tag = USA
-					}
 				}
 				country_event = {
 					id = department_of_state.73
@@ -5525,10 +5306,12 @@ USA_foreign_policy = {
 			UKR = {
 				add_ideas = USA_UKR_aid
 			}
-			every_country = {
-				limit = {
-					has_idea = NATO_member
-				}
+			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
+				country_event = department_of_state.85
+			}
+			for_each_scope_loop = {
+				array = global.nato_members
 				country_event = department_of_state.85
 			}
 			add_relation_modifier = {

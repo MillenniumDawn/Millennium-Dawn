@@ -28,26 +28,26 @@ def validate_mod_file(file_path: Path) -> bool:
     try:
         with open(file_path, "r", encoding="utf-8") as file:
             file.read()
-        print(f"✅ {file_path}: Valid UTF-8 encoding")
+        print(f"{file_path}: Valid UTF-8 encoding")
         return True
 
     except UnicodeDecodeError as e:
-        print(f"❌ {file_path}: Invalid UTF-8 encoding - {e}", file=sys.stderr)
+        print(f"{file_path}: Invalid UTF-8 encoding - {e}", file=sys.stderr)
         return False
 
     except FileNotFoundError:
-        print(f"❌ {file_path}: File not found", file=sys.stderr)
+        print(f"{file_path}: File not found", file=sys.stderr)
         return False
 
     except Exception as e:
-        print(f"❌ {file_path}: Unexpected error - {e}", file=sys.stderr)
+        print(f"{file_path}: Unexpected error - {e}", file=sys.stderr)
         return False
 
 
 def main():
     """Main entry point for the script."""
     if len(sys.argv) < 2:
-        print("❌ No files provided", file=sys.stderr)
+        print("No files provided", file=sys.stderr)
         return 1
 
     files = [Path(f) for f in sys.argv[1:]]

@@ -217,8 +217,6 @@ focus_tree = {
 				ideology = fascism
 				popularity = -0.05
 			}
-			set_temp_variable = { rad_change = -5 }
-			modify_radicalization_effect = yes
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
@@ -250,8 +248,6 @@ focus_tree = {
 				ideology = fascism
 				popularity = -0.5
 			}
-			set_temp_variable = { rad_change = -10 }
-			modify_radicalization_effect = yes
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
@@ -278,26 +274,13 @@ focus_tree = {
 					type = tactical_bomber
 				}
 			}
-			custom_trigger_tooltip = {
-				tooltip = severe_threat_higher_tt
-				check_variable = { threat_level > 50 }
-			}
 		}
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		prerequisite = { focus = EGY_clear_out_alqaeda }
 		relative_position_id = EGY_egyptian_politics
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_bedouin_invest"
-			custom_effect_tooltip = terror_conduct_strike_tt
-			set_temp_variable = { ct_training_percentage_improvement = 5 }
-			multiply_temp_variable = { ct_training_percentage_improvement = ct_training }
-			add_to_temp_variable = { ct_training_percentage_improvement = 25 }
-			set_temp_variable = { ct_training_failure = 100 }
-			subtract_from_temp_variable = { ct_training_failure = ct_training_percentage_improvement }
-			random_list = {
-				ct_training_percentage_improvement = { country_event = { id = terror.15 } }
-				ct_training_failure = { country_event = { id = terror.2 } }
-			}
+			# TODO: Need to add something here
 		}
 		ai_will_do = { factor = 1 }
 	}
@@ -476,8 +459,6 @@ focus_tree = {
 			ban_party_scripted_call = yes
 			set_temp_variable = { temp_modify_social_con_government = -5 }
 			modify_social_conservatism_government = yes
-			set_temp_variable = { rad_change = -5 }
-			modify_radicalization_effect = yes
 			add_popularity = {
 				ideology = neutrality
 				popularity = -0.10
@@ -798,10 +779,20 @@ focus_tree = {
 		relative_position_id = EGY_egyptian_politics
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_squash_diplo"
-			every_country = {
-				limit = { has_idea = NATO_member }
-				add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
-				reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_nato_disabled } }
+				custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = USA modifier = diplomatic_support }
+					reverse_add_opinion_modifier = { target = USA modifier = diplomatic_support }
+				}
+				hidden_effect = {
+					for_each_scope_loop = {
+						array = global.nato_members
+						add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
+						reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
+					}
+				}
 			}
 			set_temp_variable = { percent_change = 5 }
 			change_domestic_influence_percentage = yes
@@ -1530,12 +1521,20 @@ focus_tree = {
 				PAL = { release = HAM }
 				hidden_effect = {
 					every_state = {
-						limit = { is_core_of = PAL }
-						add_core_of = HAM
-					}
-					every_state = {
-						limit = { is_claimed_by = PAL }
-						add_claim_by = HAM
+						limit = {
+							OR = {
+								is_core_of = PAL
+								is_claimed_by = PAL
+							}
+						}
+						if = {
+							limit = { is_core_of = PAL }
+							add_core_of = HAM
+						}
+						if = {
+							limit = { is_claimed_by = PAL }
+							add_claim_by = HAM
+						}
 					}
 					HAM = { load_oob = HAM_2017 }
 					ISR = {
@@ -1663,8 +1662,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_sahwat_hegazi"
 			add_political_power = -50
-			set_temp_variable = { rad_change = 5 }
-			modify_radicalization_effect = yes
 			add_manpower = 1500
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
@@ -1691,8 +1688,6 @@ focus_tree = {
 			modify_coptic_opinion_effect = yes
 			set_temp_variable = { coptic_pol_influence_change = -2 }
 			modify_coptic_pol_influence_effect = yes
-			set_temp_variable = { rad_change = 5 }
-			modify_radicalization_effect = yes
 			add_opinion_modifier = {
 				target = SAU
 				modifier = diplomatic_proximity
@@ -1721,8 +1716,6 @@ focus_tree = {
 			modify_coptic_opinion_effect = yes
 			set_temp_variable = { coptic_pol_influence_change = 2 }
 			modify_coptic_pol_influence_effect = yes
-			set_temp_variable = { rad_change = -5 }
-			modify_radicalization_effect = yes
 			add_opinion_modifier = {
 				modifier = peace_talks
 				target = PER
@@ -1856,8 +1849,6 @@ focus_tree = {
 		relative_position_id = EGY_morsi
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_dem_a_retrial"
-			set_temp_variable = { rad_change = 5 }
-			modify_radicalization_effect = yes
 			add_popularity = {
 				ideology = democratic
 				popularity = -0.05
@@ -2587,19 +2578,21 @@ focus_tree = {
 			set_temp_variable = { receiver_nation = EGY.id }
 			set_temp_variable = { sender_nation = SOV.id }
 			set_improved_trade_agreement = yes
-			every_country = {
-				limit = { has_idea = CSTO_member }
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = improve_trade
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_csto_disabled } }
+				custom_effect_tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = SOV modifier = improve_trade }
+					add_opinion_modifier = { target = SOV modifier = diplomatic_support }
+					reverse_add_opinion_modifier = { target = SOV modifier = diplomatic_support }
 				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = diplomatic_support
-				}
-				reverse_add_opinion_modifier = {
-					target = ROOT
-					modifier = diplomatic_support
+				hidden_effect = {
+					for_each_scope_loop = {
+						array = global.CSTO_member
+						add_opinion_modifier = { target = ROOT modifier = improve_trade }
+						add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
+						reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
+					}
 				}
 			}
 		}
@@ -2662,7 +2655,7 @@ focus_tree = {
 		relative_position_id = EGY_natfront_all
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_arab_league_tigh"
-			news_event = { id = Egypt_news.4 }
+			news_event = { id = egypt_news.4 }
 			every_country = {
 				limit = { has_idea = LoAS_member }
 				swap_ideas = {
@@ -2722,8 +2715,6 @@ focus_tree = {
 				ideology = fascism
 				popularity = -0.05
 			}
-			set_temp_variable = { rad_change = -5 }
-			modify_radicalization_effect = yes
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
@@ -2787,8 +2778,6 @@ focus_tree = {
 			ban_party_scripted_call = yes
 			set_temp_variable = { temp_modify_social_con_government = -5 }
 			modify_social_conservatism_government = yes
-			set_temp_variable = { rad_change = -5 }
-			modify_radicalization_effect = yes
 			add_popularity = {
 				ideology = neutrality
 				popularity = -0.10
@@ -3331,7 +3320,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_junta_coup"
 			set_cosmetic_tag = EGY_REB_S_nationalist
-			news_event = { id = Egypt_news.1 }
+			news_event = { id = egypt_news.1 }
 			add_political_power = 100
 			add_popularity = {
 				ideology = democratic
@@ -3475,8 +3464,6 @@ focus_tree = {
 				ideology = fascism
 				popularity = -0.05
 			}
-			set_temp_variable = { rad_change = -5 }
-			modify_radicalization_effect = yes
 		}
 		ai_will_do = { factor = 51 }
 	}
@@ -3509,7 +3496,6 @@ focus_tree = {
 				limit = { NOT = { is_in_array = { ruling_party = 0 } } }
 				set_temp_variable = { rul_party_temp = 0 }
 				set_temp_variable = { col_one = 22 }
-				set_temp_variable = { enable_elections = 0 }
 				change_ruling_party_effect = yes
 			}
 
@@ -3628,7 +3614,7 @@ focus_tree = {
 			random_owned_state = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
-					type = synthetic_refinery
+					type = renewable_energy_infra
 					level = 1
 					instant_build = yes
 				}
@@ -3636,7 +3622,7 @@ focus_tree = {
 			random_owned_state = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
-					type = synthetic_refinery
+					type = renewable_energy_infra
 					level = 1
 					instant_build = yes
 				}
@@ -3882,7 +3868,7 @@ focus_tree = {
 		relative_position_id = EGY_junta_coup
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_egy_econ_forum"
-			news_event = { id = Egypt_news.3 hours = 6 }
+			news_event = { id = egypt_news.3 hours = 6 }
 			COM = { country_event = Egypt.115 }
 			ITA = { country_event = Egypt.115 }
 			CHI = { country_event = Egypt.115 }
@@ -4042,8 +4028,6 @@ focus_tree = {
 				ideology = fascism
 				popularity = -0.05
 			}
-			set_temp_variable = { rad_change = -5 }
-			modify_radicalization_effect = yes
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
@@ -4066,20 +4050,20 @@ focus_tree = {
 		relative_position_id = EGY_junta_coup
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_african_union_aff"
-			news_event = { id = Egypt_news.2 hours = 6 }
+			news_event = { id = egypt_news.2 hours = 6 }
 			SOV = { country_event = Egypt.112 }
 			set_temp_variable = { receiver_nation = EGY.id }
 			set_temp_variable = { sender_nation = SOV.id }
 			set_improved_trade_agreement = yes
-			every_country = {
-				limit = { has_idea = AU_member }
+			custom_effect_tooltip = TT_ALL_AU_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
 				add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 				reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 			}
 			hidden_effect = {
 				SOV = {
-					every_country = {
-						limit = { has_idea = AU_member }
+					for_each_scope_loop = {
+						array = global.AU_member
 						add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 						reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 					}
@@ -4128,8 +4112,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_us_mil_support"
 			hidden_effect = { add_ideas = EGY_us_helps }
 			set_temp_variable = { additional_income_change = gdp_total }
-			multiply_temp_variable = { additional_income_change = 0.02 } #2% of yearly GDP
-			multiply_temp_variable = { additional_income_change = 0.02 } #weekly
+			multiply_temp_variable = { additional_income_change = 0.0004 } #2% of yearly GDP
 			custom_effect_tooltip = additional_income_rate_percent_tt
 			set_temp_variable = { percent_change = 3 }
 			set_temp_variable = { tag_index = USA }
@@ -4529,8 +4512,6 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_theocrat_gov"
 			set_temp_variable = { temp_modify_social_con_government = 10 }
 			modify_social_conservatism_government = yes
-			set_temp_variable = { rad_change = 10 }
-			modify_radicalization_effect = yes
 			swap_ideas = {
 				remove_idea = small_medium_business_owners
 				add_idea = the_ulema
@@ -4700,8 +4681,6 @@ focus_tree = {
 			modify_coptic_opinion_effect = yes
 			set_temp_variable = { coptic_pol_influence_change = -2 }
 			modify_coptic_pol_influence_effect = yes
-			set_temp_variable = { rad_change = 5 }
-			modify_radicalization_effect = yes
 			add_opinion_modifier = {
 				target = SAU
 				modifier = diplomatic_proximity
@@ -4741,12 +4720,20 @@ focus_tree = {
 				PAL = { release = HAM }
 				hidden_effect = {
 					every_state = {
-						limit = { is_core_of = PAL }
-						add_core_of = HAM
-					}
-					every_state = {
-						limit = { is_claimed_by = PAL }
-						add_claim_by = HAM
+						limit = {
+							OR = {
+								is_core_of = PAL
+								is_claimed_by = PAL
+							}
+						}
+						if = {
+							limit = { is_core_of = PAL }
+							add_core_of = HAM
+						}
+						if = {
+							limit = { is_claimed_by = PAL }
+							add_claim_by = HAM
+						}
 					}
 					HAM = { load_oob = HAM_2017 }
 					ISR = {
@@ -5118,8 +5105,6 @@ focus_tree = {
 			}
 			set_temp_variable = { temp_modify_social_con_government = -5 }
 			modify_social_conservatism_government = yes
-			set_temp_variable = { rad_change = -5 }
-			modify_radicalization_effect = yes
 			set_temp_variable = { coptic_opinion_change = -4 }
 			modify_coptic_opinion_effect = yes
 			set_temp_variable = { coptic_pol_influence_change = 2 }
@@ -5415,8 +5400,6 @@ focus_tree = {
 			set_country_flag = party12_banned
 			set_temp_variable = { temp_modify_social_con_government = -5 }
 			modify_social_conservatism_government = yes
-			set_temp_variable = { rad_change = -5 }
-			modify_radicalization_effect = yes
 			add_popularity = {
 				ideology = neutrality
 				popularity = -0.10
@@ -5450,8 +5433,6 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_const_changes"
 			set_temp_variable = { coptic_pol_influence_change = 5 }
 			modify_coptic_pol_influence_effect = yes
-			set_temp_variable = { rad_change = -5 }
-			modify_radicalization_effect = yes
 			country_event = egypt.145
 		}
 		ai_will_do = { factor = 1 }
@@ -5599,8 +5580,6 @@ focus_tree = {
 			modify_coptic_opinion_effect = yes
 			set_temp_variable = { coptic_pol_influence_change = 5 }
 			modify_coptic_pol_influence_effect = yes
-			set_temp_variable = { rad_change = -5 }
-			modify_radicalization_effect = yes
 		}
 		ai_will_do = { factor = 1 }
 	}
@@ -5624,8 +5603,6 @@ focus_tree = {
 			modify_coptic_opinion_effect = yes
 			set_temp_variable = { coptic_pol_influence_change = -5 }
 			modify_coptic_pol_influence_effect = yes
-			set_temp_variable = { rad_change = 2 }
-			modify_radicalization_effect = yes
 		}
 		ai_will_do = { factor = 1 }
 	}
@@ -6406,7 +6383,7 @@ focus_tree = {
 			set_temp_variable = { percent_change = 5 }
 			change_domestic_influence_percentage = yes
 			add_tech_bonus = {
-				name = CAT_fuel_oil
+				name = EGY_gas_exports
 				bonus = 1
 				uses = 2
 				category = CAT_fuel_oil
@@ -6947,7 +6924,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_napi_pharma"
 			add_tech_bonus = {
-				name = CAT_genes
+				name = EGY_napi_pharma
 				bonus = 0.25
 				uses = 2
 				category = CAT_genes
@@ -7045,13 +7022,13 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_energetics"
 			add_stability = 0.05
 			add_tech_bonus = {
-				name = CAT_3d
+				name = EGY_energetics
 				bonus = 0.25
 				uses = 1
 				category = CAT_3d
 			}
 			add_tech_bonus = {
-				name = CAT_construction_tech
+				name = EGY_energetics
 				bonus = 0.25
 				uses = 1
 				category = CAT_construction_tech
@@ -7077,7 +7054,7 @@ focus_tree = {
 			random_owned_state = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
-					type = synthetic_refinery
+					type = renewable_energy_infra
 					level = 1
 					instant_build = yes
 				}
@@ -7085,7 +7062,7 @@ focus_tree = {
 			random_owned_state = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = {
-					type = synthetic_refinery
+					type = renewable_energy_infra
 					level = 1
 					instant_build = yes
 				}
@@ -7126,13 +7103,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_electrify_cities"
 			add_tech_bonus = {
-				name = CAT_3d
+				name = EGY_electrify_cities
 				bonus = 0.25
 				uses = 1
 				category = CAT_3d
 			}
 			add_tech_bonus = {
-				name = CAT_construction_tech
+				name = EGY_electrify_cities
 				bonus = 0.25
 				uses = 1
 				category = CAT_construction_tech
@@ -7453,7 +7430,7 @@ focus_tree = {
 				limit = { has_dlc = "La Resistance" }
 				add_ideas = EGY_telecom_idea
 			}
- 			else = { add_ideas = EGY_telecom_idea_non_dlc }
+			 else = { add_ideas = EGY_telecom_idea_non_dlc }
 			set_temp_variable = { treasury_change = -2.5 }
 			modify_treasury_effect = yes
 		}
@@ -7620,7 +7597,7 @@ focus_tree = {
 					add_idea = EGY_natrega_idea
 				}
 			}
- 			else = {
+			 else = {
 				swap_ideas = {
 					remove_idea = EGY_telecom_idea_non_dlc
 					add_idea = EGY_natrega_idea
@@ -7687,7 +7664,7 @@ focus_tree = {
 		cost = 4
 		x = 50
 		y = 12
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_WAR_SUPPORT }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_WAR_SUPPORT }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_lessons"
 			add_war_support = 0.05
@@ -7701,7 +7678,7 @@ focus_tree = {
 		cost = 10
 		x = 0
 		y = 1
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_lessons }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -7722,7 +7699,7 @@ focus_tree = {
 		x = 0
 		y = 2
 		available = { OR = { has_army_manpower = { size > 120000 } } }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_MANPOWER }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_MANPOWER }
 		prerequisite = { focus = EGY_army }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -7748,7 +7725,7 @@ focus_tree = {
 		cost = 7
 		x = -3
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_exer }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -7763,7 +7740,7 @@ focus_tree = {
 		cost = 7
 		x = -1
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_exer }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -7785,7 +7762,7 @@ focus_tree = {
 		cost = 7
 		x = 1
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_exer }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -7793,7 +7770,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
 			add_tech_bonus = {
-				name = CAT_nvg
+				name = EGY_visions
 				bonus = 0.5
 				uses = 1
 				category = CAT_nvg
@@ -7807,7 +7784,7 @@ focus_tree = {
 		cost = 7
 		x = 3
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_exer }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -7831,14 +7808,14 @@ focus_tree = {
 		cost = 8
 		x = -2
 		y = 4
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_academyy }
 		prerequisite = { focus = EGY_spec_weap }
 		relative_position_id = EGY_lessons
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_def"
 			add_tech_bonus = {
-				name = CAT_support_weapons
+				name = EGY_def
 				bonus = 0.35
 				uses = 1
 				category = CAT_support_weapons
@@ -7884,7 +7861,7 @@ focus_tree = {
 		x = 2
 		y = 4
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_visions }
 		prerequisite = { focus = EGY_wests }
 		relative_position_id = EGY_lessons
@@ -7908,7 +7885,7 @@ focus_tree = {
 		x = 0
 		y = 5
 		available = { OR = { has_army_manpower = { size > 140000 } } }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_MANPOWER }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_MANPOWER }
 		prerequisite = { focus = EGY_def }
 		prerequisite = { focus = EGY_rifle_trainings }
 		prerequisite = { focus = EGY_exer }
@@ -7938,7 +7915,7 @@ focus_tree = {
 		cost = 5
 		x = -6
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_exer }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -7964,7 +7941,7 @@ focus_tree = {
 		cost = 8
 		x = -7
 		y = 4
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
 		prerequisite = { focus = EGY_new_army_eq }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -7985,7 +7962,7 @@ focus_tree = {
 		cost = 8
 		x = -5
 		y = 4
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
 		prerequisite = { focus = EGY_new_army_eq }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8006,7 +7983,7 @@ focus_tree = {
 		cost = 8
 		x = -4
 		y = 5
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
 		prerequisite = { focus = EGY_new_army_eq  focus = EGY_new_army_eq }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8039,7 +8016,7 @@ focus_tree = {
 		cost = 8
 		x = -6
 		y = 5
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
 		prerequisite = { focus = EGY_new_army_eq  focus = EGY_new_army_eq }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8060,7 +8037,7 @@ focus_tree = {
 		cost = 7
 		x = -13
 		y = 2
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_CORRUPTION }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_CORRUPTION }
 		prerequisite = { focus = EGY_army }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8084,7 +8061,7 @@ focus_tree = {
 		cost = 7
 		x = -13
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_CORRUPTION }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_CORRUPTION }
 		prerequisite = { focus = EGY_fight_cor }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8118,7 +8095,7 @@ focus_tree = {
 		cost = 5
 		x = -11
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_CORRUPTION }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_CORRUPTION }
 		prerequisite = { focus = EGY_fight_cor }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8152,7 +8129,7 @@ focus_tree = {
 		cost = 5
 		x = -11
 		y = 4
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_CORRUPTION }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_CORRUPTION }
 		prerequisite = { focus = EGY_new_rep_law }
 		prerequisite = { focus = EGY_influ_army }
 		relative_position_id = EGY_lessons
@@ -8187,7 +8164,7 @@ focus_tree = {
 		cost = 5
 		x = -9
 		y = 4
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_CORRUPTION }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_CORRUPTION }
 		prerequisite = { focus = EGY_new_rep_law }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8221,7 +8198,7 @@ focus_tree = {
 		cost = 6
 		x = -10
 		y = 5
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_soc_mil }
 		prerequisite = { focus = EGY_new_forb_mil }
 		relative_position_id = EGY_lessons
@@ -8237,7 +8214,7 @@ focus_tree = {
 		cost = 7
 		x = -16
 		y = 2
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_army }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8260,7 +8237,7 @@ focus_tree = {
 		cost = 7
 		x = -16
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_fund_spez }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8280,7 +8257,7 @@ focus_tree = {
 		cost = 6
 		x = -16
 		y = 4
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_desert_corps }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8318,7 +8295,7 @@ focus_tree = {
 		cost = 6
 		x = -18
 		y = 4
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_desert_corps }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8356,7 +8333,7 @@ focus_tree = {
 		cost = 6
 		x = -14
 		y = 4
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INFLUENCE }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INFLUENCE }
 		prerequisite = { focus = EGY_desert_corps }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8406,7 +8383,7 @@ focus_tree = {
 		cost = 7
 		x = -16
 		y = 5
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_masters_ambush }
 		prerequisite = { focus = EGY_extr_trai }
 		prerequisite = { focus = EGY_acilm }
@@ -8449,7 +8426,7 @@ focus_tree = {
 		cost = 7
 		x = -21
 		y = 2
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_army }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8471,7 +8448,7 @@ focus_tree = {
 				has_idea = police_05
 			}
 		}
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_fund_police }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8509,7 +8486,7 @@ focus_tree = {
 		cost = 5
 		x = -23
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_fund_police }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8547,7 +8524,7 @@ focus_tree = {
 		cost = 5
 		x = -19
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_fund_police }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8585,7 +8562,7 @@ focus_tree = {
 		cost = 5
 		x = -21
 		y = 4
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_tour_pol }
 		prerequisite = { focus = EGY_fight_narco }
 		prerequisite = { focus = EGY_new_eq }
@@ -8607,7 +8584,7 @@ focus_tree = {
 		cost = 7
 		x = 6
 		y = 2
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_army }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8633,7 +8610,7 @@ focus_tree = {
 		y = 3
 		available = { SOV = { has_opinion = { target = EGY value > 19 } } }
 		bypass = { NOT = { country_exists = SOV } }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INFLUENCE }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INFLUENCE }
 		prerequisite = { focus = EGY_air }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8651,7 +8628,7 @@ focus_tree = {
 		y = 3
 		available = { USA = { has_opinion = { target = EGY value > 19 } } }
 		bypass = { NOT = { country_exists = USA } }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INFLUENCE }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INFLUENCE }
 		prerequisite = { focus = EGY_air }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8674,7 +8651,7 @@ focus_tree = {
 				has_completed_focus = EGY_mig29
 			}
 		}
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
 		prerequisite = { focus = EGY_mig29 focus = EGY_f16 }
 		prerequisite = { focus = EGY_air }
 		relative_position_id = EGY_lessons
@@ -8706,7 +8683,7 @@ focus_tree = {
 			NOT = { country_exists = ENG }
 			NOT = { country_exists = ITA }
 		}
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INFLUENCE }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INFLUENCE }
 		prerequisite = { focus = EGY_air }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8745,7 +8722,7 @@ focus_tree = {
 		cost = 7
 		x = 10
 		y = 4
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_roc }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8777,7 +8754,7 @@ focus_tree = {
 		cost = 5
 		x = 10
 		y = 2
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_army }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8785,7 +8762,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -3.5 }
 			modify_treasury_effect = yes
 			add_tech_bonus = {
-				name = CAT_missile
+				name = EGY_roc
 				bonus = 0.3
 				uses = 1
 				category = CAT_missile
@@ -8803,7 +8780,7 @@ focus_tree = {
 		y = 3
 		available = { SOV = { has_opinion = { target = EGY value > 19 } } }
 		bypass = { NOT = { country_exists = SOV } }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INFLUENCE }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INFLUENCE }
 		prerequisite = { focus = EGY_roc }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8821,7 +8798,7 @@ focus_tree = {
 		y = 3
 		available = { USA = { has_opinion = { target = EGY value > 19 } } }
 		bypass = { NOT = { country_exists = USA } }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_roc }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8857,7 +8834,7 @@ focus_tree = {
 		cost = 7
 		x = 5
 		y = 5
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INFLUENCE }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INFLUENCE }
 		prerequisite = { focus = EGY_domestic_air }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8874,7 +8851,7 @@ focus_tree = {
 		x = 7
 		y = 5
 		available = { FRA = { has_opinion = { target = EGY value > 19 } } }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_domestic_air }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8914,7 +8891,7 @@ focus_tree = {
 		cost = 10
 		x = 6
 		y = 6
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_licence_mir focus = EGY_new_bases }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -8937,7 +8914,7 @@ focus_tree = {
 		cost = 7
 		x = 7
 		y = 7
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_air_doc }
 		mutually_exclusive = { focus = EGY_skies }
 		relative_position_id = EGY_lessons
@@ -8964,7 +8941,7 @@ focus_tree = {
 		cost = 7
 		x = 5
 		y = 7
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_air_doc }
 		mutually_exclusive = { focus = EGY_bomb }
 		relative_position_id = EGY_lessons
@@ -8991,7 +8968,7 @@ focus_tree = {
 		cost = 5
 		x = 14
 		y = 2
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_army }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -9014,7 +8991,7 @@ focus_tree = {
 		cost = 8
 		x = 13
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_exp_fleet }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -9037,7 +9014,7 @@ focus_tree = {
 		cost = 6
 		x = 15
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_exp_fleet }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -9059,7 +9036,7 @@ focus_tree = {
 		cost = 7
 		x = 13
 		y = 4
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_ras_el_tin focus = EGY_corvet }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -9075,7 +9052,7 @@ focus_tree = {
 		cost = 7
 		x = 15
 		y = 4
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_ras_el_tin focus = EGY_corvet }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -9098,7 +9075,7 @@ focus_tree = {
 		cost = 10
 		x = 14
 		y = 7
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_ger_fleet }
 		prerequisite = { focus = EGY_ita_fleet }
 		prerequisite = { focus = EGY_fra_fleet }
@@ -9127,7 +9104,7 @@ focus_tree = {
 		x = 0
 		y = 6
 		available = { OR = { has_army_manpower = { size > 160000 } } }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_MANPOWER }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_MANPOWER }
 		prerequisite = { focus = EGY_new_doc }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -9149,7 +9126,7 @@ focus_tree = {
 		x = 2
 		y = 6
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_new_doc }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -9172,7 +9149,7 @@ focus_tree = {
 		x = -2
 		y = 6
 
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_new_doc }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -9190,7 +9167,7 @@ focus_tree = {
 		x = 0
 		y = 7
 		available = { OR = { has_army_manpower = { size > 175000 } } }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_MANPOWER }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_MANPOWER }
 		prerequisite = { focus = EGY_NATO_doc }
 		prerequisite = { focus = EGY_imp_suppl }
 		prerequisite = { focus = EGY_shells }
@@ -9218,7 +9195,7 @@ focus_tree = {
 		cost = 1
 		x = 8
 		y = -3
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		relative_position_id = EGY_lessons
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus buy_arms"
@@ -9240,7 +9217,7 @@ focus_tree = {
 		y = 1
 		available = { USA = { has_opinion = { target = EGY value > 19 } } }
 		bypass = { NOT = { country_exists = USA } }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_buy_arms }
 		relative_position_id = EGY_buy_arms
 		completion_reward = {
@@ -9258,7 +9235,7 @@ focus_tree = {
 		y = 1
 		available = { SOV = { has_opinion = { target = EGY value > 19 } } }
 		bypass = { NOT = { country_exists = SOV } }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_buy_arms }
 		relative_position_id = EGY_buy_arms
 		completion_reward = {
@@ -9276,7 +9253,7 @@ focus_tree = {
 		y = 1
 		available = { SOV = { has_opinion = { target = EGY value > 19 } } }
 		bypass = { NOT = { country_exists = SOV } }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_buy_arms }
 		relative_position_id = EGY_buy_arms
 		completion_reward = {
@@ -9294,7 +9271,7 @@ focus_tree = {
 		y = 1
 		available = { USA = { has_opinion = { target = EGY value > 19 } } }
 		bypass = { NOT = { country_exists = USA } }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_buy_arms }
 		relative_position_id = EGY_buy_arms
 		completion_reward = {
@@ -9312,7 +9289,7 @@ focus_tree = {
 		y = 1
 		available = { USA = { has_opinion = { target = EGY value > 19 } } }
 		bypass = { NOT = { country_exists = USA } }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_buy_arms }
 		relative_position_id = EGY_buy_arms
 		completion_reward = {
@@ -9329,7 +9306,7 @@ focus_tree = {
 		x = 2
 		y = 2
 		available = { arms_factory > 12 }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INDUSTRY }
 		prerequisite = { focus = EGY_us_afv focus = EGY_us_ar focus = EGY_ru_kornet focus = EGY_buy_arms }
 		relative_position_id = EGY_buy_arms
 		completion_reward = {
@@ -9345,7 +9322,7 @@ focus_tree = {
 		x = -2
 		y = 2
 		available = { amount_research_slots > 3 }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_buy_m777 focus = EGY_abrams focus = EGY_us_afv focus = EGY_buy_arms }
 		relative_position_id = EGY_buy_arms
 		completion_reward = {
@@ -9362,7 +9339,7 @@ focus_tree = {
 		cost = 10
 		x = -1
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_fund_research }
 		relative_position_id = EGY_buy_arms
 		completion_reward = {
@@ -9384,7 +9361,7 @@ focus_tree = {
 		cost = 10
 		x = -3
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_fund_research }
 		relative_position_id = EGY_buy_arms
 		completion_reward = {
@@ -9412,7 +9389,7 @@ focus_tree = {
 		cost = 10
 		x = 1
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_STABILITY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_STABILITY FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_our_vpk }
 		relative_position_id = EGY_buy_arms
 		completion_reward = {
@@ -9440,7 +9417,7 @@ focus_tree = {
 		y = 6
 		available = { GER = { has_opinion = { target = EGY value > 19 } } }
 		bypass = { NOT = { country_exists = GER } }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INFLUENCE }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INFLUENCE }
 		prerequisite = { focus = EGY_start_new_doc }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -9470,7 +9447,7 @@ focus_tree = {
 		y = 6
 		available = { FRA = { has_opinion = { target = EGY value > 19 } } }
 		bypass = { NOT = { country_exists = FRA } }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INFLUENCE }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INFLUENCE }
 		prerequisite = { focus = EGY_start_new_doc }
 		relative_position_id = EGY_lessons
 		available = {
@@ -9503,7 +9480,7 @@ focus_tree = {
 		y = 6
 		available = { ITA = { has_opinion = { target = EGY value > 19 } } }
 		bypass = { NOT = { country_exists = ITA } }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_INFLUENCE }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INFLUENCE }
 		prerequisite = { focus = EGY_start_new_doc }
 		relative_position_id = EGY_lessons
 		completion_reward = {
@@ -9531,7 +9508,7 @@ focus_tree = {
 		cost = 10
 		x = 14
 		y = 5
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		prerequisite = { focus = EGY_new_docs }
 		prerequisite = { focus = EGY_naval_air }
 		relative_position_id = EGY_lessons
@@ -9555,7 +9532,7 @@ focus_tree = {
 		cost = 10
 		x = 3
 		y = 3
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		prerequisite = { focus = EGY_our_vpk }
 		relative_position_id = EGY_buy_arms
 		completion_reward = {
