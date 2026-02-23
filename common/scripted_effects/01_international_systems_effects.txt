@@ -724,6 +724,24 @@ security_council_vote_finished = {
 				add_ideas = unsc_arms_embargo
 			}
 		}
+
+		# Fire result events for types 1-4 (type 5 is handled via update_ga_vote)
+		if = {
+			limit = {
+				NOT = { check_variable = { global.current_sc_vote_type = 5 } }
+			}
+			var:global.current_sc_vote_nation = {
+				set_variable = { sc_last_resolution_type = global.current_sc_vote_type }
+				for_each_loop = {
+					array = global.security_council_members
+					value = v
+					var:v = {
+						country_event = UNSC.10
+					}
+				}
+				country_event = UNSC.11
+			}
+		}
 	} else = {
 		news_event = recognition.122
 	}
@@ -1188,6 +1206,24 @@ check_for_subsidy_expiration = {
 # to evaluate whether to propose UN actions, without using the GUI
 # ============================================================
 
+rebuild_ga_ai_active_pool = {
+	set_global_flag = { flag = ga_ai_pool_rebuild_cooldown days = 60 value = 1 }
+	clear_array = global.ga_ai_active_pool
+	for_each_loop = {
+		array = global.UN_general_assembly
+		value = v
+		var:v = {
+			if = {
+				limit = {
+					is_ai = yes
+					has_political_power > 250
+				}
+				add_to_array = { global.ga_ai_active_pool = THIS }
+			}
+		}
+	}
+}
+
 un_ai_evaluate_actions = {
 	# Guard: Don't run if vote queues are already full
 	if = {
@@ -1210,17 +1246,26 @@ un_ai_evaluate_actions = {
 		}
 
 		# ---- GENERAL ASSEMBLY AI ----
-		# Pick one random GA member to evaluate proposing a resolution
-		random_scope_in_array = {
-			array = global.UN_general_assembly
+		# Use shuffle-deck pool: rebuild from eligible GA nations when empty
+		if = {
 			limit = {
-				is_ai = yes
-				NOT = { has_country_flag = un_ai_ga_cooldown }
-				has_political_power > 250
+				check_variable = { global.ga_ai_active_pool^num < 1 }
+				NOT = { has_global_flag = ga_ai_pool_rebuild_cooldown }
 			}
-
-			set_country_flag = { flag = un_ai_ga_cooldown days = 120 value = 1 }
-			un_ai_ga_consider_resolution = yes
+			rebuild_ga_ai_active_pool = yes
+		}
+		if = {
+			limit = {
+				check_variable = { global.ga_ai_active_pool^num > 0 }
+			}
+			random_scope_in_array = {
+				array = global.ga_ai_active_pool
+				remove_from_array = { global.ga_ai_active_pool = THIS }
+				if = {
+					limit = { has_political_power > 200 }
+					un_ai_ga_consider_resolution = yes
+				}
+			}
 		}
 	}
 }
@@ -1475,7 +1520,12 @@ un_ai_ga_consider_resolution = {
 			set_temp_variable = { ga_new_vote_nation = THIS }
 			update_ga_vote = yes
 
-			set_global_flag = { flag = proposed_ga_resolution_@var:ga_ai_resolution_type days = 365 value = 1 }
+			meta_effect = {
+				text = {
+					set_global_flag = { flag = proposed_ga_resolution_[TYPE] days = 365 value = 1 }
+				}
+				TYPE = "[?ga_ai_resolution_type]"
+			}
 		}
 	}
 }
