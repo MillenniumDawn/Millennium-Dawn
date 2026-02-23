@@ -34,9 +34,18 @@ jobs:
           bundle config set deployment true
           bundle install --jobs 4 --retry 3
 
+      - name: Install Python dependency for OG generation
+        run: python3 -m pip install --upgrade pillow
+
+      - name: Generate OG images
+        run: python3 docs/scripts/generate_og_images.py --repo-root . --docs-dir docs
+
       - name: Build docs site
         working-directory: docs
         run: bundle exec jekyll build --source . --destination ../_site_docs
+
+      - name: Validate Open Graph metadata images
+        run: python3 docs/scripts/check_og_images.py --site-dir _site_docs --baseurl /Millennium-Dawn
 
       - name: Docs hygiene checks
         run: python3 docs/scripts/check_docs_hygiene.py --repo-root . --docs-dir docs
