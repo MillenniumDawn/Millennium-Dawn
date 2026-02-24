@@ -279,6 +279,8 @@ class Validator(BaseValidator):
                     continue
                 if "[" in k and "]" in k:
                     continue
+                if "|" in k:
+                    continue
                 if '"' in k:
                     continue
                 if k.startswith("GFX_"):
