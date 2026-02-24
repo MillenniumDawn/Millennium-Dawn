@@ -164,6 +164,7 @@ add_new_org = {
 
 	add_to_array = { global.active_terror_org_threat_lvl = starting_threat }
 	add_to_array = { global.active_terror_org_vis_lvl = starting_vis }
+	add_to_array = { global.terror_org_attack_cooldown = 0 }
 	every_country = {
 		add_to_array = { international_terror_org_intel = 0 }
 		add_to_array = { international_terror_org_specific_intel = 0 }
@@ -180,6 +181,7 @@ remove_org = {
 	remove_from_array = { array = global.active_terror_orgs index = targeted_org }
 	remove_from_array = { array = global.active_terror_org_threat_lvl index = targeted_org }
 	remove_from_array = { array = global.active_terror_org_vis_lvl index = targeted_org }
+	remove_from_array = { array = global.terror_org_attack_cooldown index = targeted_org }
 
 	every_country = {
 		remove_from_array = { array = international_terror_org_intel index = targeted_org }
@@ -218,6 +220,7 @@ set_starting_org_values = {
 
 		add_to_array = { global.active_terror_org_threat_lvl = starting_threat }
 		add_to_array = { global.active_terror_org_vis_lvl = starting_vis }
+		add_to_array = { global.terror_org_attack_cooldown = 0 }
 	}
 }
 
@@ -463,11 +466,12 @@ calculate_national_global_threat_detection = {
 		value = v
 		index = i
 
+		# Base intel from civilian intel and base detection
 		set_temp_variable = { cur_con = global.active_terror_hq_country^i }
-
 		set_variable = { international_terror_org_intel^i = civilian_intel@var:cur_con }
 		add_to_variable = { international_terror_org_intel^i = base_detection }
 
+		# Gather bonus
 		if = {
 			limit = {
 				check_variable = { ct_mass_gather_store_var^i > 0 }
@@ -477,6 +481,7 @@ calculate_national_global_threat_detection = {
 			add_to_variable = { international_terror_org_intel^i = gather_add }
 		}
 
+		# Apply multipliers
 		multiply_variable = { international_terror_org_intel^i = 0.4 }
 		if = {
 			limit = {
@@ -485,63 +490,37 @@ calculate_national_global_threat_detection = {
 			multiply_variable = { international_terror_org_intel^i = foreign_ct_mod }
 		}
 		multiply_variable = { international_terror_org_intel^i = base_mod }
-	}
 
-	for_each_loop = {
-		array = international_terror_org_specific_intel
-		value = v
-		index = i
-
+		# Specific intel multiplier
 		if = {
 			limit = {
-				NOT = { check_variable = { v = 0 } }
+				NOT = { check_variable = { international_terror_org_specific_intel^i = 0 } }
 			}
-			add_to_temp_variable = { v = 1 }
-			multiply_variable = { international_terror_org_intel^i = v }
+			set_temp_variable = { spec_mult = international_terror_org_specific_intel^i }
+			add_to_temp_variable = { spec_mult = 1 }
+			multiply_variable = { international_terror_org_intel^i = spec_mult }
 		}
-	}
 
-	for_each_loop = {
-		array = international_terror_org_temp_specific_intel
-		value = v
-		index = i
-
+		# Temp specific intel bonus (decrement after use)
 		if = {
 			limit = {
-				check_variable = { v > 0 }
+				check_variable = { international_terror_org_temp_specific_intel^i > 0 }
 			}
-			add_to_variable = { international_terror_org_intel^i = v }
+			set_temp_variable = { temp_spec = international_terror_org_temp_specific_intel^i }
+			add_to_variable = { international_terror_org_intel^i = temp_spec }
 			add_to_variable = { international_terror_org_temp_specific_intel^i = -1 }
 		}
-	}
 
-	for_each_loop = {
-		array = global.active_terror_org_vis_lvl
-		value = v
-		index = i
+		# Vis contribution (higher vis = more detectable)
+		set_temp_variable = { vis_contrib = global.active_terror_org_vis_lvl^i }
+		add_to_temp_variable = { vis_contrib = -25 }
+		add_to_variable = { international_terror_org_intel^i = vis_contrib }
 
-		add_to_temp_variable = { v = -25 }
-		add_to_variable = { international_terror_org_intel^i = v }
-	}
-
-	for_each_loop = {
-		array = international_terror_org_intel
-		value = v
-		index = i
-
-		if = {
-			limit = {
-				OR = {
-					check_variable = { v < 0 }
-					check_variable = { v > 100 }
-				}
-			}
-			clamp_temp_variable = {
-				var = v
-				min = 0
-				max = 100
-			}
-			set_variable = { international_terror_org_intel^i = v }
+		# Clamp final value to [0, 100]
+		clamp_variable = {
+			var = international_terror_org_intel^i
+			min = 0
+			max = 100
 		}
 	}
 }
@@ -666,6 +645,14 @@ global_war_on_terror = {
 			min = 0
 			max = 100
 		}
+
+		# Decrement attack cooldown
+		if = {
+			limit = {
+				check_variable = { global.terror_org_attack_cooldown^i > 0 }
+			}
+			add_to_variable = { global.terror_org_attack_cooldown^i = -1 }
+		}
 	}
 }
 
@@ -682,12 +669,14 @@ check_for_global_attacks = {
 			limit = {
 				check_variable = { global.active_terror_org_threat_lvl^i > 20 }
 				check_variable = { global.active_terror_org_vis_lvl^i < global.active_terror_org_threat_lvl^i }
+				check_variable = { global.terror_org_attack_cooldown^i < 1 }
 			}
 			multiply_temp_variable = { v = 0.15 }
 			round_temp_variable = v
 
 			random = {
 				chance = v
+				set_variable = { global.terror_org_attack_cooldown^i = 3 }
 				add_to_variable = { global.active_terror_org_vis_lvl^i = 3 }
 				add_to_array = { global.current_terror_attackers = global.active_terror_orgs^i }
 			}
@@ -793,7 +782,7 @@ global_attack_roll = {
 			add_to_temp_variable = { attack_defend_adjust = intel_boost_number }
 
 			subtract_from_temp_variable = { attack_chance_succeed = attack_defend_adjust }
-			round_variable = attack_chance_succeed
+			round_temp_variable = attack_chance_succeed
 
 			log = "Attach Chance was: [?attack_chance_succeed]"
 
@@ -830,6 +819,7 @@ global_attack_roll = {
 			if = {
 				limit = {
 					NOT = { has_country_flag = global_attack_succeeded }
+					check_variable = { international_terror_org_intel^cur_attack_index > 25 }
 				}
 				add_to_variable = { international_terror_org_temp_specific_intel^cur_attack_index = 5 }
 				add_to_variable = { global.active_terror_org_vis_lvl^cur_attack_index = 10 }
