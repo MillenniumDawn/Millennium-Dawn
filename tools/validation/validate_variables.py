@@ -610,9 +610,12 @@ class Validator(BaseValidator):
                     i for i in potential_results if i not in targets_used_in_loc
                 ]
                 for target in not_encountered_targets:
+                    target_lower = target.lower()
                     if (
-                        f"[{target}.getname" in text_file
-                        or f"[{target}.getadjective" in text_file
+                        f"[{target_lower}.getname" in text_file
+                        or f"[{target_lower}.getadjective" in text_file
+                        or f"[event_target:{target_lower}.getname" in text_file
+                        or f"[event_target:{target_lower}.getadjective" in text_file
                     ):
                         targets_used_in_loc.append(target)
 
