@@ -1,6 +1,7 @@
 ---
 import { getEntry } from "astro:content";
 import type { MarkdownHeading } from "astro";
+import { ClientRouter } from "astro:transitions";
 import HeadSeo from "../components/HeadSeo.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
@@ -68,6 +69,7 @@ const seoMeta = buildSeoMeta({
 <html lang="en">
   <head>
     <HeadSeo seo={seoMeta} />
+    <ClientRouter />
     <slot name="head" />
   </head>
   <body class:list={[resolvedBodyClass, { "has-toc": toc !== "off" }]} data-page={pageSlug} data-toc={toc}>
@@ -97,17 +99,9 @@ const seoMeta = buildSeoMeta({
     />
 
     <script>
-      import { initBackToTop } from "../scripts/modules/ui-helpers";
+      import { initSite } from "../scripts/site";
 
-      const initPageUi = () => {
-        initBackToTop();
-      };
-
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initPageUi, { once: true });
-      } else {
-        initPageUi();
-      }
+      initSite();
     </script>
 
     {pageAssets.map((asset) => <script type="module" src={withBase(asset)} is:inline></script>)}

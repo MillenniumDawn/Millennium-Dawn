@@ -1,4 +1,5 @@
 import { defineCollection, z } from "astro:content";
+import { glob } from "astro/loaders";
 
 const tocSchema = z.enum(["auto", "off"]).optional();
 
@@ -29,12 +30,12 @@ const infoboxSchema = z.array(
 );
 
 const pages = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.md", base: "./src/content/pages" }),
   schema: baseDocSchema,
 });
 
 const countries = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.md", base: "./src/content/countries" }),
   schema: baseDocSchema.extend({
     slug: z.string().optional(),
     unique_focus_tree: z.boolean().default(false),
@@ -46,7 +47,7 @@ const countries = defineCollection({
 });
 
 const changelogSections = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.md", base: "./src/content/changelogSections" }),
   schema: baseDocSchema.extend({
     page_id: z.string().optional(),
     order: z.number().int(),
@@ -55,27 +56,27 @@ const changelogSections = defineCollection({
 });
 
 const tutorials = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.md", base: "./src/content/tutorials" }),
   schema: baseDocSchema,
 });
 
 const resources = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.md", base: "./src/content/resources" }),
   schema: baseDocSchema,
 });
 
 const devDiaries = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.md", base: "./src/content/devDiaries" }),
   schema: baseDocSchema,
 });
 
 const misc = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.md", base: "./src/content/misc" }),
   schema: baseDocSchema,
 });
 
 const redirects = defineCollection({
-  type: "content",
+  loader: glob({ pattern: "**/*.md", base: "./src/content/redirects" }),
   schema: z.object({
     title: z.string(),
     permalink: z.string(),
@@ -88,7 +89,7 @@ const redirects = defineCollection({
 });
 
 const navigation = defineCollection({
-  type: "data",
+  loader: glob({ pattern: "**/*.yml", base: "./src/content/navigation" }),
   schema: z.object({
     main: z.array(
       z.object({
@@ -112,7 +113,7 @@ const navigation = defineCollection({
 });
 
 const release = defineCollection({
-  type: "data",
+  loader: glob({ pattern: "**/*.yml", base: "./src/content/release" }),
   schema: z.object({
     current: z.object({
       md_version: z.string(),
@@ -129,7 +130,7 @@ const release = defineCollection({
 });
 
 const sections = defineCollection({
-  type: "data",
+  loader: glob({ pattern: "**/*.yml", base: "./src/content/sections" }),
   schema: z.record(
     z.object({
       title: z.string(),
@@ -139,7 +140,7 @@ const sections = defineCollection({
 });
 
 const home = defineCollection({
-  type: "data",
+  loader: glob({ pattern: "**/*.yml", base: "./src/content/home" }),
   schema: z.object({
     roadmaps: z.array(
       z.object({
@@ -186,7 +187,7 @@ const home = defineCollection({
 });
 
 const devDiaryArchive = defineCollection({
-  type: "data",
+  loader: glob({ pattern: "**/*.yml", base: "./src/content/devDiaryArchive" }),
   schema: z.array(
     z.object({
       title: z.string(),
@@ -202,7 +203,7 @@ const devDiaryArchive = defineCollection({
 });
 
 const knownSubmods = defineCollection({
-  type: "data",
+  loader: glob({ pattern: "**/*.yml", base: "./src/content/knownSubmods" }),
   schema: z.object({
     groups: z.array(
       z.object({

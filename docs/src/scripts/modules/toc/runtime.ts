@@ -6,13 +6,17 @@ type TocEntry = {
   link: HTMLAnchorElement;
 };
 
-export function initToc(): void {
+type Cleanup = () => void;
+
+const NOOP: Cleanup = () => {};
+
+export function initToc(): Cleanup {
   const sidebar = document.getElementById("toc-sidebar");
 
   if (document.body.dataset.toc === "off") {
     document.body.classList.remove("has-toc");
     if (sidebar) sidebar.hidden = true;
-    return;
+    return NOOP;
   }
 
   const scrollOffset = readCssPxVar("--toc-scroll-offset", 120);
@@ -25,10 +29,10 @@ export function initToc(): void {
   const closeBtn = document.getElementById("toc-close");
   const backdrop = document.getElementById("toc-backdrop");
   const progress = document.getElementById("toc-progress");
-  if (!sidebar || !panel || !nav) return;
+  if (!sidebar || !panel || !nav) return NOOP;
 
   const content = document.querySelector<HTMLElement>(".main-content");
-  if (!content) return;
+  if (!content) return NOOP;
 
   let allLinks = Array.from(nav.querySelectorAll<HTMLAnchorElement>(".toc-sidebar__link"));
   if (!allLinks.length) {
@@ -36,7 +40,7 @@ export function initToc(): void {
     if (!headings.length) {
       document.body.classList.remove("has-toc");
       sidebar.hidden = true;
-      return;
+      return NOOP;
     }
 
     ensureHeadingIds(headings);
@@ -69,7 +73,7 @@ export function initToc(): void {
   if (!headingEntries.length) {
     document.body.classList.remove("has-toc");
     sidebar.hidden = true;
-    return;
+    return NOOP;
   }
 
   const autoExpandAncestors = (link: HTMLElement) => {
@@ -199,10 +203,11 @@ export function initToc(): void {
   };
 
   window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("resize", () => {
+  const onResize = () => {
     if (!observer) setActive(findActiveFallback());
     updateProgress();
-  });
+  };
+  window.addEventListener("resize", onResize);
   updateProgress();
 
   let isDrawerOpen = false;
@@ -297,34 +302,34 @@ export function initToc(): void {
     }
   };
 
-  if (toggle) {
-    toggle.addEventListener("click", () => {
-      isDrawerOpen ? closeDrawer() : openDrawer();
-    });
-  }
+  const onToggleClick = () => {
+    isDrawerOpen ? closeDrawer() : openDrawer();
+  };
 
-  if (closeBtn) {
-    closeBtn.addEventListener("click", () => {
-      closeDrawer();
-    });
-  }
+  const onCloseClick = () => {
+    closeDrawer();
+  };
 
-  if (backdrop) {
-    backdrop.addEventListener("click", () => {
-      if (isDrawerOpen) closeDrawer();
-    });
-  }
+  const onBackdropClick = () => {
+    if (isDrawerOpen) closeDrawer();
+  };
 
-  nav.addEventListener("click", (event) => {
+  const onNavCloseClick = (event: MouseEvent) => {
     if (event.target instanceof Element && event.target.closest(".toc-sidebar__link") && isDrawerOpen) {
       closeDrawer(false);
     }
-  });
+  };
 
-  document.addEventListener("keydown", (event) => {
+  const onDocumentKeydown = (event: KeyboardEvent) => {
     if (event.key === "Escape" && isDrawerOpen) closeDrawer();
-  });
-  document.addEventListener("keydown", trapFocus);
+    trapFocus(event);
+  };
+
+  if (toggle) toggle.addEventListener("click", onToggleClick);
+  if (closeBtn) closeBtn.addEventListener("click", onCloseClick);
+  if (backdrop) backdrop.addEventListener("click", onBackdropClick);
+  nav.addEventListener("click", onNavCloseClick);
+  document.addEventListener("keydown", onDocumentKeydown);
 
   const onBreakpoint = () => {
     if (desktopMQ.matches && isDrawerOpen) closeDrawer(false);
@@ -334,7 +339,7 @@ export function initToc(): void {
     desktopMQ.addEventListener("change", onBreakpoint);
   }
 
-  nav.addEventListener("click", (event) => {
+  const onNavLinkClick = (event: MouseEvent) => {
     if (!(event.target instanceof Element)) return;
     const link = event.target.closest<HTMLAnchorElement>(".toc-sidebar__link");
     if (!link) return;
@@ -357,7 +362,9 @@ export function initToc(): void {
 
     target.setAttribute("tabindex", "-1");
     target.focus({ preventScroll: true });
-  });
+  };
+
+  nav.addEventListener("click", onNavLinkClick);
 
   if (window.location.hash) {
     try {
@@ -368,4 +375,34 @@ export function initToc(): void {
       // Ignore malformed hash selectors.
     }
   }
+
+  return () => {
+    window.removeEventListener("scroll", onScroll);
+    window.removeEventListener("resize", onResize);
+    observer?.disconnect();
+
+    if (toggle) toggle.removeEventListener("click", onToggleClick);
+    if (closeBtn) closeBtn.removeEventListener("click", onCloseClick);
+    if (backdrop) backdrop.removeEventListener("click", onBackdropClick);
+    nav.removeEventListener("click", onNavCloseClick);
+    nav.removeEventListener("click", onNavLinkClick);
+    document.removeEventListener("keydown", onDocumentKeydown);
+
+    if (typeof desktopMQ.removeEventListener === "function") {
+      desktopMQ.removeEventListener("change", onBreakpoint);
+    }
+
+    if (isDrawerOpen) {
+      isDrawerOpen = false;
+      document.body.classList.remove("toc-lock");
+      document.body.style.top = "";
+      setPageInert(false);
+    }
+
+    sidebar.classList.remove("is-open", "is-closing");
+    if (toggle) {
+      toggle.setAttribute("aria-expanded", "false");
+      toggle.setAttribute("aria-label", "Open table of contents");
+    }
+  };
 }

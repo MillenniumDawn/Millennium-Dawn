@@ -1,8 +1,12 @@
 import { readCssPxVar } from "./tokens";
 
-export function initBackToTop(): void {
+type Cleanup = () => void;
+
+const NOOP: Cleanup = () => {};
+
+export function initBackToTop(): Cleanup {
   const button = document.querySelector<HTMLButtonElement>(".back-to-top");
-  if (!button) return;
+  if (!button) return NOOP;
 
   const threshold = readCssPxVar("--back-to-top-threshold", 400);
 
@@ -10,11 +14,17 @@ export function initBackToTop(): void {
     button.classList.toggle("is-visible", window.scrollY > threshold);
   };
 
-  window.addEventListener("scroll", check, { passive: true });
-  check();
-
-  button.addEventListener("click", () => {
+  const onClick = () => {
     const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     window.scrollTo({ top: 0, behavior: prefersReduced ? "auto" : "smooth" });
-  });
+  };
+
+  window.addEventListener("scroll", check, { passive: true });
+  check();
+  button.addEventListener("click", onClick);
+
+  return () => {
+    window.removeEventListener("scroll", check);
+    button.removeEventListener("click", onClick);
+  };
 }

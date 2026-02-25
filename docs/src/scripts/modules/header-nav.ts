@@ -1,9 +1,13 @@
 import { readCssMsVar, readCssStringVar } from "./tokens";
 
-export function initHeaderHeightSync(): void {
+type Cleanup = () => void;
+
+const NOOP: Cleanup = () => {};
+
+export function initHeaderHeightSync(): Cleanup {
   const root = document.documentElement;
   const header = document.querySelector<HTMLElement>(".site-header");
-  if (!root || !header) return;
+  if (!root || !header) return NOOP;
 
   const update = () => {
     const height = Math.ceil(header.getBoundingClientRect().height);
@@ -15,17 +19,25 @@ export function initHeaderHeightSync(): void {
   window.addEventListener("resize", update);
   header.addEventListener("navstatechange", update);
 
+  let observer: ResizeObserver | null = null;
   if (typeof ResizeObserver !== "undefined") {
-    const observer = new ResizeObserver(update);
+    observer = new ResizeObserver(update);
     observer.observe(header);
   }
+
+  return () => {
+    window.removeEventListener("load", update);
+    window.removeEventListener("resize", update);
+    header.removeEventListener("navstatechange", update);
+    observer?.disconnect();
+  };
 }
 
-export function initMobileNavigation(): void {
+export function initMobileNavigation(): Cleanup {
   const toggle = document.querySelector<HTMLButtonElement>(".nav-toggle");
   const nav = document.getElementById("main-nav");
   const header = document.querySelector<HTMLElement>(".site-header");
-  if (!toggle || !nav || !header) return;
+  if (!toggle || !nav || !header) return NOOP;
 
   const tabletMin = readCssStringVar("--bp-tablet-min", "769px");
   const desktopMQ = window.matchMedia(`(min-width: ${tabletMin})`);
@@ -149,36 +161,66 @@ export function initMobileNavigation(): void {
     }
   };
 
-  toggle.addEventListener("click", () => {
+  const onToggleClick = () => {
     isOpen() ? closeNav(false) : openNav();
-  });
+  };
 
-  document.addEventListener("keydown", (event) => {
+  const onDocumentKeydown = (event: KeyboardEvent) => {
     if (event.key === "Escape" && isOpen()) closeNav(true);
-  });
+    trapFocus(event);
+  };
 
-  document.addEventListener("keydown", trapFocus);
-
-  document.addEventListener("click", (event) => {
+  const onDocumentClick = (event: MouseEvent) => {
     if (!(event.target instanceof Node)) return;
     if (isOpen() && !nav.contains(event.target) && !toggle.contains(event.target)) {
       closeNav(false);
     }
-  });
+  };
 
-  nav.addEventListener("click", (event) => {
+  const onNavClick = (event: MouseEvent) => {
     if (event.target instanceof Element && event.target.closest("a") && isOpen()) closeNav(false);
-  });
+  };
 
-  nav.addEventListener("transitionend", (event) => {
+  const onNavTransitionEnd = (event: TransitionEvent) => {
     if (event.propertyName === "max-height" && !isOpen() && !isDesktop()) {
       finishClose();
     }
-  });
+  };
+
+  const onMediaChange = () => {
+    syncByViewport();
+  };
+
+  toggle.addEventListener("click", onToggleClick);
+  document.addEventListener("keydown", onDocumentKeydown);
+  document.addEventListener("click", onDocumentClick);
+  nav.addEventListener("click", onNavClick);
+  nav.addEventListener("transitionend", onNavTransitionEnd);
 
   if (typeof desktopMQ.addEventListener === "function") {
-    desktopMQ.addEventListener("change", syncByViewport);
+    desktopMQ.addEventListener("change", onMediaChange);
   }
 
   syncByViewport();
+
+  return () => {
+    if (closeTimer !== null) {
+      window.clearTimeout(closeTimer);
+      closeTimer = null;
+    }
+    toggle.removeEventListener("click", onToggleClick);
+    document.removeEventListener("keydown", onDocumentKeydown);
+    document.removeEventListener("click", onDocumentClick);
+    nav.removeEventListener("click", onNavClick);
+    nav.removeEventListener("transitionend", onNavTransitionEnd);
+    if (typeof desktopMQ.removeEventListener === "function") {
+      desktopMQ.removeEventListener("change", onMediaChange);
+    }
+
+    nav.classList.remove("is-open", "is-closing");
+    header.classList.remove("nav-is-open");
+    document.body.classList.remove("nav-lock");
+    setToggleState(false);
+    setNavHidden(desktopMQ.matches ? false : true);
+  };
 }
