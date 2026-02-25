@@ -1,6 +1,6 @@
 # Contributing to Millennium Dawn Docs (Astro)
 
-## Быстрый старт
+## Quick Start
 
 ```bash
 cd docs
@@ -8,49 +8,49 @@ npm install
 npm run dev
 ```
 
-Откройте локальный сайт по адресу из вывода `astro dev`.
+Open the local site using the URL shown in the `astro dev` output.
 
-## Где редактировать контент
+## Where to Edit Content
 
-- Обычные страницы: `src/content/pages/*.md`
-- Страны: `src/content/countries/*.md`
-- Ченджлоги: `src/content/changelogSections/*.md`
-- Туториалы: `src/content/tutorials/*.md`
-- Ресурсы: `src/content/resources/*.md`
+- Regular pages: `src/content/pages/*.md`
+- Countries: `src/content/countries/*.md`
+- Changelogs: `src/content/changelogSections/*.md`
+- Tutorials: `src/content/tutorials/*.md`
+- Resources: `src/content/resources/*.md`
 - Dev diaries: `src/content/devDiaries/*.md`
 - Misc: `src/content/misc/*.md`
 
-## Важные правила
+## Important Rules
 
-- Используйте только Markdown + frontmatter.
-- Не используйте Liquid (`{% ... %}` / `{{ ... }}`).
-- Для внутренних ссылок используйте root-relative путь: `/tutorials/`, `/countries/germany/`.
-- Не добавляйте вручную префикс `/Millennium-Dawn`.
+- Use only Markdown + frontmatter.
+- Do not use Liquid (`{% ... %}` / `{{ ... }}`).
+- Use root-relative paths for internal links: `/tutorials/`, `/countries/germany/`.
+- Do not manually add the `/Millennium-Dawn` prefix.
 
-## Шаблон frontmatter (обычная страница)
+## Frontmatter Template (Regular Page)
 
 ```md
 ---
-# Обязательное: заголовок страницы
-title: "Название страницы"
+# Required: page title
+title: "Page title"
 
-# Рекомендуется: описание для SEO и карточек
-description: "Короткое описание страницы"
+# Recommended: description for SEO and social cards
+description: "Short page description"
 
-# Опционально: канонический URL
+# Optional: canonical URL
 permalink: "/player-tutorials/new-guide/"
 
-# Опционально: режим оглавления
-# Возможные значения: "auto" или "off"
+# Optional: table of contents mode
+# Allowed values: "auto" or "off"
 toc: "auto"
 
-# Опционально: SEO/robots
+# Optional: SEO/robots
 seo: true
 # robots: "noindex, nofollow"
 ---
 ```
 
-## Шаблон frontmatter (страна)
+## Frontmatter Template (Country)
 
 ```md
 ---
@@ -69,19 +69,19 @@ infobox:
 ---
 ```
 
-Контент страны пишется в теле Markdown:
+Country content is written in the Markdown body:
 
 ```md
 ## Political Situation
 
-Обычный markdown-текст.
+Regular markdown text.
 
 | Party | Ideology | Popularity |
 |---|---|---|
 | SPD | Social Democracy | 28% |
 ```
 
-## Проверки перед PR
+## Checks Before PR
 
 ```bash
 npm run lint:md
