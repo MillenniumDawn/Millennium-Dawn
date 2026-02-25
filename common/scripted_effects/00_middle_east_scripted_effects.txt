@@ -1608,3 +1608,61 @@ on_weekly_gcc_dominant_member_check = {
 		}
 	}
 }
+
+# Apply crackdown opinion modifiers from ROOT (crackdown country) to all MB nations in the array,
+# and apply positive mutual opinion with any other countries already cracking down.
+# ROOT = country adding the crackdown idea
+mb_apply_crackdown_opinions_effect = {
+	for_each_loop = {
+		array = global.possible_muslim_brotherhood_nation
+		value = v
+		var:v = {
+			if = {
+				limit = { Is_Muslim_Brotherhood = yes }
+				ROOT = {
+					add_opinion_modifier = { target = PREV modifier = Is_cracking_down_on_Muslim_Brotherhood }
+				}
+				add_opinion_modifier = { target = ROOT modifier = Is_Muslim_Brotherhood_negative }
+			}
+		}
+	}
+	every_country = {
+		limit = {
+			NOT = { tag = ROOT }
+			has_idea = muslim_brotherhood_crackdown
+		}
+		add_opinion_modifier = { target = ROOT modifier = Is_cracking_down_on_Muslim_Brotherhood_positive }
+		ROOT = {
+			add_opinion_modifier = { target = PREV modifier = Is_cracking_down_on_Muslim_Brotherhood_positive }
+		}
+	}
+}
+
+# Remove crackdown opinion modifiers between ROOT (crackdown country) and all MB nations,
+# and remove the positive mutual opinion with any other countries still cracking down.
+# ROOT = country removing the crackdown idea
+mb_remove_crackdown_opinions_effect = {
+	for_each_loop = {
+		array = global.possible_muslim_brotherhood_nation
+		value = v
+		var:v = {
+			if = {
+				limit = { Is_Muslim_Brotherhood = yes }
+				ROOT = {
+					remove_opinion_modifier = { target = PREV modifier = Is_cracking_down_on_Muslim_Brotherhood }
+				}
+				remove_opinion_modifier = { target = ROOT modifier = Is_Muslim_Brotherhood_negative }
+			}
+		}
+	}
+	every_country = {
+		limit = {
+			NOT = { tag = ROOT }
+			has_idea = muslim_brotherhood_crackdown
+		}
+		remove_opinion_modifier = { target = ROOT modifier = Is_cracking_down_on_Muslim_Brotherhood_positive }
+		ROOT = {
+			remove_opinion_modifier = { target = PREV modifier = Is_cracking_down_on_Muslim_Brotherhood_positive }
+		}
+	}
+}
