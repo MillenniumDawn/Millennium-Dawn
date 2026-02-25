@@ -1,3 +1,5 @@
+import { applyThemePreference, initDarkModeToggle } from "./modules/theme";
+
 type Cleanup = () => void;
 
 const NOOP: Cleanup = () => {};
@@ -15,12 +17,22 @@ function cleanupPage(): void {
 async function bootstrapPageAsync(): Promise<void> {
   cleanupPage();
   const runId = pageRunId;
+  applyThemePreference();
+
+  const cleanups: Cleanup[] = [];
+  cleanups.push(initDarkModeToggle());
+  teardownPage = () => {
+    while (cleanups.length) {
+      const cleanup = cleanups.pop();
+      if (cleanup) cleanup();
+    }
+  };
+
   const needsToc = document.body.dataset.toc !== "off" && !!document.getElementById("toc-sidebar");
   const needsCardIndex = !!document.querySelector("[data-card-index], [data-changelog-index]");
 
-  const [headerNavModule, themeModule, uiHelpersModule, tocModule, cardIndexModule] = await Promise.all([
+  const [headerNavModule, uiHelpersModule, tocModule, cardIndexModule] = await Promise.all([
     import("./modules/header-nav"),
-    import("./modules/theme"),
     import("./modules/ui-helpers"),
     needsToc ? import("./modules/toc") : Promise.resolve(null),
     needsCardIndex ? import("./modules/changelog-index") : Promise.resolve(null),
@@ -28,21 +40,11 @@ async function bootstrapPageAsync(): Promise<void> {
 
   if (runId !== pageRunId) return;
 
-  const cleanups: Cleanup[] = [];
-
   cleanups.push(headerNavModule.initHeaderHeightSync());
-  themeModule.initDarkModeToggle();
   cleanups.push(headerNavModule.initMobileNavigation());
   if (tocModule) cleanups.push(tocModule.initToc());
   if (cardIndexModule) cardIndexModule.initCardIndex();
   cleanups.push(uiHelpersModule.initBackToTop());
-
-  teardownPage = () => {
-    while (cleanups.length) {
-      const cleanup = cleanups.pop();
-      if (cleanup) cleanup();
-    }
-  };
 }
 
 function bootstrapPage(): void {
