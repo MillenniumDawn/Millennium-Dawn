@@ -49,11 +49,24 @@ pre-commit autoupdate
 - Include `ai_will_do` in focuses
 - Remove redundant code (`allowed = { always = no }`)
 
-### Docs Link Rules (`docs/`)
+### Docs Content Rules (`docs/`)
 
-- Do not hardcode `"/Millennium-Dawn/..."` in markdown links.
-- Use Liquid + `relative_url`, for example: `[Tutorial]({{ '/tutorials/' | relative_url }})`
-- Apply the same pattern to image links: `![Alt]({{ '/uploads/file.png' | relative_url }})`
+- Docs are now built with Astro 5+ and content lives in `docs/src/content/**`.
+- Use Markdown/frontmatter only. Do not add Liquid tags (`{% ... %}` or `{{ ... }}`).
+- Internal links should be root-relative, for example: `[Tutorial](/tutorials/)`.
+- Do not hardcode `"/Millennium-Dawn/..."` in markdown links. Base path is applied during build.
+- Apply the same pattern to image links: `![Alt](/assets/images/example.png)`.
+- For country pages, keep metadata in frontmatter and write section content in markdown body.
+
+### Docs Local Checks
+
+```bash
+cd docs
+npm run dev
+npm run lint:md
+npm run build
+npm run check:links
+```
 
 See [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) for details.
 
