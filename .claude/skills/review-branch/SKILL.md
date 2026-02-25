@@ -23,6 +23,9 @@ Steps:
 - Default values that should be omitted: `cancel_if_invalid = yes`, `continue_if_invalid = no`, `available_if_capitulated = no`
 - Division used instead of multiplication (`/ 100` → `* 0.01`)
 - Tabs replaced with spaces
+- MIO missing `allowed = { original_tag = TAG }` restriction
+- MIO `equipment_type` referencing a category that doesn't exist in the equipment system
+- MIO trait at `y` coordinate outside the 0–9 range
 
 ---
 
@@ -55,9 +58,12 @@ Steps:
 ---
 
 **Localisation**
-- New focus, event, decision, or idea added without matching localisation keys
+- New focus, event, decision, idea, or MIO added without matching localisation keys
 - New event missing `.t`, `.d`, or option name keys
-- Localisation keys with leftover `:0` or `:1` version suffixes
+- Localisation keys with leftover `:0` or `:1` version suffixes (correct form: `key: "value"`)
+- Subideology entries missing `_icon` or `_desc` keys
+- Subideology `_desc` key missing the `\n\n` separator between the header and body paragraph
+- Localisation strings that are empty or contain placeholder text like `"TODO"`
 
 ---
 
