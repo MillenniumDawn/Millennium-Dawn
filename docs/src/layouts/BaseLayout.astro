@@ -1,5 +1,6 @@
 ---
 import { getEntry } from "astro:content";
+import type { MarkdownHeading } from "astro";
 import HeadSeo from "../components/HeadSeo.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
@@ -21,6 +22,7 @@ interface Props {
   bodyClass?: string;
   canonicalPath?: string;
   pageAssets?: string[];
+  headings?: MarkdownHeading[];
 }
 
 const {
@@ -33,6 +35,7 @@ const {
   bodyClass,
   canonicalPath,
   pageAssets = [],
+  headings = [],
 } = Astro.props;
 
 const siteTitle = "Millennium Dawn: A Modern Day Mod";
@@ -76,7 +79,7 @@ const seoMeta = buildSeoMeta({
     />
 
     <div class="page-layout" id="page-layout">
-      <TocSidebar tocMode={toc} />
+      <TocSidebar tocMode={toc} headings={headings} />
 
       <main class="main-content" id="main-content" tabindex="-1">
         <div class="container">
@@ -94,7 +97,17 @@ const seoMeta = buildSeoMeta({
     />
 
     <script>
-      import "../scripts/site.js";
+      import { initBackToTop } from "../scripts/modules/ui-helpers";
+
+      const initPageUi = () => {
+        initBackToTop();
+      };
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initPageUi, { once: true });
+      } else {
+        initPageUi();
+      }
     </script>
 
     {pageAssets.map((asset) => <script type="module" src={withBase(asset)} is:inline></script>)}

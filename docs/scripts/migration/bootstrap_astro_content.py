@@ -318,17 +318,11 @@ def copy_assets(docs_dir: Path) -> None:
 
 
 def copy_client_scripts(docs_dir: Path) -> None:
-    src_scripts = docs_dir / "assets" / "js" / "modules"
-    dst_scripts = docs_dir / "src" / "scripts" / "modules"
-    if dst_scripts.exists():
-        shutil.rmtree(dst_scripts)
-    shutil.copytree(src_scripts, dst_scripts)
-
-    site_bundle_src = docs_dir / "assets" / "js" / "site.bundle.js"
-    site_js = docs_dir / "src" / "scripts" / "site.js"
-    site_js.parent.mkdir(parents=True, exist_ok=True)
-    if site_bundle_src.exists():
-        site_js.write_text(site_bundle_src.read_text(encoding="utf-8"), encoding="utf-8")
+    # Client runtime scripts are source-controlled TypeScript modules in src/scripts.
+    # Keep this hook for backward compatibility with older migration flows.
+    legacy_site_js = docs_dir / "src" / "scripts" / "site.js"
+    if legacy_site_js.exists():
+        legacy_site_js.unlink()
 
 
 def run() -> None:

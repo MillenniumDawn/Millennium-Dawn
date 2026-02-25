@@ -1,10 +1,15 @@
 ---
+import type { MarkdownHeading } from "astro";
+import { renderTocHtml } from "../lib/toc";
+
 interface Props {
   tocMode?: "auto" | "off";
+  headings?: MarkdownHeading[];
 }
 
-const { tocMode = "auto" } = Astro.props;
+const { tocMode = "auto", headings = [] } = Astro.props;
 const hidden = tocMode === "off";
+const tocHtml = tocMode === "off" ? "" : renderTocHtml(headings);
 ---
 
 <aside class="toc-sidebar" id="toc-sidebar" aria-labelledby="toc-heading" hidden={hidden}>
@@ -40,6 +45,22 @@ const hidden = tocMode === "off";
       <div class="toc-sidebar__progress-bar" id="toc-progress"></div>
     </div>
 
-    <nav class="toc-sidebar__nav" id="toc-nav" aria-label="Page sections"></nav>
+    <nav class="toc-sidebar__nav" id="toc-nav" aria-label="Page sections">
+      {tocHtml && <Fragment set:html={tocHtml} />}
+    </nav>
   </div>
 </aside>
+
+<script>
+  import { initToc } from "../scripts/modules/toc";
+
+  const initTocSidebar = () => {
+    initToc();
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initTocSidebar, { once: true });
+  } else {
+    initTocSidebar();
+  }
+</script>
