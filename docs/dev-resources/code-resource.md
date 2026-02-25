@@ -618,22 +618,101 @@ modify_cartel_variables_effect = yes
 
 ## Adding Subideology Parties
 
-Political parties require edits to multiple files:
+Adding a new party requires edits to four files. Follow the steps below in order.
 
-1. **Party Definition**: `localisation/english/MD_subideology_parties_l_english.yml`
-2. **Icons**: `interface/MD_parties_icons.gfx` + `gfx/texticons/parties_icons/{tag}/`
-3. **Localization**: `common/scripted_localisation/subideology_scripted_localization.txt`
-4. **Leaders** (optional): `common/scripted_effects/{TAG}_political_leaders.txt`
+### Step 1 — Choose a Slot
+
+Consult the [Subideology Slots table](#subideology-slots) below to pick the subideology key and its index for the ideology group your party belongs to. Note both — you will need the key for localisation and the index for the history file.
+
+### Step 2 — Add Localisation
+
+In `localisation/english/MD_subideology_parties_l_english.yml`, add three entries for the party. Use the format from the [Subideology Localisation Format](../../CLAUDE.md#subideology-localization-format) section of CLAUDE.md:
+
+```yaml
+TAG.subideology: "£TAG_icon_name (ABBRV) - Party Name"
+TAG.subideology_icon: "£TAG_icon_name"
+TAG.subideology_desc: "(Dominant Ideology) - Party Name (Native name, ABBRV)\n\nDescription"
+```
+
+If the party changes over time (e.g. a coalition partner becomes dominant), add `_alt` variants:
+
+```yaml
+TAG.subideology_alt: "£TAG_icon_name_alt (ABBRV) - Alternate Party Name"
+TAG.subideology_icon_alt: "£TAG_icon_name_alt"
+TAG.subideology_desc_alt: "(Dominant Ideology) - Alternate Party Name (Native name, ABBRV)\n\nDescription"
+```
+
+### Step 3 — Register the Icon
+
+**a) Add the GFX entry** to `interface/MD_parties_icons.gfx`, keeping entries sorted alphabetically by tag:
+
+```
+spriteType = {
+	name = "GFX_TAG_icon_name"
+	texturefile = "gfx/texticons/parties_icons/country_name_lowercase/TAG_icon_name.dds"
+	legacy_lazy_load = no
+}
+```
+
+The `name` value must match the icon referenced in localisation (without the `£` prefix, prefixed with `GFX_`).
+
+**b) Place the DDS file** at `gfx/texticons/parties_icons/{country_name_lowercase}/TAG_icon_name.dds`. Party icon DDS files are typically 20×20 px text icons.
+
+### Step 4 — Set Starting Popularity
+
+In `history/countries/TAG - Country.txt`, set the party's starting popularity using its slot index. A comment with the party abbreviation is required:
+
+```
+set_variable = { party_pop_array^N = 0.15 } # Party Abbreviation
+```
+
+Where `N` is the slot index from the slots table. Only set slots for parties that actually exist in the country — leave unused slots unset (they default to 0).
+
+If the party holds government or is a coalition partner at game start, also add:
+
+```
+add_to_array = { ruling_party = N }          # if this party governs alone or leads the coalition
+add_to_array = { gov_coalition_array = N }   # if this party is a junior coalition partner
+```
+
+For countries with elections, set the most recent election results separately:
+
+```
+set_variable = { party_pop_elect_array^N = 0.15 } # Party Abbreviation - election result
+```
+
+### Step 5 — Add Leaders (Optional)
+
+If the country has scripted leader rotation, add the leader's `create_country_leader` block inside the appropriate `if = { limit = { has_country_flag = set_subideology } }` block in `common/scripted_effects/TAG_political_leaders.txt`. Create the file if it doesn't yet exist for this tag.
 
 ### Subideology Slots
 
-| Ideology Group | Available Slots                                                 |
-| -------------- | --------------------------------------------------------------- |
-| Western        | `conservatism`, `liberalism`, `socialism`                       |
-| Emerging       | `Communist-State`, `anarchist_communism`, `Mod_Vilayat_e_Faqih` |
-| Salafism       | `Kingdom`, `Caliphate`                                          |
-| Non-Aligned    | `oligarchism`, `Neutral_Libertarian`, `Neutral_green`           |
-| Nationalist    | `Nat_Populism`, `Nat_Fascism`, `Nat_Autocracy`, `Monarchist`    |
+| Index | Slot                         | Ideology Group            |
+| ----- | ---------------------------- | ------------------------- |
+| 0     | `Western_Autocracy`          | Pro-Western (democratic)  |
+| 1     | `conservatism`               | Pro-Western (democratic)  |
+| 2     | `liberalism`                 | Pro-Western (democratic)  |
+| 3     | `socialism`                  | Pro-Western (democratic)  |
+| 4     | `Communist-State`            | Emerging (communism)      |
+| 5     | `anarchist_communism`        | Emerging (communism)      |
+| 6     | `Conservative`               | Emerging (communism)      |
+| 7     | `Autocracy`                  | Emerging (communism)      |
+| 8     | `Mod_Vilayat_e_Faqih`        | Emerging (communism)      |
+| 9     | `Vilayat_e_Faqih`            | Emerging (communism)      |
+| 10    | `Kingdom`                    | Salafist (fascism)        |
+| 11    | `Caliphate`                  | Salafist (fascism)        |
+| 12    | `Neutral_Muslim_Brotherhood` | Non-Aligned (neutrality)  |
+| 13    | `Neutral_Autocracy`          | Non-Aligned (neutrality)  |
+| 14    | `Neutral_conservatism`       | Non-Aligned (neutrality)  |
+| 15    | `oligarchism`                | Non-Aligned (neutrality)  |
+| 16    | `Neutral_Libertarian`        | Non-Aligned (neutrality)  |
+| 17    | `Neutral_green`              | Non-Aligned (neutrality)  |
+| 18    | `neutral_Social`             | Non-Aligned (neutrality)  |
+| 19    | `Neutral_Communism`          | Non-Aligned (neutrality)  |
+| 20    | `Nat_Populism`               | Nationalist (nationalist) |
+| 21    | `Nat_Fascism`                | Nationalist (nationalist) |
+| 22    | `Nat_Autocracy`              | Nationalist (nationalist) |
+| 23    | `Monarchist`                 | Nationalist (nationalist) |
 
 ## Historical Events (ETD System)
 
