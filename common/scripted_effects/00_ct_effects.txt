@@ -746,21 +746,57 @@ check_for_global_attacks = {
 		value = v
 		index = i
 
-		#dont draw attention to yourself if you are more visible than threatening
+		# Reach-scaled floor: local=5, regional=~12, international=20
+		set_temp_variable = { reach_floor = global.active_terror_org_reach^i }
+		multiply_temp_variable = { reach_floor = 7.5 }
+		add_to_temp_variable = { reach_floor = 5 }
+
 		if = {
 			limit = {
-				check_variable = { global.active_terror_org_threat_lvl^i > 20 }
-				check_variable = { global.active_terror_org_vis_lvl^i < global.active_terror_org_threat_lvl^i }
+				check_variable = { v > reach_floor }
 				check_variable = { global.terror_org_attack_cooldown^i < 1 }
 			}
-			multiply_temp_variable = { v = 0.15 }
-			round_temp_variable = v
+
+			# Roll 1: Ambition — threat minus half vis; local orgs get a desperation bonus
+			set_temp_variable = { ambition_chance = v }
+			set_temp_variable = { vis_suppress = global.active_terror_org_vis_lvl^i }
+			multiply_temp_variable = { vis_suppress = 0.5 }
+			subtract_from_temp_variable = { ambition_chance = vis_suppress }
+			if = {
+				limit = { check_variable = { global.active_terror_org_reach^i = 0 } }
+				add_to_temp_variable = { ambition_chance = 15 }
+			}
+			multiply_temp_variable = { ambition_chance = 0.2 }
+			round_temp_variable = ambition_chance
+			clamp_temp_variable = { var = ambition_chance min = 1 max = 85 }
 
 			random = {
-				chance = v
-				set_variable = { global.terror_org_attack_cooldown^i = 3 }
-				add_to_variable = { global.active_terror_org_vis_lvl^i = 3 }
-				add_to_array = { global.current_terror_attackers = global.active_terror_orgs^i }
+				chance = ambition_chance
+
+				# Roll 2: Execution — high vis compromises operational security
+				set_temp_variable = { exec_chance = global.active_terror_org_vis_lvl^i }
+				multiply_temp_variable = { exec_chance = -0.6 }
+				add_to_temp_variable = { exec_chance = 100 }
+				clamp_temp_variable = { var = exec_chance min = 5 max = 95 }
+
+				random = {
+					chance = exec_chance
+					set_variable = { global.terror_org_attack_cooldown^i = 3 }
+					add_to_variable = { global.active_terror_org_vis_lvl^i = 3 }
+					add_to_array = { global.current_terror_attackers = global.active_terror_orgs^i }
+				}
+
+				# Execution failed: spotted during preparation — lighter cost than a foiled attack
+				if = {
+					limit = {
+						NOT = { check_variable = { global.terror_org_attack_cooldown^i = 3 } }
+					}
+					add_to_variable = { global.active_terror_org_vis_lvl^i = 6 }
+					subtract_from_variable = { global.active_terror_org_threat_lvl^i = 3 }
+					clamp_variable = { var = global.active_terror_org_vis_lvl^i min = 0 max = 100 }
+					clamp_variable = { var = global.active_terror_org_threat_lvl^i min = 0 max = 100 }
+					set_variable = { global.terror_org_attack_cooldown^i = 2 }
+				}
 			}
 		}
 	}
