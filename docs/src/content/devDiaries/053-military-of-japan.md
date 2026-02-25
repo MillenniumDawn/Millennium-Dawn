@@ -21,10 +21,8 @@ As Japan, you will have possibilities to increase your interpretation level but 
 ![image-3](/assets/images/dev-diaries/053/image-2.png)
 These decisions are available to you as Japan, where you have the power as the player to work to activate these. 3 of these decisions are locked behind world tension. But the other two are based on your political situation:
 
-<div style="display: flex; gap: 1rem;">
-  <img src="/assets/images/dev-diaries/053/image-3.png" alt="image-4" style="width: 50%;">
-  <img src="/assets/images/dev-diaries/053/image-4.png" alt="image-5" style="width: 50%;">
-</div>
+| ![image-4](/assets/images/dev-diaries/053/image-3.png) | ![image-5](/assets/images/dev-diaries/053/image-4.png) |
+| --- | --- |
 
 The most other decisions you have in power is the aggression of China. If China is increasing its Chinese Agression, you will unlock more decisions to raise your interpretation level.
 ![image-6](/assets/images/dev-diaries/053/image-5.png)

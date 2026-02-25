@@ -148,8 +148,8 @@ const home = defineCollection({
         image: z.object({
           src: z.string(),
           alt: z.string(),
-          width: z.number().int().optional(),
-          height: z.number().int().optional(),
+          width: z.number().int(),
+          height: z.number().int(),
           loading: z.string().optional(),
         }),
       }),
