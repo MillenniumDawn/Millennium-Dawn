@@ -974,6 +974,116 @@ country_event = {
 	}
 }
 
+country_event = {
+	id = recognition.14
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		var:recog_requester = {
+			country_event = recognition.15
+		}
+
+		clear_variable = recog_requester
+	}
+}
+
+country_event = {
+	id = recognition.15
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		FROM = {
+			country_event = recognition.16
+		}
+	}
+}
+
+country_event = {
+	id = recognition.16
+	title = recognition.16.t
+	desc = recognition.16.d
+
+	is_triggered_only = yes
+
+	#Don't recognize option
+	option = {
+		name = recognition.16.a
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	#Recognize option
+	option = {
+		name = recognition.16.b
+
+		add_political_power = -25
+		meta_effect = {
+			text = {
+				set_country_flag = Recognised_[stname]
+
+				if = {
+					limit = {
+						NOT = {
+							has_country_flag = original_owner_[stname]
+							has_country_flag = supports_original_owner_[stname]
+						}
+					}
+					every_country = {
+						limit = {
+							OR = {
+								has_country_flag = original_owner_[stname]
+								has_country_flag = supports_original_owner_[stname]
+							}
+							NOT = { has_country_flag = Recognised_[stname] }
+						}
+						add_opinion_modifier = {
+							target = ROOT
+							modifier = recognises_them
+						}
+						news_event = { id = recognition.1 }
+					}
+					every_country = {
+						limit = { has_country_flag = Recognised_[stname] }
+
+						add_opinion_modifier = {
+							target = ROOT
+							modifier = supporting_recognized_ally
+						}
+						news_event = { id = recognition.9 }
+					}
+				}
+			}
+			stname = "[?FROM.GetTag]"
+		}
+		FROM = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = recognises_us
+			}
+			news_event = { id = recognition.2 }
+			add_to_variable = { Granted_Recognition = 1 }
+		}
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+
+			modifier = {
+				add = 10
+
+				has_opinion = {
+					target = FROM
+					value > 50
+				}
+			}
+		}
+	}
+}
+
 ### [FROM.GetName] gets SC recomendation
 news_event = {
 	id = recognition.121
