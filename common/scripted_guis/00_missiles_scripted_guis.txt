@@ -4569,6 +4569,178 @@ scripted_gui = {
 			}
 		}
 	}
+	MD_cyber_system_gui = {
+		window_name = MD_cyber_system_window
+		context_type = player_context
+		parent_window_name = MD_countrymissilesview
+
+		dirty = global.missile_ui_updated
+
+		visible = {
+			check_variable = { var_open_MD_cyber_gui = 2 }
+			has_country_flag = open_MD_countrymissilesview
+		}
+
+		triggers = {
+			# Investment buttons
+			cyber_invest_offense_button_click_enabled = {
+				has_political_power > 50
+			}
+
+			cyber_invest_offense_button_right_click_enabled = {
+				has_political_power > 50
+				check_variable = { cyber_offense_power > 0 }
+			}
+
+			cyber_invest_defense_button_click_enabled = {
+				has_political_power > 50
+			}
+
+			cyber_invest_defense_button_right_click_enabled = {
+				has_political_power > 50
+				check_variable = { cyber_defense_rating > 0 }
+			}
+
+			cyber_invest_intel_button_click_enabled = {
+				has_political_power > 50
+			}
+
+			cyber_invest_intel_button_right_click_enabled = {
+				has_political_power > 50
+				check_variable = { cyber_intel_capacity > 0 }
+			}
+
+			# Operation buttons — evaluated per active target list entry (i = index)
+			cyber_gps_jamming_button_click_enabled = {
+				has_cyber_capability_1 = yes
+				cyber_target_not_on_cooldown = yes
+				cyber_target_has_intel_30 = yes
+				# Target country (THIS via change_scope) must be at war with ROOT
+				has_war_with = ROOT
+			}
+
+			cyber_economic_disruption_button_click_enabled = {
+				has_cyber_capability_2 = yes
+				cyber_target_not_on_cooldown = yes
+				cyber_target_has_intel_30 = yes
+			}
+
+			cyber_propaganda_ops_button_click_enabled = {
+				has_cyber_capability_2 = yes
+				cyber_target_not_on_cooldown = yes
+				cyber_target_has_intel_60 = yes
+				NOT = { has_war_with = ROOT }
+			}
+
+			cyber_infrastructure_attack_button_click_enabled = {
+				has_cyber_capability_3 = yes
+				cyber_target_not_on_cooldown = yes
+				cyber_target_has_intel_60 = yes
+			}
+
+			cyber_critical_strike_button_click_enabled = {
+				has_cyber_capability_4 = yes
+				cyber_target_not_on_cooldown = yes
+				cyber_target_has_intel_70 = yes
+			}
+		}
+
+		effects = {
+			# Investment
+			cyber_invest_offense_button_click = {
+				log = "[GetDateText]: [Root.GetName]: cyber_invest_offense GUI"
+				add_political_power = -50
+				add_to_variable = { cyber_offense_power = 5 }
+				calculate_cyber_capability = yes
+				custom_effect_tooltip = cyber_gui_invest_offense_tt
+				missile_ui_update = yes
+			}
+
+			cyber_invest_offense_button_right_click = {
+				log = "[GetDateText]: [Root.GetName]: cyber_divest_offense GUI"
+				add_political_power = -50
+				add_to_variable = { cyber_offense_power = -3 }
+				clamp_variable = { var = cyber_offense_power min = 0 max = 100 }
+				calculate_cyber_capability = yes
+				custom_effect_tooltip = cyber_gui_divest_offense_tt
+				missile_ui_update = yes
+			}
+
+			cyber_invest_defense_button_click = {
+				log = "[GetDateText]: [Root.GetName]: cyber_invest_defense GUI"
+				add_political_power = -50
+				add_to_variable = { cyber_defense_rating = 3 }
+				calculate_cyber_capability = yes
+				custom_effect_tooltip = cyber_gui_invest_defense_tt
+				missile_ui_update = yes
+			}
+
+			cyber_invest_defense_button_right_click = {
+				log = "[GetDateText]: [Root.GetName]: cyber_divest_defense GUI"
+				add_political_power = -50
+				add_to_variable = { cyber_defense_rating = -2 }
+				clamp_variable = { var = cyber_defense_rating min = 0 max = 100 }
+				calculate_cyber_capability = yes
+				custom_effect_tooltip = cyber_gui_divest_defense_tt
+				missile_ui_update = yes
+			}
+
+			cyber_invest_intel_button_click = {
+				log = "[GetDateText]: [Root.GetName]: cyber_invest_intel GUI"
+				add_political_power = -50
+				add_to_variable = { cyber_intel_capacity = 5 }
+				calculate_cyber_capability = yes
+				custom_effect_tooltip = cyber_gui_invest_intel_tt
+				missile_ui_update = yes
+			}
+
+			cyber_invest_intel_button_right_click = {
+				log = "[GetDateText]: [Root.GetName]: cyber_divest_intel GUI"
+				add_political_power = -50
+				add_to_variable = { cyber_intel_capacity = -3 }
+				clamp_variable = { var = cyber_intel_capacity min = 0 max = 100 }
+				calculate_cyber_capability = yes
+				custom_effect_tooltip = cyber_gui_divest_intel_tt
+				missile_ui_update = yes
+			}
+
+			# Operation execution — i = index of the active target row clicked
+			cyber_gps_jamming_button_click = {
+				log = "[GetDateText]: [Root.GetName]: cyber_gps_jamming vs [This.GetName] GUI"
+				set_variable = { ROOT.cyber_op_target_index = i }
+				set_variable = { ROOT.cyber_op_type = 1 }
+				ROOT = { cyber_execute_operation = yes }
+			}
+
+			cyber_economic_disruption_button_click = {
+				log = "[GetDateText]: [Root.GetName]: cyber_economic_disruption vs [This.GetName] GUI"
+				set_variable = { ROOT.cyber_op_target_index = i }
+				set_variable = { ROOT.cyber_op_type = 2 }
+				ROOT = { cyber_execute_operation = yes }
+			}
+
+			cyber_propaganda_ops_button_click = {
+				log = "[GetDateText]: [Root.GetName]: cyber_propaganda_ops vs [This.GetName] GUI"
+				set_variable = { ROOT.cyber_op_target_index = i }
+				set_variable = { ROOT.cyber_op_type = 3 }
+				ROOT = { cyber_execute_operation = yes }
+			}
+
+			cyber_infrastructure_attack_button_click = {
+				log = "[GetDateText]: [Root.GetName]: cyber_infrastructure_attack vs [This.GetName] GUI"
+				set_variable = { ROOT.cyber_op_target_index = i }
+				set_variable = { ROOT.cyber_op_type = 4 }
+				ROOT = { cyber_execute_operation = yes }
+			}
+
+			cyber_critical_strike_button_click = {
+				log = "[GetDateText]: [Root.GetName]: cyber_critical_strike vs [This.GetName] GUI"
+				set_variable = { ROOT.cyber_op_target_index = i }
+				set_variable = { ROOT.cyber_op_type = 5 }
+				ROOT = { cyber_execute_operation = yes }
+			}
+		}
+	}
 	#Dynamic Lists
 	international_pmc_units_dynamic_lists = {
 		context_type = player_context
@@ -7722,6 +7894,63 @@ scripted_gui = {
 				ROOT = { set_variable = { selected_ct_nation = PREV } }
 				missile_ui_update = yes
 			}
+		}
+	}
+
+	is_cyber_dynamic_lists = {
+		context_type = player_context
+		parent_scripted_gui = MD_cyber_system_gui
+		window_name = "IS_cyber_targeting_container"
+
+		dirty = global.missile_ui_updated
+
+		visible = {
+			has_country_flag = open_MD_countrymissilesview
+		}
+
+		dynamic_lists = {
+			# Active targets — each entry shows intel, cooldown, and operation buttons
+			cyber_potential_current_targets_gridbox = {
+				array = ROOT.cyber_active_targets
+				entry_container = "cyber_active_target_entry"
+				change_scope = yes
+			}
+
+			# Potential targets browser — click to add a nation as a target
+			cyber_potential_targets_gridbox = {
+				array = ROOT.cyber_potential_targets
+				entry_container = "cyber_potential_target_entry"
+				change_scope = yes
+			}
+		}
+
+		triggers = {
+			cyber_remove_target_button_click_enabled = {
+				always = yes
+			}
+
+			# Add target button — enabled when slots are available
+			cyber_potential_targets_list_button_click_enabled = {
+				cyber_can_add_target = yes
+			}
+		}
+
+		effects = {
+			cyber_potential_targets_list_button_click = {
+				log = "[GetDateText]: [Root.GetName]: cyber_add_target [This.GetName] GUI"
+				cyber_add_target = yes
+			}
+
+			cyber_remove_target_button_click = {
+				log = "[GetDateText]: [Root.GetName]: cyber_remove_target index [?ROOT.cyber_active_targets^i] GUI"
+				set_variable = { ROOT.cyber_remove_index = i }
+				ROOT = { cyber_remove_target = yes }
+			}
+		}
+
+		properties = {
+			cyber_target_flag = { image = "[This.GetFlag]" }
+			cyber_potential_flag = { image = "[This.GetFlag]" }
 		}
 	}
 }
