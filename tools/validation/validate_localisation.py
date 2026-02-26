@@ -29,6 +29,13 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = ["FR_loc", "00_operations"]
 
+# Vanilla or known loc keys that are valid but not defined in mod localisation files
+VANILLA_LOC_KEYS = {
+    "SP_UNLOCK_PROJECT",
+    "SP_UNLOCK_TECH",
+    "available_scientist_one_line_tt",
+}
+
 
 def _should_skip(filename: str) -> bool:
     return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
@@ -40,7 +47,7 @@ def _should_skip(filename: str) -> bool:
 def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
     filename = args[0]
     results = []
-    text_file = FileOpener.open_text_file(filename)
+    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
     lines = text_file.split("\n")[1:]
     for line_idx, line in enumerate(lines):
         if line.count("[") != line.count("]"):
@@ -53,7 +60,9 @@ def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
 def process_yml_for_syntax(args: Tuple[str, List[str]]) -> List[str]:
     filename, valid_colors = args
     results = []
-    text_file = FileOpener.open_text_file(filename, lowercase=False)
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
     lines = text_file.split("\n")[1:]
     for line_idx, line in enumerate(lines):
         if "#" in line or line.strip() in ["", "l_english:"]:
@@ -91,7 +100,7 @@ def process_yml_for_syntax(args: Tuple[str, List[str]]) -> List[str]:
 def process_yml_for_mandatory(args: Tuple[str]) -> List[str]:
     filename = args[0]
     results = []
-    text_file = FileOpener.open_text_file(filename)
+    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
     lines = text_file.split("\n")
     if lines == [""]:
         return results
@@ -109,7 +118,9 @@ def get_all_loc_keys(
     duplicated_keys = []
 
     for filename in glob.iglob(filepath + "**/*.yml", recursive=True):
-        text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+        text_file = FileOpener.open_text_file(
+            filename, lowercase=lowercase, strip_comments_flag=True
+        )
         if "l_english" not in text_file:
             continue
         lines = text_file.split("\n")
@@ -137,7 +148,9 @@ def get_all_colors(mod_path: str) -> List[str]:
     filepath = Path(mod_path) / "interface" / "core.gfx"
     if not filepath.exists():
         return list("WGRBYCMwgrbycm!")
-    text_file = FileOpener.open_text_file(str(filepath), lowercase=False)
+    text_file = FileOpener.open_text_file(
+        str(filepath), lowercase=False, strip_comments_flag=True
+    )
     try:
         textcolors = re.findall(
             r"\ttextcolors = \{.*?^\t\}", text_file, flags=re.DOTALL | re.MULTILINE
@@ -260,8 +273,9 @@ class Validator(BaseValidator):
         for filename in glob.iglob(self.mod_path + "**/*.txt", recursive=True):
             if _should_skip(filename):
                 continue
-            text_file = FileOpener.open_text_file(filename, lowercase=False)
-            text_file = re.sub(r"^[ \t]*#.*$", "", text_file, flags=re.MULTILINE)
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
             if "localization_key =" not in text_file:
                 continue
 
@@ -272,6 +286,8 @@ class Validator(BaseValidator):
                     continue
                 if "[" in k and "]" in k:
                     continue
+                if "|" in k:
+                    continue
                 if '"' in k:
                     continue
                 if k.startswith("GFX_"):
@@ -281,6 +297,8 @@ class Validator(BaseValidator):
                 if "EUXXX_EP_agenda" in k:
                     continue
                 if re.match(r"^EU\d+$", k):
+                    continue
+                if k in VANILLA_LOC_KEYS:
                     continue
                 results.append(k)
 
@@ -305,7 +323,9 @@ class Validator(BaseValidator):
         for filename in glob.iglob(self.mod_path + "**/*.txt", recursive=True):
             if _should_skip(filename):
                 continue
-            text_file = FileOpener.open_text_file(filename, lowercase=False)
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
             if "add_resistance_target = {" not in text_file:
                 continue
 

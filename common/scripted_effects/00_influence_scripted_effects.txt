@@ -38,7 +38,6 @@ recalculate_influence = {
 		delete_influencer_check = yes
 		sort_influence = yes
 		calculate_influence_percentage = yes
-		set_counter_terror_influencer = yes
 		force_update_map_mode = { mapmode = influence_map_mode }
 		update_dirty_influence_var = yes
 	}
@@ -1093,55 +1092,6 @@ change_influence_percentage = {
 		}
 
 		recalculate_influence = yes
-
-		# Counter-terrorism state influencer tracking
-		if = {
-			limit = {
-				is_in_array = { global.ct_states = THIS.id }
-				no_jihadist_government = yes
-			}
-
-			# Check if influencer (tg) is in top 5 positions (indices 0-4)
-			set_temp_variable = { is_top_5_influencer = 0 }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { influence_array^0 = tg }
-						check_variable = { influence_array^1 = tg }
-						check_variable = { influence_array^2 = tg }
-						check_variable = { influence_array^3 = tg }
-						check_variable = { influence_array^4 = tg }
-					}
-				}
-				set_temp_variable = { is_top_5_influencer = 1 }
-			}
-
-			if = { limit = { check_variable = { is_top_5_influencer = 1 } }
-				var:tg = {
-					if = {
-						limit = {
-							PREV = { is_in_array = { global.middle_east_ct_states = THIS.id } }
-							NOT = { has_country_flag = middle_east_influencer }
-						}
-						set_country_flag = middle_east_influencer
-					}
-					if = {
-						limit = {
-							PREV = { is_in_array = { global.africa_ct_states = THIS.id } }
-							NOT = { has_country_flag = africa_influencer }
-						}
-						set_country_flag = africa_influencer
-					}
-					if = {
-						limit = {
-							PREV = { is_in_array = { global.asia_ct_states = THIS.id } }
-							NOT = { has_country_flag = asia_influencer }
-						}
-						set_country_flag = asia_influencer
-					}
-				}
-			}
-		}
 	}
 	set_temp_variable = { percent_change = percent_change_temp }
 }
@@ -1172,12 +1122,16 @@ update_auto_influence_array = {
 
 	for_each_loop = {
 		array = auto_influence_array
+		value = v
+		index = i
 		if = { limit = { check_variable = { i > auto_influence_cap } NOT = { check_variable = { v = 0 } } }
 			if = { limit = { is_debug = yes }
 				log = "[GetDateText]: [THIS.GetName]: Index [?i] is greater than the auto_influence_cap. Removing [?auto_influence_array^i.GetName] from auto influence list"
 			}
+			set_temp_variable = { removed_country = v }
 			set_variable = { auto_influence_array^i = 0 }
-			var:auto_influence_array^i = {
+			subtract_from_variable = { auto_influence_users = 1 }
+			var:removed_country = {
 				PREV = {
 					remove_auto_influencer_request = yes
 				}
@@ -1234,16 +1188,26 @@ remove_auto_influencer_request = {
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [Root.GetName]: Removal of Auto-Influencer Request. Influencing Nation: [PREV.GetName]"
 	}
-	set_temp_variable = { index = 0 }
+	set_temp_variable = { index = -1 }
+	set_temp_variable = { found_match = 0 }
 	for_each_loop = {
 		array = auto_influence_array
-		if = { limit = { check_variable = { v = PREV.id } }
+		index = i
+		value = v
+		if = {
+			limit = {
+				check_variable = { v = PREV.id }
+				check_variable = { found_match = 0 }
+			}
 			set_temp_variable = { index = i }
+			set_temp_variable = { found_match = 1 }
 		}
 	}
 
-	set_variable = { auto_influence_array^index = 0 }
-	subtract_from_variable = { auto_influence_users = 1 }
-	clamp_variable = { var = auto_influence_users min = 0 max = 10 }
+	if = { limit = { check_variable = { index > -1 } }
+		set_variable = { auto_influence_array^index = 0 }
+		subtract_from_variable = { auto_influence_users = 1 }
+		clamp_variable = { var = auto_influence_users min = 0 max = 10 }
+	}
 	custom_effect_tooltip = influence_remove_auto_request_TT
 }

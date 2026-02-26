@@ -1,105 +1,138 @@
-# Millennium Dawn's Contribution Guide
+# Contributing to Millennium Dawn
 
-More details can be found under the `docs` directory or via the [team website](https://millenniumdawn.github.io/Millennium-Dawn/)
+Thank you for your interest in contributing to Millennium Dawn!
 
-It helps to read code if it is written in a consistent style. Contributors to Millennium Dawn should agree to and adhere to our stylization and keep files consistent.
+## Quick Links
 
-Stylization and other clean up contributions are more than welcome if they fix inconsistencies. The Millennium Dawn team does run CWTools and pipeline formatters that keep stylization consistent for the team. There are several other tools available under the the directory `tools/validation` for validating and linting more codebase.
+- [Documentation](https://millenniumdawn.github.io/Millennium-Dawn/)
+- [Discord](http://discord.gg/millenniumdawn)
+- [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md)
+- [Code Resources](./docs/dev-resources/code-resource.md)
 
-## Table of Contents
+## Development Setup
 
-- [Millennium Dawn's Contribution Guide](#millennium-dawns-contribution-guide)
-  - [Table of Contents](#table-of-contents)
-  - [Development Environment Setup](#development-environment-setup)
-    - [Python Installation](#python-installation)
-    - [Pre-commit Setup](#pre-commit-setup)
-  - [Code Style Guidelines](#code-style-guidelines)
-    - [Localization files (.yml)](#localization-files-yml)
-    - [Code/Script Files](#codescript-files)
-    - [Changelog](#changelog)
-    - [Resources](#resources)
-  - [Contributing](#contributing)
-- [AI Policy](#ai-policy)
-  - [AI Art Policy](#ai-art-policy)
-
-## Development Environment Setup
-
-### Python Installation
-
-Python is required for running pre-commit hooks and other development tools. It is not required for developing Hearts of Iron IV scripts and/or fixing bugs or issues in the mod.
-
-Please follow the [Python installation guides on the Python website](https://www.python.org/downloads/)
-
-### Pre-commit Setup
-
-Pre-commit helps automatically format code and catch issues before commits. It also ensures proper file hygiene while also integrating properly with other validations and scripts within the core repository.
-
-**Installation:**
+### Python (Required for Tools)
 
 ```bash
-# Install pre-commit
 pip install pre-commit
-
-# Navigate to your Millennium Dawn repository
-cd /path/to/millennium-dawn
-
-# Install the pre-commit hooks
 pre-commit install
 ```
 
-**Usage:**
+### Pre-commit Usage
 
-- Pre-commit will automatically run on each commit
-- To manually run on all files: `pre-commit run --all-files`
-- To update hooks: `pre-commit autoupdate`
+```bash
+# Run all hooks
+pre-commit run --all-files
 
-## Code Style Guidelines
+# Update hooks
+pre-commit autoupdate
+```
 
-### Localization files (.yml)
+## Code Standards
 
-- Indentation 1 space
-- Remove all 0/1 after the : in string pairs. They break the formatting in various IDEs.
+### Localization (.yml)
 
-### Code/Script Files
+- 1-space indentation
+- UTF-8 with BOM encoding
+- Remove trailing 0/1 after colons
 
-- Indentation: 1 tab (4 spaces)
-- Comments go above or below the code.
-  - After will cause issues with several of the linters we have withing the team
+### Script Files (.txt)
 
-### Changelog
+- 1 tab indentation
+- Comments above/below code blocks
+- Include logging in effects
+- Follow naming conventions: `TAG_name_here`
 
-All changes should be documented in the Changelog where applicable.
+### Key Rules
 
-Changelog entries should follow the following standards:
+- Use `is_triggered_only = yes` for events
+- Include `ai_will_do` in focuses
+- Remove redundant code (`allowed = { always = no }`)
 
-- Full sentences describing the change
-- No code language or references such as ENG that is not accessible to the common player
+### Docs Content Rules (`docs/`)
 
-Jokes are allowed in the Changelog just try to ensure they are in good taste.
+- Docs are now built with Astro 5+ and content lives in `docs/src/content/**`.
+- Use Markdown/frontmatter only. Do not add Liquid tags (`{% ... %}` or `{{ ... }}`).
+- Internal links should be root-relative, for example: `[Tutorial](/tutorials/)`.
+- Do not hardcode `"/Millennium-Dawn/..."` in markdown links. Base path is applied during build.
+- Apply the same pattern to image links: `![Alt](/assets/images/example.png)`.
+- For country pages, keep metadata in frontmatter and write section content in markdown body.
 
-### Resources
+### Docs Local Checks
 
-- Resources or useful PDFs can be stored in the `resources` directory for all Millennium Dawn team members and other outside contributors.
+[Install Bun](https://bun.com/) first (one-time setup on your computer).
 
-## Contributing
+If you only want to edit docs content (and are not a developer), follow these steps:
 
-When contributing to Millennium Dawn:
+1. Open a terminal in this repository.
+2. Go to the docs folder:
 
-1. Ensure Python and pre-commit are installed
-2. Follow the established code style guidelines
-3. Run pre-commit hooks before submitting
-4. Document changes in the changelog
-5. Keep stylization consistent across files
+```bash
+cd docs
+```
 
-For questions about style or setup, consult the team or refer to the `resources` or `docs` directories for more specific information.
+3. First time only, install required packages:
 
-# AI Policy
+```bash
+bun install
+```
 
-The Millennium Dawn team allows the use of AI-generated code and use of AI-generated localization for the correction of typos, grammar and other generation.
-All work submitted via pull requests from forks or internal efforts must be your own work and cannot be generated content purely without review or any personal stylization.
+4. Start the local docs website:
 
-## AI Art Policy
+```bash
+bun run dev
+```
 
-The Millennium Dawn team does not under any circumstance allow pure AI-generated imagery or artwork in the mod. All contributions must be your own work full stop.
-Special circumstances such as generating side imageries for vehicles or futuristic components are possible, but are not intended to replace human work on the mod.
-Any AI generations must be stylized, converted, and used by the artist to ensure quality and consistent standards across the assets within the mod.
+5. Open the local URL shown in the terminal (usually `http://localhost:4321/`).
+6. Edit content files in `docs/src/content/`, save, and refresh the browser.
+
+Before opening a PR, run these checks from the same `docs` folder:
+
+```bash
+bun run lint:md     # checks markdown formatting
+bun run build       # builds the production site
+bun run check:links # checks broken links
+```
+
+See [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) for details.
+
+## Pull Request Process
+
+1. Fork the repository
+2. Create a feature branch
+3. Make changes following style guidelines
+4. Run pre-commit hooks
+5. Update [Changelog.txt](./Changelog.txt)
+6. Add yourself to [AUTHORS.md](./docs/misc/authors.md)
+7. Submit a pull request
+
+## Changelog Guidelines
+
+- Write full sentences describing changes
+- No internal code references (e.g., "ENG_ideas")
+- Jokes allowed if in good taste
+- Document all significant changes
+
+## AI Policy
+
+### AI-Assisted Code
+
+- AI-generated code is allowed with human review
+- Must include personal stylization
+- Cannot be pure generated content without review
+
+### AI-Generated Art
+
+- **Not allowed** under any circumstances
+- All artwork must be human-created
+- Exception: Reference images for artists (must be converted/stylized)
+
+## Resources
+
+- [Dev Resources](./docs/dev-resources/) - Tools and guides
+- [Focus Tree Lifecycle](./docs/dev-resources/focus-tree-lifecycle-checklist.md)
+- [Game Rules Reference](./docs/dev-resources/game-rules.md)
+
+---
+
+For questions, join the [Discord](http://discord.gg/millenniumdawn) or open an issue.

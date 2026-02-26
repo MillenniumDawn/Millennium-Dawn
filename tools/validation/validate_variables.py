@@ -35,7 +35,9 @@ def process_file_for_flags(
     flags = []
     paths = {}
     basename = os.path.basename(filename)
-    text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
 
     if operation == "used":
         if (
@@ -99,7 +101,9 @@ def process_file_for_targets(
     targets = []
     paths = {}
     basename = os.path.basename(filename)
-    text_file = FileOpener.open_text_file(filename, lowercase=lowercase)
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
 
     if operation == "used":
         if "tag_aliases" in filename:
@@ -599,16 +603,19 @@ class Validator(BaseValidator):
         for filename in yml_files_to_scan:
             if should_skip_file(filename):
                 continue
-            text_file = FileOpener.open_text_file(filename)
+            text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
 
             if ".get" in text_file:
                 not_encountered_targets = [
                     i for i in potential_results if i not in targets_used_in_loc
                 ]
                 for target in not_encountered_targets:
+                    target_lower = target.lower()
                     if (
-                        f"[{target}.getname" in text_file
-                        or f"[{target}.getadjective" in text_file
+                        f"[{target_lower}.getname" in text_file
+                        or f"[{target_lower}.getadjective" in text_file
+                        or f"[event_target:{target_lower}.getname" in text_file
+                        or f"[event_target:{target_lower}.getadjective" in text_file
                     ):
                         targets_used_in_loc.append(target)
 
