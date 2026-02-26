@@ -1,0 +1,631 @@
+operation_track_hvt = { ### 1 1/35
+	icon = GFX_coordinated_strike
+	map_icon = GFX_operations_coordinated_strike_map
+	name = track_HVTs
+	desc = track_HVTs_desc
+	priority = 1
+
+	days = 70
+	network_strength = 20
+	operatives = 1
+
+	visible = {
+		network_national_coverage = {
+			target = FROM
+			value > 0
+		}
+		NOT = {
+			FROM = {
+				has_country_flag = ct_hvt_target_found_by@ROOT
+			}
+		}
+		has_target_in_region_intel = yes
+	}
+
+	equipment = {
+		cnc_equipment = 2
+	}
+
+	available = {
+		set_temp_variable = { req_level = 24 }
+		custom_trigger_tooltip = {
+			tooltip = ct_required_intel_level_tt
+			check_variable = { international_terror_org_intel^selected_org > 24 }
+		}
+	}
+
+	awarded_tokens = {
+	}
+
+	on_start = {
+		FROM = {
+			capital_scope = {
+				set_variable = { target_raid_org_store = ROOT.selected_org }
+			}
+		}
+	}
+
+	risk_chance = 0.1
+	outcome_extra_chance = 0.25
+	risk_modifiers = { operation_infiltrate_risk operation_risk }
+	outcome_modifiers = { operation_infiltrate_outcome operation_outcome }
+	cost_modifiers = { operation_infiltrate_cost operation_cost }
+	outcome_execute = {
+		FROM = {
+			set_country_flag = ct_hvt_target_found_by@ROOT
+		}
+		ROOT = {
+			custom_effect_tooltip = ct_intel_raid_tt
+		}
+	}
+	outcome_extra_execute = { # SCOPE_OPERATION
+		random_list = {
+			33 = {
+				FROM = {
+					set_country_flag = ct_hvt_target_found_by@ROOT
+				}
+				ROOT = {
+					add_political_power = 25
+					add_intel = {
+						target = FROM
+						civilian_intel = 10
+					}
+				}
+			}
+			67 = {
+				FROM = {
+					set_country_flag = ct_hvt_target_found_by@ROOT
+				}
+				ROOT = {
+					add_political_power = 25
+				}
+			}
+		}
+	}
+
+	outcome_potential = {
+		FROM = {
+			set_country_flag = ct_hvt_target_found_by@ROOT
+		}
+		ROOT = {
+			custom_effect_tooltip = ct_intel_raid_tt
+		}
+	}
+
+	phases = { #infiltration
+		infiltration_border = { base = 25 }
+		infiltration_submarine = {
+			base = 25
+			modifier = {
+				add = -25
+				FROM = {
+					all_controlled_state = {
+						is_coastal = no
+					}
+				}
+			}
+		}
+		infiltration_paradrop = {
+			base = 25
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0.1 #less likely if we have no transports
+			}
+		}
+		infiltration_diplomatic = {
+			base = 25
+			modifier = {
+				factor = 20
+				ROOT = { has_war = no }
+				FROM = {
+					has_war = no
+				}
+			}
+		}
+	}
+	phases = { #infiltrate military
+		ct_track_HVTs = { base = 100 }
+	}
+	phases = { #exfiltration
+		exfiltration_air_pickup = {
+			base = 15
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0.1 #less likely if we have no transports
+			}
+		}
+		exfiltration_border = { base = 30 }
+		exfiltration_go_to_ground = { base = 30 }
+		exfiltration_submarine_pickup = {
+			base = 25
+			modifier = {
+				factor = 0.01
+				FROM = {
+					all_controlled_state = {
+						is_coastal = no
+					}
+				}
+			}
+		}
+	}
+}
+
+operation_locate_arms_caches = { ### 1 1/35
+	icon = GFX_coordinated_strike
+	map_icon = GFX_operations_coordinated_strike_map
+	name = locate_arms_caches
+	desc = locate_arms_caches_desc
+	priority = 1
+
+	days = 70
+	network_strength = 20
+	operatives = 1
+
+	visible = {
+		network_national_coverage = {
+			target = FROM
+			value > 0
+		}
+		NOT = {
+			FROM = {
+				has_country_flag = ct_cache_target_found_by@ROOT
+			}
+		}
+		has_target_in_region_intel = yes
+	}
+
+	equipment = {
+		cnc_equipment = 2
+	}
+
+	available = {
+		set_temp_variable = { req_level = 24 }
+		custom_trigger_tooltip = {
+			tooltip = ct_required_intel_level_tt
+			check_variable = { international_terror_org_intel^selected_org > 24 }
+		}
+	}
+
+	awarded_tokens = {
+	}
+
+	on_start = {
+		FROM = {
+			capital_scope = {
+				set_variable = { target_raid_org_store = ROOT.selected_org }
+			}
+		}
+	}
+
+	risk_chance = 0.1
+	outcome_extra_chance = 0.25
+	risk_modifiers = { operation_infiltrate_risk operation_risk }
+	outcome_modifiers = { operation_infiltrate_outcome operation_outcome }
+	cost_modifiers = { operation_infiltrate_cost operation_cost }
+	outcome_execute = {
+		FROM = {
+			set_country_flag = ct_cache_target_found_by@ROOT
+		}
+		ROOT = {
+			custom_effect_tooltip = ct_intel_raid_tt
+		}
+	}
+	outcome_extra_execute = { # SCOPE_OPERATION
+		random_list = {
+			33 = {
+				FROM = {
+					set_country_flag = ct_cache_target_found_by@ROOT
+				}
+				ROOT = {
+					add_political_power = 25
+					add_intel = {
+						target = FROM
+						civilian_intel = 10
+					}
+				}
+			}
+			67 = {
+				FROM = {
+					set_country_flag = ct_cache_target_found_by@ROOT
+				}
+				ROOT = {
+					add_political_power = 25
+				}
+			}
+		}
+	}
+
+	outcome_potential = {
+		FROM = {
+			set_country_flag = ct_cache_target_found_by@ROOT
+		}
+		ROOT = {
+			custom_effect_tooltip = ct_intel_raid_tt
+		}
+	}
+
+	phases = { #infiltration
+		infiltration_border = { base = 25 }
+		infiltration_submarine = {
+			base = 25
+			modifier = {
+				factor = 0.01
+				FROM = {
+					all_controlled_state = {
+						is_coastal = no
+					}
+				}
+			}
+		}
+		infiltration_paradrop = {
+			base = 25
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0.1 #less likely if we have no transports
+			}
+		}
+		infiltration_diplomatic = {
+			base = 25
+			modifier = {
+				factor = 20
+				ROOT = { has_war = no }
+				FROM = {
+					has_war = no
+				}
+			}
+		}
+	}
+	phases = { #infiltrate military
+		ct_track_HVTs = { base = 100 }
+	}
+	phases = { #exfiltration
+		exfiltration_air_pickup = {
+			base = 15
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0.1 #less likely if we have no transports
+			}
+		}
+		exfiltration_border = { base = 30 }
+		exfiltration_go_to_ground = { base = 30 }
+		exfiltration_submarine_pickup = {
+			base = 25
+			modifier = {
+				factor = 0.01
+				FROM = {
+					all_controlled_state = {
+						is_coastal = no
+					}
+				}
+			}
+		}
+	}
+}
+
+operation_locate_training_camps = { ### 1 1/35
+	icon = GFX_coordinated_strike
+	map_icon = GFX_operations_coordinated_strike_map
+	name = locate_training_camps
+	desc = locate_training_camps_desc
+	priority = 1
+
+	days = 70
+	network_strength = 20
+	operatives = 1
+
+	visible = {
+		network_national_coverage = {
+			target = FROM
+			value > 0
+		}
+		NOT = {
+			FROM = {
+				has_country_flag = ct_training_target_found_by@ROOT
+			}
+		}
+		has_target_in_region_intel = yes
+	}
+
+	equipment = {
+		cnc_equipment = 2
+	}
+
+	available = {
+		set_temp_variable = { req_level = 24 }
+		custom_trigger_tooltip = {
+			tooltip = ct_required_intel_level_tt
+			check_variable = { international_terror_org_intel^selected_org > 24 }
+		}
+	}
+
+	awarded_tokens = {
+	}
+	risk_chance = 0.1
+	outcome_extra_chance = 0.25
+	risk_modifiers = { operation_infiltrate_risk operation_risk }
+	outcome_modifiers = { operation_infiltrate_outcome operation_outcome }
+	cost_modifiers = { operation_infiltrate_cost operation_cost }
+
+	on_start = {
+		FROM = {
+			capital_scope = {
+				set_variable = { target_raid_org_store = ROOT.selected_org }
+			}
+		}
+	}
+
+	outcome_execute = {
+		FROM = {
+			set_country_flag = ct_training_target_found_by@ROOT
+		}
+		ROOT = {
+			custom_effect_tooltip = ct_intel_raid_tt
+		}
+	}
+	outcome_extra_execute = { # SCOPE_OPERATION
+		random_list = {
+			33 = {
+				FROM = {
+					set_country_flag = ct_training_target_found_by@ROOT
+				}
+				ROOT = {
+					add_political_power = 25
+					add_intel = {
+						target = FROM
+						civilian_intel = 10
+					}
+				}
+			}
+			67 = {
+				FROM = {
+					set_country_flag = ct_training_target_found_by@ROOT
+				}
+				ROOT = {
+					add_political_power = 25
+				}
+			}
+		}
+	}
+
+	outcome_potential = {
+		FROM = {
+			set_country_flag = ct_training_target_found_by@ROOT
+		}
+		ROOT = {
+			custom_effect_tooltip = ct_intel_raid_tt
+		}
+	}
+
+	phases = { #infiltration
+		infiltration_border = { base = 25 }
+		infiltration_submarine = {
+			base = 25
+			modifier = {
+				factor = 0.01
+				FROM = {
+					all_controlled_state = {
+						is_coastal = no
+					}
+				}
+			}
+		}
+		infiltration_paradrop = {
+			base = 25
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0.1 #less likely if we have no transports
+			}
+		}
+		infiltration_diplomatic = {
+			base = 25
+			modifier = {
+				factor = 20
+				ROOT = { has_war = no }
+				FROM = {
+					has_war = no
+				}
+			}
+		}
+	}
+	phases = { #infiltrate military
+		ct_track_HVTs = { base = 100 }
+	}
+	phases = { #exfiltration
+		exfiltration_air_pickup = {
+			base = 15
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0.1 #less likely if we have no transports
+			}
+		}
+		exfiltration_border = { base = 30 }
+		exfiltration_go_to_ground = { base = 30 }
+		exfiltration_submarine_pickup = {
+			base = 25
+			modifier = {
+				factor = 0.01
+				FROM = {
+					all_controlled_state = {
+						is_coastal = no
+					}
+				}
+			}
+		}
+	}
+}
+
+operation_locate_regional_headquarters = { ### 1 1/35
+	icon = GFX_coordinated_strike
+	map_icon = GFX_operations_coordinated_strike_map
+	name = locate_regional_headquarters
+	desc = locate_regional_headquarters_desc
+	priority = 1
+
+	days = 70
+	network_strength = 20
+	operatives = 1
+
+	visible = {
+		network_national_coverage = {
+			target = FROM
+			value > 0
+		}
+		NOT = {
+			FROM = {
+				has_country_flag = ct_elim_raid_prepared_by@ROOT
+			}
+		}
+		has_target_in_country_intel = yes
+		check_variable = { international_terror_org_intel^selected_org > 80 }
+	}
+
+	equipment = {
+		cnc_equipment = 2
+	}
+
+	available = {
+		set_temp_variable = { req_level = 92 }
+		custom_trigger_tooltip = {
+			tooltip = ct_required_intel_level_tt
+			check_variable = { international_terror_org_intel^selected_org > 92 }
+		}
+	}
+
+	awarded_tokens = {
+	}
+	risk_chance = 0.1
+	outcome_extra_chance = 0.25
+	risk_modifiers = { operation_infiltrate_risk operation_risk }
+	outcome_modifiers = { operation_infiltrate_outcome operation_outcome }
+	cost_modifiers = { operation_infiltrate_cost operation_cost }
+	outcome_execute = {
+		FROM = {
+			set_country_flag = ct_elim_raid_prepared_by@ROOT
+		}
+		ROOT = {
+			custom_effect_tooltip = ct_intel_raid_tt
+		}
+	}
+	outcome_extra_execute = { # SCOPE_OPERATION
+		random_list = {
+			33 = {
+				FROM = {
+					set_country_flag = ct_elim_raid_prepared_by@ROOT
+				}
+				ROOT = {
+					add_political_power = 25
+					add_intel = {
+						target = FROM
+						civilian_intel = 10
+					}
+				}
+			}
+			67 = {
+				FROM = {
+					set_country_flag = ct_elim_raid_prepared_by@ROOT
+				}
+				ROOT = {
+					add_political_power = 25
+				}
+			}
+		}
+	}
+
+	outcome_potential = {
+		FROM = {
+			set_country_flag = ct_elim_raid_prepared_by@ROOT
+		}
+		ROOT = {
+			custom_effect_tooltip = ct_intel_raid_tt
+		}
+	}
+
+	phases = { #infiltration
+		infiltration_border = { base = 25 }
+		infiltration_submarine = {
+			base = 25
+			modifier = {
+				factor = 0.01
+				FROM = {
+					all_controlled_state = {
+						is_coastal = no
+					}
+				}
+			}
+		}
+		infiltration_paradrop = {
+			base = 25
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0.1 #less likely if we have no transports
+			}
+		}
+		infiltration_diplomatic = {
+			base = 25
+			modifier = {
+				factor = 20
+				ROOT = { has_war = no }
+				FROM = {
+					has_war = no
+				}
+			}
+		}
+	}
+	phases = { #infiltrate military
+		ct_track_HVTs = { base = 100 }
+	}
+	phases = { #exfiltration
+		exfiltration_air_pickup = {
+			base = 15
+			modifier = {
+				ROOT = {
+					has_equipment = {
+						large_plane_air_transport_airframe < 1
+					}
+				}
+				factor = 0.1 #less likely if we have no transports
+			}
+		}
+		exfiltration_border = { base = 30 }
+		exfiltration_go_to_ground = { base = 30 }
+		exfiltration_submarine_pickup = {
+			base = 25
+			modifier = {
+				factor = 0.01
+				FROM = {
+					all_controlled_state = {
+						is_coastal = no
+					}
+				}
+			}
+		}
+	}
+}

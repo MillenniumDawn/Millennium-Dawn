@@ -8,7 +8,15 @@ Millennium Dawn is a Hearts of Iron IV mod set in the modern era (2000-present).
 
 ## Directory Structure
 
-- `common/` - Game data (focuses, ideas, decisions, technologies, modifiers, AI configs)
+- `common/` - Game data files:
+  - `national_focus/` - Focus tree files
+  - `ideas/` - National spirits and ideas
+  - `decisions/` - Decision and mission files
+  - `scripted_effects/` - Reusable effect blocks
+  - `scripted_triggers/` - Reusable trigger blocks
+  - `on_actions/` - On action hooks (`on_daily_TAG`, `on_weekly`, etc.)
+  - `technologies/` - Research tree files
+  - `modifiers/`, `ai-*/` - Modifier and AI strategy files
 - `localisation/` - Language files (English yml files with UTF-8 BOM)
 - `events/` - Event chains and triggered events
 - `history/` - Historical country data, states, units
@@ -17,24 +25,30 @@ Millennium Dawn is a Hearts of Iron IV mod set in the modern era (2000-present).
 - `tools/` - Python development and validation scripts
 - `docs/` - Development documentation
 
+Ignore the `resources` directory entirely, this is mostly used for supporting team resources.
+
+## Available Skills
+
+The following slash commands are available in this project (`.claude/skills/`):
+
+| Skill                         | Description                                                                                   |
+| ----------------------------- | --------------------------------------------------------------------------------------------- |
+| `/validate [staged] [strict]` | Run all validation tools; optionally limit to staged files or fail on errors                  |
+| `/standardize <file>`         | Auto-standardize a focus/event/decision/idea file against MD conventions                      |
+| `/new-focus <TAG>`            | Scaffold a new country focus tree file with correct structure and localisation stubs          |
+| `/review-branch`              | Review the current branch diff vs main for style violations, logic errors, and balance issues |
+
 ## Validation & Formatting Tools
 
-```bash
-# Run all pre-commit hooks
-pre-commit run --all-files
+Validation and standardization tools are available in `tools/validation/` and `tools/standardization/`. Use the `/validate` and `/standardize` skills above for quick access, or run the scripts directly — both directories have READMEs with full usage details.
 
-# Auto-format specific content types
-python3 tools/standardization/standardize.py focus
-python3 tools/standardization/standardize.py event
-python3 tools/standardization/standardize.py decision
-python3 tools/standardization/standardize.py idea
-```
+A standalone diff summary script is also available: `tools/review-branch.sh [base-branch]`.
 
 ## General Formatting Rules
 
 - Use **tabs** for indentation (not spaces), increase by 1 on `{`, decrease by 1 on `}`
 - Keep simple checks on one line: `available = { has_country_flag = some_flag }`
-- Place closing brackets on the same line as the keyword
+- Opening `{` stays on the same line as the property; closing `}` gets its own line at the outer indentation level
 - 1 blank line between elements
 - Remove unused/commented-out code
 - Use multiplication instead of division (e.g., `* 0.01` not `/ 100`)
@@ -59,6 +73,27 @@ python3 tools/standardization/standardize.py idea
 | `05_`    | Country-specific trees                       |
 
 The prefix number forces load order: shared trees load before country-specific ones.
+
+### Focus Tree Container
+
+```
+focus_tree = {
+	id = greece_focus
+
+	country = {
+		factor = 0
+		modifier = {
+			tag = GRE
+			add = 100
+		}
+	}
+
+	shared_focus = USoE001
+	shared_focus = POTEF001
+
+	continuous_focus_position = { x = 2350 y = 1200 }
+}
+```
 
 ### Required Property Order
 
@@ -114,6 +149,9 @@ focus = {
 	# bypass = { }
 	# cancel = { }
 
+	# will_lead_to_war_with = TAG  # Only if granting a war goal
+	# complete_tooltip = { }        # Only if always-visible tooltip is needed
+	# select_effect = { }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SER_free_market_capitalism"
 		add_ideas = SER_free_market_idea
@@ -236,6 +274,17 @@ BRA_idea_higher_minimum_wage_1 = {
 
 ## Military-Industrial Organizations (MIO)
 
+### Best Practices
+
+- Name MIOs with `TAG_organization_name` format
+- Always include `allowed = { original_tag = TAG }` to restrict to the correct country
+- Set `task_capacity` proportional to nation size (typically 10–25)
+- Equipment types must reference valid `equipment_type` categories
+- Trait grid runs `y = 0` to `y = 9`; use relative positioning for trait layout
+- Add `initial_trait` for the organization's defining bonus
+
+### Example MIO
+
 ```
 CHI_norinco_manufacturer = {
 	allowed = { original_tag = CHI }
@@ -264,8 +313,6 @@ CHI_norinco_manufacturer = {
 	}
 }
 ```
-
-Trait grid maximum: `y = 0 - 9`. Use relative positioning within the grid.
 
 ## Localization Files (.yml)
 

@@ -29,6 +29,13 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = ["FR_loc", "00_operations"]
 
+# Vanilla or known loc keys that are valid but not defined in mod localisation files
+VANILLA_LOC_KEYS = {
+    "SP_UNLOCK_PROJECT",
+    "SP_UNLOCK_TECH",
+    "available_scientist_one_line_tt",
+}
+
 
 def _should_skip(filename: str) -> bool:
     return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
@@ -279,6 +286,8 @@ class Validator(BaseValidator):
                     continue
                 if "[" in k and "]" in k:
                     continue
+                if "|" in k:
+                    continue
                 if '"' in k:
                     continue
                 if k.startswith("GFX_"):
@@ -288,6 +297,8 @@ class Validator(BaseValidator):
                 if "EUXXX_EP_agenda" in k:
                     continue
                 if re.match(r"^EU\d+$", k):
+                    continue
+                if k in VANILLA_LOC_KEYS:
                     continue
                 results.append(k)
 

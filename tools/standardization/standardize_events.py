@@ -27,13 +27,18 @@ class EventStandardizer(BaseStandardizer):
             "desc": "",
             "picture": "",
             "is_triggered_only": "",
+            "hidden": "",
             "major": "",
             "fire_only_once": "",
             "mean_time_to_happen": [],
             "trigger": [],
             "immediate": [],
             "option": [],
-            "other": [],
+            "comments_after_header": [],
+            "comments_after_mtth": [],
+            "comments_after_trigger": [],
+            "comments_after_immediate": [],
+            "comments_after_options": [],
         }
 
         # Determine event type from first line
@@ -47,14 +52,19 @@ class EventStandardizer(BaseStandardizer):
         elif "news_event" in first_line:
             props["event_type"] = "news_event"
 
+        # Track which section we're in for comment placement
+        current_section = "header"
+
         i = 1  # Skip opening brace
         while i < len(block_lines) - 1:  # Skip closing brace
             line = block_lines[i].strip()
 
             if line.startswith("id ="):
                 props["id"] = line
+                current_section = "header"
             elif line.startswith("title ="):
                 props["title"] = line
+                current_section = "header"
             elif line.startswith("desc ="):
                 # Check if this is a multi-line block or single line
                 if "{" in line:
@@ -62,41 +72,64 @@ class EventStandardizer(BaseStandardizer):
                     block_lines_block, next_i = self.extract_block(block_lines, i)
                     props["desc"] = block_lines_block
                     i = next_i
+                    current_section = "header"
                     continue
                 else:
                     # Single line
                     props["desc"] = line
+                    current_section = "header"
             elif line.startswith("picture ="):
                 props["picture"] = line
+                current_section = "header"
             elif line.startswith("is_triggered_only ="):
                 props["is_triggered_only"] = line
+                current_section = "header"
+            elif line.startswith("hidden ="):
+                props["hidden"] = line
+                current_section = "header"
             elif line.startswith("major ="):
                 props["major"] = line
+                current_section = "header"
             elif line.startswith("fire_only_once ="):
                 props["fire_only_once"] = line
+                current_section = "header"
 
             elif line.startswith("mean_time_to_happen ="):
                 block_lines_block, next_i = self.extract_block(block_lines, i)
                 props["mean_time_to_happen"].append(block_lines_block)
                 i = next_i
+                current_section = "mtth"
                 continue
             elif line.startswith("trigger ="):
                 block_lines_block, next_i = self.extract_block(block_lines, i)
                 props["trigger"].append(block_lines_block)
                 i = next_i
+                current_section = "trigger"
                 continue
             elif line.startswith("immediate ="):
                 block_lines_block, next_i = self.extract_block(block_lines, i)
                 props["immediate"].append(block_lines_block)
                 i = next_i
+                current_section = "immediate"
                 continue
             elif line.startswith("option ="):
                 block_lines_block, next_i = self.extract_block(block_lines, i)
                 props["option"].append(block_lines_block)
                 i = next_i
+                current_section = "options"
                 continue
             else:
-                props["other"].append(block_lines[i])
+                # This is a comment or unrecognized line - add to current section
+                if current_section == "header":
+                    props["comments_after_header"].append(block_lines[i])
+                elif current_section == "mtth":
+                    props["comments_after_mtth"].append(block_lines[i])
+                elif current_section == "trigger":
+                    props["comments_after_trigger"].append(block_lines[i])
+                elif current_section == "immediate":
+                    props["comments_after_immediate"].append(block_lines[i])
+                elif current_section == "options":
+                    props["comments_after_options"].append(block_lines[i])
 
             i += 1
 
@@ -165,36 +198,60 @@ class EventStandardizer(BaseStandardizer):
         if props["major"]:
             lines.append(f'\t{props["major"]}')
 
-        # 6. fire_only_once (use sparingly)
+        # 6. hidden parameter
+        if props["hidden"]:
+            lines.append(f'\t{props["hidden"]}')
+
+        # 7. fire_only_once (use sparingly)
         if props["fire_only_once"]:
             lines.append(f'\t{props["fire_only_once"]}')
 
         lines.append("")
 
-        # 7. Mean time to happen
+        # Comments after header section
+        for comment in props["comments_after_header"]:
+            if comment.strip():
+                lines.append(comment.rstrip())
+
+        # 8. Mean time to happen
         for mtth in props["mean_time_to_happen"]:
             compacted_mtth = self.compact_block(mtth[:])
             for line in compacted_mtth:
                 lines.append(line)
             lines.append("")
 
-        # 8. Trigger
+        # Comments after MTTH section
+        for comment in props["comments_after_mtth"]:
+            if comment.strip():
+                lines.append(comment.rstrip())
+
+        # 9. Trigger
         for trigger in props["trigger"]:
             compacted_trigger = self.compact_block(trigger[:])
             for line in compacted_trigger:
                 lines.append(line)
             lines.append("")
 
-        # 9. Immediate effects
+        # Comments after trigger section
+        for comment in props["comments_after_trigger"]:
+            if comment.strip():
+                lines.append(comment.rstrip())
+
+        # 10. Immediate effects
         for immediate in props["immediate"]:
             compacted_immediate = self.compact_block(immediate[:])
             for line in compacted_immediate:
                 lines.append(line)
             lines.append("")
 
-        # 10. Options
+        # Comments after immediate section
+        for comment in props["comments_after_immediate"]:
+            if comment.strip():
+                lines.append(comment.rstrip())
+
+        # 11. Options
         for option in props["option"]:
-            has_log = any("log =" in line for line in option)
+            has_log = any(line.strip().startswith("log =") for line in option)
 
             # Only add log if there are actual effects in the option
             has_effects = any(
@@ -230,13 +287,12 @@ class EventStandardizer(BaseStandardizer):
                 lines.append(line)
             lines.append("")
 
-        # 11. Other properties
-        if props["other"]:
-            for line in props["other"]:
-                if line.strip():
-                    lines.append(line)
-            if props["other"]:
-                lines.append("")
+        # Comments after options section
+        for comment in props["comments_after_options"]:
+            if comment.strip():
+                lines.append(comment.rstrip())
+        if props["comments_after_options"]:
+            lines.append("")
 
         lines.append("}")
 

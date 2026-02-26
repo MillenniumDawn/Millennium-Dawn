@@ -130,6 +130,7 @@ v2.0.0
   - Allowed the AI to invest up to 8% interest rate from 6% (should expand more of the options available to the AI for investments)
   - Added AI strategies for the Netherlands
   - Improved the Israeli AIs handling of their Knesset mechanic and have them weighted to take missions that are available
+  - Communist AI should now properly grab 5-year plans and pick based on need
 
  Balance:
   - BUILDING CHANGES:
@@ -214,6 +215,24 @@ v2.0.0
   - Removed the equipment capture from specific land subunits and put them at the global level so no more 10000000000% equipment capture rate per division
   - Reduced the stability hits from the Israeli parliament system from -7% to -2%
   - Made the Israeli "Assassinate Hamas Leader" take into account your network strength on Iran to help it be more effective
+  - Reduced the amount of convoys required for Infantry Weapons
+  - Non State Actors or Islamic Caliphate party slots (ISIS or similar analogues) can no longer demand reparations
+  - Missile stat differentiation: later ICBM and IRBM tiers now have meaningful progression (Issue #115)
+    - ICBM (nuclear_missile): air_agility now scales 10→25 and air_bombing 500→730 across tiers 1–8
+    - IRBM (nuclear_ballistic): air_agility now scales 10→22 and air_bombing 450→540 across tiers 1–7
+    - Guided missiles: naval_strike_attack now scales cleanly 12→26 across tiers 1–8 (was flat 15 or erratic)
+  - SAM missile rebalance: significantly improved cost-effectiveness relative to static AA (Issue #113)
+    - Reduced build_cost_ic by ~25% across all 8 tiers (31→23 IC through 60→45 IC)
+    - Improved air_attack scaling across all 8 tiers (0.75→0.80 through 0.968→0.990)
+  - Missile range rebalance: ranges now follow a consistent hierarchy across all missile classes
+    - IRBM (ballistic_missile): ranges now 50% of ICBM year-for-year (1500–5000 → 4500–6750)
+    - Nuclear IRBM (nuclear_ballistic): ranges match regular IRBM year-for-year (2500–5500 → 5000–6750)
+    - GLCM (guided_missile): ranges now 60% of IRBM year-for-year (1000–2800 → 2700–4050)
+    - SAM (sam_missile): ranges now 50% of GLCM year-for-year (550–750 → 1350–2025)
+  - Hypersonic missile rebalance: hypersonic missiles now properly outclass their GLCM counterparts
+    - air_range increased to 130% of matching GLCM tier (1900–2000 → 5070–5265)
+    - maximum_speed increased to 135% of matching GLCM tier (8051–8634 → 9924–10419)
+    - air_agility increased to 135% of matching GLCM tier (200–350 → 236–270)
 
  Bugfix:
   - Fixed influence monthly exploit - auto-influence now applies cooldown on activation to prevent abuse of late-month toggle (Issue #378)
@@ -358,8 +377,18 @@ v2.0.0
   - Fixed broken remove from array common effect causing the Israeli (and other mechanics) to not properly remove coalition members
   - Fixed a missing tooltip in the Iraqi focus "Arm the West" for the domestic independence amount
   - Fixed the "Auto Influencer" array not properly cleaning when a nation is annexed requiring a manual intervention
+  - [ARM] Fixed the ARM_has_artsakh_idea not being properly removed when completing the focus (Issue #203)
+  - [ARM/AZE] Fixed the ARM_open_borders_with_AZE decision showing for Azerbaijan when it should not
+  - Fixed duplicate NSB transport helicopter tech being assigned in the histories
+  - Fixed many nations not starting with the Helicopter Production Special Project
+  - Fixed several Dutch events with improper scoping to ensure the wargoals do not target the Netherlands and instead target the nation
+  - Fixed the "Error Stop" vehicles and replaced them with "Generic X" vehicles that are minimal viable equipment versions
+  - Fixed the "CFE Treaty" continuing to be present despite Russia being in NATO
+  - Fixed Howa Machina Traits giving 80% soft attack and breakthrough instead of 8%
+  - Fixed the modifier gap in the Romanian "Vadim's Struggle" power balance having value gaps for the negative and positive
 
  Content:
+  - NEW TREES: United Kingdom
   - [RAJ] Added new Naxalite-Maoist insurgency mechanics (Issue #330)
   - New focus: Counter-Insurgency Operations in military branch
   - New decisions: Integrated Development Initiative, Surrender & Rehabilitation Program
@@ -429,6 +458,17 @@ v2.0.0
   - Added a resource storage system for stockpiling resources with the "Strategic Resource Reserves"
   - Added a "Close Embassy" and "Reopen Embassy" diplomatic action
   - Added the "2014 Aswan Tribal Conflict" to Egypt
+  - Moved all International Systems into a singular UI for streamlined usage. Old Space Program UI now contains all international systems
+  - Re-Worked Counter-Terrorism system. It now functions more like a hide-and-seek game, with the player attemping to hunt down the organizations while managing the terror threat
+	- This includes the new UI, along with new Raids, and expansions of the Intelligence System
+  - Added United Nations systems to International Systems mechanics
+	- This adds a UN AID system, and a Security Council system
+  - Added Cyber-Warfare System
+    - This adds additional intelligence and other functions to allow players to conduct cyber-warfare against one another
+  - Made adjustment to the Space system menus for production, orbit, and space center
+    - Orbit view now has filter buttons to make finding and targetting specific satellites easier
+	- Nation selection UI has been adjust so that it now displays the name and flag of the country, and not just the flag
+	- Production & Payload menus now display what version a satellite is, along with the name.
   - Russia's "Annexation of Crimea" is made more flexible so as to increase the options available to the Russian player
   - Power Ranking system now is calculated 2 times a year (May and November) for performance-oriented purposes
   - Extended the Generic tree for more economic and military options
@@ -438,6 +478,13 @@ v2.0.0
   - Added bypasses for Bolivian focusses if you don't have cartels or corruption anymore
   - Changed Influence Requirement for a Strength Ratio Requirement to attack Chile
   - Changed Bolivian Political party names to the new MD standard
+  - Added Western Monarchism to the Netherlands and changed the monarchist tree to represent that
+  - Netherlands now follows new subideology localisation
+  - Added Historic Ship Names for UK to name file Type 23,26,31 etc
+  - Created Canadian Unit Name File
+  - Linked Canadian OOB to new Unit Name file
+
+
 
  Database:
   - Land drone technologies now properly give the Ranger Light Recce company recon bonuses like all other recon units
@@ -447,6 +494,7 @@ v2.0.0
   - Expanded the name list for the UK and made brigade numbers shared across different brigade types meaning no duplicates
   - Added unit name lists for Scotland and Wales
   - Added MD modifiers to be used as a dynamic modifier tooltip
+  - Updated the MIO Code Styleguide page
 
  Factions:
   - Added a new faction goal "Establish an Airborne Corps"
@@ -477,6 +525,7 @@ v2.0.0
   - Added a new game rule for the price per GW for the Energy Load Sharing system
   - The Game Rule annex microstates for the Oceania tags will now annex into Fiji so you can play w/ the tree (yes I know this is a buff to them)
   - Fixed the Game Rule for disabling "Domestic Independence" not working as expected
+  - Added Gamerule to hide obsolete paths in the tree. The available trees of having this will be expanded
 
  Localization:
   - Adjusted some of the wording in the Serbia joins the United Nation event so it doesn't say Yugoslavia when Serbia still exists
@@ -903,6 +952,7 @@ v1.12.2a
   - Fixed the LAR operation "Steal Naval Blueprint" consuming a civilian token instead of a naval token
   - Removed a Man the Guns check in the game rules for "Take over Faction"
   - Fixed the internal faction "Industrial Conglomerates" not properly initializing when switched during the game
+  - Fixed Paravia MIO in Germany, not being able to select medium aircraft.
 
  Balance:
   - Dramatically increased the base Energy Production so the Lack of Power modifier should not appear

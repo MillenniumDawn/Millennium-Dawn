@@ -16,9 +16,13 @@ This document provides reference documentation for Millennium Dawn's unique syst
 
 - [Economic Modifiers](#economic-modifiers) - Money, taxes, productivity, trade
 - [Law Modifiers](#law-modifiers) - Government spending, law costs
+- [Migration Modifiers](#migration-modifiers) - Population migration
 - [Influence Modifiers](#influence-modifiers) - Foreign influence mechanics
 - [Energy Modifiers](#energy-modifiers) - Power generation and consumption
 - [Political Modifiers](#political-modifiers) - Party popularity mechanics
+- [Counter-Terror Modifiers](#counter-terror-modifiers) - Counter-terrorism
+- [Missile & Space Modifiers](#missile--space-modifiers) - Missile/satellite production
+- [Nation-Specific Modifiers](#nation-specific-modifiers) - Country unique modifiers
 
 ## Scripted Effects Categories
 
@@ -47,28 +51,133 @@ Modifiers in Millennium Dawn follow standard HOI4 syntax but include many unique
 
 These modifiers affect the economy, taxes, trade, and productivity.
 
-| Modifier                                                                  | Category  | Description                  | Notes                           |
-| ------------------------------------------------------------------------- | --------- | ---------------------------- | ------------------------------- |
-| `interest_rate_multiplier_modifier`                                       | Economic  | Adjusts interest rate        | Whole numbers only              |
-| `personnel_cost_multiplier_modifier`                                      | Economic  | Military wages               |                                 |
-| `army/navy/airforce_personnel_cost_multiplier_modifier`                   | Economic  | Branch-specific wages        |                                 |
-| `equipment_cost_multiplier_modifier`                                      | Economic  | Equipment upkeep             |                                 |
-| `bureaucracy_cost_multiplier_modifier`                                    | Economic  | Bureaucracy spending         |                                 |
-| `tax_rate_change_multiplier_modifier`                                     | Economic  | Tax law change PP cost       |                                 |
-| `projects_cost_modifier`                                                  | Economic  | Economic project costs       |                                 |
-| `civ_facs_worker_requirement_modifier`                                    | Economic  | Civilian factory workers     |                                 |
-| `mil_facs_worker_requirement_modifier`                                    | Economic  | Military factory workers     |                                 |
-| `tax_gain_multiplier_modifier`                                            | Economic  | All tax income               |                                 |
-| `population_tax_income_multiplier_modifier`                               | Economic  | Population taxes             |                                 |
-| `corporate_tax_income_multiplier_modifier`                                | Economic  | Corporate taxes              |                                 |
-| `resource_export_multiplier_modifier`                                     | Economic  | All resource exports         |                                 |
-| `oil/steel/tungsten/aluminium/chromium/rubber_export_multiplier_modifier` | Economic  | Specific exports             |                                 |
-| `return_on_investment_modifier`                                           | Economic  | International investment ROI | Use decimals (0.02 = 2%)        |
-| `productivity_growth_modifier`                                            | Economic  | National productivity        | Keep small to avoid snowballing |
-| `state_productivity_growth_modifier`                                      | Economic  | Per-state productivity       |                                 |
-| `migration_rate_value_factor`                                             | Migration | Net migration rate           |                                 |
-| `international_market_income_modifier`                                    | Economic  | Equipment sales income       |                                 |
-| `international_market_purchase_modifier`                                  | Economic  | Equipment purchase costs     |                                 |
+### General Economic
+
+| Modifier                                           | Description                  | Notes                           |
+| -------------------------------------------------- | ---------------------------- | ------------------------------- |
+| `interest_rate_multiplier_modifier`                | Adjusts interest rate        | Whole numbers only              |
+| `personnel_cost_multiplier_modifier`               | Military wages               |                                 |
+| `army_personnel_cost_multiplier_modifier`          | Army wages                   |                                 |
+| `navy_personnel_cost_multiplier_modifier`          | Navy wages                   |                                 |
+| `airforce_personnel_cost_multiplier_modifier`      | Airforce wages               |                                 |
+| `equipment_cost_multiplier_modifier`               | Equipment upkeep             |                                 |
+| `bureaucracy_cost_multiplier_modifier`             | Bureaucracy spending         |                                 |
+| `police_cost_multiplier_modifier`                  | Police spending              |                                 |
+| `education_cost_multiplier_modifier`               | Education spending           |                                 |
+| `health_cost_multiplier_modifier`                  | Healthcare spending          |                                 |
+| `social_cost_multiplier_modifier`                  | Social spending              |                                 |
+| `tax_rate_change_multiplier_modifier`              | Tax law change PP cost       |                                 |
+| `projects_cost_modifier`                           | Economic project costs       |                                 |
+| `civ_facs_worker_requirement_modifier`             | Civilian factory workers     |                                 |
+| `mil_facs_worker_requirement_modifier`             | Military factory workers     |                                 |
+| `offices_worker_requirement_modifier`              | Office workers               |                                 |
+| `agriculture_district_worker_requirement_modifier` | Agriculture workers          |                                 |
+| `microchip_plant_worker_requirement_modifier`      | Microchip plant workers      |                                 |
+| `composite_plant_worker_requirement_modifier`      | Composite plant workers      |                                 |
+| `synthetic_refinery_worker_requirement_modifier`   | Synthetic refinery workers   |                                 |
+| `buildings_worker_requirement_modifier`            | All building workers         |                                 |
+| `tax_gain_multiplier_modifier`                     | All tax income               |                                 |
+| `population_tax_income_multiplier_modifier`        | Population taxes             |                                 |
+| `corporate_tax_income_multiplier_modifier`         | Corporate taxes              |                                 |
+| `return_on_investment_modifier`                    | International investment ROI | Use decimals (0.02 = 2%)        |
+| `productivity_growth_modifier`                     | National productivity        | Keep small to avoid snowballing |
+| `state_productivity_growth_modifier`               | Per-state productivity       |                                 |
+| `country_productivity_growth_modifier`             | Country productivity growth  |                                 |
+| `international_market_income_modifier`             | Equipment sales income       |                                 |
+| `international_market_purchase_modifier`           | Equipment purchase costs     |                                 |
+| `inflation_cost_multiplier_modifier`               | Inflation costs              |                                 |
+
+### Exports & Resources
+
+| Modifier                               | Description          |
+| -------------------------------------- | -------------------- |
+| `resource_export_multiplier_modifier`  | All resource exports |
+| `oil_export_multiplier_modifier`       | Oil exports          |
+| `steel_export_multiplier_modifier`     | Steel exports        |
+| `aluminium_export_multiplier_modifier` | Aluminium exports    |
+| `tungsten_export_multiplier_modifier`  | Tungsten exports     |
+| `chromium_export_multiplier_modifier`  | Chromium exports     |
+| `rubber_export_multiplier_modifier`    | Rubber exports       |
+| `microchip_export_multiplier_modifier` | Microchip exports    |
+| `composite_export_multiplier_modifier` | Composite exports    |
+
+### Industry Productivity
+
+| Modifier                                   | Description                     |
+| ------------------------------------------ | ------------------------------- |
+| `agricolture_productivity_modifier`        | Agriculture productivity        |
+| `microchip_plants_productivity_modifier`   | Microchip plant productivity    |
+| `composite_plants_productivity_modifier`   | Composite plant productivity    |
+| `synthetic_refinery_productivity_modifier` | Synthetic refinery productivity |
+| `civilian_factories_productivity`          | Civilian factory productivity   |
+| `military_factories_productivity`          | Military factory productivity   |
+| `dockyard_productivity`                    | Dockyard productivity           |
+| `offices_productivity`                     | Office productivity             |
+
+### Industry Income Taxes
+
+| Modifier                                   | Description                   |
+| ------------------------------------------ | ----------------------------- |
+| `office_park_income_tax_modifier`          | Office tax income             |
+| `agriculture_district_income_tax_modifier` | Agriculture tax income        |
+| `microchip_plant_income_tax_modifier`      | Microchip plant tax income    |
+| `composite_plant_income_tax_modifier`      | Composite plant tax income    |
+| `synthetic_refinery_income_tax_modifier`   | Synthetic refinery tax income |
+| `dockyard_income_tax_modifier`             | Dockyard tax income           |
+| `military_industry_tax_modifier`           | Military industry tax         |
+| `civilian_industry_tax_modifier`           | Civilian industry tax         |
+| `agriculture_tax_modifier`                 | Agriculture tax               |
+| `microchip_plant_tax_modifier`             | Microchip plant tax           |
+| `composite_plant_tax_modifier`             | Composite plant tax           |
+| `synthetic_plant_tax_modifier`             | Synthetic plant tax           |
+
+### Campaign Costs
+
+| Modifier                                     | Description               |
+| -------------------------------------------- | ------------------------- |
+| `salafist_outlook_campaign_cost_modifier`    | Salafist campaign cost    |
+| `nonaligned_outlook_campaign_cost_modifier`  | Nonaligned campaign cost  |
+| `western_outlook_campaign_cost_modifier`     | Western campaign cost     |
+| `emerging_outlook_campaign_cost_modifier`    | Emerging campaign cost    |
+| `nationalist_outlook_campaign_cost_modifier` | Nationalist campaign cost |
+| `propaganda_campaign_cost_modifier`          | Propaganda campaign cost  |
+
+### Investment Modifiers
+
+| Modifier                                   | Description                 |
+| ------------------------------------------ | --------------------------- |
+| `investment_duration_modifier`             | Your project duration       |
+| `receiving_investment_duration_modifier`   | Foreign project duration    |
+| `investment_cost_modifier`                 | Your project costs          |
+| `receiving_investment_cost_modifier`       | Foreign project costs       |
+| `internal_investments_pp_cost_modifier`    | Internal investment PP cost |
+| `internal_investments_money_cost_modifier` | Internal investment money   |
+
+### Workforce & Labor
+
+| Modifier                               | Description                  |
+| -------------------------------------- | ---------------------------- |
+| `total_workforce_modifier`             | Total workforce              |
+| `high_unemployment_threshold_modifier` | Unemployment threshold       |
+| `agriculture_workers_modifier`         | Agriculture workers %        |
+| `resource_sector_workers_modifier`     | Resource sector workers %    |
+| `gdp_from_resource_sector_modifier`    | GDP from resources           |
+| `border_control_multiplier_modifier`   | Border control effectiveness |
+| `civilian_chip_consumption_modifier`   | Civilian microchip use       |
+| `industry_chip_consumption_modifier`   | Industry microchip use       |
+
+### Upgrade & Special Costs
+
+| Modifier                                  | Description                 |
+| ----------------------------------------- | --------------------------- |
+| `econ_cycle_upg_cost_multiplier_modifier` | Economic cycle upgrade cost |
+| `cyber_cost_multiplier_modifier`          | Cyber system cost           |
+
+### Education
+
+| Modifier                           | Description             |
+| ---------------------------------- | ----------------------- |
+| `literacy_rate_education_modifier` | Literacy/education rate |
 
 ## Law Modifiers
 
@@ -90,6 +199,16 @@ These modify political power costs for changing government laws.
 | `Conscription_Law_cost_factor`  | Conscription change cost     |
 | `migration_rate_value_factor`   | Migration law cost           |
 
+## Migration Modifiers
+
+These affect population migration.
+
+| Modifier                       | Description                       |
+| ------------------------------ | --------------------------------- |
+| `base_migration_rate_value`    | Base migration rate (law only)    |
+| `maximum_migration_rate_value` | Maximum migration rate (law only) |
+| `migration_rate_value_factor`  | Migration rate multiplier         |
+
 ## Influence Modifiers
 
 These affect the foreign influence system.
@@ -103,23 +222,77 @@ These affect the foreign influence system.
 | `foreign_influence_continent_modifier`                          | Cross-continent influence      |
 | `foreign_influence_home_continent_modifier`                     | Home continent influence       |
 | `foreign_influence_monthly_domestic_independence_gain_modifier` | Monthly independence gain      |
+| `foreign_influence_monthly_domestic_independence_gain_factor`   | Independence gain factor       |
 
 ## Energy Modifiers
 
 These control power generation and consumption.
 
-| Modifier                                  | Description                   |
-| ----------------------------------------- | ----------------------------- |
-| `energy_gain`                             | Flat energy gain              |
-| `energy_gain_multiplier`                  | Percentage energy gain        |
-| `renewable_energy_gain`                   | Renewable energy specifically |
-| `pop_energy_use_multiplier`               | Population energy use         |
-| `fossil_pp_energy_generation_modifier`    | Fossil fuel plant output      |
-| `nuclear_energy_generation_modifier`      | Nuclear reactor output        |
-| `hydroelectric_power_generation_modifier` | Hydroelectric output          |
-| `geothermal_power_generation_modifier`    | Geothermal output             |
-| `energy_use_multiplier`                   | Total energy consumption      |
-| `battery_park_construction_cost`          | Battery park costs            |
+### General Energy
+
+| Modifier                           | Description                   |
+| ---------------------------------- | ----------------------------- |
+| `energy_gain`                      | Flat energy gain              |
+| `energy_gain_multiplier`           | Percentage energy gain        |
+| `energy_use`                       | Static energy use             |
+| `energy_use_multiplier`            | Total energy consumption      |
+| `renewable_energy_gain`            | Renewable energy specifically |
+| `renewable_energy_gain_multiplier` | Solar/wind energy multiplier  |
+| `resource_storage_gain`            | Energy storage gain           |
+
+### Population Energy
+
+| Modifier                                 | Description             |
+| ---------------------------------------- | ----------------------- |
+| `pop_energy_use_multiplier`              | Population energy use   |
+| `non_electric_fuel_consumption_modifier` | Direct fuel consumption |
+
+### Fossil Fuels
+
+| Modifier                               | Description              |
+| -------------------------------------- | ------------------------ |
+| `fossil_energy_gain`                   | Fossil fuel energy gain  |
+| `fossil_pp_energy_generation_modifier` | Fossil fuel plant output |
+| `fossil_fuel_consumption`              | Fossil fuel consumption  |
+| `fossil_pp_fuel_consumption_modifier`  | Fossil plant fuel use    |
+
+### Nuclear Energy
+
+| Modifier                             | Description                 |
+| ------------------------------------ | --------------------------- |
+| `nuclear_energy_gain`                | Nuclear energy gain         |
+| `nuclear_energy_generation_modifier` | Nuclear reactor output      |
+| `nuclear_fuel_consumption`           | Nuclear fuel consumption    |
+| `nuclear_fuel_consumption_modifier`  | Nuclear fuel use multiplier |
+
+### Building Energy Use
+
+| Modifier                                   | Description                   |
+| ------------------------------------------ | ----------------------------- |
+| `energy_use_modifier_civs`                 | Civilian factory energy use   |
+| `energy_use_modifier_mils`                 | Military factory energy use   |
+| `energy_use_modifier_offices`              | Office energy use             |
+| `energy_use_modifier_agriculture_district` | Agriculture energy use        |
+| `energy_use_modifier_microchip_plants`     | Microchip plant energy use    |
+| `energy_use_modifier_composite_plants`     | Composite plant energy use    |
+| `energy_use_modifier_synthetic_refinery`   | Synthetic refinery energy use |
+
+### Renewable Infrastructure
+
+| Modifier                                     | Description                |
+| -------------------------------------------- | -------------------------- |
+| `hydroelectric_energy_storage`               | Hydroelectric storage      |
+| `hydroelectric_power_generation_modifier`    | Hydroelectric output       |
+| `geothermal_power_generation_modifier`       | Geothermal output          |
+| `state_renewable_capacity_factor_modifier`   | State renewable capacity   |
+| `state_renewable_energy_generation_modifier` | State renewable generation |
+
+### Battery & Storage
+
+| Modifier                             | Description          |
+| ------------------------------------ | -------------------- |
+| `battery_park_construction_cost`     | Battery park costs   |
+| `battery_park_storage_size_modifier` | Battery storage size |
 
 ## Political Modifiers
 
@@ -129,6 +302,44 @@ These affect internal politics.
 | ---------------------------- | -------------------------- | ------------------------- |
 | `popularity_attack_modifier` | Party attack effectiveness | Not percentage (2.0 = 2x) |
 | `popularity_boost_modifier`  | Party boost effectiveness  | Not percentage (2.0 = 2x) |
+
+## Counter-Terror Modifiers
+
+These affect the counter-terrorism system.
+
+| Modifier                              | Description             |
+| ------------------------------------- | ----------------------- |
+| `terror_threat_detection_modifier`    | Threat detection chance |
+| `terror_threat_base_detect_modifier`  | Base detection value    |
+| `terror_threat_base_defense_modifier` | Base defense value      |
+
+## Missile & Space Modifiers
+
+These affect missile and satellite production.
+
+| Modifier                            | Description               |
+| ----------------------------------- | ------------------------- |
+| `olv_production_speed_modifier`     | Orbital launch vehicle    |
+| `gnss_production_speed_modifier`    | Navigation satellites     |
+| `comsat_production_speed_modifier`  | Communications satellites |
+| `spysat_production_speed_modifier`  | Spy satellites            |
+| `killsat_production_speed_modifier` | Kill satellites           |
+| `nuclear_reactor_fuel_production`   | Nuclear fuel production   |
+
+## Nation-Specific Modifiers
+
+### Czech Republic
+
+| Modifier                                 | Description        |
+| ---------------------------------------- | ------------------ |
+| `CZE_skoda_superb_productivity_modifier` | Škoda productivity |
+
+### Italy
+
+| Modifier                               | Description              |
+| -------------------------------------- | ------------------------ |
+| `ITA_ageing_population_drift_modifier` | Aging population drift   |
+| `ITA_reform_expectance_drift`          | Reform expectation drift |
 
 ---
 
@@ -390,16 +601,6 @@ set_temp_variable = { temp_change = 2 }
 build_battery_park_effect = yes
 ```
 
-### Counter-Terror (Radicalization)
-
-```hoiscript
-set_temp_variable = { rad_change = -5 }
-modify_radicalization_effect = yes
-
-set_temp_variable = { threat_change = 2 }
-modify_terror_threat_effect = yes
-```
-
 ### Cartel Effects
 
 Handles cartel strength and political influence changes.
@@ -417,22 +618,101 @@ modify_cartel_variables_effect = yes
 
 ## Adding Subideology Parties
 
-Political parties require edits to multiple files:
+Adding a new party requires edits to four files. Follow the steps below in order.
 
-1. **Party Definition**: `localisation/english/MD_subideology_parties_l_english.yml`
-2. **Icons**: `interface/MD_parties_icons.gfx` + `gfx/texticons/parties_icons/{tag}/`
-3. **Localization**: `common/scripted_localisation/subideology_scripted_localization.txt`
-4. **Leaders** (optional): `common/scripted_effects/{TAG}_political_leaders.txt`
+### Step 1 — Choose a Slot
+
+Consult the [Subideology Slots table](#subideology-slots) below to pick the subideology key and its index for the ideology group your party belongs to. Note both — you will need the key for localisation and the index for the history file.
+
+### Step 2 — Add Localisation
+
+In `localisation/english/MD_subideology_parties_l_english.yml`, add three entries for the party. Use the format from the [Subideology Localisation Format](../../CLAUDE.md#subideology-localization-format) section of CLAUDE.md:
+
+```yaml
+TAG.subideology: "£TAG_icon_name (ABBRV) - Party Name"
+TAG.subideology_icon: "£TAG_icon_name"
+TAG.subideology_desc: "(Dominant Ideology) - Party Name (Native name, ABBRV)\n\nDescription"
+```
+
+If the party changes over time (e.g. a coalition partner becomes dominant), add `_alt` variants:
+
+```yaml
+TAG.subideology_alt: "£TAG_icon_name_alt (ABBRV) - Alternate Party Name"
+TAG.subideology_icon_alt: "£TAG_icon_name_alt"
+TAG.subideology_desc_alt: "(Dominant Ideology) - Alternate Party Name (Native name, ABBRV)\n\nDescription"
+```
+
+### Step 3 — Register the Icon
+
+**a) Add the GFX entry** to `interface/MD_parties_icons.gfx`, keeping entries sorted alphabetically by tag:
+
+```
+spriteType = {
+	name = "GFX_TAG_icon_name"
+	texturefile = "gfx/texticons/parties_icons/country_name_lowercase/TAG_icon_name.dds"
+	legacy_lazy_load = no
+}
+```
+
+The `name` value must match the icon referenced in localisation (without the `£` prefix, prefixed with `GFX_`).
+
+**b) Place the DDS file** at `gfx/texticons/parties_icons/{country_name_lowercase}/TAG_icon_name.dds`. Party icon DDS files are typically 20×20 px text icons.
+
+### Step 4 — Set Starting Popularity
+
+In `history/countries/TAG - Country.txt`, set the party's starting popularity using its slot index. A comment with the party abbreviation is required:
+
+```
+set_variable = { party_pop_array^N = 0.15 } # Party Abbreviation
+```
+
+Where `N` is the slot index from the slots table. Only set slots for parties that actually exist in the country — leave unused slots unset (they default to 0).
+
+If the party holds government or is a coalition partner at game start, also add:
+
+```
+add_to_array = { ruling_party = N }          # if this party governs alone or leads the coalition
+add_to_array = { gov_coalition_array = N }   # if this party is a junior coalition partner
+```
+
+For countries with elections, set the most recent election results separately:
+
+```
+set_variable = { party_pop_elect_array^N = 0.15 } # Party Abbreviation - election result
+```
+
+### Step 5 — Add Leaders (Optional)
+
+If the country has scripted leader rotation, add the leader's `create_country_leader` block inside the appropriate `if = { limit = { has_country_flag = set_subideology } }` block in `common/scripted_effects/TAG_political_leaders.txt`. Create the file if it doesn't yet exist for this tag.
 
 ### Subideology Slots
 
-| Ideology Group | Available Slots                                                 |
-| -------------- | --------------------------------------------------------------- |
-| Western        | `conservatism`, `liberalism`, `socialism`                       |
-| Emerging       | `Communist-State`, `anarchist_communism`, `Mod_Vilayat_e_Faqih` |
-| Salafism       | `Kingdom`, `Caliphate`                                          |
-| Non-Aligned    | `oligarchism`, `Neutral_Libertarian`, `Neutral_green`           |
-| Nationalist    | `Nat_Populism`, `Nat_Fascism`, `Nat_Autocracy`, `Monarchist`    |
+| Index | Slot                         | Ideology Group            |
+| ----- | ---------------------------- | ------------------------- |
+| 0     | `Western_Autocracy`          | Pro-Western (democratic)  |
+| 1     | `conservatism`               | Pro-Western (democratic)  |
+| 2     | `liberalism`                 | Pro-Western (democratic)  |
+| 3     | `socialism`                  | Pro-Western (democratic)  |
+| 4     | `Communist-State`            | Emerging (communism)      |
+| 5     | `anarchist_communism`        | Emerging (communism)      |
+| 6     | `Conservative`               | Emerging (communism)      |
+| 7     | `Autocracy`                  | Emerging (communism)      |
+| 8     | `Mod_Vilayat_e_Faqih`        | Emerging (communism)      |
+| 9     | `Vilayat_e_Faqih`            | Emerging (communism)      |
+| 10    | `Kingdom`                    | Salafist (fascism)        |
+| 11    | `Caliphate`                  | Salafist (fascism)        |
+| 12    | `Neutral_Muslim_Brotherhood` | Non-Aligned (neutrality)  |
+| 13    | `Neutral_Autocracy`          | Non-Aligned (neutrality)  |
+| 14    | `Neutral_conservatism`       | Non-Aligned (neutrality)  |
+| 15    | `oligarchism`                | Non-Aligned (neutrality)  |
+| 16    | `Neutral_Libertarian`        | Non-Aligned (neutrality)  |
+| 17    | `Neutral_green`              | Non-Aligned (neutrality)  |
+| 18    | `neutral_Social`             | Non-Aligned (neutrality)  |
+| 19    | `Neutral_Communism`          | Non-Aligned (neutrality)  |
+| 20    | `Nat_Populism`               | Nationalist (nationalist) |
+| 21    | `Nat_Fascism`                | Nationalist (nationalist) |
+| 22    | `Nat_Autocracy`              | Nationalist (nationalist) |
+| 23    | `Monarchist`                 | Nationalist (nationalist) |
 
 ## Historical Events (ETD System)
 
