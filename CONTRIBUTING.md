@@ -60,12 +60,38 @@ pre-commit autoupdate
 
 ### Docs Local Checks
 
+[Install Bun](https://bun.com/) first (one-time setup on your computer).
+
+If you only want to edit docs content (and are not a developer), follow these steps:
+
+1. Open a terminal in this repository.
+2. Go to the docs folder:
+
 ```bash
 cd docs
-npm run dev
-npm run lint:md
-npm run build
-npm run check:links
+```
+
+3. First time only, install required packages:
+
+```bash
+bun install
+```
+
+4. Start the local docs website:
+
+```bash
+bun run dev
+```
+
+5. Open the local URL shown in the terminal (usually `http://localhost:4321/`).
+6. Edit content files in `docs/src/content/`, save, and refresh the browser.
+
+Before opening a PR, run these checks from the same `docs` folder:
+
+```bash
+bun run lint:md     # checks markdown formatting
+bun run build       # builds the production site
+bun run check:links # checks broken links
 ```
 
 See [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) for details.

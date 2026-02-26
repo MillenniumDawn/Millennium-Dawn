@@ -15,6 +15,7 @@ The following countries are playable with unique focus trees:
 
 ## Full List of Countries
 
+<!-- markdownlint-disable MD060 -->
 | Name | Tag | Available in 2000| Outlook (Ideology) in 2000 | Unique Focus Tree |
 | ------ | ------ | ------ | ------ | ------ |
 |Abkhazia|   ABK  |   Yes  |   Emerging Outlook (Communist State) | YES |
@@ -276,3 +277,4 @@ The following countries are playable with unique focus trees:
 |Yemen|         YEM|	Yes|   Western Outlook (Pro-Western Autocrat)| YES(shared GCC tree) |
 |Zambia|	ZAM|	Yes|   Western Outlook (Social Democrat)| NO |
 |Zimbabwe|	ZIM|	Yes|   Emerging Outlook (Left-Wing Radical)| NO |
+<!-- markdownlint-enable MD060 -->

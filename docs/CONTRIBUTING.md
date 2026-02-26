@@ -4,8 +4,8 @@
 
 ```bash
 cd docs
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 Open the local site using the URL shown in the `astro dev` output.
@@ -84,12 +84,12 @@ Regular markdown text.
 ## Checks Before PR
 
 ```bash
-npm run lint:md
-npm run lint:remark
-npm run check
-npm run build
-npm run check:links
-npm run check:og
-npm run check:a11y
-npm run check:perf
+bun run lint:md
+bun run lint:remark
+bun run check
+bun run build
+bun run check:links
+bun run check:og
+bun run check:a11y
+bun run check:perf
 ```
