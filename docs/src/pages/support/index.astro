@@ -1,0 +1,50 @@
+---
+import { getEntry } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { withBase } from "../../lib/urls";
+
+const releaseEntry = await getEntry("release", "index");
+if (!releaseEntry) {
+  throw new Error("Missing release/index data entry");
+}
+
+const release = releaseEntry.data.current;
+const links = releaseEntry.data.links;
+---
+
+<BaseLayout
+  title="Technical Support"
+  description="Technical support and troubleshooting help for Millennium Dawn: A Modern Day mod for Hearts of Iron IV."
+  canonicalPath="/support/"
+  pageId="support"
+>
+  <h1>Technical Support</h1>
+
+  <p>
+    For the full <a href={withBase("/player-tutorials/troubleshooting-guide/")}>Troubleshooting Guide</a>.
+  </p>
+
+  {release && (
+    <>
+      <p>
+        Current MD Version: <code>{release.md_version}</code>
+      </p>
+      <p>
+        HOI Version: <code>{release.hoi_version}</code>
+      </p>
+      <p>
+        Checksum: <code>{release.checksum}</code>
+      </p>
+    </>
+  )}
+
+  <h2>Downloads and References</h2>
+  <ul>
+    {links &&
+      Object.values(links).map((item) => (
+        <li>
+          <a href={item.url}>{item.label}</a>
+        </li>
+      ))}
+  </ul>
+</BaseLayout>

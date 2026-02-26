@@ -1,0 +1,41 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SearchableIndex from "../../components/SearchableIndex.astro";
+import { toCardItem } from "../../lib/cards";
+import { stripMarkdownExt } from "../../lib/slugs";
+
+const tutorialEntries = (await getCollection("tutorials"))
+  .slice()
+  .sort((a, b) => {
+    const ao = a.data.order ?? Number.MAX_SAFE_INTEGER;
+    const bo = b.data.order ?? Number.MAX_SAFE_INTEGER;
+    if (ao !== bo) return ao - bo;
+    return a.data.title.localeCompare(b.data.title);
+  });
+
+const cards = tutorialEntries.map((entry) => toCardItem(entry, { url: `/player-tutorials/${stripMarkdownExt(entry.id)}/` }));
+---
+
+<BaseLayout
+  title="Tutorials"
+  pageId="tutorials"
+  description="Guides and tutorials for playing Millennium Dawn: A Modern Day mod for Hearts of Iron IV."
+  canonicalPath="/tutorials/"
+  toc="off"
+>
+  <h2>Tutorials for Millennium Dawn</h2>
+  <p>
+    The following is a non-exhaustive list of tutorials and guides available on the website. You can contribute updates and
+    corrections through pull requests.
+  </p>
+
+  <SearchableIndex
+    items={cards}
+    ariaLabel="Player tutorials"
+    pageSize={8}
+    filterLabel="Search"
+    filterPlaceholder="Type to filter..."
+    emptyText="No tutorials matched your search."
+  />
+</BaseLayout>

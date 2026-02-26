@@ -1,0 +1,42 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SearchableIndex from "../../components/SearchableIndex.astro";
+import { toCardItem } from "../../lib/cards";
+import { withBase } from "../../lib/urls";
+import { stripMarkdownExt } from "../../lib/slugs";
+
+const sections = (await getCollection("changelogSections"))
+  .slice()
+  .sort((a, b) => (b.data.order ?? 0) - (a.data.order ?? 0));
+
+const cards = sections.map((entry) =>
+  toCardItem(entry, {
+    url: `/changelogs/${stripMarkdownExt(entry.id)}/`,
+    kind: "Changelog",
+  }),
+);
+---
+
+<BaseLayout
+  title="Changelogs"
+  pageId="changelogs"
+  description="Changelogs for Millennium Dawn: A Modern Day Mod"
+  canonicalPath="/changelogs/"
+  toc="off"
+>
+  <h2>Changelog Archive</h2>
+  <p>This page indexes changelogs by major release branch.</p>
+  <p>
+    For the <a href={withBase("/misc/beta-changelogs/")}>BETA test changes</a> click the link.
+  </p>
+
+  <SearchableIndex
+    items={cards}
+    ariaLabel="Changelog section index"
+    pageSize={8}
+    filterLabel="Search"
+    filterPlaceholder="Type to filter..."
+    emptyText="No changelog sections matched your search."
+  />
+</BaseLayout>

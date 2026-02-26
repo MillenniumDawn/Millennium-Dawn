@@ -1,0 +1,38 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import SearchableIndex from "../../components/SearchableIndex.astro";
+import { toCardItem } from "../../lib/cards";
+import { stripMarkdownExt } from "../../lib/slugs";
+
+const resourceEntries = (await getCollection("resources"))
+  .slice()
+  .sort((a, b) => {
+    const ao = a.data.order ?? Number.MAX_SAFE_INTEGER;
+    const bo = b.data.order ?? Number.MAX_SAFE_INTEGER;
+    if (ao !== bo) return ao - bo;
+    return a.data.title.localeCompare(b.data.title);
+  });
+
+const cards = resourceEntries.map((entry) => toCardItem(entry, { url: `/dev-resources/${stripMarkdownExt(entry.id)}/` }));
+---
+
+<BaseLayout
+  title="Resources"
+  pageId="resources"
+  description="List of resources for the development team of Millennium Dawn."
+  canonicalPath="/resources/"
+  toc="off"
+>
+  <h2>Development Resources</h2>
+  <p>This is a non-exhaustive list of team-based resources for Millennium Dawn.</p>
+
+  <SearchableIndex
+    items={cards}
+    ariaLabel="Team development resources"
+    pageSize={8}
+    filterLabel="Search"
+    filterPlaceholder="Type to filter..."
+    emptyText="No resources matched your search."
+  />
+</BaseLayout>

@@ -1,0 +1,115 @@
+---
+import { getEntry } from "astro:content";
+import type { MarkdownHeading } from "astro";
+import { ClientRouter } from "astro:transitions";
+import HeadSeo from "../components/HeadSeo.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import TocSidebar from "../components/TocSidebar.astro";
+import { buildSeoMeta } from "../lib/seo";
+import { ensureTrailingSlash, stripBase, withBase } from "../lib/urls";
+
+import "../styles/tailwind.css";
+import "../styles/app.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  toc?: "auto" | "off";
+  seo?: boolean;
+  robots?: string;
+  pageId?: string;
+  bodyClass?: string;
+  canonicalPath?: string;
+  pageAssets?: string[];
+  headings?: MarkdownHeading[];
+}
+
+const {
+  title,
+  description,
+  toc = "auto",
+  seo = true,
+  robots,
+  pageId,
+  bodyClass,
+  canonicalPath,
+  pageAssets = [],
+  headings = [],
+} = Astro.props;
+
+const siteTitle = "Millennium Dawn: A Modern Day Mod";
+const siteDescription =
+  "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV.";
+
+const navigationEntry = await getEntry("navigation", "index");
+const sectionsEntry = await getEntry("sections", "index");
+if (!navigationEntry) {
+  throw new Error("Missing navigation/index data entry");
+}
+if (!sectionsEntry) {
+  throw new Error("Missing sections/index data entry");
+}
+
+const currentPath = ensureTrailingSlash(stripBase(Astro.url.pathname));
+const pageSlug = pageId || title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+const resolvedBodyClass = bodyClass || pageSlug;
+
+const seoMeta = buildSeoMeta({
+  title: `${title} - ${siteTitle}`,
+  description,
+  canonicalPath: canonicalPath || currentPath,
+  robots,
+  seo,
+});
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <HeadSeo seo={seoMeta} />
+    <ClientRouter />
+    <slot name="head" />
+  </head>
+  <body class:list={[resolvedBodyClass, { "has-toc": toc !== "off" }]} data-page={pageSlug} data-toc={toc}>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <Header
+      title={siteTitle}
+      navItems={navigationEntry.data.main}
+      currentPath={currentPath}
+    />
+
+    <div class="page-layout" id="page-layout">
+      <TocSidebar tocMode={toc} headings={headings} />
+
+      <main class="main-content" id="main-content">
+        <div class="container">
+          <Breadcrumbs path={currentPath} title={title} sections={sectionsEntry.data} />
+          <slot />
+        </div>
+      </main>
+    </div>
+
+    <Footer
+      siteTitle={siteTitle}
+      siteDescription={siteDescription}
+      footerDocs={navigationEntry.data.footer_docs}
+      socialLinks={navigationEntry.data.social}
+    />
+
+    <script>
+      import { initSite } from "../scripts/site";
+
+      initSite();
+    </script>
+
+    {pageAssets.map((asset) => <script type="module" src={withBase(asset)} is:inline></script>)}
+
+    <button class="back-to-top" aria-label="Back to top" type="button">
+      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M12 4l-8 8h5v8h6v-8h5z" fill="currentColor"></path>
+      </svg>
+    </button>
+  </body>
+</html>
