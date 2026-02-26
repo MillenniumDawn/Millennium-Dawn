@@ -8,6 +8,7 @@ Steps:
    - `events/` → `event`
    - `common/decisions/` → `decision`
    - `common/ideas/` → `idea`
+   - `common/military_industrial_organization/organizations/` → `mio`
    If the type cannot be determined, ask the user to clarify.
 
 2. Run from the `tools/standardization/` directory:
