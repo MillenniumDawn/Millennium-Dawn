@@ -30,6 +30,11 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = ["FR_loc"]
 
+# Decisions activated dynamically (e.g. via variable-constructed IDs) that
+# cannot be detected by static analysis and should be excluded from the
+# unused-decision check.
+DYNAMICALLY_ACTIVATED_DECISIONS = [f"AC_project_{i}_target_decision" for i in range(15)]
+
 
 def _should_skip(filename: str) -> bool:
     return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
@@ -169,6 +174,60 @@ class Validator(BaseValidator):
     TITLE = "DECISION VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
+    def __init__(self, *args, fix: bool = False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fix = fix
+
+    def _apply_ai_factor_fixes(self, fixes: list):
+        """Insert a default ai_will_do = { base = 0 } block into decisions missing one."""
+        dec_filepath = str(Path(self.mod_path) / "common" / "decisions")
+
+        by_file: Dict[str, List[str]] = {}
+        for token, basename in fixes:
+            by_file.setdefault(basename, []).append(token)
+
+        fixed_total = 0
+        for basename, tokens in by_file.items():
+            target_file = None
+            for filepath in glob.iglob(dec_filepath + "/**/*.txt", recursive=True):
+                if os.path.basename(filepath) == basename:
+                    target_file = filepath
+                    break
+
+            if not target_file:
+                self.log(f"  Could not locate file: {basename}", "warning")
+                continue
+
+            with open(target_file, "r", encoding="utf-8-sig") as f:
+                content = f.read()
+
+            for token in tokens:
+                pattern = re.compile(
+                    r"(^\t" + re.escape(token) + r" = \{.*?)(^\t\})",
+                    flags=re.MULTILINE | re.DOTALL,
+                )
+
+                def _inserter(m):
+                    return (
+                        m.group(1)
+                        + "\t\tai_will_do = {\n\t\t\tbase = 0\n\t\t}\n"
+                        + m.group(2)
+                    )
+
+                new_content, count = pattern.subn(_inserter, content)
+                if count:
+                    content = new_content
+                    fixed_total += 1
+                else:
+                    self.log(f"  Could not patch {token} in {basename}", "warning")
+
+            with open(target_file, "w", encoding="utf-8-sig") as f:
+                f.write(content)
+
+        self.log(
+            f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) with missing ai_will_do{Colors.ENDC if self.use_colors else ''}"
+        )
+
     def validate_duplicated_decisions(self):
         self.log(f"\n{'='*80}")
         self.log(
@@ -225,8 +284,16 @@ class Validator(BaseValidator):
                     if f"activate_mission = {mission}" in all_matches:
                         manual_missions[mission] += 1
 
-        results = [k for k in manual_decisions if manual_decisions[k] == 0]
-        results += [k for k in manual_missions if manual_missions[k] == 0]
+        results = [
+            k
+            for k in manual_decisions
+            if manual_decisions[k] == 0 and k not in DYNAMICALLY_ACTIVATED_DECISIONS
+        ]
+        results += [
+            k
+            for k in manual_missions
+            if manual_missions[k] == 0 and k not in DYNAMICALLY_ACTIVATED_DECISIONS
+        ]
         self._report(
             results,
             "✓ No unused decisions",
@@ -289,6 +356,7 @@ class Validator(BaseValidator):
         categories = parse_decision_categories(self.mod_path)
         cats_with_decs = parse_categories_with_decisions(self.mod_path)
         results = []
+        fixes_needed = []
 
         for dec_code in decisions:
             d = DecisionFactory(dec=dec_code)
@@ -324,6 +392,8 @@ class Validator(BaseValidator):
                 results.append(
                     f"{d.token} - {paths[dec_code]} - Decision missing AI factor"
                 )
+                if self.fix:
+                    fixes_needed.append((d.token, paths[dec_code]))
 
             if d.ai_factor:
                 ai_factors = re.findall(
@@ -340,6 +410,9 @@ class Validator(BaseValidator):
                                 break
 
         self._report(results, "✓ No AI factor issues", "Decision AI factor issues:")
+
+        if self.fix and fixes_needed:
+            self._apply_ai_factor_fixes(fixes_needed)
 
     def validate_custom_cost_trigger(self):
         self.log(f"\n{'='*80}")
@@ -454,5 +527,17 @@ class Validator(BaseValidator):
         self.validate_without_allowed_check()
 
 
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--fix",
+        action="store_true",
+        help="Auto-insert 'ai_will_do = { base = 0 }' into decisions missing an AI factor",
+    )
+
+
 if __name__ == "__main__":
-    run_validator_main(Validator, "Validate decisions in Millennium Dawn mod")
+    run_validator_main(
+        Validator,
+        "Validate decisions in Millennium Dawn mod",
+        extra_args_fn=_add_extra_args,
+    )
