@@ -68,7 +68,7 @@ If you only want to edit docs content (and are not a developer), follow these st
 2. Go to the docs folder:
 
 ```bash
-cd docs
+cd docs/src
 ```
 
 3. First time only, install required packages:
