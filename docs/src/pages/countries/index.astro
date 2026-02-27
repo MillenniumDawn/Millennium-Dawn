@@ -1,0 +1,46 @@
+---
+import { getCollection, getEntry, render } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { cssUrl, withBase } from "../../lib/urls";
+import { stripMarkdownExt } from "../../lib/slugs";
+
+const focusCountries = (await getCollection("countries"))
+  .filter((country) => country.data.unique_focus_tree)
+  .slice()
+  .sort((a, b) => (a.data.grid_order ?? 0) - (b.data.grid_order ?? 0));
+
+const pageEntry = await getEntry("pages", "countries");
+if (!pageEntry) {
+  throw new Error("Missing pages/countries content entry");
+}
+const { Content: PageContent } = await render(pageEntry);
+---
+
+<BaseLayout
+  title="Countries"
+  pageId="countries"
+  description="Full list of playable countries available in Millennium Dawn: A Modern Day mod for Hearts of Iron IV."
+  canonicalPath="/countries/"
+>
+  <h1>Countries</h1>
+  <p>The following countries are playable in Millennium Dawn: Modern Day Mod.</p>
+
+  <h2>Unique Focus Trees</h2>
+  <div class="country-focus-grid" role="list" aria-label="Countries with unique focus trees">
+    {focusCountries.map((country) => (
+      <article
+        class="country-focus-card"
+        role="listitem"
+        style={country.data.flag_image ? `--country-flag-image: ${cssUrl(country.data.flag_image)};` : undefined}
+      >
+        {country.data.flag_image && <span class="country-focus-card__flag-image" aria-hidden="true"></span>}
+        <p class="country-focus-card__title">
+          <a href={withBase(`/countries/${country.data.slug || stripMarkdownExt(country.id)}/`)}>{country.data.title}</a>
+        </p>
+        {country.data.grid_note && <p class="country-focus-card__note">{country.data.grid_note}</p>}
+      </article>
+    ))}
+  </div>
+
+  <PageContent />
+</BaseLayout>

@@ -1,0 +1,72 @@
+---
+import ContentCard from "./ContentCard.astro";
+import type { CardItem } from "../lib/cards";
+
+interface Props {
+  items: CardItem[];
+  ariaLabel?: string;
+  pageSize?: number;
+  filterLabel?: string;
+  filterPlaceholder?: string;
+  emptyText?: string;
+  indexClass?: string;
+}
+
+const {
+  items,
+  ariaLabel,
+  pageSize = 8,
+  filterLabel = "Search",
+  filterPlaceholder = "Type to filter...",
+  emptyText = "No results matched your search.",
+  indexClass = "search-index",
+} = Astro.props;
+
+function slugifyId(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+const filterSeed = slugifyId(ariaLabel || indexClass || "search-index") || "search-index";
+const filterId = `${filterSeed}-filter`;
+---
+
+<section class={indexClass} data-card-index data-page-size={pageSize} aria-label={ariaLabel}>
+  <label class="search-index__filter-label" for={filterId}>
+    {filterLabel}
+  </label>
+  <input id={filterId} class="search-index__filter-input" type="search" placeholder={filterPlaceholder} autocomplete="off" data-card-filter />
+
+  <div class="search-index__cards content-grid" data-card-list>
+    {
+      items.map((item) => (
+        <article class="searchable-card" data-card-item data-search={item.searchBlob}>
+          <ContentCard
+            title={item.title}
+            url={item.url}
+            kind={item.kind}
+            description={item.description}
+            meta={item.meta}
+          />
+        </article>
+      ))
+    }
+  </div>
+
+  <p class="search-index__empty text-muted" data-card-empty hidden>
+    {emptyText}
+  </p>
+
+  <nav class="search-index__pagination" aria-label="Pagination">
+    <button type="button" class="btn btn-secondary" data-card-prev>
+      Previous
+    </button>
+    <span class="search-index__status" data-card-status aria-live="polite"></span>
+    <button type="button" class="btn btn-secondary" data-card-next>
+      Next
+    </button>
+  </nav>
+</section>

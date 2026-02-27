@@ -1,0 +1,80 @@
+---
+import type { SeoMeta } from "../lib/seo";
+import { toAbsolute, withBase } from "../lib/urls";
+
+interface Props {
+  seo: SeoMeta;
+}
+
+const { seo } = Astro.props;
+const websiteJsonLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Millennium Dawn: A Modern Day Mod",
+  url: toAbsolute("/"),
+  inLanguage: "en",
+});
+
+const organizationJsonLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Millennium Dawn",
+  url: toAbsolute("/"),
+  logo: toAbsolute("/assets/images/favicon.png"),
+});
+---
+
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{seo.title}</title>
+
+{seo.seoEnabled && (
+  <>
+    <meta name="description" content={seo.description} />
+    <link rel="canonical" href={seo.canonical} />
+
+    <meta property="og:site_name" content="Millennium Dawn: A Modern Day Mod" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={seo.title} />
+    <meta property="og:description" content={seo.description} />
+    <meta property="og:url" content={seo.canonical} />
+    {seo.image && (
+      <>
+        <meta property="og:image" content={toAbsolute(seo.image.path)} />
+        {seo.image.width && <meta property="og:image:width" content={String(seo.image.width)} />}
+        {seo.image.height && <meta property="og:image:height" content={String(seo.image.height)} />}
+        {seo.image.alt && <meta property="og:image:alt" content={seo.image.alt} />}
+      </>
+    )}
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={seo.title} />
+    <meta name="twitter:description" content={seo.description} />
+    {seo.image && <meta name="twitter:image" content={toAbsolute(seo.image.path)} />}
+
+    <script type="application/ld+json" set:html={websiteJsonLd} is:inline></script>
+    <script type="application/ld+json" set:html={organizationJsonLd} is:inline></script>
+  </>
+)}
+
+{seo.robots && <meta name="robots" content={seo.robots} />}
+
+<script>
+  (function () {
+    var doc = document.documentElement;
+    var stored = null;
+    try {
+      stored = localStorage.getItem("theme");
+    } catch (_e) {
+      stored = null;
+    }
+    var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (stored === "dark" || (!stored && prefersDark)) doc.classList.add("dark-mode");
+    else if (stored === "light") doc.classList.add("light-mode");
+  })();
+</script>
+
+<link rel="stylesheet" href={withBase("/assets/css/main.css")} />
+
+<link rel="icon" type="image/png" href={withBase("/assets/images/favicon.png")} />
+<link rel="alternate icon" type="image/x-icon" href={withBase("/assets/images/favicon.ico")} />

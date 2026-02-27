@@ -1,0 +1,123 @@
+---
+import { cssUrl } from "../lib/urls";
+
+type Stat = { label: string; value: string };
+type Group = { section: string; stats: Stat[] };
+
+interface Props {
+  title: string;
+  flagImage?: string;
+  infobox: Group[];
+}
+
+const { title, flagImage, infobox } = Astro.props;
+
+let countryTag = "WIP";
+for (const group of infobox || []) {
+  for (const stat of group.stats || []) {
+    if (stat.label === "Tag" && stat.value?.trim()) {
+      countryTag = stat.value.trim();
+      break;
+    }
+  }
+}
+
+function statValue(group: Group, labels: string[]): string {
+  const match = (group.stats || []).find((item) => labels.includes(item.label));
+  return match?.value || "-";
+}
+---
+
+<div class="wiki-infobox" role="complementary" aria-label={`${title} summary`}>
+  <div
+    class:list={[
+      "wiki-infobox__hero",
+      {
+        "wiki-infobox__hero--flag": !!flagImage,
+      },
+    ]}
+    style={flagImage ? `--country-hero-image: ${cssUrl(flagImage)};` : undefined}
+  >
+    <div class="wiki-infobox__hero-content">
+      <p class="wiki-infobox__hero-title" aria-hidden="true">{title}</p>
+      <p class="wiki-infobox__hero-tag">{countryTag}</p>
+    </div>
+  </div>
+
+  {(infobox || []).map((group) => {
+    const sectionKey = group.section.toLowerCase();
+
+    const overviewHasOnlyTag =
+      sectionKey === "overview" && (group.stats || []).every((stat) => stat.label === "Tag");
+    if (overviewHasOnlyTag) return null;
+
+    const isMilitaryIndustry = sectionKey.includes("military") && sectionKey.includes("industry");
+    const isEconomy = sectionKey.includes("economy");
+
+    return (
+      <>
+        <div class="wiki-infobox__section">{group.section}</div>
+        {isMilitaryIndustry ? (
+          <>
+            <div class="wiki-infobox__compact-table-wrap">
+              <table class="wiki-infobox__compact-table" aria-label={group.section}>
+                <thead>
+                  <tr>
+                    <th>Divisions</th>
+                    <th>Total Factories</th>
+                    <th>Military Ind.</th>
+                    <th>Civilian Ind.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>{statValue(group, ["Divisions"])}</td>
+                    <td>{statValue(group, ["Total Factories"])}</td>
+                    <td>{statValue(group, ["Military Ind.", "Military Ind"])}</td>
+                    <td>{statValue(group, ["Civilian Ind.", "Civilian Ind"])}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            {statValue(group, ["Naval Dockyards"]) !== "-" && (
+              <p class="wiki-infobox__substat">
+                <span>Naval Dockyards</span>
+                <strong>{statValue(group, ["Naval Dockyards"])}</strong>
+              </p>
+            )}
+          </>
+        ) : isEconomy ? (
+          <div class="wiki-infobox__compact-table-wrap">
+            <table class="wiki-infobox__compact-table" aria-label={group.section}>
+              <thead>
+                <tr>
+                  <th>Treasury</th>
+                  <th>Debt</th>
+                  <th>Investments</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{statValue(group, ["Treasury"])}</td>
+                  <td>{statValue(group, ["Debt"])}</td>
+                  <td>{statValue(group, ["Investments"])}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <ul class="wiki-infobox__stats">
+            {(group.stats || [])
+              .filter((stat) => stat.label !== "Tag")
+              .map((stat) => (
+                <li>
+                  <span>{stat.label}</span>
+                  <strong>{stat.value}</strong>
+                </li>
+              ))}
+          </ul>
+        )}
+      </>
+    );
+  })}
+</div>

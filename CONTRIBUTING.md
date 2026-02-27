@@ -49,11 +49,50 @@ pre-commit autoupdate
 - Include `ai_will_do` in focuses
 - Remove redundant code (`allowed = { always = no }`)
 
-### Docs Link Rules (`docs/`)
+### Docs Content Rules (`docs/`)
 
-- Do not hardcode `"/Millennium-Dawn/..."` in markdown links.
-- Use Liquid + `relative_url`, for example: `[Tutorial]({{ '/tutorials/' | relative_url }})`
-- Apply the same pattern to image links: `![Alt]({{ '/uploads/file.png' | relative_url }})`
+- Docs are now built with Astro 5+ and content lives in `docs/src/content/**`.
+- Use Markdown/frontmatter only. Do not add Liquid tags (`{% ... %}` or `{{ ... }}`).
+- Internal links should be root-relative, for example: `[Tutorial](/tutorials/)`.
+- Do not hardcode `"/Millennium-Dawn/..."` in markdown links. Base path is applied during build.
+- Apply the same pattern to image links: `![Alt](/assets/images/example.png)`.
+- For country pages, keep metadata in frontmatter and write section content in markdown body.
+
+### Docs Local Checks
+
+[Install Bun](https://bun.com/) first (one-time setup on your computer).
+
+If you only want to edit docs content (and are not a developer), follow these steps:
+
+1. Open a terminal in this repository.
+2. Go to the docs folder:
+
+```bash
+cd docs
+```
+
+3. First time only, install required packages:
+
+```bash
+bun install
+```
+
+4. Start the local docs website:
+
+```bash
+bun run dev
+```
+
+5. Open the local URL shown in the terminal (usually `http://localhost:4321/`).
+6. Edit content files in `docs/src/content/`, save, and refresh the browser.
+
+Before opening a PR, run these checks from the same `docs` folder:
+
+```bash
+bun run lint:md     # checks markdown formatting
+bun run build       # builds the production site
+bun run check:links # checks broken links
+```
 
 See [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) for details.
 
