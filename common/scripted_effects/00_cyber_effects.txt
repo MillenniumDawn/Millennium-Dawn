@@ -185,6 +185,12 @@ cyber_rebuild_potential_targets = {
 cyber_two_roll = {
 	# Roll 1: Execution — can we carry out the operation?
 	set_temp_variable = { eff_offense = cyber_offense_power }
+
+	set_temp_variable = { decrypt_mod = decryption_progress@var:cur_target_nation }
+	add_to_temp_variable = { decrypt_mod = 1 }
+
+	log = "[?decrypt_mod] is currently the progress point"
+
 	clamp_temp_variable = { var = eff_offense min = 1 max = 100 }
 
 	set_temp_variable = { cur_target_nation = cyber_op_target_nation^cyber_op_cur_target_index }
@@ -213,6 +219,7 @@ cyber_two_roll = {
 		# Roll 2: Stealth — do they detect the intrusion?
 		set_temp_variable = { stealth_chance = 80 }
 		add_to_temp_variable = { stealth_chance = cyber_attribution }
+
 		clamp_temp_variable = { var = stealth_chance min = 5 max = 95 }
 
 		set_temp_variable = { stealth_roll = 0 }
@@ -221,13 +228,42 @@ cyber_two_roll = {
 			set_temp_variable = { stealth_roll = 1 }
 		}
 
+		set_temp_variable = { attribution_bonus = cyber_attribution_bonus }
+
+		clamp_temp_variable = {
+			var = false_flag_chance
+			min = 0
+			max = 100
+		}
+
+		set_temp_variable = { false_flag_check = 0 }
+		random = {
+			chance = false_flag_chance
+			set_temp_variable = { false_flag_check = 1 }
+		}
+
 		if = { limit = { check_variable = { stealth_roll > 0 } }
-			set_temp_variable = { cyber_roll_result = 1 }		# success, hidden
+			#Results here should either be undetected, or false flag. Roll the attribution check
+			if = {
+				limit = {
+					check_variable = { false_flag_check > 0 }
+				}
+				set_temp_variable = { cyber_roll_result = 4 }
+			}else = {
+				set_temp_variable = { cyber_roll_result = 2 }
+			}
 		}
 		else = {
-			# TODO: Adjust attribution to roll off the attacks attribution score vs the defenders defense score
-			#Make this a percent chance to attribute the attack vs being caught
-			set_temp_variable = { cyber_roll_result = 2 }
+			if = {
+				limit = {
+					check_variable = { false_flag_check > 0 }
+				}
+				#False flag worked!
+				set_temp_variable = { cyber_roll_result = 4 }
+			}else = {
+				#No false flag, you get detected
+				set_temp_variable = { cyber_roll_result = 3 }
+			}
 		}
 	}
 	else = {
