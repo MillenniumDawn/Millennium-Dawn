@@ -26,6 +26,24 @@ calculate_cyber_capability = {
 	add_to_variable = { cyber_offense_power = cyber_offense_investment }
 	add_to_variable = { cyber_defense_rating = cyber_defense_investment }
 
+	set_temp_variable = { cyber_targets_num = cyber_capability }
+
+	if = {
+		limit = {
+			NOT = {
+				check_variable = { cyber_targets_num = 0 }
+			}
+		}
+		multiply_temp_variable = { cyber_targets_num = 0.5 }
+		round_temp_variable = cyber_targets_num
+		add_to_temp_variable = { cyber_targets_num = 1 }
+	}
+
+	clamp_variable = {
+		var = cyber_capability
+		max = 5
+	}
+
 	for_loop_effect = {
 		end = cyber_capability
 
@@ -51,25 +69,12 @@ calculate_cyber_capability = {
 		}
 	}
 
-	set_temp_variable = { cyber_targets_num = cyber_capability }
-
-	if = {
-		limit = {
-			NOT = {
-				check_variable = { cyber_targets_num = 0 }
-			}
-		}
-		multiply_temp_variable = { cyber_targets_num = 0.5 }
-		round_temp_variable = cyber_targets_num
-		add_to_temp_variable = { cyber_targets_num = 1 }
-	}
-
 	clamp_temp_variable = {
 		var = cyber_targets_num
 		max = 10
 	}
-
-	set_variable = { cyber_max_targets = cyber_targets_num }
+	set_variable = { cyber_max_targets = cyber_capability }
+	set_variable = { cyber_op_max_targets = cyber_targets_num }
 	missile_ui_update = yes
 }
 
@@ -77,7 +82,6 @@ calculate_cyber_capability = {
 cyber_add_target = {
 	add_to_array = { ROOT.cyber_active_targets = THIS }
 	cyber_rebuild_potential_targets = yes
-	missile_ui_update = yes
 }
 
 # Removes the target whose country tag equals cyber_remove_target_var.
@@ -181,11 +185,9 @@ cyber_rebuild_potential_targets = {
 cyber_two_roll = {
 	# Roll 1: Execution — can we carry out the operation?
 	set_temp_variable = { eff_offense = cyber_offense_power }
-	clamp_temp_variable = { var = eff_offense min = 5 max = 95 }
+	clamp_temp_variable = { var = eff_offense min = 1 max = 100 }
 
 	set_temp_variable = { cur_target_nation = cyber_op_target_nation^cyber_op_cur_target_index }
-
-	set_temp_variable = { eff_offense = 100 } #DEBUG - forces the system to pass the event
 
 	set_temp_variable = { cyber_roll_result = 0 }
 	random = {
@@ -318,8 +320,22 @@ cyber_execute_operation = {
 }
 
 # Marks a target slot as running and activates the appropriate timed tracking decision.
-# Requires cyber_op_target_index (= i from the GUI row) and cyber_op_type set before calling.
+# Requires cyber_op_target and cyber_op_type set before calling.
+# Scans cyber_op_running for the first free slot rather than using cyber_ongoing_operations
+# as the index — prevents slot collision when an earlier op completes before a later one.
 cyber_launch_operation = {
+	set_temp_variable = { cyber_open_slot = -1 }
+	for_loop_effect = {
+		end = cyber_max_targets
+		if = {
+			limit = {
+				check_variable = { cyber_open_slot = -1 }
+				check_variable = { cyber_op_running^num = 0 }
+			}
+			set_temp_variable = { cyber_open_slot = num }
+		}
+	}
+
 	meta_effect = {
 		text = {
 			set_variable = { cyber_op_running^[SLOT] = 1 }
@@ -334,7 +350,7 @@ cyber_launch_operation = {
 				set_country_flag = is_under_[TYPE]_attack_by_@ROOT
 			}
 		}
-		SLOT = "[?cyber_ongoing_operations]"
+		SLOT = "[?cyber_open_slot]"
 		TYPE = "[cyber_target_type_name]"
 	}
 	missile_ui_update = yes
