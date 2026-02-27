@@ -1,0 +1,217 @@
+# Credits: https://steamcommunity.com/sharedfiles/filedetails/?id=3164040395
+scripted_diplomatic_actions = {
+	aisend_attache = {
+		allowed = { has_game_rule = { rule = rule_enable_AI_using_attaches option = yes } }
+
+		visible = {
+			ROOT = { is_ai = yes }
+			NOT = {
+				has_capitulated = yes
+				has_attache_from = ROOT
+			}
+		}
+
+		selectable = {
+			ROOT = {
+				is_ai = yes
+				NOT = { has_country_flag = aiattachecooldown }
+			}
+			OR = {
+				ROOT = { has_opinion = { target = THIS value > 0 } }
+				has_opinion = { target = ROOT value > 0 }
+			}
+			has_war = yes
+		}
+
+		cost = 35
+		command_power = 20
+
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+
+		icon = 1
+
+		receive_description = AISEND_ATTACHE_RECIEVER_LOC
+
+		complete_effect = {
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetName]: diplomatic action complete_effect aisend_attache"
+			}
+			ROOT = {
+				diplomatic_relation = {
+					country = PREV
+					relation = send_attache
+					active = yes
+				}
+				set_country_flag = {
+					flag = airecallcooldown
+					days = 30
+					value = 1
+				}
+				if = { limit = { is_major = yes }
+					set_country_flag = { flag = aiattachecooldown days = 28 value = 1 }
+				}
+				else = {
+					set_country_flag = { flag = aiattachecooldown days = 160 value = 1 }
+				}
+			}
+		}
+
+		ai_desire = {
+			base = 1
+			modifier = {
+				add = 1
+				has_opinion = { target = ROOT value > 40 }
+			}
+			modifier = {
+				add = -5
+				ROOT = { has_stability < 0.25 }
+			}
+			modifier = {
+				add = 5
+				has_opinion = { target = ROOT value > 100 }
+			}
+			modifier = {
+				add = 1
+				surrender_progress < 0.1
+			}
+			modifier = {
+				add = -2
+				is_major = yes
+			}
+			modifier = {
+				add = 3
+				ROOT = {
+					is_major = yes
+				}
+			}
+			modifier = {
+				add = -2
+				ROOT = {
+					has_army_experience > 150
+				}
+			}
+			modifier = {
+				add = 1
+				ROOT = {
+					has_army_experience < 50
+				}
+			}
+			modifier = {
+				add = 1
+				ROOT = {
+					is_major = yes
+				}
+			}
+			modifier = {
+				add = -4
+				ROOT = {
+					political_power_growth < 1
+				}
+			}
+			modifier = {
+				add = 50
+				has_volunteers_amount_from = {
+					tag = ROOT
+					count > 1
+				}
+			}
+			modifier = {
+				add = 1
+				threat > 0.8
+			}
+			modifier = {
+				add = -4
+				ROOT = {
+					has_war = yes
+				}
+			}
+		}
+
+		ai_acceptance = {
+			condition = {
+				base = 100
+			}
+		}
+	}
+
+
+	airecall_attache = {
+		allowed = { has_game_rule = { rule = rule_enable_AI_using_attaches option = yes } }
+
+		visible = {
+			has_attache_from = ROOT
+			ROOT = { is_ai = yes }
+		}
+
+		selectable = {
+			# doing this for nicer tooltips
+			ROOT = { is_ai = yes }
+			has_attache_from = ROOT
+			has_war = yes
+			ROOT = {
+				NOT = { has_country_flag = recalled_attache_cooldown }
+			}
+		}
+
+		cost = 5
+
+		requires_acceptance = no
+		show_acceptance_on_action_button = yes
+
+		icon = 1
+
+		receive_description = AIRECALL_ATTACHE_RECIEVER_LOC
+		accept_title = AIRECALL_ATTACHE_ACCEPTED_TITLE
+		accept_description = AIRECALL_ATTACHE_ACCEPTED_DESC
+
+		complete_effect = {
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetName]: diplomatic action complete_effect airecall_attache"
+			}
+			ROOT = {
+				recall_attache = PREV
+				set_country_flag = { flag = recalled_attache_cooldown days = 90 value = 1 }
+			}
+		}
+
+		ai_desire = {
+			base = -1
+			modifier = {
+				add = 1
+				ROOT = {
+					has_war = yes
+				}
+			}
+			modifier = {
+				add = -3
+				ROOT = {
+					has_opinion = {
+						target = THIS
+						value > 100
+					}
+				}
+			}
+			modifier = {
+				add = 5
+				surrender_progress > 0.5
+			}
+			modifier = {
+				add = 15
+				has_opinion = { target = THIS value < -10 }
+			}
+			modifier = {
+				add = 50
+				ROOT = {
+					has_opinion = { target = THIS value < -50 }
+				}
+			}
+		}
+
+		ai_acceptance = {
+			condition = {
+				base = 100
+			}
+		}
+	}
+}

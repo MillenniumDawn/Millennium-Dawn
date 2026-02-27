@@ -1,97 +1,138 @@
-# Style Guide
+# Contributing to Millennium Dawn
 
-It helps to read code if it is written in a consistent style. Contributors to Millennium Dawn should agree to and adhere to our stylization and keep files consistent.
+Thank you for your interest in contributing to Millennium Dawn!
 
-Stylization and other clean up contributions are more than welcome if they fix inconsistencies. The Millennium Dawn team does run CWTools and pipeline formatters that keep stylization consistent for the team.
+## Quick Links
 
-## Development Environment Setup
+- [Documentation](https://millenniumdawn.github.io/Millennium-Dawn/)
+- [Discord](http://discord.gg/millenniumdawn)
+- [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md)
+- [Code Resources](./docs/dev-resources/code-resource.md)
 
-### Python Installation
+## Development Setup
 
-Python is required for running pre-commit hooks and other development tools.
-
-**Windows:**
-
-1. Download Python from [python.org](https://www.python.org/downloads/)
-2. During installation, check "Add Python to PATH"
-3. Verify installation by opening Command Prompt and running:
-   ```bash
-   python --version
-   ```
-
-**macOS:**
-
-1. Install using Homebrew (recommended):
-   ```bash
-   brew install python
-   ```
-2. Or download from [python.org](https://www.python.org/downloads/)
-3. Verify installation:
-   ```bash
-   python3 --version
-   ```
-
-**Linux (Ubuntu/Debian):**
+### Python (Required for Tools)
 
 ```bash
-sudo apt update
-sudo apt install python3 python3-pip
-```
-
-### Pre-commit Setup
-
-Pre-commit helps automatically format code and catch issues before commits.
-
-**Installation:**
-
-```bash
-# Install pre-commit
 pip install pre-commit
-
-# Navigate to your Millennium Dawn repository
-cd /path/to/millennium-dawn
-
-# Install the pre-commit hooks
 pre-commit install
 ```
 
-**Configuration:**
-The repository should include a `.pre-commit-config.yaml` file. If it doesn't exist, create one with appropriate hooks for your file types.
+### Pre-commit Usage
 
-**Usage:**
+```bash
+# Run all hooks
+pre-commit run --all-files
 
-- Pre-commit will automatically run on each commit
-- To manually run on all files: `pre-commit run --all-files`
-- To update hooks: `pre-commit autoupdate`
+# Update hooks
+pre-commit autoupdate
+```
 
-## Code Style Guidelines
+## Code Standards
 
-### Localization files (.yml)
+### Localization (.yml)
 
-- indent 1 space
-- Remove all 0/1 after the : in string pairs
+- 1-space indentation
+- UTF-8 with BOM encoding
+- Remove trailing 0/1 after colons
 
-### Code/Script Files
+### Script Files (.txt)
 
-- indent: 1 tab (4 spaces)
-- Comments go above or below the code
+- 1 tab indentation
+- Comments above/below code blocks
+- Include logging in effects
+- Follow naming conventions: `TAG_name_here`
 
-### Changelog
+### Key Rules
 
-- All changes should be documented in the changelog where applicable
+- Use `is_triggered_only = yes` for events
+- Include `ai_will_do` in focuses
+- Remove redundant code (`allowed = { always = no }`)
 
-### Resources
+### Docs Content Rules (`docs/`)
 
-- Resources or useful PDFs can be stored in Modding Resources for all Millennium Dawn team members
+- Docs are now built with Astro 5+ and content lives in `docs/src/content/**`.
+- Use Markdown/frontmatter only. Do not add Liquid tags (`{% ... %}` or `{{ ... }}`).
+- Internal links should be root-relative, for example: `[Tutorial](/tutorials/)`.
+- Do not hardcode `"/Millennium-Dawn/..."` in markdown links. Base path is applied during build.
+- Apply the same pattern to image links: `![Alt](/assets/images/example.png)`.
+- For country pages, keep metadata in frontmatter and write section content in markdown body.
 
-## Contributing
+### Docs Local Checks
 
-When contributing to Millennium Dawn:
+[Install Bun](https://bun.com/) first (one-time setup on your computer).
 
-1. Ensure Python and pre-commit are installed
-2. Follow the established code style guidelines
-3. Run pre-commit hooks before submitting
-4. Document changes in the changelog
-5. Keep stylization consistent across files
+If you only want to edit docs content (and are not a developer), follow these steps:
 
-For questions about style or setup, consult the team or refer to the Modding Resources.
+1. Open a terminal in this repository.
+2. Go to the docs folder:
+
+```bash
+cd docs
+```
+
+3. First time only, install required packages:
+
+```bash
+bun install
+```
+
+4. Start the local docs website:
+
+```bash
+bun run dev
+```
+
+5. Open the local URL shown in the terminal (usually `http://localhost:4321/`).
+6. Edit content files in `docs/src/content/`, save, and refresh the browser.
+
+Before opening a PR, run these checks from the same `docs` folder:
+
+```bash
+bun run lint:md     # checks markdown formatting
+bun run build       # builds the production site
+bun run check:links # checks broken links
+```
+
+See [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) for details.
+
+## Pull Request Process
+
+1. Fork the repository
+2. Create a feature branch
+3. Make changes following style guidelines
+4. Run pre-commit hooks
+5. Update [Changelog.txt](./Changelog.txt)
+6. Add yourself to [AUTHORS.md](./docs/misc/authors.md)
+7. Submit a pull request
+
+## Changelog Guidelines
+
+- Write full sentences describing changes
+- No internal code references (e.g., "ENG_ideas")
+- Jokes allowed if in good taste
+- Document all significant changes
+
+## AI Policy
+
+### AI-Assisted Code
+
+- AI-generated code is allowed with human review
+- Must include personal stylization
+- Cannot be pure generated content without review
+
+### AI-Generated Art
+
+- **Not allowed** under any circumstances
+- All artwork must be human-created
+- Exception: Reference images for artists (must be converted/stylized)
+
+## Resources
+
+- [Dev Resources](./docs/dev-resources/) - Tools and guides
+- [Focus Tree Lifecycle](./docs/dev-resources/focus-tree-lifecycle-checklist.md)
+- [Game Rules Reference](./docs/dev-resources/game-rules.md)
+
+---
+
+For questions, join the [Discord](http://discord.gg/millenniumdawn) or open an issue.

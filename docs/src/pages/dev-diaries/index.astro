@@ -1,0 +1,49 @@
+---
+import { getEntry } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { withBase } from "../../lib/urls";
+
+const archiveEntry = await getEntry("devDiaryArchive", "index");
+if (!archiveEntry) {
+  throw new Error("Missing devDiaryArchive/index data entry");
+}
+const groups = archiveEntry.data;
+---
+
+<BaseLayout
+  title="Dev Diaries"
+  pageId="dev-diaries"
+  description="Development diaries from the Millennium Dawn mod team, covering new features, changes, and updates."
+  canonicalPath="/dev-diaries/"
+>
+  <h1>Dev Diary Lists</h1>
+  <p>
+    The Millennium Dawn team rarely writes dev diaries due to release cadence. This section keeps an archive of in-repository and
+    external diary entries.
+  </p>
+
+  {groups.map((group) => (
+    <>
+      <h2>{group.title}</h2>
+      <details>
+        <summary>{group.title}</summary>
+        <ul>
+          {(group.entries || []).map((entry) => {
+            const rawUrl = (entry.url || "").trim();
+            const href = !rawUrl
+              ? ""
+              : rawUrl.includes("://")
+                ? rawUrl
+                : withBase(rawUrl);
+            return (
+              <li>
+                {href ? <a href={href} aria-label={entry.title}>{entry.title}</a> : entry.title}
+                {entry.note ? ` (${entry.note})` : ""}
+              </li>
+            );
+          })}
+        </ul>
+      </details>
+    </>
+  ))}
+</BaseLayout>
