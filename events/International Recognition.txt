@@ -974,6 +974,247 @@ country_event = {
 	}
 }
 
+country_event = {
+	id = recognition.20
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		var:recog_requester = {
+			country_event = recognition.25
+		}
+
+		clear_variable = recog_requester
+	}
+}
+
+country_event = {
+	id = recognition.25
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		FROM = {
+			country_event = recognition.16
+		}
+	}
+}
+
+country_event = {
+	id = recognition.30
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		var:prev_owner = {
+			country_event = recognition.31
+		}
+	}
+}
+
+country_event = {
+	id = recognition.31
+	title = recognition.31.t
+	desc = recognition.31.d
+
+	is_triggered_only = yes
+
+	#Don't recognize option
+	option = {
+		name = recognition.31.a
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	#Recognize option
+	option = {
+		name = recognition.31.b
+
+		set_country_flag = Recognized_@FROM
+
+		FROM = {
+			country_event = recognition.16
+		}
+
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = recognition.16
+	title = recognition.16.t
+	desc = recognition.16.d
+
+	is_triggered_only = yes
+
+	#Don't recognize option
+	option = {
+		name = recognition.16.a
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	#Recognize option
+	option = {
+		name = recognition.16.b
+
+		add_political_power = -25
+		set_country_flag = Recognised_@FROM
+
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+
+			var:v = {
+				if = {
+					limit = { has_country_flag = Recognised_@FROM }
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = supporting_recognized_ally
+					}
+					news_event = { id = recognition.9 }
+				}else_if = {
+					limit = {
+						OR = {
+							has_country_flag = original_owner_@FROM
+							has_country_flag = supports_original_owner_@FROM
+						}
+						NOT = { has_country_flag = Recognised_@FROM }
+					}
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = recognises_them
+					}
+					news_event = { id = recognition.1 }
+				}
+			}
+		}
+		FROM = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = recognises_us
+			}
+			news_event = { id = recognition.2 }
+			add_to_variable = { Granted_Recognition = 1 }
+		}
+		missile_ui_update = yes
+
+		ai_chance = {
+			base = 0
+
+			modifier = {
+				add = 10
+
+				has_opinion = {
+					target = FROM
+					value > 50
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = recognition.17
+	is_triggered_only = yes
+	hidden = yes
+	immediate = {
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+
+			var:v = {
+				if = {
+					limit = {
+						NOT = { has_country_flag = Recognised_@ROOT }
+						NOT = { has_country_flag = original_owner_@ROOT }
+					}
+					country_event = recognition.18
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = recognition.18
+	title = recognition.18.t
+	desc = recognition.18.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = recognition.18.a
+
+		ai_chance = {
+			base = 0
+
+			modifier = {
+				add = 100
+				has_country_flag = original_owner_@FROM
+			}
+			modifier = {
+				add = 25
+				has_country_flag = supports_original_owner_@FROM
+			}
+		}
+	}
+
+	option = {
+		name = recognition.18.b
+
+		set_country_flag = Recognised_@FROM
+
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+
+			var:v = {
+				if = {
+					limit = { has_country_flag = Recognised_@FROM }
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = supporting_recognized_ally
+					}
+					news_event = { id = recognition.9 }
+				}else_if = {
+					limit = {
+						OR = {
+							has_country_flag = original_owner_@FROM
+							has_country_flag = supports_original_owner_@FROM
+						}
+						NOT = { has_country_flag = Recognised_@FROM }
+					}
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = recognises_them
+					}
+					news_event = { id = recognition.1 }
+				}
+			}
+		}
+
+		FROM = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = recognises_us
+			}
+			news_event = { id = recognition.2 }
+			add_to_variable = { Granted_Recognition = 1 }
+		}
+
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
 ### [FROM.GetName] gets SC recomendation
 news_event = {
 	id = recognition.121

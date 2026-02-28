@@ -98,6 +98,12 @@ on_startup_international = {
 	set_variable = { global.international_system_refresh_gui = 1 }
 }
 
+add_tester = {
+	add_to_array = { cyber_potential_targets = SOV }
+	add_to_array = { cyber_active_targets = SOV }
+	missile_ui_update = yes
+}
+
 clr_country_pmc_flag = {
 	clr_country_flag = blackwater_sel
 	clr_country_flag = aegis_sel
@@ -159,6 +165,24 @@ un_recog_setup_check = {
 				}
 			}
 			add_to_array = { global.Unrecognised_States = THIS }
+
+			for_each_loop = {
+				array = global.UN_general_assembly
+				value = v
+
+				var:v = {
+					if = {
+						limit = {
+							has_country_flag = original_owner_@PREV
+						}
+						set_temp_variable = { spot_tracker = THIS }
+						PREV = {
+							set_variable = { prev_owner = spot_tracker }
+						}
+					}
+				}
+			}
+
 		} else = {
 			if = {
 				limit = { is_in_array = { global.Unrecognised_States = THIS } }
@@ -168,6 +192,22 @@ un_recog_setup_check = {
 				array = global.Unrecognised_States
 				value = THIS
 				index = 0
+			}
+			for_each_loop = {
+				array = global.UN_general_assembly
+				value = v
+
+				var:v = {
+					if = {
+						limit = {
+							has_country_flag = original_owner_@PREV
+						}
+						set_temp_variable = { spot_tracker = THIS }
+						PREV = {
+							set_variable = { prev_owner = spot_tracker }
+						}
+					}
+				}
 			}
 		}
 	}else = {
@@ -1506,7 +1546,7 @@ un_ai_ga_consider_resolution = {
 			}
 
 			# Do nothing - most months the AI shouldn't propose
-			#80 = { }
+			60 = { }
 		}
 
 		if = {

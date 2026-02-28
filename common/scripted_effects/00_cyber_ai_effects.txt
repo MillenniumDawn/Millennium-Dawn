@@ -1,0 +1,329 @@
+# Author(s): Doolittle
+# AI scripted effects for the Cyberwarfare System
+#
+# Entry point: ai_cyber_monthly (called from on_monthly for is_ai + has_cyber_capability_1)
+#
+# Three aggression levels based on target relationship:
+#   Surge  (90%): target is a war enemy
+#   Active (60%): target opinion < -50
+#   Passive(30%): any hostile (opinion < 0, via is_valid_cyber_target)
+#
+# Operation selection: highest available tier first, with a 30% extra gate on Tier 4.
+# Defensive ops fire independently of offensive capacity checks.
+# Investment fires at 5% monthly chance with a 90-day cooldown.
+
+# Monthly dispatch — selects a target and launches an offensive op if the roll succeeds,
+# then evaluates defensive ops and rare investment.
+#TODO: Rewrite this. We want the AI to first build a targeting array like the player, *then* select targets out of that array
+#This will also allow the AI to have false flag attacks like players, which makes for extra spicy
+ai_cyber_monthly = {
+	if = {
+		limit = { is_debug = yes }
+		log = "[THIS.GetTag] has started the cyberwarfare loop"
+	}
+	if = {
+		limit = {
+			check_variable = { cyber_ongoing_operations < cyber_max_targets }
+			command_power > 5
+		}
+		set_variable = { cyber_op_target = 0 }
+
+		# Priority 1: At war — Surge (90% monthly roll)
+		random_country = {
+			limit = {
+				is_valid_cyber_target = yes
+				has_war_with = ROOT
+			}
+			set_variable = { ROOT.cyber_op_target = THIS }
+		}
+		if = {
+			limit = { NOT = { check_variable = { cyber_op_target = 0 } } }
+			random = {
+				chance = 90
+				ai_cyber_select_and_launch = yes
+			}
+		}
+
+		# Priority 2: Deep rival (opinion < -50) — Active (60%)
+		if = {
+			limit = { check_variable = { cyber_op_target = 0 } }
+			random_country = {
+				limit = {
+					is_valid_cyber_target = yes
+					ROOT = { has_opinion = { target = PREV value < -50 } }
+				}
+				set_variable = { ROOT.cyber_op_target = THIS }
+			}
+			if = {
+				limit = { NOT = { check_variable = { cyber_op_target = 0 } } }
+				random = {
+					chance = 60
+					ai_cyber_select_and_launch = yes
+				}
+			}
+		}
+
+		# Priority 3: Any hostile (opinion < 0) — Passive (30%)
+		if = {
+			limit = { check_variable = { cyber_op_target = 0 } }
+			random_country = {
+				limit = { is_valid_cyber_target = yes }
+				set_variable = { ROOT.cyber_op_target = THIS }
+			}
+			if = {
+				limit = { NOT = { check_variable = { cyber_op_target = 0 } } }
+				random = {
+					chance = 30
+					ai_cyber_select_and_launch = yes
+				}
+			}
+		}
+	}
+
+	ai_cyber_defensive = yes
+
+	random = {
+		chance = 5
+		ai_cyber_investment = yes
+	}
+}
+
+# Selects the highest available operation tier and launches it against cyber_op_target.
+# Uses cyber_op_type = 0 as a sentinel: 0 means no op selected yet.
+# CP is deducted inside the random_list entry that selects the op type.
+# Requires cyber_op_target set to the target country before calling.
+ai_cyber_select_and_launch = {
+	set_variable = { cyber_op_type = 0 }
+
+	# Tier 4 — extra 30% gate to keep high-impact ops rare
+	if = {
+		limit = {
+			has_cyber_capability_4 = yes
+			command_power > 35
+		}
+		random = {
+			chance = 30
+			random_list = {
+				1 = {
+					modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_crit_tracking_attack_by_@ROOT } }
+					add_command_power = -35
+					set_variable = { cyber_op_type = 5 }
+				}
+				1 = {
+					modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_zero_day_strike_tracking_attack_by_@ROOT } }
+					add_command_power = -35
+					set_variable = { cyber_op_type = 15 }
+				}
+				1 = {
+					modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_deception_campaign_tracking_attack_by_@ROOT } }
+					add_command_power = -35
+					set_variable = { cyber_op_type = 14 }
+				}
+			}
+		}
+	}
+
+	# Tier 3
+	if = {
+		limit = {
+			check_variable = { cyber_op_type = 0 }
+			has_cyber_capability_3 = yes
+			command_power > 20
+		}
+		random_list = {
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_infra_tracking_attack_by_@ROOT } }
+				add_command_power = -20
+				set_variable = { cyber_op_type = 4 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_financial_system_attack_tracking_attack_by_@ROOT } }
+				add_command_power = -20
+				set_variable = { cyber_op_type = 11 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_logistics_disruption_tracking_attack_by_@ROOT } }
+				add_command_power = -20
+				set_variable = { cyber_op_type = 12 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_sleeper_network_tracking_attack_by_@ROOT } }
+				add_command_power = -20
+				set_variable = { cyber_op_type = 13 }
+			}
+		}
+	}
+
+	# Tier 2
+	if = {
+		limit = {
+			check_variable = { cyber_op_type = 0 }
+			has_cyber_capability_2 = yes
+			command_power > 10
+		}
+		random_list = {
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_economic_tracking_attack_by_@ROOT } }
+				add_command_power = -10
+				set_variable = { cyber_op_type = 2 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_propaganda_tracking_attack_by_@ROOT } }
+				add_command_power = -10
+				set_variable = { cyber_op_type = 3 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_election_interference_tracking_attack_by_@ROOT } }
+				add_command_power = -10
+				set_variable = { cyber_op_type = 8 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_industrial_espionage_tracking_attack_by_@ROOT } }
+				add_command_power = -10
+				set_variable = { cyber_op_type = 9 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_comms_intercept_tracking_attack_by_@ROOT } }
+				add_command_power = -10
+				set_variable = { cyber_op_type = 10 }
+			}
+		}
+	}
+
+	# Tier 1
+	if = {
+		limit = {
+			check_variable = { cyber_op_type = 0 }
+			command_power > 5
+		}
+		random_list = {
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_gps_tracking_attack_by_@ROOT } }
+				add_command_power = -5
+				set_variable = { cyber_op_type = 1 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_sigint_surveillance_tracking_attack_by_@ROOT } }
+				add_command_power = -5
+				set_variable = { cyber_op_type = 6 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_radar_spoofing_tracking_attack_by_@ROOT } }
+				add_command_power = -5
+				set_variable = { cyber_op_type = 7 }
+			}
+		}
+	}
+
+	if = {
+		limit = { NOT = { check_variable = { cyber_op_type = 0 } } }
+		cyber_launch_operation = yes
+	}
+}
+
+# Activates defensive cyber operations based on current threat context.
+# Fires independently of offensive capacity (no check_variable needed).
+ai_cyber_defensive = {
+	# Network Hardening (T1) — activate when at war and not already running
+	if = {
+		limit = {
+			has_cyber_capability_1 = yes
+			command_power > 5
+			has_war = yes
+			NOT = { has_idea = cyber_network_hardening_active }
+		}
+		add_command_power = -5
+		activate_mission = cyber_network_hardening_tracking
+		add_timed_idea = { idea = cyber_network_hardening_active days = 120 }
+	}
+
+	# Counter-Intrusion (T2) — reactive when intelligence infiltration is detected
+	if = {
+		limit = {
+			has_cyber_capability_2 = yes
+			command_power > 10
+			NOT = { has_idea = cyber_counter_intrusion_active }
+			OR = {
+				has_idea = cyber_sigint_surveillance_malus
+				has_idea = cyber_comms_intercept_malus
+				has_idea = cyber_sleeper_network_malus
+			}
+		}
+		add_command_power = -10
+		activate_mission = cyber_counter_intrusion_tracking
+		add_timed_idea = { idea = cyber_counter_intrusion_active days = 30 }
+	}
+
+	# Attribution Hunt (T3) — 15% monthly chance when under attack and world tension elevated
+	if = {
+		limit = {
+			has_cyber_capability_3 = yes
+			command_power > 20
+			NOT = { has_idea = cyber_attribution_hunt_active }
+			OR = {
+				has_idea = cyber_gps_jamming_malus
+				has_idea = cyber_economic_disruption_malus
+				has_idea = cyber_propaganda_ops_malus
+				has_idea = cyber_infrastructure_damage_malus
+				has_idea = cyber_critical_strike_malus
+				has_idea = cyber_sigint_surveillance_malus
+				has_idea = cyber_radar_spoofing_malus
+				has_idea = cyber_election_interference_malus
+				has_idea = cyber_industrial_espionage_malus
+				has_idea = cyber_comms_intercept_malus
+				has_idea = cyber_financial_system_attack_malus
+				has_idea = cyber_logistics_disruption_malus
+				has_idea = cyber_sleeper_network_malus
+				has_idea = cyber_deception_campaign_malus
+				has_idea = cyber_zero_day_strike_malus
+			}
+		}
+		random = {
+			chance = 15
+			add_command_power = -20
+			activate_mission = cyber_attribution_hunt_tracking
+			add_timed_idea = { idea = cyber_attribution_hunt_active days = 60 }
+		}
+	}
+}
+
+# Occasional investment into cyber offensive or defensive capacity.
+# Fires at 5% monthly chance (from ai_cyber_monthly) with a 90-day cooldown flag.
+ai_cyber_investment = {
+	if = {
+		limit = {
+			command_power > 75
+			NOT = { has_country_flag = ai_cyber_invested_flag }
+		}
+		set_country_flag = { flag = ai_cyber_invested_flag days = 90 }
+		if = {
+			limit = { has_war = yes }
+			random_list = {
+				7 = {
+					add_command_power = -25
+					add_to_variable = { cyber_offense_investment = 2 }
+					calculate_cyber_capability = yes
+				}
+				3 = {
+					add_command_power = -25
+					add_to_variable = { cyber_defense_investment = 2 }
+					calculate_cyber_capability = yes
+				}
+			}
+		}
+		else = {
+			random_list = {
+				1 = {
+					add_command_power = -25
+					add_to_variable = { cyber_offense_investment = 2 }
+					calculate_cyber_capability = yes
+				}
+				1 = {
+					add_command_power = -25
+					add_to_variable = { cyber_defense_investment = 2 }
+					calculate_cyber_capability = yes
+				}
+			}
+		}
+	}
+}
