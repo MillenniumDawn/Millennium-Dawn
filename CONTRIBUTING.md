@@ -49,11 +49,50 @@ pre-commit autoupdate
 - Include `ai_will_do` in focuses
 - Remove redundant code (`allowed = { always = no }`)
 
-### Docs Link Rules (`docs/`)
+### Docs Content Rules (`docs/`)
 
-- Do not hardcode `"/Millennium-Dawn/..."` in markdown links.
-- Use Liquid + `relative_url`, for example: `[Tutorial]({{ '/tutorials/' | relative_url }})`
-- Apply the same pattern to image links: `![Alt]({{ '/uploads/file.png' | relative_url }})`
+- Docs are now built with Astro 5+ and content lives in `docs/src/content/**`.
+- Use Markdown/frontmatter only. Do not add Liquid tags (`{% ... %}` or `{{ ... }}`).
+- Internal links should be root-relative, for example: `[Tutorial](/tutorials/)`.
+- Do not hardcode `"/Millennium-Dawn/..."` in markdown links. Base path is applied during build.
+- Apply the same pattern to image links: `![Alt](/assets/images/example.png)`.
+- For country pages, keep metadata in frontmatter and write section content in markdown body.
+
+### Docs Local Checks
+
+[Install Bun](https://bun.com/) first (one-time setup on your computer).
+
+If you only want to edit docs content (and are not a developer), follow these steps:
+
+1. Open a terminal in this repository.
+2. Go to the docs folder:
+
+```bash
+cd docs
+```
+
+3. First time only, install required packages:
+
+```bash
+bun install
+```
+
+4. Start the local docs website:
+
+```bash
+bun run dev
+```
+
+5. Open the local URL shown in the terminal (usually `http://localhost:4321/`).
+6. Edit content files in `docs/src/content/`, save, and refresh the browser.
+
+Before opening a PR, run these checks from the same `docs` folder:
+
+```bash
+bun run lint:md     # checks markdown formatting
+bun run build       # builds the production site
+bun run check:links # checks broken links
+```
 
 See [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) for details.
 
@@ -76,17 +115,28 @@ See [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) for
 
 ## AI Policy
 
+The Millennium Dawn team takes AI contributions or usage very seriously. We understand that AI can be helpful and improve the productivity of modding, but it is your responsibility to use it appropriately.
+We do not under any permissions allow any ML/AI generated assets for graphics if AI is the sole contributor.
+
 ### AI-Assisted Code
 
-- AI-generated code is allowed with human review
-- Must include personal stylization
-- Cannot be pure generated content without review
+AI-assisted code is permitted assuming you are using it responsibly. Several team members already integrate open source models, closed source models and otherwise into their workflow.
+
+_Rules_
+
+- All code must be personally reviewed before submitted to team review
+- All AI code must adhere to team standards and be properly vetted
+- Use pre-commit to ensure the contributions match the expected style
+
+### AI-Assisted Localization
+
+- AI-generated localization is allowed with human review but must maintain accuracy, styling and must still be originally created by a human
 
 ### AI-Generated Art
 
-- **Not allowed** under any circumstances
-- All artwork must be human-created
-- Exception: Reference images for artists (must be converted/stylized)
+- Pure AI Generated Art is **not allowed** under any circumstances
+- AI-Generated side profiles of military vehicles can be acceptable if there is no side profile available for graphics
+  - All graphics using this method MUST follow standardization and be hand done by a human collaborator
 
 ## Resources
 
