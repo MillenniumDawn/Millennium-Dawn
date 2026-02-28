@@ -44,35 +44,36 @@ calculate_cyber_capability = {
 		max = 5
 	}
 
+	clamp_temp_variable = {
+		var = cyber_targets_num
+		max = 10
+	}
+
 	for_loop_effect = {
-		end = cyber_capability
+		end = cyber_targets_num
 
 		if = {
 			limit = {
-				check_variable = { ROOT.cyber_op_target_nation^num < cyber_capability }
+				check_variable = { ROOT.cyber_op_target_nation^num < cyber_targets_num }
 			}
 			add_to_array = { ROOT.cyber_op_target_nation = 0 }
 		}
 
 		if = {
 			limit = {
-				check_variable = { ROOT.cyber_op_running^num < cyber_capability }
+				check_variable = { ROOT.cyber_op_running^num < cyber_targets_num }
 			}
 			add_to_array = { ROOT.cyber_op_running = 0 }
 		}
 
 		if = {
 			limit = {
-				check_variable = { ROOT.cyber_op_type_arr^num < cyber_capability }
+				check_variable = { ROOT.cyber_op_type_arr^num < cyber_targets_num }
 			}
 			add_to_array = { ROOT.cyber_op_type_arr = 0 }
 		}
 	}
 
-	clamp_temp_variable = {
-		var = cyber_targets_num
-		max = 10
-	}
 	set_variable = { cyber_max_targets = cyber_capability }
 	set_variable = { cyber_op_max_targets = cyber_targets_num }
 	missile_ui_update = yes
@@ -176,24 +177,69 @@ cyber_rebuild_potential_targets = {
 	missile_ui_update = yes
 }
 
-# Two-roll attack resolution. Requires cyber_op_target_index set as temp var before calling.
+# Two-roll attack resolution. Requires cyber_op_cur_target_index set as temp var before calling.
 # Sets cyber_roll_result on ROOT:
 #   0 = execution failed (short cooldown applied)
 #   1 = success, hidden
 #   2 = success, detected but unattributed
 #   3 = success, attributed to ROOT
+#   4 = success, false-flagged to another nation
+#
+# Roll 1 modifiers: +decrypt_progress*30, −target.cyber_defense*0.6, −10 if target hardening,
+#   −5 if target attribution hunt, +10 if SIGINT surveillance active against target
+# Roll 2 modifiers: +decrypt_progress*15, −target.cyber_defense*0.3, −15 if target counter-intrusion,
+#   −20 if target attribution hunt, −5 if ROOT at war, +25 false_flag_chance if deception campaign active
 cyber_two_roll = {
-	# Roll 1: Execution — can we carry out the operation?
+	# Set target reference first — required by all subsequent modifiers
+	set_temp_variable = { cur_target_nation = cyber_op_target_nation^cyber_op_cur_target_index }
+
+	# --- Roll 1: Execution — can we carry out the operation? ---
 	set_temp_variable = { eff_offense = cyber_offense_power }
 
+	# Decryption bonus: knowing the target's cipher reveals internal network structure
 	set_temp_variable = { decrypt_mod = decryption_progress@var:cur_target_nation }
-	add_to_temp_variable = { decrypt_mod = 1 }
+	set_temp_variable = { decrypt_offense = decrypt_mod }
+	multiply_temp_variable = { decrypt_offense = 30 }
+	add_to_temp_variable = { eff_offense = decrypt_offense }
 
-	log = "[?decrypt_mod] is currently the progress point"
+	# Target cyber defense penalty
+	var:cur_target_nation = {
+		set_temp_variable = { def_pen = cyber_defense_power }
+	}
+	multiply_temp_variable = { def_pen = -0.6 }
+	add_to_temp_variable = { eff_offense = def_pen }
 
-	clamp_temp_variable = { var = eff_offense min = 1 max = 100 }
+	# Active defensive operations on target reduce exploitable attack surface
+	if = {
+		limit = { var:cur_target_nation = { has_idea = cyber_network_hardening_active } }
+		add_to_temp_variable = { eff_offense = -10 }
+	}
+	if = {
+		limit = { var:cur_target_nation = { has_idea = cyber_attribution_hunt_active } }
+		add_to_temp_variable = { eff_offense = -5 }
+	}
 
-	set_temp_variable = { cur_target_nation = cyber_op_target_nation^cyber_op_cur_target_index }
+	# Active SIGINT surveillance provides live network access, improving execution
+	if = {
+		limit = { var:cur_target_nation = { has_country_flag = is_under_sigint_surveillance_tracking_attack_by_@ROOT } }
+		add_to_temp_variable = { eff_offense = 10 }
+	}
+
+	# Persistent access from previously successful ops
+	if = {
+		limit = { var:cur_target_nation = { has_country_flag = has_sleeper_network_tracking_access_from_@ROOT } }
+		add_to_temp_variable = { eff_offense = 15 }
+	}
+	if = {
+		limit = { var:cur_target_nation = { has_country_flag = has_comms_intercept_tracking_access_from_@ROOT } }
+		add_to_temp_variable = { eff_offense = 8 }
+	}
+	if = {
+		limit = { var:cur_target_nation = { has_country_flag = has_industrial_espionage_tracking_access_from_@ROOT } }
+		add_to_temp_variable = { eff_offense = 5 }
+	}
+
+	clamp_temp_variable = { var = eff_offense min = 5 max = 95 }
 
 	set_temp_variable = { cyber_roll_result = 0 }
 	random = {
@@ -216,9 +262,43 @@ cyber_two_roll = {
 			}
 		}
 
-		# Roll 2: Stealth — do they detect the intrusion?
+		# --- Roll 2: Stealth — do they detect the intrusion? ---
 		set_temp_variable = { stealth_chance = 80 }
 		add_to_temp_variable = { stealth_chance = cyber_attribution }
+
+		# Decryption bonus: cipher knowledge masks our traffic patterns
+		set_temp_variable = { decrypt_stealth = decrypt_mod }
+		multiply_temp_variable = { decrypt_stealth = 15 }
+		add_to_temp_variable = { stealth_chance = decrypt_stealth }
+
+		# Target defense improves their detection capability
+		var:cur_target_nation = {
+			set_temp_variable = { def_pen = cyber_defense_power }
+		}
+		multiply_temp_variable = { def_pen = -0.3 }
+		add_to_temp_variable = { stealth_chance = def_pen }
+
+		# Active CI ideas on target increase detection chance
+		if = {
+			limit = { var:cur_target_nation = { has_idea = cyber_counter_intrusion_active } }
+			add_to_temp_variable = { stealth_chance = -15 }
+		}
+		if = {
+			limit = { var:cur_target_nation = { has_idea = cyber_attribution_hunt_active } }
+			add_to_temp_variable = { stealth_chance = -20 }
+		}
+
+		# Comms intercept gives insight into target's detection posture, improving stealth
+		if = {
+			limit = { var:cur_target_nation = { has_country_flag = has_comms_intercept_tracking_access_from_@ROOT } }
+			add_to_temp_variable = { stealth_chance = 10 }
+		}
+
+		# Wartime: heightened network monitoring on all sides
+		if = {
+			limit = { has_war = yes }
+			add_to_temp_variable = { stealth_chance = -5 }
+		}
 
 		clamp_temp_variable = { var = stealth_chance min = 5 max = 95 }
 
@@ -230,15 +310,21 @@ cyber_two_roll = {
 
 		set_temp_variable = { attribution_bonus = cyber_attribution_bonus }
 
+		# False flag: base chance, boosted if a deception campaign is active against the target
+		set_temp_variable = { false_flag_temp = attribution_bonus }
+		if = {
+			limit = { var:cur_target_nation = { has_country_flag = is_under_deception_campaign_tracking_attack_by_@ROOT } }
+			add_to_temp_variable = { false_flag_temp = 25 }
+		}
 		clamp_temp_variable = {
-			var = false_flag_chance
+			var = false_flag_temp
 			min = 0
 			max = 100
 		}
 
 		set_temp_variable = { false_flag_check = 0 }
 		random = {
-			chance = false_flag_chance
+			chance = false_flag_temp
 			set_temp_variable = { false_flag_check = 1 }
 		}
 
@@ -287,6 +373,28 @@ cyber_execute_operation = {
 		}
 		ROOT = { country_event = { id = MD_cyber.1 } }
 		var:cur_target_nation = {
+			# Timed access flags — encode attacker via @ROOT while still in attacker effect chain
+			if = {
+				limit = { check_variable = { cyber_op_cur_type = 9 } }
+				set_timed_country_flag = {
+					flag = has_industrial_espionage_tracking_access_from_@ROOT
+					days = 120
+				}
+			}
+			if = {
+				limit = { check_variable = { cyber_op_cur_type = 10 } }
+				set_timed_country_flag = {
+					flag = has_comms_intercept_tracking_access_from_@ROOT
+					days = 180
+				}
+			}
+			if = {
+				limit = { check_variable = { cyber_op_cur_type = 13 } }
+				set_timed_country_flag = {
+					flag = has_sleeper_network_tracking_access_from_@ROOT
+					days = 365
+				}
+			}
 			meta_effect = {
 				text = {
 					country_event = { id = MD_cyber.1[TYPE] }
@@ -362,32 +470,43 @@ cyber_execute_operation = {
 cyber_launch_operation = {
 	set_temp_variable = { cyber_open_slot = -1 }
 	for_loop_effect = {
-		end = cyber_max_targets
+		end = cyber_op_max_targets
+		break = b
+		value = t
+
 		if = {
 			limit = {
-				check_variable = { cyber_open_slot = -1 }
-				check_variable = { cyber_op_running^num = 0 }
+				check_variable = { cyber_op_running^t = 0 }
 			}
-			set_temp_variable = { cyber_open_slot = num }
+			set_temp_variable = { cyber_open_slot = t }
+			set_temp_variable = { b = 1 }
 		}
 	}
 
-	meta_effect = {
-		text = {
-			set_variable = { cyber_op_running^[SLOT] = 1 }
-			set_variable = { cyber_op_target_nation^[SLOT] = cyber_op_target }
-			set_variable = { cyber_op_type_arr^[SLOT] = cyber_op_type }
+	#Safety check, something went wrong, abort trying to do anything
+	if = {
+		limit = { NOT = { check_variable = { cyber_open_slot = -1 } } }
+		meta_effect = {
+			text = {
+				set_variable = { cyber_op_running^[SLOT] = 1 }
+				set_variable = { cyber_op_target_nation^[SLOT] = cyber_op_target }
+				set_variable = { cyber_op_type_arr^[SLOT] = cyber_op_type }
 
-			activate_mission = cyber_op_slot_[SLOT]_[TYPE]
+				activate_mission = cyber_op_slot_[SLOT]_[TYPE]
 
-			add_to_variable = { cyber_ongoing_operations = 1 }
+				add_to_variable = { cyber_ongoing_operations = 1 }
 
-			var:cyber_op_target = {
-				set_country_flag = is_under_[TYPE]_attack_by_@ROOT
+				var:cyber_op_target = {
+					if = {
+						limit = { NOT = { original_tag = ROOT } }
+						set_country_flag = is_under_[TYPE]_attack_by_@ROOT
+					}
+				}
 			}
+			SLOT = "[?cyber_open_slot]"
+			TYPE = "[cyber_target_type_name]"
 		}
-		SLOT = "[?cyber_open_slot]"
-		TYPE = "[cyber_target_type_name]"
 	}
+
 	missile_ui_update = yes
 }
