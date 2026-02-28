@@ -740,12 +740,7 @@ security_council_vote_finished = {
 				check_variable = { global.current_sc_vote_type = 2 }
 			}
 			var:global.current_sc_vote_nation = {
-				set_variable = { security_council_trade_sanctions_var = global.UN_general_assembly^num }
-				set_variable = { security_council_research_sanctions_var = global.UN_general_assembly^num }
-
-				multiply_variable = { security_council_trade_sanctions_var = 0.35 }
-				multiply_variable = { security_council_research_sanctions_var = 0.15 }
-				add_dynamic_modifier = { modifier = united_nations_security_council_sanctions }
+				apply_united_nations_sanctions = yes
 			}
 		}
 		else_if = {
@@ -994,9 +989,9 @@ general_assembly_vote_finished = {
 			set_variable = { international_research_sanctions = global.general_assembly_vote_yes }
 			multiply_variable = { international_trade_sanctions = -0.005 }
 			multiply_variable = { international_research_sanctions = -0.001 }
-			add_dynamic_modifier = {
-				modifier = united_nations_non_binding_sanctions
-			}
+			clamp_variable = { var = international_trade_sanctions min = -1.00 }
+			clamp_variable = { var = international_research_sanctions min = -0.50 }
+			add_dynamic_modifier = { modifier = united_nations_non_binding_sanctions }
 		}
 	}
 
@@ -1568,4 +1563,16 @@ un_ai_ga_consider_resolution = {
 			}
 		}
 	}
+}
+
+# Sanctions Effects
+apply_united_nations_sanctions = {
+	set_variable = { security_council_trade_sanctions_var = global.UN_general_assembly^num }
+	set_variable = { security_council_research_sanctions_var = global.UN_general_assembly^num }
+
+	multiply_variable = { security_council_trade_sanctions_var = -0.005 }
+	multiply_variable = { security_council_research_sanctions_var = -0.003 }
+	clamp_variable = { var = security_council_trade_sanctions_var min = -1.00 }
+	clamp_variable = { var = security_council_research_sanctions_var min = -0.50 }
+	add_dynamic_modifier = { modifier = united_nations_security_council_sanctions }
 }
