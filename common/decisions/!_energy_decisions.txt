@@ -22,8 +22,11 @@ decision_category_energy = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision energy_building_enrichment_facilities"
 			clear_variable = ROOT.enrichment_facility_time
-			clr_country_flag = build_three_enrichment_facility
 			clr_country_flag = single_enrichment_facility
+		}
+
+		ai_will_do = {
+			base = 0
 		}
 	}
 
@@ -50,9 +53,10 @@ decision_category_energy = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision energy_building_battery_parks"
 			clear_variable = ROOT.battery_park_time
-			clr_country_flag = build_three_battery_park
 			clr_country_flag = single_battery_park
 		}
+
+		ai_will_do = { base = 0 }
 	}
 
 	energy_automatic_fuel_purchase = {
@@ -70,6 +74,8 @@ decision_category_energy = {
 			activate_mission = energy_automatic_fuel_purchase
 			set_country_flag = { flag = recently_bought_fuel value = 1 days = 28 }
 		}
+
+		ai_will_do = { base = 0 }
 	}
 
 	block_all_reactor_grade_purchases = {
@@ -85,6 +91,8 @@ decision_category_energy = {
 			log = "[GetDateText]: [Root.GetName]: Decision block_all_reactor_grade_purchases"
 			set_country_flag = not_accepting_new_energy_offers
 		}
+
+		ai_will_do = { base = 0 }
 	}
 
 	unblock_all_reactor_grade_purchases = {
@@ -100,6 +108,8 @@ decision_category_energy = {
 			log = "[GetDateText]: [Root.GetName]: Decision unblock_all_reactor_grade_purchases"
 			clr_country_flag = not_accepting_new_energy_offers
 		}
+
+		ai_will_do = { base = 0 }
 	}
 
 	auto_accept_all_reactor_grade_purchases = {
@@ -115,6 +125,8 @@ decision_category_energy = {
 			log = "[GetDateText]: [Root.GetName]: Decision auto_accept_all_reactor_grade_purchases"
 			set_country_flag = auto_accept_all_purchases
 		}
+
+		ai_will_do = { base = 0 }
 	}
 
 	stop_auto_accept_all_reactor_grade_purchases = {
@@ -130,8 +142,12 @@ decision_category_energy = {
 			log = "[GetDateText]: [Root.GetName]: Decision stop_auto_accept_all_reactor_grade_purchases"
 			clr_country_flag = auto_accept_all_purchases
 		}
+
+		ai_will_do = { base = 0 }
 	}
 
+	# FIXME: This needs to be replaced with a more effective medium to improve speed
+	# Fucking targeted decisions
 	energy_buy_reactor_grade_material = {
 		icon = GFX_decision_energy_buy_button
 		allowed = { always = yes }
@@ -168,10 +184,9 @@ decision_category_energy = {
 			log = "[GetDateText]: [Root.GetName]: Decision energy_buy_reactor_grade_material"
 			FROM = {
 				set_country_flag = currently_considering_an_offer
-				set_temp_variable = { temp_purchase_tag = PREV.id }
 				if = {
 					limit = { NOT = { has_country_flag = auto_accept_all_purchases } }
-					set_variable = { purchaser_tag_reactor = temp_purchase_tag }
+					set_variable = { purchaser_tag_reactor = PREV.id }
 					country_event = energy.1
 				}
 				else = {
@@ -179,7 +194,7 @@ decision_category_energy = {
 					change_reactor_grade_material_effect = yes
 					set_temp_variable = { treasury_change = 2 }
 					modify_treasury_effect = yes
-					var:temp_purchase_tag = {
+					PREV = {
 						set_temp_variable = { change_resource = 2500 }
 						change_reactor_grade_material_effect = yes
 						set_temp_variable = { treasury_change = -2 }

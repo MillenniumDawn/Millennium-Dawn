@@ -1,6 +1,4 @@
 on_actions = {
-	on_capitulation = { }
-
 	#ROOT is subject FROM is previous overlord
 	on_subject_free = {
 		effect = {
@@ -38,9 +36,12 @@ on_actions = {
 	on_subject_annexed = {
 		effect = { ##Grants Cores on Annexation
 			ROOT = {
-				for_each_scope_loop = {
+				for_each_loop = {
 					array = core_states
-					add_core_of = FROM
+					value = v
+					var:v = {
+						add_core_of = FROM
+					}
 				}
 				if = { limit = { original_tag = LBA }
 					set_country_flag = LBA_prevent_giving_tribal_traits
@@ -136,37 +137,12 @@ on_actions = {
 
 					log = "[GetDateText]: [This.GetName]: country [ROOT.GetName] history file is not loaded"
 
-					set_variable = { parent_tag = FROM }
-					# Russian shards
-					if = {
-						limit = {
-							OR = {
-								tag = CSB
-								tag = ESB
-								tag = DON
-								tag = KAE
-							}
-						}
-
-						set_variable = { parent_tag = SOV }
-					}
-
-					log = "[GetDateText]: [This.GetName]: country [ROOT.GetName] parent tag is setup as [?parent_tag.GetName]"
-
 					ROOT = {
 						if = {
 							limit = {
 								NOT = { has_variable = domestic_influence_amount }
 							}
 							set_variable = { domestic_influence_amount = 100 }
-						}
-						if = {
-							limit = { NOT = { has_variable = corporate_tax_rate } }
-							set_variable = { var = corporate_tax_rate value = 20 }
-						}
-						if = {
-							limit = { NOT = { has_variable = population_tax_rate } }
-							set_variable = { var = population_tax_rate value = 20 }
 						}
 						ingame_init_investment_system = yes
 						init_auto_influence_array = yes
@@ -189,11 +165,8 @@ on_actions = {
 						set_variable = { var = population_tax_rate value = FROM.population_tax_rate }
 						set_variable = { treasury = 0 }
 
-						set_variable = { civilian_factory_employment_var = FROM.civilian_factory_employment_var }
-						set_variable = { naval_factory_employment_var = FROM.naval_factory_employment_var }
-						set_variable = { military_factory_employment_var = FROM.military_factory_employment_var }
-						set_variable = { office_employment_var = FROM.office_employment_var }
-						set_variable = { agriculture_district_employment_var = FROM.agriculture_district_employment_var }
+						set_temp_variable = { nation_to_copy_from = PREV.id }
+						setup_employment_variables = yes
 
 						#don't get values of original yet - REMINDER -> add it on_civil_war_end
 						set_variable = { debt = 0 }
@@ -233,18 +206,22 @@ on_actions = {
 						economic_cycle_drift_popularity = yes #drift from neighbor
 
 						set_temp_variable = { nation_to_copy_from = PREV.id }
+						setup_employment_variables = yes
+						set_temp_variable = { nation_to_copy_from = PREV.id }
 						configure_religious_setup = yes
 
 						country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
 
 						inherit_technology = FROM
 
-						add_ideas = { police_02 }
-						add_ideas = { health_02 }
-						add_ideas = { bureau_02 }
-						add_ideas = { edu_02 }
-						add_ideas = { social_02 }
-						add_ideas = { defence_02 }
+						add_ideas = {
+							police_02
+							health_02
+							bureau_02
+							edu_02
+							social_02
+							defence_02
+						}
 					}
 				}
 				else = {
@@ -252,15 +229,6 @@ on_actions = {
 						set_temp_variable = { percent_change = 15 }
 						set_temp_variable = { tag_index = FROM.id }
 						set_temp_variable = { influence_target = ROOT.id }
-
-						if = {
-							limit = { NOT = { has_variable = corporate_tax_rate } }
-							set_variable = { var = corporate_tax_rate value = 20 }
-						}
-						if = {
-							limit = { NOT = { has_variable = population_tax_rate } }
-							set_variable = { var = population_tax_rate value = 20 }
-						}
 						ingame_init_investment_system = yes
 						init_auto_influence_array = yes
 
@@ -273,11 +241,8 @@ on_actions = {
 						ai_update_build_units = yes
 						calculate_expected_spending = yes
 
-						set_variable = { civilian_factory_employment_var = FROM.civilian_factory_employment_var }
-						set_variable = { naval_factory_employment_var = FROM.naval_factory_employment_var }
-						set_variable = { military_factory_employment_var = FROM.military_factory_employment_var }
-						set_variable = { office_employment_var = FROM.office_employment_var }
-						set_variable = { agriculture_district_employment_var = FROM.agriculture_district_employment_var }
+						set_temp_variable = { nation_to_copy_from = PREV.id }
+						setup_employment_variables = yes
 
 						ingame_update_setup = yes 	#money system
 						research_slot_init_for_country = yes
@@ -291,132 +256,90 @@ on_actions = {
 	#ROOT = nation being released, FROM = overlord
 	on_release_as_puppet = {
 		effect = {
-			ROOT = {
-				set_variable = { civilian_factory_employment_var = 1 }
-				set_variable = { naval_factory_employment_var = 1 }
-				set_variable = { military_factory_employment_var = 1 }
-				set_variable = { office_employment_var = 1 }
-				set_variable = { agriculture_district_employment_var = 1 }
-				set_variable = { gdpc_converging_var = FROM.gdpc_converging_var }
-				country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
-				if = {
-					limit = {
-						NOT = { has_variable = domestic_influence_amount }
-					}
-					set_variable = { domestic_influence_amount = 100 }
-				}
-				if = {
-					limit = { FROM = { has_government = democratic } }
-					set_politics = {
-						ruling_party = democratic
-						last_election = "1999.10.3"
-						election_frequency = 60
-						elections_allowed = yes
-					}
-					set_popularities = {
-						democratic = 70.0 #Western
-						communism = 10.0 #Emerging
-						fascism = 0.0 #Salafist
-						neutrality = 10.0 #Non Aligned
-						nationalist = 10.0 #Nationalist
-					}
-				}
-				if = {
-					limit = { FROM = { has_government = communism } }
-					set_politics = {
-						ruling_party = communism
-						last_election = "1999.10.3"
-						election_frequency = 60
-						elections_allowed = yes
-					}
-					set_popularities = {
-						democratic = 10.0 #Western
-						communism = 70.0 #Emerging
-						fascism = 0.0 #Salafist
-						neutrality = 10.0 #Non Aligned
-						nationalist = 10.0 #Nationalist
-					}
-				}
-				if = {
-					limit = { FROM = { has_government = neutrality } }
-					set_politics = {
-						ruling_party = neutrality
-						last_election = "1999.10.3"
-						election_frequency = 60
-						elections_allowed = yes
-					}
-					set_popularities = {
-						democratic = 10.0 #Western
-						communism = 10.0 #Emerging
-						fascism = 0.0 #Salafist
-						neutrality = 70.0 #Non Aligned
-						nationalist = 10.0 #Nationalist
-					}
-				}
-				if = {
-					limit = { FROM = { has_government = nationalist } }
-					set_politics = {
-						ruling_party = nationalist
-						last_election = "1999.10.3"
-						election_frequency = 60
-						elections_allowed = yes
-					}
-					set_popularities = {
-						democratic = 10.0 #Western
-						communism = 10.0 #Emerging
-						fascism = 0.0 #Salafist
-						neutrality = 10.0 #Non Aligned
-						nationalist = 70.0 #Nationalist
-					}
-				}
-				if = {
-					limit = { FROM = { has_government = fascism } }
-					set_politics = {
-						ruling_party = fascism
-						last_election = "1999.10.3"
-						election_frequency = 60
-						elections_allowed = no
-					}
-					set_popularities = {
-						democratic = 10.0 #Western
-						communism = 10.0 #Emerging
-						fascism = 70.0 #Salafist
-						neutrality = 10.0 #Non Aligned
-						nationalist = 0.0 #Nationalist
-					}
-				}
-				if = {
-					limit = { FROM = { NOT = { has_government = fascism } } }
-					set_temp_variable = { year_change = 3 }
-					set_election_year_60_months = yes
-				}
-				ingame_init_investment_system = yes
-				init_auto_influence_array = yes
-				inherit_technology = FROM
-				if = {
-					limit = {
-						OR = {
-							NOT = { has_variable = corporate_tax_rate }
-							NOT = { has_variable = population_tax_rate }
+			FROM = {
+				ROOT = {
+					if = { limit = { FROM = { has_government = democratic } }
+						set_politics = {
+							ruling_party = democratic
+							last_election = "1999.10.3"
+							election_frequency = 60
+							elections_allowed = yes
+						}
+						set_popularities = {
+							democratic = 70.0 #Western
+							communism = 10.0 #Emerging
+							fascism = 0.0 #Salafist
+							neutrality = 10.0 #Non Aligned
+							nationalist = 10.0 #Nationalist
 						}
 					}
-					set_variable = { var = corporate_tax_rate value = 20 }
-					set_variable = { var = population_tax_rate value = 20 }
+					else_if = { limit = { FROM = { has_government = communism } }
+						set_politics = {
+							ruling_party = communism
+							last_election = "1999.10.3"
+							election_frequency = 60
+							elections_allowed = yes
+						}
+						set_popularities = {
+							democratic = 10.0 #Western
+							communism = 70.0 #Emerging
+							fascism = 0.0 #Salafist
+							neutrality = 10.0 #Non Aligned
+							nationalist = 10.0 #Nationalist
+						}
+					}
+					else_if = { limit = { FROM = { has_government = neutrality } }
+						set_politics = {
+							ruling_party = neutrality
+							last_election = "1999.10.3"
+							election_frequency = 60
+							elections_allowed = yes
+						}
+						set_popularities = {
+							democratic = 10.0 #Western
+							communism = 10.0 #Emerging
+							fascism = 0.0 #Salafist
+							neutrality = 70.0 #Non Aligned
+							nationalist = 10.0 #Nationalist
+						}
+					}
+					else_if = { limit = { FROM = { has_government = nationalist } }
+						set_politics = {
+							ruling_party = nationalist
+							last_election = "1999.10.3"
+							election_frequency = 60
+							elections_allowed = yes
+						}
+						set_popularities = {
+							democratic = 10.0 #Western
+							communism = 10.0 #Emerging
+							fascism = 0.0 #Salafist
+							neutrality = 10.0 #Non Aligned
+							nationalist = 70.0 #Nationalist
+						}
+					}
+					else_if = { limit = { FROM = { has_government = fascism } }
+						set_politics = {
+							ruling_party = fascism
+							last_election = "1999.10.3"
+							election_frequency = 60
+							elections_allowed = no
+						}
+						set_popularities = {
+							democratic = 10.0 #Western
+							communism = 10.0 #Emerging
+							fascism = 70.0 #Salafist
+							neutrality = 10.0 #Non Aligned
+							nationalist = 0.0 #Nationalist
+						}
+					}
+					if = {
+						limit = { FROM = { NOT = { has_government = fascism } } }
+						set_temp_variable = { year_change = 3 }
+						set_election_year_60_months = yes
+					}
+					ingame_startup_nations_effect = yes
 				}
-
-				calculate_influence_percentage = yes #set alignment drifts from influence
-				startup_politics = yes
-				ingame_update_setup = yes 	#money system
-				setup_init_factions = yes 	#flags for int. factions
-				set_law_vars = yes 	#vars for change laws secondary effects
-				update_neighbors_effects = yes # Updates Neighbor Effects
-				economic_cycle_drift_popularity = yes #drift from neighbor
-				ai_update_build_units = yes
-				effect_puppet_match_ruling_party_to_overlord = yes #Just to ensure a correct thing
-				research_slot_init_for_country = yes
-				calculate_expected_spending = yes
-
-				setup_missile_configuration_effect = yes
 			}
 		}
 	}
@@ -424,43 +347,10 @@ on_actions = {
 	#ROOT is free nation FROM is releaser
 	on_release_as_free = {
 		effect = {
-			ROOT = {
-				set_variable = { civilian_factory_employment_var = 1 }
-				set_variable = { naval_factory_employment_var = 1 }
-				set_variable = { military_factory_employment_var = 1 }
-				set_variable = { office_employment_var = 1 }
-				set_variable = { agriculture_district_employment_var = 1 }
-				set_variable = { gdpc_converging_var = FROM.gdpc_converging_var }
-				country_event = { id = brotherhood.0 } #Sets muslim_brotherhood relations
-				if = {
-					limit = {
-						NOT = { has_variable = domestic_influence_amount }
-					}
-					set_variable = { domestic_influence_amount = 100 }
+			FROM = {
+				ROOT = {
+					ingame_startup_nations_effect = yes
 				}
-				if = {
-					limit = { NOT = { has_variable = corporate_tax_rate } }
-					set_variable = { var = corporate_tax_rate value = 20 }
-				}
-				if = {
-					limit = { NOT = { has_variable = population_tax_rate } }
-					set_variable = { var = population_tax_rate value = 20 }
-				}
-				ingame_init_investment_system = yes
-				init_auto_influence_array = yes
-				inherit_technology = FROM
-
-				calculate_influence_percentage = yes #set alignment drifts from influence
-				startup_politics = yes
-				ingame_update_setup = yes 	#money system
-				setup_init_factions = yes 	#flags for int. factions
-				set_law_vars = yes 	#vars for change laws secondary effects
-				update_neighbors_effects = yes # Updates Neighbor Effects
-				economic_cycle_drift_popularity = yes #drift from neighbor
-				ai_update_build_units = yes
-				calculate_expected_spending = yes
-
-				setup_missile_configuration_effect = yes
 			}
 			set_temp_variable = { percent_change = 5 }
 			set_temp_variable = { tag_index = FROM.id }

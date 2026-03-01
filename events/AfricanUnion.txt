@@ -384,6 +384,20 @@ country_event = {
 				has_elections = no
 			}
 		}
+		if = {
+			limit = { ROOT = { check_variable = { subjects^num > 0 } } }
+			ROOT = {
+				for_each_scope_loop = {
+					array = subjects
+					PREV = {
+						annex_country = {
+							target = PREV
+							transfer_troops = yes
+						}
+					}
+				}
+			}
+		}
 		UAF = {
 			annex_country = {
 				target = ROOT
@@ -516,14 +530,14 @@ country_event = {
 	option = {
 		name = AfricanUnion.4.a
 		log = "[GetDateText]: [This.GetName]: AfricanUnion.4.a executed"
-		every_country = {
-			limit = {
-				is_african_nation = yes
+		for_each_scope_loop = {
+			array = global.is_african_nation
+			if = {
+				limit = { country_exists = THIS }
+				country_event = { id = AfricanUnion.1 }
 			}
-			country_event = { id = AfricanUnion.1 }
 		}
 	}
-
 }
 
 #####################
@@ -539,8 +553,7 @@ country_event = {
 
 	trigger = {
 		NOT = { has_global_flag = African_Union_united }
-		is_african_nation = yes
-		has_idea = AU_member
+		is_in_array = { global.AU_member = THIS.id }
 		has_completed_focus = AFRICAN_UNION_shared_focus_create_investment_bank
 		has_global_flag = African_Union_formed
 		has_war = no
@@ -554,7 +567,7 @@ country_event = {
 				has_idea = regional_power
 				has_idea = large_power
 				has_idea = great_power
-				has_idea = superpower
+				has_idea = super_power
 			}
 		}
 		modifier = {
@@ -654,11 +667,9 @@ country_event = {
 			}
 			add_extra_state_shared_building_slots = 1
 		}
-		random_other_country = {
-			limit = {
-				is_african_nation = yes
-				has_idea = AU_member
-			}
+		random_scope_in_array = {
+			array = global.AU_member
+			limit = { NOT = { tag = PREV } }
 			set_temp_variable = { tag_index = THIS }
 		}
 		set_temp_variable = { influence_target = ROOT }
@@ -684,7 +695,7 @@ country_event = {
 
 	trigger = {
 		NOT = { has_global_flag = African_Union_united }
-		is_african_nation = yes
+		is_in_array = { global.is_african_nation = THIS.id }
 		has_idea = AU_member
 		has_completed_focus = AFRICAN_UNION_shared_focus_create_investment_bank
 		has_global_flag = African_Union_formed
@@ -699,7 +710,7 @@ country_event = {
 				has_idea = regional_power
 				has_idea = large_power
 				has_idea = great_power
-				has_idea = superpower
+				has_idea = super_power
 			}
 		}
 		modifier = {
@@ -799,11 +810,9 @@ country_event = {
 			}
 			add_extra_state_shared_building_slots = 1
 		}
-		random_other_country = {
-			limit = {
-				is_african_nation = yes
-				has_idea = AU_member
-			}
+		random_scope_in_array = {
+			array = global.AU_member
+			limit = { NOT = { tag = PREV } }
 			set_temp_variable = { tag_index = THIS }
 		}
 		set_temp_variable = { influence_target = ROOT }
@@ -829,8 +838,7 @@ country_event = {
 
 	trigger = {
 		NOT = { has_global_flag = African_Union_united }
-		is_african_nation = yes
-		has_idea = AU_member
+		is_in_array = { global.AU_member = THIS.id }
 		has_completed_focus = AFRICAN_UNION_shared_focus_create_investment_bank
 		has_global_flag = African_Union_formed
 		has_war = no
@@ -844,7 +852,7 @@ country_event = {
 				has_idea = regional_power
 				has_idea = large_power
 				has_idea = great_power
-				has_idea = superpower
+				has_idea = super_power
 			}
 		}
 		modifier = {
@@ -928,11 +936,9 @@ country_event = {
 				check_variable = { debt_ratio > 0.8 }
 			}
 		}
-		random_other_country = {
-			limit = {
-				is_african_nation = yes
-				has_idea = AU_member
-			}
+		random_scope_in_array = {
+			array = global.AU_member
+			limit = { NOT = { tag = PREV } }
 			set_temp_variable = { influence_target = THIS }
 			country_event = { id = AfricanUnionRandomEvents.4 hours = 6 }
 		}
@@ -1000,8 +1006,7 @@ country_event = {
 
 	trigger = {
 		NOT = { has_global_flag = African_Union_united }
-		is_african_nation = yes
-		has_idea = AU_member
+		is_in_array = { global.AU_member = THIS.id }
 		has_completed_focus = AFRICAN_UNION_shared_focus_create_monetary_fund
 		has_global_flag = African_Union_formed
 		check_variable = { debt_ratio > 0.05 }
@@ -1015,7 +1020,7 @@ country_event = {
 				has_idea = regional_power
 				has_idea = large_power
 				has_idea = great_power
-				has_idea = superpower
+				has_idea = super_power
 			}
 		}
 		modifier = {
@@ -1094,7 +1099,7 @@ country_event = {
 		modify_debt_effect = yes
 		random_other_country = {
 			limit = {
-				is_african_nation = yes
+				is_in_array = { global.is_african_nation = THIS.id }
 				has_idea = AU_member
 			}
 			set_temp_variable = { tag_index = THIS }
@@ -1126,12 +1131,12 @@ country_event = {
 
 	trigger = {
 		NOT = { has_global_flag = African_Union_united }
-		is_african_nation = yes
+		is_in_array = { global.is_african_nation = THIS.id }
 		has_idea = AU_member
 		has_completed_focus = AFRICAN_UNION_shared_focus_create_monetary_fund
 		has_global_flag = African_Union_formed
-		any_other_country = {
-			is_african_nation = yes
+		any_of_scopes = {
+			array = global.is_african_nation
 			has_idea = AU_member
 			has_completed_focus = AFRICAN_UNION_shared_focus_create_monetary_fund
 			check_variable = { debt_ratio > 0.10 }
@@ -1146,7 +1151,7 @@ country_event = {
 				has_idea = regional_power
 				has_idea = large_power
 				has_idea = great_power
-				has_idea = superpower
+				has_idea = super_power
 			}
 		}
 		modifier = {
@@ -1176,7 +1181,7 @@ country_event = {
 		}
 		random_other_country = {
 			limit = {
-				is_african_nation = yes
+				is_in_array = { global.is_african_nation = THIS.id }
 				has_idea = AU_member
 				check_variable = { debt_ratio > 0.10 }
 			}

@@ -283,8 +283,6 @@ Afghanistan_domestic_decisions = {
 		icon = GFX_decision_eng_trade_unions_support
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision AFG_atta_installs_leadership"
-			set_country_flag = massoud_running
-			set_country_flag = abdullah_running
 			set_country_flag = AFG_ATTA_leadership
 			set_variable = { var = Neutral_Muslim_Brotherhood_leader value = 4 }
 			hidden_effect = { kill_country_leader = yes }
@@ -340,7 +338,7 @@ AFG_Northern_alliance_taloqan_siege = {
 			set_country_flag = AFG_holds_Taloqan
 			effect_tooltip = {
 				newline = yes
-				custom_effect_tooltip = AFG_effect_if_they_accept3TT
+				custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
 				add_war_support = 0.15
 				custom_effect_tooltip = AFG_enhance_leader_protection_tt
 				newline = yes
@@ -352,7 +350,7 @@ AFG_Northern_alliance_taloqan_siege = {
 			#show_ideas_tooltip = AFG_Taloqan_not_one_step_back
 			AFG = { country_event = { id = Afghanistan.32 } }
 			#custom_effect_tooltip = AFG_taloqan_text1
-			custom_effect_tooltip = AFG_effect_if_they_accept3TT
+			custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
 			effect_tooltip = {
 				add_war_support = -0.08
 			}
@@ -856,8 +854,8 @@ Afghanistan_pashtunistan_decisions = {
 				threat = 5
 				name = AFG_invasion
 			}
-			every_country = {
-				limit = { original_tag = PAK }
+			every_country_with_original_tag = {
+				original_tag_to_check = PAK
 				ROOT = {
 					declare_war_on = {
 						target = PREV
@@ -937,9 +935,9 @@ Afghanistan_pashtunistan_decisions = {
 	}
 
 	unite_with_pakistan_taliban = {
+		allowed = { original_tag = TAL }
 
 		visible = {
-			original_tag = TAL
 			has_government = fascism
 			any_country_with_original_tag = {
 				original_tag_to_check = PAK
@@ -955,9 +953,9 @@ Afghanistan_pashtunistan_decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision unite_with_pakistan_taliban"
-			random_country = {
+			random_country_with_original_tag = {
+				original_tag_to_check = PAK
 				limit = {
-					original_tag = PAK
 					has_government = fascism
 				}
 				ROOT = {
@@ -978,25 +976,30 @@ Afghanistan_pashtunistan_decisions = {
 
 }
 AFG_agriculture_mech = {
+	# Pomegranate Investment - Limited to 5 uses, modest returns
+	# Investment: 5% GDP upfront, Returns: 6% GDP after harvest (20% profit margin)
 	AFG_Pomegranate_invesment1 = {
-		allowed = {
-			original_tag = AFG
-		}
+		allowed = { original_tag = AFG }
 		visible = {
 			has_war = no
 			NOT = {
 				has_country_flag = AFG_AFG_Pomegranate_invesment1_complete
 			}
+			check_variable = { AFG_pomegranate_investments < 5 }
 		}
 
 		available = {
 			has_war = no
-			#state_population_k > 15
+			NOT = { has_active_mission = AFG_Pomegranate_invesment1_collect }
+			custom_trigger_tooltip = {
+				tooltip = AFG_pomegranate_investment_limit_tt
+				check_variable = { AFG_pomegranate_investments < 5 }
+			}
 		}
-		cost = 15
+		cost = 25
 
-		days_remove = 1
-		days_re_enable = 40
+		days_remove = 30
+		days_re_enable = 90
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision AFG_Pomegranate_invesment1"
@@ -1005,50 +1008,50 @@ AFG_agriculture_mech = {
 			log = "[GetDateText]: [Root.GetName]: Decision AFG_Pomegranate_invesment1"
 			hidden_effect = {
 				set_country_flag = AFG_AFG_Pomegranate_invesment1_complete
+				add_to_variable = { AFG_pomegranate_investments = 1 }
 				activate_mission = AFG_Pomegranate_invesment1_collect
 			}
 			custom_effect_tooltip = AFG_Pomegranate_invesment_TT
 			custom_effect_tooltip = AFG_Current_sales_Money_TT
 			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = -0.10 }
+			multiply_temp_variable = { treasury_change = -0.05 }
 			modify_treasury_effect = yes
 			newline = yes
 			custom_effect_tooltip = AFG_Effect_Post_sales_TT
-			custom_effect_tooltip = AFG_AFG_Pomegranate_invesment_Pop_TT
-			custom_effect_tooltip = AFG_Current_sales_Money_TT
+			custom_effect_tooltip = AFG_pomegranate_return_tt
 			effect_tooltip = {
-				set_temp_variable = { treasury_change = population_total }
-				multiply_temp_variable = { treasury_change = 0.02 }
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = 0.06 }
 				modify_treasury_effect = yes
 			}
 		}
 	}
 	AFG_Pomegranate_invesment1_collect = {
-	 	available = {
-	 		has_country_flag = AFG_AFG_Pomegranate_invesment1_complete
-	 	}
+		available = {
+			has_country_flag = AFG_AFG_Pomegranate_invesment1_complete
+		}
 		activation = {
-	 		always = no
-	 	}
-	 	is_good = yes
-		cost = 3
-	 	days_mission_timeout = 15
+			always = no
+		}
+		is_good = yes
+		cost = 5
+		days_mission_timeout = 60
 		days_remove = 1
 		selectable_mission = yes
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision AFG_Pomegranate_invesment1_collect"
 			clr_country_flag = AFG_AFG_Pomegranate_invesment1_complete
-			custom_effect_tooltip = AFG_AFG_Pomegranate_invesment_Pop_TT
-			custom_effect_tooltip = AFG_Current_sales_Money_TT
-			set_temp_variable = { treasury_change = population_total }
-			multiply_temp_variable = { treasury_change = 0.02 }
+			custom_effect_tooltip = AFG_pomegranate_return_tt
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = 0.06 }
 			modify_treasury_effect = yes
 		}
 
 	}
-	#Attach Amount to a Varible Sheep - 4 focus Content
 
+	# Almond Investment - Limited to 5 uses, modest returns
+	# Investment: 5% GDP upfront, Returns: 6% GDP after harvest (20% profit margin)
 	AFG_Almond_invesment1 = {
 		allowed = {
 			original_tag = AFG
@@ -1058,15 +1061,20 @@ AFG_agriculture_mech = {
 			NOT = {
 				has_country_flag = AFG_AFG_Almond_invesment1_complete
 			}
+			check_variable = { AFG_almond_investments < 5 }
 		}
 
 		available = {
 			NOT = { has_active_mission = AFG_Almond_invesment1_collect }
+			custom_trigger_tooltip = {
+				tooltip = AFG_almond_investment_limit_tt
+				check_variable = { AFG_almond_investments < 5 }
+			}
 		}
 		cost = 25
 
-		days_remove = 7
-		days_re_enable = 21
+		days_remove = 30
+		days_re_enable = 90
 		highlight_states = {
 			highlight_provinces = { 1962 213 321 232 }
 			highlight_color_while_active = 3
@@ -1076,6 +1084,7 @@ AFG_agriculture_mech = {
 			log = "[GetDateText]: [Root.GetName]: Decision AFG_Almond_invesment1"
 			hidden_effect = {
 				set_country_flag = AFG_AFG_Almond_invesment1_complete
+				add_to_variable = { AFG_almond_investments = 1 }
 				activate_mission = AFG_Almond_invesment1_collect
 			}
 			custom_effect_tooltip = AFG_Almond_invesment_TT
@@ -1085,35 +1094,33 @@ AFG_agriculture_mech = {
 			modify_treasury_effect = yes
 			newline = yes
 			custom_effect_tooltip = AFG_Effect_Post_sales_TT
-			custom_effect_tooltip = AFG_AFG_Almond_invesment_Pop_TT
-			custom_effect_tooltip = AFG_Current_sales_Money_TT
+			custom_effect_tooltip = AFG_almond_return_tt
 			effect_tooltip = {
-				set_temp_variable = { treasury_change = population_total }
-				multiply_temp_variable = { treasury_change = 0.1 }
+				set_temp_variable = { treasury_change = gdp_total }
+				multiply_temp_variable = { treasury_change = 0.06 }
 				modify_treasury_effect = yes
 			}
 		}
 	}
 	AFG_Almond_invesment1_collect = {
-	 	available = {
-	 		has_country_flag = AFG_AFG_Almond_invesment1_complete
-	 	}
+		available = {
+			has_country_flag = AFG_AFG_Almond_invesment1_complete
+		}
 		activation = {
-	 		always = no
-	 	}
-	 	is_good = yes
+			always = no
+		}
+		is_good = yes
 		cost = 5
-	 	days_mission_timeout = 60
+		days_mission_timeout = 90
 		days_remove = 1
 		selectable_mission = yes
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision AFG_Almond_invesment1_collect"
 			clr_country_flag = AFG_AFG_Almond_invesment1_complete
-			custom_effect_tooltip = AFG_AFG_Almond_invesment_Pop_TT
-			custom_effect_tooltip = AFG_Current_sales_Money_TT
-			set_temp_variable = { treasury_change = population_total }
-			multiply_temp_variable = { treasury_change = 0.1 }
+			custom_effect_tooltip = AFG_almond_return_tt
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = 0.06 }
 			modify_treasury_effect = yes
 		}
 
@@ -1123,6 +1130,7 @@ AFG_agriculture_mech = {
 Taliban_insurgency_category = {
 
 	raid_taliban_hideouts = {
+		allowed = { tag = AFG }
 		icon = GFX_decision_generic_prepare_civil_war_new
 
 		custom_cost_trigger = {
@@ -1132,7 +1140,6 @@ Taliban_insurgency_category = {
 		custom_cost_text = command_power_more_than_40
 
 		visible = {
-			tag = AFG
 			check_variable = {
 				var = taliban_strength
 				value = 0
@@ -1211,6 +1218,7 @@ Taliban_insurgency_category = {
 	}
 
 	bomb_taliban_targets = {
+		allowed = { tag = AFG }
 		icon = GFX_decision_jet_aircraft
 
 		custom_cost_trigger = {
@@ -1220,7 +1228,6 @@ Taliban_insurgency_category = {
 		custom_cost_text = command_power_more_than_40
 
 		visible = {
-			tag = AFG
 			check_variable = {
 				var = taliban_strength
 				value = 0
@@ -1300,6 +1307,7 @@ Taliban_insurgency_category = {
 	}
 
 	secure_afghan_pakistani_border = {
+		allowed = { tag = AFG }
 		icon = GFX_decision_chain_fence
 
 		custom_cost_trigger = {
@@ -1338,7 +1346,6 @@ Taliban_insurgency_category = {
 
 
 		visible = {
-			tag = AFG
 			has_country_flag = afg_active_taliban_insurgency
 		}
 
@@ -1644,12 +1651,12 @@ Taliban_insurgency_category = {
 	}
 
 	afghan_unity_propaganda = {
+		allowed = { tag = AFG }
 		icon = GFX_decision_eng_propaganda_campaigns
 
 		cost = 30
 
 		visible = {
-			tag = AFG
 			check_variable = {
 				var = taliban_strength
 				value = 0
@@ -1738,18 +1745,18 @@ Taliban_insurgency_category = {
 					modifier = {
 						factor = 2.0
 						OR = {
-							any_country = {
-								has_idea = large_power
+							any_of_scopes = {
+								array = global.PR_superpowers
 								no_jihadist_government = yes
 								has_military_access_to = AFG
 							}
-							any_country = {
-								has_idea = great_power
+							any_of_scopes = {
+								array = global.PR_great_powers
 								no_jihadist_government = yes
 								has_military_access_to = AFG
 							}
-							any_country = {
-								has_idea = superpower
+							any_of_scopes = {
+								array = global.PR_large_powers
 								no_jihadist_government = yes
 								has_military_access_to = AFG
 							}
@@ -1776,10 +1783,10 @@ Taliban_insurgency_category = {
 	}
 
 	show_supporting_counter_insurgency_countries = {
+		allowed = { tag = AFG }
 		icon = GFX_decision_generic_army_support
 
 		visible = {
-			tag = AFG
 			AFG = {
 				has_country_flag = afg_active_taliban_insurgency
 			}
@@ -1800,6 +1807,7 @@ Taliban_insurgency_category = {
 	}
 
 	isaf_raid_taliban_hideouts = {
+		allowed = { NOT = { original_tag = AFG } }
 		icon = GFX_decision_humvee
 
 		custom_cost_trigger = {
@@ -1809,9 +1817,6 @@ Taliban_insurgency_category = {
 		custom_cost_text = command_power_more_than_40
 
 		visible = {
-			NOT = {
-				original_tag = AFG
-			}
 			has_country_flag = afg_support_counter_insurgency
 			AFG = {
 				check_variable = {
@@ -1919,6 +1924,7 @@ Taliban_insurgency_category = {
 	}
 
 	isaf_launch_drone_strike = {
+		allowed = { NOT = { original_tag = AFG } }
 		icon = GFX_decision_uav
 
 		custom_cost_trigger = { command_power > 40 }
@@ -1937,9 +1943,6 @@ Taliban_insurgency_category = {
 
 
 		visible = {
-			NOT = {
-				original_tag = AFG
-			}
 			has_country_flag = afg_support_counter_insurgency
 			AFG = {
 				check_variable = {
@@ -2030,6 +2033,7 @@ Taliban_insurgency_category = {
 	}
 
 	isaf_bomb_taliban_hotspots = {
+		allowed = { NOT = { original_tag = AFG } }
 		icon = GFX_decision_jet_bomber
 
 		custom_cost_trigger = {
@@ -2039,9 +2043,6 @@ Taliban_insurgency_category = {
 		custom_cost_text = command_power_more_than_40
 
 		visible = {
-			NOT = {
-				original_tag = AFG
-			}
 			has_country_flag = afg_support_counter_insurgency
 			AFG = {
 				check_variable = {
@@ -2145,6 +2146,7 @@ Taliban_insurgency_category = {
 	}
 
 	isaf_provide_technical_equipment = {
+		allowed = { NOT = { original_tag = AFG } }
 		icon = GFX_decision_generic_research_new
 
 		custom_cost_trigger = {
@@ -2154,9 +2156,6 @@ Taliban_insurgency_category = {
 		custom_cost_text = cost_0_5
 
 		visible = {
-			NOT = {
-				original_tag = AFG
-			}
 			has_country_flag = afg_support_counter_insurgency
 			AFG = {
 				check_variable = {
@@ -2214,15 +2213,12 @@ Taliban_insurgency_category = {
 	}
 
 	isaf_withdraw_from_afghanistan = {
+		allowed = { NOT = { original_tag = AFG original_tag = USA } }
 		icon = GFX_decision_jet_transport
 		cost = 50
 
 		visible = {
 			has_military_access_to = AFG
-			NOT = {
-				original_tag = AFG
-				original_tag = USA
-			}
 			has_country_flag = afg_support_counter_insurgency
 			AFG = {
 				has_country_flag = afg_active_taliban_insurgency
@@ -2287,8 +2283,8 @@ Taliban_insurgency_category = {
 		}
 	}
 
-
 	eliminate_taliban_insurgency = {
+		allowed = { tag = AFG }
 		icon = GFX_decision_oppression
 
 		custom_cost_trigger = {
@@ -2298,7 +2294,6 @@ Taliban_insurgency_category = {
 		custom_cost_text = command_power_more_than_40
 
 		visible = {
-			tag = AFG
 			has_country_flag = afg_active_taliban_insurgency
 		}
 
@@ -2541,10 +2536,6 @@ AFG_tal_insurgency_new = {
 					limit = { has_idea = Non_State_Actor }
 					remove_ideas = Non_State_Actor
 				}
-				if = {
-					limit = { has_idea = rival_government }
-					remove_ideas = rival_government
-				}
 				add_state_core = 409
 				add_state_core = 410
 				add_state_core = 411
@@ -2552,8 +2543,6 @@ AFG_tal_insurgency_new = {
 				add_state_core = 414
 				add_state_core = 415
 				set_capital = { state = 414 }
-				subtract_from_variable = { threat_level = 30 }
-				clamp_threat = yes
 
 				#Start of Taliban Insurgency
 				if = {
@@ -2593,17 +2582,13 @@ AFG_tal_insurgency_new = {
 			complete_national_focus = AFG_Training_of_local_police_officers
 		}
 
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove AFG_debug_decision"
-
-		}
-
 		ai_will_do = {
 			base = 25
 		}
 	}
 	# TALIBAN SPECIFIC DECISIONS
 	TAL_move_into_tribal_areas = {
+		allowed = { original_tag = TAL }
 		fire_only_once = yes
 		custom_cost_trigger = {
 			command_power > 40
@@ -2624,7 +2609,6 @@ AFG_tal_insurgency_new = {
 		}
 
 		visible = {
-			original_tag = TAL
 			594 = {
 				is_owned_and_controlled_by = PAK
 			}
@@ -2655,13 +2639,10 @@ AFG_tal_insurgency_new = {
 	}
 
 	TAL_construct_the_safed_koh_system = {
+		allowed = { original_tag = TAL }
 		fire_only_once = yes
 		cost = 50
-		days_remove = 1
-
-		visible = {
-			original_tag = TAL
-		}
+		days_remove = 25
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision TAL_move_into_tribal_areas"
@@ -2684,6 +2665,7 @@ AFG_tal_insurgency_new = {
 
 	# Border Wars (Shared)
 	TAL_1207_attack_1154 = {
+		allowed = { original_tag = TAL }
 
 		custom_cost_trigger = {
 			command_power > 20
@@ -2700,7 +2682,6 @@ AFG_tal_insurgency_new = {
 		}
 
 		visible = {
-			original_tag = TAL
 			1207 = {
 				is_owned_by = ROOT
 			}
@@ -2752,6 +2733,7 @@ AFG_tal_insurgency_new = {
 	}
 
 	TAL_1207_attack_1208 = {
+		allowed = { original_tag = TAL }
 
 		custom_cost_trigger = {
 			command_power > 20
@@ -2768,7 +2750,6 @@ AFG_tal_insurgency_new = {
 		}
 
 		visible = {
-			original_tag = TAL
 			1207 = {
 				is_owned_by = ROOT
 			}
@@ -2820,6 +2801,7 @@ AFG_tal_insurgency_new = {
 	}
 
 	TAL_1152_attack_415 = {
+		allowed = { original_tag = TAL }
 
 		custom_cost_trigger = {
 			command_power > 20
@@ -2836,7 +2818,6 @@ AFG_tal_insurgency_new = {
 		}
 
 		visible = {
-			original_tag = TAL
 			1152 = {
 				is_owned_by = ROOT
 			}
@@ -2888,6 +2869,7 @@ AFG_tal_insurgency_new = {
 	}
 
 	AFG_414_attack_1207 = {
+		allowed = { original_tag = AFG }
 
 		custom_cost_trigger = {
 			command_power > 20
@@ -2947,6 +2929,7 @@ AFG_tal_insurgency_new = {
 	}
 
 	AFG_414_attack_1208 = {
+		allowed = { original_tag = AFG }
 
 		custom_cost_trigger = {
 			command_power > 20
@@ -2963,7 +2946,6 @@ AFG_tal_insurgency_new = {
 		}
 
 		visible = {
-			original_tag = AFG
 			1208 = {
 				is_owned_by = TAL
 			}
@@ -3003,6 +2985,7 @@ AFG_tal_insurgency_new = {
 	}
 
 	AFG_414_attack_1154 = {
+		allowed = { original_tag = AFG }
 
 		custom_cost_trigger = {
 			command_power > 20
@@ -3019,7 +3002,6 @@ AFG_tal_insurgency_new = {
 		}
 
 		visible = {
-			original_tag = AFG
 			1154 = {
 				is_owned_by = TAL
 			}
@@ -3059,6 +3041,7 @@ AFG_tal_insurgency_new = {
 	}
 
 	AFG_415_attack_1152 = {
+		allowed = { original_tag = AFG }
 
 		custom_cost_trigger = {
 			command_power > 20
@@ -3075,7 +3058,6 @@ AFG_tal_insurgency_new = {
 		}
 
 		visible = {
-			original_tag = AFG
 			1152 = {
 				is_owned_by = TAL
 			}
@@ -3115,6 +3097,7 @@ AFG_tal_insurgency_new = {
 	}
 
 	AFG_412_attack_415 = {
+		allowed = { original_tag = AFG }
 
 		custom_cost_trigger = {
 			command_power > 20
@@ -3131,7 +3114,6 @@ AFG_tal_insurgency_new = {
 		}
 
 		visible = {
-			original_tag = AFG
 			415 = {
 				is_owned_by = TAL
 			}
@@ -3172,11 +3154,11 @@ AFG_tal_insurgency_new = {
 
 	# Taliban Take-Over Decisions
 	TAL_begin_insurgency_in_rigestan = {
+		allowed = { original_tag = TAL }
 
 		fire_only_once = yes
 
 		visible = {
-			original_tag = TAL
 			1152 = {
 				NOT = {
 					is_controlled_by = TAL
@@ -3221,9 +3203,9 @@ AFG_tal_insurgency_new = {
 	}
 
 	TAL_begin_war_again = {
+		allowed = { original_tag = TAL }
 
 		visible = {
-			original_tag = TAL
 			USA = {
 				NOT = {
 					has_idea = USA_afghan_mission_cost

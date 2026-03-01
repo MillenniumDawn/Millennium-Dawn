@@ -1,0 +1,179 @@
+on_actions = {
+	on_startup = {
+		effect = {
+		}
+	}
+	on_weekly_ENG = {
+		effect = {
+		}
+	}
+	on_monthly_ENG = {
+		effect = {
+			if = {
+				limit = {
+					NOT = {	has_country_flag = ENG_devolution_purged }
+					check_variable = {
+						ENG_election_var > 0
+					}
+				}
+				add_to_variable = { var = ENG_election_var value = -1 }
+				clamp_variable = { var = ENG_election_var min = 0 max = 24 }
+			}
+			if = {
+				limit = {
+					NOT = {	has_country_flag = ENG_devolution_purged }
+					check_variable = {
+						ENG_election_var = 0
+					}
+				}
+				add_to_variable = { var = ENG_election_var value = 24 }
+				clamp_variable = { var = ENG_election_var min = 0 max = 24 }
+				country_event = {
+					id = devolution.10
+					days = 30
+				}
+			}
+
+			if = {
+				limit = {
+					has_completed_focus = ENG_a_more_united_kingdom
+				}
+				# Pulling GDP's
+				add_to_variable = {
+					var = commonwealth_total_gdp
+					value = NZL.gdp_per_capita
+				}
+				add_to_variable = {
+					var = commonwealth_total_gdp
+					value = CAN.gdp_per_capita
+				}
+				add_to_variable = {
+					var = commonwealth_total_gdp
+					value = AST.gdp_per_capita
+				}
+
+				# Pulling army size
+				add_to_variable = {
+					var = commonwealth_total_army
+					value = NZL.deployed_army_manpower_k
+				}
+				add_to_variable = {
+					var = commonwealth_total_army
+					value = CAN.deployed_army_manpower_k
+				}
+				add_to_variable = {
+					var = commonwealth_total_army
+					value = AST.deployed_army_manpower_k
+				}
+			}
+
+			# Devolution
+
+			if = {
+				limit = {
+					NOT = {	has_country_flag = ENG_devolution_purged }
+					NOT = { has_country_flag = ENG_devolution_event_cooldown }
+					OR = {
+						# Economic reasons
+						has_idea = depression
+						has_idea = recession
+						has_idea = stagnation
+						check_variable = { interest_rate > 9.000 }
+						check_variable = { inflation_rate_var > 7.000 }
+						# Political Reasons
+						NOT = {
+							has_government = democratic
+							has_government = neutrality
+							# Welfare
+							has_idea = social_05
+							has_idea = social_06
+							has_idea = health_05
+							has_idea = health_06
+							has_idea = edu_04
+							has_idea = edu_05
+							has_idea = EU_member # Leaving EU angers some constituents
+						}
+						has_war = yes
+						has_idea = systematic_corruption
+						has_idea = unrestrained_corruption
+						has_idea = rampant_corruption
+						has_idea = crippling_corruption
+						has_idea = paralyzing_corruption
+						# Military
+						has_idea = partial_draft_army
+						has_idea = draft_army
+						has_idea = drafted_women
+					}
+				}
+				# Event
+				country_event = { id = devolution.1 random_days = 15 }
+			}
+			else = {
+				random_list = {
+					30 = {
+						country_event = { id = devolution.1 random_days = 15 }
+					}
+					70 = {
+
+					}
+				}
+			}
+
+			# Dependency is low, nationalism is high. Referendum?
+
+			if = {
+				limit = {
+					NOT = {	has_country_flag = ENG_devolution_purged }
+					OR = {
+						check_variable = {
+							ENG_scottish_dependency < 20
+						}
+						check_variable = {
+							ENG_scottish_nationalists > 65
+						}
+					}
+				}
+				random = {
+					chance = 50
+					country_event = devolution.5
+				}
+			}
+
+			if = {
+				limit = {
+					NOT = {	has_country_flag = ENG_devolution_purged }
+					OR = {
+						check_variable = {
+							ENG_north_irish_dependency < 20
+						}
+						check_variable = {
+							ENG_north_irish_nationalists > 65
+						}
+					}
+				}
+				random = {
+					chance = 50
+					country_event = devolution.6
+				}
+			}
+
+			if = {
+				limit = {
+					NOT = {	has_country_flag = ENG_devolution_purged }
+					OR = {
+						check_variable = {
+							ENG_wales_nationalists > 65
+						}
+						check_variable = {
+							ENG_wales_dependency < 20
+						}
+					}
+				}
+				random = {
+					chance = 50
+					country_event = devolution.7
+				}
+			}
+		}
+	}
+}

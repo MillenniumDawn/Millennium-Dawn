@@ -1,0 +1,65 @@
+name: Docs Quality (Astro)
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "docs/**"
+      - ".github/workflows/docs-quality.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.10"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependency for OG generation
+        run: python3 -m pip install --upgrade pillow
+
+      - name: Install docs dependencies
+        working-directory: docs
+        run: bun install
+
+      - name: Generate OG images
+        run: python3 docs/scripts/generate_og_images.py --repo-root . --docs-dir docs
+
+      - name: Astro checks
+        working-directory: docs
+        run: |
+          bun run lint:md
+          bun run lint:remark
+          bun run check
+          bun run build
+
+      - name: Validate Open Graph metadata images
+        run: python3 docs/scripts/check_og_images.py --site-dir docs/dist --baseurl /Millennium-Dawn
+
+      - name: Docs hygiene checks
+        run: python3 docs/scripts/check_docs_hygiene.py --repo-root . --docs-dir docs
+
+      - name: Validate internal links and local assets
+        run: python3 docs/scripts/check_site_links.py --site-dir docs/dist --baseurl /Millennium-Dawn
+
+      - name: Accessibility baseline checks
+        run: python3 docs/scripts/check_accessibility_basics.py --site-dir docs/dist
+
+      - name: Performance budget checks
+        run: python3 docs/scripts/check_perf_budgets.py --site-dir docs/dist
