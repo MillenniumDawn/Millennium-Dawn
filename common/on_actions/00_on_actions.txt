@@ -3267,4 +3267,31 @@ on_actions = {
 			}
 		}
 	}
+
+	# ROOT = attacker, FROM = defender
+	on_declare_war = {
+		effect = {
+			# Attacker AI adds defender to their cyber target list
+			if = {
+				limit = {
+					is_ai = yes
+					has_cyber_capability_1 = yes
+				}
+				FROM = { ai_cyber_add_target = yes }
+			}
+
+			# Defender AI adds attacker to their cyber target list
+			FROM = {
+				if = {
+					limit = {
+						is_ai = yes
+						has_cyber_capability_1 = yes
+						NOT = { is_in_array = { array = cyber_active_targets value = ROOT } }
+						check_variable = { cyber_active_targets^num < cyber_max_targets }
+					}
+					add_to_array = { cyber_active_targets = ROOT.id }
+				}
+			}
+		}
+	}
 }
