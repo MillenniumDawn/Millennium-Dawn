@@ -29,7 +29,6 @@ AB_war_second = {
 }
 
 public_war_weariness_effect = {
-	#Used in MD4_Anti_bully decisions
 	if = { limit = { NOT = { has_global_flag = GAME_RULE_disable_anti_bully } }
 		hidden_effect = {
 			add_timed_idea = { idea = three_months_of_war days = 90 }
@@ -45,34 +44,31 @@ public_war_weariness_effect = {
 				add_timed_idea = { idea = twelve_months_of_war days = 365 }
 			}
 		}
-
-	}
-	# Initializes the Anti-Bully (Public War Weariness) system
-	if = {
-		limit = {
-			NOT = { has_global_flag = GAME_RULE_disable_anti_bully }
-			FROM = {
-				is_major = no
-				ic_ratio = { tag = ROOT ratio < 0.4 }
+		# Initializes the Anti-Bully (Public War Weariness) system
+		if = {
+			limit = {
+				FROM = {
+					is_major = no
+					ic_ratio = { tag = ROOT ratio < 0.4 }
+				}
+				NOT = { has_government = fascism }
+				# TODO: Tension seems odd here. Potential look into cutting this
+				threat < 0.60
+				# TODO: Potential review this as well. I think that it would still trigger a Public War Weariness war
+				FROM = { any_owned_state = { NOT = { is_core_of = ROOT } } }
 			}
-			NOT = { has_government = fascism }
-			# TODO: Tension seems odd here. Potential look into cutting this
-			threat < 0.60
-			# TODO: Potential review this as well. I think that it would still trigger a Public War Weariness war
-			FROM = { any_owned_state = { NOT = { is_core_of = ROOT } } }
-		}
 
-		# Initialize the System
-		if = { limit = { NOT = { has_variable = anti_bully_wars } }
-			set_variable = { anti_bully_wars = 0 }
-			set_variable = { penalty_factor = 0 }
-			set_variable = { war_support_factor_var = 0 }
-			add_dynamic_modifier = { modifier = public_war_weariness_effect }
-		}
-		hidden_effect = {
-			save_event_target_as = AB_ATT
-			FROM = { save_event_target_as = AB_DEFF }
-			country_event = { id = anti_bully.1 }
+			# Initialize the System
+			if = { limit = { NOT = { has_variable = anti_bully_wars } }
+				set_variable = { anti_bully_wars = 0 }
+				set_variable = { penalty_factor = 0 }
+				set_variable = { war_support_factor_var = 0 }
+			}
+			hidden_effect = {
+				save_event_target_as = AB_ATT
+				FROM = { save_event_target_as = AB_DEFF }
+				country_event = { id = anti_bully.1 }
+			}
 		}
 	}
 }
@@ -82,6 +78,10 @@ public_war_weariness_penalty_effect = {
 
 	set_variable = { war_support_factor_var = add_t }
 	multiply_variable = { war_support_factor_var = -0.005 }
+
+	if = { limit = { NOT = { has_dynamic_modifier = { modifier = public_war_weariness_effect } } }
+		add_dynamic_modifier = { modifier = public_war_weariness_effect }
+	}
 
 	# Force the Update Dynamic Modifier with new Calculated Effects
 	force_update_dynamic_modifier = yes

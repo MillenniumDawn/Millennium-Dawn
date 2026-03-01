@@ -645,26 +645,24 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_TRADE FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_FOREIGN_POLICY }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_eu_kazuz executed"
-			every_country = {
-				limit = {
-					has_idea = EU_member
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = improve_trade }
+					reverse_add_opinion_modifier = { target = ROOT modifier = improve_trade }
+					add_opinion_modifier = { target = ROOT modifier = european_commitment }
+					reverse_add_opinion_modifier = { target = ROOT modifier = european_commitment }
 				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = improve_trade
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = ROOT modifier = improve_trade }
+					reverse_add_opinion_modifier = { target = ROOT modifier = improve_trade }
+					add_opinion_modifier = { target = ROOT modifier = european_commitment }
+					reverse_add_opinion_modifier = { target = ROOT modifier = european_commitment }
 				}
-				reverse_add_opinion_modifier = {
-					target = ROOT
-					modifier = improve_trade
-				}
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = european_commitment
-				}
-				reverse_add_opinion_modifier = {
-					target = ROOT
-					modifier = european_commitment
-				}
+			}
+			else = {
+				add_political_power = 150
 			}
 		}
 
@@ -3011,10 +3009,20 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EUROPEAN_UNION FOCUS_FILTER_FOREIGN_POLICY }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_european_model executed"
-			every_country = {
-				limit = { has_idea = EU_member }
-				add_opinion_modifier = { target = ROOT modifier = supports_us }
-				reverse_add_opinion_modifier = { target = ROOT modifier = supports_us }
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = supports_us }
+					reverse_add_opinion_modifier = { target = ROOT modifier = supports_us }
+				}
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = ROOT modifier = supports_us }
+					reverse_add_opinion_modifier = { target = ROOT modifier = supports_us }
+				}
+				set_temp_variable = { modify_eurosceptic = -0.1 }
+				set_temp_variable = { modify_eurosceptic_target = THIS }
+				eurosceptic_change = yes
 			}
 			if = {
 				limit = {
@@ -3027,9 +3035,6 @@ focus_tree = {
 			}
 			set_temp_variable = { percent_change = -5 }
 			change_domestic_influence_percentage = yes
-			set_temp_variable = { modify_eurosceptic = -0.1 }
-			set_temp_variable = { modify_eurosceptic_target = THIS }
-			eurosceptic_change = yes
 		}
 
 		ai_will_do = {
@@ -3468,6 +3473,20 @@ focus_tree = {
 				RAJ = {
 					country_event = centrasiaev.4
 				}
+			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				set_temp_variable = { skip_payment = 1 }
+				one_random_industrial_complex = yes
+				SOV = {
+					set_temp_variable = { treasury_change = -7.5 }
+					modify_treasury_effect = yes
+				}
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = SOV }
+				set_temp_variable = { influence_target = ROOT }
+				change_influence_percentage = yes
 			}
 		}
 
@@ -5253,56 +5272,36 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_TRADE FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_FOREIGN_INVESTMENTS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_trade_with_europe executed"
-			if = {
-				limit = {
-					has_game_rule = { rule = RULE_DISABLE_EU option = no }
-				}
-				every_country = {
-					limit = {
-						has_idea = EU_member
-					}
-					add_opinion_modifier = {
-						target = FROM
-						modifier = improve_trade
-					}
-					reverse_add_opinion_modifier = {
-						target = FROM
-						modifier = improve_trade
-					}
+			if = { limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = FROM modifier = improve_trade }
+					reverse_add_opinion_modifier = { target = FROM modifier = improve_trade }
 					set_temp_variable = { treasury_change = -2 }
 					modify_treasury_effect = yes
 					set_temp_variable = { int_investment_change = 1 }
 					modify_international_investment_effect = yes
 				}
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = FROM modifier = improve_trade }
+					reverse_add_opinion_modifier = { target = FROM modifier = improve_trade }
+					set_temp_variable = { treasury_change = -2 }
+					modify_treasury_effect = yes
+					set_temp_variable = { int_investment_change = 1 }
+					modify_international_investment_effect = yes
+				}
+				set_temp_variable = { modify_eurosceptic = -0.1 }
+				set_temp_variable = { modify_eurosceptic_target = THIS }
+				eurosceptic_change = yes
 			}
-			if = {
-				limit = {
-					has_game_rule = { rule = RULE_DISABLE_EU option = yes }
-				}
-				add_opinion_modifier = {
-					target = GER
-					modifier = improve_trade
-				}
-				reverse_add_opinion_modifier = {
-					target = GER
-					modifier = improve_trade
-				}
-				add_opinion_modifier = {
-					target = CZE
-					modifier = improve_trade
-				}
-				reverse_add_opinion_modifier = {
-					target = CZE
-					modifier = improve_trade
-				}
-				add_opinion_modifier = {
-					target = POL
-					modifier = improve_trade
-				}
-				reverse_add_opinion_modifier = {
-					target = POL
-					modifier = improve_trade
-				}
+			else = {
+				add_opinion_modifier = { target = GER modifier = improve_trade }
+				reverse_add_opinion_modifier = { target = GER modifier = improve_trade }
+				add_opinion_modifier = { target = CZE modifier = improve_trade }
+				reverse_add_opinion_modifier = { target = CZE modifier = improve_trade }
+				add_opinion_modifier = { target = POL modifier = improve_trade }
+				reverse_add_opinion_modifier = { target = POL modifier = improve_trade }
 				set_temp_variable = { treasury_change = -2 }
 				modify_treasury_effect = yes
 				set_temp_variable = { int_investment_change = 1 }
@@ -6250,46 +6249,30 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_promote_centralasian_jihad executed"
-			every_country = {
+			every_other_country = {
 				limit = {
-					NOT = { original_tag = ROOT }
 					OR = {
 						salafist_kingdom_are_in_power = yes
 						salafist_caliphate_are_in_power = yes
 					}
 				}
-					add_opinion_modifier = {
-						modifier = declaration_of_friendship
-						target = FROM
-					}
+				add_opinion_modifier = { modifier = declaration_of_friendship target = FROM }
 			}
 			if = {
 				limit = {
 					original_tag = KAZ
 				}
 				KYR = {
-					add_opinion_modifier = {
-						modifier = recent_actions_negative
-						target = FROM
-					}
+					add_opinion_modifier = { modifier = recent_actions_negative target = FROM }
 				}
 				UZB = {
-					add_opinion_modifier = {
-						modifier = recent_actions_negative
-						target = FROM
-					}
+					add_opinion_modifier = { modifier = recent_actions_negative target = FROM }
 				}
 				TAJ = {
-					add_opinion_modifier = {
-						modifier = recent_actions_negative
-						target = FROM
-					}
+					add_opinion_modifier = { modifier = recent_actions_negative target = FROM }
 				}
 				TRK = {
-					add_opinion_modifier = {
-						modifier = recent_actions_negative
-						target = FROM
-					}
+					add_opinion_modifier = { modifier = recent_actions_negative target = FROM }
 				}
 			}
 			if = {
@@ -6297,28 +6280,16 @@ focus_tree = {
 					original_tag = UZB
 				}
 				KYR = {
-					add_opinion_modifier = {
-						modifier = recent_actions_negative
-						target = FROM
-					}
+					add_opinion_modifier = { modifier = recent_actions_negative target = FROM }
 				}
 				KAZ = {
-					add_opinion_modifier = {
-						modifier = recent_actions_negative
-						target = FROM
-					}
+					add_opinion_modifier = { modifier = recent_actions_negative target = FROM }
 				}
 				TAJ = {
-					add_opinion_modifier = {
-						modifier = recent_actions_negative
-						target = FROM
-					}
+					add_opinion_modifier = { modifier = recent_actions_negative target = FROM }
 				}
 				TRK = {
-					add_opinion_modifier = {
-						modifier = recent_actions_negative
-						target = FROM
-					}
+					add_opinion_modifier = { modifier = recent_actions_negative target = FROM }
 				}
 			}
 			if = {
@@ -6326,28 +6297,16 @@ focus_tree = {
 					original_tag = KYR
 				}
 				KAZ = {
-					add_opinion_modifier = {
-						modifier = recent_actions_negative
-						target = FROM
-					}
+					add_opinion_modifier = { modifier = recent_actions_negative target = FROM }
 				}
 				UZB = {
-					add_opinion_modifier = {
-						modifier = recent_actions_negative
-						target = FROM
-					}
+					add_opinion_modifier = { modifier = recent_actions_negative target = FROM }
 				}
 				TAJ = {
-					add_opinion_modifier = {
-						modifier = recent_actions_negative
-						target = FROM
-					}
+					add_opinion_modifier = { modifier = recent_actions_negative target = FROM }
 				}
 				TRK = {
-					add_opinion_modifier = {
-						modifier = recent_actions_negative
-						target = FROM
-					}
+					add_opinion_modifier = { modifier = recent_actions_negative target = FROM }
 				}
 			}
 		}
@@ -6863,7 +6822,7 @@ focus_tree = {
 		cost = 5
 		available = { has_government = fascism }
 		relative_position_id = CES_radicals_in_power
-		prerequisite = { focus = CES_symbol_power focus = CES_befriend_taliban  }
+		prerequisite = { focus = CES_symbol_power focus = CES_befriend_taliban }
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_FOREIGN_POLICY }
 		will_lead_to_war_with = CHI
 		completion_reward = {
@@ -8484,7 +8443,7 @@ focus_tree = {
 			}
 		}
 		relative_position_id = CES_new_turkic_state
-		prerequisite = { focus = CES_declare_turan  }
+		prerequisite = { focus = CES_declare_turan }
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_finally_united executed"
@@ -8596,7 +8555,7 @@ focus_tree = {
 
 		cost = 7
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_ARMY_XP }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_ARMY_XP }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_newly_reestab_militar executed"
 			if = {
@@ -8639,7 +8598,7 @@ focus_tree = {
 		cost = 7
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_newly_reestab_militar }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_assemble_generals executed"
 			if = {
@@ -8691,7 +8650,7 @@ focus_tree = {
 		cost = 5
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_newly_reestab_militar }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_improve_borderline_guards executed"
 			set_temp_variable = { treasury_change = -5 }
@@ -8738,7 +8697,7 @@ focus_tree = {
 		cost = 7
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_assemble_generals }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_establish_the_doctrine executed"
 			increase_officer_training_level = yes
@@ -8763,7 +8722,7 @@ focus_tree = {
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_establish_the_doctrine }
 		prerequisite = { focus = CES_improve_borderline_guards }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_restructuring_the_army executed"
 			if = {
@@ -8813,7 +8772,7 @@ focus_tree = {
 		cost = 7
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_assemble_generals focus = CES_improve_borderline_guards }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_create_territorial_defence executed"
 			if = {
@@ -8863,7 +8822,7 @@ focus_tree = {
 		cost = 5
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_create_territorial_defence }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_AIR_XP }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_AIR_XP }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_airforce_trainings executed"
 			air_experience = 55
@@ -8888,7 +8847,7 @@ focus_tree = {
 		cost = 4
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_airforce_trainings }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_AIR_XP }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_AIR_XP }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_buying_planes executed"
 			air_experience = 75
@@ -8921,7 +8880,7 @@ focus_tree = {
 		mutually_exclusive = { focus = CES_us_air }
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_new_air_doctrine }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_russian_air executed"
 			SOV = {
@@ -8958,7 +8917,7 @@ focus_tree = {
 		mutually_exclusive = { focus = CES_india_air }
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_new_air_doctrine }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_china_air executed"
 			CHI = {
@@ -8995,7 +8954,7 @@ focus_tree = {
 		mutually_exclusive = { focus = CES_china_air }
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_new_air_doctrine }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_india_air executed"
 			RAJ = {
@@ -9037,7 +8996,7 @@ focus_tree = {
 		mutually_exclusive = { focus = CES_russian_air }
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_new_air_doctrine }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_us_air executed"
 			USA = {
@@ -9078,7 +9037,7 @@ focus_tree = {
 		cost = 5
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_russian_air  focus = CES_china_air focus = CES_us_air focus = CES_india_air }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_euro_helicopters executed"
 			set_temp_variable = {
@@ -9130,11 +9089,11 @@ focus_tree = {
 		cost = 5
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_russian_air  focus = CES_china_air focus = CES_us_air focus = CES_india_air }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_airbus_stuff executed"
 			add_tech_bonus = {
-				name = CAT_s_fighter
+				name = CES_airbus_stuff
 				bonus = 0.3
 				uses = 1
 				category = CAT_s_fighter
@@ -9166,7 +9125,7 @@ focus_tree = {
 		cost = 5
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_russian_air  focus = CES_china_air focus = CES_us_air focus = CES_india_air }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_predator_xp executed"
 			add_tech_bonus = {
@@ -9195,7 +9154,7 @@ focus_tree = {
 		cost = 5
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_russian_air  focus = CES_china_air focus = CES_us_air focus = CES_india_air }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_wing_loong executed"
 			set_temp_variable = {
@@ -9227,7 +9186,7 @@ focus_tree = {
 		cost = 8
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_wing_loong focus = CES_predator_xp focus = CES_airbus_stuff focus = CES_euro_helicopters }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_czech_jets executed"
 			add_equipment_to_stockpile = {
@@ -9257,7 +9216,7 @@ focus_tree = {
 		cost = 8
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_wing_loong focus = CES_predator_xp focus = CES_airbus_stuff focus = CES_euro_helicopters }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_tai_anka executed"
 			set_temp_variable = {
@@ -9289,7 +9248,7 @@ focus_tree = {
 		cost = 8
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_wing_loong focus = CES_predator_xp focus = CES_airbus_stuff focus = CES_euro_helicopters }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_bell_uh executed"
 			set_temp_variable = {
@@ -9321,7 +9280,7 @@ focus_tree = {
 		cost = 5
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_establish_the_doctrine }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_army_modernization executed"
 			add_tech_bonus = {
@@ -9351,7 +9310,7 @@ focus_tree = {
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_army_modernization }
 		prerequisite = { focus = CES_restructuring_the_army }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_modern_warfare executed"
 			add_doctrine_cost_reduction = {
@@ -9380,7 +9339,7 @@ focus_tree = {
 		cost = 8
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_newly_reestab_militar }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_infantr_guns executed"
 			if = {
@@ -9431,7 +9390,7 @@ focus_tree = {
 		relative_position_id = CES_newly_reestab_militar
 		mutually_exclusive = { focus = CES_us_guns focus = CES_chinese_guns }
 		prerequisite = { focus = CES_infantr_guns }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_russian_guns executed"
 			add_timed_idea = {
@@ -9466,7 +9425,7 @@ focus_tree = {
 		relative_position_id = CES_newly_reestab_militar
 		mutually_exclusive = { focus = CES_russian_guns focus = CES_us_guns }
 		prerequisite = { focus = CES_infantr_guns }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_chinese_guns executed"
 			add_timed_idea = {
@@ -9501,7 +9460,7 @@ focus_tree = {
 		relative_position_id = CES_newly_reestab_militar
 		mutually_exclusive = { focus = CES_russian_guns focus = CES_chinese_guns }
 		prerequisite = { focus = CES_infantr_guns }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_chinese_guns executed"
 			add_timed_idea = {
@@ -9535,7 +9494,7 @@ focus_tree = {
 		cost = 6
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_us_guns }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH FOCUS_FILTER_NATO }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH FOCUS_FILTER_NATO }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_us_equip executed"
 			add_equipment_to_stockpile = {
@@ -9546,7 +9505,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
 			add_tech_bonus = {
-				name = CAT_support_weapons
+				name = CES_us_equip
 				bonus = 0.3
 				uses = 1
 				category = CAT_support_weapons
@@ -9571,7 +9530,7 @@ focus_tree = {
 		cost = 6
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_russian_guns }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_rus_equip executed"
 			add_equipment_to_stockpile = {
@@ -9609,7 +9568,7 @@ focus_tree = {
 		cost = 6
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_chinese_guns }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_chinese_equip executed"
 			add_equipment_to_stockpile = {
@@ -9620,7 +9579,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
 			add_tech_bonus = {
-				name = CAT_nvg
+				name = CES_chinese_equip
 				bonus = 0.3
 				uses = 1
 				category = CAT_nvg
@@ -9645,7 +9604,7 @@ focus_tree = {
 		cost = 7
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_chinese_equip }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_chinese_art executed"
 			add_equipment_to_stockpile = {
@@ -9687,7 +9646,7 @@ focus_tree = {
 		cost = 7
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_rus_equip }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_rus_art executed"
 			add_equipment_to_stockpile = {
@@ -9729,7 +9688,7 @@ focus_tree = {
 		cost = 7
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_us_equip }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_us_art executed"
 			add_equipment_to_stockpile = {
@@ -9774,7 +9733,7 @@ focus_tree = {
 		available = {
 			any_owned_state = { is_coastal = yes }
 		}
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_NAVY FOCUS_FILTER_NAVY_XP }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_NAVY FOCUS_FILTER_NAVY_XP }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_navy executed"
 
@@ -9802,7 +9761,7 @@ focus_tree = {
 		available = {
 			any_owned_state = { is_coastal = yes }
 		}
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_NAVY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_NAVY }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_navy_dockyard executed"
 
@@ -9859,7 +9818,7 @@ focus_tree = {
 		available = {
 			any_owned_state = { is_coastal = yes }
 		}
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_NAVY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_NAVY FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_navy_corvette executed"
 
@@ -9894,7 +9853,7 @@ focus_tree = {
 		available = {
 			any_owned_state = { is_coastal = yes }
 		}
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_NAVY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_NAVY FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_navy_frigates executed"
 
@@ -9929,7 +9888,7 @@ focus_tree = {
 		available = {
 			any_owned_state = { is_coastal = yes }
 		}
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_NAVY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_NAVY FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_navy_doctrine executed"
 
@@ -9988,14 +9947,14 @@ focus_tree = {
 		cost = 8
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_newly_reestab_militar }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH FOCUS_FILTER_ARMY_XP }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH FOCUS_FILTER_ARMY_XP }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_buying_tanks executed"
 
 			army_experience = 50
 			add_war_support = 0.04
 			add_tech_bonus = {
-				name = CAT_tanks
+				name = CES_buying_tanks
 				bonus = 0.25
 				uses = 1
 				category = CAT_tanks
@@ -10021,11 +9980,11 @@ focus_tree = {
 		relative_position_id = CES_newly_reestab_militar
 		mutually_exclusive = { focus = CES_russian_tanks focus = CES_american_tanks }
 		prerequisite = { focus = CES_buying_tanks }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_chinese_tanks executed"
 			add_tech_bonus = {
-				name = CAT_tanks
+				name = CES_chinese_tanks
 				bonus = 0.25
 				uses = 2
 				category = CAT_tanks
@@ -10086,11 +10045,11 @@ focus_tree = {
 		relative_position_id = CES_newly_reestab_militar
 		mutually_exclusive = { focus = CES_chinese_tanks focus = CES_american_tanks }
 		prerequisite = { focus = CES_buying_tanks }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_russian_tanks executed"
 			add_tech_bonus = {
-				name = CAT_tanks
+				name = CES_russian_tanks
 				bonus = 0.25
 				uses = 2
 				category = CAT_tanks
@@ -10151,11 +10110,11 @@ focus_tree = {
 		relative_position_id = CES_newly_reestab_militar
 		mutually_exclusive = { focus = CES_russian_tanks focus = CES_chinese_tanks }
 		prerequisite = { focus = CES_buying_tanks }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_american_tanks executed"
 			add_tech_bonus = {
-				name = CAT_tanks
+				name = CES_american_tanks
 				bonus = 0.25
 				uses = 2
 				category = CAT_tanks
@@ -10214,7 +10173,7 @@ focus_tree = {
 		cost = 7
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_russian_tanks focus = CES_chinese_tanks focus = CES_american_tanks }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		bypass = {
 			NOT = {
 				country_exists = UKR
@@ -10223,7 +10182,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_urainian_btr executed"
 			add_tech_bonus = {
-				name = CAT_apc
+				name = CES_urainian_btr
 				bonus = 0.25
 				uses = 1
 				category = CAT_apc
@@ -10287,7 +10246,7 @@ focus_tree = {
 		cost = 8
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_russian_tanks focus = CES_chinese_tanks focus = CES_american_tanks }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_rus_bars executed"
 			add_equipment_to_stockpile = {
@@ -10319,7 +10278,7 @@ focus_tree = {
 		cost = 6
 		relative_position_id = CES_newly_reestab_militar
 		prerequisite = { focus = CES_rus_bars focus = CES_urainian_btr }
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_RESEARCH }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_polaris executed"
 			add_tech_bonus = {
@@ -10499,7 +10458,12 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_western_prave_rabochich executed"
 			add_to_variable = { CES_liberals_social_cost_multiplier_modifier = 0.20 }
-			add_to_variable = { CES_liberals_local_resources_factor = 0.10 }
+			add_to_variable = { CES_liberals_local_resources_oil_factor = 0.10
+local_resources_aluminium_factor = 0.10
+local_resources_rubber_factor = 0.10
+local_resources_tungsten_factor = 0.10
+local_resources_steel_factor = 0.10
+local_resources_chromium_factor = 0.10 }
 			custom_effect_tooltip = CES_liberals_modifier4_tt
 			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
@@ -10793,7 +10757,7 @@ focus_tree = {
 		prerequisite = { focus = CES_western_sport }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_western_resource executed"
-			one_random_synthetic_refinery = yes
+			one_random_renewable_energy_infra = yes
 		}
 
 		ai_will_do = {
@@ -10843,7 +10807,7 @@ focus_tree = {
 			original_tag = KAZ
 		}
 		prerequisite = { focus = CES_newly_reestab_militar }
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_kaz_reform_vs executed"
 			hidden_effect = { add_dynamic_modifier = { modifier = CES_kaz_modifier } }
@@ -10873,7 +10837,7 @@ focus_tree = {
 		cost = 7
 		prerequisite = { focus = CES_kaz_reform_vs }
 		relative_position_id = CES_kaz_reform_vs
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus ter_oborna executed"
 			add_to_variable = { CES_kaz_army_core_defence_factor = 0.10 }
@@ -10937,7 +10901,7 @@ focus_tree = {
 		cost = 7
 		prerequisite = { focus = CES_kaz_reform_vs }
 		relative_position_id = CES_kaz_reform_vs
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_kaz_nat_gurad executed"
 			add_to_variable = { CES_kaz_police_resistance_growth = -0.10 }
@@ -10989,7 +10953,7 @@ focus_tree = {
 		cost = 7
 		prerequisite = { focus = CES_kaz_reform_vs }
 		relative_position_id = CES_kaz_reform_vs
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_kaz_gos_ohrana executed"
 			add_to_variable = { CES_kaz_encryption_factor = 0.10 }
@@ -11016,7 +10980,7 @@ focus_tree = {
 		prerequisite = { focus = CES_kaz_ter_oborna }
 		prerequisite = { focus = CES_kaz_gos_ohrana }
 		relative_position_id = CES_kaz_reform_vs
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_kaz_reog_kadet executed"
 			add_to_variable = { CES_kaz_personnel_cost_multiplier_modifier = 0.05 }
@@ -11043,7 +11007,7 @@ focus_tree = {
 		prerequisite = { focus = CES_kaz_nat_gurad }
 		prerequisite = { focus = CES_kaz_gos_ohrana }
 		relative_position_id = CES_kaz_reform_vs
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_kaz_defence_doctrine executed"
 			add_to_variable = { CES_kaz_army_defence_factor = 0.10 }
@@ -11071,7 +11035,7 @@ focus_tree = {
 		prerequisite = { focus = CES_kaz_reog_kadet }
 		prerequisite = { focus = CES_kaz_defence_doctrine }
 		relative_position_id = CES_kaz_reform_vs
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus CES_kaz_sso executed"
 			custom_effect_tooltip = CES_kaz_sso_tt

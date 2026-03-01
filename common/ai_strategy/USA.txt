@@ -67,66 +67,37 @@ USA_spy_on_SOV = { #Spy on SOV, infiltrate Russian army
 	allowed = { original_tag = USA }
 	enable = {
 		NOT = { SOV = { is_subject_of = USA } }
-	}
-	abort = {
-		OR = {
+		country_exists = SOV
+		NOT = {
 			SOV = {
 				has_completed_focus = SOV_closer_ties_with_the_west #Stop spying on Russia if Russia becomes friendly
 			}
-			NOT = { country_exists = SOV }
 		}
 	}
 	abort_when_not_enabled = yes
+
 	ai_strategy = { type = operative_mission value = 80 mission = build_intel_network mission_target = SOV }
 	ai_strategy = { type = operative_operation value = 80 operation = operation_infiltrate_armed_forces_army operation_target = SOV }
 }
 USA_spy_on_BLR = { #Spy on BLR
 	allowed = { original_tag = USA }
 	enable = {
+		country_exists = BLR
 		NOT = { BLR = { is_subject_of = USA } }
 	}
-	abort = {
-		NOT = { country_exists = BLR }
-	}
 	abort_when_not_enabled = yes
+
 	ai_strategy = { type = operative_mission value = 80 mission = build_intel_network mission_target = BLR }
 }
 USA_spy_on_VEN = { #Spy on VEN
 	allowed = { original_tag = USA }
 	enable = {
+		country_exists = VEN
 		NOT = { VEN = { is_subject_of = USA } }
 	}
-	abort = {
-		NOT = { country_exists = VEN }
-	}
 	abort_when_not_enabled = yes
+
 	ai_strategy = { type = operative_mission value = 80 mission = build_intel_network mission_target = VEN }
-}
-###
-seek_american_alliance = {
-	enable = {
-		NOT = { tag = USA }
-		has_country_flag = seeks_american_alliance
-	}
-
-	abort = {
-		OR = {
-			NOT = { has_country_flag = seeks_american_alliance }
-			has_idea = NATO_member
-			is_in_faction_with = USA
-		}
-	}
-
-	ai_strategy = {
-		type = befriend
-		id = "USA"
-		value = 150
-	}
-	ai_strategy = {
-		type = alliance
-		id = "USA"
-		value = 150
-	}
 }
 
 USA_the_dragon = {
@@ -157,11 +128,7 @@ USA_the_bear = {
 				has_government = communism
 			}
 		}
-	}
-	abort = {
-		SOV = {
-			has_completed_focus = SOV_closer_ties_with_the_west
-		}
+		NOT = { SOV = { has_completed_focus = SOV_closer_ties_with_the_west } }
 	}
 	abort_when_not_enabled = yes
 
@@ -172,13 +139,12 @@ USA_the_bear = {
 
 USA_generic_support_israel = {
 	allowed = { tag = USA }
-	#enable = { NOT = { has_completed_focus = USA_recognize_palestine } }
 	enable = {
+		country_exists = ISR
 		OR = {
 			has_government = democratic
 			has_government = neutrality
 		}
-		country_exists = ISR
 	}
 	abort_when_not_enabled = yes
 
@@ -186,6 +152,7 @@ USA_generic_support_israel = {
 	ai_strategy = { type = befriend id = "ISR" value = 1000 }
 	ai_strategy = { type = send_lend_lease_desire id = "ISR" value = 1000 }
 	ai_strategy = { type = support id = "ISR" value = 100 }
+	ai_strategy = { type = diplo_action_desire id = "ISR" value = 75 target = guarantee }
 }
 
 USA_generic_iranian_relations = {
@@ -237,15 +204,16 @@ USA_strike_force_pacific = { #Essentially used to push out in the pacific
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = strike_force_home_base id = 105 } #Pearl Harbor - Should keep na
+	#ai_strategy = { type = strike_force_home_base id = 105 } #Pearl Harbor - Should keep na
 	ai_strategy = { type = area_priority id = pacific value = 50 }
 	ai_strategy = { type = area_priority id = asia value = 50 }
-	ai_strategy = { type = naval_avoid_region id = 88 value = 1000 } #Bering Straits -This is here to keep the AI protecting the cores regions
-	ai_strategy = { type = naval_avoid_region id = 171 value = 1000 } #Alaskan Coast
-	ai_strategy = { type = naval_avoid_region id = 32 value = 1000 }
-	ai_strategy = { type = naval_avoid_region id = 112 value = 1000 }
-	ai_strategy = { type = naval_avoid_region id = 179 value = 1000 }
-	ai_strategy = { type = naval_avoid_region id = 113 value = 1000 }
+	# ai_strategy = { type = naval_dominance id = pacific value = 90 }
+	# ai_strategy = { type = naval_avoid_region id = 88 value = 1000 } #Bering Straits -This is here to keep the AI protecting the cores regions
+	# ai_strategy = { type = naval_avoid_region id = 171 value = 1000 } #Alaskan Coast
+	# ai_strategy = { type = naval_avoid_region id = 32 value = 1000 }
+	# ai_strategy = { type = naval_avoid_region id = 112 value = 1000 }
+	# ai_strategy = { type = naval_avoid_region id = 179 value = 1000 }
+	# ai_strategy = { type = naval_avoid_region id = 113 value = 1000 }
 }
 
 USA_strike_force_europe = {
@@ -263,14 +231,13 @@ USA_strike_force_europe = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = strike_force_home_base id = 54 }
+	#ai_strategy = { type = strike_force_home_base id = 54 }
 	ai_strategy = { type = area_priority id = europe value = 250 }
 }
 
 USA_defend_home = {
 	allowed = { tag = USA }
 	enable = {
-		tag = USA
 		has_war = yes
 	}
 	abort_when_not_enabled = yes
@@ -301,8 +268,10 @@ USA_defend_the_coasts = { #This AI Strategy should keep the USA at bay in case o
 	ai_strategy = { type = area_priority id = middle_east value = -1000 }
 	ai_strategy = { type = area_priority id = africa value = -1000 }
 	ai_strategy = { type = area_priority id = oceania value = -1000 }
-	ai_strategy = { type = area_priority id = north_america value = 100000 }
-	ai_strategy = { type = area_priority id = united_states_coasts value = 100000 } #America Must Stand Strong
+	ai_strategy = { type = area_priority id = north_america value = 5000 }
+	ai_strategy = { type = area_priority id = united_states_east_coast value = 1000 } #America Must Stand Strong
+	ai_strategy = { type = area_priority id = gulf_of_america value = 1000 }
+	ai_strategy = { type = area_priority id = united_states_west_coast value = 1000 }
 	ai_strategy = {
 		type = put_unit_buffers
 		ratio = 0.80
@@ -327,7 +296,7 @@ USA_attack_china = {
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = area_priority id = chinese_coast value = 100000 } #This should mega focus here
-	ai_strategy = { type = strike_force_home_base id = 76 } #Okinawa Base - Should be useful in keeping control
+	#ai_strategy = { type = strike_force_home_base id = 76 } #Okinawa Base - Should be useful in keeping control
 
 	ai_strategy = {
 		type = put_unit_buffers
@@ -421,9 +390,7 @@ USA_garrison_oversea_bases = {
 			controls_state = 818
 		}
 	}
-	abort = {
-		has_war = yes
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = {
 		type = put_unit_buffers
@@ -460,10 +427,6 @@ USA_army_breakdown = {
 	enable = { original_tag = USA }
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = role_ratio id = L_Inf value = 0 }
-	ai_strategy = { type = role_ratio id = Militia value = 0 } #No militias for American AI
-	ai_strategy = { type = role_ratio id = infantry value = 0 }
-	ai_strategy = { type = role_ratio id = garrison value = 0 }
 	ai_strategy = { type = role_ratio id = mechanized value = 38 }
 	ai_strategy = { type = role_ratio id = armor value = 38 }
 	ai_strategy = { type = role_ratio id = marines value = 20 }
@@ -492,7 +455,6 @@ USA_air_force_breakdown_crysis = {
 		original_tag = USA
 	}
 	enable = {
-		original_tag = USA
 		tag = USA
 		date < 2006.1.1
 	}
@@ -529,7 +491,6 @@ USA_air_force_breakdown_crysis = {
 	ai_strategy = { type = equipment_variant_production_factor id = small_plane_naval_bomber_airframe value = -75 }
 	ai_strategy = { type = equipment_variant_production_factor id = small_plane_suicide_airframe value = -80 }
 	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_airframe value = -25 }
-	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_fighter_airframe value = 0 }
 	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_cas_airframe value = -25 }
 	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_maritime_patrol_airframe value = -50 }
 	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_suicide_airframe value = -75 }
@@ -547,7 +508,6 @@ USA_air_force_breakdown_crysis = {
 	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_suicide_airframe value = -100 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_airframe value = -95 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_fighter_airframe value = 25 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_cas_airframe value = 0 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_maritime_patrol_airframe value = 25 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_air_transport_airframe value = -80 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_scout_airframe value = -95 }
@@ -617,7 +577,6 @@ USA_air_force_stop_building_all_planes_at_once_its_dumb_missing_meds = {
 USA_air_force_breakdown = {
 	allowed = { original_tag = USA }
 	enable = {
-		original_tag = USA
 		date > 2006.1.1
 	}
 	abort_when_not_enabled = yes
@@ -667,7 +626,6 @@ USA_air_force_breakdown = {
 	ai_strategy = { type = equipment_variant_production_factor id = small_plane_naval_bomber_airframe value = -100 }
 	ai_strategy = { type = equipment_variant_production_factor id = small_plane_suicide_airframe value = -80 }
 	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_airframe value = -25 }
-	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_fighter_airframe value = 0 }
 	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_cas_airframe value = -25 }
 	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_maritime_patrol_airframe value = -80 }
 	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_suicide_airframe value = -75 }
@@ -685,7 +643,6 @@ USA_air_force_breakdown = {
 	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_suicide_airframe value = -100 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_airframe value = -95 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_fighter_airframe value = 25 }
-	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_cas_airframe value = 0 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_maritime_patrol_airframe value = 25 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_air_transport_airframe value = -80 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_scout_airframe value = -95 }
@@ -696,7 +653,6 @@ USA_air_force_breakdown = {
 USA_dont_build_transport_helicopter = {
 	allowed = { original_tag = USA }
 	enable = {
-		original_tag = USA
 		has_equipment = { heavy_tank_amphibious_chassis > 1500 }
 	}
 	abort_when_not_enabled = yes
@@ -707,7 +663,6 @@ USA_dont_build_transport_helicopter = {
 USA_reduce_canada_border_garrison = {
 	allowed = { original_tag = USA }
 	enable = {
-		original_tag = USA
 		OR = {
 			CAN = { has_government = democratic }
 			CAN = { has_idea = NATO_member }
@@ -725,7 +680,6 @@ USA_reduce_canada_border_garrison = {
 USA_canadians_scary = {
 	allowed = { original_tag = USA }
 	enable = {
-		original_tag = USA
 		CAN = {
 			NOT = {
 				has_government = democratic
@@ -746,7 +700,6 @@ USA_canadians_scary = {
 USA_reduce_mexico_garrison_when_cartels_are_in_mexico = {
 	allowed = { original_tag = USA }
 	enable = {
-		original_tag = USA
 		MEX = {
 			NOT = {
 				has_war_with = SLA
@@ -768,13 +721,12 @@ USA_reduce_mexico_garrison_when_cartels_are_in_mexico = {
 USA_war_with_mexico_or_canada = {
 	allowed = { original_tag = USA }
 	enable = {
-		original_tag = USA
 		OR = {
 			has_war_with = MEX
 			has_war_with = CAN
 		}
 	}
-abort_when_not_enabled = yes
+	abort_when_not_enabled = yes
 	ai_strategy = {
 		type = front_unit_request
 		tag = CAN
@@ -789,7 +741,6 @@ abort_when_not_enabled = yes
 USA_degarrison_guantanamo = {
 	allowed = { original_tag = USA }
 	enable = {
-		original_tag = USA
 		owns_state = 424
 	}
 	abort_when_not_enabled = yes
@@ -801,7 +752,7 @@ USA_degarrison_guantanamo = {
 }
 
 USA_support_afghanistan = {
-	allowed = { tag = USA has_start_date > 2016.1.1 }
+	allowed = { tag = USA }
 	enable = {
 		AFG = { NOT = { has_country_flag = AFG_new_war } }
 		NOT = { has_war_with = AFG }
@@ -860,7 +811,6 @@ USA_eu_relations = {
 	ai_strategy = { type = befriend id = "CRO" value = 30 }
 	ai_strategy = { type = befriend id = "GRE" value = 30 }
 	ai_strategy = { type = befriend id = "TUR" value = 30 }
-	ai_strategy = { type = befriend id = "FIN" value = 30 }
 	ai_strategy = { type = befriend id = "SWI" value = 30 }
 	ai_strategy = { type = befriend id = "ICE" value = 30 }
 }
@@ -913,8 +863,9 @@ USA_cuba_relations = {
 USA_korea_relations = {
 	allowed = { tag = USA }
 	enable = {
-		KOR = { has_government = democratic }
 		country_exists = NKO
+		NKO = { has_government = communism }
+		KOR = { has_government = democratic }
 	}
 	abort_when_not_enabled = yes
 
@@ -922,17 +873,45 @@ USA_korea_relations = {
 	ai_strategy = { type = protect id = "KOR" value = 100 }
 	ai_strategy = { type = contain id = "NKO" value = 100 }
 	ai_strategy = { type = antagonize id = "NKO" value = 50 }
+	ai_strategy = { type = diplo_action_desire id = "KOR" value = 75 target = guarantee }
 }
 
 USA_taiwan_relations = {
 	allowed = { tag = USA }
 	enable = {
-		TAI = { has_government = democratic }
+		country_exists = TAI
+		CHI = { has_government = communism }
+		TAI = {
+			OR = {
+				has_government = democratic
+				has_government = communism
+			}
+		}
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "TAI" value = 50 }
 	ai_strategy = { type = protect id = "TAI" value = 100 }
+	ai_strategy = { type = diplo_action_desire id = "TAI" value = 75 target = guarantee }
+}
+
+USA_japan_relations = {
+	allowed = { tag = USA }
+	enable = {
+		country_exists = JAP
+		CHI = { has_government = communism }
+		JAP = {
+			OR = {
+				has_government = democratic
+				has_government = communism
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "JAP" value = 50 }
+	ai_strategy = { type = protect id = "JAP" value = 100 }
+	ai_strategy = { type = diplo_action_desire id = "JAP" value = 75 target = guarantee }
 }
 
 USA_saudi_relations = {
@@ -1016,31 +995,13 @@ USA_support_irq = {
 	ai_strategy = { type = protect id = "IRQ" value = 1000 }
 }
 
-USA_factory_target = {
-	allowed = { tag = USA }
-	enable = { always = yes }
-	abort_when_not_enabled = yes
-
-	ai_strategy = {
-		type = building_target
-		id = industrial_complex
-		value = 350
-	}
-}
-
 USA_likes_BOT = {
 	allowed = { original_tag = USA }
 
 	enable = {
-		original_tag = USA
+		country_exists = BOT
 	}
-	abort = {
-		OR = {
-			has_war_with = BOT
-			BOT = { is_in_faction_with = CHI }
-			BOT = { is_in_faction_with = SOV }
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "BOT" value = 50 }
 	ai_strategy = { type = support id = "BOT" value = 50 }
@@ -1051,16 +1012,9 @@ USA_support_botswana_militarily = {
 	allowed = { original_tag = USA }
 
 	enable = {
-		original_tag = USA
 		BOT = { has_completed_focus = BOT_american_military_cooperation }
 	}
-	abort = {
-		OR = {
-			has_war_with = BOT
-			BOT = { is_in_faction_with = CHI }
-			BOT = { is_in_faction_with = SOV }
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "BOT" value = 50 }
 	ai_strategy = { type = support id = "BOT" value = 50 }
@@ -1074,13 +1028,7 @@ USA_supply_botswana = {
 		country_exists = BOT
 		BOT = { has_completed_focus = BOT_buy_hercules_c130 }
 	}
-	abort = {
-		OR = {
-			has_war_with = BOT
-			BOT = { is_in_faction_with = CHI }
-			BOT = { is_in_faction_with = SOV }
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "BOT" value = 15 }
 	ai_strategy = { type = support id = "BOT" value = 15 }
@@ -1094,13 +1042,7 @@ USA_befriend_BOT = {
 		country_exists = BOT
 		BOT = { has_completed_focus = BOT_us_relations }
 	}
-	abort = {
-		OR = {
-			has_war_with = BOT
-			BOT = { is_in_faction_with = CHI }
-			BOT = { is_in_faction_with = SOV }
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "BOT" value = 50 }
 
@@ -1109,7 +1051,6 @@ USA_befriend_BOT = {
 USA_invade_iraq = {
 	allowed = { original_tag = USA }
 	enable = {
-		original_tag = USA
 		owns_state = 488
 		has_war_with = IRQ
 		date < 2010.1.1
@@ -1126,7 +1067,6 @@ USA_invade_iraq = {
 USA_operation_enduring_freedom = {
 	allowed = { original_tag = USA }
 	enable = {
-		original_tag = USA
 		has_country_leader_with_trait = war_on_terror_leader
 		NOT = { has_country_flag = Operation_enduring_freedom }
 	}
@@ -1136,7 +1076,6 @@ USA_operation_enduring_freedom = {
 	ai_strategy = { type = pp_spend_priority id = guarantee value = -9999 }
 	ai_strategy = { type = pp_spend_priority id = general value = -9999 }
 	ai_strategy = { type = pp_spend_priority id = admiral value = -9999 }
-	ai_strategy = { type = pp_spend_priority id = guarantee value = -9999 }
 	ai_strategy = { type = pp_spend_priority id = idea value = -9999 } #Focus on Editing LAWS
 	ai_strategy = { type = pp_spend_priority id = decision value = 250 }
 	ai_strategy = { type = pp_spend_amount id = decision value = 250 }
@@ -1145,7 +1084,6 @@ USA_operation_enduring_freedom = {
 USA_operation_iraqi_campaign = {
 	allowed = { original_tag = USA }
 	enable = {
-		original_tag = USA
 		has_country_leader_with_trait = war_on_terror_leader
 		NOT = { has_country_flag = Operation_iraqi_freedom }
 		IRQ = { NOT = { has_country_flag = IRQ_victory_against_america } }
@@ -1156,10 +1094,20 @@ USA_operation_iraqi_campaign = {
 	ai_strategy = { type = pp_spend_priority id = guarantee value = -9999 }
 	ai_strategy = { type = pp_spend_priority id = general value = -9999 }
 	ai_strategy = { type = pp_spend_priority id = admiral value = -9999 }
-	ai_strategy = { type = pp_spend_priority id = guarantee value = -9999 }
 	ai_strategy = { type = pp_spend_priority id = idea value = -9999 } #Focus on Editing LAWS
 	ai_strategy = { type = pp_spend_priority id = decision value = 250 }
 	ai_strategy = { type = pp_spend_amount id = decision value = 250 }
+}
+
+USA_operation_iraqi_freedom = {
+	allowed = { original_tag = USA }
+	enable = {
+		has_country_flag = Operation_iraqi_freedom
+		has_wargoal_against = IRQ
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = "IRQ" value = 200 }
 }
 
 USA_army_focus = {
@@ -1347,4 +1295,15 @@ USA_CYR_intervention_in_libya = {
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = send_volunteers_desire id = "CYR" value = 500 }
+}
+
+USA_construct_additional_microchips = {
+	allowed = { original_tag = USA }
+	enable = {
+		date < 2002.1.1
+		check_variable = { resource@microchips < 0 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = building_target id = microchip_plant value = 350 }
 }

@@ -1,43 +1,44 @@
-<h1>How to use gfx_entry_generator.py for goals</h1>
-<h5>For whoever on gfx-input branch using this script:</h5>
+# How to use gfx_entry_generator.py
 
-1) Open powershell/cmd
+## Prerequisites
 
-2) Go into Millennium_Dawn/tools folder
+- Python 3.9 or later installed
+- This script must be located in the `tools/` directory of the mod
 
-3) Run command 'python3 gfx_entry_generator.py'
+## Usage
 
-4) Give the complete path to the gfx entry. Which means you need to jump out of the tools folder and the Millennium_Dawn folder when giving the path.
-With this in mind, the path you give should look like this: 
+1. Open a terminal (PowerShell, CMD, Terminal, or any shell)
 
-    ' ..\ ..\Millennium_Dawn\gfx\interface\goals '
+2. Navigate to the `tools/` directory of the mod:
+   ```
+   cd path/to/Millennium-Dawn/tools
+   ```
 
-5) You will be asked to enter the mod folder name. Typically you would want to enter: 'Millennium_Dawn\' 
+3. Run the script:
+   ```
+   python3 gfx_entry_generator.py
+   ```
 
-6) Enter '1' to generate goals.gfx
+4. Select from the menu:
+   - **1** - Generate `goals.gfx` and `goals_shine.gfx`
+   - **2** - Generate `MD_eventpictures.gfx`
+   - **3** - Generate `MD_ideas.gfx`
+   - **4** - Generate `MD_parties_icons.gfx`
+   - **5** - Generate `MD_intelligence_icons.gfx`
+   - **6** - Generate `MD_decisions.gfx`
 
-7) Next, enter '0'. (We dont append 'GFX' in front of the goals icons)
-    
-8) New goals.gfx and goals_shine.gfx should now be generated
+5. The generated `.gfx` files will be automatically moved to the `interface/` directory
 
-<h6>Extra:</h6>
+## Notes
 
-9) To view if the files changed run git command: git status
+- The script automatically detects and warns about duplicate icon names
+- Works on Linux, Mac, and Windows
+- For goals (option 1), you will be asked whether to prepend `GFX_` to icon names. Typically enter `0` (no) for goals.
 
-10) Check what changes are made with git command: git differ
+## Verification
 
-11) Everything looks good? Now commit and push :)
-
-<h6>QoA:</h6>
-
-"What is Python?"<br>
-
-Python is an interpreted, object-oriented, high-level programming language with dynamic semantics. To read more about python: <a href="https://www.python.org/doc/essays/blurb/">What is Python?</a> <br>
-
-"python command dont work / I dont have python installed, how do I download it?"<br>
-
-In order to install python you can access Windows Store and search for "Python 3.10", once it is installed you are good to go, enter Step 3) again. <br>
-
-"I dont use windows, how can I get python?" <br>
-
-Install Python through this site: <a href="https://www.python.org/downloads/">Python Website</a> <br>
+After generating, check the changes:
+```
+git status
+git diff
+```
