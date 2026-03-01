@@ -50,7 +50,6 @@ Bugfix:
 - Fixed the God of War not properly giving Army, Air, Naval Experience every month
 - Fixed the weird gap in the "Pansarregementen" division template
 - Fixed a handful of issues regarding female leaders of all types randomly bugging
-- Fixed encryption/decryption techs being set unconditionally in 332 country history files; they are now gated behind NOT having La Resistance DLC
 
 Balance:
 
