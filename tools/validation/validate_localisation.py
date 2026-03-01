@@ -8,7 +8,9 @@
 #   3. Loc syntax issues (color symbol pairing)
 #   4. Missing mandatory l_english: line
 #   5. Invalid localization_key references
-#   6. add_resistance_target tooltip issues
+#   6. Missing custom_effect_tooltip / custom_trigger_tooltip keys
+#   7. add_resistance_target tooltip issues
+#   8. Orphaned _tt tooltip keys (defined in loc but never referenced)
 # Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
 # Adapted for Millennium Dawn with multiprocessing
 ##########################
@@ -309,6 +311,51 @@ class Validator(BaseValidator):
             "Invalid localization_key references (key not found in loc files):",
         )
 
+    def validate_custom_tooltip_references(self):
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking custom tooltip references...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        loc_keys, _ = get_all_loc_keys(self.mod_path, lowercase=False)
+        results = []
+
+        # Pattern 1: custom_effect_tooltip = KEY (simple form, no brace)
+        simple_pattern = r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)"
+        # Pattern 2: custom_trigger_tooltip = { tooltip = KEY }
+        trigger_pattern = r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(\S+)"
+
+        for filename in glob.iglob(self.mod_path + "**/*.txt", recursive=True):
+            if _should_skip(filename):
+                continue
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
+            if (
+                "custom_effect_tooltip" not in text_file
+                and "custom_trigger_tooltip" not in text_file
+            ):
+                continue
+
+            for pattern in [simple_pattern, trigger_pattern]:
+                matches = re.findall(pattern, text_file)
+                for key in matches:
+                    if key in loc_keys or key in VANILLA_LOC_KEYS:
+                        continue
+                    if "[" in key or "|" in key or '"' in key:
+                        continue
+                    if key.startswith("GFX_"):
+                        continue
+                    results.append(f"{key} - {os.path.basename(filename)}")
+
+        results = sorted(set(results))
+        self._report(
+            results,
+            "✓ All custom tooltip references are valid",
+            "Custom tooltip references not found in localisation:",
+        )
+
     def validate_add_resistance_tooltip(self):
         self.log(f"\n{'='*80}")
         self.log(
@@ -357,13 +404,74 @@ class Validator(BaseValidator):
             "add_resistance_target tooltip issues:",
         )
 
+    def validate_orphaned_tooltip_keys(self):
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking for orphaned tooltip keys...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        loc_keys, _ = get_all_loc_keys(self.mod_path, lowercase=False)
+        tt_keys = {k for k in loc_keys if k.endswith("_tt") or k.endswith("_TT")}
+
+        if not tt_keys:
+            self._report(
+                [],
+                "✓ No orphaned tooltip keys found",
+                "Orphaned tooltip keys (defined in loc but never referenced):",
+            )
+            return
+
+        # 1. Collect all tooltip keys referenced in script and GUI files
+        referenced_in_scripts = set()
+        txt_patterns = [
+            r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)",
+            r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(\S+)",
+            r"tooltip\s*=\s*(\S+)",
+            r"localization_key\s*=\s*(\S+)",
+        ]
+        gui_patterns = [
+            r'(?:pdx_tooltip|pdx_tooltip_delayed|tooltip|text)\s*=\s*"([^"]+)"',
+            r"(?:tooltip|text)\s*=\s*(\S+)",
+        ]
+
+        for ext, pats in (("**/*.txt", txt_patterns), ("**/*.gui", gui_patterns)):
+            for filename in glob.iglob(self.mod_path + ext, recursive=True):
+                if _should_skip(filename):
+                    continue
+                text = FileOpener.open_text_file(
+                    filename, lowercase=False, strip_comments_flag=True
+                )
+                for pat in pats:
+                    for m in re.findall(pat, text, re.DOTALL):
+                        referenced_in_scripts.add(m)
+
+        # 2. Collect _tt keys referenced by other loc values via $KEY$
+        referenced_in_loc = set()
+        for key, value in loc_keys.items():
+            for ref in re.findall(r"\$([A-Za-z0-9_]+(?:_tt|_TT))\$", value):
+                if ref in tt_keys:
+                    referenced_in_loc.add(ref)
+
+        # 3. Report orphans
+        all_referenced = referenced_in_scripts | referenced_in_loc
+        orphaned = sorted(tt_keys - all_referenced)
+
+        self._report(
+            orphaned,
+            "✓ No orphaned tooltip keys found",
+            "Orphaned tooltip keys (defined in loc but never referenced):",
+        )
+
     def run_validations(self):
         self.validate_duplicated_keys()
         self.validate_brackets()
         self.validate_syntax()
         self.validate_mandatory_line()
         self.validate_localization_key_references()
+        self.validate_custom_tooltip_references()
         self.validate_add_resistance_tooltip()
+        self.validate_orphaned_tooltip_keys()
 
 
 if __name__ == "__main__":
