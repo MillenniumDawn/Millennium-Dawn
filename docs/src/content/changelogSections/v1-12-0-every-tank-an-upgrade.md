@@ -1,7 +1,7 @@
 ---
 title: v1.12.0 'Every Tank an Upgrade'
 page_id: changelog-v1-12-0-every-tank-an-upgrade
-toc: 'off'
+toc: "off"
 order: 13
 ---
 
@@ -141,7 +141,6 @@ User Interface:
 - Fixed some issues with the Unit Leader interface namely around missing sorting buttons when promoting a unit leader
 - Added the missing containers about factions commanders that was causing some issues
 
-
 </details>
 
 <details><summary>v1.12.3a</summary>
@@ -164,7 +163,6 @@ Game Rules:
 Localization:
 
 - Fixed the missing faction localization for the Anti Zombie Coalition faction
-
 
 </details>
 
@@ -373,7 +371,6 @@ User Interface:
 - Added a display in the Energy screen to show you how much power the reactor or fossil fuel power plant will produce
 - Added the "Stored Energy" to the Counter UI under the "Energy Balance" header
 
-
 </details>
 
 <details><summary>v1.12.2a 11/22/2025 - Hotfix A</summary>
@@ -451,11 +448,9 @@ User Interface:
 - Adjusted the air doctrines positions in the officer corps view
 - Fixed the tiny faction logo in the politics UI view
 
-
 </details>
 
 <details><summary>v1.12.2 11/20/2025 - HOI 1.17 Compatch</summary>
-
 
 Achievements:
 
@@ -619,7 +614,6 @@ User Interface:
 
 - Fixed a broken UI element when trying to design Self-Propelled Artillery as Russia
 
-            
   </details>
 
 <details><summary>v1.12.1b 8/22/25 Hotfix</summary>
@@ -762,11 +756,10 @@ Graphics:
 
 - Fixed various missing National Spirit GFX
 
-            
   </details>
 
 <details><summary>v1.12.1</summary>
-	
+
 AI:
 
 - The AI will not pursue a debt war if a nation is guaranteed by a NATO member or CSTO member
@@ -910,7 +903,6 @@ User Interface:
 - Removed floating "Armour_TITLE_WEAPONS" text from the tech tree
 - Added several national focus filters to Iran and reassigned existing filters to improve playability.
 
-            
   </details>
 
 <details><summary>v1.12.0d - 7/02/25 Hotfix</summary>
