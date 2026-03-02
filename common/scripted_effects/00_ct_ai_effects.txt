@@ -1,0 +1,510 @@
+# Author(s): Doolittle
+
+#Runs in the weekly cycle for the CT nations
+#This runs only once a month, so really, this is a monthly check
+ct_ai_weekly = {
+	if = {
+		limit = {
+			has_country_flag = ct_ai_action_cooldown
+		}
+		if = {
+			limit = { is_debug = yes }
+			log = "[GetDateText]: [THIS.GetTag]: CT AI skipped — on cooldown"
+		}
+	}
+	else = {
+		if = {
+			limit = { is_debug = yes }
+			log = "[GetDateText]: [THIS.GetTag]: CT AI weekly tick starting"
+		}
+
+		ct_ai_select_target_org = yes
+
+		if = {
+			limit = {
+				NOT = { check_variable = { selected_org = -1 } }
+			}
+			if = {
+				limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetTag]: CT AI selected org [?selected_org] — executing action"
+			}
+			ct_ai_execute_action = yes
+		}
+
+		if = {
+			limit = {
+				is_ct_major_power = yes
+				NOT = { has_country_flag = ct_ai_major_cooldown }
+			}
+			random = {
+				chance = 25
+				ct_ai_major_power_actions = yes
+			}
+		}
+	}
+}
+
+#calculates which org to go after
+#majors target international, if you have a local org, you target that
+ct_ai_select_target_org = {
+	set_variable = { ct_ai_best_score = -1 }
+	set_variable = { selected_org = -1 }
+
+	for_each_loop = {
+		array = global.active_terror_orgs
+		value = v
+		index = i
+
+		set_temp_variable = { ct_ai_org_score = 0 }
+		set_temp_variable = { org_reach = global.active_terror_org_reach^i }
+		set_temp_variable = { org_threat = global.active_terror_org_threat_lvl^i }
+
+		set_temp_variable = { threat_weight = org_threat }
+
+		if = {
+			limit = { is_ct_major_power = yes }
+			if = {
+				limit = { check_variable = { org_reach = 2 } }
+				multiply_temp_variable = { threat_weight = 1.5 }
+			}
+			else_if = {
+				limit = { check_variable = { org_reach = 1 } }
+				multiply_temp_variable = { threat_weight = 0.8 }
+			}
+			else = {
+				multiply_temp_variable = { threat_weight = 0.3 }
+			}
+		}
+		else_if = {
+			limit = { is_ct_regional_power = yes }
+			if = {
+				limit = { check_variable = { org_reach = 0 } }
+				multiply_temp_variable = { threat_weight = 1.2 }
+			}
+			else_if = {
+				limit = { check_variable = { org_reach = 1 } }
+				multiply_temp_variable = { threat_weight = 1.0 }
+			}
+			else = {
+				multiply_temp_variable = { threat_weight = 0.4 }
+			}
+		}
+		else = {
+			if = {
+				limit = { check_variable = { org_reach = 0 } }
+				multiply_temp_variable = { threat_weight = 1.5 }
+			}
+			else_if = {
+				limit = { check_variable = { org_reach = 1 } }
+				multiply_temp_variable = { threat_weight = 0.6 }
+			}
+			else = {
+				multiply_temp_variable = { threat_weight = 0.1 }
+			}
+		}
+
+		add_to_temp_variable = { ct_ai_org_score = threat_weight }
+
+		set_temp_variable = { ct_ai_hq_country = global.active_terror_hq_country^i }
+
+		if = {
+			limit = {
+				var:ct_ai_hq_country = { tag = PREV }
+			}
+			add_to_temp_variable = { ct_ai_org_score = 50 }
+		}
+		else_if = {
+			limit = {
+				var:ct_ai_hq_country = { is_neighbor_of = PREV }
+			}
+			add_to_temp_variable = { ct_ai_org_score = 30 }
+		}
+		else = {
+			set_temp_variable = { ct_check_region = global.active_terror_org_region^i }
+			if = {
+				limit = { ct_ai_same_region_as_org = yes }
+				add_to_temp_variable = { ct_ai_org_score = 15 }
+			}
+			else_if = {
+				limit = { is_ct_major_power = yes }
+				add_to_temp_variable = { ct_ai_org_score = 5 }
+			}
+		}
+
+		if = {
+			limit = {
+				meta_trigger = {
+					text = {
+						has_country_flag = ct_attacked_by_org_[ORG]
+					}
+					ORG = "[?i]"
+				}
+			}
+			add_to_temp_variable = { ct_ai_org_score = 40 }
+		}
+
+		if = {
+			limit = {
+				check_variable = { international_terror_org_intel^i > 20 }
+			}
+			add_to_temp_variable = { ct_ai_org_score = 10 }
+		}
+
+		if = {
+			limit = {
+				meta_trigger = {
+					text = {
+						has_country_flag = ct_infiltrated_agent_[ORG]
+					}
+					ORG = "[?i]"
+				}
+			}
+			add_to_temp_variable = { ct_ai_org_score = 15 }
+		}
+
+		if = {
+			limit = {
+				check_variable = { ct_ai_org_score > ct_ai_best_score }
+			}
+			set_variable = { ct_ai_best_score = ct_ai_org_score }
+			set_variable = { selected_org = i }
+		}
+
+		if = {
+			limit = { is_debug = yes }
+			log = "[GetDateText]: [THIS.GetTag]: CT AI scoring org [?i] — score=[?ct_ai_org_score] threat=[?org_threat] reach=[?org_reach]"
+		}
+	}
+
+	if = {
+		limit = {
+			NOT = { check_variable = { selected_org = -1 } }
+		}
+		set_variable = { selected_ct_nation = global.active_terror_hq_country^selected_org }
+		if = {
+			limit = { is_debug = yes }
+			log = "[GetDateText]: [THIS.GetTag]: CT AI target selected — org [?selected_org], HQ nation [?selected_ct_nation], score [?ct_ai_best_score]"
+		}
+	}
+}
+
+#executes the select action against the target organization
+ct_ai_execute_action = {
+	set_temp_variable = { ct_ai_acted = 0 }
+
+	if = {
+		limit = {
+			check_variable = { ct_ai_acted = 0 }
+			check_variable = { ct_mass_gather_store_var^selected_org > 0 }
+		}
+		ct_ai_exploit_intel = yes
+		set_temp_variable = { ct_ai_acted = 1 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { ct_ai_acted = 0 }
+			has_political_power > 150
+			check_variable = { global.active_terror_org_threat_lvl^selected_org > 30 }
+			check_variable = { international_terror_org_intel^selected_org > 15 }
+		}
+		ct_ai_arrest_sympathizers = yes
+		set_temp_variable = { ct_ai_acted = 1 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { ct_ai_acted = 0 }
+			has_political_power > 150
+			check_variable = { international_terror_org_intel^selected_org > 40 }
+			NOT = { has_country_flag = recent_ct_asset_seizure }
+		}
+		ct_ai_seize_assets = yes
+		set_temp_variable = { ct_ai_acted = 1 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { ct_ai_acted = 0 }
+			has_political_power > 150
+			NOT = { has_country_flag = recent_ct_intel_op }
+		}
+		ct_ai_mass_gathering = yes
+		set_temp_variable = { ct_ai_acted = 1 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { ct_ai_acted = 0 }
+			has_political_power > 100
+			NOT = {
+				meta_trigger = {
+					text = {
+						has_country_flag = ct_infiltrated_agent_[ORG]
+					}
+					ORG = "[?selected_org]"
+				}
+			}
+			NOT = {
+				meta_trigger = {
+					text = {
+						has_country_flag = ct_failed_infil_against_[ORG]
+					}
+					ORG = "[?selected_org]"
+				}
+			}
+		}
+		ct_ai_infiltrate_agent = yes
+		set_temp_variable = { ct_ai_acted = 1 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { ct_ai_acted = 0 }
+			has_political_power > 100
+			check_variable = { international_terror_org_specific_intel^selected_org < 0.10 }
+		}
+		ct_ai_analyst_focus = yes
+		set_temp_variable = { ct_ai_acted = 1 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { ct_ai_acted = 0 }
+			has_political_power > 250
+			check_variable = { ct_home_defense_var < 2 }
+		}
+		ct_ai_increase_funding = yes
+		set_temp_variable = { ct_ai_acted = 1 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { ct_ai_acted = 1 }
+		}
+		set_country_flag = { flag = ct_ai_action_cooldown days = 45 value = 1 }
+	}
+	else = {
+		if = {
+			limit = { is_debug = yes }
+			log = "[GetDateText]: [THIS.GetTag]: CT AI — no eligible action this tick"
+		}
+	}
+}
+
+ct_ai_exploit_intel = {
+	set_temp_variable = { exploit_int = ct_mass_gather_store_var^selected_org }
+	set_variable = { ct_mass_gather_store_var^selected_org = 0 }
+	multiply_temp_variable = { exploit_int = 1.25 }
+	add_to_variable = { international_terror_org_temp_specific_intel^selected_org = exploit_int }
+
+	log = "[GetDateText]: [THIS.GetTag]: CT AI exploited intel on org [?selected_org], gained [?exploit_int] temp specific intel"
+}
+
+ct_ai_arrest_sympathizers = {
+	add_political_power = -100
+
+	randomize_temp_variable = {
+		var = threat_reducer
+		min = 2
+		max = 6
+		distribution = uniform
+	}
+
+	subtract_from_variable = { global.active_terror_org_threat_lvl^selected_org = threat_reducer }
+	subtract_from_variable = { global.active_terror_org_vis_lvl^selected_org = threat_reducer }
+	multiply_temp_variable = { threat_reducer = 0.5 }
+	add_to_variable = { international_terror_org_temp_specific_intel^selected_org = threat_reducer }
+
+	set_temp_variable = { random_bad_luck = 100 }
+	subtract_from_temp_variable = { random_bad_luck = international_terror_org_intel^selected_org }
+	subtract_from_temp_variable = { random_bad_luck = ct_intel_agency_value }
+	random = {
+		chance = random_bad_luck
+		country_event = { id = MD_terror.6 }
+	}
+
+	log = "[GetDateText]: [THIS.GetTag]: CT AI arrested sympathizers — org [?selected_org], threat reduced by [?threat_reducer]"
+}
+
+ct_ai_seize_assets = {
+	add_political_power = -100
+
+	set_country_flag = { flag = recent_ct_asset_seizure days = 210 value = 1 }
+
+	set_temp_variable_to_random = {
+		var = treasury_change
+		min = 2
+		max = 8
+	}
+	set_temp_variable = { booster = 1 }
+	add_to_temp_variable = { booster = modifier@international_market_income_modifier }
+	multiply_temp_variable = { treasury_change = booster }
+	modify_treasury_effect = yes
+
+	multiply_temp_variable = { treasury_change = -1 }
+	add_to_variable = { global.active_terror_org_threat_lvl^selected_org = treasury_change }
+	add_to_variable = { global.active_terror_org_vis_lvl^selected_org = treasury_change }
+
+	multiply_temp_variable = { treasury_change = -1 }
+	log = "[GetDateText]: [THIS.GetTag]: CT AI seized assets — org [?selected_org], treasury +[?treasury_change]"
+}
+
+ct_ai_mass_gathering = {
+	add_political_power = -100
+
+	randomize_temp_variable = {
+		var = num_add
+		min = 0
+		max = 5
+		distribution = uniform
+	}
+	add_to_temp_variable = { num_add = 1 }
+	add_to_variable = { ct_mass_gather_store_var^selected_org = num_add }
+
+	set_country_flag = { flag = recent_ct_intel_op days = 210 value = 1 }
+
+	random = {
+		chance = 50
+		country_event = { id = MD_terror.5 }
+	}
+
+	log = "[GetDateText]: [THIS.GetTag]: CT AI mass gathering — org [?selected_org], gathered [?num_add] intel"
+}
+
+ct_ai_infiltrate_agent = {
+	add_political_power = -50
+
+	set_temp_variable = { fail_chance = 100 }
+	set_temp_variable = { success_chance = international_terror_org_intel^selected_org }
+	add_to_temp_variable = { success_chance = ct_intel_agency_value }
+	subtract_from_temp_variable = { fail_chance = success_chance }
+
+	clamp_temp_variable = { var = success_chance min = 5 max = 95 }
+	clamp_temp_variable = { var = fail_chance min = 5 max = 95 }
+
+	log = "[GetDateText]: [THIS.GetTag]: CT AI infiltrate agent — org [?selected_org], success_chance=[?success_chance]"
+
+	random_list = {
+		success_chance = {
+			country_event = { id = MD_terror.7 }
+			set_temp_variable_to_random = {
+				var = random_add
+				min = 0.05
+				max = 0.5
+			}
+			add_to_variable = { international_terror_org_specific_intel^selected_org = random_add }
+			meta_effect = {
+				text = {
+					set_country_flag = ct_infiltrated_agent_[ORG]
+				}
+				ORG = "[?selected_org]"
+			}
+			log = "[GetDateText]: [THIS.GetTag]: CT AI infiltration SUCCESS — org [?selected_org], specific intel +[?random_add]"
+		}
+		fail_chance = {
+			country_event = { id = MD_terror.8 }
+			set_temp_variable_to_random = {
+				var = random_add
+				min = -0.5
+				max = -0.05
+			}
+			add_to_variable = { international_terror_org_specific_intel^selected_org = random_add }
+			meta_effect = {
+				text = {
+					set_country_flag = {
+						flag = ct_failed_infil_against_[ORG]
+						days = 365
+						value = 1
+					}
+				}
+				ORG = "[?selected_org]"
+			}
+			log = "[GetDateText]: [THIS.GetTag]: CT AI infiltration FAILED — org [?selected_org], specific intel [?random_add]"
+		}
+	}
+}
+
+ct_ai_analyst_focus = {
+	add_political_power = -50
+
+	for_each_loop = {
+		array = international_terror_org_specific_intel
+		value = v
+		index = i
+
+		if = {
+			limit = { check_variable = { i = selected_org } }
+			add_to_variable = { international_terror_org_specific_intel^i = 0.02 }
+		}
+		else = {
+			add_to_variable = { international_terror_org_specific_intel^i = -0.01 }
+		}
+	}
+
+	log = "[GetDateText]: [THIS.GetTag]: CT AI analyst focus — org [?selected_org], specific intel +0.02"
+}
+
+ct_ai_increase_funding = {
+	add_political_power = -100
+
+	add_to_variable = { ct_home_defense_var = 0.5 }
+	add_to_variable = { ct_global_base_detect_var = 0.5 }
+	add_to_variable = { ct_police_cost_var = 0.01 }
+
+	log = "[GetDateText]: [THIS.GetTag]: CT AI increased funding — defense=[?ct_home_defense_var], detect=[?ct_global_base_detect_var]"
+}
+
+
+ct_ai_major_power_actions = {
+	if = {
+		limit = {
+			check_variable = { selected_org = -1 }
+		}
+	}
+	else = {
+		set_temp_variable = { ct_ai_major_acted = 0 }
+
+		if = {
+			limit = {
+				check_variable = { ct_ai_major_acted = 0 }
+				has_political_power > 150
+				NOT = { check_variable = { selected_ct_nation = THIS } }
+				var:selected_ct_nation = {
+					NOT = { has_country_flag = has_ct_advisor_from@PREV }
+				}
+			}
+			add_political_power = -100
+			var:selected_ct_nation = {
+				set_country_flag = has_ct_advisor_from@PREV
+				add_to_variable = { foreign_counter_terror_support = 1 }
+				country_event = { id = MD_terror.12 }
+			}
+			set_country_flag = { flag = ct_ai_major_cooldown days = 90 value = 1 }
+			set_temp_variable = { ct_ai_major_acted = 1 }
+			log = "[GetDateText]: [THIS.GetTag]: CT AI sending advisor to [?selected_ct_nation]"
+		}
+
+		if = {
+			limit = {
+				check_variable = { ct_ai_major_acted = 0 }
+				has_political_power > 150
+				check_variable = { international_terror_org_intel^selected_org > 24 }
+				NOT = { check_variable = { selected_ct_nation = THIS } }
+				var:selected_ct_nation = {
+					NOT = { has_country_flag = ct_drone_op_prepared_by@PREV }
+				}
+			}
+			add_political_power = -100
+			var:selected_ct_nation = {
+				set_country_flag = ct_drone_op_prepared_by@PREV
+				capital_scope = {
+					set_variable = { target_drone_org_store = PREV.PREV.selected_org }
+				}
+			}
+			set_country_flag = { flag = ct_ai_major_cooldown days = 90 value = 1 }
+			set_temp_variable = { ct_ai_major_acted = 1 }
+			log = "[GetDateText]: [THIS.GetTag]: CT AI preparing drone op against org [?selected_org] in [?selected_ct_nation]"
+		}
+	}
+}
