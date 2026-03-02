@@ -73,6 +73,7 @@ ingame_update_setup = {
 
 	#Various
 	update_economic_cycle_cost = yes
+	update_cyber_cost = yes
 	update_employment_productivity_output_dynamic_modifier = yes
 	calculate_migration_mechanic_values = yes
 
@@ -2552,6 +2553,37 @@ update_military_rate = {
 
 	set_variable = { defence_gain = array_defence_spend^def_index }
 	clamp_variable = { var = defence_gain min = 0 }
+
+	# Cyber Command weekly overhead cost
+	set_variable = { defence_breakdown_cyber = 0 }
+	if = {
+		limit = { has_cyber_capability_4 = yes }
+		set_variable = { defence_breakdown_cyber = gdp_total }
+		multiply_variable = { defence_breakdown_cyber = 0.0000015 }
+	}
+	else_if = {
+		limit = { has_cyber_capability_3 = yes }
+		set_variable = { defence_breakdown_cyber = gdp_total }
+		multiply_variable = { defence_breakdown_cyber = 0.000001 }
+	}
+	else_if = {
+		limit = { has_cyber_capability_2 = yes }
+		set_variable = { defence_breakdown_cyber = gdp_total }
+		multiply_variable = { defence_breakdown_cyber = 0.0000006 }
+	}
+	else_if = {
+		limit = { has_cyber_capability_1 = yes }
+		set_variable = { defence_breakdown_cyber = gdp_total }
+		multiply_variable = { defence_breakdown_cyber = 0.0000003 }
+	}
+	if = {
+		limit = { check_variable = { defence_breakdown_cyber > 0 } }
+		set_temp_variable = { cyber_weekly_mul = 1 }
+		add_to_temp_variable = { cyber_weekly_mul = modifier@cyber_cost_multiplier_modifier }
+		multiply_variable = { defence_breakdown_cyber = cyber_weekly_mul }
+		multiply_variable = { defence_breakdown_cyber = 7 }
+		add_to_variable = { defence_gain = defence_breakdown_cyber }
+	}
 }
 
 #Update bureaucracy spending
@@ -2619,6 +2651,7 @@ update_police_rate = {
 	#Additional additive modifiers
 	set_temp_variable = { police_cost_multiplier = 1 }
 	add_to_temp_variable = { police_cost_multiplier = modifier@police_cost_multiplier_modifier }
+	add_to_temp_variable = { police_cost_multiplier = ct_police_cost_var }
 	multiply_temp_variable = { police_cost_multiplier = common_money_modifier }
 	multiply_temp_variable = { police_cost_multiplier = police_base_cost }
 
@@ -3900,6 +3933,116 @@ update_economic_cycle_cost = {
 	add_to_temp_variable = { econ_cycle_upg_cost_multiplier = modifier@econ_cycle_upg_cost_multiplier_modifier }
 
 	multiply_variable = { econ_cycle_upg_cost = econ_cycle_upg_cost_multiplier }
+}
+
+update_cyber_cost = {
+	if = {
+		limit = { check_variable = { gdp_total < 501 } }
+		set_variable = { treasury_cyber_small = gdp_total }
+		multiply_variable = { treasury_cyber_small = 0.006 }
+		set_variable = { treasury_cyber_medium = gdp_total }
+		multiply_variable = { treasury_cyber_medium = 0.011 }
+		multiply_variable = { treasury_cyber_medium = 0.85 }
+		set_variable = { treasury_cyber_large = gdp_total }
+		multiply_variable = { treasury_cyber_large = 0.015 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { gdp_total > 500 }
+			check_variable = { gdp_total < 1001 }
+		}
+		set_variable = { treasury_cyber_small = gdp_total }
+		multiply_variable = { treasury_cyber_small = 0.005 }
+		multiply_variable = { treasury_cyber_small = 0.85 }
+		set_variable = { treasury_cyber_medium = gdp_total }
+		multiply_variable = { treasury_cyber_medium = 0.009 }
+		multiply_variable = { treasury_cyber_medium = 0.85 }
+		set_variable = { treasury_cyber_large = gdp_total }
+		multiply_variable = { treasury_cyber_large = 0.015 }
+		multiply_variable = { treasury_cyber_large = 0.90 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { gdp_total > 1000 }
+			check_variable = { gdp_total < 2001 }
+		}
+		set_variable = { treasury_cyber_small = gdp_total }
+		multiply_variable = { treasury_cyber_small = 0.004 }
+		set_variable = { treasury_cyber_medium = gdp_total }
+		multiply_variable = { treasury_cyber_medium = 0.007 }
+		multiply_variable = { treasury_cyber_medium = 0.85 }
+		set_variable = { treasury_cyber_large = gdp_total }
+		multiply_variable = { treasury_cyber_large = 0.01 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { gdp_total > 2000 }
+			check_variable = { gdp_total < 5001 }
+		}
+		set_variable = { treasury_cyber_small = gdp_total }
+		multiply_variable = { treasury_cyber_small = 0.003 }
+		multiply_variable = { treasury_cyber_small = 0.85 }
+		set_variable = { treasury_cyber_medium = gdp_total }
+		multiply_variable = { treasury_cyber_medium = 0.005 }
+		multiply_variable = { treasury_cyber_medium = 0.75 }
+		set_variable = { treasury_cyber_large = gdp_total }
+		multiply_variable = { treasury_cyber_large = 0.005 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { gdp_total > 5000 }
+			check_variable = { gdp_total < 10001 }
+		}
+		set_variable = { treasury_cyber_small = gdp_total }
+		multiply_variable = { treasury_cyber_small = 0.002 }
+		multiply_variable = { treasury_cyber_small = 0.85 }
+		set_variable = { treasury_cyber_medium = gdp_total }
+		multiply_variable = { treasury_cyber_medium = 0.003 }
+		multiply_variable = { treasury_cyber_medium = 0.90 }
+		set_variable = { treasury_cyber_large = gdp_total }
+		multiply_variable = { treasury_cyber_large = 0.005 }
+		multiply_variable = { treasury_cyber_large = 0.80 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { gdp_total > 10000 }
+			check_variable = { gdp_total < 30001 }
+		}
+		set_variable = { treasury_cyber_small = gdp_total }
+		multiply_variable = { treasury_cyber_small = 0.002 }
+		multiply_variable = { treasury_cyber_small = 0.70 }
+		set_variable = { treasury_cyber_medium = gdp_total }
+		multiply_variable = { treasury_cyber_medium = 0.003 }
+		multiply_variable = { treasury_cyber_medium = 0.65 }
+		set_variable = { treasury_cyber_large = gdp_total }
+		multiply_variable = { treasury_cyber_large = 0.003 }
+		multiply_variable = { treasury_cyber_large = 0.85 }
+	}
+
+	if = {
+		limit = { check_variable = { gdp_total > 30000 } }
+		set_variable = { treasury_cyber_small = gdp_total }
+		multiply_variable = { treasury_cyber_small = 0.001 }
+		set_variable = { treasury_cyber_medium = gdp_total }
+		multiply_variable = { treasury_cyber_medium = 0.002 }
+		multiply_variable = { treasury_cyber_medium = 0.70 }
+		set_variable = { treasury_cyber_large = gdp_total }
+		multiply_variable = { treasury_cyber_large = 0.002 }
+		multiply_variable = { treasury_cyber_large = 0.87 }
+	}
+
+	#Apply cyber cost multiplier modifier
+	set_temp_variable = { cyber_cost_multiplier = 1 }
+	add_to_temp_variable = { cyber_cost_multiplier = modifier@cyber_cost_multiplier_modifier }
+
+	multiply_variable = { treasury_cyber_small = cyber_cost_multiplier }
+	multiply_variable = { treasury_cyber_medium = cyber_cost_multiplier }
+	multiply_variable = { treasury_cyber_large = cyber_cost_multiplier }
 }
 
 update_state_variables = {
@@ -5358,9 +5501,6 @@ recalculate_resources_price = {
 		add_to_temp_variable = { sum_import_composites = resource_imported@composites }
 	}
 
-	log = "[?sum_microchips]"
-	log = "[?sum_import_microchips]"
-
 	#Set the % of supply used by doing demand / supply
 	#If using > 50% of supply, price should go up
 	#If using < 50% of supply, price should go down
@@ -5374,8 +5514,6 @@ recalculate_resources_price = {
 	divide_temp_variable = { sum_import_microchips = sum_microchips }
 	divide_temp_variable = { sum_import_composites = sum_chromium }
 
-	log = "[?sum_import_microchips] after divide check"
-
 	multiply_temp_variable = { sum_import_steel = 2 }
 	multiply_temp_variable = { sum_import_rubber = 2 }
 	multiply_temp_variable = { sum_import_oil = 2 }
@@ -5384,8 +5522,6 @@ recalculate_resources_price = {
 	multiply_temp_variable = { sum_import_chromium = 2 }
 	multiply_temp_variable = { sum_import_microchips = 2 }
 	multiply_temp_variable = { sum_import_composites = 2 }
-
-	log = "[?sum_import_microchips] after multiply check"
 
 	set_temp_variable = { oil_price_adjuster = global.starting_oil_price }
 	set_temp_variable = { steel_price_adjuster = global.starting_steel_price }
@@ -5396,8 +5532,6 @@ recalculate_resources_price = {
 	set_temp_variable = { microchips_price_adjuster = global.starting_microchips_price }
 	set_temp_variable = { composites_price_adjuster = global.starting_composites_price }
 
-	log = "[?microchips_price_adjuster] starting price point "
-
 	multiply_temp_variable = { oil_price_adjuster = sum_import_oil }
 	multiply_temp_variable = { steel_price_adjuster = sum_import_steel }
 	multiply_temp_variable = { rubber_price_adjuster = sum_import_rubber }
@@ -5407,51 +5541,15 @@ recalculate_resources_price = {
 	multiply_temp_variable = { microchips_price_adjuster = sum_import_microchips }
 	multiply_temp_variable = { composites_price_adjuster = sum_import_composites }
 
-	log = "[?microchips_price_adjuster] after price change"
-
 	#Clamp the prices at their min / max after adjusting them for supply & demand
-	clamp_variable = {
-		var = steel_price_adjuster
-		min = 0.005
-		max = 0.120
-	}
-	clamp_variable = {
-		var = oil_price_adjuster
-		min = 1.36
-		max = 34
-	}
-	clamp_variable = {
-		var = rubber_price_adjuster
-		min = 0.018
-		max = 0.45
-	}
-	clamp_variable = {
-		var = alum_price_adjuster
-		min = 0.042
-		max = 1.05
-	}
-	clamp_variable = {
-		var = tungsten_price_adjuster
-		min = 0.056
-		max = 1.4
-	}
-	clamp_variable = {
-		var = chromium_price_adjuster
-		min = 0.036
-		max = 0.9
-	}
-	clamp_variable = {
-		var = microchips_price_adjuster
-		min = 1.58
-		max = 36.2
-	}
-	clamp_variable = {
-		var = composites_price_adjuster
-		min = 1.42
-		max = 35.4
-	}
-
-	log = "[?microchips_price_adjuster] after clamp"
+	clamp_variable = { var = steel_price_adjuster min = 0.005 max = 0.120 }
+	clamp_variable = { var = oil_price_adjuster min = 1.36 max = 34 }
+	clamp_variable = { var = rubber_price_adjuster min = 0.018 max = 0.45 }
+	clamp_variable = { var = alum_price_adjuster min = 0.042 max = 1.05 }
+	clamp_variable = { var = tungsten_price_adjuster min = 0.056 max = 1.4 }
+	clamp_variable = { var = chromium_price_adjuster min = 0.036 max = 0.9 }
+	clamp_variable = { var = microchips_price_adjuster min = 1.58 max = 36.2 }
+	clamp_variable = { var = composites_price_adjuster min = 1.42 max = 35.4 }
 
 	set_variable = { global.oil_price = oil_price_adjuster } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
 	set_variable = { global.steel_price = steel_price_adjuster } #Based on steel price
