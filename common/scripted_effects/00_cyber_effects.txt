@@ -2,21 +2,18 @@
 # Scripted effects for the Cyberwarfare System
 
 # Called once per country at game start
+# Sets the base variables, then grabs the starting setup where needed
 cyber_nation_startup = {
 	set_variable = { cyber_max_targets = 0 }
 	set_variable = { cyber_offense_power = 0 }
 	set_variable = { cyber_defense_rating = 0 }
 	set_variable = { cyber_attribution_bonus = 0 }
-	clear_array = cyber_active_targets
-	clear_array = cyber_target_cooldown
-	clear_array = cyber_op_running
-	clear_array = cyber_op_type_arr
-	clear_array = cyber_potential_targets
 	calculate_cyber_capability = yes
 	cyber_rebuild_potential_targets = yes
 }
 
-# Recalculates cyber_capability and cyber_max_targets from agency upgrades and tech
+# Recalculates cyber_capability, cyber_max_targets, cyber_op_max_targets from agency upgrades or technologies
+#Then applies any GUI level upgrades for the total
 calculate_cyber_capability = {
 	set_variable = { cyber_capability = modifier@cyber_capability_modifier }
 	set_variable = { cyber_offense_power = modifier@cyber_offense_power_modifier }
@@ -79,15 +76,13 @@ calculate_cyber_capability = {
 	missile_ui_update = yes
 }
 
-# Adds THIS country as an active target (called from scripted GUI with THIS = target country)
+# Adds country to the active targets array. Called via script or the change_scope enabled button
 cyber_add_target = {
 	add_to_array = { ROOT.cyber_active_targets = THIS }
 	cyber_rebuild_potential_targets = yes
 }
 
-# Removes the target whose country tag equals cyber_remove_target_var.
-# Rebuilds all five parallel arrays by copying every entry except the one being removed,
-# since HOI4 only supports value-based removal from arrays (not index-based).
+# Removes the selected nation from the array
 cyber_remove_target = {
 	remove_from_array = { ROOT.cyber_active_targets = cyber_remove_target_var }
 	cyber_rebuild_potential_targets = yes
@@ -177,39 +172,30 @@ cyber_rebuild_potential_targets = {
 	missile_ui_update = yes
 }
 
-# Two-roll attack resolution. Requires cyber_op_cur_target_index set as temp var before calling.
-# Sets cyber_roll_result on ROOT:
-#   0 = execution failed (short cooldown applied)
-#   1 = success, hidden
-#   2 = success, detected but unattributed
-#   3 = success, attributed to ROOT
-#   4 = success, false-flagged to another nation
-#
-# Roll 1 modifiers: +decrypt_progress*30, −target.cyber_defense*0.6, −10 if target hardening,
-#   −5 if target attribution hunt, +10 if SIGINT surveillance active against target
-# Roll 2 modifiers: +decrypt_progress*15, −target.cyber_defense*0.3, −15 if target counter-intrusion,
-#   −20 if target attribution hunt, −5 if ROOT at war, +25 false_flag_chance if deception campaign active
+# Rolls the dice for attacking the target nation when the decision is completed
+#Requires targeting indexing to be setup prior to calling. See the decisions for details on that setup.
 cyber_two_roll = {
-	# Set target reference first — required by all subsequent modifiers
+	# Set target reference
 	set_temp_variable = { cur_target_nation = cyber_op_target_nation^cyber_op_cur_target_index }
 
-	# --- Roll 1: Execution — can we carry out the operation? ---
+	#Set the base starting
 	set_temp_variable = { eff_offense = cyber_offense_power }
 
-	# Decryption bonus: knowing the target's cipher reveals internal network structure
+	#Add the decryption bonus to the offensive power. This is a multiplier that is applied to the base add amount.
+	#More decryption = better added buff. the full +30 is a biiiig boost.
 	set_temp_variable = { decrypt_mod = decryption_progress@var:cur_target_nation }
 	set_temp_variable = { decrypt_offense = decrypt_mod }
 	multiply_temp_variable = { decrypt_offense = 30 }
 	add_to_temp_variable = { eff_offense = decrypt_offense }
 
-	# Target cyber defense penalty
+	# Grab the target nations basic value for their nation, and apply it to the math
 	var:cur_target_nation = {
 		set_temp_variable = { def_pen = cyber_defense_power }
 	}
 	multiply_temp_variable = { def_pen = -0.6 }
 	add_to_temp_variable = { eff_offense = def_pen }
 
-	# Active defensive operations on target reduce exploitable attack surface
+	# Add penalties and benefits for any active missions or cyber stuff
 	if = {
 		limit = { var:cur_target_nation = { has_idea = cyber_network_hardening_active } }
 		add_to_temp_variable = { eff_offense = -10 }
@@ -218,14 +204,10 @@ cyber_two_roll = {
 		limit = { var:cur_target_nation = { has_idea = cyber_attribution_hunt_active } }
 		add_to_temp_variable = { eff_offense = -5 }
 	}
-
-	# Active SIGINT surveillance provides live network access, improving execution
 	if = {
 		limit = { var:cur_target_nation = { has_country_flag = is_under_sigint_surveillance_tracking_attack_by_@ROOT } }
 		add_to_temp_variable = { eff_offense = 10 }
 	}
-
-	# Persistent access from previously successful ops
 	if = {
 		limit = { var:cur_target_nation = { has_country_flag = has_sleeper_network_tracking_access_from_@ROOT } }
 		add_to_temp_variable = { eff_offense = 15 }
@@ -239,6 +221,8 @@ cyber_two_roll = {
 		add_to_temp_variable = { eff_offense = 5 }
 	}
 
+	#Clamp at the min and max. Always a chance to pass, always a chance to fail
+	#Then roll the dice
 	clamp_temp_variable = { var = eff_offense min = 5 max = 95 }
 
 	set_temp_variable = { cyber_roll_result = 0 }
@@ -247,6 +231,8 @@ cyber_two_roll = {
 		set_temp_variable = { cyber_roll_result = 1 }
 	}
 
+	#Check how the attack went! If successful, let's roll to see if we get detected
+	#If failed, roll down the failure path
 	if = { limit = { check_variable = { cyber_roll_result > 0 } }
 		var:cur_target_nation = {
 			set_country_flag = {
@@ -262,23 +248,21 @@ cyber_two_roll = {
 			}
 		}
 
-		# --- Roll 2: Stealth — do they detect the intrusion? ---
+		#Let's total it all up! The better our decryption and attribution skills, the more likely we are to false flag
 		set_temp_variable = { stealth_chance = 80 }
 		add_to_temp_variable = { stealth_chance = cyber_attribution }
 
-		# Decryption bonus: cipher knowledge masks our traffic patterns
 		set_temp_variable = { decrypt_stealth = decrypt_mod }
 		multiply_temp_variable = { decrypt_stealth = 15 }
 		add_to_temp_variable = { stealth_chance = decrypt_stealth }
 
-		# Target defense improves their detection capability
 		var:cur_target_nation = {
 			set_temp_variable = { def_pen = cyber_defense_power }
 		}
 		multiply_temp_variable = { def_pen = -0.3 }
 		add_to_temp_variable = { stealth_chance = def_pen }
 
-		# Active CI ideas on target increase detection chance
+		#Add the modifiers for previous or ongoing operations
 		if = {
 			limit = { var:cur_target_nation = { has_idea = cyber_counter_intrusion_active } }
 			add_to_temp_variable = { stealth_chance = -15 }
@@ -287,14 +271,11 @@ cyber_two_roll = {
 			limit = { var:cur_target_nation = { has_idea = cyber_attribution_hunt_active } }
 			add_to_temp_variable = { stealth_chance = -20 }
 		}
-
-		# Comms intercept gives insight into target's detection posture, improving stealth
 		if = {
 			limit = { var:cur_target_nation = { has_country_flag = has_comms_intercept_tracking_access_from_@ROOT } }
 			add_to_temp_variable = { stealth_chance = 10 }
 		}
 
-		# Wartime: heightened network monitoring on all sides
 		if = {
 			limit = { has_war = yes }
 			add_to_temp_variable = { stealth_chance = -5 }
@@ -330,6 +311,8 @@ cyber_two_roll = {
 
 		if = { limit = { check_variable = { stealth_roll > 0 } }
 			#Results here should either be undetected, or false flag. Roll the attribution check
+			#The attribution check looks to see if a nation on your target list will be blamed for the mission, other than you
+			#If the target list is empty except for this target, it'll default back to you being blamed.
 			if = {
 				limit = {
 					check_variable = { false_flag_check > 0 }
@@ -353,6 +336,7 @@ cyber_two_roll = {
 		}
 	}
 	else = {
+		#Attack has failed, go ahead and try again.
 		var:cur_target_nation = {
 			set_country_flag = {
 				flag = recent_cyber_attack_from_@ROOT
@@ -363,7 +347,8 @@ cyber_two_roll = {
 	}
 }
 
-# Executes a cyber operation. Requires cyber_op_target_index and cyber_op_type set before calling.
+# Executes a cyber operation, and runs the effects
+# This rolls the dice for attacks, then starts firing effects off
 cyber_execute_operation = {
 	cyber_two_roll = yes
 
@@ -373,7 +358,6 @@ cyber_execute_operation = {
 		}
 		ROOT = { country_event = { id = MD_cyber.1 } }
 		var:cur_target_nation = {
-			# Timed access flags — encode attacker via @ROOT while still in attacker effect chain
 			if = {
 				limit = { check_variable = { cyber_op_cur_type = 9 } }
 				set_country_flag = {
@@ -395,6 +379,7 @@ cyber_execute_operation = {
 					days = 365
 				}
 			}
+			#executes the proper event based on the mission type
 			meta_effect = {
 				text = {
 					country_event = { id = MD_cyber.1[TYPE] }
@@ -403,6 +388,7 @@ cyber_execute_operation = {
 			}
 		}
 
+		#now we see what happens, if someone got caught or false flagged, ect!
 		if = {
 			limit = {
 				check_variable = { cyber_roll_result = 2 }
@@ -463,10 +449,9 @@ cyber_execute_operation = {
 	missile_ui_update = yes
 }
 
-# Marks a target slot as running and activates the appropriate timed tracking decision.
-# Requires cyber_op_target and cyber_op_type set before calling.
-# Scans cyber_op_running for the first free slot rather than using cyber_ongoing_operations
-# as the index — prevents slot collision when an earlier op completes before a later one.
+# This executes the operations
+# First, this system finds the first empty operation slot, and grabs it
+# Then, it executes the proper mission in the slot
 cyber_launch_operation = {
 	set_temp_variable = { cyber_open_slot = -1 }
 	for_loop_effect = {

@@ -525,12 +525,10 @@ calculate_national_global_threat_detection = {
 		value = v
 		index = i
 
-		# Base intel from civilian intel and base detection
 		set_temp_variable = { cur_con = global.active_terror_hq_country^i }
 		set_variable = { international_terror_org_intel^i = civilian_intel@var:cur_con }
 		add_to_variable = { international_terror_org_intel^i = base_detection }
 
-		# Gather bonus
 		if = {
 			limit = {
 				check_variable = { ct_mass_gather_store_var^i > 0 }
@@ -540,7 +538,6 @@ calculate_national_global_threat_detection = {
 			add_to_variable = { international_terror_org_intel^i = gather_add }
 		}
 
-		# Apply multipliers
 		multiply_variable = { international_terror_org_intel^i = 0.4 }
 		if = {
 			limit = {
@@ -550,7 +547,6 @@ calculate_national_global_threat_detection = {
 		}
 		multiply_variable = { international_terror_org_intel^i = base_mod }
 
-		# Specific intel multiplier
 		if = {
 			limit = {
 				NOT = { check_variable = { international_terror_org_specific_intel^i = 0 } }
@@ -560,7 +556,6 @@ calculate_national_global_threat_detection = {
 			multiply_variable = { international_terror_org_intel^i = spec_mult }
 		}
 
-		# Temp specific intel bonus (decrement after use)
 		if = {
 			limit = {
 				check_variable = { international_terror_org_temp_specific_intel^i > 0 }
@@ -570,12 +565,10 @@ calculate_national_global_threat_detection = {
 			add_to_variable = { international_terror_org_temp_specific_intel^i = -1 }
 		}
 
-		# Vis contribution (higher vis = more detectable)
 		set_temp_variable = { vis_contrib = global.active_terror_org_vis_lvl^i }
 		add_to_temp_variable = { vis_contrib = -25 }
 		add_to_variable = { international_terror_org_intel^i = vis_contrib }
 
-		# Clamp final value to [0, 100]
 		clamp_variable = {
 			var = international_terror_org_intel^i
 			min = 0
@@ -745,16 +738,14 @@ global_war_on_terror = {
 		}
 	}
 }
-
+#Check if orgs are able to do an attack, or if they get caught in the planning phase
 check_for_global_attacks = {
-	#See if any org has planned and executed an attack
 	clear_array = global.current_terror_attackers
 	for_each_loop = {
 		array = global.active_terror_org_threat_lvl
 		value = v
 		index = i
 
-		# Reach-scaled floor: local=5, regional=~12, international=20
 		set_temp_variable = { reach_floor = global.active_terror_org_reach^i }
 		multiply_temp_variable = { reach_floor = 7.5 }
 		add_to_temp_variable = { reach_floor = 5 }
@@ -765,7 +756,6 @@ check_for_global_attacks = {
 				check_variable = { global.terror_org_attack_cooldown^i < 1 }
 			}
 
-			# Roll 1: Ambition — threat minus half vis; local orgs get a desperation bonus
 			set_temp_variable = { ambition_chance = v }
 			set_temp_variable = { vis_suppress = global.active_terror_org_vis_lvl^i }
 			multiply_temp_variable = { vis_suppress = 0.5 }
@@ -781,7 +771,6 @@ check_for_global_attacks = {
 			random = {
 				chance = ambition_chance
 
-				# Roll 2: Execution — high vis compromises operational security
 				set_temp_variable = { exec_chance = global.active_terror_org_vis_lvl^i }
 				multiply_temp_variable = { exec_chance = -0.6 }
 				add_to_temp_variable = { exec_chance = 100 }
@@ -794,7 +783,6 @@ check_for_global_attacks = {
 					add_to_array = { global.current_terror_attackers = i }
 				}
 
-				# Execution failed: spotted during preparation — lighter cost than a foiled attack
 				if = {
 					limit = {
 						NOT = { check_variable = { global.terror_org_attack_cooldown^i = 3 } }
@@ -863,7 +851,6 @@ relocate_terror_org = {
 		index = targeted_org
 	}
 
-	# Fix pre-existing gap: update HQ country to match new state's controller
 	var:new_state_open = {
 		set_temp_variable = { new_hq_country = controller }
 	}
@@ -944,7 +931,6 @@ check_org_reach_escalation = {
 				check_variable = { cur_vis < cur_threat }
 			}
 			set_variable = { global.active_terror_org_reach^i = 1 }
-			# Only announce once — prevents spam when threat oscillates around the 25/39 thresholds
 			if = {
 				limit = {
 					check_variable = { global.active_terror_org_regional_flag^i = 0 }
@@ -1002,7 +988,6 @@ check_org_reach_escalation = {
 				check_variable = { cur_vis < cur_threat }
 			}
 			set_variable = { global.active_terror_org_reach^i = 2 }
-			# Only announce once — prevents spam when threat oscillates around the 55/69 thresholds
 			if = {
 				limit = {
 					check_variable = { global.active_terror_org_international_flag^i = 0 }
@@ -1043,7 +1028,7 @@ select_attack_target = {
 	set_temp_variable = { hq_state = global.active_terror_hq^cur_attack_index }
 
 	if = {
-		# Local reach: attack countries controlling states neighboring the HQ
+		# Local orgs attack their host nation or a neighbor
 		limit = { check_variable = { org_reach = 0 } }
 
 		var:hq_state = {
@@ -1066,14 +1051,14 @@ select_attack_target = {
 			var:chosen_target = { resolve_terror_attack = yes }
 		}
 		else = {
-			# Fallback: island HQ with no land neighbors, attack HQ country itself
+			# Blow yourself up if island or no neighbors.
 			set_temp_variable = { chosen_target = global.active_terror_hq_country^cur_attack_index }
 			var:chosen_target = { resolve_terror_attack = yes }
 		}
 	}
 
 	else_if = {
-		# Regional reach: pick a random country directly from the org's home region array
+		# If a regional org, target a natio inside your region
 		limit = { check_variable = { org_reach = 1 } }
 
 		set_temp_variable = { org_region = global.active_terror_org_region^cur_attack_index }
@@ -1135,8 +1120,12 @@ select_attack_target = {
 	}
 
 	else = {
-		# International reach: any country (original behavior)
-		random_country = { resolve_terror_attack = yes }
+		#international orgs will focus their efforts on global powers
+		random_scope_in_array = {
+			array = global.majors
+
+			resolve_terror_attack = yes
+		}
 	}
 }
 

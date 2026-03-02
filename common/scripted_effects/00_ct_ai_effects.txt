@@ -1,29 +1,8 @@
 # Author(s): Doolittle
-# AI scripted effects for the Counter-Terrorism System
-#
-# Entry point: ct_ai_weekly (called from on_weekly stagger for is_ai countries)
-#
-# SCOPING: All effects run inside the var:v loop in MD_on_actions.txt.
-#   THIS (implicit scope) = the AI country being iterated
-#   ROOT = the on_action executor (NOT the AI country — never use ROOT here)
-#   When scoping into another country via var:, use PREV to reference back to THIS.
-#
-# Org targeting:
-#   ct_ai_select_target_org  — scores all active orgs, sets selected_org + selected_ct_nation
-#
-# Operation execution:
-#   ct_ai_execute_action     — priority cascade of available CT operations
-#   ct_ai_major_power_actions — advisor dispatch + drone prep (major powers only, separate cooldown)
-#
-# Each sub-effect mirrors the corresponding GUI button logic in 00_missiles_scripted_guis.txt
-# to ensure identical game-state mutations.
 
-# ============================================================================
-# ENTRY POINT
-# ============================================================================
-
+#Runs in the weekly cycle for the CT nations
+#This runs only once a month, so really, this is a monthly check
 ct_ai_weekly = {
-	# Guard: skip if on cooldown or no active orgs
 	if = {
 		limit = {
 			has_country_flag = ct_ai_action_cooldown
@@ -39,10 +18,8 @@ ct_ai_weekly = {
 			log = "[GetDateText]: [THIS.GetTag]: CT AI weekly tick starting"
 		}
 
-		# 1. Score all orgs and pick the best target
 		ct_ai_select_target_org = yes
 
-		# 2. Execute the best available operation
 		if = {
 			limit = {
 				NOT = { check_variable = { selected_org = -1 } }
@@ -54,7 +31,6 @@ ct_ai_weekly = {
 			ct_ai_execute_action = yes
 		}
 
-		# 3. Major power actions (separate evaluation, 25% chance per tick)
 		if = {
 			limit = {
 				is_ct_major_power = yes
@@ -68,10 +44,8 @@ ct_ai_weekly = {
 	}
 }
 
-# ============================================================================
-# ORG TARGETING — PRIORITY SCORING
-# ============================================================================
-
+#calculates which org to go after
+#majors target international, if you have a local org, you target that
 ct_ai_select_target_org = {
 	set_variable = { ct_ai_best_score = -1 }
 	set_variable = { selected_org = -1 }
@@ -85,12 +59,10 @@ ct_ai_select_target_org = {
 		set_temp_variable = { org_reach = global.active_terror_org_reach^i }
 		set_temp_variable = { org_threat = global.active_terror_org_threat_lvl^i }
 
-		# --- Threat component (scaled by nation type vs org reach) ---
 		set_temp_variable = { threat_weight = org_threat }
 
 		if = {
 			limit = { is_ct_major_power = yes }
-			# Major powers care most about international, least about local
 			if = {
 				limit = { check_variable = { org_reach = 2 } }
 				multiply_temp_variable = { threat_weight = 1.5 }
@@ -105,7 +77,6 @@ ct_ai_select_target_org = {
 		}
 		else_if = {
 			limit = { is_ct_regional_power = yes }
-			# Regional powers focus on local and regional
 			if = {
 				limit = { check_variable = { org_reach = 0 } }
 				multiply_temp_variable = { threat_weight = 1.2 }
@@ -119,7 +90,6 @@ ct_ai_select_target_org = {
 			}
 		}
 		else = {
-			# Smaller nations care most about local threats
 			if = {
 				limit = { check_variable = { org_reach = 0 } }
 				multiply_temp_variable = { threat_weight = 1.5 }
@@ -135,24 +105,20 @@ ct_ai_select_target_org = {
 
 		add_to_temp_variable = { ct_ai_org_score = threat_weight }
 
-		# --- Proximity component ---
 		set_temp_variable = { ct_ai_hq_country = global.active_terror_hq_country^i }
 
-		# HQ is in our own country
 		if = {
 			limit = {
 				var:ct_ai_hq_country = { tag = PREV }
 			}
 			add_to_temp_variable = { ct_ai_org_score = 50 }
 		}
-		# HQ is in a neighboring country
 		else_if = {
 			limit = {
 				var:ct_ai_hq_country = { is_neighbor_of = PREV }
 			}
 			add_to_temp_variable = { ct_ai_org_score = 30 }
 		}
-		# Same region
 		else = {
 			set_temp_variable = { ct_check_region = global.active_terror_org_region^i }
 			if = {
@@ -160,13 +126,11 @@ ct_ai_select_target_org = {
 				add_to_temp_variable = { ct_ai_org_score = 15 }
 			}
 			else_if = {
-				# Different region — major powers still get a small bonus
 				limit = { is_ct_major_power = yes }
 				add_to_temp_variable = { ct_ai_org_score = 5 }
 			}
 		}
 
-		# --- Attack response: recently attacked by this org ---
 		if = {
 			limit = {
 				meta_trigger = {
@@ -179,7 +143,6 @@ ct_ai_select_target_org = {
 			add_to_temp_variable = { ct_ai_org_score = 40 }
 		}
 
-		# --- Intel momentum: continue what we started ---
 		if = {
 			limit = {
 				check_variable = { international_terror_org_intel^i > 20 }
@@ -187,7 +150,6 @@ ct_ai_select_target_org = {
 			add_to_temp_variable = { ct_ai_org_score = 10 }
 		}
 
-		# Infiltrated agent bonus
 		if = {
 			limit = {
 				meta_trigger = {
@@ -200,7 +162,6 @@ ct_ai_select_target_org = {
 			add_to_temp_variable = { ct_ai_org_score = 15 }
 		}
 
-		# --- Update best score ---
 		if = {
 			limit = {
 				check_variable = { ct_ai_org_score > ct_ai_best_score }
@@ -215,7 +176,6 @@ ct_ai_select_target_org = {
 		}
 	}
 
-	# Set selected_ct_nation to the HQ country of the chosen org
 	if = {
 		limit = {
 			NOT = { check_variable = { selected_org = -1 } }
@@ -228,14 +188,10 @@ ct_ai_select_target_org = {
 	}
 }
 
-# ============================================================================
-# OPERATION EXECUTION — PRIORITY CASCADE
-# ============================================================================
-
+#executes the select action against the target organization
 ct_ai_execute_action = {
 	set_temp_variable = { ct_ai_acted = 0 }
 
-	# Priority 1: Exploit Intelligence (free — always do this first)
 	if = {
 		limit = {
 			check_variable = { ct_ai_acted = 0 }
@@ -245,7 +201,6 @@ ct_ai_execute_action = {
 		set_temp_variable = { ct_ai_acted = 1 }
 	}
 
-	# Priority 2: Arrest Sympathizers (100 PP)
 	if = {
 		limit = {
 			check_variable = { ct_ai_acted = 0 }
@@ -257,7 +212,6 @@ ct_ai_execute_action = {
 		set_temp_variable = { ct_ai_acted = 1 }
 	}
 
-	# Priority 3: Seize Assets (100 PP)
 	if = {
 		limit = {
 			check_variable = { ct_ai_acted = 0 }
@@ -269,7 +223,6 @@ ct_ai_execute_action = {
 		set_temp_variable = { ct_ai_acted = 1 }
 	}
 
-	# Priority 4: Mass Gathering (100 PP)
 	if = {
 		limit = {
 			check_variable = { ct_ai_acted = 0 }
@@ -280,7 +233,6 @@ ct_ai_execute_action = {
 		set_temp_variable = { ct_ai_acted = 1 }
 	}
 
-	# Priority 5: Infiltrate Agent (50 PP)
 	if = {
 		limit = {
 			check_variable = { ct_ai_acted = 0 }
@@ -306,7 +258,6 @@ ct_ai_execute_action = {
 		set_temp_variable = { ct_ai_acted = 1 }
 	}
 
-	# Priority 6: Analyst Focus (50 PP)
 	if = {
 		limit = {
 			check_variable = { ct_ai_acted = 0 }
@@ -317,7 +268,6 @@ ct_ai_execute_action = {
 		set_temp_variable = { ct_ai_acted = 1 }
 	}
 
-	# Priority 7: Increase Funding (100 PP — only early game / low funding)
 	if = {
 		limit = {
 			check_variable = { ct_ai_acted = 0 }
@@ -328,7 +278,6 @@ ct_ai_execute_action = {
 		set_temp_variable = { ct_ai_acted = 1 }
 	}
 
-	# Set cooldown if we acted
 	if = {
 		limit = {
 			check_variable = { ct_ai_acted = 1 }
@@ -343,11 +292,6 @@ ct_ai_execute_action = {
 	}
 }
 
-# ============================================================================
-# INDIVIDUAL OPERATION EFFECTS
-# ============================================================================
-
-# Mirrors exploit_intelligence_button_click from scripted_guis
 ct_ai_exploit_intel = {
 	set_temp_variable = { exploit_int = ct_mass_gather_store_var^selected_org }
 	set_variable = { ct_mass_gather_store_var^selected_org = 0 }
@@ -357,7 +301,6 @@ ct_ai_exploit_intel = {
 	log = "[GetDateText]: [THIS.GetTag]: CT AI exploited intel on org [?selected_org], gained [?exploit_int] temp specific intel"
 }
 
-# Mirrors arrest_sympathizers_button_click from scripted_guis
 ct_ai_arrest_sympathizers = {
 	add_political_power = -100
 
@@ -373,7 +316,6 @@ ct_ai_arrest_sympathizers = {
 	multiply_temp_variable = { threat_reducer = 0.5 }
 	add_to_variable = { international_terror_org_temp_specific_intel^selected_org = threat_reducer }
 
-	# Failure chance — bad intel causes collateral damage
 	set_temp_variable = { random_bad_luck = 100 }
 	subtract_from_temp_variable = { random_bad_luck = international_terror_org_intel^selected_org }
 	subtract_from_temp_variable = { random_bad_luck = ct_intel_agency_value }
@@ -385,7 +327,6 @@ ct_ai_arrest_sympathizers = {
 	log = "[GetDateText]: [THIS.GetTag]: CT AI arrested sympathizers — org [?selected_org], threat reduced by [?threat_reducer]"
 }
 
-# Mirrors seize_assets_button_click from scripted_guis
 ct_ai_seize_assets = {
 	add_political_power = -100
 
@@ -401,17 +342,14 @@ ct_ai_seize_assets = {
 	multiply_temp_variable = { treasury_change = booster }
 	modify_treasury_effect = yes
 
-	# Reduce threat/vis by the same amount seized
 	multiply_temp_variable = { treasury_change = -1 }
 	add_to_variable = { global.active_terror_org_threat_lvl^selected_org = treasury_change }
 	add_to_variable = { global.active_terror_org_vis_lvl^selected_org = treasury_change }
 
-	# Undo the negation for logging
 	multiply_temp_variable = { treasury_change = -1 }
 	log = "[GetDateText]: [THIS.GetTag]: CT AI seized assets — org [?selected_org], treasury +[?treasury_change]"
 }
 
-# Mirrors mass_gathering_button_click from scripted_guis
 ct_ai_mass_gathering = {
 	add_political_power = -100
 
@@ -426,7 +364,6 @@ ct_ai_mass_gathering = {
 
 	set_country_flag = { flag = recent_ct_intel_op days = 210 value = 1 }
 
-	# 50% chance of operational exposure
 	random = {
 		chance = 50
 		country_event = { id = MD_terror.5 }
@@ -435,7 +372,6 @@ ct_ai_mass_gathering = {
 	log = "[GetDateText]: [THIS.GetTag]: CT AI mass gathering — org [?selected_org], gathered [?num_add] intel"
 }
 
-# Mirrors infil_agent_button_click from scripted_guis
 ct_ai_infiltrate_agent = {
 	add_political_power = -50
 
@@ -489,7 +425,6 @@ ct_ai_infiltrate_agent = {
 	}
 }
 
-# Mirrors analyst_focus_button_click from scripted_guis
 ct_ai_analyst_focus = {
 	add_political_power = -50
 
@@ -510,7 +445,6 @@ ct_ai_analyst_focus = {
 	log = "[GetDateText]: [THIS.GetTag]: CT AI analyst focus — org [?selected_org], specific intel +0.02"
 }
 
-# Mirrors ct_funding_button_click from scripted_guis
 ct_ai_increase_funding = {
 	add_political_power = -100
 
@@ -521,21 +455,16 @@ ct_ai_increase_funding = {
 	log = "[GetDateText]: [THIS.GetTag]: CT AI increased funding — defense=[?ct_home_defense_var], detect=[?ct_global_base_detect_var]"
 }
 
-# ============================================================================
-# MAJOR POWER ACTIONS (separate evaluation, own cooldown)
-# ============================================================================
 
 ct_ai_major_power_actions = {
 	if = {
 		limit = {
 			check_variable = { selected_org = -1 }
 		}
-		# No org selected, nothing to do
 	}
 	else = {
 		set_temp_variable = { ct_ai_major_acted = 0 }
 
-		# Send Advisors — help the HQ country if we aren't it
 		if = {
 			limit = {
 				check_variable = { ct_ai_major_acted = 0 }
@@ -556,7 +485,6 @@ ct_ai_major_power_actions = {
 			log = "[GetDateText]: [THIS.GetTag]: CT AI sending advisor to [?selected_ct_nation]"
 		}
 
-		# Drone Ops Preparation — prepare a strike if we have intel
 		if = {
 			limit = {
 				check_variable = { ct_ai_major_acted = 0 }
