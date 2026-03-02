@@ -1,0 +1,487 @@
+# Author(s): Doolittle
+
+#Adds a target to the target array
+ai_cyber_add_target = {
+	if = {
+		limit = { is_debug = yes }
+		log = "[PREV.GetTag] is attempting to add [THIS.GetTag] as a cyber target."
+	}
+	if = {
+		limit = {
+			NOT = { is_in_array = { array = PREV.cyber_active_targets value = THIS } }
+			PREV = { check_variable = { cyber_active_targets^num < cyber_max_targets } }
+		}
+		if = {
+			limit = { is_debug = yes }
+			log = "[PREV.GetTag]'s attempt was a success, adding [THIS.GetTag] to the target array."
+		}
+		add_to_array = { PREV.cyber_active_targets = THIS }
+	}
+}
+
+#Do a sweep over the array, and remove a single target
+#As soon as a valid target is found, exit the loop and clear it
+#if not target is found, just run through clean
+ai_cyber_maintenance = {
+	set_variable = { cyber_remove_target_var = 0 }
+	for_each_loop = {
+		array = cyber_active_targets
+		value = v
+		var:v = {
+			if = {
+				limit = {
+					NOT = { has_war_with = PREV }
+					PREV = { NOT = { check_variable = { ai_attitude_hostile_weight@PREV > ai_attitude_friendly_weight@PREV } } }
+					NOT = { is_in_array = { array = PREV.cyber_op_target_nation value = THIS } }
+				}
+				set_variable = { PREV.cyber_remove_target_var = THIS }
+				set_temp_variable = { break = 1 }
+			}
+		}
+	}
+	if = {
+		limit = { NOT = { check_variable = { cyber_remove_target_var = 0 } } }
+		cyber_remove_target = yes
+		set_variable = { cyber_remove_target_var = 0 }
+	}
+}
+
+#check if you were attacked recently and know who did it
+#if you know, add them as a target for retaliation
+ai_cyber_reactive_add = {
+	for_each_loop = {
+		array = global.cyber_capable_nations
+		value = v
+		var:v = {
+			if = {
+				limit = {
+					is_valid_ai_cyber_target = yes
+					PREV = { has_country_flag = recent_cyber_attack_from_@PREV }
+				}
+				log = "[PREV.GetTag] is conducting a reactive add of [THIS.GetTag]"
+				ai_cyber_add_target = yes
+			}
+		}
+	}
+}
+
+#Checks if you meet the criteria to be added as a target
+#if they do, add them as a target
+look_and_add = {
+	var:v = {
+		if = {
+			limit = {
+				is_valid_ai_cyber_target = yes
+				OR = {
+					PREV = { check_variable = { ai_attitude_hostile_weight@PREV > ai_attitude_friendly_weight@PREV } }
+				}
+			}
+			ai_cyber_add_target = yes
+		}
+	}
+}
+
+#Scans the regional arrays for local targets
+ai_cyber_regional_scan = {
+	if = {
+		limit = { is_debug = yes }
+		log = "[THIS.GetTag] is starting regional scan for targets"
+	}
+	if = {
+		limit = { NOT = { has_country_flag = ai_cyber_regional_scan_cooldown } }
+		set_country_flag = { flag = ai_cyber_regional_scan_cooldown days = 90 }
+
+		if = {
+			limit = { has_country_flag = european_nation_flag }
+			for_each_loop = {
+				array = global.european_nations
+				value = v
+				break = b
+				look_and_add = yes
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = asian_nation_flag }
+			for_each_loop = {
+				array = global.asian_nations
+				value = v
+				break = b
+				look_and_add = yes
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = middle_east_flag }
+			for_each_loop = {
+				array = global.middle_eastern_nations
+				value = v
+				break = b
+				look_and_add = yes
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = africa_nation_flag }
+			for_each_loop = {
+				array = global.sub_saharan_nations
+				value = v
+				break = b
+				look_and_add = yes
+			}
+		}
+		else = {
+			for_each_loop = {
+				array = global.american_nations
+				value = v
+				break = b
+				look_and_add = yes
+			}
+		}
+	}
+}
+
+#Sweeps over the majors array, then adds targets. This makes it so that majors are always valid potential targets
+ai_majors_scan = {
+	if = {
+		limit = { is_debug = yes }
+		log = "[THIS.GetTag] is starting majors scan for targets"
+	}
+	for_each_loop = {
+		array = global.majors
+		value = v
+
+		var:v = {
+			if = {
+				limit = {
+					is_valid_ai_cyber_target = yes
+					PREV = {
+						check_variable = { ai_attitude_hostile_weight@PREV > ai_attitude_friendly_weight@PREV }
+						has_opinion = {
+							target = PREV
+							value < -10
+						}
+					}
+				}
+				ai_cyber_add_target = yes
+			}
+		}
+	}
+}
+
+# Cycles the monthly loop for cyberwarfare operations
+ai_cyber_monthly = {
+	if = {
+		limit = { is_debug = yes }
+		log = "[THIS.GetTag] has started the cyberwarfare loop"
+	}
+	ai_cyber_maintenance = yes
+
+	#TODO: Filter this better. How should an AI choose between global targets vs regional targets?
+	#If the target list is not full, lets find more targets
+	if = {
+		limit = { cyber_target_array_not_full = yes }
+		ai_cyber_reactive_add = yes
+		ai_cyber_regional_scan = yes
+		ai_majors_scan = yes
+	}
+
+	#now lets conduct attacks, if we can
+	if = {
+		limit = {
+			check_variable = { cyber_ongoing_operations < cyber_op_max_targets }
+			command_power > 5
+			check_variable = { cyber_active_targets^num > 0 }
+		}
+		set_variable = { cyber_op_target = 0 }
+
+		# Wartime strike. Targets at war are the highest priority, so they get hit first
+		random_scope_in_array = {
+			array = cyber_active_targets
+			limit = { has_war_with = PREV }
+			set_variable = { PREV.cyber_op_target = THIS }
+		}
+		if = {
+			limit = { NOT = { check_variable = { cyber_op_target = 0 } } }
+			random = {
+				chance = 90
+				ai_cyber_select_and_launch = yes
+			}
+		}
+
+		# People we *really* dont like get hit second
+		if = {
+			limit = { check_variable = { cyber_op_target = 0 } }
+			random_scope_in_array = {
+				array = cyber_active_targets
+				limit = { PREV = { has_opinion = { target = PREV value < -50 } } }
+				set_variable = { PREV.cyber_op_target = THIS }
+			}
+			if = {
+				limit = { NOT = { check_variable = { cyber_op_target = 0 } } }
+				random = {
+					chance = 60
+					ai_cyber_select_and_launch = yes
+				}
+			}
+		}
+
+		# anyone else gets hit third, and is far less likely to be hit
+		if = {
+			limit = { check_variable = { cyber_op_target = 0 } }
+			random_scope_in_array = {
+				array = cyber_active_targets
+				set_variable = { PREV.cyber_op_target = THIS }
+			}
+			if = {
+				limit = { NOT = { check_variable = { cyber_op_target = 0 } } }
+				random = {
+					chance = 30
+					ai_cyber_select_and_launch = yes
+				}
+			}
+		}
+	}
+
+	ai_cyber_defensive = yes
+
+	random = {
+		chance = 5
+		ai_cyber_investment = yes
+	}
+}
+
+# Selects and executes the operation
+# This rates based on war, tier of nations capabilites, all the fun stuff
+ai_cyber_select_and_launch = {
+	set_variable = { cyber_op_type = 0 }
+
+	if = {
+		limit = {
+			has_cyber_capability_4 = yes
+			command_power > 35
+		}
+		random = {
+			chance = 30
+			random_list = {
+				1 = {
+					modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_crit_tracking_attack_by_@PREV } }
+					add_command_power = -35
+					set_variable = { cyber_op_type = 5 }
+				}
+				1 = {
+					modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_zero_day_strike_tracking_attack_by_@PREV } }
+					add_command_power = -35
+					set_variable = { cyber_op_type = 15 }
+				}
+				1 = {
+					modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_deception_campaign_tracking_attack_by_@PREV } }
+					add_command_power = -35
+					set_variable = { cyber_op_type = 14 }
+				}
+			}
+		}
+	}
+
+	if = {
+		limit = {
+			check_variable = { cyber_op_type = 0 }
+			has_cyber_capability_3 = yes
+			command_power > 20
+		}
+		random_list = {
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_infra_tracking_attack_by_@PREV } }
+				add_command_power = -20
+				set_variable = { cyber_op_type = 4 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_financial_system_attack_tracking_attack_by_@PREV } }
+				add_command_power = -20
+				set_variable = { cyber_op_type = 11 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_logistics_disruption_tracking_attack_by_@PREV } }
+				add_command_power = -20
+				set_variable = { cyber_op_type = 12 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_sleeper_network_tracking_attack_by_@PREV } }
+				add_command_power = -20
+				set_variable = { cyber_op_type = 13 }
+			}
+		}
+	}
+
+	if = {
+		limit = {
+			check_variable = { cyber_op_type = 0 }
+			has_cyber_capability_2 = yes
+			command_power > 10
+		}
+		random_list = {
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_economic_tracking_attack_by_@PREV } }
+				add_command_power = -10
+				set_variable = { cyber_op_type = 2 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_propaganda_tracking_attack_by_@PREV } }
+				add_command_power = -10
+				set_variable = { cyber_op_type = 3 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_election_interference_tracking_attack_by_@PREV } }
+				add_command_power = -10
+				set_variable = { cyber_op_type = 8 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_industrial_espionage_tracking_attack_by_@PREV } }
+				add_command_power = -10
+				set_variable = { cyber_op_type = 9 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_comms_intercept_tracking_attack_by_@PREV } }
+				add_command_power = -10
+				set_variable = { cyber_op_type = 10 }
+			}
+		}
+	}
+
+	if = {
+		limit = {
+			check_variable = { cyber_op_type = 0 }
+			command_power > 5
+		}
+		random_list = {
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_gps_tracking_attack_by_@PREV } }
+				add_command_power = -5
+				set_variable = { cyber_op_type = 1 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_sigint_surveillance_tracking_attack_by_@PREV } }
+				add_command_power = -5
+				set_variable = { cyber_op_type = 6 }
+			}
+			1 = {
+				modifier = { factor = 0  var:cyber_op_target = { has_country_flag = is_under_radar_spoofing_tracking_attack_by_@PREV } }
+				add_command_power = -5
+				set_variable = { cyber_op_type = 7 }
+			}
+		}
+	}
+
+	if = {
+		limit = { NOT = { check_variable = { cyber_op_type = 0 } } }
+		cyber_launch_operation = yes
+	}
+}
+
+# Runs the defensive operations, if a nation is able to run them
+ai_cyber_defensive = {
+	if = {
+		limit = {
+			has_cyber_capability_1 = yes
+			command_power > 5
+			has_war = yes
+			check_variable = { cyber_ongoing_operations < cyber_max_targets }
+			NOT = { has_idea = cyber_network_hardening_active }
+		}
+		add_command_power = -5
+		set_variable = { cyber_op_type = 16 }
+		set_variable = { cyber_op_target = THIS }
+		cyber_launch_operation = yes
+		add_timed_idea = { idea = cyber_network_hardening_active days = 120 }
+	}
+
+	if = {
+		limit = {
+			has_cyber_capability_2 = yes
+			command_power > 10
+			check_variable = { cyber_ongoing_operations < cyber_max_targets }
+			NOT = { has_idea = cyber_counter_intrusion_active }
+			OR = {
+				has_idea = cyber_sigint_surveillance_malus
+				has_idea = cyber_comms_intercept_malus
+				has_idea = cyber_sleeper_network_malus
+			}
+		}
+		add_command_power = -10
+		set_variable = { cyber_op_type = 17 }
+		set_variable = { cyber_op_target = THIS }
+		cyber_launch_operation = yes
+		add_timed_idea = { idea = cyber_counter_intrusion_active days = 30 }
+	}
+
+	if = {
+		limit = {
+			has_cyber_capability_3 = yes
+			command_power > 20
+			check_variable = { cyber_ongoing_operations < cyber_max_targets }
+			NOT = { has_idea = cyber_attribution_hunt_active }
+			OR = {
+				has_idea = cyber_gps_jamming_malus
+				has_idea = cyber_economic_disruption_malus
+				has_idea = cyber_propaganda_ops_malus
+				has_idea = cyber_infrastructure_damage_malus
+				has_idea = cyber_critical_strike_malus
+				has_idea = cyber_sigint_surveillance_malus
+				has_idea = cyber_radar_spoofing_malus
+				has_idea = cyber_election_interference_malus
+				has_idea = cyber_industrial_espionage_malus
+				has_idea = cyber_comms_intercept_malus
+				has_idea = cyber_financial_system_attack_malus
+				has_idea = cyber_logistics_disruption_malus
+				has_idea = cyber_sleeper_network_malus
+				has_idea = cyber_deception_campaign_malus
+				has_idea = cyber_zero_day_strike_malus
+			}
+		}
+		random = {
+			chance = 15
+			add_command_power = -20
+			set_variable = { cyber_op_type = 18 }
+			set_variable = { cyber_op_target = THIS }
+			cyber_launch_operation = yes
+			add_timed_idea = { idea = cyber_attribution_hunt_active days = 60 }
+		}
+	}
+}
+
+# Has the AI invest in their offensive and defensive capabilities via the "menu"
+ai_cyber_investment = {
+	if = {
+		limit = {
+			command_power > 75
+			NOT = { has_country_flag = ai_cyber_invested_flag }
+		}
+		set_country_flag = { flag = ai_cyber_invested_flag days = 90 }
+		if = {
+			limit = { has_war = yes }
+			random_list = {
+				7 = {
+					add_command_power = -25
+					add_to_variable = { cyber_offense_investment = 2 }
+					calculate_cyber_capability = yes
+				}
+				3 = {
+					add_command_power = -25
+					add_to_variable = { cyber_defense_investment = 2 }
+					calculate_cyber_capability = yes
+				}
+			}
+		}
+		else = {
+			random_list = {
+				1 = {
+					add_command_power = -25
+					add_to_variable = { cyber_offense_investment = 2 }
+					calculate_cyber_capability = yes
+				}
+				1 = {
+					add_command_power = -25
+					add_to_variable = { cyber_defense_investment = 2 }
+					calculate_cyber_capability = yes
+				}
+			}
+		}
+	}
+}
