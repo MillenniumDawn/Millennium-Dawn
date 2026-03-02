@@ -2,42 +2,69 @@ on_actions = {
 	on_weekly_ISR = {
 		effect = {
 			if = { limit = { PAL = { is_subject_of = ISR } }
-				remove_ideas = {
-					ISR_calm_security
-					ISR_stable_security
-					ISR_routine_security
-					ISR_frequent_incidents
-					ISR_very_frequent_incidents
-					ISR_intifada
-					palestinian_resistance
+				# Calculate current tier
+				set_temp_variable = { ISR_security_tier = 1 }
+				if = { limit = { check_variable = { ISR_palestine_situation > 19 } }
+					set_temp_variable = { ISR_security_tier = 2 }
+				}
+				if = { limit = { check_variable = { ISR_palestine_situation > 34 } }
+					set_temp_variable = { ISR_security_tier = 3 }
+				}
+				if = { limit = { check_variable = { ISR_palestine_situation > 49 } }
+					set_temp_variable = { ISR_security_tier = 4 }
+				}
+				if = { limit = { check_variable = { ISR_palestine_situation > 64 } }
+					set_temp_variable = { ISR_security_tier = 5 }
+				}
+				if = { limit = { check_variable = { ISR_palestine_situation > 79 } }
+					set_temp_variable = { ISR_security_tier = 6 }
+				}
+				if = { limit = { check_variable = { ISR_palestine_situation > 94 } }
+					set_temp_variable = { ISR_security_tier = 7 }
 				}
 
+				# Only swap ideas if the tier changed
 				if = {
-					limit = { check_variable = { ISR_palestine_situation > 94 } }
-					add_ideas = palestinian_resistance
-				}
-				else_if = {
-					limit = { check_variable = { ISR_palestine_situation > 79 } }
-					add_ideas = ISR_intifada
-				}
-				else_if = {
-					limit = { check_variable = { ISR_palestine_situation > 64 } }
-					add_ideas = ISR_very_frequent_incidents
-				}
-				else_if = {
-					limit = { check_variable = { ISR_palestine_situation > 49 } }
-					add_ideas = ISR_frequent_incidents
-				}
-				else_if = {
-					limit = { check_variable = { ISR_palestine_situation > 34 } }
-					add_ideas = ISR_routine_security
-				}
-				else_if = {
-					limit = { check_variable = { ISR_palestine_situation > 19 } }
-					add_ideas = ISR_stable_security
-				}
-				else = {
-					add_ideas = ISR_calm_security
+					limit = { NOT = { check_variable = { ISR_current_security_tier = ISR_security_tier } } }
+					set_variable = { ISR_current_security_tier = ISR_security_tier }
+
+					remove_ideas = {
+						ISR_calm_security
+						ISR_stable_security
+						ISR_routine_security
+						ISR_frequent_incidents
+						ISR_very_frequent_incidents
+						ISR_intifada
+						palestinian_resistance
+					}
+
+					if = {
+						limit = { check_variable = { ISR_current_security_tier = 7 } }
+						add_ideas = palestinian_resistance
+					}
+					else_if = {
+						limit = { check_variable = { ISR_current_security_tier = 6 } }
+						add_ideas = ISR_intifada
+					}
+					else_if = {
+						limit = { check_variable = { ISR_current_security_tier = 5 } }
+						add_ideas = ISR_very_frequent_incidents
+					}
+					else_if = {
+						limit = { check_variable = { ISR_current_security_tier = 4 } }
+						add_ideas = ISR_frequent_incidents
+					}
+					else_if = {
+						limit = { check_variable = { ISR_current_security_tier = 3 } }
+						add_ideas = ISR_routine_security
+					}
+					else_if = {
+						limit = { check_variable = { ISR_current_security_tier = 2 } }
+						add_ideas = ISR_stable_security
+					}
+					else = {
+						add_ideas = ISR_calm_security
+					}
 				}
 			}
 			ISR_update_palestine = yes
