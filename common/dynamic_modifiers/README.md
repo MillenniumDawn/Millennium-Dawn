@@ -1,60 +1,125 @@
-# Singapore Dynamic Modifier Guide
+# Dynamic Modifiers Guide
 
 **Author(s):** BirdyBoi & BlackSyX
 **Mentor:** BirdyBoi & Luigi IV (aka MD's Fijian Nationalist)
 
 ---
 
-This guide covers how to create Singapore dynamic modifiers. This is one of 3 files related to Singapore Dynamic Modifier (`05_SIN_dynamic_modifier.txt`, `SIN - Singapore.txt`, `MD_ideas.gfx`).
+This guide covers how to create and use country dynamic modifiers. A dynamic modifier ties in-game modifier fields (e.g. `industrial_capacity_factory`, `army_org_factor`) to named variables so that focus trees, decisions, and events can adjust them at runtime.
 
 **© Millennium Dawn 2016-2026**
 
-## How to Add New Ideas
+## File Naming
 
-Follow these steps to create a new idea for a country:
+| Prefix | Usage                                         |
+| ------ | --------------------------------------------- |
+| `05_`  | Country-specific dynamic modifiers            |
+| `09_`  | Country-specific dynamic modifiers (overflow) |
+| `00_`  | System/shared dynamic modifiers               |
 
-### Step 1: Create Your Dynamic Modifier
-Edit the file: `common/dynamic_modifiers/05_SIN_dynamic_modifiers.txt`
+## How to Add a New Dynamic Modifier
 
-**Modifier Database References:**
-- `localisation/english/replace/replaced_from_focus_l_english.yml`
-- `localisation/english/replace/replaced_from_vanilla_modifiers_l_english.yml`
+### Step 1: Define the Modifier
 
-### Step 2: Add Dynamic Modifier to Country
-Edit the file: `history/countries/SIN - Singapore.txt`
+Create or edit the appropriate file in `common/dynamic_modifiers/`.
 
-Add the following line:
 ```
-530 = { add_dynamic_modifier = { modifier = SIN_singapore_problem } }
+TAG_modifier_name = {
+	enable = { always = yes }
+
+	icon = GFX_idea_TAG_modifier_icon
+
+	production_speed_buildings_factor = tag_construction_speed
+	industrial_capacity_factory = tag_industrial_output
+}
 ```
 
-### Step 3: Register Your GFX
-Edit these files:
+Each line maps a game modifier field to a variable name. The variable defaults to 0 and can be changed via `add_to_variable` in focus trees, decisions, or events.
+
+### Step 2: Attach the Modifier to a Country
+
+Edit the country history file in `history/countries/`:
+
+```
+530 = { add_dynamic_modifier = { modifier = TAG_modifier_name } }
+```
+
+### Step 3: Register the GFX
+
+Add entries in both:
+
 - `interface/MD_ideas.gfx`
 - `interface/MD_dynamic_modifiers.gfx`
 
-Add:
 ```
-name = "GFX_idea_SIN_singapore_problem"
-texturefile = "gfx/interface/state_modifiers/SIN_singapore_problem.dds"
+spriteType = {
+	name = "GFX_idea_TAG_modifier_icon"
+	texturefile = "gfx/interface/state_modifiers/TAG_modifier_icon.dds"
+}
 ```
 
-### Step 4: Register State Modifier
-Edit the appropriate state file in: `history/states/`
+### Step 4: Create the Icon
 
-### Step 5: Create Idea Icon
-Create icon in: `gfx/interface/state_modifiers/`
+Create the icon in `gfx/interface/state_modifiers/`.
 
-**Icon Creation Guidelines:**
-1. Millennium Dawn has visual standards - discuss in Discord channel "graphics-sound"
-2. Download template from Google Drive (pinned in Discord "graphics-sound" channel)
-3. Create an icon that represents your idea
-4. Submit for review in Discord channel "gfx_request" to ensure visual consistency
+**Icon Guidelines:**
 
-### Step 6: Add Localisation
-Edit the file: `localisation/english/MD_focus_SIN_l_english.yml`
+1. Follow Millennium Dawn visual standards (see Discord "graphics-sound" channel)
+2. Use the template pinned in Discord "graphics-sound"
+3. Submit for review in "gfx_request" to ensure visual consistency
 
-Add your dynamic modifier with name and description.
+### Step 5: Add Localisation
+
+Add name and description keys in the appropriate `localisation/english/MD_focus_TAG_l_english.yml`.
+
+## Standardized Tooltip Pattern
+
+When a focus (or decision/event) modifies dynamic modifier variables, use the **standardized tooltip pattern** so the player sees a consistent "Modifies Dynamic Modifier" header followed by per-variable change descriptions.
+
+### Old Pattern (Do NOT Use)
+
+```
+completion_reward = {
+	log = "[GetDateText]: [Root.GetName]: Focus TAG_focus_name"
+	add_to_variable = { tag_construction_speed = 0.10 }
+	add_to_variable = { tag_industrial_output = 0.05 }
+	custom_effect_tooltip = construction_speed10_tooltip
+	custom_effect_tooltip = factory_output5_tooltip
+}
+```
+
+This required a separate localisation key for every variable-value combination, leading to dozens of redundant keys per country.
+
+### New Pattern (Standard)
+
+```
+completion_reward = {
+	log = "[GetDateText]: [Root.GetName]: Focus TAG_focus_name"
+	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = TAG_modifier_name }
+	add_to_variable = { tag_construction_speed = 0.10 tooltip = production_speed_buildings_factor_tt }
+	add_to_variable = { tag_industrial_output = 0.05 tooltip = industrial_capacity_factory_tt }
+}
+```
+
+**Key differences:**
+
+1. A single `custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = TAG_modifier_name }` header replaces all per-variable tooltip lines
+2. Each `add_to_variable` gets a `tooltip = <field>_tt` that references the standardized tooltip key for that modifier field
+3. No per-country localisation keys needed for tooltips
+
+### How to Find the Right Tooltip Key
+
+The tooltip key follows the pattern `<modifier_field_name>_tt`, where `<modifier_field_name>` is the left-hand side of the dynamic modifier definition.
+
+For example, if your dynamic modifier has:
+
+```
+production_speed_buildings_factor = tag_construction_speed
+```
+
+Then the tooltip key is `production_speed_buildings_factor_tt`.
+
+All available `_tt` keys are defined in `localisation/english/MD_dm_modifiers_l_english.yml`. Always verify the key exists in that file before using it.
 
 ---
 

@@ -1,54 +1,33 @@
 on_actions = {
-	on_weekly_HEZ = {
+	on_monthly_HEZ = {
 		effect = {
-			#Hezbollah's Gains from Influence
-			set_variable = { total_influence_in_countries = 0 }
+			clear_array = HEZ_influenced_nations
 			every_other_country = {
 				limit = {
 					NOT = { is_ally_with = HEZ }
 					is_influencer = yes
 				}
-				if = {
-					limit = {
-						check_variable = { influence_array^0 = HEZ }
+				add_to_array = { HEZ.HEZ_influenced_nations = THIS.id }
+			}
+		}
+	}
+	on_weekly_HEZ = {
+		effect = {
+			set_variable = { total_influence_in_countries = 0 }
+			for_each_loop = {
+				array = HEZ.HEZ_influenced_nations
+				value = nation_id
+				var:nation_id = {
+					for_each_loop = {
+						array = influence_array
+						value = influencer_id
+						index = slot
+
+						if = {
+							limit = { var:influencer_id = { original_tag = ROOT } }
+							add_to_variable = { HEZ.total_influence_in_countries = influence_array_val^slot }
+						}
 					}
-					HEZ = { add_to_variable = { total_influence_in_countries = PREV.influence_array_val^0 } }
-				}
-				else_if = {
-					limit = {
-						check_variable = { influence_array^1 = HEZ }
-					}
-					HEZ = { add_to_variable = { total_influence_in_countries = PREV.influence_array_val^1 } }
-				}
-				else_if = {
-					limit = {
-						check_variable = { influence_array^2 = HEZ }
-					}
-					HEZ = { add_to_variable = { total_influence_in_countries = PREV.influence_array_val^2 } }
-				}
-				else_if = {
-					limit = {
-						check_variable = { influence_array^3 = HEZ }
-					}
-					HEZ = { add_to_variable = { total_influence_in_countries = PREV.influence_array_val^3 } }
-				}
-				else_if = {
-					limit = {
-						check_variable = { influence_array^4 = HEZ }
-					}
-					HEZ = { add_to_variable = { total_influence_in_countries = PREV.influence_array_val^4 } }
-				}
-				else_if = {
-					limit = {
-						check_variable = { influence_array^5 = HEZ }
-					}
-					HEZ = { add_to_variable = { total_influence_in_countries = PREV.influence_array_val^5 } }
-				}
-				else_if = {
-					limit = {
-						check_variable = { influence_array^6 = HEZ }
-					}
-					HEZ = { add_to_variable = { total_influence_in_countries = PREV.influence_array_val^6 } }
 				}
 			}
 
@@ -67,7 +46,6 @@ on_actions = {
 
 			#MANPOWER
 			set_temp_variable = { x = total_influence_in_countries }
-			multiply_variable = { x = 1 }
 			round_temp_variable = x
 			add_manpower = x
 			set_variable = { hezbollah_weekly_manpower = x }
@@ -124,70 +102,61 @@ on_actions = {
 			set_variable = { hezbollah_weekly_atgm = x }
 
 			# MBT
-			set_temp_variable = { x = total_influence_in_countries }
-			multiply_temp_variable = { x = 0.004 }
-			round_temp_variable = x
+			set_temp_variable = { mbt_amount = total_influence_in_countries }
+			multiply_temp_variable = { mbt_amount = 0.004 }
+			round_temp_variable = mbt_amount
+			set_variable = { hezbollah_weekly_mbt = mbt_amount }
+
+			# APC
+			set_temp_variable = { apc_amount = total_influence_in_countries }
+			multiply_temp_variable = { apc_amount = 0.01 }
+			round_temp_variable = apc_amount
+			set_variable = { hezbollah_weekly_apc = apc_amount }
+
+			# IFV
+			set_temp_variable = { ifv_amount = total_influence_in_countries }
+			multiply_temp_variable = { ifv_amount = 0.008 }
+			round_temp_variable = ifv_amount
+			set_variable = { hezbollah_weekly_ifv = ifv_amount }
+
 			if = {
 				limit = { has_dlc = "No Step Back" }
 				add_equipment_to_stockpile = {
 					type = medium_tank_chassis_0
 					variant_name = "T-55"
-					amount = x
+					amount = mbt_amount
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = medium_tank_amphibious_chassis_1
+					variant_name = "M113"
+					amount = apc_amount
+					producer = USA
+				}
+				add_equipment_to_stockpile = {
+					type = medium_tank_flame_chassis_0
+					variant_name = "BMP-1"
+					amount = ifv_amount
 					producer = SOV
 				}
 			}
 			else = {
 				add_equipment_to_stockpile = {
 					type = MBT_1
-					amount = x
+					amount = mbt_amount
 					producer = SOV
 				}
-			}
-			set_variable = { hezbollah_weekly_mbt = x }
-
-			# APC
-			set_temp_variable = { x = total_influence_in_countries }
-			multiply_temp_variable = { x = 0.01 }
-			round_temp_variable = x
-			if = {
-				limit = { has_dlc = "No Step Back" }
-				add_equipment_to_stockpile = {
-					type = medium_tank_amphibious_chassis_1
-					variant_name = "M113"
-					amount = x
-					producer = USA
-				}
-			}
-			else = {
 				add_equipment_to_stockpile = {
 					type = APC_2
-					amount = x
+					amount = apc_amount
 					producer = USA
 				}
-			}
-			set_variable = { hezbollah_weekly_apc = x }
-
-			# IFV
-			set_temp_variable = { x = total_influence_in_countries }
-			multiply_temp_variable = { x = 0.008 }
-			round_temp_variable = x
-			if = {
-				limit = { has_dlc = "No Step Back" }
-				add_equipment_to_stockpile = {
-					type = medium_tank_flame_chassis_0
-					variant_name = "BMP-1"
-					amount = x
-					producer = SOV
-				}
-			}
-			else = {
 				add_equipment_to_stockpile = {
 					type = IFV_2
-					amount = x
+					amount = ifv_amount
 					producer = SOV
 				}
 			}
-			set_variable = { hezbollah_weekly_ifv = x }
 
 			# Utility Vehicle
 			set_temp_variable = { x = total_influence_in_countries }
