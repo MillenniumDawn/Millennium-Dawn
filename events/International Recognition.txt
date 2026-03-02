@@ -1265,43 +1265,23 @@ country_event = {
 
 	option = {
 		name = recognition.18.b
-
 		set_country_flag = Recognised_@FROM
 
-		for_each_loop = {
-			array = global.UN_general_assembly
-			value = v
-
-			var:v = {
-				if = {
-					limit = { has_country_flag = Recognised_@FROM }
-					add_opinion_modifier = {
-						target = ROOT
-						modifier = supporting_recognized_ally
-					}
-					news_event = { id = recognition.9 }
-				}else_if = {
-					limit = {
-						OR = {
-							has_country_flag = original_owner_@FROM
-							has_country_flag = supports_original_owner_@FROM
-						}
-						NOT = { has_country_flag = Recognised_@FROM }
-					}
-					add_opinion_modifier = {
-						target = ROOT
-						modifier = recognises_them
-					}
-					news_event = { id = recognition.1 }
-				}
-			}
-		}
-
 		FROM = {
-			add_opinion_modifier = {
-				target = ROOT
-				modifier = recognises_us
+			# TODO: Add one for enemies in here that we can do that
+			every_allied_country = {
+				add_opinion_modifier = { target = ROOT modifier = supporting_recognized_ally }
+				news_event = recognition.9
 			}
+
+			random_country = {
+				limit = { has_country_flag = original_owner_@FROM }
+
+				add_opinion_modifier = { target = ROOT modifier = recognises_them }
+				news_event = recognition.1
+			}
+
+			add_opinion_modifier = { target = ROOT modifier = recognises_us }
 			news_event = { id = recognition.2 }
 			add_to_variable = { Granted_Recognition = 1 }
 		}
