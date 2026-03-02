@@ -51,11 +51,6 @@ yearly_investment_targets_routine = {
 	get_random_allies_investment_targets = yes
 	# add permanent targets from special array
 	add_permanent_investment_targets = yes
-
-	if = {
-		limit = { NOT = { has_country_flag = investment_targets_are_set_up } }
-		set_country_flag = investment_targets_are_set_up
-	}
 }
 
 get_random_investment_targets = {
@@ -68,6 +63,7 @@ get_random_investment_targets = {
 		random_scope_in_array = {
 			array = global.countries
 			limit = {
+				NOT = { has_country_flag = not_investment_target }
 				PREV = {
 					has_opinion = { target = THIS value > -25 }
 				}
@@ -90,6 +86,7 @@ get_random_friend_investment_targets = {
 		random_scope_in_array = {
 			array = global.countries
 			limit = {
+				NOT = { has_country_flag = not_investment_target }
 				PREV = {
 					has_opinion = { target = THIS value > 75 }
 				}
@@ -118,7 +115,10 @@ get_random_allies_investment_targets = {
 			random_scope_in_array = {
 				array = THIS.allies
 				if = {
-					limit = { NOT = { is_in_array = { PREV.investment_targets = THIS } } }
+					limit = {
+						NOT = { has_country_flag = not_investment_target }
+						NOT = { is_in_array = { PREV.investment_targets = THIS } }
+					}
 					add_to_array = { PREV.investment_targets = THIS }
 				}
 			}
@@ -136,6 +136,7 @@ get_random_allies_investment_targets = {
 			random_scope_in_array = {
 				array = global.countries
 				limit = {
+					NOT = { has_country_flag = not_investment_target }
 					PREV = {
 						has_opinion = { target = THIS value > 75 }
 					}
