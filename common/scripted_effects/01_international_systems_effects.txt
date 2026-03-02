@@ -98,11 +98,6 @@ on_startup_international = {
 	set_variable = { global.international_system_refresh_gui = 1 }
 }
 
-add_tester = {
-	add_to_array = { cyber_potential_targets = SOV }
-	add_to_array = { cyber_active_targets = SOV }
-	missile_ui_update = yes
-}
 
 clr_country_pmc_flag = {
 	clr_country_flag = blackwater_sel
@@ -1260,14 +1255,12 @@ rebuild_ga_ai_active_pool = {
 }
 
 un_ai_evaluate_actions = {
-	# Guard: Don't run if vote queues are already full
+	# ---- SECURITY COUNCIL AI ----
+	# Guard: Don't run if SC vote queue is full
 	if = {
 		limit = {
 			check_variable = { global.sc_vote_type_tracker^num < 3 }
-			check_variable = { global.ga_vote_type_tracker^num < 3 }
 		}
-
-		# ---- SECURITY COUNCIL AI ----
 		# Pick one random SC member to evaluate proposing an action
 		random_scope_in_array = {
 			array = global.security_council_members
@@ -1279,8 +1272,14 @@ un_ai_evaluate_actions = {
 			set_country_flag = { flag = un_ai_sc_cooldown days = 90 value = 1 }
 			un_ai_sc_consider_action = yes
 		}
+	}
 
-		# ---- GENERAL ASSEMBLY AI ----
+	# ---- GENERAL ASSEMBLY AI ----
+	# Guard: Don't run if GA vote queue is full
+	if = {
+		limit = {
+			check_variable = { global.ga_vote_type_tracker^num < 3 }
+		}
 		# Use shuffle-deck pool: rebuild from eligible GA nations when empty
 		if = {
 			limit = {
