@@ -1,5 +1,7 @@
 # Security Policy
 
+The vast majority of security vulnerabilities will be handled via the Paradox Interactive with the game engine. We do use utilities that should be reported if there is a known vulnerability.
+
 ## Reporting a Vulnerability
 
 If you discover a security vulnerability in Millennium Dawn, please report it responsibly:
@@ -32,4 +34,3 @@ Our Dependabot configuration includes:
 - **GitHub Actions**: Weekly updates for workflow dependencies
 - **Python Dependencies**: Weekly updates for tools dependencies
 - **Ruby/Jekyll**: Weekly updates for documentation dependencies
--
