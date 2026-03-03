@@ -1,0 +1,138 @@
+# Author(s): Doolittle
+# AI International Recognition effects
+# Called from on_monthly. Scoping: for_each_scope_loop over global.Unrecognised_States, so THIS = unrecognized nation.
+#cycle to see if we should do anything at all
+recog_ai_monthly = {
+	if = {
+		limit = { is_debug = yes }
+		log = "[GetDateText]: Recognition AI monthly tick — [?global.Unrecognised_States^num] unrecognized states"
+	}
+
+	for_each_scope_loop = {
+		array = global.Unrecognised_States
+
+		if = {
+			limit = {
+				is_ai = yes
+				has_civil_war = no
+				has_idea = Lacks_International_Recognition
+				NOT = { has_country_flag = recog_ai_cooldown }
+			}
+			recog_ai_evaluate_actions = yes
+		}
+
+		if = {
+			limit = {
+				has_civil_war = no
+				has_idea = Lacks_International_Recognition
+				country_exists = THIS
+			}
+			recog_ai_consider_grants = yes
+		}
+	}
+}
+
+#determine what action you should do now
+recog_ai_evaluate_actions = {
+	set_temp_variable = { recog_threshold = global.UN_general_assembly^num }
+	multiply_temp_variable = { recog_threshold = 0.4 }
+
+	if = { limit = { has_political_power > 200 }
+		if = {
+			limit = {
+				check_variable = { Granted_Recognition > recog_threshold }
+				NOT = { has_country_flag = recent_un_ascension_attempt }
+			}
+			if = {
+				limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetTag]: Recognition AI — initiating UN Ascension vote (support=[?Granted_Recognition], threshold=[?recog_threshold])"
+			}
+			set_country_flag = { flag = recent_un_ascension_attempt days = 365 value = 1 }
+			set_temp_variable = { sc_new_vote_type = 5 }
+			set_temp_variable = { sc_new_vote_nation = THIS }
+			update_sc_vote = yes
+			set_country_flag = { flag = recog_ai_cooldown days = 90 value = 1 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_country_flag = recent_global_recog_request_campaign }
+			}
+			if = {
+				limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetTag]: Recognition AI — campaigning for recognition (PP=[?political_power])"
+			}
+			add_political_power = -200
+			set_country_flag = { flag = recent_global_recog_request_campaign days = 365 value = 1 }
+			hidden_effect = { country_event = recognition.17 }
+			set_country_flag = { flag = recog_ai_cooldown days = 90 value = 1 }
+		}
+		else_if = {
+			limit = {
+				NOT = { has_country_flag = recent_global_recog_campaign }
+			}
+			if = {
+				limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetTag]: Recognition AI — improving UN relations (PP=[?political_power])"
+			}
+			add_political_power = -200
+			set_country_flag = { flag = recent_global_recog_campaign days = 365 value = 1 }
+			for_each_loop = {
+				array = global.UN_general_assembly
+				value = v
+				var:v = {
+					add_opinion_modifier = { target = PREV modifier = improving_un_relations }
+				}
+			}
+			set_country_flag = { flag = recog_ai_cooldown days = 90 value = 1 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { prev_owner > 0 }
+				NOT = { has_country_flag = recent_independence_request }
+				has_political_power > 350
+			}
+			if = {
+				limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetTag]: Recognition AI — asking for independence from [?prev_owner] (PP=[?political_power])"
+			}
+			add_political_power = -350
+			set_country_flag = { flag = recent_independence_request days = 365 value = 1 }
+			hidden_effect = { country_event = recognition.30 }
+			set_country_flag = { flag = recog_ai_cooldown days = 90 value = 1 }
+		}
+	}
+}
+
+#Randomly grab one nation, they might support us now!
+recog_ai_consider_grants = {
+	random_scope_in_array = {
+		array = global.UN_general_assembly
+		limit = {
+			is_ai = yes
+			has_civil_war = no
+			NOT = { has_country_flag = Recognised_@PREV }
+			NOT = { has_country_flag = original_owner_@PREV }
+			NOT = { has_country_flag = supports_original_owner_@PREV }
+			NOT = { has_country_flag = recog_ai_grant_cooldown }
+			has_political_power > 50
+			has_opinion = { target = PREV value > 30 }
+		}
+
+		random = {
+			chance = 30
+			add_political_power = -25
+			set_country_flag = Recognised_@PREV
+			set_country_flag = { flag = recog_ai_grant_cooldown days = 180 value = 1 }
+
+			PREV = {
+				add_opinion_modifier = { target = PREV modifier = recognises_us }
+				add_to_variable = { Granted_Recognition = 1 }
+			}
+
+			if = {
+				limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetTag]: Recognition AI — granted recognition to [?PREV.GetTag]"
+			}
+		}
+	}
+}
