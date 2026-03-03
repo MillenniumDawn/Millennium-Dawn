@@ -33,6 +33,13 @@ jobs:
           path: tools_validation_report.json
       - name: Check validation results
         run: |
-          if [ -f tools_validation_report.json ]; then
-            python -c "import json; with open('tools_validation_report.json', 'r') as f: data = json.load(f); errors = data['summary']['errors']; print(f'Validation failed with {errors} errors') if errors > 0 else print('Tools validation passed'); exit(1 if errors > 0 else 0)"
-          fi
+          python - << 'EOF'
+          import json
+          with open('tools_validation_report.json') as f:
+              data = json.load(f)
+          errors = data['summary']['errors']
+          if errors > 0:
+              print('Validation failed with ' + str(errors) + ' errors')
+              exit(1)
+          print('Tools validation passed')
+          EOF

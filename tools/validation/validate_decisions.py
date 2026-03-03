@@ -517,6 +517,16 @@ class Validator(BaseValidator):
         )
 
     def run_validations(self):
+        if self.staged_only and self.staged_files is not None:
+            dec_path = os.path.join(self.mod_path, "common", "decisions")
+            has_decision_files = any(dec_path in f for f in self.staged_files)
+            if not has_decision_files:
+                self.log(
+                    "No decision files in diff — skipping decision validation",
+                    "warning",
+                )
+                return
+
         self.validate_duplicated_decisions()
         self.validate_unused_decisions()
         self.validate_unused_categories()
