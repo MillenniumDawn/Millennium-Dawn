@@ -44,12 +44,12 @@ MAX_TIER = {
     "attack_submarine_hull": 6,
     "missile_submarine_hull": 6,
     "corvette_hull": 6,
-    "frigate_hull": 5,
+    "frigate_hull": 6,
     "destroyer_hull": 5,
     "cruiser_hull": 5,
     "battleship_hull": 4,
-    "battle_cruiser_hull": 3,
-    "carrier_hull": 3,
+    "battle_cruiser_hull": 4,
+    "carrier_hull": 5,
     "mine_sweeper_hull": 2,
 }
 
