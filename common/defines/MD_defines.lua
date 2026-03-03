@@ -1078,7 +1078,7 @@
 	NDefines.NIntel.RECON_PLANE_INTEL_BASE = 0.024								-- (normaly 0.02) intel base amount for a strategic area per plane
 
 	-- NChracter defines
-	NDefines.NCharacter.OFFICER_CORP_ADVISOR_ENTRIES_IN_MENU = { "high_command", "theorist", "army_chief", "air_chief", "navy_chief" }
+	NDefines.NCharacter.OFFICER_CORP_ADVISOR_ENTRIES_IN_MENU = { "high_command", "theorist", "army_chief", "air_chief", "navy_chief", }
 	NDefines.NCharacter.OFFICER_CORP_HIGH_COMMAND_SLOTS_IN_MENU = 3 --For Alert manager to count the number of High Command Slots in the UI
 
 	-- NSupply Defines
@@ -1174,12 +1174,12 @@
 	NDefines.NDiplomacy.FACTION_POWER_NAVAL_WEIGHT = 0.25				--The weight of the naval equipment except capital ships on the faction's power projection
 	NDefines.NDiplomacy.FACTION_POWER_EFFECTS_WEIGHT = 1			--The weight of the faction's goal status on the faction's power projection
 
-	NDefines.NFactions.FACTION_INFLUENCE_INDUSTRIAL_CAPACITY_FACTOR = 0.5 --how much the country's industry affects its influence
-	NDefines.NFactions.FACTION_INFLUENCE_LEADER_BONUS = 150			-- How much influence we are giving a faction member for being the leader, vanilla 200
+	NDefines.NFactions.FACTION_INFLUENCE_INDUSTRIAL_CAPACITY_FACTOR = 0.65 --how much the country's industry affects its influence
+	NDefines.NFactions.FACTION_INFLUENCE_LEADER_BONUS = 250			-- How much influence we are giving a faction member for being the leader, vanilla 200
 	NDefines.NFactions.MAX_NUM_SHORT_TERM_GOALS = 2						-- Maximum number of short term goals a faction can have at any one time, vanilla 1
 	NDefines.NFactions.MAX_NUM_MEDIUM_TERM_GOALS = 1						-- Maximum number of medium term goals a faction can have at any one time
 	NDefines.NFactions.MAX_NUM_LONG_TERM_GOALS = 1						-- Maximum number of long term goals a faction can have at any one time
 	NDefines.NFactions.FACTION_INITIATIVE_CHANGE_RULE_COST = 3 -- vanilla 1
-	NDefines.NFactions.FACTION_SCIENTIST_CONTRIBUTION_VALUE = 1.25 -- vanilla is 3
-	NDefines.NFactions.FACTION_TAKE_OVER_RELUCTANCE_VERSUS_HUMAN_INFLUENCE = 2.0
-	NDefines.NFactions.FACTION_ASSIGN_SCIENTIST_COST = 50
+	NDefines.NFactions.FACTION_SCIENTIST_CONTRIBUTION_VALUE = 1.15 -- vanilla is 3
+	NDefines.NFactions.FACTION_TAKE_OVER_RELUCTANCE_VERSUS_HUMAN_INFLUENCE = 2.5
+	NDefines.NFactions.FACTION_ASSIGN_SCIENTIST_COST = 75

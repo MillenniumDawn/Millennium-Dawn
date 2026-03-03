@@ -81,7 +81,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
-			nationalist_monarchists_are_not_in_power = yes
+			nationalist_monarchists_are_in_power = no
 		}
 
 		completion_reward = {
@@ -116,7 +116,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
-			nationalist_monarchists_are_not_in_power = yes
+			nationalist_monarchists_are_in_power = no
 		}
 
 		completion_reward = {
@@ -157,9 +157,9 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
-			emerging_anarchist_communism_are_not_in_power = yes
-			emerging_communist_state_are_not_in_power = yes
-			neutrality_neutral_communism_are_not_in_power = yes
+			emerging_anarchist_communism_are_in_power = no
+			emerging_communist_state_are_in_power = no
+			neutrality_neutral_communism_are_in_power = no
 		}
 
 		completion_reward = {
@@ -200,8 +200,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
-			nationalist_monarchists_are_not_in_power = yes
-			nationalist_fascist_are_not_in_power = yes
+			nationalist_monarchists_are_in_power = no
+			nationalist_fascist_are_in_power = no
 		}
 
 		completion_reward = {
@@ -332,10 +332,6 @@ focus_tree = {
 			if = { limit = { NOT = { is_in_array = { ruling_party = 1 } } }
 				set_temp_variable = { rul_party_temp = 1 }
 				change_ruling_party_effect = yes
-				set_politics = {
-					ruling_party = democratic
-					elections_allowed = yes
-				}
 			}
 			set_temp_variable = { party_index = 1 }
 			set_temp_variable = { party_popularity_increase = 0.15 }
@@ -376,10 +372,6 @@ focus_tree = {
 			if = { limit = { NOT = { is_in_array = { ruling_party = 3 } } }
 				set_temp_variable = { rul_party_temp = 3 }
 				change_ruling_party_effect = yes
-				set_politics = {
-					ruling_party = democratic
-					elections_allowed = yes
-				}
 			}
 			set_temp_variable = { party_index = 3 }
 			set_temp_variable = { party_popularity_increase = 0.15 }
@@ -609,14 +601,31 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_europian_communism_alliacne executed"
-			every_country = {
-				limit = { has_idea = EU_member }
-				add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
-				reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
-				set_temp_variable = { party_index = 3 }
-				set_temp_variable = { party_popularity_increase = 0.05 }
-				set_temp_variable = { temp_outlook_increase = 0.05 }
-				add_relative_party_popularity = yes
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+					reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+					set_temp_variable = { party_index = 3 }
+					set_temp_variable = { party_popularity_increase = 0.05 }
+					set_temp_variable = { temp_outlook_increase = 0.05 }
+					add_relative_party_popularity = yes
+				}
+				hidden_effect = {
+					set_temp_variable = { party_index = 3 }
+					set_temp_variable = { party_popularity_increase = 0.05 }
+					set_temp_variable = { temp_outlook_increase = 0.05 }
+					for_each_scope_loop = {
+						array = global.EU_member
+						add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+						reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+						add_relative_party_popularity = yes
+					}
+				}
+			}
+			else = {
+				add_political_power = 150
 			}
 		}
 
@@ -1163,16 +1172,23 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_assoc_with_eu executed"
 			give_guarantee = ITA
 			give_military_access = ITA
-			every_country = {
-				limit = {
-					has_idea = EU_member
-					NOT = { has_war_with = SOV }
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				set_temp_variable = { modify_eurosceptic = -0.03 }
+				EU_eurosceptic_change = yes
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					set_temp_variable = { percent_change = 5 }
+					change_domestic_influence_percentage = yes
 				}
-				set_temp_variable = { percent_change = 5 }
-				change_domestic_influence_percentage = yes
+				hidden_effect = {
+					for_each_scope_loop = {
+						array = global.EU_member
+						set_temp_variable = { percent_change = 5 }
+						change_domestic_influence_percentage = yes
+					}
+				}
 			}
-			set_temp_variable = { modify_eurosceptic = -0.03 }
-			EU_eurosceptic_change = yes
 		}
 
 		ai_will_do = {
@@ -2263,8 +2279,12 @@ focus_tree = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_approach_nato executed"
 			add_ideas = Major_Non_NATO_Ally
 			set_country_flag = Major_Non_NATO_Ally
-			every_country = {
-				limit = { has_idea = NATO_member }
+			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
+				add_opinion_modifier = { target = CAN modifier = diplomatic_support }
+			}
+			for_each_scope_loop = {
+				array = global.nato_members
 				add_opinion_modifier = { target = CAN modifier = diplomatic_support }
 			}
 		}
@@ -2299,17 +2319,21 @@ focus_tree = {
 			set_temp_variable = { receiver_nation = FRA.id }
 			set_temp_variable = { sender_nation = SMA.id }
 			set_improved_trade_agreement = yes
-			set_temp_variable = { modify_eurosceptic = -0.05 }
-			EU_eurosceptic_change = yes
-			every_country = {
-				limit = {
-					has_idea = EU_member
-					NOT = { original_tag = FIN }
-					NOT = { has_war_with = FIN }
+			if = {
+				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
+				set_temp_variable = { modify_eurosceptic = -0.05 }
+				EU_eurosceptic_change = yes
+				newline = yes
+				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				effect_tooltip = {
+					add_opinion_modifier = { target = SMA modifier = european_commitment }
 				}
-				add_opinion_modifier = {
-					target = SMA
-					modifier = european_commitment
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = {
+						target = SMA
+						modifier = european_commitment
+					}
 				}
 			}
 		}
@@ -4371,7 +4395,7 @@ focus_tree = {
 
 		cost = 2
 
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_army_san_marino executed"
@@ -4399,7 +4423,7 @@ focus_tree = {
 			focus = SMA_army_san_marino
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_ARMY_XP }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_ARMY_XP }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_armed_forces_san_marino executed"
@@ -4458,7 +4482,7 @@ focus_tree = {
 			focus = SMA_purchase_spanish_equipment
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_divisons_training executed"
@@ -4516,7 +4540,7 @@ focus_tree = {
 			focus = SMA_recruits
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_contract_service executed"
@@ -4579,7 +4603,7 @@ focus_tree = {
 			focus = SMA_contract_service
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_recruits executed"
@@ -4644,7 +4668,7 @@ focus_tree = {
 			focus = SMA_purchase_italian_equipment
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_ARMY_XP }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_ARMY_XP }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_solders_training executed"
@@ -4705,7 +4729,7 @@ focus_tree = {
 			focus = SMA_purchase_spanish_equipment
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_EQUIPMENT }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_EQUIPMENT }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_purchase_italian_weapons executed"
@@ -4740,7 +4764,7 @@ focus_tree = {
 			focus = SMA_purchase_italian_weapons
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_EQUIPMENT }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_EQUIPMENT }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_purchase_italian_technique executed"
@@ -4819,7 +4843,7 @@ focus_tree = {
 			focus = SMA_ask_italian_for_MANPADS_and_ATGM
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_EQUIPMENT }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_EQUIPMENT }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_ask_italian_for_Artillery executed"
@@ -4853,7 +4877,7 @@ focus_tree = {
 			focus = SMA_ask_italian_for_Artillery
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_EQUIPMENT }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_EQUIPMENT }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_ask_italian_for_MANPADS_and_ATGM executed"
@@ -4890,7 +4914,7 @@ focus_tree = {
 			focus = SMA_ask_italian_for_MANPADS_and_ATGM
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_EQUIPMENT }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_EQUIPMENT }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_purchase_italian_equipment executed"
@@ -4926,7 +4950,7 @@ focus_tree = {
 			focus = SMA_purchase_italian_weapons
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_EQUIPMENT }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_EQUIPMENT }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_purchase_spanish_equipment executed"
@@ -4957,7 +4981,7 @@ focus_tree = {
 			focus = SMA_purchase_spanish_equipment
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_EQUIPMENT }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_EQUIPMENT }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_purchase_spanish_technique executed"
@@ -5036,7 +5060,7 @@ focus_tree = {
 			focus = SMA_ask_spanish_for_APC
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_EQUIPMENT }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_EQUIPMENT }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_ask_spanish_for_BMP executed"
@@ -5095,7 +5119,7 @@ focus_tree = {
 			focus = SMA_ask_spanish_for_BMP
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_EQUIPMENT }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_EQUIPMENT }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_ask_spanish_for_APC executed"
@@ -5152,7 +5176,7 @@ focus_tree = {
 			focus = SMA_ask_spanish_for_BMP
 		}
 
-		search_filters = { FOCUS_FILTER_MILITARY FOCUS_FILTER_EQUIPMENT }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_EQUIPMENT }
 
 		completion_reward = {
 			log = "[GetDateText]: [This.GetName]: focus SMA_purchase_spanish_weapons executed"

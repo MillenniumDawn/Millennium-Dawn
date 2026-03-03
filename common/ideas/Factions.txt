@@ -3,13 +3,17 @@ ideas = {
 
 		#North Atlanic Treaty Organization
 		NATO_member = {
-
-
 			picture = NATO_member
-
-			allowed_civil_war = {
-				has_government = democratic
+			allowed_civil_war = { has_government = democratic }
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea NATO_member"
+				add_to_array = { global.nato_members = THIS }
 			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: remove idea NATO_member"
+				remove_from_array = { global.nato_members = THIS }
+			}
+
 			cancel = {
 				OR = {
 					is_in_faction = no
@@ -50,9 +54,14 @@ ideas = {
 		#CSTO
 		CSTO_member = {
 			picture = CSTO_member
-
-			allowed_civil_war = {
-				has_government = communism
+			allowed_civil_war = { has_government = communism }
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: add idea CSTO_member"
+				add_to_array = { global.CSTO_member = THIS }
+			}
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: remove idea CSTO_member"
+				remove_from_array = { global.CSTO_member = THIS }
 			}
 
 			cancel = {
@@ -99,6 +108,48 @@ ideas = {
 				local_resources_chromium_factor = 0.10
 				ai_get_ally_desire_factor = -1000
 				custom_modifier_tooltip = idea_gcc_member_state_TT
+			}
+		}
+
+		#British Commonwealth Alliance
+		faction_Commonwealth_of_Nations = {
+			on_add = { log = "[GetDateText]: [Root.GetName]: add idea faction_Commonwealth_of_Nations" }
+			picture = faction_british_commonwealth
+
+			allowed = {
+				is_commonwealth_member = yes
+			}
+
+			modifier = {
+				custom_modifier_tooltip = faction_Commonwealth_of_Nations_TT
+			}
+		}
+
+		#Monroe Alliance
+		faction_monroe_alliance = {
+
+			picture = faction_monroe_alliance
+
+			allowed = {
+				tag = USA
+			}
+
+			modifier = {
+				custom_modifier_tooltip = faction_monroe_alliance_TT
+			}
+		}
+
+		#Chinese United Front
+		faction_chinese_united_front = {
+
+			picture = faction_chinese_united_front
+
+			allowed = {
+				tag = CHI
+			}
+
+			modifier = {
+				custom_modifier_tooltip = faction_chinese_united_front_TT
 			}
 		}
 
@@ -198,12 +249,7 @@ ideas = {
 
 		#CENTO Member
 		faction_cento_alliance = {
-
 			picture = CENTO_faction
-
-			allowed = {
-				tag = PER
-			}
 			cancel = {
 				is_in_faction = no
 			}
@@ -213,14 +259,21 @@ ideas = {
 			}
 		}
 
+		# ASO Member
+		faction_aso_alliance = {
+			picture = ASO_faction
+			cancel = {
+				is_in_faction = no
+			}
+
+			modifier = {
+				custom_modifier_tooltip = faction_aso_TT
+			}
+		}
+
 		#SEATO Member
 		faction_seato_alliance = {
-
 			picture = morale_bonus
-
-			allowed = {
-				tag = JAP
-			}
 			cancel = {
 				is_in_faction = no
 			}
@@ -232,12 +285,7 @@ ideas = {
 
 		#IMPERIAL BLOC MEMBER
 		faction_imperial_bloc_alliance = {
-
 			picture = triumphant_will
-
-			allowed = {
-				tag = GER
-			}
 			cancel = {
 				is_in_faction = no
 			}
@@ -249,12 +297,8 @@ ideas = {
 
 		#BRICS Member
 		faction_brics_alliance = {
-
 			picture = bricks
 
-			allowed = {
-				tag = RAJ
-			}
 			cancel = {
 				is_in_faction = no
 			}
@@ -326,6 +370,42 @@ ideas = {
 				custom_modifier_tooltip = muslim_brotherhood_faction_member_tt2
 				education_cost_multiplier_modifier = -0.05
 				social_cost_multiplier_modifier = -0.05
+			}
+		}
+
+		# Warsaw Pact Idea
+		faction_warsaw_pact_idea = {
+			picture = warsaw_pact_idea
+			on_add = {
+				add_to_array = { global.WARSAW_PACT_member = THIS.id }
+			}
+			on_remove = {
+				if = {
+					limit = { is_in_array = { global.WARSAW_PACT_member = THIS.id } }
+					remove_from_array = { global.WARSAW_PACT_member = THIS.id }
+				}
+			}
+			cancel = {
+				AND = {
+					NOT = { has_autonomy_state = autonomy_warsaw }
+					SOV = {
+						NOT = {
+							emerging_communist_state_are_in_power = yes
+							emerging_anarchist_communism_are_in_power = yes
+							emerging_reactionaries_are_in_power = yes
+						}
+					}
+				}
+			}
+			modifier = {
+				custom_modifier_tooltip = faction_warsaw_pact_member_tt
+				send_volunteer_size = 5
+				send_volunteer_divisions_required = -0.25
+				send_volunteers_tension = -0.15
+				air_volunteer_cap = 25
+				coordination_bonus = 0.08
+				army_org_factor = 0.10
+				communism_drift = 0.02
 			}
 		}
 	}

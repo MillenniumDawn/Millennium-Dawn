@@ -10,7 +10,7 @@ EU_environmental_imperialism_category = {
 					has_idea = regional_power
 					has_idea = large_power
 					has_idea = great_power
-					has_idea = superpower
+					has_idea = super_power
 				}
 				renewable_energy_infra < num_owned_states
 				OR = {
@@ -140,12 +140,7 @@ EU_environmental_imperialism_category = {
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			add_relative_party_popularity = yes
-			#custom_effect_tooltip = tooltip_EU_USoE_environmental_puppet
-			#set_country_flag = EU_USoE_environmental_puppet
-			every_country = {
-				limit = {
-					has_idea = EU_president
-				}
+			var:global.eupresfederation = {
 				country_event = {
 					id = USoEevent.5
 				}
@@ -154,12 +149,8 @@ EU_environmental_imperialism_category = {
 		}
 		timeout_effect = {
 			add_ideas = USoE_environmental_sanctions
-			#show_ideas_tooltip = USoE_environmental_sanctions
 			clr_country_flag = EU_POTEF_environmental_imperialism_target
-			every_country = {
-				limit = {
-					has_idea = EU_president
-				}
+			var:global.eupresfederation = {
 				country_event = {
 					id = USoEevent.6
 				}
@@ -462,18 +453,14 @@ EU_office_category = {
 			}
 			custom_trigger_tooltip = {
 				tooltip = tooltip_EU_POTEF_nominee_trigger_2
-				all_country = {
-					if = {
-						limit = {
-							has_idea = EU_member
-							is_in_array = { ruling_party = temp_idx }
+				all_of_scopes = {
+					array = global.EU_member
+					is_in_array = { ruling_party = temp_idx }
+					meta_trigger = {
+						text = {
+							NOT = { has_country_flag = POTEF_nominee_[subideology] }
 						}
-						meta_trigger = {
-							text = {
-								NOT = { has_country_flag = POTEF_nominee_[subideology] }
-							}
-							subideology = "[?temp_idx|0]"
-						}
+						subideology = "[?temp_idx|0]"
 					}
 				}
 			}
@@ -482,7 +469,8 @@ EU_office_category = {
 		visible = {
 			has_global_flag = european_federation
 			has_idea = EU_member
-			any_country = {
+			any_of_scopes = {
+				array = global.EU_member
 				has_active_mission = EU_POTEF_election_campaign
 			}
 			NOT = {
@@ -535,13 +523,13 @@ EU_office_category = {
 				}
 				subideology = "[?var_gov_index|0]"
 			}
-			every_country = {
-				limit = {
-					has_idea = EU_member
-				}
-				news_event = {
-					id = EU_POTEF_news.1
-				}
+			custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
+				news_event = { id = EU_POTEF_news.1 }
+			}
+			for_each_scope_loop = {
+				array = global.EU_member
+				news_event = { id = EU_POTEF_news.1 }
 			}
 		}
 
@@ -629,7 +617,8 @@ EU_office_category = {
 		fixed_random_seed = no
 
 		visible = {
-			any_country = {
+			any_of_scopes = {
+				array = global.EU_member
 				has_active_mission = EU_POTEF_election_campaign
 			}
 		}
@@ -729,13 +718,13 @@ EU_office_category = {
 						}
 						add_to_variable = { FROM.party_pop_array^var_gov_index = 0.05 }
 						recalculate_party = yes
-						every_country = {
-							limit = {
-								has_idea = EU_member
-							}
-							news_event = {
-								id = EU_POTEF_news.5
-							}
+						custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+						effect_tooltip = {
+							news_event = { id = EU_POTEF_news.5 }
+						}
+						for_each_scope_loop = {
+							array = global.EU_member
+							news_event = { id = EU_POTEF_news.5 }
 						}
 					}
 					1 = {
@@ -780,13 +769,13 @@ EU_office_category = {
 								}
 							}
 						}
-						every_country = {
-							limit = {
-								has_idea = EU_member
-							}
-							news_event = {
-								id = EU_POTEF_news.6
-							}
+						custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+						effect_tooltip = {
+							news_event = { id = EU_POTEF_news.6 }
+						}
+						for_each_scope_loop = {
+							array = global.EU_member
+							news_event = { id = EU_POTEF_news.6 }
 						}
 					}
 				}
@@ -826,14 +815,8 @@ EU_defense_category = {
 					has_idea = EDU_major_non_EU_ally
 				}
 
-				FROM = {
-					add_to_faction = PREV
-				}
-				add_ai_strategy = {
-					type = alliance
-					id = FROM
-					value = 200
-				}
+				FROM = { add_to_faction = PREV }
+				add_ai_strategy = { type = alliance id = FROM value = 200 }
 			}
 		}
 	}

@@ -9,33 +9,6 @@ add_namespace = EU_POTEF
 add_namespace = EU_POTEF_news
 add_namespace = EU_party_news
 
-# EU Cheat EVents
-# Mainly Utility
-# EUcheat.1 == Voting Cheat Section
-country_event = {
-	id = EUcheat.1
-	title = EUcheat.1.t
-	desc = EUcheat.1.d
-	is_triggered_only = yes
-
-	option = {
-		name = EUcheat.1.a
-		log = "[GetDateText]: [Root.GetName]: event EUcheat.1.a"
-		set_global_flag = EU_voting_cheat_yes
-	}
-	option = {
-		name = EUcheat.1.b
-		log = "[GetDateText]: [Root.GetName]: event EUcheat.1.b"
-		set_global_flag = EU_voting_cheat_no
-	}
-	option = {
-		name = EUcheat.1.c
-		log = "[GetDateText]: [Root.GetName]: event EUcheat.1.c"
-		clr_global_flag = EU_voting_cheat_yes
-		clr_global_flag = EU_voting_cheat_no
-	}
-}
-
 ### EUupdate
 
 # Triggers the Update to the EUU_monitor nation and preps the
@@ -45,9 +18,9 @@ country_event = {
 	hidden = yes
 	immediate = {
 		log = "[GetDateText]: [ROOT.GetName]: event EUupdate.1"
-		random_country = {
+		random_scope_in_array = {
+			array = global.EU_potential
 			limit = {
-				is_EU_potential = yes
 				is_ai = yes
 			}
 			add_ideas = EUU_monitor
@@ -95,6 +68,10 @@ country_event = {
 		TUR = {
 			set_temp_variable = { treasury_change = 3 }
 			modify_treasury_effect = yes
+		}
+		custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+		effect_tooltip = {
+			country_event = { id = EUevent.17 }
 		}
 		for_each_scope_loop = {
 			array = global.EU_member
@@ -266,8 +243,34 @@ country_event = {
 					TECH = "[?v.GetTokenKey]"
 				}
 			}
-			every_country = {
-				limit = { has_idea = EU_member }
+			custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
+				EUU = { inherit_technology = PREV }
+				set_country_flag = USoE_member
+				every_unit_leader = {
+					set_unit_leader_flag = USoE_unit_leader
+					set_nationality = ROOT
+					add_unit_leader_trait = military_reorganization
+				}
+				every_owned_state = {
+					limit = {
+						OR = {
+							is_on_continent = europe
+							is_core_of = GEO
+							is_core_of = ARM
+							is_core_of = AZE
+							is_core_of = TUR
+							is_core_of = POR
+							is_core_of = SPR
+						}
+						NOT = { is_core_of = ROOT }
+					}
+					add_core_of = ROOT
+				}
+				country_event = EUevent.4
+			}
+			for_each_scope_loop = {
+				array = global.EU_member
 				EUU = { inherit_technology = PREV }
 				set_country_flag = USoE_member
 				every_unit_leader = {
@@ -355,8 +358,19 @@ country_event = {
 	option = {
 		name = EUevent.5.a
 		log = "[GetDateText]: [Root.GetName]: event EUevent.5.a"
-		every_country = {
-			limit = { has_idea = EU_member }
+		custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+		effect_tooltip = {
+			add_ideas = european_debt_crisis
+			if = {
+				limit = {
+					check_variable = { interest_rate > 4.5 }
+					gdp_debt_ratio_lower_75 = yes
+				}
+				add_ideas = EUU_national_dept_crisis_eu
+			}
+		}
+		for_each_scope_loop = {
+			array = global.EU_member
 			add_ideas = european_debt_crisis
 			if = {
 				limit = {
@@ -405,8 +419,12 @@ country_event = {
 	option = {
 		name = EUevent.7.a
 		log = "[GetDateText]: [Root.GetName]: event EUevent.7.a"
-		every_country = {
-			limit = { has_idea = EU_member }
+		custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+		effect_tooltip = {
+			activate_mission = eurozone_reforms
+		}
+		for_each_scope_loop = {
+			array = global.EU_member
 			activate_mission = eurozone_reforms
 		}
 	}
@@ -467,8 +485,12 @@ country_event = {
 				target = FROM
 			}
 		}
-		every_country = {
-			limit = { has_idea = EU_member }
+		custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+		effect_tooltip = {
+			news_event = { id = EU_news.25 }
+		}
+		for_each_scope_loop = {
+			array = global.EU_member
 			news_event = { id = EU_news.25 }
 		}
 		ai_chance = {
@@ -479,8 +501,12 @@ country_event = {
 	option = { #b no
 		name = EUevent.10.b
 		log = "[GetDateText]: [Root.GetName]: event EUevent.10.b"
-		every_country = {
-			limit = { has_idea = EU_member }
+		custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+		effect_tooltip = {
+			news_event = { id = EU_news.26 }
+		}
+		for_each_scope_loop = {
+			array = global.EU_member
 			news_event = { id = EU_news.26 }
 		}
 		ai_chance = {
@@ -611,10 +637,12 @@ country_event = {
 	option = {
 		name = EUevent.22.a
 		log = "[GetDateText]: [Root.GetName]: event EUevent.22.a"
-		every_country = {
-			limit = {
-				has_idea = EU_member
-			}
+		custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+		effect_tooltip = {
+			add_ideas = Migrant_Crisis_Europe
+		}
+		for_each_scope_loop = {
+			array = global.EU_member
 			add_ideas = Migrant_Crisis_Europe
 		}
 	}
@@ -636,6 +664,10 @@ country_event = {
 		election_EU_Parliament = yes
 
 		### Result of EU Parliament elections
+		custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+		effect_tooltip = {
+			news_event = { id = EU_news.52 }
+		}
 		for_each_scope_loop = {
 			array = global.EU_member
 			news_event = { id = EU_news.52 }
