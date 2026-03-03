@@ -11,7 +11,7 @@ scripted_gui = {
 				change_scope = yes
 			}
 			nato_member_waiting_to_ratify_gridbox = {
-				array = global.NATO_members
+				array = cur_nat_disp_rat_list
 				entry_container = NATO_waiting_on_ratify_list
 				change_scope = yes
 			}
@@ -20,6 +20,30 @@ scripted_gui = {
 		triggers = {
 			nato_waiting_on_list_text_visible = {
 
+			}
+		}
+		effects = {
+			nato_current_list_button_click = {
+				clear_array = ROOT.cur_nat_disp_rat_list
+				if = {
+					limit = {
+						NOT = { tag = ROOT }
+					}
+					#do ratify shit here
+				}
+				for_each_loop = {
+					array = global.NATO_members
+					value = v
+
+					var:v = {
+						if = {
+							limit = {
+								NOT = { has_country_flag = NATO_Ratified_@PREV }
+							}
+							add_to_array = { ROOT.cur_nat_disp_rat_list = THIS }
+						}
+					}
+				}
 			}
 		}
 	}
