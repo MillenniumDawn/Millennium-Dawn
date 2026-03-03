@@ -177,6 +177,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 | 4RH1T3CT0R           | @4rh1t3ct0r                     | @4RH1T3CT0R7   | -             | -                             |
 | ccfox                | -                               | @ccfox         | -             | -                             |
 | 81_evan              | -                               | @81_evan       | -             | -                             |
+| arakan94             | @arakan94                       | arakan94       | arakan94      | arakan94@proton.me            |
 | BigRobbo             | @BigRobbo                       | @BigRobbo919   | -             | -                             |
 
 # Fellow Modders/Teams
