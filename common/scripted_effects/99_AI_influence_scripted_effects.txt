@@ -5,16 +5,19 @@ AI_select_influence_target = {
 
 	# Difficulty Based Minimums for the AI to influence
 	if = {
-		limit = { difficulty < 1 }
-		set_temp_variable = { AI_minimum_influence = 50 }
+		limit = { difficulty > 2 } # Veteran or higher
+		set_temp_variable = { AI_minimum_influence = 10 }
 	}
 	else_if = {
-		limit = { difficulty > 1 } # Regular or higher
+		limit = { difficulty > 1 } # Regular
 		set_temp_variable = { AI_minimum_influence = 20 }
 	}
 	else_if = {
-		limit = { difficulty > 2 } # Veteran or higher
-		set_temp_variable = { AI_minimum_influence = 10 }
+		limit = { difficulty > 0 } # Normal
+		set_temp_variable = { AI_minimum_influence = 35 }
+	}
+	else = { # Civilian
+		set_temp_variable = { AI_minimum_influence = 50 }
 	}
 
 	for_each_scope_loop = {
@@ -47,47 +50,27 @@ AI_do_not_conduct_influence_condition = {
 			add_to_temp_variable = { AI_country_score = -200 }
 		}
 		else = {
-			if = {
-				limit = {
-					political_power_daily > 2
-				}
-				add_to_temp_variable = { AI_country_score = 5 }
+			# Cumulative PP scoring — else_if stops at first match (descending order)
+			if = { limit = { political_power_daily > 10 }
+				add_to_temp_variable = { AI_country_score = 140 }
 			}
-			if = {
-				limit = {
-					political_power_daily > 3
-				}
-				add_to_temp_variable = { AI_country_score = 10 }
+			else_if = { limit = { political_power_daily > 8 }
+				add_to_temp_variable = { AI_country_score = 90 }
 			}
-			if = {
-				limit = {
-					political_power_daily > 4
-				}
+			else_if = { limit = { political_power_daily > 6 }
+				add_to_temp_variable = { AI_country_score = 70 }
+			}
+			else_if = { limit = { political_power_daily > 5 }
+				add_to_temp_variable = { AI_country_score = 50 }
+			}
+			else_if = { limit = { political_power_daily > 4 }
+				add_to_temp_variable = { AI_country_score = 30 }
+			}
+			else_if = { limit = { political_power_daily > 3 }
 				add_to_temp_variable = { AI_country_score = 15 }
 			}
-			if = {
-				limit = {
-					political_power_daily > 5
-				}
-				add_to_temp_variable = { AI_country_score = 20 }
-			}
-			if = {
-				limit = {
-					political_power_daily > 6
-				}
-				add_to_temp_variable = { AI_country_score = 20 }
-			}
-			if = {
-				limit = {
-					political_power_daily > 8
-				}
-				add_to_temp_variable = { AI_country_score = 20 }
-			}
-			if = {
-				limit = {
-					political_power_daily > 10
-				}
-				add_to_temp_variable = { AI_country_score = 50 }
+			else_if = { limit = { political_power_daily > 2 }
+				add_to_temp_variable = { AI_country_score = 5 }
 			}
 		}
 	}
@@ -144,45 +127,48 @@ AI_influence_country_selection_calculation = {
 	}
 
 	# If already an influencer do more influencing
-	for_each_scope_loop = {
-		array = influence_array
+	# Uses for_loop_effect instead of for_each_scope_loop to keep variable access on the target country
+	for_loop_effect = {
+		start = 0
+		end = influence_array^num
+		value = v
 		# Check if you're an influencer at ALL
-		if = { limit = { check_variable = { influence_array^i = PREV.id } }
+		if = { limit = { check_variable = { influence_array^v = PREV.id } }
 			add_to_temp_variable = { AI_country_score = 40 }
 
-			# If i is in one of the top three add more fluff
+			# If v is in one of the top three add more fluff
 			if = {
-				limit = { check_variable = { i = 0 } }
+				limit = { check_variable = { v = 0 } }
 				add_to_temp_variable = { AI_country_score = 25 }
 			}
 			if = {
-				limit = { check_variable = { i = 1 } }
+				limit = { check_variable = { v = 1 } }
 				add_to_temp_variable = { AI_country_score = 25 }
 			}
 			if = {
-				limit = { check_variable = { i = 2 } }
+				limit = { check_variable = { v = 2 } }
 				add_to_temp_variable = { AI_country_score = 25 }
 			}
 
-			# If i is greater than this in one of these slots then calculate that difference
+			# If v is greater than this in one of these slots then calculate that difference
 			if = {
-				limit = { check_variable = { influence_array_val^i > 24.99 } }
+				limit = { check_variable = { influence_array_val^v > 24.99 } }
 				add_to_temp_variable = { AI_country_score = 5 }
 			}
 			if = {
-				limit = { check_variable = { influence_array_val^i > 34.99 } }
+				limit = { check_variable = { influence_array_val^v > 34.99 } }
 				add_to_temp_variable = { AI_country_score = 5 }
 			}
 			if = {
-				limit = { check_variable = { influence_array_val^i > 49.99 } }
+				limit = { check_variable = { influence_array_val^v > 49.99 } }
 				add_to_temp_variable = { AI_country_score = 5 }
 			}
 			if = {
-				limit = { check_variable = { influence_array_val^i > 54.99 } }
+				limit = { check_variable = { influence_array_val^v > 54.99 } }
 				add_to_temp_variable = { AI_country_score = 5 }
 			}
 			if = {
-				limit = { check_variable = { influence_array_val^i > 75.99 } }
+				limit = { check_variable = { influence_array_val^v > 75.99 } }
 				add_to_temp_variable = { AI_country_score = 5 }
 			}
 		}
@@ -242,8 +228,8 @@ AI_influence_country_selection_calculation = {
 
 	set_temp_variable_to_random = {
 		var = randomizer_country_score
-		min = 25
-		max = 75
+		min = 0
+		max = 20
 		integer = yes
 	}
 	subtract_from_temp_variable = { AI_country_score = randomizer_country_score }
@@ -274,7 +260,8 @@ change_permanent_influence_target = {
 			add_to_array = { permanent_influence_target = var:adding_nation }
 		}
 	}
-	else = {
+	else_if = {
+		limit = { NOT = { check_variable = { remove_nation = 0 } } }
 		custom_effect_tooltip = change_permanent_influence_target_remove_tt
 		var:target_nation = {
 			remove_from_array = { permanent_influence_target = var:remove_nation }
