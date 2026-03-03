@@ -291,10 +291,6 @@ on_actions = {
 				}
 				calculate_un_program_budgets = yes
 			}
-			if = {
-				limit = { is_ai = no }
-				force_update_dynamic_modifier = yes
-			}
 		}
 	}
 
@@ -421,14 +417,8 @@ on_actions = {
 								NOT = { check_variable = { v = 0 } }
 								NOT = { country_exists = var:v }
 							}
-							set_temp_variable = { removed_country = v }
 							set_variable = { auto_influence_array^i = 0 }
 							subtract_from_variable = { auto_influence_users = 1 }
-							var:removed_country = {
-								PREV = {
-									remove_auto_influencer_request = yes
-								}
-							}
 							add_to_temp_variable = { removed_count = 1 }
 						}
 					}
@@ -831,7 +821,14 @@ on_actions = {
 					apply_protest_effects = yes
 
 					un_check_if_valid_for_sanctions = yes
-					if = { limit = { NOT = { check_variable = { influence_targets^0 = 0 } } }
+					if = {
+						limit = {
+							NOT = { check_variable = { influence_targets^0 = 0 } }
+							is_ai = yes
+							has_political_power > 200
+							is_subject = no
+							NOT = { has_active_mission = bankruptcy_incoming_collapse }
+						}
 						country_event = influence.500
 					}
 
@@ -861,13 +858,17 @@ on_actions = {
 										var:v = { exists = yes }
 										NOT = { has_country_flag = spread_influence@var:v }
 									}
-									log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing [?var:v.GetName]"
+									if = { limit = { is_debug = yes }
+										log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing [?var:v.GetName]"
+									}
 									set_temp_variable = { influence_target = v }
 									change_influence_percentage = yes
 									add_to_temp_variable = { nations_influenced = 1 }
 								}
 								else = {
-									log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing failed to influence on index [?i]"
+									if = { limit = { is_debug = yes }
+										log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing failed to influence on index [?i]"
+									}
 								}
 							}
 
@@ -1259,10 +1260,6 @@ on_actions = {
 				if = { limit = { is_debug = yes }
 					log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
 				}
-			}
-
-			if = { limit = { is_ai = no }
-				force_update_dynamic_modifier = yes
 			}
 		}
 	}
