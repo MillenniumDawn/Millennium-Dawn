@@ -1,0 +1,50 @@
+scripted_gui = {
+	nato_gui_info_display = {
+		context_type = decision_category
+		window_name = "NATO_gui_container"
+		dirty = global.num_days
+
+		dynamic_lists = {
+			nato_member_ratify_tracker_gridbox = {
+				array = global.NATO_Accession_Candidates
+				entry_container = NATO_gui_current_list
+				change_scope = yes
+			}
+			nato_member_waiting_to_ratify_gridbox = {
+				array = cur_nat_disp_rat_list
+				entry_container = NATO_waiting_on_ratify_list
+				change_scope = yes
+			}
+		}
+
+		triggers = {
+			nato_waiting_on_list_text_visible = {
+
+			}
+		}
+		effects = {
+			nato_current_list_button_click = {
+				clear_array = ROOT.cur_nat_disp_rat_list
+				if = {
+					limit = {
+						NOT = { tag = ROOT }
+					}
+					#do ratify shit here
+				}
+				for_each_loop = {
+					array = global.NATO_members
+					value = v
+
+					var:v = {
+						if = {
+							limit = {
+								NOT = { has_country_flag = NATO_Ratified_@PREV }
+							}
+							add_to_array = { ROOT.cur_nat_disp_rat_list = THIS }
+						}
+					}
+				}
+			}
+		}
+	}
+}
