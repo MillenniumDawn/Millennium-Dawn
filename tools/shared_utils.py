@@ -281,27 +281,46 @@ class DataCleaner:
 def get_staged_files(
     mod_path: str, extensions: Optional[List[str]] = None
 ) -> Optional[List[str]]:
-    """Get list of git staged files for validation"""
+    """Get list of git changed files for validation.
+
+    First checks for staged (cached) files — used in pre-commit hook context.
+    Falls back to the branch diff vs main when nothing is staged, so that
+    running --staged on a feature branch validates only the changed files.
+    """
     if extensions is None:
         extensions = [".txt"]
+
+    def _filter(names: list) -> list:
+        return [
+            os.path.join(mod_path, f)
+            for f in names
+            if f and any(f.endswith(ext) for ext in extensions)
+        ]
 
     try:
         import subprocess
 
-        result = subprocess.run(
-            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
-            cwd=mod_path,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        files = result.stdout.strip().split("\n")
-        staged_files = [
-            os.path.join(mod_path, f)
-            for f in files
-            if f and any(f.endswith(ext) for ext in extensions)
-        ]
-        return staged_files if staged_files else None
+        def _git_diff(*args):
+            result = subprocess.run(
+                ["git", "diff"] + list(args) + ["--name-only", "--diff-filter=ACM"],
+                cwd=mod_path,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip().split("\n")
+
+        # Pre-commit hook context: files added to the index
+        files = _filter(_git_diff("--cached"))
+        if files:
+            return files
+
+        # Feature branch context: files changed vs main
+        files = _filter(_git_diff("main...HEAD"))
+        if files:
+            return files
+
+        return None
     except subprocess.CalledProcessError:
         return None
     except ImportError:
