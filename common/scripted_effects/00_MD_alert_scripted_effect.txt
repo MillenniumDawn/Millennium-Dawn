@@ -1,0 +1,277 @@
+# How to use:
+#	1. Set up a token ID in common/ideas/zzz_Alerts.txt henceforth refered to as <token ID>
+#		- Add an on_add to assign a sound effect to your alert as it gets added
+#	2. Set up the GFX in interface/md_alerts.gfx as GFX_<token ID>
+#		- Place the GFX file under gfx/interface/md_alerts/
+#		- Template is available in that folder, named blank.dds
+#	3. Set up any effects that clicking your alert does in common/scripted_effects/md_alerts_scripted_effect.txt
+#		- Do this under the md_alert_click effect
+#	4. Localize the alert in localisation/<language>/md_alerts_l_<language>.yml
+#		- The loc key as <token ID> and description as <token ID>_Desc (it is important that the D is capitalized)
+#		- If you would like to do custom scripted localisation here, use common/scripted_localisations/md_alerts_scripted_localisation.txt
+#	5. In order to show an alert, do the following:
+#
+#		set_temp_variable = { alert_id = token:<token ID> }
+#		set_temp_variable = { alert_color = (1/2) }			# 1 is for a yellow glow while 2 is for a red glow
+#		set_temp_variable = { alert_data = <...> }			# (Optional) This can be used to store any sort of data that corresponds to the alert
+#		add_md_alert = yes									# alternatively, add_md_alert_unless_exists
+#
+#	6. In order to remove an alert, do the following:
+#
+# 		set_temp_variable = { alert_id = token:<token ID> }
+#		remove_md_alert = yes
+
+
+# Scripted effects for custom alert system ported from TNO
+# Set up any effects that clicking your alert does under md_alert_click
+
+
+add_md_alert_unless_exists = {
+	if = {
+		limit = {
+			NOT = { is_in_array = { md_alerts = alert_id } }
+		}
+
+		add_md_alert = yes
+	}
+}
+
+# Adds an alert with id `alert_id`, color `alert_color`, and optionally data `alert_data` to the list of alerts unconditionally
+add_md_alert = {
+	if = {
+		limit = {
+			is_ai = no
+		}
+		add_to_array = { array = md_alerts value = alert_id index = 0 }
+		add_to_array = { array = md_alert_color value = alert_color index = 0 }
+		add_to_array = { array = md_alert_data value = alert_data index = 0 }
+
+		hidden_effect = {
+			add_ideas = var:alert_id
+			remove_ideas = var:alert_id
+		}
+
+		md_alert_update_gui = yes
+	}
+}
+
+# Removes all alerts with id `alert_id`
+remove_md_alert = {
+	set_temp_variable = { idx = 0 }
+
+	while_loop_effect = {
+		limit = { check_variable = { idx < md_alerts^num } }
+
+		if = {
+			limit = { check_variable = { md_alerts^idx = alert_id } }
+
+			remove_from_array = { array = md_alerts index = idx }
+			remove_from_array = { array = md_alert_color index = idx }
+			remove_from_array = { array = md_alert_data index = idx }
+
+			subtract_from_temp_variable = { idx = 1 }
+		}
+		add_to_temp_variable = { idx = 1 }
+	}
+
+	md_alert_update_gui = yes
+}
+
+# Alert click effect
+md_alert_click = {
+	# DO NOT DELETE THIS
+	# Follow this template:
+	# if = {
+	# 	limit = {
+	# 		check_variable = { md_alerts^alert_idx = token:<token ID> }
+	# 	}
+	# 	<effects>
+	# }
+
+	if = {
+		limit = {
+			check_variable = { md_alerts^alert_idx = token:md_negative_nuclear_fuel }
+		}
+		if = {
+			limit = { NOT = { has_country_flag = open_energy_screen } }
+			set_country_flag = open_energy_screen
+			update_global_energy_ui = yes
+		}
+	}
+
+	if = {
+		limit = {
+			check_variable = { md_alerts^alert_idx = token:md_available_tech_slot_expansion }
+		}
+		if = {
+			limit = { NOT = { has_country_flag = open_research_screen } }
+			set_country_flag = open_research_screen
+			add_to_variable = { global.research_screen_ui = 1 }
+		}
+	}
+
+	md_alert_update_gui = yes
+}
+
+## Misc. scripted effects ##
+# Checks net_nuclear_fuel_display and adds or removes the md_negative_nuclear_fuel alert accordingly.
+# Call this at the end of calculate_energy_use (after net_nuclear_fuel_display is set).
+md_check_nuclear_fuel_alert = {
+	set_temp_variable = { alert_id = token:md_negative_nuclear_fuel }
+	if = {
+		limit = { check_variable = { net_nuclear_fuel_display < 0 } }
+		set_temp_variable = { alert_color = 2 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { is_in_array = { md_alerts = alert_id } }
+		remove_md_alert = yes
+	}
+}
+
+# Checks all expected spending categories and adds or removes their alerts accordingly.
+# Call this at the end of calculate_expected_spending (after all budget variables are set).
+md_check_spending_alerts = {
+	# Social spending
+	set_temp_variable = { alert_id = token:md_negative_expected_social_spending }
+	if = {
+		limit = { check_variable = { expected_welfare_spending > social_budget } }
+		set_temp_variable = { alert_color = 2 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { is_in_array = { md_alerts = alert_id } }
+		remove_md_alert = yes
+	}
+
+	# Healthcare spending
+	set_temp_variable = { alert_id = token:md_negative_expected_healthcare_spending }
+	if = {
+		limit = { check_variable = { expected_health_spending > health_budget } }
+		set_temp_variable = { alert_color = 2 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { is_in_array = { md_alerts = alert_id } }
+		remove_md_alert = yes
+	}
+
+	# Administrative spending
+	set_temp_variable = { alert_id = token:md_negative_expected_administrative_spending }
+	if = {
+		limit = { check_variable = { expected_adm_spending > bureaucracy } }
+		set_temp_variable = { alert_color = 2 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { is_in_array = { md_alerts = alert_id } }
+		remove_md_alert = yes
+	}
+
+	# Education spending
+	set_temp_variable = { alert_id = token:md_negative_expected_education_spending }
+	if = {
+		limit = { check_variable = { expected_edu_spending > education_budget } }
+		set_temp_variable = { alert_color = 2 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { is_in_array = { md_alerts = alert_id } }
+		remove_md_alert = yes
+	}
+
+	# Police spending
+	set_temp_variable = { alert_id = token:md_negative_expected_police_spending }
+	if = {
+		limit = { check_variable = { expected_police_spending > crime_fighting } }
+		set_temp_variable = { alert_color = 2 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { is_in_array = { md_alerts = alert_id } }
+		remove_md_alert = yes
+	}
+
+	# Defense spending
+	set_temp_variable = { alert_id = token:md_negative_expected_defense_spending }
+	if = {
+		limit = { check_variable = { expected_military_sp > Military_Spending } }
+		set_temp_variable = { alert_color = 2 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { is_in_array = { md_alerts = alert_id } }
+		remove_md_alert = yes
+	}
+}
+
+# Checks energy_balance_value_display and adds or removes the md_negative_eletricity alert accordingly.
+# Call this at the end of calculate_energy_use (after energy_balance_value_display is set).
+md_check_energy_balance_alert = {
+	set_temp_variable = { alert_id = token:md_negative_eletricity }
+	if = {
+		limit = { check_variable = { energy_balance_value_display < 1 } }
+		set_temp_variable = { alert_color = 2 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { is_in_array = { md_alerts = alert_id } }
+		remove_md_alert = yes
+	}
+}
+
+# Checks if a GDP-based research slot expansion is available and adds or removes the alert accordingly.
+# Call this at the end of ingame_update_setup (after gdp_total and gdp_per_capita are set).
+md_check_research_slot_alert = {
+	set_temp_variable = { alert_id = token:md_available_tech_slot_expansion }
+	if = {
+		limit = {
+			OR = {
+				AND = {
+					check_variable = { next_slot_from_gdp < 10 }
+					NOT = { has_decision = gdp_gain_slot }
+					NOT = { has_country_flag = gdp_gain_industry_slot_flag }
+					check_variable = { gdp_total > GLOBAL.gdp_slot^next_slot_from_gdp }
+				}
+				AND = {
+					check_variable = { next_slot_from_gdp_c < 7 }
+					NOT = { has_decision = gdp_c_gain_slot }
+					NOT = { has_country_flag = gdp_gain_developmental_size_flag }
+					check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^next_slot_from_gdp_c }
+				}
+			}
+		}
+		set_temp_variable = { alert_color = 1 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { is_in_array = { md_alerts = alert_id } }
+		remove_md_alert = yes
+	}
+}
+
+# Alert right click/cancel effect
+md_alert_right_click = {
+	# DO NOT DELETE THIS
+	# Follow this template:
+	# if = {
+	# 	limit = {
+	# 		check_variable = { md_alerts^alert_idx = token:<token ID> }
+	# 	}
+	# 	<effects>
+	# }
+
+	remove_from_array = { array = md_alerts index = alert_idx }
+	remove_from_array = { array = md_alert_color index = alert_idx }
+	remove_from_array = { array = md_alert_data index = alert_idx }
+	md_alert_update_gui = yes
+}
+
+md_alert_update_gui = {
+	if = {
+		limit = {
+			is_ai = no
+		}
+		add_to_variable = { md_alertbar_dirty = 0.00001 }
+	}
+}
