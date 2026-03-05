@@ -2945,8 +2945,8 @@
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = 95_total_gdp_tt
-				check_variable = { gdp_total > 95 }
+				tooltip = 150_total_gdp_tt
+				check_variable = { gdp_total > 150 }
 			}
 			has_war = no
 		}
@@ -3004,8 +3004,8 @@
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = 95_total_gdp_tt
-				check_variable = { gdp_total > 95 }
+				tooltip = 200_total_gdp_tt
+				check_variable = { gdp_total > 200 }
 			}
 			has_war = no
 		}
@@ -3240,27 +3240,32 @@
 		y = 4
 		relative_position_id = GENERIC_ease_of_business_reforms
 
-		cost = 10
+		cost = 7.86
 
 		prerequisite = { focus = GENERIC_energy_sector }
 
 		search_filters = { FOCUS_FILTER_POWER_INFRASTRUCTURE }
 
+		available = {
+			controls_a_state_with_hydroelectric = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_hydroelectric_energy_expansion"
 			add_timed_idea = {
 				idea = hydroelectric_energy_production_idea
-				days = 730
+				days = 1095
 			}
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.007 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
 			base = 5
 			modifier = {
 				factor = 5
-				any_controlled_state = {
-					has_dynamic_modifier = { modifier = hydroelectric_infrastructure_in_state }
-				}
+				controls_a_state_with_hydroelectric = yes
 			}
 			modifier = {
 				factor = 5
@@ -3277,27 +3282,32 @@
 		y = 5
 		relative_position_id = GENERIC_ease_of_business_reforms
 
-		cost = 10
+		cost = 7.86
 
 		prerequisite = { focus = GENERIC_energy_sector }
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
 
+		available = {
+			controls_a_state_with_geothermal = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_geothermal_energy_expansion"
 			add_timed_idea = {
 				idea = geothermal_energy_production_idea
-				days = 730
+				days = 1095
 			}
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.007 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
 			base = 5
 			modifier = {
 				factor = 5
-				any_controlled_state = {
-					has_dynamic_modifier = { modifier = geothermal_infrastructure_in_state }
-				}
+				controls_a_state_with_geothermal = yes
 			}
 			modifier = {
 				factor = 5
@@ -3433,7 +3443,7 @@
 		y = 6
 		relative_position_id = GENERIC_ease_of_business_reforms
 
-		cost = 10
+		cost = 7.86
 
 		prerequisite = {
 			focus = GENERIC_renewable_infrastructure
@@ -3461,7 +3471,7 @@
 		y = 6
 		relative_position_id = GENERIC_ease_of_business_reforms
 
-		cost = 10
+		cost = 7.86
 
 		prerequisite = {
 			focus = GENERIC_renewable_infrastructure
@@ -4257,12 +4267,24 @@
 					folder = naval
 				}
 			}
+			newline = yes
+			if = { limit = { NOT = { is_special_project_completed = sp:sp_naval_vessel_project } }
+				sp:sp_naval_vessel_project = {
+					add_project_progress_ratio = 0.15
+				}
+			}
+			newline = yes
 			set_temp_variable = { temp_opinion = 10 }
 			change_maritime_industry_opinion = yes
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				has_idea = maritime_industry
+				check_variable = { maritime_industry_opinion < 75 }
+			}
 		}
 	}
 	focus = {
@@ -4304,7 +4326,7 @@
 		id = GENERIC_naval_bases
 		icon = navy2
 
-		x = -4
+		x = -3
 		y = 1
 		relative_position_id = GENERIC_naval_reform
 
@@ -4366,7 +4388,7 @@
 
 		available = {
 			controls_a_coastal_state = yes
-			num_of_naval_factories > 3
+			num_of_naval_factories > 4
 		}
 
 		completion_reward = {
@@ -4399,6 +4421,7 @@
 
 		available = {
 			controls_a_coastal_state = yes
+			is_special_project_completed = sp:sp_naval_vessel_project
 			num_of_naval_factories > 3
 		}
 
@@ -4438,7 +4461,7 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_dockyards"
 			if = {
-				limit = { num_of_factories < 10 }
+				limit = { num_of_factories < 15 }
 				one_random_dockyard = yes
 			}
 			else = {
@@ -4452,15 +4475,11 @@
 			base = 1
 			modifier = {
 				factor = 0
-				disabled_ai_unit_list = yes
-			}
-			modifier = {
-				factor = 0
-				num_of_civilian_factories < 10
-			}
-			modifier = {
-				factor = 0
-				check_variable = { total_unemployed_percentage_display < 0.02 }
+				OR = {
+					disabled_ai_unit_list = yes
+					num_of_civilian_factories < 15
+					check_variable = { total_unemployed_percentage_display < 0.02 }
+				}
 			}
 		}
 	}
@@ -4572,8 +4591,9 @@
 
 		available = {
 			controls_a_coastal_state = yes
+			is_special_project_completed = sp:sp_naval_vessel_project
 			has_at_least_major_power_status = yes
-			num_of_naval_factories > 5
+			num_of_naval_factories > 10
 		}
 
 		completion_reward = {
@@ -4622,17 +4642,18 @@
 
 		available = {
 			controls_a_coastal_state = yes
+			is_special_project_completed = sp:sp_naval_vessel_project
+			has_at_least_regional_power_status = yes
 			num_of_naval_factories > 5
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_light_helicopter_operators"
 			add_tech_bonus = {
-				name = GENERIC_aircraft_carriers
+				name = GENERIC_light_helicopter_operators
 				uses = 2
 				bonus = 0.5
-				category = CAT_lha
-				category = CAT_lpd
+				category = CAT_helicopter_operators
 			}
 		}
 
@@ -4867,18 +4888,19 @@
 		id = GENERIC_convoy_and_freighter_production
 		icon = generic_convoy
 
-		x = -2
-		y = 5
+		x = -5
+		y = 1
 		relative_position_id = GENERIC_naval_reform
 
 		cost = 10
 
-		prerequisite = { focus = GENERIC_vessel_production }
+		prerequisite = { focus = GENERIC_naval_reform }
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		available = {
 			controls_a_coastal_state = yes
+			num_of_naval_factories > 0
 		}
 
 		completion_reward = {
@@ -4950,6 +4972,7 @@
 
 		available = {
 			controls_a_coastal_state = yes
+			is_special_project_completed = sp:sp_naval_vessel_project
 		}
 
 		completion_reward = {
@@ -5009,6 +5032,7 @@
 
 		available = {
 			controls_a_coastal_state = yes
+			is_special_project_completed = sp:sp_naval_vessel_project
 		}
 
 		completion_reward = {
@@ -5061,8 +5085,14 @@
 				category = CAT_air_eqp
 			}
 			add_mastery = {
-				amount = 10
+				amount = 25
 				folder = air
+			}
+
+			if = { limit = { has_dlc = "By Blood Alone" }
+				sp:sp_aircraft_project = {
+					add_project_progress_ratio = 0.10
+				}
 			}
 		}
 
@@ -5098,6 +5128,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				num_of_military_factories < 5
+			}
 		}
 	}
 	focus = {
@@ -5279,6 +5313,14 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				add = 5
+				threat > 0.5
+			}
+			modifier = {
+				add = 5
+				has_war = yes
+			}
 		}
 	}
 
@@ -5325,6 +5367,14 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				add = 5
+				threat > 0.5
+			}
+			modifier = {
+				add = 5
+				has_war = yes
+			}
 		}
 	}
 
@@ -5418,20 +5468,29 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = { num_of_military_factories > 5 }
+		available = {
+			num_of_military_factories > 5
+			if = { limit = { has_dlc = "By Blood Alone" }
+				is_special_project_completed = sp:sp_aircraft_project
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_bomber_planes"
 			add_tech_bonus = {
 				name = GENERIC_bomber_planes
-				uses = 2
-				bonus = 0.5
-				category = CAT_str_bomber
+				uses = 1
+				bonus = 0.35
+				category = CAT_large_plane
 			}
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				num_of_military_factories < 15
+			}
 		}
 	}
 	focus = {
@@ -5534,7 +5593,10 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = { num_of_military_factories > 3 }
+		available = {
+			air_facility > 0
+			num_of_military_factories > 3
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_domestic_helicopter_production"
@@ -5576,6 +5638,7 @@
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		available = {
+			air_facility > 0
 			is_special_project_completed = sp:sp_helicopter_project
 			num_of_military_factories > 3
 		}
@@ -5586,7 +5649,7 @@
 				name = GENERIC_domestic_attack_helicopter_production
 				uses = 2
 				bonus = 0.35
-				category = CAT_heli
+				category = CAT_atk_heli
 			}
 		}
 
