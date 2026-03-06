@@ -59,6 +59,8 @@ country_event = {
 			country_event = { id = News_influence.0 days = 1 }
 		}
 
+		update_money_dirty_variable = yes
+
 		ai_chance = {
 			factor = 1
 			modifier = {
@@ -104,6 +106,8 @@ country_event = {
 
 			country_event = { id = News_influence.0 days = 1 }
 		}
+
+		update_money_dirty_variable = yes
 	}
 
 	# Send 15% of GDP as Economic Aid
@@ -129,6 +133,7 @@ country_event = {
 			country_event = { id = News_influence.0 days = 1 }
 		}
 
+		update_money_dirty_variable = yes
 	}
 
 	#Let's not bother
@@ -136,6 +141,8 @@ country_event = {
 		name = influence.1.e
 		log = "[GetDateText]: [This.GetName]: influence.1.e executed"
 		FROM = { ROOT = { clr_country_flag = recently_sent_aid@PREV } }
+
+		update_money_dirty_variable = yes
 
 		# AI Section
 		ai_chance = {
@@ -215,6 +222,8 @@ country_event = {
 
 		# Generic Response
 		FROM = { country_event = { id = diplomatic_response.1 } }
+
+		update_money_dirty_variable = yes
 		# AI Section
 		ai_chance = {
 			base = 5 # Weighted to prefer it
@@ -277,23 +286,19 @@ country_event = {
 		add_ruling_outlook_popularity = yes
 
 		# Returns Funds to the Influencer Nation
+		if = {
+			limit = { has_country_flag = sending_five_percent_of_gdp_@FROM }
+			set_temp_variable = { temp_amount_gift_sum = five_gift_sum }
+		}
+		else_if = {
+			limit = { has_country_flag = sending_ten_percent_of_gdp_@FROM }
+			set_temp_variable = { temp_amount_gift_sum = ten_gift_sum }
+		}
+		else_if = {
+			limit = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM }
+			set_temp_variable = { temp_amount_gift_sum = fifteen_gift_sum }
+		}
 		FROM = {
-			if = {
-				limit = { PREV = { has_country_flag = sending_five_percent_of_gdp_@FROM } }
-
-				set_temp_variable = { temp_amount_gift_sum = PREV.five_gift_sum }
-			}
-			else_if = {
-				limit = { PREV = { has_country_flag = sending_ten_percent_of_gdp_@FROM } }
-
-				set_temp_variable = { temp_amount_gift_sum = PREV.ten_gift_sum }
-			}
-			else_if = {
-				limit = { PREV = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM } }
-
-				set_temp_variable = { temp_amount_gift_sum = PREV.fifteen_gift_sum }
-			}
-
 			custom_effect_tooltip = economic_aid_influence_value_TT
 			add_to_variable = { treasury = temp_amount_gift_sum }
 
@@ -303,6 +308,8 @@ country_event = {
 		clr_country_flag = sending_five_percent_of_gdp_@FROM
 		clr_country_flag = sending_ten_percent_of_gdp_@FROM
 		clr_country_flag = sending_fifteen_percent_of_gdp_@FROM
+
+		update_money_dirty_variable = yes
 
 		ai_chance = {
 			base = 1
