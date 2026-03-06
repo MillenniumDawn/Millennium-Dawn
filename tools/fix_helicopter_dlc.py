@@ -10,7 +10,7 @@ Pattern A (3-tab indentation - already inside NSB DLC block):
   - Fix: remove the top-level occurrence, add inside the DLC block if not already there.
 
 Pattern B (2-tab indentation - in main set_technology without DLC guard):
-  - transport_helicopter1/2 and nsb_transport_helicopter1/2 are all in the main set_technology.
+  - transport_helicopter_1/2 and nsb_transport_helicopter_1/2 are all in the main set_technology.
   - complete_special_project = sp:sp_helicopter_project is at top level.
   - Fix: remove helicopter techs from main set_technology, replace the top-level
     complete_special_project with a proper if/else DLC block.
@@ -33,15 +33,15 @@ def fix_file(filepath):
     with open(filepath, "r", encoding="utf-8-sig") as f:
         content = f.read()
 
-    if "nsb_transport_helicopter1" not in content:
+    if "nsb_transport_helicopter_1" not in content:
         return None
 
     original_content = content
 
-    # Detect pattern by indentation of nsb_transport_helicopter1
+    # Detect pattern by indentation of nsb_transport_helicopter_1
     pattern = None
     for line in content.split("\n"):
-        if re.search(r"^(\t+)nsb_transport_helicopter1 = 1$", line):
+        if re.search(r"^(\t+)nsb_transport_helicopter_1 = 1$", line):
             tabs = len(line) - len(line.lstrip("\t"))
             if tabs >= 3:
                 pattern = "A"
@@ -55,30 +55,30 @@ def fix_file(filepath):
     if pattern == "B":
         # Determine which helicopter techs are present at 2-tab level
         has_heli1 = bool(
-            re.search(r"^\t\ttransport_helicopter1 = 1$", content, re.MULTILINE)
+            re.search(r"^\t\ttransport_helicopter_1 = 1$", content, re.MULTILINE)
         )
         has_heli2 = bool(
-            re.search(r"^\t\ttransport_helicopter2 = 1$", content, re.MULTILINE)
+            re.search(r"^\t\ttransport_helicopter_2 = 1$", content, re.MULTILINE)
         )
         has_nsb1 = bool(
-            re.search(r"^\t\tnsb_transport_helicopter1 = 1$", content, re.MULTILINE)
+            re.search(r"^\t\tnsb_transport_helicopter_1 = 1$", content, re.MULTILINE)
         )
         has_nsb2 = bool(
-            re.search(r"^\t\tnsb_transport_helicopter2 = 1$", content, re.MULTILINE)
+            re.search(r"^\t\tnsb_transport_helicopter_2 = 1$", content, re.MULTILINE)
         )
 
         # Build the NSB if/else block
         nsb_techs = []
         if has_nsb1:
-            nsb_techs.append("\t\t\tnsb_transport_helicopter1 = 1")
+            nsb_techs.append("\t\t\tnsb_transport_helicopter_1 = 1")
         if has_nsb2:
-            nsb_techs.append("\t\t\tnsb_transport_helicopter2 = 1")
+            nsb_techs.append("\t\t\tnsb_transport_helicopter_2 = 1")
 
         else_techs = []
         if has_heli1:
-            else_techs.append("\t\t\t\ttransport_helicopter1 = 1")
+            else_techs.append("\t\t\t\ttransport_helicopter_1 = 1")
         if has_heli2:
-            else_techs.append("\t\t\t\ttransport_helicopter2 = 1")
+            else_techs.append("\t\t\t\ttransport_helicopter_2 = 1")
 
         nsb_block = '\tif = { limit = { has_dlc = "No Step Back" }\n'
         nsb_block += "\t\tcomplete_special_project = sp:sp_helicopter_project\n"
@@ -181,11 +181,11 @@ def fix_file(filepath):
 
         if not already_inside_dlc:
             # Insert complete_special_project inside the NSB DLC block,
-            # right before the set_technology block that contains nsb_transport_helicopter1
+            # right before the set_technology block that contains nsb_transport_helicopter_1
             lines = content.split("\n")
             inserted = False
             for i, line in enumerate(lines):
-                if re.search(r"^\t\t\tnsb_transport_helicopter1 = 1$", line):
+                if re.search(r"^\t\t\tnsb_transport_helicopter_1 = 1$", line):
                     # Look backwards for the opening set_technology = { at 2 tabs
                     for j in range(i - 1, -1, -1):
                         if re.search(r"^\t\tset_technology = \{", lines[j]):
