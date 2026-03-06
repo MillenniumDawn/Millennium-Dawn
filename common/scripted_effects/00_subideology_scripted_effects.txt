@@ -1788,6 +1788,51 @@ update_government_coalition_strength = {
 	set_coalition_drift = yes
 }
 
+# Transfers coalition leadership to the largest coalition member if they outrank the ruling party
+# or if the ruling party has dropped below the election threshold.
+# Called after coalition re-election (MD4_election.2).
+update_coalition_leader = {
+	if = {
+		limit = { check_variable = { gov_coalition_array^num > 0 } }
+
+		# Start with the ruling party as the baseline
+		set_temp_variable = { best_coalition_pop = party_pop_elect_array^ruling_party^0 }
+		set_temp_variable = { best_coalition_index = ruling_party^0 }
+
+		# Find if any coalition partner has higher electoral strength
+		for_each_loop = {
+			array = gov_coalition_array
+			value = v
+			if = {
+				limit = { check_variable = { party_pop_elect_array^v > best_coalition_pop } }
+				set_temp_variable = { best_coalition_pop = party_pop_elect_array^v }
+				set_temp_variable = { best_coalition_index = v }
+			}
+		}
+
+		# If a coalition partner outranks the ruling party, transfer leadership
+		if = {
+			limit = {
+				NOT = { is_in_array = { ruling_party = best_coalition_index } }
+			}
+			# Old ruling party joins coalition only if still above threshold
+			if = {
+				limit = {
+					check_variable = { party_pop_elect_array^ruling_party^0 > election_threshold }
+				}
+				add_to_array = { gov_coalition_array = ruling_party^0 }
+			}
+			# New ruling party leaves coalition
+			remove_from_array = { gov_coalition_array = best_coalition_index }
+			# Update ruling party
+			clear_array = ruling_party
+			add_to_array = { ruling_party = best_coalition_index }
+			update_party_name = yes
+			update_dirty_subideology = yes
+		}
+	}
+}
+
 refund_government_coalition = {
 	set_temp_variable = { sum_factor = 0 }
 	for_loop_effect = {
