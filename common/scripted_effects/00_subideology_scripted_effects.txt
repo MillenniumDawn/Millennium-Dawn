@@ -1788,6 +1788,79 @@ update_government_coalition_strength = {
 	set_coalition_drift = yes
 }
 
+# Transfers coalition leadership to the largest coalition member if they outrank the ruling party.
+# Rebuilds the government via change_ruling_party_effect to ensure leader/ideology swap.
+# Called after coalition re-election (MD4_election.2).
+update_coalition_leader = {
+	if = {
+		limit = { check_variable = { gov_coalition_array^num > 0 } }
+
+		# Build temp array of all coalition members (ruling party + partners)
+		clear_temp_array = full_coalition_temp
+		add_to_temp_array = { full_coalition_temp = ruling_party^0 }
+		for_each_loop = {
+			array = gov_coalition_array
+			value = v
+			add_to_temp_array = { full_coalition_temp = v }
+		}
+
+		# Find the strongest member by electoral popularity
+		set_temp_variable = { best_coalition_pop = 0 }
+		set_temp_variable = { best_coalition_index = ruling_party^0 }
+		for_each_loop = {
+			array = full_coalition_temp
+			value = v
+			if = {
+				limit = { check_variable = { party_pop_elect_array^v > best_coalition_pop } }
+				set_temp_variable = { best_coalition_pop = party_pop_elect_array^v }
+				set_temp_variable = { best_coalition_index = v }
+			}
+		}
+
+		# Only swap if a different party is now strongest
+		if = {
+			limit = {
+				NOT = { is_in_array = { ruling_party = best_coalition_index } }
+			}
+
+			# Set up change_ruling_party_effect parameters
+			set_temp_variable = { rul_party_temp = best_coalition_index }
+			set_temp_variable = { disable_elections = 0 }
+
+			# Assign remaining coalition members to col slots
+			set_temp_variable = { coalition_slot = 0 }
+			for_each_loop = {
+				array = full_coalition_temp
+				value = v
+				if = {
+					limit = {
+						NOT = { check_variable = { v = best_coalition_index } }
+						check_variable = { party_pop_elect_array^v > election_threshold }
+					}
+					if = { limit = { check_variable = { coalition_slot = 0 } }
+						set_temp_variable = { col_one = v }
+					}
+					else_if = { limit = { check_variable = { coalition_slot = 1 } }
+						set_temp_variable = { col_two = v }
+					}
+					else_if = { limit = { check_variable = { coalition_slot = 2 } }
+						set_temp_variable = { col_three = v }
+					}
+					else_if = { limit = { check_variable = { coalition_slot = 3 } }
+						set_temp_variable = { col_four = v }
+					}
+					else_if = { limit = { check_variable = { coalition_slot = 4 } }
+						set_temp_variable = { col_five = v }
+					}
+					add_to_temp_variable = { coalition_slot = 1 }
+				}
+			}
+
+			change_ruling_party_effect = yes
+		}
+	}
+}
+
 refund_government_coalition = {
 	set_temp_variable = { sum_factor = 0 }
 	for_loop_effect = {
@@ -4152,6 +4225,7 @@ remove_coalition_members_effect = {
 # set_temp_variable = { col_two = 0 - 23 }  -- Optional
 # set_temp_variable = { col_three = 0 - 23 }  -- Optional
 # set_temp_variable = { col_four = 0 - 23 }  -- Optional
+# set_temp_variable = { col_five = 0 - 23 }  -- Optional
 # set_temp_variable = { change_leader_temp = 0-1 } -- Optional
 # set_temp_variable = { disable_elections = 0-1 } -- Optional
 change_ruling_party_effect = {
@@ -4170,20 +4244,29 @@ change_ruling_party_effect = {
 
 	# Coalition Array Parameters
 	if = { limit = { has_variable = col_one }
+		set_temp_variable = { add_col_one = col_one }
 		custom_effect_tooltip = add_coalition_members_effect_TT
-		add_to_array = { gov_coalition_array = col_one }
+		add_to_array = { gov_coalition_array = add_col_one }
 	}
 	if = { limit = { has_variable = col_two }
+		set_temp_variable = { add_col_one = col_two }
 		custom_effect_tooltip = add_coalition_members_effect_TT
-		add_to_array = { gov_coalition_array = col_two }
+		add_to_array = { gov_coalition_array = add_col_one }
 	}
 	if = { limit = { has_variable = col_three }
+		set_temp_variable = { add_col_one = col_three }
 		custom_effect_tooltip = add_coalition_members_effect_TT
-		add_to_array = { gov_coalition_array = col_three }
+		add_to_array = { gov_coalition_array = add_col_one }
 	}
 	if = { limit = { has_variable = col_four }
+		set_temp_variable = { add_col_one = col_four }
 		custom_effect_tooltip = add_coalition_members_effect_TT
-		add_to_array = { gov_coalition_array = col_four }
+		add_to_array = { gov_coalition_array = add_col_one }
+	}
+	if = { limit = { has_variable = col_five }
+		set_temp_variable = { add_col_one = col_five }
+		custom_effect_tooltip = add_coalition_members_effect_TT
+		add_to_array = { gov_coalition_array = add_col_one }
 	}
 
 	# Disable Elections of 0 means that they have elections
