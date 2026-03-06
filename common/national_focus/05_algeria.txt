@@ -193,9 +193,9 @@ focus_tree = {
 		available = {
 			date > 2000.1.1
 			has_country_leader = {
-			name = "Abdelaziz Bouteflika"
-			ruling_only = yes
-		}
+				name = "Abdelaziz Bouteflika"
+				ruling_only = yes
+			}
 		}
 
 		completion_reward = {
@@ -260,6 +260,7 @@ focus_tree = {
 		relative_position_id = ALG_election_day
 
 		cost = 5
+		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {has_country_flag = ALG_fln_opp_path has_country_flag = ALG_FLN_chosen }
 		prerequisite = { focus = ALG_FLN_path }
@@ -443,8 +444,7 @@ focus_tree = {
 					add_idea = ALG_loyal_military2_idea
 				}
 			}
-			if = {
-				limit = { NOT = { has_idea = ALG_loyal_military_idea}}
+			else = {
 				add_ideas = ALG_loyal_military_idea
 			}
 		}
@@ -1646,36 +1646,19 @@ focus_tree = {
 			modify_international_investment_effect = yes
 			set_temp_variable = { percent_change = 3 }
 	 		change_domestic_influence_percentage = yes
-			#if = { #not sure about this either
-			#	limit = {
-			#		NOT = {
-			#			has_tech = big_autocannon_tech
-			#		}
-			#	}
-			#	set_technology = {
-			#		big_autocannon_tech = 1
-			#	}
-			#}
 			if = {
 				limit = {
 					has_tech = big_autocannon_tech
-					NOT = {
-						has_tech = big_autocannon_tech_2
-					}
+					NOT = { has_tech = big_autocannon_tech_2 }
 				}
-				set_technology = {
-					big_autocannon_tech_2 = 1
-				}
+				set_technology = { big_autocannon_tech_2 = 1 }
 			}
-			if = {
+			else_if = {
 				limit = {
-					NOT = {
-						has_tech = big_autocannon_tech_3
-					}
+					has_tech = big_autocannon_tech_2
+					NOT = { has_tech = big_autocannon_tech_3 }
 				}
-				set_technology = {
-					big_autocannon_tech_3 = 1
-				}
+				set_technology = { big_autocannon_tech_3 = 1 }
 			}
 		}
 
@@ -12680,7 +12663,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ALG_relax_restrictions"
 			custom_effect_tooltip = ALG_relax_restrictions_tt
 			add_to_variable = { ALG_mafia_influence = 5 }
-			custom_effect_tooltip = ALG_mafia_increase_5
+			custom_effect_tooltip = ALG_mafia_increase_5_tt
 			swap_ideas = {
 				remove_idea = ALG_drug_problem
 				add_idea = ALG_drugs_legalized
@@ -26662,6 +26645,7 @@ focus_tree = {
 		relative_position_id = FIS_soldiers_of_faith
 
 		cost = 8
+		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		prerequisite = {focus = FIS_disciplined_army_of_god}
 		prerequisite = { focus = FIS_made_of_steel_and_faith }
@@ -26796,30 +26780,28 @@ focus_tree = {
 				limit = {
 					is_arabic_nation = yes
 					is_middle_eastern_nation = yes
-				OR = {
+					OR = {
 						has_idea = sunni
 						has_idea = shia
 						has_idea = sufi_islam
 						has_idea = ibadi
 					}
 				}
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = ROOT }
+				set_temp_variable = { influence_target = PREV }
+				change_influence_percentage = yes
 			}
-			set_temp_variable = { percent_change = 3 }
-			set_temp_variable = { tag_index = ROOT }
-			set_temp_variable = { influence_target = PREV }
-			change_influence_percentage = yes
+			
 			set_rule = {
 				can_create_factions = yes
 				can_join_factions = yes
 			}
 			if = {
-				limit = { is_in_faction = no }
-				create_faction = FIS_al_aqsa_faction
-			}
-			if = {
 				limit = { is_in_faction = yes }
 				leave_faction = yes
 			}
+			create_faction = FIS_al_aqsa_faction
 		}
 
 		ai_will_do = {
@@ -26841,15 +26823,18 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INFLUENCE }
 
 		available = {
-			# TODO: update this to any_of_scopes w/ a tooltip
-			any_other_country = {
-				is_middle_eastern_nation = yes
-				has_idea = sunni
-				has_opinion = { target = ALG value > 70 }
-				OR = {
-					has_idea = intervention_regional_interventionism
-					has_idea = intervention_global_interventionism
-					has_idea = intervention_neo_imperialism
+			custom_trigger_tooltip = {
+				tooltip = FIS_faction_middle_east_available_tt
+				any_other_country = {
+					is_middle_eastern_nation = yes
+					has_idea = sunni
+					is_subject = no
+					has_opinion = { target = ROOT value > 70 }
+					OR = {
+						has_idea = intervention_regional_interventionism
+						has_idea = intervention_global_interventionism
+						has_idea = intervention_neo_imperialism
+					}
 				}
 			}
 		}
@@ -26933,15 +26918,19 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INFLUENCE }
 
 		available = {
-			# TODO: Replace with something more performance friendly
-			any_other_country = {
-				is_asian_nation = yes
-				has_idea = sunni
-				has_opinion = { target = ALG value > 70 }
-				OR = {
-					has_idea = intervention_regional_interventionism
-					has_idea = intervention_global_interventionism
-					has_idea = intervention_neo_imperialism
+			custom_trigger_tooltip = {
+				tooltip = FIS_faction_asia_available_tt
+				any_other_country = {
+					is_asian_nation = yes
+					has_idea = sunni
+					is_subject = no
+					NOT = { is_at_war_with = ROOT }
+					has_opinion = { target = ROOT value > 70 }
+					OR = {
+						has_idea = intervention_regional_interventionism
+						has_idea = intervention_global_interventionism
+						has_idea = intervention_neo_imperialism
+					}
 				}
 			}
 		}
