@@ -112,3 +112,66 @@ apply_currency_multipliers = {
 		multiply_variable = { debt_rate = debt_factor }
 	}
 }
+
+# ── Seigniorage income ────────────────────────────────────────────────────────
+
+# Weekly income per adopting nation for all reserve currency issuers (in-game B/week).
+# Adoption count naturally differentiates currencies — USD ~150 adopters, EUR ~25, RUB ~10.
+@seigniorage_per_adopter = 0.05
+# Fraction of tax_gain used as the income base for non-issuers using QE.
+@seigniorage_nonissuer_fraction = 0.02
+
+# Called from ingame_update_setup after calculate_additional_income_rate and
+# before apply_currency_multipliers.
+#
+# Option A — Reserve issuers earn passive income proportional to how many other
+# nations hold their currency (tracked via the global adoption counters set in
+# the on_add/on_remove of each reserve_currency idea).
+#
+# Option D — The seigniorage_income_modifier (set by the Expand Money Supply
+# decision) scales the issuer base by (1 + modifier). Non-issuers earn a small
+# fraction of their tax_gain only while the modifier is positive.
+calculate_seigniorage_income = {
+	set_temp_variable = { seigniorage_mod = modifier@seigniorage_income_modifier }
+	set_temp_variable = { seigniorage_base = 0 }
+
+	# USD — USA is the sole usd_reserve_currency_issuer at game start
+	if = { limit = { has_country_flag = usd_reserve_currency_issuer }
+		set_temp_variable = { seigniorage_base = global.usd_reserve_adoption_count }
+		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
+	}
+	# EUR — EUU when the EU superstate exists; GER as fallback when it doesn't
+	else_if = { limit = {
+		has_country_flag = eur_reserve_currency_issuer
+		OR = {
+			tag = EUU
+			AND = { tag = GER NOT = { country_exists = EUU } }
+		}
+	}
+		set_temp_variable = { seigniorage_base = global.eur_reserve_adoption_count }
+		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
+	}
+	# RUB — Russia is the sole rub_reserve_currency_issuer at game start
+	else_if = { limit = { has_country_flag = rub_reserve_currency_issuer tag = RUS }
+		set_temp_variable = { seigniorage_base = global.rub_reserve_adoption_count }
+		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
+	}
+	# Non-issuers: money-printing income only when Expand Money Supply is active
+	else_if = { limit = { check_variable = { seigniorage_mod > 0 } }
+		set_temp_variable = { seigniorage_base = tax_gain }
+		multiply_temp_variable = { seigniorage_base = @seigniorage_nonissuer_fraction }
+		multiply_temp_variable = { seigniorage_base = seigniorage_mod }
+		add_to_variable = { additional_income_rate = seigniorage_base }
+		# Reset so the issuer multiplier block below does not double-count
+		set_temp_variable = { seigniorage_base = 0 }
+	}
+
+	# Apply seigniorage_income_modifier as a multiplier on the issuer base:
+	# income = base × (1 + modifier). When no decision is active modifier = 0,
+	# so the factor is 1.0 and the base is unchanged.
+	if = { limit = { check_variable = { seigniorage_base > 0 } }
+		add_to_temp_variable = { seigniorage_mod = 1.0 }
+		multiply_temp_variable = { seigniorage_base = seigniorage_mod }
+		add_to_variable = { additional_income_rate = seigniorage_base }
+	}
+}
