@@ -2608,6 +2608,7 @@ on_actions = {
 				resource_storage_system_setup = yes
 				counter_terror_nation_startup = yes #sets up the basic CT stuff
 				cyber_nation_startup = yes #sets up cyberwarfare variables
+				currency_startup = yes #sets up currency_strength variable and dynamic modifier
 				#Make sure all nations are setup for international systems
 				un_recog_setup_check = yes
 
@@ -3008,6 +3009,27 @@ on_actions = {
 				# Counter Terror global setup
 				#Moved here so the initilization will work properly
 				counter_terror_global_setup = yes
+
+				# Currency system global counters
+				# on_add does not fire for history-file ideas, so we count them manually here
+				set_variable = { global.usd_reserve_adoption_count = 0 }
+				set_variable = { global.eur_reserve_adoption_count = 0 }
+				set_variable = { global.cny_reserve_adoption_count = 0 }
+				set_variable = { global.rub_reserve_adoption_count = 0 }
+				every_country = {
+					if = { limit = { has_idea = us_dollar }
+						add_to_variable = { global.usd_reserve_adoption_count = 1 }
+					}
+					else_if = { limit = { has_idea = euro }
+						add_to_variable = { global.eur_reserve_adoption_count = 1 }
+					}
+					else_if = { limit = { has_idea = chinese_yuan }
+						add_to_variable = { global.cny_reserve_adoption_count = 1 }
+					}
+					else_if = { limit = { has_idea = russia_rouble }
+						add_to_variable = { global.rub_reserve_adoption_count = 1 }
+					}
+				}
 
 				#Calculate the starting UN budget here!
 				set_variable = { global.general_operating_budget_contribute_percent = 0.0001 }

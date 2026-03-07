@@ -47,7 +47,7 @@ set_temp_variable = { var = my_temp value = 10 }
 Stored globally, not on any scope.
 
 ```
-set_global_variable = { var = global_my_var value = 1 }
+set_variable = { var = global_my_var value = 1 }
 global.global_my_var   # read globally
 ```
 
