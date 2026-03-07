@@ -178,6 +178,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 | ccfox                | -                               | @ccfox         | -             | -                             |
 | 81_evan              | -                               | @81_evan       | -             | -                             |
 | BigRobbo             | @BigRobbo                       | @BigRobbo919   | -             | -                             |
+| polski_oski          | @polski_oski                    |                | -             | -                             |
 
 # Fellow Modders/Teams
 
