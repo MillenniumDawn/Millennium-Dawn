@@ -22,7 +22,7 @@ currency_startup = {
 		set_variable = { currency_strength = 1.0 }
 	}
 	set_variable = { currency_inflation_feed = 0 }
-	add_dynamic_modifier = { modifier = currency_strength_dynamic_modifier }
+	set_variable = { inflation_cost_combined_var = 0 }
 }
 
 # ── Monthly recalculation ─────────────────────────────────────────────────────
@@ -65,12 +65,15 @@ calculate_currency_strength = {
 	clamp_variable = { var = currency_strength min = 0.15 max = 2.0 }
 
 	# Recompute inflation feed: weak currency = positive inflation pressure.
-	# currency_inflation_feed is read by currency_strength_dynamic_modifier
-	# and applied to inflation_cost_multiplier_modifier each tick.
+	# Feeds into inflation_cost_combined_var, read by inflation_dynamic_modifier.
 	set_variable = { currency_inflation_feed = 1.0 }
 	divide_variable = { currency_inflation_feed = currency_strength }
 	subtract_from_variable = { currency_inflation_feed = 1.0 }
 	multiply_variable = { currency_inflation_feed = @currency_inflation_sensitivity }
+
+	# Keep combined var in sync with monthly currency feed updates
+	set_variable = { inflation_cost_combined_var = inflation_rate_var }
+	add_to_variable = { inflation_cost_combined_var = currency_inflation_feed }
 }
 
 # ── Income stream multipliers ─────────────────────────────────────────────────
@@ -140,16 +143,26 @@ calculate_seigniorage_income = {
 		set_temp_variable = { seigniorage_base = global.usd_reserve_adoption_count }
 		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
 	}
-	# EUR — EUU when the EU superstate exists; GER as fallback when it doesn't
+	# EUR — EUU earns directly (EU or USoE cosmetic — same tag)
 	else_if = { limit = {
 		has_country_flag = eur_reserve_currency_issuer
-		OR = {
-			tag = EUU
-			AND = { tag = GER NOT = { country_exists = EUU } }
-		}
+		tag = EUU
 	}
 		set_temp_variable = { seigniorage_base = global.eur_reserve_adoption_count }
 		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
+	}
+	# EUR fallback — EUU not yet spawned: pool into EU budget for next annual recalc
+	else_if = { limit = {
+		has_country_flag = eur_reserve_currency_issuer
+		tag = GER
+		NOT = { country_exists = EUU }
+	}
+		set_temp_variable = { pool_base = global.eur_reserve_adoption_count }
+		multiply_temp_variable = { pool_base = @seigniorage_per_adopter }
+		add_to_temp_variable = { seigniorage_mod = 1.0 }
+		multiply_temp_variable = { pool_base = seigniorage_mod }
+		add_to_variable = { global.EU_seigniorage_pool = pool_base }
+		# seigniorage_base stays 0 — income goes to pool, not GER's treasury
 	}
 	# RUB — Russia is the sole rub_reserve_currency_issuer at game start
 	else_if = { limit = { has_country_flag = rub_reserve_currency_issuer tag = RUS }
