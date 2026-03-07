@@ -1,0 +1,72 @@
+zombie_coalition_decisions = {
+	ZOM_research_cure = {
+		icon = GFX_decision_generic_research
+
+		cost = 200
+		days_remove = 730
+
+		visible = {
+			has_faction_template = faction_template_anti_zombie_coalition
+			NOT = { ZOM = { has_country_flag = ZOM_cure_research_started } }
+		}
+
+		available = {
+			has_faction_template = faction_template_anti_zombie_coalition
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ZOM_research_cure"
+			ZOM = { set_country_flag = ZOM_cure_research_started }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ZOM_research_cure completed"
+			set_country_flag = ZOM_developed_a_cure
+			ZOM = { set_country_flag = ZOM_cure_distributed }
+			# Distribute cure bonus to all nations currently fighting ZOM
+			every_country = {
+				limit = { has_war_with = ZOM }
+				add_ideas = ZOM_cure_developed
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 10
+				is_major = yes
+				has_faction_template = faction_template_anti_zombie_coalition
+			}
+		}
+	}
+
+	ZOM_establish_safe_zones = {
+		icon = GFX_decision_hol_draw_up_staff_plans
+
+		cost = 75
+		days_remove = 180
+
+		visible = {
+			has_faction_template = faction_template_anti_zombie_coalition
+		}
+
+		available = {
+			has_faction_template = faction_template_anti_zombie_coalition
+			stability > 0.3
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ZOM_establish_safe_zones"
+			add_stability = 0.05
+			add_war_support = 0.05
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 5
+				stability < 0.5
+			}
+		}
+	}
+}
