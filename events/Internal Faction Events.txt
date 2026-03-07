@@ -4228,3 +4228,584 @@ country_event = {
 		}
 	}
 }
+
+# Communist Cadres: Party Loyalty Investigation
+country_event = {
+	id = internal_factions_events.53
+	title = internal_factions_events.53.t
+	desc = internal_factions_events.53.d
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = INT_recently_had_cadre_loyalty_investigation }
+		has_idea = communist_cadres
+		check_variable = { communist_cadres_opinion > 60 }
+	}
+	immediate = {
+		set_country_flag = { flag = INT_recently_had_cadre_loyalty_investigation value = 1 days = 365 }
+	}
+
+	# Comply with the purge
+	option = {
+		name = internal_factions_events.53.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.53.o1 executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.003 }
+		modify_treasury_effect = yes
+		set_temp_variable = { temp_opinion = 10 }
+		change_communist_cadres_opinion = yes
+		if = {
+			limit = { has_idea = the_military }
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
+		}
+		add_timed_idea = { idea = internal_factions_cadre_purge days = 180 }
+		ai_chance = { base = 1 }
+	}
+
+	# Refuse the purge
+	option = {
+		name = internal_factions_events.53.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.53.o2 executed"
+		set_temp_variable = { temp_opinion = -10 }
+		change_communist_cadres_opinion = yes
+		if = {
+			limit = { has_idea = the_military }
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+		}
+		ai_chance = { base = 1 }
+	}
+
+	# Compromise
+	option = {
+		name = internal_factions_events.53.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.53.o3 executed"
+		add_political_power = -75
+		set_temp_variable = { temp_opinion = 5 }
+		change_communist_cadres_opinion = yes
+		ai_chance = { base = 1 }
+	}
+}
+
+# Communist Cadres: Cadres Demand Collectivisation Drive
+country_event = {
+	id = internal_factions_events.54
+	title = internal_factions_events.54.t
+	desc = internal_factions_events.54.d
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = INT_recently_had_cadre_collectivisation }
+		has_idea = communist_cadres
+		check_variable = { agriculture_district_total > 0 }
+	}
+	immediate = {
+		set_country_flag = { flag = INT_recently_had_cadre_collectivisation value = 1 days = 365 }
+	}
+
+	# Support collectivisation
+	option = {
+		name = internal_factions_events.54.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.54.o1 executed"
+		set_temp_variable = { temp_opinion = 10 }
+		change_communist_cadres_opinion = yes
+		if = {
+			limit = { has_idea = farmers }
+			set_temp_variable = { temp_opinion = -10 }
+			change_farmers_opinion = yes
+		}
+		if = {
+			limit = { has_idea = landowners }
+			set_temp_variable = { temp_opinion = -10 }
+			change_landowners_opinion = yes
+		}
+		add_timed_idea = { idea = internal_factions_collectivisation_drive days = 365 }
+		ai_chance = { base = 1 }
+	}
+
+	# Refuse collectivisation
+	option = {
+		name = internal_factions_events.54.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.54.o2 executed"
+		set_temp_variable = { temp_opinion = -10 }
+		change_communist_cadres_opinion = yes
+		if = {
+			limit = { has_idea = farmers }
+			set_temp_variable = { temp_opinion = 5 }
+			change_farmers_opinion = yes
+		}
+		ai_chance = { base = 1 }
+	}
+
+	# Partial reform
+	option = {
+		name = internal_factions_events.54.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.54.o3 executed"
+		add_political_power = -100
+		set_temp_variable = { temp_opinion = 5 }
+		change_communist_cadres_opinion = yes
+		if = {
+			limit = { has_idea = farmers }
+			set_temp_variable = { temp_opinion = -5 }
+			change_farmers_opinion = yes
+		}
+		ai_chance = { base = 1 }
+	}
+}
+
+# Maritime Industry: Port Expansion Dispute
+country_event = {
+	id = internal_factions_events.55
+	title = internal_factions_events.55.t
+	desc = internal_factions_events.55.d
+	picture = GFX_carrier
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = INT_recently_had_port_expansion_dispute }
+		has_idea = maritime_industry
+		any_owned_state = { is_coastal = yes }
+	}
+	immediate = {
+		set_country_flag = { flag = INT_recently_had_port_expansion_dispute value = 1 days = 365 }
+	}
+
+	# Approve expansion
+	option = {
+		name = internal_factions_events.55.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.55.o1 executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.015 }
+		modify_treasury_effect = yes
+		set_temp_variable = { temp_opinion = 10 }
+		change_maritime_industry_opinion = yes
+		random_owned_state = {
+			limit = { is_coastal = yes }
+			add_building_construction = { type = dockyard level = 1 instant_build = yes }
+		}
+		ai_chance = { base = 1 }
+	}
+
+	# Deny expansion
+	option = {
+		name = internal_factions_events.55.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.55.o2 executed"
+		set_temp_variable = { temp_opinion = -10 }
+		change_maritime_industry_opinion = yes
+		if = {
+			limit = { has_idea = landowners }
+			set_temp_variable = { temp_opinion = 5 }
+			change_landowners_opinion = yes
+		}
+		ai_chance = { base = 1 }
+	}
+
+	# Negotiate
+	option = {
+		name = internal_factions_events.55.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.55.o3 executed"
+		add_political_power = -75
+		set_temp_variable = { temp_opinion = 5 }
+		change_maritime_industry_opinion = yes
+		if = {
+			limit = { has_idea = landowners }
+			set_temp_variable = { temp_opinion = 5 }
+			change_landowners_opinion = yes
+		}
+		ai_chance = { base = 1 }
+	}
+}
+
+# Maritime Industry: Piracy Threatens Shipping Lanes
+country_event = {
+	id = internal_factions_events.56
+	title = internal_factions_events.56.t
+	desc = internal_factions_events.56.d
+	picture = GFX_carrier
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = INT_recently_had_piracy_threat }
+		has_idea = maritime_industry
+		has_war = no
+	}
+	immediate = {
+		set_country_flag = { flag = INT_recently_had_piracy_threat value = 1 days = 365 }
+	}
+
+	# Fund naval escort
+	option = {
+		name = internal_factions_events.56.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.56.o1 executed"
+		set_temp_variable = { temp_opinion = 5 }
+		change_maritime_industry_opinion = yes
+		add_timed_idea = { idea = internal_factions_convoy_escort days = 180 }
+		ai_chance = { base = 1 }
+	}
+
+	# Ignore the threat
+	option = {
+		name = internal_factions_events.56.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.56.o2 executed"
+		set_temp_variable = { temp_opinion = -5 }
+		change_maritime_industry_opinion = yes
+		add_timed_idea = { idea = internal_factions_piracy_losses days = 90 }
+		ai_chance = { base = 1 }
+	}
+
+	# Request international cooperation
+	option = {
+		name = internal_factions_events.56.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.56.o3 executed"
+		set_temp_variable = { temp_opinion = 5 }
+		change_maritime_industry_opinion = yes
+		add_political_power = 25
+		ai_chance = { base = 1 }
+	}
+}
+
+# Intelligence Community: Covert Operation Opportunity
+country_event = {
+	id = internal_factions_events.57
+	title = internal_factions_events.57.t
+	desc = internal_factions_events.57.d
+	picture = GFX_politics_surveillence
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = INT_recently_had_covert_op_opportunity }
+		has_idea = intelligence_community
+		check_variable = { intelligence_community_opinion > 49 }
+	}
+	immediate = {
+		set_country_flag = { flag = INT_recently_had_covert_op_opportunity value = 1 days = 365 }
+	}
+
+	# Expose publicly
+	option = {
+		name = internal_factions_events.57.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.57.o1 executed"
+		add_political_power = -50
+		set_temp_variable = { temp_opinion = 5 }
+		change_intelligence_community_opinion = yes
+		add_stability = 0.02
+		add_world_tension = 0.1
+		ai_chance = { base = 1 }
+	}
+
+	# Quietly neutralise
+	option = {
+		name = internal_factions_events.57.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.57.o2 executed"
+		set_temp_variable = { temp_opinion = 10 }
+		change_intelligence_community_opinion = yes
+		add_timed_idea = { idea = internal_factions_neutralised_spies days = 180 }
+		ai_chance = { base = 1 }
+	}
+
+	# Ignore the threat
+	option = {
+		name = internal_factions_events.57.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.57.o3 executed"
+		set_temp_variable = { temp_opinion = -10 }
+		change_intelligence_community_opinion = yes
+		ai_chance = { base = 1 }
+	}
+}
+
+# Intelligence Community: Intelligence Budget Review
+country_event = {
+	id = internal_factions_events.58
+	title = internal_factions_events.58.t
+	desc = internal_factions_events.58.d
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = INT_recently_had_intel_budget_review }
+		has_idea = intelligence_community
+		has_elections = yes
+	}
+	immediate = {
+		set_country_flag = { flag = INT_recently_had_intel_budget_review value = 1 days = 365 }
+	}
+
+	# Defend budget fully
+	option = {
+		name = internal_factions_events.58.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.58.o1 executed"
+		lose_pp_for_2_months = yes
+		set_temp_variable = { temp_opinion = 10 }
+		change_intelligence_community_opinion = yes
+		ai_chance = { base = 1 }
+	}
+
+	# Reveal partial info
+	option = {
+		name = internal_factions_events.58.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.58.o2 executed"
+		set_temp_variable = { temp_opinion = -5 }
+		change_intelligence_community_opinion = yes
+		add_stability = 0.01
+		add_political_power = -50
+		ai_chance = { base = 1 }
+	}
+
+	# Increase transparency
+	option = {
+		name = internal_factions_events.58.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.58.o3 executed"
+		set_temp_variable = { temp_opinion = -10 }
+		change_intelligence_community_opinion = yes
+		add_timed_idea = { idea = internal_factions_transparency_costs days = 180 }
+		set_party_index_to_ruling_party = yes
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		add_relative_party_popularity = yes
+		ai_chance = { base = 1 }
+	}
+}
+
+# Foreign Jihadis: Foreign Fighters Arrive
+country_event = {
+	id = internal_factions_events.59
+	title = internal_factions_events.59.t
+	desc = internal_factions_events.59.d
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = INT_recently_had_foreign_fighters_arrive }
+		has_idea = foreign_jihadis
+		has_war = yes
+	}
+	immediate = {
+		set_country_flag = { flag = INT_recently_had_foreign_fighters_arrive value = 1 days = 365 }
+	}
+
+	# Integrate into forces
+	option = {
+		name = internal_factions_events.59.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.59.o1 executed"
+		set_temp_variable = { temp_opinion = 10 }
+		change_foreign_jihadis_opinion = yes
+		add_manpower = 5000
+		add_timed_idea = { idea = internal_factions_jihadi_integrated days = 180 }
+		ai_chance = { base = 1 }
+	}
+
+	# Assign to frontlines
+	option = {
+		name = internal_factions_events.59.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.59.o2 executed"
+		set_temp_variable = { temp_opinion = 5 }
+		change_foreign_jihadis_opinion = yes
+		add_timed_idea = { idea = internal_factions_jihadi_frontline days = 180 }
+		ai_chance = { base = 1 }
+	}
+
+	# Turn them away
+	option = {
+		name = internal_factions_events.59.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.59.o3 executed"
+		set_temp_variable = { temp_opinion = -10 }
+		change_foreign_jihadis_opinion = yes
+		add_stability = 0.01
+		ai_chance = { base = 1 }
+	}
+}
+
+# Foreign Jihadis: Jihadi Faction Demands Autonomy
+country_event = {
+	id = internal_factions_events.60
+	title = internal_factions_events.60.t
+	desc = internal_factions_events.60.d
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = INT_recently_had_jihadi_autonomy_demand }
+		has_idea = foreign_jihadis
+		check_variable = { foreign_jihadis_opinion > 60 }
+	}
+	immediate = {
+		set_country_flag = { flag = INT_recently_had_jihadi_autonomy_demand value = 1 days = 365 }
+	}
+
+	# Grant autonomy
+	option = {
+		name = internal_factions_events.60.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.60.o1 executed"
+		add_stability = -0.02
+		set_temp_variable = { temp_opinion = 15 }
+		change_foreign_jihadis_opinion = yes
+		add_timed_idea = { idea = internal_factions_jihadi_autonomy days = 365 }
+		ai_chance = { base = 1 }
+	}
+
+	# Deny autonomy
+	option = {
+		name = internal_factions_events.60.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.60.o2 executed"
+		set_temp_variable = { temp_opinion = -10 }
+		change_foreign_jihadis_opinion = yes
+		add_stability = 0.01
+		ai_chance = { base = 1 }
+	}
+
+	# Integrate formally
+	option = {
+		name = internal_factions_events.60.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.60.o3 executed"
+		set_temp_variable = { temp_opinion = -5 }
+		change_foreign_jihadis_opinion = yes
+		add_manpower = 5000
+		add_timed_idea = { idea = internal_factions_jihadi_integrated days = 180 }
+		ai_chance = { base = 1 }
+	}
+}
+
+# Iranian Quds Force: Quds Force Requests Expanded Operations
+country_event = {
+	id = internal_factions_events.61
+	title = internal_factions_events.61.t
+	desc = internal_factions_events.61.d
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = INT_recently_had_quds_expansion_request }
+		has_idea = iranian_quds_force
+		check_variable = { iranian_quds_force_opinion > 49 }
+	}
+	immediate = {
+		set_country_flag = { flag = INT_recently_had_quds_expansion_request value = 1 days = 365 }
+	}
+
+	# Fund fully
+	option = {
+		name = internal_factions_events.61.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.61.o1 executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.01 }
+		modify_treasury_effect = yes
+		set_temp_variable = { temp_opinion = 10 }
+		change_iranian_quds_force_opinion = yes
+		add_timed_idea = { idea = internal_factions_quds_expanded days = 270 }
+		ai_chance = { base = 1 }
+	}
+
+	# Partial support
+	option = {
+		name = internal_factions_events.61.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.61.o2 executed"
+		add_political_power = -50
+		set_temp_variable = { temp_opinion = 5 }
+		change_iranian_quds_force_opinion = yes
+		ai_chance = { base = 1 }
+	}
+
+	# Deny request
+	option = {
+		name = internal_factions_events.61.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.61.o3 executed"
+		set_temp_variable = { temp_opinion = -10 }
+		change_iranian_quds_force_opinion = yes
+		add_political_power = 75
+		ai_chance = { base = 1 }
+	}
+}
+
+# Iranian Quds Force: Quds Force Identifies Strategic Opportunity
+country_event = {
+	id = internal_factions_events.62
+	title = internal_factions_events.62.t
+	desc = internal_factions_events.62.d
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = INT_recently_had_quds_strategic_op }
+		has_idea = iranian_quds_force
+		any_neighbor_country = { has_war = yes }
+	}
+	immediate = {
+		set_country_flag = { flag = INT_recently_had_quds_strategic_op value = 1 days = 365 }
+	}
+
+	# Exploit the opportunity
+	option = {
+		name = internal_factions_events.62.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.62.o1 executed"
+		add_political_power = -75
+		add_timed_idea = { idea = internal_factions_quds_operation days = 180 }
+		set_temp_variable = { temp_opinion = 5 }
+		change_iranian_quds_force_opinion = yes
+		ai_chance = { base = 1 }
+	}
+
+	# Share intelligence with allies
+	option = {
+		name = internal_factions_events.62.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.62.o2 executed"
+		set_temp_variable = { temp_opinion = 5 }
+		change_iranian_quds_force_opinion = yes
+		add_political_power = 25
+		ai_chance = { base = 1 }
+	}
+
+	# Ignore the opportunity
+	option = {
+		name = internal_factions_events.62.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.62.o3 executed"
+		set_temp_variable = { temp_opinion = -5 }
+		change_iranian_quds_force_opinion = yes
+		add_political_power = 50
+		ai_chance = { base = 1 }
+	}
+}
+
+# Defense Industry: Defense Industry Seeks Export Contracts
+country_event = {
+	id = internal_factions_events.63
+	title = internal_factions_events.63.t
+	desc = internal_factions_events.63.d
+	picture = GFX_politics_economy
+	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = INT_recently_had_defense_export_contracts }
+		has_idea = defense_industry
+		has_war = no
+	}
+	immediate = {
+		set_country_flag = { flag = INT_recently_had_defense_export_contracts value = 1 days = 365 }
+	}
+
+	# Approve exports
+	option = {
+		name = internal_factions_events.63.o1
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.63.o1 executed"
+		add_political_power = -50
+		set_temp_variable = { temp_opinion = 10 }
+		change_defense_industry_opinion = yes
+		add_world_tension = 0.5
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.003 }
+		modify_treasury_effect = yes
+		ai_chance = { base = 1 }
+	}
+
+	# Restrict to allied buyers only
+	option = {
+		name = internal_factions_events.63.o2
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.63.o2 executed"
+		set_temp_variable = { temp_opinion = 5 }
+		change_defense_industry_opinion = yes
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.002 }
+		modify_treasury_effect = yes
+		ai_chance = { base = 1 }
+	}
+
+	# Deny
+	option = {
+		name = internal_factions_events.63.o3
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.63.o3 executed"
+		set_temp_variable = { temp_opinion = -10 }
+		change_defense_industry_opinion = yes
+		add_political_power = 50
+		ai_chance = { base = 1 }
+	}
+}
