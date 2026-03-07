@@ -1,68 +1,67 @@
 ---
-title: Internal Faction Guide
-description: 'Guide for the Internal Factions for Millennium Dawn: A Modern Day mod.'
+title: Internal Factions Guide
+description: Guide for the Internal Factions system in Millennium Dawn.
 ---
-
-# Table of Contents
-
-- [Table of Contents](#table-of-contents)
-- [Internal Factions Guide](#internal-factions-guide)
-  - [Overview](#overview)
-  - [How Opinion Works](#how-opinion-works)
-  - [Economic Factions](#economic-factions)
-    - [Small \& Medium Business Owners](#small--medium-business-owners)
-    - [International Bankers](#international-bankers)
-    - [Fossil Fuel Industry](#fossil-fuel-industry)
-    - [Industrial Conglomerates](#industrial-conglomerates)
-    - [Oligarchs](#oligarchs)
-  - [Militaristic Factions](#militaristic-factions)
-    - [Maritime Industry](#maritime-industry)
-    - [Defense Industry (Military-Industrial Complex)](#defense-industry-military-industrial-complex)
-    - [The Military](#the-military)
-    - [Intelligence Community](#intelligence-community)
-  - [Special Interest Factions](#special-interest-factions)
-    - [Labour Unions](#labour-unions)
-    - [Landowners](#landowners)
-    - [Farmers](#farmers)
-    - [Communist Cadres](#communist-cadres)
-  - [Religious Factions](#religious-factions)
-    - [The Priesthood](#the-priesthood)
-    - [The Ulema](#the-ulema)
-    - [The Clergy](#the-clergy)
-    - [Wahabi Ulema](#wahabi-ulema)
-  - [Nation-Specific Factions](#nation-specific-factions)
-    - [The Donju (North Korea)](#the-donju-north-korea)
-    - [Saudi Royal Family](#saudi-royal-family)
-    - [Iranian Quds Force](#iranian-quds-force)
-    - [Foreign Jihadis](#foreign-jihadis)
-    - [Wall Street (USA)](#wall-street-usa)
-    - [Chaebols (South Korea)](#chaebols-south-korea)
-  - [Strategic Tips](#strategic-tips)
-  - [Common Event Chains](#common-event-chains)
-  - [Quick Reference Table](#quick-reference-table)
 
 # Internal Factions Guide
 
-## Overview
+Internal Factions represent powerful interest groups within your country. Each faction has an opinion score from 0 to 100, where 50 is neutral. Higher opinion unlocks stronger dynamic bonuses; low opinion reduces or reverses them. Factions cost **1500 Political Power** to add (reducible by the "Reduce Internal Faction Costs" game rule).
 
-Internal Factions represent powerful interest groups within your country that can provide significant bonuses or penalties based on their opinion of your government. Each faction has an opinion score ranging from 0-100, with 50 being neutral. Higher opinion grants better bonuses, while lower opinion reduces or reverses these benefits.
+You can only have **one active faction at a time**. Switching removes the old faction and replaces it with the new one.
+
+## Table of Contents
+
+- [How Opinion Works](#how-opinion-works)
+- [Economic Factions](#economic-factions)
+  - [Small & Medium Business Owners](#small--medium-business-owners)
+  - [International Bankers](#international-bankers)
+  - [Fossil Fuel Industry](#fossil-fuel-industry)
+  - [Industrial Conglomerates](#industrial-conglomerates)
+  - [Oligarchs](#oligarchs)
+- [Militaristic Factions](#militaristic-factions)
+  - [Maritime Industry](#maritime-industry)
+  - [Defense Industry (Military-Industrial Complex)](#defense-industry-military-industrial-complex)
+  - [The Military](#the-military)
+  - [Intelligence Community](#intelligence-community)
+- [Special Interest Factions](#special-interest-factions)
+  - [Labour Unions](#labour-unions)
+  - [Landowners](#landowners)
+  - [Farmers](#farmers)
+  - [Communist Cadres](#communist-cadres)
+- [Religious Factions](#religious-factions)
+  - [The Priesthood](#the-priesthood)
+  - [The Ulema](#the-ulema)
+  - [The Clergy](#the-clergy)
+  - [Wahabi Ulema](#wahabi-ulema)
+- [Nation-Specific Factions](#nation-specific-factions)
+  - [The Donju (North Korea)](#the-donju-north-korea)
+  - [Saudi Royal Family](#saudi-royal-family)
+  - [Iranian Quds Force](#iranian-quds-force)
+  - [Foreign Jihadis](#foreign-jihadis)
+  - [Wall Street (USA)](#wall-street-usa)
+  - [Chaebols (South Korea)](#chaebols-south-korea)
+- [Strategic Tips](#strategic-tips)
+- [Common Event Chains](#common-event-chains)
+- [Quick Reference Table](#quick-reference-table)
 
 ---
 
 ## How Opinion Works
 
-Opinion represents how happy the current internal faction is with the ruling party. Ideas that modify the minimum value of an internal faction it will also increase the minimum opinion the faction's opinion will tick to via the monthly internal faction tick.
+Opinion represents how satisfied a faction is with the ruling government. It decays monthly toward its minimum threshold if not actively maintained.
 
-- **Starting Opinion**: 60 when you first add a faction (50 for some nations)
-- **Monthly Decay**: Opinion naturally decays toward the minimum threshold each month
+- **Starting Opinion**: 60 when you first add a faction
+- **Minimum Threshold**: 50 for most factions (the floor opinion decays toward)
 - **Opinion Ranges**:
-  - **Hostile**: 0-30
-  - **Negative**: 31-49
-  - **Indifferent**: 50-69
-  - **Positive**: 70-89
-  - **Enthusiastic**: 90-100
+  - **Hostile**: 0–30
+  - **Negative**: 31–49
+  - **Indifferent**: 50–69
+  - **Positive**: 70–89
+  - **Enthusiastic**: 90–100
 
-- **Autocrat Bonus**: Autocratic governments (Western Autocrats, Emerging Autocrats, Neutral Autocrats, Fascists, Military Junta) receive **double opinion changes** from events and decisions
+**Autocrat Bonus**: Autocratic governments (Western Autocrats, Emerging Autocrats, Neutral Autocrats, Fascists, Military Junta) receive **double opinion changes** from events and decisions.
+
+Ideas that increase a faction's minimum opinion also raise the floor that monthly decay targets, effectively sustaining higher opinion levels passively.
 
 ---
 
@@ -70,9 +69,11 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 ### Small & Medium Business Owners
 
+**Available for**: Most nations (not available to WAG, KOR, NKO — those use unique variants)
+
 **Dynamic Bonuses** (scale with opinion):
 
-- Industrial Complex construction speed (max +15%)
+- Industrial complex construction speed (max +15%)
 - Stability (max +10%)
 - Consumer goods factor (max -10%)
 - Civilian factory tax income (max +20%)
@@ -99,6 +100,8 @@ Opinion represents how happy the current internal faction is with the ruling par
 ---
 
 ### International Bankers
+
+**Available for**: Most nations (not available to USA, which uses Wall Street instead)
 
 **Static Bonuses**:
 
@@ -154,6 +157,8 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 ### Industrial Conglomerates
 
+**Available for**: Most nations — not available to former Soviet/oligarch states (SOV, UKR, KAZ, BLR, ARM, GEO, UZB, TRK, KYR, MLV, PMR, NOV, SOO, ABK, SYR, EGY), which use Oligarchs instead
+
 **Static Bonuses**:
 
 - Investment duration: -25%
@@ -184,6 +189,8 @@ Opinion represents how happy the current internal faction is with the ruling par
 ---
 
 ### Oligarchs
+
+**Available for**: Former Soviet states and specific oligarch nations (SOV, UKR, KAZ, BLR, ARM, GEO, UZB, TRK, KYR, MLV, PMR, NOV, SOO, ABK, SYR, EGY, VEN, NIG, BUL, and others with autocracy in power)
 
 **Static Bonuses**:
 
@@ -216,6 +223,8 @@ Opinion represents how happy the current internal faction is with the ruling par
 ## Militaristic Factions
 
 ### Maritime Industry
+
+**Available for**: Nations with at least one coastal state
 
 **Static Bonus**:
 
@@ -270,6 +279,8 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 ### The Military
 
+**Available for**: Nations without the "No Military" idea
+
 **Static Bonuses**:
 
 - Nationalist drift: +0.02
@@ -281,6 +292,7 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Army morale (max +10%)
 - Training time (max -20%)
 - Air base construction speed (max +25%)
+- Generate wargoal tension (reduced at high opinion)
 - Personnel cost multiplier (max -25%)
 
 **Minimum Opinion Bonuses**:
@@ -290,7 +302,7 @@ Opinion represents how happy the current internal faction is with the ruling par
 **Events**:
 
 - SAM site demands
-- Government opposition (if you're liberal/progressive)
+- Government opposition (if liberal/progressive ruling)
 - Ideological conflicts with Communist Cadres
 - Foreign nationals in military
 
@@ -303,14 +315,17 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 ### Intelligence Community
 
+**Available for**: Most nations (not available to Pakistan, which has its own unique ISI faction)
+
 **Static Bonus**:
 
 - Expected police budget modifier: +0.5
 
 **Dynamic Bonuses** (scale with opinion):
 
-- **With La Resistance DLC**: Civilian/Army/Navy/Airforce intel factor (max +15% each)
-- **Without DLC**: Decryption/Encryption factor (max +20% each)
+- Civilian, army, navy, and airforce intel factors (max +15% each)
+- Decryption factor (max +20%)
+- Encryption factor (max +20%)
 - Radar station construction speed (max +25%)
 - Foreign subversive activities cost (max -20%)
 - Foreign influence effectiveness (max +15%)
@@ -326,6 +341,8 @@ Opinion represents how happy the current internal faction is with the ruling par
 ## Special Interest Factions
 
 ### Labour Unions
+
+**Available for**: Nations not running a Nationalist or Fascist government
 
 **Static Bonuses**:
 
@@ -397,10 +414,10 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Conscription factor (max +10%)
 - Consumer goods factor (max -10%)
 - Monthly population growth (max +20%)
+- Agriculture productivity modifier (scales with opinion)
 - Agricultural district construction speed (max +15%)
-- Agriculture district tax income (max +20%)
 
-**Special**: Opinion changes are **doubled** if you have increased agricultural subsidies (Syria-specific)
+**Special**: Opinion changes are **doubled** if agricultural subsidies are increased (Syria-specific)
 
 **Events**:
 
@@ -419,6 +436,8 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 ### Communist Cadres
 
+**Available for**: Nations with Neutral Communist or Emerging Communist State in power
+
 **Static Bonus**:
 
 - Expected administration modifier: +0.5
@@ -435,7 +454,7 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 - Ideological conflicts with Military
 - Governmental concession requests
-- Taxing religious institutions (positive)
+- Taxing religious institutions (positive reaction)
 
 **Decisions**:
 
@@ -449,6 +468,8 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 ### The Priesthood
 
+**Available for**: Nations with Buddhism, Hinduism, Shinto, or Cheondoism as their state religion
+
 **Static Bonus**:
 
 - Expected military budget modifier: -0.5
@@ -457,10 +478,8 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 - Stability factor (max +15%)
 - Monthly population growth (max +25%)
-- Political power (max +30%)
+- Political power factor (max +30%)
 - Education cost multiplier (max -10%)
-
-**Available for**: Buddhism, Hinduism, Shinto, Cheondo
 
 **Events**:
 
@@ -478,13 +497,14 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 ### The Ulema
 
-**Static Bonus**:
+**Available for**: Nations with Sunni, Ibadi, Sufi, or Shia Islam as their state religion
 
-- Expected military budget modifier: -0.5
+**Dynamic Bonuses** (scale with opinion):
 
-**Dynamic Bonuses** (same as The Priesthood)
-
-**Available for**: Sunni, Ibadi, Sufi Islam, Shia
+- Stability factor (max +15%)
+- Monthly population growth (max +25%)
+- Political power factor (max +30%)
+- Education cost multiplier (max -10%)
 
 **Events**:
 
@@ -500,13 +520,18 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 ### The Clergy
 
+**Available for**: Nations with Orthodox Christian, Christian, or Eastern Church variants as their state religion
+
 **Static Bonus**:
 
 - Expected military budget modifier: -0.5
 
-**Dynamic Bonuses** (same as The Priesthood)
+**Dynamic Bonuses** (scale with opinion):
 
-**Available for**: Orthodox Christian, Christian, Eastern Church variants
+- Stability factor (max +15%)
+- Monthly population growth (max +25%)
+- Political power factor (max +30%)
+- Education cost multiplier (max -10%)
 
 **Events**: Same as The Priesthood
 
@@ -516,6 +541,8 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 ### Wahabi Ulema
 
+**Available for**: Saudi Arabia, Qatar, UAE, Al-Qaeda, ISIS, and affiliated extremist nations
+
 **Static Bonus**:
 
 - Expected military budget modifier: +0.5 (opposite of other religious factions)
@@ -524,11 +551,9 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 - Stability factor (max +15%)
 - Monthly population growth (max +25%)
-- Political power (max +30%)
+- Political power factor (max +30%)
 - Fascism drift (max +0.25%)
 - Education cost multiplier (max -10%)
-
-**Available for**: Saudi Arabia, Qatar, UAE, certain Islamic extremist nations
 
 **Events**:
 
@@ -543,6 +568,8 @@ Opinion represents how happy the current internal faction is with the ruling par
 ## Nation-Specific Factions
 
 ### The Donju (North Korea)
+
+**Available for**: North Korea only
 
 **Static Bonuses**:
 
@@ -566,9 +593,9 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 **Dynamic Bonuses** (scale with opinion):
 
-- Political power factor (max +25%)
+- Political power factor (max +20%)
 - Ideology drift defense (max +25%)
-- Stability factor (max +15%)
+- Stability factor (scales with opinion)
 
 **Events**:
 
@@ -580,7 +607,11 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 ### Iranian Quds Force
 
-**Static Bonus**:
+**Available for**: Iranian proxies — Iraq, Hamas, Hezbollah, Syria, Houthis, Yemen, Kurdistan, Lebanon, Afghanistan, Taliban, Tajikistan, and Gulf states
+
+**Availability**: Requires Communism, Neutrality, or Nationalist government
+
+**Static Bonuses**:
 
 - Send volunteer size: +2
 - Expected military budget modifier: +0.5
@@ -588,15 +619,12 @@ Opinion represents how happy the current internal faction is with the ruling par
 **Dynamic Bonuses** (scale with opinion):
 
 - Communist drift (max +0.10%)
-- Offensive influence operations (max +1.75%)
-
-**Available for**: Iraq, Hamas, Hezbollah, Syria, Houthis, Yemen, Kurdistan, and other Iranian proxies
-
-**Events**: Limited specific events
 
 ---
 
 ### Foreign Jihadis
+
+**Availability**: Requires Fascist government
 
 **Static Bonuses**:
 
@@ -612,15 +640,15 @@ Opinion represents how happy the current internal faction is with the ruling par
 - Non-core manpower (max +10%)
 - Special forces cap (max +20%)
 
-**Available for**: Islamic extremist factions
-
 ---
 
 ### Wall Street (USA)
 
+**Available for**: USA only (replaces International Bankers)
+
 **Static Bonuses**:
 
-- Economic cycles cost factor: -25%
+- Economic cycle cost factor: -25%
 - Democratic drift: +0.02
 - Interest rate multiplier: -1
 - Expected welfare modifier: -0.25
@@ -641,6 +669,10 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 ### Chaebols (South Korea)
 
+**Available for**: South Korea only (replaces Small & Medium Business Owners)
+
+**Note**: Minimum opinion is **60** (higher floor than most factions)
+
 **Static Bonuses**:
 
 - Corruption cost factor: +25%
@@ -659,61 +691,62 @@ Opinion represents how happy the current internal faction is with the ruling par
 
 ## Strategic Tips
 
-1. **Prioritize High-Value Factions**: Focus on factions that align with your playstyle (military for conquest, economic for buildup)
+1. **Prioritize factions that match your playstyle**: Economic factions accelerate building; military factions improve combat readiness.
 
-2. **Use Autocratic Governments**: The doubled opinion gain makes managing factions much easier
+2. **Autocratic governments get double opinion gains**: This makes maintaining high opinion significantly easier.
 
-3. **Monitor Opinion Decay**: Opinion naturally decays toward minimum thresholds monthly, so regular maintenance is needed
+3. **Opinion decays monthly**: Neglecting a faction will see it drift back toward its minimum threshold. Use decisions and events to maintain it.
 
-4. **Stack Related Decisions**: Many decisions affect multiple factions simultaneously
+4. **Stack related decisions**: Many decisions boost multiple factions at once (e.g., "Raise Wages" affects SMBO, Labour Unions, and Communist Cadres).
 
-5. **Plan for Events**: Keep 75-150 political power available for faction-related decisions
+5. **Keep 75–150 PP available**: Faction-related decisions are time-sensitive and appear as events you need to act on.
 
-6. **Balance Conflicting Factions**: Some factions (Labour Unions vs. Business Owners) have opposing interests
+6. **Conflicting factions**: Labour Unions and business owner factions (SMBO, Industrial Conglomerates) often have opposing interests — choose based on your economic strategy.
 
-7. **Time Your Tax Changes**: Use tax decisions to boost faction opinion before major events
+7. **Religious factions are strong for stability**: The political power and population growth bonuses are among the best in the game for civilian buildup.
 
-8. **Religious Faction Power**: Religious factions provide significant stability and population growth bonuses
-
-9. **Economic Factions for Building**: High opinion with economic factions dramatically speeds construction
-
-10. **Military Factions for War**: Essential for extended conflicts due to organization, morale, and cost bonuses
+8. **Military and Defense Industry stack differently**: The Military improves existing troops; Defense Industry improves factory output. They're complementary goals.
 
 ---
 
 ## Common Event Chains
 
-**Business vs. Labor**: Events often force you to choose between business interests (SMBO, Industrial Conglomerates) and worker interests (Labour Unions)
+**Business vs. Labor**: Events force choices between business interests (SMBO, Industrial Conglomerates) and worker interests (Labour Unions). Siding with one reduces the other's opinion.
 
-**Religious vs. Secular**: Religious factions request government influence, education control, and funding
+**Religious vs. Secular**: Religious factions push for government influence, education control, and funding. Taxing religious institutions is a major opinion hit but benefits Communist Cadres.
 
-**Resource Extraction**: Fossil Fuel Industry, Oligarchs, and Landowners push for deregulation and tax cuts
+**Resource Extraction**: Fossil Fuel Industry, Oligarchs, and Landowners push for deregulation and tax cuts at the cost of stability or productivity.
 
-**Military Spending**: The Military pushes for increased budgets and foreign recruitment
+**Military Spending**: The Military pushes for increased budgets and will react to personnel decisions like foreign nationals recruitment.
 
-**Corruption Opportunities**: Oligarchs, Landowners, and Communist Cadres offer treasury income in exchange for increased corruption
+**Corruption Opportunities**: Oligarchs, Landowners, and Communist Cadres offer treasury income via "Sell Political Positions" in exchange for increased corruption.
 
 ---
 
 ## Quick Reference Table
 
-| Faction                        | Best For              | Key Bonus                     | Cost    |
-| ------------------------------ | --------------------- | ----------------------------- | ------- |
-| Small & Medium Business Owners | Civilian economy      | +15% civ construction         | 1500 PP |
-| International Bankers          | Trade & investment    | -1 interest rate              | 1500 PP |
-| Fossil Fuel Industry           | Resource production   | +25% fuel gain                | 1500 PP |
-| Industrial Conglomerates       | Infrastructure        | +15% infra construction       | 1500 PP |
-| Oligarchs                      | Communist nations     | +20% local resources          | 1500 PP |
-| Maritime Industry              | Naval powers          | +20% dockyard speed           | 1500 PP |
-| Defense Industry               | Military production   | +15% mil factory productivity | 1500 PP |
-| The Military                   | Combat effectiveness  | +10% army morale              | 1500 PP |
-| Intelligence Community         | Espionage             | +15% intel factors            | 1500 PP |
-| Labour Unions                  | Social policies       | +25% political power          | 1500 PP |
-| Landowners                     | Resource exploitation | +15% local resources          | 1500 PP |
-| Farmers                        | Agriculture           | +20% population growth        | 1500 PP |
-| Communist Cadres               | Communist nations     | +25% mobilization speed       | 1500 PP |
-| Religious Factions             | Stability & growth    | +30% political power          | 1500 PP |
-
----
-
-_Last Updated: December 2025 (Based on mod version)_
+| Faction                        | Category         | Key Bonus                            | Availability Restriction               |
+| ------------------------------ | ---------------- | ------------------------------------ | -------------------------------------- |
+| Small & Medium Business Owners | Economic         | +15% civ construction, +20% civ tax  | Not WAG, KOR, NKO                      |
+| International Bankers          | Economic         | -1 interest rate, +20% trade op.     | Not USA                                |
+| Fossil Fuel Industry           | Economic         | +25% fuel gain                       | —                                      |
+| Industrial Conglomerates       | Economic         | +15% infra construction              | Not oligarch/post-Soviet states        |
+| Oligarchs                      | Economic         | +20% local resources                 | Oligarch/post-Soviet states only       |
+| Maritime Industry              | Militaristic     | +20% dockyard speed and capacity     | Requires coastal state                 |
+| Defense Industry               | Militaristic     | +15% mil factory productivity        | —                                      |
+| The Military                   | Militaristic     | +10% army morale, -25% pers. cost    | Requires military idea                 |
+| Intelligence Community         | Militaristic     | +15% intel factors, +20% crypto      | Not Pakistan                           |
+| Labour Unions                  | Special Interest | +25% political power                 | Not Nationalist or Fascist governments |
+| Landowners                     | Special Interest | +15% local resources                 | —                                      |
+| Farmers                        | Special Interest | +20% population growth               | —                                      |
+| Communist Cadres               | Special Interest | +25% mobilization speed              | Communist governments only             |
+| The Priesthood                 | Religious        | +30% political power, +25% pop.      | Buddhism, Hinduism, Shinto, Cheondoism |
+| The Ulema                      | Religious        | +30% political power, +25% pop.      | Sunni, Ibadi, Sufi, Shia Islam         |
+| The Clergy                     | Religious        | +30% political power, +25% pop.      | Orthodox, Christian, Eastern Church    |
+| Wahabi Ulema                   | Religious        | +30% political power, +fascism drift | SAU, QAT, UAE, extremist nations       |
+| The Donju                      | Nation-Specific  | +15% civ construction                | NKO only                               |
+| Saudi Royal Family             | Nation-Specific  | +20% political power                 | SAU, QAT, BHR, OMA, KUW                |
+| Iranian Quds Force             | Nation-Specific  | +0.10% communist drift               | Iranian proxies only                   |
+| Foreign Jihadis                | Nation-Specific  | +20% special forces cap              | Fascist government only                |
+| Wall Street                    | Nation-Specific  | -1 interest rate, -25% econ cycle    | USA only                               |
+| Chaebols                       | Nation-Specific  | +15% civ/infra construction          | KOR only                               |
