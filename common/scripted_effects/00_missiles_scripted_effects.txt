@@ -97,9 +97,6 @@ basic_ai_space_program_production = {
 }
 
 missile_ui_update = {
-	if = { limit = { NOT = { has_variable = global.missile_ui_updated } }
-		set_variable = { global.missile_ui_updated = 0 }
-	}
 	add_to_variable = { global.missile_ui_updated = 1 }
 }
 
@@ -237,7 +234,6 @@ clear_prod_display_arrays = {
 	clear_array = prod_12_display_array
 	clear_array = prod_13_display_array
 	clear_array = prod_14_display_array
-	clear_array = prod_15_display_array
 }
 
 # function: calculate_production_vars_10
@@ -398,49 +394,43 @@ set_satellites_gui = {
 }
 
 set_GNSS_satellites = {
-	set_variable = { var_GNSS_sat_total = 0 }
-	add_to_variable = { var_GNSS_sat_total = GNSS_satellite_array^0 }
-	add_to_variable = { var_GNSS_sat_total = GNSS_satellite_array^1 }
-	add_to_variable = { var_GNSS_sat_total = GNSS_satellite_array^2 }
-	add_to_variable = { var_GNSS_sat_total = GNSS_satellite_array^3 }
-	add_to_variable = { var_GNSS_sat_total = GNSS_satellite_array^4 }
-	add_to_variable = { var_GNSS_sat_total = GNSS_satellite_array^5 }
-	add_to_variable = { var_GNSS_sat_total = GNSS_satellite_array^6 }
-	add_to_variable = { var_GNSS_sat_total = GNSS_satellite_array^7 }
+	set_temp_variable = { tot = 0 }
+	for_each_loop = {
+		array = GNSS_satellite_array
+		value = v
+		add_to_temp_variable = { tot = v }
+	}
+	set_variable = { var_GNSS_sat_total = tot }
 }
 
 set_COM_satellites = {
 	set_temp_variable = { tot = 0 }
 	for_each_loop = {
 		array = COM_satellite_array
-		index = i
 		value = v
-
 		add_to_temp_variable = { tot = v }
 	}
 	set_variable = { var_COM_sat_total = tot }
 }
 
 set_SPY_satellites = {
-	set_variable = { var_SPY_sat_total = 0 }
-	add_to_variable = { var_SPY_sat_total = SPY_satellite_array^0 }
-	add_to_variable = { var_SPY_sat_total = SPY_satellite_array^1 }
-	add_to_variable = { var_SPY_sat_total = SPY_satellite_array^2 }
-	add_to_variable = { var_SPY_sat_total = SPY_satellite_array^3 }
-	add_to_variable = { var_SPY_sat_total = SPY_satellite_array^4 }
-	add_to_variable = { var_SPY_sat_total = SPY_satellite_array^5 }
-	add_to_variable = { var_SPY_sat_total = SPY_satellite_array^6 }
-	add_to_variable = { var_SPY_sat_total = SPY_satellite_array^7 }
+	set_temp_variable = { tot = 0 }
+	for_each_loop = {
+		array = SPY_satellite_array
+		value = v
+		add_to_temp_variable = { tot = v }
+	}
+	set_variable = { var_SPY_sat_total = tot }
 }
 
 set_KILL_satellites = {
-	set_variable = { var_KILL_sat_total = 0 }
-	add_to_variable = { var_KILL_sat_total = KILL_satellite_array^0 }
-	add_to_variable = { var_KILL_sat_total = KILL_satellite_array^1 }
-	add_to_variable = { var_KILL_sat_total = KILL_satellite_array^2 }
-	add_to_variable = { var_KILL_sat_total = KILL_satellite_array^3 }
-	add_to_variable = { var_KILL_sat_total = KILL_satellite_array^4 }
-	add_to_variable = { var_KILL_sat_total = KILL_satellite_array^5 }
+	set_temp_variable = { tot = 0 }
+	for_each_loop = {
+		array = KILL_satellite_array
+		value = v
+		add_to_temp_variable = { tot = v }
+	}
+	set_variable = { var_KILL_sat_total = tot }
 }
 
 ### satellite systems
@@ -859,7 +849,6 @@ update_SPY_mission_num = {
 		}
 		subtract_from_variable = { var_SPY_mission_num_total = var_SPY_civ_sat_system_num }
 	}
-	#subtract_from_variable = { var_SPY_mission_num_total = var_SPY_civ_sat_system_num }
 	set_variable = { var_SPY_mission_num_available = var_SPY_mission_num_total }
 	subtract_from_variable = { var_SPY_mission_num_available = var_SPY_mission_active_sat }
 	update_SPY_mission_start_button = yes
@@ -868,7 +857,6 @@ update_SPY_mission_num = {
 update_SPY_mission_start_button = {
 	set_variable = { ROOT.var_SPY_mission_intel_ratio = ROOT.var_SPY_mission_num_gui }
 	var:orbit_selected_TAG = {
-		#set_variable = { ROOT.var_SPY_mission_num_gui = num_controlled_states }
 		divide_variable = { ROOT.var_SPY_mission_intel_ratio = ROOT.var_SPY_mission_num_gui }
 	}
 	set_variable = { ROOT.var_SPY_mission_intel_add = ROOT.var_SPY_mission_intel_ratio }
@@ -876,7 +864,6 @@ update_SPY_mission_start_button = {
 }
 
 update_SPY_mission_plus_minus_button = {
-	#set_variable = { ROOT.var_SPY_mission_intel_ratio = ROOT.var_SPY_mission_num_gui }
 	var:orbit_selected_TAG = {
 		set_variable = { ROOT.var_SPY_mission_intel_ratio = ROOT.var_SPY_mission_num_gui }
 		divide_variable = { ROOT.var_SPY_mission_intel_ratio = num_controlled_states }
@@ -1247,7 +1234,7 @@ add_access_COM_mil_vars = {
 		if = { limit = { check_variable = { ROOT.COM_mil_access_array^num > 0 } }
 			#max_command_power
 			clamp_variable = { var = ROOT.var_COM_mil_max_command_power max = global.COM_mil_max_command_power_max_array^temp_COM_mil_access_system_highest_idx }
-			#army_org_facto
+			#army_org_factor
 			clamp_variable = { var = ROOT.var_COM_mil_army_org_factor max = global.COM_mil_army_org_factor_max_array^temp_COM_mil_access_system_highest_idx }
 			#planning_speed
 			clamp_variable = { var = ROOT.var_COM_mil_planning_speed max = global.COM_mil_planning_speed_max_array^temp_COM_mil_access_system_highest_idx }
@@ -1661,7 +1648,7 @@ launch_OLV = {
 		subtract_from_variable = { ROOT.var_OLV_flights = 1 }
 		subtract_from_variable = { ROOT.var_OLV_inventory = 1 }
 		add_to_variable = { var_orbital_launch_total = 1 }
-		randomize_variable = { # Pap has put his Doner in this code and I have no idea what this does
+		randomize_variable = { # Random roll for OLV launch success check
 			var = var_OLV_trajectory
 			distribution = uniform
 			min = 0
@@ -1758,302 +1745,55 @@ add_satellite_from_payload = {
 
 	for_each_loop = {
 		array = payload_array
+		set_temp_variable = { payload_id = payload_array^i }
 		if = {
 			limit = {
-				check_variable = { payload_array^i = 111 }
+				check_variable = { payload_id > 110 }
+				check_variable = { payload_id < 119 }
 			}
-			add_to_variable = { GNSS_satellite_array^0 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
+			set_temp_variable = { sat_idx = payload_id }
+			subtract_from_temp_variable = { sat_idx = 111 }
+			add_to_variable = { GNSS_satellite_array^sat_idx = 1 }
+			add_to_array = { orbit_array = payload_id }
 			set_variable = { var_orbit_display_ID = orbit_array^num }
 			subtract_from_variable = { var_orbit_display_ID = 1 }
 			add_new_satellite_to_orbit = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				check_variable = { payload_array^i = 112 }
+				check_variable = { payload_id > 120 }
+				check_variable = { payload_id < 129 }
 			}
-			add_to_variable = { GNSS_satellite_array^1 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
+			set_temp_variable = { sat_idx = payload_id }
+			subtract_from_temp_variable = { sat_idx = 121 }
+			add_to_variable = { COM_satellite_array^sat_idx = 1 }
+			add_to_array = { orbit_array = payload_id }
 			set_variable = { var_orbit_display_ID = orbit_array^num }
 			subtract_from_variable = { var_orbit_display_ID = 1 }
 			add_new_satellite_to_orbit = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				check_variable = { payload_array^i = 113 }
+				check_variable = { payload_id > 130 }
+				check_variable = { payload_id < 139 }
 			}
-			add_to_variable = { GNSS_satellite_array^2 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
+			set_temp_variable = { sat_idx = payload_id }
+			subtract_from_temp_variable = { sat_idx = 131 }
+			add_to_variable = { SPY_satellite_array^sat_idx = 1 }
+			add_to_array = { orbit_array = payload_id }
 			set_variable = { var_orbit_display_ID = orbit_array^num }
 			subtract_from_variable = { var_orbit_display_ID = 1 }
 			add_new_satellite_to_orbit = yes
 		}
-		if = {
+		else_if = {
 			limit = {
-				check_variable = { payload_array^i = 114 }
+				check_variable = { payload_id > 140 }
+				check_variable = { payload_id < 147 }
 			}
-			add_to_variable = { GNSS_satellite_array^3 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 115 }
-			}
-			add_to_variable = { GNSS_satellite_array^4 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 116 }
-			}
-			add_to_variable = { GNSS_satellite_array^5 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 117 }
-			}
-			add_to_variable = { GNSS_satellite_array^6 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 118 }
-			}
-			add_to_variable = { GNSS_satellite_array^7 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 121 }
-			}
-			add_to_variable = { COM_satellite_array^0 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 122 }
-			}
-			add_to_variable = { COM_satellite_array^1 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 123 }
-			}
-			add_to_variable = { COM_satellite_array^2 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 124 }
-			}
-			add_to_variable = { COM_satellite_array^3 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 125 }
-			}
-			add_to_variable = { COM_satellite_array^4 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 126 }
-			}
-			add_to_variable = { COM_satellite_array^5 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 127 }
-			}
-			add_to_variable = { COM_satellite_array^6 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 128 }
-			}
-			add_to_variable = { COM_satellite_array^7 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 131 }
-			}
-			add_to_variable = { SPY_satellite_array^0 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 132 }
-			}
-			add_to_variable = { SPY_satellite_array^1 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 133 }
-			}
-			add_to_variable = { SPY_satellite_array^2 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 134 }
-			}
-			add_to_variable = { SPY_satellite_array^3 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 135 }
-			}
-			add_to_variable = { SPY_satellite_array^4 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 136 }
-			}
-			add_to_variable = { SPY_satellite_array^5 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 137 }
-			}
-			add_to_variable = { SPY_satellite_array^6 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 138 }
-			}
-			add_to_variable = { SPY_satellite_array^7 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 141 }
-			}
-			add_to_variable = { KILL_satellite_array^0 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 142 }
-			}
-			add_to_variable = { KILL_satellite_array^1 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 143 }
-			}
-			add_to_variable = { KILL_satellite_array^2 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 144 }
-			}
-			add_to_variable = { KILL_satellite_array^3 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 145 }
-			}
-			add_to_variable = { KILL_satellite_array^4 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
-			set_variable = { var_orbit_display_ID = orbit_array^num }
-			subtract_from_variable = { var_orbit_display_ID = 1 }
-			add_new_satellite_to_orbit = yes
-		}
-		if = {
-			limit = {
-				check_variable = { payload_array^i = 146 }
-			}
-			add_to_variable = { KILL_satellite_array^5 = 1 }
-			add_to_array = { orbit_array = payload_array^i }
+			set_temp_variable = { sat_idx = payload_id }
+			subtract_from_temp_variable = { sat_idx = 141 }
+			add_to_variable = { KILL_satellite_array^sat_idx = 1 }
+			add_to_array = { orbit_array = payload_id }
 			set_variable = { var_orbit_display_ID = orbit_array^num }
 			subtract_from_variable = { var_orbit_display_ID = 1 }
 			add_new_satellite_to_orbit = yes
@@ -2149,7 +1889,7 @@ add_new_satellite_to_orbit = {
 				check_variable = { sat_2_array^num > 399 }
 				check_variable = { sat_6_array^num > 0 }
 			}
-			set_variable = { sat_2_array^i = var_orbit_display_ID } #set_variable = { sat_2_array^i = 1 }
+			set_variable = { sat_2_array^i = var_orbit_display_ID }
 		}
 		else_if = {
 			limit = {
@@ -2180,7 +1920,7 @@ add_new_satellite_to_orbit = {
 				check_variable = { sat_4_array^num > 399 }
 				check_variable = { sat_6_array^num > 0 }
 			}
-			set_variable = { sat_4_array^i = var_orbit_display_ID } #set_variable = { sat_4_array^i = 1 }
+			set_variable = { sat_4_array^i = var_orbit_display_ID }
 		}
 		else_if = {
 			limit = {
@@ -2211,7 +1951,7 @@ add_new_satellite_to_orbit = {
 				check_variable = { sat_1_array^num > 179 }
 				check_variable = { sat_6_array^num > 0 }
 			}
-			set_variable = { sat_1_array^i = var_orbit_display_ID } #set_variable = { sat_1_array^i = 1 }
+			set_variable = { sat_1_array^i = var_orbit_display_ID }
 		}
 		else_if = {
 			limit = {
@@ -2242,7 +1982,7 @@ add_new_satellite_to_orbit = {
 				check_variable = { sat_5_array^num > 179 }
 				check_variable = { sat_6_array^num > 0 }
 			}
-			set_variable = { sat_5_array^i = var_orbit_display_ID } #set_variable = { sat_5_array^i = 1 }
+			set_variable = { sat_5_array^i = var_orbit_display_ID }
 		}
 		else_if = {
 			limit = {
@@ -2336,7 +2076,7 @@ add_new_satellite_to_orbit_4 = {
 		add_to_temp_variable = { temp4 = add_plus_X4 }
 		add_to_variable = { add_plus_X4 = 1 }
 	}
-	set_variable = { sat_4_array^temp4 = var_orbit_display_ID } #set_variable = { sat_4_array^temp4 = 1 }
+	set_variable = { sat_4_array^temp4 = var_orbit_display_ID }
 }
 add_new_satellite_to_orbit_5 = {
 	add_to_variable = { var_sat_in_orbit = 1 }
@@ -2355,7 +2095,7 @@ add_new_satellite_to_orbit_5 = {
 		add_to_temp_variable = { temp5 = add_plus_X5 }
 		add_to_variable = { add_plus_X5 = 1 }
 	}
-	set_variable = { sat_5_array^temp5 = var_orbit_display_ID } #set_variable = { sat_5_array^temp5 = 1 }
+	set_variable = { sat_5_array^temp5 = var_orbit_display_ID }
 }
 
 add_new_satellite_to_orbit_6 = {
@@ -2512,185 +2252,42 @@ remove_satellite_from_orbit = {
 
 remove_satellite_from_system = {
 	var:tempTAG = {
+		set_temp_variable = { sat_id = orbit_array^var_sat_ID }
 		if = {
 			limit = {
-				check_variable = { orbit_array^var_sat_ID = 111 }
+				check_variable = { sat_id > 110 }
+				check_variable = { sat_id < 119 }
 			}
-			subtract_from_variable = { GNSS_satellite_array^0 = 1 }
+			set_temp_variable = { sat_idx = sat_id }
+			subtract_from_temp_variable = { sat_idx = 111 }
+			subtract_from_variable = { GNSS_satellite_array^sat_idx = 1 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				check_variable = { orbit_array^var_sat_ID = 112 }
+				check_variable = { sat_id > 120 }
+				check_variable = { sat_id < 129 }
 			}
-			subtract_from_variable = { GNSS_satellite_array^1 = 1 }
+			set_temp_variable = { sat_idx = sat_id }
+			subtract_from_temp_variable = { sat_idx = 121 }
+			subtract_from_variable = { COM_satellite_array^sat_idx = 1 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				check_variable = { orbit_array^var_sat_ID = 113 }
+				check_variable = { sat_id > 130 }
+				check_variable = { sat_id < 139 }
 			}
-			subtract_from_variable = { GNSS_satellite_array^2 = 1 }
+			set_temp_variable = { sat_idx = sat_id }
+			subtract_from_temp_variable = { sat_idx = 131 }
+			subtract_from_variable = { SPY_satellite_array^sat_idx = 1 }
 		}
-		if = {
+		else_if = {
 			limit = {
-				check_variable = { orbit_array^var_sat_ID = 114 }
+				check_variable = { sat_id > 140 }
+				check_variable = { sat_id < 147 }
 			}
-			subtract_from_variable = { GNSS_satellite_array^3 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 115 }
-			}
-			subtract_from_variable = { GNSS_satellite_array^4 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 116 }
-			}
-			subtract_from_variable = { GNSS_satellite_array^5 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 117 }
-			}
-			subtract_from_variable = { GNSS_satellite_array^6 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 118 }
-			}
-			subtract_from_variable = { GNSS_satellite_array^7 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 121 }
-			}
-			subtract_from_variable = { COM_satellite_array^0 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 122 }
-			}
-			subtract_from_variable = { COM_satellite_array^1 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 123 }
-			}
-			subtract_from_variable = { COM_satellite_array^2 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 124 }
-			}
-			subtract_from_variable = { COM_satellite_array^3 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 125 }
-			}
-			subtract_from_variable = { COM_satellite_array^4 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 126 }
-			}
-			subtract_from_variable = { COM_satellite_array^5 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 127 }
-			}
-			subtract_from_variable = { COM_satellite_array^6 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 128 }
-			}
-			subtract_from_variable = { COM_satellite_array^7 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 131 }
-			}
-			subtract_from_variable = { SPY_satellite_array^0 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 132 }
-			}
-			subtract_from_variable = { SPY_satellite_array^1 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 133 }
-			}
-			subtract_from_variable = { SPY_satellite_array^2 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 134 }
-			}
-			subtract_from_variable = { SPY_satellite_array^3 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 135 }
-			}
-			subtract_from_variable = { SPY_satellite_array^4 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 136 }
-			}
-			subtract_from_variable = { SPY_satellite_array^5 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 137 }
-			}
-			subtract_from_variable = { SPY_satellite_array^6 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 138 }
-			}
-			subtract_from_variable = { SPY_satellite_array^7 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 141 }
-			}
-			subtract_from_variable = { KILL_satellite_array^0 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 142 }
-			}
-			subtract_from_variable = { KILL_satellite_array^1 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 143 }
-			}
-			subtract_from_variable = { KILL_satellite_array^2 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 144 }
-			}
-			subtract_from_variable = { KILL_satellite_array^3 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 145 }
-			}
-			subtract_from_variable = { KILL_satellite_array^4 = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = { orbit_array^var_sat_ID = 146 }
-			}
-			subtract_from_variable = { KILL_satellite_array^5 = 1 }
+			set_temp_variable = { sat_idx = sat_id }
+			subtract_from_temp_variable = { sat_idx = 141 }
+			subtract_from_variable = { KILL_satellite_array^sat_idx = 1 }
 		}
 	}
 }
@@ -2767,46 +2364,40 @@ target_all_filtered_sats = {
 			limit = {
 				check_variable = { ROOT.sat_disp_num = 1 }
 			}
-			target_gnss = yes
+			set_temp_variable = { target_range_min = 110 }
+			set_temp_variable = { target_range_max = 119 }
+			target_sat_type = yes
 		}
 		if = {
 			limit = {
 				check_variable = { ROOT.sat_disp_num = 2 }
 			}
-			target_com = yes
+			set_temp_variable = { target_range_min = 120 }
+			set_temp_variable = { target_range_max = 129 }
+			target_sat_type = yes
 		}
 		if = {
 			limit = {
 				check_variable = { ROOT.sat_disp_num = 3 }
 			}
-			target_spy = yes
+			set_temp_variable = { target_range_min = 130 }
+			set_temp_variable = { target_range_max = 139 }
+			target_sat_type = yes
 		}
 	}
 }
 
-target_gnss = {
+target_sat_type = {
 	for_each_loop = {
 		array = sat_1_array
 		value = v
-		index = i
-
 		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
+			limit = { check_variable = { ROOT.spec_filter = 0 } }
 			set_temp_variable = { gfx_idx = v }
 			if = {
 				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 111 }
-						check_variable = { orbit_array^gfx_idx = 112 }
-						check_variable = { orbit_array^gfx_idx = 113 }
-						check_variable = { orbit_array^gfx_idx = 114 }
-						check_variable = { orbit_array^gfx_idx = 115 }
-						check_variable = { orbit_array^gfx_idx = 116 }
-						check_variable = { orbit_array^gfx_idx = 117 }
-						check_variable = { orbit_array^gfx_idx = 118 }
-					}
+					check_variable = { orbit_array^gfx_idx > target_range_min }
+					check_variable = { orbit_array^gfx_idx < target_range_max }
 				}
 				add_to_array = { ROOT.sat_target_array = v }
 				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
@@ -2825,25 +2416,13 @@ target_gnss = {
 	for_each_loop = {
 		array = sat_2_array
 		value = v
-		index = i
-
 		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
+			limit = { check_variable = { ROOT.spec_filter = 0 } }
 			set_temp_variable = { gfx_idx = v }
 			if = {
 				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 111 }
-						check_variable = { orbit_array^gfx_idx = 112 }
-						check_variable = { orbit_array^gfx_idx = 113 }
-						check_variable = { orbit_array^gfx_idx = 114 }
-						check_variable = { orbit_array^gfx_idx = 115 }
-						check_variable = { orbit_array^gfx_idx = 116 }
-						check_variable = { orbit_array^gfx_idx = 117 }
-						check_variable = { orbit_array^gfx_idx = 118 }
-					}
+					check_variable = { orbit_array^gfx_idx > target_range_min }
+					check_variable = { orbit_array^gfx_idx < target_range_max }
 				}
 				add_to_array = { ROOT.sat_target_array = v }
 				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
@@ -2862,25 +2441,13 @@ target_gnss = {
 	for_each_loop = {
 		array = sat_3_array
 		value = v
-		index = i
-
 		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
+			limit = { check_variable = { ROOT.spec_filter = 0 } }
 			set_temp_variable = { gfx_idx = v }
 			if = {
 				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 111 }
-						check_variable = { orbit_array^gfx_idx = 112 }
-						check_variable = { orbit_array^gfx_idx = 113 }
-						check_variable = { orbit_array^gfx_idx = 114 }
-						check_variable = { orbit_array^gfx_idx = 115 }
-						check_variable = { orbit_array^gfx_idx = 116 }
-						check_variable = { orbit_array^gfx_idx = 117 }
-						check_variable = { orbit_array^gfx_idx = 118 }
-					}
+					check_variable = { orbit_array^gfx_idx > target_range_min }
+					check_variable = { orbit_array^gfx_idx < target_range_max }
 				}
 				add_to_array = { ROOT.sat_target_array = v }
 				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
@@ -2899,25 +2466,13 @@ target_gnss = {
 	for_each_loop = {
 		array = sat_4_array
 		value = v
-		index = i
-
 		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
+			limit = { check_variable = { ROOT.spec_filter = 0 } }
 			set_temp_variable = { gfx_idx = v }
 			if = {
 				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 111 }
-						check_variable = { orbit_array^gfx_idx = 112 }
-						check_variable = { orbit_array^gfx_idx = 113 }
-						check_variable = { orbit_array^gfx_idx = 114 }
-						check_variable = { orbit_array^gfx_idx = 115 }
-						check_variable = { orbit_array^gfx_idx = 116 }
-						check_variable = { orbit_array^gfx_idx = 117 }
-						check_variable = { orbit_array^gfx_idx = 118 }
-					}
+					check_variable = { orbit_array^gfx_idx > target_range_min }
+					check_variable = { orbit_array^gfx_idx < target_range_max }
 				}
 				add_to_array = { ROOT.sat_target_array = v }
 				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
@@ -2936,25 +2491,13 @@ target_gnss = {
 	for_each_loop = {
 		array = sat_5_array
 		value = v
-		index = i
-
 		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
+			limit = { check_variable = { ROOT.spec_filter = 0 } }
 			set_temp_variable = { gfx_idx = v }
 			if = {
 				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 111 }
-						check_variable = { orbit_array^gfx_idx = 112 }
-						check_variable = { orbit_array^gfx_idx = 113 }
-						check_variable = { orbit_array^gfx_idx = 114 }
-						check_variable = { orbit_array^gfx_idx = 115 }
-						check_variable = { orbit_array^gfx_idx = 116 }
-						check_variable = { orbit_array^gfx_idx = 117 }
-						check_variable = { orbit_array^gfx_idx = 118 }
-					}
+					check_variable = { orbit_array^gfx_idx > target_range_min }
+					check_variable = { orbit_array^gfx_idx < target_range_max }
 				}
 				add_to_array = { ROOT.sat_target_array = v }
 				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
@@ -2973,475 +2516,13 @@ target_gnss = {
 	for_each_loop = {
 		array = sat_6_array
 		value = v
-		index = i
-
 		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
+			limit = { check_variable = { ROOT.spec_filter = 0 } }
 			set_temp_variable = { gfx_idx = v }
 			if = {
 				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 111 }
-						check_variable = { orbit_array^gfx_idx = 112 }
-						check_variable = { orbit_array^gfx_idx = 113 }
-						check_variable = { orbit_array^gfx_idx = 114 }
-						check_variable = { orbit_array^gfx_idx = 115 }
-						check_variable = { orbit_array^gfx_idx = 116 }
-						check_variable = { orbit_array^gfx_idx = 117 }
-						check_variable = { orbit_array^gfx_idx = 118 }
-					}
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}else = {
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					check_variable = { orbit_array^gfx_idx = ROOT.spec_filter }
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}
-	}
-}
-
-target_com = {
-	for_each_loop = {
-		array = sat_1_array
-		value = v
-		index = i
-
-		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 121 }
-						check_variable = { orbit_array^gfx_idx = 122 }
-						check_variable = { orbit_array^gfx_idx = 123 }
-						check_variable = { orbit_array^gfx_idx = 124 }
-						check_variable = { orbit_array^gfx_idx = 125 }
-						check_variable = { orbit_array^gfx_idx = 126 }
-						check_variable = { orbit_array^gfx_idx = 127 }
-						check_variable = { orbit_array^gfx_idx = 128 }
-					}
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}else = {
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					check_variable = { orbit_array^gfx_idx = ROOT.spec_filter }
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}
-	}
-	for_each_loop = {
-		array = sat_2_array
-		value = v
-		index = i
-
-		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 121 }
-						check_variable = { orbit_array^gfx_idx = 122 }
-						check_variable = { orbit_array^gfx_idx = 123 }
-						check_variable = { orbit_array^gfx_idx = 124 }
-						check_variable = { orbit_array^gfx_idx = 125 }
-						check_variable = { orbit_array^gfx_idx = 126 }
-						check_variable = { orbit_array^gfx_idx = 127 }
-						check_variable = { orbit_array^gfx_idx = 128 }
-					}
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}else = {
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					check_variable = { orbit_array^gfx_idx = ROOT.spec_filter }
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}
-	}
-	for_each_loop = {
-		array = sat_3_array
-		value = v
-		index = i
-
-		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 121 }
-						check_variable = { orbit_array^gfx_idx = 122 }
-						check_variable = { orbit_array^gfx_idx = 123 }
-						check_variable = { orbit_array^gfx_idx = 124 }
-						check_variable = { orbit_array^gfx_idx = 125 }
-						check_variable = { orbit_array^gfx_idx = 126 }
-						check_variable = { orbit_array^gfx_idx = 127 }
-						check_variable = { orbit_array^gfx_idx = 128 }
-					}
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}else = {
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					check_variable = { orbit_array^gfx_idx = ROOT.spec_filter }
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}
-	}
-	for_each_loop = {
-		array = sat_4_array
-		value = v
-		index = i
-
-		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 121 }
-						check_variable = { orbit_array^gfx_idx = 122 }
-						check_variable = { orbit_array^gfx_idx = 123 }
-						check_variable = { orbit_array^gfx_idx = 124 }
-						check_variable = { orbit_array^gfx_idx = 125 }
-						check_variable = { orbit_array^gfx_idx = 126 }
-						check_variable = { orbit_array^gfx_idx = 127 }
-						check_variable = { orbit_array^gfx_idx = 128 }
-					}
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}else = {
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					check_variable = { orbit_array^gfx_idx = ROOT.spec_filter }
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}
-	}
-	for_each_loop = {
-		array = sat_5_array
-		value = v
-		index = i
-
-		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 121 }
-						check_variable = { orbit_array^gfx_idx = 122 }
-						check_variable = { orbit_array^gfx_idx = 123 }
-						check_variable = { orbit_array^gfx_idx = 124 }
-						check_variable = { orbit_array^gfx_idx = 125 }
-						check_variable = { orbit_array^gfx_idx = 126 }
-						check_variable = { orbit_array^gfx_idx = 127 }
-						check_variable = { orbit_array^gfx_idx = 128 }
-					}
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}else = {
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					check_variable = { orbit_array^gfx_idx = ROOT.spec_filter }
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}
-	}
-	for_each_loop = {
-		array = sat_6_array
-		value = v
-		index = i
-
-		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 121 }
-						check_variable = { orbit_array^gfx_idx = 122 }
-						check_variable = { orbit_array^gfx_idx = 123 }
-						check_variable = { orbit_array^gfx_idx = 124 }
-						check_variable = { orbit_array^gfx_idx = 125 }
-						check_variable = { orbit_array^gfx_idx = 126 }
-						check_variable = { orbit_array^gfx_idx = 127 }
-						check_variable = { orbit_array^gfx_idx = 128 }
-					}
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}else = {
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					check_variable = { orbit_array^gfx_idx = ROOT.spec_filter }
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}
-	}
-}
-
-target_spy = {
-	for_each_loop = {
-		array = sat_1_array
-		value = v
-		index = i
-
-		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 131 }
-						check_variable = { orbit_array^gfx_idx = 132 }
-						check_variable = { orbit_array^gfx_idx = 133 }
-						check_variable = { orbit_array^gfx_idx = 134 }
-						check_variable = { orbit_array^gfx_idx = 135 }
-						check_variable = { orbit_array^gfx_idx = 136 }
-						check_variable = { orbit_array^gfx_idx = 137 }
-						check_variable = { orbit_array^gfx_idx = 138 }
-					}
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}else = {
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					check_variable = { orbit_array^gfx_idx = ROOT.spec_filter }
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}
-	}
-	for_each_loop = {
-		array = sat_2_array
-		value = v
-		index = i
-
-		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 131 }
-						check_variable = { orbit_array^gfx_idx = 132 }
-						check_variable = { orbit_array^gfx_idx = 133 }
-						check_variable = { orbit_array^gfx_idx = 134 }
-						check_variable = { orbit_array^gfx_idx = 135 }
-						check_variable = { orbit_array^gfx_idx = 136 }
-						check_variable = { orbit_array^gfx_idx = 137 }
-						check_variable = { orbit_array^gfx_idx = 138 }
-					}
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}else = {
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					check_variable = { orbit_array^gfx_idx = ROOT.spec_filter }
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}
-	}
-	for_each_loop = {
-		array = sat_3_array
-		value = v
-		index = i
-
-		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 131 }
-						check_variable = { orbit_array^gfx_idx = 132 }
-						check_variable = { orbit_array^gfx_idx = 133 }
-						check_variable = { orbit_array^gfx_idx = 134 }
-						check_variable = { orbit_array^gfx_idx = 135 }
-						check_variable = { orbit_array^gfx_idx = 136 }
-						check_variable = { orbit_array^gfx_idx = 137 }
-						check_variable = { orbit_array^gfx_idx = 138 }
-					}
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}else = {
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					check_variable = { orbit_array^gfx_idx = ROOT.spec_filter }
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}
-	}
-	for_each_loop = {
-		array = sat_4_array
-		value = v
-		index = i
-
-		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 131 }
-						check_variable = { orbit_array^gfx_idx = 132 }
-						check_variable = { orbit_array^gfx_idx = 133 }
-						check_variable = { orbit_array^gfx_idx = 134 }
-						check_variable = { orbit_array^gfx_idx = 135 }
-						check_variable = { orbit_array^gfx_idx = 136 }
-						check_variable = { orbit_array^gfx_idx = 137 }
-						check_variable = { orbit_array^gfx_idx = 138 }
-					}
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}else = {
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					check_variable = { orbit_array^gfx_idx = ROOT.spec_filter }
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}
-	}
-	for_each_loop = {
-		array = sat_5_array
-		value = v
-		index = i
-
-		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 131 }
-						check_variable = { orbit_array^gfx_idx = 132 }
-						check_variable = { orbit_array^gfx_idx = 133 }
-						check_variable = { orbit_array^gfx_idx = 134 }
-						check_variable = { orbit_array^gfx_idx = 135 }
-						check_variable = { orbit_array^gfx_idx = 136 }
-						check_variable = { orbit_array^gfx_idx = 137 }
-						check_variable = { orbit_array^gfx_idx = 138 }
-					}
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}else = {
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					check_variable = { orbit_array^gfx_idx = ROOT.spec_filter }
-				}
-				add_to_array = { ROOT.sat_target_array = v }
-				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
-			}
-		}
-	}
-	for_each_loop = {
-		array = sat_6_array
-		value = v
-		index = i
-
-		if = {
-			limit = {
-				check_variable = { ROOT.spec_filter = 0 }
-			}
-			set_temp_variable = { gfx_idx = v }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { orbit_array^gfx_idx = 131 }
-						check_variable = { orbit_array^gfx_idx = 132 }
-						check_variable = { orbit_array^gfx_idx = 133 }
-						check_variable = { orbit_array^gfx_idx = 134 }
-						check_variable = { orbit_array^gfx_idx = 135 }
-						check_variable = { orbit_array^gfx_idx = 136 }
-						check_variable = { orbit_array^gfx_idx = 137 }
-						check_variable = { orbit_array^gfx_idx = 138 }
-					}
+					check_variable = { orbit_array^gfx_idx > target_range_min }
+					check_variable = { orbit_array^gfx_idx < target_range_max }
 				}
 				add_to_array = { ROOT.sat_target_array = v }
 				add_to_array = { ROOT.sat_target_TAG_array = orbit_selected_TAG }
