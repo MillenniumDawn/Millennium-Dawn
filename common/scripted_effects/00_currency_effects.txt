@@ -1,0 +1,114 @@
+# Currency System — Core Effects
+# Implements currency_strength per-country variable, monthly update, and income multipliers.
+# Design reference: resources/CurrencySystem.txt
+
+# ── Script constants ─────────────────────────────────────────────────────────
+# Sensitivity of trade balance to currency appreciation/depreciation per month
+@currency_trade_sensitivity = 0.0002
+# Sensitivity of debt-to-GDP ratio to currency weakness
+@currency_debt_sensitivity = 0.02
+# Sensitivity of stability to currency strength
+@currency_stability_sensitivity = 0.003
+# How strongly currency weakness feeds into inflation_cost_multiplier_modifier
+@currency_inflation_sensitivity = 0.15
+
+# ── Startup ──────────────────────────────────────────────────────────────────
+
+# Called per-country during on_startup (every_country block).
+# History files set the starting currency_strength value; this provides a safe
+# fallback of 1.0 (neutral) for any country without an explicit history entry.
+currency_startup = {
+	if = { limit = { NOT = { has_variable = currency_strength } }
+		set_variable = { currency_strength = 1.0 }
+	}
+	set_variable = { currency_inflation_feed = 0 }
+	add_dynamic_modifier = { modifier = currency_strength_dynamic_modifier }
+}
+
+# ── Monthly recalculation ─────────────────────────────────────────────────────
+
+# Called monthly for every country (on_monthly hook in MD_on_actions.txt).
+# Updates currency_strength based on trade balance, debt load, and stability,
+# then recomputes the currency_inflation_feed variable used by the dynamic modifier.
+calculate_currency_strength = {
+	set_temp_variable = { currency_delta = 0 }
+
+	# Trade balance contribution: surplus = appreciates, deficit = depreciates
+	set_temp_variable = { trade_contrib = resource_sale_rate }
+	add_to_temp_variable = { trade_contrib = int_investments_rate }
+	subtract_from_temp_variable = { trade_contrib = display_expense }
+	multiply_temp_variable = { trade_contrib = @currency_trade_sensitivity }
+	add_to_temp_variable = { currency_delta = trade_contrib }
+
+	# Debt-to-GDP: high debt ratio weakens currency
+	set_temp_variable = { debt_contrib = debt_ratio }
+	multiply_temp_variable = { debt_contrib = @currency_debt_sensitivity }
+	subtract_from_temp_variable = { currency_delta = debt_contrib }
+
+	# Stability: instability drives currency flight
+	set_temp_variable = { stab_contrib = stability }
+	multiply_temp_variable = { stab_contrib = @currency_stability_sensitivity }
+	add_to_temp_variable = { currency_delta = stab_contrib }
+
+	# Reserve currency issuers get a floor — they can weaken but less dramatically
+	if = { limit = { has_country_flag = usd_reserve_currency_issuer }
+		clamp_variable = { var = currency_delta min = -0.005 max = 0.02 }
+	}
+	else_if = { limit = { has_country_flag = eur_reserve_currency_issuer }
+		clamp_variable = { var = currency_delta min = -0.007 max = 0.015 }
+	}
+	else_if = { limit = { has_country_flag = rub_reserve_currency_issuer }
+		clamp_variable = { var = currency_delta min = -0.01 max = 0.012 }
+	}
+
+	add_to_variable = { currency_strength = currency_delta }
+	clamp_variable = { var = currency_strength min = 0.15 max = 2.0 }
+
+	# Recompute inflation feed: weak currency = positive inflation pressure.
+	# currency_inflation_feed is read by currency_strength_dynamic_modifier
+	# and applied to inflation_cost_multiplier_modifier each tick.
+	set_variable = { currency_inflation_feed = 1.0 }
+	divide_variable = { currency_inflation_feed = currency_strength }
+	subtract_from_variable = { currency_inflation_feed = 1.0 }
+	multiply_variable = { currency_inflation_feed = @currency_inflation_sensitivity }
+}
+
+# ── Income stream multipliers ─────────────────────────────────────────────────
+
+# Called inside ingame_update_setup in 00_money_system.txt, after all income
+# streams are computed and before update_display aggregates them.
+#
+# Exchange logic (both streams use 1/currency_strength):
+#   - currency_strength > 1.0 (strong): factor < 1.0 → income reduced in local terms
+#   - currency_strength = 1.0 (neutral): factor = 1.0 → no change
+#   - currency_strength < 1.0 (weak):   factor > 1.0 → income boosted in local terms
+#
+# This captures the real-world dynamic where a weak home currency makes
+# foreign-denominated earnings and commodity exports worth more locally,
+# while a strong currency suppresses these figures.
+apply_currency_multipliers = {
+	# International investment returns: denominated in reserve currency
+	set_temp_variable = { inv_factor = 1.0 }
+	divide_temp_variable = { inv_factor = currency_strength }
+	multiply_variable = { int_investments_rate = inv_factor }
+
+	# Resource exports: commodities are priced globally in reserve currency
+	set_temp_variable = { res_factor = 1.0 }
+	divide_temp_variable = { res_factor = currency_strength }
+	multiply_variable = { resource_sale_rate = res_factor }
+
+	# Foreign-denominated debt multiplier: only applies to countries whose
+	# debt is denominated in an external reserve currency (not autarkic/no_foreign_reserve).
+	if = { limit = {
+		OR = {
+			has_idea = us_dollar
+			has_idea = euro
+			has_idea = chinese_yuan
+			has_idea = russia_rouble
+		}
+	}
+		set_temp_variable = { debt_factor = 1.0 }
+		divide_temp_variable = { debt_factor = currency_strength }
+		multiply_variable = { debt_rate = debt_factor }
+	}
+}
