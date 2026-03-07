@@ -1,0 +1,498 @@
+# Author(s): Doolittle
+# Scripted effects for the Cyberwarfare System
+
+# Called once per country at game start
+# Sets the base variables, then grabs the starting setup where needed
+cyber_nation_startup = {
+	set_variable = { cyber_max_targets = 0 }
+	set_variable = { cyber_offense_power = 0 }
+	set_variable = { cyber_defense_rating = 0 }
+	set_variable = { cyber_attribution_bonus = 0 }
+	set_variable = { cyber_ongoing_operations = 0 }
+	calculate_cyber_capability = yes
+	cyber_rebuild_potential_targets = yes
+}
+
+# Recalculates cyber_capability, cyber_max_targets, cyber_op_max_targets from agency upgrades or technologies
+#Then applies any GUI level upgrades for the total
+calculate_cyber_capability = {
+	set_variable = { cyber_capability = modifier@cyber_capability_modifier }
+	set_variable = { cyber_offense_power = modifier@cyber_offense_power_modifier }
+	set_variable = { cyber_defense_rating = modifier@cyber_defense_rating_modifier }
+	set_variable = { cyber_attribution = modifier@cyber_attribution_bonus_modifier }
+
+	add_to_variable = { cyber_offense_power = cyber_offense_investment }
+	add_to_variable = { cyber_defense_rating = cyber_defense_investment }
+
+	set_temp_variable = { cyber_targets_num = cyber_capability }
+
+	if = {
+		limit = {
+			NOT = {
+				check_variable = { cyber_targets_num = 0 }
+			}
+		}
+		multiply_temp_variable = { cyber_targets_num = 0.5 }
+		round_temp_variable = cyber_targets_num
+		add_to_temp_variable = { cyber_targets_num = 1 }
+	}
+
+	clamp_variable = {
+		var = cyber_capability
+		max = 5
+	}
+
+	clamp_temp_variable = {
+		var = cyber_targets_num
+		max = 10
+	}
+
+	for_loop_effect = {
+		end = cyber_targets_num
+
+		if = {
+			limit = {
+				check_variable = { ROOT.cyber_op_target_nation^num < cyber_targets_num }
+			}
+			add_to_array = { ROOT.cyber_op_target_nation = 0 }
+		}
+
+		if = {
+			limit = {
+				check_variable = { ROOT.cyber_op_running^num < cyber_targets_num }
+			}
+			add_to_array = { ROOT.cyber_op_running = 0 }
+		}
+
+		if = {
+			limit = {
+				check_variable = { ROOT.cyber_op_type_arr^num < cyber_targets_num }
+			}
+			add_to_array = { ROOT.cyber_op_type_arr = 0 }
+		}
+	}
+
+	set_variable = { cyber_max_targets = cyber_capability }
+	set_variable = { cyber_op_max_targets = cyber_targets_num }
+	missile_ui_update = yes
+}
+
+# Adds country to the active targets array. Called via script or the change_scope enabled button
+cyber_add_target = {
+	add_to_array = { ROOT.cyber_active_targets = THIS }
+	cyber_rebuild_potential_targets = yes
+}
+
+# Removes the selected nation from the array
+cyber_remove_target = {
+	remove_from_array = { ROOT.cyber_active_targets = cyber_remove_target_var }
+	cyber_rebuild_potential_targets = yes
+}
+
+# Rebuilds the potential targets browser list (all non-self non-subject non-already-targeted nations)
+cyber_rebuild_potential_targets = {
+	clear_array = cyber_potential_targets
+
+	if = {
+		limit = { check_variable = { region_swap = 0 } }
+		for_each_loop = {
+			array = global.asian_nations
+			value = v
+
+			var:v = {
+				if = {
+					limit = {
+						is_valid_cyber_target = yes
+					}
+					add_to_array = { ROOT.cyber_potential_targets = THIS }
+				}
+			}
+		}
+	}else_if = {
+		limit = { check_variable = { region_swap = 1 } }
+		for_each_loop = {
+			array = global.middle_eastern_nations
+			value = v
+
+			var:v = {
+				if = {
+					limit = {
+						is_valid_cyber_target = yes
+					}
+					add_to_array = { ROOT.cyber_potential_targets = THIS }
+				}
+			}
+		}
+	}else_if = {
+		limit = { check_variable = { region_swap = 2 } }
+		for_each_loop = {
+			array = global.sub_saharan_nations
+			value = v
+
+			var:v = {
+				if = {
+					limit = {
+						is_valid_cyber_target = yes
+					}
+					add_to_array = { ROOT.cyber_potential_targets = THIS }
+				}
+			}
+		}
+	}else_if = {
+		limit = { check_variable = { region_swap = 3 } }
+		for_each_loop = {
+			array = global.european_nations
+			value = v
+
+			var:v = {
+				if = {
+					limit = {
+						is_valid_cyber_target = yes
+					}
+					add_to_array = { ROOT.cyber_potential_targets = THIS }
+				}
+			}
+		}
+	}else_if = {
+		limit = { check_variable = { region_swap = 4 } }
+		for_each_loop = {
+			array = global.american_nations
+			value = v
+
+			var:v = {
+				if = {
+					limit = {
+						is_valid_cyber_target = yes
+					}
+					add_to_array = { ROOT.cyber_potential_targets = THIS }
+				}
+			}
+		}
+	}
+
+	missile_ui_update = yes
+}
+
+# Rolls the dice for attacking the target nation when the decision is completed
+#Requires targeting indexing to be setup prior to calling. See the decisions for details on that setup.
+cyber_two_roll = {
+	# Set target reference
+	set_temp_variable = { cur_target_nation = cyber_op_target_nation^cyber_op_cur_target_index }
+
+	#Set the base starting
+	set_temp_variable = { eff_offense = cyber_offense_power }
+
+	#Add the decryption bonus to the offensive power. This is a multiplier that is applied to the base add amount.
+	#More decryption = better added buff. the full +30 is a biiiig boost.
+	set_temp_variable = { decrypt_mod = decryption_progress@var:cur_target_nation }
+	set_temp_variable = { decrypt_offense = decrypt_mod }
+	multiply_temp_variable = { decrypt_offense = 30 }
+	add_to_temp_variable = { eff_offense = decrypt_offense }
+
+	# Grab the target nations basic value for their nation, and apply it to the math
+	var:cur_target_nation = {
+		set_temp_variable = { def_pen = cyber_defense_power }
+	}
+	multiply_temp_variable = { def_pen = -0.6 }
+	add_to_temp_variable = { eff_offense = def_pen }
+
+	# Add penalties and benefits for any active missions or cyber stuff
+	if = {
+		limit = { var:cur_target_nation = { has_idea = cyber_network_hardening_active } }
+		add_to_temp_variable = { eff_offense = -10 }
+	}
+	if = {
+		limit = { var:cur_target_nation = { has_idea = cyber_attribution_hunt_active } }
+		add_to_temp_variable = { eff_offense = -5 }
+	}
+	if = {
+		limit = { var:cur_target_nation = { has_country_flag = is_under_sigint_surveillance_tracking_attack_by_@ROOT } }
+		add_to_temp_variable = { eff_offense = 10 }
+	}
+	if = {
+		limit = { var:cur_target_nation = { has_country_flag = has_sleeper_network_tracking_access_from_@ROOT } }
+		add_to_temp_variable = { eff_offense = 15 }
+	}
+	if = {
+		limit = { var:cur_target_nation = { has_country_flag = has_comms_intercept_tracking_access_from_@ROOT } }
+		add_to_temp_variable = { eff_offense = 8 }
+	}
+	if = {
+		limit = { var:cur_target_nation = { has_country_flag = has_industrial_espionage_tracking_access_from_@ROOT } }
+		add_to_temp_variable = { eff_offense = 5 }
+	}
+
+	#Clamp at the min and max. Always a chance to pass, always a chance to fail
+	#Then roll the dice
+	clamp_temp_variable = { var = eff_offense min = 5 max = 95 }
+
+	set_temp_variable = { cyber_roll_result = 0 }
+	random = {
+		chance = eff_offense
+		set_temp_variable = { cyber_roll_result = 1 }
+	}
+
+	#Check how the attack went! If successful, let's roll to see if we get detected
+	#If failed, roll down the failure path
+	if = { limit = { check_variable = { cyber_roll_result > 0 } }
+		var:cur_target_nation = {
+			set_country_flag = {
+				flag = recent_cyber_attack_from_@ROOT
+				days = 90
+				value = 1
+			}
+			meta_effect = {
+				text = {
+					clr_country_flag = is_under_[TYPE]_attack_by_@ROOT
+				}
+				TYPE = "[cyber_clear_name_check]"
+			}
+		}
+
+		#Let's total it all up! The better our decryption and attribution skills, the more likely we are to false flag
+		set_temp_variable = { stealth_chance = 80 }
+		add_to_temp_variable = { stealth_chance = cyber_attribution }
+
+		set_temp_variable = { decrypt_stealth = decrypt_mod }
+		multiply_temp_variable = { decrypt_stealth = 15 }
+		add_to_temp_variable = { stealth_chance = decrypt_stealth }
+
+		var:cur_target_nation = {
+			set_temp_variable = { def_pen = cyber_defense_power }
+		}
+		multiply_temp_variable = { def_pen = -0.3 }
+		add_to_temp_variable = { stealth_chance = def_pen }
+
+		#Add the modifiers for previous or ongoing operations
+		if = {
+			limit = { var:cur_target_nation = { has_idea = cyber_counter_intrusion_active } }
+			add_to_temp_variable = { stealth_chance = -15 }
+		}
+		if = {
+			limit = { var:cur_target_nation = { has_idea = cyber_attribution_hunt_active } }
+			add_to_temp_variable = { stealth_chance = -20 }
+		}
+		if = {
+			limit = { var:cur_target_nation = { has_country_flag = has_comms_intercept_tracking_access_from_@ROOT } }
+			add_to_temp_variable = { stealth_chance = 10 }
+		}
+
+		if = {
+			limit = { has_war = yes }
+			add_to_temp_variable = { stealth_chance = -5 }
+		}
+
+		clamp_temp_variable = { var = stealth_chance min = 5 max = 95 }
+
+		set_temp_variable = { stealth_roll = 0 }
+		random = {
+			chance = stealth_chance
+			set_temp_variable = { stealth_roll = 1 }
+		}
+
+		set_temp_variable = { attribution_bonus = cyber_attribution_bonus }
+
+		# False flag: base chance, boosted if a deception campaign is active against the target
+		set_temp_variable = { false_flag_temp = attribution_bonus }
+		if = {
+			limit = { var:cur_target_nation = { has_country_flag = is_under_deception_campaign_tracking_attack_by_@ROOT } }
+			add_to_temp_variable = { false_flag_temp = 25 }
+		}
+		clamp_temp_variable = {
+			var = false_flag_temp
+			min = 0
+			max = 100
+		}
+
+		set_temp_variable = { false_flag_check = 0 }
+		random = {
+			chance = false_flag_temp
+			set_temp_variable = { false_flag_check = 1 }
+		}
+
+		if = { limit = { check_variable = { stealth_roll > 0 } }
+			#Results here should either be undetected, or false flag. Roll the attribution check
+			#The attribution check looks to see if a nation on your target list will be blamed for the mission, other than you
+			#If the target list is empty except for this target, it'll default back to you being blamed.
+			if = {
+				limit = {
+					check_variable = { false_flag_check > 0 }
+				}
+				set_temp_variable = { cyber_roll_result = 4 }
+			}else = {
+				set_temp_variable = { cyber_roll_result = 2 }
+			}
+		}
+		else = {
+			if = {
+				limit = {
+					check_variable = { false_flag_check > 0 }
+				}
+				#False flag worked!
+				set_temp_variable = { cyber_roll_result = 4 }
+			}else = {
+				#No false flag, you get detected
+				set_temp_variable = { cyber_roll_result = 3 }
+			}
+		}
+	}
+	else = {
+		#Attack has failed, go ahead and try again.
+		var:cur_target_nation = {
+			set_country_flag = {
+				flag = recent_cyber_attack_from_@ROOT
+				days = 30
+				value = 1
+			}
+		}
+	}
+}
+
+# Executes a cyber operation, and runs the effects
+# This rolls the dice for attacks, then starts firing effects off
+cyber_execute_operation = {
+	cyber_two_roll = yes
+
+	if = {
+		limit = {
+			check_variable = { cyber_roll_result > 0 }
+		}
+		ROOT = { country_event = { id = MD_cyber.1 } }
+		var:cur_target_nation = {
+			if = {
+				limit = { check_variable = { cyber_op_cur_type = 9 } }
+				set_country_flag = {
+					flag = has_industrial_espionage_tracking_access_from_@ROOT
+					days = 120
+				}
+			}
+			if = {
+				limit = { check_variable = { cyber_op_cur_type = 10 } }
+				set_country_flag = {
+					flag = has_comms_intercept_tracking_access_from_@ROOT
+					days = 180
+				}
+			}
+			if = {
+				limit = { check_variable = { cyber_op_cur_type = 13 } }
+				set_country_flag = {
+					flag = has_sleeper_network_tracking_access_from_@ROOT
+					days = 365
+				}
+			}
+			#executes the proper event based on the mission type
+			meta_effect = {
+				text = {
+					country_event = { id = MD_cyber.1[TYPE] }
+				}
+				TYPE = "[?cyber_op_cur_type]"
+			}
+		}
+
+		#now we see what happens, if someone got caught or false flagged, ect!
+		if = {
+			limit = {
+				check_variable = { cyber_roll_result = 2 }
+			}
+			var:cur_target_nation = {
+				country_event = { id = MD_cyber.2 }
+			}
+		}else_if = {
+			limit = {
+				check_variable = { cyber_roll_result = 3 }
+			}
+			var:cur_target_nation = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = cyber_hostile_attack_opinion
+				}
+				set_variable = { disp_name_agressor = ROOT }
+				country_event = { id = MD_cyber.3 }
+			}
+		}else_if = {
+			limit = {
+				check_variable = { cyber_roll_result = 4 }
+			}
+			var:cur_target_nation = {
+				random_scope_in_array = {
+					array = ROOT.cyber_active_targets
+					limit = { NOT = { tag = PREV } }
+					set_variable = { PREV.disp_name_agressor = THIS }
+				}
+
+				if = {
+					limit = {
+						OR = {
+							check_variable = { disp_name_agressor = 0 }
+							check_variable = { disp_name_agressor = THIS }
+						}
+					}
+					set_variable = { disp_name_agressor = ROOT }
+				}
+
+				var:disp_name_agressor = {
+					reverse_add_opinion_modifier = {
+						target = PREV
+						modifier = cyber_hostile_attack_opinion
+					}
+				}
+
+				country_event = { id = MD_cyber.3 }
+			}
+		}
+	}else = {
+		ROOT = { country_event = { id = MD_cyber.4 } }
+		#TODO: add an event here where nations can detect a failed cyber attack and react accordingly
+	}
+
+	add_to_variable = { cyber_ongoing_operations = -1 }
+
+	missile_ui_update = yes
+}
+
+# This executes the operations
+# First, this system finds the first empty operation slot, and grabs it
+# Then, it executes the proper mission in the slot
+cyber_launch_operation = {
+	set_temp_variable = { cyber_open_slot = -1 }
+	for_loop_effect = {
+		end = cyber_op_max_targets
+		break = b
+		value = t
+
+		if = {
+			limit = {
+				check_variable = { cyber_op_running^t = 0 }
+			}
+			set_temp_variable = { cyber_open_slot = t }
+			set_temp_variable = { b = 1 }
+		}
+	}
+
+	#Safety check, something went wrong, abort trying to do anything
+	if = {
+		limit = { NOT = { check_variable = { cyber_open_slot = -1 } } }
+		meta_effect = {
+			text = {
+				set_variable = { cyber_op_running^[SLOT] = 1 }
+				set_variable = { cyber_op_target_nation^[SLOT] = cyber_op_target }
+				set_variable = { cyber_op_type_arr^[SLOT] = cyber_op_type }
+
+				activate_mission = cyber_op_slot_[SLOT]_[TYPE]
+
+				add_to_variable = { cyber_ongoing_operations = 1 }
+
+				var:cyber_op_target = {
+					if = {
+						limit = { NOT = { original_tag = ROOT } }
+						set_country_flag = is_under_[TYPE]_attack_by_@ROOT
+					}
+				}
+			}
+			SLOT = "[?cyber_open_slot]"
+			TYPE = "[cyber_target_type_name]"
+		}
+	}
+
+	missile_ui_update = yes
+}
