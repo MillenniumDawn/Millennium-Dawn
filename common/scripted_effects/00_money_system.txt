@@ -4765,134 +4765,111 @@ calculate_gdp_modifiers = {
 
 # Effect: calculate_ai_taxes_desire
 # Purpose: Calculates the tax rate for the AI to change
+# Runs weekly from MD_on_actions (AI path only). Changes are ±1 per week.
 calculate_ai_taxes_desire = {
-	# POPULATION TAX
+	set_temp_variable = { pop_tax_change = 0 }
+	set_temp_variable = { corp_tax_change = 0 }
+
+	# === TAX INCREASES (deficit response) ===
+
+	# Population tax: raise at mild deficit (treasury_rate < -1)
+	# Skip if low stability unless deficit is severe (< -5)
 	if = {
 		limit = {
-			check_variable = { treasury_rate < 0 }
+			check_variable = { treasury_rate < -1 }
 			check_variable = { population_tax_rate < 40 }
+			OR = {
+				has_stability > 0.24
+				check_variable = { treasury_rate < -5 }
+			}
 		}
 		set_temp_variable = { pop_tax_change = 1 }
+	}
 
-		if = { limit = { check_variable = { treasury_rate > -5 } }
-			set_temp_variable = { pop_tax_change = 0 }
-		}
-
-		if = {
-			limit = {
-				has_stability < 0.25
-				check_variable = { treasury_rate > -10 }
+	# Corporate tax: raise at moderate deficit (treasury_rate < -2)
+	# Only after population tax reaches a moderate level (> 24), or at severe deficit regardless
+	if = {
+		limit = {
+			check_variable = { treasury_rate < -2 }
+			check_variable = { corporate_tax_rate < 50 }
+			OR = {
+				check_variable = { population_tax_rate > 24 }
+				check_variable = { treasury_rate < -5 }
 			}
-			set_temp_variable = { pop_tax_change = 0 }
 		}
+		set_temp_variable = { corp_tax_change = 1 }
+	}
 
+	# Interest rate escalation: if interest > 8% and any deficit, force tax increases
+	# Catches debt spirals early before treasury_rate thresholds are hit
+	if = {
+		limit = {
+			check_variable = { interest_rate > 8 }
+			check_variable = { treasury_rate < 0 }
+		}
 		if = {
 			limit = {
-				check_variable = { pop_tax_change = 1 }
-				OR = {
-					original_tag = CHI
-					original_tag = RAJ
-					original_tag = DRC
-					original_tag = IND
-					original_tag = JAP
-					original_tag = NIG
-					original_tag = EGY
-					original_tag = BRA
-				}
-				check_variable = { treasury_rate < -2 }
+				check_variable = { population_tax_rate < 40 }
+				check_variable = { pop_tax_change = 0 }
 			}
 			set_temp_variable = { pop_tax_change = 1 }
 		}
-
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Population Tax +[?pop_tax_change] (Current: [?population_tax_rate]%, Treasury: [?treasury_rate])"
-		}
-	}
-	else_if = {
-		limit = {
-			check_variable = { treasury_rate > 0 }
-			check_variable = { population_tax_rate > 15 }
-			OR = {
-				has_stability < 0.35
-				AND = {
-					check_variable = { debt_ratio < 0.25 }
-					check_variable = { interest_rate < 5 }
-				}
+		if = {
+			limit = {
+				check_variable = { corporate_tax_rate < 50 }
+				check_variable = { corp_tax_change = 0 }
 			}
-		}
-		set_temp_variable = { pop_tax_change = -1 }
-
-		if = { limit = { check_variable = { treasury_rate < 3 } }
-			set_temp_variable = { pop_tax_change = 0 }
-		}
-
-		if = { limit = { check_variable = { corporate_tax_rate > 10 } }
-			set_temp_variable = { pop_tax_change = 0 }
-		}
-
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Population Tax [?pop_tax_change] (Current: [?population_tax_rate]%, Treasury: [?treasury_rate])"
+			set_temp_variable = { corp_tax_change = 1 }
 		}
 	}
 
-	# CORPORATE TAX
+	# === TAX DECREASES (surplus response) ===
+
+	# When surplus is healthy and debt is manageable, lower taxes
+	# Prefer lowering corporate tax first (it drags productivity and investment)
 	if = {
 		limit = {
-			check_variable = { treasury_rate < 0 }
-			check_variable = { population_tax_rate > 39 }
-			check_variable = { corporate_tax_rate < 50 }
+			check_variable = { treasury_rate > 2 }
+			check_variable = { debt_ratio < 0.30 }
+			check_variable = { interest_rate < 5 }
+			check_variable = { pop_tax_change = 0 }
+			check_variable = { corp_tax_change = 0 }
 		}
-		set_temp_variable = { corp_tax_change = 1 }
-
-		if = { limit = { check_variable = { treasury_rate > -5 } }
-			set_temp_variable = { corp_tax_change = 0 }
-		}
-
 		if = {
-			limit = {
-				check_variable = { office_park_total > 30 }
-				check_variable = { treasury_rate < -3 }
-			}
-			set_temp_variable = { corp_tax_change = 1 }
-		}
-
-		if = {
-			limit = {
-				num_of_factories > 20
-				check_variable = { treasury_rate < -3 }
-			}
-			set_temp_variable = { corp_tax_change = 1 }
-		}
-
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Corporate Tax +[?corp_tax_change] (Current: [?corporate_tax_rate]%, Treasury: [?treasury_rate])"
-		}
-	}
-	else_if = {
-		limit = {
-			check_variable = { treasury_rate > 0 }
-			check_variable = { corporate_tax_rate > 10 }
-			OR = {
-				num_of_available_civilian_factories < 10
-				AND = {
-					check_variable = { debt_ratio < 0.25 }
-					check_variable = { interest_rate < 5 }
-				}
-			}
-		}
-		set_temp_variable = { corp_tax_change = -1 }
-
-		if = { limit = { check_variable = { treasury_rate < 5 } }
-			set_temp_variable = { corp_tax_change = 0 }
-		}
-
-		if = { limit = { num_of_available_civilian_factories < 15 }
+			limit = { check_variable = { corporate_tax_rate > 10 } }
 			set_temp_variable = { corp_tax_change = -1 }
 		}
-
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Corporate Tax [?corp_tax_change] (Current: [?corporate_tax_rate]%, Treasury: [?treasury_rate])"
+		else_if = {
+			limit = { check_variable = { population_tax_rate > 15 } }
+			set_temp_variable = { pop_tax_change = -1 }
 		}
+	}
+
+	# Low stability override: lower population tax to restore stability
+	if = {
+		limit = {
+			has_stability < 0.30
+			check_variable = { population_tax_rate > 20 }
+			check_variable = { treasury_rate > 0 }
+			check_variable = { pop_tax_change = 0 }
+		}
+		set_temp_variable = { pop_tax_change = -1 }
+	}
+
+	# Factory scarcity: lower corporate tax to attract investment
+	if = {
+		limit = {
+			num_of_available_civilian_factories < 10
+			check_variable = { corporate_tax_rate > 15 }
+			check_variable = { treasury_rate > 0 }
+			check_variable = { corp_tax_change = 0 }
+		}
+		set_temp_variable = { corp_tax_change = -1 }
+	}
+
+	# === APPLY AND CLAMP ===
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [THIS.GetName]: AI Tax: Pop [?pop_tax_change] ([?population_tax_rate]%), Corp [?corp_tax_change] ([?corporate_tax_rate]%), Treasury: [?treasury_rate], Interest: [?interest_rate]%"
 	}
 
 	if = { limit = { NOT = { check_variable = { pop_tax_change = 0 } } }
@@ -4901,6 +4878,9 @@ calculate_ai_taxes_desire = {
 	if = { limit = { NOT = { check_variable = { corp_tax_change = 0 } } }
 		add_to_variable = { corporate_tax_rate = corp_tax_change }
 	}
+
+	clamp_variable = { var = population_tax_rate min = 0 max = 50 }
+	clamp_variable = { var = corporate_tax_rate min = 0 max = 50 }
 }
 
 calculate_new_education_spending_tooltip = {
