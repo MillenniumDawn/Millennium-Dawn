@@ -187,35 +187,6 @@ calculate_tax_gain = {
 	multiply_variable = { agriculture_tax_gain = agriculture_tax_gain_multiplier }
 	clamp_variable = { var = agriculture_tax_gain min = 0.001 }
 
-	# Healthcare Corporate Income Tax
-	# Represents the private healthcare market: hospitals, pharmaceutical companies, medical devices, insurance
-	# Uses healthcare_gdp_var computed in calculate_gdp (last cycle) as the tax base
-	if = { limit = { has_idea = health_01 } set_temp_variable = { healthcare_income_rate = 0.05 } }
-	else_if = { limit = { has_idea = health_02 } set_temp_variable = { healthcare_income_rate = 0.08 } }
-	else_if = { limit = { has_idea = health_03 } set_temp_variable = { healthcare_income_rate = 0.11 } }
-	else_if = { limit = { has_idea = health_04 } set_temp_variable = { healthcare_income_rate = 0.14 } }
-	else_if = { limit = { has_idea = health_05 } set_temp_variable = { healthcare_income_rate = 0.17 } }
-	else_if = { limit = { has_idea = health_06 } set_temp_variable = { healthcare_income_rate = 0.20 } }
-
-	set_variable = { healthcare_tax_gain = healthcare_gdp_var }
-	multiply_variable = { healthcare_tax_gain = healthcare_income_rate }
-
-	set_temp_variable = { healthcare_income_mod = 1 }
-	add_to_temp_variable = { healthcare_income_mod = modifier@healthcare_income_multiplier_modifier }
-	clamp_temp_variable = { var = healthcare_income_mod min = 0 }
-	multiply_variable = { healthcare_tax_gain = healthcare_income_mod }
-
-	# Corporate tax rate + display factor (0.007) + gain multipliers
-	# Does NOT include overall_productivity — healthcare_gdp_var already absorbed it via gdp_total
-	set_temp_variable = { healthcare_corp_multiplier = corporate_tax_rate }
-	multiply_temp_variable = { healthcare_corp_multiplier = tax_gain_multiplier }
-	multiply_temp_variable = { healthcare_corp_multiplier = 0.007 }
-	multiply_temp_variable = { healthcare_corp_multiplier = corporate_tax_gain_multiplier }
-	multiply_variable = { healthcare_tax_gain = healthcare_corp_multiplier }
-	clamp_variable = { var = healthcare_tax_gain min = 0 }
-
-	add_to_variable = { corporate_tax = healthcare_tax_gain }
-
 	# Set base building counts (base tax constants will be factored into building-specific unified multipliers)
 	# Civilian Factories - base constant 2.5
 	# Military Factories - base constant 0.2
@@ -435,6 +406,35 @@ calculate_tax_gain = {
 		multiply_temp_variable = { building_final_modifier = internet_station_unified }
 		multiply_variable = { internet_station_tax = building_final_modifier }
 	}
+
+	# Healthcare Corporate Income Tax
+	# Represents the private healthcare market: hospitals, pharmaceutical companies, medical devices, insurance
+	# Uses healthcare_gdp_var computed in calculate_gdp (last cycle) as the tax base
+	if = { limit = { has_idea = health_01 } set_temp_variable = { healthcare_income_rate = 0.05 } }
+	else_if = { limit = { has_idea = health_02 } set_temp_variable = { healthcare_income_rate = 0.08 } }
+	else_if = { limit = { has_idea = health_03 } set_temp_variable = { healthcare_income_rate = 0.11 } }
+	else_if = { limit = { has_idea = health_04 } set_temp_variable = { healthcare_income_rate = 0.14 } }
+	else_if = { limit = { has_idea = health_05 } set_temp_variable = { healthcare_income_rate = 0.17 } }
+	else_if = { limit = { has_idea = health_06 } set_temp_variable = { healthcare_income_rate = 0.20 } }
+
+	set_variable = { healthcare_tax_gain = healthcare_gdp_var }
+	multiply_variable = { healthcare_tax_gain = healthcare_income_rate }
+
+	set_temp_variable = { healthcare_income_mod = 1 }
+	add_to_temp_variable = { healthcare_income_mod = modifier@healthcare_income_multiplier_modifier }
+	clamp_temp_variable = { var = healthcare_income_mod min = 0 }
+	multiply_variable = { healthcare_tax_gain = healthcare_income_mod }
+
+	# Corporate tax rate + display factor (0.007) + gain multipliers
+	# Does NOT include overall_productivity — healthcare_gdp_var already absorbed it via gdp_total
+	set_temp_variable = { healthcare_corp_multiplier = corporate_tax_rate }
+	multiply_temp_variable = { healthcare_corp_multiplier = tax_gain_multiplier }
+	multiply_temp_variable = { healthcare_corp_multiplier = 0.007 }
+	multiply_temp_variable = { healthcare_corp_multiplier = corporate_tax_gain_multiplier }
+	multiply_variable = { healthcare_tax_gain = healthcare_corp_multiplier }
+	clamp_variable = { var = healthcare_tax_gain min = 0 }
+
+	add_to_variable = { corporate_tax = healthcare_tax_gain }
 
 	##POP
 	set_variable = { var = population_tax value = population_total_m }
