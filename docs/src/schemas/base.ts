@@ -13,6 +13,7 @@ export const loadingSchema = z.enum(["lazy", "eager"]);
 export const slugSchema = z.string().regex(/^[a-z0-9-]+$/, "Expected a lowercase slug");
 
 export const tocSchema = z.enum(["auto", "off"]).optional();
+export const infoboxGroupKindSchema = z.enum(["default", "overview", "military_industry", "economy"]);
 
 export const baseDocSchema = z.object({
   title: z.string(),
@@ -28,14 +29,35 @@ export const baseDocSchema = z.object({
   order: z.number().int().optional(),
 });
 
+function resolveInfoboxGroupKind(
+  section: string,
+  kind?: z.infer<typeof infoboxGroupKindSchema>,
+): z.infer<typeof infoboxGroupKindSchema> {
+  if (kind) return kind;
+
+  const normalizedSection = section.toLowerCase();
+  if (normalizedSection === "overview") return "overview";
+  if (normalizedSection.includes("military") && normalizedSection.includes("industry")) {
+    return "military_industry";
+  }
+  if (normalizedSection.includes("economy")) return "economy";
+  return "default";
+}
+
 export const infoboxSchema = z.array(
-  z.object({
-    section: z.string(),
-    stats: z.array(
-      z.object({
-        label: z.string(),
-        value: z.string(),
-      }),
-    ),
-  }),
+  z
+    .object({
+      section: z.string(),
+      kind: infoboxGroupKindSchema.optional(),
+      stats: z.array(
+        z.object({
+          label: z.string(),
+          value: z.string(),
+        }),
+      ),
+    })
+    .transform((group) => ({
+      ...group,
+      kind: resolveInfoboxGroupKind(group.section, group.kind),
+    })),
 );

@@ -1,28 +1,30 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import SearchableIndex from "../../components/SearchableIndex.astro";
-import { toCardItem } from "../../lib/cards";
+import SearchableIndex from "../../features/searchable-index/ui/SearchableIndex.astro";
+import { STATIC_PAGE_META } from "../../shared/config/page-meta";
+import { toCardItem } from "../../shared/lib/cards";
+import { getChangelogPath } from "../../shared/lib/content-routes";
 import { withBase } from "../../lib/urls";
-import { stripMarkdownExt } from "../../lib/slugs";
 
 const sections = (await getCollection("changelogSections"))
   .slice()
   .sort((a, b) => (b.data.order ?? 0) - (a.data.order ?? 0));
 
+const pageMeta = STATIC_PAGE_META.changelogs;
 const cards = sections.map((entry) =>
   toCardItem(entry, {
-    url: `/changelogs/${stripMarkdownExt(entry.id)}/`,
+    url: getChangelogPath(entry),
     kind: "Changelog",
   }),
 );
 ---
 
 <BaseLayout
-  title="Changelogs"
-  pageId="changelogs"
-  description="Changelogs for Millennium Dawn: A Modern Day Mod"
-  canonicalPath="/changelogs/"
+  title={pageMeta.title}
+  pageId={pageMeta.pageId}
+  description={pageMeta.description}
+  canonicalPath={pageMeta.canonicalPath}
   toc="off"
 >
   <h1>Changelog Archive</h1>

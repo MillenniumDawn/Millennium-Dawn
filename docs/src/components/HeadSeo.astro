@@ -1,6 +1,14 @@
 ---
 import type { SeoMeta } from "../lib/seo";
+import { buildThemeBootstrapScript } from "../features/theme/lib";
 import { toAbsolute, withBase } from "../lib/urls";
+import {
+  SITE_DESCRIPTION,
+  SITE_LANGUAGE,
+  SITE_LOGO_PATH,
+  SITE_ORGANIZATION_NAME,
+  SITE_TITLE,
+} from "../shared/config/site";
 
 interface Props {
   seo: SeoMeta;
@@ -21,18 +29,21 @@ const ogImageUrl = seo.image
 const websiteJsonLd = JSON.stringify({
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "Millennium Dawn: A Modern Day Mod",
+  name: SITE_TITLE,
   url: toAbsolute("/"),
-  inLanguage: "en",
+  inLanguage: SITE_LANGUAGE,
 });
 
 const organizationJsonLd = JSON.stringify({
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Millennium Dawn",
+  name: SITE_ORGANIZATION_NAME,
   url: toAbsolute("/"),
-  logo: toAbsolute("/assets/images/favicon.png"),
+  logo: toAbsolute(SITE_LOGO_PATH),
+  description: SITE_DESCRIPTION,
 });
+
+const themeBootstrapScript = buildThemeBootstrapScript();
 ---
 
 <meta charset="UTF-8" />
@@ -44,7 +55,7 @@ const organizationJsonLd = JSON.stringify({
     <meta name="description" content={seo.description} />
     <link rel="canonical" href={seo.canonical} />
 
-    <meta property="og:site_name" content="Millennium Dawn: A Modern Day Mod" />
+    <meta property="og:site_name" content={SITE_TITLE} />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={seo.title} />
     <meta property="og:description" content={seo.description} />
@@ -71,24 +82,7 @@ const organizationJsonLd = JSON.stringify({
 
 {seo.robots && <meta name="robots" content={seo.robots} />}
 
-<script is:inline>
-  (function () {
-    var doc = document.documentElement;
-    var stored = null;
-    try {
-      stored = localStorage.getItem("theme");
-    } catch (_e) {
-      stored = null;
-    }
-    var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    var isDark = stored === "dark" || (!stored && prefersDark);
-    if (isDark) doc.classList.add("dark-mode");
-    else if (stored === "light") doc.classList.add("light-mode");
-    doc.style.colorScheme = isDark ? "dark" : "light";
-  })();
-</script>
+<script is:inline set:html={themeBootstrapScript}></script>
 
-<link rel="stylesheet" href={withBase("/assets/css/main.css")} />
-
-<link rel="icon" type="image/png" href={withBase("/assets/images/favicon.png")} />
+<link rel="icon" type="image/png" href={withBase(SITE_LOGO_PATH)} />
 <link rel="alternate icon" type="image/x-icon" href={withBase("/assets/images/favicon.ico")} />

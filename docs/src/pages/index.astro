@@ -8,10 +8,17 @@ import HomeResourceGroups from "../components/HomeResourceGroups.astro";
 import HomeCredits from "../components/HomeCredits.astro";
 import { parseInlineMarkdown } from "../lib/inline-markdown";
 import { withBase } from "../lib/urls";
+import { STATIC_PAGE_META } from "../shared/config/page-meta";
+import { slugifyText } from "../shared/lib/slugs";
 
-function toSlug(text: string): string {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-}
+const HOME_SECTION_IDS = {
+  roadmapImages: "roadmap-images",
+  joiningTeam: "joining-team",
+  translations: "translations",
+  paratranzProjects: "paratranz-projects",
+  submods: "submods",
+  credits: "credits",
+} as const;
 
 const releaseEntry = await getEntry("release", "index");
 const homeEntry = await getEntry("home", "index");
@@ -24,24 +31,25 @@ if (!homeEntry) {
 
 const release = releaseEntry.data.current;
 const home = homeEntry.data;
+const pageMeta = STATIC_PAGE_META.home;
 
 const pageHeadings: MarkdownHeading[] = [
-  { depth: 2, slug: "roadmap-images", text: "Roadmap Images" },
-  ...(home.roadmaps ?? []).map((r) => ({ depth: 3, slug: toSlug(r.title), text: r.title })),
-  { depth: 3, slug: "joining-team", text: "Joining the Development Team" },
-  { depth: 3, slug: "translations", text: "Translations" },
-  { depth: 4, slug: "paratranz-projects", text: "Paratranz Projects" },
-  ...(home.resource_groups ?? []).map((g) => ({ depth: 3, slug: toSlug(g.heading), text: g.heading })),
-  { depth: 3, slug: "submods", text: "Submods" },
-  { depth: 2, slug: "credits", text: "Credits" },
+  { depth: 2, slug: HOME_SECTION_IDS.roadmapImages, text: "Roadmap Images" },
+  ...(home.roadmaps ?? []).map((r) => ({ depth: 3, slug: slugifyText(r.title), text: r.title })),
+  { depth: 3, slug: HOME_SECTION_IDS.joiningTeam, text: "Joining the Development Team" },
+  { depth: 3, slug: HOME_SECTION_IDS.translations, text: "Translations" },
+  { depth: 4, slug: HOME_SECTION_IDS.paratranzProjects, text: "Paratranz Projects" },
+  ...(home.resource_groups ?? []).map((g) => ({ depth: 3, slug: slugifyText(g.heading), text: g.heading })),
+  { depth: 3, slug: HOME_SECTION_IDS.submods, text: "Submods" },
+  { depth: 2, slug: HOME_SECTION_IDS.credits, text: "Credits" },
 ];
 ---
 
 <BaseLayout
-  title="Home"
-  pageId="home"
-  canonicalPath="/"
-  description="Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV."
+  title={pageMeta.title}
+  pageId={pageMeta.pageId}
+  canonicalPath={pageMeta.canonicalPath}
+  description={pageMeta.description}
   headings={pageHeadings}
 >
   <Hero />
@@ -62,7 +70,7 @@ const pageHeadings: MarkdownHeading[] = [
 
   <HomeRoadmaps roadmaps={home?.roadmaps || []} />
 
-  <h3 id="joining-team">Joining the Millennium Dawn Development Team</h3>
+  <h3 id={HOME_SECTION_IDS.joiningTeam}>Joining the Millennium Dawn Development Team</h3>
   {home?.team_join?.description && (
     <p>
       {parseInlineMarkdown(home.team_join.description).map((part) =>
@@ -71,8 +79,8 @@ const pageHeadings: MarkdownHeading[] = [
     </p>
   )}
 
-  <h3 id="translations">Translations</h3>
-  <h4 id="paratranz-projects">Paratranz Projects</h4>
+  <h3 id={HOME_SECTION_IDS.translations}>Translations</h3>
+  <h4 id={HOME_SECTION_IDS.paratranzProjects}>Paratranz Projects</h4>
   <ul>
     {(home?.paratranz_projects || []).map((item) => (
       <li>
@@ -83,7 +91,7 @@ const pageHeadings: MarkdownHeading[] = [
 
   <HomeResourceGroups groups={home?.resource_groups || []} />
 
-  <h3 id="submods">Submods</h3>
+  <h3 id={HOME_SECTION_IDS.submods}>Submods</h3>
   <p>
     <strong>DISCLAIMER</strong> Any issues with a submod should be first reported to the submod you are playing with. Even
     something as simple as a graphics mod could break something in Millennium Dawn.

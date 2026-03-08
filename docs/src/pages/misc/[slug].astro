@@ -2,9 +2,8 @@
 import { getCollection, render } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import type { GetStaticPaths } from "astro";
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import { resolveToc } from "../../lib/content-helpers";
-import { stripMarkdownExt } from "../../lib/slugs";
+import MarkdownDocPage from "../../shared/ui/MarkdownDocPage.astro";
+import { buildEntryStaticPaths, getEntryBaseId, getMiscPath } from "../../shared/lib/content-routes";
 
 interface Props {
   entry: CollectionEntry<"misc">;
@@ -12,25 +11,13 @@ interface Props {
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const entries = await getCollection("misc");
-  return entries.map((entry) => ({
-    params: { slug: stripMarkdownExt(entry.id) },
-    props: { entry },
-  }));
+  return buildEntryStaticPaths(entries, getEntryBaseId);
 };
 
 const { entry }: Props = Astro.props;
 const { Content, headings } = await render(entry);
 ---
 
-<BaseLayout
-  title={entry.data.title}
-  description={entry.data.description}
-  canonicalPath={`/misc/${stripMarkdownExt(entry.id)}/`}
-  toc={resolveToc(entry.data.toc)}
-  seo={entry.data.seo ?? true}
-  robots={entry.data.robots}
-  pageId={entry.data.page_id ?? stripMarkdownExt(entry.id)}
-  headings={headings}
->
+<MarkdownDocPage entry={entry} canonicalPath={getMiscPath(entry)} headings={headings}>
   <Content />
-</BaseLayout>
+</MarkdownDocPage>

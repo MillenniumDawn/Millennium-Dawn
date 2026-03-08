@@ -4,7 +4,11 @@ import InfoboxCompactTable from "./InfoboxCompactTable.astro";
 import InfoboxStatList from "./InfoboxStatList.astro";
 
 interface Stat { label: string; value: string }
-interface Group { section: string; stats: Stat[] }
+interface Group {
+  section: string;
+  kind?: "default" | "overview" | "military_industry" | "economy";
+  stats: Stat[];
+}
 
 interface Props {
   title: string;
@@ -47,19 +51,14 @@ function statValue(group: Group, labels: string[]): string {
   </div>
 
   {(infobox || []).map((group) => {
-    const sectionKey = group.section.toLowerCase();
-
     const overviewHasOnlyTag =
-      sectionKey === "overview" && (group.stats || []).every((stat) => stat.label === "Tag");
+      group.kind === "overview" && (group.stats || []).every((stat) => stat.label === "Tag");
     if (overviewHasOnlyTag) return null;
-
-    const isMilitaryIndustry = sectionKey.includes("military") && sectionKey.includes("industry");
-    const isEconomy = sectionKey.includes("economy");
 
     return (
       <>
         <div class="wiki-infobox__section">{group.section}</div>
-        {isMilitaryIndustry ? (
+        {group.kind === "military_industry" ? (
           <>
             <InfoboxCompactTable
               group={group}
@@ -73,7 +72,7 @@ function statValue(group: Group, labels: string[]): string {
               </p>
             )}
           </>
-        ) : isEconomy ? (
+        ) : group.kind === "economy" ? (
           <InfoboxCompactTable
             group={group}
             columns={["Treasury", "Debt", "Investments"]}

@@ -1,5 +1,15 @@
 import { getCollection, getEntry } from "astro:content";
-import { stripMarkdownExt } from "./slugs";
+import { CONTENT_PAGE_ROUTES, STATIC_PAGE_META } from "../shared/config/page-meta";
+import { SITE_DESCRIPTION } from "../shared/config/site";
+import {
+  getChangelogPath,
+  getCountryPath,
+  getDevDiaryPath,
+  getLastPathSegment,
+  getMiscPath,
+  getResourcePath,
+  getTutorialPath,
+} from "../shared/lib/content-routes";
 
 export interface OgPageData {
   slug: string;
@@ -7,58 +17,22 @@ export interface OgPageData {
   description: string;
 }
 
-const DEFAULT_DESCRIPTION =
-  "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV.";
+const DEFAULT_DESCRIPTION = SITE_DESCRIPTION;
 
 async function getStaticPages(): Promise<OgPageData[]> {
   const pages: OgPageData[] = [
-    {
-      slug: "index",
-      title: "Home",
-      description: DEFAULT_DESCRIPTION,
-    },
-    {
-      slug: "changelogs",
-      title: "Changelogs",
-      description: "Changelogs for Millennium Dawn: A Modern Day Mod",
-    },
-    {
-      slug: "dev-diaries",
-      title: "Dev Diaries",
-      description:
-        "Development diaries from the Millennium Dawn mod team, covering new features, changes, and updates.",
-    },
-    {
-      slug: "tutorials",
-      title: "Tutorials",
-      description:
-        "Guides and tutorials for playing Millennium Dawn: A Modern Day mod for Hearts of Iron IV.",
-    },
-    {
-      slug: "support",
-      title: "Technical Support",
-      description:
-        "Technical support and troubleshooting help for Millennium Dawn: A Modern Day mod for Hearts of Iron IV.",
-    },
-    {
-      slug: "resources",
-      title: "Resources",
-      description: "List of resources for the development team of Millennium Dawn.",
-    },
+    ...Object.values(STATIC_PAGE_META).map((page) => ({
+      slug: page.ogSlug,
+      title: page.title,
+      description: page.description,
+    })),
   ];
 
-  // Content-backed static pages (served via index.astro with getEntry)
-  const contentPageIds = [
-    { id: "getting-started", route: "getting-started" },
-    { id: "faq", route: "faq" },
-    { id: "countries", route: "countries" },
-  ] as const;
-
-  for (const { id, route } of contentPageIds) {
+  for (const [id, route] of Object.entries(CONTENT_PAGE_ROUTES)) {
     const entry = await getEntry("pages", id);
     if (entry) {
       pages.push({
-        slug: route,
+        slug: getLastPathSegment(route),
         title: entry.data.title,
         description: entry.data.description ?? DEFAULT_DESCRIPTION,
       });
@@ -88,9 +62,8 @@ async function collectDynamicPages(): Promise<OgPageData[]> {
   ]);
 
   for (const entry of countryEntries) {
-    const slug = entry.data.slug ?? stripMarkdownExt(entry.id);
     pages.push({
-      slug: `countries/${slug}`,
+      slug: getCountryPath(entry).replace(/^\/+|\/+$/g, ""),
       title: entry.data.title,
       description: entry.data.description ?? DEFAULT_DESCRIPTION,
     });
@@ -99,7 +72,7 @@ async function collectDynamicPages(): Promise<OgPageData[]> {
   for (const entry of changelogEntries) {
     if (entry.data.seo === false) continue;
     pages.push({
-      slug: `changelogs/${stripMarkdownExt(entry.id)}`,
+      slug: getChangelogPath(entry).replace(/^\/+|\/+$/g, ""),
       title: entry.data.title,
       description: entry.data.description ?? DEFAULT_DESCRIPTION,
     });
@@ -107,11 +80,8 @@ async function collectDynamicPages(): Promise<OgPageData[]> {
 
   for (const entry of devDiaryEntries) {
     if (entry.data.seo === false) continue;
-    const slug = entry.data.permalink
-      ? entry.data.permalink.replace(/^\/+|\/+$/g, "")
-      : `dev-diaries/${stripMarkdownExt(entry.id)}`;
     pages.push({
-      slug,
+      slug: getDevDiaryPath(entry).replace(/^\/+|\/+$/g, ""),
       title: entry.data.title,
       description: entry.data.description ?? DEFAULT_DESCRIPTION,
     });
@@ -120,7 +90,7 @@ async function collectDynamicPages(): Promise<OgPageData[]> {
   for (const entry of tutorialEntries) {
     if (entry.data.seo === false) continue;
     pages.push({
-      slug: `player-tutorials/${stripMarkdownExt(entry.id)}`,
+      slug: getTutorialPath(entry).replace(/^\/+|\/+$/g, ""),
       title: entry.data.title,
       description: entry.data.description ?? DEFAULT_DESCRIPTION,
     });
@@ -129,7 +99,7 @@ async function collectDynamicPages(): Promise<OgPageData[]> {
   for (const entry of resourceEntries) {
     if (entry.data.seo === false) continue;
     pages.push({
-      slug: `dev-resources/${stripMarkdownExt(entry.id)}`,
+      slug: getResourcePath(entry).replace(/^\/+|\/+$/g, ""),
       title: entry.data.title,
       description: entry.data.description ?? DEFAULT_DESCRIPTION,
     });
@@ -138,7 +108,7 @@ async function collectDynamicPages(): Promise<OgPageData[]> {
   for (const entry of miscEntries) {
     if (entry.data.seo === false) continue;
     pages.push({
-      slug: `misc/${stripMarkdownExt(entry.id)}`,
+      slug: getMiscPath(entry).replace(/^\/+|\/+$/g, ""),
       title: entry.data.title,
       description: entry.data.description ?? DEFAULT_DESCRIPTION,
     });

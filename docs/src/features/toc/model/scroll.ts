@@ -1,3 +1,5 @@
+import { TOC_ATTRS, TOC_SELECTORS } from "../lib/config";
+
 export interface TocScrollHandle {
   cleanup(): void;
 }
@@ -16,18 +18,18 @@ export function initTocScroll(
 
   const onNavLinkClick = (event: MouseEvent) => {
     if (!(event.target instanceof Element)) return;
-    const link = event.target.closest<HTMLAnchorElement>(".toc-sidebar__link");
+    const link = event.target.closest<HTMLAnchorElement>(TOC_SELECTORS.link);
     if (!link) return;
 
     event.preventDefault();
 
-    const targetId = link.getAttribute("data-toc-id");
+    const targetId = link.getAttribute(TOC_ATTRS.tocId);
     if (!targetId) return;
 
     const target = document.getElementById(targetId);
     if (!(target instanceof HTMLElement)) return;
 
-    const header = document.querySelector<HTMLElement>(".site-header");
+    const header = document.querySelector<HTMLElement>(TOC_SELECTORS.header);
     const offset = header ? header.offsetHeight + 16 : scrollOffset;
     const targetTop = target.getBoundingClientRect().top + window.pageYOffset - offset;
     const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

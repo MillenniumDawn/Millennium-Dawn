@@ -1,4 +1,5 @@
 import { toAbsolute, withBase } from "./urls";
+import { SITE_DESCRIPTION } from "../shared/config/site";
 
 export interface SeoImage {
   path: string;
@@ -16,8 +17,7 @@ export interface SeoMeta {
   seoEnabled: boolean;
 }
 
-const DEFAULT_DESCRIPTION =
-  "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV.";
+const DEFAULT_DESCRIPTION = SITE_DESCRIPTION;
 
 function ogImagePath(canonicalPath: string): string {
   const slug = canonicalPath.replace(/^\/+|\/+$/g, "");
