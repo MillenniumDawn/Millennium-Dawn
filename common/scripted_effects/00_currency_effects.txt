@@ -23,6 +23,8 @@ currency_startup = {
 	}
 	set_variable = { currency_inflation_feed = 0 }
 	set_variable = { inflation_cost_combined_var = 0 }
+	set_variable = { reserve_roi_bonus = 0 }
+	set_variable = { reserve_trade_bonus = 0 }
 }
 
 # ── Monthly recalculation ─────────────────────────────────────────────────────
@@ -74,6 +76,9 @@ calculate_currency_strength = {
 	# Keep combined var in sync with monthly currency feed updates
 	set_variable = { inflation_cost_combined_var = inflation_rate_var }
 	add_to_variable = { inflation_cost_combined_var = currency_inflation_feed }
+
+	# Recalculate reserve currency ROI bonus and apply inflation buffer
+	calculate_reserve_roi_bonus = yes
 }
 
 # ── Income stream multipliers ─────────────────────────────────────────────────
@@ -186,5 +191,100 @@ calculate_seigniorage_income = {
 		add_to_temp_variable = { seigniorage_mod = 1.0 }
 		multiply_temp_variable = { seigniorage_base = seigniorage_mod }
 		add_to_variable = { additional_income_rate = seigniorage_base }
+	}
+}
+
+# ── Reserve Currency ROI Bonus ────────────────────────────────────────────────
+
+# Called at the end of calculate_currency_strength (monthly, per country).
+# Sets reserve_roi_bonus and reserve_trade_bonus based on the issuer's current
+# currency_strength and the global adoption network size.
+#
+# reserve_roi_bonus feeds into reserve_currency_investment_modifier (dynamic)
+#   → return_on_investment_modifier → calculate_int_investments_rate
+# reserve_trade_bonus feeds into reserve_currency_trade_modifier (dynamic)
+#   → trade_opinion_factor
+#
+# Inflation buffer: subtracts a fraction of reserve_roi_bonus from
+# inflation_cost_combined_var, which was just set by calculate_currency_strength.
+# A stronger reserve currency partially insulates against domestic inflation.
+calculate_reserve_roi_bonus = {
+	if = {
+		limit = { has_idea = us_dollar }
+		set_variable = { reserve_roi_bonus = USA.currency_strength }
+		multiply_variable = { reserve_roi_bonus = 0.04 }
+		set_temp_variable = { tmp_network = global.usd_reserve_adoption_count }
+		multiply_temp_variable = { tmp_network = 0.001 }
+		add_to_variable = { reserve_roi_bonus = tmp_network }
+		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.10 }
+	}
+	else_if = {
+		limit = { has_idea = euro }
+		if = {
+			limit = { country_exists = EUU }
+			set_variable = { reserve_roi_bonus = EUU.currency_strength }
+		}
+		else = {
+			set_variable = { reserve_roi_bonus = GER.currency_strength }
+		}
+		multiply_variable = { reserve_roi_bonus = 0.03 }
+		set_temp_variable = { tmp_network = global.eur_reserve_adoption_count }
+		multiply_temp_variable = { tmp_network = 0.001 }
+		add_to_variable = { reserve_roi_bonus = tmp_network }
+		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.08 }
+	}
+	else_if = {
+		limit = { has_idea = chinese_yuan }
+		set_variable = { reserve_roi_bonus = CHI.currency_strength }
+		multiply_variable = { reserve_roi_bonus = 0.025 }
+		set_temp_variable = { tmp_network = global.cny_reserve_adoption_count }
+		multiply_temp_variable = { tmp_network = 0.001 }
+		add_to_variable = { reserve_roi_bonus = tmp_network }
+		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.07 }
+	}
+	else_if = {
+		limit = { has_idea = russia_rouble }
+		# SOV = Russia at game start; may become RUS through gameplay paths
+		if = {
+			limit = { country_exists = SOV }
+			set_variable = { reserve_roi_bonus = SOV.currency_strength }
+		}
+		else_if = {
+			limit = { country_exists = RUS }
+			set_variable = { reserve_roi_bonus = RUS.currency_strength }
+		}
+		else = {
+			set_variable = { reserve_roi_bonus = 0 }
+		}
+		multiply_variable = { reserve_roi_bonus = 0.025 }
+		set_temp_variable = { tmp_network = global.rub_reserve_adoption_count }
+		multiply_temp_variable = { tmp_network = 0.001 }
+		add_to_variable = { reserve_roi_bonus = tmp_network }
+		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.07 }
+	}
+	else = {
+		# no_foreign_reserve or no idea: zero out both bonuses
+		set_variable = { reserve_roi_bonus = 0 }
+		set_variable = { reserve_trade_bonus = 0 }
+	}
+
+	# Derive trade_opinion bonus from ROI bonus (scaled down)
+	if = {
+		limit = {
+			OR = {
+				has_idea = us_dollar
+				has_idea = euro
+				has_idea = chinese_yuan
+				has_idea = russia_rouble
+			}
+		}
+		set_variable = { reserve_trade_bonus = reserve_roi_bonus }
+		multiply_variable = { reserve_trade_bonus = 0.3 }
+		clamp_variable = { var = reserve_trade_bonus min = 0 max = 0.05 }
+
+		# Inflation buffer: strong reserve currency reduces domestic inflation feedthrough
+		set_temp_variable = { tmp_inflation_buffer = reserve_roi_bonus }
+		multiply_temp_variable = { tmp_inflation_buffer = -0.5 }
+		add_to_variable = { inflation_cost_combined_var = tmp_inflation_buffer }
 	}
 }
