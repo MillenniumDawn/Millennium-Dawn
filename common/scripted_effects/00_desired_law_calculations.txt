@@ -489,123 +489,123 @@ change_expected_defense_spending = {
 }
 
 ai_reduce_spending_on_deficit = {
-	# STEP 1: Trim any category above its expected level when running a high deficit
-	# Applies in peacetime only — wartime spending is handled by war multipliers
-	if = {
-		limit = {
-			is_ai = yes
-			has_war = no
-			ai_has_high_deficit = yes
+	if = { limit = { is_ai = yes }
+		# STEP 1: Trim any category above its expected level when running a high deficit
+		# Applies in peacetime only — wartime spending is handled by war multipliers
+		if = {
+			limit = {
+				has_war = no
+				ai_has_high_deficit = yes
+			}
+
+			# Reduce civilian categories first (welfare, health, education, police, admin)
+			if = {
+				limit = {
+					check_variable = { social_budget > 1 }
+					check_variable = { social_budget > expected_welfare_spending }
+				}
+				decrease_social_spending = yes
+				set_law_vars = yes
+			}
+			if = {
+				limit = {
+					check_variable = { crime_fighting > 1 }
+					check_variable = { crime_fighting > expected_police_spending }
+				}
+				decrease_policing_budget = yes
+				set_law_vars = yes
+			}
+			if = {
+				limit = {
+					check_variable = { education_budget > 1 }
+					check_variable = { education_budget > expected_edu_spending }
+				}
+				decrease_education_budget = yes
+				set_law_vars = yes
+			}
+			if = {
+				limit = {
+					check_variable = { health_budget > 1 }
+					check_variable = { health_budget > expected_health_spending }
+				}
+				decrease_healthcare_budget = yes
+				set_law_vars = yes
+			}
+			if = {
+				limit = {
+					check_variable = { bureaucracy > 1 }
+					check_variable = { bureaucracy > expected_adm_spending }
+				}
+				decrease_centralization = yes
+				set_law_vars = yes
+			}
+
+			# Military cut LAST: only reduce if above expected level
+			if = {
+				limit = {
+					check_variable = { Military_Spending > 1 }
+					check_variable = { Military_Spending > expected_military_sp }
+				}
+				decrease_military_spending = yes
+				set_law_vars = yes
+			}
 		}
 
-		# Reduce civilian categories first (welfare, health, education, police, admin)
+		# STEP 2: Emergency austerity during MAJOR crisis (interest >12% + rate < -9)
+		# Applies even during wartime — if the economy is collapsing, cuts must happen
+		# Cut one civilian category per month (the highest one), military only if civilians are all at minimum
 		if = {
 			limit = {
-				check_variable = { social_budget > 1 }
-				check_variable = { social_budget > expected_welfare_spending }
+				ai_has_major_economic_problems = yes
 			}
-			decrease_social_spending = yes
-			set_law_vars = yes
-		}
-		if = {
-			limit = {
-				check_variable = { crime_fighting > 1 }
-				check_variable = { crime_fighting > expected_police_spending }
-			}
-			decrease_policing_budget = yes
-			set_law_vars = yes
-		}
-		if = {
-			limit = {
-				check_variable = { education_budget > 1 }
-				check_variable = { education_budget > expected_edu_spending }
-			}
-			decrease_education_budget = yes
-			set_law_vars = yes
-		}
-		if = {
-			limit = {
-				check_variable = { health_budget > 1 }
-				check_variable = { health_budget > expected_health_spending }
-			}
-			decrease_healthcare_budget = yes
-			set_law_vars = yes
-		}
-		if = {
-			limit = {
-				check_variable = { bureaucracy > 1 }
-				check_variable = { bureaucracy > expected_adm_spending }
-			}
-			decrease_centralization = yes
-			set_law_vars = yes
-		}
 
-		# Military cut LAST: only reduce if above expected level
-		if = {
-			limit = {
-				check_variable = { Military_Spending > 1 }
-				check_variable = { Military_Spending > expected_military_sp }
+			# Try civilian categories first — pick the highest non-minimum one
+			if = {
+				limit = {
+					check_variable = { social_budget > 1 }
+					check_variable = { social_budget > crime_fighting }
+					check_variable = { social_budget > education_budget }
+				}
+				decrease_social_spending = yes
+				set_law_vars = yes
 			}
-			decrease_military_spending = yes
-			set_law_vars = yes
-		}
-	}
-
-	# STEP 2: Emergency austerity during MAJOR crisis (interest >12% + rate < -9)
-	# Applies even during wartime — if the economy is collapsing, cuts must happen
-	# Cut one civilian category per month (the highest one), military only if civilians are all at minimum
-	if = {
-		limit = {
-			is_ai = yes
-			ai_has_major_economic_problems = yes
-		}
-
-		# Try civilian categories first — pick the highest non-minimum one
-		if = {
-			limit = {
-				check_variable = { social_budget > 1 }
-				check_variable = { social_budget > crime_fighting }
-				check_variable = { social_budget > education_budget }
+			else_if = {
+				limit = {
+					check_variable = { health_budget > 1 }
+					check_variable = { health_budget > crime_fighting }
+					check_variable = { health_budget > education_budget }
+				}
+				decrease_healthcare_budget = yes
+				set_law_vars = yes
 			}
-			decrease_social_spending = yes
-			set_law_vars = yes
-		}
-		else_if = {
-			limit = {
-				check_variable = { health_budget > 1 }
-				check_variable = { health_budget > crime_fighting }
-				check_variable = { health_budget > education_budget }
+			else_if = {
+				limit = { check_variable = { education_budget > 1 } }
+				decrease_education_budget = yes
+				set_law_vars = yes
 			}
-			decrease_healthcare_budget = yes
-			set_law_vars = yes
-		}
-		else_if = {
-			limit = { check_variable = { education_budget > 1 } }
-			decrease_education_budget = yes
-			set_law_vars = yes
-		}
-		else_if = {
-			limit = { check_variable = { crime_fighting > 1 } }
-			decrease_policing_budget = yes
-			set_law_vars = yes
-		}
-		else_if = {
-			limit = { check_variable = { bureaucracy > 1 } }
-			decrease_centralization = yes
-			set_law_vars = yes
-		}
-		# Military LAST: only cut if all civilian categories are at minimum (level 1)
-		else_if = {
-			limit = {
-				check_variable = { Military_Spending > 1 }
-				check_variable = { social_budget < 2 }
-				check_variable = { health_budget < 2 }
-				check_variable = { education_budget < 2 }
-				check_variable = { crime_fighting < 2 }
-				check_variable = { bureaucracy < 2 }
+			else_if = {
+				limit = { check_variable = { crime_fighting > 1 } }
+				decrease_policing_budget = yes
+				set_law_vars = yes
 			}
-			decrease_military_spending = yes
-			set_law_vars = yes
+			else_if = {
+				limit = { check_variable = { bureaucracy > 1 } }
+				decrease_centralization = yes
+				set_law_vars = yes
+			}
+			# Military LAST: only cut if all civilian categories are at minimum (level 1)
+			else_if = {
+				limit = {
+					check_variable = { Military_Spending > 1 }
+					check_variable = { social_budget < 2 }
+					check_variable = { health_budget < 2 }
+					check_variable = { education_budget < 2 }
+					check_variable = { crime_fighting < 2 }
+					check_variable = { bureaucracy < 2 }
+				}
+				decrease_military_spending = yes
+				set_law_vars = yes
+			}
 		}
 	}
 }
