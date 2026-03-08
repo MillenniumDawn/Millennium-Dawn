@@ -191,6 +191,35 @@ calculate_tax_gain = {
 	multiply_variable = { agriculture_tax_gain = agriculture_tax_gain_multiplier }
 	clamp_variable = { var = agriculture_tax_gain min = 0.001 }
 
+	# Healthcare Corporate Income Tax
+	# Represents the private healthcare market: hospitals, pharmaceutical companies, medical devices, insurance
+	# Uses healthcare_gdp_var computed in calculate_gdp (last cycle) as the tax base
+	if = { limit = { has_idea = health_01 } set_temp_variable = { healthcare_income_rate = 0.05 } }
+	else_if = { limit = { has_idea = health_02 } set_temp_variable = { healthcare_income_rate = 0.08 } }
+	else_if = { limit = { has_idea = health_03 } set_temp_variable = { healthcare_income_rate = 0.11 } }
+	else_if = { limit = { has_idea = health_04 } set_temp_variable = { healthcare_income_rate = 0.14 } }
+	else_if = { limit = { has_idea = health_05 } set_temp_variable = { healthcare_income_rate = 0.17 } }
+	else_if = { limit = { has_idea = health_06 } set_temp_variable = { healthcare_income_rate = 0.20 } }
+
+	set_variable = { healthcare_tax_gain = healthcare_gdp_var }
+	multiply_variable = { healthcare_tax_gain = healthcare_income_rate }
+
+	set_temp_variable = { healthcare_income_mod = 1 }
+	add_to_temp_variable = { healthcare_income_mod = modifier@healthcare_income_multiplier_modifier }
+	clamp_temp_variable = { var = healthcare_income_mod min = 0 }
+	multiply_variable = { healthcare_tax_gain = healthcare_income_mod }
+
+	# Corporate tax rate + display factor (0.007) + gain multipliers
+	# Does NOT include overall_productivity — healthcare_gdp_var already absorbed it via gdp_total
+	set_temp_variable = { healthcare_corp_multiplier = corporate_tax_rate }
+	multiply_temp_variable = { healthcare_corp_multiplier = tax_gain_multiplier }
+	multiply_temp_variable = { healthcare_corp_multiplier = 0.007 }
+	multiply_temp_variable = { healthcare_corp_multiplier = corporate_tax_gain_multiplier }
+	multiply_variable = { healthcare_tax_gain = healthcare_corp_multiplier }
+	clamp_variable = { var = healthcare_tax_gain min = 0 }
+
+	add_to_variable = { corporate_tax = healthcare_tax_gain }
+
 	# Set base building counts (base tax constants will be factored into building-specific unified multipliers)
 	# Civilian Factories - base constant 2.5
 	# Military Factories - base constant 0.2
@@ -4750,6 +4779,33 @@ calculate_gdp = {
 		subtract_from_temp_variable = { workforce_total = workers_in_internet_stations }
 	}
 
+	# Healthcare Sector — Workforce
+	if = { limit = { has_idea = health_01 } set_temp_variable = { healthcare_workforce_level_scalar = 0.50 } }
+	else_if = { limit = { has_idea = health_02 } set_temp_variable = { healthcare_workforce_level_scalar = 1.00 } }
+	else_if = { limit = { has_idea = health_03 } set_temp_variable = { healthcare_workforce_level_scalar = 1.50 } }
+	else_if = { limit = { has_idea = health_04 } set_temp_variable = { healthcare_workforce_level_scalar = 2.00 } }
+	else_if = { limit = { has_idea = health_05 } set_temp_variable = { healthcare_workforce_level_scalar = 2.50 } }
+	else_if = { limit = { has_idea = health_06 } set_temp_variable = { healthcare_workforce_level_scalar = 3.00 } }
+
+	set_temp_variable = { workers_per_healthcare_demand_unit = 0.003 }
+	multiply_temp_variable = { workers_per_healthcare_demand_unit = healthcare_workforce_level_scalar }
+
+	set_temp_variable = { healthcare_workers_req_mod = 1 }
+	add_to_temp_variable = { healthcare_workers_req_mod = modifier@healthcare_workforce_requirement_modifier }
+	clamp_temp_variable = { var = healthcare_workers_req_mod min = 0.10 }
+	multiply_temp_variable = { workers_per_healthcare_demand_unit = healthcare_workers_req_mod }
+
+	set_temp_variable = { max_workers_in_healthcare = state_healthcare_demand }
+	multiply_temp_variable = { max_workers_in_healthcare = workers_per_healthcare_demand_unit }
+
+	set_variable = { workers_in_healthcare = max_workers_in_healthcare }
+	clamp_variable = { var = workers_in_healthcare max = workforce_total }
+
+	set_variable = { healthcare_manpower_fulfillment = workers_in_healthcare }
+	divide_variable = { healthcare_manpower_fulfillment = max_workers_in_healthcare }
+	clamp_variable = { var = healthcare_manpower_fulfillment min = 0.1 max = 1 }
+	subtract_from_temp_variable = { workforce_total = workers_in_healthcare }
+
 	# Average Worker Fulfillment
 	set_variable = { average_worker_fulfillment = civilian_factories_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = military_factories_manpower_fulfillment }
@@ -4763,7 +4819,8 @@ calculate_gdp = {
 	add_to_variable = { average_worker_fulfillment = fossil_powerplants_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = renewable_energy_infra_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = internet_stations_manpower_fulfillment }
-	multiply_variable = { average_worker_fulfillment = 0.0833 } # 1/12 buildings
+	add_to_variable = { average_worker_fulfillment = healthcare_manpower_fulfillment }
+	multiply_variable = { average_worker_fulfillment = 0.0769 } # 1/13 sectors
 
 	set_variable = { total_unemployed = workforce_total }
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = high_unemployment_modifier } } }
@@ -4866,6 +4923,25 @@ calculate_gdp = {
 	multiply_temp_variable = { gdp_from_renewable_energy = renewable_energy_infra_manpower_fulfillment }
 	multiply_temp_variable = { gdp_from_internet_stations = internet_stations_manpower_fulfillment }
 
+	# Healthcare Sector — GDP Contribution
+	# Formula: state_healthcare_demand * 0.01 * gdp_per_capita * level_mult * fulfillment
+	# Global overall_productivity * 0.001 is applied to the full gdp_total pool below (line ~4924)
+	if = { limit = { has_idea = health_01 } set_temp_variable = { health_gdp_level_mult = 0.30 } }
+	else_if = { limit = { has_idea = health_02 } set_temp_variable = { health_gdp_level_mult = 0.60 } }
+	else_if = { limit = { has_idea = health_03 } set_temp_variable = { health_gdp_level_mult = 1.00 } }
+	else_if = { limit = { has_idea = health_04 } set_temp_variable = { health_gdp_level_mult = 1.40 } }
+	else_if = { limit = { has_idea = health_05 } set_temp_variable = { health_gdp_level_mult = 1.80 } }
+	else_if = { limit = { has_idea = health_06 } set_temp_variable = { health_gdp_level_mult = 2.20 } }
+
+	set_temp_variable = { gdp_from_healthcare = state_healthcare_demand }
+	multiply_temp_variable = { gdp_from_healthcare = 0.01 }
+	multiply_temp_variable = { gdp_from_healthcare = gdp_per_capita }
+	multiply_temp_variable = { gdp_from_healthcare = health_gdp_level_mult }
+	multiply_temp_variable = { gdp_from_healthcare = healthcare_manpower_fulfillment }
+
+	# Store as persistent variable for corporate tax calculation in calculate_tax_gain
+	set_variable = { healthcare_gdp_var = gdp_from_healthcare }
+
 	set_temp_variable = { gdp_from_factories = gdp_from_civs }
 	add_to_temp_variable = { gdp_from_factories = gdp_from_mils }
 	add_to_temp_variable = { gdp_from_factories = gdp_from_dockyards }
@@ -4878,6 +4954,7 @@ calculate_gdp = {
 	add_to_temp_variable = { gdp_from_factories = gdp_from_fossil_powerplants }
 	add_to_temp_variable = { gdp_from_factories = gdp_from_renewable_energy }
 	add_to_temp_variable = { gdp_from_factories = gdp_from_internet_stations }
+	add_to_temp_variable = { gdp_from_factories = gdp_from_healthcare }
 
 	set_variable = { gdp_total = gdp_from_factories }
 	add_to_variable = { gdp_total = gdp_from_agriculture }
