@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate internal links and local assets in a built Jekyll site."""
+"""Validate internal links and local assets in a built site."""
 
 from __future__ import annotations
 
@@ -126,7 +126,7 @@ def collect_broken_links(site_dir: Path, baseurl: str) -> List[Tuple[Path, str, 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--site-dir", required=True, help="Path to generated site directory")
-    parser.add_argument("--baseurl", default="", help="Jekyll baseurl (e.g. /Millennium-Dawn)")
+    parser.add_argument("--baseurl", default="", help="Site base path (e.g. /Millennium-Dawn)")
     return parser.parse_args()
 
 

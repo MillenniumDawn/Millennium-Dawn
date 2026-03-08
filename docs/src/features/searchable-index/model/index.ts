@@ -1,0 +1,1 @@
+export { initCardIndex } from "./initCardIndex";

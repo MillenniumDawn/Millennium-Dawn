@@ -1,9 +1,10 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import SearchableIndex from "../../components/SearchableIndex.astro";
+import { SearchableIndex } from "../../features/searchable-index";
+import { STATIC_PAGE_META } from "../../lib/page-meta";
 import { toCardItem } from "../../lib/cards";
-import { stripMarkdownExt } from "../../lib/slugs";
+import { getResourcePath } from "../../lib/content-routes";
 
 const resourceEntries = (await getCollection("resources"))
   .slice()
@@ -14,17 +15,18 @@ const resourceEntries = (await getCollection("resources"))
     return a.data.title.localeCompare(b.data.title);
   });
 
-const cards = resourceEntries.map((entry) => toCardItem(entry, { url: `/dev-resources/${stripMarkdownExt(entry.id)}/` }));
+const pageMeta = STATIC_PAGE_META.resources;
+const cards = resourceEntries.map((entry) => toCardItem(entry, { url: getResourcePath(entry) }));
 ---
 
 <BaseLayout
-  title="Resources"
-  pageId="resources"
-  description="List of resources for the development team of Millennium Dawn."
-  canonicalPath="/resources/"
+  title={pageMeta.title}
+  pageId={pageMeta.pageId}
+  description={pageMeta.description}
+  canonicalPath={pageMeta.canonicalPath}
   toc="off"
 >
-  <h2>Development Resources</h2>
+  <h1>Development Resources</h1>
   <p>This is a non-exhaustive list of team-based resources for Millennium Dawn.</p>
 
   <SearchableIndex

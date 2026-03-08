@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 
 
-TEXT_EXTENSIONS = {".md", ".html", ".yml", ".yaml", ".scss", ".css", ".js"}
+TEXT_EXTENSIONS = {".md", ".html", ".yml", ".yaml", ".scss", ".css", ".js", ".ts", ".astro"}
 TEMP_NAME_RE = re.compile(r"-temp", re.IGNORECASE)
 
 # Keep this list short and explicit when an unreferenced asset is intentional.

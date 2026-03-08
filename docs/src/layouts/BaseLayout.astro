@@ -1,14 +1,14 @@
 ---
 import { getEntry } from "astro:content";
 import type { MarkdownHeading } from "astro";
-import { ClientRouter } from "astro:transitions";
 import HeadSeo from "../components/HeadSeo.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import Breadcrumbs from "../components/Breadcrumbs.astro";
-import TocSidebar from "../components/TocSidebar.astro";
+import { TocSidebar } from "../features/toc";
 import { buildSeoMeta } from "../lib/seo";
-import { ensureTrailingSlash, stripBase, withBase } from "../lib/urls";
+import { ensureTrailingSlash, stripBase } from "../lib/urls";
+import { SITE_DESCRIPTION, SITE_TITLE } from "../shared/config/site";
 
 import "../styles/tailwind.css";
 import "../styles/app.css";
@@ -22,7 +22,6 @@ interface Props {
   pageId?: string;
   bodyClass?: string;
   canonicalPath?: string;
-  pageAssets?: string[];
   headings?: MarkdownHeading[];
 }
 
@@ -35,13 +34,8 @@ const {
   pageId,
   bodyClass,
   canonicalPath,
-  pageAssets = [],
   headings = [],
-} = Astro.props;
-
-const siteTitle = "Millennium Dawn: A Modern Day Mod";
-const siteDescription =
-  "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV.";
+}: Props = Astro.props;
 
 const navigationEntry = await getEntry("navigation", "index");
 const sectionsEntry = await getEntry("sections", "index");
@@ -53,13 +47,13 @@ if (!sectionsEntry) {
 }
 
 const currentPath = ensureTrailingSlash(stripBase(Astro.url.pathname));
-const pageSlug = pageId || title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-const resolvedBodyClass = bodyClass || pageSlug;
+const pageSlug = pageId ?? title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+const resolvedBodyClass = bodyClass ?? pageSlug;
 
 const seoMeta = buildSeoMeta({
-  title: `${title} - ${siteTitle}`,
+  title: `${title} - ${SITE_TITLE}`,
   description,
-  canonicalPath: canonicalPath || currentPath,
+  canonicalPath: canonicalPath ?? currentPath,
   robots,
   seo,
 });
@@ -69,13 +63,12 @@ const seoMeta = buildSeoMeta({
 <html lang="en">
   <head>
     <HeadSeo seo={seoMeta} />
-    <ClientRouter />
     <slot name="head" />
   </head>
   <body class:list={[resolvedBodyClass, { "has-toc": toc !== "off" }]} data-page={pageSlug} data-toc={toc}>
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <Header
-      title={siteTitle}
+      title={SITE_TITLE}
       navItems={navigationEntry.data.main}
       currentPath={currentPath}
     />
@@ -92,8 +85,8 @@ const seoMeta = buildSeoMeta({
     </div>
 
     <Footer
-      siteTitle={siteTitle}
-      siteDescription={siteDescription}
+      siteTitle={SITE_TITLE}
+      siteDescription={SITE_DESCRIPTION}
       footerDocs={navigationEntry.data.footer_docs}
       socialLinks={navigationEntry.data.social}
     />
@@ -103,8 +96,6 @@ const seoMeta = buildSeoMeta({
 
       initSite();
     </script>
-
-    {pageAssets.map((asset) => <script type="module" src={withBase(asset)} is:inline></script>)}
 
     <button class="back-to-top" aria-label="Back to top" type="button">
       <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
