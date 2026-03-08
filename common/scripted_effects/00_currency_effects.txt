@@ -25,6 +25,17 @@ currency_startup = {
 	set_variable = { inflation_cost_combined_var = 0 }
 	set_variable = { reserve_roi_bonus = 0 }
 	set_variable = { reserve_trade_bonus = 0 }
+
+	# Default all countries to fiat currency if no backing law is set
+	if = {
+		limit = {
+			NOT = { has_idea = gold_standard }
+			NOT = { has_idea = silver_standard }
+			NOT = { has_idea = bi_metal_standard }
+			NOT = { has_idea = no_currency_backing }
+		}
+		add_ideas = no_currency_backing
+	}
 }
 
 # ── Monthly recalculation ─────────────────────────────────────────────────────
@@ -62,8 +73,48 @@ calculate_currency_strength = {
 	else_if = { limit = { has_country_flag = rub_reserve_currency_issuer }
 		clamp_variable = { var = currency_delta min = -0.01 max = 0.012 }
 	}
+	else_if = { limit = { has_country_flag = gbp_reserve_currency_issuer }
+		clamp_variable = { var = currency_delta min = -0.008 max = 0.013 }
+	}
+	else_if = { limit = { has_country_flag = jpy_reserve_currency_issuer }
+		clamp_variable = { var = currency_delta min = -0.008 max = 0.012 }
+	}
+	else_if = { limit = { has_country_flag = chf_reserve_currency_issuer }
+		clamp_variable = { var = currency_delta min = -0.004 max = 0.010 }
+	}
+	# Backing-specific clamp for non-issuers — hard-money standards dampen volatility
+	else_if = { limit = { has_idea = gold_standard }
+		clamp_variable = { var = currency_delta min = -0.005 max = 0.008 }
+	}
+	else_if = { limit = { has_idea = silver_standard }
+		clamp_variable = { var = currency_delta min = -0.008 max = 0.012 }
+	}
+	else_if = { limit = { has_idea = bi_metal_standard }
+		clamp_variable = { var = currency_delta min = -0.010 max = 0.015 }
+	}
 
 	add_to_variable = { currency_strength = currency_delta }
+
+	# Hard-money mean-reversion: gold and silver pull currency_strength toward par (1.0)
+	if = {
+		limit = { has_idea = gold_standard }
+		if = {
+			limit = { NOT = { check_variable = { currency_strength > 1.0 } } }
+			add_to_variable = { currency_strength = 0.003 }
+		}
+		else_if = {
+			limit = { check_variable = { currency_strength > 1.05 } }
+			subtract_from_variable = { currency_strength = 0.002 }
+		}
+	}
+	else_if = {
+		limit = { has_idea = silver_standard }
+		if = {
+			limit = { NOT = { check_variable = { currency_strength > 1.0 } } }
+			add_to_variable = { currency_strength = 0.002 }
+		}
+	}
+
 	clamp_variable = { var = currency_strength min = 0.15 max = 2.0 }
 
 	# Recompute inflation feed: weak currency = positive inflation pressure.
@@ -113,6 +164,9 @@ apply_currency_multipliers = {
 			has_idea = euro
 			has_idea = chinese_yuan
 			has_idea = russia_rouble
+			has_idea = japanese_yen
+			has_idea = british_pound
+			has_idea = swiss_frank
 		}
 	}
 		set_temp_variable = { debt_factor = 1.0 }
@@ -172,6 +226,21 @@ calculate_seigniorage_income = {
 	# RUB — Russia is the sole rub_reserve_currency_issuer at game start
 	else_if = { limit = { has_country_flag = rub_reserve_currency_issuer tag = RUS }
 		set_temp_variable = { seigniorage_base = global.rub_reserve_adoption_count }
+		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
+	}
+	# GBP — United Kingdom
+	else_if = { limit = { has_country_flag = gbp_reserve_currency_issuer tag = ENG }
+		set_temp_variable = { seigniorage_base = global.gbp_reserve_adoption_count }
+		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
+	}
+	# JPY — Japan
+	else_if = { limit = { has_country_flag = jpy_reserve_currency_issuer tag = JAP }
+		set_temp_variable = { seigniorage_base = global.jpy_reserve_adoption_count }
+		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
+	}
+	# CHF — Switzerland
+	else_if = { limit = { has_country_flag = chf_reserve_currency_issuer tag = SWI }
+		set_temp_variable = { seigniorage_base = global.chf_reserve_adoption_count }
 		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
 	}
 	# Non-issuers: money-printing income only when Expand Money Supply is active
@@ -262,6 +331,33 @@ calculate_reserve_roi_bonus = {
 		add_to_variable = { reserve_roi_bonus = tmp_network }
 		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.07 }
 	}
+	else_if = {
+		limit = { has_idea = japanese_yen }
+		set_variable = { reserve_roi_bonus = JAP.currency_strength }
+		multiply_variable = { reserve_roi_bonus = 0.02 }
+		set_temp_variable = { tmp_network = global.jpy_reserve_adoption_count }
+		multiply_temp_variable = { tmp_network = 0.001 }
+		add_to_variable = { reserve_roi_bonus = tmp_network }
+		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.06 }
+	}
+	else_if = {
+		limit = { has_idea = british_pound }
+		set_variable = { reserve_roi_bonus = ENG.currency_strength }
+		multiply_variable = { reserve_roi_bonus = 0.025 }
+		set_temp_variable = { tmp_network = global.gbp_reserve_adoption_count }
+		multiply_temp_variable = { tmp_network = 0.001 }
+		add_to_variable = { reserve_roi_bonus = tmp_network }
+		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.07 }
+	}
+	else_if = {
+		limit = { has_idea = swiss_frank }
+		set_variable = { reserve_roi_bonus = SWI.currency_strength }
+		multiply_variable = { reserve_roi_bonus = 0.015 }
+		set_temp_variable = { tmp_network = global.chf_reserve_adoption_count }
+		multiply_temp_variable = { tmp_network = 0.001 }
+		add_to_variable = { reserve_roi_bonus = tmp_network }
+		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.05 }
+	}
 	else = {
 		# no_foreign_reserve or no idea: zero out both bonuses
 		set_variable = { reserve_roi_bonus = 0 }
@@ -276,6 +372,9 @@ calculate_reserve_roi_bonus = {
 				has_idea = euro
 				has_idea = chinese_yuan
 				has_idea = russia_rouble
+				has_idea = japanese_yen
+				has_idea = british_pound
+				has_idea = swiss_frank
 			}
 		}
 		set_variable = { reserve_trade_bonus = reserve_roi_bonus }
