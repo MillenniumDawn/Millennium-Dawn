@@ -443,17 +443,20 @@ country_event = {
 		name = zombie.8.a
 		log = "[GetDateText]: [This.GetName]: zombie.8.a executed"
 
-		every_other_country = {
-			limit = {
-				OR = {
-					has_idea = large_power
-					has_idea = great_power
-					has_idea = super_power
+		if = {
+			limit = { ZOM_coalition_can_form = yes }
+			every_other_country = {
+				limit = {
+					OR = {
+						has_idea = large_power
+						has_idea = great_power
+						has_idea = super_power
+					}
 				}
-			}
-			display_individual_scopes = yes
+				display_individual_scopes = yes
 
-			country_event = { id = zombie.9 days = 14 random_days = 7 }
+				country_event = { id = zombie.9 days = 14 random_days = 7 }
+			}
 		}
 	}
 
@@ -495,7 +498,8 @@ country_event = {
 	# Join the Anti-Zombie Coalition
 	option = {
 		name = zombie.9.a
-		log = "[GetDateText]: [This.GetName]: zombie.9.b executed"
+		log = "[GetDateText]: [This.GetName]: zombie.9.a executed"
+		trigger = { ZOM_coalition_can_form = yes }
 		if = {
 			limit = { is_in_faction = yes }
 			leave_faction = yes
@@ -597,10 +601,10 @@ country_event = {
 				count = 15
 				owner = ZOM
 			}
+			# Difficulty scaling: each tier adds +20 outbreak units
+			# HARD: +20, EXTREME: +40, INSANE: +60
 			if = {
-				limit = {
-					has_game_rule = { rule = zombie_difficulty option = EXTREME }
-				}
+				limit = { ZOM_difficulty_at_least_hard = yes }
 				create_unit = {
 					division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
 					count = 20
@@ -608,12 +612,7 @@ country_event = {
 				}
 			}
 			if = {
-				limit = {
-					OR = {
-						has_game_rule = { rule = zombie_difficulty option = INSANE }
-						has_game_rule = { rule = zombie_difficulty option = EXTREME }
-					}
-				}
+				limit = { ZOM_difficulty_at_least_extreme = yes }
 				create_unit = {
 					division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
 					count = 20
@@ -621,13 +620,7 @@ country_event = {
 				}
 			}
 			if = {
-				limit = {
-					OR = {
-						has_game_rule = { rule = zombie_difficulty option = HARD }
-						has_game_rule = { rule = zombie_difficulty option = EXTREME }
-						has_game_rule = { rule = zombie_difficulty option = INSANE }
-					}
-				}
+				limit = { ZOM_difficulty_insane = yes }
 				create_unit = {
 					division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
 					count = 20
@@ -638,6 +631,234 @@ country_event = {
 		set_country_flag = has_had_outbreak_event
 		clear_variable = random_outbreak_state
 		news_event = zombie.11
+	}
+}
+
+# The Horde Evolves
+country_event = {
+	id = zombie.15
+	title = zombie.15.t
+	desc = zombie.15.d
+	is_triggered_only = yes
+	trigger = {
+		original_tag = ZOM
+		NOT = { has_global_flag = ZOM_horde_evolved }
+	}
+
+	option = {
+		name = zombie.15.a
+		log = "[GetDateText]: [This.GetName]: zombie.15.a executed"
+		ai_chance = { base = 1 }
+		set_global_flag = ZOM_horde_evolved
+		ZOM = {
+			division_template = {
+				name = "Runner Pack"
+
+				regiments = {
+					zombie_runner = { x = 0 y = 0 }
+					zombie_runner = { x = 0 y = 1 }
+					zombie_runner = { x = 0 y = 2 }
+					zombie_runner = { x = 0 y = 3 }
+					zombie_runner = { x = 1 y = 0 }
+					zombie_runner = { x = 1 y = 1 }
+					zombie_runner = { x = 1 y = 2 }
+					zombie_runner = { x = 1 y = 3 }
+					zombie_runner = { x = 2 y = 0 }
+					zombie_runner = { x = 2 y = 1 }
+					zombie_runner = { x = 2 y = 2 }
+					zombie_runner = { x = 2 y = 3 }
+				}
+				priority = 100
+			}
+
+			division_template = {
+				name = "Brute Vanguard"
+
+				regiments = {
+					zombie_brute = { x = 0 y = 0 }
+					zombie_brute = { x = 0 y = 1 }
+					zombie_brute = { x = 0 y = 2 }
+					zombie_brute = { x = 1 y = 0 }
+					zombie_brute = { x = 1 y = 1 }
+					zombie_brute = { x = 1 y = 2 }
+					zombies = { x = 2 y = 0 }
+					zombies = { x = 2 y = 1 }
+					zombies = { x = 2 y = 2 }
+					zombies = { x = 3 y = 0 }
+					zombies = { x = 3 y = 1 }
+					zombies = { x = 3 y = 2 }
+				}
+				priority = 100
+			}
+		}
+		capital_scope = {
+			create_unit = {
+				division = "name = \"Runner Pack\" division_template = \"Runner Pack\" start_experience_factor = 0.3"
+				count = 10
+				owner = ZOM
+			}
+			create_unit = {
+				division = "name = \"Brute Vanguard\" division_template = \"Brute Vanguard\" start_experience_factor = 0.3"
+				count = 10
+				owner = ZOM
+			}
+		}
+	}
+}
+
+# The Virus Spreads to Nigeria
+country_event = {
+	id = zombie.12
+	title = zombie.12.t
+	desc = zombie.12.d
+	is_triggered_only = yes
+	trigger = {
+		original_tag = ZOM
+		NOT = { has_country_flag = ZOM_invasion_of_nigeria }
+		has_capitulated = no
+		country_exists = NIG
+	}
+
+	option = {
+		name = zombie.12.a
+		log = "[GetDateText]: [This.GetName]: zombie.12.a executed"
+		ai_chance = { base = 1 }
+		set_country_flag = ZOM_invasion_of_nigeria
+		if = { limit = { any_country = { has_faction_template = faction_template_anti_zombie_coalition } }
+			random_country = {
+				limit = {
+					has_faction_template = faction_template_anti_zombie_coalition
+					is_faction_leader = yes
+				}
+				NIG = {
+					if = {
+						limit = { is_in_faction = yes }
+						leave_faction = yes
+					}
+					add_to_war = {
+						targeted_alliance = PREV
+						enemy = ZOM
+						hostility_reason = the_horde_spreads
+					}
+					add_to_faction = PREV
+				}
+			}
+		}
+		ZOM = {
+			set_province_controller = 11358
+		}
+		270 = {
+			create_unit = {
+				division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
+				count = 20
+				owner = ZOM
+				prioritize_location = 11358
+			}
+		}
+	}
+}
+
+# The Virus Spreads to Brazil
+country_event = {
+	id = zombie.13
+	title = zombie.13.t
+	desc = zombie.13.d
+	is_triggered_only = yes
+	trigger = {
+		original_tag = ZOM
+		NOT = { has_country_flag = ZOM_invasion_of_brazil }
+		has_capitulated = no
+		country_exists = BRA
+	}
+
+	option = {
+		name = zombie.13.a
+		log = "[GetDateText]: [This.GetName]: zombie.13.a executed"
+		ai_chance = { base = 1 }
+		set_country_flag = ZOM_invasion_of_brazil
+		if = { limit = { any_country = { has_faction_template = faction_template_anti_zombie_coalition } }
+			random_country = {
+				limit = {
+					has_faction_template = faction_template_anti_zombie_coalition
+					is_faction_leader = yes
+				}
+				BRA = {
+					if = {
+						limit = { is_in_faction = yes }
+						leave_faction = yes
+					}
+					add_to_war = {
+						targeted_alliance = PREV
+						enemy = ZOM
+						hostility_reason = the_horde_spreads
+					}
+					add_to_faction = PREV
+				}
+			}
+		}
+		ZOM = {
+			set_province_controller = 3429
+		}
+		284 = {
+			create_unit = {
+				division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
+				count = 20
+				owner = ZOM
+				prioritize_location = 3429
+			}
+		}
+	}
+}
+
+# The Virus Spreads to Turkey
+country_event = {
+	id = zombie.14
+	title = zombie.14.t
+	desc = zombie.14.d
+	is_triggered_only = yes
+	trigger = {
+		original_tag = ZOM
+		NOT = { has_country_flag = ZOM_invasion_of_turkey }
+		has_capitulated = no
+		country_exists = TUR
+	}
+
+	option = {
+		name = zombie.14.a
+		log = "[GetDateText]: [This.GetName]: zombie.14.a executed"
+		ai_chance = { base = 1 }
+		set_country_flag = ZOM_invasion_of_turkey
+		if = { limit = { any_country = { has_faction_template = faction_template_anti_zombie_coalition } }
+			random_country = {
+				limit = {
+					has_faction_template = faction_template_anti_zombie_coalition
+					is_faction_leader = yes
+				}
+				TUR = {
+					if = {
+						limit = { is_in_faction = yes }
+						leave_faction = yes
+					}
+					add_to_war = {
+						targeted_alliance = PREV
+						enemy = ZOM
+						hostility_reason = the_horde_spreads
+					}
+					add_to_faction = PREV
+				}
+			}
+		}
+		ZOM = {
+			set_province_controller = 857
+		}
+		131 = {
+			create_unit = {
+				division = "name = \"Zombie Horde\" division_template = \"Zombie Horde\" start_experience_factor = 0.3"
+				count = 20
+				owner = ZOM
+				prioritize_location = 857
+			}
+		}
 	}
 }
 
@@ -671,5 +892,70 @@ news_event = {
 				}
 			}
 		}
+	}
+}
+
+add_namespace = zombie_capitulation
+
+# China Falls to the Zombie Horde
+news_event = {
+	id = zombie_capitulation.1
+	title = zombie_capitulation.1.t
+	desc = zombie_capitulation.1.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = zombie_capitulation.1.a
+		trigger = { NOT = { original_tag = ZOM } }
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = zombie_capitulation.1.b
+		trigger = { original_tag = ZOM }
+		ai_chance = { base = 1 }
+	}
+}
+
+# Russia Falls to the Zombie Horde
+news_event = {
+	id = zombie_capitulation.2
+	title = zombie_capitulation.2.t
+	desc = zombie_capitulation.2.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = zombie_capitulation.2.a
+		trigger = { NOT = { original_tag = ZOM } }
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = zombie_capitulation.2.b
+		trigger = { original_tag = ZOM }
+		ai_chance = { base = 1 }
+	}
+}
+
+# United States Falls to the Zombie Horde
+news_event = {
+	id = zombie_capitulation.3
+	title = zombie_capitulation.3.t
+	desc = zombie_capitulation.3.d
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = zombie_capitulation.3.a
+		trigger = { NOT = { original_tag = ZOM } }
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = zombie_capitulation.3.b
+		trigger = { original_tag = ZOM }
+		ai_chance = { base = 1 }
 	}
 }

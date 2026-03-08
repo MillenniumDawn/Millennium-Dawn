@@ -1,3 +1,9 @@
+# File Encoding
+
+- All `.txt` files (focus trees, events, decisions, ideas, etc.) must be saved as **UTF-8 without BOM**.
+- Only `.yml` localisation files use UTF-8 **with** BOM.
+- When creating or editing `.txt` files, never add a BOM byte sequence (`EF BB BF`).
+
 # Documentation References
 
 ## Local Documentation (`resources/documentation/`)
