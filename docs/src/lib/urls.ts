@@ -1,4 +1,4 @@
-const FALLBACK_ORIGIN = "https://millenniumdawn.github.io";
+import { SITE_FALLBACK_ORIGIN } from "../shared/config/site";
 
 function normalizeBase(rawBase: string | undefined): string {
   if (!rawBase || rawBase === "/") return "";
@@ -6,7 +6,7 @@ function normalizeBase(rawBase: string | undefined): string {
 }
 
 function normalizeOrigin(rawSite: string | undefined): string {
-  const site = rawSite || FALLBACK_ORIGIN;
+  const site = rawSite ?? SITE_FALLBACK_ORIGIN;
   return site.endsWith("/") ? site.slice(0, -1) : site;
 }
 

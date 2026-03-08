@@ -1,8 +1,14 @@
 ---
 import { cssUrl } from "../lib/urls";
+import InfoboxCompactTable from "./InfoboxCompactTable.astro";
+import InfoboxStatList from "./InfoboxStatList.astro";
 
-type Stat = { label: string; value: string };
-type Group = { section: string; stats: Stat[] };
+interface Stat { label: string; value: string }
+interface Group {
+  section: string;
+  kind?: "default" | "overview" | "military_industry" | "economy";
+  stats: Stat[];
+}
 
 interface Props {
   title: string;
@@ -10,7 +16,7 @@ interface Props {
   infobox: Group[];
 }
 
-const { title, flagImage, infobox } = Astro.props;
+const { title, flagImage, infobox }: Props = Astro.props;
 
 let countryTag = "WIP";
 for (const group of infobox || []) {
@@ -23,8 +29,8 @@ for (const group of infobox || []) {
 }
 
 function statValue(group: Group, labels: string[]): string {
-  const match = (group.stats || []).find((item) => labels.includes(item.label));
-  return match?.value || "-";
+  const match = (group.stats ?? []).find((item) => labels.includes(item.label));
+  return match?.value ?? "-";
 }
 ---
 
@@ -45,40 +51,20 @@ function statValue(group: Group, labels: string[]): string {
   </div>
 
   {(infobox || []).map((group) => {
-    const sectionKey = group.section.toLowerCase();
-
     const overviewHasOnlyTag =
-      sectionKey === "overview" && (group.stats || []).every((stat) => stat.label === "Tag");
+      group.kind === "overview" && (group.stats || []).every((stat) => stat.label === "Tag");
     if (overviewHasOnlyTag) return null;
-
-    const isMilitaryIndustry = sectionKey.includes("military") && sectionKey.includes("industry");
-    const isEconomy = sectionKey.includes("economy");
 
     return (
       <>
         <div class="wiki-infobox__section">{group.section}</div>
-        {isMilitaryIndustry ? (
+        {group.kind === "military_industry" ? (
           <>
-            <div class="wiki-infobox__compact-table-wrap">
-              <table class="wiki-infobox__compact-table" aria-label={group.section}>
-                <thead>
-                  <tr>
-                    <th>Divisions</th>
-                    <th>Total Factories</th>
-                    <th>Military Ind.</th>
-                    <th>Civilian Ind.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>{statValue(group, ["Divisions"])}</td>
-                    <td>{statValue(group, ["Total Factories"])}</td>
-                    <td>{statValue(group, ["Military Ind.", "Military Ind"])}</td>
-                    <td>{statValue(group, ["Civilian Ind.", "Civilian Ind"])}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <InfoboxCompactTable
+              group={group}
+              columns={["Divisions", "Total Factories", "Military Ind.", "Civilian Ind."]}
+              label={group.section}
+            />
             {statValue(group, ["Naval Dockyards"]) !== "-" && (
               <p class="wiki-infobox__substat">
                 <span>Naval Dockyards</span>
@@ -86,36 +72,14 @@ function statValue(group: Group, labels: string[]): string {
               </p>
             )}
           </>
-        ) : isEconomy ? (
-          <div class="wiki-infobox__compact-table-wrap">
-            <table class="wiki-infobox__compact-table" aria-label={group.section}>
-              <thead>
-                <tr>
-                  <th>Treasury</th>
-                  <th>Debt</th>
-                  <th>Investments</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{statValue(group, ["Treasury"])}</td>
-                  <td>{statValue(group, ["Debt"])}</td>
-                  <td>{statValue(group, ["Investments"])}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        ) : group.kind === "economy" ? (
+          <InfoboxCompactTable
+            group={group}
+            columns={["Treasury", "Debt", "Investments"]}
+            label={group.section}
+          />
         ) : (
-          <ul class="wiki-infobox__stats">
-            {(group.stats || [])
-              .filter((stat) => stat.label !== "Tag")
-              .map((stat) => (
-                <li>
-                  <span>{stat.label}</span>
-                  <strong>{stat.value}</strong>
-                </li>
-              ))}
-          </ul>
+          <InfoboxStatList stats={group.stats} excludeLabels={["Tag"]} />
         )}
       </>
     );

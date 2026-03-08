@@ -1,14 +1,14 @@
 import type { CollectionEntry } from "astro:content";
 import { withBase } from "./urls";
 
-export type CardItem = {
+export interface CardItem {
   title: string;
   url?: string;
   kind?: string;
   description?: string;
   meta?: string;
   searchBlob: string;
-};
+}
 
 function compactText(value: string): string {
   return value.replace(/\s+/g, " ").trim();
@@ -26,9 +26,9 @@ export function toCardItem(
     meta?: string;
   },
 ): CardItem {
-  const title = entry.data.title || entry.id;
-  const description = entry.data.description || "";
-  const kind = opts.kind || entry.data.kind;
+  const title = entry.data.title ?? entry.id;
+  const description = entry.data.description ?? "";
+  const kind = opts.kind ?? entry.data.kind;
   const searchBlob = compactText([title, kind, description].filter(Boolean).join(" ").toLowerCase());
 
   return {

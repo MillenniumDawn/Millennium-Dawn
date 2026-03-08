@@ -1,4 +1,4 @@
-import { applyThemePreference, initDarkModeToggle } from "./modules/theme";
+import { applyThemePreference, initDarkModeToggle } from "../features/theme/model";
 
 type Cleanup = () => void;
 
@@ -29,13 +29,13 @@ async function bootstrapPageAsync(): Promise<void> {
   };
 
   const needsToc = document.body.dataset.toc !== "off" && !!document.getElementById("toc-sidebar");
-  const needsCardIndex = !!document.querySelector("[data-card-index], [data-changelog-index]");
+  const needsCardIndex = !!document.querySelector("[data-card-index]");
 
   const [headerNavModule, uiHelpersModule, tocModule, cardIndexModule] = await Promise.all([
     import("./modules/header-nav"),
     import("./modules/ui-helpers"),
-    needsToc ? import("./modules/toc") : Promise.resolve(null),
-    needsCardIndex ? import("./modules/changelog-index") : Promise.resolve(null),
+    needsToc ? import("../features/toc/model") : Promise.resolve(null),
+    needsCardIndex ? import("../features/searchable-index/model") : Promise.resolve(null),
   ]);
 
   if (runId !== pageRunId) return;
@@ -43,7 +43,7 @@ async function bootstrapPageAsync(): Promise<void> {
   cleanups.push(headerNavModule.initHeaderHeightSync());
   cleanups.push(headerNavModule.initMobileNavigation());
   if (tocModule) cleanups.push(tocModule.initToc());
-  if (cardIndexModule) cardIndexModule.initCardIndex();
+  if (cardIndexModule) cleanups.push(cardIndexModule.initCardIndex());
   cleanups.push(uiHelpersModule.initBackToTop());
 }
 
