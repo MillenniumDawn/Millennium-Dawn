@@ -1,24 +1,14 @@
 ---
-import type { MarkdownHeading } from "astro";
 import { getEntry } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Hero from "../components/Hero.astro";
+import HomeIntro from "../components/HomeIntro.astro";
 import HomeRoadmaps from "../components/HomeRoadmaps.astro";
+import HomeCommunity from "../components/HomeCommunity.astro";
 import HomeResourceGroups from "../components/HomeResourceGroups.astro";
+import HomeSubmods from "../components/HomeSubmods.astro";
 import HomeCredits from "../components/HomeCredits.astro";
-import { parseInlineMarkdown } from "../lib/inline-markdown";
-import { withBase } from "../lib/urls";
-import { STATIC_PAGE_META } from "../shared/config/page-meta";
-import { slugifyText } from "../shared/lib/slugs";
-
-const HOME_SECTION_IDS = {
-  roadmapImages: "roadmap-images",
-  joiningTeam: "joining-team",
-  translations: "translations",
-  paratranzProjects: "paratranz-projects",
-  submods: "submods",
-  credits: "credits",
-} as const;
+import { STATIC_PAGE_META } from "../lib/page-meta";
 
 const releaseEntry = await getEntry("release", "index");
 const homeEntry = await getEntry("home", "index");
@@ -32,17 +22,13 @@ if (!homeEntry) {
 const release = releaseEntry.data.current;
 const home = homeEntry.data;
 const pageMeta = STATIC_PAGE_META.home;
-
-const pageHeadings: MarkdownHeading[] = [
-  { depth: 2, slug: HOME_SECTION_IDS.roadmapImages, text: "Roadmap Images" },
-  ...(home.roadmaps ?? []).map((r) => ({ depth: 3, slug: slugifyText(r.title), text: r.title })),
-  { depth: 3, slug: HOME_SECTION_IDS.joiningTeam, text: "Joining the Development Team" },
-  { depth: 3, slug: HOME_SECTION_IDS.translations, text: "Translations" },
-  { depth: 4, slug: HOME_SECTION_IDS.paratranzProjects, text: "Paratranz Projects" },
-  ...(home.resource_groups ?? []).map((g) => ({ depth: 3, slug: slugifyText(g.heading), text: g.heading })),
-  { depth: 3, slug: HOME_SECTION_IDS.submods, text: "Submods" },
-  { depth: 2, slug: HOME_SECTION_IDS.credits, text: "Credits" },
-];
+const {
+  roadmaps,
+  team_join,
+  paratranz_projects,
+  resource_groups,
+  credits,
+} = home;
 ---
 
 <BaseLayout
@@ -50,59 +36,15 @@ const pageHeadings: MarkdownHeading[] = [
   pageId={pageMeta.pageId}
   canonicalPath={pageMeta.canonicalPath}
   description={pageMeta.description}
-  headings={pageHeadings}
 >
   <Hero />
-
-  <h1>Welcome to the MD Wiki</h1>
-
-  {release && (
-    <>
-      <p><strong>Current Expected Version:</strong> {release.md_version}</p>
-      <p><strong>Current Expected Checksum:</strong> {release.checksum}</p>
-    </>
-  )}
-
-  <p>
-    <strong>Note:</strong> The following Wiki is currently a work in progress. However, we will do our best to get meaningful
-    content updated and placed on this page.
-  </p>
-
-  <HomeRoadmaps roadmaps={home?.roadmaps || []} />
-
-  <h3 id={HOME_SECTION_IDS.joiningTeam}>Joining the Millennium Dawn Development Team</h3>
-  {home?.team_join?.description && (
-    <p>
-      {parseInlineMarkdown(home.team_join.description).map((part) =>
-        part.type === "link" ? <a href={part.href}>{part.value}</a> : part.value,
-      )}
-    </p>
-  )}
-
-  <h3 id={HOME_SECTION_IDS.translations}>Translations</h3>
-  <h4 id={HOME_SECTION_IDS.paratranzProjects}>Paratranz Projects</h4>
-  <ul>
-    {(home?.paratranz_projects || []).map((item) => (
-      <li>
-        <a href={item.url}>{item.name}</a>
-      </li>
-    ))}
-  </ul>
-
-  <HomeResourceGroups groups={home?.resource_groups || []} />
-
-  <h3 id={HOME_SECTION_IDS.submods}>Submods</h3>
-  <p>
-    <strong>DISCLAIMER</strong> Any issues with a submod should be first reported to the submod you are playing with. Even
-    something as simple as a graphics mod could break something in Millennium Dawn.
-  </p>
-  <p>
-    For a list of Known Submods follow this <a href={withBase("/misc/known-submods/")}>link</a>.
-  </p>
-
-  {home?.credits && <HomeCredits credits={home.credits} />}
-
-  <p>
-    Furthermore, a non-exhaustive list can be found at the <a href={withBase("/misc/authors/")}>Authors</a>.
-  </p>
+  <HomeIntro release={release} />
+  <HomeRoadmaps roadmaps={roadmaps} />
+  <HomeCommunity
+    teamJoinDescription={team_join.description}
+    paratranzProjects={paratranz_projects}
+  />
+  <HomeResourceGroups groups={resource_groups} />
+  <HomeSubmods />
+  <HomeCredits credits={credits} />
 </BaseLayout>

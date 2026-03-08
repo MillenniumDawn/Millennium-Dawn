@@ -1,4 +1,4 @@
-import { SITE_DESCRIPTION } from "./site";
+import { SITE_DESCRIPTION } from "../shared/config/site";
 
 export interface StaticPageMeta {
   title: string;

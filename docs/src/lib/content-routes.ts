@@ -1,4 +1,4 @@
-import { stripMarkdownExt } from "./slugs";
+import { stripMarkdownExt } from "../shared/lib/slugs";
 
 interface RoutedEntryLike {
   id: string;
@@ -6,7 +6,6 @@ interface RoutedEntryLike {
     permalink?: string;
     page_id?: string;
     body_class?: string;
-    page_assets?: string[];
     slug?: string;
   };
 }
@@ -61,10 +60,6 @@ export function getEntryPageId(entry: RoutedEntryLike): string {
 
 export function getEntryBodyClass(entry: RoutedEntryLike): string | undefined {
   return entry.data.body_class;
-}
-
-export function getEntryPageAssets(entry: RoutedEntryLike): string[] {
-  return entry.data.page_assets ?? [];
 }
 
 export function buildEntryStaticPaths<T>(entries: T[], getSlug: (entry: T) => string) {

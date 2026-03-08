@@ -24,7 +24,6 @@ export const baseDocSchema = z.object({
   robots: z.string().optional(),
   page_id: z.string().optional(),
   body_class: z.string().optional(),
-  page_assets: z.array(internalPathSchema).optional(),
   kind: z.string().optional(),
   order: z.number().int().optional(),
 });

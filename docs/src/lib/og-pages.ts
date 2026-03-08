@@ -1,5 +1,5 @@
 import { getCollection, getEntry } from "astro:content";
-import { CONTENT_PAGE_ROUTES, STATIC_PAGE_META } from "../shared/config/page-meta";
+import { CONTENT_PAGE_ROUTES, STATIC_PAGE_META } from "./page-meta";
 import { SITE_DESCRIPTION } from "../shared/config/site";
 import {
   getChangelogPath,
@@ -9,7 +9,7 @@ import {
   getMiscPath,
   getResourcePath,
   getTutorialPath,
-} from "../shared/lib/content-routes";
+} from "./content-routes";
 
 export interface OgPageData {
   slug: string;

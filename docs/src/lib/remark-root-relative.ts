@@ -1,5 +1,6 @@
 import type { Root } from "mdast";
 import { visit } from "unist-util-visit";
+import { SITE_BASE_PATH } from "../shared/config/site";
 
 const ABSOLUTE_SCHEME = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
 
@@ -32,7 +33,7 @@ function createRewriteHtml(
   };
 }
 
-export function remarkRootRelativeToBase(base = "/Millennium-Dawn"): (tree: Root) => void {
+export function remarkRootRelativeToBase(base = SITE_BASE_PATH): (tree: Root) => void {
   const normalized = base.endsWith("/") ? base.slice(0, -1) : base;
   const applyBase = createWithBase(normalized);
   const rewriteHtml = createRewriteHtml(normalized, applyBase);

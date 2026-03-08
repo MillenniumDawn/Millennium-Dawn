@@ -1,6 +1,5 @@
 ---
 import { withBase } from "../lib/urls";
-import { slugifyText } from "../shared/lib/slugs";
 
 interface ResourceItem {
   title: string;
@@ -17,20 +16,21 @@ interface Props {
 }
 
 const { groups }: Props = Astro.props;
+
+function resolveGroupHref(url: string): string {
+  return url.includes("://") ? url : withBase(url);
+}
 ---
 
 {groups.map((group) => (
-  <>
-    <h3 id={slugifyText(group.heading)}>{group.heading}</h3>
+  <section>
+    <h3>{group.heading}</h3>
     <ul>
-      {group.items.map((item) => {
-        const href = item.url.includes("://") ? item.url : withBase(item.url);
-        return (
-          <li>
-            <a href={href}>{item.title}</a>
-          </li>
-        );
-      })}
+      {group.items.map((item) => (
+        <li>
+          <a href={resolveGroupHref(item.url)}>{item.title}</a>
+        </li>
+      ))}
     </ul>
-  </>
+  </section>
 ))}
