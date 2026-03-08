@@ -7,6 +7,15 @@ interface Props {
 }
 
 const { seo }: Props = Astro.props;
+
+// In dev mode, use the current request origin so OG preview extensions can
+// actually reach the image via localhost instead of the production domain.
+const ogImageUrl = seo.image
+  ? import.meta.env.DEV
+    ? `${Astro.url.origin}${withBase(seo.image.path)}`
+    : toAbsolute(seo.image.path)
+  : undefined;
+
 const websiteJsonLd = JSON.stringify({
   "@context": "https://schema.org",
   "@type": "WebSite",
@@ -40,7 +49,7 @@ const organizationJsonLd = JSON.stringify({
     <meta property="og:url" content={seo.canonical} />
     {seo.image && (
       <>
-        <meta property="og:image" content={toAbsolute(seo.image.path)} />
+        <meta property="og:image" content={ogImageUrl} />
         {seo.image.width && <meta property="og:image:width" content={String(seo.image.width)} />}
         {seo.image.height && <meta property="og:image:height" content={String(seo.image.height)} />}
         {seo.image.alt && <meta property="og:image:alt" content={seo.image.alt} />}
@@ -50,7 +59,7 @@ const organizationJsonLd = JSON.stringify({
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={seo.title} />
     <meta name="twitter:description" content={seo.description} />
-    {seo.image && <meta name="twitter:image" content={toAbsolute(seo.image.path)} />}
+    {seo.image && <meta name="twitter:image" content={ogImageUrl} />}
     {seo.image?.alt && <meta name="twitter:image:alt" content={seo.image.alt} />}
 
     <script type="application/ld+json" set:html={websiteJsonLd} is:inline></script>
