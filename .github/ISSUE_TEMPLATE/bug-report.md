@@ -3,6 +3,8 @@ name: Bug Report
 about: Create a bug report to report an issue in Millennium Dawn
 title: "[BUG]"
 labels: bug
+type: bug
+projects: ["MillenniumDawn/projects/3"]
 assignees: ""
 ---
 

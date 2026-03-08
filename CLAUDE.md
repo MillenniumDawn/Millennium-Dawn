@@ -37,6 +37,7 @@ The following slash commands are available in this project (`.claude/skills/`):
 | `/standardize <file>`         | Auto-standardize a focus/event/decision/idea file against MD conventions                      |
 | `/new-focus <TAG>`            | Scaffold a new country focus tree file with correct structure and localisation stubs          |
 | `/review-branch`              | Review the current branch diff vs main for style violations, logic errors, and balance issues |
+| `/fix-issue [number]`         | Find an open GitHub bug, diagnose the root cause, fix it, and open a PR                       |
 
 ## Validation & Formatting Tools
 
@@ -293,7 +294,7 @@ CHI_norinco_manufacturer = {
 	task_capacity = 18
 
 	equipment_type = {
-		Inf_equipment
+		infantry_weapons_type
 		artillery_equipment
 		mio_cat_all_armor
 	}
