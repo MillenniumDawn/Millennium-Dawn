@@ -1,0 +1,31 @@
+---
+import { parseInlineMarkdown } from "../lib/inline-markdown";
+
+interface SpecialThanks {
+  text: string;
+}
+
+interface Credits {
+  model_credit_list: string;
+  special_thanks: SpecialThanks[];
+}
+
+interface Props {
+  credits: Credits;
+}
+
+const { credits }: Props = Astro.props;
+---
+
+<h2 id="credits">Credits</h2>
+<p>
+  A full list of credits for all models that are currently in use in-game:{" "}
+  <a href={credits.model_credit_list}>Model Credit List</a>.
+</p>
+{(credits.special_thanks || []).map((thanks) => (
+  <p>
+    {parseInlineMarkdown(thanks.text).map((part) =>
+      part.type === "link" ? <a href={part.href}>{part.value}</a> : part.value,
+    )}
+  </p>
+))}

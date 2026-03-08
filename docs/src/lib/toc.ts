@@ -1,12 +1,12 @@
 import type { MarkdownHeading } from "astro";
 
-type TocItem = {
+interface TocItem {
   id: string;
   text: string;
   depth: number;
   children: TocItem[];
   sublistId?: number;
-};
+}
 
 function escapeHtml(value: string): string {
   return value

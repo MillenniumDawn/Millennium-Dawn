@@ -6,7 +6,7 @@ function normalizeBase(rawBase: string | undefined): string {
 }
 
 function normalizeOrigin(rawSite: string | undefined): string {
-  const site = rawSite || FALLBACK_ORIGIN;
+  const site = rawSite ?? FALLBACK_ORIGIN;
   return site.endsWith("/") ? site.slice(0, -1) : site;
 }
 

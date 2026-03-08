@@ -1,10 +1,9 @@
 import { bindExpandButtons, buildTree, ensureHeadingIds, renderNav, toggleSublist } from "./render";
 import { readCssMsVar, readCssPxVar, readCssStringVar } from "../tokens";
-
-type TocEntry = {
-  el: HTMLElement;
-  link: HTMLAnchorElement;
-};
+import { createDrawer } from "../shared/drawer";
+import { initTocObserver } from "./observer";
+import { initTocScroll } from "./scroll";
+import type { TocEntry } from "./types";
 
 type Cleanup = () => void;
 
@@ -29,7 +28,7 @@ export function initToc(): Cleanup {
   const closeBtn = document.getElementById("toc-close");
   const backdrop = document.getElementById("toc-backdrop");
   const progress = document.getElementById("toc-progress");
-  if (!sidebar || !panel || !nav) return NOOP;
+  if (!sidebar || !panel || !nav || !toggle) return NOOP;
 
   const content = document.querySelector<HTMLElement>(".main-content");
   if (!content) return NOOP;
@@ -76,6 +75,8 @@ export function initToc(): Cleanup {
     return NOOP;
   }
 
+  // --- Active-heading helpers ---
+
   const autoExpandAncestors = (link: HTMLElement) => {
     let node = link.parentElement;
     while (node && node !== nav) {
@@ -119,252 +120,55 @@ export function initToc(): Cleanup {
     }
   };
 
-  const updateProgress = () => {
-    if (!progress) return;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const pct = docHeight > 0 ? Math.min(100, ((window.scrollY || 0) / docHeight) * 100) : 0;
-    (progress as HTMLElement).style.width = `${pct}%`;
-  };
+  // --- Panel semantics (dialog on mobile, region on desktop) ---
 
-  const findActiveFallback = (): TocEntry | null => {
-    let active: TocEntry | null = null;
-    for (let i = headingEntries.length - 1; i >= 0; i -= 1) {
-      if (headingEntries[i].el.getBoundingClientRect().top <= scrollOffset) {
-        active = headingEntries[i];
-        break;
-      }
-    }
-    return active || headingEntries[0] || null;
-  };
-
-  const visibleHeadings = new Map<string, number>();
-  let observer: IntersectionObserver | null = null;
-
-  const pickVisibleActive = (): TocEntry | null => {
-    if (!visibleHeadings.size) {
-      if ((window.scrollY || 0) < 32) return headingEntries[0] || null;
-      return currentActive || findActiveFallback();
-    }
-
-    let bestEntry: TocEntry | null = null;
-    let bestDistance = Number.POSITIVE_INFINITY;
-
-    visibleHeadings.forEach((top, id) => {
-      const entry = entryById[id];
-      if (!entry) return;
-
-      const distance = Math.abs(top - scrollOffset);
-      if (distance < bestDistance) {
-        bestDistance = distance;
-        bestEntry = entry;
-      }
-    });
-
-    return bestEntry || currentActive || findActiveFallback();
-  };
-
-  if (typeof IntersectionObserver !== "undefined") {
-    observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const target = entry.target as HTMLElement;
-          if (entry.isIntersecting) {
-            visibleHeadings.set(target.id, entry.boundingClientRect.top);
-          } else {
-            visibleHeadings.delete(target.id);
-          }
-        });
-        setActive(pickVisibleActive());
-      },
-      {
-        root: null,
-        rootMargin: `-${scrollOffset}px 0px -55% 0px`,
-        threshold: [0, 1],
-      },
-    );
-
-    headingEntries.forEach((entry) => {
-      observer?.observe(entry.el);
-    });
-    setActive(headingEntries[0]);
-  } else {
-    setActive(findActiveFallback());
-  }
-
-  let rafPending = false;
-  const onScroll = () => {
-    if (rafPending) return;
-    rafPending = true;
-    requestAnimationFrame(() => {
-      rafPending = false;
-      if (!observer) setActive(findActiveFallback());
-      updateProgress();
-    });
-  };
-
-  window.addEventListener("scroll", onScroll, { passive: true });
-  const onResize = () => {
-    if (!observer) setActive(findActiveFallback());
-    updateProgress();
-  };
-  window.addEventListener("resize", onResize);
-  updateProgress();
-
-  let isDrawerOpen = false;
-  let lastFocused: Element | null = null;
-  const desktopMQ = window.matchMedia(`(min-width: ${wideMin})`);
-  const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
-  let savedScrollY = 0;
-
-  const getFocusableEls = (): HTMLElement[] =>
-    Array.from(panel.querySelectorAll<HTMLElement>(focusableSelector)).filter((el) => el.offsetParent !== null);
-
-  const setPageInert = (inert: boolean) => {
-    const elements: Array<HTMLElement | null> = [
-      document.getElementById("main-content"),
-      document.querySelector<HTMLElement>(".site-header"),
-      document.querySelector<HTMLElement>(".site-footer"),
-    ];
-
-    elements.forEach((element) => {
-      if (!element) return;
-      if (inert) {
-        element.setAttribute("inert", "");
-        element.setAttribute("aria-hidden", "true");
-      } else {
-        element.removeAttribute("inert");
-        element.removeAttribute("aria-hidden");
-      }
-    });
-  };
-
-  const openDrawer = () => {
-    if (!toggle) return;
-    lastFocused = document.activeElement;
-    isDrawerOpen = true;
-
-    savedScrollY = window.scrollY || window.pageYOffset;
-    sidebar.classList.add("is-open");
-    toggle.setAttribute("aria-expanded", "true");
-    toggle.setAttribute("aria-label", "Close table of contents");
-    document.body.classList.add("toc-lock");
-    document.body.style.top = `-${savedScrollY}px`;
-    setPageInert(true);
-
-    window.setTimeout(() => {
-      if (closeBtn instanceof HTMLElement) {
-        closeBtn.focus();
-      } else {
-        const focusables = getFocusableEls();
-        if (focusables.length) focusables[0].focus();
-      }
-    }, 40);
-  };
-
-  const closeDrawer = (restoreFocus = true) => {
-    if (!toggle) return;
-    isDrawerOpen = false;
-
-    sidebar.classList.add("is-closing");
-    sidebar.classList.remove("is-open");
-    toggle.setAttribute("aria-expanded", "false");
-    toggle.setAttribute("aria-label", "Open table of contents");
-    document.body.classList.remove("toc-lock");
-    document.body.style.top = "";
-    window.scrollTo(0, savedScrollY);
-    setPageInert(false);
-
-    window.setTimeout(() => {
-      sidebar.classList.remove("is-closing");
-    }, drawerAnimMs);
-
-    if (restoreFocus && lastFocused instanceof HTMLElement) {
-      lastFocused.focus();
+  const setPanelSemantics = (dialogMode: boolean) => {
+    panel.setAttribute("role", dialogMode ? "dialog" : "region");
+    if (dialogMode) {
+      panel.setAttribute("aria-modal", "true");
+    } else {
+      panel.removeAttribute("aria-modal");
     }
   };
 
-  const trapFocus = (event: KeyboardEvent) => {
-    if (!isDrawerOpen || event.key !== "Tab") return;
-    const focusables = getFocusableEls();
-    if (!focusables.length) return;
+  setPanelSemantics(false);
 
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
+  // --- Drawer (mobile slide-out) ---
 
-    if (event.shiftKey) {
-      if (document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      }
-    } else if (document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
+  const drawer = createDrawer({
+    container: sidebar,
+    panel,
+    toggle,
+    closeBtn,
+    backdrop,
+    desktopMQ: window.matchMedia(`(min-width: ${wideMin})`),
+    animMs: drawerAnimMs,
+    bodyLockClass: "toc-lock",
+    openLabels: { expanded: "true", ariaLabel: "Close table of contents" },
+    closedLabels: { expanded: "false", ariaLabel: "Open table of contents" },
+    lockScroll: true,
+    inertSelectors: ["#main-content", ".site-header", ".site-footer"],
+    onOpen: () => setPanelSemantics(true),
+    onClose: () => setPanelSemantics(false),
+  });
+
+  // Close drawer when a ToC link is clicked on mobile
+  const onNavLinkCloseDrawer = (event: MouseEvent) => {
+    if (event.target instanceof Element && event.target.closest(".toc-sidebar__link") && drawer.isOpen()) {
+      drawer.close(false);
     }
   };
+  nav.addEventListener("click", onNavLinkCloseDrawer);
 
-  const onToggleClick = () => {
-    isDrawerOpen ? closeDrawer() : openDrawer();
-  };
+  // --- Observer (active heading tracking) ---
 
-  const onCloseClick = () => {
-    closeDrawer();
-  };
+  const observerHandle = initTocObserver(headingEntries, entryById, scrollOffset, setActive);
 
-  const onBackdropClick = () => {
-    if (isDrawerOpen) closeDrawer();
-  };
+  // --- Scroll (smooth-scroll + progress bar) ---
 
-  const onNavCloseClick = (event: MouseEvent) => {
-    if (event.target instanceof Element && event.target.closest(".toc-sidebar__link") && isDrawerOpen) {
-      closeDrawer(false);
-    }
-  };
+  const scrollHandle = initTocScroll(nav, progress, scrollOffset);
 
-  const onDocumentKeydown = (event: KeyboardEvent) => {
-    if (event.key === "Escape" && isDrawerOpen) closeDrawer();
-    trapFocus(event);
-  };
-
-  if (toggle) toggle.addEventListener("click", onToggleClick);
-  if (closeBtn) closeBtn.addEventListener("click", onCloseClick);
-  if (backdrop) backdrop.addEventListener("click", onBackdropClick);
-  nav.addEventListener("click", onNavCloseClick);
-  document.addEventListener("keydown", onDocumentKeydown);
-
-  const onBreakpoint = () => {
-    if (desktopMQ.matches && isDrawerOpen) closeDrawer(false);
-  };
-
-  if (typeof desktopMQ.addEventListener === "function") {
-    desktopMQ.addEventListener("change", onBreakpoint);
-  }
-
-  const onNavLinkClick = (event: MouseEvent) => {
-    if (!(event.target instanceof Element)) return;
-    const link = event.target.closest<HTMLAnchorElement>(".toc-sidebar__link");
-    if (!link) return;
-
-    event.preventDefault();
-
-    const targetId = link.getAttribute("data-toc-id");
-    if (!targetId) return;
-
-    const target = document.getElementById(targetId);
-    if (!(target instanceof HTMLElement)) return;
-
-    const header = document.querySelector<HTMLElement>(".site-header");
-    const offset = header ? header.offsetHeight + 16 : scrollOffset;
-    const targetTop = target.getBoundingClientRect().top + window.pageYOffset - offset;
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({ top: targetTop, behavior: prefersReduced ? "auto" : "smooth" });
-
-    if (history.replaceState) history.replaceState(null, "", `#${targetId}`);
-
-    target.setAttribute("tabindex", "-1");
-    target.focus({ preventScroll: true });
-  };
-
-  nav.addEventListener("click", onNavLinkClick);
+  // --- Hash-expand on load ---
 
   if (window.location.hash) {
     try {
@@ -376,33 +180,13 @@ export function initToc(): Cleanup {
     }
   }
 
+  // --- Cleanup ---
+
   return () => {
-    window.removeEventListener("scroll", onScroll);
-    window.removeEventListener("resize", onResize);
-    observer?.disconnect();
-
-    if (toggle) toggle.removeEventListener("click", onToggleClick);
-    if (closeBtn) closeBtn.removeEventListener("click", onCloseClick);
-    if (backdrop) backdrop.removeEventListener("click", onBackdropClick);
-    nav.removeEventListener("click", onNavCloseClick);
-    nav.removeEventListener("click", onNavLinkClick);
-    document.removeEventListener("keydown", onDocumentKeydown);
-
-    if (typeof desktopMQ.removeEventListener === "function") {
-      desktopMQ.removeEventListener("change", onBreakpoint);
-    }
-
-    if (isDrawerOpen) {
-      isDrawerOpen = false;
-      document.body.classList.remove("toc-lock");
-      document.body.style.top = "";
-      setPageInert(false);
-    }
-
-    sidebar.classList.remove("is-open", "is-closing");
-    if (toggle) {
-      toggle.setAttribute("aria-expanded", "false");
-      toggle.setAttribute("aria-label", "Open table of contents");
-    }
+    observerHandle.cleanup();
+    scrollHandle.cleanup();
+    drawer.cleanup();
+    nav.removeEventListener("click", onNavLinkCloseDrawer);
+    setPanelSemantics(false);
   };
 }

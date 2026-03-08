@@ -1,3 +1,4 @@
+import type { AstroUserConfig } from "astro";
 import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
@@ -8,14 +9,20 @@ import { remarkRootRelativeToBase } from "./src/lib/remark-root-relative";
 import { rehypeTableWrapper } from "./src/lib/rehype-table-wrapper";
 import { hoiscriptLanguage } from "./src/lib/shiki-hoiscript";
 
+// Astro and @tailwindcss/vite currently resolve different Vite type instances.
+const tailwindPlugins =
+  tailwindcss() as unknown as NonNullable<NonNullable<AstroUserConfig["vite"]>["plugins"]>;
+
+const siteBase = "/Millennium-Dawn";
+
 export default defineConfig({
   site: "https://millenniumdawn.github.io",
-  base: "/Millennium-Dawn",
+  base: siteBase,
   output: "static",
   trailingSlash: "always",
   integrations: [mdx(), sitemap()],
   vite: {
-    plugins: [tailwindcss() as any],
+    plugins: tailwindPlugins,
   },
   markdown: {
     syntaxHighlight: {
@@ -25,7 +32,7 @@ export default defineConfig({
     shikiConfig: {
       langs: [hoiscriptLanguage],
     },
-    remarkPlugins: [remarkDirective, remarkCountryDirectives, remarkRootRelativeToBase],
+    remarkPlugins: [remarkDirective, remarkCountryDirectives, [remarkRootRelativeToBase, siteBase]],
     rehypePlugins: [rehypeTableWrapper],
   },
 });

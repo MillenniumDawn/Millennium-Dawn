@@ -1,9 +1,17 @@
 ---
+import type { MarkdownHeading } from "astro";
 import { getEntry } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Hero from "../components/Hero.astro";
-import ResponsiveImage from "../components/ResponsiveImage.astro";
+import HomeRoadmaps from "../components/HomeRoadmaps.astro";
+import HomeResourceGroups from "../components/HomeResourceGroups.astro";
+import HomeCredits from "../components/HomeCredits.astro";
+import { parseInlineMarkdown } from "../lib/inline-markdown";
 import { withBase } from "../lib/urls";
+
+function toSlug(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
 
 const releaseEntry = await getEntry("release", "index");
 const homeEntry = await getEntry("home", "index");
@@ -17,51 +25,16 @@ if (!homeEntry) {
 const release = releaseEntry.data.current;
 const home = homeEntry.data;
 
-type InlinePart =
-  | { type: "text"; value: string }
-  | { type: "link"; value: string; href: string };
-
-const INLINE_LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
-
-function isSafeHref(href: string): boolean {
-  return /^(https?:\/\/|mailto:|\/|#)/i.test(href.trim());
-}
-
-function resolveInlineHref(href: string): string {
-  return href.startsWith("/") ? withBase(href) : href;
-}
-
-function parseInlineMarkdown(text: string): InlinePart[] {
-  const source = text || "";
-  const parts: InlinePart[] = [];
-  let lastIndex = 0;
-
-  INLINE_LINK_RE.lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = INLINE_LINK_RE.exec(source)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push({ type: "text", value: source.slice(lastIndex, match.index) });
-    }
-
-    const label = match[1] || "";
-    const href = (match[2] || "").trim();
-
-    if (isSafeHref(href)) {
-      parts.push({ type: "link", value: label, href: resolveInlineHref(href) });
-    } else {
-      parts.push({ type: "text", value: `[${label}](${href})` });
-    }
-
-    lastIndex = INLINE_LINK_RE.lastIndex;
-  }
-
-  if (lastIndex < source.length) {
-    parts.push({ type: "text", value: source.slice(lastIndex) });
-  }
-
-  return parts;
-}
+const pageHeadings: MarkdownHeading[] = [
+  { depth: 2, slug: "roadmap-images", text: "Roadmap Images" },
+  ...(home.roadmaps ?? []).map((r) => ({ depth: 3, slug: toSlug(r.title), text: r.title })),
+  { depth: 3, slug: "joining-team", text: "Joining the Development Team" },
+  { depth: 3, slug: "translations", text: "Translations" },
+  { depth: 4, slug: "paratranz-projects", text: "Paratranz Projects" },
+  ...(home.resource_groups ?? []).map((g) => ({ depth: 3, slug: toSlug(g.heading), text: g.heading })),
+  { depth: 3, slug: "submods", text: "Submods" },
+  { depth: 2, slug: "credits", text: "Credits" },
+];
 ---
 
 <BaseLayout
@@ -69,6 +42,7 @@ function parseInlineMarkdown(text: string): InlinePart[] {
   pageId="home"
   canonicalPath="/"
   description="Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV."
+  headings={pageHeadings}
 >
   <Hero />
 
@@ -86,24 +60,9 @@ function parseInlineMarkdown(text: string): InlinePart[] {
     content updated and placed on this page.
   </p>
 
-  <h2>Roadmap Images</h2>
-  {(home?.roadmaps || []).map((roadmap) => (
-    <>
-      <h3>{roadmap.title}</h3>
-      {(roadmap.paragraphs || []).map((paragraph) => (
-        <p>{paragraph}</p>
-      ))}
-      <ResponsiveImage
-        src={roadmap.image.src}
-        alt={roadmap.image.alt}
-        width={roadmap.image.width}
-        height={roadmap.image.height}
-        loading={roadmap.image.loading as "lazy" | "eager" | undefined}
-      />
-    </>
-  ))}
+  <HomeRoadmaps roadmaps={home?.roadmaps || []} />
 
-  <h3>Joining the Millennium Dawn Development Team</h3>
+  <h3 id="joining-team">Joining the Millennium Dawn Development Team</h3>
   {home?.team_join?.description && (
     <p>
       {parseInlineMarkdown(home.team_join.description).map((part) =>
@@ -112,8 +71,8 @@ function parseInlineMarkdown(text: string): InlinePart[] {
     </p>
   )}
 
-  <h3>Translations</h3>
-  <h4>Paratranz Projects</h4>
+  <h3 id="translations">Translations</h3>
+  <h4 id="paratranz-projects">Paratranz Projects</h4>
   <ul>
     {(home?.paratranz_projects || []).map((item) => (
       <li>
@@ -122,23 +81,9 @@ function parseInlineMarkdown(text: string): InlinePart[] {
     ))}
   </ul>
 
-  {(home?.resource_groups || []).map((group) => (
-    <>
-      <h3>{group.heading}</h3>
-      <ul>
-        {group.items.map((item) => {
-          const href = item.url.includes("://") ? item.url : withBase(item.url);
-          return (
-            <li>
-              <a href={href}>{item.title}</a>
-            </li>
-          );
-        })}
-      </ul>
-    </>
-  ))}
+  <HomeResourceGroups groups={home?.resource_groups || []} />
 
-  <h3>Submods</h3>
+  <h3 id="submods">Submods</h3>
   <p>
     <strong>DISCLAIMER</strong> Any issues with a submod should be first reported to the submod you are playing with. Even
     something as simple as a graphics mod could break something in Millennium Dawn.
@@ -147,22 +92,7 @@ function parseInlineMarkdown(text: string): InlinePart[] {
     For a list of Known Submods follow this <a href={withBase("/misc/known-submods/")}>link</a>.
   </p>
 
-  <h2>Credits</h2>
-  {home?.credits && (
-    <>
-      <p>
-        A full list of credits for all models that are currently in use in-game:{" "}
-        <a href={home.credits.model_credit_list}>Model Credit List</a>.
-      </p>
-      {(home.credits.special_thanks || []).map((thanks) => (
-        <p>
-          {parseInlineMarkdown(thanks.text).map((part) =>
-            part.type === "link" ? <a href={part.href}>{part.value}</a> : part.value,
-          )}
-        </p>
-      ))}
-    </>
-  )}
+  {home?.credits && <HomeCredits credits={home.credits} />}
 
   <p>
     Furthermore, a non-exhaustive list can be found at the <a href={withBase("/misc/authors/")}>Authors</a>.

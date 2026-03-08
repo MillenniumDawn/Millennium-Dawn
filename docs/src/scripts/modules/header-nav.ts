@@ -162,7 +162,7 @@ export function initMobileNavigation(): Cleanup {
   };
 
   const onToggleClick = () => {
-    isOpen() ? closeNav(false) : openNav();
+    if (isOpen()) { closeNav(false); } else { openNav(); }
   };
 
   const onDocumentKeydown = (event: KeyboardEvent) => {

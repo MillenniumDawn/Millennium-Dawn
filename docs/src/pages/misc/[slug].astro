@@ -1,18 +1,24 @@
 ---
 import { getCollection, render } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+import type { GetStaticPaths } from "astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { resolveToc } from "../../lib/content-helpers";
 import { stripMarkdownExt } from "../../lib/slugs";
 
-export async function getStaticPaths() {
+interface Props {
+  entry: CollectionEntry<"misc">;
+}
+
+export const getStaticPaths: GetStaticPaths = async () => {
   const entries = await getCollection("misc");
   return entries.map((entry) => ({
     params: { slug: stripMarkdownExt(entry.id) },
     props: { entry },
   }));
-}
+};
 
-const { entry } = Astro.props;
+const { entry }: Props = Astro.props;
 const { Content, headings } = await render(entry);
 ---
 
@@ -23,7 +29,7 @@ const { Content, headings } = await render(entry);
   toc={resolveToc(entry.data.toc)}
   seo={entry.data.seo ?? true}
   robots={entry.data.robots}
-  pageId={entry.data.page_id || stripMarkdownExt(entry.id)}
+  pageId={entry.data.page_id ?? stripMarkdownExt(entry.id)}
   headings={headings}
 >
   <Content />

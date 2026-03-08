@@ -1,0 +1,35 @@
+---
+import { withBase } from "../lib/urls";
+
+interface ResourceItem {
+  title: string;
+  url: string;
+}
+
+interface ResourceGroup {
+  heading: string;
+  items: ResourceItem[];
+}
+
+interface Props {
+  groups: ResourceGroup[];
+}
+
+const { groups }: Props = Astro.props;
+---
+
+{groups.map((group) => (
+  <>
+    <h3 id={group.heading.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}>{group.heading}</h3>
+    <ul>
+      {group.items.map((item) => {
+        const href = item.url.includes("://") ? item.url : withBase(item.url);
+        return (
+          <li>
+            <a href={href}>{item.title}</a>
+          </li>
+        );
+      })}
+    </ul>
+  </>
+))}

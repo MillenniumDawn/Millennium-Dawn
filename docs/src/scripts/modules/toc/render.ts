@@ -1,9 +1,9 @@
-export type TocTreeItem = {
+export interface TocTreeItem {
   id: string;
   text: string;
   level: number;
   children: TocTreeItem[];
-};
+}
 
 function escapeHtml(value: string): string {
   const node = document.createElement("div");
@@ -39,7 +39,7 @@ export function buildTree(headings: HTMLHeadingElement[]): TocTreeItem[] {
       currentH3 = item;
       (currentH2 ? currentH2.children : tree).push(item);
     } else if (level === 4) {
-      const parent = currentH3 || currentH2;
+      const parent = currentH3 ?? currentH2;
       (parent ? parent.children : tree).push(item);
     }
   });

@@ -28,7 +28,7 @@ export function initCardIndex(): void {
     const nextBtn = getFirst(root, ["[data-card-next]", "[data-changelog-next]"]) as HTMLButtonElement | null;
     const status = getFirst(root, ["[data-card-status]", "[data-changelog-status]"]);
 
-    let pageSize = Number.parseInt(root.getAttribute("data-page-size") || "8", 10);
+    let pageSize = Number.parseInt(root.getAttribute("data-page-size") ?? "8", 10);
     if (!Number.isFinite(pageSize) || pageSize < 1) pageSize = 8;
 
     let currentPage = 1;
@@ -38,7 +38,7 @@ export function initCardIndex(): void {
       if (!activeQuery) return cards.slice();
 
       return cards.filter((card) => {
-        const haystack = (card.getAttribute("data-search") || "").toLowerCase();
+        const haystack = (card.getAttribute("data-search") ?? "").toLowerCase();
         return haystack.includes(activeQuery);
       });
     };

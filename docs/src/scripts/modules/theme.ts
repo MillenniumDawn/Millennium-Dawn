@@ -30,12 +30,14 @@ export function applyThemePreference(): void {
   html.classList.remove(DARK_CLASS, LIGHT_CLASS);
   if (stored === "dark" || (!stored && prefersDark)) {
     html.classList.add(DARK_CLASS);
+    html.style.colorScheme = "dark";
     return;
   }
 
   if (stored === "light") {
     html.classList.add(LIGHT_CLASS);
   }
+  html.style.colorScheme = "light";
 }
 
 export function initDarkModeToggle(): Cleanup {
@@ -54,8 +56,10 @@ export function initDarkModeToggle(): Cleanup {
 
     if (wasDark) {
       html.classList.add(LIGHT_CLASS);
+      html.style.colorScheme = "light";
       persistTheme("light");
     } else {
+      html.style.colorScheme = "dark";
       persistTheme("dark");
     }
 

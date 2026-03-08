@@ -1,20 +1,20 @@
 import { toAbsolute, withBase } from "./urls";
 
-export type SeoImage = {
+export interface SeoImage {
   path: string;
   width?: number;
   height?: number;
   alt?: string;
-};
+}
 
-export type SeoMeta = {
+export interface SeoMeta {
   title: string;
   description: string;
   canonical: string;
   robots?: string;
   image?: SeoImage;
   seoEnabled: boolean;
-};
+}
 
 const DEFAULT_DESCRIPTION =
   "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV.";
@@ -34,10 +34,10 @@ export function buildSeoMeta(input: {
   seo?: boolean;
   image?: SeoImage;
 }): SeoMeta {
-  const canonicalPath = input.canonicalPath || "/";
+  const canonicalPath = input.canonicalPath ?? "/";
   return {
     title: input.title,
-    description: input.description || DEFAULT_DESCRIPTION,
+    description: input.description ?? DEFAULT_DESCRIPTION,
     canonical: toAbsolute(canonicalPath),
     robots: input.robots,
     seoEnabled: input.seo !== false,

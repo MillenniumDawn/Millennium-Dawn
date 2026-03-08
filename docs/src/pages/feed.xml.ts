@@ -11,9 +11,8 @@ function mapItem(
 ) {
   return {
     title,
-    description: description || "",
+    description: description ?? "",
     link: withBase(path),
-    pubDate: new Date(),
   };
 }
 
@@ -31,7 +30,7 @@ export async function GET(context: APIContext) {
       mapItem(
         entry.data.title,
         entry.data.description,
-        entry.data.permalink || `/dev-diaries/${stripMarkdownExt(entry.id)}/`,
+        entry.data.permalink ?? `/dev-diaries/${stripMarkdownExt(entry.id)}/`,
       ),
     ),
   ];
@@ -40,7 +39,7 @@ export async function GET(context: APIContext) {
     title: "Millennium Dawn: A Modern Day Mod",
     description:
       "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV.",
-    site: context.site || "https://millenniumdawn.github.io",
+    site: context.site ?? "https://millenniumdawn.github.io",
     items,
     customData: `<language>en</language>`,
   });
