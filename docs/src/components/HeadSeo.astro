@@ -8,10 +8,12 @@ interface Props {
 
 const { seo }: Props = Astro.props;
 
-// In dev mode, use the current request origin so OG preview extensions can
-// actually reach the image via localhost instead of the production domain.
+// In dev mode Astro renders per-request so Astro.url reflects localhost —
+// use that origin so OG preview extensions can reach the image locally.
+// (preview mode serves pre-built HTML with production URLs; that's by design.)
+const isLocalHost = Astro.url.hostname === "localhost" || Astro.url.hostname === "127.0.0.1";
 const ogImageUrl = seo.image
-  ? import.meta.env.DEV
+  ? isLocalHost
     ? `${Astro.url.origin}${withBase(seo.image.path)}`
     : toAbsolute(seo.image.path)
   : undefined;
