@@ -2,8 +2,13 @@
 import { getEntry } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Hero from "../components/Hero.astro";
-import ResponsiveImage from "../components/ResponsiveImage.astro";
-import { withBase } from "../lib/urls";
+import HomeIntro from "../components/HomeIntro.astro";
+import HomeRoadmaps from "../components/HomeRoadmaps.astro";
+import HomeCommunity from "../components/HomeCommunity.astro";
+import HomeResourceGroups from "../components/HomeResourceGroups.astro";
+import HomeSubmods from "../components/HomeSubmods.astro";
+import HomeCredits from "../components/HomeCredits.astro";
+import { STATIC_PAGE_META } from "../lib/page-meta";
 
 const releaseEntry = await getEntry("release", "index");
 const homeEntry = await getEntry("home", "index");
@@ -16,155 +21,30 @@ if (!homeEntry) {
 
 const release = releaseEntry.data.current;
 const home = homeEntry.data;
-
-type InlinePart =
-  | { type: "text"; value: string }
-  | { type: "link"; value: string; href: string };
-
-const INLINE_LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
-
-function isSafeHref(href: string): boolean {
-  return /^(https?:\/\/|mailto:|\/|#)/i.test(href.trim());
-}
-
-function resolveInlineHref(href: string): string {
-  return href.startsWith("/") ? withBase(href) : href;
-}
-
-function parseInlineMarkdown(text: string): InlinePart[] {
-  const source = text || "";
-  const parts: InlinePart[] = [];
-  let lastIndex = 0;
-
-  INLINE_LINK_RE.lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = INLINE_LINK_RE.exec(source)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push({ type: "text", value: source.slice(lastIndex, match.index) });
-    }
-
-    const label = match[1] || "";
-    const href = (match[2] || "").trim();
-
-    if (isSafeHref(href)) {
-      parts.push({ type: "link", value: label, href: resolveInlineHref(href) });
-    } else {
-      parts.push({ type: "text", value: `[${label}](${href})` });
-    }
-
-    lastIndex = INLINE_LINK_RE.lastIndex;
-  }
-
-  if (lastIndex < source.length) {
-    parts.push({ type: "text", value: source.slice(lastIndex) });
-  }
-
-  return parts;
-}
+const pageMeta = STATIC_PAGE_META.home;
+const {
+  roadmaps,
+  team_join,
+  paratranz_projects,
+  resource_groups,
+  credits,
+} = home;
 ---
 
 <BaseLayout
-  title="Home"
-  pageId="home"
-  canonicalPath="/"
-  description="Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV."
+  title={pageMeta.title}
+  pageId={pageMeta.pageId}
+  canonicalPath={pageMeta.canonicalPath}
+  description={pageMeta.description}
 >
   <Hero />
-
-  <h1>Welcome to the MD Wiki</h1>
-
-  {release && (
-    <>
-      <p><strong>Current Expected Version:</strong> {release.md_version}</p>
-      <p><strong>Current Expected Checksum:</strong> {release.checksum}</p>
-    </>
-  )}
-
-  <p>
-    <strong>Note:</strong> The following Wiki is currently a work in progress. However, we will do our best to get meaningful
-    content updated and placed on this page.
-  </p>
-
-  <h2>Roadmap Images</h2>
-  {(home?.roadmaps || []).map((roadmap) => (
-    <>
-      <h3>{roadmap.title}</h3>
-      {(roadmap.paragraphs || []).map((paragraph) => (
-        <p>{paragraph}</p>
-      ))}
-      <ResponsiveImage
-        src={roadmap.image.src}
-        alt={roadmap.image.alt}
-        width={roadmap.image.width}
-        height={roadmap.image.height}
-        loading={roadmap.image.loading as "lazy" | "eager" | undefined}
-      />
-    </>
-  ))}
-
-  <h3>Joining the Millennium Dawn Development Team</h3>
-  {home?.team_join?.description && (
-    <p>
-      {parseInlineMarkdown(home.team_join.description).map((part) =>
-        part.type === "link" ? <a href={part.href}>{part.value}</a> : part.value,
-      )}
-    </p>
-  )}
-
-  <h3>Translations</h3>
-  <h4>Paratranz Projects</h4>
-  <ul>
-    {(home?.paratranz_projects || []).map((item) => (
-      <li>
-        <a href={item.url}>{item.name}</a>
-      </li>
-    ))}
-  </ul>
-
-  {(home?.resource_groups || []).map((group) => (
-    <>
-      <h3>{group.heading}</h3>
-      <ul>
-        {group.items.map((item) => {
-          const href = item.url.includes("://") ? item.url : withBase(item.url);
-          return (
-            <li>
-              <a href={href}>{item.title}</a>
-            </li>
-          );
-        })}
-      </ul>
-    </>
-  ))}
-
-  <h3>Submods</h3>
-  <p>
-    <strong>DISCLAIMER</strong> Any issues with a submod should be first reported to the submod you are playing with. Even
-    something as simple as a graphics mod could break something in Millennium Dawn.
-  </p>
-  <p>
-    For a list of Known Submods follow this <a href={withBase("/misc/known-submods/")}>link</a>.
-  </p>
-
-  <h2>Credits</h2>
-  {home?.credits && (
-    <>
-      <p>
-        A full list of credits for all models that are currently in use in-game:{" "}
-        <a href={home.credits.model_credit_list}>Model Credit List</a>.
-      </p>
-      {(home.credits.special_thanks || []).map((thanks) => (
-        <p>
-          {parseInlineMarkdown(thanks.text).map((part) =>
-            part.type === "link" ? <a href={part.href}>{part.value}</a> : part.value,
-          )}
-        </p>
-      ))}
-    </>
-  )}
-
-  <p>
-    Furthermore, a non-exhaustive list can be found at the <a href={withBase("/misc/authors/")}>Authors</a>.
-  </p>
+  <HomeIntro release={release} />
+  <HomeRoadmaps roadmaps={roadmaps} />
+  <HomeCommunity
+    teamJoinDescription={team_join.description}
+    paratranzProjects={paratranz_projects}
+  />
+  <HomeResourceGroups groups={resource_groups} />
+  <HomeSubmods />
+  <HomeCredits credits={credits} />
 </BaseLayout>

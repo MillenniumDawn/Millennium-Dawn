@@ -241,12 +241,6 @@ cyber_two_roll = {
 				days = 90
 				value = 1
 			}
-			meta_effect = {
-				text = {
-					clr_country_flag = is_under_[TYPE]_attack_by_@ROOT
-				}
-				TYPE = "[cyber_clear_name_check]"
-			}
 		}
 
 		#Let's total it all up! The better our decryption and attribution skills, the more likely we are to false flag
@@ -359,21 +353,19 @@ cyber_execute_operation = {
 		}
 		ROOT = { country_event = { id = MD_cyber.1 } }
 		var:cur_target_nation = {
-			if = {
-				limit = { check_variable = { cyber_op_cur_type = 9 } }
+			if = { limit = { check_variable = { cyber_op_cur_type = 9 } }
 				set_country_flag = {
 					flag = has_industrial_espionage_tracking_access_from_@ROOT
 					days = 120
 				}
 			}
-			if = {
-				limit = { check_variable = { cyber_op_cur_type = 10 } }
+			else_if = { limit = { check_variable = { cyber_op_cur_type = 10 } }
 				set_country_flag = {
 					flag = has_comms_intercept_tracking_access_from_@ROOT
 					days = 180
 				}
 			}
-			if = {
+			else_if = {
 				limit = { check_variable = { cyber_op_cur_type = 13 } }
 				set_country_flag = {
 					flag = has_sleeper_network_tracking_access_from_@ROOT
@@ -440,9 +432,19 @@ cyber_execute_operation = {
 				country_event = { id = MD_cyber.3 }
 			}
 		}
-	}else = {
+	}
+	else = {
 		ROOT = { country_event = { id = MD_cyber.4 } }
 		#TODO: add an event here where nations can detect a failed cyber attack and react accordingly
+	}
+
+	meta_effect = {
+		text = {
+			var:cur_target_nation = {
+				clr_country_flag = is_under_[TYPE]_attack_by_@ROOT
+			}
+		}
+		TYPE = "[cyber_clear_name_check]"
 	}
 
 	add_to_variable = { cyber_ongoing_operations = -1 }

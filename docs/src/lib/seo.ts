@@ -1,30 +1,37 @@
 import { toAbsolute, withBase } from "./urls";
+import { SITE_DESCRIPTION } from "../shared/config/site";
 
-export type SeoImage = {
+export interface SeoImage {
   path: string;
   width?: number;
   height?: number;
   alt?: string;
-};
+}
 
-export type SeoMeta = {
+export interface SeoMeta {
   title: string;
   description: string;
   canonical: string;
   robots?: string;
   image?: SeoImage;
   seoEnabled: boolean;
-};
+}
 
-const DEFAULT_DESCRIPTION =
-  "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV.";
+const DEFAULT_DESCRIPTION = SITE_DESCRIPTION;
 
-const DEFAULT_IMAGE: SeoImage = {
-  path: "/assets/images/seo/og-image.png",
-  width: 1200,
-  height: 630,
-  alt: "Millennium Dawn logo banner",
-};
+function ogImagePath(canonicalPath: string): string {
+  const slug = canonicalPath.replace(/^\/+|\/+$/g, "");
+  return slug ? `/open-graph/${slug}.png` : "/open-graph/index.png";
+}
+
+function defaultOgImage(canonicalPath: string, title: string): SeoImage {
+  return {
+    path: ogImagePath(canonicalPath),
+    width: 1200,
+    height: 630,
+    alt: title,
+  };
+}
 
 export function buildSeoMeta(input: {
   title: string;
@@ -34,15 +41,18 @@ export function buildSeoMeta(input: {
   seo?: boolean;
   image?: SeoImage;
 }): SeoMeta {
-  const canonicalPath = input.canonicalPath || "/";
+  const canonicalPath = input.canonicalPath ?? "/";
   return {
     title: input.title,
-    description: input.description || DEFAULT_DESCRIPTION,
+    description: input.description ?? DEFAULT_DESCRIPTION,
     canonical: toAbsolute(canonicalPath),
     robots: input.robots,
     seoEnabled: input.seo !== false,
     image: input.image
       ? { ...input.image, path: withBase(input.image.path) }
-      : { ...DEFAULT_IMAGE, path: withBase(DEFAULT_IMAGE.path) },
+      : {
+          ...defaultOgImage(canonicalPath, input.title),
+          path: withBase(defaultOgImage(canonicalPath, input.title).path),
+        },
   };
 }

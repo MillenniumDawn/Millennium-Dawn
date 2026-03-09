@@ -45,7 +45,7 @@ class MetaCollector(HTMLParser):
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--site-dir", required=True, help="Path to built site directory")
-    parser.add_argument("--baseurl", default="", help="Site baseurl, e.g. /Millennium-Dawn")
+    parser.add_argument("--baseurl", default="", help="Site base path (e.g. /Millennium-Dawn)")
     return parser.parse_args()
 
 
