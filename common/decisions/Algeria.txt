@@ -1662,6 +1662,10 @@ ALG_political_struggle = {
 				power_balance_value = { id = algeria_power_balance value < -0.40 }
 			}
 			modifier = {
+				factor = 3
+				power_balance_value = { id = algeria_power_balance value < -0.3 }
+			}
+			modifier = {
 				factor = 0.2
 				power_balance_value = { id = algeria_power_balance value > 0.60 }
 			}
@@ -1863,6 +1867,58 @@ ALG_political_struggle = {
 			modifier = {
 				factor = 2
 				has_country_flag = ALG_crackdown_path
+			}
+		}
+	}
+	ALG_support_mujahideen = {
+		icon = GFX_decision_military_plan
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_power_balance = { id = algeria_power_balance }
+			has_political_power > 75
+			NOT = { has_country_flag = ALG_supporting_mujahideen }
+		}
+
+		visible = {
+			has_power_balance = { id = algeria_power_balance }
+		}
+
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_support_mujahideen"
+			set_country_flag = { flag = ALG_supporting_mujahideen days = 120 value = 1 }
+
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.07
+			}
+
+			add_stability = 0.03
+			add_war_support = 0.02
+
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.015
+			}
+
+			add_named_threat = {
+				name = deep_state_power
+				amount = 1
+			}
+		}
+
+		ai_will_do = {
+			factor = 0.5
+			modifier = {
+				factor = 2
+				has_country_flag = ALG_crackdown_path
+			}
+			modifier = {
+				factor = 2
+				power_balance_value = { id = algeria_power_balance value > 0.30 }
 			}
 		}
 	}
@@ -2241,6 +2297,436 @@ ALG_political_struggle = {
 			modifier = {
 				factor = 2
 				has_country_flag = ALG_reconciliation_path
+			}
+		}
+	}
+}
+ALG_deep_state_category = {
+	ALG_assess_deep_state = {
+		icon = GFX_decision_generic_intelligence_operation
+		
+		allowed = { original_tag = ALG }
+		
+		available = {
+			has_political_power > 25
+		}
+		
+		visible = {
+			has_variable = deep_state_power
+		}
+		
+		cost = 25
+		days_remove = 30
+		
+		complete_effect = {
+			custom_effect_tooltip = deep_state_assessing_tt
+		}
+		
+		remove_effect = {
+			custom_effect_tooltip = deep_state_level_revealed_tt
+			# Show different warnings based on level
+			if = {
+				limit = { check_variable = { deep_state_power < 6 } }
+				custom_effect_tooltip = deep_state_warning_low_tt
+			}
+			else_if = {
+				limit = { check_variable = { deep_state_power < 11 } }
+				custom_effect_tooltip = deep_state_warning_moderate_tt
+			}
+			else_if = {
+				limit = { check_variable = { deep_state_power < 16 } }
+				custom_effect_tooltip = deep_state_warning_medium_tt
+			}
+			else_if = {
+				limit = { check_variable = { deep_state_power < 21 } }
+				custom_effect_tooltip = deep_state_warning_high_tt
+			}
+			else_if = {
+				limit = { check_variable = { deep_state_power < 28 } }
+				custom_effect_tooltip = deep_state_warning_critical_tt
+			}
+			else = {
+				custom_effect_tooltip = deep_state_warning_coup_imminent_tt
+			}
+		}
+		
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	ALG_reduce_deep_state = {
+		icon = GFX_decision_eng_propaganda_campaigns
+		
+		allowed = { original_tag = ALG }
+		
+		available = {
+			has_political_power > 100
+			check_variable = { deep_state_power > 5 }
+		}
+		
+		visible = {
+			has_variable = deep_state_power
+		}
+		
+		cost = 100
+		days_remove = 60
+		
+		modifier = {
+			stability_weekly = -0.002
+		}
+		
+		complete_effect = {
+			custom_effect_tooltip = deep_state_reduction_started_tt
+			custom_effect_tooltip = deep_state_expect_resistance_tt
+		}
+		
+		remove_effect = {
+			custom_effect_tooltip = deep_state_power_decreased_5_tt
+			custom_effect_tooltip = deep_state_civilian_gains_tt
+			add_to_variable = { deep_state_power = -5 }
+			clamp_variable = {
+				var = deep_state_power
+				min = 0
+				max = 30
+			}
+			add_stability = -0.04
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = 0.08
+			}
+			# Chance of backlash at high power
+			if = {
+				limit = { check_variable = { deep_state_power > 15 } }
+				random_list = {
+					70 = { custom_effect_tooltip = deep_state_reduction_success_tt }
+					30 = {
+						custom_effect_tooltip = deep_state_reduction_backlash_tt
+						add_to_variable = { deep_state_power = 2 }
+						add_stability = -0.03
+					}
+				}
+			}
+		}
+		
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 5
+				check_variable = { deep_state_power > 20 }
+			}
+		}
+	}
+	
+	ALG_purge_military_command = {
+		icon = GFX_decision_politic_kill
+		
+		allowed = { original_tag = ALG }
+		
+		available = {
+			has_political_power > 200
+			check_variable = { deep_state_power > 15 }
+			NOT = { has_country_flag = recent_purge }
+		}
+		
+		visible = {
+			check_variable = { deep_state_power > 10 }
+		}
+		
+		cost = 200
+		days_remove = 90
+		
+		modifier = {
+			army_org_factor = -0.10
+			stability_weekly = -0.005
+		}
+		
+		complete_effect = {
+			custom_effect_tooltip = deep_state_purge_started_tt
+			custom_effect_tooltip = deep_state_army_disruption_tt
+			set_country_flag = { flag = recent_purge days = 365 }
+		}
+		
+		remove_effect = {
+			custom_effect_tooltip = deep_state_power_decreased_10_tt
+			custom_effect_tooltip = deep_state_purge_complete_tt
+			add_to_variable = { deep_state_power = -10 }
+			clamp_variable = {
+				var = deep_state_power
+				min = 0
+				max = 30
+			}
+			add_stability = -0.10
+			army_experience = -50
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = 0.15
+			}
+			# Clear stage flags to allow re-triggering events
+			if = {
+				limit = { check_variable = { deep_state_power < 21 } }
+				clr_country_flag = deep_state_stage_4
+			}
+			if = {
+				limit = { check_variable = { deep_state_power < 16 } }
+				clr_country_flag = deep_state_stage_3
+			}
+			if = {
+				limit = { check_variable = { deep_state_power < 11 } }
+				clr_country_flag = deep_state_stage_2
+			}
+		}
+		
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				factor = 10
+				check_variable = { deep_state_power > 25 }
+			}
+		}
+	}
+	
+	ALG_cooperate_with_military = {
+		icon = GFX_decision_generic_army_support_new
+		
+		allowed = { original_tag = ALG }
+		
+		available = {
+			has_political_power > 50
+			# Don't cooperate if already at critical levels
+			check_variable = { deep_state_power < 25 }
+		}
+		
+		visible = {
+			has_variable = deep_state_power
+		}
+		
+		cost = 50
+		
+		complete_effect = {
+			custom_effect_tooltip = deep_state_power_increased_3_tt
+			custom_effect_tooltip = deep_state_cooperation_tt
+			custom_effect_tooltip = deep_state_stability_boost_tt
+			add_to_variable = { deep_state_power = 3 }
+			clamp_variable = {
+				var = deep_state_power
+				min = 0
+				max = 30
+			}
+			add_stability = 0.03
+			add_political_power = 50
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.05
+			}
+			# Warning if approaching danger zone
+			if = {
+				limit = { check_variable = { deep_state_power > 18 } }
+				custom_effect_tooltip = deep_state_cooperation_warning_tt
+			}
+		}
+		
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				check_variable = { deep_state_power > 15 }
+			}
+		}
+	}
+	
+	ALG_reform_intelligence_services = {
+		icon = GFX_decision_hol_exchange_intelligence_data
+		
+		allowed = { original_tag = ALG }
+		
+		available = {
+			has_political_power > 150
+			check_variable = { deep_state_power > 10 }
+			NOT = { has_country_flag = recent_intel_reform }
+		}
+		
+		visible = {
+			check_variable = { deep_state_power > 5 }
+		}
+		
+		cost = 150
+		days_remove = 120
+		
+		modifier = {
+			political_power_factor = -0.10
+		}
+		
+		complete_effect = {
+			custom_effect_tooltip = deep_state_intel_reform_started_tt
+			custom_effect_tooltip = deep_state_expect_pushback_tt
+			set_country_flag = { flag = recent_intel_reform days = 180 }
+		}
+		
+		remove_effect = {
+			custom_effect_tooltip = deep_state_power_decreased_7_tt
+			custom_effect_tooltip = deep_state_intel_reformed_tt
+			add_to_variable = { deep_state_power = -7 }
+			clamp_variable = {
+				var = deep_state_power
+				min = 0
+				max = 30
+			}
+			add_stability = -0.05
+			if = {
+				limit = { has_idea = ALG_surveillance_state_1 }
+				remove_ideas = ALG_surveillance_state_1
+				custom_effect_tooltip = deep_state_surveillance_removed_tt
+			}
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = 0.10
+			}
+		}
+		
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 3
+				check_variable = { deep_state_power > 18 }
+			}
+		}
+	}
+	
+	ALG_appoint_loyal_officers = {
+		icon = GFX_decision_civil_support
+		
+		allowed = { original_tag = ALG }
+		
+		available = {
+			has_political_power > 75
+			has_army_experience > 25
+			NOT = { has_country_flag = recent_officer_appointments }
+		}
+		
+		visible = {
+			has_variable = deep_state_power
+		}
+		
+		cost = 75
+		days_remove = 45
+		
+		complete_effect = {
+			custom_effect_tooltip = deep_state_loyal_officers_tt
+			army_experience = -25
+			set_country_flag = { flag = recent_officer_appointments days = 120 }
+		}
+		
+		remove_effect = {
+			custom_effect_tooltip = deep_state_power_decreased_3_tt
+			custom_effect_tooltip = deep_state_loyalists_placed_tt
+			add_to_variable = { deep_state_power = -3 }
+			clamp_variable = {
+				var = deep_state_power
+				min = 0
+				max = 30
+			}
+		}
+		
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 2
+				check_variable = { deep_state_power > 15 }
+			}
+		}
+	}
+	
+	#Emergency Martial Law (if deep state is too powerful)
+	ALG_declare_emergency = {
+		icon = GFX_decision_emerging_button
+		
+		allowed = { original_tag = ALG }
+		
+		available = {
+			has_political_power > 150
+			check_variable = { deep_state_power > 22 }
+			NOT = { has_idea = ALG_state_of_emergency }
+		}
+		
+		visible = {
+			check_variable = { deep_state_power > 18 }
+		}
+		
+		cost = 150
+		
+		complete_effect = {
+			custom_effect_tooltip = deep_state_emergency_declared_tt
+			custom_effect_tooltip = deep_state_emergency_effect_tt
+			add_ideas = ALG_state_of_emergency
+			add_stability = -0.08
+			add_war_support = 0.05
+			# Temporarily freezes deep state growth
+			set_country_flag = { flag = deep_state_frozen days = 180 }
+		}
+		
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 10
+				check_variable = { deep_state_power > 26 }
+			}
+		}
+	}
+	
+	#Negotiate with Generals
+	ALG_negotiate_with_generals = {
+		icon = GFX_decision_negotiate_icon
+		
+		allowed = { original_tag = ALG }
+		
+		available = {
+			has_political_power > 100
+			check_variable = { deep_state_power > 15 }
+			NOT = { has_country_flag = recent_negotiations }
+		}
+		
+		visible = {
+			check_variable = { deep_state_power > 12 }
+		}
+		
+		cost = 100
+		days_remove = 30
+		
+		complete_effect = {
+			custom_effect_tooltip = deep_state_negotiation_started_tt
+			set_country_flag = { flag = recent_negotiations days = 180 }
+		}
+		
+		remove_effect = {
+			random_list = {
+				50 = {
+					custom_effect_tooltip = deep_state_negotiation_success_tt
+					add_to_variable = { deep_state_power = -4 }
+					add_stability = 0.02
+				}
+				30 = {
+					custom_effect_tooltip = deep_state_negotiation_partial_tt
+					add_to_variable = { deep_state_power = -2 }
+				}
+				20 = {
+					custom_effect_tooltip = deep_state_negotiation_failed_tt
+					add_to_variable = { deep_state_power = 2 }
+					add_stability = -0.03
+				}
+			}
+			clamp_variable = {
+				var = deep_state_power
+				min = 0
+				max = 30
+			}
+		}
+		
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 3
+				check_variable = { deep_state_power > 20 }
 			}
 		}
 	}
