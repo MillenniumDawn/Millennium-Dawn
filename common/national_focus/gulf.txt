@@ -571,11 +571,6 @@ focus_tree = {
 			increase_social_spending = yes
 			set_temp_variable = { arg_popularity = 0.05 }
 			add_ruling_outlook_popularity = yes
-			if = {
-				limit = { no_jihadist_government = yes has_idea = sunni }
-				set_temp_variable = { rad_change = -2 }
-				modify_radicalization_effect = yes
-			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_deepen_the_safety_net executed"
 			set_temp_variable = { desire_change = 0.5 }
 			change_expected_social_spending = yes
@@ -758,14 +753,6 @@ focus_tree = {
 			decrease_social_spending = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_small_medium_business_owners_opinion = yes
-			if = {
-				limit = {
-					no_jihadist_government = yes
-					has_idea = sunni
-				}
-				set_temp_variable = { rad_change = 2 }
-				modify_radicalization_effect = yes
-			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_shrink_the_safety_net executed"
 			set_temp_variable = { desire_change = -0.5 }
 			change_expected_social_spending = yes
@@ -806,11 +793,6 @@ focus_tree = {
 			}
 			set_temp_variable = { arg_popularity = -0.1 }
 			add_ruling_outlook_popularity = yes
-			if = {
-				limit = { no_jihadist_government = yes has_idea = sunni }
-				set_temp_variable = { rad_change = -2 }
-				modify_radicalization_effect = yes
-			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_private_sector_job_creation executed"
 		}
 
@@ -842,14 +824,6 @@ focus_tree = {
 				days = 365
 			}
 			increase_economic_growth = yes
-			if = {
-				limit = {
-					no_jihadist_government = yes
-					has_idea = sunni
-				}
-				set_temp_variable = { rad_change = -5 }
-				modify_radicalization_effect = yes
-			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_construction_boom executed"
 		}
 
@@ -868,7 +842,7 @@ focus_tree = {
 
 		prerequisite = { focus = GCC_diversify_the_economy }
 
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 		bypass = {
 			OR = {
 				AND = {
@@ -1109,11 +1083,6 @@ focus_tree = {
 		completion_reward = {
 			remove_ideas = rentier_state
 			add_stability = 0.05
-			if = {
-				limit = { no_jihadist_government = yes has_idea = sunni }
-				set_temp_variable = { rad_change = -5 }
-				modify_radicalization_effect = yes
-			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_end_the_rentier_state executed"
 		}
 
@@ -3537,7 +3506,7 @@ focus_tree = {
 			if = {
 				limit = {
 					tag = SAU
-					has_start_date > 2016.01.01
+					has_idea = SAU_crown_prince_mbs
 				}
 				has_idea = SAU_crown_prince_mbs
 			}
@@ -3734,20 +3703,7 @@ focus_tree = {
 		available = {
 			if = {
 				limit = {
-					has_idea = saudi_royal_family
-					NOT = {
-						AND = {
-							tag = SAU
-							has_start_date > 2016.01.01
-						}
-					}
-				}
-				sarf_at_least_positive_opinion = yes
-			}
-			else_if = {
-				limit = {
 					tag = SAU
-					has_start_date > 2016.01.01
 					has_idea = saudi_royal_family
 				}
 				OR = {
@@ -4030,10 +3986,7 @@ focus_tree = {
 			modifier = {
 				add = 4
 				is_historical_focus_on = no
-				OR = {
-					jihadist_government = yes
-					check_variable = { radicalization > 50 }
-				}
+				jihadist_government = yes
 			}
 		}
 	}
@@ -4059,10 +4012,6 @@ focus_tree = {
 		completion_reward = {
 			set_temp_variable = { treasury_change = -1 }
 			modify_treasury_effect = yes
-			YEM = {
-				set_temp_variable = { threat_change = 10 }
-				modify_terror_threat_effect = yes
-			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_covert_support_for_islamist_radicals executed"
 		}
 
@@ -4085,8 +4034,6 @@ focus_tree = {
 		bypass = { jihadist_government = yes }
 
 		completion_reward = {
-			set_temp_variable = { rad_change = 10 }
-			modify_radicalization_effect = yes
 			add_popularity = {
 				ideology = fascism
 				popularity = 0.05
@@ -4124,8 +4071,6 @@ focus_tree = {
 		completion_reward = {
 			add_war_support = 0.05
 			add_stability = -0.05
-			set_temp_variable = { threat_change = 20 }
-			modify_terror_threat_effect = yes
 
 			add_popularity = { ideology = fascism popularity = 0.05 }
 			recalculate_party = yes
@@ -4154,8 +4099,6 @@ focus_tree = {
 		completion_reward = {
 			add_war_support = 0.05
 			add_stability = -0.05
-			set_temp_variable = { threat_change = 20 }
-			modify_terror_threat_effect = yes
 			add_popularity = {
 				ideology = fascism
 				popularity = 0.05
@@ -4187,12 +4130,8 @@ focus_tree = {
 			if = { limit = { tag = SAU }
 				set_variable = { party_pop_array^11 = 1 }
 				recalculate_party = yes
-				clear_array = ruling_party
-				clear_array = gov_coalition_array
-				add_to_array = { ruling_party = 11 }
-				update_government_coalition_strength = yes
-				update_party_name = yes
-				set_coalition_drift = yes
+				set_temp_variable = { rul_party_temp = 11 }
+				change_ruling_party_effect = yes
 
 				retire_country_leader = yes
 				create_country_leader = {
@@ -4330,18 +4269,11 @@ focus_tree = {
 			if = {
 				limit = { tag = BHR }
 				hidden_effect = {
-					set_politics = {
-						ruling_party = fascism
-						elections_allowed = no
-					}
 					set_variable = { party_pop_array^11 = 1 }
 					recalculate_party = yes
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 11 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
+					set_temp_variable = { rul_party_temp = 11 }
+					set_temp_variable = { disable_elections = 1 }
+					change_ruling_party_effect = yes
 				}
 				swap_ideas = {
 					remove_idea = saudi_royal_family
@@ -4362,18 +4294,10 @@ focus_tree = {
 			if = {
 				limit = { tag = QAT }
 				hidden_effect = {
-					set_politics = {
-						ruling_party = fascism
-						elections_allowed = no
-					}
 					set_variable = { party_pop_array^11 = 1 }
 					recalculate_party = yes
-					clear_array = ruling_party
-					clear_array = gov_coalition_array
-					add_to_array = { ruling_party = 11 }
-					update_government_coalition_strength = yes
-					update_party_name = yes
-					set_coalition_drift = yes
+					set_temp_variable = { rul_party_temp = 11 }
+					change_ruling_party_effect = yes
 				}
 				create_country_leader = {
 					name = "Qasim al-Raymi"
@@ -5588,6 +5512,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_INFLUENCE }
 		completion_reward = {
+			log = "[GetDateText]: [This.GetName]: focus GCC_influence_muslim_europe executed"
 			if = {
 				limit = {
 					OR = {
@@ -5596,38 +5521,28 @@ focus_tree = {
 						original_tag = QAT
 					}
 				}
-				every_country = {
-					limit = {
-						OR = {
-							original_tag = ALB
-							original_tag = BOS
-							original_tag = KOS
-							original_tag = TUR
-						}
-					}
-					set_temp_variable = { percent_change = 2 }
-					set_temp_variable = { tag_index = ROOT.id }
-					set_temp_variable = { influence_target = THIS.id }
-					change_influence_percentage = yes
-				}
+				set_temp_variable = { percent_change = 2 }
 			}
 			else = {
-				every_country = {
-					limit = {
-						OR = {
-							original_tag = ALB
-							original_tag = BOS
-							original_tag = KOS
-							original_tag = TUR
-						}
-					}
-					set_temp_variable = { percent_change = 1 }
-					set_temp_variable = { tag_index = ROOT.id }
-					set_temp_variable = { influence_target = THIS.id }
-					change_influence_percentage = yes
-				}
+				set_temp_variable = { percent_change = 1 }
 			}
-			log = "[GetDateText]: [This.GetName]: focus GCC_influence_muslim_europe executed"
+			set_temp_variable = { tag_index = ROOT.id }
+			ALB = {
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			BOS = {
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			KOS = {
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+			TUR = {
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
 		}
 
 		ai_will_do = { base = 1 }
@@ -6444,11 +6359,6 @@ focus_tree = {
 			subtract_from_variable = { palestinian_support = 1 }
 			set_temp_variable = { arg_popularity = -0.1 }
 			add_ruling_outlook_popularity = yes
-			if = {
-				limit = { has_idea = sunni }
-				set_temp_variable = { rad_change = 10 }
-				modify_radicalization_effect = yes
-			}
 			set_temp_variable = { temp_opinion = -5 }
 			change_the_wahabi_ulema_opinion = yes
 			change_the_ulema_opinion = yes
@@ -6546,11 +6456,7 @@ focus_tree = {
 
 		available = {
 			NOT = { has_government = communism }
-			if = {
-				limit = {
-					tag = SAU
-					has_start_date > 2016.01.01
-				}
+			if = { limit = { tag = SAU }
 				has_idea = SAU_crown_prince_mbs
 			}
 		}
@@ -6664,11 +6570,6 @@ focus_tree = {
 				custom_effect_tooltip = israel_peace_deal1_tt
 				add_to_variable = { isreali_support = 2 }
 				subtract_from_variable = { palestinian_support = 2 }
-				if = {
-					limit = { has_idea = sunni }
-					set_temp_variable = { rad_change = 10 }
-					modify_radicalization_effect = yes
-				}
 			}
 			set_temp_variable = { temp_opinion = -5 }
 			change_the_wahabi_ulema_opinion = yes
@@ -8225,11 +8126,6 @@ focus_tree = {
 				add_ai_strategy = { type = protect id = ROOT value = 20 }
 			}
 			if = {
-				limit = { has_idea = sunni }
-				set_temp_variable = { rad_change = 10 }
-				modify_radicalization_effect = yes
-			}
-			if = {
 				limit = {
 					has_idea = idea_gcc_member_state
 					any_of_scopes = {
@@ -8275,8 +8171,6 @@ focus_tree = {
 
 		completion_reward = {
 			add_war_support = 0.05
-			set_temp_variable = { rad_change = 10 }
-			modify_radicalization_effect = yes
 			if = {
 				limit = {
 					check_variable = { shia_population > 0 }
@@ -8420,11 +8314,6 @@ focus_tree = {
 				set_temp_variable = { temp_modify_gcc_unity = -5 }
 				modify_gcc_unity = yes
 			}
-			if = {
-				limit = { no_jihadist_government = yes has_idea = sunni }
-				set_temp_variable = { rad_change = -2 }
-				modify_radicalization_effect = yes
-			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_distance_from_america executed"
 		}
 
@@ -8508,11 +8397,6 @@ focus_tree = {
 				}
 				set_temp_variable = { temp_modify_gcc_unity = -10 }
 				modify_gcc_unity = yes
-			}
-			if = {
-				limit = { no_jihadist_government = yes has_idea = sunni }
-				set_temp_variable = { rad_change = -5 }
-				modify_radicalization_effect = yes
 			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_expel_us_interests executed"
 		}
@@ -8711,11 +8595,6 @@ focus_tree = {
 				}
 				set_temp_variable = { temp_modify_gcc_unity = -10 }
 				modify_gcc_unity = yes
-			}
-			if = {
-				limit = { no_jihadist_government = yes has_idea = sunni }
-				set_temp_variable = { rad_change = -5 }
-				modify_radicalization_effect = yes
 			}
 		}
 
@@ -10097,7 +9976,7 @@ focus_tree = {
 
 		cost = 5
 
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = { focus = GCC_military_affairs }
 		completion_reward = {
@@ -10105,12 +9984,12 @@ focus_tree = {
 			navy_experience = 5
 			air_experience = 5
 			add_equipment_to_stockpile = {
-				type = infantry_weapons2
+				type = infantry_weapons_3
 				amount = 1000
 				producer = ROOT
 			}
 			add_equipment_to_stockpile = {
-				type = command_control_equipment1
+				type = cnc_equipment_2
 				amount = 200
 				producer = ROOT
 			}
@@ -10132,7 +10011,7 @@ focus_tree = {
 
 		cost = 5
 
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = { focus = GCC_equipment_modernizations }
 		completion_reward = {
@@ -10225,14 +10104,14 @@ focus_tree = {
 					value > -1
 				}
 			}
-			SOV = { has_tech = infantry_weapons3 }
+			SOV = { has_tech = infantry_weapons_4 }
 		}
 
 		completion_reward = {
 			set_temp_variable = { treasury_change = -0.5 }
 			modify_treasury_effect = yes
 			add_equipment_to_stockpile = {
-				type = infantry_weapons3
+				type = infantry_weapons_4
 				amount = 3000
 				producer = SOV
 			}
@@ -10278,14 +10157,14 @@ focus_tree = {
 					value > -1
 				}
 			}
-			USA = { has_tech = infantry_weapons3 }
+			USA = { has_tech = infantry_weapons_4 }
 		}
 
 		completion_reward = {
 			set_temp_variable = { treasury_change = -0.5 }
 			modify_treasury_effect = yes
 			add_equipment_to_stockpile = {
-				type = infantry_weapons3
+				type = infantry_weapons_4
 				amount = 3000
 				producer = USA
 			}
@@ -10334,7 +10213,7 @@ focus_tree = {
 				category = CAT_afv
 			}
 			add_equipment_to_stockpile = {
-				type = util_vehicle_1
+				type = util_vehicle_2
 				amount = 300
 				producer = ROOT
 			}
@@ -10371,7 +10250,7 @@ focus_tree = {
 					value > -1
 				}
 			}
-			TUR = { has_tech = util_vehicle_3 }
+			TUR = { has_tech = util_vehicle_4 }
 			if = { limit = { tag = SAU } TUR = { NOT = { has_opinion_modifier = khashoggi_affair } } }
 		}
 
@@ -10379,7 +10258,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -1.5 }
 			modify_treasury_effect = yes
 			add_equipment_to_stockpile = {
-				type = util_vehicle_3
+				type = util_vehicle_4
 				amount = 650
 				producer = TUR
 			}
@@ -10425,14 +10304,14 @@ focus_tree = {
 					value > -1
 				}
 			}
-			USA = { has_tech = util_vehicle_4 }
+			USA = { has_tech = util_vehicle_5 }
 		}
 
 		completion_reward = {
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 			add_equipment_to_stockpile = {
-				type = util_vehicle_4
+				type = util_vehicle_5
 				amount = 650
 				producer = USA
 			}
@@ -11114,7 +10993,7 @@ focus_tree = {
 
 		cost = 7.2
 
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = { focus = GCC_asymmetric_warfare }
 		completion_reward = {
@@ -11147,7 +11026,7 @@ focus_tree = {
 
 		cost = 8.58
 
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		prerequisite = { focus = GCC_develop_indigenous_drone_capability focus = GCC_chinese_uavs }
 		completion_reward = {
@@ -11259,7 +11138,7 @@ focus_tree = {
 
 		prerequisite = { focus = GCC_asymmetric_warfare }
 
-		search_filters = { FOCUS_FILTER_MILITARY }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		bypass = { all_owned_state = { air_base > 8 } }
 
@@ -11701,11 +11580,6 @@ focus_tree = {
 			shia_resistance_level_up = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_wahabi_ulema_opinion = yes
-			if = {
-				limit = { has_idea = sunni }
-				set_temp_variable = { rad_change = 10 }
-				modify_radicalization_effect = yes
-			}
 			log = "[GetDateText]: [This.GetName]: focus GCC_inflame_rhetoric executed"
 		}
 

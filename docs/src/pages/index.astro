@@ -1,0 +1,50 @@
+---
+import { getEntry } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Hero from "../components/Hero.astro";
+import HomeIntro from "../components/HomeIntro.astro";
+import HomeRoadmaps from "../components/HomeRoadmaps.astro";
+import HomeCommunity from "../components/HomeCommunity.astro";
+import HomeResourceGroups from "../components/HomeResourceGroups.astro";
+import HomeSubmods from "../components/HomeSubmods.astro";
+import HomeCredits from "../components/HomeCredits.astro";
+import { STATIC_PAGE_META } from "../lib/page-meta";
+
+const releaseEntry = await getEntry("release", "index");
+const homeEntry = await getEntry("home", "index");
+if (!releaseEntry) {
+  throw new Error("Missing release/index data entry");
+}
+if (!homeEntry) {
+  throw new Error("Missing home/index data entry");
+}
+
+const release = releaseEntry.data.current;
+const home = homeEntry.data;
+const pageMeta = STATIC_PAGE_META.home;
+const {
+  roadmaps,
+  team_join,
+  paratranz_projects,
+  resource_groups,
+  credits,
+} = home;
+---
+
+<BaseLayout
+  title={pageMeta.title}
+  pageId={pageMeta.pageId}
+  canonicalPath={pageMeta.canonicalPath}
+  description={pageMeta.description}
+>
+  <Hero />
+  <HomeIntro release={release} />
+  <HomeRoadmaps roadmaps={roadmaps} />
+  <HomeCommunity
+    teamJoinDescription={team_join.description}
+    paratranzProjects={paratranz_projects}
+  />
+  <HomeResourceGroups groups={resource_groups} />
+  <HomeSubmods />
+  <HomeCredits credits={credits} />
+</BaseLayout>

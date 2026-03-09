@@ -1,0 +1,63 @@
+---
+import type { MarkdownHeading } from "astro";
+import BaseLayout from "./BaseLayout.astro";
+import CountryInfobox from "../components/CountryInfobox.astro";
+
+interface Stat {
+  label: string;
+  value: string;
+}
+
+interface InfoboxGroup {
+  section: string;
+  stats: Stat[];
+}
+
+interface Props {
+  title: string;
+  description?: string;
+  seo?: boolean;
+  robots?: string;
+  pageId?: string;
+  bodyClass?: string;
+  canonicalPath: string;
+  flagImage?: string;
+  infobox: InfoboxGroup[];
+  headings?: MarkdownHeading[];
+}
+
+const {
+  title,
+  description,
+  seo,
+  robots,
+  pageId,
+  bodyClass,
+  canonicalPath,
+  flagImage,
+  infobox,
+  headings = [],
+}: Props = Astro.props;
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  seo={seo}
+  robots={robots}
+  pageId={pageId}
+  bodyClass={bodyClass}
+  canonicalPath={canonicalPath}
+  toc="auto"
+  headings={headings}
+>
+  <div class="country-profile">
+    <div class="country-profile__main">
+      <h1 class="country-profile__title">{title}</h1>
+      <slot />
+    </div>
+    <aside class="country-profile__sidebar">
+      <CountryInfobox title={title} flagImage={flagImage} infobox={infobox || []} />
+    </aside>
+  </div>
+</BaseLayout>

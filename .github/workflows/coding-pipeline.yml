@@ -2,25 +2,21 @@ name: Code Standards & Validation
 
 on:
   pull_request:
-    branches: [ main, master ]
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [ main ]
     paths:
-    - '**/*.txt'
-    - '**/*.yml'
-    - '**/*.gfx'
-    - '**/*.gui'
-    - '!tutorial/**'
-    - '!Changelog.txt'
-  push:
-    tags: [ 'v*' ]
+    - 'common/**'
+    - 'events/**'
+    - 'history/**'
+    - 'localisation/**'
+    - 'interface/**'
+    - 'gfx/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
-  INPUT_RULES: 'https://github.com/Kaiserreich/cwtools-hoi4-config.git'
-  INPUT_RULESREF: 'master'
-  INPUT_SUPPRESSEDOFFENCECATEGORIES: '{"failure":["CW226"], "warning":["CW251"], "notice":[]}'
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 permissions:
@@ -32,15 +28,16 @@ permissions:
 jobs:
   coding-standards:
     name: Coding Standards
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 1
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: '3.x'
 
@@ -54,17 +51,18 @@ jobs:
 
   styling-check:
     name: Style Check
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     needs: [coding-standards]
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 1
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: '3.x'
 
@@ -80,25 +78,30 @@ jobs:
 
   validate-variables:
     name: Validate Flags and Event Targets
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 1
 
+    - name: Stage PR changed files
+      run: |
+        gh pr diff ${{ github.event.pull_request.number }} --name-only | while IFS= read -r file; do git add -- "$file"; done
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: '3.x'
 
     - name: Run variable validation
       run: |
-        python3 tools/validation/validate_variables.py --strict --no-color --workers 4 --output validation-variables.log
+        python3 tools/validation/validate_variables.py --staged --strict --no-color --workers 4 --output validation-variables.log
 
     - name: Upload validation results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.0
       if: always()
       with:
         name: validation-variables-results
@@ -107,25 +110,30 @@ jobs:
 
   validate-scripted-localisation:
     name: Validate Scripted Localisation
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 1
 
+    - name: Stage PR changed files
+      run: |
+        gh pr diff ${{ github.event.pull_request.number }} --name-only | while IFS= read -r file; do git add -- "$file"; done
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: '3.x'
 
     - name: Run scripted localisation validation
       run: |
-        python3 tools/validation/validate_scripted_localisation.py --strict --no-color --workers 4 --output validation-scripted-localisation.log
+        python3 tools/validation/validate_scripted_localisation.py --staged --strict --no-color --workers 4 --output validation-scripted-localisation.log
 
     - name: Upload validation results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.0
       if: always()
       with:
         name: validation-scripted-localisation-results
@@ -134,25 +142,30 @@ jobs:
 
   validate-cosmetic-tags:
     name: Validate Cosmetic Tags
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 1
 
+    - name: Stage PR changed files
+      run: |
+        gh pr diff ${{ github.event.pull_request.number }} --name-only | while IFS= read -r file; do git add -- "$file"; done
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: '3.x'
 
     - name: Run cosmetic tag validation
       run: |
-        python3 tools/validation/validate_cosmetic_tags.py --strict --no-color --workers 4 --output validation-cosmetic-tags.log
+        python3 tools/validation/validate_cosmetic_tags.py --staged --strict --no-color --workers 4 --output validation-cosmetic-tags.log
 
     - name: Upload validation results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.0
       if: always()
       with:
         name: validation-cosmetic-tags-results
@@ -161,25 +174,30 @@ jobs:
 
   validate-decisions:
     name: Validate Decisions
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 1
 
+    - name: Stage PR changed files
+      run: |
+        gh pr diff ${{ github.event.pull_request.number }} --name-only | while IFS= read -r file; do git add -- "$file"; done
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: '3.x'
 
     - name: Run decision validation
       run: |
-        python3 tools/validation/validate_decisions.py --strict --no-color --workers 4 --output validation-decisions.log
+        python3 tools/validation/validate_decisions.py --staged --strict --no-color --workers 4 --output validation-decisions.log
 
     - name: Upload validation results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.0
       if: always()
       with:
         name: validation-decisions-results
@@ -188,25 +206,30 @@ jobs:
 
   validate-localisation:
     name: Validate Localisation
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 1
 
+    - name: Stage PR changed files
+      run: |
+        gh pr diff ${{ github.event.pull_request.number }} --name-only | while IFS= read -r file; do git add -- "$file"; done
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: '3.x'
 
     - name: Run localisation validation
       run: |
-        python3 tools/validation/validate_localisation.py --strict --no-color --workers 4 --output validation-localisation.log
+        python3 tools/validation/validate_localisation.py --staged --strict --no-color --workers 4 --output validation-localisation.log
 
     - name: Upload validation results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.0
       if: always()
       with:
         name: validation-localisation-results
@@ -215,25 +238,30 @@ jobs:
 
   validate-events:
     name: Validate Events
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 1
 
+    - name: Stage PR changed files
+      run: |
+        gh pr diff ${{ github.event.pull_request.number }} --name-only | while IFS= read -r file; do git add -- "$file"; done
+
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: '3.x'
 
     - name: Run event validation
       run: |
-        python3 tools/validation/validate_events.py --strict --no-color --workers 4 --output validation-events.log
+        python3 tools/validation/validate_events.py --staged --strict --no-color --workers 4 --output validation-events.log
 
     - name: Upload validation results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.0
       if: always()
       with:
         name: validation-events-results
@@ -244,21 +272,21 @@ jobs:
     name: Generate Validation Report
     runs-on: ubuntu-latest
     needs: [validate-variables, validate-scripted-localisation, validate-cosmetic-tags, validate-decisions, validate-localisation, validate-events]
-    if: always() && github.event_name == 'pull_request'
+    if: always() && github.event_name == 'pull_request' && github.event.pull_request.draft == false
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 1
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: '3.x'
 
     - name: Download all validation results
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         path: validation-results
 
@@ -275,28 +303,9 @@ jobs:
           --print
 
     - name: Upload combined report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.0
       if: always()
       with:
         name: validation-report
         path: report.md
         retention-days: 30
-
-  create-release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
-
-    - name: Create Release
-      uses: actions/create-release@v1
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false

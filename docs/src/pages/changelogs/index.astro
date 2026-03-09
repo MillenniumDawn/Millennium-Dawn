@@ -1,0 +1,44 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SearchableIndex } from "../../features/searchable-index";
+import { STATIC_PAGE_META } from "../../lib/page-meta";
+import { toCardItem } from "../../lib/cards";
+import { getChangelogPath } from "../../lib/content-routes";
+import { withBase } from "../../lib/urls";
+
+const sections = (await getCollection("changelogSections"))
+  .slice()
+  .sort((a, b) => (b.data.order ?? 0) - (a.data.order ?? 0));
+
+const pageMeta = STATIC_PAGE_META.changelogs;
+const cards = sections.map((entry) =>
+  toCardItem(entry, {
+    url: getChangelogPath(entry),
+    kind: "Changelog",
+  }),
+);
+---
+
+<BaseLayout
+  title={pageMeta.title}
+  pageId={pageMeta.pageId}
+  description={pageMeta.description}
+  canonicalPath={pageMeta.canonicalPath}
+  toc="off"
+>
+  <h1>Changelog Archive</h1>
+  <p>This page indexes changelogs by major release branch.</p>
+  <p>
+    For the <a href={withBase("/misc/beta-changelogs/")}>BETA test changes</a> click the link.
+  </p>
+
+  <SearchableIndex
+    items={cards}
+    ariaLabel="Changelog section index"
+    pageSize={8}
+    filterLabel="Search"
+    filterPlaceholder="Type to filter..."
+    emptyText="No changelog sections matched your search."
+  />
+</BaseLayout>
