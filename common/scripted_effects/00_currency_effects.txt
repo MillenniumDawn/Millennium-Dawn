@@ -36,6 +36,39 @@ currency_startup = {
 		}
 		add_ideas = no_currency_backing
 	}
+
+	update_currency_issuers = yes
+}
+
+# Sets global.XXX_issuer to whoever currently owns the original home capital of
+# each reserve currency. Called at startup and after every peace conference so
+# that issuer status reflects in-game territorial changes.
+update_currency_issuers = {
+	# USD — whoever owns Washington DC (state 1182)
+	state:1182 = { owner = { set_variable = { global.usd_issuer = THIS } } }
+
+	# EUR — EUU when spawned, else owner of Berlin (state 45)
+	if = { limit = { country_exists = EUU }
+		EUU = { set_variable = { global.eur_issuer = THIS } }
+	}
+	else = {
+		state:45 = { owner = { set_variable = { global.eur_issuer = THIS } } }
+	}
+
+	# CNY — whoever owns Beijing (state 547)
+	state:547 = { owner = { set_variable = { global.cny_issuer = THIS } } }
+
+	# RUB — whoever owns Moscow (state 652)
+	state:652 = { owner = { set_variable = { global.rub_issuer = THIS } } }
+
+	# JPY — whoever owns Tokyo (state 615)
+	state:615 = { owner = { set_variable = { global.jpy_issuer = THIS } } }
+
+	# GBP — whoever owns London (state 13)
+	state:13 = { owner = { set_variable = { global.gbp_issuer = THIS } } }
+
+	# CHF — whoever owns Bern (state 74)
+	state:74 = { owner = { set_variable = { global.chf_issuer = THIS } } }
 }
 
 # ── Monthly recalculation ─────────────────────────────────────────────────────
@@ -64,22 +97,22 @@ calculate_currency_strength = {
 	add_to_temp_variable = { currency_delta = stab_contrib }
 
 	# Reserve currency issuers get a floor — they can weaken but less dramatically
-	if = { limit = { has_country_flag = usd_reserve_currency_issuer }
+	if = { limit = { check_variable = { global.usd_issuer = THIS } }
 		clamp_variable = { var = currency_delta min = -0.005 max = 0.02 }
 	}
-	else_if = { limit = { has_country_flag = eur_reserve_currency_issuer }
+	else_if = { limit = { check_variable = { global.eur_issuer = THIS } }
 		clamp_variable = { var = currency_delta min = -0.007 max = 0.015 }
 	}
-	else_if = { limit = { has_country_flag = rub_reserve_currency_issuer }
+	else_if = { limit = { check_variable = { global.rub_issuer = THIS } }
 		clamp_variable = { var = currency_delta min = -0.01 max = 0.012 }
 	}
-	else_if = { limit = { has_country_flag = gbp_reserve_currency_issuer }
+	else_if = { limit = { check_variable = { global.gbp_issuer = THIS } }
 		clamp_variable = { var = currency_delta min = -0.008 max = 0.013 }
 	}
-	else_if = { limit = { has_country_flag = jpy_reserve_currency_issuer }
+	else_if = { limit = { check_variable = { global.jpy_issuer = THIS } }
 		clamp_variable = { var = currency_delta min = -0.008 max = 0.012 }
 	}
-	else_if = { limit = { has_country_flag = chf_reserve_currency_issuer }
+	else_if = { limit = { check_variable = { global.chf_issuer = THIS } }
 		clamp_variable = { var = currency_delta min = -0.004 max = 0.010 }
 	}
 	# Backing-specific clamp for non-issuers — hard-money standards dampen volatility
@@ -197,23 +230,22 @@ calculate_seigniorage_income = {
 	set_temp_variable = { seigniorage_mod = modifier@seigniorage_income_modifier }
 	set_temp_variable = { seigniorage_base = 0 }
 
-	# USD — USA is the sole usd_reserve_currency_issuer at game start
-	if = { limit = { has_country_flag = usd_reserve_currency_issuer }
+	# USD — whoever currently owns Washington DC (state 1182)
+	if = { limit = { check_variable = { global.usd_issuer = THIS } }
 		set_temp_variable = { seigniorage_base = global.usd_reserve_adoption_count }
 		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
 	}
-	# EUR — EUU earns directly (EU or USoE cosmetic — same tag)
+	# EUR — EUU earns directly when spawned
 	else_if = { limit = {
-		has_country_flag = eur_reserve_currency_issuer
-		tag = EUU
+		check_variable = { global.eur_issuer = THIS }
+		country_exists = EUU
 	}
 		set_temp_variable = { seigniorage_base = global.eur_reserve_adoption_count }
 		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
 	}
 	# EUR fallback — EUU not yet spawned: pool into EU budget for next annual recalc
 	else_if = { limit = {
-		has_country_flag = eur_reserve_currency_issuer
-		tag = GER
+		check_variable = { global.eur_issuer = THIS }
 		NOT = { country_exists = EUU }
 	}
 		set_temp_variable = { pool_base = global.eur_reserve_adoption_count }
@@ -221,25 +253,25 @@ calculate_seigniorage_income = {
 		add_to_temp_variable = { seigniorage_mod = 1.0 }
 		multiply_temp_variable = { pool_base = seigniorage_mod }
 		add_to_variable = { global.EU_seigniorage_pool = pool_base }
-		# seigniorage_base stays 0 — income goes to pool, not GER's treasury
+		# seigniorage_base stays 0 — income goes to pool, not the issuer's treasury
 	}
-	# RUB — Russia is the sole rub_reserve_currency_issuer at game start
-	else_if = { limit = { has_country_flag = rub_reserve_currency_issuer tag = RUS }
+	# RUB — whoever currently owns Moscow (state 652)
+	else_if = { limit = { check_variable = { global.rub_issuer = THIS } }
 		set_temp_variable = { seigniorage_base = global.rub_reserve_adoption_count }
 		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
 	}
-	# GBP — United Kingdom
-	else_if = { limit = { has_country_flag = gbp_reserve_currency_issuer tag = ENG }
+	# GBP — whoever currently owns London (state 13)
+	else_if = { limit = { check_variable = { global.gbp_issuer = THIS } }
 		set_temp_variable = { seigniorage_base = global.gbp_reserve_adoption_count }
 		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
 	}
-	# JPY — Japan
-	else_if = { limit = { has_country_flag = jpy_reserve_currency_issuer tag = JAP }
+	# JPY — whoever currently owns Tokyo (state 615)
+	else_if = { limit = { check_variable = { global.jpy_issuer = THIS } }
 		set_temp_variable = { seigniorage_base = global.jpy_reserve_adoption_count }
 		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
 	}
-	# CHF — Switzerland
-	else_if = { limit = { has_country_flag = chf_reserve_currency_issuer tag = SWI }
+	# CHF — whoever currently owns Bern (state 74)
+	else_if = { limit = { check_variable = { global.chf_issuer = THIS } }
 		set_temp_variable = { seigniorage_base = global.chf_reserve_adoption_count }
 		multiply_temp_variable = { seigniorage_base = @seigniorage_per_adopter }
 	}
@@ -280,7 +312,7 @@ calculate_seigniorage_income = {
 calculate_reserve_roi_bonus = {
 	if = {
 		limit = { has_idea = us_dollar }
-		set_variable = { reserve_roi_bonus = USA.currency_strength }
+		var:global.usd_issuer = { ROOT = { set_variable = { reserve_roi_bonus = PREV.currency_strength } } }
 		multiply_variable = { reserve_roi_bonus = 0.04 }
 		set_temp_variable = { tmp_network = global.usd_reserve_adoption_count }
 		multiply_temp_variable = { tmp_network = 0.001 }
@@ -289,13 +321,7 @@ calculate_reserve_roi_bonus = {
 	}
 	else_if = {
 		limit = { has_idea = euro }
-		if = {
-			limit = { country_exists = EUU }
-			set_variable = { reserve_roi_bonus = EUU.currency_strength }
-		}
-		else = {
-			set_variable = { reserve_roi_bonus = GER.currency_strength }
-		}
+		var:global.eur_issuer = { ROOT = { set_variable = { reserve_roi_bonus = PREV.currency_strength } } }
 		multiply_variable = { reserve_roi_bonus = 0.03 }
 		set_temp_variable = { tmp_network = global.eur_reserve_adoption_count }
 		multiply_temp_variable = { tmp_network = 0.001 }
@@ -304,7 +330,7 @@ calculate_reserve_roi_bonus = {
 	}
 	else_if = {
 		limit = { has_idea = chinese_yuan }
-		set_variable = { reserve_roi_bonus = CHI.currency_strength }
+		var:global.cny_issuer = { ROOT = { set_variable = { reserve_roi_bonus = PREV.currency_strength } } }
 		multiply_variable = { reserve_roi_bonus = 0.025 }
 		set_temp_variable = { tmp_network = global.cny_reserve_adoption_count }
 		multiply_temp_variable = { tmp_network = 0.001 }
@@ -313,18 +339,7 @@ calculate_reserve_roi_bonus = {
 	}
 	else_if = {
 		limit = { has_idea = russia_rouble }
-		# SOV = Russia at game start; may become RUS through gameplay paths
-		if = {
-			limit = { country_exists = SOV }
-			set_variable = { reserve_roi_bonus = SOV.currency_strength }
-		}
-		else_if = {
-			limit = { country_exists = RUS }
-			set_variable = { reserve_roi_bonus = RUS.currency_strength }
-		}
-		else = {
-			set_variable = { reserve_roi_bonus = 0 }
-		}
+		var:global.rub_issuer = { ROOT = { set_variable = { reserve_roi_bonus = PREV.currency_strength } } }
 		multiply_variable = { reserve_roi_bonus = 0.025 }
 		set_temp_variable = { tmp_network = global.rub_reserve_adoption_count }
 		multiply_temp_variable = { tmp_network = 0.001 }
@@ -333,7 +348,7 @@ calculate_reserve_roi_bonus = {
 	}
 	else_if = {
 		limit = { has_idea = japanese_yen }
-		set_variable = { reserve_roi_bonus = JAP.currency_strength }
+		var:global.jpy_issuer = { ROOT = { set_variable = { reserve_roi_bonus = PREV.currency_strength } } }
 		multiply_variable = { reserve_roi_bonus = 0.02 }
 		set_temp_variable = { tmp_network = global.jpy_reserve_adoption_count }
 		multiply_temp_variable = { tmp_network = 0.001 }
@@ -342,7 +357,7 @@ calculate_reserve_roi_bonus = {
 	}
 	else_if = {
 		limit = { has_idea = british_pound }
-		set_variable = { reserve_roi_bonus = ENG.currency_strength }
+		var:global.gbp_issuer = { ROOT = { set_variable = { reserve_roi_bonus = PREV.currency_strength } } }
 		multiply_variable = { reserve_roi_bonus = 0.025 }
 		set_temp_variable = { tmp_network = global.gbp_reserve_adoption_count }
 		multiply_temp_variable = { tmp_network = 0.001 }
@@ -351,7 +366,7 @@ calculate_reserve_roi_bonus = {
 	}
 	else_if = {
 		limit = { has_idea = swiss_frank }
-		set_variable = { reserve_roi_bonus = SWI.currency_strength }
+		var:global.chf_issuer = { ROOT = { set_variable = { reserve_roi_bonus = PREV.currency_strength } } }
 		multiply_variable = { reserve_roi_bonus = 0.015 }
 		set_temp_variable = { tmp_network = global.chf_reserve_adoption_count }
 		multiply_temp_variable = { tmp_network = 0.001 }
