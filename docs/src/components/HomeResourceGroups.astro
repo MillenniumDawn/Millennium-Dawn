@@ -1,0 +1,36 @@
+---
+import { withBase } from "../lib/urls";
+
+interface ResourceItem {
+  title: string;
+  url: string;
+}
+
+interface ResourceGroup {
+  heading: string;
+  items: ResourceItem[];
+}
+
+interface Props {
+  groups: ResourceGroup[];
+}
+
+const { groups }: Props = Astro.props;
+
+function resolveGroupHref(url: string): string {
+  return url.includes("://") ? url : withBase(url);
+}
+---
+
+{groups.map((group) => (
+  <section>
+    <h3>{group.heading}</h3>
+    <ul>
+      {group.items.map((item) => (
+        <li>
+          <a href={resolveGroupHref(item.url)}>{item.title}</a>
+        </li>
+      ))}
+    </ul>
+  </section>
+))}
