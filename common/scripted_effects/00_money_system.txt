@@ -2685,6 +2685,7 @@ update_bureaucracy_rate = {
 
 	#Set the base cost of bureaucracy (billion $ per 10 000 000 people)
 	set_temp_variable = { bureaucracy_base_cost = 0.0007 }
+	@bureau_salary_per_worker = 0.001
 
 	# Additional additive modifiers
 	set_temp_variable = { bureaucracy_cost_multiplier = 1 }
@@ -4809,6 +4810,47 @@ calculate_gdp = {
 	clamp_variable = { var = healthcare_manpower_fulfillment min = 0.1 max = 1 }
 	subtract_from_temp_variable = { workforce_total = workers_in_healthcare }
 
+	# Bureaucracy — civil servants required by government administration level
+	set_temp_variable = { workers_per_bureau = 0 }
+	if = { limit = { has_idea = bureau_01 }
+		set_temp_variable = { workers_per_bureau = 0.00075 }
+	}
+	else_if = { limit = { has_idea = bureau_02 }
+		set_temp_variable = { workers_per_bureau = 0.0015 }
+	}
+	else_if = { limit = { has_idea = bureau_03 }
+		set_temp_variable = { workers_per_bureau = 0.003 }
+	}
+	else_if = { limit = { has_idea = bureau_04 }
+		set_temp_variable = { workers_per_bureau = 0.00525 }
+	}
+	else_if = { limit = { has_idea = bureau_05 }
+		set_temp_variable = { workers_per_bureau = 0.009 }
+	}
+
+	if = { limit = { check_variable = { workers_per_bureau = 0 } }
+		set_variable = { bureaucracy_manpower_fulfillment = 1 }
+	}
+	else = {
+		set_temp_variable = { max_workers_in_bureaucracy = population_total_m }
+		multiply_temp_variable = { max_workers_in_bureaucracy = workers_per_bureau }
+		clamp_temp_variable = { var = max_workers_in_bureaucracy min = 0 }
+
+		set_variable = { workers_in_bureaucracy = max_workers_in_bureaucracy }
+		clamp_variable = { var = workers_in_bureaucracy max = workforce_total }
+
+		set_variable = { bureaucracy_manpower_fulfillment = workers_in_bureaucracy }
+		divide_variable = { bureaucracy_manpower_fulfillment = max_workers_in_bureaucracy }
+		clamp_variable = { var = bureaucracy_manpower_fulfillment min = 0.1 max = 1 }
+
+		subtract_from_temp_variable = { workforce_total = workers_in_bureaucracy }
+
+		# Salary cost — civil servant wages add to total bureaucracy expenditure
+		set_temp_variable = { bureau_salary = workers_in_bureaucracy }
+		multiply_temp_variable = { bureau_salary = @bureau_salary_per_worker }
+		add_to_variable = { bureaucracy_gain = bureau_salary }
+	}
+
 	# Average Worker Fulfillment
 	set_variable = { average_worker_fulfillment = civilian_factories_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = military_factories_manpower_fulfillment }
@@ -4823,7 +4865,8 @@ calculate_gdp = {
 	add_to_variable = { average_worker_fulfillment = renewable_energy_infra_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = internet_stations_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = healthcare_manpower_fulfillment }
-	multiply_variable = { average_worker_fulfillment = 0.0769 } # 1/13 sectors
+	add_to_variable = { average_worker_fulfillment = bureaucracy_manpower_fulfillment }
+	multiply_variable = { average_worker_fulfillment = 0.0714 } # 1/14 sectors
 
 	set_variable = { total_unemployed = workforce_total }
 	set_variable = { total_unemployed_percentage_display = total_unemployed }
