@@ -17,8 +17,11 @@ For some numbies, I want to reference back to [Dev Diary #49: Europe, Voting and
 Compared to the European Union benchmark, my hardware has remained the same with the only exception of switching from Windows to Linux:
 
 Specs:
+
 CPU: i9-12900k
+
 OS: Kubuntu - Rolling Release - Linux Runtime
+
 GPU: NVIDIA GeForce RTX 4070
 
 | Tick    | Old Avg (ms) | New Avg (ms) | Improvement |
