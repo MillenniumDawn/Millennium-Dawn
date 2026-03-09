@@ -1,27 +1,49 @@
 ---
 import type { SeoMeta } from "../lib/seo";
+import { buildThemeBootstrapScript } from "../features/theme/lib";
 import { toAbsolute, withBase } from "../lib/urls";
+import {
+  SITE_DESCRIPTION,
+  SITE_LANGUAGE,
+  SITE_LOGO_PATH,
+  SITE_ORGANIZATION_NAME,
+  SITE_TITLE,
+} from "../shared/config/site";
 
 interface Props {
   seo: SeoMeta;
 }
 
-const { seo } = Astro.props;
+const { seo }: Props = Astro.props;
+
+// In dev mode Astro renders per-request so Astro.url reflects localhost —
+// use that origin so OG preview extensions can reach the image locally.
+// (preview mode serves pre-built HTML with production URLs; that's by design.)
+const isLocalHost = Astro.url.hostname === "localhost" || Astro.url.hostname === "127.0.0.1";
+const ogImageUrl = seo.image
+  ? isLocalHost
+    ? `${Astro.url.origin}${withBase(seo.image.path)}`
+    : toAbsolute(seo.image.path)
+  : undefined;
+
 const websiteJsonLd = JSON.stringify({
   "@context": "https://schema.org",
   "@type": "WebSite",
-  name: "Millennium Dawn: A Modern Day Mod",
+  name: SITE_TITLE,
   url: toAbsolute("/"),
-  inLanguage: "en",
+  inLanguage: SITE_LANGUAGE,
 });
 
 const organizationJsonLd = JSON.stringify({
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Millennium Dawn",
+  name: SITE_ORGANIZATION_NAME,
   url: toAbsolute("/"),
-  logo: toAbsolute("/assets/images/favicon.png"),
+  logo: toAbsolute(SITE_LOGO_PATH),
+  description: SITE_DESCRIPTION,
 });
+
+const themeBootstrapScript = buildThemeBootstrapScript();
 ---
 
 <meta charset="UTF-8" />
@@ -33,14 +55,14 @@ const organizationJsonLd = JSON.stringify({
     <meta name="description" content={seo.description} />
     <link rel="canonical" href={seo.canonical} />
 
-    <meta property="og:site_name" content="Millennium Dawn: A Modern Day Mod" />
+    <meta property="og:site_name" content={SITE_TITLE} />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={seo.title} />
     <meta property="og:description" content={seo.description} />
     <meta property="og:url" content={seo.canonical} />
     {seo.image && (
       <>
-        <meta property="og:image" content={toAbsolute(seo.image.path)} />
+        <meta property="og:image" content={ogImageUrl} />
         {seo.image.width && <meta property="og:image:width" content={String(seo.image.width)} />}
         {seo.image.height && <meta property="og:image:height" content={String(seo.image.height)} />}
         {seo.image.alt && <meta property="og:image:alt" content={seo.image.alt} />}
@@ -50,7 +72,8 @@ const organizationJsonLd = JSON.stringify({
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={seo.title} />
     <meta name="twitter:description" content={seo.description} />
-    {seo.image && <meta name="twitter:image" content={toAbsolute(seo.image.path)} />}
+    {seo.image && <meta name="twitter:image" content={ogImageUrl} />}
+    {seo.image?.alt && <meta name="twitter:image:alt" content={seo.image.alt} />}
 
     <script type="application/ld+json" set:html={websiteJsonLd} is:inline></script>
     <script type="application/ld+json" set:html={organizationJsonLd} is:inline></script>
@@ -59,22 +82,7 @@ const organizationJsonLd = JSON.stringify({
 
 {seo.robots && <meta name="robots" content={seo.robots} />}
 
-<script>
-  (function () {
-    var doc = document.documentElement;
-    var stored = null;
-    try {
-      stored = localStorage.getItem("theme");
-    } catch (_e) {
-      stored = null;
-    }
-    var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (stored === "dark" || (!stored && prefersDark)) doc.classList.add("dark-mode");
-    else if (stored === "light") doc.classList.add("light-mode");
-  })();
-</script>
+<script is:inline set:html={themeBootstrapScript}></script>
 
-<link rel="stylesheet" href={withBase("/assets/css/main.css")} />
-
-<link rel="icon" type="image/png" href={withBase("/assets/images/favicon.png")} />
+<link rel="icon" type="image/png" href={withBase(SITE_LOGO_PATH)} />
 <link rel="alternate icon" type="image/x-icon" href={withBase("/assets/images/favicon.ico")} />

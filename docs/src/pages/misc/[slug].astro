@@ -1,30 +1,22 @@
 ---
-import { getCollection, render } from "astro:content";
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import { resolveToc } from "../../lib/content-helpers";
-import { stripMarkdownExt } from "../../lib/slugs";
+import type { CollectionEntry } from "astro:content";
+import type { GetStaticPaths } from "astro";
+import MarkdownDocLayout from "../../layouts/MarkdownDocLayout.astro";
+import { getEntryBaseId, getMiscPath } from "../../lib/content-routes";
+import { buildMarkdownDocStaticPaths, renderMarkdownDocEntry } from "../../lib/markdown-doc-entry";
 
-export async function getStaticPaths() {
-  const entries = await getCollection("misc");
-  return entries.map((entry) => ({
-    params: { slug: stripMarkdownExt(entry.id) },
-    props: { entry },
-  }));
+interface Props {
+  entry: CollectionEntry<"misc">;
 }
 
-const { entry } = Astro.props;
-const { Content, headings } = await render(entry);
+export const getStaticPaths: GetStaticPaths = async () => {
+  return buildMarkdownDocStaticPaths("misc", getEntryBaseId);
+};
+
+const { entry }: Props = Astro.props;
+const { Content, headings } = await renderMarkdownDocEntry(entry);
 ---
 
-<BaseLayout
-  title={entry.data.title}
-  description={entry.data.description}
-  canonicalPath={`/misc/${stripMarkdownExt(entry.id)}/`}
-  toc={resolveToc(entry.data.toc)}
-  seo={entry.data.seo ?? true}
-  robots={entry.data.robots}
-  pageId={entry.data.page_id || stripMarkdownExt(entry.id)}
-  headings={headings}
->
+<MarkdownDocLayout entry={entry} canonicalPath={getMiscPath(entry)} headings={headings}>
   <Content />
-</BaseLayout>
+</MarkdownDocLayout>

@@ -88,8 +88,8 @@ Source: `common/units/equipment/MD_x_tank_chassis.txt`
 | `medium_tank_rocket_chassis_N`     | MLRS / Rocket Artillery         | SP_R_arty_0 – SP_R_arty_4                     | BM-27 Uragan, M270 MLRS           |
 | `medium_tank_aa_chassis_N`         | SPAA (Self-Propelled Anti-Air)  | SP_Anti_Air_0 – SP_Anti_Air_4                 | ZSU-23-4, Tunguska, Gepard        |
 | `medium_tank_destroyer_chassis_N`  | Recon Tank / Light Tank         | Rec_tank_0 – Rec_tank_5                       | BRDM, AMX-10RC, Stryker           |
-| `heavy_tank_chassis_N`             | Attack Helicopter               | attack_helicopter1 – attack_helicopter5       | Mi-24, AH-64 Apache, Ka-52        |
-| `heavy_tank_amphibious_chassis_N`  | Transport Helicopter            | transport_helicopter1 – transport_helicopter5 | Mi-8, UH-60 Black Hawk, CH-47     |
+| `heavy_tank_chassis_N`             | Attack Helicopter               | attack_helicopter_1 – attack_helicopter_5       | Mi-24, AH-64 Apache, Ka-52        |
+| `heavy_tank_amphibious_chassis_N`  | Transport Helicopter            | transport_helicopter_1 – transport_helicopter_5 | Mi-8, UH-60 Black Hawk, CH-47     |
 
 **Generation mapping (medium_tank_chassis MBT):**
 

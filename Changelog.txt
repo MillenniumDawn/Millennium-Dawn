@@ -79,6 +79,8 @@ v2.0.0
   - [SIN] Increased the year count from 2004 to 2006 for the "Head of the Tigers" achievement
 
  AI:
+  - [SMA] Added treasury > 30 check to all equipment purchase focus AI weights to prevent AI from buying equipment it cannot afford
+  - [SMA] Added opinion-based AI acceptance logic to all equipment purchase events (ITA/SPR reject if opinion < 0, more likely if > 50)
   - [SOV] Added has_war checks to all wargoal focuses to prevent AI from starting new wars while already at war
   - [SOV] Added strength ratio checks to wargoal focuses against AZE, TUR, PER, CHI, USA, and the Baltic states
   - [SOV] Added NATO/EU membership checks to wargoal focuses against the Baltics and Romania
@@ -140,8 +142,12 @@ v2.0.0
   - Added AI strategies for the Netherlands
   - Improved the Israeli AIs handling of their Knesset mechanic and have them weighted to take missions that are available
   - Communist AI should now properly grab 5-year plans and pick based on need
+  - [NKO] Should pursue a more historical path when historical is on
+  - Updated naval AI focus priorities for USA, Russia, India, and generic AI profiles to use the consolidated CAT_carrier and CAT_helicopter_operators technology categories
+  - [NKO] Should pursue a more historical path when historical is on
 
  Balance:
+  - [LIC] Reduced focus times from 70 days (cost 10) to 55 days (cost 7.86) for 19 Liechtenstein focuses
   - BUILDING CHANGES:
     - Reduced the construction cost of Civilian Factories by 15%, base workers down from 345k to 275k and GDP to 17.5 from 20 billion
     - Naval Yards + Military Factories Give 1.5 billion GDP per building at base
@@ -246,8 +252,25 @@ v2.0.0
     - air_range increased to 130% of matching GLCM tier (1900–2000 → 5070–5265)
     - maximum_speed increased to 135% of matching GLCM tier (8051–8634 → 9924–10419)
     - air_agility increased to 135% of matching GLCM tier (200–350 → 236–270)
+  - Increased GDP requirements for certain generic economic focuses (95 → 150 and 200 billion)
+  - Added special project completion requirements to multiple generic naval research focuses
+  - Raised num_of_naval_factories thresholds for destroyer production (3 → 4) and carrier-class production (5 → 10) generic focuses
+  - Added has_at_least_regional_power_status requirement to generic light helicopter operators focus
+  - Changed generic convoy and freighter production prerequisite to branch directly off naval reform
+  - Increased air mastery bonus in the generic air force mastery focus from 10 to 25
+  - [ENG] Added AI modifier to skip naval vessel production during bankruptcy
+  - Removed some Naval Headquarters and replaced then with Naval Supply Hubs to more gameplay friendly headquarters
+  - Increased MIO Policy cost and the level requierments
+  - Electricity Infrastructure buildings had some stat changes
 
  Bugfix:
+  - [ISR] Fixed liberal leader selection logic preventing Yair Lapid from ever appearing - NOT block incorrectly checked all five party flags as a group instead of individually, causing Yitzhak Mordechai to always trigger first
+  - Fixed cyber warfare operations not clearing the target attack flag on mission failure, permanently blocking future operations against that country
+  - Fixed UN vote influence (both GA and SC) showing effects applying to the player instead of the target country, caused by incorrect scope resolution of THIS.id in scripted GUI dynamic list effects
+  - [SMA] Fixed economy balance focuses (SMA_more_economy, SMA_more_economy_deep) incorrectly referencing SMA_balance_economy_ii instead of cycling through the full tourism/economy idea chain
+  - [SMA] Fixed SMA_tourism_support_ii containing a duplicate idea swap block
+  - [SMA] Removed incorrect SMA_balance_tourism_ii availability blockers from hotel building focuses (SMA_build_hotel_hetel_rosa, SMA_build_hotel_public_palace, SMA_build_hotel_prima_torre)
+  - [SMA] Fixed equipment purchase focuses giving equipment directly instead of using the event-based acceptance system with Italy/Spain
   - Fixed Blackwater units not being disbanded when Constellis forms - the formation event now iterates all hiring countries and removes their Blackwater units and correctly adjusts deployment counts
   - Fixed PMC self-hire exploit where hiring a domestic PMC refunded the cost back to the player via the payment event (Issue #490)
   - Fixed VTB PMC mission clearing the wrong flag (sberbank_yes instead of vtb_yes), preventing VTB from being rehired
@@ -408,9 +431,19 @@ v2.0.0
   - Fixed the modifier gap in the Romanian "Vadim's Struggle" power balance having value gaps for the negative and positive
   - Fixed the Germany MBT for the Spähpanzer 3 Luchs 2 being an invalid design due to ammo load
   - Fixed encryption/decryption techs being set unconditionally in country history files; they are now gated behind NOT having La Resistance DLC (Issue #608)
+  - [BOS] Fixed BOS_aggressive_nation idea being applied to the wrong scope in Bosnian civil war events; removed erroneous retire_character = ratko_mladic_bosnia calls
+  - [INA] Removed redundant zero-value party popularity array assignments from Indonesian election event
+  - Renamed PMR_commi_education idea to PMR_commi_education_idea to fix naming inconsistency in Transnistrian ideas file
+  - Fixed Al-Shabaab division template name typo (Al-Shabaab Milishiab → Al-Shabaab Milishia) in SHB OOBs
+  - [KOR] Fixed missing log statement and corrected log placement order in KOR_lpx_program focus
+  - Fixed Korean unification mechanic not being available when the Korea's annex eachother outside of the focus tree
+  - Fixed your economic aid being evaporated when the target nation rejected the economic aid (Issue #680)
+  - Fixed Unobtainable trait for Cugir MIO reducing to require only 2 traits
 
  Content:
   - NEW TREES: United Kingdom
+  - Expanded the Technology Tree untill 2080
+  - 50 new Special Projects
   - [RAJ] Added new Naxalite-Maoist insurgency mechanics (Issue #330)
     - New focus: Counter-Insurgency Operations in military branch
     - New decisions: Integrated Development Initiative, Surrender & Rehabilitation Program
@@ -505,11 +538,16 @@ v2.0.0
   - Added Historic Ship Names for UK to name file Type 23,26,31 etc
   - Created Canadian Unit Name File
   - Linked Canadian OOB to new Unit Name file
-  - Added a doezne flavor events for Iranian protests
+  - Added a dozen flavor events for Iranian protests
   - [PER] Removed unnecessary hidden_trigger wrappers in Iran focus tree for the Ansar Allah stuff
   - [USA] The United States can no longer take the decision to establish a government in Afghanistan if they are a subject or if they do not have influence in Afghanistan
   - [USA] The United States can no longer take the decision to establish a government in Afghanistan if they have lost in Iraq
+  - [UKR] Added Natsionalna Hvardiya division template creation to the UKR_national_guard focus completion reward
+  - [BOS] Added BOS_aggressive_nation national spirit for use in Bosnian civil war scenarios
   - Boosting party popularity through political power now has the added flight risk of increasing corruption
+  - If another coalition member is the larger party they become the ruling party and the others shift to the coalition to show popularity shifts (Issue #692)
+  - [SMA] Added 30 new equipment purchase events (SMA_equipment.1–30) for buying weapons, vehicles, artillery, and support equipment from Italy and Spain
+  - [SMA] Added SMA_equipment namespace and localisation for all equipment purchase events
 
  Database:
   - Land drone technologies now properly give the Ranger Light Recce company recon bonuses like all other recon units
@@ -520,6 +558,11 @@ v2.0.0
   - Added unit name lists for Scotland and Wales
   - Added MD modifiers to be used as a dynamic modifier tooltip
   - Updated the MIO Code Styleguide page
+  - [ISR] Fixed indentation in Israel history file equipment variant definitions
+  - [FRA] Removed commented-out MIRV tech assignments from France history file
+  - [SMA] Added declaration of friendship opinion modifier with Croatia to country history
+  - [SMA] Added level 1 bunker to province 13290 in state 948
+  - [SMA] Renamed division template from "Battaglione Di Polizia" to "The Gendarmerie"
 
  Factions:
   - Added a new faction goal "Establish an Airborne Corps"
@@ -545,8 +588,16 @@ v2.0.0
   - Credits to jumpropeTravesty1974 for their mod that we integrated.
   - Added additional portraits for generic scientists and otherwise
   - Added 'Focus Overlays' for political focuses in the Iranian tree
+  - Removed over 4,700 unused missile model GFX entries from MD_countrymissilesview.gfx
+  - Removed over 3,300 unused technology icon GFX entries from Technologies.gfx
+  - Moved deprecated missile UI graphics to resources/deprecated-missile-graphics/
+  - Moved unused technology icons to resources/deprecated-tech-graphics/
+  - [GUY] Standardized Guyana's leader portrait in 2000
 
  Game Rules:
+  - [ZOM] Added Zombie Spawn Location game rule with India, Central Africa, East Asia, and Multiple Locations options (Issue #205)
+  - [ZOM] Added Zombie Spawn Delay game rule with No Delay, 1 Year, 2 Year, and 3 Year countdown options (Issue #205)
+  - [ZOM] Added Anti-Zombie Coalition toggle game rule to enable or disable coalition formation (Issue #205)
   - Added a new game rule for Enabling/Disabling Energy Load Sharing system
   - Added a new game rule for the price per GW for the Energy Load Sharing system
   - The Game Rule annex microstates for the Oceania tags will now annex into Fiji so you can play w/ the tree (yes I know this is a buff to them)
@@ -562,6 +613,13 @@ v2.0.0
   - Introduced more flavorful text for the satellite access diplomatic actions
   - Removed the weird gap in additional income or additional expenses that came from the market contracts
   - Fixed a number of missing additional income and additional expenses that were missing from the tooltips so you can actually see those bonuses
+  - Removed version number suffixes from all keys in research_l_english.yml
+  - Added localisation for BOS_aggressive_nation national spirit
+  - Removed localisation keys for deprecated MIRV, MARV, and HGV equipment variants
+  - Consolidated naval carrier category localisation: replaced CAT_n_cv, CAT_cv, CAT_lha, CAT_lpd with CAT_carrier and CAT_helicopter_operators
+  - Removed CAT_slbm and CAT_conventional_warhead localisation keys
+  - [SMA] Added localisation for 30 equipment purchase events (SMA_equipment.1–30)
+  - [SMA] Fixed title casing for combat experience national spirit names (SMA_no_wars_i/ii/iii)
 
  Map:
   - HMNB Clyde is now properly represented with a Level 8 Naval Base + Naval Headquarters for the UK's Nuclear Submarines deployment
@@ -603,6 +661,8 @@ v2.0.0
   - Further optimized the AI strategies to stablilize the ticks and reducing redundant AI strategies
   - Disabled more AI strategies for non-important nations for market access and otherwise
   - Removed some dynamic modifiers from being present on game start if they are not needed
+  - Removed set_all_missile_tech scripted effect from on_startup to improve game start load time
+  - Added scripted triggers controls_a_state_with_hydroelectric and controls_a_state_with_geothermal to replace inline any_controlled_state calls in focus and AI conditions
 
  Quality of Life:
   - You can now push your Election Threshold to 0% instead of the minimum 1% in the Subideology screen
@@ -612,15 +672,28 @@ v2.0.0
   - Added a startup event to help direct and support new players (simple for now will likely be redone into a proper helper)
   - Added a container as part of the topbar to show a percentage of energy unfufillment for quick visibility into your Energy situation
   - Added Custom alerts for Negative Nuclear Fuel, Available Tech Slot Expansion, Negative Electricity and not having the expected law
+  - [SMA] Equipment purchase focuses now show treasury cost in tooltip so players can see the price before completing
+  - [SMA] Added war and country existence checks to all equipment purchase focuses to prevent purchases during wars with the seller
 
  Sound:
   - Ensured that voicelines for various nations are saved in the proper format as to prevent nonsense errors in the logs
+
+ Technology:
+  - Consolidated naval technology categories: merged CAT_n_cv and CAT_cv into CAT_carrier; merged CAT_lha and CAT_lpd into CAT_helicopter_operators
+  - Removed CAT_slbm and CAT_conventional_warhead technology categories
+  - Removed commented-out MIRV, MARV, and HGV tech tree branches from ICBM and IRBM research trees
+  - Updated attack helicopter tech bonus to use CAT_atk_heli instead of CAT_heli
+  - Updated strategic bomber tech bonus to use CAT_large_plane instead of CAT_str_bomber
+  - Updated artillery tech: direct_fire_conversion module replaced with direct_fire_conversion_medium
+  - Removed chassis_truck_gen4 and spaa_chassis_truck_gen4 module unlocks from utility vehicle tech
 
  User Interface:
   - Fixed the doctrine's text being unreadable due to a black font on a black interface
   - Fixed the Faction Goal popup being off center and weird in the UI
   - Modernized the trade GUI to MD's stylization
   - Reduced precision in several menus so you do not see 5 decimal points in areas where it does not matter
+  - Fixed the user interface for the politics screen when you are a subject and the faction screen overlaps the menu
+  - Fixed the "View Factions" button missing when you were in a faction
 
 v1.12.3b
 
