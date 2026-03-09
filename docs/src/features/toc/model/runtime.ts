@@ -2,11 +2,11 @@ import { createDrawer } from "../../../shared/lib/drawer";
 import { readCssMsVar, readCssPxVar, readCssStringVar } from "../../../shared/lib/tokens";
 import {
   TOC_ATTRS,
-  TOC_CLASSES,
   TOC_DEFAULTS,
   TOC_DRAWER,
   TOC_IDS,
   TOC_SELECTORS,
+  TOC_STATES,
 } from "../lib/config";
 import { ensureHeadingIds, queryTocHeadings } from "../lib/headingIds";
 import { bindExpandButtons, buildTree, renderNav, toggleSublist } from "./dom";
@@ -139,7 +139,7 @@ function createActiveState(nav: HTMLElement): {
   const autoExpandAncestors = (link: HTMLElement) => {
     let node = link.parentElement;
     while (node && node !== nav) {
-      if (node.classList.contains(TOC_CLASSES.sublist) && !node.classList.contains(TOC_CLASSES.expanded)) {
+      if (node.hasAttribute(TOC_ATTRS.sublist) && !node.classList.contains(TOC_STATES.expanded)) {
         const idx = node.getAttribute(TOC_ATTRS.sublist);
         if (!idx) {
           node = node.parentElement;
@@ -170,14 +170,14 @@ function createActiveState(nav: HTMLElement): {
       if (nextActive === currentActive) return;
 
       if (currentActive) {
-        currentActive.link.classList.remove(TOC_CLASSES.active);
+        currentActive.link.classList.remove(TOC_STATES.active);
         currentActive.link.removeAttribute("aria-current");
       }
 
       currentActive = nextActive;
 
       if (currentActive) {
-        currentActive.link.classList.add(TOC_CLASSES.active);
+        currentActive.link.classList.add(TOC_STATES.active);
         currentActive.link.setAttribute("aria-current", "location");
         autoExpandAncestors(currentActive.link);
         scrollTocIntoView(currentActive.link);

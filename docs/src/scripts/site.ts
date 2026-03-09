@@ -16,7 +16,6 @@ function cleanupPage(): void {
 
 async function bootstrapPageAsync(): Promise<void> {
   cleanupPage();
-  const runId = pageRunId;
   applyThemePreference();
 
   const cleanups: Cleanup[] = [];
@@ -28,22 +27,16 @@ async function bootstrapPageAsync(): Promise<void> {
     }
   };
 
-  const needsToc = document.body.dataset.toc !== "off" && !!document.getElementById("toc-sidebar");
-  const needsCardIndex = !!document.querySelector("[data-card-index]");
-
-  const [headerNavModule, uiHelpersModule, tocModule, cardIndexModule] = await Promise.all([
+  const runId = pageRunId;
+  const [headerNavModule, uiHelpersModule] = await Promise.all([
     import("./modules/header-nav"),
     import("./modules/ui-helpers"),
-    needsToc ? import("../features/toc/model") : Promise.resolve(null),
-    needsCardIndex ? import("../features/searchable-index/model") : Promise.resolve(null),
   ]);
 
   if (runId !== pageRunId) return;
 
   cleanups.push(headerNavModule.initHeaderHeightSync());
   cleanups.push(headerNavModule.initMobileNavigation());
-  if (tocModule) cleanups.push(tocModule.initToc());
-  if (cardIndexModule) cleanups.push(cardIndexModule.initCardIndex());
   cleanups.push(uiHelpersModule.initBackToTop());
 }
 

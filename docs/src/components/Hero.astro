@@ -2,7 +2,40 @@
 import { getImage } from "astro:assets";
 import heroImage from "../../assets/images/branding/hero.jpeg";
 import { cssUrl, withBase } from "../lib/urls";
-import { SITE_DISCORD_URL } from "../shared/config/site";
+import {
+  BUTTON_OUTLINE_CLASS,
+  BUTTON_PRIMARY_CLASS,
+  BUTTON_SECONDARY_CLASS,
+  INVERSE_FOCUS_RING_CLASS,
+} from "../shared/ui/tailwind";
+
+interface HeroLink {
+  label: string;
+  url: string;
+}
+
+interface HeroNote {
+  prefix: string;
+  link_label: string;
+  link_url: string;
+  suffix?: string;
+}
+
+interface HeroContent {
+  badge: HeroLink;
+  title: string;
+  subtitle: string;
+  primary_cta: HeroLink;
+  secondary_cta: HeroLink;
+  community_cta: HeroLink;
+  note: HeroNote;
+}
+
+interface Props {
+  hero: HeroContent;
+}
+
+const { hero }: Props = Astro.props;
 
 const optimizedHero = await getImage({
   src: heroImage,
@@ -10,29 +43,55 @@ const optimizedHero = await getImage({
   quality: 80,
   width: 1920,
 });
+
+const heroNoteLinkClass = [
+  "text-text-inverse",
+  "underline",
+  "decoration-overlay-inverse-50",
+  "underline-offset-4",
+  "transition-colors",
+  "duration-[var(--transition-speed)]",
+  "ease-[var(--transition-fn)]",
+  "hover:text-overlay-inverse-88",
+  "hover:decoration-text-inverse",
+  INVERSE_FOCUS_RING_CLASS,
+].join(" ");
 ---
 
-<section class="hero-section">
-  <div class="hero-background" style={`--hero-bg: ${cssUrl(optimizedHero.src)};`}></div>
-  <div class="hero-content">
-    <a href={withBase("/changelogs/")} class="hero-badge">
-      <span class="badge-dot"></span> See latest updates
+<section class="relative mb-xl flex min-h-[480px] items-center justify-center overflow-hidden rounded-lg bg-[linear-gradient(135deg,var(--color-header-bg),var(--color-header-bg-end))] px-container py-2xl text-center text-text-inverse shadow-lg">
+  <div
+    class="absolute inset-0 bg-[image:var(--hero-bg)] bg-cover bg-center opacity-20 mix-blend-luminosity"
+    style={`--hero-bg: ${cssUrl(optimizedHero.src)};`}
+  ></div>
+  <div class="relative z-[1] mx-auto flex max-w-[800px] flex-col items-center">
+    <a
+      href={withBase(hero.badge.url)}
+      class:list={[
+        "mb-lg inline-flex items-center gap-sm rounded-full border border-overlay-inverse-28 bg-overlay-inverse-15 px-md py-sm text-sm font-semibold text-text-inverse no-underline [backdrop-filter:blur(12px)] hover:text-text-inverse hover:no-underline",
+        INVERSE_FOCUS_RING_CLASS,
+      ]}
+    >
+      <span class="size-2 rounded-full bg-info"></span> {hero.badge.label}
     </a>
 
-    <p class="hero-title">Welcome to Millennium Dawn</p>
-    <p class="hero-subtitle">
-      With the dawn of a new millennium, a new chapter in human history will be written. Immerse yourself in the intricacies of
-      the modern era with unique tech trees, a complex economic system, and deep political mechanics.
+    <p class="mb-md text-[clamp(2rem,5vw+1rem,3.5rem)] font-bold leading-[1.1] text-text-inverse [text-shadow:0_4px_18px_var(--color-text-shadow-strong)]">
+      {hero.title}
+    </p>
+    <p class="mb-xl max-w-[90%] text-[clamp(1.1rem,2vw+0.5rem,1.25rem)] leading-[1.65] text-footer-text">
+      {hero.subtitle}
     </p>
 
-    <div class="hero-actions">
-      <a href={withBase("/getting-started/")} class="btn btn-primary">Getting Started</a>
-      <a href={withBase("/countries/")} class="btn btn-secondary">Playable Countries</a>
-      <a href={SITE_DISCORD_URL} class="btn btn-outline" target="_blank" rel="noopener">Join Discord</a>
+    <div class="flex flex-wrap justify-center gap-md">
+      <a href={withBase(hero.primary_cta.url)} class={BUTTON_PRIMARY_CLASS}>{hero.primary_cta.label}</a>
+      <a href={withBase(hero.secondary_cta.url)} class={BUTTON_SECONDARY_CLASS}>{hero.secondary_cta.label}</a>
+      <a href={withBase(hero.community_cta.url)} class={BUTTON_OUTLINE_CLASS} target="_blank" rel="noopener">
+        {hero.community_cta.label}
+      </a>
     </div>
 
-    <p class="hero-note">
-      See the <a href={withBase("/player-tutorials/troubleshooting-guide/")}>Troubleshooting Guide</a> for common issues.
+    <p class="mb-sm mt-md text-[0.95rem] text-footer-text">
+      {hero.note.prefix} <a class={heroNoteLinkClass} href={withBase(hero.note.link_url)}>{hero.note.link_label}</a>
+      {hero.note.suffix && ` ${hero.note.suffix}`}
     </p>
   </div>
 </section>

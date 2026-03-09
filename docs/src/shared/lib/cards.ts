@@ -1,5 +1,5 @@
 import type { CollectionEntry } from "astro:content";
-import { withBase } from "./urls";
+import { withBase } from "../../lib/urls";
 
 export interface CardItem {
   title: string;

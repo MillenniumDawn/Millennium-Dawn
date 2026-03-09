@@ -1,5 +1,6 @@
 ---
 import { withBase } from "../lib/urls";
+import { INVERSE_FOCUS_RING_CLASS, LAYOUT_CONTAINER_CLASS, SMALL_HEADING_CLASS } from "../shared/ui/tailwind";
 
 interface LinkItem {
   title: string;
@@ -20,22 +21,33 @@ interface Props {
 
 const { siteTitle, siteDescription, footerDocs, socialLinks }: Props = Astro.props;
 const year = new Date().getFullYear();
+
+const footerLinkClass = [
+  "text-footer-text",
+  "no-underline",
+  "transition-colors",
+  "duration-[var(--transition-speed)]",
+  "ease-[var(--transition-fn)]",
+  "hover:text-text-inverse",
+  "hover:no-underline",
+  INVERSE_FOCUS_RING_CLASS,
+].join(" ");
 ---
 
-<footer class="site-footer" role="contentinfo">
-  <div class="container">
-    <div class="footer-content">
-      <div class="footer-section">
-        <h3>{siteTitle}</h3>
-        <p>{siteDescription}</p>
+<footer class="site-footer mt-2xl bg-footer-bg py-xl pb-md text-text-inverse print:hidden" role="contentinfo">
+  <div class={LAYOUT_CONTAINER_CLASS}>
+    <div class="mb-xl grid gap-xl phone:grid-cols-1 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+      <div>
+        <h3 class={`${SMALL_HEADING_CLASS} text-footer-heading`}>{siteTitle}</h3>
+        <p class="m-0 text-[0.98rem] leading-base text-footer-text">{siteDescription}</p>
       </div>
 
-      <div class="footer-section" aria-label="Social links">
-        <h3>Links</h3>
-        <ul>
+      <div aria-label="Social links">
+        <h3 class={`${SMALL_HEADING_CLASS} text-footer-heading`}>Links</h3>
+        <ul class="m-0 list-none p-0">
           {socialLinks.map((item) => (
-            <li>
-              <a href={item.url} target="_blank" rel="noopener noreferrer" aria-label={item.name}>
+            <li class="mb-sm text-[0.95rem] text-footer-text">
+              <a class={footerLinkClass} href={item.url} target="_blank" rel="noopener noreferrer" aria-label={item.name}>
                 {item.name}
               </a>
             </li>
@@ -43,12 +55,12 @@ const year = new Date().getFullYear();
         </ul>
       </div>
 
-      <div class="footer-section" aria-label="Documentation links">
-        <h3>Documentation</h3>
-        <ul>
+      <div aria-label="Documentation links">
+        <h3 class={`${SMALL_HEADING_CLASS} text-footer-heading`}>Documentation</h3>
+        <ul class="m-0 list-none p-0">
           {footerDocs.map((item) => (
-            <li>
-              <a href={withBase(item.url)} aria-label={item.title}>
+            <li class="mb-sm text-[0.95rem] text-footer-text">
+              <a class={footerLinkClass} href={withBase(item.url)} aria-label={item.title}>
                 {item.title}
               </a>
             </li>
@@ -57,8 +69,8 @@ const year = new Date().getFullYear();
       </div>
     </div>
 
-    <div class="footer-bottom">
-      <p>&copy; {year} {siteTitle}. All rights reserved.</p>
+    <div class="border-t border-header-bg-end pt-md text-center">
+      <p class="m-0 text-[0.9rem] text-footer-text">&copy; {year} {siteTitle}. All rights reserved.</p>
     </div>
   </div>
 </footer>

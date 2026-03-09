@@ -3,7 +3,11 @@ import { cssUrl } from "../lib/urls";
 import InfoboxCompactTable from "./InfoboxCompactTable.astro";
 import InfoboxStatList from "./InfoboxStatList.astro";
 
-interface Stat { label: string; value: string }
+interface Stat {
+  key?: string;
+  label: string;
+  value: string;
+}
 interface Group {
   section: string;
   kind?: "default" | "overview" | "military_industry" | "economy";
@@ -18,68 +22,82 @@ interface Props {
 
 const { title, flagImage, infobox }: Props = Astro.props;
 
-let countryTag = "WIP";
-for (const group of infobox || []) {
-  for (const stat of group.stats || []) {
-    if (stat.label === "Tag" && stat.value?.trim()) {
-      countryTag = stat.value.trim();
-      break;
-    }
-  }
-}
+const militaryIndustryColumns = [
+  { key: "divisions", label: "Divisions" },
+  { key: "total_factories", label: "Total Factories" },
+  { key: "military_industry", label: "Military Ind." },
+  { key: "civilian_industry", label: "Civilian Ind." },
+];
 
-function statValue(group: Group, labels: string[]): string {
-  const match = (group.stats ?? []).find((item) => labels.includes(item.label));
+const economyColumns = [
+  { key: "treasury", label: "Treasury" },
+  { key: "debt", label: "Debt" },
+  { key: "investments", label: "Investments" },
+];
+
+function statValue(group: Group, key: string): string {
+  const match = (group.stats ?? []).find((item) => item.key === key);
   return match?.value ?? "-";
 }
+
+const countryTag =
+  (infobox ?? [])
+    .flatMap((group) => group.stats ?? [])
+    .find((stat) => stat.key === "tag" && stat.value?.trim())
+    ?.value.trim() ?? "WIP";
 ---
 
-<div class="wiki-infobox" role="complementary" aria-label={`${title} summary`}>
+<div class="overflow-hidden rounded-lg border border-border-light bg-surface shadow-sm" role="complementary" aria-label={`${title} summary`}>
   <div
     class:list={[
-      "wiki-infobox__hero",
+      "relative min-h-[170px] border-b border-border-light bg-[linear-gradient(135deg,var(--color-header-bg),var(--color-header-bg-end))]",
       {
-        "wiki-infobox__hero--flag": !!flagImage,
+        "[background-image:linear-gradient(180deg,var(--color-overlay-scrim-45)_0%,transparent_55%,var(--color-overlay-scrim-60)_100%),var(--country-hero-image)] [background-position:center,center] [background-repeat:no-repeat,no-repeat] [background-size:cover,cover]":
+          !!flagImage,
       },
     ]}
     style={flagImage ? `--country-hero-image: ${cssUrl(flagImage)};` : undefined}
   >
-    <div class="wiki-infobox__hero-content">
-      <p class="wiki-infobox__hero-title" aria-hidden="true">{title}</p>
-      <p class="wiki-infobox__hero-tag">{countryTag}</p>
+    <div class="absolute inset-x-0 bottom-[-5px] flex items-end justify-between gap-sm bg-[linear-gradient(180deg,transparent_0%,var(--color-overlay-scrim-60)_100%)] px-4 pb-[0.95rem] pt-[0.9rem]">
+      <p class="m-0 max-w-[70%] text-[1.3rem] font-bold leading-tight text-text-inverse [text-shadow:0_2px_12px_var(--color-overlay-scrim-60)]" aria-hidden="true">
+        {title}
+      </p>
+      <p class="m-0 rounded-full border border-overlay-inverse-28 bg-overlay-inverse-14 px-[0.7rem] py-[0.3rem] text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-text-inverse [backdrop-filter:blur(8px)]">
+        {countryTag}
+      </p>
     </div>
   </div>
 
   {(infobox || []).map((group) => {
     const overviewHasOnlyTag =
-      group.kind === "overview" && (group.stats || []).every((stat) => stat.label === "Tag");
+      group.kind === "overview" && (group.stats || []).every((stat) => stat.key === "tag");
     if (overviewHasOnlyTag) return null;
 
     return (
       <>
-        <div class="wiki-infobox__section">{group.section}</div>
+        <div class="px-4 pb-[0.45rem] pt-[0.65rem] text-[0.83rem] font-bold uppercase tracking-[0.08em] text-text-muted">{group.section}</div>
         {group.kind === "military_industry" ? (
           <>
             <InfoboxCompactTable
               group={group}
-              columns={["Divisions", "Total Factories", "Military Ind.", "Civilian Ind."]}
+              columns={militaryIndustryColumns}
               label={group.section}
             />
-            {statValue(group, ["Naval Dockyards"]) !== "-" && (
-              <p class="wiki-infobox__substat">
-                <span>Naval Dockyards</span>
-                <strong>{statValue(group, ["Naval Dockyards"])}</strong>
+            {statValue(group, "naval_dockyards") !== "-" && (
+              <p class="m-0 flex items-center justify-between gap-[0.8rem] px-4 pb-[0.8rem] text-[0.86rem]">
+                <span class="text-text-secondary">Naval Dockyards</span>
+                <strong>{statValue(group, "naval_dockyards")}</strong>
               </p>
             )}
           </>
         ) : group.kind === "economy" ? (
           <InfoboxCompactTable
             group={group}
-            columns={["Treasury", "Debt", "Investments"]}
+            columns={economyColumns}
             label={group.section}
           />
         ) : (
-          <InfoboxStatList stats={group.stats} excludeLabels={["Tag"]} />
+          <InfoboxStatList stats={group.stats} excludeKeys={["tag"]} />
         )}
       </>
     );

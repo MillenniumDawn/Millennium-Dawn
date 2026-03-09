@@ -1,19 +1,23 @@
 ---
-interface Stat { label: string; value: string }
+interface Stat {
+  key?: string;
+  label: string;
+  value: string;
+}
 
 interface Props {
   stats: Stat[];
-  excludeLabels?: string[];
+  excludeKeys?: string[];
 }
 
-const { stats, excludeLabels = [] }: Props = Astro.props;
-const filtered = (stats || []).filter((stat) => !excludeLabels.includes(stat.label));
+const { stats, excludeKeys = [] }: Props = Astro.props;
+const filtered = (stats || []).filter((stat) => !stat.key || !excludeKeys.includes(stat.key));
 ---
 
-<ul class="wiki-infobox__stats">
+<ul class="m-0 grid list-none gap-[0.4rem] px-4 pb-[0.8rem]">
   {filtered.map((stat) => (
-    <li>
-      <span>{stat.label}</span>
+    <li class="m-0 flex items-center justify-between gap-[0.8rem] text-[0.9rem]">
+      <span class="text-text-secondary">{stat.label}</span>
       <strong>{stat.value}</strong>
     </li>
   ))}

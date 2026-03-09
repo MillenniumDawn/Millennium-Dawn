@@ -1,7 +1,17 @@
 ---
 import ContentCard from "../../../shared/ui/ContentCard.astro";
-import type { CardItem } from "../../../lib/cards";
+import type { CardItem } from "../../../shared/lib/cards";
 import { slugifyText } from "../../../shared/lib/slugs";
+import {
+  BUTTON_SECONDARY_CLASS,
+  CONTENT_GRID_CLASS,
+  MUTED_TEXT_CLASS,
+  SEARCH_INDEX_INPUT_CLASS,
+  SEARCH_INDEX_LABEL_CLASS,
+  SEARCH_INDEX_PAGINATION_CLASS,
+  SEARCH_INDEX_ROOT_CLASS,
+  SEARCH_INDEX_STATUS_CLASS,
+} from "../../../shared/ui/tailwind";
 
 interface Props {
   items: CardItem[];
@@ -20,23 +30,30 @@ const {
   filterLabel = "Search",
   filterPlaceholder = "Type to filter...",
   emptyText = "No results matched your search.",
-  indexClass = "search-index",
+  indexClass = "",
 }: Props = Astro.props;
 
 const filterSeed = slugifyText(ariaLabel ?? indexClass ?? "search-index") || "search-index";
 const filterId = `${filterSeed}-filter`;
 ---
 
-<section class={indexClass} data-card-index data-page-size={pageSize} aria-label={ariaLabel}>
-  <label class="search-index__filter-label" for={filterId}>
+<section class:list={[SEARCH_INDEX_ROOT_CLASS, indexClass]} data-card-index data-page-size={pageSize} aria-label={ariaLabel}>
+  <label class={SEARCH_INDEX_LABEL_CLASS} for={filterId}>
     {filterLabel}
   </label>
-  <input id={filterId} class="search-index__filter-input" type="search" placeholder={filterPlaceholder} autocomplete="off" data-card-filter />
+  <input
+    id={filterId}
+    class={SEARCH_INDEX_INPUT_CLASS}
+    type="search"
+    placeholder={filterPlaceholder}
+    autocomplete="off"
+    data-card-filter
+  />
 
-  <div class="search-index__cards content-grid" data-card-list>
+  <div class={CONTENT_GRID_CLASS} data-card-list>
     {
       items.map((item) => (
-        <article class="searchable-card" data-card-item data-search={item.searchBlob}>
+        <article class="min-w-0" data-card-item data-search={item.searchBlob}>
           <ContentCard
             title={item.title}
             url={item.url}
@@ -49,17 +66,23 @@ const filterId = `${filterSeed}-filter`;
     }
   </div>
 
-  <p class="search-index__empty text-muted" data-card-empty hidden>
+  <p class={MUTED_TEXT_CLASS} data-card-empty hidden>
     {emptyText}
   </p>
 
-  <nav class="search-index__pagination" aria-label="Pagination">
-    <button type="button" class="btn btn-secondary" data-card-prev>
+  <nav class={SEARCH_INDEX_PAGINATION_CLASS} aria-label="Pagination">
+    <button type="button" class={BUTTON_SECONDARY_CLASS} data-card-prev>
       Previous
     </button>
-    <span class="search-index__status" data-card-status aria-live="polite"></span>
-    <button type="button" class="btn btn-secondary" data-card-next>
+    <span class={SEARCH_INDEX_STATUS_CLASS} data-card-status aria-live="polite"></span>
+    <button type="button" class={BUTTON_SECONDARY_CLASS} data-card-next>
       Next
     </button>
   </nav>
 </section>
+
+<script>
+  import { initCardIndexPage } from "../model/page";
+
+  initCardIndexPage();
+</script>

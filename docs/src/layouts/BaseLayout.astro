@@ -9,6 +9,7 @@ import { TocSidebar } from "../features/toc";
 import { buildSeoMeta } from "../lib/seo";
 import { ensureTrailingSlash, stripBase } from "../lib/urls";
 import { SITE_DESCRIPTION, SITE_TITLE } from "../shared/config/site";
+import { INVERSE_FOCUS_RING_CLASS, LAYOUT_CONTAINER_CLASS } from "../shared/ui/tailwind";
 
 import "../styles/tailwind.css";
 import "../styles/app.css";
@@ -65,19 +66,42 @@ const seoMeta = buildSeoMeta({
     <HeadSeo seo={seoMeta} />
     <slot name="head" />
   </head>
-  <body class:list={[resolvedBodyClass, { "has-toc": toc !== "off" }]} data-page={pageSlug} data-toc={toc}>
-    <a class="skip-link" href="#main-content">Skip to main content</a>
+  <body
+    class:list={[
+      resolvedBodyClass,
+      "min-h-screen bg-bg font-base text-base leading-base text-text antialiased selection:bg-primary selection:text-text-inverse [&.nav-lock]:overflow-hidden tablet:[&.nav-lock]:overflow-auto [&.toc-lock]:fixed [&.toc-lock]:w-full [&.toc-lock]:overflow-hidden wide:[&.toc-lock]:static wide:[&.toc-lock]:w-auto wide:[&.toc-lock]:overflow-auto",
+      { "has-toc": toc !== "off" },
+    ]}
+    data-page={pageSlug}
+    data-toc={toc}
+  >
+    <a
+      class:list={[
+        "absolute left-md top-[-100%] z-[10000] rounded-b bg-primary px-md py-sm font-bold text-text-inverse no-underline transition-[top] duration-[var(--transition-speed)] ease-[var(--transition-fn)] focus:top-0 focus:text-text-inverse focus:no-underline print:hidden",
+        INVERSE_FOCUS_RING_CLASS,
+      ]}
+      href="#main-content"
+    >
+      Skip to main content
+    </a>
     <Header
       title={SITE_TITLE}
       navItems={navigationEntry.data.main}
       currentPath={currentPath}
     />
 
-    <div class="page-layout" id="page-layout">
+    <div class:list={["block w-full min-h-[calc(100vh-var(--header-height,4rem))]", toc !== "off" && "wide:flex"]} id="page-layout">
       <TocSidebar tocMode={toc} headings={headings} />
 
-      <main class="main-content" id="main-content">
-        <div class="container">
+      <main
+        class:list={[
+          "main-content min-h-[calc(100vh-200px)] py-lg mobile:py-md print:py-0",
+          toc !== "off" && "wide:min-w-0 wide:flex-[1_1_0%]",
+          pageSlug === "home" && "pt-md",
+        ]}
+        id="main-content"
+      >
+        <div class={LAYOUT_CONTAINER_CLASS}>
           <Breadcrumbs path={currentPath} title={title} sections={sectionsEntry.data} />
           <slot />
         </div>
@@ -97,8 +121,15 @@ const seoMeta = buildSeoMeta({
       initSite();
     </script>
 
-    <button class="back-to-top" aria-label="Back to top" type="button">
-      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <button
+      class:list={[
+        "back-to-top fixed bottom-[calc(var(--space-xl)+60px)] right-lg z-back-to-top hidden size-12 items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--color-header-bg),var(--color-header-bg-end))] text-text-inverse shadow-md transition-[background,transform,opacity] duration-200 ease-[var(--transition-fn)] hover:scale-[1.06] hover:bg-[linear-gradient(135deg,var(--color-header-bg-end),var(--color-header-bg))] active:scale-95 narrow:bottom-[calc(var(--space-xl)+60px)] narrow:right-lg wide:bottom-xl wide:right-xl wide:size-11 wide:bg-primary wide:hover:scale-100 wide:hover:bg-primary-hover [&.is-visible]:flex print:hidden",
+        INVERSE_FOCUS_RING_CLASS,
+      ]}
+      aria-label="Back to top"
+      type="button"
+    >
+      <svg class="size-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
         <path d="M12 4l-8 8h5v8h6v-8h5z" fill="currentColor"></path>
       </svg>
     </button>

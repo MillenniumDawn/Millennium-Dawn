@@ -1,34 +1,47 @@
 ---
-interface Stat { label: string; value: string }
-interface Group { section: string; stats: Stat[] }
+interface Stat {
+  key?: string;
+  label: string;
+  value: string;
+}
+
+interface Group {
+  section: string;
+  stats: Stat[];
+}
+
+interface Column {
+  key: string;
+  label: string;
+}
 
 interface Props {
   group: Group;
-  columns: string[];
+  columns: Column[];
   label: string;
 }
 
 const { group, columns, label }: Props = Astro.props;
 
-function statValue(labels: string[]): string {
-  const match = (group.stats ?? []).find((item) => labels.includes(item.label));
+function statValue(key: string): string {
+  const match = (group.stats ?? []).find((item) => item.key === key);
   return match?.value ?? "-";
 }
 ---
 
-<div class="wiki-infobox__compact-table-wrap">
-  <table class="wiki-infobox__compact-table" aria-label={label}>
-    <thead>
+<div class="px-4 pb-[0.6rem]">
+  <table class="w-full table-fixed border-collapse text-center text-[0.76rem] leading-[1.25]" aria-label={label}>
+    <thead class="bg-[color-mix(in_srgb,var(--color-surface)_92%,var(--color-primary-light))]">
       <tr>
         {columns.map((col) => (
-          <th>{col}</th>
+          <th class="border border-border-light px-[0.3rem] py-[0.35rem] font-bold text-text-secondary">{col.label}</th>
         ))}
       </tr>
     </thead>
     <tbody>
       <tr>
         {columns.map((col) => (
-          <td>{statValue([col, col.replace(/\.$/, "")])}</td>
+          <td class="border border-border-light px-[0.3rem] py-[0.35rem] align-middle">{statValue(col.key)}</td>
         ))}
       </tr>
     </tbody>
