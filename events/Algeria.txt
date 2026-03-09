@@ -66,7 +66,806 @@ add_namespace = ALG_auto
 add_namespace = ALG_fln
 add_namespace = alg_deep_state
 add_namespace = alg_deep_state_news
+add_namespace = alg_cabinet
 
+### CABINET OVERVIEW EVENT ###
+country_event = {
+	id = alg_cabinet.1
+	title = alg_cabinet.1.t
+	desc = alg_cabinet.1.d
+	picture = GFX_romanian_parliament
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = alg_cabinet.1.a
+		custom_effect_tooltip = ALG_cabinet_reviewed_tt
+	}
+}
+
+### PRIME MINISTER SELECTION ###
+country_event = {
+	id = alg_cabinet.10
+	title = alg_cabinet.10.t
+	desc = alg_cabinet.10.d
+	picture = GFX_political_deal
+	
+	is_triggered_only = yes
+	
+	# Ahmed Ouyahia - Technocrat
+	option = {
+		name = alg_cabinet.10.a
+		trigger = {
+			NOT = { has_country_flag = ALG_pm_ouyahia }
+		}
+		custom_effect_tooltip = ALG_appoint_ouyahia_tt
+		ALG_appoint_pm_ouyahia = yes
+		add_political_power = 25
+	}
+	
+	# Abdelmalek Sellal - Loyalist
+	option = {
+		name = alg_cabinet.10.b
+		trigger = {
+			NOT = { has_country_flag = ALG_pm_sellal }
+		}
+		custom_effect_tooltip = ALG_appoint_sellal_tt
+		ALG_appoint_pm_sellal = yes
+		add_stability = 0.02
+	}
+	
+	# Abdelaziz Djerad - Reformist
+	option = {
+		name = alg_cabinet.10.c
+		trigger = {
+			NOT = { has_country_flag = ALG_pm_djerad }
+		}
+		custom_effect_tooltip = ALG_appoint_djerad_tt
+		ALG_appoint_pm_djerad = yes
+		add_to_variable = { deep_state_power = -2 }
+		custom_effect_tooltip = deep_state_power_decreased_2_tt
+	}
+	
+	# Ahmed Benbitour - Independent
+	option = {
+		name = alg_cabinet.10.e
+		trigger = {
+			NOT = { has_country_flag = ALG_pm_benbitour }
+			check_variable = { deep_state_power < 15 }
+		}
+		custom_effect_tooltip = ALG_appoint_benbitour_tt
+		ALG_appoint_pm_benbitour = yes
+		add_to_variable = { deep_state_power = -3 }
+		custom_effect_tooltip = deep_state_power_decreased_3_tt
+		add_stability = -0.02
+	}
+	
+	# Noureddine Bedoui - Loyalist
+	option = {
+		name = alg_cabinet.10.f
+		trigger = {
+			NOT = { has_country_flag = ALG_pm_bedoui }
+		}
+		custom_effect_tooltip = ALG_appoint_bedoui_pm_tt
+		ALG_appoint_pm_bedoui = yes
+		add_stability = 0.01
+	}
+	
+	# Abdelmadjid Tebboune - Reformist
+	option = {
+		name = alg_cabinet.10.g
+		trigger = {
+			NOT = { has_country_flag = ALG_pm_tebboune }
+		}
+		custom_effect_tooltip = ALG_appoint_tebboune_tt
+		ALG_appoint_pm_tebboune = yes
+	}
+	
+	# Keep current
+	option = {
+		name = alg_cabinet.10.h
+		custom_effect_tooltip = ALG_keep_current_pm_tt
+	}
+}
+
+### DEFENSE MINISTER SELECTION ###
+country_event = {
+	id = alg_cabinet.20
+	title = alg_cabinet.20.t
+	desc = alg_cabinet.20.d
+	picture = GFX_turkmen_karakalpak_army
+	
+	is_triggered_only = yes
+	
+	immediate = {
+		# Check if deep state will react
+		if = {
+			limit = { check_variable = { ALG_mod_deep_state > 70 } }
+			set_country_flag = ALG_mod_change_triggers_ds
+		}
+	}
+	
+	# Ahmed Gaid Salah - Deep State Military
+	option = {
+		name = alg_cabinet.20.a
+		trigger = {
+			NOT = { has_country_flag = ALG_mod_gaaid_salah }
+		}
+		custom_effect_tooltip = ALG_appoint_gaaid_salah_tt
+		ALG_appoint_mod_gaaid_salah = yes
+		add_to_variable = { deep_state_power = 3 }
+		custom_effect_tooltip = deep_state_power_increased_3_tt
+	}
+	
+	# Civilian Defense Expert
+	option = {
+		name = alg_cabinet.20.b
+		trigger = {
+			check_variable = { deep_state_power < 15 }
+		}
+		custom_effect_tooltip = ALG_appoint_civilian_mod_tt
+		ALG_appoint_mod_civilian = yes
+		add_to_variable = { deep_state_power = -3 }
+		custom_effect_tooltip = deep_state_power_decreased_3_tt
+		add_stability = -0.03
+		if = {
+			limit = { has_country_flag = ALG_mod_change_triggers_ds }
+			country_event = { id = alg_cabinet.25 days = 7 }
+		}
+	}
+	
+	# Reformist General
+	option = {
+		name = alg_cabinet.20.c
+		custom_effect_tooltip = ALG_appoint_reformist_mod_tt
+		ALG_appoint_mod_reformist = yes
+		if = {
+			limit = { has_country_flag = ALG_mod_change_triggers_ds }
+			add_to_variable = { deep_state_power = 2 }
+			custom_effect_tooltip = deep_state_power_increased_2_tt
+		}
+	}
+	
+	# Hardline General
+	option = {
+		name = alg_cabinet.20.e
+		custom_effect_tooltip = ALG_appoint_hardliner_mod_tt
+		ALG_appoint_mod_hardliner = yes
+		add_to_variable = { deep_state_power = 2 }
+		custom_effect_tooltip = deep_state_power_increased_2_tt
+		add_war_support = 0.03
+	}
+	
+	# Keep current
+	option = {
+		name = alg_cabinet.20.f
+		custom_effect_tooltip = ALG_keep_current_mod_tt
+	}
+}
+
+# Deep State Reaction to Defense Minister Change
+country_event = {
+	id = alg_cabinet.25
+	title = alg_cabinet.25.t
+	desc = alg_cabinet.25.d
+	picture = GFX_Military_Reform
+	
+	is_triggered_only = yes
+	
+	immediate = {
+		clr_country_flag = ALG_mod_change_triggers_ds
+	}
+	
+	option = {
+		name = alg_cabinet.25.a
+		custom_effect_tooltip = ALG_ds_accepts_mod_change_tt
+		add_to_variable = { deep_state_power = 2 }
+		custom_effect_tooltip = deep_state_power_increased_2_tt
+	}
+	
+	option = {
+		name = alg_cabinet.25.b
+		trigger = {
+			has_political_power > 50
+		}
+		custom_effect_tooltip = ALG_ds_appeased_tt
+		add_political_power = -50
+	}
+}
+
+### INTERIOR MINISTER SELECTION ###
+country_event = {
+	id = alg_cabinet.30
+	title = alg_cabinet.30.t
+	desc = alg_cabinet.30.d
+	picture = GFX_timor_election
+	
+	is_triggered_only = yes
+	
+	# Security Hardliner
+	option = {
+		name = alg_cabinet.30.a
+		custom_effect_tooltip = ALG_appoint_hardliner_moi_tt
+		ALG_appoint_moi_hardliner = yes
+		add_stability = 0.02
+		add_to_variable = { deep_state_power = 1 }
+		custom_effect_tooltip = deep_state_power_increased_1_tt
+	}
+	
+	# Reformist Administrator
+	option = {
+		name = alg_cabinet.30.b
+		custom_effect_tooltip = ALG_appoint_reformist_moi_tt
+		ALG_appoint_moi_reformist = yes
+		add_to_variable = { deep_state_power = -1 }
+		custom_effect_tooltip = deep_state_power_decreased_1_tt
+	}
+	
+	# Loyalist Technocrat
+	option = {
+		name = alg_cabinet.30.c
+		custom_effect_tooltip = ALG_appoint_technocrat_moi_tt
+		ALG_appoint_moi_technocrat = yes
+	}
+	
+	# Keep current
+	option = {
+		name = alg_cabinet.30.e
+		custom_effect_tooltip = ALG_keep_current_moi_tt
+	}
+}
+
+### FOREIGN AFFAIRS MINISTER SELECTION ###
+country_event = {
+	id = alg_cabinet.40
+	title = alg_cabinet.40.t
+	desc = alg_cabinet.40.d
+	picture = GFX_EST_ParliamentElections
+	
+	is_triggered_only = yes
+	
+	# Pro-Western Diplomat
+	option = {
+		name = alg_cabinet.40.a
+		custom_effect_tooltip = ALG_appoint_prowestern_mofa_tt
+		ALG_appoint_mofa_prowestern = yes
+		if = {
+			limit = { country_exists = USA }
+			USA = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = ALG_prowestern_minister
+				}
+			}
+		}
+		if = {
+			limit = { country_exists = FRA }
+			FRA = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = ALG_prowestern_minister
+				}
+			}
+		}
+	}
+	
+	# Pan-Arab Nationalist
+	option = {
+		name = alg_cabinet.40.b
+		custom_effect_tooltip = ALG_appoint_panarab_mofa_tt
+		ALG_appoint_mofa_panarab = yes
+		if = {
+			limit = { country_exists = EGY }
+			EGY = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = ALG_panarab_minister
+				}
+			}
+		}
+		if = {
+			limit = { country_exists = SAU }
+			SAU = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = ALG_panarab_minister
+				}
+			}
+		}
+	}
+	
+	# Non-Aligned Veteran
+	option = {
+		name = alg_cabinet.40.c
+		custom_effect_tooltip = ALG_appoint_nonaligned_mofa_tt
+		ALG_appoint_mofa_nonaligned = yes
+	}
+	
+	# Keep current
+	option = {
+		name = alg_cabinet.40.e
+		custom_effect_tooltip = ALG_keep_current_mofa_tt
+	}
+}
+
+### FINANCE MINISTER SELECTION ###
+country_event = {
+	id = alg_cabinet.50
+	title = alg_cabinet.50.t
+	desc = alg_cabinet.50.d
+	picture = GFX_internal_faction_money
+	
+	is_triggered_only = yes
+	
+	# Free Market Economist
+	option = {
+		name = alg_cabinet.50.a
+		custom_effect_tooltip = ALG_appoint_freemarket_mof_tt
+		ALG_appoint_mof_freemarket = yes
+		add_ideas = ALG_economic_liberalization
+	}
+	
+	# State Interventionist
+	option = {
+		name = alg_cabinet.50.b
+		custom_effect_tooltip = ALG_appoint_statist_mof_tt
+		ALG_appoint_mof_statist = yes
+	}
+	
+	# Loyal Bureaucrat
+	option = {
+		name = alg_cabinet.50.c
+		custom_effect_tooltip = ALG_appoint_bureaucrat_mof_tt
+		ALG_appoint_mof_bureaucrat = yes
+	}
+	
+	# Keep current
+	option = {
+		name = alg_cabinet.50.e
+		custom_effect_tooltip = ALG_keep_current_mof_tt
+	}
+}
+
+### ENERGY MINISTER SELECTION ###
+country_event = {
+	id = alg_cabinet.60
+	title = alg_cabinet.60.t
+	desc = alg_cabinet.60.d
+	picture = GFX_internal_faction_energy
+	
+	is_triggered_only = yes
+	
+	# Sonatrach Insider
+	option = {
+		name = alg_cabinet.60.a
+		custom_effect_tooltip = ALG_appoint_sonatrach_moe_tt
+		ALG_appoint_moe_sonatrach = yes
+		add_resource = {
+			type = oil
+			amount = 5
+			state = 459
+		}
+	}
+	
+	# International Energy Expert
+	option = {
+		name = alg_cabinet.60.b
+		custom_effect_tooltip = ALG_appoint_international_moe_tt
+		ALG_appoint_moe_international = yes
+	}
+	
+	# Loyal Administrator
+	option = {
+		name = alg_cabinet.60.c
+		custom_effect_tooltip = ALG_appoint_loyal_moe_tt
+		ALG_appoint_moe_loyal = yes
+	}
+	
+	# Keep current
+	option = {
+		name = alg_cabinet.60.e
+		custom_effect_tooltip = ALG_keep_current_moe_tt
+	}
+}
+
+### JUSTICE MINISTER SELECTION ###
+country_event = {
+	id = alg_cabinet.70
+	title = alg_cabinet.70.t
+	desc = alg_cabinet.70.d
+	picture = GFX_tanzania_parliament
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = alg_cabinet.70.a
+		custom_effect_tooltip = ALG_appoint_independent_moj_tt
+		ALG_appoint_moj_independent = yes
+		add_to_variable = { deep_state_power = -2 }
+		clamp_variable = { var = deep_state_power min = 0 max = 30 }
+		custom_effect_tooltip = deep_state_power_decreased_2_tt
+		add_stability = -0.01
+	}
+	
+	option = {
+		name = alg_cabinet.70.b
+		custom_effect_tooltip = ALG_appoint_security_moj_tt
+		ALG_appoint_moj_security = yes
+		add_to_variable = { deep_state_power = 1 }
+		clamp_variable = { var = deep_state_power min = 0 max = 30 }
+		custom_effect_tooltip = deep_state_power_increased_1_tt
+		add_stability = 0.01
+	}
+	
+	option = {
+		name = alg_cabinet.70.c
+		custom_effect_tooltip = ALG_appoint_loyalist_moj_tt
+		ALG_appoint_moj_loyalist = yes
+	}
+	
+	option = {
+		name = alg_cabinet.70.e
+		custom_effect_tooltip = ALG_keep_current_moj_tt
+	}
+}
+
+### INTELLIGENCE CHIEF SELECTION ###
+country_event = {
+	id = alg_cabinet.80
+	title = alg_cabinet.80.t
+	desc = alg_cabinet.80.d
+	picture = GFX_CAN_withdraw_security_bid
+	
+	is_triggered_only = yes
+	
+	immediate = {
+		if = {
+			limit = { check_variable = { ALG_drs_deep_state > 80 } }
+			set_country_flag = ALG_drs_change_triggers_ds
+		}
+	}
+	
+	option = {
+		name = alg_cabinet.80.a
+		trigger = {
+			NOT = { has_country_flag = ALG_drs_tartag }
+		}
+		custom_effect_tooltip = ALG_appoint_tartag_tt
+		ALG_appoint_drs_tartag = yes
+		add_to_variable = { deep_state_power = 3 }
+		clamp_variable = { var = deep_state_power min = 0 max = 30 }
+		custom_effect_tooltip = deep_state_power_increased_3_tt
+	}
+	
+	option = {
+		name = alg_cabinet.80.b
+		trigger = {
+			NOT = { has_country_flag = ALG_drs_mediene }
+		}
+		custom_effect_tooltip = ALG_appoint_mediene_tt
+		ALG_appoint_drs_mediene = yes
+		add_to_variable = { deep_state_power = 5 }
+		clamp_variable = { var = deep_state_power min = 0 max = 30 }
+		custom_effect_tooltip = deep_state_power_increased_5_tt
+	}
+	
+	option = {
+		name = alg_cabinet.80.c
+		custom_effect_tooltip = ALG_appoint_loyalist_drs_tt
+		ALG_appoint_drs_loyalist = yes
+		add_to_variable = { deep_state_power = -2 }
+		clamp_variable = { var = deep_state_power min = 0 max = 30 }
+		custom_effect_tooltip = deep_state_power_decreased_2_tt
+		if = {
+			limit = { has_country_flag = ALG_drs_change_triggers_ds }
+			country_event = { id = alg_cabinet.85 days = 7 }
+		}
+	}
+	
+	option = {
+		name = alg_cabinet.80.e
+		trigger = {
+			check_variable = { deep_state_power < 10 }
+		}
+		custom_effect_tooltip = ALG_appoint_civilian_drs_tt
+		ALG_appoint_drs_civilian = yes
+		add_to_variable = { deep_state_power = -5 }
+		clamp_variable = { var = deep_state_power min = 0 max = 30 }
+		custom_effect_tooltip = deep_state_power_decreased_5_tt
+		add_stability = -0.05
+		if = {
+			limit = { has_country_flag = ALG_drs_change_triggers_ds }
+			country_event = { id = alg_cabinet.85 days = 7 }
+		}
+	}
+	
+	option = {
+		name = alg_cabinet.80.f
+		trigger = {
+			check_variable = { deep_state_power < 15 }
+		}
+		custom_effect_tooltip = ALG_appoint_reformist_drs_tt
+		ALG_appoint_drs_reformist = yes
+		add_to_variable = { deep_state_power = -3 }
+		clamp_variable = { var = deep_state_power min = 0 max = 30 }
+		custom_effect_tooltip = deep_state_power_decreased_3_tt
+		if = {
+			limit = { has_country_flag = ALG_drs_change_triggers_ds }
+			country_event = { id = alg_cabinet.85 days = 7 }
+		}
+	}
+	
+	option = {
+		name = alg_cabinet.80.g
+		custom_effect_tooltip = ALG_keep_current_drs_tt
+	}
+}
+
+country_event = {
+	id = alg_cabinet.85
+	title = alg_cabinet.85.t
+	desc = alg_cabinet.85.d
+	picture = GFX_CAN_withdraw_security_bid
+	
+	is_triggered_only = yes
+	
+	immediate = {
+		clr_country_flag = ALG_drs_change_triggers_ds
+	}
+	
+	option = {
+		name = alg_cabinet.85.a
+		custom_effect_tooltip = ALG_intelligence_network_resists_tt
+		add_to_variable = { deep_state_power = 3 }
+		clamp_variable = { var = deep_state_power min = 0 max = 30 }
+		custom_effect_tooltip = deep_state_power_increased_3_tt
+		add_stability = -0.03
+	}
+	
+	option = {
+		name = alg_cabinet.85.b
+		trigger = {
+			has_political_power > 75
+		}
+		custom_effect_tooltip = ALG_intelligence_network_appeased_tt
+		add_political_power = -75
+		add_to_variable = { ALG_drs_loyalty = 5 }
+		clamp_variable = { var = ALG_drs_loyalty min = 0 max = 100 }
+		ALG_calculate_cabinet_stats = yes
+	}
+}
+
+### CABINET RESHUFFLE ###
+country_event = {
+	id = alg_cabinet.100
+	title = alg_cabinet.100.t
+	desc = alg_cabinet.100.d
+	picture = GFX_comittee_genoc_research
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = alg_cabinet.100.a
+		custom_effect_tooltip = ALG_loyalist_cabinet_tt
+		ALG_apply_loyalist_cabinet = yes
+		add_stability = 0.05
+		add_to_variable = { deep_state_power = 1 }
+		clamp_variable = { var = deep_state_power min = 0 max = 30 }
+		custom_effect_tooltip = deep_state_power_increased_1_tt
+	}
+	
+	option = {
+		name = alg_cabinet.100.b
+		custom_effect_tooltip = ALG_technocrat_cabinet_tt
+		ALG_apply_technocrat_cabinet = yes
+		add_political_power = 50
+	}
+	
+	option = {
+		name = alg_cabinet.100.c
+		custom_effect_tooltip = ALG_reform_cabinet_tt
+		ALG_apply_reform_cabinet = yes
+		add_to_variable = { deep_state_power = -5 }
+		clamp_variable = { var = deep_state_power min = 0 max = 30 }
+		custom_effect_tooltip = deep_state_power_decreased_5_tt
+		add_stability = -0.03
+	}
+	
+	option = {
+		name = alg_cabinet.100.e
+		add_political_power = 100
+	}
+}
+
+### DEMAND LOYALTY ###
+country_event = {
+	id = alg_cabinet.110
+	title = alg_cabinet.110.t
+	desc = alg_cabinet.110.d
+	picture = GFX_alg_president
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = alg_cabinet.110.a
+		custom_effect_tooltip = ALG_force_loyalty_tt
+		random_list = {
+			70 = {
+				ALG_increase_all_loyalty = yes
+				custom_effect_tooltip = ALG_loyalty_accepted_tt
+			}
+			30 = {
+				ALG_increase_all_loyalty = yes
+				subtract_from_variable = { ALG_cabinet_competence = 5 }
+				clamp_variable = { var = ALG_cabinet_competence min = 0 max = 100 }
+				ALG_calculate_cabinet_stats = yes
+				custom_effect_tooltip = ALG_loyalty_resignation_tt
+			}
+		}
+	}
+	
+	option = {
+		name = alg_cabinet.110.b
+		trigger = {
+			has_political_power > 50
+		}
+		custom_effect_tooltip = ALG_buy_loyalty_tt
+		add_political_power = -50
+		ALG_increase_all_loyalty = yes
+	}
+	
+	option = {
+		name = alg_cabinet.110.c
+		custom_effect_tooltip = ALG_back_down_loyalty_tt
+		ALG_decrease_all_loyalty = yes
+		add_stability = -0.02
+	}
+}
+
+### CABINET DISLOYALTY CRISIS ###
+country_event = {
+	id = alg_cabinet.200
+	title = alg_cabinet.200.t
+	desc = alg_cabinet.200.d
+	picture = GFX_ivory_coast_protest_supressed
+	
+	trigger = {
+		tag = ALG
+		has_variable = ALG_cabinet_loyalty
+		OR = {
+			check_variable = { ALG_pm_loyalty < 30 }
+			check_variable = { ALG_mod_loyalty < 30 }
+			check_variable = { ALG_drs_loyalty < 30 }
+		}
+		NOT = { has_country_flag = cabinet_crisis_cooldown }
+		NOT = { has_idea = ALG_military_junta_1 }
+	}
+	
+	mean_time_to_happen = {
+		days = 60
+	}
+	
+	immediate = {
+		set_country_flag = { flag = cabinet_crisis_cooldown days = 180 }
+	}
+	
+	option = {
+		name = alg_cabinet.200.a
+		custom_effect_tooltip = ALG_dismiss_disloyal_tt
+		if = {
+			limit = { check_variable = { ALG_pm_loyalty < 30 } }
+			country_event = { id = alg_cabinet.10 days = 1 }
+		}
+		if = {
+			limit = { check_variable = { ALG_mod_loyalty < 30 } }
+			add_to_variable = { deep_state_power = 3 }
+			clamp_variable = { var = deep_state_power min = 0 max = 30 }
+			custom_effect_tooltip = deep_state_power_increased_3_tt
+		}
+		if = {
+			limit = { check_variable = { ALG_drs_loyalty < 30 } }
+			add_to_variable = { deep_state_power = 5 }
+			clamp_variable = { var = deep_state_power min = 0 max = 30 }
+			custom_effect_tooltip = deep_state_power_increased_5_tt
+		}
+		add_stability = -0.05
+	}
+	
+	option = {
+		name = alg_cabinet.200.b
+		custom_effect_tooltip = ALG_negotiate_disloyal_tt
+		add_political_power = -75
+		if = {
+			limit = { check_variable = { ALG_pm_loyalty < 30 } }
+			add_to_variable = { ALG_pm_loyalty = 20 }
+		}
+		if = {
+			limit = { check_variable = { ALG_mod_loyalty < 30 } }
+			add_to_variable = { ALG_mod_loyalty = 15 }
+		}
+		if = {
+			limit = { check_variable = { ALG_drs_loyalty < 30 } }
+			add_to_variable = { ALG_drs_loyalty = 10 }
+		}
+		clamp_variable = { var = ALG_pm_loyalty min = 0 max = 100 }
+		clamp_variable = { var = ALG_mod_loyalty min = 0 max = 100 }
+		clamp_variable = { var = ALG_drs_loyalty min = 0 max = 100 }
+		ALG_calculate_cabinet_stats = yes
+	}
+	
+	option = {
+		name = alg_cabinet.200.c
+		custom_effect_tooltip = ALG_ignore_disloyal_tt
+		ALG_decrease_all_loyalty = yes
+		add_stability = -0.05
+	}
+}
+
+### DEEP STATE PRESSURE ON CABINET ###
+country_event = {
+	id = alg_cabinet.201
+	title = alg_cabinet.201.t
+	desc = alg_cabinet.201.d
+	picture = GFX_protests_kazakhstan_2
+	
+	trigger = {
+		tag = ALG
+		has_variable = ALG_cabinet_deep_state_influence
+		check_variable = { deep_state_power > 15 }
+		check_variable = { ALG_cabinet_deep_state_influence < 50 }
+		NOT = { has_country_flag = ds_cabinet_pressure_cooldown }
+		NOT = { has_idea = ALG_military_junta_1 }
+	}
+	
+	mean_time_to_happen = {
+		days = 120
+	}
+	
+	immediate = {
+		set_country_flag = { flag = ds_cabinet_pressure_cooldown days = 180 }
+	}
+	
+	option = {
+		name = alg_cabinet.201.a
+		custom_effect_tooltip = ALG_accept_ds_pressure_tt
+		ALG_increase_deep_state_influence_cabinet = yes
+		add_to_variable = { deep_state_power = 2 }
+		clamp_variable = { var = deep_state_power min = 0 max = 30 }
+		custom_effect_tooltip = deep_state_power_increased_2_tt
+		add_stability = 0.01
+	}
+	
+	option = {
+		name = alg_cabinet.201.b
+		custom_effect_tooltip = ALG_resist_ds_pressure_tt
+		add_stability = -0.05
+		add_to_variable = { deep_state_power = 3 }
+		clamp_variable = { var = deep_state_power min = 0 max = 30 }
+		custom_effect_tooltip = deep_state_power_increased_3_tt
+		subtract_from_variable = { ALG_mod_loyalty = 10 }
+		subtract_from_variable = { ALG_drs_loyalty = 15 }
+		clamp_variable = { var = ALG_mod_loyalty min = 0 max = 100 }
+		clamp_variable = { var = ALG_drs_loyalty min = 0 max = 100 }
+		ALG_calculate_cabinet_stats = yes
+	}
+	
+	option = {
+		name = alg_cabinet.201.c
+		trigger = {
+			has_political_power > 50
+		}
+		custom_effect_tooltip = ALG_compromise_ds_pressure_tt
+		add_political_power = -50
+		add_to_variable = { ALG_pm_deep_state = 5 }
+		add_to_variable = { ALG_moi_deep_state = 5 }
+		clamp_variable = { var = ALG_pm_deep_state min = 0 max = 100 }
+		clamp_variable = { var = ALG_moi_deep_state min = 0 max = 100 }
+		ALG_calculate_cabinet_stats = yes
+		add_to_variable = { deep_state_power = 1 }
+		clamp_variable = { var = deep_state_power min = 0 max = 30 }
+		custom_effect_tooltip = deep_state_power_increased_1_tt
+	}
+}
 ### GRADUAL GROWTH EVENTS ###
 country_event = {
 	id = alg_deep_state.1
