@@ -1,8 +1,9 @@
 import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
 import { getCollection } from "astro:content";
-import { stripMarkdownExt } from "../lib/slugs";
 import { withBase } from "../lib/urls";
+import { SITE_DESCRIPTION, SITE_FALLBACK_ORIGIN, SITE_TITLE } from "../shared/config/site";
+import { getChangelogPath, getDevDiaryPath } from "../lib/content-routes";
 
 function mapItem(
   title: string,
@@ -11,9 +12,8 @@ function mapItem(
 ) {
   return {
     title,
-    description: description || "",
+    description: description ?? "",
     link: withBase(path),
-    pubDate: new Date(),
   };
 }
 
@@ -25,22 +25,15 @@ export async function GET(context: APIContext) {
 
   const items = [
     ...changelogs.map((entry) =>
-      mapItem(entry.data.title, entry.data.description, `/changelogs/${stripMarkdownExt(entry.id)}/`),
+      mapItem(entry.data.title, entry.data.description, getChangelogPath(entry)),
     ),
-    ...devDiaries.map((entry) =>
-      mapItem(
-        entry.data.title,
-        entry.data.description,
-        entry.data.permalink || `/dev-diaries/${stripMarkdownExt(entry.id)}/`,
-      ),
-    ),
+    ...devDiaries.map((entry) => mapItem(entry.data.title, entry.data.description, getDevDiaryPath(entry))),
   ];
 
   return rss({
-    title: "Millennium Dawn: A Modern Day Mod",
-    description:
-      "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV.",
-    site: context.site || "https://millenniumdawn.github.io",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    site: context.site ?? SITE_FALLBACK_ORIGIN,
     items,
     customData: `<language>en</language>`,
   });

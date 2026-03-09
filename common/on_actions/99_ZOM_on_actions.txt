@@ -1,4 +1,46 @@
 on_actions = {
+	on_startup = {
+		effect = {
+			if = {
+				limit = {
+					has_game_rule = { rule = zombie_mode_enabled option = yes }
+				}
+				# Load division templates
+				ZOM = {
+					# Delayed spawn - activate countdown mission for all human players
+					if = {
+						limit = { has_game_rule = { rule = zombie_spawn_delay option = ONE_YEAR } }
+						set_global_flag = ZOM_apocalypse_countdown
+						every_country = {
+							limit = { is_ai = no }
+							activate_mission = ZOM_apocalypse_countdown_1yr
+						}
+					}
+					else_if = {
+						limit = { has_game_rule = { rule = zombie_spawn_delay option = TWO_YEARS } }
+						set_global_flag = ZOM_apocalypse_countdown
+						every_country = {
+							limit = { is_ai = no }
+							activate_mission = ZOM_apocalypse_countdown_2yr
+						}
+					}
+					else_if = {
+						limit = { has_game_rule = { rule = zombie_spawn_delay option = THREE_YEARS } }
+						set_global_flag = ZOM_apocalypse_countdown
+						every_country = {
+							limit = { is_ai = no }
+							activate_mission = ZOM_apocalypse_countdown_3yr
+						}
+					}
+					# No delay (default) - spawn immediately
+					else = {
+						ZOM_execute_zombie_spawn = yes
+					}
+				}
+			}
+		}
+	}
+
 	on_weekly_ZOM = {
 		random_events = {
 			1000 = 0
@@ -10,7 +52,11 @@ on_actions = {
 			50 = zombie.5
 			50 = zombie.6
 			50 = zombie.7
+			50 = zombie.12
+			50 = zombie.13
+			50 = zombie.14
 		}
+
 		effect = {
 			# Zombies do not believe in stocks bonds or your pitiful attempts at economy!
 			if = { limit = { check_variable = { treasury < 0 } }
@@ -34,17 +80,20 @@ on_actions = {
 					leave_faction = yes
 				}
 
-				random_country = {
-					limit = {
-						has_faction_template = faction_template_anti_zombie_coalition
-						is_faction_leader = yes
-					}
-					add_to_faction = PREV
-					PREV = {
-						add_to_war = {
-							targeted_alliance = PREV
-							enemy = ZOM
-							hostility_reason = the_horde_spreads
+				if = {
+					limit = { ZOM_coalition_can_form = yes }
+					random_country = {
+						limit = {
+							has_faction_template = faction_template_anti_zombie_coalition
+							is_faction_leader = yes
+						}
+						add_to_faction = PREV
+						PREV = {
+							add_to_war = {
+								targeted_alliance = PREV
+								enemy = ZOM
+								hostility_reason = the_horde_spreads
+							}
 						}
 					}
 				}
@@ -71,12 +120,6 @@ on_actions = {
 				}
 			}
 
-			# Annex All Capitulated Enemies
-			every_enemy_country = {
-				limit = { has_capitulated = yes }
-				ZOM = { annex_country = { target = PREV transfer_troops = no } }
-			}
-
 			# Annex All Subjects if we have subjects
 			if = {
 				limit = { num_subjects > 0 }
@@ -84,6 +127,15 @@ on_actions = {
 					ZOM = {
 						annex_country = { target = PREV transfer_troops = no }
 					}
+				}
+			}
+
+			# Propagate cure bonus to late-joining war participants
+			if = {
+				limit = { has_country_flag = ZOM_cure_distributed }
+				every_enemy_country = {
+					limit = { NOT = { has_idea = ZOM_cure_developed } }
+					add_ideas = ZOM_cure_developed
 				}
 			}
 
@@ -118,10 +170,10 @@ on_actions = {
 					prioritize_location = 1510
 				}
 			}
+			# Difficulty scaling: each tier adds +15 units and -100k manpower
+			# HARD: +15, EXTREME: +30, INSANE: +45
 			if = {
-				limit = {
-					has_game_rule = { rule = zombie_difficulty option = HARD }
-				}
+				limit = { ZOM_difficulty_at_least_hard = yes }
 				add_manpower = -100000
 				capital_scope = {
 					create_unit = {
@@ -133,12 +185,7 @@ on_actions = {
 				}
 			}
 			if = {
-				limit = {
-					OR = {
-						has_game_rule = { rule = zombie_difficulty option = HARD }
-						has_game_rule = { rule = zombie_difficulty option = EXTREME }
-					}
-				}
+				limit = { ZOM_difficulty_at_least_extreme = yes }
 				add_manpower = -100000
 				capital_scope = {
 					create_unit = {
@@ -150,13 +197,7 @@ on_actions = {
 				}
 			}
 			if = {
-				limit = {
-					OR = {
-						has_game_rule = { rule = zombie_difficulty option = HARD }
-						has_game_rule = { rule = zombie_difficulty option = EXTREME }
-						has_game_rule = { rule = zombie_difficulty option = INSANE }
-					}
-				}
+				limit = { ZOM_difficulty_insane = yes }
 				add_manpower = -100000
 				capital_scope = {
 					create_unit = {
@@ -168,18 +209,43 @@ on_actions = {
 				}
 			}
 
-			# Outbreak Random Chance
+			# Horde Evolution - unlock Runner Packs and Brute Vanguards after significant expansion or 2 years
 			if = {
 				limit = {
+					NOT = { has_global_flag = ZOM_horde_evolved }
 					OR = {
-						check_variable = { global.month = 3 }
-						check_variable = { global.month = 6 }
-						check_variable = { global.month = 9 }
-						check_variable = { global.month = 12 }
+						check_variable = { num_owned_states > 24 }
+						date > 2002.1.1
 					}
 				}
+				country_event = { id = zombie.15 }
+			}
+
+			# Outbreak Random Chance - fires every month
+			random = {
+				chance = 33
+				random_other_country = {
+					limit = {
+						NOT = { has_war_with = ZOM }
+						NOT = { has_country_flag = has_had_outbreak_event }
+					}
+					country_event = { id = zombie.10 days = 3 random_days = 3 }
+				}
+			}
+			random = {
+				chance = 15
+				random_other_country = {
+					limit = {
+						NOT = { has_war_with = ZOM }
+						NOT = { has_country_flag = has_had_outbreak_event }
+					}
+					country_event = { id = zombie.10 days = 5 random_days = 5 }
+				}
+			}
+			if = {
+				limit = { ZOM_difficulty_at_least_hard = yes }
 				random = {
-					chance = 25
+					chance = 17
 					random_other_country = {
 						limit = {
 							NOT = { has_war_with = ZOM }
@@ -187,6 +253,35 @@ on_actions = {
 						}
 						country_event = { id = zombie.10 days = 3 random_days = 3 }
 					}
+				}
+				random = {
+					chance = 10
+					random_other_country = {
+						limit = {
+							NOT = { has_war_with = ZOM }
+							NOT = { has_country_flag = has_had_outbreak_event }
+						}
+						country_event = { id = zombie.10 days = 5 random_days = 5 }
+					}
+				}
+			}
+		}
+	}
+
+	on_capitulation_immediate = {
+		effect = {
+			if = { limit = { FROM = { original_tag = ZOM } }
+				if = {
+					limit = { ROOT = { original_tag = CHI } }
+					news_event = { id = zombie_capitulation.1 }
+				}
+				if = {
+					limit = { ROOT = { original_tag = SOV } }
+					news_event = { id = zombie_capitulation.2 }
+				}
+				if = {
+					limit = { ROOT = { original_tag = USA } }
+					news_event = { id = zombie_capitulation.3 }
 				}
 			}
 		}
