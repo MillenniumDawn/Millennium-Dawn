@@ -26,10 +26,10 @@ GPU: NVIDIA GeForce RTX 4070
 
 | Tick    | Old Avg (ms) | New Avg (ms) | Improvement |
 | ------- | -----------: | -----------: | ----------: |
-| Hourly  |           45 |           26 |       37.8% |
-| Daily   |          219 |           72 |       63.5% |
-| Weekly  |          404 |          113 |       71.5% |
-| Monthly |          445 |          212 |       53.9% |
+| Hourly  |           45 |           26 |       42.2% |
+| Daily   |          219 |           72 |       67.1% |
+| Weekly  |          404 |          113 |       72.0% |
+| Monthly |          445 |          212 |       52.4% |
 
 ![In-Game Tick Rate Display](/assets/images/dev-diaries/054/image-01.png)
 
