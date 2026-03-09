@@ -5,8 +5,8 @@ Steps:
 1. Get context and the full diff:
 
    ```
-   git log main..HEAD --oneline
-   git diff main...HEAD
+   git log origin/main..HEAD --oneline
+   git diff origin/main...HEAD
    ```
 
 2. Review every changed file against the rules in CLAUDE.md, localisation.md, and hoi4-data-structures.md. Check for issues in four categories:
