@@ -1,36 +1,34 @@
-# Project Architecture
+# File Encoding
 
-This is a Hearts of Iron IV mod, Millennium Dawn. See [CLAUDE.md](../../CLAUDE.md) for the full directory structure and coding standards.
+- All `.txt` files (focus trees, events, decisions, ideas, etc.) must be saved as **UTF-8 without BOM**.
+- Only `.yml` localisation files use UTF-8 **with** BOM.
+- When creating or editing `.txt` files, never add a BOM byte sequence (`EF BB BF`).
 
+# HOI4 Scripting — Quick Reference
 
-> The primary code styling reference is [CLAUDE.md](../../CLAUDE.md). Localisation rules are in [localisation.md](localisation.md).
+For the full reference (variables, arrays, loops, collections, formatted loc), read `.claude/docs/hoi4-data-structures.md`.
 
-# External Documentation
+## Scope Keywords
 
-Documentation for the Hearts of Iron IV modding community. The vast majority of these cover the various large scale scope of the mod.
+| Keyword      | Meaning                                                      |
+| ------------ | ------------------------------------------------------------ |
+| `THIS`       | Current scope (usually implicit)                             |
+| `ROOT`       | Original scope at block start (event, focus, decision)       |
+| `PREV`       | Previous scope before last scope change (`PREV.PREV` chains) |
+| `FROM`       | Sender scope (in events: `FROM` = event sender)              |
+| `OWNER`      | Owner of current state scope                                 |
+| `CONTROLLER` | Controller of current state scope                            |
+| `CAPITAL`    | Capital state of current country scope                       |
 
-- [AI](https://hoi4.paradoxwikis.com/AI_modding) - Contains information about the AI for Hearts of Iron IV
-- [Triggers](https://hoi4.paradoxwikis.com/Triggers) - Contains information regarding valid triggers in available, visible
-- [Data Structures](https://hoi4.paradoxwikis.com/Data_structures) - Data structures information such as variable and arrays.
-- [Effect](https://hoi4.paradoxwikis.com/Effect) - Contains information regarding effects.
-- [Localisation](https://hoi4.paradoxwikis.com/Localisation) - Contains information regarding localisation and localisation formatting for Hearts of Iron IV.
-- [Scopes](https://hoi4.paradoxwikis.com/Scopes) - Contains the information regarding the scopes
-- [On Actions](https://hoi4.paradoxwikis.com/On_actions) - Contains information about the on actions system such as on_daily, on_weekly, and on_monthly
-- [Focus Tree Modding](https://hoi4.paradoxwikis.com/National_focus_modding)
-- [Decision Modding](https://hoi4.paradoxwikis.com/Decision_modding)
-- [Event Modding](https://hoi4.paradoxwikis.com/Event_modding)
-- [Idea Modding](https://hoi4.paradoxwikis.com/Idea_modding)
-- [Scripted GUI](https://hoi4.paradoxwikis.com/Scripted_GUI_modding)
-- [Technologies](https://hoi4.paradoxwikis.com/Technology_modding)
-- [Equipment](https://hoi4.paradoxwikis.com/Equipment_modding)
-- [Factions](https://hoi4.paradoxwikis.com/Faction_modding)
-- [Military Industrial Organization](https://hoi4.paradoxwikis.com/Military_industrial_organization_modding)
-- [Units](https://hoi4.paradoxwikis.com/Unit_modding)
+## Variables (basics)
 
-# Repository Access
+- **Persistent:** `set_variable = { var = X value = Y }` — stored on scope, survives saves
+- **Temporary:** `set_temp_variable = { var = X value = Y }` — current block only
+- **Global:** `set_global_variable = { var = X value = Y }` — read via `global.X`
+- **Arrays:** `my_array^0` (literal index), `my_array^i` (dynamic index)
+- **Scoping:** `var:my_var = { ... }` or `var:my_array^i = { ... }` — never `var:v^i`
 
-You can use the `gh` CLI to:
+# Documentation References
 
-- Search for issues: `gh issue list --repo owner/repo`
-- View pull requests: `gh pr list --repo owner/repo`
-- Clone repositories: `gh repo clone owner/repo`
+For more comprehensive HOI4 scripting docs (effects, triggers, modifiers, wiki links), read `.claude/docs/documentation-references.md`.
+

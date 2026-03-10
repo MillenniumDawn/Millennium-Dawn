@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: 1
       - name: Set up Python
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
       - name: Install dependencies
@@ -26,13 +26,20 @@ jobs:
         run: |
           python tools/validate_tools.py --output tools_validation_report.json
       - name: Upload validation report
-        uses: actions/upload-artifact@v6.0.0
+        uses: actions/upload-artifact@v7.0.0
         if: always()
         with:
           name: tools-validation-report
           path: tools_validation_report.json
       - name: Check validation results
         run: |
-          if [ -f tools_validation_report.json ]; then
-            python -c "import json; with open('tools_validation_report.json', 'r') as f: data = json.load(f); errors = data['summary']['errors']; print(f'Validation failed with {errors} errors') if errors > 0 else print('Tools validation passed'); exit(1 if errors > 0 else 0)"
-          fi
+          python - << 'EOF'
+          import json
+          with open('tools_validation_report.json') as f:
+              data = json.load(f)
+          errors = data['summary']['errors']
+          if errors > 0:
+              print('Validation failed with ' + str(errors) + ' errors')
+              exit(1)
+          print('Tools validation passed')
+          EOF

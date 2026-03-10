@@ -180,6 +180,14 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				has_stability < 0.65
+			}
+			modifier = {
+				factor = 2
+				has_war_support < 0.65
+			}
 		}
 	}
 
@@ -231,7 +239,7 @@
 				idea = idea_focus_generic_national_heritage
 				days = 365
 			}
-			# AGRICULTURAL SHIT
+			# Agricultural economy effects
 			if = { limit = { is_agrarian_economy = yes }
 				set_temp_variable = { treasury_change = gdp_total }
 				multiply_temp_variable = { treasury_change = -0.015 }
@@ -239,13 +247,6 @@
 				set_temp_variable = { AGRI_protections_change = 2 }
 				AGRI_protection_update = yes
 				AGRI_update_math_variables = yes
-			}
-			# Temporary Way of Getting Rid of Separatism Focuses
-			if = { limit = { has_idea = india_divided }
-				remove_ideas = india_divided
-			}
-			if = { limit = { has_idea = indonesia_divided }
-				remove_ideas = indonesia_divided
 			}
 			if = { limit = { has_idea = large_refugee_population }
 				remove_ideas = large_refugee_population
@@ -262,7 +263,7 @@
 		id = GENERIC_expand_the_secret_service
 		icon = espionage
 
-		x = 1
+		x = -6
 		y = 1
 		relative_position_id = GENERIC_political_reform
 
@@ -275,7 +276,7 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_expand_the_secret_service"
 			add_tech_bonus = {
-				name = GENERIC_expand_the_secret_service
+				name = CAT_nvg
 				category = CAT_nvg
 				uses = 1
 				bonus = 0.25
@@ -300,7 +301,7 @@
 		id = GENERIC_build_intelligence_stations
 		icon = espionage2
 
-		x = 1
+		x = -6
 		y = 2
 		relative_position_id = GENERIC_political_reform
 
@@ -317,7 +318,6 @@
 		}
 
 		bypass_if_unavailable = yes
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_build_intelligence_stations"
@@ -346,6 +346,117 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				add = 5
+				OR = {
+					AND = {
+						has_idea = the_military
+						check_variable = { the_military_opinion < 75 }
+					}
+					AND = {
+						has_idea = intelligence_community
+						check_variable = { intelligence_community_opinion < 75 }
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = GENERIC_counter_terrorism_operations
+		icon = generic_counter_insurgency_icon
+
+		x = -6
+		y = 3
+		relative_position_id = GENERIC_political_reform
+
+		cost = 10
+
+		prerequisite = { focus = GENERIC_build_intelligence_stations }
+
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			has_at_least_regional_power_status = yes
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_counter_terrorism_operations"
+			add_timed_idea = {
+				idea = idea_focus_generic_counter_terrorism
+				days = 730
+			}
+			set_temp_variable = { temp_opinion = 10 }
+			change_intelligence_community_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 15
+				has_idea = intelligence_community
+				check_variable = { intelligence_community_opinion < 75 }
+			}
+			modifier = {
+				factor = 3
+				threat > 0.15
+			}
+		}
+	}
+
+	focus = {
+		id = GENERIC_cyber_warfare_program
+		icon = cyberwarfare
+
+		x = -6
+		y = 4
+		relative_position_id = GENERIC_political_reform
+
+		cost = 10
+
+		prerequisite = { focus = GENERIC_counter_terrorism_operations }
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			has_intelligence_agency = yes
+		}
+
+		allow_branch = {
+			has_dlc = "La Resistance"
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_cyber_warfare_program"
+			add_timed_idea = {
+				idea = idea_focus_generic_cyber_warfare
+				days = 730
+			}
+			add_tech_bonus = {
+				name = GENERIC_cyber_warfare_program
+				uses = 1
+				bonus = 0.25
+				category = CAT_internet_tech
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				add = 5
+				has_idea = intelligence_community
+				check_variable = { intelligence_community_opinion < 75 }
+			}
+			modifier = {
+				factor = 2
+				has_at_least_major_power_status = yes
+			}
 		}
 	}
 
@@ -508,9 +619,9 @@
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_anti_corruption_reforms"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_decentralization"
 			add_ideas = generic_decentralization
-			# AGRICULTURAL SHIT
+			# Agricultural economy effects
 			if = { limit = { is_agrarian_economy = yes }
 				set_temp_variable = { treasury_change = gdp_total }
 				multiply_temp_variable = { treasury_change = -0.005 }
@@ -542,7 +653,7 @@
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_anti_corruption_reforms"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_centralization"
 			add_ideas = generic_centralization
 		}
 
@@ -609,18 +720,10 @@
 			modifier = {
 				factor = 1.25
 				OR = {
-					var:influence_array^0 = {
-						has_government = democratic
-					}
-					var:influence_array^1 = {
-						has_government = democratic
-					}
-					var:influence_array^2 = {
-						has_government = democratic
-					}
-					var:influence_array^3 = {
-						has_government = democratic
-					}
+					var:influence_array^0 = { has_government = democratic }
+					var:influence_array^1 = { has_government = democratic }
+					var:influence_array^2 = { has_government = democratic }
+					var:influence_array^3 = { has_government = democratic }
 				}
 			}
 			modifier = {
@@ -1005,7 +1108,7 @@
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_the_rising_powers"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_the_conservative_approach"
 			if = { limit = { has_idea = generic_non_aligned_boost_idea2 }
 				modify_timed_idea = {
 					idea = generic_non_aligned_boost_idea2
@@ -1286,7 +1389,7 @@
 		}
 
 		ai_will_do = {
-			base = 20
+			base = 3
 		}
 	}
 	focus = {
@@ -1434,6 +1537,8 @@
 		cost = 10
 
 		prerequisite = { focus = GENERIC_neutrality }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_build_fortifications"
@@ -1621,7 +1726,6 @@
 		}
 
 		bypass_if_unavailable = yes
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_build_highways"
@@ -1899,7 +2003,7 @@
 					capital_scope = { add_resource = { type = steel amount = 15 } }
 				}
 			}
-			# AGRICULTURAL SHIT
+			# Agricultural economy effects
 			if = { limit = { is_agrarian_economy = yes }
 				set_temp_variable = { treasury_change = gdp_total }
 				multiply_temp_variable = { treasury_change = -0.005 }
@@ -1989,7 +2093,7 @@
 		id = GENERIC_economic_measures
 		icon = economic_prosperity
 
-		x = 2
+		x = 3
 		y = 5
 		relative_position_id = GENERIC_build_roads
 
@@ -2001,7 +2105,7 @@
 		search_filters = { FOCUS_FILTER_RESOURCE }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_autarky"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_economic_measures"
 			if = {
 				limit = {
 					NOT = {
@@ -2019,7 +2123,7 @@
 			set_temp_variable = { debt_change = debt }
 			multiply_temp_variable = { debt_change = -0.03 }
 			modify_debt_effect = yes
-			# AGRICULTURAL SHIT
+			# Agricultural economy effects
 			if = { limit = { is_agrarian_economy = yes }
 				set_temp_variable = { crop_type = 0 }
 				set_temp_variable = { price_change = 5 }
@@ -2035,6 +2139,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 5
+				gdp_debt_ratio_higher_50 = yes
+			}
 		}
 	}
 
@@ -2042,7 +2150,7 @@
 		id = GENERIC_productivity_measures
 		icon = focus_generic_industrialists
 
-		x = 4
+		x = 1
 		y = 5
 		relative_position_id = GENERIC_build_roads
 
@@ -2238,7 +2346,7 @@
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_assure_the_national_fuel_reserve"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_expand_the_strategic_reserves"
 			one_fuel_reserve = yes
 			set_temp_variable = { temp_opinion = 10 }
 			change_fossil_fuel_industry_opinion = yes
@@ -2331,7 +2439,7 @@
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_attract_foreign_investors"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_debt_refactoring"
 			set_temp_variable = { debt_change = debt }
 			multiply_temp_variable = { debt_change = 0.05 }
 			clamp_temp_variable = { var = debt_change min = 0 max = 100 }
@@ -2415,6 +2523,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				is_agrarian_economy = yes
+			}
 		}
 	}
 
@@ -2433,7 +2545,7 @@
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_agricultural_district_subsidization"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_focus_towards_the_subsistence"
 			set_temp_variable = { temp_change = 3 }
 			change_farmers_opinion = yes
 			swap_ideas = {
@@ -2444,6 +2556,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				is_agrarian_economy = yes
+			}
 		}
 	}
 
@@ -2463,7 +2579,7 @@
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_agricultural_district_subsidization"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_commercialized_agriculture_investments"
 			set_temp_variable = { temp_change = 3 }
 			change_farmers_opinion = yes
 			two_random_agriculture_district = yes
@@ -2471,6 +2587,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				is_agrarian_economy = yes
+			}
 		}
 	}
 
@@ -2489,7 +2609,7 @@
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_agricultural_district_subsidization"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_encourage_more_commercial_agriculture"
 			set_temp_variable = { temp_change = 3 }
 			change_farmers_opinion = yes
 			swap_ideas = {
@@ -2500,6 +2620,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				is_agrarian_economy = yes
+			}
 		}
 	}
 
@@ -2521,7 +2645,7 @@
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_agricultural_district_subsidization"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_a_new_breadbasket"
 			set_temp_variable = { temp_change = 5 }
 			change_farmers_opinion = yes
 			set_temp_variable = { skip_payment = 1 }
@@ -2530,6 +2654,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				is_agrarian_economy = yes
+			}
 		}
 	}
 
@@ -2582,7 +2710,7 @@
 			base = 3
 			modifier = {
 				factor = 0
-				check_variable = { total_unemployed_percentage_display < 0.02 }
+				can_staff_an_industrial_complex = no
 			}
 		}
 	}
@@ -2592,14 +2720,12 @@
 		icon = economic_it
 
 		x = 5
-		y = 1
+		y = 2
 		relative_position_id = GENERIC_ease_of_business_reforms
 
 		cost = 6.8
 
-		prerequisite = { focus = GENERIC_ease_of_business_reforms }
-		prerequisite = { focus = GENERIC_light_industry_investments }
-
+		prerequisite = { focus = GENERIC_mobilize_the_working_class }
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
 
 		available = {
@@ -2607,7 +2733,7 @@
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_mobilize_the_working_class"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_microchip_research_and_development"
 			add_breakthrough_points = {
 				specialization = specialization_nuclear
 				value = 1
@@ -2634,13 +2760,12 @@
 		icon = economic_robots
 
 		x = 5
-		y = 2
+		y = 3
 		relative_position_id = GENERIC_ease_of_business_reforms
 
 		cost = 6.8
 
-		prerequisite = { focus = GENERIC_ease_of_business_reforms }
-		prerequisite = { focus = GENERIC_light_industry_investments }
+		prerequisite = { focus = GENERIC_microchip_research_and_development }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
 
@@ -2657,7 +2782,7 @@
 			base = 3
 			modifier = {
 				factor = 0
-				check_variable = { total_unemployed_percentage_display < 0.02 }
+				can_staff_an_industrial_complex = no
 			}
 		}
 	}
@@ -2699,10 +2824,6 @@
 					level = 1
 				}
 			}
-			if = {
-				limit = { num_of_factories > 25 }
-				one_random_industrial_complex = yes
-			}
 		}
 
 		ai_will_do = {
@@ -2717,7 +2838,7 @@
 			}
 			modifier = {
 				factor = 0
-				check_variable = { total_unemployed_percentage_display < 0.02 }
+				can_staff_an_industrial_complex = no
 			}
 		}
 	}
@@ -2775,7 +2896,7 @@
 			}
 			modifier = {
 				factor = 0
-				check_variable = { total_unemployed_percentage_display < 0.02 }
+				can_staff_an_arms_industry = no
 			}
 		}
 	}
@@ -2795,12 +2916,16 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_doctrine_expertise"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_synthetic_refinery_expansion"
 			one_random_synthetic_refinery = yes
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				check_variable = { resource_imported@rubber > 0 }
+			}
 		}
 	}
 
@@ -2820,14 +2945,14 @@
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = 95_total_gdp_tt
-				check_variable = { gdp_total > 95 }
+				tooltip = 150_total_gdp_tt
+				check_variable = { gdp_total > 150 }
 			}
 			has_war = no
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_heavy_industry_investments"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_refitting_the_military_industry"
 			set_temp_variable = { treasury_change = -7.5 }
 			modify_treasury_effect = yes
 			capital_scope = {
@@ -2858,7 +2983,7 @@
 			}
 			modifier = {
 				factor = 0
-				check_variable = { total_unemployed_percentage_display < 0.02 }
+				can_staff_an_arms_industry = no
 			}
 		}
 	}
@@ -2879,14 +3004,14 @@
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = 95_total_gdp_tt
-				check_variable = { gdp_total > 95 }
+				tooltip = 200_total_gdp_tt
+				check_variable = { gdp_total > 200 }
 			}
 			has_war = no
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_heavy_industry_investments"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_military_industry_investment_projects"
 			add_timed_idea = {
 				idea = military_industry_project
 				days = 730
@@ -2917,7 +3042,7 @@
 		icon = national_grid
 
 		x = -2
-		y = 2
+		y = 3
 		relative_position_id = GENERIC_ease_of_business_reforms
 
 		cost = 10
@@ -2957,7 +3082,7 @@
 		icon = oil_red
 
 		x = -1
-		y = 3
+		y = 4
 		relative_position_id = GENERIC_ease_of_business_reforms
 
 		cost = 10
@@ -2996,7 +3121,7 @@
 		icon = oil_companies
 
 		x = -1
-		y = 4
+		y = 5
 		relative_position_id = GENERIC_ease_of_business_reforms
 
 		cost = 10
@@ -3019,6 +3144,10 @@
 				factor = 2
 				num_of_civilian_factories < 5
 			}
+			modifier = {
+				factor = 5
+				has_an_energy_deficit = yes
+			}
 		}
 	}
 
@@ -3027,7 +3156,7 @@
 		icon = generic_solar
 
 		x = -3
-		y = 3
+		y = 4
 		relative_position_id = GENERIC_ease_of_business_reforms
 
 		cost = 10
@@ -3062,7 +3191,7 @@
 		icon = BRA_renewable_energy_funds
 
 		x = -3
-		y = 4
+		y = 5
 		relative_position_id = GENERIC_ease_of_business_reforms
 
 		cost = 10
@@ -3072,7 +3201,7 @@
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_renewable_retooling"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_renewable_infrastructure"
 			set_temp_variable = { treasury_change = -8.0 }
 			modify_treasury_effect = yes
 			capital_scope = {
@@ -3107,34 +3236,40 @@
 		id = GENERIC_hydroelectric_energy_expansion
 		icon = hydroelectric2
 
-		x = 0
-		y = 5
+		x = 1
+		y = 4
 		relative_position_id = GENERIC_ease_of_business_reforms
 
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = GENERIC_renewable_infrastructure
-			focus = GENERIC_improved_energy_cycling
-		}
+		prerequisite = { focus = GENERIC_energy_sector }
 
 		search_filters = { FOCUS_FILTER_POWER_INFRASTRUCTURE }
+
+		available = {
+			controls_a_state_with_hydroelectric = yes
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_hydroelectric_energy_expansion"
 			add_timed_idea = {
 				idea = hydroelectric_energy_production_idea
-				days = 730
+				days = 1095
 			}
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.007 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
 			base = 5
 			modifier = {
-				factor = 0
-				any_controlled_state = {
-					has_dynamic_modifier = { modifier = hydroelectric_infrastructure_in_state }
-				}
+				factor = 5
+				controls_a_state_with_hydroelectric = yes
+			}
+			modifier = {
+				factor = 5
+				has_an_energy_deficit = yes
 			}
 		}
 	}
@@ -3143,34 +3278,40 @@
 		id = GENERIC_geothermal_energy_expansion
 		icon = oil_production2
 
-		x = 1
-		y = 6
+		x = 2
+		y = 5
 		relative_position_id = GENERIC_ease_of_business_reforms
 
-		cost = 10
+		cost = 7.86
 
-		prerequisite = {
-			focus = GENERIC_renewable_infrastructure
-			focus = GENERIC_improved_energy_cycling
-		}
+		prerequisite = { focus = GENERIC_energy_sector }
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
+
+		available = {
+			controls_a_state_with_geothermal = yes
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_geothermal_energy_expansion"
 			add_timed_idea = {
 				idea = geothermal_energy_production_idea
-				days = 730
+				days = 1095
 			}
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = -0.007 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
 			base = 5
 			modifier = {
-				factor = 0
-				any_controlled_state = {
-					has_dynamic_modifier = { modifier = geothermal_infrastructure_in_state }
-				}
+				factor = 5
+				controls_a_state_with_geothermal = yes
+			}
+			modifier = {
+				factor = 5
+				has_an_energy_deficit = yes
 			}
 		}
 	}
@@ -3179,7 +3320,7 @@
 		id = GENERIC_battery_park_investments
 		icon = electricity
 
-		x = -3
+		x = 2
 		y = 6
 		relative_position_id = GENERIC_ease_of_business_reforms
 
@@ -3216,8 +3357,8 @@
 		id = GENERIC_nuclear_energy_expansions
 		icon = nuclear_energy
 
-		x = -2
-		y = 5
+		x = -3
+		y = 7
 		relative_position_id = GENERIC_ease_of_business_reforms
 
 		cost = 10
@@ -3231,26 +3372,12 @@
 
 		available = {
 			has_tech = reactor1
+			has_at_least_regional_power_status = yes
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_nuclear_energy_expansions"
-			if = { limit = { NOT = { has_tech = reactor1 } }
-				effect_tooltip = {
-					random_owned_controlled_state = {
-						add_building_construction = {
-							type = nuclear_reactor
-							level = 1
-							instant_build = yes
-						}
-					}
-					set_temp_variable = { treasury_change = -9.00 }
-					modify_treasury_effect = yes
-				}
-			}
-			else = {
-				one_random_nuclear_reactor = yes
-			}
+			one_random_nuclear_reactor = yes
 			if = {
 				limit = { has_idea = non_nuclear_power }
 				swap_ideas = {
@@ -3262,6 +3389,10 @@
 
 		ai_will_do = {
 			base = 5
+			modifier = {
+				factor = 5
+				has_an_energy_deficit = yes
+			}
 		}
 	}
 
@@ -3269,8 +3400,8 @@
 		id = GENERIC_nuclear_energy_expansions_two
 		icon = focus_generic_nuclear_development
 
-		x = -1
-		y = 6
+		x = -3
+		y = 8
 		relative_position_id = GENERIC_ease_of_business_reforms
 
 		cost = 10
@@ -3284,23 +3415,8 @@
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_nuclear_energy_expansions"
-			if = { limit = { NOT = { has_tech = reactor1 } }
-				effect_tooltip = {
-					random_owned_controlled_state = {
-						add_building_construction = {
-							type = nuclear_reactor
-							level = 1
-							instant_build = yes
-						}
-					}
-					set_temp_variable = { treasury_change = -9.00 }
-					modify_treasury_effect = yes
-				}
-			}
-			else = {
-				one_random_nuclear_reactor = yes
-			}
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_nuclear_energy_expansions_two"
+			one_random_nuclear_reactor = yes
 			if = {
 				limit = { has_idea = non_nuclear_power }
 				swap_ideas = {
@@ -3312,6 +3428,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 5
+				has_an_energy_deficit = yes
+			}
 		}
 	}
 
@@ -3320,12 +3440,15 @@
 		icon = national_grid
 
 		x = -2
-		y = 7
+		y = 6
 		relative_position_id = GENERIC_ease_of_business_reforms
 
-		cost = 10
+		cost = 7.86
 
-		prerequisite = { focus = GENERIC_nuclear_energy_expansions_two }
+		prerequisite = {
+			focus = GENERIC_renewable_infrastructure
+			focus = GENERIC_improved_energy_cycling
+		}
 		mutually_exclusive = { focus = GENERIC_high_capacity_electric_grid }
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
@@ -3345,12 +3468,15 @@
 		icon = focus_generic_electrification
 
 		x = 0
-		y = 7
+		y = 6
 		relative_position_id = GENERIC_ease_of_business_reforms
 
-		cost = 10
+		cost = 7.86
 
-		prerequisite = { focus = GENERIC_nuclear_energy_expansions_two }
+		prerequisite = {
+			focus = GENERIC_renewable_infrastructure
+			focus = GENERIC_improved_energy_cycling
+		}
 		mutually_exclusive = { focus = GENERIC_reinforced_electric_grid }
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
@@ -3427,7 +3553,7 @@
 		id = GENERIC_satisfy_the_middle_class
 		icon = decentralized_economy
 
-		x = 4
+		x = 6
 		y = 4
 		relative_position_id = GENERIC_ease_of_business_reforms
 
@@ -3479,6 +3605,7 @@
 			base = 1
 		}
 	}
+
 	focus = {
 		id = GENERIC_build_churches
 		icon = religious_unity
@@ -3602,6 +3729,7 @@
 
 		available = {
 			NOT = { has_idea = police_05 }
+			has_not_repressive_government = yes
 			has_civil_war = no
 		}
 
@@ -3639,7 +3767,7 @@
 					level = 1
 				}
 			}
-			# AGRICULTURAL SHIT
+			# Agricultural economy effects
 			if = { limit = { is_agrarian_economy = yes }
 				set_temp_variable = { treasury_change = gdp_total }
 				multiply_temp_variable = { treasury_change = -0.005 }
@@ -3664,6 +3792,15 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				has_idea = farmers
+				check_variable = { farmers_opinion < 50 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 	focus = {
@@ -3684,7 +3821,7 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_import_foreign_automobiles"
 			add_political_power = 100
 			add_tech_bonus = {
-				name = GENERIC_import_foreign_automobiles
+				name = CAT_afv
 				category = CAT_util
 				category = CAT_afv
 				category = CAT_ifv
@@ -3721,26 +3858,50 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_create_an_automotive_industry"
-			one_random_industrial_complex = yes
 			if = {
-				limit = { num_of_factories > 29 num_of_factories < 60 }
+				limit = { num_of_factories < 60 }
 				one_random_industrial_complex = yes
 			}
-			if = {
-				limit = { num_of_factories > 59 }
+			else = {
 				two_random_industrial_complex = yes
 			}
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
 			change_industrial_conglomerates_opinion = yes
 			change_small_medium_business_owners_opinion = yes
-			change_the_donju_opinion = yes
-			change_chaebols_opinion = yes
-			change_wall_street_opinion = yes
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				OR = {
+					AND = {
+						has_idea = labour_unions
+						check_variable = { labour_unions_opinion < 50 }
+					}
+					AND = {
+						has_idea = industrial_conglomerates
+						check_variable = { industrial_conglomerates_opinion < 50 }
+					}
+					AND = {
+						has_idea = small_medium_business_owners
+						check_variable = { small_medium_business_owners_opinion < 50 }
+					}
+				}
+			}
+			modifier = {
+				add = 5
+				check_variable = { total_unemployed_percentage_display > 0.02 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_industrial_complex = no
+			}
 		}
 	}
 
@@ -3771,6 +3932,11 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				has_variable = literacy_rate
+				check_variable = { literacy_rate < 0.7 }
+			}
 		}
 	}
 	focus = {
@@ -3808,6 +3974,11 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				has_variable = literacy_rate
+				check_variable = { literacy_rate < 0.7 }
+			}
 		}
 	}
 	focus = {
@@ -3867,10 +4038,11 @@
 				tooltip = 200_total_gdp_tt
 				check_variable = { gdp_total > 200 }
 			}
+			has_tech = early_ai_robotics
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_expand_the_universities"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_artificial_intelligence_investments"
 			generic_research_buff = yes
 			add_tech_bonus = {
 				name = GENERIC_artificial_intelligence_investments
@@ -3882,6 +4054,14 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				add = 5
+				check_variable = { total_unemployed_percentage_display < 0.02 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 	focus = {
@@ -4075,7 +4255,9 @@
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 
-		available = { any_controlled_state = { is_coastal = yes } }
+		available = {
+			controls_a_coastal_state = yes
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_reform"
@@ -4085,16 +4267,28 @@
 					has_selected_naval_grand_doctrine = yes
 				}
 				add_mastery = {
-					amount = 15
+					amount = 30
 					folder = naval
 				}
 			}
+			newline = yes
+			if = { limit = { NOT = { is_special_project_completed = sp:sp_naval_vessel_project } }
+				sp:sp_naval_vessel_project = {
+					add_project_progress_ratio = 0.15
+				}
+			}
+			newline = yes
 			set_temp_variable = { temp_opinion = 10 }
 			change_maritime_industry_opinion = yes
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				has_idea = maritime_industry
+				check_variable = { maritime_industry_opinion < 75 }
+			}
 		}
 	}
 	focus = {
@@ -4128,6 +4322,7 @@
 				OR = {
 					num_of_civilian_factories < 10
 					disabled_ai_unit_list = yes
+					can_staff_an_arms_industry = no
 				}
 			}
 		}
@@ -4136,7 +4331,7 @@
 		id = GENERIC_naval_bases
 		icon = navy2
 
-		x = -4
+		x = -3
 		y = 1
 		relative_position_id = GENERIC_naval_reform
 
@@ -4146,7 +4341,9 @@
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 
-		available = { any_controlled_state = { is_coastal = yes } }
+		available = {
+			controls_a_coastal_state = yes
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_bases"
@@ -4194,12 +4391,15 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = { num_of_naval_factories > 3 }
+		available = {
+			controls_a_coastal_state = yes
+			num_of_naval_factories > 4
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_submarines"
 			add_tech_bonus = {
-				name = GENERIC_submarines
+				name = CAT_sub
 				uses = 2
 				bonus = 0.5
 				category = CAT_sub
@@ -4224,12 +4424,16 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = { num_of_naval_factories > 3 }
+		available = {
+			controls_a_coastal_state = yes
+			is_special_project_completed = sp:sp_naval_vessel_project
+			num_of_naval_factories > 3
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_surface_ships"
 			add_tech_bonus = {
-				name = GENERIC_surface_ships
+				name = CAT_surface_ship
 				uses = 2
 				bonus = 0.5
 				category = CAT_surface_ship
@@ -4255,14 +4459,14 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 
 		available = {
-			any_owned_state = { is_coastal = yes }
+			controls_a_coastal_state = yes
 			num_of_factories > 0
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_dockyards"
 			if = {
-				limit = { num_of_factories < 10 }
+				limit = { num_of_factories < 15 }
 				one_random_dockyard = yes
 			}
 			else = {
@@ -4276,15 +4480,11 @@
 			base = 1
 			modifier = {
 				factor = 0
-				disabled_ai_unit_list = yes
-			}
-			modifier = {
-				factor = 0
-				num_of_civilian_factories < 10
-			}
-			modifier = {
-				factor = 0
-				check_variable = { total_unemployed_percentage_display < 0.02 }
+				OR = {
+					disabled_ai_unit_list = yes
+					num_of_civilian_factories < 15
+					can_staff_an_dockyard = no
+				}
 			}
 		}
 	}
@@ -4302,13 +4502,16 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = { num_of_naval_factories > 7 }
+		available = {
+			num_of_naval_factories > 7
+			controls_a_coastal_state = yes
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_nuclear_submarines"
 			add_tech_bonus = {
-				name = GENERIC_nuclear_submarines
-				uses = 1
+				name = CAT_nuke_sub
+				uses = 2
 				bonus = 0.5
 				category = CAT_sub
 			}
@@ -4354,12 +4557,13 @@
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		available = {
+			controls_a_coastal_state = yes
 			has_selected_naval_grand_doctrine = yes
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_doctrine_innovations"
-			navy_experience = 25
+			navy_experience = 50
 			add_mastery = {
 				amount = 50
 				folder = naval
@@ -4368,6 +4572,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				add = 5
+				threat > 0.25
+			}
 		}
 	}
 	focus = {
@@ -4386,7 +4594,12 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = { num_of_naval_factories > 5 }
+		available = {
+			controls_a_coastal_state = yes
+			is_special_project_completed = sp:sp_naval_vessel_project
+			has_at_least_major_power_status = yes
+			num_of_naval_factories > 10
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_aircraft_carriers"
@@ -4400,6 +4613,11 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				add = 5
+				has_war = yes
+				num_of_naval_factories < 10
+			}
 			modifier = {
 				factor = 0
 				OR = {
@@ -4427,16 +4645,20 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = { num_of_naval_factories > 5 }
+		available = {
+			controls_a_coastal_state = yes
+			is_special_project_completed = sp:sp_naval_vessel_project
+			has_at_least_regional_power_status = yes
+			num_of_naval_factories > 5
+		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_aircraft_carriers"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_light_helicopter_operators"
 			add_tech_bonus = {
-				name = GENERIC_aircraft_carriers
+				name = GENERIC_light_helicopter_operators
 				uses = 2
 				bonus = 0.5
-				category = CAT_lha
-				category = CAT_lpd
+				category = CAT_helicopter_operators
 			}
 		}
 
@@ -4469,7 +4691,11 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = { num_of_naval_factories > 5 }
+		available = {
+			controls_a_coastal_state = yes
+			has_at_least_major_power_status = yes
+			num_of_naval_factories > 5
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_large_ship_drydocks"
@@ -4479,11 +4705,22 @@
 		ai_will_do = {
 			base = 1
 			modifier = {
+				add = 5
+				OR = {
+					has_war = yes
+					threat > 0.50
+				}
+			}
+			modifier = {
 				factor = 0
 				OR = {
 					has_idea = non_power
 					has_idea = minor_power
 				}
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_dockyard = no
 			}
 		}
 	}
@@ -4503,7 +4740,11 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = { num_of_naval_factories > 5 }
+		available = {
+			controls_a_coastal_state = yes
+			has_at_least_major_power_status = yes
+			num_of_naval_factories > 5
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_improved_repair_facilities"
@@ -4539,6 +4780,10 @@
 		prerequisite = { focus = GENERIC_dockyards }
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		available = {
+			controls_a_coastal_state = yes
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_vessel_production"
@@ -4626,6 +4871,10 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
+		available = {
+			controls_a_coastal_state = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_doctrine_expertise"
 			navy_experience = 25
@@ -4637,6 +4886,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				add = 5
+				threat > 0.25
+			}
 		}
 	}
 
@@ -4644,15 +4897,20 @@
 		id = GENERIC_convoy_and_freighter_production
 		icon = generic_convoy
 
-		x = -2
-		y = 5
+		x = -5
+		y = 1
 		relative_position_id = GENERIC_naval_reform
 
 		cost = 10
 
-		prerequisite = { focus = GENERIC_vessel_production }
+		prerequisite = { focus = GENERIC_naval_reform }
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
+
+		available = {
+			controls_a_coastal_state = yes
+			num_of_naval_factories > 0
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_convoy_and_freighter_production"
@@ -4678,6 +4936,10 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
+		available = {
+			controls_a_coastal_state = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_establish_a_marine_corps"
 			add_ideas = establishing_a_marine_corps_idea
@@ -4685,6 +4947,20 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				num_of_naval_factories < 5
+			}
+			modifier = {
+				add = 5
+				any_enemy_country = {
+					NOT = { is_on_same_continent_as = ROOT }
+				}
+			}
+			modifier = {
+				add = 5
+				threat > 0.25
+			}
 		}
 	}
 
@@ -4703,8 +4979,13 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
+		available = {
+			controls_a_coastal_state = yes
+			is_special_project_completed = sp:sp_naval_vessel_project
+		}
+
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_doctrine_expertise"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_submarine_expansion_project"
 			add_tech_bonus = {
 				name = GENERIC_nuclear_submarines
 				uses = 2
@@ -4736,6 +5017,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				num_of_naval_factories < 5
+			}
 		}
 	}
 
@@ -4754,8 +5039,13 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
+		available = {
+			controls_a_coastal_state = yes
+			is_special_project_completed = sp:sp_naval_vessel_project
+		}
+
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_doctrine_expertise"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_stealth_ships"
 			if = { limit = { NOT = { is_special_project_completed = sp:sp_stealth_corvette } }
 				sp:sp_stealth_corvette = {
 					add_project_progress_ratio = 0.10
@@ -4775,6 +5065,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				num_of_naval_factories < 5
+			}
 		}
 	}
 
@@ -4800,8 +5094,14 @@
 				category = CAT_air_eqp
 			}
 			add_mastery = {
-				amount = 10
+				amount = 25
 				folder = air
+			}
+
+			if = { limit = { has_dlc = "By Blood Alone" }
+				sp:sp_aircraft_project = {
+					add_project_progress_ratio = 0.10
+				}
 			}
 		}
 
@@ -4837,6 +5137,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				num_of_military_factories < 5
+			}
 		}
 	}
 	focus = {
@@ -4915,7 +5219,7 @@
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_air_doctrine_innovations"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_satellite_programs"
 			if = { limit = { has_completed_space_program = no }
 				if = {
 					limit = { has_dlc = "Gotterdammerung" }
@@ -5018,6 +5322,14 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				add = 5
+				threat > 0.5
+			}
+			modifier = {
+				add = 5
+				has_war = yes
+			}
 		}
 	}
 
@@ -5064,6 +5376,14 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				add = 5
+				threat > 0.5
+			}
+			modifier = {
+				add = 5
+				has_war = yes
+			}
 		}
 	}
 
@@ -5134,7 +5454,7 @@
 		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_AIRCRAFT }
 
 		completion_reward = {
-			log = "[GetDateText]: [ROOT.GetName]: Focus GENERIC_defense_scheme_beta"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_air_base_expansion_plan"
 			one_air_base = yes
 		}
 
@@ -5157,20 +5477,29 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = { num_of_military_factories > 5 }
+		available = {
+			num_of_military_factories > 5
+			if = { limit = { has_dlc = "By Blood Alone" }
+				is_special_project_completed = sp:sp_aircraft_project
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_bomber_planes"
 			add_tech_bonus = {
 				name = GENERIC_bomber_planes
-				uses = 2
-				bonus = 0.5
-				category = CAT_str_bomber
+				uses = 1
+				bonus = 0.35
+				category = CAT_large_plane
 			}
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				num_of_military_factories < 15
+			}
 		}
 	}
 	focus = {
@@ -5273,7 +5602,10 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = { num_of_military_factories > 3 }
+		available = {
+			air_facility > 0
+			num_of_military_factories > 3
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_domestic_helicopter_production"
@@ -5282,7 +5614,7 @@
 				value = 1
 			}
 			if = { limit = { NOT = { is_special_project_completed = sp:sp_helicopter_project } }
-				sp:sp_microchip_production = {
+				sp:sp_helicopter_project = {
 					add_project_progress_ratio = 0.15
 				}
 			}
@@ -5314,7 +5646,11 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = { num_of_military_factories > 3 }
+		available = {
+			air_facility > 0
+			is_special_project_completed = sp:sp_helicopter_project
+			num_of_military_factories > 3
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_domestic_attack_helicopter_production"
@@ -5322,7 +5658,7 @@
 				name = GENERIC_domestic_attack_helicopter_production
 				uses = 2
 				bonus = 0.35
-				category = CAT_heli
+				category = CAT_atk_heli
 			}
 		}
 
@@ -5345,7 +5681,10 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = { num_of_military_factories > 3 }
+		available = {
+			is_special_project_completed = sp:sp_helicopter_project
+			num_of_military_factories > 9
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_develop_air_cavalry_doctrines"
@@ -5440,7 +5779,7 @@
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_air_doctrine_expertise"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_paratrooper_corps"
 			add_ideas = establishing_a_paratrooper_corps_idea
 		}
 
@@ -5697,6 +6036,13 @@
 				factor = 0.25
 				has_selected_land_grand_doctrine = no
 			}
+			modifier = {
+				factor = 2
+				OR = {
+					has_war = yes
+					threat > 0.15
+				}
+			}
 		}
 	}
 	focus = {
@@ -5727,6 +6073,13 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				OR = {
+					has_war = yes
+					threat > 0.15
+				}
+			}
 		}
 	}
 	focus = {
@@ -5749,15 +6102,15 @@
 				name = GENERIC_uniform_improvements
 				uses = 2
 				bonus = 0.5
-				technology = body_armor_1980
-				technology = body_armor_2000
-				technology = body_armor_2010
-				technology = body_armor_2030
-				technology = camouflage
-				technology = camouflage2
-				technology = camouflage3
-				technology = camouflage4
-				technology = camouflage5
+				technology = body_armor_1
+				technology = body_armor_2
+				technology = body_armor_3
+				technology = body_armor_4
+				technology = camouflage_1
+				technology = camouflage_2
+				technology = camouflage_3
+				technology = camouflage_4
+				technology = camouflage_5
 			}
 		}
 
@@ -5821,6 +6174,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				NOT = { has_doctrine = special_elite_forces }
+			}
 		}
 	}
 	focus = {
@@ -5851,6 +6208,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				NOT = { has_doctrine = special_elite_forces }
+			}
 		}
 	}
 	focus = {
@@ -5875,6 +6236,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				NOT = { has_doctrine = special_elite_forces }
+			}
 		}
 	}
 	focus = {
@@ -5906,6 +6271,13 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				OR = {
+					has_war = yes
+					threat > 0.15
+				}
+			}
 		}
 	}
 	focus = {
@@ -5925,7 +6297,7 @@
 		available = { num_of_military_factories > 4 }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_self_propelled_artillery"
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_self_propelled_anti_air"
 			add_tech_bonus = {
 				name = GENERIC_self_propelled_artillery
 				uses = 2
@@ -5976,6 +6348,13 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 2
+				OR = {
+					has_war = yes
+					threat > 0.15
+				}
+			}
 		}
 	}
 	focus = {

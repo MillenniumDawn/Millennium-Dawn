@@ -173,6 +173,23 @@ on_actions = {
 								}
 								assign_power_ranking_ideas = yes
 							}
+							if = {
+								limit = {
+									is_ai = yes
+								}
+								if = {
+									limit = {
+										check_variable = { cyber_capability > 0 }
+									}
+									ai_cyber_monthly = yes
+								}
+								if = {
+									limit = {
+										check_variable = { global.active_terror_orgs^num > 0 }
+									}
+									ct_ai_weekly = yes
+								}
+							}
 						}
 					}
 				}else_if = {
@@ -190,6 +207,20 @@ on_actions = {
 									has_global_flag = power_ranking_ideas_cycle
 								}
 								assign_power_ranking_ideas = yes
+							}
+							if = {
+								limit = {
+									is_ai = yes
+									check_variable = { cyber_capability > 0 }
+								}
+								ai_cyber_monthly = yes
+							}
+							if = {
+								limit = {
+									is_ai = yes
+									check_variable = { global.active_terror_orgs^num > 0 }
+								}
+								ct_ai_weekly = yes
 							}
 						}
 					}
@@ -209,6 +240,20 @@ on_actions = {
 								}
 								assign_power_ranking_ideas = yes
 							}
+							if = {
+								limit = {
+									is_ai = yes
+									check_variable = { cyber_capability > 0 }
+								}
+								ai_cyber_monthly = yes
+							}
+							if = {
+								limit = {
+									is_ai = yes
+									check_variable = { global.active_terror_orgs^num > 0 }
+								}
+								ct_ai_weekly = yes
+							}
 						}
 					}
 				}else_if = {
@@ -227,14 +272,24 @@ on_actions = {
 								}
 								assign_power_ranking_ideas = yes
 							}
+							if = {
+								limit = {
+									is_ai = yes
+									check_variable = { cyber_capability > 0 }
+								}
+								ai_cyber_monthly = yes
+							}
+							if = {
+								limit = {
+									is_ai = yes
+									check_variable = { global.active_terror_orgs^num > 0 }
+								}
+								ct_ai_weekly = yes
+							}
 						}
 					}
 				}
 				calculate_un_program_budgets = yes
-			}
-			if = {
-				limit = { is_ai = no }
-				force_update_dynamic_modifier = yes
 			}
 		}
 	}
@@ -362,14 +417,8 @@ on_actions = {
 								NOT = { check_variable = { v = 0 } }
 								NOT = { country_exists = var:v }
 							}
-							set_temp_variable = { removed_country = v }
 							set_variable = { auto_influence_array^i = 0 }
 							subtract_from_variable = { auto_influence_users = 1 }
-							var:removed_country = {
-								PREV = {
-									remove_auto_influencer_request = yes
-								}
-							}
 							add_to_temp_variable = { removed_count = 1 }
 						}
 					}
@@ -400,6 +449,12 @@ on_actions = {
 							end_project = yes
 						}
 					}
+				}
+				if = {
+					limit = {
+						has_idea = p5_member
+					}
+					remove_ideas = p5_member
 				}
 			}
 
@@ -744,6 +799,7 @@ on_actions = {
 				# Monthly Single Fire Check
 				every_country = {
 					recalculate_party = yes
+					gov_pop_calculation = yes
 					recalculate_law_desires = yes
 					update_neighbors_effects = yes
 
@@ -765,7 +821,14 @@ on_actions = {
 					apply_protest_effects = yes
 
 					un_check_if_valid_for_sanctions = yes
-					if = { limit = { NOT = { check_variable = { influence_targets^0 = 0 } } }
+					if = {
+						limit = {
+							NOT = { check_variable = { influence_targets^0 = 0 } }
+							is_ai = yes
+							has_political_power > 200
+							is_subject = no
+							NOT = { has_active_mission = bankruptcy_incoming_collapse }
+						}
 						country_event = influence.500
 					}
 
@@ -795,13 +858,17 @@ on_actions = {
 										var:v = { exists = yes }
 										NOT = { has_country_flag = spread_influence@var:v }
 									}
-									log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing [?var:v.GetName]"
+									if = { limit = { is_debug = yes }
+										log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing [?var:v.GetName]"
+									}
 									set_temp_variable = { influence_target = v }
 									change_influence_percentage = yes
 									add_to_temp_variable = { nations_influenced = 1 }
 								}
 								else = {
-									log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing failed to influence on index [?i]"
+									if = { limit = { is_debug = yes }
+										log = "[GetDateText]: [ROOT.GetName]: Index:[?i], Auto influencing failed to influence on index [?i]"
+									}
 								}
 							}
 
@@ -878,39 +945,30 @@ on_actions = {
 						ai_update_build_units = yes
 						ai_weapon_dump = yes
 
-						# used in strategies, instead of checking it directly there
-						if = {
-							limit = {
-								has_war = no
-								any_of_scopes = {
-									array = potential_and_current_enemies
-									has_wargoal_against = ROOT
+						if = { limit = { NOT = { original_tag = ZOM } }
+							if = {
+								limit = {
+									check_variable = { next_slot_from_gdp < 10 }
+									NOT = { has_decision = gdp_gain_slot }
+									NOT = { has_country_flag = gdp_gain_industry_slot_flag }
+									check_variable = { gdp_total > GLOBAL.gdp_slot^next_slot_from_gdp }
 								}
+								set_country_flag = { flag = gdp_gain_industry_slot_flag value = 1 days = 240 }
+								activate_decision = gdp_gain_slot
 							}
-
-							set_country_flag = { flag = someone_has_wargoal_against_this_flag value = 1 days = 100 }
+							if = {
+								limit = {
+									check_variable = { next_slot_from_gdp_c < 7 }
+									NOT = { has_decision = gdp_c_gain_slot }
+									NOT = { has_country_flag = gdp_gain_developmental_size_flag }
+									check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^next_slot_from_gdp_c }
+								}
+								set_country_flag = { flag = gdp_gain_developmental_size_flag value = 1 days = 240 }
+								activate_decision = gdp_c_gain_slot
+							}
 						}
 
-						if = {
-							limit = {
-								check_variable = { next_slot_from_gdp < 10 }
-								NOT = { has_decision = gdp_gain_slot }
-								NOT = { has_country_flag = gdp_gain_industry_slot_flag }
-								check_variable = { gdp_total > GLOBAL.gdp_slot^next_slot_from_gdp }
-							}
-							set_country_flag = { flag = gdp_gain_industry_slot_flag value = 1 days = 240 }
-							activate_decision = gdp_gain_slot
-						}
-						if = {
-							limit = {
-								check_variable = { next_slot_from_gdp_c < 7 }
-								NOT = { has_decision = gdp_c_gain_slot }
-								NOT = { has_country_flag = gdp_gain_developmental_size_flag }
-								check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^next_slot_from_gdp_c }
-							}
-							set_country_flag = { flag = gdp_gain_developmental_size_flag value = 1 days = 240 }
-							activate_decision = gdp_c_gain_slot
-						}
+						calculate_ai_taxes_desire = yes
 
 						if = { limit = { has_game_rule = { rule = rule_god_of_war option = yes } }
 							ai_add_xp = yes
@@ -1187,6 +1245,15 @@ on_actions = {
 
 				recalculate_resources_price = yes
 
+				un_ai_evaluate_actions = yes
+
+				if = {
+					limit = {
+						check_variable = { global.Unrecognised_States^num > 0 }
+					}
+					recog_ai_monthly = yes
+				}
+
 				counter_terror_global = yes
 
 				# On Monthly Flag:
@@ -1196,9 +1263,6 @@ on_actions = {
 					log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
 				}
 			}
-
-			# 1 Force update
-			force_update_dynamic_modifier = yes
 		}
 	}
 }

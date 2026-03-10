@@ -108,24 +108,78 @@ See [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) for
 
 ## Changelog Guidelines
 
-- Write full sentences describing changes
-- No internal code references (e.g., "ENG_ideas")
+All PRs must update [Changelog.txt](./Changelog.txt) under the current top-most version heading.
+
+### Formatting
+
+- **Version heading**: standalone line (e.g., `v2.0.0`), blank line after
+- **Category header**: 1 space + category name + colon (e.g., ` Bugfix:`)
+- **Entry**: 2 spaces + `- ` + text (e.g., `  - Fixed something`)
+- **Sub-entry**: 4 spaces + `- ` + text (e.g., `    - Detail about the fix`)
+- **Continuation text**: 6 spaces to align with the parent entry's text
+- Blank line between categories
+
+### Categories
+
+Use only these categories (skip any that have no entries):
+
+| Category        | Use for                                                                      |
+| --------------- | ---------------------------------------------------------------------------- |
+| Achievements    | New or changed achievements                                                  |
+| AI              | AI behavior, strategy, or decision-making changes                            |
+| Balance         | Stat tweaks, modifier adjustments, cost/value changes                        |
+| Bugfix          | Bug fixes, crash fixes, typo corrections                                     |
+| Content         | New focus trees, events, decisions, ideas, MIOs, or significant new gameplay |
+| Database        | Country history, OOBs, state data, technology assignments                    |
+| Documentation   | Docs, guides, modding resources                                              |
+| Factions        | Faction mechanics, membership, leadership changes                            |
+| Game Rules      | New or modified game rules                                                   |
+| Graphics        | GFX, icons, portraits, sprites, 3D models                                    |
+| Localization    | Localisation strings, translations, formatting                               |
+| Map             | Map changes, state boundaries, provinces, map modes                          |
+| Music           | New or changed music tracks, sound triggers                                  |
+| Performance     | Optimizations, removed redundant triggers, on_action improvements            |
+| Quality of Life | QoL improvements, UI polish, tooltips                                        |
+| Sound           | Sound effects and audio changes                                              |
+| Technology      | Tech tree changes, research categories                                       |
+| User Interface  | UI layout, scripted GUIs, interface definitions                              |
+
+### Writing Style
+
+- Use past tense ("Added", "Fixed", "Reduced", "Reworked")
+- Write full sentences describing the change — no internal code references (e.g., write "Fixed Serbian election focus prerequisite", not "Fixed SER_elections prereq")
+- Be specific: name the focus, event, decision, or mechanic affected
+- Prefix country-specific entries with `[TAG]` (e.g., `  - [SER] Fixed focus prerequisite for Serbian elections`)
+- No tag prefix for global or system-wide changes
+- One bullet per distinct change; group related micro-changes as sub-entries under a parent
+- Reference issue numbers when applicable (e.g., `(Issue #330)`)
 - Jokes allowed if in good taste
-- Document all significant changes
+- Use spaces only — no tab characters
 
 ## AI Policy
 
+The Millennium Dawn team takes AI contributions or usage very seriously. We understand that AI can be helpful and improve the productivity of modding, but it is your responsibility to use it appropriately.
+We do not under any permissions allow any ML/AI generated assets for graphics if AI is the sole contributor.
+
 ### AI-Assisted Code
 
-- AI-generated code is allowed with human review
-- Must include personal stylization
-- Cannot be pure generated content without review
+AI-assisted code is permitted assuming you are using it responsibly. Several team members already integrate open source models, closed source models and otherwise into their workflow.
+
+_Rules_
+
+- All code must be personally reviewed before submitted to team review
+- All AI code must adhere to team standards and be properly vetted
+- Use pre-commit to ensure the contributions match the expected style
+
+### AI-Assisted Localization
+
+- AI-generated localization is allowed with human review but must maintain accuracy, styling and must still be originally created by a human
 
 ### AI-Generated Art
 
-- **Not allowed** under any circumstances
-- All artwork must be human-created
-- Exception: Reference images for artists (must be converted/stylized)
+- Pure AI Generated Art is **not allowed** under any circumstances
+- AI-Generated side profiles of military vehicles can be acceptable if there is no side profile available for graphics
+  - All graphics using this method MUST follow standardization and be hand done by a human collaborator
 
 ## Resources
 

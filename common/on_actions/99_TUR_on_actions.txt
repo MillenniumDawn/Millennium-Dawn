@@ -10,39 +10,62 @@ on_actions = {
 			subtract_from_variable = { kurdish_resistance_garrison_damage = 0.999 }
 
 			if = { limit = { has_idea = the_military }
-				remove_ideas = {
-					TUR_military_happy
-					TUR_military_anger1
-					TUR_military_anger2
-					TUR_military_anger3
-					TUR_military_anger4
-					TUR_military_anger5
+				# Calculate current tier
+				set_temp_variable = { TUR_mil_tier = 1 }
+				if = { limit = { check_variable = { TUR_military_standing_value < -1 } }
+					set_temp_variable = { TUR_mil_tier = 2 }
+				}
+				if = { limit = { check_variable = { TUR_military_standing_value < -49 } }
+					set_temp_variable = { TUR_mil_tier = 3 }
+				}
+				if = { limit = { check_variable = { TUR_military_standing_value < -99 } }
+					set_temp_variable = { TUR_mil_tier = 4 }
+				}
+				if = { limit = { check_variable = { TUR_military_standing_value < -149 } }
+					set_temp_variable = { TUR_mil_tier = 5 }
+				}
+				if = { limit = { check_variable = { TUR_military_standing_value < -199 } }
+					set_temp_variable = { TUR_mil_tier = 6 }
 				}
 
+				# Only swap ideas if the tier changed
 				if = {
-					limit = { check_variable = { TUR_military_standing_value < -199 } }
-					add_ideas = TUR_military_anger5
-					remove_ideas = the_military
-				}
-				else_if = {
-					limit = { check_variable = { TUR_military_standing_value < -149 } }
-					add_ideas = TUR_military_anger4
-				}
-				else_if = {
-					limit = { check_variable = { TUR_military_standing_value < -99 } }
-					add_ideas = TUR_military_anger3
-				}
-				else_if = {
-					limit = { check_variable = { TUR_military_standing_value < -49 } }
-					add_ideas = TUR_military_anger2
-				}
-				else_if = {
-					limit = { check_variable = { TUR_military_standing_value < -1 } }
-					add_ideas = TUR_military_anger1
-				}
-				else_if = {
-					limit = { check_variable = { TUR_military_standing_value > 0.01 } }
-					add_ideas = TUR_military_happy
+					limit = { NOT = { check_variable = { TUR_current_mil_tier = TUR_mil_tier } } }
+					set_variable = { TUR_current_mil_tier = TUR_mil_tier }
+
+					remove_ideas = {
+						TUR_military_happy
+						TUR_military_anger1
+						TUR_military_anger2
+						TUR_military_anger3
+						TUR_military_anger4
+						TUR_military_anger5
+					}
+
+					if = {
+						limit = { check_variable = { TUR_current_mil_tier = 6 } }
+						add_ideas = TUR_military_anger5
+						remove_ideas = the_military
+					}
+					else_if = {
+						limit = { check_variable = { TUR_current_mil_tier = 5 } }
+						add_ideas = TUR_military_anger4
+					}
+					else_if = {
+						limit = { check_variable = { TUR_current_mil_tier = 4 } }
+						add_ideas = TUR_military_anger3
+					}
+					else_if = {
+						limit = { check_variable = { TUR_current_mil_tier = 3 } }
+						add_ideas = TUR_military_anger2
+					}
+					else_if = {
+						limit = { check_variable = { TUR_current_mil_tier = 2 } }
+						add_ideas = TUR_military_anger1
+					}
+					else = {
+						add_ideas = TUR_military_happy
+					}
 				}
 			}
 			TUR_update_military_standing = yes

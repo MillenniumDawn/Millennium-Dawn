@@ -37,6 +37,7 @@ The following slash commands are available in this project (`.claude/skills/`):
 | `/standardize <file>`         | Auto-standardize a focus/event/decision/idea file against MD conventions                      |
 | `/new-focus <TAG>`            | Scaffold a new country focus tree file with correct structure and localisation stubs          |
 | `/review-branch`              | Review the current branch diff vs main for style violations, logic errors, and balance issues |
+| `/fix-issue [number]`         | Find an open GitHub bug, diagnose the root cause, fix it, and open a PR                       |
 
 ## Validation & Formatting Tools
 
@@ -107,9 +108,8 @@ focus_tree = {
 7.  prerequisite / mutually_exclusive
 8.  search_filters
 9.  available / bypass / cancel
-10. will_lead_to_war_with       (only if giving war goal)
-11. select_effect / completion_reward / bypass_effect
-12. ai_will_do                  (ALWAYS LAST)
+10. completion_reward / select_effect / bypass_effect
+11. ai_will_do                  (ALWAYS LAST)
 ```
 
 ### Best Practices
@@ -149,9 +149,6 @@ focus = {
 	# bypass = { }
 	# cancel = { }
 
-	# will_lead_to_war_with = TAG  # Only if granting a war goal
-	# complete_tooltip = { }        # Only if always-visible tooltip is needed
-	# select_effect = { }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SER_free_market_capitalism"
 		add_ideas = SER_free_market_idea
@@ -293,7 +290,7 @@ CHI_norinco_manufacturer = {
 	task_capacity = 18
 
 	equipment_type = {
-		Inf_equipment
+		infantry_weapons_type
 		artillery_equipment
 		mio_cat_all_armor
 	}
@@ -314,25 +311,8 @@ CHI_norinco_manufacturer = {
 }
 ```
 
-## Localization Files (.yml)
-
-- 1-space indentation
-- Remove trailing 0/1 after colons (use `key: "value"` not `key:0 "value"`)
-- UTF-8 with BOM encoding required
-
-### Subideology Localization Format
-
-```
-TAG.ideology: "£PARTY_ICON (ABBRV) - Party Name"
-TAG.ideology_icon: "£PARTY_ICON"
-TAG.ideology_desc: "(Ideology Group) - Party Name (Native Name, ABBRV)\n\nDescription"
-```
-
 ## Key Resources
 
-- [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) - Full formatting reference
-- [Code Resources](./docs/dev-resources/code-resource.md) - Modifiers, effects, and how-to guides
-- [Focus Tree Lifecycle](./docs/dev-resources/focus-tree-lifecycle-checklist.md) - Development checklist
-- [Game Rules Reference](./docs/player-tutorials/game-rules.md) - Complete game rules guide
-- [Error Debug Codes](./docs/dev-resources/error-debug-codes.md)
 - [Contributing Guidelines](./CONTRIBUTING.md)
+- [HOI4 Scripting Reference](./.claude/docs/hoi4-data-structures.md) - Variables, arrays, loops, collections, loc
+- [Documentation Index](./.claude/docs/documentation-references.md) - Effects, triggers, modifiers docs & wiki links

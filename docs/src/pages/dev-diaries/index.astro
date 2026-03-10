@@ -2,19 +2,22 @@
 import { getEntry } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { withBase } from "../../lib/urls";
+import { STATIC_PAGE_META } from "../../lib/page-meta";
 
 const archiveEntry = await getEntry("devDiaryArchive", "index");
 if (!archiveEntry) {
   throw new Error("Missing devDiaryArchive/index data entry");
 }
 const groups = archiveEntry.data;
+const pageMeta = STATIC_PAGE_META.devDiaries;
 ---
 
 <BaseLayout
-  title="Dev Diaries"
-  pageId="dev-diaries"
-  description="Development diaries from the Millennium Dawn mod team, covering new features, changes, and updates."
-  canonicalPath="/dev-diaries/"
+  title={pageMeta.title}
+  pageId={pageMeta.pageId}
+  description={pageMeta.description}
+  canonicalPath={pageMeta.canonicalPath}
+  toc="off"
 >
   <h1>Dev Diary Lists</h1>
   <p>
@@ -28,8 +31,8 @@ const groups = archiveEntry.data;
       <details>
         <summary>{group.title}</summary>
         <ul>
-          {(group.entries || []).map((entry) => {
-            const rawUrl = (entry.url || "").trim();
+          {(group.entries ?? []).map((entry) => {
+            const rawUrl = (entry.url ?? "").trim();
             const href = !rawUrl
               ? ""
               : rawUrl.includes("://")
