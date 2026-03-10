@@ -315,25 +315,8 @@ CHI_norinco_manufacturer = {
 }
 ```
 
-## Localization Files (.yml)
-
-- 1-space indentation
-- Remove trailing 0/1 after colons (use `key: "value"` not `key:0 "value"`)
-- UTF-8 with BOM encoding required
-
-### Subideology Localization Format
-
-```
-TAG.ideology: "£PARTY_ICON (ABBRV) - Party Name"
-TAG.ideology_icon: "£PARTY_ICON"
-TAG.ideology_desc: "(Ideology Group) - Party Name (Native Name, ABBRV)\n\nDescription"
-```
-
 ## Key Resources
 
-- [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) - Full formatting reference
-- [Code Resources](./docs/dev-resources/code-resource.md) - Modifiers, effects, and how-to guides
-- [Focus Tree Lifecycle](./docs/dev-resources/focus-tree-lifecycle-checklist.md) - Development checklist
-- [Game Rules Reference](./docs/player-tutorials/game-rules.md) - Complete game rules guide
-- [Error Debug Codes](./docs/dev-resources/error-debug-codes.md)
 - [Contributing Guidelines](./CONTRIBUTING.md)
+- [HOI4 Scripting Reference](./.claude/docs/hoi4-data-structures.md) - Variables, arrays, loops, collections, loc
+- [Documentation Index](./.claude/docs/documentation-references.md) - Effects, triggers, modifiers docs & wiki links
