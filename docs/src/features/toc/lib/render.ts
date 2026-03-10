@@ -1,6 +1,6 @@
 import { buildTocTree, type TocHeadingLike, type TocTreeItem } from "../../../shared/lib/toc";
 import { FOCUS_RING_CLASS } from "../../../shared/ui/tailwind";
-import { TOC_ATTRS, TOC_HEADING_RANGE, TOC_LABELS, TOC_STATES } from "./config";
+import { TOC_ATTRS, TOC_HEADING_RANGE, TOC_LABELS } from "./config";
 
 function escapeHtml(value: string): string {
   return value
@@ -51,10 +51,10 @@ const TOC_LINK_BASE_CLASS = [
   "[word-break:break-word]",
   "[-webkit-box-orient:vertical]",
   "[-webkit-line-clamp:var(--toc-line-clamp,3)]",
-  `[&.${TOC_STATES.active}]:border-primary`,
-  `[&.${TOC_STATES.active}]:bg-primary-light`,
-  `[&.${TOC_STATES.active}]:font-semibold`,
-  `[&.${TOC_STATES.active}]:text-primary`,
+  "[&.is-active]:border-primary",
+  "[&.is-active]:bg-primary-light",
+  "[&.is-active]:font-semibold",
+  "[&.is-active]:text-primary",
   FOCUS_RING_CLASS,
 ].join(" ");
 
@@ -93,7 +93,7 @@ function getLinkClass(depth: number): string {
       "text-[0.78rem]",
       "text-text-muted",
       "[-webkit-line-clamp:2]",
-      `[&.${TOC_STATES.active}]:text-primary`,
+      "[&.is-active]:text-primary",
     ].join(" ");
   }
 
@@ -124,7 +124,7 @@ export function renderTocTreeHtml(tree: TocTreeItem[]): string {
         html += `<div class="${TOC_ROW_CLASS}">`;
         html += `<a href="#${id}" class="${getLinkClass(depth)}" ${TOC_ATTRS.link} ${TOC_ATTRS.tocId}="${id}" title="${text}">${text}</a>`;
         html += `<button class="${TOC_EXPAND_BUTTON_CLASS}" aria-expanded="false" aria-label="${escapeHtml(TOC_LABELS.expand(item.text))}" ${TOC_ATTRS.expand}="${currentSublistId}" type="button">`;
-        html += '<svg aria-hidden="true" class="size-3 shrink-0 transition-transform duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)]" viewBox="0 0 12 12">';
+        html += '<svg aria-hidden="true" class="size-3 shrink-0 transition-transform duration-250 ease-in-out" viewBox="0 0 12 12">';
         html += '<path d="M4.5 2l4 4-4 4" stroke="currentColor" stroke-width="1.5"';
         html += ' fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
         html += "</svg></button>";

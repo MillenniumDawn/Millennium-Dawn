@@ -1,16 +1,12 @@
 ---
 title: v1.6 - 1.11 Compatibility and Economic Rework
 page_id: changelog-v1-6-1-11-compatibility-and-economic-rework
-toc: 'off'
 order: 7
 ---
 
 # v1.6 - 1.11 Compatibility and Economic Rework
 
-<details><summary>v1.6.3 Minor Patch</summary>
-
-AI:
-
+## v1.6.3 Minor Patch### AI
 - Investment AI will no longer offer you projects that exceed 730 days
 - Disabled Anti Bully Decisions for AI (They didn't use it anyways)
 - Armenian/Azerbaijan Hostile Relations added
@@ -25,10 +21,7 @@ AI:
 - Added "Tick" checks so the AI won't decrease and increase taxes in the same week
 - AI will strike back when nuked
 - On DoW AI will set its nuclear weapons on alert
-- Made Danish AI not able to form the kalmer union on historical, and not choose wacky political parties on historical.
-
-Bugfixes:
-
+- Made Danish AI not able to form the kalmer union on historical, and not choose wacky political parties on historical.### Bugfixes
 - Fixed Steam Link leading to outdated steam page
 - Fixed social buttons positioning for all resolutions
 - Fixed Brazilian idea "Crippled Currency" from not always being removed
@@ -85,10 +78,7 @@ Bugfixes:
 - Fixed missing name in Yemen's Subideologies
 - Fixed Missing Event Image for GCC Arms Sales Event
 - Fixed inability to remove "IMF Debts" national spirit form Brazil
-- SOV will now be allowed to station troops in PMR & ABK without "exile" in 2000 start
-
-Content:
-
+- SOV will now be allowed to station troops in PMR & ABK without "exile" in 2000 start### Content
 - USA, SOV, CHI, ENG, FRA, RAJ, JAP, ITA, SPR, PER, KOR, TAI, ISR, NKO, TUR, GER, UKR, BRA, PAK, EGY missile technology setup
 - All countries now start with reworked generals and advisors
 - Updated Turkish political parties, leaders and starting political setup in preparation for more Turkish content
@@ -106,56 +96,32 @@ Content:
 - New Music: 22/02/2022
 - Stability from budget laws has been reduced
 - Reintroduced starting factions and reworked faction mechanics
-- New Supported Language: French
-
-Graphics:
-
+- New Supported Language: French### Graphics
 - New Russian Infantry Model
 - New Czech and Slovakian models
 - T-90, BTR-80, BMP-3, BMP-2 Russian models
 - Added planes to the deck of the Russian AC model
 - All generic nations now have plane models based off their equipment types
 - DirectX 11 Compatibility is now supported for all image types
-- Added missile gfx: CHI ALCM, NKO ICBM
-
-Units:
-
+- Added missile gfx: CHI ALCM, NKO ICBM### Units
 - Bosnian templates are no longer non-deletable
-- Replaced "Trucks" with "Utility Vehicles" in various supply tooltips
-
-Economy:
-
+- Replaced "Trucks" with "Utility Vehicles" in various supply tooltips### Economy
 - Semi-Consumption Economy can no longer be taken by a "Rentier State"
-- Subjects can now ask for debt relief only from the IMF or their Overlord
-
-Performance:
-
+- Subjects can now ask for debt relief only from the IMF or their Overlord### Performance
 - Optimised Party Popularity calculations
 - Optimized budget law creation
-- Optimised Textures so mod weight is significantly lower than before
-
-Map:
-
+- Optimised Textures so mod weight is significantly lower than before### Map
 - Gave Mongolia it's rightful clay from China
 - Added Xinjiang core to Aksai Chin
 - Provincial rework to Northern Australia
 - Split Central Anatolian State in two for Turkey
-- Added new states in Armenia, Georgia, Azerbaijan, and Artaskh
-
-Modding:
-
+- Added new states in Armenia, Georgia, Azerbaijan, and Artaskh### Modding
 - Special Purpose Payload now ready for modding
 
-</details>
 
-<details><summary>v1.6.2</summary>
 
-AI:
-
-- Baltics shouldn't leave NATO if neutral
-
-Bugfixes:
-
+## v1.6.2### AI
+- Baltics shouldn't leave NATO if neutral### Bugfixes
 - Fixed GROM image for Poland focus tree
 - Brazilian 2017 Election Killswitch fixed
 - Liechtenstein state name is now correctly name
@@ -189,10 +155,7 @@ Bugfixes:
 - Fixed Brazilian stockpile lacking equipment or having erroneous equipment
 - Brazilian corporate tax and debt percentage to more accurately reflect real-life levels
 - Fixed some Brazilian issues, made focuses clearer
-- Fixed Ukrainian Event "Cooldown of 2001 Protests" now showing the correct text
-
-Content:
-
+- Fixed Ukrainian Event "Cooldown of 2001 Protests" now showing the correct text### Content
 - Reworked Officer Corps for CZE, GRE, FRA, NKO, SWS, SOO, TAB, SYR, SOO, SWA, NKR, NIC, NCY, NAM, MRT, PAP, MOZ, MNC, PAL PRU, PAN, PAR, PHI, NEP, MNT, SUR, NGR, SLO, SRI and 6 releasable tags
 - GRE-CYP Enosis event chain allows for Akrotiri's return under correct conditions
 
@@ -210,10 +173,7 @@ Database
 - Increased Nigerian oil to better represent their oil reserves
 - Fixed double power ranking setting
 - Cleaned redundant variables from Canada
-- Corrected the name of a Swedish politician
-
-Graphics:
-
+- Corrected the name of a Swedish politician### Graphics
 - New models for Mig21, Mig23, Su17, Su24, Mig29, Su27, Su33, Su57, and correction to the tu160 models
 - f111 aardvark model added for USA
 - F14 Model Replaced to match USA Tech Tree Icon (F15)
@@ -225,29 +185,17 @@ Graphics:
 - French focus Total SA now has an icon
 - Train Graphics
 - Updated general portraits for China, Germany and Russian
-- Updated some portrait from Swedish politician
-
-Localization:
-
+- Updated some portrait from Swedish politician### Localization
 - ALCM launch button trigger tooltip rework
-- Fixed Possessive in French focus Napoleon's Dream
-
-Map:
-
+- Fixed Possessive in French focus Napoleon's Dream### Map
 - New Outer Donbas state for Ukraine
 - Added additional maps
-- Fixed provincial issues in Sierre Leone
-
-Modding:
-
+- Fixed provincial issues in Sierre Leone### Modding
 - added instructions for map changes to Millennium_Dawn\history\states\#readme.txt
 
-</details>
 
-<details><summary>v1.6.1</summary>
 
-AI:
-
+## v1.6.1### AI
 - Removed minors from mockup missile defense AI (including HLS & SMA)
 - Improved project AI so they should now be more willing to put other buildings in project queues
 - Improved logging of AI Investment targets so Bird can make better AI (Bird fix AI)
@@ -257,10 +205,7 @@ AI:
 - Fixed and added historical AI for the nordic countries
 - The Nigerian AI should no longer ping pong between Islamic and Christian religious paths
 - Ukrainian AI should no longer bum rush the Baltic-Black Sea Union every game
-- Sanity checks for Korea. They shouldn't take their wargoals for JAP or USA if they're currently at war with South Korea
-
-Bugfixes:
-
+- Sanity checks for Korea. They shouldn't take their wargoals for JAP or USA if they're currently at war with South Korea### Bugfixes
 - Civilian Folder Horizontal Scrollbar patched
 - Fixed diplomatic actions UI issues for resolutions smaller than 1920x1080
 - Fixed policies UI for resolutions smaller than 1920x1080
@@ -317,10 +262,7 @@ Bugfixes:
 - Patched internal faction The Bazaar immediately plummeting to 0 when taking any kind of opinion option
 - Fixed nuclear doctrine triggers for fire button not working correctly
 - Fixed nuclear test not working correctly
-- Fixed satellite access adding wrong stats, when own sat system is higher
-
-Content:
-
+- Fixed satellite access adding wrong stats, when own sat system is higher### Content
 - Added option to Stock Market Crash to "bailout" to give you a player option
 - More factions dislike when the Stock Market Crash
 - Added Ukrainian Event to cooldown the 2001 protests
@@ -328,48 +270,27 @@ Content:
 - Rebalanced some Nigerian focuses
 - Syrian Civil War named threat is now 5 tension rather than 2 allowing for volunteers
 - Cut the PKK system (System for Turkey needs to be completely reworked)
-- Added an event for nuclear tests
-
-Database:
-
+- Added an event for nuclear tests### Database
 - Added AA Upgrade 3 to Russia
 - Removed minors from on start up SAM sites and SAM tech (including HLS & SMA)
 - Officer rework for MIC, MLC, MLD, MLT, MLW
 - Added Early Helicopter to Nigeria
 - Updated Israeli Aircraft Names
 - Updated Isreali starting Techs
-- Removed some UAE starting Techs
-
-Focus Tree:
-
+- Removed some UAE starting Techs### Focus Tree
 - Revealed hidden North Korean tree branches
-- Reduced negative modifiers from Arduous March so you can actually research something (in 8000 days :kek:)
-
-Graphics:
-
-- Updated Investment System Icons to new building icons
-
-Localization:
-
+- Reduced negative modifiers from Arduous March so you can actually research something (in 8000 days :kek:)### Graphics
+- Updated Investment System Icons to new building icons### Localization
 - Fixed a typo in alert button
 - Fixed a typo in Trajectory Tooltip
 - Updated localization for Investment System
 - Fixed grammar and spelling for the print money tooltip
 - Fixed type in Eau Claire, WI
 - Fixed typo in Turkish city
-- The new content has been translated into Russian.
-
-OOBs:
-
-- Fixed FREMM-FR class not having VLS
-
-Performance:
-
+- The new content has been translated into Russian.### OOBs
+- Fixed FREMM-FR class not having VLS### Performance
 - Optimised Syria's events
-- Additional optimization to event runs
-
-Military:
-
+- Additional optimization to event runs### Military
 - Removed Power Projection mechanic
 - Strike Fighter now are fighter cas tactical_bomber scout_plane
 - Multi Role Fighter now are fighter interceptor cas tactical_bomber scout_plane
@@ -379,10 +300,7 @@ Military:
 - Increased Air-to-Air damage for Aircraft
 - Adjusted Terrain Penalties for CAS damage
 - Adjust Air Combat Damage scale to more closely align with Vanilla numbers
-- Adjusted Defines for Positional Values and Stacking values to penalize Death Stacking Navies
-
-UI:
-
+- Adjusted Defines for Positional Values and Stacking values to penalize Death Stacking Navies### UI
 - Replaced hoi_22typewriter font with hoi_18mbs for missiles UI
 - Fixed strategic priorities overlapping visuals
 - Added click options +10%, 50%, 100% to nuclear energy/nuclear material buttons
@@ -390,24 +308,15 @@ UI:
 - Fixed overlap in strategic priorities screen
 - Nuclear warhead production +10/-10/+100/-100 click options added
 - QOL Update Missiles Launch Control Center: salvo & duration automatically set to 1 when selecting a missile
-- Fixed policies screen to view the policies on lower resolutions
-
-Economy:
-
+- Fixed policies screen to view the policies on lower resolutions### Economy
 - Capped max negative population growth from GDP/C to -100% from -115%
 - Taking control of the Panama Canal and the Suez Canal from their original owner will now give income
-- Changed Power Ranking calculation to prevent overflow making everyone a non-power
-
-Map:
-
+- Changed Power Ranking calculation to prevent overflow making everyone a non-power### Map
 - Fixed unit locations in Western Tibet
 
-</details>
 
-<details><summary>v1.6.0</summary>
 
-AI:
-
+## v1.6.0### AI
 - Implemented Country Specific Civilian Industrial Targets for CHI, USA, ITA, FRA, UKR
 - Implemented a generic country industrial target for generic minor, regional, large, and major nations
 - AI is now willing to trade away 35% of their factories for resources
@@ -419,10 +328,7 @@ AI:
 - Taliban should no longer suicide on Afghanistan
 - America now should no longer abandon Kuwait Naval Base when at war with Iraq (hecking Bush)
 - North Korea/Korea should not invade the other if they are guaranteed by superpowers
-- Added investment AI for South Africa
-
-Balance:
-
+- Added investment AI for South Africa### Balance
 - Balanced Refitting IC cost of modules
 - Balanced IC cost of many modules, especially ESMs
 - Added new module choices to many slots, especially ESMs
@@ -448,10 +354,7 @@ Balance:
 - No longer can manually take debt when interest rate is greater than 20%
 - Engineer companies have greater entrenchment
 - Tension from puppeting is now reduced
-- Yearly tick down for tension increased from 1.2 to 1.8
-
-Bugfixes:
-
+- Yearly tick down for tension increased from 1.2 to 1.8### Bugfixes
 - Fixed some naval variant errors
 - Fixed the subideology scripted GUI spamming an error whenever selected/hovered
 - Fixed the musical compression to be 44.1KHz for Firewall, Memories Without Colour, and Lost on The Hill
@@ -533,10 +436,7 @@ Bugfixes:
 - Fixed Confederate States having non-MTG techs w/ MTG enabled
 - Fixed loosing research solts when forming the United States of Europe; gained Techs now don't popup anymore
 - Fixed German Legacy is now removed with focus Constitute the new European Nation
-- Fixed Operatives no longer generating properly
-
-Content:
-
+- Fixed Operatives no longer generating properly### Content
 - New Gamerule to control duration of influence mechanics cooldown
 - Made Cyber Warfare decisions for Non-LAR Players (will convert and add on to LAR systems)
 - Evergiven Blocking the Suez Event Chain
@@ -557,16 +457,10 @@ Content:
 - Limited the Generic Civilian Factories Focuses to be done at peace only
 - Added base equipment capture rate: 5%
 - Reworked officers and officers corps for MD
-- Starting Reactors are given to most nations who have them
-
-Database:
-
+- Starting Reactors are given to most nations who have them### Database
 - Cleaned texticons.gfx of vanilla ideas
 - Archived unused decisions for greater load-up speed
-- Archived unused localization files
-
-Focus Trees:
-
+- Archived unused localization files### Focus Trees
 - New Trees: Botswana, North Korea, South Korea, Poland, Afghanistan
 - Redid the UK industrial tree to better match the targeted regions
 - Expanded and Reworked Danish Tree (Wherever that is)
@@ -576,10 +470,7 @@ Focus Trees:
 - Ukraine tree rebalanced and improved
 - minor updates to the Italian tree
 - Brazilian tree expansion with additional content for Lula and tweaks to other sections
-- Expanded AI desire to lead to war w/ focuses that give war goals
-
-Graphics:
-
+- Expanded AI desire to lead to war w/ focuses that give war goals### Graphics
 - Implemented a new particle GFX effect for Airplanes
 - Added new Asian/Middle East/African city graphics
 - Add a icon for MillenniumDawn Game
@@ -590,19 +481,10 @@ Graphics:
 - Agency icons for Iraq, and a new CIA icon
 - Implemented the following new models: F4, F14, F15c, F15ex, F16, RQ-170, B1, B2, C-5, Eurofighter, M2000, M-5, J11, J16, Sharp Sword UAV, H-6k, Q-5, MIG-23, TU-160, SU-25
 - New icons for Light guns
-- Fixed an icon issue w/ the American naval tree
-
-Localization:
-
-- Russian language support
-
-Map:
-
+- Fixed an icon issue w/ the American naval tree### Localization
+- Russian language support### Map
 - Corrections to map
-- Added new states for Brazil
-
-OoBs/Units:
-
+- Added new states for Brazil### OoBs/Units
 - Tweaked some ship classes
 - Added Destroyer Hull 4 to France in 2000 to make the OoBs work correctly
 - Additional Destroyer Names for China
@@ -623,10 +505,7 @@ OoBs/Units:
 - Removed NH90 and Eurocopter Tiger from production and stockpile for France and Germany in 2000 bookmark
 - Removed Scorpene Class submarines from Chile in 2000 (MTG only)
 - Removed HMS Ledbury fom the UK in 2017
-- Added FREMM-FR class to France in 2017
-
-Performance:
-
+- Added FREMM-FR class to France in 2017### Performance
 - Improved tech tree performance by cutting down possible tech paths
 - Reduced some AI has_game_rule calls
 - Removed the AIs ability to see some blank non-AI related decisions
@@ -635,14 +514,11 @@ Performance:
 - Full scale optimization of internal faction system
 - 45% performance improvement to general runtime
 - Changed Ukrainian Events to fire using on_actions rather than MTTH
-- Changed Brazilian Events to fire using on_actions rather than MTTH
-
-Techtree:
-
+- Changed Brazilian Events to fire using on_actions rather than MTTH### Techtree
 - Removed air IFV and APC techs
 - Removed links between IFVs and recon tanks
 - Artillery, AA and AT tech trees are now linear
 - Legacy doctrines can no longer be researched
 - Cut links between various non-MTG ship techs
 
-</details>
+

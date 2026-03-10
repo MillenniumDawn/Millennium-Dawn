@@ -50,19 +50,22 @@ const countryTag =
 <div class="overflow-hidden rounded-lg border border-border-light bg-surface shadow-sm" role="complementary" aria-label={`${title} summary`}>
   <div
     class:list={[
-      "relative min-h-[170px] border-b border-border-light bg-[linear-gradient(135deg,var(--color-header-bg),var(--color-header-bg-end))]",
-      {
-        "[background-image:linear-gradient(180deg,var(--color-overlay-scrim-45)_0%,transparent_55%,var(--color-overlay-scrim-60)_100%),var(--country-hero-image)] [background-position:center,center] [background-repeat:no-repeat,no-repeat] [background-size:cover,cover]":
-          !!flagImage,
-      },
+      "relative",
+      flagImage ? "min-h-[170px] bg-surface" : "min-h-[100px] bg-surface-muted border-b border-border-light",
     ]}
-    style={flagImage ? `--country-hero-image: ${cssUrl(flagImage)};` : undefined}
   >
-    <div class="absolute inset-x-0 bottom-[-5px] flex items-end justify-between gap-sm bg-[linear-gradient(180deg,transparent_0%,var(--color-overlay-scrim-60)_100%)] px-4 pb-[0.95rem] pt-[0.9rem]">
-      <p class="m-0 max-w-[70%] text-[1.3rem] font-bold leading-tight text-text-inverse [text-shadow:0_2px_12px_var(--color-overlay-scrim-60)]" aria-hidden="true">
+    {flagImage && (
+      <div
+        class="absolute inset-0 z-0 pointer-events-none"
+        style={`background-image: ${cssUrl(flagImage)}; background-position: center center; background-repeat: no-repeat; background-size: cover; mask-image: linear-gradient(180deg, black 0%, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(180deg, black 0%, black 50%, transparent 100%);`}
+        aria-hidden="true"
+      />
+    )}
+    <div class="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-sm px-4 pb-4 pt-12">
+      <p class="m-0 max-w-[70%] text-[1.4rem] font-bold leading-tight text-text [text-shadow:0_1px_12px_var(--color-surface),0_2px_24px_var(--color-surface)] dark:[text-shadow:0_1px_12px_var(--color-surface),0_2px_24px_var(--color-surface)]" aria-hidden="true">
         {title}
       </p>
-      <p class="m-0 rounded-full border border-overlay-inverse-28 bg-overlay-inverse-14 px-[0.7rem] py-[0.3rem] text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-text-inverse [backdrop-filter:blur(8px)]">
+      <p class="m-0 rounded-full border border-border bg-surface/80 px-[0.7rem] py-[0.3rem] text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-text shadow-sm backdrop-blur-md">
         {countryTag}
       </p>
     </div>
@@ -74,8 +77,9 @@ const countryTag =
     if (overviewHasOnlyTag) return null;
 
     return (
-      <>
-        <div class="px-4 pb-[0.45rem] pt-[0.65rem] text-[0.83rem] font-bold uppercase tracking-[0.08em] text-text-muted">{group.section}</div>
+      <section aria-labelledby={`infobox-${group.section.replace(/\s+/g, '-').toLowerCase()}`}>
+        {/* Use semantic heading for structure instead of a visually formatted div */}
+        <h3 id={`infobox-${group.section.replace(/\s+/g, '-').toLowerCase()}`} class="m-0 px-4 pb-[0.45rem] pt-[0.65rem] text-[0.83rem] font-bold uppercase tracking-[0.08em] text-text-muted">{group.section}</h3>
         {group.kind === "military_industry" ? (
           <>
             <InfoboxCompactTable
@@ -99,7 +103,7 @@ const countryTag =
         ) : (
           <InfoboxStatList stats={group.stats} excludeKeys={["tag"]} />
         )}
-      </>
+      </section>
     );
   })}
 </div>

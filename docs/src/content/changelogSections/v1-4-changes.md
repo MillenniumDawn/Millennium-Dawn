@@ -1,13 +1,12 @@
 ---
 title: v1.4 Changes
 page_id: changelog-v1-4-changes
-toc: 'off'
 order: 5
 ---
 
 # v1.4 Changes
 
-<details><summary>v1.4.0</summary>
+## v1.4.0
 
 Balance
 
@@ -71,4 +70,4 @@ Politics
 - Angola is now Emerging Radical Socialist
 - Italian Ruling Party is now correct for the start
 
-</details>
+
