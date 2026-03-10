@@ -63,6 +63,7 @@ country_event = {
 			FROM = {
 				start_project_two = yes
 				clr_country_flag = this_investment_offer_pending@PREV
+				clr_country_flag = AC_ai_investment_pending
 			}
 			# Influence Section
 			if = {
@@ -341,6 +342,7 @@ country_event = {
 		name = AC_event.2.o1
 		log = "[GetDateText]: [This.GetName]: AC_event.11.o1 executed"
 		clr_country_flag = this_investment_offer_pending@FROM
+		clr_country_flag = AC_ai_investment_pending
 	}
 }
 
@@ -548,6 +550,7 @@ country_event = {
 
 	trigger = {
 		is_ai = yes
+		NOT = { has_country_flag = AC_ai_investment_pending }
 		check_variable = { active_projects < 15 }
 		check_variable = { debt_ratio < 2.50 }
 		check_variable = { interest_rate < 8.000 }
@@ -725,6 +728,8 @@ country_event = {
 						}
 						ROOT = { country_event = { id = AC_event.3 } }
 					}
+					# Guard against overlapping proposals overwriting the -1 staging variables
+					set_country_flag = { flag = AC_ai_investment_pending days = 7 value = 1 }
 					# Temporarily pulls this tag from investment targets for the sake of spreading investments around
 					var:AI_best_country = {
 						set_country_flag = { flag = recently_accepted_an_investment value = 1 days = 21 }
