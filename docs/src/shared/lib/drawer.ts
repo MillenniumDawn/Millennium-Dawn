@@ -153,12 +153,12 @@ function syncBodyScrollLock(state: DrawerState, lockScroll: boolean, open: boole
 function focusDrawerEntry(panel: HTMLElement, closeBtn?: HTMLElement | null): void {
   window.setTimeout(() => {
     if (closeBtn instanceof HTMLElement) {
-      closeBtn.focus();
+      closeBtn.focus({ preventScroll: true });
       return;
     }
 
     const focusables = getFocusableEls(panel);
-    if (focusables.length) focusables[0].focus();
+    if (focusables.length) focusables[0].focus({ preventScroll: true });
   }, 40);
 }
 

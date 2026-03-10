@@ -1,6 +1,5 @@
 import type { Element, Root } from "hast";
 import { visit } from "unist-util-visit";
-import type { Parent } from "unist";
 import { MARKDOWN_CLASSNAMES } from "../shared/ui/tailwind";
 
 function asClassList(value: unknown): string[] {
@@ -9,7 +8,7 @@ function asClassList(value: unknown): string[] {
   return [];
 }
 
-function addClasses(node: Element, ...classNames: Array<string | false | null | undefined>): void {
+function addClasses(node: Element, ...classNames: (string | false | null | undefined)[]): void {
   const existing = asClassList(node.properties?.className);
   const next = new Set(existing);
 
@@ -23,8 +22,8 @@ function addClasses(node: Element, ...classNames: Array<string | false | null | 
   };
 }
 
-function tagNameOf(node: Parent | null | undefined): string | null {
-  return node && node.type === "element" ? node.tagName : null;
+function tagNameOf(node: Element | null | undefined): string | null {
+  return node?.tagName ?? null;
 }
 
 export function rehypeTailwindContent(): (tree: Root) => void {
@@ -33,7 +32,7 @@ export function rehypeTailwindContent(): (tree: Root) => void {
       if (node.type !== "element") return;
 
       const tagName = node.tagName;
-      const parentTag = tagNameOf(parent as Parent | undefined);
+      const parentTag = tagNameOf(parent as Element | undefined);
 
       if (/^h[1-6]$/.test(tagName)) {
         const key = tagName as keyof Pick<typeof MARKDOWN_CLASSNAMES, "h1" | "h2" | "h3" | "h4" | "h5" | "h6">;
