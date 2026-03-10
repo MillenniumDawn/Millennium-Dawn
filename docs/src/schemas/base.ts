@@ -35,6 +35,7 @@ export const baseDocSchema = z.object({
   robots: z.string().optional(),
   page_id: z.string().optional(),
   body_class: z.string().optional(),
+  hidden: z.boolean().optional(),
   kind: z.string().optional(),
   order: z.number().int().optional(),
 });

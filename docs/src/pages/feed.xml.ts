@@ -22,9 +22,10 @@ export async function GET(context: APIContext) {
     getCollection("changelogSections"),
     getCollection("devDiaries"),
   ]);
+  const visibleChangelogs = changelogs.filter((entry) => !entry.data.hidden);
 
   const items = [
-    ...changelogs.map((entry) =>
+    ...visibleChangelogs.map((entry) =>
       mapItem(entry.data.title, entry.data.description, getChangelogPath(entry)),
     ),
     ...devDiaries.map((entry) => mapItem(entry.data.title, entry.data.description, getDevDiaryPath(entry))),
