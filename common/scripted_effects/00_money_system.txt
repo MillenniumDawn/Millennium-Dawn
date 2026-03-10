@@ -58,8 +58,8 @@ ingame_update_setup = {
 	calculate_int_investments_rate = yes
 	calculate_resource_sale_rate = yes
 	calculate_tax_gain = yes
-	calculate_additional_income_rate = yes
 	calculate_seigniorage_income = yes
+	calculate_additional_income_rate = yes
 
 	#Currency multipliers — applied after all income streams are computed
 	apply_currency_multipliers = yes
@@ -375,7 +375,7 @@ calculate_tax_gain = {
 	# Fossil Power Plants
 	if = { limit = { check_variable = { fossil_powerplant_tax > 0 } }
 		set_temp_variable = { fossil_powerplant_unified = unified_building_multiplier }
-		multiply_temp_variable = { fossil_powerplant_unified = 0.375 }
+		multiply_temp_variable = { fossil_powerplant_unified = 0.31875 }
 
 		set_temp_variable = { building_final_modifier = 1 }
 		add_to_temp_variable = { building_final_modifier = modifier@infrastructure_tax_gain_multiplier_modifier }
@@ -399,7 +399,7 @@ calculate_tax_gain = {
 	# Internet Stations
 	if = { limit = { check_variable = { internet_station_tax > 0 } }
 		set_temp_variable = { internet_station_unified = unified_building_multiplier }
-		multiply_temp_variable = { internet_station_unified = 0.75 }
+		multiply_temp_variable = { internet_station_unified = 0.525 }
 
 		set_temp_variable = { building_final_modifier = 1 }
 		add_to_temp_variable = { building_final_modifier = modifier@infrastructure_tax_gain_multiplier_modifier }
@@ -497,6 +497,15 @@ calculate_tax_gain = {
 calculate_additional_income_rate = {
 	set_variable = { additional_income_rate = 0 }
 
+	# Apply seigniorage_income_modifier as a multiplier on the issuer base:
+	# income = base × (1 + modifier). When no decision is active modifier = 0,
+	# so the factor is 1.0 and the base is unchanged.
+	if = { limit = { check_variable = { seigniorage_base > 0 } }
+		add_to_temp_variable = { seigniorage_mod = 1.0 }
+		multiply_temp_variable = { seigniorage_base = seigniorage_mod }
+		add_to_variable = { additional_income_rate = seigniorage_base }
+		set_variable = { seigniorage_income_display = seigniorage_base }
+	}
 	# Additional incomes, set income amount as a variable (weekly gain)
 	if = { limit = { original_tag = HEZ }
 		if = {
@@ -4958,9 +4967,9 @@ calculate_gdp = {
 	set_temp_variable = { gdp_from_renewable_energy = renewable_energy_infra }
 	set_temp_variable = { gdp_from_internet_stations = internet_station_total }
 	multiply_temp_variable = { gdp_from_nuclear_reactors = 4 }
-	multiply_temp_variable = { gdp_from_fossil_powerplants = 2 }
+	multiply_temp_variable = { gdp_from_fossil_powerplants = 1.7 }
 	multiply_temp_variable = { gdp_from_renewable_energy = 2 }
-	multiply_temp_variable = { gdp_from_internet_stations = 5 }
+	multiply_temp_variable = { gdp_from_internet_stations = 3.5 }
 	multiply_temp_variable = { gdp_from_nuclear_reactors = nuclear_reactors_manpower_fulfillment }
 	multiply_temp_variable = { gdp_from_fossil_powerplants = fossil_powerplants_manpower_fulfillment }
 	multiply_temp_variable = { gdp_from_renewable_energy = renewable_energy_infra_manpower_fulfillment }

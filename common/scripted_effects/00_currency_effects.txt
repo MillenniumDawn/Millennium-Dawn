@@ -29,7 +29,7 @@ currency_startup = {
 	# Default all countries to fiat currency if no backing law is set
 	if = {
 		limit = {
-			NOT = { has_idea = gold_standard }
+			NOT = { has_idea = gold_standard_back }
 			NOT = { has_idea = silver_standard }
 			NOT = { has_idea = bi_metal_standard }
 			NOT = { has_idea = no_currency_backing }
@@ -45,30 +45,30 @@ currency_startup = {
 # that issuer status reflects in-game territorial changes.
 update_currency_issuers = {
 	# USD — whoever owns Washington DC (state 1182)
-	state:1182 = { owner = { set_variable = { global.usd_issuer = THIS } } }
+	1182 = { owner = { set_variable = { global.usd_issuer = THIS } } }
 
 	# EUR — EUU when spawned, else owner of Berlin (state 45)
 	if = { limit = { country_exists = EUU }
 		EUU = { set_variable = { global.eur_issuer = THIS } }
 	}
 	else = {
-		state:45 = { owner = { set_variable = { global.eur_issuer = THIS } } }
+		45 = { owner = { set_variable = { global.eur_issuer = THIS } } }
 	}
 
 	# CNY — whoever owns Beijing (state 547)
-	state:547 = { owner = { set_variable = { global.cny_issuer = THIS } } }
+	547 = { owner = { set_variable = { global.cny_issuer = THIS } } }
 
 	# RUB — whoever owns Moscow (state 652)
-	state:652 = { owner = { set_variable = { global.rub_issuer = THIS } } }
+	652 = { owner = { set_variable = { global.rub_issuer = THIS } } }
 
 	# JPY — whoever owns Tokyo (state 615)
-	state:615 = { owner = { set_variable = { global.jpy_issuer = THIS } } }
+	615 = { owner = { set_variable = { global.jpy_issuer = THIS } } }
 
 	# GBP — whoever owns London (state 13)
-	state:13 = { owner = { set_variable = { global.gbp_issuer = THIS } } }
+	13 = { owner = { set_variable = { global.gbp_issuer = THIS } } }
 
 	# CHF — whoever owns Bern (state 74)
-	state:74 = { owner = { set_variable = { global.chf_issuer = THIS } } }
+	74 = { owner = { set_variable = { global.chf_issuer = THIS } } }
 }
 
 # ── Monthly recalculation ─────────────────────────────────────────────────────
@@ -116,7 +116,7 @@ calculate_currency_strength = {
 		clamp_variable = { var = currency_delta min = -0.004 max = 0.010 }
 	}
 	# Backing-specific clamp for non-issuers — hard-money standards dampen volatility
-	else_if = { limit = { has_idea = gold_standard }
+	else_if = { limit = { has_idea = gold_standard_back }
 		clamp_variable = { var = currency_delta min = -0.005 max = 0.008 }
 	}
 	else_if = { limit = { has_idea = silver_standard }
@@ -130,7 +130,7 @@ calculate_currency_strength = {
 
 	# Hard-money mean-reversion: gold and silver pull currency_strength toward par (1.0)
 	if = {
-		limit = { has_idea = gold_standard }
+		limit = { has_idea = gold_standard_back }
 		if = {
 			limit = { NOT = { check_variable = { currency_strength > 1.0 } } }
 			add_to_variable = { currency_strength = 0.003 }
@@ -229,6 +229,7 @@ apply_currency_multipliers = {
 calculate_seigniorage_income = {
 	set_temp_variable = { seigniorage_mod = modifier@seigniorage_income_modifier }
 	set_temp_variable = { seigniorage_base = 0 }
+	set_variable = { seigniorage_income_display = 0 }
 
 	# USD — whoever currently owns Washington DC (state 1182)
 	if = { limit = { check_variable = { global.usd_issuer = THIS } }
@@ -286,17 +287,9 @@ calculate_seigniorage_income = {
 		multiply_temp_variable = { seigniorage_base = @seigniorage_nonissuer_fraction }
 		multiply_temp_variable = { seigniorage_base = seigniorage_mod }
 		add_to_variable = { additional_income_rate = seigniorage_base }
+		set_variable = { seigniorage_income_display = seigniorage_base }
 		# Reset so the issuer multiplier block below does not double-count
 		set_temp_variable = { seigniorage_base = 0 }
-	}
-
-	# Apply seigniorage_income_modifier as a multiplier on the issuer base:
-	# income = base × (1 + modifier). When no decision is active modifier = 0,
-	# so the factor is 1.0 and the base is unchanged.
-	if = { limit = { check_variable = { seigniorage_base > 0 } }
-		add_to_temp_variable = { seigniorage_mod = 1.0 }
-		multiply_temp_variable = { seigniorage_base = seigniorage_mod }
-		add_to_variable = { additional_income_rate = seigniorage_base }
 	}
 }
 
