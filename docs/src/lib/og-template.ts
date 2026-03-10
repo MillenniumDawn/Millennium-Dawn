@@ -19,10 +19,10 @@ const OG_THEME = {
   },
   fontSizes: {
     // bumped all values to improve readability on social previews
-    homeTitle: "64px",
-    homeSubtitle: "32px",
+    homeTitle: "72px",
+    homeSubtitle: "40px",
     pageTitle: {
-      default: "72px",
+      default: "75px",
       compact: "52px",
     },
     pageDescription: "32px",
