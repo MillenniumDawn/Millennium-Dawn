@@ -18,14 +18,15 @@ const OG_THEME = {
     footerMarginTop: "30px",
   },
   fontSizes: {
-    homeTitle: "48px",
-    homeSubtitle: "26px",
+    // bumped all values to improve readability on social previews
+    homeTitle: "64px",
+    homeSubtitle: "32px",
     pageTitle: {
-      default: "52px",
-      compact: "42px",
+      default: "72px",
+      compact: "52px",
     },
-    pageDescription: "26px",
-    footer: "20px",
+    pageDescription: "32px",
+    footer: "24px",
   },
 } as const;
 
