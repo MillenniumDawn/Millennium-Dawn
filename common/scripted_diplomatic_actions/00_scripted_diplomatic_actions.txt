@@ -446,6 +446,10 @@ scripted_diplomatic_actions = {
 				add = 100
 			}
 			modifier = {
+				factor = 0
+				is_in_faction_with = ROOT
+			}
+			modifier = {
 				factor = 1.10
 				ROOT = { has_political_power > 499 }
 			}
@@ -1157,14 +1161,6 @@ scripted_diplomatic_actions = {
 				ROOT = { has_political_power < 450 }
 			}
 			modifier = {
-				factor = 1.10
-				ROOT = { has_political_power > 499 }
-			}
-			modifier = {
-				factor = 0.50
-				ROOT = { has_political_power < 450 }
-			}
-			modifier = {
 				add = -15
 				date < 2000.6.1
 			}
@@ -1264,6 +1260,10 @@ scripted_diplomatic_actions = {
 				add = 100
 			}
 			modifier = {
+				factor = 0
+				is_in_faction_with = ROOT
+			}
+			modifier = {
 				factor = 1.10
 				ROOT = { has_political_power > 499 }
 			}
@@ -1293,6 +1293,7 @@ scripted_diplomatic_actions = {
 			is_subject_of = ROOT
 			NOT = { has_war_with = ROOT }
 			has_opinion = { target = ROOT value > 25 }
+			ERI_is_not_transitional_government = yes
 		}
 
 		cost = 50
@@ -1380,6 +1381,26 @@ scripted_diplomatic_actions = {
 				ROOT = { check_variable = { treasury_rate > 3.00 } }
 			}
 			modifier = {
+				add = 10
+				ROOT = { has_opinion = { target = PREV value > 50 } }
+			}
+			modifier = {
+				add = 10
+				ROOT = { has_opinion = { target = PREV value > 100 } }
+			}
+			modifier = {
+				add = 10
+				is_in_faction_with = ROOT
+			}
+			modifier = {
+				factor = 0.5
+				ROOT = { ai_has_minor_economic_problems = yes }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { ai_has_moderate_economic_problems = yes }
+			}
+			modifier = {
 				factor = 0
 				ROOT = { check_variable = { interest_rate > 12.99 } }
 			}
@@ -1453,76 +1474,24 @@ scripted_diplomatic_actions = {
 			}
 		}
 
-		ai_acceptance = {
-			base_mutual_investment_treaty_condition = {
-				base = -14
-			}
-			condition_two = {
-				base = 0
-				modifier = {
-					add = 5
-					is_same_government_THIS_ROOT = yes
-				}
-				modifier = {
-					add = -50
-					THIS = { has_government = nationalist }
-				}
-			}
-			condition_three = {
-				base = 0
-				modifier = {
-					set_temp_variable = { opinion_calculator = opinion@ROOT }
-					multiply_temp_variable = { opinion_calculator = 0.05 }
-					check_variable = { opinion_calculator > -60 }
-					add = opinion_calculator
-				}
-			}
-			condition_four = {
-				base = 0
-				modifier = {
-					ROOT = { has_idea = NATO_member }
-					THIS = { has_idea = NATO_member }
-					add = 10
-				}
-			}
-			condition_five = {
-				base = 0
-				modifier = {
-					THIS = {
-						OR = {
-							has_idea = EU_member
-							tag = SWI
-						}
-					}
-					ROOT = { has_idea = EU_member }
-					add = 15
-				}
-			}
-			condition_six = {
-				base = 0
-				modifier = {
-					ROOT = { is_in_faction_with = PREV }
-					add = 10
-				}
-			}
-			condition_seven = {
-				base = 0
-				modifier = {
-					add = 10
-					is_subject_of = ROOT
-				}
-			}
-			condition_eight = {
-				base = 0
-				modifier = {
-					add = 10
-					is_influencer = yes
-				}
-			}
-		}
-
 		ai_desire = {
 			base = 5
+			modifier = {
+				factor = 0
+				is_in_faction_with = ROOT
+			}
+			modifier = {
+				add = -15
+				ROOT = { has_opinion = { target = PREV value > 75 } }
+			}
+			modifier = {
+				add = -10
+				ROOT = { has_opinion = { target = PREV value > 100 } }
+			}
+			modifier = {
+				add = 15
+				ROOT = { ai_has_major_economic_problems = yes }
+			}
 			modifier = {
 				add = 25
 				is_subject = no
@@ -1537,7 +1506,6 @@ scripted_diplomatic_actions = {
 	}
 
 	# Negotiate Release
-	# NOTE: This needs additional AI but I can work on that more throughout the next day or two
 	negotiate_operative_release = {
 		allowed = { has_dlc = "La Resistance" }
 
@@ -1684,7 +1652,45 @@ scripted_diplomatic_actions = {
 		}
 
 		ai_desire = {
-			base = 0
+			base = 15
+			modifier = {
+				add = 10
+				ROOT = { has_opinion = { target = PREV value > 50 } }
+			}
+			modifier = {
+				add = 10
+				ROOT = { has_opinion = { target = PREV value > 100 } }
+			}
+			modifier = {
+				add = 15
+				is_in_faction_with = ROOT
+			}
+			modifier = {
+				add = 5
+				OR = {
+					ROOT = { has_military_access_to = PREV }
+					ROOT = { gives_military_access_to = PREV }
+					PREV = { has_volunteers_amount_from = { tag = ROOT count > 0 } }
+					ROOT = { has_volunteers_amount_from = { tag = PREV count > 0 } }
+				}
+			}
+			modifier = {
+				add = 10
+				ROOT = {
+					OR = {
+						has_idea = super_power
+						has_idea = great_power
+					}
+				}
+			}
+			modifier = {
+				factor = 0.5
+				ROOT = { ai_has_minor_economic_problems = yes }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { ai_has_moderate_economic_problems = yes }
+			}
 		}
 	}
 
@@ -1707,6 +1713,7 @@ scripted_diplomatic_actions = {
 				value > 100
 			}
 			has_offensive_war = yes
+			ERI_is_not_transitional_government = yes
 		}
 
 		cost = 50
@@ -1843,6 +1850,35 @@ scripted_diplomatic_actions = {
 
 		ai_desire = {
 			base = 0
+			modifier = {
+				add = 15
+				ROOT = {
+					OR = {
+						has_idea = super_power
+						has_idea = great_power
+					}
+				}
+			}
+			modifier = {
+				add = 20
+				is_in_faction_with = ROOT
+			}
+			modifier = {
+				add = 15
+				is_subject_of = ROOT
+			}
+			modifier = {
+				add = 10
+				ROOT = { has_opinion = { target = PREV value > 150 } }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { ai_has_minor_economic_problems = yes }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { has_war = yes }
+			}
 		}
 	}
 
@@ -1930,6 +1966,47 @@ scripted_diplomatic_actions = {
 
 		ai_desire = {
 			base = 0
+			modifier = {
+				add = 20
+				ROOT = { NOT = { has_an_energy_deficit = yes } }
+			}
+			modifier = {
+				add = 25
+				is_in_faction_with = ROOT
+			}
+			modifier = {
+				add = 20
+				is_subject_of = ROOT
+			}
+			modifier = {
+				add = 5
+				ROOT = { has_opinion = { target = PREV value > 50 } }
+			}
+			modifier = {
+				add = 10
+				ROOT = { has_opinion = { target = PREV value > 100 } }
+			}
+			modifier = {
+				add = 5
+				is_same_government_THIS_ROOT = yes
+			}
+			modifier = {
+				add = 5
+				OR = {
+					ROOT = { has_military_access_to = PREV }
+					ROOT = { gives_military_access_to = PREV }
+					PREV = { has_volunteers_amount_from = { tag = ROOT count > 0 } }
+					ROOT = { has_volunteers_amount_from = { tag = PREV count > 0 } }
+				}
+			}
+			modifier = {
+				factor = 0.5
+				ROOT = { ai_has_minor_economic_problems = yes }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { ai_has_moderate_economic_problems = yes }
+			}
 		}
 	}
 
@@ -2012,7 +2089,44 @@ scripted_diplomatic_actions = {
 		}
 
 		ai_desire = {
-			base = 0
+			base = 25
+			modifier = {
+				add = 20
+				is_in_faction_with = ROOT
+			}
+			modifier = {
+				add = 15
+				ROOT = { is_subject_of = PREV }
+			}
+			modifier = {
+				add = 5
+				ROOT = { has_opinion = { target = PREV value > 50 } }
+			}
+			modifier = {
+				add = 10
+				ROOT = { has_opinion = { target = PREV value > 100 } }
+			}
+			modifier = {
+				add = 5
+				is_same_government_THIS_ROOT = yes
+			}
+			modifier = {
+				add = 5
+				OR = {
+					ROOT = { has_military_access_to = PREV }
+					ROOT = { gives_military_access_to = PREV }
+					PREV = { has_volunteers_amount_from = { tag = ROOT count > 0 } }
+					ROOT = { has_volunteers_amount_from = { tag = PREV count > 0 } }
+				}
+			}
+			modifier = {
+				factor = 0.5
+				ROOT = { ai_has_moderate_economic_problems = yes }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { ai_has_major_economic_problems = yes }
+			}
 		}
 	}
 
@@ -2068,6 +2182,276 @@ scripted_diplomatic_actions = {
 
 		ai_desire = {
 			base = 0
+			modifier = {
+				add = 25
+				ROOT = { has_opinion = { target = PREV value < 0 } }
+			}
+			modifier = {
+				add = 25
+				ROOT = { has_opinion = { target = PREV value < -25 } }
+			}
+			modifier = {
+				add = 50
+				ROOT = { has_opinion = { target = PREV value < -50 } }
+			}
+			modifier = {
+				add = 100
+				ROOT = { has_war_with = PREV }
+			}
+			modifier = {
+				add = 50
+				ROOT = {
+					is_in_faction = yes
+					PREV = {
+						is_in_faction = yes
+						NOT = { is_in_faction_with = ROOT }
+					}
+				}
+			}
+			modifier = {
+				add = 75
+				ROOT = {
+					has_an_energy_deficit = yes
+					NOT = { has_country_flag = energy_load_sharing_recipient }
+				}
+			}
+		}
+	}
+
+	# Purchase Reactor-Grade Material
+	purchase_reactor_grade_material = {
+		visible = {
+			is_in_array = { global.enrichment_countries = THIS.id }
+			THIS = {
+				NOT = { has_war_with = ROOT }
+				NOT = {
+					any_allied_country = {
+						has_war_with = ROOT
+					}
+				}
+			}
+		}
+		selectable = {
+			ROOT = {
+				has_nuclear_reactors = yes
+			}
+			THIS = {
+				has_enrichment_facilities = yes
+				has_reactor_material_stockpile = yes
+			}
+			custom_trigger_tooltip = {
+				tooltip = recently_purchased_reactor_material_tt
+				ROOT = {
+					NOT = { has_country_flag = recently_purchased_reactor_material_from_@PREV }
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = pending_reactor_material_offer_tt
+				THIS = {
+					NOT = { has_country_flag = pending_reactor_material_offer_from_@ROOT }
+				}
+			}
+			ERI_is_not_transitional_government = yes
+		}
+
+		cost = 25
+		requires_acceptance = yes
+		show_acceptance_on_action_button = yes
+		icon = 24
+
+		send_description = PURCHASE_REACTOR_GRADE_MATERIAL_DESC
+
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect purchase_reactor_grade_material"
+			THIS = {
+				set_country_flag = { flag = pending_reactor_material_offer_from_@ROOT days = 90 value = 1 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action purchase_reactor_grade_material"
+			THIS = {
+				set_temp_variable = { change_resource = -5000 }
+				change_reactor_grade_material_effect = yes
+				set_temp_variable = { treasury_change = 4 }
+				modify_treasury_effect = yes
+				clr_country_flag = pending_reactor_material_offer_from_@ROOT
+			}
+			ROOT = {
+				set_temp_variable = { change_resource = 5000 }
+				change_reactor_grade_material_effect = yes
+				set_temp_variable = { treasury_change = -4 }
+				modify_treasury_effect = yes
+				set_country_flag = { flag = recently_purchased_reactor_material_from_@PREV days = 90 value = 1 }
+			}
+		}
+		reject_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect purchase_reactor_grade_material"
+			THIS = {
+				clr_country_flag = pending_reactor_material_offer_from_@ROOT
+			}
+		}
+
+		accept_title = PURCHASE_REACTOR_GRADE_MATERIAL_ACCEPT_TITLE
+		accept_description = PURCHASE_REACTOR_GRADE_MATERIAL_ACCEPT_DESC
+		reject_title = PURCHASE_REACTOR_GRADE_MATERIAL_REJECT_TITLE
+		reject_description = PURCHASE_REACTOR_GRADE_MATERIAL_REJECT_DESC
+
+		ai_acceptance = {
+			base_purchase_reactor_grade = {
+				base = -10
+			}
+			surplus_production_condition = {
+				base = 0
+				modifier = {
+					add = 15
+					check_variable = { nuclear_reactor_fuel_production > nuclear_fuel_consumption }
+				}
+				modifier = {
+					add = -25
+					NOT = { check_variable = { nuclear_reactor_fuel_production > nuclear_fuel_consumption } }
+				}
+			}
+			opinion_condition = {
+				base = 0
+				modifier = {
+					set_temp_variable = { opinion_calculator = opinion@ROOT }
+					multiply_temp_variable = { opinion_calculator = 0.1 }
+					add = opinion_calculator
+				}
+			}
+			condition_six = {
+				base = 0
+				modifier = {
+					add = 10
+					is_in_faction_with = ROOT
+				}
+			}
+			condition_four = {
+				base = 0
+				modifier = {
+					add = 10
+					ROOT = { has_idea = NATO_member }
+					has_idea = NATO_member
+				}
+			}
+			csto_member_condition = {
+				base = 0
+				modifier = {
+					add = 10
+					ROOT = { has_idea = CSTO_member }
+					has_idea = CSTO_member
+				}
+			}
+			geopolitical_rivals_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					OR = {
+						AND = {
+							original_tag = CHI
+							ROOT = { original_tag = USA }
+						}
+						AND = {
+							original_tag = USA
+							ROOT = { original_tag = CHI }
+						}
+						AND = {
+							original_tag = CHI
+							ROOT = { original_tag = TAI }
+						}
+						AND = {
+							original_tag = TAI
+							ROOT = { original_tag = CHI }
+						}
+						AND = {
+							original_tag = JAP
+							ROOT = { original_tag = CHI }
+						}
+						AND = {
+							original_tag = CHI
+							ROOT = { original_tag = JAP }
+						}
+					}
+				}
+				modifier = {
+					add = -15
+					OR = {
+						AND = {
+							original_tag = SOV
+							ROOT = { has_idea = NATO_member }
+						}
+						AND = {
+							has_idea = NATO_member
+							ROOT = { original_tag = SOV }
+						}
+						AND = {
+							original_tag = FRA
+							ROOT = { original_tag = SOV }
+						}
+						AND = {
+							original_tag = SOV
+							ROOT = { original_tag = FRA }
+						}
+					}
+				}
+			}
+			war_condition = {
+				base = 0
+				modifier = {
+					add = -200
+					has_war = yes
+				}
+			}
+		}
+
+		ai_desire = {
+			base = 0
+			modifier = {
+				add = 50
+				ROOT = { check_variable = { var_reactor_material_stockpile < 5000 } }
+			}
+			modifier = {
+				add = 25
+				ROOT = { check_variable = { var_reactor_material_stockpile < 2500 } }
+			}
+			modifier = {
+				add = 10
+				ROOT = { has_opinion = { target = PREV value > 50 } }
+			}
+			modifier = {
+				add = 15
+				ROOT = { has_opinion = { target = PREV value > 100 } }
+			}
+			modifier = {
+				add = 10
+				is_in_faction_with = ROOT
+			}
+			modifier = {
+				add = 5
+				ROOT = { has_idea = NATO_member }
+				has_idea = NATO_member
+			}
+			modifier = {
+				add = 5
+				ROOT = { has_idea = CSTO_member }
+				has_idea = CSTO_member
+			}
+			modifier = {
+				factor = 0.5
+				ROOT = { ai_has_minor_economic_problems = yes }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { ai_has_moderate_economic_problems = yes }
+			}
+			modifier = {
+				add = -200
+				ROOT = {
+					set_temp_variable = { nuclear_fuel_consumption_tmp = nuclear_fuel_consumption }
+					multiply_temp_variable = { nuclear_fuel_consumption_tmp = 10 }
+					check_variable = { var_reactor_material_stockpile > nuclear_fuel_consumption_tmp }
+				}
+			}
 		}
 	}
 
@@ -2122,6 +2506,64 @@ scripted_diplomatic_actions = {
 
 		ai_desire = {
 			base = 0
+			modifier = {
+				add = 10
+				ROOT = { has_opinion = { target = PREV value < -25 } }
+			}
+			modifier = {
+				add = 15
+				ROOT = { has_opinion = { target = PREV value < -50 } }
+			}
+			modifier = {
+				add = 25
+				ROOT = { has_opinion = { target = PREV value < -75 } }
+			}
+			modifier = {
+				add = 50
+				ROOT = { has_opinion = { target = PREV value < -100 } }
+			}
+			modifier = {
+				add = 100
+				ROOT = { has_war_with = PREV }
+			}
+			modifier = {
+				add = 50
+				ROOT = {
+					is_in_faction = yes
+					PREV = {
+						is_in_faction = yes
+						NOT = { is_in_faction_with = ROOT }
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				is_in_faction_with = ROOT
+			}
+			modifier = {
+				factor = 0
+				is_subject_of = ROOT
+			}
+			modifier = {
+				factor = 0
+				ROOT = { is_subject_of = PREV }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { has_military_access_to = PREV }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { gives_military_access_to = PREV }
+			}
+			modifier = {
+				factor = 0.5
+				ROOT = { ai_has_minor_economic_problems = yes }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { ai_has_moderate_economic_problems = yes }
+			}
 		}
 	}
 
