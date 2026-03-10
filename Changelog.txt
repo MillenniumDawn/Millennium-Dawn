@@ -79,6 +79,16 @@ v2.0.0
   - [SIN] Increased the year count from 2004 to 2006 for the "Head of the Tigers" achievement
 
  AI:
+  - Added AI desire logic to negotiate_operative_release: base 15, opinion/faction/power rank bonuses, PP gating, interest rate kill switch
+  - Added AI desire logic to enforce_peace_option: great/super power bonus, faction/subject/opinion bonuses, PP gate, war kill switch
+  - Added AI desire logic to propose_energy_load_sharing: surplus check, faction/subject/opinion/government bonuses, PP gating
+  - Added AI desire logic to request_energy_load_sharing: base 25 (urgent), faction/overlord/opinion/government bonuses, PP gating
+  - Added AI desire logic to cancel_energy_load_sharing: negative opinion tiers, war/enemy faction bonuses, own energy deficit trigger
+  - Enhanced AI desire for purchase_reactor_grade_material: added second urgency tier, tiered opinion, faction/NATO/CSTO bonuses, PP gating
+  - Added AI desire logic to close_embassy_action: tiered negative opinion, war/enemy faction bonuses, faction/subject kill switches, PP gating
+  - Removed outdated TODO comment from negotiate_operative_release
+  - Added AI desire logic to all 6 satellite access request actions (request_mil/civ_gnss/com/spy_access): +100 to request from friends, -100 to avoid requesting from foes, +50 bonus when provider has a strictly superior system tier
+  - Added explicit base = 0 to all 6 offer_* and 6 revoke_* satellite actions for consistency with the rest of the codebase
   - Added employment-based staffing triggers (can_staff_an_industrial_complex, can_staff_an_arms_industry, can_staff_an_dockyard, can_staff_an_offices) to prevent AI from taking construction focuses when it cannot staff the resulting building
   - Applied staffing triggers to 9 generic focus tree construction focuses (civilian factories, military factories, dockyards)
   - [SER] Applied staffing triggers to 17 construction focuses (10 civilian, 5 military, 3 offices)
@@ -271,6 +281,12 @@ v2.0.0
   - Electricity Infrastructure buildings had some stat changes
 
  Bugfix:
+  - Fixed reopen embassy accept description incorrectly saying "rejected" instead of "accepted" (copy-paste bug)
+  - Fixed duplicate political power modifiers in propose_mutual_investment_treaty ai_desire being applied twice
+  - Removed dead ai_acceptance block from cancel_subsidies_to_subject (action has requires_acceptance = no)
+  - [ERI] Added missing ERI_is_not_transitional_government check to propose_subsidies_to_subject and enforce_peace_option diplomatic actions
+  - Fixed purchase_reactor_grade_material reject log format to be consistent with other diplomatic actions
+  - Added missing localisation keys for close_embassy_action accept/reject titles and descriptions
   - [ISR] Fixed liberal leader selection logic preventing Yair Lapid from ever appearing - NOT block incorrectly checked all five party flags as a group instead of individually, causing Yitzhak Mordechai to always trigger first
   - Fixed cyber warfare operations not clearing the target attack flag on mission failure, permanently blocking future operations against that country
   - Fixed UN vote influence (both GA and SC) showing effects applying to the player instead of the target country, caused by incorrect scope resolution of THIS.id in scripted GUI dynamic list effects
@@ -449,6 +465,7 @@ v2.0.0
   - Fixed Unobtainable trait for Cugir MIO reducing to require only 2 traits
 
  Content:
+  - Converted reactor-grade material purchase from targeted decision to scripted diplomatic action with full AI acceptance logic and proper accept/reject flow
   - NEW TREES: United Kingdom
   - Expanded the Technology Tree untill 2080
   - 50 new Special Projects
@@ -613,6 +630,8 @@ v2.0.0
   - Added Gamerule to hide obsolete paths in the tree. The available trees of having this will be expanded
 
  Localization:
+  - Added localisation for the new reactor-grade material purchase diplomatic action (titles, descriptions, tooltips, AI condition labels)
+  - Removed obsolete localisation for old reactor-grade material decision and event chain (energy.1, energy.2, energy.3)
   - [MNT] Removed 3 unused custom tooltip keys for the Port of Bar dynamic modifier (MNT_port_bar_start_tt, MNT_port_bar_change_tt, MNT_port_bar_pirate_tt)
   - Adjusted some of the wording in the Serbia joins the United Nation event so it doesn't say Yugoslavia when Serbia still exists
   - Fixed all 148 missing or placeholder descriptions in the Georgian focus tree (Issue #149)
@@ -645,6 +664,7 @@ v2.0.0
   - Removed junk map modes that were lingering in the files and not adding anything
 
  Performance:
+  - Replaced reactor-grade material targeted decision and event chain with a single diplomatic action, eliminating per-country visibility checks and event round-trips
   - Converted more add AI strategy to save performance in the long term and reduce the save games
   - Optimized some early European Union initialization to be more performant in the early game when loading histories
   - Refactored the power ranking system so it's 33% faster on the weekly ticks to improve tick speed
