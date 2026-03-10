@@ -1,8 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./src/**/*.{astro,ts,tsx,md,mdx}",
-  ],
   theme: {
     extend: {
       colors: {
