@@ -1,25 +1,6 @@
-# HOI4 Data Structures — Comprehensive Reference
+# HOI4 Data Structures — Full Reference
 
 For full lists of effects, triggers, modifiers, and dynamic variables, see the corresponding files in `resources/documentation/`.
-
----
-
-## Scope References
-
-These keywords refer to countries/states relative to the current execution context:
-
-| Keyword      | Meaning                                                                     |
-| ------------ | --------------------------------------------------------------------------- |
-| `THIS`       | The current scope (usually implicit; rarely written explicitly)             |
-| `ROOT`       | The original scope at the start of the block (event, focus, decision, etc.) |
-| `PREV`       | The previous scope before the most recent scope change                      |
-| `FROM`       | The sender scope (used in events: `FROM` is the event sender)               |
-| `OWNER`      | The owner of the current state scope                                        |
-| `CONTROLLER` | The controller of the current state scope                                   |
-| `OCCUPIED`   | The occupied country in the current state scope                             |
-| `CAPITAL`    | The capital state of the current country scope                              |
-
-`PREV` chains: inside a nested scope, `PREV` = the immediate prior scope, `PREV.PREV` = the one before that.
 
 ---
 
