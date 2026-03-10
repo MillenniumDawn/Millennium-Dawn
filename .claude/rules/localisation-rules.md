@@ -19,7 +19,7 @@
 - **Be concise.** Remove filler words and redundant phrasing. Prefer shorter sentences.
 - **No excessive hyphenation.** Only hyphenate compound modifiers before a noun (e.g., "pro-Western government"), not elsewhere.
 - **No ellipsis abuse.** Do not use `...` in descriptions or tooltips.
-- Capitalise proper nouns, party names, ideology group names, and in-game concepts (e.g., Political Power, Stability).
+- Capitalize proper nouns, party names, ideology group names, and in-game concepts (e.g., Political Power, Stability).
 - Do not use all-caps for emphasis; use in-game formatting codes instead if needed (e.g., `£icon`, `§Y...§!`).
 
 ## Subideology Localisation Format
@@ -33,7 +33,6 @@ TAG.ideology_desc: "(Dominant Ideology) - Party Name (Language: Native Name, Lan
 ```
 
 Rules:
-
 - **Short name** (`TAG.ideology`): icon + abbreviation in parentheses + dash + English party name.
 - **Icon** (`TAG.ideology_icon`): icon reference only, no extra text.
 - **Description** (`TAG.ideology_desc`):
@@ -63,10 +62,10 @@ MOR.conservatism_desc: "(Classic Liberalism) - National Rally of Independents (A
 
 ## Common Mistakes to Avoid
 
-| Wrong                                                      | Correct                          |
-| ---------------------------------------------------------- | -------------------------------- |
-| `key:0 "value"`                                            | `key: "value"`                   |
-| `...` trailing sentences                                   | End with a full stop             |
-| `Pro-Western` mid-sentence as a standalone noun            | `pro-Western` (adjective)        |
-| Repeating the same sentence across multiple ideology descs | Unique body per entry            |
-| Empty or placeholder strings like `"TODO"`                 | Always provide a complete string |
+| Wrong | Correct |
+|---|---|
+| `key:0 "value"` | `key: "value"` |
+| `...` trailing sentences | End with a full stop |
+| `Pro-Western` mid-sentence as a standalone noun | `pro-Western` (adjective) |
+| Repeating the same sentence across multiple ideology descs | Unique body per entry |
+| Empty or placeholder strings like `"TODO"` | Always provide a complete string |
