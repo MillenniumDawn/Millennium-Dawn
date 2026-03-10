@@ -108,9 +108,8 @@ focus_tree = {
 7.  prerequisite / mutually_exclusive
 8.  search_filters
 9.  available / bypass / cancel
-10. will_lead_to_war_with       (only if giving war goal)
-11. select_effect / completion_reward / bypass_effect
-12. ai_will_do                  (ALWAYS LAST)
+10. completion_reward / select_effect / bypass_effect
+11. ai_will_do                  (ALWAYS LAST)
 ```
 
 ### Best Practices
@@ -150,9 +149,6 @@ focus = {
 	# bypass = { }
 	# cancel = { }
 
-	# will_lead_to_war_with = TAG  # Only if granting a war goal
-	# complete_tooltip = { }        # Only if always-visible tooltip is needed
-	# select_effect = { }
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SER_free_market_capitalism"
 		add_ideas = SER_free_market_idea
