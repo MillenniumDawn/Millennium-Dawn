@@ -43,9 +43,11 @@ These decisions are available to you as Japan, where you have the power as the p
 The most other decisions you have in power is the aggression of China. If China is increasing its Chinese Agression, you will unlock more decisions to raise your interpretation level.
 
 <img src="/assets/images/dev-diaries/053/image-5.png" alt="Effect of Chinese aggression" class="mx-auto my-6 max-w-full" />
+
 Also the choices North-Korea and Russia are making, will give you ways to change the BoP:
 
 <img src="/assets/images/dev-diaries/053/image-6.png" alt="Decisions from NK and Russia" class="mx-auto my-6 max-w-full" />
+
 In the political tree we also will have focusses which will help you, in combating Article 9. Maybe even your USA friend can help (Donald Trump WILL push this button):
 
 <img src="/assets/images/dev-diaries/053/image-7.png" alt="Political focus tree screenshot" class="mx-auto my-6 max-w-full" />
@@ -56,12 +58,15 @@ Now don't worry. As Japan you still are able to work on your army.
 With Article 9. You have access to these focusses:
 
 <img src="/assets/images/dev-diaries/053/image-8.png" alt="Military focus branch pre-Article 9" class="mx-auto my-6 max-w-full" />
+
 These will help improve your equipment and defense capabilities mostly. Your goal is to get to the 'Establish the Defense Transition Committee'' as fast as possible. This will help you get rid of the BoP:
 
 <img src="/assets/images/dev-diaries/053/image-9.png" alt="Defense Transition Committee focus" class="mx-auto my-6 max-w-full" />
+
 These will unlock missions which autocompletes to improve your article 9. This reflects that a constitution change just can't be done in 70 days and your whole military is ready to fight in the world.
 
 <img src="/assets/images/dev-diaries/053/image-10.png" alt="Mission auto‑completion example" class="mx-auto my-6 max-w-full" />
+
 Once the negative penalties are gone. Its time for Japan to abandon Article 9 and become a new military power in Asia
 
 <img src="/assets/images/dev-diaries/053/image-11.png" alt="Post‑Article 9 focus tree" class="mx-auto my-6 max-w-full" />
@@ -71,10 +76,12 @@ Once the negative penalties are gone. Its time for Japan to abandon Article 9 an
 When you complete the Formalize National Defense Capabilities, you unlock the full potential of the Japanese Military Focus Tree. To compensate for your struggle, the bonuses you gain will be a bit stronger then you would expect normally..
 
 <img src="/assets/images/dev-diaries/053/image-12.png" alt="Post‑Article 9 bonuses" class="mx-auto my-6 max-w-full" />
+
 When you have completed the Japanese Military Branch. You have a very solid military at your disposale and even Japan gets into space (sorry Poland).
 Remember your Article 9 modifier? Well at the end it becomes like this:
 
 <img src="/assets/images/dev-diaries/053/image-13.png" alt="Final Article 9 modifier" class="mx-auto my-6 max-w-full" />
+
 As you can see. Those rewards are powerful. Also via decisions and space focusses you unlock other bonuses which will help taking back the tide and not being a sitting duck.
 
 And with that, that's all for now. I have shared our plan to the Military of Japan, but now it's your turn to tell us what you think, and we're looking forward to hearing your feedback. Matane!

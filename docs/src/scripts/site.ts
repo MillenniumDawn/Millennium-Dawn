@@ -38,6 +38,12 @@ async function bootstrapPageAsync(): Promise<void> {
   cleanups.push(headerNavModule.initHeaderHeightSync());
   cleanups.push(headerNavModule.initMobileNavigation());
   cleanups.push(uiHelpersModule.initBackToTop());
+
+  if (document.body.dataset.page === "dev-diary") {
+    const contentMediaModule = await import("../features/content-media/model");
+    if (runId !== pageRunId) return;
+    cleanups.push(contentMediaModule.initContentMediaLightbox());
+  }
 }
 
 function bootstrapPage(): void {
