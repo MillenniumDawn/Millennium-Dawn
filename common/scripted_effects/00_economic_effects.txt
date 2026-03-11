@@ -563,6 +563,13 @@ quarterly_inflation_calculation = {
 	subtract_from_temp_variable = { inflation_rate_adjuster = gdpc_growth_inflation_adjuster }
 	log = "Post Tax Rate Inflation Adjusted [?inflation_rate_adjuster]"
 
+	#CB policy rate suppresses inflation — higher rate = tighter money = less inflationary pressure
+	#Coefficient 0.003: a 5% rate reduces the quarterly adjuster by 0.015 (~1.5pp per quarter)
+	set_temp_variable = { cb_rate_infl_adj = cb_policy_rate }
+	multiply_temp_variable = { cb_rate_infl_adj = 0.003 }
+	subtract_from_temp_variable = { inflation_rate_adjuster = cb_rate_infl_adj }
+	log = "Post CB Rate Inflation Adjusted [?inflation_rate_adjuster]"
+
 	#Adjust inflation further by the base GDP/C Amount
 	#Take the GDP/C and multiply it by the growth rate
 	#This means that insanely high growth can springboard inflation, but slower / steadier growth raises it in a controlled manner
@@ -674,6 +681,27 @@ quarterly_inflation_calculation = {
 		log = "[GetDateText]: [THIS.GetName]: Inflation Update: Current Inflation Rate: [?THIS.inflation_rate_var|%] - Last Four Quarters: [?THIS.year_quarter_inflation_tracker^0|%] - [?THIS.year_quarter_inflation_tracker^1|%] - [?THIS.year_quarter_inflation_tracker^2|%] - [?THIS.year_quarter_inflation_tracker^3|%]"
 	}
 	calculate_inflation_effects = yes
+
+	#AI-only: adjust cb_policy_rate once per quarter based on current inflation level
+	#Uses the same 60-day cooldown flag as the player GUI buttons
+	if = { limit = { is_ai = yes
+	                 NOT = { has_country_flag = temp_cb_rate_changed } }
+		if = { limit = { check_variable = { inflation_rate_var > 0.10 }
+		                 check_variable = { cb_policy_rate < 20 } }
+			add_to_variable = { cb_policy_rate = 1 }
+			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+		}
+		else_if = { limit = { check_variable = { inflation_rate_var > 0.05 }
+		                      check_variable = { cb_policy_rate < 15 } }
+			add_to_variable = { cb_policy_rate = 1 }
+			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+		}
+		else_if = { limit = { check_variable = { inflation_rate_var < 0.01 }
+		                      check_variable = { cb_policy_rate > 1 } }
+			subtract_from_variable = { cb_policy_rate = 1 }
+			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+		}
+	}
 }
 
 calculate_inflation_effects = {
