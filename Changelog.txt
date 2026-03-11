@@ -88,6 +88,12 @@ v2.0.0
   - [NKO] Should pursue a more historical path when historical is on
   - Updated naval AI focus priorities for USA, Russia, India, and generic AI profiles to use the consolidated CAT_carrier and CAT_helicopter_operators technology categories
   - [NKO] Should pursue a more historical path when historical is on
+  - Improved AI raid targeting across all raid types: AI no longer raids allies, subjects, influenced nations, or nations it's heavily indebted to
+  - AI no longer initiates raids at low threat levels unless at war or retaliating
+  - AI date gate for raids moved from 2002 to 2001
+  - AI no longer demands reparations from nations with very negative opinion, and limits demands to once per year
+  - AI no longer pays reparations more than once per year, or to/from nations with deeply hostile relations
+  - AI no longer raids allied nations via naval raids (previously only reduced by 60%)
 
  Balance:
   - [LIC] Reduced focus times from 70 days (cost 10) to 55 days (cost 7.86) for 19 Liechtenstein focuses
@@ -205,6 +211,8 @@ v2.0.0
   - Removed some Naval Headquarters and replaced then with Naval Supply Hubs to more gameplay friendly headquarters
   - Increased MIO Policy cost and the level requierments
   - Electricity Infrastructure buildings had some stat changes
+  - Lowered coup influence threshold from 90% to 50% to match existing is_top_fifty_influencer trigger
+  - Increased reparation payment cap from 150 to 200
 
  Bugfix:
   - Fixed reopen embassy accept description incorrectly saying "rejected" instead of "accepted" (copy-paste bug)
@@ -228,6 +236,7 @@ v2.0.0
   - Fixed influence monthly exploit - auto-influence now applies cooldown on activation to prevent abuse of late-month toggle (Issue #378)
   - Fixed AI investment proposals intermittently targeting wrong states by adding a pending-proposal guard flag to prevent the weekly pulse from overwriting staging variables before the target responds (Issue #227)
   - Fixed investment exploit allowing players to bypass treasury checks while game is paused by adding runtime validation (Issue #374)
+  - Fixed unescaped quotes in raid event descriptions (MD_raid.2, MD_raid.4, MD_raid.5)
   - [JAP] Fixed missing interface files for Japan in the Tank Designer - created new _jap.gui files for all tank chassis types using USA layout (Issue #349)
   - Fixed ship experience gain modifiers not showing ship type in tooltips (Issue #354)
   - All naval unit experience modifiers now display their ship type (e.g., "Destroyer Training Experience Gain")
@@ -499,6 +508,8 @@ v2.0.0
   - If another coalition member is the larger party they become the ruling party and the others shift to the coalition to show popularity shifts (Issue #692)
   - [SMA] Added 30 new equipment purchase events (SMA_equipment.1–30) for buying weapons, vehicles, artillery, and support equipment from Italy and Spain
   - [SMA] Added SMA_equipment namespace and localisation for all equipment purchase events
+  - Added 3 new drone raid types: Drone Airfield Strike, Drone Power Grid Strike, and Drone Rocket Site Strike
+  - Added reparation demand and payment cooldown flags (once per year each) to prevent reparation spam
 
  Database:
   - Land drone technologies now properly give the Ranger Light Recce company recon bonuses like all other recon units
@@ -574,6 +585,7 @@ v2.0.0
   - Removed CAT_slbm and CAT_conventional_warhead localisation keys
   - [SMA] Added localisation for 30 equipment purchase events (SMA_equipment.1–30)
   - [SMA] Fixed title casing for combat experience national spirit names (SMA_no_wars_i/ii/iii)
+  - Added localisation for new drone raid types (airfield, power grid, rocket site)
 
  Map:
   - HMNB Clyde is now properly represented with a Level 8 Naval Base + Naval Headquarters for the UK's Nuclear Submarines deployment
@@ -622,6 +634,10 @@ v2.0.0
   - Removed some dynamic modifiers from being present on game start if they are not needed
   - Removed set_all_missile_tech scripted effect from on_startup to improve game start load time
   - Added scripted triggers controls_a_state_with_hydroelectric and controls_a_state_with_geothermal to replace inline any_controlled_state calls in focus and AI conditions
+  - Extracted duplicate AA defence calculation into reusable scripted effect (calculate_raid_aa_defense)
+  - Extracted duplicate plane loss finalization into reusable scripted effect (finalize_raid_plane_losses)
+  - Extracted duplicate raid availability and show_target triggers into 6 reusable scripted triggers
+  - Refactored influence coup GUI to use is_top_fifty_influencer scripted trigger instead of inline variable checks
 
  Quality of Life:
   - You can now push your Election Threshold to 0% instead of the minimum 1% in the Subideology screen
