@@ -262,10 +262,171 @@ export const SEARCH_INDEX_ROOT_CLASS = [
   "gap-md",
 ].join(" ");
 
+export const SEARCH_INDEX_PAGINATION_CLASS = [
+  "mt-sm",
+  "grid",
+  "gap-sm",
+  "rounded-lg",
+  "border",
+  "border-border-light",
+  "bg-[linear-gradient(180deg,color-mix(in_srgb,var(--color-surface)_96%,transparent),color-mix(in_srgb,var(--color-primary-light)_22%,var(--color-surface)))]",
+  "p-md",
+  "shadow-sm",
+  "phone:gap-3",
+  "phone:p-[0.85rem]",
+].join(" ");
+
+export const SEARCH_INDEX_PAGINATION_SUMMARY_CLASS = [
+  "flex",
+  "flex-wrap",
+  "items-center",
+  "justify-between",
+  "gap-x-sm",
+  "gap-y-xs",
+  "phone:flex-col",
+  "phone:items-stretch",
+].join(" ");
+
+export const SEARCH_INDEX_PAGINATION_STATUS_CLASS = [
+  "inline-flex",
+  "min-h-8",
+  "items-center",
+  "justify-center",
+  "whitespace-nowrap",
+  "rounded-full",
+  "bg-[color-mix(in_srgb,var(--color-primary-light)_72%,var(--color-surface))]",
+  "px-[0.7rem]",
+  "py-1",
+  "text-[0.92rem]",
+  "font-bold",
+  "text-text",
+  "phone:justify-center",
+  "phone:text-center",
+].join(" ");
+
+export const SEARCH_INDEX_PAGINATION_RESULTS_CLASS = [
+  "text-[0.88rem]",
+  "text-text-secondary",
+  "phone:text-center",
+].join(" ");
+
+export const SEARCH_INDEX_PAGINATION_CONTROLS_CLASS = [
+  "grid",
+  "grid-cols-[auto_1fr_auto]",
+  "items-center",
+  "gap-sm",
+  "phone:grid-cols-1",
+].join(" ");
+
+export const SEARCH_INDEX_PAGINATION_PAGES_CLASS = [
+  "flex",
+  "min-w-0",
+  "flex-wrap",
+  "items-center",
+  "justify-center",
+  "gap-[0.35rem]",
+  "phone:order-[-1]",
+].join(" ");
+
+export const SEARCH_INDEX_PAGINATION_NAV_BUTTON_CLASS = [
+  "min-w-[7.5rem]",
+  "justify-center",
+  "whitespace-nowrap",
+  "phone:w-full",
+  "phone:min-w-0",
+].join(" ");
+
+export const SEARCH_INDEX_PAGINATION_PAGE_BUTTON_CLASS = [
+  "inline-flex",
+  "min-h-10",
+  "min-w-10",
+  "items-center",
+  "justify-center",
+  "rounded-full",
+  "border",
+  "border-border",
+  "bg-surface",
+  "px-[0.65rem]",
+  "py-[0.35rem]",
+  "text-[0.92rem]",
+  "font-bold",
+  "text-text-secondary",
+  "shadow-sm",
+  "transition-[transform,border-color,background-color,color,box-shadow]",
+  "duration-[var(--transition-speed)]",
+  "ease-[var(--transition-fn)]",
+  "hover:-translate-y-px",
+  "hover:border-primary",
+  "hover:text-primary",
+  "aria-[current=page]:border-primary",
+  "aria-[current=page]:bg-primary",
+  "aria-[current=page]:text-text-inverse",
+  "aria-[current=page]:shadow-md",
+  "aria-[current=page]:hover:translate-y-0",
+  "aria-[current=page]:hover:text-text-inverse",
+  "focus-visible:[outline:var(--focus-ring-width)_solid_var(--color-primary)]",
+  "focus-visible:[outline-offset:2px]",
+  "phone:min-h-[2.35rem]",
+  "phone:min-w-[2.35rem]",
+  "phone:px-[0.55rem]",
+].join(" ");
+
+export const SEARCH_INDEX_PAGINATION_ELLIPSIS_CLASS = [
+  "inline-flex",
+  "min-h-10",
+  "min-w-10",
+  "items-center",
+  "justify-center",
+  "rounded-full",
+  "px-[0.65rem]",
+  "py-[0.35rem]",
+  "text-[0.92rem]",
+  "font-bold",
+  "text-text-muted",
+  "phone:min-h-[2.35rem]",
+  "phone:min-w-[2.35rem]",
+  "phone:px-[0.55rem]",
+].join(" ");
+
 export const SEARCH_INDEX_LABEL_CLASS = [
   "text-[0.95rem]",
   "font-semibold",
   "text-text-secondary",
+].join(" ");
+
+export const TRANSLATION_LIST_CLASS = [
+  "m-0",
+  "flex",
+  "list-none",
+  "flex-wrap",
+  "gap-sm",
+  "p-0",
+].join(" ");
+
+export const TRANSLATION_LINK_CLASS = [
+  "inline-flex",
+  "items-center",
+  "gap-xs",
+  "rounded",
+  "border",
+  "border-border-light",
+  "bg-surface",
+  "px-md",
+  "py-2",
+  "text-[0.875rem]",
+  "font-medium",
+  "text-text-secondary",
+  "no-underline",
+  "shadow-sm",
+  "transition-[transform,border-color,color,box-shadow]",
+  "duration-200",
+  "ease-out",
+  "hover:-translate-y-0.5",
+  "hover:border-primary",
+  "hover:text-primary",
+  "hover:no-underline",
+  "hover:shadow-md",
+  FOCUS_RING_CLASS,
 ].join(" ");
 
 export const SEARCH_INDEX_INPUT_CLASS = [
@@ -289,18 +450,110 @@ export const SEARCH_INDEX_INPUT_CLASS = [
   "focus:ring-primary-light",
 ].join(" ");
 
-export const SEARCH_INDEX_PAGINATION_CLASS = [
-  "mt-sm",
-  "flex",
-  "flex-wrap",
-  "items-center",
-  "gap-sm",
+export const LIGHTBOX_LOCK_BODY_CLASS = [
+  "fixed",
+  "inset-x-0",
+  "top-[var(--lightbox-scroll-top)]",
+  "w-full",
+  "overflow-hidden",
+  "pr-[var(--lightbox-scrollbar-compensation)]",
+  "touch-none",
 ].join(" ");
 
-export const SEARCH_INDEX_STATUS_CLASS = [
-  "min-w-[8.5rem]",
-  "text-[0.95rem]",
-  "text-text-secondary",
+export const LIGHTBOX_TRIGGER_IMAGE_CLASS = [
+  "cursor-zoom-in",
+  "transition-[transform,opacity,box-shadow]",
+  "duration-[var(--transition-speed)]",
+  "ease-[var(--transition-fn)]",
+  "hover:opacity-95",
+  FOCUS_RING_CLASS,
+].join(" ");
+
+export const LIGHTBOX_OVERLAY_CLASS = [
+  "group",
+  "fixed",
+  "inset-0",
+  "z-[4000]",
+  "grid",
+  "place-items-center",
+  "overflow-hidden",
+  "bg-[rgba(10,14,22,0.9)]",
+  "opacity-0",
+  "backdrop-blur-[8px]",
+  "transition-opacity",
+  "duration-[180ms]",
+  "ease-out",
+  "data-[state=open]:opacity-100",
+].join(" ");
+
+export const LIGHTBOX_CLOSE_BUTTON_CLASS = [
+  "absolute",
+  "right-4",
+  "top-4",
+  "z-[2]",
+  "inline-flex",
+  "min-h-11",
+  "min-w-11",
+  "items-center",
+  "justify-center",
+  "rounded-full",
+  "border",
+  "border-[color-mix(in_srgb,var(--color-border-light)_50%,transparent)]",
+  "bg-[color-mix(in_srgb,var(--color-surface)_22%,transparent)]",
+  "text-text-inverse",
+  "shadow-sm",
+  "opacity-0",
+  "[transform:translateY(-0.5rem)_scale(0.96)]",
+  "transition-[transform,opacity,background-color]",
+  "duration-[180ms]",
+  "ease-out",
+  "group-data-[state=open]:opacity-100",
+  "group-data-[state=open]:[transform:translateY(0)_scale(1)]",
+  "hover:bg-[color-mix(in_srgb,var(--color-surface)_30%,transparent)]",
+  FOCUS_RING_CLASS,
+].join(" ");
+
+export const LIGHTBOX_VIEWPORT_CLASS = [
+  "grid",
+  "h-screen",
+  "w-screen",
+  "place-items-center",
+  "overflow-hidden",
+  "p-[clamp(1rem,2vw,2rem)]",
+  "touch-none",
+].join(" ");
+
+export const LIGHTBOX_CONTENT_CLASS = [
+  "grid",
+  "max-h-full",
+  "max-w-full",
+  "place-items-center",
+  "opacity-0",
+  "[transform:scale(0.985)]",
+  "transition-[opacity,transform]",
+  "duration-[180ms]",
+  "ease-out",
+  "will-change-[opacity,transform]",
+  "group-data-[state=open]:opacity-100",
+  "group-data-[state=open]:[transform:scale(1)]",
+  "group-data-[state=closing]:opacity-0",
+  "group-data-[state=closing]:[transform:scale(0.985)]",
+].join(" ");
+
+export const LIGHTBOX_IMAGE_CLASS = [
+  "h-auto",
+  "max-h-[92vh]",
+  "w-auto",
+  "max-w-[min(96vw,1600px)]",
+  "select-none",
+  "object-contain",
+  "[-webkit-user-drag:none]",
+  "[transform:translate3d(0,0,0)_scale(1)]",
+  "[transform-origin:center_center]",
+  "transition-none",
+  "will-change-transform",
+  "group-data-[zoomed=true]:cursor-grab",
+  "group-data-[zoomed=false]:cursor-zoom-out",
 ].join(" ");
 
 export const MARKDOWN_CLASSNAMES = {
@@ -533,6 +786,37 @@ export const TOC_BACKDROP_CLASS = [
   "[.toc-sidebar.is-open_&]:opacity-100",
   "[html.dark-mode_&]:bg-overlay-scrim-60",
   "wide:hidden",
+].join(" ");
+
+export const TOC_TOGGLE_CLASS = [
+  "group",
+  "fixed",
+  "bottom-[calc(var(--space-xl)+60px)]",
+  "left-lg",
+  "z-toc-fab",
+  "flex",
+  "size-12",
+  "items-center",
+  "justify-center",
+  "rounded-full",
+  "border",
+  "border-border",
+  "bg-surface",
+  "text-text",
+  "shadow-sm",
+  "transition-all",
+  "duration-200",
+  "ease-out",
+  "hover:-translate-y-0.5",
+  "hover:border-border",
+  "hover:text-primary",
+  "hover:shadow-md",
+  "active:translate-y-0",
+  "active:scale-95",
+  "data-[nav-hidden=true]:pointer-events-none",
+  "data-[nav-hidden=true]:opacity-0",
+  "wide:hidden",
+  FOCUS_RING_CLASS,
 ].join(" ");
 
 export const TOC_PANEL_CLASS = [

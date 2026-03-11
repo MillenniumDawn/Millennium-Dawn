@@ -75,6 +75,25 @@ function queryDomRefs(sidebar: HTMLElement | null): TocDomRefs | null {
   };
 }
 
+function syncToggleWithHeaderNav(toggle: HTMLElement): Cleanup {
+  const header = document.querySelector<HTMLElement>(".site-header");
+  if (!header) return NOOP;
+
+  const applyState = () => {
+    toggle.dataset.navHidden = header.classList.contains("nav-is-open") ? "true" : "false";
+  };
+
+  const onNavStateChange = () => applyState();
+
+  applyState();
+  header.addEventListener("navstatechange", onNavStateChange);
+
+  return () => {
+    header.removeEventListener("navstatechange", onNavStateChange);
+    toggle.dataset.navHidden = "false";
+  };
+}
+
 function hydrateNav(nav: HTMLElement, content: HTMLElement): { links: HTMLAnchorElement[]; cleanup: Cleanup } | null {
   let links = Array.from(nav.querySelectorAll<HTMLAnchorElement>(TOC_SELECTORS.link));
   let cleanupExpandButtons = NOOP;
@@ -276,6 +295,7 @@ export function initToc(): Cleanup {
 
   const drawer = createTocDrawer(dom, config, setPanelSemantics);
   const cleanupNavDrawerClose = bindCloseDrawerOnNavClick(dom.nav, drawer);
+  const cleanupHeaderNavSync = syncToggleWithHeaderNav(dom.toggle);
   const observerHandle = initTocObserver(registry.headingEntries, registry.entryById, config.scrollOffset, setActive);
   const scrollHandle = initTocScroll(dom.nav, dom.progress, config.scrollOffset);
 
@@ -287,6 +307,7 @@ export function initToc(): Cleanup {
     drawer.cleanup();
     navState.cleanup();
     cleanupNavDrawerClose();
+    cleanupHeaderNavSync();
     setPanelSemantics(false);
   };
 }

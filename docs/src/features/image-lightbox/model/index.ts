@@ -1,3 +1,13 @@
+import {
+  LIGHTBOX_CLOSE_BUTTON_CLASS,
+  LIGHTBOX_CONTENT_CLASS,
+  LIGHTBOX_IMAGE_CLASS,
+  LIGHTBOX_LOCK_BODY_CLASS,
+  LIGHTBOX_OVERLAY_CLASS,
+  LIGHTBOX_TRIGGER_IMAGE_CLASS,
+  LIGHTBOX_VIEWPORT_CLASS,
+} from "@/shared/ui/tailwind";
+
 type Cleanup = () => void;
 
 type Point = {
@@ -13,6 +23,8 @@ const MIN_SCALE = 1;
 const MAX_SCALE = 5;
 const WHEEL_STEP = 0.2;
 const CLOSE_DURATION_MS = 180;
+const SCROLL_TOP_CSS_VAR = "--lightbox-scroll-top";
+const SCROLLBAR_COMPENSATION_CSS_VAR = "--lightbox-scrollbar-compensation";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -60,16 +72,18 @@ function getBaseImageSize(image: HTMLImageElement, viewport: HTMLElement): { wid
 
 function createLightbox() {
   const overlay = document.createElement("div");
-  overlay.className = "image-lightbox";
+  overlay.className = LIGHTBOX_OVERLAY_CLASS;
   overlay.hidden = true;
+  overlay.dataset.state = "closed";
+  overlay.dataset.zoomed = "false";
   overlay.setAttribute("aria-hidden", "true");
   overlay.innerHTML = `
-    <button class="image-lightbox__close" type="button" aria-label="Close image viewer" data-image-lightbox-close>
+    <button class="${LIGHTBOX_CLOSE_BUTTON_CLASS}" type="button" aria-label="Close image viewer" data-image-lightbox-close>
       <span aria-hidden="true">×</span>
     </button>
-    <div class="image-lightbox__viewport" data-image-lightbox-viewport>
-      <div class="image-lightbox__content">
-        <img class="image-lightbox__image" alt="" draggable="false" data-image-lightbox-image />
+    <div class="${LIGHTBOX_VIEWPORT_CLASS}" data-image-lightbox-viewport>
+      <div class="${LIGHTBOX_CONTENT_CLASS}">
+        <img class="${LIGHTBOX_IMAGE_CLASS}" alt="" draggable="false" data-image-lightbox-image />
       </div>
     </div>
   `;
@@ -90,6 +104,7 @@ function createLightbox() {
   let offsetY = 0;
   let activeTrigger: HTMLElement | null = null;
   let closeTimer = 0;
+  let lockedScrollY = 0;
   let dragPointerId: number | null = null;
   let dragLastPoint: Point | null = null;
   let pinchStartDistance = 0;
@@ -141,13 +156,24 @@ function createLightbox() {
     render();
   };
 
+  const lockBody = () => {
+    lockedScrollY = window.scrollY;
+    const scrollbarCompensation = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+    document.body.style.setProperty(SCROLL_TOP_CSS_VAR, `-${lockedScrollY}px`);
+    document.body.style.setProperty(SCROLLBAR_COMPENSATION_CSS_VAR, `${scrollbarCompensation}px`);
+    document.body.classList.add(...LIGHTBOX_LOCK_BODY_CLASS.split(" "));
+  };
+
   const unlockBody = () => {
-    document.body.classList.remove("lightbox-lock");
+    document.body.classList.remove(...LIGHTBOX_LOCK_BODY_CLASS.split(" "));
+    document.body.style.removeProperty(SCROLL_TOP_CSS_VAR);
+    document.body.style.removeProperty(SCROLLBAR_COMPENSATION_CSS_VAR);
+    window.scrollTo({ top: lockedScrollY, left: 0, behavior: "instant" as ScrollBehavior });
   };
 
   const finishClose = () => {
     overlay.hidden = true;
-    overlay.classList.remove("is-open", "is-closing");
+    overlay.dataset.state = "closed";
     overlay.setAttribute("aria-hidden", "true");
     image.removeAttribute("src");
     resetTransform();
@@ -162,10 +188,9 @@ function createLightbox() {
   };
 
   const close = () => {
-    if (overlay.hidden || overlay.classList.contains("is-closing")) return;
+    if (overlay.hidden || overlay.dataset.state === "closing") return;
     clearCloseTimer();
-    overlay.classList.remove("is-open");
-    overlay.classList.add("is-closing");
+    overlay.dataset.state = "closing";
     closeTimer = window.setTimeout(finishClose, CLOSE_DURATION_MS);
   };
 
@@ -175,13 +200,13 @@ function createLightbox() {
     image.src = src;
     image.alt = alt;
     overlay.hidden = false;
-    overlay.classList.remove("is-closing");
+    overlay.dataset.state = "closed";
     overlay.setAttribute("aria-hidden", "false");
-    document.body.classList.add("lightbox-lock");
+    lockBody();
     resetTransform();
 
     requestAnimationFrame(() => {
-      overlay.classList.add("is-open");
+      overlay.dataset.state = "open";
       closeButton.focus();
     });
   };
@@ -344,7 +369,7 @@ export function initImageLightbox(): Cleanup {
     if (image.hasAttribute(BOUND_ATTRIBUTE)) return;
 
     image.setAttribute(BOUND_ATTRIBUTE, "true");
-    image.classList.add("lightbox-enabled-image");
+    image.classList.add(...LIGHTBOX_TRIGGER_IMAGE_CLASS.split(" "));
 
     if (!image.closest("a")) {
       image.tabIndex = 0;
@@ -371,7 +396,7 @@ export function initImageLightbox(): Cleanup {
     cleanups.push(() => {
       image.removeEventListener("click", openImage);
       image.removeEventListener("keydown", onKeyDown);
-      image.classList.remove("lightbox-enabled-image");
+      image.classList.remove(...LIGHTBOX_TRIGGER_IMAGE_CLASS.split(" "));
       image.removeAttribute(BOUND_ATTRIBUTE);
 
       if (image.getAttribute("role") === "button") {
