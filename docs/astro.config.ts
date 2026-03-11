@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import type { AstroUserConfig } from "astro";
 import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
@@ -22,6 +23,11 @@ export default defineConfig({
   trailingSlash: "always",
   integrations: [mdx(), sitemap()],
   vite: {
+    resolve: {
+      alias: {
+        "@": fileURLToPath(new URL("./src", import.meta.url)),
+      },
+    },
     plugins: tailwindPlugins,
   },
   markdown: {

@@ -1,5 +1,5 @@
-import { createDrawer } from "../../../shared/lib/drawer";
-import { readCssMsVar, readCssPxVar, readCssStringVar } from "../../../shared/lib/tokens";
+import { createDrawer } from "@/shared/lib/drawer";
+import { readCssMsVar, readCssPxVar, readCssStringVar } from "@/shared/lib/tokens";
 import {
   TOC_ATTRS,
   TOC_DEFAULTS,

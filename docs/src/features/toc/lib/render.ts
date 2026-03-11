@@ -1,5 +1,5 @@
-import { buildTocTree, type TocHeadingLike, type TocTreeItem } from "../../../shared/lib/toc";
-import { FOCUS_RING_CLASS } from "../../../shared/ui/tailwind";
+import { buildTocTree, type TocHeadingLike, type TocTreeItem } from "@/shared/lib/toc";
+import { FOCUS_RING_CLASS } from "@/shared/ui/tailwind";
 import { TOC_ATTRS, TOC_HEADING_RANGE, TOC_LABELS } from "./config";
 
 function escapeHtml(value: string): string {

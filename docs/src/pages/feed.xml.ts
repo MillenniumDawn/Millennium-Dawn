@@ -1,9 +1,9 @@
 import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
 import { getCollection } from "astro:content";
-import { withBase } from "../lib/urls";
-import { SITE_DESCRIPTION, SITE_FALLBACK_ORIGIN, SITE_TITLE } from "../shared/config/site";
-import { getChangelogPath, getDevDiaryPath } from "../lib/content-routes";
+import { withBase } from "@/lib/urls";
+import { SITE_DESCRIPTION, SITE_FALLBACK_ORIGIN, SITE_TITLE } from "@/shared/config/site";
+import { getChangelogPath, getDevDiaryPath } from "@/lib/content-routes";
 
 function mapItem(
   title: string,

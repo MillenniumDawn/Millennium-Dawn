@@ -1,4 +1,4 @@
-import { applyThemePreference, initDarkModeToggle } from "../features/theme/model";
+import { applyThemePreference, initDarkModeToggle } from "@/features/theme/model";
 
 type Cleanup = () => void;
 
@@ -29,8 +29,8 @@ async function bootstrapPageAsync(): Promise<void> {
 
   const runId = pageRunId;
   const [headerNavModule, uiHelpersModule] = await Promise.all([
-    import("./modules/header-nav"),
-    import("./modules/ui-helpers"),
+    import("@/scripts/modules/header-nav"),
+    import("@/scripts/modules/ui-helpers"),
   ]);
 
   if (runId !== pageRunId) return;
@@ -40,7 +40,7 @@ async function bootstrapPageAsync(): Promise<void> {
   cleanups.push(uiHelpersModule.initBackToTop());
 
   if (document.body.dataset.page === "dev-diary") {
-    const contentMediaModule = await import("../features/content-media/model");
+    const contentMediaModule = await import("@/features/content-media/model");
     if (runId !== pageRunId) return;
     cleanups.push(contentMediaModule.initContentMediaLightbox());
   }

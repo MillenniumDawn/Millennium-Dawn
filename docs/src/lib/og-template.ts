@@ -1,7 +1,7 @@
 import type { OgPageData } from "./og-pages";
 import type { BrandingAssets } from "./og-assets";
 import { OG_FONT_FAMILY } from "./og-assets";
-import { SITE_BRAND_TAGLINE, SITE_ORGANIZATION_NAME, SITE_TITLE } from "../shared/config/site";
+import { SITE_BRAND_TAGLINE, SITE_ORGANIZATION_NAME, SITE_TITLE } from "@/shared/config/site";
 
 const OG_THEME = {
   overlayGradient:
