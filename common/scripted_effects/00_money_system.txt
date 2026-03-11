@@ -103,6 +103,8 @@ update_money_dirty_variable = {
 		force_update_map_mode = { mapmode = gdp_c_map_mode }
 		force_update_map_mode = { mapmode = energy_consumption_map_mode }
 		force_update_map_mode = { mapmode = productivity_map_mode }
+
+		md_check_research_slot_alert = yes
 	}
 }
 
@@ -122,8 +124,8 @@ expense_modifier_calculations = {
 # Purpose: Calculates the tax rate of a given nation where you flow in the corporate_tax_rate of a given nation
 calculate_tax_rate = {
 	hidden_effect = {
-		if = { limit = { NOT = { has_dynamic_modifier = { modifier = corporate_tax_consumer_goods_hit } } }
-			add_dynamic_modifier = { modifier = corporate_tax_consumer_goods_hit }
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = impact_of_tax_dynamic_modifier } } }
+			add_dynamic_modifier = { modifier = impact_of_tax_dynamic_modifier }
 		}
 		set_variable = { consumer_goods_from_corporate_tax = corporate_tax_rate }
 		multiply_variable = { consumer_goods_from_corporate_tax = 0.015 } # Doubles the Consumer Goods Penalty
@@ -138,10 +140,6 @@ calculate_tax_rate = {
 		set_variable = { productivity_growth_modifier_from_corporate_tax = base_modifier }
 		multiply_variable = { productivity_growth_modifier_from_corporate_tax = 0.005 }
 
-		if = {
-			limit = { NOT = { has_dynamic_modifier = { modifier = population_tax_stability_hit } } }
-			add_dynamic_modifier = { modifier = population_tax_stability_hit }
-		}
 		set_variable = { stability_factor_from_population_tax = population_tax_rate }
 		multiply_variable = { stability_factor_from_population_tax = -0.01 }
 
@@ -316,9 +314,9 @@ calculate_tax_gain = {
 		set_temp_variable = { building_final_modifier = 1 }
 		add_to_temp_variable = { building_final_modifier = modifier@microchip_plant_income_tax_modifier }
 		set_temp_variable = { temp_prod_mod = 1 }
-		add_to_temp_variable = { temp_prod_mod = modifier@microchip_plants_productivity_modifier }
+		add_to_temp_variable = { temp_prod_mod = modifier@microchip_plant_productivity_modifier }
 		multiply_temp_variable = { building_final_modifier = temp_prod_mod }
-		multiply_temp_variable = { building_final_modifier = microchip_plants_manpower_fulfillment }
+		multiply_temp_variable = { building_final_modifier = microchip_plant_manpower_fulfillment }
 		multiply_temp_variable = { building_final_modifier = microchip_unified }
 		multiply_variable = { microchip_plant_tax = building_final_modifier }
 	}
@@ -331,9 +329,9 @@ calculate_tax_gain = {
 		set_temp_variable = { building_final_modifier = 1 }
 		add_to_temp_variable = { building_final_modifier = modifier@composite_plant_income_tax_modifier }
 		set_temp_variable = { temp_prod_mod = 1 }
-		add_to_temp_variable = { temp_prod_mod = modifier@composite_plants_productivity_modifier }
+		add_to_temp_variable = { temp_prod_mod = modifier@composite_plant_productivity_modifier }
 		multiply_temp_variable = { building_final_modifier = temp_prod_mod }
-		multiply_temp_variable = { building_final_modifier = composite_plants_manpower_fulfillment }
+		multiply_temp_variable = { building_final_modifier = composite_plant_manpower_fulfillment }
 		multiply_temp_variable = { building_final_modifier = composite_unified }
 		multiply_variable = { composite_plant_tax = building_final_modifier }
 	}
@@ -2151,17 +2149,17 @@ update_military_rate = {
 	set_variable = { equipment_operative_cost = 0 }
 
 	# Infantry equipment (per 1000 guns, cost: 0.3M yearly)
-	set_temp_variable = { temp_eq = num_equipment_in_armies_k@Inf_equipment }
+	set_temp_variable = { temp_eq = num_equipment_in_armies_k@infantry_weapons_type }
 	multiply_temp_variable = { temp_eq = 0.3 }
-	set_temp_variable = { temp_eq_stock = num_equipment@Inf_equipment }
+	set_temp_variable = { temp_eq_stock = num_equipment@infantry_weapons_type }
 	multiply_temp_variable = { temp_eq_stock = 0.00006 } # 0.001 (to thousands) × 0.2 (stockpile) × 0.3 (cost)
 	add_to_temp_variable = { temp_eq = temp_eq_stock }
 	add_to_variable = { equipment_operative_cost = temp_eq }
 
 	# CNC equipment (per 1000 units, cost: 0.4M yearly)
-	set_temp_variable = { temp_eq = num_equipment_in_armies_k@cnc_equipment }
+	set_temp_variable = { temp_eq = num_equipment_in_armies_k@cnc_equipment_type }
 	multiply_temp_variable = { temp_eq = 0.4 }
-	set_temp_variable = { temp_eq_stock = num_equipment@cnc_equipment }
+	set_temp_variable = { temp_eq_stock = num_equipment@cnc_equipment_type }
 	multiply_temp_variable = { temp_eq_stock = 0.00008 } # 0.001 × 0.2 × 0.4
 	add_to_temp_variable = { temp_eq = temp_eq_stock }
 	add_to_variable = { equipment_operative_cost = temp_eq }
@@ -2263,9 +2261,9 @@ update_military_rate = {
 	add_to_variable = { equipment_operative_cost = temp_eq }
 
 	# Utility vehicles (cost: 0.022M yearly)
-	set_temp_variable = { temp_eq = num_equipment_in_armies@util_vehicle_equipment }
+	set_temp_variable = { temp_eq = num_equipment_in_armies@util_vehicle_type }
 	multiply_temp_variable = { temp_eq = 0.022 }
-	set_temp_variable = { temp_eq_stock = num_equipment@util_vehicle_equipment }
+	set_temp_variable = { temp_eq_stock = num_equipment@util_vehicle_type }
 	multiply_temp_variable = { temp_eq_stock = 0.0044 } # 0.2 × 0.022
 	add_to_temp_variable = { temp_eq = temp_eq_stock }
 	add_to_variable = { equipment_operative_cost = temp_eq }
@@ -4255,9 +4253,6 @@ calculate_gdp = {
 	clamp_variable = { var = resource_sector_worker_fulfillment min = 0 max = 1 }
 	set_variable = { resource_sector_worker_fulfillment_var = -1 }
 	add_to_variable = { resource_sector_worker_fulfillment_var = resource_sector_worker_fulfillment }
-	if = { limit = { NOT = { has_dynamic_modifier = { modifier = resources_manpower_fulfillment_modifier } } }
-		add_dynamic_modifier = { modifier = resources_manpower_fulfillment_modifier }
-	}
 	if = { limit = { check_variable = { resource_sector_workers > max_resource_workers } }
 		set_variable = { resource_sector_workers = max_resource_workers }
 	}
@@ -4464,7 +4459,7 @@ calculate_gdp = {
 	}
 
 	if = { limit = { check_variable = { microchip_plant_total = 0 } }
-		set_variable = { microchip_plants_manpower_fulfillment = 1 }
+		set_variable = { microchip_plant_manpower_fulfillment = 1 }
 	}
 	else = {
 		set_temp_variable = { microchip_plant_worker_requirement_multiplier = 1 }
@@ -4476,22 +4471,22 @@ calculate_gdp = {
 		set_variable = { workers_per_microchip_plant_display = workers_per_microchip_plant }
 		multiply_variable = { workers_per_microchip_plant_display = 1000 }
 
-		set_temp_variable = { max_workers_in_microchip_plants = microchip_plant_total }
-		multiply_temp_variable = { max_workers_in_microchip_plants = workers_per_microchip_plant }
+		set_temp_variable = { max_workers_in_microchip_plant = microchip_plant_total }
+		multiply_temp_variable = { max_workers_in_microchip_plant = workers_per_microchip_plant }
 
-		set_variable = { workers_in_microchip_plants = max_workers_in_microchip_plants }
+		set_variable = { workers_in_microchip_plant = max_workers_in_microchip_plant }
 		clamp_variable = {
-			var = workers_in_microchip_plants
+			var = workers_in_microchip_plant
 			max = workforce_total
 		}
-		multiply_variable = { workers_in_microchip_plants = microchip_plants_employment_var }
-		set_variable = { microchip_plants_manpower_fulfillment = workers_in_microchip_plants }
-		divide_variable = { microchip_plants_manpower_fulfillment = max_workers_in_microchip_plants }
-		subtract_from_temp_variable = { workforce_total = workers_in_microchip_plants }
+		multiply_variable = { workers_in_microchip_plant = microchip_plant_employment_var }
+		set_variable = { microchip_plant_manpower_fulfillment = workers_in_microchip_plant }
+		divide_variable = { microchip_plant_manpower_fulfillment = max_workers_in_microchip_plant }
+		subtract_from_temp_variable = { workforce_total = workers_in_microchip_plant }
 	}
 
 	if = { limit = { check_variable = { composite_plant_total = 0 } }
-		set_variable = { composite_plants_manpower_fulfillment = 1 }
+		set_variable = { composite_plant_manpower_fulfillment = 1 }
 	}
 	else = {
 		set_temp_variable = { composite_plant_worker_requirement_multiplier = 1 }
@@ -4503,18 +4498,18 @@ calculate_gdp = {
 		set_variable = { workers_per_composite_plant_display = workers_per_composite_plant }
 		multiply_variable = { workers_per_composite_plant_display = 1000 }
 
-		set_temp_variable = { max_workers_in_composite_plants = composite_plant_total }
-		multiply_temp_variable = { max_workers_in_composite_plants = workers_per_composite_plant }
+		set_temp_variable = { max_workers_in_composite_plant = composite_plant_total }
+		multiply_temp_variable = { max_workers_in_composite_plant = workers_per_composite_plant }
 
-		set_variable = { workers_in_composite_plants = max_workers_in_composite_plants }
+		set_variable = { workers_in_composite_plant = max_workers_in_composite_plant }
 		clamp_variable = {
-			var = workers_in_composite_plants
+			var = workers_in_composite_plant
 			max = workforce_total
 		}
-		multiply_variable = { workers_in_composite_plants = composite_plants_employment_var }
-		set_variable = { composite_plants_manpower_fulfillment = workers_in_composite_plants }
-		divide_variable = { composite_plants_manpower_fulfillment = max_workers_in_composite_plants }
-		subtract_from_temp_variable = { workforce_total = workers_in_composite_plants }
+		multiply_variable = { workers_in_composite_plant = composite_plant_employment_var }
+		set_variable = { composite_plant_manpower_fulfillment = workers_in_composite_plant }
+		divide_variable = { composite_plant_manpower_fulfillment = max_workers_in_composite_plant }
+		subtract_from_temp_variable = { workforce_total = workers_in_composite_plant }
 	}
 
 	if = { limit = { check_variable = { synthetic_refinery_total = 0 } }
@@ -4549,16 +4544,13 @@ calculate_gdp = {
 	add_to_variable = { average_worker_fulfillment = military_factories_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = naval_factories_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = offices_manpower_fulfillment }
-	add_to_variable = { average_worker_fulfillment = microchip_plants_manpower_fulfillment }
-	add_to_variable = { average_worker_fulfillment = composite_plants_manpower_fulfillment }
+	add_to_variable = { average_worker_fulfillment = microchip_plant_manpower_fulfillment }
+	add_to_variable = { average_worker_fulfillment = composite_plant_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = synthetic_refinery_manpower_fulfillment }
 	add_to_variable = { average_worker_fulfillment = agriculture_district_manpower_fulfillment }
 	multiply_variable = { average_worker_fulfillment = 0.125 } # x number of buildings
 
 	set_variable = { total_unemployed = workforce_total }
-	if = { limit = { NOT = { has_dynamic_modifier = { modifier = high_unemployment_modifier } } }
-		add_dynamic_modifier = { modifier = high_unemployment_modifier }
-	}
 	set_variable = { total_unemployed_percentage_display = total_unemployed }
 	divide_variable = { total_unemployed_percentage_display = workforce_total_display }
 	set_variable = { high_unemployment_modifier_var = total_unemployed_percentage_display }
@@ -4588,16 +4580,16 @@ calculate_gdp = {
 	set_temp_variable = { gdp_from_dockyards = dockyard_fac }
 	set_temp_variable = { gdp_from_offices = office_park_total }
 	set_temp_variable = { gdp_from_agriculture_district = agriculture_district_total }
-	set_temp_variable = { gdp_from_microchip_plants = microchip_plant_total }
-	set_temp_variable = { gdp_from_composite_plants = composite_plant_total }
+	set_temp_variable = { gdp_from_microchip_plant = microchip_plant_total }
+	set_temp_variable = { gdp_from_composite_plant = composite_plant_total }
 	set_temp_variable = { gdp_from_synthetic_refinery = synthetic_refinery_total }
 
 	multiply_temp_variable = { gdp_from_civs = 17.5 }	#was 15, original 24.8
 	multiply_temp_variable = { gdp_from_mils = 1.5 }	#was 9, original 15.5
 	multiply_temp_variable = { gdp_from_dockyards = 1.5 }	#was 9, original 15.5
 	multiply_temp_variable = { gdp_from_offices = 50 }	#was 26, original 38.8
-	multiply_temp_variable = { gdp_from_microchip_plants = 35 }
-	multiply_temp_variable = { gdp_from_composite_plants = 30 }
+	multiply_temp_variable = { gdp_from_microchip_plant = 32 }
+	multiply_temp_variable = { gdp_from_composite_plant = 28 }
 	multiply_temp_variable = { gdp_from_synthetic_refinery = 10 }
 	multiply_temp_variable = { gdp_from_agriculture_district = 25 }	#was 26, original 38.8
 
@@ -4623,12 +4615,12 @@ calculate_gdp = {
 	add_to_temp_variable = { gdp_from_agriculture_district = temp_productivity_contribution }
 	set_temp_variable = { temp_productivity_contribution = microchip_plant_total }
 	multiply_temp_variable = { temp_productivity_contribution = 35 }
-	multiply_temp_variable = { temp_productivity_contribution = modifier@microchip_plants_productivity_modifier }
-	add_to_temp_variable = { gdp_from_microchip_plants = temp_productivity_contribution }
+	multiply_temp_variable = { temp_productivity_contribution = modifier@microchip_plant_productivity_modifier }
+	add_to_temp_variable = { gdp_from_microchip_plant = temp_productivity_contribution }
 	set_temp_variable = { temp_productivity_contribution = composite_plant_total }
 	multiply_temp_variable = { temp_productivity_contribution = 30 }
-	multiply_temp_variable = { temp_productivity_contribution = modifier@composite_plants_productivity_modifier }
-	add_to_temp_variable = { gdp_from_composite_plants = temp_productivity_contribution }
+	multiply_temp_variable = { temp_productivity_contribution = modifier@composite_plant_productivity_modifier }
+	add_to_temp_variable = { gdp_from_composite_plant = temp_productivity_contribution }
 	set_temp_variable = { temp_productivity_contribution = synthetic_refinery_total }
 	multiply_temp_variable = { temp_productivity_contribution = 10 }
 	multiply_temp_variable = { temp_productivity_contribution = modifier@synthetic_refinery_productivity_modifier }
@@ -4639,8 +4631,8 @@ calculate_gdp = {
 	multiply_temp_variable = { gdp_from_dockyards = naval_factories_manpower_fulfillment }
 	multiply_temp_variable = { gdp_from_offices = offices_manpower_fulfillment }
 	multiply_temp_variable = { gdp_from_agriculture_district = agriculture_district_manpower_fulfillment }
-	multiply_temp_variable = { gdp_from_microchip_plants = microchip_plants_manpower_fulfillment }
-	multiply_temp_variable = { gdp_from_composite_plants = composite_plants_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_microchip_plant = microchip_plant_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_composite_plant = composite_plant_manpower_fulfillment }
 	multiply_temp_variable = { gdp_from_synthetic_refinery = synthetic_refinery_manpower_fulfillment }
 
 	set_temp_variable = { gdp_from_factories = gdp_from_civs }
@@ -4648,8 +4640,8 @@ calculate_gdp = {
 	add_to_temp_variable = { gdp_from_factories = gdp_from_dockyards }
 	add_to_temp_variable = { gdp_from_factories = gdp_from_offices }
 	add_to_temp_variable = { gdp_from_factories = gdp_from_agriculture_district }
-	add_to_temp_variable = { gdp_from_factories = gdp_from_microchip_plants }
-	add_to_temp_variable = { gdp_from_factories = gdp_from_composite_plants }
+	add_to_temp_variable = { gdp_from_factories = gdp_from_microchip_plant }
+	add_to_temp_variable = { gdp_from_factories = gdp_from_composite_plant }
 	add_to_temp_variable = { gdp_from_factories = gdp_from_synthetic_refinery }
 
 	set_variable = { gdp_total = gdp_from_factories }
@@ -4664,8 +4656,8 @@ calculate_gdp = {
 	set_variable = { agriculture_district_fac_percent = gdp_from_agriculture_district }
 	set_variable = { agriculture_percent = gdp_from_agriculture }
 	set_variable = { resources_percent = gdp_from_resource_sector }
-	set_variable = { microchip_plant_percent = gdp_from_microchip_plants }
-	set_variable = { composite_plant_percent = gdp_from_composite_plants }
+	set_variable = { microchip_plant_percent = gdp_from_microchip_plant }
+	set_variable = { composite_plant_percent = gdp_from_composite_plant }
 	set_variable = { synthetic_refinery_percent = gdp_from_synthetic_refinery }
 
 	divide_variable = { civil_fac_percent = gdp_total }
@@ -4774,134 +4766,111 @@ calculate_gdp_modifiers = {
 
 # Effect: calculate_ai_taxes_desire
 # Purpose: Calculates the tax rate for the AI to change
+# Runs monthly from MD_on_actions (AI path only). Changes are ±1 per week.
 calculate_ai_taxes_desire = {
-	# POPULATION TAX
+	set_temp_variable = { pop_tax_change = 0 }
+	set_temp_variable = { corp_tax_change = 0 }
+
+	# === TAX INCREASES (deficit response) ===
+
+	# Population tax: raise at mild deficit (treasury_rate < -1)
+	# Skip if low stability unless deficit is severe (< -5)
 	if = {
 		limit = {
-			check_variable = { treasury_rate < 0 }
+			check_variable = { treasury_rate < -1 }
 			check_variable = { population_tax_rate < 40 }
+			OR = {
+				has_stability > 0.24
+				check_variable = { treasury_rate < -5 }
+			}
 		}
 		set_temp_variable = { pop_tax_change = 1 }
+	}
 
-		if = { limit = { check_variable = { treasury_rate > -5 } }
-			set_temp_variable = { pop_tax_change = 0 }
-		}
-
-		if = {
-			limit = {
-				has_stability < 0.25
-				check_variable = { treasury_rate > -10 }
+	# Corporate tax: raise at moderate deficit (treasury_rate < -2)
+	# Only after population tax reaches a moderate level (> 24), or at severe deficit regardless
+	if = {
+		limit = {
+			check_variable = { treasury_rate < -2 }
+			check_variable = { corporate_tax_rate < 50 }
+			OR = {
+				check_variable = { population_tax_rate > 24 }
+				check_variable = { treasury_rate < -5 }
 			}
-			set_temp_variable = { pop_tax_change = 0 }
 		}
+		set_temp_variable = { corp_tax_change = 1 }
+	}
 
+	# Interest rate escalation: if interest > 8% and any deficit, force tax increases
+	# Catches debt spirals early before treasury_rate thresholds are hit
+	if = {
+		limit = {
+			check_variable = { interest_rate > 8 }
+			check_variable = { treasury_rate < 0 }
+		}
 		if = {
 			limit = {
-				check_variable = { pop_tax_change = 1 }
-				OR = {
-					original_tag = CHI
-					original_tag = RAJ
-					original_tag = DRC
-					original_tag = IND
-					original_tag = JAP
-					original_tag = NIG
-					original_tag = EGY
-					original_tag = BRA
-				}
-				check_variable = { treasury_rate < -2 }
+				check_variable = { population_tax_rate < 40 }
+				check_variable = { pop_tax_change = 0 }
 			}
 			set_temp_variable = { pop_tax_change = 1 }
 		}
-
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Population Tax +[?pop_tax_change] (Current: [?population_tax_rate]%, Treasury: [?treasury_rate])"
-		}
-	}
-	else_if = {
-		limit = {
-			check_variable = { treasury_rate > 0 }
-			check_variable = { population_tax_rate > 15 }
-			OR = {
-				has_stability < 0.35
-				AND = {
-					check_variable = { debt_ratio < 0.25 }
-					check_variable = { interest_rate < 5 }
-				}
+		if = {
+			limit = {
+				check_variable = { corporate_tax_rate < 50 }
+				check_variable = { corp_tax_change = 0 }
 			}
-		}
-		set_temp_variable = { pop_tax_change = -1 }
-
-		if = { limit = { check_variable = { treasury_rate < 3 } }
-			set_temp_variable = { pop_tax_change = 0 }
-		}
-
-		if = { limit = { check_variable = { corporate_tax_rate > 10 } }
-			set_temp_variable = { pop_tax_change = 0 }
-		}
-
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Population Tax [?pop_tax_change] (Current: [?population_tax_rate]%, Treasury: [?treasury_rate])"
+			set_temp_variable = { corp_tax_change = 1 }
 		}
 	}
 
-	# CORPORATE TAX
+	# === TAX DECREASES (surplus response) ===
+
+	# When surplus is healthy and debt is manageable, lower taxes
+	# Prefer lowering corporate tax first (it drags productivity and investment)
 	if = {
 		limit = {
-			check_variable = { treasury_rate < 0 }
-			check_variable = { population_tax_rate > 39 }
-			check_variable = { corporate_tax_rate < 50 }
+			check_variable = { treasury_rate > 2 }
+			check_variable = { debt_ratio < 0.30 }
+			check_variable = { interest_rate < 5 }
+			check_variable = { pop_tax_change = 0 }
+			check_variable = { corp_tax_change = 0 }
 		}
-		set_temp_variable = { corp_tax_change = 1 }
-
-		if = { limit = { check_variable = { treasury_rate > -5 } }
-			set_temp_variable = { corp_tax_change = 0 }
-		}
-
 		if = {
-			limit = {
-				check_variable = { office_park_total > 30 }
-				check_variable = { treasury_rate < -3 }
-			}
-			set_temp_variable = { corp_tax_change = 1 }
-		}
-
-		if = {
-			limit = {
-				num_of_factories > 20
-				check_variable = { treasury_rate < -3 }
-			}
-			set_temp_variable = { corp_tax_change = 1 }
-		}
-
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Corporate Tax +[?corp_tax_change] (Current: [?corporate_tax_rate]%, Treasury: [?treasury_rate])"
-		}
-	}
-	else_if = {
-		limit = {
-			check_variable = { treasury_rate > 0 }
-			check_variable = { corporate_tax_rate > 10 }
-			OR = {
-				num_of_available_civilian_factories < 10
-				AND = {
-					check_variable = { debt_ratio < 0.25 }
-					check_variable = { interest_rate < 5 }
-				}
-			}
-		}
-		set_temp_variable = { corp_tax_change = -1 }
-
-		if = { limit = { check_variable = { treasury_rate < 5 } }
-			set_temp_variable = { corp_tax_change = 0 }
-		}
-
-		if = { limit = { num_of_available_civilian_factories < 15 }
+			limit = { check_variable = { corporate_tax_rate > 10 } }
 			set_temp_variable = { corp_tax_change = -1 }
 		}
-
-		if = { limit = { is_debug = yes }
-			log = "[GetDateText]: [THIS.GetName]: AI Corporate Tax [?corp_tax_change] (Current: [?corporate_tax_rate]%, Treasury: [?treasury_rate])"
+		else_if = {
+			limit = { check_variable = { population_tax_rate > 15 } }
+			set_temp_variable = { pop_tax_change = -1 }
 		}
+	}
+
+	# Low stability override: lower population tax to restore stability
+	if = {
+		limit = {
+			has_stability < 0.30
+			check_variable = { population_tax_rate > 20 }
+			check_variable = { treasury_rate > 0 }
+			check_variable = { pop_tax_change = 0 }
+		}
+		set_temp_variable = { pop_tax_change = -1 }
+	}
+
+	# Factory scarcity: lower corporate tax to attract investment
+	if = {
+		limit = {
+			num_of_available_civilian_factories < 10
+			check_variable = { corporate_tax_rate > 15 }
+			check_variable = { treasury_rate > 0 }
+			check_variable = { corp_tax_change = 0 }
+		}
+		set_temp_variable = { corp_tax_change = -1 }
+	}
+
+	# === APPLY AND CLAMP ===
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [THIS.GetName]: AI Tax: Pop [?pop_tax_change] ([?population_tax_rate]%), Corp [?corp_tax_change] ([?corporate_tax_rate]%), Treasury: [?treasury_rate], Interest: [?interest_rate]%"
 	}
 
 	if = { limit = { NOT = { check_variable = { pop_tax_change = 0 } } }
@@ -4910,6 +4879,9 @@ calculate_ai_taxes_desire = {
 	if = { limit = { NOT = { check_variable = { corp_tax_change = 0 } } }
 		add_to_variable = { corporate_tax_rate = corp_tax_change }
 	}
+
+	clamp_variable = { var = population_tax_rate min = 0 max = 50 }
+	clamp_variable = { var = corporate_tax_rate min = 0 max = 50 }
 }
 
 calculate_new_education_spending_tooltip = {
@@ -5211,10 +5183,6 @@ calculate_migration_mechanic_values = {
 	set_variable = { immigration_government_factor_display = 0 }
 	set_variable = { immigration_employment_factor_display = 0 }
 
-	# Add the Dynamic Modifier If you don't have it
-	if = { limit = { NOT = { has_dynamic_modifier = { modifier = migration_rate_impact_effect } } }
-		add_dynamic_modifier = { modifier = migration_rate_impact_effect }
-	}
 	# Productivity Calculation
 	set_temp_variable = { immigration_productivity_calculations = overall_productivity }
 	divide_temp_variable = { immigration_productivity_calculations = global.average_world_productivity }
@@ -5363,8 +5331,8 @@ setup_employment_variables = {
 		set_variable = { naval_factory_employment_var = 1 }
 		set_variable = { military_factory_employment_var = 1 }
 		set_variable = { office_employment_var = 1 }
-		set_variable = { microchip_plants_employment_var = 1 }
-		set_variable = { composite_plants_employment_var = 1 }
+		set_variable = { microchip_plant_employment_var = 1 }
+		set_variable = { composite_plant_employment_var = 1 }
 		set_variable = { agriculture_district_employment_var = 1 }
 		set_variable = { synthetic_refinery_employment_var = 1 }
 		if = {
@@ -5382,8 +5350,8 @@ setup_employment_variables = {
 			set_variable = { PREV.naval_factory_employment_var = naval_factory_employment_var }
 			set_variable = { PREV.military_factory_employment_var = military_factory_employment_var }
 			set_variable = { PREV.office_employment_var = office_employment_var }
-			set_variable = { PREV.microchip_plants_employment_var = microchip_plants_employment_var }
-			set_variable = { PREV.composite_plants_employment_var = composite_plants_employment_var }
+			set_variable = { PREV.microchip_plant_employment_var = microchip_plant_employment_var }
+			set_variable = { PREV.composite_plant_employment_var = composite_plant_employment_var }
 			set_variable = { PREV.agriculture_district_employment_var = agriculture_district_employment_var }
 			set_variable = { PREV.synthetic_refinery_employment_var = synthetic_refinery_employment_var }
 			set_variable = { var = PREV.corporate_tax_rate value = corporate_tax_rate }

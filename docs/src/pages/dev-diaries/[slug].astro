@@ -1,37 +1,22 @@
 ---
-import { getCollection, render } from "astro:content";
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import { resolveToc } from "../../lib/content-helpers";
-import { stripMarkdownExt } from "../../lib/slugs";
+import type { CollectionEntry } from "astro:content";
+import type { GetStaticPaths } from "astro";
+import MarkdownDocLayout from "../../layouts/MarkdownDocLayout.astro";
+import { getDevDiaryPath, getDevDiarySlug } from "../../lib/content-routes";
+import { buildMarkdownDocStaticPaths, renderMarkdownDocEntry } from "../../lib/markdown-doc-entry";
 
-export async function getStaticPaths() {
-  const entries = await getCollection("devDiaries");
-
-  function slugFromPermalink(permalink: string): string {
-    return permalink.replace(/^\/+|\/+$/g, "").split("/").pop() || "";
-  }
-
-  return entries.map((entry) => ({
-    params: {
-      slug: entry.data.permalink ? slugFromPermalink(entry.data.permalink) : stripMarkdownExt(entry.id),
-    },
-    props: { entry },
-  }));
+interface Props {
+  entry: CollectionEntry<"devDiaries">;
 }
 
-const { entry } = Astro.props;
-const { Content, headings } = await render(entry);
+export const getStaticPaths: GetStaticPaths = async () => {
+  return buildMarkdownDocStaticPaths("devDiaries", getDevDiarySlug);
+};
+
+const { entry }: Props = Astro.props;
+const { Content, headings } = await renderMarkdownDocEntry(entry);
 ---
 
-<BaseLayout
-  title={entry.data.title}
-  description={entry.data.description}
-  canonicalPath={entry.data.permalink || `/dev-diaries/${stripMarkdownExt(entry.id)}/`}
-  toc={resolveToc(entry.data.toc)}
-  seo={entry.data.seo ?? true}
-  robots={entry.data.robots}
-  pageId={entry.data.page_id || stripMarkdownExt(entry.id)}
-  headings={headings}
->
+<MarkdownDocLayout entry={entry} canonicalPath={getDevDiaryPath(entry)} headings={headings}>
   <Content />
-</BaseLayout>
+</MarkdownDocLayout>
