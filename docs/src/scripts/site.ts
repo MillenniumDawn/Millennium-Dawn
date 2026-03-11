@@ -28,9 +28,10 @@ async function bootstrapPageAsync(): Promise<void> {
   };
 
   const runId = pageRunId;
-  const [headerNavModule, uiHelpersModule] = await Promise.all([
+  const [headerNavModule, uiHelpersModule, imageLightboxModule] = await Promise.all([
     import("@/scripts/modules/header-nav"),
     import("@/scripts/modules/ui-helpers"),
+    import("@/features/image-lightbox"),
   ]);
 
   if (runId !== pageRunId) return;
@@ -38,12 +39,7 @@ async function bootstrapPageAsync(): Promise<void> {
   cleanups.push(headerNavModule.initHeaderHeightSync());
   cleanups.push(headerNavModule.initMobileNavigation());
   cleanups.push(uiHelpersModule.initBackToTop());
-
-  if (document.body.dataset.page === "dev-diary") {
-    const contentMediaModule = await import("@/features/content-media/model");
-    if (runId !== pageRunId) return;
-    cleanups.push(contentMediaModule.initContentMediaLightbox());
-  }
+  cleanups.push(imageLightboxModule.initImageLightbox());
 }
 
 function bootstrapPage(): void {
