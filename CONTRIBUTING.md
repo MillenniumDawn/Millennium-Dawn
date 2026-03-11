@@ -108,10 +108,53 @@ See [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) for
 
 ## Changelog Guidelines
 
-- Write full sentences describing changes
-- No internal code references (e.g., "ENG_ideas")
+All PRs must update [Changelog.txt](./Changelog.txt) under the current top-most version heading.
+
+### Formatting
+
+- **Version heading**: standalone line (e.g., `v2.0.0`), blank line after
+- **Category header**: 1 space + category name + colon (e.g., ` Bugfix:`)
+- **Entry**: 2 spaces + `- ` + text (e.g., `  - Fixed something`)
+- **Sub-entry**: 4 spaces + `- ` + text (e.g., `    - Detail about the fix`)
+- **Continuation text**: 6 spaces to align with the parent entry's text
+- Blank line between categories
+
+### Categories
+
+Use only these categories (skip any that have no entries):
+
+| Category        | Use for                                                                      |
+| --------------- | ---------------------------------------------------------------------------- |
+| Achievements    | New or changed achievements                                                  |
+| AI              | AI behavior, strategy, or decision-making changes                            |
+| Balance         | Stat tweaks, modifier adjustments, cost/value changes                        |
+| Bugfix          | Bug fixes, crash fixes, typo corrections                                     |
+| Content         | New focus trees, events, decisions, ideas, MIOs, or significant new gameplay |
+| Database        | Country history, OOBs, state data, technology assignments                    |
+| Documentation   | Docs, guides, modding resources                                              |
+| Factions        | Faction mechanics, membership, leadership changes                            |
+| Game Rules      | New or modified game rules                                                   |
+| Graphics        | GFX, icons, portraits, sprites, 3D models                                    |
+| Localization    | Localisation strings, translations, formatting                               |
+| Map             | Map changes, state boundaries, provinces, map modes                          |
+| Music           | New or changed music tracks, sound triggers                                  |
+| Performance     | Optimizations, removed redundant triggers, on_action improvements            |
+| Quality of Life | QoL improvements, UI polish, tooltips                                        |
+| Sound           | Sound effects and audio changes                                              |
+| Technology      | Tech tree changes, research categories                                       |
+| User Interface  | UI layout, scripted GUIs, interface definitions                              |
+
+### Writing Style
+
+- Use past tense ("Added", "Fixed", "Reduced", "Reworked")
+- Write full sentences describing the change — no internal code references (e.g., write "Fixed Serbian election focus prerequisite", not "Fixed SER_elections prereq")
+- Be specific: name the focus, event, decision, or mechanic affected
+- Prefix country-specific entries with `[TAG]` (e.g., `  - [SER] Fixed focus prerequisite for Serbian elections`)
+- No tag prefix for global or system-wide changes
+- One bullet per distinct change; group related micro-changes as sub-entries under a parent
+- Reference issue numbers when applicable (e.g., `(Issue #330)`)
 - Jokes allowed if in good taste
-- Document all significant changes
+- Use spaces only — no tab characters
 
 ## AI Policy
 

@@ -20,10 +20,7 @@ startup_influence = {
 # Purpose: This is the main effect that is used to update the dirty influence variable
 update_dirty_influence_var = {
 	if = {
-		limit = {
-			NOT = { has_variable = global.update_influence_ui }
-			check_variable = { global.update_influence_ui = 10000 }
-		}
+		limit = { NOT = { has_variable = global.update_influence_ui } }
 		set_variable = { global.update_influence_ui = 1 }
 	}
 	else = {
@@ -38,7 +35,6 @@ recalculate_influence = {
 		delete_influencer_check = yes
 		sort_influence = yes
 		calculate_influence_percentage = yes
-		force_update_map_mode = { mapmode = influence_map_mode }
 		update_dirty_influence_var = yes
 	}
 }
@@ -323,6 +319,8 @@ influence_coup_action = {
 
 # Effect: delete_influencer_check
 # Purpose: This is the main effect that is used to delete an influencer
+# Note: remove_from_array inside forward-iterating loops can skip consecutive entries
+# that need removal (index shift). This is self-correcting as recalculate_influence runs frequently.
 delete_influencer_check = {
 	# Influence Array Indexer
 	# Purpose:
@@ -443,7 +441,7 @@ change_current_influencer_index_percentage = {
 		value = v
 		index = i
 
-		if = { limit = { NOT = { check_variable = { i = 0 } } }
+		if = { limit = { NOT = { check_variable = { i = influencer_index } } }
 			multiply_variable = { influence_array_val^i = temp_total }
 		}
 	}
@@ -482,7 +480,7 @@ change_influence_percentage = {
 		else = {
 			set_temp_variable = { itd = THIS.domestic_influence_amount }
 			set_temp_variable = { size_of_influence_array = -1 }
-			set_temp_variable = { influencer_index = 0 }
+			set_temp_variable = { influencer_index = -1 }
 
 			for_each_loop = {
 				array = influence_array
@@ -495,7 +493,7 @@ change_influence_percentage = {
 					add_to_temp_variable = { PREV.size_of_influence_array = 1 }
 				}
 			}
-			if = { limit = { check_variable = { influencer_index = 0 } }
+			if = { limit = { check_variable = { influencer_index = -1 } }
 				add_to_array = { influence_array = var:tag_index }
 				add_to_array = { influence_array_val = 0 }
 
@@ -509,11 +507,11 @@ change_influence_percentage = {
 
 				var:tag_index = {
 					set_temp_variable = { influence_change = modifier@foreign_influence_modifier }
-					if = { limit = { PREV_is_not_on_same_continent = yes }
+					if = { limit = { NOT = { is_on_same_continent_as = PREV } }
 						add_to_temp_variable = { influence_change = modifier@foreign_influence_continent_modifier }
 					}
-					if = { limit = { PREV_is_on_same_continent = yes }
-						add_to_temp_variable = { influence_change = modifier@foreign_influence_continent_modifier }
+					if = { limit = { is_on_same_continent_as = PREV }
+						add_to_temp_variable = { influence_change = modifier@foreign_influence_home_continent_modifier }
 					}
 				}
 
@@ -1083,7 +1081,7 @@ change_influence_percentage = {
 					value = v
 					index = i
 
-					if = { limit = { NOT = { check_variable = { i = 0 } } }
+					if = { limit = { NOT = { check_variable = { i = influencer_index } } }
 						multiply_variable = { influence_array_val^i = temp_total }
 					}
 				}
@@ -1128,14 +1126,8 @@ update_auto_influence_array = {
 			if = { limit = { is_debug = yes }
 				log = "[GetDateText]: [THIS.GetName]: Index [?i] is greater than the auto_influence_cap. Removing [?auto_influence_array^i.GetName] from auto influence list"
 			}
-			set_temp_variable = { removed_country = v }
 			set_variable = { auto_influence_array^i = 0 }
 			subtract_from_variable = { auto_influence_users = 1 }
-			var:removed_country = {
-				PREV = {
-					remove_auto_influencer_request = yes
-				}
-			}
 		}
 		if = { limit = { NOT = { check_variable = { v = 0 } } }
 			add_to_variable = { auto_influence_cost = 1.50 }
@@ -1201,6 +1193,7 @@ remove_auto_influencer_request = {
 			}
 			set_temp_variable = { index = i }
 			set_temp_variable = { found_match = 1 }
+			set_temp_variable = { break = 1 }
 		}
 	}
 

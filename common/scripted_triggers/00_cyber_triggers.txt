@@ -1,0 +1,103 @@
+# Author(s): Doolittle
+
+#List of triggers for quickly checking nations cyber capabilities
+has_cyber_capability_1 = {
+	custom_trigger_tooltip = {
+		tooltip = has_cyber_capability_1
+		check_variable = { cyber_capability > 0 }
+	}
+}
+
+has_cyber_capability_2 = {
+	custom_trigger_tooltip = {
+		tooltip = has_cyber_capability_2
+		check_variable = { cyber_capability > 3 }
+	}
+}
+
+has_cyber_capability_3 = {
+	custom_trigger_tooltip = {
+		tooltip = has_cyber_capability_3
+		check_variable = { cyber_capability > 7 }
+	}
+}
+
+has_cyber_capability_4 = {
+	custom_trigger_tooltip = {
+		tooltip = has_cyber_capability_4
+		check_variable = { cyber_capability > 11 }
+	}
+}
+
+# Used in dynamic list context — i is the loop index
+cyber_target_not_on_cooldown = {
+	custom_trigger_tooltip = {
+		tooltip = cyber_not_recently_attacked_target_tt
+		NOT = { has_country_flag = recent_cyber_attack_from_@ROOT }
+	}
+}
+
+cyber_not_at_capacity = {
+	custom_trigger_tooltip = {
+		tooltip = cyber_not_at_op_capacity_tt
+		ROOT = {
+			check_variable = { cyber_ongoing_operations < cyber_op_max_targets }
+		}
+	}
+}
+
+cyber_has_valid_target = {
+	custom_trigger_tooltip = {
+		tooltip = cyber_has_valid_target_tt
+		NOT = { check_variable = { ROOT.current_cyber_nation_target = 0 } }
+	}
+}
+#Makes sure you are not running the specific mission against a target
+cyber_mission_not_running = {
+	var:current_cyber_nation_target = {
+		meta_trigger = {
+			text = {
+				custom_trigger_tooltip = {
+					tooltip = cyber_not_doing_current_mission_against_tt
+					NOT = { has_country_flag = is_under_[TYPE]_attack_by_@ROOT }
+				}
+			}
+			TYPE = "[cyber_trigger_check_name]"
+		}
+	}
+}
+#allows AI to check cyber targets while using the loop properly
+#This is a scoping fix: DO NOT CHANGE THIS, as changing the scope improperly WILL break the AI
+is_valid_ai_cyber_target = {
+	NOT = {
+		original_tag = PREV
+		is_subject_of = PREV
+		is_in_faction_with = PREV
+		is_in_array = { array = PREV.cyber_active_targets value = THIS }
+	}
+	PREV = {
+		has_opinion = {
+			target = PREV
+			value < 0
+		}
+	}
+}
+
+cyber_target_array_not_full = {
+	NOT = { check_variable = { cyber_active_targets^num = cyber_max_targets }  }
+}
+
+is_valid_cyber_target = {
+	NOT = {
+		original_tag = ROOT
+		is_subject_of = ROOT
+		is_in_faction_with = ROOT
+		is_in_array = { array = ROOT.cyber_active_targets value = THIS }
+	}
+	ROOT = {
+		has_opinion = {
+			target = PREV
+			value < 0
+		}
+	}
+}

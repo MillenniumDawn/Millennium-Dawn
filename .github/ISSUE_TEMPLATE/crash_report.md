@@ -3,6 +3,8 @@ name: Crash Report
 about: Creates a GitHub issue to report a crash in Millennium Dawn
 title: "[CRASH]"
 labels: bug, crash
+type: bug
+projects: ["MillenniumDawn/projects/3"]
 assignees: ""
 ---
 

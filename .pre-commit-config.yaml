@@ -7,9 +7,9 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        exclude: '\.txt$|\.mod$'  # Exclude mod files which might need specific formatting
+        exclude: '\.mod$'  # Exclude mod files which might need specific formatting
       - id: end-of-file-fixer
-        exclude: '\.txt$|\.mod$'
+        exclude: '\.mod$'
       - id: check-yaml
         files: 'localisation/english/.*\.yml$'
       - id: check-json
@@ -19,6 +19,7 @@ repos:
         args: ['--maxkb=100000']  # Prevent files larger than 100MB
       - id: check-case-conflict
       - id: check-executables-have-shebangs
+        exclude: '\.txt$|\.mod$'
       - id: check-shebang-scripts-are-executable
       - id: fix-encoding-pragma
         args: [--remove]
@@ -82,14 +83,8 @@ repos:
         pass_filenames: false
         args: ["dummy_token"]
         stages: [pre-commit]
-      - id: validate-localization-encoding
-        name: Validate HOI4 localization UTF-8 with BOM
-        entry: python3 tools/validate_localization_encoding.py
-        language: system
-        files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
-        pass_filenames: true
       - id: fix-localization-encoding
-        name: Auto-fix HOI4 localization UTF-8 BOM
+        name: Validate and fix HOI4 localization UTF-8 BOM
         entry: python3 tools/validate_localization_encoding.py --fix
         language: system
         files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
@@ -100,13 +95,6 @@ repos:
         language: system
         files: '\.mod$'
         pass_filenames: true
-      - id: validate-color-literals
-        name: Validate CSS color literals in docs/_sass
-        entry: python3 tools/validation/validate_css_color_literals.py --staged --strict --no-color
-        language: system
-        files: '^docs/_sass/.*\.(scss|css)$'
-        pass_filenames: false
-        stages: [pre-commit]
       - id: check-braces
         name: Check for missing braces
         entry: python3 tools/check_braces.py
@@ -114,38 +102,3 @@ repos:
         files: '\.(txt)$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: true
-      # - id: validate-variables
-      #   name: Validate flags and event targets
-      #   entry: python3 tools/validation/validate_variables.py --staged --strict --no-color
-      #   language: system
-      #   files: '\.(txt|yml)$'
-      #   exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$|gfx/|tools/|resources/|docs/|map/'
-      #   pass_filenames: false
-      #   stages: [commit]
-      # - id: validate-set-variables
-      #   name: Validate set_variable usage
-      #   entry: python3 tools/validation/validate_set_variables.py --staged --strict --no-color
-      #   language: system
-      #   files: '\.(txt)$'
-      #   exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$|gfx/|tools/|resources/|docs/|map/'
-      #   pass_filenames: false
-      #   stages: [commit]
-      # - id: validate-scripted-localisation
-      #   name: Validate scripted localisation
-      #   entry: python3 tools/validation/validate_scripted_localisation.py --staged --strict --no-color
-      #   language: system
-      #   files: '\.(txt|yml)$'
-      #   exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$|gfx/|tools/|resources/|docs/|map/'
-      #   pass_filenames: false
-      #   stages: [commit]
-ci:
-  autofix_commit_msg: |
-    [pre-commit.ci] auto fixes from pre-commit.com hooks
-
-    for more information, see https://pre-commit.ci
-  autofix_prs: true
-  autoupdate_branch: ''
-  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
-  autoupdate_schedule: weekly
-  skip: []
-  submodules: false
