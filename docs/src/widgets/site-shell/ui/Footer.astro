@@ -1,0 +1,78 @@
+---
+import { withBase } from "@/lib/urls";
+import { FOCUS_RING_CLASS, LAYOUT_CONTAINER_CLASS, SMALL_HEADING_CLASS } from "@/shared/ui/tailwind";
+
+interface LinkItem {
+  title: string;
+  url: string;
+}
+
+interface SocialItem {
+  name: string;
+  url: string;
+}
+
+interface Props {
+  siteTitle: string;
+  siteDescription: string;
+  footerDocs: LinkItem[];
+  socialLinks: SocialItem[];
+}
+
+const { siteTitle, siteDescription, footerDocs, socialLinks }: Props = Astro.props;
+const year = new Date().getFullYear();
+
+// Ensure minimum target sizes for links in mobile view per WCAG 2.2 considerations
+const footerLinkClass = [
+  "inline-block py-1", // Add vertical padding to increase touch target size without breaking visual layout
+  "text-text-secondary",
+  "no-underline",
+  "transition-colors",
+  "duration-[var(--transition-speed)]",
+  "ease-[var(--transition-fn)]",
+  "hover:text-primary",
+  "hover:no-underline",
+  FOCUS_RING_CLASS,
+].join(" ");
+---
+
+<footer class="site-footer mt-2xl bg-surface border-t border-border py-xl pb-md text-text print:hidden">
+  <div class={LAYOUT_CONTAINER_CLASS}>
+    <div class="mb-xl grid gap-xl phone:grid-cols-1 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
+      <div>
+        <h3 class={`${SMALL_HEADING_CLASS} text-text`}>{siteTitle}</h3>
+        <p class="m-0 text-[0.98rem] leading-base text-text-secondary">{siteDescription}</p>
+      </div>
+
+      <div aria-label="Social links">
+        <h3 class={`${SMALL_HEADING_CLASS} text-text`}>Links</h3>
+        <ul class="m-0 list-none p-0">
+          {socialLinks.map((item) => (
+            <li class="mb-sm text-[0.95rem] text-text-secondary">
+              <a class={footerLinkClass} href={item.url} target="_blank" rel="noopener noreferrer" aria-label={item.name}>
+                {item.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div aria-label="Documentation links">
+        <h3 class={`${SMALL_HEADING_CLASS} text-text`}>Documentation</h3>
+        <ul class="m-0 list-none p-0">
+          {footerDocs.map((item) => (
+            <li class="mb-sm text-[0.95rem] text-text-secondary">
+              <a class={footerLinkClass} href={withBase(item.url)} aria-label={item.title}>
+                {item.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t border-border pt-md text-center">
+      <p class="m-0 text-[0.9rem] text-text opacity-90">&copy; {year} {siteTitle}. All rights reserved.</p>
+    </div>
+  </div>
+</footer>

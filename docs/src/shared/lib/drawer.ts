@@ -36,6 +36,25 @@ interface DrawerState {
   closeTimer: number | null;
 }
 
+interface DrawerRuntime {
+  container: HTMLElement;
+  panel: HTMLElement;
+  toggle: HTMLElement;
+  closeBtn?: HTMLElement | null;
+  backdrop?: HTMLElement | null;
+  desktopMQ: MediaQueryList;
+  animMs: number;
+  bodyLockClass: string;
+  openLabels: DrawerConfig["openLabels"];
+  closedLabels: DrawerConfig["closedLabels"];
+  lockScroll: boolean;
+  inertSelectors: string[];
+  onBeforeOpen?: () => void;
+  onOpen?: () => void;
+  onClose?: () => void;
+  onAfterClose?: () => void;
+}
+
 function setToggleAttrs(
   toggle: HTMLElement,
   open: boolean,
@@ -134,12 +153,12 @@ function syncBodyScrollLock(state: DrawerState, lockScroll: boolean, open: boole
 function focusDrawerEntry(panel: HTMLElement, closeBtn?: HTMLElement | null): void {
   window.setTimeout(() => {
     if (closeBtn instanceof HTMLElement) {
-      closeBtn.focus();
+      closeBtn.focus({ preventScroll: true });
       return;
     }
 
     const focusables = getFocusableEls(panel);
-    if (focusables.length) focusables[0].focus();
+    if (focusables.length) focusables[0].focus({ preventScroll: true });
   }, 40);
 }
 
@@ -154,72 +173,65 @@ function registerMediaQueryListener(mediaQuery: MediaQueryList, listener: () => 
   return () => {};
 }
 
-export function createDrawer(config: DrawerConfig): DrawerHandle {
-  const {
-    container,
-    panel,
-    toggle,
-    closeBtn,
-    backdrop,
-    desktopMQ,
-    animMs,
-    bodyLockClass,
-    openLabels,
-    closedLabels,
-    lockScroll = false,
-    inertSelectors = [],
-    onBeforeOpen,
-    onOpen,
-    onClose,
-    onAfterClose,
-  } = config;
+function finishClose(runtime: DrawerRuntime, state: DrawerState): void {
+  runtime.container.classList.remove("is-closing");
+  clearCloseTimer(state);
+  runtime.onAfterClose?.();
+}
 
-  const state: DrawerState = {
-    drawerOpen: false,
-    lastFocused: null,
-    savedScrollY: 0,
-    closeTimer: null,
-  };
+function openDrawer(runtime: DrawerRuntime, state: DrawerState): void {
+  clearCloseTimer(state);
 
-  const finishClose = () => {
-    container.classList.remove("is-closing");
-    clearCloseTimer(state);
-    onAfterClose?.();
-  };
+  runtime.onBeforeOpen?.();
+  state.lastFocused = document.activeElement;
+  state.drawerOpen = true;
 
-  const open = () => {
-    clearCloseTimer(state);
+  syncBodyScrollLock(state, runtime.lockScroll, true);
 
-    onBeforeOpen?.();
-    state.lastFocused = document.activeElement;
-    state.drawerOpen = true;
+  runtime.container.classList.add("is-open");
+  syncToggleAndPageState(
+    runtime.toggle,
+    runtime.bodyLockClass,
+    runtime.openLabels,
+    runtime.closedLabels,
+    runtime.inertSelectors,
+    true,
+  );
+  runtime.onOpen?.();
+  focusDrawerEntry(runtime.panel, runtime.closeBtn);
+}
 
-    syncBodyScrollLock(state, lockScroll, true);
+function closeDrawer(runtime: DrawerRuntime, state: DrawerState, restoreFocus = true): void {
+  state.drawerOpen = false;
 
-    container.classList.add("is-open");
-    syncToggleAndPageState(toggle, bodyLockClass, openLabels, closedLabels, inertSelectors, true);
-    onOpen?.();
-    focusDrawerEntry(panel, closeBtn);
-  };
+  runtime.container.classList.add("is-closing");
+  runtime.container.classList.remove("is-open");
+  syncToggleAndPageState(
+    runtime.toggle,
+    runtime.bodyLockClass,
+    runtime.openLabels,
+    runtime.closedLabels,
+    runtime.inertSelectors,
+    false,
+  );
+  runtime.onClose?.();
 
-  const close = (restoreFocus = true) => {
-    state.drawerOpen = false;
+  syncBodyScrollLock(state, runtime.lockScroll, false);
 
-    container.classList.add("is-closing");
-    container.classList.remove("is-open");
-    syncToggleAndPageState(toggle, bodyLockClass, openLabels, closedLabels, inertSelectors, false);
-    onClose?.();
+  clearCloseTimer(state);
+  state.closeTimer = window.setTimeout(() => finishClose(runtime, state), runtime.animMs);
 
-    syncBodyScrollLock(state, lockScroll, false);
+  if (restoreFocus && state.lastFocused instanceof HTMLElement) {
+    state.lastFocused.focus();
+  }
+}
 
-    clearCloseTimer(state);
-    state.closeTimer = window.setTimeout(finishClose, animMs);
-
-    if (restoreFocus && state.lastFocused instanceof HTMLElement) {
-      state.lastFocused.focus();
-    }
-  };
-
+function bindDrawerEvents(
+  runtime: DrawerRuntime,
+  state: DrawerState,
+  open: () => void,
+  close: (restoreFocus?: boolean) => void,
+): Cleanup {
   const onToggleClick = () => {
     if (state.drawerOpen) {
       close();
@@ -238,35 +250,60 @@ export function createDrawer(config: DrawerConfig): DrawerHandle {
 
   const onKeydown = (event: KeyboardEvent) => {
     if (event.key === "Escape" && state.drawerOpen) close();
-    trapFocus(panel, state.drawerOpen, event);
+    trapFocus(runtime.panel, state.drawerOpen, event);
   };
 
   const onBreakpoint = () => {
-    if (desktopMQ.matches && state.drawerOpen) close(false);
+    if (runtime.desktopMQ.matches && state.drawerOpen) close(false);
   };
 
-  toggle.addEventListener("click", onToggleClick);
-  if (closeBtn) closeBtn.addEventListener("click", onCloseClick);
-  if (backdrop) backdrop.addEventListener("click", onBackdropClick);
+  runtime.toggle.addEventListener("click", onToggleClick);
+  if (runtime.closeBtn) runtime.closeBtn.addEventListener("click", onCloseClick);
+  if (runtime.backdrop) runtime.backdrop.addEventListener("click", onBackdropClick);
   document.addEventListener("keydown", onKeydown);
-  const removeBreakpointListener = registerMediaQueryListener(desktopMQ, onBreakpoint);
+  const removeBreakpointListener = registerMediaQueryListener(runtime.desktopMQ, onBreakpoint);
 
-  const cleanup = () => {
-    toggle.removeEventListener("click", onToggleClick);
-    if (closeBtn) closeBtn.removeEventListener("click", onCloseClick);
-    if (backdrop) backdrop.removeEventListener("click", onBackdropClick);
+  return () => {
+    runtime.toggle.removeEventListener("click", onToggleClick);
+    if (runtime.closeBtn) runtime.closeBtn.removeEventListener("click", onCloseClick);
+    if (runtime.backdrop) runtime.backdrop.removeEventListener("click", onBackdropClick);
     document.removeEventListener("keydown", onKeydown);
     removeBreakpointListener();
+  };
+}
+
+export function createDrawer(config: DrawerConfig): DrawerHandle {
+  const runtime: DrawerRuntime = {
+    ...config,
+    lockScroll: config.lockScroll ?? false,
+    inertSelectors: config.inertSelectors ?? [],
+  };
+  const state: DrawerState = {
+    drawerOpen: false,
+    lastFocused: null,
+    savedScrollY: 0,
+    closeTimer: null,
+  };
+  const open = () => {
+    openDrawer(runtime, state);
+  };
+  const close = (restoreFocus = true) => {
+    closeDrawer(runtime, state, restoreFocus);
+  };
+  const removeListeners = bindDrawerEvents(runtime, state, open, close);
+
+  const cleanup = () => {
+    removeListeners();
 
     if (state.drawerOpen) {
       close(false);
     } else {
-      finishClose();
+      finishClose(runtime, state);
     }
 
-    container.classList.remove("is-open", "is-closing");
-    setToggleAttrs(toggle, false, openLabels, closedLabels);
+    runtime.container.classList.remove("is-open", "is-closing");
+    setToggleAttrs(runtime.toggle, false, runtime.openLabels, runtime.closedLabels);
   };
 
-  return { open, close, toggle: onToggleClick, isOpen: () => state.drawerOpen, cleanup };
+  return { open, close, toggle: () => (state.drawerOpen ? close() : open()), isOpen: () => state.drawerOpen, cleanup };
 }

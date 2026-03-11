@@ -1,12 +1,21 @@
 ---
 import { getCollection, getEntry, render } from "astro:content";
-import BaseLayout from "../../layouts/BaseLayout.astro";
-import { cssUrl, withBase } from "../../lib/urls";
+import { BaseLayout } from "@/app/layouts";
+import { cssUrl, withBase } from "@/lib/urls";
 import {
   getCountryPath,
   getEntryBodyClass,
   getEntryPageId,
-} from "../../lib/content-routes";
+} from "@/lib/content-routes";
+import {
+  BODY_TEXT_CLASS,
+  COUNTRY_CARD_ARTICLE_CLASS,
+  COUNTRY_FLAG_OVERLAY_CLASS,
+  INHERIT_LINK_CLASS,
+  PAGE_TITLE_CLASS,
+  SECTION_TITLE_CLASS,
+} from "@/shared/ui/tailwind";
+import MarkdownContent from "@/shared/ui/MarkdownContent.astro";
 
 const focusCountries = (await getCollection("countries"))
   .filter((country) => country.data.unique_focus_tree)
@@ -19,6 +28,8 @@ if (!pageEntry) {
 }
 const { Content: PageContent } = await render(pageEntry);
 const canonicalPath = pageEntry.data.permalink ?? "/countries/";
+
+const countryCardLinkClass = [INHERIT_LINK_CLASS, "hover:text-primary", "hover:no-underline", "before:absolute", "before:inset-0", "before:z-10"].join(" ");
 ---
 
 <BaseLayout
@@ -31,25 +42,30 @@ const canonicalPath = pageEntry.data.permalink ?? "/countries/";
   bodyClass={getEntryBodyClass(pageEntry)}
   toc="off"
 >
-  <h1>Countries</h1>
-  <p>The following countries are playable in Millennium Dawn: Modern Day Mod.</p>
+  <h1 class={PAGE_TITLE_CLASS}>Countries</h1>
+  <p class={BODY_TEXT_CLASS}>The following countries are playable in Millennium Dawn: Modern Day Mod.</p>
 
-  <h2>Unique Focus Trees</h2>
-  <div class="country-focus-grid" role="list" aria-label="Countries with unique focus trees">
+  <h2 class={SECTION_TITLE_CLASS}>Unique Focus Trees</h2>
+  <div class="mb-xl mt-md grid gap-md [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))]" role="list" aria-label="Countries with unique focus trees">
     {focusCountries.map((country) => (
       <article
-        class="country-focus-card"
+        class={COUNTRY_CARD_ARTICLE_CLASS}
         role="listitem"
         style={country.data.flag_image ? `--country-flag-image: ${cssUrl(country.data.flag_image)};` : undefined}
       >
-        {country.data.flag_image && <span class="country-focus-card__flag-image" aria-hidden="true"></span>}
-        <p class="country-focus-card__title">
-          <a href={withBase(getCountryPath(country))}>{country.data.title}</a>
+        {country.data.flag_image && (
+          <span
+            class={COUNTRY_FLAG_OVERLAY_CLASS}
+            aria-hidden="true"
+          ></span>
+        )}
+        <p class="m-0 text-[1.05rem] font-semibold leading-[1.35] text-text">
+          <a class={countryCardLinkClass} href={withBase(getCountryPath(country))}>{country.data.title}</a>
         </p>
-        {country.data.grid_note && <p class="country-focus-card__note">{country.data.grid_note}</p>}
+        {country.data.grid_note && <p class="m-0 text-[0.86rem] leading-[1.55] text-text-secondary">{country.data.grid_note}</p>}
       </article>
     ))}
   </div>
 
-  <PageContent />
+  <MarkdownContent Content={PageContent} />
 </BaseLayout>
