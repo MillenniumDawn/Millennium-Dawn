@@ -44,6 +44,32 @@ export const sectionsSchema = z.record(
 );
 
 export const homeSchema = z.object({
+  hero: z.object({
+    badge: z.object({
+      label: z.string(),
+      url: hrefSchema,
+    }),
+    title: z.string(),
+    subtitle: z.string(),
+    primary_cta: z.object({
+      label: z.string(),
+      url: hrefSchema,
+    }),
+    secondary_cta: z.object({
+      label: z.string(),
+      url: hrefSchema,
+    }),
+    community_cta: z.object({
+      label: z.string(),
+      url: hrefSchema,
+    }),
+    note: z.object({
+      prefix: z.string(),
+      link_label: z.string(),
+      link_url: hrefSchema,
+      suffix: z.string().optional(),
+    }),
+  }),
   roadmaps: z.array(
     z.object({
       title: z.string(),
