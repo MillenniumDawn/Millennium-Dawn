@@ -41,7 +41,9 @@ The following slash commands are available in this project (`.claude/skills/`):
 
 ## Validation & Formatting Tools
 
-Validation and standardization tools are available in `tools/validation/` and `tools/standardization/`. Use the `/validate` and `/standardize` skills above for quick access, or run the scripts directly — both directories have READMEs with full usage details.
+Validation runs automatically on GitHub CI when a PR is opened. Do not run validators proactively after making changes — only run `/validate` on explicit request.
+
+Standardization tools are available in `tools/standardization/`. Use the `/standardize` skill for quick access, or run the scripts directly — the directory has a README with full usage details.
 
 A standalone diff summary script is also available: `tools/review-branch.sh [base-branch]`.
 
