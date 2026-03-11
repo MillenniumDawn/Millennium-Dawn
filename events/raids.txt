@@ -328,6 +328,11 @@ country_event = {
 			target = FROM
 			modifier = violated_territorial_sovereignty
 		}
+		set_country_flag = {
+			flag = recently_demanded_reparations
+			days = 365
+			value = 1
+		}
 		FROM = {
 			country_event = {
 				id = MD_raid.2
@@ -360,6 +365,19 @@ country_event = {
 			modifier = {
 				factor = 1.5
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				# Hostile nations won't pay — don't bother demanding
+				factor = 0.05
+				has_opinion = {
+					target = FROM
+					value < -100
+				}
+			}
+			modifier = {
+				# Only demand reparations once per year
+				factor = 0
+				has_country_flag = recently_demanded_reparations
 			}
 			# Country specific
 			modifier = {
@@ -479,11 +497,16 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD_raid.2.b executed"
 		custom_effect_tooltip = MD_reparation_TT
 		set_country_flag = { flag = conceded_to@FROM days = 360 value = 1 }
+		set_country_flag = {
+			flag = recently_paid_reparations
+			days = 365
+			value = 1
+		}
 		effect_tooltip = {
 			FROM = {
 				set_temp_variable = { treasury_change = gdp_total }
 				multiply_temp_variable = { treasury_change = 0.02 }
-				clamp_temp_variable = { var = treasury_change min = 0 max = 150 }
+				clamp_temp_variable = { var = treasury_change min = 0 max = 200 }
 
 				set_temp_variable = { temp_reparation = treasury_change }
 				modify_treasury_effect = yes
@@ -515,6 +538,29 @@ country_event = {
 				set_temp_variable = { interest_rate_check = 7.99 }
 				calculate_ai_interest = yes
 			}
+			modifier = {
+				# Don't pay reparations more than once per year
+				factor = 0
+				has_country_flag = recently_paid_reparations
+			}
+			modifier = {
+				# Don't pay reparations to a nation that hates us
+				factor = 0
+				FROM = {
+					has_opinion = {
+						target = ROOT
+						value < -75
+					}
+				}
+			}
+			modifier = {
+				# Don't pay reparations to a nation we hate
+				factor = 0
+				has_opinion = {
+					target = FROM
+					value < -75
+				}
+			}
 		}
 	}
 }
@@ -534,7 +580,7 @@ country_event = {
 		ROOT = {
 			set_temp_variable = { treasury_change = gdp_total }
 			multiply_temp_variable = { treasury_change = 0.02 }
-			clamp_temp_variable = { var = treasury_change min = 0 max = 150 }
+			clamp_temp_variable = { var = treasury_change min = 0 max = 200 }
 			set_temp_variable = { temp_reparation = treasury_change }
 			modify_treasury_effect = yes
 		}
