@@ -1,4 +1,4 @@
-import { readCssPxVar } from "../../shared/lib/tokens";
+import { readCssPxVar } from "@/shared/lib/tokens";
 
 type Cleanup = () => void;
 
