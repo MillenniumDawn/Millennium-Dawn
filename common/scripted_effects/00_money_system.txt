@@ -4406,16 +4406,24 @@ calculate_gdp = {
 	set_temp_variable = { max_resource_workers = workforce_total }
 	multiply_temp_variable = { max_resource_workers = 0.75 } #percentage cap to resource workers
 	subtract_from_temp_variable = { workforce_total = max_resource_workers }
-	set_variable = { resource_sector_worker_fulfillment = max_resource_workers }
-	divide_variable = { resource_sector_worker_fulfillment = resource_sector_workers }
-	clamp_variable = { var = resource_sector_worker_fulfillment min = 0 max = 1 }
-	set_variable = { resource_sector_worker_fulfillment_var = -1 }
-	add_to_variable = { resource_sector_worker_fulfillment_var = resource_sector_worker_fulfillment }
-	if = { limit = { check_variable = { resource_sector_workers > max_resource_workers } }
-		set_variable = { resource_sector_workers = max_resource_workers }
+	if = { limit = { check_variable = { resource_sector_workers < 0.001 } }
+		set_variable = { resource_sector_worker_fulfillment = 1 }
+		set_variable = { resource_sector_worker_fulfillment_var = 0 }
+		set_variable = { resource_sector_workers = 0 }
+		add_to_temp_variable = { workforce_total = max_resource_workers }
 	}
-	subtract_from_temp_variable = { max_resource_workers = resource_sector_workers }
-	add_to_temp_variable = { workforce_total = max_resource_workers }
+	else = {
+		set_variable = { resource_sector_worker_fulfillment = max_resource_workers }
+		divide_variable = { resource_sector_worker_fulfillment = resource_sector_workers }
+		clamp_variable = { var = resource_sector_worker_fulfillment min = 0 max = 1 }
+		set_variable = { resource_sector_worker_fulfillment_var = -1 }
+		add_to_variable = { resource_sector_worker_fulfillment_var = resource_sector_worker_fulfillment }
+		if = { limit = { check_variable = { resource_sector_workers > max_resource_workers } }
+			set_variable = { resource_sector_workers = max_resource_workers }
+		}
+		subtract_from_temp_variable = { max_resource_workers = resource_sector_workers }
+		add_to_temp_variable = { workforce_total = max_resource_workers }
+	}
 	# Calculates GDP from the reosurce sector
 	set_temp_variable = { gdp_from_resource_sector = total_resource_amount }
 	multiply_temp_variable = { gdp_from_resource_sector = 0.5 } #gdp per resource global.resource_gdp_coeff
@@ -4469,6 +4477,28 @@ calculate_gdp = {
 	multiply_variable = { gdp_from_agriculture = agriculture_gdp_generation } #multiplies workers * gdp generated per worker
 	multiply_variable = { gdp_from_agriculture = 1.337 } #control factor
 	subtract_from_temp_variable = { workforce_total = agriculture_workers }
+
+	# Factories & Offices Employment
+	set_temp_variable = { workers_per_civ_fac = 0.206 } #milions #number of people who depend from these jobs, so not just direct workers but should include retail, services, food industry
+	set_temp_variable = { workers_per_mil_fac = 0.0188 }
+	set_temp_variable = { workers_per_dockyard = 0.0188 }
+	set_temp_variable = { workers_per_office = 0.473 }
+	set_temp_variable = { workers_per_agriculture_district = 0.188 }
+	set_temp_variable = { workers_per_microchip_plant = 0.0375 }
+	set_temp_variable = { workers_per_composite_plant = 0.0375 }
+	set_temp_variable = { workers_per_synthetic_refinery = 0.184 }
+	set_temp_variable = { workers_per_nuclear_reactor = 0.148 }
+	set_temp_variable = { workers_per_fossil_powerplant = 0.0075 }
+	set_temp_variable = { workers_per_renewable_energy = 0.0225 }
+	set_temp_variable = { workers_per_internet_station = 0.012 }
+
+	set_temp_variable = { temp_gdp_per_capita = gdpc_converging_var }
+	clamp_temp_variable = { var = temp_gdp_per_capita min = 5 }
+
+	set_temp_variable = { mil_facs_worker_requirement_multiplier = 1 }
+	add_to_temp_variable = { mil_facs_worker_requirement_multiplier = modifier@mil_facs_worker_requirement_modifier }
+	add_to_temp_variable = { mil_facs_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
+	clamp_temp_variable = { var = mil_facs_worker_requirement_multiplier min = 0.10 }
 
 	# Power Plants — allocated first so the grid is staffed before any industrial demand
 	# Nuclear Reactors
@@ -4545,27 +4575,6 @@ calculate_gdp = {
 	multiply_variable = { minimum_renewable_energy_var = renewable_energy_infra_manpower_fulfillment }
 	multiply_variable = { maximum_renewable_energy_var = renewable_energy_infra_manpower_fulfillment }
 
-	# Factories & Offices Employment
-	set_temp_variable = { workers_per_civ_fac = 0.206 } #milions #number of people who depend from these jobs, so not just direct workers but should include retail, services, food industry
-	set_temp_variable = { workers_per_mil_fac = 0.0188 }
-	set_temp_variable = { workers_per_dockyard = 0.0188 }
-	set_temp_variable = { workers_per_office = 0.473 }
-	set_temp_variable = { workers_per_agriculture_district = 0.188 }
-	set_temp_variable = { workers_per_microchip_plant = 0.0375 }
-	set_temp_variable = { workers_per_composite_plant = 0.0375 }
-	set_temp_variable = { workers_per_synthetic_refinery = 0.184 }
-	set_temp_variable = { workers_per_nuclear_reactor = 0.148 }
-	set_temp_variable = { workers_per_fossil_powerplant = 0.0075 }
-	set_temp_variable = { workers_per_renewable_energy = 0.0225 }
-	set_temp_variable = { workers_per_internet_station = 0.012 }
-
-	set_temp_variable = { temp_gdp_per_capita = gdpc_converging_var }
-	clamp_temp_variable = { var = temp_gdp_per_capita min = 5 }
-
-	set_temp_variable = { mil_facs_worker_requirement_multiplier = 1 }
-	add_to_temp_variable = { mil_facs_worker_requirement_multiplier = modifier@mil_facs_worker_requirement_modifier }
-	add_to_temp_variable = { mil_facs_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-	clamp_temp_variable = { var = mil_facs_worker_requirement_multiplier min = 0.10 }
 
 	if = { limit = { check_variable = { military_fac = 0 } }
 		set_variable = { military_factories_manpower_fulfillment = 1 }
@@ -4819,13 +4828,19 @@ calculate_gdp = {
 	set_temp_variable = { max_workers_in_healthcare = state_healthcare_demand }
 	multiply_temp_variable = { max_workers_in_healthcare = workers_per_healthcare_demand_unit }
 
-	set_variable = { workers_in_healthcare = max_workers_in_healthcare }
-	clamp_variable = { var = workers_in_healthcare max = workforce_total }
+	if = { limit = { check_variable = { max_workers_in_healthcare < 0.001 } }
+		set_variable = { workers_in_healthcare = 0 }
+		set_variable = { healthcare_manpower_fulfillment = 1 }
+	}
+	else = {
+		set_variable = { workers_in_healthcare = max_workers_in_healthcare }
+		clamp_variable = { var = workers_in_healthcare max = workforce_total }
 
-	set_variable = { healthcare_manpower_fulfillment = workers_in_healthcare }
-	divide_variable = { healthcare_manpower_fulfillment = max_workers_in_healthcare }
-	clamp_variable = { var = healthcare_manpower_fulfillment min = 0.1 max = 1 }
-	subtract_from_temp_variable = { workforce_total = workers_in_healthcare }
+		set_variable = { healthcare_manpower_fulfillment = workers_in_healthcare }
+		divide_variable = { healthcare_manpower_fulfillment = max_workers_in_healthcare }
+		clamp_variable = { var = healthcare_manpower_fulfillment min = 0.1 max = 1 }
+		subtract_from_temp_variable = { workforce_total = workers_in_healthcare }
+	}
 
 	# Bureaucracy — civil servants required by government administration level
 	set_temp_variable = { workers_per_bureau = 0 }
