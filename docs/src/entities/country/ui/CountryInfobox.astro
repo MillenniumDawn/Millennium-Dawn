@@ -1,0 +1,109 @@
+---
+import { cssUrl } from "@/lib/urls";
+import InfoboxCompactTable from "@/shared/ui/InfoboxCompactTable.astro";
+import InfoboxStatList from "@/shared/ui/InfoboxStatList.astro";
+
+interface Stat {
+  key?: string;
+  label: string;
+  value: string;
+}
+interface Group {
+  section: string;
+  kind?: "default" | "overview" | "military_industry" | "economy";
+  stats: Stat[];
+}
+
+interface Props {
+  title: string;
+  flagImage?: string;
+  infobox: Group[];
+}
+
+const { title, flagImage, infobox }: Props = Astro.props;
+
+const militaryIndustryColumns = [
+  { key: "divisions", label: "Divisions" },
+  { key: "total_factories", label: "Total Factories" },
+  { key: "military_industry", label: "Military Ind." },
+  { key: "civilian_industry", label: "Civilian Ind." },
+];
+
+const economyColumns = [
+  { key: "treasury", label: "Treasury" },
+  { key: "debt", label: "Debt" },
+  { key: "investments", label: "Investments" },
+];
+
+function statValue(group: Group, key: string): string {
+  const match = (group.stats ?? []).find((item) => item.key === key);
+  return match?.value ?? "-";
+}
+
+const countryTag =
+  (infobox ?? [])
+    .flatMap((group) => group.stats ?? [])
+    .find((stat) => stat.key === "tag" && stat.value?.trim())
+    ?.value.trim() ?? "WIP";
+---
+
+<div class="overflow-hidden rounded-lg border border-border-light bg-surface shadow-sm" role="complementary" aria-label={`${title} summary`}>
+  <div
+    class:list={[
+      "relative",
+      flagImage ? "min-h-[170px] bg-surface" : "min-h-[100px] bg-surface-muted border-b border-border-light",
+    ]}
+  >
+    {flagImage && (
+      <div
+        class="absolute inset-0 z-0 pointer-events-none"
+        style={`background-image: ${cssUrl(flagImage)}; background-position: center center; background-repeat: no-repeat; background-size: cover; mask-image: linear-gradient(180deg, black 0%, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(180deg, black 0%, black 50%, transparent 100%);`}
+        aria-hidden="true"
+      />
+    )}
+    <div class="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-sm px-4 pb-4 pt-12">
+      <p class="m-0 max-w-[70%] text-[1.4rem] font-bold leading-tight text-text [text-shadow:0_1px_12px_var(--color-surface),0_2px_24px_var(--color-surface)] dark:[text-shadow:0_1px_12px_var(--color-surface),0_2px_24px_var(--color-surface)]" aria-hidden="true">
+        {title}
+      </p>
+      <p class="m-0 rounded-full border border-border bg-surface/80 px-[0.7rem] py-[0.3rem] text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-text shadow-sm backdrop-blur-md">
+        {countryTag}
+      </p>
+    </div>
+  </div>
+
+  {(infobox || []).map((group) => {
+    const overviewHasOnlyTag =
+      group.kind === "overview" && (group.stats || []).every((stat) => stat.key === "tag");
+    if (overviewHasOnlyTag) return null;
+
+    return (
+      <section aria-labelledby={`infobox-${group.section.replace(/\s+/g, '-').toLowerCase()}`}>
+        {/* Use semantic heading for structure instead of a visually formatted div */}
+        <h3 id={`infobox-${group.section.replace(/\s+/g, '-').toLowerCase()}`} class="m-0 px-4 pb-[0.45rem] pt-[0.65rem] text-[0.83rem] font-bold uppercase tracking-[0.08em] text-text-muted">{group.section}</h3>
+        {group.kind === "military_industry" ? (
+          <>
+            <InfoboxCompactTable
+              group={group}
+              columns={militaryIndustryColumns}
+              label={group.section}
+            />
+            {statValue(group, "naval_dockyards") !== "-" && (
+              <p class="m-0 flex items-center justify-between gap-[0.8rem] px-4 pb-[0.8rem] text-[0.86rem]">
+                <span class="text-text-secondary">Naval Dockyards</span>
+                <strong>{statValue(group, "naval_dockyards")}</strong>
+              </p>
+            )}
+          </>
+        ) : group.kind === "economy" ? (
+          <InfoboxCompactTable
+            group={group}
+            columns={economyColumns}
+            label={group.section}
+          />
+        ) : (
+          <InfoboxStatList stats={group.stats} excludeKeys={["tag"]} />
+        )}
+      </section>
+    );
+  })}
+</div>

@@ -1,0 +1,40 @@
+---
+import { withBase, ensureTrailingSlash } from "@/lib/urls";
+import { BASE_LINK_CLASS, LIST_CLASS, LIST_ITEM_CLASS, SUBSECTION_TITLE_CLASS, PANEL_SURFACE_CLASS } from "@/shared/ui/tailwind";
+
+interface ResourceItem {
+  title: string;
+  url: string;
+}
+
+interface ResourceGroup {
+  heading: string;
+  items: ResourceItem[];
+}
+
+interface Props {
+  groups: ResourceGroup[];
+}
+
+const { groups }: Props = Astro.props;
+
+function resolveGroupHref(url: string): string {
+  if (url.includes("://")) return url;
+  return withBase(ensureTrailingSlash(url));
+}
+---
+
+{groups.map((group) => (
+  // Use <section> with a unique aria-labelledby for better landmark navigation
+  <section class:list={[PANEL_SURFACE_CLASS, "p-lg"]} aria-labelledby={`group-${group.heading.replace(/\s+/g, '-').toLowerCase()}`}>
+    <h3 id={`group-${group.heading.replace(/\s+/g, '-').toLowerCase()}`} class={SUBSECTION_TITLE_CLASS}>{group.heading}</h3>
+    <ul class={LIST_CLASS}>
+      {group.items.map((item) => (
+        <li class={LIST_ITEM_CLASS}>
+          {/* Increase touch target size slightly using padding */}
+          <a class:list={[BASE_LINK_CLASS, "inline-block py-1"]} href={resolveGroupHref(item.url)}>{item.title}</a>
+        </li>
+      ))}
+    </ul>
+  </section>
+))}

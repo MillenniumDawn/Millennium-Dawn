@@ -1,5 +1,5 @@
 import { toAbsolute, withBase } from "./urls";
-import { SITE_DESCRIPTION } from "../shared/config/site";
+import { SITE_DESCRIPTION } from "@/shared/config/site";
 
 export interface SeoImage {
   path: string;

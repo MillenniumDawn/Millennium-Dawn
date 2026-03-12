@@ -1,0 +1,29 @@
+---
+import type { CollectionEntry } from "astro:content";
+import type { MarkdownHeading } from "astro";
+import BaseLayout from "./BaseLayout.astro";
+import { resolveToc } from "@/lib/content-helpers";
+
+interface Props {
+  entry: CollectionEntry<"devDiaries">;
+  canonicalPath: string;
+  headings?: MarkdownHeading[];
+  toc?: "auto" | "off";
+}
+
+const { entry, canonicalPath, headings = [], toc }: Props = Astro.props;
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  canonicalPath={canonicalPath}
+  toc={toc ?? resolveToc(entry.data.toc)}
+  seo={entry.data.seo ?? true}
+  robots={entry.data.robots}
+  bodyClass={entry.data.body_class ?? "dev-diary-page"}
+  pageId={entry.data.page_id ?? "dev-diary"}
+  headings={headings}
+>
+  <slot />
+</BaseLayout>
