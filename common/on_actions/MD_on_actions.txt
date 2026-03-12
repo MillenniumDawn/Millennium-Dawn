@@ -584,6 +584,8 @@ on_actions = {
 					}
 				}
 			}
+			# Update dynamic issuer globals so any capital that changed hands is reflected
+			update_currency_issuers = yes
 		}
 	}
 
@@ -1262,6 +1264,66 @@ on_actions = {
 				if = { limit = { is_debug = yes }
 					log = "[GetDateText]: [THIS.GetName]: MD Monthly On_Action Triggered Month: [?global.month] Year: [?global.year]"
 				}
+			}
+
+			# Currency system — runs for every country every month
+			calculate_currency_strength = yes
+		}
+	}
+}
+
+# ── Reserve Currency — Faction-Change Auto-Switch (AI only) ──────────────────────────────
+# When an AI joins the Chinese or Russian faction, switch to their currency.
+# When an AI leaves, fall back to USD (the default global reserve).
+# ROOT = the country joining/leaving; FROM = the faction leader.
+on_actions = {
+	on_join_faction = {
+		effect = {
+			if = {
+				limit = {
+					is_ai = yes
+					FROM = { tag = CHI }
+					NOT = { has_idea = chinese_yuan }
+				}
+				add_ideas = chinese_yuan
+			}
+			else_if = {
+				limit = {
+					is_ai = yes
+					FROM = {
+						OR = {
+							tag = SOV
+							tag = RUS
+						}
+					}
+					NOT = { has_idea = russia_rouble }
+				}
+				add_ideas = russia_rouble
+			}
+		}
+	}
+
+	on_leave_faction = {
+		effect = {
+			if = {
+				limit = {
+					is_ai = yes
+					has_idea = chinese_yuan
+					NOT = { is_in_faction_with = CHI }
+					NOT = { tag = CHI }
+				}
+				add_ideas = us_dollar
+			}
+			else_if = {
+				limit = {
+					is_ai = yes
+					has_idea = russia_rouble
+					NOT = { is_in_faction_with = SOV }
+					NOT = { is_in_faction_with = RUS }
+					NOT = { tag = SOV }
+					NOT = { tag = RUS }
+				}
+				add_ideas = us_dollar
 			}
 		}
 	}

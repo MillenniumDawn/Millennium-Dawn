@@ -715,6 +715,18 @@ scripted_gui = {
 				NOT = { has_country_flag = no_corporate_tax_rate_change }
 				ROOT = { has_political_power > tax_rate_change_5 }
 			}
+			# CB Policy Rate Buttons
+			increase_cb_rate_click_enabled = {
+				check_variable = { var = cb_policy_rate value = 0 compare = greater_than_or_equals }
+				check_variable = { var = cb_policy_rate value = 20 compare = less_than }
+				NOT = { has_country_flag = temp_cb_rate_changed }
+				ROOT = { has_political_power > 25 }
+			}
+			decrease_cb_rate_click_enabled = {
+				check_variable = { var = cb_policy_rate value = 0 compare = greater_than }
+				NOT = { has_country_flag = temp_cb_rate_changed }
+				ROOT = { has_political_power > 25 }
+			}
 			# Extra Features
 			print_money_button_click_enabled = {
 				if = { limit = { has_country_flag = printed_money_recently }
@@ -730,6 +742,20 @@ scripted_gui = {
 					}
 				}
 				has_political_power > 49
+			}
+
+			# - Monetary Policy Buttons
+			expand_money_supply_button_click_enabled = {
+				NOT = { has_country_flag = monetary_expand_cooldown }
+				NOT = { has_country_flag = monetary_austerity_active }
+				NOT = { has_idea = no_foreign_reserve }
+				NOT = { has_idea = gold_standard_back }
+				is_full_state = yes
+			}
+			austerity_button_click_enabled = {
+				NOT = { has_country_flag = monetary_austerity_cooldown }
+				NOT = { has_country_flag = monetary_expand_active }
+				is_full_state = yes
 			}
 
 			# - Lease Military Factories
@@ -1033,6 +1059,29 @@ scripted_gui = {
 				}
 				set_country_flag = { flag = temp_decrease_major_hike_in_corp_taxes value = 1 days = 60 }
 			}
+			# CB Policy Rate Increase/Decrease
+			increase_cb_rate_click = {
+				ROOT = { add_political_power = -25 }
+				set_temp_variable = { previous_cb_rate = cb_policy_rate }
+				add_to_variable = { cb_policy_rate = 1 }
+				clamp_variable = { var = cb_policy_rate min = 0 max = 20 }
+				ingame_update_setup = yes
+				set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: CB Rate Increase: [?previous_cb_rate]% -> [?cb_policy_rate]%"
+				}
+			}
+			decrease_cb_rate_click = {
+				ROOT = { add_political_power = -25 }
+				set_temp_variable = { previous_cb_rate = cb_policy_rate }
+				subtract_from_variable = { cb_policy_rate = 1 }
+				clamp_variable = { var = cb_policy_rate min = 0 max = 20 }
+				ingame_update_setup = yes
+				set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: DEBUG: CB Rate Decrease: [?previous_cb_rate]% -> [?cb_policy_rate]%"
+				}
+			}
 			# - Refresh Tax Rates
 			# Allows you to bypass the weekly refresh and refresh immediately, player only
 			refresh_tax_rates_bg_click = {
@@ -1042,13 +1091,27 @@ scripted_gui = {
 				ingame_update_setup = yes
 			}
 			# - Printing Money action
-			# This action "prints" money and adds 2 weeks of your total gross income to your treasury immediately while increasing inflation.
+			# This action "prints" money and adds 2 weeks of your total gross income to your treasury immediatly while reducing productivity, increasing the penalty with each click (the penalty going back down once per year however).
 			print_money_button_click = {
 				set_temp_variable = { var = printing value = display_income }
 				multiply_temp_variable = { var = printing value = 2 }
 				set_temp_variable = { treasury_change = printing }
 				modify_treasury_effect = yes
 				add_political_power = -50
+
+				# Calculate the productivity change
+				set_temp_variable = { temp_gdp_multiplier = gdp_total } # decreases productivity cost (loss) the higher your total GDP
+				multiply_temp_variable = { temp_gdp_multiplier = 0.001 }
+
+				set_temp_variable = { temp_multiplier = 0.20 } # increases productivity cost (loss) by 20% with each press/printing of money
+				multiply_temp_variable = { temp_multiplier = printing_money_var }
+				add_to_temp_variable = { temp_multiplier = 1 }
+
+				set_temp_variable = { temp_productivity_change = -7 }
+				add_to_temp_variable = { temp_productivity_change = temp_gdp_multiplier }
+				clamp_temp_variable = { var = temp_productivity_change max = -3 } # hits the max reduction from the temp_gdp_multiplier at $4,000B GDP
+				multiply_temp_variable = { temp_productivity_change = temp_multiplier }
+				flat_productivity_change_effect = yes
 
 				add_to_variable = { printing_money_var = 1 }
 
@@ -1063,6 +1126,23 @@ scripted_gui = {
 					add_to_array = { global.printing_money_nations = THIS.id }
 				}
 				log = "[GetDateText]: [THIS.GetName]: DEBUG: Print Money. Weekly Balance:[?treasury_rate], # of Times Printed:[?printing_money_var], Int Rate:[?interest_rate]."
+			}
+
+			# - Monetary Policy Buttons
+			expand_money_supply_button_click = {
+				add_timed_idea = { idea = monetary_expand_active_idea days = 180 }
+				add_to_variable = { currency_strength = -0.05 }
+				set_country_flag = { flag = monetary_expand_active value = 1 days = 180 }
+				set_country_flag = { flag = monetary_expand_cooldown value = 1 days = 545 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [ROOT.GetName]: GUI: Expand Money Supply activated"
+			}
+			austerity_button_click = {
+				add_to_variable = { currency_strength = 0.04 }
+				set_country_flag = { flag = monetary_austerity_active value = 1 days = 120 }
+				set_country_flag = { flag = monetary_austerity_cooldown value = 1 days = 300 }
+				ingame_update_setup = yes
+				log = "[GetDateText]: [ROOT.GetName]: GUI: Austerity Measures activated"
 			}
 
 			# - Lease Military Factories

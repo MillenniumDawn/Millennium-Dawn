@@ -1,0 +1,70 @@
+monetary_policy_decisions = {
+
+	# Expand Money Supply — directs the central bank to inject liquidity.
+	# Reserve currency issuers benefit most (their base seigniorage income scales up);
+	# non-issuers earn a small fraction of tax income but pay in currency weakness.
+	# Cannot be active simultaneously with Austerity Measures.
+	monetary_policy_expand_money_supply = {
+		icon = GFX_decision_bancru_imf_button
+
+		days_mission_timeout = 180
+		days_re_enable = 365
+
+		visible = {
+			is_ai = yes
+			NOT = { has_active_mission = monetary_policy_austerity }
+		}
+
+		available = {
+			is_full_state = yes
+			NOT = { has_idea = no_foreign_reserve }
+			NOT = { has_idea = gold_standard_back }
+		}
+
+		modifier = {
+			seigniorage_income_modifier = 0.25
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision monetary_policy_expand_money_supply"
+			add_to_variable = { currency_strength = -0.05 }
+			ingame_update_setup = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				NOT = { check_variable = { treasury < 0 } }
+			}
+		}
+	}
+
+	# Austerity Measures — tightens the money supply and imposes fiscal discipline.
+	# Immediately strengthens the currency. Cannot be active alongside Expand Money Supply.
+	monetary_policy_austerity = {
+		icon = GFX_decision_bancru_ask_button
+
+		days_mission_timeout = 120
+		days_re_enable = 180
+
+		visible = {
+			is_ai = yes
+			NOT = { has_active_mission = monetary_policy_expand_money_supply }
+		}
+
+		available = {
+			is_full_state = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision monetary_policy_austerity"
+			add_to_variable = { currency_strength = 0.04 }
+			ingame_update_setup = yes
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+}
