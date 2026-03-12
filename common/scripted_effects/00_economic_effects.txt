@@ -563,11 +563,19 @@ quarterly_inflation_calculation = {
 	subtract_from_temp_variable = { inflation_rate_adjuster = gdpc_growth_inflation_adjuster }
 	log = "Post Tax Rate Inflation Adjusted [?inflation_rate_adjuster]"
 
-	#CB policy rate suppresses inflation — higher rate = tighter money = less inflationary pressure
-	#Coefficient 0.003: a 5% rate reduces the quarterly adjuster by 0.015 (~1.5pp per quarter)
-	set_temp_variable = { cb_rate_infl_adj = cb_policy_rate }
-	multiply_temp_variable = { cb_rate_infl_adj = 0.003 }
-	subtract_from_temp_variable = { inflation_rate_adjuster = cb_rate_infl_adj }
+	# Real rate = policy rate minus current inflation (both in %)
+	# Neutral floor at 2%: a zero-rate policy is always mildly stimulative, even in low-inflation environments
+	# Positive real rate = tight money (reduces inflation); negative real rate = loose money (adds pressure)
+	set_temp_variable = { cb_infl_pct = inflation_rate_var }
+	multiply_temp_variable = { cb_infl_pct = 100 }
+	if = {
+		limit = { check_variable = { cb_infl_pct < 2 } }
+		set_temp_variable = { cb_infl_pct = 2 }
+	}
+	set_temp_variable = { cb_real_rate = cb_policy_rate }
+	subtract_from_temp_variable = { cb_real_rate = cb_infl_pct }
+	multiply_temp_variable = { cb_real_rate = 0.003 }
+	subtract_from_temp_variable = { inflation_rate_adjuster = cb_real_rate }
 	log = "Post CB Rate Inflation Adjusted [?inflation_rate_adjuster]"
 
 	#Adjust inflation further by the base GDP/C Amount
@@ -740,4 +748,6 @@ calculate_inflation_effects = {
 	# Combined inflation cost: economic rate + currency exchange pressure
 	set_variable = { inflation_cost_combined_var = inflation_rate_var }
 	add_to_variable = { inflation_cost_combined_var = currency_inflation_feed }
+	# Currency can reduce inflation but must not cause deflation
+	clamp_variable = { var = inflation_cost_combined_var min = 0 }
 }

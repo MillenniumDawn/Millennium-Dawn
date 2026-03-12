@@ -4470,19 +4470,94 @@ calculate_gdp = {
 	multiply_variable = { gdp_from_agriculture = 1.337 } #control factor
 	subtract_from_temp_variable = { workforce_total = agriculture_workers }
 
+	# Power Plants — allocated first so the grid is staffed before any industrial demand
+	# Nuclear Reactors
+	if = { limit = { check_variable = { nuclear_reactors = 0 } }
+		set_variable = { nuclear_reactors_manpower_fulfillment = 1 }
+	}
+	else = {
+		set_temp_variable = { nuclear_reactor_worker_requirement_multiplier = 1 }
+		add_to_temp_variable = { nuclear_reactor_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
+		clamp_temp_variable = { var = nuclear_reactor_worker_requirement_multiplier min = 0.10 }
+		multiply_temp_variable = { workers_per_nuclear_reactor = nuclear_reactor_worker_requirement_multiplier }
+
+		set_temp_variable = { max_workers_in_nuclear_reactors = nuclear_reactors }
+		multiply_temp_variable = { max_workers_in_nuclear_reactors = workers_per_nuclear_reactor }
+		set_variable = { workers_in_nuclear_reactors = max_workers_in_nuclear_reactors }
+		clamp_variable = {
+			var = workers_in_nuclear_reactors
+			max = workforce_total
+		}
+		multiply_variable = { workers_in_nuclear_reactors = nuclear_reactor_employment_var }
+		set_variable = { nuclear_reactors_manpower_fulfillment = workers_in_nuclear_reactors }
+		divide_variable = { nuclear_reactors_manpower_fulfillment = max_workers_in_nuclear_reactors }
+		subtract_from_temp_variable = { workforce_total = workers_in_nuclear_reactors }
+	}
+
+	# Fossil Power Plants
+	if = { limit = { check_variable = { number_of_fossil_pps = 0 } }
+		set_variable = { fossil_powerplants_manpower_fulfillment = 1 }
+	}
+	else = {
+		set_temp_variable = { fossil_powerplant_worker_requirement_multiplier = 1 }
+		add_to_temp_variable = { fossil_powerplant_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
+		add_to_temp_variable = { fossil_powerplant_worker_requirement_multiplier = modifier@infrastructure_workforce_requirement_modifier }
+		clamp_temp_variable = { var = fossil_powerplant_worker_requirement_multiplier min = 0.10 }
+		multiply_temp_variable = { workers_per_fossil_powerplant = fossil_powerplant_worker_requirement_multiplier }
+
+		set_temp_variable = { max_workers_in_fossil_powerplants = number_of_fossil_pps }
+		multiply_temp_variable = { max_workers_in_fossil_powerplants = workers_per_fossil_powerplant }
+		set_variable = { workers_in_fossil_powerplants = max_workers_in_fossil_powerplants }
+		clamp_variable = {
+			var = workers_in_fossil_powerplants
+			max = workforce_total
+		}
+		multiply_variable = { workers_in_fossil_powerplants = fossil_powerplant_employment_var }
+		set_variable = { fossil_powerplants_manpower_fulfillment = workers_in_fossil_powerplants }
+		divide_variable = { fossil_powerplants_manpower_fulfillment = max_workers_in_fossil_powerplants }
+		subtract_from_temp_variable = { workforce_total = workers_in_fossil_powerplants }
+	}
+
+	# Renewable Energy Infrastructure
+	if = { limit = { check_variable = { renewable_energy_infra = 0 } }
+		set_variable = { renewable_energy_infra_manpower_fulfillment = 1 }
+	}
+	else = {
+		set_temp_variable = { renewable_energy_worker_requirement_multiplier = 1 }
+		add_to_temp_variable = { renewable_energy_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
+		add_to_temp_variable = { renewable_energy_worker_requirement_multiplier = modifier@infrastructure_workforce_requirement_modifier }
+		clamp_temp_variable = { var = renewable_energy_worker_requirement_multiplier min = 0.10 }
+		multiply_temp_variable = { workers_per_renewable_energy = renewable_energy_worker_requirement_multiplier }
+
+		set_temp_variable = { max_workers_in_renewable_energy = renewable_energy_infra }
+		multiply_temp_variable = { max_workers_in_renewable_energy = workers_per_renewable_energy }
+		set_variable = { workers_in_renewable_energy = max_workers_in_renewable_energy }
+		clamp_variable = {
+			var = workers_in_renewable_energy
+			max = workforce_total
+		}
+		multiply_variable = { workers_in_renewable_energy = renewable_energy_employment_var }
+		set_variable = { renewable_energy_infra_manpower_fulfillment = workers_in_renewable_energy }
+		divide_variable = { renewable_energy_infra_manpower_fulfillment = max_workers_in_renewable_energy }
+		subtract_from_temp_variable = { workforce_total = workers_in_renewable_energy }
+	}
+	multiply_variable = { state_renewable_energy_var = renewable_energy_infra_manpower_fulfillment }
+	multiply_variable = { minimum_renewable_energy_var = renewable_energy_infra_manpower_fulfillment }
+	multiply_variable = { maximum_renewable_energy_var = renewable_energy_infra_manpower_fulfillment }
+
 	# Factories & Offices Employment
-	set_temp_variable = { workers_per_civ_fac = 0.275 } #milions #number of people who depend from these jobs, so not just direct workers but should include retail, services, food industry
-	set_temp_variable = { workers_per_mil_fac = 0.025 }
-	set_temp_variable = { workers_per_dockyard = 0.025 }
-	set_temp_variable = { workers_per_office = 0.630 }
-	set_temp_variable = { workers_per_agriculture_district = 0.250 }
-	set_temp_variable = { workers_per_microchip_plant = 0.050 }
-	set_temp_variable = { workers_per_composite_plant = 0.050 }
-	set_temp_variable = { workers_per_synthetic_refinery = 0.245 }
-	set_temp_variable = { workers_per_nuclear_reactor = 0.197 }
-	set_temp_variable = { workers_per_fossil_powerplant = 0.010 }
-	set_temp_variable = { workers_per_renewable_energy = 0.030 }
-	set_temp_variable = { workers_per_internet_station = 0.016 }
+	set_temp_variable = { workers_per_civ_fac = 0.206 } #milions #number of people who depend from these jobs, so not just direct workers but should include retail, services, food industry
+	set_temp_variable = { workers_per_mil_fac = 0.0188 }
+	set_temp_variable = { workers_per_dockyard = 0.0188 }
+	set_temp_variable = { workers_per_office = 0.473 }
+	set_temp_variable = { workers_per_agriculture_district = 0.188 }
+	set_temp_variable = { workers_per_microchip_plant = 0.0375 }
+	set_temp_variable = { workers_per_composite_plant = 0.0375 }
+	set_temp_variable = { workers_per_synthetic_refinery = 0.184 }
+	set_temp_variable = { workers_per_nuclear_reactor = 0.148 }
+	set_temp_variable = { workers_per_fossil_powerplant = 0.0075 }
+	set_temp_variable = { workers_per_renewable_energy = 0.0225 }
+	set_temp_variable = { workers_per_internet_station = 0.012 }
 
 	set_temp_variable = { temp_gdp_per_capita = gdpc_converging_var }
 	clamp_temp_variable = { var = temp_gdp_per_capita min = 5 }
@@ -4700,80 +4775,6 @@ calculate_gdp = {
 		divide_variable = { synthetic_refinery_manpower_fulfillment = max_workers_in_synthetic_refinery }
 		subtract_from_temp_variable = { workforce_total = workers_in_synthetic_refinery }
 	}
-
-	# Nuclear Reactors
-	if = { limit = { check_variable = { nuclear_reactors = 0 } }
-		set_variable = { nuclear_reactors_manpower_fulfillment = 1 }
-	}
-	else = {
-		set_temp_variable = { nuclear_reactor_worker_requirement_multiplier = 1 }
-		add_to_temp_variable = { nuclear_reactor_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-		clamp_temp_variable = { var = nuclear_reactor_worker_requirement_multiplier min = 0.10 }
-		multiply_temp_variable = { workers_per_nuclear_reactor = nuclear_reactor_worker_requirement_multiplier }
-
-		set_temp_variable = { max_workers_in_nuclear_reactors = nuclear_reactors }
-		multiply_temp_variable = { max_workers_in_nuclear_reactors = workers_per_nuclear_reactor }
-		set_variable = { workers_in_nuclear_reactors = max_workers_in_nuclear_reactors }
-		clamp_variable = {
-			var = workers_in_nuclear_reactors
-			max = workforce_total
-		}
-		multiply_variable = { workers_in_nuclear_reactors = nuclear_reactor_employment_var }
-		set_variable = { nuclear_reactors_manpower_fulfillment = workers_in_nuclear_reactors }
-		divide_variable = { nuclear_reactors_manpower_fulfillment = max_workers_in_nuclear_reactors }
-		subtract_from_temp_variable = { workforce_total = workers_in_nuclear_reactors }
-	}
-
-	# Fossil Power Plants
-	if = { limit = { check_variable = { number_of_fossil_pps = 0 } }
-		set_variable = { fossil_powerplants_manpower_fulfillment = 1 }
-	}
-	else = {
-		set_temp_variable = { fossil_powerplant_worker_requirement_multiplier = 1 }
-		add_to_temp_variable = { fossil_powerplant_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-		add_to_temp_variable = { fossil_powerplant_worker_requirement_multiplier = modifier@infrastructure_workforce_requirement_modifier }
-		clamp_temp_variable = { var = fossil_powerplant_worker_requirement_multiplier min = 0.10 }
-		multiply_temp_variable = { workers_per_fossil_powerplant = fossil_powerplant_worker_requirement_multiplier }
-
-		set_temp_variable = { max_workers_in_fossil_powerplants = number_of_fossil_pps }
-		multiply_temp_variable = { max_workers_in_fossil_powerplants = workers_per_fossil_powerplant }
-		set_variable = { workers_in_fossil_powerplants = max_workers_in_fossil_powerplants }
-		clamp_variable = {
-			var = workers_in_fossil_powerplants
-			max = workforce_total
-		}
-		multiply_variable = { workers_in_fossil_powerplants = fossil_powerplant_employment_var }
-		set_variable = { fossil_powerplants_manpower_fulfillment = workers_in_fossil_powerplants }
-		divide_variable = { fossil_powerplants_manpower_fulfillment = max_workers_in_fossil_powerplants }
-		subtract_from_temp_variable = { workforce_total = workers_in_fossil_powerplants }
-	}
-
-	# Renewable Energy Infrastructure
-	if = { limit = { check_variable = { renewable_energy_infra = 0 } }
-		set_variable = { renewable_energy_infra_manpower_fulfillment = 1 }
-	}
-	else = {
-		set_temp_variable = { renewable_energy_worker_requirement_multiplier = 1 }
-		add_to_temp_variable = { renewable_energy_worker_requirement_multiplier = modifier@buildings_worker_requirement_modifier }
-		add_to_temp_variable = { renewable_energy_worker_requirement_multiplier = modifier@infrastructure_workforce_requirement_modifier }
-		clamp_temp_variable = { var = renewable_energy_worker_requirement_multiplier min = 0.10 }
-		multiply_temp_variable = { workers_per_renewable_energy = renewable_energy_worker_requirement_multiplier }
-
-		set_temp_variable = { max_workers_in_renewable_energy = renewable_energy_infra }
-		multiply_temp_variable = { max_workers_in_renewable_energy = workers_per_renewable_energy }
-		set_variable = { workers_in_renewable_energy = max_workers_in_renewable_energy }
-		clamp_variable = {
-			var = workers_in_renewable_energy
-			max = workforce_total
-		}
-		multiply_variable = { workers_in_renewable_energy = renewable_energy_employment_var }
-		set_variable = { renewable_energy_infra_manpower_fulfillment = workers_in_renewable_energy }
-		divide_variable = { renewable_energy_infra_manpower_fulfillment = max_workers_in_renewable_energy }
-		subtract_from_temp_variable = { workforce_total = workers_in_renewable_energy }
-	}
-	multiply_variable = { state_renewable_energy_var = renewable_energy_infra_manpower_fulfillment }
-	multiply_variable = { minimum_renewable_energy_var = renewable_energy_infra_manpower_fulfillment }
-	multiply_variable = { maximum_renewable_energy_var = renewable_energy_infra_manpower_fulfillment }
 
 	# Internet Stations
 	if = { limit = { check_variable = { internet_station_total = 0 } }

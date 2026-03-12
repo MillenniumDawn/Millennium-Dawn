@@ -16,23 +16,41 @@ ideas = {
 			ai_will_do = {
 				base = 0
 				modifier = {
-					add = 10
+					# Severe unemployment — expanding worker demand absorbs the surplus
+					add = 12
+					check_variable = { total_unemployed_percentage_display > 0.15 }
+				}
+				modifier = {
+					# High unemployment — additional incentive stacks with the severe bonus
+					add = 8
+					check_variable = { total_unemployed_percentage_display > 0.10 }
+				}
+				modifier = {
+					# Worker-protective ideologies are more willing at moderate unemployment
+					add = 3
 					OR = {
 						has_government = communism
 						has_government = neutrality
 					}
 				}
 				modifier = {
-					add = 8
+					# Wealthy democracies can afford the worker-requirement burden
+					add = 2
 					has_government = democratic
 					check_variable = { gdp_per_capita > 30.000 }
 				}
 				modifier = {
+					# Nationalist and autocratic regimes resist heavy employment mandates
 					factor = 0
 					OR = {
 						has_government = nationalist
 						has_autocratic_government = yes
 					}
+				}
+				modifier = {
+					# Tight labor market — forcing higher worker counts would be counterproductive
+					factor = 0
+					check_variable = { total_unemployed_percentage_display < 0.04 }
 				}
 			}
 		}
@@ -50,19 +68,34 @@ ideas = {
 			ai_will_do = {
 				base = 1
 				modifier = {
-					add = 5
-					has_government = democratic
+					# Elevated unemployment — moderate regulation helps without over-committing
+					add = 8
+					check_variable = { total_unemployed_percentage_display > 0.08 }
+				}
+				modifier = {
+					# Above-threshold unemployment — additional nudge
+					add = 4
+					check_variable = { total_unemployed_percentage_display > 0.06 }
 				}
 				modifier = {
 					add = 3
+					has_government = democratic
+				}
+				modifier = {
+					add = 2
 					OR = {
 						has_government = communism
 						has_government = neutrality
 					}
 				}
 				modifier = {
-					factor = 0.4
+					factor = 0.3
 					has_autocratic_government = yes
+				}
+				modifier = {
+					# Near full employment — no reason to increase worker requirements
+					factor = 0
+					check_variable = { total_unemployed_percentage_display < 0.03 }
 				}
 			}
 		}
@@ -88,18 +121,33 @@ ideas = {
 			}
 
 			ai_will_do = {
-				base = 2
+				base = 1
 				modifier = {
-					add = 5
+					# Worker shortage — easing requirements lets industry fill open slots
+					add = 10
+					check_variable = { total_unemployed_percentage_display < 0.02 }
+				}
+				modifier = {
+					# Near full employment — additional nudge
+					add = 6
+					check_variable = { total_unemployed_percentage_display < 0.04 }
+				}
+				modifier = {
+					add = 2
 					has_government = nationalist
 				}
 				modifier = {
-					add = 3
-					has_government = democratic
+					# Worker-protective ideologies resist reducing employment requirements
+					factor = 0
+					OR = {
+						has_government = communism
+						has_government = neutrality
+					}
 				}
 				modifier = {
-					add = 5
-					check_variable = { gdp_per_capita < 15.000 }
+					# High unemployment — reducing worker requirements would worsen joblessness
+					factor = 0
+					check_variable = { total_unemployed_percentage_display > 0.10 }
 				}
 			}
 		}
@@ -117,19 +165,33 @@ ideas = {
 			ai_will_do = {
 				base = 0
 				modifier = {
-					add = 10
-					has_totalitarian_government = yes
-					OR = {
-						has_war = yes
-						check_variable = { gdp_per_capita < 3.000 }
-					}
+					# Severe worker shortage — maximum deregulation to fill every open position
+					add = 12
+					check_variable = { total_unemployed_percentage_display < 0.01 }
 				}
 				modifier = {
+					# Tight labor — stacks with the shortage bonus
+					add = 8
+					check_variable = { total_unemployed_percentage_display < 0.02 }
+				}
+				modifier = {
+					# Wartime mobilization demands every available worker
+					add = 5
+					has_war = yes
+					check_variable = { total_unemployed_percentage_display < 0.04 }
+				}
+				modifier = {
+					# Democracies and neutrality governments maintain worker protections
 					factor = 0
 					OR = {
 						has_government = democratic
 						has_government = neutrality
 					}
+				}
+				modifier = {
+					# Never slash worker protections while unemployment is already high
+					factor = 0
+					check_variable = { total_unemployed_percentage_display > 0.06 }
 				}
 			}
 		}
