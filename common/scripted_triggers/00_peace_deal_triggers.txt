@@ -94,6 +94,33 @@
 				subtract_from_temp_variable = { CPD_RBW_temp = CPD_TBW_temp }
 				round_temp_variable = CPD_RBW_temp
 				add_to_temp_variable = { CPD_acceptance_temp = CPD_RBW_temp }
+			# SENDER WAR CONTRIBUTION
+				set_temp_variable = { CPD_SWC_temp = 0 }
+				if = {
+					limit = {
+						NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+						check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 0 }
+						check_variable = { ROOT.CPD_VP@PREV < 1 }
+					}
+					set_temp_variable = { CPD_SWC_temp = -100 }
+				}
+				else_if = {
+					limit = {
+						NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+						check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 5 }
+						check_variable = { ROOT.CPD_VP@PREV < 10 }
+					}
+					set_temp_variable = { CPD_SWC_temp = -50 }
+				}
+				else_if = {
+					limit = {
+						NOT = { ROOT = { has_country_flag = CPD_giving_concessions } }
+						check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 10 }
+						check_variable = { ROOT.CPD_VP@PREV < 25 }
+					}
+					set_temp_variable = { CPD_SWC_temp = -25 }
+				}
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_SWC_temp }
 			# POWER RANKING
 				if = {
 					limit = { THIS = { has_idea = super_power } }
@@ -154,11 +181,50 @@
 			set_temp_variable = { v = ROOT.CPD_total_cost_of_built_peace_deal }
 			multiply_temp_variable = { v = -5 }
 			add_to_temp_variable = { CPD_acceptance_temp = v }
+			# DEAL FAIRNESS
+				set_temp_variable = { CPD_DF_temp = 0 }
+				if = {
+					limit = { check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 20 } }
+					add_to_temp_variable = { CPD_DF_temp = -25 }
+				}
+				if = {
+					limit = { check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 40 } }
+					add_to_temp_variable = { CPD_DF_temp = -50 }
+				}
+				if = {
+					limit = { check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 60 } }
+					add_to_temp_variable = { CPD_DF_temp = -75 }
+				}
+				if = {
+					limit = { check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 100 } }
+					add_to_temp_variable = { CPD_DF_temp = -100 }
+				}
+				add_to_temp_variable = { CPD_acceptance_temp = CPD_DF_temp }
 		}
 		CPD_AI_will_accept = { # this is just for some display shit, will make this work later
 			CPD_AI_will_accept_calculation = yes
 			# FINAL CHECK
 			check_variable = { CPD_acceptance_temp > 0 }
+		}
+	# WAR CONTRIBUTION CHECK
+		CPD_has_war_contribution = {
+			custom_trigger_tooltip = {
+				tooltip = CPD_has_war_contribution_TT
+				OR = {
+					check_variable = { ROOT.CPD_VP@THIS > 0 }
+					check_variable = { ROOT.months_at_war > 3 }
+				}
+			}
+		}
+		CPD_has_demands_in_deal = {
+			ROOT = {
+				OR = {
+					check_variable = { CPD_annex_state_DEMANDS^num > 0 }
+					check_variable = { CPD_puppet_in_state_DEMANDS^num > 0 }
+					check_variable = { CPD_demilitarise_state_DEMANDS^num > 0 }
+					check_variable = { CPD_liberate_state_DEMANDS^num > 0 }
+				}
+			}
 		}
 	# OTHER TRIGGERS
 		CPD_is_an_autonomy_allowed_to_receive_deal = {
