@@ -1,6 +1,4 @@
-import type { ImageMetadata } from "astro";
-import { resolveImageSource } from "@/shared/lib/image-assets";
-import { SITE_FALLBACK_ORIGIN } from "@/shared/config/site";
+import { SITE_FALLBACK_ORIGIN } from "../shared/config/site";
 
 function normalizeBase(rawBase: string | undefined): string {
   if (!rawBase || rawBase === "/") return "";
@@ -28,9 +26,8 @@ export function withBase(path: string): string {
   return SITE_BASE ? `${SITE_BASE}${path}` : path;
 }
 
-export function cssUrl(path: string | ImageMetadata): string {
-  const resolved = resolveImageSource(path);
-  const normalized = withBase(typeof resolved === "string" ? resolved : resolved.src);
+export function cssUrl(path: string): string {
+  const normalized = withBase(path);
   const escaped = normalized.replace(/['"()\\]/g, "\\$&");
   return `url('${escaped}')`;
 }

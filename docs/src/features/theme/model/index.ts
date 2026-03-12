@@ -5,7 +5,7 @@ import {
   resolveThemeMode,
   THEME_STORAGE_KEY,
   type ThemeMode,
-} from "@/shared/lib/theme";
+} from "../lib";
 
 type Cleanup = () => void;
 

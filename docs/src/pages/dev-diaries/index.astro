@@ -1,9 +1,8 @@
 ---
 import { getEntry } from "astro:content";
-import { BaseLayout } from "@/app/layouts";
-import { withBase } from "@/lib/urls";
-import { STATIC_PAGE_META } from "@/lib/page-meta";
-import { BASE_LINK_CLASS, BODY_TEXT_CLASS, LIST_CLASS, LIST_ITEM_CLASS, MARKDOWN_CLASSNAMES, PAGE_TITLE_CLASS, SECTION_TITLE_CLASS } from "@/shared/ui/tailwind";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { withBase } from "../../lib/urls";
+import { STATIC_PAGE_META } from "../../lib/page-meta";
 
 const archiveEntry = await getEntry("devDiaryArchive", "index");
 if (!archiveEntry) {
@@ -20,18 +19,18 @@ const pageMeta = STATIC_PAGE_META.devDiaries;
   canonicalPath={pageMeta.canonicalPath}
   toc="off"
 >
-  <h1 class={PAGE_TITLE_CLASS}>Dev Diary Lists</h1>
-  <p class={BODY_TEXT_CLASS}>
+  <h1>Dev Diary Lists</h1>
+  <p>
     The Millennium Dawn team rarely writes dev diaries due to release cadence. This section keeps an archive of in-repository and
     external diary entries.
   </p>
 
   {groups.map((group) => (
     <>
-      <h2 class={SECTION_TITLE_CLASS}>{group.title}</h2>
-      <details class={MARKDOWN_CLASSNAMES.details}>
-        <summary class={MARKDOWN_CLASSNAMES.summary}>{group.title}</summary>
-        <ul class={`${LIST_CLASS} mb-0 pr-lg pb-md`}>
+      <h2>{group.title}</h2>
+      <details>
+        <summary>{group.title}</summary>
+        <ul>
           {(group.entries ?? []).map((entry) => {
             const rawUrl = (entry.url ?? "").trim();
             const href = !rawUrl
@@ -40,8 +39,8 @@ const pageMeta = STATIC_PAGE_META.devDiaries;
                 ? rawUrl
                 : withBase(rawUrl);
             return (
-              <li class={LIST_ITEM_CLASS}>
-                {href ? <a class={BASE_LINK_CLASS} href={href} aria-label={entry.title}>{entry.title}</a> : entry.title}
+              <li>
+                {href ? <a href={href} aria-label={entry.title}>{entry.title}</a> : entry.title}
                 {entry.note ? ` (${entry.note})` : ""}
               </li>
             );

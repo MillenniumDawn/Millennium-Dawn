@@ -1,14 +1,17 @@
 ---
 title: v1.11.0 'Missiles, Holidays, and Snatch-and-Grabs'
 page_id: changelog-v1-11-0-missiles-holidays-and-snatch-and-grabs
+toc: 'off'
 order: 12
 ---
 
 # v1.11.0 'Missiles, Holidays, and Snatch-and-Grabs'
 
-## v1.11.2a - 2/20/25 Hotfix
+<details><summary>v1.11.2a - 2/20/25 Hotfix</summary>
 
-v1.11.2a### Bugfixes
+v1.11.2a
+Bugfixes:
+
 - Fixed building 3D models bugging out on Linux/Mac/Steamdeck
 - Fixed skyscrapers not appearing on the map
 - Fixed Canard wingform giving 60% radar advantage instead of 6%
@@ -24,11 +27,17 @@ v1.11.2a### Bugfixes
 - Fixed bugs when germany form the useful
 - Fixed German Weizsäcker event
 
+</details>
 
+<details><summary>v1.11.2</summary>
+v1.11.2
 
-## v1.11.2
-v1.11.2### Achievements
-- Fixed a Czech ribbon not following the standards for the difficulty### AI
+Achievements:
+
+- Fixed a Czech ribbon not following the standards for the difficulty
+
+AI:
+
 - Reworked how AI manages its spending - now mainly based on expected spending
 - Reworked how AI manager its taxes - now uses simplified and more rigid model for more predictable results
 - Adjusted the AI for the United Kingdom, Italy, France to not immediately intervene in Afghanistan as soon as there is WT and instead focus there when they support the US or if it's past 2002.6.1
@@ -40,7 +49,10 @@ v1.11.2### Achievements
 - hardlocking italian ai from causing civil wars due to mismanagement when historical focus is on
 - Added FIN/SWE fully to the historical nato path after 2023
 - European Union AI should be more likely to push for expansion if any of the superpowers cause world tension (unify Europe against the others!)
-- European Union members who are in NATO are more likely to accept fellow EU members into NATO### Balance
+- European Union members who are in NATO are more likely to accept fellow EU members into NATO
+
+Balance:
+
 - Reworked the math of the internal faction decision "Taxing Religious Institutions" so the money amount isn't that high
 - Lower stability will now directly impact the productivity growth of a nation (up to -25% at 0% stability)
 - Reduced the base yearly population growth of nations from 0.008 to 0.006 so it's not as exponential
@@ -53,7 +65,10 @@ v1.11.2### Achievements
 - Updated italian MIOs with new units and missiles
 - Updated Admiral traits with new naval units
 - Updated italian migrant focuses with the new migration mechanic
-- Replaced the italian ageing population spirit with a new modifier where the malus to population growth changes dynamically### Bugfix
+- Replaced the italian ageing population spirit with a new modifier where the malus to population growth changes dynamically
+
+Bugfix:
+
 - Fixed the Helicopter takes being unable to be researchable for people who own No Step Back but not By Blood Alone
 - Fixed a flip flopped event for Hezbollah - Israel border war
 - Fixed a Syrian focus not properly charging the user nation for the infrastructure
@@ -101,7 +116,10 @@ v1.11.2### Achievements
 - Added nuclear technology as starting Czech technology
 - Fixed countries mentioned in "satellite link up" focus effect that didn't get the Al manar national spirit after the focus is completed (Hezbollah focus tree)
 - The syrian hafez succession decisions are no longer visible after hafez's death
-- Fixed research boost for Polish IFV from the effect### Content
+- Fixed research boost for Polish IFV from the effect
+
+Content:
+
 - New Focus Trees: Tajikistan
 - Improved Focus Trees: Germany
 - Added a new special project "Helicopter Design Experiments"
@@ -109,7 +127,10 @@ v1.11.2### Achievements
 - Added new or updated MIOs to Argentina, Brazil, Mexico, Venezuela, Chile, Morocco, Egypt, Spain, Nigeria, Portugal to expand the options for nations military production and so on
 - Added some new leader traits to VOX political leaders
 - Moved 2015 battleship/cruiser hull to 2020
-- BLR Political Rework - New Parties and Leaders### Ideological Powers
+- BLR Political Rework - New Parties and Leaders
+
+Ideological Powers:
+
 - Modifiers in tooltips now have text icons
 - Communists:
 - 5-Year-Plans are no longer built from pieces, but you choose from a single type of 5-year plan. The modifiers have been increased in return
@@ -129,9 +150,15 @@ v1.11.2### Achievements
 - Replaced Keep It In The Family (-15% corruption and internal faction cost) with Royal Decree (-15% Laws Cost)
 - Fundamentalists:
 - Sharia Law now gives +0.10 Outlook support instead of +0.05
-- Foreign Fighters now gives you +300 weekly manpower rather than a repeatable decision### History
+- Foreign Fighters now gives you +300 weekly manpower rather than a repeatable decision
+
+History:
+
 - Improved multiples OOB/Stockpile
-- Added many variants of rifles and other equipment### Graphics
+- Added many variants of rifles and other equipment
+
+Graphics:
+
 - Added dozens of new 3D models
 - Made the AI more competent in choosing the right 3D model and GFX for their respective country.
 - Added hundreds of equipment GFX
@@ -139,14 +166,23 @@ v1.11.2### Achievements
 - Fixed the USNA flag being incorrectly compressed causing it to not properly grab the formable flag
 - New and improved focus icons for CHI
 - New and reworked portraits for ENG
-- New icons for AGL parties### Music
+- New icons for AGL parties
+
+Music:
+
 - Added 1 hour of ambient music. Reweighted the entire MD playlist
 - Added around 40 minutes of weighted Middle Eastern music
-- Added around 40 minutes of weighted Ukraine war music### Localization
+- Added around 40 minutes of weighted Ukraine war music
+
+Localization:
+
 - Added thousand of lines for military equipment names
 - Added more translations and fixed a number of localization strings
 - Added "Political Power" to the Cost of X tooltips to be more clear
-- Added "Treasury Cost" to the Economic Cycle Upgrade cost tooltip### Map
+- Added "Treasury Cost" to the Economic Cycle Upgrade cost tooltip
+
+Map:
+
 - Redrew the map for the Baltic countries, Kaliningrad, Belarus, Ukraine, Moldova, Poland, Czechia, Slovakia, Hungary, Austria, Switzerland, Germany, France, Italy, Spain, Portugal, Morocco, Libya, Egypt, Lebanon, Syria, Iraq, Kuwait, Iran, Israel, Palestine, Jordan, Qatar, Bahrain, UAE, Oman, Yemen, Saudi Arabia and the Koreas
 
 User Interface (QoL):
@@ -154,17 +190,26 @@ User Interface (QoL):
 - Added toggles for Nuclear Power Plant and Fossil Fuel Power Plant for more control over your energy
 - Added a highlight to all NATO member states who have not ratified your accession to NATO
 
+</details>
 
+<details><summary>v1.11.1b - 12/19 Hotfix</summary>
+v1.11.1b
 
-## v1.11.1b - 12/19 Hotfix
-v1.11.1b### AI
+AI:
+
 - AI should be more likely ratify NATO applicants if they are influenced by a NATO member, has high opinion and if any of their neighbors are emerging, nationalist or salafist
 - USA should be more apt to declare operation enduring freedom if there is less than 25% threat or if they have not done so before Jan 2005
-- SER will now seek to rebuild Yugoslavia in peace deals at half cost after completion of the appropriate focus### Balance
+- SER will now seek to rebuild Yugoslavia in peace deals at half cost after completion of the appropriate focus
+
+Balance:
+
 - Reduced the passive counter intelligence gain from the "Counter-Intelligence" agency upgrade
 - Increased the gained acreage for Brazil for the Amazon Rainforest system
 - Added some triggers to the Brazilian content that you can't take decisions if you do not have the acreage to do it.
-- Reparations amount paid will now be scaled based off of the victim country GDP instead of the attacker### Bugfix
+- Reparations amount paid will now be scaled based off of the victim country GDP instead of the attacker
+
+Bugfix:
+
 - Fixed the Internal Faction event "Communist Cadres & The Military Fight Over Ideology" having incorrect options and opinion boosts
 - Fixed the "X Proposes Pre-emptive strike against Iran" event triggering twice for someone
 - Fixed Ukraine being 20 years ahead in Anti Air weaponry for No Step Back users
@@ -175,28 +220,46 @@ v1.11.1b### AI
 - Fixed the Agricultural District Construction speed spazzing out at low and high productivity
 - Fixed Indian Focus "Prepare Rebellion in Tibet" trigger to make the focus could work properly
 - Fixed Sudan-South Sudan peace agreement event having the wrong text
-- Fixed the Straits of Dover making ships teleport to Scotland### Content
-- Expanded Chinese Historical Tank/AFV Design Decision Category### Database
-- Changed Eurofighter, Gripen, Viggen, J-10, Rafale to use the Delta Wing Canard wingform### Graphics
+- Fixed the Straits of Dover making ships teleport to Scotland
+
+Content:
+
+- Expanded Chinese Historical Tank/AFV Design Decision Category
+
+Database:
+
+- Changed Eurofighter, Gripen, Viggen, J-10, Rafale to use the Delta Wing Canard wingform
+
+Graphics:
+
 - Graphical Rework of North Korean and South Korean Parties
 - Updated the Graphic library again to properly include the soviet aircraft carriers
 - Adjusted some misplaced icons for decisions in the Amazon Rainforest decisions
 - Fixed some graphical elements for Gronland, Reykjavik
 - Fixed broken achievement icons for Brazil MD Achievements
 - Fixed missing model for the Arleigh Burke class destroyer
-- Fixed some ASCII characters breaking terrain pictures### Localization
+- Fixed some ASCII characters breaking terrain pictures
+
+Localization:
+
 - Fixed a reference in the African Union decision category referencing billion instead of thousands
 - Updated the loading tip for Bolivia to accurately represent it's current number of coups
 - Flipped the colors of the "Internal Investments" Political Power and Monetary Cost Modifiers
+</details>
 
+<details><summary>v1.11.1</summary>
+v1.11.1
 
-## v1.11.1
-v1.11.1### Achievements
+Achievements:
+
 - Added the achievement "There Are Two of Them?!" as Amazon have Amazon invest in the rainforest
 - Added the achievement "The Rainforest Reborn" as Brazil have the Amazon's total acreage is over 3000
 - Added the achievement "The New Communist South America" as Brazil have your Workers' Party Alignment be 100 and have all other South American nations be Left Wing Radical
 - Added the achievement "The New Agricultural Baron" as Brazil have 150 commercialized agricultural districts and be a great power or superpower
-- Added the achievement "Who needs them silly tree anyways?" as Brazil have every Amazon state have level 5 infrastructure, level 5 network infrastructure, and 25 Office Sectors, Civilian Industries, Commercialized Agricultural District, or Military Factories### AI
+- Added the achievement "Who needs them silly tree anyways?" as Brazil have every Amazon state have level 5 infrastructure, level 5 network infrastructure, and 25 Office Sectors, Civilian Industries, Commercialized Agricultural District, or Military Factories
+
+AI:
+
 - Fixed the AI not being able to recruit nor build facilities
 - AI should no longer get a bonus due to some improvement in foreign influence handling
 - Mutual Investment Treaties now reduce the AI's willingess to do the "Increase Autonomy" continuous focus
@@ -224,7 +287,10 @@ v1.11.1### Achievements
 - AI should be less likely to be so gung ho on Embargoes unless the nation is a warmonger
 - Added additional checks to agri techs that will encourage the AI to take them if they have lower pop to free up workers
 - The AI should now properly manage their power consumption rules to help them better balance their economy and try to maximize benefit on high power (tldr good to invest in power stuff since the AI will try to use the excess power like a player)
-- The Russian AI has been reworked. Now he evenly performs focuses on the economy, the army and politics### Balance
+- The Russian AI has been reworked. Now he evenly performs focuses on the economy, the army and politics
+
+Balance:
+
 - Rebalanced breakthrough point generation for special project. Less passive gain from research, more from scientists
 - Rebalanced Special project BP cost
 - Rebalanced research time length for tank and air tree. Longer all around
@@ -260,7 +326,10 @@ v1.11.1### Achievements
 - Reduced the frequency of the "Labour Unions Protest Migrant Events"
 - Changed the balance in the Sudanese civil war a bit more towards South Sudan so they don't get steamrolled so easily
 - "Satisfy the Middle Class" focus in the generic focus tree now requires a GDP of 95 billion
-- Changed some CZE national spirits to be permament, but decreased their effects### Bugfix
+- Changed some CZE national spirits to be permament, but decreased their effects
+
+Bugfix:
+
 - Fixed the Automatic Debt Repayment forcing you into the negatives
 - Fixed the configurable UI display for resources and tax cost factor breaking
 - Fixed an issue that caused crashing if you hovered over 2 Syrian focuses
@@ -307,7 +376,10 @@ v1.11.1### Achievements
 - The ideas of Drafted Women and Volunteer women will now switch to no women in military if you are on "abolished military"
 - Fixed polish historical Rosomak APC having incorrect setup
 - POL PiS party politicians are now correctly appearing in the game
-- Fixed typos in CZE loc file### Content
+- Fixed typos in CZE loc file
+
+Content:
+
 - New/Improved Focus Trees: Israel, Brazil, North Korea, Transnistria
 - Added focus shortcuts for a bunch of different nations such as Venezuela, Israel, Brazil, France and China.
 - Added several new Internal Faction Events
@@ -334,7 +406,10 @@ v1.11.1### Achievements
 - Added China 2000 Equipment Production Line
 - Added 4 new Polish Military Industrial Organizations
 - New shortcuts for CZE and POL
-- New effects in POL military tree, adding funds for new MIOs and little boosts### Database
+- New effects in POL military tree, adding funds for new MIOs and little boosts
+
+Database:
+
 - Added "Nuclear Energy" to all of the nations who have nuclear reactors
 - Re-enabled submarine based ICBMs
 - Add back NIRBM to nations who previously had the tech
@@ -344,8 +419,14 @@ v1.11.1### Achievements
 - Fixed Canada getting extra technology it shouldn't
 - Reduced level of naval base in Sirte from 4 to 1
 - Marked the Naval Nuclear Engineering special project as done for countries that already have researched nuclear engines
-- Corrected initial setup for Pacific island countries### Game Rules
-- Fixed the AI Easy/Very Easy Energy options not allowing achievements### Graphics
+- Corrected initial setup for Pacific island countries
+
+Game Rules:
+
+- Fixed the AI Easy/Very Easy Energy options not allowing achievements
+
+Graphics:
+
 - Improved the Luxembourg City terrain picture
 - Added an icon for twin barrel mortar conversion module
 - Fixed some missing terrain pictures
@@ -358,8 +439,14 @@ v1.11.1### Achievements
 - Pack of new GFX for military equipment
 - Improved the AI logic so that it pick the correct equipment GFX, name, and model depending on the country
 - Centered the Cheondo religion idea icon
-- Fixed the missile tab icon being offset from the other buttons### Interface
-- You can now see expected spending level and whether you are over or underspending directly in the Government Expenditures idea selection### Localization
+- Fixed the missile tab icon being offset from the other buttons
+
+Interface:
+
+- You can now see expected spending level and whether you are over or underspending directly in the Government Expenditures idea selection
+
+Localization:
+
 - Fixed missing tooltip for Medium Naval Nuclear Engines
 - Improved the localization of the "Serbia Asks for Investments" event
 - Added displays to some Italian and Venezuelan focuses which just added reactor material without notifying the player
@@ -367,8 +454,14 @@ v1.11.1### Achievements
 - Adjusted raid localization so that it correctly identifies who attacked who
 - Fixed an issue with localization for the Iranian nuclear tree if the U.S. does not exist
 - Added localization for Stealth Frigates, Stealth Corvettes, and Misc Naval Vessels
-- 1965 Infantry Equipment is now called the correct name### Map
-- Redrew the map for the Nordic countries, Benelux and the British Isles### Special Projects
+- 1965 Infantry Equipment is now called the correct name
+
+Map:
+
+- Redrew the map for the Nordic countries, Benelux and the British Isles
+
+Special Projects:
+
 - Super Heavy Tank Turrets are now locked behind both "Large Gun Tech" & 4th Generation Tank Hulls
 - Increased the Civilian R&D Breakthrough cost for "Thorium Nuclear Fuel"
 - Added a resource cost to "Super Heavy Tank Turrets" to help make it more balanced
@@ -377,14 +470,20 @@ v1.11.1### Achievements
 - Transport helicopters no longer require a special project if you don't have BBA
 - Stealth technology for aircraft is now locked behind a special project
 - "Super Heavy Tank Turrets" now is unlocked by the MBT Tech 3 (2015) so those meme projects are more late game content
-- Fire and forget missile special project+hypersonic missiles### Technology
+- Fire and forget missile special project+hypersonic missiles
+
+Technology:
+
 - AFV steel and aluminium armour is now unlocked by both AFV hulls and light tank hulls
 - Separated 1965 Artillery and SP Artillery into their own techs
 - All vehicle machine gun modules are now unlocked by Small Arms 1965
 - Moved SPAA Battlestations and Optical Guidance modules under Tank Computer Systems
 - Moved SPAA Chassis modules to corresponding utility vehicle, tank hull and AFV hull techs
 - Made the naval tech tree and air tech tree a little more compact so you don't need seven monitors to see them completely
-- Heavy guns for battleships and battlecruisers are now unlocked by the naval armament techs instead of the hull techs### User Interface
+- Heavy guns for battleships and battlecruisers are now unlocked by the naval armament techs instead of the hull techs
+
+User Interface:
+
 - Added Interest Rate and Energy Balance as a percentage to the configurable UI
 - Fixed misalignment between MIOs and nuclear policies
 - Fixed facility list being cut-off at the bottom
@@ -396,11 +495,17 @@ v1.11.1### Achievements
 - Expanded the UI for Rockets to be two per row so it's easier to find the missile you're looking for
 - Fixed the UI headers in the menu being slightly off with their top
 
+</details>
 
+<details><summary>v1.11.0</summary>
+v1.11.0
 
-## v1.11.0
-v1.11.0### Achievements
-- Added a tooltip to clean up the tooltips for the African Nation achievements### AI
+Achievements:
+
+- Added a tooltip to clean up the tooltips for the African Nation achievements
+
+AI:
+
 - Added an exception to the leave NATO for Spain so Unidas Podemos will leave NATO
 - AI Russia should no longer do "Challenge NATO" focus if its already at war
 - Improved the purchasing AI for nations who are buying reactor grade fuel ensuring some rivals aren't purchasing fuel from one another
@@ -409,14 +514,20 @@ v1.11.0### Achievements
 - The AI should no longer increase taxation if they are making a surplus of greater than 0.05% of their GDP in addition to pre-existing checks
 - AI will try to design and build special facilities
 - AI will try to dynamically raid opponents using the new raid system
-- The US will try to protect and support countries that are major non-NATO allies### Balance
+- The US will try to protect and support countries that are major non-NATO allies
+
+Balance:
+
 - Reduced the amount of money gained from "Taxing Religious Institutions" Internal Faction decision
 - Changed Polish KTO Rosomak to APC in historical afv decisions
 - Slightly increased the risk and network strength required to increase corruption
 - Urban Terrain expert now gives supercity terrain bonuses
 - Changed tension back from Elian Gonzalez Affair from 8 threat to 2.5 again
 - Greatly reduced Czech productivity growth from focus tree
-- Skoda vs. Volkswagen, German AI will now get less support points### Bugfix
+- Skoda vs. Volkswagen, German AI will now get less support points
+
+Bugfix:
+
 - Fixed the Airforce Manpower display in the ledger
 - fixed the War in Darfur spamming and spiking world tension
 - Fixed the assassination of Burhanuddin Rabbani spamming a bunch of news events everwhere
@@ -456,7 +567,10 @@ v1.11.0### Achievements
 - "Strengthen Eastern Flank" focus now bypass if CZE is in faction with Russia
 - Demand territories focuses in Czechoslovakia branch will now add cores to that states for Czechoslovakia
 - Czechoslovakia opinion modifiers loc fixed
-- Fixed POL ukrainian focuses in Korwin-Mikke tree### Content
+- Fixed POL ukrainian focuses in Korwin-Mikke tree
+
+Content:
+
 - Created additional raids of all types so you can engage in non-conflict conflict and more
 - Added a number of special projects for all types and modernized it to our timeline
 - Reworked the contemporay missile system to use the new content and systems available in the newest DLC
@@ -474,7 +588,10 @@ v1.11.0### Achievements
 - Added focuses to the generic focus tree for the creation of a research facility
 - Skoda/Czech exclusive engine technologies are now increasing Skoda Productivity Growth by 0.01 point
 - Libyan tribes will no longer be able to immediately revolt again once annexed. The revolt can only happen again once the area has been re-cored by Libya
-- Added a decision to expand the nuclear sector in the ideological struggle menu for socialists### Database
+- Added a decision to expand the nuclear sector in the ideological struggle menu for socialists
+
+Database:
+
 - Added Libya to the Strengthen/Weaken list
 - Distributed starting rocket sites to countries with former buildings
 - Distributed starting Order of Battles (OOBs) including new missile stockpiles
@@ -484,7 +601,10 @@ v1.11.0### Achievements
 - Distributed starting special facilities to various countries
 - Kurdistan no longer starts with both NSB and non-NSB SP Artillery
 - Reduced Libya's military spending by one level at game start to help with budget
-- Removed most of the airbases in Northern Mali### Graphics
+- Removed most of the airbases in Northern Mali
+
+Graphics:
+
 - Custom new scientists portraits to support the new special projects
 - 10 new spy portraits for each culture group (~60 new spy portraits)
 - Custom MD GFX for all raids
@@ -494,15 +614,27 @@ v1.11.0### Achievements
 - Infantry models overhaulted all around. They are now using an upgraded shader Uniform/skin variation also added to a handful of specific nations
 - New ship and air models (10+ models)
 - New models for missiles and so on during flight while using missiles (12+ new models)
-- Added a variety of effects such as fire to buildings, tracers and more### Localization
+- Added a variety of effects such as fire to buildings, tracers and more
+
+Localization:
+
 - Added additional tooltips to the older space system to make it easier to digest
 - Removed localization from the doctrines that imply it'll cost money but doesn't actually cost money
-- Fixed Viktor Zolotov having a typo in his name### Map
-- Added several mountain ranges and implemented them as impassable terrains### Performance
+- Fixed Viktor Zolotov having a typo in his name
+
+Map:
+
+- Added several mountain ranges and implemented them as impassable terrains
+
+Performance:
+
 - Removed a number of multi-loops from the missile system to streamline the process
 - Removed a lot of bloat files and code lines from former systems to improve performance
 - Optimized on actions so they are cleaner and have less hiccup when running on speed 5
-- Startup time is faster now due to reduced and improved cleanup on checks### Sound
+- Startup time is faster now due to reduced and improved cleanup on checks
+
+Sound:
+
 - Added new sound effects to models
 
 Quality of Life(QoL):
@@ -513,4 +645,4 @@ Quality of Life(QoL):
 - "Enrich Uranium" for nuclear fuel is available in the Energy UI now so you no longer need to pivot back and forth
 - Moved "Utility Vehicles" to the Infantry Equipment line so there's a few less tabs to open
 
-
+</details>

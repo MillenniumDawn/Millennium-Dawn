@@ -1,33 +1,55 @@
 ---
 title: v1.0 Changes
 page_id: changelog-v1-0-changes
+toc: 'off'
 order: 1
 ---
 
 # v1.0 Changes
 
-## v1.0.1 Hotfix### Stability
+<details><summary>v1.0.1 Hotfix</summary>
+
+Stability:
+
 - Fixed CTD if launching the 2000 bookmark without DoD
-- Fixed CTD from Free College focus### Bugfixes
+- Fixed CTD from Free College focus
+
+Bugfixes:
+
 - Fixed country's not having flags if they are nationalist
 - Fixed missing graphics for camo and body armor techs
 - Fixed a typo in Germany's focus tree
 - Corrected Switzerland's and UK's focuses on country select screen
 - Fixed a namelist error for France
 - Fixed Chechnya's flag being in the wrong format
-- Added missing flag for Polynesia### Events
+- Added missing flag for Polynesia
+
+Events:
+
 - Assassination of Ahmed Shah Massoud now happens in 2001 and not 2000
-- ISIS is now split up on defeat to occupying countries### Focus Trees
-- Fixed a focus in the UK focus tree referring to a Slovakian state### Database
+- ISIS is now split up on defeat to occupying countries
+
+Focus Trees:
+
+- Fixed a focus in the UK focus tree referring to a Slovakian state
+
+Database:
+
 - Added two missing ideas to US
 - Added starting research slots to countries with unique focus trees (BRA,DEN, ENG, FIN, GER, JAP, NOR, SOV, SWE, SWI, USA)
 - Added a namelist for NKR (Nagarno-Karabakh)
 - Removed future techs from France from the 2000 bookmark
 - Added Xian H-6 tech (strat bomber 1) to CHI
 - Removed duplicate Space Force 3 idea
-- Adjusted the effects of "Women in the Military" law### Interface
+- Adjusted the effects of "Women in the Military" law
+
+Interface:
+
 - Fixed the Twitter button in the main menu to redirect to the correct page
-- Fixed missing communist party icons for ARG, AST, JAP and RAJ### Map
+- Fixed missing communist party icons for ARG, AST, JAP and RAJ
+
+Map:
+
 - Moved Samarkand to the correct province
 - St. Johns renamed to St. John's
 - Stary Oskolv renamed to Stary Oskol
@@ -35,47 +57,93 @@ order: 1
 - Added localisation to the new straits
 
     
+</details>
 
+<details><summary>v1.0.2 Hotfix</summary>
 
-## v1.0.2 Hotfix### Bugfixes
-- Fixed Lebanon's politics in 2000### Focus Trees
-- Added back the Russian Focus Tree### Database
+Bugfixes:
+
+- Fixed Lebanon's politics in 2000
+
+Focus Trees:
+
+- Added back the Russian Focus Tree
+
+Database:
+
 - Fixed some typos
 
+</details>
+
+<details><summary>v1.0.3 Hotfix</summary>
 
 
-## v1.0.3 Hotfix### Game rules
+Game rules:
+
 - Added the Vatican as a releasable country through custom rules
 - Added rule to allow cheat decisions/events
 - Added rules to disable NATO and EU
-- Added rule to disable the Anti-Bully system### Economy
+- Added rule to disable the Anti-Bully system
+
+Economy:
+
 - Interest rates should correctly update now when taking debt
-- Events that lower your Economic Cycle no longer steal money from your treasury### Features
+- Events that lower your Economic Cycle no longer steal money from your treasury
+
+Features:
+
 - You can now change Internal Factions with PP
-- Added a supply route to Afghanistan so volunteers sent there don't immediately go out of supply### Focuses
+- Added a supply route to Afghanistan so volunteers sent there don't immediately go out of supply
+
+Focuses:
+
 - Focuses related to NATO now check for the national idea, not faction
 - Fixed Swedish focus to restore the Monarchy properly
 - The US tree now works even if Trump is not the leader
 - Added manpower for Swiss focus to Threaten Liechtenstein
-- Norway's NATO related focus now work correctly### Events
-- Libyan Civil War peace event should now fire correctly### Graphics
+- Norway's NATO related focus now work correctly
+
+Events:
+
+- Libyan Civil War peace event should now fire correctly
+
+Graphics:
+
 - You now get the correct flag and name when forming the EU
 - You now get the correct flag and name when forming the Soviet Union
 - Reworked some portraits
-- Added missing portraits for US generals### Database
+- Added missing portraits for US generals
+
+Database:
+
 - Removed ALB, BUL, CRO, EST, LAT, LIT, SLV, SLO from NATO in the 2000 bookmark
 - Removed Operation Enduring Freedom, Operation Restoring Hope and Inherent Resolve from the 2000 bookmark
 - Removed Major non-NATO ally from some countries in the 2000 bookmark
-- Added missing starting doctrines to Angola and UNITA### Technology
+- Added missing starting doctrines to Angola and UNITA
+
+Technology:
+
 - Defence companies now decrease research speed like they should
 - Fixed COIN doctrine
 - Fixed weird pathing and dependencies in surface ships
-- Removed Baden-W rttemberg class from Germany in the 2000 bookmark### Units
-- Recon units now properly give recon### Localisation
+- Removed Baden-W rttemberg class from Germany in the 2000 bookmark
+
+Units:
+
+- Recon units now properly give recon
+
+Localisation:
+
 - Foreign investment in your country now correctly shows what building someone wants to construct
 - Fixed some missing localisation in the doctrine tree
-- Fixed missing localisation for tactics### Music
-- Equalised some of the music volumes### Politics
+- Fixed missing localisation for tactics
+
+Music:
+
+- Equalised some of the music volumes
+
+Politics:
+
 - Redid starting politics of Lebanon
 - Reduced Outlook drifts caused by Internal Factions
 - Adjusted Turkish starting politics
@@ -89,14 +157,17 @@ order: 1
 - Reduced tension decay from 0.2 to 0.15
 - Puppeting a country now correctly changes their ruling party
 - Calling NATO to arms no longer removes the puppet status of the country called
-- Corrected Mexico's election dates### Map
+- Corrected Mexico's election dates
+
+Map:
+
 - Removed Hatay as core of FSA
 - Map fixes
 
     
+</details>
 
-
-## v1.0.4 Hotfix
+<details><summary>v1.0.4 Hotfix</summary>
 
 Features
 
@@ -203,4 +274,4 @@ Map
 - State of Savoy in SE France
 
 
-
+</details>

@@ -1,4 +1,3 @@
-import { fileURLToPath } from "node:url";
 import type { AstroUserConfig } from "astro";
 import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
@@ -7,7 +6,6 @@ import tailwindcss from "@tailwindcss/vite";
 import remarkDirective from "remark-directive";
 import { remarkCountryDirectives } from "./src/lib/remark-country-directives";
 import { remarkRootRelativeToBase } from "./src/lib/remark-root-relative";
-import { rehypeTailwindContent } from "./src/lib/rehype-tailwind-content";
 import { rehypeTableWrapper } from "./src/lib/rehype-table-wrapper";
 import { hoiscriptLanguage } from "./src/lib/shiki-hoiscript";
 import { SITE_BASE_PATH, SITE_FALLBACK_ORIGIN } from "./src/shared/config/site";
@@ -23,11 +21,6 @@ export default defineConfig({
   trailingSlash: "always",
   integrations: [mdx(), sitemap()],
   vite: {
-    resolve: {
-      alias: {
-        "@": fileURLToPath(new URL("./src", import.meta.url)),
-      },
-    },
     plugins: tailwindPlugins,
   },
   markdown: {
@@ -39,6 +32,6 @@ export default defineConfig({
       langs: [hoiscriptLanguage],
     },
     remarkPlugins: [remarkDirective, remarkCountryDirectives, [remarkRootRelativeToBase, SITE_BASE_PATH]],
-    rehypePlugins: [rehypeTableWrapper, rehypeTailwindContent],
+    rehypePlugins: [rehypeTableWrapper],
   },
 });

@@ -1,6 +1,6 @@
 import { getCollection, getEntry } from "astro:content";
 import { CONTENT_PAGE_ROUTES, STATIC_PAGE_META } from "./page-meta";
-import { SITE_DESCRIPTION } from "@/shared/config/site";
+import { SITE_DESCRIPTION } from "../shared/config/site";
 import {
   getChangelogPath,
   getCountryPath,

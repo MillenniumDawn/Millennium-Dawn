@@ -15,8 +15,8 @@ const FONT_PATHS = {
 } as const;
 
 const IMAGE_PATHS = {
-  logo: path.resolve("src/assets/images/branding/main-menu.png"),
-  hero: path.resolve("src/assets/images/branding/hero.jpeg"),
+  logo: path.resolve("assets/images/branding/main-menu.png"),
+  hero: path.resolve("assets/images/branding/hero.jpeg"),
 } as const;
 
 export interface LoadedFonts {

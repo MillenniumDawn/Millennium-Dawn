@@ -1,12 +1,13 @@
 ---
 title: v1.3 Changes
 page_id: changelog-v1-3-changes
+toc: 'off'
 order: 4
 ---
 
 # v1.3 Changes
 
-## v1.3.2 Hotfix
+<details><summary>v1.3.2 Hotfix</summary>
 
 Events
 
@@ -43,9 +44,9 @@ Tech
 
 - Gave Humanoid Robots an effect
 
+</details>
 
-
-## v1.3.1 Hotfix
+<details><summary>v1.3.1 Hotfix</summary>
 
 Decision
 
@@ -73,9 +74,9 @@ Tech
 
 - Fix the ability to build equipment via research
 
+</details>
 
-
-## v1.3.0 'La Resistance and Friends'
+<details><summary>v1.3.0 'La Resistance and Friends'</summary>
 
 AI
 
@@ -204,4 +205,4 @@ Music
 
 - Added Israeli music
 
-
+</details>

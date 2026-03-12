@@ -1,7 +1,7 @@
 import type { OgPageData } from "./og-pages";
 import type { BrandingAssets } from "./og-assets";
 import { OG_FONT_FAMILY } from "./og-assets";
-import { SITE_BRAND_TAGLINE, SITE_ORGANIZATION_NAME, SITE_TITLE } from "@/shared/config/site";
+import { SITE_BRAND_TAGLINE, SITE_ORGANIZATION_NAME, SITE_TITLE } from "../shared/config/site";
 
 const OG_THEME = {
   overlayGradient:
@@ -18,15 +18,14 @@ const OG_THEME = {
     footerMarginTop: "30px",
   },
   fontSizes: {
-    // bumped all values to improve readability on social previews
-    homeTitle: "72px",
-    homeSubtitle: "40px",
+    homeTitle: "48px",
+    homeSubtitle: "26px",
     pageTitle: {
-      default: "75px",
-      compact: "52px",
+      default: "52px",
+      compact: "42px",
     },
-    pageDescription: "32px",
-    footer: "24px",
+    pageDescription: "26px",
+    footer: "20px",
   },
 } as const;
 

@@ -1,9 +1,9 @@
 import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
 import { getCollection } from "astro:content";
-import { withBase } from "@/lib/urls";
-import { SITE_DESCRIPTION, SITE_FALLBACK_ORIGIN, SITE_TITLE } from "@/shared/config/site";
-import { getChangelogPath, getDevDiaryPath } from "@/lib/content-routes";
+import { withBase } from "../lib/urls";
+import { SITE_DESCRIPTION, SITE_FALLBACK_ORIGIN, SITE_TITLE } from "../shared/config/site";
+import { getChangelogPath, getDevDiaryPath } from "../lib/content-routes";
 
 function mapItem(
   title: string,
@@ -22,10 +22,9 @@ export async function GET(context: APIContext) {
     getCollection("changelogSections"),
     getCollection("devDiaries"),
   ]);
-  const visibleChangelogs = changelogs.filter((entry) => !entry.data.hidden);
 
   const items = [
-    ...visibleChangelogs.map((entry) =>
+    ...changelogs.map((entry) =>
       mapItem(entry.data.title, entry.data.description, getChangelogPath(entry)),
     ),
     ...devDiaries.map((entry) => mapItem(entry.data.title, entry.data.description, getDevDiaryPath(entry))),

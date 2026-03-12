@@ -1,4 +1,4 @@
-import { createUniqueSlugger } from "@/shared/lib/slugs";
+import { createUniqueSlugger } from "../../../shared/lib/slugs";
 import { TOC_DEFAULTS, TOC_SELECTORS } from "./config";
 
 export function queryTocHeadings(root: ParentNode): HTMLHeadingElement[] {

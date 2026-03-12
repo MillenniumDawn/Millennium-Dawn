@@ -1,12 +1,7 @@
 ---
 title: 'Dev Diary #52: Special Projects, Performances, Raids and Missiles'
-description: In-repo dev diary template page for future diary posts.
+description: In-repo dev diary template page for Millennium Dawn updates.
 permalink: /dev-diaries/52-special-projects-performances-raids-missiles/
-author: Template
-date: 2026-02-26
-tags:
-  - dev diary
-  - v2.0
 ---
 
 # Dev Diary #52: Special Projects, Performances, Raids and Missiles

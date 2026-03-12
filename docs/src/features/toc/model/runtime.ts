@@ -1,12 +1,12 @@
-import { createDrawer } from "@/shared/lib/drawer";
-import { readCssMsVar, readCssPxVar, readCssStringVar } from "@/shared/lib/tokens";
+import { createDrawer } from "../../../shared/lib/drawer";
+import { readCssMsVar, readCssPxVar, readCssStringVar } from "../../../shared/lib/tokens";
 import {
   TOC_ATTRS,
+  TOC_CLASSES,
   TOC_DEFAULTS,
   TOC_DRAWER,
   TOC_IDS,
   TOC_SELECTORS,
-  TOC_STATES,
 } from "../lib/config";
 import { ensureHeadingIds, queryTocHeadings } from "../lib/headingIds";
 import { bindExpandButtons, buildTree, renderNav, toggleSublist } from "./dom";
@@ -75,25 +75,6 @@ function queryDomRefs(sidebar: HTMLElement | null): TocDomRefs | null {
   };
 }
 
-function syncToggleWithHeaderNav(toggle: HTMLElement): Cleanup {
-  const header = document.querySelector<HTMLElement>(".site-header");
-  if (!header) return NOOP;
-
-  const applyState = () => {
-    toggle.dataset.navHidden = header.classList.contains("nav-is-open") ? "true" : "false";
-  };
-
-  const onNavStateChange = () => applyState();
-
-  applyState();
-  header.addEventListener("navstatechange", onNavStateChange);
-
-  return () => {
-    header.removeEventListener("navstatechange", onNavStateChange);
-    toggle.dataset.navHidden = "false";
-  };
-}
-
 function hydrateNav(nav: HTMLElement, content: HTMLElement): { links: HTMLAnchorElement[]; cleanup: Cleanup } | null {
   let links = Array.from(nav.querySelectorAll<HTMLAnchorElement>(TOC_SELECTORS.link));
   let cleanupExpandButtons = NOOP;
@@ -158,7 +139,7 @@ function createActiveState(nav: HTMLElement): {
   const autoExpandAncestors = (link: HTMLElement) => {
     let node = link.parentElement;
     while (node && node !== nav) {
-      if (node.hasAttribute(TOC_ATTRS.sublist) && !node.classList.contains(TOC_STATES.expanded)) {
+      if (node.classList.contains(TOC_CLASSES.sublist) && !node.classList.contains(TOC_CLASSES.expanded)) {
         const idx = node.getAttribute(TOC_ATTRS.sublist);
         if (!idx) {
           node = node.parentElement;
@@ -189,14 +170,14 @@ function createActiveState(nav: HTMLElement): {
       if (nextActive === currentActive) return;
 
       if (currentActive) {
-        currentActive.link.classList.remove(TOC_STATES.active);
+        currentActive.link.classList.remove(TOC_CLASSES.active);
         currentActive.link.removeAttribute("aria-current");
       }
 
       currentActive = nextActive;
 
       if (currentActive) {
-        currentActive.link.classList.add(TOC_STATES.active);
+        currentActive.link.classList.add(TOC_CLASSES.active);
         currentActive.link.setAttribute("aria-current", "location");
         autoExpandAncestors(currentActive.link);
         scrollTocIntoView(currentActive.link);
@@ -295,7 +276,6 @@ export function initToc(): Cleanup {
 
   const drawer = createTocDrawer(dom, config, setPanelSemantics);
   const cleanupNavDrawerClose = bindCloseDrawerOnNavClick(dom.nav, drawer);
-  const cleanupHeaderNavSync = syncToggleWithHeaderNav(dom.toggle);
   const observerHandle = initTocObserver(registry.headingEntries, registry.entryById, config.scrollOffset, setActive);
   const scrollHandle = initTocScroll(dom.nav, dom.progress, config.scrollOffset);
 
@@ -307,7 +287,6 @@ export function initToc(): Cleanup {
     drawer.cleanup();
     navState.cleanup();
     cleanupNavDrawerClose();
-    cleanupHeaderNavSync();
     setPanelSemantics(false);
   };
 }

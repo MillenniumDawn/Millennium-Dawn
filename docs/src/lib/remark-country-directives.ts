@@ -15,26 +15,6 @@ type DirectiveNode = Parent & {
   name?: string;
 };
 
-const SPIRITS_CONTAINER_CLASS = "my-xl rounded-lg border border-border-light bg-surface p-lg shadow-sm";
-const SPIRITS_TITLE_CLASS = "mb-md text-[clamp(1.15rem,1.5vw+0.3rem,1.5rem)] font-bold leading-heading text-text-secondary";
-const SPIRITS_LIST_CLASS = "m-0 flex list-none flex-wrap gap-sm p-0";
-const SPIRIT_ITEM_BASE_CLASS = "mb-0 inline-flex items-center gap-[0.4em] rounded border px-[0.75em] py-[0.35em] text-[0.9rem] font-medium";
-const SPIRIT_DESC_CLASS = "text-[0.8rem] text-text-muted";
-
-const SPIRIT_TYPE_CLASSES: Record<string, string> = {
-  positive: "border-[color:color-mix(in_srgb,var(--color-success)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--color-success)_12%,transparent)] text-success",
-  negative: "border-[color:color-mix(in_srgb,var(--color-danger)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--color-danger)_12%,transparent)] text-danger",
-  mixed: "border-[color:color-mix(in_srgb,var(--color-warning)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--color-warning)_12%,transparent)] text-warning",
-  neutral: "border-[color:color-mix(in_srgb,var(--color-info)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--color-info)_12%,transparent)] text-text-secondary",
-};
-
-const SPIRIT_INDICATOR_CLASSES: Record<string, string> = {
-  positive: "bg-success",
-  negative: "bg-danger",
-  mixed: "bg-warning",
-  neutral: "bg-info",
-};
-
 function escapeHtml(value: unknown): string {
   const str = typeof value === "string" ? value : value == null ? "" : `${value as string | number | boolean}`;
   return str
@@ -67,23 +47,14 @@ export function remarkCountryDirectives(): (tree: Root) => void {
 
       if (!Array.isArray(parsed)) return;
 
-      const lines = [
-        `<div class="${SPIRITS_CONTAINER_CLASS}">`,
-        `<h3 class="${SPIRITS_TITLE_CLASS}">Spirits</h3>`,
-        `<ul class="${SPIRITS_LIST_CLASS}">`,
-      ];
+      const lines = ['<div class="country-spirits">', "<h3>Spirits</h3>", "<ul>"];
       for (const item of parsed as SpiritItem[]) {
         if (!item || typeof item !== "object") continue;
         const name = escapeHtml(item.name ?? "Unknown");
-        const rawType = escapeHtml(item.type ?? "neutral");
-        const normalizedType = rawType.toLowerCase();
+        const type = escapeHtml(item.type ?? "neutral");
         const desc = escapeHtml(item.desc ?? "");
-        const typeClasses = SPIRIT_TYPE_CLASSES[normalizedType] ?? SPIRIT_TYPE_CLASSES.neutral;
-        const indicatorClasses = SPIRIT_INDICATOR_CLASSES[normalizedType] ?? SPIRIT_INDICATOR_CLASSES.neutral;
-        const descHtml = desc ? ` <span class="${SPIRIT_DESC_CLASS}">${desc}</span>` : "";
-        lines.push(
-          `<li class="${SPIRIT_ITEM_BASE_CLASS} ${typeClasses}"><span class="size-2 rounded-full ${indicatorClasses}"></span><strong>${name}</strong> <span class="text-[0.85rem] opacity-90">(${rawType})</span>${descHtml}</li>`,
-        );
+        const suffix = desc ? `: ${desc}` : "";
+        lines.push(`<li><strong>${name}</strong> (${type})${suffix}</li>`);
       }
       lines.push("</ul>", "</div>");
 
