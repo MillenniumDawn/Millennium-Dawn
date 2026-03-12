@@ -1,6 +1,6 @@
 ---
 title: Authors
-description: 'Authors & Credits for Millennium Dawn: A Modern Day Mod'
+description: "Authors & Credits for Millennium Dawn: A Modern Day Mod"
 ---
 
 The following page is a non-exhaustive list of contributors from over the years who have worked on the mod in some capacity.
@@ -179,6 +179,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 | 81_evan              | -                               | @81_evan       | -             | -                             |
 | arakan94             | @arakan94                       | arakan94       | arakan94      | arakan94@proton.me            |
 | BigRobbo             | @BigRobbo                       | @BigRobbo919   | -             | -                             |
+| pastandrey           | @pastandrey                     | @pastandrey    | -             | -                             |
 
 # Fellow Modders/Teams
 
