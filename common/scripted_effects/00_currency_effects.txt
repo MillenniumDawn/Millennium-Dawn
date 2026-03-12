@@ -367,68 +367,127 @@ calculate_seigniorage_income = {
 # inflation_cost_combined_var, which was just set by calculate_currency_strength.
 # A stronger reserve currency partially insulates against domestic inflation.
 calculate_reserve_roi_bonus = {
+	# Concave curve: roi = (1 - 1/strength) * curve_multiplier
+	# Positive at strength > 1.0, negative at strength < 1.0, zero at neutral (1.0)
+	# All currencies clamped to [-0.03, +0.03]
 	if = {
 		limit = { has_idea = us_dollar }
-		var:global.usd_issuer = { ROOT = { set_variable = { reserve_roi_bonus = PREV.currency_strength } } }
-		multiply_variable = { reserve_roi_bonus = 0.03 }
-		set_temp_variable = { tmp_network = global.usd_reserve_adoption_count }
-		multiply_temp_variable = { tmp_network = 0.001 }
-		add_to_variable = { reserve_roi_bonus = tmp_network }
-		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.075 }
+		var:global.usd_issuer = {
+			ROOT = {
+				set_temp_variable = { roi_curve = 1 }
+				divide_temp_variable = { roi_curve = PREV.currency_strength }
+				multiply_temp_variable = { roi_curve = -1 }
+				add_to_temp_variable = { roi_curve = 1 }
+				multiply_temp_variable = { roi_curve = 0.06 }
+				set_temp_variable = { tmp_network = global.usd_reserve_adoption_count }
+				multiply_temp_variable = { tmp_network = 0.0002 }
+				add_to_temp_variable = { roi_curve = tmp_network }
+				set_variable = { reserve_roi_bonus = roi_curve }
+			}
+		}
+		clamp_variable = { var = reserve_roi_bonus min = -0.03 max = 0.03 }
 	}
 	else_if = {
 		limit = { has_idea = euro }
-		var:global.eur_issuer = { ROOT = { set_variable = { reserve_roi_bonus = PREV.currency_strength } } }
-		multiply_variable = { reserve_roi_bonus = 0.0225 }
-		set_temp_variable = { tmp_network = global.eur_reserve_adoption_count }
-		multiply_temp_variable = { tmp_network = 0.001 }
-		add_to_variable = { reserve_roi_bonus = tmp_network }
-		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.06 }
+		var:global.eur_issuer = {
+			ROOT = {
+				set_temp_variable = { roi_curve = 1 }
+				divide_temp_variable = { roi_curve = PREV.currency_strength }
+				multiply_temp_variable = { roi_curve = -1 }
+				add_to_temp_variable = { roi_curve = 1 }
+				multiply_temp_variable = { roi_curve = 0.045 }
+				set_temp_variable = { tmp_network = global.eur_reserve_adoption_count }
+				multiply_temp_variable = { tmp_network = 0.0002 }
+				add_to_temp_variable = { roi_curve = tmp_network }
+				set_variable = { reserve_roi_bonus = roi_curve }
+			}
+		}
+		clamp_variable = { var = reserve_roi_bonus min = -0.03 max = 0.03 }
 	}
 	else_if = {
 		limit = { has_idea = chinese_yuan }
-		var:global.cny_issuer = { ROOT = { set_variable = { reserve_roi_bonus = PREV.currency_strength } } }
-		multiply_variable = { reserve_roi_bonus = 0.01875 }
-		set_temp_variable = { tmp_network = global.cny_reserve_adoption_count }
-		multiply_temp_variable = { tmp_network = 0.001 }
-		add_to_variable = { reserve_roi_bonus = tmp_network }
-		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.0525 }
+		var:global.cny_issuer = {
+			ROOT = {
+				set_temp_variable = { roi_curve = 1 }
+				divide_temp_variable = { roi_curve = PREV.currency_strength }
+				multiply_temp_variable = { roi_curve = -1 }
+				add_to_temp_variable = { roi_curve = 1 }
+				multiply_temp_variable = { roi_curve = 0.0375 }
+				set_temp_variable = { tmp_network = global.cny_reserve_adoption_count }
+				multiply_temp_variable = { tmp_network = 0.0002 }
+				add_to_temp_variable = { roi_curve = tmp_network }
+				set_variable = { reserve_roi_bonus = roi_curve }
+			}
+		}
+		clamp_variable = { var = reserve_roi_bonus min = -0.03 max = 0.03 }
 	}
 	else_if = {
 		limit = { has_idea = russia_rouble }
-		var:global.rub_issuer = { ROOT = { set_variable = { reserve_roi_bonus = PREV.currency_strength } } }
-		multiply_variable = { reserve_roi_bonus = 0.01875 }
-		set_temp_variable = { tmp_network = global.rub_reserve_adoption_count }
-		multiply_temp_variable = { tmp_network = 0.001 }
-		add_to_variable = { reserve_roi_bonus = tmp_network }
-		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.0525 }
+		var:global.rub_issuer = {
+			ROOT = {
+				set_temp_variable = { roi_curve = 1 }
+				divide_temp_variable = { roi_curve = PREV.currency_strength }
+				multiply_temp_variable = { roi_curve = -1 }
+				add_to_temp_variable = { roi_curve = 1 }
+				multiply_temp_variable = { roi_curve = 0.0375 }
+				set_temp_variable = { tmp_network = global.rub_reserve_adoption_count }
+				multiply_temp_variable = { tmp_network = 0.0002 }
+				add_to_temp_variable = { roi_curve = tmp_network }
+				set_variable = { reserve_roi_bonus = roi_curve }
+			}
+		}
+		clamp_variable = { var = reserve_roi_bonus min = -0.03 max = 0.03 }
 	}
 	else_if = {
 		limit = { has_idea = japanese_yen }
-		var:global.jpy_issuer = { ROOT = { set_variable = { reserve_roi_bonus = PREV.currency_strength } } }
-		multiply_variable = { reserve_roi_bonus = 0.015 }
-		set_temp_variable = { tmp_network = global.jpy_reserve_adoption_count }
-		multiply_temp_variable = { tmp_network = 0.001 }
-		add_to_variable = { reserve_roi_bonus = tmp_network }
-		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.045 }
+		var:global.jpy_issuer = {
+			ROOT = {
+				set_temp_variable = { roi_curve = 1 }
+				divide_temp_variable = { roi_curve = PREV.currency_strength }
+				multiply_temp_variable = { roi_curve = -1 }
+				add_to_temp_variable = { roi_curve = 1 }
+				multiply_temp_variable = { roi_curve = 0.03 }
+				set_temp_variable = { tmp_network = global.jpy_reserve_adoption_count }
+				multiply_temp_variable = { tmp_network = 0.0002 }
+				add_to_temp_variable = { roi_curve = tmp_network }
+				set_variable = { reserve_roi_bonus = roi_curve }
+			}
+		}
+		clamp_variable = { var = reserve_roi_bonus min = -0.03 max = 0.03 }
 	}
 	else_if = {
 		limit = { has_idea = british_pound }
-		var:global.gbp_issuer = { ROOT = { set_variable = { reserve_roi_bonus = PREV.currency_strength } } }
-		multiply_variable = { reserve_roi_bonus = 0.01875 }
-		set_temp_variable = { tmp_network = global.gbp_reserve_adoption_count }
-		multiply_temp_variable = { tmp_network = 0.001 }
-		add_to_variable = { reserve_roi_bonus = tmp_network }
-		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.0525 }
+		var:global.gbp_issuer = {
+			ROOT = {
+				set_temp_variable = { roi_curve = 1 }
+				divide_temp_variable = { roi_curve = PREV.currency_strength }
+				multiply_temp_variable = { roi_curve = -1 }
+				add_to_temp_variable = { roi_curve = 1 }
+				multiply_temp_variable = { roi_curve = 0.0375 }
+				set_temp_variable = { tmp_network = global.gbp_reserve_adoption_count }
+				multiply_temp_variable = { tmp_network = 0.0002 }
+				add_to_temp_variable = { roi_curve = tmp_network }
+				set_variable = { reserve_roi_bonus = roi_curve }
+			}
+		}
+		clamp_variable = { var = reserve_roi_bonus min = -0.03 max = 0.03 }
 	}
 	else_if = {
 		limit = { has_idea = swiss_frank }
-		var:global.chf_issuer = { ROOT = { set_variable = { reserve_roi_bonus = PREV.currency_strength } } }
-		multiply_variable = { reserve_roi_bonus = 0.01125 }
-		set_temp_variable = { tmp_network = global.chf_reserve_adoption_count }
-		multiply_temp_variable = { tmp_network = 0.001 }
-		add_to_variable = { reserve_roi_bonus = tmp_network }
-		clamp_variable = { var = reserve_roi_bonus min = 0 max = 0.0375 }
+		var:global.chf_issuer = {
+			ROOT = {
+				set_temp_variable = { roi_curve = 1 }
+				divide_temp_variable = { roi_curve = PREV.currency_strength }
+				multiply_temp_variable = { roi_curve = -1 }
+				add_to_temp_variable = { roi_curve = 1 }
+				multiply_temp_variable = { roi_curve = 0.0225 }
+				set_temp_variable = { tmp_network = global.chf_reserve_adoption_count }
+				multiply_temp_variable = { tmp_network = 0.0002 }
+				add_to_temp_variable = { roi_curve = tmp_network }
+				set_variable = { reserve_roi_bonus = roi_curve }
+			}
+		}
+		clamp_variable = { var = reserve_roi_bonus min = -0.03 max = 0.03 }
 	}
 	else = {
 		# no_foreign_reserve or no idea: zero out both bonuses
