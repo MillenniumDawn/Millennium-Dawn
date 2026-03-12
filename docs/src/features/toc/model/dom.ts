@@ -1,5 +1,5 @@
-import { buildTocTree, type TocHeadingLike, type TocTreeItem } from "../../../shared/lib/toc";
-import { TOC_ATTRS, TOC_CLASSES, TOC_HEADING_RANGE, TOC_SELECTORS } from "../lib/config";
+import { buildTocTree, type TocHeadingLike, type TocTreeItem } from "@/shared/lib/toc";
+import { TOC_ATTRS, TOC_HEADING_RANGE, TOC_SELECTORS, TOC_STATES } from "../lib/config";
 import { renderTocTreeHtml } from "../lib/render";
 
 type Cleanup = () => void;
@@ -39,7 +39,7 @@ export function toggleSublist(button: HTMLElement, sublist: HTMLElement | null, 
   button.setAttribute("aria-expanded", open ? "true" : "false");
 
   if (open) {
-    sublist.classList.add(TOC_CLASSES.expanded);
+    sublist.classList.add(TOC_STATES.expanded);
     sublist.style.maxHeight = `${sublist.scrollHeight}px`;
     sublist.style.opacity = "1";
 
@@ -56,7 +56,7 @@ export function toggleSublist(button: HTMLElement, sublist: HTMLElement | null, 
     sublist.style.opacity = "0";
 
     const onEnd = () => {
-      sublist.classList.remove(TOC_CLASSES.expanded);
+      sublist.classList.remove(TOC_STATES.expanded);
       sublist.removeEventListener("transitionend", onEnd);
     };
 

@@ -46,9 +46,17 @@ const resources = defineCollection({
   schema: baseDocSchema,
 });
 
+const devDiarySchema = baseDocSchema.extend({
+  author: z.string(),
+  date: z.coerce.date(),
+  tags: z.array(z.string()).default([]),
+  page_id: z.string().default("dev-diary"),
+  body_class: z.string().default("dev-diary-page"),
+});
+
 const devDiaries = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/devDiaries" }),
-  schema: baseDocSchema,
+  schema: devDiarySchema,
 });
 
 const misc = defineCollection({

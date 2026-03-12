@@ -1,13 +1,12 @@
 ---
 title: v1.1 Changes
 page_id: changelog-v1-1-changes
-toc: 'off'
 order: 2
 ---
 
 # v1.1 Changes
 
-<details><summary>v1.1.1 Hotfix</summary>
+## v1.1.1 Hotfix
 
 Events
 
@@ -50,9 +49,9 @@ Units
 
 - Buffed armoured and armoured recon company HP from 2 -> 25
 
-</details>
 
-<details><summary>v1.1 Main</summary>
+
+## v1.1 Main
 Stability
 
 - Fixed an issue with save games bloating
@@ -204,4 +203,4 @@ Localisation
 - Added localisation to the Swiss faction
 
     
-</details>
+
