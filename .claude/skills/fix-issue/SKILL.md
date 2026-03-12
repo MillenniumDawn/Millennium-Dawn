@@ -53,34 +53,25 @@ Steps:
 
    Do not refactor surrounding code or fix unrelated issues in the same commit.
 
-6. **Validate**
+6. **Commit**
 
-   Run the validator to confirm no new errors were introduced:
-
-   ```
-   ./tools/validation/run_all_validators.sh
-   ```
-
-   If the validator flags the changed file, fix the issue before committing.
-
-7. **Commit**
-
-   Stage only the files changed for this fix:
+   Create a branch, stage only the files changed for this fix, and commit:
 
    ```
+   git checkout -b fix/<short-description>
    git add <files>
    git commit -m "Fix <short description> (#<issue number>)
 
    <one or two sentences explaining root cause and fix>
 
-   Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+   Co-Authored-By: Claude <noreply@anthropic.com>"
    ```
 
-8. **Update the changelog**
+7. **Update the changelog**
 
    Run `/changelog` to add an entry for the fix under the current version in `Changelog.txt`. Commit the changelog update separately.
 
-9. **Open a pull request**
+8. **Open a pull request**
 
    Push the branch and create a PR that closes the issue:
 
@@ -95,6 +86,6 @@ Steps:
    - **Fix** — what was changed and how it resolves it
    - **Test plan** — steps to verify the fix in-game
 
-10. **Report back**
+9. **Report back**
 
 Output the PR URL and a one-paragraph summary of the root cause and fix.

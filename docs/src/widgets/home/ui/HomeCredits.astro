@@ -1,0 +1,37 @@
+---
+import InlineMarkdownText from "@/shared/ui/InlineMarkdownText.astro";
+import { withBase } from "@/lib/urls";
+import { BASE_LINK_CLASS, BODY_TEXT_CLASS, SECTION_TITLE_CLASS } from "@/shared/ui/tailwind";
+
+interface SpecialThanks {
+  text: string;
+}
+
+interface Credits {
+  model_credit_list: string;
+  special_thanks: SpecialThanks[];
+}
+
+interface Props {
+  credits: Credits;
+}
+
+const { credits }: Props = Astro.props;
+---
+
+<section aria-labelledby="credits-heading" class="flex flex-col gap-sm">
+  <h2 id="credits-heading" class={SECTION_TITLE_CLASS}>Credits</h2>
+  <p class={BODY_TEXT_CLASS}>
+    A full list of credits for all models that are currently in use in-game:{" "}
+    <a class={BASE_LINK_CLASS} href={credits.model_credit_list} target="_blank" rel="noopener noreferrer">
+      Model Credit List
+      <span class="sr-only"> (opens in a new tab)</span>
+    </a>.
+  </p>
+  {(credits.special_thanks || []).map((thanks) => (
+    <InlineMarkdownText text={thanks.text} />
+  ))}
+  <p class={BODY_TEXT_CLASS}>
+    Furthermore, a non-exhaustive list can be found at the <a class={BASE_LINK_CLASS} href={withBase("/misc/authors/")}>Authors</a>.
+  </p>
+</section>

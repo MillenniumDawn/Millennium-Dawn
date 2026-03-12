@@ -1,3 +1,118 @@
+# Drone raid availability — wartime/wargoal/retaliation/PP>300
+# Used by drone raids that require active hostility (airfield, rocket site, swarm)
+drone_raid_available_hostile = {
+	FROM = {
+		NOT = { is_subject_of = ROOT }
+		NOT = { has_non_aggression_pact_with = ROOT }
+	}
+	OR = {
+		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+		has_war_with = FROM
+		has_wargoal_against = FROM
+		has_political_power > 300
+	}
+}
+
+# Drone raid availability — grey-zone ops (PP>99 or wartime)
+# Used by drone raids against civilian infrastructure (power grid)
+drone_raid_available_grey_zone = {
+	FROM = {
+		NOT = { is_subject_of = ROOT }
+		NOT = { has_non_aggression_pact_with = ROOT }
+	}
+	OR = {
+		has_political_power > 99
+		has_war_with = FROM
+		hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+	}
+}
+
+# Raid target basic eligibility — not a subject and no NAP
+# Used as a building block in available blocks that have custom OR conditions
+raid_target_eligible = {
+	FROM = {
+		NOT = { is_subject_of = ROOT }
+		NOT = { has_non_aggression_pact_with = ROOT }
+	}
+}
+
+# Raid show_target — neutral-hostility intervention doctrine (opinion < 0)
+# Used by air/drone raids that show when at war OR when opinion < 0 + doctrine permits
+raid_show_target_opinion_neutral = {
+	OR = {
+		AND = {
+			has_opinion = {
+				target = FROM
+				value < 0
+			}
+			if = {
+				limit = { has_idea = intervention_limited_interventionism }
+				is_neighbor_of = FROM
+			}
+			else_if = {
+				limit = { has_idea = intervention_regional_interventionism }
+				custom_trigger_tooltip = {
+					tooltip = nation_on_same_continent
+					FROM = { is_on_same_continent_as = PREV }
+				}
+			}
+		}
+		has_war_with = FROM
+	}
+}
+
+# Raid show_target — hostile-only intervention doctrine (opinion < -50)
+# Used by cruise missile raids requiring deeper hostility
+raid_show_target_opinion_hostile = {
+	OR = {
+		AND = {
+			has_opinion = {
+				target = FROM
+				value < -50
+			}
+			if = {
+				limit = { has_idea = intervention_limited_interventionism }
+				is_neighbor_of = FROM
+			}
+			else_if = {
+				limit = { has_idea = intervention_regional_interventionism }
+				custom_trigger_tooltip = {
+					tooltip = nation_on_same_continent
+					FROM = { is_on_same_continent_as = PREV }
+				}
+			}
+		}
+		has_war_with = FROM
+	}
+}
+
+# Raid show_target — special forces hostile doctrine (opinion < -50, wargoal, or justification)
+# Extends raid_show_target_opinion_hostile with wargoal/justification visibility for pre-war prep
+raid_show_target_specops_hostile = {
+	OR = {
+		AND = {
+			has_opinion = {
+				target = FROM
+				value < -50
+			}
+			if = {
+				limit = { has_idea = intervention_limited_interventionism }
+				is_neighbor_of = FROM
+			}
+			else_if = {
+				limit = { has_idea = intervention_regional_interventionism }
+				custom_trigger_tooltip = {
+					tooltip = nation_on_same_continent
+					FROM = { is_on_same_continent_as = PREV }
+				}
+			}
+		}
+		has_war_with = FROM
+		has_wargoal_against = FROM
+		is_justifying_wargoal_against = FROM
+	}
+}
+
 check_if_nuclear_weapons_in_stockpile = {
 	custom_override_tooltip = {
 		tooltip = has_nuclear_weapons_in_arsenal_tt
