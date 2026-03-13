@@ -5,7 +5,7 @@ description: Comprehensive guide to the economy system in Millennium Dawn
 
 # Economy Guide
 
-Millennium Dawn includes a detailed modern economy system covering revenue, government expenditure, debt, employment, electricity, and more. This guide explains each element and how they interact.
+Millennium Dawn includes a detailed modern economy system covering revenue, government expenditure, debt, employment, electricity, currency, inflation, and more. This guide explains each element and how they interact.
 
 ## Table of Contents
 
@@ -15,6 +15,8 @@ Millennium Dawn includes a detailed modern economy system covering revenue, gove
   - [Tax Income](#tax-income)
   - [Corporate Tax](#corporate-tax)
   - [Population Tax](#population-tax)
+  - [Resource Exports](#resource-exports)
+  - [Seigniorage Income](#seigniorage-income)
   - [Additional Income](#additional-income)
 - [Expenses](#expenses)
   - [Military Spending](#military-spending)
@@ -28,15 +30,28 @@ Millennium Dawn includes a detailed modern economy system covering revenue, gove
   - [High Interest Penalties](#high-interest-penalties)
   - [Managing Debt](#managing-debt)
 - [Tax Rate Changes](#tax-rate-changes)
+- [Currency and Monetary Policy](#currency-and-monetary-policy)
+  - [Reserve Currency](#reserve-currency)
+  - [Currency Strength](#currency-strength)
+  - [Currency Backing](#currency-backing)
+  - [Monetary Policy Decisions](#monetary-policy-decisions)
+- [Inflation](#inflation)
 - [Economic Indicators](#economic-indicators)
   - [Employment](#employment)
   - [Productivity](#productivity)
 - [Economic Cycle](#economic-cycle)
+- [Economic Laws](#economic-laws)
+  - [Employment Pressure](#employment-pressure)
+  - [Healthcare Privatization](#healthcare-privatization)
+  - [Mining Policies](#mining-policies)
+  - [Critical Infrastructure](#critical-infrastructure)
+- [Sanctions](#sanctions)
 - [Electricity](#electricity)
 - [Immigration](#immigration)
 - [International Investments](#international-investments)
 - [Internal Investment](#internal-investment)
 - [Agrarian Economy](#agrarian-economy)
+- [IMF and Bailouts](#imf-and-bailouts)
 - [Strategic Tips](#strategic-tips)
 
 ---
@@ -107,6 +122,20 @@ Population tax scales with:
 
 Higher population taxes apply a **stability penalty** (1% tax rate = -0.01% stability).
 
+### Resource Exports
+
+Countries earn income from exporting surplus resources on the international market. The following resources generate export revenue:
+
+- Oil, Steel, Aluminium, Tungsten, Chromium, Rubber, Microchips, and Composites
+
+Export income is affected by your trade law (which controls the minimum export percentage), mining policies, and currency strength. A weaker domestic currency makes resource exports more valuable in local terms, while a stronger currency reduces their local value.
+
+### Seigniorage Income
+
+Reserve currency issuers (the countries controlling USD, EUR, CNY, RUB, JPY, GBP, and CHF) earn passive seigniorage income proportional to how many other nations have adopted their currency. The more countries that hold your currency as their reserve, the more seigniorage you earn.
+
+Non-issuer countries can earn a smaller seigniorage income by activating the **Expand Money Supply** monetary policy decision, which provides a fraction of tax income as additional revenue at the cost of weakening the currency.
+
 ### Additional Income
 
 Various sources provide supplementary revenue:
@@ -161,7 +190,7 @@ Education spending is influenced by population size, number of research slots, a
 
 ### Health
 
-Health spending scales with population and provides population growth, stability, and manpower recovery bonuses.
+Health spending scales with population and provides population growth, stability, and manpower recovery bonuses. The cost and effectiveness of health spending is modified by your **Healthcare Privatization** law.
 
 **Levels 1–6:** Costs scale from 1.1× to 11× base rate.
 
@@ -189,6 +218,8 @@ Interest Rate = (Debt / GDP) × 10
 
 If your weekly balance is negative, or if a national focus or event causes you to spend more than your current funds, debt is automatically issued. The game borrows 1% of GDP plus the deficit, with a 1% fee applied to automatically borrowed funds.
 
+For countries whose debt is denominated in a foreign reserve currency (USD, EUR, CNY, etc.), a weak domestic currency increases the real burden of debt repayment, while a strong currency reduces it.
+
 ### High Interest Penalties
 
 When interest exceeds **15%**, severe penalties activate:
@@ -209,6 +240,8 @@ If debt continues to spiral, the consequences become severe: debtor nations can 
 3. Increase tax rates cautiously (reduces productivity)
 4. Use economic foci to reduce interest rates
 5. Build up treasury reserves during economic upturns
+6. Request bailouts before interest rates spiral above 15% (see [IMF and Bailouts](#imf-and-bailouts))
+7. Strengthen your currency to reduce foreign-denominated debt burden
 
 ---
 
@@ -221,6 +254,85 @@ Tax rates are adjusted through the economy interface:
 - **Population Tax**: Affects stability
 
 **Tax Rate Change Cost**: Each 1% change costs approximately 50 political power.
+
+---
+
+## Currency and Monetary Policy
+
+Millennium Dawn models a currency system where each country has a **currency strength** variable that affects income, debt costs, and inflation.
+
+### Reserve Currency
+
+Every country denominates its debt and trade in a reserve currency, chosen via the **Reserve Currency** law in the Politics window. The available options are:
+
+| Currency             | Typical Adopters                           |
+| -------------------- | ------------------------------------------ |
+| US Dollar (USD)      | Default for most nations                   |
+| Euro (EUR)           | EU member states                           |
+| Chinese Yuan (CNY)   | Chinese faction members and aligned states |
+| Japanese Yen (JPY)   | Japanese faction members                   |
+| Russian Rouble (RUB) | Russian faction members                    |
+| British Pound (GBP)  | UK faction members                         |
+| Swiss Franc (CHF)    | Switzerland and Liechtenstein only         |
+| No Foreign Reserve   | Isolated or autarkic states                |
+
+Choosing **No Foreign Reserve** eliminates foreign debt denomination effects and grants a small political power bonus, but removes the reserve currency ROI and trade bonuses that come from being part of a major currency network.
+
+### Currency Strength
+
+Currency strength is recalculated monthly based on three factors:
+
+1. **Budget Balance**: A budget surplus appreciates your currency; a deficit depreciates it
+2. **Debt-to-GDP Ratio**: High debt weakens your currency
+3. **Stability**: Political instability drives capital flight and currency depreciation
+
+Currency strength ranges from 0.15 (extremely weak) to 2.0 (extremely strong), with 1.0 as neutral. Its effects include:
+
+- **Weak currency** (below 1.0): Resource exports and international investment returns are worth more in local terms, but foreign-denominated debt costs more and inflation pressure increases
+- **Strong currency** (above 1.0): Foreign-denominated debt is cheaper and inflation is suppressed, but export income and investment returns decrease in local terms
+
+Reserve currency issuers (USD, EUR, etc.) have dampened volatility -- their currencies cannot swing as dramatically as smaller nations.
+
+### Currency Backing
+
+The **Currency Backing** law determines how your currency is anchored:
+
+| Backing           | Stability | Trade Opinion | Other Effects                            |
+| ----------------- | --------- | ------------- | ---------------------------------------- |
+| Gold Standard     | +6%       | +4%           | -5% political power; low volatility      |
+| Silver Standard   | +3%       | +2%           | -2% political power; moderate volatility |
+| Bi-Metal Standard | +2%       | +1%           | Moderate volatility                      |
+| Fiat Currency     | -2%       | --            | +0.03 daily PP; highest flexibility      |
+
+Hard-money standards (gold, silver) dampen currency volatility and pull currency strength toward par (1.0) over time. However, they restrict monetary policy flexibility -- you cannot use the Expand Money Supply decision while on the gold standard.
+
+### Monetary Policy Decisions
+
+Two monetary policy decisions are available (AI-controlled nations use these automatically):
+
+- **Expand Money Supply**: Increases seigniorage income by 25% and weakens currency strength by 0.05. Cannot be used alongside Austerity Measures or while on the gold standard. Lasts 180 days with a 365-day cooldown.
+- **Austerity Measures**: Strengthens currency by 0.04. Lasts 120 days with a 180-day cooldown. Cannot be used alongside Expand Money Supply.
+
+---
+
+## Inflation
+
+Inflation is modeled through a dynamic modifier that applies broad economic effects. The inflation rate is driven by currency weakness -- when currency strength drops below 1.0, the difference feeds into inflation pressure.
+
+Inflation affects nearly every part of the economy:
+
+| Effect                  | Impact                                                 |
+| ----------------------- | ------------------------------------------------------ |
+| Cost Multiplier         | Increases costs across the board                       |
+| Construction Speed      | Reduced building construction speed                    |
+| Factory/Dockyard Output | Reduced industrial output                              |
+| Productivity Growth     | Slower long-term productivity gains                    |
+| Political Power         | Reduced political power generation                     |
+| Consumer Goods          | Increased consumer goods requirement                   |
+| Investment Costs        | Higher costs for both domestic and foreign investments |
+| Trade Law Changes       | More expensive to adjust trade laws                    |
+
+Inflation can be managed by strengthening your currency (via austerity, reducing debt, or improving stability) or by adopting a hard-money currency backing standard.
 
 ---
 
@@ -274,8 +386,8 @@ Countries must supply electricity as part of their infrastructure. Power is gene
 
 | Building                        | Fuel Source            | Output (base) |
 | ------------------------------- | ---------------------- | ------------- |
-| Fossil Fuel Powerplant          | Fuel                   | 1 GW          |
-| Nuclear Reactor                 | Reactor-Grade Material | 2 GW          |
+| Fossil Fuel Powerplant          | Fuel                   | 2 GW          |
+| Nuclear Reactor                 | Reactor-Grade Material | 5 GW          |
 | Renewable Energy Infrastructure | None                   | 0.5 GW        |
 
 Reactor-Grade Material can be produced at Enrichment Facilities (built from the electricity panel) or purchased from other countries via decisions. States with Geothermal Infrastructure or Hydroelectric Infrastructure modifiers provide additional power.
@@ -356,6 +468,63 @@ Drought protections can be built up through decisions and national focuses to re
 
 ---
 
+## Monetary Policy
+
+Countries have access to monetary policy decisions that affect currency strength and fiscal strategy. These two policies are mutually exclusive -- you cannot run both at the same time.
+
+### Expand Money Supply
+
+Directs the central bank to inject liquidity into the economy:
+
+- **Duration**: 180 days, with a 365-day cooldown
+- **Effect**: +25% seigniorage income modifier
+- **Side effect**: Weakens currency strength by 5%
+- **Requires**: No gold standard and a functioning foreign reserve
+
+Reserve currency issuers benefit most, as their base seigniorage income scales up significantly. Non-issuers earn a smaller fraction of tax income but pay the same currency weakness cost.
+
+### Austerity Measures
+
+Tightens the money supply and imposes fiscal discipline:
+
+- **Duration**: 120 days, with a 180-day cooldown
+- **Effect**: Strengthens currency by 4%
+- **Best used**: When currency is weak but the treasury is stable
+
+---
+
+## IMF and Bailouts
+
+When your economy is struggling, several bailout options are available:
+
+### Cheap Loans from the IMF
+
+- **Cost**: 50 political power
+- **Requirements**: GDP per capita above $5,000, interest rate below 15%, expenses exceeding income, no severe corruption
+- **Cooldown**: 365 days
+- **Effect**: Provides a subsidized loan to stabilize your economy
+
+### African Investment Fund Loans
+
+Available to African nations that have completed the AU shared focus to create the monetary fund:
+
+- **Requirements**: Interest rate below 15%
+- **Effect**: Reduces interest rate multiplier by 3 while active
+- **Benefit**: An alternative to the IMF with potentially better terms for African economies
+
+### Bailout Requests
+
+When the economy is in severe distress (interest above 15%), countries can request bailouts from:
+
+1. **IMF** (cheap loans, first resort)
+2. **Neighboring countries** (diplomatic requests)
+3. **Second-most influential country** (less diplomatic damage)
+4. **Most influential country** (last resort, most influence cost)
+
+If interest exceeds 25% and the country is not at war, the AI will default on its debt, triggering severe consequences.
+
+---
+
 ## Strategic Tips
 
 ### Early Game
@@ -387,4 +556,6 @@ Drought protections can be built up through decisions and national focuses to re
 
 ## Related Documentation
 
+- [International Systems Guide](/player-tutorials/international-systems) - For PMCs, sanctions, and other international economic systems
+- [European Union Tutorial](/player-tutorials/eu-tutorial) - For EU-specific economic mechanics (Eurozone, ECB, single market)
 - [Game Rules](/player-tutorials/game-rules)
