@@ -32,6 +32,10 @@ scripted_diplomatic_actions = {
 		reject_title = REQUEST_MIL_GNSS_ACCESS_REJECTED_TITLE
 		reject_description = REQUEST_MIL_GNSS_ACCESS_REJECTED_DESC
 		#### EFFECTS ###
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect request_mil_gnss_access"
+			ROOT = { set_variable = { pending_request_mil_gnss_access = PREV.id } }
+		}
 		complete_effect = {
 			log = "[GetDateText]: [ROOT.GetName]: diplomatic action complete_effect request_mil_gnss_access"
 			ROOT = {
@@ -39,9 +43,17 @@ scripted_diplomatic_actions = {
 				add_to_array = { array = GNSS_mil_access_array value = PREV.id }
 				add_to_array = { array = GNSS_mil_access_system_idx_array value = PREV.var_GNSS_mil_system_idx }
 				add_access_GNSS_mil_vars = yes
+				clear_variable = pending_request_mil_gnss_access
 			}
 			THIS = { country_event = satellites.9 }
 			ROOT = { country_event = satellites.9 }
+		}
+		reject_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect request_mil_gnss_access"
+			ROOT = {
+				clear_variable = pending_request_mil_gnss_access
+				set_country_flag = { flag = recently_rejected_request_mil_gnss_access_@PREV value = 1 days = 270 }
+			}
 		}
 
 		#### AI SECTION ###
@@ -132,6 +144,17 @@ scripted_diplomatic_actions = {
 			modifier = {
 				add = 50
 				check_variable = { PREV.var_GNSS_mil_system_idx > ROOT.var_GNSS_mil_system_idx }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_rejected_request_mil_gnss_access_@PREV }
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					ROOT = { NOT = { check_variable = { pending_request_mil_gnss_access = 0 } } }
+					ROOT = { has_country_flag = recently_rejected_request_mil_gnss_access_@PREV }
+				}
 			}
 		}
 		ai_acceptance = {
@@ -305,7 +328,7 @@ scripted_diplomatic_actions = {
 		#### EFFECTS ###
 		on_sent_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect offer_mil_gnss_access"
-			ROOT = { set_variable = { pending_mil_access_country = PREV.id } }
+			ROOT = { set_variable = { pending_offer_mil_gnss_access = PREV.id } }
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect offer_mil_gnss_access"
@@ -316,7 +339,7 @@ scripted_diplomatic_actions = {
 				PREV = {
 					add_access_GNSS_mil_vars = yes
 				}
-				clear_variable = pending_mil_access_country
+				clear_variable = pending_offer_mil_gnss_access
 
 				# Do Not Instant Revoke
 				set_country_flag = { flag = recently_accepted_mil_gnss_@PREV value = 1 days = 180 }
@@ -326,7 +349,10 @@ scripted_diplomatic_actions = {
 		}
 		reject_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_mil_gnss_access"
-			ROOT = { clear_variable = pending_mil_access_country }
+			ROOT = {
+				clear_variable = pending_offer_mil_gnss_access
+				set_country_flag = { flag = recently_rejected_offer_mil_gnss_access_@PREV value = 1 days = 270 }
+			}
 		}
 
 		#### AI SECTION ###
@@ -417,26 +443,17 @@ scripted_diplomatic_actions = {
 			modifier = {
 				add = -100
 				OR = {
-					check_variable = {
-						THIS.var_GNSS_mil_system_idx > ROOT.var_GNSS_mil_system_idx
-					}
-					check_variable = {
-						THIS.var_GNSS_mil_system_idx = ROOT.var_GNSS_mil_system_idx
-					}
+					check_variable = { THIS.var_GNSS_mil_system_idx > ROOT.var_GNSS_mil_system_idx }
+					check_variable = { THIS.var_GNSS_mil_system_idx = ROOT.var_GNSS_mil_system_idx }
 				}
 			}
 			modifier = {
-				add = -100
-				ROOT = { has_country_flag = recently_offer_mil_gnss_access_@PREV }
-			}
-			modifier = {
-				add = -100
-				ROOT = { has_country_flag = recently_revoke_mil_gnss_access_@PREV }
-			}
-			modifier = {
 				factor = 0
-				ROOT = {
-					NOT = { check_variable = { pending_mil_access_country = 0 } }
+				OR = {
+					ROOT = { NOT = { check_variable = { pending_offer_mil_gnss_access = 0 } } }
+					ROOT = { has_country_flag = recently_rejected_offer_mil_gnss_access_@PREV }
+					ROOT = { has_country_flag = recently_revoke_mil_gnss_access_@PREV }
+					ROOT = { has_country_flag = recently_offer_mil_gnss_access_@PREV }
 				}
 			}
 		}
@@ -721,8 +738,11 @@ scripted_diplomatic_actions = {
 				ROOT = { has_country_flag = recently_offer_mil_gnss_access_@PREV }
 			}
 			modifier = {
-				add = -1000
-				ROOT = { has_country_flag = recently_accepted_mil_gnss_@PREV }
+				factor = 0
+				OR = {
+					ROOT = { has_country_flag = recently_accepted_mil_gnss_@PREV }
+					THIS = { has_country_flag = recently_accepted_mil_gnss_@ROOT }
+				}
 			}
 		}
 	}
@@ -760,6 +780,10 @@ scripted_diplomatic_actions = {
 		reject_description = REQUEST_CIV_GNSS_ACCESS_REJECTED_DESC
 
 		#### EFFECTS ###
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect request_civ_gnss_access"
+			ROOT = { set_variable = { pending_request_civ_gnss_access = PREV.id } }
+		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect request_civ_gnss_access"
 			ROOT = {
@@ -767,6 +791,7 @@ scripted_diplomatic_actions = {
 				add_to_array = { array = GNSS_civ_access_array value = PREV.id }
 				add_to_array = { array = GNSS_civ_access_system_idx_array value = PREV.var_GNSS_civ_system_idx }
 				add_access_GNSS_civ_vars = yes
+				clear_variable = pending_request_civ_gnss_access
 
 				# Do Not Instant Revoke
 				set_country_flag = { flag = recently_accepted_civ_gnss_@PREV value = 1 days = 180 }
@@ -776,6 +801,10 @@ scripted_diplomatic_actions = {
 		}
 		reject_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect request_civ_gnss_access"
+			ROOT = {
+				clear_variable = pending_request_civ_gnss_access
+				set_country_flag = { flag = recently_rejected_request_civ_gnss_access_@PREV value = 1 days = 270 }
+			}
 		}
 
 		#### AI SECTION ###
@@ -866,6 +895,17 @@ scripted_diplomatic_actions = {
 			modifier = {
 				add = 50
 				check_variable = { PREV.var_GNSS_civ_system_idx > ROOT.var_GNSS_civ_system_idx }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_rejected_request_civ_gnss_access_@PREV }
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					ROOT = { NOT = { check_variable = { pending_request_civ_gnss_access = 0 } } }
+					ROOT = { has_country_flag = recently_rejected_request_civ_gnss_access_@PREV }
+				}
 			}
 		}
 		ai_acceptance = {
@@ -1048,7 +1088,7 @@ scripted_diplomatic_actions = {
 		#### EFFECTS ###
 		on_sent_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect offer_civ_gnss_access"
-			ROOT = { set_variable = { pending_civ_access_country = PREV.id } }
+			ROOT = { set_variable = { pending_offer_civ_gnss_access = PREV.id } }
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect offer_civ_gnss_access"
@@ -1059,7 +1099,7 @@ scripted_diplomatic_actions = {
 				PREV = {
 					add_access_GNSS_civ_vars = yes
 				}
-				clear_variable = pending_civ_access_country
+				clear_variable = pending_offer_civ_gnss_access
 
 				# Do Not Instant Revoke
 				set_country_flag = { flag = recently_accepted_civ_gnss_@PREV value = 1 days = 180 }
@@ -1069,7 +1109,10 @@ scripted_diplomatic_actions = {
 		}
 		reject_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_civ_gnss_access"
-			ROOT = { clear_variable = pending_civ_access_country }
+			ROOT = {
+				clear_variable = pending_offer_civ_gnss_access
+				set_country_flag = { flag = recently_rejected_offer_civ_gnss_access_@PREV value = 1 days = 270 }
+			}
 		}
 
 		#### AI SECTION ###
@@ -1177,9 +1220,16 @@ scripted_diplomatic_actions = {
 				ROOT = { has_country_flag = recently_revoke_civ_gnss_access_@PREV }
 			}
 			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_rejected_offer_civ_gnss_access_@PREV }
+			}
+			modifier = {
 				factor = 0
-				ROOT = {
-					NOT = { check_variable = { pending_civ_access_country = 0 } }
+				OR = {
+					ROOT = { NOT = { check_variable = { pending_offer_civ_gnss_access = 0 } } }
+					ROOT = { has_country_flag = recently_rejected_offer_civ_gnss_access_@PREV }
+					ROOT = { has_country_flag = recently_revoke_civ_gnss_access_@PREV }
+					ROOT = { has_country_flag = recently_offer_civ_gnss_access_@PREV }
 				}
 			}
 		}
@@ -1459,8 +1509,11 @@ scripted_diplomatic_actions = {
 				ROOT = { has_country_flag = recently_offer_civ_gnss_access_@PREV }
 			}
 			modifier = {
-				add = -1000
-				ROOT = { has_country_flag = recently_accepted_civ_gnss_@PREV }
+				factor = 0
+				OR = {
+					ROOT = { has_country_flag = recently_accepted_civ_gnss_@PREV }
+					THIS = { has_country_flag = recently_accepted_civ_gnss_@ROOT }
+				}
 			}
 		}
 	}
@@ -1498,6 +1551,10 @@ scripted_diplomatic_actions = {
 		reject_description = REQUEST_MIL_COM_ACCESS_REJECTED_DESC
 
 		#### EFFECTS ###
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect request_mil_com_access"
+			ROOT = { set_variable = { pending_request_mil_com_access = PREV.id } }
+		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect request_mil_com_access"
 			ROOT = {
@@ -1505,12 +1562,20 @@ scripted_diplomatic_actions = {
 				add_to_array = { array = COM_mil_access_array value = PREV.id }
 				add_to_array = { array = COM_mil_access_system_idx_array value = PREV.var_COM_mil_system_idx }
 				add_access_COM_mil_vars = yes
+				clear_variable = pending_request_mil_com_access
 
 				# Do Not Instant Revoke
 				set_country_flag = { flag = recently_accepted_mil_com_@PREV value = 1 days = 180 }
 			}
 			THIS = { country_event = satellites.9 }
 			ROOT = { country_event = satellites.9 }
+		}
+		reject_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect request_mil_com_access"
+			ROOT = {
+				clear_variable = pending_request_mil_com_access
+				set_country_flag = { flag = recently_rejected_request_mil_com_access_@PREV value = 1 days = 270 }
+			}
 		}
 
 		#### AI SECTION ###
@@ -1601,6 +1666,17 @@ scripted_diplomatic_actions = {
 			modifier = {
 				add = 50
 				check_variable = { PREV.var_COM_mil_system_idx > ROOT.var_COM_mil_system_idx }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_rejected_request_mil_com_access_@PREV }
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					ROOT = { NOT = { check_variable = { pending_request_mil_com_access = 0 } } }
+					ROOT = { has_country_flag = recently_rejected_request_mil_com_access_@PREV }
+				}
 			}
 		}
 		ai_acceptance = {
@@ -1775,7 +1851,7 @@ scripted_diplomatic_actions = {
 		#### EFFECTS ###
 		on_sent_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect offer_mil_com_access"
-			ROOT = { set_variable = { pending_mil_com_access_country = PREV.id } }
+			ROOT = { set_variable = { pending_offer_mil_com_access = PREV.id } }
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect offer_mil_com_access"
@@ -1786,7 +1862,7 @@ scripted_diplomatic_actions = {
 				PREV = {
 					add_access_COM_mil_vars = yes
 				}
-				clear_variable = pending_mil_com_access_country
+				clear_variable = pending_offer_mil_com_access
 
 				# Do Not Instant Revoke
 				set_country_flag = { flag = recently_accepted_mil_com_@PREV value = 1 days = 180 }
@@ -1796,7 +1872,10 @@ scripted_diplomatic_actions = {
 		}
 		reject_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_mil_com_access"
-			ROOT = { clear_variable = pending_mil_com_access_country }
+			ROOT = {
+				clear_variable = pending_offer_mil_com_access
+				set_country_flag = { flag = recently_rejected_offer_mil_com_access_@PREV value = 1 days = 270 }
+			}
 		}
 
 		#### AI SECTION ###
@@ -1904,9 +1983,16 @@ scripted_diplomatic_actions = {
 				ROOT = { has_country_flag = recently_revoke_mil_com_access_@PREV }
 			}
 			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_rejected_offer_mil_com_access_@PREV }
+			}
+			modifier = {
 				factor = 0
-				ROOT = {
-					NOT = { check_variable = { pending_mil_com_access_country = 0 } }
+				OR = {
+					ROOT = { NOT = { check_variable = { pending_offer_mil_com_access = 0 } } }
+					ROOT = { has_country_flag = recently_rejected_offer_mil_com_access_@PREV }
+					ROOT = { has_country_flag = recently_revoke_mil_com_access_@PREV }
+					ROOT = { has_country_flag = recently_offer_mil_com_access_@PREV }
 				}
 			}
 		}
@@ -2190,8 +2276,11 @@ scripted_diplomatic_actions = {
 				ROOT = { has_country_flag = recently_offer_mil_com_access_@PREV }
 			}
 			modifier = {
-				add = -1000
-				ROOT = { has_country_flag = recently_accepted_mil_com_@PREV }
+				factor = 0
+				OR = {
+					ROOT = { has_country_flag = recently_accepted_mil_com_@PREV }
+					THIS = { has_country_flag = recently_accepted_mil_com_@ROOT }
+				}
 			}
 		}
 	}
@@ -2227,6 +2316,10 @@ scripted_diplomatic_actions = {
 		reject_description = REQUEST_CIV_COM_ACCESS_REJECTED_DESC
 
 		#### EFFECTS ###
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect request_civ_com_access"
+			ROOT = { set_variable = { pending_request_civ_com_access = PREV.id } }
+		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect request_civ_com_access"
 			ROOT = {
@@ -2234,11 +2327,19 @@ scripted_diplomatic_actions = {
 				add_to_array = { array = COM_civ_access_array value = PREV.id }
 				add_to_array = { array = COM_civ_access_system_idx_array value = PREV.var_COM_civ_system_idx }
 				add_access_COM_civ_vars = yes
+				clear_variable = pending_request_civ_com_access
 
 				set_country_flag = { flag = recently_accepted_mil_com_@PREV days = 180 value = 1 }
 			}
 			THIS = { country_event = satellites.9 }
 			ROOT = { country_event = satellites.9 }
+		}
+		reject_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect request_civ_com_access"
+			ROOT = {
+				clear_variable = pending_request_civ_com_access
+				set_country_flag = { flag = recently_rejected_request_civ_com_access_@PREV value = 1 days = 270 }
+			}
 		}
 
 		#### AI SECTION ###
@@ -2329,6 +2430,17 @@ scripted_diplomatic_actions = {
 			modifier = {
 				add = 50
 				check_variable = { PREV.var_COM_civ_system_idx > ROOT.var_COM_civ_system_idx }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_rejected_request_civ_com_access_@PREV }
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					ROOT = { NOT = { check_variable = { pending_request_civ_com_access = 0 } } }
+					ROOT = { has_country_flag = recently_rejected_request_civ_com_access_@PREV }
+				}
 			}
 		}
 		ai_acceptance = {
@@ -2500,7 +2612,7 @@ scripted_diplomatic_actions = {
 		#### EFFECTS ###
 		on_sent_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect offer_civ_com_access"
-			ROOT = { set_variable = { pending_civ_com_access_country = PREV.id } }
+			ROOT = { set_variable = { pending_offer_civ_com_access = PREV.id } }
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect offer_civ_com_access"
@@ -2511,7 +2623,7 @@ scripted_diplomatic_actions = {
 				PREV = {
 					add_access_COM_civ_vars = yes
 				}
-				clear_variable = pending_civ_com_access_country
+				clear_variable = pending_offer_civ_com_access
 
 				set_country_flag = { flag = recently_accepted_mil_com_@PREV days = 180 value = 1 }
 			}
@@ -2520,7 +2632,10 @@ scripted_diplomatic_actions = {
 		}
 		reject_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_civ_com_access"
-			ROOT = { clear_variable = pending_civ_com_access_country }
+			ROOT = {
+				clear_variable = pending_offer_civ_com_access
+				set_country_flag = { flag = recently_rejected_offer_civ_com_access_@PREV value = 1 days = 270 }
+			}
 		}
 		#### AI SECTION ###
 		ai_desire = {
@@ -2627,9 +2742,16 @@ scripted_diplomatic_actions = {
 				ROOT = { has_country_flag = recently_revoke_civ_com_access_@PREV }
 			}
 			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_rejected_offer_civ_com_access_@PREV }
+			}
+			modifier = {
 				factor = 0
-				ROOT = {
-					NOT = { check_variable = { pending_civ_com_access_country = 0 } }
+				OR = {
+					ROOT = { NOT = { check_variable = { pending_offer_civ_com_access = 0 } } }
+					ROOT = { has_country_flag = recently_rejected_offer_civ_com_access_@PREV }
+					ROOT = { has_country_flag = recently_revoke_civ_com_access_@PREV }
+					ROOT = { has_country_flag = recently_offer_civ_com_access_@PREV }
 				}
 			}
 		}
@@ -2914,8 +3036,11 @@ scripted_diplomatic_actions = {
 				ROOT = { has_country_flag = recently_offer_civ_com_access_@PREV }
 			}
 			modifier = {
-				add = -1000
-				ROOT = { has_country_flag = recently_accepted_mil_com_@PREV }
+				factor = 0
+				OR = {
+					ROOT = { has_country_flag = recently_accepted_mil_com_@PREV }
+					THIS = { has_country_flag = recently_accepted_mil_com_@ROOT }
+				}
 			}
 		}
 	}
@@ -2953,6 +3078,10 @@ scripted_diplomatic_actions = {
 		reject_description = REQUEST_MIL_SPY_ACCESS_REJECTED_DESC
 
 		#### EFFECTS ###
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect request_mil_spy_access"
+			ROOT = { set_variable = { pending_request_mil_spy_access = PREV.id } }
+		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect request_mil_spy_access"
 			ROOT = {
@@ -2960,11 +3089,19 @@ scripted_diplomatic_actions = {
 				add_to_array = { array = SPY_mil_access_array value = PREV.id }
 				add_to_array = { array = SPY_mil_access_system_idx_array value = PREV.var_SPY_mil_system_idx }
 				add_access_SPY_mil_vars = yes
+				clear_variable = pending_request_mil_spy_access
 
 				set_country_flag = { flag = recently_accepted_mil_spy_@PREV value = 1 days = 180 }
 			}
 			THIS = { country_event = satellites.9 }
 			ROOT = { country_event = satellites.9 }
+		}
+		reject_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect request_mil_spy_access"
+			ROOT = {
+				clear_variable = pending_request_mil_spy_access
+				set_country_flag = { flag = recently_rejected_request_mil_spy_access_@PREV value = 1 days = 270 }
+			}
 		}
 
 		#### AI SECTION ###
@@ -3055,6 +3192,17 @@ scripted_diplomatic_actions = {
 			modifier = {
 				add = 50
 				check_variable = { PREV.var_SPY_mil_system_idx > ROOT.var_SPY_mil_system_idx }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_rejected_request_mil_spy_access_@PREV }
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					ROOT = { NOT = { check_variable = { pending_request_mil_spy_access = 0 } } }
+					ROOT = { has_country_flag = recently_rejected_request_mil_spy_access_@PREV }
+				}
 			}
 		}
 		ai_acceptance = {
@@ -3229,7 +3377,7 @@ scripted_diplomatic_actions = {
 		#### EFFECTS ###
 		on_sent_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect offer_mil_spy_access"
-			ROOT = { set_variable = { pending_mil_spy_access_country = PREV.id } }
+			ROOT = { set_variable = { pending_offer_mil_spy_access = PREV.id } }
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect offer_mil_spy_access"
@@ -3240,7 +3388,7 @@ scripted_diplomatic_actions = {
 				PREV = {
 					add_access_SPY_mil_vars = yes
 				}
-				clear_variable = pending_mil_spy_access_country
+				clear_variable = pending_offer_mil_spy_access
 
 				set_country_flag = { flag = recently_accepted_mil_spy_@PREV value = 1 days = 180 }
 			}
@@ -3249,7 +3397,10 @@ scripted_diplomatic_actions = {
 		}
 		reject_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_mil_spy_access"
-			ROOT = { clear_variable = pending_mil_spy_access_country }
+			ROOT = {
+				clear_variable = pending_offer_mil_spy_access
+				set_country_flag = { flag = recently_rejected_offer_mil_spy_access_@PREV value = 1 days = 270 }
+			}
 		}
 
 		#### AI SECTION ###
@@ -3357,9 +3508,16 @@ scripted_diplomatic_actions = {
 				ROOT = { has_country_flag = recently_revoke_mil_spy_access_@PREV }
 			}
 			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_rejected_offer_mil_spy_access_@PREV }
+			}
+			modifier = {
 				factor = 0
-				ROOT = {
-					NOT = { check_variable = { pending_mil_spy_access_country = 0 } }
+				OR = {
+					ROOT = { NOT = { check_variable = { pending_offer_mil_spy_access = 0 } } }
+					ROOT = { has_country_flag = recently_rejected_offer_mil_spy_access_@PREV }
+					ROOT = { has_country_flag = recently_revoke_mil_spy_access_@PREV }
+					ROOT = { has_country_flag = recently_offer_mil_spy_access_@PREV }
 				}
 			}
 		}
@@ -3644,8 +3802,11 @@ scripted_diplomatic_actions = {
 				ROOT = { has_country_flag = recently_offer_mil_spy_access_@PREV }
 			}
 			modifier = {
-				add = -1000
-				ROOT = { has_country_flag = recently_accepted_mil_spy_@PREV }
+				factor = 0
+				OR = {
+					ROOT = { has_country_flag = recently_accepted_mil_spy_@PREV }
+					THIS = { has_country_flag = recently_accepted_mil_spy_@ROOT }
+				}
 			}
 		}
 	}
@@ -3685,6 +3846,10 @@ scripted_diplomatic_actions = {
 		reject_description = REQUEST_CIV_SPY_ACCESS_REJECTED_DESC
 
 		#### EFFECTS ###
+		on_sent_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect request_civ_spy_access"
+			ROOT = { set_variable = { pending_request_civ_spy_access = PREV.id } }
+		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect request_civ_spy_access"
 			ROOT = {
@@ -3692,10 +3857,18 @@ scripted_diplomatic_actions = {
 				add_to_array = { array = SPY_civ_access_array value = PREV.id }
 				add_to_array = { array = SPY_civ_access_system_idx_array value = PREV.var_SPY_civ_system_idx }
 				add_access_SPY_civ_vars = yes
+				clear_variable = pending_request_civ_spy_access
 				set_country_flag = { flag = recently_accepted_civ_spy_@PREV value = 1 days = 180 }
 			}
 			THIS = { country_event = satellites.9 }
 			ROOT = { country_event = satellites.9 }
+		}
+		reject_effect = {
+			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect request_civ_spy_access"
+			ROOT = {
+				clear_variable = pending_request_civ_spy_access
+				set_country_flag = { flag = recently_rejected_request_civ_spy_access_@PREV value = 1 days = 270 }
+			}
 		}
 
 		#### AI SECTION ###
@@ -3786,6 +3959,17 @@ scripted_diplomatic_actions = {
 			modifier = {
 				add = 50
 				check_variable = { PREV.var_SPY_civ_system_idx > ROOT.var_SPY_civ_system_idx }
+			}
+			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_rejected_request_civ_spy_access_@PREV }
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					ROOT = { NOT = { check_variable = { pending_request_civ_spy_access = 0 } } }
+					ROOT = { has_country_flag = recently_rejected_request_civ_spy_access_@PREV }
+				}
 			}
 		}
 		ai_acceptance = {
@@ -3959,7 +4143,7 @@ scripted_diplomatic_actions = {
 		#### EFFECTS ###
 		on_sent_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect offer_civ_spy_access"
-			ROOT = { set_variable = { pending_civ_spy_access_country = PREV.id } }
+			ROOT = { set_variable = { pending_offer_civ_spy_access = PREV.id } }
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect offer_civ_spy_access"
@@ -3968,7 +4152,7 @@ scripted_diplomatic_actions = {
 				add_to_array = { array = PREV.SPY_civ_access_array value = ROOT.id }
 				add_to_array = { array = PREV.SPY_civ_access_system_idx_array value = ROOT.var_SPY_civ_system_idx }
 				PREV = { add_access_SPY_civ_vars = yes }
-				clear_variable = pending_civ_spy_access_country
+				clear_variable = pending_offer_civ_spy_access
 
 				set_country_flag = { flag = recently_accepted_civ_spy_@PREV value = 1 days = 180 }
 			}
@@ -3977,7 +4161,10 @@ scripted_diplomatic_actions = {
 		}
 		reject_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect offer_civ_spy_access"
-			ROOT = { clear_variable = pending_civ_spy_access_country }
+			ROOT = {
+				clear_variable = pending_offer_civ_spy_access
+				set_country_flag = { flag = recently_rejected_offer_civ_spy_access_@PREV value = 1 days = 270 }
+			}
 		}
 
 		#### AI SECTION ###
@@ -4085,9 +4272,16 @@ scripted_diplomatic_actions = {
 				ROOT = { has_country_flag = recently_revoke_civ_spy_access_@PREV }
 			}
 			modifier = {
+				add = -100
+				ROOT = { has_country_flag = recently_rejected_offer_civ_spy_access_@PREV }
+			}
+			modifier = {
 				factor = 0
-				ROOT = {
-					NOT = { check_variable = { pending_civ_spy_access_country = 0 } }
+				OR = {
+					ROOT = { NOT = { check_variable = { pending_offer_civ_spy_access = 0 } } }
+					ROOT = { has_country_flag = recently_rejected_offer_civ_spy_access_@PREV }
+					ROOT = { has_country_flag = recently_revoke_civ_spy_access_@PREV }
+					ROOT = { has_country_flag = recently_offer_civ_spy_access_@PREV }
 				}
 			}
 		}
@@ -4365,8 +4559,11 @@ scripted_diplomatic_actions = {
 				ROOT = { has_country_flag = recently_offer_civ_spy_access_@PREV }
 			}
 			modifier = {
-				add = -1000
-				ROOT = { has_country_flag = recently_accepted_civ_spy_@PREV }
+				factor = 0
+				OR = {
+					ROOT = { has_country_flag = recently_accepted_civ_spy_@PREV }
+					THIS = { has_country_flag = recently_accepted_civ_spy_@ROOT }
+				}
 			}
 		}
 	}
