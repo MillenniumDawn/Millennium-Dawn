@@ -61,6 +61,9 @@ Millennium Dawn includes a detailed modern economy system covering revenue, gove
   - [Microchip Plants](#microchip-plants)
   - [Composite Plants](#composite-plants)
   - [Synthetic Refineries](#synthetic-refineries)
+  - [Input Resource Shortages](#input-resource-shortages)
+  - [Civilian Microchip Consumption](#civilian-microchip-consumption)
+  - [Military Equipment Requirements](#military-equipment-requirements)
   - [Building Employment Values](#building-employment-values)
 - [Immigration](#immigration)
 - [International Investments](#international-investments)
@@ -795,6 +798,68 @@ Synthetic refineries produce both **rubber** (3 per level) and **fuel** (2 per h
 | Base Workers           | 0.184 million per level                    |
 
 Synthetic refineries are the most labor-intensive advanced building by far, employing nearly 5 times as many workers per level as microchip or composite plants. They are critical for resource-poor nations that need rubber for composite production and fuel for mechanized and naval operations. Researching advanced refinery technologies increases rubber output by +1 per level per tech tier.
+
+### Input Resource Shortages
+
+Microchip and composite plants require input resources to operate. If you run short of these inputs, production is reduced proportionally -- up to a maximum penalty of -95%.
+
+**Microchip Plants** check tungsten and chromium supply weekly:
+
+- Tungsten shortages are weighted 1.25x heavier than chromium shortages
+- If both inputs are completely exhausted, microchip output drops to 5% of normal
+
+**Composite Plants** check rubber, chromium, and oil supply weekly:
+
+- Rubber shortages are weighted 1.5x heavier than chromium shortages
+- All three inputs must be available for full production
+
+**Energy shortages** also reduce microchip and composite production. If your country has an electricity deficit, plant output is further penalized on top of any input resource shortages. Production line technology research reduces the energy demand of both plant types.
+
+Securing a stable supply of input resources -- through domestic mining, trade agreements, or synthetic refineries (for rubber) -- is essential before investing heavily in advanced plants.
+
+### Civilian Microchip Consumption
+
+Beyond military equipment, microchips are consumed by the civilian economy. This consumption is recalculated monthly and scales with two factors:
+
+- **Population consumption**: Based on total population multiplied by GDP per capita. Wealthier, larger nations consume far more civilian microchips.
+- **Office park consumption**: Each staffed office building consumes additional microchips proportional to its worker fulfillment.
+
+The combined civilian demand is subtracted from available microchip supply. If demand exceeds supply:
+
+- **At war**: Military equipment production takes priority. The civilian sector receives whatever is left, and shortfalls apply a stability penalty (up to -15%).
+- **At peace**: The civilian sector takes priority. Military production may suffer instead.
+
+This means rapidly industrializing nations that build many offices and grow their GDP per capita will face increasing microchip demand even without expanding their military. Countries should plan microchip plant construction to stay ahead of both military and civilian consumption.
+
+### Military Equipment Requirements
+
+Microchips and composites are required to produce modern military equipment. The main categories include:
+
+**Microchip-dependent equipment:**
+
+| Equipment Type             | Microchips Required                   |
+| -------------------------- | ------------------------------------- |
+| Electronic warfare systems | 1-3 per unit (scales with tech level) |
+| SAM missile systems        | 1 per unit                            |
+| Guided missiles            | 1 per unit                            |
+| Ballistic missiles         | 2 per unit                            |
+| Nuclear missiles           | 2 per unit                            |
+| Advanced artillery         | 4-8 per unit                          |
+| Anti-air systems           | 1-2 per unit                          |
+| Anti-tank (ATGM) systems   | 1-2 per unit                          |
+| Advanced tank chassis      | 1-2 per unit                          |
+| Advanced aircraft          | 1-2 per unit                          |
+| Ship combat modules        | 1-4 per module (scales with level)    |
+
+**Composite-dependent equipment:**
+
+| Equipment Type       | Composites Required                  |
+| -------------------- | ------------------------------------ |
+| Advanced artillery   | 2 per unit                           |
+| Advanced aircraft    | 1-2 per unit                         |
+| Modern naval vessels | 1-6 per ship (scales with ship type) |
+
+Without sufficient microchip or composite stockpiles, production of these equipment types will stall or slow significantly. Nations planning a modern military buildup should establish microchip and composite production well before they need to ramp up equipment manufacturing.
 
 ### Building Employment Values
 
