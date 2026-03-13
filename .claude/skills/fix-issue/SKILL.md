@@ -67,11 +67,15 @@ Steps:
    Co-Authored-By: Claude <noreply@anthropic.com>"
    ```
 
-7. **Update the changelog**
+7. **Ensure branch is up to date**
+
+   Run `git merge origin/main` and ensure the branch is up to date before creating a changelog entry or a pull request.
+
+8. **Update the changelog**
 
    Run `/changelog` to add an entry for the fix under the current version in `Changelog.txt`. Commit the changelog update separately.
 
-8. **Open a pull request**
+9. **Open a pull request**
 
    Push the branch and create a PR that closes the issue:
 
@@ -86,6 +90,6 @@ Steps:
    - **Fix** — what was changed and how it resolves it
    - **Test plan** — steps to verify the fix in-game
 
-9. **Report back**
+10. **Report back**
 
 Output the PR URL and a one-paragraph summary of the root cause and fix.
