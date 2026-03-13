@@ -384,18 +384,53 @@ You can prioritize which building types receive workers first from the Economy w
 
 ### Productivity
 
-**State Productivity** affects local building output. Starting productivity varies by region:
+**State Productivity** is a per-state variable that directly scales building output and GDP. Each state has its own productivity value, and the country-level overall productivity is calculated as the population-weighted average across all states.
 
-- Europe: ~1000
-- Asia: ~650
-- Africa / South America: ~550
+**What Productivity Affects:**
 
-**Increasing Productivity:**
+- **Military factory output**: Higher productivity increases factory production efficiency
+- **Dockyard output**: Naval construction speed and output
+- **Construction speed**: All building construction is faster in high-productivity states
+- **Agriculture district output**: Farming yields scale with productivity
+- **GDP**: Overall productivity multiplies your total GDP (approximately 0.1% per productivity point)
 
-- Economic Cycle upgrades
-- Infrastructure investments
-- National focuses and spirits
-- State-specific modifiers and internal investments
+**Starting Values by Region:**
+
+| Region                                     | Starting Productivity |
+| ------------------------------------------ | --------------------- |
+| Europe                                     | 1,000                 |
+| Asia & Oceania                             | 650                   |
+| Africa, Middle East, North & South America | 550                   |
+
+There is no maximum cap on productivity — it can grow indefinitely. The minimum floor is 100; it cannot fall below this.
+
+**Catch-Up Mechanic:**
+
+Productivity growth uses a catch-up mechanism: states with productivity below the global average grow faster than those above it. This means poorer regions naturally converge toward wealthier ones over time, though wealthy states still grow — just more slowly relative to their starting advantage.
+
+**Factors That Increase Productivity Growth:**
+
+| Factor                         | Growth Bonus                                         |
+| ------------------------------ | ---------------------------------------------------- |
+| Railway infrastructure level 1 | +4%                                                  |
+| Railway infrastructure level 2 | +8%                                                  |
+| Railway infrastructure level 3 | +12%                                                 |
+| Railway infrastructure level 4 | +16%                                                 |
+| Railway infrastructure level 5 | +20%                                                 |
+| Railway infrastructure level 6 | +24%                                                 |
+| Internal investment (state)    | +20% growth in that state while investment is active |
+| Economic Cycle (Fast Growth)   | +2.0 monthly productivity growth                     |
+| Economic Cycle (Economic Boom) | +3.5 monthly productivity growth                     |
+| National focuses and spirits   | Varies                                               |
+
+**Corporate Tax and Productivity:**
+
+Corporate tax directly suppresses productivity growth. The relationship is linear:
+
+- At 20% corporate tax: no productivity growth penalty
+- At 40% corporate tax: −10% productivity growth
+
+High taxes generate revenue but slow long-term growth. Finding a balance between revenue needs and long-term productivity is one of the core tensions in economic management.
 
 ---
 
