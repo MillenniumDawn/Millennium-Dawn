@@ -103,7 +103,7 @@ See [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) for
 3. Make changes following style guidelines
 4. Run pre-commit hooks
 5. Update [Changelog.txt](./Changelog.txt)
-6. Add yourself to [AUTHORS.md](./docs/misc/authors.md)
+6. Add yourself to [AUTHORS.md](./docs/src/content/misc/authors.md)
 7. Submit a pull request
 
 ## Changelog Guidelines

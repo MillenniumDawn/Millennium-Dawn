@@ -1,7 +1,24 @@
 ---
-import ContentCard from "../../../shared/ui/ContentCard.astro";
-import type { CardItem } from "../../../lib/cards";
-import { slugifyText } from "../../../shared/lib/slugs";
+import ContentCard from "@/shared/ui/ContentCard.astro";
+import type { CardItem } from "@/shared/lib/cards";
+import { slugifyText } from "@/shared/lib/slugs";
+import {
+  BUTTON_SECONDARY_CLASS,
+  CONTENT_GRID_CLASS,
+  MUTED_TEXT_CLASS,
+  SEARCH_INDEX_INPUT_CLASS,
+  SEARCH_INDEX_LABEL_CLASS,
+  SEARCH_INDEX_PAGINATION_CLASS,
+  SEARCH_INDEX_PAGINATION_CONTROLS_CLASS,
+  SEARCH_INDEX_PAGINATION_ELLIPSIS_CLASS,
+  SEARCH_INDEX_PAGINATION_NAV_BUTTON_CLASS,
+  SEARCH_INDEX_PAGINATION_PAGES_CLASS,
+  SEARCH_INDEX_PAGINATION_PAGE_BUTTON_CLASS,
+  SEARCH_INDEX_PAGINATION_RESULTS_CLASS,
+  SEARCH_INDEX_ROOT_CLASS,
+  SEARCH_INDEX_PAGINATION_STATUS_CLASS,
+  SEARCH_INDEX_PAGINATION_SUMMARY_CLASS,
+} from "@/shared/ui/tailwind";
 
 interface Props {
   items: CardItem[];
@@ -20,23 +37,63 @@ const {
   filterLabel = "Search",
   filterPlaceholder = "Type to filter...",
   emptyText = "No results matched your search.",
-  indexClass = "search-index",
+  indexClass = "",
 }: Props = Astro.props;
 
 const filterSeed = slugifyText(ariaLabel ?? indexClass ?? "search-index") || "search-index";
 const filterId = `${filterSeed}-filter`;
+const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+const hasPagination = totalPages > 1;
+
+type PageToken = number | "ellipsis";
+
+function buildPageTokens(pageCount: number, currentPage: number): PageToken[] {
+  if (pageCount <= 5) return Array.from({ length: pageCount }, (_, index) => index + 1);
+
+  const pages = new Set<number>([1, pageCount, currentPage - 1, currentPage, currentPage + 1]);
+  const sorted = Array.from(pages).filter((page) => page >= 1 && page <= pageCount).sort((left, right) => left - right);
+  const tokens: PageToken[] = [];
+
+  sorted.forEach((page, index) => {
+    const previous = sorted[index - 1];
+    if (previous && page - previous > 1) tokens.push("ellipsis");
+    tokens.push(page);
+  });
+
+  return tokens;
+}
+
+const initialPageTokens = buildPageTokens(totalPages, 1);
 ---
 
-<section class={indexClass} data-card-index data-page-size={pageSize} aria-label={ariaLabel}>
-  <label class="search-index__filter-label" for={filterId}>
+<section class:list={[SEARCH_INDEX_ROOT_CLASS, indexClass]} data-card-index data-page-size={pageSize} aria-labelledby="search-heading">
+  <h2 id="search-heading" class="sr-only">{ariaLabel ?? filterLabel}</h2>
+  <label class={SEARCH_INDEX_LABEL_CLASS} for={filterId}>
     {filterLabel}
   </label>
-  <input id={filterId} class="search-index__filter-input" type="search" placeholder={filterPlaceholder} autocomplete="off" data-card-filter />
+  <input
+    id={filterId}
+    class={SEARCH_INDEX_INPUT_CLASS}
+    type="search"
+    placeholder={filterPlaceholder}
+    autocomplete="off"
+    data-card-filter
+  />
 
-  <div class="search-index__cards content-grid" data-card-list>
+  <div class={CONTENT_GRID_CLASS} data-card-list aria-live="polite">
     {
-      items.map((item) => (
-        <article class="searchable-card" data-card-item data-search={item.searchBlob}>
+      items.map((item, index) => {
+        const isInitiallyVisible = index < pageSize;
+
+        return (
+        <div
+          class="min-w-0 flex w-full h-full"
+          data-card-item
+          data-search={item.searchBlob}
+          hidden={!isInitiallyVisible}
+          style={isInitiallyVisible ? undefined : "display:none"}
+          aria-hidden={isInitiallyVisible ? undefined : "true"}
+        >
           <ContentCard
             title={item.title}
             url={item.url}
@@ -44,22 +101,59 @@ const filterId = `${filterSeed}-filter`;
             description={item.description}
             meta={item.meta}
           />
-        </article>
-      ))
+        </div>
+      )})
     }
   </div>
 
-  <p class="search-index__empty text-muted" data-card-empty hidden>
+  <p class={MUTED_TEXT_CLASS} data-card-empty hidden>
     {emptyText}
   </p>
 
-  <nav class="search-index__pagination" aria-label="Pagination">
-    <button type="button" class="btn btn-secondary" data-card-prev>
-      Previous
-    </button>
-    <span class="search-index__status" data-card-status aria-live="polite"></span>
-    <button type="button" class="btn btn-secondary" data-card-next>
-      Next
-    </button>
+  <nav class={SEARCH_INDEX_PAGINATION_CLASS} aria-label="Pagination" data-card-pagination hidden={!hasPagination}>
+    <div class={SEARCH_INDEX_PAGINATION_SUMMARY_CLASS}>
+      <span class={SEARCH_INDEX_PAGINATION_STATUS_CLASS} data-card-status aria-live="polite">Page 1 of {totalPages}</span>
+      <span class={SEARCH_INDEX_PAGINATION_RESULTS_CLASS} data-card-results>Showing 1-{Math.min(pageSize, items.length)} of {items.length}</span>
+    </div>
+
+    <div class={SEARCH_INDEX_PAGINATION_CONTROLS_CLASS}>
+      <button type="button" class:list={[BUTTON_SECONDARY_CLASS, SEARCH_INDEX_PAGINATION_NAV_BUTTON_CLASS]} data-card-prev disabled>
+        <span aria-hidden="true">&larr;</span>
+        <span>Previous</span>
+      </button>
+
+      <div class={SEARCH_INDEX_PAGINATION_PAGES_CLASS} data-card-pages>
+        {
+          initialPageTokens.map((token) =>
+            token === "ellipsis" ? (
+              <span class={SEARCH_INDEX_PAGINATION_ELLIPSIS_CLASS} aria-hidden="true">&hellip;</span>
+            ) : (
+              <button
+                type="button"
+                class:list={[
+                  SEARCH_INDEX_PAGINATION_PAGE_BUTTON_CLASS,
+                ]}
+                data-card-page={token}
+                aria-current={token === 1 ? "page" : undefined}
+                aria-label={`Go to page ${token}`}
+              >
+                {token}
+              </button>
+            ),
+          )
+        }
+      </div>
+
+      <button type="button" class:list={[BUTTON_SECONDARY_CLASS, SEARCH_INDEX_PAGINATION_NAV_BUTTON_CLASS]} data-card-next>
+        <span>Next</span>
+        <span aria-hidden="true">&rarr;</span>
+      </button>
+    </div>
   </nav>
 </section>
+
+<script>
+  import { initCardIndexPage } from "../model/page";
+
+  initCardIndexPage();
+</script>

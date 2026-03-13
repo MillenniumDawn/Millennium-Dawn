@@ -1,0 +1,132 @@
+---
+import { getEntry } from "astro:content";
+import type { MarkdownHeading } from "astro";
+import { HeadSeo, Header, Footer } from "@/widgets/site-shell";
+import { Breadcrumbs } from "@/widgets/breadcrumbs";
+import { TocSidebar } from "@/features/toc";
+import { buildSeoMeta } from "@/lib/seo";
+import { ensureTrailingSlash, stripBase } from "@/lib/urls";
+import { SITE_DESCRIPTION, SITE_TITLE } from "@/shared/config/site";
+import { BACK_TO_TOP_CLASS, INVERSE_FOCUS_RING_CLASS, LAYOUT_CONTAINER_CLASS } from "@/shared/ui/tailwind";
+
+import "@/styles/tailwind.css";
+import "@/styles/app.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  toc?: "auto" | "off";
+  seo?: boolean;
+  robots?: string;
+  pageId?: string;
+  bodyClass?: string;
+  canonicalPath?: string;
+  headings?: MarkdownHeading[];
+}
+
+const {
+  title,
+  description,
+  toc = "auto",
+  seo = true,
+  robots,
+  pageId,
+  bodyClass,
+  canonicalPath,
+  headings = [],
+}: Props = Astro.props;
+
+const navigationEntry = await getEntry("navigation", "index");
+const sectionsEntry = await getEntry("sections", "index");
+if (!navigationEntry) {
+  throw new Error("Missing navigation/index data entry");
+}
+if (!sectionsEntry) {
+  throw new Error("Missing sections/index data entry");
+}
+
+const currentPath = ensureTrailingSlash(stripBase(Astro.url.pathname));
+const pageSlug = pageId ?? title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+const resolvedBodyClass = bodyClass ?? pageSlug;
+
+const seoMeta = buildSeoMeta({
+  title: `${title} - ${SITE_TITLE}`,
+  description,
+  canonicalPath: canonicalPath ?? currentPath,
+  robots,
+  seo,
+});
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <HeadSeo seo={seoMeta} />
+    <slot name="head" />
+  </head>
+  <body
+    class:list={[
+      resolvedBodyClass,
+      "min-h-screen bg-bg font-base text-base leading-base text-text antialiased selection:bg-primary selection:text-text-inverse [&.nav-lock]:overflow-hidden tablet:[&.nav-lock]:overflow-auto [&.toc-lock]:fixed [&.toc-lock]:w-full [&.toc-lock]:overflow-hidden wide:[&.toc-lock]:static wide:[&.toc-lock]:w-auto wide:[&.toc-lock]:overflow-auto",
+      { "has-toc": toc !== "off" },
+    ]}
+    data-page={pageSlug}
+    data-toc={toc}
+  >
+    <a
+      class:list={[
+        "absolute left-md top-[-100%] z-[10000] rounded-b bg-primary px-md py-sm font-bold text-text-inverse no-underline transition-[top] duration-[var(--transition-speed)] ease-[var(--transition-fn)] focus:top-0 focus:text-text-inverse focus:no-underline print:hidden",
+        INVERSE_FOCUS_RING_CLASS,
+      ]}
+      href="#main-content"
+    >
+      Skip to main content
+    </a>
+    <Header
+      title={SITE_TITLE}
+      navItems={navigationEntry.data.main}
+      currentPath={currentPath}
+    />
+
+    <div class:list={["block w-full min-h-[calc(100dvh-var(--header-height,77px))]", toc !== "off" && "wide:flex"]} id="page-layout">
+      {toc !== "off" && <TocSidebar tocMode={toc} headings={headings} />}
+
+      <main
+        class:list={[
+          "main-content min-h-[calc(100dvh-200px)] py-lg mobile:py-md print:py-0",
+          toc !== "off" && "wide:min-w-0 wide:flex-[1_1_0%]",
+          pageSlug === "home" && "pt-md",
+        ]}
+        id="main-content"
+      >
+        <div class={LAYOUT_CONTAINER_CLASS}>
+          <Breadcrumbs path={currentPath} title={title} sections={sectionsEntry.data} />
+          <slot />
+        </div>
+      </main>
+    </div>
+
+    <Footer
+      siteTitle={SITE_TITLE}
+      siteDescription={SITE_DESCRIPTION}
+      footerDocs={navigationEntry.data.footer_docs}
+      socialLinks={navigationEntry.data.social}
+    />
+
+    <script>
+      import { initSite } from "@/scripts/site";
+
+      initSite();
+    </script>
+
+    <button
+      class={BACK_TO_TOP_CLASS}
+      aria-label="Back to top"
+      type="button"
+    >
+      <svg class="size-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M12 4l-8 8h5v8h6v-8h5z" fill="currentColor"></path>
+      </svg>
+    </button>
+  </body>
+</html>
