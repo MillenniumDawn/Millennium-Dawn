@@ -1,0 +1,1135 @@
+ideas = {
+	employment_pressure = {
+		law = yes
+		use_list_view = yes
+
+		comprehensive_regulations = {
+			cost = 100
+			removal_cost = -1
+			level = 1
+
+			modifier = {
+				buildings_worker_requirement_modifier = 0.25
+				high_unemployment_threshold_modifier = -0.05
+			}
+
+			ai_will_do = {
+				base = 0
+				modifier = {
+					# Severe unemployment — expanding worker demand absorbs the surplus
+					add = 12
+					check_variable = { total_unemployed_percentage_display > 0.15 }
+				}
+				modifier = {
+					# High unemployment — additional incentive stacks with the severe bonus
+					add = 8
+					check_variable = { total_unemployed_percentage_display > 0.10 }
+				}
+				modifier = {
+					# Worker-protective ideologies are more willing at moderate unemployment
+					add = 3
+					OR = {
+						has_government = communism
+						has_government = neutrality
+					}
+				}
+				modifier = {
+					# Wealthy democracies can afford the worker-requirement burden
+					add = 2
+					has_government = democratic
+					check_variable = { gdp_per_capita > 30.000 }
+				}
+				modifier = {
+					# Nationalist and autocratic regimes resist heavy employment mandates
+					factor = 0
+					OR = {
+						has_government = nationalist
+						has_autocratic_government = yes
+					}
+				}
+				modifier = {
+					# Tight labor market — forcing higher worker counts would be counterproductive
+					factor = 0
+					check_variable = { total_unemployed_percentage_display < 0.04 }
+				}
+			}
+		}
+
+		strong_regulations = {
+			cost = 75
+			removal_cost = -1
+			level = 2
+
+			modifier = {
+				buildings_worker_requirement_modifier = 0.12
+				high_unemployment_threshold_modifier = -0.02
+			}
+
+			ai_will_do = {
+				base = 1
+				modifier = {
+					# Elevated unemployment — moderate regulation helps without over-committing
+					add = 8
+					check_variable = { total_unemployed_percentage_display > 0.08 }
+				}
+				modifier = {
+					# Above-threshold unemployment — additional nudge
+					add = 4
+					check_variable = { total_unemployed_percentage_display > 0.06 }
+				}
+				modifier = {
+					add = 3
+					has_government = democratic
+				}
+				modifier = {
+					add = 2
+					OR = {
+						has_government = communism
+						has_government = neutrality
+					}
+				}
+				modifier = {
+					factor = 0.3
+					has_autocratic_government = yes
+				}
+				modifier = {
+					# Near full employment — no reason to increase worker requirements
+					factor = 0
+					check_variable = { total_unemployed_percentage_display < 0.03 }
+				}
+			}
+		}
+
+		standard_regulations = {
+			cost = 50
+			removal_cost = -1
+			level = 3
+
+			ai_will_do = {
+				base = 5
+			}
+		}
+
+		light_regulations = {
+			cost = 75
+			removal_cost = -1
+			level = 4
+
+			modifier = {
+				buildings_worker_requirement_modifier = -0.12
+				high_unemployment_threshold_modifier = 0.02
+			}
+
+			ai_will_do = {
+				base = 1
+				modifier = {
+					# Worker shortage — easing requirements lets industry fill open slots
+					add = 10
+					check_variable = { total_unemployed_percentage_display < 0.02 }
+				}
+				modifier = {
+					# Near full employment — additional nudge
+					add = 6
+					check_variable = { total_unemployed_percentage_display < 0.04 }
+				}
+				modifier = {
+					add = 2
+					has_government = nationalist
+				}
+				modifier = {
+					# Worker-protective ideologies resist reducing employment requirements
+					factor = 0
+					OR = {
+						has_government = communism
+						has_government = neutrality
+					}
+				}
+				modifier = {
+					# High unemployment — reducing worker requirements would worsen joblessness
+					factor = 0
+					check_variable = { total_unemployed_percentage_display > 0.10 }
+				}
+			}
+		}
+
+		minimal_regulations = {
+			cost = 100
+			removal_cost = -1
+			level = 5
+
+			modifier = {
+				buildings_worker_requirement_modifier = -0.25
+				high_unemployment_threshold_modifier = 0.05
+			}
+
+			ai_will_do = {
+				base = 0
+				modifier = {
+					# Severe worker shortage — maximum deregulation to fill every open position
+					add = 12
+					check_variable = { total_unemployed_percentage_display < 0.01 }
+				}
+				modifier = {
+					# Tight labor — stacks with the shortage bonus
+					add = 8
+					check_variable = { total_unemployed_percentage_display < 0.02 }
+				}
+				modifier = {
+					# Wartime mobilization demands every available worker
+					add = 5
+					has_war = yes
+					check_variable = { total_unemployed_percentage_display < 0.04 }
+				}
+				modifier = {
+					# Democracies and neutrality governments maintain worker protections
+					factor = 0
+					OR = {
+						has_government = democratic
+						has_government = neutrality
+					}
+				}
+				modifier = {
+					# Never slash worker protections while unemployment is already high
+					factor = 0
+					check_variable = { total_unemployed_percentage_display > 0.06 }
+				}
+			}
+		}
+	}
+
+	healthcare_privatization = {
+		law = yes
+		use_list_view = yes
+
+		fully_privatized_healthcare = {
+			cost = 100
+			removal_cost = -1
+			level = 1
+
+			modifier = {
+				health_cost_multiplier_modifier = -0.35
+				healthcare_income_multiplier_modifier = -0.40
+				healthcare_workforce_requirement_modifier = -0.15
+			}
+			available = {
+				NOT = {
+					has_idea = health_04
+					has_idea = health_05
+					has_idea = health_06
+				}
+			}
+
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 8
+					has_government = democratic
+				}
+				modifier = {
+					add = 5
+					has_government = nationalist
+				}
+				modifier = {
+					add = 5
+					OR = {
+						has_idea = export_economy
+						has_idea = globalized_trade_economy
+					}
+				}
+				modifier = {
+					factor = 0
+					OR = {
+						has_government = communism
+						has_government = neutrality
+					}
+				}
+			}
+		}
+
+		partially_privatized_healthcare = {
+			cost = 75
+			removal_cost = -1
+			level = 2
+
+			modifier = {
+				health_cost_multiplier_modifier = -0.15
+				healthcare_income_multiplier_modifier = -0.20
+				healthcare_workforce_requirement_modifier = -0.08
+			}
+			available = {
+				NOT = {
+					has_idea = health_05
+					has_idea = health_06
+				}
+			}
+
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 5
+					has_government = democratic
+				}
+				modifier = {
+					add = 3
+					has_government = nationalist
+				}
+				modifier = {
+					factor = 0.3
+					OR = {
+						has_government = communism
+						has_government = neutrality
+					}
+				}
+			}
+		}
+
+		partially_nationalized_healthcare = {
+			cost = 75
+			removal_cost = -1
+			level = 3
+
+			modifier = {
+				health_cost_multiplier_modifier = 0.15
+				healthcare_income_multiplier_modifier = 0.15
+				healthcare_workforce_requirement_modifier = 0.08
+			}
+			available = {
+				NOT = {
+					has_idea = health_01
+					has_idea = health_02
+				}
+			}
+
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 3
+					OR = {
+						has_government = neutrality
+						has_government = communism
+					}
+				}
+				modifier = {
+					factor = 0.3
+					has_government = democratic
+				}
+			}
+		}
+
+		fully_nationalized_healthcare = {
+			cost = 100
+			removal_cost = -1
+			level = 4
+
+			modifier = {
+				health_cost_multiplier_modifier = 0.35
+				healthcare_income_multiplier_modifier = 0.30
+				healthcare_workforce_requirement_modifier = 0.15
+			}
+			available = {
+				NOT = {
+					has_idea = health_01
+					has_idea = health_02
+					has_idea = health_03
+				}
+			}
+
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 10
+					OR = {
+						has_government = communism
+						has_government = neutrality
+					}
+				}
+				modifier = {
+					factor = 0
+					OR = {
+						has_government = democratic
+						has_government = nationalist
+					}
+				}
+			}
+		}
+	}
+
+	mining_policies = {
+		law = yes
+		use_list_view = yes
+
+		full_environmental_protections = {
+			cost = 100
+			removal_cost = -1
+			level = 1
+
+			modifier = {
+				local_resources_oil_factor = -0.20
+				local_resources_aluminium_factor = -0.20
+				local_resources_rubber_factor = -0.20
+				local_resources_tungsten_factor = -0.20
+				local_resources_steel_factor = -0.20
+				local_resources_chromium_factor = -0.20
+				resource_export_multiplier_modifier = -0.15
+				resource_extraction_workforce_requirement_modifier = -0.20
+				stability_factor = 0.15
+			}
+
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 5
+					has_government = neutrality
+					check_variable = { stability > 0.60 }
+				}
+				modifier = {
+					# Rich nations with no extractable resources have nothing to lose
+					add = 10
+					check_variable = { gdp_per_capita > 20.000 }
+					check_variable = { resource@oil < 5 }
+					check_variable = { resource@steel < 5 }
+					check_variable = { resource@aluminium < 5 }
+				}
+				modifier = {
+					factor = 0
+					has_totalitarian_government = yes
+				}
+				modifier = {
+					factor = 0.1
+					OR = {
+						check_variable = { resource@oil > 20 }
+						check_variable = { resource@steel > 20 }
+						check_variable = { resource@aluminium > 20 }
+					}
+				}
+			}
+		}
+
+		partial_environmental_protections = {
+			cost = 75
+			removal_cost = -1
+			level = 2
+
+			modifier = {
+				local_resources_oil_factor = -0.10
+				local_resources_aluminium_factor = -0.10
+				local_resources_rubber_factor = -0.10
+				local_resources_tungsten_factor = -0.10
+				local_resources_steel_factor = -0.10
+				local_resources_chromium_factor = -0.10
+				resource_export_multiplier_modifier = -0.05
+				resource_extraction_workforce_requirement_modifier = -0.10
+				stability_factor = 0.10
+			}
+
+			ai_will_do = {
+				base = 2
+				modifier = {
+					add = 3
+					has_government = democratic
+				}
+				modifier = {
+					factor = 0.4
+					has_totalitarian_government = yes
+				}
+			}
+		}
+
+		balanced_protections = {
+			cost = 75
+			removal_cost = -1
+			level = 3
+
+			modifier = {
+				local_resources_oil_factor = 0.05
+				local_resources_aluminium_factor = 0.05
+				local_resources_rubber_factor = 0.05
+				local_resources_tungsten_factor = 0.05
+				local_resources_steel_factor = 0.05
+				local_resources_chromium_factor = 0.05
+				stability_factor = 0.05
+			}
+
+			ai_will_do = {
+				base = 3
+				modifier = {
+					add = 5
+					has_government = democratic
+				}
+				modifier = {
+					add = 3
+					has_government = nationalist
+				}
+				modifier = {
+					add = 3
+					check_variable = { gdp_per_capita > 5.000 }
+					check_variable = { gdp_per_capita < 20.000 }
+				}
+			}
+		}
+
+		economic_motivated_mining = {
+			cost = 75
+			removal_cost = -1
+			level = 4
+
+			modifier = {
+				local_resources_oil_factor = 0.15
+				local_resources_aluminium_factor = 0.15
+				local_resources_rubber_factor = 0.15
+				local_resources_tungsten_factor = 0.15
+				local_resources_steel_factor = 0.15
+				local_resources_chromium_factor = 0.15
+				resource_export_multiplier_modifier = 0.05
+				resource_extraction_workforce_requirement_modifier = 0.15
+			}
+
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 8
+					OR = {
+						check_variable = { resource@oil > 10 }
+						check_variable = { resource@steel > 10 }
+						check_variable = { resource@aluminium > 10 }
+						check_variable = { resource@tungsten > 10 }
+					}
+				}
+				modifier = {
+					add = 5
+					has_autocratic_government = yes
+				}
+				modifier = {
+					add = 5
+					check_variable = { gdp_per_capita < 5.000 }
+				}
+				modifier = {
+					factor = 0
+					OR = {
+						has_government = communism
+						has_government = neutrality
+					}
+					check_variable = { stability > 0.60 }
+				}
+			}
+		}
+
+		strip_mining = {
+			cost = 100
+			removal_cost = -1
+			level = 5
+
+			modifier = {
+				local_resources_oil_factor = 0.25
+				local_resources_aluminium_factor = 0.25
+				local_resources_rubber_factor = 0.25
+				local_resources_tungsten_factor = 0.25
+				local_resources_steel_factor = 0.25
+				local_resources_chromium_factor = 0.25
+				resource_export_multiplier_modifier = 0.15
+				resource_extraction_workforce_requirement_modifier = 0.30
+			}
+
+			ai_will_do = {
+				base = 0
+				modifier = {
+					add = 10
+					has_totalitarian_government = yes
+					OR = {
+						check_variable = { resource@oil > 15 }
+						check_variable = { resource@steel > 15 }
+						check_variable = { resource@aluminium > 15 }
+					}
+				}
+				modifier = {
+					add = 8
+					check_variable = { gdp_per_capita < 3.000 }
+					OR = {
+						check_variable = { resource@oil > 10 }
+						check_variable = { resource@steel > 10 }
+						check_variable = { resource@aluminium > 10 }
+					}
+				}
+				modifier = {
+					add = 5
+					has_war = yes
+					OR = {
+						check_variable = { resource@oil > 5 }
+						check_variable = { resource@steel > 5 }
+					}
+				}
+				modifier = {
+					factor = 0
+					has_government = neutrality
+				}
+			}
+		}
+	}
+
+	critical_infrastructure = {
+		law = yes
+		use_list_view = yes
+
+		minimal_maintenance = {
+			cost = 75
+			removal_cost = -1
+			level = 1
+
+			modifier = {
+				infrastructure_cost_multiplier_modifier = -0.25
+				infrastructure_tax_gain_multiplier_modifier = -0.15
+				infrastructure_workforce_requirement_modifier = -0.20
+				energy_gain_multiplier = -0.15
+				energy_use_multiplier = -0.05
+			}
+
+			ai_will_do = {
+				base = 0
+				modifier = {
+					add = 10
+					check_variable = { gdp_per_capita < 3.000 }
+					has_war = no
+				}
+				modifier = {
+					add = 8
+					has_war = yes
+					check_variable = { gdp_per_capita < 8.000 }
+				}
+				modifier = {
+					add = 5
+					check_variable = { treasury < 10.000 }
+				}
+				modifier = {
+					factor = 0
+					check_variable = { gdp_per_capita > 15.000 }
+				}
+			}
+		}
+
+		standard_maintenance = {
+			cost = 75
+			removal_cost = -1
+			level = 2
+
+			modifier = {
+				infrastructure_cost_multiplier_modifier = -0.05
+				energy_gain_multiplier = -0.015
+				energy_use_multiplier = -0.01
+			}
+
+			ai_will_do = {
+				base = 3
+				modifier = {
+					add = 5
+					check_variable = { gdp_per_capita > 5.000 }
+					check_variable = { gdp_per_capita < 20.000 }
+				}
+				modifier = {
+					add = 3
+					has_war = yes
+				}
+				modifier = {
+					factor = 0.5
+					check_variable = { gdp_per_capita > 25.000 }
+				}
+			}
+		}
+
+		extensive_maintenance = {
+			cost = 100
+			removal_cost = -1
+			level = 3
+
+			modifier = {
+				infrastructure_cost_multiplier_modifier = 0.25
+				infrastructure_tax_gain_multiplier_modifier = 0.35
+				infrastructure_workforce_requirement_modifier = 0.20
+				energy_gain_multiplier = 0.15
+			}
+
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 10
+					check_variable = { gdp_per_capita > 20.000 }
+					has_war = no
+				}
+				modifier = {
+					add = 5
+					check_variable = { gdp_per_capita > 15.000 }
+					has_war = no
+					has_government = democratic
+				}
+				modifier = {
+					factor = 0
+					has_war = yes
+				}
+				modifier = {
+					factor = 0
+					check_variable = { gdp_per_capita < 10.000 }
+				}
+			}
+		}
+	}
+
+	reserve_currency = {
+		law = yes
+		use_list_view = yes
+
+		us_dollar = {
+			cost = 75
+			removal_cost = -1
+			level = 1
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Adopted us_dollar reserve"
+				add_to_variable = { global.usd_reserve_adoption_count = 1 }
+				calculate_reserve_roi_bonus = yes
+			}
+			on_remove = {
+				subtract_from_variable = { global.usd_reserve_adoption_count = 1 }
+			}
+
+			ai_will_do = {
+				base = 5
+				modifier = {
+					# Network effect — more adopters = stronger signal
+					add = 5
+					check_variable = { global.usd_reserve_adoption_count > 30 }
+				}
+				modifier = {
+					factor = 0
+					has_war_with = USA
+				}
+				modifier = {
+					factor = 0
+					has_idea = western_sanctions
+				}
+			}
+		}
+
+		euro = {
+			cost = 75
+			removal_cost = -1
+			level = 2
+
+			available = {
+				has_idea = EU_member
+			}
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Adopted euro reserve"
+				add_to_variable = { global.eur_reserve_adoption_count = 1 }
+				calculate_reserve_roi_bonus = yes
+			}
+			on_remove = {
+				subtract_from_variable = { global.eur_reserve_adoption_count = 1 }
+			}
+
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 9
+					has_idea = EU_member
+				}
+				modifier = {
+					add = 4
+					has_idea = EU_member
+					check_variable = { global.eur_reserve_adoption_count > 20 }
+				}
+				modifier = {
+					factor = 0
+					has_war_with = EUU
+				}
+			}
+		}
+
+		chinese_yuan = {
+			cost = 75
+			removal_cost = -1
+			level = 3
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Adopted chinese_yuan reserve"
+				add_to_variable = { global.cny_reserve_adoption_count = 1 }
+				calculate_reserve_roi_bonus = yes
+			}
+			on_remove = {
+				subtract_from_variable = { global.cny_reserve_adoption_count = 1 }
+			}
+
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 9
+					is_in_faction_with = CHI
+				}
+				modifier = {
+					add = 5
+					OR = {
+						has_government = communism
+						has_government = neutrality
+					}
+					NOT = { is_in_faction_with = USA }
+				}
+				modifier = {
+					add = 4
+					check_variable = { global.cny_reserve_adoption_count > 15 }
+					is_in_faction_with = CHI
+				}
+				modifier = {
+					factor = 0
+					has_war_with = CHI
+				}
+				modifier = {
+					factor = 0
+					NOT = { is_in_faction_with = CHI }
+					NOT = { tag = CHI }
+					NOT = {
+						AND = {
+							OR = {
+								has_government = communism
+								has_government = neutrality
+							}
+							NOT = { is_in_faction_with = USA }
+						}
+					}
+				}
+			}
+		}
+
+		japanese_yen = {
+			cost = 75
+			removal_cost = -1
+			level = 4
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Adopted japanese_yen reserve"
+				add_to_variable = { global.jpy_reserve_adoption_count = 1 }
+				calculate_reserve_roi_bonus = yes
+			}
+			on_remove = {
+				subtract_from_variable = { global.jpy_reserve_adoption_count = 1 }
+			}
+
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 9
+					is_in_faction_with = JAP
+				}
+				modifier = {
+					add = 3
+					check_variable = { global.jpy_reserve_adoption_count > 5 }
+					is_in_faction_with = JAP
+				}
+				modifier = {
+					factor = 0
+					has_war_with = JAP
+				}
+				modifier = {
+					factor = 0
+					NOT = { is_in_faction_with = JAP }
+					NOT = { tag = JAP }
+				}
+			}
+		}
+
+		russia_rouble = {
+			cost = 75
+			removal_cost = -1
+			level = 5
+
+			available = {
+				OR = {
+					tag = SOV
+					is_in_faction_with = SOV
+				}
+			}
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Adopted russia_rouble reserve"
+				add_to_variable = { global.rub_reserve_adoption_count = 1 }
+				calculate_reserve_roi_bonus = yes
+			}
+			on_remove = {
+				subtract_from_variable = { global.rub_reserve_adoption_count = 1 }
+			}
+
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 9
+					OR = {
+						tag = SOV
+						is_in_faction_with = SOV
+					}
+				}
+				modifier = {
+					factor = 0
+					NOT = { is_in_faction_with = SOV }
+					NOT = { tag = SOV }
+				}
+				modifier = {
+					factor = 0
+					OR = {
+						has_war_with = SOV
+						has_war_with = RUS
+					}
+				}
+			}
+		}
+
+		british_pound = {
+			cost = 75
+			removal_cost = -1
+			level = 6
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Adopted british_pound reserve"
+				add_to_variable = { global.gbp_reserve_adoption_count = 1 }
+				calculate_reserve_roi_bonus = yes
+			}
+			on_remove = {
+				subtract_from_variable = { global.gbp_reserve_adoption_count = 1 }
+			}
+
+			ai_will_do = {
+				base = 1
+				modifier = {
+					add = 9
+					is_in_faction_with = ENG
+				}
+				modifier = {
+					add = 3
+					check_variable = { global.gbp_reserve_adoption_count > 5 }
+					is_in_faction_with = ENG
+				}
+				modifier = {
+					factor = 0
+					has_war_with = ENG
+				}
+				modifier = {
+					factor = 0
+					NOT = { is_in_faction_with = ENG }
+					NOT = { tag = ENG }
+				}
+			}
+		}
+
+		swiss_frank = {
+			cost = 50
+			removal_cost = -1
+			level = 7
+
+			available = {
+				OR = {
+					tag = SWI
+					tag = LIC
+				}
+			}
+
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Adopted swiss_frank reserve"
+				add_to_variable = { global.chf_reserve_adoption_count = 1 }
+				calculate_reserve_roi_bonus = yes
+			}
+			on_remove = {
+				subtract_from_variable = { global.chf_reserve_adoption_count = 1 }
+			}
+
+			ai_will_do = {
+				base = 0
+				modifier = {
+					add = 15
+					OR = {
+						tag = SWI
+						tag = LIC
+					}
+				}
+			}
+		}
+
+		no_foreign_reserve = {
+			cost = 50
+			removal_cost = -1
+			level = 8
+
+			on_add = {
+				set_variable = { reserve_roi_bonus = 0 }
+				set_variable = { reserve_trade_bonus = 0 }
+			}
+
+			modifier = {
+				political_power_gain = 0.05
+			}
+
+			ai_will_do = {
+				base = 0
+				modifier = {
+					# Fully isolated authoritarian states with no Western/Chinese alignment
+					add = 20
+					has_totalitarian_government = yes
+					NOT = { is_in_faction_with = USA }
+					NOT = { is_in_faction_with = EUU }
+					NOT = { is_in_faction_with = CHI }
+					NOT = { is_in_faction_with = SOV }
+					NOT = { is_in_faction_with = RUS }
+				}
+			}
+		}
+	}
+
+	currency_backing = {
+		law = yes
+		use_list_view = yes
+
+		gold_standard_back = {
+			cost = 100
+			removal_cost = -1
+			level = 1
+
+			modifier = {
+				stability_factor = 0.06
+				trade_opinion_factor = 0.04
+				political_power_factor = -0.05
+			}
+
+			ai_will_do = {
+				base = 0
+				modifier = {
+					# Nationalist government seeking credibility anchor during high inflation
+					add = 3
+					has_government = nationalist
+					check_variable = { inflation_rate_var > 0.30 }
+				}
+				modifier = {
+					# Very weak currency — desperate monetary discipline measure
+					add = 2
+					check_variable = { currency_strength < 0.60 }
+					has_war = no
+				}
+				modifier = {
+					# Communists reject commodity-backed currency on ideological grounds
+					factor = 0
+					has_government = communism
+				}
+				modifier = {
+					# Modern liberal democracies would never return to the gold standard
+					factor = 0
+					has_government = democratic
+				}
+				modifier = {
+					# No inflation problem — no incentive to adopt a rigid peg
+					factor = 0
+					check_variable = { inflation_rate_var < 0.05 }
+				}
+			}
+		}
+
+		silver_standard = {
+			cost = 75
+			removal_cost = -1
+			level = 2
+
+			modifier = {
+				stability_factor = 0.03
+				trade_opinion_factor = 0.02
+				political_power_factor = -0.02
+			}
+
+			ai_will_do = {
+				base = 0
+				modifier = {
+					add = 2
+					has_government = nationalist
+					check_variable = { inflation_rate_var > 0.20 }
+				}
+				modifier = {
+					add = 1
+					check_variable = { currency_strength < 0.70 }
+					has_war = no
+				}
+				modifier = {
+					factor = 0
+					has_government = communism
+				}
+				modifier = {
+					factor = 0
+					has_government = democratic
+				}
+				modifier = {
+					factor = 0
+					check_variable = { inflation_rate_var < 0.05 }
+				}
+			}
+		}
+
+		bi_metal_standard = {
+			cost = 75
+			removal_cost = -1
+			level = 3
+
+			modifier = {
+				stability_factor = 0.02
+				trade_opinion_factor = 0.01
+			}
+
+			ai_will_do = {
+				base = 0
+				modifier = {
+					add = 1
+					has_government = nationalist
+					check_variable = { inflation_rate_var > 0.15 }
+				}
+				modifier = {
+					add = 1
+					check_variable = { currency_strength < 0.75 }
+					has_war = no
+				}
+				modifier = {
+					factor = 0
+					has_government = communism
+				}
+				modifier = {
+					factor = 0
+					check_variable = { inflation_rate_var < 0.05 }
+				}
+			}
+		}
+
+		no_currency_backing = {
+			cost = 50
+			removal_cost = -1
+			level = 4
+
+			modifier = {
+				political_power_gain = 0.03
+				stability_factor = -0.02
+			}
+
+			ai_will_do = {
+				base = 10
+				modifier = {
+					# Liberal democracies fully embrace fiat monetary sovereignty
+					add = 5
+					has_government = democratic
+				}
+				modifier = {
+					# State-command economies use fiat as a policy tool
+					add = 3
+					OR = {
+						has_government = communism
+						has_government = neutrality
+					}
+				}
+				modifier = {
+					# Stable nationalist governments with low inflation have no reason to leave fiat
+					add = 2
+					has_government = nationalist
+					check_variable = { inflation_rate_var < 0.10 }
+				}
+			}
+		}
+	}
+}
