@@ -16,6 +16,7 @@ Millennium Dawn includes a detailed modern economy system covering revenue, gove
   - [Corporate Tax](#corporate-tax)
   - [Population Tax](#population-tax)
   - [Resource Exports](#resource-exports)
+  - [Dynamic Resource Pricing](#dynamic-resource-pricing)
   - [Seigniorage Income](#seigniorage-income)
   - [Additional Income](#additional-income)
 - [Expenses](#expenses)
@@ -134,6 +135,34 @@ Countries earn income from exporting surplus resources on the international mark
 - Oil, Steel, Aluminium, Tungsten, Chromium, Rubber, Microchips, and Composites
 
 Export income is affected by your trade law (which controls the minimum export percentage), mining policies, and currency strength. A weaker domestic currency makes resource exports more valuable in local terms, while a stronger currency reduces their local value.
+
+### Dynamic Resource Pricing
+
+Resource export prices are not fixed — they fluctuate globally based on worldwide supply and demand. Prices are recalculated periodically using the following formula:
+
+```
+Price = (Global Demand / Global Supply) × 2 × Starting Price
+```
+
+When global demand exceeds half of global supply (demand/supply ratio > 0.5), prices rise above the starting price. When demand falls below that ratio, prices drop. Each resource has a hard floor and ceiling that prices cannot exceed:
+
+| Resource   | Starting Price | Price Floor | Price Ceiling |
+| ---------- | -------------- | ----------- | ------------- |
+| Oil        | 6.80           | 1.36        | 34.00         |
+| Steel      | 0.024          | 0.005       | 0.120         |
+| Aluminium  | 0.21           | 0.042       | 1.05          |
+| Tungsten   | 0.28           | 0.056       | 1.40          |
+| Chromium   | 0.18           | 0.036       | 0.90          |
+| Rubber     | 0.09           | 0.018       | 0.45          |
+| Microchips | 8.00           | 1.58        | 36.20         |
+| Composites | 7.40           | 1.42        | 35.40         |
+
+**Strategic implications:**
+
+- Countries that control large shares of a scarce resource (e.g., tungsten, chromium, microchips) can indirectly benefit from high prices if global supply is tight.
+- Building Microchip Plants and Composite Plants across many nations increases global supply of those resources, driving their prices down over the course of a game.
+- Microchips and composites have the highest price ceilings by far — a global shortage of either resource can make them extremely valuable exports.
+- Oil prices are the most volatile in practice, as fuel demand is high and supply is concentrated in relatively few states.
 
 ### Seigniorage Income
 
