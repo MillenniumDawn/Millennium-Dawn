@@ -1,4 +1,4 @@
-ALG_crackdown_category = {
+﻿ALG_crackdown_category = {
 	ALG_arrest_political_opponents = {
 		available = {
 			has_country_flag = ALG_crackdown_path
@@ -9,23 +9,29 @@ ALG_crackdown_category = {
 		cost = 100
 		icon = GFX_decision_generic_arrest
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision ALG_arrest_political_opponents"
-			custom_effect_tooltip = ALG_arrest_opponents_tt
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_arrest_political_opponents"
+			custom_effect_tooltip = ALG_arrest_opponents_started_tt
+			add_political_power = -50
+			add_stability = -0.05
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_arrest_political_opponents"
+			custom_effect_tooltip = ALG_arrest_opponents_complete_tt
 			add_popularity = {
 				ideology = nationalist
 				popularity = 0.05
 			}
-			add_stability = -0.05
-			add_political_power = -50
 			add_ideas = ALG_repression_modifier
 			set_temp_variable = { corp_change = 1 }
 			modify_corporate_tax_rate_effect = yes
 
 			random = {
 				chance = 30
-				country_event = { id = alg_crackdown.1 days = 15 random_days = 10 }  # protest event
+				country_event = { id = alg_crackdown.1 days = 15 random_days = 10 }
 			}
 		}
+
 
 		ai_will_do = {
 			factor = 1
@@ -50,21 +56,27 @@ ALG_crackdown_category = {
 		fire_only_once = yes
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision ALG_expand_surveillance_services"
-			custom_effect_tooltip = ALG_surveillance_tt
-			add_stability = -0.02
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_expand_surveillance_services"
+			custom_effect_tooltip = ALG_surveillance_started_tt
 			add_political_power = -25
+			add_stability = -0.02
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_expand_surveillance_services"
+			custom_effect_tooltip = ALG_surveillance_complete_tt
 			add_ideas = ALG_surveillance_state_modifier
 			set_temp_variable = { temp_productivity_change = -0.01 }
 			flat_productivity_change_effect = yes
 			add_war_support = 0.01
 		}
 
+
 		ai_will_do = {
 			factor = 1
 			modifier = {
 				factor = 1.5
-				has_idea = ALG_repression_modifier  # synergy with arrests
+				has_idea = ALG_repression_modifier
 			}
 		}
 	}
@@ -80,28 +92,10 @@ ALG_crackdown_category = {
 		fire_only_once = yes
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision ALG_ban_opposition_parties"
-			custom_effect_tooltip = ALG_ban_parties_tt
-			add_stability = -0.03
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_ban_opposition_parties"
+			custom_effect_tooltip = ALG_ban_parties_started_tt
 			add_political_power = -50
-			add_war_support = 0.02
-			set_country_flag = ALG_crackdown_backfired
-			add_popularity = {
-				ideology = nationalist
-				popularity = 0.08
-			}
-			if = {
-				limit = { has_government = democratic }
-				add_popularity = {
-					ideology = democratic
-					popularity = -0.05
-				}
-			}
-			increase_centralization = yes
-			decrease_economic_growth = yes
-
-
-			# International backlash
+			add_stability = -0.03
 			add_opinion_modifier = {
 				target = USA
 				modifier = crackdown_on_protests
@@ -114,8 +108,38 @@ ALG_crackdown_category = {
 				target = GER
 				modifier = crackdown_on_protests
 			}
+		}
 
-			# Trigger delayed unrest event
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_ban_opposition_parties"
+			custom_effect_tooltip = ALG_ban_parties_complete_tt
+			add_war_support = 0.02
+			set_country_flag = ALG_crackdown_backfired
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.06
+			}
+			add_popularity = {
+				ideology = communism
+				popularity = 0.08
+			}
+			if = {
+				limit = { has_government = democratic }
+				add_popularity = {
+					ideology = democratic
+					popularity = -0.08
+				}
+			}
+			set_temp_variable = { party_index = 0 }
+			ban_party_scripted_call = yes
+			set_temp_variable = { party_index = 1 }
+			ban_party_scripted_call = yes
+			set_temp_variable = { party_index = 16 }
+			ban_party_scripted_call = yes
+			set_temp_variable = { party_index = 18 }
+			ban_party_scripted_call = yes
+			increase_centralization = yes
+			decrease_economic_growth = yes
 			country_event = { id = alg_crackdown.2 days = 45 random_days = 15 }
 		}
 
@@ -147,12 +171,17 @@ ALG_economic_recovery_category = {
 		}
 		days_remove = 60
 		complete_effect = {
-			custom_effect_tooltip = cheap_loans_from_imf_tt
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_accept_imf_loan"
+			custom_effect_tooltip = ALG_imf_loan_started_tt
+			set_country_flag = ALG_imf_loan_taken
+			activate_mission = cheap_loan_from_the_imf_mission
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_accept_imf_loan"
+			custom_effect_tooltip = ALG_imf_loan_complete_tt
 			add_offsite_building = { type = industrial_complex level = 2 }
 			add_political_power = 100
-			ingame_update_setup = yes
-			activate_mission = cheap_loan_from_the_imf_mission
-			set_country_flag = ALG_imf_loan_taken
 			country_event = { id = alg_economy.1 days = 30 }
 		}
 
@@ -174,9 +203,15 @@ ALG_economic_recovery_category = {
 		fire_only_once = yes
 
 		complete_effect = {
-			custom_effect_tooltip = ALG_oil_licensing_tt
-			add_political_power = 50
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_start_oil_licensing"
+			custom_effect_tooltip = ALG_oil_licensing_started_tt
 			add_stability = -0.01
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_start_oil_licensing"
+			custom_effect_tooltip = ALG_oil_licensing_complete_tt
+			add_political_power = 50
 			add_ideas = ALG_foreign_oil_licensing_bonus
 			random_owned_controlled_state = {
 				limit = {
@@ -185,7 +220,6 @@ ALG_economic_recovery_category = {
 						state = 381
 						state = 383
 						is_core_of = ALG
-
 					}
 				}
 				add_resource = {
@@ -193,47 +227,17 @@ ALG_economic_recovery_category = {
 					amount = 5
 				}
 			}
-			# Improve relations with oil majors' countries
-			add_opinion_modifier = {
-				target = USA
-				modifier = oil_deals
-			}
-			add_opinion_modifier = {
-				target = PER
-				modifier = oil_deals
-			}
-			add_opinion_modifier = {
-				target = CAN
-				modifier = oil_deals
-			}
-			add_opinion_modifier = {
-				target = SAU
-				modifier = oil_deals
-			}
-			add_opinion_modifier = {
-				target = SOV
-				modifier = oil_deals
-			}
-			add_opinion_modifier = {
-				target = IRQ
-				modifier = oil_deals
-			}
-			add_opinion_modifier = {
-				target = VEN
-				modifier = oil_deals
-			}
-			add_opinion_modifier = {
-				target = UAE
-				modifier = oil_deals
-			}
-			add_opinion_modifier = {
-				target = KUW
-				modifier = oil_deals
-			}
-			add_opinion_modifier = {
-				target = MEX
-				modifier = oil_deals
-			}
+			# Relations with oil countries
+			add_opinion_modifier = { target = USA modifier = oil_deals }
+			add_opinion_modifier = { target = PER modifier = oil_deals }
+			add_opinion_modifier = { target = CAN modifier = oil_deals }
+			add_opinion_modifier = { target = SAU modifier = oil_deals }
+			add_opinion_modifier = { target = SOV modifier = oil_deals }
+			add_opinion_modifier = { target = IRQ modifier = oil_deals }
+			add_opinion_modifier = { target = VEN modifier = oil_deals }
+			add_opinion_modifier = { target = UAE modifier = oil_deals }
+			add_opinion_modifier = { target = KUW modifier = oil_deals }
+			add_opinion_modifier = { target = MEX modifier = oil_deals }
 		}
 
 		ai_will_do = {
@@ -253,7 +257,13 @@ ALG_economic_recovery_category = {
 		days_remove = 30
 		fire_only_once = yes
 		complete_effect = {
-			custom_effect_tooltip = ALG_repay_imf_tt
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_repay_imf_loan"
+			custom_effect_tooltip = ALG_repay_imf_started_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_repay_imf_loan"
+			custom_effect_tooltip = ALG_repay_imf_complete_tt
 			set_temp_variable = { debt_change = 5.0 }
 			modify_debt_effect = yes
 			add_stability = 0.03
@@ -283,6 +293,7 @@ ALG_alignments = {
 		cost = 100
 		icon = GFX_cub_usa_button
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_diplomatic_outreach_west"
 			custom_effect_tooltip = ALG_west_alignment_tt
 			add_opinion_modifier = {
 				target = USA
@@ -313,6 +324,7 @@ ALG_alignments = {
 		cost = 100
 		icon = GFX_decision_generic_china
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_diplomatic_outreach_china"
 			custom_effect_tooltip = ALG_china_alignment_tt
 			add_opinion_modifier = {
 				target = CHI
@@ -545,9 +557,6 @@ ALG_casablanca_accords = {
 			has_active_mission = algeria_casablanca_accords
 		}
 
-		available = {
-		}
-
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete algeria_casablanca_accords_draft_solution"
 			country_event = algeriaFocus.59
@@ -729,6 +738,7 @@ ALG_kabyle_issue = {
 		on_map_mode = map_only
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete highlight_states_trigger"
 			custom_effect_tooltip =  kabyle_resistance_effects
 			custom_effect_tooltip = kabyle_resistance_tooltip
 		}
@@ -1049,24 +1059,28 @@ ALG_reconciliation_path_category = {
 		days_remove = 30
 		fire_only_once = yes
 		complete_effect = {
-			custom_effect_tooltip = ALG_pardon_islamist_tt
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_pardon_moderate_islamist"
+			custom_effect_tooltip = ALG_pardon_islamist_started_tt
+			add_political_power = -25
+			add_stability = -0.02
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_pardon_moderate_islamist"
+			custom_effect_tooltip = ALG_pardon_islamist_complete_tt
 			add_popularity = {
 				ideology = fascism
-				popularity = 0.01
+				popularity = -0.04
 			}
 			add_popularity = {
 				ideology = democratic
-				popularity = 0.02
+				popularity = 0.03
 			}
 			add_popularity = {
 				ideology = naturality
-				popularity = 0.02
+				popularity = 0.03
 			}
-			add_stability = -0.02
-			add_political_power = -25
-			if = {
-				limit = { has_country_flag = threat_level_critical }
-			}
+			add_political_power = 75
 		}
 
 		ai_will_do = {
@@ -1088,10 +1102,16 @@ ALG_reconciliation_path_category = {
 		fire_only_once = yes
 
 		complete_effect = {
-			custom_effect_tooltip = ALG_dialogue_tt
-			add_stability = 0.05
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_initiate_national_dialogues"
+			custom_effect_tooltip = ALG_dialogue_started_tt
 			add_political_power = -50
 			add_war_support = -0.03
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_initiate_national_dialogues"
+			custom_effect_tooltip = ALG_dialogue_complete_tt
+			add_stability = 0.05
 			add_ideas = ALG_national_dialogue_modifier
 			set_country_flag = ALG_dialogue_opened
 			add_opinion_modifier = { target = FRA modifier = democratic_reforms }
@@ -1121,16 +1141,19 @@ ALG_reconciliation_path_category = {
 		cost = 125
 
 		complete_effect = {
-			custom_effect_tooltip = ALG_reintegrate_fighters_tt
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_reintegrate_former_fighter"
+			custom_effect_tooltip = ALG_reintegrate_fighters_started_tt
+			add_political_power = -50
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_reintegrate_former_fighter"
+			custom_effect_tooltip = ALG_reintegrate_fighters_complete_tt
 			add_stability = 0.03
 			add_manpower = 3000
-			add_political_power = -50
 			add_popularity = {
 				ideology = nationalist
 				popularity = 0.05
-			}
-			if = {
-				limit = { has_country_flag = threat_level_critical }
 			}
 		}
 
@@ -1160,6 +1183,7 @@ ALG_ethnic_data_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_init_ethnic_data"
 			country_event = { id = ALG_ethnic_data.1 }
 		}
 
@@ -1181,6 +1205,7 @@ ALG_ethnic_data_category = {
 		days_remove = 0
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_show_ethnic_data"
 			custom_effect_tooltip = ALG_ethnic_overview_full_tt
 		}
 
@@ -1208,6 +1233,7 @@ ALG_ethnic_data_category = {
 		}
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_favor_arab_policies"
 			custom_effect_tooltip = ALG_favor_arab_tt
 			hidden_effect = {
 				add_to_variable = { arab_satisfaction = 10 }
@@ -1226,6 +1252,7 @@ ALG_ethnic_data_category = {
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
 			ALG_update_ethnic_modifiers = yes
 		}
 		
@@ -1257,6 +1284,7 @@ ALG_ethnic_data_category = {
 		}
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_favor_kabyle_policies"
 			custom_effect_tooltip = ALG_favor_kabyle_tt
 			hidden_effect = {
 				add_to_variable = { kabyle_satisfaction = 10 }
@@ -1271,6 +1299,7 @@ ALG_ethnic_data_category = {
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
 			ALG_update_ethnic_modifiers = yes
 		}
 		
@@ -1302,6 +1331,7 @@ ALG_ethnic_data_category = {
 		}
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_favor_chaoui_policies"
 			custom_effect_tooltip = ALG_favor_chaoui_tt
 			hidden_effect = {
 				add_to_variable = { chaoui_satisfaction = 10 }
@@ -1316,6 +1346,7 @@ ALG_ethnic_data_category = {
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
 			ALG_update_ethnic_modifiers = yes
 		}
 		
@@ -1347,6 +1378,7 @@ ALG_ethnic_data_category = {
 		}
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_favor_tuareg_policies"
 			custom_effect_tooltip = ALG_favor_tuareg_tt
 			hidden_effect = {
 				add_to_variable = { tuareg_satisfaction = 10 }
@@ -1359,6 +1391,7 @@ ALG_ethnic_data_category = {
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
 			ALG_update_ethnic_modifiers = yes
 		}
 		
@@ -1390,6 +1423,7 @@ ALG_ethnic_data_category = {
 		}
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_favor_mozabite_policies"
 			custom_effect_tooltip = ALG_favor_mozabite_tt
 			hidden_effect = {
 				add_to_variable = { mozabite_satisfaction = 10 }
@@ -1402,6 +1436,7 @@ ALG_ethnic_data_category = {
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
 			ALG_update_ethnic_modifiers = yes
 		}
 		
@@ -1429,6 +1464,7 @@ ALG_ethnic_data_category = {
 		days_remove = 90
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_national_unity_initiative"
 			custom_effect_tooltip = ALG_unity_policy_tt
 			hidden_effect = {
 				add_to_variable = { arab_satisfaction = 5 }
@@ -1446,6 +1482,7 @@ ALG_ethnic_data_category = {
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
 			ALG_update_ethnic_modifiers = yes
 			add_stability = 0.03
 		}
@@ -1474,6 +1511,7 @@ ALG_ethnic_data_category = {
 		fire_only_once = yes
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_conduct_national_census"
 			custom_effect_tooltip = ALG_census_tt
 			hidden_effect = {
 				set_country_flag = ALG_census_conducted
@@ -1525,6 +1563,7 @@ ALG_ethnic_data_category = {
 		days_remove = 30
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			custom_effect_tooltip = ALG_suppress_unrest_tt
 			add_stability = -0.05
 			add_war_support = -0.03
@@ -1559,6 +1598,7 @@ ALG_ethnic_data_category = {
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
 			ALG_update_ethnic_modifiers = yes
 		}
 		
@@ -1583,6 +1623,7 @@ ALG_ethnic_data_category = {
 		fire_only_once = yes
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_recognize_tamazight_1"
 			custom_effect_tooltip = ALG_recognize_tamazight_tt
 			add_stability = 0.05
 			hidden_effect = {
@@ -2320,6 +2361,7 @@ ALG_cabinet_category = {
 		cost = 10
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_review_cabinet"
 			custom_effect_tooltip = ALG_cabinet_overview_tt
 			country_event = { id = alg_cabinet.1 }
 		}
@@ -2347,6 +2389,7 @@ ALG_cabinet_category = {
 		cost = 75
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_replace_prime_minister"
 			custom_effect_tooltip = ALG_replace_pm_tt
 			country_event = { id = alg_cabinet.10 }
 			set_country_flag = { flag = recent_pm_change days = 180 }
@@ -2388,6 +2431,7 @@ ALG_cabinet_category = {
 		cost = 100
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			custom_effect_tooltip = ALG_replace_mod_tt
 			if = {
 				limit = { check_variable = { ALG_mod_deep_state > 70 } }
@@ -2424,6 +2468,7 @@ ALG_cabinet_category = {
 		cost = 50
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_replace_interior_minister"
 			custom_effect_tooltip = ALG_replace_moi_tt
 			country_event = { id = alg_cabinet.30 }
 			set_country_flag = { flag = recent_moi_change days = 180 }
@@ -2456,6 +2501,7 @@ ALG_cabinet_category = {
 		cost = 50
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_replace_foreign_minister"
 			custom_effect_tooltip = ALG_replace_mofa_tt
 			country_event = { id = alg_cabinet.40 }
 			set_country_flag = { flag = recent_mofa_change days = 180 }
@@ -2484,6 +2530,7 @@ ALG_cabinet_category = {
 		cost = 50
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_replace_finance_minister"
 			custom_effect_tooltip = ALG_replace_mof_tt
 			country_event = { id = alg_cabinet.50 }
 			set_country_flag = { flag = recent_mof_change days = 180 }
@@ -2516,6 +2563,7 @@ ALG_cabinet_category = {
 		cost = 50
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_replace_energy_minister"
 			custom_effect_tooltip = ALG_replace_moe_tt
 			country_event = { id = alg_cabinet.60 }
 			set_country_flag = { flag = recent_moe_change days = 180 }
@@ -2544,6 +2592,7 @@ ALG_cabinet_category = {
 		cost = 50
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_replace_justice_minister"
 			custom_effect_tooltip = ALG_replace_moj_tt
 			country_event = { id = alg_cabinet.70 }
 			set_country_flag = { flag = recent_moj_change days = 180 }
@@ -2577,6 +2626,7 @@ ALG_cabinet_category = {
 		cost = 150
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			custom_effect_tooltip = ALG_replace_drs_tt
 			if = {
 				limit = { check_variable = { ALG_drs_deep_state > 80 } }
@@ -2618,11 +2668,13 @@ ALG_cabinet_category = {
 		}
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_cabinet_reshuffle"
 			custom_effect_tooltip = ALG_reshuffle_started_tt
 			set_country_flag = { flag = recent_reshuffle days = 365 }
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
 			country_event = { id = alg_cabinet.100 }
 		}
 		
@@ -2653,6 +2705,7 @@ ALG_cabinet_category = {
 		cost = 50
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			custom_effect_tooltip = ALG_demand_loyalty_tt
 			set_country_flag = { flag = recent_loyalty_demand days = 90 }
 			country_event = { id = alg_cabinet.110 }
@@ -2684,6 +2737,7 @@ ALG_cabinet_category = {
 		cost = 100
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_reward_cabinet"
 			custom_effect_tooltip = ALG_reward_cabinet_tt
 			set_country_flag = { flag = recent_cabinet_reward days = 180 }
 			ALG_increase_all_loyalty = yes
@@ -2722,11 +2776,13 @@ ALG_cabinet_category = {
 		}
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			custom_effect_tooltip = ALG_anti_corruption_started_tt
 			set_country_flag = { flag = recent_anti_corruption days = 365 }
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
 			custom_effect_tooltip = ALG_anti_corruption_complete_tt
 			ALG_reduce_deep_state_influence_cabinet = yes
 			add_stability = 0.03
@@ -2761,6 +2817,7 @@ ALG_cabinet_category = {
 		cost = 75
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			custom_effect_tooltip = ALG_strengthen_pm_tt
 			set_country_flag = { flag = recent_pm_authority days = 180 }
 			add_to_variable = { ALG_pm_loyalty = 10 }
@@ -2794,10 +2851,12 @@ ALG_deep_state_category = {
 		days_remove = 30
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_assess_deep_state"
 			custom_effect_tooltip = deep_state_assessing_tt
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_assess_deep_state"
 			custom_effect_tooltip = deep_state_level_revealed_tt
 			# Show different warnings based on level
 			if = {
@@ -2852,11 +2911,13 @@ ALG_deep_state_category = {
 		}
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			custom_effect_tooltip = deep_state_reduction_started_tt
 			custom_effect_tooltip = deep_state_expect_resistance_tt
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove check_variable"
 			custom_effect_tooltip = deep_state_power_decreased_5_tt
 			custom_effect_tooltip = deep_state_civilian_gains_tt
 			add_to_variable = { deep_state_power = -5 }
@@ -2917,12 +2978,14 @@ ALG_deep_state_category = {
 		}
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			custom_effect_tooltip = deep_state_purge_started_tt
 			custom_effect_tooltip = deep_state_army_disruption_tt
 			set_country_flag = { flag = recent_purge days = 365 }
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
 			custom_effect_tooltip = deep_state_power_decreased_10_tt
 			custom_effect_tooltip = deep_state_purge_complete_tt
 			add_to_variable = { deep_state_power = -10 }
@@ -2979,6 +3042,7 @@ ALG_deep_state_category = {
 		cost = 50
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			custom_effect_tooltip = deep_state_power_increased_3_tt
 			custom_effect_tooltip = deep_state_cooperation_tt
 			custom_effect_tooltip = deep_state_stability_boost_tt
@@ -3033,12 +3097,14 @@ ALG_deep_state_category = {
 		}
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			custom_effect_tooltip = deep_state_intel_reform_started_tt
 			custom_effect_tooltip = deep_state_expect_pushback_tt
 			set_country_flag = { flag = recent_intel_reform days = 180 }
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
 			custom_effect_tooltip = deep_state_power_decreased_7_tt
 			custom_effect_tooltip = deep_state_intel_reformed_tt
 			add_to_variable = { deep_state_power = -7 }
@@ -3087,12 +3153,14 @@ ALG_deep_state_category = {
 		days_remove = 45
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_appoint_loyal_officers"
 			custom_effect_tooltip = deep_state_loyal_officers_tt
 			army_experience = -25
 			set_country_flag = { flag = recent_officer_appointments days = 120 }
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
 			custom_effect_tooltip = deep_state_power_decreased_3_tt
 			custom_effect_tooltip = deep_state_loyalists_placed_tt
 			add_to_variable = { deep_state_power = -3 }
@@ -3131,6 +3199,7 @@ ALG_deep_state_category = {
 		cost = 150
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			custom_effect_tooltip = deep_state_emergency_declared_tt
 			custom_effect_tooltip = deep_state_emergency_effect_tt
 			add_ideas = ALG_state_of_emergency
@@ -3169,11 +3238,13 @@ ALG_deep_state_category = {
 		days_remove = 30
 		
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			custom_effect_tooltip = deep_state_negotiation_started_tt
 			set_country_flag = { flag = recent_negotiations days = 180 }
 		}
 		
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
 			random_list = {
 				50 = {
 					custom_effect_tooltip = deep_state_negotiation_success_tt
@@ -3208,183 +3279,186 @@ ALG_deep_state_category = {
 }
 ALG_resistance_challenges_new = {
 	ALG_healthcare_reform = {
-        icon = GFX_decision_ISR_healthcare_button
+		icon = GFX_decision_ISR_healthcare_button
 
-        visible = {
-            has_country_flag = ALG_resistance_path
-            NOT = { has_country_flag = ALG_healthcare_reform_done }
-        }
+		visible = {
+			has_country_flag = ALG_resistance_path
+			NOT = { has_country_flag = ALG_healthcare_reform_done }
+		}
 
-        available = {
-            custom_trigger_tooltip = {
-                tooltip = ALG_healthcare_reform_tt
-                check_variable = { ALG_people_grievance < 80 }
-            }
-            OR = {
-                has_idea = health_04
-                has_idea = health_05
-            }
-        }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_healthcare_reform_tt
+				check_variable = { ALG_people_grievance < 80 }
+			}
+			OR = {
+				has_idea = health_04
+				has_idea = health_05
+			}
+		}
 
-        fire_only_once = yes
-        days_mission_timeout = 180
+		fire_only_once = yes
+		days_mission_timeout = 180
 
-        complete_effect = {
-            custom_effect_tooltip = ALG_healthcare_success_tt
-            add_to_variable = { var = ALG_people_grievance value = 5 }
-            subtract_from_variable = { var = ALG_army_influence value = 3 }
-            clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
-            clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = ALG_healthcare_success_tt
+			add_to_variable = { var = ALG_people_grievance value = 5 }
+			subtract_from_variable = { var = ALG_army_influence value = 3 }
+			clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+			clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
 			custom_effect_tooltip = ALG_people_grievance_plus_5_tt
 			custom_effect_tooltip = ALG_army_influence_minus_3_tt
-            add_stability = 0.05
-            add_political_power = -50
-            set_country_flag = ALG_healthcare_reform_done
-            country_event = { id = alg.310 days = 1 }
-        }
+			add_stability = 0.05
+			add_political_power = -50
+			set_country_flag = ALG_healthcare_reform_done
+			country_event = { id = alg.310 days = 1 }
+		}
 
-        timeout_effect = {
-            custom_effect_tooltip = ALG_healthcare_failure_tt
-            subtract_from_variable = { var = ALG_people_grievance value = 5 }
-            add_to_variable = { var = ALG_army_influence value = 5 }
-            clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
-            clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+		timeout_effect = {
+			custom_effect_tooltip = ALG_healthcare_failure_tt
+			subtract_from_variable = { var = ALG_people_grievance value = 5 }
+			add_to_variable = { var = ALG_army_influence value = 5 }
+			clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+			clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
 			custom_effect_tooltip = ALG_people_grievance_minus_5_tt
 			custom_effect_tooltip = ALG_army_influence_plus_5_tt
-            add_stability = -0.05
-            set_country_flag = ALG_healthcare_reform_done
-            country_event = { id = alg.311 days = 1 }
-        }
+			add_stability = -0.05
+			set_country_flag = ALG_healthcare_reform_done
+			country_event = { id = alg.311 days = 1 }
+		}
 
-        ai_will_do = {
-            factor = 1
-            modifier = {
-                factor = 3
-                check_variable = { ALG_people_grievance < 50 }
-            }
-        }
-    }
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 3
+				check_variable = { ALG_people_grievance < 50 }
+			}
+		}
+	}
 
-    ALG_education_reform = {
-        icon = GFX_decision_ISR_education_button
+	ALG_education_reform = {
+		icon = GFX_decision_ISR_education_button
 
-        visible = { 
-            has_country_flag = ALG_resistance_path
-            NOT = { has_country_flag = ALG_education_reform_done }
-        }
+		visible = { 
+			has_country_flag = ALG_resistance_path
+			NOT = { has_country_flag = ALG_education_reform_done }
+		}
 
-        available = {
-            custom_trigger_tooltip = {
-                tooltip = ALG_education_reform_tt
-                check_variable = { ALG_people_grievance < 80 }
-            }
-            OR = {
-                has_idea = edu_04
-                has_idea = edu_05
-            }
-        }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_education_reform_tt
+				check_variable = { ALG_people_grievance < 80 }
+			}
+			OR = {
+				has_idea = edu_04
+				has_idea = edu_05
+			}
+		}
 
-        fire_only_once = yes
-        days_mission_timeout = 180
+		fire_only_once = yes
+		days_mission_timeout = 180
 
-        complete_effect = {
-            custom_effect_tooltip = ALG_education_success_tt
-            add_to_variable = { var = ALG_people_grievance value = 5 }
-            subtract_from_variable = { var = ALG_army_influence value = 3 }
-            clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
-            clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = ALG_education_success_tt
+			add_to_variable = { var = ALG_people_grievance value = 5 }
+			subtract_from_variable = { var = ALG_army_influence value = 3 }
+			clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+			clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
 			custom_effect_tooltip = ALG_people_grievance_plus_5_tt
 			custom_effect_tooltip = ALG_army_influence_minus_3_tt
-            add_stability = 0.05
-            set_country_flag = ALG_education_reform_done
-            country_event = { id = alg.320 days = 1 }
-        }
+			add_stability = 0.05
+			set_country_flag = ALG_education_reform_done
+			country_event = { id = alg.320 days = 1 }
+		}
 
-        timeout_effect = {
-            custom_effect_tooltip = ALG_education_failure_tt
-            subtract_from_variable = { var = ALG_people_grievance value = 5 }
-            add_to_variable = { var = ALG_army_influence value = 5 }
-            clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
-            clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+		timeout_effect = {
+			custom_effect_tooltip = ALG_education_failure_tt
+			subtract_from_variable = { var = ALG_people_grievance value = 5 }
+			add_to_variable = { var = ALG_army_influence value = 5 }
+			clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+			clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
 			custom_effect_tooltip = ALG_people_grievance_minus_5_tt
 			custom_effect_tooltip = ALG_army_influence_plus_5_tt
-            add_stability = -0.05
-            set_country_flag = ALG_education_reform_done
-            country_event = { id = alg.321 days = 1 }
-        }
+			add_stability = -0.05
+			set_country_flag = ALG_education_reform_done
+			country_event = { id = alg.321 days = 1 }
+		}
 
-        ai_will_do = {
-            factor = 1
-        }
-    }
+		ai_will_do = {
+			factor = 1
+		}
+	}
 
-    ALG_unemployment_reform = {
-        icon = GFX_decision_ISR_welfare_button
+	ALG_unemployment_reform = {
+		icon = GFX_decision_ISR_welfare_button
 
-        visible = { 
-            has_country_flag = ALG_resistance_path
-            NOT = { has_country_flag = ALG_unemployment_reform_done }
-        }
+		visible = { 
+			has_country_flag = ALG_resistance_path
+			NOT = { has_country_flag = ALG_unemployment_reform_done }
+		}
 
-        available = {
-            custom_trigger_tooltip = {
-                tooltip = ALG_unemployment_reform_tt
-                check_variable = { ALG_people_grievance < 80 }
-            }
-            custom_trigger_tooltip = {
-                tooltip = ALG_employment_TT
-                check_variable = { total_unemployed_percentage_display < 0.2 }
-            }
-            OR = {
-                has_idea = social_04
-                has_idea = social_05
-            }
-        }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_unemployment_reform_tt
+				check_variable = { ALG_people_grievance < 80 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = ALG_employment_TT
+				check_variable = { total_unemployed_percentage_display < 0.2 }
+			}
+			OR = {
+				has_idea = social_04
+				has_idea = social_05
+			}
+		}
 
-        fire_only_once = yes
-        days_mission_timeout = 180
+		fire_only_once = yes
+		days_mission_timeout = 180
 
-        complete_effect = {
-            custom_effect_tooltip = ALG_unemployment_success_tt
-            add_to_variable = { var = ALG_people_grievance value = 10 }
-            subtract_from_variable = { var = ALG_army_influence value = 5 }
-            clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
-            clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = ALG_unemployment_success_tt
+			add_to_variable = { var = ALG_people_grievance value = 10 }
+			subtract_from_variable = { var = ALG_army_influence value = 5 }
+			clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+			clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
 			custom_effect_tooltip = ALG_people_grievance_plus_10_tt
 			custom_effect_tooltip = ALG_army_influence_minus_5_tt
-            add_stability = 0.05
-            add_political_power = -75
-            add_offsite_building = { type = arms_factory level = 1 }
-            add_offsite_building = { type = industrial_complex level = 1 }
-            set_country_flag = ALG_unemployment_reform_done
-            country_event = { id = alg.330 days = 1 }
-        }
+			add_stability = 0.05
+			add_political_power = -75
+			add_offsite_building = { type = arms_factory level = 1 }
+			add_offsite_building = { type = industrial_complex level = 1 }
+			set_country_flag = ALG_unemployment_reform_done
+			country_event = { id = alg.330 days = 1 }
+		}
 
-        timeout_effect = {
-            custom_effect_tooltip = ALG_unemployment_failure_tt
-            subtract_from_variable = { var = ALG_people_grievance value = 10 }
-            add_to_variable = { var = ALG_army_influence value = 8 }
-            clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
-            clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+		timeout_effect = {
+			custom_effect_tooltip = ALG_unemployment_failure_tt
+			subtract_from_variable = { var = ALG_people_grievance value = 10 }
+			add_to_variable = { var = ALG_army_influence value = 8 }
+			clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+			clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
 			custom_effect_tooltip = ALG_people_grievance_minus_10_tt
 			custom_effect_tooltip = ALG_army_influence_plus_8_tt
-            add_stability = -0.1
-            random_owned_controlled_state = {
-                limit = { is_core_of = ALG }
-                add_resistance = 10
-            }
-            set_country_flag = ALG_unemployment_reform_done
-            country_event = { id = alg.331 days = 1 }
-        }
+			add_stability = -0.1
+			random_owned_controlled_state = {
+				limit = { is_core_of = ALG }
+				add_resistance = 10
+			}
+			set_country_flag = ALG_unemployment_reform_done
+			country_event = { id = alg.331 days = 1 }
+		}
 
-        ai_will_do = {
-            factor = 1
-            modifier = {
-                factor = 5
-                check_variable = { total_unemployed_percentage_display > 0.15 }
-            }
-        }
-    }
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 5
+				check_variable = { total_unemployed_percentage_display > 0.15 }
+			}
+		}
+	}
 }
 # Appease Kabyles
 alg_ethnic_policy = {
@@ -3409,9 +3483,8 @@ alg_ethnic_policy = {
 			NOT = { has_country_flag = ALG_arabization_hardline }  # Can't do both
 		}
 
-		fire_only_once = no
-
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			custom_effect_tooltip = alg_appease_kabyles_tt
 			set_temp_variable = { treasury_change = -20 }
 			modify_treasury_effect = yes
@@ -3481,10 +3554,10 @@ alg_ethnic_policy = {
 
 		cost = 150
 		days_remove = 45
-		fire_only_once = no
 
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			custom_effect_tooltip = alg_arabization_tt
 			set_temp_variable = { treasury_change = -20 }
 			modify_treasury_effect = yes
@@ -3584,38 +3657,44 @@ alg_ethnic_policy = {
 		fire_only_once = yes
 
 		complete_effect = {
-			custom_effect_tooltip = alg_tamazight_recognition_tt
+			log = "[GetDateText]: [Root.GetName]: Decision complete alg_recognize_tamazight"
+			custom_effect_tooltip = alg_tamazight_recognition_started_tt
 			add_stability = -0.02
+			subtract_from_variable = { var = arab_satisfaction value = 10 }
+			clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+			add_popularity = {
+				ideology = nationalist
+				popularity = -0.03
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove alg_recognize_tamazight"
+			custom_effect_tooltip = alg_tamazight_recognition_complete_tt
 			add_political_power = 100
 			add_to_variable = { var = kabyle_satisfaction value = 20 }
 			add_to_variable = { var = chaoui_satisfaction value = 15 }
 			add_to_variable = { var = mozabite_satisfaction value = 10 }
 			add_to_variable = { var = tuareg_satisfaction value = 12 }
 
-			# Arab dissatisfaction
-			subtract_from_variable = { var = arab_satisfaction value = 10 }
-
 			clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
 			clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
 			clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
 			clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
-			clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
 
-
-			385 = { add_resistance = -10 }  # Kabylia
+			385 = { add_resistance = -10 }
 
 			every_owned_state = {
 				limit = {
 					OR = {
-						state = 380  # Aurès
-						state = 381  # Tamanrasset
-						state = 382  #
+						state = 380
+						state = 381
+						state = 382
 					}
 				}
 				add_resistance = -5
 				add_compliance = 3
 			}
-
 
 			if = {
 				limit = { has_idea = ALG_kabylia_unrest }
@@ -3625,11 +3704,6 @@ alg_ethnic_policy = {
 				}
 			}
 
-
-			add_popularity = {
-				ideology = nationalist
-				popularity = -0.03
-			}
 			set_country_flag = ALG_tamazight_recognized
 			country_event = { id = alg_ethnic.10 days = 90 }
 		}
@@ -3661,6 +3735,7 @@ ALG_resistance_movement = {
 		available = { NOT = { has_country_flag = ALG_doing_decision_y } }
 		days_re_enable = 14
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_throttle_internet_speeds"
 			set_country_flag = ALG_doing_decision_y
 			add_power_balance_value = {
 				id = algeria_power_balance
@@ -3668,6 +3743,7 @@ ALG_resistance_movement = {
 			}
 		}
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove add_power_balance_value"
 			clr_country_flag = ALG_doing_decision_y
 			custom_effect_tooltip = ALG_protester_exhaustion_TT
 		}
@@ -3685,6 +3761,7 @@ ALG_resistance_movement = {
 		available = { NOT = { has_country_flag = ALG_doing_decision_y } }
 		days_re_enable = 14
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_nationwide_security_presence"
 			set_country_flag = ALG_doing_decision_y
 			add_power_balance_value = {
 				id = algeria_power_balance
@@ -3692,6 +3769,7 @@ ALG_resistance_movement = {
 			}
 		}
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove add_power_balance_value"
 			clr_country_flag = ALG_doing_decision_y
 			custom_effect_tooltip = ALG_protester_exhaustion_TT
 		}
@@ -3709,6 +3787,7 @@ ALG_resistance_movement = {
 		available = { NOT = { has_country_flag = ALG_doing_decision_y } }
 		days_re_enable = 14
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_fund_pro_government_protests"
 			set_country_flag = ALG_doing_decision_y
 			add_power_balance_value = {
 				id = algeria_power_balance
@@ -3716,6 +3795,7 @@ ALG_resistance_movement = {
 			}
 		}
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove add_power_balance_value"
 			clr_country_flag = ALG_doing_decision_y
 			custom_effect_tooltip = ALG_protester_exhaustion_TT
 		}
@@ -3745,7 +3825,9 @@ ALG_resistance_movement = {
 			385 = { has_state_flag = ALG_locals_swayed }
 		}
 		complete_effect = { set_country_flag = ALG_doing_decision }
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
 			clr_country_flag = ALG_doing_decision
 			custom_effect_tooltip = ALG_deploys_security_TT
 			hidden_effect = {
@@ -3782,7 +3864,9 @@ ALG_resistance_movement = {
 			379 = { has_state_flag = ALG_locals_swayed }
 		}
 		complete_effect = { set_country_flag = ALG_doing_decision }
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
 			clr_country_flag = ALG_doing_decision
 			custom_effect_tooltip = ALG_deploys_security_TT
 			hidden_effect = {
@@ -3819,7 +3903,9 @@ ALG_resistance_movement = {
 			380 = { has_state_flag = ALG_locals_swayed }
 		}
 		complete_effect = { set_country_flag = ALG_doing_decision }
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
 			clr_country_flag = ALG_doing_decision
 			custom_effect_tooltip = ALG_deploys_security_TT
 			hidden_effect = {
@@ -3856,7 +3942,9 @@ ALG_resistance_movement = {
 			381 = { has_state_flag = ALG_locals_swayed }
 		}
 		complete_effect = { set_country_flag = ALG_doing_decision }
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
 			clr_country_flag = ALG_doing_decision
 			custom_effect_tooltip = ALG_deploys_security_TT
 			hidden_effect = {
@@ -3893,7 +3981,9 @@ ALG_resistance_movement = {
 			382 = { has_state_flag = ALG_locals_swayed }
 		}
 		complete_effect = { set_country_flag = ALG_doing_decision }
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
 			clr_country_flag = ALG_doing_decision
 			custom_effect_tooltip = ALG_deploys_security_TT
 			hidden_effect = {
@@ -3930,7 +4020,9 @@ ALG_resistance_movement = {
 			383 = { has_state_flag = ALG_locals_swayed }
 		}
 		complete_effect = { set_country_flag = ALG_doing_decision }
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
 			clr_country_flag = ALG_doing_decision
 			custom_effect_tooltip = ALG_deploys_security_TT
 			hidden_effect = {
@@ -3967,7 +4059,9 @@ ALG_resistance_movement = {
 			384 = { has_state_flag = ALG_locals_swayed }
 		}
 		complete_effect = { set_country_flag = ALG_doing_decision }
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
 			clr_country_flag = ALG_doing_decision
 			custom_effect_tooltip = ALG_deploys_security_TT
 			hidden_effect = {
@@ -4004,7 +4098,9 @@ ALG_resistance_movement = {
 			386 = { has_state_flag = ALG_locals_swayed }
 		}
 		complete_effect = { set_country_flag = ALG_doing_decision }
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
 			clr_country_flag = ALG_doing_decision
 			custom_effect_tooltip = ALG_deploys_security_TT
 			hidden_effect = {
@@ -4041,7 +4137,9 @@ ALG_resistance_movement = {
 			387 = { has_state_flag = ALG_locals_swayed }
 		}
 		complete_effect = { set_country_flag = ALG_doing_decision }
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
 			clr_country_flag = ALG_doing_decision
 			custom_effect_tooltip = ALG_deploys_security_TT
 			hidden_effect = {
@@ -4075,6 +4173,7 @@ ALG_resistance_power_struggle = {
 		# custom_effect_tooltip = ALG_power_struggle_status_tt
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete Resistance_support"
 			custom_effect_tooltip = ALG_increase_resistance_tt
 			hidden_effect = {
 				random_list = {
@@ -4128,6 +4227,7 @@ ALG_resistance_power_struggle = {
 		# custom_effect_tooltip = ALG_power_struggle_status_tt
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete Le_Pouvoir_support"
 			custom_effect_tooltip = ALG_increase_pouvoir_tt
 			hidden_effect = {
 				random_list = {
@@ -4562,10 +4662,12 @@ ALG_anti_poaching_decisions = {
 		fixed_random_seed = no
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_anti_poaching_dehorn_camels"
 			ALG_increase_desertification_rate = yes
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_anti_poaching_dehorn_camels"
 			random_list = {
 				75 = {
 					country_event = { id = Algeria_events.5 }
@@ -4614,12 +4716,13 @@ ALG_de_arabisation_category = {
 			}
 		}
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete highlight_states_trigger"
 			remove_ideas = ALG_dearabisation_penalty
 			add_ideas = ALG_imazighen_perseverance
 			add_stability = 0.05
 			custom_effect_tooltip = ALG_dearabisation_end_TT
 
-			every_state = {
+			every_owned_state = {
 				limit = { is_core_of = ALG }
 				remove_core_of = ALG
 				add_core_of = KBY
@@ -4631,10 +4734,17 @@ ALG_de_arabisation_category = {
 						is_core_of = TUN
 						is_core_of = LBA
 					}
-					# region = only regions that apply for the tamazgha
+					#OR = {
+						# Only Berber/Amazigh regions
+						#state = x  # Kabylie
+						#state = x  # Aurès
+						#state = x  # Rif (Morocco)
+						# Add all Tamazgha state IDs
+					#}
 				}
 				add_core_of = KBY
 			}
+
 
 			set_country_flag = ALG_de_arabisation_mission_done
 		}
@@ -4648,6 +4758,7 @@ ALG_de_arabisation_category = {
 		}
 
 		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove highlight_states_trigger"
 			add_stability = 0.02
 		}
 	}
@@ -4673,6 +4784,7 @@ ALG_de_arabisation_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			add_to_variable = { var = kabyle_satisfaction value = 10 }
 			add_to_variable = { var = ALG_ethnic_kabyle value = 2 }
 			add_to_variable = { var = arab_satisfaction value = -5 }
@@ -4704,6 +4816,7 @@ ALG_de_arabisation_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_return_amazigh_exiles"
 			add_to_variable = { var = kabyle_satisfaction value = 15 }
 			add_to_variable = { var = ALG_ethnic_kabyle value = 3 }
 			add_war_support = 0.02
@@ -4739,6 +4852,7 @@ ALG_de_arabisation_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete any_other_country"
 			leave_faction = yes
 			remove_ideas = LoAS_member
 			add_stability = 0.05
@@ -4776,6 +4890,7 @@ ALG_de_arabisation_category = {
 			has_stability > 0.5
 		}
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			add_to_variable = { var = ALG_ethnic_kabyle value = 5 }
 			add_to_variable = { var = ALG_ethnic_arab value = -5 }
 			add_to_variable = { var = kabyle_satisfaction value = 15 }
@@ -4813,6 +4928,7 @@ ALG_tamazgha_cultural_revival_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_amazigh_language_reform"
 			add_to_variable = { var = kabyle_satisfaction value = 10 }
 			add_to_variable = { var = ALG_ethnic_kabyle value = 3 }
 			add_stability = 0.03
@@ -4850,6 +4966,7 @@ ALG_tamazgha_cultural_revival_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			add_to_variable = { var = kabyle_satisfaction value = 15 }
 			add_political_power = -100
 			add_stability = 0.04
@@ -4885,6 +5002,7 @@ ALG_tamazgha_cultural_revival_category = {
 		}
 
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
 			add_stability = 0.03
 			add_war_support = 0.02
 			add_to_variable = { var = kabyle_satisfaction value = 10 }
@@ -4927,6 +5045,7 @@ ALG_tamazgha_cultural_revival_category = {
 			}
 		}
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete has_opinion"
 			add_to_variable = { var = kabyle_satisfaction value = 20 }
 			add_stability = 0.05
 			add_war_support = 0.03
