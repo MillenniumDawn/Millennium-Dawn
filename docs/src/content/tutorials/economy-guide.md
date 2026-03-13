@@ -53,6 +53,8 @@ Millennium Dawn includes a detailed modern economy system covering revenue, gove
   - [Healthcare Privatization](#healthcare-privatization)
   - [Mining Policies](#mining-policies)
   - [Critical Infrastructure](#critical-infrastructure)
+- [Literacy](#literacy)
+- [Internal Factions](#internal-factions)
 - [Sanctions](#sanctions)
 - [Electricity](#electricity)
 - [Advanced Industrial Buildings](#advanced-industrial-buildings)
@@ -83,11 +85,18 @@ To view a country's economic information, click the graph icon in the bottom rig
 - Number of research slots
 - Interest rates (via the debt-to-GDP ratio)
 
-**GDP per Capita** is GDP divided by total population, and indicates the wealth of a nation's population. It affects:
+**GDP per Capita** is GDP divided by total population, and indicates the wealth of a nation's population. A dynamic modifier applies scaling bonuses and penalties based on your GDP/C level:
 
-- Research speed and construction speed
-- Stability and population growth
-- Military and construction costs (wealthier nations pay more)
+| Effect                         | How It Scales                                                                      |
+| ------------------------------ | ---------------------------------------------------------------------------------- |
+| Construction Speed             | Penalty increases with wealth — rich nations build slower                          |
+| Population Growth              | Bonus for poor nations, penalty for wealthy nations (break-even around $60k GDP/C) |
+| Research Speed                 | Bonus increases with wealth (kicks in above ~$51k GDP/C)                           |
+| Stability                      | Small bonus that increases with wealth (kicks in above ~$100k GDP/C)               |
+| Workforce Costs                | Wealthy nations require more workers per building                                  |
+| Fossil Fuel Plant Construction | Cheaper for poor nations, expensive for rich ones                                  |
+
+This means poor nations grow their population faster and build cheaply, but have lower research speed. Rich nations research faster and are more stable, but face higher costs for construction and workforce.
 
 ---
 
@@ -250,12 +259,14 @@ Social spending affects stability, population happiness, and the impact of unemp
 Your interest rate is determined by:
 
 ```
-Interest Rate = (Debt / GDP) × 10
+Interest Rate = (Debt / GDP) × 10 + (Central Bank Policy Rate × 0.5) + modifiers
 ```
 
 - **Minimum interest rate**: 0.8%
 - **Maximum interest rate**: 50%
 - Modified by national spirits and modifiers
+
+The central bank policy rate contributes half its value to the interest rate. This means raising the policy rate to fight inflation also increases the cost of servicing debt — a tradeoff between controlling inflation and managing debt.
 
 If your weekly balance is negative, or if a national focus or event causes you to spend more than your current funds, debt is automatically issued. The game borrows 1% of GDP plus the deficit, with a 1% fee applied to automatically borrowed funds.
 
@@ -641,6 +652,47 @@ Wealthy nations benefit from extensive maintenance, which boosts both infrastruc
 
 ---
 
+## Literacy
+
+Literacy represents the education level of your population and applies a dynamic modifier that scales with your country's literacy rate. It is primarily improved through education spending and national focuses.
+
+| Effect                    | How It Scales                                                                                      |
+| ------------------------- | -------------------------------------------------------------------------------------------------- |
+| Research Speed            | Higher literacy increases research speed                                                           |
+| Productivity Growth       | Higher literacy improves long-term productivity                                                    |
+| Education Costs           | Higher literacy increases the cost of maintaining education systems                                |
+| Office Productivity       | Educated populations are more productive in office buildings                                       |
+| Agricultural Productivity | Higher literacy _reduces_ agricultural output (workers shift away from farming into other sectors) |
+
+The literacy-agriculture tradeoff is most relevant for agrarian economies. Investing heavily in education shifts workers out of the fields, reducing agricultural output even as it boosts research and office productivity. Countries that still rely on farming income need to balance literacy growth against agricultural needs.
+
+---
+
+## Internal Factions
+
+Internal factions represent competing economic and political interest groups within your country. Each faction applies a dynamic modifier that scales with the faction's influence level. Factions can be empowered or weakened through decisions, events, and national focuses.
+
+The main factions with economic effects include:
+
+| Faction                            | Key Economic Effects                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Small & Medium Business Owners** | Construction speed, stability, consumer goods, civilian factory tax income and productivity |
+| **International Bankers**          | Office construction, resource output, trade opinion, investment cost and duration           |
+| **Fossil Fuel Industry**           | Resource output, fuel production, oil export income                                         |
+| **Industrial Conglomerates**       | Infrastructure construction, resource output, civilian industry tax income                  |
+| **Oligarchs**                      | Factory construction, resource output                                                       |
+| **Defense Industry**               | Military factory construction speed, military factory productivity and tax income           |
+| **Maritime Industry**              | Dockyard construction, dockyard output and productivity, dockyard tax income                |
+| **Labour Unions**                  | Factory efficiency, political power, health and social spending costs                       |
+| **Landowners**                     | Resource output, factory construction, office tax income                                    |
+| **Farmers**                        | Consumer goods, population growth, agricultural productivity and construction               |
+| **Communist Cadres**               | Consumer goods, bureaucracy costs                                                           |
+| **The Priesthood**                 | Stability, political power, education costs                                                 |
+
+Each faction's effects can be positive or negative depending on their influence level and your government's relationship with them. Strong factions aligned with your policies provide bonuses; powerful factions that oppose your government can impose penalties. Managing faction influence is part of the political game but has direct economic consequences.
+
+---
+
 ## Sanctions
 
 International sanctions are applied to countries through events, UN votes, and diplomatic actions. Sanctions come in four tiers of increasing severity:
@@ -670,7 +722,24 @@ Countries must supply electricity as part of their infrastructure. Power is gene
 
 Reactor-Grade Material can be produced at Enrichment Facilities (built from the electricity panel) or purchased from other countries via decisions. States with Geothermal Infrastructure or Hydroelectric Infrastructure modifiers provide additional power.
 
-Electricity consumption is calculated from active buildings and population. Insufficient power generation applies debuffs to stability, facility output, and research speed.
+Electricity consumption is calculated from active buildings and population. Insufficient power generation triggers a dynamic modifier that scales with the size of the shortfall:
+
+| Penalty                 | Effect                                                  |
+| ----------------------- | ------------------------------------------------------- |
+| Construction Speed      | Reduced proportionally to energy deficit                |
+| Factory/Dockyard Output | Reduced proportionally to energy deficit                |
+| Research Speed          | Reduced proportionally to energy deficit                |
+| Tax Income              | Reduced (businesses produce less revenue without power) |
+| Stability               | Penalty from energy shortages                           |
+
+Countries that share power via **Energy Load Sharing** agreements can offset some of their deficit by importing electricity from neighbors, but at a cost.
+
+Additionally, fossil fuel powerplants consume fuel to operate. If your country runs out of fuel, a separate **fuel shortage penalty** applies:
+
+- Reduced tax income
+- Stability penalty
+
+This is independent of the electricity shortfall penalty — you can have enough generating capacity but still suffer if you lack the fuel to run your plants.
 
 View your country's electricity situation by clicking the electricity icon in the construction window to open the Electricity Panel. Energy output can be further improved through the **Critical Infrastructure** law.
 
@@ -886,6 +955,9 @@ If interest exceeds 25% and the country is not at war, the AI will default on it
 - **Over-taxation**: Kills productivity growth and long-term revenue
 - **Ignoring currency strength**: A weak currency spirals into inflation, higher debt costs, and economic instability
 - **Neglecting bailout options**: Request IMF or influencer bailouts before interest rates exceed 15%
+- **Ignoring electricity**: An energy deficit silently drags down construction, factory output, research, and tax income
+- **Fighting inflation with only one tool**: Inflation responds to policy rate, taxes, budget balance, and currency together — relying on a single lever is less effective
+- **Raising the policy rate without considering debt**: The policy rate contributes to your interest rate, so hiking it while heavily indebted can worsen a debt spiral even as it controls inflation
 
 ---
 
