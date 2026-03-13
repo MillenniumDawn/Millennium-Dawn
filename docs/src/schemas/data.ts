@@ -1,4 +1,4 @@
-import { z } from "astro:content";
+import { z } from "astro/zod";
 import { hrefSchema, internalPathSchema, loadingSchema } from "./base";
 
 export const navigationSchema = z.object({
@@ -29,6 +29,7 @@ export const releaseSchema = z.object({
     checksum: z.string(),
   }),
   links: z.record(
+    z.string(),
     z.object({
       label: z.string(),
       url: hrefSchema,
@@ -37,6 +38,7 @@ export const releaseSchema = z.object({
 });
 
 export const sectionsSchema = z.record(
+  z.string(),
   z.object({
     title: z.string(),
     url: internalPathSchema,
