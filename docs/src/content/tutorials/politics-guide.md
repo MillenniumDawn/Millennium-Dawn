@@ -31,7 +31,14 @@ Millennium Dawn features a detailed political system with 5 ideology groups, 24 
   - [Banning and Legalizing Parties](#banning-and-legalizing-parties)
 - [Ideology Drift](#ideology-drift)
 - [Political Reform Laws](#political-reform-laws)
-- [Subideology Policies](#subideology-policies)
+- [Ideological Powers](#ideological-powers)
+  - [Communists](#communists)
+  - [Socialists](#socialists)
+  - [Conservatives](#conservatives)
+  - [Liberals](#liberals)
+  - [Autocrats](#autocrats)
+  - [Monarchists](#monarchists)
+  - [Fundamentalists](#fundamentalists)
 - [Regime Change](#regime-change)
   - [Coups and Civil Wars](#coups-and-civil-wars)
   - [Leader Retirement and Term Limits](#leader-retirement-and-term-limits)
@@ -313,49 +320,102 @@ The choice between openness and censorship is one of the core political tradeoff
 
 ---
 
-## Subideology Policies
+## Ideological Powers
 
-When specific subideologies are in power, they unlock unique policy ideas that provide passive bonuses. These are automatically applied based on your ruling party.
+Every ideology has unique powers and gameplay elements that are automatically applied when that ideology is in power. You can view all ideological powers and which ones are currently active by clicking the **Ideological Powers** button in the Politics window.
 
-**Communist and Communist-Adjacent Parties (indices 4, 19):**
+The system groups the 24 subideologies into 7 ideological categories, each with distinct bonuses and penalties. These powers are applied as hidden national ideas that activate based on your ruling party.
 
-| Policy                | Effect                             |
-| --------------------- | ---------------------------------- |
-| Spread the Revolution | +25% boost ideology mission factor |
-| Hard Labour           | +15% building worker requirement   |
+### Communists
 
-**Socialist and Green Parties (indices 3, 5, 17, 18):**
+**Available to:** Communist State (4), Neutral Communism (19)
 
-| Policy                   | Effect                                                    |
-| ------------------------ | --------------------------------------------------------- |
-| Welfare State            | -15% health and social spending costs                     |
-| Economic Interventionism | -25% internal investment costs                            |
-| Peaceful Diplomacy       | Political power trade-offs based on foreign policy stance |
+Communists focus on state-run industrialization, nationalization, and ideological expansion. They can use 5-Year Plans and nationalize foreign assets, but their centrally planned economy requires more workers per building.
 
-**Conservative Parties (indices 1, 6, 8, 12, 14, 20):**
+| Power                     | Effect                                                                                                                                                                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Spread the Revolution** | +25% boost ideology mission factor -- intelligence operatives are more effective at spreading communist ideology abroad                                                                     |
+| **Hard Labour**           | +15% building worker requirement -- centrally planned economies are less efficient, requiring more workers per building                                                                     |
+| **5-Year Plans**          | Access to decisions that provide focused bonuses to a chosen economic sector (primary, secondary, tertiary, infrastructure, military, naval, technology, or energy) for the plan's duration |
+| **Means of Production**   | Access to decisions to nationalize the industries of your largest foreign influencers, seizing their factories and reducing their influence                                                 |
 
-| Policy          | Effect                         |
-| --------------- | ------------------------------ |
-| Good Old Days   | +15% foreign influence defense |
-| Stable Society  | +15% stability                 |
-| Patriotism      | +15% war support               |
-| Homefront First | -15% foreign influence         |
+### Socialists
 
-**Liberal Parties (indices 2, 16):**
+**Available to:** Socialism (3), Anarchist Communism (5), Neutral Green (17), Neutral Social Democracy (18)
 
-| Policy               | Effect                   |
-| -------------------- | ------------------------ |
-| High-Risk Investment | +2% return on investment |
-| Invisible Hand       | Market economy bonuses   |
+Socialists focus on domestic welfare, economic interventionism, and peaceful diplomacy. They excel at internal investment but are weaker at projecting foreign influence.
 
-**Green Parties (index 17):**
+| Power                        | Effect                                                                                                                                                                                                         |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Welfare State**            | -15% health spending costs, -15% social spending costs                                                                                                                                                         |
+| **Economic Interventionism** | -25% internal investment political power cost, -25% internal investment money cost. Green parties instead get +50% renewable energy infrastructure construction speed                                          |
+| **Peaceful Diplomacy**       | Political power bonus or penalty based on Foreign Intervention Law: +15% PP per level below Limited Interventionism, -15% PP per level above it. Isolationist socialists gain PP; interventionist ones lose it |
+| **Naive Worldview**          | -15% foreign influence defense -- the focus on diplomacy over power makes the country more vulnerable to foreign ideological pressure                                                                          |
 
-| Policy                  | Effect                                                  |
-| ----------------------- | ------------------------------------------------------- |
-| Green Interventionism   | +50% renewable energy infrastructure construction speed |
-| Environmental Diplomacy | Diplomatic bonuses                                      |
+### Conservatives
 
-These policies are mutually exclusive -- changing your ruling party changes which policies are available.
+**Available to:** Conservatism (1), Conservative/Emerging (6), Moderate Vilayat-e Faqih (8), Neutral Muslim Brotherhood (12), Neutral Conservatism (14), National Populism (20)
+
+Conservatives focus on stability, national identity, and resistance to foreign influence. They are the most defensively oriented political ideology.
+
+| Power                | Effect                                                                                                                      |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Good Old Days**    | +15% foreign influence defense -- nostalgia and tradition make the population resistant to foreign ideological pressure     |
+| **Stable Society**   | +15% stability                                                                                                              |
+| **Patriotism**       | +15% war support. For Moderate Vilayat-e Faqih and Muslim Brotherhood parties, this is replaced with +15% compliance growth |
+| **[Country] First!** | -15% foreign influence effectiveness -- domestic focus makes it harder to project your own ideology abroad                  |
+
+### Liberals
+
+**Available to:** Liberalism (2), Neutral Libertarian (16), Technocrats
+
+Liberals focus on free-market economics, investment returns, and productivity. Their market-oriented approach provides strong economic bonuses but weakens military capacity.
+
+| Power                     | Effect                                                                                                                                             |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **High-Risk Investments** | +2% return on investment -- liberal markets take riskier but more profitable investment positions                                                  |
+| **The Invisible Hand**    | -15% economic cycle costs, -15% economic cycle upgrade costs, +0.75 productivity growth -- free markets are more efficient at allocating resources |
+| **Business Friendly**     | +10% corporate tax income -- pro-business policies attract more taxable economic activity                                                          |
+| **Anti-Military**         | -15% military factory output, -15% dockyard output -- liberal governments deprioritize military production                                         |
+
+### Autocrats
+
+**Available to:** Western Autocracy (0), Autocracy/Emerging (7), Neutral Autocracy (13), Oligarchism (15), Military Junta (21), Nationalist Autocracy (22)
+
+Autocrats focus on political control and consolidating power. Their signature mechanic is a corruption-based political power bonus: the more corrupt the nation, the more PP autocrats extract from the system through backroom deals.
+
+| Power                      | Effect                                                                                                                                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Corruption PP Bonus**    | Political power bonus that scales with corruption level (11 tiers). At negligible corruption: +2.7 PP/month. At paralyzing corruption: minimal bonus. Autocrats benefit most from moderate corruption levels |
+| **Power Through Strength** | +25% party popularity stability factor -- strongman governance is harder to destabilize                                                                                                                      |
+| **Army of Yes-Men**        | -15% army, navy, and air experience gain -- sycophantic commanders reduce military learning                                                                                                                  |
+| **Good Connections**       | +10% resource export multiplier (oligarchs only) -- personal connections facilitate resource trade                                                                                                           |
+
+### Monarchists
+
+**Available to:** Kingdom (10), Monarchist (23)
+
+Monarchists concentrate power in a royal family, providing governance efficiency and military inspiration but at the cost of political flexibility.
+
+| Power                  | Effect                                                                                                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Royal Decree**       | -15% cost for all law changes (economic, military, education, health, trade, nuclear, conscription, tax, and MIO laws) -- the monarch can implement policy changes more cheaply |
+| **For King and Queen** | +10% army core attack, +10% army core defense -- troops fight harder for their sovereign                                                                                        |
+| **Crown Estate**       | +10% population tax income -- the crown's prestige and estates generate additional revenue                                                                                      |
+| **Outdated Ideals**    | -15% stability -- monarchist governance clashes with modern political expectations                                                                                              |
+
+### Fundamentalists
+
+**Available to:** Hardline Vilayat-e Faqih (9), Caliphate (11)
+
+Fundamentalists are hardline religious governments that focus on ideological expansion, recruitment, and militant foreign policy, but at the cost of international isolation.
+
+| Power                                | Effect                                                                                                                |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| **Sharia Law**                       | +10% ideology drift toward the ruling ideology (communism drift for Vilayat-e Faqih, fascism drift for Caliphate)     |
+| **Foreign Fighters**                 | +300 weekly manpower -- religious recruitment draws fighters from abroad                                              |
+| **Nationalist Liberation Movements** | -10% send volunteers tension, -10% lend-lease tension, +2 volunteer size -- easier to support allied movements abroad |
+| **International Pariah**             | -50% minimum export -- international isolation restricts trade                                                        |
 
 ---
 
