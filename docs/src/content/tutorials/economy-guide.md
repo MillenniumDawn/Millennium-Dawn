@@ -37,10 +37,17 @@ Millennium Dawn includes a detailed modern economy system covering revenue, gove
   - [Currency Backing](#currency-backing)
   - [Monetary Policy Decisions](#monetary-policy-decisions)
 - [Inflation](#inflation)
+  - [What Drives Inflation](#what-drives-inflation)
+  - [The Inflation Formula](#the-inflation-formula)
+  - [Central Bank Policy Rate](#central-bank-policy-rate)
+  - [Currency and Inflation](#currency-and-inflation)
+  - [Effects of Inflation](#effects-of-inflation)
+  - [Managing Inflation](#managing-inflation)
 - [Economic Indicators](#economic-indicators)
   - [Employment](#employment)
   - [Productivity](#productivity)
 - [Economic Cycle](#economic-cycle)
+- [Trade Laws](#trade-laws)
 - [Economic Laws](#economic-laws)
   - [Employment Pressure](#employment-pressure)
   - [Healthcare Privatization](#healthcare-privatization)
@@ -351,22 +358,114 @@ Two monetary policy decisions are available (AI-controlled nations use these aut
 
 ## Inflation
 
-Inflation is modeled through a dynamic modifier that applies broad economic effects. The inflation rate is driven by currency weakness -- when currency strength drops below 1.0, the difference feeds into inflation pressure.
+Inflation is one of the most important economic variables in Millennium Dawn. It is recalculated every quarter (months 3, 6, 9, and 12) and applies broad modifiers to nearly every part of your economy. Unlike a simple currency effect, inflation is driven by the interaction of GDP per capita growth, tax policy, the central bank policy rate, the economic cycle, budget balance, and currency strength.
 
-Inflation affects nearly every part of the economy:
+### What Drives Inflation
 
-| Effect                  | Impact                                                 |
-| ----------------------- | ------------------------------------------------------ |
-| Cost Multiplier         | Increases costs across the board                       |
-| Construction Speed      | Reduced building construction speed                    |
-| Factory/Dockyard Output | Reduced industrial output                              |
-| Productivity Growth     | Slower long-term productivity gains                    |
-| Political Power         | Reduced political power generation                     |
-| Consumer Goods          | Increased consumer goods requirement                   |
-| Investment Costs        | Higher costs for both domestic and foreign investments |
-| Trade Law Changes       | More expensive to adjust trade laws                    |
+Six factors feed into the quarterly inflation calculation:
 
-Inflation can be managed by strengthening your currency (via austerity, reducing debt, or improving stability) or by adopting a hard-money currency backing standard.
+| Factor                       | Effect on Inflation                                                                                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **GDP/C Growth**             | Higher GDP per capita growth directly increases inflation pressure. A rapidly growing economy generates demand that pushes prices up.                   |
+| **Tax Rate**                 | Higher average tax rates reduce inflation pressure. Taxes act as a fiscal brake on the economy -- they pull money out of circulation.                   |
+| **Central Bank Policy Rate** | The _real_ policy rate (policy rate minus current inflation) is what matters. A positive real rate suppresses inflation; a negative real rate fuels it. |
+| **Economic Cycle**           | Boom and fast growth stages add inflationary pressure. Depression and recession stages reduce it. Stable growth is neutral.                             |
+| **Budget Balance**           | A budget deficit increases inflation (simulating money printing to cover the gap). A budget surplus decreases it.                                       |
+| **Currency Strength**        | A weak currency (below 1.0) feeds additional inflation pressure through higher import costs. A strong currency suppresses it.                           |
+
+### The Inflation Formula
+
+Each quarter, the game calculates an inflation adjustment from the factors above, then averages the last four quarters to produce the annual inflation rate. This averaging smooths out short-term spikes.
+
+**Step-by-step:**
+
+1. **GDP/C growth contribution**: The base adjustment starts from last quarter's GDP per capita growth rate, scaled by your GDP per capita level. Higher GDP/C amplifies the effect of growth on prices.
+2. **Tax dampening**: The adjustment is reduced proportionally to your average tax rate. At higher tax rates, more of the growth-driven inflation is absorbed.
+3. **Policy rate effect**: The real central bank rate (policy rate minus inflation, with a 2% floor on inflation for this calculation) is subtracted. A tight monetary policy (real rate > 0) pulls inflation down; loose policy (real rate < 0) lets it rise.
+4. **Economic cycle**: The current cycle stage applies an additional adjustment, scaled by total government spending:
+
+| Cycle Stage   | Inflation Adjustment |
+| ------------- | -------------------- |
+| Depression    | -0.035               |
+| Recession     | -0.025               |
+| Stagnation    | -0.015               |
+| Stable Growth | 0                    |
+| Fast Growth   | +0.015               |
+| Economic Boom | +0.025               |
+
+5. **Budget balance**: A deficit adds inflationary pressure proportional to the shortfall. A surplus has the opposite effect.
+6. **Money printing multiplier**: If the Expand Money Supply decision is active, the entire adjustment is amplified.
+
+The quarterly result is stored and averaged with the previous three quarters. The rate is clamped to prevent wild swings: no more than +/-10 percentage points change per quarter, and a hard cap of +/-200% total.
+
+### Central Bank Policy Rate
+
+The **Central Bank Policy Rate** is a manually adjustable interest rate (0-20%) that represents your country's monetary policy stance. It starts at 3% for all countries.
+
+What matters for inflation is the **real rate** -- the difference between the policy rate and the current inflation rate. For example:
+
+- Policy rate 5%, inflation 3% = real rate +2% (tight, reduces inflation)
+- Policy rate 3%, inflation 5% = real rate -2% (loose, increases inflation)
+- Policy rate 2%, inflation 2% = real rate 0% (neutral)
+
+The AI adjusts the policy rate automatically based on inflation:
+
+| Condition           | AI Action                     |
+| ------------------- | ----------------------------- |
+| Inflation above 10% | Raises policy rate toward 20% |
+| Inflation above 5%  | Raises policy rate toward 15% |
+| Inflation below 1%  | Lowers policy rate toward 1%  |
+
+Players can adjust the policy rate manually to respond faster or pursue different monetary strategies than the AI default.
+
+### Currency and Inflation
+
+Currency strength has a separate, additive effect on inflation costs. When your currency is weak (below 1.0), the gap between 1.0 and your currency strength feeds into a **currency inflation component**:
+
+```
+Currency Inflation = (1.0 / Currency Strength - 1.0) × 0.05
+```
+
+This is added on top of the base inflation rate to produce the **combined inflation cost** that the dynamic modifier uses. A currency at 0.5 strength adds roughly 5% additional inflation pressure. A currency at 1.0 or above adds nothing.
+
+This means inflation has two independent sources: the quarterly macroeconomic calculation and the currency channel. You can have low base inflation but still suffer high effective inflation if your currency has collapsed.
+
+### Effects of Inflation
+
+Inflation applies a dynamic modifier that scales with the inflation rate. The effects are proportional -- higher inflation means stronger penalties:
+
+| Effect                       | Multiplier                          | Example at 10% Inflation |
+| ---------------------------- | ----------------------------------- | ------------------------ |
+| Overall cost multiplier      | 1.0× inflation rate                 | +10% costs               |
+| Project costs                | 1.0× inflation rate                 | +10% project costs       |
+| Economic cycle upgrade costs | 1.25× inflation rate                | +12.5% cycle costs       |
+| Corruption costs             | Scaled by inflation                 | Increased                |
+| Productivity growth          | 1.3× inflation rate (penalty)       | -13% productivity growth |
+| Construction speed           | 2.0× inflation rate (bonus to cost) | +20% construction costs  |
+| Factory/dockyard output      | -1.25× inflation rate               | -12.5% output            |
+| Political power              | -1.3× inflation rate                | -13% PP generation       |
+| Consumer goods               | -0.5× inflation rate                | +5% consumer goods need  |
+| Trade law change costs       | 1.5× inflation rate                 | +15% trade law costs     |
+
+**Deflation** (negative inflation) reverses most of these: costs decrease but output penalties still apply in the opposite direction. Mild deflation can be beneficial, but severe deflation signals economic contraction.
+
+### Managing Inflation
+
+Inflation responds to multiple levers. Here are the main strategies:
+
+**Raise the central bank policy rate.** The most direct tool. Increasing the policy rate above the inflation rate creates a positive real rate, which suppresses inflation over the following quarters. The tradeoff is that high rates also slow economic growth.
+
+**Raise taxes.** Higher tax rates dampen inflation by pulling money out of the economy. However, high corporate taxes reduce productivity growth, so this is a short-term fix with long-term costs.
+
+**Run a budget surplus.** Spending less than you earn reduces inflationary pressure. Cut military spending or unnecessary government programs to bring the budget into surplus.
+
+**Strengthen the currency.** Use Austerity Measures, reduce debt, or improve stability to push currency strength above 1.0. This eliminates the currency inflation channel.
+
+**Adopt a hard-money standard.** Gold and silver backing dampen currency volatility and pull it toward 1.0 over time, which indirectly reduces currency-driven inflation. However, hard-money standards restrict your ability to use the Expand Money Supply decision.
+
+**Avoid the Expand Money Supply decision during high inflation.** This decision amplifies the inflation adjustment and weakens the currency -- useful during deflation but dangerous during inflation.
+
+**Upgrade the economic cycle cautiously.** While a booming economy is desirable, the Fast Growth and Economic Boom stages add inflationary pressure. If inflation is already high, pushing for a higher cycle stage can make it worse.
 
 ---
 
@@ -457,6 +556,29 @@ There are six stages, each with distinct modifiers:
 - Some national focuses advance the Economic Cycle directly
 - Random events tied to high GDP growth rates can raise it
 - Negative events -- such as a housing bubble burst, stock market crash, or banking crisis -- can lower it by one or two levels
+
+---
+
+## Trade Laws
+
+Trade laws control how much of your resource production is exported versus consumed domestically. They are changed through the Politics window and cost 150 political power per change. You can only move one tier at a time (no skipping levels), and certain restrictions apply -- Rentier States (oil-dependent economies) cannot adopt Closed Economy or Consumption Economy, and reducing trade openness may be blocked by international obligations or sanctions.
+
+| Tier | Law                     | Min Export | Consumer Goods | Resource Export Multiplier | Trade Opinion |
+| ---- | ----------------------- | ---------- | -------------- | -------------------------- | ------------- |
+| 1    | Closed Economy          | 10%        | +8%            | --                         | -30%          |
+| 2    | Consumption Economy     | 20%        | +6%            | +4%                        | -20%          |
+| 3    | Semi-Consumption        | 40%        | +3%            | +8%                        | -10%          |
+| 4    | Mixed Economy (default) | 50%        | --             | +12%                       | +10%          |
+| 5    | Export Economy          | 65%        | -3%            | +16%                       | +20%          |
+| 6    | Globalized Trade        | 80%        | -6%            | +20%                       | +30%          |
+
+**Key tradeoffs:**
+
+- **Closed/Consumption**: Keeps resources at home for domestic industry. Useful when at war or when you consume more than you produce. Reduces export income and trade opinion. Closed Economy requires either an autocratic government or being at war with a stronger enemy while short on resources.
+- **Mixed**: The default starting position. Balanced exports and domestic supply.
+- **Export/Globalized**: Maximizes resource export income and trade opinion but forces most production onto the international market, leaving less for domestic use. Reduces consumer goods costs, reflecting the income benefits of open trade.
+
+Inflation increases the cost of changing trade laws (via the `trade_laws_cost_factor` modifier), so adjusting trade policy during high inflation is more expensive.
 
 ---
 
