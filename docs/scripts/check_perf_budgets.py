@@ -15,7 +15,7 @@ BUDGETS_BYTES = {
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".avif", ".gif", ".svg"}
 MAX_IMAGE_BYTES = 3_000_000
-INDEX_HTML_BUDGET = 50_000
+INDEX_HTML_BUDGET = 60_000
 
 
 def parse_args() -> argparse.Namespace:

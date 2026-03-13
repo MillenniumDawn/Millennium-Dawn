@@ -1,14 +1,9 @@
 ---
 import { getEntry } from "astro:content";
-import BaseLayout from "../layouts/BaseLayout.astro";
-import Hero from "../components/Hero.astro";
-import HomeIntro from "../components/HomeIntro.astro";
-import HomeRoadmaps from "../components/HomeRoadmaps.astro";
-import HomeCommunity from "../components/HomeCommunity.astro";
-import HomeResourceGroups from "../components/HomeResourceGroups.astro";
-import HomeSubmods from "../components/HomeSubmods.astro";
-import HomeCredits from "../components/HomeCredits.astro";
-import { STATIC_PAGE_META } from "../lib/page-meta";
+import { BaseLayout } from "@/app/layouts";
+import { Hero, HomeIntro, HomeRoadmaps, HomeCommunity, HomeResourceGroups, HomeSubmods, HomeCredits } from "@/widgets/home";
+import { STATIC_PAGE_META } from "@/lib/page-meta";
+import { SECTION_TITLE_CLASS } from "@/shared/ui/tailwind";
 
 const releaseEntry = await getEntry("release", "index");
 const homeEntry = await getEntry("home", "index");
@@ -23,6 +18,7 @@ const release = releaseEntry.data.current;
 const home = homeEntry.data;
 const pageMeta = STATIC_PAGE_META.home;
 const {
+  hero,
   roadmaps,
   team_join,
   paratranz_projects,
@@ -36,15 +32,30 @@ const {
   pageId={pageMeta.pageId}
   canonicalPath={pageMeta.canonicalPath}
   description={pageMeta.description}
+  toc="off"
 >
-  <Hero />
-  <HomeIntro release={release} />
-  <HomeRoadmaps roadmaps={roadmaps} />
-  <HomeCommunity
-    teamJoinDescription={team_join.description}
-    paratranzProjects={paratranz_projects}
-  />
-  <HomeResourceGroups groups={resource_groups} />
-  <HomeSubmods />
-  <HomeCredits credits={credits} />
+  <Hero hero={hero} />
+  
+  <div class="flex flex-col gap-10 tablet:gap-14 my-xl [&_h2]:!mt-0">
+    <HomeIntro release={release} />
+    <HomeRoadmaps roadmaps={roadmaps} />
+
+    <section aria-labelledby="community-resources-heading">
+      <h2 id="community-resources-heading" class:list={[SECTION_TITLE_CLASS, "mb-6"]}>Community & Resources</h2>
+      <div class="flex flex-col gap-10 tablet:gap-14">
+        <HomeCommunity
+          teamJoinDescription={team_join.description}
+          paratranzProjects={paratranz_projects}
+        />
+
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-md">
+          <HomeResourceGroups groups={resource_groups} />
+        </div>
+
+        <HomeSubmods />
+      </div>
+    </section>
+
+    <HomeCredits credits={credits} />
+  </div>
 </BaseLayout>
