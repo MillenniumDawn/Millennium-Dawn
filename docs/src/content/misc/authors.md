@@ -180,6 +180,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 | arakan94             | @arakan94                       | arakan94       | arakan94      | arakan94@proton.me            |
 | BigRobbo             | @BigRobbo                       | @BigRobbo919   | -             | -                             |
 | pastandrey           | @pastandrey                     | @pastandrey    | -             | -                             |
+| altair6407           | @altair6407                     | @altair6407    | -             | -                             |
 
 # Fellow Modders/Teams
 
