@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+import type { AstroUserConfig } from "astro";
 import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
@@ -5,17 +7,28 @@ import tailwindcss from "@tailwindcss/vite";
 import remarkDirective from "remark-directive";
 import { remarkCountryDirectives } from "./src/lib/remark-country-directives";
 import { remarkRootRelativeToBase } from "./src/lib/remark-root-relative";
+import { rehypeTailwindContent } from "./src/lib/rehype-tailwind-content";
 import { rehypeTableWrapper } from "./src/lib/rehype-table-wrapper";
 import { hoiscriptLanguage } from "./src/lib/shiki-hoiscript";
+import { SITE_BASE_PATH, SITE_FALLBACK_ORIGIN } from "./src/shared/config/site";
+
+// Astro and @tailwindcss/vite currently resolve different Vite type instances.
+const tailwindPlugins =
+  tailwindcss() as unknown as NonNullable<NonNullable<AstroUserConfig["vite"]>["plugins"]>;
 
 export default defineConfig({
-  site: "https://millenniumdawn.github.io",
-  base: "/Millennium-Dawn",
+  site: SITE_FALLBACK_ORIGIN,
+  base: SITE_BASE_PATH,
   output: "static",
   trailingSlash: "always",
   integrations: [mdx(), sitemap()],
   vite: {
-    plugins: [tailwindcss() as any],
+    resolve: {
+      alias: {
+        "@": fileURLToPath(new URL("./src", import.meta.url)),
+      },
+    },
+    plugins: tailwindPlugins,
   },
   markdown: {
     syntaxHighlight: {
@@ -25,7 +38,7 @@ export default defineConfig({
     shikiConfig: {
       langs: [hoiscriptLanguage],
     },
-    remarkPlugins: [remarkDirective, remarkCountryDirectives, remarkRootRelativeToBase],
-    rehypePlugins: [rehypeTableWrapper],
+    remarkPlugins: [remarkDirective, remarkCountryDirectives, [remarkRootRelativeToBase, SITE_BASE_PATH]],
+    rehypePlugins: [rehypeTableWrapper, rehypeTailwindContent],
   },
 });

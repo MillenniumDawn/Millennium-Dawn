@@ -1,2 +1,0 @@
-"""OG image generation helpers."""
-
