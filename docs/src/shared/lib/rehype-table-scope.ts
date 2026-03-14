@@ -19,7 +19,7 @@ export function rehypeTableScope(): (tree: Root) => void {
       if (!Array.isArray(row.children)) return;
       for (const child of row.children) {
         if (child.type === "element" && child.tagName === "th") {
-          (child).properties = { ...(child).properties, scope };
+          child.properties = { ...child.properties, scope };
         }
       }
     });
