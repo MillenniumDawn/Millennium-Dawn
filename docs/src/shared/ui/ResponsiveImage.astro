@@ -8,6 +8,8 @@ type ImageFormat = "avif" | "webp";
 interface Props {
   src: string | ImageMetadata;
   alt?: string;
+  /** When true, image is decorative (alt empty) - adds role="presentation" and aria-hidden for accessibility */
+  decorative?: boolean;
   loading?: "lazy" | "eager";
   decoding?: "async" | "auto" | "sync";
   sizes?: string;
@@ -22,6 +24,7 @@ interface Props {
 const {
   src,
   alt = "",
+  decorative = false,
   loading = "lazy",
   decoding = "async",
   sizes = "100vw",
@@ -43,13 +46,17 @@ const resolvedHeight = height ?? (isStringSource ? undefined : resolvedSrc.heigh
 if (!resolvedWidth || !resolvedHeight) {
   throw new Error("ResponsiveImage requires width and height for string sources.");
 }
+
+const resolvedAlt = decorative ? "" : alt;
+const pictureAttrs = decorative ? { role: "presentation" as const, "aria-hidden": "true" as const } : {};
+const pictureAttributes = { class: pictureClassName, ...pictureAttrs };
 ---
 
 {
   isStringSource ? (
     <Picture
       src={resolvedSrc}
-      alt={alt}
+      alt={resolvedAlt}
       width={resolvedWidth}
       height={resolvedHeight}
       loading={loading}
@@ -59,12 +66,12 @@ if (!resolvedWidth || !resolvedHeight) {
       formats={formats}
       layout="constrained"
       class={imageClassName}
-      pictureAttributes={{ class: pictureClassName }}
+      pictureAttributes={pictureAttributes}
     />
   ) : (
     <Picture
       src={resolvedSrc}
-      alt={alt}
+      alt={resolvedAlt}
       width={resolvedWidth}
       height={resolvedHeight}
       loading={loading}
@@ -74,7 +81,7 @@ if (!resolvedWidth || !resolvedHeight) {
       formats={formats}
       layout="constrained"
       class={imageClassName}
-      pictureAttributes={{ class: pictureClassName }}
+      pictureAttributes={pictureAttributes}
     />
   )
 }

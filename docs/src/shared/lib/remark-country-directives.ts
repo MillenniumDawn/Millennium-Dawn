@@ -16,16 +16,22 @@ type DirectiveNode = Parent & {
 };
 
 const SPIRITS_CONTAINER_CLASS = "my-xl rounded-lg border border-border-light bg-surface p-lg shadow-sm";
-const SPIRITS_TITLE_CLASS = "mb-md text-[clamp(1.15rem,1.5vw+0.3rem,1.5rem)] font-bold leading-heading text-text-secondary";
+const SPIRITS_TITLE_CLASS =
+  "mb-md text-[clamp(1.15rem,1.5vw+0.3rem,1.5rem)] font-bold leading-heading text-text-secondary";
 const SPIRITS_LIST_CLASS = "m-0 flex list-none flex-wrap gap-sm p-0";
-const SPIRIT_ITEM_BASE_CLASS = "mb-0 inline-flex items-center gap-[0.4em] rounded border px-[0.75em] py-[0.35em] text-[0.9rem] font-medium";
+const SPIRIT_ITEM_BASE_CLASS =
+  "mb-0 inline-flex items-center gap-[0.4em] rounded border px-[0.75em] py-[0.35em] text-[0.9rem] font-medium";
 const SPIRIT_DESC_CLASS = "text-[0.8rem] text-text-muted";
 
 const SPIRIT_TYPE_CLASSES: Record<string, string> = {
-  positive: "border-[color:color-mix(in_srgb,var(--color-success)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--color-success)_12%,transparent)] text-success",
-  negative: "border-[color:color-mix(in_srgb,var(--color-danger)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--color-danger)_12%,transparent)] text-danger",
-  mixed: "border-[color:color-mix(in_srgb,var(--color-warning)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--color-warning)_12%,transparent)] text-warning",
-  neutral: "border-[color:color-mix(in_srgb,var(--color-info)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--color-info)_12%,transparent)] text-text-secondary",
+  positive:
+    "border-[color:color-mix(in_srgb,var(--color-success)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--color-success)_12%,transparent)] text-success",
+  negative:
+    "border-[color:color-mix(in_srgb,var(--color-danger)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--color-danger)_12%,transparent)] text-danger",
+  mixed:
+    "border-[color:color-mix(in_srgb,var(--color-warning)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--color-warning)_12%,transparent)] text-warning",
+  neutral:
+    "border-[color:color-mix(in_srgb,var(--color-info)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--color-info)_12%,transparent)] text-text-secondary",
 };
 
 const SPIRIT_INDICATOR_CLASSES: Record<string, string> = {

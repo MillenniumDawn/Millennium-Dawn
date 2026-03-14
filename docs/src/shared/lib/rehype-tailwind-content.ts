@@ -1,6 +1,6 @@
 import type { Element, Root } from "hast";
 import { visit } from "unist-util-visit";
-import { MARKDOWN_CLASSNAMES } from "../shared/ui/tailwind";
+import { MARKDOWN_CLASSNAMES } from "../ui/tailwind";
 
 function asClassList(value: unknown): string[] {
   if (Array.isArray(value)) return value.map(String);
@@ -41,10 +41,16 @@ export function rehypeTailwindContent(): (tree: Root) => void {
       }
 
       if (tagName === "p") {
-        addClasses(node, MARKDOWN_CLASSNAMES.p, parentTag === "blockquote" && typeof index === "number" && parent?.children
-          && index === parent.children.length - 1
-          ? "mb-0"
-          : "");
+        addClasses(
+          node,
+          MARKDOWN_CLASSNAMES.p,
+          parentTag === "blockquote" &&
+            typeof index === "number" &&
+            parent?.children &&
+            index === parent.children.length - 1
+            ? "mb-0"
+            : "",
+        );
         return;
       }
 
@@ -132,6 +138,11 @@ export function rehypeTailwindContent(): (tree: Root) => void {
         const classNames = asClassList(node.properties?.className);
         if (classNames.includes("table-wrapper")) {
           addClasses(node, MARKDOWN_CLASSNAMES.tableWrapper);
+          return;
+        }
+
+        if (classNames.includes("pre-wrapper")) {
+          addClasses(node, MARKDOWN_CLASSNAMES.preWrapper);
           return;
         }
 

@@ -5,28 +5,28 @@ unique_focus_tree: true
 grid_order: 47
 flag_image: /assets/images/flags/north_korea.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: NKO
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '75'
-  - label: Total Factories
-    value: '2'
-  - label: Military Ind.
-    value: '1'
-  - label: Civilian Ind.
-    value: '1'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $3 Billions
-  - label: Debt
-    value: $20 Billions
-  - label: Investments
-    value: $0 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: NKO
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "75"
+      - label: Total Factories
+        value: "2"
+      - label: Military Ind.
+        value: "1"
+      - label: Civilian Ind.
+        value: "1"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $3 Billions
+      - label: Debt
+        value: $20 Billions
+      - label: Investments
+        value: $0 Billions
 ---
 
 North Korea is a country surrounded by South Korea from the South, China from the North and Russia from the North-East. It starts with a Population of 22.86 Millions.

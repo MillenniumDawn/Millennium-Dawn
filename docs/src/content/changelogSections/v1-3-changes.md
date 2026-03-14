@@ -4,8 +4,6 @@ page_id: changelog-v1-3-changes
 order: 4
 ---
 
-# v1.3 Changes
-
 ## v1.3.2 Hotfix
 
 Events
@@ -43,8 +41,6 @@ Tech
 
 - Gave Humanoid Robots an effect
 
-
-
 ## v1.3.1 Hotfix
 
 Decision
@@ -72,8 +68,6 @@ Operations
 Tech
 
 - Fix the ability to build equipment via research
-
-
 
 ## v1.3.0 'La Resistance and Friends'
 
@@ -203,5 +197,3 @@ Politics
 Music
 
 - Added Israeli music
-
-

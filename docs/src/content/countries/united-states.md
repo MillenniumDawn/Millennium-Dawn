@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 64
 flag_image: /assets/images/flags/united_states.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: USA
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '30'
-  - label: Total Factories
-    value: '224'
-  - label: Military Ind.
-    value: '80'
-  - label: Civilian Ind.
-    value: '107'
-  - label: Naval Dockyards
-    value: '37'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $187 Billions
-  - label: Debt
-    value: $8033 Billions
-  - label: Investments
-    value: $405 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: USA
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "30"
+      - label: Total Factories
+        value: "224"
+      - label: Military Ind.
+        value: "80"
+      - label: Civilian Ind.
+        value: "107"
+      - label: Naval Dockyards
+        value: "37"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $187 Billions
+      - label: Debt
+        value: $8033 Billions
+      - label: Investments
+        value: $405 Billions
 ---
 
 The United States are a country surrounded by water from the West and the East. Its only borders are Canada from the North, Mexico from the South and Japan from the Okinawa Base. It starts with a Population of 283.06 Millions.
