@@ -1,6 +1,6 @@
 import type { Root } from "mdast";
 import { visit } from "unist-util-visit";
-import { SITE_BASE_PATH } from "../shared/config/site";
+import { SITE_BASE_PATH } from "../config/site";
 
 const ABSOLUTE_SCHEME = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
 

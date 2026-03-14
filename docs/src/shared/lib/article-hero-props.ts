@@ -4,12 +4,12 @@ export interface ArticleHeroProps {
   eyebrow: string;
   title: string;
   description?: string;
-  metaItems?: Array<{ label: string; value: string; datetime?: string }>;
+  metaItems?: { label: string; value: string; datetime?: string }[];
   tags?: string[];
 }
 
 function extractVersionFromTitle(title: string): string | undefined {
-  const match = title.match(/^v[\d.]+/i);
+  const match = /^v[\d.]+/i.exec(title);
   return match?.[0];
 }
 

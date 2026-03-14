@@ -36,6 +36,7 @@ export const baseDocSchema = z.object({
   hidden: z.boolean().optional(),
   kind: z.string().optional(),
   order: z.number().int().optional(),
+  last_updated: z.coerce.date().optional(),
 });
 
 function resolveInfoboxGroupKind(
