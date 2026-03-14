@@ -1,6 +1,12 @@
 import type { Element, Root } from "hast";
 import { visit } from "unist-util-visit";
-import type { Parent } from "unist";
+
+function hasPreWrapperClass(parent: Element): boolean {
+  const className = parent.properties?.className;
+  if (!className) return false;
+  const list = Array.isArray(className) ? className : [String(className)];
+  return list.some((c) => String(c) === "pre-wrapper");
+}
 
 export function rehypePreWrapper(): (tree: Root) => void {
   return (tree: Root): void => {
@@ -8,13 +14,11 @@ export function rehypePreWrapper(): (tree: Root) => void {
       if (!parent || typeof index !== "number") return;
       if (node.type !== "element" || node.tagName !== "pre") return;
 
-      const preParent = parent as Parent;
+      const preParent = parent as Element;
       if (
         preParent.type === "element" &&
         preParent.tagName === "div" &&
-        (preParent as Element).properties?.className &&
-        Array.isArray((preParent as Element).properties.className) &&
-        (preParent as Element).properties.className.includes("pre-wrapper")
+        hasPreWrapperClass(preParent)
       ) {
         return;
       }
