@@ -1,5 +1,5 @@
 ---
-title: 'Dev Diary #52: Special Projects, Performances, Raids and Missiles'
+title: "Dev Diary #52: Special Projects, Performances, Raids and Missiles"
 description: In-repo dev diary template page for future diary posts.
 permalink: /dev-diaries/52-special-projects-performances-raids-missiles/
 author: Template
@@ -8,8 +8,6 @@ tags:
   - dev diary
   - v2.0
 ---
-
-# Dev Diary #52: Special Projects, Performances, Raids and Missiles
 
 This page is the in-repository dev diary format template for future diary posts.
 
