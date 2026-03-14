@@ -15,11 +15,7 @@ export function rehypePreWrapper(): (tree: Root) => void {
       if (node.type !== "element" || node.tagName !== "pre") return;
 
       const preParent = parent as Element;
-      if (
-        preParent.type === "element" &&
-        preParent.tagName === "div" &&
-        hasPreWrapperClass(preParent)
-      ) {
+      if (preParent.type === "element" && preParent.tagName === "div" && hasPreWrapperClass(preParent)) {
         return;
       }
 

@@ -132,7 +132,7 @@ export const hoiscriptLanguage: LanguageRegistration = {
           },
           name: "string.quoted.double.hoiscript",
           patterns: [
-            { match: "\\\\[\\\\\"nrt]", name: "constant.character.escape.hoiscript" },
+            { match: '\\\\[\\\\"nrt]', name: "constant.character.escape.hoiscript" },
             { match: "£[A-Za-z0-9_]+", name: "constant.other.placeholder.hoiscript" },
           ],
         },
