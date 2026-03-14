@@ -57,6 +57,13 @@ Millennium Dawn includes a detailed modern economy system covering revenue, gove
 - [Internal Factions](#internal-factions)
 - [Sanctions](#sanctions)
 - [Electricity](#electricity)
+- [Buildings](#buildings)
+  - [Offices](#offices)
+  - [Internet Stations](#internet-stations)
+  - [Agriculture Districts](#agriculture-districts)
+  - [Energy Infrastructure](#energy-infrastructure)
+  - [Industrial Infrastructure](#industrial-infrastructure)
+  - [Stronghold Network](#stronghold-network)
 - [Advanced Industrial Buildings](#advanced-industrial-buildings)
   - [Microchip Plants](#microchip-plants)
   - [Composite Plants](#composite-plants)
@@ -231,7 +238,7 @@ Bureaucracy spending affects policy implementation speed, national focus complet
 
 ### Police/Security
 
-Police spending provides stability bonuses, reduced crime rates, and counter-terrorism effectiveness.
+Police spending provides stability bonuses and counter-terrorism effectiveness.
 
 **Levels 1–5:** Costs scale from 1× to 3.4× base rate, based on population.
 
@@ -249,7 +256,7 @@ Health spending scales with population and provides population growth, stability
 
 ### Social/Welfare
 
-Social spending affects stability, population happiness, and the impact of unemployment.
+Social spending affects stability and the impact of unemployment.
 
 **Levels 1–6:** Costs scale from 1× to 9.5× base rate. High social spending reduces the penalties from unemployment.
 
@@ -707,7 +714,7 @@ International sanctions are applied to countries through events, UN votes, and d
 | International Sanctions         | -10%         | -10%      | -10%      | -50%          | Blocked from international market |
 | Massive International Sanctions | -60%         | -10%      | -0.25/day | -75%          | -75% resource exports             |
 
-At the **International Sanctions** level and above, countries are locked out of the international market entirely (cannot buy or sell resources).
+At the **International Sanctions** level and above, countries are locked out of resource exports entirely and lose access to international trade benefits.
 
 Sanctions can be increased or decreased through diplomatic events. Reducing sanctions typically requires diplomatic alignment changes, completing certain focuses, or negotiation through international bodies.
 
@@ -745,6 +752,86 @@ Additionally, fossil fuel powerplants consume fuel to operate. If your country r
 This is independent of the electricity shortfall penalty — you can have enough generating capacity but still suffer if you lack the fuel to run your plants.
 
 View your country's electricity situation by clicking the electricity icon in the construction window to open the Electricity Panel. Energy output can be further improved through the **Critical Infrastructure** law.
+
+---
+
+## Buildings
+
+Millennium Dawn replaces or supplements many standard HOI4 buildings with modern equivalents. Beyond the standard civilian and military factories, the following buildings play key roles in the economy.
+
+### Offices
+
+Offices are the backbone of a modern service economy. They employ the most workers per level of any building (0.473 million per level) and generate the highest corporate tax income factor (5.0), making them the single best building for tax revenue. Building offices is the primary way to grow GDP and reduce unemployment in developed nations.
+
+| Property               | Value                   |
+| ---------------------- | ----------------------- |
+| Base Construction Cost | 40,000                  |
+| Max Per State          | 50                      |
+| Shares Building Slots  | Yes                     |
+| Corporate Tax Factor   | 5.0                     |
+| Base Workers           | 0.473 million per level |
+
+Offices also drive civilian microchip consumption — each staffed office consumes microchips proportional to its worker fulfillment, so nations with many offices need corresponding microchip production.
+
+### Internet Stations
+
+Internet stations represent a country's digital infrastructure. Each level provides a **+5% state productivity growth modifier**, making them a long-term multiplier on economic output. They are cheap to build and employ few workers, making them an efficient early investment.
+
+| Property               | Value                                   |
+| ---------------------- | --------------------------------------- |
+| Base Construction Cost | 5,000 (+1,450 per additional level)     |
+| Max Per State          | 6                                       |
+| Shares Building Slots  | No                                      |
+| Base Workers           | 0.012 million per level                 |
+| Effect                 | +5% state productivity growth per level |
+
+### Agriculture Districts
+
+Agriculture districts represent organized commercial farming. They produce **fuel** (8 units per hour per level, representing ethanol/biofuel) and provide **local supply** (+0.015 per level) to the state. They are important for agrarian economies and for nations looking to supplement their fuel supply without relying on fossil fuel imports.
+
+| Property               | Value                                |
+| ---------------------- | ------------------------------------ |
+| Base Construction Cost | 15,000 (+1,250 per additional level) |
+| Max Per State          | 10                                   |
+| Shares Building Slots  | Yes                                  |
+| Base Workers           | 0.188 million per level              |
+| Fuel Output            | 8 per hour per level                 |
+| Local Supply           | +0.015 per level                     |
+
+Agriculture districts also interact with the Farmers internal faction — their construction speed and tax income can be boosted by maintaining high faction opinion.
+
+### Energy Infrastructure
+
+Energy Infrastructure is a **keystone building** — each state can have at most one, and it competes with Industrial Infrastructure for the same keystone slot. It boosts energy-related construction and provides additional building slots.
+
+| Property               | Value                                                                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Base Construction Cost | 33,000                                                                                                                   |
+| Max Per State          | 1 (keystone slot)                                                                                                        |
+| Effect                 | +5% building slots, +10% renewable energy generation, +10% nuclear reactor construction speed, +10% factory repair speed |
+
+### Industrial Infrastructure
+
+Industrial Infrastructure is the alternative keystone building. It increases the efficiency of resource extraction in the state.
+
+| Property               | Value                                                  |
+| ---------------------- | ------------------------------------------------------ |
+| Base Construction Cost | 36,000                                                 |
+| Max Per State          | 1 (keystone slot)                                      |
+| Effect                 | +15% resource gain efficiency per infrastructure level |
+
+Choose between Energy and Industrial Infrastructure based on the state's role: energy-producing states benefit from the Energy keystone, while resource-rich states benefit from the Industrial keystone.
+
+### Stronghold Network
+
+Stronghold Networks are defensive military installations that provide significant defensive bonuses to a state. They require specific technology to unlock.
+
+| Property               | Value                                                                                                                      |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Base Construction Cost | 45,000                                                                                                                     |
+| Max Per State          | 1                                                                                                                          |
+| Shares Building Slots  | Yes                                                                                                                        |
+| Effect                 | +0.15 local supply, +2 max bunker level, +2 max coastal bunker level, +15% enemy attrition, +10% bunker construction speed |
 
 ---
 
