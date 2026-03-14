@@ -218,7 +218,7 @@ EU members who do not already have the Euro can adopt it through the "Join the E
 - Costs 100 Political Power.
 - Some countries (Denmark, UK, Sweden) have additional historical prerequisites or are AI-reluctant unless Europeanism is very high (above 0.95).
 
-Adopting the Euro grants the `the_euro` idea, which integrates the country into the ECB's monetary policy system.
+Adopting the Euro grants the `euro` idea, which integrates the country into the ECB's monetary policy system. This also allows you to use the Euro as a foreign reserve currency.
 
 ### 9.2 ECB Monetary Policy
 
