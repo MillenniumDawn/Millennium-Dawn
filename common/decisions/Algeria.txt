@@ -1,0 +1,5684 @@
+ALG_crackdown_category = {
+	ALG_arrest_political_opponents = {
+		available = {
+			has_country_flag = ALG_crackdown_path
+		}
+
+		days_remove = 30
+		fire_only_once = yes
+		cost = 100
+		icon = GFX_decision_generic_arrest
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_arrest_political_opponents"
+			custom_effect_tooltip = ALG_arrest_opponents_started_tt
+			add_political_power = -50
+			add_stability = -0.05
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_arrest_political_opponents"
+			custom_effect_tooltip = ALG_arrest_opponents_complete_tt
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.05
+			}
+			add_ideas = ALG_repression_modifier
+			set_temp_variable = { corp_change = 1 }
+			modify_corporate_tax_rate_effect = yes
+
+			random = {
+				chance = 30
+				country_event = { id = alg_crackdown.1 days = 15 random_days = 10 }
+			}
+		}
+
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 2
+				has_stability < 0.45
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support < 0.3
+			}
+		}
+	}
+	ALG_expand_surveillance_services = {
+		cost = 75
+
+		available = {
+			has_country_flag = ALG_crackdown_path
+		}
+		icon = GFX_decision_eng_propaganda_campaigns
+		days_remove = 30
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_expand_surveillance_services"
+			custom_effect_tooltip = ALG_surveillance_started_tt
+			add_political_power = -25
+			add_stability = -0.02
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_expand_surveillance_services"
+			custom_effect_tooltip = ALG_surveillance_complete_tt
+			add_ideas = ALG_surveillance_state_modifier
+			set_temp_variable = { temp_productivity_change = -0.01 }
+			flat_productivity_change_effect = yes
+			add_war_support = 0.01
+		}
+
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 1.5
+				has_idea = ALG_repression_modifier
+			}
+		}
+	}
+	ALG_ban_opposition_parties = {
+		cost = 100
+
+		available = {
+			has_country_flag = ALG_crackdown_path
+			has_stability > 0.65
+		}
+		icon = bancru_depts_button
+		days_remove = 30
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_ban_opposition_parties"
+			custom_effect_tooltip = ALG_ban_parties_started_tt
+			add_political_power = -50
+			add_stability = -0.03
+			add_opinion_modifier = {
+				target = USA
+				modifier = crackdown_on_protests
+			}
+			add_opinion_modifier = {
+				target = FRA
+				modifier = crackdown_on_protests
+			}
+			add_opinion_modifier = {
+				target = GER
+				modifier = crackdown_on_protests
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_ban_opposition_parties"
+			custom_effect_tooltip = ALG_ban_parties_complete_tt
+			add_war_support = 0.02
+			set_country_flag = ALG_crackdown_backfired
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.06
+			}
+			add_popularity = {
+				ideology = communism
+				popularity = 0.08
+			}
+			if = {
+				limit = { has_government = democratic }
+				add_popularity = {
+					ideology = democratic
+					popularity = -0.08
+				}
+			}
+			set_temp_variable = { party_index = 0 }
+			ban_party_scripted_call = yes
+			set_temp_variable = { party_index = 1 }
+			ban_party_scripted_call = yes
+			set_temp_variable = { party_index = 16 }
+			ban_party_scripted_call = yes
+			set_temp_variable = { party_index = 18 }
+			ban_party_scripted_call = yes
+			increase_centralization = yes
+			decrease_economic_growth = yes
+			country_event = { id = alg_crackdown.2 days = 45 random_days = 15 }
+		}
+
+		ai_will_do = {
+			factor = 0.5
+			modifier = {
+				factor = 3
+				has_stability < 0.40
+			}
+			modifier = {
+				factor = 0.1
+				has_country_flag = ALG_us_alignment  # US-aligned less likely to ban parties
+			}
+		}
+	}
+}
+ALG_economic_recovery_category = {
+	ALG_accept_imf_loan = {
+		cost = 0
+		icon = bancru_imf_button
+		available = {
+			has_country_flag = ALG_imf_path
+			NOT = { has_country_flag = ALG_imf_loan_taken }
+			NOT = {
+				has_idea = paralyzing_corruption
+				has_idea = crippling_corruption
+				has_idea = rampant_corruption
+			}
+		}
+		days_remove = 60
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_accept_imf_loan"
+			custom_effect_tooltip = ALG_imf_loan_started_tt
+			set_country_flag = ALG_imf_loan_taken
+			activate_mission = cheap_loan_from_the_imf_mission
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_accept_imf_loan"
+			custom_effect_tooltip = ALG_imf_loan_complete_tt
+			add_offsite_building = { type = industrial_complex level = 2 }
+			add_political_power = 100
+			country_event = { id = alg_economy.1 days = 30 }
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 3
+				has_political_power < 100
+			}
+		}
+	}
+	ALG_start_oil_licensing = {
+		cost = 50
+		icon = cuba_oil_button
+		available = {
+			has_country_flag = ALG_oil_reformed
+		}
+		days_remove = 30
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_start_oil_licensing"
+			custom_effect_tooltip = ALG_oil_licensing_started_tt
+			add_stability = -0.01
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_start_oil_licensing"
+			custom_effect_tooltip = ALG_oil_licensing_complete_tt
+			add_political_power = 50
+			add_ideas = ALG_foreign_oil_licensing_bonus
+			random_owned_controlled_state = {
+				limit = {
+					OR = {
+						state = 382
+						state = 381
+						state = 383
+						is_core_of = ALG
+					}
+				}
+				add_resource = {
+					type = oil
+					amount = 5
+				}
+			}
+			# Relations with oil countries
+			add_opinion_modifier = { target = USA modifier = oil_deals }
+			add_opinion_modifier = { target = PER modifier = oil_deals }
+			add_opinion_modifier = { target = CAN modifier = oil_deals }
+			add_opinion_modifier = { target = SAU modifier = oil_deals }
+			add_opinion_modifier = { target = SOV modifier = oil_deals }
+			add_opinion_modifier = { target = IRQ modifier = oil_deals }
+			add_opinion_modifier = { target = VEN modifier = oil_deals }
+			add_opinion_modifier = { target = UAE modifier = oil_deals }
+			add_opinion_modifier = { target = KUW modifier = oil_deals }
+			add_opinion_modifier = { target = MEX modifier = oil_deals }
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 2
+				has_idea = ALG_imf_conditionality
+			}
+		}
+	}
+	ALG_repay_imf_loan = {
+		cost = 50
+		icon = bancru_ass_imf_button
+		available = {
+			has_country_flag = ALG_imf_loan_taken
+		}
+		days_remove = 30
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_repay_imf_loan"
+			custom_effect_tooltip = ALG_repay_imf_started_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_repay_imf_loan"
+			custom_effect_tooltip = ALG_repay_imf_complete_tt
+			set_temp_variable = { debt_change = 5.0 }
+			modify_debt_effect = yes
+			add_stability = 0.03
+			clr_country_flag = ALG_imf_loan_taken
+		}
+		ai_will_do = {
+			factor = 0.5
+			modifier = {
+				factor = 2
+				has_stability < 0.50
+			}
+			modifier = {
+				factor = 3
+				has_political_power > 300
+			}
+		}
+	}
+}
+ALG_alignments = {
+	ALG_diplomatic_outreach_west = {
+		available = {
+			has_country_flag = ALG_us_alignment
+		}
+		visible = {
+			has_country_flag = ALG_us_alignment
+		}
+		cost = 100
+		icon = GFX_cub_usa_button
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_diplomatic_outreach_west"
+			custom_effect_tooltip = ALG_west_alignment_tt
+			add_opinion_modifier = {
+				target = USA
+				modifier = mutual_investment_treaty_trade_opinion
+			}
+			reverse_add_opinion_modifier = {
+				target = USA
+				modifier = mutual_investment_treaty_trade_opinion
+			}
+			add_political_power = 50
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 2
+				has_opinion = { target = USA value > 25 }
+			}
+		}
+	}
+
+	ALG_diplomatic_outreach_china = {
+		available = {
+			has_country_flag = ALG_china_alignment
+		}
+		visible = {
+			has_country_flag = ALG_china_alignment
+		}
+		cost = 100
+		icon = GFX_decision_generic_china
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_diplomatic_outreach_china"
+			custom_effect_tooltip = ALG_china_alignment_tt
+			add_opinion_modifier = {
+				target = CHI
+				modifier = mutual_investment_treaty_trade_opinion
+			}
+			reverse_add_opinion_modifier = {
+				target = CHI
+				modifier = mutual_investment_treaty_trade_opinion
+			}
+			add_stability = 0.02
+		}
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 2
+				has_opinion = { target = CHI value > 25 }
+			}
+		}
+	}
+}
+ALG_casablanca_accords = {
+	algeria_casablanca_accords = {
+
+		icon = political_discourse
+
+		fire_only_once = yes
+
+		days_mission_timeout = 365
+
+		selectable_mission = yes
+
+		allowed = {
+			always = no
+		}
+
+		activation = {
+			has_completed_focus = ALG_casablanca_accords
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				NOT = { check_variable = { algeria_casablanca_accords_no_of_signatories < algeria_casablanca_accords_no_of_participants } }
+				tooltip = algeria_casablanca_accords_success_tt
+			}
+		}
+
+		cancel_trigger = {
+			custom_trigger_tooltip = {
+				check_variable = { algeria_casablanca_accords_no_of_participants < 2 }
+				tooltip = algeria_casablanca_accords_fail_tt
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete algeria_casablanca_accords"
+			hidden_effect = { news_event = { id = algeriaFocusNews.16 hours = 12 } }
+			if = {
+				limit = { has_country_flag = algeria_western_sahara_peace_plan_annexation }
+				set_temp_variable = { tag_index = ROOT }
+				set_temp_variable = { influence_target = MOR }
+				set_temp_variable = { percent_change = 10 }
+				change_influence_percentage = yes
+				if = {
+					limit = { NOT = { has_country_flag = algeria_casablanca_accords_signed_by_SHA } }
+					custom_effect_tooltip = algeria_casablanca_accords_SHA_resistance_tt
+					if = {
+						limit = {
+							NOT = { is_in_faction = yes }
+							NOT = { MOR = { is_in_faction = yes } }
+						}
+						create_faction = LBA_west_sahara_task_force
+						add_to_faction = MOR
+						MOR = { set_country_flag = LBA_casablanca_accords_temp_alliance }
+						if = {
+							limit = {
+								has_country_flag = algeria_casablanca_accords_signed_by_ALG
+								NOT = { ALG = { is_in_faction = yes } }
+							}
+							add_to_faction = ALG
+							ALG = { set_country_flag = LBA_casablanca_accords_temp_alliance }
+						}
+					}
+				}
+				MOR = { country_event = { id = algeriaFocus.90 hours = 6 } }
+			}
+			if = {
+				limit = { has_country_flag = algeria_western_sahara_peace_plan_autonomy }
+				effect_tooltip = {
+					MOR = {
+						373 = {
+							transfer_state_to = SHA
+						}
+						if = {
+							limit = {
+								has_global_flag = GAME_RULE_allow_colored_puppets
+							}
+							set_autonomy = {
+								target = SHA
+								autonomy_state = autonomy_autonomous_state_colored
+							}
+						}
+						else = {
+							set_autonomy = {
+								target = SHA
+								autonomy_state = autonomy_autonomous_state
+							}
+						}
+					}
+					SHA = {
+						set_capital = { state = 373 }
+					}
+				}
+				set_temp_variable = { tag_index = ROOT }
+				set_temp_variable = { influence_target = MOR }
+				set_temp_variable = { percent_change = 5 }
+				change_influence_percentage = yes
+				set_temp_variable = { influence_target = SHA }
+				set_temp_variable = { percent_change = 5 }
+				change_influence_percentage = yes
+				MOR = { country_event = { id = algeriaFocus.91 hours = 6 } }
+				SHA = { country_event = { id = algeriaFocus.91 hours = 6 } }
+			}
+			if = {
+				limit = { has_country_flag = algeria_western_sahara_peace_plan_independence }
+				set_temp_variable = { tag_index = ROOT }
+				set_temp_variable = { influence_target = SHA }
+				set_temp_variable = { percent_change = 10 }
+				change_influence_percentage = yes
+				if = {
+					limit = { NOT = { has_country_flag = algeria_casablanca_accords_signed_by_MOR } }
+					custom_effect_tooltip = algeria_casablanca_accords_MOR_resistance_tt
+					if = {
+						limit = {
+							NOT = { is_in_faction = yes }
+							NOT = { SHA = { is_in_faction = yes } }
+						}
+						create_faction = LBA_west_sahara_task_force
+						add_to_faction = SHA
+						SHA = { set_country_flag = LBA_casablanca_accords_temp_alliance }
+						if = {
+							limit = {
+								has_country_flag = algeria_casablanca_accords_signed_by_ALG
+								NOT = { ALG = { is_in_faction = yes } }
+							}
+							add_to_faction = ALG
+							ALG = { set_country_flag = LBA_casablanca_accords_temp_alliance }
+						}
+					}
+				}
+				if = {
+					limit = { has_country_flag = algeria_casablanca_accords_signed_by_MOR }
+					MOR = { country_event = { id = algeriaFocus.92 hours = 6 } }
+				}
+				SHA = { country_event = { id = algeriaFocus.92 hours = 6 } }
+			}
+			if = {
+				limit = { has_country_flag = algeria_western_sahara_peace_plan_mauritania }
+				set_temp_variable = { tag_index = ROOT }
+				set_temp_variable = { influence_target = MAU }
+				set_temp_variable = { percent_change = 10 }
+				if = {
+					limit = {
+						OR = {
+							NOT = { has_country_flag = algeria_casablanca_accords_signed_by_MOR }
+							NOT = { has_country_flag = algeria_casablanca_accords_signed_by_SHA }
+						}
+					}
+					if = {
+						limit = {
+							NOT = { has_country_flag = algeria_casablanca_accords_signed_by_MOR }
+						}
+						custom_effect_tooltip = algeria_casablanca_accords_MOR_resistance_tt
+					}
+					if = {
+						limit = {
+							NOT = { has_country_flag = algeria_casablanca_accords_signed_by_SHA }
+						}
+						custom_effect_tooltip = algeria_casablanca_accords_SHA_resistance_tt
+					}
+					if = {
+						limit = {
+							NOT = { is_in_faction = yes }
+							NOT = { MAU = { is_in_faction = yes } }
+						}
+						create_faction = LBA_west_sahara_task_force
+						add_to_faction = MAU
+						MAU = { set_country_flag = LBA_casablanca_accords_temp_alliance }
+						if = {
+							limit = {
+								has_country_flag = algeria_casablanca_accords_signed_by_ALG
+								NOT = { ALG = { is_in_faction = yes } }
+							}
+							add_to_faction = ALG
+							ALG = { set_country_flag = LBA_casablanca_accords_temp_alliance }
+						}
+					}
+				}
+				if = {
+					limit = { has_country_flag = algeria_casablanca_accords_signed_by_MOR }
+					MOR = { country_event = { id = algeriaFocus.93 hours = 6 } }
+				}
+				MAU = { country_event = { id = algeriaFocus.93 hours = 12 } }
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout algeria_casablanca_accords"
+			hidden_effect = { news_event = { id = algeriaFocusNews.17 hours = 12 } }
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision cancel algeria_casablanca_accords"
+			hidden_effect = { news_event = { id = algeriaFocusNews.18 hours = 12 } }
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+
+	}
+
+	algeria_casablanca_accords_draft_solution = {
+
+		icon = political_discourse
+
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = ALG_casablanca_accords
+			has_active_mission = algeria_casablanca_accords
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete algeria_casablanca_accords_draft_solution"
+			country_event = { id = algeriaFocus.59 }
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+
+	}
+
+	algeria_casablanca_accords_hold_negotiations = {
+
+		icon = political_discourse
+
+		visible = {
+			has_completed_focus = ALG_casablanca_accords
+			has_active_mission = algeria_casablanca_accords
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				OR = {
+					has_country_flag = algeria_western_sahara_peace_plan_annexation
+					has_country_flag = algeria_western_sahara_peace_plan_autonomy
+					has_country_flag = algeria_western_sahara_peace_plan_independence
+					has_country_flag = algeria_western_sahara_peace_plan_mauritania
+				}
+				tooltip = casablanca_accords_convince_alg_x_tt
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete algeria_casablanca_accords_hold_negotiations"
+			if = {
+				limit = { NOT = { has_country_flag = algeria_casablanca_accords_at_least_one_neg } }
+				set_country_flag = algeria_casablanca_accords_at_least_one_neg
+			}
+			custom_effect_tooltip = algeria_casablanca_accords_hold_negotiations_tt
+			hidden_effect = {
+				algeria_update_casablanca_accords_acceptance = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+
+	}
+
+	algeria_casablanca_accords_convince_morocco = {
+
+		icon = political_discourse
+
+		cost = 50
+
+		days_re_enable = 30
+
+		visible = {
+			country_exists = MOR
+			has_completed_focus = ALG_casablanca_accords
+			OR = {
+				NOT = { has_country_flag = algeria_casablanca_accords_signed_by_MOR }
+				has_country_flag = algeria_casablanca_accords_MOR_left
+			}
+			has_active_mission = algeria_casablanca_accords
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				has_country_flag = algeria_casablanca_accords_at_least_one_neg
+				tooltip = algeria_casablanca_accords_at_least_one_neg_tt
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete algeria_casablanca_accords_convince_morocco"
+			custom_effect_tooltip = algeria_casablanca_accords_convince_target_tt
+			set_temp_variable = { tag_index = ROOT }
+			set_temp_variable = { influence_target = MOR }
+			set_temp_variable = { percent_change = -10 }
+			change_influence_percentage = yes
+			MOR = {
+				set_variable = { acceptance_chance = ROOT.Morocco_acceptance }
+				set_variable = { acceptance_chance_neg = ROOT.Morocco_acceptance_neg }
+				country_event = { id = algeriaFocus.60 hours = 6 }
+			}
+			effect_tooltip = {
+				random_list = {
+					Morocco_acceptance = {
+						custom_effect_tooltip = algeria_casablanca_accords_convince_accept_tt
+					}
+					Morocco_acceptance_neg = {
+						custom_effect_tooltip = algeria_casablanca_accords_convince_reject_tt
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+
+	}
+
+	algeria_casablanca_accords_convince_sahrawi = {
+
+		icon = political_discourse
+
+		cost = 50
+
+		days_re_enable = 30
+
+		visible = {
+			country_exists = SHA
+			has_completed_focus = ALG_casablanca_accords
+			OR = {
+				NOT = { has_country_flag = algeria_casablanca_accords_signed_by_SHA }
+				has_country_flag = algeria_casablanca_accords_SHA_left
+			}
+			has_active_mission = algeria_casablanca_accords
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				has_country_flag = algeria_casablanca_accords_at_least_one_neg
+				tooltip = algeria_casablanca_accords_at_least_one_neg_tt
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete algeria_casablanca_accords_convince_sahrawi"
+			custom_effect_tooltip = algeria_casablanca_accords_convince_target_tt
+			set_temp_variable = { tag_index = ROOT }
+			set_temp_variable = { influence_target = SHA }
+			set_temp_variable = { percent_change = -10 }
+			change_influence_percentage = yes
+			SHA = {
+				set_variable = { acceptance_chance = ROOT.Sahrawi_acceptance }
+				set_variable = { acceptance_chance_neg = ROOT.Sahrawi_acceptance_neg }
+				country_event = { id = algeriaFocus.60 hours = 6 }
+			}
+			effect_tooltip = {
+				random_list = {
+					Sahrawi_acceptance = {
+						custom_effect_tooltip = algeria_casablanca_accords_convince_accept_tt
+					}
+					Sahrawi_acceptance_neg = {
+						custom_effect_tooltip = algeria_casablanca_accords_convince_reject_tt
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+
+	}
+}
+ALG_kabyle_issue = {
+	monitor_kabyle_unrest  = {
+	icon = GFX_decision_cat_french_happiness
+		allowed = {
+			original_tag = ALG
+		}
+		available = {
+			has_idea = ALG_kabylia_unrest
+			385 = {
+				resistance > 0
+			}
+		}
+		cost = 0
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 385
+			}
+		}
+		on_map_mode = map_only
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete highlight_states_trigger"
+			custom_effect_tooltip =  kabyle_resistance_effects
+			custom_effect_tooltip = kabyle_resistance_tooltip
+		}
+		#hidden_effect = {
+		#	385 = {
+		#		save_event_target_as = kabyle_state
+		#	}
+		#	set_variable = { kabyle_resistance = event_target:kabyle_state.resistance }
+		#}
+		ai_will_do = { factor = 0 }
+	}
+}
+ALG_UN_security_council_seat = {
+
+	campaign_for_UNSC_seat_SOV1 = {
+
+		icon = GFX_decision_russia
+
+		available = {
+			has_completed_focus = ALG_seek_security_council_seat
+			SOV = {
+				has_opinion = {
+					target = ROOT
+					value > 49
+				}
+				NOT = {
+					has_country_flag = SOV_recognition_campaign_UNSC
+				}
+			}
+			if = {
+				limit = { NOT = { SOV = { has_government = democratic } } }
+				custom_trigger_tooltip = {
+					tooltip = USA_influence_below_tt
+					NOT = { check_variable = { influence_array^0 = USA } }
+				}
+			}
+			if = {
+				limit = { NOT = { SOV = { has_government = democratic } } }
+				custom_trigger_tooltip = {
+					tooltip = ENG_influence_below_tt
+					NOT = { check_variable = { influence_array^0 = ENG } }
+				}
+			}
+			if = {
+				limit = { NOT = { SOV = { has_government = democratic } } }
+				custom_trigger_tooltip = {
+					tooltip = FRA_influence_below_tt
+					NOT = { check_variable = { influence_array^0 = FRA } }
+				}
+			}
+			if = {
+				limit = { NOT = { SOV = { has_government = democratic } } }
+				custom_trigger_tooltip = {
+					tooltip = GER_influence_below_tt
+					NOT = { check_variable = { influence_array^0 = GER } }
+				}
+			}
+		}
+
+		days_remove = 30
+
+		cost = 300
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision campaign_for_UNSC_seat_SOV"
+			SOV = {
+				set_country_flag = SOV_recognition_campaign_UNSC
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = is_trying_to_win_our_favour
+				}
+			}
+		}
+		ai_will_do = {base = 1 }
+	}
+
+	campaign_for_UNSC_seat_USA1 = {
+
+		icon = GFX_decision_usa
+
+		available = {
+			has_completed_focus = ALG_seek_security_council_seat
+			USA = {
+				has_opinion = {
+					target = ROOT
+					value > 49
+				}
+				NOT = {
+					has_country_flag = USA_recognition_campaign_UNSC
+				}
+			}
+
+			if = {
+				limit = {
+					NOT = { CHI = { has_government = democratic } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = CHI_influence_below_tt
+					NOT = { check_variable = { influence_array^0 = CHI } }
+				}
+			}
+			if = {
+				limit = { NOT = { SOV = { has_government = democratic } } }
+				custom_trigger_tooltip = {
+					tooltip = SOV_influence_below_tt
+					NOT = { check_variable = { influence_array^0 = SOV } }
+				}
+			}
+		}
+
+		days_remove = 30
+
+		cost = 300
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision campaign_for_UNSC_seat_USA"
+			USA = {
+				set_country_flag = USA_recognition_campaign_UNSC
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = is_trying_to_win_our_favour
+				}
+			}
+		}
+		ai_will_do = {base = 1 }
+	}
+
+	campaign_for_UNSC_seat_FRA1= {
+
+		icon = GFX_decision_france
+
+		available = {
+			has_completed_focus = ALG_seek_security_council_seat
+			FRA = {
+				has_opinion = {
+					target = ROOT
+					value > 49
+				}
+				NOT = {
+					has_country_flag = FRA_recognition_campaign_UNSC
+				}
+			}
+
+			if = {
+				limit = {
+					NOT = { CHI = { has_government = democratic } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = CHI_influence_below_tt
+					NOT = { check_variable = { influence_array^0 = CHI } }
+				}
+			}
+			if = {
+				limit = { NOT = { SOV = { has_government = democratic } } }
+				custom_trigger_tooltip = {
+					tooltip = SOV_influence_below_tt
+					NOT = { check_variable = { influence_array^0 = SOV } }
+				}
+			}
+		}
+
+		days_remove = 30
+
+		cost = 300
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision campaign_for_UNSC_seat_FRA"
+			FRA = {
+				set_country_flag = FRA_recognition_campaign_UNSC
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = is_trying_to_win_our_favour
+				}
+			}
+		}
+		ai_will_do = {base = 1 }
+	}
+
+	campaign_for_UNSC_seat_ENG1 = {
+
+		icon = GFX_decision_uk
+
+		available = {
+			has_completed_focus = ALG_seek_security_council_seat
+			ENG = {
+				has_opinion = {
+					target = ROOT
+					value > 49
+				}
+				NOT = {
+					has_country_flag = ENG_recognition_campaign_UNSC
+				}
+			}
+			if = {
+				limit = {
+					NOT = { CHI = { has_government = democratic } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = CHI_influence_below_tt
+					NOT = { check_variable = { influence_array^0 = CHI } }
+				}
+			}
+			if = {
+				limit = { NOT = { SOV = { has_government = democratic } } }
+				custom_trigger_tooltip = {
+					tooltip = SOV_influence_below_tt
+					NOT = { check_variable = { influence_array^0 = SOV } }
+				}
+			}
+		}
+
+		days_remove = 30
+
+		cost = 300
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision campaign_for_UNSC_seat_ENG"
+			ENG = {
+				set_country_flag = ENG_recognition_campaign_UNSC
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = is_trying_to_win_our_favour
+				}
+			}
+		}
+		ai_will_do = {base = 1 }
+	}
+
+	campaign_for_UNSC_seat_CHI1 = {
+
+		icon = GFX_decision_china
+
+		available = {
+			has_completed_focus = ALG_seek_security_council_seat
+			CHI = {
+				has_opinion = {
+					target = ROOT
+					value > 49
+				}
+				NOT = {
+					has_country_flag = CHI_recognition_campaign_UNSC
+				}
+			}
+			if = {
+				limit = { NOT = { CHI = { has_government = democratic } } }
+				custom_trigger_tooltip = {
+					tooltip = USA_influence_below_tt
+					NOT = { check_variable = { influence_array^0 = USA } }
+				}
+			}
+		}
+
+		days_remove = 30
+
+		cost = 300
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision campaign_for_UNSC_seat_CHI"
+			CHI = {
+				set_country_flag = CHI_recognition_campaign_UNSC
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = is_trying_to_win_our_favour
+				}
+			}
+		}
+		ai_will_do = {base = 1 }
+	}
+
+	become_a_UNSC_state1 = {
+
+		icon = GFX_decision_generic_UN
+
+		available = {
+			has_completed_focus = ALG_seek_security_council_seat
+			NOT = {
+				has_idea = p5_member
+			}
+			custom_trigger_tooltip = {
+				tooltip = security_council_support_tt
+				USA = {
+					has_country_flag = USA_recognition_campaign_UNSC
+				}
+				ENG = {
+					has_country_flag = ENG_recognition_campaign_UNSC
+				}
+				FRA = {
+					has_country_flag = FRA_recognition_campaign_UNSC
+				}
+				SOV = {
+					has_country_flag = SOV_recognition_campaign_UNSC
+				}
+				CHI = {
+					has_country_flag = CHI_recognition_campaign_UNSC
+				}
+			}
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision become_a_UNSC_state"
+			add_ideas = p5_member
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
+		}
+		ai_will_do = {base = 1 }
+	}
+}
+ALG_reconciliation_path_category = {
+	ALG_pardon_moderate_islamist = {
+		icon = GFX_decisions_promice_peace_button
+		cost = 75
+		available = {
+			has_country_flag = ALG_reconciliation_path
+			has_stability > 0.40
+		}
+		days_remove = 30
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_pardon_moderate_islamist"
+			custom_effect_tooltip = ALG_pardon_islamist_started_tt
+			add_political_power = -25
+			add_stability = -0.02
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_pardon_moderate_islamist"
+			custom_effect_tooltip = ALG_pardon_islamist_complete_tt
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.04
+			}
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.03
+			}
+			add_popularity = {
+				ideology = neutrality
+				popularity = 0.03
+			}
+			add_political_power = 75
+		}
+
+		ai_will_do = {
+			factor = 10
+			modifier = {
+				factor = 0.3
+				has_country_flag = ALG_crackdown_path
+			}
+		}
+	}
+	ALG_initiate_national_dialogues = {
+
+		available = {
+			has_country_flag = ALG_reconciliation_path
+		}
+		icon = spending_lower_button
+		cost = 100
+		days_remove = 30
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_initiate_national_dialogues"
+			custom_effect_tooltip = ALG_dialogue_started_tt
+			add_political_power = -50
+			add_war_support = -0.03
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_initiate_national_dialogues"
+			custom_effect_tooltip = ALG_dialogue_complete_tt
+			add_stability = 0.05
+			add_ideas = ALG_national_dialogue_modifier
+			set_country_flag = ALG_dialogue_opened
+			add_opinion_modifier = { target = FRA modifier = democratic_reforms }
+			add_opinion_modifier = { target = GER modifier = democratic_reforms }
+			add_opinion_modifier = { target = ENG modifier = democratic_reforms }
+			add_opinion_modifier = { target = SWI modifier = democratic_reforms }
+			add_opinion_modifier = { target = NOR modifier = democratic_reforms }
+			add_opinion_modifier = { target = HOL modifier = democratic_reforms }
+		}
+
+		ai_will_do = {
+			factor = 0.9
+			modifier = {
+				factor = 2
+				has_stability < 0.50
+			}
+		}
+	}
+	ALG_reintegrate_former_fighter = {
+		available = {
+			has_country_flag = ALG_reconciliation_path
+		}
+
+		days_remove = 30
+		fire_only_once = yes
+		icon = GFX_decision_generic_army_support
+		cost = 125
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_reintegrate_former_fighter"
+			custom_effect_tooltip = ALG_reintegrate_fighters_started_tt
+			add_political_power = -50
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_reintegrate_former_fighter"
+			custom_effect_tooltip = ALG_reintegrate_fighters_complete_tt
+			add_stability = 0.03
+			add_manpower = 3000
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.05
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 2
+				has_manpower > 10000
+			}
+		}
+	}
+}
+ALG_ethnic_data_category = {
+	ALG_init_ethnic_data = {
+		icon = GFX_decisions_religion_government_button
+		allowed = {
+			original_tag = ALG
+		}
+
+		visible = {
+			has_country_flag = ALG_ethnic_question_raised
+			NOT = { has_country_flag = ALG_ethnic_data_initialized }
+		}
+
+		available = {
+			is_subject = no
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_init_ethnic_data"
+			country_event = { id = ALG_ethnic_data.1 }
+		}
+
+		ai_will_do = {
+			factor = 100
+		}
+	}
+	ALG_show_ethnic_data = {
+		icon = GFX_decisions_religion_government_button
+
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+		}
+
+		available = {
+			always = yes
+		}
+
+		days_remove = 0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_show_ethnic_data"
+			custom_effect_tooltip = ALG_ethnic_overview_full_tt
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+	ALG_favor_arab_policies = {
+		icon = GFX_decision_generic_political_discourse
+
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+		}
+
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = ALG_recent_ethnic_policy }
+		}
+
+		cost = 50
+		days_remove = 30
+
+		modifier = {
+			political_power_gain = 0.05
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_favor_arab_policies"
+			custom_effect_tooltip = ALG_favor_arab_tt
+			hidden_effect = {
+				add_to_variable = { arab_satisfaction = 10 }
+				add_to_variable = { ALG_arab_favor_counter = 1 }
+				subtract_from_variable = { kabyle_satisfaction = 5 }
+				subtract_from_variable = { chaoui_satisfaction = 3 }
+				subtract_from_variable = { tuareg_satisfaction = 3 }
+				subtract_from_variable = { mozabite_satisfaction = 3 }
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+				set_country_flag = { flag = ALG_recent_ethnic_policy days = 60 value = 1 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
+			ALG_update_ethnic_modifiers = yes
+		}
+
+		ai_will_do = {
+			factor = 0.2
+			modifier = {
+				factor = 2
+				check_variable = { arab_satisfaction < 40 }
+			}
+		}
+	}
+	ALG_favor_kabyle_policies = {
+		icon = GFX_decision_generic_nationalism
+
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+		}
+
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = ALG_recent_ethnic_policy }
+		}
+
+		cost = 50
+		days_remove = 30
+
+		modifier = {
+			research_speed_factor = 0.02
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_favor_kabyle_policies"
+			custom_effect_tooltip = ALG_favor_kabyle_tt
+			hidden_effect = {
+				add_to_variable = { kabyle_satisfaction = 10 }
+				add_to_variable = { ALG_kabyle_favor_counter = 1 }
+				subtract_from_variable = { arab_satisfaction = 5 }
+				subtract_from_variable = { chaoui_satisfaction = 2 }
+				clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+				set_country_flag = { flag = ALG_recent_ethnic_policy days = 60 value = 1 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
+			ALG_update_ethnic_modifiers = yes
+		}
+
+		ai_will_do = {
+			factor = 0.2
+			modifier = {
+				factor = 2
+				check_variable = { kabyle_satisfaction < 40 }
+			}
+		}
+	}
+	ALG_favor_chaoui_policies = {
+		icon = GFX_decision_generic_construction
+
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+		}
+
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = ALG_recent_ethnic_policy }
+		}
+
+		cost = 50
+		days_remove = 30
+
+		modifier = {
+			production_speed_buildings_factor = 0.03
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_favor_chaoui_policies"
+			custom_effect_tooltip = ALG_favor_chaoui_tt
+			hidden_effect = {
+				add_to_variable = { chaoui_satisfaction = 10 }
+				add_to_variable = { ALG_chaoui_favor_counter = 1 }
+				subtract_from_variable = { arab_satisfaction = 3 }
+				subtract_from_variable = { kabyle_satisfaction = 2 }
+				clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+				set_country_flag = { flag = ALG_recent_ethnic_policy days = 60 value = 1 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
+			ALG_update_ethnic_modifiers = yes
+		}
+
+		ai_will_do = {
+			factor = 0.2
+			modifier = {
+				factor = 2
+				check_variable = { chaoui_satisfaction < 40 }
+			}
+		}
+	}
+	ALG_favor_tuareg_policies = {
+		icon = GFX_decision_generic_military
+
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+		}
+
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = ALG_recent_ethnic_policy }
+		}
+
+		cost = 50
+		days_remove = 30
+
+		modifier = {
+			army_org_factor = 0.02
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_favor_tuareg_policies"
+			custom_effect_tooltip = ALG_favor_tuareg_tt
+			hidden_effect = {
+				add_to_variable = { tuareg_satisfaction = 10 }
+				add_to_variable = { ALG_tuareg_favor_counter = 1 }
+				subtract_from_variable = { arab_satisfaction = 3 }
+				clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				set_country_flag = { flag = ALG_recent_ethnic_policy days = 60 value = 1 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
+			ALG_update_ethnic_modifiers = yes
+		}
+
+		ai_will_do = {
+			factor = 0.2
+			modifier = {
+				factor = 2
+				check_variable = { tuareg_satisfaction < 40 }
+			}
+		}
+	}
+	ALG_favor_mozabite_policies = {
+		icon = GFX_decision_generic_industry
+
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+		}
+
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = ALG_recent_ethnic_policy }
+		}
+
+		cost = 50
+		days_remove = 30
+
+		modifier = {
+			consumer_goods_factor = -0.02
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_favor_mozabite_policies"
+			custom_effect_tooltip = ALG_favor_mozabite_tt
+			hidden_effect = {
+				add_to_variable = { mozabite_satisfaction = 10 }
+				add_to_variable = { ALG_mozabite_favor_counter = 1 }
+				subtract_from_variable = { arab_satisfaction = 2 }
+				clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				set_country_flag = { flag = ALG_recent_ethnic_policy days = 60 value = 1 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
+			ALG_update_ethnic_modifiers = yes
+		}
+
+		ai_will_do = {
+			factor = 0.2
+			modifier = {
+				factor = 2
+				check_variable = { mozabite_satisfaction < 40 }
+			}
+		}
+	}
+	ALG_national_unity_initiative = {
+		icon = GFX_decision_generic_form_nation
+
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+		}
+
+		available = {
+			has_political_power > 100
+			NOT = { has_country_flag = ALG_recent_unity_policy }
+		}
+
+		cost = 100
+		days_remove = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_national_unity_initiative"
+			custom_effect_tooltip = ALG_unity_policy_tt
+			hidden_effect = {
+				add_to_variable = { arab_satisfaction = 5 }
+				add_to_variable = { kabyle_satisfaction = 5 }
+				add_to_variable = { chaoui_satisfaction = 5 }
+				add_to_variable = { tuareg_satisfaction = 5 }
+				add_to_variable = { mozabite_satisfaction = 5 }
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+				set_country_flag = { flag = ALG_recent_unity_policy days = 180 value = 1 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
+			ALG_update_ethnic_modifiers = yes
+			add_stability = 0.03
+		}
+
+		ai_will_do = {
+			factor = 0.5
+		}
+	}
+	ALG_conduct_national_census = {
+		icon = GFX_decision_generic_independence
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_country_flag = ALG_ethnic_data_initialized
+			has_political_power > 75
+		}
+
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+			NOT = { has_country_flag = ALG_census_conducted }
+		}
+
+		cost = 75
+		days_remove = 60
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_conduct_national_census"
+			custom_effect_tooltip = ALG_census_tt
+			hidden_effect = {
+				set_country_flag = ALG_census_conducted
+				random_list = {
+					30 = {
+						add_to_variable = { ALG_ethnic_kabyle = 1 }
+						subtract_from_variable = { ALG_ethnic_arab = 1 }
+						add_to_variable = { kabyle_satisfaction = 5 }
+					}
+					30 = {
+						add_to_variable = { ALG_ethnic_chaoui = 1 }
+						subtract_from_variable = { ALG_ethnic_other = 0.5 }
+						subtract_from_variable = { ALG_ethnic_arab = 0.5 }
+						add_to_variable = { chaoui_satisfaction = 5 }
+					}
+					20 = {
+						add_to_variable = { ALG_ethnic_tuareg = 0.5 }
+						subtract_from_variable = { ALG_ethnic_other = 0.5 }
+						add_to_variable = { tuareg_satisfaction = 5 }
+					}
+					20 = { }
+				}
+				country_event = { id = ALG_ethnic_data.2 days = 5 }
+			}
+		}
+
+		ai_will_do = { factor = 0.5 }
+	}
+	ALG_suppress_ethnic_unrest = {
+		icon = GFX_decision_generic_ignite_civil_war
+
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+			OR = {
+				check_variable = { arab_satisfaction < 25 }
+				check_variable = { kabyle_satisfaction < 25 }
+				check_variable = { tuareg_satisfaction < 25 }
+				check_variable = { chaoui_satisfaction < 25 }
+				check_variable = { mozabite_satisfaction < 25 }
+			}
+		}
+
+		available = {
+			has_political_power > 75
+			NOT = { has_country_flag = ALG_recent_suppression }
+		}
+
+		cost = 75
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = ALG_suppress_unrest_tt
+			add_stability = -0.05
+			add_war_support = -0.03
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { arab_satisfaction < 25 } }
+					add_to_variable = { arab_satisfaction = 15 }
+				}
+				if = {
+					limit = { check_variable = { kabyle_satisfaction < 25 } }
+					add_to_variable = { kabyle_satisfaction = 15 }
+				}
+				if = {
+					limit = { check_variable = { tuareg_satisfaction < 25 } }
+					add_to_variable = { tuareg_satisfaction = 15 }
+				}
+				if = {
+					limit = { check_variable = { chaoui_satisfaction < 25 } }
+					add_to_variable = { chaoui_satisfaction = 15 }
+				}
+				if = {
+					limit = { check_variable = { mozabite_satisfaction < 25 } }
+					add_to_variable = { mozabite_satisfaction = 15 }
+				}
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+				set_country_flag = { flag = ALG_recent_suppression days = 120 value = 1 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
+			ALG_update_ethnic_modifiers = yes
+		}
+
+		ai_will_do = {
+			factor = 0.8
+		}
+	}
+	ALG_recognize_tamazight_1 = {
+		icon = GFX_decision_generic_nationalism
+
+		visible = {
+			has_country_flag = ALG_ethnic_data_initialized
+			NOT = { has_country_flag = ALG_tamazight_recognized }
+		}
+
+		available = {
+			has_political_power > 150
+			date > 2002.1.1
+		}
+
+		cost = 150
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_recognize_tamazight_1"
+			custom_effect_tooltip = ALG_recognize_tamazight_tt
+			add_stability = 0.05
+			hidden_effect = {
+				add_to_variable = { kabyle_satisfaction = 20 }
+				add_to_variable = { chaoui_satisfaction = 15 }
+				add_to_variable = { tuareg_satisfaction = 10 }
+				add_to_variable = { mozabite_satisfaction = 10 }
+				subtract_from_variable = { arab_satisfaction = 10 }
+				clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+				clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+				set_country_flag = ALG_tamazight_recognized
+				ALG_update_ethnic_modifiers = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 0.5
+			modifier = {
+				factor = 2
+				check_variable = { kabyle_satisfaction < 30 }
+			}
+		}
+	}
+}
+ALG_political_struggle = {
+	ALG_boost_reformists = {
+		icon = GFX_decision_poland_revoult
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_power_balance = { id = algeria_power_balance }
+			has_political_power > 100
+			NOT = { has_country_flag = ALG_boosting_reformists }
+		}
+
+		visible = {
+			has_power_balance = { id = algeria_power_balance }
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_boost_reformists"
+			custom_effect_tooltip = ALG_boost_reformists_tt
+			set_country_flag = { flag = ALG_boosting_reformists days = 90 value = 1 }
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = 0.15
+			}
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.02
+			}
+			add_stability = -0.02
+		}
+
+		ai_will_do = {
+			factor = 0.5
+			modifier = {
+				factor = 2
+				has_stability > 0.50
+			}
+			modifier = {
+				factor = 3
+				has_country_flag = ALG_reconciliation_path
+			}
+			modifier = {
+				factor = 0.1
+				has_country_flag = ALG_crackdown_path
+			}
+			modifier = {
+				factor = 2
+				power_balance_value = { id = algeria_power_balance value < -0.40 }
+			}
+			modifier = {
+				factor = 3
+				power_balance_value = { id = algeria_power_balance value < -0.3 }
+			}
+			modifier = {
+				factor = 0.2
+				power_balance_value = { id = algeria_power_balance value > 0.60 }
+			}
+		}
+	}
+
+	ALG_boost_old_guard = {
+		icon = GFX_decision_ISR_military_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_power_balance = { id = algeria_power_balance }
+			has_political_power > 100
+			NOT = { has_country_flag = ALG_boosting_old_guard }
+		}
+
+		visible = {
+			has_power_balance = { id = algeria_power_balance }
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_boost_old_guard"
+			custom_effect_tooltip = ALG_boost_old_guard_tt
+			set_country_flag = { flag = ALG_boosting_old_guard days = 90 value = 1 }
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.15
+			}
+			add_stability = -0.02
+			add_war_support = 0.03
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.02
+			}
+		}
+
+		ai_will_do = {
+			factor = 0.5
+			modifier = {
+				factor = 3
+				has_country_flag = ALG_crackdown_path
+			}
+			modifier = {
+				factor = 2
+				has_war_support < 0.40
+			}
+			modifier = {
+				factor = 0.1
+				has_country_flag = ALG_reconciliation_path
+			}
+			modifier = {
+				factor = 2
+				power_balance_value = { id = algeria_power_balance value > 0.40 }
+			}
+			modifier = {
+				factor = 0.2
+				power_balance_value = { id = algeria_power_balance value < -0.60 }
+			}
+		}
+	}
+
+	ALG_rally_students = {
+		icon = GFX_decision_generic_political_rally
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_power_balance = { id = algeria_power_balance }
+			has_political_power > 75
+			NOT = { has_country_flag = ALG_rallying_students }
+		}
+
+		visible = {
+			has_power_balance = { id = algeria_power_balance }
+		}
+
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_rally_students"
+			custom_effect_tooltip = ALG_rally_students_tt
+			set_country_flag = { flag = ALG_rallying_students days = 60 value = 1 }
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = 0.08
+			}
+			add_stability = -0.03
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.01
+			}
+		}
+
+		ai_will_do = {
+			factor = 0.3
+			modifier = {
+				factor = 2
+				has_country_flag = ALG_reconciliation_path
+			}
+			modifier = {
+				factor = 0.1
+				has_country_flag = ALG_crackdown_path
+			}
+		}
+	}
+
+	ALG_mobilize_veterans = {
+		icon = GFX_armed_forces_officers
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_power_balance = { id = algeria_power_balance }
+			has_political_power > 75
+			NOT = { has_country_flag = ALG_mobilizing_veterans }
+		}
+
+		visible = {
+			has_power_balance = { id = algeria_power_balance }
+		}
+
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_mobilize_veterans"
+			custom_effect_tooltip = ALG_mobilize_veterans_tt
+			set_country_flag = { flag = ALG_mobilizing_veterans days = 60 value = 1 }
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.08
+			}
+			add_stability = -0.02
+			add_war_support = 0.05
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.01
+			}
+		}
+
+		ai_will_do = {
+			factor = 0.3
+			modifier = {
+				factor = 2
+				has_country_flag = ALG_crackdown_path
+			}
+			modifier = {
+				factor = 0.1
+				has_country_flag = ALG_reconciliation_path
+			}
+		}
+	}
+
+	ALG_bribe_elites = {
+		icon = GFX_decision_money_dec
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_power_balance = { id = algeria_power_balance }
+			has_political_power > 150
+			NOT = { has_country_flag = ALG_bribing_elites }
+		}
+
+		visible = {
+			has_power_balance = { id = algeria_power_balance }
+		}
+
+		cost = 150
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_bribe_elites"
+			custom_effect_tooltip = ALG_bribe_elites_tt
+			set_country_flag = { flag = ALG_bribing_elites days = 120 value = 1 }
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.05
+			}
+			add_stability = 0.02
+			set_temp_variable = { treasury_change = -30 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { NOT = { has_idea = rampant_corruption } }
+				add_timed_idea = {
+					idea = ALG_elite_patronage
+					days = 180
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 0.2
+			modifier = {
+				factor = 3
+				has_stability < 0.35
+			}
+			modifier = {
+				factor = 2
+				has_country_flag = ALG_crackdown_path
+			}
+		}
+	}
+	ALG_support_mujahideen = {
+		icon = GFX_decision_military_plan
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_power_balance = { id = algeria_power_balance }
+			has_political_power > 75
+			NOT = { has_country_flag = ALG_supporting_mujahideen }
+		}
+
+		visible = {
+			has_power_balance = { id = algeria_power_balance }
+		}
+
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_support_mujahideen"
+			set_country_flag = { flag = ALG_supporting_mujahideen days = 120 value = 1 }
+
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.07
+			}
+
+			add_stability = 0.03
+			add_war_support = 0.02
+
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.015
+			}
+
+			add_to_variable = { deep_state_power = 1 }
+			custom_effect_tooltip = deep_state_power_increased_1_tt
+		}
+
+		ai_will_do = {
+			factor = 0.5
+			modifier = {
+				factor = 2
+				has_country_flag = ALG_crackdown_path
+			}
+			modifier = {
+				factor = 2
+				power_balance_value = { id = algeria_power_balance value > 0.30 }
+			}
+		}
+	}
+
+	ALG_seek_compromise = {
+		icon = GFX_decisions_war_campaign_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 100
+			has_power_balance = { id = algeria_power_balance }
+			NOT = { has_country_flag = ALG_seeking_compromise }
+			# Only available when not at extremes
+			power_balance_value = { id = algeria_power_balance value > -0.60 }
+			power_balance_value = { id = algeria_power_balance value < 0.60 }
+		}
+
+		visible = {
+			has_power_balance = { id = algeria_power_balance }
+		}
+
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_seek_compromise"
+			custom_effect_tooltip = ALG_compromise_tt
+			set_country_flag = { flag = ALG_seeking_compromise days = 180 value = 1 }
+			add_stability = 0.05
+			add_political_power = 25
+			# Move toward center
+			if = {
+				limit = {
+					power_balance_value = { id = algeria_power_balance value > 0.10 }
+				}
+				add_power_balance_value = {
+					id = algeria_power_balance
+					value = -0.08
+				}
+			}
+			else_if = {
+				limit = {
+					power_balance_value = { id = algeria_power_balance value < -0.10 }
+				}
+				add_power_balance_value = {
+					id = algeria_power_balance
+					value = 0.08
+				}
+			}
+			random_list = {
+				50 = {
+					country_event = { id = alg_politics.10 days = 7 }
+				}
+				50 = { }
+			}
+		}
+
+		ai_will_do = {
+			factor = 0.6
+			modifier = {
+				factor = 2
+				has_stability < 0.40
+			}
+			modifier = {
+				factor = 0.5
+				OR = {
+					has_country_flag = ALG_crackdown_path
+					has_country_flag = ALG_reconciliation_path
+				}
+			}
+		}
+	}
+
+	ALG_media_campaign_reform = {
+		icon = GFX_decision_milocevic_tv_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_power_balance = { id = algeria_power_balance }
+			has_political_power > 50
+			NOT = { has_country_flag = ALG_running_media_campaign }
+		}
+
+		visible = {
+			has_power_balance = { id = algeria_power_balance }
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_media_campaign_reform"
+			custom_effect_tooltip = ALG_media_campaign_reform_tt
+			set_country_flag = { flag = ALG_running_media_campaign days = 45 value = 1 }
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = 0.05
+			}
+			add_war_support = -0.01
+		}
+
+		ai_will_do = {
+			factor = 0.4
+			modifier = {
+				factor = 2
+				has_country_flag = ALG_reconciliation_path
+			}
+		}
+	}
+
+	ALG_security_crackdown = {
+		icon = GFX_decision_generic_military
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_power_balance = { id = algeria_power_balance }
+			has_political_power > 50
+			NOT = { has_country_flag = ALG_running_security_crackdown }
+		}
+
+		visible = {
+			has_power_balance = { id = algeria_power_balance }
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_security_crackdown"
+			custom_effect_tooltip = ALG_security_crackdown_tt
+			set_country_flag = { flag = ALG_running_security_crackdown days = 45 value = 1 }
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.05
+			}
+			add_stability = -0.01
+			add_war_support = 0.02
+		}
+
+		ai_will_do = {
+			factor = 0.4
+			modifier = {
+				factor = 2
+				has_country_flag = ALG_crackdown_path
+			}
+		}
+	}
+
+	ALG_world_tension_security = {
+		icon = GFX_decision_generic_scorched_earth
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_power_balance = { id = algeria_power_balance }
+			threat > 0.20
+			NOT = { has_country_flag = ALG_reacting_world_tension }
+		}
+
+		visible = {
+			has_power_balance = { id = algeria_power_balance }
+			threat > 0.15
+		}
+
+		cost = 50
+		days_remove = 180
+		
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_world_tension_security"
+			custom_effect_tooltip = ALG_world_tension_security_tt
+			set_country_flag = { flag = ALG_reacting_world_tension days = 180 value = 1 }
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.08
+			}
+			add_war_support = 0.03
+		}
+		
+		modifier = {
+			training_time_factor = -0.2
+		}
+		
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_world_tension_security"
+			custom_effect_tooltip = ALG_world_tension_security_ended_tt
+		}
+		
+		ai_will_do = {
+			factor = 8
+		}
+	}
+
+	ALG_world_tension_high_security = {
+		icon = GFX_decision_crisis
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_power_balance = { id = algeria_power_balance }
+			threat > 0.40
+			NOT = { has_country_flag = ALG_reacting_world_tension_high }
+		}
+
+		visible = {
+			has_power_balance = { id = algeria_power_balance }
+			threat > 0.35
+		}
+
+		cost = 50
+		days_remove = 180
+		
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_world_tension_high_security"
+			custom_effect_tooltip = ALG_world_tension_high_security_tt
+			set_country_flag = { flag = ALG_reacting_world_tension_high days = 180 value = 1 }
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.12
+			}
+			add_war_support = 0.05
+		}
+		
+		modifier = {
+			training_time_factor = -0.3
+		}
+		
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_world_tension_high_security"
+			custom_effect_tooltip = ALG_world_tension_high_security_ended_tt
+		}
+		
+		ai_will_do = {
+			factor = 10
+		}
+	}
+
+	ALG_path_crackdown_momentum = {
+		icon = GFX_decision_ISR_military_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_country_flag = ALG_crackdown_path
+			has_power_balance = { id = algeria_power_balance }
+			has_political_power > 50
+			NOT = { has_country_flag = ALG_crackdown_momentum_active }
+		}
+
+		visible = {
+			has_country_flag = ALG_crackdown_path
+		}
+
+		cost = 50
+		days_remove = 120
+		
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_path_crackdown_momentum"
+			custom_effect_tooltip = ALG_crackdown_momentum_tt
+			set_country_flag = { flag = ALG_crackdown_momentum_active days = 120 value = 1 }
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.10
+			}
+			add_stability = -0.02
+		}
+		
+		modifier = {
+			personnel_cost_multiplier_modifier = 0.05
+			army_org_factor = -0.10
+		}
+		
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_path_crackdown_momentum"
+			custom_effect_tooltip = ALG_crackdown_momentum_ended_tt
+		}
+		
+		ai_will_do = {
+			factor = 6
+		}
+	}
+
+	ALG_path_reconciliation_momentum = {
+		icon = GFX_decision_poland_revoult
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_country_flag = ALG_reconciliation_path
+			has_power_balance = { id = algeria_power_balance }
+			has_political_power > 50
+			NOT = { has_country_flag = ALG_reconciliation_momentum_active }
+		}
+
+		visible = {
+			has_country_flag = ALG_reconciliation_path
+		}
+
+		cost = 50
+		days_remove = 120
+		
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_path_reconciliation_momentum"
+			custom_effect_tooltip = ALG_reconciliation_momentum_tt
+			set_country_flag = { flag = ALG_reconciliation_momentum_active days = 120 value = 1 }
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = 0.10
+			}
+			add_stability = 0.02
+		}
+		
+		modifier = {
+			tax_gain_multiplier_modifier = -0.1
+			social_cost_multiplier_modifier = 0.1
+			health_cost_multiplier_modifier = 0.1
+		}
+		
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_path_reconciliation_momentum"
+			custom_effect_tooltip = ALG_reconciliation_momentum_ended_tt
+		}
+		
+		ai_will_do = {
+			factor = 6
+		}
+	}
+
+	# --- ECONOMIC DECISIONS ---
+
+	ALG_oil_patronage = {
+		icon = GFX_decision_cuba_oil_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_power_balance = { id = algeria_power_balance }
+			has_resources_in_country = { resource = oil amount > 30 }
+			NOT = { has_country_flag = ALG_using_oil_patronage }
+		}
+
+		visible = {
+			has_power_balance = { id = algeria_power_balance }
+		}
+
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_oil_patronage"
+			custom_effect_tooltip = ALG_oil_patronage_tt
+			set_country_flag = { flag = ALG_using_oil_patronage days = 180 value = 1 }
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.06
+			}
+			add_stability = 0.03
+			set_temp_variable = { treasury_change = -25 }
+			modify_treasury_effect = yes
+			381 = { add_resource = { type = oil amount = 3 } }
+		}
+
+		ai_will_do = {
+			factor = 5
+			modifier = {
+				factor = 2
+				has_stability < 0.40
+			}
+		}
+	}
+
+	ALG_economic_reforms = {
+		icon = GFX_decision_sov_growth_economic_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_power_balance = { id = algeria_power_balance }
+			has_political_power > 100
+			NOT = { has_country_flag = ALG_implementing_economic_reforms }
+		}
+
+		visible = {
+			has_power_balance = { id = algeria_power_balance }
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_economic_reforms"
+			custom_effect_tooltip = ALG_economic_reforms_tt
+			set_country_flag = { flag = ALG_implementing_economic_reforms days = 240 value = 1 }
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = 0.08
+			}
+			add_stability = 0.02
+			random_owned_state = {
+				set_temp_variable = { temp_productivity_change = 0.025 }
+				flat_productivity_change_effect = yes
+			}
+		}
+
+		ai_will_do = {
+			factor = 4
+			modifier = {
+				factor = 2
+				has_country_flag = ALG_reconciliation_path
+			}
+		}
+	}
+}
+ALG_cabinet_category = {
+
+	### CABINET OVERVIEW ###
+	ALG_review_cabinet = {
+		icon = GFX_decisions_governorates_4
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 10
+		}
+
+		visible = {
+			always = yes
+		}
+
+		cost = 10
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_review_cabinet"
+			custom_effect_tooltip = ALG_cabinet_overview_tt
+			country_event = { id = alg_cabinet.1 }
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+
+	### PRIME MINISTER ###
+	ALG_replace_prime_minister = {
+		icon = GFX_decision_syr_govern_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 75
+			NOT = { has_country_flag = recent_pm_change }
+		}
+
+		visible = {
+			always = yes
+		}
+
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_replace_prime_minister"
+			custom_effect_tooltip = ALG_replace_pm_tt
+			country_event = { id = alg_cabinet.10 }
+			set_country_flag = { flag = recent_pm_change days = 180 }
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 5
+				check_variable = { ALG_pm_loyalty < 40 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { ALG_pm_loyalty > 70 }
+			}
+		}
+	}
+
+	### MINISTER OF DEFENSE ###
+	ALG_replace_defense_minister = {
+		icon = GFX_decision_syr_govern_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 100
+			NOT = { has_country_flag = recent_mod_change }
+			OR = {
+				check_variable = { deep_state_power < 15 }
+				check_variable = { ALG_mod_loyalty < 30 }
+				has_idea = ALG_state_of_emergency
+			}
+		}
+
+		visible = {
+			always = yes
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = ALG_replace_mod_tt
+			if = {
+				limit = { check_variable = { ALG_mod_deep_state > 70 } }
+				custom_effect_tooltip = ALG_mod_deep_state_warning_tt
+			}
+			country_event = { id = alg_cabinet.20 }
+			set_country_flag = { flag = recent_mod_change days = 365 }
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				check_variable = { deep_state_power > 20 }
+			}
+		}
+	}
+
+	### MINISTER OF INTERIOR ###
+	ALG_replace_interior_minister = {
+		icon = GFX_decision_syr_govern_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = recent_moi_change }
+		}
+
+		visible = {
+			always = yes
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_replace_interior_minister"
+			custom_effect_tooltip = ALG_replace_moi_tt
+			country_event = { id = alg_cabinet.30 }
+			set_country_flag = { flag = recent_moi_change days = 180 }
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 3
+				check_variable = { ALG_moi_competence < 40 }
+			}
+		}
+	}
+
+	### MINISTER OF FOREIGN AFFAIRS ###
+	ALG_replace_foreign_minister = {
+		icon = GFX_decision_syr_govern_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = recent_mofa_change }
+		}
+
+		visible = {
+			always = yes
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_replace_foreign_minister"
+			custom_effect_tooltip = ALG_replace_mofa_tt
+			country_event = { id = alg_cabinet.40 }
+			set_country_flag = { flag = recent_mofa_change days = 180 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### MINISTER OF FINANCE ###
+	ALG_replace_finance_minister = {
+		icon = GFX_decision_syr_govern_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = recent_mof_change }
+		}
+
+		visible = {
+			always = yes
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_replace_finance_minister"
+			custom_effect_tooltip = ALG_replace_mof_tt
+			country_event = { id = alg_cabinet.50 }
+			set_country_flag = { flag = recent_mof_change days = 180 }
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 3
+				check_variable = { ALG_mof_competence < 50 }
+			}
+		}
+	}
+
+	### MINISTER OF ENERGY ###
+	ALG_replace_energy_minister = {
+		icon = GFX_decision_syr_govern_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = recent_moe_change }
+		}
+
+		visible = {
+			always = yes
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_replace_energy_minister"
+			custom_effect_tooltip = ALG_replace_moe_tt
+			country_event = { id = alg_cabinet.60 }
+			set_country_flag = { flag = recent_moe_change days = 180 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### MINISTER OF JUSTICE ###
+	ALG_replace_justice_minister = {
+		icon = GFX_decision_syr_govern_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = recent_moj_change }
+		}
+
+		visible = {
+			always = yes
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_replace_justice_minister"
+			custom_effect_tooltip = ALG_replace_moj_tt
+			country_event = { id = alg_cabinet.70 }
+			set_country_flag = { flag = recent_moj_change days = 180 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	### INTELLIGENCE CHIEF ###
+	ALG_replace_intelligence_chief = {
+		icon = GFX_decision_syr_govern_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 150
+			NOT = { has_country_flag = recent_drs_change }
+			OR = {
+				check_variable = { deep_state_power < 10 }
+				check_variable = { ALG_drs_loyalty < 20 }
+				has_idea = ALG_state_of_emergency
+			}
+		}
+
+		visible = {
+			always = yes
+		}
+
+		cost = 150
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = ALG_replace_drs_tt
+			if = {
+				limit = { check_variable = { ALG_drs_deep_state > 80 } }
+				custom_effect_tooltip = ALG_drs_deep_state_warning_tt
+			}
+			country_event = { id = alg_cabinet.80 }
+			set_country_flag = { flag = recent_drs_change days = 365 }
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				factor = 10
+				check_variable = { ALG_drs_loyalty < 20 }
+			}
+		}
+	}
+
+	### CABINET ACTIONS ###
+	ALG_cabinet_reshuffle = {
+		icon = GFX_recogn_nationalboost_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 200
+			NOT = { has_country_flag = recent_reshuffle }
+		}
+
+		visible = {
+			always = yes
+		}
+
+		cost = 200
+		days_remove = 30
+
+		modifier = {
+			political_power_factor = -0.25
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_cabinet_reshuffle"
+			custom_effect_tooltip = ALG_reshuffle_started_tt
+			set_country_flag = { flag = recent_reshuffle days = 365 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
+			country_event = { id = alg_cabinet.100 }
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 5
+				check_variable = { ALG_cabinet_loyalty < 50 }
+			}
+		}
+	}
+
+	ALG_demand_cabinet_loyalty = {
+		icon = GFX_decision_nationalist_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 50
+			NOT = { has_country_flag = recent_loyalty_demand }
+			check_variable = { ALG_cabinet_loyalty < 70 }
+		}
+
+		visible = {
+			check_variable = { ALG_cabinet_loyalty < 80 }
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = ALG_demand_loyalty_tt
+			set_country_flag = { flag = recent_loyalty_demand days = 90 }
+			country_event = { id = alg_cabinet.110 }
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 3
+				check_variable = { ALG_cabinet_loyalty < 50 }
+			}
+		}
+	}
+
+	ALG_reward_cabinet = {
+		icon = GFX_decision_nationalist_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 100
+			NOT = { has_country_flag = recent_cabinet_reward }
+		}
+
+		visible = {
+			always = yes
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_reward_cabinet"
+			custom_effect_tooltip = ALG_reward_cabinet_tt
+			set_country_flag = { flag = recent_cabinet_reward days = 180 }
+			ALG_increase_all_loyalty = yes
+			custom_effect_tooltip = ALG_cabinet_loyalty_increased_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 2
+				check_variable = { ALG_cabinet_loyalty < 60 }
+			}
+		}
+	}
+
+	ALG_anti_corruption_drive = {
+		icon = GFX_decision_generic_political_discourse
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 100
+			NOT = { has_country_flag = recent_anti_corruption }
+			check_variable = { ALG_cabinet_deep_state_influence > 40 }
+		}
+
+		visible = {
+			check_variable = { ALG_cabinet_deep_state_influence > 30 }
+		}
+
+		cost = 100
+		days_remove = 60
+
+		modifier = {
+			stability_weekly = -0.002
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = ALG_anti_corruption_started_tt
+			set_country_flag = { flag = recent_anti_corruption days = 365 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
+			custom_effect_tooltip = ALG_anti_corruption_complete_tt
+			ALG_reduce_deep_state_influence_cabinet = yes
+			add_stability = 0.03
+			add_to_variable = { deep_state_power = 2 }
+			custom_effect_tooltip = deep_state_power_increased_2_tt
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 3
+				check_variable = { ALG_cabinet_deep_state_influence > 60 }
+			}
+		}
+	}
+
+	ALG_strengthen_pm_authority = {
+		icon = GFX_decision_anti_sheriff_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 75
+			NOT = { has_country_flag = recent_pm_authority }
+			check_variable = { ALG_pm_competence > 50 }
+		}
+
+		visible = {
+			always = yes
+		}
+
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = ALG_strengthen_pm_tt
+			set_country_flag = { flag = recent_pm_authority days = 180 }
+			add_to_variable = { ALG_pm_loyalty = 10 }
+			add_to_variable = { ALG_pm_competence = 5 }
+			clamp_variable = { var = ALG_pm_loyalty min = 0 max = 100 }
+			clamp_variable = { var = ALG_pm_competence min = 0 max = 100 }
+			ALG_calculate_cabinet_stats = yes
+			add_political_power = 25
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+}
+ALG_deep_state_category = {
+	ALG_assess_deep_state = {
+		icon = GFX_decision_generic_intelligence_operation
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 25
+		}
+
+		visible = {
+			has_variable = deep_state_power
+		}
+
+		cost = 25
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_assess_deep_state"
+			custom_effect_tooltip = deep_state_assessing_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_assess_deep_state"
+			custom_effect_tooltip = deep_state_level_revealed_tt
+			# Show different warnings based on level
+			if = {
+				limit = { check_variable = { deep_state_power < 6 } }
+				custom_effect_tooltip = deep_state_warning_low_tt
+			}
+			else_if = {
+				limit = { check_variable = { deep_state_power < 11 } }
+				custom_effect_tooltip = deep_state_warning_moderate_tt
+			}
+			else_if = {
+				limit = { check_variable = { deep_state_power < 16 } }
+				custom_effect_tooltip = deep_state_warning_medium_tt
+			}
+			else_if = {
+				limit = { check_variable = { deep_state_power < 21 } }
+				custom_effect_tooltip = deep_state_warning_high_tt
+			}
+			else_if = {
+				limit = { check_variable = { deep_state_power < 28 } }
+				custom_effect_tooltip = deep_state_warning_critical_tt
+			}
+			else = {
+				custom_effect_tooltip = deep_state_warning_coup_imminent_tt
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	ALG_reduce_deep_state = {
+		icon = GFX_decision_eng_propaganda_campaigns
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 100
+			check_variable = { deep_state_power > 5 }
+		}
+
+		visible = {
+			has_variable = deep_state_power
+		}
+
+		cost = 100
+		days_remove = 60
+
+		modifier = {
+			stability_weekly = -0.002
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = deep_state_reduction_started_tt
+			custom_effect_tooltip = deep_state_expect_resistance_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove check_variable"
+			custom_effect_tooltip = deep_state_power_decreased_5_tt
+			custom_effect_tooltip = deep_state_civilian_gains_tt
+			add_to_variable = { deep_state_power = -5 }
+			clamp_variable = {
+				var = deep_state_power
+				min = 0
+				max = 30
+			}
+			add_stability = -0.04
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = 0.08
+			}
+			# Chance of backlash at high power
+			if = {
+				limit = { check_variable = { deep_state_power > 15 } }
+				random_list = {
+					70 = { custom_effect_tooltip = deep_state_reduction_success_tt }
+					30 = {
+						custom_effect_tooltip = deep_state_reduction_backlash_tt
+						add_to_variable = { deep_state_power = 2 }
+						add_stability = -0.03
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 5
+				check_variable = { deep_state_power > 20 }
+			}
+		}
+	}
+
+	ALG_purge_military_command = {
+		icon = GFX_decision_politic_kill
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 200
+			check_variable = { deep_state_power > 15 }
+			NOT = { has_country_flag = recent_purge }
+		}
+
+		visible = {
+			check_variable = { deep_state_power > 10 }
+		}
+
+		cost = 200
+		days_remove = 90
+
+		modifier = {
+			army_org_factor = -0.10
+			stability_weekly = -0.005
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = deep_state_purge_started_tt
+			custom_effect_tooltip = deep_state_army_disruption_tt
+			set_country_flag = { flag = recent_purge days = 365 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
+			custom_effect_tooltip = deep_state_power_decreased_10_tt
+			custom_effect_tooltip = deep_state_purge_complete_tt
+			add_to_variable = { deep_state_power = -10 }
+			clamp_variable = {
+				var = deep_state_power
+				min = 0
+				max = 30
+			}
+			add_stability = -0.10
+			army_experience = -50
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = 0.15
+			}
+			# Clear stage flags to allow re-triggering events
+			if = {
+				limit = { check_variable = { deep_state_power < 21 } }
+				clr_country_flag = deep_state_stage_4
+			}
+			if = {
+				limit = { check_variable = { deep_state_power < 16 } }
+				clr_country_flag = deep_state_stage_3
+			}
+			if = {
+				limit = { check_variable = { deep_state_power < 11 } }
+				clr_country_flag = deep_state_stage_2
+			}
+		}
+
+		ai_will_do = {
+			factor = 0
+			modifier = {
+				factor = 10
+				check_variable = { deep_state_power > 25 }
+			}
+		}
+	}
+
+	ALG_cooperate_with_military = {
+		icon = GFX_decision_generic_army_support_new
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 50
+			# Don't cooperate if already at critical levels
+			check_variable = { deep_state_power < 25 }
+		}
+
+		visible = {
+			has_variable = deep_state_power
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = deep_state_power_increased_3_tt
+			custom_effect_tooltip = deep_state_cooperation_tt
+			custom_effect_tooltip = deep_state_stability_boost_tt
+			add_to_variable = { deep_state_power = 3 }
+			clamp_variable = {
+				var = deep_state_power
+				min = 0
+				max = 30
+			}
+			add_stability = 0.03
+			add_political_power = 50
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.05
+			}
+			# Warning if approaching danger zone
+			if = {
+				limit = { check_variable = { deep_state_power > 18 } }
+				custom_effect_tooltip = deep_state_cooperation_warning_tt
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 0
+				check_variable = { deep_state_power > 15 }
+			}
+		}
+	}
+
+	ALG_reform_intelligence_services = {
+		icon = GFX_decision_hol_exchange_intelligence_data
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 150
+			check_variable = { deep_state_power > 10 }
+			NOT = { has_country_flag = recent_intel_reform }
+		}
+
+		visible = {
+			check_variable = { deep_state_power > 5 }
+		}
+
+		cost = 150
+		days_remove = 120
+
+		modifier = {
+			political_power_factor = -0.10
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = deep_state_intel_reform_started_tt
+			custom_effect_tooltip = deep_state_expect_pushback_tt
+			set_country_flag = { flag = recent_intel_reform days = 180 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
+			custom_effect_tooltip = deep_state_power_decreased_7_tt
+			custom_effect_tooltip = deep_state_intel_reformed_tt
+			add_to_variable = { deep_state_power = -7 }
+			clamp_variable = {
+				var = deep_state_power
+				min = 0
+				max = 30
+			}
+			add_stability = -0.05
+			if = {
+				limit = { has_idea = ALG_surveillance_state_1 }
+				remove_ideas = ALG_surveillance_state_1
+				custom_effect_tooltip = deep_state_surveillance_removed_tt
+			}
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = 0.10
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 3
+				check_variable = { deep_state_power > 18 }
+			}
+		}
+	}
+
+	ALG_appoint_loyal_officers = {
+		icon = GFX_decision_civil_support
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 75
+			has_army_experience > 25
+			NOT = { has_country_flag = recent_officer_appointments }
+		}
+
+		visible = {
+			has_variable = deep_state_power
+		}
+
+		cost = 75
+		days_remove = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_appoint_loyal_officers"
+			custom_effect_tooltip = deep_state_loyal_officers_tt
+			army_experience = -25
+			set_country_flag = { flag = recent_officer_appointments days = 120 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
+			custom_effect_tooltip = deep_state_power_decreased_3_tt
+			custom_effect_tooltip = deep_state_loyalists_placed_tt
+			add_to_variable = { deep_state_power = -3 }
+			clamp_variable = {
+				var = deep_state_power
+				min = 0
+				max = 30
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 2
+				check_variable = { deep_state_power > 15 }
+			}
+		}
+	}
+
+	#Emergency Martial Law (if deep state is too powerful)
+	ALG_declare_emergency = {
+		icon = GFX_decision_emerging_button
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 150
+			check_variable = { deep_state_power > 22 }
+			NOT = { has_idea = ALG_state_of_emergency }
+		}
+
+		visible = {
+			check_variable = { deep_state_power > 18 }
+		}
+
+		cost = 150
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = deep_state_emergency_declared_tt
+			custom_effect_tooltip = deep_state_emergency_effect_tt
+			add_ideas = ALG_state_of_emergency
+			add_stability = -0.08
+			add_war_support = 0.05
+			# Temporarily freezes deep state growth
+			set_country_flag = { flag = deep_state_frozen days = 180 }
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 10
+				check_variable = { deep_state_power > 26 }
+			}
+		}
+	}
+
+	#Negotiate with Generals
+	ALG_negotiate_with_generals = {
+		icon = GFX_decision_negotiate_icon
+
+		allowed = { original_tag = ALG }
+
+		available = {
+			has_political_power > 100
+			check_variable = { deep_state_power > 15 }
+			NOT = { has_country_flag = recent_negotiations }
+		}
+
+		visible = {
+			check_variable = { deep_state_power > 12 }
+		}
+
+		cost = 100
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = deep_state_negotiation_started_tt
+			set_country_flag = { flag = recent_negotiations days = 180 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove set_country_flag"
+			random_list = {
+				50 = {
+					custom_effect_tooltip = deep_state_negotiation_success_tt
+					add_to_variable = { deep_state_power = -4 }
+					add_stability = 0.02
+				}
+				30 = {
+					custom_effect_tooltip = deep_state_negotiation_partial_tt
+					add_to_variable = { deep_state_power = -2 }
+				}
+				20 = {
+					custom_effect_tooltip = deep_state_negotiation_failed_tt
+					add_to_variable = { deep_state_power = 2 }
+					add_stability = -0.03
+				}
+			}
+			clamp_variable = {
+				var = deep_state_power
+				min = 0
+				max = 30
+			}
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 3
+				check_variable = { deep_state_power > 20 }
+			}
+		}
+	}
+}
+ALG_resistance_challenges_new = {
+	ALG_healthcare_reform = {
+		icon = GFX_decision_ISR_healthcare_button
+
+		visible = {
+			has_country_flag = ALG_resistance_path
+			NOT = { has_country_flag = ALG_healthcare_reform_done }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_healthcare_reform_tt
+				check_variable = { ALG_people_grievance < 80 }
+			}
+			OR = {
+				has_idea = health_04
+				has_idea = health_05
+			}
+		}
+
+		fire_only_once = yes
+		days_mission_timeout = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = ALG_healthcare_success_tt
+			add_to_variable = { var = ALG_people_grievance value = 5 }
+			subtract_from_variable = { var = ALG_army_influence value = 3 }
+			clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+			clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+			custom_effect_tooltip = ALG_people_grievance_plus_5_tt
+			custom_effect_tooltip = ALG_army_influence_minus_3_tt
+			add_stability = 0.05
+			add_political_power = -50
+			set_country_flag = ALG_healthcare_reform_done
+			country_event = { id = alg.310 days = 1 }
+		}
+
+		timeout_effect = {
+			custom_effect_tooltip = ALG_healthcare_failure_tt
+			subtract_from_variable = { var = ALG_people_grievance value = 5 }
+			add_to_variable = { var = ALG_army_influence value = 5 }
+			clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+			clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+			custom_effect_tooltip = ALG_people_grievance_minus_5_tt
+			custom_effect_tooltip = ALG_army_influence_plus_5_tt
+			add_stability = -0.05
+			set_country_flag = ALG_healthcare_reform_done
+			country_event = { id = alg.311 days = 1 }
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 3
+				check_variable = { ALG_people_grievance < 50 }
+			}
+		}
+	}
+
+	ALG_education_reform = {
+		icon = GFX_decision_ISR_education_button
+
+		visible = {
+			has_country_flag = ALG_resistance_path
+			NOT = { has_country_flag = ALG_education_reform_done }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_education_reform_tt
+				check_variable = { ALG_people_grievance < 80 }
+			}
+			OR = {
+				has_idea = edu_04
+				has_idea = edu_05
+			}
+		}
+
+		fire_only_once = yes
+		days_mission_timeout = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = ALG_education_success_tt
+			add_to_variable = { var = ALG_people_grievance value = 5 }
+			subtract_from_variable = { var = ALG_army_influence value = 3 }
+			clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+			clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+			custom_effect_tooltip = ALG_people_grievance_plus_5_tt
+			custom_effect_tooltip = ALG_army_influence_minus_3_tt
+			add_stability = 0.05
+			set_country_flag = ALG_education_reform_done
+			country_event = { id = alg.320 days = 1 }
+		}
+
+		timeout_effect = {
+			custom_effect_tooltip = ALG_education_failure_tt
+			subtract_from_variable = { var = ALG_people_grievance value = 5 }
+			add_to_variable = { var = ALG_army_influence value = 5 }
+			clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+			clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+			custom_effect_tooltip = ALG_people_grievance_minus_5_tt
+			custom_effect_tooltip = ALG_army_influence_plus_5_tt
+			add_stability = -0.05
+			set_country_flag = ALG_education_reform_done
+			country_event = { id = alg.321 days = 1 }
+		}
+
+		ai_will_do = {
+			factor = 1
+		}
+	}
+
+	ALG_unemployment_reform = {
+		icon = GFX_decision_ISR_welfare_button
+
+		visible = {
+			has_country_flag = ALG_resistance_path
+			NOT = { has_country_flag = ALG_unemployment_reform_done }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_unemployment_reform_tt
+				check_variable = { ALG_people_grievance < 80 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = ALG_employment_TT
+				check_variable = { total_unemployed_percentage_display < 0.2 }
+			}
+			OR = {
+				has_idea = social_04
+				has_idea = social_05
+			}
+		}
+
+		fire_only_once = yes
+		days_mission_timeout = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = ALG_unemployment_success_tt
+			add_to_variable = { var = ALG_people_grievance value = 10 }
+			subtract_from_variable = { var = ALG_army_influence value = 5 }
+			clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+			clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+			custom_effect_tooltip = ALG_people_grievance_plus_10_tt
+			custom_effect_tooltip = ALG_army_influence_minus_5_tt
+			add_stability = 0.05
+			add_political_power = -75
+			add_offsite_building = { type = arms_factory level = 1 }
+			add_offsite_building = { type = industrial_complex level = 1 }
+			set_country_flag = ALG_unemployment_reform_done
+			country_event = { id = alg.330 days = 1 }
+		}
+
+		timeout_effect = {
+			custom_effect_tooltip = ALG_unemployment_failure_tt
+			subtract_from_variable = { var = ALG_people_grievance value = 10 }
+			add_to_variable = { var = ALG_army_influence value = 8 }
+			clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+			clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+			custom_effect_tooltip = ALG_people_grievance_minus_10_tt
+			custom_effect_tooltip = ALG_army_influence_plus_8_tt
+			add_stability = -0.1
+			random_owned_controlled_state = {
+				limit = { is_core_of = ALG }
+				add_resistance = 10
+			}
+			set_country_flag = ALG_unemployment_reform_done
+			country_event = { id = alg.331 days = 1 }
+		}
+
+		ai_will_do = {
+			factor = 1
+			modifier = {
+				factor = 5
+				check_variable = { total_unemployed_percentage_display > 0.15 }
+			}
+		}
+	}
+}
+# Appease Kabyles
+alg_ethnic_policy = {
+	alg_appease_kabyles = {
+		icon = Kabylie_Flag
+
+		allowed = {
+			original_tag = ALG
+		}
+
+		visible = {
+			check_variable = { kabyle_satisfaction < 80 }
+
+		}
+
+		cost = 200
+		days_remove = 45
+
+		available = {
+
+			has_political_power > 200
+			NOT = { has_country_flag = ALG_arabization_hardline }  # Can't do both
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = alg_appease_kabyles_tt
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+			add_to_variable = { var = kabyle_satisfaction value = 10 }
+			subtract_from_variable = { var = arab_satisfaction value = 5 }
+			clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+
+			385 = {
+				add_resistance = -5
+				add_compliance = 5
+			}
+			if = {
+				limit = { has_country_flag = ALG_reconciliation_path }
+				add_stability = 0.02
+			}
+			else = {
+				add_stability = 0.01
+			}
+
+			add_popularity = {
+				ideology = nationalist
+				popularity = -0.01
+			}
+			set_country_flag = ALG_kabyle_appeased_recently
+			clr_country_flag = { flag = ALG_kabyle_appeased_recently days = 90 }
+		}
+
+		ai_will_do = {
+			factor = 0.5
+			modifier = {
+				factor = 3
+				385 = { resistance > 20 }
+			}
+			modifier = {
+				factor = 2
+				has_country_flag = ALG_reconciliation_path
+			}
+			modifier = {
+				factor = 0.1
+				has_country_flag = ALG_crackdown_path
+			}
+			modifier = {
+				factor = 0
+				has_country_flag = ALG_kabyle_appeased_recently
+			}
+		}
+	}
+
+	# Promote Arabization
+	alg_promote_arabization = {
+		icon = arabic
+		allowed = {
+			original_tag = ALG
+		}
+
+		visible = {
+
+			check_variable = { arab_satisfaction < 80 }
+		}
+
+		available = {
+
+			has_political_power > 150
+			NOT = { has_country_flag = ALG_kabyle_autonomy }  # Contradictory
+		}
+
+		cost = 150
+		days_remove = 45
+
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			custom_effect_tooltip = alg_arabization_tt
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+			add_to_variable = { var = arab_satisfaction value = 10 }
+			subtract_from_variable = { var = kabyle_satisfaction value = 10 }
+			subtract_from_variable = { var = mozabite_satisfaction value = 5 }
+			subtract_from_variable = { var = chaoui_satisfaction value = 5 }
+			subtract_from_variable = { var = tuareg_satisfaction value = 3 }
+
+			clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+
+			385 = { add_resistance = 5 }
+			random_owned_controlled_state = {
+				limit = {
+					OR = {
+						state = 380  # Aurès (Chaoui)
+						state = 381  # Southern desert (Tuareg)
+					}
+				}
+				add_resistance = 2
+			}
+
+
+			add_popularity = {
+				ideology = nationalist
+				popularity = 0.02
+			}
+
+
+			if = {
+				limit = { has_country_flag = ALG_crackdown_path }
+				add_stability = 0.01
+			}
+			else = {
+				add_stability = -0.01
+			}
+
+
+			if = {
+				limit = { has_country_flag = ALG_arabization_pushed_once }
+				set_country_flag = ALG_arabization_hardline
+			}
+			else = {
+				set_country_flag = ALG_arabization_pushed_once
+			}
+
+
+			set_country_flag = ALG_arabization_recent
+			clr_country_flag = { flag = ALG_arabization_recent days = 90 }
+		}
+
+		ai_will_do = {
+			factor = 0.4
+			modifier = {
+				factor = 3
+				has_country_flag = ALG_crackdown_path
+			}
+			modifier = {
+				factor = 2
+				check_variable = { arab_satisfaction < 40 }
+			}
+			modifier = {
+				factor = 0.1
+				has_country_flag = ALG_reconciliation_path
+			}
+			modifier = {
+				factor = 0
+				has_country_flag = ALG_arabization_recent
+			}
+		}
+
+	}
+	# Recognize Tamazight Language
+	alg_recognize_tamazight = {
+		icon = amazigh
+
+		allowed = {
+			original_tag = ALG
+		}
+
+		visible = {
+			NOT = { has_country_flag = ALG_tamazight_recognized }
+		}
+
+		available = {
+			has_political_power > 150
+			has_stability > 0.40
+			NOT = { has_country_flag = ALG_arabization_hardline }
+		}
+
+		cost = 150
+		days_remove = 60
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete alg_recognize_tamazight"
+			custom_effect_tooltip = alg_tamazight_recognition_started_tt
+			add_stability = -0.02
+			subtract_from_variable = { var = arab_satisfaction value = 10 }
+			clamp_variable = { var = arab_satisfaction min = 0 max = 100 }
+			add_popularity = {
+				ideology = nationalist
+				popularity = -0.03
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove alg_recognize_tamazight"
+			custom_effect_tooltip = alg_tamazight_recognition_complete_tt
+			add_political_power = 100
+			add_to_variable = { var = kabyle_satisfaction value = 20 }
+			add_to_variable = { var = chaoui_satisfaction value = 15 }
+			add_to_variable = { var = mozabite_satisfaction value = 10 }
+			add_to_variable = { var = tuareg_satisfaction value = 12 }
+
+			clamp_variable = { var = kabyle_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = chaoui_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = mozabite_satisfaction min = 0 max = 100 }
+			clamp_variable = { var = tuareg_satisfaction min = 0 max = 100 }
+
+			385 = { add_resistance = -10 }
+
+			every_owned_state = {
+				limit = {
+					OR = {
+						state = 380
+						state = 381
+						state = 382
+					}
+				}
+				add_resistance = -5
+				add_compliance = 3
+			}
+
+			if = {
+				limit = { has_idea = ALG_kabylia_unrest }
+				swap_ideas = {
+					remove_idea = ALG_kabylia_unrest
+					add_idea = ALG_tamazight_integration_process
+				}
+			}
+
+			set_country_flag = ALG_tamazight_recognized
+			country_event = { id = alg_ethnic.10 days = 90 }
+		}
+
+		ai_will_do = {
+			factor = 0.7
+			modifier = {
+				factor = 5
+				has_country_flag = ALG_reconciliation_path
+			}
+			modifier = {
+				factor = 3
+				385 = { resistance > 25 }
+			}
+			modifier = {
+				factor = 0.1
+				has_country_flag = ALG_crackdown_path
+			}
+		}
+	}
+}
+ALG_resistance_movement = {
+	# National Measures
+
+	ALG_throttle_internet_speeds = {
+		allowed = { original_tag = ALG }
+		days_remove = 30
+		icon = generic_nationalism
+		available = { NOT = { has_country_flag = ALG_doing_decision_y } }
+		days_re_enable = 14
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_throttle_internet_speeds"
+			set_country_flag = ALG_doing_decision_y
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.05 # Le Pouvoir gains
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove add_power_balance_value"
+			clr_country_flag = ALG_doing_decision_y
+			custom_effect_tooltip = ALG_protester_exhaustion_TT
+		}
+		modifier = {
+			research_speed_factor = -0.15
+			stability_weekly = -0.01
+		}
+		ai_will_do = { factor = 100 }
+	}
+
+	ALG_nationwide_security_presence = {
+		allowed = { original_tag = ALG }
+		days_remove = 30
+		icon = generic_nationalism
+		available = { NOT = { has_country_flag = ALG_doing_decision_y } }
+		days_re_enable = 14
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_nationwide_security_presence"
+			set_country_flag = ALG_doing_decision_y
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.05
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove add_power_balance_value"
+			clr_country_flag = ALG_doing_decision_y
+			custom_effect_tooltip = ALG_protester_exhaustion_TT
+		}
+		modifier = {
+			police_cost_multiplier_modifier = 0.10
+			stability_weekly = -0.01
+		}
+		ai_will_do = { factor = 100 }
+	}
+
+	ALG_fund_pro_government_protests = {
+		allowed = { original_tag = ALG }
+		days_remove = 30
+		icon = generic_nationalism
+		available = { NOT = { has_country_flag = ALG_doing_decision_y } }
+		days_re_enable = 14
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_fund_pro_government_protests"
+			set_country_flag = ALG_doing_decision_y
+			add_power_balance_value = {
+				id = algeria_power_balance
+				value = -0.05
+			}
+		}
+		remove_effect = {
+			clr_country_flag = ALG_doing_decision_y
+			custom_effect_tooltip = ALG_protester_exhaustion_TT
+		}
+		modifier = {
+			political_power_gain = -1.00
+			stability_weekly = -0.01
+		}
+		ai_will_do = { factor = 100 }
+	}
+
+	# Regional Deployments
+
+	# Kabylia
+	ALG_deploy_security_kabylia_1 = {
+		allowed = { original_tag = ALG }
+		days_remove = 14
+		on_map_mode = map_only
+		icon = generic_nationalism
+		cost = 25
+		days_re_enable = 14
+		highlight_states = { highlight_state_targets = { state = 385 } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_presidential_decisions_only_one_is_available_TT
+				NOT = { has_country_flag = ALG_doing_decision }
+			}
+			385 = { has_state_flag = ALG_locals_swayed }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_deploy_security_kabylia_1"
+			set_country_flag = ALG_doing_decision
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
+			clr_country_flag = ALG_doing_decision
+			custom_effect_tooltip = ALG_deploys_security_TT
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { the_military_opinion > 60 } }
+					random_list = {
+						70 = {
+							country_event = { id = algerian_events.200 } # Suppressed
+							385 = { clr_state_flag = ALG_locals_swayed }
+							set_country_flag = { flag = ALG_kabylia_fell_recently value = 1 days = 180 }
+						}
+						30 = { country_event = { id = algerian_events.2015 } } # Failed
+					}
+				}
+			}
+		}
+		ai_will_do = { base = 100 }
+	}
+
+	# Mzab
+	ALG_deploy_security_mzab_1 = {
+		allowed = { original_tag = ALG }
+		days_remove = 14
+		on_map_mode = map_only
+		icon = generic_nationalism
+		cost = 25
+		days_re_enable = 14
+		highlight_states = { highlight_state_targets = { state = 379 } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_presidential_decisions_only_one_is_available_TT
+				NOT = { has_country_flag = ALG_doing_decision }
+			}
+			379 = { has_state_flag = ALG_locals_swayed }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
+			set_country_flag = ALG_doing_decision
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
+			clr_country_flag = ALG_doing_decision
+			custom_effect_tooltip = ALG_deploys_security_TT
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { the_military_opinion > 60 } }
+					random_list = {
+						70 = {
+							country_event = { id = algerian_events.200 }
+							379 = { clr_state_flag = ALG_locals_swayed }
+							set_country_flag = { flag = ALG_mzab_fell_recently value = 1 days = 180 }
+						}
+						30 = { country_event = { id = algerian_events.2015 } }
+					}
+				}
+			}
+		}
+		ai_will_do = { base = 100 }
+	}
+
+	# Aures
+	ALG_deploy_security_aures_1 = {
+		allowed = { original_tag = ALG }
+		days_remove = 14
+		on_map_mode = map_only
+		icon = generic_nationalism
+		cost = 25
+		days_re_enable = 14
+		highlight_states = { highlight_state_targets = { state = 380 } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_presidential_decisions_only_one_is_available_TT
+				NOT = { has_country_flag = ALG_doing_decision }
+			}
+			380 = { has_state_flag = ALG_locals_swayed }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
+			set_country_flag = ALG_doing_decision
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
+			clr_country_flag = ALG_doing_decision
+			custom_effect_tooltip = ALG_deploys_security_TT
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { the_military_opinion > 60 } }
+					random_list = {
+						70 = {
+							country_event = { id = algerian_events.200 }
+							380 = { clr_state_flag = ALG_locals_swayed }
+							set_country_flag = { flag = ALG_aures_fell_recently value = 1 days = 180 }
+						}
+						30 = { country_event = { id = algerian_events.2015 } }
+					}
+				}
+			}
+		}
+		ai_will_do = { base = 100 }
+	}
+
+	# Tamanrasset
+	ALG_deploy_security_tamanrasset_1 = {
+		allowed = { original_tag = ALG }
+		days_remove = 14
+		on_map_mode = map_only
+		icon = generic_nationalism
+		cost = 25
+		days_re_enable = 14
+		highlight_states = { highlight_state_targets = { state = 381 } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_presidential_decisions_only_one_is_available_TT
+				NOT = { has_country_flag = ALG_doing_decision }
+			}
+			381 = { has_state_flag = ALG_locals_swayed }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
+			set_country_flag = ALG_doing_decision
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
+			clr_country_flag = ALG_doing_decision
+			custom_effect_tooltip = ALG_deploys_security_TT
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { the_military_opinion > 60 } }
+					random_list = {
+						70 = {
+							country_event = { id = algerian_events.200 }
+							381 = { clr_state_flag = ALG_locals_swayed }
+							set_country_flag = { flag = ALG_tamanrasset_fell_recently value = 1 days = 180 }
+						}
+						30 = { country_event = { id = algerian_events.2015 } }
+					}
+				}
+			}
+		}
+		ai_will_do = { base = 100 }
+	}
+
+	# Grand Erg Occidental
+	ALG_deploy_security_granderg_1 = {
+		allowed = { original_tag = ALG }
+		days_remove = 14
+		on_map_mode = map_only
+		icon = generic_nationalism
+		cost = 25
+		days_re_enable = 14
+		highlight_states = { highlight_state_targets = { state = 382 } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_presidential_decisions_only_one_is_available_TT
+				NOT = { has_country_flag = ALG_doing_decision }
+			}
+			382 = { has_state_flag = ALG_locals_swayed }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
+			set_country_flag = ALG_doing_decision
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
+			clr_country_flag = ALG_doing_decision
+			custom_effect_tooltip = ALG_deploys_security_TT
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { the_military_opinion > 60 } }
+					random_list = {
+						70 = {
+							country_event = { id = algerian_events.200 }
+							382 = { clr_state_flag = ALG_locals_swayed }
+							set_country_flag = { flag = ALG_granderg_fell_recently value = 1 days = 180 }
+						}
+						30 = { country_event = { id = algerian_events.2015 } }
+					}
+				}
+			}
+		}
+		ai_will_do = { base = 100 }
+	}
+
+	# Algerian Atlas
+	ALG_deploy_security_atlas_1 = {
+		allowed = { original_tag = ALG }
+		days_remove = 14
+		on_map_mode = map_only
+		icon = generic_nationalism
+		cost = 25
+		days_re_enable = 14
+		highlight_states = { highlight_state_targets = { state = 383 } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_presidential_decisions_only_one_is_available_TT
+				NOT = { has_country_flag = ALG_doing_decision }
+			}
+			383 = { has_state_flag = ALG_locals_swayed }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
+			set_country_flag = ALG_doing_decision
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
+			clr_country_flag = ALG_doing_decision
+			custom_effect_tooltip = ALG_deploys_security_TT
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { the_military_opinion > 60 } }
+					random_list = {
+						70 = {
+							country_event = { id = algerian_events.200 }
+							383 = { clr_state_flag = ALG_locals_swayed }
+							set_country_flag = { flag = ALG_atlas_fell_recently value = 1 days = 180 }
+						}
+						30 = { country_event = { id = algerian_events.2015 } }
+					}
+				}
+			}
+		}
+		ai_will_do = { base = 100 }
+	}
+
+	# Constantinois
+	ALG_deploy_security_constantinois_1 = {
+		allowed = { original_tag = ALG }
+		days_remove = 14
+		on_map_mode = map_only
+		icon = generic_nationalism
+		cost = 25
+		days_re_enable = 14
+		highlight_states = { highlight_state_targets = { state = 384 } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_presidential_decisions_only_one_is_available_TT
+				NOT = { has_country_flag = ALG_doing_decision }
+			}
+			384 = { has_state_flag = ALG_locals_swayed }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
+			set_country_flag = ALG_doing_decision
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
+			clr_country_flag = ALG_doing_decision
+			custom_effect_tooltip = ALG_deploys_security_TT
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { the_military_opinion > 60 } }
+					random_list = {
+						70 = {
+							country_event = { id = algerian_events.200 }
+							384 = { clr_state_flag = ALG_locals_swayed }
+							set_country_flag = { flag = ALG_constantinois_fell_recently value = 1 days = 180 }
+						}
+						30 = { country_event = { id = algerian_events.2015 } }
+					}
+				}
+			}
+		}
+		ai_will_do = { base = 100 }
+	}
+
+	# Algerois
+	ALG_deploy_security_algerois_1 = {
+		allowed = { original_tag = ALG }
+		days_remove = 14
+		on_map_mode = map_only
+		icon = generic_nationalism
+		cost = 25
+		days_re_enable = 14
+		highlight_states = { highlight_state_targets = { state = 386 } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_presidential_decisions_only_one_is_available_TT
+				NOT = { has_country_flag = ALG_doing_decision }
+			}
+			386 = { has_state_flag = ALG_locals_swayed }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
+			set_country_flag = ALG_doing_decision
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
+			clr_country_flag = ALG_doing_decision
+			custom_effect_tooltip = ALG_deploys_security_TT
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { the_military_opinion > 60 } }
+					random_list = {
+						70 = {
+							country_event = { id = algerian_events.200 }
+							386 = { clr_state_flag = ALG_locals_swayed }
+							set_country_flag = { flag = ALG_algerois_fell_recently value = 1 days = 180 }
+						}
+						30 = { country_event = { id = algerian_events.2015 } }
+					}
+				}
+			}
+		}
+		ai_will_do = { base = 100 }
+	}
+
+	# Oranais
+	ALG_deploy_security_oranais_1 = {
+		allowed = { original_tag = ALG }
+		days_remove = 14
+		on_map_mode = map_only
+		icon = generic_nationalism
+		cost = 25
+		days_re_enable = 14
+		highlight_states = { highlight_state_targets = { state = 387 } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_presidential_decisions_only_one_is_available_TT
+				NOT = { has_country_flag = ALG_doing_decision }
+			}
+			387 = { has_state_flag = ALG_locals_swayed }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete custom_trigger_tooltip"
+			set_country_flag = ALG_doing_decision
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove custom_trigger_tooltip"
+			clr_country_flag = ALG_doing_decision
+			custom_effect_tooltip = ALG_deploys_security_TT
+			hidden_effect = {
+				if = {
+					limit = { check_variable = { the_military_opinion > 60 } }
+					random_list = {
+						70 = {
+							country_event = { id = algerian_events.200 }
+							387 = { clr_state_flag = ALG_locals_swayed }
+							set_country_flag = { flag = ALG_oranais_fell_recently value = 1 days = 180 }
+						}
+						30 = { country_event = { id = algerian_events.2015 } }
+					}
+				}
+			}
+		}
+		ai_will_do = { base = 100 }
+	}
+}
+ALG_resistance_power_struggle = {
+
+	Resistance_support = {
+		icon = GFX_decision_resistance_support_button
+		allowed = { original_tag = ALG }
+		cost = 100
+		days_remove = 60
+		fixed_random_seed = no
+		available = {
+			has_country_flag = ALG_resistance_path
+		}
+		# custom_effect_tooltip = ALG_power_struggle_status_tt
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete Resistance_support"
+			custom_effect_tooltip = ALG_increase_resistance_tt
+			hidden_effect = {
+				random_list = {
+					50 = {
+						add_to_variable = { var = ALG_people_grievance value = 2 }
+						clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+						subtract_from_variable = { var = ALG_army_influence value = 2 }
+						clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+						custom_effect_tooltip = ALG_people_grievance_plus_2_tt
+						custom_effect_tooltip = ALG_army_influence_minus_2_tt
+					}
+					30 = {
+						add_to_variable = { var = ALG_people_grievance value = 3 }
+						clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+						subtract_from_variable = { var = ALG_army_influence value = 3 }
+						clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+						custom_effect_tooltip = ALG_people_grievance_plus_3_tt
+						custom_effect_tooltip = ALG_army_influence_minus_3_tt
+					}
+					15 = {
+						add_to_variable = { var = ALG_people_grievance value = 4 }
+						clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+						subtract_from_variable = { var = ALG_army_influence value = 4 }
+						clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+						custom_effect_tooltip = ALG_people_grievance_plus_4_tt
+						custom_effect_tooltip = ALG_army_influence_minus_4_tt
+					}
+					5 = {
+						add_to_variable = { var = ALG_people_grievance value = 5 }
+						clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+						subtract_from_variable = { var = ALG_army_influence value = 5 }
+						clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+						custom_effect_tooltip = ALG_people_grievance_plus_5_tt
+						custom_effect_tooltip = ALG_army_influence_minus_5_tt
+					}
+				}
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
+
+	Le_Pouvoir_support = {
+		icon = GFX_decision_pouvoir_support_button
+		allowed = { original_tag = ALG }
+		cost = 100
+		days_remove = 60
+		fixed_random_seed = no
+		available = {
+			has_country_flag = ALG_resistance_path
+		}
+		# custom_effect_tooltip = ALG_power_struggle_status_tt
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete Le_Pouvoir_support"
+			custom_effect_tooltip = ALG_increase_pouvoir_tt
+			hidden_effect = {
+				random_list = {
+					50 = {
+						add_to_variable = { var = ALG_army_influence value = 2 }
+						clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+						subtract_from_variable = { var = ALG_people_grievance value = 2 }
+						clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+						custom_effect_tooltip = ALG_people_grievance_minus_2_tt
+						custom_effect_tooltip = ALG_army_influence_plus_2_tt
+					}
+					30 = {
+						add_to_variable = { var = ALG_army_influence value = 3 }
+						clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+						subtract_from_variable = { var = ALG_people_grievance value = 3 }
+						clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+						custom_effect_tooltip = ALG_people_grievance_minus_3_tt
+						custom_effect_tooltip = ALG_army_influence_plus_3_tt
+					}
+					15 = {
+						add_to_variable = { var = ALG_army_influence value = 4 }
+						clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+						subtract_from_variable = { var = ALG_people_grievance value = 4 }
+						clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+						custom_effect_tooltip = ALG_people_grievance_minus_4_tt
+						custom_effect_tooltip = ALG_army_influence_plus_4_tt
+					}
+					5 = {
+						add_to_variable = { var = ALG_army_influence value = 5 }
+						clamp_variable = { var = ALG_army_influence min = 0 max = 100 }
+						subtract_from_variable = { var = ALG_people_grievance value = 5 }
+						clamp_variable = { var = ALG_people_grievance min = 0 max = 100 }
+						custom_effect_tooltip = ALG_people_grievance_minus_5_tt
+						custom_effect_tooltip = ALG_army_influence_plus_5_tt
+					}
+				}
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
+
+	Resistance_Final_Clash = {
+		icon = GFX_decision_resistance_final_button
+		allowed = { original_tag = ALG }
+		days_mission_timeout = 90
+		fire_only_once = yes
+		available = {
+			has_country_flag = ALG_resistance_path
+		}
+		# custom_effect_tooltip = ALG_power_struggle_status_tt
+
+		activation = {
+			has_country_flag = ALG_resistance_path
+			NOT = {
+				OR = {
+					has_completed_focus = ALG_restore_hope
+					has_completed_focus = ALG_military_coup
+				}
+			}
+		}
+		#available = { always = no }
+		fixed_random_seed = no
+
+		timeout_effect = {
+			# If resistance is strong enough
+			if = {
+				limit = {
+					check_variable = { ALG_people_grievance > 64 }
+				}
+				set_country_flag = ALG_resistance_wins
+				news_event = alg_resistance.1
+			}
+			# If Le Pouvoir dominates
+			else_if = {
+				limit = {
+					check_variable = { ALG_army_influence > 64 }
+				}
+				set_country_flag = ALG_pouvoir_wins
+				news_event = alg_resistance.2
+			}
+			# If both sides are weak, chaos/junta
+			else = {
+				set_country_flag = ALG_junta
+				news_event = alg_resistance.3
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
+}
+ALG_algeria_support_category = {
+	ALG_ter_oboronaup_start = {
+		custom_cost_trigger = {
+			command_power > 20
+		}
+		custom_cost_text = command_power_more_than_20
+		icon = GFX_decision_ter_oborona
+		days_remove = 45
+		fire_only_once = yes
+		available = {
+			has_war = yes
+		}
+		visible = {
+			has_completed_focus = ALG_al_hars_al_watani
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_ter_oboronaup_start"
+			add_manpower = -5000
+			set_temp_variable = { treasury_change = -6 }
+			add_command_power = -25
+			modify_treasury_effect = yes
+			385 = {
+				create_unit = {
+					division = "name = \"Territorial Defense Brigade\" division_template = \"Territorial Defense Brigade\" start_experience_factor = 1.0"
+					prioritize_location = 7065
+					owner = ALG
+				}
+			}
+			386 = {
+				create_unit = {
+					division = "name = \"Territorial Defense Brigade\" division_template = \"Territorial Defense Brigade\" start_experience_factor = 1.0"
+					prioritize_location = 1145
+					owner = ALG
+				}
+			}
+			384 = {
+				create_unit = {
+					division = "name = \"Territorial Defense Brigade\" division_template = \"Territorial Defense Brigade\" start_experience_factor = 1.0"
+					prioritize_location = 11953
+					owner = ALG
+				}
+			}
+			383 = {
+				create_unit = {
+					division = "name = \"Territorial Defense Brigade\" division_template = \"Territorial Defense Brigade\" start_experience_factor = 1.0"
+					prioritize_location = 13074
+					owner = ALG
+				}
+			}
+			382 = {
+				create_unit = {
+					division = "name = \"Territorial Defense Brigade\" division_template = \"Territorial Defense Brigade\" start_experience_factor = 1.0"
+					prioritize_location = 10731
+					owner = ALG
+				}
+			}
+			381 = {
+				create_unit = {
+					division = "name = \"Territorial Defense Brigade\" division_template = \"Territorial Defense Brigade\" start_experience_factor = 1.0"
+					prioritize_location = 5095
+					owner = ALG
+				}
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
+	ALG_internalup_start = {
+		custom_cost_trigger = {
+			command_power > 20
+		}
+		custom_cost_text = command_power_more_than_20
+		icon = GFX_decision_internal_troops
+		days_remove = 35
+		fire_only_once = yes
+		available = {
+			has_war = yes
+		}
+		visible = {
+			has_completed_focus = ALG_internal_troops
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_internalup_start"
+			add_manpower = -1000
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			add_command_power = -25
+			385 = {
+				create_unit = {
+					division = "name = \"3rd Separate Special-Purpose Brigade\" division_template = \"Internal Troops\" start_experience_factor = 1.2"
+					prioritize_location = 7166
+					owner = ALG
+				}
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
+}
+
+# parliament_gui_decision_category = {
+# 	lobbylibs = {
+# 		icon = eng_trade_unions_support
+
+# 		available = {
+# 			NOT = { has_country_flag = ALG_ffs_in_power }
+# 		}
+
+# 		days_remove = 15
+
+# 		cost = 100
+
+# 		fire_only_once = no
+
+# 		complete_effect = {
+# 		set_temp_variable = { party_index = 12 }
+# 		set_temp_variable = { party_popularity_increase = 0.03 }
+# 		add_relative_party_popularity = yes
+# 		}
+
+# 		modifier = {
+# 			political_power_gain = -0.50
+# 		}
+
+# 		remove_effect = {
+# 			set_temp_variable = { temp_member = 4 }
+# 			set_temp_variable = { temp_seats = 10 }
+# 			modify_parliament_seat = yes
+# 		}
+# 	}
+# 	lobbycos = {
+# 		icon = eng_trade_unions_support
+
+# 		available = {
+# 		}
+
+# 		days_remove = 15
+
+# 		cost = 100
+
+# 		fire_only_once = no
+
+# 		complete_effect = {
+# 		set_temp_variable = { party_index = 2 }
+# 		set_temp_variable = { party_popularity_increase = 0.03 }
+# 		add_relative_party_popularity = yes
+# 		}
+
+# 		modifier = {
+# 			political_power_gain = -0.50
+# 		}
+
+# 		remove_effect = {
+# 			set_temp_variable = { temp_member = 3 }
+# 			set_temp_variable = { temp_seats = 10 }
+# 			modify_parliament_seat = yes
+# 		}
+# 	}
+# 	lobbysocs = {
+# 		icon = eng_trade_unions_support
+
+# 		available = {
+# 		}
+
+# 		days_remove = 15
+
+# 		cost = 100
+
+# 		fire_only_once = no
+
+# 		complete_effect = {
+# 		set_temp_variable = { party_index = 14 }
+# 		set_temp_variable = { party_popularity_increase = 0.03 }
+# 		add_relative_party_popularity = yes
+# 		}
+
+# 		modifier = {
+# 			political_power_gain = -0.50
+# 		}
+
+# 		remove_effect = {
+# 			set_temp_variable = { temp_member = 2 }
+# 			set_temp_variable = { temp_seats = 10 }
+# 			modify_parliament_seat = yes
+# 		}
+# 	}
+# 	lobbynats = {
+# 		icon = eng_trade_unions_support
+
+# 		available = {
+# 		}
+
+# 		days_remove = 15
+
+# 		cost = 100
+
+# 		fire_only_once = no
+
+# 		complete_effect = {
+# 		set_temp_variable = { party_index = 7 }
+# 		set_temp_variable = { party_popularity_increase = 0.03 }
+# 		add_relative_party_popularity = yes
+# 		}
+
+# 		modifier = {
+# 			political_power_gain = -0.50
+# 		}
+
+# 		remove_effect = {
+# 			set_temp_variable = { temp_member = 1 }
+# 			set_temp_variable = { temp_seats = 10 }
+# 			modify_parliament_seat = yes
+# 		}
+# 	}
+# }
+ALG_anti_poaching_decisions = {
+
+	ALG_bi_yearly_poaching_report = {
+
+		icon = GFX_decision_shoot_bird
+
+		available = {
+			always = no
+		}
+
+		activation = {
+			OR = {
+				has_idea = ALG_sahara_expansion_1
+				has_idea = ALG_sahara_expansion_2
+				has_idea = ALG_sahara_expansion_3
+				has_idea = ALG_sahara_expansion_4
+				has_idea = ALG_sahara_expansion_5
+				has_idea = ALG_sahara_expansion_6
+				has_idea = ALG_sahara_expansion_7
+				has_idea = ALG_sahara_expansion_8
+				has_idea = ALG_sahara_expansion_9
+				has_idea = ALG_sahara_expansion_10
+			}
+		}
+
+		days_mission_timeout = 360
+		days_re_enable = 1
+
+		timeout_effect = {
+			if = {
+				limit = { check_variable = { no_of_poachers < 50 } }
+				ALG_decrease_desertification_rate = yes
+			}
+			else_if = {
+				limit = { check_variable = { no_of_poachers > 149 } }
+				ALG_increase_desertification_rate = yes
+			}
+		}
+	}
+
+	ALG_anti_poaching_extra_security = {
+
+		icon = generic_police_action
+
+		available = {
+			command_power > 20
+		}
+
+		cost = 25
+		days_remove = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_anti_poaching_extra_security"
+			add_to_variable = { chance_to_kill_poachers = 10 }
+			add_command_power = -20
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_anti_poaching_extra_security"
+			subtract_from_variable = { chance_to_kill_poachers = 10 }
+		}
+
+		modifier = {
+			police_cost_multiplier_modifier = 0.50
+			custom_modifier_tooltip = ALG_anti_poaching_extra_security_tt
+		}
+
+		ai_will_do = {
+			factor = 100
+			modifier = {
+				factor = 0
+				check_variable = { no_of_poachers < 50 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { no_of_poachers > 150 }
+			}
+		}
+	}
+
+	ALG_anti_poaching_heavy_weapons = {
+
+		icon = generic_assassination
+
+		available = {
+			command_power > 20
+		}
+
+		cost = 25
+		days_remove = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_anti_poaching_heavy_weapons"
+			add_to_variable = { no_of_poachers_to_kill = 5 }
+			add_command_power = -20
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_anti_poaching_heavy_weapons"
+			subtract_from_variable = { no_of_poachers_to_kill = 5 }
+		}
+
+		modifier = {
+			police_cost_multiplier_modifier = 0.50
+			custom_modifier_tooltip = ALG_anti_poaching_heavy_weapons_tt
+		}
+
+		ai_will_do = {
+			factor = 100
+			modifier = {
+				factor = 0
+				check_variable = { no_of_poachers < 50 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { no_of_poachers > 150 }
+			}
+		}
+	}
+
+	ALG_anti_poaching_dehorn_camels = {
+
+		available = {
+			always = yes
+		}
+
+		cost = 100
+		days_remove = 30
+		days_re_enable = 360
+		fixed_random_seed = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_anti_poaching_dehorn_camels"
+			ALG_increase_desertification_rate = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ALG_anti_poaching_dehorn_camels"
+			random_list = {
+				75 = {
+					country_event = { id = Algeria_events.5 }
+					custom_effect_tooltip = ALG_anti_poaching_dehorn_camels_tt
+				}
+				25 = {
+					country_event = { id = Algeria_events.6 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			factor = 100
+			modifier = {
+				factor = 0
+				check_variable = { no_of_poachers < 50 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { no_of_poachers > 150 }
+			}
+		}
+	}
+}
+ALG_de_arabisation_category = {
+	ALG_de_arabisation_mission = {
+		icon = arab_federation_nationalist_announce_button
+		days_mission_timeout = 356
+		is_good = no
+
+		activation = {
+			has_completed_focus = ALG_de_arabisation
+		}
+
+		available = {
+			has_idea = ALG_dearabisation_penalty
+		}
+
+		cancel_trigger = {
+			has_war = yes
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				is_core_of = ALG
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete highlight_states_trigger"
+			remove_ideas = ALG_dearabisation_penalty
+			add_ideas = ALG_imazighen_perseverance
+			add_stability = 0.05
+			custom_effect_tooltip = ALG_dearabisation_end_TT
+
+			every_owned_state = {
+				limit = { is_core_of = ALG }
+				remove_core_of = ALG
+				add_core_of = KBY
+			}
+			every_state = {
+				limit = {
+					OR = {
+						is_core_of = MOR
+						is_core_of = TUN
+						is_core_of = LBA
+					}
+					#OR = {
+						# Only Berber/Amazigh regions
+						#state = x  # Kabylie
+						#state = x  # Aurès
+						#state = x  # Rif (Morocco)
+						# Add all Tamazgha state IDs
+					#}
+				}
+				add_core_of = KBY
+			}
+
+
+			set_country_flag = ALG_de_arabisation_mission_done
+		}
+
+		timeout_effect = {
+			remove_ideas = ALG_dearabisation_penalty
+			add_stability = -0.05
+			add_to_variable = { var = kabyle_satisfaction value = -10 }
+			add_to_variable = { var = arab_satisfaction value = -5 }
+			custom_effect_tooltip = ALG_dearabisation_fail_TT
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove highlight_states_trigger"
+			add_stability = 0.02
+		}
+	}
+	ALG_subsidise_amazigh_businesses = {
+		icon = decision_money_dec
+		days_mission_timeout = 180
+		is_good = no
+
+		activation = {
+			has_completed_focus = ALG_de_arabisation
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+			custom_trigger_tooltip = {
+				tooltip = ALG_ethnic_kabyle_tt
+				check_variable = { var = ALG_ethnic_kabyle value > 10 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = ALG_kabyle_satisfaction_tt
+				check_variable = { var = kabyle_satisfaction value > 64 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			add_to_variable = { var = kabyle_satisfaction value = 10 }
+			add_to_variable = { var = ALG_ethnic_kabyle value = 2 }
+			add_to_variable = { var = arab_satisfaction value = -5 }
+			add_political_power = -50
+			add_stability = 0.03
+			custom_effect_tooltip = ALG_amazigh_businesses_complete_TT
+			set_country_flag = ALG_subsidise_amazigh_businesses_done
+		}
+
+		timeout_effect = {
+			add_to_variable = { var = kabyle_satisfaction value = -5 }
+			add_stability = -0.02
+			custom_effect_tooltip = ALG_amazigh_businesses_fail_TT
+		}
+	}
+	ALG_return_amazigh_exiles = {
+		icon = GFX_goal_generic_political_reform
+		days_mission_timeout = 200
+		is_good = no
+
+		activation = {
+			has_completed_focus = ALG_de_arabisation
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+			has_political_power > 200
+			has_stability > 0.6
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_return_amazigh_exiles"
+			add_to_variable = { var = kabyle_satisfaction value = 15 }
+			add_to_variable = { var = ALG_ethnic_kabyle value = 3 }
+			add_war_support = 0.02
+			add_political_power = -75
+			add_manpower = 5000
+			custom_effect_tooltip = ALG_return_exiles_complete_TT
+			set_country_flag = ALG_return_amazigh_exiles_done
+		}
+
+		timeout_effect = {
+			add_to_variable = { var = kabyle_satisfaction value = -10 }
+			add_stability = -0.03
+			custom_effect_tooltip = ALG_return_exiles_fail_TT
+		}
+	}
+	ALG_leave_arab_league = {
+		icon = GFX_decision_generic_political_pressure
+		days_mission_timeout = 90
+		is_good = no
+
+		activation = {
+			has_completed_focus = ALG_de_arabisation
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+			NOT = {
+				any_other_country = {
+					is_in_faction_with = ROOT
+					has_idea = LoAS_member
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete any_other_country"
+			leave_faction = yes
+			remove_ideas = LoAS_member
+			add_stability = 0.05
+			add_to_variable = { var = arab_satisfaction value = -15 }
+			add_to_variable = { var = kabyle_satisfaction value = 10 }
+
+			set_temp_variable = { int_investment_change = -0.20 }
+			modify_international_investment_effect = yes
+
+			custom_effect_tooltip = ALG_leave_arab_league_complete_TT
+			set_country_flag = ALG_leave_arab_league_done
+		}
+
+		timeout_effect = {
+			add_stability = -0.05
+			add_to_variable = { var = kabyle_satisfaction value = -5 }
+			custom_effect_tooltip = ALG_leave_arab_league_fail_TT
+		}
+	}
+	ALG_boost_kabyle_population = {
+		icon = GFX_goal_generic_population
+		days_mission_timeout = 240
+		is_good = no
+
+		activation = {
+			has_completed_focus = ALG_de_arabisation
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+			custom_trigger_tooltip = {
+				tooltip = ALG_kabyle_satisfaction_70_tt
+				check_variable = { var = kabyle_satisfaction value > 70 }
+			}
+			has_stability > 0.5
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			add_to_variable = { var = ALG_ethnic_kabyle value = 5 }
+			add_to_variable = { var = ALG_ethnic_arab value = -5 }
+			add_to_variable = { var = kabyle_satisfaction value = 15 }
+			add_stability = 0.05
+
+			random_owned_controlled_state = {
+				limit = { is_core_of = KBY }
+				add_manpower = 5000
+			}
+
+			custom_effect_tooltip = ALG_kabyle_pop_complete_TT
+			set_country_flag = ALG_boost_kabyle_population_done
+		}
+
+		timeout_effect = {
+			add_to_variable = { var = kabyle_satisfaction value = -10 }
+			add_stability = -0.03
+			custom_effect_tooltip = ALG_kabyle_pop_fail_TT
+		}
+	}
+}
+ALG_tamazgha_cultural_revival_category = {
+	ALG_amazigh_language_reform = {
+		icon = amazigh
+		days_mission_timeout = 180
+		is_good = no
+
+		activation = {
+			has_country_flag = ALG_de_arabisation_mission_done
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+			has_idea = edu_03
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete ALG_amazigh_language_reform"
+			add_to_variable = { var = kabyle_satisfaction value = 10 }
+			add_to_variable = { var = ALG_ethnic_kabyle value = 3 }
+			add_stability = 0.03
+			add_political_power = -50
+			set_temp_variable = { temp_productivity_change = 0.015 }
+			flat_productivity_change_effect = yes
+			increase_education_budget_2 = yes
+			custom_effect_tooltip = ALG_amazigh_language_reform_complete_TT
+			set_country_flag = ALG_amazigh_language_reform_done
+		}
+
+		timeout_effect = {
+			add_stability = -0.03
+			add_to_variable = { var = kabyle_satisfaction value = -5 }
+			custom_effect_tooltip = ALG_amazigh_language_reform_fail_TT
+		}
+	}
+	ALG_tamazight_in_education = {
+		icon = ISR_education_button
+		days_mission_timeout = 210
+		is_good = no
+
+		activation = {
+			has_country_flag = ALG_de_arabisation_mission_done
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+			custom_trigger_tooltip = {
+				tooltip = ALG_kabyle_satisfaction_60_tt
+				check_variable = { var = kabyle_satisfaction value > 60 }
+			}
+			has_idea = edu_04
+			has_stability > 0.6
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			add_to_variable = { var = kabyle_satisfaction value = 15 }
+			add_political_power = -100
+			add_stability = 0.04
+			set_temp_variable = { int_investment_change = 0.1 }
+			modify_international_investment_effect = yes
+			custom_effect_tooltip = ALG_tamazight_in_education_complete_TT
+			set_country_flag = ALG_tamazight_in_education_done
+		}
+
+		timeout_effect = {
+			add_stability = -0.04
+			add_to_variable = { var = kabyle_satisfaction value = -10 }
+			custom_effect_tooltip = ALG_tamazight_in_education_fail_TT
+		}
+	}
+	ALG_media_cultural_independence = {
+		icon = independence
+		days_mission_timeout = 150
+		is_good = no
+
+		activation = {
+			has_country_flag = ALG_de_arabisation_mission_done
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+			custom_trigger_tooltip = {
+				tooltip = ALG_kabyle_satisfaction_70_tt
+				check_variable = { var = kabyle_satisfaction value > 70 }
+			}
+			has_idea = social_04
+			has_idea = police_04
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete check_variable"
+			add_stability = 0.03
+			add_war_support = 0.02
+			add_to_variable = { var = kabyle_satisfaction value = 10 }
+			set_temp_variable = { temp_opinion = 10 }
+			change_small_medium_business_owners_opinion = yes
+			custom_effect_tooltip = ALG_media_cultural_independence_complete_TT
+			set_country_flag = ALG_media_cultural_independence_done
+		}
+
+		timeout_effect = {
+			add_stability = -0.03
+			add_to_variable = { var = kabyle_satisfaction value = -5 }
+			custom_effect_tooltip = ALG_media_cultural_independence_fail_TT
+		}
+	}
+	ALG_tamazgha_regional_cooperation = {
+		icon = decision_eng_ally_imperialist_coup
+		days_mission_timeout = 240
+		is_good = no
+
+		activation = {
+			has_country_flag = ALG_de_arabisation_mission_done
+		}
+
+		available = {
+			has_country_flag = ALG_tamazgha_path
+			is_in_faction = no
+			any_other_country = {
+				OR = {
+					tag = MAU
+					tag = TUN
+					tag = MOR
+					tag = LBA
+				}
+				is_in_faction = no
+				has_opinion = {
+					target = ROOT
+					value > 49
+				}
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete has_opinion"
+			add_to_variable = { var = kabyle_satisfaction value = 20 }
+			add_stability = 0.05
+			add_war_support = 0.03
+			set_temp_variable = { int_investment_change = 0.5 }
+			modify_international_investment_effect = yes
+
+			create_faction = "Tamazgha_Confederation"
+
+			every_other_country = {
+				limit = {
+					OR = {
+						tag = MAU
+						tag = TUN
+						tag = MOR
+						tag = LBA
+					}
+					is_in_faction = no
+				}
+				set_country_flag = ALG_tamazgha_invitation_pending
+			}
+			every_other_country = {
+				limit = { has_country_flag = ALG_tamazgha_invitation_pending }
+				country_event = { id = ALG_tamazgha.1 }
+			}
+
+			custom_effect_tooltip = ALG_tamazgha_regional_cooperation_complete_TT
+			set_country_flag = ALG_tamazgha_regional_cooperation_done
+		}
+
+		timeout_effect = {
+			add_stability = -0.04
+			add_to_variable = { var = kabyle_satisfaction value = -10 }
+			custom_effect_tooltip = ALG_tamazgha_regional_cooperation_fail_TT
+		}
+	}
+}
+ALG_casablanca_decisions = {
+	ALG_casablanca_mission = {
+		icon = GFX_west_sahara2
+
+		visible = { has_country_flag = algeria_casablanca_unlocked }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_casablanca_mission_tt
+				check_variable = { algeria_casablanca_result = 0 }
+				NOT = { check_variable = { algeria_casablanca_approach = 0 } }
+			}
+		}
+
+		days_mission_timeout = 180
+		cancel_if_not_visible = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_casablanca_mission"
+			# if approach = 1 (great powers) -> best odds
+			if = {
+				limit = { check_variable = { variable = algeria_casablanca_approach value = 1 compare = greater_than_or_equals } }
+				random_list = {
+					60 = { set_variable = { algeria_casablanca_result = 2 } } # high success
+					30 = { set_variable = { algeria_casablanca_result = 1 } } # medium
+					10 = { set_variable = { algeria_casablanca_result = 0 } } # low
+				}
+			}
+
+			# approach = 3 (mixed) -> balanced odds
+			if = {
+				limit = { check_variable = { variable = algeria_casablanca_approach value = 3 compare = greater_than_or_equals } }
+				random_list = {
+					40 = { set_variable = { algeria_casablanca_result = 2 } }
+					40 = { set_variable = { algeria_casablanca_result = 1 } }
+					20 = { set_variable = { algeria_casablanca_result = 0 } }
+				}
+			}
+
+			# approach = 2 (regional) -> worst odds
+			if = {
+				limit = { check_variable = { variable = algeria_casablanca_approach value = 2 compare = greater_than_or_equals } }
+				random_list = {
+					10 = { set_variable = { algeria_casablanca_result = 2 } }
+					30 = { set_variable = { algeria_casablanca_result = 1 } }
+					60 = { set_variable = { algeria_casablanca_result = 0 } }
+				}
+			}
+
+			# fallback (no approach set) - treat as regional
+			if = {
+				limit = {
+					NOT = {
+						OR = {
+							check_variable = { variable = algeria_casablanca_approach value = 1 compare = greater_than_or_equals }
+							check_variable = { variable = algeria_casablanca_approach value = 2 compare = greater_than_or_equals }
+							check_variable = { variable = algeria_casablanca_approach value = 3 compare = greater_than_or_equals }
+						}
+					}
+				}
+				random_list = {
+					10 = { set_variable = { algeria_casablanca_result = 2 } }
+					30 = { set_variable = { algeria_casablanca_result = 1 } }
+					60 = { set_variable = { algeria_casablanca_result = 0 } }
+				}
+			}
+
+			# Rewards: PP & stability only
+			if = {
+				limit = { check_variable = { variable = algeria_casablanca_result value = 2 compare = greater_than_or_equals } }
+				add_political_power = 100
+				add_stability = 0.03
+				hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_result_high hours = 6 } }
+			}
+			if = {
+				limit = { check_variable = { variable = algeria_casablanca_result value = 1 compare = greater_than_or_equals } }
+				add_political_power = 50
+				add_stability = 0.02
+				hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_result_med hours = 6 } }
+			}
+			if = {
+				limit = { check_variable = { variable = algeria_casablanca_result value = 0 compare = greater_than_or_equals } }
+				add_political_power = 20
+				add_stability = 0.01
+				hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_result_low hours = 6 } }
+			}
+
+			# clear unlock flag so player can't spam decisions immediately
+			clr_country_flag = algeria_casablanca_unlocked
+		}
+
+		timeout_effect = {
+			# mission timed out: failure
+			set_variable = { algeria_casablanca_result = 0 }
+			add_stability = -0.03
+			hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_timeout hours = 6 } }
+			clr_country_flag = algeria_casablanca_unlocked
+		}
+		ai_will_do = { base = 1 }
+	}
+	ALG_casablanca_approach_great_powers = {
+		icon = GFX_generic_meeting
+
+		visible = { has_country_flag = algeria_casablanca_unlocked }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_casablanca_approach_tt
+				check_variable = { algeria_casablanca_approach = 0 }
+				check_variable = { algeria_casablanca_result = 0 }
+			}
+		}
+
+		cost = 50
+
+
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_casablanca_approach_great_powers"
+			set_variable = { algeria_casablanca_approach = 3 }
+			add_stability = -0.03
+			set_country_flag = algeria_casablanca_mission_active
+			set_temp_variable = { percent_change = 10 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 8 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 7 }
+			set_temp_variable = { tag_index = SPR }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_court_great_powers hours = 6 } }
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+	ALG_casablanca_approach_regional = {
+		icon = GFX_generic_meeting
+
+		visible = { has_country_flag = algeria_casablanca_unlocked }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_casablanca_approach_tt
+				check_variable = { algeria_casablanca_approach = 0 }
+				check_variable = { algeria_casablanca_result = 0 }
+			}
+		}
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_casablanca_approach_regional"
+			set_variable = { algeria_casablanca_approach = 2 }
+			add_stability = -0.02
+			set_country_flag = algeria_casablanca_mission_active
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = MAU }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = TUN }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = LBA }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = MOR }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_regional_approach hours = 6 } }
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+	ALG_casablanca_approach_mixed = {
+		icon = GFX_generic_meeting
+
+		visible = { has_country_flag = algeria_casablanca_unlocked }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ALG_casablanca_approach_tt
+				check_variable = { algeria_casablanca_approach = 0 }
+				check_variable = { algeria_casablanca_result = 0 }
+			}
+		}
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_casablanca_approach_mixed"
+			set_variable = { algeria_casablanca_approach = 1 }
+			add_stability = -0.01
+			set_country_flag = algeria_casablanca_mission_active
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = SOV }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = SPR }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = MAU }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = TUN }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = LBA }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = MOR }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			hidden_effect = { news_event = { id = AlgeriaFocusNews.AU_mixed_strategy hours = 6 } }
+		}
+
+		ai_will_do = {
+			factor = 0
+		}
+	}
+}
+ALG_uav_procurement_category = {
+	ALG_purchase_turkish_uavs = {
+		icon = GFX_arm_drone_button
+		allowed = { original_tag = ALG }
+		visible = {
+			has_country_flag = ALG_uav_procurement_open
+			NOT = { has_country_flag = ALG_uav_procured }
+		}
+		available = {
+			NOT = { has_country_flag = ALG_uav_procured }
+			TUR = {
+				has_opinion = {
+					target = ALG
+					value > 25
+				}
+			}
+		}
+		cost = 75
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_purchase_turkish_uavs"
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = small_plane_suicide_airframe_2
+					amount = 30
+					variant_name = "Bayraktar TB2"
+					producer = TUR
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = Air_UAV1
+					amount = 30
+					producer = TUR
+				}
+			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = TUR }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			add_opinion_modifier = {
+				target = TUR
+				modifier = improve_trade
+			}
+			reverse_add_opinion_modifier = {
+				target = TUR
+				modifier = improve_trade
+			}
+			set_country_flag = ALG_uav_procured
+		}
+	}
+
+	ALG_purchase_chinese_uavs = {
+		icon = GFX_arm_drone_button
+		allowed = { original_tag = ALG }
+		visible = {
+			has_country_flag = ALG_uav_procurement_open
+			NOT = { has_country_flag = ALG_uav_procured }
+		}
+		available = {
+			NOT = { has_country_flag = ALG_uav_procured }
+			CHI = {
+				has_opinion = {
+					target = ALG
+					value > 25
+				}
+			}
+		}
+		cost = 75
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_purchase_chinese_uavs"
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = small_plane_suicide_airframe_2
+					amount = 40
+					variant_name = "Wing Loong II"
+					producer = CHI
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = Air_UAV1
+					amount = 40
+					producer = CHI
+				}
+			}
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = CHI }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			add_opinion_modifier = {
+				target = CHI
+				modifier = improve_trade
+			}
+			reverse_add_opinion_modifier = {
+				target = CHI
+				modifier = improve_trade
+			}
+			set_country_flag = ALG_uav_procured
+		}
+	}
+
+	ALG_purchase_iranian_uavs = {
+		icon = GFX_arm_drone_button
+		allowed = { original_tag = ALG }
+		visible = {
+			has_country_flag = ALG_uav_procurement_open
+			NOT = { has_country_flag = ALG_uav_procured }
+		}
+		available = {
+			NOT = { has_country_flag = ALG_uav_procured }
+			PER = {
+				has_opinion = {
+					target = ALG
+					value > 25
+				}
+			}
+		}
+		cost = 75
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_purchase_iranian_uavs"
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = small_plane_suicide_airframe_2
+					amount = 50
+					variant_name = "Mohajer-6"
+					producer = PER
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = Air_UAV1
+					amount = 50
+					producer = PER
+				}
+			}
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { tag_index = PER }
+			set_temp_variable = { influence_target = ALG }
+			change_influence_percentage = yes
+			add_opinion_modifier = {
+				target = PER
+				modifier = improve_trade
+			}
+			reverse_add_opinion_modifier = {
+				target = PER
+				modifier = improve_trade
+			}
+			set_country_flag = ALG_uav_procured
+		}
+	}
+}
+
+ALG_drone_program_category = {
+	ALG_develop_amel_recon_uav = {
+		icon = GFX_missile_rocket_button
+		allowed = { original_tag = ALG }
+		visible = {
+			has_country_flag = ALG_drone_program_open
+			NOT = { has_country_flag = ALG_drone_variant_chosen }
+		}
+		available = {
+			NOT = { has_country_flag = ALG_drone_variant_chosen }
+			amount_research_slots > 3
+		}
+		cost = 100
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_develop_amel_recon_uav"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = ALG_amel_developed_tt
+			if = {
+				limit = {
+					has_dlc = "By Blood Alone"
+					NOT = { has_tech = drone_2 }
+				}
+				set_technology = { drone_2 = 1 }
+			}
+			else_if = {
+				limit = {
+					NOT = { has_tech = Air_UAV2 }
+					has_tech = Air_UAV1
+				}
+				set_technology = { Air_UAV2 = 1 }
+			}
+			else = {
+				add_tech_bonus = {
+					name = ALG_amel_uav
+					bonus = 0.5
+					uses = 1
+					category = CAT_a_uav
+				}
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = small_plane_suicide_airframe_2
+					amount = 20
+					variant_name = "Amel-1"
+					producer = ALG
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = Air_UAV2
+					amount = 20
+					producer = ALG
+				}
+			}
+			set_country_flag = ALG_drone_variant_chosen
+		}
+	}
+
+	ALG_develop_el_djazair_ucav = {
+		icon = GFX_missile_rocket_button
+		allowed = { original_tag = ALG }
+		visible = {
+			has_country_flag = ALG_drone_program_open
+			NOT = { has_country_flag = ALG_drone_variant_chosen }
+		}
+		available = {
+			NOT = { has_country_flag = ALG_drone_variant_chosen }
+			amount_research_slots > 3
+		}
+		cost = 100
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_develop_el_djazair_ucav"
+			set_temp_variable = { treasury_change = -7 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = ALG_ucav_developed_tt
+			add_tech_bonus = {
+				name = ALG_ucav_development
+				bonus = 0.75
+				uses = 1
+				category = CAT_drones
+			}
+			add_ideas = ALG_combat_uav_program
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = small_plane_suicide_airframe_2
+					amount = 15
+					producer = ALG
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = Air_UAV2
+					amount = 15
+					producer = ALG
+				}
+			}
+			set_country_flag = ALG_drone_variant_chosen
+		}
+	}
+
+	ALG_develop_swarm_loitering = {
+		icon = GFX_missile_rocket_button
+		allowed = { original_tag = ALG }
+		visible = {
+			has_country_flag = ALG_drone_program_open
+			NOT = { has_country_flag = ALG_drone_variant_chosen }
+		}
+		available = {
+			NOT = { has_country_flag = ALG_drone_variant_chosen }
+			amount_research_slots > 4
+			has_tech = avionics_2
+		}
+		cost = 100
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ALG_develop_swarm_loitering"
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = ALG_swarm_developed_tt
+			add_tech_bonus = {
+				name = ALG_swarm_drones
+				bonus = 1.0
+				uses = 1
+				category = CAT_l_drone
+			}
+			add_tech_bonus = {
+				name = ALG_swarm_ai
+				bonus = 0.5
+				uses = 1
+				category = CAT_computer_systems
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = small_plane_suicide_airframe_2
+					amount = 60
+					producer = ALG
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = Air_UAV2
+					amount = 60
+					producer = ALG
+				}
+			}
+			set_country_flag = ALG_drone_variant_chosen
+		}
+	}
+}
