@@ -50,7 +50,7 @@ You can only have **one active faction at a time**. Switching removes the old fa
 
 Opinion represents how satisfied a faction is with the ruling government. It decays monthly toward its minimum threshold if not actively maintained.
 
-- **Starting Opinion**: 60 when you first add a faction
+- **Starting Opinion**: 50 when you first add a faction
 - **Minimum Threshold**: 50 for most factions (the floor opinion decays toward)
 - **Opinion Ranges**:
   - **Hostile**: 0–30
@@ -59,7 +59,7 @@ Opinion represents how satisfied a faction is with the ruling government. It dec
   - **Positive**: 70–89
   - **Enthusiastic**: 90–100
 
-**Autocrat Bonus**: Autocratic governments (Western Autocrats, Emerging Autocrats, Neutral Autocrats, Fascists, Military Junta) receive **double opinion changes** from events and decisions.
+**Autocrat Bonus**: Autocratic governments (Western Autocrats, Emerging Autocrats, Neutral Autocrats, Fascists, Military Junta) receive **double positive opinion changes** from events and decisions. Negative opinion changes are not doubled.
 
 Ideas that increase a faction's minimum opinion also raise the floor that monthly decay targets, effectively sustaining higher opinion levels passively.
 
@@ -693,7 +693,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 1. **Prioritize factions that match your playstyle**: Economic factions accelerate building; military factions improve combat readiness.
 
-2. **Autocratic governments get double opinion gains**: This makes maintaining high opinion significantly easier.
+2. **Autocratic governments get double positive opinion gains**: This makes maintaining high opinion significantly easier, though negative changes still hit at normal rate.
 
 3. **Opinion decays monthly**: Neglecting a faction will see it drift back toward its minimum threshold. Use decisions and events to maintain it.
 
