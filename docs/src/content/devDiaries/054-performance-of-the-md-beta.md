@@ -11,7 +11,7 @@ tags:
 
 # Dev Diary #54: The Great Performance Crusade
 
-*By AngriestBird – 09 Mar 2026*
+_By AngriestBird – 09 Mar 2026_
 
 Hey there everyone! My name is AngriestBird and I am one of the lead developers and owner of the Millennium Dawn mod.
 

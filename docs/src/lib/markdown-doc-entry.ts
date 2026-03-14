@@ -2,12 +2,7 @@ import { getCollection, render } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import { buildEntryStaticPaths } from "./content-routes";
 
-export type MarkdownDocCollection =
-  | "changelogSections"
-  | "devDiaries"
-  | "misc"
-  | "resources"
-  | "tutorials";
+export type MarkdownDocCollection = "changelogSections" | "devDiaries" | "misc" | "resources" | "tutorials";
 
 export async function buildMarkdownDocStaticPaths<C extends MarkdownDocCollection>(
   collection: C,

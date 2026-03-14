@@ -41,10 +41,16 @@ export function rehypeTailwindContent(): (tree: Root) => void {
       }
 
       if (tagName === "p") {
-        addClasses(node, MARKDOWN_CLASSNAMES.p, parentTag === "blockquote" && typeof index === "number" && parent?.children
-          && index === parent.children.length - 1
-          ? "mb-0"
-          : "");
+        addClasses(
+          node,
+          MARKDOWN_CLASSNAMES.p,
+          parentTag === "blockquote" &&
+            typeof index === "number" &&
+            parent?.children &&
+            index === parent.children.length - 1
+            ? "mb-0"
+            : "",
+        );
         return;
       }
 

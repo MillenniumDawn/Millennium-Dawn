@@ -58,8 +58,6 @@ Music
 
 - Vanilla main theme is now available on the radio
 
-
-
 ## v1.2.0 1.9 Patch and Content
 
 Events
@@ -118,5 +116,3 @@ Map
 
 - Various Victory Point fixed across the world
 - Fixes to the Colombian-Ecuadorian coast borders and Bahamas
-
-

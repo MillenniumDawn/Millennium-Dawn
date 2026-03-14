@@ -72,7 +72,7 @@ Error in the Log:
 [19:01:16][no_game_date][virtualfilesystem_physfs.cpp:1257]: Error setting buffer for file: common/countries/Lesotho.txt. File may not read/write correctly.
 ```
 
-****Windows Instructions****
+\***\*Windows Instructions\*\***
 
 To increase your page file size:
 

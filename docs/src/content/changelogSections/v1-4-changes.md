@@ -69,5 +69,3 @@ Politics
 - Namibia is now Emerging Radical Socialist
 - Angola is now Emerging Radical Socialist
 - Italian Ruling Party is now correct for the start
-
-

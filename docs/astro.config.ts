@@ -13,8 +13,7 @@ import { hoiscriptLanguage } from "./src/lib/shiki-hoiscript";
 import { SITE_BASE_PATH, SITE_FALLBACK_ORIGIN } from "./src/shared/config/site";
 
 // Astro and @tailwindcss/vite currently resolve different Vite type instances.
-const tailwindPlugins =
-  tailwindcss() as unknown as NonNullable<NonNullable<AstroUserConfig["vite"]>["plugins"]>;
+const tailwindPlugins = tailwindcss() as unknown as NonNullable<NonNullable<AstroUserConfig["vite"]>["plugins"]>;
 
 export default defineConfig({
   site: SITE_FALLBACK_ORIGIN,

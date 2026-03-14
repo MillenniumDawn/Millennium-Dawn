@@ -49,9 +49,8 @@ Units
 
 - Buffed armoured and armoured recon company HP from 2 -> 25
 
-
-
 ## v1.1 Main
+
 Stability
 
 - Fixed an issue with save games bloating
@@ -201,6 +200,3 @@ Localisation
 
 - Lots of spelling mistakes fixed
 - Added localisation to the Swiss faction
-
-    
-

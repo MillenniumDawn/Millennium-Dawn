@@ -41,17 +41,17 @@ export function remarkRootRelativeToBase(base = SITE_BASE_PATH): (tree: Root) =>
   return (tree: Root): void => {
     visit(tree, (node) => {
       if (node.type === "link" || node.type === "image" || node.type === "definition") {
-        const nextUrl = applyBase((node).url);
+        const nextUrl = applyBase(node.url);
         if (nextUrl) {
-          (node).url = nextUrl;
+          node.url = nextUrl;
         }
         return;
       }
 
       if (node.type === "html") {
-        const nextValue = rewriteHtml((node).value);
+        const nextValue = rewriteHtml(node.value);
         if (nextValue) {
-          (node).value = nextValue;
+          node.value = nextValue;
         }
       }
     });

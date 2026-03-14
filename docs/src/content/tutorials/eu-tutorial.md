@@ -6,12 +6,13 @@ description: Updated guide to the European Union in Millennium Dawn
 The following guide is an updated guide to the European Union in Millennium Dawn.
 
 # Table of Contents
+
 - [Table of Contents](#table-of-contents)
-	- [Chapter 1 - The European Union](#chapter-1---the-european-union)
-	- [Chapter 1.1 - The European Union in Millennium Dawn](#chapter-11---the-european-union-in-millennium-dawn)
-	- [Chapter 1.2 - The European Institutions](#chapter-12---the-european-institutions)
-		- [The European Union has six main institutions:](#the-european-union-has-six-main-institutions)
-		- [In the EU's unique institutional set-up:](#in-the-eus-unique-institutional-set-up)
+  - [Chapter 1 - The European Union](#chapter-1---the-european-union)
+  - [Chapter 1.1 - The European Union in Millennium Dawn](#chapter-11---the-european-union-in-millennium-dawn)
+  - [Chapter 1.2 - The European Institutions](#chapter-12---the-european-institutions)
+    - [The European Union has six main institutions:](#the-european-union-has-six-main-institutions)
+    - [In the EU's unique institutional set-up:](#in-the-eus-unique-institutional-set-up)
 
 ## Chapter 1 - The European Union
 

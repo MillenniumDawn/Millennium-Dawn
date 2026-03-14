@@ -178,8 +178,6 @@ Music
 
 - Memories Without Colours and Firewall added
 
-
-
 ## v1.5.0 'Economic Prowess & Man the Guns' - 1.10 compatible
 
 AI
@@ -360,5 +358,3 @@ Units
 - Removed Engineer Tanks
 - Fuel is now balanced according to new resources reworks
 - MTG Compatibility
-
-

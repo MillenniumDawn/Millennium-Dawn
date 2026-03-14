@@ -1,8 +1,6 @@
 import { z } from "astro/zod";
 
-export const internalPathSchema = z
-  .string()
-  .regex(/^\/[A-Za-z0-9/_.-]*$/, "Expected a root-relative path");
+export const internalPathSchema = z.string().regex(/^\/[A-Za-z0-9/_.-]*$/, "Expected a root-relative path");
 
 export const hrefSchema = z
   .string()
@@ -56,11 +54,7 @@ function resolveInfoboxGroupKind(
 }
 
 function normalizeInfoboxLabel(label: string): string {
-  return label
-    .trim()
-    .toLowerCase()
-    .replace(/\./g, "")
-    .replace(/\s+/g, " ");
+  return label.trim().toLowerCase().replace(/\./g, "").replace(/\s+/g, " ");
 }
 
 function resolveInfoboxStatKey(label: string): z.infer<typeof infoboxStatKeySchema> | undefined {
