@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 56
 flag_image: /assets/images/flags/south_korea.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: KOR
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '49'
-  - label: Total Factories
-    value: '32'
-  - label: Military Ind.
-    value: '9'
-  - label: Civilian Ind.
-    value: '20'
-  - label: Naval Dockyards
-    value: '3'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $141 Billions
-  - label: Debt
-    value: $196 Billions
-  - label: Investments
-    value: $140 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: KOR
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "49"
+      - label: Total Factories
+        value: "32"
+      - label: Military Ind.
+        value: "9"
+      - label: Civilian Ind.
+        value: "20"
+      - label: Naval Dockyards
+        value: "3"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $141 Billions
+      - label: Debt
+        value: $196 Billions
+      - label: Investments
+        value: $140 Billions
 ---
 
 South Korea is a country that borders only North Korea. It starts with a Population of 47.06 Millions.

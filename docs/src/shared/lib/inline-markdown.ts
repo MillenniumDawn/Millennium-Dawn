@@ -1,8 +1,6 @@
 import { withBase } from "./urls";
 
-export type InlinePart =
-  | { type: "text"; value: string }
-  | { type: "link"; value: string; href: string };
+export type InlinePart = { type: "text"; value: string } | { type: "link"; value: string; href: string };
 
 const INLINE_LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
 

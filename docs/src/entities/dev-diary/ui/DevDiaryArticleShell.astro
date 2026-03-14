@@ -1,11 +1,12 @@
 ---
 import type { CollectionEntry } from "astro:content";
+import { getArticleFooterProps } from "@/shared/lib/article-footer-props";
+import ArticleShell from "@/shared/ui/ArticleShell.astro";
 
 interface Props {
   entry: CollectionEntry<"devDiaries">;
 }
-
-const { entry }: Props = Astro.props;
+const { entry } = Astro.props;
 const publishedDate = entry.data.date;
 const publishedLabel = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
@@ -14,159 +15,18 @@ const publishedLabel = new Intl.DateTimeFormat("en-US", {
 }).format(publishedDate);
 const tags = entry.data.tags ?? [];
 
-const shellClass = ["grid", "gap-xl"].join(" ");
-
-const heroClass = [
-  "relative",
-  "overflow-hidden",
-  "rounded-[24px]",
-  "border",
-  "border-border-light",
-  "bg-[radial-gradient(circle_at_top_left,var(--color-primary-light),transparent_42%),linear-gradient(180deg,var(--color-surface),color-mix(in_srgb,var(--color-surface)_84%,var(--color-primary-light)))]",
-  "p-[clamp(1.5rem,2vw,2.25rem)]",
-  "shadow-sm",
-  "after:absolute",
-  "after:inset-x-0",
-  "after:bottom-0",
-  "after:h-1",
-  "after:bg-[linear-gradient(90deg,var(--color-primary),transparent_70%)]",
-  "phone:rounded-[20px]",
-].join(" ");
-
-const heroEyebrowClass = [
-  "mb-sm",
-  "mt-0",
-  "text-[0.8rem]",
-  "font-bold",
-  "uppercase",
-  "tracking-[0.12em]",
-  "text-primary",
-].join(" ");
-
-const heroBodyClass = [
-  "grid",
-  "items-stretch",
-  "gap-xl",
-  "wide:grid-cols-[minmax(0,1.8fr)_minmax(18rem,0.95fr)]",
-].join(" ");
-
-const heroContentClass = [
-  "flex",
-  "min-w-0",
-  "flex-col",
-  "justify-between",
-  "gap-lg",
-].join(" ");
-
-const heroTitleClass = [
-  "m-0",
-  "max-w-[12ch]",
-  "text-[clamp(2rem,4vw,3.4rem)]",
-  "leading-[1.05]",
-  "text-text",
-  "[text-wrap:balance]",
-].join(" ");
-
-const heroDescriptionClass = [
-  "mt-md",
-  "max-w-[72ch]",
-  "text-[1.0625rem]",
-  "text-text-secondary",
-].join(" ");
-
-const heroSidebarClass = [
-  "flex",
-  "min-w-0",
-  "flex-col",
-  "items-start",
-  "justify-between",
-  "gap-lg",
-].join(" ");
-
-const heroMetaClass = [
-  "grid",
-  "w-full",
-  "max-w-[22rem]",
-  "gap-md",
-].join(" ");
-
-const heroMetaItemClass = [
-  "grid",
-  "gap-[0.2rem]",
-  "rounded-[16px]",
-  "border",
-  "border-[color-mix(in_srgb,var(--color-border)_75%,transparent)]",
-  "bg-[color-mix(in_srgb,var(--color-surface)_88%,transparent)]",
-  "px-4",
-  "py-[0.9rem]",
-  "shadow-sm",
-].join(" ");
-
-const heroMetaLabelClass = [
-  "text-[0.75rem]",
-  "font-bold",
-  "uppercase",
-  "tracking-[0.08em]",
-  "text-text-muted",
-].join(" ");
-
-const heroTagsClass = [
-  "m-0",
-  "flex",
-  "flex-wrap",
-  "gap-3",
-  "list-none",
-  "p-0",
-].join(" ");
-
-const heroTagClass = [
-  "rounded-full",
-  "border",
-  "border-[color-mix(in_srgb,var(--color-primary)_18%,var(--color-border))]",
-  "bg-[color-mix(in_srgb,var(--color-primary-light)_72%,var(--color-surface))]",
-  "px-[0.8rem]",
-  "py-[0.42rem]",
-  "text-[0.875rem]",
-  "font-semibold",
-  "text-text",
-].join(" ");
+const heroProps = {
+  eyebrow: "Millennium Dawn Dev Diary",
+  title: entry.data.title,
+  description: entry.data.description,
+  metaItems: [
+    { label: "Author", value: entry.data.author },
+    { label: "Published", value: publishedLabel, datetime: publishedDate.toISOString() },
+  ],
+  tags: tags.length > 0 ? tags : undefined,
+};
 ---
 
-<section class={shellClass}>
-  <header class={heroClass}>
-    <p class={heroEyebrowClass}>Millennium Dawn Dev Diary</p>
-    <div class={heroBodyClass}>
-      <div class={heroContentClass}>
-        <h1 class={heroTitleClass}>{entry.data.title}</h1>
-        {entry.data.description && <p class={heroDescriptionClass}>{entry.data.description}</p>}
-      </div>
-
-      <div class={heroSidebarClass}>
-        <div class={heroMetaClass} aria-label="Article metadata">
-          <div class={heroMetaItemClass}>
-            <span class={heroMetaLabelClass}>Author</span>
-            <strong>{entry.data.author}</strong>
-          </div>
-
-          <div class={heroMetaItemClass}>
-            <span class={heroMetaLabelClass}>Published</span>
-            <time datetime={publishedDate.toISOString()}>{publishedLabel}</time>
-          </div>
-        </div>
-
-        {tags.length > 0 && (
-          <ul class={heroTagsClass} aria-label="Tags">
-            {tags.map((tag) => (
-              <li class={heroTagClass}>{tag}</li>
-            ))}
-          </ul>
-        )}
-
-      </div>
-    </div>
-  </header>
-
-      <article>
-    <slot />
-  </article>
-</section>
+<ArticleShell {...heroProps} {...getArticleFooterProps(entry)}>
+  <slot />
+</ArticleShell>
