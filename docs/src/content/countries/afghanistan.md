@@ -6,24 +6,24 @@ grid_order: 3
 grid_note: Afghan Northern Alliance in 2000
 flag_image: /assets/images/flags/afghan_northern_alliance.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: AFG
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '6'
-  - label: Total Factories
-    value: '0'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $0.2 Billions
-  - label: Debt
-    value: $1 Billion
-  - label: Investments
-    value: $0
+  - section: Overview
+    stats:
+      - label: Tag
+        value: AFG
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "6"
+      - label: Total Factories
+        value: "0"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $0.2 Billions
+      - label: Debt
+        value: $1 Billion
+      - label: Investments
+        value: $0
 ---
 
 The Afghan Northern Alliance is a country surrounded by Tajikistan in the north, Pakistan from the East and the Islamic Emirate of Afghanistan, its enemy, from the south and the West. It starts with a population of 4.76 millions.

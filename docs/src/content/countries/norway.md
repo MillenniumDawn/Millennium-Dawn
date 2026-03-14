@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 46
 flag_image: /assets/images/flags/norway.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: NOR
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '9'
-  - label: Total Factories
-    value: '7'
-  - label: Military Ind.
-    value: '2'
-  - label: Civilian Ind.
-    value: '4'
-  - label: Naval Dockyards
-    value: '1'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $40.74 Billions
-  - label: Debt
-    value: $76 Billions
-  - label: Investments
-    value: $48 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: NOR
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "9"
+      - label: Total Factories
+        value: "7"
+      - label: Military Ind.
+        value: "2"
+      - label: Civilian Ind.
+        value: "4"
+      - label: Naval Dockyards
+        value: "1"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $40.74 Billions
+      - label: Debt
+        value: $76 Billions
+      - label: Investments
+        value: $48 Billions
 ---
 
 Norway is a country surrounded by Sweden from the East and Finland and Russia from the North-East. It starts with a Population of 4.50 Millions.

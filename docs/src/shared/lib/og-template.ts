@@ -186,9 +186,7 @@ export function buildOgMarkup(page: OgPageData, assets: BrandingAssets) {
             fontFamily: OG_FONT_FAMILY,
             color: OG_THEME.colors.primaryText,
           },
-          children: isHome
-            ? buildHomeContent(assets.logo)
-            : buildPageContent(assets.logo, title, description),
+          children: isHome ? buildHomeContent(assets.logo) : buildPageContent(assets.logo, title, description),
         },
       },
     },

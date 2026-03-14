@@ -1,13 +1,6 @@
 import { createDrawer } from "@/shared/lib/drawer";
 import { readCssMsVar, readCssPxVar, readCssStringVar } from "@/shared/lib/tokens";
-import {
-  TOC_ATTRS,
-  TOC_DEFAULTS,
-  TOC_DRAWER,
-  TOC_IDS,
-  TOC_SELECTORS,
-  TOC_STATES,
-} from "../lib/config";
+import { TOC_ATTRS, TOC_DEFAULTS, TOC_DRAWER, TOC_IDS, TOC_SELECTORS, TOC_STATES } from "../lib/config";
 import { ensureHeadingIds, queryTocHeadings } from "../lib/headingIds";
 import { bindExpandButtons, buildTree, renderNav, toggleSublist } from "./dom";
 import { initTocObserver } from "./observer";

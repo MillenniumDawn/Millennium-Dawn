@@ -3,8 +3,6 @@ title: Internal Factions Guide
 description: Guide for the Internal Factions system in Millennium Dawn.
 ---
 
-# Internal Factions Guide
-
 Internal Factions represent powerful interest groups within your country. Each faction has an opinion score from 0 to 100, where 50 is neutral. Higher opinion unlocks stronger dynamic bonuses; low opinion reduces or reverses them. Factions cost **1500 Political Power** to add (reducible by the "Reduce Internal Faction Costs" game rule).
 
 You can only have **one active faction at a time**. Switching removes the old faction and replaces it with the new one.

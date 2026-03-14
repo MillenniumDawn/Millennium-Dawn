@@ -112,7 +112,14 @@ function updateCardVisibility(cards: HTMLElement[], matches: HTMLElement[], star
   });
 }
 
-function lockListHeight(list: HTMLElement | null, cards: HTMLElement[], matches: HTMLElement[], pageSize: number, currentStart: number, currentEnd: number): void {
+function lockListHeight(
+  list: HTMLElement | null,
+  cards: HTMLElement[],
+  matches: HTMLElement[],
+  pageSize: number,
+  currentStart: number,
+  currentEnd: number,
+): void {
   if (!list) return;
 
   if (!matches.length) {
@@ -149,9 +156,7 @@ function renderCardIndex(dom: CardIndexDomRefs, state: CardIndexState): void {
   if (dom.nextBtn) dom.nextBtn.disabled = state.currentPage >= totalPages || matches.length === 0;
 
   if (dom.status) {
-    dom.status.textContent = matches.length
-      ? `Page ${state.currentPage} of ${totalPages}`
-      : "No matches";
+    dom.status.textContent = matches.length ? `Page ${state.currentPage} of ${totalPages}` : "No matches";
   }
 
   if (dom.results) {

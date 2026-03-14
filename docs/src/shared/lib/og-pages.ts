@@ -45,21 +45,15 @@ async function getStaticPages(): Promise<OgPageData[]> {
 async function collectDynamicPages(): Promise<OgPageData[]> {
   const pages: OgPageData[] = [];
 
-  const [
-    countryEntries,
-    changelogEntries,
-    devDiaryEntries,
-    tutorialEntries,
-    resourceEntries,
-    miscEntries,
-  ] = await Promise.all([
-    getCollection("countries"),
-    getCollection("changelogSections"),
-    getCollection("devDiaries"),
-    getCollection("tutorials"),
-    getCollection("resources"),
-    getCollection("misc"),
-  ]);
+  const [countryEntries, changelogEntries, devDiaryEntries, tutorialEntries, resourceEntries, miscEntries] =
+    await Promise.all([
+      getCollection("countries"),
+      getCollection("changelogSections"),
+      getCollection("devDiaries"),
+      getCollection("tutorials"),
+      getCollection("resources"),
+      getCollection("misc"),
+    ]);
 
   for (const entry of countryEntries) {
     pages.push({
@@ -118,9 +112,6 @@ async function collectDynamicPages(): Promise<OgPageData[]> {
 }
 
 export async function getAllOgPages(): Promise<OgPageData[]> {
-  const [staticPages, dynamicPages] = await Promise.all([
-    getStaticPages(),
-    collectDynamicPages(),
-  ]);
+  const [staticPages, dynamicPages] = await Promise.all([getStaticPages(), collectDynamicPages()]);
   return [...staticPages, ...dynamicPages];
 }

@@ -1,6 +1,6 @@
 ---
 import ResponsiveImage from "@/shared/ui/ResponsiveImage.astro";
-import { withBase } from "@/lib/urls";
+import { withBase } from "@/shared/lib/urls";
 import { getPublicImageDimensions } from "@/shared/lib/public-image-size";
 import { getInternalImageAsset } from "@/shared/lib/image-assets";
 
@@ -35,15 +35,18 @@ function parseDimension(value: number | string | undefined): number | undefined 
 const explicitWidth = parseDimension(width);
 const explicitHeight = parseDimension(height);
 const internalAsset = getInternalImageAsset(src);
-const inferredDimensions = explicitWidth && explicitHeight
-  ? null
-  : internalAsset
-    ? { width: internalAsset.width, height: internalAsset.height }
-    : await getPublicImageDimensions(src);
+const inferredDimensions =
+  explicitWidth && explicitHeight
+    ? null
+    : internalAsset
+      ? { width: internalAsset.width, height: internalAsset.height }
+      : await getPublicImageDimensions(src);
 const resolvedWidth = explicitWidth ?? inferredDimensions?.width;
 const resolvedHeight = explicitHeight ?? inferredDimensions?.height;
 const resolvedClassName = className?.trim();
 const canUseResponsiveImage = Boolean(resolvedWidth && resolvedHeight);
+const isDecorative = !alt || alt.trim() === "";
+const imgAttrs = isDecorative ? { "aria-hidden": "true" as const, role: "presentation" as const } : {};
 ---
 
 {
@@ -51,6 +54,7 @@ const canUseResponsiveImage = Boolean(resolvedWidth && resolvedHeight);
     <ResponsiveImage
       src={internalAsset ?? src}
       alt={alt}
+      decorative={isDecorative}
       width={resolvedWidth}
       height={resolvedHeight}
       loading={loading}
@@ -62,6 +66,7 @@ const canUseResponsiveImage = Boolean(resolvedWidth && resolvedHeight);
     <img
       src={withBase(src)}
       alt={alt}
+      {...imgAttrs}
       class={resolvedClassName}
       width={resolvedWidth}
       height={resolvedHeight}

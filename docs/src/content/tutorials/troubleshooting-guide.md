@@ -3,8 +3,6 @@ title: Troubleshooting Guide
 description: Guide for troubleshooting common issues in Millennium Dawn
 ---
 
-# Troubleshooting Guide
-
 ## General Performance Improvement Tips
 
 Some computers may have performance issues with Millennium Dawn and as such we recommend taking a couple precautionary steps if you have an older GPU/Laptop or any form of computer that offers. Every update we strive to continue to make the mod more performant, but are ultimately beholden to Paradox for most major performance improvements.
@@ -72,7 +70,7 @@ Error in the Log:
 [19:01:16][no_game_date][virtualfilesystem_physfs.cpp:1257]: Error setting buffer for file: common/countries/Lesotho.txt. File may not read/write correctly.
 ```
 
-****Windows Instructions****
+\***\*Windows Instructions\*\***
 
 To increase your page file size:
 

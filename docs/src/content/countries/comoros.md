@@ -5,22 +5,22 @@ unique_focus_tree: true
 grid_order: 13
 flag_image: /assets/images/flags/comoros.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: COM
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '1'
-  - label: Civilian Ind.
-    value: '1'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $0.01
-  - label: Debt
-    value: $1 billion
+  - section: Overview
+    stats:
+      - label: Tag
+        value: COM
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "1"
+      - label: Civilian Ind.
+        value: "1"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $0.01
+      - label: Debt
+        value: $1 billion
 ---
 
 The Comoros is am Island nation in East Africa between Madagascar, Tanzania and near the French overseas territory of Mayotte.

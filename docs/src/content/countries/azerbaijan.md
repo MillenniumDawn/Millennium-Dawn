@@ -5,24 +5,24 @@ unique_focus_tree: true
 grid_order: 4
 flag_image: /assets/images/flags/azerbaijan.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: AZE
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '17'
-  - label: Total Factories
-    value: '0'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $1 Billion
-  - label: Debt
-    value: $13 Billions
-  - label: Investments
-    value: $0
+  - section: Overview
+    stats:
+      - label: Tag
+        value: AZE
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "17"
+      - label: Total Factories
+        value: "0"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $1 Billion
+      - label: Debt
+        value: $13 Billions
+      - label: Investments
+        value: $0
 ---
 
 Azerbaijan is a country surrounded by Russia from the north, Georgia, Armenia and Artsakh from the West, Iran from the South and the Caspian Sea from the East. It starts with a Population of 10.6 millions.

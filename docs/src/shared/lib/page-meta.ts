@@ -46,7 +46,8 @@ export const STATIC_PAGE_META = {
   },
   support: {
     title: "Technical Support",
-    description: "Technical support and troubleshooting help for Millennium Dawn: A Modern Day mod for Hearts of Iron IV.",
+    description:
+      "Technical support and troubleshooting help for Millennium Dawn: A Modern Day mod for Hearts of Iron IV.",
     canonicalPath: "/support/",
     pageId: "support",
     ogSlug: "support",

@@ -82,9 +82,9 @@ Country content is written in the Markdown body:
 
 Regular markdown text.
 
-| Party | Ideology | Popularity |
-|---|---|---|
-| SPD | Social Democracy | 28% |
+| Party | Ideology         | Popularity |
+| ----- | ---------------- | ---------- |
+| SPD   | Social Democracy | 28%        |
 ```
 
 ## Checks Before PR

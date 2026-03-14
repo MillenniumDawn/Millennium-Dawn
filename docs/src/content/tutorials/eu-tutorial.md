@@ -5,7 +5,14 @@ description: Updated guide to the European Union in Millennium Dawn
 
 The following guide is a comprehensive tutorial for the European Union system in Millennium Dawn. It covers the EU's mechanics, institutions, decision categories, focus trees, and strategic tips for players.
 
-## 1. Overview
+# Table of Contents
+
+- [Table of Contents](#table-of-contents)
+  - [Chapter 1 - The European Union](#chapter-1---the-european-union)
+  - [Chapter 1.1 - The European Union in Millennium Dawn](#chapter-11---the-european-union-in-millennium-dawn)
+  - [Chapter 1.2 - The European Institutions](#chapter-12---the-european-institutions)
+    - [The European Union has six main institutions:](#the-european-union-has-six-main-institutions)
+    - [In the EU's unique institutional set-up:](#in-the-eus-unique-institutional-set-up)
 
 The European Union (EU) is a unique supranational organization in Millennium Dawn. Unlike most organizations in Hearts of Iron IV, the EU is not a playable country tag (although an internal `EUU` tag exists for background processing). Instead, the EU is played through its member states. Players control their nation's role within the EU through influence, euroscepticism, shared focus trees, parliamentary votes, council decisions, EU offices, and the fiscal system.
 

@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 36
 flag_image: /assets/images/flags/italy.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: ITA
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '13'
-  - label: Total Factories
-    value: '56'
-  - label: Military Ind.
-    value: '15'
-  - label: Civilian Ind.
-    value: '32'
-  - label: Naval Dockyards
-    value: '9'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $69 Billions
-  - label: Debt
-    value: $1419 Billions
-  - label: Investments
-    value: $100 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: ITA
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "13"
+      - label: Total Factories
+        value: "56"
+      - label: Military Ind.
+        value: "15"
+      - label: Civilian Ind.
+        value: "32"
+      - label: Naval Dockyards
+        value: "9"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $69 Billions
+      - label: Debt
+        value: $1419 Billions
+      - label: Investments
+        value: $100 Billions
 ---
 
 Italy is a country surrounded by France from the North-West, Switzerland from the North, Austria from the North-East and Slovenia and Croatia from the East. Inside its borders there are two microstates, San Marino and Vatican City. It starts with a Population of 57.11 Millions.

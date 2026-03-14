@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 28
 flag_image: /assets/images/flags/greece.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: GRE
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '28'
-  - label: Total Factories
-    value: '8'
-  - label: Military Ind.
-    value: '4'
-  - label: Civilian Ind.
-    value: '3'
-  - label: Naval Dockyards
-    value: '1'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $21 Billions
-  - label: Debt
-    value: $318 Billions
-  - label: Investments
-    value: $1 Billion
+  - section: Overview
+    stats:
+      - label: Tag
+        value: GRE
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "28"
+      - label: Total Factories
+        value: "8"
+      - label: Military Ind.
+        value: "4"
+      - label: Civilian Ind.
+        value: "3"
+      - label: Naval Dockyards
+        value: "1"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $21 Billions
+      - label: Debt
+        value: $318 Billions
+      - label: Investments
+        value: $1 Billion
 ---
 
 Greece is a country surrounded by Albania from the North-West, Macedonia and Bulgaria from the North and Turkey from the East. It starts with a Population of 10.91 Millions.

@@ -23,9 +23,7 @@ function toTocHeading(heading: HTMLHeadingElement): TocHeadingLike | null {
 export type { TocTreeItem };
 
 export function buildTree(headings: HTMLHeadingElement[]): TocTreeItem[] {
-  const tocHeadings = headings
-    .map(toTocHeading)
-    .filter((heading): heading is TocHeadingLike => heading !== null);
+  const tocHeadings = headings.map(toTocHeading).filter((heading): heading is TocHeadingLike => heading !== null);
 
   return buildTocTree(tocHeadings, TOC_HEADING_RANGE);
 }

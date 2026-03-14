@@ -1,5 +1,5 @@
 ---
-title: 'Dev Diary #53: The Military of Japan'
+title: "Dev Diary #53: The Military of Japan"
 description: In-repo dev diary template page for Millennium Dawn updates.
 permalink: /dev-diaries/53-the-military-of-japan/
 author: TheGeneral
@@ -9,9 +9,7 @@ tags:
   - v2.0
 ---
 
-# Dev Diary #53: The Military of Japan
-
-*By TheGeneral – 26 Feb 2026*
+_By TheGeneral – 26 Feb 2026_
 
 Kon'nichiwa! Hello and welcome to a long time no see, Millennium Dawn Dev Diary. I (TheGeneral) will guide you through some of the ideas of the new Japanese content for the upcoming DLC. One of the key parts of the rework of Japan is the design of Article 9. For those who don't know, Article 9 is an article in the constitution of Japan where the military is only allowed to act on self‑defense. This has been part of the Japanese constitution since the end of World War II. Article 9 is still active until this day, but it has had new interpretations. This would ease the use of the Japanese military.
 

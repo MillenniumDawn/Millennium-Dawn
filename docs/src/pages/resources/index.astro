@@ -2,19 +2,17 @@
 import { getCollection } from "astro:content";
 import { BaseLayout } from "@/app/layouts";
 import { SearchableIndex } from "@/features/searchable-index";
-import { STATIC_PAGE_META } from "@/lib/page-meta";
+import { STATIC_PAGE_META } from "@/shared/lib/page-meta";
 import { toCardItem } from "@/shared/lib/cards";
-import { getResourcePath } from "@/lib/content-routes";
+import { getResourcePath } from "@/shared/lib/content-routes";
 import { BODY_TEXT_CLASS, PAGE_TITLE_CLASS } from "@/shared/ui/tailwind";
 
-const resourceEntries = (await getCollection("resources"))
-  .slice()
-  .sort((a, b) => {
-    const ao = a.data.order ?? Number.MAX_SAFE_INTEGER;
-    const bo = b.data.order ?? Number.MAX_SAFE_INTEGER;
-    if (ao !== bo) return ao - bo;
-    return a.data.title.localeCompare(b.data.title);
-  });
+const resourceEntries = (await getCollection("resources")).slice().sort((a, b) => {
+  const ao = a.data.order ?? Number.MAX_SAFE_INTEGER;
+  const bo = b.data.order ?? Number.MAX_SAFE_INTEGER;
+  if (ao !== bo) return ao - bo;
+  return a.data.title.localeCompare(b.data.title);
+});
 
 const pageMeta = STATIC_PAGE_META.resources;
 const cards = resourceEntries.map((entry) => toCardItem(entry, { url: getResourcePath(entry) }));
