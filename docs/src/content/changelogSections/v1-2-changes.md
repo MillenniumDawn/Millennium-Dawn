@@ -4,8 +4,6 @@ page_id: changelog-v1-2-changes
 order: 3
 ---
 
-# v1.2 Changes
-
 ## v1.2.0 1.9 Patch and Content
 
 Stability

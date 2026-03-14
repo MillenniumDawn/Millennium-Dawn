@@ -141,6 +141,11 @@ export function rehypeTailwindContent(): (tree: Root) => void {
           return;
         }
 
+        if (classNames.includes("pre-wrapper")) {
+          addClasses(node, MARKDOWN_CLASSNAMES.preWrapper);
+          return;
+        }
+
         if (classNames.includes("dev-diary-gallery")) {
           addClasses(node, "grid w-full grid-cols-1 gap-md my-lg tablet:grid-cols-2");
           return;

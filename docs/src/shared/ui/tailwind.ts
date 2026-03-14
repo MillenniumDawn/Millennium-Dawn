@@ -11,6 +11,7 @@ export const INVERSE_FOCUS_RING_CLASS = [
 export const LAYOUT_CONTAINER_CLASS = [
   "mx-auto",
   "w-full",
+  "min-w-0",
   "max-w-[var(--container-max-width)]",
   "px-container",
   "phone:px-4",
@@ -540,8 +541,10 @@ export const MARKDOWN_CLASSNAMES = {
   ].join(" "),
   codeBlock: ["rounded-none", "bg-transparent", "p-0", "font-mono", "text-[0.875rem]", "text-code-text"].join(" "),
   pre: [
-    "mb-lg",
+    "mb-0",
+    "min-w-min",
     "overflow-x-auto",
+    "[-webkit-overflow-scrolling:touch]",
     "rounded",
     "border",
     "border-code-border",
@@ -549,6 +552,15 @@ export const MARKDOWN_CLASSNAMES = {
     "p-lg",
     "leading-[1.5]",
     "print:break-inside-avoid",
+  ].join(" "),
+  preWrapper: [
+    "pre-wrapper",
+    "mb-lg",
+    "min-w-0",
+    "w-full",
+    "max-w-full",
+    "overflow-x-auto",
+    "[-webkit-overflow-scrolling:touch]",
   ].join(" "),
   details: [
     "my-md",

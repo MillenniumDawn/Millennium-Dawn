@@ -4,8 +4,6 @@ page_id: changelog-v1-4-changes
 order: 5
 ---
 
-# v1.4 Changes
-
 ## v1.4.0
 
 Balance

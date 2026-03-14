@@ -5,8 +5,6 @@ order: 13
 hidden: true
 ---
 
-# v1.12.x Hotfixes (Every Tank an Upgrade)
-
 > Looking for the base release notes? See [v1.12.0 'Every Tank an Upgrade'](/changelogs/v1-12-0-every-tank-an-upgrade/).
 
 ## v1.12.3b

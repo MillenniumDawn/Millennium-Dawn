@@ -4,8 +4,6 @@ page_id: changelog-v1-9-top-gun-nov-16th
 order: 10
 ---
 
-# v1.9 'Top Gun' -- Nov 16th
-
 ## v1.9.6
 
 ### Balance

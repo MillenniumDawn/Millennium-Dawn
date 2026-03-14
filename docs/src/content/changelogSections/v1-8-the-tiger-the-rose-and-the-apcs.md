@@ -4,8 +4,6 @@ page_id: changelog-v1-8-the-tiger-the-rose-and-the-apcs
 order: 9
 ---
 
-# v1.8 'The Tiger, The Rose, and the APCs'
-
 ## v1.8.8 - 1.13 Compatch
 
 ### Bugfix

@@ -9,8 +9,6 @@ tags:
   - v2.0
 ---
 
-# Dev Diary #52: Special Projects, Performances, Raids and Missiles
-
 This page is the in-repository dev diary format template for future diary posts.
 
 ## Overview

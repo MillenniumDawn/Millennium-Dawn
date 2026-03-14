@@ -4,8 +4,6 @@ page_id: changelog-v1-10-0-the-lion-of-brussels-and-babylon
 order: 11
 ---
 
-# v1.10.0 'The Lion of Brussels and Babylon'
-
 ## v1.10.5
 
 v1.10.5

@@ -4,8 +4,6 @@ page_id: changelog-v1-3-changes
 order: 4
 ---
 
-# v1.3 Changes
-
 ## v1.3.2 Hotfix
 
 Events

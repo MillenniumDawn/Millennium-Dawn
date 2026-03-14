@@ -4,8 +4,6 @@ page_id: changelog-v1-11-0-missiles-holidays-and-snatch-and-grabs
 order: 12
 ---
 
-# v1.11.0 'Missiles, Holidays, and Snatch-and-Grabs'
-
 ## v1.11.2a - 2/20/25 Hotfix
 
 v1.11.2a

@@ -4,8 +4,6 @@ page_id: changelog-v1-7-make-millennium-dawn-great-again
 order: 8
 ---
 
-# v1.7 "Make Millennium Dawn Great Again"
-
 ## v1.7.5 - Hotfix
 
 ### Balance

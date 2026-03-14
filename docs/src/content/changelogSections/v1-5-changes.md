@@ -4,8 +4,6 @@ page_id: changelog-v1-5-changes
 order: 6
 ---
 
-# v1.5 Changes
-
 ## v1.5.1 Hotfix
 
 AI

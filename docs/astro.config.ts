@@ -8,6 +8,7 @@ import remarkDirective from "remark-directive";
 import { remarkCountryDirectives } from "./src/lib/remark-country-directives";
 import { remarkRootRelativeToBase } from "./src/lib/remark-root-relative";
 import { rehypeTailwindContent } from "./src/lib/rehype-tailwind-content";
+import { rehypePreWrapper } from "./src/lib/rehype-pre-wrapper";
 import { rehypeTableWrapper } from "./src/lib/rehype-table-wrapper";
 import { hoiscriptLanguage } from "./src/lib/shiki-hoiscript";
 import { SITE_BASE_PATH, SITE_FALLBACK_ORIGIN } from "./src/shared/config/site";
@@ -38,6 +39,6 @@ export default defineConfig({
       langs: [hoiscriptLanguage],
     },
     remarkPlugins: [remarkDirective, remarkCountryDirectives, [remarkRootRelativeToBase, SITE_BASE_PATH]],
-    rehypePlugins: [rehypeTableWrapper, rehypeTailwindContent],
+    rehypePlugins: [rehypeTableWrapper, rehypePreWrapper, rehypeTailwindContent],
   },
 });

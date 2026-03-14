@@ -3,8 +3,6 @@ title: Troubleshooting Guide
 description: Guide for troubleshooting common issues in Millennium Dawn
 ---
 
-# Troubleshooting Guide
-
 ## General Performance Improvement Tips
 
 Some computers may have performance issues with Millennium Dawn and as such we recommend taking a couple precautionary steps if you have an older GPU/Laptop or any form of computer that offers. Every update we strive to continue to make the mod more performant, but are ultimately beholden to Paradox for most major performance improvements.

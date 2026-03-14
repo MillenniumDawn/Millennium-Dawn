@@ -4,8 +4,6 @@ page_id: changelog-v1-0-changes
 order: 1
 ---
 
-# v1.0 Changes
-
 ## v1.0.1 Hotfix
 
 ### Stability

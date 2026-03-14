@@ -4,8 +4,6 @@ page_id: changelog-v1-6-1-11-compatibility-and-economic-rework
 order: 7
 ---
 
-# v1.6 - 1.11 Compatibility and Economic Rework
-
 ## v1.6.3 Minor Patch
 
 ### AI

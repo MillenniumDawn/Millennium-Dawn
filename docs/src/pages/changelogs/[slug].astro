@@ -2,8 +2,10 @@
 import type { CollectionEntry } from "astro:content";
 import type { GetStaticPaths } from "astro";
 import { MarkdownDocLayout } from "@/app/layouts";
+import { getChangelogHeroProps } from "@/lib/article-hero-props";
 import { getChangelogPath, getEntryBaseId } from "@/lib/content-routes";
 import { buildMarkdownDocStaticPaths, renderMarkdownDocEntry } from "@/lib/markdown-doc-entry";
+import ArticleShell from "@/shared/ui/ArticleShell.astro";
 import MarkdownContent from "@/shared/ui/MarkdownContent.astro";
 
 interface Props {
@@ -16,8 +18,11 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
 const { entry }: Props = Astro.props;
 const { Content, headings } = await renderMarkdownDocEntry(entry);
+const heroProps = getChangelogHeroProps(entry);
 ---
 
 <MarkdownDocLayout entry={entry} canonicalPath={getChangelogPath(entry)} headings={headings} toc="auto">
-  <MarkdownContent Content={Content} />
+  <ArticleShell {...heroProps}>
+    <MarkdownContent Content={Content} />
+  </ArticleShell>
 </MarkdownDocLayout>
