@@ -63,7 +63,7 @@ Millennium Dawn includes a detailed modern economy system covering revenue, gove
   - [Agriculture Districts](#agriculture-districts)
   - [Energy Infrastructure](#energy-infrastructure)
   - [Industrial Infrastructure](#industrial-infrastructure)
-  - [Stronghold Network](#stronghold-network)
+
 - [Advanced Industrial Buildings](#advanced-industrial-buildings)
   - [Microchip Plants](#microchip-plants)
   - [Composite Plants](#composite-plants)
@@ -821,17 +821,6 @@ Industrial Infrastructure is the alternative keystone building. It increases the
 | Effect                 | +15% resource gain efficiency per infrastructure level |
 
 Choose between Energy and Industrial Infrastructure based on the state's role: energy-producing states benefit from the Energy keystone, while resource-rich states benefit from the Industrial keystone.
-
-### Stronghold Network
-
-Stronghold Networks are defensive military installations that provide significant defensive bonuses to a state. They require specific technology to unlock.
-
-| Property               | Value                                                                                                                      |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Base Construction Cost | 45,000                                                                                                                     |
-| Max Per State          | 1                                                                                                                          |
-| Shares Building Slots  | Yes                                                                                                                        |
-| Effect                 | +0.15 local supply, +2 max bunker level, +2 max coastal bunker level, +15% enemy attrition, +10% bunker construction speed |
 
 ---
 

@@ -127,7 +127,7 @@ Anti-satellite weapons allow you to target enemy satellites and, at higher tiers
 | KILLSAT5   | 2025      | 2.0           |
 | KILLSAT6   | 2035      | 2.0           |
 
-**Requirements**: KILLSAT technologies require both the Space Program **and** the Space-Based Weapons project to be completed. KILLSAT2 additionally unlocks the Space Artillery special project.
+**Requirements**: KILLSAT technologies require both the Space Program **and** the Space-Based Weapons project to be completed. KILLSAT3 additionally unlocks the Space Artillery special project.
 
 ### OLV (Orbital Launch Vehicles)
 
@@ -402,7 +402,7 @@ An improved version is also available:
 
 ### Orbital Fire Support
 
-The most advanced space weapon system, unlocked at KILLSAT2:
+The most advanced space weapon system, unlocked at KILLSAT3:
 
 | Property    | Value                                                         |
 | ----------- | ------------------------------------------------------------- |

@@ -131,7 +131,7 @@ Countries can become subjects of other nations through the influence system, war
 
 As an overlord, you can reduce a subject's autonomy through the **Reduce Autonomy** decision in the Influence category. This costs 50 Political Power and reduces the subject's autonomy by 12%. You must hold at least 5% influence over the subject.
 
-Some subjects are exempt from autonomy manipulation, including Special Administrative Regions (Hong Kong, Macao, Taiwan), Warsaw Pact members, and Russian federal subjects.
+Some subjects are exempt from autonomy manipulation, including Special Administrative Regions (Hong Kong, Macao, Taiwan), Tibet, East Turkestan, Mongolia, Wagner PMC members, CIS member states, Warsaw Pact members, and Russian federal subjects.
 
 Several nation-specific systems use custom autonomy hierarchies. Russia has a federal subject system with its own promotion chain (Governorate, Okrug, Oblast, Kray, Republic, State). Britain has a devolution system for constituent countries.
 
