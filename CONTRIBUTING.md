@@ -6,8 +6,8 @@ Thank you for your interest in contributing to Millennium Dawn!
 
 - [Documentation](https://millenniumdawn.github.io/Millennium-Dawn/)
 - [Discord](http://discord.gg/millenniumdawn)
-- [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md)
-- [Code Resources](./docs/dev-resources/code-resource.md)
+- [Code Stylization Guide](./docs/src/content/resources/code-stylization-guide.md)
+- [Code Resources](./docs/src/content/resources/code-resource.md)
 
 ## Development Setup
 
@@ -51,7 +51,7 @@ pre-commit autoupdate
 
 ### Docs Content Rules (`docs/`)
 
-- Docs are now built with Astro 5+ and content lives in `docs/src/content/**`.
+- Docs are built with Astro 6 and content lives in `docs/src/content/**`.
 - Use Markdown/frontmatter only. Do not add Liquid tags (`{% ... %}` or `{{ ... }}`).
 - Internal links should be root-relative, for example: `[Tutorial](/tutorials/)`.
 - Do not hardcode `"/Millennium-Dawn/..."` in markdown links. Base path is applied during build.
@@ -60,7 +60,9 @@ pre-commit autoupdate
 
 ### Docs Local Checks
 
-[Install Bun](https://bun.com/) first (one-time setup on your computer).
+**Prerequisites:**
+- [Node.js 24 LTS](https://nodejs.org/) or newer (required by Astro 6)
+- [Bun](https://bun.com/) (package manager and script runner)
 
 If you only want to edit docs content (and are not a developer), follow these steps:
 
@@ -89,12 +91,12 @@ bun run dev
 Before opening a PR, run these checks from the same `docs` folder:
 
 ```bash
-bun run lint:md     # checks markdown formatting
-bun run build       # builds the production site
-bun run check:links # checks broken links
+bun run ci
 ```
 
-See [Code Stylization Guide](./docs/dev-resources/code-stylization-guide.md) for details.
+Or run individual checks: `lint:md`, `lint:remark`, `check`, `build`, `check:links`, `check:og`, `check:a11y`, `check:perf`. Full checks also require Python 3 for some validation scripts.
+
+See [Code Stylization Guide](./docs/src/content/resources/code-stylization-guide.md) for details.
 
 ## Pull Request Process
 
@@ -183,9 +185,9 @@ _Rules_
 
 ## Resources
 
-- [Dev Resources](./docs/dev-resources/) - Tools and guides
-- [Focus Tree Lifecycle](./docs/dev-resources/focus-tree-lifecycle-checklist.md)
-- [Game Rules Reference](./docs/dev-resources/game-rules.md)
+- [Dev Resources](./docs/src/content/resources/) - Tools and guides
+- [Focus Tree Lifecycle](./docs/src/content/resources/focus-tree-lifecycle-checklist.md)
+- [Game Rules Reference](./docs/src/content/tutorials/game-rules.md)
 
 ---
 
