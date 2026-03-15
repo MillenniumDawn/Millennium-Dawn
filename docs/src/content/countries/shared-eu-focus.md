@@ -5,10 +5,10 @@ unique_focus_tree: true
 grid_order: 21
 grid_note: USoE and POTEF
 infobox:
-- section: Status
-  stats:
-  - label: Content
-    value: WIP
+  - section: Status
+    stats:
+      - label: Content
+        value: WIP
 ---
 
 WIP

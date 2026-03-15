@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 53
 flag_image: /assets/images/flags/spain.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: SPR
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '19'
-  - label: Total Factories
-    value: '33'
-  - label: Military Ind.
-    value: '6'
-  - label: Civilian Ind.
-    value: '22'
-  - label: Naval Dockyards
-    value: '5'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $52 Billions
-  - label: Debt
-    value: $828 Billions
-  - label: Investments
-    value: $98 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: SPR
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "19"
+      - label: Total Factories
+        value: "33"
+      - label: Military Ind.
+        value: "6"
+      - label: Civilian Ind.
+        value: "22"
+      - label: Naval Dockyards
+        value: "5"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $52 Billions
+      - label: Debt
+        value: $828 Billions
+      - label: Investments
+        value: $98 Billions
 ---
 
 Spain is a country surrounded by Portugal from the West, France and Andorra from the North and the United Kingdom from the South. For its territory in Africa it borders with Marocco from the South. It starts with a Population of 41.70 Millions.

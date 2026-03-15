@@ -679,7 +679,6 @@ ideas = {
 		us_dollar = {
 			cost = 75
 			removal_cost = -1
-			level = 1
 
 			on_add = {
 				log = "[GetDateText]: [Root.GetName]: Adopted us_dollar reserve"
@@ -688,6 +687,10 @@ ideas = {
 			}
 			on_remove = {
 				subtract_from_variable = { global.usd_reserve_adoption_count = 1 }
+			}
+
+			available = {
+				NOT = { has_country_flag = EU_joined_the_eurozone }
 			}
 
 			ai_will_do = {
@@ -705,16 +708,22 @@ ideas = {
 					factor = 0
 					has_idea = western_sanctions
 				}
+				modifier = {
+					factor = 0
+					has_country_flag = EU_joined_the_eurozone
+				}
 			}
 		}
 
 		euro = {
 			cost = 75
 			removal_cost = -1
-			level = 2
+
+			allowed_civil_war = { has_idea = EU_member }
 
 			available = {
 				has_idea = EU_member
+				has_country_flag = EU_joined_the_eurozone
 			}
 
 			on_add = {
@@ -724,6 +733,36 @@ ideas = {
 			}
 			on_remove = {
 				subtract_from_variable = { global.eur_reserve_adoption_count = 1 }
+				if = {
+					limit = {
+						NOT = {
+							OR = {
+								has_idea = us_dollar
+								has_idea = chinese_yuan
+								has_idea = japanese_yen
+								has_idea = russia_rouble
+								has_idea = british_pound
+								has_idea = swiss_frank
+							}
+						}
+					}
+					clr_country_flag = EU_joined_the_eurozone
+					add_ideas = no_foreign_reserve
+				}
+			}
+			cancel = {
+				#please add here exception for some countries like Andorra, San Marino, Vatican, Monaco if you need this.
+				NOT = { has_idea = EU_member }
+				# Disabled if not in the EU
+				has_global_flag = GAME_RULE_eu_disabled
+			}
+
+			modifier = {
+				economic_cycles_cost_factor = 0.5
+				trade_opinion_factor = 0.2
+				consumer_goods_factor = -0.01
+				interest_rate_multiplier_modifier = -2
+				econ_cycle_upg_cost_multiplier_modifier = 0.50
 			}
 
 			ai_will_do = {
@@ -738,6 +777,10 @@ ideas = {
 					check_variable = { global.eur_reserve_adoption_count > 20 }
 				}
 				modifier = {
+					factor = 5
+					has_country_flag = EU_joined_the_eurozone
+				}
+				modifier = {
 					factor = 0
 					has_war_with = EUU
 				}
@@ -747,7 +790,6 @@ ideas = {
 		chinese_yuan = {
 			cost = 75
 			removal_cost = -1
-			level = 3
 
 			on_add = {
 				log = "[GetDateText]: [Root.GetName]: Adopted chinese_yuan reserve"
@@ -756,6 +798,10 @@ ideas = {
 			}
 			on_remove = {
 				subtract_from_variable = { global.cny_reserve_adoption_count = 1 }
+			}
+
+			available = {
+				NOT = { has_country_flag = EU_joined_the_eurozone }
 			}
 
 			ai_will_do = {
@@ -795,13 +841,16 @@ ideas = {
 						}
 					}
 				}
+				modifier = {
+					factor = 0
+					has_country_flag = EU_joined_the_eurozone
+				}
 			}
 		}
 
 		japanese_yen = {
 			cost = 75
 			removal_cost = -1
-			level = 4
 
 			on_add = {
 				log = "[GetDateText]: [Root.GetName]: Adopted japanese_yen reserve"
@@ -810,6 +859,10 @@ ideas = {
 			}
 			on_remove = {
 				subtract_from_variable = { global.jpy_reserve_adoption_count = 1 }
+			}
+
+			available = {
+				NOT = { has_country_flag = EU_joined_the_eurozone }
 			}
 
 			ai_will_do = {
@@ -832,15 +885,19 @@ ideas = {
 					NOT = { is_in_faction_with = JAP }
 					NOT = { tag = JAP }
 				}
+				modifier = {
+					factor = 0
+					has_country_flag = EU_joined_the_eurozone
+				}
 			}
 		}
 
 		russia_rouble = {
 			cost = 75
 			removal_cost = -1
-			level = 5
 
 			available = {
+				NOT = { has_country_flag = EU_joined_the_eurozone }
 				OR = {
 					tag = SOV
 					is_in_faction_with = SOV
@@ -877,13 +934,20 @@ ideas = {
 						has_war_with = RUS
 					}
 				}
+				modifier = {
+					factor = 0
+					has_country_flag = EU_joined_the_eurozone
+				}
 			}
 		}
 
 		british_pound = {
 			cost = 75
 			removal_cost = -1
-			level = 6
+
+			available = {
+				NOT = { has_country_flag = EU_joined_the_eurozone }
+			}
 
 			on_add = {
 				log = "[GetDateText]: [Root.GetName]: Adopted british_pound reserve"
@@ -914,15 +978,19 @@ ideas = {
 					NOT = { is_in_faction_with = ENG }
 					NOT = { tag = ENG }
 				}
+				modifier = {
+					factor = 0
+					has_country_flag = EU_joined_the_eurozone
+				}
 			}
 		}
 
 		swiss_frank = {
 			cost = 50
 			removal_cost = -1
-			level = 7
 
 			available = {
+				NOT = { has_country_flag = EU_joined_the_eurozone }
 				OR = {
 					tag = SWI
 					tag = LIC
@@ -947,17 +1015,24 @@ ideas = {
 						tag = LIC
 					}
 				}
+				modifier = {
+					factor = 0
+					has_country_flag = EU_joined_the_eurozone
+				}
 			}
 		}
 
 		no_foreign_reserve = {
 			cost = 50
 			removal_cost = -1
-			level = 8
 
 			on_add = {
 				set_variable = { reserve_roi_bonus = 0 }
 				set_variable = { reserve_trade_bonus = 0 }
+			}
+
+			available = {
+				NOT = { has_country_flag = EU_joined_the_eurozone }
 			}
 
 			modifier = {
@@ -976,6 +1051,10 @@ ideas = {
 					NOT = { is_in_faction_with = SOV }
 					NOT = { is_in_faction_with = RUS }
 				}
+				modifier = {
+					factor = 0
+					has_country_flag = EU_joined_the_eurozone
+				}
 			}
 		}
 	}
@@ -987,7 +1066,10 @@ ideas = {
 		gold_standard_back = {
 			cost = 100
 			removal_cost = -1
-			level = 1
+
+			available = {
+				NOT = { has_idea = euro }
+			}
 
 			modifier = {
 				stability_factor = 0.06
@@ -1028,9 +1110,12 @@ ideas = {
 		}
 
 		silver_standard = {
-			cost = 75
+			cost = 100
 			removal_cost = -1
-			level = 2
+
+			available = {
+				NOT = { has_idea = euro }
+			}
 
 			modifier = {
 				stability_factor = 0.03
@@ -1066,9 +1151,12 @@ ideas = {
 		}
 
 		bi_metal_standard = {
-			cost = 75
+			cost = 100
 			removal_cost = -1
-			level = 3
+
+			available = {
+				NOT = { has_idea = euro }
+			}
 
 			modifier = {
 				stability_factor = 0.02
@@ -1099,9 +1187,8 @@ ideas = {
 		}
 
 		no_currency_backing = {
-			cost = 50
+			cost = 100
 			removal_cost = -1
-			level = 4
 
 			modifier = {
 				political_power_gain = 0.03

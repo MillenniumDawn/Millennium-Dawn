@@ -4,49 +4,63 @@ page_id: changelog-v1-12-0-every-tank-an-upgrade
 order: 13
 ---
 
-# v1.12.0 'Every Tank an Upgrade'
-
 > Looking for v1.12.1+ hotfixes? See [v1.12.x Hotfixes](/changelogs/v1-12-0-every-tank-an-upgrade-hotfixes/).
 
 ## v1.12.0d - 7/02/25 Hotfix
 
 v1.12.0d
+
 ### AI
+
 - The AI should now actually deploy planes when at war with the United States (China and Russia were the worst offenders.)
+
 ### Balance
+
 - Increased the benefit of the "Improve Local Infrastructure" internal investment from 15% to 20% for all infrastructure types
 - By default you can no longer sending investments to countries while you have the "Bankruptcy Incoming" mission active
 - Added requirement for Transnistria to be independent to complete focuses with wargoals to prevent early WWIII from happeneing
 - Command Power has replaced Army Experience in the PKK mechanic for Turkey
+
 ### Bugfix
+
 - Fixed the broken display for the "Storm the Tulkarm Fort" decision not showing up with the right information
 - Fixed the Israel "The Passover Massacre" operations when failed Gaza Strip becomes overlord of Israel and instead changed it so that Israel becomes the overlord over the Gaza strip
 - Fixed the "Resource Exports" not properly taking into account subjects when calculating your resource export income
 - Fixed the "Rafale Planes" focus not properly giving the Rafale M to India
 - Fixed the broken Romanian tooltips for the economic focuses
 - Fixed the stealth corvette techs not properly being limited to 2025 and instead being able to research without a tech research penalty
+
 ### Database
+
 - Added a new scripted trigger "is_autonomy_that_cannot_change_level" to check if a country has a special autonomy level that cannot be changed
 - Changed Destroyers back to being Capital Ships instead of Screen Ships. This will be reverted in a future naval rework
 - Removed older "anti_air artillery" type from ship classes for the older missile system
 - Removed a ton of duplicate equipment variants for the "Error Stop" variant so the game should start a bit faster
 - Russia no longer starts with the "Naval Guns 2025" tech in 2000. Silly time travelers
+
 ### Game Rules
+
 - Added a new Game Rule "Disable Investment Bankruptcy Lock" that allows you to send investments to countries while you have the "Bankruptcy Incoming" mission active
+
 ### Graphics
+
 - Updated the icon for the Nigerian Idea "Blood Oil"
+
 ### Localization
+
 - Changed all the vehicle hull names from "Light Tank" to "Armored Hull"
 - Added a tooltip to the first "Armored Vehicle Hull" tech that explains you only need to research this
+
 ### Performance
+
 - Improved the performance of how the on actions are triggered for civil wars so there is less idea drag
-
-
 
 ## v1.12.0c - 6/27/25 Hotfix
 
 v1.12.0c
+
 ### AI
+
 - The AI with generic focus tree should no longer take continuous focus "Increase Autonomy" if they have special (i.e. can't upgrade) autonomy level
 - AI should no longer try to increase its autonomy level if it has same ideology as overlord and current autonomy level is not too low (lower than sattelite)
 - AI will take into account interest rates before paying reparations following a raid
@@ -56,7 +70,9 @@ v1.12.0c
 - Improved the AI for Nigeria handling its religious conversion mechanic
 - AI is likely to go to war over debt if the target is in a major faction (CSTO, NATO)
 - Iranian AI will be more likely to stir trouble in Yemen
+
 ### Balance
+
 - Moved the added manpower from the Automatic Loading System to the Manual Loading System for tanks
 - For now the Russian Army Focus "Opportunity To Buy Off The Army" will give 0.015b weekly income per 10 million population instead of fixed income of 0.150b weekly
 - Made the United Kingdom focus "Towards The Right" remove the "Part of the 1st World" idea
@@ -67,7 +83,9 @@ v1.12.0c
 - Rebalanced modifiers from Iran's presidential decisions
 - Made the Coaxial Engines for Helicopters jump by 5 KM/H per generation
 - Removed the piercing value from the Modern Smoothbore ATGM and better laid out the ATGM hard attack by increments of 4
+
 ### Bugfix
+
 - Fixed the Weaken Libya and Weaken Venezuela modifiers not properly weakening the countries
 - Fixed having no scrollbar in special project window
 - Fixed having no priority buttons for equipment in Production Tab
@@ -89,13 +107,17 @@ v1.12.0c
 - Fixed the "Sectarian Groups Start to Seek Independence" mission in Syria cycling without actually triggering
 - Fixed a number of minor issues w/ Linux being unable to find specific graphics files due to file case sensitivity
 - Fixed the Bosnian decision "Unite Yugoslavia" not properly annexing the right nations
+
 ### Content
+
 - Added an option to blacklist countries from re-applying to the F-35 program as the United States
 - Tabled Iran's MEK mechanic
 - Added an event for the end of the Nigerian "Religious Civil War Mission" if you are able to successfully convert everything without the Islamic civil war triggering
 - Added 8 new American leaders to extend presidential cycles for another 16 years (4 DEM, 4 REP)
 - Added an option to mend ties with the United States as I.R. Iran
+
 ### Database
+
 - Added the starting spirit of "Nuclear Energy" to Iran
 - Blocked the "Electronic Government" special project from being visible for other nations other than Iran
 - Adjusted some triggers in Iran to require Intel instead of Influence
@@ -103,18 +125,23 @@ v1.12.0c
 - Changed Helicopters from requiring the "Aircraft Project" special project to requiring the "Helicopter Project" special project
 - Added a new strengthen/weaken setting for the Czech Republic
 - Adjusted the Hezbollahi Focus "Steal the Bastards" to require the United States has to have declared war on Iraq, has Iraq as a subject or has military access to them
+
 ### Localization
+
 - Some minor localization fixes for Russian and its subjects content
 - Added missing localization to two Iranian national spirits
 - Rewrote the entire Russian localization file for better grammar and readability
+
 ### Graphics
+
 - Fixed some inconsistencies in the VLS naval tech icons for the Naval Designer
 
-
-
 ## v1.12.0
+
 v1.12.0
+
 ### AI
+
 - Rewrite the influence AI to closer to the investment AI where it evaluates by country context
 - Fixed the AI not wanting to take European Parliament measures due to them having a lone factor of 0
 - Improved the AIs performance when evaluating whether to push for laws or decisions
@@ -130,7 +157,9 @@ v1.12.0
 - Added 150+ new infantry models and textures
 - Added dozens of new vehicles and texture variations for them
 - Added dozens of new ships. Hull visual model progression also added.
+
 ### Balance
+
 - Adjusted the political power from 100 to 150 when you succeed in fixing the bankruptcy
 - Improved the EuroArmy Brigade so it's not nearly as shit for the European Union
 - Reduced the industrial cost of the heavy guns by half of the cost
@@ -156,7 +185,9 @@ v1.12.0
 - Increased SAM air superiority per wing from 5 to 15.
 - Added a 2% boost to Air-Ground-Attack on the BBA radar upgrade, to represent ground search radars
 - Made the German Soldiers Popularity mechanic for the War on Terror a little more random but a little easier to manage
+
 ### Bugfix
+
 - Fixed a German MIO giving piercing despite Small Arms not having Piercing
 - Fixes German Content Bugs, like License production, and minor stuff
 - Fixed the wrong colour in the display names in the laws
@@ -236,7 +267,9 @@ v1.12.0
 - Replaced requirement for Visegrad focuses to not require countries to be the same ideology as Poland, instead they cannot be at war with each other
 - Fixed POL Purchase of Foreign Board Aircraft not giving planes.
 - Fixed CZE brigade deployment focuses not deploying brigades
+
 ### Content
+
 - NEW/IMPROVED TREES: Armenia, Nigeria, Iran
 - NEW TAGS/COUNTRIES ON MAP: People's Union Of Kurdistan (PUK), Islamic Emirate Of Kurdistan (IEK)
 - Ecuador's starting leader Jamil Mahuad with the lawyer trait
@@ -274,7 +307,9 @@ v1.12.0
 - Flavor decisions for Kurdish unification in the Peshmerga region
 - Removed Turkish Cypriot & Kurdish tree until a more comprehensive rework is ready
 - Renamed the POL "Modernization Of Su-25" focus to "Extend MiG-29 Fleet" and changed its effects.
+
 ### Database
+
 - Adjusted the European Debt Crisis timer has been adjusted to 900 days to better allow for time to pass the required laws
 - Adjusted the Naval Doctrines to include stealth corvettes and stealth frigates
 - Added FAO, BAY, BSH, CHU, CRM, DON, DPR, DRP, FAO, GGZ, HPR, HZG, KAE, KLM, KOM, KSH, LAG, LPR, LRP, MEL, MLR, MOV, NEE, OPR, PRP, RSK, RUS, SIL, SPA, TAT, TRA, VOJ, VRP, VTB, WLC to European country group trigger
@@ -296,29 +331,37 @@ v1.12.0
 - Added vanilla (non-DLC) starting techs Israel was missing
 - Adjusted the maximum number of quick wings for deployment from 3 to 8
 - Added a new scripted effect to clear the EU vote variables when a vote fails to cleanup (effect is called EU_emergency_vote_clear)
+
 ### Graphics
+
 - Fixed the "Combined Defense Industries" idea icon from missing from the generic ideas
 - Fixed bad file path errors in graphics in the error log when using Mac/Linux/Steamdeck
 - Fixed multiple Israeli ideas missing icon
+
 ### Localization
+
 - Fixed a missing localization for a intervention law for the Greens for Isolation
 - Improved the system explanation for Brazil's Amazon Conservation System so it's easier to understand what to do
 - Improved and rewrote a lot of the Syrian focus tree localization to be more well written and additional lroe
 - Bunch of Israeli English localization fixes
+
 ### Map
+
 - Updated the map for Yugoslavia, Romania, Albania, Bulgaria, Greece, Turkey, Cyprus, the Caucasus and Southern Russia
 
 Quality of Life (QoL):
 
 - Added a decision that allows you to disable raid event notifications of raids that do not pertain to you
 - Added Unemployment Rate to the Economy Overview when clicking on nations
+
 ### Performance
+
 - Removed some redundant code in the European Union scripted effects
 - Rewrite the Nepalese on actions to not allow other checks to check whether they're Nepal or Maoist Nepal
 - Improved the performance of the on_actions on monthly so they're about 15% faster per month
+
 ### Sound
+
 - Added unit voice-lines to Ukraine
 - Added unit voice-lines to Saudi Arabia
 - Redid unit voice-lines for Iraq
-
-

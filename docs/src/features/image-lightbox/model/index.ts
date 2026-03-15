@@ -10,10 +10,10 @@ import {
 
 type Cleanup = () => void;
 
-type Point = {
+interface Point {
   x: number;
   y: number;
-};
+}
 
 const NOOP: Cleanup = () => {};
 const ROOT_SELECTOR = "#main-content";
@@ -32,13 +32,13 @@ function clamp(value: number, min: number, max: number): number {
 
 function isEligibleImage(image: HTMLImageElement): boolean {
   if (image.closest("[data-lightbox-ignore], dialog, button")) return false;
-  const src = image.currentSrc || image.getAttribute("src") || "";
+  const src = image.currentSrc ?? image.getAttribute("src") ?? "";
   if (!src.trim()) return false;
   return true;
 }
 
 function getImageSource(image: HTMLImageElement): string {
-  return image.currentSrc || image.src || image.getAttribute("src") || "";
+  return image.currentSrc ?? image.src ?? image.getAttribute("src") ?? "";
 }
 
 function getImageLabel(image: HTMLImageElement): string {

@@ -229,24 +229,24 @@ calculate_currency_strength = {
 # foreign-denominated earnings and commodity exports worth more locally,
 # while a strong currency suppresses these figures.
 apply_currency_multipliers = {
-	# International investment returns: denominated in reserve currency
+	# All multipliers are 1/currency_strength — compute once and reuse
 	set_temp_variable = { inv_factor = 1.0 }
 	divide_temp_variable = { inv_factor = currency_strength }
+
+	# International investment returns: denominated in reserve currency
 	multiply_variable = { int_investments_rate = inv_factor }
 
 	# Resource exports: commodities are priced globally in reserve currency
-	set_temp_variable = { res_factor = 1.0 }
-	divide_temp_variable = { res_factor = currency_strength }
-	multiply_variable = { resource_sale_rate = res_factor }
 	# Keep individual breakdown variables in sync so the tooltip matches resource_sale_rate
-	multiply_variable = { oil_exports = res_factor }
-	multiply_variable = { steel_exports = res_factor }
-	multiply_variable = { aluminium_exports = res_factor }
-	multiply_variable = { tungsten_exports = res_factor }
-	multiply_variable = { chromium_exports = res_factor }
-	multiply_variable = { rubber_exports = res_factor }
-	multiply_variable = { microchip_exports = res_factor }
-	multiply_variable = { composite_exports = res_factor }
+	multiply_variable = { resource_sale_rate = inv_factor }
+	multiply_variable = { oil_exports = inv_factor }
+	multiply_variable = { steel_exports = inv_factor }
+	multiply_variable = { aluminium_exports = inv_factor }
+	multiply_variable = { tungsten_exports = inv_factor }
+	multiply_variable = { chromium_exports = inv_factor }
+	multiply_variable = { rubber_exports = inv_factor }
+	multiply_variable = { microchip_exports = inv_factor }
+	multiply_variable = { composite_exports = inv_factor }
 
 	# Foreign-denominated debt multiplier: only applies to countries whose
 	# debt is denominated in an external reserve currency (not autarkic/no_foreign_reserve).
@@ -261,9 +261,7 @@ apply_currency_multipliers = {
 			has_idea = swiss_frank
 		}
 	}
-		set_temp_variable = { debt_factor = 1.0 }
-		divide_temp_variable = { debt_factor = currency_strength }
-		multiply_variable = { debt_rate = debt_factor }
+		multiply_variable = { debt_rate = inv_factor }
 	}
 }
 
@@ -517,190 +515,4 @@ calculate_reserve_roi_bonus = {
 		multiply_temp_variable = { tmp_inflation_buffer = -0.5 }
 		add_to_variable = { inflation_cost_combined_var = tmp_inflation_buffer }
 	}
-}
-
-# ── Debug Snapshot ────────────────────────────────────────────────────────────
-# Usage (HOI4 console, playing as any country):
-#   effect debug_currency_snapshot=yes         — global adoption counts + all 7 issuers
-#   effect debug_currency_country_snapshot=yes — current country's full currency data
-# Output goes to logs/game.log
-
-# Logs global adoption counts and a per-issuer data block for every reserve currency.
-debug_currency_snapshot = {
-	log = "====== CURRENCY SNAPSHOT [GetDateText] ======"
-	log = "ADOPTION: USD=[global.usd_reserve_adoption_count] EUR=[global.eur_reserve_adoption_count] CNY=[global.cny_reserve_adoption_count] RUB=[global.rub_reserve_adoption_count] GBP=[global.gbp_reserve_adoption_count] JPY=[global.jpy_reserve_adoption_count] CHF=[global.chf_reserve_adoption_count]"
-
-	# USD
-	if = { limit = { check_variable = { global.usd_issuer > 0 } }
-		var:global.usd_issuer = {
-			log = "USD ISSUER: [This.GetTag] | strength=[This.GetVariable.currency_strength] | treasury=[This.GetVariable.treasury_rate] | debt_ratio=[This.GetVariable.debt_ratio] | stability=[This.GetStability] | seigniorage=[This.GetVariable.seigniorage_income_display] | roi_bonus=[This.GetVariable.reserve_roi_bonus]"
-			if = { limit = { has_country_flag = is_usd_issuer }
-				log = "  is_usd_issuer=YES"
-			}
-			else = { log = "  is_usd_issuer=NO (flag missing!)" }
-		}
-	}
-	else = { log = "USD ISSUER: none (global.usd_issuer not set)" }
-
-	# EUR
-	if = { limit = { check_variable = { global.eur_issuer > 0 } }
-		var:global.eur_issuer = {
-			log = "EUR ISSUER: [This.GetTag] | strength=[This.GetVariable.currency_strength] | treasury=[This.GetVariable.treasury_rate] | debt_ratio=[This.GetVariable.debt_ratio] | stability=[This.GetStability] | seigniorage=[This.GetVariable.seigniorage_income_display] | roi_bonus=[This.GetVariable.reserve_roi_bonus]"
-			if = { limit = { has_country_flag = is_eur_issuer }
-				log = "  is_eur_issuer=YES"
-			}
-			else = { log = "  is_eur_issuer=NO (flag missing!)" }
-		}
-	}
-	else = { log = "EUR ISSUER: none (global.eur_issuer not set)" }
-
-	# CNY
-	if = { limit = { check_variable = { global.cny_issuer > 0 } }
-		var:global.cny_issuer = {
-			log = "CNY ISSUER: [This.GetTag] | strength=[This.GetVariable.currency_strength] | treasury=[This.GetVariable.treasury_rate] | debt_ratio=[This.GetVariable.debt_ratio] | stability=[This.GetStability] | seigniorage=[This.GetVariable.seigniorage_income_display] | roi_bonus=[This.GetVariable.reserve_roi_bonus]"
-			if = { limit = { has_country_flag = is_cny_issuer }
-				log = "  is_cny_issuer=YES"
-			}
-			else = { log = "  is_cny_issuer=NO (flag missing!)" }
-		}
-	}
-	else = { log = "CNY ISSUER: none (global.cny_issuer not set)" }
-
-	# RUB
-	if = { limit = { check_variable = { global.rub_issuer > 0 } }
-		var:global.rub_issuer = {
-			log = "RUB ISSUER: [This.GetTag] | strength=[This.GetVariable.currency_strength] | treasury=[This.GetVariable.treasury_rate] | debt_ratio=[This.GetVariable.debt_ratio] | stability=[This.GetStability] | seigniorage=[This.GetVariable.seigniorage_income_display] | roi_bonus=[This.GetVariable.reserve_roi_bonus]"
-			if = { limit = { has_country_flag = is_rub_issuer }
-				log = "  is_rub_issuer=YES"
-			}
-			else = { log = "  is_rub_issuer=NO (flag missing!)" }
-		}
-	}
-	else = { log = "RUB ISSUER: none (global.rub_issuer not set)" }
-
-	# GBP
-	if = { limit = { check_variable = { global.gbp_issuer > 0 } }
-		var:global.gbp_issuer = {
-			log = "GBP ISSUER: [This.GetTag] | strength=[This.GetVariable.currency_strength] | treasury=[This.GetVariable.treasury_rate] | debt_ratio=[This.GetVariable.debt_ratio] | stability=[This.GetStability] | seigniorage=[This.GetVariable.seigniorage_income_display] | roi_bonus=[This.GetVariable.reserve_roi_bonus]"
-			if = { limit = { has_country_flag = is_gbp_issuer }
-				log = "  is_gbp_issuer=YES"
-			}
-			else = { log = "  is_gbp_issuer=NO (flag missing!)" }
-		}
-	}
-	else = { log = "GBP ISSUER: none (global.gbp_issuer not set)" }
-
-	# JPY
-	if = { limit = { check_variable = { global.jpy_issuer > 0 } }
-		var:global.jpy_issuer = {
-			log = "JPY ISSUER: [This.GetTag] | strength=[This.GetVariable.currency_strength] | treasury=[This.GetVariable.treasury_rate] | debt_ratio=[This.GetVariable.debt_ratio] | stability=[This.GetStability] | seigniorage=[This.GetVariable.seigniorage_income_display] | roi_bonus=[This.GetVariable.reserve_roi_bonus]"
-			if = { limit = { has_country_flag = is_jpy_issuer }
-				log = "  is_jpy_issuer=YES"
-			}
-			else = { log = "  is_jpy_issuer=NO (flag missing!)" }
-		}
-	}
-	else = { log = "JPY ISSUER: none (global.jpy_issuer not set)" }
-
-	# CHF
-	if = { limit = { check_variable = { global.chf_issuer > 0 } }
-		var:global.chf_issuer = {
-			log = "CHF ISSUER: [This.GetTag] | strength=[This.GetVariable.currency_strength] | treasury=[This.GetVariable.treasury_rate] | debt_ratio=[This.GetVariable.debt_ratio] | stability=[This.GetStability] | seigniorage=[This.GetVariable.seigniorage_income_display] | roi_bonus=[This.GetVariable.reserve_roi_bonus]"
-			if = { limit = { has_country_flag = is_chf_issuer }
-				log = "  is_chf_issuer=YES"
-			}
-			else = { log = "  is_chf_issuer=NO (flag missing!)" }
-		}
-	}
-	else = { log = "CHF ISSUER: none (global.chf_issuer not set)" }
-
-	log = "====== END CURRENCY SNAPSHOT ======"
-}
-
-# Logs the current country's full currency state.
-# Run while playing as the country you want to inspect.
-debug_currency_country_snapshot = {
-	log = "====== COUNTRY CURRENCY: [THIS.GetTag] [GetDateText] ======"
-	log = "  currency_strength=[?THIS.currency_strength]"
-	log = "  treasury_rate=[?THIS.treasury_rate]"
-	log = "  debt_ratio=[?THIS.debt_ratio]"
-	log = "  seigniorage_income_display=[?THIS.seigniorage_income_display]"
-	log = "  reserve_roi_bonus=[?THIS.reserve_roi_bonus]"
-	log = "  reserve_trade_bonus=[?THIS.reserve_trade_bonus]"
-	log = "  currency_inflation_feed=[?THIS.currency_inflation_feed]"
-	log = "  inflation_cost_combined_var=[?THIS.inflation_cost_combined_var]"
-	log = "  cb_policy_rate=[?THIS.cb_policy_rate]"
-
-	# Reserve currency idea
-	if = { limit = { has_idea = us_dollar }
-		log = "  reserve_idea=us_dollar"
-	}
-	else_if = { limit = { has_idea = euro }
-		log = "  reserve_idea=euro"
-	}
-	else_if = { limit = { has_idea = chinese_yuan }
-		log = "  reserve_idea=chinese_yuan"
-	}
-	else_if = { limit = { has_idea = russia_rouble }
-		log = "  reserve_idea=russia_rouble"
-	}
-	else_if = { limit = { has_idea = japanese_yen }
-		log = "  reserve_idea=japanese_yen"
-	}
-	else_if = { limit = { has_idea = british_pound }
-		log = "  reserve_idea=british_pound"
-	}
-	else_if = { limit = { has_idea = swiss_frank }
-		log = "  reserve_idea=swiss_frank"
-	}
-	else = { log = "  reserve_idea=none (no_foreign_reserve or autarkic)" }
-
-	# Currency backing
-	if = { limit = { has_idea = gold_standard_back }
-		log = "  backing=gold_standard"
-	}
-	else_if = { limit = { has_idea = silver_standard }
-		log = "  backing=silver_standard"
-	}
-	else_if = { limit = { has_idea = bi_metal_standard }
-		log = "  backing=bi_metal"
-	}
-	else = { log = "  backing=no_currency_backing (fiat)" }
-
-	# Issuer flag
-	if = { limit = { has_country_flag = is_usd_issuer }
-		log = "  issuer_flag=is_usd_issuer"
-	}
-	else_if = { limit = { has_country_flag = is_eur_issuer }
-		log = "  issuer_flag=is_eur_issuer"
-	}
-	else_if = { limit = { has_country_flag = is_cny_issuer }
-		log = "  issuer_flag=is_cny_issuer"
-	}
-	else_if = { limit = { has_country_flag = is_rub_issuer }
-		log = "  issuer_flag=is_rub_issuer"
-	}
-	else_if = { limit = { has_country_flag = is_gbp_issuer }
-		log = "  issuer_flag=is_gbp_issuer"
-	}
-	else_if = { limit = { has_country_flag = is_jpy_issuer }
-		log = "  issuer_flag=is_jpy_issuer"
-	}
-	else_if = { limit = { has_country_flag = is_chf_issuer }
-		log = "  issuer_flag=is_chf_issuer"
-	}
-	else = { log = "  issuer_flag=none" }
-
-	log = "====== END COUNTRY CURRENCY ======"
-}
-
-# Calls debug_currency_country_snapshot for every country.
-# Produces one data block per country in game.log.
-# Search for "COUNTRY CURRENCY:" to find each entry.
-debug_currency_all_countries = {
-	log = "====== CURRENCY ALL COUNTRIES [GetDateText] ======"
-	every_country = {
-		debug_currency_country_snapshot = yes
-	}
-	log = "====== END CURRENCY ALL COUNTRIES ======"
 }
