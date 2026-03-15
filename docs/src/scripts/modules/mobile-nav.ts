@@ -1,5 +1,5 @@
-import { createDrawer } from "../../shared/lib/drawer";
-import { readCssMsVar, readCssStringVar } from "../../shared/lib/tokens";
+import { createDrawer } from "@/shared/lib/drawer";
+import { readCssMsVar, readCssStringVar } from "@/shared/lib/tokens";
 
 type Cleanup = () => void;
 
@@ -11,11 +11,9 @@ function dispatchHeaderState(header: HTMLElement): void {
 
 function setNavHidden(nav: HTMLElement, hidden: boolean): void {
   if (hidden) {
-    nav.setAttribute("hidden", "");
     nav.setAttribute("aria-hidden", "true");
     nav.setAttribute("inert", "");
   } else {
-    nav.removeAttribute("hidden");
     nav.removeAttribute("aria-hidden");
     nav.removeAttribute("inert");
   }

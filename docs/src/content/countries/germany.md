@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 27
 flag_image: /assets/images/flags/germany.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: GER
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '13'
-  - label: Total Factories
-    value: '72'
-  - label: Military Ind.
-    value: '17'
-  - label: Civilian Ind.
-    value: '50'
-  - label: Naval Dockyards
-    value: '5'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $128 Billions
-  - label: Debt
-    value: $2096
-  - label: Investments
-    value: $112
+  - section: Overview
+    stats:
+      - label: Tag
+        value: GER
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "13"
+      - label: Total Factories
+        value: "72"
+      - label: Military Ind.
+        value: "17"
+      - label: Civilian Ind.
+        value: "50"
+      - label: Naval Dockyards
+        value: "5"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $128 Billions
+      - label: Debt
+        value: $2096
+      - label: Investments
+        value: $112
 ---
 
 Germany is a country surrounded by The Netherlands and Belgium from the North-West, Luxembourg and France from the West, Switzerland from the South, Austria from the South-South East, Czech Republic and Poland from the East and Denmark from the North. It starts with a Population of 85.75 Millions.

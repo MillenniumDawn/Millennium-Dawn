@@ -1,5 +1,11 @@
 # Contributing to Millennium Dawn Docs (Astro)
 
+## Prerequisites
+
+- Node.js 24 LTS or newer ([nodejs.org](https://nodejs.org/))
+- [Bun](https://bun.com/)
+- Python 3 (for `check:links`, `check:og`, `check:a11y`, `check:perf`)
+
 ## Quick Start
 
 ```bash
@@ -76,9 +82,9 @@ Country content is written in the Markdown body:
 
 Regular markdown text.
 
-| Party | Ideology | Popularity |
-|---|---|---|
-| SPD | Social Democracy | 28% |
+| Party | Ideology         | Popularity |
+| ----- | ---------------- | ---------- |
+| SPD   | Social Democracy | 28%        |
 ```
 
 ## Checks Before PR
