@@ -1,8 +1,9 @@
 import type { LanguageRegistration } from "shiki";
 
 /**
- * HOI4 / Paradox script syntax highlighting aligned with docs/public/assets/hoi4.xml
- * (Kate KSyntaxHighlighting). Same categories and token roles for consistent look.
+ * HOI4 / Paradox script syntax highlighting aligned with
+ * https://github.com/AngriestBird/kate-paradox-hoi4-syntax (Kate KSyntaxHighlighting).
+ * Same categories and token roles for consistent look.
  */
 
 const BOOLEANS = ["yes", "no"] as const;
