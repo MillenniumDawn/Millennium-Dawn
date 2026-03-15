@@ -5,16 +5,19 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import remarkDirective from "remark-directive";
-import { remarkCountryDirectives } from "./src/lib/remark-country-directives";
-import { remarkRootRelativeToBase } from "./src/lib/remark-root-relative";
-import { rehypeTailwindContent } from "./src/lib/rehype-tailwind-content";
-import { rehypeTableWrapper } from "./src/lib/rehype-table-wrapper";
-import { hoiscriptLanguage } from "./src/lib/shiki-hoiscript";
+import rehypeExternalLinks from "rehype-external-links";
+import { remarkCountryDirectives } from "./src/shared/lib/remark-country-directives";
+import { remarkRootRelativeToBase } from "./src/shared/lib/remark-root-relative";
+import { rehypeTailwindContent } from "./src/shared/lib/rehype-tailwind-content";
+import { rehypePreWrapper } from "./src/shared/lib/rehype-pre-wrapper";
+import { rehypeImgAlt } from "./src/shared/lib/rehype-img-alt";
+import { rehypeTableScope } from "./src/shared/lib/rehype-table-scope";
+import { rehypeTableWrapper } from "./src/shared/lib/rehype-table-wrapper";
+import { hoiscriptLanguage } from "./src/shared/lib/shiki-hoiscript";
 import { SITE_BASE_PATH, SITE_FALLBACK_ORIGIN } from "./src/shared/config/site";
 
 // Astro and @tailwindcss/vite currently resolve different Vite type instances.
-const tailwindPlugins =
-  tailwindcss() as unknown as NonNullable<NonNullable<AstroUserConfig["vite"]>["plugins"]>;
+const tailwindPlugins = tailwindcss() as unknown as NonNullable<NonNullable<AstroUserConfig["vite"]>["plugins"]>;
 
 export default defineConfig({
   site: SITE_FALLBACK_ORIGIN,
@@ -39,6 +42,20 @@ export default defineConfig({
       langs: [hoiscriptLanguage],
     },
     remarkPlugins: [remarkDirective, remarkCountryDirectives, [remarkRootRelativeToBase, SITE_BASE_PATH]],
-    rehypePlugins: [rehypeTableWrapper, rehypeTailwindContent],
+    rehypePlugins: [
+      rehypeImgAlt,
+      [
+        rehypeExternalLinks,
+        {
+          target: "_blank",
+          rel: ["noopener", "noreferrer"],
+          content: { type: "text", value: " (opens in new tab)" },
+        },
+      ],
+      rehypeTableScope,
+      rehypeTableWrapper,
+      rehypePreWrapper,
+      rehypeTailwindContent,
+    ],
   },
 });

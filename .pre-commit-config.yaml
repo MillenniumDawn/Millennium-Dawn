@@ -10,6 +10,9 @@ repos:
         exclude: '\.mod$'  # Exclude mod files which might need specific formatting
       - id: end-of-file-fixer
         exclude: '\.mod$'
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: '\.mod$'
       - id: check-yaml
         files: 'localisation/english/.*\.yml$'
       - id: check-json
@@ -56,32 +59,13 @@ repos:
         args: [--print-width=120]
   - repo: local
     hooks:
-      # Existing Millennium Dawn quality assurance tools
-      - id: md-basic-style-check
-        name: MD Basic Style Check
-        entry: python3 tools/check_basic_style.py --mode staged
+      - id: md-fix-styling
+        name: MD Fix Styling (auto-fix spaces/tabs/braces)
+        entry: python3 tools/fix_styling.py --mode staged
         language: system
         files: '\.(txt)$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
-        stages: [pre-commit]
-      - id: md-basic-style-check-2
-        name: MD Basic Style Check 2 (Advanced)
-        entry: python3 tools/check_basic_style_2.py --mode staged
-        language: system
-        files: '\.(txt)$'
-        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
-        pass_filenames: false
-        args: ["dummy_token"]
-        stages: [pre-commit]
-      - id: md-coding-standards
-        name: MD Coding Standards
-        entry: python3 tools/coding_standards.py
-        language: system
-        files: '\.(txt)$'
-        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
-        pass_filenames: false
-        args: ["dummy_token"]
         stages: [pre-commit]
       - id: fix-localization-encoding
         name: Validate and fix HOI4 localization UTF-8 BOM
@@ -89,6 +73,13 @@ repos:
         language: system
         files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
         pass_filenames: true
+      # - id: md-standardize
+      #   name: MD Standardize (auto-fix ideas/events/decisions/focuses)
+      #   entry: python3 tools/standardize_staged.py
+      #   language: system
+      #   files: '(common/national_focus|common/decisions|common/ideas|events)/.*\.txt$'
+      #   pass_filenames: true
+      #   stages: [pre-commit]
       - id: check-mod-file-encoding
         name: Check .mod file UTF-8 encoding
         entry: python3 tools/validate_mod_encoding.py
@@ -102,3 +93,10 @@ repos:
         files: '\.(txt)$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: true
+      - id: validate-staged
+        name: Validate staged files (opt-in, set MD_VALIDATE=1)
+        entry: python3 tools/validate_staged.py
+        language: system
+        files: '(events/.*\.txt|common/decisions/.*\.txt|localisation/.*\.yml)$'
+        pass_filenames: false
+        stages: [pre-commit]

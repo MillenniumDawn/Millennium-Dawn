@@ -1,5 +1,5 @@
 ---
-import { withBase } from "@/lib/urls";
+import { withBase } from "@/shared/lib/urls";
 import { BASE_LINK_CLASS } from "@/shared/ui/tailwind";
 
 interface SectionMeta {
@@ -30,32 +30,32 @@ const segments = (path || "/")
             Home
           </a>
         </li>
-        {
-          segments.map((segment, index) => {
-            const isLast = index === segments.length - 1;
-            const section = sections[segment];
-            const segmentPath = `/${segments.slice(0, index + 1).join("/")}/`;
-            const segmentTitle = section?.title || segment.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
-            const segmentHref = section?.url || segmentPath;
+        {segments.map((segment, index) => {
+          const isLast = index === segments.length - 1;
+          const section = sections[segment];
+          const segmentPath = `/${segments.slice(0, index + 1).join("/")}/`;
+          const segmentTitle = section?.title || segment.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
+          const segmentHref = section?.url || segmentPath;
 
-            if (isLast) {
-              return (
-                <li class="m-0 flex items-center gap-xs text-sm text-text-muted before:mr-xs before:text-text-muted before:content-['/']">
-                  <span class="py-1" aria-current="page">{title ?? segmentTitle}</span>
-                </li>
-              );
-            }
-
+          if (isLast) {
             return (
               <li class="m-0 flex items-center gap-xs text-sm text-text-muted before:mr-xs before:text-text-muted before:content-['/']">
-                {/* Increase touch target padding */}
-                <a class={`${BASE_LINK_CLASS} py-1`} href={withBase(segmentHref)} aria-label={segmentTitle}>
-                  {segmentTitle}
-                </a>
+                <span class="py-1" aria-current="page">
+                  {title ?? segmentTitle}
+                </span>
               </li>
             );
-          })
-        }
+          }
+
+          return (
+            <li class="m-0 flex items-center gap-xs text-sm text-text-muted before:mr-xs before:text-text-muted before:content-['/']">
+              {/* Increase touch target padding */}
+              <a class={`${BASE_LINK_CLASS} py-1`} href={withBase(segmentHref)} aria-label={segmentTitle}>
+                {segmentTitle}
+              </a>
+            </li>
+          );
+        })}
       </ol>
     </nav>
   )

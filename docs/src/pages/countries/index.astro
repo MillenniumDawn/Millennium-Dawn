@@ -1,12 +1,8 @@
 ---
 import { getCollection, getEntry, render } from "astro:content";
 import { BaseLayout } from "@/app/layouts";
-import { cssUrl, withBase } from "@/lib/urls";
-import {
-  getCountryPath,
-  getEntryBodyClass,
-  getEntryPageId,
-} from "@/lib/content-routes";
+import { cssUrl, withBase } from "@/shared/lib/urls";
+import { getCountryPath, getEntryBodyClass, getEntryPageId } from "@/shared/lib/content-routes";
 import {
   BODY_TEXT_CLASS,
   COUNTRY_CARD_ARTICLE_CLASS,
@@ -29,7 +25,14 @@ if (!pageEntry) {
 const { Content: PageContent } = await render(pageEntry);
 const canonicalPath = pageEntry.data.permalink ?? "/countries/";
 
-const countryCardLinkClass = [INHERIT_LINK_CLASS, "hover:text-primary", "hover:no-underline", "before:absolute", "before:inset-0", "before:z-10"].join(" ");
+const countryCardLinkClass = [
+  INHERIT_LINK_CLASS,
+  "hover:text-primary",
+  "hover:no-underline",
+  "before:absolute",
+  "before:inset-0",
+  "before:z-10",
+].join(" ");
 ---
 
 <BaseLayout
@@ -46,25 +49,30 @@ const countryCardLinkClass = [INHERIT_LINK_CLASS, "hover:text-primary", "hover:n
   <p class={BODY_TEXT_CLASS}>The following countries are playable in Millennium Dawn: Modern Day Mod.</p>
 
   <h2 class={SECTION_TITLE_CLASS}>Unique Focus Trees</h2>
-  <div class="mb-xl mt-md grid gap-md [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))]" role="list" aria-label="Countries with unique focus trees">
-    {focusCountries.map((country) => (
-      <article
-        class={COUNTRY_CARD_ARTICLE_CLASS}
-        role="listitem"
-        style={country.data.flag_image ? `--country-flag-image: ${cssUrl(country.data.flag_image)};` : undefined}
-      >
-        {country.data.flag_image && (
-          <span
-            class={COUNTRY_FLAG_OVERLAY_CLASS}
-            aria-hidden="true"
-          ></span>
-        )}
-        <p class="m-0 text-[1.05rem] font-semibold leading-[1.35] text-text">
-          <a class={countryCardLinkClass} href={withBase(getCountryPath(country))}>{country.data.title}</a>
-        </p>
-        {country.data.grid_note && <p class="m-0 text-[0.86rem] leading-[1.55] text-text-secondary">{country.data.grid_note}</p>}
-      </article>
-    ))}
+  <div
+    class="mb-xl mt-md grid gap-md [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))]"
+    role="list"
+    aria-label="Countries with unique focus trees"
+  >
+    {
+      focusCountries.map((country) => (
+        <article
+          class={COUNTRY_CARD_ARTICLE_CLASS}
+          role="listitem"
+          style={country.data.flag_image ? `--country-flag-image: ${cssUrl(country.data.flag_image)};` : undefined}
+        >
+          {country.data.flag_image && <span class={COUNTRY_FLAG_OVERLAY_CLASS} aria-hidden="true" />}
+          <p class="m-0 text-[1.05rem] font-semibold leading-[1.35] text-text">
+            <a class={countryCardLinkClass} href={withBase(getCountryPath(country))}>
+              {country.data.title}
+            </a>
+          </p>
+          {country.data.grid_note && (
+            <p class="m-0 text-[0.86rem] leading-[1.55] text-text-secondary">{country.data.grid_note}</p>
+          )}
+        </article>
+      ))
+    }
   </div>
 
   <MarkdownContent Content={PageContent} />

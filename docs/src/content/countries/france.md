@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 24
 flag_image: /assets/images/flags/france.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: FRA
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '12'
-  - label: Total Factories
-    value: '50'
-  - label: Military Ind.
-    value: '17'
-  - label: Civilian Ind.
-    value: '27'
-  - label: Naval Dockyards
-    value: '6'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $93 Billions
-  - label: Debt
-    value: $1412 Billions
-  - label: Investments
-    value: $637 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: FRA
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "12"
+      - label: Total Factories
+        value: "50"
+      - label: Military Ind.
+        value: "17"
+      - label: Civilian Ind.
+        value: "27"
+      - label: Naval Dockyards
+        value: "6"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $93 Billions
+      - label: Debt
+        value: $1412 Billions
+      - label: Investments
+        value: $637 Billions
 ---
 
 France is a country surrounded by Belgium and Luxembourg from the North, Germany, Switzerland, Italy and Monaco from the East and Spain and Andorra from the South. Its territory in South America borders with Brazil and Suriname. France starts off with a Population of 62.34 Millions.

@@ -4,10 +4,10 @@ slug: cuba
 unique_focus_tree: true
 grid_order: 15
 infobox:
-- section: Status
-  stats:
-  - label: Content
-    value: WIP
+  - section: Status
+    stats:
+      - label: Content
+        value: WIP
 ---
 
 WIP

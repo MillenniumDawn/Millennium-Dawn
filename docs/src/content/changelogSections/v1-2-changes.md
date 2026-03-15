@@ -4,8 +4,6 @@ page_id: changelog-v1-2-changes
 order: 3
 ---
 
-# v1.2 Changes
-
 ## v1.2.0 1.9 Patch and Content
 
 Stability
@@ -57,8 +55,6 @@ Gameplay
 Music
 
 - Vanilla main theme is now available on the radio
-
-
 
 ## v1.2.0 1.9 Patch and Content
 
@@ -118,5 +114,3 @@ Map
 
 - Various Victory Point fixed across the world
 - Fixes to the Colombian-Ecuadorian coast borders and Bahamas
-
-

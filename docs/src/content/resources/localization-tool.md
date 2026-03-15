@@ -8,6 +8,7 @@ This is a tool to help process missing/duplicated/unused loc
 Unused part is a bit messy, and will require a lot of manual walkthrough
 
 How to use:
+
 - Download archive
 - Unpack it
 - Install .net 6.0 runtime https://dotnet.microsoft.com/en-us/download/dotnet/6.0

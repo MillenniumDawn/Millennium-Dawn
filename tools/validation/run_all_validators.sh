@@ -46,7 +46,7 @@ echo -e "${CYAN}================================================================
 echo ""
 
 TOTAL_ERRORS=0
-TOTAL_VALIDATORS=7
+TOTAL_VALIDATORS=8
 
 # 1. Run variable validation
 echo -e "${CYAN}[1/$TOTAL_VALIDATORS] Running variable and event target validation...${NC}"
@@ -132,6 +132,18 @@ else
 fi
 echo ""
 
+# 8. Run unused scripted effects/triggers validation
+echo -e "${CYAN}[8/$TOTAL_VALIDATORS] Running unused scripted effects/triggers validation...${NC}"
+python3 tools/validation/validate_unused_scripted.py $STAGED_FLAG $STRICT_FLAG $COLOR_FLAG --output /tmp/unused-scripted-validation.txt
+USC_EXIT=$?
+if [ $USC_EXIT -ne 0 ]; then
+    echo -e "${RED}✗ Unused scripted effects/triggers validation found issues${NC}"
+    TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+else
+    echo -e "${GREEN}✓ Unused scripted effects/triggers validation passed${NC}"
+fi
+echo ""
+
 # Summary
 echo -e "${CYAN}================================================================================${NC}"
 if [ $TOTAL_ERRORS -eq 0 ]; then
@@ -152,6 +164,7 @@ else
     [ $DEC_EXIT -ne 0 ] && echo "  - /tmp/decisions-validation.txt"
     [ $LOC_EXIT -ne 0 ] && echo "  - /tmp/localisation-validation.txt"
     [ $EVT_EXIT -ne 0 ] && echo "  - /tmp/events-validation.txt"
+    [ $USC_EXIT -ne 0 ] && echo "  - /tmp/unused-scripted-validation.txt"
     echo ""
 
     if [ -n "$STRICT_FLAG" ]; then

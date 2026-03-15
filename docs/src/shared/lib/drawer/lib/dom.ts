@@ -15,10 +15,9 @@ export function setToggleAttrs(
 
 export function setPageInert(inertSelectors: string[], inert: boolean): void {
   inertSelectors.forEach((selector) => {
-    const element =
-      selector.startsWith("#")
-        ? document.getElementById(selector.slice(1))
-        : document.querySelector<HTMLElement>(selector);
+    const element = selector.startsWith("#")
+      ? document.getElementById(selector.slice(1))
+      : document.querySelector<HTMLElement>(selector);
 
     if (!element) return;
 

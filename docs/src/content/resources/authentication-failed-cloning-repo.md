@@ -3,8 +3,6 @@ title: Authentication Failed Cloning Repo
 description: How to resolve 'Authentication failed' errors when cloning a repository from GitLab
 ---
 
-# Authentication Failed Cloning Repo
-
 If you have the error screen "Authentication Failed" like below:
 
 [Image unavailable: authentication error screenshot]
@@ -24,6 +22,7 @@ This will take you to your profile settings page, on the left of the screen you 
 [Image unavailable: access tokens screenshot]
 
 This is where you will need to create a "Personal Access Token" or PAT for short.
+
 1. This is where you name your PAT, this can be anything you like it to be, I've called it "Guide" for this example.
 2. This is where you can set an expiration date on your PAT, for security reasons, leaving it blank will have this PAT be usable indefinitely, so it's up to you what you want to pick.
 3. This is the only one of these you need to tick, it's so your PAT works for everything a password normally would, think of it as changing from "read-only" to "editing privileges", it is important to not forget this step.

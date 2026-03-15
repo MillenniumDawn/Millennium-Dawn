@@ -137,6 +137,10 @@ def generate_report(results_dir, pr_number=None, commit_sha=None):
             "Event Validation",
             "validation-events-results/validation-events.log",
         ),
+        (
+            "Unused Scripted Effects & Triggers Validation",
+            "validation-unused-scripted-results/validation-unused-scripted.log",
+        ),
     ]
 
     # Add each validation section

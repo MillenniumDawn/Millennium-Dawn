@@ -4423,3 +4423,110 @@ set_continent_nation_flag = {
 		set_country_flag = american_nation_flag
 	}
 }
+
+# wargoal_by = wargoal FROM
+# wargoal_on = country on which wargoal is placed
+# wargoal_type = 0 - puppet/default, 1 - liberate/change government, 2 - conquer
+add_threat_from_wargoal_effect = {
+	if = {
+		limit = { check_variable = { wargoal_by = 0 } }
+	}
+
+	set_temp_variable = { temp_threat = 5 }
+	if = {
+		limit = {
+			var:wargoal_by = { has_idea = non_power }
+		}
+
+		add_to_temp_variable = { temp_threat = -2 }
+	}
+	else_if = {
+		limit = {
+			var:wargoal_by = { has_idea = minor_power }
+		}
+
+		add_to_temp_variable = { temp_threat = -1 }
+	}
+	else_if = {
+		limit = {
+			var:wargoal_by = { has_idea = large_power }
+		}
+
+		add_to_temp_variable = { temp_threat = 1 }
+	}
+	else_if = {
+		limit = {
+			var:wargoal_by = { has_idea = great_power }
+		}
+
+		add_to_temp_variable = { temp_threat = 2 }
+	}
+	else_if = {
+		limit = {
+			var:wargoal_by = { has_idea = super_power }
+		}
+
+		add_to_temp_variable = { temp_threat = 3 }
+	}
+
+	if = {
+		limit = {
+			var:wargoal_on = { has_idea = non_power }
+		}
+
+		add_to_temp_variable = { temp_threat = -2 }
+	}
+	else_if = {
+		limit = {
+			var:wargoal_on = { has_idea = minor_power }
+		}
+
+		add_to_temp_variable = { temp_threat = -1 }
+	}
+	else_if = {
+		limit = {
+			var:wargoal_on = { has_idea = large_power }
+		}
+
+		add_to_temp_variable = { temp_threat = 1 }
+	}
+	else_if = {
+		limit = {
+			var:wargoal_on = { has_idea = great_power }
+		}
+
+		add_to_temp_variable = { temp_threat = 2 }
+	}
+	else_if = {
+		limit = {
+			var:wargoal_on = { has_idea = super_power }
+		}
+
+		add_to_temp_variable = { temp_threat = 3 }
+	}
+
+	if = {
+		limit = {
+			check_variable = { wargoal_type = 1 }
+		}
+
+		multiply_temp_variable = { temp_threat = 0.5 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { wargoal_type = 2 }
+		}
+
+		multiply_temp_variable = { temp_threat = 2 }
+	}
+
+	clamp_temp_variable = {
+		var = temp_threat
+		min = 1
+		max = 10
+	}
+
+	var:wargoal_by = {
+		add_threat = temp_threat
+	}
+}

@@ -12,6 +12,7 @@ It might require .NET 6.0 runtime to run
 https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 
 How to use
+
 - make your diagram in diagram.net
 - use simple rectangles for focuses
 - use simple arrows for connection
@@ -22,6 +23,7 @@ How to use
 - when ready go to file -> export as -> XML -> UNTICK the 'Compressed' -> download the xml to DEVICE
 
 In tool
+
 - enter path to your xml file
 - enter path to file you want to generate (you can set it to folder/your_non_existing_file_yet.txt)
 - enter tag you want to use for your focus tree, use custom parameters if needed

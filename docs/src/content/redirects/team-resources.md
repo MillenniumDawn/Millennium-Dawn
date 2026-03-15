@@ -4,7 +4,7 @@ permalink: /team-resources/
 redirect_to: /resources/
 seo: false
 robots: noindex, nofollow
-toc: 'off'
+toc: "off"
 ---
 
 This page has moved to [/resources/](/resources/).

@@ -4,11 +4,7 @@ export interface TocScrollHandle {
   cleanup(): void;
 }
 
-export function initTocScroll(
-  nav: HTMLElement,
-  progress: HTMLElement | null,
-  scrollOffset: number,
-): TocScrollHandle {
+export function initTocScroll(nav: HTMLElement, progress: HTMLElement | null, scrollOffset: number): TocScrollHandle {
   const updateProgress = () => {
     if (!progress) return;
     const docHeight = document.documentElement.scrollHeight - window.innerHeight;

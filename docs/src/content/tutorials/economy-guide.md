@@ -3,9 +3,7 @@ title: Economy Guide
 description: Comprehensive guide to the economy system in Millennium Dawn
 ---
 
-# Economy Guide
-
-Millennium Dawn includes a detailed modern economy system covering revenue, government expenditure, debt, employment, electricity, currency, inflation, and more. This guide explains each element and how they interact.
+Millennium Dawn includes a detailed modern economy system covering revenue, government expenditure, debt, employment, electricity, and more. This guide explains each element and how they interact.
 
 ## Table of Contents
 

@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 54
 flag_image: /assets/images/flags/sweden.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: SWE
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '13'
-  - label: Total Factories
-    value: '13'
-  - label: Military Ind.
-    value: '3'
-  - label: Civilian Ind.
-    value: '7'
-  - label: Naval Dockyards
-    value: '3'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $24 Billions
-  - label: Debt
-    value: $234 Billions
-  - label: Investments
-    value: $40 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: SWE
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "13"
+      - label: Total Factories
+        value: "13"
+      - label: Military Ind.
+        value: "3"
+      - label: Civilian Ind.
+        value: "7"
+      - label: Naval Dockyards
+        value: "3"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $24 Billions
+      - label: Debt
+        value: $234 Billions
+      - label: Investments
+        value: $40 Billions
 ---
 
 Sweden is a country surrounded by Denmark from the South, Norway from the West and Finland from the East. It starts with a Population of 9.08 Millions.
