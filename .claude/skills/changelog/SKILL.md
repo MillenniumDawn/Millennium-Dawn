@@ -9,9 +9,9 @@ Steps:
 2. Get the branch diff and commit history:
 
    ```
-   git log main..HEAD --oneline
-   git diff main...HEAD --stat
-   git diff main...HEAD
+   git log origin/main..HEAD --oneline
+   git diff origin/main...HEAD --stat
+   git diff origin/main...HEAD
    ```
 
 3. Analyze every change and classify each into one of these categories (skip empty categories):
