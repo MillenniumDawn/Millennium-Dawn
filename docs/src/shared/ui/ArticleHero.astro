@@ -1,0 +1,134 @@
+---
+interface MetaItem {
+  label: string;
+  value: string;
+  datetime?: string;
+}
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  description?: string;
+  metaItems?: MetaItem[];
+  tags?: string[];
+}
+
+const { eyebrow, title, description, metaItems = [], tags = [] }: Props = Astro.props;
+
+const heroClass = [
+  "relative",
+  "overflow-hidden",
+  "rounded-[24px]",
+  "border",
+  "border-border-light",
+  "bg-[radial-gradient(circle_at_top_left,var(--color-primary-light),transparent_42%),linear-gradient(180deg,var(--color-surface),color-mix(in_srgb,var(--color-surface)_84%,var(--color-primary-light)))]",
+  "p-[clamp(1rem,1.5vw,1.5rem)]",
+  "shadow-sm",
+  "after:absolute",
+  "after:inset-x-0",
+  "after:bottom-0",
+  "after:h-1",
+  "after:bg-[linear-gradient(90deg,var(--color-primary),transparent_70%)]",
+  "phone:rounded-[20px]",
+].join(" ");
+
+const heroEyebrowClass = [
+  "mb-xs",
+  "mt-0",
+  "text-[0.75rem]",
+  "font-bold",
+  "uppercase",
+  "tracking-[0.12em]",
+  "text-primary",
+].join(" ");
+
+const hasSidebar = metaItems.length > 0 || tags.length > 0;
+
+const heroBodyClass = hasSidebar
+  ? ["grid", "items-stretch", "gap-md", "wide:grid-cols-[minmax(0,1.8fr)_minmax(18rem,0.95fr)]"].join(" ")
+  : ["grid", "items-stretch", "gap-md"].join(" ");
+
+const heroContentClass = ["flex", "min-w-0", "flex-col", "justify-between", "gap-sm"].join(" ");
+
+const heroTitleClass = [
+  "m-0",
+  "max-w-[72ch]",
+  "text-[clamp(1.6rem,3.5vw,2.75rem)]",
+  "leading-[1.08]",
+  "text-text",
+  "[text-wrap:balance]",
+].join(" ");
+
+const heroDescriptionClass = ["mt-xs", "max-w-[72ch]", "text-[0.9375rem]", "text-text-secondary", "leading-snug"].join(
+  " ",
+);
+
+const heroSidebarClass = ["flex", "min-w-0", "flex-col", "items-start", "justify-between", "gap-sm"].join(" ");
+
+const heroMetaClass = ["grid", "w-full", "max-w-[22rem]", "gap-sm", "wide:grid-cols-2"].join(" ");
+
+const heroMetaItemClass = [
+  "grid",
+  "gap-[0.15rem]",
+  "rounded-[12px]",
+  "border",
+  "border-[color-mix(in_srgb,var(--color-border)_75%,transparent)]",
+  "bg-[color-mix(in_srgb,var(--color-surface)_88%,transparent)]",
+  "px-3",
+  "py-[0.5rem]",
+  "shadow-sm",
+].join(" ");
+
+const heroMetaLabelClass = ["text-[0.7rem]", "font-bold", "uppercase", "tracking-[0.08em]", "text-text-muted"].join(
+  " ",
+);
+
+const heroTagsClass = ["m-0", "flex", "flex-wrap", "gap-2", "list-none", "p-0"].join(" ");
+
+const heroTagClass = [
+  "rounded-full",
+  "border",
+  "border-[color-mix(in_srgb,var(--color-primary)_18%,var(--color-border))]",
+  "bg-[color-mix(in_srgb,var(--color-primary-light)_72%,var(--color-surface))]",
+  "px-[0.65rem]",
+  "py-[0.25rem]",
+  "text-[0.8125rem]",
+  "font-semibold",
+  "text-text",
+].join(" ");
+---
+
+<header class={heroClass}>
+  <p class={heroEyebrowClass}>{eyebrow}</p>
+  <div class={heroBodyClass}>
+    <div class={heroContentClass}>
+      <h1 class={heroTitleClass}>{title}</h1>
+      {description && <p class={heroDescriptionClass}>{description}</p>}
+    </div>
+
+    {
+      hasSidebar && (
+        <div class={heroSidebarClass}>
+          {metaItems.length > 0 && (
+            <div class={heroMetaClass} aria-label="Article metadata">
+              {metaItems.map((item) => (
+                <div class={heroMetaItemClass}>
+                  <span class={heroMetaLabelClass}>{item.label}</span>
+                  {item.datetime ? <time datetime={item.datetime}>{item.value}</time> : <strong>{item.value}</strong>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tags.length > 0 && (
+            <ul class={heroTagsClass} aria-label="Tags">
+              {tags.map((tag) => (
+                <li class={heroTagClass}>{tag}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )
+    }
+  </div>
+</header>
