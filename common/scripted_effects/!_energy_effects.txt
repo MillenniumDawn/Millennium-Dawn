@@ -207,6 +207,8 @@ calculate_energy_use = {
 		multiply_variable = { fossil_pp_energy_per_plant_display = temp_energy_gain_m }
 	}
 
+	multiply_variable = { fossil_pp_energy_generation = fossil_powerplants_manpower_fulfillment }
+
 	# Implements the No Fuel Killswitch
 	set_temp_variable = { no_fuel_killswitch_var = 1 }
 	if = { limit = { check_variable = { fuel_k = 0 } }
@@ -265,6 +267,7 @@ calculate_energy_use = {
 		}
 
 		multiply_variable = { nuclear_energy_generation = temp_energy_gain_m }
+		multiply_variable = { nuclear_energy_generation = nuclear_reactors_manpower_fulfillment }
 		add_to_variable = { energy_sum = nuclear_energy_generation }
 
 		# Generation of Power per Fossil Power Plant
@@ -490,7 +493,9 @@ setup_starting_fossil_powerplants = {
 	round_variable = startup_energy_needed
 	clamp_variable = { var = startup_energy_needed min = 1 } #so every country, even the smallest ones, start with 1 fossil fuel power plant
 	while_loop_effect = {
-		limit = { check_variable = { startup_energy_needed > 0.00001 } }
+		limit = {
+			check_variable = { startup_energy_needed > 0.00001 }
+		}
 		random_owned_controlled_state = {
 			limit = { check_variable = { building_level@fossil_powerplant < 21 } }
 			add_building_construction = {

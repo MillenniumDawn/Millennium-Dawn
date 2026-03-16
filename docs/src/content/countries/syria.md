@@ -5,28 +5,28 @@ unique_focus_tree: true
 grid_order: 58
 flag_image: /assets/images/flags/syria.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: SYR
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '21'
-  - label: Total Factories
-    value: '3'
-  - label: Military Ind.
-    value: '2'
-  - label: Civilian Ind.
-    value: '1'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $10 Billions
-  - label: Debt
-    value: $64 Billions
-  - label: Investments
-    value: $0
+  - section: Overview
+    stats:
+      - label: Tag
+        value: SYR
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "21"
+      - label: Total Factories
+        value: "3"
+      - label: Military Ind.
+        value: "2"
+      - label: Civilian Ind.
+        value: "1"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $10 Billions
+      - label: Debt
+        value: $64 Billions
+      - label: Investments
+        value: $0
 ---
 
 Syria is a country surrounded by Turkey from the North, Iraq from the East and South-East, Jordan from the South, Israel from the South-West and Lebanon and Hezbollah from the West. It starts with a Population of 16.01 Millions.

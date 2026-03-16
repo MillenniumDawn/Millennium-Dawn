@@ -1,0 +1,88 @@
+---
+import { withBase } from "@/shared/lib/urls";
+import { SECTION_TITLE_CLASS } from "@/shared/ui/tailwind";
+
+interface Entry {
+  title: string;
+  url?: string;
+  note?: string;
+}
+
+interface Group {
+  title: string;
+  entries?: Entry[];
+}
+
+interface Props {
+  groups: Group[];
+}
+
+const { groups } = Astro.props;
+---
+
+<div class="dev-diary-list">
+  {
+    groups.map((group) => {
+      const slug = group.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      return (
+        <div class="mb-12 last:mb-0">
+          <h2 id={slug} class={`${SECTION_TITLE_CLASS} scroll-mt-24`}>
+            {group.title}
+          </h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {(group.entries ?? []).map((entry) => {
+              const rawUrl = (entry.url ?? "").trim();
+              const href = !rawUrl ? "" : rawUrl.includes("://") ? rawUrl : withBase(rawUrl);
+
+              const isExternal = href?.includes("://");
+
+              return (
+                <div class="group relative flex flex-col justify-between rounded-xl border border-border-light bg-surface p-5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-md">
+                  <div class="flex items-start justify-between gap-3">
+                    <h3 class="m-0 text-[1.05rem] font-bold leading-tight text-text group-hover:text-primary transition-colors">
+                      {href ? (
+                        <a
+                          href={href}
+                          class="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface before:absolute before:inset-0"
+                          target={isExternal ? "_blank" : undefined}
+                          rel={isExternal ? "noopener noreferrer" : undefined}
+                        >
+                          {entry.title}
+                        </a>
+                      ) : (
+                        entry.title
+                      )}
+                    </h3>
+                    {isExternal && (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="text-text-muted shrink-0 mt-1"
+                      >
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                        <polyline points="15 3 21 3 21 9" />
+                        <line x1="10" y1="14" x2="21" y2="3" />
+                      </svg>
+                    )}
+                  </div>
+
+                  {entry.note && (
+                    <p class="mt-3 text-sm text-text-secondary border-t border-border-light/50 pt-3">{entry.note}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    })
+  }
+</div>

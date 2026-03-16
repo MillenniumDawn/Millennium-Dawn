@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 9
 flag_image: /assets/images/flags/brazil.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: BRA
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '25'
-  - label: Total Factories
-    value: '24'
-  - label: Military Ind.
-    value: '13'
-  - label: Civilian Ind.
-    value: '8'
-  - label: Naval Dockyards
-    value: '3'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $48 Billions
-  - label: Debt
-    value: $1053 Billions
-  - label: Investments
-    value: $16.6 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: BRA
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "25"
+      - label: Total Factories
+        value: "24"
+      - label: Military Ind.
+        value: "13"
+      - label: Civilian Ind.
+        value: "8"
+      - label: Naval Dockyards
+        value: "3"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $48 Billions
+      - label: Debt
+        value: $1053 Billions
+      - label: Investments
+        value: $16.6 Billions
 ---
 
 Brazil is a country surrounded by French Guyana, Suriname, Guyana and Venezuela from the North, Colombia from the North-West, Peru and Bolivia from the West, Paraguay and Uruguay from the South and from the North-West-South. It starts with a Population of 177.95 Millions.

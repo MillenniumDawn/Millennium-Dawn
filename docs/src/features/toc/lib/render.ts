@@ -78,12 +78,7 @@ const TOC_EXPAND_BUTTON_CLASS = [
 
 function getLinkClass(depth: number): string {
   if (depth === 1) {
-    return [
-      TOC_LINK_BASE_CLASS,
-      "pl-[calc(0.85rem+0.85rem)]",
-      "text-[0.81rem]",
-      "[-webkit-line-clamp:2]",
-    ].join(" ");
+    return [TOC_LINK_BASE_CLASS, "pl-[calc(0.85rem+0.85rem)]", "text-[0.81rem]", "[-webkit-line-clamp:2]"].join(" ");
   }
 
   if (depth >= 2) {
@@ -124,7 +119,8 @@ export function renderTocTreeHtml(tree: TocTreeItem[]): string {
         html += `<div class="${TOC_ROW_CLASS}">`;
         html += `<a href="#${id}" class="${getLinkClass(depth)}" ${TOC_ATTRS.link} ${TOC_ATTRS.tocId}="${id}" title="${text}">${text}</a>`;
         html += `<button class="${TOC_EXPAND_BUTTON_CLASS}" aria-expanded="false" aria-label="${escapeHtml(TOC_LABELS.expand(item.text))}" ${TOC_ATTRS.expand}="${currentSublistId}" type="button">`;
-        html += '<svg aria-hidden="true" class="size-3 shrink-0 transition-transform duration-250 ease-in-out" viewBox="0 0 12 12">';
+        html +=
+          '<svg aria-hidden="true" class="size-3 shrink-0 transition-transform duration-250 ease-in-out" viewBox="0 0 12 12">';
         html += '<path d="M4.5 2l4 4-4 4" stroke="currentColor" stroke-width="1.5"';
         html += ' fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
         html += "</svg></button>";
