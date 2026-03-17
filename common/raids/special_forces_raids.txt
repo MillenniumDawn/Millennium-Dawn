@@ -4812,7 +4812,6 @@ types = {
 
 
 	# IRAQI RAIDS
-
 	raid_baath = {
 		allowed = { original_tag = USA }
 		days_to_prepare = 30
@@ -5240,6 +5239,208 @@ types = {
 					FROM = { is_subject_of = ROOT }
 					is_subject_of = FROM
 				}
+			}
+		}
+	}
+
+	JAP_raid_sikhalin = {
+		days_to_prepare = 30
+		allowed = { original_tag = JAP }
+		target_icon = GFX_other_target_icon
+
+		category = special_forces_raids
+
+		command_power = 20
+
+		fire_only_once = yes
+
+		arrow = {
+			type = naval
+		}
+
+		ai_will_do = {
+			base = 2
+		}
+
+		# Specific Target is visible
+		visible = {
+			original_tag = JAP
+			has_country_flag = JAP_sakhalin_raid_unlocked
+		}
+		available = {
+			original_tag = JAP
+			has_country_flag = JAP_sakhalin_raid_unlocked
+		}
+		# Specific Target is visible
+		show_target = {
+			FROM = { original_tag = SOV }
+		}
+		target_type = {
+			province = 12446
+			building = {
+				type = naval_base
+			}
+		}
+
+		starting_point = {
+			types = { naval_base air_base carrier }
+		}
+
+		unit_requirements = {
+			battalion_types = {
+				Mech_Marine_Bat = { min = 4 }
+			}
+		}
+		success_levels = {
+			failure = {
+				victim_effects = {
+					var:victim_country = { country_event = JAP_diplomacy.91 }
+					effect_tooltip = {
+						random_list = {
+							50 = {
+								SOV = {
+									JAP = {
+										declare_war_on = {
+											target = var:victim_country
+											type = take_claimed_state
+											generator = { 691 690 1168 }
+										}
+									}
+								}
+							}
+							50 = {
+								var:victim_country = {
+									send_embargo = JAP
+									diplomatic_relation = {
+										country = JAP
+										relation = naval_blockade
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			limited_success = {
+				victim_effects = {
+					var:victim_country = {
+						country_event = JAP_diplomacy.92
+						unlock_decision_tooltip = {
+							decision = JAP_tookover_sikhalin_mission
+							show_effect_tooltip = yes
+						}
+					}
+				}
+				actor_effects = {
+					raid_add_unit_experience = 0.25
+					JAP = {
+						set_province_controller = 12446
+						set_country_flag = JAP_sikhalin_raid_done
+						declare_war_on = {
+							target = var:victim_country
+							type = take_claimed_state
+							generator = { 691 690 1168 }
+						}
+					}
+				}
+			}
+			success = {
+				victim_effects = {
+					var:victim_country = {
+						country_event = JAP_diplomacy.92
+						activate_mission_tooltip = JAP_tookover_sikhalin_mission
+					}
+				}
+				actor_effects = {
+					raid_add_unit_experience = 0.25
+					JAP = {
+						set_province_controller = 12446
+						set_country_flag = JAP_sikhalin_raid_done
+						declare_war_on = {
+							target = var:victim_country
+							type = take_claimed_state
+							generator = { 691 690 1168 }
+						}
+					}
+					691 = {
+						add_dynamic_modifier = {
+							modifier = JAP_sabotaged_russians
+							days = 200
+						}
+					}
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					var:victim_country = {
+						delete_unit = {
+							state = 691
+							disband = no
+						}
+						country_event = JAP_diplomacy.92
+						unlock_decision_tooltip = {
+							decision = JAP_tookover_sikhalin_mission
+							show_effect_tooltip = yes
+						}
+					}
+				}
+				actor_effects = {
+					raid_add_unit_experience = 0.25
+					JAP = {
+						transfer_state = 691
+						set_country_flag = JAP_sikhalin_raid_done
+						declare_war_on = {
+							target = var:victim_country
+							type = take_claimed_state
+							generator = { 691 690 1168 }
+						}
+					}
+					687 = {
+						add_dynamic_modifier = {
+							modifier = JAP_sabotaged_russians
+							days = 100
+						}
+					}
+				}
+			}
+		}
+		success_factors = {
+			success = {
+				base = 0.05
+
+				# Raiding unit modifiers
+				experience = {
+					weight = 0.15
+					start_weight = -0.15
+					reference = 0.5
+				}
+				organisation = {
+					weight = 0.15
+					start_weight = -0.15
+					reference = 60
+				}
+				strength = {
+					weight = 0.05
+					start_weight = -0.05
+					reference = 1
+				}
+				recon = {
+					weight = 0.20
+					reference = 10
+				}
+
+				### Target Modifiers
+				intel = {
+					weight = 0.3
+					#start_reference = 50
+					reference = 100
+				}
+			}
+			critical = {
+				base = 0.05
+			}
+			disaster = {
+				base = 0.25
 			}
 		}
 	}
