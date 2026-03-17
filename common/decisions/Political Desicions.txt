@@ -1020,38 +1020,6 @@ generic_coalition_politics_decisions = {
 		}
 	}
 
-	JAP_spirit_of_the_warrior = {
-		icon = GFX_decision_japan_dec
-
-		cost = 100
-
-		allowed = {
-			original_tag = JAP
-		}
-
-		visible = {
-			OR = {
-				is_in_array = { ruling_party = 23 }
-				is_in_array = { ruling_party = 22 }
-				is_in_array = { ruling_party = 21 }
-			}
-			NOT = { has_idea = idea_JAP_spirit_of_the_warrior }
-		}
-
-		available = {
-			OR = {
-				check_variable = { party_pop_array^23 > 0.10 }
-				check_variable = { party_pop_array^22 > 0.10 }
-				check_variable = { party_pop_array^21 > 0.10 }
-			}
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision JAP_spirit_of_the_warrior"
-			add_ideas = idea_JAP_spirit_of_the_warrior
-		}
-	}
-
 	neutral_communist_extremist_civil_war = {
 		allowed = { NOT = { tag = WAG } }
 		icon = revolt
@@ -1990,35 +1958,6 @@ generic_coalition_politics_decisions = {
 				}
 			}
 			hidden_effect = { URG = { add_political_power = 400 } }
-		}
-	}
-
-	# Japan
-	JAP_revoke_article_nine = {
-		allowed = { original_tag = JAP }
-		icon = GFX_decision_generic_decision
-		cost = 150
-		visible = {
-			has_idea = article_nine_jap
-		}
-		available = {
-			OR = {
-				threat > 0.50
-				has_completed_focus = JAP_east_asian_alliance
-				has_completed_focus = JAP_ally_the_united_states
-				custom_trigger_tooltip = {
-					tooltip = CHI_chinese_aggression_greater_than_10_tt
-					check_variable = { CHI.chinese_aggression > 9 }
-				}
-			}
-			40_percent_government_popularity = yes
-		}
-
-		days_remove = 50
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove JAP_revoke_article_nine"
-			remove_ideas = article_nine_jap
 		}
 	}
 
@@ -3498,6 +3437,138 @@ generic_coalition_politics_decisions = {
 		}
 		ai_will_do = {
 			factor = 0
+		}
+	}
+	JAP_russia_demands_peace_russia = {
+
+		icon = GFX_decision_eng_propaganda_campaigns
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				surrender_progress > 0.35
+				add = 50
+			}
+		}
+
+		allowed = { original_tag = SOV }
+
+		available = {
+			691 = { is_controlled_by = JAP }
+			690 = { is_controlled_by = JAP }
+			1168 = { is_controlled_by = JAP }
+		}
+
+		visible = {
+			OR = {
+				is_debug = yes
+				AND = {
+					JAP = {
+						has_completed_focus = JAP_russian_lost_territories
+						has_war_with = SOV
+						hidden_trigger = {
+							NOT = {
+								691 = { is_owned_by = JAP }
+								690 = { is_owned_by = JAP }
+								1168 = { is_owned_by = JAP }
+							}
+						}
+					}
+				}
+			}
+		}
+
+		on_map_mode = map_and_decisions_view
+
+		cost = 75
+
+		fire_only_once = no
+
+		days_remove = 5
+
+		days_re_enable = 30
+
+		modifier = {
+			political_power_factor = -0.15
+		}
+
+		remove_effect = {
+			JAP = {
+				country_event = {
+					id = JAP_diplomacy.80
+					hours = 1
+				}
+			}
+		}
+	}
+	JAP_tookover_sikhalin_mission = {
+		icon = GFX_decision_eng_propaganda_campaigns
+
+		allowed = { original_tag = SOV }
+
+		days_mission_timeout = 30
+
+		fire_only_once = yes
+
+		is_good = no
+
+		selectable_mission = no
+
+		activation = {
+			if = {
+				limit = { is_debug = yes }
+				always = yes
+			}
+			else = {
+				has_country_flag = JAP_sikhalin_raid_done
+			}
+		}
+
+		available = {
+			hidden_trigger = {
+				always = no
+			}
+		}
+
+
+		cancel_trigger = {
+			691 = { is_fully_controlled_by = SOV }
+			690 = { is_fully_controlled_by = SOV }
+			1168 = { is_fully_controlled_by = SOV }
+		}
+
+		cancel_effect = {
+			JAP = {
+				country_event = { id = JAP_diplomacy.200 days = 1 }
+			}
+		}
+
+		timeout_effect = {
+			JAP = {
+				white_peace = {
+					tag = SOV
+				}
+				every_other_country = {
+					limit = {
+						is_in_faction_with = SOV
+					}
+					white_peace = {
+						tag = JAP
+					}
+				}
+				if = {
+					limit = { 691 = { is_fully_controlled_by = JAP } }
+					transfer_state = 691
+				}
+				if = {
+					limit = { 690 = { is_fully_controlled_by = JAP } }
+					transfer_state = 690
+				}
+				if = {
+					limit = { 1168 = { is_fully_controlled_by = JAP } }
+					transfer_state = 1168
+				}
+			}
 		}
 	}
 }
