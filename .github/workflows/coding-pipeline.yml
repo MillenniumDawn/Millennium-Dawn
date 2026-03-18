@@ -244,6 +244,34 @@ jobs:
         path: validation-events.log
         retention-days: 7
 
+  validate-history-techs:
+    name: Validate History Technology Dependencies
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 1
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.x'
+
+    - name: Run history technology dependency validation
+      run: |
+        python3 tools/validation/validate_history_techs.py --strict --no-color --workers 4 --output validation-history-techs.log
+
+    - name: Upload validation results
+      uses: actions/upload-artifact@v7.0.0
+      if: always()
+      with:
+        name: validation-history-techs-results
+        path: validation-history-techs.log
+        retention-days: 7
+
   validate-unused-scripted:
     name: Validate Unused Scripted Effects & Triggers
     if: github.event.pull_request.draft == false
@@ -275,7 +303,7 @@ jobs:
   validation-report:
     name: Generate Validation Report
     runs-on: ubuntu-latest
-    needs: [validate-variables, validate-scripted-localisation, validate-cosmetic-tags, validate-decisions, validate-localisation, validate-events, validate-unused-scripted]
+    needs: [validate-variables, validate-scripted-localisation, validate-cosmetic-tags, validate-decisions, validate-localisation, validate-events, validate-history-techs, validate-unused-scripted]
     if: always() && github.event_name == 'pull_request' && github.event.pull_request.draft == false
 
     steps:
