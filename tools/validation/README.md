@@ -5,6 +5,7 @@ Comprehensive validation tools for Millennium Dawn mod that check for issues wit
 ## Quick Start
 
 Run all validators at once:
+
 ```bash
 # Run all validators
 ./tools/validation/run_all_validators.sh
@@ -75,6 +76,7 @@ python tools/validation/validate_variables.py --staged --strict --output validat
 3. **Unused**: Flags that are set with `set_X_flag` but never checked with `has_X_flag`
 
 **Important**: All flag checks are **case-sensitive**. This means:
+
 - `my_flag` and `My_Flag` are considered different flags
 - This ensures proper compatibility across Linux, macOS, and Windows
 - Helps catch potential bugs from inconsistent casing
@@ -90,11 +92,13 @@ python tools/validation/validate_variables.py --staged --strict --output validat
 ## Output Format
 
 Results include:
+
 - **File path** (relative to mod root)
 - **Line number** where the issue occurs
 - **Variable/target name**
 
 Example output:
+
 ```
 ================================================================================
 Checking missing country flags (used but not set)...
@@ -110,17 +114,20 @@ ERROR: 2 issues found
 The validator is **already integrated** into `.pre-commit-config.yaml` and runs automatically on commit.
 
 **How it works:**
+
 - When you `git commit`, the validator runs with `--staged` flag
 - It **only scans the files you're committing** (not the entire mod)
 - Validates the **full content** of staged files for any issues
 - If issues are found, the commit is blocked until they're fixed
 
 **Note:** The staged mode validates the complete content of staged files, not just the changed lines. This ensures:
+
 - New issues aren't introduced by your changes
 - Existing issues in files you're modifying are caught
 - Cross-file references are properly validated
 
 To bypass the validator for a single commit (not recommended):
+
 ```bash
 git commit --no-verify
 ```
@@ -128,6 +135,7 @@ git commit --no-verify
 ## Ignored Directories
 
 The following directories are automatically skipped:
+
 - `gfx/`
 - `tools/`
 - `resources/`
@@ -136,13 +144,13 @@ The following directories are automatically skipped:
 
 ## Command-Line Arguments
 
-| Argument | Description |
-|----------|-------------|
-| `--path PATH` | Path to mod folder (default: current directory) |
-| `--strict` | Exit with error code if issues found |
-| `--output FILE`, `-o FILE` | Save results to file |
-| `--no-color` | Disable ANSI color codes |
-| `--staged` | Only validate git staged files |
+| Argument                   | Description                                     |
+| -------------------------- | ----------------------------------------------- |
+| `--path PATH`              | Path to mod folder (default: current directory) |
+| `--strict`                 | Exit with error code if issues found            |
+| `--output FILE`, `-o FILE` | Save results to file                            |
+| `--no-color`               | Disable ANSI color codes                        |
+| `--staged`                 | Only validate git staged files                  |
 
 ## Exit Codes
 
@@ -152,6 +160,7 @@ The following directories are automatically skipped:
 ## False Positives
 
 The validator has built-in lists of known false positives that are automatically skipped. These include:
+
 - Variables with `@` (templates)
 - Variables with `[` (dynamic variables)
 - Specific known exceptions (like `kr_current_version`)
@@ -159,6 +168,7 @@ The validator has built-in lists of known false positives that are automatically
 ## Example Workflows
 
 ### Local Development
+
 ```bash
 # Quick check before committing
 python tools/validation/validate_variables.py --staged
@@ -168,12 +178,14 @@ python tools/validation/validate_variables.py --output validation-report.txt
 ```
 
 ### CI/CD Pipeline
+
 ```bash
 # Fail the build if validation fails
 python tools/validation/validate_variables.py --strict --no-color --output ci-report.txt
 ```
 
 ### Pre-Commit Hook
+
 ```bash
 # Automatically validate staged files
 python tools/validation/validate_variables.py --staged --strict --no-color
@@ -182,16 +194,20 @@ python tools/validation/validate_variables.py --staged --strict --no-color
 ## Troubleshooting
 
 ### No staged files found
+
 If using `--staged` and getting "No staged .txt or .yml files found", make sure you have staged your changes:
+
 ```bash
 git add your_file.txt
 python tools/validation/validate_variables.py --staged
 ```
 
 ### Colors not showing
+
 Some terminals may not support ANSI colors. Use `--no-color` to disable them.
 
 ### Performance
+
 For large mods, the validator may take a minute or two to scan all files. The `--staged` option significantly speeds this up by only checking modified files.
 
 ---
@@ -217,12 +233,14 @@ Validation tool for scripted localisation definitions in `common/scripted_locali
 2. **Unused**: Scripted localisations that are defined but never referenced anywhere
 
 The validator scans:
+
 - All `.txt` game files for `localization_key = <name>` references (used in scripted localisation definitions)
 - All `.gui` interface files for `text = "[name]"` patterns (used in GUI)
 - All `.yml` localisation files for `"[name_scripted_loc]"` or `"[name_scl]"` patterns (scripted loc references)
 - All scripted localisation definitions in `common/scripted_localisation/`
 
 **Important**: The validator correctly distinguishes between:
+
 - **Scripted localisation** (dynamic): Defined in `common/scripted_localisation/`, ends with `_scripted_loc` or `_scl`
 - **Regular localisation** (static): Defined in `.yml` files, regular `[key]` without scripted loc suffixes
 
@@ -259,11 +277,13 @@ python tools/validation/validate_scripted_localisation.py --no-color
 ## Output Format
 
 Results include:
+
 - **File path** (relative to mod root)
 - **Line number** where the issue occurs
 - **Scripted localisation name**
 
 Example output:
+
 ```
 ================================================================================
 Checking missing scripted localisations (used but not defined)...
@@ -279,37 +299,45 @@ ERROR: 1 issues found
 The validator specifically looks for scripted localisation in these contexts:
 
 ### In Game Files (`.txt`)
+
 Checks `localization_key = <name>` patterns, which appear in:
+
 - Scripted localisation definitions (`defined_text` blocks)
 - NOT in bracketed form `[key]` (those are regular localisation)
 
 ### In Interface Files (`.gui`)
+
 Checks `text = "[name]"` patterns, which is how scripted loc is referenced in GUI
 
 ### In Localisation Files (`.yml`)
+
 Checks `"[name_scripted_loc]"` or `"[name_scl]"` patterns only
+
 - Only keys ending with `_scripted_loc` or `_scl` are considered scripted localisation
 - This naming convention distinguishes them from regular localisation keys
 
 ### What It Ignores
+
 The validator automatically ignores:
+
 - Regular bracketed keys in `.yml` files (without `_scripted_loc` or `_scl` suffix)
 - Scope references with dots (`Root.GetName`, `THIS.GetAdjective`)
 - Variables with special characters (`?`, `@`, etc.)
 
 ## Command-Line Arguments
 
-| Argument | Description |
-|----------|-------------|
-| `--path PATH` | Path to mod folder (default: current directory) |
-| `--strict` | Exit with error code if issues found |
-| `--output FILE`, `-o FILE` | Save results to file |
-| `--no-color` | Disable ANSI color codes |
-| `--staged` | Only validate git staged files |
+| Argument                   | Description                                     |
+| -------------------------- | ----------------------------------------------- |
+| `--path PATH`              | Path to mod folder (default: current directory) |
+| `--strict`                 | Exit with error code if issues found            |
+| `--output FILE`, `-o FILE` | Save results to file                            |
+| `--no-color`               | Disable ANSI color codes                        |
+| `--staged`                 | Only validate git staged files                  |
 
 ## Example Workflows
 
 ### Local Development
+
 ```bash
 # Quick check before committing
 python tools/validation/validate_scripted_localisation.py --staged
@@ -319,10 +347,64 @@ python tools/validation/validate_scripted_localisation.py --output scripted-loc-
 ```
 
 ### CI/CD Pipeline
+
 ```bash
 # Fail the build if validation fails
 python tools/validation/validate_scripted_localisation.py --strict --no-color --output ci-report.txt
 ```
+
+---
+
+# History Technology Dependency Validation
+
+Validation tool that checks country history files for missing technology prerequisites.
+
+## Features
+
+- **Dependency Graph**: Builds a complete technology dependency graph from `common/technologies/`
+- **DLC-Aware**: Handles DLC conditional branches (NSB, BBA, LaR, etc.) correctly
+- **Deduplication**: Collapses errors that appear across all DLC combinations
+- **Multiprocessing**: Validates all 392+ history files in parallel
+
+## What It Checks
+
+For each `set_technology` block in `history/countries/`, the validator ensures that when a technology is granted, all of its prerequisite technologies (defined by `path = { leads_to_tech = ... }` in tech files) are also granted.
+
+For example, if `infantry_weapons_2` requires `infantry_weapons_1` (because `infantry_weapons_1` has `leads_to_tech = infantry_weapons_2`), then any history file granting `infantry_weapons_2` must also grant `infantry_weapons_1`.
+
+## Usage
+
+```bash
+# Validate current directory
+python tools/validation/validate_history_techs.py
+
+# Validate with strict mode
+python tools/validation/validate_history_techs.py --strict
+
+# Validate only staged files
+python tools/validation/validate_history_techs.py --staged --strict
+```
+
+## Output Format
+
+```
+ABK - Abkhazia.txt: fuel_refining requires fuel_silos
+ARA - Arabistan.txt: infantry_weapons_3 requires infantry_weapons_2
+ALB - Albania.txt: countermeasures_1 requires air_weapons_1 [No Step Back + By Blood Alone]
+```
+
+Errors without a DLC context tag are unconditional (present regardless of DLCs). Errors with a DLC context tag only occur in that specific DLC combination.
+
+## Command-Line Arguments
+
+| Argument                   | Description                                     |
+| -------------------------- | ----------------------------------------------- |
+| `--path PATH`              | Path to mod folder (default: current directory) |
+| `--strict`                 | Exit with error code if issues found            |
+| `--output FILE`, `-o FILE` | Save results to file                            |
+| `--no-color`               | Disable ANSI color codes                        |
+| `--staged`                 | Only validate git staged files                  |
+| `--workers N`              | Number of worker processes                      |
 
 ---
 
