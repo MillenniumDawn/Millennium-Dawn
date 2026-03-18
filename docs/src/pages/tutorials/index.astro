@@ -2,19 +2,17 @@
 import { getCollection } from "astro:content";
 import { BaseLayout } from "@/app/layouts";
 import { SearchableIndex } from "@/features/searchable-index";
-import { STATIC_PAGE_META } from "@/lib/page-meta";
+import { STATIC_PAGE_META } from "@/shared/lib/page-meta";
 import { toCardItem } from "@/shared/lib/cards";
-import { getTutorialPath } from "@/lib/content-routes";
+import { getTutorialPath } from "@/shared/lib/content-routes";
 import { BODY_TEXT_CLASS, PAGE_TITLE_CLASS } from "@/shared/ui/tailwind";
 
-const tutorialEntries = (await getCollection("tutorials"))
-  .slice()
-  .sort((a, b) => {
-    const ao = a.data.order ?? Number.MAX_SAFE_INTEGER;
-    const bo = b.data.order ?? Number.MAX_SAFE_INTEGER;
-    if (ao !== bo) return ao - bo;
-    return a.data.title.localeCompare(b.data.title);
-  });
+const tutorialEntries = (await getCollection("tutorials")).slice().sort((a, b) => {
+  const ao = a.data.order ?? Number.MAX_SAFE_INTEGER;
+  const bo = b.data.order ?? Number.MAX_SAFE_INTEGER;
+  if (ao !== bo) return ao - bo;
+  return a.data.title.localeCompare(b.data.title);
+});
 
 const pageMeta = STATIC_PAGE_META.tutorials;
 const cards = tutorialEntries.map((entry) => toCardItem(entry, { url: getTutorialPath(entry) }));
@@ -29,8 +27,8 @@ const cards = tutorialEntries.map((entry) => toCardItem(entry, { url: getTutoria
 >
   <h1 class={PAGE_TITLE_CLASS}>Tutorials for Millennium Dawn</h1>
   <p class={BODY_TEXT_CLASS}>
-    The following is a non-exhaustive list of tutorials and guides available on the website. You can contribute updates and
-    corrections through pull requests.
+    The following is a non-exhaustive list of tutorials and guides available on the website. You can contribute updates
+    and corrections through pull requests.
   </p>
 
   <SearchableIndex

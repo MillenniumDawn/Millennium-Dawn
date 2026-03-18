@@ -4,8 +4,6 @@ page_id: changelog-v1-5-changes
 order: 6
 ---
 
-# v1.5 Changes
-
 ## v1.5.1 Hotfix
 
 AI
@@ -177,8 +175,6 @@ Map
 Music
 
 - Memories Without Colours and Firewall added
-
-
 
 ## v1.5.0 'Economic Prowess & Man the Guns' - 1.10 compatible
 
@@ -360,5 +356,3 @@ Units
 - Removed Engineer Tanks
 - Fuel is now balanced according to new resources reworks
 - MTG Compatibility
-
-

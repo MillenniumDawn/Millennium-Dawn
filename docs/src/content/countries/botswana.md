@@ -5,22 +5,22 @@ unique_focus_tree: true
 grid_order: 8
 flag_image: /assets/images/flags/botswana.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: BOT
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '2'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $9 Billions
-  - label: Debt
-    value: $3 Billions
-  - label: Investments
-    value: $0.03
+  - section: Overview
+    stats:
+      - label: Tag
+        value: BOT
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "2"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $9 Billions
+      - label: Debt
+        value: $3 Billions
+      - label: Investments
+        value: $0.03
 ---
 
 Botswana is a country surroundend by South Africa in the south, Namibia from the West and the North and Zimbabwe from the East. It starts with a Population of 1.73 Millions.
