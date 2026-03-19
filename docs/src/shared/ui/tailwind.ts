@@ -11,6 +11,7 @@ export const INVERSE_FOCUS_RING_CLASS = [
 export const LAYOUT_CONTAINER_CLASS = [
   "mx-auto",
   "w-full",
+  "min-w-0",
   "max-w-[var(--container-max-width)]",
   "px-container",
   "phone:px-4",
@@ -73,51 +74,25 @@ export const MINOR_HEADING_CLASS = [
   "text-text-secondary",
 ].join(" ");
 
-export const SMALL_HEADING_CLASS = [
-  "mb-md",
-  "text-base",
-  "font-bold",
-  "leading-heading",
-  "text-text-secondary",
-].join(" ");
+export const SMALL_HEADING_CLASS = ["mb-md", "text-base", "font-bold", "leading-heading", "text-text-secondary"].join(
+  " ",
+);
 
-export const BODY_TEXT_CLASS = [
-  "mb-md",
-  "text-[clamp(1rem,0.5vw+0.9rem,1.1rem)]",
-  "leading-base",
-  "text-text",
-].join(" ");
+export const BODY_TEXT_CLASS = ["mb-md", "text-[clamp(1rem,0.5vw+0.9rem,1.1rem)]", "leading-base", "text-text"].join(
+  " ",
+);
 
-export const LEAD_TEXT_CLASS = [
-  "mt-0",
-  "mb-md",
-  "text-[1.03rem]",
-  "leading-base",
-  "text-text-secondary",
-].join(" ");
+export const LEAD_TEXT_CLASS = ["mt-0", "mb-md", "text-[1.03rem]", "leading-base", "text-text-secondary"].join(" ");
 
-export const MUTED_TEXT_CLASS = [
-  "text-text-muted",
-].join(" ");
+export const MUTED_TEXT_CLASS = ["text-text-muted"].join(" ");
 
-export const LIST_CLASS = [
-  "mb-md",
-  "ml-lg",
-  "list-disc",
-].join(" ");
+export const LIST_CLASS = ["mb-md", "ml-lg", "list-disc"].join(" ");
 
-export const ORDERED_LIST_CLASS = [
-  "mb-md",
-  "ml-lg",
-  "list-decimal",
-].join(" ");
+export const ORDERED_LIST_CLASS = ["mb-md", "ml-lg", "list-decimal"].join(" ");
 
-export const LIST_ITEM_CLASS = [
-  "mb-xs",
-  "text-[clamp(1rem,0.5vw+0.9rem,1.1rem)]",
-  "leading-base",
-  "text-text",
-].join(" ");
+export const LIST_ITEM_CLASS = ["mb-xs", "text-[clamp(1rem,0.5vw+0.9rem,1.1rem)]", "leading-base", "text-text"].join(
+  " ",
+);
 
 export const BUTTON_BASE_CLASS = [
   "inline-flex",
@@ -224,13 +199,7 @@ export const CONTENT_CARD_KIND_CLASS = [
   "text-text-muted",
 ].join(" ");
 
-export const CONTENT_CARD_TITLE_CLASS = [
-  "m-0",
-  "text-[1.06rem]",
-  "font-bold",
-  "leading-[1.3]",
-  "text-text",
-].join(" ");
+export const CONTENT_CARD_TITLE_CLASS = ["m-0", "text-[1.06rem]", "font-bold", "leading-[1.3]", "text-text"].join(" ");
 
 export const CONTENT_CARD_TITLE_LINK_CLASS = [
   "text-inherit",
@@ -243,24 +212,13 @@ export const CONTENT_CARD_TITLE_LINK_CLASS = [
   FOCUS_RING_CLASS,
 ].join(" ");
 
-export const CONTENT_CARD_DESCRIPTION_CLASS = [
-  "m-0",
-  "text-[0.94rem]",
-  "leading-[1.6]",
-  "text-text-secondary",
-].join(" ");
+export const CONTENT_CARD_DESCRIPTION_CLASS = ["m-0", "text-[0.94rem]", "leading-[1.6]", "text-text-secondary"].join(
+  " ",
+);
 
-export const CONTENT_CARD_META_CLASS = [
-  "m-0",
-  "text-[0.82rem]",
-  "text-text-muted",
-].join(" ");
+export const CONTENT_CARD_META_CLASS = ["m-0", "text-[0.82rem]", "text-text-muted"].join(" ");
 
-export const SEARCH_INDEX_ROOT_CLASS = [
-  "mt-lg",
-  "grid",
-  "gap-md",
-].join(" ");
+export const SEARCH_INDEX_ROOT_CLASS = ["mt-lg", "grid", "gap-md"].join(" ");
 
 export const SEARCH_INDEX_PAGINATION_CLASS = [
   "mt-sm",
@@ -388,20 +346,9 @@ export const SEARCH_INDEX_PAGINATION_ELLIPSIS_CLASS = [
   "phone:px-[0.55rem]",
 ].join(" ");
 
-export const SEARCH_INDEX_LABEL_CLASS = [
-  "text-[0.95rem]",
-  "font-semibold",
-  "text-text-secondary",
-].join(" ");
+export const SEARCH_INDEX_LABEL_CLASS = ["text-[0.95rem]", "font-semibold", "text-text-secondary"].join(" ");
 
-export const TRANSLATION_LIST_CLASS = [
-  "m-0",
-  "flex",
-  "list-none",
-  "flex-wrap",
-  "gap-sm",
-  "p-0",
-].join(" ");
+export const TRANSLATION_LIST_CLASS = ["m-0", "flex", "list-none", "flex-wrap", "gap-sm", "p-0"].join(" ");
 
 export const TRANSLATION_LINK_CLASS = [
   "inline-flex",
@@ -592,17 +539,12 @@ export const MARKDOWN_CLASSNAMES = {
     "text-inline-code-text",
     "hyphens-auto",
   ].join(" "),
-  codeBlock: [
-    "rounded-none",
-    "bg-transparent",
-    "p-0",
-    "font-mono",
-    "text-[0.875rem]",
-    "text-code-text",
-  ].join(" "),
+  codeBlock: ["rounded-none", "bg-transparent", "p-0", "font-mono", "text-[0.875rem]", "text-code-text"].join(" "),
   pre: [
-    "mb-lg",
+    "mb-0",
+    "min-w-min",
     "overflow-x-auto",
+    "[-webkit-overflow-scrolling:touch]",
     "rounded",
     "border",
     "border-code-border",
@@ -610,6 +552,15 @@ export const MARKDOWN_CLASSNAMES = {
     "p-lg",
     "leading-[1.5]",
     "print:break-inside-avoid",
+  ].join(" "),
+  preWrapper: [
+    "pre-wrapper",
+    "mb-lg",
+    "min-w-0",
+    "w-full",
+    "max-w-full",
+    "overflow-x-auto",
+    "[-webkit-overflow-scrolling:touch]",
   ].join(" "),
   details: [
     "my-md",
@@ -663,37 +614,13 @@ export const MARKDOWN_CLASSNAMES = {
     "mobile:[&>table]:min-w-full",
     "mobile:[&>table]:w-max",
   ].join(" "),
-  table: [
-    "w-full",
-    "border",
-    "border-table-border",
-    "text-left",
-    "text-[0.95rem]",
-    "print:break-inside-avoid",
-  ].join(" "),
+  table: ["w-full", "border", "border-table-border", "text-left", "text-[0.95rem]", "print:break-inside-avoid"].join(
+    " ",
+  ),
   thead: "bg-table-header-bg",
-  th: [
-    "border",
-    "border-table-border",
-    "px-md",
-    "py-3",
-    "text-left",
-    "font-bold",
-    "text-text",
-  ].join(" "),
-  td: [
-    "border",
-    "border-border-light",
-    "px-md",
-    "py-3",
-    "align-top",
-  ].join(" "),
-  image: [
-    "h-auto",
-    "max-w-full",
-    "rounded",
-    "print:break-inside-avoid",
-  ].join(" "),
+  th: ["border", "border-table-border", "px-md", "py-3", "text-left", "font-bold", "text-text"].join(" "),
+  td: ["border", "border-border-light", "px-md", "py-3", "align-top"].join(" "),
+  image: ["h-auto", "max-w-full", "rounded", "print:break-inside-avoid"].join(" "),
 } as const;
 
 export const INLINE_CODE_CLASS = MARKDOWN_CLASSNAMES.inlineCode;

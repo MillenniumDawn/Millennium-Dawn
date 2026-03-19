@@ -1,9 +1,9 @@
 ---
 import { getEntry } from "astro:content";
 import { BaseLayout } from "@/app/layouts";
-import { withBase } from "@/lib/urls";
-import { STATIC_PAGE_META } from "@/lib/page-meta";
-import { BASE_LINK_CLASS, BODY_TEXT_CLASS, LIST_CLASS, LIST_ITEM_CLASS, MARKDOWN_CLASSNAMES, PAGE_TITLE_CLASS, SECTION_TITLE_CLASS } from "@/shared/ui/tailwind";
+import { STATIC_PAGE_META } from "@/shared/lib/page-meta";
+import { BODY_TEXT_CLASS, PAGE_TITLE_CLASS } from "@/shared/ui/tailwind";
+import { DevDiaryList } from "@/widgets/dev-diary-list";
 
 const archiveEntry = await getEntry("devDiaryArchive", "index");
 if (!archiveEntry) {
@@ -11,6 +11,12 @@ if (!archiveEntry) {
 }
 const groups = archiveEntry.data;
 const pageMeta = STATIC_PAGE_META.devDiaries;
+
+const headings = groups.map((group) => ({
+  depth: 2,
+  slug: group.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+  text: group.title,
+}));
 ---
 
 <BaseLayout
@@ -18,36 +24,14 @@ const pageMeta = STATIC_PAGE_META.devDiaries;
   pageId={pageMeta.pageId}
   description={pageMeta.description}
   canonicalPath={pageMeta.canonicalPath}
-  toc="off"
+  toc="auto"
+  headings={headings}
 >
   <h1 class={PAGE_TITLE_CLASS}>Dev Diary Lists</h1>
   <p class={BODY_TEXT_CLASS}>
-    The Millennium Dawn team rarely writes dev diaries due to release cadence. This section keeps an archive of in-repository and
-    external diary entries.
+    The Millennium Dawn team rarely writes dev diaries due to release cadence. This section keeps an archive of
+    in-repository and external diary entries.
   </p>
 
-  {groups.map((group) => (
-    <>
-      <h2 class={SECTION_TITLE_CLASS}>{group.title}</h2>
-      <details class={MARKDOWN_CLASSNAMES.details}>
-        <summary class={MARKDOWN_CLASSNAMES.summary}>{group.title}</summary>
-        <ul class={`${LIST_CLASS} mb-0 pr-lg pb-md`}>
-          {(group.entries ?? []).map((entry) => {
-            const rawUrl = (entry.url ?? "").trim();
-            const href = !rawUrl
-              ? ""
-              : rawUrl.includes("://")
-                ? rawUrl
-                : withBase(rawUrl);
-            return (
-              <li class={LIST_ITEM_CLASS}>
-                {href ? <a class={BASE_LINK_CLASS} href={href} aria-label={entry.title}>{entry.title}</a> : entry.title}
-                {entry.note ? ` (${entry.note})` : ""}
-              </li>
-            );
-          })}
-        </ul>
-      </details>
-    </>
-  ))}
+  <DevDiaryList groups={groups} />
 </BaseLayout>

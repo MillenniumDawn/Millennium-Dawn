@@ -1,6 +1,6 @@
 ---
 title: Known Submods
-description: 'Known submods for Millennium Dawn: A Modern Day Mod'
+description: "Known submods for Millennium Dawn: A Modern Day Mod"
 ---
 
 # Known Submods for Millennium Dawn

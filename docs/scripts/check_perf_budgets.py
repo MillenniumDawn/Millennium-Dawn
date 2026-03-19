@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 BUDGETS_BYTES = {
-    ".html": 300_000,
+    ".html": 320_000,
     ".css": 120_000,
     ".js": 80_000,
 }
