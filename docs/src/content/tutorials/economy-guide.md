@@ -740,7 +740,22 @@ Countries must supply electricity as part of their infrastructure. Power is gene
 
 Reactor-Grade Material can be produced at Enrichment Facilities (built from the electricity panel) or purchased from other countries via decisions. States with Geothermal Infrastructure or Hydroelectric Infrastructure modifiers provide additional power.
 
-Electricity consumption is calculated from active buildings and population. Insufficient power generation triggers a dynamic modifier that scales with the size of the shortfall:
+Electricity consumption is calculated from active buildings and population. Each building type consumes energy per level:
+
+| Building              | Energy Consumption (GW per level) |
+| --------------------- | --------------------------------- |
+| Composite Plants      | 0.80                              |
+| Microchip Plants      | 0.75                              |
+| Civilian Factories    | 0.50                              |
+| Military Factories    | 0.50                              |
+| Dockyards             | 0.50                              |
+| Offices               | 0.25                              |
+| Synthetic Refineries  | 0.20                              |
+| Agriculture Districts | 0.10                              |
+
+Population energy consumption also scales with total population and GDP per capita — wealthier, larger nations consume significantly more electricity.
+
+Insufficient power generation triggers a dynamic modifier that scales with the size of the shortfall:
 
 | Penalty                 | Effect                                                  |
 | ----------------------- | ------------------------------------------------------- |
@@ -777,6 +792,7 @@ Offices are the backbone of a modern service economy. They employ the most worke
 | Max Per State          | 50                      |
 | Shares Building Slots  | Yes                     |
 | Corporate Tax Factor   | 5.0                     |
+| Energy Consumption     | 0.25 GW per level       |
 | Base Workers           | 0.473 million per level |
 
 Offices also drive civilian microchip consumption — each staffed office consumes microchips proportional to its worker fulfillment, so nations with many offices need corresponding microchip production.
@@ -802,6 +818,8 @@ Agriculture districts represent organized commercial farming. They produce **fue
 | Base Construction Cost | 15,000 (+1,250 per additional level) |
 | Max Per State          | 10                                   |
 | Shares Building Slots  | Yes                                  |
+| Corporate Tax Factor   | 2.6                                  |
+| Energy Consumption     | 0.10 GW per level                    |
 | Base Workers           | 0.188 million per level              |
 | Fuel Output            | 8 per hour per level                 |
 | Local Supply           | +0.015 per level                     |
@@ -848,6 +866,7 @@ Microchip plants produce **Microchips**, a strategic resource required for advan
 | Max Per State          | 5                                                 |
 | Shares Building Slots  | Yes                                               |
 | Corporate Tax Factor   | 4.0                                               |
+| Energy Consumption     | 0.75 GW per level                                 |
 | Base Workers           | 0.0375 million per level                          |
 
 Microchip plants have the second-highest corporate tax factor in the game (behind offices), making them a strong source of tax revenue. However, they require a steady supply of Technology Metals and Precious Metals to operate -- countries without domestic access to these resources will need to import them.
@@ -864,6 +883,7 @@ Composite plants produce **Advanced Composites**, a strategic resource used in a
 | Max Per State          | 5                                                       |
 | Shares Building Slots  | Yes                                                     |
 | Corporate Tax Factor   | 3.5                                                     |
+| Energy Consumption     | 0.80 GW per level                                       |
 | Base Workers           | 0.0375 million per level                                |
 
 Composite plants require three different input resources (Rubber, Precious Metals, and Fossil Fuels), making them the most resource-intensive building to sustain. Countries with limited resource access should secure trade agreements or invest in synthetic refineries to supply the Rubber component.
@@ -879,6 +899,7 @@ Synthetic refineries produce both **rubber** (3 per level) and **fuel** (2 per h
 | Max Per State          | 2                                          |
 | Shares Building Slots  | Yes                                        |
 | Corporate Tax Factor   | 3.0                                        |
+| Energy Consumption     | 0.20 GW per level                          |
 | Base Workers           | 0.184 million per level                    |
 
 Synthetic refineries are the most labor-intensive advanced building by far, employing nearly 5 times as many workers per level as microchip or composite plants. They are critical for resource-poor nations that need Rubber for Advanced Composite production and fuel for mechanized and naval operations. Researching advanced refinery technologies increases Rubber output by +1 per level per tech tier.
