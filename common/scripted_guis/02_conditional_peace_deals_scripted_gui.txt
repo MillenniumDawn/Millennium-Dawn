@@ -1,15 +1,11 @@
 scripted_gui = {
 	CPD_peace_deal_builder = {
-		# this seems to error in the log but doesn't crash, try later with other contexts
+		# diplomatic_action context logs harmless parse errors — this is a known engine quirk
 		context_type = diplomatic_action
-		# context_type = player_context
 
 		window_name = "CPD_peace_deal_builder"
 
-		visible = {
-			always = yes
-			#	has_country_flag = CPD_considering_peace_deal
-		}
+		dirty = global.CPD_dirty
 
 		dynamic_lists = {
 			CPD_actionable_states_gridbox = {
@@ -22,57 +18,90 @@ scripted_gui = {
 				change_scope = yes
 				entry_container = "CPD_current_peace_deal_entry"
 			}
-			# work back and fix this if it turns out to be unoptimised
 		}
 
 		properties = {
-			# Single State Action
 			CPD_annex_state_button = { image = "[CPD_ANNEX_STATE_BUTTON_LOC]" }
 			CPD_make_puppet_in_state_button = { image = "[CPD_MAKE_PUPPET_IN_STATE_BUTTON_LOC]" }
 			CPD_demilitarise_state_button = { image = "[CPD_DEMILITARISE_STATE_BUTTON_LOC]" }
 			CPD_liberate_in_state_button = { image = "[CPD_LIBERATE_IN_STATE_BUTTON_LOC]" }
-			# Full Country Action
-			# CPD_full_puppet_button = { image = "[CPD_FULL_PUPPET_BUTTON_LOC]" }
-
-			# CPD_demands_tab_button = { frame = ROOT.CPD_selected_demands_frame_var }
-			# CPD_concessions_tab_button = { frame = ROOT.CPD_selected_concessions_frame_var }
 		}
 
 		effects = {
-			# Select Concessions/Demand Types
+			# Demands / Concessions tabs
 			CPD_demands_tab_button_click = {
-				ROOT = {
-					# set_variable = { CPD_selected_demands_frame_var = 1 }
-					# set_variable = { CPD_selected_concessions_frame_var = 2 }
-					clr_country_flag = CPD_giving_concessions
-				}
+				ROOT = { clr_country_flag = CPD_giving_concessions }
 				CPD_demand_concede_switch = yes
 			}
 			CPD_concessions_tab_button_click = {
-				ROOT = {
-					# set_variable = { CPD_selected_demands_frame_var = 2 }
-					# set_variable = { CPD_selected_concessions_frame_var = 1 }
-					set_country_flag = CPD_giving_concessions
-				}
+				ROOT = { set_country_flag = CPD_giving_concessions }
 				CPD_demand_concede_switch = yes
 			}
 
-			# Single State Action
+			# State / Country action type tabs
+			CPD_state_actions_tab_button_click = {
+				ROOT = { clr_country_flag = CPD_showing_country_actions }
+				add_to_variable = { global.CPD_dirty = 1 }
+			}
+			CPD_country_actions_tab_button_click = {
+				ROOT = { set_country_flag = CPD_showing_country_actions }
+				add_to_variable = { global.CPD_dirty = 1 }
+			}
+
+			# Existing state action buttons (options 1-4)
 			CPD_annex_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 1 } }
 			CPD_make_puppet_in_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 2 } }
 			CPD_demilitarise_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 3 } }
-			CPD_liberate_in_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 4 } } # need to make this possible to select between multiple cores
-			# Full Country Action
-			# CPD_full_puppet_button_click = { CPD_fully_puppet = yes }
+			CPD_liberate_in_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 4 } }
 
-			# ADD STATE TO PEACE DEAL BUILD WITH CURRENT PARAMETERS
+			# New state action buttons (options 5-7)
+			CPD_resource_rights_button_click = { set_variable = { ROOT.CPD_state_option_selection = 5 } }
+			CPD_military_basing_button_click = { set_variable = { ROOT.CPD_state_option_selection = 6 } }
+			CPD_full_puppet_button_click = {
+				ROOT = {
+					if = {
+						limit = { has_country_flag = CPD_full_puppet_toggle }
+						clr_country_flag = CPD_full_puppet_toggle
+					}
+					else = { set_country_flag = CPD_full_puppet_toggle }
+				}
+				add_to_variable = { global.CPD_dirty = 1 }
+			}
+
+			# Country action buttons (options 8-11) — toggle flags
+			CPD_ceasefire_button_click = {
+				CPD_toggle_country_action = yes
+				add_to_variable = { global.CPD_dirty = 1 }
+			}
+			CPD_war_reparations_button_click = {
+				CPD_toggle_war_reparations = yes
+				add_to_variable = { global.CPD_dirty = 1 }
+			}
+			CPD_forced_neutrality_button_click = {
+				CPD_toggle_forced_neutrality = yes
+				add_to_variable = { global.CPD_dirty = 1 }
+			}
+			CPD_regime_change_button_click = {
+				CPD_toggle_regime_change = yes
+				add_to_variable = { global.CPD_dirty = 1 }
+			}
+
+			# State list interactions
 			CPD_add_state_with_parameters_button_click = { CPD_change_state_actions = yes }
 			CPD_clear_from_current_deal_button_click = { CPD_remove_from_deal = yes }
 		}
+
 		triggers = {
-			# CPD_demilitarise_state_button_visible = { has_country_flag = DREAD_HAS_FINISHED_THIS }
-			CPD_liberate_in_state_button_visible = { has_country_flag = DREAD_HAS_FINISHED_THIS }
-			#
+			# State action container visibility — hidden when in country actions mode
+			CPD_SAO_container_visible = { ROOT = { NOT = { has_country_flag = CPD_showing_country_actions } } }
+			CPD_actionable_states_container_visible = { ROOT = { NOT = { has_country_flag = CPD_showing_country_actions } } }
+			CPD_peace_deal_builder_ACTIONABLE_STATES_TITLE_visible = { ROOT = { NOT = { has_country_flag = CPD_showing_country_actions } } }
+
+			# Country action container visibility — shown when in country actions mode
+			CPD_CAO_container_visible = { ROOT = { has_country_flag = CPD_showing_country_actions } }
+
+			CPD_liberate_in_state_button_visible = { always = yes }
+
 			CPD_add_state_with_parameters_button_click_enabled = { NOT = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } } }
 
 			CPD_AIA_acceptance_ICON_visible = {
@@ -93,15 +122,13 @@ scripted_gui = {
 		ai_enabled = { always = no }
 	}
 
-	# Receiver Event
 	CPD_built_peace_deal = {
-		# this seems to error in the log but doesn't crash, try later with other contexts
+		# diplomatic_action context logs harmless parse errors — this is a known engine quirk
 		context_type = diplomatic_action
-		# context_type = player_context
 
 		window_name = "CPD_built_peace_deal"
 
-		visible = { always = yes }
+		dirty = global.CPD_dirty
 
 		dynamic_lists = {
 			CPD_current_deal_gridbox_CONCESSIONS_TO_RECEIVER = {

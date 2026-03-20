@@ -86,6 +86,31 @@
 			}
 			text = { localization_key = "Error in Scripted Localisation, Fix \"CPD_DEMILITARISE_TT_DELAYED_LOC\"" }
 		}
+	# LIBERATE IN STATE BUTTON TOOLTIP
+		defined_text = {
+			name = CPD_LIBERATE_TT_LOC
+			text = {
+				trigger = { NOT = { ROOT = { has_country_flag = CPD_giving_concessions } } }
+				localization_key = "CPD_liberate_in_state_button_TT_DEMAND"
+			}
+			text = {
+				trigger = { ROOT = { has_country_flag = CPD_giving_concessions } }
+				localization_key = "CPD_liberate_in_state_button_TT_CONCESSION"
+			}
+			text = { localization_key = "Error in Scripted Localisation, Fix \"CPD_LIBERATE_TT_LOC\"" }
+		}
+		defined_text = {
+			name = CPD_LIBERATE_TT_DELAYED_LOC
+			text = {
+				trigger = { NOT = { ROOT = { has_country_flag = CPD_giving_concessions } } }
+				localization_key = "CPD_liberate_in_state_button_TT_DELAYED_DEMAND"
+			}
+			text = {
+				trigger = { ROOT = { has_country_flag = CPD_giving_concessions } }
+				localization_key = "CPD_liberate_in_state_button_TT_DELAYED_CONCESSION"
+			}
+			text = { localization_key = "Error in Scripted Localisation, Fix \"CPD_LIBERATE_TT_DELAYED_LOC\"" }
+		}
 # ICON/BUTTON GFX LOC
 	# ANNEX STATE BUTTON
 		defined_text = {
@@ -198,6 +223,24 @@
 				}
 				localization_key = "CPD_liberation_of_state"
 			}
+			text = {
+				trigger = {
+					OR = {
+						ROOT = { is_in_array = { CPD_resource_rights_DEMANDS = PREV } }
+						ROOT = { is_in_array = { CPD_resource_rights_CONCESSIONS = PREV } }
+					}
+				}
+				localization_key = "CPD_resource_rights_of_state"
+			}
+			text = {
+				trigger = {
+					OR = {
+						ROOT = { is_in_array = { CPD_basing_rights_DEMANDS = PREV } }
+						ROOT = { is_in_array = { CPD_basing_rights_CONCESSIONS = PREV } }
+					}
+				}
+				localization_key = "CPD_basing_rights_in_state"
+			}
 		}
 	# ENACTED ACTIONS ON STATE LIST TOOLTIP
 		defined_text = {
@@ -236,6 +279,24 @@
 				text = {
 					trigger = { ROOT = { is_in_array = { CPD_liberate_state_CONCESSIONS = PREV } } }
 					localization_key = "CPD_conceding_liberation_of_state_TT"
+				}
+			# RESOURCE RIGHTS
+				text = {
+					trigger = { ROOT = { is_in_array = { CPD_resource_rights_DEMANDS = PREV } } }
+					localization_key = "CPD_demanding_resource_rights_TT"
+				}
+				text = {
+					trigger = { ROOT = { is_in_array = { CPD_resource_rights_CONCESSIONS = PREV } } }
+					localization_key = "CPD_conceding_resource_rights_TT"
+				}
+			# MILITARY BASING
+				text = {
+					trigger = { ROOT = { is_in_array = { CPD_basing_rights_DEMANDS = PREV } } }
+					localization_key = "CPD_demanding_basing_rights_TT"
+				}
+				text = {
+					trigger = { ROOT = { is_in_array = { CPD_basing_rights_CONCESSIONS = PREV } } }
+					localization_key = "CPD_conceding_basing_rights_TT"
 				}
 		}
 	# AI/PLAYER ACCEPTANCE
@@ -478,6 +539,10 @@ defined_text = {
 		trigger = {
 			set_temp_variable = { months_at_war_tmp = THIS.months_at_war }
 			multiply_temp_variable = { months_at_war_tmp = 2 }
+			clamp_temp_variable = {
+				var = months_at_war_tmp
+				max = 120
+			}
 		}
 		localization_key = "CPD_ai_accept_months_at_war_tt"
 	}
@@ -489,6 +554,10 @@ defined_text = {
 		trigger = {
 			set_temp_variable = { v = ROOT.CPD_total_cost_of_built_peace_deal }
 			multiply_temp_variable = { v = -5 }
+			clamp_temp_variable = {
+				var = v
+				max = 50
+			}
 		}
 		localization_key = "CPD_ai_accept_cost_of_peace_tt"
 	}
@@ -499,14 +568,15 @@ defined_text = {
 
 	text = {
 		trigger = {
+			set_temp_variable = { v = 0 }
 			if = { limit = { difficulty < 1 }
-				set_temp_variable = { v = 15 }
+				add_to_temp_variable = { v = 15 }
 			}
 			if = { limit = { difficulty > 1 }
-				set_temp_variable = { v = 15 }
+				add_to_temp_variable = { v = -15 }
 			}
 			if = { limit = { difficulty > 2 }
-				set_temp_variable = { v = 15 }
+				add_to_temp_variable = { v = -15 }
 			}
 		}
 		localization_key = "CPD_ai_acceptance_difficulty_setting_tt"

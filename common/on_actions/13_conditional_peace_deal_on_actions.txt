@@ -1,42 +1,43 @@
 on_actions = {
-	# TODO: Make this functional since the AI should offer peace deals at some point but there's no reason to hold onto this until that's done.
-	# Yes, the AI evaluates peace deals effectively when the player offers it to them.
-	# on_weekly = {
-	# 	effect = {
-	# 		if = {
-	# 			limit = {
-	# 				has_country_flag = CPD_AI_wants_peace
-	# 				# ai has to have the flag that tells them they want to not
-	# 				# be at war anymore
-	# 				OR = {
-	# 					var:CPD_AI_wants_peace_with = { NOT = { CPD_AI_will_offer_peace = yes } }
-	# 					NOT = { has_war_with = var:CPD_AI_wants_peace_with }
-	# 					# ^obviously shouldn't be a valid trigger if they're no longer at war
-	# 				}
-	# 			}
-	# 			clr_country_flag = CPD_AI_wants_peace
-	# 			clear_variable = CPD_AI_wants_peace_with
-	# 			CPD_reset_built_peace_deal = yes
-	# 		}
-	# 		if = {
-	# 			limit = {
-	# 				is_ai = yes
-	# 				has_war = yes
-	# 				NOT = { has_country_flag = CPD_AI_wants_peace }
-	# 			}
-	# 			random_enemy_country = {
-	# 				limit = { CPD_AI_will_offer_peace = yes }
-	# 				CPD_reset_built_peace_deal = yes
-	# 				CPD_AI_build_peace_deal = yes
-	# 				# ^need to make this effect still
-	# 				ROOT = {
-	# 					set_country_flag = CPD_AI_wants_peace
-	# 					set_variable = { CPD_AI_wants_peace_with = PREV }
-	# 				}
-	# 			}
-	# 		}
-	# 	}
-	# }
+	on_monthly = {
+		effect = {
+			if = {
+				limit = { is_ai = yes }
+				# Clear stale AI peace flags if conditions no longer apply
+				if = {
+					limit = {
+						has_country_flag = CPD_AI_wants_peace
+						OR = {
+							NOT = { has_war_with = var:CPD_AI_wants_peace_with }
+							var:CPD_AI_wants_peace_with = { exists = no }
+						}
+					}
+					clr_country_flag = CPD_AI_wants_peace
+					clear_variable = CPD_AI_wants_peace_with
+				}
+				# AI considers offering peace
+				if = {
+					limit = {
+						has_war = yes
+						NOT = { has_country_flag = CPD_AI_wants_peace }
+						NOT = { has_country_flag = CPD_AI_peace_cooldown }
+					}
+					random_enemy_country = {
+						limit = {
+							CPD_is_a_custom_civil_war = yes
+						}
+						CPD_reset_built_peace_deal = yes
+						CPD_AI_build_peace_deal = yes
+						ROOT = {
+							set_country_flag = CPD_AI_wants_peace
+							set_variable = { CPD_AI_wants_peace_with = PREV }
+							set_country_flag = { flag = CPD_AI_peace_cooldown days = 90 value = 1 }
+						}
+					}
+				}
+			}
+		}
+	}
 
 	on_capitulation = {
 		effect = {
@@ -86,14 +87,17 @@ on_actions = {
 				ROOT = {
 					every_enemy_country = {
 						add_to_temp_variable = { CPD_VP_total = num_armies_in_state@FROM.FROM }
-						set_temp_variable = { CPD_VP_temp = num_armies_in_state@FROM.FROM }
-						divide_temp_variable = { CPD_VP_temp = CPD_VP_total }
-						multiply_temp_variable = { CPD_VP_temp = CPD_SVP }
-						add_to_variable = { CPD_VP@FROM = CPD_VP_temp }
-						subtract_from_variable = { FROM.CPD_VP@THIS = CPD_VP_temp }
-						clamp_variable = {
-							var = FROM.CPD_VP@THIS
-							min = 0
+						if = {
+							limit = { check_variable = { CPD_VP_total > 0 } }
+							set_temp_variable = { CPD_VP_temp = num_armies_in_state@FROM.FROM }
+							divide_temp_variable = { CPD_VP_temp = CPD_VP_total }
+							multiply_temp_variable = { CPD_VP_temp = CPD_SVP }
+							add_to_variable = { CPD_VP@FROM = CPD_VP_temp }
+							subtract_from_variable = { FROM.CPD_VP@THIS = CPD_VP_temp }
+							clamp_variable = {
+								var = FROM.CPD_VP@THIS
+								min = 0
+							}
 						}
 					}
 				}

@@ -27,11 +27,34 @@
 		}
 # CONDITIONAL PEACE DEAL TRIGGERS
 	# AI SPECIFIC TRIGGERS
-		CPD_AI_will_offer_peace = { always = no }
+		CPD_AI_will_offer_peace = {
+			NOT = { has_country_flag = CPD_AI_peace_cooldown }
+			is_ai = yes
+			has_war = yes
+			OR = {
+				# Long war with low war support
+				AND = {
+					has_war_support < 0.3
+					check_variable = { months_at_war > 12 }
+				}
+				# High surrender progress
+				AND = {
+					surrender_progress > 0.3
+					check_variable = { months_at_war > 6 }
+				}
+				# Economic collapse
+				has_active_mission = debt_default_main_mission
+				# Massively outgunned
+				AND = {
+					enemies_strength_ratio > 2.0
+					check_variable = { months_at_war > 6 }
+				}
+			}
+		}
 		# Just for display shit
 		CPD_AI_will_accept_calculation = {
 			# BASE ACCEPTANCE
-			set_temp_variable = { CPD_acceptance_temp = -50 }
+			set_temp_variable = { CPD_acceptance_temp = -100 }
 
 			# OTHER CHECKS IN HERE
 			# ECONOMIC FACTORING
@@ -162,24 +185,32 @@
 				}
 				add_to_temp_variable = { CPD_acceptance_temp = CPD_FB_temp }
 
-			# Time at War
+			# Time at War (capped at 120 to prevent runaway acceptance in very long wars)
 			set_temp_variable = { months_at_war_tmp = THIS.months_at_war }
 			multiply_temp_variable = { months_at_war_tmp = 2 }
+			clamp_temp_variable = {
+				var = months_at_war_tmp
+				max = 120
+			}
 			add_to_temp_variable = { CPD_acceptance_temp = months_at_war_tmp }
 
 			if = { limit = { difficulty < 1 }
-				add_to_temp_variable = { CPD_acceptance_temp = -15 }
+				add_to_temp_variable = { CPD_acceptance_temp = 15 }
 			}
 			if = { limit = { difficulty > 1 }
-				add_to_temp_variable = { CPD_acceptance_temp = 15 }
+				add_to_temp_variable = { CPD_acceptance_temp = -15 }
 			}
 			if = { limit = { difficulty > 2 }
-				add_to_temp_variable = { CPD_acceptance_temp = 15 }
+				add_to_temp_variable = { CPD_acceptance_temp = -15 }
 			}
 
-			# Cost of Peace Deal
+			# Cost of Peace Deal (capped: concessions bonus maxes at +50)
 			set_temp_variable = { v = ROOT.CPD_total_cost_of_built_peace_deal }
 			multiply_temp_variable = { v = -5 }
+			clamp_temp_variable = {
+				var = v
+				max = 50
+			}
 			add_to_temp_variable = { CPD_acceptance_temp = v }
 			# DEAL FAIRNESS
 				set_temp_variable = { CPD_DF_temp = 0 }
@@ -345,6 +376,28 @@
 							min = 1
 						}
 				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
+					# RESOURCE RIGHTS — cheaper than annexation
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						multiply_temp_variable = { CPD_VP_temp = 0.15 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 6 } }
+					# MILITARY BASING — cheapest state action
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						multiply_temp_variable = { CPD_VP_temp = 0.1 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
 				if = {
 					limit = { is_owned_and_controlled_by = THIS.owner }
 					multiply_temp_variable = { CPD_VP_temp = 2 }
@@ -401,6 +454,28 @@
 					# COST CALCULATION
 						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
 						multiply_temp_variable = { CPD_VP_temp = 0.3333 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
+					# RESOURCE RIGHTS
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						multiply_temp_variable = { CPD_VP_temp = 0.15 }
+						round_temp_variable = CPD_VP_temp
+						clamp_temp_variable = {
+							var = CPD_VP_temp
+							min = 1
+						}
+				}
+				else_if = {
+					limit = { check_variable = { ROOT.CPD_state_option_selection = 6 } }
+					# MILITARY BASING
+						set_temp_variable = { CPD_VP_temp = THIS.state_strategic_value }
+						multiply_temp_variable = { CPD_VP_temp = 0.1 }
 						round_temp_variable = CPD_VP_temp
 						clamp_temp_variable = {
 							var = CPD_VP_temp
