@@ -411,7 +411,10 @@ CPD_remove_from_deal = {
 				remove_from_array = { CPD_current_deal_list_CONCESSIONS = PREV }
 			}
 		}
-		ROOT = { remove_from_array = { CPD_current_deal_list = PREV } }
+		if = {
+			limit = { check_variable = { v < 10000 } }
+			ROOT = { remove_from_array = { CPD_current_deal_list = PREV } }
+		}
 }
 
 CPD_clear_victory_points = {
@@ -681,6 +684,32 @@ CPD_sign_peace_deal = {
 			THIS = { add_timed_idea = { idea = CPD_war_reparations_receiver days = 1800 } }
 		}
 
+	# CEASEFIRE STATUS QUO - transfer controlled states before white peace
+		if = {
+			limit = {
+				ROOT = {
+					OR = {
+						has_country_flag = CPD_ceasefire_demand
+						has_country_flag = CPD_ceasefire_concession
+					}
+				}
+			}
+			# THIS = receiver country, ROOT = sender country
+			# ROOT gets states it controls that receiver owns
+			every_owned_state = {
+				limit = { is_controlled_by = ROOT }
+				ROOT = { transfer_state = PREV }
+			}
+			# Receiver gets states it controls that ROOT owns
+			# Inside ROOT.every_owned_state: PREV = ROOT, PREV.PREV = receiver
+			ROOT = {
+				every_owned_state = {
+					limit = { is_controlled_by = PREV.PREV }
+					PREV.PREV = { transfer_state = PREV }
+				}
+			}
+		}
+
 	# WHITE PEACE - always fires to end the war after all transfers and actions
 		set_temp_variable = { CPD_WP_initiator = ROOT }
 		set_temp_variable = { CPD_WP_receiver = THIS }
@@ -948,6 +977,46 @@ CPD_AI_build_peace_deal = {
 
 # COUNTRY ACTION TOGGLE EFFECTS
 # Sentinel state IDs for country actions in deal list: 10001-10006
+# When adding a new country action, also update: CPD_reset_built_peace_deal, CPD_remove_from_deal sentinel dispatch
+
+# Clears all state-level actions from the deal (used when ceasefire is toggled on)
+# Expects to be called while ROOT is the peace deal builder
+CPD_clear_all_state_actions = {
+	ROOT = {
+		# Reset cost to 0 since we are wiping all state entries (country actions have no cost)
+		set_variable = { CPD_total_cost_of_built_peace_deal = 0 }
+		# Clear all state action arrays
+		clear_array = CPD_annex_state_DEMANDS
+		clear_array = CPD_puppet_in_state_DEMANDS
+		clear_array = CPD_demilitarise_state_DEMANDS
+		clear_array = CPD_liberate_state_DEMANDS
+		clear_array = CPD_resource_rights_DEMANDS
+		clear_array = CPD_annex_state_CONCESSIONS
+		clear_array = CPD_puppet_in_state_CONCESSIONS
+		clear_array = CPD_demilitarise_state_CONCESSIONS
+		clear_array = CPD_liberate_state_CONCESSIONS
+		clear_array = CPD_resource_rights_CONCESSIONS
+		# Wipe deal lists and rebuild with only country action sentinels
+		clear_array = CPD_current_deal_list
+		clear_array = CPD_current_deal_list_DEMANDS
+		clear_array = CPD_current_deal_list_CONCESSIONS
+		clear_array = CPD_value_of_state
+		# Re-add active country action sentinels
+		if = { limit = { has_country_flag = CPD_ceasefire_demand } add_to_array = { CPD_current_deal_list = 10001 } add_to_array = { CPD_current_deal_list_DEMANDS = 10001 } }
+		if = { limit = { has_country_flag = CPD_ceasefire_concession } add_to_array = { CPD_current_deal_list = 10001 } add_to_array = { CPD_current_deal_list_CONCESSIONS = 10001 } }
+		if = { limit = { has_country_flag = CPD_war_reparations_demand } add_to_array = { CPD_current_deal_list = 10002 } add_to_array = { CPD_current_deal_list_DEMANDS = 10002 } }
+		if = { limit = { has_country_flag = CPD_war_reparations_concession } add_to_array = { CPD_current_deal_list = 10002 } add_to_array = { CPD_current_deal_list_CONCESSIONS = 10002 } }
+		if = { limit = { has_country_flag = CPD_forced_neutrality_demand } add_to_array = { CPD_current_deal_list = 10003 } add_to_array = { CPD_current_deal_list_DEMANDS = 10003 } }
+		if = { limit = { has_country_flag = CPD_forced_neutrality_concession } add_to_array = { CPD_current_deal_list = 10003 } add_to_array = { CPD_current_deal_list_CONCESSIONS = 10003 } }
+		if = { limit = { has_country_flag = CPD_regime_change_demand } add_to_array = { CPD_current_deal_list = 10004 } add_to_array = { CPD_current_deal_list_DEMANDS = 10004 } }
+		if = { limit = { has_country_flag = CPD_regime_change_concession } add_to_array = { CPD_current_deal_list = 10004 } add_to_array = { CPD_current_deal_list_CONCESSIONS = 10004 } }
+		if = { limit = { has_country_flag = CPD_military_basing_demand } add_to_array = { CPD_current_deal_list = 10005 } add_to_array = { CPD_current_deal_list_DEMANDS = 10005 } }
+		if = { limit = { has_country_flag = CPD_military_basing_concession } add_to_array = { CPD_current_deal_list = 10005 } add_to_array = { CPD_current_deal_list_CONCESSIONS = 10005 } }
+		if = { limit = { has_country_flag = CPD_full_puppet_demand } add_to_array = { CPD_current_deal_list = 10006 } add_to_array = { CPD_current_deal_list_DEMANDS = 10006 } }
+		if = { limit = { has_country_flag = CPD_full_puppet_concession } add_to_array = { CPD_current_deal_list = 10006 } add_to_array = { CPD_current_deal_list_CONCESSIONS = 10006 } }
+	}
+}
+
 CPD_toggle_ceasefire = {
 	add_to_variable = { global.CPD_dirty = 1 }
 	ROOT = {
@@ -978,6 +1047,18 @@ CPD_toggle_ceasefire = {
 				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10001 }
 			}
 		}
+	}
+	# Ceasefire means no territorial changes - clear all state actions after flag is set
+	if = {
+		limit = {
+			ROOT = {
+				OR = {
+					has_country_flag = CPD_ceasefire_demand
+					has_country_flag = CPD_ceasefire_concession
+				}
+			}
+		}
+		CPD_clear_all_state_actions = yes
 	}
 }
 
