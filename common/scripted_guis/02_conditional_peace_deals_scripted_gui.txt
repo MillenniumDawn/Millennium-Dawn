@@ -1,11 +1,11 @@
 scripted_gui = {
 	CPD_peace_deal_builder = {
-		# diplomatic_action context logs harmless parse errors — this is a known engine quirk
+		# diplomatic_action context logs harmless parse errors - this is a known engine quirk
 		context_type = diplomatic_action
 
 		window_name = "CPD_peace_deal_builder"
 
-		dirty = global.CPD_dirty
+		# dirty = global.CPD_dirty # Recomment this when getting everything back and sorted
 
 		dynamic_lists = {
 			CPD_actionable_states_gridbox = {
@@ -20,71 +20,48 @@ scripted_gui = {
 			}
 		}
 
-		properties = {
-			CPD_annex_state_button = { image = "[CPD_ANNEX_STATE_BUTTON_LOC]" }
-			CPD_make_puppet_in_state_button = { image = "[CPD_MAKE_PUPPET_IN_STATE_BUTTON_LOC]" }
-			CPD_demilitarise_state_button = { image = "[CPD_DEMILITARISE_STATE_BUTTON_LOC]" }
-			CPD_liberate_in_state_button = { image = "[CPD_LIBERATE_IN_STATE_BUTTON_LOC]" }
-		}
-
 		effects = {
 			# Demands / Concessions tabs
 			CPD_demands_tab_button_click = {
 				ROOT = { clr_country_flag = CPD_giving_concessions }
 				CPD_demand_concede_switch = yes
+				add_to_variable = { global.CPD_dirty = 1 }
 			}
 			CPD_concessions_tab_button_click = {
 				ROOT = { set_country_flag = CPD_giving_concessions }
 				CPD_demand_concede_switch = yes
-			}
-
-			# State / Country action type tabs
-			CPD_state_actions_tab_button_click = {
-				ROOT = { clr_country_flag = CPD_showing_country_actions }
-				add_to_variable = { global.CPD_dirty = 1 }
-			}
-			CPD_country_actions_tab_button_click = {
-				ROOT = { set_country_flag = CPD_showing_country_actions }
 				add_to_variable = { global.CPD_dirty = 1 }
 			}
 
-			# Existing state action buttons (options 1-4)
-			CPD_annex_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 1 } }
-			CPD_make_puppet_in_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 2 } }
-			CPD_demilitarise_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 3 } }
-			CPD_liberate_in_state_button_click = { set_variable = { ROOT.CPD_state_option_selection = 4 } }
-
-			# New state action buttons (options 5-7)
-			CPD_resource_rights_button_click = { set_variable = { ROOT.CPD_state_option_selection = 5 } }
-			CPD_military_basing_button_click = { set_variable = { ROOT.CPD_state_option_selection = 6 } }
-			CPD_full_puppet_button_click = {
-				ROOT = {
-					if = {
-						limit = { has_country_flag = CPD_full_puppet_toggle }
-						clr_country_flag = CPD_full_puppet_toggle
-					}
-					else = { set_country_flag = CPD_full_puppet_toggle }
-				}
+			# State action buttons - select which action applies to clicked states
+			CPD_annex_state_button_click = {
+				set_variable = { ROOT.CPD_state_option_selection = 1 }
+				add_to_variable = { global.CPD_dirty = 1 }
+			}
+			CPD_make_puppet_in_state_button_click = {
+				set_variable = { ROOT.CPD_state_option_selection = 2 }
+				add_to_variable = { global.CPD_dirty = 1 }
+			}
+			CPD_demilitarise_state_button_click = {
+				set_variable = { ROOT.CPD_state_option_selection = 3 }
+				add_to_variable = { global.CPD_dirty = 1 }
+			}
+			CPD_liberate_in_state_button_click = {
+				set_variable = { ROOT.CPD_state_option_selection = 4 }
+				add_to_variable = { global.CPD_dirty = 1 }
+			}
+			CPD_resource_rights_button_click = {
+				set_variable = { ROOT.CPD_state_option_selection = 5 }
 				add_to_variable = { global.CPD_dirty = 1 }
 			}
 
-			# Country action buttons (options 8-11) — toggle flags
-			CPD_ceasefire_button_click = {
-				CPD_toggle_country_action = yes
-				add_to_variable = { global.CPD_dirty = 1 }
-			}
-			CPD_war_reparations_button_click = {
-				CPD_toggle_war_reparations = yes
-				add_to_variable = { global.CPD_dirty = 1 }
-			}
-			CPD_forced_neutrality_button_click = {
-				CPD_toggle_forced_neutrality = yes
-				add_to_variable = { global.CPD_dirty = 1 }
-			}
-			CPD_regime_change_button_click = {
-				CPD_toggle_regime_change = yes
-				add_to_variable = { global.CPD_dirty = 1 }
-			}
+			# Country action buttons - dirty bump is inside each toggle effect
+			CPD_ceasefire_button_click = { CPD_toggle_ceasefire = yes }
+			CPD_war_reparations_button_click = { CPD_toggle_war_reparations = yes }
+			CPD_forced_neutrality_button_click = { CPD_toggle_forced_neutrality = yes }
+			CPD_regime_change_button_click = { CPD_toggle_regime_change = yes }
+			CPD_military_basing_button_click = { CPD_toggle_military_basing = yes }
+			CPD_full_puppet_button_click = { CPD_toggle_full_puppet = yes }
 
 			# State list interactions
 			CPD_add_state_with_parameters_button_click = { CPD_change_state_actions = yes }
@@ -92,17 +69,25 @@ scripted_gui = {
 		}
 
 		triggers = {
-			# State action container visibility — hidden when in country actions mode
-			CPD_SAO_container_visible = { ROOT = { NOT = { has_country_flag = CPD_showing_country_actions } } }
-			CPD_actionable_states_container_visible = { ROOT = { NOT = { has_country_flag = CPD_showing_country_actions } } }
-			CPD_peace_deal_builder_ACTIONABLE_STATES_TITLE_visible = { ROOT = { NOT = { has_country_flag = CPD_showing_country_actions } } }
+			# Grey out puppet state button when full puppet is active
+			CPD_make_puppet_in_state_button_click_enabled = {
+				ROOT = {
+					NOT = { has_country_flag = CPD_full_puppet_demand }
+					NOT = { has_country_flag = CPD_full_puppet_concession }
+				}
+			}
 
-			# Country action container visibility — shown when in country actions mode
-			CPD_CAO_container_visible = { ROOT = { has_country_flag = CPD_showing_country_actions } }
-
-			CPD_liberate_in_state_button_visible = { always = yes }
-
-			CPD_add_state_with_parameters_button_click_enabled = { NOT = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } } }
+			CPD_add_state_with_parameters_button_click_enabled = {
+				NOT = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } }
+				# Block adding puppet-in-state when full puppet is active
+				OR = {
+					NOT = { ROOT = { check_variable = { CPD_state_option_selection = 2 } } }
+					ROOT = {
+						NOT = { has_country_flag = CPD_full_puppet_demand }
+						NOT = { has_country_flag = CPD_full_puppet_concession }
+					}
+				}
+			}
 
 			CPD_AIA_acceptance_ICON_visible = {
 				is_ai = yes
@@ -123,7 +108,7 @@ scripted_gui = {
 	}
 
 	CPD_built_peace_deal = {
-		# diplomatic_action context logs harmless parse errors — this is a known engine quirk
+		# diplomatic_action context logs harmless parse errors - this is a known engine quirk
 		context_type = diplomatic_action
 
 		window_name = "CPD_built_peace_deal"

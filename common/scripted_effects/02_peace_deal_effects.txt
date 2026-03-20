@@ -32,7 +32,6 @@ CPD_reset_built_peace_deal = {
 			add_to_variable = { global.CPD_dirty = 1 }
 			# SETS UP INITIAL GUI STATE SELECTION OPTION
 				set_variable = { ROOT.CPD_state_option_selection = 1 }
-				set_variable = { ROOT.CPD_selected_demands_frame_var = 1 }
 			# RESETS COST OF PEACE DEAL
 				set_variable = { ROOT.CPD_total_cost_of_built_peace_deal = 0 }
 			# RESETS DEMANDS
@@ -53,8 +52,6 @@ CPD_reset_built_peace_deal = {
 			# CLEARS NEW STATE ACTION ARRAYS
 				clear_array = CPD_resource_rights_DEMANDS
 				clear_array = CPD_resource_rights_CONCESSIONS
-				clear_array = CPD_basing_rights_DEMANDS
-				clear_array = CPD_basing_rights_CONCESSIONS
 			# CLEARS COUNTRY ACTION FLAGS
 				clr_country_flag = CPD_ceasefire_demand
 				clr_country_flag = CPD_ceasefire_concession
@@ -64,8 +61,10 @@ CPD_reset_built_peace_deal = {
 				clr_country_flag = CPD_forced_neutrality_concession
 				clr_country_flag = CPD_regime_change_demand
 				clr_country_flag = CPD_regime_change_concession
-				clr_country_flag = CPD_full_puppet_toggle
-				clr_country_flag = CPD_showing_country_actions
+				clr_country_flag = CPD_military_basing_demand
+				clr_country_flag = CPD_military_basing_concession
+				clr_country_flag = CPD_full_puppet_demand
+				clr_country_flag = CPD_full_puppet_concession
 		}
 		CPD_demand_concede_switch = yes
 	}
@@ -74,7 +73,6 @@ CPD_reset_built_peace_deal = {
 CPD_demand_concede_switch = {
 	ROOT = {
 		clear_array = CPD_state_list
-		add_to_variable = { global.CPD_dirty = 1 }
 	}
 	if = {
 		limit = { ROOT = { has_country_flag = CPD_giving_concessions } }
@@ -148,7 +146,10 @@ CPD_demand_concede_switch = {
 }
 
 CPD_change_state_actions = {
-	add_to_variable = { global.CPD_dirty = 1 }
+	if = {
+		limit = { ROOT = { is_ai = no } }
+		add_to_variable = { global.CPD_dirty = 1 }
+	}
 	if = {
 		limit = { ROOT = { has_country_flag = CPD_giving_concessions } }
 		if = {
@@ -187,10 +188,6 @@ CPD_add_to_concessions = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
 		ROOT = { add_to_array = { CPD_resource_rights_CONCESSIONS = PREV } }
 	}
-	if = {
-		limit = { check_variable = { ROOT.CPD_state_option_selection = 6 } }
-		ROOT = { add_to_array = { CPD_basing_rights_CONCESSIONS = PREV } }
-	}
 
 	if = {
 		limit = { CPD_calculate_province_cost = yes }
@@ -224,10 +221,6 @@ CPD_remove_from_concessions = {
 	if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
 		ROOT = { remove_from_array = { CPD_resource_rights_CONCESSIONS = PREV } }
-	}
-	if = {
-		limit = { check_variable = { ROOT.CPD_state_option_selection = 6 } }
-		ROOT = { remove_from_array = { CPD_basing_rights_CONCESSIONS = PREV } }
 	}
 
 	if = {
@@ -263,10 +256,6 @@ CPD_add_to_demands = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
 		ROOT = { add_to_array = { CPD_resource_rights_DEMANDS = PREV } }
 	}
-	if = {
-		limit = { check_variable = { ROOT.CPD_state_option_selection = 6 } }
-		ROOT = { add_to_array = { CPD_basing_rights_DEMANDS = PREV } }
-	}
 
 	if = {
 		limit = { CPD_calculate_province_cost = yes }
@@ -301,10 +290,6 @@ CPD_remove_from_demands = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
 		ROOT = { remove_from_array = { CPD_resource_rights_DEMANDS = PREV } }
 	}
-	if = {
-		limit = { check_variable = { ROOT.CPD_state_option_selection = 6 } }
-		ROOT = { remove_from_array = { CPD_basing_rights_DEMANDS = PREV } }
-	}
 
 	if = {
 		limit = { CPD_calculate_province_cost = yes }
@@ -319,95 +304,112 @@ CPD_remove_from_demands = {
 }
 
 CPD_remove_from_deal = {
-	add_to_variable = { global.CPD_dirty = 1 }
-	# DEMANDS
+	if = {
+		limit = { ROOT = { is_ai = no } }
+		add_to_variable = { global.CPD_dirty = 1 }
+	}
+	# COUNTRY ACTION SENTINELS - toggle off the corresponding flag
+	if = {
+		limit = { check_variable = { v > 9999 } }
+		if = { limit = { check_variable = { v = 10001 } } ROOT = { clr_country_flag = CPD_ceasefire_demand clr_country_flag = CPD_ceasefire_concession } }
+		if = { limit = { check_variable = { v = 10002 } } ROOT = { clr_country_flag = CPD_war_reparations_demand clr_country_flag = CPD_war_reparations_concession } }
+		if = { limit = { check_variable = { v = 10003 } } ROOT = { clr_country_flag = CPD_forced_neutrality_demand clr_country_flag = CPD_forced_neutrality_concession } }
+		if = { limit = { check_variable = { v = 10004 } } ROOT = { clr_country_flag = CPD_regime_change_demand clr_country_flag = CPD_regime_change_concession } }
+		if = { limit = { check_variable = { v = 10005 } } ROOT = { clr_country_flag = CPD_military_basing_demand clr_country_flag = CPD_military_basing_concession } }
+		if = { limit = { check_variable = { v = 10006 } } ROOT = { clr_country_flag = CPD_full_puppet_demand clr_country_flag = CPD_full_puppet_concession } }
+		ROOT = {
+			remove_from_array = { CPD_current_deal_list = v }
+			if = {
+				limit = { is_in_array = { CPD_current_deal_list_DEMANDS = v } }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = v }
+			}
+			if = {
+				limit = { is_in_array = { CPD_current_deal_list_CONCESSIONS = v } }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = v }
+			}
+		}
+	}
+	# DEMANDS - if/else_if chain for early exit (a state is only in one array)
 		if = {
 			limit = { ROOT = { is_in_array = { CPD_annex_state_DEMANDS = PREV } } }
 			subtract_from_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_annex_state_DEMANDS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_annex_state_DEMANDS = PREV }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = PREV }
+			}
 		}
-		if = {
+		else_if = {
 			limit = { ROOT = { is_in_array = { CPD_puppet_in_state_DEMANDS = PREV } } }
 			subtract_from_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_puppet_in_state_DEMANDS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_puppet_in_state_DEMANDS = PREV }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = PREV }
+			}
 		}
-		if = {
+		else_if = {
 			limit = { ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } } }
 			subtract_from_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_demilitarise_state_DEMANDS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_demilitarise_state_DEMANDS = PREV }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = PREV }
+			}
 		}
-		if = {
+		else_if = {
 			limit = { ROOT = { is_in_array = { CPD_liberate_state_DEMANDS = PREV } } }
 			subtract_from_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_liberate_state_DEMANDS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_liberate_state_DEMANDS = PREV }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = PREV }
+			}
 		}
-		if = {
+		else_if = {
 			limit = { ROOT = { is_in_array = { CPD_resource_rights_DEMANDS = PREV } } }
 			subtract_from_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_resource_rights_DEMANDS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_resource_rights_DEMANDS = PREV }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = PREV }
+			}
 		}
-		if = {
-			limit = { ROOT = { is_in_array = { CPD_basing_rights_DEMANDS = PREV } } }
-			subtract_from_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_basing_rights_DEMANDS = PREV } }
-		}
-	# CONCESSIONS
+	# CONCESSIONS - same early-exit pattern
 		if = {
 			limit = { ROOT = { is_in_array = { CPD_annex_state_CONCESSIONS = PREV } } }
 			add_to_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_annex_state_CONCESSIONS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_annex_state_CONCESSIONS = PREV }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = PREV }
+			}
 		}
-		if = {
+		else_if = {
 			limit = { ROOT = { is_in_array = { CPD_puppet_in_state_CONCESSIONS = PREV } } }
 			add_to_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_puppet_in_state_CONCESSIONS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_puppet_in_state_CONCESSIONS = PREV }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = PREV }
+			}
 		}
-		if = {
+		else_if = {
 			limit = { ROOT = { is_in_array = { CPD_demilitarise_state_CONCESSIONS = PREV } } }
 			add_to_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_demilitarise_state_CONCESSIONS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_demilitarise_state_CONCESSIONS = PREV }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = PREV }
+			}
 		}
-		if = {
+		else_if = {
 			limit = { ROOT = { is_in_array = { CPD_liberate_state_CONCESSIONS = PREV } } }
 			add_to_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_liberate_state_CONCESSIONS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_liberate_state_CONCESSIONS = PREV }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = PREV }
+			}
 		}
-		if = {
+		else_if = {
 			limit = { ROOT = { is_in_array = { CPD_resource_rights_CONCESSIONS = PREV } } }
 			add_to_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_resource_rights_CONCESSIONS = PREV } }
-		}
-		if = {
-			limit = { ROOT = { is_in_array = { CPD_basing_rights_CONCESSIONS = PREV } } }
-			add_to_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_basing_rights_CONCESSIONS = PREV } }
-		}
-	# CLEANUP
-		if = {
-			limit = {
-				OR = {
-					ROOT = { is_in_array = { CPD_annex_state_DEMANDS = PREV } }
-					ROOT = { is_in_array = { CPD_puppet_in_state_DEMANDS = PREV } }
-					ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } }
-					ROOT = { is_in_array = { CPD_liberate_state_DEMANDS = PREV } }
-					ROOT = { is_in_array = { CPD_resource_rights_DEMANDS = PREV } }
-					ROOT = { is_in_array = { CPD_basing_rights_DEMANDS = PREV } }
-				}
+			ROOT = {
+				remove_from_array = { CPD_resource_rights_CONCESSIONS = PREV }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = PREV }
 			}
-			ROOT = { remove_from_array = { CPD_current_deal_list_DEMANDS = PREV } }
-		}
-		if = {
-			limit = {
-				OR = {
-					ROOT = { is_in_array = { CPD_annex_state_CONCESSIONS = PREV } }
-					ROOT = { is_in_array = { CPD_puppet_in_state_CONCESSIONS = PREV } }
-					ROOT = { is_in_array = { CPD_demilitarise_state_CONCESSIONS = PREV } }
-					ROOT = { is_in_array = { CPD_liberate_state_CONCESSIONS = PREV } }
-					ROOT = { is_in_array = { CPD_resource_rights_CONCESSIONS = PREV } }
-					ROOT = { is_in_array = { CPD_basing_rights_CONCESSIONS = PREV } }
-				}
-			}
-			ROOT = { remove_from_array = { CPD_current_deal_list_CONCESSIONS = PREV } }
 		}
 		ROOT = { remove_from_array = { CPD_current_deal_list = PREV } }
 }
@@ -586,7 +588,7 @@ CPD_sign_peace_deal = {
 	# RESOURCE RIGHTS - uses native give_resource_rights effect
 		if = {
 			limit = { check_variable = { CPD_resource_rights_DEMANDS^0 > -1 } }
-			# ROOT demands resource rights from THIS's states — THIS gives to ROOT
+			# ROOT demands resource rights from THIS's states - THIS gives to ROOT
 			for_each_loop = {
 				array = ROOT.CPD_resource_rights_DEMANDS
 				THIS = { give_resource_rights = { receiver = ROOT state = v } }
@@ -594,7 +596,7 @@ CPD_sign_peace_deal = {
 		}
 		if = {
 			limit = { check_variable = { CPD_resource_rights_CONCESSIONS^0 > -1 } }
-			# ROOT concedes resource rights on ROOT's states to THIS — ROOT gives to THIS
+			# ROOT concedes resource rights on ROOT's states to THIS - ROOT gives to THIS
 			for_each_loop = {
 				array = ROOT.CPD_resource_rights_CONCESSIONS
 				ROOT = { give_resource_rights = { receiver = THIS state = v } }
@@ -603,26 +605,22 @@ CPD_sign_peace_deal = {
 
 	# MILITARY BASING RIGHTS
 		if = {
-			limit = { check_variable = { CPD_basing_rights_DEMANDS^0 > -1 } }
+			limit = { ROOT = { has_country_flag = CPD_military_basing_demand } }
 			THIS = { give_military_access = ROOT }
 		}
 		if = {
-			limit = { check_variable = { CPD_basing_rights_CONCESSIONS^0 > -1 } }
+			limit = { ROOT = { has_country_flag = CPD_military_basing_concession } }
 			ROOT = { give_military_access = THIS }
 		}
 
 	# FULL COUNTRY PUPPET
 		if = {
-			limit = { ROOT = { has_country_flag = CPD_full_puppet_toggle } }
-			if = {
-				limit = { NOT = { ROOT = { has_country_flag = CPD_giving_concessions } } }
-				# ROOT demands puppet of THIS
-				ROOT = { puppet = THIS }
-			}
-			else = {
-				# ROOT concedes to be puppeted by THIS
-				THIS = { puppet = ROOT }
-			}
+			limit = { ROOT = { has_country_flag = CPD_full_puppet_demand } }
+			ROOT = { puppet = THIS }
+		}
+		if = {
+			limit = { ROOT = { has_country_flag = CPD_full_puppet_concession } }
+			THIS = { puppet = ROOT }
 		}
 
 	# COUNTRY ACTION: FORCED NEUTRALITY
@@ -821,7 +819,7 @@ CPD_liberate_in_state_effect = {
 		}
 	}
 	else_if = {
-		# No living country with cores — revive a dead tag
+		# No living country with cores - revive a dead tag
 		limit = {
 			any_country = {
 				NOT = { tag = var:CPD_liberated_state_owner }
@@ -839,7 +837,7 @@ CPD_liberate_in_state_effect = {
 		}
 	}
 	else = {
-		# No core holder at all — create a dynamic country
+		# No core holder at all - create a dynamic country
 		create_dynamic_country = {
 			original_tag = var:CPD_liberated_state_owner
 			set_cosmetic_tag = var:CPD_liberated_state_owner
@@ -949,82 +947,217 @@ CPD_AI_build_peace_deal = {
 }
 
 # COUNTRY ACTION TOGGLE EFFECTS
-CPD_toggle_country_action = {
+# Sentinel state IDs for country actions in deal list: 10001-10006
+CPD_toggle_ceasefire = {
+	add_to_variable = { global.CPD_dirty = 1 }
 	ROOT = {
 		if = {
 			limit = { NOT = { has_country_flag = CPD_giving_concessions } }
 			if = {
 				limit = { has_country_flag = CPD_ceasefire_demand }
 				clr_country_flag = CPD_ceasefire_demand
+				remove_from_array = { CPD_current_deal_list = 10001 }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = 10001 }
 			}
-			else = { set_country_flag = CPD_ceasefire_demand }
+			else = {
+				set_country_flag = CPD_ceasefire_demand
+				add_to_array = { CPD_current_deal_list = 10001 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10001 }
+			}
 		}
 		else = {
 			if = {
 				limit = { has_country_flag = CPD_ceasefire_concession }
 				clr_country_flag = CPD_ceasefire_concession
+				remove_from_array = { CPD_current_deal_list = 10001 }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = 10001 }
 			}
-			else = { set_country_flag = CPD_ceasefire_concession }
+			else = {
+				set_country_flag = CPD_ceasefire_concession
+				add_to_array = { CPD_current_deal_list = 10001 }
+				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10001 }
+			}
 		}
 	}
 }
 
 CPD_toggle_war_reparations = {
+	add_to_variable = { global.CPD_dirty = 1 }
 	ROOT = {
 		if = {
 			limit = { NOT = { has_country_flag = CPD_giving_concessions } }
 			if = {
 				limit = { has_country_flag = CPD_war_reparations_demand }
 				clr_country_flag = CPD_war_reparations_demand
+				remove_from_array = { CPD_current_deal_list = 10002 }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = 10002 }
 			}
-			else = { set_country_flag = CPD_war_reparations_demand }
+			else = {
+				set_country_flag = CPD_war_reparations_demand
+				add_to_array = { CPD_current_deal_list = 10002 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10002 }
+			}
 		}
 		else = {
 			if = {
 				limit = { has_country_flag = CPD_war_reparations_concession }
 				clr_country_flag = CPD_war_reparations_concession
+				remove_from_array = { CPD_current_deal_list = 10002 }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = 10002 }
 			}
-			else = { set_country_flag = CPD_war_reparations_concession }
+			else = {
+				set_country_flag = CPD_war_reparations_concession
+				add_to_array = { CPD_current_deal_list = 10002 }
+				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10002 }
+			}
 		}
 	}
 }
 
 CPD_toggle_forced_neutrality = {
+	add_to_variable = { global.CPD_dirty = 1 }
 	ROOT = {
 		if = {
 			limit = { NOT = { has_country_flag = CPD_giving_concessions } }
 			if = {
 				limit = { has_country_flag = CPD_forced_neutrality_demand }
 				clr_country_flag = CPD_forced_neutrality_demand
+				remove_from_array = { CPD_current_deal_list = 10003 }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = 10003 }
 			}
-			else = { set_country_flag = CPD_forced_neutrality_demand }
+			else = {
+				set_country_flag = CPD_forced_neutrality_demand
+				add_to_array = { CPD_current_deal_list = 10003 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10003 }
+			}
 		}
 		else = {
 			if = {
 				limit = { has_country_flag = CPD_forced_neutrality_concession }
 				clr_country_flag = CPD_forced_neutrality_concession
+				remove_from_array = { CPD_current_deal_list = 10003 }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = 10003 }
 			}
-			else = { set_country_flag = CPD_forced_neutrality_concession }
+			else = {
+				set_country_flag = CPD_forced_neutrality_concession
+				add_to_array = { CPD_current_deal_list = 10003 }
+				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10003 }
+			}
 		}
 	}
 }
 
 CPD_toggle_regime_change = {
+	add_to_variable = { global.CPD_dirty = 1 }
 	ROOT = {
 		if = {
 			limit = { NOT = { has_country_flag = CPD_giving_concessions } }
 			if = {
 				limit = { has_country_flag = CPD_regime_change_demand }
 				clr_country_flag = CPD_regime_change_demand
+				remove_from_array = { CPD_current_deal_list = 10004 }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = 10004 }
 			}
-			else = { set_country_flag = CPD_regime_change_demand }
+			else = {
+				set_country_flag = CPD_regime_change_demand
+				add_to_array = { CPD_current_deal_list = 10004 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10004 }
+			}
 		}
 		else = {
 			if = {
 				limit = { has_country_flag = CPD_regime_change_concession }
 				clr_country_flag = CPD_regime_change_concession
+				remove_from_array = { CPD_current_deal_list = 10004 }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = 10004 }
 			}
-			else = { set_country_flag = CPD_regime_change_concession }
+			else = {
+				set_country_flag = CPD_regime_change_concession
+				add_to_array = { CPD_current_deal_list = 10004 }
+				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10004 }
+			}
+		}
+	}
+}
+
+CPD_toggle_military_basing = {
+	add_to_variable = { global.CPD_dirty = 1 }
+	ROOT = {
+		if = {
+			limit = { NOT = { has_country_flag = CPD_giving_concessions } }
+			if = {
+				limit = { has_country_flag = CPD_military_basing_demand }
+				clr_country_flag = CPD_military_basing_demand
+				remove_from_array = { CPD_current_deal_list = 10005 }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = 10005 }
+			}
+			else = {
+				set_country_flag = CPD_military_basing_demand
+				add_to_array = { CPD_current_deal_list = 10005 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10005 }
+			}
+		}
+		else = {
+			if = {
+				limit = { has_country_flag = CPD_military_basing_concession }
+				clr_country_flag = CPD_military_basing_concession
+				remove_from_array = { CPD_current_deal_list = 10005 }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = 10005 }
+			}
+			else = {
+				set_country_flag = CPD_military_basing_concession
+				add_to_array = { CPD_current_deal_list = 10005 }
+				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10005 }
+			}
+		}
+	}
+}
+
+CPD_toggle_full_puppet = {
+	add_to_variable = { global.CPD_dirty = 1 }
+	ROOT = {
+		if = {
+			limit = { NOT = { has_country_flag = CPD_giving_concessions } }
+			if = {
+				limit = { has_country_flag = CPD_full_puppet_demand }
+				clr_country_flag = CPD_full_puppet_demand
+				remove_from_array = { CPD_current_deal_list = 10006 }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = 10006 }
+			}
+			else = {
+				set_country_flag = CPD_full_puppet_demand
+				add_to_array = { CPD_current_deal_list = 10006 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10006 }
+				# Full puppet supersedes individual puppet-in-state entries - subtract cost and clear
+				for_each_loop = {
+					array = CPD_puppet_in_state_DEMANDS
+					subtract_from_variable = { CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
+					remove_from_array = { CPD_current_deal_list_DEMANDS = v }
+					remove_from_array = { CPD_current_deal_list = v }
+				}
+				clear_array = CPD_puppet_in_state_DEMANDS
+			}
+		}
+		else = {
+			if = {
+				limit = { has_country_flag = CPD_full_puppet_concession }
+				clr_country_flag = CPD_full_puppet_concession
+				remove_from_array = { CPD_current_deal_list = 10006 }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = 10006 }
+			}
+			else = {
+				set_country_flag = CPD_full_puppet_concession
+				add_to_array = { CPD_current_deal_list = 10006 }
+				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10006 }
+				# Full puppet supersedes individual puppet-in-state entries - subtract cost and clear
+				for_each_loop = {
+					array = CPD_puppet_in_state_CONCESSIONS
+					add_to_variable = { CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
+					remove_from_array = { CPD_current_deal_list_CONCESSIONS = v }
+					remove_from_array = { CPD_current_deal_list = v }
+				}
+				clear_array = CPD_puppet_in_state_CONCESSIONS
+			}
 		}
 	}
 }
