@@ -694,18 +694,18 @@ CPD_sign_peace_deal = {
 					}
 				}
 			}
-			# THIS = receiver country, ROOT = sender country
-			# ROOT gets states it controls that receiver owns
+			# THIS = receiver, ROOT = sender
+			set_temp_variable = { CPD_ceasefire_receiver = THIS }
+			# Sender gets states it controls that receiver owns
 			every_owned_state = {
 				limit = { is_controlled_by = ROOT }
 				ROOT = { transfer_state = PREV }
 			}
-			# Receiver gets states it controls that ROOT owns
-			# Inside ROOT.every_owned_state: PREV = ROOT, PREV.PREV = receiver
+			# Receiver gets states it controls that sender owns
 			ROOT = {
 				every_owned_state = {
-					limit = { is_controlled_by = PREV.PREV }
-					PREV.PREV = { transfer_state = PREV }
+					limit = { NOT = { is_controlled_by = ROOT } }
+					var:CPD_ceasefire_receiver = { transfer_state = PREV }
 				}
 			}
 		}
