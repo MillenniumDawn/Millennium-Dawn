@@ -41,6 +41,12 @@ Steam doesn't seem to play very nicely with large installs so just repeat steps 
 4. Allow Steam to fully complete the download
 5. Restart your steam client and then try to boot the mod.
 
+If your game is still loading vanilla after doing the steps above. Go inside `documents\Paradox Interactive\Hearts of Iron IV\mod` to confirm if you see symbols such as :repeat: or :white_check_mark: or :x: next to the files' names, in the case that you do see symbols stated that means you're using **OneDrive** for the documents folder which can cause issues with both Steam and the HOI4 launcher when it comes to configuring or loading mods. What you need to do is move the documents folder out of **OneDrive** to ensure no systemic issues with loading the mod.
+
+**A Tutorial on how to move the documents folder out of OneDrive:** https://youtu.be/eGxtK5WxiLA?si=vu4yfZk5XcvepUcW
+
+- **You can of course move the documents folder anywhere you desire, the location doesn't have to be the same as the video. Create a folder in the designated location called "documents" and then redirecting it to the designated location, with the steps the video shows.**
+
 ## Stale or Duplicate .mod Files
 
 When switching between mod versions, changing game versions, or reinstalling mods from the Workshop, Steam can leave behind stale `.mod` files in your HOI4 mod directory (`Documents / Paradox Interactive / Hearts Of Iron IV / mod`). These leftover files can point to outdated or removed mod folders, causing the game to load the wrong version of a mod, boot into vanilla, or a mix of incompatible versions.
