@@ -1,17 +1,14 @@
 ---
 title: v1.10.0 'The Lion of Brussels and Babylon'
 page_id: changelog-v1-10-0-the-lion-of-brussels-and-babylon
-toc: 'off'
 order: 11
 ---
 
-# v1.10.0 'The Lion of Brussels and Babylon'
-
-<details><summary>v1.10.5</summary>
+## v1.10.5
 
 v1.10.5
 
-Achievements:
+### Achievements
 
 - The Spanish focus "Solidify the Iberian Union" should now give you the needed country flag or conditions for the "Formed Iberia" decision
 - Added achievement CzechosloGRANDia: "As Czechoslovakia, control all Czech, Slovakia and former Austro-Hungary territories, Silesia region and Zakarpattya state"
@@ -20,7 +17,7 @@ Achievements:
 - Added achievement Afri-Net: "As an African nation ensure every African state has Network Infrastructure of at least 3"
 - Added achievement Pan-African Highway: "As an African nation have a railway connection from Cairo to Cape Town"
 
-AI:
+### AI
 
 - Added AI to Abkhazia to befriend South Ossetia
 - AI should try to maximize internal faction opinion buffs in general to keep them more on the path
@@ -45,7 +42,7 @@ AI:
 - NATO countries are now more likely to ratify membership in the Alliance
 - The AI of Bulgaria, Serbia, Kazakhstan, Kyrgyzstan and Tajikistan are now more often brought to power by various parties
 
-Balance:
+### Balance
 
 - Added additional internal factions effects to a variety of different trees
 - Military spending now raises the minimum of "The Military" opinion
@@ -70,7 +67,7 @@ Balance:
 - Rebalanced the Liberals Productivity to 0.75 to 0.50
 - Rentier State now gives +15 opinion to Fossil Fuel Industry
 
-Bugfix:
+### Bugfix
 
 - Fixed the missing model errors from TOTA (added blank asset files)
 - Fixed Larry Holmes being Larry Golmes by mistake
@@ -118,7 +115,7 @@ Bugfix:
 - Fixed an issue with the independence for Iraq not triggering
 - Fixed an issue with an immortal Jay Garner in Iraq
 
-Content:
+### Content
 
 - NEW/IMPROVED FOCUS TREES: Urals, Kuban, Romania, Gagauzia, Southern Republic, Czech Republic, PMC Wagner, Syria, Afghanistan
 - Added additional decisions to a variety of different internal factions
@@ -170,14 +167,14 @@ Content:
 - New Czech Republic bookmark entry
 - New Syrian Republic bookmark entry
 
-Database:
+### Database
 
 - ADJUSTED PRODUCTIVITY: MIC, KOS, KAR, KAC, SHN, WAA, ABK, JUB, CHE, SOM, RYU
 - Added Precious Metals to Western Papua in Indonesia for the Grasberg Mine
 - Added a couple new Swedish generals and admirals
 - St. Pierre (French state) now matches closer to French Guyana in terms of Productivity
 
-Game Rules:
+### Game Rules
 
 - Add a new set of game rules for USA, USB, CSA, CAS, LKT focus tree behavior
 - Added a "120" day option to the European Union cooldown
@@ -185,19 +182,27 @@ Game Rules:
 - You can now appropriately weaken Yemen in the game rules
 - Czech game rules for historical and communist paths
 
-Graphics:
+### Graphics
 
 - Reworked most of the decision menu pictures
 - Additional conversions of PNGs to DDS for more optimized performance for players
 - New models for the following nations:
-  Europe:
-  - United EU, Italy, Spain, France, Netherlands, Belgium, Germany, Poland, Denmark, Norway, Finland, Sweden, Armenia, Georgia, Greece, The 3 baltic state, Romania, Czech republic, Ukraine, Russia
-    Middle East:
-  - Israel, Turkey, Egypt, Syria,
-    Asia:
-  - India, Pakistan, Australia, Japan, Afghanistan
-    North America:
-  - USA, Canada
+
+### Europe
+
+- United EU, Italy, Spain, France, Netherlands, Belgium, Germany, Poland, Denmark, Norway, Finland, Sweden, Armenia, Georgia, Greece, The 3 baltic state, Romania, Czech republic, Ukraine, Russia
+
+### Middle East
+
+- Israel, Turkey, Egypt, Syria,
+
+### Asia
+
+- India, Pakistan, Australia, Japan, Afghanistan
+
+### North America
+
+- USA, Canada
 - New set of evolutive generic models for Eastern Europe, Africa, South America, Middle East, Asia
 - Hundreds of tech and variant GFXs for multiple nations
 - Fixed the broken icon for Panavia Germany
@@ -207,12 +212,12 @@ Graphics:
 - Updated part of the UI to be more modern and more "MD"
 - Added a new loading screen for Indonesia from their turmoil in Aceh
 
-History/OOBs:
+### History/OOBs
 
 - Multiple OOBs rebuilt
 - Variant added to multiple nations, totaling in the hundreds
 
-Localization:
+### Localization
 
 - Fixed an error with Saddams Rage localization not appearing
 - Redid political party names & descriptions for: PER, SAU, TUR, IRQ
@@ -221,16 +226,16 @@ Localization:
 - Add Spanish Localization
 - Fixed the Ideological Power incorrectly displaying the wrong productivity growth
 
-Modding Resources:
+### Modding Resources
 
 - Added more detailed unit modifiers for main infantry battalions as well as org modifier for existing sub-unit modifiers
 - Added two additional modifiers for the "Internal Investments" system
 
-Ribbons:
+### Ribbons
 
 - Added ribbon Kraj Královecký: "As Czech Republic, conquer Kaliningrad"
 
-User Interface:
+### User Interface
 
 - Added an "Unemployment Rate" map mode
 - You can now see your last quarter's GDP growth rate in the GDP tooltip
@@ -241,16 +246,15 @@ User Interface:
 - Added a new State Investment screen when looking at owned states
 - Fixed Network Infrastructure not properly displaying that it increases the speed of International Investments
 
-Performance:
+### Performance
 
 - Optimalized Polish events and fixed some styling
-</details>
 
-<details><summary>v1.10.4</summary>
+## v1.10.4
 
 v1.10.4
 
-Balance:
+### Balance
 
 - Made it so that if Syria is a puppet of Iraq, it cannot take the focus "Iraqi Divisons" which causes a civil war in Iraq
 - Rebalanced the Magpul Magazine/Extended Magazine to be more balanced and more of a choice
@@ -265,7 +269,7 @@ Balance:
 - Tweaked some of the internal faction effects in North Korea Tree
 - Tweaked North Korean focus "Constrain the Donju", which would give DPRK $100B with only 35 days
 
-Bugfix:
+### Bugfix
 
 - Fixed an issue with Iraq where the 'Uday Hussein' national spirit expired for no reason
 - Fixed an issue with Iran where the revolution goes undone if you click a certain decision betwee March 2001 and June 2001
@@ -279,7 +283,7 @@ Bugfix:
 - Fixed the duplicate intelligence agency for COL
 - Fixed Suicide Drone Costs
 
-Content:
+### Content
 
 - Added "Overlord Subsidies" Diplomatic Action
 - Changed the focus "New CAS Aircraft" to "Joint Strike Fighter"
@@ -288,39 +292,38 @@ Content:
 - Added an event related to the Iowa battleships
 - UK stockpiles, variants, and OOB has been reworked
 
-Graphics:
+### Graphics
 
 - Map improved with community feedback
 - Major overhaul of Iranian and UK models
 - Added Swiss infantry
 
-History:
+### History
 
 - Reworked Iran starting techs and removed 2G from its provinces in 2000
 - Added missing train tracks+supply hubs to the USA
 
-Localization:
+### Localization
 
 - Fixed the misspelling of the "Norwegian Armed Forces" in the Norwegian tree
 - Fixed the misspelling of the "Reliance On Europe" opinion modifier
 
-Performance:
+### Performance
 
 - Consolidated some files so the startup time is quicker for the mod
 - Optimized a number of minor textures from PNG to DDS to help the loadup time and in-game registration of icons
 
-User Interface:
+### User Interface
 
 - Added the "Foreign Investment Limit" counter to the configurable display UI
 - Added "Productivity" to the "Economy" tab of the Ledger
 - Added a notification event for the European Union when the Council and Parliament are ready for session
-</details>
 
-<details><summary>v1.10.3</summary>
+## v1.10.3
 
 v1.10.3
 
-Achievements & Ribbons:
+### Achievements & Ribbons
 
 - Added achievement Diamonds Are A Ruler's Best Friend: "Extract over 500 precious metals"
 - Added achievement Botswana: "As Botswana, research Human Imitation AI"
@@ -330,13 +333,13 @@ Achievements & Ribbons:
 - Added ribbon Botswana Police Medal for Meritorious Service: "Solve the Zimbabwean refugee crisis"
 - Added ribbon Botswana Teachers Silver Jubilee Medal: "Increase the literacy rate to 90%"
 
-AI:
+### AI
 
 - Made the AI for Africa more dynamic to ditch the CFA Franc
 - Made the American AI more likely to intervene in Haiti when George Bush is in power
 - Fixed the AI being unable to build enrichment facilities
 
-Balance:
+### Balance
 
 - INCREASED PRODUCTIVITY: NKO, CUB
 - Reduced the amount of income from Agricultural Districts
@@ -362,7 +365,7 @@ Balance:
 - Made it so that you need to be friendly with Russia to pass through the Volga-Don Canal
 - Changed weights of units for traits and icons
 
-Bugfix:
+### Bugfix
 
 - Fixed a couple focuses for France where the Stage: focuses were going to the wrong continent
 - Fixed the migration mechanic giving inverse logic productivity
@@ -406,7 +409,7 @@ Bugfix:
 - Fixed Jay Garner being captured by American forces instead of Saddam
 - Fixed an issue where the Autonomy GUI would cover the Balance of Power GUI, the BoP should now be visible when you are a puppet
 
-Content:
+### Content
 
 - Increased the priority of French decisions so they appear near the top rather than the bottom of the list
 - Reworked Irans Parliament system
@@ -422,7 +425,7 @@ Content:
 - The Ace Pilots can now be female
 - Reworked Libya's Oil Nationalisation mechanic to make the economy a bit more stable
 
-Database:
+### Database
 
 - Rebuilt KOR, JAP, CHI, and TAI OOB, stockpiles, and variants. Also UKR+IRQ OOB fixes
 - Removed variant version numbering for most majors
@@ -433,7 +436,7 @@ Database:
 - Coptic Egypt can now take the "The Clergy" internal faction
 - Revised most nations starting corruption
 
-Graphics:
+### Graphics
 
 - About 60 3D models and texture
 - Complete equipment GFX + 3D models update for China, South Korea, Japan, and Taiwan
@@ -452,7 +455,9 @@ Localisation
 - Fixed a option for the event issue showing the wrong localization in the Operation Secure Tomorrow event
 - Added a trigger tooltip for Indonesia's Invest in our Policies focus
 - Re-added missing loc strings in the German tree (They got deleted for some reason?)
-  Map:
+
+### Map
+
 - Complete Graphical rework of the map
 - Add Abu Musa Isles
 - Add Western Timor
@@ -460,23 +465,21 @@ Localisation
 - Russian Central Federal District revamp (complete)
 - Add Huai River
 
-Music:
+### Music
 
 - New radio station with 53 minutes of Asian themed music
 
-Used Interface:
+### Used Interface
 
 - Fixed the total number of employed persons for Commercialized Agriculture Districts not being present in the tooltip for Millions Worker per Sector
 - Added the potential Renewable Energy Generation to the Power Energy Generation User Interface
 - Added the European Parliament Voting Cooldown and European Council Voting Cooldown
 
-</details>
-
-<details><summary>v1.10.2</summary>
+## v1.10.2
 
 v1.10.2
 
-Achievements:
+### Achievements
 
 - Added achievement Africa Paradis: "As an African country, form the United States of Africa and have a higher GDP than any European country"
 - Added achievement Gaddafi? More like Gooddafi: "As Muammar Gaddafi, rule over a democratic Libya"
@@ -485,7 +488,7 @@ Achievements:
 - Added achievement F is for Family: "As Muammar Gaddafi, have all your children be either dead or exiled"
 - Added achievement T-Posing: "As Libya, have Tibesti and the Tuareg State as subjects while they own all their core states"
 
-AI:
+### AI
 
 - Improved building production AI getting the various nations to focus more on productivity buildings for longer term gain
 - Enabled the AI to build the new Agriculture Districts
@@ -500,7 +503,7 @@ AI:
 - Improved the French AI when it comes to the Central African Republic Bush War in 2006 always escalating
 - Improved AI for peace deals for China, Iraq, Kurdistan, Nigeria, Ukraine, Saudi Arabia, Serbia, Russia and America
 
-Balance:
+### Balance
 
 - Reduced the amount of fuel consumed by non-electric (population) sources
 - Buffed the Fuel Silo storage from 100 to 200
@@ -523,7 +526,7 @@ Balance:
 - Added a 750 construction increase per level of network infrastructure to hamper some snowballing in later tiers
 - Added a dedicated countermeasure slot to planes
 
-Bugfix:
+### Bugfix
 
 - Fixed an issue where the Base Fuel Gain of a nation wasn't quite accurate
 - Fixed a visual display for the North Korean succession decisions
@@ -585,7 +588,7 @@ Bugfix:
 - Fixed Houthi Yemen not having the right employment values causing them to have 0% GDP when spawned from the Iranian focus tree
 - Fixed the Indian Maoist rebellion mechanic.
 
-Content:
+### Content
 
 - NEW TREES: Libya, Tibesti, African Union (Shared)
 - NEW REWORKED/IMPROVED: Ukraine, Crimea, Donetsk People's Republic, Greece
@@ -606,13 +609,13 @@ Content:
 - Added African Union mechanics to accompany the shared tree
 - Added a discourage population decision for those who want to make their country have less people pre-maritally holding hands
 
-Game Rules:
+### Game Rules
 
 - Removed the "Disabled AI Missile Alert" game rule
 - Added a game rule so you can have the AI start with 250, 500, or 1000 political power
 - Added a game rule so you can adjust the voting cooldown for the European Union
 
-Graphics:
+### Graphics
 
 - Enlarged previously broken diplo actions backgrounds so that they fit the buttons accurately
 - Added event images to the European Union events
@@ -635,7 +638,7 @@ History
 - Added starting influence into the Tuareg State
 - Improved OOBs of USA, Russia, France, Germany
 
-Localization:
+### Localization
 
 - Add Polish and Brazilian Portuguese localization to MD
 - Added descriptions to the remaining Private Military Companies
@@ -645,7 +648,7 @@ Localization:
 - Fixed the T-134 being drunk instead of being a bear (changed the hull name)
 - Improved the Kenyan parties and added descriptions to each of them
 
-Map:
+### Map
 
 - USA province level revamp
 - Russian Central Federal District revamp(section)
@@ -653,13 +656,13 @@ Map:
 - River cross fix
 - State rework in Sudan: Split Kordofan into North and South Kordofan, split Blue Nile into Blue Nile and White Nile
 
-Modding Resources:
+### Modding Resources
 
 - Added two modifiers "Base Migration Rate Value" and "Migration Rate Value Factor" for the Migration System
 - Added a modifier "Migration Control Cost Modifier" for the new Migration Control law
 - Added new modifiers for the Commercialized Agriculture District to impact their tax rate, worker percentage
 
-Performance:
+### Performance
 
 - Optimized On Actions a bit more cleaning up some of the events
 - Fixed some performance heavy events which should help daily ticks
@@ -672,7 +675,7 @@ Ribbons
 - Added ribbon Libyan Order of the Grand Conqueror: "Ally yourself with a Superpower or a Great Power"
 - Added ribbon Libyan Order of Military Merit: "Rverse history and win a war against Egypt and Chad"
 
-Sound:
+### Sound
 
 - NEW VOICELINES: BRA, POR, MEX, AST, GRE, KUW
 
@@ -683,11 +686,9 @@ Quality of Life(QoL):
 - Polish tree now reposition itself after hiding socialist and conservative branches and after hiding communist/nationalist branches.
 - Added a take a 1000b in debt button to the debt buttons
 
-</details>
+## v1.10.1
 
-<details><summary>v1.10.1</summary>
-
-AI:
+### AI
 
 - Fixed the historical AI inaccuracy where the Communist Party of Cuba wouldn't take the Pro-LGBT Policies
 - Cleaned up an Operation Enduring Freedom AI strategies so they're more performant friendly
@@ -698,7 +699,7 @@ AI:
 - Fixed the AI of Myanmar always bankrupting immediately
 - Made the AI less likely to propose trade agreements/debt/mutual investment treaty while it needs political power
 
-Balance:
+### Balance
 
 - Removed the armor value from "NextGen Design Mindset" since helicopters typically don't have armor
 - Reduced default influence gain from 2% flat to 1.5% flat
@@ -707,7 +708,7 @@ Balance:
 - Increased the PP cost for Proposed Trade Agreements
 - Made Chechen slightly stronger. They now start with insurgency doctrines.
 
-Bugfixes:
+### Bugfixes
 
 - Fixed all of the intro focuses bypassing for Serbia
 - USAID will cancel if the USA no longer exists
@@ -753,7 +754,7 @@ Bugfixes:
 - Fixed an error with US squadrons for players without BBA
 - Fixed a graphic error linked to ships blinking/rotating
 
-Content:
+### Content
 
 - The Communist Party of Cuba can now take the pro-LGBT policies
 - Added HLS, SMA, MNC, ADO, and LIC to the possible European Member States
@@ -762,7 +763,7 @@ Content:
 - Improved French OOB, added 50 brigade names to their library
 - Refined French and Russian starting stockpile
 
-Graphics:
+### Graphics
 
 - Added unique graphics to the "Pillar of Counter Terrorism" and "French Foreign Legion" idea icons
 - Added new Franch plane model for non-BBA players which already implement into BBA in 1.10.0
@@ -770,16 +771,16 @@ Graphics:
 - New models for France
 - Added some missing models/gfx to the NSB library
 
-Game Rules:
+### Game Rules
 
 - Added 1% and 1.5% for Influence Spread Gain to Game Rules
 
-Localization:
+### Localization
 
 - Added new and improved localization to the European Union
 - Improved the localization for the Diplomatic Actions
 
-Performance:
+### Performance
 
 - Cleaned up more European Union display scripted localization that was not needed
 
@@ -789,11 +790,9 @@ Quality of Life (QoL):
 - Expanded the information available for each resolution
 - Added a flow chart to the MD Wiki which is now viewable in game via the new "?" button
 
-</details>
+## v1.10.0
 
-<details><summary>v1.10.0</summary>
-
-Achievements:
+### Achievements
 
 - Added achievement It's All Françafrique to Me: "As France have all of Africa under your control"
 - Added achievement the Return to Charlesfort & Ft. Saint Louis: "As Bourbon Monarchist France occupy South Carolina & Texas"
@@ -806,7 +805,7 @@ Achievements:
 - Added achievement Are You Sure That's Enough?: "Control at least 90% of Arab GDP before unifying the Arabs"
 - Added achievement But In The Interest of Full Disclosure, I have to say, I hate A-rabs: "Defeat the United Arab Republic or the Federation of Arab Republics in a war"
 
-AI:
+### AI
 
 - Reworked AI stockpile, production, and target templates
 - Removed AI dump decisions to monthly tick - should increase performance negligibly
@@ -822,7 +821,7 @@ AI:
 - AI will now try to push for the historical expansions of the EU on historical AI
 - France should now intervene in Afghanistan alongside the other coalition partners
 
-Balance:
+### Balance
 
 - Increased Strength losses in combat by (around 2 times greater), to make losses more realistic and decrease amount of 0 losses in combat
 - Added a Monthly Productivity Growth penalty to high corporate tax rate
@@ -847,7 +846,7 @@ Balance:
 - Increased the amount of money earned from international market purchases
 - Low/High Price Points for the market are now implemented. Low decreases the cost by 20%, and high increases by 20%
 
-Bugfixes:
+### Bugfixes
 
 - Fixed a bug when the opinion modifiers reached 100 or -100 due to an incorrectly configured decay
 - Better focus filters for Wagner.
@@ -911,7 +910,7 @@ Bugfixes:
 - Fixed a missing icon in the Syrian national spirits
 - Cleaned up a tooltip for a San Marino investments to make it clearer
 
-Content:
+### Content
 
 - NEW TREES: Kharkiv PR, Odessa PR, Serbia, Montenegro, Kosovo, Vojvodina, Cuba, Free States of America, Iraq
 - NEW REWORKED/IMPROVED TREES: Donetsk PR, Transnistria, Lugansk PR, Belarus, Denmark, Norway, France, United States of America, Iran
@@ -965,12 +964,12 @@ Content:
 - Added SigSauer to Switzerland
 - Added three new continuous focuses: Temporary Intelligence Agents, Nuclear Energy Investments, Encourage Foreign Investments
 
-Game Rules:
+### Game Rules
 
 - Added a new "Enable Monthly Domestic Independence Tick" game rule
 - Added a new "Monthly Domestic Independence Tick Amount" game rule
 
-Graphics:
+### Graphics
 
 - Added the "Toofan MRAP" for Iran (2005 Inf EQP)
 - Replaced the unit model for Russia
@@ -992,7 +991,7 @@ Graphics:
 - Additional french models
 - Reworked Law & Spending GFX
 
-Localization:
+### Localization
 
 - Added missing loc for tech categories research speed bonus
 - Rewrote a number of the tooltips available in the European Union content focusing on usability
@@ -1013,7 +1012,7 @@ Localization:
 - Fixed typos in a number of the technology descriptions
 - Fixed and improved the localization in parts of the Comorosian content
 
-Map:
+### Map
 
 - Revamp Iran region
 - Revamp Somalia region
@@ -1034,7 +1033,7 @@ Map:
 - Add Alaska railway
 - Minor adjustment
 
-Performance:
+### Performance
 
 - Improved the hourly and daily tick rates of the mod by optimizing the European Union's decision categories
 - Improved the load time configuration
@@ -1051,10 +1050,8 @@ Quality of Life (QoL):
 - Added Euroscepticism to Configurable Toolbar
 - Added a decision under the "Political Decisions" menu to auto-decline all corruption offers
 
-User Interface:
+### User Interface
 
 - Reworked the Research Slot system to be a Custom GUI
 - Reworked the European Union system into a Custom GUI
 - Added a new music station "Breeze of the East" to encompass M.E. related music
-
-</details>

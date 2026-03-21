@@ -1,32 +1,28 @@
 ---
 title: v1.8 'The Tiger, The Rose, and the APCs'
 page_id: changelog-v1-8-the-tiger-the-rose-and-the-apcs
-toc: 'off'
 order: 9
 ---
 
-# v1.8 'The Tiger, The Rose, and the APCs'
+## v1.8.8 - 1.13 Compatch
 
-<details><summary>v1.8.8 - 1.13 Compatch</summary>
-
-Bugfix:
+### Bugfix
 
 - 1.13 compatibility
 
-Content:
+### Content
 
 - Disabled Vanilla International Market
 - Converted MD's Defense Companies to MIOs
 
-Database:
+### Database
 
 - Removed an unusued Equipment Type "Engineering Equipment"
 - Removed an unusued Equipment Type "Land Drone Equipment"
-</details>
 
-<details><summary>v1.8.7 - Patch</summary>
+## v1.8.7 - Patch
 
-AI:
+### AI
 
 - AI should now try to have globalized export economy if it has mp optimization idea
 - Improved AI focuses so the AI should research more effectively
@@ -35,7 +31,7 @@ AI:
 - AI should no longer research Naval Tech if they don't have dockyards
 - AI on harder difficulties gets a research reduction now to assist in keeping them competitive
 
-Balance:
+### Balance
 
 - Rebalanced some of the focuses for Myanmar in the military tree
 - MP optimization annexation decisions will no longer annex countries if they are controlled by players
@@ -57,7 +53,7 @@ Balance:
 - Decrease damage done to planes by strat bomber by 10 times
 - Decrease overall damage of strat bombing from 45 to 20
 
-Bugfix:
+### Bugfix
 
 - Fixed localization errors in the Iranian revolutionary tree
 - Fixed party icon not appearing for one of the Iranian parties
@@ -110,7 +106,7 @@ Content
 - Expanded Namelist for New Zealand Navy and Mexican Navy.
 - Added Names for Burma, Thailand, Indian, Portugal, Bosnia, Syria, Iceland, Romania, Poland, Norway, Latvia and Lithuania Navy Ships
 
-Localisation:
+### Localisation
 
 - 38th Parallel Decision's title Localisation reworked
 - Fixed typo in Spanish ideas for Deindustrialization
@@ -119,26 +115,23 @@ Localisation:
 - Clarified how to cancel a auto influenced nation
 - Fixed the loc for the Debt War to make more sense
 
-UI:
+### UI
 
 - Added a shift click to the auto-influencing button to clear all currently influenced nations at once
 
-</details>
+## v1.8.6 - July
 
-<details><summary>v1.8.6 - July</summary>
-
-Bugfixes:
+### Bugfixes
 
 - Fixed the Auto-Influence only influencing the first one
 - Fixed the Auto-Influence not correctly applying spread_influence
 - Fixed Kim's Successor Focuses, which lead North Korea can change its leader normally after Daddy Kim's death
 - Fixed UNSC decision trigger of Unified Korea
 - Fixed Russian loc
-</details>
 
-<details><summary>v1.8.5 - June</summary>
+## v1.8.5 - June
 
-AI:
+### AI
 
 - Fixed the AI investing in states that are below 50k pop or inhospitable
 - Expanded the AIs ability to determine if a low pop state is worth investing in
@@ -152,7 +145,7 @@ AI:
 - Indonesian AI will be more likely to combat Salafism
 - Tweaked AI behavior for Finland so they don't declare war on Russia
 
-Balance:
+### Balance
 
 - Most countries now will no longer lack basic equipment on start - they still may lack AFVs etc
 - Rework division templates for: FRA, ITA, GER, CHI, JAP, POL, SPR, SOV, UKR, ARM
@@ -165,7 +158,7 @@ Balance:
 - The national spirit which gave a -95% attack debuff against Aceh for Indonesia is now visible (Was hidden before)
 - Increased the PP gain from refusing Economic Aid timer (90 days to 180 days)
 
-Bugfix:
+### Bugfix
 
 - Fixed the auto influencers automatically deleting when you set one
 - Fixed Korean unification event for Unity Government/South Lead unification
@@ -184,7 +177,7 @@ Bugfix:
 - Fixed egyptian oil deal italian focus wrong state bug
 - Fixed a situation that could prevent you from receiving a roman expansion casus belli
 
-Content:
+### Content
 
 - When a civil war triggers, both sides now get a debuff to slow down quick civil wars. The debuff will slowly go away
 - Reorganized Iranian Political Tree & added 2 new paths
@@ -196,7 +189,7 @@ Content:
 - Added more decisions to fight mafia and slighlty rebalanced mafia power drift
 - Added one more italian enviromental policy
 
-Graphics:
+### Graphics
 
 - New political icons for SLO
 - Fixed the white box issue for people using DX11/OpenGL
@@ -206,13 +199,13 @@ Graphics:
 - Fixed intelligence agency logo for Indonesia
 - Fixed the UI bug for the advisor trait type
 
-Localisation:
+### Localisation
 
 - Renamed "2nd Generation tank hull" to "2nd/3rd Generation tank hull" so I am left at peace at once
 - Fixed Advanced Heavy Howitzer description
 - Japanese localisation adapted(Even we have no Japanese localisation file at this moment)
 
-Map:
+### Map
 
 - Modified state layouts for Chad, Burkina Faso, Mali and Niger in preparation for Libyan content
 - Add Macau and Kalmykia
@@ -220,20 +213,19 @@ Map:
 - Fixed a character in province number 13537
 - Fixed "Isfahan" province being called "Ishafan" in central Iran
 
-GUI:
+### GUI
 
 - Combined the integrated/naval air defense system and removed the missile system ideas from the ideas.
 - Added a display in the Integrated Air Defense tab with the modifier
-</details>
 
-<details><summary>v1.8.4 - Hotfix</summary>
+## v1.8.4 - Hotfix
 
-AI:
+### AI
 
 - The AI should no longer leave when presented with the hammer and sickle (fifth international)
 - Revolutionary Iran AI will no longer be confined to just Tehran and 12 divisions
 
-Bugfix:
+### Bugfix
 
 - Fixed a number of minor nations not having the right starting techs preventing them from being playable
 - Fixed EU ideas being left over despite having left the EU for Poland
@@ -292,16 +284,16 @@ Content
 - New focuses for the Communist and Nationalist branches of Abkhazia
 - Removed ECOWAS map mode as it doesn't do much.
 
-Database:
+### Database
 
 - Added CV-67 to the USN. Slightly upgraded Kitty Hawk class carrier
 
-Graphics:
+### Graphics
 
 - Added new loading screens for BLR, BUL, CHE, COM, SOV and PER
 - Fixed a broken focus icon in Poland for Linux users
 
-Localization:
+### Localization
 
 - Fixed typos in Polish division templates
 - Fixed an Iranian focus description
@@ -310,20 +302,18 @@ Localization:
 - Added missing localisation for Russian focuses
 - Fixed missing loc for Central American formable nation
 
-Modding Resources:
+### Modding Resources
 
 - Added 4 new color formatting keys n - Navy Blue, l - Light Blue, P - Deep Pink, p - Hot Pink
 
-User Interface:
+### User Interface
 
 - Added a new "Open Economy Button" in the main screen
 - Better position for ruling party info in diplomatic window (neccesary for Russian language)
 
-</details>
+## v1.8.3 - May Patch
 
-<details><summary>v1.8.3 - May Patch</summary>
-
-Achievements:
+### Achievements
 
 - Removed ironman requirement based on poll
 - Added "A New Begonia Leaf" as China recover Outer Mongolia, Taiwan and South China Sea region.
@@ -331,17 +321,17 @@ Achievements:
 - Added "Project National Glory" as Republic of China restore the Mainland, Outer Mongolia, and South China Sea region and all other claimed state to our control.
 - Fixed Belgium being one of the potential nations to form Central America
 
-AI:
+### AI
 
 - AI should now dynamically consider Japan's focus tree alliances
 - AI should now no longer leave the faction from Japan immediately once they accept
 - AI Bosnia should no longer go to civil war in like two minutes
 
-Balance:
+### Balance
 
 - Changed Bosnia's starting military spending and gave it additional stability to help
 
-Bugfix:
+### Bugfix
 
 - Corrected localization error in trigger for achievements
 - Fixed "Farmers Push for Biofuel Investment" having a incorrect faction opinion change
@@ -351,7 +341,7 @@ Bugfix:
 - Fixed the Singaporean Trade focuses having a broken prerequisite
 - Fixed peace conference crash (this was due to a overloading a flag strip)
 
-Content:
+### Content
 
 - NEW FOCUS TREES: Abkhazia, Bulgaria, Comoros, Chechnya, Russia, Iran
 - Added idea "Arms Exporter" to Singapore to buff the Arms Exporter focus
@@ -370,13 +360,13 @@ Content:
 - Ukraine will now not lack that much of basic equipment on game start
 - Additional content for Belarus and restructuring of the miltiary tree
 
-Localization:
+### Localization
 
 - Improved the localization of click/right click with icons
 - Adds icons to all of the modifiers in MD
 - Fixed typo in Construction Process Reforms in Polish idea
 
-Map:
+### Map
 
 - NEW TAG: BRY, BSH, CRM, DAG, DPR, KBK, KLM, LPR, TAT, TUV, and YAK
 - Denmark map adjustments around Copenhagen
@@ -384,24 +374,22 @@ Map:
 - Several victory point fixes
 - River crossing fixes
 
-Misc:
+### Misc
 
 - Added game rule for MP sessions to balance out countries via offmap factories
 - Added game rule to disable generals having a chance of getting killed in battle
 
-</details>
+## v1.8.2 - Hotfix
 
-<details><summary>v1.8.2 - Hotfix</summary>
-
-Achievements:
+### Achievements
 
 - Achievements are now ironman required
 
-AI:
+### AI
 
 - Korea DPR AI Path "kim Jong-un" could get achievement normally
 
-Balance:
+### Balance
 
 - Generals now can die in combat: 0.3% chance to die if battle is lost, 0.1% if battle is won
 - Reckless trait now makes general 20% more likely to die in combat
@@ -410,7 +398,7 @@ Balance:
 - Rebalanced Ukranian oob, less modern arty, more guns and apcs
 - Rebalanced the idea "Personal Freedoms" to give Democratic Drift +0.05 from 0.01, 5% flat stability and 10% Political Power Gain
 
-Bugfixes:
+### Bugfixes
 
 - Fixed Mali getting relations as the clear East Asian nation it is from Indonesia
 - Fixed unvisible cheat decisions if you switched to another country via console command tag XXX
@@ -420,15 +408,15 @@ Bugfixes:
 - Removed unused stats for AS fighters and STR bombers to not confuse players
 - Fixed cartels coming back with more cocaine after being defeated
 
-Content:
+### Content
 
 - Added some new cheat decisions (add 50, 100, 500 and 1000 billions in money, add 100000, 250000, 500000, 1000000 manpower)
 
-Game Rules:
+### Game Rules
 
 - Temporarily removed the Hard Economic AI option, it needs some further tweaking. If you wish for a harder experience play on Elite for the time being
 
-Graphics:
+### Graphics
 
 - Added all available 3D models to the IFV designer
 - Added all available 3D models to the APC designer
@@ -436,30 +424,28 @@ Graphics:
 - Added all available 3D models to the SPARTY designer
 - Expanded the number of 2D icons available to the IFV/APC/MBT/SPARTY designers
 
-Localization:
+### Localization
 
 - Fix the "Seek UN Security Council Seat" of Unified Korea
 - Improved a number of files localization grammatically
 
-Modding Resources:
+### Modding Resources
 
 - Added four new modifiers: Office Park Tax Modifier, Civilian Industry Tax Modifier, Military Industry Tax Modifier, and Naval Dockyard Tax Modifier
 
-</details>
+## v1.8.1 - Hotfix
 
-<details><summary>v1.8.1 - Hotfix</summary>
-
-Achievements:
+### Achievements
 
 - Updated description for The Only Superpower to include China
 
-AI:
+### AI
 
 - AI should now be more likely to ratify new NATO members if they are a top three influencer
 - AI should now be more likely to ratify new NATO members if the ratifier has a high opinion of them
 - AI USA should now have some more available political power to help them do things
 
-Balance:
+### Balance
 
 - Shortern time for some Bosnian focuses
 - Equipment purchasing weapon price rebalanced
@@ -468,7 +454,7 @@ Balance:
 - Reduced ratification of NATO aspirants to 25 from 50
 - Increased the IC cost of the Kamikaze Drones
 
-Bugfixes:
+### Bugfixes
 
 - Fixed Nepal chnaged orthodox with hindu
 - Fixed Bosnia focus national unity by added event effects into focus
@@ -489,11 +475,11 @@ Bugfixes:
 - Fixed getting cores on UK via CANZUK decisions integration
 - Several fixes for decisions of formable nations (was wrong checking IDs states, kekw)
 
-Content:
+### Content
 
 - Added an event option to Singapore to repeal Migrant Actions
 
-Localization:
+### Localization
 
 - Fixed the Missile Tooltip showing the incorrect action
 - Colorized some tooltips in the Missile UIs for clearer looks
@@ -502,25 +488,23 @@ Localization:
 - Fixed a missing localization key in Formables/Achievements
 - Fixed missing localization for Bosnian Civil War
 
-Game Rules:
+### Game Rules
 
 - Added a game rule to make 9/11 happen on 9/11
 - AI restrictions allow you to earn achievements
 - Enable AI Division Limiter allow you to earn achievements
 
-Graphics:
+### Graphics
 
 - Added a number of APC/IFV for the designer for people to design what they want. If you want a Soviet APC model on your American design go for it.
 
-UI:
+### UI
 
 - Cleaned up some titles and formatting so the Recon/Utility Trucks section is not free floating weird
 
-</details>
+## v1.8.0 - 'The Tiger, The Rose, and the APCs'
 
-<details><summary>v1.8.0 - 'The Tiger, The Rose, and the APCs'</summary>
-
-Achievements:
+### Achievements
 
 - A variety of new custom modded achievements (challenge runs) to take earn and play various gameplay styles
 - A variety of new ribbons for some short game ideas or general strategic goals for a nation
@@ -591,7 +575,7 @@ Achievements:
 - Added ribbon End the Second Sudanese Civil War: "End the Second Sudanese Civil War as either Sudan or South Sudan."
 - Added ribbon End the Nepalese Civil War: "End the Nepalese Civil War as either Nepal or Maoist Nepal."
 
-AI:
+### AI
 
 - Changed how investment AI works: AI will now prefer to invest into allies and countries with good relations
 - AI will now adjust its investment targets more as the game progresses
@@ -633,7 +617,7 @@ AI:
 - Added a small AI strategy for Brazil to "rival" Argentina and vice versa for more interesting geopolitical content in SA
 - China should take their regional/global influence branches a bit later to make them focus on internal growth early game
 
-Balance:
+### Balance
 
 - AI has a stronger bonus on harder difficulties for players who want stronger AI
 - Non State Actors research debuff decreased 50% -> 20%, resource gain debuff is now removed, but now has -5% tax gain modifier
@@ -659,7 +643,7 @@ Balance:
 - Now China will deploy Varyag (Liaoning) in Dalian instead of getting production this carrier.
 - Block releasing ETK and TIB nations via Occupied Territories for China until specific focuses is completed.
 
-Combat Balance Changes:
+### Combat Balance Changes
 
 - Batallions now provide different supression: militia has lowest, motorised and light tank provide highest
 - Increased training speed for air and land units
@@ -673,7 +657,7 @@ Combat Balance Changes:
 - Units now have 10 levels (instead of 5)
 - Unit level bonus for land units decreased from 15% to 5% per level
 
-Bugfixes:
+### Bugfixes
 
 - Fixed the paradropping bug (changed minimum required planes from 50 to 25 thus allowing paradropping)
 - Added a faction creation to UNASUL for temp fix
@@ -712,7 +696,7 @@ Bugfixes:
 - Fixed Wimax/LTE UI Error
 - Fixed missing party icon from Greens in Israel
 
-Content:
+### Content
 
 - NEW FOCUS TREES: Belarus, Bosnia, Georgia, Indonesia, Singapore, Iran
 - New equipment designers: APC, IFV, SPART
@@ -754,14 +738,14 @@ Content:
 - Add one sub-branch for PRC Regional Influence to annexation of Mongolia or create Outer Mongolia SAR, and related Mongolia region development goal.
 - Add one path for PRC to end ROC after victory in civil war
 
-Game Rules:
+### Game Rules
 
 - Added New AI path: Korea DPR, United States, Spain, Switzerland, Ukraine
 - Reorganized game rules around categories
 - Added options for chaos peace deals and player led peace conferences
 - Added game rules for better MP performance and scenario set-up
 
-Database:
+### Database
 
 - Reduced starting debt of Angola, DRC, Guinea-Bissau, Korea DPR & Liberia
 - Reduced starting military spending of Congo, Libya, North Korea, Pakistan & Yemen
@@ -769,7 +753,7 @@ Database:
 - Added Libyan starting influence to a bunch of African countries
 - Updated Belarusian equipment
 
-Economy:
+### Economy
 
 - Increased cost of Internal Security Spending by 15%, increased stability gained per level by 40%
 - Replaced PP cost for high military spending at peace time with negative stability modifier that is removed during war-time
@@ -778,7 +762,7 @@ Economy:
 - Adjusted Serbia's debt due to the starting debt spiral
 - Added a reinvest international investment feature
 
-Graphics:
+### Graphics
 
 - Reworked all tech icons
 - Added a unique icon for Combat Service Support company
@@ -836,14 +820,14 @@ Graphics:
 - Added a model for the QBZ 191
 - Adjusted the models for J15, F18, US LCS model, J-31, J-20
 
-Localization:
+### Localization
 
 - Improved localization in the Armenia, Nigerian & Korea DPR tree
 - Completed all of the localization for the Spanish tree
 - Localization improvements for internal factions
 - Localization for the formable nation decisions
 
-Map:
+### Map
 
 - NEW TAGS: Alaska (ASK), Adjara (ADJ), Silesia (SIL), Vitebsk (VTB), Hawaii (HWI), Lakota (LKT), New York (NYK), Puerto Rico (PTR), Union of Desert (UDT)
 - Add Delaware and Rhode Island state.
@@ -884,7 +868,7 @@ Map:
 - New state for New Cairo
 - New state in Georgia for Armenian autonomous region content
 
-Modding Resources:
+### Modding Resources
 
 - Added a "set_improved_trade_agreement" effect to set up trade agreement diplo actions
 - Added a flag to disable new investments for country content
@@ -916,5 +900,3 @@ GUI
 - Small improvements in missiles GUI
 - Now you will see custom effects in some missiles techs
 - Improved the debt repay button to pay down debt from what you have available in the treasury
-
-</details>

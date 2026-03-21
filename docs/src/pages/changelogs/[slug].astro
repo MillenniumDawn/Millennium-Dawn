@@ -1,9 +1,13 @@
 ---
 import type { CollectionEntry } from "astro:content";
 import type { GetStaticPaths } from "astro";
-import MarkdownDocLayout from "../../layouts/MarkdownDocLayout.astro";
-import { getChangelogPath, getEntryBaseId } from "../../lib/content-routes";
-import { buildMarkdownDocStaticPaths, renderMarkdownDocEntry } from "../../lib/markdown-doc-entry";
+import { MarkdownDocLayout } from "@/app/layouts";
+import { getArticleFooterProps } from "@/shared/lib/article-footer-props";
+import { getChangelogHeroProps } from "@/shared/lib/article-hero-props";
+import { getChangelogPath, getEntryBaseId } from "@/shared/lib/content-routes";
+import { buildMarkdownDocStaticPaths, renderMarkdownDocEntry } from "@/shared/lib/markdown-doc-entry";
+import ArticleShell from "@/shared/ui/ArticleShell.astro";
+import MarkdownContent from "@/shared/ui/MarkdownContent.astro";
 
 interface Props {
   entry: CollectionEntry<"changelogSections">;
@@ -15,8 +19,11 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
 const { entry }: Props = Astro.props;
 const { Content, headings } = await renderMarkdownDocEntry(entry);
+const heroProps = getChangelogHeroProps(entry);
 ---
 
-<MarkdownDocLayout entry={entry} canonicalPath={getChangelogPath(entry)} headings={headings} toc="off">
-  <Content />
+<MarkdownDocLayout entry={entry} canonicalPath={getChangelogPath(entry)} headings={headings} toc="auto">
+  <ArticleShell {...heroProps} {...getArticleFooterProps(entry)}>
+    <MarkdownContent Content={Content} />
+  </ArticleShell>
 </MarkdownDocLayout>

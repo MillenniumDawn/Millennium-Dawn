@@ -1,22 +1,19 @@
 ---
 title: v1.9 'Top Gun' -- Nov 16th
 page_id: changelog-v1-9-top-gun-nov-16th
-toc: 'off'
 order: 10
 ---
 
-# v1.9 'Top Gun' -- Nov 16th
+## v1.9.6
 
-<details><summary>v1.9.6</summary>
-
-Balance:
+### Balance
 
 - Rebalanced the "Family Planning" cont. focus to 60% Monthly Pop, 40% Social Spending Increase
 - Rentier State spirit now cancels if GDP from resource exctraction is below 20% AND resource exports
   income is less than 30% of Pop and Corp taxes combined (and you're not at war). The resource exports income requirement is the new addition.
 - Delayed Polish ZKP-P events
 
-Bugfixes:
+### Bugfixes
 
 - Fixed Central Asian investment events giving influence "backwardly"
 - Fixed the International Investments rejection not working
@@ -27,7 +24,7 @@ Bugfixes:
 - Fixed AZE tree's economy branch being locked.
 - Fixed Polish AI to loose Balance of Power and Communist Revolution
 
-Content:
+### Content
 
 - NEW SHIP NAMELISTS: BAN, MAY
 - Add Mari El Republic, Republic of Mordovia, Udmurt Republic, Chuvash Republic to the game
@@ -35,13 +32,13 @@ Content:
 - Rework of the PMC Wagner Tree
 - Small update on the mechanics of the Warsaw Pact
 
-Localization:
+### Localization
 
 - Fixed U.S. Petro Dollar from being "Petrodollari" to "Petro Dollar"
 - Corrected instances of "Civil War" being "Civilwar" in the Iranian tree
 - Fixed a number of minor typoes in the tech trees
 
-Map:
+### Map
 
 - Regroup Russian North Caucasian Federal District, Southern Federal District, Volga Federal District, Far Eastern Federal District, Northwestern Federal District, Siberian Federal District, Ural Federal District
 - Make all Federal subjects of Russia(republics/autonomous oblast/autonomous okrugs/krais) got their own state
@@ -50,11 +47,9 @@ Map:
 - Add one state for Cuba
 - Minor adjustment
 
-</details>
+## v1.9.5
 
-<details><summary>v1.9.5</summary>
-
-AI:
+### AI
 
 - Simplified AI strategies, so it spends resources more naturally
 - Made CHI/SOV/USA AI less willing to make unarmored divs
@@ -62,17 +57,17 @@ AI:
 - Late game AI should focus on armored units more
 - Improved AI templates
 
-Database:
+### Database
 
 - NEW UNIT NAME LISTS: AST, AFG, ARM, AZE, SPR
 - Shifted 2000's non-MTG variants for ENG from 2017 to 2000 where they belong
 
-Game Rules:
+### Game Rules
 
 - Added a "Starting National Debt" game rule that will allow you to remove starting national debt
 - Added "Red Dream" AI behavior for Poland to take communist path and Korwin/Wałęsa AI behavior to choose UPR/ChDRP trees
 
-Balance:
+### Balance
 
 - Decrease space taken in convoys by artillery, apcs, ifvs, tanks
 - Reduced the time for holding "Emergency Elections" from 2 years to 1 year
@@ -81,7 +76,7 @@ Balance:
 - Increase combat width for all tiles by around 20%, Urban tiles are now almost twice combat width
 - Added spirit Fight With Communism for Poland to prevent boosting communist parties without taking communist path
 
-Bugfixes:
+### Bugfixes
 
 - Fixed "balkanized" shards of countries having non working economy and politics
 - Fixed loc issue causing RAJ border war tension not showing up
@@ -122,7 +117,7 @@ Bugfixes:
 - Fixed KOR having 2025 artillery on game start
 - Fixed channel and straight issue
 
-Content:
+### Content
 
 - NEW TREES: Transnistria, Egypt, San Marino
 - Added more foci to the German military tree
@@ -138,7 +133,7 @@ Content:
 - PO and PiS focus trees in Poland can now be completed with social democratic PPS party in power if some requirements are met
 - Added Game Rules for Transnitria
 
-Graphics:
+### Graphics
 
 - NEW TECH ICONS: CAN
 - Integrated some models from 'GEO Modern Models Mod for Millennium Dawn' (Thank you, Khahketi Kartli!)
@@ -146,7 +141,7 @@ Graphics:
 - Updated the background of the vanilla UI to be more consist with the MD style
 - Poland's UPR party flag and missing focus icons are fixed
 
-Localization:
+### Localization
 
 - Improved Russian localization
 - Fixed the Peruvian Submission focus name typo
@@ -155,7 +150,7 @@ Localization:
 - Fixed a typo in the Game Rules "Sinagpore" to "Singapore"
 - Fixed several unlocalized strings in the Greek tree
 
-Map:
+### Map
 
 - Make Najrani Desert a separate state
 - Make South Spratlys border with North Spratlys
@@ -164,29 +159,27 @@ Map:
 - Eastern Iraq adjustment for US-Iraq war
 - Minor adjustment
 
-Modding Resources:
+### Modding Resources
 
 - Added automatic decision gfx generation to gfx_entry_generator.py
 - Renamed starter Polish corvettes to ORP Grom and ORP Kaszub
 
-Performance:
+### Performance
 
 - Polish starter democratic branch will be hiding after choosing alt-history and vice-versa
 
-</details>
+## v1.9.4
 
-<details><summary>v1.9.4</summary>
- - Droid's fuckup that he failed to fix even with a hotfix
-</details>
+- Droid's fuckup that he failed to fix even with a hotfix
 
-<details><summary>v1.9.3</summary>
+## v1.9.3
 
-AI:
+### AI
 
 - Fixed some AI pathing in the Bulgarian tree regarding historical accuracy
 - AI Bulgaria should no longer just instantly leave the CSTO if they choose to join willingly
 
-Balance:
+### Balance
 
 - Added a research speed debuff to Russia in the "Broken Economy" idea that decreases per level
 - Boosted the Netherland's oil production in Oost-Nederland due to their natural gas production
@@ -197,7 +190,7 @@ Balance:
 - Add +0.5 suppression bonus to anti-mine afv module
 - Simplified market calculations a bit as part of AAT fix
 
-Bugfixes:
+### Bugfixes
 
 - Fixed (hopefully) most of AAT market related crashes
 - Fixed an Indonesian bug where the focus prerequisite was not correct
@@ -223,7 +216,7 @@ Bugfixes:
 - Fixed China having non-designable AA with NSB dlc
 - Fixed the National Assembly Election Problem of R.o.Korea
 
-Content:
+### Content
 
 - Added some bypass conditions in the Bulgarian diplomacy tree
 - Rebalanced some things w/ the French tree
@@ -243,16 +236,16 @@ Content:
 - Improved mechanics of the Warsaw Pact
 - Added new generals for LPR
 
-Graphics:
+### Graphics
 
 - Added the Aircraft Icon Fix submod which gives more accurate plane icons (Thanks Wolfpack!)
 - Fixed icons for Hezbollah
 
-Music:
+### Music
 
 - Added "War in Kashmir"
 
-Localization:
+### Localization
 
 - Improved Russian localisation
 - Updated French localization for the mod (Thank you, Zorkan!)
@@ -260,7 +253,7 @@ Localization:
 - Fixed typoes in the Missile GUi with respect to the word Launcher
 - Changed description for Polish decision "Buy AA Missiles" to better fit it's reward
 
-Map:
+### Map
 
 - Add Orenburg Oblast of Russia
 - VP Optimization
@@ -268,15 +261,13 @@ Map:
 - Channel and strait fix
 - Make Jan Mayen separate from Iceland
 
-</details>
+## v1.9.2
 
-<details><summary>v1.9.2</summary>
-
-AI:
+### AI
 
 - Fixed AI underflow from the International Market
 
-Balance:
+### Balance
 
 - Increased the workforce reductions from the AI tree
 - Added additional research slots to help developing countries catch up
@@ -289,7 +280,7 @@ Balance:
 - As you annex a nation you now gain their enrichment facilities
 - Removed the give Hezbollah factories decisions
 
-Bugfixes:
+### Bugfixes
 
 - Fixed the Japanese "Kikai-ka Ryodan" hole in the template
 - Fixed the Generic Focus "Economic Measures" taking away your 20% resource export income
@@ -305,7 +296,7 @@ Bugfixes:
 - Fixed is_locked in Ukrainian focuses
 - Fixed the AKP tree in Turkey being unavailable
 
-Content:
+### Content
 
 - NEW FOCUS TREE: South Ossetia
 - Added a "Canarios Targeted Subsidies" decision to Spain
@@ -313,14 +304,14 @@ Content:
 - Added "Petro Dollar" idea back to America
 - Adjusted Turkey focus time lengths to be shorter
 
-Database:
+### Database
 
 - Adjusted the "End Game" victory screen to spawn in 2100 instead of 2070
 - Added renewable energy hotspots to Spain, Portugal, Morocco, Tunisia, Algeria and France in areas they hadn't already had one
 - Added a Renewable Energy hotspot map mode
 - Added hydroelectric power to Spain and Portugal
 
-Localisation:
+### Localisation
 
 - Removed the localization in Assume Debt referring to influence.
 - Added descriptions to the Danish political parties
@@ -331,15 +322,13 @@ Localisation:
 - Fixed Indian localization issues
 - Added a tooltip extension to fuel to tell people to look at their energy screen for their fuel consumption.
 
-UI:
+### UI
 
 - Added a "Average Worker Fulfillment" to the Economic Preview screen
 
-</details>
+## v1.9.1
 
-<details><summary>v1.9.1</summary>
-
-AI:
+### AI
 
 - Improved the AI navigation of the Generic tree to make it more optimal in padding its economic issues
 - Improved the Bulgarian AI's navigation through her economic tree
@@ -356,7 +345,7 @@ AI:
 - AI will dynmaically use the international market based on their economy size and if they are under threat of war or not
 - Old MD EP system AI has been removed
 
-Balance:
+### Balance
 
 - Improved Tooltips for Germany to help explain mechanics better
 - Removed Turkic Council spirit being given without acceptance.
@@ -403,7 +392,7 @@ Balance:
 - Reduced aircraft heavy naval weapons strength
 - Adjusted Sweden's starting plane designs
 
-Bugfixes:
+### Bugfixes
 
 - Fixed GEO going alt-history too much.
 - Replaced ARM, BUL, GEO ideas and fixed bugs related to them.
@@ -442,7 +431,7 @@ Bugfixes:
 - fixed initial aircraft carrier tech referencing an unavailable nonBBA tech while BBA loaded
 - Fixed being able to send all designed equipment for dirt cheap convoy costs
 
-Content:
+### Content
 
 - Added some bypasses to some focuses in the Conservative tree in Spain
 - Added a debt refactor focus so the AI can "absolve" some of their debt
@@ -459,12 +448,12 @@ Content:
 - Removed MD Equipment Purchasing System, archived. May it rest in peace
 - Added the International Market. It's in now. Please stop screaming about it.
 
-Database:
+### Database
 
 - Changed the starting debt and treasury of KYR/TAJ
 - Halved Nepalese debt to make them less dead
 
-Graphics:
+### Graphics
 
 - Added a new token for patrol boat and heavy frigate
 - Added missing supply hub 3D models
@@ -472,12 +461,12 @@ Graphics:
 - Changed event picture for news event China Vows Revenge
 - Fixed the Intelligence Agency Icons for Brazil and Turkey
 
-Music:
+### Music
 
 - Added "Mopikel - Technologies for Peace"
 - Added "Mopikel - Industrial destruction"
 
-Localisation:
+### Localisation
 
 - More cleanup in the loc files to remove unused localization
 - Fixed typo in the air wing screen saying 50 planes vs 100
@@ -508,7 +497,7 @@ Modding Resources
 - Added "Battery Park Storage Size Modifier"
 - Added "Foreign Influence Coup Success Factor"
 
-UI:
+### UI
 
 - Created a Productivity map mode so you can see the productivity of states easier
 - Added total debt to the Debt tooltip
@@ -516,18 +505,16 @@ UI:
 - Expected Spending screen shouldn't be open on observe mode
 - Added a tooltip to the Enrichment Facility button
 
-</details>
+## v1.9.0 - 'Top Gun'
 
-<details><summary>v1.9.0 - 'Top Gun'</summary>
-
-Achievements:
+### Achievements
 
 - Montenegro can now earn the Twogoslavia achievement
 - Achievement "Gang is Back Together" can now be earned by JAP and ITA as well
 - New Ribbon for Fiji: "Innovation Station"
 - Several new and reworked ribbons for the United States
 
-AI:
+### AI
 
 - AI will now use the MD Weapon Market - for now, only partially land equipment
 - The AI will now respond more dynamically to Increasing Autonomy to help make it less CBT
@@ -575,7 +562,7 @@ AI:
 - AI India should occupy border regions if they're hostile
 - AI India should more dynamically respond to its region and changes in the region
 
-Balance:
+### Balance
 
 - Azerbaijan is now Neutral state with Neutral Autocracy party
 - Implemented global shared building slots in construction tech
@@ -652,7 +639,7 @@ Balance:
 - Fixed the decay on Gave Economic Aid and Granted Bailout so they aren't just perma buffs to opinion
 - Dialed back the bonuses to the AI on Elite, Hard and Normal due to improvements in Economic Handling
 
-Bugfix:
+### Bugfix
 
 - Fixed Armenian SA-2 GOA buying focus giving money instead of taking it
 - Fixed Armenian focuses not bypassing with certain conditions
@@ -721,7 +708,7 @@ Bugfix:
 - Fixed ASEAN nation's not being able to use the cartel mechanics when they should be able to
 - When India get no core on Aksai Chin, the border conflicts decision between China and India over Aksai Chin will not show up
 
-Content:
+### Content
 
 - NEW FOCUS TREES: Turkey, Estonia, India, Fiji, Malorossiya, Bashkiria, Wagner(Sahel Confederation), DPR, Central Asian Shared Tree, Venezuela, Hezbollah
 - REWORKED/IMPROVED FOCUS TREES: Germany, Iran, Denmark, United States, Poland, Russia, Belarus, Chechnya
@@ -815,7 +802,7 @@ Content:
 - Added state specific wind power modifiers according to realistic values
 - Finland can join NATO via their focus tree if they choose Sweden or Germany now
 
-Database:
+### Database
 
 - Changed America's starting trade law
 - Changed Saudi Arabia's starting trade law
@@ -826,12 +813,12 @@ Database:
 - Removed Rentier State as a starting idea from Algeria, Australia, Congo, Indonesia, Iran, Kurdistan, Nigeria, Norway & South Africa
 - Removed starting military access for NATO members since they're a faction and if you leave NATO you probably don't want NATO troops in your country anymore
 
-Game Rules:
+### Game Rules
 
 - Added a game rule to allow you to block AI from using the Increase Autonomy cont. focus
 - Added scrollbars to weaken/strengthen countries with the newest game content.
 
-Graphics:
+### Graphics
 
 - NEW INFANTRY (3D) MODELS: IRQ, POL, BOS, SAU, RAJ, SPR, UKR, PER (Revolutionary), BRA, MEX, TAI, GRE, AFG, TAJ, BLR, & VEN
 - Major countries should no longer have SOV gfx for AFV and SPART hulls in tech tree
@@ -842,7 +829,7 @@ Graphics:
 - New political leaders, focus tree icons and balance of power icons for Poland
 - Fixed a number of missing Denmark graphics for event pictures
 
-Localization:
+### Localization
 
 - Cleaned up a number of non-used localization
 - Added a tooltip to the "Subjects" header so you can understand what exactly is going on with your subjects
@@ -868,7 +855,7 @@ Localization:
 - Fixed several localization errors.
 - Cleaned up spelling in most english localization files
 
-Map:
+### Map
 
 - Added a new terrain supercity (this represents large megacities such as Los Angeles, Shanghai, Delhi)
 - Add Lienchiang( Matsu )
@@ -894,7 +881,7 @@ Map:
 - Separate Nauru and Kiribati
 - Create Tonga
 
-Modding Resources:
+### Modding Resources
 
 - Added a quick "ban_party_scripted_call" quick script
 - Added a quick "unban_party_scripted_call" quick script
@@ -905,20 +892,20 @@ Modding Resources:
 - Added modifiers for each individual resource type export income
 - Added scripted effects for every 'number'_random_'building'. You can use 'number'_state_'building' in state scope to add building to that state.
 
-Performance:
+### Performance
 
 - Reduced the number of scripted loc calls to improve runtime performance
 - Implemented a refresh variable for the subideology screen
 - Implemented a meta_effect yearly trigger to optimize the on_monthly
 - Removed a number of not needed on_actions to help optimize the monthly tick
 
-Sound:
+### Sound
 
 - NEW VOICELINES: SPR, TUR, FRA, ITA, SOV, RAJ, ENG, USA, GER, & CHI
 - Adjusted the Armenian voicelines so that they aren't earraping you
 - Removed the Pandur rocket noise, which would fire repeatedly even when zoomed out
 
-UI:
+### UI
 
 - Subideology screen now closes with the political tab vs free floating
 - All Attack/Boost/Allow/Ban buttons are visible always so you can always view why or why you can't click a button
@@ -933,5 +920,3 @@ UI:
 - Introduced a dirty variable to help performance on the ideological powers screen
 - Added a "Disable Monthly Auto-Influence Report" monthly event if required
 - Added a display for your auto-influence nations in the influence decisions
-
-</details>

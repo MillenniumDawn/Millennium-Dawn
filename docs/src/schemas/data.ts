@@ -1,4 +1,4 @@
-import { z } from "astro:content";
+import { z } from "astro/zod";
 import { hrefSchema, internalPathSchema, loadingSchema } from "./base";
 
 export const navigationSchema = z.object({
@@ -29,6 +29,7 @@ export const releaseSchema = z.object({
     checksum: z.string(),
   }),
   links: z.record(
+    z.string(),
     z.object({
       label: z.string(),
       url: hrefSchema,
@@ -37,6 +38,7 @@ export const releaseSchema = z.object({
 });
 
 export const sectionsSchema = z.record(
+  z.string(),
   z.object({
     title: z.string(),
     url: internalPathSchema,
@@ -44,6 +46,32 @@ export const sectionsSchema = z.record(
 );
 
 export const homeSchema = z.object({
+  hero: z.object({
+    badge: z.object({
+      label: z.string(),
+      url: hrefSchema,
+    }),
+    title: z.string(),
+    subtitle: z.string(),
+    primary_cta: z.object({
+      label: z.string(),
+      url: hrefSchema,
+    }),
+    secondary_cta: z.object({
+      label: z.string(),
+      url: hrefSchema,
+    }),
+    community_cta: z.object({
+      label: z.string(),
+      url: hrefSchema,
+    }),
+    note: z.object({
+      prefix: z.string(),
+      link_label: z.string(),
+      link_url: hrefSchema,
+      suffix: z.string().optional(),
+    }),
+  }),
   roadmaps: z.array(
     z.object({
       title: z.string(),

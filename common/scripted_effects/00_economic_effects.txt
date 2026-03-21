@@ -563,6 +563,21 @@ quarterly_inflation_calculation = {
 	subtract_from_temp_variable = { inflation_rate_adjuster = gdpc_growth_inflation_adjuster }
 	log = "Post Tax Rate Inflation Adjusted [?inflation_rate_adjuster]"
 
+	# Real rate = policy rate minus current inflation (both in %)
+	# Neutral floor at 2%: a zero-rate policy is always mildly stimulative, even in low-inflation environments
+	# Positive real rate = tight money (reduces inflation); negative real rate = loose money (adds pressure)
+	set_temp_variable = { cb_infl_pct = inflation_rate_var }
+	multiply_temp_variable = { cb_infl_pct = 100 }
+	if = {
+		limit = { check_variable = { cb_infl_pct < 2 } }
+		set_temp_variable = { cb_infl_pct = 2 }
+	}
+	set_temp_variable = { cb_real_rate = cb_policy_rate }
+	subtract_from_temp_variable = { cb_real_rate = cb_infl_pct }
+	multiply_temp_variable = { cb_real_rate = 0.003 }
+	subtract_from_temp_variable = { inflation_rate_adjuster = cb_real_rate }
+	log = "Post CB Rate Inflation Adjusted [?inflation_rate_adjuster]"
+
 	#Adjust inflation further by the base GDP/C Amount
 	#Take the GDP/C and multiply it by the growth rate
 	#This means that insanely high growth can springboard inflation, but slower / steadier growth raises it in a controlled manner
@@ -674,6 +689,27 @@ quarterly_inflation_calculation = {
 		log = "[GetDateText]: [THIS.GetName]: Inflation Update: Current Inflation Rate: [?THIS.inflation_rate_var|%] - Last Four Quarters: [?THIS.year_quarter_inflation_tracker^0|%] - [?THIS.year_quarter_inflation_tracker^1|%] - [?THIS.year_quarter_inflation_tracker^2|%] - [?THIS.year_quarter_inflation_tracker^3|%]"
 	}
 	calculate_inflation_effects = yes
+
+	#AI-only: adjust cb_policy_rate once per quarter based on current inflation level
+	#Uses the same 60-day cooldown flag as the player GUI buttons
+	if = { limit = { is_ai = yes
+	                 NOT = { has_country_flag = temp_cb_rate_changed } }
+		if = { limit = { check_variable = { inflation_rate_var > 0.10 }
+		                 check_variable = { cb_policy_rate < 20 } }
+			add_to_variable = { cb_policy_rate = 1 }
+			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+		}
+		else_if = { limit = { check_variable = { inflation_rate_var > 0.05 }
+		                      check_variable = { cb_policy_rate < 15 } }
+			add_to_variable = { cb_policy_rate = 1 }
+			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+		}
+		else_if = { limit = { check_variable = { inflation_rate_var < 0.01 }
+		                      check_variable = { cb_policy_rate > 1 } }
+			subtract_from_variable = { cb_policy_rate = 1 }
+			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+		}
+	}
 }
 
 calculate_inflation_effects = {
@@ -708,4 +744,10 @@ calculate_inflation_effects = {
 	set_temp_variable = { inflation_goods = inflation_rate_start }
 	multiply_temp_variable = { inflation_goods = -0.5 }
 	set_variable = { inflation_goods_var = inflation_goods }
+
+	# Combined inflation cost: economic rate + currency exchange pressure
+	set_variable = { inflation_cost_combined_var = inflation_rate_var }
+	add_to_variable = { inflation_cost_combined_var = currency_inflation_feed }
+	# Currency can reduce inflation but must not cause deflation
+	clamp_variable = { var = inflation_cost_combined_var min = 0 }
 }
