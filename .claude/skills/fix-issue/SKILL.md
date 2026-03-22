@@ -1,4 +1,4 @@
-Find an open GitHub issue that is actionable and fix it, then open a pull request.
+Find an open GitHub issue that is actionable and fix it, then open a pull request. If no actionable issues remain, scan the codebase for common bug patterns instead.
 
 Supported arguments: an issue number to fix a specific issue, or none to auto-select one.
 Requested arguments: $ARGUMENTS
@@ -21,6 +21,17 @@ Steps:
    ```
 
    Prefer issues labelled `bug` with a clear reproduction path. Skip issues that already have an open PR or are vague with no reproduction steps.
+
+   **If no actionable GitHub issues remain** (all are too vague, graphical, engine-level crashes, or already covered), scan the codebase for common bug patterns instead. Examples of patterns to search for:
+   - `swap_ideas` where `remove_idea` and `add_idea` are the same, or `remove_idea` doesn't match the `limit` condition
+   - Event options with `name =` referencing a different event's ID (copy-paste errors)
+   - Duplicate option names within the same event
+   - `give_resource_rights` / `transfer_state` targeting wrong state IDs
+   - Variables accumulated monthly without being reset first
+   - Events sending responses to the wrong country (wrong FROM/PREV/ROOT scope)
+   - `else_if` blocks with the same `limit` as the preceding `if` (unreachable code)
+
+   When fixing codebase-scanned bugs, omit the `Closes #` line from the PR since there is no issue to reference.
 
 2. **Understand the bug**
 
@@ -67,11 +78,15 @@ Steps:
    Co-Authored-By: Claude <noreply@anthropic.com>"
    ```
 
-7. **Update the changelog**
+7. **Ensure branch is up to date**
+
+   Run `git merge origin/main` and ensure the branch is up to date before creating a changelog entry or a pull request.
+
+8. **Update the changelog**
 
    Run `/changelog` to add an entry for the fix under the current version in `Changelog.txt`. Commit the changelog update separately.
 
-8. **Open a pull request**
+9. **Open a pull request**
 
    Push the branch and create a PR that closes the issue:
 
@@ -86,6 +101,6 @@ Steps:
    - **Fix** — what was changed and how it resolves it
    - **Test plan** — steps to verify the fix in-game
 
-9. **Report back**
+10. **Report back**
 
 Output the PR URL and a one-paragraph summary of the root cause and fix.

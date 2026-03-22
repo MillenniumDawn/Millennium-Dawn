@@ -51,7 +51,9 @@ function buildPageTokens(pageCount: number, currentPage: number): PageToken[] {
   if (pageCount <= 5) return Array.from({ length: pageCount }, (_, index) => index + 1);
 
   const pages = new Set<number>([1, pageCount, currentPage - 1, currentPage, currentPage + 1]);
-  const sorted = Array.from(pages).filter((page) => page >= 1 && page <= pageCount).sort((left, right) => left - right);
+  const sorted = Array.from(pages)
+    .filter((page) => page >= 1 && page <= pageCount)
+    .sort((left, right) => left - right);
   const tokens: PageToken[] = [];
 
   sorted.forEach((page, index) => {
@@ -66,7 +68,12 @@ function buildPageTokens(pageCount: number, currentPage: number): PageToken[] {
 const initialPageTokens = buildPageTokens(totalPages, 1);
 ---
 
-<section class:list={[SEARCH_INDEX_ROOT_CLASS, indexClass]} data-card-index data-page-size={pageSize} aria-labelledby="search-heading">
+<section
+  class:list={[SEARCH_INDEX_ROOT_CLASS, indexClass]}
+  data-card-index
+  data-page-size={pageSize}
+  aria-labelledby="search-heading"
+>
   <h2 id="search-heading" class="sr-only">{ariaLabel ?? filterLabel}</h2>
   <label class={SEARCH_INDEX_LABEL_CLASS} for={filterId}>
     {filterLabel}
@@ -86,23 +93,24 @@ const initialPageTokens = buildPageTokens(totalPages, 1);
         const isInitiallyVisible = index < pageSize;
 
         return (
-        <div
-          class="min-w-0 flex w-full h-full"
-          data-card-item
-          data-search={item.searchBlob}
-          hidden={!isInitiallyVisible}
-          style={isInitiallyVisible ? undefined : "display:none"}
-          aria-hidden={isInitiallyVisible ? undefined : "true"}
-        >
-          <ContentCard
-            title={item.title}
-            url={item.url}
-            kind={item.kind}
-            description={item.description}
-            meta={item.meta}
-          />
-        </div>
-      )})
+          <div
+            class="min-w-0 flex w-full h-full"
+            data-card-item
+            data-search={item.searchBlob}
+            hidden={!isInitiallyVisible}
+            style={isInitiallyVisible ? undefined : "display:none"}
+            aria-hidden={isInitiallyVisible ? undefined : "true"}
+          >
+            <ContentCard
+              title={item.title}
+              url={item.url}
+              kind={item.kind}
+              description={item.description}
+              meta={item.meta}
+            />
+          </div>
+        );
+      })
     }
   </div>
 
@@ -112,12 +120,22 @@ const initialPageTokens = buildPageTokens(totalPages, 1);
 
   <nav class={SEARCH_INDEX_PAGINATION_CLASS} aria-label="Pagination" data-card-pagination hidden={!hasPagination}>
     <div class={SEARCH_INDEX_PAGINATION_SUMMARY_CLASS}>
-      <span class={SEARCH_INDEX_PAGINATION_STATUS_CLASS} data-card-status aria-live="polite">Page 1 of {totalPages}</span>
-      <span class={SEARCH_INDEX_PAGINATION_RESULTS_CLASS} data-card-results>Showing 1-{Math.min(pageSize, items.length)} of {items.length}</span>
+      <span class={SEARCH_INDEX_PAGINATION_STATUS_CLASS} data-card-status aria-live="polite"
+        >Page 1 of {totalPages}</span
+      >
+      <span class={SEARCH_INDEX_PAGINATION_RESULTS_CLASS} data-card-results
+        >Showing 1-{Math.min(pageSize, items.length)} of {items.length}</span
+      >
     </div>
 
     <div class={SEARCH_INDEX_PAGINATION_CONTROLS_CLASS}>
-      <button type="button" class:list={[BUTTON_SECONDARY_CLASS, SEARCH_INDEX_PAGINATION_NAV_BUTTON_CLASS]} data-card-prev disabled>
+      <button
+        type="button"
+        class:list={[BUTTON_SECONDARY_CLASS, SEARCH_INDEX_PAGINATION_NAV_BUTTON_CLASS]}
+        data-card-prev
+        disabled
+        aria-label="Go to previous page"
+      >
         <span aria-hidden="true">&larr;</span>
         <span>Previous</span>
       </button>
@@ -126,13 +144,13 @@ const initialPageTokens = buildPageTokens(totalPages, 1);
         {
           initialPageTokens.map((token) =>
             token === "ellipsis" ? (
-              <span class={SEARCH_INDEX_PAGINATION_ELLIPSIS_CLASS} aria-hidden="true">&hellip;</span>
+              <span class={SEARCH_INDEX_PAGINATION_ELLIPSIS_CLASS} aria-hidden="true">
+                &hellip;
+              </span>
             ) : (
               <button
                 type="button"
-                class:list={[
-                  SEARCH_INDEX_PAGINATION_PAGE_BUTTON_CLASS,
-                ]}
+                class:list={[SEARCH_INDEX_PAGINATION_PAGE_BUTTON_CLASS]}
                 data-card-page={token}
                 aria-current={token === 1 ? "page" : undefined}
                 aria-label={`Go to page ${token}`}
@@ -144,7 +162,12 @@ const initialPageTokens = buildPageTokens(totalPages, 1);
         }
       </div>
 
-      <button type="button" class:list={[BUTTON_SECONDARY_CLASS, SEARCH_INDEX_PAGINATION_NAV_BUTTON_CLASS]} data-card-next>
+      <button
+        type="button"
+        class:list={[BUTTON_SECONDARY_CLASS, SEARCH_INDEX_PAGINATION_NAV_BUTTON_CLASS]}
+        data-card-next
+        aria-label="Go to next page"
+      >
         <span>Next</span>
         <span aria-hidden="true">&rarr;</span>
       </button>
