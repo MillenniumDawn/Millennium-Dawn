@@ -79,15 +79,15 @@ create_equipment_variant = {
 
 Source: `common/units/equipment/MD_x_tank_chassis.txt`
 
-| Chassis                            | In-Game Role                    | Equipment IDs                                 | Example Vehicles                  |
-| ---------------------------------- | ------------------------------- | --------------------------------------------- | --------------------------------- |
-| `medium_tank_chassis_N`            | MBT (Main Battle Tank)          | MBT_1 – MBT_8                                 | T-64, T-84, Leopard 2, M1 Abrams  |
-| `medium_tank_amphibious_chassis_N` | APC (Wheeled/Tracked APC)       | APC_1 – APC_8                                 | BTR-3, BTR-60, MT-LB, M113        |
-| `medium_tank_flame_chassis_N`      | IFV (Infantry Fighting Vehicle) | IFV_1 – IFV_8                                 | BMP-2, BMP-3, Bradley, Marder     |
-| `medium_tank_artillery_chassis_N`  | SP Artillery                    | SP_arty_0 – SP_arty_4                         | 2S1 Gvozdika, 2S19 Msta, PzH 2000 |
-| `medium_tank_rocket_chassis_N`     | MLRS / Rocket Artillery         | SP_R_arty_0 – SP_R_arty_4                     | BM-27 Uragan, M270 MLRS           |
-| `medium_tank_aa_chassis_N`         | SPAA (Self-Propelled Anti-Air)  | SP_Anti_Air_0 – SP_Anti_Air_4                 | ZSU-23-4, Tunguska, Gepard        |
-| `medium_tank_destroyer_chassis_N`  | Recon Tank / Light Tank         | Rec_tank_0 – Rec_tank_5                       | BRDM, AMX-10RC, Stryker           |
+| Chassis                            | In-Game Role                    | Equipment IDs                                   | Example Vehicles                  |
+| ---------------------------------- | ------------------------------- | ----------------------------------------------- | --------------------------------- |
+| `medium_tank_chassis_N`            | MBT (Main Battle Tank)          | MBT_1 – MBT_8                                   | T-64, T-84, Leopard 2, M1 Abrams  |
+| `medium_tank_amphibious_chassis_N` | APC (Wheeled/Tracked APC)       | APC_1 – APC_8                                   | BTR-3, BTR-60, MT-LB, M113        |
+| `medium_tank_flame_chassis_N`      | IFV (Infantry Fighting Vehicle) | IFV_1 – IFV_8                                   | BMP-2, BMP-3, Bradley, Marder     |
+| `medium_tank_artillery_chassis_N`  | SP Artillery                    | SP_arty_0 – SP_arty_4                           | 2S1 Gvozdika, 2S19 Msta, PzH 2000 |
+| `medium_tank_rocket_chassis_N`     | MLRS / Rocket Artillery         | SP_R_arty_0 – SP_R_arty_4                       | BM-27 Uragan, M270 MLRS           |
+| `medium_tank_aa_chassis_N`         | SPAA (Self-Propelled Anti-Air)  | SP_Anti_Air_0 – SP_Anti_Air_4                   | ZSU-23-4, Tunguska, Gepard        |
+| `medium_tank_destroyer_chassis_N`  | Recon Tank / Light Tank         | Rec_tank_0 – Rec_tank_5                         | BRDM, AMX-10RC, Stryker           |
 | `heavy_tank_chassis_N`             | Attack Helicopter               | attack_helicopter_1 – attack_helicopter_5       | Mi-24, AH-64 Apache, Ka-52        |
 | `heavy_tank_amphibious_chassis_N`  | Transport Helicopter            | transport_helicopter_1 – transport_helicopter_5 | Mi-8, UH-60 Black Hawk, CH-47     |
 
@@ -350,7 +350,7 @@ A country with MBT bonuses does NOT automatically get APC or IFV bonuses — eac
 
 5. **Production bonuses**: Equipment bonuses in ideas target chassis types, not individual variants. If a country has `medium_tank_chassis` bonuses but not `medium_tank_amphibious_chassis` or `medium_tank_flame_chassis`, IFVs/APCs won't benefit.
 
-6. **Hull/role mismatch**: Don't use corvette hulls for minesweepers or other roles the hull wasn't designed for — it causes AI equipment/role mismatch issues.
+6. **Hull generation mismatch**: The hull type in the OOB (`corvette_hull_1`, `attack_submarine_hull_3`, etc.) must match the `type` in the variant's `create_equipment_variant` block. If the OOB says `corvette_hull_1` but the variant is defined on `corvette_hull_2`, the game logs `"does not have any equipment variant for type X version 0"`. To diagnose: find the `version_name` in the OOB, then grep for that name in the creator country's history file and compare the `type` field. Fix by changing the hull in the OOB to match the variant definition.
 
 7. **DLC gating**: Always place NSB variants inside `has_dlc = "No Step Back"` blocks and BBA variants inside `has_dlc = "By Blood Alone"` blocks. Provide fallback content in `else` blocks.
 
