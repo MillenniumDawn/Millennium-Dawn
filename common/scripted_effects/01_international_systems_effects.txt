@@ -514,6 +514,23 @@ start_unsc_next_term_voting = {
 			add_to_array = { global.new_council_members = THIS }
 		}
 	}
+	#Fallback: if regional pools couldn't fill all 5 seats, pick from any UN member
+	set_temp_variable = { seats_needed = 5 }
+	subtract_from_temp_variable = { seats_needed = global.new_council_members^num }
+	for_loop_effect = {
+		end = seats_needed
+		random_scope_in_array = {
+			array = global.UN_general_assembly
+			limit = {
+				NOT = { is_in_array = { global.security_council_members = THIS } }
+				NOT = { is_in_array = { global.new_council_members = THIS } }
+				NOT = { is_in_array = { global.p5_sc_members = THIS } }
+				NOT = { has_idea = Lacks_International_Recognition has_idea = Non_State_Actor }
+			}
+			add_to_array = { global.new_council_members = THIS }
+		}
+	}
+
 	#Fires in june, should be faster voting efforts (cycle them faster, bypass the queueing system)
 	set_temp_variable = { ga_new_vote_type = 6 }
 	set_temp_variable = { ga_new_vote_nation = global.new_council_members^0 }
@@ -533,11 +550,14 @@ update_security_council_peeps = {
 		add_to_temp_variable = { set_index = 1 }
 	}
 
-	#Add the new members here
+	#Add the new members here — only copy entries that actually exist
+	#Reading past the end of confirmed_new_council_members returns 0, which
+	#causes the GUI to display the viewing country's flag instead of a real member
 	set_temp_variable = { set = 0 }
 	set_temp_variable = { set_index = 5 }
+	set_temp_variable = { confirmed_count = global.confirmed_new_council_members^num }
 	for_loop_effect = {
-		end = 5
+		end = confirmed_count
 		set_variable = { global.security_council_members^set_index = global.confirmed_new_council_members^set }
 		add_to_temp_variable = { set = 1 }
 		add_to_temp_variable = { set_index = 1 }
@@ -613,6 +633,22 @@ un_sc_new_members_re_roll = {
 				}
 				set_variable = { global.new_council_members^0 = THIS }
 			}
+		}
+	}
+
+	#Fallback: if the regional re-roll found nobody, try any UN member
+	if = {
+		limit = {
+			check_variable = { global.new_council_members^num < 1 }
+		}
+		random_scope_in_array = {
+			array = global.UN_general_assembly
+			limit = {
+				NOT = { is_in_array = { global.security_council_members = THIS } }
+				NOT = { is_in_array = { global.p5_sc_members = THIS } }
+				NOT = { has_idea = Lacks_International_Recognition has_idea = Non_State_Actor }
+			}
+			add_to_array = { global.new_council_members = THIS }
 		}
 	}
 
