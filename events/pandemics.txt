@@ -1,0 +1,539 @@
+add_namespace = AIDS_events
+add_namespace = COVID_events
+add_namespace = pandemic_events
+
+## Aids/HIV events
+# HIV prevalence increases
+country_event = {
+	id = AIDS_events.1
+	title = AIDS_events.1.t
+	desc = AIDS_events.1.d
+
+	picture = GFX_african_school
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AIDS_events.1.a executed"
+		name = AIDS_events.1.a
+		increase_HIV_prevalence = yes
+	}
+}
+
+# HIV situation stays the same
+country_event = {
+	id = AIDS_events.2
+	title = AIDS_events.2.t
+	desc = AIDS_events.2.d
+
+	picture = GFX_african_school
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AIDS_events.2.a executed"
+		name = AIDS_events.2.a
+	}
+}
+
+# HIV prevalence decreases
+country_event = {
+	id = AIDS_events.3
+	title = AIDS_events.3.t
+	desc = AIDS_events.3.d
+
+	picture = GFX_african_school
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AIDS_events.3.a executed"
+		name = AIDS_events.3.a
+		decrease_HIV_prevalence = yes
+	}
+}
+
+## COVID Events
+# A New Virus
+country_event = {
+	id = COVID_events.0
+	title = COVID_events.0.t
+	desc = COVID_events.0.d
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	option = {
+		name = COVID_events.0.a
+		log = "[GetDateText]: [This.GetName]: COVID_events.0.a executed"
+		set_global_flag = COVID_start_of_pandemic
+
+		hidden_effect = {
+			set_variable = { global.COVID_start_nation = THIS.id }
+			country_event = { id = COVID_events.1 days = 15 random_days = 15 }
+
+			# Global pandemic spread — fires to every country ~3 months after initial outbreak
+			every_country = {
+				limit = {
+					exists = yes
+					has_capitulated = no
+				}
+				country_event = { id = COVID_events.4 days = 90 random_days = 90 }
+			}
+
+			# Global supply chain crisis — fires ~6 months after outbreak
+			every_country = {
+				limit = {
+					exists = yes
+					has_capitulated = no
+				}
+				country_event = { id = COVID_events.5 days = 180 random_days = 60 }
+			}
+
+			# Germany pandemic flavor event
+			if = {
+				limit = { country_exists = GER }
+				GER = {
+					country_event = { id = germany_yearly.49 days = 120 random_days = 60 }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Whistleblower Doctors
+country_event = {
+	id = COVID_events.1
+	title = COVID_events.1.t
+	desc = COVID_events.1.d
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	# Arrest the whistleblowers
+	option = {
+		name = COVID_events.1.a
+		log = "[GetDateText]: [This.GetName]: COVID_events.1.a executed"
+		set_country_flag = CHI_hide_the_virus
+		add_stability = 0.02
+
+		hidden_effect = {
+			country_event = { id = COVID_events.2 days = 15 random_days = 15 }
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	# Allow their reports
+	option = {
+		name = COVID_events.1.b
+		log = "[GetDateText]: [This.GetName]: COVID_events.1.b executed"
+		add_stability = -0.02
+		add_political_power = 25
+
+		hidden_effect = {
+			country_event = { id = COVID_events.2 days = 15 random_days = 15 }
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Pandemic Confirmed
+country_event = {
+	id = COVID_events.2
+	title = COVID_events.2.t
+	desc = COVID_events.2.d
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	option = {
+		name = COVID_events.2.a
+		log = "[GetDateText]: [This.GetName]: COVID_events.2.a executed"
+		decrease_economic_growth = yes
+		add_timed_idea = {
+			idea = COVID_pandemic_origin
+			days = 540
+		}
+
+		hidden_effect = {
+			every_country = {
+				limit = {
+					exists = yes
+					has_capitulated = no
+				}
+				news_event = { id = COVID_events.3 days = 3 random_days = 7 }
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# COVID-19 Emerges
+news_event = {
+	id = COVID_events.3
+	title = COVID_events.3.t
+	desc = {
+		text = COVID_events.3.d1
+		trigger = {
+			var:global.COVID_start_nation = { has_country_flag = CHI_hide_the_virus }
+		}
+	}
+	desc = {
+		text = COVID_events.3.d2
+		trigger = {
+			NOT = { var:global.COVID_start_nation = { has_country_flag = CHI_hide_the_virus } }
+		}
+	}
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	option = {
+		name = COVID_events.3.a
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# The Pandemic Reaches [This.GetName]
+country_event = {
+	id = COVID_events.4
+	title = COVID_events.4.t
+	desc = COVID_events.4.d
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_idea = COVID_pandemic_origin }
+		NOT = { has_idea = COVID_pandemic_impact }
+	}
+
+	option = {
+		name = COVID_events.4.a
+		log = "[GetDateText]: [This.GetName]: COVID_events.4.a executed"
+		decrease_economic_growth = yes
+		add_stability = -0.05
+		add_timed_idea = {
+			idea = COVID_pandemic_impact
+			days = 360
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Global Supply Chains Collapse
+news_event = {
+	id = COVID_events.5
+	title = COVID_events.5.t
+	desc = COVID_events.5.d
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	trigger = {
+		has_global_flag = COVID_start_of_pandemic
+	}
+
+	option = {
+		name = COVID_events.5.a
+		log = "[GetDateText]: [This.GetName]: COVID_events.5.a executed"
+		decrease_economic_growth = yes
+		if = {
+			limit = {
+				NOT = { has_idea = COVID_supply_chain_disruption }
+			}
+			add_timed_idea = {
+				idea = COVID_supply_chain_disruption
+				days = 270
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+## 2009 Swine Flu (H1N1) Pandemic
+# Swine Flu Pandemic — Mexico origin
+country_event = {
+	id = pandemic_events.1
+	title = pandemic_events.1.t
+	desc = pandemic_events.1.d
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	option = {
+		name = pandemic_events.1.a
+		log = "[GetDateText]: [This.GetName]: pandemic_events.1.a executed"
+		set_global_flag = swine_flu_pandemic
+		decrease_economic_growth = yes
+		add_timed_idea = {
+			idea = pandemic_swine_flu_origin
+			days = 180
+		}
+
+		hidden_effect = {
+			every_country = {
+				limit = {
+					exists = yes
+					has_capitulated = no
+				}
+				country_event = { id = pandemic_events.2 days = 60 random_days = 60 }
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# H1N1 Reaches [This.GetName]
+country_event = {
+	id = pandemic_events.2
+	title = pandemic_events.2.t
+	desc = pandemic_events.2.d
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_idea = pandemic_swine_flu_origin }
+		NOT = { has_idea = pandemic_swine_flu_impact }
+	}
+
+	option = {
+		name = pandemic_events.2.a
+		log = "[GetDateText]: [This.GetName]: pandemic_events.2.a executed"
+		add_stability = -0.02
+		add_timed_idea = {
+			idea = pandemic_swine_flu_impact
+			days = 120
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+## 2012 MERS Outbreak
+# MERS Outbreak — Saudi Arabia
+country_event = {
+	id = pandemic_events.3
+	title = pandemic_events.3.t
+	desc = pandemic_events.3.d
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	option = {
+		name = pandemic_events.3.a
+		log = "[GetDateText]: [This.GetName]: pandemic_events.3.a executed"
+		decrease_economic_growth = yes
+		add_stability = -0.03
+		add_timed_idea = {
+			idea = pandemic_MERS_outbreak
+			days = 180
+		}
+
+		hidden_effect = {
+			# Spread to neighboring Gulf states
+			if = { limit = { country_exists = QAT } QAT = { country_event = { id = pandemic_events.7 days = 30 random_days = 30 } } }
+			if = { limit = { country_exists = BHR } BHR = { country_event = { id = pandemic_events.7 days = 30 random_days = 30 } } }
+			if = { limit = { country_exists = KUW } KUW = { country_event = { id = pandemic_events.7 days = 30 random_days = 30 } } }
+			if = { limit = { country_exists = UAE } UAE = { country_event = { id = pandemic_events.7 days = 30 random_days = 30 } } }
+			if = { limit = { country_exists = OMA } OMA = { country_event = { id = pandemic_events.7 days = 30 random_days = 30 } } }
+
+			# 2015 South Korea MERS outbreak — hospital super-spreader ~3 years later
+			if = { limit = { country_exists = KOR } KOR = { country_event = { id = pandemic_events.9 days = 1000 random_days = 90 } } }
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+## 2014 Ebola Outbreak — West Africa
+# Ebola Outbreak in West Africa — Guinea origin
+country_event = {
+	id = pandemic_events.4
+	title = pandemic_events.4.t
+	desc = pandemic_events.4.d
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	option = {
+		name = pandemic_events.4.a
+		log = "[GetDateText]: [This.GetName]: pandemic_events.4.a executed"
+		set_global_flag = ebola_west_africa_outbreak
+		decrease_economic_growth = yes
+		add_timed_idea = {
+			idea = pandemic_ebola_outbreak
+			days = 360
+		}
+
+		hidden_effect = {
+			if = { limit = { country_exists = LIB } LIB = { country_event = { id = pandemic_events.5 days = 30 random_days = 30 } } }
+			if = { limit = { country_exists = SIE } SIE = { country_event = { id = pandemic_events.5 days = 30 random_days = 30 } } }
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Ebola Spreads to [This.GetName]
+country_event = {
+	id = pandemic_events.5
+	title = pandemic_events.5.t
+	desc = pandemic_events.5.d
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_idea = pandemic_ebola_outbreak }
+	}
+
+	option = {
+		name = pandemic_events.5.a
+		log = "[GetDateText]: [This.GetName]: pandemic_events.5.a executed"
+		decrease_economic_growth = yes
+		add_stability = -0.05
+		add_timed_idea = {
+			idea = pandemic_ebola_outbreak
+			days = 360
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+## 2018 Ebola Outbreak — DR Congo
+# Ebola Returns in the Congo
+country_event = {
+	id = pandemic_events.6
+	title = pandemic_events.6.t
+	desc = pandemic_events.6.d
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	option = {
+		name = pandemic_events.6.a
+		log = "[GetDateText]: [This.GetName]: pandemic_events.6.a executed"
+		decrease_economic_growth = yes
+		add_timed_idea = {
+			idea = pandemic_ebola_DRC
+			days = 270
+		}
+
+		hidden_effect = {
+			# Spread to neighboring countries
+			if = { limit = { country_exists = UGA } UGA = { country_event = { id = pandemic_events.8 days = 30 random_days = 30 } } }
+			if = { limit = { country_exists = RWA } RWA = { country_event = { id = pandemic_events.8 days = 30 random_days = 30 } } }
+			if = { limit = { country_exists = BUR } BUR = { country_event = { id = pandemic_events.8 days = 30 random_days = 30 } } }
+			if = { limit = { country_exists = CNG } CNG = { country_event = { id = pandemic_events.8 days = 30 random_days = 30 } } }
+			if = { limit = { country_exists = SSU } SSU = { country_event = { id = pandemic_events.8 days = 30 random_days = 30 } } }
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+## Neighbor Spread Events
+# MERS Spreads to [This.GetName]
+country_event = {
+	id = pandemic_events.7
+	title = pandemic_events.7.t
+	desc = pandemic_events.7.d
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_idea = pandemic_MERS_outbreak }
+	}
+
+	option = {
+		name = pandemic_events.7.a
+		log = "[GetDateText]: [This.GetName]: pandemic_events.7.a executed"
+		add_stability = -0.02
+		add_timed_idea = {
+			idea = pandemic_MERS_outbreak
+			days = 120
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Ebola Spreads to [This.GetName] (DRC neighbors)
+country_event = {
+	id = pandemic_events.8
+	title = pandemic_events.8.t
+	desc = pandemic_events.8.d
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_idea = pandemic_ebola_DRC }
+	}
+
+	option = {
+		name = pandemic_events.8.a
+		log = "[GetDateText]: [This.GetName]: pandemic_events.8.a executed"
+		add_stability = -0.03
+		add_timed_idea = {
+			idea = pandemic_ebola_DRC
+			days = 180
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+## 2015 MERS Outbreak — South Korea
+# A hospital super-spreader event caused 186 cases and 38 deaths
+country_event = {
+	id = pandemic_events.9
+	title = pandemic_events.9.t
+	desc = pandemic_events.9.d
+	picture = GFX_african_school # FIXME: Replace with proper pandemic art
+	is_triggered_only = yes
+
+	option = {
+		name = pandemic_events.9.a
+		log = "[GetDateText]: [This.GetName]: pandemic_events.9.a executed"
+		decrease_economic_growth = yes
+		add_stability = -0.05
+		add_timed_idea = {
+			idea = pandemic_MERS_outbreak
+			days = 120
+		}
+
+		ai_chance = {
+			base = 1
+		}
+	}
+}
