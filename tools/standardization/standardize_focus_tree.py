@@ -35,6 +35,16 @@ def log_message(level: str, message: str, verbose: bool = False):
     print(formatted_message, file=sys.stderr)
 
 
+def is_empty_block(block_lines):
+    """Check if a block contains only braces and whitespace (no meaningful content)"""
+    if not block_lines:
+        return True
+    content = "".join(line.strip() for line in block_lines)
+    # Remove the property name and braces, check if anything remains
+    inner = re.sub(r"^[^{]*\{(.*)\}$", r"\1", content, flags=re.DOTALL)
+    return inner.strip() == ""
+
+
 def extract_focus_properties(focus_lines):
     """Extract properties from focus block lines"""
     props = {
@@ -100,7 +110,7 @@ def extract_focus_properties(focus_lines):
             props["cost"] = line
         elif line.startswith("offset ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props["offset"] = block_lines
+            props["offset"].append(block_lines)
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("search_filters ="):
@@ -118,22 +128,26 @@ def extract_focus_properties(focus_lines):
             continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("mutually_exclusive ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props["mutually_exclusive"].append(block_lines)
+            if not is_empty_block(block_lines):
+                props["mutually_exclusive"].append(block_lines)
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("available ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props["available"] = block_lines
+            if not is_empty_block(block_lines):
+                props["available"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("bypass ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props["bypass"] = block_lines
+            if not is_empty_block(block_lines):
+                props["bypass"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("cancel ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props["cancel"] = block_lines
+            if not is_empty_block(block_lines):
+                props["cancel"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("completion_reward ="):
@@ -161,6 +175,17 @@ def extract_focus_properties(focus_lines):
             props["bypass_effect"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
+        elif line == "cancel_if_invalid = yes":
+            pass  # Default value, skip
+        elif line == "continue_if_invalid = no":
+            pass  # Default value, skip
+        elif line == "available_if_capitulated = no":
+            pass  # Default value, skip
+        elif re.match(
+            r"^#\s*(available|bypass|cancel|visible|mutually_exclusive)\s*=\s*\{\s*\}$",
+            line,
+        ):
+            pass  # Commented-out empty block, skip
         else:
             props["other"].append(focus_lines[i])
 
@@ -321,10 +346,10 @@ def format_focus_offset_block(block_lines):
     return lines
 
 
-def format_focus_block(props):
+def format_focus_block(props, block_type="focus"):
     """Format focus according to Millennium Dawn standard"""
     lines = []
-    lines.append("\tfocus = {")
+    lines.append(f"\t{block_type} = {{")
 
     # 1. ID and icon (no blank line between them)
     if props["id"]:
@@ -370,8 +395,8 @@ def format_focus_block(props):
         lines.append(f'\t\t{props["y"]}')
     if props["relative_position_id"]:
         lines.append(f'\t\t{props["relative_position_id"]}')
-    if props["offset"]:
-        formatted_offset = format_focus_offset_block(props["offset"][:])
+    for offset_block in props["offset"]:
+        formatted_offset = format_focus_offset_block(offset_block[:])
         for line in formatted_offset:
             lines.append(line)
 
@@ -807,6 +832,8 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
     output_lines = []
     i = 0
     focus_count = 0
+    shared_focus_count = 0
+    joint_focus_count = 0
     shortcut_count = 0
     inlay_count = 0
     offset_count = 0
@@ -831,6 +858,44 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
                 log_message(
                     "DEBUG",
                     f"Processed focus block {focus_count}: {props.get('id', 'unknown')}",
+                    verbose,
+                )
+
+            i = next_i
+        elif re.match(r"\s*shared_focus\s*=\s*{", line):
+            log_message("DEBUG", f"Found shared_focus block at line {i+1}", verbose)
+
+            focus_block, next_i = extract_block(lines, i)
+
+            if focus_block:
+                props = extract_focus_properties(focus_block)
+                formatted_lines = format_focus_block(props, "shared_focus")
+
+                output_lines.extend(formatted_lines)
+                shared_focus_count += 1
+
+                log_message(
+                    "DEBUG",
+                    f"Processed shared_focus block {shared_focus_count}: {props.get('id', 'unknown')}",
+                    verbose,
+                )
+
+            i = next_i
+        elif re.match(r"\s*joint_focus\s*=\s*{", line):
+            log_message("DEBUG", f"Found joint_focus block at line {i+1}", verbose)
+
+            focus_block, next_i = extract_block(lines, i)
+
+            if focus_block:
+                props = extract_focus_properties(focus_block)
+                formatted_lines = format_focus_block(props, "joint_focus")
+
+                output_lines.extend(formatted_lines)
+                joint_focus_count += 1
+
+                log_message(
+                    "DEBUG",
+                    f"Processed joint_focus block {joint_focus_count}: {props.get('id', 'unknown')}",
                     verbose,
                 )
 
@@ -914,6 +979,25 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
             output_lines.append(line)
             i += 1
 
+    # Post-processing: ensure blank lines between consecutive focus/shared_focus/joint_focus blocks
+    focus_block_pattern = re.compile(r"^\t(focus|shared_focus|joint_focus)\s*=\s*{")
+    final_lines = []
+    for idx, line in enumerate(output_lines):
+        if focus_block_pattern.match(line) and final_lines:
+            # Find the previous non-empty line
+            prev_idx = len(final_lines) - 1
+            while prev_idx >= 0 and final_lines[prev_idx].strip() == "":
+                prev_idx -= 1
+            # If the previous content line is a closing brace and there's no blank line, add one
+            if (
+                prev_idx >= 0
+                and final_lines[prev_idx].strip() == "}"
+                and final_lines[-1].strip() != ""
+            ):
+                final_lines.append("")
+        final_lines.append(line)
+    output_lines = final_lines
+
     try:
         with open(output_file, "w", encoding="utf-8") as f:
             for line in output_lines:
@@ -931,6 +1015,12 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
 
         log_message("SUCCESS", f"Standardization completed in {time_str}")
         log_message("SUCCESS", f"Processed {focus_count} focus blocks")
+        if shared_focus_count > 0:
+            log_message(
+                "SUCCESS", f"Processed {shared_focus_count} shared_focus blocks"
+            )
+        if joint_focus_count > 0:
+            log_message("SUCCESS", f"Processed {joint_focus_count} joint_focus blocks")
         if continuous_pos_count > 0:
             log_message(
                 "SUCCESS",
