@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   create-release:
@@ -19,11 +20,40 @@ jobs:
         fetch-depth: 1
 
     - name: Create Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
         draft: false
         prerelease: false
+        generate_release_notes: true
+
+    - name: Close matching milestone
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const tag = '${{ github.ref_name }}';
+          // Strip leading 'v' to match milestone title (v2.0 -> 2.0)
+          const version = tag.replace(/^v/, '');
+
+          const milestones = await github.rest.issues.listMilestones({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+          });
+
+          const milestone = milestones.data.find(m => m.title === version || m.title === tag);
+
+          if (!milestone) {
+            console.log(`No open milestone matching "${version}" or "${tag}" found`);
+            return;
+          }
+
+          await github.rest.issues.updateMilestone({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            milestone_number: milestone.number,
+            state: 'closed',
+          });
+
+          console.log(`Closed milestone "${milestone.title}"`);
