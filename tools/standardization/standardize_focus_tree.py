@@ -330,12 +330,23 @@ def format_focus_offset_block(block_lines):
         lines.append(f"\t\t\t{y_val}")
 
     if trigger_lines:
-        # Reformat trigger block with proper indentation (3 tabs base, 4 tabs for content)
+        # Reformat trigger block with brace-aware indentation
         lines.append("\t\t\ttrigger = {")
+        depth = 0  # Nesting depth relative to trigger block
         for trigger_line in trigger_lines[1:-1]:  # Skip opening/closing braces
             stripped = trigger_line.strip()
-            if stripped:
-                lines.append(f"\t\t\t\t{stripped}")
+            if not stripped:
+                continue
+            # Adjust depth for closing braces before writing the line
+            close_count = stripped.count("}")
+            open_count = stripped.count("{")
+            if stripped == "}":
+                depth -= 1
+            indent = "\t\t\t\t" + "\t" * max(0, depth)
+            lines.append(f"{indent}{stripped}")
+            # Adjust depth for opening braces after writing the line
+            if stripped != "}":
+                depth += open_count - close_count
         lines.append("\t\t\t}")
 
     for line in other_lines:
