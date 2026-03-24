@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Assign earliest open milestone
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -24,8 +24,6 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              sort: 'due_on',
-              direction: 'asc',
             });
 
             if (milestones.data.length === 0) {
@@ -33,7 +31,22 @@ jobs:
               return;
             }
 
-            const milestone = milestones.data[0];
+            // Sort by version number (e.g., "2.0" < "2.1") to pick the lowest
+            const sorted = milestones.data.sort((a, b) => {
+              const parseVersion = (title) => {
+                const parts = title.match(/(\d+)/g);
+                return parts ? parts.map(Number) : [Infinity];
+              };
+              const va = parseVersion(a.title);
+              const vb = parseVersion(b.title);
+              for (let i = 0; i < Math.max(va.length, vb.length); i++) {
+                const diff = (va[i] || 0) - (vb[i] || 0);
+                if (diff !== 0) return diff;
+              }
+              return 0;
+            });
+
+            const milestone = sorted[0];
 
             await github.rest.issues.update({
               owner: context.repo.owner,
