@@ -3,8 +3,12 @@
 ## Prerequisites
 
 - Node.js 24 LTS or newer ([nodejs.org](https://nodejs.org/))
-- [Bun](https://bun.com/)
+- [Bun](https://bun.com/) — see **Bun version** below.
 - Python 3 (for `check:links`, `check:og`, `check:a11y`, `check:perf`)
+
+### Bun version
+
+The supported Bun release for this package is pinned in `package.json` as `packageManager` (for example `bun@1.3.11`). Treat that value as the canonical toolchain version: CI and other contributors use it, and Bun’s resolver and lockfile behavior can differ between releases, so drifting too far can cause “works on my machine” install or script failures. **Upgrade Bun on your machine from time to time** (security fixes and compatibility with newer tooling), and when this repo bumps the `packageManager` entry or refreshes `bun.lock`, align your local Bun to that version before working on docs.
 
 ## Quick Start
 
@@ -28,6 +32,7 @@ Open the local site using the URL shown in the `astro dev` output.
 
 ## Important Rules
 
+- If you change any Markdown under `src/content/**/*.md`, run **`bun run lint:md`** (and preferably **`bun run lint:remark`**) **before you commit**. The same checks run in CI; fixing MD/style issues locally avoids broken builds and noisy follow-up commits.
 - Use only Markdown + frontmatter.
 - Do not use Liquid (`{% ... %}` / `{{ ... }}`).
 - Use root-relative paths for internal links: `/tutorials/`, `/countries/germany/`.
