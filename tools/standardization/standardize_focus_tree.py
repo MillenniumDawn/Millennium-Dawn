@@ -105,23 +105,28 @@ def extract_focus_properties(focus_lines):
                 else:
                     # First icon
                     props["icon"] = [line]
+        elif line.startswith("text_icon ="):
+            props["text_icon"] = line
+        elif line.startswith("overlay ="):
+            props["overlay"] = line
         elif line.startswith("x ="):
             props["x"] = line
         elif line.startswith("y ="):
             props["y"] = line
         elif line.startswith("relative_position_id ="):
             props["relative_position_id"] = line
-        elif line.startswith("cost ="):
-            props["cost"] = line
-        elif line.startswith("text_icon ="):
-            props["text_icon"] = line
-        elif line.startswith("overlay ="):
-            props["overlay"] = line
         elif line.startswith("offset ="):
             block_lines, next_i = extract_block(focus_lines, i)
             props["offset"].append(block_lines)
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("allow_branch ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["allow_branch"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("cost ="):
+            props["cost"] = line
         elif line.startswith("search_filters ="):
             block_lines, next_i = extract_block(focus_lines, i)
             props["search_filters"] = block_lines
@@ -152,16 +157,31 @@ def extract_focus_properties(focus_lines):
                 props["available"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("cancel ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            if not is_empty_block(block_lines):
+                props["cancel"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("select_effect ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["select_effect"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("bypass ="):
             block_lines, next_i = extract_block(focus_lines, i)
             if not is_empty_block(block_lines):
                 props["bypass"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("cancel ="):
+        elif line.startswith("bypass_effect ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            if not is_empty_block(block_lines):
-                props["cancel"] = block_lines
+            props["bypass_effect"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("completion_reward ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["completion_reward"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("completion_reward_joint_originator ="):
@@ -174,29 +194,9 @@ def extract_focus_properties(focus_lines):
             props["completion_reward_joint_member"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("completion_reward ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["completion_reward"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("ai_will_do ="):
             block_lines, next_i = extract_block(focus_lines, i)
             props["ai_will_do"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("allow_branch ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["allow_branch"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("select_effect ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["select_effect"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("bypass_effect ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["bypass_effect"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
         elif line == "cancel_if_invalid = yes":
