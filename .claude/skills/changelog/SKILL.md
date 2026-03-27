@@ -14,25 +14,9 @@ Steps:
    git diff origin/main...HEAD
    ```
 
-3. Analyze every change and classify each into one of these categories (skip empty categories):
-   - **Achievements** — New or changed achievements
-   - **AI** — AI behavior, strategy, or decision-making changes
-   - **Balance** — Stat tweaks, modifier adjustments, cost/value changes
-   - **Bugfix** — Bug fixes, crash fixes, typo corrections
-   - **Content** — New focus trees, events, decisions, ideas, MIOs, countries, or significant new gameplay
-   - **Database** — Country history, OOBs, state data, technology assignments
-   - **Documentation** — Docs, guides, modding resources
-   - **Factions** — Faction mechanics, membership, leadership changes
-   - **Game Rules** — New or modified game rules
-   - **Graphics** — GFX, icons, portraits, sprites, 3D models
-   - **Localization** — Localisation strings, translations, formatting
-   - **Map** — Map changes, state boundaries, provinces, map modes
-   - **Music** — New or changed music tracks, sound triggers
-   - **Performance** — Optimizations, removed redundant triggers, on_action improvements
-   - **Quality of Life** — QoL improvements, UI polish, tooltips
-   - **Sound** — Sound effects and audio changes
-   - **Technology** — Tech tree changes, research categories
-   - **User Interface** — UI layout, scripted GUIs, interface definitions
+3. Scan the existing `Changelog.txt` for all category headings (lines matching ` CategoryName:`) and collect them into a list. **Only use categories that already exist in the file.** Do not invent new category names. If a change does not fit any existing category, use the closest match. The typical categories found in this file are: Achievements, AI, Balance, Bugfix, Content, Database, Factions, Game Rules, Graphics, Localization, Map, Map Modes, Performance, Quality of Life, Sound, Technology, User Interface.
+
+   Classify each change into one of those existing categories (skip empty categories). Focus on user-facing and gameplay-relevant changes — omit internal refactors or implementation details that don't affect the player experience unless they have a meaningful performance or correctness impact.
 
 4. Write each entry following the `Changelog.txt` format:
    - 1 space before category name, followed by a colon (e.g., ` AI:`)
