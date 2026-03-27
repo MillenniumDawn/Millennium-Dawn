@@ -1,4 +1,4 @@
-import { stripMarkdownExt } from "@/shared/lib/slugs";
+import { stripMarkdownExt } from "./slugs";
 
 interface RoutedEntryLike {
   id: string;

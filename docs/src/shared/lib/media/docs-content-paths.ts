@@ -1,9 +1,9 @@
 import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { SITE_BASE_PATH } from "../config/site";
-import { isContainedInRoot } from "./fs-path-safety";
-import { normalizeSiteBase, stripPathBase } from "./site-path-base";
+import { SITE_BASE_PATH } from "../../config/site";
+import { isContainedInRoot } from "../fs/fs-path-safety";
+import { normalizeSiteBase, stripPathBase } from "../routing/site-path-base";
 
 const PUBLICATION_BASE = normalizeSiteBase(SITE_BASE_PATH);
 

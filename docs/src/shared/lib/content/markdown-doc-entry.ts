@@ -1,6 +1,6 @@
 import { getCollection, render } from "astro:content";
 import type { CollectionEntry } from "astro:content";
-import { buildEntryStaticPaths } from "./content-routes";
+import { buildEntryStaticPaths } from "@/shared/lib/routing/content-routes";
 
 export type MarkdownDocCollection = "changelogSections" | "devDiaries" | "misc" | "resources" | "tutorials";
 

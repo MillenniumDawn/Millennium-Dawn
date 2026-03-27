@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import type { Root } from "hast";
 import imageSize from "image-size";
 import { visit } from "unist-util-visit";
-import { resolveLocalRasterImageFile } from "./docs-content-paths";
+import { resolveLocalRasterImageFile } from "../media/docs-content-paths";
 
 const RASTER_EXT = /\.(png|jpe?g|webp|avif|gif)$/i;
 

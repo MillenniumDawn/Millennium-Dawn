@@ -1,7 +1,7 @@
 import type { ImageMetadata } from "astro";
-import { resolveImageSource } from "@/shared/lib/image-assets";
+import { resolveImageSource } from "@/shared/lib/media/image-assets";
 import { SITE_FALLBACK_ORIGIN } from "@/shared/config/site";
-import { normalizeSiteBase, stripPathBase } from "@/shared/lib/site-path-base";
+import { normalizeSiteBase, stripPathBase } from "./site-path-base";
 
 function normalizeOrigin(rawSite: string | undefined): string {
   const site = rawSite ?? SITE_FALLBACK_ORIGIN;

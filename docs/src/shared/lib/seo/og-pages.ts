@@ -9,7 +9,7 @@ import {
   getMiscPath,
   getResourcePath,
   getTutorialPath,
-} from "./content-routes";
+} from "@/shared/lib/routing/content-routes";
 
 export interface OgPageData {
   slug: string;

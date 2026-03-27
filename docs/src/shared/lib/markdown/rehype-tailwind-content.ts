@@ -1,6 +1,6 @@
 import type { Element, Root } from "hast";
 import { visit } from "unist-util-visit";
-import { MARKDOWN_CLASSNAMES } from "../ui/tailwind";
+import { MARKDOWN_CLASSNAMES } from "../../ui/tailwind";
 
 function asClassList(value: unknown): string[] {
   if (Array.isArray(value)) return value.map(String);

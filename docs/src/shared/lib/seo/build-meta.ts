@@ -1,4 +1,4 @@
-import { toAbsolute, withBase } from "./urls";
+import { toAbsolute, withBase } from "@/shared/lib/routing/urls";
 import { SITE_DESCRIPTION } from "@/shared/config/site";
 
 export interface SeoImage {

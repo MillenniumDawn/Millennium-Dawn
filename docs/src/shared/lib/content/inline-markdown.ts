@@ -1,4 +1,4 @@
-import { withBase } from "./urls";
+import { withBase } from "@/shared/lib/routing/urls";
 
 export type InlinePart = { type: "text"; value: string } | { type: "link"; value: string; href: string };
 

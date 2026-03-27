@@ -1,4 +1,4 @@
-import { SITE_REPO_EDIT_BASE } from "../config/site";
+import { SITE_REPO_EDIT_BASE } from "@/shared/config/site";
 
 export function getArticleFooterProps(entry: { id: string; data: { last_updated?: Date } }): {
   lastUpdated?: Date;
