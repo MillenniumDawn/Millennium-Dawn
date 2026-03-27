@@ -11,7 +11,7 @@ let cachedPackageRoot: string | null = null;
 
 /**
  * Directory that contains `astro.config.*` and `public/` for this docs package.
- * Matches logic in `public-image-size` (cwd vs monorepo root vs bundled fallback).
+ * Matches logic used by `local-image-dimensions` and build tooling (cwd vs monorepo root vs bundled fallback).
  */
 export function getDocsPackageRoot(): string {
   if (cachedPackageRoot) return cachedPackageRoot;
@@ -36,8 +36,12 @@ export function getDocsPackageRoot(): string {
     return cachedPackageRoot;
   }
 
+  /** Fallback when `cwd` is not the package root (e.g. some Astro worker contexts). Avoid relying on this alone: Vite may prebundle this file and shift `import.meta.url`. */
   const fromSourceTree = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
-  if (existsSync(resolve(fromSourceTree, "astro.config.ts"))) {
+  if (
+    existsSync(resolve(fromSourceTree, "astro.config.ts")) ||
+    existsSync(resolve(fromSourceTree, "astro.config.mjs"))
+  ) {
     cachedPackageRoot = fromSourceTree;
     return cachedPackageRoot;
   }
@@ -63,7 +67,9 @@ const REMOTE_SCHEME = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
 
 /**
  * Resolves a raster image file on disk for a root-relative or base-prefixed URL used in markdown.
- * Tries `public/` first, then `src/assets/images/`.
+ *
+ * **`/assets/images/...`** — only `src/assets/images/` (single source of truth; no `public/` mirror).
+ * Other root-relative paths (e.g. rare static files) may still resolve under `public/`.
  */
 export function resolveLocalRasterImageFile(srcAttr: string): string | null {
   if (!srcAttr || typeof srcAttr !== "string") return null;
@@ -75,18 +81,19 @@ export function resolveLocalRasterImageFile(srcAttr: string): string | null {
   const segments = normalized.replace(/^\/+/, "").split("/").filter(Boolean);
   if (segments.some((s) => s === "..")) return null;
 
-  const publicRoot = getDocsPublicRoot();
-  const underPublic = resolve(publicRoot, ...segments);
-  if (isContainedInRoot(publicRoot, underPublic) && existsSync(underPublic)) {
-    return underPublic;
-  }
-
   if (segments[0] === "assets" && segments[1] === "images") {
     const imagesRoot = getDocsSrcAssetsImagesRoot();
     const underSrc = resolve(imagesRoot, ...segments.slice(2));
     if (isContainedInRoot(imagesRoot, underSrc) && existsSync(underSrc)) {
       return underSrc;
     }
+    return null;
+  }
+
+  const publicRoot = getDocsPublicRoot();
+  const underPublic = resolve(publicRoot, ...segments);
+  if (isContainedInRoot(publicRoot, underPublic) && existsSync(underPublic)) {
+    return underPublic;
   }
 
   return null;

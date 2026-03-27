@@ -16,23 +16,31 @@ import { rehypeTableScope } from "./src/shared/lib/rehype-table-scope";
 import { rehypeTableWrapper } from "./src/shared/lib/rehype-table-wrapper";
 import { hoiscriptLanguage } from "./src/shared/lib/shiki-hoiscript";
 import { SITE_BASE_PATH, SITE_FALLBACK_ORIGIN } from "./src/shared/config/site";
+import { copySrcImagesToDist } from "./src/integrations/copy-src-images-to-dist";
+import { viteServeSrcImages } from "./src/integrations/vite-serve-src-images";
+
+const docsPackageRoot = fileURLToPath(new URL(".", import.meta.url));
 
 // Astro and @tailwindcss/vite currently resolve different Vite type instances.
 const tailwindPlugins = tailwindcss() as unknown as NonNullable<NonNullable<AstroUserConfig["vite"]>["plugins"]>;
+const vitePlugins = [
+  viteServeSrcImages(docsPackageRoot),
+  ...(Array.isArray(tailwindPlugins) ? tailwindPlugins : [tailwindPlugins]),
+];
 
 export default defineConfig({
   site: SITE_FALLBACK_ORIGIN,
   base: SITE_BASE_PATH,
   output: "static",
   trailingSlash: "always",
-  integrations: [mdx(), sitemap()],
+  integrations: [mdx(), sitemap(), copySrcImagesToDist()],
   vite: {
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),
       },
     },
-    plugins: tailwindPlugins,
+    plugins: vitePlugins,
   },
   markdown: {
     syntaxHighlight: {

@@ -1,5 +1,5 @@
 import { isEligibleLightboxImage, pickResolvedImageUrl } from "@/features/image-lightbox/lib/eligibility";
-import { TOC_DRAWER } from "@/features/toc/lib/config";
+import { TOC_DRAWER_BODY_LOCK_CLASS } from "@/shared/config/body-scroll-lock";
 import {
   LIGHTBOX_CLOSE_BUTTON_CLASS,
   LIGHTBOX_CONTENT_CLASS,
@@ -24,7 +24,8 @@ interface MainInertSnapshot {
 
 const NOOP: Cleanup = () => {};
 const MAIN_CONTENT_SELECTOR = "#main-content";
-const TARGET_SELECTOR = "img";
+/** Scope lightbox to main content only (avoids header/footer chrome and duplicate work on large DOMs). */
+const CONTENT_IMAGE_SELECTOR = `${MAIN_CONTENT_SELECTOR} img`;
 const BOUND_ATTRIBUTE = "data-image-lightbox-bound";
 const LIGHTBOX_TITLE_ID = "image-lightbox-title";
 const MIN_SCALE = 1;
@@ -145,7 +146,7 @@ function createLightbox() {
     const { el, wasInert } = mainInertSnapshot;
     mainInertSnapshot = null;
     if (wasInert) return;
-    if (!document.body.classList.contains(TOC_DRAWER.bodyLockClass)) {
+    if (!document.body.classList.contains(TOC_DRAWER_BODY_LOCK_CLASS)) {
       el.removeAttribute("inert");
     }
   };
@@ -444,7 +445,9 @@ function createLightbox() {
 export function initImageLightbox(): Cleanup {
   if (!document.querySelector(MAIN_CONTENT_SELECTOR)) return NOOP;
 
-  const images = Array.from(document.querySelectorAll<HTMLImageElement>(TARGET_SELECTOR)).filter(isEligibleLightboxImage);
+  const images = Array.from(document.querySelectorAll<HTMLImageElement>(CONTENT_IMAGE_SELECTOR)).filter(
+    isEligibleLightboxImage,
+  );
   if (!images.length) return NOOP;
 
   const lightbox = createLightbox();

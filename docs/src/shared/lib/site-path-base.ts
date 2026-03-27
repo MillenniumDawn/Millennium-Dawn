@@ -7,7 +7,7 @@ export function normalizeSiteBase(rawBase: string | undefined): string {
   return rawBase.endsWith("/") ? rawBase.slice(0, -1) : rawBase;
 }
 
-/** Strip a normalized base prefix from a pathname; mirrors legacy `stripBase` / `stripPublicationBase` rules. */
+/** Strip a normalized base prefix from a pathname (same rules as `stripBase` in `urls.ts` and `stripPublicationBase` in `docs-content-paths`). */
 export function stripPathBase(pathname: string, baseNormalized: string): string {
   if (!pathname) return "/";
   if (!baseNormalized) return pathname;

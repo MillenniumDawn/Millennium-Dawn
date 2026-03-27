@@ -27,7 +27,7 @@ Open the local site using the URL shown in the `astro dev` output.
 - Changelogs: `src/content/changelogSections/*.md`
 - Tutorials: `src/content/tutorials/*.md`
 - Resources: `src/content/resources/*.md`
-- Dev diaries: `src/content/devDiaries/*.md`
+- Dev diaries: `src/content/devDiaries/*.{md,mdx}` (MDX recommended so markdown images use `MarkdownImage` / `Picture`; plain `.md` compiles to HTML only)
 - Misc: `src/content/misc/*.md`
 
 ## Important Rules
@@ -37,6 +37,16 @@ Open the local site using the URL shown in the `astro dev` output.
 - Do not use Liquid (`{% ... %}` / `{{ ... }}`).
 - Use root-relative paths for internal links: `/tutorials/`, `/countries/germany/`.
 - Do not manually add the `/Millennium-Dawn` prefix.
+
+## Images and static files
+
+Raster images for the docs site are stored **only** under **`docs/src/assets/images/`**. In Markdown and YAML, keep using root-relative paths such as `/assets/images/flags/germany.png`; the build resolves them through the Astro asset pipeline (`getInternalImageAsset`, `Picture` / `getImage`) so optimized output does not rely on a duplicate tree under `public/`.
+
+**`public/`** is for assets that are not part of that pipeline — for example **`public/assets/downloads/...`** (zip archives). Do not add new tracked files under `docs/public/assets/images/`; that directory should stay empty in git.
+
+After `astro build`, the integration in `src/integrations/copy-src-images-to-dist.ts` copies `src/assets/images/**` into `dist/assets/images/**` so any HTML that still uses root-relative `/assets/images/...` (for example markdown `<img>` fallbacks) resolves in `check:links` and on static hosting. Treat **`dist/assets/images` as owned by that step**: it is wiped and repopulated each build, so nothing else should write there.
+
+CI runs `python3 docs/scripts/check_docs_hygiene.py` (from the repo root) against `docs/public/assets/images/`, `docs/public/assets/downloads/`, and `docs/src/assets/images/`. It fails if a tracked asset is never referenced from other docs sources using `/assets/images/...`, `@/assets/images/...`, or a `src/assets/images/...` path string. Remove unused files or add an explicit entry to `ALLOW_UNUSED_ASSETS` in that script only when keeping an unreferenced file is intentional.
 
 ## Frontmatter Template (Regular Page)
 

@@ -6,6 +6,8 @@ import { resolveLocalRasterImageFile } from "./docs-content-paths";
 
 const RASTER_EXT = /\.(png|jpe?g|webp|avif|gif)$/i;
 
+const dimensionCache = new Map<string, { width: number; height: number }>();
+
 /**
  * Inject `width`/`height` on `<img>` for resolvable local rasters so layout is stable before paint.
  * Pages that render markdown via `MarkdownImage` may still get dimensions here from the hast pipeline;
@@ -26,17 +28,23 @@ export function rehypeImageDimensions(): (tree: Root) => void {
       const fsPath = resolveLocalRasterImageFile(src);
       if (!fsPath || !RASTER_EXT.test(fsPath)) return;
 
-      try {
-        const dim = imageSize(readFileSync(fsPath));
-        if (!dim.width || !dim.height) return;
-        node.properties = {
-          ...node.properties,
-          width: String(dim.width),
-          height: String(dim.height),
-        };
-      } catch {
-        /* ignore missing or corrupt files */
+      let dim = dimensionCache.get(fsPath);
+      if (!dim) {
+        try {
+          const read = imageSize(readFileSync(fsPath));
+          if (!read.width || !read.height) return;
+          dim = { width: read.width, height: read.height };
+          dimensionCache.set(fsPath, dim);
+        } catch {
+          return;
+        }
       }
+
+      node.properties = {
+        ...node.properties,
+        width: String(dim.width),
+        height: String(dim.height),
+      };
     });
   };
 }
