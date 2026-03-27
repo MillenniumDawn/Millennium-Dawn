@@ -11,6 +11,7 @@ import { remarkRootRelativeToBase } from "./src/shared/lib/remark-root-relative"
 import { rehypeTailwindContent } from "./src/shared/lib/rehype-tailwind-content";
 import { rehypePreWrapper } from "./src/shared/lib/rehype-pre-wrapper";
 import { rehypeImgAlt } from "./src/shared/lib/rehype-img-alt";
+import { rehypeImageDimensions } from "./src/shared/lib/rehype-image-dimensions";
 import { rehypeTableScope } from "./src/shared/lib/rehype-table-scope";
 import { rehypeTableWrapper } from "./src/shared/lib/rehype-table-wrapper";
 import { hoiscriptLanguage } from "./src/shared/lib/shiki-hoiscript";
@@ -44,6 +45,7 @@ export default defineConfig({
     remarkPlugins: [remarkDirective, remarkCountryDirectives, [remarkRootRelativeToBase, SITE_BASE_PATH]],
     rehypePlugins: [
       rehypeImgAlt,
+      rehypeImageDimensions,
       [
         rehypeExternalLinks,
         {

@@ -1,4 +1,4 @@
-import { isEligibleLightboxImage } from "@/features/image-lightbox/lib/eligibility";
+import { isEligibleLightboxImage, pickResolvedImageUrl } from "@/features/image-lightbox/lib/eligibility";
 import { TOC_DRAWER } from "@/features/toc/lib/config";
 import {
   LIGHTBOX_CLOSE_BUTTON_CLASS,
@@ -36,10 +36,6 @@ const SCROLLBAR_COMPENSATION_CSS_VAR = "--lightbox-scrollbar-compensation";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
-}
-
-function getImageSource(image: HTMLImageElement): string {
-  return image.currentSrc ?? image.src ?? image.getAttribute("src") ?? "";
 }
 
 function getImageLabel(image: HTMLImageElement): string {
@@ -85,7 +81,9 @@ function createLightbox() {
   overlay.innerHTML = `
     <h2 class="sr-only" id="${LIGHTBOX_TITLE_ID}"></h2>
     <button class="${LIGHTBOX_CLOSE_BUTTON_CLASS}" type="button" aria-label="Close image viewer" data-image-lightbox-close>
-      <span aria-hidden="true">×</span>
+      <svg class="size-6 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"></path>
+      </svg>
     </button>
     <div class="${LIGHTBOX_VIEWPORT_CLASS}" data-image-lightbox-viewport>
       <div class="${LIGHTBOX_CONTENT_CLASS}" data-image-lightbox-content>
@@ -239,7 +237,8 @@ function createLightbox() {
     pinchStartDistance = 0;
     pinchStartMidpoint = null;
     unlockBody();
-    activeTrigger?.focus();
+    // Restore focus for a11y without scrolling the page — `focus()` otherwise mimics scrollIntoView and fights `scrollTo(lockedScrollY)`.
+    activeTrigger?.focus({ preventScroll: true });
     activeTrigger = null;
   };
 
@@ -427,7 +426,7 @@ function createLightbox() {
       pinchStartDistance = 0;
       pinchStartMidpoint = null;
       unlockBody();
-      activeTrigger?.focus();
+      activeTrigger?.focus({ preventScroll: true });
       activeTrigger = null;
     }
   };
@@ -467,7 +466,7 @@ export function initImageLightbox(): Cleanup {
 
     const openImage = (event?: Event) => {
       event?.preventDefault();
-      const src = getImageSource(image);
+      const src = pickResolvedImageUrl(image);
       if (!src) return;
       lightbox.open(image, src, image.getAttribute("alt")?.trim() ?? "");
     };

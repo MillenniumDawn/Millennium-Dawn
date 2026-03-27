@@ -1,21 +1,29 @@
 import { access } from "node:fs/promises";
 import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { imageSizeFromFile } from "image-size/fromFile";
+import { getDocsPublicRoot } from "./docs-content-paths";
+import { isContainedInRoot } from "./fs-path-safety";
+import { normalizeSiteBase, stripPathBase } from "./site-path-base";
 
 interface PublicImageDimensions {
   width: number;
   height: number;
 }
 
-const publicRoot = fileURLToPath(new URL("../../../public", import.meta.url));
+const SITE_BASE_NORMALIZED = normalizeSiteBase(import.meta.env.BASE_URL);
+
 const sizeCache = new Map<string, Promise<PublicImageDimensions | null>>();
 
 async function readPublicImageDimensions(src: string): Promise<PublicImageDimensions | null> {
-  if (!src.startsWith("/") || src.startsWith("//")) return null;
+  const normalized = stripPathBase(src, SITE_BASE_NORMALIZED);
+  if (!normalized.startsWith("/") || normalized.startsWith("//")) return null;
 
-  const publicFilePath = resolve(publicRoot, `.${src}`);
-  if (!publicFilePath.startsWith(publicRoot)) return null;
+  const publicRoot = getDocsPublicRoot();
+  const segments = normalized.replace(/^\/+/, "").split("/").filter(Boolean);
+  if (segments.some((s) => s === "..")) return null;
+
+  const publicFilePath = resolve(publicRoot, ...segments);
+  if (!isContainedInRoot(publicRoot, publicFilePath)) return null;
 
   try {
     await access(publicFilePath);
@@ -31,10 +39,11 @@ async function readPublicImageDimensions(src: string): Promise<PublicImageDimens
 }
 
 export function getPublicImageDimensions(src: string): Promise<PublicImageDimensions | null> {
-  const cached = sizeCache.get(src);
+  const normalized = stripPathBase(src, SITE_BASE_NORMALIZED);
+  const cached = sizeCache.get(normalized);
   if (cached) return cached;
 
   const pending = readPublicImageDimensions(src);
-  sizeCache.set(src, pending);
+  sizeCache.set(normalized, pending);
   return pending;
 }

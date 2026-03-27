@@ -25,7 +25,7 @@ The first system you'll encounter is the **Balance of Power**, representing the 
 
 - **Le Peuple** — a broad, evolving coalition that has never taken one single form. In 2000 it is the FFS of **Hocine Aït Ahmed** — the independence war hero who spent decades calling out the system from inside it — and the RCD, the Kabyle Berberist movement fresh from the Black Spring and the _aârouch_ uprising of 2001, labour unions, independent journalists, and tens of thousands of ordinary citizens who mounted the localised street protests known as _protesta_ throughout the 2000s without any party ever managing to channel their anger into a unified political force. The Hirak of 2019 was not the beginning of this story — it was its loudest chapter yet.
 
-<img src="/assets/images/dev-diaries/055/bop_overview.png" alt="Algeria Balance of Power overview" class="mx-auto my-6 max-w-full" />
+![Algeria Balance of Power overview](/assets/images/dev-diaries/055/bop_overview.png)
 
 The bar starts at the center. Shift it far enough toward le Peuple and you trigger the **Democratic Surge** — Bouteflika falls, the opposition takes power, and Algeria enters a fragile transition. Shift it far enough toward le Pouvoir and the **Military Coup** fires — the generals formalize their grip and Algeria becomes a junta state.
 
@@ -33,7 +33,7 @@ Neither outcome is handed to you. Both require active work — and both carry re
 
 Warning events fire as you approach either extreme, giving you a last chance to course-correct before the regime-defining outcome triggers.
 
-<img src="/assets/images/dev-diaries/055/bop_warning.png" alt="Balance of Power warning event" class="mx-auto my-6 max-w-full" />
+![Balance of Power warning event](/assets/images/dev-diaries/055/bop_warning.png)
 
 ---
 
@@ -49,7 +49,7 @@ That dynamic — the civilian president as a managed facade while the real decis
 
 We track it through a single variable: **deep_state_power**, ranging from 0 to 30. It starts at 5 — the generals already have their fingers in everything — and grows passively every few weeks.
 
-<img src="/assets/images/dev-diaries/055/deep_state_variable.png" alt="Deep state power variable tooltip" class="mx-auto my-6 max-w-full" />
+![Deep state power variable tooltip](/assets/images/dev-diaries/055/deep_state_variable.png)
 
 As it crosses key thresholds, events force you to make increasingly difficult choices:
 
@@ -69,7 +69,7 @@ We want the player to feel the impossible arithmetic of Algerian governance: eve
 
 The four key positions are the **Prime Minister**, the **Minister of Defense**, the **Intelligence Chief**, and the **Interior Minister**. Each has multiple candidates with different tradeoff profiles. Appointing a hardline general to Defense brings military buy-in — but feeds the deep state variable. Appointing a civilian reformist does the opposite, and the brass will make their displeasure known.
 
-<img src="/assets/images/dev-diaries/055/cabinet_appointment.png" alt="Cabinet appointment event with candidate options" class="mx-auto my-6 max-w-full" />
+![Cabinet appointment event with candidate options](/assets/images/dev-diaries/055/cabinet_appointment.png)
 
 Loyalty decays naturally over time. When it drops below a critical threshold, a **Cabinet Disloyalty Crisis** fires — you dismiss, negotiate, or accept the fallout.
 
@@ -79,7 +79,7 @@ To give you a sense of why we built this the way we did — consider the real ca
 
 That is the machine we are modeling. Not a clean hierarchy. Not a stable authoritarian government you can optimize. A system that devours its own — where yesterday's intelligence chief is tomorrow's prisoner, and where the most powerful men in the country can find themselves fleeing on a speedboat because they know too much.
 
-<img src="/assets/images/dev-diaries/055/cabinet.png" alt="Cabinet Overview" class="mx-auto my-6 max-w-full" />
+![Cabinet Overview](/assets/images/dev-diaries/055/cabinet.png)
 
 ---
 

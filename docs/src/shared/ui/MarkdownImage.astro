@@ -1,6 +1,6 @@
 ---
 import ResponsiveImage from "@/shared/ui/ResponsiveImage.astro";
-import { withBase } from "@/shared/lib/urls";
+import { stripBase, withBase } from "@/shared/lib/urls";
 import { getPublicImageDimensions } from "@/shared/lib/public-image-size";
 import { getInternalImageAsset } from "@/shared/lib/image-assets";
 
@@ -34,13 +34,15 @@ function parseDimension(value: number | string | undefined): number | undefined 
 
 const explicitWidth = parseDimension(width);
 const explicitHeight = parseDimension(height);
-const internalAsset = getInternalImageAsset(src);
+/** Paths are often prefixed with `SITE_BASE` by remark; public disk + asset map use root-relative `/assets/...`. */
+const assetSrc = stripBase(src);
+const internalAsset = getInternalImageAsset(assetSrc);
 const inferredDimensions =
   explicitWidth && explicitHeight
     ? null
     : internalAsset
       ? { width: internalAsset.width, height: internalAsset.height }
-      : await getPublicImageDimensions(src);
+      : await getPublicImageDimensions(assetSrc);
 const resolvedWidth = explicitWidth ?? inferredDimensions?.width;
 const resolvedHeight = explicitHeight ?? inferredDimensions?.height;
 const resolvedClassName = className?.trim();
@@ -52,7 +54,7 @@ const imgAttrs = isDecorative ? { "aria-hidden": "true" as const, role: "present
 {
   canUseResponsiveImage ? (
     <ResponsiveImage
-      src={internalAsset ?? src}
+      src={internalAsset ?? assetSrc}
       alt={alt}
       decorative={isDecorative}
       width={resolvedWidth}

@@ -1,11 +1,7 @@
 import type { ImageMetadata } from "astro";
 import { resolveImageSource } from "@/shared/lib/image-assets";
 import { SITE_FALLBACK_ORIGIN } from "@/shared/config/site";
-
-function normalizeBase(rawBase: string | undefined): string {
-  if (!rawBase || rawBase === "/") return "";
-  return rawBase.endsWith("/") ? rawBase.slice(0, -1) : rawBase;
-}
+import { normalizeSiteBase, stripPathBase } from "@/shared/lib/site-path-base";
 
 function normalizeOrigin(rawSite: string | undefined): string {
   const site = rawSite ?? SITE_FALLBACK_ORIGIN;
@@ -13,7 +9,7 @@ function normalizeOrigin(rawSite: string | undefined): string {
 }
 
 export const SITE_ORIGIN = normalizeOrigin(import.meta.env.SITE);
-export const SITE_BASE = normalizeBase(import.meta.env.BASE_URL);
+export const SITE_BASE = normalizeSiteBase(import.meta.env.BASE_URL);
 
 const ABSOLUTE_SCHEME = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
 
@@ -36,14 +32,7 @@ export function cssUrl(path: string | ImageMetadata): string {
 }
 
 export function stripBase(pathname: string): string {
-  if (!pathname) return "/";
-  if (!SITE_BASE) return pathname;
-  if (pathname === SITE_BASE) return "/";
-  if (pathname.startsWith(`${SITE_BASE}/`)) {
-    const sliced = pathname.slice(SITE_BASE.length);
-    return sliced.startsWith("/") ? sliced : `/${sliced}`;
-  }
-  return pathname;
+  return stripPathBase(pathname, SITE_BASE);
 }
 
 export function ensureTrailingSlash(pathname: string): string {

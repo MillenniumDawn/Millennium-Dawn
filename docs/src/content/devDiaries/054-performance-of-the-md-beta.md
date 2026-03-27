@@ -38,7 +38,7 @@ GPU: NVIDIA GeForce RTX 4070
 | Weekly  |          404 |          113 |       72.0% |
 | Monthly |          445 |          212 |       52.4% |
 
-<img src="/assets/images/dev-diaries/054/image-01.png" alt="In-game tick rate display" class="mx-auto my-6 max-w-full" />
+![In-game tick rate display](/assets/images/dev-diaries/054/image-01.png)
 
 As you can see, we have made substantial changes that have yielded insanely high performance improvements without removing or losing any content.
 
@@ -84,9 +84,9 @@ Unfortunately, performance work is not that glamorous, but the results speak for
 
 Now with that out of the way, the Generic Tree. Everyone loves to play the Generic tree alongside the custom country content, but it has always lagged a bit behind the main mod when it comes to new systems and features we have developed. This left an unfortunate gap for those nations that were not expected to receive dedicated content any time soon.
 
-<img src="/assets/images/dev-diaries/054/image-02.png" alt="Generic tree economy branch" class="mx-auto my-6 max-w-full" />
+![Generic tree economy branch](/assets/images/dev-diaries/054/image-02.png)
 
-<img src="/assets/images/dev-diaries/054/image-03.png" alt="Generic tree military branch" class="mx-auto my-6 max-w-full" />
+![Generic tree military branch](/assets/images/dev-diaries/054/image-03.png)
 
 Part 1 of the Generic Tree Expansion brings both an economy branch and a military branch, giving those nations a meaningful foundation to build from and bringing them up to speed with the rest of the mod.
 This change should make the Generic Nations a bit more competitive with all the extra content we have added to allow them to participate with all the new content without being left behind.
