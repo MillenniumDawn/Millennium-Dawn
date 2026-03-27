@@ -197,7 +197,7 @@ export function createViewportInteractions(opts: ViewportInteractionsOptions): V
     viewport.addEventListener("pointermove", onPointerMove);
     viewport.addEventListener("pointerup", onPointerEnd);
     viewport.addEventListener("pointercancel", onPointerEnd);
-    viewport.addEventListener("pointerleave", onPointerEnd);
+    viewport.addEventListener("lostpointercapture", onPointerEnd);
     viewport.addEventListener("dblclick", onViewportDoubleClick);
     image.addEventListener("load", onImageLoad);
     overlay.addEventListener("keydown", onKeyDown);
@@ -209,7 +209,7 @@ export function createViewportInteractions(opts: ViewportInteractionsOptions): V
     viewport.removeEventListener("pointermove", onPointerMove);
     viewport.removeEventListener("pointerup", onPointerEnd);
     viewport.removeEventListener("pointercancel", onPointerEnd);
-    viewport.removeEventListener("pointerleave", onPointerEnd);
+    viewport.removeEventListener("lostpointercapture", onPointerEnd);
     viewport.removeEventListener("dblclick", onViewportDoubleClick);
     image.removeEventListener("load", onImageLoad);
     overlay.removeEventListener("keydown", onKeyDown);

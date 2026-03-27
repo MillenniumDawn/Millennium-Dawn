@@ -1,3 +1,4 @@
+import { splitClassList } from "@/shared/lib/dom/class-list";
 import { LIGHTBOX_TRIGGER_IMAGE_CLASS } from "@/shared/ui/tailwind";
 import { isEligibleLightboxImage, pickResolvedImageUrl } from "./lightbox-eligibility";
 import { createBodyScrollLock } from "./body-scroll-lock";
@@ -15,6 +16,8 @@ import { createViewportInteractions } from "./viewport-interactions";
 type Cleanup = () => void;
 
 const NOOP: Cleanup = () => {};
+
+const LIGHTBOX_TRIGGER_CLASSES = splitClassList(LIGHTBOX_TRIGGER_IMAGE_CLASS);
 
 function getImageLabel(image: HTMLImageElement): string {
   const alt = image.getAttribute("alt")?.trim();
@@ -144,7 +147,7 @@ export function initImageLightbox(): Cleanup {
     if (image.hasAttribute(BOUND_ATTRIBUTE)) return;
 
     image.setAttribute(BOUND_ATTRIBUTE, "true");
-    image.classList.add(...LIGHTBOX_TRIGGER_IMAGE_CLASS.split(" "));
+    image.classList.add(...LIGHTBOX_TRIGGER_CLASSES);
 
     if (!image.closest("a")) {
       image.tabIndex = 0;
@@ -171,7 +174,7 @@ export function initImageLightbox(): Cleanup {
     cleanups.push(() => {
       image.removeEventListener("click", openImage);
       image.removeEventListener("keydown", onKeyDown);
-      image.classList.remove(...LIGHTBOX_TRIGGER_IMAGE_CLASS.split(" "));
+      image.classList.remove(...LIGHTBOX_TRIGGER_CLASSES);
       image.removeAttribute(BOUND_ATTRIBUTE);
 
       if (image.getAttribute("role") === "button") {

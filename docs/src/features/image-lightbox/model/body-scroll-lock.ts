@@ -1,7 +1,8 @@
+import { splitClassList } from "@/shared/lib/dom/class-list";
 import { LIGHTBOX_LOCK_BODY_CLASS } from "@/shared/ui/tailwind";
 import { SCROLL_TOP_CSS_VAR, SCROLLBAR_COMPENSATION_CSS_VAR } from "./constants";
 
-const LOCK_BODY_CLASSES = LIGHTBOX_LOCK_BODY_CLASS.split(" ").filter(Boolean);
+const LOCK_BODY_CLASSES = splitClassList(LIGHTBOX_LOCK_BODY_CLASS);
 
 export function createBodyScrollLock() {
   let lockedScrollY = 0;
