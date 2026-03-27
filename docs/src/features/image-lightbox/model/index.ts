@@ -1,3 +1,5 @@
+import { isEligibleLightboxImage } from "@/features/image-lightbox/lib/eligibility";
+import { TOC_DRAWER } from "@/features/toc/lib/config";
 import {
   LIGHTBOX_CLOSE_BUTTON_CLASS,
   LIGHTBOX_CONTENT_CLASS,
@@ -15,10 +17,16 @@ interface Point {
   y: number;
 }
 
+interface MainInertSnapshot {
+  el: HTMLElement;
+  wasInert: boolean;
+}
+
 const NOOP: Cleanup = () => {};
-const ROOT_SELECTOR = "#main-content";
+const MAIN_CONTENT_SELECTOR = "#main-content";
 const TARGET_SELECTOR = "img";
 const BOUND_ATTRIBUTE = "data-image-lightbox-bound";
+const LIGHTBOX_TITLE_ID = "image-lightbox-title";
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
 const WHEEL_STEP = 0.2;
@@ -28,13 +36,6 @@ const SCROLLBAR_COMPENSATION_CSS_VAR = "--lightbox-scrollbar-compensation";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
-}
-
-function isEligibleImage(image: HTMLImageElement): boolean {
-  if (image.closest("[data-lightbox-ignore], dialog, button")) return false;
-  const src = image.currentSrc ?? image.getAttribute("src") ?? "";
-  if (!src.trim()) return false;
-  return true;
 }
 
 function getImageSource(image: HTMLImageElement): string {
@@ -73,16 +74,21 @@ function getBaseImageSize(image: HTMLImageElement, viewport: HTMLElement): { wid
 function createLightbox() {
   const overlay = document.createElement("div");
   overlay.className = LIGHTBOX_OVERLAY_CLASS;
+  overlay.setAttribute("data-image-lightbox-overlay", "");
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
+  overlay.setAttribute("aria-labelledby", LIGHTBOX_TITLE_ID);
   overlay.hidden = true;
   overlay.dataset.state = "closed";
   overlay.dataset.zoomed = "false";
   overlay.setAttribute("aria-hidden", "true");
   overlay.innerHTML = `
+    <h2 class="sr-only" id="${LIGHTBOX_TITLE_ID}"></h2>
     <button class="${LIGHTBOX_CLOSE_BUTTON_CLASS}" type="button" aria-label="Close image viewer" data-image-lightbox-close>
       <span aria-hidden="true">×</span>
     </button>
     <div class="${LIGHTBOX_VIEWPORT_CLASS}" data-image-lightbox-viewport>
-      <div class="${LIGHTBOX_CONTENT_CLASS}">
+      <div class="${LIGHTBOX_CONTENT_CLASS}" data-image-lightbox-content>
         <img class="${LIGHTBOX_IMAGE_CLASS}" alt="" draggable="false" data-image-lightbox-image />
       </div>
     </div>
@@ -90,11 +96,12 @@ function createLightbox() {
 
   document.body.append(overlay);
 
+  const titleEl = overlay.querySelector<HTMLHeadingElement>(`#${LIGHTBOX_TITLE_ID}`);
   const viewport = overlay.querySelector<HTMLElement>("[data-image-lightbox-viewport]");
   const image = overlay.querySelector<HTMLImageElement>("[data-image-lightbox-image]");
   const closeButton = overlay.querySelector<HTMLButtonElement>("[data-image-lightbox-close]");
 
-  if (!viewport || !image || !closeButton) {
+  if (!titleEl || !viewport || !image || !closeButton) {
     overlay.remove();
     return null;
   }
@@ -105,6 +112,7 @@ function createLightbox() {
   let activeTrigger: HTMLElement | null = null;
   let closeTimer = 0;
   let lockedScrollY = 0;
+  let bodyScrollLocked = false;
   let dragPointerId: number | null = null;
   let dragLastPoint: Point | null = null;
   let pinchStartDistance = 0;
@@ -113,11 +121,54 @@ function createLightbox() {
   let pinchStartMidpoint: Point | null = null;
   const pointers = new Map<number, Point>();
 
+  let mainInertSnapshot: MainInertSnapshot | null = null;
+  let focusTrapHandler: ((event: FocusEvent) => void) | null = null;
+
   const clearCloseTimer = () => {
     if (closeTimer) {
       window.clearTimeout(closeTimer);
       closeTimer = 0;
     }
+  };
+
+  const applyMainInertOnOpen = () => {
+    const main = document.querySelector<HTMLElement>(MAIN_CONTENT_SELECTOR);
+    if (!main) {
+      mainInertSnapshot = null;
+      return;
+    }
+    const wasInert = main.hasAttribute("inert");
+    if (!wasInert) main.setAttribute("inert", "");
+    mainInertSnapshot = { el: main, wasInert };
+  };
+
+  const restoreMainInertAfterClose = () => {
+    if (!mainInertSnapshot) return;
+    const { el, wasInert } = mainInertSnapshot;
+    mainInertSnapshot = null;
+    if (wasInert) return;
+    if (!document.body.classList.contains(TOC_DRAWER.bodyLockClass)) {
+      el.removeAttribute("inert");
+    }
+  };
+
+  const attachFocusTrap = () => {
+    if (focusTrapHandler) return;
+    focusTrapHandler = (event: FocusEvent) => {
+      if (overlay.hidden) return;
+      const target = event.target as Node | null;
+      if (target && overlay.contains(target)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeButton.focus();
+    };
+    document.addEventListener("focusin", focusTrapHandler, true);
+  };
+
+  const detachFocusTrap = () => {
+    if (!focusTrapHandler) return;
+    document.removeEventListener("focusin", focusTrapHandler, true);
+    focusTrapHandler = null;
   };
 
   const clampOffsets = (nextScale: number, nextOffsetX: number, nextOffsetY: number) => {
@@ -157,6 +208,7 @@ function createLightbox() {
   };
 
   const lockBody = () => {
+    bodyScrollLocked = true;
     lockedScrollY = window.scrollY;
     const scrollbarCompensation = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
     document.body.style.setProperty(SCROLL_TOP_CSS_VAR, `-${lockedScrollY}px`);
@@ -165,6 +217,8 @@ function createLightbox() {
   };
 
   const unlockBody = () => {
+    if (!bodyScrollLocked) return;
+    bodyScrollLocked = false;
     document.body.classList.remove(...LIGHTBOX_LOCK_BODY_CLASS.split(" "));
     document.body.style.removeProperty(SCROLL_TOP_CSS_VAR);
     document.body.style.removeProperty(SCROLLBAR_COMPENSATION_CSS_VAR);
@@ -172,6 +226,8 @@ function createLightbox() {
   };
 
   const finishClose = () => {
+    detachFocusTrap();
+    restoreMainInertAfterClose();
     overlay.hidden = true;
     overlay.dataset.state = "closed";
     overlay.setAttribute("aria-hidden", "true");
@@ -197,11 +253,14 @@ function createLightbox() {
   const open = (trigger: HTMLElement, src: string, alt: string) => {
     clearCloseTimer();
     activeTrigger = trigger;
+    titleEl.textContent = alt.trim() ? alt : "Image";
     image.src = src;
     image.alt = alt;
     overlay.hidden = false;
     overlay.dataset.state = "closed";
-    overlay.setAttribute("aria-hidden", "false");
+    overlay.removeAttribute("aria-hidden");
+    applyMainInertOnOpen();
+    attachFocusTrap();
     lockBody();
     resetTransform();
 
@@ -296,6 +355,12 @@ function createLightbox() {
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "Tab") {
+      event.preventDefault();
+      closeButton.focus();
+      return;
+    }
+
     if (event.key === "Escape") {
       event.preventDefault();
       close();
@@ -332,32 +397,55 @@ function createLightbox() {
   viewport.addEventListener("dblclick", onViewportDoubleClick);
   image.addEventListener("load", onImageLoad);
 
+  const removeAllListeners = () => {
+    closeButton.removeEventListener("click", close);
+    overlay.removeEventListener("click", onOverlayClick);
+    overlay.removeEventListener("keydown", onKeyDown);
+    viewport.removeEventListener("wheel", onWheel);
+    viewport.removeEventListener("pointerdown", onPointerDown);
+    viewport.removeEventListener("pointermove", onPointerMove);
+    viewport.removeEventListener("pointerup", onPointerEnd);
+    viewport.removeEventListener("pointercancel", onPointerEnd);
+    viewport.removeEventListener("pointerleave", onPointerEnd);
+    viewport.removeEventListener("dblclick", onViewportDoubleClick);
+    image.removeEventListener("load", onImageLoad);
+  };
+
+  const syncTeardown = () => {
+    clearCloseTimer();
+    detachFocusTrap();
+    restoreMainInertAfterClose();
+    if (!overlay.hidden) {
+      overlay.hidden = true;
+      overlay.dataset.state = "closed";
+      overlay.setAttribute("aria-hidden", "true");
+      image.removeAttribute("src");
+      resetTransform();
+      pointers.clear();
+      dragPointerId = null;
+      dragLastPoint = null;
+      pinchStartDistance = 0;
+      pinchStartMidpoint = null;
+      unlockBody();
+      activeTrigger?.focus();
+      activeTrigger = null;
+    }
+  };
+
   return {
     open,
     destroy: () => {
-      clearCloseTimer();
-      closeButton.removeEventListener("click", close);
-      overlay.removeEventListener("click", onOverlayClick);
-      overlay.removeEventListener("keydown", onKeyDown);
-      viewport.removeEventListener("wheel", onWheel);
-      viewport.removeEventListener("pointerdown", onPointerDown);
-      viewport.removeEventListener("pointermove", onPointerMove);
-      viewport.removeEventListener("pointerup", onPointerEnd);
-      viewport.removeEventListener("pointercancel", onPointerEnd);
-      viewport.removeEventListener("pointerleave", onPointerEnd);
-      viewport.removeEventListener("dblclick", onViewportDoubleClick);
-      image.removeEventListener("load", onImageLoad);
-      unlockBody();
+      syncTeardown();
+      removeAllListeners();
       overlay.remove();
     },
   };
 }
 
 export function initImageLightbox(): Cleanup {
-  const root = document.querySelector<HTMLElement>(ROOT_SELECTOR);
-  if (!root) return NOOP;
+  if (!document.querySelector(MAIN_CONTENT_SELECTOR)) return NOOP;
 
-  const images = Array.from(root.querySelectorAll<HTMLImageElement>(TARGET_SELECTOR)).filter(isEligibleImage);
+  const images = Array.from(document.querySelectorAll<HTMLImageElement>(TARGET_SELECTOR)).filter(isEligibleLightboxImage);
   if (!images.length) return NOOP;
 
   const lightbox = createLightbox();
