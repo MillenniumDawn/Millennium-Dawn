@@ -321,12 +321,11 @@ def main():
     logger.info("The script took {0} second!".format(time.time() - startTime))
 
     # GitLab integration (only if not disabled and environment variables exist)
-    if not args.no_gitlab:
-        try:
-            projectId = os.environ["CI_PROJECT_ID"]
-            # Try to get private token from args or fallback to command line argument
-            privateToken = os.environ.get("BOT_TOKEN")
+    projectId = os.environ.get("CI_PROJECT_ID")
+    if not args.no_gitlab and projectId:
+        privateToken = os.environ.get("BOT_TOKEN")
 
+        try:
             if privateToken and postResults:
                 headers = {"PRIVATE-TOKEN": privateToken}
                 payload = {"body": message}
@@ -357,8 +356,6 @@ def main():
                     print("Posted results to commit")
             elif not postResults:
                 print("File validation passed Coding Standards: SUCCESS")
-        except KeyError:
-            logger.info("Not in GitLab CI environment, skipping GitLab integration")
         except Exception:
             print("Couldn't post results to gitlab")
 

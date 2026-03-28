@@ -649,44 +649,43 @@ def main():
 
     print("The script took {0} second!".format(time.time() - startTime))
 
-    try:
-        projectId = os.environ["CI_PROJECT_ID"]
+    projectId = os.environ.get("CI_PROJECT_ID")
+    if projectId:
         privateToken = os.environ.get("BOT_TOKEN")
         headers = {"PRIVATE-TOKEN": privateToken}
         payload = {"body": message}
 
-        if postResults and privateToken:
-            if "CI_MERGE_REQUEST_IID" in os.environ:
-                mergeRequestId = os.environ["CI_MERGE_REQUEST_IID"]
-                r = requests.post(
-                    "https://gitlab.com/api/v4/projects/"
-                    + projectId
-                    + "/merge_requests/"
-                    + mergeRequestId
-                    + "/discussions",
-                    data=payload,
-                    headers=headers,
-                )
-                print("Posted results to merge request")
+        try:
+            if postResults and privateToken:
+                if "CI_MERGE_REQUEST_IID" in os.environ:
+                    mergeRequestId = os.environ["CI_MERGE_REQUEST_IID"]
+                    r = requests.post(
+                        "https://gitlab.com/api/v4/projects/"
+                        + projectId
+                        + "/merge_requests/"
+                        + mergeRequestId
+                        + "/discussions",
+                        data=payload,
+                        headers=headers,
+                    )
+                    print("Posted results to merge request")
 
-            else:
-                commitID = os.environ["CI_COMMIT_SHA"]
-                r = requests.post(
-                    "https://gitlab.com/api/v4/projects/"
-                    + projectId
-                    + "/commits/"
-                    + commitID
-                    + "/discussions",
-                    data=payload,
-                    headers=headers,
-                )
-                print("Posted results to commit")
-        elif not postResults:
-            print("File validation passed Coding Standards: SUCCESS")
-    except KeyError:
-        pass  # Not in GitLab CI environment
-    except Exception:
-        print("Couldn't post results to gitlab")
+                else:
+                    commitID = os.environ["CI_COMMIT_SHA"]
+                    r = requests.post(
+                        "https://gitlab.com/api/v4/projects/"
+                        + projectId
+                        + "/commits/"
+                        + commitID
+                        + "/discussions",
+                        data=payload,
+                        headers=headers,
+                    )
+                    print("Posted results to commit")
+            elif not postResults:
+                print("File validation passed Coding Standards: SUCCESS")
+        except Exception:
+            print("Couldn't post results to gitlab")
 
     return error_count
 
