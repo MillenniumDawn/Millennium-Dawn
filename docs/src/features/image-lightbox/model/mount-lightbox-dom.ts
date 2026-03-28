@@ -27,7 +27,7 @@ export function mountLightboxDom(): LightboxDomRefs | null {
   overlay.dataset.zoomed = "false";
   overlay.setAttribute("aria-hidden", "true");
   overlay.innerHTML = `
-    <h2 class="sr-only" id="${LIGHTBOX_TITLE_ID}"></h2>
+    <h2 class="sr-only pointer-events-none absolute left-0 top-0 m-0 border-0 p-0" id="${LIGHTBOX_TITLE_ID}"></h2>
     <button class="${LIGHTBOX_CLOSE_BUTTON_CLASS}" type="button" aria-label="Close image viewer" data-image-lightbox-close>
       <svg class="size-6 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
         <path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"></path>
