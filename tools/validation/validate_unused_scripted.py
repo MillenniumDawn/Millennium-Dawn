@@ -9,12 +9,16 @@
 import glob
 import os
 import re
-from multiprocessing import Pool
 from pathlib import Path
 from typing import List, Set, Tuple
 
-from shared_utils import strip_comments
-from validator_common import BaseValidator, Colors, run_validator_main, should_skip_file
+from validator_common import (
+    BaseValidator,
+    Colors,
+    run_validator_main,
+    should_skip_file,
+    strip_comments,
+)
 
 # Names that are HOI4 built-in blocks and should not be treated as definitions
 BUILTIN_BLOCKS = frozenset(
@@ -205,31 +209,22 @@ class Validator(BaseValidator):
         if not os.path.isdir(search_path):
             return []
 
-        files = list(glob.iglob(search_path + "/**/*.txt", recursive=True))
-        files = [f for f in files if not should_skip_file(f)]
-
         if self.staged_files:
+            files = list(glob.iglob(search_path + "/**/*.txt", recursive=True))
+            files = [f for f in files if not should_skip_file(f)]
             staged_set = set(self.staged_files)
             files = [f for f in files if f in staged_set]
+        else:
+            files = self._collect_files([f"common/{subdir}/**/*.txt"])
 
         args_list = [(f, self.mod_path) for f in files]
-        with Pool(processes=self.workers) as pool:
-            all_results = pool.map(extract_definitions, args_list, chunksize=10)
+        all_results = self._pool_map(extract_definitions, args_list, chunksize=10)
 
         definitions = []
         for result in all_results:
             definitions.extend(result)
 
         return definitions
-
-    def _collect_all_txt_files(self) -> List[str]:
-        """Collect all .txt files in the mod directory to scan for usages."""
-        all_files = []
-        for pattern in ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]:
-            all_files.extend(
-                glob.iglob(os.path.join(self.mod_path, pattern), recursive=True)
-            )
-        return [f for f in all_files if not should_skip_file(f)]
 
     def _find_unused(
         self, definitions: List[Tuple[str, str, int]], kind: str, def_subdir: str
@@ -248,17 +243,23 @@ class Validator(BaseValidator):
         all_names = {d[0] for d in definitions}
 
         # Scan all txt files for usages
-        all_files = self._collect_all_txt_files()
+        all_files = self._collect_files(
+            [
+                "common/**/*.txt",
+                "events/**/*.txt",
+                "history/**/*.txt",
+            ]
+        )
 
         # Split files into "definition files" and "other files"
         def_dir = f"common/{def_subdir}/"
-        other_files = [f for f in all_files if def_dir not in f.replace("\\", "/")]
-        def_files = [f for f in all_files if def_dir in f.replace("\\", "/")]
+        other_files, def_files = [], []
+        for f in all_files:
+            (def_files if def_dir in f.replace("\\", "/") else other_files).append(f)
 
         # First pass: find all names used in non-definition files
         args_list = [(f, all_names) for f in other_files]
-        with Pool(processes=self.workers) as pool:
-            results = pool.map(scan_file_for_usages, args_list, chunksize=50)
+        results = self._pool_map(scan_file_for_usages, args_list)
 
         used_names = set()
         for found in results:
@@ -269,8 +270,7 @@ class Validator(BaseValidator):
         remaining = all_names - used_names
         if remaining:
             args_list = [(f, remaining) for f in def_files]
-            with Pool(processes=self.workers) as pool:
-                results = pool.map(scan_file_for_usages, args_list, chunksize=10)
+            results = self._pool_map(scan_file_for_usages, args_list, chunksize=10)
 
             # For each name found in definition files, check if it appears
             # more than just its own definition (i.e., it's called somewhere)
