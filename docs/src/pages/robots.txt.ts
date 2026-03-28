@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { SITE_BASE } from "@/shared/lib/urls";
+import { SITE_BASE } from "@/shared/lib/routing/urls";
 import { SITE_FALLBACK_ORIGIN } from "@/shared/config/site";
 
 export const GET: APIRoute = ({ site }) => {
