@@ -60,6 +60,14 @@ MOR.conservatism_desc: "(Classic Liberalism) - National Rally of Independents (A
 - Name (`name: "..."`) should be title-cased, concise (3–6 words typical).
 - Description should explain what the idea represents in 1–3 sentences. Do not repeat modifier values verbatim; describe their political or economic meaning.
 
+## YAML Validity
+
+HOI4 localisation files are checked by `check-yaml` in the pre-commit hook. The HOI4 format is not strict YAML, so several patterns cause parse failures:
+
+- **Embedded double quotes**: `"He called it "important""` is invalid. Use `\"important\"` for emphasis, or rephrase to remove the inner quotes entirely.
+- **Mixed indentation**: All keys in a file must be consistently indented (all with 1 leading space, or all without). Mixing indented and non-indented keys in the same file causes YAML to see two separate mappings. Remove stray spaces to make indentation uniform.
+- **Colons in values**: A bare colon followed by a space inside a quoted string can confuse some parsers — wrap the value in quotes as usual and this is safe, but watch for unquoted values.
+
 ## Common Mistakes to Avoid
 
 | Wrong | Correct |
@@ -69,3 +77,40 @@ MOR.conservatism_desc: "(Classic Liberalism) - National Rally of Independents (A
 | `Pro-Western` mid-sentence as a standalone noun | `pro-Western` (adjective) |
 | Repeating the same sentence across multiple ideology descs | Unique body per entry |
 | Empty or placeholder strings like `"TODO"` | Always provide a complete string |
+| `"text "quoted word" more text"` | `"text \"quoted word\" more text"` |
+| Mixed indented/non-indented keys in same file | All keys at same indentation level |
+
+## Recurring Typo Watchlist
+
+These typos appear frequently across country files — check for them when reviewing:
+
+| Typo | Correct |
+|---|---|
+| `Estabilish` / `estabilish` | `Establish` / `establish` |
+| `innvoations` | `innovations` |
+| `irreperable` / `irrepairable` | `irreparable` |
+| `unenmployed` | `unemployed` |
+| `existance` | `existence` |
+| `effectivness` | `effectiveness` |
+| `disproportinate` | `disproportionate` |
+| `tarditions` | `traditions` |
+| `contrats` (used as contrast) | `by contrast` |
+| `Airforce` | `Air Force` |
+| `miltiary` | `military` |
+| `coaltion` | `coalition` |
+| `tumultous` | `tumultuous` |
+| `recgonized` | `recognized` |
+| `Propgramme` | `Programme` |
+| `poeple` | `people` |
+| `it's` (possessive) | `its` |
+| `Unloyal` | `Disloyal` |
+| `Isreal` | `Israel` |
+| `unrepairable` | `irreparable` |
+| `bocme` | `become` |
+| `hovewer` | `however` |
+| `acomplish` | `accomplish` |
+| `Endevours` | `Endeavours` |
+| `Quiantified` | `Quantified` |
+| `convering` | `converting` |
+| `encomapassing` | `encompassing` |
+| `fundamnetals` | `fundamentals` |
