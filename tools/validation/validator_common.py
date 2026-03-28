@@ -3,14 +3,12 @@
 # Shared Validation Infrastructure
 # Common classes, functions, and base validator used by all validation scripts
 ##########################
-import argparse
 import glob
 import logging
 import os
 import re
 import sys
 from multiprocessing import cpu_count
-from pathlib import Path
 from typing import Dict, List, Optional
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -168,71 +166,3 @@ class BaseValidator:
 
         self.save_output()
         return self.errors_found
-
-
-def create_argument_parser(description: str) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument(
-        "--path",
-        type=str,
-        default=".",
-        help="Path to the mod folder (default: current directory)",
-    )
-    parser.add_argument(
-        "--strict", action="store_true", help="Exit with error code if issues are found"
-    )
-    parser.add_argument(
-        "--output", "-o", type=str, help="Save validation results to file"
-    )
-    parser.add_argument(
-        "--no-color", action="store_true", help="Disable ANSI color codes in output"
-    )
-    parser.add_argument(
-        "--staged", action="store_true", help="Only validate git staged files"
-    )
-    parser.add_argument(
-        "--workers",
-        type=int,
-        default=None,
-        help=f"Number of worker processes (default: {max(1, cpu_count() // 2)})",
-    )
-    return parser
-
-
-def run_validator_main(
-    validator_class, description: str = "Run validation", extra_args_fn=None
-):
-    parser = create_argument_parser(description)
-    if extra_args_fn:
-        extra_args_fn(parser)
-    args = parser.parse_args()
-
-    mod_path = Path(args.path).resolve()
-    if not mod_path.exists():
-        logging.error(f"Error: Path does not exist: {mod_path}")
-        sys.exit(1)
-    if not mod_path.is_dir():
-        logging.error(f"Error: Path is not a directory: {mod_path}")
-        sys.exit(1)
-
-    kwargs = dict(
-        output_file=args.output,
-        use_colors=not args.no_color,
-        staged_only=args.staged,
-        workers=args.workers,
-    )
-    if extra_args_fn:
-        for key in vars(args):
-            if key not in ("path", "strict", "output", "no_color", "staged", "workers"):
-                kwargs[key] = getattr(args, key)
-
-    validator = validator_class(str(mod_path), **kwargs)
-    errors_found = validator.run_all_validations()
-
-    if args.strict and errors_found > 0:
-        sys.exit(1)
-    else:
-        sys.exit(0)

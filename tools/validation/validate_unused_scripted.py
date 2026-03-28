@@ -9,14 +9,17 @@
 import glob
 import os
 import re
-import sys
 from multiprocessing import Pool
 from pathlib import Path
 from typing import List, Set, Tuple
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from shared_utils import strip_comments
-from validator_common import BaseValidator, Colors, run_validator_main, should_skip_file
+from validator_common import (
+    BaseValidator,
+    Colors,
+    run_validator_main,
+    should_skip_file,
+    strip_comments,
+)
 
 # Names that are HOI4 built-in blocks and should not be treated as definitions
 BUILTIN_BLOCKS = frozenset(
