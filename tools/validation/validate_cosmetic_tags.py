@@ -12,7 +12,6 @@
 import glob
 import os
 import re
-from multiprocessing import Pool
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -48,8 +47,6 @@ def process_file_for_has_cosmetic_tag(
     args: Tuple[str, bool]
 ) -> Tuple[Dict[str, int], Dict[str, str]]:
     filename, lowercase = args
-    if _should_skip(filename):
-        return ({}, {})
     text_file = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
@@ -66,8 +63,6 @@ def process_file_for_has_cosmetic_tag(
 
 def process_file_for_set_cosmetic_tag(args: Tuple[str, bool]) -> Dict[str, int]:
     filename, lowercase, tags_to_find = args
-    if _should_skip(filename):
-        return {}
     text_file = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
@@ -84,8 +79,6 @@ def process_file_for_set_cosmetic_tag_defined(
     args: Tuple[str, bool]
 ) -> Tuple[Dict[str, int], Dict[str, str]]:
     filename, lowercase = args
-    if _should_skip(filename):
-        return ({}, {})
     text_file = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
@@ -103,11 +96,6 @@ class Validator(BaseValidator):
     TITLE = "COSMETIC TAG VALIDATION"
     STAGED_EXTENSIONS = [".txt", ".yml"]
 
-    def _get_txt_files(self) -> List[str]:
-        if self.staged_files:
-            return [f for f in self.staged_files if f.endswith(".txt")]
-        return list(glob.iglob(self.mod_path + "**/*.txt", recursive=True))
-
     def validate_missing_cosmetic_tags(self, false_positives: list):
         self.log(f"\n{'='*80}")
         self.log(
@@ -115,13 +103,10 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        files = self._get_txt_files()
+        files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
 
         args_list = [(f, False) for f in files]
-        with Pool(processes=self.workers) as pool:
-            results = pool.map(
-                process_file_for_has_cosmetic_tag, args_list, chunksize=50
-            )
+        results = self._pool_map(process_file_for_has_cosmetic_tag, args_list)
 
         cosmetic_tags = {}
         paths = {}
@@ -139,10 +124,7 @@ class Validator(BaseValidator):
 
         remaining_tags = list(cosmetic_tags.keys())
         args_list = [(f, False, remaining_tags) for f in files]
-        with Pool(processes=self.workers) as pool:
-            results = pool.map(
-                process_file_for_set_cosmetic_tag, args_list, chunksize=50
-            )
+        results = self._pool_map(process_file_for_set_cosmetic_tag, args_list)
 
         for counts in results:
             for tag, count in counts.items():
@@ -180,13 +162,10 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        files = self._get_txt_files()
+        files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
 
         args_list = [(f, False) for f in files]
-        with Pool(processes=self.workers) as pool:
-            results = pool.map(
-                process_file_for_set_cosmetic_tag_defined, args_list, chunksize=50
-            )
+        results = self._pool_map(process_file_for_set_cosmetic_tag_defined, args_list)
 
         cosmetic_tags = {}
         paths = {}
@@ -227,8 +206,6 @@ class Validator(BaseValidator):
                             break
 
         for filename in files:
-            if _should_skip(filename):
-                continue
             text_file = FileOpener.open_text_file(
                 filename, lowercase=False, strip_comments_flag=True
             )
@@ -313,10 +290,8 @@ class Validator(BaseValidator):
             cosmetic_tags, tuple(false_positives)
         )
 
-        files = self._get_txt_files()
+        files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
         for filename in files:
-            if _should_skip(filename):
-                continue
             text_file = FileOpener.open_text_file(
                 filename, lowercase=False, strip_comments_flag=True
             )

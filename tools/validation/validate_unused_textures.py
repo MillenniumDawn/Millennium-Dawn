@@ -37,7 +37,6 @@
 import glob
 import os
 import re
-from multiprocessing import Pool
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
@@ -287,9 +286,7 @@ class Validator(BaseValidator):
             for f in gfx_files
         ]
 
-        # Process files in parallel
-        with Pool(processes=self.workers) as pool:
-            all_results = pool.map(process_gfx_file, args_list, chunksize=10)
+        all_results = self._pool_map(process_gfx_file, args_list, chunksize=10)
 
         # Combine all results
         referenced_textures = set()
@@ -319,9 +316,7 @@ class Validator(BaseValidator):
         # Prepare arguments for multiprocessing
         args_list = [(f, self.mod_path, self.texture_files) for f in game_files]
 
-        # Process files in parallel
-        with Pool(processes=self.workers) as pool:
-            all_results = pool.map(process_game_file, args_list, chunksize=10)
+        all_results = self._pool_map(process_game_file, args_list, chunksize=10)
 
         # Combine all results
         matched_textures = set()

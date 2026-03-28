@@ -16,14 +16,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 permissions:
-  checks: write
   contents: read
   pull-requests: write
-  issues: write
 
 jobs:
   coding-standards:
@@ -32,22 +27,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         fetch-depth: 1
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
         python-version: '3.x'
 
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install requests
-
     - name: Run coding standards check
-      run: python tools/coding_standards.py ${{ secrets.BOT_TOKEN }}
+      run: python tools/coding_standards.py
 
   styling-check:
     name: Style Check
@@ -57,268 +47,80 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         fetch-depth: 1
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
         python-version: '3.x'
-
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install requests
 
     - name: Run style check
       run: |
-        python tools/check_basic_style.py --mode diff ${{ secrets.BOT_TOKEN }}
-        python tools/check_basic_style_2.py --mode diff ${{ secrets.BOT_TOKEN }}
+        python tools/check_basic_style.py --mode diff
+        python tools/check_basic_style_2.py --mode diff
 
-  validate-variables:
-    name: Validate Flags and Event Targets
+  validate:
+    name: Validate ${{ matrix.validator.title }}
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        validator:
+          - { script: validate_variables.py,            name: variables,            title: "Variables" }
+          - { script: validate_set_variables.py,        name: set-variables,        title: "Set Variables" }
+          - { script: validate_scripted_localisation.py, name: scripted-localisation, title: "Scripted Localisation" }
+          - { script: validate_cosmetic_tags.py,         name: cosmetic-tags,        title: "Cosmetic Tags" }
+          - { script: validate_decisions.py,             name: decisions,            title: "Decisions" }
+          - { script: validate_localisation.py,          name: localisation,         title: "Localisation" }
+          - { script: validate_events.py,                name: events,               title: "Events" }
+          - { script: validate_history_techs.py,         name: history-techs,        title: "History Technology Dependencies" }
+          - { script: validate_unused_scripted.py,       name: unused-scripted,      title: "Unused Scripted Effects & Triggers" }
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         fetch-depth: 1
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
         python-version: '3.x'
 
-    - name: Run variable validation
+    - name: Run validation
       run: |
-        python3 tools/validation/validate_variables.py --strict --no-color --workers 4 --output validation-variables.log
+        python3 tools/validation/${{ matrix.validator.script }} --strict --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
 
-    - name: Upload validation results
-      uses: actions/upload-artifact@v7.0.0
+    - name: Upload results
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       if: always()
       with:
-        name: validation-variables-results
-        path: validation-variables.log
-        retention-days: 7
-
-  validate-scripted-localisation:
-    name: Validate Scripted Localisation
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 1
-
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.x'
-
-    - name: Run scripted localisation validation
-      run: |
-        python3 tools/validation/validate_scripted_localisation.py --strict --no-color --workers 4 --output validation-scripted-localisation.log
-
-    - name: Upload validation results
-      uses: actions/upload-artifact@v7.0.0
-      if: always()
-      with:
-        name: validation-scripted-localisation-results
-        path: validation-scripted-localisation.log
-        retention-days: 7
-
-  validate-cosmetic-tags:
-    name: Validate Cosmetic Tags
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 1
-
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.x'
-
-    - name: Run cosmetic tag validation
-      run: |
-        python3 tools/validation/validate_cosmetic_tags.py --strict --no-color --workers 4 --output validation-cosmetic-tags.log
-
-    - name: Upload validation results
-      uses: actions/upload-artifact@v7.0.0
-      if: always()
-      with:
-        name: validation-cosmetic-tags-results
-        path: validation-cosmetic-tags.log
-        retention-days: 7
-
-  validate-decisions:
-    name: Validate Decisions
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 1
-
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.x'
-
-    - name: Run decision validation
-      run: |
-        python3 tools/validation/validate_decisions.py --strict --no-color --workers 4 --output validation-decisions.log
-
-    - name: Upload validation results
-      uses: actions/upload-artifact@v7.0.0
-      if: always()
-      with:
-        name: validation-decisions-results
-        path: validation-decisions.log
-        retention-days: 7
-
-  validate-localisation:
-    name: Validate Localisation
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 1
-
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.x'
-
-    - name: Run localisation validation
-      run: |
-        python3 tools/validation/validate_localisation.py --strict --no-color --workers 4 --output validation-localisation.log
-
-    - name: Upload validation results
-      uses: actions/upload-artifact@v7.0.0
-      if: always()
-      with:
-        name: validation-localisation-results
-        path: validation-localisation.log
-        retention-days: 7
-
-  validate-events:
-    name: Validate Events
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 1
-
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.x'
-
-    - name: Run event validation
-      run: |
-        python3 tools/validation/validate_events.py --strict --no-color --workers 4 --output validation-events.log
-
-    - name: Upload validation results
-      uses: actions/upload-artifact@v7.0.0
-      if: always()
-      with:
-        name: validation-events-results
-        path: validation-events.log
-        retention-days: 7
-
-  validate-history-techs:
-    name: Validate History Technology Dependencies
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 1
-
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.x'
-
-    - name: Run history technology dependency validation
-      run: |
-        python3 tools/validation/validate_history_techs.py --strict --no-color --workers 4 --output validation-history-techs.log
-
-    - name: Upload validation results
-      uses: actions/upload-artifact@v7.0.0
-      if: always()
-      with:
-        name: validation-history-techs-results
-        path: validation-history-techs.log
-        retention-days: 7
-
-  validate-unused-scripted:
-    name: Validate Unused Scripted Effects & Triggers
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 1
-
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.x'
-
-    - name: Run unused scripted effects/triggers validation
-      run: |
-        python3 tools/validation/validate_unused_scripted.py --strict --no-color --workers 4 --output validation-unused-scripted.log
-
-    - name: Upload validation results
-      uses: actions/upload-artifact@v7.0.0
-      if: always()
-      with:
-        name: validation-unused-scripted-results
-        path: validation-unused-scripted.log
+        name: validation-${{ matrix.validator.name }}-results
+        path: validation-${{ matrix.validator.name }}.log
         retention-days: 7
 
   validation-report:
     name: Generate Validation Report
     runs-on: ubuntu-latest
-    needs: [validate-variables, validate-scripted-localisation, validate-cosmetic-tags, validate-decisions, validate-localisation, validate-events, validate-history-techs, validate-unused-scripted]
-    if: always() && github.event_name == 'pull_request' && github.event.pull_request.draft == false
+    needs: [validate]
+    if: always() && github.event_name == 'pull_request' && github.event.pull_request.draft == false && needs.validate.result != 'cancelled'
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         fetch-depth: 1
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
         python-version: '3.x'
 
     - name: Download all validation results
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       with:
         path: validation-results
 
@@ -329,13 +131,12 @@ jobs:
           --output report.md \
           --pr-number "${{ github.event.pull_request.number }}" \
           --commit-sha "${{ github.sha }}" \
-          --github-token "${{ secrets.GITHUB_TOKEN }}" \
           --github-repository "${{ github.repository }}" \
           --post-comment \
           --print
 
     - name: Upload combined report
-      uses: actions/upload-artifact@v7.0.0
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       if: always()
       with:
         name: validation-report
