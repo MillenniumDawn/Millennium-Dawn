@@ -8,8 +8,8 @@ import logging
 import os
 import re
 import sys
-from multiprocessing import cpu_count
-from typing import Dict, List, Optional
+from multiprocessing import Pool, cpu_count
+from typing import Callable, Dict, List, Optional, Set
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import (
@@ -62,6 +62,7 @@ class BaseValidator:
         self.workers = workers if workers else max(1, cpu_count() // 2)
         self.staged_files = None
         self.output_lines = []
+        self._pool: Optional[Pool] = None
 
         if staged_only:
             self.staged_files = get_staged_files(
@@ -132,6 +133,52 @@ class BaseValidator:
                         pass
         return None
 
+    def _pool_map(self, func: Callable, args_list: List, chunksize: int = 50) -> List:
+        """Run func over args_list using the validator's shared worker pool."""
+        if self._pool is None:
+            raise RuntimeError("_pool_map called outside run_all_validations")
+        return self._pool.map(func, args_list, chunksize=chunksize)
+
+    def _collect_files(
+        self,
+        patterns: List[str],
+        extra_skip: Optional[Callable[[str], bool]] = None,
+    ) -> List[str]:
+        """Collect mod files matching glob patterns, with staged-file support.
+
+        In staged mode, filters self.staged_files by extension and a coarse
+        directory hint derived from each pattern's first non-wildcard segment.
+        In full mode, expands each pattern via glob.iglob relative to mod_path.
+        Always applies should_skip_file; extra_skip adds validator-local filtering.
+        """
+        extensions = list(
+            {os.path.splitext(p)[1] for p in patterns if os.path.splitext(p)[1]}
+        ) or [".txt"]
+
+        if self.staged_files:
+            dir_hints = [
+                next((s for s in p.split("/") if "*" not in s), "") for p in patterns
+            ]
+            files = [
+                f
+                for f in self.staged_files
+                if any(f.endswith(ext) for ext in extensions)
+                and any(hint == "" or hint in f for hint in dir_hints)
+            ]
+        else:
+            seen: Set[str] = set()
+            files = []
+            for pattern in patterns:
+                for f in glob.iglob(self.mod_path + pattern, recursive=True):
+                    if f not in seen:
+                        seen.add(f)
+                        files.append(f)
+
+        result = [f for f in files if not should_skip_file(f)]
+        if extra_skip is not None:
+            result = [f for f in result if not extra_skip(f)]
+        return result
+
     def run_validations(self):
         raise NotImplementedError("Subclasses must implement run_validations()")
 
@@ -150,7 +197,13 @@ class BaseValidator:
         if self.output_file:
             self.log(f"Output file: {self.output_file}")
 
-        self.run_validations()
+        self._pool = Pool(processes=self.workers)
+        try:
+            self.run_validations()
+        finally:
+            self._pool.terminate()
+            self._pool.join()
+            self._pool = None
 
         self.log(f"\n{'#'*80}")
         if self.errors_found == 0:

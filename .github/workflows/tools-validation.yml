@@ -6,11 +6,16 @@ on:
       - 'tools/**'
       - '.github/workflows/tools-validation.yml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   validate-tools:
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,22 +32,11 @@ jobs:
           pip install -r tools/requirements.txt
       - name: Run tools validation
         run: |
-          python tools/validate_tools.py --output tools_validation_report.json
+          python tools/validate_tools.py --strict --no-color --output tools_validation.log
       - name: Upload validation report
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: always()
         with:
           name: tools-validation-report
-          path: tools_validation_report.json
-      - name: Check validation results
-        run: |
-          python - << 'EOF'
-          import json
-          with open('tools_validation_report.json') as f:
-              data = json.load(f)
-          errors = data['summary']['errors']
-          if errors > 0:
-              print('Validation failed with ' + str(errors) + ' errors')
-              exit(1)
-          print('Tools validation passed')
-          EOF
+          path: tools_validation.log
+          retention-days: 7
