@@ -1,15 +1,23 @@
 name: Auto Assign Milestone
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+permissions:
+  issues: write
+  pull-requests: write
 
 jobs:
   assign-milestone:
     runs-on: ubuntu-latest
     steps:
       - name: Assign earliest open milestone
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

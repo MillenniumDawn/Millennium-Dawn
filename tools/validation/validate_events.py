@@ -9,11 +9,8 @@
 # Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
 # Adapted for Millennium Dawn with multiprocessing
 ##########################
-import glob
 import os
 import re
-from multiprocessing import Pool
-from pathlib import Path
 from typing import Dict, List, Tuple
 
 from validator_common import (
@@ -32,28 +29,6 @@ def _should_skip(filename: str) -> bool:
 
 
 # --- Event parsing ---
-
-
-def parse_all_events(
-    mod_path: str, lowercase: bool = False
-) -> Tuple[List[str], Dict[str, str]]:
-    events_path = str(Path(mod_path) / "events") + "/"
-    pattern = re.compile(
-        r"^(?:country_event|news_event) = \{(.*?)^\}", flags=re.DOTALL | re.MULTILINE
-    )
-    events = []
-    paths = {}
-
-    for filename in glob.iglob(events_path + "**/*.txt", recursive=True):
-        text_file = FileOpener.open_text_file(
-            filename, lowercase=lowercase, strip_comments_flag=True
-        )
-        matches = pattern.findall(text_file)
-        for match in matches:
-            events.append(match)
-            paths[match] = os.path.basename(filename)
-
-    return events, paths
 
 
 def process_file_for_events(args: Tuple[str, bool]) -> Tuple[List[str], Dict[str, str]]:
@@ -80,17 +55,9 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt"]
 
     def _get_all_events(self) -> Tuple[List[str], Dict[str, str]]:
-        events_path = str(Path(self.mod_path) / "events") + "/"
-        if self.staged_files:
-            files = [
-                f for f in self.staged_files if f.endswith(".txt") and "events" in f
-            ]
-        else:
-            files = list(glob.iglob(events_path + "**/*.txt", recursive=True))
-
+        files = self._collect_files(["events/**/*.txt"])
         args_list = [(f, False) for f in files]
-        with Pool(processes=self.workers) as pool:
-            all_results = pool.map(process_file_for_events, args_list, chunksize=10)
+        all_results = self._pool_map(process_file_for_events, args_list, chunksize=10)
 
         events = []
         paths = {}
