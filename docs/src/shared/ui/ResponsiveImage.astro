@@ -1,7 +1,8 @@
 ---
 import type { ImageMetadata } from "astro";
 import { Picture } from "astro:assets";
-import { resolveImageSource } from "@/shared/lib/image-assets";
+import { LIGHTBOX_FULL_SRC_ATTR } from "@/shared/config/lightbox-dom";
+import { resolveImageSource } from "@/shared/lib/media/image-assets";
 
 type ImageFormat = "avif" | "webp";
 
@@ -19,6 +20,8 @@ interface Props {
   class?: string;
   wrapperClass?: string;
   formats?: ImageFormat[];
+  /** Absolute or site-prefixed URL to the original file for the image lightbox (skips responsive `currentSrc`). */
+  lightboxFullSrc?: string;
 }
 
 const {
@@ -34,11 +37,13 @@ const {
   class: className,
   wrapperClass,
   formats = ["avif", "webp"],
+  lightboxFullSrc,
 }: Props = Astro.props;
 
 const resolvedSrc = resolveImageSource(src);
-const pictureClassName = [wrapperClass, "block"].filter(Boolean).join(" ");
-const imageClassName = ["h-auto", "max-w-full", "rounded", className].filter(Boolean).join(" ");
+/* Layout/centering for content images: `#main-content` in app.css */
+const pictureClassName = [wrapperClass?.trim()].filter(Boolean).join(" ");
+const imageClassName = className?.trim() ? className.trim() : "rounded";
 const isStringSource = typeof resolvedSrc === "string";
 const resolvedWidth = width ?? (isStringSource ? undefined : resolvedSrc.width);
 const resolvedHeight = height ?? (isStringSource ? undefined : resolvedSrc.height);
@@ -49,7 +54,11 @@ if (!resolvedWidth || !resolvedHeight) {
 
 const resolvedAlt = decorative ? "" : alt;
 const pictureAttrs = decorative ? { role: "presentation" as const, "aria-hidden": "true" as const } : {};
-const pictureAttributes = { class: pictureClassName, ...pictureAttrs };
+const pictureAttributes = {
+  class: pictureClassName,
+  ...pictureAttrs,
+  ...(lightboxFullSrc ? { [LIGHTBOX_FULL_SRC_ATTR]: lightboxFullSrc } : {}),
+};
 ---
 
 {

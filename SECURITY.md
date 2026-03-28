@@ -33,4 +33,4 @@ Our Dependabot configuration includes:
 
 - **GitHub Actions**: Weekly updates for workflow dependencies
 - **Python Dependencies**: Weekly updates for tools dependencies
-- **Ruby/Jekyll**: Weekly updates for documentation dependencies
+- **Documentation site (Bun / Astro)**: Weekly updates for `docs/` dependencies (`package.json` / `bun.lock`)
