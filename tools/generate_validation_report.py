@@ -268,7 +268,8 @@ def main():
     )
     parser.add_argument(
         "--github-token",
-        help="GitHub token for posting PR comments (required if --post-comment is used)",
+        default=os.environ.get("GITHUB_TOKEN"),
+        help="GitHub token for posting PR comments (required if --post-comment is used, defaults to GITHUB_TOKEN env var)",
     )
     parser.add_argument(
         "--github-repository",

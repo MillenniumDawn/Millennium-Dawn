@@ -224,11 +224,6 @@ def main():
         nargs="*",
         help="Files to check (positional argument for pre-commit)",
     )
-    # Keep the private token as a positional argument for backward compatibility
-    parser.add_argument(
-        "private_token", nargs="?", help="GitLab private token for posting results"
-    )
-
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -330,11 +325,7 @@ def main():
         try:
             projectId = os.environ["CI_PROJECT_ID"]
             # Try to get private token from args or fallback to command line argument
-            privateToken = (
-                args.private_token
-                if args.private_token
-                else sys.argv[1] if len(sys.argv) > 1 else None
-            )
+            privateToken = os.environ.get("BOT_TOKEN")
 
             if privateToken and postResults:
                 headers = {"PRIVATE-TOKEN": privateToken}

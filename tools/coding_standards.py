@@ -581,9 +581,6 @@ def main():
         default=os.cpu_count() or 4,
         help="Number of parallel workers (default: CPU count)",
     )
-    parser.add_argument(
-        "private_token", nargs="?", help="GitLab private token for posting results"
-    )
     args = parser.parse_args()
 
     print("Validating Coding Standards")
@@ -654,9 +651,7 @@ def main():
 
     try:
         projectId = os.environ["CI_PROJECT_ID"]
-        privateToken = args.private_token or (
-            sys.argv[1] if len(sys.argv) > 1 else None
-        )
+        privateToken = os.environ.get("BOT_TOKEN")
         headers = {"PRIVATE-TOKEN": privateToken}
         payload = {"body": message}
 

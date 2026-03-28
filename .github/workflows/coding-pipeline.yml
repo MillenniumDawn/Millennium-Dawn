@@ -16,9 +16,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 permissions:
   checks: write
   contents: read
@@ -47,7 +44,9 @@ jobs:
         pip install requests
 
     - name: Run coding standards check
-      run: python tools/coding_standards.py ${{ secrets.BOT_TOKEN }}
+      env:
+        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      run: python tools/coding_standards.py
 
   styling-check:
     name: Style Check
@@ -72,9 +71,11 @@ jobs:
         pip install requests
 
     - name: Run style check
+      env:
+        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
       run: |
-        python tools/check_basic_style.py --mode diff ${{ secrets.BOT_TOKEN }}
-        python tools/check_basic_style_2.py --mode diff ${{ secrets.BOT_TOKEN }}
+        python tools/check_basic_style.py --mode diff
+        python tools/check_basic_style_2.py --mode diff
 
   validate-variables:
     name: Validate Flags and Event Targets
@@ -329,7 +330,6 @@ jobs:
           --output report.md \
           --pr-number "${{ github.event.pull_request.number }}" \
           --commit-sha "${{ github.sha }}" \
-          --github-token "${{ secrets.GITHUB_TOKEN }}" \
           --github-repository "${{ github.repository }}" \
           --post-comment \
           --print
