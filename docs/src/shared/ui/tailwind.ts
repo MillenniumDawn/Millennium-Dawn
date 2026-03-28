@@ -438,11 +438,13 @@ export const LIGHTBOX_CLOSE_BUTTON_CLASS = [
   "right-4",
   "top-4",
   "z-[2]",
-  "inline-flex",
-  "min-h-11",
-  "min-w-11",
+  "flex",
+  "size-11",
+  "shrink-0",
   "items-center",
   "justify-center",
+  "p-0",
+  "m-0",
   "rounded-full",
   "border",
   "border-[color-mix(in_srgb,var(--color-border-light)_50%,transparent)]",
@@ -620,7 +622,8 @@ export const MARKDOWN_CLASSNAMES = {
   thead: "bg-table-header-bg",
   th: ["border", "border-table-border", "px-md", "py-3", "text-left", "font-bold", "text-text"].join(" "),
   td: ["border", "border-border-light", "px-md", "py-3", "align-top"].join(" "),
-  image: ["h-auto", "max-w-full", "rounded", "print:break-inside-avoid"].join(" "),
+  /* Centering/max size: `#main-content` rules in app.css; keep only what those rules omit */
+  image: ["rounded", "print:break-inside-avoid"].join(" "),
 } as const;
 
 export const INLINE_CODE_CLASS = MARKDOWN_CLASSNAMES.inlineCode;

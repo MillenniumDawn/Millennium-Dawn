@@ -1,5 +1,5 @@
 import { createDrawer } from "@/shared/lib/drawer";
-import { readCssMsVar, readCssStringVar } from "@/shared/lib/tokens";
+import { readCssMsVar, readCssStringVar } from "@/shared/lib/dom/tokens";
 
 type Cleanup = () => void;
 
