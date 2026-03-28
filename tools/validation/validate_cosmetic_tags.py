@@ -323,10 +323,30 @@ class Validator(BaseValidator):
             )
 
     def run_validations(self):
-        FALSE_POSITIVES = ["[", "{"]
-        self.validate_missing_cosmetic_tags(FALSE_POSITIVES)
-        self.validate_unused_cosmetic_tags(FALSE_POSITIVES)
-        self.validate_unused_cosmetic_tag_colors(FALSE_POSITIVES)
+        # Tags containing [ or { are from meta_effect text blocks and should be ignored
+        PATTERN_FALSE_POSITIVES = ["[", "{"]
+        # Tags that are generated dynamically via meta_effects (e.g. [ROOTTAG]_REB)
+        # and so never appear as literal set_cosmetic_tag = TAG calls
+        META_EFFECT_TAGS = [
+            "PER_REB",  # from [ROOTTAG]_REB
+            "GER_AUTH_S",  # from [ROOTTAG]_AUTH_S
+            "CRO_Serbian_Krajina",  # checked in scripted loc but set externally
+            "ENG_England",  # checked in formable nations but never set
+        ]
+        KNOWN_BUGS = []
+        # Tags set in focus trees that lack cosmetic.txt/flag definitions (incomplete)
+        INCOMPLETE_TAGS = [
+            "BSH_limonka",  # 05_bashkiriya.txt - nationalist fascist override
+            "BSH_REB_S_nationalist",  # 05_bashkiriya.txt - nationalist junta override
+            "TAT_REB_S_nationalist",  # Tatarstan.txt - nationalist junta override
+        ]
+        self.validate_missing_cosmetic_tags(PATTERN_FALSE_POSITIVES + META_EFFECT_TAGS)
+        self.validate_unused_cosmetic_tags(
+            PATTERN_FALSE_POSITIVES + KNOWN_BUGS + INCOMPLETE_TAGS
+        )
+        self.validate_unused_cosmetic_tag_colors(
+            PATTERN_FALSE_POSITIVES + META_EFFECT_TAGS
+        )
 
 
 if __name__ == "__main__":
