@@ -1,4 +1,4 @@
-import { buildTocTree, type TocHeadingLike, type TocTreeItem } from "@/shared/lib/toc";
+import { buildTocTree, type TocHeadingLike, type TocTreeItem } from "@/shared/lib/content/toc";
 import { TOC_ATTRS, TOC_HEADING_RANGE, TOC_SELECTORS, TOC_STATES } from "../lib/config";
 import { renderTocTreeHtml } from "../lib/render";
 
