@@ -7,7 +7,6 @@ import sys
 import time
 from multiprocessing import Pool
 
-import requests
 from path_utils import clean_filepath
 
 startTime = time.time()
@@ -648,44 +647,6 @@ def main():
         postResults = True
 
     print("The script took {0} second!".format(time.time() - startTime))
-
-    projectId = os.environ.get("CI_PROJECT_ID")
-    if projectId:
-        privateToken = os.environ.get("BOT_TOKEN")
-        headers = {"PRIVATE-TOKEN": privateToken}
-        payload = {"body": message}
-
-        try:
-            if postResults and privateToken:
-                if "CI_MERGE_REQUEST_IID" in os.environ:
-                    mergeRequestId = os.environ["CI_MERGE_REQUEST_IID"]
-                    r = requests.post(
-                        "https://gitlab.com/api/v4/projects/"
-                        + projectId
-                        + "/merge_requests/"
-                        + mergeRequestId
-                        + "/discussions",
-                        data=payload,
-                        headers=headers,
-                    )
-                    print("Posted results to merge request")
-
-                else:
-                    commitID = os.environ["CI_COMMIT_SHA"]
-                    r = requests.post(
-                        "https://gitlab.com/api/v4/projects/"
-                        + projectId
-                        + "/commits/"
-                        + commitID
-                        + "/discussions",
-                        data=payload,
-                        headers=headers,
-                    )
-                    print("Posted results to commit")
-            elif not postResults:
-                print("File validation passed Coding Standards: SUCCESS")
-        except Exception:
-            print("Couldn't post results to gitlab")
 
     return error_count
 

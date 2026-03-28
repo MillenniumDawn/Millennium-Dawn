@@ -9,10 +9,12 @@
 import glob
 import os
 import re
+import sys
 from multiprocessing import Pool
 from pathlib import Path
 from typing import List, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import strip_comments
 from validator_common import BaseValidator, Colors, run_validator_main, should_skip_file
 
