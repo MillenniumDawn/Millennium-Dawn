@@ -7,6 +7,15 @@ import {
 } from "../lib/lightbox-geometry";
 import { MIN_SCALE, MAX_SCALE, WHEEL_STEP } from "./constants";
 
+/** Mirrors `getLightboxContentContainer` + client sizes in `lightbox-geometry.ts` (local helper avoids ESLint `no-unsafe-*` on that import). */
+function lightboxContentBoxSize(image: HTMLImageElement, viewport: HTMLElement): { width: number; height: number } {
+  const parent = image.parentElement;
+  if (parent instanceof HTMLElement && parent.hasAttribute("data-image-lightbox-content")) {
+    return { width: parent.clientWidth, height: parent.clientHeight };
+  }
+  return { width: viewport.clientWidth, height: viewport.clientHeight };
+}
+
 export interface ViewportInteractionsOptions {
   overlay: HTMLElement;
   viewport: HTMLElement;
@@ -40,8 +49,9 @@ export function createViewportInteractions(opts: ViewportInteractionsOptions): V
     const baseSize = getLightboxBaseImageSize(image, viewport);
     const scaledWidth = baseSize.width * nextScale;
     const scaledHeight = baseSize.height * nextScale;
-    const maxOffsetX = Math.max(0, (scaledWidth - viewport.clientWidth) / 2);
-    const maxOffsetY = Math.max(0, (scaledHeight - viewport.clientHeight) / 2);
+    const { width: boxW, height: boxH } = lightboxContentBoxSize(image, viewport);
+    const maxOffsetX = Math.max(0, (scaledWidth - boxW) * 0.5);
+    const maxOffsetY = Math.max(0, (scaledHeight - boxH) * 0.5);
 
     return {
       x: clampLightbox(nextOffsetX, -maxOffsetX, maxOffsetX),
@@ -156,20 +166,22 @@ export function createViewportInteractions(opts: ViewportInteractionsOptions): V
     }
   };
 
-  const onViewportDoubleClick = () => {
+  const onImageDoubleClick = () => {
     setTransform(scale > MIN_SCALE ? MIN_SCALE : 2);
+  };
+
+  const onBackdropClick = (event: MouseEvent) => {
+    const t = event.target;
+    if (!(t instanceof Node)) return;
+    if (!viewport.contains(t)) return;
+    if (image.contains(t)) return;
+    requestClose();
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Tab") {
       event.preventDefault();
       closeButton.focus();
-      return;
-    }
-
-    if (event.key === "Escape") {
-      event.preventDefault();
-      requestClose();
       return;
     }
 
@@ -198,7 +210,8 @@ export function createViewportInteractions(opts: ViewportInteractionsOptions): V
     viewport.addEventListener("pointerup", onPointerEnd);
     viewport.addEventListener("pointercancel", onPointerEnd);
     viewport.addEventListener("lostpointercapture", onPointerEnd);
-    viewport.addEventListener("dblclick", onViewportDoubleClick);
+    viewport.addEventListener("click", onBackdropClick);
+    image.addEventListener("dblclick", onImageDoubleClick);
     image.addEventListener("load", onImageLoad);
     overlay.addEventListener("keydown", onKeyDown);
   };
@@ -210,7 +223,8 @@ export function createViewportInteractions(opts: ViewportInteractionsOptions): V
     viewport.removeEventListener("pointerup", onPointerEnd);
     viewport.removeEventListener("pointercancel", onPointerEnd);
     viewport.removeEventListener("lostpointercapture", onPointerEnd);
-    viewport.removeEventListener("dblclick", onViewportDoubleClick);
+    viewport.removeEventListener("click", onBackdropClick);
+    image.removeEventListener("dblclick", onImageDoubleClick);
     image.removeEventListener("load", onImageLoad);
     overlay.removeEventListener("keydown", onKeyDown);
   };
