@@ -55,7 +55,8 @@ A standalone diff summary script is also available: `tools/review-branch.sh [bas
 - 1 blank line between elements
 - Remove unused/commented-out code
 - Use multiplication instead of division (e.g., `* 0.01` not `/ 100`)
-- Use variables instead of magic numbers
+- Use `if/else` instead of two consecutive `if` blocks with complementary conditions — avoids double-execution risk and is clearer in intent
+- Use variables instead of magic numbers; always prefix country-specific variables with the country tag (e.g., `ISR_operation_success`, not `oper_succ_var`) to avoid cross-country collisions
 
 ## Performance Tips
 
@@ -67,254 +68,74 @@ A standalone diff summary script is also available: `tools/review-branch.sh [bas
 
 ## Focus Trees
 
-### File Naming
-
-| Prefix   | Usage                                        |
-| -------- | -------------------------------------------- |
-| `00_`    | System requirements only (e.g., titlebar)    |
-| `01-04_` | Shared/joint trees (EU, African Union, etc.) |
-| `05_`    | Country-specific trees                       |
-
-The prefix number forces load order: shared trees load before country-specific ones.
-
-### Focus Tree Container
-
-```
-focus_tree = {
-	id = greece_focus
-
-	country = {
-		factor = 0
-		modifier = {
-			tag = GRE
-			add = 100
-		}
-	}
-
-	shared_focus = USoE001
-	shared_focus = POTEF001
-
-	continuous_focus_position = { x = 2350 y = 1200 }
-}
-```
-
-### Required Property Order
-
-```
-1.  id                          (always first)
-2.  icon                        (always second)
-3.  x, y coordinates
-4.  relative_position_id
-5.  cost
-6.  allow_branch
-7.  prerequisite / mutually_exclusive
-8.  search_filters
-9.  available / bypass / cancel
-10. completion_reward / select_effect / bypass_effect
-11. ai_will_do                  (ALWAYS LAST)
-```
-
-### Best Practices
-
 - Focus ID format: `TAG_focus_name_here`
 - Use `relative_position_id` for positioning
 - Always include logging: `log = "[GetDateText]: [Root.GetName]: Focus TAG_focus_name"`
-- Always include `ai_will_do` with game options checks
-- Always include `search_filters`
+- Always include `ai_will_do = { base = N }` with game options checks — use `base`, not `factor`, at the root level
+- Always include `search_filters` — use the two-layer pattern: country-specific filter + matching generic (see `.claude/docs/search-filters.md`)
 - Omit default values: `cancel_if_invalid = yes`, `continue_if_invalid = no`, `available_if_capitulated = no`
 - Avoid empty `mutually_exclusive` and `available` blocks
 - Limit permanent effects to 5; use timed ideas for more
 - Use scripted effects and triggers where applicable
 - Implement starting ideas that weaken nations, resolvable through focus trees/decisions
+- Never use `available = { always = no }` on a focus that also has a `bypass`. Always set `available` to match or approximate the bypass condition — otherwise the player is hard-locked if the bypass fails to auto-fire.
+- High-cost focuses (cost >= 8, or cost >= 5 for military/economy/research focuses) should include `NOT = { has_active_mission = bankruptcy_incoming_collapse }` in `available` to prevent the AI from queueing expensive focuses during financial collapse.
 
-### Example Focus
-
-```
-focus = {
-	id = SER_free_market_capitalism
-	icon = blr_market_economy
-
-	x = 5
-	y = 3
-	relative_position_id = SER_free_elections
-
-	cost = 5
-
-	# allow_branch = { }
-	prerequisite = { focus = SER_western_approach }
-	# mutually_exclusive = { }
-	search_filters = { FOCUS_FILTER_POLITICAL }
-
-	available = {
-		western_liberals_are_in_power = yes
-	}
-	# bypass = { }
-	# cancel = { }
-
-	completion_reward = {
-		log = "[GetDateText]: [Root.GetName]: Focus SER_free_market_capitalism"
-		add_ideas = SER_free_market_idea
-	}
-	# bypass_effect = { }
-
-	ai_will_do = {
-		base = 1
-	}
-}
-```
+For property order, structure, building costs, and examples, see `.claude/docs/focus-tree-reference.md`.
 
 ## Decisions
-
-### Best Practices
 
 - Use `fire_only_once` only when necessary
 - Include logging in `complete_effect`: `log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"`
 - Structure with clear `visible` and `available` conditions
-- Include `ai_will_do`
+- Include `ai_will_do = { base = N }` — `base` not `factor` at root level; use `modifier = { factor = X ... }` for conditional adjustments
 
-### Example Decision
-
-```
-URA_world_opr = {
-	allowed = { original_tag = URA }
-	icon = GFX_decision_sovfed_button
-
-	cost = 50
-	days_remove = 400
-
-	visible = {
-		country_exists = OPR
-		OPR = {
-			OR = {
-				has_autonomy_state = autonomy_republic_rf
-				has_autonomy_state = autonomy_kray_rf
-			}
-		}
-	}
-
-	complete_effect = {
-		log = "[GetDateText]: [Root.GetName]: Decision URA_world_opr"
-		OPR = { country_event = { id = subject_rus.121 days = 1 } }
-	}
-
-	ai_will_do = {
-		factor = 10
-	}
-}
-```
+For structure, scripted effects, and examples, see `.claude/docs/decision-reference.md`.
 
 ## Events
-
-### Best Practices
 
 - Always use `is_triggered_only = yes` for triggered events
 - Log only if there are actual effects in the option
 - Use `major = yes` sparingly (news events only)
-- Trigger date-based events via `common/scripted_effects/00_yearly_effects.txt`
+- Trigger date-based events via `common/scripted_effects/00_yearly_effects.txt`; when the intended recipient may no longer own the target state, use the owner-guard pattern (check expected owner, fall back to `random_country = { limit = { owns_state = X } }`)
+- When a focus or event fires to another nation, always add `TT_IF_THEY_ACCEPT` / `TT_IF_THEY_REJECT` tooltips so the player can see both outcomes — see `.claude/rules/general-rules.md` for the full pattern and available keys.
+- `add_building_construction` for `naval_base` requires `province = XXXXX` — without it the build silently fails or misplaces the base in multi-province states
+- When adding new subideology parties, register them in `common/scripted_localisation/00_subideology_scripted_localisation.txt` for every relevant ideology group — missing registration causes fallback to a generic entry
 
-### Example Event
-
-```
-country_event = {
-	id = france_md.504
-	title = france_md.504.t
-	desc = france_md.504.d
-	picture = GFX_france_mcdonalds_bombing
-	is_triggered_only = yes
-
-	option = {
-		name = france_md.504.a
-		log = "[GetDateText]: [This.GetName]: france_md.504.a executed"
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = -0.01 }
-		add_relative_party_popularity = yes
-
-		ai_chance = {
-			base = 1
-		}
-	}
-
-	option = {
-		name = france_md.504.b
-		ai_chance = {
-			base = 0
-		}
-	}
-}
-```
+For structure, ETD system, and examples, see `.claude/docs/event-reference.md`.
 
 ## Ideas
 
-### Best Practices
-
 - Include `allowed_civil_war = { always = yes }` for civil war tags
+- Use `original_tag` not `tag` in `allowed` blocks — during civil wars the split-off country has a different runtime tag but the same `original_tag`; `allowed = { tag = TAG }` breaks for those countries
 - **Remove** `allowed = { always = no }` - this is the default and hurts performance
 - **Remove** `cancel = { always = no }` - checked hourly, never true
 - **Remove** empty `on_add = { log = "" }` unless actually doing something
 - Log in `on_add` only when making changes
 
-### Example Idea
-
-```
-BRA_idea_higher_minimum_wage_1 = {
-	name = BRA_idea_higher_minimum_wage
-	allowed_civil_war = { always = yes }
-
-	picture = gold
-
-	modifier = {
-		political_power_factor = 0.1
-		stability_factor = 0.05
-		consumer_goods_factor = 0.075
-		population_tax_income_multiplier_modifier = 0.05
-	}
-}
-```
+For structure and examples, see `.claude/docs/idea-reference.md`.
 
 ## Military-Industrial Organizations (MIO)
 
-### Best Practices
-
 - Name MIOs with `TAG_organization_name` format
 - Always include `allowed = { original_tag = TAG }` to restrict to the correct country
-- Set `task_capacity` proportional to nation size (typically 10–25)
+- Set `task_capacity` proportional to nation size (typically 10-25)
 - Equipment types must reference valid `equipment_type` categories
 - Trait grid runs `y = 0` to `y = 9`; use relative positioning for trait layout
 - Add `initial_trait` for the organization's defining bonus
 
-### Example MIO
-
-```
-CHI_norinco_manufacturer = {
-	allowed = { original_tag = CHI }
-	icon = GFX_idea_Norinco_CHI
-
-	task_capacity = 18
-
-	equipment_type = {
-		infantry_weapons_type
-		artillery_equipment
-		mio_cat_all_armor
-	}
-
-	research_categories = {
-		CAT_infrastructure
-		CAT_armor
-		CAT_artillery
-	}
-
-	initial_trait = {
-		name = CHI_norinco_company_trait
-		equipment_bonus = {
-			reliability = 0.03
-			build_cost_ic = -0.03
-		}
-	}
-}
-```
+For structure and examples, see `.claude/docs/mio-reference.md`.
 
 ## Key Resources
 
 - [Contributing Guidelines](./CONTRIBUTING.md)
 - [HOI4 Scripting Reference](./.claude/docs/hoi4-data-structures.md) - Variables, arrays, loops, collections, loc
 - [Documentation Index](./.claude/docs/documentation-references.md) - Effects, triggers, modifiers docs & wiki links
+- [Search Filter Reference](./.claude/docs/search-filters.md) - All FOCUS*FILTER*\* values, Israel filter mapping, subcategory logic
+- [Focus Tree Reference](./.claude/docs/focus-tree-reference.md) - Property order, building costs, examples
+- [Event Reference](./.claude/docs/event-reference.md) - Event structure, ETD system, examples
+- [Decision Reference](./.claude/docs/decision-reference.md) - Decision/mission structure, scripted effects, examples
+- [Idea Reference](./.claude/docs/idea-reference.md) - Idea structure and examples
+- [MIO Reference](./.claude/docs/mio-reference.md) - MIO structure and examples
+- [Content Guidelines](./.claude/docs/content-guidelines.md) - Quality checklist, general/admiral formulas
+- [Faction Rules](./.claude/docs/faction-rules.md) - Faction rule structure, locked faction patterns
