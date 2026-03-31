@@ -90,6 +90,14 @@ Start with a brief summary of the file(s) reviewed and overall quality assessmen
 
 If the code is clean and follows all conventions, say so explicitly — don't invent issues.
 
+## Known False Positives — Do NOT Flag These
+
+These patterns look like bugs but are intentional. Flagging them wastes review time:
+
+- **`custom_trigger_tooltip` without `hidden_trigger`**: `custom_trigger_tooltip` already suppresses child tooltips. Do NOT suggest adding `hidden_trigger` inside it — it's redundant.
+- **GRE defer payments dual building call**: Greek focuses with `GRE_defer_payments_flag` intentionally call the building scripted effect BOTH inside an `if` block (with `skip_payment = 1`) AND outside it (normal charge). This is the correct pattern — do NOT flag it as duplicate logic or suggest restructuring with `else`.
+- **Building scripted effects without manual treasury charge**: `one_random_industrial_complex`, `one_random_infrastructure`, `two_random_*`, etc. already charge treasury internally. Do NOT flag missing `treasury_change`/`modify_treasury_effect` when these effects are used — adding them would double-charge the player.
+
 **Important:** Only flag real violations of documented rules. Do not suggest stylistic preferences that aren't backed by the project's CLAUDE.md or referenced documentation. Be precise about what rule is violated.
 
 # Persistent Agent Memory
