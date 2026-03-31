@@ -14,7 +14,6 @@ import glob
 import os
 import re
 from collections import defaultdict
-from multiprocessing import Pool
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -446,8 +445,7 @@ class Validator(BaseValidator):
 
         args_list = [(f, self.prerequisites, self.all_techs) for f in files]
 
-        with Pool(processes=self.workers) as pool:
-            all_results = pool.map(validate_country_file, args_list, chunksize=20)
+        all_results = self._pool_map(validate_country_file, args_list, chunksize=20)
 
         results = []
         for file_results in all_results:

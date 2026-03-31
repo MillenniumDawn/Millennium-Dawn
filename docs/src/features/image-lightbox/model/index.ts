@@ -77,8 +77,11 @@ function createLightbox() {
     resetOverlayToClosed();
   };
 
-  const onOverlayClick = (event: MouseEvent) => {
-    if (event.target === overlay) close();
+  const onDocumentKeyDown = (event: KeyboardEvent) => {
+    if (overlay.hidden || overlay.dataset.state === "closing") return;
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    close();
   };
 
   const open = (trigger: HTMLElement, src: string, alt: string) => {
@@ -103,11 +106,11 @@ function createLightbox() {
 
   interactions.bind();
   closeButton.addEventListener("click", close);
-  overlay.addEventListener("click", onOverlayClick);
+  document.addEventListener("keydown", onDocumentKeyDown, true);
 
   const removeChromeListeners = () => {
     closeButton.removeEventListener("click", close);
-    overlay.removeEventListener("click", onOverlayClick);
+    document.removeEventListener("keydown", onDocumentKeyDown, true);
   };
 
   const syncTeardown = () => {

@@ -76,6 +76,24 @@ can_remove = {
 }
 ```
 
+## Common Mistake: `not_locked_faction`
+
+`not_locked_faction` is **not a valid scripted trigger**. The engine will silently evaluate it as always-false (or always-true depending on context), breaking the rule's availability logic. Always use:
+
+```
+available = {
+    is_locked_faction = no   # correct
+}
+```
+
+Not:
+
+```
+available = {
+    not_locked_faction = no  # WRONG — does not exist
+}
+```
+
 ## Rules That Don't Need Locked Faction Checks
 
 - Rules with `available = { always = no }` — already permanently unavailable (e.g., scripted-only rules like `call_to_war_rule_chinese_united_front`)

@@ -213,23 +213,28 @@ def strip_comments(text: str) -> str:
 class FileOpener:
     """Helper class for opening and reading files with various options"""
 
+    _cache: Dict[Tuple, str] = {}
+
     @classmethod
     def open_text_file(
         cls, filename: str, lowercase: bool = True, strip_comments_flag: bool = False
     ) -> str:
-        """Open a text file with optional processing"""
+        """Open a text file with optional processing. Results are cached per process."""
+        cache_key = (filename, lowercase, strip_comments_flag)
+        if cache_key in cls._cache:
+            return cls._cache[cache_key]
         try:
             with open(filename, "r", encoding="utf-8-sig") as text_file:
                 content = text_file.read()
                 if strip_comments_flag:
                     content = strip_comments(content)
                 if lowercase:
-                    return content.lower()
-                else:
-                    return content
+                    content = content.lower()
         except Exception as ex:
             log_message("WARNING", f"Skipping the file {filename}, {ex}")
             return ""
+        cls._cache[cache_key] = content
+        return content
 
 
 class DataCleaner:

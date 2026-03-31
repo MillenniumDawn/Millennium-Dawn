@@ -3,15 +3,13 @@
 # Shared Validation Infrastructure
 # Common classes, functions, and base validator used by all validation scripts
 ##########################
-import argparse
 import glob
 import logging
 import os
 import re
 import sys
-from multiprocessing import cpu_count
-from pathlib import Path
-from typing import Dict, List, Optional
+from multiprocessing import Pool, cpu_count
+from typing import Callable, Dict, List, Optional, Set
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import (
@@ -64,6 +62,7 @@ class BaseValidator:
         self.workers = workers if workers else max(1, cpu_count() // 2)
         self.staged_files = None
         self.output_lines = []
+        self._pool: Optional[Pool] = None
 
         if staged_only:
             self.staged_files = get_staged_files(
@@ -134,6 +133,52 @@ class BaseValidator:
                         pass
         return None
 
+    def _pool_map(self, func: Callable, args_list: List, chunksize: int = 50) -> List:
+        """Run func over args_list using the validator's shared worker pool."""
+        if self._pool is None:
+            raise RuntimeError("_pool_map called outside run_all_validations")
+        return self._pool.map(func, args_list, chunksize=chunksize)
+
+    def _collect_files(
+        self,
+        patterns: List[str],
+        extra_skip: Optional[Callable[[str], bool]] = None,
+    ) -> List[str]:
+        """Collect mod files matching glob patterns, with staged-file support.
+
+        In staged mode, filters self.staged_files by extension and a coarse
+        directory hint derived from each pattern's first non-wildcard segment.
+        In full mode, expands each pattern via glob.iglob relative to mod_path.
+        Always applies should_skip_file; extra_skip adds validator-local filtering.
+        """
+        extensions = list(
+            {os.path.splitext(p)[1] for p in patterns if os.path.splitext(p)[1]}
+        ) or [".txt"]
+
+        if self.staged_files:
+            dir_hints = [
+                next((s for s in p.split("/") if "*" not in s), "") for p in patterns
+            ]
+            files = [
+                f
+                for f in self.staged_files
+                if any(f.endswith(ext) for ext in extensions)
+                and any(hint == "" or hint in f for hint in dir_hints)
+            ]
+        else:
+            seen: Set[str] = set()
+            files = []
+            for pattern in patterns:
+                for f in glob.iglob(self.mod_path + pattern, recursive=True):
+                    if f not in seen:
+                        seen.add(f)
+                        files.append(f)
+
+        result = [f for f in files if not should_skip_file(f)]
+        if extra_skip is not None:
+            result = [f for f in result if not extra_skip(f)]
+        return result
+
     def run_validations(self):
         raise NotImplementedError("Subclasses must implement run_validations()")
 
@@ -152,7 +197,13 @@ class BaseValidator:
         if self.output_file:
             self.log(f"Output file: {self.output_file}")
 
-        self.run_validations()
+        self._pool = Pool(processes=self.workers)
+        try:
+            self.run_validations()
+        finally:
+            self._pool.terminate()
+            self._pool.join()
+            self._pool = None
 
         self.log(f"\n{'#'*80}")
         if self.errors_found == 0:
@@ -168,71 +219,3 @@ class BaseValidator:
 
         self.save_output()
         return self.errors_found
-
-
-def create_argument_parser(description: str) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument(
-        "--path",
-        type=str,
-        default=".",
-        help="Path to the mod folder (default: current directory)",
-    )
-    parser.add_argument(
-        "--strict", action="store_true", help="Exit with error code if issues are found"
-    )
-    parser.add_argument(
-        "--output", "-o", type=str, help="Save validation results to file"
-    )
-    parser.add_argument(
-        "--no-color", action="store_true", help="Disable ANSI color codes in output"
-    )
-    parser.add_argument(
-        "--staged", action="store_true", help="Only validate git staged files"
-    )
-    parser.add_argument(
-        "--workers",
-        type=int,
-        default=None,
-        help=f"Number of worker processes (default: {max(1, cpu_count() // 2)})",
-    )
-    return parser
-
-
-def run_validator_main(
-    validator_class, description: str = "Run validation", extra_args_fn=None
-):
-    parser = create_argument_parser(description)
-    if extra_args_fn:
-        extra_args_fn(parser)
-    args = parser.parse_args()
-
-    mod_path = Path(args.path).resolve()
-    if not mod_path.exists():
-        logging.error(f"Error: Path does not exist: {mod_path}")
-        sys.exit(1)
-    if not mod_path.is_dir():
-        logging.error(f"Error: Path is not a directory: {mod_path}")
-        sys.exit(1)
-
-    kwargs = dict(
-        output_file=args.output,
-        use_colors=not args.no_color,
-        staged_only=args.staged,
-        workers=args.workers,
-    )
-    if extra_args_fn:
-        for key in vars(args):
-            if key not in ("path", "strict", "output", "no_color", "staged", "workers"):
-                kwargs[key] = getattr(args, key)
-
-    validator = validator_class(str(mod_path), **kwargs)
-    errors_found = validator.run_all_validations()
-
-    if args.strict and errors_found > 0:
-        sys.exit(1)
-    else:
-        sys.exit(0)
