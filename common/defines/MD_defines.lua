@@ -168,7 +168,7 @@
 	NDefines.NCountry.AIR_SUPPLY_DROP_EXPIRATION_HOURS = 168 -- 168
 	NDefines.NCountry.FUEL_LEASE_CONVOY_RATIO = 0.00005 -- 0.0005
 	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 -- Maintains Vanilla's 2 RS default. RSs are handled via the dynamic system
-	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.008 --0.015 in vanilla, reduced from the 0.01 in MD to accomdate for the migration system
+	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.006 --0.015 in vanilla, reduced from the 0.01 in MD to accomdate for the migration system
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_VP = 0.001
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_UNIT = 0.002
 	NDefines.NCountry.RESOURCE_LENDLEASE_PRIORITY = 2
@@ -389,7 +389,7 @@
 	NDefines.NMilitary.UNIT_EXPERIENCE_SCALE = 0.25 -- 1.0
 	NDefines.NMilitary.UNIT_EXPERIENCE_PER_TRAINING_DAY = 0.0035 -- 0.0015
 	NDefines.NMilitary.TRAINING_EXPERIENCE_SCALE = 92.0 -- 62.0
-	NDefines.NMilitary.UNIT_EXP_LEVELS = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1 }
+	NDefines.NMilitary.UNIT_EXP_LEVELS = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 }
 	NDefines.NMilitary.ARMY_EXP_BASE_LEVEL = 3
 	NDefines.NMilitary.TRAINING_MAX_LEVEL = 5
 	NDefines.NMilitary.DEPLOY_TRAINING_MAX_LEVEL = 2
