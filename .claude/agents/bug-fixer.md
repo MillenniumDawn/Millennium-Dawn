@@ -41,6 +41,14 @@ When no specific issues are assigned, scan for these known problem patterns:
 - **`force_update_dynamic_modifier`** usage — should be avoided.
 - **`every_country`/`random_country` without specific array triggers** — performance concern.
 
+## Known False Positives — Do NOT Flag These
+
+These patterns look like bugs but are intentional:
+
+- **`custom_trigger_tooltip` without `hidden_trigger`**: `custom_trigger_tooltip` already suppresses child tooltips. `hidden_trigger` inside it is redundant — do not add it.
+- **GRE defer payments dual building call**: Greek focuses with `GRE_defer_payments_flag` intentionally call the building scripted effect BOTH inside an `if` block (with `skip_payment = 1`) AND outside it (normal charge). This is correct — do NOT restructure it or flag the duplication.
+- **Building scripted effects without manual treasury charge**: `one_random_*` and `two_random_*` building effects already charge treasury internally. Missing `treasury_change`/`modify_treasury_effect` is correct — adding them would double-charge.
+
 ## Fix Guidelines
 
 - Follow all formatting rules: tabs for indentation in .txt files, 1 space in .yml files.
