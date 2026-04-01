@@ -171,7 +171,7 @@ class Variables:
                 "Unsupported flag value passed. Expected country, state, global"
             )
 
-        if staged_files:
+        if staged_files is not None:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
             files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
@@ -238,7 +238,7 @@ class EventTargets:
         targets = []
         paths = {}
 
-        if staged_files:
+        if staged_files is not None:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
             files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
@@ -651,6 +651,16 @@ class Validator(BaseValidator):
         )
 
     def run_validations(self):
+        if self.staged_only:
+            # Variable validation cross-references flags across all files
+            # (used in A, set in B). Scanning only staged files produces
+            # false positives. Skip in staged mode; CI handles full validation.
+            self.log(
+                "Variable validation requires cross-file comparison — skipping in staged mode",
+                "warning",
+            )
+            return
+
         FALSE_POSITIVES_GENERIC = ["@", "[", "{"]
         FALSE_POSITIVES_COUNTRY = [
             "@",

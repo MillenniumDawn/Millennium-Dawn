@@ -424,7 +424,9 @@ class Validator(BaseValidator):
     def _get_history_files(self) -> List[str]:
         """Get list of history country files to validate."""
         history_dir = os.path.join(self.mod_path, "history", "countries")
-        if self.staged_files:
+        if self.staged_only:
+            if not self.staged_files:
+                return []
             return [
                 f
                 for f in self.staged_files
