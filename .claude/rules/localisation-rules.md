@@ -12,6 +12,8 @@
 - Keys use **no trailing version number**: write `key: "value"`, not `key:0 "value"`.
 - Key naming mirrors the associated script ID exactly (e.g., focus `SER_free_market_capitalism` → `SER_free_market_capitalism: "..."`, `SER_free_market_capitalism_desc: "..."`).
 - Focus/decision/event keys follow the pattern: `ID`, `ID_desc` (tooltip body). Events also need `ID.t` (title), `ID.d` (description), and `ID.a`, `ID.b`, … (option names).
+- Every new script object (focus, decision, event, idea, MIO, subideology) needs matching loc keys before it goes in.
+- Undefined `[variable]` substitutions in loc strings — every `[Foo.GetBar]` or `[my_var]` must correspond to a real scope getter or set variable. A missing or misspelled getter renders as an empty string or literal `[variable_name]` in-game.
 
 ## Writing Style
 
@@ -33,6 +35,7 @@ TAG.ideology_desc: "(Dominant Ideology) - Party Name (Language: Native Name, Lan
 ```
 
 Rules:
+
 - **Short name** (`TAG.ideology`): icon + abbreviation in parentheses + dash + English party name.
 - **Icon** (`TAG.ideology_icon`): icon reference only, no extra text.
 - **Description** (`TAG.ideology_desc`):
@@ -70,47 +73,65 @@ HOI4 localisation files are checked by `check-yaml` in the pre-commit hook. The 
 
 ## Common Mistakes to Avoid
 
-| Wrong | Correct |
-|---|---|
-| `key:0 "value"` | `key: "value"` |
-| `...` trailing sentences | End with a full stop |
-| `Pro-Western` mid-sentence as a standalone noun | `pro-Western` (adjective) |
-| Repeating the same sentence across multiple ideology descs | Unique body per entry |
-| Empty or placeholder strings like `"TODO"` | Always provide a complete string |
-| `"text "quoted word" more text"` | `"text \"quoted word\" more text"` |
-| Mixed indented/non-indented keys in same file | All keys at same indentation level |
+| Wrong                                                                   | Correct                                                                     |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `key:0 "value"`                                                         | `key: "value"`                                                              |
+| `...` trailing sentences                                                | End with a full stop                                                        |
+| `Pro-Western` mid-sentence as a standalone noun                         | `pro-Western` (adjective)                                                   |
+| Repeating the same sentence across multiple ideology descs              | Unique body per entry                                                       |
+| Empty or placeholder strings like `"TODO"`                              | Always provide a complete string                                            |
+| `"text "quoted word" more text"`                                        | `"text \"quoted word\" more text"`                                          |
+| Mixed indented/non-indented keys in same file                           | All keys at same indentation level                                          |
+| Backtick `` ` `` as apostrophe: ``"we`ll"``                             | `"we'll"` — use the real apostrophe                                         |
+| Cyrillic lookalike characters (e.g., `С`, `а`, `е`) in English text     | Latin equivalents — run a non-ASCII check                                   |
+| Non-English text in `*_l_english.yml` (French, Russian, Spanish titles) | Full English translation                                                    |
+| Duplicate keys in the same `.yml` file                                  | Remove the earlier duplicate; keep only one definition per key              |
+| Wrong color-code prefix, e.g. `§RY` (stray extra character)             | `§R` then text immediately — no stray character between code and content    |
+| Copy-pasted country-specific flavour text left unreplaced               | Update every reference to the original country's name, demonym, and culture |
 
 ## Recurring Typo Watchlist
 
 These typos appear frequently across country files — check for them when reviewing:
 
-| Typo | Correct |
-|---|---|
-| `Estabilish` / `estabilish` | `Establish` / `establish` |
-| `innvoations` | `innovations` |
-| `irreperable` / `irrepairable` | `irreparable` |
-| `unenmployed` | `unemployed` |
-| `existance` | `existence` |
-| `effectivness` | `effectiveness` |
-| `disproportinate` | `disproportionate` |
-| `tarditions` | `traditions` |
-| `contrats` (used as contrast) | `by contrast` |
-| `Airforce` | `Air Force` |
-| `miltiary` | `military` |
-| `coaltion` | `coalition` |
-| `tumultous` | `tumultuous` |
-| `recgonized` | `recognized` |
-| `Propgramme` | `Programme` |
-| `poeple` | `people` |
-| `it's` (possessive) | `its` |
-| `Unloyal` | `Disloyal` |
-| `Isreal` | `Israel` |
-| `unrepairable` | `irreparable` |
-| `bocme` | `become` |
-| `hovewer` | `however` |
-| `acomplish` | `accomplish` |
-| `Endevours` | `Endeavours` |
-| `Quiantified` | `Quantified` |
-| `convering` | `converting` |
-| `encomapassing` | `encompassing` |
-| `fundamnetals` | `fundamentals` |
+| Typo                                                        | Correct                   |
+| ----------------------------------------------------------- | ------------------------- |
+| `Estabilish` / `estabilish`                                 | `Establish` / `establish` |
+| `innvoations`                                               | `innovations`             |
+| `irreperable` / `irrepairable`                              | `irreparable`             |
+| `unenmployed`                                               | `unemployed`              |
+| `existance`                                                 | `existence`               |
+| `effectivness`                                              | `effectiveness`           |
+| `disproportinate`                                           | `disproportionate`        |
+| `tarditions`                                                | `traditions`              |
+| `contrats` (used as contrast)                               | `by contrast`             |
+| `Airforce`                                                  | `Air Force`               |
+| `miltiary`                                                  | `military`                |
+| `coaltion`                                                  | `coalition`               |
+| `tumultous`                                                 | `tumultuous`              |
+| `recgonized`                                                | `recognized`              |
+| `Propgramme`                                                | `Programme`               |
+| `poeple`                                                    | `people`                  |
+| `it's` (possessive)                                         | `its`                     |
+| `Unloyal`                                                   | `Disloyal`                |
+| `Isreal`                                                    | `Israel`                  |
+| `unrepairable`                                              | `irreparable`             |
+| `bocme`                                                     | `become`                  |
+| `hovewer`                                                   | `however`                 |
+| `acomplish`                                                 | `accomplish`              |
+| `Endevours`                                                 | `Endeavours`              |
+| `Quiantified`                                               | `Quantified`              |
+| `convering`                                                 | `converting`              |
+| `encomapassing`                                             | `encompassing`            |
+| `fundamnetals`                                              | `fundamentals`            |
+| `civillian`                                                 | `civilian`                |
+| `civillisation` / `civilisation` (American English context) | `civilization`            |
+| `suprised`                                                  | `surprised`               |
+| `alledged`                                                  | `alleged`                 |
+| `succesful` / `succesfull`                                  | `successful`              |
+| `huminliating`                                              | `humiliating`             |
+| `reffered`                                                  | `referred`                |
+| `stronly`                                                   | `strongly`                |
+| `togeather`                                                 | `together`                |
+| `disasterous`                                               | `disastrous`              |
+| `religous`                                                  | `religious`               |
+| `suzerainity`                                               | `suzerainty`              |
