@@ -7,7 +7,6 @@ import sys
 import time
 from multiprocessing import Pool
 
-import requests
 from path_utils import clean_filepath
 
 startTime = time.time()
@@ -581,9 +580,6 @@ def main():
         default=os.cpu_count() or 4,
         help="Number of parallel workers (default: CPU count)",
     )
-    parser.add_argument(
-        "private_token", nargs="?", help="GitLab private token for posting results"
-    )
     args = parser.parse_args()
 
     print("Validating Coding Standards")
@@ -651,47 +647,6 @@ def main():
         postResults = True
 
     print("The script took {0} second!".format(time.time() - startTime))
-
-    try:
-        projectId = os.environ["CI_PROJECT_ID"]
-        privateToken = args.private_token or (
-            sys.argv[1] if len(sys.argv) > 1 else None
-        )
-        headers = {"PRIVATE-TOKEN": privateToken}
-        payload = {"body": message}
-
-        if postResults and privateToken:
-            if "CI_MERGE_REQUEST_IID" in os.environ:
-                mergeRequestId = os.environ["CI_MERGE_REQUEST_IID"]
-                r = requests.post(
-                    "https://gitlab.com/api/v4/projects/"
-                    + projectId
-                    + "/merge_requests/"
-                    + mergeRequestId
-                    + "/discussions",
-                    data=payload,
-                    headers=headers,
-                )
-                print("Posted results to merge request")
-
-            else:
-                commitID = os.environ["CI_COMMIT_SHA"]
-                r = requests.post(
-                    "https://gitlab.com/api/v4/projects/"
-                    + projectId
-                    + "/commits/"
-                    + commitID
-                    + "/discussions",
-                    data=payload,
-                    headers=headers,
-                )
-                print("Posted results to commit")
-        elif not postResults:
-            print("File validation passed Coding Standards: SUCCESS")
-    except KeyError:
-        pass  # Not in GitLab CI environment
-    except Exception:
-        print("Couldn't post results to gitlab")
 
     return error_count
 

@@ -18,14 +18,25 @@ export function lightboxMidpoint(first: LightboxPoint, second: LightboxPoint): L
   };
 }
 
+/** Content wrapper inside padded viewport — use for fit/pan math, not full `viewport.clientWidth`. */
+export function getLightboxContentContainer(image: HTMLImageElement, viewport: HTMLElement): HTMLElement {
+  const parent = image.parentElement;
+  if (parent instanceof HTMLElement && parent.hasAttribute("data-image-lightbox-content")) {
+    return parent;
+  }
+  return viewport;
+}
+
+/** Fits the image inside the content box (inside viewport padding) so mobile insets stay symmetric. */
 export function getLightboxBaseImageSize(
   image: HTMLImageElement,
   viewport: HTMLElement,
 ): { width: number; height: number } {
   const naturalWidth = image.naturalWidth || viewport.clientWidth || 1;
   const naturalHeight = image.naturalHeight || viewport.clientHeight || 1;
-  const viewportWidth = viewport.clientWidth || naturalWidth;
-  const viewportHeight = viewport.clientHeight || naturalHeight;
+  const fitEl = getLightboxContentContainer(image, viewport);
+  const viewportWidth = fitEl.clientWidth || naturalWidth;
+  const viewportHeight = fitEl.clientHeight || naturalHeight;
   const fitRatio = Math.min(viewportWidth / naturalWidth, viewportHeight / naturalHeight, 1);
 
   return {
