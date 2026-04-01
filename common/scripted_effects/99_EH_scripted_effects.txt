@@ -1,0 +1,788 @@
+EH_drone_mission_calculations_effect = {
+	# Drones bonus
+	set_variable = { EH_drone_success_chance = EH_selected_drones_var }
+	multiply_variable = { EH_drone_success_chance = 0.06 }
+
+	# Air Intel bonus
+	set_variable = { EH_temp_air_intel = air_intel@ALN }
+	clamp_variable = { var = EH_temp_air_intel max = 100 }
+	multiply_variable = { EH_temp_air_intel = 0.55 }
+	add_to_variable = { EH_drone_success_chance = EH_temp_air_intel }
+
+	# Failure chance
+	set_variable = { EH_drone_failure_chance = 100 }
+	subtract_from_variable = { EH_drone_failure_chance = EH_drone_success_chance }
+
+	EH_refresh_gui = yes
+}
+
+EH_drone_mission_effect = {
+	random_list = {
+		EH_drone_success_chance = {
+			# Success
+			add_intel = {
+				target = ALN
+				army_intel = 15
+				airforce_intel = 15
+			}
+			country_event = EH_focus_event.3
+			set_country_flag = EH_country_succeeded_in_drone_mission_flag # Important further while recruiting scientists
+			clear_variable = EH_drone_success_chance
+			clear_variable = EH_drone_failure_chance
+			clear_variable = EH_temp_air_intel
+
+			set_temp_variable_to_random = {
+				var = EH_temp_drones_lost
+				max = EH_selected_drones_var
+				integer = yes
+			}
+			add_ai_strategy = {
+				type = equipment_variant_production_factor
+				id = small_plane_suicide_airframe
+				value = -100
+			}
+		}
+		EH_drone_failure_chance = {
+			# Failure
+			set_temp_variable = { EH_temp_drones_lost = EH_selected_drones_var }
+			country_event = EH_focus_event.4
+		}
+	}
+
+	multiply_temp_variable = { EH_temp_drones_lost = -1 }
+	add_equipment_to_stockpile = {
+		type = small_plane_suicide_airframe
+		amount = EH_temp_drones_lost
+	}
+
+	EH_refresh_gui = yes
+}
+
+EH_calculate_research_sites_effects = {
+	set_variable = { EH_research_sites_research_speed_factor_var = 0.01 }
+	set_variable = { EH_research_sites_scientist_breakthrough_bonus_factor_var = 0.02 }
+	set_variable = { EH_research_sites_scientist_research_bonus_factor_var = 0.025 }
+	set_variable = { EH_research_sites_scientist_xp_gain_factor_var = 0.03 }
+	multiply_variable = { EH_research_sites_research_speed_factor_var = EH_research_sites_constructed_var }
+	multiply_variable = { EH_research_sites_scientist_breakthrough_bonus_factor_var = EH_research_sites_constructed_var }
+	multiply_variable = { EH_research_sites_scientist_research_bonus_factor_var = EH_research_sites_constructed_var }
+	multiply_variable = { EH_research_sites_scientist_xp_gain_factor_var = EH_research_sites_constructed_var }
+	EH_refresh_gui = yes
+}
+
+EH_research_site_strike_effect = {
+	set_temp_variable = { EH_temp_strike_success_chance = 80 }
+	subtract_from_temp_variable = { EH_temp_strike_success_chance = EH_research_sites_protection_var }
+
+	set_temp_variable = { EH_temp_strike_failure_chance = 100 }
+	subtract_from_temp_variable = { EH_temp_strike_failure_chance = EH_temp_strike_success_chance }
+
+	random_list = {
+		EH_temp_strike_success_chance = {
+			# Success
+			set_country_flag = {
+				flag = EH_research_sites_strike_cooldown_flag
+				days = 21
+				value = 1
+			}
+			subtract_from_variable = { EH_research_sites_constructed_var = 1 }
+			clamp_variable = {
+				var = EH_research_sites_constructed_var
+				min = 0
+			}
+			EH_calculate_research_sites_effects = yes
+			if = {
+				limit = { has_country_flag = EH_research_sites_disable_notifications_flag }
+				add_manpower = -50
+				ALN = { add_manpower = -120 }
+				add_breakthrough_progress = {
+					specialization = specialization_land
+					value = -0.15
+				}
+			}
+			else = { country_event = EH_focus_event.5 }
+			EH_research_site_scientist_survive_effect = yes
+		}
+		EH_temp_strike_failure_chance = {
+			# Failure
+			set_country_flag = {
+				flag = EH_research_sites_strike_cooldown_flag
+				days = 35
+				value = 1
+			}
+			if = {
+				limit = { has_country_flag = EH_research_sites_disable_notifications_flag }
+				add_manpower = -15
+				ALN = { add_manpower = -240 }
+			}
+			else = { country_event = EH_focus_event.6 }
+		}
+	}
+	EH_refresh_gui = yes
+}
+
+EH_research_site_scientist_survive_effect = {
+	set_temp_variable = { EH_temp_scientist_killed_chance = 40 }
+	subtract_from_temp_variable = { EH_temp_scientist_killed_chance = EH_research_sites_scientist_protection_var }
+
+	set_temp_variable = { EH_temp_scientist_survived_chance = 100 }
+	subtract_from_temp_variable = { EH_temp_scientist_survived_chance = EH_temp_scientist_killed_chance }
+
+	random_list = {
+		EH_temp_scientist_killed_chance = {
+			# Killed
+			if = {
+				limit = {
+					OR = {
+						has_country_flag = EH_hired_jennifer_doudna_flag
+						has_country_flag = EH_hired_fabiola_gianotti_flag
+						has_country_flag = EH_hired_lene_hau_flag
+						has_country_flag = EH_hired_emmanuelle_charpentier_flag
+						has_country_flag = EH_hired_andrzej_trautman_flag
+					}
+				}
+				country_event = EH_focus_event.7
+				while_loop_effect = {
+					limit = { NOT = { has_country_flag = EH_research_sites_scientist_found_flag } }
+					set_temp_variable_to_random = {
+						var = EH_temp_var
+						min = 0
+						max = 5
+						integer = yes
+					}
+					if = {
+						limit = { is_in_array = { EH_scientists_array = EH_temp_var } }
+						if = {
+							limit = {
+								OR = {
+									AND = {
+										check_variable = { EH_temp_var = 0 }
+										has_idea = EH_scientist_jennifer_doudna_idea
+									}
+									AND = {
+										check_variable = { EH_temp_var = 1 }
+										has_idea = EH_scientist_fabiola_gianotti_idea
+									}
+									AND = {
+										check_variable = { EH_temp_var = 2 }
+										has_idea = EH_scientist_lene_hau_idea
+									}
+									AND = {
+										check_variable = { EH_temp_var = 3 }
+										has_idea = EH_scientist_emmanuelle_charpentier_idea
+									}
+									AND = {
+										check_variable = { EH_temp_var = 4 }
+										has_idea = EH_scientist_andrzej_trautman_idea
+									}
+								}
+							}
+							set_variable = { EH_scientists_array^EH_temp_var = -1 }
+							set_country_flag = EH_research_sites_scientist_found_flag
+						}
+					}
+				}
+				clr_country_flag = EH_research_sites_scientist_found_flag
+			}
+		}
+		EH_temp_scientist_survived_chance = {
+			# Survived
+			# Nothing happens
+		}
+	}
+	EH_refresh_gui = yes
+}
+
+EH_modify_research_sites_prep_time_effect = {
+	subtract_from_variable = { EH_research_sites_prep_time_var = EH_temp_research_sites_prep_time_var }
+	custom_effect_tooltip = EH_research_sites_prep_time_shortened_TT
+}
+
+EH_research_sites_protection_increase = {
+	add_to_variable = { EH_research_sites_protection_var = EH_temp_protection_increase }
+	custom_effect_tooltip = EH_research_sites_protection_upgrade_installed_TT
+}
+
+EH_research_sites_scientist_protection_increase = {
+	add_to_variable = { EH_research_sites_scientist_protection_var = EH_temp_research_sites_scientist_protection_increase }
+	custom_effect_tooltip = EH_research_sites_scientist_protection_upgrade_installed_TT
+}
+
+EH_convergence_event_chain_effect = {
+	random_country = {
+		news_event = { id = EH_event.300 days = 1 random_days = 10 }
+		news_event = { id = EH_event.301 days = 12 random_days = 7 }
+		news_event = { id = EH_event.302 days = 23 random_days = 6 }
+		news_event = { id = EH_event.303 days = 32 random_days = 6 }
+		news_event = { id = EH_event.304 days = 41 random_days = 5 }
+		news_event = { id = EH_event.305 days = 47 random_days = 5 }
+		news_event = { id = EH_event.306 days = 52 random_days = 4 }
+		news_event = { id = EH_event.307 days = 58 random_days = 4 }
+		news_event = { id = EH_event.308 days = 64 }
+		news_event = { id = EH_event.309 days = 70 }
+	}
+	random_country = {
+		limit = { is_in_north_america = yes }
+		country_event = { id = EH_event.401 days = 80 random_days = 5 }
+	}
+}
+
+EH_set_randallite_effect = {
+	set_variable = { EH_randallite_stockpile = EH_total_randallite_var }
+	subtract_from_variable = { EH_randallite_stockpile = modifier@randallite_resource_cost_modifier }
+
+	set_variable = { EH_randallite_usage_var = EH_total_randallite_var }
+	subtract_from_variable = { EH_randallite_usage_var = EH_randallite_stockpile }
+	EH_refresh_gui = yes
+}
+
+EH_add_randallite_effect = {
+	custom_effect_tooltip = EH_add_randallite_effect_tt
+	add_to_variable = { EH_total_randallite_var = add_randallite }
+	EH_refresh_gui = yes
+}
+
+EH_randallite_effects = {
+	set_variable = { EH_randallite_productivity_var = 0.01 }
+	set_variable = { EH_randallite_mech_production_speed_var = 0.004 }
+	set_variable = { EH_randallite_resource_income_var = 0.006 }
+	set_variable = { EH_randallite_industrial_capacity_var = 0.005 }
+	set_variable = { EH_randallite_cic_construction_boost_var = 0.01 }
+
+	if = {
+		limit = {
+			check_variable = {
+				var = EH_temp_randallite_productivity_var
+				value = 0
+				compare = not_equals
+			}
+		}
+		add_to_variable = { EH_randallite_productivity_var = EH_temp_randallite_productivity_var }
+		custom_effect_tooltip = EH_randallite_productivity_modified_TT
+	}
+	if = {
+		limit = {
+			check_variable = {
+				var = EH_temp_randallite_mech_production_speed_var
+				value = 0
+				compare = not_equals
+			}
+		}
+		add_to_variable = { EH_randallite_mech_production_speed_var = EH_temp_randallite_mech_production_speed_var }
+		custom_effect_tooltip = EH_randallite_mech_production_speed_modified_TT
+	}
+	if = {
+		limit = {
+			check_variable = {
+				var = EH_temp_randallite_resource_income_var
+				value = 0
+				compare = not_equals
+			}
+		}
+		add_to_variable = { EH_randallite_resource_income_var = EH_temp_randallite_resource_income_var }
+		custom_effect_tooltip = EH_randallite_resource_income_modified_TT
+	}
+	if = {
+		limit = {
+			check_variable = {
+				var = EH_temp_randallite_industrial_capacity_var
+				value = 0
+				compare = not_equals
+			}
+		}
+		add_to_variable = { EH_randallite_industrial_capacity_var = EH_temp_randallite_industrial_capacity_var }
+		custom_effect_tooltip = EH_randallite_industrial_capacity_modified_TT
+	}
+	if = {
+		limit = {
+			check_variable = {
+				var = EH_temp_randallite_cic_construction_boost_var
+				value = 0
+				compare = not_equals
+			}
+		}
+		add_to_variable = { EH_randallite_cic_construction_boost_var = EH_temp_randallite_cic_construction_boost_var }
+		custom_effect_tooltip = EH_randallite_cic_construction_boost_modified_TT
+	}
+
+	multiply_variable = { EH_randallite_productivity_var = EH_randallite_stockpile }
+	multiply_variable = { EH_randallite_mech_production_speed_var = EH_randallite_stockpile }
+	multiply_variable = { EH_randallite_resource_income_var = EH_randallite_stockpile }
+	multiply_variable = { EH_randallite_industrial_capacity_var = EH_randallite_stockpile }
+	multiply_variable = { EH_randallite_cic_construction_boost_var = EH_randallite_stockpile }
+	EH_refresh_gui = yes
+}
+
+EH_weekly_randallite_income_effect = {
+	set_temp_variable = { add_randallite = EH_randallite_mines_set_up_var }
+	if = {
+		limit = { has_idea = EH_scientist_fabiola_gianotti_idea }
+		multiply_temp_variable = { add_randallite = 1.5 }
+	}
+	EH_add_randallite_effect = yes
+}
+
+EH_chimera_portal_1_created_effect = {
+	if = {
+		limit = { NOT = { has_global_flag = chimera_portal_1_created } }
+		create_entity = {
+			entity = portal_chimera_entity
+			id = 9991
+			x = 1
+			y = 1
+			z = 1
+			province = 14126
+			rotation = 1.0
+			scale = 1.0
+			min_zoom = 150.0
+			visible = EH_scenario_enabled
+		}
+		591 = {
+			add_dynamic_modifier = { modifier = EH_portal_presence_modifier }
+			set_state_flag = EH_state_with_portal
+		}
+		set_global_flag = chimera_portal_1_created
+	}
+}
+
+EH_chimera_portal_234_created_effect = {
+	if = {
+		limit = { NOT = { has_global_flag = chimera_portal_234_created } }
+		create_entity = {
+			entity = portal_chimera_entity
+			id = 9992
+			x = 1
+			y = 1
+			z = 1
+			province = 11009
+			rotation = 1.0
+			scale = 1.0
+			min_zoom = 150.0
+			visible = EH_scenario_enabled
+		}
+		create_entity = {
+			entity = portal_chimera_entity
+			id = 9993
+			x = 1
+			y = 1
+			z = 1
+			province = 13831
+			rotation = 1.0
+			scale = 1.0
+			min_zoom = 150.0
+			visible = EH_scenario_enabled
+		}
+		create_entity = {
+			entity = portal_chimera_entity
+			id = 9994
+			x = 1
+			y = 1
+			z = 1
+			province = 15079
+			rotation = 1.0
+			scale = 1.0
+			min_zoom = 150.0
+			visible = EH_scenario_enabled
+		}
+		234 = {
+			add_dynamic_modifier = { modifier = EH_portal_presence_modifier }
+			set_state_flag = EH_state_with_portal
+			create_unit = {
+				division = "name = \"Ethiopian Cluster\" division_template = \"Portal Cluster\" start_experience_factor = 1 start_equipment_factor = 1"
+				owner = ROOT
+				prioritize_location = 13831
+				allow_spawning_on_enemy_provs = yes
+				count = 16
+			}
+		}
+		814 = {
+			add_dynamic_modifier = { modifier = EH_portal_presence_modifier }
+			set_state_flag = EH_state_with_portal
+			create_unit = {
+				division = "name = \"Alaskan Cluster\" division_template = \"Portal Cluster\" start_experience_factor = 1 start_equipment_factor = 1"
+				owner = ROOT
+				prioritize_location = 15079
+				allow_spawning_on_enemy_provs = yes
+				count = 16
+			}
+		}
+		457 = {
+			add_dynamic_modifier = { modifier = EH_portal_presence_modifier }
+			set_state_flag = EH_state_with_portal
+			create_unit = {
+				division = "name = \"Chilean Cluster\" division_template = \"Portal Cluster\" start_experience_factor = 1 start_equipment_factor = 1"
+				owner = ROOT
+				prioritize_location = 11009
+				allow_spawning_on_enemy_provs = yes
+				count = 16
+			}
+		}
+		591 = {
+			create_unit = {
+				division = "name = \"Tibetan Cluster\" division_template = \"Portal Cluster\" start_experience_factor = 1 start_equipment_factor = 1"
+				owner = ROOT
+				prioritize_location = 14126
+				allow_spawning_on_enemy_provs = yes
+				count = 16
+			}
+		}
+		993 = {
+			create_unit = {
+				division = "name = \"Tibetan Cluster\" division_template = \"Portal Cluster\" start_experience_factor = 1 start_equipment_factor = 1"
+				owner = ROOT
+				allow_spawning_on_enemy_provs = yes
+				count = 16
+			}
+		}
+		421 = {
+			create_unit = {
+				division = "name = \"Tibetan Cluster\" division_template = \"Portal Cluster\" start_experience_factor = 1 start_equipment_factor = 1"
+				owner = ROOT
+				allow_spawning_on_enemy_provs = yes
+				count = 16
+			}
+		}
+		set_global_flag = chimera_portal_234_created
+	}
+}
+
+EH_chimera_portal_destroyed_effect = {
+	var:target_state = { set_state_flag = EH_state_with_destroyed_portal }
+	if = {
+		limit = {
+			591 = {
+				has_state_flag = EH_state_with_destroyed_portal
+				has_state_flag = EH_state_with_portal
+			}
+		}
+		destroy_entity = 9991
+		damage_units = {
+			region = 188
+			limit = { original_tag = ALN }
+			damage = 1 # Kills all aliens in the region
+		}
+		damage_units = {
+			region = 144
+			limit = { original_tag = ALN }
+			damage = 1
+		}
+		damage_units = {
+			region = 146
+			limit = { original_tag = ALN }
+			damage = 1
+		}
+		damage_units = {
+			region = 161
+			limit = { original_tag = ALN }
+			damage = 1
+		}
+		damage_units = {
+			region = 153
+			limit = { original_tag = ALN }
+			damage = 1
+		}
+		591 = {
+			clr_state_flag = EH_state_with_destroyed_portal
+			clr_state_flag = EH_state_with_portal
+		}
+	}
+	if = {
+		limit = {
+			457 = {
+				has_state_flag = EH_state_with_destroyed_portal
+				has_state_flag = EH_state_with_portal
+			}
+		}
+		destroy_entity = 9992
+		damage_units = {
+			region = 191
+			limit = { original_tag = ALN }
+			damage = 1
+		}
+		457 = {
+			clr_state_flag = EH_state_with_destroyed_portal
+			clr_state_flag = EH_state_with_portal
+		}
+	}
+	if = {
+		limit = {
+			234 = {
+				has_state_flag = EH_state_with_destroyed_portal
+				has_state_flag = EH_state_with_portal
+			}
+		}
+		destroy_entity = 9993
+		damage_units = {
+			region = 133
+			limit = { original_tag = ALN }
+			damage = 1
+		}
+		damage_units = {
+			region = 183
+			limit = { original_tag = ALN }
+			damage = 1
+		}
+		damage_units = {
+			region = 132
+			limit = { original_tag = ALN }
+			damage = 1
+		}
+		damage_units = {
+			region = 186
+			limit = { original_tag = ALN }
+			damage = 1
+		}
+		damage_units = {
+			region = 185
+			limit = { original_tag = ALN }
+			damage = 1
+		}
+		234 = {
+			clr_state_flag = EH_state_with_destroyed_portal
+			clr_state_flag = EH_state_with_portal
+		}
+	}
+	if = {
+		limit = {
+			814 = {
+				has_state_flag = EH_state_with_destroyed_portal
+				has_state_flag = EH_state_with_portal
+			}
+		}
+		destroy_entity = 9994
+		damage_units = {
+			region = 33
+			limit = { original_tag = ALN }
+			damage = 1
+		}
+		damage_units = {
+			region = 182
+			limit = { original_tag = ALN }
+			damage = 1
+		}
+		damage_units = {
+			region = 122
+			limit = { original_tag = ALN }
+			damage = 1
+		}
+		814 = {
+			clr_state_flag = EH_state_with_destroyed_portal
+			clr_state_flag = EH_state_with_portal
+		}
+	}
+}
+
+EH_is_tesla_finished = {
+	if = {
+		limit = {
+			has_country_flag = EH_tesla_airframe_completed_flag
+			has_country_flag = EH_tesla_neutralizer_completed_flag
+			has_country_flag = EH_tesla_emp_completed_flag
+		}
+		set_country_flag = EH_tesla_weapon_in_stockpile
+		EH_refresh_gui = yes
+	}
+}
+
+EH_reset_tesla_weapon = {
+	clr_country_flag = EH_tesla_airframe_completed_flag
+	clr_country_flag = EH_tesla_neutralizer_completed_flag
+	clr_country_flag = EH_tesla_emp_completed_flag
+	clr_country_flag = EH_tesla_weapon_in_stockpile
+	set_variable = { EH_tesla_airframe_progress = 0 }
+	set_variable = { EH_tesla_neutralizer_progress = 0 }
+	set_variable = { EH_tesla_emp_progress = 0 }
+	if = {
+		limit = { NOT = { has_country_flag = EH_tesla_success_flag } }
+		set_country_flag = EH_tesla_success_flag
+	}
+	EH_refresh_gui = yes
+}
+
+EH_calculate_mechs_production_time_effect = {
+	set_variable = { EH_mech_production_cost_var = 10 }
+	add_to_variable = { EH_mech_production_cost_var = EH_selected_mechs_var }
+	multiply_variable = { EH_mech_production_cost_var = EH_mech_production_time_multiplier_var }
+
+	set_temp_variable = { EH_mech_production_cost_modifier_var = 1 }
+	subtract_from_temp_variable = { EH_mech_production_cost_modifier_var = modifier@mech_production_speed_multiplier_modifier }
+	multiply_variable = { EH_mech_production_cost_var = EH_mech_production_cost_modifier_var }
+
+	set_variable = { EH_add_mech_production_var = 100 }
+	divide_variable = { EH_add_mech_production_var = EH_mech_production_cost_var }
+
+	EH_calculate_randallite_mech_production_cost_effect = yes
+}
+
+EH_calculate_randallite_mech_production_cost_effect = {
+	if = {
+		limit = { has_country_flag = EH_mech_1_selected_flag }
+		set_variable = { EH_mech_production_randallite_cost_var = 0.15 }
+	}
+	else_if = {
+		limit = { has_country_flag = EH_mech_2_selected_flag }
+		set_variable = { EH_mech_production_randallite_cost_var = 0.25 }
+	}
+	else = { set_variable = { EH_mech_production_randallite_cost_var = 0.4 } }
+	if = {
+		limit = {
+			check_variable = {
+				var = EH_changed_hacs_cost_var
+				value = 0
+				compare = not_equals
+			}
+		}
+		multiply_variable = { EH_mech_production_randallite_cost_var = EH_changed_hacs_cost_var }
+	}
+	multiply_variable = { EH_mech_production_randallite_cost_var = EH_selected_mechs_var }
+	round_variable = EH_mech_production_randallite_cost_var
+	if = {
+		limit = { check_variable = { EH_mech_production_randallite_cost_var < 1 } }
+		set_variable = { EH_mech_production_randallite_cost_var = 1 }
+	}
+	EH_refresh_gui = yes
+}
+
+EH_start_mech_production_factory_1_effect = {
+	set_variable = { EH_mech_1_amount = EH_selected_mechs_var }
+	set_variable = { EH_mech_production_1_cost_var = EH_add_mech_production_var }
+	if = {
+		limit = { has_country_flag = EH_mech_1_selected_flag }
+		set_country_flag = EH_first_mech_1_selected_flag
+	}
+	else_if = {
+		limit = { has_country_flag = EH_mech_2_selected_flag }
+		set_country_flag = EH_first_mech_2_selected_flag
+	}
+	set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
+	multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+	set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
+	EH_add_randallite_effect = yes
+	custom_effect_tooltip = EH_mech_production_effects_TT
+	EH_refresh_gui = yes
+}
+
+EH_start_mech_production_factory_2_effect = {
+	set_variable = { EH_mech_2_amount = EH_selected_mechs_var }
+	set_variable = { EH_mech_production_2_cost_var = EH_add_mech_production_var }
+	if = {
+		limit = { has_country_flag = EH_mech_1_selected_flag }
+		set_country_flag = EH_second_mech_1_selected_flag
+	}
+	else_if = {
+		limit = { has_country_flag = EH_mech_2_selected_flag }
+		set_country_flag = EH_second_mech_2_selected_flag
+	}
+	set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
+	multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+	set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
+	EH_add_randallite_effect = yes
+	custom_effect_tooltip = EH_mech_production_effects_TT
+	EH_refresh_gui = yes
+}
+
+EH_start_mech_production_factory_3_effect = {
+	set_variable = { EH_mech_3_amount = EH_selected_mechs_var }
+	set_variable = { EH_mech_production_3_cost_var = EH_add_mech_production_var }
+	if = {
+		limit = { has_country_flag = EH_mech_1_selected_flag }
+		set_country_flag = EH_third_mech_1_selected_flag
+	}
+	else_if = {
+		limit = { has_country_flag = EH_mech_2_selected_flag }
+		set_country_flag = EH_third_mech_2_selected_flag
+	}
+	set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
+	multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+	set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
+	EH_add_randallite_effect = yes
+	custom_effect_tooltip = EH_mech_production_effects_TT
+	EH_refresh_gui = yes
+}
+
+EH_start_mech_production_factory_4_effect = {
+	set_variable = { EH_mech_4_amount = EH_selected_mechs_var }
+	set_variable = { EH_mech_production_4_cost_var = EH_add_mech_production_var }
+	if = {
+		limit = { has_country_flag = EH_mech_1_selected_flag }
+		set_country_flag = EH_fourth_mech_1_selected_flag
+	}
+	else_if = {
+		limit = { has_country_flag = EH_mech_2_selected_flag }
+		set_country_flag = EH_fourth_mech_2_selected_flag
+	}
+	set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
+	multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+	set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
+	EH_add_randallite_effect = yes
+	custom_effect_tooltip = EH_mech_production_effects_TT
+	EH_refresh_gui = yes
+}
+
+EH_start_mech_production_factory_5_effect = {
+	set_variable = { EH_mech_5_amount = EH_selected_mechs_var }
+	set_variable = { EH_mech_production_5_cost_var = EH_add_mech_production_var }
+	if = {
+		limit = { has_country_flag = EH_mech_1_selected_flag }
+		set_country_flag = EH_fifth_mech_1_selected_flag
+	}
+	else_if = {
+		limit = { has_country_flag = EH_mech_2_selected_flag }
+		set_country_flag = EH_fifth_mech_2_selected_flag
+	}
+	set_temp_variable = { EH_mech_randallite_cost_to_remove = EH_mech_production_randallite_cost_var }
+	multiply_temp_variable = { EH_mech_randallite_cost_to_remove = -1 }
+	set_temp_variable = { add_randallite = EH_mech_randallite_cost_to_remove }
+	EH_add_randallite_effect = yes
+	custom_effect_tooltip = EH_mech_production_effects_TT
+	EH_refresh_gui = yes
+}
+
+EH_refresh_gui = {
+	if = {
+		limit = { check_variable = { EH_refresh_gui_dirty < 200 } }
+		add_to_variable = { EH_refresh_gui_dirty = 1 }
+	}
+	else = { set_variable = { EH_refresh_gui_dirty = 0 } }
+}
+
+EH_change_hacs_cost_effect = { # Percentual. If x < 0, makes abs(x). If provided 0 < x < 1, reduces by x. If x > 1, increases by x.
+	# If provided x = 0.8, it will decrease cost by 20%, if provided x = 1.2, it will increase cost by 20%
+	set_temp_variable = { EH_change_hacs_cost_temp = EH_change_hacs_cost_var }
+
+	# Abs(x)
+	if = {
+		limit = { check_variable = { EH_change_hacs_cost_temp < 0 } }
+		multiply_temp_variable = { EH_change_hacs_cost_temp = -1 }
+	}
+
+	set_temp_variable = { EH_temp_loc_var = EH_change_hacs_cost_temp }
+	subtract_from_temp_variable = { EH_temp_loc_var = 1 }
+	custom_effect_tooltip = EH_changed_hacs_cost_TT
+
+	if = {
+		limit = {
+			check_variable = {
+				var = EH_changed_hacs_cost_var
+				value = 0
+				compare = equals
+			}
+		}
+		set_variable = { EH_changed_hacs_cost_var = 1 }
+	}
+
+	multiply_variable = { EH_changed_hacs_cost_var = EH_change_hacs_cost_temp }
+	EH_refresh_gui = yes
+}
+
+EH_chimera_declares_war = {
+	if = {
+		limit = { NOT = { ROOT = { has_war_with = ALN } } }
+		ALN = {
+			declare_war_on = {
+				target = ROOT
+				type = annex_everything
+			}
+		}
+	}
+}
