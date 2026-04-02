@@ -3,6 +3,7 @@ import argparse
 import fnmatch
 import os
 import re
+import subprocess
 import sys
 import time
 from multiprocessing import Pool
@@ -570,9 +571,31 @@ def getUnkownEffects(allEffects):
     return unkownEffects
 
 
+def get_staged_txt_files():
+    """Get list of staged .txt files from git."""
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMRT"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return [
+            f for f in result.stdout.strip().split("\n") if f and f.endswith(".txt")
+        ]
+    except subprocess.CalledProcessError:
+        return []
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Validate Coding Standards for HOI4 mod files"
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["all", "staged"],
+        default="all",
+        help="Check mode: all files or staged files only (default: all)",
     )
     parser.add_argument(
         "--workers",
@@ -582,8 +605,8 @@ def main():
     )
     args = parser.parse_args()
 
-    print("Validating Coding Standards")
-    message = "Validating Coding Standards\n"
+    print(f"Validating Coding Standards (Mode: {args.mode})")
+    message = f"Validating Coding Standards (Mode: {args.mode})\n"
 
     error_count = 0
     warning_count = 0
@@ -597,6 +620,14 @@ def main():
         rootDir + "/resources/List of triggers and effects 1_9_1.txt"
     )
 
+    # When in staged mode, filter to only staged files
+    staged_files = None
+    if args.mode == "staged":
+        staged_files = set(os.path.abspath(f) for f in get_staged_txt_files())
+        if not staged_files:
+            print("No staged .txt files found")
+            return 0
+
     # Collect focus files (excluding generic.txt)
     focus_files = []
     for root, dirnames, filenames in os.walk(
@@ -604,13 +635,17 @@ def main():
     ):
         for filename in fnmatch.filter(filenames, "*.txt"):
             if filename != "generic.txt":
-                focus_files.append(os.path.join(root, filename))
+                filepath = os.path.join(root, filename)
+                if staged_files is None or os.path.abspath(filepath) in staged_files:
+                    focus_files.append(filepath)
 
     # Collect event files
     event_files = []
     for root, dirnames, filenames in os.walk(rootDir + "/" + "events/"):
         for filename in fnmatch.filter(filenames, "*.txt"):
-            event_files.append(os.path.join(root, filename))
+            filepath = os.path.join(root, filename)
+            if staged_files is None or os.path.abspath(filepath) in staged_files:
+                event_files.append(filepath)
 
     # Check focus files and event files in parallel
     with Pool(processes=args.workers) as pool:
