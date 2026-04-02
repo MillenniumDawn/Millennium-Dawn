@@ -79,13 +79,13 @@ repos:
         language: system
         files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
         pass_filenames: true
-      # - id: md-standardize
-      #   name: MD Standardize (auto-fix ideas/events/decisions/focuses)
-      #   entry: python3 tools/standardize_staged.py
-      #   language: system
-      #   files: '(common/national_focus|common/decisions|common/ideas|events)/.*\.txt$'
-      #   pass_filenames: true
-      #   stages: [pre-commit]
+      - id: md-standardize
+        name: MD Standardize (auto-fix ideas/events/decisions/focuses)
+        entry: python3 tools/standardize_staged.py
+        language: system
+        files: '(common/national_focus|common/decisions|common/ideas|events)/.*\.txt$'
+        pass_filenames: true
+        stages: [pre-commit]
       - id: check-mod-file-encoding
         name: Check .mod file UTF-8 encoding
         entry: python3 tools/validate_mod_encoding.py
@@ -99,10 +99,41 @@ repos:
         files: '\.(txt)$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: true
+      - id: check-basic-style
+        name: MD Basic Style Check
+        entry: python3 tools/check_basic_style.py --mode staged
+        language: system
+        files: '\.(txt)$'
+        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
+        pass_filenames: false
+        stages: [pre-commit]
+      - id: check-basic-style-2
+        name: MD Basic Style Check (secondary)
+        entry: python3 tools/check_basic_style_2.py --mode staged
+        language: system
+        files: '\.(txt)$'
+        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
+        pass_filenames: false
+        stages: [pre-commit]
+      - id: coding-standards
+        name: MD Coding Standards (focus IDs, flags, events)
+        entry: python3 tools/coding_standards.py --mode staged
+        language: system
+        files: '(common/national_focus|events)/.*\.txt$'
+        pass_filenames: false
+        stages: [pre-commit]
+      - id: check-common-mistakes
+        name: MD Common Mistakes (threat scale, always=no, etc.)
+        entry: python3 tools/check_common_mistakes.py --mode staged
+        language: system
+        files: '\.(txt)$'
+        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
+        pass_filenames: false
+        stages: [pre-commit]
       - id: validate-staged
-        name: Validate staged files (opt-in, set MD_VALIDATE=1)
+        name: Validate staged files (opt-out via MD_SKIP_VALIDATE=1)
         entry: python3 tools/validate_staged.py
         language: system
-        files: '(events/.*\.txt|common/decisions/.*\.txt|localisation/.*\.yml)$'
+        files: '(events/.*\.txt|common/.*\.txt|history/.*\.txt|localisation/.*\.yml)$'
         pass_filenames: false
         stages: [pre-commit]

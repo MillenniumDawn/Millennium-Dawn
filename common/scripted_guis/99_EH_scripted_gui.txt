@@ -1,0 +1,829 @@
+scripted_gui = {
+	EH_drone_scripted_gui = {
+		window_name = "EH_drone_scripted_gui_window"
+		context_type = decision_category
+		dirty = EH_refresh_gui_dirty
+
+		visible = {
+			ROOT = {
+        	    has_completed_focus = EH_investigate_strange_structure
+        	    NOT = { has_country_flag = EH_country_succeeded_in_drone_mission_flag }
+        	}
+		}
+
+		effects = {
+			EH_increase_drones_button_click = {
+				ROOT = {
+					add_to_variable = { EH_selected_drones_var = 1 }
+					clamp_variable = {
+						var = EH_selected_drones_var
+						max = 500
+					}
+					EH_drone_mission_calculations_effect = yes
+				}
+			}
+			EH_increase_drones_button_control_click = {
+				ROOT = {
+					add_to_variable = { EH_selected_drones_var = 10 }
+					clamp_variable = {
+						var = EH_selected_drones_var
+						max = 500
+					}
+					EH_drone_mission_calculations_effect = yes
+				}
+			}
+			EH_increase_drones_button_shift_click = {
+				ROOT = {
+					add_to_variable = { EH_selected_drones_var = 100 }
+					clamp_variable = {
+						var = EH_selected_drones_var
+						max = 500
+					}
+					EH_drone_mission_calculations_effect = yes
+				}
+			}
+
+			EH_decrease_drones_button_click = {
+				ROOT = {
+					subtract_from_variable = { EH_selected_drones_var = 1 }
+					clamp_variable = {
+						var = EH_selected_drones_var
+						min = 100
+					}
+					EH_drone_mission_calculations_effect = yes
+				}
+			}
+			EH_decrease_drones_button_control_click = {
+				ROOT = {
+					subtract_from_variable = { EH_selected_drones_var = 10 }
+					clamp_variable = {
+						var = EH_selected_drones_var
+						min = 100
+					}
+					EH_drone_mission_calculations_effect = yes
+				}
+			}
+			EH_decrease_drones_button_shift_click = {
+				ROOT = {
+					subtract_from_variable = { EH_selected_drones_var = 100 }
+					clamp_variable = {
+						var = EH_selected_drones_var
+						min = 100
+					}
+					EH_drone_mission_calculations_effect = yes
+				}
+			}
+
+			EH_launch_mission_button_click = {
+				ROOT = {
+					EH_drone_mission_effect = yes
+				}
+			}
+        }
+
+		triggers = {
+			EH_increase_drones_button_click_enabled = {
+				ROOT = { check_variable = { EH_selected_drones_var < 501 } }
+			}
+
+			EH_decrease_drones_button_click_enabled = {
+				ROOT = { check_variable = { EH_selected_drones_var > 99 } }
+			}
+
+			EH_launch_mission_button_click_enabled = {
+				ROOT = {
+					has_equipment = {
+						suicide > EH_selected_drones_var
+					}
+				}
+			}
+		}
+
+		ai_enabled = {
+			always = yes
+		}
+
+		ai_weights = {
+			EH_increase_drones_button_shift_click = {
+				ai_will_do = {
+					base = 100
+
+					modifier = {
+						factor = 0
+						has_deployed_air_force_size = {
+    						size < EH_selected_drones_var
+    						type = suicide
+						}
+					}
+				}
+			}
+
+			EH_launch_mission_button_click = { # AI takes low risk here, cuz it's stupid in equipment production so let's not make them waste all drones
+				ai_will_do = {
+					base = 0
+
+					modifier = {
+						add = 10
+						check_variable = { EH_selected_drones_var > 299 }
+					}
+					modifier = {
+						add = 50
+						check_variable = { EH_selected_drones_var > 499 }
+					}
+					modifier = {
+						add = 40
+						check_variable = { air_intel@ALN > 50 }
+					}
+					modifier = {
+						factor = 0
+						check_variable = { air_intel@ALN < 35 }
+					}
+				}
+			}
+		}
+	}
+
+	EH_research_sites_scripted_gui = {
+		window_name = "EH_research_sites_scripted_gui_window"
+		context_type = decision_category
+		dirty = EH_refresh_gui_dirty
+
+		visible = {
+			ROOT = {
+			    has_country_flag = EH_research_sites_enabled
+			}
+		}
+
+		effects = {
+			EH_hire_Jennifer_Doudna_button_click = {
+				add_ideas = EH_scientist_jennifer_doudna_idea
+				set_country_flag = EH_hired_jennifer_doudna_flag
+				if = {
+					limit = {
+						has_active_mission = EH_doudna_or_charpentier_project_mission
+						AND = {
+							has_country_flag = EH_hired_jennifer_doudna_flag
+							has_country_flag = EH_hired_emmanuelle_charpentier_flag
+						}
+					}
+					add_days_mission_timeout = {
+						mission = EH_doudna_or_charpentier_project_mission
+						days = -50
+					}
+				}
+				else_if = {
+					limit = {
+						has_country_flag = EH_hired_jennifer_doudna_flag
+						has_country_flag = EH_hired_emmanuelle_charpentier_flag
+					}
+					activate_mission = EH_doudna_or_charpentier_project_mission
+				}
+				EH_refresh_gui = yes
+			}
+			EH_hire_Fabiola_Gianotti_button_click = {
+				add_ideas = EH_scientist_fabiola_gianotti_idea
+				set_country_flag = EH_hired_fabiola_gianotti_flag
+				newline = yes
+				custom_effect_tooltip = EH_fabiola_gianotti_special_effect_tt
+				EH_refresh_gui = yes
+			}
+			EH_hire_Lene_Hau_button_click = {
+				add_ideas = EH_scientist_lene_hau_idea
+				set_country_flag = EH_hired_lene_hau_flag
+				newline = yes
+				custom_effect_tooltip = EH_lene_hau_special_effect_tt
+				EH_refresh_gui = yes
+			}
+			EH_hire_Emmanuelle_Charpentier_button_click = {
+				add_ideas = EH_scientist_emmanuelle_charpentier_idea
+				set_country_flag = EH_hired_emmanuelle_charpentier_flag
+				if = {
+					limit = {
+						has_active_mission = EH_doudna_or_charpentier_project_mission
+						AND = {
+							has_country_flag = EH_hired_jennifer_doudna_flag
+							has_country_flag = EH_hired_emmanuelle_charpentier_flag
+						}
+					}
+					add_days_mission_timeout = {
+						mission = EH_doudna_or_charpentier_project_mission
+						days = -50
+					}
+				}
+				else_if = {
+					limit = {
+						has_country_flag = EH_hired_jennifer_doudna_flag
+						has_country_flag = EH_hired_emmanuelle_charpentier_flag
+					}
+					activate_mission = EH_doudna_or_charpentier_project_mission
+				}
+				EH_refresh_gui = yes
+			}
+			EH_hire_Andrzej_Trautman_button_click = {
+				add_ideas = EH_scientist_andrzej_trautman_idea
+				set_country_flag = EH_hired_andrzej_trautman_flag
+				newline = yes
+				custom_effect_tooltip = EH_andrzej_trautman_special_effect_tt
+				EH_refresh_gui = yes
+			}
+		}
+
+		triggers = {
+			EH_scientist_Jennifer_Doudna_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = EH_scientist_is_alive_tt
+					is_in_array = { EH_scientists_array = 0 }
+				}
+				hidden_trigger = { has_country_flag = EH_hired_jennifer_doudna_flag }
+				ALN = {
+					casualties_inflicted_by = {
+						opponent = ROOT
+						thousands > 10
+					}
+				}
+			}
+			EH_hire_Jennifer_Doudna_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = EH_scientist_is_alive_tt
+					is_in_array = { EH_scientists_array = 0 }
+				}
+				NOT = { has_country_flag = EH_hired_jennifer_doudna_flag }
+				ALN = {
+					casualties_inflicted_by = {
+						opponent = ROOT
+						thousands > 10
+					}
+				}
+			}
+
+			EH_scientist_Fabiola_Gianotti_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = EH_scientist_is_alive_tt
+					is_in_array = { EH_scientists_array = 1 }
+				}
+				hidden_trigger = { has_country_flag = EH_hired_fabiola_gianotti_flag }
+				has_completed_focus = EH_find_new_veins
+			}
+			EH_hire_Fabiola_Gianotti_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = EH_scientist_is_alive_tt
+					is_in_array = { EH_scientists_array = 1 }
+				}
+				NOT = { has_country_flag = EH_hired_fabiola_gianotti_flag }
+				has_completed_focus = EH_find_new_veins
+			}
+
+			EH_scientist_Lene_Hau_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = EH_scientist_is_alive_tt
+					is_in_array = { EH_scientists_array = 2 }
+				}
+				hidden_trigger = { has_country_flag = EH_hired_lene_hau_flag }
+				is_special_project_completed = sp:sp_monitor_portal_energy_emissions_project
+			}
+			EH_hire_Lene_Hau_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = EH_scientist_is_alive_tt
+					is_in_array = { EH_scientists_array = 2 }
+				}
+				NOT = { has_country_flag = EH_hired_lene_hau_flag }
+				is_special_project_completed = sp:sp_monitor_portal_energy_emissions_project
+			}
+
+			EH_scientist_Emmanuelle_Charpentier_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = EH_scientist_is_alive_tt
+					is_in_array = { EH_scientists_array = 3 }
+				}
+				hidden_trigger = { has_country_flag = EH_hired_emmanuelle_charpentier_flag }
+				ALN = {
+					casualties_inflicted_by = {
+						opponent = ROOT
+						thousands > 10
+					}
+				}
+			}
+			EH_hire_Emmanuelle_Charpentier_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = EH_scientist_is_alive_tt
+					is_in_array = { EH_scientists_array = 3 }
+				}
+				NOT = { has_country_flag = EH_hired_emmanuelle_charpentier_flag }
+				ALN = {
+					casualties_inflicted_by = {
+						opponent = ROOT
+						thousands > 10
+					}
+				}
+			}
+
+			EH_scientist_Andrzej_Trautman_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = EH_scientist_is_alive_tt
+					is_in_array = { EH_scientists_array = 4 }
+				}
+				hidden_trigger = { has_country_flag = EH_hired_andrzej_trautman_flag }
+				has_country_flag = EH_country_succeeded_in_drone_mission_flag
+			}
+			EH_hire_Andrzej_Trautman_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = EH_scientist_is_alive_tt
+					is_in_array = { EH_scientists_array = 4 }
+				}
+				NOT = { has_country_flag = EH_hired_andrzej_trautman_flag }
+				has_country_flag = EH_country_succeeded_in_drone_mission_flag
+			}
+		}
+
+		ai_weights = {
+			EH_hire_Jennifer_Doudna_button_click = {
+				ai_will_do = { base = 100 }
+			}
+			EH_hire_Emmanuelle_Charpentier_button_click = {
+				ai_will_do = { base = 100 }
+			}
+			EH_hire_Fabiola_Gianotti_button_click = {
+				ai_will_do = { base = 100 }
+			}
+			EH_hire_Lene_Hau_button_click = {
+				ai_will_do = { base = 100 }
+			}
+			EH_hire_Andrzej_Trautman_button_click = {
+				ai_will_do = { base = 100 }
+			}
+		}
+	}
+
+	EH_open_randallite_scripted_gui = {
+		window_name = "EH_open_randallite_tab_gui_window"
+		context_type = player_context
+		parent_window_token = production_tab
+		dirty = global.date
+
+		visible = {
+			ROOT = { has_completed_focus = EH_a_new_resource }
+		}
+
+		effects = {
+			EH_open_randallite_tab_button_click = {
+				if = {
+					limit = { has_country_flag = EH_randallite_tab_open_flag }
+					clr_country_flag = EH_randallite_tab_open_flag
+				}
+				else = {
+					set_country_flag = EH_randallite_tab_open_flag
+				}
+			}
+		}
+
+		ai_weights = {
+			EH_open_randallite_tab_button_click = {
+				ai_will_do = {
+					base = 100
+					modifier = {
+						factor = 0
+						has_country_flag = EH_randallite_tab_open_flag
+					}
+				}
+			}
+		}
+	}
+
+	EH_randallite_scripted_gui = {
+		window_name = "EH_randallite_scripted_gui_window"
+		context_type = player_context
+		parent_window_token = production_tab
+		dirty = EH_refresh_gui_dirty
+
+		visible = {
+			ROOT = {
+			    has_country_flag = EH_randallite_tab_open_flag
+			}
+		}
+
+		properties = {
+			EH_mech_production_progress_bar_1 = { frame = ROOT.EH_mech_production_1_progress_var }
+			EH_mech_production_progress_bar_2 = { frame = ROOT.EH_mech_production_2_progress_var }
+			EH_mech_production_progress_bar_3 = { frame = ROOT.EH_mech_production_3_progress_var }
+			EH_mech_production_progress_bar_4 = { frame = ROOT.EH_mech_production_4_progress_var }
+			EH_mech_production_progress_bar_5 = { frame = ROOT.EH_mech_production_5_progress_var }
+		}
+
+		effects = {
+			EH_mech_production_start_factory_1_click = {
+				ROOT = {
+					set_country_flag = EH_mech_production_1_in_progress_flag
+					EH_start_mech_production_factory_1_effect = yes
+				}
+			}
+			EH_mech_production_start_factory_2_click = {
+				ROOT = {
+					set_country_flag = EH_mech_production_2_in_progress_flag
+					EH_start_mech_production_factory_2_effect = yes
+				}
+			}
+			EH_mech_production_start_factory_3_click = {
+				ROOT = {
+					set_country_flag = EH_mech_production_3_in_progress_flag
+					EH_start_mech_production_factory_3_effect = yes
+				}
+			}
+			EH_mech_production_start_factory_4_click = {
+				ROOT = {
+					set_country_flag = EH_mech_production_4_in_progress_flag
+					EH_start_mech_production_factory_4_effect = yes
+				}
+			}
+			EH_mech_production_start_factory_5_click = {
+				ROOT = {
+					set_country_flag = EH_mech_production_5_in_progress_flag
+					EH_start_mech_production_factory_5_effect = yes
+				}
+			}
+
+			EH_select_mech_1_click = {
+				set_country_flag = EH_mech_selected_flag
+				set_country_flag = EH_mech_1_selected_flag
+				set_variable = { EH_mech_production_time_multiplier_var = 1.5 }
+				EH_calculate_mechs_production_time_effect = yes
+			}
+			EH_select_mech_2_click = {
+				set_country_flag = EH_mech_selected_flag
+				set_country_flag = EH_mech_2_selected_flag
+				set_variable = { EH_mech_production_time_multiplier_var = 2.5 }
+				EH_calculate_mechs_production_time_effect = yes
+			}
+			EH_select_mech_3_click = {
+				set_country_flag = EH_mech_selected_flag
+				set_country_flag = EH_mech_3_selected_flag
+				set_variable = { EH_mech_production_time_multiplier_var = 4 }
+				EH_calculate_mechs_production_time_effect = yes
+			}
+
+			EH_increase_mechs_button_click = {
+				ROOT = {
+					add_to_variable = { EH_selected_mechs_var = 1 }
+					clamp_variable = {
+						var = EH_selected_mechs_var
+						max = 99
+					}
+					EH_calculate_mechs_production_time_effect = yes
+				}
+			}
+			EH_increase_mechs_button_control_click = {
+				ROOT = {
+					add_to_variable = { EH_selected_mechs_var = 10 }
+					clamp_variable = {
+						var = EH_selected_mechs_var
+						max = 99
+					}
+					EH_calculate_mechs_production_time_effect = yes
+				}
+			}
+			EH_increase_mechs_button_shift_click = {
+				ROOT = {
+					add_to_variable = { EH_selected_mechs_var = 100 }
+					clamp_variable = {
+						var = EH_selected_mechs_var
+						max = 99
+					}
+					EH_calculate_mechs_production_time_effect = yes
+				}
+			}
+
+			EH_decrease_mechs_button_click = {
+				ROOT = {
+					subtract_from_variable = { EH_selected_mechs_var = 1 }
+					clamp_variable = {
+						var = EH_selected_mechs_var
+						min = 0
+					}
+					EH_calculate_mechs_production_time_effect = yes
+				}
+			}
+			EH_decrease_mechs_button_control_click = {
+				ROOT = {
+					subtract_from_variable = { EH_selected_mechs_var = 10 }
+					clamp_variable = {
+						var = EH_selected_mechs_var
+						min = 0
+					}
+					EH_calculate_mechs_production_time_effect = yes
+				}
+			}
+			EH_decrease_mechs_button_shift_click = {
+				ROOT = {
+					subtract_from_variable = { EH_selected_mechs_var = 100 }
+					clamp_variable = {
+						var = EH_selected_mechs_var
+						min = 0
+					}
+					EH_calculate_mechs_production_time_effect = yes
+				}
+			}
+
+			EH_show_tesla_page_click = {
+				ROOT = {
+					set_country_flag = EH_tesla_window_visible
+					EH_refresh_gui = yes
+				}
+			}
+			EH_close_tesla_page_click = {
+				ROOT = {
+					clr_country_flag = EH_tesla_window_visible
+					EH_refresh_gui = yes
+				}
+			}
+		}
+
+		triggers = {
+			EH_mech_production_start_factory_1_click_enabled = {
+				NOT = { has_country_flag = EH_mech_production_1_in_progress_flag }
+				EH_mech_production_available_trigger = yes
+			}
+			EH_mech_production_start_factory_2_click_enabled = {
+				NOT = { has_country_flag = EH_mech_production_2_in_progress_flag }
+				EH_mech_production_available_trigger = yes
+			}
+			EH_mech_production_start_factory_3_click_enabled = {
+				NOT = { has_country_flag = EH_mech_production_3_in_progress_flag }
+				EH_mech_production_available_trigger = yes
+			}
+			EH_mech_production_start_factory_4_click_enabled = {
+				NOT = { has_country_flag = EH_mech_production_4_in_progress_flag }
+				EH_mech_production_available_trigger = yes
+			}
+			EH_mech_production_start_factory_5_click_enabled = {
+				NOT = { has_country_flag = EH_mech_production_5_in_progress_flag }
+				EH_mech_production_available_trigger = yes
+			}
+
+			EH_select_mech_1_click_enabled = {
+				is_special_project_completed = sp:sp_hacs_gen_one_project
+				hidden_trigger = { NOT = { has_country_flag = EH_mech_1_selected_flag } }
+			}
+			EH_select_mech_2_click_enabled = {
+				is_special_project_completed = sp:sp_hacs_gen_two_project
+				hidden_trigger = { NOT = { has_country_flag = EH_mech_2_selected_flag } }
+			}
+			EH_select_mech_3_click_enabled = {
+				is_special_project_completed = sp:sp_hacs_gen_three_project
+				hidden_trigger = { NOT = { has_country_flag = EH_mech_3_selected_flag } }
+			}
+
+			EH_show_tesla_page_visible = {
+				NOT = { has_country_flag = EH_tesla_window_visible }
+			}
+			EH_show_tesla_page_click_enabled = {
+				# is_special_project_completed = sp:sp_the_tesla_weapon_project
+			}
+			EH_close_tesla_page_visible = {
+				has_country_flag = EH_tesla_window_visible
+			}
+		}
+
+		ai_weights = {
+			EH_mech_production_start_factory_1_click = {
+				ai_will_do = {
+					base = 100
+					modifier = {
+						factor = 0
+						set_temp_variable = { check_randallite = 6 }
+						EH_check_randallite_trigger = yes
+					}
+				}
+			}
+			EH_mech_production_start_factory_2_click = {
+				ai_will_do = {
+					base = 100
+					modifier = {
+						factor = 0
+						set_temp_variable = { check_randallite = 6 }
+						EH_check_randallite_trigger = yes
+					}
+				}
+			}
+			EH_mech_production_start_factory_3_click = {
+				ai_will_do = {
+					base = 100
+					modifier = {
+						factor = 0
+						set_temp_variable = { check_randallite = 6 }
+						EH_check_randallite_trigger = yes
+					}
+				}
+			}
+			EH_mech_production_start_factory_4_click = {
+				ai_will_do = {
+					base = 100
+					modifier = {
+						factor = 0
+						set_temp_variable = { check_randallite = 6 }
+						EH_check_randallite_trigger = yes
+					}
+				}
+			}
+			EH_mech_production_start_factory_5_click = {
+				ai_will_do = {
+					base = 100
+					modifier = {
+						factor = 0
+						set_temp_variable = { check_randallite = 6 }
+						EH_check_randallite_trigger = yes
+					}
+				}
+			}
+
+			EH_select_mech_1_click = {
+				ai_will_do = {
+					base = 100
+					modifier = {
+						factor = 0
+						is_special_project_completed = sp:sp_hacs_gen_two_project
+					}
+				}
+			}
+			EH_select_mech_2_click = {
+				ai_will_do = {
+					base = 100
+					modifier = {
+						factor = 0
+						is_special_project_completed = sp:sp_hacs_gen_three_project
+					}
+				}
+			}
+			EH_select_mech_3_click = {
+				ai_will_do = { base = 100 }
+			}
+
+			EH_increase_mechs_button_control_click = {
+				ai_will_do = {
+					base = 100
+					modifier = {
+						factor = 0
+						check_variable = { EH_selected_mechs_var > 9 }
+					}
+				}
+			}
+
+			EH_show_tesla_page_click = {
+				ai_will_do = {
+					base = 100
+					modifier = {
+						factor = 0
+						has_country_flag = EH_tesla_window_visible
+					}
+				}
+			}
+		}
+	}
+
+	EH_tesla_missile_scripted_gui = {
+		window_name = "EH_tesla_missile_scripted_gui_window"
+		parent_window_token = production_tab
+		dirty = EH_refresh_gui_dirty
+
+		visible = {
+			has_country_flag = EH_tesla_window_visible
+			has_country_flag = EH_randallite_tab_open_flag
+		}
+
+		properties = {
+			EH_randallite_ui_tesla_airframe_progress_bar = { frame = ROOT.EH_tesla_airframe_progress }
+			EH_randallite_ui_tesla_neutralizer_progress_bar = { frame = ROOT.EH_tesla_neutralizer_progress }
+			EH_randallite_ui_tesla_emp_progress_bar = { frame = ROOT.EH_tesla_emp_progress }
+		}
+
+		effects = {
+			EH_randallite_ui_tesla_airframe_click = {
+				set_country_flag = EH_tesla_airframe_in_production_flag
+				set_temp_variable = { add_randallite = -17 }
+				EH_add_randallite_effect = yes
+				add_ideas = EH_tesla_airframe_production_idea
+			}
+			EH_randallite_ui_tesla_neutralizer_click = {
+				set_country_flag = EH_tesla_neutralizer_in_production_flag
+				set_temp_variable = { add_randallite = -6 }
+				EH_add_randallite_effect = yes
+				add_ideas = EH_tesla_neutralizer_production_idea
+			}
+			EH_randallite_ui_tesla_emp_click = {
+				set_country_flag = EH_tesla_emp_in_production_flag
+				set_temp_variable = { add_randallite = -11 }
+				EH_add_randallite_effect = yes
+				add_ideas = EH_tesla_emp_production_idea
+			}
+		}
+
+		triggers = {
+			EH_randallite_ui_tesla_airframe_click_enabled = {
+				set_temp_variable = { check_randallite = 16 }
+				EH_check_randallite_trigger = yes
+				has_resources_in_country = {
+					resource = steel
+					amount > 14
+				}
+				has_resources_in_country = {
+					resource = aluminium
+					amount > 3
+				}
+				num_of_military_factories > 5
+			}
+			EH_randallite_ui_tesla_airframe_visible = {
+				NOT = {
+					OR = {
+						has_country_flag = EH_tesla_airframe_in_production_flag
+						has_country_flag = EH_tesla_airframe_completed_flag
+					}
+				}
+			}
+
+			EH_randallite_ui_tesla_neutralizer_click_enabled = {
+				set_temp_variable = { check_randallite = 5 }
+				EH_check_randallite_trigger = yes
+				has_resources_in_country = {
+					resource = steel
+					amount > 12
+				}
+				has_resources_in_country = {
+					resource = aluminium
+					amount > 10
+				}
+				has_resources_in_country = {
+					resource = rubber
+					amount > 2
+				}
+				has_resources_in_country = {
+					resource = microchips
+					amount > 4
+				}
+				num_of_military_factories > 2
+			}
+			EH_randallite_ui_tesla_neutralizer_visible = {
+				NOT = {
+					OR = {
+						has_country_flag = EH_tesla_neutralizer_in_production_flag
+						has_country_flag = EH_tesla_neutralizer_completed_flag
+					}
+				}
+			}
+
+			EH_randallite_ui_tesla_emp_click_enabled = {
+				set_temp_variable = { check_randallite = 10 }
+				EH_check_randallite_trigger = yes
+				has_resources_in_country = {
+					resource = steel
+					amount > 4
+				}
+				has_resources_in_country = {
+					resource = aluminium
+					amount > 5
+				}
+				has_resources_in_country = {
+					resource = microchips
+					amount > 6
+				}
+				num_of_military_factories > 2
+			}
+			EH_randallite_ui_tesla_emp_visible = {
+				NOT = {
+					OR = {
+						has_country_flag = EH_tesla_emp_in_production_flag
+						has_country_flag = EH_tesla_emp_completed_flag
+					}
+				}
+			}
+			EH_randallite_ui_tesla_airframe_progress_bar_visible = {
+				has_country_flag = EH_tesla_airframe_in_production_flag
+			}
+			EH_randallite_ui_tesla_neutralizer_progress_bar_visible = {
+				has_country_flag = EH_tesla_neutralizer_in_production_flag
+			}
+			EH_randallite_ui_tesla_emp_progress_bar_visible = {
+				has_country_flag = EH_tesla_emp_in_production_flag
+			}
+		}
+
+		ai_weights = {
+			EH_randallite_ui_tesla_airframe_click = {
+				ai_will_do = { base = 100 }
+			}
+			EH_randallite_ui_tesla_neutralizer_click = {
+				ai_will_do = { base = 100 }
+			}
+			EH_randallite_ui_tesla_emp_click = {
+				ai_will_do = { base = 100 }
+			}
+		}
+	}
+
+	EH_random_static_scripted_gui = {
+		window_name = "EH_random_static_scripted_gui_window"
+		context_type = player_context
+		dirty = global.date
+
+		visible = {
+			has_country_flag = EH_random_static_gui_flag
+		}
+	}
+}
