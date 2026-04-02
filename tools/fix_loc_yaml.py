@@ -25,8 +25,8 @@ from pathlib import Path
 
 # Curly quote pairs to normalize
 SMART_QUOTES = {
-    "\u201c": '\\"',  # left double curly quote
-    "\u201d": '\\"',  # right double curly quote
+    "\u201c": '"',  # left double curly quote
+    "\u201d": '"',  # right double curly quote
     "\u2018": "'",  # left single curly quote
     "\u2019": "'",  # right single curly quote
 }
