@@ -352,6 +352,13 @@ class Validator(BaseValidator):
         )
 
     def run_validations(self):
+        if self.staged_only:
+            self.log(
+                "Unused scripted check requires full codebase scan — skipping in staged mode",
+                "warning",
+            )
+            return
+
         self.validate_unused_effects()
         self.validate_unused_triggers()
 

@@ -539,14 +539,24 @@ class Validator(BaseValidator):
         )
 
     def run_validations(self):
+        if self.staged_only and not self.staged_files:
+            self.log(
+                "No staged files found — skipping localisation validation",
+                "warning",
+            )
+            return
+
         self.validate_duplicated_keys()
         self.validate_brackets()
         self.validate_syntax()
         self.validate_mandatory_line()
-        self.validate_localization_key_references()
-        self.validate_custom_tooltip_references()
-        self.validate_add_resistance_tooltip()
-        self.validate_orphaned_tooltip_keys()
+
+        # Cross-reference checks scan all .txt/.gui files — skip in staged mode
+        if not self.staged_only:
+            self.validate_localization_key_references()
+            self.validate_custom_tooltip_references()
+            self.validate_add_resistance_tooltip()
+            self.validate_orphaned_tooltip_keys()
 
 
 if __name__ == "__main__":
