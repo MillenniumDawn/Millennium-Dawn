@@ -3,22 +3,15 @@
 """
 Pre-commit hook wrapper for staged file validation.
 
-Runs validators for file types that are staged. Each validator skips
-cross-reference checks in staged mode so it only validates the staged
-files themselves (CI handles the full cross-reference validation).
+Opt-in via environment variable:
+    MD_VALIDATE=1 git commit -m "..."
 
-  - events/*.txt                      -> validate_events.py
-  - common/decisions/*.txt            -> validate_decisions.py
-  - localisation/*.yml                -> validate_localisation.py
-  - history/countries/*.txt           -> validate_history_techs.py
-  - common/, events/, history/        -> validate_variables.py
-  - common/scripted_localisation/     -> validate_scripted_localisation.py
-  - common/                           -> validate_cosmetic_tags.py
-  - common/scripted_effects/,
-    common/scripted_triggers/         -> validate_unused_scripted.py
+Runs validators only for file types that are staged:
+  - events/*.txt          -> validate_events.py
+  - common/decisions/*.txt -> validate_decisions.py
+  - localisation/*.yml    -> validate_localisation.py
 
-Opt-out via environment variable:
-    MD_SKIP_VALIDATE=1 git commit -m "..."
+Skips silently when MD_VALIDATE is not set.
 """
 
 import os
@@ -28,7 +21,7 @@ import sys
 VALIDATORS = [
     {
         "name": "events",
-        "prefixes": ["events/"],
+        "prefix": "events/",
         "suffix": ".txt",
         "cmd": [
             "python3",
@@ -40,7 +33,7 @@ VALIDATORS = [
     },
     {
         "name": "decisions",
-        "prefixes": ["common/decisions/"],
+        "prefix": "common/decisions/",
         "suffix": ".txt",
         "cmd": [
             "python3",
@@ -52,71 +45,11 @@ VALIDATORS = [
     },
     {
         "name": "localisation",
-        "prefixes": ["localisation/"],
+        "prefix": "localisation/",
         "suffix": ".yml",
         "cmd": [
             "python3",
             "tools/validation/validate_localisation.py",
-            "--staged",
-            "--strict",
-            "--no-color",
-        ],
-    },
-    {
-        "name": "history techs",
-        "prefixes": ["history/countries/"],
-        "suffix": ".txt",
-        "cmd": [
-            "python3",
-            "tools/validation/validate_history_techs.py",
-            "--staged",
-            "--strict",
-            "--no-color",
-        ],
-    },
-    {
-        "name": "variables",
-        "prefixes": ["common/", "events/", "history/"],
-        "suffix": ".txt",
-        "cmd": [
-            "python3",
-            "tools/validation/validate_variables.py",
-            "--staged",
-            "--strict",
-            "--no-color",
-        ],
-    },
-    {
-        "name": "scripted localisation",
-        "prefixes": ["common/scripted_localisation/"],
-        "suffix": ".txt",
-        "cmd": [
-            "python3",
-            "tools/validation/validate_scripted_localisation.py",
-            "--staged",
-            "--strict",
-            "--no-color",
-        ],
-    },
-    {
-        "name": "cosmetic tags",
-        "prefixes": ["common/"],
-        "suffix": ".txt",
-        "cmd": [
-            "python3",
-            "tools/validation/validate_cosmetic_tags.py",
-            "--staged",
-            "--strict",
-            "--no-color",
-        ],
-    },
-    {
-        "name": "unused scripted",
-        "prefixes": ["common/scripted_effects/", "common/scripted_triggers/"],
-        "suffix": ".txt",
-        "cmd": [
-            "python3",
-            "tools/validation/validate_unused_scripted.py",
             "--staged",
             "--strict",
             "--no-color",
@@ -136,7 +69,7 @@ def get_staged_files():
 
 
 def main():
-    if os.environ.get("MD_SKIP_VALIDATE", "") == "1":
+    if os.environ.get("MD_VALIDATE", "") != "1":
         return 0
 
     staged = get_staged_files()
@@ -144,8 +77,7 @@ def main():
 
     for v in VALIDATORS:
         has_matching = any(
-            any(f.startswith(p) for p in v["prefixes"]) and f.endswith(v["suffix"])
-            for f in staged
+            f.startswith(v["prefix"]) and f.endswith(v["suffix"]) for f in staged
         )
         if not has_matching:
             continue

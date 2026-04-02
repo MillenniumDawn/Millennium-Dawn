@@ -96,7 +96,7 @@ class ScriptedLocalisation:
         localisations = []
         paths = {}
 
-        if staged_files is not None:
+        if staged_files:
             files_to_scan = [
                 f
                 for f in staged_files
@@ -135,7 +135,7 @@ class ScriptedLocalisation:
             {name.lower() for name in defined_names} if lowercase else defined_names
         )
 
-        if staged_files is not None:
+        if staged_files:
             files_to_scan = [
                 f
                 for f in staged_files
@@ -410,13 +410,6 @@ class Validator(BaseValidator):
             )
 
     def run_validations(self):
-        if self.staged_only and not self.staged_files:
-            self.log(
-                "No staged files found — skipping scripted localisation validation",
-                "warning",
-            )
-            return
-
         FALSE_POSITIVES = [
             "root.getname",
             "this.getname",
@@ -445,10 +438,7 @@ class Validator(BaseValidator):
         ]
         self.validate_missing_scripted_localisations(FALSE_POSITIVES)
         self.validate_unused_scripted_localisations(FALSE_POSITIVES)
-
-        # GFX icon check scans all interface/*.gfx files — skip in staged mode
-        if not self.staged_only:
-            self.validate_gfx_icons()
+        self.validate_gfx_icons()
 
 
 if __name__ == "__main__":
