@@ -36,9 +36,31 @@ joint_focus = {
 		has_dynamic_modifier = mercosur_member_state_modifier
 	}
 
+	select_effect = {
+		set_global_flag = BRA_americas_unity_in_progress
+	}
+
 	completion_reward = {
 		log = "[GetDateText]: [THIS.GetName]: Focus BRA_americas_unity"
 
+		if = {
+			limit = { NOT = { has_global_flag = mercosur.30_broadcasted } }
+			set_global_flag = mercosur.30_broadcasted
+		}
+
+		if = {
+			limit = {
+				exists = yes
+				NOT = { tag = MEX }
+				NOT = { tag = PAN }
+				NOT = { has_country_flag = mercosur.30_received }
+			}
+			set_country_flag = mercosur.30_received
+			country_event = { id = mercosur.30 }
+		}
+	}
+
+	completion_reward_joint_originator = {
 		for_each_scope_loop = {
 			array = global.mercosur_potential
 			if = {
@@ -52,34 +74,14 @@ joint_focus = {
 				reverse_add_opinion_modifier = { target = ROOT modifier = medium_increase }
 			}
 		}
-
-		if = {
-			limit = { NOT = { has_global_flag = mercosur.30_broadcasted } }
-			set_global_flag = mercosur.30_broadcasted
-
-			for_each_scope_loop = {
-				array = global.mercosur_potential
-				if = {
-					limit = {
-						exists = yes
-						NOT = { tag = MEX }
-						NOT = { tag = PAN }
-						NOT = { has_country_flag = mercosur.30_received }
-					}
-					set_country_flag = mercosur.30_received
-					country_event = { id = mercosur.30 }
-				}
-			}
-		}
-
 		custom_effect_tooltip = BRA_americas_unity_TT
 	}
 
 	ai_will_do = {
-		base = 45
+		base = 1
 		modifier = {
-			factor = 2
-			is_historical_focus_on = yes
+			factor = 0
+			has_global_flag = BRA_americas_unity_in_progress
 		}
 	}
 }
@@ -103,6 +105,10 @@ joint_focus = {
 		has_dynamic_modifier = mercosur_member_state_modifier
 	}
 
+	select_effect = {
+		set_global_flag = BRA_mercosur_in_progress
+	}
+
 	completion_reward = {
 		log = "[GetDateText]: [THIS.GetName]: Focus BRA_neighborly_development"
 		unlock_decision_tooltip = MER_invite_PRU_associate
@@ -115,34 +121,10 @@ joint_focus = {
 
 	ai_will_do = {
 		base = 1
-	}
-}
-
-joint_focus = {
-	id = BRA_unasul
-	icon = align_to_usan
-
-	x = 4
-	y = 1
-	relative_position_id = BRA_americas_unity
-
-	cost = 5
-
-	prerequisite = { focus = BRA_americas_unity }
-	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
-
-	available = {
-		is_subject = no
-		has_at_least_regional_power_status = yes
-	}
-
-	completion_reward = {
-		log = "[GetDateText]: [THIS.GetName]: Focus BRA_unasul"
-		add_ideas = BRA_idea_unasul_member
-	}
-
-	ai_will_do = {
-		base = 1
+		modifier = {
+			factor = 0
+			has_global_flag = BRA_mercosur_in_progress
+		}
 	}
 }
 
@@ -172,7 +154,7 @@ joint_focus = {
 			MODIFIER = mercosur_member_state_modifier
 		}
 		add_to_variable = { mercosur_member_state_tax_gain_multiplier_modifier = 0.02 tooltip = tax_gain_multiplier_modifier_tt }
-		add_to_variable = { mercosur_member_state_productivity_growth_modifier = 0.05 tooltip = productivity_growth_modifier_tt }
+		add_to_variable = { mercosur_member_state_productivity_growth_modifier = 0.03 tooltip = productivity_growth_modifier_tt }
 	}
 
 }
@@ -275,7 +257,7 @@ joint_focus = {
 joint_focus = {
 	id = MER_secretariat_reform
 	icon = focus_generic_improve_the_administration
-	x = -2
+	x = -1
 	y = 1
 	relative_position_id = BRA_assoc_members
 
@@ -303,45 +285,9 @@ joint_focus = {
 }
 
 joint_focus = {
-	id = MER_infrastructure_corridor_program
-	icon = focus_CHL_connect_the_northern_railways
-	x = 0
-	y = 1
-	relative_position_id = BRA_assoc_members
-
-	cost = 10
-
-	prerequisite = { focus = BRA_assoc_members }
-	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_MERCOSUR }
-
-	available = {
-		is_subject = no
-		has_at_least_regional_power_status = yes
-		has_dynamic_modifier = mercosur_member_state_modifier
-	}
-
-	completion_reward = {
-		log = "[GetDateText]: [THIS.GetName]: Focus MER_infrastructure_corridor_program"
-		custom_effect_tooltip = {
-			localization_key = modifies_dynamic_modifier_tt
-			MODIFIER = mercosur_member_state_modifier
-		}
-		add_to_variable = { mercosur_member_state_production_speed_infrastructure_factor = 0.05 tooltip = production_speed_infrastructure_factor_tt }
-		add_to_variable = { mercosur_member_state_production_speed_internet_station_factor = 0.05 tooltip = production_speed_internet_station_factor_tt }
-		add_to_variable = { mercosur_member_state_infrastructure_cost_multiplier_modifier = -0.05 tooltip = infrastructure_cost_multiplier_modifier_tt }
-
-		unlock_decision_tooltip = {
-			decision = MER_launch_corridor_investment_round
-			show_effect_tooltip = yes
-		}
-		newline = yes
-	}
-}
-
-joint_focus = {
 	id = MER_development_fund
 	icon = focus_generic_financial_agreement
-	x = 2
+	x = 1
 	y = 1
 	relative_position_id = BRA_assoc_members
 
@@ -376,12 +322,12 @@ joint_focus = {
 joint_focus = {
 	id = BRA_education_integration
 	icon = examine_foreign_laws
-	x = -1
+	x = 0
 	y = 1
-	relative_position_id = MER_infrastructure_corridor_program
+	relative_position_id = MER_secretariat_reform
 	cost = 10
 	prerequisite = { focus = MER_secretariat_reform }
-	prerequisite = { focus = MER_infrastructure_corridor_program }
+	prerequisite = { focus = MER_development_fund }
 	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_MERCOSUR }
 
 	available = {
@@ -405,13 +351,13 @@ joint_focus = {
 	id = BRA_mercosur_market
 	icon = industry_democratic
 
-	x = 1
+	x = 0
 	y = 1
-	relative_position_id = MER_infrastructure_corridor_program
+	relative_position_id = MER_development_fund
 
 	cost = 10
 
-	prerequisite = { focus = MER_infrastructure_corridor_program }
+	prerequisite = { focus = MER_secretariat_reform }
 	prerequisite = { focus = MER_development_fund }
 	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_MERCOSUR }
 
@@ -428,7 +374,7 @@ joint_focus = {
 			MODIFIER = mercosur_member_state_modifier
 		}
 		add_to_variable = { mercosur_member_state_tax_gain_multiplier_modifier = 0.03 tooltip = tax_gain_multiplier_modifier_tt }
-		add_to_variable = { mercosur_member_state_productivity_growth_modifier = 0.10 tooltip = productivity_growth_modifier_tt }
+		add_to_variable = { mercosur_member_state_productivity_growth_modifier = 0.07 tooltip = productivity_growth_modifier_tt }
 		add_to_variable = { mercosur_member_state_foreign_influence_modifier = 0.04 tooltip = foreign_influence_modifier_tt }
 	}
 }
@@ -499,31 +445,36 @@ joint_focus = {
 }
 
 joint_focus = {
-	id = BRA_follow_euro
-	icon = euro
+	id = BRA_unasul
+	icon = align_to_usan
 
-	x = 0
+	x = 4
 	y = 1
-	relative_position_id = BRA_unasul
+	relative_position_id = BRA_americas_unity
 
 	cost = 5
 
-	prerequisite = { focus = BRA_unasul }
-	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL FOCUS_FILTER_STABILITY }
+	prerequisite = { focus = BRA_americas_unity }
+	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
 
 	available = {
 		is_subject = no
 		has_at_least_regional_power_status = yes
+		has_dynamic_modifier = mercosur_member_state_modifier
 	}
 
 	completion_reward = {
-		log = "[GetDateText]: [THIS.GetName]: Focus BRA_follow_euro"
-		add_stability = 0.05
+		log = "[GetDateText]: [THIS.GetName]: Focus BRA_unasul"
+		add_ideas = BRA_idea_unasul_member
+	}
+
+	ai_will_do = {
+		base = 1
 	}
 }
 
 joint_focus = {
-	id = BRA_united_continent
+	id = MER_expansion_unasul
 	icon = tripartite_pact
 
 	x = -2
@@ -565,8 +516,34 @@ joint_focus = {
 }
 
 joint_focus = {
-	id = BRA_cooperation
-	icon = diplomacy
+	id = MER_sa_corridor_development
+	icon = focus_CHL_connect_the_northern_railways
+
+	x = 0
+	y = 1
+	relative_position_id = BRA_unasul
+
+	cost = 5
+
+	prerequisite = { focus = BRA_unasul }
+	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
+
+	available = {
+		is_subject = no
+		has_at_least_regional_power_status = yes
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [THIS.GetName]: Focus MER_sa_corridor_development"
+	}
+
+	ai_will_do = {
+		base = 1
+	}
+}
+joint_focus = {
+	id = MER_counter_cartel
+	icon = x
 
 	x = 2
 	y = 1
@@ -575,7 +552,7 @@ joint_focus = {
 	cost = 5
 
 	prerequisite = { focus = BRA_unasul }
-	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL FOCUS_FILTER_STABILITY }
+	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
 
 	available = {
 		is_subject = no
@@ -583,96 +560,166 @@ joint_focus = {
 	}
 
 	completion_reward = {
-		log = "[GetDateText]: [THIS.GetName]: Focus BRA_cooperation"
-		add_stability = 0.05
-		add_political_power = 50
+		log = "[GetDateText]: [THIS.GetName]: Focus MER_counter_cartel"
+	}
+
+	ai_will_do = {
+		base = 1
 	}
 }
 
 joint_focus = {
-	id = BRA_sa_left
-	icon = communism
+	id = MER_sa_energy_council
+	icon = x
+
+	x = -1
+	y = 1
+	relative_position_id = MER_sa_corridor_development
+
+	cost = 5
+
+	prerequisite = { focus = MER_sa_corridor_development }
+	prerequisite = { focus = MER_expansion_unasul }
+	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
+
+	available = {
+		is_subject = no
+		has_at_least_regional_power_status = yes
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [THIS.GetName]: Focus MER_sa_energy_council"
+	}
+
+	ai_will_do = {
+		base = 1
+	}
+}
+
+joint_focus = {
+	id = MER_sa_health_council
+	icon = x
+
+	x = 1
+	y = 1
+	relative_position_id = MER_sa_corridor_development
+
+	cost = 5
+
+	prerequisite = { focus = MER_sa_corridor_development }
+	prerequisite = { focus = MER_counter_cartel }
+	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
+
+	available = {
+		is_subject = no
+		has_at_least_regional_power_status = yes
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [THIS.GetName]: Focus MER_sa_health_council"
+	}
+
+	ai_will_do = {
+		base = 1
+	}
+}
+
+
+joint_focus = {
+	id = MER_productive_integration_and_sme_networks
+	icon = x
+
+	x = -1
+	y = 1
+	relative_position_id = MER_sa_energy_council
+
+	cost = 5
+
+	prerequisite = { focus =  MER_sa_energy_council }
+	prerequisite = { focus = MER_sa_health_council }
+	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
+
+	available = {
+		is_subject = no
+		has_at_least_regional_power_status = yes
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [THIS.GetName]: Focus MER_productive_integration_and_sme_networks"
+	}
+
+	ai_will_do = {
+		base = 1
+	}
+}
+
+joint_focus = {
+	id = MER_sa_defense_council
+	icon = x
+
+	x = 1
+	y = 1
+	relative_position_id = MER_sa_energy_council
+
+	cost = 5
+
+	prerequisite = { focus =  MER_sa_energy_council }
+	prerequisite = { focus = MER_sa_health_council }
+	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
+
+	available = {
+		is_subject = no
+		has_at_least_regional_power_status = yes
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [THIS.GetName]: Focus MER_sa_defense_council"
+	}
+
+	ai_will_do = {
+		base = 1
+	}
+}
+
+joint_focus = {
+	id = MER_sa_network_for_science_and_innovation
+	icon = x
+
+	x = 1
+	y = 1
+	relative_position_id = MER_sa_health_council
+
+	cost = 5
+
+	prerequisite = { focus =  MER_sa_energy_council }
+	prerequisite = { focus = MER_sa_health_council }
+	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
+
+	available = {
+		is_subject = no
+		has_at_least_regional_power_status = yes
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [THIS.GetName]: Focus MER_sa_network_for_science_and_innovation"
+	}
+
+	ai_will_do = {
+		base = 1
+	}
+}
+
+joint_focus = {
+	id = MER_unasul_factions
+	icon = x
 
 	x = 0
 	y = 1
-	relative_position_id = BRA_united_continent
+	relative_position_id = MER_sa_defense_council
 
 	cost = 5
 
-	prerequisite = { focus = BRA_follow_euro }
-	prerequisite = { focus = BRA_united_continent }
-	prerequisite = { focus = BRA_cooperation }
-	mutually_exclusive = { focus = BRA_sa_right }
-	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
-
-	available = {
-		is_subject = no
-		has_at_least_regional_power_status = yes
-		NOT = {
-			has_government = nationalist
-			has_government = democratic
-		}
-	}
-
-	completion_reward = {
-		log = "[GetDateText]: [THIS.GetName]: Focus BRA_sa_left"
-		every_country = {
-			limit = { has_idea = BRA_idea_unasul_member }
-			add_popularity = { ideology = communism popularity = 0.10 }
-			recalculate_party = yes
-		}
-	}
-
-}
-
-joint_focus = {
-	id = BRA_sa_right
-	icon = reactionary
-
-	x = 0
-	y = 1
-	relative_position_id = BRA_cooperation
-
-	cost = 5
-
-	prerequisite = { focus = BRA_follow_euro }
-	prerequisite = { focus = BRA_cooperation }
-	mutually_exclusive = { focus = BRA_sa_left }
-	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
-
-	available = {
-		is_subject = no
-		has_at_least_regional_power_status = yes
-		NOT = { has_government = communism }
-	}
-
-	completion_reward = {
-		log = "[GetDateText]: [THIS.GetName]: Focus BRA_sa_right"
-		custom_effect_tooltip = BRA_south_american_right_tt
-		every_country = {
-			limit = {
-				has_idea = BRA_idea_unasul_member
-			}
-			add_popularity = { ideology = nationalist popularity = 0.05 }
-			add_popularity = { ideology = democratic popularity = 0.05 }
-			recalculate_party = yes
-		}
-	}
-}
-	#Support Member States
-joint_focus = {
-	id = BRA_support_members
-	icon = military_deal
-	x = 2
-	y = 1
-	relative_position_id = BRA_sa_left
-
-	cost = 5
-
-	prerequisite = {
-		focus = BRA_sa_left
-		focus = BRA_sa_right
-	}
+	prerequisite = { focus =  MER_sa_defense_council }
 	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
 
 	available = {
@@ -681,186 +728,48 @@ joint_focus = {
 	}
 
 	completion_reward = {
-		log = "[GetDateText]: [THIS.GetName]: Focus BRA_support_members"
-		every_country = {
-			limit = {
-				capital_scope = { is_on_continent = south_america }
-				NOT = { has_war_with = ROOT }
-				NOT = { tag = ROOT }
-				is_in_faction = no
-			}
-			add_opinion_modifier = { target = ROOT modifier = has_expressed_loyalty }
+		log = "[GetDateText]: [THIS.GetName]: Focus MER_unasul_factions"
+	}
 
-		}
+	ai_will_do = {
+		base = 1
 	}
 }
 
-# Integration of the UNASUL
-joint_focus = {
-	id = BRA_integrate
-	icon = communist_constiution
 
-	x = 0
-	y = 1
-	relative_position_id = BRA_sa_left
 
-	cost = 5
+# joint_focus = {
+# 	id = MER_infrastructure_corridor_program
+# 	icon = focus_CHL_connect_the_northern_railways
+# 	x = 0
+# 	y = 1
+# 	relative_position_id = BRA_assoc_members
 
-	prerequisite = { focus = BRA_sa_left }
-	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
+# 	cost = 10
 
-	available = {
-		is_subject = no
-		has_at_least_regional_power_status = yes
-	}
+# 	prerequisite = { focus = BRA_assoc_members }
+# 	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_MERCOSUR }
 
-	completion_reward = {
-		every_country = {
-			limit = {
-				has_idea = BRA_idea_unasul_member
-			}
-			add_popularity = { ideology = communism popularity = 0.10 }
-		}
-	}
-}
+# 	available = {
+# 		is_subject = no
+# 		has_at_least_regional_power_status = yes
+# 		has_dynamic_modifier = mercosur_member_state_modifier
+# 	}
 
-# Diplomatic Posturing
-joint_focus = {
-	id = BRA_posturing
-	icon = colonial_crackdown
+# 	completion_reward = {
+# 		log = "[GetDateText]: [THIS.GetName]: Focus MER_infrastructure_corridor_program"
+# 		custom_effect_tooltip = {
+# 			localization_key = modifies_dynamic_modifier_tt
+# 			MODIFIER = mercosur_member_state_modifier
+# 		}
+# 		add_to_variable = { mercosur_member_state_production_speed_infrastructure_factor = 0.05 tooltip = production_speed_infrastructure_factor_tt }
+# 		add_to_variable = { mercosur_member_state_production_speed_internet_station_factor = 0.05 tooltip = production_speed_internet_station_factor_tt }
+# 		add_to_variable = { mercosur_member_state_infrastructure_cost_multiplier_modifier = -0.05 tooltip = infrastructure_cost_multiplier_modifier_tt }
 
-	x = -2
-	y = 1
-	relative_position_id = BRA_sa_left
-
-	cost = 5
-
-	prerequisite = { focus = BRA_sa_left }
-	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
-
-	available = {
-		is_subject = no
-		has_at_least_regional_power_status = yes
-	}
-
-	completion_reward = {
-		log = "[GetDateText]: [THIS.GetName]: Focus BRA_posturing"
-		every_country = {
-			limit = { has_idea = BRA_idea_unasul_member }
-			add_stability = 0.05
-		}
-	}
-}
-
-joint_focus = {
-	id = BRA_strengthen
-	icon = tripartite_pact
-
-	x = 0
-	y = 1
-	relative_position_id = BRA_integrate
-
-	cost = 5
-
-	prerequisite = { focus = BRA_support_members }
-	prerequisite = { focus = BRA_integrate }
-	prerequisite = { focus = BRA_posturing }
-	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
-
-	available = {
-		is_subject = no
-		has_at_least_regional_power_status = yes
-	}
-
-	completion_reward = {
-		log = "[GetDateText]: [THIS.GetName]: Focus BRA_strengthen"
-		every_country = {
-			limit = { has_idea = BRA_idea_unasul_member }
-			add_stability = 0.05
-		}
-	}
-}
-
-joint_focus = {
-	id = BRA_south_american_protection
-	icon = conservative
-
-	x = 0
-	y = 1
-	relative_position_id = BRA_sa_right
-
-	cost = 5
-
-	prerequisite = { focus = BRA_sa_right }
-	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
-
-	available = {
-		is_subject = no
-		has_at_least_regional_power_status = yes
-	}
-
-	completion_reward = {
-		log = "[GetDateText]: [THIS.GetName]: Focus BRA_south_american_protection"
-		every_country = {
-			limit = { has_idea = BRA_idea_unasul_member }
-			add_war_support = 0.05
-		}
-	}
-}
-
-joint_focus = {
-	id = BRA_maitain_sa_democracy
-	icon = democracy
-
-	x = 2
-	y = 1
-	relative_position_id = BRA_sa_right
-
-	cost = 5
-
-	prerequisite = { focus = BRA_sa_right }
-	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
-
-	available = {
-		is_subject = no
-		has_at_least_regional_power_status = yes
-		NOT = { has_completed_focus = BRA_auto_coup }
-	}
-
-	completion_reward = {
-		log = "[GetDateText]: [THIS.GetName]: Focus BRA_maitain_sa_democracy"
-		every_country = {
-			limit = { has_idea = BRA_idea_unasul_member }
-			add_war_support = 0.05
-		}
-	}
-}
-
-joint_focus = {
-	id = BRA_maintain_unity
-	icon = national_unity
-
-	x = 0
-	y = 1
-	relative_position_id = BRA_south_american_protection
-
-	cost = 5
-
-	prerequisite = { focus = BRA_support_members }
-	prerequisite = { focus = BRA_south_american_protection }
-	prerequisite = { focus = BRA_maitain_sa_democracy }
-	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_UNASUL }
-
-	available = {
-		is_subject = no
-		has_at_least_regional_power_status = yes
-	}
-
-	completion_reward = {
-		log = "[GetDateText]: [THIS.GetName]: Focus BRA_maintain_unity"
-		every_country = {
-			limit = { has_idea = BRA_idea_unasul_member }
-			add_political_power = 100
-		}
-	}
-}
+# 		unlock_decision_tooltip = {
+# 			decision = MER_launch_corridor_investment_round
+# 			show_effect_tooltip = yes
+# 		}
+# 		newline = yes
+# 	}
+# }
