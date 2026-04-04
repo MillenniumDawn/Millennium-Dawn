@@ -30,6 +30,24 @@ Steps:
    - Variables accumulated monthly without being reset first
    - Events sending responses to the wrong country (wrong FROM/PREV/ROOT scope)
    - `else_if` blocks with the same `limit` as the preceding `if` (unreachable code)
+   - `tag` instead of `original_tag` in idea `allowed` blocks (breaks civil war tags)
+   - `CONTROLLER` used in country scope (undefined — must be in state scope)
+   - `set_cosmetic_tag = original_tag` (should be `drop_cosmetic_tag = yes`)
+   - Missing `country_exists` guard before firing an event to a potentially non-existent tag
+   - AND conditions in `cancel` or `available` blocks that can never simultaneously be true
+   - `for_each_scope_loop` iterating over a variable-index array (use `for_each_loop` instead)
+   - GUI buttons with a `trigger` block but no `effects` block (clicking does nothing)
+   - OOB templates using equipment variants that the country cannot have at game start (wrong tech level or missing DLC variant)
+   - Idea names with wrong capitalisation in `has_idea`/`add_ideas`/`remove_ideas` — HOI4 checks are case-sensitive and fail silently
+   - `swap_ideas` removing and re-adding the same idea (no-op at final upgrade tier)
+   - `else_if` with the same `limit` as the preceding `if` (unreachable — lives in shadow of the `if`)
+   - `NOT = { A B }` blocks where two conditions should each have their own `NOT`
+   - `threat > N` where N > 1 (threat is 0.0–1.0; whole-number comparisons are always false)
+   - `not_locked_faction` trigger in faction rules (non-existent; use `is_locked_faction = no`)
+   - Stacked multipliers producing near-zero denominators (clamp before division)
+   - `add_building_construction` for naval base missing `province`
+   - Scripted trigger defined twice in the same file (second definition silently overwrites first)
+   - New subideology parties missing registration in `00_subideology_scripted_localisation.txt`
 
    When fixing codebase-scanned bugs, omit the `Closes #` line from the PR since there is no issue to reference.
 
