@@ -3,11 +3,11 @@ import argparse
 import fnmatch
 import os
 import re
+import subprocess
 import sys
 import time
 from multiprocessing import Pool
 
-import requests
 from path_utils import clean_filepath
 
 startTime = time.time()
@@ -571,9 +571,31 @@ def getUnkownEffects(allEffects):
     return unkownEffects
 
 
+def get_staged_txt_files():
+    """Get list of staged .txt files from git."""
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMRT"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return [
+            f for f in result.stdout.strip().split("\n") if f and f.endswith(".txt")
+        ]
+    except subprocess.CalledProcessError:
+        return []
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Validate Coding Standards for HOI4 mod files"
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["all", "staged"],
+        default="all",
+        help="Check mode: all files or staged files only (default: all)",
     )
     parser.add_argument(
         "--workers",
@@ -581,13 +603,10 @@ def main():
         default=os.cpu_count() or 4,
         help="Number of parallel workers (default: CPU count)",
     )
-    parser.add_argument(
-        "private_token", nargs="?", help="GitLab private token for posting results"
-    )
     args = parser.parse_args()
 
-    print("Validating Coding Standards")
-    message = "Validating Coding Standards\n"
+    print(f"Validating Coding Standards (Mode: {args.mode})")
+    message = f"Validating Coding Standards (Mode: {args.mode})\n"
 
     error_count = 0
     warning_count = 0
@@ -601,6 +620,14 @@ def main():
         rootDir + "/resources/List of triggers and effects 1_9_1.txt"
     )
 
+    # When in staged mode, filter to only staged files
+    staged_files = None
+    if args.mode == "staged":
+        staged_files = set(os.path.abspath(f) for f in get_staged_txt_files())
+        if not staged_files:
+            print("No staged .txt files found")
+            return 0
+
     # Collect focus files (excluding generic.txt)
     focus_files = []
     for root, dirnames, filenames in os.walk(
@@ -608,13 +635,17 @@ def main():
     ):
         for filename in fnmatch.filter(filenames, "*.txt"):
             if filename != "generic.txt":
-                focus_files.append(os.path.join(root, filename))
+                filepath = os.path.join(root, filename)
+                if staged_files is None or os.path.abspath(filepath) in staged_files:
+                    focus_files.append(filepath)
 
     # Collect event files
     event_files = []
     for root, dirnames, filenames in os.walk(rootDir + "/" + "events/"):
         for filename in fnmatch.filter(filenames, "*.txt"):
-            event_files.append(os.path.join(root, filename))
+            filepath = os.path.join(root, filename)
+            if staged_files is None or os.path.abspath(filepath) in staged_files:
+                event_files.append(filepath)
 
     # Check focus files and event files in parallel
     with Pool(processes=args.workers) as pool:
@@ -651,47 +682,6 @@ def main():
         postResults = True
 
     print("The script took {0} second!".format(time.time() - startTime))
-
-    try:
-        projectId = os.environ["CI_PROJECT_ID"]
-        privateToken = args.private_token or (
-            sys.argv[1] if len(sys.argv) > 1 else None
-        )
-        headers = {"PRIVATE-TOKEN": privateToken}
-        payload = {"body": message}
-
-        if postResults and privateToken:
-            if "CI_MERGE_REQUEST_IID" in os.environ:
-                mergeRequestId = os.environ["CI_MERGE_REQUEST_IID"]
-                r = requests.post(
-                    "https://gitlab.com/api/v4/projects/"
-                    + projectId
-                    + "/merge_requests/"
-                    + mergeRequestId
-                    + "/discussions",
-                    data=payload,
-                    headers=headers,
-                )
-                print("Posted results to merge request")
-
-            else:
-                commitID = os.environ["CI_COMMIT_SHA"]
-                r = requests.post(
-                    "https://gitlab.com/api/v4/projects/"
-                    + projectId
-                    + "/commits/"
-                    + commitID
-                    + "/discussions",
-                    data=payload,
-                    headers=headers,
-                )
-                print("Posted results to commit")
-        elif not postResults:
-            print("File validation passed Coding Standards: SUCCESS")
-    except KeyError:
-        pass  # Not in GitLab CI environment
-    except Exception:
-        print("Couldn't post results to gitlab")
 
     return error_count
 

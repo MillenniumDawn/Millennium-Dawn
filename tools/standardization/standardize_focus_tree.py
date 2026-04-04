@@ -35,28 +35,43 @@ def log_message(level: str, message: str, verbose: bool = False):
     print(formatted_message, file=sys.stderr)
 
 
+def is_empty_block(block_lines):
+    """Check if a block contains only braces and whitespace (no meaningful content)"""
+    if not block_lines:
+        return True
+    content = "".join(line.strip() for line in block_lines)
+    # Remove the property name and braces, check if anything remains
+    inner = re.sub(r"^[^{]*\{(.*)\}$", r"\1", content, flags=re.DOTALL)
+    return inner.strip() == ""
+
+
 def extract_focus_properties(focus_lines):
     """Extract properties from focus block lines"""
     props = {
         "id": "",
         "icon": "",
+        "text_icon": "",
+        "overlay": "",
         "x": "",
         "y": "",
         "relative_position_id": "",
-        "cost": "",
         "offset": [],
+        "allow_branch": [],
+        "cost": "",
         "prerequisites": [],
         "mutually_exclusive": [],
         "will_lead_to_war_with": [],
+        "joint_trigger": [],
         "available": [],
-        "bypass": [],
         "cancel": [],
-        "completion_reward": [],
-        "ai_will_do": [],
-        "search_filters": "",
-        "allow_branch": [],
         "select_effect": [],
+        "bypass": [],
         "bypass_effect": [],
+        "completion_reward": [],
+        "completion_reward_joint_originator": [],
+        "completion_reward_joint_member": [],
+        "search_filters": "",
+        "ai_will_do": [],
         "other": [],
     }
 
@@ -90,19 +105,28 @@ def extract_focus_properties(focus_lines):
                 else:
                     # First icon
                     props["icon"] = [line]
+        elif line.startswith("text_icon ="):
+            props["text_icon"] = line
+        elif line.startswith("overlay ="):
+            props["overlay"] = line
         elif line.startswith("x ="):
             props["x"] = line
         elif line.startswith("y ="):
             props["y"] = line
         elif line.startswith("relative_position_id ="):
             props["relative_position_id"] = line
-        elif line.startswith("cost ="):
-            props["cost"] = line
         elif line.startswith("offset ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props["offset"] = block_lines
+            props["offset"].append(block_lines)
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("allow_branch ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["allow_branch"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("cost ="):
+            props["cost"] = line
         elif line.startswith("search_filters ="):
             block_lines, next_i = extract_block(focus_lines, i)
             props["search_filters"] = block_lines
@@ -118,37 +142,25 @@ def extract_focus_properties(focus_lines):
             continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("mutually_exclusive ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props["mutually_exclusive"].append(block_lines)
+            if not is_empty_block(block_lines):
+                props["mutually_exclusive"].append(block_lines)
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("joint_trigger ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["joint_trigger"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("available ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props["available"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("bypass ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["bypass"] = block_lines
+            if not is_empty_block(block_lines):
+                props["available"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("cancel ="):
             block_lines, next_i = extract_block(focus_lines, i)
-            props["cancel"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("completion_reward ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["completion_reward"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("ai_will_do ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["ai_will_do"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("allow_branch ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["allow_branch"] = block_lines
+            if not is_empty_block(block_lines):
+                props["cancel"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("select_effect ="):
@@ -156,11 +168,48 @@ def extract_focus_properties(focus_lines):
             props["select_effect"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("bypass ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            if not is_empty_block(block_lines):
+                props["bypass"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("bypass_effect ="):
             block_lines, next_i = extract_block(focus_lines, i)
             props["bypass_effect"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("completion_reward ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["completion_reward"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("completion_reward_joint_originator ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["completion_reward_joint_originator"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("completion_reward_joint_member ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["completion_reward_joint_member"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("ai_will_do ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["ai_will_do"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
+        elif line == "cancel_if_invalid = yes":
+            pass  # Default value, skip
+        elif line == "continue_if_invalid = no":
+            pass  # Default value, skip
+        elif line == "available_if_capitulated = no":
+            pass  # Default value, skip
+        elif re.match(
+            r"^#\s*(available|bypass|cancel|visible|mutually_exclusive)\s*=\s*\{\s*\}$",
+            line,
+        ):
+            pass  # Commented-out empty block, skip
         else:
             props["other"].append(focus_lines[i])
 
@@ -182,7 +231,10 @@ def extract_block(lines, start_index):
         line = lines[i]
         block_lines.append(line)
 
-        brace_count += line.count("{") - line.count("}")
+        line_no_comment = line.split("#")[
+            0
+        ]  # Strip inline comments before counting braces
+        brace_count += line_no_comment.count("{") - line_no_comment.count("}")
 
         if brace_count == 0 and "{" in lines[start_index]:
             # We've closed all braces, block is complete
@@ -305,12 +357,23 @@ def format_focus_offset_block(block_lines):
         lines.append(f"\t\t\t{y_val}")
 
     if trigger_lines:
-        # Reformat trigger block with proper indentation (3 tabs base, 4 tabs for content)
+        # Reformat trigger block with brace-aware indentation
         lines.append("\t\t\ttrigger = {")
+        depth = 0  # Nesting depth relative to trigger block
         for trigger_line in trigger_lines[1:-1]:  # Skip opening/closing braces
             stripped = trigger_line.strip()
-            if stripped:
-                lines.append(f"\t\t\t\t{stripped}")
+            if not stripped:
+                continue
+            # Adjust depth for closing braces before writing the line
+            close_count = stripped.count("}")
+            open_count = stripped.count("{")
+            if stripped == "}":
+                depth -= 1
+            indent = "\t\t\t\t" + "\t" * max(0, depth)
+            lines.append(f"{indent}{stripped}")
+            # Adjust depth for opening braces after writing the line
+            if stripped != "}":
+                depth += open_count - close_count
         lines.append("\t\t\t}")
 
     for line in other_lines:
@@ -321,10 +384,10 @@ def format_focus_offset_block(block_lines):
     return lines
 
 
-def format_focus_block(props):
+def format_focus_block(props, block_type="focus"):
     """Format focus according to Millennium Dawn standard"""
     lines = []
-    lines.append("\tfocus = {")
+    lines.append(f"\t{block_type} = {{")
 
     # 1. ID and icon (no blank line between them)
     if props["id"]:
@@ -370,8 +433,8 @@ def format_focus_block(props):
         lines.append(f'\t\t{props["y"]}')
     if props["relative_position_id"]:
         lines.append(f'\t\t{props["relative_position_id"]}')
-    if props["offset"]:
-        formatted_offset = format_focus_offset_block(props["offset"][:])
+    for offset_block in props["offset"]:
+        formatted_offset = format_focus_offset_block(offset_block[:])
         for line in formatted_offset:
             lines.append(line)
 
@@ -381,6 +444,10 @@ def format_focus_block(props):
     # 5. Cost
     if props["cost"]:
         lines.append(f'\t\t{props["cost"]}')
+    if props["text_icon"]:
+        lines.append(f'\t\t{props["text_icon"]}')
+    if props["overlay"]:
+        lines.append(f'\t\t{props["overlay"]}')
 
     # 6. Blank line before prerequisites/conditions
     lines.append("")
@@ -423,7 +490,14 @@ def format_focus_block(props):
         lines.append(f"\t\t{search_filters_line}")
         lines.append("")
 
-    # 10. Available block
+    # 10. Joint trigger (after search filters, before available)
+    if props["joint_trigger"]:
+        compacted_joint_trigger = compact_block(props["joint_trigger"][:])
+        for line in compacted_joint_trigger:
+            lines.append(line)
+        lines.append("")
+
+    # 11. Available block
     if props["available"]:
         compacted_available = compact_block(props["available"][:])
         for line in compacted_available:
@@ -471,7 +545,21 @@ def format_focus_block(props):
             lines.append(line)
         lines.append("")
 
-    # 15. Select effect (add log if missing)
+    # 15. Completion reward joint originator
+    if props["completion_reward_joint_originator"]:
+        compacted = compact_block(props["completion_reward_joint_originator"][:])
+        for line in compacted:
+            lines.append(line)
+        lines.append("")
+
+    # 16. Completion reward joint member
+    if props["completion_reward_joint_member"]:
+        compacted = compact_block(props["completion_reward_joint_member"][:])
+        for line in compacted:
+            lines.append(line)
+        lines.append("")
+
+    # 17. Select effect (add log if missing)
     if props["select_effect"]:
         has_log = any("log =" in line for line in props["select_effect"])
         if not has_log and props["id"]:
@@ -807,6 +895,8 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
     output_lines = []
     i = 0
     focus_count = 0
+    shared_focus_count = 0
+    joint_focus_count = 0
     shortcut_count = 0
     inlay_count = 0
     offset_count = 0
@@ -831,6 +921,44 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
                 log_message(
                     "DEBUG",
                     f"Processed focus block {focus_count}: {props.get('id', 'unknown')}",
+                    verbose,
+                )
+
+            i = next_i
+        elif re.match(r"\s*shared_focus\s*=\s*{", line):
+            log_message("DEBUG", f"Found shared_focus block at line {i+1}", verbose)
+
+            focus_block, next_i = extract_block(lines, i)
+
+            if focus_block:
+                props = extract_focus_properties(focus_block)
+                formatted_lines = format_focus_block(props, "shared_focus")
+
+                output_lines.extend(formatted_lines)
+                shared_focus_count += 1
+
+                log_message(
+                    "DEBUG",
+                    f"Processed shared_focus block {shared_focus_count}: {props.get('id', 'unknown')}",
+                    verbose,
+                )
+
+            i = next_i
+        elif re.match(r"\s*joint_focus\s*=\s*{", line):
+            log_message("DEBUG", f"Found joint_focus block at line {i+1}", verbose)
+
+            focus_block, next_i = extract_block(lines, i)
+
+            if focus_block:
+                props = extract_focus_properties(focus_block)
+                formatted_lines = format_focus_block(props, "joint_focus")
+
+                output_lines.extend(formatted_lines)
+                joint_focus_count += 1
+
+                log_message(
+                    "DEBUG",
+                    f"Processed joint_focus block {joint_focus_count}: {props.get('id', 'unknown')}",
                     verbose,
                 )
 
@@ -914,6 +1042,25 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
             output_lines.append(line)
             i += 1
 
+    # Post-processing: ensure blank lines between consecutive focus/shared_focus/joint_focus blocks
+    focus_block_pattern = re.compile(r"^\t(focus|shared_focus|joint_focus)\s*=\s*{")
+    final_lines = []
+    for idx, line in enumerate(output_lines):
+        if focus_block_pattern.match(line) and final_lines:
+            # Find the previous non-empty line
+            prev_idx = len(final_lines) - 1
+            while prev_idx >= 0 and final_lines[prev_idx].strip() == "":
+                prev_idx -= 1
+            # If the previous content line is a closing brace and there's no blank line, add one
+            if (
+                prev_idx >= 0
+                and final_lines[prev_idx].strip() == "}"
+                and final_lines[-1].strip() != ""
+            ):
+                final_lines.append("")
+        final_lines.append(line)
+    output_lines = final_lines
+
     try:
         with open(output_file, "w", encoding="utf-8") as f:
             for line in output_lines:
@@ -931,6 +1078,12 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
 
         log_message("SUCCESS", f"Standardization completed in {time_str}")
         log_message("SUCCESS", f"Processed {focus_count} focus blocks")
+        if shared_focus_count > 0:
+            log_message(
+                "SUCCESS", f"Processed {shared_focus_count} shared_focus blocks"
+            )
+        if joint_focus_count > 0:
+            log_message("SUCCESS", f"Processed {joint_focus_count} joint_focus blocks")
         if continuous_pos_count > 0:
             log_message(
                 "SUCCESS",

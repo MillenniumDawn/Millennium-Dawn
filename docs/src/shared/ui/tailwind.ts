@@ -421,8 +421,10 @@ export const LIGHTBOX_OVERLAY_CLASS = [
   "fixed",
   "inset-0",
   "z-[4000]",
-  "grid",
-  "place-items-center",
+  "flex",
+  "min-h-0",
+  "min-w-0",
+  "flex-col",
   "overflow-hidden",
   "bg-[rgba(10,14,22,0.9)]",
   "opacity-0",
@@ -435,14 +437,16 @@ export const LIGHTBOX_OVERLAY_CLASS = [
 
 export const LIGHTBOX_CLOSE_BUTTON_CLASS = [
   "absolute",
-  "right-4",
-  "top-4",
+  "right-[max(1rem,env(safe-area-inset-right,0px))]",
+  "top-[max(1rem,env(safe-area-inset-top,0px))]",
   "z-[2]",
-  "inline-flex",
-  "min-h-11",
-  "min-w-11",
+  "flex",
+  "size-11",
+  "shrink-0",
   "items-center",
   "justify-center",
+  "p-0",
+  "m-0",
   "rounded-full",
   "border",
   "border-[color-mix(in_srgb,var(--color-border-light)_50%,transparent)]",
@@ -461,20 +465,31 @@ export const LIGHTBOX_CLOSE_BUTTON_CLASS = [
 ].join(" ");
 
 export const LIGHTBOX_VIEWPORT_CLASS = [
-  "grid",
-  "h-screen",
-  "w-screen",
-  "place-items-center",
-  "overflow-hidden",
-  "p-[clamp(1rem,2vw,2rem)]",
+  "flex",
+  "min-h-0",
+  "min-w-0",
+  "w-full",
+  "flex-1",
   "touch-none",
+  "items-stretch",
+  "justify-center",
+  "overflow-hidden",
+  "box-border",
+  "px-[max(clamp(1rem,2vw,2rem),env(safe-area-inset-left,0px),env(safe-area-inset-right,0px))]",
+  "pt-[max(clamp(1rem,2vw,2rem),env(safe-area-inset-top,0px))]",
+  "pb-[max(clamp(1rem,2vw,2rem),env(safe-area-inset-bottom,0px))]",
 ].join(" ");
 
 export const LIGHTBOX_CONTENT_CLASS = [
-  "grid",
+  "flex",
+  "h-full",
+  "min-h-0",
+  "min-w-0",
+  "w-full",
   "max-h-full",
   "max-w-full",
-  "place-items-center",
+  "items-center",
+  "justify-center",
   "opacity-0",
   "[transform:scale(0.985)]",
   "transition-[opacity,transform]",
@@ -489,9 +504,9 @@ export const LIGHTBOX_CONTENT_CLASS = [
 
 export const LIGHTBOX_IMAGE_CLASS = [
   "h-auto",
-  "max-h-[92vh]",
+  "max-h-full",
   "w-auto",
-  "max-w-[min(96vw,1600px)]",
+  "max-w-full",
   "select-none",
   "object-contain",
   "[-webkit-user-drag:none]",
@@ -620,7 +635,8 @@ export const MARKDOWN_CLASSNAMES = {
   thead: "bg-table-header-bg",
   th: ["border", "border-table-border", "px-md", "py-3", "text-left", "font-bold", "text-text"].join(" "),
   td: ["border", "border-border-light", "px-md", "py-3", "align-top"].join(" "),
-  image: ["h-auto", "max-w-full", "rounded", "print:break-inside-avoid"].join(" "),
+  /* Centering/max size: `#main-content` rules in app.css; keep only what those rules omit */
+  image: ["rounded", "print:break-inside-avoid"].join(" "),
 } as const;
 
 export const INLINE_CODE_CLASS = MARKDOWN_CLASSNAMES.inlineCode;

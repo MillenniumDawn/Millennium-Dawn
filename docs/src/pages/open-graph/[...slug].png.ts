@@ -1,6 +1,6 @@
 import type { GetStaticPaths, APIRoute } from "astro";
-import { getAllOgPages, type OgPageData } from "@/shared/lib/og-pages";
-import { generateOgImage } from "@/shared/lib/og-image";
+import { getAllOgPages, type OgPageData } from "@/shared/lib/seo/og-pages";
+import { generateOgImage } from "@/shared/lib/seo/og-image";
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const pages = await getAllOgPages();

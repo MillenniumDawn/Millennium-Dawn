@@ -1264,28 +1264,37 @@ AI_country_selection_calculation = {
 	}
 	# Check if they have a project in one of their other states
 	if = { limit = { NOT = { check_variable = { PREV.project_array^0 = 0 } } }
-		for_each_scope_loop = {
-			array = PREV.project_array
-			if = { limit = { is_owned_and_controlled_by = PREV.PREV }
-				add_to_temp_variable = { AI_country_score = -35 }
+		PREV = {
+			for_each_loop = {
+				array = project_array
+				value = v
+				index = i
+				if = {
+					limit = { check_variable = { v < 0 } }
+					var:project_array^i = {
+						if = { limit = { is_owned_and_controlled_by = PREV.PREV }
+							add_to_temp_variable = { AI_country_score = -35 }
+						}
+					}
+				}
 			}
 		}
 	}
 
 	# Check if the ROOT is ECB President
-	if = {
-		limit = {
-			PREV = { has_idea = ECB_president }
-			is_in_array = { global.EU_member = THIS.id }
+	if = { limit = { is_in_array = { global.EU_member = THIS.id } }
+		if = {
+			limit = {
+				PREV = { has_idea = ECB_president }
+			}
+			add_to_temp_variable = { AI_country_score = 15 }
 		}
-		add_to_temp_variable = { AI_country_score = 15 }
-	}
-	if = {
-		limit = {
-			PREV = { has_idea = EU_finance_minister }
-			is_in_array = { global.EU_member = THIS.id }
+		if = {
+			limit = {
+				PREV = { has_idea = EU_finance_minister }
+			}
+			add_to_temp_variable = { AI_country_score = 5 }
 		}
-		add_to_temp_variable = { AI_country_score = 5 }
 	}
 
 	# Check whether someone is an influencer
