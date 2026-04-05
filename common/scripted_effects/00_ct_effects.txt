@@ -1109,83 +1109,91 @@ select_attack_target = {
 }
 
 resolve_terror_attack = {
-	set_temp_variable = { attack_chance_succeed = 100 }
-	set_temp_variable = { attack_defend_adjust = ct_defense_total }
-
-	#turn them both into percentages. reduce the attack chance by the percentage of visibility, cut in half
-	set_temp_variable = { vis_reducer_number = global.active_terror_org_vis_lvl^cur_attack_index }
-	multiply_temp_variable = { vis_reducer_number = 0.5 }
-
-	subtract_from_temp_variable = { attack_chance_succeed = vis_reducer_number }
-
-	#turn into a percentage and bump by vis
-	set_temp_variable = { intel_boost_number = international_terror_org_intel^cur_attack_index }
-	multiply_temp_variable = { intel_boost_number = 1.15 }
-
-	add_to_temp_variable = { attack_defend_adjust = intel_boost_number }
-
-	subtract_from_temp_variable = { attack_chance_succeed = attack_defend_adjust }
-	round_temp_variable = attack_chance_succeed
-
-	if = { limit = { is_debug = yes }
-		log = "Attack chance was: [?attack_chance_succeed]"
-	}
-
-	clamp_temp_variable = {
-		var = attack_chance_succeed
-		min = 1
-		max = 100
-	}
-
-	random = {
-		chance = attack_chance_succeed
-		set_country_flag = { flag = global_attack_succeeded days = 2 value = 1 }
-		log = "[GetDateText]: [THIS.GetName] Was hit by an international terror attack"
-		add_to_variable = { global.active_terror_org_vis_lvl^cur_attack_index = 5 }
-		subtract_from_variable = { global.active_terror_org_threat_lvl^cur_attack_index = 5 }
-		set_variable = { attacking_org = cur_attack_index }
-		clamp_variable = {
-			var = global.active_terror_org_vis_lvl^cur_attack_index
-			min = 0
-			max = 100
-		}
-		clamp_variable = {
-			var = global.active_terror_org_threat_lvl^cur_attack_index
-			min = 0
-			max = 100
-		}
-		country_event = {
-			id = MD_terror.1
-			days = 1
-			random_days = 30
-		}
-	}
-
+	# Skip terror attacks against ghost nations
 	if = {
 		limit = {
-			NOT = { has_country_flag = global_attack_succeeded }
-			check_variable = { international_terror_org_intel^cur_attack_index > 25 }
+			NOT = { original_tag = ZOM }
+			NOT = { original_tag = ALN }
 		}
-		add_to_variable = { international_terror_org_temp_specific_intel^cur_attack_index = 5 }
-		add_to_variable = { global.active_terror_org_vis_lvl^cur_attack_index = 8 }
-		subtract_from_variable = { global.active_terror_org_threat_lvl^cur_attack_index = 10 }
-		set_variable = { attacking_org = cur_attack_index }
-		clamp_variable = {
-			var = global.active_terror_org_vis_lvl^cur_attack_index
-			min = 0
+
+		set_temp_variable = { attack_chance_succeed = 100 }
+		set_temp_variable = { attack_defend_adjust = ct_defense_total }
+
+		#turn them both into percentages. reduce the attack chance by the percentage of visibility, cut in half
+		set_temp_variable = { vis_reducer_number = global.active_terror_org_vis_lvl^cur_attack_index }
+		multiply_temp_variable = { vis_reducer_number = 0.5 }
+
+		subtract_from_temp_variable = { attack_chance_succeed = vis_reducer_number }
+
+		#turn into a percentage and bump by vis
+		set_temp_variable = { intel_boost_number = international_terror_org_intel^cur_attack_index }
+		multiply_temp_variable = { intel_boost_number = 1.15 }
+
+		add_to_temp_variable = { attack_defend_adjust = intel_boost_number }
+
+		subtract_from_temp_variable = { attack_chance_succeed = attack_defend_adjust }
+		round_temp_variable = attack_chance_succeed
+
+		if = { limit = { is_debug = yes }
+			log = "Attack chance was: [?attack_chance_succeed]"
+		}
+
+		clamp_temp_variable = {
+			var = attack_chance_succeed
+			min = 1
 			max = 100
 		}
-		clamp_variable = {
-			var = global.active_terror_org_threat_lvl^cur_attack_index
-			min = 0
-			max = 100
+
+		random = {
+			chance = attack_chance_succeed
+			set_country_flag = { flag = global_attack_succeeded days = 2 value = 1 }
+			log = "[GetDateText]: [THIS.GetName] Was hit by an international terror attack"
+			add_to_variable = { global.active_terror_org_vis_lvl^cur_attack_index = 5 }
+			subtract_from_variable = { global.active_terror_org_threat_lvl^cur_attack_index = 5 }
+			set_variable = { attacking_org = cur_attack_index }
+			clamp_variable = {
+				var = global.active_terror_org_vis_lvl^cur_attack_index
+				min = 0
+				max = 100
+			}
+			clamp_variable = {
+				var = global.active_terror_org_threat_lvl^cur_attack_index
+				min = 0
+				max = 100
+			}
+			country_event = {
+				id = MD_terror.1
+				days = 1
+				random_days = 30
+			}
 		}
-		#fire the stopped the event here
-		log = "[GetDateText]: [THIS.GetName] prevented an international terror attack"
-		country_event = {
-			id = MD_terror.2
-			days = 1
-			random_days = 30
+
+		if = {
+			limit = {
+				NOT = { has_country_flag = global_attack_succeeded }
+				check_variable = { international_terror_org_intel^cur_attack_index > 25 }
+			}
+			add_to_variable = { international_terror_org_temp_specific_intel^cur_attack_index = 5 }
+			add_to_variable = { global.active_terror_org_vis_lvl^cur_attack_index = 8 }
+			subtract_from_variable = { global.active_terror_org_threat_lvl^cur_attack_index = 10 }
+			set_variable = { attacking_org = cur_attack_index }
+			clamp_variable = {
+				var = global.active_terror_org_vis_lvl^cur_attack_index
+				min = 0
+				max = 100
+			}
+			clamp_variable = {
+				var = global.active_terror_org_threat_lvl^cur_attack_index
+				min = 0
+				max = 100
+			}
+			#fire the stopped the event here
+			log = "[GetDateText]: [THIS.GetName] prevented an international terror attack"
+			country_event = {
+				id = MD_terror.2
+				days = 1
+				random_days = 30
+			}
 		}
 	}
 }
