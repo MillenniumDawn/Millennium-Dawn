@@ -159,7 +159,6 @@ country_event = {
 					MODIFIER = mercosur_member_state_modifier
 				}
 				add_to_variable = { mercosur_member_state_productivity_growth_modifier = 0.01 tooltip = productivity_growth_modifier_tt }
-				add_to_variable = { mercosur_member_state_tax_gain_multiplier_modifier = 0.01 tooltip = tax_gain_multiplier_modifier_tt }
 				add_to_variable = { mercosur_member_state_foreign_influence_modifier = 0.01 tooltip = foreign_influence_modifier_tt }
 			}
 		}
@@ -222,10 +221,8 @@ country_event = {
 		name = mercosur.02.b
 		log = "[GetDateText]: [This.GetName]: mercosur.02.b executed"
 		set_country_flag = { flag = mercosur_recently_declined_associate days = 180 }
-		add_opinion_modifier = { target = FROM modifier = mercosur_rejected }
 		FROM = {
 			add_political_power = -15
-			add_opinion_modifier = { target = ROOT modifier = mercosur_rejected }
 			country_event = { id = mercosur.04 days = 0 }
 		}
 		ai_chance = {
@@ -461,6 +458,21 @@ country_event = {
 	option = {
 		name = mercosur.06.a
 		log = "[GetDateText]: [This.GetName]: mercosur.06.a executed"
+		add_opinion_modifier = { target = FROM modifier = mercosur_focus_tt }
+		FROM = {
+			add_opinion_modifier = { target = ROOT modifier = mercosur_focus_tt }
+			country_event = { id = mercosur.93 days = 0 }
+		}
+		country_event = { id = mercosur.92 days = 0 }
+		country_event = { id = mercosur.94 days = 0 }
+		ai_chance = {
+			base = 0
+		}
+	}
+
+	option = {
+		name = mercosur.06.b
+		log = "[GetDateText]: [This.GetName]: mercosur.06.b executed"
 		if = {
 			limit = { tag = CHL }
 			clr_country_flag = mercosur_chl_accession_mission_1_done
@@ -547,25 +559,33 @@ country_event = {
 			country_event = { id = mercosur.07 days = 0 }
 		}
 		ai_chance = {
-			base = 8
+			base = 10
 			modifier = {
-				add = 25
+				add = 20
 				has_idea = BRA_idea_associate_states
 			}
 			modifier = {
-				add = 20
+				add = 12
+				has_opinion = { target = FROM value > 20 }
+			}
+			modifier = {
+				add = 18
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				add = 25
 				has_opinion = { target = FROM value > 75 }
 			}
 			modifier = {
-				add = 30
+				add = 50
 				sender_influence_higher_10 = yes
 			}
 			modifier = {
-				add = 60
+				add = 25
 				sender_influence_higher_20 = yes
 			}
 			modifier = {
-				add = 15
+				add = 10
 				FROM = { has_completed_focus = BRA_education_integration }
 			}
 			modifier = {
@@ -580,21 +600,31 @@ country_event = {
 				add = -30
 				has_war = yes
 			}
+			modifier = {
+				add = -25
+				has_opinion = { target = FROM value < 0 }
+			}
 		}
 	}
 
 	option = {
-		name = mercosur.06.b
-		log = "[GetDateText]: [This.GetName]: mercosur.06.b executed"
+		name = mercosur.06.c
+		log = "[GetDateText]: [This.GetName]: mercosur.06.c executed"
 		set_country_flag = { flag = mercosur_recently_declined_full days = 365 }
-		add_opinion_modifier = { target = FROM modifier = mercosur_rejected }
 		FROM = {
 			add_political_power = -25
-			add_opinion_modifier = { target = ROOT modifier = mercosur_rejected }
 			country_event = { id = mercosur.08 days = 0 }
 		}
 		ai_chance = {
-			base = 92
+			base = 20
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 20
+				has_opinion = { target = FROM value < 0 }
+			}
 		}
 	}
 
@@ -750,85 +780,7 @@ country_event = {
 			limit = {
 				check_variable = { mercosur_finalize_accession = 1 }
 			}
-			if = {
-				limit = { has_idea = BRA_idea_associate_states }
-				remove_ideas = BRA_idea_associate_states
-			}
-			if = {
-				limit = {
-					NOT = { has_dynamic_modifier = mercosur_member_state_modifier }
-				}
-				add_dynamic_modifier = { modifier = mercosur_member_state_modifier }
-			}
-			if = {
-				limit = { FROM = { has_completed_focus = BRA_trade_agreement } }
-				add_to_variable = { mercosur_member_state_tax_gain_multiplier_modifier = 0.02 }
-				add_to_variable = { mercosur_member_state_productivity_growth_modifier = 0.03 }
-			}
-			if = {
-				limit = { FROM = { has_completed_focus = BRA_discuss_currency } }
-				add_to_variable = { mercosur_member_state_stability_factor = 0.02 }
-				add_to_variable = { mercosur_member_state_political_power_factor = 0.02 }
-				add_to_variable = { mercosur_member_state_interest_rate_multiplier_modifier = -0.25 }
-			}
-			if = {
-				limit = { FROM = { has_completed_focus = BRA_people_goods } }
-				add_to_variable = { mercosur_member_state_total_workforce_modifier = 0.02 }
-				add_to_variable = { mercosur_member_state_high_unemployment_threshold_modifier = 0.02 }
-			}
-			if = {
-				limit = { FROM = { has_completed_focus = MER_secretariat_reform } }
-				add_to_variable = { mercosur_member_state_stability_factor = 0.02 }
-				add_to_variable = { mercosur_member_state_political_power_factor = 0.02 }
-				add_to_variable = { mercosur_member_state_corruption_cost_factor = -0.10 }
-			}
-			if = {
-				limit = { FROM = { has_completed_focus = MER_development_fund } }
-				add_to_variable = { mercosur_member_state_production_speed_industrial_complex_factor = 0.05 }
-				add_to_variable = { mercosur_member_state_production_speed_offices_factor = 0.05 }
-			}
-			if = {
-				limit = { FROM = { has_completed_focus = BRA_education_integration } }
-				add_to_variable = { mercosur_member_state_stability_factor = 0.03 }
-				add_to_variable = { mercosur_member_state_research_speed_factor = 0.05 }
-			}
-			if = {
-				limit = { FROM = { has_completed_focus = BRA_mercosur_market } }
-				add_to_variable = { mercosur_member_state_tax_gain_multiplier_modifier = 0.03 }
-				add_to_variable = { mercosur_member_state_productivity_growth_modifier = 0.07 }
-				add_to_variable = { mercosur_member_state_foreign_influence_modifier = 0.04 }
-			}
-			if = {
-				limit = { FROM = { has_completed_focus = BRA_maintain_quo } }
-				add_to_variable = { mercosur_member_state_political_power_factor = 0.03 }
-				add_to_variable = { mercosur_member_state_stability_factor = 0.03 }
-			}
-			for_each_scope_loop = {
-				array = global.mercosur_potential
-				if = {
-					limit = {
-						has_dynamic_modifier = mercosur_member_state_modifier
-					}
-					custom_effect_tooltip = {
-						localization_key = modifies_dynamic_modifier_tt
-						MODIFIER = mercosur_member_state_modifier
-					}
-					add_to_variable = { mercosur_member_state_productivity_growth_modifier = 0.01 tooltip = productivity_growth_modifier_tt }
-					add_to_variable = { mercosur_member_state_tax_gain_multiplier_modifier = 0.01 tooltip = tax_gain_multiplier_modifier_tt }
-					add_to_variable = { mercosur_member_state_foreign_influence_modifier = 0.01 tooltip = foreign_influence_modifier_tt }
-				}
-			}
-			for_each_scope_loop = {
-				array = global.mercosur_potential
-				if = {
-					limit = {
-						exists = yes
-						NOT = { tag = MEX }
-						NOT = { tag = PAN }
-					}
-					country_event = { id = mercosur.32 }
-				}
-			}
+			country_event = { id = mercosur.92 days = 0 }
 			FROM = {
 				country_event = { id = mercosur.28 days = 0 }
 			}
@@ -966,7 +918,7 @@ country_event = {
 	hidden = yes
 
 	immediate = {
-		clr_global_flag = MER_release_development_fund_round_finished
+		clr_global_flag = MER_release_development_fund_round_cooldown
 	}
 
 }
@@ -1009,6 +961,19 @@ country_event = {
 			country_event = { id = mercosur.37 days = 0 }
 		}
 		country_event = { id = mercosur.39 days = 0 }
+		for_each_scope_loop = {
+			array = global.mercosur_potential
+			if = {
+				limit = {
+					exists = yes
+					NOT = { tag = ROOT }
+					NOT = { tag = FROM }
+					NOT = { tag = MEX }
+					NOT = { tag = PAN }
+				}
+				country_event = { id = mercosur.40 days = 0 }
+			}
+		}
 		ai_chance = {
 			base = 20
 			modifier = {
@@ -1078,10 +1043,8 @@ country_event = {
 		name = mercosur.35.b
 		log = "[GetDateText]: [This.GetName]: mercosur.35.b executed"
 		set_country_flag = { flag = mercosur_recently_declined_unasul days = 365 }
-		add_opinion_modifier = { target = FROM modifier = mercosur_rejected }
 		FROM = {
 			add_political_power = -15
-			add_opinion_modifier = { target = ROOT modifier = mercosur_rejected }
 			country_event = { id = mercosur.38 days = 0 }
 		}
 		ai_chance = {
@@ -1176,6 +1139,430 @@ country_event = {
 }
 
 country_event = {
+	id = mercosur.92
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		if = {
+			limit = { has_idea = BRA_idea_associate_states }
+			remove_ideas = BRA_idea_associate_states
+		}
+		if = {
+			limit = {
+				NOT = { has_dynamic_modifier = mercosur_member_state_modifier }
+			}
+			add_dynamic_modifier = { modifier = mercosur_member_state_modifier }
+		}
+		if = {
+			limit = { FROM = { has_completed_focus = BRA_trade_agreement } }
+			add_to_variable = { mercosur_member_state_tax_gain_multiplier_modifier = 0.02 }
+			add_to_variable = { mercosur_member_state_productivity_growth_modifier = 0.03 }
+		}
+		if = {
+			limit = { FROM = { has_completed_focus = BRA_discuss_currency } }
+			add_to_variable = { mercosur_member_state_stability_factor = 0.02 }
+			add_to_variable = { mercosur_member_state_political_power_factor = 0.02 }
+			add_to_variable = { mercosur_member_state_interest_rate_multiplier_modifier = -0.25 }
+		}
+		if = {
+			limit = { FROM = { has_completed_focus = BRA_people_goods } }
+			add_to_variable = { mercosur_member_state_total_workforce_modifier = 0.02 }
+			add_to_variable = { mercosur_member_state_high_unemployment_threshold_modifier = 0.02 }
+		}
+		if = {
+			limit = { FROM = { has_completed_focus = MER_secretariat_reform } }
+			add_to_variable = { mercosur_member_state_stability_factor = 0.02 }
+			add_to_variable = { mercosur_member_state_political_power_factor = 0.02 }
+			add_to_variable = { mercosur_member_state_corruption_cost_factor = -0.10 }
+		}
+		if = {
+			limit = { FROM = { has_completed_focus = MER_development_fund } }
+			add_to_variable = { mercosur_member_state_production_speed_industrial_complex_factor = 0.05 }
+			add_to_variable = { mercosur_member_state_production_speed_offices_factor = 0.05 }
+		}
+		if = {
+			limit = { FROM = { has_completed_focus = BRA_education_integration } }
+			add_to_variable = { mercosur_member_state_stability_factor = 0.03 }
+			add_to_variable = { mercosur_member_state_research_speed_factor = 0.05 }
+		}
+		if = {
+			limit = { FROM = { has_completed_focus = BRA_mercosur_market } }
+			add_to_variable = { mercosur_member_state_tax_gain_multiplier_modifier = 0.03 }
+			add_to_variable = { mercosur_member_state_productivity_growth_modifier = 0.07 }
+			add_to_variable = { mercosur_member_state_foreign_influence_modifier = 0.04 }
+		}
+		if = {
+			limit = { FROM = { has_completed_focus = BRA_maintain_quo } }
+			add_to_variable = { mercosur_member_state_political_power_factor = 0.03 }
+			add_to_variable = { mercosur_member_state_stability_factor = 0.03 }
+		}
+		for_each_scope_loop = {
+			array = global.mercosur_potential
+			if = {
+				limit = {
+					has_dynamic_modifier = mercosur_member_state_modifier
+				}
+				custom_effect_tooltip = {
+					localization_key = modifies_dynamic_modifier_tt
+					MODIFIER = mercosur_member_state_modifier
+				}
+				add_to_variable = { mercosur_member_state_productivity_growth_modifier = 0.01 tooltip = productivity_growth_modifier_tt }
+				add_to_variable = { mercosur_member_state_tax_gain_multiplier_modifier = 0.01 tooltip = tax_gain_multiplier_modifier_tt }
+				add_to_variable = { mercosur_member_state_foreign_influence_modifier = 0.01 tooltip = foreign_influence_modifier_tt }
+			}
+		}
+		for_each_scope_loop = {
+			array = global.mercosur_potential
+			if = {
+				limit = {
+					exists = yes
+					NOT = { tag = MEX }
+					NOT = { tag = PAN }
+				}
+				country_event = { id = mercosur.32 }
+			}
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.93
+	title = mercosur.93.t
+	desc = mercosur.93.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.93.a
+		log = "[GetDateText]: [This.GetName]: mercosur.93.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.94
+	title = mercosur.94.t
+	desc = mercosur.94.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.94.a
+		log = "[GetDateText]: [This.GetName]: mercosur.94.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.40
+	title = mercosur.40.t
+	desc = mercosur.40.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.40.a
+		log = "[GetDateText]: [This.GetName]: mercosur.40.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.95
+	title = mercosur.95.t
+	desc = mercosur.95.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.95.a
+		log = "[GetDateText]: [This.GetName]: mercosur.95.a executed"
+		FROM = { country_event = { id = mercosur.104 days = 0 } }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.96
+	title = mercosur.96.t
+	desc = mercosur.96.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.96.a
+		log = "[GetDateText]: [This.GetName]: mercosur.96.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.97
+	title = mercosur.97.t
+	desc = mercosur.97.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.97.a
+		log = "[GetDateText]: [This.GetName]: mercosur.97.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.98
+	title = mercosur.98.t
+	desc = mercosur.98.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.98.a
+		log = "[GetDateText]: [This.GetName]: mercosur.98.a executed"
+		FROM = { country_event = { id = mercosur.06 days = 0 } }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.99
+	title = mercosur.99.t
+	desc = mercosur.99.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.99.a
+		log = "[GetDateText]: [This.GetName]: mercosur.99.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.100
+	title = mercosur.100.t
+	desc = mercosur.100.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.100.a
+		log = "[GetDateText]: [This.GetName]: mercosur.100.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.101
+	title = mercosur.101.t
+	desc = mercosur.101.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.101.a
+		log = "[GetDateText]: [This.GetName]: mercosur.101.a executed"
+		FROM = { country_event = { id = mercosur.106 days = 0 } }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.102
+	title = mercosur.102.t
+	desc = mercosur.102.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.102.a
+		log = "[GetDateText]: [This.GetName]: mercosur.102.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.103
+	title = mercosur.103.t
+	desc = mercosur.103.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.103.a
+		log = "[GetDateText]: [This.GetName]: mercosur.103.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.104
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_idea = BRA_idea_associate_states }
+			}
+			add_ideas = BRA_idea_associate_states
+		}
+		for_each_scope_loop = {
+			array = global.mercosur_potential
+			if = {
+				limit = {
+					has_dynamic_modifier = mercosur_member_state_modifier
+				}
+				custom_effect_tooltip = {
+					localization_key = modifies_dynamic_modifier_tt
+					MODIFIER = mercosur_member_state_modifier
+				}
+				add_to_variable = { mercosur_member_state_productivity_growth_modifier = 0.01 tooltip = productivity_growth_modifier_tt }
+				add_to_variable = { mercosur_member_state_foreign_influence_modifier = 0.01 tooltip = foreign_influence_modifier_tt }
+			}
+		}
+		country_event = { id = mercosur.105 days = 0 }
+		for_each_scope_loop = {
+			array = global.mercosur_potential
+			if = {
+				limit = {
+					exists = yes
+					NOT = { tag = ROOT }
+					NOT = { tag = FROM }
+					NOT = { tag = MEX }
+					NOT = { tag = PAN }
+				}
+				country_event = { id = mercosur.31 }
+			}
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.105
+	title = mercosur.105.t
+	desc = mercosur.105.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.105.a
+		log = "[GetDateText]: [This.GetName]: mercosur.105.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.106
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_dynamic_modifier = unasul_member_state_modifier }
+			}
+			custom_effect_tooltip = {
+				localization_key = adds_dynamic_modifier_tt
+				MODIFIER = unasul_member_state_modifier
+			}
+			add_dynamic_modifier = { modifier = unasul_member_state_modifier }
+		}
+		if = {
+			limit = {
+				NOT = { has_country_flag = MER_unasul_counted_member }
+			}
+			set_country_flag = MER_unasul_counted_member
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = unasul_member_state_modifier
+			}
+			add_to_variable = { global.MER_unasul_political_power_factor = 0.01 tooltip = political_power_factor_tt }
+			add_to_variable = { global.MER_unasul_stability_factor = 0.01 tooltip = stability_factor_tt }
+		}
+		add_opinion_modifier = { target = FROM modifier = mercosur_focus_tt }
+		FROM = {
+			add_opinion_modifier = { target = ROOT modifier = mercosur_focus_tt }
+		}
+		country_event = { id = mercosur.107 days = 0 }
+		for_each_scope_loop = {
+			array = global.mercosur_potential
+			if = {
+				limit = {
+					exists = yes
+					NOT = { tag = ROOT }
+					NOT = { tag = FROM }
+					NOT = { tag = MEX }
+					NOT = { tag = PAN }
+				}
+				country_event = { id = mercosur.40 days = 0 }
+			}
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.107
+	title = mercosur.107.t
+	desc = mercosur.107.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.107.a
+		log = "[GetDateText]: [This.GetName]: mercosur.107.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
 	id = mercosur.50
 	title = mercosur.50.t
 	desc = mercosur.50.d
@@ -1185,6 +1572,12 @@ country_event = {
 	option = {
 		name = mercosur.50.a
 		log = "[GetDateText]: [This.GetName]: mercosur.50.a executed"
+		effect_tooltip = {
+			add_timed_idea = {
+				idea = MER_unasul_integrated_corridor_plan_modifier
+				days = 180
+			}
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -1219,6 +1612,13 @@ country_event = {
 	option = {
 		name = mercosur.52.a
 		log = "[GetDateText]: [This.GetName]: mercosur.52.a executed"
+		custom_effect_tooltip = {
+			localization_key = modifies_dynamic_modifier_tt
+			MODIFIER = unasul_member_state_modifier
+		}
+		effect_tooltip = {
+			add_to_variable = { global.MER_unasul_monthly_population = 0.02 tooltip = monthly_population_tt }
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -1236,6 +1636,12 @@ country_event = {
 	option = {
 		name = mercosur.53.a
 		log = "[GetDateText]: [This.GetName]: mercosur.53.a executed"
+		effect_tooltip = {
+			add_timed_idea = {
+				idea = MER_unasul_energy_security_modifier
+				days = 180
+			}
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -1270,6 +1676,13 @@ country_event = {
 	option = {
 		name = mercosur.55.a
 		log = "[GetDateText]: [This.GetName]: mercosur.55.a executed"
+		custom_effect_tooltip = {
+			localization_key = modifies_dynamic_modifier_tt
+			MODIFIER = unasul_member_state_modifier
+		}
+		effect_tooltip = {
+			add_to_variable = { global.MER_unasul_production_speed_industrial_complex_factor = 0.03 tooltip = civilian_factories_productivity_tt }
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -1287,6 +1700,12 @@ country_event = {
 	option = {
 		name = mercosur.56.a
 		log = "[GetDateText]: [This.GetName]: mercosur.56.a executed"
+		effect_tooltip = {
+			add_timed_idea = {
+				idea = MER_unasul_joint_exercises_modifier
+				days = 180
+			}
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -1321,6 +1740,13 @@ country_event = {
 	option = {
 		name = mercosur.58.a
 		log = "[GetDateText]: [This.GetName]: mercosur.58.a executed"
+		custom_effect_tooltip = {
+			localization_key = modifies_dynamic_modifier_tt
+			MODIFIER = unasul_member_state_modifier
+		}
+		effect_tooltip = {
+			add_to_variable = { global.MER_unasul_research_speed_factor = 0.02 tooltip = research_speed_factor_tt }
+		}
 		ai_chance = {
 			base = 1
 		}
@@ -1532,7 +1958,7 @@ country_event = {
 					is_faction_leader = yes
 				}
 			}
-			add_to_faction = FROM
+			FROM = { add_to_faction = ROOT }
 		}
 		else_if = {
 			limit = {
@@ -1546,7 +1972,7 @@ country_event = {
 					is_in_faction_with = FROM
 					is_faction_leader = yes
 				}
-				ROOT = { add_to_faction = PREV }
+				add_to_faction = ROOT
 			}
 		}
 		else_if = {
@@ -1556,7 +1982,7 @@ country_event = {
 				}
 			}
 			FROM = { create_faction_from_template = faction_template_unasul }
-			add_to_faction = FROM
+			FROM = { add_to_faction = ROOT }
 		}
 		add_opinion_modifier = { target = FROM modifier = mercosur_focus_tt }
 		FROM = {
@@ -1597,9 +2023,7 @@ country_event = {
 		name = mercosur.75.b
 		log = "[GetDateText]: [This.GetName]: mercosur.75.b executed"
 		set_country_flag = { flag = mercosur_recently_declined_unasul_faction days = 365 }
-		add_opinion_modifier = { target = FROM modifier = mercosur_rejected }
 		FROM = {
-			add_opinion_modifier = { target = ROOT modifier = mercosur_rejected }
 			country_event = { id = mercosur.77 days = 0 }
 		}
 		ai_chance = {
@@ -1653,6 +2077,263 @@ country_event = {
 	option = {
 		name = mercosur.78.a
 		log = "[GetDateText]: [This.GetName]: mercosur.78.a executed"
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.79
+	title = mercosur.79.t
+	desc = mercosur.79.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.accession_project_complete.a
+		log = "[GetDateText]: [This.GetName]: mercosur.79.a executed"
+		clear_global_event_target = mercosur_accession_target
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.80
+	title = mercosur.80.t
+	desc = mercosur.80.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.accession_project_complete.a
+		log = "[GetDateText]: [This.GetName]: mercosur.80.a executed"
+		clear_global_event_target = mercosur_accession_target
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.81
+	title = mercosur.81.t
+	desc = mercosur.81.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.accession_project_complete.a
+		log = "[GetDateText]: [This.GetName]: mercosur.81.a executed"
+		clear_global_event_target = mercosur_accession_target
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.82
+	title = mercosur.82.t
+	desc = mercosur.82.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.accession_project_complete.a
+		log = "[GetDateText]: [This.GetName]: mercosur.82.a executed"
+		clear_global_event_target = mercosur_accession_target
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.83
+	title = mercosur.83.t
+	desc = mercosur.83.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.accession_project_complete.a
+		log = "[GetDateText]: [This.GetName]: mercosur.83.a executed"
+		clear_global_event_target = mercosur_accession_target
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.84
+	title = mercosur.84.t
+	desc = mercosur.84.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.accession_project_complete.a
+		log = "[GetDateText]: [This.GetName]: mercosur.84.a executed"
+		clear_global_event_target = mercosur_accession_target
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.85
+	title = mercosur.85.t
+	desc = mercosur.85.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.accession_project_complete.a
+		log = "[GetDateText]: [This.GetName]: mercosur.85.a executed"
+		clear_global_event_target = mercosur_accession_target
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.86
+	title = mercosur.86.t
+	desc = mercosur.86.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.accession_project_complete.a
+		log = "[GetDateText]: [This.GetName]: mercosur.86.a executed"
+		clear_global_event_target = mercosur_accession_target
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.87
+	title = mercosur.87.t
+	desc = mercosur.87.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.accession_project_complete.a
+		log = "[GetDateText]: [This.GetName]: mercosur.87.a executed"
+		clear_global_event_target = mercosur_accession_target
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.88
+	title = mercosur.88.t
+	desc = mercosur.88.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.accession_project_complete.a
+		log = "[GetDateText]: [This.GetName]: mercosur.88.a executed"
+		clear_global_event_target = mercosur_accession_target
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.89
+	title = mercosur.89.t
+	desc = mercosur.89.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.accession_project_complete.a
+		log = "[GetDateText]: [This.GetName]: mercosur.89.a executed"
+		clear_global_event_target = mercosur_accession_target
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.90
+	title = mercosur.90.t
+	desc = mercosur.90.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.accession_project_complete.a
+		log = "[GetDateText]: [This.GetName]: mercosur.90.a executed"
+		clear_global_event_target = mercosur_accession_target
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.91
+	title = mercosur.91.t
+	desc = mercosur.91.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.accession_project_complete.a
+		log = "[GetDateText]: [This.GetName]: mercosur.91.a executed"
+		clear_global_event_target = mercosur_accession_target
+		ai_chance = {
+			base = 1
+		}
+	}
+
+}
+
+country_event = {
+	id = mercosur.108
+	title = mercosur.108.t
+	desc = mercosur.108.d
+	picture = GFX_country_event_mercosur
+	is_triggered_only = yes
+
+	option = {
+		name = mercosur.108.a
+		log = "[GetDateText]: [This.GetName]: mercosur.108.a executed"
+		effect_tooltip = {
+			add_timed_idea = {
+				idea = MER_development_fund_round_modifier
+				days = 180
+			}
+		}
 		ai_chance = {
 			base = 1
 		}
