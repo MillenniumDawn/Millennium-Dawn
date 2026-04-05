@@ -4,6 +4,7 @@ Check for common scripting mistakes in HOI4 mod files.
 
 Detects mechanically-checkable rule violations from CLAUDE.md:
   - threat > N where N >= 1 (threat is 0.0-1.0, not a percentage)
+  - has_war_support / has_stability > N where N >= 1 (0.0-1.0 range)
   - allowed = { always = no } in ideas (default, hurts performance)
   - cancel = { always = no } in ideas (checked hourly, never true)
   - Division instead of multiplication (/ 100 -> * 0.01)
@@ -85,6 +86,22 @@ def check_file(filepath):
                         f"threat {threat_match.group(1)} {value} looks like a percentage -- threat is 0.0-1.0 (use {suggestion}?)",
                     )
                 )
+
+        # Check 5: has_war_support / has_stability with values >= 1 (should be 0.0-1.0)
+        for trigger_name in ("has_war_support", "has_stability"):
+            ws_match = re.search(
+                rf"(?<!\w){trigger_name}\s*([><]=?)\s*(\d+\.?\d*)", code_part
+            )
+            if ws_match:
+                value = float(ws_match.group(2))
+                if value >= 1.0:
+                    suggestion = round(value / 100.0, 4)
+                    issues.append(
+                        (
+                            line_num,
+                            f"{trigger_name} {ws_match.group(1)} {ws_match.group(2)} looks like a percentage -- {trigger_name} is 0.0-1.0 (use {suggestion}?)",
+                        )
+                    )
 
         # Check 2: allowed = { always = no } in ideas (default, hurts performance)
         # Only flag in idea files -- decisions use this intentionally to hide
