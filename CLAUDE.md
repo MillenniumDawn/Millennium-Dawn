@@ -137,5 +137,6 @@ For structure and examples, see `.claude/docs/mio-reference.md`.
 - [Decision Reference](./.claude/docs/decision-reference.md) - Decision/mission structure, scripted effects, examples
 - [Idea Reference](./.claude/docs/idea-reference.md) - Idea structure and examples
 - [MIO Reference](./.claude/docs/mio-reference.md) - MIO structure and examples
+- [Diplomatic Action Reference](./.claude/docs/diplomatic-action-reference.md) - Scripted diplomatic action structure, cooldowns, AI weighting
 - [Content Guidelines](./.claude/docs/content-guidelines.md) - Quality checklist, general/admiral formulas
 - [Faction Rules](./.claude/docs/faction-rules.md) - Faction rule structure, locked faction patterns
