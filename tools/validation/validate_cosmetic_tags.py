@@ -323,6 +323,13 @@ class Validator(BaseValidator):
             )
 
     def run_validations(self):
+        if self.staged_only and not self.staged_files:
+            self.log(
+                "No staged files found — skipping cosmetic tags validation",
+                "warning",
+            )
+            return
+
         # Tags containing [ or { are from meta_effect text blocks and should be ignored
         PATTERN_FALSE_POSITIVES = ["[", "{"]
         # Tags that are generated dynamically via meta_effects (e.g. [ROOTTAG]_REB)
@@ -340,13 +347,17 @@ class Validator(BaseValidator):
             "BSH_REB_S_nationalist",  # 05_bashkiriya.txt - nationalist junta override
             "TAT_REB_S_nationalist",  # Tatarstan.txt - nationalist junta override
         ]
+        # validate_missing uses _collect_files() which respects staged mode
         self.validate_missing_cosmetic_tags(PATTERN_FALSE_POSITIVES + META_EFFECT_TAGS)
-        self.validate_unused_cosmetic_tags(
-            PATTERN_FALSE_POSITIVES + KNOWN_BUGS + INCOMPLETE_TAGS
-        )
-        self.validate_unused_cosmetic_tag_colors(
-            PATTERN_FALSE_POSITIVES + META_EFFECT_TAGS
-        )
+
+        # Cross-reference checks scan all .tga/.yml files — skip in staged mode
+        if not self.staged_only:
+            self.validate_unused_cosmetic_tags(
+                PATTERN_FALSE_POSITIVES + KNOWN_BUGS + INCOMPLETE_TAGS
+            )
+            self.validate_unused_cosmetic_tag_colors(
+                PATTERN_FALSE_POSITIVES + META_EFFECT_TAGS
+            )
 
 
 if __name__ == "__main__":

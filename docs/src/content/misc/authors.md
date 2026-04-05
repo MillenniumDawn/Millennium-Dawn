@@ -181,6 +181,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 | BigRobbo             | @BigRobbo                       | @BigRobbo919   | -             | -                             |
 | pastandrey           | @pastandrey                     | @pastandrey    | -             | -                             |
 | altair6407           | @altair6407                     | @altair6407    | -             | -                             |
+| polski_oski          | @polski_oski                    |                | -             | -                             |
 
 # Fellow Modders/Teams
 

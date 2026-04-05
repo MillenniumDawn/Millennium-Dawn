@@ -72,7 +72,7 @@ A standalone diff summary script is also available: `tools/review-branch.sh [bas
 - Use `relative_position_id` for positioning
 - Always include logging: `log = "[GetDateText]: [Root.GetName]: Focus TAG_focus_name"`
 - Always include `ai_will_do = { base = N }` with game options checks — use `base`, not `factor`, at the root level
-- Always include `search_filters` — use the two-layer pattern: country-specific filter + matching generic (see `.claude/docs/search-filters.md`)
+- Always include `search_filters` — use the two-layer pattern: country-specific filter + matching generic where a custom filter exists (see `.claude/docs/search-filters.md`)
 - Omit default values: `cancel_if_invalid = yes`, `continue_if_invalid = no`, `available_if_capitulated = no`
 - Avoid empty `mutually_exclusive` and `available` blocks
 - Limit permanent effects to 5; use timed ideas for more
@@ -131,7 +131,7 @@ For structure and examples, see `.claude/docs/mio-reference.md`.
 - [Contributing Guidelines](./CONTRIBUTING.md)
 - [HOI4 Scripting Reference](./.claude/docs/hoi4-data-structures.md) - Variables, arrays, loops, collections, loc
 - [Documentation Index](./.claude/docs/documentation-references.md) - Effects, triggers, modifiers docs & wiki links
-- [Search Filter Reference](./.claude/docs/search-filters.md) - All FOCUS*FILTER*\* values, Israel filter mapping, subcategory logic
+- [Search Filter Reference](./.claude/docs/search-filters.md) - All `FOCUS_FILTER_*` values, Israel filter mapping, subcategory logic
 - [Focus Tree Reference](./.claude/docs/focus-tree-reference.md) - Property order, building costs, examples
 - [Event Reference](./.claude/docs/event-reference.md) - Event structure, ETD system, examples
 - [Decision Reference](./.claude/docs/decision-reference.md) - Decision/mission structure, scripted effects, examples

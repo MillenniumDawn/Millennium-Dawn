@@ -517,15 +517,15 @@ class Validator(BaseValidator):
         )
 
     def run_validations(self):
-        if self.staged_only and self.staged_files is not None:
-            dec_path = os.path.join(self.mod_path, "common", "decisions")
-            has_decision_files = any(dec_path in f for f in self.staged_files)
-            if not has_decision_files:
-                self.log(
-                    "No decision files in diff — skipping decision validation",
-                    "warning",
-                )
-                return
+        if self.staged_only:
+            # Decision checks parse all 200+ decision files even for structural
+            # validation (duplicates, AI factors). Skip entirely in staged mode;
+            # CI handles the full decision validation.
+            self.log(
+                "Decision validation requires full file scan — skipping in staged mode",
+                "warning",
+            )
+            return
 
         self.validate_duplicated_decisions()
         self.validate_unused_decisions()

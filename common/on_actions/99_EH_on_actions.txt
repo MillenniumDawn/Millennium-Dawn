@@ -1,0 +1,697 @@
+on_actions = {
+	on_daily = {
+		effect = {
+			if = {
+				limit = { ROOT = { has_war_with = ALN } }
+				every_controlled_state = {
+					if = {
+						limit = {
+							has_state_flag = EH_electric_trap_enabled_flag
+							NOT = {
+								is_frontline_state = yes
+								is_second_line_state = yes
+								is_third_line_state = yes
+							}
+						}
+						clr_state_flag = EH_electric_trap_enabled_flag
+					}
+				}
+				if = {
+					limit = {
+						ROOT = {
+							has_country_flag = EH_nation_activated_electric_traps_flag
+							has_war_with = ALN
+						}
+					}
+					ROOT = {
+						every_controlled_state = {
+							limit = {
+								OR = {
+									is_frontline_state = yes
+									is_second_line_state = yes
+								}
+							}
+							set_state_flag = EH_electric_trap_enabled_flag
+						}
+					}
+				}
+				if = {
+					limit = {
+						ROOT = {
+							has_completed_focus = EH_investigate_strange_structure
+							NOT = {
+								has_country_flag = EH_country_succeeded_in_drone_mission_flag
+							}
+						}
+					}
+					ROOT = {
+						EH_drone_mission_calculations_effect = yes
+					}
+				}
+				if = {
+					limit = {
+						ROOT = { has_completed_focus = EH_a_new_resource }
+					}
+					ROOT = {
+						EH_set_randallite_effect = yes
+						EH_randallite_effects = yes
+					}
+				}
+				# STATIC #
+				if = {
+					limit = {
+						has_idea = EH_disrupted_satellite_network_idea
+						check_variable = { EH_static_countdown_var = 0 }
+					}
+					set_variable_to_random = {
+						var = EH_static_countdown_var
+						min = 14
+						max = 45
+						integer = yes
+					}
+				}
+				if = {
+					limit = {
+						check_variable = { EH_static_countdown_var > 1 }
+					}
+					add_to_variable = { EH_static_countdown_var = -1 }
+				}
+				if = {
+					limit = {
+						check_variable = { EH_static_countdown_var = 1 }
+						NOT = {
+							is_special_project_completed = sp:sp_monitor_portal_energy_emissions_project
+						}
+					}
+					set_country_flag = { flag = EH_random_static_gui_flag days = 3 value = 1 }
+					remove_ideas = EH_disrupted_satellite_network_idea
+					add_timed_idea = { idea = EH_satellite_critical_failure_idea days = 3 }
+					random_controlled_state = {
+						damage_building = {
+							type = infrastructure
+							damage = 2
+						}
+						damage_building = {
+							type = industrial_complex
+							damage = 2
+						}
+					}
+					random_controlled_state = {
+						damage_building = {
+							type = arms_factory
+							damage = 2
+						}
+					}
+					set_variable = { EH_static_countdown_var = 0 }
+				}
+				# TESLA #
+				if = {
+					limit = {
+						has_country_flag = EH_tesla_airframe_in_production_flag
+					}
+					if = {
+						limit = {
+							check_variable = { EH_tesla_airframe_progress < 210 }
+						}
+						ROOT = {
+							add_to_variable = { EH_tesla_airframe_progress = EH_tesla_module_production_speed }
+							clamp_variable = {
+								var = EH_tesla_airframe_progress
+								max = 210
+							}
+							EH_refresh_gui = yes
+						}
+					}
+					else = {
+						ROOT = {
+							clr_country_flag = EH_tesla_airframe_in_production_flag
+							set_country_flag = EH_tesla_airframe_completed_flag
+							EH_is_tesla_finished = yes
+						}
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = EH_tesla_neutralizer_in_production_flag
+					}
+					if = {
+						limit = {
+							check_variable = { EH_tesla_neutralizer_progress < 210 }
+						}
+						ROOT = {
+							add_to_variable = { EH_tesla_neutralizer_progress = EH_tesla_module_production_speed }
+							clamp_variable = {
+								var = EH_tesla_neutralizer_progress
+								max = 210
+							}
+							EH_refresh_gui = yes
+						}
+					}
+					else = {
+						ROOT = {
+							clr_country_flag = EH_tesla_neutralizer_in_production_flag
+							set_country_flag = EH_tesla_neutralizer_completed_flag
+							EH_is_tesla_finished = yes
+						}
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = EH_tesla_emp_in_production_flag
+					}
+					if = {
+						limit = {
+							check_variable = { EH_tesla_emp_progress < 210 }
+						}
+						ROOT = {
+							add_to_variable = { EH_tesla_emp_progress = EH_tesla_module_production_speed }
+							clamp_variable = {
+								var = EH_tesla_emp_progress
+								max = 210
+							}
+							EH_refresh_gui = yes
+						}
+					}
+					else = {
+						ROOT = {
+							clr_country_flag = EH_tesla_emp_in_production_flag
+							set_country_flag = EH_tesla_emp_completed_flag
+							EH_is_tesla_finished = yes
+						}
+					}
+				}
+				# MECHS #
+				if = {
+					limit = {
+						ROOT = {
+							has_country_flag = EH_mech_production_1_in_progress_flag
+							check_variable = { EH_mech_production_1_progress_var < 100 }
+						}
+					}
+					ROOT = {
+						add_to_variable = { EH_mech_production_1_progress_var = EH_mech_production_1_cost_var }
+						clamp_variable = {
+							var = EH_mech_production_1_progress_var
+							max = 100
+						}
+						EH_refresh_gui = yes
+					}
+				}
+				else_if = {
+					limit = {
+						ROOT = {
+							check_variable = { EH_mech_production_1_progress_var = 100 }
+						}
+					}
+					ROOT = {
+						clr_country_flag = EH_mech_production_1_in_progress_flag
+						set_variable = { EH_mech_production_1_progress_var = 0 }
+						if = {
+							limit = {
+								has_country_flag = EH_first_mech_1_selected_flag
+							}
+							add_equipment_to_stockpile = {
+								type = HACS_0
+								amount = var:EH_mech_1_amount
+								producer = ROOT
+							}
+						}
+						else_if = {
+							limit = {
+								has_country_flag = EH_first_mech_2_selected_flag
+							}
+							add_equipment_to_stockpile = {
+								type = HACS_1
+								amount = var:EH_mech_1_amount
+								producer = ROOT
+							}
+						}
+						else = {
+							add_equipment_to_stockpile = {
+								type = HACS_2
+								amount = var:EH_mech_1_amount
+								producer = ROOT
+							}
+						}
+						clr_country_flag = EH_first_mech_1_selected_flag
+						clr_country_flag = EH_first_mech_2_selected_flag
+						set_variable = { EH_mech_1_amount = 0 }
+						EH_refresh_gui = yes
+					}
+				}
+				if = {
+					limit = {
+						ROOT = {
+							has_country_flag = EH_mech_production_2_in_progress_flag
+							check_variable = { EH_mech_production_2_progress_var < 100 }
+						}
+					}
+					ROOT = {
+						add_to_variable = { EH_mech_production_2_progress_var = EH_mech_production_2_cost_var }
+						clamp_variable = {
+							var = EH_mech_production_2_progress_var
+							max = 100
+						}
+						EH_refresh_gui = yes
+					}
+				}
+				else_if = {
+					limit = {
+						ROOT = {
+							check_variable = { EH_mech_production_2_progress_var = 100 }
+						}
+					}
+					ROOT = {
+						clr_country_flag = EH_mech_production_2_in_progress_flag
+						set_variable = { EH_mech_production_2_progress_var = 0 }
+						if = {
+							limit = {
+								has_country_flag = EH_second_mech_1_selected_flag
+							}
+							add_equipment_to_stockpile = {
+								type = HACS_0
+								amount = var:EH_mech_2_amount
+								producer = ROOT
+							}
+						}
+						else_if = {
+							limit = {
+								has_country_flag = EH_second_mech_2_selected_flag
+							}
+							add_equipment_to_stockpile = {
+								type = HACS_1
+								amount = var:EH_mech_2_amount
+								producer = ROOT
+							}
+						}
+						else = {
+							add_equipment_to_stockpile = {
+								type = HACS_2
+								amount = var:EH_mech_2_amount
+								producer = ROOT
+							}
+						}
+						clr_country_flag = EH_second_mech_1_selected_flag
+						clr_country_flag = EH_second_mech_2_selected_flag
+						set_variable = { EH_mech_2_amount = 0 }
+						EH_refresh_gui = yes
+					}
+				}
+				if = {
+					limit = {
+						ROOT = {
+							has_country_flag = EH_mech_production_3_in_progress_flag
+							check_variable = { EH_mech_production_3_progress_var < 100 }
+						}
+					}
+					ROOT = {
+						add_to_variable = { EH_mech_production_3_progress_var = EH_mech_production_3_cost_var }
+						clamp_variable = {
+							var = EH_mech_production_3_progress_var
+							max = 100
+						}
+						EH_refresh_gui = yes
+					}
+				}
+				else_if = {
+					limit = {
+						ROOT = {
+							check_variable = { EH_mech_production_3_progress_var = 100 }
+						}
+					}
+					ROOT = {
+						clr_country_flag = EH_mech_production_3_in_progress_flag
+						set_variable = { EH_mech_production_3_progress_var = 0 }
+						if = {
+							limit = {
+								has_country_flag = EH_third_mech_1_selected_flag
+							}
+							add_equipment_to_stockpile = {
+								type = HACS_0
+								amount = var:EH_mech_3_amount
+								producer = ROOT
+							}
+						}
+						else_if = {
+							limit = {
+								has_country_flag = EH_third_mech_2_selected_flag
+							}
+							add_equipment_to_stockpile = {
+								type = HACS_1
+								amount = var:EH_mech_3_amount
+								producer = ROOT
+							}
+						}
+						else = {
+							add_equipment_to_stockpile = {
+								type = HACS_2
+								amount = var:EH_mech_3_amount
+								producer = ROOT
+							}
+						}
+						clr_country_flag = EH_third_mech_1_selected_flag
+						clr_country_flag = EH_third_mech_2_selected_flag
+						set_variable = { EH_mech_3_amount = 0 }
+						EH_refresh_gui = yes
+					}
+				}
+				if = {
+					limit = {
+						ROOT = {
+							has_country_flag = EH_mech_production_4_in_progress_flag
+							check_variable = { EH_mech_production_4_progress_var < 100 }
+						}
+					}
+					ROOT = {
+						add_to_variable = { EH_mech_production_4_progress_var = EH_mech_production_4_cost_var }
+						clamp_variable = {
+							var = EH_mech_production_4_progress_var
+							max = 100
+						}
+						EH_refresh_gui = yes
+					}
+				}
+				else_if = {
+					limit = {
+						ROOT = {
+							check_variable = { EH_mech_production_4_progress_var = 100 }
+						}
+					}
+					ROOT = {
+						clr_country_flag = EH_mech_production_4_in_progress_flag
+						set_variable = { EH_mech_production_4_progress_var = 0 }
+						if = {
+							limit = {
+								has_country_flag = EH_fourth_mech_1_selected_flag
+							}
+							add_equipment_to_stockpile = {
+								type = HACS_0
+								amount = var:EH_mech_4_amount
+								producer = ROOT
+							}
+						}
+						else_if = {
+							limit = {
+								has_country_flag = EH_fourth_mech_2_selected_flag
+							}
+							add_equipment_to_stockpile = {
+								type = HACS_1
+								amount = var:EH_mech_4_amount
+								producer = ROOT
+							}
+						}
+						else = {
+							add_equipment_to_stockpile = {
+								type = HACS_2
+								amount = var:EH_mech_4_amount
+								producer = ROOT
+							}
+						}
+						clr_country_flag = EH_fourth_mech_1_selected_flag
+						clr_country_flag = EH_fourth_mech_2_selected_flag
+						set_variable = { EH_mech_4_amount = 0 }
+						EH_refresh_gui = yes
+					}
+				}
+				if = {
+					limit = {
+						ROOT = {
+							has_country_flag = EH_mech_production_5_in_progress_flag
+							check_variable = { EH_mech_production_5_progress_var < 100 }
+						}
+					}
+					ROOT = {
+						add_to_variable = { EH_mech_production_5_progress_var = EH_mech_production_5_cost_var }
+						clamp_variable = {
+							var = EH_mech_production_5_progress_var
+							max = 100
+						}
+						EH_refresh_gui = yes
+					}
+				}
+				else_if = {
+					limit = {
+						ROOT = {
+							check_variable = { EH_mech_production_5_progress_var = 100 }
+						}
+					}
+					ROOT = {
+						clr_country_flag = EH_mech_production_5_in_progress_flag
+						set_variable = { EH_mech_production_5_progress_var = 0 }
+						if = {
+							limit = {
+								has_country_flag = EH_fifth_mech_1_selected_flag
+							}
+							add_equipment_to_stockpile = {
+								type = HACS_0
+								amount = var:EH_mech_5_amount
+								producer = ROOT
+							}
+						}
+						else_if = {
+							limit = {
+								has_country_flag = EH_fifth_mech_2_selected_flag
+							}
+							add_equipment_to_stockpile = {
+								type = HACS_1
+								amount = var:EH_mech_5_amount
+								producer = ROOT
+							}
+						}
+						else = {
+							add_equipment_to_stockpile = {
+								type = HACS_2
+								amount = var:EH_mech_5_amount
+								producer = ROOT
+							}
+						}
+						clr_country_flag = EH_fifth_mech_1_selected_flag
+						clr_country_flag = EH_fifth_mech_2_selected_flag
+						set_variable = { EH_mech_5_amount = 0 }
+						EH_refresh_gui = yes
+					}
+				}
+			}
+		}
+	}
+
+	on_weekly = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = {
+						check_variable = { EH_research_sites_constructed_var > 0 }
+						has_country_flag = EH_research_sites_enabled
+						NOT = {
+							has_country_flag = EH_research_sites_strike_cooldown_flag
+						}
+						has_war_with = ALN
+					}
+				}
+				ROOT = {
+					random = {
+						chance = 40
+						EH_research_site_strike_effect = yes
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					has_idea = EH_scientist_andrzej_trautman_idea
+				}
+				ROOT = {
+					random = {
+						chance = 5
+						if = {
+							limit = {
+								is_special_project_being_researched = sp:sp_monitor_portal_energy_emissions_project
+							}
+							sp:sp_monitor_portal_energy_emissions_project = {
+								add_project_progress_ratio = 0.03
+							}
+						}
+						if = {
+							limit = {
+								is_special_project_being_researched = sp:sp_spies_in_hive_project
+							}
+							sp:sp_spies_in_hive_project = {
+								add_project_progress_ratio = 0.03
+							}
+						}
+						if = {
+							limit = {
+								is_special_project_being_researched = sp:sp_the_tesla_weapon_project
+							}
+							sp:sp_the_tesla_weapon_project = {
+								add_project_progress_ratio = 0.03
+							}
+						}
+					}
+				}
+			}
+			if = {
+				limit = { check_variable = { EH_randallite_mines_set_up_var > 0 } }
+				EH_weekly_randallite_income_effect = yes
+			}
+		}
+	}
+
+	on_weekly_ALN = {
+		effect = {
+			if = {
+				limit = {
+					has_army_size = {
+						size < 800
+					}
+					NOT = { has_country_flag = EH_chimera_stop_spawning_units_flag }
+				}
+				if = {
+					limit = {
+						814 = {
+							has_state_flag = EH_state_with_portal
+						}
+					}
+					814 = {
+						create_unit = {
+							division = "name = \"Alaskan Cluster\" division_template = \"Portal Cluster\" start_experience_factor = 1 start_equipment_factor = 1"
+							owner = ROOT
+							prioritize_location = 15079
+							allow_spawning_on_enemy_provs = yes
+							count = 3
+						}
+					}
+				}
+				if = {
+					limit = {
+						591 = {
+							has_state_flag = EH_state_with_portal
+						}
+					}
+					591 = {
+						create_unit = {
+							division = "name = \"Tibetan Cluster\" division_template = \"Portal Cluster\" start_experience_factor = 1 start_equipment_factor = 1"
+							owner = ROOT
+							prioritize_location = 14126
+							allow_spawning_on_enemy_provs = yes
+							count = 5
+						}
+					}
+				}
+				if = {
+					limit = {
+						457 = {
+							has_state_flag = EH_state_with_portal
+						}
+					}
+					457 = {
+						create_unit = {
+							division = "name = \"Chilean Cluster\" division_template = \"Portal Cluster\" start_experience_factor = 1 start_equipment_factor = 1"
+							owner = ROOT
+							prioritize_location = 11009
+							allow_spawning_on_enemy_provs = yes
+							count = 4
+						}
+					}
+				}
+				if = {
+					limit = {
+						234 = {
+							has_state_flag = EH_state_with_portal
+						}
+					}
+					234 = {
+						create_unit = {
+							division = "name = \"Ethiopian Cluster\" division_template = \"Portal Cluster\" start_experience_factor = 1 start_equipment_factor = 1"
+							owner = ROOT
+							prioritize_location = 13831
+							allow_spawning_on_enemy_provs = yes
+							count = 4
+						}
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_army_size = {
+						size > 799
+					}
+				}
+				set_country_flag = EH_chimera_stop_spawning_units_flag
+			}
+		}
+	}
+
+	on_monthly = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = {
+						has_completed_focus = EH_study_new_enemy
+						has_war_with = ALN
+						check_variable = { EH_army_attack_factor_var3 < 0.12 }
+					}
+				}
+				ROOT = {
+					add_to_variable = { EH_army_attack_factor_var3 = 0.02 }
+					add_to_variable = { EH_army_defence_factor_var3 = 0.02 }
+				}
+			}
+			if = {
+				limit = {
+					ROOT = {
+						check_variable = { EH_research_sites_constructed_var > 0 }
+						has_country_flag = EH_research_sites_enabled
+						NOT = {
+							has_country_flag = EH_event_fired_flag
+						}
+					}
+				}
+				random = {
+					chance = 30
+					if = {
+						limit = {
+							NOT = {
+								has_country_flag = EH_event_1_fired_flag
+							}
+						}
+						country_event = EH_focus_event.9
+					}
+				}
+				random = {
+					chance = 50
+					if = {
+						limit = {
+							NOT = {
+								has_country_flag = EH_event_2_fired_flag
+							}
+						}
+						country_event = EH_focus_event.10
+					}
+				}
+				random = {
+					chance = 10
+					if = {
+						limit = {
+							NOT = {
+								has_country_flag = EH_event_3_fired_flag
+							}
+						}
+						country_event = EH_focus_event.11
+					}
+				}
+			}
+		}
+	}
+
+	on_startup = {
+		effect = {
+			if = {
+				limit = { EH_scenario_enabled = yes }
+				random_country = { # It must be some specific country to trigger the event
+					news_event = EH_event.0
+				}
+			}
+		}
+	}
+}

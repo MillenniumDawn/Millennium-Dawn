@@ -65,8 +65,8 @@ class BaseValidator:
         self._pool: Optional[Pool] = None
 
         if staged_only:
-            self.staged_files = get_staged_files(
-                mod_path, extensions=self.STAGED_EXTENSIONS
+            self.staged_files = (
+                get_staged_files(mod_path, extensions=self.STAGED_EXTENSIONS) or []
             )
             if not self.staged_files:
                 logging.warning("No staged files found")
@@ -155,7 +155,9 @@ class BaseValidator:
             {os.path.splitext(p)[1] for p in patterns if os.path.splitext(p)[1]}
         ) or [".txt"]
 
-        if self.staged_files:
+        if self.staged_only:
+            if not self.staged_files:
+                return []
             dir_hints = [
                 next((s for s in p.split("/") if "*" not in s), "") for p in patterns
             ]
