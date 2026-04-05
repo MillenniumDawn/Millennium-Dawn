@@ -1,6 +1,15 @@
 # Pre-commit configuration for Millennium Dawn HOI4 mod
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+#
+# MD-specific hooks (prefixed "MD") are set to stages: [manual] by default
+# so they don't block external contributors. To run them:
+#   pre-commit run --hook-stage manual           # all manual hooks
+#   pre-commit run md-fix-styling --hook-stage manual  # single hook
+#
+# Team members can enable them on every commit by adding to .pre-commit-config.yaml
+# (local override, don't commit):
+#   default_stages: [pre-commit, manual]
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -59,14 +68,6 @@ repos:
         args: [--print-width=120]
   - repo: local
     hooks:
-      - id: md-fix-styling
-        name: MD Fix Styling (auto-fix spaces/tabs/braces)
-        entry: python3 tools/fix_styling.py --mode staged
-        language: system
-        files: '\.(txt)$'
-        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
-        pass_filenames: false
-        stages: [pre-commit]
       - id: fix-localization-encoding
         name: Validate and fix HOI4 localization UTF-8 BOM
         entry: python3 tools/validate_localization_encoding.py --fix
@@ -79,13 +80,6 @@ repos:
         language: system
         files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
         pass_filenames: true
-      - id: md-standardize
-        name: MD Standardize (auto-fix ideas/events/decisions/focuses)
-        entry: python3 tools/standardize_staged.py
-        language: system
-        files: '(common/national_focus|common/decisions|common/ideas|events)/.*\.txt$'
-        pass_filenames: true
-        stages: [pre-commit]
       - id: check-mod-file-encoding
         name: Check .mod file UTF-8 encoding
         entry: python3 tools/validate_mod_encoding.py
@@ -99,6 +93,22 @@ repos:
         files: '\.(txt)$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: true
+      # --- MD-specific hooks (manual by default) ---
+      - id: md-fix-styling
+        name: MD Fix Styling (auto-fix spaces/tabs/braces)
+        entry: python3 tools/fix_styling.py --mode staged
+        language: system
+        files: '\.(txt)$'
+        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-standardize
+        name: MD Standardize (auto-fix ideas/events/decisions/focuses)
+        entry: python3 tools/standardize_staged.py
+        language: system
+        files: '(common/national_focus|common/decisions|common/ideas|events)/.*\.txt$'
+        pass_filenames: true
+        stages: [manual]
       - id: check-basic-style
         name: MD Basic Style Check
         entry: python3 tools/check_basic_style.py --mode staged
@@ -106,7 +116,7 @@ repos:
         files: '\.(txt)$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
-        stages: [pre-commit]
+        stages: [manual]
       - id: check-basic-style-2
         name: MD Basic Style Check (secondary)
         entry: python3 tools/check_basic_style_2.py --mode staged
@@ -114,26 +124,26 @@ repos:
         files: '\.(txt)$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
-        stages: [pre-commit]
+        stages: [manual]
       - id: coding-standards
         name: MD Coding Standards (focus IDs, flags, events)
         entry: python3 tools/coding_standards.py --mode staged
         language: system
         files: '(common/national_focus|events)/.*\.txt$'
         pass_filenames: false
-        stages: [pre-commit]
+        stages: [manual]
       - id: check-common-mistakes
-        name: MD Common Mistakes (threat scale, always=no, etc.)
+        name: MD Common Mistakes (threat scale, value ranges, always=no, etc.)
         entry: python3 tools/check_common_mistakes.py --mode staged
         language: system
         files: '\.(txt)$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
-        stages: [pre-commit]
+        stages: [manual]
       - id: validate-staged
-        name: Validate staged files (opt-out via MD_SKIP_VALIDATE=1)
+        name: MD Validate staged files
         entry: python3 tools/validate_staged.py
         language: system
         files: '(events/.*\.txt|common/.*\.txt|history/.*\.txt|localisation/.*\.yml)$'
         pass_filenames: false
-        stages: [pre-commit]
+        stages: [manual]
