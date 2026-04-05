@@ -1,5 +1,5 @@
 import type { ImageMetadata } from "astro";
-import { resolveImageSource } from "@/shared/lib/media/image-assets";
+import { getRootRelativeUrlForMetadata, resolveImageSource } from "@/shared/lib/media/image-assets";
 import { SITE_FALLBACK_ORIGIN } from "@/shared/config/site";
 import { normalizeSiteBase, stripPathBase } from "./site-path-base";
 
@@ -26,7 +26,16 @@ export function withBase(path: string): string {
 
 export function cssUrl(path: string | ImageMetadata): string {
   const resolved = resolveImageSource(path);
-  const normalized = withBase(typeof resolved === "string" ? resolved : resolved.src);
+  let normalized: string;
+  if (typeof resolved === "string") {
+    normalized = withBase(resolved);
+  } else {
+    const staticDocsPath = getRootRelativeUrlForMetadata(resolved);
+    normalized =
+      staticDocsPath?.startsWith("/assets/images/")
+        ? withBase(staticDocsPath)
+        : withBase(resolved.src);
+  }
   const escaped = normalized.replace(/['"()\\]/g, "\\$&");
   return `url('${escaped}')`;
 }
