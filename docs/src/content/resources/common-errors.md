@@ -3,7 +3,32 @@ title: Common Hearts of Iron IV Errors
 description: List of common Hearts of Iron IV errors and how to fix them.
 ---
 
-This guide is intended for developers to find and fix any errors they may see in the error log.
+This guide is intended for developers to find and fix common errors and crashes they may encounter during development.
+
+---
+
+## Crash: Special Project with ai_will_do base = 0
+
+**Symptom:** The game crashes when a special project becomes available and the AI gains a breakthrough point for it.
+
+**Cause:** Setting `ai_will_do = { base = 0 }` on a special project causes a crash. Unlike focuses and decisions where `base = 0` is valid, the special projects system does not handle a zero base value correctly.
+
+**Note:** Using `factor = 0` inside a `modifier` block within `ai_will_do` is fine — the crash only occurs when the root-level `base` itself is 0.
+
+**Fix:** Use a very small positive value instead:
+
+```hoi4
+ai_will_do = {
+	base = 0.001
+	# use modifier blocks to zero it out conditionally
+	modifier = {
+		factor = 0
+		# condition here
+	}
+}
+```
+
+---
 
 ## Failed to Generate a Name for a Character
 
