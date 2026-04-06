@@ -12,39 +12,59 @@ pip install -r requirements.txt
 
 **Packages:** requests, pillow
 
-## Scripts
+## Directory Structure
 
-### Validation & Code Standards
+```
+tools/
+├── analysis/          Analysis, reference finders, metrics
+├── assets/            DDS conversion, GFX generation, texture tools
+├── generators/        Content generators (tribute ideas, focus names)
+├── linting/           Style checkers, formatters, encoding validators
+├── publishing/        Steam Workshop publishing
+├── standardization/   Auto-standardizers for focuses, events, decisions, ideas
+├── tests/             Test suites for validators
+├── validation/        Content validators (events, decisions, variables, etc.)
+├── path_utils.py      Shared path utilities (used by linting scripts)
+├── shared_utils.py    Shared utilities (used by validation + standardization)
+├── loc.py             Localisation utilities
+├── logging_tool.py    Logging utility
+├── validate_staged.py Pre-commit hook: routes staged files to validators
+├── standardize_staged.py Pre-commit hook: routes staged files to standardizers
+├── generate_validation_report.py CI: generates PR validation reports
+├── validate_tools.py  CI: validates Python scripts in tools/
+└── README.md
+```
 
-| Script                                | Description                                                            |
-| ------------------------------------- | ---------------------------------------------------------------------- |
-| **check_basic_style.py**              | Style checker for mod `.txt` files (used in pre-commit + CI)           |
-| **check_basic_style_2.py**            | Extended style checker with additional rules (used in pre-commit + CI) |
-| **check_braces.py**                   | Validates matching braces in mod script files                          |
-| **check_common_mistakes.py**          | Detects common scripting mistakes from CLAUDE.md rules                 |
-| **coding_standards.py**               | Enforces Millennium Dawn coding standards                              |
-| **validate_localization_encoding.py** | Validates and fixes UTF-8 BOM encoding for localisation files          |
-| **validate_mod_encoding.py**          | Checks UTF-8 encoding for `.mod` files                                 |
-| **validate_staged.py**                | Runs validators against staged files for pre-commit                    |
-| **validate_tools.py**                 | Meta-validator for Python scripts in the tools directory               |
+## Scripts by Category
 
-### Formatting & Cleanup
+### Linting (`linting/`)
 
-| Script                  | Description                                                                                   |
-| ----------------------- | --------------------------------------------------------------------------------------------- |
-| **fix_styling.py**      | Comprehensive auto-fixer for style issues (tabs, spacing, braces, trailing whitespace)        |
-| **fix_line_endings.py** | Converts CRLF to LF line endings                                                              |
-| **fix_loc_yaml.py**     | Fixes localisation YAML issues (quotes, tabs, colons, version keys) — used as pre-commit hook |
+Style checkers, formatters, and encoding validators. These are used in pre-commit hooks and CI.
 
-### Standardization
+| Script                                | Description                                                                   |
+| ------------------------------------- | ----------------------------------------------------------------------------- |
+| **check_basic_style.py**              | Style checker for mod `.txt` files (pre-commit + CI)                          |
+| **check_basic_style_2.py**            | Extended style checker with additional rules (pre-commit + CI)                |
+| **check_braces.py**                   | Validates matching braces in mod script files                                 |
+| **check_common_mistakes.py**          | Detects common scripting mistakes from CLAUDE.md rules                        |
+| **coding_standards.py**               | Enforces Millennium Dawn coding standards                                     |
+| **fix_styling.py**                    | Comprehensive auto-fixer for style issues (tabs, spacing, braces, whitespace) |
+| **fix_line_endings.py**               | Converts CRLF to LF line endings                                              |
+| **fix_loc_yaml.py**                   | Fixes localisation YAML issues (quotes, tabs, colons, version keys)           |
+| **validate_localization_encoding.py** | Validates and fixes UTF-8 BOM encoding for localisation files                 |
+| **validate_mod_encoding.py**          | Checks UTF-8 encoding for `.mod` files                                        |
 
-The `standardization/` directory contains the standardization pipeline. See its own README for details.
+### Validation (`validation/`)
 
-| Script                    | Description                          |
-| ------------------------- | ------------------------------------ |
-| **standardize_staged.py** | Runs standardization on staged files |
+Content validators run in CI via matrix strategy. See `validation/README.md` for details.
 
-### Asset & Graphics
+### Standardization (`standardization/`)
+
+Auto-standardizers for focus trees, events, decisions, and ideas. See `standardization/README.md` for details.
+
+### Assets (`assets/`)
+
+DDS conversion, GFX entry generation, texture and flag tools.
 
 | Script                           | Description                                                               |
 | -------------------------------- | ------------------------------------------------------------------------- |
@@ -59,26 +79,32 @@ The `standardization/` directory contains the standardization pipeline. See its 
 | **gfx_entry_generator_linux.py** | Cross-platform GFX entry generator (pathlib-based, deterministic sort)    |
 | **state_gfx.py**                 | Extracts province colors from state files and renders them on the map     |
 
-### Focus Tree & Content
+See `assets/gfxEntryGenerator.md` for the GFX entry generator guide.
 
-| Script                                | Description                                                           |
-| ------------------------------------- | --------------------------------------------------------------------- |
-| **count_of_focuses.py**               | Counts focuses in focus tree files                                    |
-| **text_to_focus_and_focus_to_loc.py** | Converts text to focus IDs and generates localisation entries         |
-| **generate_tribute_ideas.py**         | Generates tribute idea definitions and localisation for all countries |
-| **search_add_ideas.py**               | Searches for `add_ideas` / `add_timed_idea` usage across the codebase |
+### Analysis (`analysis/`)
 
-### Analysis & Reference
+Metrics, reference analysis, and review tools.
 
 | Script                              | Description                                                            |
 | ----------------------------------- | ---------------------------------------------------------------------- |
 | **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system              |
+| **count_of_focuses.py**             | Counts focuses in focus tree files                                     |
 | **estimate_gdp.py**                 | Estimates starting GDP for country tags using MD's building formulas   |
 | **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase |
 | **find_scripted_loc_references.py** | Checks whether scripted localisation names are actually referenced     |
-| **generate_validation_report.py**   | Generates a validation report across the mod                           |
+| **review_branch.py**                | Generates a diff summary of the current branch vs main                 |
+| **search_add_ideas.py**             | Searches for `add_ideas` / `add_timed_idea` usage across the codebase  |
 
-### Publishing
+### Generators (`generators/`)
+
+Content generation tools.
+
+| Script                                | Description                                                           |
+| ------------------------------------- | --------------------------------------------------------------------- |
+| **generate_tribute_ideas.py**         | Generates tribute idea definitions and localisation for all countries |
+| **text_to_focus_and_focus_to_loc.py** | Converts text to focus IDs and generates localisation entries         |
+
+### Publishing (`publishing/`)
 
 | Script                  | Description                                               |
 | ----------------------- | --------------------------------------------------------- |
@@ -86,33 +112,33 @@ The `standardization/` directory contains the standardization pipeline. See its 
 
 See the [Workshop Publishing Guide](#workshop-publishing-guide) below for full usage details.
 
-### Internal / Shared
-
-| Script               | Description                                            |
-| -------------------- | ------------------------------------------------------ |
-| **loc.py**           | Localisation utilities                                 |
-| **logging_tool.py**  | Logging utility for development                        |
-| **path_utils.py**    | Path manipulation utilities                            |
-| **shared_utils.py**  | Shared utility functions used by other scripts         |
-| **review_branch.py** | Generates a diff summary of the current branch vs main |
-
-### Test Scripts
+### Tests (`tests/`)
 
 | Script                             | Description                                                      |
 | ---------------------------------- | ---------------------------------------------------------------- |
 | **staged_validators_test.py**      | Tests staged validators using synthetic temporary files          |
 | **staged_validators_real_test.py** | Tests staged validators against real mod files with known issues |
 
-## Documentation
+### Root-Level Scripts
 
-- **gfxEntryGenerator.md** — Detailed guide on using the GFX entry generator
-- **README.md** — This file
+Hook entry points, CI tools, and shared libraries that stay at the `tools/` root.
+
+| Script                            | Description                                                      |
+| --------------------------------- | ---------------------------------------------------------------- |
+| **validate_staged.py**            | Pre-commit hook: routes staged files to the correct validator    |
+| **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer |
+| **generate_validation_report.py** | CI: generates and posts PR validation reports                    |
+| **validate_tools.py**             | CI: validates Python scripts in the tools directory              |
+| **path_utils.py**                 | Shared path utilities (imported by linting scripts)              |
+| **shared_utils.py**               | Shared utilities (imported by validation + standardization)      |
+| **loc.py**                        | Localisation utilities                                           |
+| **logging_tool.py**               | Logging utility                                                  |
 
 ---
 
 ## Workshop Publishing Guide
 
-`publish_workshop.py` handles uploading the mod to the Steam Workshop. It supports two targets (**release** and **beta**) and two modes (**full upload** and **diff-only upload**).
+`publishing/publish_workshop.py` handles uploading the mod to the Steam Workshop. It supports two targets (**release** and **beta**) and two modes (**full upload** and **diff-only upload**).
 
 ### Prerequisites
 
@@ -128,7 +154,7 @@ Provide your Steam username in one of two ways:
 export STEAM_USERNAME=YourSteamUser
 
 # Or via CLI flag
-python3 tools/publish_workshop.py release --full --username YourSteamUser
+python3 tools/publishing/publish_workshop.py release --full --username YourSteamUser
 ```
 
 SteamCMD will prompt for your password and Steam Guard code interactively.
@@ -140,7 +166,7 @@ SteamCMD will prompt for your password and Steam Guard code interactively.
 Uploads the entire mod (minus dev/CI files) to the release Workshop item:
 
 ```bash
-python3 tools/publish_workshop.py release --full
+python3 tools/publishing/publish_workshop.py release --full
 ```
 
 #### Full Upload (beta)
@@ -148,7 +174,7 @@ python3 tools/publish_workshop.py release --full
 Same as above but targets the beta Workshop item:
 
 ```bash
-python3 tools/publish_workshop.py beta --full
+python3 tools/publishing/publish_workshop.py beta --full
 ```
 
 #### Diff-Only Upload (beta)
@@ -156,7 +182,7 @@ python3 tools/publish_workshop.py beta --full
 Uploads only files changed since a given git ref. Useful for pushing incremental beta updates without re-uploading the entire mod:
 
 ```bash
-python3 tools/publish_workshop.py beta --base-ref v1.12.3b
+python3 tools/publishing/publish_workshop.py beta --base-ref v1.12.3b
 ```
 
 The script uses `git log --diff-filter=ACM` to determine which files changed, copies the full repo, then prunes unchanged files before uploading. `descriptor.mod` and `thumbnail.png` are always included.

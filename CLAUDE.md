@@ -45,7 +45,7 @@ Validation runs automatically on GitHub CI when a PR is opened. Do not run valid
 
 Standardization tools are available in `tools/standardization/`. Use the `/standardize` skill for quick access, or run the scripts directly — the directory has a README with full usage details.
 
-A standalone diff summary script is also available: `python3 tools/review_branch.py [base-branch]`.
+A standalone diff summary script is also available: `python3 tools/analysis/review_branch.py [base-branch]`.
 
 ## General Formatting Rules
 
