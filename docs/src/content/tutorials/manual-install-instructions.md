@@ -1,279 +1,376 @@
 ---
 title: Git Setup & Usage Guide
-description: Guide to setting up Git, GitHub Desktop/GitKraken, and contributing to Millennium Dawn
+description: Step-by-step guide to setting up Git, your development environment, and contributing to Millennium Dawn
 ---
 
-This guide provides clear instructions on how to use Git and GitHub for contributions of any kind. Please read this guide thoroughly if you are not familiar with Git. If you have experience, skip to the sections relevant to you.
+This guide walks you through everything you need to start working on Millennium Dawn. It is written for people with little or no coding experience. Follow each section in order and you will be up and running.
 
-## How to Set Up the Millennium Dawn Dev Version
+---
 
-Before we begin with Git instructions, you need to properly configure your accounts with GitHub.
+## Step 1: Create a GitHub Account
 
-1. Log into [GitHub.com](https://github.com) and create an account.
-2. Log into the email you used and enter the verification code you received.
-3. Choose the option "Just me", then choose the free account.
-4. Give your GitHub account name to **TheBrokenDroid** or **XCezor** if you are a dev (AngriestBird if they are unavailable). **Playtesters can skip this step.**
-5. Download the [GitHub Desktop](https://desktop.github.com/download/) application.
+GitHub is the website where all of the mod's files are stored. You need an account to access them.
 
-### Cloning the Repository
+1. Go to [github.com](https://github.com) and click **Sign up**.
+2. Enter your email address, create a password, and pick a username.
+3. Check your email for a verification code and enter it on the site.
+4. When asked how many people are on your team, choose **Just me**.
+5. Choose the **free** account.
 
-Once you have been added (playtesters do not need to wait for this step):
+Once your account is created, give your GitHub username to **TheBrokenDroid** or **XCezor** so they can add you to the team. If they are unavailable, contact **AngriestBird**. **Playtesters can skip this step** — you do not need to be added to clone the repo.
 
-1. Go to [https://github.com/MillenniumDawn/Millennium-Dawn](https://github.com/MillenniumDawn/Millennium-Dawn).
-2. Click the dropdown called **Code** and copy the **HTTPS** link. Do not use the SSH or GitHub CLI options.
-3. Open the GitHub Desktop application and click **Clone a repository from the Internet**.
-4. Fill in the URL using the HTTPS link you copied.
-5. Change your local path to your mod directory:
+---
+
+## Step 2: Install a Git Application
+
+A Git application is a program that downloads the mod files to your computer and keeps them in sync with the team. You do not need to type commands — it has buttons for everything.
+
+We recommend **GitKraken** (free): [gitkraken.com](https://www.gitkraken.com/)
+
+Alternatively, you can use **GitHub Desktop**: [desktop.github.com](https://desktop.github.com/download/)
+
+Download and install whichever one you prefer.
+
+---
+
+## Step 3: Clone the Repository
+
+"Cloning" means downloading a copy of all the mod's files to your computer. You only need to do this once.
+
+1. Go to [the Millennium Dawn repository](https://github.com/MillenniumDawn/Millennium-Dawn) on GitHub.
+2. Click the green **Code** button and copy the **HTTPS** link. Do not use SSH or GitHub CLI — HTTPS is the simplest option.
+3. Open your Git application (GitKraken or GitHub Desktop).
+4. Click **Clone a repository** (or **Clone a repository from the Internet** in GitHub Desktop).
+5. Paste the HTTPS link you copied.
+6. For the **local path** (where the files will be saved), navigate to your HOI4 mod folder:
    - **Windows:** `C:\Users\YOUR_USERNAME\Documents\Paradox Interactive\Hearts of Iron IV\mod`
    - **Linux:** `~/.local/share/Paradox Interactive/Hearts of Iron IV/mod`
    - **macOS:** `~/Documents/Paradox Interactive/Hearts of Iron IV/mod`
-6. Click the blue **Clone** button.
+7. Click **Clone** and wait for it to finish.
 
-> If you get an error saying "Authentication failed", follow the [Authentication Failed guide](/dev-resources/authentication-failed-cloning-repo).
+> If you see an "Authentication failed" error, follow the [Authentication Failed guide](/dev-resources/authentication-failed-cloning-repo) to fix it.
 
-> The `Millennium_Dawn` file might appear as a strange file type. Change it to open in Notepad or Notepad++.
+> If downloading at less than 200 KB/s, the clone may fail. Try again on a faster connection.
 
-Wait until cloning is finished. If downloading at less than 200 KB/s, it may fail.
+---
 
-### Enabling the Mod
+## Step 4: Enable the Mod in HOI4
 
-1. Open your file explorer and navigate to `Documents/Paradox Interactive/Hearts of Iron IV/mod/Millennium_Dawn`.
-2. Find the file called `Millennium_Dawn.mod`, copy it, and go back to the `mod` folder.
-3. Paste it so you now have the `.mod` file in both the `Millennium_Dawn` folder and the `mod` folder.
-4. Launch HOI4 and in the Paradox Launcher, click **Playsets**, then **Add more mods**, and enable Millennium Dawn Dev.
+1. Open your file explorer and go to the folder where you just cloned the mod (e.g., `Documents/Paradox Interactive/Hearts of Iron IV/mod/Millennium_Dawn`).
+2. Find the file called `Millennium_Dawn.mod`. **Copy** it.
+3. Go up one folder to the `mod` folder itself.
+4. **Paste** the `.mod` file here. You should now have a copy in both the `Millennium_Dawn` folder and the `mod` folder.
+5. Launch HOI4. In the Paradox Launcher, click **Playsets**, then **Add more mods**, and enable **Millennium Dawn Dev**.
+6. Start the game. If it loads with the mod, you are done with this step.
 
-If your game works, you are done with setup.
+> **Still loading vanilla?** Make sure the `.mod` file is in the `mod` folder (not just inside `Millennium_Dawn`). If it still does not work, try the [Irony Mod Manager](https://bcssov.github.io/IronyModManager/) as an alternative launcher.
 
-### Note for Playtesters
+> You can move the `Millennium_Dawn` folder to another drive if needed. Just edit the file path inside the `.mod` file to point to the new location. Make sure the path does not contain Cyrillic or special characters.
 
-You will need to change your branch in GitHub Desktop to the specific branch when you begin testing, as each piece of content is hosted on a different branch.
+---
 
-Click the **Current branch** button and search for the branch specified in the tester task.
+## Step 5: Set Up Your Text Editor
 
-**Playtester instructions end here.** Developers continue below.
+You will be editing plain text files (`.txt` and `.yml`). We recommend **Visual Studio Code** (free): [code.visualstudio.com](https://code.visualstudio.com/Download)
+
+The repo includes a pre-configured workspace that sets up syntax highlighting, error detection, and other useful features for HOI4 modding:
+
+1. Open VSCode.
+2. Go to **File** > **Open Workspace from File**.
+3. Navigate to the mod folder, then open `.vscode/hoi4_millennium_dawn.code-workspace`.
+4. A popup will ask to install recommended extensions. Click **Install All**.
+
+This gives you:
+
+- Paradox syntax highlighting so HOI4 script files are colour-coded and easier to read.
+- Automatic trailing whitespace removal on save, which prevents unnecessary merge conflicts.
+- Markdown support for editing documentation files.
+
+> **Why a workspace instead of your own settings?** When someone finds a useful extension or setting, they can add it to the workspace file and everyone on the team gets it automatically. Your personal preferences (font size, theme, etc.) stay in your own VSCode settings.
+
+---
+
+## Note for Playtesters
+
+If you are a playtester (not a developer), your setup is done after Step 4. When a tester task is assigned to you:
+
+1. Open your Git application.
+2. Click the **Current branch** button (top of the window).
+3. Search for the branch name given in the tester task.
+4. Switch to that branch and **Pull** to get the latest files.
+5. Launch the game and test.
+
+**Playtester instructions end here.** The rest of this guide is for developers.
 
 ---
 
 ## Developer Environment Setup
 
-Before you start coding, you need Python 3.10+ installed on your system (3.12+ recommended). You can download it from [python.org](https://www.python.org/downloads/).
+This section sets up the tools that automatically check your code for problems when you commit. You need **Python** installed for this.
 
-After cloning, run the setup script from the repo root. This is a one-time step that installs everything you need:
+### Installing Python
+
+1. Go to [python.org/downloads](https://www.python.org/downloads/) and download Python 3.12 or newer.
+2. **Windows users:** During installation, check the box that says **"Add Python to PATH"**. This is important — without it, the commands below will not work.
+3. Finish the installation.
+
+To verify Python is installed, open a terminal and type:
+
+```bash
+python3 --version
+```
+
+You should see something like `Python 3.12.x`. On Windows, you may need to use `python` instead of `python3`.
+
+> **What is a terminal?** On Windows, press the **Windows key**, type `cmd`, and open **Command Prompt**. On macOS, open **Terminal** from Applications > Utilities. On Linux, open your terminal application. A terminal lets you type commands that your computer runs.
+
+### Running the Setup Script
+
+Open a terminal, navigate to the Millennium Dawn folder, and run:
 
 ```bash
 python3 tools/setup.py
 ```
 
-The setup script will:
+On Windows, if `python3` does not work, try:
 
-1. **Install pre-commit** — a tool that automatically checks your code for style issues, encoding problems, and common mistakes every time you commit.
-2. **Install git hooks** — connects pre-commit to your local Git so checks run automatically.
-3. **Install tool dependencies** — Python packages (`requests`, `pillow`) used by the development tools.
+```bash
+python tools/setup.py
+```
 
-You can verify your environment at any time:
+This script does three things for you:
+
+1. **Installs pre-commit** — a tool that checks your code for problems every time you commit.
+2. **Sets up git hooks** — connects pre-commit to Git so the checks run automatically. You do not have to remember to run them.
+3. **Installs tool dependencies** — a couple of Python packages (`requests` and `pillow`) that some development tools need.
+
+Once it finishes, you are set up. To check that everything is working at any time, run:
 
 ```bash
 python3 tools/setup.py --check
 ```
 
-If you are also working on the [documentation site](https://millenniumdawn.github.io/Millennium-Dawn/), add the `--docs` flag (requires [Node.js 24+](https://nodejs.org/) and [Bun](https://bun.sh/)):
+### What Are Pre-commit Hooks?
+
+When you make a commit (save your changes to Git), pre-commit hooks automatically scan your files for common problems:
+
+- Wrong indentation (should be tabs, not spaces)
+- Encoding issues in localisation files
+- Missing or mismatched braces
+- Trailing whitespace that clutters diffs
+
+If a hook finds a problem, one of two things happens:
+
+- **It fixes the problem for you** and asks you to commit again (just run your commit a second time).
+- **It tells you what to fix** with a clear error message. Fix the issue, then commit again.
+
+You do not need to memorize any rules. The hooks catch mistakes automatically.
+
+### Development Tools
+
+The repo includes helpful tools for analysis, validation, and content generation. You can see everything available and run tools by name:
+
+```bash
+python3 tools/run.py --list
+```
+
+To run a specific tool:
+
+```bash
+python3 tools/run.py estimate_gdp USA
+python3 tools/run.py find_idea common/ideas/Greek.txt
+```
+
+You do not need to remember which folder a tool is in — `run.py` finds it for you. Partial names also work (e.g., `find_idea` matches `find_idea_references`).
+
+### Docs Site Setup (Optional)
+
+If you are editing the documentation website (the files under `docs/`), you need two extra tools: [Node.js 24+](https://nodejs.org/) and [Bun](https://bun.sh/). Once those are installed, run:
 
 ```bash
 python3 tools/setup.py --docs
 ```
 
-### What Are Pre-commit Hooks?
-
-Pre-commit hooks are automatic checks that run every time you make a commit. They catch problems before your code reaches the team — things like wrong indentation, encoding issues, or missing braces. If a hook finds a problem, it will either fix it automatically or tell you what to fix. You do not need to run these manually; they just work in the background.
-
-### Development Tools
-
-The repo includes a collection of tools for analysis, validation, and content generation. You can browse and run them by short name:
+To preview the docs site on your computer:
 
 ```bash
-python3 tools/run.py --list                           # see all available tools
-python3 tools/run.py estimate_gdp USA                 # run a tool by name
-python3 tools/run.py find_idea common/ideas/Greek.txt # partial name matching works
+cd docs
+bun run dev
 ```
 
-See [CONTRIBUTING.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md) for the full code standards and pull request process.
+This opens a local preview at `http://localhost:4321/`. For full details, see [CONTRIBUTING.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md).
 
 ---
 
-## What is Git?
+## Understanding Git
 
-Git is a version control system. We use GitHub as our Git hosting platform.
+This section explains how Git works. If you already know Git, skip ahead to [Making a Commit](#making-a-commit--pushing).
 
-In Git there are **branches**. The way we use them, they act as different versions/builds of the mod. Branches are set up based on the project you are assigned to. For example, Iranian content would be in a branch named `iranian-content` or `development`.
+### What is Git?
 
-When making changes on your branch, you mod as normal - editing text files, images, or whatever in your text editor. When you are done for the day or feel you have reached a point worth sharing, you use the Git application.
+Git is a **version control system** — it tracks every change made to every file. Think of it like an unlimited undo history that the entire team shares. If something breaks, we can look at what changed and roll it back.
 
-You will need to make a **commit** and then **push** your changes to the server so everyone else can download them.
+We use **GitHub** to store the files online so everyone can access them.
 
-### Key Concepts
+### Branches
 
-**Commit:** Think of commits like entries in a journal. You make changes to the mod and then create a new entry noting what you did. Commits let everyone else know what you changed and act as save points. We can roll back thousands of commits and view every single change made to a file. This allows for easy troubleshooting, statistics, and depth. An example commit message: _"Fixed all the bugs in the Argentina Focus tree"_.
+A **branch** is like a separate copy of the mod where you can make changes without affecting anyone else. Each project or feature gets its own branch. For example, Iranian content would be in a branch called `iranian-content`.
 
-**Syncing (Push & Pull):**
+When you are done, your branch gets **merged** into the main branch so everyone gets your changes.
 
-- **Pushing** uploads your commits to the server so others can see them. Until you push, commits are only stored on your PC.
-- **Pulling** downloads any changes made to that branch that you do not have on your PC.
+### Commits
 
-**Merging:** Merging combines changes from two branches. Instead of sending files back and forth, a merge combines both sets of changes into one version. This is mostly automated.
+A **commit** is a snapshot of your changes with a short description of what you did. Think of it like a save point in a game — you can always go back to any previous commit. Example: _"Fixed all the bugs in the Argentina focus tree"_.
 
-> Make sure you are always using your own branch. In the Git app, there is a section to select your current branch. No one wants to sync and find their branch broken because someone committed a WIP or broken file to the wrong branch.
+### Push and Pull
 
-> You can run and modify anyone's branch. If someone is working on GFX and you want to test it, switch to their branch, pull, and launch the game. Git handles the file changes seamlessly in the background.
+- **Push** uploads your commits from your computer to GitHub so others can see them.
+- **Pull** downloads commits from GitHub that others have pushed.
+
+Until you push, your commits only exist on your computer.
 
 ### Shared Branches
 
-In addition to individual feature branches, the team maintains several communal branches:
+The team maintains a few communal branches that multiple people work on:
 
-- **master / main** — The current most up-to-date branch prior to release. Content is merged here only through approved pull requests.
-- **gfx-input** — All graphics are committed here, regardless of what content they support. See the [Art Standards](/dev-resources/art-standards/) for details.
-- **bug-fixes** — Shared branch for general bug fixes. Most bug fixes should be done here unless otherwise noted.
-- **map-work** — Shared branch for map-related changes.
+- **master / main** — The current release-ready version. Content reaches here through approved pull requests.
+- **gfx-input** — All graphics go here, regardless of what content they are for. See the [Art Standards](/dev-resources/art-standards/) for details.
+- **bug-fixes** — General bug fix work. Most fixes should be done here unless told otherwise.
+- **map-work** — Map-related changes.
 
-Work on your own feature branch unless you are contributing to one of these specific workflows. Do not commit to shared branches without coordination.
+Work on your own feature branch unless you are contributing to one of these. Do not commit to shared branches without checking with the team first.
 
 ---
 
 ## Making a Commit & Pushing
 
-Now that you have GitHub set up, how do you share your work?
+This is the day-to-day workflow: you edit files, then save and upload your changes.
 
-1. Mod the files on your computer as if Git was not there.
-2. When finished, open the GitKraken application.
-3. Click into the **//WIP** commit in the commit graph.
-4. Click **Stage All Changes**.
-5. Once all files are staged, type the title of your commit in the **Summary** field. You can provide a description, but it is not required.
-6. Click **Commit Changes**.
-7. Click **Push to Remote**.
+1. Edit mod files on your computer as normal (using VSCode, Notepad++, or any text editor).
+2. When you are ready to save your progress, open **GitKraken**.
+3. You will see your changed files listed. Click **Stage All Changes** to prepare them for committing.
+4. Type a short summary of what you changed in the **Summary** field. For example: _"Added new focus for Turkish military reform"_. A description is optional.
+5. Click **Commit Changes**.
+6. Click **Push** to upload your commit to GitHub.
 
-## Pulling the Local Branch
+That's it. Your changes are now on the server and visible to the team.
 
-Once you have pushed your commit, other team members can pull your changes and update their local copy.
+---
 
-1. Select the desired branch.
-2. Click the **Pull** option from the top bar.
+## Pulling Changes
 
-GitKraken automatically fetches in the background, ensuring you are notified of remote branches not present locally.
+Other team members will be pushing their own changes. To download their latest work:
 
-## Updating from Master
+1. Select the branch you want to update.
+2. Click **Pull** in the top bar.
 
-You need to constantly update your branch with changes from the master branch. This ensures your branch has the most recent changes and prevents you from editing old files, which causes merge conflicts.
+GitKraken checks for new changes in the background, so you will usually see a notification when there is something to pull.
 
-To update your branch:
+---
 
-1. Switch to **master** and pull to make sure you have all the latest commits.
-2. Switch back to your branch.
-3. Right-click your branch and select the merge option (e.g., "Merge master into your-branch-name").
+## Updating Your Branch from Master
+
+You should regularly update your branch with changes from the master branch. This keeps your files current and prevents conflicts later.
+
+1. Switch to the **master** branch.
+2. Click **Pull** to download the latest changes.
+3. Switch back to your own branch.
+4. Right-click your branch name and select the merge option (e.g., "Merge master into your-branch-name").
+
+The more often you do this, the fewer merge conflicts you will encounter.
 
 ---
 
 ## Merge Conflicts
 
-A merge conflict occurs when Git cannot automatically merge two files because they both changed in the same place. Git leaves it to the user to decide which version is correct.
+A **merge conflict** happens when two people edit the same lines in the same file. Git cannot decide which version to keep, so it asks you to choose.
 
-### Example
+### How Do You Know You Have One?
 
-Two people edit an event file at the same time. Both start with Version 1, but each makes different changes. If Version 2 gets merged into master and you (using Version 3) try to update from master, you will get a merge conflict because Git could not automatically reconcile the overlapping changes.
+Your Git application will show orange warning signs or a "conflict" message after a merge or pull.
 
-### How to Identify a Merge Conflict
+### What Does a Conflict Look Like?
 
-Orange warning signs in the Git app indicate a merge conflict.
-
-### How to Resolve a Merge Conflict
-
-When you open the conflicted file, you will see something like this:
+If you open the conflicted file in a text editor, you will see markers like this:
 
 ```
 <<<<<<< HEAD:events/MD4_Init.txt
-(your branch's code)
+(your version of the code)
 =======
-(master's code)
+(the other person's version of the code)
 >>>>>>> master:events/MD_Init.txt
 ```
 
-Everything between `<<<<<<< HEAD` and `=======` is code from your current branch. Everything between `=======` and `>>>>>>> master` is code from the branch you are merging in.
+- Everything between `<<<<<<< HEAD` and `=======` is **your** code.
+- Everything between `=======` and `>>>>>>>` is **their** code.
 
-To resolve:
+### How to Fix It
 
-1. Compare the two blocks of code.
-2. Decide which changes to keep (sometimes it is a mix of both).
+1. Look at both versions and decide which one to keep. Sometimes you need parts of both.
+2. Delete the version you do not want.
 3. Delete the conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`).
-4. Check the entire file carefully - there can be several merge conflicts in one file.
+4. Save the file.
+5. Check the rest of the file — there can be multiple conflicts in one file.
+6. Once all conflicts are resolved, commit and push.
 
-Once all conflicts are resolved, the Git app should allow you to commit and push.
+> For a video walkthrough, see the [Git Conflict Resolution guide](https://youtu.be/edoJhO7ZkCs).
 
 ---
 
 ## Pull Requests
 
-How do you get your code into the master branch? You should only make a pull request when you have completed something noteworthy that is not crashing or causing issues.
+A **pull request** (PR) is how your code gets merged into the master branch. Only submit a PR when your work is complete and not causing crashes or errors.
 
-1. Go to the repository on GitHub and select **New Pull Request**.
-2. Set the **source branch** to your branch.
-3. Ensure the **target branch** is `master`.
-4. Select **Compare branches and continue**.
-5. Fill out the title, description, assignee (you), milestone, and labels.
-6. Click **Submit Pull Request**.
+1. Go to the [Millennium Dawn repository](https://github.com/MillenniumDawn/Millennium-Dawn) on GitHub.
+2. Click **Pull requests** > **New Pull Request**.
+3. Set the **source** to your branch and the **target** to `master`.
+4. Click **Create Pull Request**.
+5. Fill out the title (a short summary) and description (what you changed and why).
+6. Assign yourself and add any relevant labels or milestones.
+7. Click **Submit**.
 
-### CI Validation
+### What Happens Next
 
-For your code to be merged, two things are required:
+Two things must happen before your code is merged:
 
-1. **It must pass CI validation**, which scans your code for errors. If it passes, you will see a green checkmark. If you get a red X, click through to see the error details, fix the issue, and push a new commit. A new test will run automatically.
-2. **A team leader must review and approve** your pull request before it is merged.
+1. **CI validation** — An automated system scans your code for errors. If it passes, you see a green checkmark. If it fails (red X), click through to see what went wrong, fix it, and push a new commit. The check runs again automatically.
+2. **Team review** — A team leader reviews your changes and either approves them or requests changes.
 
-> Update from master as often as possible, or you will cause yourself a ton of issues.
-
----
-
-## FAQ & Notes
-
-- You can view all commits and changes on the repository's commit history page.
-- Changes can always be reverted down to a single file if someone modifies the wrong branch. It is not the end of the world, but keeping things tidy saves everyone time.
-- **The mod runs as vanilla?** In the `Millennium_Dawn` folder there is a `Millennium_Dawn.mod` file. Copy it and paste it in `Hearts of Iron IV/mod/`. You should now be able to enable the mod in the launcher. If you continue to have issues, you may use the [Irony Mod Manager](https://bcssov.github.io/IronyModManager/) as an alternative launcher.
-- You can also move the `Millennium_Dawn` folder to another drive and edit the file path in the `.mod` file to match the new location. Make sure the path does not contain Cyrillic characters.
+> Update your branch from master as often as possible. Stale branches cause more merge conflicts and make reviews harder.
 
 ---
 
-## Visual Studio Code Workspace Instructions
+## FAQ & Troubleshooting
 
-For anyone interested in using Visual Studio Code as an IDE:
+**The mod loads as vanilla (no Millennium Dawn content).**
+Make sure the `Millennium_Dawn.mod` file is in the `mod` folder (one level above the `Millennium_Dawn` folder). If it still does not work, try the [Irony Mod Manager](https://bcssov.github.io/IronyModManager/).
 
-### How to Use the Workspace
+**Can I test someone else's branch?**
+Yes. In your Git application, switch to their branch and pull. The files on your computer update instantly. Switch back to your own branch when you are done.
 
-1. Open VSCode.
-2. Go to **File** > **Open Workspace**.
-3. Navigate to the mod folder, then `.vscode`, then `hoi4_millennium_dawn.code-workspace`.
-4. Confirm the popup to install recommended extensions.
+**I accidentally committed to the wrong branch.**
+Let a team lead know. Changes can be reverted down to individual files. It is not the end of the world, but it saves everyone time if you double-check your branch before committing.
 
-### What is Configured?
+**The `python3` command is not found (Windows).**
+Try using `python` instead. If that does not work either, you may have missed the "Add Python to PATH" checkbox during installation. Reinstall Python and make sure to check that box.
 
-1. Two extensions for Paradox syntax with syntax highlighting, snippets, and automatic problem scanning.
-2. An extension that highlights and automatically deletes trailing spaces on save. Trailing spaces bloat git diffs and introduce unnecessary merge conflicts.
-3. Extensions for Markdown, line sorting (F9), CODEOWNERS, and EditorConfig for cross-IDE configuration.
-4. Workspace folders configured for easier access and better hierarchy in search results.
-
-### Why Use a Workspace Instead of Personal Configuration?
-
-If you or someone else finds an extension or configuration that is useful for everyone, it can be committed to the workspace file and then everyone gets it automatically. Opinionated personal settings (e.g., font size, color theme) should stay in your own user configuration rather than the shared workspace.
+**Pre-commit hooks are failing and I do not understand the error.**
+Ask in the Discord development channel. Include the error message — someone will help you sort it out.
 
 ---
 
-## GitHub Desktop to GitKraken Migration
+## GitKraken Setup (for New Users or Migration from GitHub Desktop)
+
+If you are setting up GitKraken for the first time or switching from GitHub Desktop:
 
 1. Download [GitKraken Desktop](https://www.gitkraken.com/) (free) and install it.
-2. Click **Let's Open a repository!**
-3. Confirm the commit information and click **Use These for Git Commits**.
-4. Click **Open Repo** and navigate to your Millennium Dawn install via the **Browse** option.
-5. Select **Millennium Dawn**.
-6. Click **Pull** to ensure you are up to date.
-7. Go to **File** > **Preferences** and update the following:
-   - Reduce **Initial commits in graph** to `500`.
-   - Set **Auto-Fetch Interval** to `10`.
-   - Set **External Editor** to Visual Studio Code (if not already set).
-8. Exit preferences and click **Local** in the branches menu.
-9. Shift-click all local branches (except the one you are currently on) and right-click to delete them.
+2. Open GitKraken and click **Let's Open a repository!**
+3. Confirm your name and email for commits, then click **Use These for Git Commits**.
+4. Click **Open Repo**, browse to your Millennium Dawn folder, and select it.
+5. Click **Pull** to make sure you have the latest files.
+6. Go to **File** > **Preferences** and adjust these settings:
+   - **Max commits in graph:** `500` (keeps the app responsive)
+   - **Auto-Fetch Interval:** `10` minutes (checks for team changes regularly)
+   - **External Editor:** Visual Studio Code (if not already set)
+7. Close preferences. In the left sidebar, click **Local** under the branches list.
+8. Select all local branches you do not need (hold Shift and click), then right-click and delete them. Keep only the branch you are working on.
