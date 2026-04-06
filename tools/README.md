@@ -12,6 +12,18 @@ pip install -r requirements.txt
 
 **Packages:** requests, pillow
 
+## Quick Start
+
+Use `run.py` to run any tool by short name — no need to remember subdirectory paths:
+
+```bash
+python3 tools/run.py --list                              # see all available tools
+python3 tools/run.py estimate_gdp USA --all              # run a tool by name
+python3 tools/run.py find_idea common/ideas/Greek.txt    # partial names work too
+python3 tools/run.py publish_workshop release --full      # pass args through
+python3 tools/run.py gfx_entry_generator_linux            # works on any platform
+```
+
 ## Directory Structure
 
 ```
