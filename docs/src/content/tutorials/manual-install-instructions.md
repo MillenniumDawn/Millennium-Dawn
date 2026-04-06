@@ -54,6 +54,24 @@ Click the **Current branch** button and search for the branch specified in the t
 
 ---
 
+## Developer Environment Setup
+
+After cloning, run the setup script to install pre-commit hooks and tool dependencies. This is a one-time step:
+
+```bash
+python3 tools/setup.py
+```
+
+You can verify your environment at any time with:
+
+```bash
+python3 tools/setup.py --check
+```
+
+If you are also working on the docs site, add the `--docs` flag. See [CONTRIBUTING.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md) for full details.
+
+---
+
 ## What is Git?
 
 Git is a version control system. We use GitHub as our Git hosting platform.

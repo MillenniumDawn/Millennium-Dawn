@@ -11,11 +11,22 @@ Thank you for your interest in contributing to Millennium Dawn!
 
 ## Development Setup
 
-### Python (Required for Tools)
+After cloning the repo, run the setup script to install pre-commit hooks and tool dependencies:
 
 ```bash
-pip install pre-commit
-pre-commit install
+python3 tools/setup.py
+```
+
+To also set up the docs site (requires Node.js 24+ and Bun):
+
+```bash
+python3 tools/setup.py --docs
+```
+
+To check your environment without installing anything:
+
+```bash
+python3 tools/setup.py --check
 ```
 
 ### Pre-commit Usage
@@ -61,6 +72,7 @@ pre-commit autoupdate
 ### Docs Local Checks
 
 **Prerequisites:**
+
 - [Node.js 24 LTS](https://nodejs.org/) or newer (required by Astro 6)
 - [Bun](https://bun.com/) (package manager and script runner)
 
