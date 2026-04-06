@@ -166,6 +166,47 @@ If a hook finds a problem, one of two things happens:
 
 You do not need to memorize any rules. The hooks catch mistakes automatically.
 
+### How Hooks Work in Different Git Applications
+
+Pre-commit hooks work differently depending on which Git application you use. Here is what to expect:
+
+**Terminal / Command Line (full support)**
+
+If you commit using `git commit` in a terminal, hooks run automatically every time. This is the most reliable method and what CI uses. No extra setup is needed beyond `python3 tools/setup.py`.
+
+**GitKraken (works, with one caveat)**
+
+GitKraken runs hooks when you commit through its interface. However, GitKraken uses its own process environment, which sometimes cannot find Python or pre-commit on your system. If you see an error like `pre-commit: command not found` when committing in GitKraken:
+
+1. Go to **File** > **Preferences** > **General**.
+2. Make sure **Use Custom Terminal** is not overriding your PATH.
+3. Try closing and reopening GitKraken after installing Python and running `tools/setup.py`. GitKraken picks up PATH changes on restart.
+4. If hooks still do not run, you can run them manually in a terminal before committing:
+
+```bash
+pre-commit run --all-files
+```
+
+Then commit in GitKraken as normal. The hooks will not block you if the files are already clean.
+
+**GitHub Desktop (limited support on Windows)**
+
+GitHub Desktop on Windows often uses a bundled version of Git with a restricted environment. This means it may not be able to find `python3` or `pre-commit`, even if both are installed on your system. When this happens, hooks silently fail or show a "Did you forget to activate your virtualenv?" error.
+
+On macOS and Linux, GitHub Desktop generally works fine because it inherits your shell's PATH.
+
+If hooks are not running in GitHub Desktop on Windows:
+
+1. Run hooks manually in a terminal before committing:
+
+```bash
+pre-commit run --all-files
+```
+
+2. Then commit in GitHub Desktop as normal.
+
+Alternatively, consider switching to **GitKraken** or committing from the terminal for a smoother experience. The CI pipeline will also catch any issues that hooks would have flagged, so your code is always validated before merge regardless of which application you use.
+
 ### Development Tools
 
 The repo includes helpful tools for analysis, validation, and content generation. You can see everything available and run tools by name:
@@ -356,6 +397,12 @@ Try using `python` instead. If that does not work either, you may have missed th
 
 **Pre-commit hooks are failing and I do not understand the error.**
 Ask in the Discord development channel. Include the error message — someone will help you sort it out.
+
+**Hooks are not running when I commit in GitKraken or GitHub Desktop.**
+GUI applications sometimes cannot find Python or pre-commit on your system. See the [How Hooks Work in Different Git Applications](#how-hooks-work-in-different-git-applications) section above. The quickest workaround is to run `pre-commit run --all-files` in a terminal before committing.
+
+**I see "Did you forget to activate your virtualenv?" when committing.**
+This means your Git application cannot find pre-commit. This is common on Windows with GitHub Desktop. Run `pre-commit run --all-files` in a terminal instead, or switch to GitKraken for better hook support.
 
 ---
 
