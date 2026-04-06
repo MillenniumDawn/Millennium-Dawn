@@ -11,6 +11,7 @@
 #   4. Suggests closest match for likely typos
 ##########################
 import difflib
+import glob
 import os
 import re
 from typing import Dict, List, Set, Tuple
@@ -121,7 +122,12 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        template_files = self._collect_files(["common/ai_templates/*.txt"])
+        # Always scan ALL template files for role definitions, even in staged mode.
+        # Role definitions are the "truth set" — we need the complete picture.
+        template_pattern = os.path.join(
+            self.mod_path, "common", "ai_templates", "*.txt"
+        )
+        template_files = glob.glob(template_pattern)
         for filepath in template_files:
             self.valid_roles.update(collect_roles_from_file(filepath))
 
