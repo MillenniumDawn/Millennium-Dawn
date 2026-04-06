@@ -56,19 +56,47 @@ Click the **Current branch** button and search for the branch specified in the t
 
 ## Developer Environment Setup
 
-After cloning, run the setup script to install pre-commit hooks and tool dependencies. This is a one-time step:
+Before you start coding, you need Python 3.10+ installed on your system (3.12+ recommended). You can download it from [python.org](https://www.python.org/downloads/).
+
+After cloning, run the setup script from the repo root. This is a one-time step that installs everything you need:
 
 ```bash
 python3 tools/setup.py
 ```
 
-You can verify your environment at any time with:
+The setup script will:
+
+1. **Install pre-commit** — a tool that automatically checks your code for style issues, encoding problems, and common mistakes every time you commit.
+2. **Install git hooks** — connects pre-commit to your local Git so checks run automatically.
+3. **Install tool dependencies** — Python packages (`requests`, `pillow`) used by the development tools.
+
+You can verify your environment at any time:
 
 ```bash
 python3 tools/setup.py --check
 ```
 
-If you are also working on the docs site, add the `--docs` flag. See [CONTRIBUTING.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md) for full details.
+If you are also working on the [documentation site](https://millenniumdawn.github.io/Millennium-Dawn/), add the `--docs` flag (requires [Node.js 24+](https://nodejs.org/) and [Bun](https://bun.sh/)):
+
+```bash
+python3 tools/setup.py --docs
+```
+
+### What Are Pre-commit Hooks?
+
+Pre-commit hooks are automatic checks that run every time you make a commit. They catch problems before your code reaches the team — things like wrong indentation, encoding issues, or missing braces. If a hook finds a problem, it will either fix it automatically or tell you what to fix. You do not need to run these manually; they just work in the background.
+
+### Development Tools
+
+The repo includes a collection of tools for analysis, validation, and content generation. You can browse and run them by short name:
+
+```bash
+python3 tools/run.py --list                           # see all available tools
+python3 tools/run.py estimate_gdp USA                 # run a tool by name
+python3 tools/run.py find_idea common/ideas/Greek.txt # partial name matching works
+```
+
+See [CONTRIBUTING.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/CONTRIBUTING.md) for the full code standards and pull request process.
 
 ---
 
