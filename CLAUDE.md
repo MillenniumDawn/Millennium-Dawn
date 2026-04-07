@@ -17,6 +17,10 @@ Millennium Dawn is a Hearts of Iron IV mod set in the modern era (2000-present).
   - `on_actions/` - On action hooks (`on_daily_TAG`, `on_weekly`, etc.)
   - `technologies/` - Research tree files
   - `modifiers/`, `ai-*/` - Modifier and AI strategy files
+  - `ai_strategy/` - AI production weights, role ratios, and combat strategies
+  - `ai_templates/` - AI division template compositions (role-to-template mapping)
+  - `ai_equipment/` - AI equipment variant designs (tank/ship/plane module configurations)
+  - `units/` - Unit type definitions (battalions, companies) and equipment archetypes
 - `localisation/` - Language files (English yml files with UTF-8 BOM)
 - `events/` - Event chains and triggered events
 - `history/` - Historical country data, states, units
@@ -126,6 +130,33 @@ For structure and examples, see `.claude/docs/idea-reference.md`.
 
 For structure and examples, see `.claude/docs/mio-reference.md`.
 
+## AI Strategies & Unit Production
+
+The AI unit production system has three layers: a unit-building gate (`AI_is_threatened` flag), role ratio strategies, and division templates. See `.claude/docs/ai-strategy-reference.md` for full details.
+
+Key rules:
+
+- `role_ratio id = X` must match a `role = X` defined in `common/ai_templates/` — the `validate_ai_roles` pre-commit hook catches mismatches
+- Unit names in OOB files and AI templates are **case-sensitive** — the `validate_oob_units` pre-commit hook catches typos
+- When setting template `enable` conditions with factory thresholds, ensure adjacent templates cover the full range with no gaps (e.g., `> 10` and `< 21` for one, `> 20` for the next)
+- Subject/puppet nations always get the `AI_is_threatened` flag — do not add conditions that would clear it for subjects
+- `give_AI_templates` uses `division_template` (additive) — each sub-effect is guarded by `has_template` checks to prevent duplicates
+- When puppeting a nation via events/decisions, `on_puppet` already handles AI template initialization — no additional scripting needed
+
+## AI Equipment
+
+AI equipment files (`common/ai_equipment/`) define equipment variants the AI should build. See `.claude/docs/ai-equipment-reference.md` for full structure.
+
+Key rules:
+
+- Every role template needs `category`, `roles = { ... }`, and a top-level `priority = { ... }` block
+- Every design needs `target_variant` with `type`, `match_value`, and `modules`
+- Role template names must be unique across all files with overlapping `available_for` — duplicates silently overwrite
+- Nations blocked from generic files MUST have all needed roles covered in custom/shared files
+- Module assignments must match the slot type (e.g., don't put armor modules in `reload_type_slot`)
+- CAS designs must use `medium_cas_fighter` role, not `medium_as_fighter`
+- Use date-based thresholds (e.g., `date < 2000.6.1`) instead of factory count thresholds for small nations that may never reach high factory counts
+
 ## Key Resources
 
 - [Contributing Guidelines](./CONTRIBUTING.md)
@@ -137,6 +168,8 @@ For structure and examples, see `.claude/docs/mio-reference.md`.
 - [Decision Reference](./.claude/docs/decision-reference.md) - Decision/mission structure, scripted effects, examples
 - [Idea Reference](./.claude/docs/idea-reference.md) - Idea structure and examples
 - [MIO Reference](./.claude/docs/mio-reference.md) - MIO structure and examples
+- [AI Strategy Reference](./.claude/docs/ai-strategy-reference.md) - Unit-building gate, role ratios, templates, subject AI
+- [AI Equipment Reference](./.claude/docs/ai-equipment-reference.md) - Equipment variant designs, coverage model, common mistakes
 - [Diplomatic Action Reference](./.claude/docs/diplomatic-action-reference.md) - Scripted diplomatic action structure, cooldowns, AI weighting
 - [Content Guidelines](./.claude/docs/content-guidelines.md) - Quality checklist, general/admiral formulas
 - [Faction Rules](./.claude/docs/faction-rules.md) - Faction rule structure, locked faction patterns
