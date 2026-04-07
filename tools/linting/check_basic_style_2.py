@@ -11,6 +11,7 @@ import sys
 import time
 from multiprocessing import Pool
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from path_utils import clean_filepath
 
 startTime = time.time()

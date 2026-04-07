@@ -3,6 +3,7 @@ import os
 import shutil
 from tkinter import *
 from tkinter import messagebox
+
 ddslist = []
 ddsdict = {}
 pnglist = []
@@ -26,249 +27,337 @@ iVBORw0KGgoAAAANSUhEUgAAAI4AAABDCAYAAABKiz1iAAAACXBIWXMAAAsTAAALEwEAmpwYAAAK62lU
 idea_icons_base64 = """
 iVBORw0KGgoAAAANSUhEUgAAAI4AAABDCAYAAABKiz1iAAAACXBIWXMAAAsTAAALEwEAmpwYAAAK42lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS42LWMxNDggNzkuMTY0MDM2LCAyMDE5LzA4LzEzLTAxOjA2OjU3ICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyIgeG1sbnM6cGhvdG9zaG9wPSJodHRwOi8vbnMuYWRvYmUuY29tL3Bob3Rvc2hvcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIDIxLjAgKFdpbmRvd3MpIiB4bXA6Q3JlYXRlRGF0ZT0iMjAyMi0wMS0wM1QxMDowMToxMCswMzozMCIgeG1wOk1vZGlmeURhdGU9IjIwMjMtMDEtMjFUMTk6NDc6MzIrMDM6MzAiIHhtcDpNZXRhZGF0YURhdGU9IjIwMjMtMDEtMjFUMTk6NDc6MzIrMDM6MzAiIGRjOmZvcm1hdD0iaW1hZ2UvcG5nIiBwaG90b3Nob3A6Q29sb3JNb2RlPSIzIiBwaG90b3Nob3A6SUNDUHJvZmlsZT0ic1JHQiBJRUM2MTk2Ni0yLjEiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NTA5NDFiNmEtMDlkOS02ZDQwLThmMGUtMDBjZTU0Y2JhZGVlIiB4bXBNTTpEb2N1bWVudElEPSJhZG9iZTpkb2NpZDpwaG90b3Nob3A6NjBhNjllMzUtMGJhMi0zMzQyLWE1YjgtNmY3ZDEwODc4ZDE0IiB4bXBNTTpPcmlnaW5hbERvY3VtZW50SUQ9InhtcC5kaWQ6OTRiYjkzYzgtNDNiOC1mYjRkLWFiOGUtOWI1MmEzYTk5YjQ1Ij4gPHBob3Rvc2hvcDpUZXh0TGF5ZXJzPiA8cmRmOkJhZz4gPHJkZjpsaSBwaG90b3Nob3A6TGF5ZXJOYW1lPSJNaWxsZW5uaXVtIERhd24gR0ZYIEVudHJ5IEdlbmVyYXRvciIgcGhvdG9zaG9wOkxheWVyVGV4dD0iTWlsbGVubml1bSBEYXduIEdGWCBFbnRyeSBHZW5lcmF0b3IiLz4gPHJkZjpsaSBwaG90b3Nob3A6TGF5ZXJOYW1lPSJHZW5lcmF0ZSEiIHBob3Rvc2hvcDpMYXllclRleHQ9IkdlbmVyYXRlISIvPiA8cmRmOmxpIHBob3Rvc2hvcDpMYXllck5hbWU9IklkZWEgSWNvbnMiIHBob3Rvc2hvcDpMYXllclRleHQ9IklkZWEgSWNvbnMiLz4gPC9yZGY6QmFnPiA8L3Bob3Rvc2hvcDpUZXh0TGF5ZXJzPiA8eG1wTU06SGlzdG9yeT4gPHJkZjpTZXE+IDxyZGY6bGkgc3RFdnQ6YWN0aW9uPSJjcmVhdGVkIiBzdEV2dDppbnN0YW5jZUlEPSJ4bXAuaWlkOjk0YmI5M2M4LTQzYjgtZmI0ZC1hYjhlLTliNTJhM2E5OWI0NSIgc3RFdnQ6d2hlbj0iMjAyMi0wMS0wM1QxMDowMToxMCswMzozMCIgc3RFdnQ6c29mdHdhcmVBZ2VudD0iQWRvYmUgUGhvdG9zaG9wIDIxLjAgKFdpbmRvd3MpIi8+IDxyZGY6bGkgc3RFdnQ6YWN0aW9uPSJzYXZlZCIgc3RFdnQ6aW5zdGFuY2VJRD0ieG1wLmlpZDo0M2M5MDNhMi02NTllLTQwNDUtYTM2Ni05ZWYxMjQ4ZGM4M2MiIHN0RXZ0OndoZW49IjIwMjMtMDEtMjFUMTc6NTM6NTErMDM6MzAiIHN0RXZ0OnNvZnR3YXJlQWdlbnQ9IkFkb2JlIFBob3Rvc2hvcCAyMS4wIChXaW5kb3dzKSIgc3RFdnQ6Y2hhbmdlZD0iLyIvPiA8cmRmOmxpIHN0RXZ0OmFjdGlvbj0ic2F2ZWQiIHN0RXZ0Omluc3RhbmNlSUQ9InhtcC5paWQ6YjUzNzNhY2UtZTAyYS1hNDQxLTkwOGMtOTMyY2FmYWFkN2FhIiBzdEV2dDp3aGVuPSIyMDIzLTAxLTIxVDE5OjQ3OjMyKzAzOjMwIiBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZG9iZSBQaG90b3Nob3AgMjEuMCAoV2luZG93cykiIHN0RXZ0OmNoYW5nZWQ9Ii8iLz4gPHJkZjpsaSBzdEV2dDphY3Rpb249ImNvbnZlcnRlZCIgc3RFdnQ6cGFyYW1ldGVycz0iZnJvbSBhcHBsaWNhdGlvbi92bmQuYWRvYmUucGhvdG9zaG9wIHRvIGltYWdlL3BuZyIvPiA8cmRmOmxpIHN0RXZ0OmFjdGlvbj0iZGVyaXZlZCIgc3RFdnQ6cGFyYW1ldGVycz0iY29udmVydGVkIGZyb20gYXBwbGljYXRpb24vdm5kLmFkb2JlLnBob3Rvc2hvcCB0byBpbWFnZS9wbmciLz4gPHJkZjpsaSBzdEV2dDphY3Rpb249InNhdmVkIiBzdEV2dDppbnN0YW5jZUlEPSJ4bXAuaWlkOjUwOTQxYjZhLTA5ZDktNmQ0MC04ZjBlLTAwY2U1NGNiYWRlZSIgc3RFdnQ6d2hlbj0iMjAyMy0wMS0yMVQxOTo0NzozMiswMzozMCIgc3RFdnQ6c29mdHdhcmVBZ2VudD0iQWRvYmUgUGhvdG9zaG9wIDIxLjAgKFdpbmRvd3MpIiBzdEV2dDpjaGFuZ2VkPSIvIi8+IDwvcmRmOlNlcT4gPC94bXBNTTpIaXN0b3J5PiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDpiNTM3M2FjZS1lMDJhLWE0NDEtOTA4Yy05MzJjYWZhYWQ3YWEiIHN0UmVmOmRvY3VtZW50SUQ9ImFkb2JlOmRvY2lkOnBob3Rvc2hvcDoyNDViZmVlOC1kNzhkLTJhNDQtODk3Mi0y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
 """
+
+
 def getfiles(path):
-	for filename in os.listdir(path):
-		f = os.path.join(path,filename)
-		if os.path.isfile(f):
-			if '.dds' in f:
-				ddsdict[f] = filename
-				ddslist.append(filename)
-			elif '.png' in f:
-				ddsdict[f] = filename
-				ddslist.append(filename)
-				pnglist.append(filename)
-			elif '.tga' in f:
-				ddsdict[f] = filename
-				ddslist.append(filename)
-				tgalist.append(filename)
-		else:
-			getfiles(f)
+    for filename in os.listdir(path):
+        f = os.path.join(path, filename)
+        if os.path.isfile(f):
+            if ".dds" in f:
+                ddsdict[f] = filename
+                ddslist.append(filename)
+            elif ".png" in f:
+                ddsdict[f] = filename
+                ddslist.append(filename)
+                pnglist.append(filename)
+            elif ".tga" in f:
+                ddsdict[f] = filename
+                ddslist.append(filename)
+                tgalist.append(filename)
+        else:
+            getfiles(f)
 
 
 lastClickX = 0
 lastClickY = 0
+
+
 def SaveLastClickPos(event):
     global lastClickX, lastClickY
     lastClickX = event.x
     lastClickY = event.y
+
+
 def Dragging(event):
     x, y = event.x - lastClickX + gui.winfo_x(), event.y - lastClickY + gui.winfo_y()
-    gui.geometry("+%s+%s" % (x , y))
+    gui.geometry("+%s+%s" % (x, y))
+
 
 gui = Tk()
 gui.geometry("527x315")
-bg_img = PhotoImage(data = background_base64)
-generate_img = PhotoImage(data = generate_base64)
-exit_img = PhotoImage(data = exit_base64)
-focus_icons_img = PhotoImage(data = focus_icons_base64)
-event_pictures_img = PhotoImage(data = event_pictures_base64)
-idea_icons_img = PhotoImage(data = idea_icons_base64)
+bg_img = PhotoImage(data=background_base64)
+generate_img = PhotoImage(data=generate_base64)
+exit_img = PhotoImage(data=exit_base64)
+focus_icons_img = PhotoImage(data=focus_icons_base64)
+event_pictures_img = PhotoImage(data=event_pictures_base64)
+idea_icons_img = PhotoImage(data=idea_icons_base64)
 
 gui.overrideredirect(True)
-#gui.attributes('-topmost', True)
-gui.bind('<Button-1>', SaveLastClickPos)
-gui.bind('<B1-Motion>', Dragging)
+# gui.attributes('-topmost', True)
+gui.bind("<Button-1>", SaveLastClickPos)
+gui.bind("<B1-Motion>", Dragging)
 
 selection = IntVar()
 
+
 def main(event=None):
-	path = os.path.abspath(os.path.join(os.path.dirname('Millennium_Dawn'),'..'))
-	modfolder = 'Millennium_Dawn\\'
-    
-	if int(selection.get()) == 1:
-		path = os.path.abspath(os.path.join(os.path.dirname('Millennium_Dawn'),'..\gfx\interface\goals'))
-		print(path)
-		getfiles(path)
-	elif int(selection.get()) == 2:
-		path = os.path.abspath(os.path.join(os.path.dirname('Millennium_Dawn'),'..\gfx\event_pictures'))
-		print(path)
-		getfiles(path)
-	elif int(selection.get()) == 3:
-		path = os.path.abspath(os.path.join(os.path.dirname('Millennium_Dawn'),'..\gfx\interface\ideas'))
-		print(path)
-		getfiles(path)
-	else:
-		messagebox.showerror("Errro!", "\nSelect an option before generating.")
-		return
-    #print(f"There are " + str(len(ddslist)) + f" .dds, .png or .tga files available in this directory\n")
-    # Variable Init
-	x = "" # X == the file name. It is only used to parse out the path
-	y = "" # Y == becomes the path that is implemented texturefile
-	z = "" # Z == is used to "sort" for a file
-	w = "" # W == is the file name or texture name
+    path = os.path.abspath(os.path.join(os.path.dirname("Millennium_Dawn"), ".."))
+    modfolder = "Millennium_Dawn\\"
 
-	if True:
-	
-		if int(selection.get()) == 1:
-			gfxbool = 0 #int(input("Would you like me to append \"GFX_\" to the front of the icon?\n1 for yes, 0 for no.\n"))
-			print(1)
+    if int(selection.get()) == 1:
+        path = os.path.abspath(
+            os.path.join(os.path.dirname("Millennium_Dawn"), "..\gfx\interface\goals")
+        )
+        print(path)
+        getfiles(path)
+    elif int(selection.get()) == 2:
+        path = os.path.abspath(
+            os.path.join(os.path.dirname("Millennium_Dawn"), "..\gfx\event_pictures")
+        )
+        print(path)
+        getfiles(path)
+    elif int(selection.get()) == 3:
+        path = os.path.abspath(
+            os.path.join(os.path.dirname("Millennium_Dawn"), "..\gfx\interface\ideas")
+        )
+        print(path)
+        getfiles(path)
+    else:
+        messagebox.showerror("Errro!", "\nSelect an option before generating.")
+        return
+        # print(f"There are " + str(len(ddslist)) + f" .dds, .png or .tga files available in this directory\n")
+        # Variable Init
+    x = ""  # X == the file name. It is only used to parse out the path
+    y = ""  # Y == becomes the path that is implemented texturefile
+    z = ""  # Z == is used to "sort" for a file
+    w = ""  # W == is the file name or texture name
 
-			with open("goals.gfx","w") as ffile:
-				ffile.write('spriteTypes = {\n')
-				ffile.write('\t#Vanilla DO NOT DELETE\n')
-				ffile.write('\tspriteType = {\n\t\tname = \"GFX_goal_unknown\"\n\t\ttexturefile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\tlegacy_lazy_load = no\n\t}\n')
-				for fname in ddsdict:
-					x = fname
-					x = x.split(modfolder)
-					y = x[1] # Should Retrieve the Path
-					z = y
-					y = y.replace("\\", "/")
-					z = z.replace("gfx\\interface\\goals\\", "")
-					z = z.split("\\")
-					for i in range(len(z)):
-						if ".dds" in z[i]:
-							w = z[i]
-						elif ".png" in z[i]:
-							w = z[i]
-						elif ".tga" in z[i]:
-							w = z[i]
-					if ".dds" in w:
-						w = w.replace(".dds", "")
-					elif ".png" in w:
-						w = w.replace(".png", "")
-					elif ".tga" in w:
-						w = w.replace (".tga", "")
+    if True:
 
-					if gfxbool == 0:
-						ffile.write('\tspriteType = {\n\t\tname = \"' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
-					else:
-						ffile.write('\tspriteType = {\n\t\tname = \"GFX_' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
-				ffile.write('}')
-			with open("goals_shine.gfx", "w") as ffile:
-				ffile.write('spriteTypes = {\n')
-				ffile.write('\t#Vanilla DO NOT DELETE \n')
-				ffile.write('\tspriteType = {\n\t\tname = \"GFX__shine\"\n\t\ttexturefile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\teffectFile = \"gfx/FX/buttonstate.lua\"\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\t\tanimationtexturefile = \"gfx/interface/goals/shine_overlay.dds\"\n\t\t\tanimationrotation = -90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = \"add\"\n\t\t\tanimationtype = \"scrolling\"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"gfx/interface/goals/goal_unknown.dds\"\n\t\t\tanimationtexturefile = \"gfx/interface/goals/shine_overlay.dds\"\n\t\t\tanimationrotation = 90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = \"add\"\n\t\t\tanimationtype = \"scrolling\"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tlegacy_lazy_load = no\n\t}\n')
-				for fname in ddsdict:
-					x = fname
-					x = x.split(modfolder)
-					y = x[1] # Should Retrieve the Path
-					z = y
-					y = y.replace("\\", "/")
-					z = z.replace("gfx\\interface\\goals\\", "")
-					z = z.split("\\")
-					for i in range(len(z)):
-						if ".dds" in z[i]:
-							w = z[i]
-						elif ".png" in z[i]:
-							w = z[i]
-						elif ".tga" in z[i]:
-							w = z[i]
-					if ".dds" in w:
-						w = w.replace(".dds", "")
-					elif ".png" in w:
-						w = w.replace(".png", "")
-					elif ".tga" in w:
-						w = w.replace (".tga", "")
+        if int(selection.get()) == 1:
+            gfxbool = 0  # int(input("Would you like me to append \"GFX_\" to the front of the icon?\n1 for yes, 0 for no.\n"))
+            print(1)
 
-					if gfxbool == 0:
-						ffile.write('\tspriteType = { \n\t\tname = \"' + w + '_shine\"\n\t\ttexturefile = \"' + y + '\"\n\t\teffectfile = \"gfx/FX/buttonstate.lua\"\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"' + y + '\"\n\t\t\tanimationtexturefile = \"gfx/interface/goals/shine_overlay.dds\"\n\t\t\tanimationrotation = -90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"' + y + '\"\n\t\t\tanimationtexturefile = "gfx/interface/goals/shine_overlay.tga"\n\t\t\tanimationrotation = 90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tlegacy_lazy_load = no\n\t}\n')
-					else:
-						ffile.write('\tspriteType = { \n\t\tname = \"GFX_' + w + '_shine\"\n\t\ttexturefile = \"' + y + '\"\n\t\teffectfile = \"gfx/FX/buttonstate.lua\"\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"' + y + '\"\n\t\t\tanimationtexturefile = \"gfx/interface/goals/shine_overlay.dds\"\n\t\t\tanimationrotation = -90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tanimation = {\n\t\t\tanimationmaskfile = \"' + y + '\"\n\t\t\tanimationtexturefile = "gfx/interface/goals/shine_overlay.tga"\n\t\t\tanimationrotation = 90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tlegacy_lazy_load = no\n\t}\n')
-				ffile.write('}')
-			shutil.copy('goals.gfx','../interface')
-			shutil.copy('goals_shine.gfx','../interface')
-			os.remove('goals.gfx')
-			os.remove('goals_shine.gfx')
-			messagebox.showinfo("Done", "goals.gfx and goals_shine.gfx have been generated for " + str(len(ddslist)) + " icons.\n\nThe files have been outputted into the interface files.")
-			return
-		elif int(selection.get()) == 2:
-			with open ("MD_eventpictures.gfx", "w") as ffile:
-				ffile.write('spriteTypes = {\n')
-				for fname in ddsdict:
-					x = fname
-					x = x.split(modfolder)
-					y = x[1] # Should Retrieve the Path
-					z = y
-					y = y.replace("\\", "/")
-					z = z.replace("gfx\\event_pictures\\", "")
-					z = z.split("\\")
-					for i in range(len(z)):
-						if ".dds" in z[i]:
-							w = z[i]
-						elif ".png" in z[i]:
-							w = z[i]
-						elif ".tga" in z[i]:
-							w = z[i]
-					if ".dds" in w:
-						w = w.replace(".dds", "")
-					elif ".png" in w:
-						w = w.replace(".png", "")
-					elif ".tga" in w:
-						w = w.replace (".tga", "")
+            with open("goals.gfx", "w") as ffile:
+                ffile.write("spriteTypes = {\n")
+                ffile.write("\t#Vanilla DO NOT DELETE\n")
+                ffile.write(
+                    '\tspriteType = {\n\t\tname = "GFX_goal_unknown"\n\t\ttexturefile = "gfx/interface/goals/goal_unknown.dds"\n\t\tlegacy_lazy_load = no\n\t}\n'
+                )
+                for fname in ddsdict:
+                    x = fname
+                    x = x.split(modfolder)
+                    y = x[1]  # Should Retrieve the Path
+                    z = y
+                    y = y.replace("\\", "/")
+                    z = z.replace("gfx\\interface\\goals\\", "")
+                    z = z.split("\\")
+                    for i in range(len(z)):
+                        if ".dds" in z[i]:
+                            w = z[i]
+                        elif ".png" in z[i]:
+                            w = z[i]
+                        elif ".tga" in z[i]:
+                            w = z[i]
+                    if ".dds" in w:
+                        w = w.replace(".dds", "")
+                    elif ".png" in w:
+                        w = w.replace(".png", "")
+                    elif ".tga" in w:
+                        w = w.replace(".tga", "")
 
-					if "GFX_" in w:
-						ffile.write('\tspriteType = {\n\t\tname = \"' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
-					else:
-						ffile.write('\tspriteType = {\n\t\tname = \"GFX_' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
+                    if gfxbool == 0:
+                        ffile.write(
+                            '\tspriteType = {\n\t\tname = "'
+                            + w
+                            + '"\n\t\ttexturefile = "'
+                            + y
+                            + '"\n\t}\n'
+                        )
+                    else:
+                        ffile.write(
+                            '\tspriteType = {\n\t\tname = "GFX_'
+                            + w
+                            + '"\n\t\ttexturefile = "'
+                            + y
+                            + '"\n\t}\n'
+                        )
+                ffile.write("}")
+            with open("goals_shine.gfx", "w") as ffile:
+                ffile.write("spriteTypes = {\n")
+                ffile.write("\t#Vanilla DO NOT DELETE \n")
+                ffile.write(
+                    '\tspriteType = {\n\t\tname = "GFX__shine"\n\t\ttexturefile = "gfx/interface/goals/goal_unknown.dds"\n\t\teffectFile = "gfx/FX/buttonstate.lua"\n\t\tanimation = {\n\t\t\tanimationmaskfile = "gfx/interface/goals/goal_unknown.dds"\n\t\t\tanimationtexturefile = "gfx/interface/goals/shine_overlay.dds"\n\t\t\tanimationrotation = -90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\n\t\tanimation = {\n\t\t\tanimationmaskfile = "gfx/interface/goals/goal_unknown.dds"\n\t\t\tanimationtexturefile = "gfx/interface/goals/shine_overlay.dds"\n\t\t\tanimationrotation = 90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tlegacy_lazy_load = no\n\t}\n'
+                )
+                for fname in ddsdict:
+                    x = fname
+                    x = x.split(modfolder)
+                    y = x[1]  # Should Retrieve the Path
+                    z = y
+                    y = y.replace("\\", "/")
+                    z = z.replace("gfx\\interface\\goals\\", "")
+                    z = z.split("\\")
+                    for i in range(len(z)):
+                        if ".dds" in z[i]:
+                            w = z[i]
+                        elif ".png" in z[i]:
+                            w = z[i]
+                        elif ".tga" in z[i]:
+                            w = z[i]
+                    if ".dds" in w:
+                        w = w.replace(".dds", "")
+                    elif ".png" in w:
+                        w = w.replace(".png", "")
+                    elif ".tga" in w:
+                        w = w.replace(".tga", "")
 
-				ffile.write('}')
-			shutil.copy('MD_eventpictures.gfx','../interface')
-			os.remove('MD_eventpictures.gfx')
-			messagebox.showinfo("Done", "\neventpictures.gfx has been generated for " + str(len(ddslist)) + " event pictures.\n\nThe files have been outputted in into the interface files.")
-			return
-		elif int(selection.get()) == 3:
-			with open ("MD_ideas.gfx", "w") as ffile:
-				ffile.write('spriteTypes = {\n')
-				for fname in ddsdict:
-					x = fname
-					x = x.split(modfolder)
-					y = x[1] # Should Retrieve the Path
-					z = y
-					y = y.replace("\\", "/")
-					z = z.replace("gfx\\interface\\ideas\\", "")
-					z = z.split("\\")
-					for i in range(len(z)):
-						if ".dds" in z[i]:
-							w = z[i]
-						elif ".png" in z[i]:
-							w = z[i]
-						elif ".tga" in z[i]:
-							w = z[i]
-					if ".dds" in w:
-						w = w.replace(".dds", "")
-					elif ".png" in w:
-						w = w.replace(".png", "")
-					elif ".tga" in w:
-						w = w.replace (".tga", "")
+                    if gfxbool == 0:
+                        ffile.write(
+                            '\tspriteType = { \n\t\tname = "'
+                            + w
+                            + '_shine"\n\t\ttexturefile = "'
+                            + y
+                            + '"\n\t\teffectfile = "gfx/FX/buttonstate.lua"\n\t\tanimation = {\n\t\t\tanimationmaskfile = "'
+                            + y
+                            + '"\n\t\t\tanimationtexturefile = "gfx/interface/goals/shine_overlay.dds"\n\t\t\tanimationrotation = -90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tanimation = {\n\t\t\tanimationmaskfile = "'
+                            + y
+                            + '"\n\t\t\tanimationtexturefile = "gfx/interface/goals/shine_overlay.tga"\n\t\t\tanimationrotation = 90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tlegacy_lazy_load = no\n\t}\n'
+                        )
+                    else:
+                        ffile.write(
+                            '\tspriteType = { \n\t\tname = "GFX_'
+                            + w
+                            + '_shine"\n\t\ttexturefile = "'
+                            + y
+                            + '"\n\t\teffectfile = "gfx/FX/buttonstate.lua"\n\t\tanimation = {\n\t\t\tanimationmaskfile = "'
+                            + y
+                            + '"\n\t\t\tanimationtexturefile = "gfx/interface/goals/shine_overlay.dds"\n\t\t\tanimationrotation = -90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tanimation = {\n\t\t\tanimationmaskfile = "'
+                            + y
+                            + '"\n\t\t\tanimationtexturefile = "gfx/interface/goals/shine_overlay.tga"\n\t\t\tanimationrotation = 90.0\n\t\t\tanimationlooping = no\n\t\t\tanimationtime = 0.75\n\t\t\tanimationdelay = 0\n\t\t\tanimationblendmode = "add"\n\t\t\tanimationtype = "scrolling"\n\t\t\tanimationrotationoffset = { x = 0.0 y = 0.0 }\n\t\t\tanimationtexturescale = { x = 1.0 y = 1.0 }\n\t\t}\n\t\tlegacy_lazy_load = no\n\t}\n'
+                        )
+                ffile.write("}")
+            shutil.copy("goals.gfx", "../interface")
+            shutil.copy("goals_shine.gfx", "../interface")
+            os.remove("goals.gfx")
+            os.remove("goals_shine.gfx")
+            messagebox.showinfo(
+                "Done",
+                "goals.gfx and goals_shine.gfx have been generated for "
+                + str(len(ddslist))
+                + " icons.\n\nThe files have been outputted into the interface files.",
+            )
+            return
+        elif int(selection.get()) == 2:
+            with open("MD_eventpictures.gfx", "w") as ffile:
+                ffile.write("spriteTypes = {\n")
+                for fname in ddsdict:
+                    x = fname
+                    x = x.split(modfolder)
+                    y = x[1]  # Should Retrieve the Path
+                    z = y
+                    y = y.replace("\\", "/")
+                    z = z.replace("gfx\\event_pictures\\", "")
+                    z = z.split("\\")
+                    for i in range(len(z)):
+                        if ".dds" in z[i]:
+                            w = z[i]
+                        elif ".png" in z[i]:
+                            w = z[i]
+                        elif ".tga" in z[i]:
+                            w = z[i]
+                    if ".dds" in w:
+                        w = w.replace(".dds", "")
+                    elif ".png" in w:
+                        w = w.replace(".png", "")
+                    elif ".tga" in w:
+                        w = w.replace(".tga", "")
 
-					if "idea_" in w:
-						w = w.replace("idea_", "")
-					if "GFX_idea_" in w:
-						w = w.replace("GFX_idea_", "")
+                    if "GFX_" in w:
+                        ffile.write(
+                            '\tspriteType = {\n\t\tname = "'
+                            + w
+                            + '"\n\t\ttexturefile = "'
+                            + y
+                            + '"\n\t}\n'
+                        )
+                    else:
+                        ffile.write(
+                            '\tspriteType = {\n\t\tname = "GFX_'
+                            + w
+                            + '"\n\t\ttexturefile = "'
+                            + y
+                            + '"\n\t}\n'
+                        )
 
-					ffile.write('\tspriteType ={\n\t\tname = \"GFX_idea_' + w + '\"\n\t\ttexturefile = \"' + y + '\"\n\t}\n')
-				ffile.write('}')
-			shutil.copy('MD_ideas.gfx','../interface')
-			os.remove('MD_ideas.gfx')
-			messagebox.showinfo("Done", "\nMD_ideas.gfx has been generated for " + str(len(ddslist)) + " idea pictures.\n\nThe files have been outputted into the interface files.")
-			return
-		else:
-			messagebox.showerror("Error!", "\nSelect an option before generating.")
+                ffile.write("}")
+            shutil.copy("MD_eventpictures.gfx", "../interface")
+            os.remove("MD_eventpictures.gfx")
+            messagebox.showinfo(
+                "Done",
+                "\neventpictures.gfx has been generated for "
+                + str(len(ddslist))
+                + " event pictures.\n\nThe files have been outputted in into the interface files.",
+            )
+            return
+        elif int(selection.get()) == 3:
+            with open("MD_ideas.gfx", "w") as ffile:
+                ffile.write("spriteTypes = {\n")
+                for fname in ddsdict:
+                    x = fname
+                    x = x.split(modfolder)
+                    y = x[1]  # Should Retrieve the Path
+                    z = y
+                    y = y.replace("\\", "/")
+                    z = z.replace("gfx\\interface\\ideas\\", "")
+                    z = z.split("\\")
+                    for i in range(len(z)):
+                        if ".dds" in z[i]:
+                            w = z[i]
+                        elif ".png" in z[i]:
+                            w = z[i]
+                        elif ".tga" in z[i]:
+                            w = z[i]
+                    if ".dds" in w:
+                        w = w.replace(".dds", "")
+                    elif ".png" in w:
+                        w = w.replace(".png", "")
+                    elif ".tga" in w:
+                        w = w.replace(".tga", "")
+
+                    if "idea_" in w:
+                        w = w.replace("idea_", "")
+                    if "GFX_idea_" in w:
+                        w = w.replace("GFX_idea_", "")
+
+                    ffile.write(
+                        '\tspriteType ={\n\t\tname = "GFX_idea_'
+                        + w
+                        + '"\n\t\ttexturefile = "'
+                        + y
+                        + '"\n\t}\n'
+                    )
+                ffile.write("}")
+            shutil.copy("MD_ideas.gfx", "../interface")
+            os.remove("MD_ideas.gfx")
+            messagebox.showinfo(
+                "Done",
+                "\nMD_ideas.gfx has been generated for "
+                + str(len(ddslist))
+                + " idea pictures.\n\nThe files have been outputted into the interface files.",
+            )
+            return
+        else:
+            messagebox.showerror("Error!", "\nSelect an option before generating.")
 
 
 def focus_icons_clicked(event=None):
-	selection.set(1)
-def event_pictures_clicked(event=None):
-	selection.set(2)
-def idea_icons_clicked(event=None):
-	selection.set(3)
+    selection.set(1)
 
-can = Canvas(gui, width=527,height=315, bd=0, highlightthickness=0)
-can.pack(fill = "both", expand = True)
-can.create_image( 0, 0, image=bg_img, anchor=NW)
-quit_button = can.create_image(510,15, image=exit_img)
+
+def event_pictures_clicked(event=None):
+    selection.set(2)
+
+
+def idea_icons_clicked(event=None):
+    selection.set(3)
+
+
+can = Canvas(gui, width=527, height=315, bd=0, highlightthickness=0)
+can.pack(fill="both", expand=True)
+can.create_image(0, 0, image=bg_img, anchor=NW)
+quit_button = can.create_image(510, 15, image=exit_img)
 can.tag_bind(quit_button, "<Button-1>", exit)
 
-generate_button = can.create_image(255,280, image=generate_img)
+generate_button = can.create_image(255, 280, image=generate_img)
 can.tag_bind(generate_button, "<Button-1>", main)
 
-focus_icons_button = can.create_image(110,165, image=focus_icons_img)
+focus_icons_button = can.create_image(110, 165, image=focus_icons_img)
 can.tag_bind(focus_icons_button, "<Button-1>", focus_icons_clicked)
 
-event_pictures_button = can.create_image(260,165, image=event_pictures_img)
+event_pictures_button = can.create_image(260, 165, image=event_pictures_img)
 can.tag_bind(event_pictures_button, "<Button-1>", event_pictures_clicked)
 
-idea_icons_button = can.create_image(410,165, image=idea_icons_img)
+idea_icons_button = can.create_image(410, 165, image=idea_icons_img)
 can.tag_bind(idea_icons_button, "<Button-1>", idea_icons_clicked)
 
 gui.mainloop()

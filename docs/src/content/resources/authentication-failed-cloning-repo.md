@@ -1,40 +1,47 @@
 ---
 title: Authentication Failed Cloning Repo
-description: How to resolve 'Authentication failed' errors when cloning a repository from GitLab
+description: How to resolve 'Authentication failed' errors when cloning the repository from GitHub
 ---
 
-If you have the error screen "Authentication Failed" like below:
+If you get an "Authentication Failed" error when trying to clone the Millennium Dawn repository, follow the steps below.
 
-[Image unavailable: authentication error screenshot]
+## Option 1: Sign In via GitHub Desktop
 
-The way to fix it is pretty simple, first you need to be on gitlab.com (if you're here, you've done this already)
+The simplest fix is to sign into GitHub through the GitHub Desktop application:
 
-Then you need to go to your profile, up at the top right of the page, like so:
+1. Open GitHub Desktop.
+2. Go to **File** > **Options** (Windows) or **GitHub Desktop** > **Settings** (macOS).
+3. Click the **Accounts** tab.
+4. Click **Sign In** next to GitHub.com and follow the browser-based authentication flow.
+5. Once signed in, try cloning the repository again.
 
-[Image unavailable: profile menu screenshot]
+## Option 2: Create a Personal Access Token (PAT)
 
-Then to "Edit profile", which is right here:
+If GitHub Desktop sign-in does not resolve the issue, you can authenticate using a Personal Access Token:
 
-[Image unavailable: edit profile screenshot]
+1. Go to [github.com](https://github.com) and sign in.
+2. Click your profile picture in the top right, then go to **Settings**.
+3. Scroll down in the left sidebar and click **Developer settings**.
+4. Click **Personal access tokens** > **Tokens (classic)**.
+5. Click **Generate new token** > **Generate new token (classic)**.
+6. Give the token a descriptive name (e.g., "Millennium Dawn Dev").
+7. Set an expiration date (or select "No expiration" if you prefer, though an expiry is recommended for security).
+8. Under **Select scopes**, check the **repo** checkbox (this grants full access to repositories).
+9. Click **Generate token**.
+10. **Copy the token immediately** — you will not be able to see it again after leaving the page.
 
-This will take you to your profile settings page, on the left of the screen you will see this menu, go to "Access Tokens" as shown:
+> **Do not share your token with anyone.** A PAT functions as a password and could compromise your account.
 
-[Image unavailable: access tokens screenshot]
+When prompted for a password during cloning, paste your PAT instead of your GitHub password.
 
-This is where you will need to create a "Personal Access Token" or PAT for short.
+## Option 3: Use SSH Authentication
 
-1. This is where you name your PAT, this can be anything you like it to be, I've called it "Guide" for this example.
-2. This is where you can set an expiration date on your PAT, for security reasons, leaving it blank will have this PAT be usable indefinitely, so it's up to you what you want to pick.
-3. This is the only one of these you need to tick, it's so your PAT works for everything a password normally would, think of it as changing from "read-only" to "editing privileges", it is important to not forget this step.
+As an alternative to HTTPS, you can set up SSH keys:
 
-[Image unavailable: PAT settings screenshot]
+1. Follow GitHub's guide to [generate a new SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
+2. [Add the SSH key to your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account).
+3. When cloning, use the **SSH** URL instead of HTTPS from the repository's **Code** dropdown.
 
-Then you need to click "Create personal access token", like so:
+## Still Having Issues?
 
-[Image unavailable: create token screenshot]
-
-This will create a string of characters above the settings you have chosen, it is **VITAL** you do not share this with anyone, as this could result in your account being compromised, this PAT can be used instead of a password. Click the clipboard icon to copy it as shown:
-
-[Image unavailable: copy token screenshot]
-
-Sign in as normal but instead of using your password in the password field, paste your PAT code in there, your username is just your regular username, hopefully this method will get you on the go and ready to clone as normal!
+If none of the above works, ask for help in the Discord development channel.
