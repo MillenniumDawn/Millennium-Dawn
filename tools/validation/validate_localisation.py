@@ -17,7 +17,6 @@
 import glob
 import os
 import re
-from multiprocessing import Pool
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -230,14 +229,9 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt", ".yml"]
 
     def _get_yml_files(self) -> List[str]:
-        loc_path = str(Path(self.mod_path) / "localisation" / "english") + "/"
-        if self.staged_files:
-            files = [
-                f for f in self.staged_files if f.endswith(".yml") and "english" in f
-            ]
-        else:
-            files = list(glob.iglob(loc_path + "**/*.yml", recursive=True))
-        return [f for f in files if not _should_skip(f)]
+        return self._collect_files(
+            ["localisation/english/**/*.yml"], extra_skip=_should_skip
+        )
 
     def validate_duplicated_keys(self):
         self.log(f"\n{'='*80}")
@@ -265,8 +259,7 @@ class Validator(BaseValidator):
         yml_files = self._get_yml_files()
         args_list = [(f,) for f in yml_files]
 
-        with Pool(processes=self.workers) as pool:
-            all_results = pool.map(process_yml_for_brackets, args_list, chunksize=10)
+        all_results = self._pool_map(process_yml_for_brackets, args_list, chunksize=10)
 
         results = []
         for file_results in all_results:
@@ -289,8 +282,7 @@ class Validator(BaseValidator):
         yml_files = self._get_yml_files()
         args_list = [(f, valid_colors) for f in yml_files]
 
-        with Pool(processes=self.workers) as pool:
-            all_results = pool.map(process_yml_for_syntax, args_list, chunksize=10)
+        all_results = self._pool_map(process_yml_for_syntax, args_list, chunksize=10)
 
         results = []
         for file_results in all_results:
@@ -312,8 +304,7 @@ class Validator(BaseValidator):
         yml_files = self._get_yml_files()
         args_list = [(f,) for f in yml_files]
 
-        with Pool(processes=self.workers) as pool:
-            all_results = pool.map(process_yml_for_mandatory, args_list, chunksize=10)
+        all_results = self._pool_map(process_yml_for_mandatory, args_list, chunksize=10)
 
         results = []
         for file_results in all_results:
@@ -548,14 +539,24 @@ class Validator(BaseValidator):
         )
 
     def run_validations(self):
+        if self.staged_only and not self.staged_files:
+            self.log(
+                "No staged files found — skipping localisation validation",
+                "warning",
+            )
+            return
+
         self.validate_duplicated_keys()
         self.validate_brackets()
         self.validate_syntax()
         self.validate_mandatory_line()
-        self.validate_localization_key_references()
-        self.validate_custom_tooltip_references()
-        self.validate_add_resistance_tooltip()
-        self.validate_orphaned_tooltip_keys()
+
+        # Cross-reference checks scan all .txt/.gui files — skip in staged mode
+        if not self.staged_only:
+            self.validate_localization_key_references()
+            self.validate_custom_tooltip_references()
+            self.validate_add_resistance_tooltip()
+            self.validate_orphaned_tooltip_keys()
 
 
 if __name__ == "__main__":

@@ -133,14 +133,18 @@ Notable DLC entity packs that overlap with MD assets:
 **How to diagnose:**
 
 1. Search the mod for the entity name:
+
    ```bash
    grep -rn 'name = "ITA_mechanized_vehicle_1_entity"' gfx/entities/
    ```
+
 2. Search the vanilla install for the same name:
+
    ```bash
    grep -rn '"ITA_mechanized_vehicle_1_entity"' \
      ~/.local/share/Steam/steamapps/common/Hearts\ of\ Iron\ IV/
    ```
+
 3. If both return results, you have a duplicate.
 
 **Fix options:**
@@ -205,10 +209,13 @@ Example fix — change the nonexistent parent to the correct one:
 **How to diagnose:**
 
 1. Search mod particle files:
+
    ```bash
    grep -rn 'name="sparks_file"' gfx/particles/
    ```
+
 2. Search vanilla:
+
    ```bash
    grep -rn 'name="sparks_file"' \
      ~/.local/share/Steam/steamapps/common/Hearts\ of\ Iron\ IV/gfx/particles/
@@ -261,6 +268,7 @@ Check that the parent `containerWindowType` or `windowType` exists and that its 
 - Entity names defined in mod files **cannot override** vanilla entities. You must use a unique name.
 - After fixing an entity error, the downstream "Failed to find entity for attachment" errors for the same entity will automatically resolve.
 - Filter the error log to just entity/asset lines for faster triage:
+
   ```bash
   grep -E 'pdx_entity|assetfactory|pdx_particle' error.log
   ```

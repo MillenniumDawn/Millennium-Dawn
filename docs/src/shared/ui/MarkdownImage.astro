@@ -1,8 +1,11 @@
 ---
 import ResponsiveImage from "@/shared/ui/ResponsiveImage.astro";
-import { withBase } from "@/shared/lib/urls";
-import { getPublicImageDimensions } from "@/shared/lib/public-image-size";
-import { getInternalImageAsset } from "@/shared/lib/image-assets";
+import { stripBase, withBase } from "@/shared/lib/routing/urls";
+import {
+  getLocalImageDimensions,
+  getLocalRasterDimensionsSyncFromUrl,
+} from "@/shared/lib/media/local-image-dimensions";
+import { getInternalImageAsset } from "@/shared/lib/media/image-assets";
 
 interface Props {
   src: string;
@@ -27,32 +30,50 @@ const {
 }: Props = Astro.props;
 
 function parseDimension(value: number | string | undefined): number | undefined {
-  if (typeof value === "number") return value;
-  if (typeof value === "string" && /^\d+$/.test(value)) return Number(value);
+  if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
+  if (typeof value === "string") {
+    const t = value.trim();
+    if (/^\d+$/.test(t)) return Number(t);
+    const px = /^(\d+)px$/i.exec(t);
+    if (px) return Number(px[1]);
+  }
   return undefined;
 }
 
 const explicitWidth = parseDimension(width);
 const explicitHeight = parseDimension(height);
-const internalAsset = getInternalImageAsset(src);
-const inferredDimensions =
-  explicitWidth && explicitHeight
-    ? null
-    : internalAsset
-      ? { width: internalAsset.width, height: internalAsset.height }
-      : await getPublicImageDimensions(src);
+/** Paths are often prefixed with `SITE_BASE` by remark; public disk + asset map use root-relative `/assets/...`. */
+const assetSrc = stripBase(src);
+const internalAsset = getInternalImageAsset(assetSrc);
+/** Prefer `src/assets` metadata whenever the file is in the glob map — even if rehype already injected width/height (see `rehypeImageDimensions`). */
+let inferredDimensions: { width: number; height: number } | null | undefined = internalAsset
+  ? { width: internalAsset.width, height: internalAsset.height }
+  : await getLocalImageDimensions(assetSrc);
+if (!inferredDimensions && !internalAsset) {
+  inferredDimensions =
+    getLocalRasterDimensionsSyncFromUrl(assetSrc) ?? getLocalRasterDimensionsSyncFromUrl(src);
+}
 const resolvedWidth = explicitWidth ?? inferredDimensions?.width;
 const resolvedHeight = explicitHeight ?? inferredDimensions?.height;
 const resolvedClassName = className?.trim();
 const canUseResponsiveImage = Boolean(resolvedWidth && resolvedHeight);
 const isDecorative = !alt || alt.trim() === "";
 const imgAttrs = isDecorative ? { "aria-hidden": "true" as const, role: "presentation" as const } : {};
+/** Unoptimized file URL for lightbox zoom (same path as markdown, not Astro `srcset` pick). */
+const ABSOLUTE_SCHEME = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
+const lightboxFullSrc =
+  canUseResponsiveImage &&
+  assetSrc.startsWith("/") &&
+  !assetSrc.startsWith("//") &&
+  !ABSOLUTE_SCHEME.test(assetSrc)
+    ? withBase(assetSrc)
+    : undefined;
 ---
 
 {
   canUseResponsiveImage ? (
     <ResponsiveImage
-      src={internalAsset ?? src}
+      src={internalAsset ?? assetSrc}
       alt={alt}
       decorative={isDecorative}
       width={resolvedWidth}
@@ -61,6 +82,7 @@ const imgAttrs = isDecorative ? { "aria-hidden": "true" as const, role: "present
       decoding={decoding}
       wrapperClass={resolvedClassName}
       class={resolvedClassName}
+      lightboxFullSrc={lightboxFullSrc}
     />
   ) : (
     <img

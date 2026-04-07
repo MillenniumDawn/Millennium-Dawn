@@ -1,0 +1,1928 @@
+@DEFENSE_WALLS_RENDER_DISTANCE = 300.0
+
+EH_electric_traps_category = {
+	EH_set_up_electric_trap = {
+		icon = GFX_decision_fixes_button
+		days_remove = 7
+
+		state_target = yes
+
+		on_map_mode = map_only
+        highlight_states = {
+	    	highlight_states_trigger = {
+                is_controlled_by = ROOT
+	    		has_state_flag = EH_electric_trap_enabled_flag
+	    	}
+	    	highlight_color_before_active = 3
+	    	highlight_color_while_active = 2
+	    }
+		target_trigger = {
+            FROM = {
+                is_controlled_by = ROOT
+                has_state_flag = EH_electric_trap_enabled_flag
+            }
+        }
+
+		available = {
+			has_resources_in_country = {
+                resource = tungsten
+                amount > 0
+            }
+		}
+
+		visible = {
+			FROM = {
+				NOT = { has_state_flag = EH_electric_trap_set_up_flag }
+			}
+		}
+
+		remove_effect = {
+			FROM = {
+				set_state_flag = EH_electric_trap_set_up_flag
+			}
+			add_to_variable = { EH_electric_trap_country_resource_cost_tungsten_var = 1 }
+			custom_effect_tooltip = EH_electric_trap_country_resource_cost_tungsten_TT
+		}
+	}
+    EH_remove_electric_trap = {
+		icon = GFX_decision_fixes_button_blocked
+		days_remove = 7
+
+		state_target = yes
+
+		on_map_mode = map_only
+
+		highlight_states = {
+	    	highlight_states_trigger = {
+                is_controlled_by = ROOT
+	    		has_state_flag = EH_electric_trap_enabled_flag
+	    	}
+	    	highlight_color_before_active = 3
+	    	highlight_color_while_active = 2
+	    }
+
+		target_trigger = {
+            FROM = {
+                is_controlled_by = ROOT
+                has_state_flag = EH_electric_trap_set_up_flag
+            }
+        }
+
+		visible = {
+			FROM = {
+				has_state_flag = EH_electric_trap_set_up_flag
+			}
+		}
+
+        available = {
+            FROM = {
+                NOT = {
+                    has_state_flag = EH_electric_trap_active_flag
+                }
+            }
+        }
+
+        complete_effect = {
+            FROM = {
+                set_state_flag = EH_electric_trap_removing_flag
+            }
+        }
+
+		remove_effect = {
+			FROM = {
+				clr_state_flag = EH_electric_trap_set_up_flag
+                clr_state_flag = EH_electric_trap_removing_flag
+			}
+			add_to_variable = { EH_electric_trap_country_resource_cost_tungsten_var = -1 }
+			custom_effect_tooltip = EH_electric_trap_remove_country_resource_cost_tungsten_TT
+		}
+	}
+    EH_activate_electric_trap = {
+        icon = GFX_decision_influence
+        days_remove = 10
+
+        state_target = yes
+
+        on_map_mode = map_only
+
+        highlight_states = {
+	    	highlight_states_trigger = {
+                is_controlled_by = ROOT
+	    		has_state_flag = EH_electric_trap_enabled_flag
+	    	}
+	    	highlight_color_before_active = 3
+	    	highlight_color_while_active = 2
+	    }
+
+        target_trigger = {
+            FROM = {
+                is_controlled_by = ROOT
+                has_state_flag = EH_electric_trap_set_up_flag
+            }
+        }
+
+		visible = {
+			FROM = {
+				has_state_flag = EH_electric_trap_set_up_flag
+			}
+		}
+
+        available = {
+            FROM = {
+                NOT = {
+                    has_state_flag = EH_electric_trap_cooldown
+                    has_state_flag = EH_electric_trap_removing_flag
+                }
+            }
+        }
+
+        complete_effect = {
+            if = {
+                limit = {
+                    NOT = {
+                        has_dynamic_modifier = {
+                            modifier = EH_electric_trap_country_effects_idea
+                        }
+                    }
+                }
+                hidden_effect = {
+                    add_dynamic_modifier = {
+                        modifier = EH_electric_trap_country_effects_idea
+                    }
+                }
+            }
+            add_to_variable = { EH_electric_trap_energy_use_var = 0.1 }
+            custom_effect_tooltip = EH_electric_trap_energy_use_TT
+            FROM = {
+                set_state_flag = EH_electric_trap_active_flag
+                add_dynamic_modifier = {
+                    modifier = EH_electric_trap_modifier
+                }
+            }
+        }
+
+        remove_effect = {
+            # Effects for country
+            add_to_variable = { EH_electric_trap_energy_use_var = -0.1 }
+            FROM = {
+                # Effects for state
+                set_state_flag = {
+                    flag = EH_electric_trap_cooldown
+                    days = 15
+                    value = 1
+                }
+                clr_state_flag = EH_electric_trap_active_flag
+            }
+        }
+    }
+}
+
+EH_research_sites_category = {
+    EH_setup_research_site = {
+        icon = GFX_decision_generic_research
+        days_remove = var:EH_research_sites_prep_time_var
+
+        available = {
+            EH_any_controlled_state_1500_to_any_portal = yes
+            custom_trigger_tooltip = {
+                tooltip = EH_research_sites_limit_TT
+                check_variable = { EH_research_sites_constructed_var < 10 }
+            }
+            NOT = {
+                has_country_flag = EH_research_sites_decision_ongoing_flag
+            }
+        }
+
+        complete_effect = {
+            set_temp_variable = { treasury_change = -15 }
+            if = {
+                limit = {
+                    has_country_flag = EH_research_sites_anti_air_installed_flag
+                }
+                subtract_from_temp_variable = { treasury_change = 5 }
+            }
+            set_country_flag = EH_research_sites_decision_ongoing_flag
+            modify_treasury_effect = yes
+            custom_effect_tooltip = EH_research_sites_cost_TT
+        }
+
+        remove_effect = {
+            add_to_variable = { EH_research_sites_constructed_var = 1}
+            EH_calculate_research_sites_effects = yes
+            if = {
+                limit = {
+                    NOT = {
+                        has_dynamic_modifier = {
+                            modifier = EH_research_sites_effects_idea
+                        }
+                    }
+                }
+                add_dynamic_modifier = {
+                    modifier = EH_research_sites_effects_idea
+                }
+            }
+            custom_effect_tooltip = EH_add_research_site_TT
+            clr_country_flag = EH_research_sites_decision_ongoing_flag
+        }
+    }
+
+    EH_install_anti_air_weapons = {
+        icon = GFX_decision_shoot_bird
+        days_remove = 60
+        fire_only_once = yes
+
+        available = {
+            EH_has_research_site = yes
+            NOT = {
+                has_country_flag = EH_research_sites_decision_ongoing_flag
+            }
+        }
+
+        complete_effect = {
+            set_temp_variable = { treasury_change = -5 }
+            multiply_temp_variable = { treasury_change = EH_research_sites_constructed_var }
+			modify_treasury_effect = yes
+            custom_effect_tooltip = EH_research_sites_cost_scaling_TT
+            set_country_flag = EH_research_sites_anti_air_installed_flag
+            set_country_flag = EH_research_sites_decision_ongoing_flag
+        }
+
+        remove_effect = {
+            set_temp_variable = { EH_temp_protection_increase = 25 }
+            EH_research_sites_protection_increase = yes
+            clr_country_flag = EH_research_sites_decision_ongoing_flag
+        }
+    }
+
+    EH_panic_shelters_and_land_turrets = {
+        icon = GFX_decision_conter_raid_button
+        days_remove = 60
+        fire_only_once = yes
+
+        available = {
+            EH_has_research_site = yes
+            NOT = {
+                has_country_flag = EH_research_sites_decision_ongoing_flag
+            }
+        }
+
+        complete_effect = {
+            set_temp_variable = { treasury_change = -5 }
+            multiply_temp_variable = { treasury_change = EH_research_sites_constructed_var }
+			modify_treasury_effect = yes
+            custom_effect_tooltip = EH_research_sites_cost_scaling_TT
+            set_country_flag = EH_research_sites_shelters_installed_flag
+            set_country_flag = EH_research_sites_decision_ongoing_flag
+        }
+
+        remove_effect = {
+            set_temp_variable = { EH_temp_protection_increase = 15 }
+            EH_research_sites_protection_increase = yes
+            set_temp_variable = { EH_temp_research_sites_scientist_protection_increase = 10 }
+            EH_research_sites_scientist_protection_increase = yes
+            clr_country_flag = EH_research_sites_decision_ongoing_flag
+        }
+    }
+
+    EH_hire_additional_security_for_scientists = {
+        icon = GFX_decision_recruit_operative
+        days_remove = 40
+        fire_only_once = yes
+
+        available = {
+            EH_has_research_site = yes
+            NOT = {
+                has_country_flag = EH_research_sites_decision_ongoing_flag
+            }
+        }
+
+        complete_effect = {
+            set_temp_variable = { treasury_change = -3 }
+            multiply_temp_variable = { treasury_change = EH_research_sites_constructed_var }
+			modify_treasury_effect = yes
+            custom_effect_tooltip = EH_research_sites_cost_scaling2_TT
+            set_country_flag = EH_research_sites_security_hired_flag
+            set_country_flag = EH_research_sites_decision_ongoing_flag
+        }
+
+        remove_effect = {
+            set_temp_variable = { EH_temp_research_sites_scientist_protection_increase = 25 }
+            EH_research_sites_scientist_protection_increase = yes
+            clr_country_flag = EH_research_sites_decision_ongoing_flag
+        }
+    }
+
+    EH_disable_site_notifications = {
+        icon = GFX_decision_message_decline_button
+
+        visible = {
+            NOT = { has_country_flag = EH_research_sites_disable_notifications_flag }
+        }
+
+        remove_effect = {
+            set_country_flag = EH_research_sites_disable_notifications_flag
+            custom_effect_tooltip = EH_research_sites_disable_notifications_TT
+        }
+    }
+
+    EH_enable_site_notifications = {
+        icon = GFX_decision_message_accept_button
+
+        visible = {
+            has_country_flag = EH_research_sites_disable_notifications_flag
+        }
+
+        remove_effect = {
+            clr_country_flag = EH_research_sites_disable_notifications_flag
+            custom_effect_tooltip = EH_research_sites_enable_notifications_TT
+        }
+    }
+
+    EH_doudna_or_charpentier_project_mission = {
+        activation = {
+            AND = {
+                has_country_flag = EH_hired_jennifer_doudna_flag
+                has_country_flag = EH_hired_emmanuelle_charpentier_flag
+            }
+        }
+
+        available = {
+            has_war_with = ALN
+            has_country_flag = EH_research_sites_enabled
+            NOT = {
+                has_country_flag = EH_doudna_or_charpentier_finished_project_flag
+            }
+        }
+
+        cancel_trigger = {
+            NOT = {
+                has_country_flag = EH_hired_jennifer_doudna_flag
+                has_country_flag = EH_hired_emmanuelle_charpentier_flag
+            }
+        }
+
+        icon = GFX_decision_jennifer_emmanuelle
+        is_good = yes
+        days_mission_timeout = 280
+
+        timeout_effect = {
+            set_country_flag = EH_doudna_or_charpentier_finished_project_flag
+            custom_effect_tooltip = EH_doudna_or_charpentier_finished_project_TT
+        }
+    }
+}
+
+EH_find_new_veins_category = {
+    EH_search_for_randallite_veins = {
+        icon = GFX_decision_search_for_randallite
+        days_remove = var:EH_search_for_randallite_veins_time_var
+        days_re_enable = 10
+
+        fixed_random_seed = no
+
+        available = {
+            set_temp_variable = { EH_controlled_states = num_of_controlled_states }
+            divide_temp_variable = { EH_controlled_states = 7 }
+            round_temp_variable = EH_controlled_states
+            custom_trigger_tooltip = {
+                tooltip = EH_randallite_veins_limit_TT
+                check_variable = { EH_total_mines < EH_controlled_states }
+            }
+
+            OR = {
+                NOT = {
+                    has_active_mission = EH_set_up_mine_mission
+                }
+                has_completed_focus = EH_new_enemy_new_strategy
+            }
+        }
+
+        modifier = {
+            cic_construction_boost_factor = -0.06
+            resource_sector_workers_modifier = 0.08
+        }
+
+        complete_effect = {
+            if = {
+                limit = {
+                    NOT = {
+                        has_active_mission = EH_set_up_mine_mission
+                    }
+                }
+                set_temp_variable = { treasury_change = -10 }
+                modify_treasury_effect = yes
+            }
+            else = {
+                set_temp_variable = { treasury_change = -25 }
+                modify_treasury_effect = yes
+                add_timed_idea = { idea = EH_economy_overload_idea days = var:EH_search_for_randallite_veins_time_var }
+            }
+        }
+
+        remove_effect = {
+            random_list = {
+                80 = {
+                    country_event = EH_focus_event.12
+                }
+                10 = {
+                    country_event = EH_focus_event.13
+                }
+                10 = {
+                    country_event = EH_focus_event.14
+                }
+            }
+        }
+    }
+
+    EH_set_up_mine_mission = {
+        icon = GFX_decision_search_for_randallite
+        is_good = yes
+        days_mission_timeout = var:EH_set_up_mine_time_var
+
+        activation = {
+            always = no
+        }
+
+        available = {
+            always = no
+        }
+
+        timeout_effect = {
+            if = {
+                limit = {
+                    has_country_flag = EH_setting_up_randallite_mine_flag
+                }
+                set_temp_variable = { add_randallite = EH_add_randallite_random }
+                EH_add_randallite_effect = yes
+                add_to_variable = { EH_randallite_mines_set_up_var = 1 }
+                clr_country_flag = EH_setting_up_randallite_mine_flag
+            }
+            if = {
+                limit = {
+                    has_country_flag = EH_setting_up_iron_mine_flag
+                }
+                random_controlled_state = {
+                    add_resource = {
+                        type = steel
+                        amount = 2
+                    }
+                }
+                clr_country_flag = EH_setting_up_iron_mine_flag
+            }
+            if = {
+                limit = {
+                    has_country_flag = EH_setting_up_aluminium_mine_flag
+                }
+                random_controlled_state = {
+                    add_resource = {
+                        type = aluminium
+                        amount = 2
+                    }
+                }
+                clr_country_flag = EH_setting_up_aluminium_mine_flag
+            }
+            add_to_variable = { EH_total_mines = 1 }
+        }
+    }
+
+    EH_large_company_seeks_for_randallite_mission = {
+        icon = GFX_decision_gre_investment_decisions
+        days_mission_timeout = 100
+
+        fixed_random_seed = no
+
+        activation = {
+            NOT = {
+                has_country_flag = EH_outlawed_randallite_extraction_flag
+            }
+            has_completed_focus = EH_find_new_veins
+        }
+
+        available = {
+            has_country_flag = EH_outlawed_randallite_extraction_flag
+        }
+
+        timeout_effect = {
+            random = {
+                chance = 85
+                country_event = EH_focus_event.15
+                set_variable = { EH_non_state_mines_corporate_tax_income_var = 0.05 }
+                add_to_variable = { EH_non_state_mines_var = 1 }
+                add_to_variable = { EH_total_mines = 1 }
+                multiply_variable = { EH_non_state_mines_corporate_tax_income_var = EH_non_state_mines_var }
+
+                if = {
+                    limit = {
+                        NOT = {
+                            has_dynamic_modifier = {
+                                modifier = EH_non_state_mines_modifier
+                                scope = ROOT
+                            }
+                        }
+                    }
+                    hidden_effect = {
+                        add_dynamic_modifier = {
+                            modifier = EH_non_state_mines_modifier
+                            scope = ROOT
+                        }
+                    }
+                    newline = yes
+                    custom_effect_tooltip = EH_non_state_mines_modifier_TT
+                }
+                newline = yes
+                custom_effect_tooltip = EH_non_state_mines_TT
+            }
+        }
+    }
+
+    EH_outlaw_randallite_extraction = {
+        icon = GFX_decision_randallite_outlawed
+        days_remove = 30
+
+        visible = {
+            NOT = {
+                has_country_flag = EH_outlawed_randallite_extraction_flag
+            }
+            check_variable = { EH_non_state_mines_var > 0 }
+        }
+
+        modifier = {
+            political_power_gain = -1
+        }
+
+        remove_effect = {
+            set_temp_variable = { EH_outlaw_randallite_stability_penalty = -0.04 }
+            set_temp_variable = { EH_outlaw_randallite_pp_penalty = -50 }
+            set_temp_variable = { EH_outlaw_randallite_randallite_gain = 2 }
+
+            multiply_temp_variable = { EH_outlaw_randallite_stability_penalty = EH_non_state_mines_var }
+            multiply_temp_variable = { EH_outlaw_randallite_pp_penalty = EH_non_state_mines_var }
+            multiply_temp_variable = { EH_outlaw_randallite_randallite_gain = EH_non_state_mines_var }
+
+            add_stability = EH_outlaw_randallite_stability_penalty
+            add_political_power = EH_outlaw_randallite_pp_penalty
+            set_temp_variable = { add_randallite = EH_outlaw_randallite_randallite_gain }
+            EH_add_randallite_effect = yes
+
+            add_to_variable = { EH_randallite_mines_set_up_var = EH_non_state_mines_var }
+            set_variable = { EH_non_state_mines_var = 0 }
+
+            newline = yes
+
+            set_country_flag = EH_outlawed_randallite_extraction_flag
+            custom_effect_tooltip = EH_outlaw_randallite_extraction_TT
+
+            newline = yes
+
+            increase_corruption = yes
+        }
+    }
+
+    EH_legalize_randallite_extraction = {
+        icon = GFX_decision_randallite_allowed
+        days_remove = 30
+
+        visible = {
+            has_country_flag = EH_outlawed_randallite_extraction_flag
+        }
+
+        modifier = {
+            political_power_gain = -0.5
+        }
+
+        remove_effect = {
+            clr_country_flag = EH_outlawed_randallite_extraction_flag
+            custom_effect_tooltip = EH_legalize_randallite_extraction_TT
+        }
+    }
+}
+
+EH_nile_defense_line_category = {
+    EH_construct_southern_zenobia_defense_line = {
+        icon = GFX_decision_fortification
+        days_remove = 30
+        fire_only_once = yes
+
+        available = {
+            custom_trigger_tooltip = {
+                tooltip = EH_all_highlighted_states_must_have_bunker_TT
+                217 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 3871
+                            id = 14157
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                590 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 13227
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+            }
+        }
+
+        highlight_states = {
+            highlight_provinces = { 3871 14157 13227 }
+	    	highlight_color_before_active = 3
+	    	highlight_color_while_active = 2
+	    }
+
+        modifier = {
+            land_bunker_effectiveness_factor = -0.15
+            civilian_factory_use = 6
+            production_speed_bunker_factor = 0.2
+        }
+
+        complete_effect = {
+            if = {
+                limit = { NOT = { has_global_flag = EH_zenobia_line_construction_flag } }
+                news_event = EH_event.800
+            }
+        }
+
+        remove_effect = {
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 8991
+                x = -6
+                y = 1
+                z = 0.85
+                province = 3871
+                scale = 1.0
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 8992
+                x = 1
+                y = -2.5
+                z = -1.5
+                province = 13227
+                scale = 1.0
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            217 = {
+                set_state_flag = EH_state_with_zenobia_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_zenobia_line_wall_modifier
+                }
+            }
+            590 = {
+                set_state_flag = EH_state_with_zenobia_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_zenobia_line_wall_modifier
+                }
+            }
+            221 = { # Chimera Territory
+                set_state_flag = EH_state_with_zenobia_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_zenobia_line_wall_modifier
+                }
+            }
+            newline = yes
+            custom_effect_tooltip = EH_construct_southern_zenobia_defense_line_TT
+        }
+    }
+    EH_southern_zenobia_defense_line_destruction = {
+        icon = GFX_decision_fire
+        days_mission_timeout = 15
+
+        activation = {
+            ALN = {
+                OR = {
+                    controls_province = 3871
+                    controls_province = 14157
+                    controls_province = 13227
+                }
+            }
+            217 = {
+                has_state_flag = EH_state_with_zenobia_line_wall
+            }
+        }
+
+        available = {
+            ALN = {
+                NOT = {
+                    controls_province = 3871
+                    controls_province = 14157
+                    controls_province = 13227
+                }
+            }
+        }
+
+        timeout_effect = {
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 8991
+                x = -6
+                y = 1
+                z = 0.85
+                province = 3871
+                scale = 1.0
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 8992
+                x = 1
+                y = -2.5
+                z = -1.5
+                province = 13227
+                scale = 1.0
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            217 = {
+                clr_state_flag = EH_state_with_zenobia_line_wall
+            }
+            590 = {
+                clr_state_flag = EH_state_with_zenobia_line_wall
+            }
+            221 = { # Chimera Territory
+                clr_state_flag = EH_state_with_zenobia_line_wall
+            }
+            custom_effect_tooltip = EH_defense_line_will_be_destroyed_TT
+        }
+    }
+
+    EH_construct_western_zenobia_defense_line = {
+        icon = GFX_decision_fortification
+        days_remove = 30
+        fire_only_once = yes
+
+        available = {
+            custom_trigger_tooltip = {
+                tooltip = EH_all_highlighted_states_must_have_bunker_TT
+                216 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 7079
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                218 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 12764
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+            }
+        }
+
+        highlight_states = {
+            highlight_provinces = { 12764 7079 }
+	    	highlight_color_before_active = 3
+	    	highlight_color_while_active = 2
+	    }
+
+        modifier = {
+            land_bunker_effectiveness_factor = -0.15
+            civilian_factory_use = 6
+            production_speed_bunker_factor = 0.2
+        }
+
+        complete_effect = {
+            if = {
+                limit = { NOT = { has_global_flag = EH_zenobia_line_construction_flag } }
+                news_event = EH_event.800
+            }
+        }
+
+        remove_effect = {
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 8993
+                x = -6
+                y = 13
+                z = 0.45
+                province = 12764
+                rotation = -1.7
+                scale = 1.2
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            216 = {
+                set_state_flag = EH_state_with_zenobia_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_zenobia_line_wall_modifier
+                }
+            }
+            218 = {
+                set_state_flag = EH_state_with_zenobia_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_zenobia_line_wall_modifier
+                }
+            }
+            396 = { # Chimera Territory
+                set_state_flag = EH_state_with_zenobia_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_zenobia_line_wall_modifier
+                }
+            }
+            newline = yes
+            custom_effect_tooltip = EH_construct_western_zenobia_defense_line_TT
+        }
+    }
+
+    EH_western_zenobia_defense_line_destruction = {
+        icon = GFX_decision_fire
+        days_mission_timeout = 15
+
+        activation = {
+            ALN = {
+                OR = {
+                    controls_province = 12764
+                    controls_province = 7079
+                }
+            }
+            216 = {
+                has_state_flag = EH_state_with_zenobia_line_wall
+            }
+        }
+
+        available = {
+            ALN = {
+                NOT = {
+                    controls_province = 12764
+                    controls_province = 7079
+                }
+            }
+        }
+
+        timeout_effect = {
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 8993
+                x = -6
+                y = 13
+                z = 0.45
+                province = 12764
+                rotation = -1.7
+                scale = 1.2
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            216 = {
+                clr_state_flag = EH_state_with_zenobia_line_wall
+            }
+            218 = {
+                clr_state_flag = EH_state_with_zenobia_line_wall
+            }
+            396 = { # Chimera Territory
+                clr_state_flag = EH_state_with_zenobia_line_wall
+            }
+            custom_effect_tooltip = EH_defense_line_will_be_destroyed_TT
+        }
+    }
+
+    EH_construct_inner_saladin_defense_line = {
+        icon = GFX_decision_fortification
+        days_remove = 45
+        fire_only_once = yes
+
+        available = {
+            custom_trigger_tooltip = {
+                tooltip = EH_all_highlighted_states_must_have_bunker_TT
+                216 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 11967
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                217 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 12044
+                            id = 7073
+                            id = 12071
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                218 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 7148
+                            id = 10127
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                219 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 12889
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+            }
+        }
+
+        highlight_states = {
+            highlight_provinces = { 11967 7148 10127 12889 12044 7073 12071 }
+	    	highlight_color_before_active = 3
+	    	highlight_color_while_active = 2
+	    }
+
+        modifier = {
+            land_bunker_effectiveness_factor = -0.15
+            civilian_factory_use = 6
+            production_speed_bunker_factor = 0.2
+        }
+
+        complete_effect = {
+            if = {
+                limit = { NOT = { has_global_flag = EH_zenobia_line_construction_flag } }
+                news_event = EH_event.800
+            }
+        }
+
+        remove_effect = {
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 8995
+                x = 11
+                y = 0
+                z = 0.45
+                province = 10127
+                rotation = -0.5
+                scale = 0.95
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 8996
+                x = 2
+                y = 0
+                z = -1.25
+                province = 12889
+                rotation = 0
+                scale = 0.60
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 8997
+                x = -1
+                y = -2
+                z = 0.45
+                province = 7148
+                rotation = -1.1
+                scale = 0.55
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 8998
+                x = -1
+                y = -1.5
+                z = 0.35
+                province = 11967
+                rotation = -1.7
+                scale = 0.5
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            216 = {
+                add_dynamic_modifier = {
+                    modifier = EH_saladin_line_wall_modifier
+                }
+                set_state_flag = EH_state_with_saladin_line_wall
+            }
+            217 = {
+                set_state_flag = EH_state_with_saladin_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_saladin_line_wall_modifier
+                }
+            }
+            218 = {
+                set_state_flag = EH_state_with_saladin_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_saladin_line_wall_modifier
+                }
+            }
+            219 = {
+                set_state_flag = EH_state_with_saladin_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_saladin_line_wall_modifier
+                }
+            }
+            newline = yes
+            custom_effect_tooltip = EH_construct_inner_saladin_defense_line_TT
+        }
+    }
+
+    EH_inner_saladin_defense_line_destruction = {
+        icon = GFX_decision_fire
+        days_mission_timeout = 15
+
+        activation = {
+            ALN = {
+                OR = {
+                    controls_province = 11967
+                    controls_province = 7148
+                    controls_province = 10127
+                    controls_province = 12889
+                    controls_province = 12044
+                    controls_province = 7073
+                    controls_province = 12071
+                }
+            }
+            216 = {
+                has_state_flag = EH_state_with_saladin_line_wall
+            }
+        }
+
+        available = {
+            ALN = {
+                NOT = {
+                    controls_province = 11967
+                    controls_province = 7148
+                    controls_province = 10127
+                    controls_province = 12889
+                    controls_province = 12044
+                    controls_province = 7073
+                    controls_province = 12071
+                }
+            }
+        }
+
+        timeout_effect = {
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 8995
+                x = 11
+                y = 0
+                z = 0.45
+                province = 10127
+                rotation = -0.5
+                scale = 0.95
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 8996
+                x = 2
+                y = 0
+                z = -1.25
+                province = 12889
+                rotation = 0
+                scale = 0.60
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 8997
+                x = -1
+                y = -2
+                z = 0.45
+                province = 7148
+                rotation = -1.1
+                scale = 0.55
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 8998
+                x = -1
+                y = -1.5
+                z = 0.35
+                province = 11967
+                rotation = -1.7
+                scale = 0.5
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            216 = {
+                clr_state_flag = EH_state_with_saladin_line_wall
+            }
+            217 = {
+                clr_state_flag = EH_state_with_saladin_line_wall
+            }
+            218 = {
+                clr_state_flag = EH_state_with_saladin_line_wall
+            }
+            219 = {
+                clr_state_flag = EH_state_with_saladin_line_wall
+            }
+            custom_effect_tooltip = EH_defense_line_will_be_destroyed_TT
+        }
+    }
+
+    EH_construct_outer_saladin_defense_line = {
+        icon = GFX_decision_fortification
+        days_remove = 45
+        fire_only_once = yes
+
+        available = {
+            custom_trigger_tooltip = {
+                tooltip = EH_all_highlighted_states_must_have_bunker_TT
+                213 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 9947
+                            id = 1155
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+            }
+        }
+
+        highlight_states = {
+            highlight_provinces = { 9947 1155 }
+	    	highlight_color_before_active = 3
+	    	highlight_color_while_active = 2
+	    }
+
+        modifier = {
+            land_bunker_effectiveness_factor = -0.15
+            civilian_factory_use = 6
+            production_speed_bunker_factor = 0.2
+        }
+
+        complete_effect = {
+            if = {
+                limit = { NOT = { has_global_flag = EH_zenobia_line_construction_flag } }
+                news_event = EH_event.800
+            }
+        }
+
+        remove_effect = {
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 8994
+                x = -2
+                y = 7
+                z = 0.45
+                province = 9947
+                rotation = -1.5
+                scale = 0.65
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            213 = {
+                set_state_flag = EH_state_with_saladin_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_saladin_line_wall_modifier
+                }
+            }
+            214 = {
+                set_state_flag = EH_state_with_saladin_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_saladin_line_wall_modifier
+                }
+            }
+            newline = yes
+            custom_effect_tooltip = EH_construct_outer_saladin_defense_line_TT
+        }
+    }
+
+    EH_outer_saladin_defense_line_destruction = {
+        icon = GFX_decision_fire
+        days_mission_timeout = 15
+
+        activation = {
+            ALN = {
+                OR = {
+                    controls_province = 9947
+                    controls_province = 1155
+                }
+            }
+            213 = {
+                has_state_flag = EH_state_with_saladin_line_wall
+            }
+        }
+
+        available = {
+            ALN = {
+                NOT = {
+                    controls_province = 9947
+                    controls_province = 1155
+                }
+            }
+        }
+
+        timeout_effect = {
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 8994
+                x = -2
+                y = 7
+                z = 0.45
+                province = 9947
+                rotation = -1.5
+                scale = 0.65
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            213 = {
+                clr_state_flag = EH_state_with_saladin_line_wall
+            }
+            214 = {
+                clr_state_flag = EH_state_with_saladin_line_wall
+            }
+            custom_effect_tooltip = EH_defense_line_will_be_destroyed_TT
+        }
+    }
+}
+
+EH_bosporus_defense_line_category = {
+    EH_construct_bosphorus_defense_line = {
+        icon = GFX_decision_fortification
+        days_remove = 30
+        fire_only_once = yes
+
+        available = {
+            custom_trigger_tooltip = {
+                tooltip = EH_all_highlighted_states_must_have_bunker_TT
+                155 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 11867
+                            id = 3786
+                            id = 6871
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                156 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 6864
+                            id = 9887
+                            id = 11778
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+            }
+        }
+
+        highlight_states = {
+            highlight_provinces = { 11867 3786 6871 6864 9887 11778 }
+	    	highlight_color_before_active = 3
+	    	highlight_color_while_active = 2
+	    }
+
+        modifier = {
+            land_bunker_effectiveness_factor = -0.15
+            civilian_factory_use = 6
+            production_speed_bunker_factor = 0.2
+        }
+
+        complete_effect = {
+            if = {
+                limit = { NOT = { has_global_flag = EH_bosphorus_line_construction_flag } }
+                news_event = EH_event.803
+            }
+        }
+
+        remove_effect = {
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 9010
+                x = 2
+                y = 4
+                z = 0
+                province = 11778
+                scale = 1.3
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 9011
+                x = -5
+                y = -1
+                z = 0
+                province = 6871
+                scale = 0.8
+                rotation = 0.7
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            155 = {
+                set_state_flag = EH_state_with_bosphorus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_bosphorus_line_wall_modifier
+                }
+            }
+            156 = {
+                set_state_flag = EH_state_with_bosphorus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_bosphorus_line_wall_modifier
+                }
+            }
+            159 = { # Chimera Territory
+                set_state_flag = EH_state_with_bosphorus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_bosphorus_line_wall_modifier
+                }
+            }
+            160 = { # Chimera Territory
+                set_state_flag = EH_state_with_bosphorus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_bosphorus_line_wall_modifier
+                }
+            }
+            newline = yes
+            custom_effect_tooltip = EH_construct_bosphorus_defense_line_TT
+        }
+    }
+    EH_bosphorus_defense_line_destruction = {
+        icon = GFX_decision_fire
+        days_mission_timeout = 15
+
+        activation = {
+            ALN = {
+                OR = {
+                    controls_province = 6864
+                    controls_province = 9887
+                    controls_province = 11778
+                    controls_province = 11867
+                    controls_province = 3786
+                    controls_province = 6871
+                }
+            }
+            155 = {
+                has_state_flag = EH_state_with_bosphorus_line_wall
+            }
+        }
+
+        available = {
+            ALN = {
+                NOT = {
+                    controls_province = 6864
+                    controls_province = 9887
+                    controls_province = 11778
+                    controls_province = 11867
+                    controls_province = 3786
+                    controls_province = 6871
+                }
+            }
+        }
+
+        timeout_effect = {
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 9010
+                x = 2
+                y = 4
+                z = 0
+                province = 11778
+                scale = 1.3
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 9011
+                x = -5
+                y = -1
+                z = 0
+                province = 6871
+                scale = 0.8
+                rotation = 0.7
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            155 = { clr_state_flag = EH_state_with_bosphorus_line_wall }
+            156 = { clr_state_flag = EH_state_with_bosphorus_line_wall }
+            159 = { clr_state_flag = EH_state_with_bosphorus_line_wall }
+            160 = { clr_state_flag = EH_state_with_bosphorus_line_wall }
+            news_event = EH_event.804
+            custom_effect_tooltip = EH_defense_line_will_be_destroyed_TT
+        }
+    }
+}
+
+EH_caucasus_defense_line_category = {
+    EH_construct_caucasus_defense_line = {
+        icon = GFX_decision_fortification
+        days_remove = 30
+        fire_only_once = yes
+
+        available = {
+            custom_trigger_tooltip = {
+                tooltip = EH_all_highlighted_states_must_have_bunker_TT
+                1140 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 9663
+                            id = 9694
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                1125 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 9674
+                            id = 11664
+                            id = 13828
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                674 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 9649
+                            id = 11633
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                673 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 9628
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                1126 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 670
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                672 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 666
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                671 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 6689
+                            id = 9645
+                            id = 4463
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                669 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 14328
+                            id = 9718
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                1085 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 14435
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                667 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 11559
+                            id = 684
+                            id = 3587
+                            id = 775
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+                1107 = {
+                    any_province_building_level = {
+                        province = {
+                            id = 3779
+                            id = 6765
+                            id = 11724
+                            id = 742
+                            id = 14600
+                            id = 6758
+                            id = 9503
+                        }
+                        building = bunker
+                        level > 3
+                    }
+                }
+            }
+        }
+
+        highlight_states = {
+            highlight_provinces = { 9663 9694 9674 11664 13828 9649 11633 9628 670 666 6689 9645 4463 14328 9718 14435 11559 684 3587 775 3779 6765 11724 742 14600 6758 9503 }
+	    	highlight_color_before_active = 3
+	    	highlight_color_while_active = 2
+	    }
+
+        modifier = {
+            land_bunker_effectiveness_factor = -0.15
+            civilian_factory_use = 6
+            production_speed_bunker_factor = 0.2
+        }
+
+        complete_effect = {
+            if = {
+                limit = { NOT = { has_global_flag = EH_caucasus_line_construction_flag } }
+                news_event = EH_event.806
+            }
+        }
+
+        remove_effect = {
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 9012
+                x = -31
+                y = 10
+                z = -2.3
+                province = 9628
+                rotation = -0.15
+                scale = 1.75
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 9013
+                x = -2
+                y = 2
+                z = -0.72
+                province = 6689
+                rotation = -0.35
+                scale = 1.75
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 9014
+                x = 1
+                y = -1
+                z = 0
+                province = 9718
+                scale = 0.6
+                rotation = 1.3
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 9015
+                x = -30
+                y = 7
+                z = 0
+                province = 9415
+                scale = 1.77
+                rotation = -0.24
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall
+                id = 9016
+                x = 7
+                y = 5
+                z = 0
+                province = 742
+                scale = 1.77
+                rotation = -0.2
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            1140 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            1125 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            674 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            673 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            1126 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            672 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            671 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            669 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            1085 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            667 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            1107 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            705 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            706 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            707 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            708 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            1206 = {
+                set_state_flag = EH_state_with_caucasus_line_wall
+                add_dynamic_modifier = {
+                    modifier = EH_caucasus_line_wall_modifier
+                }
+            }
+            newline = yes
+            custom_effect_tooltip = EH_construct_caucasus_defense_line_TT
+        }
+    }
+    EH_caucasus_defense_line_destruction_1 = {
+        icon = GFX_decision_fire
+        days_mission_timeout = 15
+
+        activation = {
+            ALN = {
+                OR = {
+                    controls_province = 9663
+                    controls_province = 9694
+                    controls_province = 9674
+                    controls_province = 11664
+                    controls_province = 13828
+                    controls_province = 9649
+                    controls_province = 11633
+                    controls_province = 9628
+                    controls_province = 670
+                    controls_province = 666
+                    controls_province = 6689
+                    controls_province = 9645
+                    controls_province = 4463
+                }
+            }
+            674 = {
+                has_state_flag = EH_state_with_caucasus_line_wall
+            }
+        }
+
+        available = {
+            ALN = {
+                NOT = {
+                    controls_province = 9663
+                    controls_province = 9694
+                    controls_province = 9674
+                    controls_province = 11664
+                    controls_province = 13828
+                    controls_province = 9649
+                    controls_province = 11633
+                    controls_province = 9628
+                    controls_province = 670
+                    controls_province = 666
+                    controls_province = 6689
+                    controls_province = 9645
+                    controls_province = 4463
+                }
+            }
+        }
+
+        timeout_effect = {
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 9012
+                x = -31
+                y = 10
+                z = -2.3
+                province = 9628
+                rotation = -0.15
+                scale = 1.75
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 9013
+                x = -2
+                y = 2
+                z = -0.72
+                province = 6689
+                rotation = -0.35
+                scale = 1.75
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            1140 = { clr_state_flag = EH_state_with_caucasus_line_wall }
+            1125 = { clr_state_flag = EH_state_with_caucasus_line_wall }
+            674 = { clr_state_flag = EH_state_with_caucasus_line_wall }
+            673 = { clr_state_flag = EH_state_with_caucasus_line_wall }
+            1126 = { clr_state_flag = EH_state_with_caucasus_line_wall }
+            672 = { clr_state_flag = EH_state_with_caucasus_line_wall }
+            671 = { clr_state_flag = EH_state_with_caucasus_line_wall }
+            news_event = EH_event.807
+            custom_effect_tooltip = EH_defense_line_will_be_destroyed_TT
+        }
+    }
+    EH_caucasus_defense_line_destruction_2 = {
+        icon = GFX_decision_fire
+        days_mission_timeout = 15
+
+        activation = {
+            ALN = {
+                OR = {
+                    controls_province = 14328
+                    controls_province = 9718
+                    controls_province = 14435
+                    controls_province = 11559
+                    controls_province = 684
+                    controls_province = 3587
+                    controls_province = 775
+                    controls_province = 3779
+                    controls_province = 6765
+                    controls_province = 11724
+                    controls_province = 742
+                    controls_province = 14600
+                    controls_province = 6758
+                    controls_province = 9503
+                }
+            }
+            155 = {
+                has_state_flag = EH_state_with_caucasus_line_wall
+            }
+        }
+
+        available = {
+            ALN = {
+                NOT = {
+                    controls_province = 14328
+                    controls_province = 9718
+                    controls_province = 14435
+                    controls_province = 11559
+                    controls_province = 684
+                    controls_province = 3587
+                    controls_province = 775
+                    controls_province = 3779
+                    controls_province = 6765
+                    controls_province = 11724
+                    controls_province = 742
+                    controls_province = 14600
+                    controls_province = 6758
+                    controls_province = 9503
+                }
+            }
+        }
+
+        timeout_effect = {
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 9014
+                x = 1
+                y = -1
+                z = 0
+                province = 9718
+                scale = 0.6
+                rotation = 1.3
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 9015
+                x = -30
+                y = 7
+                z = 0
+                province = 9415
+                scale = 1.77
+                rotation = -0.24
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            create_entity = {
+                entity = building_landmark_zenobia_wall_destroyed
+                id = 9016
+                x = 7
+                y = 5
+                z = 0
+                province = 742
+                scale = 1.77
+                rotation = -0.2
+                min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+                visible = EH_scenario_enabled
+            }
+            669 = { clr_state_flag = EH_state_with_caucasus_line_wall }
+            1085 = { clr_state_flag = EH_state_with_caucasus_line_wall }
+            667 = { clr_state_flag = EH_state_with_caucasus_line_wall }
+            1107 = { clr_state_flag = EH_state_with_caucasus_line_wall }
+            news_event = EH_event.808
+            custom_effect_tooltip = EH_defense_line_will_be_destroyed_TT
+        }
+    }
+}
+
+EH_start_scenario_cheat_category = {
+    EH_start_scenario_decision = {
+        icon = GFX_decision_generic_research
+
+        fire_only_once = yes
+
+        complete_effect = {
+            hidden_effect = { EH_convergence_event_chain_effect = yes }
+            set_global_flag = EH_scenario_launched_earlier_flag
+        }
+    }
+}

@@ -1,3 +1,5 @@
+import { TOC_DRAWER_BODY_LOCK_CLASS } from "@/shared/config/body-scroll-lock";
+
 export const TOC_IDS = {
   sidebar: "toc-sidebar",
   heading: "toc-heading",
@@ -61,7 +63,7 @@ export const TOC_DEFAULTS = {
 } as const;
 
 export const TOC_DRAWER = {
-  bodyLockClass: "toc-lock",
+  bodyLockClass: TOC_DRAWER_BODY_LOCK_CLASS,
   inertSelectors: ["#main-content", TOC_SELECTORS.header, TOC_SELECTORS.footer],
   openLabels: { expanded: "true", ariaLabel: TOC_LABELS.close },
   closedLabels: { expanded: "false", ariaLabel: TOC_LABELS.open },

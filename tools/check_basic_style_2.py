@@ -11,7 +11,6 @@ import sys
 import time
 from multiprocessing import Pool
 
-import requests
 from path_utils import clean_filepath
 
 startTime = time.time()
@@ -209,11 +208,6 @@ def main():
         help="Base branch for diff comparison (default: main)",
     )
     parser.add_argument(
-        "--no-gitlab",
-        action="store_true",
-        help="Disable GitLab integration even if environment variables are set",
-    )
-    parser.add_argument(
         "--workers",
         type=int,
         default=os.cpu_count() or 4,
@@ -224,11 +218,6 @@ def main():
         nargs="*",
         help="Files to check (positional argument for pre-commit)",
     )
-    # Keep the private token as a positional argument for backward compatibility
-    parser.add_argument(
-        "private_token", nargs="?", help="GitLab private token for posting results"
-    )
-
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -324,52 +313,6 @@ def main():
         print("File validation FAILED")
 
     logger.info("The script took {0} second!".format(time.time() - startTime))
-
-    # GitLab integration (only if not disabled and environment variables exist)
-    if not args.no_gitlab:
-        try:
-            projectId = os.environ["CI_PROJECT_ID"]
-            # Try to get private token from args or fallback to command line argument
-            privateToken = (
-                args.private_token
-                if args.private_token
-                else sys.argv[1] if len(sys.argv) > 1 else None
-            )
-
-            if privateToken and postResults:
-                headers = {"PRIVATE-TOKEN": privateToken}
-                payload = {"body": message}
-
-                if "CI_MERGE_REQUEST_IID" in os.environ:
-                    mergeRequestId = os.environ["CI_MERGE_REQUEST_IID"]
-                    r = requests.post(
-                        "https://gitlab.com/api/v4/projects/"
-                        + projectId
-                        + "/merge_requests/"
-                        + mergeRequestId
-                        + "/discussions",
-                        data=payload,
-                        headers=headers,
-                    )
-                    print("Posted results to merge request")
-                else:
-                    commitID = os.environ["CI_COMMIT_SHA"]
-                    r = requests.post(
-                        "https://gitlab.com/api/v4/projects/"
-                        + projectId
-                        + "/commits/"
-                        + commitID
-                        + "/discussions",
-                        data=payload,
-                        headers=headers,
-                    )
-                    print("Posted results to commit")
-            elif not postResults:
-                print("File validation passed Coding Standards: SUCCESS")
-        except KeyError:
-            logger.info("Not in GitLab CI environment, skipping GitLab integration")
-        except Exception:
-            print("Couldn't post results to gitlab")
 
     return bad_count
 

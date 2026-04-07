@@ -50,23 +50,28 @@ def extract_focus_properties(focus_lines):
     props = {
         "id": "",
         "icon": "",
+        "text_icon": "",
+        "overlay": "",
         "x": "",
         "y": "",
         "relative_position_id": "",
-        "cost": "",
         "offset": [],
+        "allow_branch": [],
+        "cost": "",
         "prerequisites": [],
         "mutually_exclusive": [],
         "will_lead_to_war_with": [],
+        "joint_trigger": [],
         "available": [],
-        "bypass": [],
         "cancel": [],
-        "completion_reward": [],
-        "ai_will_do": [],
-        "search_filters": "",
-        "allow_branch": [],
         "select_effect": [],
+        "bypass": [],
         "bypass_effect": [],
+        "completion_reward": [],
+        "completion_reward_joint_originator": [],
+        "completion_reward_joint_member": [],
+        "search_filters": "",
+        "ai_will_do": [],
         "other": [],
     }
 
@@ -100,19 +105,28 @@ def extract_focus_properties(focus_lines):
                 else:
                     # First icon
                     props["icon"] = [line]
+        elif line.startswith("text_icon ="):
+            props["text_icon"] = line
+        elif line.startswith("overlay ="):
+            props["overlay"] = line
         elif line.startswith("x ="):
             props["x"] = line
         elif line.startswith("y ="):
             props["y"] = line
         elif line.startswith("relative_position_id ="):
             props["relative_position_id"] = line
-        elif line.startswith("cost ="):
-            props["cost"] = line
         elif line.startswith("offset ="):
             block_lines, next_i = extract_block(focus_lines, i)
             props["offset"].append(block_lines)
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("allow_branch ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["allow_branch"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("cost ="):
+            props["cost"] = line
         elif line.startswith("search_filters ="):
             block_lines, next_i = extract_block(focus_lines, i)
             props["search_filters"] = block_lines
@@ -132,16 +146,15 @@ def extract_focus_properties(focus_lines):
                 props["mutually_exclusive"].append(block_lines)
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("joint_trigger ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["joint_trigger"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("available ="):
             block_lines, next_i = extract_block(focus_lines, i)
             if not is_empty_block(block_lines):
                 props["available"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("bypass ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            if not is_empty_block(block_lines):
-                props["bypass"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("cancel ="):
@@ -150,29 +163,40 @@ def extract_focus_properties(focus_lines):
                 props["cancel"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("completion_reward ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["completion_reward"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("ai_will_do ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["ai_will_do"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("allow_branch ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["allow_branch"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("select_effect ="):
             block_lines, next_i = extract_block(focus_lines, i)
             props["select_effect"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("bypass ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            if not is_empty_block(block_lines):
+                props["bypass"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
         elif line.startswith("bypass_effect ="):
             block_lines, next_i = extract_block(focus_lines, i)
             props["bypass_effect"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("completion_reward ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["completion_reward"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("completion_reward_joint_originator ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["completion_reward_joint_originator"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("completion_reward_joint_member ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["completion_reward_joint_member"] = block_lines
+            i = next_i  # Set i to the position after the block
+            continue  # Skip the i += 1 at the end of the loop
+        elif line.startswith("ai_will_do ="):
+            block_lines, next_i = extract_block(focus_lines, i)
+            props["ai_will_do"] = block_lines
             i = next_i  # Set i to the position after the block
             continue  # Skip the i += 1 at the end of the loop
         elif line == "cancel_if_invalid = yes":
@@ -207,7 +231,10 @@ def extract_block(lines, start_index):
         line = lines[i]
         block_lines.append(line)
 
-        brace_count += line.count("{") - line.count("}")
+        line_no_comment = line.split("#")[
+            0
+        ]  # Strip inline comments before counting braces
+        brace_count += line_no_comment.count("{") - line_no_comment.count("}")
 
         if brace_count == 0 and "{" in lines[start_index]:
             # We've closed all braces, block is complete
@@ -417,6 +444,10 @@ def format_focus_block(props, block_type="focus"):
     # 5. Cost
     if props["cost"]:
         lines.append(f'\t\t{props["cost"]}')
+    if props["text_icon"]:
+        lines.append(f'\t\t{props["text_icon"]}')
+    if props["overlay"]:
+        lines.append(f'\t\t{props["overlay"]}')
 
     # 6. Blank line before prerequisites/conditions
     lines.append("")
@@ -459,7 +490,14 @@ def format_focus_block(props, block_type="focus"):
         lines.append(f"\t\t{search_filters_line}")
         lines.append("")
 
-    # 10. Available block
+    # 10. Joint trigger (after search filters, before available)
+    if props["joint_trigger"]:
+        compacted_joint_trigger = compact_block(props["joint_trigger"][:])
+        for line in compacted_joint_trigger:
+            lines.append(line)
+        lines.append("")
+
+    # 11. Available block
     if props["available"]:
         compacted_available = compact_block(props["available"][:])
         for line in compacted_available:
@@ -507,7 +545,21 @@ def format_focus_block(props, block_type="focus"):
             lines.append(line)
         lines.append("")
 
-    # 15. Select effect (add log if missing)
+    # 15. Completion reward joint originator
+    if props["completion_reward_joint_originator"]:
+        compacted = compact_block(props["completion_reward_joint_originator"][:])
+        for line in compacted:
+            lines.append(line)
+        lines.append("")
+
+    # 16. Completion reward joint member
+    if props["completion_reward_joint_member"]:
+        compacted = compact_block(props["completion_reward_joint_member"][:])
+        for line in compacted:
+            lines.append(line)
+        lines.append("")
+
+    # 17. Select effect (add log if missing)
     if props["select_effect"]:
         has_log = any("log =" in line for line in props["select_effect"])
         if not has_log and props["id"]:
