@@ -45,6 +45,7 @@ declare -A SCRIPTS=(
     [events]="validate_events.py"
     [history-techs]="validate_history_techs.py"
     [unused-scripted]="validate_unused_scripted.py"
+    [oob-units]="validate_oob_units.py"
 )
 
 # name -> human-readable label
@@ -58,10 +59,11 @@ declare -A LABELS=(
     [events]="Event validation"
     [history-techs]="History technology dependency validation"
     [unused-scripted]="Unused scripted effects/triggers validation"
+    [oob-units]="OOB unit name validation"
 )
 
 # Ordered for consistent output
-ORDERED=(variables set-variables scripted-localisation cosmetic-tags decisions localisation events history-techs unused-scripted)
+ORDERED=(variables set-variables scripted-localisation cosmetic-tags decisions localisation events history-techs unused-scripted oob-units)
 
 declare -A PIDS=()
 
