@@ -10,11 +10,13 @@
 1. Open a terminal (PowerShell, CMD, Terminal, or any shell)
 
 2. Navigate to the `tools/` directory of the mod:
+
    ```
    cd path/to/Millennium-Dawn/tools
    ```
 
 3. Run the script:
+
    ```
    python3 gfx_entry_generator.py
    ```
@@ -38,6 +40,7 @@
 ## Verification
 
 After generating, check the changes:
+
 ```
 git status
 git diff
