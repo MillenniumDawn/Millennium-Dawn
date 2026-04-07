@@ -27,6 +27,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 MOD_IDS = {
     "release": "2777392649",
     "beta": "3374271790",
+    "test": "2777133449",
 }
 
 # Files that must always be included (even if unchanged in diff mode).
@@ -50,12 +51,10 @@ DEFAULT_EXCLUDES = {
     "SECURITY.md",
     "LICENSE",
     "README.md",
-    "Changelog.txt",
     "Millennium_Dawn.mod",
     "docs",
     "tools",
     "resources",
-    "scenario_tests",
     "node_modules",
     "vscode-userdata:",
     "pythontools.log",
