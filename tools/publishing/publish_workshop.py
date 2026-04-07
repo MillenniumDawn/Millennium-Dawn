@@ -225,8 +225,22 @@ def write_vdf(mod_dir: Path, mod_id: str) -> Path:
     return vdf_path
 
 
+def steam_login(steamcmd: Path, username: str) -> None:
+    """Log in to Steam interactively to cache credentials before uploading."""
+    print(f"  Logging in to Steam as '{username}'...")
+    print("  (Enter password / Steam Guard code if prompted)\n")
+    ret = subprocess.call([str(steamcmd), "+login", username, "+quit"])
+    if ret != 0:
+        sys.exit(f"ERROR: Steam login failed (exit code {ret})")
+    print("\n  Login successful — credentials cached.\n")
+
+
 def publish(mod_dir: Path, username: str, mod_id: str) -> None:
     steamcmd = find_steamcmd()
+
+    # Pre-login interactively so credentials are cached for the upload.
+    steam_login(steamcmd, username)
+
     vdf_path = write_vdf(mod_dir, mod_id)
     print(f"  Mod ID:   {mod_id}")
     print(f"  VDF:      {vdf_path}")
