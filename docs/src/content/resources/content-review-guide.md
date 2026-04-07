@@ -24,6 +24,22 @@ Content reviews ensure a consistent, high-quality product for both the team and 
 
 ---
 
+## Developer Expectations
+
+These are baseline expectations for all developers on the team:
+
+- **Communicate in English.** All Discord and internal communication must be in English, even between native speakers of the same language. Your work may outlast you, and others need to understand it.
+- **Always commit and push your work.** There is no acceptable reason for leaving code only on your local machine. Push regularly so the team has access to your progress.
+- **Complete your assigned project first.** New developers are assigned an initial project. Complete it before proposing new content. Tag a lead if you need a project assignment.
+- **Get your draft approved before coding.** Focus trees require a presentable draft (use [Diagram.net / draw.io](https://app.diagrams.net/) or similar) approved by a mentor or lead developer before you begin coding. See the [Focus Tree Lifecycle Checklist](/dev-resources/focus-tree-lifecycle-checklist/) for the full process.
+- **Localize everything before starting new work.** All projects must be fully localized before you move on. Half-localized content looks unfinished and will not be accepted.
+- **Ask when in doubt.** If you are unsure about a content decision, ask a lead developer or Council Member before proceeding.
+- **Review your own content first.** Complete this checklist and the standards in the [Code Resource](/dev-resources/code-resource/) before requesting a lead review.
+- **Read the [Focus Tree Design Principles](/dev-resources/focus-tree-design-principles/).** Familiarize yourself with the design philosophy for branch structure, pacing, and player choice.
+- **Set up your environment.** Run `python3 tools/setup.py` after cloning to install pre-commit hooks and tool dependencies. See the [Git Setup & Usage Guide](/player-tutorials/manual-install-instructions/) for full instructions.
+
+---
+
 ## Content Guidelines
 
 ### Economic Guidelines

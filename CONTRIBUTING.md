@@ -4,109 +4,127 @@ Thank you for your interest in contributing to Millennium Dawn!
 
 ## Quick Links
 
-- [Documentation](https://millenniumdawn.github.io/Millennium-Dawn/)
+- [Documentation Site](https://millenniumdawn.github.io/Millennium-Dawn/)
 - [Discord](http://discord.gg/millenniumdawn)
-- [Code Stylization Guide](./docs/src/content/resources/code-stylization-guide.md)
-- [Code Resources](./docs/src/content/resources/code-resource.md)
+- [Git Setup & Usage Guide](https://millenniumdawn.github.io/Millennium-Dawn/player-tutorials/manual-install-instructions/) — Cloning, branches, commits, PRs
+- [Code Stylization Guide](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/code-stylization-guide/) — Formatting and code structure
+- [Content Review Guide](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/content-review-guide/) — Quality checklist and developer expectations
+- [Focus Tree Design Principles](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/focus-tree-design-principles/) — Branch structure, pacing, choices
 
 ## Development Setup
 
-### Python (Required for Tools)
+### Prerequisites
+
+- **Python 3.10+** (3.12+ recommended to match CI)
+- **Git** with a GUI client ([GitKraken](https://www.gitkraken.com/) recommended, or [GitHub Desktop](https://desktop.github.com/))
+- **Text editor** — [Visual Studio Code](https://code.visualstudio.com/) recommended (see workspace instructions below)
+
+### One-Command Setup
+
+After cloning the repo, run the setup script. It installs pre-commit hooks and Python tool dependencies:
 
 ```bash
-pip install pre-commit
-pre-commit install
+python3 tools/setup.py
 ```
 
-### Pre-commit Usage
+That's it. Pre-commit hooks will now run automatically on every commit, catching style issues, encoding problems, and common mistakes before they reach CI.
+
+To verify your environment at any time:
 
 ```bash
-# Run all hooks
-pre-commit run --all-files
+python3 tools/setup.py --check
+```
 
-# Update hooks
-pre-commit autoupdate
+### Docs Site Setup (Optional)
+
+If you are editing the documentation site (under `docs/`), add the `--docs` flag. This requires [Node.js 24 LTS](https://nodejs.org/) and [Bun](https://bun.sh/):
+
+```bash
+python3 tools/setup.py --docs
+```
+
+To preview the docs site locally:
+
+```bash
+cd docs
+bun run dev    # opens at http://localhost:4321/
+```
+
+Before opening a docs PR, run the full check suite:
+
+```bash
+cd docs
+bun run ci
+```
+
+### VSCode Workspace (Recommended)
+
+The repo includes a pre-configured VSCode workspace with Paradox syntax highlighting, trailing whitespace cleanup, and other useful extensions:
+
+1. Open VSCode.
+2. Go to **File** > **Open Workspace**.
+3. Select `.vscode/hoi4_millennium_dawn.code-workspace`.
+4. Accept the popup to install recommended extensions.
+
+### Dev Tools
+
+All development scripts live in `tools/` and can be run by short name:
+
+```bash
+python3 tools/run.py --list                           # see all tools
+python3 tools/run.py estimate_gdp USA                 # run by name
+python3 tools/run.py find_idea common/ideas/Greek.txt # partial match works
+```
+
+See [tools/README.md](./tools/README.md) for the full directory layout and descriptions.
+
+### Pre-commit Hooks
+
+Hooks run automatically on every commit. You can also run them manually:
+
+```bash
+pre-commit run --all-files       # run all hooks on every file
+pre-commit run check-braces      # run a specific hook
+pre-commit autoupdate            # update hook versions
 ```
 
 ## Code Standards
 
-### Localization (.yml)
+### Localisation (.yml)
 
 - 1-space indentation
 - UTF-8 with BOM encoding
-- Remove trailing 0/1 after colons
+- Remove trailing version numbers after colons (`key: "value"`, not `key:0 "value"`)
 
 ### Script Files (.txt)
 
-- 1 tab indentation
-- Comments above/below code blocks
-- Include logging in effects
-- Follow naming conventions: `TAG_name_here`
-
-### Key Rules
-
+- Tab indentation (not spaces)
+- Include logging in all effects
+- Follow naming conventions: `TAG_focus_name_here`
 - Use `is_triggered_only = yes` for events
-- Include `ai_will_do` in focuses
-- Remove redundant code (`allowed = { always = no }`)
+- Include `ai_will_do` in all focuses and decisions
+- Remove redundant code (`allowed = { always = no }`, empty trigger blocks)
 
-### Docs Content Rules (`docs/`)
+See the [Code Stylization Guide](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/code-stylization-guide/) for the complete reference.
 
-- Docs are built with Astro 6 and content lives in `docs/src/content/**`.
-- Use Markdown/frontmatter only. Do not add Liquid tags (`{% ... %}` or `{{ ... }}`).
-- Internal links should be root-relative, for example: `[Tutorial](/tutorials/)`.
-- Do not hardcode `"/Millennium-Dawn/..."` in markdown links. Base path is applied during build.
-- Apply the same pattern to image links: `![Alt](/assets/images/example.png)`.
-- For country pages, keep metadata in frontmatter and write section content in markdown body.
+### Docs Content (`docs/`)
 
-### Docs Local Checks
-
-**Prerequisites:**
-- [Node.js 24 LTS](https://nodejs.org/) or newer (required by Astro 6)
-- [Bun](https://bun.com/) (package manager and script runner)
-
-If you only want to edit docs content (and are not a developer), follow these steps:
-
-1. Open a terminal in this repository.
-2. Go to the docs folder:
-
-```bash
-cd docs
-```
-
-3. First time only, install required packages:
-
-```bash
-bun install
-```
-
-4. Start the local docs website:
-
-```bash
-bun run dev
-```
-
-5. Open the local URL shown in the terminal (usually `http://localhost:4321/`).
-6. Edit content files in `docs/src/content/`, save, and refresh the browser.
-
-Before opening a PR, run these checks from the same `docs` folder:
-
-```bash
-bun run ci
-```
-
-Or run individual checks: `lint:md`, `lint:remark`, `check`, `build`, `check:links`, `check:og`, `check:a11y`, `check:perf`. Full checks also require Python 3 for some validation scripts.
-
-See [Code Stylization Guide](./docs/src/content/resources/code-stylization-guide.md) for details.
+- Built with Astro 6 — content lives in `docs/src/content/**`
+- Use Markdown and frontmatter only (no Liquid tags)
+- Internal links must be root-relative: `[Tutorial](/tutorials/)`
+- Do not hardcode `"/Millennium-Dawn/..."` — base path is applied during build
+- Image links follow the same pattern: `![Alt](/assets/images/example.png)`
 
 ## Pull Request Process
 
-1. Fork the repository
-2. Create a feature branch
-3. Make changes following style guidelines
-4. Run pre-commit hooks
-5. Update [Changelog.txt](./Changelog.txt)
-6. Add yourself to [AUTHORS.md](./docs/src/content/misc/authors.md)
-7. Submit a pull request
+1. Create a feature branch from `main`
+2. Run `python3 tools/setup.py --check` to verify your environment
+3. Make your changes following the style guidelines above
+4. Commit — pre-commit hooks run automatically and will flag issues
+5. Update [Changelog.txt](./Changelog.txt) with your changes (see format below)
+6. Add yourself to [AUTHORS.md](./docs/src/content/misc/authors.md) if this is your first contribution
+7. Push your branch and open a pull request on GitHub
+8. CI validation must pass and a team leader must approve before merge
 
 ## Changelog Guidelines
 

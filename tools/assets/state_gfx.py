@@ -1,24 +1,34 @@
 # Cooked by Warner
 # YOU SHOULD DO `pip install Pillow` IN CMD IF YOU GET ERRORS FOR 'PIL' MODULE.
 
-import os
-import PIL.Image
 import csv
+import os
 import re
+
+import PIL.Image
 from PIL import Image
 
-modfolder = 'Millennium_Dawn\\'
-mod = 'Millennium_Dawn'
-path = os.path.abspath(os.path.join(os.path.dirname(mod),'..'))
-states_dir = os.path.abspath(os.path.join(os.path.dirname(mod),'..\history\states'))
-definition_file = os.path.abspath(os.path.join(os.path.dirname(mod),'..\map\definition.csv'))
-desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop')
+modfolder = "Millennium_Dawn\\"
+mod = "Millennium_Dawn"
+path = os.path.abspath(os.path.join(os.path.dirname(mod), ".."))
+states_dir = os.path.abspath(os.path.join(os.path.dirname(mod), "..\history\states"))
+definition_file = os.path.abspath(
+    os.path.join(os.path.dirname(mod), "..\map\definition.csv")
+)
+desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
 
 state_ids = input("Enter the state ID(s) separated by spaces: ").split(" ")
-scale_number = int(input("Enter the scale (I suggest 2, but try one in game to see how big it becomes)(default is 1): ") or 1)
+scale_number = int(
+    input(
+        "Enter the scale (I suggest 2, but try one in game to see how big it becomes)(default is 1): "
+    )
+    or 1
+)
+
 
 def rgb_to_hex(rgb):
-    return '#%02x%02x%02x' % rgb
+    return "#%02x%02x%02x" % rgb
+
 
 def merge_provinces(image_path, target_hex_codes, replacement_hex_code):
     img = PIL.Image.open(image_path).convert("RGB")
@@ -31,21 +41,27 @@ def merge_provinces(image_path, target_hex_codes, replacement_hex_code):
             pixel_rgb = img_arr[x, y]
             pixel_hex = "#{:02x}{:02x}{:02x}".format(*pixel_rgb)
             if pixel_hex in target_hex_codes:
-                img_arr[x, y] = tuple(int(replacement_hex_code[i:i+2], 16) for i in range(1, len(replacement_hex_code), 2))
+                img_arr[x, y] = tuple(
+                    int(replacement_hex_code[i : i + 2], 16)
+                    for i in range(1, len(replacement_hex_code), 2)
+                )
     return img
+
 
 for state_id in state_ids:
     state_file = None
     for file_name in os.listdir(states_dir):
-        if file_name.startswith(state_id) and not any(char.isdigit() for char in file_name[len(state_id):]):
+        if file_name.startswith(state_id) and not any(
+            char.isdigit() for char in file_name[len(state_id) :]
+        ):
             state_file = os.path.join(states_dir, file_name)
             break
-        
+
     hex_codes = []
 
     if state_file:
         province_ids = []
-        with open(state_file, 'r', encoding='utf-8-sig') as file:
+        with open(state_file, "r", encoding="utf-8-sig") as file:
             state_data = file.read()
             match = re.findall(r"provinces\s*=\s*{([^}]*)}", state_data)
             if match:
@@ -58,8 +74,8 @@ for state_id in state_ids:
                 print("Could not extract state name from file name.")
                 continue
 
-        with open(definition_file, 'r') as file:
-            csv_reader = csv.reader(file, delimiter=';')
+        with open(definition_file, "r") as file:
+            csv_reader = csv.reader(file, delimiter=";")
             next(csv_reader)  # Skip header
             for row in csv_reader:
                 if len(row) < 4:
@@ -74,7 +90,7 @@ for state_id in state_ids:
                         hex_codes.append(hex_code)
                 except ValueError:
                     print(f"Skipping invalid province_id: {row[0]}")
-                    
+
         print("Province IDs:", province_ids)
         print("HEX Codes:", hex_codes)
         print("Let me cook...")
@@ -82,7 +98,9 @@ for state_id in state_ids:
     else:
         print("Couldn't find state file")
 
-    image_path = os.path.abspath(os.path.join(os.path.dirname(mod),'..\map\provinces.bmp'))
+    image_path = os.path.abspath(
+        os.path.join(os.path.dirname(mod), "..\map\provinces.bmp")
+    )
     target_hex_codes = hex_codes
     replacement_hex_code = "#ffffff"
 
