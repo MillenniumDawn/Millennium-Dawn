@@ -32,6 +32,13 @@ MOD_IDS = {
     "test": "2777133449",
 }
 
+# Display names written into descriptor.mod per target.
+MOD_NAMES = {
+    "release": "Millennium Dawn: A Modern Day Mod",
+    "beta": "Millennium Dawn: A Beta Test Mod",
+    "test": "MD Test",
+}
+
 # Files that must always be included (even if unchanged in diff mode).
 ALWAYS_KEEP = {"descriptor.mod", "thumbnail.png"}
 
@@ -349,6 +356,19 @@ def main() -> None:
             prune_unchanged(mod_dir, changed)
         else:
             mod_dir = copy_repo(tmp, excludes)
+
+        # Set the correct mod name in descriptor.mod for this target.
+        descriptor = mod_dir / "descriptor.mod"
+        target_name = MOD_NAMES[args.target]
+        if descriptor.exists():
+            text = descriptor.read_text(encoding="utf-8")
+            lines = text.splitlines(keepends=True)
+            for i, line in enumerate(lines):
+                if line.startswith("name="):
+                    lines[i] = f'name="{target_name}"\n'
+                    break
+            descriptor.write_text("".join(lines), encoding="utf-8")
+        print(f"  Mod name: {target_name}")
 
         print()
         publish(mod_dir, username, mod_id)
