@@ -49,7 +49,7 @@ Download and install whichever one you prefer.
 7. Click **Clone** and wait for it to finish.
 
 > If you see an "Authentication failed" error, follow the [Authentication Failed guide](/dev-resources/authentication-failed-cloning-repo) to fix it.
-
+>
 > If downloading at less than 200 KB/s, the clone may fail. Try again on a faster connection.
 
 ---
@@ -64,7 +64,7 @@ Download and install whichever one you prefer.
 6. Start the game. If it loads with the mod, you are done with this step.
 
 > **Still loading vanilla?** Make sure the `.mod` file is in the `mod` folder (not just inside `Millennium_Dawn`). If it still does not work, try the [Irony Mod Manager](https://bcssov.github.io/IronyModManager/) as an alternative launcher.
-
+>
 > You can move the `Millennium_Dawn` folder to another drive if needed. Just edit the file path inside the `.mod` file to point to the new location. Make sure the path does not contain Cyrillic or special characters.
 
 ---
