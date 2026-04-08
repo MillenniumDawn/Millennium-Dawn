@@ -50,16 +50,23 @@ const countryTag =
 
 const flagAssetPath = flagImage ? stripBase(flagImage) : "";
 const flagMeta = flagAssetPath ? getInternalImageAsset(flagAssetPath) : undefined;
-const flagBackground = flagMeta
-  ? await getImage({
-      src: flagMeta,
-      format: "webp",
-      quality: 75,
-      width: 1600,
-      height: 800,
-    })
-  : null;
-const showFlagBanner = Boolean(flagBackground);
+// Optimized src from map, else raw /assets/images/… like countries index.
+const flagBackgroundCss = flagMeta
+  ? cssUrl(
+      (
+        await getImage({
+          src: flagMeta,
+          format: "webp",
+          quality: 75,
+          width: 1600,
+          height: 800,
+        })
+      ).src,
+    )
+  : flagAssetPath.startsWith("/assets/images/")
+    ? cssUrl(flagAssetPath)
+    : null;
+const showFlagBanner = Boolean(flagBackgroundCss);
 ---
 
 <div
@@ -74,10 +81,10 @@ const showFlagBanner = Boolean(flagBackground);
     ]}
   >
     {
-      flagBackground && (
+      flagBackgroundCss && (
         <div
           class="absolute inset-0 z-0 pointer-events-none"
-          style={`background-image: ${cssUrl(flagBackground.src)}; background-position: center center; background-repeat: no-repeat; background-size: cover; mask-image: linear-gradient(180deg, black 0%, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(180deg, black 0%, black 50%, transparent 100%);`}
+          style={`background-image: ${flagBackgroundCss}; background-position: center center; background-repeat: no-repeat; background-size: cover; mask-image: linear-gradient(180deg, black 0%, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(180deg, black 0%, black 50%, transparent 100%);`}
           aria-hidden="true"
         />
       )

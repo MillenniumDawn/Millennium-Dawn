@@ -122,6 +122,23 @@ VALIDATORS = [
             "--no-color",
         ],
     },
+    {
+        "name": "oob units",
+        "prefixes": [
+            "history/units/",
+            "common/units/",
+            "common/ai_templates/",
+            "common/scripted_effects/",
+        ],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_oob_units.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
 ]
 
 

@@ -1,74 +1,58 @@
 ai_update_build_units = { #default is not to build units
-	if = { #Stop building units
+	if = { # Set flag — allow unit building
 		limit = {
-			NOT = {
-				has_country_flag = ai_yes_unit_build
-				has_country_flag = AI_is_threatened
-			}
+			NOT = { has_country_flag = AI_is_threatened }
 			OR = {
 				has_war = yes
-				if = {
-					limit = { has_government = democratic }
+				is_subject = yes
+				AND = {
+					has_government = democratic
 					threat > 0.15
 				}
-				else_if = {
-					limit = { has_government = neutrality }
+				AND = {
+					has_government = neutrality
 					threat > 0.30
 				}
-				else = {
+				AND = {
+					NOT = { has_government = democratic }
+					NOT = { has_government = neutrality }
 					threat > 0.10
 				}
 				has_government = nationalist
 				has_government = fascism
-				any_of_scopes = {
-					array = THIS.potential_and_current_enemies
-					OR = {
-						is_justifying_wargoal_against = PREV
-						has_wargoal_against = PREV
-					}
-				}
+				check_variable = { potential_and_current_enemies^num > 0 }
 			}
 		}
-		set_country_flag = ai_yes_unit_build
+		set_country_flag = AI_is_threatened
 		add_to_variable = { var = ai_wants_divisions value = 100 }
 		log = "[GetDateText]: [THIS.GetName]: AI Update - AI Build Unit Flag Set"
 	}
-	if = {
+	if = { # Clear flag — stop building
 		limit = {
-			OR = {
-				has_country_flag = ai_yes_unit_build #check will end here if they don't have the flag thus avoiding the expensive triggers below
-				has_country_flag = AI_is_threatened
-			}
+			has_country_flag = AI_is_threatened
+			is_subject = no
 			has_war = no
-			if = {
-				limit = { has_government = democratic }
-				threat < 0.15
-			}
-			else_if = {
-				limit = { has_government = neutrality }
-				threat < 0.30
-			}
-			else = {
-				threat < 0.10
-			}
 			NOT = { has_government = nationalist }
 			NOT = { has_government = fascism }
-			NOT = {
-				any_of_scopes = {
-					array = THIS.potential_and_current_enemies
-					OR = {
-						is_justifying_wargoal_against = PREV
-						has_wargoal_against = PREV
-					}
+			OR = {
+				AND = {
+					has_government = democratic
+					threat < 0.15
+				}
+				AND = {
+					has_government = neutrality
+					threat < 0.30
+				}
+				AND = {
+					NOT = { has_government = democratic }
+					NOT = { has_government = neutrality }
+					threat < 0.10
 				}
 			}
+			check_variable = { potential_and_current_enemies^num < 1 }
 		}
-		clr_country_flag = ai_yes_unit_build
-		if = {
-			limit = { has_country_flag = AI_is_threatened }
-			clr_country_flag = AI_is_threatened
-		}
+		clr_country_flag = AI_is_threatened
 		log = "[GetDateText]: [THIS.GetName]: AI Update - AI Build Unit Flag clear"
-		add_to_variable = { var = ai_wants_divisions value = -100 } #maybe causing a crash? You can edit vanilla vars? idk who did this
+		add_to_variable = { var = ai_wants_divisions value = -100 }
 	}
 }

@@ -32,7 +32,7 @@ Some textures, such as flags, require the TGA format instead. Be mindful of what
 
 ## Placing Files
 
-Ensure that you are in the gfx-input branch on the GitLab repository before dropping anything into the mod. This is where all graphics go regardless of what they are being made for.
+Ensure that you are in the gfx-input branch on the GitHub repository before dropping anything into the mod. This is where all graphics go regardless of what they are being made for.
 
 You can usually find the location where your graphics need to go relatively easily just by looking at the names of the folders. Compare them to what you’re working on. Folder layouts might vary; some are deeper in the files than others. Here are just some examples.
 

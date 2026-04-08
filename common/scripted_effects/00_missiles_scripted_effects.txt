@@ -1055,6 +1055,31 @@ calculate_SPY_civ_gui_vars = {
 }
 
 add_access_GNSS_mil_vars = {
+	# Rebuild access arrays so stale country scopes cannot survive into scope loops.
+	clear_array = temp_GNSS_mil_access_array
+	for_each_loop = {
+		array = GNSS_mil_access_array
+		value = v
+		if = {
+			limit = {
+				NOT = { check_variable = { v = 0 } }
+				var:v = { exists = yes }
+				NOT = { is_in_array = { array = temp_GNSS_mil_access_array value = v } }
+			}
+			add_to_array = { array = temp_GNSS_mil_access_array value = v }
+		}
+	}
+	clear_array = GNSS_mil_access_array
+	clear_array = GNSS_mil_access_system_idx_array
+	for_each_loop = {
+		array = temp_GNSS_mil_access_array
+		value = v
+		add_to_array = { array = GNSS_mil_access_array value = v }
+		var:v = {
+			add_to_array = { array = ROOT.GNSS_mil_access_system_idx_array value = var_GNSS_mil_system_idx }
+		}
+	}
+	clear_array = temp_GNSS_mil_access_array
 	set_variable = { temp_GNSS_mil_access_system_highest_idx = 0 }
 	set_variable = { var_GNSS_mil_army_speed_factor = var_GNSS_mil_army_speed_factor_base }
 	set_variable = { var_GNSS_mil_air_cas_efficiency = var_GNSS_mil_air_cas_efficiency_base }
@@ -1128,6 +1153,31 @@ add_access_GNSS_mil_vars = {
 }
 
 add_access_GNSS_civ_vars = {
+	# Rebuild access arrays so stale country scopes cannot survive into scope loops.
+	clear_array = temp_GNSS_civ_access_array
+	for_each_loop = {
+		array = GNSS_civ_access_array
+		value = v
+		if = {
+			limit = {
+				NOT = { check_variable = { v = 0 } }
+				var:v = { exists = yes }
+				NOT = { is_in_array = { array = temp_GNSS_civ_access_array value = v } }
+			}
+			add_to_array = { array = temp_GNSS_civ_access_array value = v }
+		}
+	}
+	clear_array = GNSS_civ_access_array
+	clear_array = GNSS_civ_access_system_idx_array
+	for_each_loop = {
+		array = temp_GNSS_civ_access_array
+		value = v
+		add_to_array = { array = GNSS_civ_access_array value = v }
+		var:v = {
+			add_to_array = { array = ROOT.GNSS_civ_access_system_idx_array value = var_GNSS_civ_system_idx }
+		}
+	}
+	clear_array = temp_GNSS_civ_access_array
 	set_variable = { temp_GNSS_civ_access_system_highest_idx = 0 }
 	set_variable = { var_GNSS_civ_production_speed_buildings_factor = var_GNSS_civ_production_speed_buildings_factor_base }
 	set_variable = { var_GNSS_civ_production_speed_infrastructure_factor = var_GNSS_civ_production_speed_infrastructure_factor_base }

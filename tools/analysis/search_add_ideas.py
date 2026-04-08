@@ -4,20 +4,22 @@ Script to search for 'add_ideas = <tag>' and 'add_timed_idea = { idea = <tag> }'
 Supports searching single files, multiple files, or entire directories recursively.
 """
 
+import argparse
 import os
 import re
-import argparse
 from pathlib import Path
-from typing import List, Tuple, Set
+from typing import List, Set, Tuple
 
 
-def find_idea_patterns(content: str, filename: str = "") -> List[Tuple[str, int, str, str]]:
+def find_idea_patterns(
+    content: str, filename: str = ""
+) -> List[Tuple[str, int, str, str]]:
     results = []
-    lines = content.split('\n')
+    lines = content.split("\n")
 
-    simple_pattern = r'^\s*add_ideas\s*=\s*(?:{?\s*)?([A-Za-z0-9_]+)(?:\s*}?)?\s*$'
-    timed_pattern = r'^\s*add_timed_idea\s*=\s*{'
-    idea_in_timed_pattern = r'^\s*idea\s*=\s*([A-Za-z0-9_]+)\s*$'
+    simple_pattern = r"^\s*add_ideas\s*=\s*(?:{?\s*)?([A-Za-z0-9_]+)(?:\s*}?)?\s*$"
+    timed_pattern = r"^\s*add_timed_idea\s*=\s*{"
+    idea_in_timed_pattern = r"^\s*idea\s*=\s*([A-Za-z0-9_]+)\s*$"
 
     in_timed_block = False
     timed_block_start_line = 0
@@ -51,7 +53,7 @@ def find_idea_patterns(content: str, filename: str = "") -> List[Tuple[str, int,
 
 def search_file(filepath: str) -> List[Tuple[str, int, str, str]]:
     try:
-        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
             content = f.read()
         return find_idea_patterns(content, os.path.basename(filepath))
     except Exception as e:
@@ -63,7 +65,7 @@ def search_directory(directory: str, file_extensions: List[str] = None) -> dict:
     results = {}
 
     if file_extensions is None:
-        file_extensions = ['.txt', '.yml', '.yaml']
+        file_extensions = [".txt", ".yml", ".yaml"]
 
     for root, dirs, files in os.walk(directory):
         for file in files:
@@ -76,7 +78,9 @@ def search_directory(directory: str, file_extensions: List[str] = None) -> dict:
     return results
 
 
-def filter_excluded_tags(matches: List[Tuple[str, int, str, str]], exclude_prefixes: List[str]) -> List[Tuple[str, int, str, str]]:
+def filter_excluded_tags(
+    matches: List[Tuple[str, int, str, str]], exclude_prefixes: List[str]
+) -> List[Tuple[str, int, str, str]]:
     if not exclude_prefixes:
         return matches
 
@@ -94,7 +98,9 @@ def filter_excluded_tags(matches: List[Tuple[str, int, str, str]], exclude_prefi
     return filtered_matches
 
 
-def print_results(results: dict, show_line_numbers: bool = True, show_full_line: bool = True):
+def print_results(
+    results: dict, show_line_numbers: bool = True, show_full_line: bool = True
+):
     if not results:
         print("No idea patterns found.")
         return
@@ -128,24 +134,44 @@ Examples:
   python search_add_ideas.py file1.txt file2.txt
   python search_add_ideas.py -d common/ --exclude COM IND
   python search_add_ideas.py file.txt --exclude BRA USA
-        """
+        """,
     )
 
-    parser.add_argument('paths', nargs='+', help='Files or directories to search')
-    parser.add_argument('-d', '--directory', action='store_true',
-                       help='Treat paths as directories to search recursively')
-    parser.add_argument('-e', '--extensions', nargs='+', default=['.txt', '.yml', '.yaml'],
-                       help='File extensions to include when searching directories')
-    parser.add_argument('--no-line-numbers', action='store_true',
-                       help='Hide line numbers in output')
-    parser.add_argument('--no-full-line', action='store_true',
-                       help='Hide full line content in output')
-    parser.add_argument('--unique-tags', action='store_true',
-                       help='Show only unique idea tags found')
-    parser.add_argument('--exclude', nargs='+', default=[],
-                       help='Exclude idea tags that start with these prefixes (e.g., COM IND)')
-    parser.add_argument('--pattern-type', choices=['all', 'add_ideas', 'add_timed_idea'],
-                       default='all', help='Filter by pattern type')
+    parser.add_argument("paths", nargs="+", help="Files or directories to search")
+    parser.add_argument(
+        "-d",
+        "--directory",
+        action="store_true",
+        help="Treat paths as directories to search recursively",
+    )
+    parser.add_argument(
+        "-e",
+        "--extensions",
+        nargs="+",
+        default=[".txt", ".yml", ".yaml"],
+        help="File extensions to include when searching directories",
+    )
+    parser.add_argument(
+        "--no-line-numbers", action="store_true", help="Hide line numbers in output"
+    )
+    parser.add_argument(
+        "--no-full-line", action="store_true", help="Hide full line content in output"
+    )
+    parser.add_argument(
+        "--unique-tags", action="store_true", help="Show only unique idea tags found"
+    )
+    parser.add_argument(
+        "--exclude",
+        nargs="+",
+        default=[],
+        help="Exclude idea tags that start with these prefixes (e.g., COM IND)",
+    )
+    parser.add_argument(
+        "--pattern-type",
+        choices=["all", "add_ideas", "add_timed_idea"],
+        default="all",
+        help="Filter by pattern type",
+    )
 
     args = parser.parse_args()
 
@@ -167,10 +193,12 @@ Examples:
             else:
                 print(f"Warning: {path} is not a file, skipping...")
 
-    if args.pattern_type != 'all':
+    if args.pattern_type != "all":
         filtered_results = {}
         for filepath, matches in all_results.items():
-            filtered_matches = [match for match in matches if match[3] == args.pattern_type]
+            filtered_matches = [
+                match for match in matches if match[3] == args.pattern_type
+            ]
             if filtered_matches:
                 filtered_results[filepath] = filtered_matches
         all_results = filtered_results
@@ -193,9 +221,11 @@ Examples:
         for tag in sorted(unique_tags):
             print(f"  {tag}")
     else:
-        print_results(all_results,
-                     show_line_numbers=not args.no_line_numbers,
-                     show_full_line=not args.no_full_line)
+        print_results(
+            all_results,
+            show_line_numbers=not args.no_line_numbers,
+            show_full_line=not args.no_full_line,
+        )
 
 
 if __name__ == "__main__":
