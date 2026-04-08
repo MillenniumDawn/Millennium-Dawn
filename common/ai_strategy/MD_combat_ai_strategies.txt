@@ -18,7 +18,7 @@ default_army_production_strategy = {
 	ai_strategy = { type = role_ratio id = apc_mechanized value = 50 }
 	ai_strategy = { type = role_ratio id = ifv_mechanized value = 50 }
 	ai_strategy = { type = role_ratio id = armor value = 35 }
-	ai_strategy = { type = role_ratio id = marines value = 10 }
+	ai_strategy = { type = role_ratio id = marines value = 15 }
 	ai_strategy = { type = role_ratio id = Air_helicopters value = 5 }
 	ai_strategy = { type = role_ratio id = Air_mech value = 10 }
 	ai_strategy = { type = role_ratio id = Special_Forces value = 40 }
@@ -42,7 +42,7 @@ default_army_production_strategy_maj = {
 	ai_strategy = { type = role_ratio id = apc_mechanized value = 35 }
 	ai_strategy = { type = role_ratio id = ifv_mechanized value = 50 }
 	ai_strategy = { type = role_ratio id = armor value = 40 }
-	ai_strategy = { type = role_ratio id = marines value = 20 }
+	ai_strategy = { type = role_ratio id = marines value = 25 }
 	ai_strategy = { type = role_ratio id = Air_helicopters value = 5 }
 	ai_strategy = { type = role_ratio id = Air_mech value = 15 }
 	ai_strategy = { type = role_ratio id = Special_Forces value = 50 }
@@ -63,7 +63,7 @@ default_army_production_strategy_global = {
 	ai_strategy = { type = role_ratio id = apc_mechanized value = 20 }
 	ai_strategy = { type = role_ratio id = ifv_mechanized value = 50 }
 	ai_strategy = { type = role_ratio id = armor value = 40 }
-	ai_strategy = { type = role_ratio id = marines value = 20 }
+	ai_strategy = { type = role_ratio id = marines value = 25 }
 	ai_strategy = { type = role_ratio id = Air_helicopters value = 5 }
 	ai_strategy = { type = role_ratio id = Air_mech value = 15 }
 	ai_strategy = { type = role_ratio id = Special_Forces value = 50 }
@@ -163,12 +163,12 @@ default_air_unit_production_low_mils = {
 	enable = { num_of_military_factories < 25 }
 	abort_when_not_enabled = yes
 	#Focus production around light multi-role fighters, to allow for a cheap and flexible air force for poor counties
-	ai_strategy = { type = unit_ratio id = fighter value = 5 }
+	ai_strategy = { type = unit_ratio id = fighter value = 15 }
 	ai_strategy = { type = unit_ratio id = cas value = 5 }
 	ai_strategy = { type = unit_ratio id = naval_bomber value = 2 }
-	ai_strategy = { type = unit_ratio id = tactical_bomber value = 20 }
+	ai_strategy = { type = unit_ratio id = tactical_bomber value = 15 }
 	ai_strategy = { type = unit_ratio id = heavy_fighter value = 2 }
-	ai_strategy = { type = unit_ratio id = interceptor value = 2 }
+	ai_strategy = { type = unit_ratio id = interceptor value = 5 }
 	ai_strategy = { type = unit_ratio id = scout_plane value = 2 }
 	ai_strategy = { type = unit_ratio id = suicide value = 2 }
 	ai_strategy = { type = unit_ratio id = strategic_bomber value = 1 }
@@ -1166,6 +1166,122 @@ plane_limiter = {
 	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_maritime_patrol_airframe value = -100 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_air_transport_airframe value = -100 }
 	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_scout_airframe value = -100 }
+}
+
+### WARTIME AI BEHAVIOR IMPROVEMENTS ###
+# Inspired by Ebby Warfare Overhaul
+
+# When at war with enough divisions, shift composition toward offensive units
+wartime_offensive_composition = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		num_divisions > 24
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = infantry value = -5 }
+	ai_strategy = { type = role_ratio id = garrison value = -5 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 10 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = 10 }
+	ai_strategy = { type = role_ratio id = armor value = 10 }
+	ai_strategy = { type = role_ratio id = Air_mech value = 5 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 5 }
+}
+
+# Majors at war should build armies more aggressively
+major_wartime_commitment = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		is_major = yes
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = force_build_armies value = 35 }
+}
+
+# Wartime air superiority push — boost fighters and CAS when at war with enough industry
+wartime_air_superiority = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		NOT = { original_tag = USA }
+		NOT = { original_tag = CHI }
+	}
+	enable = {
+		has_war = yes
+		num_of_military_factories > 10
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = unit_ratio id = fighter value = 12 }
+	ai_strategy = { type = unit_ratio id = interceptor value = 6 }
+	ai_strategy = { type = unit_ratio id = cas value = 8 }
+	ai_strategy = { type = unit_ratio id = naval_bomber value = 4 }
+	ai_strategy = { type = air_factory_balance value = 5 }
+}
+
+# During war, stop spamming offices and internet stations — focus on military buildings
+wartime_stop_office_spam = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = { has_war = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = building_target id = offices value = -10 }
+	ai_strategy = { type = building_target id = internet_station value = -5 }
+}
+
+# During war, push infrastructure for supply
+wartime_logistics_support = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = { has_war = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = building_target id = infrastructure value = 8 }
+}
+
+# Wartime military factory ratio push for land majors
+land_major_wartime_industry = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		OR = {
+			original_tag = GER
+			original_tag = SOV
+			original_tag = CHI
+			original_tag = RAJ
+		}
+	}
+	enable = { has_war = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = building_target id = arms_factory value = 20 }
+	ai_strategy = { type = building_target id = fuel_silo value = 8 }
+	ai_strategy = { type = building_target id = synthetic_refinery value = 8 }
+	ai_strategy = { type = building_target id = infrastructure value = 14 }
+	ai_strategy = { type = added_military_to_civilian_factory_ratio value = 50 } # AI_ratio_military applies -25 baseline, so net +25 during war
+}
+
+# Wartime military factory ratio push for naval majors
+naval_major_wartime_industry = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		OR = {
+			original_tag = USA
+			original_tag = ENG
+			original_tag = FRA
+			original_tag = JAP
+			original_tag = ITA
+		}
+	}
+	enable = { has_war = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = building_target id = arms_factory value = 16 }
+	ai_strategy = { type = building_target id = dockyard value = 10 }
+	ai_strategy = { type = building_target id = fuel_silo value = 12 }
+	ai_strategy = { type = building_target id = synthetic_refinery value = 10 }
+	ai_strategy = { type = building_target id = infrastructure value = 10 }
+	ai_strategy = { type = added_military_to_civilian_factory_ratio value = 45 } # AI_ratio_military applies -25 baseline, so net +20 during war
 }
 
 plane_limiter_potato = {
