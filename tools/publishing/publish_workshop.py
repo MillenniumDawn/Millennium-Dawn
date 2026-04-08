@@ -18,16 +18,25 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 from pathlib import Path
 
 HOI4_APP_ID = "394360"
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
 # Workshop mod IDs for each target.
 MOD_IDS = {
     "release": "2777392649",
     "beta": "3374271790",
     "test": "2777133449",
+}
+
+# Display names written into descriptor.mod per target.
+MOD_NAMES = {
+    "release": "Millennium Dawn: A Modern Day Mod",
+    "beta": "Millennium Dawn: A Beta Test Mod",
+    "test": "MD Test",
 }
 
 # Files that must always be included (even if unchanged in diff mode).
@@ -60,6 +69,47 @@ DEFAULT_EXCLUDES = {
     "pythontools.log",
     "__pycache__",
 }
+
+
+def elapsed_str(start: float) -> str:
+    s = int(time.time() - start)
+    if s < 60:
+        return f"{s}s"
+    return f"{s // 60}m {s % 60:02d}s"
+
+
+class Spinner:
+    """Animated spinner that shows elapsed time on a single line."""
+
+    FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
+    def __init__(self, label: str):
+        self._label = label
+        self._start = time.time()
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._spin, daemon=True)
+
+    def _spin(self) -> None:
+        i = 0
+        while not self._stop.is_set():
+            frame = self.FRAMES[i % len(self.FRAMES)]
+            sys.stdout.write(
+                f"\r  {frame} {self._label} [{elapsed_str(self._start)}]   "
+            )
+            sys.stdout.flush()
+            i += 1
+            self._stop.wait(0.1)
+
+    def __enter__(self) -> "Spinner":
+        self._thread.start()
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        self._stop.set()
+        self._thread.join()
+        dt = elapsed_str(self._start)
+        sys.stdout.write(f"\r  + {self._label} [{dt}]\n")
+        sys.stdout.flush()
 
 
 def find_steamcmd() -> Path:
@@ -99,6 +149,16 @@ def get_changed_files(base_ref: str) -> set[str]:
     return files
 
 
+def dir_stats(root: Path) -> tuple[int, int]:
+    """Return (file_count, total_bytes) for a directory tree."""
+    count, total = 0, 0
+    for path in root.rglob("*"):
+        if path.is_file():
+            count += 1
+            total += path.stat().st_size
+    return count, total
+
+
 def copy_repo(dest_parent: Path, excludes: set[str]) -> Path:
     dest = dest_parent / "mod"
 
@@ -109,11 +169,15 @@ def copy_repo(dest_parent: Path, excludes: set[str]) -> Path:
             if n in excludes or any(fnmatch.fnmatch(n, p) for p in excludes)
         }
 
-    shutil.copytree(REPO_ROOT, dest, ignore=_ignore)
+    with Spinner("Copying mod files"):
+        shutil.copytree(REPO_ROOT, dest, ignore=_ignore)
+
+    count, total = dir_stats(dest)
+    print(f"    {count:,} files, {format_size(total)}")
     return dest
 
 
-def format_size(n: int) -> str:
+def format_size(n: int | float) -> str:
     for unit in ("B", "KB", "MB", "GB"):
         if n < 1024:
             return f"{n:.1f} {unit}"
@@ -168,12 +232,30 @@ def write_vdf(mod_dir: Path, mod_id: str) -> Path:
     return vdf_path
 
 
+def steam_login(steamcmd: Path, username: str) -> None:
+    """Log in to Steam interactively to cache credentials before uploading."""
+    print(f"  Logging in to Steam as '{username}'...")
+    print("  (Enter password / Steam Guard code if prompted)\n")
+    ret = subprocess.call([str(steamcmd), "+login", username, "+quit"])
+    if ret != 0:
+        sys.exit(f"ERROR: Steam login failed (exit code {ret})")
+    print("\n  Login successful — credentials cached.\n")
+
+
 def publish(mod_dir: Path, username: str, mod_id: str) -> None:
     steamcmd = find_steamcmd()
+
+    # Pre-login interactively so credentials are cached for the upload.
+    steam_login(steamcmd, username)
+
     vdf_path = write_vdf(mod_dir, mod_id)
-    print(f"  Target: {mod_id}")
-    print(f"  VDF: {vdf_path}")
-    subprocess.run(
+    print(f"  Mod ID:   {mod_id}")
+    print(f"  VDF:      {vdf_path}")
+    print(f"  steamcmd: {steamcmd}")
+    print()
+
+    start = time.time()
+    proc = subprocess.Popen(
         [
             str(steamcmd),
             "+login",
@@ -182,11 +264,45 @@ def publish(mod_dir: Path, username: str, mod_id: str) -> None:
             str(vdf_path),
             "+quit",
         ],
-        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
     )
+
+    phase = "Connecting"
+    for line in proc.stdout:
+        line = line.rstrip()
+        if not line:
+            continue
+
+        # Detect phase transitions from steamcmd output.
+        low = line.lower()
+        if "logging in" in low or "login" in low:
+            phase = "Logging in"
+        elif "waiting for confirmation" in low:
+            phase = "Waiting for Steam Guard"
+        elif "preparing" in low:
+            phase = "Preparing upload"
+        elif "uploading content" in low:
+            phase = "Uploading content"
+        elif "uploading preview" in low:
+            phase = "Uploading preview"
+        elif "committing" in low:
+            phase = "Committing update"
+
+        # Show steamcmd output with elapsed time.
+        print(f"  [{elapsed_str(start)}] {phase}: {line}")
+
+    proc.wait()
+    if proc.returncode != 0:
+        sys.exit(f"ERROR: steamcmd exited with code {proc.returncode}")
+
+    print(f"\n  Upload completed in {elapsed_str(start)}")
 
 
 def main() -> None:
+    total_start = time.time()
+
     parser = argparse.ArgumentParser(
         description="Publish Millennium Dawn to Steam Workshop.",
     )
@@ -225,24 +341,42 @@ def main() -> None:
     excludes = set() if args.no_default_excludes else set(DEFAULT_EXCLUDES)
     excludes.update(args.exclude)
 
-    print(f"Repo:   {REPO_ROOT}")
-    print(f"Target: {args.target} (mod {mod_id})")
+    print()
+    print(f"  Repo:   {REPO_ROOT}")
+    print(f"  Target: {args.target} (mod {mod_id})")
+    print(f"  Mode:   {'diff from ' + args.base_ref if args.base_ref else 'full'}")
+    print()
 
     tmp = Path(tempfile.mkdtemp(prefix="md_publish_"))
     try:
         if args.base_ref:
             changed = get_changed_files(args.base_ref)
-            print(f"{len(changed)} file(s) changed since {args.base_ref}")
+            print(f"  {len(changed)} file(s) changed since {args.base_ref}")
             mod_dir = copy_repo(tmp, excludes)
             prune_unchanged(mod_dir, changed)
         else:
             mod_dir = copy_repo(tmp, excludes)
 
+        # Set the correct mod name in descriptor.mod for this target.
+        descriptor = mod_dir / "descriptor.mod"
+        target_name = MOD_NAMES[args.target]
+        if descriptor.exists():
+            text = descriptor.read_text(encoding="utf-8")
+            lines = text.splitlines(keepends=True)
+            for i, line in enumerate(lines):
+                if line.startswith("name="):
+                    lines[i] = f'name="{target_name}"\n'
+                    break
+            descriptor.write_text("".join(lines), encoding="utf-8")
+        print(f"  Mod name: {target_name}")
+
+        print()
         publish(mod_dir, username, mod_id)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
-    print("Done.")
+    print(f"\n  Total time: {elapsed_str(total_start)}")
+    print()
 
 
 if __name__ == "__main__":
