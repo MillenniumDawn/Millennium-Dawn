@@ -6,6 +6,8 @@
 	NDefines.NGame.MAX_SCRIPTED_LOC_RECURSION = 40
 	NDefines.NGame.ENERGY_RESOURCE = "oil" -- sets what resource is used for energy. We can adjust this later to a proper resource that is tradeable
 	NDefines.NGame.CHECKSUM_SALT = "MillenniumDawn"
+	NDefines.NGame.COMBAT_LOG_MAX_MONTHS = 6 -- 12; halve combat log retention for performance
+	NDefines.NGame.MESSAGE_TIMEOUT_DAYS = 7 -- 60; messages expire sooner to reduce memory
 
 	-- NDiplomacy Defines
 	NDefines.NDiplomacy.MAX_OPINION_VALUE = 300
@@ -181,6 +183,13 @@
 	NDefines.NCountry.BASE_STABILITY_WAR_FACTOR = -0.15
 	NDefines.NCountry.WAR_SUPPORT_OFFNSIVE_WAR = -0.1
 	NDefines.NCountry.WAR_SUPPORT_DEFENSIVE_WAR = 0.2 -- 1
+	NDefines.NCountry.EVENT_PROCESS_OFFSET = 30 -- 20; stagger event processing across 30 ticks to reduce spike load with 200+ countries
+	NDefines.NCountry.COUNTRY_SCORE_MULTIPLIER = 0 -- 1.0; disable cosmetic VP score calculations for performance
+	NDefines.NCountry.ARMY_SCORE_MULTIPLIER = 0 -- 0.15
+	NDefines.NCountry.NAVY_SCORE_MULTIPLIER = 0 -- 1.0
+	NDefines.NCountry.AIR_SCORE_MULTIPLIER = 0 -- 0.1
+	NDefines.NCountry.INDUSTRY_SCORE_MULTIPLIER = 0 -- 1.0
+	NDefines.NCountry.PROVINCE_SCORE_MULTIPLIER = 0 -- 0.1
 	NDefines.NCountry.MAJOR_IC_RATIO = 3                            -- difference in total factories needed to be considered major with respect to other nation
 	NDefines.NCountry.MAJOR_MIN_FACTORIES = 35						-- need at least these many factories to become a major
 	NDefines.NCountry.MIN_MAJOR_COUNTRIES	= 8						-- MIN_MAJOR_COUNTRIES countries with most factories will be considered as major countries
@@ -738,6 +747,8 @@
 	NDefines.NNavy.NAVAL_COMBAT_AIR_STRENGTH_TARGET_SCORE = 5                         -- how much score factor from low health (scales between 0->this number)
 	NDefines.NNavy.NAVAL_COMBAT_AIR_LOW_AA_TARGET_SCORE = 5                           -- how much score factor from low AA guns (scales between 0->this number)
 
+	NDefines.NNavy.NAVAL_COMBAT_RESULT_TIMEOUT_YEARS = 1 -- 2; halve naval combat result history retention
+	NDefines.NNavy.CONVOY_LOSS_HISTORY_TIMEOUT_MONTHS = 3 -- 6; halve convoy loss history retention
 	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_MANPOWER_FACTOR = 0.01                        -- war score gained for every manpower killed when sinking a ship
 	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_PRODUCTION_COST_FACTOR = 0.01   --0.04                       -- war score gained for every IC of the sunk ship
 	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_CONVOY = 1.25  --10                       -- war score gained for every sunk convoy
@@ -932,7 +943,6 @@
 	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20				-- Amount of CAS planes requested per enemy army
 
 	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 65
-	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
 	NDefines.NAI.MIN_WANTED_MAX_FUEL = 25
 	NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 2.5 -- Reduced from 5 to 2.5/originally was 10 but caused issues with the AI being unable to use their planes on missions
 	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
@@ -969,7 +979,12 @@
 	NDefines.NAI.LAND_COMBAT_AIR_SUPERIORITY_IMPORTANCE = 1.5
 	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.8
 	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
+	NDefines.NAI.LAND_COMBAT_GUIDE_DISTANCE = 400.0 -- 290; wider zone for CAS plane assignment
+	NDefines.NAI.STR_BOMB_AIR_SUPERIORITY_IMPORTANCE = 0.7 -- 0.10; AI actually escorts its strategic bomber fleets
+	NDefines.NAI.LAND_DEFENSE_MIN_FACTORIES_FOR_AIR_IMPORTANCE = 2 -- 5; even small nations value air defense
 	NDefines.NAI.MAX_AIR_REGIONS_TO_CARE_ABOUT = 7
+	NDefines.NAir.ACE_WING_SIZE = 25 -- 100; smaller wing size for ace bonus scaling (MD uses smaller wings)
+	NDefines.NFocus.MAX_SAVED_FOCUS_PROGRESS = 20 -- 10; AI can restart more focuses after interruption
 	NDefines.NAI.AI_FRACTION_OF_FIGHTERS_RESERVED_FOR_INTERCEPTION = 0.10
 	NDefines.NAI.WANTED_LAND_PLANES_PER_DIVISION = 30
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of priority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
@@ -980,6 +995,17 @@
 	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.03		-- ai will try to build a silo per this ratio of civ factories
 	NDefines.NAI.NUM_SILOS_PER_MILITARY_FACTORIES = 0.03		-- ai will try to build a silo per this ratio of mil factories
 	NDefines.NAI.NUM_SILOS_PER_DOCKYARDS = 0.03
+
+	-- AI Refresh Frequency — reduce expensive periodic checks for 200+ nation mod
+	NDefines.NAI.DAYS_BETWEEN_CHECK_BEST_TEMPLATE = 14 -- 7; 2x less frequent template re-evaluation
+	NDefines.NAI.DAYS_BETWEEN_CHECK_BEST_EQUIPMENT = 14 -- 7; 2x less frequent equipment re-evaluation
+	NDefines.NAI.DAYS_BETWEEN_AIR_PRIORITIES_UPDATE = 14 -- 4; less frequent than vanilla to reduce CPU load
+
+	-- AI Combat Responsiveness — more frequent than vanilla for smarter wartime AI (trades CPU for quality)
+	NDefines.NAI.HOURS_BETWEEN_ENCIRCLEMENT_DISCOVERY = 24 -- 72; 3x faster encirclement detection
+	NDefines.NAI.AI_UPDATE_ROLES_FREQUENCY_HOURS = 12 -- 48; 4x faster unit role reassignment
+	NDefines.NAI.UPDATE_SUPPLY_MOTORIZATION_FREQUENCY_HOURS = 24 -- 52; 2x faster supply motorization response
+	NDefines.NAI.UPDATE_SUPPLY_BOTTLENECKS_FREQUENCY_HOURS = 48 -- 168; 3.5x faster supply bottleneck response
 
 	-- AI Research Stuff
 	NDefines.NAI.RESEARCH_WEIGHT_TRUNCATION_THRESHOLD = 0.5 -- Reduced this from 0.75

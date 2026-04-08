@@ -1,0 +1,1430 @@
+# War Declaration Intelligence Layer
+# Inspired by Ebby Warfare Overhaul
+#
+# Each conflict pairing has a 5-block readiness-gated progression:
+#   1. prepare     — fires when wargoal exists, builds up armies
+#   2. delay_demo  — democracies below threshold get declare_war penalty
+#   3. ready_demo  — democracies above threshold get declare_war bonus
+#   4. ready_nat   — nationalists/fascists fire at lower threshold with higher aggression
+#   5. ready_mid   — communism/neutrality mid-range threshold
+#   6. failsafe    — anti-stall: forces declaration when clearly overpowered
+#
+# Design notes:
+# - Democracies at war get hard -120 suppression with no positive offset (no two-front wars)
+# - Subjects lose wargoals on puppeting, so has_wargoal_against + abort_when_not_enabled gates them
+# - Neutrality and communism both route through the ready_mid tier
+
+### CHI vs TAI — Cross-Strait Conflict ###
+
+CHI_prepare_cross_strait_TAI = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = TAI
+		NOT = { has_war_with = TAI }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = TAI value = 180 }
+	ai_strategy = { type = front_unit_request tag = TAI value = 12 }
+	ai_strategy = { type = force_build_armies value = 20 }
+}
+
+CHI_delay_demo_cross_strait_TAI = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = TAI
+		NOT = { has_war_with = TAI }
+		has_government = democratic
+		OR = {
+			num_divisions < 40
+			has_navy_size = { size < 14 }
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = TAI value = -120 }
+}
+
+CHI_ready_demo_cross_strait_TAI = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = TAI
+		NOT = { has_war_with = TAI }
+		has_government = democratic
+		num_divisions > 40
+		has_navy_size = { size > 14 }
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = TAI value = 55 }
+	ai_strategy = { type = conquer id = TAI value = 180 }
+}
+
+CHI_ready_nat_cross_strait_TAI = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = TAI
+		NOT = { has_war_with = TAI }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 22
+		has_navy_size = { size > 6 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = TAI value = 85 }
+	ai_strategy = { type = conquer id = TAI value = 220 }
+}
+
+CHI_ready_mid_cross_strait_TAI = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = TAI
+		NOT = { has_war_with = TAI }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 28
+		has_navy_size = { size > 8 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = TAI value = 65 }
+	ai_strategy = { type = conquer id = TAI value = 190 }
+}
+
+CHI_failsafe_cross_strait_TAI = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = TAI
+		NOT = { has_war_with = TAI }
+		NOT = { has_war = yes }
+		num_divisions > 55
+		has_navy_size = { size > 22 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = TAI value = 110 }
+}
+
+### NKO vs KOR — Korean Peninsula ###
+
+NKO_prepare_reunification_KOR = {
+	allowed = { original_tag = NKO }
+	enable = {
+		has_wargoal_against = KOR
+		NOT = { has_war_with = KOR }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = KOR value = 180 }
+	ai_strategy = { type = front_unit_request tag = KOR value = 12 }
+	ai_strategy = { type = force_build_armies value = 20 }
+}
+
+NKO_delay_demo_reunification_KOR = {
+	allowed = { original_tag = NKO }
+	enable = {
+		has_wargoal_against = KOR
+		NOT = { has_war_with = KOR }
+		has_government = democratic
+		OR = {
+			num_divisions < 18
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = KOR value = -120 }
+}
+
+NKO_ready_demo_reunification_KOR = {
+	allowed = { original_tag = NKO }
+	enable = {
+		has_wargoal_against = KOR
+		NOT = { has_war_with = KOR }
+		has_government = democratic
+		num_divisions > 18
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = KOR value = 55 }
+	ai_strategy = { type = conquer id = KOR value = 180 }
+}
+
+NKO_ready_nat_reunification_KOR = {
+	allowed = { original_tag = NKO }
+	enable = {
+		has_wargoal_against = KOR
+		NOT = { has_war_with = KOR }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 12
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = KOR value = 85 }
+	ai_strategy = { type = conquer id = KOR value = 220 }
+}
+
+NKO_ready_mid_reunification_KOR = {
+	allowed = { original_tag = NKO }
+	enable = {
+		has_wargoal_against = KOR
+		NOT = { has_war_with = KOR }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 15
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = KOR value = 65 }
+	ai_strategy = { type = conquer id = KOR value = 190 }
+}
+
+NKO_failsafe_reunification_KOR = {
+	allowed = { original_tag = NKO }
+	enable = {
+		has_wargoal_against = KOR
+		NOT = { has_war_with = KOR }
+		NOT = { has_war = yes }
+		num_divisions > 30
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = KOR value = 110 }
+}
+
+### KOR vs NKO — Korean Peninsula (South) ###
+
+KOR_prepare_counter_reunification_NKO = {
+	allowed = { original_tag = KOR }
+	enable = {
+		has_wargoal_against = NKO
+		NOT = { has_war_with = NKO }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = NKO value = 180 }
+	ai_strategy = { type = front_unit_request tag = NKO value = 12 }
+	ai_strategy = { type = force_build_armies value = 20 }
+}
+
+KOR_delay_demo_counter_reunification_NKO = {
+	allowed = { original_tag = KOR }
+	enable = {
+		has_wargoal_against = NKO
+		NOT = { has_war_with = NKO }
+		has_government = democratic
+		OR = {
+			num_divisions < 22
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = NKO value = -120 }
+}
+
+KOR_ready_demo_counter_reunification_NKO = {
+	allowed = { original_tag = KOR }
+	enable = {
+		has_wargoal_against = NKO
+		NOT = { has_war_with = NKO }
+		has_government = democratic
+		num_divisions > 22
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = NKO value = 55 }
+	ai_strategy = { type = conquer id = NKO value = 180 }
+}
+
+KOR_ready_nat_counter_reunification_NKO = {
+	allowed = { original_tag = KOR }
+	enable = {
+		has_wargoal_against = NKO
+		NOT = { has_war_with = NKO }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 15
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = NKO value = 85 }
+	ai_strategy = { type = conquer id = NKO value = 220 }
+}
+
+KOR_ready_mid_counter_reunification_NKO = {
+	allowed = { original_tag = KOR }
+	enable = {
+		has_wargoal_against = NKO
+		NOT = { has_war_with = NKO }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 18
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = NKO value = 65 }
+	ai_strategy = { type = conquer id = NKO value = 190 }
+}
+
+KOR_failsafe_counter_reunification_NKO = {
+	allowed = { original_tag = KOR }
+	enable = {
+		has_wargoal_against = NKO
+		NOT = { has_war_with = NKO }
+		NOT = { has_war = yes }
+		num_divisions > 38
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = NKO value = 110 }
+}
+
+### ISR vs PER — Middle East ###
+
+ISR_prepare_iran_war_PER = {
+	allowed = { original_tag = ISR }
+	enable = {
+		has_wargoal_against = PER
+		NOT = { has_war_with = PER }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = PER value = 180 }
+	ai_strategy = { type = front_unit_request tag = PER value = 12 }
+	ai_strategy = { type = force_build_armies value = 20 }
+}
+
+ISR_delay_demo_iran_war_PER = {
+	allowed = { original_tag = ISR }
+	enable = {
+		has_wargoal_against = PER
+		NOT = { has_war_with = PER }
+		has_government = democratic
+		OR = {
+			num_divisions < 20
+			has_navy_size = { size < 4 }
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = PER value = -120 }
+}
+
+ISR_ready_demo_iran_war_PER = {
+	allowed = { original_tag = ISR }
+	enable = {
+		has_wargoal_against = PER
+		NOT = { has_war_with = PER }
+		has_government = democratic
+		num_divisions > 20
+		has_navy_size = { size > 4 }
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = PER value = 55 }
+	ai_strategy = { type = conquer id = PER value = 180 }
+}
+
+ISR_ready_nat_iran_war_PER = {
+	allowed = { original_tag = ISR }
+	enable = {
+		has_wargoal_against = PER
+		NOT = { has_war_with = PER }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 12
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = PER value = 85 }
+	ai_strategy = { type = conquer id = PER value = 220 }
+}
+
+ISR_ready_mid_iran_war_PER = {
+	allowed = { original_tag = ISR }
+	enable = {
+		has_wargoal_against = PER
+		NOT = { has_war_with = PER }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 16
+		has_navy_size = { size > 2 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = PER value = 65 }
+	ai_strategy = { type = conquer id = PER value = 190 }
+}
+
+ISR_failsafe_iran_war_PER = {
+	allowed = { original_tag = ISR }
+	enable = {
+		has_wargoal_against = PER
+		NOT = { has_war_with = PER }
+		NOT = { has_war = yes }
+		num_divisions > 32
+		has_navy_size = { size > 12 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = PER value = 110 }
+}
+
+### PER vs ISR — Middle East (Iran) ###
+
+PER_prepare_israel_war_ISR = {
+	allowed = { original_tag = PER }
+	enable = {
+		has_wargoal_against = ISR
+		NOT = { has_war_with = ISR }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = ISR value = 180 }
+	ai_strategy = { type = front_unit_request tag = ISR value = 12 }
+	ai_strategy = { type = force_build_armies value = 20 }
+}
+
+PER_delay_demo_israel_war_ISR = {
+	allowed = { original_tag = PER }
+	enable = {
+		has_wargoal_against = ISR
+		NOT = { has_war_with = ISR }
+		has_government = democratic
+		OR = {
+			num_divisions < 25
+			has_navy_size = { size < 8 }
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ISR value = -120 }
+}
+
+PER_ready_demo_israel_war_ISR = {
+	allowed = { original_tag = PER }
+	enable = {
+		has_wargoal_against = ISR
+		NOT = { has_war_with = ISR }
+		has_government = democratic
+		num_divisions > 25
+		has_navy_size = { size > 8 }
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ISR value = 55 }
+	ai_strategy = { type = conquer id = ISR value = 180 }
+}
+
+PER_ready_nat_israel_war_ISR = {
+	allowed = { original_tag = PER }
+	enable = {
+		has_wargoal_against = ISR
+		NOT = { has_war_with = ISR }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 18
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ISR value = 85 }
+	ai_strategy = { type = conquer id = ISR value = 220 }
+}
+
+PER_ready_mid_israel_war_ISR = {
+	allowed = { original_tag = PER }
+	enable = {
+		has_wargoal_against = ISR
+		NOT = { has_war_with = ISR }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 20
+		has_navy_size = { size > 4 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ISR value = 65 }
+	ai_strategy = { type = conquer id = ISR value = 190 }
+}
+
+PER_failsafe_israel_war_ISR = {
+	allowed = { original_tag = PER }
+	enable = {
+		has_wargoal_against = ISR
+		NOT = { has_war_with = ISR }
+		NOT = { has_war = yes }
+		num_divisions > 42
+		has_navy_size = { size > 14 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ISR value = 110 }
+}
+
+### RAJ vs PAK — India-Pakistan ###
+
+RAJ_prepare_pakistan_rivalry_PAK = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		has_wargoal_against = PAK
+		NOT = { has_war_with = PAK }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = PAK value = 180 }
+	ai_strategy = { type = front_unit_request tag = PAK value = 12 }
+	ai_strategy = { type = force_build_armies value = 20 }
+}
+
+RAJ_delay_demo_pakistan_rivalry_PAK = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		has_wargoal_against = PAK
+		NOT = { has_war_with = PAK }
+		has_government = democratic
+		OR = {
+			num_divisions < 35
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = PAK value = -120 }
+}
+
+RAJ_ready_demo_pakistan_rivalry_PAK = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		has_wargoal_against = PAK
+		NOT = { has_war_with = PAK }
+		has_government = democratic
+		num_divisions > 35
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = PAK value = 55 }
+	ai_strategy = { type = conquer id = PAK value = 180 }
+}
+
+RAJ_ready_nat_pakistan_rivalry_PAK = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		has_wargoal_against = PAK
+		NOT = { has_war_with = PAK }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 22
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = PAK value = 85 }
+	ai_strategy = { type = conquer id = PAK value = 220 }
+}
+
+RAJ_ready_mid_pakistan_rivalry_PAK = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		has_wargoal_against = PAK
+		NOT = { has_war_with = PAK }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 28
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = PAK value = 65 }
+	ai_strategy = { type = conquer id = PAK value = 190 }
+}
+
+RAJ_failsafe_pakistan_rivalry_PAK = {
+	allowed = { original_tag = RAJ }
+	enable = {
+		has_wargoal_against = PAK
+		NOT = { has_war_with = PAK }
+		NOT = { has_war = yes }
+		num_divisions > 55
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = PAK value = 110 }
+}
+
+### PAK vs RAJ — Pakistan-India ###
+
+PAK_prepare_india_rivalry_RAJ = {
+	allowed = { original_tag = PAK }
+	enable = {
+		has_wargoal_against = RAJ
+		NOT = { has_war_with = RAJ }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = RAJ value = 180 }
+	ai_strategy = { type = front_unit_request tag = RAJ value = 12 }
+	ai_strategy = { type = force_build_armies value = 20 }
+}
+
+PAK_delay_demo_india_rivalry_RAJ = {
+	allowed = { original_tag = PAK }
+	enable = {
+		has_wargoal_against = RAJ
+		NOT = { has_war_with = RAJ }
+		has_government = democratic
+		OR = {
+			num_divisions < 28
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = RAJ value = -120 }
+}
+
+PAK_ready_demo_india_rivalry_RAJ = {
+	allowed = { original_tag = PAK }
+	enable = {
+		has_wargoal_against = RAJ
+		NOT = { has_war_with = RAJ }
+		has_government = democratic
+		num_divisions > 28
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = RAJ value = 55 }
+	ai_strategy = { type = conquer id = RAJ value = 180 }
+}
+
+PAK_ready_nat_india_rivalry_RAJ = {
+	allowed = { original_tag = PAK }
+	enable = {
+		has_wargoal_against = RAJ
+		NOT = { has_war_with = RAJ }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 18
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = RAJ value = 85 }
+	ai_strategy = { type = conquer id = RAJ value = 220 }
+}
+
+PAK_ready_mid_india_rivalry_RAJ = {
+	allowed = { original_tag = PAK }
+	enable = {
+		has_wargoal_against = RAJ
+		NOT = { has_war_with = RAJ }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 22
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = RAJ value = 65 }
+	ai_strategy = { type = conquer id = RAJ value = 190 }
+}
+
+PAK_failsafe_india_rivalry_RAJ = {
+	allowed = { original_tag = PAK }
+	enable = {
+		has_wargoal_against = RAJ
+		NOT = { has_war_with = RAJ }
+		NOT = { has_war = yes }
+		num_divisions > 45
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = RAJ value = 110 }
+}
+
+### CHI vs JAP — East China Sea (focus: CHI_liquidate_the_evil) ###
+
+CHI_prepare_east_china_sea_JAP = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = JAP
+		NOT = { has_war_with = JAP }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = JAP value = 180 }
+	ai_strategy = { type = front_unit_request tag = JAP value = 12 }
+	ai_strategy = { type = force_build_armies value = 20 }
+}
+
+CHI_delay_demo_east_china_sea_JAP = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = JAP
+		NOT = { has_war_with = JAP }
+		has_government = democratic
+		OR = {
+			num_divisions < 40
+			has_navy_size = { size < 14 }
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = JAP value = -120 }
+}
+
+CHI_ready_demo_east_china_sea_JAP = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = JAP
+		NOT = { has_war_with = JAP }
+		has_government = democratic
+		num_divisions > 40
+		has_navy_size = { size > 14 }
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = JAP value = 55 }
+	ai_strategy = { type = conquer id = JAP value = 180 }
+}
+
+CHI_ready_nat_east_china_sea_JAP = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = JAP
+		NOT = { has_war_with = JAP }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 22
+		has_navy_size = { size > 6 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = JAP value = 85 }
+	ai_strategy = { type = conquer id = JAP value = 220 }
+}
+
+CHI_ready_mid_east_china_sea_JAP = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = JAP
+		NOT = { has_war_with = JAP }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 28
+		has_navy_size = { size > 8 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = JAP value = 65 }
+	ai_strategy = { type = conquer id = JAP value = 190 }
+}
+
+CHI_failsafe_east_china_sea_JAP = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_wargoal_against = JAP
+		NOT = { has_war_with = JAP }
+		NOT = { has_war = yes }
+		num_divisions > 55
+		has_navy_size = { size > 22 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = JAP value = 110 }
+}
+
+### GER vs FRA — Western Expansion (focus: GER_french_invasion) ###
+
+GER_prepare_westward_FRA = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = FRA
+		NOT = { has_war_with = FRA }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = FRA value = 180 }
+	ai_strategy = { type = front_unit_request tag = FRA value = 12 }
+	ai_strategy = { type = force_build_armies value = 20 }
+}
+
+GER_delay_demo_westward_FRA = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = FRA
+		NOT = { has_war_with = FRA }
+		has_government = democratic
+		OR = {
+			num_divisions < 40
+			has_navy_size = { size < 8 }
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = FRA value = -120 }
+}
+
+GER_ready_demo_westward_FRA = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = FRA
+		NOT = { has_war_with = FRA }
+		has_government = democratic
+		num_divisions > 40
+		has_navy_size = { size > 8 }
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = FRA value = 55 }
+	ai_strategy = { type = conquer id = FRA value = 180 }
+}
+
+GER_ready_nat_westward_FRA = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = FRA
+		NOT = { has_war_with = FRA }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 25
+		has_navy_size = { size > 5 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = FRA value = 85 }
+	ai_strategy = { type = conquer id = FRA value = 220 }
+}
+
+GER_ready_mid_westward_FRA = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = FRA
+		NOT = { has_war_with = FRA }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 30
+		has_navy_size = { size > 6 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = FRA value = 65 }
+	ai_strategy = { type = conquer id = FRA value = 190 }
+}
+
+GER_failsafe_westward_FRA = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = FRA
+		NOT = { has_war_with = FRA }
+		NOT = { has_war = yes }
+		num_divisions > 60
+		has_navy_size = { size > 15 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = FRA value = 110 }
+}
+
+### GER vs SOV — Eastern Expansion (focus: GER_russian_invasion) ###
+
+GER_prepare_eastward_SOV = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = SOV
+		NOT = { has_war_with = SOV }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = SOV value = 180 }
+	ai_strategy = { type = front_unit_request tag = SOV value = 15 }
+	ai_strategy = { type = force_build_armies value = 25 }
+}
+
+GER_delay_demo_eastward_SOV = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = SOV
+		NOT = { has_war_with = SOV }
+		has_government = democratic
+		OR = {
+			num_divisions < 45
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = SOV value = -120 }
+}
+
+GER_ready_demo_eastward_SOV = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = SOV
+		NOT = { has_war_with = SOV }
+		has_government = democratic
+		num_divisions > 45
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = SOV value = 55 }
+	ai_strategy = { type = conquer id = SOV value = 180 }
+}
+
+GER_ready_nat_eastward_SOV = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = SOV
+		NOT = { has_war_with = SOV }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 28
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = SOV value = 85 }
+	ai_strategy = { type = conquer id = SOV value = 220 }
+}
+
+GER_ready_mid_eastward_SOV = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = SOV
+		NOT = { has_war_with = SOV }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 35
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = SOV value = 65 }
+	ai_strategy = { type = conquer id = SOV value = 190 }
+}
+
+GER_failsafe_eastward_SOV = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = SOV
+		NOT = { has_war_with = SOV }
+		NOT = { has_war = yes }
+		num_divisions > 65
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = SOV value = 110 }
+}
+
+### SOV vs GER — Westward Push (focus: SOV_challenge_nato) ###
+
+SOV_prepare_westward_GER = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_wargoal_against = GER
+		NOT = { has_war_with = GER }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = GER value = 180 }
+	ai_strategy = { type = front_unit_request tag = GER value = 15 }
+	ai_strategy = { type = force_build_armies value = 25 }
+}
+
+SOV_delay_demo_westward_GER = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_wargoal_against = GER
+		NOT = { has_war_with = GER }
+		has_government = democratic
+		OR = {
+			num_divisions < 55
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = GER value = -120 }
+}
+
+SOV_ready_demo_westward_GER = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_wargoal_against = GER
+		NOT = { has_war_with = GER }
+		has_government = democratic
+		num_divisions > 55
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = GER value = 55 }
+	ai_strategy = { type = conquer id = GER value = 180 }
+}
+
+SOV_ready_nat_westward_GER = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_wargoal_against = GER
+		NOT = { has_war_with = GER }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 35
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = GER value = 85 }
+	ai_strategy = { type = conquer id = GER value = 220 }
+}
+
+SOV_ready_mid_westward_GER = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_wargoal_against = GER
+		NOT = { has_war_with = GER }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 40
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = GER value = 65 }
+	ai_strategy = { type = conquer id = GER value = 190 }
+}
+
+SOV_failsafe_westward_GER = {
+	allowed = { original_tag = SOV }
+	enable = {
+		has_wargoal_against = GER
+		NOT = { has_war_with = GER }
+		NOT = { has_war = yes }
+		num_divisions > 80
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = GER value = 110 }
+}
+
+### TUR vs KUR — Anti-Kurdish (focus: TUR_southward) ###
+
+TUR_prepare_anti_kurdish_KUR = {
+	allowed = { original_tag = TUR }
+	enable = {
+		has_wargoal_against = KUR
+		NOT = { has_war_with = KUR }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = KUR value = 180 }
+	ai_strategy = { type = front_unit_request tag = KUR value = 10 }
+	ai_strategy = { type = force_build_armies value = 15 }
+}
+
+TUR_delay_demo_anti_kurdish_KUR = {
+	allowed = { original_tag = TUR }
+	enable = {
+		has_wargoal_against = KUR
+		NOT = { has_war_with = KUR }
+		has_government = democratic
+		OR = {
+			num_divisions < 22
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = KUR value = -120 }
+}
+
+TUR_ready_demo_anti_kurdish_KUR = {
+	allowed = { original_tag = TUR }
+	enable = {
+		has_wargoal_against = KUR
+		NOT = { has_war_with = KUR }
+		has_government = democratic
+		num_divisions > 22
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = KUR value = 55 }
+	ai_strategy = { type = conquer id = KUR value = 180 }
+}
+
+TUR_ready_nat_anti_kurdish_KUR = {
+	allowed = { original_tag = TUR }
+	enable = {
+		has_wargoal_against = KUR
+		NOT = { has_war_with = KUR }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 14
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = KUR value = 85 }
+	ai_strategy = { type = conquer id = KUR value = 220 }
+}
+
+TUR_ready_mid_anti_kurdish_KUR = {
+	allowed = { original_tag = TUR }
+	enable = {
+		has_wargoal_against = KUR
+		NOT = { has_war_with = KUR }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 18
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = KUR value = 65 }
+	ai_strategy = { type = conquer id = KUR value = 190 }
+}
+
+TUR_failsafe_anti_kurdish_KUR = {
+	allowed = { original_tag = TUR }
+	enable = {
+		has_wargoal_against = KUR
+		NOT = { has_war_with = KUR }
+		NOT = { has_war = yes }
+		num_divisions > 35
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = KUR value = 110 }
+}
+
+### EGY vs ISR — Arab-Israeli (focus: EGY_war_with_israel) ###
+
+EGY_prepare_arab_israeli_ISR = {
+	allowed = { original_tag = EGY }
+	enable = {
+		has_wargoal_against = ISR
+		NOT = { has_war_with = ISR }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = ISR value = 180 }
+	ai_strategy = { type = front_unit_request tag = ISR value = 10 }
+	ai_strategy = { type = force_build_armies value = 20 }
+}
+
+EGY_delay_demo_arab_israeli_ISR = {
+	allowed = { original_tag = EGY }
+	enable = {
+		has_wargoal_against = ISR
+		NOT = { has_war_with = ISR }
+		has_government = democratic
+		OR = {
+			num_divisions < 20
+			has_navy_size = { size < 3 }
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ISR value = -120 }
+}
+
+EGY_ready_demo_arab_israeli_ISR = {
+	allowed = { original_tag = EGY }
+	enable = {
+		has_wargoal_against = ISR
+		NOT = { has_war_with = ISR }
+		has_government = democratic
+		num_divisions > 20
+		has_navy_size = { size > 3 }
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ISR value = 55 }
+	ai_strategy = { type = conquer id = ISR value = 180 }
+}
+
+EGY_ready_nat_arab_israeli_ISR = {
+	allowed = { original_tag = EGY }
+	enable = {
+		has_wargoal_against = ISR
+		NOT = { has_war_with = ISR }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 13
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ISR value = 85 }
+	ai_strategy = { type = conquer id = ISR value = 220 }
+}
+
+EGY_ready_mid_arab_israeli_ISR = {
+	allowed = { original_tag = EGY }
+	enable = {
+		has_wargoal_against = ISR
+		NOT = { has_war_with = ISR }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 16
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ISR value = 65 }
+	ai_strategy = { type = conquer id = ISR value = 190 }
+}
+
+EGY_failsafe_arab_israeli_ISR = {
+	allowed = { original_tag = EGY }
+	enable = {
+		has_wargoal_against = ISR
+		NOT = { has_war_with = ISR }
+		NOT = { has_war = yes }
+		num_divisions > 32
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ISR value = 110 }
+}
+
+### GRE vs TUR — Megali Idea (focus: GRE_constantinople_not_istanbul) ###
+
+GRE_prepare_megali_TUR = {
+	allowed = { original_tag = GRE }
+	enable = {
+		has_wargoal_against = TUR
+		NOT = { has_war_with = TUR }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = TUR value = 180 }
+	ai_strategy = { type = front_unit_request tag = TUR value = 10 }
+	ai_strategy = { type = force_build_armies value = 20 }
+}
+
+GRE_delay_demo_megali_TUR = {
+	allowed = { original_tag = GRE }
+	enable = {
+		has_wargoal_against = TUR
+		NOT = { has_war_with = TUR }
+		has_government = democratic
+		OR = {
+			num_divisions < 12
+			has_navy_size = { size < 6 }
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = TUR value = -120 }
+}
+
+GRE_ready_demo_megali_TUR = {
+	allowed = { original_tag = GRE }
+	enable = {
+		has_wargoal_against = TUR
+		NOT = { has_war_with = TUR }
+		has_government = democratic
+		num_divisions > 12
+		has_navy_size = { size > 6 }
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = TUR value = 55 }
+	ai_strategy = { type = conquer id = TUR value = 180 }
+}
+
+GRE_ready_nat_megali_TUR = {
+	allowed = { original_tag = GRE }
+	enable = {
+		has_wargoal_against = TUR
+		NOT = { has_war_with = TUR }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 8
+		has_navy_size = { size > 3 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = TUR value = 85 }
+	ai_strategy = { type = conquer id = TUR value = 220 }
+}
+
+GRE_ready_mid_megali_TUR = {
+	allowed = { original_tag = GRE }
+	enable = {
+		has_wargoal_against = TUR
+		NOT = { has_war_with = TUR }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 10
+		has_navy_size = { size > 4 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = TUR value = 65 }
+	ai_strategy = { type = conquer id = TUR value = 190 }
+}
+
+GRE_failsafe_megali_TUR = {
+	allowed = { original_tag = GRE }
+	enable = {
+		has_wargoal_against = TUR
+		NOT = { has_war_with = TUR }
+		NOT = { has_war = yes }
+		num_divisions > 20
+		has_navy_size = { size > 10 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = TUR value = 110 }
+}
+
+### GER vs ENG — British Invasion (focus: GER_british_invasion) ###
+
+GER_prepare_channel_ENG = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = ENG
+		NOT = { has_war_with = ENG }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = prepare_for_war id = ENG value = 180 }
+	ai_strategy = { type = front_unit_request tag = ENG value = 12 }
+	ai_strategy = { type = force_build_armies value = 20 }
+}
+
+GER_delay_demo_channel_ENG = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = ENG
+		NOT = { has_war_with = ENG }
+		has_government = democratic
+		OR = {
+			num_divisions < 40
+			has_navy_size = { size < 12 }
+			has_war = yes
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ENG value = -120 }
+}
+
+GER_ready_demo_channel_ENG = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = ENG
+		NOT = { has_war_with = ENG }
+		has_government = democratic
+		num_divisions > 40
+		has_navy_size = { size > 12 }
+		NOT = { has_war = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ENG value = 55 }
+	ai_strategy = { type = conquer id = ENG value = 180 }
+}
+
+GER_ready_nat_channel_ENG = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = ENG
+		NOT = { has_war_with = ENG }
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
+		num_divisions > 25
+		has_navy_size = { size > 8 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ENG value = 85 }
+	ai_strategy = { type = conquer id = ENG value = 220 }
+}
+
+GER_ready_mid_channel_ENG = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = ENG
+		NOT = { has_war_with = ENG }
+		NOT = { has_government = democratic }
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
+		num_divisions > 30
+		has_navy_size = { size > 10 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ENG value = 65 }
+	ai_strategy = { type = conquer id = ENG value = 190 }
+}
+
+GER_failsafe_channel_ENG = {
+	allowed = { original_tag = GER }
+	enable = {
+		has_wargoal_against = ENG
+		NOT = { has_war_with = ENG }
+		NOT = { has_war = yes }
+		num_divisions > 60
+		has_navy_size = { size > 20 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = ENG value = 110 }
+}
