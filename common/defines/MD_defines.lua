@@ -624,7 +624,7 @@
 	NDefines.NNavy.ALL_SHIPS_ACTIVATE_TIME = 6 -- 8
 
 	NDefines.NNavy.NAVAL_COMBAT_PLANE_MIN_STACKING_PENALTY = 140 -- 80, How many planes flying in a naval combat before penalties are introduced
-	NDefines.NNavy.NAVAL_COMBAT_PLANE_STACKING_PENALTY_EFFECT = 0.025 -- 0.025, Each plane above the optimal amount decreases the amount of airplanes being able to takeoff by such %. Subject to diminishing returns
+	NDefines.NNavy.NAVAL_COMBAT_PLANE_STACKING_PENALTY_EFFECT = 0.01 -- 0.005 vanilla; was 0.025 (12.5x harsher than BNA mod, punished carrier air power)
 
 	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_CAPITAL = 10 -- 10, For dynamic plane efficacy, silhouette value (nominally in planes, but very abstract)
 	NDefines.NNavy.SHIP_SILHOUETTE_VALUE_PLANES_SCREEN = 10 -- 5, As Above. This one would be nice to split by type, but that's problematic.
@@ -733,6 +733,18 @@
 	NDefines.NNavy.AGGRESSION_HEAVY_GUN_EFFICIENCY_ON_HEAVY_SHIPS = 1.15 -- ratio for scoring for different gun types against heavy ships
 	NDefines.NNavy.AGGRESSION_TORPEDO_EFFICIENCY_ON_HEAVY_SHIPS = 1.1   -- ratio for scoring for different gun types against heavy ships
 
+	-- BNA-inspired engagement and training improvements
+	NDefines.NNavy.AGGRESSION_SETTINGS_VALUES = {						-- engagement thresholds per aggression level
+		0,			-- do not engage
+		1.5,		-- low (0.5 vanilla) — more willing to engage at disadvantage
+		2.0,		-- medium (0.9 vanilla)
+		3.0,		-- high (2.0 vanilla)
+		10000		-- always engage
+	}
+	NDefines.NNavy.FUEL_COST_MULT = 0.07							-- 0.10 vanilla; modern navies are more fuel-efficient
+	NDefines.NNavy.EXPERIENCE_FACTOR_NON_CARRIER_GAIN = 0.06		-- 0.04 vanilla; faster XP gain helps AI improve ship designs
+	NDefines.NNavy.EXPERIENCE_FACTOR_CARRIER_GAIN = 0.12			-- 0.08 vanilla; carrier crews gain experience faster
+
 	-- Navy Piercing adjustments
 	-- This adjustment should 0 out light attack for the landing ships, meaning they dont do anything in naval battles compared to cannons
 	-- While allowing them to still shore bombard, while cannons can now attack light ships, and add guns back as a real naval weapon!
@@ -806,8 +818,8 @@
 	NDefines.NAI.COMMUNISTS_ANTAGONIZE_FASCISTS = 25
 	NDefines.NAI.COMMUNISTS_ANTAGONIZE_DEMOCRACIES = 30
 	NDefines.NAI.COMMUNISTS_ANTAGONIZE_COMMUNISTS = -50
-	NDefines.NAI.REFIT_SHIP_RELUCTANCE = 56						-- 28
-	NDefines.NAI.REFIT_SHIP_PERCENTAGE_OF_FORCES = 0.25				-- 0.1
+	NDefines.NAI.REFIT_SHIP_RELUCTANCE = 120						-- 28 vanilla; was 56 (too eager), BNA uses 280. Middle ground: refit less frequently
+	NDefines.NAI.REFIT_SHIP_PERCENTAGE_OF_FORCES = 0.10				-- 0.1 vanilla; was 0.25 (refitting 25% of fleet at once cripples naval strength)
 	NDefines.NAI.UPGRADE_DIVISION_RELUCTANCE = 30					-- 7
 	NDefines.NAI.UPGRADE_PERCENTAGE_OF_FORCES = 0.15				-- 0.1
 	NDefines.NAI.ENEMY_NAVY_STRENGTH_DONT_BOTHER = 1.5				-- 2.5
@@ -827,6 +839,14 @@
 	NDefines.NAI.INVASION_COASTAL_PROVS_PER_ORDER = 8				-- 12
 	NDefines.NAI.NAVAL_COMBAT_AIR_IMPORTANCE = 24.0					-- 12.0
 	NDefines.NAI.TRANSPORTS_PER_PARATROOPER = 10					-- 20
+
+	-- BNA-inspired naval AI improvements
+	NDefines.NAI.DESIRE_USE_XP_TO_UPGRADE_NAVAL_EQUIPMENT = 1.5		-- 1.0 vanilla; AI prioritizes naval design upgrades more
+	NDefines.NAI.WANTED_CARRIER_PLANES_PER_CARRIER_CAPACITY_IN_PRODUCTION_FACTOR = 1.5 -- 1.0 vanilla; AI pre-builds planes for carriers under construction
+	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_NAVY_TRAINING = 0.5	-- 0.2 vanilla; allow more fuel for naval training
+	NDefines.NAI.MAX_FULLY_TRAINED_SHIP_RATIO_FOR_TRAINING = 0.85	-- 0.7 vanilla; train even with mostly-trained fleet
+	NDefines.NAI.REGION_THREAT_LEVEL_TO_AVOID_REGION = 5000			-- 250 vanilla; fleets don't hide from minor threats
+	NDefines.NAI.REGION_THREAT_LEVEL_TO_BLOCK_REGION = 10000		-- 2500 vanilla; extreme threat needed to block regions
 
 	NDefines.NAI.NAVAL_FIGHTERS_PER_PLANE = 2					-- 1.1
 	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_ARMY = 1					-- 0
@@ -942,7 +962,6 @@
 		'fossil_powerplant', 'industrial_complex', 'internet_station', 'microchip_plant', 'renewable_energy_infra', 'nuclear_reactor', 'fuel_silo', 'composite_plant', 'offices', 'synthetic_refinery', 'infrastructure', 'agriculture_district', 'arms_factory'
 	}
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.2
-	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_NAVY_TRAINING = 0.2
 	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.03		-- ai will try to build a silo per this ratio of civ factories
 	NDefines.NAI.NUM_SILOS_PER_MILITARY_FACTORIES = 0.03		-- ai will try to build a silo per this ratio of mil factories
 	NDefines.NAI.NUM_SILOS_PER_DOCKYARDS = 0.03
@@ -1064,7 +1083,7 @@
 
 	NDefines.NAI.SHIPS_PRODUCTION_BASE_COST = 15000					-- Used by the AI to normalize IC values when picking what ship to build.
 	NDefines.NAI.NEEDED_NAVAL_FACTORIES_EXPENSIVE_SHIP_BONUS = 10    -- Amount of naval yards you need to get a bonus to building really expensive ships
-	NDefines.NAI.PRODUCTION_MAX_PROGRESS_TO_SWITCH_NAVAL = 0.2		-- AI will not replace ships being built by newer types if progress is above this
+	NDefines.NAI.PRODUCTION_MAX_PROGRESS_TO_SWITCH_NAVAL = 0.10		-- 0.1 vanilla; was 0.2 (too reluctant to adapt naval production to new designs)
 	NDefines.NAI.AREA_DEFENSE_SETTING_AIRBASES = true
 
 	NDefines.NAI.MIN_MAIN_SHIP_RATIO = 0.5                    -- 0.3 vanilla; below this, steal ships from other TFs. Was 1 (impossible), caused constant reshuffling
