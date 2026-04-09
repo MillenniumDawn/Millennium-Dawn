@@ -233,6 +233,17 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt"]
 
     def run_validations(self):
+        # Skip if no relevant files staged
+        if self.staged_only and self.staged_files:
+            relevant = [f for f in self.staged_files if "ai_navy" in f or "units" in f]
+            if not relevant:
+                self.log("  No staged ai_navy or units files, skipping")
+                return
+
+        # Parse taskforce files once, reuse in both checks
+        self._defined_taskforces, self._ship_refs, self._mission_refs = (
+            parse_taskforce_files(self.mod_path)
+        )
         self._validate_ship_types()
         self._validate_fleet_references()
 
@@ -255,9 +266,9 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        defined_taskforces, ship_refs, mission_refs = parse_taskforce_files(
-            self.mod_path
-        )
+        defined_taskforces = self._defined_taskforces
+        ship_refs = self._ship_refs
+        mission_refs = self._mission_refs
         self.log(
             f"  Found {len(defined_taskforces)} taskforce templates, "
             f"{len(ship_refs)} ship type references, "
@@ -312,8 +323,7 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        # Get all defined taskforce names
-        defined_taskforces, _, _ = parse_taskforce_files(self.mod_path)
+        defined_taskforces = self._defined_taskforces
 
         # Get all fleet references
         fleet_refs = parse_fleet_files(self.mod_path)

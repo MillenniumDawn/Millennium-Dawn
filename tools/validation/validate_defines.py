@@ -14,7 +14,6 @@
 import difflib
 import os
 import re
-import sys
 from typing import Dict, List, Optional, Set, Tuple
 
 from validator_common import BaseValidator, Colors, run_validator_main
@@ -300,28 +299,15 @@ class Validator(BaseValidator):
 
 
 if __name__ == "__main__":
-    import argparse
 
-    # Extend the standard parser with --vanilla-path
-    from shared_utils import create_validation_parser
+    def extra_args(parser):
+        parser.add_argument(
+            "--vanilla-path",
+            type=str,
+            default=None,
+            help="Path to vanilla 00_defines.lua (auto-detected from Steam if omitted)",
+        )
 
-    parser = create_validation_parser("Validate MD defines against vanilla HOI4")
-    parser.add_argument(
-        "--vanilla-path",
-        type=str,
-        default=None,
-        help="Path to vanilla 00_defines.lua (auto-detected from Steam if omitted)",
+    run_validator_main(
+        Validator, "Validate MD defines against vanilla HOI4", extra_args_fn=extra_args
     )
-    args = parser.parse_args()
-
-    validator = Validator(
-        mod_path=args.path,
-        output_file=args.output,
-        use_colors=not args.no_color,
-        staged_only=args.staged,
-        workers=args.workers,
-        vanilla_path=args.vanilla_path,
-    )
-    validator.run_all_validations()
-    if args.strict and validator.errors_found > 0:
-        sys.exit(1)

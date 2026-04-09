@@ -135,6 +135,13 @@ class Validator(BaseValidator):
             self.log("  common/ai_equipment/ not found, skipping")
             return
 
+        # Skip if no relevant files staged
+        if self.staged_only and self.staged_files:
+            relevant = [f for f in self.staged_files if "ai_equipment" in f]
+            if not relevant:
+                self.log("  No staged ai_equipment files, skipping")
+                return
+
         # Parse all equipment files
         self.log(f"\n{'='*80}")
         self.log(
