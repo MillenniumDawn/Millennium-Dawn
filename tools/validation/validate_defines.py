@@ -14,6 +14,7 @@
 import difflib
 import os
 import re
+import sys
 from typing import Dict, List, Optional, Set, Tuple
 
 from validator_common import BaseValidator, Colors, run_validator_main
