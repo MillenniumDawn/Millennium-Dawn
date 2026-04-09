@@ -152,7 +152,7 @@ Key rules:
 - Every role template needs `category`, `roles = { ... }`, and a top-level `priority = { ... }` block
 - Every design needs `target_variant` with `type`, `match_value`, and `modules`
 - Role template names must be unique across all files with overlapping `available_for` — duplicates silently overwrite
-- Nations blocked from generic files MUST have all needed roles covered in custom/shared files — the `validate_naval_equipment` pre-commit hook catches gaps
+- Nations blocked from generic files MUST have all needed roles covered in custom/shared files — the `validate_ai_equipment` pre-commit hook catches gaps
 - Module assignments must match the slot type (e.g., don't put armor modules in `reload_type_slot`)
 - CAS designs must use `medium_cas_fighter` role, not `medium_as_fighter`
 - Use date-based thresholds (e.g., `date < 2000.6.1`) instead of factory count thresholds for small nations that may never reach high factory counts

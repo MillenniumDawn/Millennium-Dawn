@@ -47,8 +47,8 @@ declare -A SCRIPTS=(
     [unused-scripted]="validate_unused_scripted.py"
     [oob-units]="validate_oob_units.py"
     [defines]="validate_defines.py"
-    [naval-templates]="validate_naval_templates.py"
-    [naval-equipment]="validate_naval_equipment.py"
+    [ai-navy]="validate_ai_navy.py"
+    [ai-equipment]="validate_ai_equipment.py"
 )
 
 # name -> human-readable label
@@ -64,12 +64,12 @@ declare -A LABELS=(
     [unused-scripted]="Unused scripted effects/triggers validation"
     [oob-units]="OOB unit name validation"
     [defines]="Defines validation (dead/namespace/duplicate)"
-    [naval-templates]="Naval template validation (ship types, missions, fleets)"
-    [naval-equipment]="Naval equipment coverage validation"
+    [ai-navy]="AI navy validation (ship types, missions, fleet refs)"
+    [ai-equipment]="AI equipment coverage validation (naval/land/air)"
 )
 
 # Ordered for consistent output
-ORDERED=(variables set-variables scripted-localisation cosmetic-tags decisions localisation events history-techs unused-scripted oob-units defines naval-templates naval-equipment)
+ORDERED=(variables set-variables scripted-localisation cosmetic-tags decisions localisation events history-techs unused-scripted oob-units defines ai-navy ai-equipment)
 
 declare -A PIDS=()
 

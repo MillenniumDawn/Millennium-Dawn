@@ -270,6 +270,6 @@ For nations that need distinct ASW-focused screen destroyers (e.g., USA), add a 
 | Missing `allowed_modules`                                | AI won't pick any modules beyond `target_variant.modules` | Add if AI should use extra modules                 |
 | CV plane `ai_type = heavy_fighter` (land type)           | Plane excluded from carrier production entirely           | Use one of 5 valid CV ai_types (see above)         |
 | `equipment_variant_production_factor = -95` on base type | Subtypes inherit penalty even with positive overrides     | Keep base type penalty mild (-25 max)              |
-| Nation excluded from generic but no custom role coverage | AI cannot produce that equipment type at all              | Run `validate_naval_equipment.py`                  |
+| Nation excluded from generic but no custom role coverage | AI cannot produce that equipment type at all              | Run `validate_ai_equipment.py`                     |
 | Partial naval goals (only overriding a few types)        | Duplicate goals — both generic and custom apply           | Define complete set of all 11 objective types      |
 | Nation blocked from generic air with no custom strategy  | Zero interceptor/bomber/drone production                  | Verify every excluded nation has full air doctrine |
