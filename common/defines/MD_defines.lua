@@ -23,7 +23,6 @@
 	NDefines.NDiplomacy.BASE_BOOST_PARTY_POPULARITY_DAILY_DRIFT = 0.1
 	NDefines.NDiplomacy.BASE_STAGE_COUP_DAILY_PP = 2.5
 	NDefines.NDiplomacy.BASE_STAGE_COUP_TOTAL_COST = 2000
-	NDefines.NDiplomacy.TRADE_OPINION_FACTOR_FACTOR = 0.5
 	NDefines.NDiplomacy.DIPLOMACY_HOURS_BETWEEN_REQUESTS = 72 -- 24 exp
 	NDefines.NDiplomacy.IC_TO_EQUIPMENT_COUP_RATIO = 0.3
 	NDefines.NDiplomacy.VOLUNTEERS_RETURN_EQUIPMENT = 1
@@ -153,7 +152,7 @@
 	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1.10 -- 1.25
 	-- Raid AI
 	NDefines.NAI.RAIDS_MIN_SUCCESS_FOR_LAUNCH = 0.12 -- 0.65 -- Scaled by 0.10 more for some reason
-	NDefines.NAI.RAIDS_CREATE_FREQUENCEY_DAYS = 30 -- 7 -- Changed this to monthly to reduce the performance hit, given the number of raids present
+	NDefines.NAI.RAIDS_CREATE_FREQUENCY_DAYS = 30 -- 7 -- Changed this to monthly to reduce the performance hit, given the number of raids present
 	NDefines.NAI.RAIDS_COMMAND_POWER_CAP_TO_CREATE = 60 -- 60
 	NDefines.NAI.RAIDS_CANCEL_AFTER_DAYS_LAUNCHABLE = 90 -- 60 -- Increased to give the AI more time to try and make a raid happen
 	NDefines.NAI.RAIDS_AVOID_SAME_TARGET_DURATION_DAYS = 180 -- 180
@@ -162,7 +161,7 @@
 	NDefines.NAI.RAIDS_UNIT_SCORE_SUCCESS_CHANCE_FACTOR = 500.0 -- 500.0
 	NDefines.NAI.RAIDS_UNIT_SCORE_DISTANCE_KM_FACTOR = 0.1 -- 0.1
 	-- Market AI
-	NDefines.NAI.MAX_CIVS_FOR_PURCHASES_RATIO = 0.05 -- 0.1
+	NDefines.NAI.EQUIPMENT_MARKET_MAX_CIVS_FOR_PURCHASES_RATIO = 0.05 -- 0.1
 	NDefines.NAI.EQUIPMENT_MARKET_BASE_MARKET_RATIO = 0.1 -- 0.2
 	NDefines.NAI.EQUIPMENT_MARKET_NR_DELIVERIES_SOFT_MAX = 400 -- 10 -- this should get AI to never add more than one factory
 	-- NCountry Releated Defines
@@ -172,11 +171,9 @@
 	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 -- Maintains Vanilla's 2 RS default. RSs are handled via the dynamic system
 	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.006 --0.015 in vanilla, reduced from the 0.01 in MD to accomdate for the migration system
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_VP = 0.001
-	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_UNIT = 0.002
 	NDefines.NCountry.RESOURCE_LENDLEASE_PRIORITY = 2
 	NDefines.NCountry.SUPPLY_CONVOY_FACTOR = 0.5
 	NDefines.NCountry.CONVOY_RANGE_FACTOR = 1.5
-	NDefines.NCountry.LOCAL_MANPOWER_ACCESSIBLE_FACTOR = 0.01
 	NDefines.NCountry.LOCAL_MANPOWER_ACCESSIBLE_NON_CORE_FACTOR = 0.01
 	NDefines.NCountry.DEFAULT_STABILITY = 0.65 		-- Default stability if not scripted otherwise.
 	NDefines.NCountry.DEFAULT_WAR_SUPPORT = 0.5 		-- Default war support if not scripted otherwise.
@@ -227,7 +224,6 @@
 	NDefines.NProduction.MAX_EQUIPMENT_RESOURCES_NEED = 4
 	NDefines.NProduction.MAX_LINE_RESOURCE_PENALTY = 50
 	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 5
-	NDefines.NProduction.BASE_CONSUMER_GOODS_NEED_FACTOR = 0
 	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 1
 	NDefines.NProduction.EQUIPMENT_LEND_LEASE_WEIGHT_FACTOR = 0.01
 	NDefines.NProduction.ANNEX_STOCKPILES_RATIO = 0.4
@@ -320,11 +316,9 @@
 	NDefines.NMilitary.LAND_COMBAT_ORG_ARMOR_ON_SOFT_DICE_SIZE = 6 -- 6
 	NDefines.NMilitary.LAND_COMBAT_STR_ARMOR_DEFLECTION_FACTOR = 0.5 -- 0.5
 	NDefines.NMilitary.LAND_COMBAT_ORG_ARMOR_DEFLECTION_FACTOR = 0.3 -- 0.5
-	NDefines.NMilitary.LAND_COMBAT_COLLATERAL_FACTOR = 0.05 -- 0.005
 	NDefines.NMilitary.LAND_COMBAT_FORT_DAMAGE_CHANCE = 15
 	NDefines.NMilitary.ATTRITION_DAMAGE_ORG = 0.04 -- 0.08
 	NDefines.NMilitary.ATTRITION_EQUIPMENT_LOSS_CHANCE = 0.005 -- 0.1
-	NDefines.NMilitary.ATTRITION_EQUIPMENT_PER_TYPE_LOSS_CHANCE = 0.005 -- 0.1
 	NDefines.NMilitary.CHANCE_TO_AVOID_HIT_AT_NO_DEF = 50 -- 60
 	NDefines.NMilitary.COMBAT_MOVEMENT_SPEED = 0.10
 	NDefines.NMilitary.TACTIC_SWAP_FREQUENCEY = 24 -- 24
@@ -432,12 +426,7 @@
 		0.35, -- up from vanilla 25% for first trait
 		0.15  -- up from vanilla 5% for second trait after that
 	}
-	NDefines.NMilitary.WAR_SCORE_AIR_WORTH = 0.02	            	-- how much strategic bombing will affect warscore
-	NDefines.NMilitary.WAR_SCORE_AIR_WORTH_CAP = 500				-- the warscore liit we get from strategic bombing
-	NDefines.NMilitary.WAR_SCORE_AIR_MONTHLY_FALLOFF = 20			-- how much the warscore we got from the strategic bombing falls off every month.
 	NDefines.NMilitary.WAR_SCORE_LOSSES_RATIO = 4	         	-- Scale how much losses will affect warscore ( per 1000 losses ).
-	NDefines.NMilitary.NUKE_MIN_DAMAGE_PERCENT = 0.3					-- Minimum damage from nukes as a percentage of current strength/organisation
-	NDefines.NMilitary.NUKE_MAX_DAMAGE_PERCENT = 1					-- Maximum damage from nukes as a percentage of current strength/organisation
 	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
 
 	-- Disabled as it seems like this is causing performance problems?
@@ -451,9 +440,9 @@
 	NDefines.NAir.AIR_WING_MAX_STATS_AGILITY = 999 -- 100
 	NDefines.NAir.AIR_WING_MAX_STATS_SPEED = 4000 -- 800
 	NDefines.NAir.AIR_WING_MAX_STATS_BOMBING = 999 -- 100
-	NDefines.NAir.AIR_WING_AVERAGE_SIZE = 50 -- Eyeballed average amount of airplanes in the airwings
+	NDefines.NAir.AIR_WING_AVERAGE_SIZE = 30 -- 100 vanilla; was 50. Reduced to reflect MD wing sizes (land=50, cv=10, strat=25). Used for air volunteer calculations.
 	NDefines.NAir.AIR_WING_BOMB_DAMAGE_FACTOR = 20 -- 2
-	NDefines.NAir.AI_ALLOWED_PLANES_KEPT_IN_RESERVE = 0.15
+	NDefines.NAir.AI_ALLOWED_PLANES_KEPT_IN_RESERVE = 0.05 -- 0.10 vanilla; was 0.15 — too many carrier planes held back from deployment
 	NDefines.NAir.BIGGEST_AGILITY_FACTOR_DIFF = 6 -- 2.5
 	NDefines.NAir.COMBAT_BETTER_AGILITY_DAMAGE_REDUCTION = 0.70 -- 0.3
 	NDefines.NAir.COMBAT_BETTER_SPEED_DAMAGE_INCREASE = 0.45 -- 0.6
@@ -513,16 +502,16 @@
 	NDefines.NAir.AIR_WING_XP_LOSS_REDUCTION_OVER_FRIENDLY_TERRITORY_FACTOR = 0.6 -- 0.3
 	NDefines.NAir.CARRIER_PLANES_AMOUNT_FOR_POSITIONING = 30 -- 50
 	NDefines.NAir.CAS_NIGHT_ATTACK_FACTOR = 0.5 -- 0.1
-	NDefines.NAir.BOMBING_TARGETING_RANDOM_FACTOR = 0.15 -- 0.25
 	NDefines.NAir.RECON_LAND_SPOT_CHANCE = 0.07 -- 0.02
 	NDefines.NAir.CAPACITY_PENALTY = 4 -- 2
 	NDefines.NAir.DISRUPTION_FACTOR = 6.0 -- 4.0
 	NDefines.NAir.DISRUPTION_FACTOR_CARRIER = 8.0 -- 8.0
 	NDefines.NAir.CARRIER_SIZE_STAT_INCREMENT = 10 -- 10
+	NDefines.NAir.REINFORCEMENT_DISABLING_DURATION_IN_LAND_CARRIER_TRANSFER = 12 -- 48 vanilla; reduced so AI is less reluctant to move planes onto carriers
 	NDefines.NAir.MIN_PLANE_COUNT_PARADROP = 5 -- 50 is vanilla
 	NDefines.NAir.BASE_UNIT_WEIGHT_IN_TRANSPORT_PLANES = 5 -- fuck this fucking define fuck you. 45 is vanilla
-	NDefines.NAir.MISSILE_LAUNCHER_CAPACITY = 50
-	NDefines.NAir.MISSILE_LAUNCHER_SLOTS = 10
+	NDefines.NAir.MISSILE_LAUNCHER_CAPACITY = 50 -- 10 vanilla
+	NDefines.NAir.MISSILE_LAUNCHER_SLOTS = 10 -- 1 vanilla
 	NDefines.NAir.MAX_QUICK_WING_SELECTION = 8 -- Thank you for the idea Ebby
 	NDefines.NAir.MISSION_FUEL_COSTS = {
 		1.0, -- AIR_SUPERIORITY
@@ -577,7 +566,6 @@
 	NDefines.NNavy.BASE_CARRIER_SORTIE_EFFICIENCY = 0.5 -- 0.5
 	NDefines.NNavy.NAVAL_SPEED_MODIFIER = 0.1 -- 0.1
 	NDefines.NNavy.NAVAL_TRANSFER_BASE_SPEED = 12 -- 6
-	NDefines.NNavy.NAVAL_INVASION_PREPARE_HOURS = 96 -- 168
 	NDefines.NNavy.ANTI_AIR_TARGETING = 2.4 -- 0.9
 	NDefines.NNavy.ANTI_AIR_TARGETTING_TO_CHANCE = 4 -- 0.2
 	NDefines.NNavy.ANTI_AIR_ATTACK_TO_AMOUNT = 0.0005 -- 0.01
@@ -585,8 +573,6 @@
 	NDefines.NNavy.ANTI_AIR_POW_ON_INCOMING_AIR_DAMAGE = 0.2 -- 0.2
 	NDefines.NNavy.ANTI_AIR_MULT_ON_INCOMING_AIR_DAMAGE = 0.35 -- 0.15
 	NDefines.NNavy.MAX_ANTI_AIR_REDUCTION_EFFECT_ON_INCOMING_AIR_DAMAGE = 0.9 -- 0.75
-	NDefines.NNavy.ENEMY_AIR_SUPERIORITY_IMPACT = -1.25
-
 	NDefines.NNavy.MISSION_FUEL_COSTS = {
 		0.1, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
 		0.8, -- PATROL
@@ -610,18 +596,6 @@
 		0.2, -- TRAIN
 		0.3, -- RESERVE_FLEET
 		0.2, -- NAVAL_INVASION_SUPPORT
-	}
-	NDefines.NNavy.MISSION_SUPREMACY_RATIOS = {
-		0.5, -- HOLD
-		1.0, -- PATROL
-		0.5, -- STRIKE FORCE
-		0.75, -- CONVOY RAIDING
-		0.75, -- CONVOY ESCORT
-		0.35, -- MINES PLANTING
-		0.35, -- MINES SWEEPING
-		0.20, -- TRAIN
-		0.0, -- RESERVE_FLEET
-		1.0, -- NAVAL_INVASION_SUPPORT
 	}
 	NDefines.NNavy.MIN_HOURS_TO_SHUFFLE_NEWLY_ASSIGNED_PATROLS = 10 * 24
 	NDefines.NNavy.BASE_SPOTTING_FROM_RADAR = 15 -- 5
@@ -684,7 +658,7 @@
 	NDefines.NNavy.LEADER_EXPERIENCE_SCALE = 2 -- 1
 	NDefines.NNavy.CHANCE_TO_DAMAGE_PART_ON_CRITICAL_HIT = 0.1 -- 0.1
 	NDefines.NNavy.CHANCE_TO_DAMAGE_PART_ON_CRITICAL_HIT_FROM_AIR = 0.1 -- 0.1
-	NDefines.NNavy.CAPITAL_RATIO_FOR_FULL_SCREENING_FOR_CARRIERS = 2 -- 1
+	NDefines.NNavy.CAPITAL_RATIO_FOR_FULL_SCREENING_FOR_CARRIERS = 1.5 -- 1 vanilla; was 2 (too hard for AI to screen carriers)
 	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CAPITALS = 1.5 -- 3.0
 	NDefines.NNavy.SCREEN_RATIO_FOR_FULL_SCREENING_FOR_CONVOYS = 0.25 -- 0.5
 	NDefines.NNavy.CAPITAL_RATIO_FOR_FULL_SCREENING_FOR_CONVOYS = 0.1 -- 0.25
@@ -693,16 +667,16 @@
 		0.10  -- 10% for level two
               -- 0% for level three to ten
 	}
-	NDefines.NNavy.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 1 		-- optimum carrier count for carrier taskforces
-	NDefines.NNavy.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 6 		-- optimum capital count for capital taskforces
-	NDefines.NNavy.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 2			-- optimum screen count for screen taskforces
-	NDefines.NNavy.SUB_TASKFORCE_MAX_SHIP_COUNT = 4				-- optimum sub count for sub taskforces
+	NDefines.NNavy.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 2 		-- 4 vanilla; was 1 (too few, carriers piled up in reserve)
+	NDefines.NNavy.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 4 		-- 12 vanilla; harmonized with NAI
+	NDefines.NNavy.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 4			-- 12 vanilla; harmonized with NAI
+	NDefines.NNavy.SUB_TASKFORCE_MAX_SHIP_COUNT = 3				-- 16 vanilla; harmonized with NAI
 	NDefines.NNavy.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 1
 	NDefines.NNavy.MAX_CAPITALS_PER_AUTO_TASK_FORCE = 2
 
 	NDefines.NNavy.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 2			-- carrier fleets will at least have this amount of capitals
 	NDefines.NNavy.CAPITALS_TO_CARRIER_RATIO = 2				-- capital to carrier count in carrier taskfoces
-	NDefines.NNavy.SCREENS_TO_CAPITAL_RATIO = 2				-- screens to capital/carrier count in carrier & capital taskforces
+	NDefines.NNavy.SCREENS_TO_CAPITAL_RATIO = 3				-- 4.0 vanilla; was 2 (too few screens per capital, carriers left unscreened)
 
 	NDefines.NNavy.BASE_POSITIONING = 0.70 -- 1.0
 	NDefines.NNavy.RELATIVE_SURFACE_DETECTION_TO_POSITIONING_FACTOR = 0.01 -- 0.01
@@ -740,12 +714,17 @@
 	NDefines.NNavy.NAVAL_COMBAT_AIR_SUB_DETECTION_DECAY_RATE = 1.0					-- Factor to decay the value of sub detection contributed by planes on the last hour. Note: the maximum value between the decayed value and the newly computed one is taken into account. A decay rate of 1 means that nothing is carried over, the previous value is zerod out. A decay rate of 0 means that the previous value is carried over as is.
 	NDefines.NNavy.NAVAL_COMBAT_AIR_SUB_DETECTION_FACTOR = 0.0						-- A global factor that applies after all others, right before the sub detection contributed by plane is added to the global sub detection of a combatant
 
-	NDefines.NNavy.NAVAL_COMBAT_AIR_SUB_TARGET_SCORE = 10                             -- scoring for target picking for planes inside naval combat, one define per ship typ
-	NDefines.NNavy.NAVAL_COMBAT_AIR_CAPITAL_TARGET_SCORE = 25
-	NDefines.NNavy.NAVAL_COMBAT_AIR_CARRIER_TARGET_SCORE = 200
-	NDefines.NNavy.NAVAL_COMBAT_AIR_CONVOY_TARGET_SCORE = 1.0
-	NDefines.NNavy.NAVAL_COMBAT_AIR_STRENGTH_TARGET_SCORE = 5                         -- how much score factor from low health (scales between 0->this number)
-	NDefines.NNavy.NAVAL_COMBAT_AIR_LOW_AA_TARGET_SCORE = 5                           -- how much score factor from low AA guns (scales between 0->this number)
+	-- Naval air target scoring: BASE = score when fully screened, SCALE = additional score when screening drops to 0
+	NDefines.NNavy.NAVAL_COMBAT_AIR_SUB_TARGET_BASE = 10
+	NDefines.NNavy.NAVAL_COMBAT_AIR_SCREEN_TARGET_BASE = 10
+	NDefines.NNavy.NAVAL_COMBAT_AIR_CAPITAL_TARGET_BASE = 15                          -- slightly above vanilla 10 to prioritize capitals
+	NDefines.NNavy.NAVAL_COMBAT_AIR_CARRIER_TARGET_BASE = 15                          -- slightly above vanilla 10 to prioritize carriers even when screened
+	NDefines.NNavy.NAVAL_COMBAT_AIR_CONVOY_TARGET_BASE = 1.0
+	NDefines.NNavy.NAVAL_COMBAT_AIR_SUB_TARGET_SCALE = 10
+	NDefines.NNavy.NAVAL_COMBAT_AIR_SCREEN_TARGET_SCALE = 10
+	NDefines.NNavy.NAVAL_COMBAT_AIR_CAPITAL_TARGET_SCALE = 50                         -- vanilla 50
+	NDefines.NNavy.NAVAL_COMBAT_AIR_CARRIER_TARGET_SCALE = 200                        -- vanilla 200 — heavily target unscreened carriers
+	NDefines.NNavy.NAVAL_COMBAT_AIR_CONVOY_TARGET_SCALE = 1.0
 
 	NDefines.NNavy.NAVAL_COMBAT_RESULT_TIMEOUT_YEARS = 1 -- 2; halve naval combat result history retention
 	NDefines.NNavy.CONVOY_LOSS_HISTORY_TIMEOUT_MONTHS = 3 -- 6; halve convoy loss history retention
@@ -855,7 +834,6 @@
 	NDefines.NAI.REFIT_SHIP_PERCENTAGE_OF_FORCES = 0.25				-- 0.1
 	NDefines.NAI.UPGRADE_DIVISION_RELUCTANCE = 30					-- 7
 	NDefines.NAI.UPGRADE_PERCENTAGE_OF_FORCES = 0.15				-- 0.1
-	NDefines.NAI.STRATEGIC_BOMBING_DEFENCE_IMPORTANCE = 500.0
 	NDefines.NAI.ENEMY_NAVY_STRENGTH_DONT_BOTHER = 1.5				-- 2.5
 	NDefines.NAI.STATE_CONTROL_FOR_AREA_DEFENSE = 0.2				-- 0.4
 	NDefines.NAI.NAVAL_MISSION_INVASION_BASE = 5000					-- 1000
@@ -893,19 +871,23 @@
 	NDefines.NAI.RECON_PLANES_NAVAL = 5						-- 50
 	NDefines.NAI.RECON_PLANES_LAND_COMBAT = 5					-- 25
 	NDefines.NAI.RECON_PLANES_STRATEGIC = 5						-- 50
-	NDefines.NAI.MAX_CARRIER_OVERFILL = 1.50					-- 2.25 -- Reduced to 1.5 to hopefully stop the AI from overcrowding the Carriers
-	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 1				-- 4
-	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 2				-- 12
-	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 4				-- 12
-	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 3					-- 16
-	NDefines.NAI.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 1				-- 10
-	NDefines.NAI.CAPITALS_TO_CARRIER_RATIO = 1					-- 1.5
-	NDefines.NAI.SCREENS_TO_CAPITAL_RATIO = 2					-- 4.0
+	NDefines.NAI.MAX_CARRIER_OVERFILL = 1.85					-- 1.85 vanilla; restored to allow AI to fill carriers with more wings
+	NDefines.NAI.WANTED_CARRIER_PLANES_PER_CARRIER_CAPACITY_FACTOR = 2.0	-- 1.5 vanilla; AI wants 2x deck space filled to ensure carriers always have planes
+	NDefines.NAI.AI_WANTED_CARRIER_BASED_PLANES_FACTOR = 2.0			-- 1.0 vanilla; boost AI desire for carrier planes — MD uses carrier_air_wing_size = 10, so carriers need many small wings
+	NDefines.NAI.PRODUCTION_CARRIER_PLANE_BUFFER_RATIO = 2.0			-- 1.5 vanilla; larger buffer so AI doesn't run out of carrier planes
+	NDefines.NAI.PRODUCTION_CARRIER_PLANE_PRODUCTION_BOOST_TO_BUFFER = 5.0	-- 4.0 vanilla; more urgency when carrier plane buffer is low
+	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 2				-- 4 vanilla; was 1 (match NNavy)
+	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 4				-- 12 vanilla; harmonized with NNavy
+	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 4				-- 12 vanilla; harmonized with NNavy
+	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 3					-- 16 vanilla; harmonized with NNavy
+	NDefines.NAI.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 2				-- 6 vanilla; AI needs at least 2 capitals to form a carrier TF
+	NDefines.NAI.CAPITALS_TO_CARRIER_RATIO = 2					-- 1.5 vanilla; match NNavy ratio
+	NDefines.NAI.SCREENS_TO_CAPITAL_RATIO = 3					-- 4.0 vanilla; match NNavy ratio
 	NDefines.NAI.FRONT_EVAL_UNIT_ACCURACY = 0.85					-- 0.7
 	NDefines.NAI.HIGH_PRIO_NAVAL_MISSION_SCORES = {
 		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
 		100000, -- PATROL
-		5000, -- STRIKE FORCE
+		50000, -- STRIKE FORCE — raised from 5000 so AI actually assigns carrier TFs to strike force missions
 		10000, -- CONVOY RAIDING
 		1000, -- CONVOY ESCORT
 		-1, -- MINES PLANTING
@@ -917,7 +899,7 @@
 	NDefines.NAI.MAX_MISSION_PER_TASKFORCE = {
 		0, -- HOLD (consumes fuel HOLD_MISSION_MOVEMENT_COST fuel while moving)
 		3.5, -- PATROL
-		1, -- STRIKE FORCE
+		3, -- STRIKE FORCE — raised from 1 so AI forms multiple carrier TFs per region
 		3, -- CONVOY RAIDING
 		4, -- CONVOY ESCORT
 		1, -- MINES PLANTING
@@ -1028,9 +1010,11 @@
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CORE = true				-- Whether AI should evaluate giving states to other winners if state is their core (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CLAIM = true				-- Whether AI should evaluate giving states to other winners if they have a claim on the state (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_ALWAYS = false				-- Whether AI should always evaluate giving states to other winners (!!! may heavily affect performance on new conference turn for large peace conferences !!!)
-	NDefines.NAI.LAND_DEFENSE_SAM_MISSILE_IMPORTANCE_FACTOR = 0.6 -- Importance of SAMs in strat region Higher value = more -- 0.2
+	NDefines.NAI.LAND_DEFENSE_SAM_MISSILE_IMPORTANCE_FACTOR = 0.3 -- 0.2 vanilla; was 0.6 (3x vanilla caused AI to overstack rocket sites with SAMs)
 	NDefines.NAI.LAND_COMBAT_MISSILE_IMPORTANCE_FACTOR = 1.75 -- Importance of missiles for regions of strat importance. Higher = more -- 1.5
 	NDefines.NAI.LAND_DEFENSE_AA_IMPORTANCE_FACTOR = 1.0 -- Factor of AA on stat importance
+	NDefines.NAI.ROCKET_ASSIGN_SCORE_REDUCTION_PER_ASSIGNMENT = 2.0 -- 0.5 vanilla; each assigned missile wing reduces region score to prevent overstacking (vanilla 0.5 allowed ~20 wings per region)
+	NDefines.NAI.ROCKET_MIN_ASSIGN_SCORE = 10 -- 10 vanilla; with reduction of 2.0, AI assigns ~5 wings per region before stopping
 
 	-- NOperatives Defines
 	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 25.0 -- (We do not need factories aside from establishment)
@@ -1116,15 +1100,15 @@
 	NDefines.NAI.PRODUCTION_MAX_PROGRESS_TO_SWITCH_NAVAL = 0.2		-- AI will not replace ships being built by newer types if progress is above this
 	NDefines.NAI.AREA_DEFENSE_SETTING_AIRBASES = true
 
-	NDefines.NAI.MIN_MAIN_SHIP_RATIO = 1                      -- if main ship ratio is below this, steal other ships.
+	NDefines.NAI.MIN_MAIN_SHIP_RATIO = 0.5                    -- 0.3 vanilla; below this, steal ships from other TFs. Was 1 (impossible), caused constant reshuffling
 	NDefines.NAI.MIN_SUPPORT_SHIP_RATIO = 0.7                   -- if support ship ratio is below this, steal other ships.
-	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_REINFORCE = 1         -- the main ships will be tried to reinforce this level.
-	NDefines.NAI.MIN_SUPPORT_SHIP_RATIO_TO_REINFORCE = 1      -- the support ships will be tried to reinforce this level.
-	NDefines.NAI.MIN_MAIN_SHIP_TO_SPARE = 0.2                   -- can only steal ships from a task force if their main ship ratio is above this.
-	NDefines.NAI.MIN_SUPPORT_SHIP_TO_SPARE = 0.25                -- can only steal ships from a task force if their support ship ratio is above this.
-	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_MERGE = 1.0             -- try merge task force if main ship ratio is lower than this.
-	NDefines.NAI.MAX_MAIN_SHIP_RATIO_TO_MERGE = 2.5           -- if resulting main ship ratio would be at most this, allow merging into this task force.
-	NDefines.NAI.MAIN_SHIP_RATIO_TO_SPLIT = 3                 -- if main ship ratio in a task force is larger than this, split it. (If a carrier TF wants 4 carriers (see defines above), but it has more than [this * 4] carriers, then we try to split the TF.)
+	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_REINFORCE = 0.7       -- 0.5 vanilla; try to reinforce main ships to this level. Was 1 (always trying to reinforce)
+	NDefines.NAI.MIN_SUPPORT_SHIP_RATIO_TO_REINFORCE = 0.9    -- try to reinforce support ships to this level. Was 1
+	NDefines.NAI.MIN_MAIN_SHIP_TO_SPARE = 0.5                   -- 0.7 vanilla; can only steal from TFs above this ratio. Was 0.2 (too aggressive)
+	NDefines.NAI.MIN_SUPPORT_SHIP_TO_SPARE = 0.5                -- 1.0 vanilla; can only steal support ships from TFs above this. Was 0.25
+	NDefines.NAI.MIN_MAIN_SHIP_RATIO_TO_MERGE = 0.7             -- 0.7 vanilla; merge TFs below this ratio. Was 1.0 (always merging)
+	NDefines.NAI.MAX_MAIN_SHIP_RATIO_TO_MERGE = 1.5           -- 1.001 vanilla; allow merge if result would be at most this. Was 2.5
+	NDefines.NAI.MAIN_SHIP_RATIO_TO_SPLIT = 2.0               -- 1.8 vanilla; split TFs above this ratio. Was 3 (TFs grew too large before splitting)
 	NDefines.NAI.INDUSTRIAL_ORG_TRAIT_UNLOCK_RANDOMNESS = 3		-- AI will pick a random from N top traits when choosing a trait to unlock
 	NDefines.NAI.INDUSTRIAL_ORG_POLICY_CHANGE_RANDOMNESS = 3	-- AI will pick a random from N top policies when choosing a policy to attach to an MIO
 	NDefines.NAI.INDUSTRIAL_ORG_RESEARCH_ASSIGN_RANDOMNESS = 3	-- AI will pick a random from N top MIOs when choosing an MIO to assign to a research
@@ -1206,6 +1190,5 @@
 	NDefines.NFactions.MAX_NUM_MEDIUM_TERM_GOALS = 1						-- Maximum number of medium term goals a faction can have at any one time
 	NDefines.NFactions.MAX_NUM_LONG_TERM_GOALS = 1						-- Maximum number of long term goals a faction can have at any one time
 	NDefines.NFactions.FACTION_INITIATIVE_CHANGE_RULE_COST = 3 -- vanilla 1
-	NDefines.NFactions.FACTION_SCIENTIST_CONTRIBUTION_VALUE = 1.15 -- vanilla is 3
 	NDefines.NFactions.FACTION_TAKE_OVER_RELUCTANCE_VERSUS_HUMAN_INFLUENCE = 2.5
 	NDefines.NFactions.FACTION_ASSIGN_SCIENTIST_COST = 75
