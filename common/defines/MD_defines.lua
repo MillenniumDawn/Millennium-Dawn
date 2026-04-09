@@ -75,7 +75,7 @@
 	NDefines.NDiplomacy.JOIN_FACTION_LIMIT_CHANGE_AT_WAR = 1 --0.5 in Vanilla, value of 1 should mean defensive war gives no reduction to tension limit	-- if in defensive war this or your modifier is counted as limit to join factions (so if you have 80% join limit this now means you can join at 50%)
 	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_PP_COST = 200				-- Political power cost to assume faction leadership
 	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_MIN_MANPOWER_RATIO = 2		-- The minimum ratio of manpower that a country must have compared to the current leader in order to assume leadership.
-	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_MIN_FACTORY_RATIO = 1.5		-- The minimum ratio of factories that a country must have compared to the current leader in order to assume leadership.
+	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_MIN_FACTORY_RATIO = 2		-- 1.5 vanilla; the minimum ratio of factories that a country must have compared to the current leader in order to assume leadership.
 	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_COOLDOWN_DAYS = 180			-- Number of days after formation of faction or change in leadership before another country is allowed to assume leadership.
 	NDefines.NDiplomacy.ASSUME_FACTION_SPYMASTER_COOLDOWN_DAYS = 180			-- Number of days after change of Spy Master before another country is allowed to become Spy Master.
 	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_ALERT_THRESHOLD = 0.8		-- Threshold for showing an alert when a faction member is close to being able to assume leadership of the faction that a player currently leads.
@@ -171,7 +171,7 @@
 	NDefines.NCountry.BASE_RESEARCH_SLOTS = 2 -- Maintains Vanilla's 2 RS default. RSs are handled via the dynamic system
 	NDefines.NCountry.POPULATION_YEARLY_GROWTH_BASE = 0.006 --0.015 in vanilla, reduced from the 0.01 in MD to accomdate for the migration system
 	NDefines.NCountry.RESISTANCE_STRENGTH_FROM_VP = 0.001
-	NDefines.NCountry.RESOURCE_LENDLEASE_PRIORITY = 2
+	NDefines.NNavy.RESOURCE_LENDLEASE_PRIORITY = 2 -- 3 vanilla; moved from NCountry to correct NNavy namespace
 	NDefines.NCountry.SUPPLY_CONVOY_FACTOR = 0.5
 	NDefines.NCountry.CONVOY_RANGE_FACTOR = 1.5
 	NDefines.NCountry.LOCAL_MANPOWER_ACCESSIBLE_NON_CORE_FACTOR = 0.01
@@ -222,7 +222,6 @@
 	}
 
 	NDefines.NProduction.MAX_EQUIPMENT_RESOURCES_NEED = 4
-	NDefines.NProduction.MAX_LINE_RESOURCE_PENALTY = 50
 	NDefines.NProduction.BASE_FACTORY_START_EFFICIENCY_FACTOR = 5
 	NDefines.NProduction.EQUIPMENT_BASE_LEND_LEASE_WEIGHT = 1
 	NDefines.NProduction.EQUIPMENT_LEND_LEASE_WEIGHT_FACTOR = 0.01
@@ -258,10 +257,10 @@
 		0.25,	-- Size MUST be SCIENTIST_SKILL_LEVEL_THRESHOLDS's size + 1
 	}
 	NDefines.NProject.RECRUIT_SCIENTIST_COST = {
-		75,			-- pp cost if no available scientist
-		75,			-- pp cost if 1 available scientist
-		75,			-- pp cost if 2 available scientist
-		75			-- pp cost if more than 2 available scientist
+		50,			-- pp cost if no available scientist (vanilla 25/50/75/100 scaling; MD uses flat 50)
+		50,			-- pp cost if 1 available scientist
+		50,			-- pp cost if 2 available scientist
+		50			-- pp cost if more than 2 available scientist
 	}
 	NDefines.NProject.BREAKTHROUGH_DAILY_SCIENTIST_SKILL_GAIN = 15       -- Amount in 1/100th percentage gained per skill when doing basic research. E.g. 5 = 0.05% per skill level.
 	NDefines.NProject.BREAKTHROUGH_DAILY_TECHNOLOGY_GAIN = 10           -- Amount in 1/100th percentage. E.g. 25 = 0.25%
@@ -319,7 +318,6 @@
 	NDefines.NMilitary.LAND_COMBAT_FORT_DAMAGE_CHANCE = 15
 	NDefines.NMilitary.ATTRITION_DAMAGE_ORG = 0.04 -- 0.08
 	NDefines.NMilitary.ATTRITION_EQUIPMENT_LOSS_CHANCE = 0.005 -- 0.1
-	NDefines.NMilitary.CHANCE_TO_AVOID_HIT_AT_NO_DEF = 50 -- 60
 	NDefines.NMilitary.COMBAT_MOVEMENT_SPEED = 0.10
 	NDefines.NMilitary.TACTIC_SWAP_FREQUENCEY = 24 -- 24
 	NDefines.NMilitary.LAND_SPEED_MODIFIER = 0.05 -- 0.05
@@ -537,7 +535,6 @@
 
 	NDefines.NNavy.BEST_CAPITALS_TO_CARRIER_RATIO = 2 -- 1
 	NDefines.NNavy.BEST_CAPITALS_TO_SCREENS_RATIO = 0.5 -- 0.25
-	NDefines.NNavy.DETECTION_CHANCE_BALANCE = 1.5 -- 2.5
 	NDefines.NNavy.DECRYPTION_SPOTTING_BONUS = 0.3 -- 0.2
 	NDefines.NNavy.COMBAT_EVASION_TO_HIT_CHANCE_TORPEDO_MULT = 1 -- 40
 	NDefines.NNavy.COMBAT_LOW_ORG_HIT_CHANCE_PENALTY = -0.8 -- -0.5
@@ -546,11 +543,6 @@
 	NDefines.NNavy.COMBAT_DAMAGE_RANDOMNESS = 0.75 -- 0.5, increased this number to decrease the amount of randomization in damage
 	NDefines.NNavy.COMBAT_DAMAGE_TO_STR_FACTOR = 1.6-- 1.6 -- 0.6
 	NDefines.NNavy.COMBAT_DAMAGE_TO_ORG_FACTOR = 1.6 -- 1.9 -- 1
-	NDefines.NNavy.COMBAT_DAMAGE_REDUCTION_ON_RETREAT = 0.75 -- 0.8
-	NDefines.NNavy.COMBAT_ESCAPING_SPEED_BALANCE = 0.9 -- 0.8
-	NDefines.NNavy.COMBAT_SHIP_SPEED_TO_FIELD_FACTOR = 0.15 -- 0.03
-	NDefines.NNavy.COMBAT_MAX_DISTANCE_TO_CENTER_LINE = 350 -- 50
-	NDefines.NNavy.COMBAT_MAX_DISTANCE_TO_ARRIVE = 600 -- 80
 	NDefines.NNavy.COMBAT_MIN_DURATION = 16 -- 8
 	NDefines.NNavy.COMBAT_CHASE_RESIGNATION_HOURS = 6 -- 8
 	NDefines.NNavy.REPAIR_AND_RETURN_PRIO_LOW = 0.35 -- 0.2
@@ -667,16 +659,8 @@
 		0.10  -- 10% for level two
               -- 0% for level three to ten
 	}
-	NDefines.NNavy.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 2 		-- 4 vanilla; was 1 (too few, carriers piled up in reserve)
-	NDefines.NNavy.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 4 		-- 12 vanilla; harmonized with NAI
-	NDefines.NNavy.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 4			-- 12 vanilla; harmonized with NAI
-	NDefines.NNavy.SUB_TASKFORCE_MAX_SHIP_COUNT = 3				-- 16 vanilla; harmonized with NAI
 	NDefines.NNavy.MAX_SUBMARINES_PER_AUTO_TASK_FORCE = 1
 	NDefines.NNavy.MAX_CAPITALS_PER_AUTO_TASK_FORCE = 2
-
-	NDefines.NNavy.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 2			-- carrier fleets will at least have this amount of capitals
-	NDefines.NNavy.CAPITALS_TO_CARRIER_RATIO = 2				-- capital to carrier count in carrier taskfoces
-	NDefines.NNavy.SCREENS_TO_CAPITAL_RATIO = 3				-- 4.0 vanilla; was 2 (too few screens per capital, carriers left unscreened)
 
 	NDefines.NNavy.BASE_POSITIONING = 0.70 -- 1.0
 	NDefines.NNavy.RELATIVE_SURFACE_DETECTION_TO_POSITIONING_FACTOR = 0.01 -- 0.01
@@ -731,7 +715,6 @@
 	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_MANPOWER_FACTOR = 0.01                        -- war score gained for every manpower killed when sinking a ship
 	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_PRODUCTION_COST_FACTOR = 0.01   --0.04                       -- war score gained for every IC of the sunk ship
 	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_CONVOY = 1.25  --10                       -- war score gained for every sunk convoy
-	NDefines.NNavy.WAR_SCORE_DECAY_FOR_BUILT_CONVOY = 1  --5                         -- war score deducted when convoy-raided enemy produces one new convoy
 
 	NDefines.NNavy.UNDERWAY_REPLENISHMENT_RANGE_FACTOR = 0.42 -- bonus factor applied to task force's range when underway replenishment is activated (e.g. 0.2 means +20%) -- 0.42 base game
 	NDefines.NNavy.UNDERWAY_REPLENISHMENT_CONVOY_COST_PER_FUEL = 0.42 -- Cost in convoys for underway replenishment multiplied by max daily fuel consumption (rounded up) -- 0.42 base game
@@ -784,7 +767,6 @@
 	NDefines.NAI.DIPLOMACY_ACCEPT_VOLUNTEERS_BASE = 75 -- 50
 	NDefines.NAI.DIPLOMACY_ACCEPT_ATTACHE_BASE = 75 -- 50
 	NDefines.NAI.MIN_DELIVERED_TRADE_FRACTION = 0.6 -- 0.8
-	NDefines.NAI.PRODUCTION_UNAVAILABLE_RESORCE_FACTORY_FACTOR = 0.4 -- 0.75
 	NDefines.NAI.MAX_VOLUNTEER_ARMY_FRACTION = 0.5			-- 0.25
 	NDefines.NAI.DEPLOY_MIN_EQUIPMENT_WAR_FACTOR = 0.60		-- 0.90
 	NDefines.NAI.CALL_ALLY_BASE_DESIRE = 25					-- 20
@@ -800,22 +782,17 @@
 	NDefines.NAI.PLAN_FRONTUNIT_DISTANCE_FACTOR = 20			-- 10
 	NDefines.NAI.PLAN_ATTACK_DEPTH_FACTOR = 1.2				-- 0.5
 	NDefines.NAI.PLAN_STEP_COST_LIMIT = 15					-- 11
-	NDefines.NAI.PLAN_FRONT_SECTION_MAX_LENGTH = 9			-- 18
-	NDefines.NAI.PLAN_FRONT_SECTION_MIN_LENGTH = 4			-- 10
 	NDefines.NAI.PLAN_MIN_SIZE_FOR_FALLBACK = 1000			-- 50
 	NDefines.NAI.SEND_VOLUNTEER_EVAL_BASE_DISTANCE = 100.0  	-- 175
 	NDefines.NAI.SEND_VOLUNTEER_EVAL_CONTAINMENT_FACTOR = 0.05 -- 0.1
 	NDefines.NAI.MAIN_ENEMY_FRONT_IMPORTANCE = 2.5			-- 4
 	NDefines.NAI.EASY_TARGET_FRONT_IMPORTANCE = 1.3			-- 7.5
 	NDefines.NAI.MICRO_POCKET_SIZE = 3						-- 4
-	NDefines.NAI.FRONT_REASSIGN_DISTANCE = 40.0				-- 120
-	NDefines.NAI.OLD_FRONT_IMPORTANCE_FACTOR = 1.80			-- 1.5
 	NDefines.NAI.FRONT_TERRAIN_DEFENSE_FACTOR = 3.75			-- 3.75
 	NDefines.NAI.FRONT_TERRAIN_ATTACK_FACTOR = 8.0			-- 5
 	NDefines.NAI.BASE_DISTANCE_TO_CARE = 200.0				-- 600
 	NDefines.NAI.MIN_FORCE_RATIO_TO_PROTECT = 1.5			-- 0.5
 	NDefines.NAI.STR_UNIT_STRONG = 0.85						-- 0.75
-	NDefines.NAI.MIN_STATE_VALUE_TO_PROTECT = 3.5			-- 7.5
 	NDefines.NAI.FASCISTS_BEFRIEND_COMMUNISTS = -50
 	NDefines.NAI.FASCISTS_ALLY_FASCISTS = -25
 	NDefines.NAI.FASCISTS_ALLY_DEMOCRACIES = -75
@@ -829,7 +806,6 @@
 	NDefines.NAI.COMMUNISTS_ANTAGONIZE_FASCISTS = 25
 	NDefines.NAI.COMMUNISTS_ANTAGONIZE_DEMOCRACIES = 30
 	NDefines.NAI.COMMUNISTS_ANTAGONIZE_COMMUNISTS = -50
-	NDefines.NAI.CALL_ALLY_WT_LIMIT = 0.6 -- 0.8
 	NDefines.NAI.REFIT_SHIP_RELUCTANCE = 56						-- 28
 	NDefines.NAI.REFIT_SHIP_PERCENTAGE_OF_FORCES = 0.25				-- 0.1
 	NDefines.NAI.UPGRADE_DIVISION_RELUCTANCE = 30					-- 7
@@ -839,16 +815,9 @@
 	NDefines.NAI.NAVAL_MISSION_INVASION_BASE = 5000					-- 1000
 	NDefines.NAI.SCARY_LEVEL_AVERAGE_DEFENSE = -0.6					-- -0.7
 	NDefines.NAI.ATTACK_HEAVILY_DEFENDED_LIMIT = 1.2					-- 0.45
-	NDefines.NAI.HOUR_BAD_COMBAT_REEVALUATE = 42						-- 100
 	NDefines.NAI.AI_FRONT_MOVEMENT_FACTOR_FOR_READY = 0.15 --default 0.25
 	NDefines.NAI.PLAN_VALUE_TO_EXECUTE = -0.2 --default -0.5
 	NDefines.NAI.REQUEST_LEND_LEASE_CONTAINS_VALUE = 60				-- 100
-	NDefines.NAI.REQUEST_LEND_LEASE_STOCKPILE_RATIO_LAND = 0.5			-- 0.1
-	NDefines.NAI.REQUEST_LEND_LEASE_PRODUCTION_DAYS_LAND = 500			-- 28
-	NDefines.NAI.REQUEST_LEND_LEASE_STOCKPILE_RATIO_AIR = 0.3			-- 0.03
-	NDefines.NAI.REQUEST_LEND_LEASE_PRODUCTION_DAYS_AIR = 28			-- 10
-	NDefines.NAI.REQUEST_LEND_LEASE_STOCKPILE_RATIO_NAVAL = 0.3			-- 0.1
-	NDefines.NAI.INVASION_DISTANCE_RANDOMNESS = 200					-- 300
 	NDefines.NAI.NAVAL_TRANSFER_AIR_IMPORTANCE = 1.0				-- 0
 	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_SHIP = 30 					--20 reduced by 50% to reduce the AI spamming planes over naval battles
 	NDefines.NAI.FOCUS_TREE_CONTINUE_FACTOR = 1		-- Factor for score of how likely the AI is to keep going down a focus tree rather than starting a new path.
@@ -921,7 +890,7 @@
 	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE = 60				-- countries will enter fuel saving mode if they will be out of fuel in this number of days and their fuel ratio is below next define
 	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE_FUEL_RATIO = 0.25
 	NDefines.NAI.FUEL_RATIO_TO_EXIST_FUEL_SAVING_MODE = 0.30 					-- countries will exit fuel saving mode if they have more fuel ratio than this
-	NDefines.NAI.LAND_COMBAT_CAS_WINGS_PER_ENEMY_ARMY_LIMIT = 5	-- Limit of CAS wings requested by enemy armies
+	NDefines.NAI.LAND_COMBAT_CAS_PLANES_PER_ENEMY_ARMY_LIMIT = 5	-- 200 vanilla; limit of CAS planes requested by enemy armies
 	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20				-- Amount of CAS planes requested per enemy army
 
 	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 65
@@ -1000,9 +969,7 @@
 
 	-- Peace deal AI stuff
 	NDefines.NAI.PEACE_BID_FOLD_AGAINST_PLAYER_CHANCE = 0.7			-- 0.5 in vanilla
-	NDefines.NAI.PEACE_BID_FOLD_AGAINST_AI_CHANCE_UNCONTROLLED = 0.60	-- 0.40 in vanilla
 	NDefines.NAI.PEACE_BID_FOLD_AGAINST_LIBERATE_CONTEST = 1.0			-- 1.0 in vanilla
-	NDefines.NAI.PEACE_BID_FOLD_MINOR_VS_MAJOR = 2.0					-- 1.0 in vanilla
 	NDefines.NAI.PEACE_AI_GROUP_PEACE_ACTIONS = false					-- Whether AI should group peace actions or greedily just select the most-desired peace actions
 	NDefines.NAI.PEACE_AI_EVALUATE_FOR_SUBJECTS = true					-- Whether AI should include subjects when evaluating giving states to other winners (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_FOR_ALLIES = true					-- Whether AI should include allies when evaluating giving states to other winners (may affect performance on new conference turn)
@@ -1161,19 +1128,6 @@
 	NDefines.NProduction.POWERED_FACTORY_SPEED = 4 					--Powered factory speed multiplier.
 	NDefines.NProduction.POWERED_FACTORY_SPEED_MIL = 3 			--Powered factory speed multiplier.
 	NDefines.NProduction.POWERED_FACTORY_SPEED_NAV = 8 			--Powered factory speed multiplier.
-
-	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_PP_COST = 200				-- Political power cost to assume faction leadership
-	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_MIN_MANPOWER_RATIO = 2		-- The minimum ratio of manpower that a country must have compared to the current leader in order to assume leadership.
-	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_MIN_FACTORY_RATIO = 2		-- 1.5
-	NDefines.NDiplomacy.ASSUME_FACTION_LEADERSHIP_COOLDOWN_DAYS = 180			-- Number of days after formation of faction or change in leadership before another country is allowed to assume leadership.
-	NDefines.NDiplomacy.ASSUME_FACTION_SPYMASTER_COOLDOWN_DAYS = 180			-- Number of days after change of Spy Master before another country is allowed to become Spy Master.
-	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_ALERT_THRESHOLD = 0.8		-- Threshold for showing an alert when a faction member is close to being able to assume leadership of the faction that a player currently leads.
-	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_NOT_SUBJECT_WEIGHT = 2		-- Importance of subject status when determining how close a faction member is to being able to assume leadership.
-	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_NOT_CAPITULATED_WEIGHT = 2	-- Importance of capitulation status when determining how close a faction member is to being able to assume leadership.
-	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_IN_ALL_WARS_WEIGHT = 1		-- Importance not being in all faction leader wars when determining how close a faction member is to being able to assume leadership.
-	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_COOLDOWN_WEIGHT = 1			-- Importance of leadership change cooldown when determining how close a faction member is to being able to assume leadership.
-	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_MANPOWER_WEIGHT = 2			-- Importance of manpower in field when determining how close a faction member is to being able to assume leadership.
-	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_FACTORY_WEIGHT = 2			-- Importance of factory count when determining how close a faction member is to being able to assume leadership.
 
 	NDefines.NDiplomacy.FACTION_POWER_RESOURCE_WEIGHT = 0.04			-- 0.05
 	NDefines.NDiplomacy.FACTION_POWER_INDUSTRY_WEIGHT = 0.4			-- 0.1
