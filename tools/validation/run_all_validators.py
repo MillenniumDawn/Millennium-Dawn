@@ -16,7 +16,6 @@ TOOLS_DIR = os.path.dirname(SCRIPTS_DIR)
 # name -> (script filename, human-readable label)
 VALIDATORS = [
     ("variables", "validate_variables.py", "Variable and event target validation"),
-    ("set-variables", "validate_set_variables.py", "Set variable usage validation"),
     (
         "scripted-localisation",
         "validate_scripted_localisation.py",

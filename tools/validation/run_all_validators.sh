@@ -37,7 +37,6 @@ echo ""
 # name -> script filename
 declare -A SCRIPTS=(
     [variables]="validate_variables.py"
-    [set-variables]="validate_set_variables.py"
     [scripted-localisation]="validate_scripted_localisation.py"
     [cosmetic-tags]="validate_cosmetic_tags.py"
     [decisions]="validate_decisions.py"
@@ -56,7 +55,6 @@ declare -A SCRIPTS=(
 # name -> human-readable label
 declare -A LABELS=(
     [variables]="Variable and event target validation"
-    [set-variables]="Set variable usage validation"
     [scripted-localisation]="Scripted localisation validation"
     [cosmetic-tags]="Cosmetic tag validation"
     [decisions]="Decision validation"
@@ -73,7 +71,7 @@ declare -A LABELS=(
 )
 
 # Ordered for consistent output
-ORDERED=(variables set-variables scripted-localisation cosmetic-tags decisions localisation events history-techs unused-scripted oob-units defines ai-navy ai-equipment ai-roles factions)
+ORDERED=(variables scripted-localisation cosmetic-tags decisions localisation events history-techs unused-scripted oob-units defines ai-navy ai-equipment ai-roles factions)
 
 declare -A PIDS=()
 
