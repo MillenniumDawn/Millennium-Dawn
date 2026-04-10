@@ -144,7 +144,7 @@ def parse_taskforce_files(
     """
     taskforce_dir = os.path.join(mod_path, "common", "ai_navy", "taskforce")
     if not os.path.isdir(taskforce_dir):
-        return set(), [], []
+        return set(), [], [], []
 
     defined_taskforces: Set[str] = set()
     ship_refs: List[Tuple[str, str, int]] = []
