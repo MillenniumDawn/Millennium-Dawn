@@ -7,7 +7,8 @@
 #   1. Ship types in taskforce templates match canonical sub_unit definitions
 #   2. Taskforce names referenced in fleet templates match defined taskforces
 #   3. Mission types in taskforce templates are valid HOI4 naval missions
-#   4. Suggests closest match for likely typos
+#   4. Optimal composition sizes respect NAI define limits
+#   5. Suggests closest match for likely typos
 ##########################
 import difflib
 import glob
@@ -31,6 +32,34 @@ VALID_MISSIONS = {
     "hold",
     "naval_carrier_operations",
 }
+
+# Ship type classifications for composition limit checks
+# Source: common/units/MD_naval_units.txt type = X fields
+CARRIER_TYPES = {"carrier", "helicopter_operator"}
+CAPITAL_TYPES = {
+    "battleship",
+    "battle_cruiser",
+    "cruiser",
+    "stealth_destroyer",
+    "destroyer",
+    "heavy_frigate",
+}
+SCREEN_TYPES = {
+    "screen_destroyer",
+    "stealth_frigate",
+    "frigate",
+    "corvette",
+    "stealth_corvette",
+    "patrol_boat",
+}
+SUB_TYPES = {"missile_submarine", "attack_submarine"}
+
+# NAI define limits — from common/defines/MD_defines.lua
+# These cap how many ships the AI puts per type category in a single taskforce.
+CARRIER_MAX = 2  # CARRIER_TASKFORCE_MAX_CARRIER_COUNT
+CAPITAL_MAX = 6  # CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT
+SCREEN_MAX = 8  # SCREEN_TASKFORCE_MAX_SHIP_COUNT
+SUB_MAX = 8  # SUB_TASKFORCE_MAX_SHIP_COUNT
 
 # Ship type references inside composition blocks: name = { amount = N }
 SHIP_TYPE_RE = re.compile(r"^\s+(\w+)\s*=\s*\{")
@@ -93,15 +122,25 @@ def parse_naval_units(mod_path: str) -> Set[str]:
     return ship_types
 
 
+# Composition entry: ship_type with amount
+AMOUNT_RE = re.compile(r"amount\s*=\s*(\d+)")
+
+
 def parse_taskforce_files(
     mod_path: str,
-) -> Tuple[Set[str], List[Tuple[str, str, int]], List[Tuple[str, str, int]]]:
+) -> Tuple[
+    Set[str],
+    List[Tuple[str, str, int]],
+    List[Tuple[str, str, int]],
+    List[Tuple[str, str, int, Dict[str, int]]],
+]:
     """Parse taskforce template files.
 
     Returns:
         - Set of defined taskforce template names
         - List of (ship_type, filename, line_num) for ship type references
         - List of (mission_type, filename, line_num) for mission references
+        - List of (tf_name, filename, line_num, {ship_type: amount}) for optimal compositions
     """
     taskforce_dir = os.path.join(mod_path, "common", "ai_navy", "taskforce")
     if not os.path.isdir(taskforce_dir):
@@ -110,6 +149,7 @@ def parse_taskforce_files(
     defined_taskforces: Set[str] = set()
     ship_refs: List[Tuple[str, str, int]] = []
     mission_refs: List[Tuple[str, str, int]] = []
+    optimal_compositions: List[Tuple[str, str, int, Dict[str, int]]] = []
 
     for filepath in glob.iglob(os.path.join(taskforce_dir, "*.txt")):
         filename = os.path.basename(filepath)
@@ -120,7 +160,12 @@ def parse_taskforce_files(
             continue
 
         in_composition = False
+        in_optimal = False
         brace_depth = 0
+        current_tf_name = ""
+        current_tf_line = 0
+        current_optimal: Dict[str, int] = {}
+        current_ship_type = ""
 
         for line_num, line in enumerate(lines, start=1):
             stripped = line.strip()
@@ -140,10 +185,16 @@ def parse_taskforce_files(
             if brace_depth == 0:
                 match = TASKFORCE_DEF_RE.match(stripped)
                 if match:
-                    defined_taskforces.add(match.group(1))
+                    current_tf_name = match.group(1)
+                    current_tf_line = line_num
+                    defined_taskforces.add(current_tf_name)
 
             # Detect composition blocks
-            if "min_composition" in stripped or "optimal_composition" in stripped:
+            if "optimal_composition" in stripped:
+                in_optimal = True
+                in_composition = True
+                current_optimal = {}
+            elif "min_composition" in stripped:
                 in_composition = True
 
             # Inside composition: ship type references
@@ -153,6 +204,14 @@ def parse_taskforce_files(
                     name = match.group(1)
                     if name not in ("amount", "min_composition", "optimal_composition"):
                         ship_refs.append((name, filename, line_num))
+                        current_ship_type = name
+
+                # Capture amount for optimal composition tracking
+                if in_optimal and current_ship_type:
+                    amount_match = AMOUNT_RE.search(stripped)
+                    if amount_match:
+                        current_optimal[current_ship_type] = int(amount_match.group(1))
+                        current_ship_type = ""
 
             # Mission references
             mission_match = MISSION_BLOCK_RE.search(stripped)
@@ -167,9 +226,21 @@ def parse_taskforce_files(
 
             # Reset composition tracking when we exit the block
             if in_composition and brace_depth < 2:
+                if in_optimal and current_optimal:
+                    optimal_compositions.append(
+                        (
+                            current_tf_name,
+                            filename,
+                            current_tf_line,
+                            dict(current_optimal),
+                        )
+                    )
                 in_composition = False
+                in_optimal = False
+                current_optimal = {}
+                current_ship_type = ""
 
-    return defined_taskforces, ship_refs, mission_refs
+    return defined_taskforces, ship_refs, mission_refs, optimal_compositions
 
 
 def parse_fleet_files(
@@ -240,12 +311,16 @@ class Validator(BaseValidator):
                 self.log("  No staged ai_navy or units files, skipping")
                 return
 
-        # Parse taskforce files once, reuse in both checks
-        self._defined_taskforces, self._ship_refs, self._mission_refs = (
-            parse_taskforce_files(self.mod_path)
-        )
+        # Parse taskforce files once, reuse in all checks
+        (
+            self._defined_taskforces,
+            self._ship_refs,
+            self._mission_refs,
+            self._optimal_compositions,
+        ) = parse_taskforce_files(self.mod_path)
         self._validate_ship_types()
         self._validate_fleet_references()
+        self._validate_composition_limits()
 
     def _validate_ship_types(self):
         """Validate ship types and missions in taskforce templates."""
@@ -346,6 +421,46 @@ class Validator(BaseValidator):
             results,
             "✓ All fleet taskforce references are valid",
             "Invalid taskforce references in fleet templates:",
+        )
+
+    def _validate_composition_limits(self):
+        """Validate optimal compositions respect NAI define limits."""
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking taskforce composition limits "
+            f"(carrier≤{CARRIER_MAX}, capital≤{CAPITAL_MAX}, "
+            f"screen≤{SCREEN_MAX}, sub≤{SUB_MAX})..."
+            f"{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        results = []
+        for tf_name, filename, line_num, composition in self._optimal_compositions:
+            carrier_count = sum(composition.get(t, 0) for t in CARRIER_TYPES)
+            capital_count = sum(composition.get(t, 0) for t in CAPITAL_TYPES)
+            screen_count = sum(composition.get(t, 0) for t in SCREEN_TYPES)
+            sub_count = sum(composition.get(t, 0) for t in SUB_TYPES)
+
+            violations = []
+            if carrier_count > CARRIER_MAX:
+                violations.append(f"carrier={carrier_count}>{CARRIER_MAX}")
+            if capital_count > CAPITAL_MAX:
+                violations.append(f"capital={capital_count}>{CAPITAL_MAX}")
+            if screen_count > SCREEN_MAX:
+                violations.append(f"screen={screen_count}>{SCREEN_MAX}")
+            if sub_count > SUB_MAX:
+                violations.append(f"sub={sub_count}>{SUB_MAX}")
+
+            if violations:
+                results.append(
+                    f"{filename}:{line_num}: {tf_name} exceeds NAI limits: "
+                    f"{', '.join(violations)}"
+                )
+
+        self._report(
+            results,
+            "✓ All taskforce compositions within NAI define limits",
+            "Taskforce compositions exceeding NAI define limits:",
         )
 
 

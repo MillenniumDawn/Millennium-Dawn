@@ -257,6 +257,60 @@ MD splits destroyers into two sub_units: `destroyer` (capital_ship) and `screen_
 
 For nations that need distinct ASW-focused screen destroyers (e.g., USA), add a `naval_screen_destroyer` role with ASW-optimized designs (sonar, torpedoes, ASW missiles). Add corresponding `role_ratio` in the AI strategy file.
 
+## Taskforce Composition Limits
+
+NAI defines in `common/defines/MD_defines.lua` cap how many ships the AI puts per category in a single taskforce. The `optimal_composition` in fleet templates is silently capped by these:
+
+| Define                                | Value | Category     | Ship Types                                                                          |
+| ------------------------------------- | ----- | ------------ | ----------------------------------------------------------------------------------- |
+| `CARRIER_TASKFORCE_MAX_CARRIER_COUNT` | 2     | carrier      | carrier, helicopter_operator                                                        |
+| `CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT` | 6     | capital_ship | battleship, battle_cruiser, cruiser, stealth_destroyer, destroyer, heavy_frigate    |
+| `SCREEN_TASKFORCE_MAX_SHIP_COUNT`     | 8     | screen_ship  | screen_destroyer, stealth_frigate, frigate, corvette, stealth_corvette, patrol_boat |
+| `SUB_TASKFORCE_MAX_SHIP_COUNT`        | 8     | submarine    | missile_submarine, attack_submarine                                                 |
+
+**If an optimal_composition exceeds these caps, the excess ships are silently ignored.** The `validate_ai_navy` pre-commit hook catches violations.
+
+Other relevant ratios:
+
+- `CAPITALS_TO_CARRIER_RATIO = 2` — AI wants 2 capitals per carrier
+- `SCREENS_TO_CAPITAL_RATIO = 3` — AI wants 3 screens per capital
+- `MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 2` — need 2 capitals to form carrier TF
+
+### Fleet Sizing for Large Navies
+
+Nations with many ships (100+) need sufficient fleet/taskforce slots to absorb them:
+
+- Increase `optional_taskforces` counts in fleet templates
+- Add more fleet template varieties (patrol, escort, submarine, corvette fleets)
+- The AI creates **multiple instances** of each fleet template if ships are available
+- Keep taskforce sizes within define caps; create more taskforces rather than larger ones
+
+### NOT Block AND Trap in Priority Blocks
+
+`NOT = { tag = A tag = B }` means NOT(A AND B) — always true since a country can only be one tag. This is a common copy-paste error in priority blocks:
+
+```pdx
+# WRONG — always evaluates true, modifier never applies
+modifier = {
+    factor = 0
+    NOT = {
+        tag = USA
+        tag = ENG
+    }
+}
+
+# CORRECT — zeroes priority for any nation not in the list
+modifier = {
+    factor = 0
+    NOT = {
+        OR = {
+            tag = USA
+            tag = ENG
+        }
+    }
+}
+```
+
 ## Common Mistakes
 
 | Mistake                                                  | Impact                                                    | Fix                                                |
@@ -273,3 +327,8 @@ For nations that need distinct ASW-focused screen destroyers (e.g., USA), add a 
 | Nation excluded from generic but no custom role coverage | AI cannot produce that equipment type at all              | Run `validate_ai_equipment.py`                     |
 | Partial naval goals (only overriding a few types)        | Duplicate goals — both generic and custom apply           | Define complete set of all 11 objective types      |
 | Nation blocked from generic air with no custom strategy  | Zero interceptor/bomber/drone production                  | Verify every excluded nation has full air doctrine |
+| `NOT = { tag=A tag=B }` in priority block                | Modifier never fires (AND trap)                           | Use `NOT = { OR = { tag=A tag=B } }`               |
+| `factor = 0` for nation + nation not in `blocked_for`    | Nation uses template but with zero priority               | Either block the nation or remove factor=0         |
+| Duplicate design names within a role template            | Second silently overwrites first — design is lost         | Use unique names (e.g., `_improved`, `_next`)      |
+| Optimal composition exceeds NAI define caps              | Engine silently caps ships; excess wasted                 | Run `validate_ai_navy.py`, respect define limits   |
+| `AP_` prefix on design names (copy-paste from JAP)       | No functional impact but confuses debugging               | Use correct tag prefix                             |

@@ -865,10 +865,10 @@
 	NDefines.NAI.AI_WANTED_CARRIER_BASED_PLANES_FACTOR = 2.0			-- 1.0 vanilla; boost AI desire for carrier planes — MD uses carrier_air_wing_size = 10, so carriers need many small wings
 	NDefines.NAI.PRODUCTION_CARRIER_PLANE_BUFFER_RATIO = 2.0			-- 1.5 vanilla; larger buffer so AI doesn't run out of carrier planes
 	NDefines.NAI.PRODUCTION_CARRIER_PLANE_PRODUCTION_BOOST_TO_BUFFER = 5.0	-- 4.0 vanilla; more urgency when carrier plane buffer is low
-	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 2				-- 4 vanilla; was 1 (match NNavy)
-	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 4				-- 12 vanilla; harmonized with NNavy
-	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 4				-- 12 vanilla; harmonized with NNavy
-	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 3					-- 16 vanilla; harmonized with NNavy
+	NDefines.NAI.CARRIER_TASKFORCE_MAX_CARRIER_COUNT = 2				-- 4 vanilla; 2 carriers per TF is realistic for modern CSGs
+	NDefines.NAI.CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT = 6				-- 12 vanilla; allows modern SAGs (2 cruisers + 4 destroyers)
+	NDefines.NAI.SCREEN_TASKFORCE_MAX_SHIP_COUNT = 8				-- 12 vanilla; allows proper escort groups (frigates + corvettes)
+	NDefines.NAI.SUB_TASKFORCE_MAX_SHIP_COUNT = 8					-- 16 vanilla; allows realistic wolfpacks (6-8 subs)
 	NDefines.NAI.MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 2				-- 6 vanilla; AI needs at least 2 capitals to form a carrier TF
 	NDefines.NAI.CAPITALS_TO_CARRIER_RATIO = 2					-- 1.5 vanilla; match NNavy ratio
 	NDefines.NAI.SCREENS_TO_CAPITAL_RATIO = 3					-- 4.0 vanilla; match NNavy ratio
