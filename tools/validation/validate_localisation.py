@@ -496,7 +496,6 @@ class Validator(BaseValidator):
             and not k.startswith("cannot_go_higher_than_")
             and not k.startswith("cannot_go_lower_than_")
             and not k.startswith("OPERATIVE_MISSION_")
-            and not k.startswith("GER_")
         }
 
         if not tt_keys:
