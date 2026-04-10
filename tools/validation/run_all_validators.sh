@@ -49,6 +49,8 @@ declare -A SCRIPTS=(
     [defines]="validate_defines.py"
     [ai-navy]="validate_ai_navy.py"
     [ai-equipment]="validate_ai_equipment.py"
+    [ai-roles]="validate_ai_roles.py"
+    [factions]="validate_factions.py"
 )
 
 # name -> human-readable label
@@ -66,10 +68,12 @@ declare -A LABELS=(
     [defines]="Defines validation (dead/namespace/duplicate)"
     [ai-navy]="AI navy validation (ship types, missions, fleet refs)"
     [ai-equipment]="AI equipment coverage validation (naval/land/air)"
+    [ai-roles]="AI role reference validation"
+    [factions]="Faction system validation"
 )
 
 # Ordered for consistent output
-ORDERED=(variables set-variables scripted-localisation cosmetic-tags decisions localisation events history-techs unused-scripted oob-units defines ai-navy ai-equipment)
+ORDERED=(variables set-variables scripted-localisation cosmetic-tags decisions localisation events history-techs unused-scripted oob-units defines ai-navy ai-equipment ai-roles factions)
 
 declare -A PIDS=()
 
