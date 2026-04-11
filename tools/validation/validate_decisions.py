@@ -151,7 +151,7 @@ def parse_categories_with_decisions(
         parse_decision_categories(mod_path, lowercase, visible_when_empty).keys()
     )
     result = {cat: [] for cat in category_names}
-    dec_pattern = re.compile(r"^\t(\S+) = \{", flags=re.MULTILINE)
+    dec_pattern = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
 
     for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
         if "categories" in filename:

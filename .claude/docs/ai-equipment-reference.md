@@ -161,17 +161,17 @@ The generic files (`generic_tank.txt`, `generic_plane.txt`, `generic_naval.txt`)
 
 ### Land Equipment Roles
 
-| Role                                    | Equipment Type         | Used By                                                  |
-| --------------------------------------- | ---------------------- | -------------------------------------------------------- |
-| `land_modern_tank` / `land_medium_tank` | MBT chassis            | `armor_Bat`                                              |
-| `land_modern_apc`                       | APC chassis            | `Mech_Inf_Bat`, `Mech_Air_Inf_Bat`                       |
-| `land_modern_ifv`                       | IFV chassis            | `Arm_Inf_Bat`                                            |
-| `land_modern_artillery`                 | SP artillery chassis   | `SP_Arty_Bat`, `SP_Arty_Battery`                         |
-| `land_medium_tank_anti_air`             | SP AA chassis          | `SP_AA_Bat`, `SP_AA_Battery`                             |
-| `land_attack_helicopter`                | Attack helo chassis    | `attack_helo_bat`                                        |
-| `land_assault_helicopter`               | Transport/assault helo | `L_Air_assault_Bat`, `helicopter_combat_service_support` |
-| `land_modern_mlrs`                      | MLRS chassis           | MLRS variants                                            |
-| `land_modern_light_tank`                | Light tank chassis     | Light tank variants                                      |
+| Role                        | Equipment Type         | Used By                                                  |
+| --------------------------- | ---------------------- | -------------------------------------------------------- |
+| `land_modern_tank`          | MBT chassis            | `armor_Bat`                                              |
+| `land_modern_apc`           | APC chassis            | `Mech_Inf_Bat`, `Mech_Air_Inf_Bat`                       |
+| `land_modern_ifv`           | IFV chassis            | `Arm_Inf_Bat`                                            |
+| `land_modern_artillery`     | SP artillery chassis   | `SP_Arty_Bat`, `SP_Arty_Battery`                         |
+| `land_medium_tank_anti_air` | SP AA chassis          | `SP_AA_Bat`, `SP_AA_Battery`                             |
+| `land_attack_helicopter`    | Attack helo chassis    | `attack_helo_bat`                                        |
+| `land_assault_helicopter`   | Transport/assault helo | `L_Air_assault_Bat`, `helicopter_combat_service_support` |
+| `land_modern_mlrs`          | MLRS chassis           | MLRS variants                                            |
+| `land_modern_light_tank`    | Light tank chassis     | Light tank variants                                      |
 
 ### Coverage Files
 
@@ -208,14 +208,127 @@ priority = {
 }
 ```
 
+## CV Plane ai_type System
+
+Carrier-variant (CV) plane airframes must have `ai_type` set to one of 5 engine-recognized CV types. Any other `ai_type` (including land types like `heavy_fighter`) silently excludes the plane from carrier production — the engine treats it as a land plane.
+
+Valid CV `ai_type` values:
+
+| ai_type           | unit_ratio ID     | What it covers                                           |
+| ----------------- | ----------------- | -------------------------------------------------------- |
+| `cv_fighter`      | `cv_fighter`      | MR fighters, AWACS/scouts (no dedicated cv_scout exists) |
+| `cv_interceptor`  | `cv_interceptor`  | AS fighters                                              |
+| `cv_cas`          | `cv_cas`          | CAS variants                                             |
+| `cv_naval_bomber` | `cv_naval_bomber` | Naval bombers, maritime patrol                           |
+| `cv_suicide`      | `cv_suicide`      | Drones, transports (no dedicated cv_transport exists)    |
+
+When creating CV plane sub-archetypes, always set `ai_type` explicitly — do not rely on inheriting from the parent archetype, as the parent may use a generic type.
+
+## Equipment Role Chain
+
+Three systems must align for AI equipment production to work:
+
+```
+Equipment design role (ai_equipment/) → Airframe ai_type (units/equipment/) → AI strategy unit_ratio (ai_strategy/)
+```
+
+1. **Equipment design `roles = { X }`** — tells AI which design template to use
+2. **Airframe `ai_type = Y`** — tells engine which production bucket the airframe belongs to
+3. **AI strategy `unit_ratio id = Y`** — tells AI what proportion of production to allocate
+
+If any link is missing, the AI either can't build the equipment or doesn't know it should.
+
+## Naval Goals Structure
+
+Naval goal files (`common/ai_navy/goals/`) must define a **complete set of all objective types** per nation. Vanilla blocks custom nations from generic goals and gives each a full replacement set. Partial overrides cause duplicate goals (both generic and custom apply simultaneously).
+
+**Required objective types per nation** (11 total):
+`naval_invasion_support`, `naval_invasion_defense`, `coast_defense`, `convoy_protection`, `convoy_raiding`, `naval_dominance`, `naval_blockade`, `mines_sweeping`, `mines_planting`, `training`, `strike_force_objective`
+
+When adding a new nation's goals file:
+
+1. Define all 11 objective types with `available_for = { TAG }`
+2. Add the TAG to `blocked_for` on every generic goal entry in `goals_generic.txt`
+3. Customize min/max_priority to match the nation's naval doctrine
+
+## Screen Destroyer Role
+
+MD splits destroyers into two sub_units: `destroyer` (capital_ship) and `screen_destroyer` (screen_ship). Both use the same equipment (`need_equipment = { destroyer = 1 }`), following vanilla's light_cruiser/heavy_cruiser pattern.
+
+For nations that need distinct ASW-focused screen destroyers (e.g., USA), add a `naval_screen_destroyer` role with ASW-optimized designs (sonar, torpedoes, ASW missiles). Add corresponding `role_ratio` in the AI strategy file.
+
+## Taskforce Composition Limits
+
+NAI defines in `common/defines/MD_defines.lua` cap how many ships the AI puts per category in a single taskforce. The `optimal_composition` in fleet templates is silently capped by these:
+
+| Define                                | Value | Category     | Ship Types                                                                          |
+| ------------------------------------- | ----- | ------------ | ----------------------------------------------------------------------------------- |
+| `CARRIER_TASKFORCE_MAX_CARRIER_COUNT` | 2     | carrier      | carrier, helicopter_operator                                                        |
+| `CAPITAL_TASKFORCE_MAX_CAPITAL_COUNT` | 6     | capital_ship | battleship, battle_cruiser, cruiser, stealth_destroyer, destroyer, heavy_frigate    |
+| `SCREEN_TASKFORCE_MAX_SHIP_COUNT`     | 8     | screen_ship  | screen_destroyer, stealth_frigate, frigate, corvette, stealth_corvette, patrol_boat |
+| `SUB_TASKFORCE_MAX_SHIP_COUNT`        | 8     | submarine    | missile_submarine, attack_submarine                                                 |
+
+**If an optimal_composition exceeds these caps, the excess ships are silently ignored.** The `validate_ai_navy` pre-commit hook catches violations.
+
+Other relevant ratios:
+
+- `CAPITALS_TO_CARRIER_RATIO = 2` — AI wants 2 capitals per carrier
+- `SCREENS_TO_CAPITAL_RATIO = 3` — AI wants 3 screens per capital
+- `MIN_CAPITALS_FOR_CARRIER_TASKFORCE = 2` — need 2 capitals to form carrier TF
+
+### Fleet Sizing for Large Navies
+
+Nations with many ships (100+) need sufficient fleet/taskforce slots to absorb them:
+
+- Increase `optional_taskforces` counts in fleet templates
+- Add more fleet template varieties (patrol, escort, submarine, corvette fleets)
+- The AI creates **multiple instances** of each fleet template if ships are available
+- Keep taskforce sizes within define caps; create more taskforces rather than larger ones
+
+### NOT Block AND Trap in Priority Blocks
+
+`NOT = { tag = A tag = B }` means NOT(A AND B) — always true since a country can only be one tag. This is a common copy-paste error in priority blocks:
+
+```pdx
+# WRONG — always evaluates true, modifier never applies
+modifier = {
+    factor = 0
+    NOT = {
+        tag = USA
+        tag = ENG
+    }
+}
+
+# CORRECT — zeroes priority for any nation not in the list
+modifier = {
+    factor = 0
+    NOT = {
+        OR = {
+            tag = USA
+            tag = ENG
+        }
+    }
+}
+```
+
 ## Common Mistakes
 
-| Mistake                                                  | Impact                                                    | Fix                                         |
-| -------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------- |
-| Wrong module in slot (e.g., armor in `reload_type_slot`) | AI fails to build valid variant                           | Check module matches slot type              |
-| Duplicate role template names across files               | Second silently overwrites first                          | Use unique names per template               |
-| `roles = { medium_as_fighter }` on CAS designs           | AI deploys CAS as air superiority                         | Use `medium_cas_fighter` for CAS            |
-| Factory threshold `< 15` on small nations                | Nation can never produce                                  | Use date checks or lower thresholds         |
-| Missing top-level `priority` on role template            | Undefined AI priority behavior                            | Always include `priority = { factor = N }`  |
-| `available_for` overlap between templates for same role  | AI gets competing designs                                 | Verify intent; remove overlap if not wanted |
-| Missing `allowed_modules`                                | AI won't pick any modules beyond `target_variant.modules` | Add if AI should use extra modules          |
+| Mistake                                                  | Impact                                                    | Fix                                                |
+| -------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------- |
+| Wrong module in slot (e.g., armor in `reload_type_slot`) | AI fails to build valid variant                           | Check module matches slot type                     |
+| Duplicate role template names across files               | Second silently overwrites first                          | Use unique names per template                      |
+| `roles = { medium_as_fighter }` on CAS designs           | AI deploys CAS as air superiority                         | Use `medium_cas_fighter` for CAS                   |
+| Factory threshold `< 15` on small nations                | Nation can never produce                                  | Use date checks or lower thresholds                |
+| Missing top-level `priority` on role template            | Undefined AI priority behavior                            | Always include `priority = { factor = N }`         |
+| `available_for` overlap between templates for same role  | AI gets competing designs                                 | Verify intent; remove overlap if not wanted        |
+| Missing `allowed_modules`                                | AI won't pick any modules beyond `target_variant.modules` | Add if AI should use extra modules                 |
+| CV plane `ai_type = heavy_fighter` (land type)           | Plane excluded from carrier production entirely           | Use one of 5 valid CV ai_types (see above)         |
+| `equipment_variant_production_factor = -95` on base type | Subtypes inherit penalty even with positive overrides     | Keep base type penalty mild (-25 max)              |
+| Nation excluded from generic but no custom role coverage | AI cannot produce that equipment type at all              | Run `validate_ai_equipment.py`                     |
+| Partial naval goals (only overriding a few types)        | Duplicate goals — both generic and custom apply           | Define complete set of all 11 objective types      |
+| Nation blocked from generic air with no custom strategy  | Zero interceptor/bomber/drone production                  | Verify every excluded nation has full air doctrine |
+| `NOT = { tag=A tag=B }` in priority block                | Modifier never fires (AND trap)                           | Use `NOT = { OR = { tag=A tag=B } }`               |
+| `factor = 0` for nation + nation not in `blocked_for`    | Nation uses template but with zero priority               | Either block the nation or remove factor=0         |
+| Duplicate design names within a role template            | Second silently overwrites first — design is lost         | Use unique names (e.g., `_improved`, `_next`)      |
+| Optimal composition exceeds NAI define caps              | Engine silently caps ships; excess wasted                 | Run `validate_ai_navy.py`, respect define limits   |
+| `AP_` prefix on design names (copy-paste from JAP)       | No functional impact but confuses debugging               | Use correct tag prefix                             |

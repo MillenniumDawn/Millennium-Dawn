@@ -31,6 +31,7 @@ VANILLA_ROLES = {
     "naval_corvettes",
     "naval_frigate",
     "naval_destroyer",
+    "naval_screen_destroyer",
     "naval_stealth_destroyer",
     "naval_attack_submarine",
     "naval_missile_submarine",
