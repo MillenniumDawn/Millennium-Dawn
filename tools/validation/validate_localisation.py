@@ -57,6 +57,16 @@ VANILLA_LOC_KEYS = {
     "mtg_usa_senate_small_opposition_tt",
     "mtg_usa_senate_small_support_tt",
     "free_agency_upgrade_tt",
+    # Vanilla operative mission tooltip keys
+    "OPERATIVE_MISSION_BOOST_IDEOLOGY_TT",
+    "OPERATIVE_MISSION_BUILD_INTEL_NETWORK_TT",
+    "OPERATIVE_MISSION_CONTROL_TRADE_TT",
+    "OPERATIVE_MISSION_COUNTER_INTELLIGENCE_TT",
+    "OPERATIVE_MISSION_DIPLOMATIC_PRESSURE_TT",
+    "OPERATIVE_MISSION_NO_MISSION_TT",
+    "OPERATIVE_MISSION_PROPAGANDA_TT",
+    "OPERATIVE_MISSION_QUIET_INTEL_NETWORK_TT",
+    "OPERATIVE_MISSION_ROOT_OUT_RESISTANCE_TT",
 }
 
 
@@ -485,6 +495,7 @@ class Validator(BaseValidator):
             and k not in skipped_keys
             and not k.startswith("cannot_go_higher_than_")
             and not k.startswith("cannot_go_lower_than_")
+            and not k.startswith("OPERATIVE_MISSION_")
         }
 
         if not tt_keys:

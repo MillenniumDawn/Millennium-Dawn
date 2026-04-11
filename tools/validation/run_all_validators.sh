@@ -37,7 +37,6 @@ echo ""
 # name -> script filename
 declare -A SCRIPTS=(
     [variables]="validate_variables.py"
-    [set-variables]="validate_set_variables.py"
     [scripted-localisation]="validate_scripted_localisation.py"
     [cosmetic-tags]="validate_cosmetic_tags.py"
     [decisions]="validate_decisions.py"
@@ -46,12 +45,16 @@ declare -A SCRIPTS=(
     [history-techs]="validate_history_techs.py"
     [unused-scripted]="validate_unused_scripted.py"
     [oob-units]="validate_oob_units.py"
+    [defines]="validate_defines.py"
+    [ai-navy]="validate_ai_navy.py"
+    [ai-equipment]="validate_ai_equipment.py"
+    [ai-roles]="validate_ai_roles.py"
+    [factions]="validate_factions.py"
 )
 
 # name -> human-readable label
 declare -A LABELS=(
     [variables]="Variable and event target validation"
-    [set-variables]="Set variable usage validation"
     [scripted-localisation]="Scripted localisation validation"
     [cosmetic-tags]="Cosmetic tag validation"
     [decisions]="Decision validation"
@@ -60,10 +63,15 @@ declare -A LABELS=(
     [history-techs]="History technology dependency validation"
     [unused-scripted]="Unused scripted effects/triggers validation"
     [oob-units]="OOB unit name validation"
+    [defines]="Defines validation (dead/namespace/duplicate)"
+    [ai-navy]="AI navy validation (ship types, missions, fleet refs)"
+    [ai-equipment]="AI equipment coverage validation (naval/land/air)"
+    [ai-roles]="AI role reference validation"
+    [factions]="Faction system validation"
 )
 
 # Ordered for consistent output
-ORDERED=(variables set-variables scripted-localisation cosmetic-tags decisions localisation events history-techs unused-scripted oob-units)
+ORDERED=(variables scripted-localisation cosmetic-tags decisions localisation events history-techs unused-scripted oob-units defines ai-navy ai-equipment ai-roles factions)
 
 declare -A PIDS=()
 
