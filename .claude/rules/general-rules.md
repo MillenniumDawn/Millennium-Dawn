@@ -55,6 +55,26 @@ NOT = { has_idea = foo }
 NOT = { has_idea = bar }
 ```
 
+## Tautological OR in ai_will_do modifiers
+
+An `OR` block inside an `ai_will_do modifier` that covers all possible values of a trigger is always true and does nothing useful:
+
+```
+# Wrong — OR(yes, no) is always true; modifier fires unconditionally
+modifier = {
+    add = 1
+    OR = {
+        is_historical_focus_on = yes
+        is_historical_focus_on = no
+    }
+}
+
+# Correct — if you want an unconditional bonus, remove the OR entirely
+# and fold the value into base = N, or remove the modifier block
+```
+
+Remove the entire modifier block and increase `base` by the `add` amount instead. If a real condition was intended (e.g., add only when historical focus is on), write it without the tautological OR.
+
 ## threat scale
 
 `threat` is a decimal 0.0–1.0, never a percentage. Comparisons like `threat > 10` or `threat > 40` are always false. Use `threat > 0.10`, `threat > 0.40`, etc.
