@@ -516,6 +516,61 @@ class Validator(BaseValidator):
             "Decisions in categories without allowed check that also lack their own allowed trigger:",
         )
 
+    def validate_bare_trigger_names(self):
+        """Check for common bare trigger names that need a has_ prefix.
+
+        HOI4 requires ``has_political_power``, ``has_stability``, etc. when
+        used as comparison triggers.  The bare names (``political_power < 50``)
+        are silently accepted by the parser but produce runtime errors.  Only
+        flag occurrences that look like comparison triggers (followed by ``<``
+        or ``>``), and exclude ``check_variable`` blocks where the bare name
+        is a valid variable reference.
+        """
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking for bare trigger names missing has_ prefix...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        BARE_TRIGGERS = {
+            "political_power": "has_political_power",
+            "stability": "has_stability",
+            "war_support": "has_war_support",
+            "manpower": "has_manpower",
+            "num_of_factories": "has_num_of_factories",
+        }
+
+        pattern = re.compile(
+            r"^\t+(" + "|".join(BARE_TRIGGERS.keys()) + r")\s+[<>]",
+            flags=re.MULTILINE,
+        )
+
+        results = []
+        dec_filepath = str(Path(self.mod_path) / "common" / "decisions")
+        for filename in sorted(glob.iglob(dec_filepath + "/**/*.txt", recursive=True)):
+            if _should_skip(filename):
+                continue
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
+            # Remove check_variable blocks where bare names are valid
+            cleaned = re.sub(r"check_variable\s*=\s*\{[^}]*\}", "", text_file)
+            for match in pattern.finditer(cleaned):
+                bare = match.group(1)
+                correct = BARE_TRIGGERS[bare]
+                line_num = cleaned[: match.start()].count("\n") + 1
+                basename = os.path.basename(filename)
+                results.append(
+                    f"{basename}:{line_num} - '{bare}' should be '{correct}'"
+                )
+
+        self._report(
+            results,
+            "✓ No bare trigger names found",
+            "Bare trigger names (need has_ prefix):",
+            category="bare-trigger-name",
+        )
+
     def run_validations(self):
         if self.staged_only:
             # Decision checks parse all 200+ decision files even for structural
@@ -535,6 +590,7 @@ class Validator(BaseValidator):
         self.validate_targeted_without_target()
         self.validate_targets_no_trigger()
         self.validate_without_allowed_check()
+        self.validate_bare_trigger_names()
 
 
 def _add_extra_args(parser):
