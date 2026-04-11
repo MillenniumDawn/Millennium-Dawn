@@ -4,10 +4,12 @@
 # Common classes, functions, and base validator used by all validation scripts
 ##########################
 import glob
+import json
 import logging
 import os
 import re
 import sys
+from dataclasses import dataclass, field
 from multiprocessing import Pool, cpu_count
 from typing import Callable, Dict, List, Optional, Set
 
@@ -39,6 +41,112 @@ class Colors:
     UNDERLINE = "\033[4m"
 
 
+class Severity:
+    ERROR = "error"
+    WARNING = "warning"
+
+
+@dataclass
+class Issue:
+    severity: str
+    category: str
+    message: str
+    file: str = ""
+    line: int = 0
+
+    def to_dict(self) -> dict:
+        return {
+            "severity": self.severity,
+            "category": self.category,
+            "message": self.message,
+            "file": self.file,
+            "line": self.line,
+        }
+
+    def to_key(self) -> tuple:
+        return (self.file, self.line, self.severity, self.category)
+
+
+HOI4_BUILTIN_BLOCKS = frozenset(
+    {
+        "if",
+        "else",
+        "else_if",
+        "limit",
+        "AND",
+        "OR",
+        "NOT",
+        "hidden_effect",
+        "random_list",
+        "tooltip",
+        "custom_effect_tooltip",
+        "custom_trigger_tooltip",
+        "modifier",
+        "random",
+        "every_country",
+        "random_country",
+        "every_state",
+        "random_state",
+        "every_owned_state",
+        "random_owned_state",
+        "every_neighbor_country",
+        "random_neighbor_country",
+        "every_enemy_country",
+        "random_enemy_country",
+        "every_other_country",
+        "random_other_country",
+        "capital_scope",
+        "owner",
+        "controller",
+        "ROOT",
+        "PREV",
+        "FROM",
+        "country_event",
+        "news_event",
+        "state_event",
+        "every_army_leader",
+        "random_army_leader",
+        "every_unit_leader",
+        "random_unit_leader",
+        "every_navy_leader",
+        "random_navy_leader",
+        "every_possible_country",
+        "random_possible_country",
+        "all_of",
+        "any_of",
+        "for_each_scope_loop",
+        "while_loop_effect",
+        "for_loop_effect",
+        "effect_tooltip",
+        "add_to_array",
+        "remove_from_array",
+        "overlord",
+        "faction_leader",
+        "any_country",
+        "any_state",
+        "any_owned_state",
+        "any_neighbor_country",
+        "any_enemy_country",
+        "any_other_country",
+        "any_allied_country",
+        "any_country_with_original_tag",
+        "any_army_leader",
+        "any_navy_leader",
+        "any_unit_leader",
+        "any_possible_country",
+        "every_allied_country",
+        "random_allied_country",
+        "every_occupied_country",
+        "random_occupied_country",
+        "any_occupied_country",
+        "every_country_with_original_tag",
+        "random_country_with_original_tag",
+        "meta_effect",
+        "meta_trigger",
+    }
+)
+
+
 class BaseValidator:
     TITLE = "VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -56,6 +164,7 @@ class BaseValidator:
             mod_path += os.sep
         self.mod_path = mod_path
         self.errors_found = 0
+        self.warnings_found = 0
         self.output_file = output_file
         self.use_colors = use_colors
         self.staged_only = staged_only
@@ -63,6 +172,8 @@ class BaseValidator:
         self.staged_files = None
         self.output_lines = []
         self._pool: Optional[Pool] = None
+        self._regex_cache: Dict[str, re.Pattern] = {}
+        self._issues: List[Issue] = []
 
         if staged_only:
             self.staged_files = (
@@ -70,6 +181,13 @@ class BaseValidator:
             )
             if not self.staged_files:
                 logging.warning("No staged files found")
+
+    def get_regex(self, pattern: str, flags: int = 0) -> re.Pattern:
+        """Get a compiled regex pattern from cache or compile and cache it."""
+        key = f"{pattern}:{flags}"
+        if key not in self._regex_cache:
+            self._regex_cache[key] = re.compile(pattern, flags)
+        return self._regex_cache[key]
 
     def log(self, message: str, level: str = "info"):
         display_msg = (
@@ -93,26 +211,91 @@ class BaseValidator:
             except Exception as e:
                 logging.error(f"Failed to save output to {self.output_file}: {e}")
 
-    def _report(self, results: list, ok_msg: str, fail_msg: str):
+        json_file = (
+            self.output_file.replace(".txt", ".json") if self.output_file else None
+        )
+        if json_file and self._issues:
+            try:
+                with open(json_file, "w", encoding="utf-8") as f:
+                    f.write(self.get_issues_json())
+                logging.info(f"JSON results saved to: {json_file}")
+            except Exception as e:
+                logging.error(f"Failed to save JSON to {json_file}: {e}")
+
+    def add_issue(
+        self, severity: str, category: str, message: str, file: str = "", line: int = 0
+    ):
+        """Add an issue to the internal list for later deduplication and reporting."""
+        issue = Issue(
+            severity=severity, category=category, message=message, file=file, line=line
+        )
+        self._issues.append(issue)
+        if severity == Severity.ERROR:
+            self.errors_found += 1
+        elif severity == Severity.WARNING:
+            self.warnings_found += 1
+
+    def add_error(self, category: str, message: str, file: str = "", line: int = 0):
+        """Convenience method to add an ERROR level issue."""
+        self.add_issue(Severity.ERROR, category, message, file, line)
+
+    def add_warning(self, category: str, message: str, file: str = "", line: int = 0):
+        """Convenience method to add a WARNING level issue."""
+        self.add_issue(Severity.WARNING, category, message, file, line)
+
+    def _report(
+        self,
+        results: list,
+        ok_msg: str,
+        fail_msg: str,
+        severity: str = Severity.ERROR,
+        category: str = "",
+    ):
+        """Report results with specified severity level.
+
+        This is the single source of truth for counting and recording issues.
+        Do NOT call add_error/add_warning separately for results passed here.
+        """
+        color = Colors.RED if severity == Severity.ERROR else Colors.YELLOW
+
         if len(results) > 0:
             self.log(
-                f"{Colors.RED if self.use_colors else ''}{fail_msg}{Colors.ENDC if self.use_colors else ''}",
-                "error",
+                f"{color if self.use_colors else ''}{fail_msg}{Colors.ENDC if self.use_colors else ''}",
+                "error" if severity == Severity.ERROR else "warning",
             )
             for r in results:
                 self.log(
-                    f"  {Colors.YELLOW if self.use_colors else ''}{r}{Colors.ENDC if self.use_colors else ''}",
-                    "error",
+                    f"  {color if self.use_colors else ''}{r}{Colors.ENDC if self.use_colors else ''}",
+                    "error" if severity == Severity.ERROR else "warning",
                 )
+                if category:
+                    issue = Issue(severity=severity, category=category, message=r)
+                    self._issues.append(issue)
             self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
+                f"{color if self.use_colors else ''}{len(results)} issue(s) found{Colors.ENDC if self.use_colors else ''}",
+                "error" if severity == Severity.ERROR else "warning",
             )
-            self.errors_found += len(results)
+            if severity == Severity.ERROR:
+                self.errors_found += len(results)
+            else:
+                self.warnings_found += len(results)
         else:
             self.log(
                 f"{Colors.GREEN if self.use_colors else ''}{ok_msg}{Colors.ENDC if self.use_colors else ''}"
             )
+
+    def get_issues_json(self) -> str:
+        """Get issues as JSON string."""
+        return json.dumps([issue.to_dict() for issue in self._issues], indent=2)
+
+    def get_summary(self) -> dict:
+        """Get validation summary as dict."""
+        return {
+            "title": self.TITLE,
+            "errors": self.errors_found,
+            "warnings": self.warnings_found,
+            "issues": [issue.to_dict() for issue in self._issues],
+        }
 
     def get_full_path(
         self, basename: str, item: str, file_patterns: Optional[List[str]] = None
@@ -215,13 +398,18 @@ class BaseValidator:
             self._pool = None
 
         self.log(f"\n{'#'*80}")
-        if self.errors_found == 0:
+        if self.errors_found == 0 and self.warnings_found == 0:
             self.log(
                 f"{Colors.GREEN if self.use_colors else ''}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC if self.use_colors else ''}"
             )
         else:
+            error_msg = f"✗ VALIDATION COMPLETE"
+            if self.errors_found > 0:
+                error_msg += f" - {self.errors_found} ERROR(S)"
+            if self.warnings_found > 0:
+                error_msg += f" - {self.warnings_found} WARNING(S)"
             self.log(
-                f"{Colors.RED if self.use_colors else ''}✗ VALIDATION COMPLETE - {self.errors_found} TOTAL ISSUES FOUND{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.RED if self.use_colors else ''}{error_msg}{Colors.ENDC if self.use_colors else ''}",
                 "error",
             )
         self.log(f"{'#'*80}\n")
