@@ -614,7 +614,7 @@ def main():
 
     # Allow running from root directory as well as from inside the tools directory
     scriptDir = os.path.realpath(__file__)
-    rootDir = os.path.dirname(os.path.dirname(scriptDir))
+    rootDir = os.path.dirname(os.path.dirname(os.path.dirname(scriptDir)))
 
     tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
     allTriggers, allEffects = findPdxSyntax(

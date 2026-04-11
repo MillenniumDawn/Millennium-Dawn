@@ -152,10 +152,14 @@ Key rules:
 - Every role template needs `category`, `roles = { ... }`, and a top-level `priority = { ... }` block
 - Every design needs `target_variant` with `type`, `match_value`, and `modules`
 - Role template names must be unique across all files with overlapping `available_for` — duplicates silently overwrite
-- Nations blocked from generic files MUST have all needed roles covered in custom/shared files
+- Nations blocked from generic files MUST have all needed roles covered in custom/shared files — the `validate_ai_equipment` pre-commit hook catches gaps
 - Module assignments must match the slot type (e.g., don't put armor modules in `reload_type_slot`)
 - CAS designs must use `medium_cas_fighter` role, not `medium_as_fighter`
 - Use date-based thresholds (e.g., `date < 2000.6.1`) instead of factory count thresholds for small nations that may never reach high factory counts
+- CV plane airframes must use one of 5 valid `ai_type` values: `cv_fighter`, `cv_interceptor`, `cv_cas`, `cv_naval_bomber`, `cv_suicide` — any other type (e.g., `heavy_fighter`) silently excludes the plane from carrier production
+- When excluding a nation from generic air/naval strategies, verify the nation's custom strategy covers ALL unit types (especially `interceptor` — commonly missed)
+- `equipment_variant_production_factor` penalties on base archetypes cascade to subtypes — a `-95%` on the base effectively zeros out even `+25%` overrides on children. Keep base penalties mild (`-25%` max)
+- Naval goals require complete sets of all 11 objective types per nation; partial overrides cause duplicates. See `.claude/docs/ai-equipment-reference.md` for the full list
 
 ## Key Resources
 

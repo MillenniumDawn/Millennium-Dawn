@@ -21,15 +21,75 @@ permissions:
   pull-requests: write
 
 jobs:
+  # ───────────────────────────────────────────────────────────────
+  # Detect which file groups changed so downstream jobs can skip
+  # ───────────────────────────────────────────────────────────────
+  detect-changes:
+    name: Detect Changes
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    outputs:
+      common:        ${{ steps.filter.outputs.common }}
+      events:        ${{ steps.filter.outputs.events }}
+      history:       ${{ steps.filter.outputs.history }}
+      localisation:  ${{ steps.filter.outputs.localisation }}
+      ai-strategy:   ${{ steps.filter.outputs.ai-strategy }}
+      ai-navy:       ${{ steps.filter.outputs.ai-navy }}
+      ai-equipment:  ${{ steps.filter.outputs.ai-equipment }}
+      factions:      ${{ steps.filter.outputs.factions }}
+      oob:           ${{ steps.filter.outputs.oob }}
+      decisions:     ${{ steps.filter.outputs.decisions }}
+      scripted-loc:  ${{ steps.filter.outputs.scripted-loc }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+    - name: Detect changed file groups
+      uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      id: filter
+      with:
+        filters: |
+          common:
+            - 'common/**'
+          events:
+            - 'events/**'
+          history:
+            - 'history/**'
+          localisation:
+            - 'localisation/**'
+          ai-strategy:
+            - 'common/ai_strategy/**'
+            - 'common/ai_templates/**'
+          ai-navy:
+            - 'common/ai_navy/**'
+            - 'common/units/**'
+          ai-equipment:
+            - 'common/ai_equipment/**'
+          factions:
+            - 'common/factions/**'
+          oob:
+            - 'history/units/**'
+            - 'common/units/**'
+            - 'common/ai_templates/**'
+            - 'common/scripted_effects/00_AI_templates.txt'
+          decisions:
+            - 'common/decisions/**'
+          scripted-loc:
+            - 'common/scripted_localisation/**'
+
+  # ───────────────────────────────────────────────────────────────
+  # Linters — run when any game content files change
+  # ───────────────────────────────────────────────────────────────
   coding-standards:
     name: Coding Standards
-    if: github.event.pull_request.draft == false
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.common == 'true' ||
+      needs.detect-changes.outputs.events == 'true'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        fetch-depth: 1
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -41,15 +101,16 @@ jobs:
 
   styling-check:
     name: Style Check
-    if: github.event.pull_request.draft == false
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.common == 'true' ||
+      needs.detect-changes.outputs.events == 'true' ||
+      needs.detect-changes.outputs.history == 'true'
     runs-on: ubuntu-latest
-    needs: [coding-standards]
 
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        fetch-depth: 1
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -61,29 +122,33 @@ jobs:
         python tools/linting/check_basic_style.py --mode diff
         python tools/linting/check_basic_style_2.py --mode diff
 
-  validate:
+  # ───────────────────────────────────────────────────────────────
+  # Core validators — broad scope, run when most game files change
+  # ───────────────────────────────────────────────────────────────
+  validate-core:
     name: Validate ${{ matrix.validator.title }}
-    if: github.event.pull_request.draft == false
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.common == 'true' ||
+      needs.detect-changes.outputs.events == 'true' ||
+      needs.detect-changes.outputs.history == 'true' ||
+      needs.detect-changes.outputs.localisation == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         validator:
-          - { script: validate_variables.py,            name: variables,            title: "Variables" }
-          - { script: validate_scripted_localisation.py, name: scripted-localisation, title: "Scripted Localisation" }
-          - { script: validate_cosmetic_tags.py,         name: cosmetic-tags,        title: "Cosmetic Tags" }
-          - { script: validate_decisions.py,             name: decisions,            title: "Decisions" }
-          - { script: validate_localisation.py,          name: localisation,         title: "Localisation" }
-          - { script: validate_events.py,                name: events,               title: "Events" }
-          - { script: validate_history_techs.py,         name: history-techs,        title: "History Technology Dependencies" }
-          - { script: validate_unused_scripted.py,       name: unused-scripted,      title: "Unused Scripted Effects & Triggers" }
-          - { script: validate_oob_units.py,              name: oob-units,            title: "OOB Unit Names" }
+          - { script: validate_variables.py,              name: variables,              title: "Variables" }
+          - { script: validate_scripted_localisation.py,  name: scripted-localisation,  title: "Scripted Localisation" }
+          - { script: validate_cosmetic_tags.py,          name: cosmetic-tags,          title: "Cosmetic Tags" }
+          - { script: validate_localisation.py,           name: localisation,           title: "Localisation" }
+          - { script: validate_events.py,                 name: events,                 title: "Events" }
+          - { script: validate_history_techs.py,          name: history-techs,          title: "History Technology Dependencies" }
+          - { script: validate_unused_scripted.py,        name: unused-scripted,        title: "Unused Scripted Effects & Triggers" }
 
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        fetch-depth: 1
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -102,17 +167,156 @@ jobs:
         path: validation-${{ matrix.validator.name }}.log
         retention-days: 7
 
-  validation-report:
-    name: Generate Validation Report
+  # ───────────────────────────────────────────────────────────────
+  # Targeted validators — only run when their specific files change
+  # ───────────────────────────────────────────────────────────────
+  validate-decisions:
+    name: Validate Decisions
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.decisions == 'true'
     runs-on: ubuntu-latest
-    needs: [validate]
-    if: always() && github.event_name == 'pull_request' && github.event.pull_request.draft == false && needs.validate.result != 'cancelled'
-
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
-        fetch-depth: 1
+        python-version: '3.x'
+    - name: Run validation
+      run: python3 tools/validation/validate_decisions.py --strict --no-color --workers 4 --output validation-decisions.log
+    - name: Upload results
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      if: always()
+      with:
+        name: validation-decisions-results
+        path: validation-decisions.log
+        retention-days: 7
+
+  validate-oob-units:
+    name: Validate OOB Unit Names
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.oob == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      with:
+        python-version: '3.x'
+    - name: Run validation
+      run: python3 tools/validation/validate_oob_units.py --strict --no-color --workers 4 --output validation-oob-units.log
+    - name: Upload results
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      if: always()
+      with:
+        name: validation-oob-units-results
+        path: validation-oob-units.log
+        retention-days: 7
+
+  validate-ai-roles:
+    name: Validate AI Role References
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.ai-strategy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      with:
+        python-version: '3.x'
+    - name: Run validation
+      run: python3 tools/validation/validate_ai_roles.py --strict --no-color --workers 4 --output validation-ai-roles.log
+    - name: Upload results
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      if: always()
+      with:
+        name: validation-ai-roles-results
+        path: validation-ai-roles.log
+        retention-days: 7
+
+  validate-ai-navy:
+    name: Validate AI Navy
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.ai-navy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      with:
+        python-version: '3.x'
+    - name: Run validation
+      run: python3 tools/validation/validate_ai_navy.py --strict --no-color --workers 4 --output validation-ai-navy.log
+    - name: Upload results
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      if: always()
+      with:
+        name: validation-ai-navy-results
+        path: validation-ai-navy.log
+        retention-days: 7
+
+  validate-ai-equipment:
+    name: Validate AI Equipment Coverage
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.ai-equipment == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      with:
+        python-version: '3.x'
+    - name: Run validation
+      run: python3 tools/validation/validate_ai_equipment.py --strict --no-color --workers 4 --output validation-ai-equipment.log
+    - name: Upload results
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      if: always()
+      with:
+        name: validation-ai-equipment-results
+        path: validation-ai-equipment.log
+        retention-days: 7
+
+  validate-factions:
+    name: Validate Faction System
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.factions == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      with:
+        python-version: '3.x'
+    - name: Run validation
+      run: python3 tools/validation/validate_factions.py --strict --no-color --workers 4 --output validation-factions.log
+    - name: Upload results
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      if: always()
+      with:
+        name: validation-factions-results
+        path: validation-factions.log
+        retention-days: 7
+
+  # ───────────────────────────────────────────────────────────────
+  # Validation report — collects all results and posts PR comment
+  # ───────────────────────────────────────────────────────────────
+  validation-report:
+    name: Generate Validation Report
+    runs-on: ubuntu-latest
+    needs: [validate-core, validate-decisions, validate-oob-units, validate-ai-roles, validate-ai-navy, validate-ai-equipment, validate-factions]
+    if: >-
+      always() &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.draft == false &&
+      !cancelled()
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -122,9 +326,12 @@ jobs:
     - name: Download all validation results
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       with:
+        pattern: validation-*-results
         path: validation-results
 
     - name: Generate and post validation report
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: |
         python3 tools/generate_validation_report.py \
           --results-dir validation-results \
