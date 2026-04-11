@@ -52,8 +52,8 @@ class BaseValidator:
         workers: int = None,
         **kwargs,
     ):
-        if not mod_path.endswith("/"):
-            mod_path += "/"
+        if not mod_path.endswith(os.sep):
+            mod_path += os.sep
         self.mod_path = mod_path
         self.errors_found = 0
         self.output_file = output_file
@@ -120,7 +120,9 @@ class BaseValidator:
         if file_patterns is None:
             file_patterns = ["**/*.txt"]
         for pattern in file_patterns:
-            for filename in glob.iglob(self.mod_path + pattern, recursive=True):
+            for filename in glob.iglob(
+                os.path.join(self.mod_path, pattern), recursive=True
+            ):
                 if os.path.basename(filename) == basename:
                     if should_skip_file(filename):
                         continue
@@ -159,19 +161,24 @@ class BaseValidator:
             if not self.staged_files:
                 return []
             dir_hints = [
-                next((s for s in p.split("/") if "*" not in s), "") for p in patterns
+                next((s for s in p.replace("\\", "/").split("/") if "*" not in s), "")
+                for p in patterns
             ]
             files = [
                 f
                 for f in self.staged_files
                 if any(f.endswith(ext) for ext in extensions)
-                and any(hint == "" or hint in f for hint in dir_hints)
+                and any(
+                    hint == "" or hint in f.replace("\\", "/") for hint in dir_hints
+                )
             ]
         else:
             seen: Set[str] = set()
             files = []
             for pattern in patterns:
-                for f in glob.iglob(self.mod_path + pattern, recursive=True):
+                for f in glob.iglob(
+                    os.path.join(self.mod_path, pattern), recursive=True
+                ):
                     if f not in seen:
                         seen.add(f)
                         files.append(f)
