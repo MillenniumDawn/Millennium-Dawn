@@ -13,91 +13,13 @@ from pathlib import Path
 from typing import List, Set, Tuple
 
 from validator_common import (
+    HOI4_BUILTIN_BLOCKS,
     BaseValidator,
     Colors,
+    Severity,
     run_validator_main,
     should_skip_file,
     strip_comments,
-)
-
-# Names that are HOI4 built-in blocks and should not be treated as definitions
-BUILTIN_BLOCKS = frozenset(
-    {
-        "if",
-        "else",
-        "else_if",
-        "limit",
-        "AND",
-        "OR",
-        "NOT",
-        "hidden_effect",
-        "random_list",
-        "tooltip",
-        "custom_effect_tooltip",
-        "custom_trigger_tooltip",
-        "modifier",
-        "random",
-        "every_country",
-        "random_country",
-        "every_state",
-        "random_state",
-        "every_owned_state",
-        "random_owned_state",
-        "every_neighbor_country",
-        "random_neighbor_country",
-        "every_enemy_country",
-        "random_enemy_country",
-        "every_other_country",
-        "random_other_country",
-        "capital_scope",
-        "owner",
-        "controller",
-        "ROOT",
-        "PREV",
-        "FROM",
-        "country_event",
-        "news_event",
-        "state_event",
-        "every_army_leader",
-        "random_army_leader",
-        "every_unit_leader",
-        "random_unit_leader",
-        "every_navy_leader",
-        "random_navy_leader",
-        "every_possible_country",
-        "random_possible_country",
-        "all_of",
-        "any_of",
-        "for_each_scope_loop",
-        "while_loop_effect",
-        "for_loop_effect",
-        "effect_tooltip",
-        "add_to_array",
-        "remove_from_array",
-        "overlord",
-        "faction_leader",
-        "any_country",
-        "any_state",
-        "any_owned_state",
-        "any_neighbor_country",
-        "any_enemy_country",
-        "any_other_country",
-        "any_allied_country",
-        "any_country_with_original_tag",
-        "any_army_leader",
-        "any_navy_leader",
-        "any_unit_leader",
-        "any_possible_country",
-        "every_allied_country",
-        "random_allied_country",
-        "every_occupied_country",
-        "random_occupied_country",
-        "any_occupied_country",
-        "every_country_with_original_tag",
-        "random_country_with_original_tag",
-        "meta_effect",
-        "meta_trigger",
-    }
 )
 
 # Patterns for known false positives — these are referenced by the game engine,
@@ -165,7 +87,7 @@ def extract_definitions(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
             m = re.match(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{", stripped)
             if m:
                 name = m.group(1)
-                if name not in BUILTIN_BLOCKS:
+                if name not in HOI4_BUILTIN_BLOCKS:
                     rel_path = os.path.relpath(filename, mod_path)
                     results.append((name, rel_path, line_num))
 
@@ -331,6 +253,8 @@ class Validator(BaseValidator):
             unused,
             "✓ No unused scripted effects found",
             "Unused scripted effects (defined but never called):",
+            Severity.WARNING,
+            category="unused-scripted-effect",
         )
 
     def validate_unused_triggers(self):
@@ -349,6 +273,8 @@ class Validator(BaseValidator):
             unused,
             "✓ No unused scripted triggers found",
             "Unused scripted triggers (defined but never called):",
+            Severity.WARNING,
+            category="unused-scripted-trigger",
         )
 
     def run_validations(self):

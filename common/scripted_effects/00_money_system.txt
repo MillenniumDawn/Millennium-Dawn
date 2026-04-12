@@ -3850,6 +3850,7 @@ calculate_int_investments_rate = {
 
 	# Modifier for ROI
 	add_to_variable = { roi_rate = modifier@return_on_investment_modifier }
+	clamp_variable = { var = roi_rate min = 0 max = 0.20 }
 
 	#This is how much money we get back in a year
 	set_variable = { int_investments_rate = int_investments }
@@ -4229,6 +4230,7 @@ update_state_variables = {
 	set_variable = { var = internet_station_total value = 0 }
 	set_variable = { var = max_stored_energy value = 0 }
 	set_variable = { var = number_of_battery_parks value = 0 }
+	set_variable = { var = last_overall_productivity value = overall_productivity }
 	set_variable = { var = overall_productivity value = 0 }
 	set_variable = { var = nuclear_facility_total value = 0 }
 	set_variable = { var = air_facility_total value = 0 }
@@ -4342,6 +4344,13 @@ update_state_variables = {
 	multiply_variable = { overall_productivity = 0.1 }
 	divide_variable = { overall_productivity = population_total_m }
 	multiply_variable = { overall_productivity = 1000 }
+
+	# If no controlled states (capitulated/exiled), preserve last known productivity so the economy isn't permanently destroyed on liberation
+	if = {
+		limit = { check_variable = { overall_productivity < 1 } }
+		set_variable = { overall_productivity = last_overall_productivity }
+	}
+
 	clamp_variable = { var = overall_productivity min = 0 max = 1000000 } # INFO: This is a workaround to prevent the overflow of produtcivity to 424 million.
 
 	calculate_gdp = yes
@@ -5339,9 +5348,11 @@ productivity_growth_controlled_display_effect = {
 		limit = {
 			check_variable = { state_productivity_growth_scaled > 0 }
 		}
-		# Initial Calculation
+		# Initial Calculation — guard against uninitialized (0) productivity_state_var causing div-by-zero overflow
+		set_temp_variable = { safe_productivity_state_var = productivity_state_var }
+		clamp_temp_variable = { var = safe_productivity_state_var min = 100 }
 		set_temp_variable = { productivity_catch_up = global.average_world_productivity }
-		divide_temp_variable = { productivity_catch_up = productivity_state_var }
+		divide_temp_variable = { productivity_catch_up = safe_productivity_state_var }
 		add_to_temp_variable = { productivity_catch_up = -1 }
 		multiply_temp_variable = { productivity_catch_up = state_productivity_growth_scaled }
 		multiply_temp_variable = { productivity_catch_up = 0.5 } #control factor for the catch up effect
@@ -5379,7 +5390,9 @@ productivity_growth_controlled_display_effect = {
 	}
 	else = {
 		multiply_variable = { state_productivity_growth_scaled = productivity_state_var }
-		divide_variable = { state_productivity_growth_scaled = global.average_world_productivity }
+		set_temp_variable = { safe_avg_world_prod = global.average_world_productivity }
+		clamp_temp_variable = { var = safe_avg_world_prod min = 100 }
+		divide_variable = { state_productivity_growth_scaled = safe_avg_world_prod }
 	}
 }
 
@@ -5524,7 +5537,7 @@ productivity_growth_effect = {
 	every_controlled_state = {
 		productivity_growth_controlled_display_effect = yes
 		add_to_variable = { productivity_state_var = state_productivity_growth_scaled }
-		clamp_variable = { var = productivity_state_var min = 100 }
+		clamp_variable = { var = productivity_state_var min = 100 max = 100000 } # max cap prevents runaway overflow into overall_productivity
 	}
 	update_employment_productivity_output_dynamic_modifier = yes
 
@@ -6256,6 +6269,8 @@ calcluate_program_distributions = {
 		var:v = {
 			set_variable = { un_esco_political_power_var = esco_political_budget }
 			set_variable = { un_esco_research_speed_var = esco_research_budget }
+			multiply_variable = { un_esco_research_speed_var = 0.002 }
+			clamp_variable = { var = un_esco_research_speed_var min = 0 max = 0.30 }
 		}
 	}
 
@@ -6280,6 +6295,8 @@ calcluate_program_distributions = {
 		var:v = {
 			set_variable = { un_ido_current_building_count = un_ido_building_count }
 			set_variable = { un_ido_construction_speed_var = construction_speed_buffs }
+			multiply_variable = { un_ido_construction_speed_var = 0.002 }
+			clamp_variable = { var = un_ido_construction_speed_var min = 0 max = 0.30 }
 			if = {
 				limit = {
 					NOT = { check_variable = { un_ido_old_building_count = un_ido_building_count } }
@@ -6310,6 +6327,8 @@ calcluate_program_distributions = {
 
 		var:v = {
 			set_variable = { un_cdf_productivity_var = prod_var }
+			multiply_variable = { un_cdf_productivity_var = 0.002 }
+			clamp_variable = { var = un_cdf_productivity_var min = 0 max = 0.30 }
 			set_variable = { un_cdf_construction_cost_var = cost_var }
 		}
 	}

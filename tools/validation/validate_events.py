@@ -17,6 +17,7 @@ from validator_common import (
     BaseValidator,
     Colors,
     FileOpener,
+    Severity,
     run_validator_main,
     should_skip_file,
 )
@@ -102,6 +103,8 @@ class Validator(BaseValidator):
             results,
             "✓ No unsupported title/desc combinations",
             "Events with invalid title/desc combinations (both block and inline forms):",
+            Severity.ERROR,
+            category="invalid-title-desc",
         )
 
     def validate_missing_triggered_only(self):
@@ -114,18 +117,21 @@ class Validator(BaseValidator):
         events, paths = self._get_all_events()
         self.log(f"  Found {len(events)} events")
         pattern_id = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
-        results = []
 
+        results = []
         for event in events:
             if "is_triggered_only = yes" not in event:
                 event_id = pattern_id.findall(event)
                 eid = event_id[0] if event_id else "unknown"
-                results.append(f"{eid} - {paths.get(event, 'unknown')}")
+                filename = paths.get(event, "unknown")
+                results.append(f"{eid} - {filename}")
 
         self._report(
             results,
             "✓ All events have is_triggered_only = yes",
             "Events missing is_triggered_only = yes:",
+            Severity.ERROR,
+            category="missing-triggered-only",
         )
 
     def run_validations(self):
