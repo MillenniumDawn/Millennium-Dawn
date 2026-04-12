@@ -1,0 +1,329 @@
+scripted_gui = {
+	FFTF_agency_queue_scripted_gui = {
+		context_type = player_context
+		window_name = "FFTF_agency_queue_gui"
+
+		visible = {
+			has_country_flag = FFTF_agency_queue_gui_open
+		}
+
+		triggers = {
+			decrease_order_click_enabled = {
+				set_temp_variable = { last_in_array = THIS.agency_queue^num }
+				subtract_from_temp_variable = { last_in_array = 1 }
+				check_variable = { i < last_in_array }
+			}
+			decrease_order_shift_click_enabled = {
+				set_temp_variable = { last_in_array = THIS.agency_queue^num }
+				subtract_from_temp_variable = { last_in_array = 1 }
+				check_variable = { i < last_in_array }
+			}
+			increase_order_click_enabled = {
+				check_variable = { i > 0 }
+			}
+			increase_order_shift_click_enabled = {
+				check_variable = { i > 0 }
+			}
+
+			agency_upgrade_icon_button_click_enabled = {
+				NOT = {
+					OR = {
+						meta_trigger = {
+							text = {
+								has_done_agency_upgrade = [AGENCY_UPGRADE]
+							}
+							AGENCY_UPGRADE = "[?global.agency_upgrades^i.GetTokenLocalizedKey]"
+						}
+						check_variable = {
+							var = THIS.agency_upgrades_completed_and_queued^i
+							value = global.agency_max_upgrades^i
+							compare = greater_than_or_equals
+						}
+					}
+				}
+			}
+		}
+
+		effects = {
+			close_button_click = { clr_country_flag = FFTF_agency_queue_gui_open }
+
+			expand_agency_dropdown_button_click = {
+				if = {
+					limit = { check_variable = { THIS.agency_dropdown_visible = 2 } }
+					set_variable = { THIS.agency_dropdown_visible = 1 }
+				}
+				else = {
+					set_variable = { THIS.agency_dropdown_visible = 2 }
+				}
+			}
+			expand_agency_dropdown_button_arrow_click = {
+				if = {
+					limit = { check_variable = { THIS.agency_dropdown_visible = 2 } }
+					set_variable = { THIS.agency_dropdown_visible = 1 }
+				}
+				else = {
+					set_variable = { THIS.agency_dropdown_visible = 2 }
+				}
+			}
+
+			decrease_order_click = {
+				set_temp_variable = { below = i }
+				add_to_temp_variable = { below = 1 }
+				set_temp_variable = { below_value = THIS.agency_queue^below }
+
+				set_temp_variable = { hold = v }
+
+				set_variable = { THIS.agency_queue^i = below_value }
+				set_variable = { THIS.agency_queue^below = hold }
+			}
+
+			decrease_order_shift_click = {
+				set_temp_variable = { hold_value = v }
+
+				set_temp_variable = { last = THIS.agency_queue^num }
+				subtract_from_temp_variable = { last = 1 }
+
+				if = {
+					limit = {
+						check_variable = { THIS.agency_queue^num > 1 }
+						check_variable = { i < last }
+					}
+
+					set_temp_variable = { start_from = i }
+					add_to_temp_variable = { start_from = 1 }
+
+					for_loop_effect = {
+						start = start_from
+						end = THIS.agency_queue^num
+						value = v2
+
+						set_temp_variable = { above = v2 }
+						subtract_from_temp_variable = { above = 1 }
+						set_variable = { THIS.agency_queue^above = THIS.agency_queue^v2 }
+					}
+
+					clear_variable = THIS.agency_queue^last
+					subtract_from_variable = { THIS.agency_queue^num = 1 }
+				}
+				else_if = {
+					limit = { check_variable = { THIS.agency_queue^num = 1 } }
+					clear_array = THIS.agency_queue
+				}
+				else = {
+					clear_variable = THIS.agency_queue^last
+					subtract_from_variable = { THIS.agency_queue^num = 1 }
+				}
+
+				add_to_array = { THIS.agency_queue = hold_value }
+			}
+
+			increase_order_click = {
+				set_temp_variable = { above = i }
+				subtract_from_temp_variable = { above = 1 }
+				set_temp_variable = { above_value = THIS.agency_queue^above }
+
+				set_temp_variable = { hold = v }
+
+				set_variable = { THIS.agency_queue^i = above_value }
+				set_variable = { THIS.agency_queue^above = hold }
+			}
+
+			increase_order_shift_click = {
+				set_temp_variable = { hold_value = v }
+
+				for_loop_effect = {
+					start = i
+					end = 0
+					value = v2
+					compare = greater_than
+					add = -1
+
+					set_temp_variable = { above = v2 }
+					subtract_from_temp_variable = { above = 1 }
+					set_temp_variable = { above_value = THIS.agency_queue^above }
+
+					set_variable = { THIS.agency_queue^v2 = above_value }
+				}
+
+				set_variable = { THIS.agency_queue^0 = hold_value }
+			}
+
+			remove_from_queue_click = {
+				set_temp_variable = { val = THIS.agency_queue^i }
+				subtract_from_variable = { THIS.agency_upgrades_completed_and_queued^val = 1 }
+
+				set_temp_variable = { last = THIS.agency_queue^num }
+				subtract_from_temp_variable = { last = 1 }
+
+				if = {
+					limit = {
+						check_variable = { THIS.agency_queue^num > 1 }
+						check_variable = { i < last }
+					}
+
+					set_temp_variable = { start_from = i }
+					add_to_temp_variable = { start_from = 1 }
+
+					for_loop_effect = {
+						start = start_from
+						end = THIS.agency_queue^num
+						value = v2
+
+						set_temp_variable = { above = v2 }
+						subtract_from_temp_variable = { above = 1 }
+						set_variable = { THIS.agency_queue^above = THIS.agency_queue^v2 }
+					}
+
+					clear_variable = THIS.agency_queue^last
+					subtract_from_variable = { THIS.agency_queue^num = 1 }
+				}
+				else_if = {
+					limit = { check_variable = { THIS.agency_queue^num = 1 } }
+					clear_array = THIS.agency_queue
+				}
+				else = {
+					clear_variable = THIS.agency_queue^last
+					subtract_from_variable = { THIS.agency_queue^num = 1 }
+				}
+			}
+
+			agency_upgrade_icon_button_click = {
+				add_to_array = { THIS.agency_queue = i }
+				add_to_variable = { THIS.agency_upgrades_completed_and_queued^i = 1 }
+				FFTF_agency_verify_agency_queue = yes
+				FFTF_update_automated_agency_upgrade_state = yes
+			}
+
+			agency_upgrade_icon_button_shift_click = {
+				set_temp_variable = { loop_duration = global.agency_max_upgrades^i }
+				subtract_from_temp_variable = { loop_duration = THIS.agency_upgrades_completed_and_queued^i }
+				set_temp_variable = { upgrade_index = i }
+
+				if = {
+					limit = { check_variable = { loop_duration > 0 } }
+
+					for_loop_effect = {
+						end = loop_duration
+
+						add_to_array = { THIS.agency_queue = upgrade_index }
+						add_to_variable = { THIS.agency_upgrades_completed_and_queued^upgrade_index = 1 }
+					}
+
+					FFTF_agency_verify_agency_queue = yes
+					FFTF_update_automated_agency_upgrade_state = yes
+				}
+			}
+
+			clear_queue_button_click = {
+				for_each_loop = {
+					array = THIS.agency_queue
+					value = upgrade_idx
+					index = local_index
+
+					subtract_from_variable = { THIS.agency_upgrades_completed_and_queued^upgrade_idx = 1 }
+				}
+
+				clear_array = THIS.agency_queue
+				FFTF_update_automated_agency_upgrade_state = yes
+			}
+		}
+
+		properties = {
+			agency_queue_icon = {
+				image = "[?global.agency_gfx^v.GetTokenLocalizedKey]"
+			}
+			agency_upgrade_icon_button = {
+				image = "[?global.agency_gfx^i.GetTokenLocalizedKey]"
+				x = global.agency_upgrade_icon_button_x^i
+				y = global.agency_upgrade_icon_button_y^i
+			}
+			agency_upgrade_icon_bg = {
+				x = global.agency_upgrade_icon_button_x^i
+				y = global.agency_upgrade_icon_button_y^i
+			}
+			agency_upgrade_name_textbox = {
+				x = global.agency_upgrade_icon_button_x^i
+				y = global.agency_upgrade_icon_button_y^i
+			}
+			expand_agency_dropdown_button_arrow = {
+				frame = agency_dropdown_visible
+			}
+		}
+
+		dynamic_lists = {
+			queue_list_gridbox = {
+				array = THIS.agency_queue
+				change_scope = no
+				entry_container = "FFTF_agency_upgrade_in_queue_item"
+			}
+			upgrades_bg_gridbox = {
+				array = global.agency_upgrades
+				change_scope = no
+				entry_container = "FFTF_agency_upgrade_item_bg"
+			}
+			upgrades_list_gridbox = {
+				array = global.agency_upgrades
+				change_scope = no
+				entry_container = "FFTF_agency_upgrade_item"
+			}
+			upgrade_names_gridbox = {
+				array = global.agency_names
+				change_scope = no
+				entry_container = "FFTF_agency_upgrade_name_bg"
+			}
+		}
+	}
+
+	FFTF_agency_upgrade_selection_option_dropdown_gui = {
+		context_type = player_context
+		window_name = "FFTF_agency_upgrade_selection_option_dropdown_container"
+		parent_window_name = FFTF_agency_queue_gui
+
+		visible = {
+			has_country_flag = FFTF_agency_queue_gui_open
+			check_variable = { THIS.agency_dropdown_visible = 1 }
+		}
+
+		effects = {
+			auto_upgrades_off_button_click = {
+				set_variable = { THIS.automate_agency_upgrades_choice = 1 }
+				set_variable = { THIS.agency_dropdown_visible = 2 }
+				FFTF_update_automated_agency_upgrade_state = yes
+			}
+			auto_upgrades_on_button_click = {
+				set_variable = { THIS.automate_agency_upgrades_choice = 2 }
+				set_variable = { THIS.agency_dropdown_visible = 2 }
+				FFTF_update_automated_agency_upgrade_state = yes
+			}
+			auto_upgrades_queue_only_button_click = {
+				set_variable = { THIS.automate_agency_upgrades_choice = 3 }
+				set_variable = { THIS.agency_dropdown_visible = 2 }
+				FFTF_update_automated_agency_upgrade_state = yes
+			}
+		}
+	}
+
+	spy_agency_upgrade_automation_scripted_ui = {
+		context_type = player_context
+		window_name = "spy_agency_upgrade_automation_ui"
+		parent_window_name = agency_branches
+
+		visible = {
+			has_intelligence_agency = yes
+		}
+
+		effects = {
+			load_queue_tab_button_click = {
+				if = {
+					limit = {
+						has_country_flag = FFTF_agency_queue_gui_open
+					}
+					clr_country_flag = FFTF_agency_queue_gui_open
+				}
+				else = {
+					set_country_flag = FFTF_agency_queue_gui_open
+				}
+			}
+		}
+	}
+}

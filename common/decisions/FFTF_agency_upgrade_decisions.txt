@@ -1,0 +1,40 @@
+FFTF_agency_upgrade_cat = {
+	spy_agency_upgrade_in_progress = {
+		priority = 999
+
+		icon = generic_research_new
+		allowed = { always = no }
+
+		selectable_mission = yes
+		ai_will_do = { factor = 0 }
+		available = { hidden_trigger = { always = yes } }
+
+		is_good = yes
+		days_mission_timeout = THIS.agency_upgrade_time_days
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision spy_agency_upgrade_in_progress timeout"
+			FFTF_agency_upgrade_selected_agency = yes
+			clr_country_flag = spy_agency_upgrade_in_progress_flag
+			FFTF_begin_automatic_upgrade_if_possible = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision spy_agency_upgrade_in_progress cancelled"
+			custom_effect_tooltip = FFTF_will_cancel_agency_upgrade
+			if = {
+				limit = {
+					NOT = { check_variable = { THIS.agency_selected_upgrade = -1 } }
+					check_variable = {
+						var = THIS.agency_upgrades_completed_and_queued^agency_selected_upgrade
+						value = 0
+						compare = greater_than
+					}
+				}
+				subtract_from_variable = { THIS.agency_upgrades_completed_and_queued^agency_selected_upgrade = 1 }
+			}
+			clr_country_flag = spy_agency_upgrade_in_progress_flag
+			set_variable = { THIS.agency_selected_upgrade = -1 }
+		}
+	}
+}
