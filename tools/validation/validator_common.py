@@ -212,7 +212,9 @@ class BaseValidator:
                 logging.error(f"Failed to save output to {self.output_file}: {e}")
 
         json_file = (
-            self.output_file.replace(".txt", ".json") if self.output_file else None
+            os.path.splitext(self.output_file)[0] + ".json"
+            if self.output_file
+            else None
         )
         if json_file and self._issues:
             try:

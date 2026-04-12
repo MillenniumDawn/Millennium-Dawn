@@ -537,7 +537,6 @@ class Validator(BaseValidator):
             "stability": "has_stability",
             "war_support": "has_war_support",
             "manpower": "has_manpower",
-            "num_of_factories": "has_num_of_factories",
         }
 
         pattern = re.compile(
