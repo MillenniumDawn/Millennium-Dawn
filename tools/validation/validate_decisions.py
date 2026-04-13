@@ -397,19 +397,13 @@ class Validator(BaseValidator):
                 if self.fix:
                     fixes_needed.append((d.token, paths[dec_code]))
 
-            if d.ai_factor:
-                ai_factors = re.findall(
-                    r"(base = \S+|factor = \S+|add = \S+)", d.ai_factor
-                )
-                if len(ai_factors) > 0 and "base =" in d.ai_factor:
-                    if "factor = 0" in ai_factors:
-                        num_zeroed = ai_factors.count("factor = 0")
-                        for idx in range(1, num_zeroed):
-                            if ai_factors[idx] != "factor = 0":
-                                results.append(
-                                    f"{d.token} - {paths[dec_code]} - Zeroed AI factors not evaluated immediately"
-                                )
-                                break
+            # Note: we previously flagged "zeroed AI factors not evaluated
+            # immediately" when factor=0 modifiers appeared after add=N
+            # modifiers. That heuristic is wrong for HOI4: ai_will_do
+            # evaluates in order on a running total, and clustering
+            # factor=0 before the adds makes them a no-op (0*0=0 with base=0).
+            # The whole point of placing factor=0 after adds is to override
+            # the adds conditionally. Do not re-add that check.
 
         self._report(results, "✓ No AI factor issues", "Decision AI factor issues:")
 
