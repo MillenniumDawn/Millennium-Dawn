@@ -72,6 +72,8 @@ class DecisionFactory:
         self.target_trigger = extract_value_multi_line(dec, "target_trigger")
         self.targets = extract_value_multi_line(dec, "targets")
         self.target_array = extract_value_single_line(dec, "target_array")
+        self.state_target = "state_target = yes" in dec
+        self.map_only = "on_map_mode = map_only" in dec
         self.mission_subtype = "\tdays_mission_timeout =" in dec
         self.selectable_mission = (
             "\tdays_mission_timeout =" in dec and "selectable_mission = yes" in dec
@@ -438,6 +440,13 @@ class Validator(BaseValidator):
         )
 
     def validate_targeted_without_target(self):
+        """Flag targeted decisions missing an explicit target set.
+
+        Exempts:
+        - ``allowed = { always = no }`` (decision is script-activated, never auto-visible)
+        - ``state_target = yes`` / ``on_map_mode = map_only`` (player-driven map click;
+          the engine iterates states/countries only on map interaction, not daily)
+        """
         self.log(f"\n{'='*80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking targeted decisions without targets (performance)...{Colors.ENDC if self.use_colors else ''}"
@@ -451,8 +460,11 @@ class Validator(BaseValidator):
             d = DecisionFactory(dec=dec_code)
             if d.target_root_trigger or d.target_trigger:
                 if not d.targets and not d.target_array:
-                    if not d.allowed or "always = no" not in d.allowed:
-                        results.append(f"{d.token:<55}{paths[dec_code]}")
+                    if d.allowed and "always = no" in d.allowed:
+                        continue
+                    if d.state_target or d.map_only:
+                        continue
+                    results.append(f"{d.token:<55}{paths[dec_code]}")
 
         self._report(
             results,
@@ -461,25 +473,43 @@ class Validator(BaseValidator):
         )
 
     def validate_targets_no_trigger(self):
+        """Flag decisions whose visible/available contains FROM checks but lack a target_trigger.
+
+        Having ``targets = { TAG }`` or ``target_array = X`` without a target_trigger
+        is perfectly valid — the game simply uses ``visible``/``available`` to filter
+        per target. The performance concern arises only when those blocks contain
+        FROM checks (evaluated every tick per target). Moving those FROM checks
+        into ``target_trigger`` makes them daily instead.
+        """
         self.log(f"\n{'='*80}")
         self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking decisions with targets but no target_trigger (performance)...{Colors.ENDC if self.use_colors else ''}"
+            f"{Colors.CYAN if self.use_colors else ''}Checking decisions with FROM checks in visible/available but no target_trigger (performance)...{Colors.ENDC if self.use_colors else ''}"
         )
         self.log(f"{'='*80}")
 
         decisions, paths = parse_all_decisions(self.mod_path)
         results = []
 
+        from_pattern = re.compile(r"\bFROM\s*=\s*\{")
         for dec_code in decisions:
             d = DecisionFactory(dec=dec_code)
-            if d.targets or d.target_array:
-                if not d.target_trigger:
-                    results.append(f"{d.token:<55}{paths[dec_code]}")
+            if not (d.targets or d.target_array):
+                continue
+            if d.target_trigger:
+                continue
+            # Only flag if there's at least one FROM = { ... } block in visible or available
+            has_from_filter = False
+            if d.visible and from_pattern.search(d.visible):
+                has_from_filter = True
+            if d.available and from_pattern.search(d.available):
+                has_from_filter = True
+            if has_from_filter:
+                results.append(f"{d.token:<55}{paths[dec_code]}")
 
         self._report(
             results,
-            "✓ No decisions with targets but no target_trigger",
-            "Decisions with targets but no target_trigger (falls back to slower available/visible checks):",
+            "✓ No decisions with FROM checks needing target_trigger",
+            "Decisions with FROM checks in visible/available but no target_trigger (move FROM into target_trigger for perf):",
         )
 
     def validate_without_allowed_check(self):
