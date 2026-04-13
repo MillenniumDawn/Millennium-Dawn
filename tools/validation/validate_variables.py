@@ -327,6 +327,44 @@ class Validator(BaseValidator):
                 f"{Colors.GREEN if self.use_colors else ''}{ok_msg}{Colors.ENDC if self.use_colors else ''}"
             )
 
+    # HOI4 scope keywords that can appear in @SCOPE substitutions inside flag names
+    _SCOPE_KEYWORDS = (
+        "ROOT",
+        "FROM",
+        "PREV",
+        "THIS",
+        "OWNER",
+        "CONTROLLER",
+        "CAPITAL",
+    )
+
+    @classmethod
+    def _build_dynamic_flag_matchers(cls, flags):
+        """Build regex patterns from flags containing @SCOPE substitutions.
+
+        A flag like ``libya_casablanca_accords_@ROOT_left`` is set at runtime as
+        ``libya_casablanca_accords_MOR_left``, ``_ALG_left``, etc. Convert the
+        ``@SCOPE`` segments to a 3-letter tag wildcard so literal flag checks
+        can be matched back to their dynamic setter. Only recognized HOI4 scope
+        keywords are treated as substitution points — an ``@`` followed by
+        anything else is left literal.
+        """
+        scope_pat = re.compile(
+            r"@(?:" + "|".join(cls._SCOPE_KEYWORDS) + r")(?![A-Za-z0-9])"
+        )
+        patterns = []
+        for flag in flags:
+            if "@" not in flag:
+                continue
+            if not scope_pat.search(flag):
+                continue
+            parts = scope_pat.split(flag)
+            # Replace @SCOPE placeholders with a wildcard matching 2-4 char
+            # country tag, or any word characters for defensiveness.
+            pattern_str = r"\w+".join(re.escape(p) for p in parts)
+            patterns.append(re.compile(f"^{pattern_str}$"))
+        return patterns
+
     def validate_cleared_flags(self, flag_type: str, false_positives: list):
         self.log(f"\n{'='*80}")
         self.log(
@@ -354,18 +392,21 @@ class Validator(BaseValidator):
             cleared_flags, tuple(false_positives)
         )
 
+        dynamic_set_patterns = self._build_dynamic_flag_matchers(set_flags)
+
         for flag in cleared_flags:
-            if flag not in set_flags:
-                basename = paths[flag]
-                full_path = self.get_full_path(
-                    basename, f"clr_{flag_type}_flag = {flag}"
+            if flag in set_flags:
+                continue
+            if any(p.match(flag) for p in dynamic_set_patterns):
+                continue
+            basename = paths[flag]
+            full_path = self.get_full_path(basename, f"clr_{flag_type}_flag = {flag}")
+            if full_path:
+                rel_path = os.path.relpath(full_path, self.mod_path)
+                line_num = find_line_number(
+                    full_path, f"clr_{flag_type}_flag = {flag}", lowercase=False
                 )
-                if full_path:
-                    rel_path = os.path.relpath(full_path, self.mod_path)
-                    line_num = find_line_number(
-                        full_path, f"clr_{flag_type}_flag = {flag}", lowercase=False
-                    )
-                    results.append({"flag": flag, "file": rel_path, "line": line_num})
+                results.append({"flag": flag, "file": rel_path, "line": line_num})
 
         self._report_with_locations(
             results,
@@ -400,18 +441,21 @@ class Validator(BaseValidator):
             used_flags, tuple(false_positives)
         )
 
+        dynamic_set_patterns = self._build_dynamic_flag_matchers(set_flags)
+
         for flag in used_flags:
-            if flag not in set_flags:
-                basename = paths[flag]
-                full_path = self.get_full_path(
-                    basename, f"has_{flag_type}_flag = {flag}"
+            if flag in set_flags:
+                continue
+            if any(p.match(flag) for p in dynamic_set_patterns):
+                continue
+            basename = paths[flag]
+            full_path = self.get_full_path(basename, f"has_{flag_type}_flag = {flag}")
+            if full_path:
+                rel_path = os.path.relpath(full_path, self.mod_path)
+                line_num = find_line_number(
+                    full_path, f"has_{flag_type}_flag = {flag}", lowercase=False
                 )
-                if full_path:
-                    rel_path = os.path.relpath(full_path, self.mod_path)
-                    line_num = find_line_number(
-                        full_path, f"has_{flag_type}_flag = {flag}", lowercase=False
-                    )
-                    results.append({"flag": flag, "file": rel_path, "line": line_num})
+                results.append({"flag": flag, "file": rel_path, "line": line_num})
 
         self._report_with_locations(
             results,
@@ -446,18 +490,21 @@ class Validator(BaseValidator):
             set_flags, tuple(false_positives)
         )
 
+        dynamic_used_patterns = self._build_dynamic_flag_matchers(used_flags)
+
         for flag in set_flags:
-            if flag not in used_flags:
-                basename = paths[flag]
-                full_path = self.get_full_path(
-                    basename, f"set_{flag_type}_flag = {flag}"
+            if flag in used_flags:
+                continue
+            if any(p.match(flag) for p in dynamic_used_patterns):
+                continue
+            basename = paths[flag]
+            full_path = self.get_full_path(basename, f"set_{flag_type}_flag = {flag}")
+            if full_path:
+                rel_path = os.path.relpath(full_path, self.mod_path)
+                line_num = find_line_number(
+                    full_path, f"set_{flag_type}_flag = {flag}", lowercase=False
                 )
-                if full_path:
-                    rel_path = os.path.relpath(full_path, self.mod_path)
-                    line_num = find_line_number(
-                        full_path, f"set_{flag_type}_flag = {flag}", lowercase=False
-                    )
-                    results.append({"flag": flag, "file": rel_path, "line": line_num})
+                results.append({"flag": flag, "file": rel_path, "line": line_num})
 
         self._report_with_locations(
             results,
