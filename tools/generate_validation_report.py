@@ -42,12 +42,31 @@ def determine_status(content):
 
 
 def count_issues(content):
-    """Count the number of issues reported in the log summary line."""
+    """Count the number of issues reported in the log summary line.
+
+    Supports both output formats produced by the validators:
+      - BaseValidator: "✗ VALIDATION COMPLETE - N ERROR(S) - M WARNING(S)"
+        (either or both segments may be present)
+      - validate_set_variables legacy: "✗ VALIDATION COMPLETE - N TOTAL ISSUES FOUND"
+    """
     if content is None:
         return 0
 
-    m = re.search(r"✗ VALIDATION COMPLETE - (\d+) TOTAL ISSUES FOUND", content)
-    return int(m.group(1)) if m else 0
+    legacy = re.search(r"✗ VALIDATION COMPLETE - (\d+) TOTAL ISSUES FOUND", content)
+    if legacy:
+        return int(legacy.group(1))
+
+    total = 0
+    matched = False
+    err_m = re.search(r"✗ VALIDATION COMPLETE[^\n]*?(\d+) ERROR\(S\)", content)
+    if err_m:
+        total += int(err_m.group(1))
+        matched = True
+    warn_m = re.search(r"✗ VALIDATION COMPLETE[^\n]*?(\d+) WARNING\(S\)", content)
+    if warn_m:
+        total += int(warn_m.group(1))
+        matched = True
+    return total if matched else 0
 
 
 def discover_validations(results_dir):
