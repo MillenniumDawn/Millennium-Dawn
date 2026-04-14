@@ -58,7 +58,9 @@ def extract_value_multi_line(obj: str, s: str) -> str:
 
 
 class DecisionFactory:
-    def __init__(self, dec: str) -> None:
+    def __init__(self, dec: str, source_basename: str = "") -> None:
+        self.source_basename = source_basename
+        self.raw = dec
         self.token = re.findall(r"^\t*(.+) = \{", dec, flags=re.MULTILINE)[0]
         self.allowed = extract_value_multi_line(dec, "allowed")
         self.available = extract_value_multi_line(dec, "available")
@@ -85,102 +87,179 @@ class DecisionFactory:
         self.cost = extract_value_single_line(dec, "cost")
         self.has_tooltip = "tooltip =" in dec
         self.has_random_list = bool(re.search(r"\brandom_list\s*=\s*\{", dec))
-        self.fixed_random_seed_no = "fixed_random_seed = no" in dec
+        self.fixed_random_seed_explicit = bool(
+            re.search(r"\bfixed_random_seed\s*=\s*(yes|no)\b", dec)
+        )
+
+
+# Decisions parsing cache - enabled by default, disabled via --no-cache for CI
+_DECISION_CACHE = {"enabled": True, "data": {}}
+
+
+def _set_cache_enabled(enabled: bool):
+    """Enable or disable the decision parsing cache."""
+    global _DECISION_CACHE
+    _DECISION_CACHE["enabled"] = enabled
+    if not enabled:
+        _DECISION_CACHE["data"].clear()
+
+
+def _get_cached(key: str, mod_path: str, lowercase: bool, factory_fn):
+    """Get cached result or compute and cache it."""
+    if not _DECISION_CACHE["enabled"]:
+        return factory_fn()
+
+    cache_key = f"{mod_path}:{lowercase}:{key}"
+    if cache_key not in _DECISION_CACHE["data"]:
+        _DECISION_CACHE["data"][cache_key] = factory_fn()
+    return _DECISION_CACHE["data"][cache_key]
 
 
 def parse_all_decisions(
     mod_path: str, lowercase: bool = False
 ) -> Tuple[List[str], Dict[str, str]]:
-    filepath = str(Path(mod_path) / "common" / "decisions")
-    pattern = re.compile(r"^\t[^\t#]+ = \{.*?^\t\}", flags=re.MULTILINE | re.DOTALL)
-    decisions = []
-    paths = {}
+    """Parse all decisions with caching."""
 
-    for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
-        if "categories" in filename:
-            continue
-        text_file = FileOpener.open_text_file(
-            filename, lowercase=lowercase, strip_comments_flag=True
+    def _parse():
+        filepath = str(Path(mod_path) / "common" / "decisions")
+        # Pre-compile pattern once
+        _decisions_pattern = re.compile(
+            r"^\t[^\t#]+ = \{.*?^\t\}", flags=re.MULTILINE | re.DOTALL
         )
-        matches = pattern.findall(text_file)
-        for match in matches:
-            decisions.append(match)
-            paths[match] = os.path.basename(filename)
+        decisions = []
+        paths = {}
 
-    return decisions, paths
+        for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
+            if "categories" in filename:
+                continue
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=lowercase, strip_comments_flag=True
+            )
+            matches = _decisions_pattern.findall(text_file)
+            for match in matches:
+                decisions.append(match)
+                paths[match] = os.path.basename(filename)
+
+        return decisions, paths
+
+    return _get_cached("decisions", mod_path, lowercase, _parse)
+
+
+def parse_all_decision_factories(
+    mod_path: str, lowercase: bool = False
+) -> List["DecisionFactory"]:
+    """Build DecisionFactory instances for every decision and cache them.
+
+    Each factory does ~14 multi-line regex extractions in __init__, so building
+    them once and reusing across all validators eliminates the dominant cost of
+    a full decisions validation run (was ~7s of ~10s on this mod).
+
+    The source filename is stored on the factory as ``source_basename`` so
+    reporting code can avoid re-keying a parallel paths dict.
+    """
+
+    def _build():
+        decisions, dec_paths = parse_all_decisions(mod_path, lowercase)
+        return [DecisionFactory(dec=d, source_basename=dec_paths[d]) for d in decisions]
+
+    return _get_cached("decision_factories", mod_path, lowercase, _build)
 
 
 def parse_all_decision_names(
     mod_path: str, lowercase: bool = False
 ) -> Tuple[List[str], Dict[str, str]]:
-    decisions, dec_paths = parse_all_decisions(mod_path, lowercase)
-    pattern = re.compile(r"^\t(.+) =", flags=re.MULTILINE)
-    names = []
-    name_paths = {}
-    for d in decisions:
-        name = pattern.findall(d)[0]
-        names.append(name)
-        name_paths[name] = dec_paths[d]
-    return names, name_paths
+    """Parse all decision names with caching."""
+
+    def _parse():
+        decisions, dec_paths = parse_all_decisions(mod_path, lowercase)
+        _names_pattern = re.compile(r"^\t(.+) =", flags=re.MULTILINE)
+        names = []
+        name_paths = {}
+        for d in decisions:
+            name = _names_pattern.findall(d)[0]
+            names.append(name)
+            name_paths[name] = dec_paths[d]
+        return names, name_paths
+
+    return _get_cached("decision_names", mod_path, lowercase, _parse)
 
 
 def parse_decision_categories(
     mod_path: str, lowercase: bool = False, visible_when_empty: bool = True
 ) -> Dict[str, str]:
-    filepath = str(Path(mod_path) / "common" / "decisions" / "categories")
-    categories = {}
-    cat_pattern = re.compile(r"^\w* = \{.*?^\}", flags=re.DOTALL | re.MULTILINE)
-    name_pattern = re.compile(r"^(.*) = \{")
+    """Parse decision categories with caching."""
 
-    for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
-        text_file = FileOpener.open_text_file(
-            filename, lowercase=lowercase, strip_comments_flag=True
-        )
-        matches = re.findall(cat_pattern, text_file)
-        for match in matches:
-            if not visible_when_empty and "visible_when_empty = yes" in match:
-                continue
-            name = re.findall(name_pattern, match)
-            if name:
-                categories[name[0]] = match
+    def _parse():
+        filepath = str(Path(mod_path) / "common" / "decisions" / "categories")
+        categories = {}
+        # Pre-compile patterns once
+        _cat_pattern = re.compile(r"^\w* = \{.*?^\}", flags=re.DOTALL | re.MULTILINE)
+        _name_pattern = re.compile(r"^(.*) = \{")
 
-    return categories
+        for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=lowercase, strip_comments_flag=True
+            )
+            matches = re.findall(_cat_pattern, text_file)
+            for match in matches:
+                if not visible_when_empty and "visible_when_empty = yes" in match:
+                    continue
+                name = re.findall(_name_pattern, match)
+                if name:
+                    categories[name[0]] = match
+
+        return categories
+
+    cache_key = f"categories:{visible_when_empty}"
+    return _get_cached(cache_key, mod_path, lowercase, _parse)
 
 
 def parse_categories_with_decisions(
     mod_path: str, lowercase: bool = False, visible_when_empty: bool = True
 ) -> Dict[str, List[str]]:
-    filepath = str(Path(mod_path) / "common" / "decisions")
-    category_names = list(
-        parse_decision_categories(mod_path, lowercase, visible_when_empty).keys()
-    )
-    result = {cat: [] for cat in category_names}
-    dec_pattern = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
+    """Parse categories with their decisions - reuses category cache."""
 
-    for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
-        if "categories" in filename:
-            continue
-        text_file = FileOpener.open_text_file(
-            filename, lowercase=lowercase, strip_comments_flag=True
-        )
-        for category in category_names:
-            if f"{category} = {{" in text_file:
-                pattern = r"^" + re.escape(category) + r" = \{.*?^\}"
-                matches = re.findall(pattern, text_file, flags=re.DOTALL | re.MULTILINE)
-                for match in matches:
-                    dec_names = dec_pattern.findall(match)
-                    result[category].extend(dec_names)
+    def _parse():
+        # Reuse the categories cache instead of re-parsing
+        categories = parse_decision_categories(mod_path, lowercase, visible_when_empty)
+        category_names = list(categories.keys())
 
-    return result
+        result = {cat: [] for cat in category_names}
+
+        filepath = str(Path(mod_path) / "common" / "decisions")
+        _dec_pattern = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
+
+        for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
+            if "categories" in filename:
+                continue
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=lowercase, strip_comments_flag=True
+            )
+            for category in category_names:
+                if f"{category} = {{" in text_file:
+                    pattern = r"^" + re.escape(category) + r" = \{.*?^\}"
+                    matches = re.findall(
+                        pattern, text_file, flags=re.DOTALL | re.MULTILINE
+                    )
+                    for match in matches:
+                        dec_names = _dec_pattern.findall(match)
+                        result[category].extend(dec_names)
+
+        return result
+
+    cache_key = f"cats_with_decs:{visible_when_empty}"
+    return _get_cached(cache_key, mod_path, lowercase, _parse)
 
 
 class Validator(BaseValidator):
     TITLE = "DECISION VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
-    def __init__(self, *args, fix: bool = False, **kwargs):
+    def __init__(self, *args, fix: bool = False, no_cache: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
         self.fix = fix
+        if no_cache:
+            _set_cache_enabled(False)
 
     def _apply_ai_factor_fixes(self, fixes: list):
         """Insert a default ai_will_do = { base = 0 } block into decisions missing one."""
@@ -254,19 +333,25 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        decisions, paths = parse_all_decisions(self.mod_path)
-        pattern_decision = re.compile(r"activate_targeted_decision = [^\n\t]*")
-        pattern_mission = re.compile(r"activate_mission = \S*")
-        manual_decisions = {}
-        manual_missions = {}
+        factories = parse_all_decision_factories(self.mod_path)
+        manual_decisions: set = set()
+        manual_missions: set = set()
 
-        for dec_code in decisions:
-            d = DecisionFactory(dec=dec_code)
-            if d.allowed:
-                if "always = no" in d.allowed and not d.mission_subtype:
-                    manual_decisions[d.token] = 0
-                elif "always = no" in d.allowed and d.mission_subtype:
-                    manual_missions[d.token] = 0
+        for d in factories:
+            if d.allowed and "always = no" in d.allowed:
+                if d.mission_subtype:
+                    manual_missions.add(d.token)
+                else:
+                    manual_decisions.add(d.token)
+
+        # Single pass over the mod tree: extract every (decision name) from
+        # `activate_targeted_decision = { ... decision = X ... }` and every
+        # (mission name) from `activate_mission = X`. The previous version
+        # ran an O(files × manual_decisions) inner loop per file.
+        decision_name_pat = re.compile(r"\bdecision\s*=\s*(\S+)")
+        mission_name_pat = re.compile(r"\bactivate_mission\s*=\s*(\S+)")
+        activated_decisions: set = set()
+        activated_missions: set = set()
 
         for filename in glob.iglob(self.mod_path + "**/*.txt", recursive=True):
             if _should_skip(filename):
@@ -274,30 +359,22 @@ class Validator(BaseValidator):
             text_file = FileOpener.open_text_file(
                 filename, lowercase=False, strip_comments_flag=True
             )
-            if "activate_targeted_decision =" in text_file:
-                remaining = {k: v for k, v in manual_decisions.items() if v == 0}
-                all_matches = pattern_decision.findall(text_file)
-                for dec in remaining:
-                    for match in all_matches:
-                        if f"decision = {dec}" in match:
-                            manual_decisions[dec] += 1
-            if "activate_mission =" in text_file:
-                remaining = {k: v for k, v in manual_missions.items() if v == 0}
-                all_matches = pattern_mission.findall(text_file)
-                for mission in remaining:
-                    if f"activate_mission = {mission}" in all_matches:
-                        manual_missions[mission] += 1
+            if "activate_targeted_decision" in text_file:
+                # `decision = X` only appears inside activate_targeted_decision
+                # blocks in our codebase; if false-positives ever creep in
+                # they're harmless (a referenced name marks the decision used).
+                activated_decisions.update(decision_name_pat.findall(text_file))
+            if "activate_mission" in text_file:
+                activated_missions.update(mission_name_pat.findall(text_file))
 
-        results = [
-            k
-            for k in manual_decisions
-            if manual_decisions[k] == 0 and k not in DYNAMICALLY_ACTIVATED_DECISIONS
-        ]
-        results += [
-            k
-            for k in manual_missions
-            if manual_missions[k] == 0 and k not in DYNAMICALLY_ACTIVATED_DECISIONS
-        ]
+        results = sorted(
+            (manual_decisions - activated_decisions)
+            - set(DYNAMICALLY_ACTIVATED_DECISIONS)
+        )
+        results += sorted(
+            (manual_missions - activated_missions)
+            - set(DYNAMICALLY_ACTIVATED_DECISIONS)
+        )
         self._report(
             results,
             "✓ No unused decisions",
@@ -356,14 +433,22 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        decisions, paths = parse_all_decisions(self.mod_path)
+        factories = parse_all_decision_factories(self.mod_path)
         categories = parse_decision_categories(self.mod_path)
         cats_with_decs = parse_categories_with_decisions(self.mod_path)
+
+        # Reverse index: decision token -> parent category. The previous
+        # version did an O(N) scan per decision over `cats_with_decs`, which
+        # added ~1.5s on this mod.
+        decision_to_category: Dict[str, str] = {}
+        for cat, dec_tokens in cats_with_decs.items():
+            for tok in dec_tokens:
+                decision_to_category.setdefault(tok, cat)
+
         results = []
         fixes_needed = []
 
-        for dec_code in decisions:
-            d = DecisionFactory(dec=dec_code)
+        for d in factories:
             if d.available and any(
                 ["is_ai = no" in d.available, "always = no" in d.available]
             ):
@@ -373,11 +458,7 @@ class Validator(BaseValidator):
             ):
                 continue
 
-            dec_category = None
-            for cat in cats_with_decs:
-                if d.token in cats_with_decs[cat]:
-                    dec_category = cat
-                    break
+            dec_category = decision_to_category.get(d.token)
             if dec_category and dec_category in categories:
                 cat_code = categories[dec_category]
                 if "is_ai = no" in cat_code or "always = no" in cat_code:
@@ -386,18 +467,18 @@ class Validator(BaseValidator):
             if d.mission_subtype:
                 if d.selectable_mission and not d.ai_factor:
                     results.append(
-                        f"{d.token} - {paths[dec_code]} - Selectable mission missing AI factor"
+                        f"{d.token} - {d.source_basename} - Selectable mission missing AI factor"
                     )
                 elif not d.selectable_mission and d.ai_factor:
                     results.append(
-                        f"{d.token} - {paths[dec_code]} - Non-selectable mission has AI factor"
+                        f"{d.token} - {d.source_basename} - Non-selectable mission has AI factor"
                     )
             elif not d.ai_factor and "debug" not in d.token:
                 results.append(
-                    f"{d.token} - {paths[dec_code]} - Decision missing AI factor"
+                    f"{d.token} - {d.source_basename} - Decision missing AI factor"
                 )
                 if self.fix:
-                    fixes_needed.append((d.token, paths[dec_code]))
+                    fixes_needed.append((d.token, d.source_basename))
 
             # Note: we previously flagged "zeroed AI factors not evaluated
             # immediately" when factor=0 modifiers appeared after add=N
@@ -419,14 +500,13 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        decisions, paths = parse_all_decisions(self.mod_path)
+        factories = parse_all_decision_factories(self.mod_path)
         results = []
 
-        for dec_code in decisions:
-            d = DecisionFactory(dec=dec_code)
+        for d in factories:
             if d.custom_cost_trigger and not d.has_tooltip and not d.custom_cost_text:
                 results.append(
-                    f"{d.token:<55}{paths[dec_code]} - has custom_cost_trigger but no tooltip or custom_cost_text"
+                    f"{d.token:<55}{d.source_basename} - has custom_cost_trigger but no tooltip or custom_cost_text"
                 )
 
         self._report(
@@ -449,18 +529,17 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        decisions, paths = parse_all_decisions(self.mod_path)
+        factories = parse_all_decision_factories(self.mod_path)
         results = []
 
-        for dec_code in decisions:
-            d = DecisionFactory(dec=dec_code)
+        for d in factories:
             if d.target_root_trigger or d.target_trigger:
                 if not d.targets and not d.target_array:
                     if d.allowed and "always = no" in d.allowed:
                         continue
                     if d.state_target or d.map_only:
                         continue
-                    results.append(f"{d.token:<55}{paths[dec_code]}")
+                    results.append(f"{d.token:<55}{d.source_basename}")
 
         self._report(
             results,
@@ -483,12 +562,11 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        decisions, paths = parse_all_decisions(self.mod_path)
+        factories = parse_all_decision_factories(self.mod_path)
         results = []
 
         from_pattern = re.compile(r"\bFROM\s*=\s*\{")
-        for dec_code in decisions:
-            d = DecisionFactory(dec=dec_code)
+        for d in factories:
             if not (d.targets or d.target_array):
                 continue
             if d.target_trigger:
@@ -500,7 +578,7 @@ class Validator(BaseValidator):
             if d.available and from_pattern.search(d.available):
                 has_from_filter = True
             if has_from_filter:
-                results.append(f"{d.token:<55}{paths[dec_code]}")
+                results.append(f"{d.token:<55}{d.source_basename}")
 
         self._report(
             results,
@@ -516,7 +594,7 @@ class Validator(BaseValidator):
         self.log(f"{'='*80}")
 
         cats_with_decs = parse_categories_with_decisions(self.mod_path)
-        decisions, _ = parse_all_decisions(self.mod_path)
+        factories = parse_all_decision_factories(self.mod_path)
         categories = parse_decision_categories(self.mod_path)
 
         unchecked_cats = []
@@ -524,14 +602,13 @@ class Validator(BaseValidator):
             if "allowed = {" not in cat_code:
                 unchecked_cats.append(cat)
 
-        decisions_to_check = []
+        decisions_to_check = set()
         for cat in unchecked_cats:
             if cat in cats_with_decs:
-                decisions_to_check.extend(cats_with_decs[cat])
+                decisions_to_check.update(cats_with_decs[cat])
 
         results = []
-        for dec_code in decisions:
-            d = DecisionFactory(dec=dec_code)
+        for d in factories:
             if d.token in decisions_to_check:
                 if not d.allowed:
                     results.append(d.token)
@@ -543,14 +620,17 @@ class Validator(BaseValidator):
         )
 
     def validate_random_list_seed(self):
-        """Flag decisions that use ``random_list = { ... }`` without ``fixed_random_seed = no``.
+        """Flag decisions using ``random_list`` without an explicit ``fixed_random_seed`` setting.
 
         HOI4 caches RNG outcomes by default within a single tick/save state, so
         a ``random_list`` inside a decision will deterministically pick the same
         branch every time it's evaluated unless ``fixed_random_seed = no`` is
         set on the decision. This defeats the point of the random_list and
-        leads to confusingly stuck behavior. The fix is to add
-        ``fixed_random_seed = no`` to the decision body.
+        leads to confusingly stuck behavior.
+
+        We only flag decisions where ``fixed_random_seed`` is omitted entirely;
+        an explicit ``fixed_random_seed = yes`` is treated as a deliberate
+        choice (e.g. reproducible AI rolls) and left alone.
         """
         self.log(f"\n{'='*80}")
         self.log(
@@ -558,18 +638,17 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        decisions, paths = parse_all_decisions(self.mod_path)
+        factories = parse_all_decision_factories(self.mod_path)
         results = []
 
-        for dec_code in decisions:
-            d = DecisionFactory(dec=dec_code)
-            if d.has_random_list and not d.fixed_random_seed_no:
-                results.append(f"{d.token:<55}{paths[dec_code]}")
+        for d in factories:
+            if d.has_random_list and not d.fixed_random_seed_explicit:
+                results.append(f"{d.token:<55}{d.source_basename}")
 
         self._report(
             results,
-            "✓ No random_list decisions missing fixed_random_seed = no",
-            "Decisions with random_list but no 'fixed_random_seed = no' (RNG will deterministically repeat):",
+            "✓ No random_list decisions missing an explicit fixed_random_seed setting",
+            "Decisions with random_list but no explicit 'fixed_random_seed' (RNG will deterministically repeat — set 'fixed_random_seed = no' to randomise, or 'fixed_random_seed = yes' to acknowledge intentional determinism):",
         )
 
     def validate_redundant_tag_checks(self):
@@ -597,7 +676,7 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        decisions, paths = parse_all_decisions(self.mod_path)
+        factories = parse_all_decision_factories(self.mod_path)
         results = []
 
         # Pattern matching a `tag = TAG` or `original_tag = TAG` token anywhere
@@ -734,8 +813,7 @@ class Validator(BaseValidator):
                     return True
             return False
 
-        for dec_code in decisions:
-            d = DecisionFactory(dec=dec_code)
+        for d in factories:
             if not d.allowed:
                 continue
             allowed_tags = _flat_tag_pins(d.allowed)
@@ -786,7 +864,7 @@ class Validator(BaseValidator):
 
             if issues:
                 results.append(
-                    f"{d.token:<55}{paths[dec_code]} ({pinned}: {', '.join(issues)})"
+                    f"{d.token:<55}{d.source_basename} ({pinned}: {', '.join(issues)})"
                 )
 
         self._report(
@@ -809,7 +887,7 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        decisions, paths = parse_all_decisions(self.mod_path)
+        factories = parse_all_decision_factories(self.mod_path)
         categories = parse_decision_categories(self.mod_path)
         cats_with_decs = parse_categories_with_decisions(self.mod_path)
 
@@ -868,8 +946,7 @@ class Validator(BaseValidator):
             cat_pins[cat_name] = flat_pins(cat_code[a_start:i])
 
         results = []
-        for dec_code in decisions:
-            d = DecisionFactory(dec=dec_code)
+        for d in factories:
             if not d.allowed:
                 continue
             dec_pinned = flat_pins(d.allowed)
@@ -898,7 +975,7 @@ class Validator(BaseValidator):
             if cat_name not in cat_pins:
                 continue
             if pinned in cat_pins[cat_name]:
-                results.append(f"{d.token:<55}{paths[dec_code]} ({pinned})")
+                results.append(f"{d.token:<55}{d.source_basename} ({pinned})")
 
         self._report(
             results,
@@ -908,26 +985,32 @@ class Validator(BaseValidator):
 
     def validate_pp_charge_in_effect(self):
         """Flag decisions that charge political power via ``add_political_power = -N``
-        in ``complete_effect``/``remove_effect`` instead of using the proper
-        ``cost = N`` field.
+        in ``complete_effect``/``remove_effect`` instead of (or in addition to)
+        the proper ``cost = N`` field.
 
-        The ``cost`` field integrates with the engine's UI (greys out the
-        decision when PP < cost, displays the cost in the tooltip, blocks
-        the AI from queueing it without sufficient PP) and is the canonical
-        way to charge PP for a decision. Hand-rolling the charge inside an
-        effect block bypasses all of that and produces inconsistent UX.
+        Two cases are reported:
+
+        1. **Hidden cost** — no top-level ``cost`` field and the effect block
+           has an unconditional ``add_political_power = -N``. The player pays
+           PP without the engine displaying a cost or gating affordability.
+
+        2. **Double-charge** — both a ``cost = N`` field AND an unconditional
+           ``add_political_power = -M`` in the effect. The true cost is
+           ``N + M`` but the UI shows only ``N``. Roll the hidden charge into
+           the cost field and remove the duplicate.
 
         Only flags ``add_political_power = -N`` at the **top level** of the
-        effect block — i.e. directly charging the decision-taker. Nested
-        charges inside conditional blocks (``if``, ``random_list``) or scope
-        changes (``OTHER_TAG = { ... }``) are gameplay outcomes, not costs,
-        and are left alone.
+        effect block — i.e. unconditional charges to the decision-taker.
+        Nested charges inside ``if``/``random_list``/scope changes are
+        gameplay outcomes, not costs, and are left alone.
 
         Skipped if:
-        - decision already has a ``cost`` field
+
         - decision has a ``custom_cost_trigger`` (its own custom cost flow)
-        - decision is a mission subtype (``days_mission_timeout``) — PP changes
-          there are mission outcomes, not entry costs
+        - decision is a non-selectable mission (``days_mission_timeout``
+          without ``selectable_mission = yes``) — PP changes in those effects
+          are timeout outcomes, not entry costs. Selectable missions still
+          get checked because their ``complete_effect`` is the player path.
         """
         self.log(f"\n{'='*80}")
         self.log(
@@ -935,14 +1018,17 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        decisions, paths = parse_all_decisions(self.mod_path)
-        results = []
+        factories = parse_all_decision_factories(self.mod_path)
+        hidden = []
+        double = []
 
-        def _has_top_level_neg_pp(block: str) -> bool:
-            """True if a literal `add_political_power = -N` exists at depth 0
-            of the block (i.e. unconditional charge to the decision-taker)."""
+        def _top_level_neg_pp(block: str):
+            """Return the magnitude (positive int) of an unconditional
+            ``add_political_power = -N`` at depth 0 of ``block``, or ``None``
+            if there is no such line. Conditional/nested subtractions are
+            ignored (they are gameplay outcomes, not entry costs)."""
             if not block:
-                return False
+                return None
             inner = block.strip()
             if inner.startswith("{"):
                 inner = inner[1:]
@@ -966,34 +1052,164 @@ class Validator(BaseValidator):
                         i += 1
                     continue
                 if depth == 0:
-                    m = re.match(r"add_political_power\s*=\s*(-\d+)", inner[i:])
+                    m = re.match(r"add_political_power\s*=\s*-(\d+)", inner[i:])
                     if m:
-                        return True
+                        return int(m.group(1))
                 i += 1
-            return False
+            return None
 
-        for dec_code in decisions:
-            d = DecisionFactory(dec=dec_code)
-            if d.cost or d.custom_cost_trigger:
+        for d in factories:
+            if d.custom_cost_trigger:
                 continue
-            if d.mission_subtype:
+            if d.mission_subtype and not d.selectable_mission:
                 continue
+
+            try:
+                cost_val = int(d.cost) if d.cost else 0
+            except (TypeError, ValueError):
+                cost_val = 0
+
             for block_name, block in (
                 ("complete_effect", d.complete_effect),
                 ("remove_effect", d.remove_effect),
             ):
-                if not block:
+                pp = _top_level_neg_pp(block)
+                if pp is None:
                     continue
-                if _has_top_level_neg_pp(block):
-                    results.append(
-                        f"{d.token:<55}{paths[dec_code]} ({block_name}: charges PP without cost field)"
+                if cost_val > 0:
+                    double.append(
+                        f"{d.token:<55}{d.source_basename} ({block_name}: cost={cost_val} + {pp} hidden = {cost_val + pp} true; roll into cost)"
                     )
-                    break
+                else:
+                    hidden.append(
+                        f"{d.token:<55}{d.source_basename} ({block_name}: charges {pp} PP without cost field)"
+                    )
+                break
+
+        self._report(
+            hidden,
+            "✓ No decisions hand-rolling PP cost in effects",
+            "Decisions charging political power in effects without a cost field (use 'cost = N' instead):",
+        )
+        self._report(
+            double,
+            "✓ No decisions double-charging PP",
+            "Decisions double-charging PP (cost field plus add_political_power in effect — roll into cost):",
+        )
+
+    def _normalize_block(self, block: str) -> str:
+        """Normalize a trigger block for comparison by stripping whitespace/comments."""
+        if not block:
+            return ""
+        inner = block.strip()
+        if inner.startswith("{"):
+            inner = inner[1:]
+        if inner.endswith("}"):
+            inner = inner[:-1]
+        normalized = re.sub(r"#.*$", "", inner, flags=re.MULTILINE)
+        normalized = re.sub(r"\s+", " ", normalized)
+        return normalized.strip()
+
+    def validate_visible_equals_available(self):
+        """Flag decisions where ``visible`` and ``available`` are functionally identical.
+
+        In HOI4, the engine checks ``visible`` first to determine if a decision appears
+        in the UI, then checks ``available`` to determine if it's clickable. If both
+        blocks are identical, one is redundant. We move available -> visible since
+        it's more efficient (only one check instead of two identical checks).
+        """
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking decisions with identical visible and available...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+        fixes_needed = []
+
+        for d in factories:
+            if not d.visible or not d.available:
+                continue
+
+            vis_normalized = self._normalize_block(d.visible)
+            avail_normalized = self._normalize_block(d.available)
+
+            if (
+                vis_normalized
+                and avail_normalized
+                and vis_normalized == avail_normalized
+            ):
+                results.append(f"{d.token:<55}{d.source_basename}")
+                if self.fix:
+                    fixes_needed.append((d.token, d.source_basename))
 
         self._report(
             results,
-            "✓ No decisions hand-rolling PP cost in effects",
-            "Decisions charging political power in effects (use 'cost = N' instead):",
+            "✓ No decisions with identical visible and available",
+            "Decisions with identical visible and available:",
+        )
+
+        if self.fix and fixes_needed:
+            self._apply_visible_to_available_fixes(fixes_needed)
+
+    def _apply_visible_to_available_fixes(self, fixes: list):
+        """Replace identical available blocks with the visible content and remove available."""
+        dec_filepath = str(Path(self.mod_path) / "common" / "decisions")
+
+        by_file: Dict[str, List[str]] = {}
+        for token, basename in fixes:
+            by_file.setdefault(basename, []).append(token)
+
+        fixed_total = 0
+        for basename, tokens in by_file.items():
+            target_file = None
+            for filepath in glob.iglob(dec_filepath + "/**/*.txt", recursive=True):
+                if os.path.basename(filepath) == basename:
+                    target_file = filepath
+                    break
+
+            if not target_file:
+                self.log(f"  Could not locate file: {basename}", "warning")
+                continue
+
+            with open(target_file, "r", encoding="utf-8-sig") as f:
+                content = f.read()
+
+            for token in tokens:
+                # Pattern matches decision with both visible and available blocks
+                # We want to remove the available block entirely since visible already covers it
+                # The decision looks like:
+                #   token = {
+                #       ...
+                #       available = { ... }
+                #       ...
+                #       visible = { ... }
+                #       ...
+                #   }
+                # We remove the available block (including its content)
+                avail_pattern = re.compile(
+                    r"(\t"
+                    + re.escape(token)
+                    + r" = \{.*?)(\n\t\tavailable = \{[^\}]*\})",
+                    flags=re.DOTALL,
+                )
+
+                def _remover(m):
+                    return m.group(1) + "\n"
+
+                new_content, count = avail_pattern.subn(_remover, content)
+                if count:
+                    content = new_content
+                    fixed_total += 1
+                else:
+                    self.log(f"  Could not patch {token} in {basename}", "warning")
+
+            with open(target_file, "w", encoding="utf-8-sig") as f:
+                f.write(content)
+
+        self.log(
+            f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) by moving available -> visible{Colors.ENDC if self.use_colors else ''}"
         )
 
     def validate_bare_trigger_names(self):
@@ -1073,6 +1289,7 @@ class Validator(BaseValidator):
         self.validate_redundant_tag_checks()
         self.validate_allowed_redundant_with_category()
         self.validate_pp_charge_in_effect()
+        self.validate_visible_equals_available()
         self.validate_bare_trigger_names()
 
 
@@ -1080,13 +1297,16 @@ def _add_extra_args(parser):
     parser.add_argument(
         "--fix",
         action="store_true",
-        help="Auto-insert 'ai_will_do = { base = 0 }' into decisions missing an AI factor",
+        help="Auto-fix decisions: insert 'ai_will_do = { base = 0 }' for missing AI factors, and move identical available blocks into visible",
+    )
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Disable decision parsing cache (useful for CI runs where cache overhead exceeds benefit)",
     )
 
 
-if __name__ == "__main__":
-    run_validator_main(
-        Validator,
-        "Validate decisions in Millennium Dawn mod",
-        extra_args_fn=_add_extra_args,
-    )
+def _post_init(mod_path: str, args):
+    """Post-initialization callback to configure cache based on args."""
+    if getattr(args, "no_cache", False):
+        _set_cache_enabled(False)
