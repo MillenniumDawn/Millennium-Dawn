@@ -1,0 +1,106 @@
+name: Validation Report
+
+# This workflow posts the validation report comment on PRs after the
+# Code Standards & Validation workflow completes. It runs in the base
+# repo context (`workflow_run` trigger), so it has full token access
+# and can comment on PRs from forks — unlike the upstream workflow,
+# which uses the safer `pull_request` event and gets a read-only token
+# for fork PRs.
+#
+# Security model:
+#   - This workflow does NOT check out any PR code. It only:
+#     (1) downloads artifacts produced by the upstream run, and
+#     (2) runs `tools/generate_validation_report.py` from the BASE repo
+#         (the trusted version on the default branch).
+#   - The artifacts are validator output logs and a small PR metadata
+#     file (PR number + head SHA). Both are treated as untrusted data,
+#     never executed.
+
+on:
+  workflow_run:
+    workflows: ["Code Standards & Validation"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read         # required to list/download artifacts from the upstream run
+  pull-requests: write  # required to post the report comment
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  report:
+    name: Post Validation Report
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion != 'cancelled' &&
+      github.event.workflow_run.conclusion != 'skipped'
+    steps:
+      - name: Checkout (base repo, trusted)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.x'
+
+      - name: Download validation result artifacts from upstream run
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: validation-*-results
+          path: validation-results
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download PR metadata artifact from upstream run
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: pr-metadata
+          path: pr-metadata
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read PR metadata
+        id: pr
+        run: |
+          set -euo pipefail
+          if [ ! -s pr-metadata/pr_number.txt ] || [ ! -s pr-metadata/pr_sha.txt ]; then
+            echo "::error::PR metadata files missing or empty" >&2
+            exit 1
+          fi
+          pr_number=$(cat pr-metadata/pr_number.txt | tr -d '[:space:]')
+          pr_sha=$(cat pr-metadata/pr_sha.txt | tr -d '[:space:]')
+          if ! [[ "$pr_number" =~ ^[0-9]+$ ]]; then
+            echo "::error::pr_number is not a positive integer: $pr_number" >&2
+            exit 1
+          fi
+          if ! [[ "$pr_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::pr_sha is not a valid commit SHA: $pr_sha" >&2
+            exit 1
+          fi
+          echo "number=$pr_number" >> "$GITHUB_OUTPUT"
+          echo "sha=$pr_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Generate and post validation report
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 tools/generate_validation_report.py \
+            --results-dir validation-results \
+            --output report.md \
+            --pr-number "${{ steps.pr.outputs.number }}" \
+            --commit-sha "${{ steps.pr.outputs.sha }}" \
+            --github-repository "${{ github.repository }}" \
+            --post-comment \
+            --print
+
+      - name: Upload combined report
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        if: always()
+        with:
+          name: validation-report
+          path: report.md
+          retention-days: 30

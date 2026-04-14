@@ -18,7 +18,6 @@ concurrency:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   # ───────────────────────────────────────────────────────────────
@@ -76,6 +75,23 @@ jobs:
             - 'common/decisions/**'
           scripted-loc:
             - 'common/scripted_localisation/**'
+
+    # Persist PR metadata so the follow-up Validation Report workflow
+    # (workflow_run-triggered) can identify the PR to comment on.
+    # Required because workflow_run runs in the base repo context and
+    # github.event.workflow_run.pull_requests is empty for fork PRs.
+    - name: Save PR metadata
+      run: |
+        mkdir -p pr-metadata
+        echo "${{ github.event.pull_request.number }}" > pr-metadata/pr_number.txt
+        echo "${{ github.event.pull_request.head.sha }}" > pr-metadata/pr_sha.txt
+
+    - name: Upload PR metadata
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      with:
+        name: pr-metadata
+        path: pr-metadata/
+        retention-days: 1
 
   # ───────────────────────────────────────────────────────────────
   # Linters — run when any game content files change
@@ -303,49 +319,9 @@ jobs:
         retention-days: 7
 
   # ───────────────────────────────────────────────────────────────
-  # Validation report — collects all results and posts PR comment
+  # Validation report posting is handled by validation-report.yml,
+  # which is triggered by `workflow_run` after this workflow completes.
+  # That separation keeps this workflow on the safer `pull_request`
+  # event (no secrets, no write access) while still allowing the
+  # follow-up workflow to comment on PRs from forks with full token.
   # ───────────────────────────────────────────────────────────────
-  validation-report:
-    name: Generate Validation Report
-    runs-on: ubuntu-latest
-    needs: [validate-core, validate-decisions, validate-oob-units, validate-ai-roles, validate-ai-navy, validate-ai-equipment, validate-factions]
-    if: >-
-      always() &&
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.draft == false &&
-      !cancelled()
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
-
-    - name: Download all validation results
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-      with:
-        pattern: validation-*-results
-        path: validation-results
-
-    - name: Generate and post validation report
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      run: |
-        python3 tools/generate_validation_report.py \
-          --results-dir validation-results \
-          --output report.md \
-          --pr-number "${{ github.event.pull_request.number }}" \
-          --commit-sha "${{ github.sha }}" \
-          --github-repository "${{ github.repository }}" \
-          --post-comment \
-          --print
-
-    - name: Upload combined report
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-      if: always()
-      with:
-        name: validation-report
-        path: report.md
-        retention-days: 30
