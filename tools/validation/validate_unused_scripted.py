@@ -43,6 +43,12 @@ FALSE_POSITIVE_PATTERNS = [
 FALSE_POSITIVE_FILES = frozenset(
     {
         "00_game_rule_triggers.txt",
+        # Internal faction opinion triggers — a convention-based preset library
+        # (enthusiastic_X / positive_X / indifferent_X / negative_X / hostile_X
+        # for every internal faction). Kept fully populated so any content that
+        # wants to check a faction mood level has a ready-made trigger, even if
+        # many are not currently referenced anywhere in the mod.
+        "00_internal_factions_trigger.txt",
     }
 )
 
