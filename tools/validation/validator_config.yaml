@@ -1,0 +1,178 @@
+# Millennium Dawn Validator Configuration
+# This file defines the mapping between validators and the file types they process.
+# Used by validate_staged.py to determine which validators to run for staged files.
+
+validators:
+  # Events validator
+  - name: events
+    script: validate_events.py
+    file_types:
+      - events/**/*.txt
+    staged_paths:
+      - events/
+
+  # Decisions validator
+  - name: decisions
+    script: validate_decisions.py
+    file_types:
+      - common/decisions/**/*.txt
+    staged_paths:
+      - common/decisions/
+
+  # Localisation validator
+  - name: localisation
+    script: validate_localisation.py
+    file_types:
+      - localisation/**/*.yml
+    staged_paths:
+      - localisation/
+
+  # History techs validator
+  - name: history-techs
+    script: validate_history_techs.py
+    file_types:
+      - history/countries/**/*.txt
+    staged_paths:
+      - history/countries/
+
+  # Variables validator (cross-file checks)
+  - name: variables
+    script: validate_variables.py
+    file_types:
+      - common/**/*.txt
+      - events/**/*.txt
+      - history/**/*.txt
+    staged_paths:
+      - common/
+      - events/
+      - history/
+
+  # Scripted localisation validator
+  - name: scripted-localisation
+    script: validate_scripted_localisation.py
+    file_types:
+      - common/scripted_localisation/**/*.txt
+    staged_paths:
+      - common/scripted_localisation/
+
+  # Cosmetic tags validator
+  - name: cosmetic-tags
+    script: validate_cosmetic_tags.py
+    file_types:
+      - common/**/*.txt
+    staged_paths:
+      - common/
+
+  # Unused scripted validator (full scan required)
+  - name: unused-scripted
+    script: validate_unused_scripted.py
+    file_types:
+      - common/scripted_effects/**/*.txt
+      - common/scripted_triggers/**/*.txt
+    staged_paths:
+      - common/scripted_effects/
+      - common/scripted_triggers/
+    requires_full_scan: true
+
+  # OOB units validator
+  - name: oob-units
+    script: validate_oob_units.py
+    file_types:
+      - history/units/**/*.txt
+      - common/units/**/*.txt
+      - common/ai_templates/**/*.txt
+    staged_paths:
+      - history/units/
+      - common/units/
+      - common/ai_templates/
+
+  # AI roles validator
+  - name: ai-roles
+    script: validate_ai_roles.py
+    file_types:
+      - common/ai_strategy/**/*.txt
+      - common/ai_templates/**/*.txt
+    staged_paths:
+      - common/ai_strategy/
+      - common/ai_templates/
+
+  # AI equipment validator
+  - name: ai-equipment
+    script: validate_ai_equipment.py
+    file_types:
+      - common/ai_equipment/**/*.txt
+    staged_paths:
+      - common/ai_equipment/
+
+  # AI navy validator
+  - name: ai-navy
+    script: validate_ai_navy.py
+    file_types:
+      - common/ai_navy/**/*.txt
+    staged_paths:
+      - common/ai_navy/
+
+  # Defines validator
+  - name: defines
+    script: validate_defines.py
+    file_types:
+      - common/defines/**/*.txt
+    staged_paths:
+      - common/defines/
+
+  # Factions validator
+  - name: factions
+    script: validate_factions.py
+    file_types:
+      - common/factions/**/*.txt
+      - history/countries/**/*.txt
+    staged_paths:
+      - common/factions/
+
+  # Set variables validator
+  - name: set-variables
+    script: validate_set_variables.py
+    file_types:
+      - common/**/*.txt
+      - events/**/*.txt
+      - history/**/*.txt
+    staged_paths:
+      - common/
+      - events/
+      - history/
+
+  # Unused textures validator
+  - name: unused-textures
+    script: validate_unused_textures.py
+    file_types:
+      - common/**/*.txt
+      - gfx/**/*.png
+    staged_paths:
+      - gfx/
+
+# Severity classifications (automatic based on check type)
+severity:
+  error:
+    - Missing required game mechanics (is_triggered_only, tech dependencies)
+    - Invalid syntax or parsing errors
+    - Missing required fields in definitions
+
+  warning:
+    - Unused definitions (scripted effects, triggers)
+    - Duplicate keys (localisation)
+    - Code quality issues
+    - Style/formatting issues
+
+# Report settings
+report:
+  # Group issues by file in output
+  group_by_file: true
+
+  # Deduplicate issues across validators
+  deduplicate: true
+
+  # Output formats available
+  formats:
+    - text
+    - json
+    - both

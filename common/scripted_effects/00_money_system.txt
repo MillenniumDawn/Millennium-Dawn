@@ -2035,6 +2035,38 @@ calculate_interest_rate = {
 		multiply_temp_variable = { cb_rate_premium = 0.5 }
 		add_to_variable = { interest_rate = cb_rate_premium }
 
+		# Threat premium - current threat level raises borrowing costs; decays with world tension.
+		# as 1.825% per year. 80% (0.8) tensioon -> 4% interest rate (4.0).
+		set_variable = { threat_interest_premium = global.threat } 
+		multiply_variable = { threat_interest_premium = 5 }
+		clamp_variable = { var = threat_interest_premium min = 0 max = 5 }
+		add_to_variable = { interest_rate = threat_interest_premium }
+		multiply_variable = { threat_interest_premium = 0.01 } # For localisation display.
+
+		# World tension cause premium - Countries which cause world tension are chaotic and less
+		# stable.
+		# Get tension created today.
+		if = {
+			limit = { not = { has_variable = tracked_threat } }
+			set_variable = { tracked_threat = 0 }
+		}
+		set_temp_variable = { recent_threat = has_added_tension_amount }
+		subtract_from_temp_variable = { recent_threat = tracked_threat }
+		# Get current country tension premium.
+		if = {
+			limit = { not = { has_variable = tension_premium } }
+			set_variable = { tension_premium = 0 }
+		}
+		# Decay by 0.5% each day, 140 days to decay 50%, 460 days to decay 90%
+		multiply_variable = { tension_premium = 0.995 }
+		add_to_variable = { tension_premium = recent_threat } # Add new tension
+		set_variable = { adjusted_tension_premium = tension_premium }
+		multiply_variable = { adjusted_tension_premium = 0.1 } # 100% tension -> 10% interest rate
+		add_to_variable = { interest_rate = adjusted_tension_premium }
+		set_variable = { tracked_threat = has_added_tension_amount }
+		multiply_variable = { adjusted_tension_premium = 0.01 } # For localisation display.
+		
+
 		clamp_variable = { var = interest_rate min = 0.8 max = 50 } #Min is 0.8% on debt max is 50%
 
 		#Calculate debt rate based on interest
