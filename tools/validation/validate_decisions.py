@@ -84,6 +84,8 @@ class DecisionFactory:
         self.ai_hint_pp_cost = extract_value_single_line(dec, "ai_hint_pp_cost")
         self.cost = extract_value_single_line(dec, "cost")
         self.has_tooltip = "tooltip =" in dec
+        self.has_random_list = bool(re.search(r"\brandom_list\s*=\s*\{", dec))
+        self.fixed_random_seed_no = "fixed_random_seed = no" in dec
 
 
 def parse_all_decisions(
@@ -540,6 +542,460 @@ class Validator(BaseValidator):
             "Decisions in categories without allowed check that also lack their own allowed trigger:",
         )
 
+    def validate_random_list_seed(self):
+        """Flag decisions that use ``random_list = { ... }`` without ``fixed_random_seed = no``.
+
+        HOI4 caches RNG outcomes by default within a single tick/save state, so
+        a ``random_list`` inside a decision will deterministically pick the same
+        branch every time it's evaluated unless ``fixed_random_seed = no`` is
+        set on the decision. This defeats the point of the random_list and
+        leads to confusingly stuck behavior. The fix is to add
+        ``fixed_random_seed = no`` to the decision body.
+        """
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking decisions with random_list missing fixed_random_seed = no...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        decisions, paths = parse_all_decisions(self.mod_path)
+        results = []
+
+        for dec_code in decisions:
+            d = DecisionFactory(dec=dec_code)
+            if d.has_random_list and not d.fixed_random_seed_no:
+                results.append(f"{d.token:<55}{paths[dec_code]}")
+
+        self._report(
+            results,
+            "✓ No random_list decisions missing fixed_random_seed = no",
+            "Decisions with random_list but no 'fixed_random_seed = no' (RNG will deterministically repeat):",
+        )
+
+    def validate_redundant_tag_checks(self):
+        """Flag redundant tag/original_tag checks within a single decision.
+
+        Two patterns are flagged:
+
+        1. ``allowed`` already pins the decision to a single tag (via
+           ``tag = X`` or ``original_tag = X``) and ``visible`` or ``available``
+           re-checks the same tag. Since ``allowed`` permanently disables the
+           decision for any country with a different tag, the visible/available
+           check is dead weight evaluated every tick.
+
+        2. ``allowed`` has both ``tag = X`` and ``original_tag = X`` for the
+           same tag — only one is needed (and ``original_tag`` is preferred so
+           civil-war split-offs still match).
+
+        Note: this only flags decisions whose ``allowed`` is a flat single-tag
+        gate. Decisions whose ``allowed`` uses ``OR``/``NOT``/no tag at all
+        are skipped — those legitimately need per-tag filtering downstream.
+        """
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking decisions for redundant tag checks...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        decisions, paths = parse_all_decisions(self.mod_path)
+        results = []
+
+        # Pattern matching a `tag = TAG` or `original_tag = TAG` token anywhere
+        # inside a block. We use brace-depth tracking to ensure the match is at
+        # the *top level* of the surrounding block (depth 0 within the block),
+        # not nested inside OR/NOT/AND/if subblocks.
+        TAG_TOKEN_PATTERN = re.compile(
+            r"\b(original_tag|tag)\s*=\s*([A-Z][A-Z0-9_]{1,7})\b"
+        )
+
+        def _flat_tag_pins(block: str):
+            """Return set of tags pinned by flat (non-OR'd) tag/original_tag tokens.
+
+            Tokens nested inside OR/NOT/AND/if subblocks are skipped — those
+            are conditional, not a hard pin. Handles both multi-line and
+            single-line ``{ original_tag = SER }`` formats.
+            """
+            if not block:
+                return set()
+            # Strip the outer braces of the block if present
+            inner = block.strip()
+            if inner.startswith("{"):
+                inner = inner[1:]
+            if inner.endswith("}"):
+                inner = inner[:-1]
+
+            tags = set()
+            depth = 0
+            i = 0
+            n = len(inner)
+            while i < n:
+                ch = inner[i]
+                if ch == "{":
+                    depth += 1
+                    i += 1
+                    continue
+                if ch == "}":
+                    depth -= 1
+                    i += 1
+                    continue
+                if ch == "#":
+                    # Skip to end of line
+                    while i < n and inner[i] != "\n":
+                        i += 1
+                    continue
+                if depth == 0:
+                    m = TAG_TOKEN_PATTERN.match(inner, i)
+                    if m:
+                        tags.add(m.group(2))
+                        i = m.end()
+                        continue
+                i += 1
+            return tags
+
+        def _scan_top_level(block: str):
+            """Iterate top-level tokens inside a block.
+
+            Yields (kind, payload) pairs where kind is 'tag' or 'scope' and
+            payload is the tag string. Tokens nested inside subblocks
+            (OR/AND/NOT/if/custom_trigger_tooltip/etc.) are skipped — those are
+            conditional context, not unconditional pins.
+            """
+            if not block:
+                return
+            inner = block.strip()
+            if inner.startswith("{"):
+                inner = inner[1:]
+            if inner.endswith("}"):
+                inner = inner[:-1]
+
+            depth = 0
+            i = 0
+            n = len(inner)
+            while i < n:
+                ch = inner[i]
+                if ch == "{":
+                    depth += 1
+                    i += 1
+                    continue
+                if ch == "}":
+                    depth -= 1
+                    i += 1
+                    continue
+                if ch == "#":
+                    while i < n and inner[i] != "\n":
+                        i += 1
+                    continue
+                if depth == 0:
+                    # An identifier-start char only counts if it begins on a
+                    # word boundary (preceded by start-of-block or whitespace),
+                    # otherwise we'd misread `has_cosmetic_tag = MAU` as a
+                    # `tag = MAU` token.
+                    if ch.isalpha() or ch == "_":
+                        prev = inner[i - 1] if i > 0 else "\n"
+                        if prev.isalnum() or prev == "_":
+                            i += 1
+                            continue
+                        m = re.match(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*", inner[i:])
+                        if m:
+                            ident = m.group(1)
+                            after = i + m.end()
+                            # `tag = X` / `original_tag = X` token
+                            if ident in ("tag", "original_tag"):
+                                tm = re.match(r"([A-Z][A-Z0-9_]{1,7})\b", inner[after:])
+                                if tm:
+                                    yield ("tag", tm.group(1))
+                                    i = after + tm.end()
+                                    continue
+                            # `TAG = { ... }` self-scope (3-letter caps tag)
+                            if (
+                                re.match(r"^[A-Z][A-Z0-9_]{1,7}$", ident)
+                                and after < n
+                                and inner[after] == "{"
+                            ):
+                                yield ("scope", ident)
+                                # Don't consume the brace, let the outer loop dive in
+                                i = after
+                                continue
+                            # Skip past the entire identifier so we don't
+                            # re-scan its tail and falsely match nested tokens.
+                            i = after
+                            continue
+                i += 1
+
+        def _has_top_level_tag_check(block: str, tag: str) -> bool:
+            for kind, payload in _scan_top_level(block):
+                if kind == "tag" and payload == tag:
+                    return True
+            return False
+
+        def _has_top_level_self_scope(block: str, tag: str) -> bool:
+            for kind, payload in _scan_top_level(block):
+                if kind == "scope" and payload == tag:
+                    return True
+            return False
+
+        for dec_code in decisions:
+            d = DecisionFactory(dec=dec_code)
+            if not d.allowed:
+                continue
+            allowed_tags = _flat_tag_pins(d.allowed)
+            if not allowed_tags:
+                continue
+            # Only consider single-tag pins (multi-tag allowed is not a redundancy issue here)
+            if len(allowed_tags) != 1:
+                continue
+            pinned = next(iter(allowed_tags))
+
+            issues = []
+
+            # Pattern 2a: allowed has BOTH `tag = X` and `original_tag = X`
+            tag_count = len(
+                re.findall(
+                    r"\btag\s*=\s*" + re.escape(pinned) + r"\b",
+                    d.allowed,
+                )
+            )
+            orig_count = len(
+                re.findall(
+                    r"\boriginal_tag\s*=\s*" + re.escape(pinned) + r"\b",
+                    d.allowed,
+                )
+            )
+            if tag_count and orig_count:
+                issues.append("allowed has both 'tag' and 'original_tag'")
+            # Pattern 2b: allowed uses `tag = X` instead of `original_tag = X`.
+            # The `tag` form excludes civil-war split-offs (which have
+            # `original_tag = X` but a different runtime tag), so it's almost
+            # always a code smell.
+            elif tag_count and not orig_count:
+                issues.append(
+                    "allowed uses 'tag' (prefer 'original_tag' for civil-war robustness)"
+                )
+
+            # Pattern 1: visible/available re-checks the same tag at top level
+            if _has_top_level_tag_check(d.visible, pinned):
+                issues.append("visible re-checks tag")
+            if _has_top_level_tag_check(d.available, pinned):
+                issues.append("available re-checks tag")
+
+            # Pattern 3: visible/available scopes back into self at top level
+            if _has_top_level_self_scope(d.visible, pinned):
+                issues.append("visible self-scopes")
+            if _has_top_level_self_scope(d.available, pinned):
+                issues.append("available self-scopes")
+
+            if issues:
+                results.append(
+                    f"{d.token:<55}{paths[dec_code]} ({pinned}: {', '.join(issues)})"
+                )
+
+        self._report(
+            results,
+            "✓ No redundant tag checks found",
+            "Decisions with redundant tag checks (allowed already pins the tag):",
+        )
+
+    def validate_allowed_redundant_with_category(self):
+        """Flag decisions whose ``allowed`` is fully redundant with the parent
+        category's ``allowed`` (same single-tag pin, no extra conditions).
+
+        E.g. a decision with ``allowed = { original_tag = SER }`` inside a
+        category that already declares ``allowed = { original_tag = SER }``.
+        The decision-level allowed is dead weight — remove it.
+        """
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking decisions with allowed redundant with parent category...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        decisions, paths = parse_all_decisions(self.mod_path)
+        categories = parse_decision_categories(self.mod_path)
+        cats_with_decs = parse_categories_with_decisions(self.mod_path)
+
+        TAG_TOKEN = re.compile(r"\b(original_tag|tag)\s*=\s*([A-Z][A-Z0-9_]{1,7})\b")
+
+        def flat_pins(block):
+            if not block:
+                return set()
+            inner = block.strip()
+            if inner.startswith("{"):
+                inner = inner[1:]
+            if inner.endswith("}"):
+                inner = inner[:-1]
+            tags = set()
+            depth = 0
+            i = 0
+            n = len(inner)
+            while i < n:
+                ch = inner[i]
+                if ch == "{":
+                    depth += 1
+                    i += 1
+                    continue
+                if ch == "}":
+                    depth -= 1
+                    i += 1
+                    continue
+                if ch == "#":
+                    while i < n and inner[i] != "\n":
+                        i += 1
+                    continue
+                if depth == 0:
+                    m = TAG_TOKEN.match(inner, i)
+                    if m:
+                        tags.add(m.group(2))
+                        i = m.end()
+                        continue
+                i += 1
+            return tags
+
+        # Build category -> pinned tags
+        cat_pins = {}
+        for cat_name, cat_code in categories.items():
+            am = re.search(r"\ballowed\s*=\s*\{", cat_code)
+            if not am:
+                continue
+            a_start = cat_code.find("{", am.start())
+            depth = 1
+            i = a_start + 1
+            while i < len(cat_code) and depth > 0:
+                if cat_code[i] == "{":
+                    depth += 1
+                elif cat_code[i] == "}":
+                    depth -= 1
+                i += 1
+            cat_pins[cat_name] = flat_pins(cat_code[a_start:i])
+
+        results = []
+        for dec_code in decisions:
+            d = DecisionFactory(dec=dec_code)
+            if not d.allowed:
+                continue
+            dec_pinned = flat_pins(d.allowed)
+            if len(dec_pinned) != 1:
+                continue
+            pinned = next(iter(dec_pinned))
+            # Verify allowed has ONLY this pin (no extra conditions)
+            inner = d.allowed.strip()
+            if inner.startswith("{"):
+                inner = inner[1:]
+            if inner.endswith("}"):
+                inner = inner[:-1]
+            cleaned = re.sub(r"#[^\n]*", "", inner).strip()
+            single_pin_pat = re.compile(
+                r"^\s*(?:original_tag|tag)\s*=\s*" + re.escape(pinned) + r"\s*$"
+            )
+            if not single_pin_pat.match(cleaned):
+                continue
+
+            # Find parent category
+            cat_name = None
+            for c, dec_set in cats_with_decs.items():
+                if d.token in dec_set:
+                    cat_name = c
+                    break
+            if cat_name not in cat_pins:
+                continue
+            if pinned in cat_pins[cat_name]:
+                results.append(f"{d.token:<55}{paths[dec_code]} ({pinned})")
+
+        self._report(
+            results,
+            "✓ No decisions with allowed redundant with parent category",
+            "Decisions with `allowed` redundant with parent category (remove the decision's allowed):",
+        )
+
+    def validate_pp_charge_in_effect(self):
+        """Flag decisions that charge political power via ``add_political_power = -N``
+        in ``complete_effect``/``remove_effect`` instead of using the proper
+        ``cost = N`` field.
+
+        The ``cost`` field integrates with the engine's UI (greys out the
+        decision when PP < cost, displays the cost in the tooltip, blocks
+        the AI from queueing it without sufficient PP) and is the canonical
+        way to charge PP for a decision. Hand-rolling the charge inside an
+        effect block bypasses all of that and produces inconsistent UX.
+
+        Only flags ``add_political_power = -N`` at the **top level** of the
+        effect block — i.e. directly charging the decision-taker. Nested
+        charges inside conditional blocks (``if``, ``random_list``) or scope
+        changes (``OTHER_TAG = { ... }``) are gameplay outcomes, not costs,
+        and are left alone.
+
+        Skipped if:
+        - decision already has a ``cost`` field
+        - decision has a ``custom_cost_trigger`` (its own custom cost flow)
+        - decision is a mission subtype (``days_mission_timeout``) — PP changes
+          there are mission outcomes, not entry costs
+        """
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking decisions for hand-rolled PP cost in effects...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        decisions, paths = parse_all_decisions(self.mod_path)
+        results = []
+
+        def _has_top_level_neg_pp(block: str) -> bool:
+            """True if a literal `add_political_power = -N` exists at depth 0
+            of the block (i.e. unconditional charge to the decision-taker)."""
+            if not block:
+                return False
+            inner = block.strip()
+            if inner.startswith("{"):
+                inner = inner[1:]
+            if inner.endswith("}"):
+                inner = inner[:-1]
+            depth = 0
+            i = 0
+            n = len(inner)
+            while i < n:
+                ch = inner[i]
+                if ch == "{":
+                    depth += 1
+                    i += 1
+                    continue
+                if ch == "}":
+                    depth -= 1
+                    i += 1
+                    continue
+                if ch == "#":
+                    while i < n and inner[i] != "\n":
+                        i += 1
+                    continue
+                if depth == 0:
+                    m = re.match(r"add_political_power\s*=\s*(-\d+)", inner[i:])
+                    if m:
+                        return True
+                i += 1
+            return False
+
+        for dec_code in decisions:
+            d = DecisionFactory(dec=dec_code)
+            if d.cost or d.custom_cost_trigger:
+                continue
+            if d.mission_subtype:
+                continue
+            for block_name, block in (
+                ("complete_effect", d.complete_effect),
+                ("remove_effect", d.remove_effect),
+            ):
+                if not block:
+                    continue
+                if _has_top_level_neg_pp(block):
+                    results.append(
+                        f"{d.token:<55}{paths[dec_code]} ({block_name}: charges PP without cost field)"
+                    )
+                    break
+
+        self._report(
+            results,
+            "✓ No decisions hand-rolling PP cost in effects",
+            "Decisions charging political power in effects (use 'cost = N' instead):",
+        )
+
     def validate_bare_trigger_names(self):
         """Check for common bare trigger names that need a has_ prefix.
 
@@ -613,6 +1069,10 @@ class Validator(BaseValidator):
         self.validate_targeted_without_target()
         self.validate_targets_no_trigger()
         self.validate_without_allowed_check()
+        self.validate_random_list_seed()
+        self.validate_redundant_tag_checks()
+        self.validate_allowed_redundant_with_category()
+        self.validate_pp_charge_in_effect()
         self.validate_bare_trigger_names()
 
 

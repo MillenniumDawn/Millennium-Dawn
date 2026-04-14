@@ -512,6 +512,111 @@ class Validator(BaseValidator):
             f"Unused {flag_type} flags were encountered - they are not used via 'has_{flag_type}_flag' at least once. Flags with @ are skipped.",
         )
 
+    def validate_flag_set_with_days_no_value(self):
+        """Flag ``set_*_flag = { flag = X days = N }`` calls that omit ``value``.
+
+        Per the HOI4 engine: when ``days`` is specified without ``value``,
+        the flag is set with value 0 by default. The shortform check
+        ``has_*_flag = X`` is internally equivalent to
+        ``has_*_flag = { flag = X value > 0 }``, so a value-0 flag fails the
+        shortform check — meaning the flag is effectively never set even
+        though the engine doesn't report an error.
+
+        See HOI4 wiki / Pelmen's effect docs: omitting value when using days
+        leaves the flag at default 0, which the shortform trigger reads as false.
+        """
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking for set_*_flag with days but no value...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        # Match `set_X_flag = { ... days = N ... }` blocks; flag X variants:
+        # country, global, state, character, mio, project, unit_leader.
+        flag_block_pattern = re.compile(
+            r"\bset_(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{[^}]*\}",
+        )
+        days_pattern = re.compile(r"\bdays\s*=\s*[^\s}]+")
+        value_pattern = re.compile(r"\bvalue\s*=\s*[^\s}]+")
+
+        results = []
+        from pathlib import Path
+
+        for ext_dir in ("common", "events", "history"):
+            base = Path(self.mod_path) / ext_dir
+            if not base.exists():
+                continue
+            for fp in base.rglob("*.txt"):
+                if should_skip_file(str(fp)):
+                    continue
+                try:
+                    text = fp.read_text(encoding="utf-8-sig", errors="ignore")
+                except Exception:
+                    continue
+                # Strip comments
+                cleaned = re.sub(r"#[^\n]*", "", text)
+                for m in flag_block_pattern.finditer(cleaned):
+                    block = m.group(0)
+                    if days_pattern.search(block) and not value_pattern.search(block):
+                        line = cleaned[: m.start()].count("\n") + 1
+                        rel = fp.relative_to(self.mod_path)
+                        results.append(
+                            f"{rel}:{line} - {block.strip()} (missing value field; flag will default to 0 and fail shortform has_*_flag check)"
+                        )
+
+        self._report(
+            results,
+            "✓ No set_*_flag calls missing value when days is set",
+            "set_*_flag with days but no value (flag defaults to 0, fails shortform has_*_flag check):",
+        )
+
+    def validate_flag_long_form_no_args(self):
+        """Flag ``set_*_flag = { flag = X }`` (no other args) that should use
+        the shorthand ``set_*_flag = X``.
+
+        Per HOI4 engine: ``set_country_flag = { flag = my_flag }`` is equivalent
+        to ``set_country_flag = my_flag`` — the long form with only the flag
+        argument is dead syntax weight that should be replaced.
+        """
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking for set_*_flag long form with only flag arg...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        # Match `set_X_flag = { flag = NAME }` with no other tokens
+        long_form_pattern = re.compile(
+            r"\bset_(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{\s*flag\s*=\s*([^\s{}]+)\s*\}",
+        )
+
+        results = []
+        from pathlib import Path
+
+        for ext_dir in ("common", "events", "history"):
+            base = Path(self.mod_path) / ext_dir
+            if not base.exists():
+                continue
+            for fp in base.rglob("*.txt"):
+                if should_skip_file(str(fp)):
+                    continue
+                try:
+                    text = fp.read_text(encoding="utf-8-sig", errors="ignore")
+                except Exception:
+                    continue
+                cleaned = re.sub(r"#[^\n]*", "", text)
+                for m in long_form_pattern.finditer(cleaned):
+                    line = cleaned[: m.start()].count("\n") + 1
+                    rel = fp.relative_to(self.mod_path)
+                    results.append(
+                        f"{rel}:{line} - set_{m.group(1)}_flag = {{ flag = {m.group(2)} }} → use shorthand `set_{m.group(1)}_flag = {m.group(2)}`"
+                    )
+
+        self._report(
+            results,
+            "✓ No set_*_flag long-form-only calls found",
+            "Redundant long-form set_*_flag calls (use shorthand instead):",
+        )
+
     def validate_cleared_event_targets(self):
         self.log(f"\n{'='*80}")
         self.log(
@@ -778,6 +883,8 @@ class Validator(BaseValidator):
         self.validate_cleared_event_targets()
         self.validate_missing_event_targets()
         self.validate_unused_event_targets()
+        self.validate_flag_set_with_days_no_value()
+        self.validate_flag_long_form_no_args()
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@
 ##########################
 import os
 import re
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 from validator_common import (
@@ -134,9 +135,62 @@ class Validator(BaseValidator):
             category="missing-triggered-only",
         )
 
+    def validate_event_call_long_form(self):
+        """Flag ``country_event = { id = X }`` (or ``news_event``/``state_event``)
+        where the only argument is ``id``. Should use the shorthand
+        ``country_event = X``.
+
+        Scans all .txt files in the mod, not just events/, since events are
+        called from focuses, decisions, scripted effects, etc.
+        """
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking for redundant long-form event calls (id-only)...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        # Match `(country|news|state|unit_leader|character)_event = { id = X }` where
+        # the block contains ONLY the id assignment.
+        pattern = re.compile(
+            r"\b((?:country|news|state|unit_leader|character|operative)_event)\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
+        )
+
+        results = []
+        seen = set()
+        for ext_dir in ("common", "events", "history"):
+            base = Path(self.mod_path) / ext_dir
+            if not base.exists():
+                continue
+            for fp in base.rglob("*.txt"):
+                if _should_skip(str(fp)):
+                    continue
+                try:
+                    text = fp.read_text(encoding="utf-8-sig", errors="ignore")
+                except Exception:
+                    continue
+                # Strip line comments to avoid false positives
+                cleaned = re.sub(r"#[^\n]*", "", text)
+                for m in pattern.finditer(cleaned):
+                    line = cleaned[: m.start()].count("\n") + 1
+                    rel = fp.relative_to(self.mod_path)
+                    key = (str(rel), line, m.group(1), m.group(2))
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    results.append(
+                        f"{rel}:{line} - {m.group(1)} = {{ id = {m.group(2)} }} → use shorthand `{m.group(1)} = {m.group(2)}`"
+                    )
+
+        self._report(
+            results,
+            "✓ No redundant long-form event calls found",
+            "Long-form event calls with only id (use shorthand instead):",
+        )
+
     def run_validations(self):
         self.validate_unsupported_title_desc()
         self.validate_missing_triggered_only()
+        self.validate_event_call_long_form()
 
 
 if __name__ == "__main__":
