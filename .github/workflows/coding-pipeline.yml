@@ -394,8 +394,15 @@ jobs:
       github.event.pull_request.draft == false &&
       !cancelled()
     steps:
-    - name: Checkout code
+    # Only the report script itself is needed — stdlib only — so sparse-
+    # checkout a single file instead of cloning the whole repo.
+    - name: Checkout report script
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        sparse-checkout: |
+          tools/generate_validation_report.py
+        sparse-checkout-cone-mode: false
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
