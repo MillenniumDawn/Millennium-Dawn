@@ -11,6 +11,9 @@ on:
     - 'localisation/**'
     - 'interface/**'
     - 'gfx/**'
+    - 'tools/validation/**'
+    - 'tools/standardization/**'
+    - '.github/workflows/coding-pipeline.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -43,6 +46,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
 
     - name: Detect changed file groups
       uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
@@ -90,6 +95,18 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        sparse-checkout: |
+          common
+          events
+          history
+          localisation
+          interface
+          gfx/flags
+          tools
+          .claude
+          CLAUDE.md
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -111,6 +128,18 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        sparse-checkout: |
+          common
+          events
+          history
+          localisation
+          interface
+          gfx/flags
+          tools
+          .claude
+          CLAUDE.md
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -149,6 +178,18 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        sparse-checkout: |
+          common
+          events
+          history
+          localisation
+          interface
+          gfx/flags
+          tools
+          .claude
+          CLAUDE.md
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -178,6 +219,13 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        sparse-checkout: |
+          common/decisions
+          common/scripted_effects
+          common/scripted_triggers
+          tools
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
@@ -200,6 +248,14 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        sparse-checkout: |
+          history/units
+          common/units
+          common/ai_templates
+          common/scripted_effects
+          tools
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
@@ -222,6 +278,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        sparse-checkout: |
+          common/ai_strategy
+          common/ai_templates
+          tools
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
@@ -244,6 +306,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        sparse-checkout: |
+          common/ai_navy
+          common/units
+          tools
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
@@ -266,6 +334,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        sparse-checkout: |
+          common/ai_equipment
+          common/units
+          tools
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
@@ -288,6 +362,11 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        sparse-checkout: |
+          common/factions
+          tools
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
@@ -315,8 +394,15 @@ jobs:
       github.event.pull_request.draft == false &&
       !cancelled()
     steps:
-    - name: Checkout code
+    # Only the report script itself is needed — stdlib only — so sparse-
+    # checkout a single file instead of cloning the whole repo.
+    - name: Checkout report script
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        sparse-checkout: |
+          tools/generate_validation_report.py
+        sparse-checkout-cone-mode: false
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6

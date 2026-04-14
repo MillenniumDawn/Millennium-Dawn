@@ -345,17 +345,44 @@ class BaseValidator:
         if self.staged_only:
             if not self.staged_files:
                 return []
-            dir_hints = [
-                next((s for s in p.replace("\\", "/").split("/") if "*" not in s), "")
-                for p in patterns
-            ]
+
+            # Build a precise directory-prefix hint per pattern by joining all
+            # leading segments before the first wildcard. For
+            # `common/ai_templates/*.txt` the hint becomes `common/ai_templates/`,
+            # so an unrelated staged file in `common/national_focus/` won't match.
+            dir_hints = []
+            for p in patterns:
+                segments = p.replace("\\", "/").split("/")
+                leading = []
+                for s in segments:
+                    if "*" in s:
+                        break
+                    leading.append(s)
+                # If the pattern has no wildcard (exact file), the full path
+                # is the hint. Otherwise the directory prefix followed by `/`.
+                if leading == segments:
+                    dir_hints.append("/".join(leading))
+                else:
+                    dir_hints.append("/".join(leading) + "/" if leading else "")
+
+            def _matches_hint(path: str, hint: str) -> bool:
+                if hint == "":
+                    return True
+                normalized = path.replace("\\", "/")
+                # Exact-file hint (no trailing slash): require exact suffix match
+                if not hint.endswith("/"):
+                    return normalized == hint or normalized.endswith("/" + hint)
+                # Directory-prefix hint: path must start with the prefix (possibly
+                # after a leading mod-path component)
+                return hint in normalized and (
+                    normalized.startswith(hint) or ("/" + hint) in normalized
+                )
+
             files = [
                 f
                 for f in self.staged_files
                 if any(f.endswith(ext) for ext in extensions)
-                and any(
-                    hint == "" or hint in f.replace("\\", "/") for hint in dir_hints
-                )
+                and any(_matches_hint(f, hint) for hint in dir_hints)
             ]
         else:
             seen: Set[str] = set()

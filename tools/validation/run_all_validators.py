@@ -250,6 +250,8 @@ def main():
         extra_flags.append("--strict")
     if args.no_color:
         extra_flags.append("--no-color")
+    # CI runner doesn't benefit from cache - disable it
+    extra_flags.append("--no-cache")
 
     output_dir = tempfile.mkdtemp()
     VALIDATORS = discover_validators(include_slow=args.include_slow)
