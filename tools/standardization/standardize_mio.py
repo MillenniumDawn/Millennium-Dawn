@@ -24,7 +24,9 @@ class MIOStandardizer(BaseStandardizer):
             "organization_id": "",
             "name": "",
             "allowed": [],
+            "visible": [],
             "icon": [],
+            "ai_will_do": [],
             "task_capacity": "",
             "equipment_type": [],
             "research_categories": [],
@@ -53,13 +55,23 @@ class MIOStandardizer(BaseStandardizer):
                 props["allowed"].append(block)
                 i = next_i
                 continue
+            elif line.startswith("visible ="):
+                block, next_i = self.extract_block(block_lines, i)
+                props["visible"].append(block)
+                i = next_i
+                continue
             elif line.startswith("icon ="):
                 if "{" in line:
                     block, next_i = self.extract_block(block_lines, i)
                     props["icon"].append(block)
                     i = next_i
                     continue
-                props["icon"] = [line]
+                props["icon"].append([f"\t{line}"])
+            elif line.startswith("ai_will_do ="):
+                block, next_i = self.extract_block(block_lines, i)
+                props["ai_will_do"].append(block)
+                i = next_i
+                continue
             elif line.startswith("task_capacity ="):
                 props["task_capacity"] = line
             elif line.startswith("equipment_type ="):
@@ -125,20 +137,26 @@ class MIOStandardizer(BaseStandardizer):
         """Format MIO according to Millennium Dawn standard"""
         lines = [f"{props['organization_id']} = {{"]
 
+        if props["allowed"]:
+            lines.extend(self._format_allowed_blocks(props["allowed"]))
+
         if props["name"]:
             lines.append(f"\t{props['name']}")
 
-        if props["allowed"]:
-            self._add_blank_line_if_needed(lines)
-            self._add_blocks(lines, props["allowed"])
-
         if props["icon"]:
-            self._add_blank_line_if_needed(lines)
             self._add_blocks(lines, props["icon"])
 
         if props["task_capacity"]:
             self._add_blank_line_if_needed(lines)
             lines.append(f"\t{props['task_capacity']}")
+
+        if props["visible"]:
+            self._add_blank_line_if_needed(lines)
+            self._add_blocks(lines, props["visible"])
+
+        if props["ai_will_do"]:
+            self._add_blank_line_if_needed(lines)
+            self._add_blocks(lines, props["ai_will_do"])
 
         if props["equipment_type"]:
             self._add_blank_line_if_needed(lines)
@@ -175,12 +193,45 @@ class MIOStandardizer(BaseStandardizer):
                 compacted.append(line.rstrip())
         return compacted
 
+    def compact_allowed_block(self, block_lines: List[str]) -> str:
+        """Compact allowed block into a single standardized line"""
+        if not block_lines:
+            return "\tallowed = { }"
+
+        content_parts = []
+        for line in block_lines:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if stripped.startswith("allowed"):
+                after_brace = stripped.split("{", 1)[1] if "{" in stripped else ""
+                if "}" in after_brace:
+                    after_brace = after_brace.split("}", 1)[0]
+                if after_brace.strip():
+                    content_parts.append(after_brace.strip())
+            elif stripped == "}":
+                continue
+            else:
+                before_brace = stripped.split("}", 1)[0].strip()
+                if before_brace:
+                    content_parts.append(before_brace)
+
+        content = " ".join(content_parts).strip()
+        content = " ".join(content.split())
+        content = content.replace("{ ", "{").replace(" }", "}")
+        content = content.replace("=", " = ")
+        content = " ".join(content.split())
+        return f"\tallowed = {{ {content} }}"
+
     def _add_blocks(self, lines: List[str], blocks: List[List[str]]) -> None:
         for index, block in enumerate(blocks):
             for line in self.compact_block(block[:]):
                 lines.append(line)
             if index < len(blocks) - 1:
                 lines.append("")
+
+    def _format_allowed_blocks(self, blocks: List[List[str]]) -> List[str]:
+        return [self.compact_allowed_block(block) for block in blocks]
 
     def _add_comments(self, lines: List[str], comments: List[str]) -> None:
         for comment in comments:
