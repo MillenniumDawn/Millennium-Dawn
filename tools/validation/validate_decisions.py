@@ -1073,6 +1073,10 @@ class Validator(BaseValidator):
                 ("complete_effect", d.complete_effect),
                 ("remove_effect", d.remove_effect),
             ):
+                # remove_effect is always a timeout outcome for mission-type decisions;
+                # skip it regardless of selectable_mission to avoid false positives.
+                if block_name == "remove_effect" and d.mission_subtype:
+                    continue
                 pp = _top_level_neg_pp(block)
                 if pp is None:
                     continue

@@ -12,7 +12,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from validator_common import (
     BaseValidator,
@@ -25,9 +25,39 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = ["FR_loc"]
 
+# Pre-compiled pattern for the long-form check (used in pool worker)
+_LONG_FORM_PATTERN = re.compile(
+    r"\b((?:country|news|state|unit_leader|character|operative)_event)\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
+)
+
 
 def _should_skip(filename: str) -> bool:
     return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
+
+
+def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
+    """Pool worker: find id-only long-form event calls in one .txt file."""
+    filename, mod_path = args
+    if _should_skip(filename):
+        return []
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+    except Exception:
+        return []
+    cleaned = re.sub(r"#[^\n]*", "", text)
+    results = []
+    seen = set()
+    for m in _LONG_FORM_PATTERN.finditer(cleaned):
+        line = cleaned[: m.start()].count("\n") + 1
+        rel = os.path.relpath(filename, mod_path)
+        key = (rel, line, m.group(1), m.group(2))
+        if key in seen:
+            continue
+        seen.add(key)
+        results.append(
+            f"{rel}:{line} - {m.group(1)} = {{ id = {m.group(2)} }} → use shorthand `{m.group(1)} = {m.group(2)}`"
+        )
+    return results
 
 
 # --- Event parsing ---
@@ -56,7 +86,13 @@ class Validator(BaseValidator):
     TITLE = "EVENT VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._events_cache: Optional[Tuple[List[str], Dict[str, str]]] = None
+
     def _get_all_events(self) -> Tuple[List[str], Dict[str, str]]:
+        if self._events_cache is not None:
+            return self._events_cache
         files = self._collect_files(["events/**/*.txt"])
         args_list = [(f, False) for f in files]
         all_results = self._pool_map(process_file_for_events, args_list, chunksize=10)
@@ -67,7 +103,8 @@ class Validator(BaseValidator):
             events.extend(ev_list)
             paths.update(ev_paths)
 
-        return events, paths
+        self._events_cache = (events, paths)
+        return self._events_cache
 
     def validate_unsupported_title_desc(self):
         self.log(f"\n{'='*80}")
@@ -149,37 +186,14 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        # Match `(country|news|state|unit_leader|character)_event = { id = X }` where
-        # the block contains ONLY the id assignment.
-        pattern = re.compile(
-            r"\b((?:country|news|state|unit_leader|character|operative)_event)\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
+        txt_files = self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
         )
-
-        results = []
-        seen = set()
-        for ext_dir in ("common", "events", "history"):
-            base = Path(self.mod_path) / ext_dir
-            if not base.exists():
-                continue
-            for fp in base.rglob("*.txt"):
-                if _should_skip(str(fp)):
-                    continue
-                try:
-                    text = fp.read_text(encoding="utf-8-sig", errors="ignore")
-                except Exception:
-                    continue
-                # Strip line comments to avoid false positives
-                cleaned = re.sub(r"#[^\n]*", "", text)
-                for m in pattern.finditer(cleaned):
-                    line = cleaned[: m.start()].count("\n") + 1
-                    rel = fp.relative_to(self.mod_path)
-                    key = (str(rel), line, m.group(1), m.group(2))
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    results.append(
-                        f"{rel}:{line} - {m.group(1)} = {{ id = {m.group(2)} }} → use shorthand `{m.group(1)} = {m.group(2)}`"
-                    )
+        args_list = [(f, self.mod_path) for f in txt_files]
+        all_results = self._pool_map(
+            process_txt_for_long_form_events, args_list, chunksize=30
+        )
+        results = [r for file_res in all_results for r in file_res]
 
         self._report(
             results,

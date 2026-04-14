@@ -67,19 +67,22 @@ def process_file_for_used_localisations(
     if "scripted_localisation" in filename:
         return ([], {})
 
-    localisations = []
-    paths = {}
     basename = os.path.basename(filename)
 
     text_file = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
 
-    for name in search_names:
-        if name in text_file:
-            localisations.append(name)
-            paths[name] = basename
+    # Tokenize the file once and intersect with the search set — O(len(text)) instead
+    # of O(N × len(text)) for iterating every defined name over every file.
+    all_tokens = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", text_file))
+    found = all_tokens & search_names
 
+    if not found:
+        return ([], {})
+
+    localisations = list(found)
+    paths = {name: basename for name in found}
     return (localisations, paths)
 
 
@@ -168,30 +171,18 @@ class Validator(BaseValidator):
     TITLE = "SCRIPTED LOCALISATION VALIDATION"
     STAGED_EXTENSIONS = [".txt", ".yml", ".gui"]
 
-    def validate_missing_scripted_localisations(self, false_positives):
+    def validate_missing_scripted_localisations(
+        self,
+        false_positives,
+        defined_locs: List[str],
+        used_locs: List[str],
+        used_paths: Dict[str, str],
+    ):
         self.log(f"\n{'='*80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking missing scripted localisations (used but not defined)...{Colors.ENDC if self.use_colors else ''}"
         )
         self.log(f"{'='*80}")
-
-        results = []
-        defined_locs = ScriptedLocalisation.get_all_defined_localisations(
-            mod_path=self.mod_path,
-            lowercase=False,
-            staged_files=self.staged_files,
-            workers=self.workers,
-        )
-
-        defined_names_set = set(defined_locs)
-        used_locs, paths = ScriptedLocalisation.get_all_used_localisations(
-            mod_path=self.mod_path,
-            defined_names=defined_names_set,
-            lowercase=False,
-            return_paths=True,
-            staged_files=self.staged_files,
-            workers=self.workers,
-        )
 
         defined_locs_lower = [loc.lower() for loc in defined_locs]
         used_locs_lower = [loc.lower() for loc in used_locs]
@@ -200,11 +191,12 @@ class Validator(BaseValidator):
             used_locs_lower, tuple(false_positives)
         )
 
+        results = []
         reported = set()
         for i, loc in enumerate(used_locs_lower):
             if loc not in defined_locs_lower and loc not in reported:
                 original_loc = used_locs[i]
-                basename = paths.get(original_loc, paths.get(loc, "unknown"))
+                basename = used_paths.get(original_loc, used_paths.get(loc, "unknown"))
                 full_path = self.get_full_path(
                     basename, loc, file_patterns=["**/*.txt", "**/*.gui"]
                 )
@@ -246,30 +238,18 @@ class Validator(BaseValidator):
                 f"{Colors.GREEN if self.use_colors else ''}✓ No issues found with missing scripted localisations{Colors.ENDC if self.use_colors else ''}"
             )
 
-    def validate_unused_scripted_localisations(self, false_positives):
+    def validate_unused_scripted_localisations(
+        self,
+        false_positives,
+        defined_locs: List[str],
+        defined_paths: Dict[str, str],
+        used_locs: List[str],
+    ):
         self.log(f"\n{'='*80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking unused scripted localisations (defined but not used)...{Colors.ENDC if self.use_colors else ''}"
         )
         self.log(f"{'='*80}")
-
-        results = []
-        defined_locs, paths = ScriptedLocalisation.get_all_defined_localisations(
-            mod_path=self.mod_path,
-            lowercase=False,
-            return_paths=True,
-            staged_files=self.staged_files,
-            workers=self.workers,
-        )
-
-        defined_names_set = set(defined_locs)
-        used_locs = ScriptedLocalisation.get_all_used_localisations(
-            mod_path=self.mod_path,
-            defined_names=defined_names_set,
-            lowercase=False,
-            staged_files=self.staged_files,
-            workers=self.workers,
-        )
 
         defined_locs_lower = [loc.lower() for loc in defined_locs]
         used_locs_lower = [loc.lower() for loc in used_locs]
@@ -278,11 +258,14 @@ class Validator(BaseValidator):
             defined_locs_lower, tuple(false_positives)
         )
 
+        results = []
         reported = set()
         for i, loc in enumerate(defined_locs_lower):
             if loc not in used_locs_lower and loc not in reported:
                 original_loc = defined_locs[i]
-                basename = paths.get(original_loc, paths.get(loc, "unknown"))
+                basename = defined_paths.get(
+                    original_loc, defined_paths.get(loc, "unknown")
+                )
 
                 full_path = None
                 pattern = os.path.join(
@@ -443,8 +426,33 @@ class Validator(BaseValidator):
             "@",
             "[",
         ]
-        self.validate_missing_scripted_localisations(FALSE_POSITIVES)
-        self.validate_unused_scripted_localisations(FALSE_POSITIVES)
+
+        # Build defined/used lists once and share between both checks — avoids
+        # scanning the entire mod twice (once per validator call).
+        defined_locs, defined_paths = (
+            ScriptedLocalisation.get_all_defined_localisations(
+                mod_path=self.mod_path,
+                lowercase=False,
+                return_paths=True,
+                staged_files=self.staged_files,
+                workers=self.workers,
+            )
+        )
+        used_locs, used_paths = ScriptedLocalisation.get_all_used_localisations(
+            mod_path=self.mod_path,
+            defined_names=set(defined_locs),
+            lowercase=False,
+            return_paths=True,
+            staged_files=self.staged_files,
+            workers=self.workers,
+        )
+
+        self.validate_missing_scripted_localisations(
+            FALSE_POSITIVES, defined_locs, used_locs, used_paths
+        )
+        self.validate_unused_scripted_localisations(
+            FALSE_POSITIVES, defined_locs, defined_paths, used_locs
+        )
 
         # GFX icon check scans all interface/*.gfx files — skip in staged mode
         if not self.staged_only:

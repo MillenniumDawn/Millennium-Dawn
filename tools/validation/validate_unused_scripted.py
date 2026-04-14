@@ -243,6 +243,101 @@ class Validator(BaseValidator):
 
         return unused
 
+    def _find_unused_combined(
+        self,
+        effect_defs: List[Tuple[str, str, int]],
+        trigger_defs: List[Tuple[str, str, int]],
+    ) -> Tuple[List[str], List[str]]:
+        """Find unused effects and triggers in a single codebase scan.
+
+        Merges both definition sets and scans the full codebase once instead of
+        calling _find_unused() twice (which would scan the codebase twice).
+        Returns (unused_effects, unused_triggers).
+        """
+        all_defs = effect_defs + trigger_defs
+        if not all_defs:
+            return [], []
+
+        effect_names = {d[0] for d in effect_defs}
+        trigger_names = {d[0] for d in trigger_defs}
+        all_names = effect_names | trigger_names
+
+        all_files = self._collect_files(
+            [
+                "common/**/*.txt",
+                "events/**/*.txt",
+                "history/**/*.txt",
+            ]
+        )
+
+        # Split files into definition files and other files
+        effect_dir = "common/scripted_effects/"
+        trigger_dir = "common/scripted_triggers/"
+        other_files, def_files = [], []
+        for f in all_files:
+            norm = f.replace("\\", "/")
+            if effect_dir in norm or trigger_dir in norm:
+                def_files.append(f)
+            else:
+                other_files.append(f)
+
+        # First pass: find all names used outside definition dirs
+        args_list = [(f, all_names) for f in other_files]
+        results = self._pool_map(scan_file_for_usages, args_list)
+
+        used_names: set = set()
+        for found in results:
+            used_names.update(found)
+
+        # Second pass: check cross-calls within definition files
+        remaining = all_names - used_names
+        if remaining:
+            args_list = [(f, remaining) for f in def_files]
+            def_results = self._pool_map(scan_file_for_usages, args_list, chunksize=10)
+
+            potentially_used: set = set()
+            for found in def_results:
+                potentially_used.update(found)
+
+            for def_file in def_files:
+                try:
+                    with open(def_file, "r", encoding="utf-8-sig") as f:
+                        content = strip_comments(f.read())
+                except Exception:
+                    continue
+                for name in list(potentially_used - used_names):
+                    if name not in content:
+                        continue
+                    if re.search(rf"\b{re.escape(name)}\s*=\s*(?:yes|no)\b", content):
+                        used_names.add(name)
+                    elif re.search(
+                        rf"custom_(?:effect|trigger)_tooltip\s*=\s*{re.escape(name)}\b",
+                        content,
+                    ):
+                        used_names.add(name)
+
+        # Build result lists, partitioned by kind
+        name_to_location: dict = {}
+        for name, filepath, line_num in all_defs:
+            if name not in name_to_location:
+                name_to_location[name] = []
+            name_to_location[name].append((filepath, line_num))
+
+        unused_effects: List[str] = []
+        unused_triggers: List[str] = []
+        for name in sorted(all_names - used_names):
+            locations = name_to_location.get(name, [])
+            for filepath, line_num in locations:
+                if _is_false_positive(name, filepath):
+                    continue
+                entry = f"{filepath}:{line_num} - {name}"
+                if name in effect_names:
+                    unused_effects.append(entry)
+                else:
+                    unused_triggers.append(entry)
+
+        return unused_effects, unused_triggers
+
     def validate_unused_effects(self):
         self.log(f"\n{'='*80}")
         self.log(
@@ -250,38 +345,12 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        definitions = self._collect_definitions("scripted_effects")
-        self.log(f"  Found {len(definitions)} scripted effect definitions")
-
-        unused = self._find_unused(definitions, "effect", "scripted_effects")
-
-        self._report(
-            unused,
-            "✓ No unused scripted effects found",
-            "Unused scripted effects (defined but never called):",
-            Severity.WARNING,
-            category="unused-scripted-effect",
-        )
-
     def validate_unused_triggers(self):
         self.log(f"\n{'='*80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking for unused scripted triggers...{Colors.ENDC if self.use_colors else ''}"
         )
         self.log(f"{'='*80}")
-
-        definitions = self._collect_definitions("scripted_triggers")
-        self.log(f"  Found {len(definitions)} scripted trigger definitions")
-
-        unused = self._find_unused(definitions, "trigger", "scripted_triggers")
-
-        self._report(
-            unused,
-            "✓ No unused scripted triggers found",
-            "Unused scripted triggers (defined but never called):",
-            Severity.WARNING,
-            category="unused-scripted-trigger",
-        )
 
     def run_validations(self):
         if self.staged_only:
@@ -291,8 +360,32 @@ class Validator(BaseValidator):
             )
             return
 
-        self.validate_unused_effects()
-        self.validate_unused_triggers()
+        effect_defs = self._collect_definitions("scripted_effects")
+        trigger_defs = self._collect_definitions("scripted_triggers")
+        self.log(
+            f"  Found {len(effect_defs)} scripted effect definitions, "
+            f"{len(trigger_defs)} scripted trigger definitions"
+        )
+
+        # Single codebase scan for both effects and triggers.
+        unused_effects, unused_triggers = self._find_unused_combined(
+            effect_defs, trigger_defs
+        )
+
+        self._report(
+            unused_effects,
+            "✓ No unused scripted effects found",
+            "Unused scripted effects (defined but never called):",
+            Severity.WARNING,
+            category="unused-scripted-effect",
+        )
+        self._report(
+            unused_triggers,
+            "✓ No unused scripted triggers found",
+            "Unused scripted triggers (defined but never called):",
+            Severity.WARNING,
+            category="unused-scripted-trigger",
+        )
 
 
 if __name__ == "__main__":
