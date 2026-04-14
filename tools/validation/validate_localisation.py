@@ -583,6 +583,19 @@ class Validator(BaseValidator):
         def _matches_dynamic_ref(key: str) -> bool:
             return any(p.match(key) for p in dynamic_ref_patterns)
 
+        # The HOI4 engine auto-resolves `_NOT` variants of tooltip keys when
+        # the parent trigger is invoked with `NOT = { ... }` or `= no`. So
+        # `tooltip_X_approve_NOT` is referenced implicitly by any caller of
+        # `tooltip_X_approve`. Treat a `_NOT`-suffixed key as referenced if
+        # its base form (without the `_NOT`) is referenced.
+        def _has_not_base_referenced(key: str) -> bool:
+            if not key.endswith("_NOT"):
+                return False
+            base = key[: -len("_NOT")]
+            if base in referenced_in_scripts or base in referenced_in_loc:
+                return True
+            return any(p.match(base) for p in dynamic_ref_patterns)
+
         # 2. Collect _tt keys referenced by other loc values via $KEY$
         referenced_in_loc = set()
         for key, value in loc_keys.items():
@@ -593,7 +606,9 @@ class Validator(BaseValidator):
         # 3. Report orphans
         all_referenced = referenced_in_scripts | referenced_in_loc
         orphaned = sorted(
-            k for k in (tt_keys - all_referenced) if not _matches_dynamic_ref(k)
+            k
+            for k in (tt_keys - all_referenced)
+            if not _matches_dynamic_ref(k) and not _has_not_base_referenced(k)
         )
 
         self._report(
