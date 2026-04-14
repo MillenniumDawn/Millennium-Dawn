@@ -104,6 +104,15 @@ def _set_cache_enabled(enabled: bool):
         _DECISION_CACHE["data"].clear()
 
 
+def _invalidate_decision_cache():
+    """Drop all cached decision data so subsequent parse calls re-read disk.
+
+    Call this after any ``--fix`` pass that rewrites decision files so later
+    validators see the patched contents instead of stale factories.
+    """
+    _DECISION_CACHE["data"].clear()
+
+
 def _get_cached(key: str, mod_path: str, lowercase: bool, factory_fn):
     """Get cached result or compute and cache it."""
     if not _DECISION_CACHE["enabled"]:
@@ -251,6 +260,71 @@ def parse_categories_with_decisions(
     return _get_cached(cache_key, mod_path, lowercase, _parse)
 
 
+def _remove_available_block_for_token(content: str, token: str):
+    """Remove the ``available = { ... }`` sub-block of a decision named ``token``.
+
+    Uses brace-balanced scanning so nested blocks (``NOT = { ... }``, etc.)
+    inside ``available`` are handled correctly. Returns the rewritten content,
+    or ``None`` if the token / available block could not be located.
+    """
+    token_pattern = re.compile(
+        r"(^|\n)(\s*)" + re.escape(token) + r"\s*=\s*\{", re.MULTILINE
+    )
+    m = token_pattern.search(content)
+    if not m:
+        return None
+
+    body_start = m.end()
+    depth = 1
+    i = body_start
+    dec_end = -1
+    while i < len(content):
+        ch = content[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                dec_end = i
+                break
+        i += 1
+    if dec_end < 0:
+        return None
+
+    decision_body = content[body_start:dec_end]
+    avail_match = re.search(
+        r"(^|\n)([ \t]*)available\s*=\s*\{", decision_body, re.MULTILINE
+    )
+    if not avail_match:
+        return None
+
+    avail_body_start = avail_match.end()
+    depth = 1
+    j = avail_body_start
+    avail_end = -1
+    while j < len(decision_body):
+        ch = decision_body[j]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                avail_end = j
+                break
+        j += 1
+    if avail_end < 0:
+        return None
+
+    # Range covers the leading newline (if any), keyword, and block.
+    remove_start = avail_match.start()
+    remove_end = avail_end + 1  # include closing brace
+    new_decision_body = decision_body[:remove_start] + decision_body[remove_end:]
+    # Collapse any doubled blank lines introduced by the removal.
+    new_decision_body = re.sub(r"\n[ \t]*\n[ \t]*\n", "\n\n", new_decision_body)
+
+    return content[:body_start] + new_decision_body + content[dec_end:]
+
+
 class Validator(BaseValidator):
     TITLE = "DECISION VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -310,6 +384,8 @@ class Validator(BaseValidator):
         self.log(
             f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) with missing ai_will_do{Colors.ENDC if self.use_colors else ''}"
         )
+        if fixed_total:
+            _invalidate_decision_cache()
 
     def validate_duplicated_decisions(self):
         self.log(f"\n{'='*80}")
@@ -345,9 +421,18 @@ class Validator(BaseValidator):
                     manual_decisions.add(d.token)
 
         # Single pass over the mod tree: extract every (decision name) from
-        # `activate_targeted_decision = { ... decision = X ... }` and every
-        # (mission name) from `activate_mission = X`. The previous version
-        # ran an O(files × manual_decisions) inner loop per file.
+        # `activate_targeted_decision = { ... decision = X ... }` blocks and
+        # every (mission name) from `activate_mission = X`.
+        #
+        # We must NOT treat a bare `decision = X` anywhere in a file that
+        # mentions `activate_targeted_decision` as an activation — the keyword
+        # `decision` appears in many other places (e.g. `on_political_decision`
+        # hook references) and that would hide genuinely unused decisions.
+        # Instead, extract the activate_targeted_decision block first, then
+        # pull `decision = X` from inside that block only.
+        targeted_block_pat = re.compile(
+            r"\bactivate_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
+        )
         decision_name_pat = re.compile(r"\bdecision\s*=\s*(\S+)")
         mission_name_pat = re.compile(r"\bactivate_mission\s*=\s*(\S+)")
         activated_decisions: set = set()
@@ -360,10 +445,8 @@ class Validator(BaseValidator):
                 filename, lowercase=False, strip_comments_flag=True
             )
             if "activate_targeted_decision" in text_file:
-                # `decision = X` only appears inside activate_targeted_decision
-                # blocks in our codebase; if false-positives ever creep in
-                # they're harmless (a referenced name marks the decision used).
-                activated_decisions.update(decision_name_pat.findall(text_file))
+                for block in targeted_block_pat.findall(text_file):
+                    activated_decisions.update(decision_name_pat.findall(block))
             if "activate_mission" in text_file:
                 activated_missions.update(mission_name_pat.findall(text_file))
 
@@ -1181,29 +1264,11 @@ class Validator(BaseValidator):
                 content = f.read()
 
             for token in tokens:
-                # Pattern matches decision with both visible and available blocks
-                # We want to remove the available block entirely since visible already covers it
-                # The decision looks like:
-                #   token = {
-                #       ...
-                #       available = { ... }
-                #       ...
-                #       visible = { ... }
-                #       ...
-                #   }
-                # We remove the available block (including its content)
-                avail_pattern = re.compile(
-                    r"(\t"
-                    + re.escape(token)
-                    + r" = \{.*?)(\n\t\tavailable = \{[^\}]*\})",
-                    flags=re.DOTALL,
-                )
-
-                def _remover(m):
-                    return m.group(1) + "\n"
-
-                new_content, count = avail_pattern.subn(_remover, content)
-                if count:
+                # Find the decision block, then remove its available = { ... }
+                # sub-block using brace-balanced matching so nested blocks
+                # (NOT = { ... }, AND = { ... }, etc.) don't break the patch.
+                new_content = _remove_available_block_for_token(content, token)
+                if new_content is not None and new_content != content:
                     content = new_content
                     fixed_total += 1
                 else:
@@ -1215,6 +1280,8 @@ class Validator(BaseValidator):
         self.log(
             f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) by moving available -> visible{Colors.ENDC if self.use_colors else ''}"
         )
+        if fixed_total:
+            _invalidate_decision_cache()
 
     def validate_bare_trigger_names(self):
         """Check for common bare trigger names that need a has_ prefix.

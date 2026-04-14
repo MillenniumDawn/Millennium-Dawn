@@ -162,8 +162,12 @@ def extract_definitions(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
 def scan_file_for_usages(args: Tuple[str, Set[str]]) -> Set[str]:
     """Scan a file for usages of any of the given names.
 
-    A usage is when a name appears as `name = yes`, `name = no`, or
-    as a call inside another block (not as a top-level definition).
+    A usage is when a name appears as a whole word — guarded by
+    word boundaries so ``foo_bar`` does not spuriously mark ``foo``
+    or ``bar`` as used. This is a fast pre-filter; callers still
+    verify call-site syntax (``name = yes/no`` or
+    ``custom_effect_tooltip = name``) before trusting the hit for
+    definition-directory files.
     """
     filename, names_to_find = args
     found = set()
@@ -176,9 +180,11 @@ def scan_file_for_usages(args: Tuple[str, Set[str]]) -> Set[str]:
 
     content = strip_comments(content)
 
-    for name in names_to_find:
-        if name in content:
-            found.add(name)
+    # Collect every identifier-like token in the file once, then intersect.
+    # Cheaper than running a word-boundary regex per name when names_to_find
+    # is large.
+    tokens = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", content))
+    found = names_to_find & tokens
 
     return found
 

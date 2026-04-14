@@ -288,13 +288,48 @@ def process_txt_for_custom_tt_refs(
     return results
 
 
+def _extract_not_blocks(text: str) -> List[str]:
+    """Return the bodies of every ``NOT = { ... }`` block in ``text``,
+    brace-balanced so nested trigger blocks are kept intact."""
+    out: List[str] = []
+    not_re = re.compile(r"\bNOT\s*=\s*\{")
+    i = 0
+    while True:
+        m = not_re.search(text, i)
+        if not m:
+            break
+        start = m.end()
+        depth = 1
+        j = start
+        while j < len(text) and depth > 0:
+            ch = text[j]
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+            j += 1
+        if depth == 0:
+            out.append(text[start : j - 1])
+            i = j
+        else:
+            break
+    return out
+
+
 def process_file_for_orphan_tt_refs(
     args: Tuple,
-) -> Tuple[set, List[str]]:
-    """Pool worker: collect tooltip references and dynamic patterns from one file."""
+) -> Tuple[set, List[str], set]:
+    """Pool worker: collect tooltip references and dynamic patterns from one file.
+
+    Returns ``(referenced, dynamic_raw, negated_refs)`` where ``negated_refs``
+    is the subset of tooltip references that appear inside a ``NOT = { ... }``
+    block. Callers use ``negated_refs`` to decide whether ``_NOT``-suffixed
+    tooltip keys can be treated as implicitly referenced via HOI4's automatic
+    negation lookup.
+    """
     filename, patterns = args
     if _should_skip(filename):
-        return set(), []
+        return set(), [], set()
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
@@ -306,7 +341,15 @@ def process_file_for_orphan_tt_refs(
             referenced.add(token)
             if "[" in token and "]" in token:
                 dynamic_raw.append(token)
-    return referenced, dynamic_raw
+
+    negated_refs: set = set()
+    if "NOT" in text_file:
+        for block_body in _extract_not_blocks(text_file):
+            for pat in patterns:
+                for m in re.findall(pat, block_body, re.DOTALL):
+                    negated_refs.add(m.strip('"'))
+
+    return referenced, dynamic_raw, negated_refs
 
 
 def _get_skipped_loc_keys(mod_path: str) -> set:
@@ -586,9 +629,11 @@ class Validator(BaseValidator):
         # A literal tooltip_*_approve key matching this pattern is considered
         # referenced even though the call site uses runtime substitution.
         raw_dynamic_tokens: List[str] = []
-        for referenced, dynamic_raw in all_scan_results:
+        negated_script_refs: set = set()
+        for referenced, dynamic_raw, negated in all_scan_results:
             referenced_in_scripts.update(referenced)
             raw_dynamic_tokens.extend(dynamic_raw)
+            negated_script_refs.update(negated)
 
         # Compile dynamic patterns once, deduplicating raw tokens first.
         dynamic_ref_patterns = []
@@ -611,18 +656,17 @@ class Validator(BaseValidator):
         def _matches_dynamic_ref(key: str) -> bool:
             return any(p.match(key) for p in dynamic_ref_patterns)
 
-        # The HOI4 engine auto-resolves `_NOT` variants of tooltip keys when
-        # the parent trigger is invoked with `NOT = { ... }` or `= no`. So
-        # `tooltip_X_approve_NOT` is referenced implicitly by any caller of
-        # `tooltip_X_approve`. Treat a `_NOT`-suffixed key as referenced if
-        # its base form (without the `_NOT`) is referenced.
+        # HOI4 auto-looks-up `_NOT` variants only for tooltip keys whose base
+        # is referenced *inside* a ``NOT = { ... }`` block. A `foo_tt` only
+        # used in positive context never causes the engine to look up
+        # `foo_tt_NOT`, so we must not suppress the orphan warning for those.
         def _has_not_base_referenced(key: str) -> bool:
             if not key.endswith("_NOT"):
                 return False
             base = key[: -len("_NOT")]
-            if base in referenced_in_scripts or base in referenced_in_loc:
+            if base in negated_script_refs:
                 return True
-            return any(p.match(base) for p in dynamic_ref_patterns)
+            return False
 
         # 2. Collect _tt keys referenced by other loc values via $KEY$
         referenced_in_loc = set()

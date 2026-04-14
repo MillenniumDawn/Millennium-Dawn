@@ -52,7 +52,9 @@ def process_file_for_flags(
                 paths[match] = basename
 
             pattern_matches = re.findall(
-                r"[y|s]_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
+                r"(?:has|modify)_"
+                + flag_type
+                + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
                 text_file,
                 flags=re.MULTILINE | re.DOTALL,
             )
@@ -131,7 +133,7 @@ def process_file_for_all_flags(
         for m in re.findall(r"has_" + flag_type + r"_flag = ([^ \t\n]+)", text_file):
             used_paths[m] = basename
         for m in re.findall(
-            r"[y|s]_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
+            r"(?:has|modify)_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
             text_file,
             flags=re.MULTILINE | re.DOTALL,
         ):
@@ -574,15 +576,19 @@ class Validator(BaseValidator):
             r"@(?:" + "|".join(cls._SCOPE_KEYWORDS) + r")(?![A-Za-z0-9])"
         )
         patterns = []
+        # Country tags are upper-case letters/digits (``ISR``, ``CHI``).
+        # During civil wars, runtime tags can also appear as
+        # ``TAG_CW_0`` etc., so allow underscores and digits. This is
+        # narrower than ``\w+`` (which matched lowercase and could
+        # incorrectly capture unrelated literal flags).
+        tag_wildcard = r"[A-Z][A-Z0-9_]{1,11}"
         for flag in flags:
             if "@" not in flag:
                 continue
             if not scope_pat.search(flag):
                 continue
             parts = scope_pat.split(flag)
-            # Replace @SCOPE placeholders with a wildcard matching 2-4 char
-            # country tag, or any word characters for defensiveness.
-            pattern_str = r"\w+".join(re.escape(p) for p in parts)
+            pattern_str = tag_wildcard.join(re.escape(p) for p in parts)
             patterns.append(re.compile(f"^{pattern_str}$"))
         return patterns
 
