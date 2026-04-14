@@ -512,10 +512,13 @@ class Validator(BaseValidator):
 
         loc_keys, _ = get_all_loc_keys(self.mod_path, lowercase=False)
         skipped_keys = _get_skipped_loc_keys(self.mod_path)
+        # Tooltip-named keys: anything ending in _tt/_TT or starting with `tooltip_`.
+        # The latter catches modder-named explicit tooltip strings like
+        # `tooltip_influence_on_all_other_EU_members_25_percent` that aren't suffixed.
         tt_keys = {
             k
             for k in loc_keys
-            if (k.endswith("_tt") or k.endswith("_TT"))
+            if (k.endswith("_tt") or k.endswith("_TT") or k.startswith("tooltip_"))
             and k not in skipped_keys
             and not k.startswith("cannot_go_higher_than_")
             and not k.startswith("cannot_go_lower_than_")
@@ -545,6 +548,12 @@ class Validator(BaseValidator):
             r"(?:tooltip|text|buttonText)\s*=\s*(\S+)",
         ]
 
+        # Dynamic-key patterns (compiled regexes) collected from meta_effect
+        # substitutions like `tooltip_EU_parliament_focus_[EUXXX]_approve`.
+        # A literal tooltip_*_approve key matching this pattern is considered
+        # referenced even though the call site uses runtime substitution.
+        dynamic_ref_patterns = []
+
         for ext, pats in (("**/*.txt", txt_patterns), ("**/*.gui", gui_patterns)):
             for filename in glob.iglob(self.mod_path + ext, recursive=True):
                 if _should_skip(filename):
@@ -554,7 +563,25 @@ class Validator(BaseValidator):
                 )
                 for pat in pats:
                     for m in re.findall(pat, text, re.DOTALL):
-                        referenced_in_scripts.add(m.strip('"'))
+                        token = m.strip('"')
+                        # Plain literal reference
+                        referenced_in_scripts.add(token)
+                        # Dynamic reference: contains [VAR] substitution
+                        if "[" in token and "]" in token:
+                            # Convert [VAR] to a wildcard regex
+                            esc = re.escape(token)
+                            esc = re.sub(
+                                r"\\\[[A-Za-z_][A-Za-z0-9_]*\\\]",
+                                r"[A-Za-z0-9_]+",
+                                esc,
+                            )
+                            try:
+                                dynamic_ref_patterns.append(re.compile(f"^{esc}$"))
+                            except re.error:
+                                pass
+
+        def _matches_dynamic_ref(key: str) -> bool:
+            return any(p.match(key) for p in dynamic_ref_patterns)
 
         # 2. Collect _tt keys referenced by other loc values via $KEY$
         referenced_in_loc = set()
@@ -565,7 +592,9 @@ class Validator(BaseValidator):
 
         # 3. Report orphans
         all_referenced = referenced_in_scripts | referenced_in_loc
-        orphaned = sorted(tt_keys - all_referenced)
+        orphaned = sorted(
+            k for k in (tt_keys - all_referenced) if not _matches_dynamic_ref(k)
+        )
 
         self._report(
             orphaned,
