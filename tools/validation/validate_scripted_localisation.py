@@ -21,6 +21,7 @@ from validator_common import (
     find_line_number,
     run_validator_main,
     should_skip_file,
+    strip_comments,
 )
 
 
@@ -76,14 +77,83 @@ def process_file_for_used_localisations(
     # Tokenize the file once and intersect with the search set — O(len(text)) instead
     # of O(N × len(text)) for iterating every defined name over every file.
     all_tokens = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", text_file))
-    found = all_tokens & search_names
 
-    if not found:
+    # Also extract bracketed scripted-loc call sites: [name]
+    # The standard token regex requires an alpha/underscore first character, so
+    # digit-prefixed names (e.g. image = "[447_maoist_influence]" in scripted GUIs)
+    # are silently missed.  \w covers [a-zA-Z0-9_] including digit-first names.
+    all_tokens |= set(re.findall(r"\[(\w+)\]", text_file))
+
+    # HOI4 scripted loc names are case-insensitive at runtime, but definitions and
+    # call sites may use different casing (e.g. EU_parl_PG_party vs eu_parl_pg_party).
+    # Perform case-insensitive intersection: lower everything, then recover the original
+    # defined name so downstream code can match it back to the definition list.
+    search_lower = {n.lower(): n for n in search_names}
+    found_original = {
+        search_lower[t.lower()] for t in all_tokens if t.lower() in search_lower
+    }
+
+    if not found_original:
         return ([], {})
 
-    localisations = list(found)
-    paths = {name: basename for name in found}
+    localisations = list(found_original)
+    paths = {name: basename for name in found_original}
     return (localisations, paths)
+
+
+# Regex: identifier with a non-empty prefix followed by one or more [VAR] segments.
+# Matches templates like "tooltip_EU_[EUXXX]_approve" or "attract_voters_pos.[INDEX]".
+# Requires at least one alpha/underscore-starting prefix so pure "[VAR]" expansions
+# (which don't name a scripted loc directly) are skipped.
+_META_TEMPLATE_RE = re.compile(
+    r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+"
+    r")"
+)
+
+
+def scan_for_meta_constructed_localisations(
+    files: List[str], defined_names: Set[str]
+) -> List[str]:
+    """Return defined scripted loc names that are called via meta_effect/meta_trigger
+    template substitution (e.g. ``custom_effect_tooltip = tooltip_EU_[EUXXX]_approve``).
+
+    Scans *files* for identifier templates containing ``[VAR]`` placeholders,
+    splits each on its ``[VAR]`` segments to extract a (prefix, suffix) pair,
+    and returns every defined name whose lower-cased text starts with *prefix*
+    and ends with *suffix*.
+    """
+    defined_lower = {n.lower(): n for n in defined_names}
+    found: Set[str] = set()
+
+    for filepath in files:
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as fh:
+                content = fh.read()
+        except Exception:
+            continue
+
+        if "meta_effect" not in content and "meta_trigger" not in content:
+            continue
+
+        content_clean = strip_comments(content)
+
+        for m in _META_TEMPLATE_RE.finditer(content_clean):
+            template = m.group(1)
+            parts = re.split(r"\[[^\]]+\]", template)
+            prefix = parts[0].lower()
+            suffix = parts[-1].lower() if len(parts) > 1 else ""
+
+            if not prefix and not suffix:
+                continue
+
+            for name_lower, name_orig in defined_lower.items():
+                if name_orig in found:
+                    continue
+                if name_lower.startswith(prefix) and name_lower.endswith(suffix):
+                    if len(name_lower) > len(prefix) + len(suffix):
+                        found.add(name_orig)
+
+    return list(found)
 
 
 class ScriptedLocalisation:
@@ -162,6 +232,24 @@ class ScriptedLocalisation:
                 if loc not in found_names:
                     localisations.append(loc)
                     paths[loc] = paths_dict[loc]
+                    found_names.add(loc)
+
+        # Additional pass: detect scripted locs called via meta_effect/meta_trigger
+        # template substitution (e.g. `custom_effect_tooltip = tooltip_EU_[EUXXX]_approve`).
+        # Only check names not already found to keep scanning cost low.
+        still_unfound = set(defined_names) - found_names
+        if still_unfound:
+            txt_files_for_meta = [
+                f
+                for f in files_to_scan
+                if f.endswith(".txt") and "scripted_localisation" not in f
+            ]
+            for loc in scan_for_meta_constructed_localisations(
+                txt_files_for_meta, still_unfound
+            ):
+                if loc not in found_names:
+                    localisations.append(loc)
+                    paths[loc] = "<meta_effect>"
                     found_names.add(loc)
 
         return (localisations, paths) if return_paths else localisations
@@ -251,11 +339,21 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
+        # Preemptive slot libraries — defined for all possible slots even if only a
+        # subset are active.  Suppress unused warnings for the unoccupied slots rather
+        # than requiring every slot to have a live caller.
+        UNUSED_ONLY_FALSE_POSITIVES = [
+            # EU parliament PG-party support locs: defined for all 24 party groups but
+            # the GUI display path uses the _icon and _loc_key variants instead.
+            "eu_parl_pg_party_",
+        ]
+
         defined_locs_lower = [loc.lower() for loc in defined_locs]
         used_locs_lower = [loc.lower() for loc in used_locs]
 
         defined_locs_lower = DataCleaner.clear_false_positives_partial_match(
-            defined_locs_lower, tuple(false_positives)
+            defined_locs_lower,
+            tuple(false_positives) + tuple(UNUSED_ONLY_FALSE_POSITIVES),
         )
 
         results = []

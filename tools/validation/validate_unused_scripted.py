@@ -34,9 +34,6 @@ FALSE_POSITIVE_PATTERNS = [
     re.compile(
         r"^DIPLOMACY_.*_ENABLE_TRIGGER"
     ),  # Game rule triggers, engine-referenced
-    re.compile(
-        r"^set_leader_"
-    ),  # Called dynamically via meta_effect in election_effects
 ]
 
 # Files whose definitions are entirely engine-referenced (all contents are false positives)
@@ -51,6 +48,65 @@ FALSE_POSITIVE_FILES = frozenset(
         "00_internal_factions_trigger.txt",
     }
 )
+
+
+# Regex: identifier containing at least one [VAR] placeholder with a non-empty
+# constant prefix (e.g. "set_leader_[IDEOLOGY]", "tooltip_EU_[EUXXX]_approve").
+# Requires a non-empty prefix so pure "[VAR]" expansions (like "[TECH] = 1") are
+# excluded — those don't call scripted effects/triggers by constructed name.
+_TEMPLATE_RE = re.compile(
+    r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+"
+    r")"
+)
+
+
+def scan_for_meta_constructed_names(
+    files: List[str], defined_names: Set[str]
+) -> Set[str]:
+    """Return the subset of *defined_names* that are called via meta_effect/
+    meta_trigger template substitution (e.g. ``set_leader_[IDEOLOGY] = yes``).
+
+    For every file that contains a ``meta_effect`` or ``meta_trigger`` keyword,
+    we extract identifier templates of the form ``prefix_[VAR]_suffix``, split
+    them on ``[VAR]`` segments to recover the constant (prefix, suffix) pair,
+    and match any defined name whose lower-cased form starts with *prefix* and
+    ends with *suffix*.
+    """
+    defined_lower = {n.lower(): n for n in defined_names}
+    used: Set[str] = set()
+
+    for filepath in files:
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as fh:
+                content = fh.read()
+        except Exception:
+            continue
+
+        if "meta_effect" not in content and "meta_trigger" not in content:
+            continue
+
+        content_clean = strip_comments(content)
+
+        for m in _TEMPLATE_RE.finditer(content_clean):
+            template = m.group(1)
+            # Split on every [VAR] segment — constant parts become prefix/suffix
+            parts = re.split(r"\[[^\]]+\]", template)
+            prefix = parts[0].lower()
+            suffix = parts[-1].lower() if len(parts) > 1 else ""
+
+            # Skip pure-placeholder templates where no constant anchors the match
+            if not prefix and not suffix:
+                continue
+
+            for name_lower, name_orig in defined_lower.items():
+                if name_orig in used:
+                    continue
+                if name_lower.startswith(prefix) and name_lower.endswith(suffix):
+                    # Guard: VAR must resolve to something non-empty
+                    if len(name_lower) > len(prefix) + len(suffix):
+                        used.add(name_orig)
+
+    return used
 
 
 def _is_false_positive(name: str, filepath: str) -> bool:
@@ -315,6 +371,15 @@ class Validator(BaseValidator):
                         content,
                     ):
                         used_names.add(name)
+
+        # Third pass: detect names called via meta_effect/meta_trigger template
+        # substitution (e.g. `set_leader_[IDEOLOGY] = yes`).  Only scan the
+        # names still remaining after the first two passes to keep cost low.
+        still_remaining = all_names - used_names
+        if still_remaining:
+            used_names.update(
+                scan_for_meta_constructed_names(all_files, still_remaining)
+            )
 
         # Build result lists, partitioned by kind
         name_to_location: dict = {}
