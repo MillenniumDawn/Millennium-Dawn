@@ -15,6 +15,19 @@ from validator_common import BaseValidator, Colors, run_validator_main
 # Prevent self-validation
 _SKIP_SCRIPTS = frozenset({"validate_tools.py"})
 
+# Library/utility modules that are imported by other scripts, not run directly.
+# Shebang, executability, and main-guard checks are not meaningful for these.
+_LIBRARY_MODULES = frozenset(
+    {
+        "path_utils.py",
+        "shared_utils.py",
+        "loc.py",
+        "logging_tool.py",
+        "common_utils.py",
+        "validator_common.py",
+    }
+)
+
 
 class ToolsValidator(BaseValidator):
     TITLE = "TOOLS VALIDATION"
@@ -26,8 +39,11 @@ class ToolsValidator(BaseValidator):
 
     def _find_scripts(self) -> List[Path]:
         try:
+            old_dir = self.tools_dir / "old"
             return sorted(
-                p for p in self.tools_dir.rglob("*.py") if p.name not in _SKIP_SCRIPTS
+                p
+                for p in self.tools_dir.rglob("*.py")
+                if p.name not in _SKIP_SCRIPTS and not p.is_relative_to(old_dir)
             )
         except (FileNotFoundError, NotADirectoryError):
             self.log(
@@ -54,7 +70,12 @@ class ToolsValidator(BaseValidator):
 
         first_line = content.split("\n", 1)[0].strip()
         has_shebang = first_line.startswith("#!") and "python" in first_line
-        has_main = 'if __name__ == "__main__"' in content or "def main(" in content
+        has_main = (
+            'if __name__ == "__main__"' in content
+            or "def main(" in content
+            or "run_validator_main(" in content
+            or "run_standardizer(" in content
+        )
 
         return syntax_err, has_shebang, has_main
 
@@ -97,16 +118,18 @@ class ToolsValidator(BaseValidator):
 
         for path in scripts:
             rel = str(path.relative_to(self.tools_dir))
+            is_library = path.name in _LIBRARY_MODULES
             syntax_err, has_shebang, has_main = self._validate_script(path)
 
             if syntax_err:
                 syntax_errors.append(syntax_err)
-            if not has_shebang:
-                missing_shebangs.append(rel)
-            if not self._is_executable(path):
-                non_executable.append(rel)
-            if not has_main:
-                no_main.append(rel)
+            if not is_library:
+                if not has_shebang:
+                    missing_shebangs.append(rel)
+                if not self._is_executable(path):
+                    non_executable.append(rel)
+                if not has_main:
+                    no_main.append(rel)
 
         self._report(
             syntax_errors,
