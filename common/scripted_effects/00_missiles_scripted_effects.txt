@@ -545,7 +545,7 @@ check_sat_systems_min_sat_num = {
 			}
 		}
 		subtract_from_variable = { var_GNSS_mil_system_idx = 1 }
-		ROOT = { news_event = { id = satellites.2 } }
+		ROOT = { news_event = satellites.2 }
 	}
 	if = {
 		limit = {
@@ -557,7 +557,7 @@ check_sat_systems_min_sat_num = {
 			}
 		}
 		subtract_from_variable = { var_GNSS_civ_system_idx = 1 }
-		ROOT = { news_event = { id = satellites.3 } }
+		ROOT = { news_event = satellites.3 }
 	}
 	#COM
 	if = {
@@ -566,7 +566,7 @@ check_sat_systems_min_sat_num = {
 			check_variable = { var_COM_mil_system_idx > 0 }
 		}
 		subtract_from_variable = { var_COM_mil_system_idx = 1 }
-		ROOT = { news_event = { id = satellites.4 } }
+		ROOT = { news_event = satellites.4 }
 	}
 	if = {
 		limit = {
@@ -574,7 +574,7 @@ check_sat_systems_min_sat_num = {
 			check_variable = { var_COM_civ_system_idx > 0 }
 		}
 		subtract_from_variable = { var_COM_civ_system_idx = 1 }
-		ROOT = { news_event = { id = satellites.5 } }
+		ROOT = { news_event = satellites.5 }
 	}
 	#SPY
 	if = {
@@ -583,7 +583,7 @@ check_sat_systems_min_sat_num = {
 			check_variable = { var_SPY_mil_system_idx > 0 }
 		}
 		subtract_from_variable = { var_SPY_mil_system_idx = 1 }
-		ROOT = { news_event = { id = satellites.6 } }
+		ROOT = { news_event = satellites.6 }
 	}
 	if = {
 		limit = {
@@ -591,7 +591,7 @@ check_sat_systems_min_sat_num = {
 			check_variable = { var_SPY_civ_system_idx > 0 }
 		}
 		subtract_from_variable = { var_SPY_civ_system_idx = 1 }
-		ROOT = { news_event = { id = satellites.7 } }
+		ROOT = { news_event = satellites.7 }
 	}
 }
 
@@ -1055,6 +1055,31 @@ calculate_SPY_civ_gui_vars = {
 }
 
 add_access_GNSS_mil_vars = {
+	# Rebuild access arrays so stale country scopes cannot survive into scope loops.
+	clear_array = temp_GNSS_mil_access_array
+	for_each_loop = {
+		array = GNSS_mil_access_array
+		value = v
+		if = {
+			limit = {
+				NOT = { check_variable = { v = 0 } }
+				var:v = { exists = yes }
+				NOT = { is_in_array = { array = temp_GNSS_mil_access_array value = v } }
+			}
+			add_to_array = { array = temp_GNSS_mil_access_array value = v }
+		}
+	}
+	clear_array = GNSS_mil_access_array
+	clear_array = GNSS_mil_access_system_idx_array
+	for_each_loop = {
+		array = temp_GNSS_mil_access_array
+		value = v
+		add_to_array = { array = GNSS_mil_access_array value = v }
+		var:v = {
+			add_to_array = { array = ROOT.GNSS_mil_access_system_idx_array value = var_GNSS_mil_system_idx }
+		}
+	}
+	clear_array = temp_GNSS_mil_access_array
 	set_variable = { temp_GNSS_mil_access_system_highest_idx = 0 }
 	set_variable = { var_GNSS_mil_army_speed_factor = var_GNSS_mil_army_speed_factor_base }
 	set_variable = { var_GNSS_mil_air_cas_efficiency = var_GNSS_mil_air_cas_efficiency_base }
@@ -1128,6 +1153,31 @@ add_access_GNSS_mil_vars = {
 }
 
 add_access_GNSS_civ_vars = {
+	# Rebuild access arrays so stale country scopes cannot survive into scope loops.
+	clear_array = temp_GNSS_civ_access_array
+	for_each_loop = {
+		array = GNSS_civ_access_array
+		value = v
+		if = {
+			limit = {
+				NOT = { check_variable = { v = 0 } }
+				var:v = { exists = yes }
+				NOT = { is_in_array = { array = temp_GNSS_civ_access_array value = v } }
+			}
+			add_to_array = { array = temp_GNSS_civ_access_array value = v }
+		}
+	}
+	clear_array = GNSS_civ_access_array
+	clear_array = GNSS_civ_access_system_idx_array
+	for_each_loop = {
+		array = temp_GNSS_civ_access_array
+		value = v
+		add_to_array = { array = GNSS_civ_access_array value = v }
+		var:v = {
+			add_to_array = { array = ROOT.GNSS_civ_access_system_idx_array value = var_GNSS_civ_system_idx }
+		}
+	}
+	clear_array = temp_GNSS_civ_access_array
 	set_variable = { temp_GNSS_civ_access_system_highest_idx = 0 }
 	set_variable = { var_GNSS_civ_production_speed_buildings_factor = var_GNSS_civ_production_speed_buildings_factor_base }
 	set_variable = { var_GNSS_civ_production_speed_infrastructure_factor = var_GNSS_civ_production_speed_infrastructure_factor_base }
@@ -2107,7 +2157,7 @@ add_new_satellite_to_orbit_6 = {
 			}
 			check_variable = { sat_6_array^num > 1503 }
 		}
-		ROOT = { news_event = { id = satellites.8 } }
+		ROOT = { news_event = satellites.8 }
 	}
 	else = {
 		add_to_variable = { var_sat_in_orbit = 1 }

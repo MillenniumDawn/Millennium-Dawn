@@ -13,91 +13,13 @@ from pathlib import Path
 from typing import List, Set, Tuple
 
 from validator_common import (
+    HOI4_BUILTIN_BLOCKS,
     BaseValidator,
     Colors,
+    Severity,
     run_validator_main,
     should_skip_file,
     strip_comments,
-)
-
-# Names that are HOI4 built-in blocks and should not be treated as definitions
-BUILTIN_BLOCKS = frozenset(
-    {
-        "if",
-        "else",
-        "else_if",
-        "limit",
-        "AND",
-        "OR",
-        "NOT",
-        "hidden_effect",
-        "random_list",
-        "tooltip",
-        "custom_effect_tooltip",
-        "custom_trigger_tooltip",
-        "modifier",
-        "random",
-        "every_country",
-        "random_country",
-        "every_state",
-        "random_state",
-        "every_owned_state",
-        "random_owned_state",
-        "every_neighbor_country",
-        "random_neighbor_country",
-        "every_enemy_country",
-        "random_enemy_country",
-        "every_other_country",
-        "random_other_country",
-        "capital_scope",
-        "owner",
-        "controller",
-        "ROOT",
-        "PREV",
-        "FROM",
-        "country_event",
-        "news_event",
-        "state_event",
-        "every_army_leader",
-        "random_army_leader",
-        "every_unit_leader",
-        "random_unit_leader",
-        "every_navy_leader",
-        "random_navy_leader",
-        "every_possible_country",
-        "random_possible_country",
-        "all_of",
-        "any_of",
-        "for_each_scope_loop",
-        "while_loop_effect",
-        "for_loop_effect",
-        "effect_tooltip",
-        "add_to_array",
-        "remove_from_array",
-        "overlord",
-        "faction_leader",
-        "any_country",
-        "any_state",
-        "any_owned_state",
-        "any_neighbor_country",
-        "any_enemy_country",
-        "any_other_country",
-        "any_allied_country",
-        "any_country_with_original_tag",
-        "any_army_leader",
-        "any_navy_leader",
-        "any_unit_leader",
-        "any_possible_country",
-        "every_allied_country",
-        "random_allied_country",
-        "every_occupied_country",
-        "random_occupied_country",
-        "any_occupied_country",
-        "every_country_with_original_tag",
-        "random_country_with_original_tag",
-        "meta_effect",
-        "meta_trigger",
-    }
 )
 
 # Patterns for known false positives — these are referenced by the game engine,
@@ -112,17 +34,79 @@ FALSE_POSITIVE_PATTERNS = [
     re.compile(
         r"^DIPLOMACY_.*_ENABLE_TRIGGER"
     ),  # Game rule triggers, engine-referenced
-    re.compile(
-        r"^set_leader_"
-    ),  # Called dynamically via meta_effect in election_effects
 ]
 
 # Files whose definitions are entirely engine-referenced (all contents are false positives)
 FALSE_POSITIVE_FILES = frozenset(
     {
         "00_game_rule_triggers.txt",
+        # Internal faction opinion triggers — a convention-based preset library
+        # (enthusiastic_X / positive_X / indifferent_X / negative_X / hostile_X
+        # for every internal faction). Kept fully populated so any content that
+        # wants to check a faction mood level has a ready-made trigger, even if
+        # many are not currently referenced anywhere in the mod.
+        "00_internal_factions_trigger.txt",
     }
 )
+
+
+# Regex: identifier containing at least one [VAR] placeholder with a non-empty
+# constant prefix (e.g. "set_leader_[IDEOLOGY]", "tooltip_EU_[EUXXX]_approve").
+# Requires a non-empty prefix so pure "[VAR]" expansions (like "[TECH] = 1") are
+# excluded — those don't call scripted effects/triggers by constructed name.
+_TEMPLATE_RE = re.compile(
+    r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+"
+    r")"
+)
+
+
+def scan_for_meta_constructed_names(
+    files: List[str], defined_names: Set[str]
+) -> Set[str]:
+    """Return the subset of *defined_names* that are called via meta_effect/
+    meta_trigger template substitution (e.g. ``set_leader_[IDEOLOGY] = yes``).
+
+    For every file that contains a ``meta_effect`` or ``meta_trigger`` keyword,
+    we extract identifier templates of the form ``prefix_[VAR]_suffix``, split
+    them on ``[VAR]`` segments to recover the constant (prefix, suffix) pair,
+    and match any defined name whose lower-cased form starts with *prefix* and
+    ends with *suffix*.
+    """
+    defined_lower = {n.lower(): n for n in defined_names}
+    used: Set[str] = set()
+
+    for filepath in files:
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as fh:
+                content = fh.read()
+        except Exception:
+            continue
+
+        if "meta_effect" not in content and "meta_trigger" not in content:
+            continue
+
+        content_clean = strip_comments(content)
+
+        for m in _TEMPLATE_RE.finditer(content_clean):
+            template = m.group(1)
+            # Split on every [VAR] segment — constant parts become prefix/suffix
+            parts = re.split(r"\[[^\]]+\]", template)
+            prefix = parts[0].lower()
+            suffix = parts[-1].lower() if len(parts) > 1 else ""
+
+            # Skip pure-placeholder templates where no constant anchors the match
+            if not prefix and not suffix:
+                continue
+
+            for name_lower, name_orig in defined_lower.items():
+                if name_orig in used:
+                    continue
+                if name_lower.startswith(prefix) and name_lower.endswith(suffix):
+                    # Guard: VAR must resolve to something non-empty
+                    if len(name_lower) > len(prefix) + len(suffix):
+                        used.add(name_orig)
+
+    return used
 
 
 def _is_false_positive(name: str, filepath: str) -> bool:
@@ -165,7 +149,7 @@ def extract_definitions(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
             m = re.match(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{", stripped)
             if m:
                 name = m.group(1)
-                if name not in BUILTIN_BLOCKS:
+                if name not in HOI4_BUILTIN_BLOCKS:
                     rel_path = os.path.relpath(filename, mod_path)
                     results.append((name, rel_path, line_num))
 
@@ -178,8 +162,12 @@ def extract_definitions(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
 def scan_file_for_usages(args: Tuple[str, Set[str]]) -> Set[str]:
     """Scan a file for usages of any of the given names.
 
-    A usage is when a name appears as `name = yes`, `name = no`, or
-    as a call inside another block (not as a top-level definition).
+    A usage is when a name appears as a whole word — guarded by
+    word boundaries so ``foo_bar`` does not spuriously mark ``foo``
+    or ``bar`` as used. This is a fast pre-filter; callers still
+    verify call-site syntax (``name = yes/no`` or
+    ``custom_effect_tooltip = name``) before trusting the hit for
+    definition-directory files.
     """
     filename, names_to_find = args
     found = set()
@@ -192,9 +180,11 @@ def scan_file_for_usages(args: Tuple[str, Set[str]]) -> Set[str]:
 
     content = strip_comments(content)
 
-    for name in names_to_find:
-        if name in content:
-            found.add(name)
+    # Collect every identifier-like token in the file once, then intersect.
+    # Cheaper than running a word-boundary regex per name when names_to_find
+    # is large.
+    tokens = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", content))
+    found = names_to_find & tokens
 
     return found
 
@@ -315,6 +305,110 @@ class Validator(BaseValidator):
 
         return unused
 
+    def _find_unused_combined(
+        self,
+        effect_defs: List[Tuple[str, str, int]],
+        trigger_defs: List[Tuple[str, str, int]],
+    ) -> Tuple[List[str], List[str]]:
+        """Find unused effects and triggers in a single codebase scan.
+
+        Merges both definition sets and scans the full codebase once instead of
+        calling _find_unused() twice (which would scan the codebase twice).
+        Returns (unused_effects, unused_triggers).
+        """
+        all_defs = effect_defs + trigger_defs
+        if not all_defs:
+            return [], []
+
+        effect_names = {d[0] for d in effect_defs}
+        trigger_names = {d[0] for d in trigger_defs}
+        all_names = effect_names | trigger_names
+
+        all_files = self._collect_files(
+            [
+                "common/**/*.txt",
+                "events/**/*.txt",
+                "history/**/*.txt",
+            ]
+        )
+
+        # Split files into definition files and other files
+        effect_dir = "common/scripted_effects/"
+        trigger_dir = "common/scripted_triggers/"
+        other_files, def_files = [], []
+        for f in all_files:
+            norm = f.replace("\\", "/")
+            if effect_dir in norm or trigger_dir in norm:
+                def_files.append(f)
+            else:
+                other_files.append(f)
+
+        # First pass: find all names used outside definition dirs
+        args_list = [(f, all_names) for f in other_files]
+        results = self._pool_map(scan_file_for_usages, args_list)
+
+        used_names: set = set()
+        for found in results:
+            used_names.update(found)
+
+        # Second pass: check cross-calls within definition files
+        remaining = all_names - used_names
+        if remaining:
+            args_list = [(f, remaining) for f in def_files]
+            def_results = self._pool_map(scan_file_for_usages, args_list, chunksize=10)
+
+            potentially_used: set = set()
+            for found in def_results:
+                potentially_used.update(found)
+
+            for def_file in def_files:
+                try:
+                    with open(def_file, "r", encoding="utf-8-sig") as f:
+                        content = strip_comments(f.read())
+                except Exception:
+                    continue
+                for name in list(potentially_used - used_names):
+                    if name not in content:
+                        continue
+                    if re.search(rf"\b{re.escape(name)}\s*=\s*(?:yes|no)\b", content):
+                        used_names.add(name)
+                    elif re.search(
+                        rf"custom_(?:effect|trigger)_tooltip\s*=\s*{re.escape(name)}\b",
+                        content,
+                    ):
+                        used_names.add(name)
+
+        # Third pass: detect names called via meta_effect/meta_trigger template
+        # substitution (e.g. `set_leader_[IDEOLOGY] = yes`).  Only scan the
+        # names still remaining after the first two passes to keep cost low.
+        still_remaining = all_names - used_names
+        if still_remaining:
+            used_names.update(
+                scan_for_meta_constructed_names(all_files, still_remaining)
+            )
+
+        # Build result lists, partitioned by kind
+        name_to_location: dict = {}
+        for name, filepath, line_num in all_defs:
+            if name not in name_to_location:
+                name_to_location[name] = []
+            name_to_location[name].append((filepath, line_num))
+
+        unused_effects: List[str] = []
+        unused_triggers: List[str] = []
+        for name in sorted(all_names - used_names):
+            locations = name_to_location.get(name, [])
+            for filepath, line_num in locations:
+                if _is_false_positive(name, filepath):
+                    continue
+                entry = f"{filepath}:{line_num} - {name}"
+                if name in effect_names:
+                    unused_effects.append(entry)
+                else:
+                    unused_triggers.append(entry)
+
+        return unused_effects, unused_triggers
+
     def validate_unused_effects(self):
         self.log(f"\n{'='*80}")
         self.log(
@@ -322,34 +416,12 @@ class Validator(BaseValidator):
         )
         self.log(f"{'='*80}")
 
-        definitions = self._collect_definitions("scripted_effects")
-        self.log(f"  Found {len(definitions)} scripted effect definitions")
-
-        unused = self._find_unused(definitions, "effect", "scripted_effects")
-
-        self._report(
-            unused,
-            "✓ No unused scripted effects found",
-            "Unused scripted effects (defined but never called):",
-        )
-
     def validate_unused_triggers(self):
         self.log(f"\n{'='*80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking for unused scripted triggers...{Colors.ENDC if self.use_colors else ''}"
         )
         self.log(f"{'='*80}")
-
-        definitions = self._collect_definitions("scripted_triggers")
-        self.log(f"  Found {len(definitions)} scripted trigger definitions")
-
-        unused = self._find_unused(definitions, "trigger", "scripted_triggers")
-
-        self._report(
-            unused,
-            "✓ No unused scripted triggers found",
-            "Unused scripted triggers (defined but never called):",
-        )
 
     def run_validations(self):
         if self.staged_only:
@@ -359,8 +431,32 @@ class Validator(BaseValidator):
             )
             return
 
-        self.validate_unused_effects()
-        self.validate_unused_triggers()
+        effect_defs = self._collect_definitions("scripted_effects")
+        trigger_defs = self._collect_definitions("scripted_triggers")
+        self.log(
+            f"  Found {len(effect_defs)} scripted effect definitions, "
+            f"{len(trigger_defs)} scripted trigger definitions"
+        )
+
+        # Single codebase scan for both effects and triggers.
+        unused_effects, unused_triggers = self._find_unused_combined(
+            effect_defs, trigger_defs
+        )
+
+        self._report(
+            unused_effects,
+            "✓ No unused scripted effects found",
+            "Unused scripted effects (defined but never called):",
+            Severity.WARNING,
+            category="unused-scripted-effect",
+        )
+        self._report(
+            unused_triggers,
+            "✓ No unused scripted triggers found",
+            "Unused scripted triggers (defined but never called):",
+            Severity.WARNING,
+            category="unused-scripted-trigger",
+        )
 
 
 if __name__ == "__main__":
