@@ -1,7 +1,8 @@
 #!/usr/bin/python
 import argparse
-import re
 import collections
+import re
+
 
 #############################
 ###
@@ -41,11 +42,11 @@ def readfile(name):
             lines = f.read().splitlines()
     except:
         try:
-            with open(name, "r", encoding='utf-8') as f:
+            with open(name, "r", encoding="utf-8") as f:
                 lines = f.read().splitlines()
         except:
             try:
-                with open(name, "r", encoding='utf-8-sig') as f:
+                with open(name, "r", encoding="utf-8-sig") as f:
                     lines = f.read().splitlines()
             except:
                 print("Could not read file " + name + "!")
@@ -59,8 +60,13 @@ def readfile(name):
     is_decision_categories_file = False
     is_technology_file = False
     for line in lines:
-        line = re.sub('#.*', "", line)
-        if not is_event_file and not is_focus_file and not is_idea_file and not is_decision_categories_file:
+        line = re.sub("#.*", "", line)
+        if (
+            not is_event_file
+            and not is_focus_file
+            and not is_idea_file
+            and not is_decision_categories_file
+        ):
             if "focus_tree" in line:
                 is_focus_file = True
                 print("File " + name + " is a national_focus file...")
@@ -80,64 +86,99 @@ def readfile(name):
         if is_decision_categories_file:
             if open_blocks < 2 and "{" in line:
                 temp_line = line
-                temp_line = re.sub('\s|=(\s|){', "", temp_line)
+                temp_line = re.sub(r"\s|=(\s|){", "", temp_line)
                 temp_line.strip()
                 if not is_decision_file and open_blocks == 1:
                     temp_tags.append(temp_line)
                 else:
                     tags[temp_line] = None
                     tags[temp_line + "_desc"] = None
-            if not is_decision_file and open_blocks == 2 and ("available" in line or "visible" in line or "fire_only_once" in line or "cost" in line or "days_remove" in line or "remove_effect" in line or "complete_effect" in line):
+            if (
+                not is_decision_file
+                and open_blocks == 2
+                and (
+                    "available" in line
+                    or "visible" in line
+                    or "fire_only_once" in line
+                    or "cost" in line
+                    or "days_remove" in line
+                    or "remove_effect" in line
+                    or "complete_effect" in line
+                )
+            ):
                 print("File " + name + " is a decisions file...")
                 is_decision_file = True
                 for key in temp_tags:
                     tags[key] = None
                     tags[key + "_desc"] = None
         elif is_focus_file:
-            if open_blocks == 2 and re.match('^.*id ?=', line):
-                temp_line = re.sub('^.*id ?=', "", line)
-                temp_line = re.sub('\s', "", temp_line)
+            if open_blocks == 2 and re.match("^.*id ?=", line):
+                temp_line = re.sub("^.*id ?=", "", line)
+                temp_line = re.sub(r"\s", "", temp_line)
                 temp_line.strip()
                 tags[temp_line] = None
                 tags[temp_line + "_desc"] = None
         elif is_idea_file:
             if open_blocks == 2 and "{" in line:
                 temp_line = line
-                temp_line = re.sub('\s|=(\s|){', "", temp_line)
+                temp_line = re.sub(r"\s|=(\s|){", "", temp_line)
                 temp_line.strip()
                 tags[temp_line] = None
                 tags[temp_line + "_desc"] = None
         elif is_event_file:
-            if open_blocks > 0 and open_blocks < 3 and re.match('^.*(title|desc|name|text) ?=', line):
-                temp_line = re.sub('^.*(title|desc|name|text) ?=', "", line)
-                temp_line = re.sub('\s', "", temp_line)
+            if (
+                open_blocks > 0
+                and open_blocks < 3
+                and re.match("^.*(title|desc|name|text) ?=", line)
+            ):
+                temp_line = re.sub("^.*(title|desc|name|text) ?=", "", line)
+                temp_line = re.sub(r"\s", "", temp_line)
                 temp_line.strip()
                 tags[temp_line] = None
         elif is_technology_file:
             if open_blocks == 2 and "{" in line:
                 temp_line = line
-                temp_line = re.sub('\s|=(\s|){', "", temp_line)
+                temp_line = re.sub(r"\s|=(\s|){", "", temp_line)
                 temp_line.strip()
                 tags[temp_line] = None
                 tags[temp_line + "_desc"] = None
-        open_blocks += line.count('{')
-        open_blocks -= line.count('}')
+        open_blocks += line.count("{")
+        open_blocks -= line.count("}")
 
     print("File " + name + " read successfully!")
-    return list(tags.keys()), (is_event_file, is_focus_file, is_idea_file, is_decision_categories_file)
+    return list(tags.keys()), (
+        is_event_file,
+        is_focus_file,
+        is_idea_file,
+        is_decision_categories_file,
+    )
+
+
 ###################################################################
-parser = argparse.ArgumentParser(description='Given an event, national_focus, decisions, decision_categories or ideas file, add missing localisation entries to a specified localisation file. Note: custom tooltips are not supported. In case of events, title, description and option names will be added (triggered titles and descriptions are supported). For national_focus and ideas, names and descriptions will be added. For decisions and decision_categories, names and category names will be added. WARNING: The script defaults to a decisions file if it cannot determine the type of file.')
-parser.add_argument('input', metavar='input',
-                    help='Event, national_focus, decisions, decision_categories or ideas file to parse')
-parser.add_argument( 'output', metavar='output',
-                    help='Localisation file to write to (if empty/non-existing, a new English localisation file will be created)')
-parser.add_argument( '-t', '--todo', action='store_true',
-                    help='Add "#TODO" to every added line instead of just once (Default: False)')
+parser = argparse.ArgumentParser(
+    description="Given an event, national_focus, decisions, decision_categories or ideas file, add missing localisation entries to a specified localisation file. Note: custom tooltips are not supported. In case of events, title, description and option names will be added (triggered titles and descriptions are supported). For national_focus and ideas, names and descriptions will be added. For decisions and decision_categories, names and category names will be added. WARNING: The script defaults to a decisions file if it cannot determine the type of file."
+)
+parser.add_argument(
+    "input",
+    metavar="input",
+    help="Event, national_focus, decisions, decision_categories or ideas file to parse",
+)
+parser.add_argument(
+    "output",
+    metavar="output",
+    help="Localisation file to write to (if empty/non-existing, a new English localisation file will be created)",
+)
+parser.add_argument(
+    "-t",
+    "--todo",
+    action="store_true",
+    help='Add "#TODO" to every added line instead of just once (Default: False)',
+)
 
 args = parser.parse_args()
 
 parsed_file = readfile(args.input)
-#if not parsed_file[1][0] and not parsed_file[1][1] and not parsed_file[1][2:]:
+# if not parsed_file[1][0] and not parsed_file[1][1] and not parsed_file[1][2:]:
 #    sys.exit("File " + args.input + " is not a valid event, national_focus or ideas file.")
 lines = list()
 try:
@@ -145,17 +186,21 @@ try:
         lines = f.read().splitlines()
 except:
     try:
-        with open(args.output, "r", encoding='utf-8') as f:
+        with open(args.output, "r", encoding="utf-8") as f:
             lines = f.read().splitlines()
     except:
         try:
-            with open(args.output, "r", encoding='utf-8-sig') as f:
+            with open(args.output, "r", encoding="utf-8-sig") as f:
                 lines = f.read().splitlines()
         except:
             print("Could not read file " + args.output + "!")
 output_lines = list()
 if len(lines) < 1:
-    print("Output file " + args.output + " is empty or doesn't exist, creating a new english localisation file.")
+    print(
+        "Output file "
+        + args.output
+        + " is empty or doesn't exist, creating a new english localisation file."
+    )
     output_lines.append("l_english:")
 for line in lines:
     for i, parsed_line in enumerate(parsed_file[0]):
@@ -175,12 +220,18 @@ if len(parsed_file[0]) > 0:
         x = line.split("_")
         y = ""
         for i in x:
-            if 'SPR' in i:
+            if "SPR" in i:
                 print("hah pink shirt")
             else:
                 y = y + i.capitalize() + " "
         print(y)
-        output_lines.append(" " + line + ": \""+ y +"\"")
-    with open(args.output,"a") as f:
+        output_lines.append(" " + line + ': "' + y + '"')
+    with open(args.output, "a") as f:
         f.writelines(str(line) + "\n" for line in output_lines)
-print("Appended " + str(len(parsed_file[0])) + " lines to output file " + args.output + " successfully!")
+print(
+    "Appended "
+    + str(len(parsed_file[0]))
+    + " lines to output file "
+    + args.output
+    + " successfully!"
+)

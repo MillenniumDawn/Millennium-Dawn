@@ -1377,7 +1377,9 @@ def _add_extra_args(parser):
     )
 
 
-def _post_init(mod_path: str, args):
-    """Post-initialization callback to configure cache based on args."""
-    if getattr(args, "no_cache", False):
-        _set_cache_enabled(False)
+if __name__ == "__main__":
+    run_validator_main(
+        Validator,
+        "Validate decisions in Millennium Dawn mod",
+        extra_args_fn=_add_extra_args,
+    )
