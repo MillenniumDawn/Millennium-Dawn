@@ -108,6 +108,12 @@ def _extract_unit_refs_from_blocks(content: str) -> Set[str]:
             i += 1
             continue
 
+        # Depth at the START of this line — unit references live at depth 1
+        # (direct children of the regiments/support block). Deeper lines
+        # (e.g. position `x = 0` / `y = 0` inside `unit_name = { ... }`) must
+        # be skipped.
+        depth_at_line_start = brace_depth
+
         for ch in line:
             if ch == "{":
                 brace_depth += 1
@@ -116,6 +122,10 @@ def _extract_unit_refs_from_blocks(content: str) -> Set[str]:
 
         if brace_depth <= 0:
             in_block = False
+            i += 1
+            continue
+
+        if depth_at_line_start != 1:
             i += 1
             continue
 

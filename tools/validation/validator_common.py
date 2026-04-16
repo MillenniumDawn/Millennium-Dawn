@@ -245,6 +245,48 @@ class BaseValidator:
         """Convenience method to add a WARNING level issue."""
         self.add_issue(Severity.WARNING, category, message, file, line)
 
+    # Regex patterns for auto-extracting (file, line) from common result string
+    # formats. Tried in order; first match wins. Patterns cover every format
+    # currently emitted by the validators:
+    #   - "path/to/file.ext:42 - something"           (standard colon form)
+    #   - "path/to/file.ext:42: something"            (colon+colon variant)
+    #   - "file.ext - line 42 - something"            (localisation dash form)
+    #   - "file.ext, line 42, something"              (localisation comma form)
+    #   - "id - path/to/file.ext - description"       (two-segment dash form,
+    #                                                  captures file only)
+    _LOC_PATTERNS = (
+        re.compile(
+            r"^(?P<file>[^\s:][^:\s]*?\.\w+):(?P<line>\d+)\s*[-:]\s*(?P<msg>.+)$"
+        ),
+        re.compile(
+            r"^(?P<file>[^\s,]+?\.\w+)\s*-\s*line\s*(?P<line>\d+)\s*-\s*(?P<msg>.+)$"
+        ),
+        re.compile(r"^(?P<file>[^\s,]+?\.\w+),\s*line\s*(?P<line>\d+),\s*(?P<msg>.+)$"),
+        re.compile(
+            r"^(?P<prefix>[^\s].*?)\s*-\s*(?P<file>[^\s]+?\.\w+)\s*-\s*(?P<msg>.+)$"
+        ),
+    )
+
+    @classmethod
+    def _parse_result_location(cls, text: str) -> tuple:
+        """Best-effort extraction of (message, file, line) from a result string.
+
+        Returns the original string as the message when no known format matches.
+        The ``line`` value is 0 when the pattern matched a file-only format.
+        """
+        for pat in cls._LOC_PATTERNS:
+            m = pat.match(text)
+            if not m:
+                continue
+            gd = m.groupdict()
+            line = int(gd["line"]) if gd.get("line") else 0
+            prefix = gd.get("prefix")
+            msg = gd.get("msg", "")
+            if prefix:
+                msg = f"{prefix}: {msg}" if msg else prefix
+            return msg, gd.get("file", ""), line
+        return text, "", 0
+
     def _report(
         self,
         results: list,
@@ -254,6 +296,13 @@ class BaseValidator:
         category: str = "",
     ):
         """Report results with specified severity level.
+
+        Each entry in ``results`` may be:
+          - ``str`` — legacy form. Auto-parsed via ``_parse_result_location``
+            so standard ``path:line - msg`` strings get structured into an
+            ``Issue`` with ``file`` / ``line`` populated.
+          - ``(message, file, line)`` tuple — explicit structured form.
+          - ``Issue`` instance — used directly.
 
         This is the single source of truth for counting and recording issues.
         Do NOT call add_error/add_warning separately for results passed here.
@@ -266,12 +315,46 @@ class BaseValidator:
                 "error" if severity == Severity.ERROR else "warning",
             )
             for r in results:
+                # Normalize into (display_text, Issue) so logging and storage
+                # stay in sync regardless of which input shape was passed.
+                if isinstance(r, Issue):
+                    issue = r
+                    if issue.file and issue.line > 0:
+                        display_text = f"{issue.file}:{issue.line} - {issue.message}"
+                    else:
+                        display_text = issue.message
+                elif isinstance(r, tuple):
+                    # (message, file, line)
+                    msg_t = str(r[0]) if len(r) > 0 else ""
+                    file_t = str(r[1]) if len(r) > 1 else ""
+                    line_t = int(r[2]) if len(r) > 2 and r[2] else 0
+                    issue = Issue(
+                        severity=severity,
+                        category=category or "",
+                        message=msg_t,
+                        file=file_t,
+                        line=line_t,
+                    )
+                    display_text = (
+                        f"{file_t}:{line_t} - {msg_t}" if file_t and line_t else msg_t
+                    )
+                else:
+                    text = str(r)
+                    msg_p, file_p, line_p = self._parse_result_location(text)
+                    issue = Issue(
+                        severity=severity,
+                        category=category or "",
+                        message=msg_p,
+                        file=file_p,
+                        line=line_p,
+                    )
+                    display_text = text  # preserve original formatting in the log
+
                 self.log(
-                    f"  {color if self.use_colors else ''}{r}{Colors.ENDC if self.use_colors else ''}",
+                    f"  {color if self.use_colors else ''}{display_text}{Colors.ENDC if self.use_colors else ''}",
                     "error" if severity == Severity.ERROR else "warning",
                 )
                 if category:
-                    issue = Issue(severity=severity, category=category, message=r)
                     self._issues.append(issue)
             self.log(
                 f"{color if self.use_colors else ''}{len(results)} issue(s) found{Colors.ENDC if self.use_colors else ''}",
@@ -345,17 +428,44 @@ class BaseValidator:
         if self.staged_only:
             if not self.staged_files:
                 return []
-            dir_hints = [
-                next((s for s in p.replace("\\", "/").split("/") if "*" not in s), "")
-                for p in patterns
-            ]
+
+            # Build a precise directory-prefix hint per pattern by joining all
+            # leading segments before the first wildcard. For
+            # `common/ai_templates/*.txt` the hint becomes `common/ai_templates/`,
+            # so an unrelated staged file in `common/national_focus/` won't match.
+            dir_hints = []
+            for p in patterns:
+                segments = p.replace("\\", "/").split("/")
+                leading = []
+                for s in segments:
+                    if "*" in s:
+                        break
+                    leading.append(s)
+                # If the pattern has no wildcard (exact file), the full path
+                # is the hint. Otherwise the directory prefix followed by `/`.
+                if leading == segments:
+                    dir_hints.append("/".join(leading))
+                else:
+                    dir_hints.append("/".join(leading) + "/" if leading else "")
+
+            def _matches_hint(path: str, hint: str) -> bool:
+                if hint == "":
+                    return True
+                normalized = path.replace("\\", "/")
+                # Exact-file hint (no trailing slash): require exact suffix match
+                if not hint.endswith("/"):
+                    return normalized == hint or normalized.endswith("/" + hint)
+                # Directory-prefix hint: path must start with the prefix (possibly
+                # after a leading mod-path component)
+                return hint in normalized and (
+                    normalized.startswith(hint) or ("/" + hint) in normalized
+                )
+
             files = [
                 f
                 for f in self.staged_files
                 if any(f.endswith(ext) for ext in extensions)
-                and any(
-                    hint == "" or hint in f.replace("\\", "/") for hint in dir_hints
-                )
+                and any(_matches_hint(f, hint) for hint in dir_hints)
             ]
         else:
             seen: Set[str] = set()
