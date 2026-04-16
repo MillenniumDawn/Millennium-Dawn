@@ -65,6 +65,7 @@ def checkFocuses(filepath):
             if (
                 not line.startswith("#") and line.strip()
             ):  # If the line doesn't start with a comment or blank
+                depth_before = braces
                 if "{" in line:
                     braces += line.count("{")
                 if "}" in line:
@@ -82,13 +83,19 @@ def checkFocuses(filepath):
                 elif in_completion_reward and braces == 0:
                     in_completion_reward = False
 
-                # Check for search_filters within focus block (do this first)
+                # Check for search_filters within focus block
                 if in_focus_block:
                     if "search_filters" in line:
                         has_search_filters = True
 
-                # Track focus blocks
-                if "focus" in line and "{" in line:
+                # Track focus blocks — only match a NEW top-level `focus = {`
+                # (depth 0 before the opening brace).  Lines like
+                # `prerequisite = { focus = X }` or `has_completed_focus = X`
+                # contain the word "focus" but are NOT new focus block openers.
+                is_new_focus_block = depth_before == 0 and re.match(
+                    r"^\s*focus\s*=\s*\{", line
+                )
+                if is_new_focus_block:
                     in_focus_block = True
                     found_focus_id = False
                     has_search_filters = False
@@ -230,9 +237,10 @@ def check_event_for_logs(filepath):
                     continue
                 if inNewsEvent:
                     continue
-                if "option" in line and "{" in line and "=" in line:
+                if re.search(r"\boption\s*=\s*\{", line):
                     optionFound = 1
                     optionLine = lineNum
+                    optionName = ""
                     hasLog = 0
                     hasOtherDefinitions = 0
                 if optionFound == 1:
@@ -259,11 +267,16 @@ def check_event_for_logs(filepath):
                         braces = 0
                     if "}" in line:
                         braces -= line.count("}")
-                    if braces == 0 and hasLog == 0 and hasOtherDefinitions == 0:
+                    if (
+                        braces == 0
+                        and hasLog == 0
+                        and hasOtherDefinitions == 1
+                        and optionName
+                    ):
                         print(
                             "WARNING: Event option "
                             + optionName
-                            + " has no effects and no logging in {0} Line number: {1}".format(
+                            + " has effects but no log in {0} Line number: {1}".format(
                                 clean_filepath(filepath), optionLine
                             )
                         )
@@ -615,11 +628,6 @@ def main():
     # Allow running from root directory as well as from inside the tools directory
     scriptDir = os.path.realpath(__file__)
     rootDir = os.path.dirname(os.path.dirname(os.path.dirname(scriptDir)))
-
-    tags = get_tags(rootDir + "/common/country_tags/00_countries.txt")
-    allTriggers, allEffects = findPdxSyntax(
-        rootDir + "/resources/List of triggers and effects 1_9_1.txt"
-    )
 
     # When in staged mode, filter to only staged files
     staged_files = None
