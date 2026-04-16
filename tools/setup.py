@@ -3,7 +3,7 @@
 setup.py — One-command developer environment setup for Millennium Dawn.
 
 Usage:
-    python3 tools/setup.py          Set up mod development (pre-commit + tools)
+    python3 tools/setup.py          Set up mod development (pre-commit + tools + test deps)
     python3 tools/setup.py --docs   Also set up the docs site (Node.js + Bun)
     python3 tools/setup.py --check  Check if everything is installed without changing anything
 
@@ -11,7 +11,8 @@ Run this after cloning the repo. It will:
   1. Check Python version (3.10+ required, 3.12+ recommended)
   2. Install pre-commit and set up git hooks
   3. Install Python tool dependencies (requests, pillow)
-  4. Optionally set up the docs site (Node.js 24+, Bun)
+  4. Install Python dev/test dependencies (pytest) so `pytest tools/` works locally
+  5. Optionally set up the docs site (Node.js 24+, Bun)
 """
 
 import shutil
@@ -75,10 +76,10 @@ def check_hooks_installed() -> bool:
     return installed
 
 
-def check_pip_packages() -> bool:
-    reqs_file = TOOLS_DIR / "requirements.txt"
+def _check_requirements_file(reqs_file: Path, label: str) -> bool:
+    """Return True if every package in ``reqs_file`` can be imported."""
     if not reqs_file.exists():
-        print("  Tool dependencies: requirements.txt not found")
+        print(f"  {label}: {reqs_file.name} not found")
         return False
     missing = []
     for line in reqs_file.read_text().splitlines():
@@ -98,10 +99,20 @@ def check_pip_packages() -> bool:
                     pass
             missing.append(pkg)
     if missing:
-        print(f"  Tool dependencies: missing {', '.join(missing)}")
+        print(f"  {label}: missing {', '.join(missing)}")
         return False
-    print("  Tool dependencies: OK")
+    print(f"  {label}: OK")
     return True
+
+
+def check_pip_packages() -> bool:
+    return _check_requirements_file(TOOLS_DIR / "requirements.txt", "Tool dependencies")
+
+
+def check_dev_packages() -> bool:
+    return _check_requirements_file(
+        TOOLS_DIR / "report_lib" / "requirements-dev.txt", "Dev/test dependencies"
+    )
 
 
 def check_node() -> tuple[bool, str | None]:
@@ -149,15 +160,26 @@ def install_hooks() -> bool:
     return result.returncode == 0
 
 
-def install_pip_packages() -> bool:
-    print("Installing tool dependencies...")
-    reqs = str(TOOLS_DIR / "requirements.txt")
+def _pip_install(reqs_file: Path, label: str) -> bool:
+    """Install ``-r <reqs_file>`` with a --user fallback for PEP 668 systems."""
+    print(f"Installing {label}...")
+    reqs = str(reqs_file)
     result = run([sys.executable, "-m", "pip", "install", "-r", reqs], check=False)
     if result.returncode != 0:
         result = run(
             [sys.executable, "-m", "pip", "install", "--user", "-r", reqs], check=False
         )
     return result.returncode == 0
+
+
+def install_pip_packages() -> bool:
+    return _pip_install(TOOLS_DIR / "requirements.txt", "tool dependencies")
+
+
+def install_dev_packages() -> bool:
+    return _pip_install(
+        TOOLS_DIR / "report_lib" / "requirements-dev.txt", "dev/test dependencies"
+    )
 
 
 def install_docs_deps() -> bool:
@@ -192,6 +214,7 @@ def main() -> None:
     pc_ok = check_pre_commit()
     hooks_ok = check_hooks_installed()
     deps_ok = check_pip_packages()
+    dev_deps_ok = check_dev_packages()
 
     docs_ready = True
     if args.docs or args.check:
@@ -204,7 +227,7 @@ def main() -> None:
 
     if args.check:
         print()
-        all_ok = py_ok and pc_ok and hooks_ok and deps_ok
+        all_ok = py_ok and pc_ok and hooks_ok and deps_ok and dev_deps_ok
         if args.docs:
             all_ok = all_ok and docs_ready
         if all_ok:
@@ -230,6 +253,9 @@ def main() -> None:
 
     if not deps_ok:
         ok = install_pip_packages() and ok
+
+    if not dev_deps_ok:
+        ok = install_dev_packages() and ok
 
     if args.docs:
         node_ok_now, _ = check_node() if not node_ok else (True, None)
@@ -257,10 +283,13 @@ def main() -> None:
         print("Setup complete. You're ready to develop.")
         print()
         print("Quick reference:")
-        print("  git commit           Pre-commit hooks run automatically")
-        print("  python3 tools/run.py --list    See available dev tools")
+        print(
+            "  git commit                               Pre-commit hooks run automatically"
+        )
+        print("  python3 tools/run.py --list              See available dev tools")
+        print("  pytest tools/report_lib tools/validation Run tool test suite")
         if args.docs:
-            print("  cd docs && bun run dev         Preview docs site")
+            print("  cd docs && bun run dev                   Preview docs site")
     else:
         print("Setup finished with some issues. Check the output above.")
 

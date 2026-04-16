@@ -33,6 +33,7 @@ tools/
 ├── generators/        Content generators (tribute ideas, focus names)
 ├── linting/           Style checkers, formatters, encoding validators
 ├── publishing/        Steam Workshop publishing
+├── report_lib/        PR validation report renderer + GitHub Checks API client
 ├── standardization/   Auto-standardizers for focuses, events, decisions, ideas
 ├── tests/             Test suites for validators
 ├── validation/        Content validators (events, decisions, variables, etc.)
@@ -46,6 +47,12 @@ tools/
 ├── validate_tools.py  CI: validates Python scripts in tools/
 └── README.md
 ```
+
+### Architecture quick-reference
+
+- **Writing a new validator?** Subclass `BaseValidator` from `tools/validation/validator_common.py`. Prefer `add_error(category, msg, file, line)` for structured issues; `_report(list_of_strings, ...)` still works and now auto-parses common `path:line - msg` formats into file+line for the PR comment's inline annotations.
+- **Writing a new linter or fixer?** Import helpers from `tools/shared_utils.py`. Skip `validator_common` — linters don't emit the structured issue stream validators produce.
+- **Reading validator output?** Import from `tools/report_lib`. It parses the JSON sidecars each validator writes and renders the PR comment + GitHub Check Runs.
 
 ## Scripts by Category
 
@@ -121,6 +128,22 @@ Content generation tools.
 
 See the [Workshop Publishing Guide](#workshop-publishing-guide) below for full usage details.
 
+### Report Library (`report_lib/`)
+
+Internal package used by `generate_validation_report.py` to render PR comments and post GitHub Check Runs. Its only inputs are the JSON sidecars produced by each validator.
+
+| Module            | Responsibility                                                          |
+| ----------------- | ----------------------------------------------------------------------- |
+| **models.py**     | `Issue`, `ValidatorRun`, `ReportContext` dataclasses                    |
+| **loader.py**     | Reads `.json` sidecars; falls back to parsing `.log` text when missing  |
+| **dedupe.py**     | Collapses cross-validator duplicates, preserving first-seen order       |
+| **markdown.py**   | Renders the report Markdown — summary table + issues-by-file + raw logs |
+| **truncation.py** | Drops heavy sections when the body exceeds 60 KB, keeping the summary   |
+| **comment.py**    | Find-by-marker + PATCH/POST logic for the bot-authored PR comment       |
+| **checks_api.py** | One Check Run per validator with up to 50 annotations per run           |
+
+Tests live in `report_lib/tests/` and run on every PR via the `tools-validation.yml` workflow.
+
 ### Tests (`tests/`)
 
 | Script                             | Description                                                      |
@@ -136,7 +159,7 @@ Hook entry points, CI tools, and shared libraries that stay at the `tools/` root
 | --------------------------------- | ---------------------------------------------------------------- |
 | **validate_staged.py**            | Pre-commit hook: routes staged files to the correct validator    |
 | **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer |
-| **generate_validation_report.py** | CI: generates and posts PR validation reports                    |
+| **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs  |
 | **validate_tools.py**             | CI: validates Python scripts in the tools directory              |
 | **path_utils.py**                 | Shared path utilities (imported by linting scripts)              |
 | **shared_utils.py**               | Shared utilities (imported by validation + standardization)      |
