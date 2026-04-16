@@ -1,4 +1,4 @@
-#!/user/bin/python
+#!/usr/bin/env python3
 import codecs
 import os
 import shutil

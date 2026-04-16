@@ -112,7 +112,7 @@ For structure, ETD system, and examples, see `.claude/docs/event-reference.md`.
 
 - Include `allowed_civil_war = { always = yes }` for civil war tags
 - Use `original_tag` not `tag` in `allowed` blocks — during civil wars the split-off country has a different runtime tag but the same `original_tag`; `allowed = { tag = TAG }` breaks for those countries
-- **Remove** `allowed = { always = no }` - this is the default and hurts performance
+- **`allowed` blocks by category:** In `country` and `hidden_ideas` categories, `allowed = { always = no }` is the default and should be removed; `allowed = { tag = TAG }` should also be removed (or use `original_tag = TAG` if an explicit restriction is genuinely needed). In all other categories (e.g. `AA_law_budget`), the `allowed` block is load-bearing — it must be present to restrict the idea correctly, so always include it there. Note: `check_common_mistakes.py` only flags these violations when inside a `country` or `hidden_ideas` category block — it intentionally skips other categories.
 - **Remove** `cancel = { always = no }` - checked hourly, never true
 - **Remove** empty `on_add = { log = "" }` unless actually doing something
 - Log in `on_add` only when making changes
