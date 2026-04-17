@@ -3,6 +3,8 @@ scripted_gui = {
 		context_type = player_context
 		window_name = "MD_auto_agency_queue_gui"
 
+		dirty = global.auto_agency_upgrade
+
 		visible = {
 			has_country_flag = MD_auto_agency_queue_gui_open
 		}
@@ -95,10 +97,19 @@ scripted_gui = {
 		}
 
 		effects = {
-			close_button_click = { clr_country_flag = MD_auto_agency_queue_gui_open }
+			close_button_click = {
+				clr_country_flag = MD_auto_agency_queue_gui_open
+				MD_auto_agency_mark_dirty = yes
+			}
 
-			expand_agency_dropdown_button_click = { MD_auto_agency_toggle_dropdown = yes }
-			expand_agency_dropdown_button_arrow_click = { MD_auto_agency_toggle_dropdown = yes }
+			expand_agency_dropdown_button_click = {
+				MD_auto_agency_toggle_dropdown = yes
+				MD_auto_agency_mark_dirty = yes
+			}
+			expand_agency_dropdown_button_arrow_click = {
+				MD_auto_agency_toggle_dropdown = yes
+				MD_auto_agency_mark_dirty = yes
+			}
 
 			decrease_order_click = {
 				set_temp_variable = { below = i }
@@ -109,6 +120,7 @@ scripted_gui = {
 
 				set_variable = { agency_queue^i = below_value }
 				set_variable = { agency_queue^below = hold }
+				MD_auto_agency_mark_dirty = yes
 			}
 
 			decrease_order_shift_click = {
@@ -116,6 +128,7 @@ scripted_gui = {
 				set_temp_variable = { shrink_idx = i }
 				MD_auto_agency_shrink_queue_at_index = yes
 				add_to_array = { agency_queue = hold_value }
+				MD_auto_agency_mark_dirty = yes
 			}
 
 			increase_order_click = {
@@ -127,6 +140,7 @@ scripted_gui = {
 
 				set_variable = { agency_queue^i = above_value }
 				set_variable = { agency_queue^above = hold }
+				MD_auto_agency_mark_dirty = yes
 			}
 
 			increase_order_shift_click = {
@@ -147,6 +161,7 @@ scripted_gui = {
 				}
 
 				set_variable = { agency_queue^0 = hold_value }
+				MD_auto_agency_mark_dirty = yes
 			}
 
 			remove_from_queue_click = {
@@ -155,6 +170,7 @@ scripted_gui = {
 				set_temp_variable = { shrink_idx = i }
 				MD_auto_agency_shrink_queue_at_index = yes
 				country_event = { id = md_auto_agency.1 days = 1 }
+				MD_auto_agency_mark_dirty = yes
 			}
 
 			agency_upgrade_icon_button_click = {
@@ -177,6 +193,7 @@ scripted_gui = {
 					# find_first_valid consumes it.
 					country_event = { id = md_auto_agency.1 days = 1 }
 				}
+				MD_auto_agency_mark_dirty = yes
 			}
 
 			agency_upgrade_icon_button_shift_click = {
@@ -209,6 +226,8 @@ scripted_gui = {
 					else = {
 						country_event = { id = md_auto_agency.1 days = 1 }
 					}
+
+					MD_auto_agency_mark_dirty = yes
 				}
 			}
 
@@ -225,6 +244,7 @@ scripted_gui = {
 				# Deferred so ON mode doesn't immediately pick a random upgrade before
 				# the player re-queues.
 				country_event = { id = md_auto_agency.1 days = 1 }
+				MD_auto_agency_mark_dirty = yes
 			}
 		}
 
@@ -259,6 +279,8 @@ scripted_gui = {
 		window_name = "MD_auto_agency_upgrade_selection_option_dropdown_container"
 		parent_window_name = MD_auto_agency_queue_gui
 
+		dirty = global.auto_agency_upgrade
+
 		visible = {
 			has_country_flag = MD_auto_agency_queue_gui_open
 			check_variable = { agency_dropdown_visible = 1 }
@@ -276,11 +298,13 @@ scripted_gui = {
 				# Deferred so find_first_valid doesn't strip queued items on the
 				# same tick the player toggled automation.
 				country_event = { id = md_auto_agency.1 days = 1 }
+				MD_auto_agency_mark_dirty = yes
 			}
 			auto_upgrades_queue_only_button_click = {
 				set_variable = { automate_agency_upgrades_choice = 3 }
 				set_variable = { agency_dropdown_visible = 2 }
 				country_event = { id = md_auto_agency.1 days = 1 }
+				MD_auto_agency_mark_dirty = yes
 			}
 		}
 	}
@@ -289,6 +313,8 @@ scripted_gui = {
 		context_type = player_context
 		window_name = "spy_agency_upgrade_automation_ui"
 		parent_window_name = agency_branches
+
+		dirty = global.auto_agency_upgrade
 
 		visible = {
 			has_intelligence_agency = yes
@@ -311,6 +337,7 @@ scripted_gui = {
 				else = {
 					set_country_flag = MD_auto_agency_queue_gui_open
 				}
+				MD_auto_agency_mark_dirty = yes
 			}
 		}
 	}

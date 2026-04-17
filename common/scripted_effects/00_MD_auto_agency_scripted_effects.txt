@@ -1,3 +1,16 @@
+# Bumps the dirty counter used by the auto-agency scripted_guis so they only
+# refresh when queue/selection/automation state actually changed, instead of
+# every tick. Wraps at 10000 to stay within safe integer range.
+MD_auto_agency_mark_dirty = {
+	if = {
+		limit = { check_variable = { global.auto_agency_upgrade < 10000 } }
+		add_to_variable = { global.auto_agency_upgrade = 1 }
+	}
+	else = {
+		set_variable = { global.auto_agency_upgrade = 1 }
+	}
+}
+
 # Caller must `set_temp_variable = { shrink_idx = N }` before invoking.
 MD_auto_agency_shrink_queue_at_index = {
 	set_temp_variable = { last = agency_queue^num }
@@ -189,6 +202,7 @@ MD_auto_agency_apply_selected = {
 	}
 
 	set_variable = { agency_selected_upgrade = -1 }
+	MD_auto_agency_mark_dirty = yes
 }
 
 MD_auto_agency_init_country_state = {
@@ -208,6 +222,7 @@ MD_auto_agency_init_country_state = {
 	}
 
 	MD_auto_agency_get_upgrade_time = yes
+	MD_auto_agency_mark_dirty = yes
 }
 
 MD_auto_agency_get_upgrade_time = {
@@ -241,6 +256,7 @@ MD_auto_agency_reconcile_state = {
 MD_auto_agency_update_state = {
 	MD_auto_agency_reconcile_state = yes
 	MD_auto_agency_begin_if_possible = yes
+	MD_auto_agency_mark_dirty = yes
 }
 
 MD_auto_agency_begin_if_possible = {
@@ -254,5 +270,7 @@ MD_auto_agency_begin_if_possible = {
 			limit = { NOT = { check_variable = { agency_selected_upgrade = -1 } } }
 			activate_mission = spy_agency_upgrade_in_progress
 		}
+
+		MD_auto_agency_mark_dirty = yes
 	}
 }
