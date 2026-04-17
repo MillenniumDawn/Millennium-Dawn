@@ -32,7 +32,7 @@ upgrade_deepfake_detection = {
 
     ai_will_do = { base = 3 ... }
     modifiers_during_progress = { hidden_modifier = { MD_auto_agency_in_progress_boolean = 1 } }
-    available = { custom_trigger_tooltip = { tooltip = cannot_manually_upgrade_agency_tt NOT = { has_country_flag = spy_agency_upgrade_in_progress_flag } } }
+    available = { custom_trigger_tooltip = { tooltip = cannot_manually_upgrade_agency_tt MD_auto_agency_manual_upgrade_available = yes } }
 
     level = { modifier = { ... } complete_effect = { ... } }
     level = { modifier = { ... } complete_effect = { ... } }

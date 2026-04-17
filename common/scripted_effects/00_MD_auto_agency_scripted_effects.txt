@@ -64,21 +64,9 @@ MD_auto_agency_verify_queue = {
 
 			if = {
 				limit = {
-					NOT = {
-						OR = {
-							meta_trigger = {
-								text = {
-									has_done_agency_upgrade = [AGENCY_UPGRADE]
-								}
-								AGENCY_UPGRADE = "[?global.agency_upgrades^v.GetTokenLocalizedKey]"
-							}
-							check_variable = {
-								var = agency_upgrades_in_queue_count^v
-								value = global.agency_max_upgrades^v
-								compare = greater_than_or_equals
-							}
-						}
-					}
+					MD_auto_agency_v_index_valid = yes
+					MD_auto_agency_v_not_completed = yes
+					MD_auto_agency_v_not_maxed_in_queue = yes
 				}
 
 				add_to_array = { agency_queue_hold = v }
@@ -122,12 +110,8 @@ MD_auto_agency_find_first_valid = {
 
 			if = {
 				limit = {
-					meta_trigger = {
-						text = {
-							MD_auto_agency_can_select_upgrade_[AGENCY]_trigger = yes
-						}
-						AGENCY = "[?v]"
-					}
+					MD_auto_agency_v_index_valid = yes
+					MD_auto_agency_v_can_select = yes
 				}
 
 				set_variable = { agency_selected_upgrade = v }
@@ -165,18 +149,8 @@ MD_auto_agency_select_random = {
 
 		if = {
 			limit = {
-				meta_trigger = {
-					text = {
-						MD_auto_agency_can_select_upgrade_[AGENCY]_trigger = yes
-					}
-					AGENCY = "[?v]"
-				}
-				meta_trigger = {
-					text = {
-						NOT = { has_done_agency_upgrade = [AGENCY_UPGRADE] }
-					}
-					AGENCY_UPGRADE = "[?global.agency_upgrades^v.GetTokenLocalizedKey]"
-				}
+				MD_auto_agency_v_can_select = yes
+				MD_auto_agency_v_not_completed = yes
 			}
 
 			add_to_array = { random_agency_upgrade_to_select = v }
@@ -203,11 +177,15 @@ MD_auto_agency_select_random = {
 }
 
 MD_auto_agency_apply_selected = {
-	meta_effect = {
-		text = {
-			upgrade_intelligence_agency = [AGENCY]
+	set_temp_variable = { v = agency_selected_upgrade }
+	if = {
+		limit = { MD_auto_agency_v_index_valid = yes }
+		meta_effect = {
+			text = {
+				upgrade_intelligence_agency = [AGENCY]
+			}
+			AGENCY = "[?global.agency_upgrades^v.GetTokenLocalizedKey]"
 		}
-		AGENCY = "[?global.agency_upgrades^agency_selected_upgrade.GetTokenLocalizedKey]"
 	}
 
 	set_variable = { agency_selected_upgrade = -1 }
@@ -244,25 +222,19 @@ MD_auto_agency_get_upgrade_time = {
 }
 
 MD_auto_agency_reconcile_state = {
+	# Stale selection recovery: mission gone, no native upgrade running, yet a
+	# selection remains. Push it back onto the queue so it gets re-evaluated.
 	if = {
 		limit = {
 			NOT = { has_active_mission = spy_agency_upgrade_in_progress }
 			check_variable = { modifier@MD_auto_agency_in_progress_boolean = 0 }
-			OR = {
-				has_country_flag = spy_agency_upgrade_in_progress_flag
-				NOT = { check_variable = { agency_selected_upgrade = -1 } }
-			}
+			NOT = { check_variable = { agency_selected_upgrade = -1 } }
 		}
 
-		if = {
-			limit = { NOT = { check_variable = { agency_selected_upgrade = -1 } } }
-			set_temp_variable = { interrupted_selected_upgrade = agency_selected_upgrade }
-			set_variable = { agency_selected_upgrade = -1 }
-			add_to_array = { agency_queue = interrupted_selected_upgrade }
-			MD_auto_agency_verify_queue = yes
-		}
-
-		clr_country_flag = spy_agency_upgrade_in_progress_flag
+		set_temp_variable = { interrupted_selected_upgrade = agency_selected_upgrade }
+		set_variable = { agency_selected_upgrade = -1 }
+		add_to_array = { agency_queue = interrupted_selected_upgrade }
+		MD_auto_agency_verify_queue = yes
 	}
 }
 
@@ -280,7 +252,6 @@ MD_auto_agency_begin_if_possible = {
 
 		if = {
 			limit = { NOT = { check_variable = { agency_selected_upgrade = -1 } } }
-			set_country_flag = spy_agency_upgrade_in_progress_flag
 			activate_mission = spy_agency_upgrade_in_progress
 		}
 	}

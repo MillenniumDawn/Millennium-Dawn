@@ -143,9 +143,59 @@ MD_auto_agency_can_upgrade = {
 
 MD_auto_agency_can_start = {
 	check_variable = { automate_agency_upgrades_choice > 1 }
-	NOT = { has_country_flag = spy_agency_upgrade_in_progress_flag }
 	NOT = { has_active_mission = spy_agency_upgrade_in_progress }
+	# Set by every vanilla upgrade's modifiers_during_progress — blocks us when a
+	# native upgrade is running that we didn't start.
 	check_variable = { modifier@MD_auto_agency_in_progress_boolean = 0 }
+	check_variable = { agency_selected_upgrade = -1 }
 	has_intelligence_agency = yes
 	MD_auto_agency_can_upgrade = yes
+}
+
+# The v_* helpers all read the temp variable `v` (caller's loop index) and guard
+# meta_trigger/meta_effect substitutions from reading out-of-range upgrade slots.
+
+MD_auto_agency_v_index_valid = {
+	check_variable = { v > -1 }
+	check_variable = { v < global.agency_upgrades^num }
+}
+
+MD_auto_agency_v_not_completed = {
+	NOT = {
+		meta_trigger = {
+			text = {
+				has_done_agency_upgrade = [AGENCY_UPGRADE]
+			}
+			AGENCY_UPGRADE = "[?global.agency_upgrades^v.GetTokenLocalizedKey]"
+		}
+	}
+}
+
+MD_auto_agency_v_can_select = {
+	meta_trigger = {
+		text = {
+			MD_auto_agency_can_select_upgrade_[AGENCY]_trigger = yes
+		}
+		AGENCY = "[?v]"
+	}
+}
+
+MD_auto_agency_v_not_maxed_in_queue = {
+	NOT = {
+		check_variable = {
+			var = agency_upgrades_in_queue_count^v
+			value = global.agency_max_upgrades^v
+			compare = greater_than_or_equals
+		}
+	}
+}
+
+# Called from every vanilla upgrade's `available` to block manual clicks while the
+# auto-agency is running or has a queue primed.
+MD_auto_agency_manual_upgrade_available = {
+	custom_override_tooltip = {
+		tooltip = cannot_manually_upgrade_agency_tt
+		NOT = { has_active_mission = spy_agency_upgrade_in_progress }
+		check_variable = { agency_queue^num < 1 }
+	}
 }
