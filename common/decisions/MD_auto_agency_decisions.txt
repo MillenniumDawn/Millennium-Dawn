@@ -1,0 +1,39 @@
+MD_auto_agency_cat = {
+	spy_agency_upgrade_in_progress = {
+		priority = 999
+
+		icon = generic_research_new
+		allowed = { always = no }
+
+		selectable_mission = yes
+		ai_will_do = { base = 0 }
+
+		is_good = yes
+		days_mission_timeout = agency_upgrade_time_days
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision spy_agency_upgrade_in_progress timeout"
+			MD_auto_agency_apply_selected = yes
+			MD_auto_agency_begin_if_possible = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision spy_agency_upgrade_in_progress cancelled"
+			custom_effect_tooltip = MD_auto_agency_will_cancel_tt
+			if = {
+				limit = {
+					NOT = { check_variable = { agency_selected_upgrade = -1 } }
+					check_variable = {
+						var = agency_upgrades_completed_and_queued^agency_selected_upgrade
+						value = 0
+						compare = greater_than
+					}
+				}
+				subtract_from_variable = { agency_upgrades_completed_and_queued^agency_selected_upgrade = 1 }
+			}
+			set_variable = { agency_selected_upgrade = -1 }
+			# Chain the next upgrade so manual cancellation doesn't leave ON / Queue Only idle.
+			MD_auto_agency_begin_if_possible = yes
+		}
+	}
+}

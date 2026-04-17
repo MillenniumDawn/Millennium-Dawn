@@ -130,6 +130,12 @@ For structure and examples, see `.claude/docs/idea-reference.md`.
 
 For structure and examples, see `.claude/docs/mio-reference.md`.
 
+## Intelligence Agency Upgrades
+
+Agency upgrades live in `common/intelligence_agency_upgrades/` and drive both the vanilla agency UI and MD's auto-agency queue. Adding a new upgrade requires wiring it across five files: the definition, the on_actions registry (four parallel arrays, bump every `resize_array size =`), the localisation triple (`id` / `_name` / `_gfx`), any scripted_gui prereq branches, and a sprite in `interface/*.gfx`.
+
+See `common/intelligence_agency_upgrades/README.md` for the step-by-step checklist. The `validate_agency_upgrades` validator cross-checks all of this plus every mod-wide `create_intelligence_agency` icon and `upgrade_intelligence_agency` call target.
+
 ## AI Strategies & Unit Production
 
 The AI unit production system has three layers: a unit-building gate (`AI_is_threatened` flag), role ratio strategies, and division templates. See `.claude/docs/ai-strategy-reference.md` for full details.

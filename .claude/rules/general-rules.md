@@ -59,6 +59,34 @@ NOT = { has_idea = bar }
 
 `threat` is a decimal 0.0–1.0, never a percentage. Comparisons like `threat > 10` or `threat > 40` are always false. Use `threat > 0.10`, `threat > 0.40`, etc.
 
+## check_variable comparison operators
+
+`check_variable` only accepts `=`, `>`, and `<` as inline operators. `>=` and `<=` are **not valid syntax** — the parser silently treats them as something else and the check never matches as intended.
+
+```
+# Wrong — >= and <= are not valid inline
+check_variable = { v >= 0 }
+check_variable = { count <= max }
+
+# Correct — use the long form with compare = ...
+check_variable = {
+	var = v
+	value = 0
+	compare = greater_than_or_equals
+}
+check_variable = {
+	var = count
+	value = max
+	compare = less_than_or_equals
+}
+
+# Or — for integer indices, rewrite as strict inequality
+check_variable = { v > -1 }          # equivalent to v >= 0 for integers
+NOT = { check_variable = { v < 0 } } # also equivalent
+```
+
+Valid `compare` values: `equals`, `greater_than`, `less_than`, `greater_than_or_equals`, `less_than_or_equals`, `not_equals`.
+
 ## if/else over if/if
 
 When two consecutive `if` blocks cover complementary conditions, always use `if/else`:

@@ -30,6 +30,7 @@ add_md_alert_unless_exists = {
 	if = {
 		limit = {
 			NOT = { is_in_array = { md_alerts = alert_id } }
+			NOT = { is_in_array = { md_alerts_suppressed = alert_id } }
 		}
 
 		add_md_alert = yes
@@ -129,80 +130,52 @@ md_check_nuclear_fuel_alert = {
 	}
 }
 
+# Shared shortfall check: caller sets alert_id and spending_delta (expected - budget).
+# A positive delta means expected spending exceeds the current budget.
+md_check_spending_alert = {
+	if = {
+		limit = { check_variable = { spending_delta > 0 } }
+		set_temp_variable = { alert_color = 2 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { is_in_array = { md_alerts = alert_id } }
+		remove_md_alert = yes
+	}
+}
+
 # Checks all expected spending categories and adds or removes their alerts accordingly.
 # Call this at the end of calculate_expected_spending (after all budget variables are set).
 md_check_spending_alerts = {
-	# Social spending
 	set_temp_variable = { alert_id = token:md_negative_expected_social_spending }
-	if = {
-		limit = { check_variable = { expected_welfare_spending > social_budget } }
-		set_temp_variable = { alert_color = 2 }
-		add_md_alert_unless_exists = yes
-	}
-	else_if = {
-		limit = { is_in_array = { md_alerts = alert_id } }
-		remove_md_alert = yes
-	}
+	set_temp_variable = { spending_delta = expected_welfare_spending }
+	subtract_from_temp_variable = { spending_delta = social_budget }
+	md_check_spending_alert = yes
 
-	# Healthcare spending
 	set_temp_variable = { alert_id = token:md_negative_expected_healthcare_spending }
-	if = {
-		limit = { check_variable = { expected_health_spending > health_budget } }
-		set_temp_variable = { alert_color = 2 }
-		add_md_alert_unless_exists = yes
-	}
-	else_if = {
-		limit = { is_in_array = { md_alerts = alert_id } }
-		remove_md_alert = yes
-	}
+	set_temp_variable = { spending_delta = expected_health_spending }
+	subtract_from_temp_variable = { spending_delta = health_budget }
+	md_check_spending_alert = yes
 
-	# Administrative spending
 	set_temp_variable = { alert_id = token:md_negative_expected_administrative_spending }
-	if = {
-		limit = { check_variable = { expected_adm_spending > bureaucracy } }
-		set_temp_variable = { alert_color = 2 }
-		add_md_alert_unless_exists = yes
-	}
-	else_if = {
-		limit = { is_in_array = { md_alerts = alert_id } }
-		remove_md_alert = yes
-	}
+	set_temp_variable = { spending_delta = expected_adm_spending }
+	subtract_from_temp_variable = { spending_delta = bureaucracy }
+	md_check_spending_alert = yes
 
-	# Education spending
 	set_temp_variable = { alert_id = token:md_negative_expected_education_spending }
-	if = {
-		limit = { check_variable = { expected_edu_spending > education_budget } }
-		set_temp_variable = { alert_color = 2 }
-		add_md_alert_unless_exists = yes
-	}
-	else_if = {
-		limit = { is_in_array = { md_alerts = alert_id } }
-		remove_md_alert = yes
-	}
+	set_temp_variable = { spending_delta = expected_edu_spending }
+	subtract_from_temp_variable = { spending_delta = education_budget }
+	md_check_spending_alert = yes
 
-	# Police spending
 	set_temp_variable = { alert_id = token:md_negative_expected_police_spending }
-	if = {
-		limit = { check_variable = { expected_police_spending > crime_fighting } }
-		set_temp_variable = { alert_color = 2 }
-		add_md_alert_unless_exists = yes
-	}
-	else_if = {
-		limit = { is_in_array = { md_alerts = alert_id } }
-		remove_md_alert = yes
-	}
+	set_temp_variable = { spending_delta = expected_police_spending }
+	subtract_from_temp_variable = { spending_delta = crime_fighting }
+	md_check_spending_alert = yes
 
-	# Defense spending
 	set_temp_variable = { alert_id = token:md_negative_expected_defense_spending }
-	if = {
-		limit = { check_variable = { expected_military_sp > Military_Spending } }
-		set_temp_variable = { alert_color = 2 }
-		add_md_alert_unless_exists = yes
-	}
-	else_if = {
-		limit = { is_in_array = { md_alerts = alert_id } }
-		remove_md_alert = yes
-	}
+	set_temp_variable = { spending_delta = expected_military_sp }
+	subtract_from_temp_variable = { spending_delta = Military_Spending }
+	md_check_spending_alert = yes
 }
 
 # Checks energy_balance_value_display and adds or removes the md_negative_eletricity alert accordingly.
@@ -252,7 +225,13 @@ md_check_research_slot_alert = {
 	}
 }
 
-# Alert right click/cancel effect
+# Shift-click: clears suppression list so dismissed alerts can surface again.
+md_alert_restore_suppressed = {
+	clear_array = md_alerts_suppressed
+	md_alert_update_gui = yes
+}
+
+# Right-click: suppresses the specific dismissed alert id from re-adding.
 md_alert_right_click = {
 	# DO NOT DELETE THIS
 	# Follow this template:
@@ -262,6 +241,9 @@ md_alert_right_click = {
 	# 	}
 	# 	<effects>
 	# }
+
+	set_temp_variable = { dismissed_alert_id = md_alerts^alert_idx }
+	add_to_array = { array = md_alerts_suppressed value = dismissed_alert_id }
 
 	remove_from_array = { array = md_alerts index = alert_idx }
 	remove_from_array = { array = md_alert_color index = alert_idx }
