@@ -18,12 +18,9 @@ MER_clear_mercosur_member_state_variables = {
 
 MER_sync_mercosur_member_state_from_existing = {
 	for_each_scope_loop = {
-		array = global.mercosur_potential
+		array = global.mercosur_member_state
 		if = {
-			limit = {
-				has_dynamic_modifier = mercosur_member_state_modifier
-				NOT = { tag = ROOT }
-			}
+			limit = { NOT = { tag = ROOT } }
 			ROOT = {
 				set_variable = { var = mercosur_member_state_political_power_factor value = PREV.mercosur_member_state_political_power_factor }
 				set_variable = { var = mercosur_member_state_stability_factor value = PREV.mercosur_member_state_stability_factor }
@@ -47,11 +44,8 @@ MER_sync_mercosur_member_state_from_existing = {
 
 MER_sync_mercosur_member_stability_delta = {
 	for_each_scope_loop = {
-		array = global.mercosur_potential
-		if = {
-			limit = { has_dynamic_modifier = mercosur_member_state_modifier }
-			add_to_variable = { mercosur_member_state_stability_factor = MER_mercosur_member_state_stability_delta }
-		}
+		array = global.mercosur_member_state
+		add_to_variable = { mercosur_member_state_stability_factor = MER_mercosur_member_state_stability_delta }
 	}
 }
 
@@ -120,12 +114,9 @@ MER_suspend_mercosur_member_effect = {
 		limit = { has_dynamic_modifier = mercosur_member_state_modifier }
 
 		for_each_scope_loop = {
-			array = global.mercosur_potential
+			array = global.mercosur_member_state
 			if = {
-				limit = {
-					NOT = { tag = ROOT }
-					has_dynamic_modifier = mercosur_member_state_modifier
-				}
+				limit = { NOT = { tag = ROOT } }
 				add_to_variable = { mercosur_member_state_productivity_growth_modifier = -0.01 }
 				add_to_variable = { mercosur_member_state_tax_gain_multiplier_modifier = -0.01 }
 				add_to_variable = { mercosur_member_state_foreign_influence_modifier = -0.01 }
@@ -134,6 +125,7 @@ MER_suspend_mercosur_member_effect = {
 
 		MER_clear_mercosur_member_state_variables = yes
 		remove_dynamic_modifier = { modifier = mercosur_member_state_modifier }
+		remove_from_array = { global.mercosur_member_state = THIS }
 	}
 }
 
@@ -164,6 +156,7 @@ MER_suspend_unasul_member_effect = {
 		}
 
 		remove_dynamic_modifier = { modifier = unasul_member_state_modifier }
+		remove_from_array = { global.unasul_member_state = THIS }
 	}
 }
 
