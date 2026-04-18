@@ -33,6 +33,7 @@ tools/
 ├── generators/        Content generators (tribute ideas, focus names)
 ├── linting/           Style checkers, formatters, encoding validators
 ├── publishing/        Steam Workshop publishing
+├── report_lib/        PR validation report renderer + GitHub Checks API client
 ├── standardization/   Auto-standardizers for focuses, events, decisions, ideas
 ├── tests/             Test suites for validators
 ├── validation/        Content validators (events, decisions, variables, etc.)
@@ -47,24 +48,30 @@ tools/
 └── README.md
 ```
 
+### Architecture quick-reference
+
+- **Writing a new validator?** Subclass `BaseValidator` from `tools/validation/validator_common.py`. Prefer `add_error(category, msg, file, line)` for structured issues; `_report(list_of_strings, ...)` still works and now auto-parses common `path:line - msg` formats into file+line for the PR comment's inline annotations.
+- **Writing a new linter or fixer?** Import helpers from `tools/shared_utils.py`. Skip `validator_common` — linters don't emit the structured issue stream validators produce.
+- **Reading validator output?** Import from `tools/report_lib`. It parses the JSON sidecars each validator writes and renders the PR comment + GitHub Check Runs.
+
 ## Scripts by Category
 
 ### Linting (`linting/`)
 
 Style checkers, formatters, and encoding validators. These are used in pre-commit hooks and CI.
 
-| Script                                | Description                                                                   |
-| ------------------------------------- | ----------------------------------------------------------------------------- |
-| **check_basic_style.py**              | Style checker for mod `.txt` files (pre-commit + CI)                          |
-| **check_basic_style_2.py**            | Extended style checker with additional rules (pre-commit + CI)                |
-| **check_braces.py**                   | Validates matching braces in mod script files                                 |
-| **check_common_mistakes.py**          | Detects common scripting mistakes from CLAUDE.md rules                        |
-| **coding_standards.py**               | Enforces Millennium Dawn coding standards                                     |
-| **fix_styling.py**                    | Comprehensive auto-fixer for style issues (tabs, spacing, braces, whitespace) |
-| **fix_line_endings.py**               | Converts CRLF to LF line endings                                              |
-| **fix_loc_yaml.py**                   | Fixes localisation YAML issues (quotes, tabs, colons, version keys)           |
-| **validate_localization_encoding.py** | Validates and fixes UTF-8 BOM encoding for localisation files                 |
-| **validate_mod_encoding.py**          | Checks UTF-8 encoding for `.mod` files                                        |
+| Script                                | Description                                                                                                                                       |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **check_basic_style.py**              | Style checker for mod `.txt` files (pre-commit + CI)                                                                                              |
+| **check_basic_style_2.py**            | Extended style checker with additional rules (pre-commit + CI)                                                                                    |
+| **check_braces.py**                   | Validates matching braces in mod script files                                                                                                     |
+| **check_common_mistakes.py**          | Detects common scripting mistakes: bad value ranges, `allowed`/`cancel` no-ops, `ai_will_do factor` vs `base`, division instead of multiplication |
+| **coding_standards.py**               | Enforces Millennium Dawn coding standards                                                                                                         |
+| **fix_styling.py**                    | Comprehensive auto-fixer for style issues (tabs, spacing, braces, whitespace)                                                                     |
+| **fix_line_endings.py**               | Converts CRLF to LF line endings                                                                                                                  |
+| **fix_loc_yaml.py**                   | Fixes localisation YAML issues (quotes, tabs, colons, version keys)                                                                               |
+| **validate_localization_encoding.py** | Validates and fixes UTF-8 BOM encoding for localisation files                                                                                     |
+| **validate_mod_encoding.py**          | Checks UTF-8 encoding for `.mod` files                                                                                                            |
 
 ### Validation (`validation/`)
 
@@ -80,15 +87,14 @@ DDS conversion, GFX entry generation, texture and flag tools.
 
 | Script                           | Description                                                               |
 | -------------------------------- | ------------------------------------------------------------------------- |
-| **batchDDS.py**                  | Generates nvtt_export batch scripts for DDS conversion                    |
 | **batchdds-2.py**                | Self-contained Python DDS converter (DXT1/DXT5, no external dependencies) |
 | **convert_to_legacy_dds.py**     | Converts DX10/sRGB DDS files to legacy ARGB8888 for HOI4 compatibility    |
-| **duplicate_icon.py**            | Detects duplicate icon files                                              |
+| **duplicate_icon.py**            | Detects duplicate icon files in a focus tree file                         |
 | **find_duplicate_textures.py**   | Finds duplicate texture files in the mod                                  |
 | **flag-reference-checker.py**    | Validates flag references across the mod                                  |
-| **gfx_entry_generator.py**       | Generates GFX sprite entries for goals and interface elements             |
-| **gfx_entry_generator_gui.py**   | GUI version of the GFX entry generator                                    |
-| **gfx_entry_generator_linux.py** | Cross-platform GFX entry generator (pathlib-based, deterministic sort)    |
+| **gfx_entry_generator.py**       | GFX sprite entry generator (Windows)                                      |
+| **gfx_entry_generator_gui.py**   | GFX sprite entry generator with GUI (Windows)                             |
+| **gfx_entry_generator_linux.py** | GFX sprite entry generator (cross-platform, deterministic sort)           |
 | **state_gfx.py**                 | Extracts province colors from state files and renders them on the map     |
 
 See `assets/gfxEntryGenerator.md` for the GFX entry generator guide.
@@ -100,7 +106,6 @@ Metrics, reference analysis, and review tools.
 | Script                              | Description                                                            |
 | ----------------------------------- | ---------------------------------------------------------------------- |
 | **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system              |
-| **count_of_focuses.py**             | Counts focuses in focus tree files                                     |
 | **estimate_gdp.py**                 | Estimates starting GDP for country tags using MD's building formulas   |
 | **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase |
 | **find_scripted_loc_references.py** | Checks whether scripted localisation names are actually referenced     |
@@ -111,10 +116,9 @@ Metrics, reference analysis, and review tools.
 
 Content generation tools.
 
-| Script                                | Description                                                           |
-| ------------------------------------- | --------------------------------------------------------------------- |
-| **generate_tribute_ideas.py**         | Generates tribute idea definitions and localisation for all countries |
-| **text_to_focus_and_focus_to_loc.py** | Converts text to focus IDs and generates localisation entries         |
+| Script                        | Description                                                           |
+| ----------------------------- | --------------------------------------------------------------------- |
+| **generate_tribute_ideas.py** | Generates tribute idea definitions and localisation for all countries |
 
 ### Publishing (`publishing/`)
 
@@ -123,6 +127,22 @@ Content generation tools.
 | **publish_workshop.py** | Publishes the mod to the Steam Workshop (release or beta) |
 
 See the [Workshop Publishing Guide](#workshop-publishing-guide) below for full usage details.
+
+### Report Library (`report_lib/`)
+
+Internal package used by `generate_validation_report.py` to render PR comments and post GitHub Check Runs. Its only inputs are the JSON sidecars produced by each validator.
+
+| Module            | Responsibility                                                          |
+| ----------------- | ----------------------------------------------------------------------- |
+| **models.py**     | `Issue`, `ValidatorRun`, `ReportContext` dataclasses                    |
+| **loader.py**     | Reads `.json` sidecars; falls back to parsing `.log` text when missing  |
+| **dedupe.py**     | Collapses cross-validator duplicates, preserving first-seen order       |
+| **markdown.py**   | Renders the report Markdown — summary table + issues-by-file + raw logs |
+| **truncation.py** | Drops heavy sections when the body exceeds 60 KB, keeping the summary   |
+| **comment.py**    | Find-by-marker + PATCH/POST logic for the bot-authored PR comment       |
+| **checks_api.py** | One Check Run per validator with up to 50 annotations per run           |
+
+Tests live in `report_lib/tests/` and run on every PR via the `tools-validation.yml` workflow.
 
 ### Tests (`tests/`)
 
@@ -139,7 +159,7 @@ Hook entry points, CI tools, and shared libraries that stay at the `tools/` root
 | --------------------------------- | ---------------------------------------------------------------- |
 | **validate_staged.py**            | Pre-commit hook: routes staged files to the correct validator    |
 | **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer |
-| **generate_validation_report.py** | CI: generates and posts PR validation reports                    |
+| **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs  |
 | **validate_tools.py**             | CI: validates Python scripts in the tools directory              |
 | **path_utils.py**                 | Shared path utilities (imported by linting scripts)              |
 | **shared_utils.py**               | Shared utilities (imported by validation + standardization)      |

@@ -35,6 +35,19 @@ def _should_skip(filename: str) -> bool:
     return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
 
 
+def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
+    """Pool worker: count occurrences of each tracked event ID in one file."""
+    filename, tracked_ids = args
+    if _should_skip(filename):
+        return {}
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+    except Exception:
+        return {}
+    cleaned = re.sub(r"#[^\n]*", "", text)
+    return {eid: cleaned.count(eid) for eid in tracked_ids if eid in cleaned}
+
+
 def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
     """Pool worker: find id-only long-form event calls in one .txt file."""
     filename, mod_path = args
@@ -201,10 +214,98 @@ class Validator(BaseValidator):
             "Long-form event calls with only id (use shorthand instead):",
         )
 
+    def validate_missing_localisation(self):
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking for events with missing localisation keys...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        events, paths = self._get_all_events()
+        loc_keys = self._load_localisation_keys()
+        self.log(f"  Found {len(events)} events, {len(loc_keys)} localisation keys")
+
+        # Extracts values from title/desc/name fields that look like loc keys (contain a dot).
+        # Covers simple form (title = foo.1.t) and block form (triggered_desc { desc = foo.1.t }).
+        ref_pattern = re.compile(
+            r"\b(?:title|desc|name)\s*=\s*([\w][\w.]*)", re.MULTILINE
+        )
+        pattern_id = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
+
+        results = []
+        for event in events:
+            eid_matches = pattern_id.findall(event)
+            eid = eid_matches[0] if eid_matches else "unknown"
+            filename = paths.get(event, "unknown")
+
+            loc_refs = [k for k in ref_pattern.findall(event) if "." in k]
+            missing = [k for k in loc_refs if k not in loc_keys]
+            for key in missing:
+                results.append(f"{eid} - {filename}: missing loc key '{key}'")
+
+        self._report(
+            results,
+            "✓ All event localisation keys are defined",
+            "Events with missing localisation keys:",
+            Severity.WARNING,
+            category="missing-event-localisation",
+        )
+
+    def validate_triggered_only_unreferenced(self):
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking for triggered-only events never referenced anywhere...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        events, paths = self._get_all_events()
+        pattern_id = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
+
+        triggered_only_ids: Dict[str, str] = {}
+        for event in events:
+            if "is_triggered_only = yes" in event:
+                matches = pattern_id.findall(event)
+                if matches:
+                    eid = matches[0]
+                    triggered_only_ids[eid] = paths.get(event, "unknown")
+
+        self.log(
+            f"  Found {len(triggered_only_ids)} triggered-only events — scanning for references..."
+        )
+
+        txt_files = self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+        )
+        tracked = frozenset(triggered_only_ids.keys())
+        args_list = [(f, tracked) for f in txt_files]
+        all_counts = self._pool_map(count_event_ids_in_file, args_list, chunksize=30)
+
+        total_counts: Dict[str, int] = {eid: 0 for eid in tracked}
+        for file_counts in all_counts:
+            for eid, count in file_counts.items():
+                total_counts[eid] = total_counts.get(eid, 0) + count
+
+        # The definition itself contributes 1 occurrence (id = X inside the event block).
+        # Anything > 1 means it's referenced somewhere else.
+        results = []
+        for eid in sorted(triggered_only_ids):
+            if total_counts.get(eid, 0) <= 1:
+                results.append(f"{eid} - {triggered_only_ids[eid]}")
+
+        self._report(
+            results,
+            "✓ All triggered-only events are referenced somewhere",
+            "Triggered-only events with no references found:",
+            Severity.WARNING,
+            category="unreferenced-triggered-only",
+        )
+
     def run_validations(self):
         self.validate_unsupported_title_desc()
         self.validate_missing_triggered_only()
         self.validate_event_call_long_form()
+        self.validate_triggered_only_unreferenced()
+        self.validate_missing_localisation()
 
 
 if __name__ == "__main__":

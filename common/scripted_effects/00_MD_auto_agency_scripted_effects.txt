@@ -1,0 +1,276 @@
+# Bumps the dirty counter used by the auto-agency scripted_guis so they only
+# refresh when queue/selection/automation state actually changed, instead of
+# every tick. Wraps at 10000 to stay within safe integer range.
+MD_auto_agency_mark_dirty = {
+	if = {
+		limit = { check_variable = { global.auto_agency_upgrade < 10000 } }
+		add_to_variable = { global.auto_agency_upgrade = 1 }
+	}
+	else = {
+		set_variable = { global.auto_agency_upgrade = 1 }
+	}
+}
+
+# Caller must `set_temp_variable = { shrink_idx = N }` before invoking.
+MD_auto_agency_shrink_queue_at_index = {
+	set_temp_variable = { last = agency_queue^num }
+	subtract_from_temp_variable = { last = 1 }
+
+	if = {
+		limit = {
+			check_variable = { agency_queue^num > 1 }
+			check_variable = { shrink_idx < last }
+		}
+
+		set_temp_variable = { start_from = shrink_idx }
+		add_to_temp_variable = { start_from = 1 }
+
+		for_loop_effect = {
+			start = start_from
+			end = agency_queue^num
+			value = v2
+
+			set_temp_variable = { above = v2 }
+			subtract_from_temp_variable = { above = 1 }
+			set_variable = { agency_queue^above = agency_queue^v2 }
+		}
+
+		clear_variable = agency_queue^last
+		subtract_from_variable = { agency_queue^num = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { agency_queue^num = 1 } }
+		clear_array = agency_queue
+	}
+	else = {
+		clear_variable = agency_queue^last
+		subtract_from_variable = { agency_queue^num = 1 }
+	}
+}
+
+MD_auto_agency_toggle_dropdown = {
+	if = {
+		limit = { check_variable = { agency_dropdown_visible = 2 } }
+		set_variable = { agency_dropdown_visible = 1 }
+	}
+	else = {
+		set_variable = { agency_dropdown_visible = 2 }
+	}
+}
+
+MD_auto_agency_verify_queue = {
+	if = {
+		limit = {
+			has_variable = agency_queue^num
+			check_variable = { agency_queue^num > 0 }
+		}
+		resize_array = { array = agency_upgrades_in_queue_count size = agency_upgrades_completed_and_queued^num value = 0 }
+
+		if = {
+			limit = { NOT = { check_variable = { agency_selected_upgrade = -1 } } }
+			add_to_variable = { agency_upgrades_in_queue_count^agency_selected_upgrade = 1 }
+		}
+
+		for_each_loop = {
+			array = agency_queue
+			value = v
+
+			if = {
+				limit = {
+					MD_auto_agency_v_index_valid = yes
+					MD_auto_agency_v_not_completed = yes
+					MD_auto_agency_v_not_maxed_in_queue = yes
+				}
+
+				add_to_array = { agency_queue_hold = v }
+				add_to_variable = { agency_upgrades_in_queue_count^v = 1 }
+			}
+		}
+
+		clear_array = agency_upgrades_in_queue_count
+		clear_array = agency_queue
+
+		resize_array = { array = agency_queue value = 0 size = agency_queue_hold^num }
+		for_each_loop = {
+			array = agency_queue_hold
+			value = v
+			index = i
+
+			set_variable = { agency_queue^i = v }
+		}
+
+		clear_array = agency_queue_hold
+	}
+}
+
+MD_auto_agency_find_first_valid = {
+	MD_auto_agency_verify_queue = yes
+
+	set_variable = { agency_selected_upgrade = -1 }
+
+	if = {
+		limit = {
+			has_intelligence_agency = yes
+			has_variable = agency_queue^num
+			check_variable = { agency_queue^num > 0 }
+		}
+
+		for_each_loop = {
+			array = agency_queue
+			value = v
+			break = MD_auto_agency_loop_break
+			index = i
+
+			if = {
+				limit = {
+					MD_auto_agency_v_index_valid = yes
+					MD_auto_agency_v_can_select = yes
+				}
+
+				set_variable = { agency_selected_upgrade = v }
+				set_temp_variable = { idx_to_remove = i }
+				set_temp_variable = { MD_auto_agency_loop_break = 1 }
+			}
+		}
+	}
+
+	if = {
+		limit = {
+			check_variable = { agency_selected_upgrade = -1 }
+			check_variable = { automate_agency_upgrades_choice = 2 }
+		}
+		MD_auto_agency_select_random = yes
+
+		if = {
+			limit = { NOT = { check_variable = { agency_selected_upgrade = -1 } } }
+			add_to_variable = { agency_upgrades_completed_and_queued^agency_selected_upgrade = 1 }
+		}
+	}
+	else_if = {
+		limit = { NOT = { check_variable = { agency_selected_upgrade = -1 } } }
+		set_temp_variable = { shrink_idx = idx_to_remove }
+		MD_auto_agency_shrink_queue_at_index = yes
+	}
+}
+
+MD_auto_agency_select_random = {
+	clear_array = random_agency_upgrade_to_select
+
+	for_loop_effect = {
+		end = global.agency_upgrades^num
+		value = v
+
+		if = {
+			limit = {
+				MD_auto_agency_v_can_select = yes
+				MD_auto_agency_v_not_completed = yes
+			}
+
+			add_to_array = { random_agency_upgrade_to_select = v }
+		}
+	}
+
+	if = {
+		limit = {
+			has_variable = random_agency_upgrade_to_select^num
+			check_variable = { random_agency_upgrade_to_select^num > 0 }
+		}
+
+		set_temp_variable_to_random = {
+			var = random_num
+			min = 0
+			max = random_agency_upgrade_to_select^num
+			integer = yes
+		}
+
+		set_variable = { agency_selected_upgrade = random_agency_upgrade_to_select^random_num }
+	}
+
+	clear_array = random_agency_upgrade_to_select
+}
+
+MD_auto_agency_apply_selected = {
+	set_temp_variable = { v = agency_selected_upgrade }
+	if = {
+		limit = { MD_auto_agency_v_index_valid = yes }
+		meta_effect = {
+			text = {
+				upgrade_intelligence_agency = [AGENCY]
+			}
+			AGENCY = "[?global.agency_upgrades^v.GetTokenLocalizedKey]"
+		}
+	}
+
+	set_variable = { agency_selected_upgrade = -1 }
+	MD_auto_agency_mark_dirty = yes
+}
+
+MD_auto_agency_init_country_state = {
+	resize_array = { array = agency_upgrades_completed_and_queued value = 0 size = 25 }
+
+	if = {
+		limit = { NOT = { has_variable = agency_selected_upgrade } }
+		set_variable = { agency_selected_upgrade = -1 }
+	}
+	if = {
+		limit = { NOT = { has_variable = automate_agency_upgrades_choice } }
+		set_variable = { automate_agency_upgrades_choice = 1 }
+	}
+	if = {
+		limit = { NOT = { has_variable = agency_dropdown_visible } }
+		set_variable = { agency_dropdown_visible = 2 }
+	}
+
+	MD_auto_agency_get_upgrade_time = yes
+	MD_auto_agency_mark_dirty = yes
+}
+
+MD_auto_agency_get_upgrade_time = {
+	set_variable = { agency_upgrade_time_days = modifier@agency_upgrade_time }
+	add_to_variable = { agency_upgrade_time_days = 1 }
+	multiply_variable = { agency_upgrade_time_days = global.agency_upgrade_time_days_base }
+	clamp_variable = {
+		var = agency_upgrade_time_days
+		min = 1
+	}
+	round_variable = agency_upgrade_time_days
+}
+
+MD_auto_agency_reconcile_state = {
+	# Stale selection recovery: mission gone, no native upgrade running, yet a
+	# selection remains. Push it back onto the queue so it gets re-evaluated.
+	if = {
+		limit = {
+			NOT = { has_active_mission = spy_agency_upgrade_in_progress }
+			check_variable = { modifier@MD_auto_agency_in_progress_boolean = 0 }
+			NOT = { check_variable = { agency_selected_upgrade = -1 } }
+		}
+
+		set_temp_variable = { interrupted_selected_upgrade = agency_selected_upgrade }
+		set_variable = { agency_selected_upgrade = -1 }
+		add_to_array = { agency_queue = interrupted_selected_upgrade }
+		MD_auto_agency_verify_queue = yes
+	}
+}
+
+MD_auto_agency_update_state = {
+	MD_auto_agency_reconcile_state = yes
+	MD_auto_agency_begin_if_possible = yes
+	MD_auto_agency_mark_dirty = yes
+}
+
+MD_auto_agency_begin_if_possible = {
+	if = {
+		limit = { MD_auto_agency_can_start = yes }
+
+		MD_auto_agency_get_upgrade_time = yes
+		MD_auto_agency_find_first_valid = yes
+
+		if = {
+			limit = { NOT = { check_variable = { agency_selected_upgrade = -1 } } }
+			activate_mission = spy_agency_upgrade_in_progress
+		}
+
+		MD_auto_agency_mark_dirty = yes
+	}
+}
