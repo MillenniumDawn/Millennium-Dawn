@@ -9,6 +9,7 @@
 import glob
 import os
 import re
+from functools import partial
 from multiprocessing import Pool
 from typing import Dict, List, Optional, Tuple
 
@@ -104,7 +105,9 @@ class SetVariables:
         if staged_files:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
+            files_to_scan = list(
+                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
+            )
 
         process_func = partial(process_file_for_set_variables, lowercase=lowercase)
 
@@ -198,8 +201,12 @@ class Validator(BaseValidator):
                 f for f in self.staged_files if f.endswith(".txt") or f.endswith(".yml")
             ]
         else:
-            txt_files = list(glob.iglob(self.mod_path + "**/*.txt", recursive=True))
-            yml_files = list(glob.iglob(self.mod_path + "**/*.yml", recursive=True))
+            txt_files = list(
+                glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
+            )
+            yml_files = list(
+                glob.iglob(os.path.join(self.mod_path, "**", "*.yml"), recursive=True)
+            )
             files_to_scan = txt_files + yml_files
 
         tracked_vars = frozenset(cleaned_vars)

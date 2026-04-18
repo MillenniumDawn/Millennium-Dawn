@@ -145,11 +145,35 @@ def collect_all_issues(
     return all_issues
 
 
+def _format_issues_by_file(issues: List[Dict], lines: List[str]) -> None:
+    """Append issues grouped by file, sorted by line number, to lines list."""
+    by_file: Dict[str, List[Dict]] = {}
+    for issue in issues:
+        f = issue.get("file", "unknown")
+        if f not in by_file:
+            by_file[f] = []
+        by_file[f].append(issue)
+
+    for file_path, file_issues in sorted(by_file.items()):
+        file_issues.sort(key=lambda i: i.get("line", 0))
+        lines.append(f"  {file_path} ({len(file_issues)} issue(s))")
+        for issue in file_issues:
+            line_ref = f":{issue['line']}" if issue.get("line") else ""
+            lines.append(
+                f"    - {file_path}{line_ref}: [{issue.get('category', 'unknown')}] {issue.get('message', '')}"
+            )
+        lines.append("")
+
+
 def generate_combined_report(
-    output_dir: str, validators: List[Tuple[str, str, str]], use_colors: bool = True
+    output_dir: str,
+    validators: List[Tuple[str, str, str]],
+    crashed: List[str] = None,
+    use_colors: bool = True,
 ) -> str:
     """Generate a combined deduplicated report from all validators."""
     all_issues = collect_all_issues(output_dir, validators)
+    crashed = crashed or []
 
     errors = [i for i in all_issues if i.get("severity") == "error"]
     warnings = [i for i in all_issues if i.get("severity") == "warning"]
@@ -161,46 +185,25 @@ def generate_combined_report(
     lines.append(f"Total validators run: {len(validators)}")
     lines.append("")
 
-    if not errors and not warnings:
+    if not errors and not warnings and not crashed:
         lines.append("✓ ALL VALIDATIONS PASSED")
     else:
         if errors:
             lines.append(f"✗ {len(errors)} ERROR(S)")
             lines.append("")
-
-            by_file: Dict[str, List[Dict]] = {}
-            for e in errors:
-                f = e.get("file", "unknown")
-                if f not in by_file:
-                    by_file[f] = []
-                by_file[f].append(e)
-
-            for file_path, issues in sorted(by_file.items()):
-                lines.append(f"  {file_path} ({len(issues)} issue(s))")
-                for issue in issues:
-                    lines.append(
-                        f"    - [{issue.get('category', 'unknown')}] {issue.get('message', '')}"
-                    )
-                lines.append("")
+            _format_issues_by_file(errors, lines)
 
         if warnings:
             lines.append(f"⚠ {len(warnings)} WARNING(S)")
             lines.append("")
+            _format_issues_by_file(warnings, lines)
 
-            by_file: Dict[str, List[Dict]] = {}
-            for w in warnings:
-                f = w.get("file", "unknown")
-                if f not in by_file:
-                    by_file[f] = []
-                by_file[f].append(w)
-
-            for file_path, issues in sorted(by_file.items()):
-                lines.append(f"  {file_path} ({len(issues)} issue(s))")
-                for issue in issues:
-                    lines.append(
-                        f"    - [{issue.get('category', 'unknown')}] {issue.get('message', '')}"
-                    )
-                lines.append("")
+        if crashed:
+            lines.append(f"💥 {len(crashed)} VALIDATOR(S) CRASHED (no output produced)")
+            lines.append("")
+            for name in crashed:
+                lines.append(f"  - {name}")
+            lines.append("")
 
     lines.append("=" * 80)
     return "\n".join(lines)
@@ -250,8 +253,6 @@ def main():
         extra_flags.append("--strict")
     if args.no_color:
         extra_flags.append("--no-color")
-    # CI runner doesn't benefit from cache - disable it
-    extra_flags.append("--no-cache")
 
     output_dir = tempfile.mkdtemp()
     VALIDATORS = discover_validators(include_slow=args.include_slow)
@@ -283,6 +284,7 @@ def main():
     # Collect results in order
     total_errors = 0
     total_warnings = 0
+    crashed_validators = []
 
     for name, _script, label in VALIDATORS:
         returncode = processes[name].wait()
@@ -295,7 +297,9 @@ def main():
             total_errors += error_count
             total_warnings += warning_count
         elif returncode != 0:
-            print(f"{Colors.RED}✗ {label}{Colors.NC} (exit code {returncode})")
+            # Non-zero exit with no JSON output means the validator itself crashed
+            print(f"{Colors.RED}✗ {label}{Colors.NC} (crashed, exit code {returncode})")
+            crashed_validators.append(label)
             total_errors += 1
         else:
             print(f"{Colors.GREEN}✓ {label}{Colors.NC}")
@@ -318,7 +322,9 @@ def main():
 
         sys.exit(0)
     else:
-        report = generate_combined_report(output_dir, VALIDATORS, not args.no_color)
+        report = generate_combined_report(
+            output_dir, VALIDATORS, crashed_validators, not args.no_color
+        )
 
         if args.format in ("json", "both"):
             combined_json = {
