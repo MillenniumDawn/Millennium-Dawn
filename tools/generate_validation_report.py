@@ -24,6 +24,7 @@ if _TOOLS_DIR not in sys.path:
     sys.path.insert(0, _TOOLS_DIR)
 
 from report_lib import (  # noqa: E402
+    MAX_ISSUES_STEP_SUMMARY,
     ReportContext,
     dedupe,
     load_all,
@@ -35,17 +36,23 @@ from report_lib import (  # noqa: E402
 
 
 def build_report(results_dir: str, ctx: ReportContext):
-    """Return (body, runs, deduped_issues, truncated)."""
+    """Return (body, step_summary_body, runs, deduped_issues, truncated)."""
     runs = load_all(results_dir)
     flat_issues = [i for run in runs for i in run.issues]
     deduped = dedupe(flat_issues)
+
+    # PR comment — kept under 65 KB with truncation.
     body = render(runs, deduped, ctx)
     body, truncated = truncate_if_needed(
         body,
         artifact_url=ctx.artifact_url or "",
         workflow_run_url=ctx.workflow_run_url or "",
     )
-    return body, runs, deduped, truncated
+
+    # Step summary — richer version, ~1 MB budget, no marker header needed.
+    step_body = render(runs, deduped, ctx, max_visible=MAX_ISSUES_STEP_SUMMARY)
+
+    return body, step_body, runs, deduped, truncated
 
 
 def main() -> int:
@@ -89,7 +96,7 @@ def main() -> int:
         date_utc=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
     )
 
-    body, runs, deduped, truncated = build_report(args.results_dir, ctx)
+    body, step_body, runs, deduped, truncated = build_report(args.results_dir, ctx)
 
     try:
         with open(args.output, "w", encoding="utf-8") as f:
@@ -103,6 +110,16 @@ def main() -> int:
             "Report body exceeded 60 KB and was truncated; artifact has the full data.",
             file=sys.stderr,
         )
+
+    # Write richer report to GitHub Actions step summary when running in CI.
+    step_summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if step_summary_path:
+        try:
+            with open(step_summary_path, "w", encoding="utf-8") as f:
+                f.write(step_body)
+            print("Step summary written.", file=sys.stderr)
+        except Exception as e:
+            print(f"Warning: could not write step summary: {e}", file=sys.stderr)
 
     if args.print:
         print(body)

@@ -335,7 +335,9 @@ class Variables:
         if staged_files is not None:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
+            files_to_scan = list(
+                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
+            )
 
         args_list = [(f, lowercase, flag_type, operation) for f in files_to_scan]
         with Pool(processes=workers) as pool:
@@ -364,7 +366,9 @@ class Variables:
         if staged_files is not None:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
+            files_to_scan = list(
+                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
+            )
 
         args_list = [(f, lowercase, flag_type) for f in files_to_scan]
         with Pool(processes=workers) as pool:
@@ -442,7 +446,9 @@ class EventTargets:
         if staged_files is not None:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
+            files_to_scan = list(
+                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
+            )
 
         args_list = [(f, lowercase) for f in files_to_scan]
         with Pool(processes=workers) as pool:
@@ -465,7 +471,9 @@ class EventTargets:
         if staged_files is not None:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
+            files_to_scan = list(
+                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
+            )
 
         args_list = [(f, lowercase, operation) for f in files_to_scan]
         with Pool(processes=workers) as pool:
@@ -854,7 +862,9 @@ class Validator(BaseValidator):
         if self.staged_files:
             yml_files_to_scan = [f for f in self.staged_files if f.endswith(".yml")]
         else:
-            yml_files_to_scan = glob.iglob(self.mod_path + "**/*.yml", recursive=True)
+            yml_files_to_scan = glob.iglob(
+                os.path.join(self.mod_path, "**", "*.yml"), recursive=True
+            )
 
         for filename in yml_files_to_scan:
             if should_skip_file(filename):
