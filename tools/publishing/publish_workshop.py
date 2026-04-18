@@ -3,17 +3,20 @@
 publish_workshop.py - Publish Millennium Dawn to Steam Workshop.
 
 Usage:
-  publish_workshop.py release --full
-  publish_workshop.py beta --base-ref v1.12.3b
+  publish_workshop.py release --full --version 1.12.3
+  publish_workshop.py beta --base-ref v1.12.3b --version 1.12.3b
   publish_workshop.py release --full --username OtherUser
   STEAM_USERNAME=MyUser publish_workshop.py beta --full
 
 Username is read from --username or the STEAM_USERNAME env var.
+--version rewrites version= in descriptor.mod for this upload only; omit
+to ship whatever version is currently committed in the repo.
 """
 
 import argparse
 import fnmatch
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -42,19 +45,13 @@ MOD_NAMES = {
 # Files that must always be included (even if unchanged in diff mode).
 ALWAYS_KEEP = {"descriptor.mod", "thumbnail.png"}
 
-# Dev/CI artifacts excluded from all uploads.
-DEFAULT_EXCLUDES = {
-    ".git",
-    ".github",
-    ".claude",
-    ".vscode",
-    ".vs",
-    ".idea",
-    ".continue",
+# Dev/CI artifacts excluded only at the repo root. Names here collide with
+# legitimate game content deeper in the tree (e.g. common/resources is game
+# data; docs/ has its own tools/ and resources/ subdirs).
+ROOT_ONLY_EXCLUDES = {
     ".pre-commit-config.yaml",
     ".gitignore",
     ".gitattributes",
-    "CLAUDE.md",
     "CODEOWNERS",
     "CONTRIBUTING.md",
     "SECURITY.md",
@@ -64,11 +61,25 @@ DEFAULT_EXCLUDES = {
     "docs",
     "tools",
     "resources",
+}
+
+# Dev artifacts excluded wherever they appear in the tree.
+ANYWHERE_EXCLUDES = {
+    ".git",
+    ".github",
+    ".claude",
+    ".vscode",
+    ".vs",
+    ".idea",
+    ".continue",
+    "CLAUDE.md",
     "node_modules",
     "vscode-userdata:",
     "pythontools.log",
     "__pycache__",
 }
+
+DEFAULT_EXCLUDES = ROOT_ONLY_EXCLUDES | ANYWHERE_EXCLUDES
 
 
 def elapsed_str(start: float) -> str:
@@ -162,11 +173,19 @@ def dir_stats(root: Path) -> tuple[int, int]:
 def copy_repo(dest_parent: Path, excludes: set[str]) -> Path:
     dest = dest_parent / "mod"
 
-    def _ignore(_dir: str, names: list[str]) -> set[str]:
+    # Anything in excludes that is also in ROOT_ONLY_EXCLUDES is applied only
+    # at the repo root. Everything else matches at every depth.
+    root_only = excludes & ROOT_ONLY_EXCLUDES
+    anywhere = excludes - ROOT_ONLY_EXCLUDES
+
+    def _ignore(dir_path: str, names: list[str]) -> set[str]:
+        patterns = anywhere
+        if Path(dir_path).resolve() == REPO_ROOT:
+            patterns = patterns | root_only
         return {
             n
             for n in names
-            if n in excludes or any(fnmatch.fnmatch(n, p) for p in excludes)
+            if n in patterns or any(fnmatch.fnmatch(n, p) for p in patterns)
         }
 
     with Spinner("Copying mod files"):
@@ -232,6 +251,56 @@ def write_vdf(mod_dir: Path, mod_id: str) -> Path:
     return vdf_path
 
 
+def patch_descriptor(
+    mod_dir: Path, target_name: str, mod_id: str, version: str | None
+) -> None:
+    """Rewrite name, remote_file_id, and (optionally) version in descriptor.mod.
+
+    The repo's descriptor.mod hardcodes the release mod ID and a stale version.
+    Each publish target needs its own name + ID so the launcher binds the
+    uploaded content to the correct Workshop item.
+    """
+    descriptor = mod_dir / "descriptor.mod"
+    if not descriptor.exists():
+        print("  WARNING: descriptor.mod not found in content folder; skipping patch")
+        return
+
+    updates = {
+        "name=": f'name="{target_name}"\n',
+        "remote_file_id=": f'remote_file_id="{mod_id}"\n',
+    }
+    if version:
+        updates["version="] = f'version="{version}"\n'
+
+    lines = descriptor.read_text(encoding="utf-8").splitlines(keepends=True)
+    patched: set[str] = set()
+    for i, line in enumerate(lines):
+        for prefix, replacement in updates.items():
+            if prefix in patched:
+                continue
+            if line.startswith(prefix):
+                lines[i] = replacement
+                patched.add(prefix)
+                break
+
+    # Any field missing from the descriptor is appended so the upload is
+    # self-consistent rather than silently omitting it.
+    for prefix in updates.keys() - patched:
+        print(
+            f"  WARNING: descriptor.mod had no '{prefix.rstrip('=')}' line; appending"
+        )
+        lines.append(updates[prefix])
+
+    descriptor.write_text("".join(lines), encoding="utf-8")
+
+    print(f"  Mod name:       {target_name}")
+    print(f"  remote_file_id: {mod_id}")
+    if version:
+        print(f"  version:        {version}")
+    else:
+        print("  version:        (unchanged — using repo descriptor.mod value)")
+
+
 def steam_login(steamcmd: Path, username: str) -> None:
     """Log in to Steam interactively to cache credentials before uploading."""
     print(f"  Logging in to Steam as '{username}'...")
@@ -249,55 +318,119 @@ def publish(mod_dir: Path, username: str, mod_id: str) -> None:
     steam_login(steamcmd, username)
 
     vdf_path = write_vdf(mod_dir, mod_id)
-    print(f"  Mod ID:   {mod_id}")
-    print(f"  VDF:      {vdf_path}")
-    print(f"  steamcmd: {steamcmd}")
-    print()
+
+    # Persistent log outside the temp content folder so it survives cleanup.
+    log_path = Path(tempfile.gettempdir()) / f"md_publish_{int(time.time())}.log"
+
+    count, total = dir_stats(mod_dir)
+
+    # Phases are ordered: only move forward, never backwards, to avoid flapping.
+    PHASES = [
+        ("Connecting", ()),
+        ("Logging in", ("logging in", "logged in")),
+        ("Waiting for Steam Guard", ("waiting for confirmation",)),
+        ("Preparing upload", ("preparing",)),
+        ("Uploading content", ("uploading content",)),
+        ("Uploading preview", ("uploading preview",)),
+        ("Committing update", ("committing",)),
+    ]
+
+    # +set_spew_level N N raises steamcmd's console/log verbosity (0=silent, 4=debug).
+    # +@ShutdownOnFailedCommand 0 prints failures instead of bailing silently.
+    cmd = [
+        str(steamcmd),
+        "+@ShutdownOnFailedCommand",
+        "0",
+        "+@NoPromptForPassword",
+        "1",
+        "+set_spew_level",
+        "4",
+        "4",
+        "+login",
+        username,
+        "+workshop_build_item",
+        str(vdf_path),
+        "+quit",
+    ]
+
+    preamble = [
+        f"  Mod ID:       {mod_id}",
+        f"  Content dir:  {mod_dir}",
+        f"  Files:        {count:,}",
+        f"  Total size:   {format_size(total)}",
+        f"  VDF:          {vdf_path}",
+        f"  steamcmd:     {steamcmd}",
+        f"  Log file:     {log_path}",
+        "",
+        "  --- workshop_upload.vdf ---",
+        *(f"    {l}" for l in vdf_path.read_text(encoding="utf-8").splitlines()),
+        "  ---------------------------",
+        "",
+        f"  Command: {shlex.join(cmd)}",
+        "",
+    ]
+    for pline in preamble:
+        print(pline)
 
     start = time.time()
+    phase_start = start
+    phase_idx = 0
+    phase_timings: list[tuple[str, float]] = []
+
     proc = subprocess.Popen(
-        [
-            str(steamcmd),
-            "+login",
-            username,
-            "+workshop_build_item",
-            str(vdf_path),
-            "+quit",
-        ],
+        cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
+        bufsize=1,
     )
 
-    phase = "Connecting"
-    for line in proc.stdout:
-        line = line.rstrip()
-        if not line:
-            continue
+    with log_path.open("w", encoding="utf-8") as log_f:
+        # Preserve preamble context in the log file for post-mortem.
+        for pline in preamble:
+            log_f.write(pline + "\n")
+        log_f.flush()
 
-        # Detect phase transitions from steamcmd output.
-        low = line.lower()
-        if "logging in" in low or "login" in low:
-            phase = "Logging in"
-        elif "waiting for confirmation" in low:
-            phase = "Waiting for Steam Guard"
-        elif "preparing" in low:
-            phase = "Preparing upload"
-        elif "uploading content" in low:
-            phase = "Uploading content"
-        elif "uploading preview" in low:
-            phase = "Uploading preview"
-        elif "committing" in low:
-            phase = "Committing update"
+        for line in proc.stdout:
+            line = line.rstrip()
+            if not line:
+                continue
 
-        # Show steamcmd output with elapsed time.
-        print(f"  [{elapsed_str(start)}] {phase}: {line}")
+            log_f.write(line + "\n")
+            log_f.flush()
+
+            # Detect monotonic phase transitions from steamcmd output.
+            low = line.lower()
+            for i in range(phase_idx + 1, len(PHASES)):
+                name, keywords = PHASES[i]
+                if any(k in low for k in keywords):
+                    dt = time.time() - phase_start
+                    phase_timings.append((PHASES[phase_idx][0], dt))
+                    print(
+                        f"  [{elapsed_str(start)}] + {PHASES[phase_idx][0]} done ({int(dt)}s)"
+                    )
+                    phase_idx = i
+                    phase_start = time.time()
+                    break
+
+            print(f"  [{elapsed_str(start)}] {PHASES[phase_idx][0]}: {line}")
 
     proc.wait()
+    phase_timings.append((PHASES[phase_idx][0], time.time() - phase_start))
+
+    print()
+    print("  --- Phase timings ---")
+    for name, dt in phase_timings:
+        print(f"    {name:<28}  {int(dt)}s")
+    print(f"    {'TOTAL':<28}  {elapsed_str(start)}")
+    print()
+
     if proc.returncode != 0:
+        print(f"  Full steamcmd output: {log_path}")
         sys.exit(f"ERROR: steamcmd exited with code {proc.returncode}")
 
-    print(f"\n  Upload completed in {elapsed_str(start)}")
+    print(f"  Upload completed in {elapsed_str(start)}")
+    print(f"  Full steamcmd log preserved at: {log_path}")
 
 
 def main() -> None:
@@ -317,6 +450,11 @@ def main() -> None:
         help="Steam username (default: $STEAM_USERNAME)",
     )
     parser.add_argument("--mod-id", help="Override the Workshop mod ID")
+    parser.add_argument(
+        "--version",
+        help='Override version= in descriptor.mod (e.g. "1.12.3"). '
+        "Leave unset to ship the value already committed in the repo.",
+    )
     parser.add_argument(
         "--exclude",
         action="append",
@@ -357,18 +495,8 @@ def main() -> None:
         else:
             mod_dir = copy_repo(tmp, excludes)
 
-        # Set the correct mod name in descriptor.mod for this target.
-        descriptor = mod_dir / "descriptor.mod"
-        target_name = MOD_NAMES[args.target]
-        if descriptor.exists():
-            text = descriptor.read_text(encoding="utf-8")
-            lines = text.splitlines(keepends=True)
-            for i, line in enumerate(lines):
-                if line.startswith("name="):
-                    lines[i] = f'name="{target_name}"\n'
-                    break
-            descriptor.write_text("".join(lines), encoding="utf-8")
-        print(f"  Mod name: {target_name}")
+        # Rewrite descriptor.mod so the shipped copy matches this target.
+        patch_descriptor(mod_dir, MOD_NAMES[args.target], mod_id, args.version)
 
         print()
         publish(mod_dir, username, mod_id)
