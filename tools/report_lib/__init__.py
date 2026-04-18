@@ -18,11 +18,12 @@ from .checks_api import post_checks
 from .comment import REPORT_MARKER, find_existing_comment, post_comment
 from .dedupe import dedupe
 from .loader import discover_validator_runs, load_all
-from .markdown import render
+from .markdown import MAX_ISSUES_STEP_SUMMARY, render
 from .models import Issue, ReportContext, Severity, ValidatorRun
 from .truncation import MAX_COMMENT_BYTES, truncate_if_needed
 
 __all__ = [
+    "MAX_ISSUES_STEP_SUMMARY",
     "Issue",
     "Severity",
     "ValidatorRun",

@@ -24,6 +24,7 @@ from validator_common import (
     BaseValidator,
     Colors,
     FileOpener,
+    Severity,
     run_validator_main,
     should_skip_file,
 )
@@ -438,7 +439,9 @@ class Validator(BaseValidator):
         activated_decisions: set = set()
         activated_missions: set = set()
 
-        for filename in glob.iglob(self.mod_path + "**/*.txt", recursive=True):
+        for filename in glob.iglob(
+            os.path.join(self.mod_path, "**", "*.txt"), recursive=True
+        ):
             if _should_skip(filename):
                 continue
             text_file = FileOpener.open_text_file(
@@ -1337,6 +1340,41 @@ class Validator(BaseValidator):
             category="bare-trigger-name",
         )
 
+    def validate_missing_localisation(self):
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking for decisions with missing localisation keys...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        factories = parse_all_decision_factories(self.mod_path, lowercase=False)
+        loc_keys = self._load_localisation_keys()
+        self.log(
+            f"  Found {len(factories)} decisions, {len(loc_keys)} localisation keys"
+        )
+
+        results = []
+        for dec in factories:
+            dec_id = dec.token
+            filename = dec.source_basename
+            missing = []
+            if dec_id not in loc_keys:
+                missing.append(dec_id)
+            if f"{dec_id}_desc" not in loc_keys:
+                missing.append(f"{dec_id}_desc")
+            if dec.custom_cost_text and dec.custom_cost_text not in loc_keys:
+                missing.append(dec.custom_cost_text)
+            for key in missing:
+                results.append(f"{dec_id} - {filename}: missing loc key '{key}'")
+
+        self._report(
+            results,
+            "✓ All decision localisation keys are defined",
+            "Decisions with missing localisation keys:",
+            Severity.WARNING,
+            category="missing-decision-localisation",
+        )
+
     def run_validations(self):
         if self.staged_only:
             # Decision checks parse all 200+ decision files even for structural
@@ -1362,6 +1400,7 @@ class Validator(BaseValidator):
         self.validate_pp_charge_in_effect()
         self.validate_visible_equals_available()
         self.validate_bare_trigger_names()
+        self.validate_missing_localisation()
 
 
 def _add_extra_args(parser):

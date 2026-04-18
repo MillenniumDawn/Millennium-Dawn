@@ -534,7 +534,9 @@ class Validator(BaseValidator):
         pattern = r"^(\t+)add_resistance_target = (\{\n.*?)^\1\}"
         results = []
 
-        for filename in glob.iglob(self.mod_path + "**/*.txt", recursive=True):
+        for filename in glob.iglob(
+            os.path.join(self.mod_path, "**", "*.txt"), recursive=True
+        ):
             if _should_skip(filename):
                 continue
             text_file = FileOpener.open_text_file(

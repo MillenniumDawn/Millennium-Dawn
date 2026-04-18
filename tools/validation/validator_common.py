@@ -483,6 +483,20 @@ class BaseValidator:
             result = [f for f in result if not extra_skip(f)]
         return result
 
+    def _load_localisation_keys(self) -> frozenset:
+        """Load all defined keys from English localisation yml files."""
+        yml_files = self._collect_files(["localisation/english/**/*.yml"])
+        key_pattern = re.compile(r"^\s+([\w.]+)\s*:", re.MULTILINE)
+        all_keys: set = set()
+        for filepath in yml_files:
+            try:
+                with open(filepath, encoding="utf-8-sig", errors="ignore") as f:
+                    text = f.read()
+            except Exception:
+                continue
+            all_keys.update(key_pattern.findall(text))
+        return frozenset(all_keys)
+
     def run_validations(self):
         raise NotImplementedError("Subclasses must implement run_validations()")
 

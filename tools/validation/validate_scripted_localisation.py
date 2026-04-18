@@ -65,29 +65,33 @@ def process_file_for_used_localisations(
     if should_skip_file(filename):
         return ([], {})
 
-    if "scripted_localisation" in filename:
-        return ([], {})
-
     basename = os.path.basename(filename)
 
     text_file = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
 
-    # Tokenize the file once and intersect with the search set — O(len(text)) instead
-    # of O(N × len(text)) for iterating every defined name over every file.
+    if "scripted_localisation" in filename:
+        # Only extract bracket tokens — full tokenisation would treat `name = X` as a usage.
+        bracket_tokens: set = set(re.findall(r"\[(\w+)\]", text_file))
+        bracket_tokens |= set(re.findall(r"\[\w+\.(\w+)\]", text_file))
+        search_lower = {n.lower(): n for n in search_names}
+        found_original = {
+            search_lower[t.lower()] for t in bracket_tokens if t.lower() in search_lower
+        }
+        if not found_original:
+            return ([], {})
+        localisations = list(found_original)
+        paths = {name: basename for name in found_original}
+        return (localisations, paths)
+
+    # Tokenise once; also extract [name] and [Scope.name] bracket calls
+    # (\w catches digit-prefixed names missed by [A-Za-z_][A-Za-z0-9_]*).
     all_tokens = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", text_file))
-
-    # Also extract bracketed scripted-loc call sites: [name]
-    # The standard token regex requires an alpha/underscore first character, so
-    # digit-prefixed names (e.g. image = "[447_maoist_influence]" in scripted GUIs)
-    # are silently missed.  \w covers [a-zA-Z0-9_] including digit-first names.
     all_tokens |= set(re.findall(r"\[(\w+)\]", text_file))
+    all_tokens |= set(re.findall(r"\[\w+\.(\w+)\]", text_file))
 
-    # HOI4 scripted loc names are case-insensitive at runtime, but definitions and
-    # call sites may use different casing (e.g. EU_parl_PG_party vs eu_parl_pg_party).
-    # Perform case-insensitive intersection: lower everything, then recover the original
-    # defined name so downstream code can match it back to the definition list.
+    # Case-insensitive intersection — recover original casing for downstream matching.
     search_lower = {n.lower(): n for n in search_names}
     found_original = {
         search_lower[t.lower()] for t in all_tokens if t.lower() in search_lower
@@ -101,10 +105,8 @@ def process_file_for_used_localisations(
     return (localisations, paths)
 
 
-# Regex: identifier with a non-empty prefix followed by one or more [VAR] segments.
-# Matches templates like "tooltip_EU_[EUXXX]_approve" or "attract_voters_pos.[INDEX]".
-# Requires at least one alpha/underscore-starting prefix so pure "[VAR]" expansions
-# (which don't name a scripted loc directly) are skipped.
+# Matches meta_effect templates like "tooltip_EU_[EUXXX]_approve" — prefix required
+# so bare "[VAR]" expansions are skipped.
 _META_TEMPLATE_RE = re.compile(
     r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+"
     r")"
@@ -114,14 +116,7 @@ _META_TEMPLATE_RE = re.compile(
 def scan_for_meta_constructed_localisations(
     files: List[str], defined_names: Set[str]
 ) -> List[str]:
-    """Return defined scripted loc names that are called via meta_effect/meta_trigger
-    template substitution (e.g. ``custom_effect_tooltip = tooltip_EU_[EUXXX]_approve``).
-
-    Scans *files* for identifier templates containing ``[VAR]`` placeholders,
-    splits each on its ``[VAR]`` segments to extract a (prefix, suffix) pair,
-    and returns every defined name whose lower-cased text starts with *prefix*
-    and ends with *suffix*.
-    """
+    """Return defined names called via meta_effect/meta_trigger template substitution."""
     defined_lower = {n.lower(): n for n in defined_names}
     found: Set[str] = set()
 
@@ -215,9 +210,15 @@ class ScriptedLocalisation:
                 if f.endswith(".gui") or f.endswith(".yml") or f.endswith(".txt")
             ]
         else:
-            gui_files = list(glob.iglob(mod_path + "**/*.gui", recursive=True))
-            yml_files = list(glob.iglob(mod_path + "**/*.yml", recursive=True))
-            txt_files = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
+            gui_files = list(
+                glob.iglob(os.path.join(mod_path, "**", "*.gui"), recursive=True)
+            )
+            yml_files = list(
+                glob.iglob(os.path.join(mod_path, "**", "*.yml"), recursive=True)
+            )
+            txt_files = list(
+                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
+            )
             files_to_scan = gui_files + yml_files + txt_files
 
         args_list = [(f, search_names, lowercase) for f in files_to_scan]
@@ -273,17 +274,18 @@ class Validator(BaseValidator):
         self.log(f"{'='*80}")
 
         defined_locs_lower = [loc.lower() for loc in defined_locs]
-        used_locs_lower = [loc.lower() for loc in used_locs]
+        used_locs_lower_raw = [loc.lower() for loc in used_locs]
+        used_lower_to_original = {loc.lower(): loc for loc in used_locs}
 
         used_locs_lower = DataCleaner.clear_false_positives_partial_match(
-            used_locs_lower, tuple(false_positives)
+            used_locs_lower_raw, tuple(false_positives)
         )
 
         results = []
         reported = set()
-        for i, loc in enumerate(used_locs_lower):
+        for loc in used_locs_lower:
             if loc not in defined_locs_lower and loc not in reported:
-                original_loc = used_locs[i]
+                original_loc = used_lower_to_original.get(loc, loc)
                 basename = used_paths.get(original_loc, used_paths.get(loc, "unknown"))
                 full_path = self.get_full_path(
                     basename, loc, file_patterns=["**/*.txt", "**/*.gui"]
@@ -348,6 +350,7 @@ class Validator(BaseValidator):
             "eu_parl_pg_party_",
         ]
 
+        defined_lower_to_original = {loc.lower(): loc for loc in defined_locs}
         defined_locs_lower = [loc.lower() for loc in defined_locs]
         used_locs_lower = [loc.lower() for loc in used_locs]
 
@@ -358,9 +361,9 @@ class Validator(BaseValidator):
 
         results = []
         reported = set()
-        for i, loc in enumerate(defined_locs_lower):
+        for loc in defined_locs_lower:
             if loc not in used_locs_lower and loc not in reported:
-                original_loc = defined_locs[i]
+                original_loc = defined_lower_to_original.get(loc, loc)
                 basename = defined_paths.get(
                     original_loc, defined_paths.get(loc, "unknown")
                 )
