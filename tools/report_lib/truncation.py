@@ -64,10 +64,10 @@ def _tail_notice(artifact_url: str, workflow_run_url: str) -> str:
     if artifact_url:
         link = f"[workflow artifact]({artifact_url})"
     elif workflow_run_url:
-        link = f"[workflow run]({workflow_run_url})"
+        link = f"the [step summary]({workflow_run_url})"
     else:
-        link = "the workflow run"
+        link = "the step summary"
     return (
         "> ⚠ This report was too large for a single PR comment. "
-        f"The full issue list and raw logs are available in {link}.\n"
+        f"The full issue list is available in {link}.\n"
     )
