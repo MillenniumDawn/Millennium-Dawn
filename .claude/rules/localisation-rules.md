@@ -89,49 +89,6 @@ HOI4 localisation files are checked by `check-yaml` in the pre-commit hook. The 
 | Wrong color-code prefix, e.g. `§RY` (stray extra character)             | `§R` then text immediately — no stray character between code and content    |
 | Copy-pasted country-specific flavour text left unreplaced               | Update every reference to the original country's name, demonym, and culture |
 
-## Recurring Typo Watchlist
+## Recurring Typos
 
-These typos appear frequently across country files — check for them when reviewing:
-
-| Typo                                                        | Correct                   |
-| ----------------------------------------------------------- | ------------------------- |
-| `Estabilish` / `estabilish`                                 | `Establish` / `establish` |
-| `innvoations`                                               | `innovations`             |
-| `irreperable` / `irrepairable`                              | `irreparable`             |
-| `unenmployed`                                               | `unemployed`              |
-| `existance`                                                 | `existence`               |
-| `effectivness`                                              | `effectiveness`           |
-| `disproportinate`                                           | `disproportionate`        |
-| `tarditions`                                                | `traditions`              |
-| `contrats` (used as contrast)                               | `by contrast`             |
-| `Airforce`                                                  | `Air Force`               |
-| `miltiary`                                                  | `military`                |
-| `coaltion`                                                  | `coalition`               |
-| `tumultous`                                                 | `tumultuous`              |
-| `recgonized`                                                | `recognized`              |
-| `Propgramme`                                                | `Programme`               |
-| `poeple`                                                    | `people`                  |
-| `it's` (possessive)                                         | `its`                     |
-| `Unloyal`                                                   | `Disloyal`                |
-| `Isreal`                                                    | `Israel`                  |
-| `unrepairable`                                              | `irreparable`             |
-| `bocme`                                                     | `become`                  |
-| `hovewer`                                                   | `however`                 |
-| `acomplish`                                                 | `accomplish`              |
-| `Endevours`                                                 | `Endeavours`              |
-| `Quiantified`                                               | `Quantified`              |
-| `convering`                                                 | `converting`              |
-| `encomapassing`                                             | `encompassing`            |
-| `fundamnetals`                                              | `fundamentals`            |
-| `civillian`                                                 | `civilian`                |
-| `civillisation` / `civilisation` (American English context) | `civilization`            |
-| `suprised`                                                  | `surprised`               |
-| `alledged`                                                  | `alleged`                 |
-| `succesful` / `succesfull`                                  | `successful`              |
-| `huminliating`                                              | `humiliating`             |
-| `reffered`                                                  | `referred`                |
-| `stronly`                                                   | `strongly`                |
-| `togeather`                                                 | `together`                |
-| `disasterous`                                               | `disastrous`              |
-| `religous`                                                  | `religious`               |
-| `suzerainity`                                               | `suzerainty`              |
+See [`.claude/docs/typo-watchlist.md`](.claude/docs/typo-watchlist.md) for the full list. Check it when reviewing localisation files.

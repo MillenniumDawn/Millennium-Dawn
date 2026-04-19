@@ -61,12 +61,12 @@ def test_render_groups_issues_by_category():
         ),
     ]
     body = render([], issues, _ctx())
-    # Both categories appear as sections
-    assert "`alpha`" in body
-    assert "`beta`" in body
+    # Both categories appear as H4 sections
+    assert "#### Alpha" in body
+    assert "#### Beta" in body
     # Within a category, errors sort before warnings
-    alpha_pos = body.index("`alpha`")
-    alpha_section = body[alpha_pos : body.index("`beta`")]
+    alpha_pos = body.index("#### Alpha")
+    alpha_section = body[alpha_pos : body.index("#### Beta")]
     assert alpha_section.index("✗") < alpha_section.index("⚠")
 
 
@@ -104,7 +104,7 @@ def test_render_collapses_raw_logs_into_details_block():
     assert "some validator output" in body
 
 
-def test_render_has_footer_with_workflow_link():
+def test_render_has_footer_with_step_summary_link():
     ctx = _ctx()
     body = render([], [], ctx)
-    assert "[workflow run](https://example.test/run/1)" in body
+    assert "[step summary](https://example.test/run/1)" in body

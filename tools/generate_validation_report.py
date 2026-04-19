@@ -49,8 +49,11 @@ def build_report(results_dir: str, ctx: ReportContext):
         workflow_run_url=ctx.workflow_run_url or "",
     )
 
-    # Step summary — richer version, ~1 MB budget, no marker header needed.
-    step_body = render(runs, deduped, ctx, max_visible=MAX_ISSUES_STEP_SUMMARY)
+    # Step summary — more issues, but skip raw logs (they're large and redundant
+    # with the structured issue list; omitting them keeps the summary under 1 MB).
+    step_body = render(
+        runs, deduped, ctx, max_visible=MAX_ISSUES_STEP_SUMMARY, include_raw_logs=False
+    )
 
     return body, step_body, runs, deduped, truncated
 
