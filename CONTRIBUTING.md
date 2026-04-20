@@ -121,7 +121,7 @@ See the [Code Stylization Guide](https://millenniumdawn.github.io/Millennium-Daw
 2. Run `python3 tools/setup.py --check` to verify your environment
 3. Make your changes following the style guidelines above
 4. Commit — pre-commit hooks run automatically and will flag issues
-5. Update [Changelog.txt](./Changelog.txt) with your changes (see format below)
+5. Update the source file **Changelog.txt** with your changes (see format below), then run `python3 tools/changelog/format_changelog.py` to regenerate **Changelog.md** and commit both. The `check-changelog` pre-commit hook verifies the two stay in sync and will block the commit otherwise.
 6. Add yourself to [AUTHORS.md](./docs/src/content/misc/authors.md) if this is your first contribution
 7. Push your branch and open a pull request on GitHub
 8. CI validation must pass and a team leader must approve before merge
@@ -129,6 +129,8 @@ See the [Code Stylization Guide](https://millenniumdawn.github.io/Millennium-Daw
 ## Changelog Guidelines
 
 All PRs must update [Changelog.txt](./Changelog.txt) under the current top-most version heading.
+
+`Changelog.txt` is the source of truth. `Changelog.md` is generated from it by `python3 tools/changelog/format_changelog.py`, validated by the `check-changelog` pre-commit hook, and used by the release workflow to publish the tagged release notes into the docs site.
 
 ### Formatting
 
