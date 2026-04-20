@@ -33,11 +33,11 @@ def test_render_includes_summary_table_totals():
     assert "✓ Pass" in body
 
 
-def test_render_groups_issues_by_file():
+def test_render_groups_issues_by_category():
     issues = [
         Issue(
             severity=Severity.ERROR,
-            category="cat",
+            category="alpha",
             message="A",
             file="z.txt",
             line=5,
@@ -45,7 +45,7 @@ def test_render_groups_issues_by_file():
         ),
         Issue(
             severity=Severity.ERROR,
-            category="cat",
+            category="beta",
             message="B",
             file="a.txt",
             line=1,
@@ -53,7 +53,7 @@ def test_render_groups_issues_by_file():
         ),
         Issue(
             severity=Severity.WARNING,
-            category="cat",
+            category="alpha",
             message="C",
             file="a.txt",
             line=2,
@@ -61,15 +61,13 @@ def test_render_groups_issues_by_file():
         ),
     ]
     body = render([], issues, _ctx())
-    # Alphabetical file order
-    a_pos = body.index("### `a.txt`")
-    z_pos = body.index("### `z.txt`")
-    assert a_pos < z_pos
-    # Within a file, errors before warnings
-    a_section = body[a_pos:z_pos]
-    error_line = a_section.index("✗")
-    warning_line = a_section.index("⚠")
-    assert error_line < warning_line
+    # Both categories appear as H4 sections
+    assert "#### Alpha" in body
+    assert "#### Beta" in body
+    # Within a category, errors sort before warnings
+    alpha_pos = body.index("#### Alpha")
+    alpha_section = body[alpha_pos : body.index("#### Beta")]
+    assert alpha_section.index("✗") < alpha_section.index("⚠")
 
 
 def test_render_shows_detected_by_when_multiple_validators():
@@ -83,13 +81,13 @@ def test_render_shows_detected_by_when_multiple_validators():
         detected_by=["localisation", "variables"],
     )
     body = render([], [issue], _ctx())
-    assert "also detected by: localisation, variables" in body
+    assert "also: localisation, variables" in body
 
 
 def test_render_omits_issues_section_when_none():
     run = ValidatorRun(name="events", title="Events", status="passed")
     body = render([run], [], _ctx())
-    assert "## Issues by file" not in body
+    assert "## Issues" not in body
 
 
 def test_render_collapses_raw_logs_into_details_block():
@@ -106,7 +104,7 @@ def test_render_collapses_raw_logs_into_details_block():
     assert "some validator output" in body
 
 
-def test_render_has_footer_with_workflow_link():
+def test_render_has_footer_with_step_summary_link():
     ctx = _ctx()
     body = render([], [], ctx)
-    assert "[workflow run](https://example.test/run/1)" in body
+    assert "[step summary](https://example.test/run/1)" in body

@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
 Millennium Dawn is a Hearts of Iron IV mod set in the modern era (2000-present). It's a Paradox Interactive game modification with extensive game systems including focus trees, events, decisions, ideas, technologies, and more.
@@ -111,8 +109,8 @@ For structure, ETD system, and examples, see `.claude/docs/event-reference.md`.
 ## Ideas
 
 - Include `allowed_civil_war = { always = yes }` for civil war tags
-- Use `original_tag` not `tag` in `allowed` blocks — during civil wars the split-off country has a different runtime tag but the same `original_tag`; `allowed = { tag = TAG }` breaks for those countries
-- **`allowed` blocks by category:** In `country` and `hidden_ideas` categories, `allowed = { always = no }` is the default and should be removed; `allowed = { tag = TAG }` should also be removed (or use `original_tag = TAG` if an explicit restriction is genuinely needed). In all other categories (e.g. `AA_law_budget`), the `allowed` block is load-bearing — it must be present to restrict the idea correctly, so always include it there. Note: `check_common_mistakes.py` only flags these violations when inside a `country` or `hidden_ideas` category block — it intentionally skips other categories.
+- Use `original_tag` not `tag` in `allowed` blocks (see general-rules.md for full explanation)
+- **`allowed` blocks by category:** In `country` and `hidden_ideas` categories, `allowed = { always = no }` is the default and should be removed; `allowed = { tag = TAG }` should also be removed (or use `original_tag = TAG` if an explicit restriction is genuinely needed). In all other categories (e.g. `AA_law_budget`), the `allowed` block is load-bearing — must be present to restrict the idea correctly. Note: `check_common_mistakes.py` only flags these violations inside `country` or `hidden_ideas` categories.
 - **Remove** `cancel = { always = no }` - checked hourly, never true
 - **Remove** empty `on_add = { log = "" }` unless actually doing something
 - Log in `on_add` only when making changes
@@ -129,6 +127,12 @@ For structure and examples, see `.claude/docs/idea-reference.md`.
 - Add `initial_trait` for the organization's defining bonus
 
 For structure and examples, see `.claude/docs/mio-reference.md`.
+
+## Intelligence Agency Upgrades
+
+Agency upgrades live in `common/intelligence_agency_upgrades/` and drive both the vanilla agency UI and MD's auto-agency queue. Adding a new upgrade requires wiring it across five files: the definition, the on_actions registry (four parallel arrays, bump every `resize_array size =`), the localisation triple (`id` / `_name` / `_gfx`), any scripted_gui prereq branches, and a sprite in `interface/*.gfx`.
+
+See `common/intelligence_agency_upgrades/README.md` for the step-by-step checklist. The `validate_agency_upgrades` validator cross-checks all of this plus every mod-wide `create_intelligence_agency` icon and `upgrade_intelligence_agency` call target.
 
 ## AI Strategies & Unit Production
 
@@ -177,3 +181,4 @@ Key rules:
 - [Diplomatic Action Reference](./.claude/docs/diplomatic-action-reference.md) - Scripted diplomatic action structure, cooldowns, AI weighting
 - [Content Guidelines](./.claude/docs/content-guidelines.md) - Quality checklist, general/admiral formulas
 - [Faction Rules](./.claude/docs/faction-rules.md) - Faction rule structure, locked faction patterns
+- [Typo Watchlist](./.claude/docs/typo-watchlist.md) - Common recurring spelling mistakes in localisation

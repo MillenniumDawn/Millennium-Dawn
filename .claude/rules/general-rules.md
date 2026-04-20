@@ -59,6 +59,24 @@ NOT = { has_idea = bar }
 
 `threat` is a decimal 0.0–1.0, never a percentage. Comparisons like `threat > 10` or `threat > 40` are always false. Use `threat > 0.10`, `threat > 0.40`, etc.
 
+## check_variable comparison operators
+
+`check_variable` only accepts `=`, `>`, and `<` as inline operators. `>=` and `<=` are **not valid syntax** — the parser silently treats them as something else and the check never matches as intended.
+
+```
+# Wrong — >= and <= are not valid inline
+check_variable = { v >= 0 }
+
+# Correct — use compare = ...
+check_variable = {
+	var = v
+	value = 0
+	compare = greater_than_or_equals
+}
+```
+
+Valid `compare` values: `equals`, `greater_than`, `less_than`, `greater_than_or_equals`, `less_than_or_equals`, `not_equals`.
+
 ## if/else over if/if
 
 When two consecutive `if` blocks cover complementary conditions, always use `if/else`:
@@ -113,34 +131,3 @@ option = {
 ```
 
 Copy-pasting from option A and forgetting to update to `.b` is a common source of misleading logs.
-
-# AI System Rules
-
-## Unit name case sensitivity
-
-Unit type names in OOB files (`history/units/`), AI templates (`common/ai_templates/`), and scripted division templates (`common/scripted_effects/00_AI_templates.txt`) are **case-sensitive**. A typo like `Armor_Bat` (capital A) instead of `armor_Bat` silently fails — the battalion slot is left empty. The `validate_oob_units` pre-commit hook catches these.
-
-Common case-sensitivity traps:
-
-| Wrong              | Correct            |
-| ------------------ | ------------------ |
-| `Armor_Bat`        | `armor_Bat`        |
-| `armor_Recce_comp` | `armor_Recce_Comp` |
-| `SP_AA_battery`    | `SP_AA_Battery`    |
-
-## AI strategy role names
-
-`role_ratio id = X` and `build_army id = X` in strategy files must match a `role = X` declared in `common/ai_templates/*.txt`. Orphaned references are silently ignored — the AI wastes production weight on a void. The `validate_ai_roles` pre-commit hook catches these.
-
-Common role name traps:
-
-| Wrong        | Correct                              |
-| ------------ | ------------------------------------ |
-| `mechanized` | `apc_mechanized` or `ifv_mechanized` |
-| `armored`    | `armor`                              |
-
-## AI equipment roles
-
-When a nation is added to a `blocked_for` list in `common/ai_equipment/generic_tank.txt` (or generic_plane/generic_naval), it MUST have coverage for all required equipment roles in a custom or shared file. Missing coverage means the AI cannot produce that equipment type at all.
-
-CAS aircraft designs must use `roles = { medium_cas_fighter }`, not `medium_as_fighter`. Using the wrong role causes the AI to deploy CAS planes as air superiority fighters.
