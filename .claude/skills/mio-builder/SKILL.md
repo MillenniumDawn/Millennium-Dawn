@@ -35,10 +35,20 @@ Steps:
 4. **Show a trait outline table** — this is the plan result. Do not summarize or paraphrase it in surrounding text.
 
    ```
-   | Branch | Trait name | Modifier type | Based on |
+   | Branch | # | Trait name | Modifier type | Icon | x | y | ME partner | Cross-branch parent |
    ```
 
-   List `initial_trait` separately at the top. Mark mutually_exclusive splits. **A mutually_exclusive pair counts as 1 trait in the budget** (only one can be completed); max 2 traits per pair per branch. The tree must be an organic network: some rows have 2–3 parallel traits, splits can reconverge, cross-branch parents allowed. Wait for approval.
+   List `initial_trait` separately at the top (no x/y needed). Mark mutually_exclusive splits. **A mutually_exclusive pair counts as 1 trait in the budget** (only one can be completed); max 2 traits per pair per branch. The tree must be an organic network: some rows have 2–3 parallel traits, splits can reconverge, cross-branch parents allowed.
+
+   **Fill in absolute x/y for every trait** before presenting the table. Rules:
+   - Branches occupy distinct x-lanes; total spread stays within 0–9
+   - Mutual exclusives share the same y, placed side-by-side
+   - Every child is at y = parent_y + 1 (no skipped rows, no same-row parent/child)
+   - Cross-branch parent must have a lower y than its child
+
+   Wait for approval.
+
+4b. **Coverage check.** Before finalising the outline, verify every required modifier for the equipment group appears at least once — use the minimum coverage table in `~/.claude/CLAUDE.md` ("Vermijd repetitie" section). Preferred modifiers must appear on multiple traits if the trait budget allows. Add missing modifiers to existing traits (as a second modifier) or insert a new trait rather than omitting them.
 
 **Locked fields:** If the user's input already contains `equipment_type = { ... }` and/or `research_categories = { ... }`, treat both as final. Steps 5–6 only derive `task_capacity` and confirm consistency — never change the values.
 
@@ -75,17 +85,39 @@ Steps:
    - Attack helis: `GFX_generic_mio_trait_icon_attackheli_{reliability|soft_attack|hard_attack|breakthrough|armor|defense|speed|efficiency_gain|buildcost|resource|weight}`
    - Transport/operator helis: `GFX_generic_mio_trait_icon_heli_operator_{reliability|armor|defense|speed|range|buildcost|resources|hg_attack|lg_attack|anti_air_attack|sub_detection|surface_detection}`
 
-**Model delegation (Opus → Sonnet).** Before steps 9–10, check the active model. If _"You are powered by the model named Opus"_, delegate steps 9–10 to a Sonnet subagent (`Agent`, `subagent_type: "general-purpose"`, `model: "sonnet"`). The subagent starts cold; the prompt must include:
+**Delegation strategy.** Choose based on trait count:
+
+| Trait count | Strategy                                                                              |
+| ----------- | ------------------------------------------------------------------------------------- |
+| ≤ 25 traits | One Sonnet subagent for steps 9–10 (current behaviour)                                |
+| > 25 traits | One Sonnet subagent **per branch**, all launched in parallel in a single `Agent` call |
+
+**Small MIO (≤ 25 traits) — single subagent.** Same as before: delegate steps 9–10 to one Sonnet subagent (`subagent_type: "general-purpose"`, `model: "sonnet"`). Prompt must include:
 
 - MIO token, TAG, total trait count, `task_capacity` value (or "omit" flag)
 - Full `equipment_type` and `research_categories` lists
-- Complete approved trait outline table with icons resolved per step 8: branch, name, modifier type, absolute x/y, icon token, mutually_exclusive partners, cross-branch parents
-- Target `.txt` file path and absolute `.yml` path
-- Pointer to `~/.claude/CLAUDE.md`, project `CLAUDE.md`, `.claude/docs/mio-reference.md` — do not re-derive rules in the prompt
-- Explicit task: write MIO block to `.txt`, append loc keys to `.yml` under `### MIO` (UTF-8 with BOM) per step 10
+- Complete approved trait outline table (branch, name, modifier type, absolute x/y, icon token, ME partners, cross-branch parents)
+- Target `.txt` file path and `.yml` path
+- Pointers to `~/.claude/CLAUDE.md`, project `CLAUDE.md`, `.claude/docs/mio-reference.md`
+- Explicit task: write MIO block to `.txt`, append loc keys to `.yml` under `### MIO` per step 10
 - Hard constraint: steps 9–10 only. No design changes. If ambiguous, stop and report.
 
-After the subagent returns, relay the result in one short sentence. Do not re-read the files unless the subagent reported an error.
+**Large MIO (> 25 traits) — parallel branch subagents.** Launch one Sonnet subagent per branch in a single parallel `Agent` call. Each subagent prompt must include:
+
+- MIO token, TAG, `task_capacity` (or "omit"), `equipment_type`, `research_categories`
+- Only the trait rows for **this branch** (name, modifier type, icon, absolute x, absolute y, ME partner if any)
+- Cross-branch parents referenced by this branch: name + x/y only (no full other-branch data)
+- Pointers to `~/.claude/CLAUDE.md`, project `CLAUDE.md`, `.claude/docs/mio-reference.md`
+- Explicit task: **return only the `trait = { ... }` blocks for this branch as plain text.** No `initial_trait`, no MIO header, no file writes.
+- Hard constraint: no design changes. If a position or rule is ambiguous, stop and report.
+
+**Assembly (large MIO only).** After all branch subagents return:
+
+1. Combine: MIO header + `initial_trait` block (written by orchestrator) + all branch trait blocks from subagents
+2. Sort traits by ascending y, then ascending x (for readability only — does not affect game logic)
+3. Write the complete assembled block to `.txt` and append loc keys to `.yml` under `### MIO` — one atomic write each
+
+After writing, relay the result in one short sentence. Do not re-read the files unless a subagent or write reported an error.
 
 9. **Generate the full MIO.** Structure per `.claude/docs/mio-reference.md`. Do not read any organizations `.txt` to derive patterns. Token: `TAG_orgname`. Initial trait name: `{org_token}_trait`. Layout and mandatory blocks follow `~/.claude/CLAUDE.md`.
 
@@ -96,6 +128,7 @@ After the subagent returns, relay the result in one short sentence. Do not re-re
    - Trait has only `organization_modifier` (no `equipment_bonus` / `production_bonus`) → skip.
    - Trait bonuses apply to all equipment types equally → skip.
    - Only add when the trait targets a strict subset of multiple equipment types.
+   - **Category groups:** When `equipment_type` uses a category group (e.g. `mio_cat_all_armor`), individual traits may still use `limit_to_equipment_type` with specific equipment type tokens from within that category (e.g. `limit_to_equipment_type = { medium_tank_chassis medium_tank_artillery_chassis }`).
 
 10. **Localisation + write.**
     Required keys (no `_desc` for traits):
