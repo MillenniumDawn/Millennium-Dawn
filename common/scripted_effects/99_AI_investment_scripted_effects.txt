@@ -18,7 +18,7 @@ invest_cic = {
 		set_variable = { project_build_amount^-1 = 1 }
 		update_gui = yes
 		PREV = {
-			CONTROLLER = { country_event = { id = AC_event.10 } }
+			CONTROLLER = { country_event = AC_event.10 }
 		}
 	}
 }
@@ -29,7 +29,7 @@ invest_mic = {
 		set_variable = { project_build_amount^-1 = 1 }
 		update_gui = yes
 		PREV = {
-			CONTROLLER = { country_event = { id = AC_event.10 } }
+			CONTROLLER = { country_event = AC_event.10 }
 		}
 	}
 }
@@ -40,7 +40,7 @@ invest_infra = {
 		set_variable = { project_build_amount^-1 = 1 }
 		update_gui = yes
 		PREV = {
-			CONTROLLER = { country_event = { id = AC_event.10 } }
+			CONTROLLER = { country_event = AC_event.10 }
 		}
 	}
 }
@@ -149,13 +149,13 @@ AI_get_military_industry_score = {
 		if = { limit = { date > 2006.1.1 }
 			add_to_temp_variable = { v1 = 10 }
 		}
-		if = { limit = { threat > 10 }
+		if = { limit = { threat > 0.1 }
 			add_to_temp_variable = { v1 = 10 }
 		}
-		if = { limit = { threat > 20 }
+		if = { limit = { threat > 0.2 }
 			add_to_temp_variable = { v1 = 10 }
 		}
-		if = { limit = { threat > 40 }
+		if = { limit = { threat > 0.4 }
 			add_to_temp_variable = { v1 = 10 }
 		}
 		if = { limit = { CONTROLLER = { num_of_military_factories < 15 } }
@@ -166,9 +166,6 @@ AI_get_military_industry_score = {
 		}
 		if = { limit = { CONTROLLER = { num_of_military_factories < 5 } }
 			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
-			add_to_temp_variable = { v1 = 15 }
 		}
 		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
 			add_to_temp_variable = { v1 = 15 }
@@ -204,7 +201,7 @@ AI_get_military_industry_score = {
 			if = {
 				limit = {
 					CONTROLLER = {
-						set_temp_variable = { mils_fo_factories_ratio = num_of_factories }
+						set_temp_variable = { mils_to_factories_ratio = num_of_factories }
 						multiply_temp_variable = { mils_to_factories_ratio = 0.45 }
 						check_variable = { num_of_military_factories > mils_to_factories_ratio }
 					}
@@ -259,9 +256,6 @@ AI_get_dockyard_score = {
 		}
 		if = { limit = { CONTROLLER = { num_of_naval_factories < 5 } }
 			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
-			add_to_temp_variable = { v1 = 15 }
 		}
 		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
 			add_to_temp_variable = { v1 = 15 }
@@ -580,13 +574,13 @@ AI_get_antiair_score = {
 
 		# Increase Section
 		# Threat-based scoring
-		if = { limit = { threat > 10 }
+		if = { limit = { threat > 0.1 }
 			add_to_temp_variable = { v1 = 15 }
 		}
-		if = { limit = { threat > 25 }
+		if = { limit = { threat > 0.25 }
 			add_to_temp_variable = { v1 = 20 }
 		}
-		if = { limit = { threat > 50 }
+		if = { limit = { threat > 0.5 }
 			add_to_temp_variable = { v1 = 25 }
 		}
 		# War and threat flags
@@ -617,7 +611,7 @@ AI_get_antiair_score = {
 		add_to_temp_variable = { v2 = pending_penalty }
 
 		# Reduce priority in peacetime
-		if = { limit = { CONTROLLER = { has_war = no threat < 5 } }
+		if = { limit = { CONTROLLER = { has_war = no threat < 0.5 } }
 			add_to_temp_variable = { v2 = 50 }
 		}
 		# Don't build if economy is struggling
@@ -654,13 +648,13 @@ AI_get_radar_score = {
 
 		# Increase Section
 		# Threat-based scoring
-		if = { limit = { threat > 10 }
+		if = { limit = { threat > 0.1 }
 			add_to_temp_variable = { v1 = 15 }
 		}
-		if = { limit = { threat > 25 }
+		if = { limit = { threat > 0.25 }
 			add_to_temp_variable = { v1 = 20 }
 		}
-		if = { limit = { threat > 50 }
+		if = { limit = { threat > 0.5 }
 			add_to_temp_variable = { v1 = 25 }
 		}
 		# War and strategic importance
@@ -692,7 +686,7 @@ AI_get_radar_score = {
 		add_to_temp_variable = { v2 = pending_penalty }
 
 		# Reduce priority in peacetime
-		if = { limit = { CONTROLLER = { has_war = no threat < 5 } }
+		if = { limit = { CONTROLLER = { has_war = no threat < 0.5 } }
 			add_to_temp_variable = { v2 = 45 }
 		}
 		# Don't build if economy is struggling
@@ -734,17 +728,14 @@ AI_get_airbase_score = {
 		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
 			add_to_temp_variable = { v1 = 25 }
 		}
-		if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
-			add_to_temp_variable = { v1 = 20 }
-		}
 		# Threat-based scoring
-		if = { limit = { threat > 15 }
+		if = { limit = { threat > 0.15 }
 			add_to_temp_variable = { v1 = 15 }
 		}
-		if = { limit = { threat > 30 }
+		if = { limit = { threat > 0.3 }
 			add_to_temp_variable = { v1 = 15 }
 		}
-		if = { limit = { threat > 50 }
+		if = { limit = { threat > 0.5 }
 			add_to_temp_variable = { v1 = 20 }
 		}
 		# Strategic locations
@@ -843,9 +834,6 @@ AI_get_fuel_silo_score = {
 		if = { limit = { is_coastal = yes }
 			add_to_temp_variable = { v1 = 10 }
 		}
-		if = { limit = { CONTROLLER = { has_country_flag = ai_yes_unit_build } }
-			add_to_temp_variable = { v1 = 15 }
-		}
 
 		# Reduction Section
 		set_temp_variable = { v2 = 0 }
@@ -868,7 +856,7 @@ AI_get_fuel_silo_score = {
 			add_to_temp_variable = { v2 = 60 }
 		}
 		# Low priority in peacetime
-		if = { limit = { CONTROLLER = { has_war = no threat < 10 } }
+		if = { limit = { CONTROLLER = { has_war = no threat < 0.1 } }
 			add_to_temp_variable = { v2 = 30 }
 		}
 		# Don't build if economy is struggling
@@ -1264,28 +1252,37 @@ AI_country_selection_calculation = {
 	}
 	# Check if they have a project in one of their other states
 	if = { limit = { NOT = { check_variable = { PREV.project_array^0 = 0 } } }
-		for_each_scope_loop = {
-			array = PREV.project_array
-			if = { limit = { is_owned_and_controlled_by = PREV.PREV }
-				add_to_temp_variable = { AI_country_score = -35 }
+		PREV = {
+			for_each_loop = {
+				array = project_array
+				value = v
+				index = i
+				if = {
+					limit = { check_variable = { v < 0 } }
+					var:project_array^i = {
+						if = { limit = { is_owned_and_controlled_by = PREV.PREV }
+							add_to_temp_variable = { AI_country_score = -35 }
+						}
+					}
+				}
 			}
 		}
 	}
 
 	# Check if the ROOT is ECB President
-	if = {
-		limit = {
-			PREV = { has_idea = ECB_president }
-			is_in_array = { global.EU_member = THIS.id }
+	if = { limit = { is_in_array = { global.EU_member = THIS.id } }
+		if = {
+			limit = {
+				PREV = { has_idea = ECB_president }
+			}
+			add_to_temp_variable = { AI_country_score = 15 }
 		}
-		add_to_temp_variable = { AI_country_score = 15 }
-	}
-	if = {
-		limit = {
-			PREV = { has_idea = EU_finance_minister }
-			is_in_array = { global.EU_member = THIS.id }
+		if = {
+			limit = {
+				PREV = { has_idea = EU_finance_minister }
+			}
+			add_to_temp_variable = { AI_country_score = 5 }
 		}
-		add_to_temp_variable = { AI_country_score = 5 }
 	}
 
 	# Check whether someone is an influencer

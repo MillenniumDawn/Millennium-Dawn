@@ -36,6 +36,7 @@ NATO_decisions = {
 				has_country_flag = USA_f35_program_member_new
 				original_tag = USA
 			}
+			EH_is_megastate_country = no
 		}
 
 		remove_effect = {
@@ -152,30 +153,6 @@ NATO_decisions = {
 				NOT = { has_government = democratic }
 				NOT = { has_government = neutrality }
 			}
-			modifier = {
-				factor = 0
-				original_tag = ITA
-				OR = {
-					AND = {
-						has_government = nationalist
-						nationalist_right_wing_populists_are_in_power = yes
-						is_historical_focus_on = yes
-					}
-					AND = {
-						has_government = communism
-						is_historical_focus_on = yes
-					}
-				}
-			}
-			modifier = {
-				factor = 0
-				original_tag = CZE
-				AND = {
-					has_government = nationalist
-					nationalist_military_junta_are_in_power = yes
-					is_historical_focus_on = yes
-				}
-			}
 			# Denmark should leave if they're not RWP, Western or Neutrality
 			modifier = {
 				add = 1000
@@ -185,6 +162,23 @@ NATO_decisions = {
 				AND = {
 					has_government = nationalist
 					is_in_array = { ruling_party = 20 }
+				}
+			}
+			# Spain will leave if the Unidas Podemos is in the elections and nationalist not vox
+			modifier = {
+				add = 1000
+				original_tag = SPR
+				OR = {
+					AND = {
+						has_government = nationalist
+						NOT = { is_in_array = { ruling_party = 20 } }
+					}
+					has_government = communism
+					has_government = fascism
+					AND = {
+						has_government = neutrality
+						is_in_array = { ruling_party = 18 }
+					}
 				}
 			}
 			modifier = {
@@ -215,21 +209,28 @@ NATO_decisions = {
 					has_global_flag = POL_KORWIN_PE_PATH
 				}
 			}
-			# Spain will leave if the Unidas Podemos is in the elections and nationalist not vox
 			modifier = {
-				add = 1000
-				original_tag = SPR
+				factor = 0
+				original_tag = ITA
 				OR = {
 					AND = {
 						has_government = nationalist
-						NOT = { is_in_array = { ruling_party = 20 } }
+						nationalist_right_wing_populists_are_in_power = yes
+						is_historical_focus_on = yes
 					}
-					has_government = communism
-					has_government = fascism
 					AND = {
-						has_government = neutrality
-						is_in_array = { ruling_party = 18 }
+						has_government = communism
+						is_historical_focus_on = yes
 					}
+				}
+			}
+			modifier = {
+				factor = 0
+				original_tag = CZE
+				AND = {
+					has_government = nationalist
+					nationalist_military_junta_are_in_power = yes
+					is_historical_focus_on = yes
 				}
 			}
 		}
@@ -709,15 +710,13 @@ NATO_decisions = {
 
 		target_array = global.NATO_Accession_Candidates
 
-		target_trigger = {
-			FROM = { has_country_flag = NATO_Accession_Voting }
+		target_root_trigger = {
+			has_idea = NATO_member
 		}
 
-		visible = {
-			has_idea = NATO_member
-			hidden_trigger = {
-				NOT = { has_country_flag = NATO_Ratified_@FROM }
-			}
+		target_trigger = {
+			FROM = { has_country_flag = NATO_Accession_Voting }
+			NOT = { has_country_flag = NATO_Ratified_@FROM }
 		}
 
 		cost = 20

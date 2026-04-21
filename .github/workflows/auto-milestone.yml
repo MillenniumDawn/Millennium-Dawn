@@ -1,0 +1,65 @@
+name: Auto Assign Milestone
+
+on:
+  pull_request_target:
+    types: [opened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  assign-milestone:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Assign earliest open milestone
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+
+            if (pr.milestone) {
+              console.log(`PR #${pr.number} already has milestone: ${pr.milestone.title}`);
+              return;
+            }
+
+            const milestones = await github.rest.issues.listMilestones({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+            });
+
+            if (milestones.data.length === 0) {
+              console.log('No open milestones found');
+              return;
+            }
+
+            // Sort by version number (e.g., "2.0" < "2.1") to pick the lowest
+            const sorted = milestones.data.sort((a, b) => {
+              const parseVersion = (title) => {
+                const parts = title.match(/(\d+)/g);
+                return parts ? parts.map(Number) : [Infinity];
+              };
+              const va = parseVersion(a.title);
+              const vb = parseVersion(b.title);
+              for (let i = 0; i < Math.max(va.length, vb.length); i++) {
+                const diff = (va[i] || 0) - (vb[i] || 0);
+                if (diff !== 0) return diff;
+              }
+              return 0;
+            });
+
+            const milestone = sorted[0];
+
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              milestone: milestone.number,
+            });
+
+            console.log(`Assigned milestone "${milestone.title}" to PR #${pr.number}`);

@@ -12,6 +12,8 @@
 - Keys use **no trailing version number**: write `key: "value"`, not `key:0 "value"`.
 - Key naming mirrors the associated script ID exactly (e.g., focus `SER_free_market_capitalism` → `SER_free_market_capitalism: "..."`, `SER_free_market_capitalism_desc: "..."`).
 - Focus/decision/event keys follow the pattern: `ID`, `ID_desc` (tooltip body). Events also need `ID.t` (title), `ID.d` (description), and `ID.a`, `ID.b`, … (option names).
+- Every new script object (focus, decision, event, idea, MIO, subideology) needs matching loc keys before it goes in.
+- Undefined `[variable]` substitutions in loc strings — every `[Foo.GetBar]` or `[my_var]` must correspond to a real scope getter or set variable. A missing or misspelled getter renders as an empty string or literal `[variable_name]` in-game.
 
 ## Writing Style
 
@@ -33,6 +35,7 @@ TAG.ideology_desc: "(Dominant Ideology) - Party Name (Language: Native Name, Lan
 ```
 
 Rules:
+
 - **Short name** (`TAG.ideology`): icon + abbreviation in parentheses + dash + English party name.
 - **Icon** (`TAG.ideology_icon`): icon reference only, no extra text.
 - **Description** (`TAG.ideology_desc`):
@@ -60,12 +63,32 @@ MOR.conservatism_desc: "(Classic Liberalism) - National Rally of Independents (A
 - Name (`name: "..."`) should be title-cased, concise (3–6 words typical).
 - Description should explain what the idea represents in 1–3 sentences. Do not repeat modifier values verbatim; describe their political or economic meaning.
 
+## YAML Validity
+
+HOI4 localisation files are checked by `check-yaml` in the pre-commit hook. The HOI4 format is not strict YAML, so several patterns cause parse failures:
+
+- **Embedded double quotes**: `"He called it "important""` is invalid. Use `\"important\"` for emphasis, or rephrase to remove the inner quotes entirely.
+- **Mixed indentation**: All keys in a file must be consistently indented (all with 1 leading space, or all without). Mixing indented and non-indented keys in the same file causes YAML to see two separate mappings. Remove stray spaces to make indentation uniform.
+- **Colons in values**: A bare colon followed by a space inside a quoted string can confuse some parsers — wrap the value in quotes as usual and this is safe, but watch for unquoted values.
+
 ## Common Mistakes to Avoid
 
-| Wrong | Correct |
-|---|---|
-| `key:0 "value"` | `key: "value"` |
-| `...` trailing sentences | End with a full stop |
-| `Pro-Western` mid-sentence as a standalone noun | `pro-Western` (adjective) |
-| Repeating the same sentence across multiple ideology descs | Unique body per entry |
-| Empty or placeholder strings like `"TODO"` | Always provide a complete string |
+| Wrong                                                                   | Correct                                                                     |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `key:0 "value"`                                                         | `key: "value"`                                                              |
+| `...` trailing sentences                                                | End with a full stop                                                        |
+| `Pro-Western` mid-sentence as a standalone noun                         | `pro-Western` (adjective)                                                   |
+| Repeating the same sentence across multiple ideology descs              | Unique body per entry                                                       |
+| Empty or placeholder strings like `"TODO"`                              | Always provide a complete string                                            |
+| `"text "quoted word" more text"`                                        | `"text \"quoted word\" more text"`                                          |
+| Mixed indented/non-indented keys in same file                           | All keys at same indentation level                                          |
+| Backtick `` ` `` as apostrophe: ``"we`ll"``                             | `"we'll"` — use the real apostrophe                                         |
+| Cyrillic lookalike characters (e.g., `С`, `а`, `е`) in English text     | Latin equivalents — run a non-ASCII check                                   |
+| Non-English text in `*_l_english.yml` (French, Russian, Spanish titles) | Full English translation                                                    |
+| Duplicate keys in the same `.yml` file                                  | Remove the earlier duplicate; keep only one definition per key              |
+| Wrong color-code prefix, e.g. `§RY` (stray extra character)             | `§R` then text immediately — no stray character between code and content    |
+| Copy-pasted country-specific flavour text left unreplaced               | Update every reference to the original country's name, demonym, and culture |
+
+## Recurring Typos
+
+See [`.claude/docs/typo-watchlist.md`](.claude/docs/typo-watchlist.md) for the full list. Check it when reviewing localisation files.
