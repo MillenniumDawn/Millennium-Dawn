@@ -130,7 +130,7 @@ See the [Code Stylization Guide](https://millenniumdawn.github.io/Millennium-Daw
 
 All PRs must update [Changelog.txt](./Changelog.txt) under the current top-most version heading.
 
-`Changelog.txt` is the source of truth. `Changelog.md` is generated from it by `python3 tools/changelog/format_changelog.py`, validated by the `check-changelog` pre-commit hook, and used by the release workflow to publish the tagged release notes into the docs site.
+`Changelog.txt` is the source of truth. `Changelog.md` is a generated mirror used by the release workflow to publish the tagged release notes into the docs site.
 
 ### Formatting
 
