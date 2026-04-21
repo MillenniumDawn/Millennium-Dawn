@@ -22,7 +22,6 @@ _EVENT_TYPES = ("country_event", "province_event", "unit_leader_event", "news_ev
 
 _HEADER_SINGLE_PROPS = {
     "id",
-    "title",
     "picture",
     "is_triggered_only",
     "hidden",
@@ -78,8 +77,11 @@ class EventStandardizer(BaseStandardizer):
         props: Dict[str, Any] = {
             "event_type": "",
             "id": "",
-            "title": "",
-            "desc": "",
+            # title/desc: list of entries. Each entry is either a single-line
+            # string or a list[str] for `prop = { trigger = {...} text = ... }`
+            # conditional blocks (which can repeat).
+            "title": [],
+            "desc": [],
             "picture": "",
             "is_triggered_only": "",
             "hidden": "",
@@ -115,15 +117,15 @@ class EventStandardizer(BaseStandardizer):
             if prop_name in _HEADER_SINGLE_PROPS:
                 props[prop_name] = line
                 current_section = "header"
-            elif prop_name == "desc":
+            elif prop_name in ("title", "desc"):
                 if "{" in line:
                     block, next_i = extract_block(block_lines, i)
-                    props["desc"] = block
+                    props[prop_name].append(block)
                     i = next_i
                     current_section = "header"
                     continue
                 else:
-                    props["desc"] = line
+                    props[prop_name].append(line)
                     current_section = "header"
             elif prop_name in _BLOCK_PROPS:
                 key, section = _BLOCK_PROPS[prop_name]
@@ -149,14 +151,17 @@ class EventStandardizer(BaseStandardizer):
         if props["id"]:
             lines.append(f'\t{props["id"]}')
 
-        # 2. Title and description
-        if props["title"]:
-            lines.append(f'\t{props["title"]}')
-        if props["desc"]:
-            if isinstance(props["desc"], list):
-                lines.extend(compact_block(props["desc"][:]))
+        # 2. Title and description (may repeat as conditional blocks)
+        for title_entry in props["title"]:
+            if isinstance(title_entry, list):
+                lines.extend(compact_block(title_entry[:]))
             else:
-                lines.append(f'\t{props["desc"]}')
+                lines.append(f"\t{title_entry}")
+        for desc_entry in props["desc"]:
+            if isinstance(desc_entry, list):
+                lines.extend(compact_block(desc_entry[:]))
+            else:
+                lines.append(f"\t{desc_entry}")
 
         # 3. Picture
         if props["picture"]:

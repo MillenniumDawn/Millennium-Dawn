@@ -139,20 +139,18 @@ def extract_focus_properties(focus_lines):
 
         if prop_name == "icon":
             # Icon may repeat, and each entry can be a single line or a block.
-            # Store as [entry, ...] where entry is str (single line) or list[str] (block).
+            # Store uniformly as list[list[str]] — single-line entries become a
+            # one-element sublist so downstream code can treat every entry the same.
             if "{" in line:
                 block_lines, next_i = extract_block(focus_lines, i)
                 entry = block_lines
                 i = next_i
             else:
-                entry = line
+                entry = [line]
                 i += 1
-            if isinstance(props["icon"], list):
-                if props["icon"] and not isinstance(props["icon"][0], list):
-                    props["icon"] = [props["icon"]]
-                props["icon"].append(entry)
-            else:
-                props["icon"] = [entry]
+            if not isinstance(props["icon"], list):
+                props["icon"] = []
+            props["icon"].append(entry)
             continue
 
         if prop_name in _SINGLE_LINE_PROPS:
@@ -240,14 +238,33 @@ def emit_effect_block_with_log(lines, effect_block, focus_id):
     if not effect_block:
         return
     if focus_id and not any("log =" in line for line in effect_block):
-        new_block = []
-        for i, line in enumerate(effect_block):
-            new_block.append(line)
-            if i == 0 and "{" in line:
-                new_block.append(
-                    f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"'
-                )
-        effect_block = new_block
+        log_line = f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"'
+        # Single-line block (`prop = { ... }` on one line): expand to multi-line
+        # so the log lands INSIDE the braces, not after them.
+        first = effect_block[0]
+        if (
+            len(effect_block) == 1
+            and "{" in first
+            and "}" in first
+            and first.count("{") == first.count("}")
+        ):
+            leading = re.match(r"^(\s*)", first).group(1)
+            open_idx = first.index("{")
+            close_idx = first.rindex("}")
+            header = first[: open_idx + 1].rstrip()
+            inner = first[open_idx + 1 : close_idx].strip()
+            expanded = [header, log_line]
+            if inner:
+                expanded.append(f"{leading}\t{inner}")
+            expanded.append(f"{leading}}}")
+            effect_block = expanded
+        else:
+            new_block = []
+            for i, line in enumerate(effect_block):
+                new_block.append(line)
+                if i == 0 and "{" in line:
+                    new_block.append(log_line)
+            effect_block = new_block
     for line in compact_block(effect_block[:]):
         lines.append(line)
     lines.append("")
@@ -325,35 +342,15 @@ def format_focus_block(props, block_type="focus"):
     if props["id"]:
         lines.append(f'\t\t{props["id"]}')
     if props["icon"]:
-        # Handle multiple icon blocks
-        if isinstance(props["icon"], list) and len(props["icon"]) > 0:
-            # Check if it's a list of icon blocks or a single block
-            if isinstance(props["icon"][0], list):
-                # Multiple icon blocks
-                for icon_block in props["icon"]:
-                    icon_lines = compact_icon(icon_block)
-                    if "\n" in icon_lines:
-                        # Multi-line output - split and add each line with proper indentation
-                        for icon_line in icon_lines.split("\n"):
-                            if icon_line.strip():  # Only add non-empty lines
-                                lines.append(icon_line)
-                    else:
-                        # Single line output
-                        lines.append(f"\t\t{icon_lines}")
+        # `icon` is always list[list[str]] — emit each entry in order.
+        for icon_block in props["icon"]:
+            icon_lines = compact_icon(icon_block)
+            if "\n" in icon_lines:
+                for icon_line in icon_lines.split("\n"):
+                    if icon_line.strip():
+                        lines.append(icon_line)
             else:
-                # Single icon block
-                icon_lines = compact_icon(props["icon"])
-                if "\n" in icon_lines:
-                    # Multi-line output - split and add each line with proper indentation
-                    for icon_line in icon_lines.split("\n"):
-                        if icon_line.strip():  # Only add non-empty lines
-                            lines.append(icon_line)
-                else:
-                    # Single line output
-                    lines.append(f"\t\t{icon_lines}")
-        else:
-            # Single line - use as-is
-            lines.append(f'\t\t{props["icon"]}')
+                lines.append(f"\t\t{icon_lines}")
 
     # 2. Blank line before position group
     lines.append("")
@@ -683,10 +680,21 @@ def format_offset_block(block_lines):
 
 def format_continuous_focus_position_block(block_lines):
     """Format continuous_focus_position block according to standard"""
-    # Extract x and y values
     x_val = ""
     y_val = ""
 
+    # Handle single-line blocks like `continuous_focus_position = { x = 5700 y = 2000 }`
+    # by tokenising the contents between the braces.
+    if len(block_lines) == 1 and "{" in block_lines[0] and "}" in block_lines[0]:
+        inner = block_lines[0].split("{", 1)[1].rsplit("}", 1)[0].strip()
+        for match in re.finditer(r"(x|y)\s*=\s*(\S+)", inner):
+            key, value = match.group(1), match.group(2)
+            if key == "x":
+                x_val = value
+            elif key == "y":
+                y_val = value
+
+    # Multi-line blocks: one property per line.
     for line in block_lines:
         stripped = line.strip()
         if stripped.startswith("x ="):
@@ -694,12 +702,11 @@ def format_continuous_focus_position_block(block_lines):
         elif stripped.startswith("y ="):
             y_val = stripped.split("=")[1].strip()
 
-    # Format as single line
     if x_val and y_val:
         return [f"\tcontinuous_focus_position = {{ x = {x_val} y = {y_val} }}"]
-    else:
-        # Fallback to original if parsing fails
-        return block_lines
+
+    # Fallback: return rstripped lines so no stray newlines survive.
+    return [line.rstrip("\r\n") for line in block_lines]
 
 
 def format_initial_show_position_block(block_lines):
