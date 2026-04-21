@@ -66,6 +66,39 @@ def compact_icon(block_lines: List[str]) -> str:
     return "\n".join(compacted_lines)
 
 
+def collapse_blank_runs(lines: List[str], max_blank: int = 1) -> List[str]:
+    """Collapse consecutive blank lines to at most `max_blank` in a row."""
+    result = []
+    blank_count = 0
+    for line in lines:
+        if line.strip() == "":
+            blank_count += 1
+            if blank_count <= max_blank:
+                result.append(line)
+        else:
+            blank_count = 0
+            result.append(line)
+    return result
+
+
+def block_has_log(block_lines: List[str]) -> bool:
+    """Check whether any line in a block contains a log statement."""
+    return any("log =" in line for line in block_lines)
+
+
+def inject_log_after_brace(block_lines: List[str], log_line: str) -> List[str]:
+    """Return a copy of block_lines with `log_line` inserted after the first line
+    that contains an opening brace. No-op if no such line exists."""
+    result = []
+    injected = False
+    for line in block_lines:
+        result.append(line)
+        if not injected and "{" in line:
+            result.append(log_line)
+            injected = True
+    return result
+
+
 class BaseStandardizer(ABC):
     """Base class for all standardizers"""
 
