@@ -5,7 +5,7 @@ Millennium Dawn MIO Standardizer
 Standardizes HOI4 military industrial organization files according to
 Millennium Dawn coding standards.
 """
-
+import re
 from typing import Any, Dict, List
 
 from common_utils import BaseStandardizer, run_standardizer
@@ -24,10 +24,10 @@ class MIOStandardizer(BaseStandardizer):
             "organization_id": "",
             "name": "",
             "allowed": [],
-            "visible": [],
             "icon": [],
-            "ai_will_do": [],
             "task_capacity": "",
+            "visible": [],
+            "ai_will_do": [],
             "equipment_type": [],
             "research_categories": [],
             "tree_header_text": [],
@@ -149,34 +149,42 @@ class MIOStandardizer(BaseStandardizer):
         if props["task_capacity"]:
             self._add_blank_line_if_needed(lines)
             lines.append(f"\t{props['task_capacity']}")
+            lines.append("")
 
         if props["visible"]:
             self._add_blank_line_if_needed(lines)
             self._add_blocks(lines, props["visible"])
+            lines.append("")
 
         if props["ai_will_do"]:
             self._add_blank_line_if_needed(lines)
             self._add_blocks(lines, props["ai_will_do"])
+            lines.append("")
 
         if props["equipment_type"]:
             self._add_blank_line_if_needed(lines)
             self._add_blocks(lines, props["equipment_type"])
+            lines.append("")
 
         if props["research_categories"]:
             self._add_blank_line_if_needed(lines)
             self._add_blocks(lines, props["research_categories"])
+            lines.append("")
 
         if props["tree_header_text"]:
             self._add_blank_line_if_needed(lines)
             self._add_blocks(lines, props["tree_header_text"])
+            lines.append("")
 
         if props["initial_trait"]:
             self._add_blank_line_if_needed(lines)
             self._add_blocks(lines, props["initial_trait"])
+            lines.append("")
 
         if props["traits"]:
             self._add_blank_line_if_needed(lines)
-            self._add_blocks(lines, props["traits"])
+            self._add_blocks(lines, props["traits"], is_trait=True)
+            lines.append("")
 
         if props["other"]:
             self._add_blank_line_if_needed(lines)
@@ -192,6 +200,219 @@ class MIOStandardizer(BaseStandardizer):
             if line.strip():
                 compacted.append(line.rstrip())
         return compacted
+
+    def normalize_on_complete(self, block_lines: List[str]) -> List[str]:
+        """Normalize on_complete blocks to use expenditure_for_mio_upgrade = yes, preserving other content"""
+        content = " ".join(line.strip() for line in block_lines if line.strip())
+        if not content.startswith("on_complete"):
+            return block_lines
+        if (
+            "free_trait_picks" not in content
+            and "expenditure_for_mio_upgrade" not in content
+        ):
+            return block_lines
+
+        indent = block_lines[0][: len(block_lines[0]) - len(block_lines[0].lstrip())]
+        inner_indent = indent + "\t"
+
+        # Collect non-expenditure inner content
+        other_lines = []
+        i = 1
+        while i < len(block_lines) - 1:
+            line = block_lines[i]
+            stripped = line.strip()
+            if not stripped:
+                i += 1
+                continue
+
+            if stripped.startswith("expenditure_for_mio_upgrade"):
+                i += 1
+            elif "{" in stripped:
+                sub, next_i = self.extract_block(block_lines, i)
+                sub_content = " ".join(l.strip() for l in sub if l.strip())
+                if (
+                    "free_trait_picks" in sub_content
+                    or "small_expenditure" in sub_content
+                ):
+                    i = next_i
+                else:
+                    other_lines.extend(sub)
+                    i = next_i
+            else:
+                other_lines.append(line)
+                i += 1
+
+        if not other_lines:
+            return [f"{indent}on_complete = {{ expenditure_for_mio_upgrade = yes }}"]
+
+        result = [f"{indent}on_complete = {{"]
+        for line in other_lines:
+            if line.strip():
+                result.append(line.rstrip())
+        result.append(f"{inner_indent}expenditure_for_mio_upgrade = yes")
+        result.append(f"{indent}}}")
+        return result
+
+    def normalize_mutually_exclusive(
+        self, block_lines: List[str], inner_indent: str
+    ) -> List[str]:
+        """Compact mutually_exclusive to a single line when it contains one trait token"""
+        content_tokens = []
+        for line in block_lines:
+            stripped = line.strip()
+            if not stripped or stripped in ("{", "}"):
+                continue
+            if stripped.startswith("mutually_exclusive"):
+                inner = (
+                    stripped.split("{", 1)[1].split("}")[0].strip()
+                    if "{" in stripped
+                    else ""
+                )
+                if inner:
+                    content_tokens.extend(inner.split())
+            elif stripped != "}":
+                content_tokens.extend(stripped.rstrip("}").split())
+
+        if len(content_tokens) == 1:
+            return [f"{inner_indent}mutually_exclusive = {{ {content_tokens[0]} }}"]
+        return self.compact_block(block_lines)
+
+    def normalize_limit_to_equipment_type(
+        self, block_lines: List[str], inner_indent: str
+    ) -> List[str]:
+        """Compact limit_to_equipment_type to a single line when it contains one type token"""
+        content_tokens = []
+        for line in block_lines:
+            stripped = line.strip()
+            if not stripped or stripped in ("{", "}"):
+                continue
+            if stripped.startswith("limit_to_equipment_type"):
+                inner = (
+                    stripped.split("{", 1)[1].split("}")[0].strip()
+                    if "{" in stripped
+                    else ""
+                )
+                if inner:
+                    content_tokens.extend(inner.split())
+            elif stripped != "}":
+                content_tokens.extend(stripped.rstrip("}").split())
+
+        if len(content_tokens) == 1:
+            return [
+                f"{inner_indent}limit_to_equipment_type = {{ {content_tokens[0]} }}"
+            ]
+        return self.compact_block(block_lines)
+
+    def format_trait_block(self, block_lines: List[str]) -> List[str]:
+        """Format a trait block with blank lines between logical sections"""
+        if not block_lines:
+            return block_lines
+
+        outer_indent = block_lines[0][
+            : len(block_lines[0]) - len(block_lines[0].lstrip())
+        ]
+        inner_indent = outer_indent + "\t"
+
+        sections: Dict[str, List[str]] = {
+            "identity": [],
+            "parents": [],
+            "position": [],
+            "mutually_exclusive": [],
+            "limit": [],
+            "equipment_bonus": [],
+            "production_bonus": [],
+            "organization_modifier": [],
+            "on_complete": [],
+            "ai_will_do": [],
+            "other": [],
+        }
+
+        i = 1
+        while i < len(block_lines) - 1:
+            line = block_lines[i]
+            stripped = line.strip()
+            if not stripped:
+                i += 1
+                continue
+
+            if stripped.startswith(
+                ("token =", "name =", "icon =", "special_trait_background =")
+            ):
+                if "{" in stripped:
+                    sub, i = self.extract_block(block_lines, i)
+                    sections["identity"].extend(self.compact_block(sub))
+                else:
+                    sections["identity"].append(f"{inner_indent}{stripped}")
+                    i += 1
+            elif stripped.startswith(("all_parents =", "any_parent =")):
+                if "{" in stripped:
+                    sub, i = self.extract_block(block_lines, i)
+                    sections["parents"].extend(self.compact_block(sub))
+                else:
+                    sections["parents"].append(f"{inner_indent}{stripped}")
+                    i += 1
+            elif stripped.startswith(("position =", "relative_position_id =")):
+                if "{" in stripped:
+                    sub, i = self.extract_block(block_lines, i)
+                    sections["position"].extend(self.compact_block(sub))
+                else:
+                    sections["position"].append(f"{inner_indent}{stripped}")
+                    i += 1
+            elif stripped.startswith("mutually_exclusive ="):
+                sub, i = self.extract_block(block_lines, i)
+                sections["mutually_exclusive"].extend(
+                    self.normalize_mutually_exclusive(sub, inner_indent)
+                )
+            elif stripped.startswith("limit_to_equipment_type ="):
+                sub, i = self.extract_block(block_lines, i)
+                sections["limit"].extend(
+                    self.normalize_limit_to_equipment_type(sub, inner_indent)
+                )
+            elif stripped.startswith("equipment_bonus ="):
+                sub, i = self.extract_block(block_lines, i)
+                sections["equipment_bonus"].extend(self.compact_block(sub))
+            elif stripped.startswith("production_bonus ="):
+                sub, i = self.extract_block(block_lines, i)
+                sections["production_bonus"].extend(self.compact_block(sub))
+            elif stripped.startswith("organization_modifier ="):
+                sub, i = self.extract_block(block_lines, i)
+                sections["organization_modifier"].extend(self.compact_block(sub))
+            elif stripped.startswith("on_complete ="):
+                sub, i = self.extract_block(block_lines, i)
+                sections["on_complete"].extend(self.normalize_on_complete(sub))
+            elif stripped.startswith("ai_will_do ="):
+                sub, i = self.extract_block(block_lines, i)
+                sections["ai_will_do"].extend(self.compact_block(sub))
+            else:
+                sections["other"].append(f"{inner_indent}{stripped}")
+                i += 1
+
+        result = [block_lines[0].rstrip()]
+        section_order = [
+            "identity",
+            "parents",
+            "position",
+            "mutually_exclusive",
+            "limit",
+            "equipment_bonus",
+            "production_bonus",
+            "organization_modifier",
+            "on_complete",
+            "ai_will_do",
+            "other",
+        ]
+        first = True
+        for key in section_order:
+            if not sections[key]:
+                continue
+            if not first:
+                result.append("")
+            for line in sections[key]:
+                result.append(line.rstrip())
+            first = False
+
+        result.append(block_lines[-1].rstrip())
+        return result
 
     def compact_allowed_block(self, block_lines: List[str]) -> str:
         """Compact allowed block into a single standardized line"""
@@ -223,9 +444,12 @@ class MIOStandardizer(BaseStandardizer):
         content = " ".join(content.split())
         return f"\tallowed = {{ {content} }}"
 
-    def _add_blocks(self, lines: List[str], blocks: List[List[str]]) -> None:
+    def _add_blocks(
+        self, lines: List[str], blocks: List[List[str]], is_trait: bool = False
+    ) -> None:
         for index, block in enumerate(blocks):
-            for line in self.compact_block(block[:]):
+            formatter = self.format_trait_block if is_trait else self.compact_block
+            for line in formatter(block[:]):
                 lines.append(line)
             if index < len(blocks) - 1:
                 lines.append("")
