@@ -2,32 +2,47 @@ Generate a complete Military-Industrial Organization (MIO) for Millennium Dawn, 
 
 Input (free text): $ARGUMENTS
 
-**All questions to the user must go through `AskUserQuestion`.** Never ask inline in text output — applies to missing input, branch approval, outline approval, file-choice, etc. The first question needs to be one question where you ask the user in provide the ID of the organisation and the amount of traits.
+**All questions to the user must go through `AskUserQuestion`.** Never ask inline in text output. The first question must be a single call asking for the org ID and trait count.
 
-**Authoritative rule sources** (apply silently, don't repeat their contents here):
+**Authoritative rule sources** (apply silently):
 
 - `~/.claude/CLAUDE.md` — plan-mode workflow, legal modifiers per equipment group, ORG bonus keys + magnitudes, effect magnitude table, layout/dependency rules, cross-branch rules, mutually_exclusive rules, the mandatory `on_complete` + `ai_will_do` blocks, sanity-check list.
 - project `CLAUDE.md` + `.claude/docs/mio-reference.md` — MIO naming, `allowed = { original_tag = TAG }`, canonical example, x-range 0..9, parent exactly one row above child, `{org_token}_trait` naming.
+- `.claude/docs/mio-modifiers-reference.md` — canonical modifier keys per block type (equipment_bonus / production_bonus / organization_modifier) and equipment category; use this to verify which keys are legal before writing any trait.
 
 Steps:
 
-1. **Collect input.** Parse `$ARGUMENTS` for: organisation ID (e.g. `ITA_leonardo`) and trait count. Derive TAG from the first underscore segment (`ITA_leonardo` → `ITA`). Look up `{org_id}_name` in the matching `localisation/english/MD_{TAG}*.yml` file to get the real-world name for research. If ID or trait count is missing, ask. If the `_name` loc key does not yet exist (brand-new MIO), ask the user for the real-world name.
+1. **Collect input.** Parse `$ARGUMENTS` for: organisation ID (e.g. `ITA_leonardo`) and trait count. Derive TAG from the first underscore segment. Look up `{org_id}_name` in `localisation/english/MD_{TAG}*.yml` for the real-world name. If ID or trait count is missing, ask via `AskUserQuestion`:
+   - Org ID (free text)
+   - Trait count: **15 / 25 / 35 / Other** (structured choice)
+   - Number of branches: **1 / 2 / 3** (structured choice)
 
-   **Never rename the token.** The ID the user provides is the final token — use it verbatim as `TAG_orgname` and as the base for `{org_token}_trait` and all loc keys. Do not normalise case, swap underscores, shorten, or "correct" it, even if it looks inconsistent with other MIOs.
+   If the `_name` loc key does not exist, ask the user for the real-world name.
+
+   **Trait count = regular traits only.** `initial_trait` is always additional. Total written = user count + 1.
+
+   **Never rename the token.** Use the ID verbatim as `TAG_orgname` and as the base for `{org_token}_trait` and all loc keys.
+
+   **Token naming `{org_token}_trait` is fixed per `mio-reference.md`.** Do not search mod files to derive naming patterns.
 
 2. **Online research.** WebSearch + WebFetch (Wikipedia + official site) for: divisions, product lines (military AND civilian), notable programmes, specific vehicle/aircraft/ship/weapon names. If findings are thin, ask for user-supplied context.
 
-3. **Propose 2–3 branches** — short name, applicable `limit_to_equipment_type` values, 1-sentence motivation grounded in the real company. Research categories must reflect what the org actually builds (no bombers if they make only fighters). Ask for approval.
+3. **Propose branches** (count = user's answer from step 1). Use `AskUserQuestion` with exactly 3 options — no surrounding plain text. Each option lists branch names only, one per line:
+   - Option A: primary proposal
+   - Option B: first alternative
+   - Option C: second alternative
 
-4. **Show a trait outline table** before writing any code:
+4. **Show a trait outline table** — this is the plan result. Do not summarize or paraphrase it in surrounding text.
 
    ```
    | Branch | Trait name | Modifier type | Based on |
    ```
 
-   List `initial_trait` separately. Mark mutually_exclusive splits and which traits share a row. The tree must be an organic network, not a straight line: some rows have 2–3 parallel traits, splits can reconverge, cross-branch parents allowed. Wait for approval.
+   List `initial_trait` separately at the top. Mark mutually_exclusive splits. **A mutually_exclusive pair counts as 1 trait in the budget** (only one can be completed); max 2 traits per pair per branch. The tree must be an organic network: some rows have 2–3 parallel traits, splits can reconverge, cross-branch parents allowed. Wait for approval.
 
-5. **`task_capacity` = 5 × number of equipment _categories_ covered.** Categories are the four buckets below (multiple types in one bucket = one category). **Omit the field entirely if only 1 category** — 5 is the game default.
+**Locked fields:** If the user's input already contains `equipment_type = { ... }` and/or `research_categories = { ... }`, treat both as final. Steps 5–6 only derive `task_capacity` and confirm consistency — never change the values.
+
+5. **`task_capacity` = 5 × number of equipment _categories_ covered.** Omit if only 1 category (5 is the game default).
 
    | Category            | In-game equipment types                                                                                                                                                                                                               |
    | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -37,11 +52,11 @@ Steps:
    | Naval & Convoy      | `ship_hull_light`, `ship_hull_cruiser`, `ship_hull_heavy`, `ship_hull_carrier`, `ship_hull_submarine`, `convoy`                                                                                                                       |
 
 6. **Research categories** — map what the org actually builds:
-   - Helicopters → `CAT_heli` · UAVs → `CAT_uav` · fighters → `CAT_fighter` · CAS → `CAT_cas` · bombers → `CAT_bomber` · transport → `CAT_transport_plane` · armour → `CAT_armor` · infantry weapons → `CAT_infantry_weapons` · artillery → `CAT_artillery` · missiles/rockets → `CAT_missile` · naval → relevant `CAT_*` naval types.
+   Helicopters → `CAT_heli` · UAVs → `CAT_uav` · fighters → `CAT_fighter` · CAS → `CAT_cas` · bombers → `CAT_bomber` · transport → `CAT_transport_plane` · armour → `CAT_armor` · infantry weapons → `CAT_infantry_weapons` · artillery → `CAT_artillery` · missiles/rockets → `CAT_missile` · naval → relevant `CAT_*` naval types.
 
-7. **Trait names:** max 3 words, always based on a real product, programme, or historical hallmark (e.g. "AW Heritage", "Falco Foundation", "Anagni CoE"). Never generic ("Improved Reliability").
+7. **Trait names:** max 3 words, always based on a real product, programme, or historical hallmark (e.g. "AW Heritage", "Falco Foundation"). Never generic ("Improved Reliability").
 
-8. **Icons** — `GFX_generic_mio_trait_icon_{kind}` based on primary modifier:
+8. **Icons** — `GFX_generic_mio_trait_icon_{kind}` based on primary modifier. Use the table below exclusively; do not search mod files.
 
    | Modifier                                          | Icon suffix             |
    | ------------------------------------------------- | ----------------------- |
@@ -54,45 +69,42 @@ Steps:
    | `air_agility`                                     | `air_agility`           |
    | `air_attack`                                      | `air_attack`            |
 
-   If the trait has `limit_to_equipment_type` for one specific equipment category, use that equipment's icon instead.
+   If the trait has `limit_to_equipment_type` for one specific category, use that equipment's icon instead.
 
-   **Helicopter MIOs (IMPORTANT):** In MD, helicopters are implemented on tank chassis — `heavy_tank_amphibious_chassis` (attack helicopters) and `heavy_tank_chassis` (transport helicopters). They use tank-equivalent stats (`reliability`, `soft_attack`, `hard_attack`, `ap_attack`, `breakthrough`, `armor_value`, `maximum_speed`, `defense`, `hardness`, `build_cost_ic`, `anti_air_attack`). Use these dedicated heli icon families:
+   **Helicopter MIOs:** In MD, helicopters use tank chassis — `heavy_tank_amphibious_chassis` (attack) and `heavy_tank_chassis` (transport). They use tank-equivalent stats. Use these icon families:
    - Attack helis: `GFX_generic_mio_trait_icon_attackheli_{reliability|soft_attack|hard_attack|breakthrough|armor|defense|speed|efficiency_gain|buildcost|resource|weight}`
    - Transport/operator helis: `GFX_generic_mio_trait_icon_heli_operator_{reliability|armor|defense|speed|range|buildcost|resources|hg_attack|lg_attack|anti_air_attack|sub_detection|surface_detection}`
 
-**Model delegation (Opus → Sonnet).** Before executing steps 9-10, check the active model. If the system prompt states _"You are powered by the model named Opus"_, steps 9-10 are mechanical file writes — delegate to a Sonnet subagent to conserve tokens. On any other model, run steps 9-10 inline.
+**Model delegation (Opus → Sonnet).** Before steps 9–10, check the active model. If _"You are powered by the model named Opus"_, delegate steps 9–10 to a Sonnet subagent (`Agent`, `subagent_type: "general-purpose"`, `model: "sonnet"`). The subagent starts cold; the prompt must include:
 
-Delegation call: `Agent` with `subagent_type: "general-purpose"` and `model: "sonnet"`. The subagent starts cold; the prompt must be fully self-contained and include:
+- MIO token, TAG, total trait count, `task_capacity` value (or "omit" flag)
+- Full `equipment_type` and `research_categories` lists
+- Complete approved trait outline table with icons resolved per step 8: branch, name, modifier type, absolute x/y, icon token, mutually_exclusive partners, cross-branch parents
+- Target `.txt` file path and absolute `.yml` path
+- Pointer to `~/.claude/CLAUDE.md`, project `CLAUDE.md`, `.claude/docs/mio-reference.md` — do not re-derive rules in the prompt
+- Explicit task: write MIO block to `.txt`, append loc keys to `.yml` under `### MIO` (UTF-8 with BOM) per step 10
+- Hard constraint: steps 9–10 only. No design changes. If ambiguous, stop and report.
 
-- MIO token (e.g. `ITA_leonardo`), TAG, total trait count, and the `task_capacity` value — or an explicit "omit (only 1 category)" flag
-- Full `equipment_type` list and `research_categories` list
-- Complete trait outline table approved in step 4, with icons resolved per step 8: per trait the branch, name, modifier type, absolute x/y position, icon token, mutually_exclusive partners, cross-branch parents
-- Target `.txt` file path: append to existing `MD_[TAG]_organizations.txt` or create new (user's step 10 choice)
-- Absolute path of the target localisation `.yml` (confirmed in step 10)
-- Pointer to authoritative rules — `~/.claude/CLAUDE.md` (mandatory `on_complete` + `ai_will_do` blocks, layout rules, ORG-modifier keys + magnitudes, effect magnitude table), project `CLAUDE.md`, `.claude/docs/mio-reference.md`. Do **not** re-derive or summarise them in the prompt.
-- Explicit task: write the MIO block to the `.txt`, then append loc keys to the `.yml` under `### MIO` (UTF-8 with BOM), exactly per step 10.
-- Hard constraint: execute steps 9-10 **only**. No design changes, no renaming, no inventing traits/modifiers/icons. If the outline is ambiguous or rules conflict, stop and report — do not improvise.
+After the subagent returns, relay the result in one short sentence. Do not re-read the files unless the subagent reported an error.
 
-After the subagent returns, relay the result to the user in one short sentence (file written, loc keys appended). Do not re-read the generated files unless the subagent reported an error. If the subagent fails or the model cannot be determined, fall back to executing steps 9-10 inline.
+9. **Generate the full MIO.** Structure per `.claude/docs/mio-reference.md`. Do not read any organizations `.txt` to derive patterns. Token: `TAG_orgname`. Initial trait name: `{org_token}_trait`. Layout and mandatory blocks follow `~/.claude/CLAUDE.md`.
 
-9. **Generate the full MIO.** _If Model delegation applies, the Sonnet subagent performs this step and step 10 — the main conversation stops here._ Structure per `.claude/docs/mio-reference.md` and `common/military_industrial_organization/organizations/MD_ENG_organizations.txt` / `MD_CHI_organizations.txt`. Token: `TAG_orgname`. Initial trait name: `{org_token}_trait`. Layout and mandatory code blocks follow the global `~/.claude/CLAUDE.md` rules — don't re-derive them.
+   **`on_complete` form:** Use `expenditure_for_mio_upgrade = yes` for standard traits. Only use the full HOI4 block when custom country effects are explicitly needed.
 
-   **`limit_to_equipment_type` usage (skill-specific, not in CLAUDE.md):**
-   - MIO has exactly **one** entry in `equipment_type` → **never** include it (redundant).
-   - Trait has **only** an `organization_modifier` block (no `equipment_bonus` / `production_bonus`) → skip it.
-   - Trait's bonuses apply to **all** of the MIO's equipment types equally → skip it.
-   - Only add it when the trait targets a strict subset of multiple equipment types.
+   **`limit_to_equipment_type` usage:**
+   - MIO has exactly one `equipment_type` entry → never include (redundant).
+   - Trait has only `organization_modifier` (no `equipment_bonus` / `production_bonus`) → skip.
+   - Trait bonuses apply to all equipment types equally → skip.
+   - Only add when the trait targets a strict subset of multiple equipment types.
 
-10. **Localisation + write**
+10. **Localisation + write.**
     Required keys (no `_desc` for traits):
     - `TAG_orgname_name: "Organisation Name"`
     - `TAG_orgname_trait: "Initial Trait Name"`
     - `TAG_orgname_traittoken: "Trait Name"` per trait
 
-    Find the file: `localisation/english/` with TAG in the filename (e.g. `MD_ITA_l_english.yml`); multiple matches → pick the main country file; no match → ask.
+    **Skeleton detection (no question needed):** Check if a block matching the org ID already exists in `MD_[TAG]_organizations.txt`. If yes, write traits into that existing block automatically. If no existing block is found, ask: add to existing `MD_[TAG]_organizations.txt` or create a new file.
 
-    Append strategy: look for a `### MIO` comment near the bottom. If absent, add it at EOF and append keys beneath it. If present, append new keys directly after the last existing MIO key. Never insert mid-file.
+    **Localisation file:** Find `localisation/english/` file with TAG in the filename; multiple matches → pick the main country file; no match → ask.
 
-    Ask: add to existing `MD_[TAG]_organizations.txt` or create a new file. After confirmation:
-    1. Write the MIO block.
-    2. Append loc keys to the `.yml` (UTF-8 with BOM).
+    **Append strategy:** look for `### MIO` near the bottom. If absent, add it at EOF and append keys beneath. If present, append after the last existing MIO key. Never insert mid-file.
