@@ -11,7 +11,7 @@ import re
 import sys
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import (
@@ -97,6 +97,18 @@ def inject_log_after_brace(block_lines: List[str], log_line: str) -> List[str]:
             result.append(log_line)
             injected = True
     return result
+
+
+# Shared regex: matches the property name at the start of a stripped line
+# like `prop_name = value` or `prop_name = { ... }`.
+PROP_NAME_RE = re.compile(r"^(\w+)\s*=")
+
+
+def emit_comments(lines: List[str], comments: List[str]) -> None:
+    """Append non-blank comment lines (rstripped) onto `lines` in-place."""
+    for comment in comments:
+        if comment.strip():
+            lines.append(comment.rstrip())
 
 
 class BaseStandardizer(ABC):

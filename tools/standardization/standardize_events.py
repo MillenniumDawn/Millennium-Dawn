@@ -5,13 +5,14 @@ Millennium Dawn Event Standardizer
 Standardizes HOI4 event files according to Millennium Dawn coding standards
 """
 
-import re
 from typing import Any, Dict, List
 
 from common_utils import (
+    PROP_NAME_RE,
     BaseStandardizer,
     block_has_log,
     collapse_blank_runs,
+    emit_comments,
     inject_log_after_brace,
     run_standardizer,
 )
@@ -20,15 +21,16 @@ from shared_utils import compact_block, extract_block
 _EVENT_TYPES = ("country_event", "province_event", "unit_leader_event", "news_event")
 
 _HEADER_SINGLE_PROPS = {
-    "id": "id",
-    "title": "title",
-    "picture": "picture",
-    "is_triggered_only": "is_triggered_only",
-    "hidden": "hidden",
-    "major": "major",
-    "fire_only_once": "fire_only_once",
+    "id",
+    "title",
+    "picture",
+    "is_triggered_only",
+    "hidden",
+    "major",
+    "fire_only_once",
 }
 
+# Maps script property name -> (props key, section tag for comment placement)
 _BLOCK_PROPS = {
     "mean_time_to_happen": ("mean_time_to_happen", "mtth"),
     "trigger": ("trigger", "trigger"),
@@ -36,11 +38,10 @@ _BLOCK_PROPS = {
     "option": ("option", "options"),
 }
 
-_PROP_NAME_RE = re.compile(r"^(\w+)\s*=")
 
-
-def _option_log_line(option_block: List[str], event_id_line: str) -> str:
-    """Build the log line for an event option."""
+def _option_log_line(option_block: List[str]) -> str:
+    """Build the log line for an event option. Uses the first `name = ...`
+    line found in the block (matches legacy behaviour)."""
     option_name = "option"
     for line in option_block:
         stripped = line.strip()
@@ -108,11 +109,11 @@ class EventStandardizer(BaseStandardizer):
         i = 1  # Skip opening brace
         while i < len(block_lines) - 1:  # Skip closing brace
             line = block_lines[i].strip()
-            match = _PROP_NAME_RE.match(line)
+            match = PROP_NAME_RE.match(line)
             prop_name = match.group(1) if match else None
 
             if prop_name in _HEADER_SINGLE_PROPS:
-                props[_HEADER_SINGLE_PROPS[prop_name]] = line
+                props[prop_name] = line
                 current_section = "header"
             elif prop_name == "desc":
                 if "{" in line:
@@ -181,40 +182,25 @@ class EventStandardizer(BaseStandardizer):
 
         lines.append("")
 
-        # Comments after header section
-        for comment in props["comments_after_header"]:
-            if comment.strip():
-                lines.append(comment.rstrip())
+        emit_comments(lines, props["comments_after_header"])
 
         # 8. Mean time to happen
         for mtth in props["mean_time_to_happen"]:
             lines.extend(compact_block(mtth[:]))
             lines.append("")
-
-        # Comments after MTTH section
-        for comment in props["comments_after_mtth"]:
-            if comment.strip():
-                lines.append(comment.rstrip())
+        emit_comments(lines, props["comments_after_mtth"])
 
         # 9. Trigger
         for trigger in props["trigger"]:
             lines.extend(compact_block(trigger[:]))
             lines.append("")
-
-        # Comments after trigger section
-        for comment in props["comments_after_trigger"]:
-            if comment.strip():
-                lines.append(comment.rstrip())
+        emit_comments(lines, props["comments_after_trigger"])
 
         # 10. Immediate effects
         for immediate in props["immediate"]:
             lines.extend(compact_block(immediate[:]))
             lines.append("")
-
-        # Comments after immediate section
-        for comment in props["comments_after_immediate"]:
-            if comment.strip():
-                lines.append(comment.rstrip())
+        emit_comments(lines, props["comments_after_immediate"])
 
         # 11. Options
         for option in props["option"]:
@@ -223,16 +209,13 @@ class EventStandardizer(BaseStandardizer):
                 and not block_has_log(option)
                 and props["id"]
             ):
-                log_line = _option_log_line(option, props["id"])
+                log_line = _option_log_line(option)
                 option = inject_log_after_brace(option, log_line)
 
             lines.extend(compact_block(option[:]))
             lines.append("")
 
-        # Comments after options section
-        for comment in props["comments_after_options"]:
-            if comment.strip():
-                lines.append(comment.rstrip())
+        emit_comments(lines, props["comments_after_options"])
         if props["comments_after_options"]:
             lines.append("")
 

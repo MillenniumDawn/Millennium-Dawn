@@ -5,10 +5,10 @@ Millennium Dawn Decision Standardizer
 Standardizes HOI4 decision files according to Millennium Dawn coding standards
 """
 
-import re
 from typing import Any, Dict, List
 
 from common_utils import (
+    PROP_NAME_RE,
     BaseStandardizer,
     block_has_log,
     collapse_blank_runs,
@@ -17,22 +17,8 @@ from common_utils import (
 )
 from shared_utils import compact_block, extract_block
 
-_SINGLE_LINE_PROPS = {
-    "cost": "cost",
-    "days_remove": "days_remove",
-    "fire_only_once": "fire_only_once",
-    "icon": "icon",
-}
-
-_BLOCK_PROPS = {
-    "allowed": "allowed",
-    "visible": "visible",
-    "available": "available",
-    "complete_effect": "complete_effect",
-    "ai_will_do": "ai_will_do",
-}
-
-_PROP_NAME_RE = re.compile(r"^(\w+)\s*=")
+_SINGLE_LINE_PROPS = {"cost", "days_remove", "fire_only_once", "icon"}
+_BLOCK_PROPS = {"allowed", "visible", "available", "complete_effect", "ai_will_do"}
 
 
 class DecisionStandardizer(BaseStandardizer):
@@ -61,14 +47,14 @@ class DecisionStandardizer(BaseStandardizer):
         i = 1  # Skip opening brace
         while i < len(block_lines) - 1:  # Skip closing brace
             line = block_lines[i].strip()
-            match = _PROP_NAME_RE.match(line)
+            match = PROP_NAME_RE.match(line)
             prop_name = match.group(1) if match else None
 
             if prop_name in _SINGLE_LINE_PROPS:
-                props[_SINGLE_LINE_PROPS[prop_name]] = line
+                props[prop_name] = line
             elif prop_name in _BLOCK_PROPS:
                 block, next_i = extract_block(block_lines, i)
-                props[_BLOCK_PROPS[prop_name]].append(block)
+                props[prop_name].append(block)
                 i = next_i
                 continue
             else:

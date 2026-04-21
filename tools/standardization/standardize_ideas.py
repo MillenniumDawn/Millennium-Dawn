@@ -5,30 +5,27 @@ Millennium Dawn Idea Standardizer
 Standardizes HOI4 idea files according to Millennium Dawn coding standards
 """
 
+import os
 import re
-from typing import Any, Dict, List, Optional
+import time
+from typing import Any, Dict, List
 
-from common_utils import BaseStandardizer, run_standardizer
+from common_utils import PROP_NAME_RE, BaseStandardizer, run_standardizer
 from shared_utils import extract_block, log_message
 
-# Properties captured as single-line values
-_SINGLE_LINE_PROPS = {
-    "name": "name",
-    "picture": "picture",
-}
+_SINGLE_LINE_PROPS = {"name", "picture"}
 
-# Properties captured as multi-line blocks. Value is the props key to append to.
 _BLOCK_PROPS = {
-    "allowed": "allowed",
-    "allowed_civil_war": "allowed_civil_war",
-    "cancel": "cancel",
-    "modifier": "modifier",
-    "targeted_modifier": "targeted_modifier",
-    "research_bonus": "research_bonus",
-    "rule": "rule",
-    "equipment_bonus": "equipment_bonus",
-    "on_add": "on_add",
-    "on_remove": "on_remove",
+    "allowed",
+    "allowed_civil_war",
+    "cancel",
+    "modifier",
+    "targeted_modifier",
+    "research_bonus",
+    "rule",
+    "equipment_bonus",
+    "on_add",
+    "on_remove",
 }
 
 # Blocks that get filtered out when they contain `always = no`
@@ -36,7 +33,6 @@ _ALWAYS_NO_FILTERED = {"allowed", "allowed_civil_war", "cancel"}
 
 # Block pattern for wrapper blocks / idea blocks
 _BLOCK_START_RE = re.compile(r"\s*[\w_]+\s*=\s*{")
-_PROP_NAME_RE = re.compile(r"^(\w+)\s*=")
 
 
 class IdeaStandardizer(BaseStandardizer):
@@ -92,13 +88,12 @@ class IdeaStandardizer(BaseStandardizer):
         i = 1  # Skip opening brace line
         while i < len(block_lines) - 1:  # Skip closing brace
             line = block_lines[i].strip()
-            match = _PROP_NAME_RE.match(line)
+            match = PROP_NAME_RE.match(line)
             prop_name = match.group(1) if match else None
 
             if prop_name in _SINGLE_LINE_PROPS:
-                props[_SINGLE_LINE_PROPS[prop_name]] = line
+                props[prop_name] = line
             elif prop_name in _BLOCK_PROPS:
-                key = _BLOCK_PROPS[prop_name]
                 block, next_i = extract_block(block_lines, i)
                 if (
                     prop_name in _ALWAYS_NO_FILTERED
@@ -112,7 +107,7 @@ class IdeaStandardizer(BaseStandardizer):
                         re.sub(r"\btag\s*=\s*(\w+)", r"original_tag = \1", bl)
                         for bl in block
                     ]
-                props[key].append(block)
+                props[prop_name].append(block)
                 i = next_i
                 continue
             else:
@@ -319,9 +314,6 @@ class IdeaStandardizer(BaseStandardizer):
 
     def standardize_file(self, input_file: str, output_file: str) -> bool:
         """Standardize ideas file by handling nested structure properly"""
-        import os
-        import time
-
         self.start_time = time.time()
         log_message("INFO", f"Starting standardization of {input_file}", self.verbose)
 
