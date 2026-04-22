@@ -187,7 +187,7 @@ These are baseline expectations for all developers on the team:
   Review your content at least twice before requesting a review.
 
 - **Have I added my content additions to Changelog.txt?**
-  You are responsible for documenting your content in the changelog source file before submitting for review. The pre-commit hook will verify that the generated `Changelog.md` stays in sync.
+  You are responsible for documenting your content in the changelog before submitting for review.
 
 - **Have I reviewed my pipeline?**
   Review the CI pipeline to ensure it has either succeeded or any errors are acknowledged and explained.

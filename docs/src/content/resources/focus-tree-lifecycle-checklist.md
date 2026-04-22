@@ -90,7 +90,7 @@ This section is a subsection of coding. It is is mostly for visual and quality a
 
 ### Completion Phase
 
-<input type="checkbox"> Changelog.txt (source) and Authors.txt are updated; the pre-commit hook will verify that Changelog.md stays in sync
+<input type="checkbox"> Changelog.txt and Authors.txt are updated
 
 <input type="checkbox"> Merge request is created, comments are fixed
 
