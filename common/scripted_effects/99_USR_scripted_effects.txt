@@ -10,39 +10,48 @@ modify_union_state_support = {
 	}
 }
 ###########UNION STATE - ADDED FIRST TIER MINISTRY###########
+# Ideas move together; sentinel check makes re-entry idempotent.
 USR_first_tier_ministry_added = {
-	add_ideas = {
-		USR_eternal_commitie_idea
-		USR_money_palata_idea
-		USR_council_ministers_idea
-		USR_gos_sovet_idea
-		USR_parlament_idea
+	if = {
+		limit = { NOT = { has_idea = USR_eternal_commitie_idea } }
+		add_ideas = {
+			USR_eternal_commitie_idea
+			USR_money_palata_idea
+			USR_council_ministers_idea
+			USR_gos_sovet_idea
+			USR_parlament_idea
+		}
 	}
 }
 ###########UNION STATE - ADDED SECOND TIER MINISTRY###########
 USR_second_tier_ministry_added = {
-	add_ideas = {
-		USR_valute_idea
-		USR_civils_idea
-		USR_economic_space_idea
+	if = {
+		limit = { NOT = { has_idea = USR_valute_idea } }
+		add_ideas = {
+			USR_valute_idea
+			USR_civils_idea
+			USR_economic_space_idea
+		}
 	}
 }
 ###########UNION STATE - LEAVE UNION STATE (REMOVE ALL MINISTRIES)###########
+# Each remove_ideas guarded individually so partial-state cleanup still works.
 USR_leave_union_state_script = {
-	remove_ideas = {
-		USR_valute_idea
-		USR_civils_idea
-		USR_economic_space_idea
-		USR_eternal_commitie_idea
-		USR_money_palata_idea
-		USR_council_ministers_idea
-		USR_gos_sovet_idea
-		USR_parlament_idea
-	}
+	if = { limit = { has_idea = USR_valute_idea } remove_ideas = USR_valute_idea }
+	if = { limit = { has_idea = USR_civils_idea } remove_ideas = USR_civils_idea }
+	if = { limit = { has_idea = USR_economic_space_idea } remove_ideas = USR_economic_space_idea }
+	if = { limit = { has_idea = USR_eternal_commitie_idea } remove_ideas = USR_eternal_commitie_idea }
+	if = { limit = { has_idea = USR_money_palata_idea } remove_ideas = USR_money_palata_idea }
+	if = { limit = { has_idea = USR_council_ministers_idea } remove_ideas = USR_council_ministers_idea }
+	if = { limit = { has_idea = USR_gos_sovet_idea } remove_ideas = USR_gos_sovet_idea }
+	if = { limit = { has_idea = USR_parlament_idea } remove_ideas = USR_parlament_idea }
 }
 ###########UNION STATE - BELARUS BECOME UNION STATE###########
 USR_union_state_blr_create = {
 	hidden_effect = {
+		# Called from union_state.3.a (event fired on BLR), so ROOT = BLR.
+		# Influencer must be SOV for every change_influence_percentage call in this block.
+		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { percent_change = 9 }
 		set_temp_variable = { influence_target = BLR }
 		change_influence_percentage = yes
