@@ -40,6 +40,8 @@ Steps:
 
    List `initial_trait` separately at the top (no coordinates needed). Mark mutually_exclusive splits. **A mutually_exclusive pair counts as 1 trait in the budget** (only one can be completed); max 2 traits per pair per branch. The tree must be an organic network: some rows have 2–3 parallel traits, splits can reconverge, cross-branch parents allowed.
 
+   **Per-branch `limit_to_equipment_type` is mandatory when the MIO covers multiple equipment types and the branches map to different subsets.** Before drawing the table, determine the equipment subset each branch represents (e.g. branch "Tanks" → `medium_tank_chassis`, branch "APCs" → `APC_chassis mod_APC_chassis`). Fill the `limit_to_equipment_type` column for **every** trait in that branch that has an `equipment_bonus` or `production_bonus` — not just one per branch. Write the explicit token list in each row; `—` only when a skip rule applies (see step 9). Skip rules: single-equipment MIO, `organization_modifier`-only trait, or the bonus genuinely applies to the whole MIO scope.
+
    **Two coordinate systems — fill in both for every trait** before presenting the table:
    - `abs_x / abs_y` = absolute position on the global grid (0–9 range for x). Used for overlap checks and cross-branch parent validation only.
    - `rel_x / rel_y` = offset from branch root. This is what goes into the code `position = { x = ... y = ... }`.
@@ -55,7 +57,28 @@ Steps:
 
    Wait for approval.
 
-4b. **Coverage check.** Before finalising the outline, verify every required modifier for the equipment group appears at least once — use the minimum coverage table in `~/.claude/CLAUDE.md` ("Vermijd repetitie" section). Preferred modifiers must appear on multiple traits if the trait budget allows. Add missing modifiers to existing traits (as a second modifier) or insert a new trait rather than omitting them.
+4b. **Modifier planning — coverage + diversity cap.** Before finalising the outline, run an explicit planning pass. This is the _thinking_ layer: determine what modifiers each trait carries before any code is written.
+
+**Plan framework (answer in order, do not skip):**
+
+1.  **Which equipment_type does this MIO cover?** Map it to the legal-modifier list in [`.claude/docs/mio-modifiers-reference.md`](../../docs/mio-modifiers-reference.md). List the **required** keys (coverage ≥ 1×) and **preferred** keys (may stack up to 3×) for this equipment group.
+2.  **Which traits are thematic vs cross-cutting?** Thematic traits (chassis / platform-specific) keep their `limit_to_equipment_type`. Cross-cutting traits (production, maintenance, research, funds) carry no limit. Mutual-exclusive pairs may split on limit.
+3.  **Which keys go in `equipment_bonus` vs `production_bonus` vs `organization_modifier`?** They count as separate keys even when the underlying stat overlaps.
+
+**Planning table (required before writing any trait):**
+
+```
+| # | trait_token | block types | eq_bonus keys | prod_bonus keys | org_mod keys | limit_to_equipment_type |
+```
+
+**Fill logic:**
+
+- Walk the required-key list and assign each key to at least one trait (coverage first).
+- Preferred keys may stack up to **3×** across the whole MIO (`initial_trait` counts). Required keys stay at 1–2× unless also preferred.
+- `equipment_bonus` and `production_bonus` variants of the same stat count as separate keys. `organization_modifier` keys count separately from each other.
+- Max 3 blocks per trait: at most 1× `equipment_bonus` + 1× `production_bonus` + 1× `organization_modifier`.
+
+**Pre-write count check (mandatory):** tally each key across the planning table and write the totals below it (e.g. `soft_attack(eq): 3, reliability(eq): 2, build_cost_ic(prod): 2, ...`). If any total is ≥ 4, redistribute the excess to an under-covered key before finalising. If any required key has 0 occurrences, add it before a second instance of any already-covered key. Only finalise the outline once every required key has ≥ 1 and no key has ≥ 4.
 
 **Locked fields:** If the user's input already contains `equipment_type = { ... }` and/or `research_categories = { ... }`, treat both as final. Steps 5–6 only derive `task_capacity` and confirm consistency — never change the values.
 
@@ -105,7 +128,7 @@ Steps:
 - Full `equipment_type` and `research_categories` lists
 - Complete approved trait outline table (branch, name, modifier type, abs_x/abs_y, rel_x/rel_y, icon token, ME partners, cross-branch parents, limit_to_equipment_type per trait where applicable)
 - Positioning rule: branch root traits use `position = { x = abs_x y = 0 }` with no `relative_position_id`; all child traits use `relative_position_id = <branch_root_token>` and `position = { x = rel_x y = rel_y }` from the outline. Never use abs_x/abs_y directly in child trait code.
-- `limit_to_equipment_type` rules: (1) MIO has exactly one `equipment_type` entry → never include (redundant). (2) Trait has only `organization_modifier` (no `equipment_bonus` / `production_bonus`) → skip. (3) Trait bonuses apply to all equipment types equally → skip. (4) Only add when the trait targets a strict subset of multiple equipment types. (5) When `equipment_type` uses a category group (e.g. `mio_cat_all_armor`), individual traits may still use `limit_to_equipment_type` with specific tokens from within that category (e.g. `limit_to_equipment_type = { medium_tank_chassis medium_tank_artillery_chassis }`).
+- `limit_to_equipment_type` rules: (1) MIO has exactly one `equipment_type` entry → never include (redundant). (2) Trait has only `organization_modifier` (no `equipment_bonus` / `production_bonus`) → skip. (3) Trait bonuses apply to all equipment types equally → skip. (4) Only add when the trait targets a strict subset of multiple equipment types. (5) When `equipment_type` uses a category group (e.g. `mio_cat_all_armor`), individual traits may still use `limit_to_equipment_type` with specific tokens from within that category (e.g. `limit_to_equipment_type = { medium_tank_chassis medium_tank_artillery_chassis }`). (6) **Per-branch rule (critical):** when branches map to different equipment subsets, every `equipment_bonus` / `production_bonus` trait in a branch MUST carry the `limit_to_equipment_type` value from its outline row — do not omit it because "the branch name already implies it". Copy the token list verbatim from the outline table into each trait.
 - Target `.txt` file path and `.yml` path
 - Pointers to `~/.claude/CLAUDE.md`, project `CLAUDE.md`, `.claude/docs/mio-reference.md`
 - Explicit task: write MIO block to `.txt`, append loc keys to `.yml` under `### MIO` per step 10
@@ -117,7 +140,7 @@ Steps:
 - Only the trait rows for **this branch** (name, modifier type, icon, abs_x, abs_y, rel_x, rel_y, ME partner if any, limit_to_equipment_type where applicable)
 - Cross-branch parents referenced by this branch: name + abs_x/abs_y only (no full other-branch data)
 - Positioning rule: branch root traits use `position = { x = abs_x y = 0 }` with no `relative_position_id`; all child traits use `relative_position_id = <branch_root_token>` and `position = { x = rel_x y = rel_y }` from the outline. Never use abs_x/abs_y directly in child trait code.
-- `limit_to_equipment_type` rules: (1) MIO has exactly one `equipment_type` entry → never include (redundant). (2) Trait has only `organization_modifier` (no `equipment_bonus` / `production_bonus`) → skip. (3) Trait bonuses apply to all equipment types equally → skip. (4) Only add when the trait targets a strict subset of multiple equipment types. (5) When `equipment_type` uses a category group (e.g. `mio_cat_all_armor`), individual traits may still use `limit_to_equipment_type` with specific tokens from within that category (e.g. `limit_to_equipment_type = { medium_tank_chassis medium_tank_artillery_chassis }`).
+- `limit_to_equipment_type` rules: (1) MIO has exactly one `equipment_type` entry → never include (redundant). (2) Trait has only `organization_modifier` (no `equipment_bonus` / `production_bonus`) → skip. (3) Trait bonuses apply to all equipment types equally → skip. (4) Only add when the trait targets a strict subset of multiple equipment types. (5) When `equipment_type` uses a category group (e.g. `mio_cat_all_armor`), individual traits may still use `limit_to_equipment_type` with specific tokens from within that category (e.g. `limit_to_equipment_type = { medium_tank_chassis medium_tank_artillery_chassis }`). (6) **Per-branch rule (critical):** when branches map to different equipment subsets, every `equipment_bonus` / `production_bonus` trait in a branch MUST carry the `limit_to_equipment_type` value from its outline row — do not omit it because "the branch name already implies it". Copy the token list verbatim from the outline table into each trait.
 - Pointers to `~/.claude/CLAUDE.md`, project `CLAUDE.md`, `.claude/docs/mio-reference.md`
 - Explicit task: **return only the `trait = { ... }` blocks for this branch as plain text.** No `initial_trait`, no MIO header, no file writes.
 - Hard constraint: no design changes. If a position or rule is ambiguous, stop and report.
@@ -139,6 +162,7 @@ After writing, relay the result in one short sentence. Do not re-read the files 
    - Trait has only `organization_modifier` (no `equipment_bonus` / `production_bonus`) → skip.
    - Trait bonuses apply to all equipment types equally → skip.
    - Only add when the trait targets a strict subset of multiple equipment types.
+   - **Per-branch rule (critical, most-often-forgotten):** If the MIO has multiple `equipment_type` entries **and** branches map to different equipment subsets, every `equipment_bonus` / `production_bonus` trait in a branch must carry `limit_to_equipment_type` for that branch's subset. Copy the token list straight from the outline table — do not rely on the branch name alone to communicate scope to the game engine.
    - **Category groups:** When `equipment_type` uses a category group (e.g. `mio_cat_all_armor`), individual traits may still use `limit_to_equipment_type` with specific equipment type tokens from within that category (e.g. `limit_to_equipment_type = { medium_tank_chassis medium_tank_artillery_chassis }`).
 
 10. **Localisation + write.**
@@ -152,5 +176,11 @@ After writing, relay the result in one short sentence. Do not re-read the files 
     **Localisation file:** Find `localisation/english/` file with TAG in the filename; multiple matches → pick the main country file; no match → ask.
 
     **Append strategy:** look for `### MIO` near the bottom. If absent, add it at EOF and append keys beneath. If present, append after the last existing MIO key. Never insert mid-file.
+
+**Post-write sanity check (mandatory before reporting done):** After files are written, re-verify `limit_to_equipment_type` coverage against the outline table:
+
+1. For each branch with a non-empty `limit_to_equipment_type` value in the outline, grep the generated `.txt` block and confirm the expected number of traits carry that exact token list.
+2. If any trait that should have `limit_to_equipment_type` is missing it, patch the file immediately — do not report the MIO as done until the coverage matches the outline.
+3. Only skip this check when the MIO has a single `equipment_type` entry (rule 1 always applies).
 
 **Civil War (CW) errors:** Do not validate or flag CW-related errors during generation. Only check for them at the very end, and treat any CW errors found as potentially false positives caused by caching — report them as advisory only, not blockers.
