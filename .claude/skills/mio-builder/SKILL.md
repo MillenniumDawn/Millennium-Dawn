@@ -35,16 +35,23 @@ Steps:
 4. **Show a trait outline table** — this is the plan result. Do not summarize or paraphrase it in surrounding text.
 
    ```
-   | Branch | # | Trait name | Modifier type | Icon | x | y | ME partner | Cross-branch parent |
+   | Branch | # | Trait name | Modifier type | Icon | abs_x | abs_y | rel_x | rel_y | ME partner | Cross-branch parent | limit_to_equipment_type |
    ```
 
-   List `initial_trait` separately at the top (no x/y needed). Mark mutually_exclusive splits. **A mutually_exclusive pair counts as 1 trait in the budget** (only one can be completed); max 2 traits per pair per branch. The tree must be an organic network: some rows have 2–3 parallel traits, splits can reconverge, cross-branch parents allowed.
+   List `initial_trait` separately at the top (no coordinates needed). Mark mutually_exclusive splits. **A mutually_exclusive pair counts as 1 trait in the budget** (only one can be completed); max 2 traits per pair per branch. The tree must be an organic network: some rows have 2–3 parallel traits, splits can reconverge, cross-branch parents allowed.
 
-   **Fill in absolute x/y for every trait** before presenting the table. Rules:
+   **Two coordinate systems — fill in both for every trait** before presenting the table:
+   - `abs_x / abs_y` = absolute position on the global grid (0–9 range for x). Used for overlap checks and cross-branch parent validation only.
+   - `rel_x / rel_y` = offset from branch root. This is what goes into the code `position = { x = ... y = ... }`.
+     - Branch root traits: `rel_x = abs_x`, `rel_y = 0` (they have no `relative_position_id` in code).
+     - All other traits: `rel_x = abs_x − root_abs_x`, `rel_y = abs_y − root_abs_y`.
+
+   Layout rules (validated against `abs_x / abs_y`):
    - Branches occupy distinct x-lanes; total spread stays within 0–9
-   - Mutual exclusives share the same y, placed side-by-side
-   - Every child is at y = parent_y + 1 (no skipped rows, no same-row parent/child)
-   - Cross-branch parent must have a lower y than its child
+   - Mutual exclusives share the same `abs_y`, placed side-by-side
+   - Every child is at `abs_y = parent_abs_y + 1` (no skipped rows, no same-row parent/child)
+   - No two traits share the same `(abs_x, abs_y)` pair
+   - Cross-branch parent must have a lower `abs_y` than its child
 
    Wait for approval.
 
@@ -66,7 +73,7 @@ Steps:
 
 7. **Trait names:** max 3 words, always based on a real product, programme, or historical hallmark (e.g. "AW Heritage", "Falco Foundation"). Never generic ("Improved Reliability").
 
-8. **Icons** — `GFX_generic_mio_trait_icon_{kind}` based on primary modifier. Use the table below exclusively; do not search mod files.
+8. **Icons** — always write `icon = x` as a literal placeholder. This will produce a game error, which is expected and intentional — the user assigns real icon values manually afterwards. Do not attempt to resolve or replace `x` with any icon path.
 
    | Modifier                                          | Icon suffix             |
    | ------------------------------------------------- | ----------------------- |
@@ -96,7 +103,9 @@ Steps:
 
 - MIO token, TAG, total trait count, `task_capacity` value (or "omit" flag)
 - Full `equipment_type` and `research_categories` lists
-- Complete approved trait outline table (branch, name, modifier type, absolute x/y, icon token, ME partners, cross-branch parents)
+- Complete approved trait outline table (branch, name, modifier type, abs_x/abs_y, rel_x/rel_y, icon token, ME partners, cross-branch parents, limit_to_equipment_type per trait where applicable)
+- Positioning rule: branch root traits use `position = { x = abs_x y = 0 }` with no `relative_position_id`; all child traits use `relative_position_id = <branch_root_token>` and `position = { x = rel_x y = rel_y }` from the outline. Never use abs_x/abs_y directly in child trait code.
+- `limit_to_equipment_type` rules: (1) MIO has exactly one `equipment_type` entry → never include (redundant). (2) Trait has only `organization_modifier` (no `equipment_bonus` / `production_bonus`) → skip. (3) Trait bonuses apply to all equipment types equally → skip. (4) Only add when the trait targets a strict subset of multiple equipment types. (5) When `equipment_type` uses a category group (e.g. `mio_cat_all_armor`), individual traits may still use `limit_to_equipment_type` with specific tokens from within that category (e.g. `limit_to_equipment_type = { medium_tank_chassis medium_tank_artillery_chassis }`).
 - Target `.txt` file path and `.yml` path
 - Pointers to `~/.claude/CLAUDE.md`, project `CLAUDE.md`, `.claude/docs/mio-reference.md`
 - Explicit task: write MIO block to `.txt`, append loc keys to `.yml` under `### MIO` per step 10
@@ -105,8 +114,10 @@ Steps:
 **Large MIO (> 25 traits) — parallel branch subagents.** Launch one Sonnet subagent per branch in a single parallel `Agent` call. Each subagent prompt must include:
 
 - MIO token, TAG, `task_capacity` (or "omit"), `equipment_type`, `research_categories`
-- Only the trait rows for **this branch** (name, modifier type, icon, absolute x, absolute y, ME partner if any)
-- Cross-branch parents referenced by this branch: name + x/y only (no full other-branch data)
+- Only the trait rows for **this branch** (name, modifier type, icon, abs_x, abs_y, rel_x, rel_y, ME partner if any, limit_to_equipment_type where applicable)
+- Cross-branch parents referenced by this branch: name + abs_x/abs_y only (no full other-branch data)
+- Positioning rule: branch root traits use `position = { x = abs_x y = 0 }` with no `relative_position_id`; all child traits use `relative_position_id = <branch_root_token>` and `position = { x = rel_x y = rel_y }` from the outline. Never use abs_x/abs_y directly in child trait code.
+- `limit_to_equipment_type` rules: (1) MIO has exactly one `equipment_type` entry → never include (redundant). (2) Trait has only `organization_modifier` (no `equipment_bonus` / `production_bonus`) → skip. (3) Trait bonuses apply to all equipment types equally → skip. (4) Only add when the trait targets a strict subset of multiple equipment types. (5) When `equipment_type` uses a category group (e.g. `mio_cat_all_armor`), individual traits may still use `limit_to_equipment_type` with specific tokens from within that category (e.g. `limit_to_equipment_type = { medium_tank_chassis medium_tank_artillery_chassis }`).
 - Pointers to `~/.claude/CLAUDE.md`, project `CLAUDE.md`, `.claude/docs/mio-reference.md`
 - Explicit task: **return only the `trait = { ... }` blocks for this branch as plain text.** No `initial_trait`, no MIO header, no file writes.
 - Hard constraint: no design changes. If a position or rule is ambiguous, stop and report.
@@ -141,3 +152,5 @@ After writing, relay the result in one short sentence. Do not re-read the files 
     **Localisation file:** Find `localisation/english/` file with TAG in the filename; multiple matches → pick the main country file; no match → ask.
 
     **Append strategy:** look for `### MIO` near the bottom. If absent, add it at EOF and append keys beneath. If present, append after the last existing MIO key. Never insert mid-file.
+
+**Civil War (CW) errors:** Do not validate or flag CW-related errors during generation. Only check for them at the very end, and treat any CW errors found as potentially false positives caused by caching — report them as advisory only, not blockers.
