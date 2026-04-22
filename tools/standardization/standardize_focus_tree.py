@@ -12,6 +12,8 @@ import sys
 import time
 from datetime import datetime
 
+from common_utils import compact_icon, compact_search_filters
+
 
 def log_message(level: str, message: str, verbose: bool = False):
     """Log a message with timestamp"""
@@ -43,6 +45,55 @@ def is_empty_block(block_lines):
     # Remove the property name and braces, check if anything remains
     inner = re.sub(r"^[^{]*\{(.*)\}$", r"\1", content, flags=re.DOTALL)
     return inner.strip() == ""
+
+
+# Property dispatch tables for extract_focus_properties.
+# Single-line props: map script name -> props dict key.
+_SINGLE_LINE_PROPS = {
+    "id": "id",
+    "text_icon": "text_icon",
+    "overlay": "overlay",
+    "x": "x",
+    "y": "y",
+    "relative_position_id": "relative_position_id",
+    "cost": "cost",
+    "will_lead_to_war_with": "will_lead_to_war_with",
+}
+
+# Block props: map script name -> (props key, style).
+# Styles: "scalar" overwrites; "list" appends; "skip_empty_scalar"/"skip_empty_list"
+# drop blocks that contain only whitespace.
+_BLOCK_PROPS = {
+    "offset": ("offset", "list"),
+    "allow_branch": ("allow_branch", "scalar"),
+    "search_filters": ("search_filters", "scalar"),
+    "prerequisite": ("prerequisites", "list"),
+    "mutually_exclusive": ("mutually_exclusive", "skip_empty_list"),
+    "joint_trigger": ("joint_trigger", "scalar"),
+    "available": ("available", "skip_empty_scalar"),
+    "cancel": ("cancel", "skip_empty_scalar"),
+    "select_effect": ("select_effect", "scalar"),
+    "bypass": ("bypass", "skip_empty_scalar"),
+    "bypass_effect": ("bypass_effect", "scalar"),
+    "completion_reward": ("completion_reward", "scalar"),
+    "completion_reward_joint_originator": (
+        "completion_reward_joint_originator",
+        "scalar",
+    ),
+    "completion_reward_joint_member": ("completion_reward_joint_member", "scalar"),
+    "ai_will_do": ("ai_will_do", "scalar"),
+}
+
+_DEFAULT_REMOVALS = {
+    "cancel_if_invalid = yes",
+    "continue_if_invalid = no",
+    "available_if_capitulated = no",
+}
+
+_PROP_NAME_RE = re.compile(r"^(\w+)\s*=")
+_COMMENTED_EMPTY_BLOCK_RE = re.compile(
+    r"^#\s*(available|bypass|cancel|visible|mutually_exclusive)\s*=\s*\{\s*\}$"
+)
 
 
 def extract_focus_properties(focus_lines):
@@ -79,140 +130,47 @@ def extract_focus_properties(focus_lines):
     while i < len(focus_lines) - 1:  # Skip closing brace
         line = focus_lines[i].strip()
 
-        if line.startswith("id ="):
-            props["id"] = line
-        elif line.startswith("icon ="):
-            # Check if this is a multi-line block or single line
+        if line in _DEFAULT_REMOVALS or _COMMENTED_EMPTY_BLOCK_RE.match(line):
+            i += 1
+            continue
+
+        match = _PROP_NAME_RE.match(line)
+        prop_name = match.group(1) if match else None
+
+        if prop_name == "icon":
+            # Icon may repeat, and each entry can be a single line or a block.
+            # Store uniformly as list[list[str]] — single-line entries become a
+            # one-element sublist so downstream code can treat every entry the same.
             if "{" in line:
-                # Multi-line block
                 block_lines, next_i = extract_block(focus_lines, i)
-                if isinstance(props["icon"], list):
-                    # Already have icon blocks, append to the list
-                    if not isinstance(props["icon"][0], list):
-                        # Convert single icon to list format
-                        props["icon"] = [props["icon"]]
-                    props["icon"].append(block_lines)
-                else:
-                    # First icon block
-                    props["icon"] = [block_lines]
-                i = next_i  # Set i to the position after the block
-                continue  # Skip the i += 1 at the end of the loop
+                entry = block_lines
+                i = next_i
             else:
-                # Single line
-                if isinstance(props["icon"], list):
-                    # Already have icon blocks, append to the list
-                    props["icon"].append(line)
+                entry = [line]
+                i += 1
+            if not isinstance(props["icon"], list):
+                props["icon"] = []
+            props["icon"].append(entry)
+            continue
+
+        if prop_name in _SINGLE_LINE_PROPS:
+            props[_SINGLE_LINE_PROPS[prop_name]] = line
+            i += 1
+            continue
+
+        if prop_name in _BLOCK_PROPS:
+            key, style = _BLOCK_PROPS[prop_name]
+            block_lines, next_i = extract_block(focus_lines, i)
+            skip_empty = style.startswith("skip_empty_")
+            if not skip_empty or not is_empty_block(block_lines):
+                if style.endswith("list"):
+                    props[key].append(block_lines)
                 else:
-                    # First icon
-                    props["icon"] = [line]
-        elif line.startswith("text_icon ="):
-            props["text_icon"] = line
-        elif line.startswith("overlay ="):
-            props["overlay"] = line
-        elif line.startswith("x ="):
-            props["x"] = line
-        elif line.startswith("y ="):
-            props["y"] = line
-        elif line.startswith("relative_position_id ="):
-            props["relative_position_id"] = line
-        elif line.startswith("offset ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["offset"].append(block_lines)
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("allow_branch ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["allow_branch"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("cost ="):
-            props["cost"] = line
-        elif line.startswith("search_filters ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["search_filters"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("will_lead_to_war_with ="):
-            props["will_lead_to_war_with"] = line
+                    props[key] = block_lines
+            i = next_i
+            continue
 
-        elif line.startswith("prerequisite ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["prerequisites"].append(block_lines)
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("mutually_exclusive ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            if not is_empty_block(block_lines):
-                props["mutually_exclusive"].append(block_lines)
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("joint_trigger ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["joint_trigger"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("available ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            if not is_empty_block(block_lines):
-                props["available"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("cancel ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            if not is_empty_block(block_lines):
-                props["cancel"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("select_effect ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["select_effect"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("bypass ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            if not is_empty_block(block_lines):
-                props["bypass"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("bypass_effect ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["bypass_effect"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("completion_reward ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["completion_reward"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("completion_reward_joint_originator ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["completion_reward_joint_originator"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("completion_reward_joint_member ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["completion_reward_joint_member"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line.startswith("ai_will_do ="):
-            block_lines, next_i = extract_block(focus_lines, i)
-            props["ai_will_do"] = block_lines
-            i = next_i  # Set i to the position after the block
-            continue  # Skip the i += 1 at the end of the loop
-        elif line == "cancel_if_invalid = yes":
-            pass  # Default value, skip
-        elif line == "continue_if_invalid = no":
-            pass  # Default value, skip
-        elif line == "available_if_capitulated = no":
-            pass  # Default value, skip
-        elif re.match(
-            r"^#\s*(available|bypass|cancel|visible|mutually_exclusive)\s*=\s*\{\s*\}$",
-            line,
-        ):
-            pass  # Commented-out empty block, skip
-        else:
-            props["other"].append(focus_lines[i])
-
+        props["other"].append(focus_lines[i])
         i += 1
 
     return props
@@ -274,51 +232,42 @@ def compact_block(block_lines):
     return compacted
 
 
-def compact_search_filters(block_lines):
-    """Compact search_filters block into a single line with spaces between entities, supporting both single-line and multi-line formats."""
-    if not block_lines:
-        return "search_filters = { }"
-
-    entities = []
-    for line in block_lines:
-        # Find everything between { and } (or after {, or before })
-        if "search_filters" in line and "{" in line:
-            # Get everything after the first '{'
-            after_brace = line.split("{", 1)[1]
-            # Remove everything after '}' if present
-            after_brace = after_brace.split("}", 1)[0]
-            tokens = after_brace.strip().split()
-            entities.extend(tokens)
-        elif "}" in line:
-            # Get everything before '}'
-            before_brace = line.split("}", 1)[0]
-            tokens = before_brace.strip().split()
-            entities.extend(tokens)
+def emit_effect_block_with_log(lines, effect_block, focus_id):
+    """Append an effect block to `lines`, injecting a log line as the first
+    statement if the block doesn't already contain one."""
+    if not effect_block:
+        return
+    if focus_id and not any("log =" in line for line in effect_block):
+        log_line = f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"'
+        # Single-line block (`prop = { ... }` on one line): expand to multi-line
+        # so the log lands INSIDE the braces, not after them.
+        first = effect_block[0]
+        if (
+            len(effect_block) == 1
+            and "{" in first
+            and "}" in first
+            and first.count("{") == first.count("}")
+        ):
+            leading = re.match(r"^(\s*)", first).group(1)
+            open_idx = first.index("{")
+            close_idx = first.rindex("}")
+            header = first[: open_idx + 1].rstrip()
+            inner = first[open_idx + 1 : close_idx].strip()
+            expanded = [header, log_line]
+            if inner:
+                expanded.append(f"{leading}\t{inner}")
+            expanded.append(f"{leading}}}")
+            effect_block = expanded
         else:
-            tokens = line.strip().split()
-            entities.extend(tokens)
-
-    # Remove empty tokens
-    entities = [e for e in entities if e]
-    return f"search_filters = {{ {' '.join(entities)} }}"
-
-
-def compact_icon(block_lines):
-    """Compact icon block into a single line, handling both simple strings and multi-line blocks"""
-    if not block_lines:
-        return "icon = GFX_goal_generic_support_the_left_wing"  # Default fallback
-
-    # If it's already a single line (simple icon)
-    if len(block_lines) == 1:
-        return block_lines[0].strip()
-
-    # For complex multi-line blocks, just remove blank lines and preserve original indentation
-    compacted_lines = []
-    for line in block_lines:
-        if line.strip():  # Only keep non-empty lines
-            compacted_lines.append(line.rstrip())
-
-    return "\n".join(compacted_lines)
+            new_block = []
+            for i, line in enumerate(effect_block):
+                new_block.append(line)
+                if i == 0 and "{" in line:
+                    new_block.append(log_line)
+            effect_block = new_block
+    for line in compact_block(effect_block[:]):
+        lines.append(line)
+    lines.append("")
 
 
 def format_focus_offset_block(block_lines):
@@ -393,35 +342,15 @@ def format_focus_block(props, block_type="focus"):
     if props["id"]:
         lines.append(f'\t\t{props["id"]}')
     if props["icon"]:
-        # Handle multiple icon blocks
-        if isinstance(props["icon"], list) and len(props["icon"]) > 0:
-            # Check if it's a list of icon blocks or a single block
-            if isinstance(props["icon"][0], list):
-                # Multiple icon blocks
-                for icon_block in props["icon"]:
-                    icon_lines = compact_icon(icon_block)
-                    if "\n" in icon_lines:
-                        # Multi-line output - split and add each line with proper indentation
-                        for icon_line in icon_lines.split("\n"):
-                            if icon_line.strip():  # Only add non-empty lines
-                                lines.append(icon_line)
-                    else:
-                        # Single line output
-                        lines.append(f"\t\t{icon_lines}")
+        # `icon` is always list[list[str]] — emit each entry in order.
+        for icon_block in props["icon"]:
+            icon_lines = compact_icon(icon_block)
+            if "\n" in icon_lines:
+                for icon_line in icon_lines.split("\n"):
+                    if icon_line.strip():
+                        lines.append(icon_line)
             else:
-                # Single icon block
-                icon_lines = compact_icon(props["icon"])
-                if "\n" in icon_lines:
-                    # Multi-line output - split and add each line with proper indentation
-                    for icon_line in icon_lines.split("\n"):
-                        if icon_line.strip():  # Only add non-empty lines
-                            lines.append(icon_line)
-                else:
-                    # Single line output
-                    lines.append(f"\t\t{icon_lines}")
-        else:
-            # Single line - use as-is
-            lines.append(f'\t\t{props["icon"]}')
+                lines.append(f"\t\t{icon_lines}")
 
     # 2. Blank line before position group
     lines.append("")
@@ -526,24 +455,10 @@ def format_focus_block(props, block_type="focus"):
         if props["other"]:
             lines.append("")
 
-    # 14. Completion reward (add log if missing)
-    if props["completion_reward"]:
-        has_log = any("log =" in line for line in props["completion_reward"])
-        if not has_log and props["id"]:
-            focus_id = props["id"].split("=")[1].strip()
-            modified_reward = []
-            for i, line in enumerate(props["completion_reward"]):
-                modified_reward.append(line)
-                if i == 0 and "{" in line:
-                    modified_reward.append(
-                        f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"'
-                    )
-            props["completion_reward"] = modified_reward
+    focus_id = props["id"].split("=")[1].strip() if props["id"] else ""
 
-        compacted_reward = compact_block(props["completion_reward"][:])
-        for line in compacted_reward:
-            lines.append(line)
-        lines.append("")
+    # 14. Completion reward (add log if missing)
+    emit_effect_block_with_log(lines, props["completion_reward"], focus_id)
 
     # 15. Completion reward joint originator
     if props["completion_reward_joint_originator"]:
@@ -560,42 +475,10 @@ def format_focus_block(props, block_type="focus"):
         lines.append("")
 
     # 17. Select effect (add log if missing)
-    if props["select_effect"]:
-        has_log = any("log =" in line for line in props["select_effect"])
-        if not has_log and props["id"]:
-            focus_id = props["id"].split("=")[1].strip()
-            modified_effect = []
-            for i, line in enumerate(props["select_effect"]):
-                modified_effect.append(line)
-                if i == 0 and "{" in line:
-                    modified_effect.append(
-                        f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"'
-                    )
-            props["select_effect"] = modified_effect
+    emit_effect_block_with_log(lines, props["select_effect"], focus_id)
 
-        compacted_effect = compact_block(props["select_effect"][:])
-        for line in compacted_effect:
-            lines.append(line)
-        lines.append("")
-
-    # 16. Bypass effect (add log if missing)
-    if props["bypass_effect"]:
-        has_log = any("log =" in line for line in props["bypass_effect"])
-        if not has_log and props["id"]:
-            focus_id = props["id"].split("=")[1].strip()
-            modified_effect = []
-            for i, line in enumerate(props["bypass_effect"]):
-                modified_effect.append(line)
-                if i == 0 and "{" in line:
-                    modified_effect.append(
-                        f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"'
-                    )
-            props["bypass_effect"] = modified_effect
-
-        compacted_effect = compact_block(props["bypass_effect"][:])
-        for line in compacted_effect:
-            lines.append(line)
-        lines.append("")
+    # 18. Bypass effect (add log if missing)
+    emit_effect_block_with_log(lines, props["bypass_effect"], focus_id)
 
     # 17. AI will do (always last, always multi-line)
     if props["ai_will_do"]:
@@ -797,10 +680,21 @@ def format_offset_block(block_lines):
 
 def format_continuous_focus_position_block(block_lines):
     """Format continuous_focus_position block according to standard"""
-    # Extract x and y values
     x_val = ""
     y_val = ""
 
+    # Handle single-line blocks like `continuous_focus_position = { x = 5700 y = 2000 }`
+    # by tokenising the contents between the braces.
+    if len(block_lines) == 1 and "{" in block_lines[0] and "}" in block_lines[0]:
+        inner = block_lines[0].split("{", 1)[1].rsplit("}", 1)[0].strip()
+        for match in re.finditer(r"(x|y)\s*=\s*(\S+)", inner):
+            key, value = match.group(1), match.group(2)
+            if key == "x":
+                x_val = value
+            elif key == "y":
+                y_val = value
+
+    # Multi-line blocks: one property per line.
     for line in block_lines:
         stripped = line.strip()
         if stripped.startswith("x ="):
@@ -808,12 +702,11 @@ def format_continuous_focus_position_block(block_lines):
         elif stripped.startswith("y ="):
             y_val = stripped.split("=")[1].strip()
 
-    # Format as single line
     if x_val and y_val:
         return [f"\tcontinuous_focus_position = {{ x = {x_val} y = {y_val} }}"]
-    else:
-        # Fallback to original if parsing fails
-        return block_lines
+
+    # Fallback: return rstripped lines so no stray newlines survive.
+    return [line.rstrip("\r\n") for line in block_lines]
 
 
 def format_initial_show_position_block(block_lines):
@@ -827,6 +720,19 @@ def format_initial_show_position_block(block_lines):
     focus_val = ""
     offset_lines = []
     other_lines = []
+
+    # Handle single-line blocks like `initial_show_position = { x = 2 y = 0 }`
+    # by extracting the contents between the braces and tokenising them.
+    if len(block_lines) == 1 and "{" in block_lines[0] and "}" in block_lines[0]:
+        inner = block_lines[0].split("{", 1)[1].rsplit("}", 1)[0].strip()
+        for match in re.finditer(r"(x|y|focus)\s*=\s*(\S+)", inner):
+            key, value = match.group(1), match.group(2)
+            if key == "x":
+                x_val = f"x = {value}"
+            elif key == "y":
+                y_val = f"y = {value}"
+            elif key == "focus":
+                focus_val = f"focus = {value}"
 
     i = 1  # Skip opening brace
     while i < len(block_lines) - 1:  # Skip closing brace
@@ -853,6 +759,12 @@ def format_initial_show_position_block(block_lines):
         # Simple case: just focus reference
         return [f"\tinitial_show_position = {{ {focus_val} }}"]
 
+    if x_val and y_val and not focus_val and not offset_lines and not other_lines:
+        # Simple case: just x/y coordinates
+        x_num = x_val.split("=", 1)[1].strip()
+        y_num = y_val.split("=", 1)[1].strip()
+        return [f"\tinitial_show_position = {{ x = {x_num} y = {y_num} }}"]
+
     # Multi-line format
     if x_val:
         lines.append(f"\t\t{x_val}")
@@ -872,6 +784,32 @@ def format_initial_show_position_block(block_lines):
 
     lines.append("\t}")
     return lines
+
+
+# Dispatch tables for standardize_focus_tree's main loop.
+_FOCUS_BLOCK_TYPES = {"focus", "shared_focus", "joint_focus"}
+
+_SIMPLE_BLOCK_HANDLERS = {
+    "shortcut": format_shortcut_block,
+    "inlay_window": format_inlay_window_block,
+    "offset": format_offset_block,
+    "continuous_focus_position": format_continuous_focus_position_block,
+    "initial_show_position": format_initial_show_position_block,
+}
+
+# Order preserved for the SUCCESS log output at end of standardization.
+_BLOCK_COUNT_ORDER = (
+    "focus",
+    "shared_focus",
+    "joint_focus",
+    "continuous_focus_position",
+    "initial_show_position",
+    "shortcut",
+    "inlay_window",
+    "offset",
+)
+
+_BLOCK_DISPATCH_RE = re.compile(r"^\s*(" + "|".join(_BLOCK_COUNT_ORDER) + r")\s*=\s*\{")
 
 
 def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = False):
@@ -894,153 +832,43 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
 
     output_lines = []
     i = 0
-    focus_count = 0
-    shared_focus_count = 0
-    joint_focus_count = 0
-    shortcut_count = 0
-    inlay_count = 0
-    offset_count = 0
-    continuous_pos_count = 0
-    initial_pos_count = 0
+    counts = {block_type: 0 for block_type in _BLOCK_COUNT_ORDER}
 
     while i < len(lines):
         line = lines[i].rstrip()
+        match = _BLOCK_DISPATCH_RE.match(line)
 
-        if re.match(r"\s*focus\s*=\s*{", line):
-            log_message("DEBUG", f"Found focus block at line {i+1}", verbose)
-
-            focus_block, next_i = extract_block(lines, i)
-
-            if focus_block:
-                props = extract_focus_properties(focus_block)
-                formatted_lines = format_focus_block(props)
-
-                output_lines.extend(formatted_lines)
-                focus_count += 1
-
-                log_message(
-                    "DEBUG",
-                    f"Processed focus block {focus_count}: {props.get('id', 'unknown')}",
-                    verbose,
-                )
-
-            i = next_i
-        elif re.match(r"\s*shared_focus\s*=\s*{", line):
-            log_message("DEBUG", f"Found shared_focus block at line {i+1}", verbose)
-
-            focus_block, next_i = extract_block(lines, i)
-
-            if focus_block:
-                props = extract_focus_properties(focus_block)
-                formatted_lines = format_focus_block(props, "shared_focus")
-
-                output_lines.extend(formatted_lines)
-                shared_focus_count += 1
-
-                log_message(
-                    "DEBUG",
-                    f"Processed shared_focus block {shared_focus_count}: {props.get('id', 'unknown')}",
-                    verbose,
-                )
-
-            i = next_i
-        elif re.match(r"\s*joint_focus\s*=\s*{", line):
-            log_message("DEBUG", f"Found joint_focus block at line {i+1}", verbose)
-
-            focus_block, next_i = extract_block(lines, i)
-
-            if focus_block:
-                props = extract_focus_properties(focus_block)
-                formatted_lines = format_focus_block(props, "joint_focus")
-
-                output_lines.extend(formatted_lines)
-                joint_focus_count += 1
-
-                log_message(
-                    "DEBUG",
-                    f"Processed joint_focus block {joint_focus_count}: {props.get('id', 'unknown')}",
-                    verbose,
-                )
-
-            i = next_i
-        elif re.match(r"\s*shortcut\s*=\s*{", line):
-            log_message("DEBUG", f"Found shortcut block at line {i+1}", verbose)
-
-            shortcut_block, next_i = extract_block(lines, i)
-
-            if shortcut_block:
-                formatted_lines = format_shortcut_block(shortcut_block)
-                output_lines.extend(formatted_lines)
-                shortcut_count += 1
-
-                log_message(
-                    "DEBUG", f"Processed shortcut block {shortcut_count}", verbose
-                )
-
-            i = next_i
-        elif re.match(r"\s*inlay_window\s*=\s*{", line):
-            log_message("DEBUG", f"Found inlay_window block at line {i+1}", verbose)
-
-            inlay_block, next_i = extract_block(lines, i)
-
-            if inlay_block:
-                formatted_lines = format_inlay_window_block(inlay_block)
-                output_lines.extend(formatted_lines)
-                inlay_count += 1
-
-                log_message(
-                    "DEBUG", f"Processed inlay_window block {inlay_count}", verbose
-                )
-
-            i = next_i
-        elif re.match(r"\s*offset\s*=\s*{", line):
-            log_message("DEBUG", f"Found offset block at line {i+1}", verbose)
-
-            offset_block, next_i = extract_block(lines, i)
-
-            if offset_block:
-                formatted_lines = format_offset_block(offset_block)
-                output_lines.extend(formatted_lines)
-                offset_count += 1
-
-                log_message("DEBUG", f"Processed offset block {offset_count}", verbose)
-
-            i = next_i
-        elif re.match(r"\s*continuous_focus_position\s*=\s*{", line):
-            log_message(
-                "DEBUG", f"Found continuous_focus_position block at line {i+1}", verbose
-            )
-
-            block, next_i = extract_block(lines, i)
-
-            if block:
-                formatted_lines = format_continuous_focus_position_block(block)
-                output_lines.extend(formatted_lines)
-                continuous_pos_count += 1
-
-                log_message(
-                    "DEBUG", f"Processed continuous_focus_position block", verbose
-                )
-
-            i = next_i
-        elif re.match(r"\s*initial_show_position\s*=\s*{", line):
-            log_message(
-                "DEBUG", f"Found initial_show_position block at line {i+1}", verbose
-            )
-
-            block, next_i = extract_block(lines, i)
-
-            if block:
-                formatted_lines = format_initial_show_position_block(block)
-                output_lines.extend(formatted_lines)
-                initial_pos_count += 1
-
-                log_message("DEBUG", f"Processed initial_show_position block", verbose)
-
-            i = next_i
-        else:
+        if not match:
             output_lines.append(line)
             i += 1
+            continue
+
+        block_type = match.group(1)
+        log_message("DEBUG", f"Found {block_type} block at line {i + 1}", verbose)
+
+        block_lines, next_i = extract_block(lines, i)
+        if block_lines:
+            if block_type in _FOCUS_BLOCK_TYPES:
+                props = extract_focus_properties(block_lines)
+                formatted_lines = format_focus_block(props, block_type)
+                counts[block_type] += 1
+                log_message(
+                    "DEBUG",
+                    f"Processed {block_type} block {counts[block_type]}: "
+                    f"{props.get('id', 'unknown')}",
+                    verbose,
+                )
+            else:
+                formatted_lines = _SIMPLE_BLOCK_HANDLERS[block_type](block_lines)
+                counts[block_type] += 1
+                log_message(
+                    "DEBUG",
+                    f"Processed {block_type} block {counts[block_type]}",
+                    verbose,
+                )
+            output_lines.extend(formatted_lines)
+
+        i = next_i
 
     # Post-processing: ensure blank lines between consecutive focus/shared_focus/joint_focus blocks
     focus_block_pattern = re.compile(r"^\t(focus|shared_focus|joint_focus)\s*=\s*{")
@@ -1077,28 +905,14 @@ def standardize_focus_tree(input_file: str, output_file: str, verbose: bool = Fa
             time_str = f"{minutes}m {seconds:.2f}s"
 
         log_message("SUCCESS", f"Standardization completed in {time_str}")
-        log_message("SUCCESS", f"Processed {focus_count} focus blocks")
-        if shared_focus_count > 0:
-            log_message(
-                "SUCCESS", f"Processed {shared_focus_count} shared_focus blocks"
-            )
-        if joint_focus_count > 0:
-            log_message("SUCCESS", f"Processed {joint_focus_count} joint_focus blocks")
-        if continuous_pos_count > 0:
-            log_message(
-                "SUCCESS",
-                f"Processed {continuous_pos_count} continuous_focus_position blocks",
-            )
-        if initial_pos_count > 0:
-            log_message(
-                "SUCCESS", f"Processed {initial_pos_count} initial_show_position blocks"
-            )
-        if shortcut_count > 0:
-            log_message("SUCCESS", f"Processed {shortcut_count} shortcut blocks")
-        if inlay_count > 0:
-            log_message("SUCCESS", f"Processed {inlay_count} inlay_window blocks")
-        if offset_count > 0:
-            log_message("SUCCESS", f"Processed {offset_count} offset blocks")
+        log_message("SUCCESS", f"Processed {counts['focus']} focus blocks")
+        for block_type in _BLOCK_COUNT_ORDER:
+            if block_type == "focus":
+                continue  # already logged above, unconditionally
+            if counts[block_type] > 0:
+                log_message(
+                    "SUCCESS", f"Processed {counts[block_type]} {block_type} blocks"
+                )
         log_message("SUCCESS", f"Output written to: {output_file}")
 
     except Exception as e:
