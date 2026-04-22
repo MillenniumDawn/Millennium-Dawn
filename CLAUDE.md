@@ -100,7 +100,7 @@ For structure, scripted effects, and examples, see `.claude/docs/decision-refere
 - Log only if there are actual effects in the option
 - Use `major = yes` sparingly (news events only)
 - Trigger date-based events via `common/scripted_effects/00_yearly_effects.txt`; when the intended recipient may no longer own the target state, use the owner-guard pattern (check expected owner, fall back to `random_country = { limit = { owns_state = X } }`)
-- When a focus or event fires to another nation, always add `TT_IF_THEY_ACCEPT` / `TT_IF_THEY_REJECT` tooltips so the player can see both outcomes — see `.claude/rules/general-rules.md` for the full pattern and available keys.
+- When a focus or event fires to another nation, always add a `TT_IF_THEY_ACCEPT` tooltip so the player can see the accept outcome. Add `TT_IF_THEY_REJECT` only when rejection has real consequences (opinion penalty, retaliation, tariff, etc.) — omit it when rejection just means "nothing happens", since the accept tooltip already implies the alternative. See `.claude/rules/general-rules.md` for the full pattern and available keys.
 - `add_building_construction` for `naval_base` requires `province = XXXXX` — without it the build silently fails or misplaces the base in multi-province states
 - When adding new subideology parties, register them in `common/scripted_localisation/00_subideology_scripted_localisation.txt` for every relevant ideology group — missing registration causes fallback to a generic entry
 

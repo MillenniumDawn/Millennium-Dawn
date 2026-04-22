@@ -40,6 +40,10 @@ When no specific issues are assigned, scan for these known problem patterns:
 - **Localisation issues**: trailing version numbers (`key:0`), missing BOM in yml files, mixed indentation.
 - **`force_update_dynamic_modifier`** usage — should be avoided.
 - **`every_country`/`random_country` without specific array triggers** — performance concern.
+- **`check_variable` with `>=` or `<=`** — not valid HOI4 syntax, parser silently mis-handles them. Must use long-form `compare = greater_than_or_equals` / `less_than_or_equals`, or rewrite as strict inequality (`v > -1` ≡ `v >= 0`). See `.claude/rules/general-rules.md`.
+- **`NOT = { A B }` trap**: `NOT = { original_tag = USA original_tag = CHI }` means NOT(USA AND CHI) — always true for any single country. Split into separate `NOT` blocks to exclude both.
+- **Dead defines in `common/defines/MD_defines.lua`** — defines not present in vanilla `00_defines.lua` are silently ignored by Lua. Common cases: misspellings (e.g. `RAIDS_CREATE_FREQUENCEY_DAYS`), wrong namespace (NAI vs NAir vs NFocus), defines deprecated in newer HOI4 patches. Cross-check against your local vanilla HOI4 install's `common/defines/00_defines.lua` or the Paradox Wiki: https://hoi4.paradoxwikis.com/Defines.
+- **`allowed = { tag/original_tag = TAG }` in `country` or `hidden_ideas` idea categories** — redundant because `add_ideas` bypasses `allowed` and national spirits are not player-selectable. Safe to remove. Do NOT remove from other categories (e.g. `AA_law_budget`).
 
 ## Known False Positives — Do NOT Flag These
 
@@ -48,6 +52,11 @@ These patterns look like bugs but are intentional:
 - **`custom_trigger_tooltip` without `hidden_trigger`**: `custom_trigger_tooltip` already suppresses child tooltips. `hidden_trigger` inside it is redundant — do not add it.
 - **GRE defer payments dual building call**: Greek focuses with `GRE_defer_payments_flag` intentionally call the building scripted effect BOTH inside an `if` block (with `skip_payment = 1`) AND outside it (normal charge). This is correct — do NOT restructure it or flag the duplication.
 - **Building scripted effects without manual treasury charge**: `one_random_*` and `two_random_*` building effects already charge treasury internally. Missing `treasury_change`/`modify_treasury_effect` is correct — adding them would double-charge.
+- **`num_of_factories`** is a valid HOI4 trigger (total factories = civilian + military). Do NOT rewrite it to `num_of_civilian_factories` or flag it as a typo for `has_num_of_factories` (which doesn't exist).
+- **`MAX_CIV_FACTORIES_PER_CONTRACT = 1`** and **`EQUIPMENT_MARKET_MAX_CIVS_FOR_PURCHASES_RATIO = 0.05`** in MD defines are intentional design choices to limit AI market spending. Do NOT raise.
+- **`context_type = diplomatic_action`** on scripted_guis (e.g. `02_conditional_peace_deals_scripted_gui.txt`) — the parser prints "Unexpected token: context_type" but the GUI works at runtime. Switching to `player_context` breaks the diplomatic-action hook. Leave alone.
+- **`EH_scenario_enabled = yes`** in raid category `visible` blocks — error.log shows "Invalid Scope, provided: None", but the raid category resolves correctly at runtime. Do NOT inline the scripted trigger.
+- **Unscoped `FROM` in non-targeted country-scoped decisions** — resolves to ROOT/THIS as a fallback (does not silently fail). The `validate_from_without_targets` validator flags these as redundant/misleading rather than broken. Cleanup is dropping the `FROM.` prefix, not rewiring the decision.
 
 ## Fix Guidelines
 

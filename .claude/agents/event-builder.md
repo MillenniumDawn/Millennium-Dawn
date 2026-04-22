@@ -58,10 +58,11 @@ country_event = {
 
 When a focus or event fires to another nation:
 
-1. **Always add `TT_IF_THEY_ACCEPT` / `TT_IF_THEY_REJECT` tooltips** in the sending focus/event so the player can see both outcomes
-2. **AI weighting** must be based on opinion/influence, not random chance
-3. Use `sender_influence_higher_*` triggers and `has_opinion` for AI chance modifiers
-4. Fire follow-up events with `days = 1` to the originator for accept/reject responses
+1. **Always add `TT_IF_THEY_ACCEPT`** in the sending focus/event so the player can see the accept outcome
+2. **Only add `TT_IF_THEY_REJECT` when rejection has real consequences** (tariffs, opinion penalties, retaliatory chains). If rejection just means "nothing happens," omit it — the accept tooltip already implies the alternative, and empty reject blocks are redundant noise.
+3. **AI weighting** must be based on opinion/influence, not random chance
+4. Use `sender_influence_higher_*` triggers and `has_opinion` for AI chance modifiers
+5. Fire follow-up events with `days = 1` to the originator for accept/reject responses
 
 Example AI chance pattern:
 
@@ -146,6 +147,27 @@ When adding new subideology parties via events, register them in `common/scripte
 
 Do NOT wrap triggers inside `custom_trigger_tooltip` with `hidden_trigger` — `custom_trigger_tooltip` already suppresses child tooltips. `hidden_trigger` is redundant there.
 
+### check_variable Comparison Operators
+
+`check_variable` only accepts `=`, `>`, and `<` as inline operators. `>=` and `<=` are **not valid** — the parser silently mis-handles them and the check never matches as intended. Use:
+
+- Long form: `check_variable = { var = X value = Y compare = greater_than_or_equals }` (also `less_than_or_equals`, `equals`, `not_equals`)
+- Strict inequality rewrite for integers: `v > -1` ≡ `v >= 0`
+- Negation: `NOT = { check_variable = { v < 0 } }` ≡ `v >= 0`
+
+### NOT Block AND Trap
+
+`NOT = { original_tag = USA original_tag = CHI }` means NOT(USA AND CHI) — always true for any single country. Use separate `NOT` blocks to exclude both:
+
+```
+NOT = { original_tag = USA }
+NOT = { original_tag = CHI }
+```
+
+### FROM in Non-Targeted Decisions
+
+In a non-targeted country-scoped decision (no `targets`, `target_array`, or `state_target`), `FROM` resolves to ROOT/THIS as a fallback rather than being undefined. So `var:FROM.influence_array^0 = { ... }` fires on ROOT rather than silently failing. These patterns are redundant/misleading — drop the `FROM.` prefix, or make the decision properly targeted if another country is genuinely intended.
+
 ## Formatting Rules
 
 - Use **tabs** for indentation (not spaces)
@@ -186,7 +208,7 @@ Generate corresponding localisation entries for every event:
    - `is_triggered_only = yes` is present
    - Log messages match their option IDs
    - Scoping is correct (FROM, ROOT, PREV used appropriately)
-   - Cross-nation events have accept/reject tooltips and AI weighting
+   - Cross-nation events have `TT_IF_THEY_ACCEPT` and AI weighting; `TT_IF_THEY_REJECT` is present only when rejection has real consequences
    - No empty log statements in effect-less options
    - Tab indentation throughout
    - No performance anti-patterns
@@ -199,7 +221,7 @@ Check for these common issues:
 - Log message ID mismatches (`.a` log in `.b` option)
 - Logging in options with no actual effects
 - `major = yes` on non-news events
-- Missing `TT_IF_THEY_ACCEPT` / `TT_IF_THEY_REJECT` tooltips for cross-nation events
+- Missing `TT_IF_THEY_ACCEPT` tooltip on cross-nation events (reject tooltip only required when rejection triggers real effects)
 - `add_building_construction` for `naval_base` missing `province`
 - `tag` instead of `original_tag` in trigger blocks
 - Incorrect FROM/ROOT scoping

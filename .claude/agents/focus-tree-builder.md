@@ -73,6 +73,15 @@ log = "[GetDateText]: [Root.GetName]: Focus TAG_focus_name"
 ### Triggers
 
 - Do NOT wrap triggers inside `custom_trigger_tooltip` with `hidden_trigger` — `custom_trigger_tooltip` already suppresses child tooltips, making `hidden_trigger` redundant and adding unnecessary nesting.
+- `check_variable` only accepts `=`, `>`, `<` inline. `>= 0` and `<= N` are silently mis-handled by the parser. Use long-form `compare = greater_than_or_equals` (or `less_than_or_equals` / `equals` / `not_equals`), or rewrite as strict inequality (`v > -1` ≡ `v >= 0`).
+- `NOT = { original_tag = USA original_tag = CHI }` means NOT(USA AND CHI) — always true for a single country. Use separate `NOT` blocks to exclude both: `NOT = { original_tag = USA } NOT = { original_tag = CHI }`.
+
+### Cross-Nation Completion Rewards
+
+When `completion_reward` fires an event to another nation:
+
+- Always add a `TT_IF_THEY_ACCEPT` tooltip showing the accept outcome
+- Only add `TT_IF_THEY_REJECT` when rejection triggers actual effects (opinion penalty, retaliation, etc.). Omit it if rejection just means nothing happens — the accept tooltip already implies the alternative.
 
 ### Buildings & Treasury
 

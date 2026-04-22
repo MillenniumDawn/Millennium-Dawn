@@ -3,7 +3,6 @@
 SUB_integrate_influence_bonus_to_root = {
 	set_temp_variable = { percent_change = 2 }
 	set_temp_variable = { tag_index = SOV }
-	set_temp_variable = { influence_target = ROOT }
 	change_influence_percentage = yes
 }
 ###########SUBJECTS OF RUSSIA - VARIABLES###########
@@ -1234,6 +1233,28 @@ SUB_subjects_integrate_army_of_russia = {
 		SUB_integrate_influence_bonus_to_root = yes
 	}
 }
+###########SUBJECTS OF RUSSIA - MERGE SUBJECT INTO ROOT###########
+# Pre-set: set_temp_variable = { SUB_merge_target = TAG }
+# Transfers cores, leaders, treasury, debt, investments from SUB_merge_target to ROOT,
+# then annexes the target. Bumps avtoritet +2, domestic influence +0.5%,
+# and adds bidirectional positive opinion with SOV.
+SUB_merge_subject_into_root = {
+	set_temp_variable = { modify_subjectavtoritet = 2 }
+	modify_subjectavtoritet_support = yes
+	var:SUB_merge_target = {
+		every_core_state = { add_core_of = ROOT }
+		every_unit_leader = { set_nationality = ROOT }
+	}
+	add_to_variable = { treasury = var:SUB_merge_target.treasury }
+	add_to_variable = { debt = var:SUB_merge_target.debt }
+	add_to_variable = { int_investments = var:SUB_merge_target.int_investments }
+	annex_country = { target = var:SUB_merge_target transfer_troops = yes }
+	set_temp_variable = { percent_change = 0.5 }
+	change_domestic_influence_percentage = yes
+	add_opinion_modifier = { target = SOV modifier = recent_actions_positive }
+	SOV = { add_opinion_modifier = { target = ROOT modifier = recent_actions_positive } }
+}
+
 ###########SUBJECTS OF RUSSIA - ANNEX SUBJECTS###########
 # Tag tiers:
 #   minor  = -95 pp / -3 treasury / -0.03 popularity (small unrecognised republics)

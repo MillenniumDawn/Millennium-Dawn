@@ -135,6 +135,15 @@ If the nation has the build flag but still isn't producing:
 - Check for UNSC arms embargo or international sanctions (`common/ideas/Various.txt`)
 - Check `ai_weapon_dump` — is it destroying stockpiles?
 
+### 8b. Check AI Defines
+
+If AI strategic behavior looks wrong (raids not firing, ace wings the wrong size, naval target selection broken, score thresholds off):
+
+- Cross-check relevant defines in `common/defines/MD_defines.lua` against vanilla `00_defines.lua` in your local HOI4 install, or the Paradox Wiki: https://hoi4.paradoxwikis.com/Defines.
+- **Dead defines are silently ignored by Lua** — the game doesn't error, the value just does nothing. Past incidents: `RAIDS_CREATE_FREQUENCEY_DAYS` (typo, should be `FREQUENCY`), `ACE_WING_SIZE` (wrong namespace — NAir not NAI), `MAX_SAVED_FOCUS_PROGRESS` (NFocus not NAI).
+- **Verify the namespace header** (e.g. `NAir = {`, `NAI = {`, `NNavy = {`) above the define in vanilla before overriding.
+- When a bug looks like "the AI is ignoring a configured threshold," a dead define is a prime suspect.
+
 ## Fix Guidelines
 
 - Apply minimal correct fixes following project conventions
