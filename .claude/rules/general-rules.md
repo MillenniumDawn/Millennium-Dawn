@@ -95,13 +95,23 @@ else = { ... }
 
 ## Cross-country event tooltips
 
-When a focus `completion_reward` or event option fires an event to another country, add `TT_IF` tooltips immediately after the event fire to show the player both outcomes:
+When a focus `completion_reward` or event option fires an event to another country, add a `TT_IF_THEY_ACCEPT` tooltip immediately after the event fire so the player can see what happens on acceptance:
+
+```
+OTHER = { country_event = { id = foo.1 days = 1 } }
+custom_effect_tooltip = TT_IF_THEY_ACCEPT
+effect_tooltip = {
+	# effects / tooltip keys summarising the acceptance outcome
+}
+```
+
+Only add `TT_IF_THEY_REJECT` when rejection has real consequences on the sender (opinion penalty, retaliation, tariff, follow-up event chain, etc.). If rejection just means "nothing happens," omit it — the accept tooltip already implies the alternative, and empty reject blocks are redundant noise. When both branches have real outcomes, include both:
 
 ```
 OTHER = { country_event = { id = foo.1 days = 1 } }
 custom_effect_tooltip = TT_IF_THEY_REJECT
 effect_tooltip = {
-	# effects / tooltip keys summarising the rejection outcome
+	# effects / tooltip keys summarising the rejection outcome (opinion penalty, retaliation, etc.)
 }
 custom_effect_tooltip = TT_IF_THEY_ACCEPT
 effect_tooltip = {

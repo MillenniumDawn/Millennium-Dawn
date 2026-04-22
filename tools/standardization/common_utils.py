@@ -11,7 +11,7 @@ import re
 import sys
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import (
@@ -64,6 +64,51 @@ def compact_icon(block_lines: List[str]) -> str:
             compacted_lines.append(line.rstrip())
 
     return "\n".join(compacted_lines)
+
+
+def collapse_blank_runs(lines: List[str], max_blank: int = 1) -> List[str]:
+    """Collapse consecutive blank lines to at most `max_blank` in a row."""
+    result = []
+    blank_count = 0
+    for line in lines:
+        if line.strip() == "":
+            blank_count += 1
+            if blank_count <= max_blank:
+                result.append(line)
+        else:
+            blank_count = 0
+            result.append(line)
+    return result
+
+
+def block_has_log(block_lines: List[str]) -> bool:
+    """Check whether any line in a block contains a log statement."""
+    return any("log =" in line for line in block_lines)
+
+
+def inject_log_after_brace(block_lines: List[str], log_line: str) -> List[str]:
+    """Return a copy of block_lines with `log_line` inserted after the first line
+    that contains an opening brace. No-op if no such line exists."""
+    result = []
+    injected = False
+    for line in block_lines:
+        result.append(line)
+        if not injected and "{" in line:
+            result.append(log_line)
+            injected = True
+    return result
+
+
+# Shared regex: matches the property name at the start of a stripped line
+# like `prop_name = value` or `prop_name = { ... }`.
+PROP_NAME_RE = re.compile(r"^(\w+)\s*=")
+
+
+def emit_comments(lines: List[str], comments: List[str]) -> None:
+    """Append non-blank comment lines (rstripped) onto `lines` in-place."""
+    for comment in comments:
+        if comment.strip():
+            lines.append(comment.rstrip())
 
 
 class BaseStandardizer(ABC):
