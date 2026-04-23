@@ -48,7 +48,7 @@ _SCRIPT_COMPLETED_FOCUSES: set = set()
 _SCRIPT_COMPLETED_DECISIONS: set = set()
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from cleanup_or import find_single_condition_or_blocks
+from cleanup_or import find_redundant_and_blocks, find_single_condition_or_blocks
 from path_utils import clean_filepath
 
 
@@ -136,14 +136,18 @@ def _check_focus_available_always_no(lines):
     return issues
 
 
+_RE_DAYS_MISSION_TIMEOUT = re.compile(r"\bdays_mission_timeout\s*=")
+
+
 def _check_decision_available_always_no(lines):
     """Flag available = { always = no } in decisions with no valid completion mechanism.
 
     Valid mechanisms (all skip the flag):
       - visible = { always = no } (decision is script-triggered, invisible to player)
+      - days_mission_timeout (timer missions auto-complete via timeout_effect)
       - activate_decision = DECISION_ID found elsewhere in the codebase
 
-    Only flags when available=always-no AND neither mechanism is present.
+    Only flags when available=always-no AND none of the above are present.
     """
     issues = []
     i = 0
@@ -171,6 +175,7 @@ def _check_decision_available_always_no(lines):
                         _RE_DECISION_MARKER.search(norm)
                         and _RE_AVAILABLE_ALWAYS_NO.search(norm)
                         and not _RE_VISIBLE_ALWAYS_NO.search(norm)
+                        and not _RE_DAYS_MISSION_TIMEOUT.search(norm)
                         and (
                             dec_id is None or dec_id not in _SCRIPT_COMPLETED_DECISIONS
                         )
@@ -386,6 +391,8 @@ def check_file(filepath):
             )
 
     for ln, msg in find_single_condition_or_blocks(lines):
+        issues.append((ln, msg))
+    for ln, msg in find_redundant_and_blocks(lines):
         issues.append((ln, msg))
 
     if is_focus_file:

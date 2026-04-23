@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
-"""Simplify OR blocks with a single condition.
+"""Simplify redundant OR and AND wrapper blocks.
 
-For every .txt file under the worktree, finds OR = { ... } blocks where the
-content is exactly one top-level condition (regardless of formatting) and
-replaces them with the bare condition at the same indentation level.
+For every .txt file under the worktree:
+  - OR = { single_cond } → bare condition (OR with one branch is meaningless)
+  - AND = { ... } outside OR context → contents promoted to parent scope
+    (AND is the default scope everywhere except inside OR)
 
 Handles all formatting variants:
   - Standard multi-line:    OR = {\n    cond\n}
   - Inline:                 OR = { cond }
   - Tab-after-brace:        OR = {\\tcond\\n}
   - Nested block condition: OR = {\\n    NOT = {\\n        ...\\n    }\\n}
+
+AND cleanup respects OR context: AND = { A B } inside OR = { } is kept
+because it groups A and B as a single OR branch.
 
 Run tools/cleanup_or.py from the repo root to process all files, or pass
 explicit file paths as arguments to process only those files.
@@ -148,6 +152,28 @@ def _collect_or_block(lines, start):
     return block_lines, j
 
 
+def _collect_block(lines, start):
+    """Collect all lines of any brace-delimited block starting at lines[start].
+
+    Unlike _collect_or_block this works for ANY block type (AND, NOT, etc.)
+    because it counts braces from the full opening line rather than stripping
+    an OR-specific prefix first.
+
+    Returns (block_lines, next_index).
+    """
+    code = lines[start].split("#")[0]
+    depth = code.count("{") - code.count("}")
+    block_lines = [lines[start]]
+    j = start + 1
+    while depth > 0 and j < len(lines):
+        l = lines[j]
+        block_lines.append(l)
+        code = l.split("#")[0]
+        depth += code.count("{") - code.count("}")
+        j += 1
+    return block_lines, j
+
+
 # ---------------------------------------------------------------------------
 # Inline OR handling  (OR = { cond } all on one line, embedded in other blocks)
 # ---------------------------------------------------------------------------
@@ -176,6 +202,109 @@ def _fix_inline_or_line(line):
 
     new_code = _RE_INLINE_OR.sub(_replace, code)
     return new_code + comment
+
+
+# ---------------------------------------------------------------------------
+# AND block helpers
+# ---------------------------------------------------------------------------
+
+_RE_AND_OPEN = re.compile(r"^\s*AND\s*=\s*\{")
+_RE_OR_BLOCK_OPEN = re.compile(r"^\s*OR\s*=\s*\{")
+
+
+def _extract_all_inner_lines(inner_text, target_indent):
+    """Extract all content lines from inside an AND block, rebased to target_indent.
+
+    Blank lines and leading/trailing whitespace-only lines are stripped.
+    Comments are preserved.
+    """
+    raw = inner_text.splitlines(keepends=True)
+
+    # Find base indentation from the first non-blank line
+    base_indent = None
+    for ln in raw:
+        if ln.strip():
+            base_indent = ln[: len(ln) - len(ln.lstrip())]
+            break
+
+    if base_indent is None:
+        return []
+
+    result = []
+    for ln in raw:
+        if not ln.strip():
+            continue
+        if ln.startswith(base_indent):
+            result.append(target_indent + ln[len(base_indent) :])
+        else:
+            result.append(ln)
+
+    if result and not result[-1].endswith("\n"):
+        result[-1] += "\n"
+    return result
+
+
+def _simplify_and_single_pass(lines):
+    """Single pass: remove AND = { } wrappers that are not in OR context.
+
+    AND is HOI4's default scope.  It is only meaningful inside OR = { }
+    blocks, where it groups several conditions as one OR branch.  Elsewhere
+    the wrapper adds noise without changing semantics.
+
+    When an AND block is removed its content is promoted to the parent
+    indentation level.  The brace-context stack is NOT updated for removed
+    AND blocks because AND = { ... } always has net-zero brace effect.
+    """
+    out = []
+    i = 0
+    n = len(lines)
+    # Stack of bools: True = this brace depth was opened by OR = {
+    block_is_or = [False]
+
+    while i < n:
+        line = lines[i]
+        code = line.split("#")[0]
+
+        if _RE_AND_OPEN.match(line):
+            in_or = block_is_or[-1]
+            if not in_or:
+                and_indent = line[: len(line) - len(line.lstrip())]
+                block_lines, j = _collect_block(lines, i)
+                inner = _extract_inner_text(block_lines)
+                out.extend(_extract_all_inner_lines(inner, and_indent))
+                i = j
+                # Stack unchanged: net brace effect of the AND block is 0
+                continue
+
+        # Track which brace depths are OR blocks
+        is_or = bool(_RE_OR_BLOCK_OPEN.match(line))
+        opens = code.count("{")
+        closes = code.count("}")
+        out.append(line)
+        for k in range(opens):
+            block_is_or.append(True if (is_or and k == 0) else False)
+        for _ in range(closes):
+            if len(block_is_or) > 1:
+                block_is_or.pop()
+
+        i += 1
+
+    return out
+
+
+def simplify_and_block(lines):
+    """Remove redundant AND = { } wrappers (not inside OR context).
+
+    Runs multiple passes until stable so nested redundant ANDs are
+    all removed (outer pass exposes inner AND blocks for the next pass).
+    """
+    current = lines
+    while True:
+        result = _simplify_and_single_pass(current)
+        if result == current:
+            break
+        current = result
+    return current
 
 
 # ---------------------------------------------------------------------------
@@ -223,6 +352,51 @@ def find_single_condition_or_blocks(lines):
     return issues
 
 
+def find_redundant_and_blocks(lines):
+    """Return list of (line_num, message) for redundant AND = { } blocks.
+
+    Detects AND blocks that are not inside an OR context.  line_num is 1-based.
+    Only the outermost redundant AND at each location is reported (inner ones
+    are revealed after the outer is fixed by cleanup_or.py).
+    """
+    issues = []
+    i = 0
+    n = len(lines)
+    block_is_or = [False]
+
+    while i < n:
+        line = lines[i]
+        code = line.split("#")[0]
+
+        if _RE_AND_OPEN.match(line):
+            in_or = block_is_or[-1]
+            if not in_or:
+                issues.append(
+                    (
+                        i + 1,
+                        "redundant AND = { } wrapper (AND is the default scope)"
+                        " -- run tools/cleanup_or.py to fix",
+                    )
+                )
+            # Skip past the block; net brace effect is 0 so stack is unchanged
+            _, j = _collect_block(lines, i)
+            i = j
+            continue
+
+        is_or = bool(_RE_OR_BLOCK_OPEN.match(line))
+        opens = code.count("{")
+        closes = code.count("}")
+        for k in range(opens):
+            block_is_or.append(True if (is_or and k == 0) else False)
+        for _ in range(closes):
+            if len(block_is_or) > 1:
+                block_is_or.pop()
+
+        i += 1
+
+    return issues
+
+
 # ---------------------------------------------------------------------------
 # File transformation
 # ---------------------------------------------------------------------------
@@ -261,7 +435,9 @@ def simplify_or_block(lines):
 def process_file(filepath):
     with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
         lines = f.readlines()
+    # OR cleanup first so OR = { AND = { A B } } chains fully collapse
     new_lines = simplify_or_block(lines)
+    new_lines = simplify_and_block(new_lines)
     if new_lines != lines:
         with open(filepath, "w", encoding="utf-8") as f:
             f.writelines(new_lines)
