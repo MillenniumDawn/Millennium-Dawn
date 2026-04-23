@@ -47,6 +47,8 @@
 @refugee_percentage_adjuster = 0.005
 # Minimum workers per building
 @minimum_workers_per_building = 0.00001
+# Resource sale rate constant
+@resource_sale_rate_constant = 0.00298
 
 # ingame_update_setup
 # This function is used to update the economic setup mid game
@@ -318,7 +320,7 @@ calculate_tax_gain = {
 	# Microchip Plants
 	if = { limit = { check_variable = { microchip_plant_tax > 0 } }
 		set_temp_variable = { microchip_unified = unified_building_multiplier }
-		multiply_temp_variable = { microchip_unified = 4 }
+		multiply_temp_variable = { microchip_unified = 3.6 }
 
 		set_temp_variable = { building_final_modifier = 1 }
 		add_to_temp_variable = { building_final_modifier = modifier@microchip_plant_income_tax_modifier }
@@ -333,7 +335,7 @@ calculate_tax_gain = {
 	# Composite Plants
 	if = { limit = { check_variable = { composite_plant_tax > 0 } }
 		set_temp_variable = { composite_unified = unified_building_multiplier }
-		multiply_temp_variable = { composite_unified = 3.5 }
+		multiply_temp_variable = { composite_unified = 3.15 }
 
 		set_temp_variable = { building_final_modifier = 1 }
 		add_to_temp_variable = { building_final_modifier = modifier@composite_plant_income_tax_modifier }
@@ -348,7 +350,7 @@ calculate_tax_gain = {
 	# Synthetic Refineries
 	if = { limit = { check_variable = { synthetic_refinery_tax > 0 } }
 		set_temp_variable = { synthetic_unified = unified_building_multiplier }
-		multiply_temp_variable = { synthetic_unified = 3 }
+		multiply_temp_variable = { synthetic_unified = 2.7 }
 
 		set_temp_variable = { building_final_modifier = 1 }
 		add_to_temp_variable = { building_final_modifier = modifier@synthetic_refinery_income_tax_modifier }
@@ -2037,7 +2039,7 @@ calculate_interest_rate = {
 
 		# Threat premium - current threat level raises borrowing costs; decays with world tension.
 		# as 1.825% per year. 80% (0.8) tensioon -> 4% interest rate (4.0).
-		set_variable = { threat_interest_premium = global.threat } 
+		set_variable = { threat_interest_premium = global.threat }
 		multiply_variable = { threat_interest_premium = 5 }
 		clamp_variable = { var = threat_interest_premium min = 0 max = 5 }
 		add_to_variable = { interest_rate = threat_interest_premium }
@@ -2065,7 +2067,7 @@ calculate_interest_rate = {
 		add_to_variable = { interest_rate = adjusted_tension_premium }
 		set_variable = { tracked_threat = has_added_tension_amount }
 		multiply_variable = { adjusted_tension_premium = 0.01 } # For localisation display.
-		
+
 
 		clamp_variable = { var = interest_rate min = 0.8 max = 50 } #Min is 0.8% on debt max is 50%
 
@@ -3894,16 +3896,6 @@ calculate_int_investments_rate = {
 
 #Calculates income from resources
 calculate_resource_sale_rate = {
-	#Set the base price for single unit of resource, this is the relative price between resources
-	# set_temp_variable = { oil_price = 6.8 } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
-	# set_temp_variable = { steel_price = 0.024 } #Based on steel price
-	# set_temp_variable = { aluminium_price = 0.21 }	#Based on aluminium price
-	# set_temp_variable = { tungsten_price = 0.28 }	#Based on copper price
-	# set_temp_variable = { chromium_price = 0.18 }	#Based on gold price
-	# set_temp_variable = { rubber_price = 0.09 }	#Based on rubber price
-	# set_temp_variable = { microchip_price = 8 } #Based on Bird pulling a random number outta his head
-	# set_temp_variable = { composite_price = 7.4 } #Based on Doolittle saying composites have less value than microchips cause reasons
-
 	#resource_exported = total amount of resources put to market
 	set_variable = { oil_exports = resource_exported@oil }
 	set_variable = { steel_exports = resource_exported@steel }
@@ -3923,49 +3915,6 @@ calculate_resource_sale_rate = {
 	add_to_temp_variable = { resource_exports = rubber_exports }
 	add_to_temp_variable = { resource_exports = microchip_exports }
 	add_to_temp_variable = { resource_exports = composite_exports }
-
-	# Check if we have subjects
-	if = { limit = { check_variable = { num_subjects > 0 } }
-		set_temp_variable = { CIC_from_subjects = 0 }
-		for_each_scope_loop = {
-			array = subjects
-			set_temp_variable = { cic_to_overlord_modifier = 1 }
-			subtract_from_temp_variable = { cic_to_overlord_modifier = modifier@cic_to_overlord_factor }
-
-			set_temp_variable = { cic_subject_industry_lost_total = 0 }
-			add_to_temp_variable = { cic_subject_industry_lost_total = num_of_civilian_factories }
-			divide_temp_variable = { cic_subject_industry_lost_total = cic_to_overlord_modifier }
-			multiply_temp_variable = { cic_subject_industry_lost_total = modifier@cic_to_overlord_factor }
-			round_temp_variable = cic_subject_industry_lost_total
-			add_to_temp_variable = { PREV.CIC_from_subjects = cic_subject_industry_lost_total }
-		}
-		round_temp_variable = CIC_from_subjects
-	}
-
-	#Don't give money for resources that are bought, as they already give CIC
-	set_temp_variable = { CIC_from_trade = num_of_civilian_factories }
-	subtract_from_temp_variable = { CIC_from_trade = CIC_from_subjects }
-
-	# Prevents
-	if = { limit = { has_country_flag = lease_civilian_factories_flag }
-		subtract_from_temp_variable = { CIC_from_trade = leased_civilian_factories }
-	}
-	subtract_from_temp_variable = { CIC_from_trade = industrial_complex_total }
-	multiply_temp_variable = { CIC_from_trade = 8 }
-	divide_temp_variable = { CIC_from_trade = resource_exports }
-	subtract_from_temp_variable = { CIC_from_trade = 1 }
-	multiply_temp_variable = { CIC_from_trade = -1 }
-	clamp_temp_variable = { var = CIC_from_trade max = 1 min = 0 }
-
-	#Scale down everything based on above
-	multiply_variable = { oil_exports = CIC_from_trade }
-	multiply_variable = { steel_exports = CIC_from_trade }
-	multiply_variable = { aluminium_exports = CIC_from_trade }
-	multiply_variable = { tungsten_exports = CIC_from_trade }
-	multiply_variable = { chromium_exports = CIC_from_trade }
-	multiply_variable = { rubber_exports = CIC_from_trade }
-	multiply_variable = { microchip_exports = CIC_from_trade }
-	multiply_variable = { composite_exports = CIC_from_trade }
 
 	#Multiply with cost to get money generated
 	multiply_variable = { oil_exports = global.oil_price }
@@ -4010,15 +3959,14 @@ calculate_resource_sale_rate = {
 	set_variable = { resource_export_multiplier_display = resource_export_multiplier }
 	subtract_from_variable = { resource_export_multiplier_display = 1 }
 
-	#Income for 7 days with scale factors (0.007 * 0.526 = 0.003682)
-	multiply_variable = { oil_exports = 0.00368 }
-	multiply_variable = { steel_exports = 0.00368 }
-	multiply_variable = { aluminium_exports = 0.00368 }
-	multiply_variable = { tungsten_exports = 0.00368 }
-	multiply_variable = { chromium_exports = 0.00368 }
-	multiply_variable = { rubber_exports = 0.00368 }
-	multiply_variable = { microchip_exports = 0.00368 }
-	multiply_variable = { composite_exports = 0.00368 }
+	multiply_variable = { oil_exports = @resource_sale_rate_constant }
+	multiply_variable = { steel_exports = @resource_sale_rate_constant }
+	multiply_variable = { aluminium_exports = @resource_sale_rate_constant }
+	multiply_variable = { tungsten_exports = @resource_sale_rate_constant }
+	multiply_variable = { chromium_exports = @resource_sale_rate_constant }
+	multiply_variable = { rubber_exports = @resource_sale_rate_constant }
+	multiply_variable = { microchip_exports = @resource_sale_rate_constant }
+	multiply_variable = { composite_exports = @resource_sale_rate_constant }
 
 	# Clamp Export Values at 0 so Luigi's massive negatives don't break my shit
 	clamp_variable = { var = oil_exports min = 0 }
@@ -5857,7 +5805,7 @@ set_initial_cost_resources = {
 	set_variable = { global.tungsten_price = 0.28 }	#Based on copper price
 	set_variable = { global.chromium_price = 0.18 }	#Based on gold price
 	set_variable = { global.rubber_price = 0.09 }	#Based on rubber price
-	set_variable = { global.microchip_price = 8 }
+	set_variable = { global.microchip_price = 7.6 }
 	set_variable = { global.composite_price = 7.4 }
 
 	set_variable = { global.starting_oil_price = 6.8 } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
@@ -5866,7 +5814,7 @@ set_initial_cost_resources = {
 	set_variable = { global.starting_tungsten_price = 0.28 }	#Based on copper price
 	set_variable = { global.starting_chromium_price = 0.18 }	#Based on gold price
 	set_variable = { global.starting_rubber_price = 0.09 }	#Based on rubber price
-	set_variable = { global.starting_microchips_price = 8 }
+	set_variable = { global.starting_microchips_price = 7.6 }
 	set_variable = { global.starting_composites_price = 7.4 }
 
 	set_variable = { global.oil_export = 3381 }
@@ -5955,7 +5903,7 @@ recalculate_resources_price = {
 	divide_temp_variable = { sum_import_tungsten = sum_tungsten }
 	divide_temp_variable = { sum_import_chromium = sum_chromium }
 	divide_temp_variable = { sum_import_microchips = sum_microchips }
-	divide_temp_variable = { sum_import_composites = sum_chromium }
+	divide_temp_variable = { sum_import_composites = sum_composites }
 
 	multiply_temp_variable = { sum_import_steel = 2 }
 	multiply_temp_variable = { sum_import_rubber = 2 }

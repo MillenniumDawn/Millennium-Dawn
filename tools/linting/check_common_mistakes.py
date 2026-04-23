@@ -3,10 +3,12 @@
 Check for common scripting mistakes in HOI4 mod files.
 
 Detects mechanically-checkable rule violations from CLAUDE.md:
-  - threat > N where N >= 1 (threat is 0.0-1.0, not a percentage)
-  - has_war_support / has_stability > N where N >= 1 (0.0-1.0 range)
-  - allowed = { always = no } in ideas (default, hurts performance)
+  - threat/has_war_support/has_stability comparisons >= 1 (all are 0.0-1.0 ranges)
+  - allowed = { always = no } in country/hidden_ideas idea categories (default, hurts performance)
+  - allowed = { tag = TAG } in country/hidden_ideas (breaks civil war split-offs; use original_tag)
+  - allowed_civil_war = { always = no } in ideas (no effect, remove it)
   - cancel = { always = no } in ideas (checked hourly, never true)
+  - ai_will_do root-level factor = N (should be base = N; factor only valid in modifier children)
   - Division instead of multiplication (/ 100 -> * 0.01)
 """
 
@@ -16,6 +18,20 @@ import re
 import subprocess
 import sys
 from multiprocessing import Pool
+
+# Compiled patterns — done once at import, not per file/line
+_RE_THREAT = re.compile(r"(?<!\w)threat\s*([><]=?)\s*(\d+\.?\d*)")
+_RE_WAR_SUPPORT = re.compile(r"(?<!\w)has_war_support\s*([><]=?)\s*(\d+\.?\d*)")
+_RE_STABILITY = re.compile(r"(?<!\w)has_stability\s*([><]=?)\s*(\d+\.?\d*)")
+_RE_ALLOWED_ALWAYS_NO = re.compile(r"allowed\s*=\s*\{\s*always\s*=\s*no\s*\}")
+_RE_ALLOWED_OPEN = re.compile(r"allowed\s*=\s*\{")
+_RE_ALLOWED_TAG = re.compile(r"allowed\s*=\s*\{\s*tag\s*=\s*\w+\s*\}")
+_RE_ALLOWED_CIVIL_WAR = re.compile(r"allowed_civil_war\s*=\s*\{\s*always\s*=\s*no\s*\}")
+_RE_CANCEL = re.compile(r"cancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
+_RE_AI_WILL_DO = re.compile(r"ai_will_do\s*=\s*\{[^{]*?\bfactor\b\s*=")
+_RE_DIVISION = re.compile(r"/\s*(100|1000|10|50|200|500)\b")
+_RE_IDEAS_BLOCK = re.compile(r"^ideas\s*=\s*\{")
+_RE_CATEGORY = re.compile(r"^(\w+)\s*=\s*\{")
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from path_utils import clean_filepath
@@ -58,20 +74,50 @@ def check_file(filepath):
     except Exception:
         return issues
 
+    is_ideas = "common/ideas" in filepath
+    is_ai_file = any(
+        d in filepath
+        for d in (
+            "common/national_focus",
+            "common/decisions",
+            "common/military_industrial_organization",
+        )
+    )
+
+    # Only track idea categories for idea files (country/hidden_ideas vs others)
+    FLAGGED_IDEA_CATEGORIES = {"country", "hidden_ideas"}
+    current_category = None
+    brace_depth = 0
+    ideas_depth = None
+    # Multi-line allowed block tracking (flags only if sole content is always = no)
+    in_allowed_block = False
+    allowed_block_start_line = 0
+    allowed_block_depth = 0
+    allowed_block_lines = []
+
     for line_num, line in enumerate(lines, 1):
         stripped = line.strip()
 
-        # Skip comments
+        # Brace/category tracking is only needed for idea files
+        if is_ideas:
+            brace_depth += stripped.count("{") - stripped.count("}")
+
+            if _RE_IDEAS_BLOCK.match(stripped):
+                ideas_depth = brace_depth - 1
+            if ideas_depth is not None and brace_depth == ideas_depth + 2:
+                cat_match = _RE_CATEGORY.match(stripped)
+                if cat_match:
+                    current_category = cat_match.group(1)
+            elif ideas_depth is not None and brace_depth <= ideas_depth + 1:
+                current_category = None
+
         if stripped.startswith("#"):
             continue
 
-        # Remove inline comments for analysis
         code_part = line.split("#")[0] if "#" in line else line
 
-        # Check 1: threat > N where N >= 1 (should be decimal 0.0-1.0)
-        # Only match comparison operators (> < >= <=), not bare = which is
-        # used in add_named_threat = { threat = N } and similar effects
-        threat_match = re.search(r"(?<!\w)threat\s*([><]=?)\s*(\d+\.?\d*)", code_part)
+        # threat is 0.0-1.0; exclude add_threat/named_threat which use absolute values
+        threat_match = _RE_THREAT.search(code_part)
         if (
             threat_match
             and "add_threat" not in code_part
@@ -79,45 +125,78 @@ def check_file(filepath):
         ):
             value = float(threat_match.group(2))
             if value >= 1.0:
-                suggestion = round(value / 100.0, 4)
                 issues.append(
                     (
                         line_num,
-                        f"threat {threat_match.group(1)} {value} looks like a percentage -- threat is 0.0-1.0 (use {suggestion}?)",
+                        f"threat {threat_match.group(1)} {value} looks like a percentage -- threat is 0.0-1.0 (use {round(value / 100.0, 4)}?)",
                     )
                 )
 
-        # Check 5: has_war_support / has_stability with values >= 1 (should be 0.0-1.0)
-        for trigger_name in ("has_war_support", "has_stability"):
-            ws_match = re.search(
-                rf"(?<!\w){trigger_name}\s*([><]=?)\s*(\d+\.?\d*)", code_part
-            )
+        for trigger_name, pattern in (
+            ("has_war_support", _RE_WAR_SUPPORT),
+            ("has_stability", _RE_STABILITY),
+        ):
+            ws_match = pattern.search(code_part)
             if ws_match:
                 value = float(ws_match.group(2))
                 if value >= 1.0:
-                    suggestion = round(value / 100.0, 4)
                     issues.append(
                         (
                             line_num,
-                            f"{trigger_name} {ws_match.group(1)} {ws_match.group(2)} looks like a percentage -- {trigger_name} is 0.0-1.0 (use {suggestion}?)",
+                            f"{trigger_name} {ws_match.group(1)} {ws_match.group(2)} looks like a percentage -- {trigger_name} is 0.0-1.0 (use {round(value / 100.0, 4)}?)",
                         )
                     )
 
-        # Check 2: allowed = { always = no } in ideas (default, hurts performance)
-        # Only flag in idea files -- decisions use this intentionally to hide
-        # programmatically-activated decisions
-        if "common/ideas" in filepath:
-            if re.search(r"allowed\s*=\s*\{\s*always\s*=\s*no\s*\}", code_part):
+        if is_ideas and current_category in FLAGGED_IDEA_CATEGORIES:
+            # Single-line forms
+            if _RE_ALLOWED_ALWAYS_NO.search(code_part):
                 issues.append(
                     (
                         line_num,
-                        "allowed = { always = no } is the default for ideas -- remove it (hurts performance)",
+                        f"allowed = {{ always = no }} is the default for ideas in '{current_category}' -- remove it (hurts performance)",
+                    )
+                )
+            elif _RE_ALLOWED_OPEN.search(code_part) and "}" not in code_part:
+                # Opening of a multi-line allowed block — collect its contents
+                in_allowed_block = True
+                allowed_block_start_line = line_num
+                allowed_block_depth = brace_depth
+                allowed_block_lines = []
+            if _RE_ALLOWED_TAG.search(code_part):
+                issues.append(
+                    (
+                        line_num,
+                        "allowed = { tag = TAG } breaks for civil war split-offs -- use original_tag = TAG instead",
                     )
                 )
 
-        # Check 3: cancel = { always = no } in ideas (checked hourly, never true)
-        if "common/ideas" in filepath:
-            if re.search(r"cancel\s*=\s*\{\s*always\s*=\s*no\s*\}", code_part):
+        # Multi-line allowed block: flag only if sole content is always = no
+        if in_allowed_block:
+            if brace_depth < allowed_block_depth:
+                content_lines = [
+                    l for l in allowed_block_lines if l not in ("", "{", "}")
+                ]
+                if content_lines == ["always = no"]:
+                    issues.append(
+                        (
+                            allowed_block_start_line,
+                            f"allowed = {{ always = no }} is the default for ideas in '{current_category}' -- remove it (hurts performance)",
+                        )
+                    )
+                in_allowed_block = False
+                allowed_block_lines = []
+            elif stripped and not _RE_ALLOWED_OPEN.match(stripped):
+                allowed_block_lines.append(stripped)
+
+        if is_ideas:
+            if _RE_ALLOWED_CIVIL_WAR.search(code_part):
+                issues.append(
+                    (
+                        line_num,
+                        "allowed_civil_war = { always = no } has no effect -- remove it",
+                    )
+                )
+            if _RE_CANCEL.search(code_part):
                 issues.append(
                     (
                         line_num,
@@ -125,15 +204,24 @@ def check_file(filepath):
                     )
                 )
 
-        # Check 4: Division where multiplication should be used
-        div_match = re.search(r"/\s*(100|1000|10|50|200|500)\b", code_part)
+        # [^{]*? stops before any nested { so modifier = { factor = X } children are not flagged
+        if is_ai_file and _RE_AI_WILL_DO.search(code_part):
+            issues.append(
+                (
+                    line_num,
+                    "ai_will_do root-level 'factor =' should be 'base =' -- factor is only valid inside modifier = { } children",
+                )
+            )
+
+        div_match = _RE_DIVISION.search(code_part)
         if div_match:
             divisor = int(div_match.group(1))
             multiplier = 1.0 / divisor
-            if multiplier == int(multiplier):
-                mult_str = str(int(multiplier))
-            else:
-                mult_str = f"{multiplier:g}"
+            mult_str = (
+                str(int(multiplier))
+                if multiplier == int(multiplier)
+                else f"{multiplier:g}"
+            )
             issues.append(
                 (
                     line_num,
@@ -185,7 +273,7 @@ def main():
     )
     args = parser.parse_args()
 
-    script_dir = os.path.realpath(__file__)
+    script_dir = os.path.dirname(os.path.realpath(__file__))
     root_dir = os.path.dirname(os.path.dirname(script_dir))
 
     if args.filenames:
@@ -206,9 +294,7 @@ def main():
     with Pool(processes=args.workers) as pool:
         results = pool.map(check_file, files_list)
 
-    all_issues = []
-    for file_issues in results:
-        all_issues.extend(file_issues)
+    all_issues = [issue for file_issues in results for issue in file_issues]
 
     for filepath, line_num, message in sorted(all_issues):
         print(f"WARNING: {clean_filepath(filepath)}:{line_num}: {message}")

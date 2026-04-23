@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Cooked by Warner
 # YOU SHOULD DO `pip install Pillow` IN CMD IF YOU GET ERRORS FOR 'PIL' MODULE.
 
@@ -11,9 +12,9 @@ from PIL import Image
 modfolder = "Millennium_Dawn\\"
 mod = "Millennium_Dawn"
 path = os.path.abspath(os.path.join(os.path.dirname(mod), ".."))
-states_dir = os.path.abspath(os.path.join(os.path.dirname(mod), "..\history\states"))
+states_dir = os.path.abspath(os.path.join(os.path.dirname(mod), r"..\history\states"))
 definition_file = os.path.abspath(
-    os.path.join(os.path.dirname(mod), "..\map\definition.csv")
+    os.path.join(os.path.dirname(mod), r"..\map\definition.csv")
 )
 desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
 
@@ -99,7 +100,7 @@ for state_id in state_ids:
         print("Couldn't find state file")
 
     image_path = os.path.abspath(
-        os.path.join(os.path.dirname(mod), "..\map\provinces.bmp")
+        os.path.join(os.path.dirname(mod), r"..\map\provinces.bmp")
     )
     target_hex_codes = hex_codes
     replacement_hex_code = "#ffffff"

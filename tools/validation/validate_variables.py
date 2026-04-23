@@ -17,6 +17,7 @@ from validator_common import (
     Colors,
     DataCleaner,
     FileOpener,
+    Severity,
     find_line_number,
     run_validator_main,
     should_skip_file,
@@ -334,7 +335,9 @@ class Variables:
         if staged_files is not None:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
+            files_to_scan = list(
+                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
+            )
 
         args_list = [(f, lowercase, flag_type, operation) for f in files_to_scan]
         with Pool(processes=workers) as pool:
@@ -363,7 +366,9 @@ class Variables:
         if staged_files is not None:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
+            files_to_scan = list(
+                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
+            )
 
         args_list = [(f, lowercase, flag_type) for f in files_to_scan]
         with Pool(processes=workers) as pool:
@@ -441,7 +446,9 @@ class EventTargets:
         if staged_files is not None:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
+            files_to_scan = list(
+                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
+            )
 
         args_list = [(f, lowercase) for f in files_to_scan]
         with Pool(processes=workers) as pool:
@@ -464,7 +471,9 @@ class EventTargets:
         if staged_files is not None:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
+            files_to_scan = list(
+                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
+            )
 
         args_list = [(f, lowercase, operation) for f in files_to_scan]
         with Pool(processes=workers) as pool:
@@ -523,32 +532,28 @@ class Validator(BaseValidator):
     TITLE = "VARIABLE AND EVENT TARGET VALIDATION"
     STAGED_EXTENSIONS = [".txt", ".yml"]
 
-    def _report_with_locations(self, results: list, ok_msg: str, fail_msg: str):
-        if len(results) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{fail_msg}{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for result in results:
-                if result["line"] > 0:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}:{result['line']}{Colors.ENDC if self.use_colors else ''} - {result.get('flag', result.get('target', ''))}",
-                        "error",
-                    )
-                else:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}{Colors.ENDC if self.use_colors else ''} - {result.get('flag', result.get('target', ''))}",
-                        "error",
-                    )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(results)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}{ok_msg}{Colors.ENDC if self.use_colors else ''}"
-            )
+    def _report_with_locations(
+        self, results: list, ok_msg: str, fail_msg: str, category: str = "variables"
+    ):
+        """Report a list of ``{"file", "line", "flag"|"target"}`` dicts.
+
+        Delegates to ``BaseValidator._report`` with structured tuples so
+        ``file`` and ``line`` flow into the JSON sidecar and become eligible
+        for Checks API annotations.
+        """
+        tuples = []
+        for result in results:
+            identifier = result.get("flag") or result.get("target") or ""
+            file_path = result.get("file", "")
+            line_no = int(result.get("line", 0) or 0)
+            tuples.append((identifier, file_path, line_no))
+        self._report(
+            tuples,
+            ok_msg=ok_msg,
+            fail_msg=fail_msg,
+            severity=Severity.ERROR,
+            category=category,
+        )
 
     # HOI4 scope keywords that can appear in @SCOPE substitutions inside flag names
     _SCOPE_KEYWORDS = (
@@ -857,7 +862,9 @@ class Validator(BaseValidator):
         if self.staged_files:
             yml_files_to_scan = [f for f in self.staged_files if f.endswith(".yml")]
         else:
-            yml_files_to_scan = glob.iglob(self.mod_path + "**/*.yml", recursive=True)
+            yml_files_to_scan = glob.iglob(
+                os.path.join(self.mod_path, "**", "*.yml"), recursive=True
+            )
 
         for filename in yml_files_to_scan:
             if should_skip_file(filename):

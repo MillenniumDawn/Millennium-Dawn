@@ -259,7 +259,11 @@ class Validator(BaseValidator):
                 t for t in cosmetic_tags if cosmetic_tags[t] == 0
             )
             if remaining_tags:
-                yml_files = list(glob.iglob(self.mod_path + "**/*.yml", recursive=True))
+                yml_files = list(
+                    glob.iglob(
+                        os.path.join(self.mod_path, "**", "*.yml"), recursive=True
+                    )
+                )
                 yml_files = [f for f in yml_files if not _should_skip(f)]
                 args_list = [(f, remaining_tags) for f in yml_files]
                 yml_results = self._pool_map(
