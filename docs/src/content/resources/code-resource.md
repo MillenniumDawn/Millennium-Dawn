@@ -507,7 +507,7 @@ change_small_medium_business_owners_opinion = yes
 
 The following scripts change for the influence system changing a targeted nation (`influence_target`) with another nation's influence (`tag_index`).
 
-`change_domestic_influence_percentage` changes `THIS` domestic independence.
+`change_domestic_influence_percentage` changes `THIS` domestic influence.
 
 ```hoiscript
 # Domestic influence

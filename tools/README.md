@@ -128,13 +128,6 @@ Content generation tools.
 
 See the [Workshop Publishing Guide](#workshop-publishing-guide) below for full usage details.
 
-### Changelog (`changelog/`)
-
-| Script                        | Description                                                                       |
-| ----------------------------- | --------------------------------------------------------------------------------- |
-| **format_changelog.py**       | Regenerates `Changelog.md` from `Changelog.txt`                                   |
-| **publish_changelog_page.py** | CI: extracts the release version's block and writes it to the docs content folder |
-
 ### Report Library (`report_lib/`)
 
 Internal package used by `generate_validation_report.py` to render PR comments and post GitHub Check Runs. Its only inputs are the JSON sidecars produced by each validator.
@@ -178,8 +171,6 @@ Hook entry points, CI tools, and shared libraries that stay at the `tools/` root
 ## Workshop Publishing Guide
 
 `publishing/publish_workshop.py` handles uploading the mod to the Steam Workshop. It supports two targets (**release** and **beta**) and two modes (**full upload** and **diff-only upload**).
-
-This is separate from `tools/changelog/publish_changelog_page.py`, which is used by CI to publish versioned changelog pages for the docs site.
 
 ### Prerequisites
 

@@ -1004,9 +1004,9 @@ Offices are a purely economic building that generates corporate tax income. They
 - **Building Slots**: Shares building slots with other production buildings
 - **Max Level**: 50 per state
 
-### Network Infrastructure
+### Internet Stations
 
-Network infrastructure represents a country's internet and telecommunications capacity. Each level provides a **+5% state productivity growth modifier**, making it one of the best long-term investments for increasing building output.
+Internet stations represent a country's internet and telecommunications capacity. Each level provides a **+5% state productivity growth modifier**, making it one of the best long-term investments for increasing building output.
 
 - **Max Level**: 6 per state
 - **Upkeep**: Costs a small weekly infrastructure expense per level

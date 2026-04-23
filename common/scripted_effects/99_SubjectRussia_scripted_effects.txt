@@ -218,7 +218,8 @@ SUB_change_status_subject = {
 	}
 }
 ###########SUBJECTS OF RUSSIA - CHECK REPUBLICAN SEPARATISM##########
-# Republics fire event 69, okrugs fire event 98. Separatism event fires when subjectinped > 75.
+# Republics fire event 69, okrugs fire event 98.
+# TAT/BSH/CHE rebel at subjectinped > 75; all other republics at > 85.
 # Set the rebellion flag at queue time so a timed-out popup cannot re-queue next tick.
 #
 # NOTE: every_subject_country only iterates EXISTING subjects. Absorbed regions (where
@@ -228,11 +229,16 @@ SUB_change_status_subject = {
 # release = TAG inside option .a to re-spawn the absorbed subject. If that behavior
 # is desired in the future, re-add it via a separate per-TAG path here.
 SUB_update_separatism_rebellion = {
-	# Republic-tier subjects (includes autonomy_state_rf for KUB)
+	# Volatile republics (TAT/BSH/CHE) — threshold 75
 	every_subject_country = {
 		limit = {
 			check_variable = { subjectinped > 75 }
 			NOT = { has_country_flag = SUB_subject_rebellion_flag }
+			OR = {
+				original_tag = TAT
+				original_tag = BSH
+				original_tag = CHE
+			}
 			OR = {
 				has_autonomy_state = autonomy_republic_rf
 				has_autonomy_state = autonomy_state_rf
@@ -241,10 +247,26 @@ SUB_update_separatism_rebellion = {
 		set_country_flag = SUB_subject_rebellion_flag
 		SOV = { country_event = { id = subject_rus.69 days = 1 } }
 	}
-	# Okrug-tier subjects (KHM, YAM, NEE)
+	# Other republic-tier subjects (includes autonomy_state_rf for KUB) — threshold 85
 	every_subject_country = {
 		limit = {
-			check_variable = { subjectinped > 75 }
+			check_variable = { subjectinped > 85 }
+			NOT = { has_country_flag = SUB_subject_rebellion_flag }
+			NOT = { original_tag = TAT }
+			NOT = { original_tag = BSH }
+			NOT = { original_tag = CHE }
+			OR = {
+				has_autonomy_state = autonomy_republic_rf
+				has_autonomy_state = autonomy_state_rf
+			}
+		}
+		set_country_flag = SUB_subject_rebellion_flag
+		SOV = { country_event = { id = subject_rus.69 days = 1 } }
+	}
+	# Okrug-tier subjects (KHM, YAM, NEE) — threshold 85
+	every_subject_country = {
+		limit = {
+			check_variable = { subjectinped > 85 }
 			NOT = { has_country_flag = SUB_subject_rebellion_flag }
 			has_autonomy_state = autonomy_okrug_rf
 		}
@@ -516,19 +538,10 @@ URA_ural_spirit_plus = {
 }
 URA_ural_spirit_minus = {
 	if = {
-		limit = { NOT = { has_idea = URA_uralian_spirit_idea } }
-		set_temp_variable = { percent_change = 5 }
-		change_domestic_influence_percentage = yes
-	}
-	else_if = {
-		limit = { has_idea = URA_uralian_spirit_idea }
-		remove_ideas = URA_uralian_spirit_idea
-	}
-	else_if = {
-		limit = { has_idea = URA_uralian_spirit_idea1 }
+		limit = { has_idea = URA_uralian_spirit_idea3 }
 		swap_ideas = {
-			remove_idea = URA_uralian_spirit_idea1
-			add_idea = URA_uralian_spirit_idea
+			remove_idea = URA_uralian_spirit_idea3
+			add_idea = URA_uralian_spirit_idea2
 		}
 	}
 	else_if = {
@@ -539,11 +552,15 @@ URA_ural_spirit_minus = {
 		}
 	}
 	else_if = {
-		limit = { has_idea = URA_uralian_spirit_idea3 }
+		limit = { has_idea = URA_uralian_spirit_idea1 }
 		swap_ideas = {
-			remove_idea = URA_uralian_spirit_idea3
-			add_idea = URA_uralian_spirit_idea2
+			remove_idea = URA_uralian_spirit_idea1
+			add_idea = URA_uralian_spirit_idea
 		}
+	}
+	else_if = {
+		limit = { has_idea = URA_uralian_spirit_idea }
+		remove_ideas = URA_uralian_spirit_idea
 	}
 }
 ###########URAL REPUBLIC - UGMK###########
@@ -1471,6 +1488,7 @@ SUB_downgrade_subject_taxes_on_annex = {
 	}
 
 	SOV = {
+		set_temp_variable = { modify_subjectnalogs = PREV.modify_subjectnalogs }
 		modify_subjectnalogs_support = yes
 	}
 }
@@ -1663,6 +1681,7 @@ SOV_subject_taxation_payment = {
 
 	modify_treasury_effect = yes
 	SOV = {
+		set_temp_variable = { treasury_change = PREV.treasury_change }
 		multiply_temp_variable = { treasury_change = -1 }
 		modify_treasury_effect = yes
 	}
