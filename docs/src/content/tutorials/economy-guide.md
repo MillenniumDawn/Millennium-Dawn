@@ -55,7 +55,6 @@ Millennium Dawn includes a detailed modern economy system covering revenue, gove
 - [Internal Factions](#internal-factions)
 - [Sanctions](#sanctions)
 - [Electricity](#electricity)
-  <<<<<<< Updated upstream
 - [Buildings](#buildings)
   - [Offices](#offices)
   - [Internet Stations](#internet-stations)
@@ -69,9 +68,8 @@ Millennium Dawn includes a detailed modern economy system covering revenue, gove
   - [Input Resource Shortages](#input-resource-shortages)
   - [Civilian Microchip Consumption](#civilian-microchip-consumption)
   - [Military Equipment Requirements](#military-equipment-requirements)
-  - # [Building Employment Values](#building-employment-values)
+  - [Building Employment Values](#building-employment-values)
 - [MD-Specific Buildings](#md-specific-buildings)
-  > > > > > > > Stashed changes
 - [Immigration](#immigration)
 - [International Investments](#international-investments)
   - [International Market](#international-market)
