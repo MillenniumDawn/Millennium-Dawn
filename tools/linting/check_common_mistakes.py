@@ -32,9 +32,166 @@ _RE_AI_WILL_DO = re.compile(r"ai_will_do\s*=\s*\{[^{]*?\bfactor\b\s*=")
 _RE_DIVISION = re.compile(r"/\s*(100|1000|10|50|200|500)\b")
 _RE_IDEAS_BLOCK = re.compile(r"^ideas\s*=\s*\{")
 _RE_CATEGORY = re.compile(r"^(\w+)\s*=\s*\{")
+_RE_AVAILABLE_ALWAYS_NO = re.compile(r"\bavailable\s*=\s*\{\s*always\s*=\s*no\s*\}")
+_RE_VISIBLE_ALWAYS_NO = re.compile(r"\bvisible\s*=\s*\{\s*always\s*=\s*no\s*\}")
+_RE_BYPASS_OPEN = re.compile(r"\bbypass\s*=\s*\{")
+_RE_BYPASS_TRIVIAL = re.compile(r"\bbypass\s*=\s*\{\s*always\s*=\s*(?:yes|no)\s*\}")
+_RE_DECISION_MARKER = re.compile(
+    r"\bcomplete_effect\s*=\s*\{|\bfire_only_once\s*=|\bactivation\s*=\s*\{|\bdays_mission_timeout\s*="
+)
+_RE_FOCUS_ID_IN_BLOCK = re.compile(r"\bid\s*=\s*(\w+)")
+_RE_COMPLETE_FOCUS = re.compile(r"\bcomplete_national_focus\s*=\s*(\w+)")
+_RE_ACTIVATE_DECISION = re.compile(r"\bactivate_decision\s*=\s*(\w+)")
+
+# Populated by main() before spawning Pool workers; inherited via fork on Unix.
+_SCRIPT_COMPLETED_FOCUSES: set = set()
+_SCRIPT_COMPLETED_DECISIONS: set = set()
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from cleanup_or import find_single_condition_or_blocks
 from path_utils import clean_filepath
+
+
+def _scan_script_completed(root_dir):
+    """Return (focus_ids, decision_ids) that are script-triggered across the codebase.
+
+    Scans all .txt files for complete_national_focus = ID and activate_decision = ID
+    so the checkers can skip flagging intentionally script-completed items.
+    """
+    focuses: set = set()
+    decisions: set = set()
+    for directory in ["common", "events", "history"]:
+        dir_path = os.path.join(root_dir, directory)
+        if not os.path.exists(dir_path):
+            continue
+        for root, _, filenames in os.walk(dir_path):
+            for filename in filenames:
+                if not filename.endswith(".txt"):
+                    continue
+                fp = os.path.join(root, filename)
+                try:
+                    with open(fp, "r", encoding="utf-8", errors="ignore") as f:
+                        content = f.read()
+                    for m in _RE_COMPLETE_FOCUS.finditer(content):
+                        focuses.add(m.group(1))
+                    for m in _RE_ACTIVATE_DECISION.finditer(content):
+                        decisions.add(m.group(1))
+                except Exception:
+                    pass
+    return focuses, decisions
+
+
+def _get_block(lines, start):
+    """Collect the complete brace-delimited block starting at lines[start].
+    Returns (block_lines, next_idx) where next_idx is the first index after the block.
+    Works on any list — passing a sub-list is safe.
+    """
+    code = lines[start].split("#")[0]
+    depth = code.count("{") - code.count("}")
+    j = start + 1
+    while depth > 0 and j < len(lines):
+        code = lines[j].split("#")[0]
+        depth += code.count("{") - code.count("}")
+        j += 1
+    return lines[start:j], j
+
+
+def _check_focus_available_always_no(lines):
+    """Flag available = { always = no } with no completion mechanism.
+
+    Valid completion mechanisms (all skip the flag):
+      - bypass block present (focus auto-bypasses when conditions fire)
+      - complete_national_focus = FOCUS_ID found elsewhere in the codebase
+
+    Only flags when available=always-no AND neither mechanism is present,
+    meaning the focus is permanently unreachable.
+    """
+    issues = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        if re.match(r"^\s*focus\s*=\s*\{", lines[i]):
+            start = i
+            block, i = _get_block(lines, start)
+            norm = re.sub(r"\s+", " ", "".join(block))
+            if _RE_AVAILABLE_ALWAYS_NO.search(norm):
+                id_match = _RE_FOCUS_ID_IN_BLOCK.search(norm)
+                focus_id = id_match.group(1) if id_match else None
+                has_bypass = bool(_RE_BYPASS_OPEN.search(norm))
+                script_completed = focus_id and focus_id in _SCRIPT_COMPLETED_FOCUSES
+                if not has_bypass and not script_completed:
+                    for k, bl in enumerate(block):
+                        if re.search(r"\bavailable\s*=\s*\{", bl):
+                            issues.append(
+                                (
+                                    start + k + 1,
+                                    "available = { always = no } with no bypass or complete_national_focus"
+                                    " -- focus is permanently unreachable;"
+                                    " add a bypass block or trigger it via complete_national_focus",
+                                )
+                            )
+                            break
+        else:
+            i += 1
+    return issues
+
+
+def _check_decision_available_always_no(lines):
+    """Flag available = { always = no } in decisions with no valid completion mechanism.
+
+    Valid mechanisms (all skip the flag):
+      - visible = { always = no } (decision is script-triggered, invisible to player)
+      - activate_decision = DECISION_ID found elsewhere in the codebase
+
+    Only flags when available=always-no AND neither mechanism is present.
+    """
+    issues = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        code = lines[i].split("#")[0]
+        # Category block: starts at column 0 with a word and {
+        if (
+            re.match(r"^\w", lines[i])
+            and "{" in code
+            and not lines[i].lstrip().startswith("#")
+        ):
+            cat_start = i
+            cat_block, i = _get_block(lines, cat_start)
+            k = 1  # skip category header line
+            while k < len(cat_block) - 1:  # skip closing } line
+                bl = cat_block[k]
+                bl_code = bl.split("#")[0]
+                if re.match(r"^\s+\w", bl) and "{" in bl_code:
+                    dec_block, next_k = _get_block(cat_block, k)
+                    norm = re.sub(r"\s+", " ", "".join(dec_block))
+                    dec_id_match = re.match(r"\s*(\w+)\s*=\s*\{", cat_block[k])
+                    dec_id = dec_id_match.group(1) if dec_id_match else None
+                    if (
+                        _RE_DECISION_MARKER.search(norm)
+                        and _RE_AVAILABLE_ALWAYS_NO.search(norm)
+                        and not _RE_VISIBLE_ALWAYS_NO.search(norm)
+                        and (
+                            dec_id is None or dec_id not in _SCRIPT_COMPLETED_DECISIONS
+                        )
+                    ):
+                        for p, dbl in enumerate(dec_block):
+                            if re.search(r"\bavailable\s*=\s*\{", dbl):
+                                issues.append(
+                                    (
+                                        cat_start + k + p + 1,
+                                        "available = { always = no } without visible = { always = no }"
+                                        " -- add visible = { always = no } for script-triggered decisions,"
+                                        " or set a real available condition",
+                                    )
+                                )
+                                break
+                    k = next_k
+                else:
+                    k += 1
+        else:
+            i += 1
+    return issues
 
 
 def get_git_diff_files(base_branch="main", staged_only=False):
@@ -75,13 +232,12 @@ def check_file(filepath):
         return issues
 
     is_ideas = "common/ideas" in filepath
-    is_ai_file = any(
-        d in filepath
-        for d in (
-            "common/national_focus",
-            "common/decisions",
-            "common/military_industrial_organization",
-        )
+    is_focus_file = "common/national_focus" in filepath
+    is_decision_file = "common/decisions" in filepath
+    is_ai_file = (
+        is_focus_file
+        or is_decision_file
+        or "common/military_industrial_organization" in filepath
     )
 
     # Only track idea categories for idea files (country/hidden_ideas vs others)
@@ -229,6 +385,14 @@ def check_file(filepath):
                 )
             )
 
+    for ln, msg in find_single_condition_or_blocks(lines):
+        issues.append((ln, msg))
+
+    if is_focus_file:
+        issues.extend(_check_focus_available_always_no(lines))
+    if is_decision_file:
+        issues.extend(_check_decision_available_always_no(lines))
+
     return [(filepath, ln, msg) for ln, msg in issues]
 
 
@@ -288,6 +452,12 @@ def main():
     if not files_list:
         print("No files to check")
         return 0
+
+    # Build script-completion sets before forking workers so they inherit via fork.
+    global _SCRIPT_COMPLETED_FOCUSES, _SCRIPT_COMPLETED_DECISIONS
+    _SCRIPT_COMPLETED_FOCUSES, _SCRIPT_COMPLETED_DECISIONS = _scan_script_completed(
+        root_dir
+    )
 
     print(f"Checking {len(files_list)} files for common mistakes...")
 
