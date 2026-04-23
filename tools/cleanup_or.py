@@ -23,6 +23,12 @@ def simplify_or_block(lines):
         line = lines[i]
         if re.match(r"^\s*OR\s*=\s*{", line):
             indent = line[: line.find("OR")]
+            # Check whether the opening OR = { line has trailing content after {.
+            # If so, there is at least one condition inlined on this line, making it
+            # impossible to determine the true condition count from inner lines alone.
+            after_brace = re.sub(r"^.*OR\s*=\s*\{", "", line).strip()
+            has_inline_content = bool(after_brace and not after_brace.startswith("#"))
+
             block = []
             brace_depth = 0
             while i < len(lines):
@@ -32,12 +38,18 @@ def simplify_or_block(lines):
                 i += 1
                 if brace_depth == 0:
                     break
+            if has_inline_content:
+                # Cannot safely unwrap: the OR line itself carries a condition.
+                out.extend(block)
+                continue
             inner = [
                 ln.strip()
                 for ln in block[1:-1]
                 if ln.strip() and not ln.strip().startswith("#")
             ]
-            if len(inner) == 1:
+            # A single inner line may still contain multiple tab-separated conditions
+            # (e.g. "trigger_a = yes\ttrigger_b = yes"). Treat those as multi-condition.
+            if len(inner) == 1 and "\t" not in inner[0]:
                 out.append(f"{indent}{inner[0]}\n")
                 continue
             else:
