@@ -163,12 +163,16 @@ class MIOStandardizer(BaseStandardizer):
 
         if props["equipment_type"]:
             self._add_blank_line_if_needed(lines)
-            self._add_blocks(lines, props["equipment_type"])
+            self._add_token_list_blocks(
+                lines, props["equipment_type"], "equipment_type", "\t"
+            )
             lines.append("")
 
         if props["research_categories"]:
             self._add_blank_line_if_needed(lines)
-            self._add_blocks(lines, props["research_categories"])
+            self._add_token_list_blocks(
+                lines, props["research_categories"], "research_categories", "\t"
+            )
             lines.append("")
 
         if props["tree_header_text"]:
@@ -253,55 +257,58 @@ class MIOStandardizer(BaseStandardizer):
         result.append(f"{indent}}}")
         return result
 
-    def normalize_mutually_exclusive(
-        self, block_lines: List[str], inner_indent: str
+    def _normalize_token_list(
+        self, block_lines: List[str], key: str, indent: str
     ) -> List[str]:
-        """Compact mutually_exclusive to a single line when it contains one trait token"""
+        """Format `key = { tokens }` as single-line for 1 token, multi-line for 2+.
+        Falls back to compact_block if the block contains comments (to preserve them).
+        """
+        for line in block_lines:
+            if line.strip().startswith("#"):
+                return self.compact_block(block_lines)
+
         content_tokens = []
         for line in block_lines:
             stripped = line.strip()
             if not stripped or stripped in ("{", "}"):
                 continue
-            if stripped.startswith("mutually_exclusive"):
-                inner = (
-                    stripped.split("{", 1)[1].split("}")[0].strip()
-                    if "{" in stripped
-                    else ""
-                )
-                if inner:
-                    content_tokens.extend(inner.split())
+            if stripped.startswith(key):
+                if "{" in stripped:
+                    inner = stripped.split("{", 1)[1]
+                    if "}" in inner:
+                        inner = inner.rsplit("}", 1)[0]
+                    if inner.strip():
+                        content_tokens.extend(inner.split())
             elif stripped != "}":
                 content_tokens.extend(stripped.rstrip("}").split())
 
+        if not content_tokens:
+            return self.compact_block(block_lines)
         if len(content_tokens) == 1:
-            return [f"{inner_indent}mutually_exclusive = {{ {content_tokens[0]} }}"]
-        return self.compact_block(block_lines)
+            return [f"{indent}{key} = {{ {content_tokens[0]} }}"]
+
+        inner_indent = indent + "\t"
+        result = [f"{indent}{key} = {{"]
+        for tok in content_tokens:
+            result.append(f"{inner_indent}{tok}")
+        result.append(f"{indent}}}")
+        return result
+
+    def normalize_mutually_exclusive(
+        self, block_lines: List[str], inner_indent: str
+    ) -> List[str]:
+        """Format mutually_exclusive based on token count (single-line for 1, multi-line for 2+)"""
+        return self._normalize_token_list(
+            block_lines, "mutually_exclusive", inner_indent
+        )
 
     def normalize_limit_to_equipment_type(
         self, block_lines: List[str], inner_indent: str
     ) -> List[str]:
-        """Compact limit_to_equipment_type to a single line when it contains one type token"""
-        content_tokens = []
-        for line in block_lines:
-            stripped = line.strip()
-            if not stripped or stripped in ("{", "}"):
-                continue
-            if stripped.startswith("limit_to_equipment_type"):
-                inner = (
-                    stripped.split("{", 1)[1].split("}")[0].strip()
-                    if "{" in stripped
-                    else ""
-                )
-                if inner:
-                    content_tokens.extend(inner.split())
-            elif stripped != "}":
-                content_tokens.extend(stripped.rstrip("}").split())
-
-        if len(content_tokens) == 1:
-            return [
-                f"{inner_indent}limit_to_equipment_type = {{ {content_tokens[0]} }}"
-            ]
-        return self.compact_block(block_lines)
+        """Format limit_to_equipment_type based on token count (single-line for 1, multi-line for 2+)"""
+        return self._normalize_token_list(
+            block_lines, "limit_to_equipment_type", inner_indent
+        )
 
     def format_trait_block(self, block_lines: List[str]) -> List[str]:
         """Format a trait block with blank lines between logical sections"""
@@ -344,10 +351,13 @@ class MIOStandardizer(BaseStandardizer):
                 else:
                     sections["identity"].append(f"{inner_indent}{stripped}")
                     i += 1
-            elif stripped.startswith(("all_parents =", "any_parent =")):
+            elif stripped.startswith(("all_parents =", "any_parent =", "parent =")):
+                key_name = stripped.split("=", 1)[0].strip()
                 if "{" in stripped:
                     sub, i = self.extract_block(block_lines, i)
-                    sections["parents"].extend(self.compact_block(sub))
+                    sections["parents"].extend(
+                        self._normalize_token_list(sub, key_name, inner_indent)
+                    )
                 else:
                     sections["parents"].append(f"{inner_indent}{stripped}")
                     i += 1
@@ -450,6 +460,19 @@ class MIOStandardizer(BaseStandardizer):
         for index, block in enumerate(blocks):
             formatter = self.format_trait_block if is_trait else self.compact_block
             for line in formatter(block[:]):
+                lines.append(line)
+            if index < len(blocks) - 1:
+                lines.append("")
+
+    def _add_token_list_blocks(
+        self,
+        lines: List[str],
+        blocks: List[List[str]],
+        key: str,
+        indent: str,
+    ) -> None:
+        for index, block in enumerate(blocks):
+            for line in self._normalize_token_list(block, key, indent):
                 lines.append(line)
             if index < len(blocks) - 1:
                 lines.append("")
