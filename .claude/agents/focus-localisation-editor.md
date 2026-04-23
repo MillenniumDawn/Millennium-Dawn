@@ -49,8 +49,12 @@ Check against the project's canonical typo watchlist in `.claude/docs/typo-watch
 
 - Keys use no trailing version number: `key: "value"` not `key:0 "value"`
 - 1 space indentation for keys (not tabs)
-- Embedded double quotes must be escaped: `\"word\"`
+- Embedded double quotes must be escaped: `\"word\"` — bare `"He called it "important""` is invalid YAML and will fail the pre-commit `check-yaml` hook
 - File must remain UTF-8 with BOM
+- **Mixed indentation** — all keys in a file must be consistently indented (all with 1 leading space). Mixing indented and non-indented keys in the same file causes the YAML parser to see two separate mappings
+- **Cyrillic lookalike characters** — watch for Cyrillic С, а, е, о, р and similar glyphs copy-pasted into English text. They look identical but are different Unicode code points and cause subtle rendering issues. Flag any non-ASCII characters in `*_l_english.yml` values
+- **Color-code prefix** — `§Y`, `§R`, `§G`, etc. must be followed immediately by content with no stray character between the code and text (e.g. `§RY text` is wrong — remove the stray `Y` or the stray `§R`)
+- **Backtick apostrophes** — ``we`ll`` is wrong; use the real apostrophe `we'll`
 
 ## Important Constraints
 

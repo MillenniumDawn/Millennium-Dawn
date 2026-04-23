@@ -164,6 +164,31 @@ NOT = { original_tag = USA }
 NOT = { original_tag = CHI }
 ```
 
+### threat Scale
+
+`threat` is a decimal **0.0–1.0**, never a percentage. Comparisons like `threat > 10` or `threat > 40` are always false. Use `threat > 0.10`, `threat > 0.40`, etc.
+
+### Tautological OR in ai_chance
+
+An `OR` block inside `ai_chance` that covers all possible values of a trigger is always true and does nothing:
+
+```
+# Wrong — modifier fires unconditionally
+modifier = {
+    add = 10
+    OR = {
+        is_historical_focus_on = yes
+        is_historical_focus_on = no
+    }
+}
+```
+
+Remove the OR block and fold the value into `base` instead, or write the real condition directly.
+
+### Event Namespace Mismatch
+
+Event IDs used in `country_event = { id = foo.1 }` must match the namespace declared at the top of the events file (`add_namespace = foo`). If the file uses `add_namespace = bar`, the correct ID is `bar.1` — a namespace mismatch silently fires nothing. Always grep `add_namespace` at the top of the events file and verify every caller uses that exact prefix.
+
 ### FROM in Non-Targeted Decisions
 
 In a non-targeted country-scoped decision (no `targets`, `target_array`, or `state_target`), `FROM` resolves to ROOT/THIS as a fallback rather than being undefined. So `var:FROM.influence_array^0 = { ... }` fires on ROOT rather than silently failing. These patterns are redundant/misleading — drop the `FROM.` prefix, or make the decision properly targeted if another country is genuinely intended.

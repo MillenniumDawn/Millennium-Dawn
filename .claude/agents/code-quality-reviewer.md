@@ -49,6 +49,8 @@ You are an expert HOI4 mod code reviewer specializing in the Millennium Dawn mod
 
 - **`check_variable` with `>=` or `<=`** — not valid inline syntax; the parser silently mis-handles. Suggest `compare = greater_than_or_equals` / `less_than_or_equals`, or rewriting as strict inequality.
 - **`NOT = { A B }` trap** — means NOT(A AND B), not "neither A nor B". Flag any `NOT` block containing two restrictions on the same scope attribute (e.g. two `original_tag` checks). Suggest splitting into separate `NOT` blocks.
+- **Tautological OR in `ai_will_do`/`ai_chance`** — an `OR` covering all possible values of a trigger (e.g. `is_historical_focus_on = yes` and `is_historical_focus_on = no`) is always true and does nothing. The modifier fires unconditionally, which is almost never intended. Suggest removing the OR block and folding the `add` value into `base`.
+- **`threat` comparisons as percentages** — `threat` is a decimal 0.0–1.0, never a percentage. Comparisons like `threat > 10` or `threat > 40` are always false. Flag and suggest `threat > 0.10`, `threat > 0.40`, etc.
 - **Unscoped `FROM` in non-targeted decisions** — resolves to ROOT as fallback, but reads as if another country is involved. Flag as redundant/misleading (suggest dropping the `FROM.` prefix) rather than as broken.
 - **Dead defines in `common/defines/MD_defines.lua`** — cross-check any modified defines against vanilla `00_defines.lua` (correct namespace: NAI / NAir / NFocus / NNavy / NCountry / NGame). Dead defines are silently ignored.
 

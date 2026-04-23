@@ -75,6 +75,24 @@ log = "[GetDateText]: [Root.GetName]: Focus TAG_focus_name"
 - Do NOT wrap triggers inside `custom_trigger_tooltip` with `hidden_trigger` — `custom_trigger_tooltip` already suppresses child tooltips, making `hidden_trigger` redundant and adding unnecessary nesting.
 - `check_variable` only accepts `=`, `>`, `<` inline. `>= 0` and `<= N` are silently mis-handled by the parser. Use long-form `compare = greater_than_or_equals` (or `less_than_or_equals` / `equals` / `not_equals`), or rewrite as strict inequality (`v > -1` ≡ `v >= 0`).
 - `NOT = { original_tag = USA original_tag = CHI }` means NOT(USA AND CHI) — always true for a single country. Use separate `NOT` blocks to exclude both: `NOT = { original_tag = USA } NOT = { original_tag = CHI }`.
+- `threat` is a decimal **0.0–1.0**, never a percentage. Comparisons like `threat > 10` or `threat > 40` are always false. Use `threat > 0.10`, `threat > 0.40`, etc.
+
+### ai_will_do — Tautological OR
+
+An `OR` block inside `ai_will_do` that covers all possible values of a trigger is always true and does nothing. Common mistake:
+
+```
+# Wrong — OR(yes, no) is always true; modifier fires unconditionally
+modifier = {
+    add = 1
+    OR = {
+        is_historical_focus_on = yes
+        is_historical_focus_on = no
+    }
+}
+```
+
+Remove the entire modifier block and fold the value into `base = N` instead. If a real condition was intended (e.g., add only when historical focus is on), write it without the `OR`.
 
 ### Cross-Nation Completion Rewards
 
