@@ -10,6 +10,9 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - cancel = { always = no } in ideas (checked hourly, never true)
   - ai_will_do root-level factor = N (should be base = N; factor only valid in modifier children)
   - Division instead of multiplication (/ 100 -> * 0.01)
+  - Multiple values of a single-valued trigger (has_government, tag, original_tag,
+    has_country_leader_ideology) at the same AND/NOT depth — always false (AND) or
+    always true (NOT); caller meant OR = { ... } or separate NOT blocks.
 """
 
 import argparse
@@ -42,6 +45,20 @@ _RE_DECISION_MARKER = re.compile(
 _RE_FOCUS_ID_IN_BLOCK = re.compile(r"\bid\s*=\s*(\w+)")
 _RE_COMPLETE_FOCUS = re.compile(r"\bcomplete_national_focus\s*=\s*(\w+)")
 _RE_ACTIVATE_DECISION = re.compile(r"\bactivate_decision\s*=\s*(\w+)")
+_RE_OR_BLOCK_OPEN = re.compile(r"^\s*OR\s*=\s*\{")
+_RE_NOT_BLOCK_OPEN = re.compile(r"^\s*NOT\s*=\s*\{")
+_RE_TRIGGER_ASSIGN = re.compile(r"^(\w+)\s*=\s*([\w.]+)$")
+
+# Single-valued country triggers. A country has exactly one government/tag/etc,
+# so two checks at the same AND depth can never both be true — caller almost
+# always meant to wrap them in OR. Inside NOT, the block is always true and
+# pointless — caller meant separate NOT blocks or NOT = { OR = { ... } }.
+_MUTUALLY_EXCLUSIVE_TRIGGERS = {
+    "has_government",
+    "tag",
+    "original_tag",
+    "has_country_leader_ideology",
+}
 
 # Populated by main() before spawning Pool workers; inherited via fork on Unix.
 _SCRIPT_COMPLETED_FOCUSES: set = set()
@@ -133,6 +150,82 @@ def _check_focus_available_always_no(lines):
                             break
         else:
             i += 1
+    return issues
+
+
+def _check_mutually_exclusive_contradictions(lines):
+    """Flag blocks with multiple values of a single-valued trigger at the same AND depth.
+
+    Example bug:
+        SOV = {
+            has_government = communism
+            has_government = nationalist
+        }
+    A country has exactly one government, so this evaluates to false forever.
+    Caller meant OR = { has_government = communism has_government = nationalist }.
+
+    Inside NOT the inverse bug appears:
+        NOT = {
+            tag = USA
+            tag = CHI
+        }
+    which is NOT(A AND B) — always true since a country is only one tag at a
+    time. Caller meant separate NOT blocks or NOT = { OR = { ... } }.
+    """
+    issues = []
+    # Stack entries: (is_or, is_not, {trigger: [(line_num, value), ...]})
+    stack = [(False, False, {})]
+
+    for i, line in enumerate(lines):
+        code = line.split("#")[0]
+        stripped = code.strip()
+        if not stripped:
+            continue
+
+        if "{" not in code and "}" not in code:
+            m = _RE_TRIGGER_ASSIGN.match(stripped)
+            if m and m.group(1) in _MUTUALLY_EXCLUSIVE_TRIGGERS:
+                stack[-1][2].setdefault(m.group(1), []).append((i + 1, m.group(2)))
+
+        is_or = bool(_RE_OR_BLOCK_OPEN.match(line))
+        is_not = bool(_RE_NOT_BLOCK_OPEN.match(line))
+
+        opens = code.count("{")
+        closes = code.count("}")
+
+        for k in range(opens):
+            # Only the first open on a line carries the OR/NOT keyword
+            if k == 0:
+                stack.append((is_or, is_not, {}))
+            else:
+                stack.append((False, False, {}))
+
+        for _ in range(closes):
+            if len(stack) > 1:
+                popped_or, popped_not, popped_triggers = stack.pop()
+                if popped_or:
+                    continue
+                for trigger, entries in popped_triggers.items():
+                    values = {v for _, v in entries}
+                    if len(values) < 2:
+                        continue
+                    first_line = entries[0][0]
+                    vals_str = ", ".join(sorted(values))
+                    if popped_not:
+                        msg = (
+                            f"NOT = {{ }} contains multiple '{trigger}' values"
+                            f" ({vals_str}) -- always true since a country has"
+                            f" only one {trigger}; use separate NOT blocks or"
+                            f" NOT = {{ OR = {{ ... }} }}"
+                        )
+                    else:
+                        msg = (
+                            f"multiple '{trigger}' values in same AND block"
+                            f" ({vals_str}) -- always false since a country has"
+                            f" only one {trigger}; wrap in OR = {{ }} to match any"
+                        )
+                    issues.append((first_line, msg))
+
     return issues
 
 
@@ -394,6 +487,7 @@ def check_file(filepath):
         issues.append((ln, msg))
     for ln, msg in find_redundant_and_blocks(lines):
         issues.append((ln, msg))
+    issues.extend(_check_mutually_exclusive_contradictions(lines))
 
     if is_focus_file:
         issues.extend(_check_focus_available_always_no(lines))
