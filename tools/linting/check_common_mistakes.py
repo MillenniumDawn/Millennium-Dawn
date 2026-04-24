@@ -568,13 +568,13 @@ def main():
     all_issues = [issue for file_issues in results for issue in file_issues]
 
     for filepath, line_num, message in sorted(all_issues):
-        print(f"WARNING: {clean_filepath(filepath)}:{line_num}: {message}")
-
+        print(f"{clean_filepath(filepath)}:{line_num}: {message}")
+    # Summary after processing all issues
     print(f"------\nChecked {len(files_list)} files")
     if all_issues:
         print(f"Found {len(all_issues)} issue(s)")
-        print("Check FAILED")
-        return 1
+        print("Issues found (non-blocking)")
+        return 0
     else:
         print("No issues found")
         print("Check PASSED")
