@@ -4,14 +4,93 @@ SUB_has_russian_special_autonomy = {
 	custom_trigger_tooltip = {
 		tooltip = SOV_subjects_exist_tt
 		any_subject_country = {
-			OR = {
-				has_autonomy_state = autonomy_republic_rf
-				has_autonomy_state = autonomy_kray_rf
-				has_autonomy_state = autonomy_oblast_rf
-				has_autonomy_state = autonomy_okrug_rf
-				has_autonomy_state = autonomy_state_rf
-			}
+			SUB_is_rf_subject = yes
 		}
+	}
+}
+
+###########SUBJECTS OF RUSSIA - IS RF SUBJECT###########
+SUB_is_rf_subject = {
+	OR = {
+		has_autonomy_state = autonomy_state_rf
+		has_autonomy_state = autonomy_republic_rf
+		has_autonomy_state = autonomy_kray_rf
+		has_autonomy_state = autonomy_oblast_rf
+		has_autonomy_state = autonomy_okrug_rf
+	}
+}
+
+###########SUBJECTS OF RUSSIA - IS LESSER RF SUBJECT (excludes autonomy_state_rf governorate tier)###########
+SUB_is_rf_lesser_subject = {
+	OR = {
+		has_autonomy_state = autonomy_republic_rf
+		has_autonomy_state = autonomy_kray_rf
+		has_autonomy_state = autonomy_oblast_rf
+		has_autonomy_state = autonomy_okrug_rf
+	}
+}
+
+###########SUBJECTS OF RUSSIA - IS POST-SOVIET SPHERE SUBJECT (RF tiers + CIS + Union State)###########
+SUB_is_soviet_sphere_subject = {
+	OR = {
+		SUB_is_rf_subject = yes
+		has_autonomy_state = autonomy_state_cis
+		has_autonomy_state = autonomy_union_state
+	}
+}
+
+###########SUBJECTS OF RUSSIA - IS POST-SOVIET SPHERE MEMBER (SOV itself or a sphere subject)###########
+SUB_is_soviet_sphere_member = {
+	OR = {
+		original_tag = SOV
+		SUB_is_soviet_sphere_subject = yes
+	}
+}
+
+###########SUBJECTS OF RUSSIA - IS ACTIVE RF SUBJECT (not rebelling + any RF tier)###########
+SUB_is_active_rf_subject = {
+	NOT = { has_country_flag = SUB_subject_rebellion_flag }
+	SUB_is_rf_subject = yes
+}
+
+###########SUBJECTS OF RUSSIA - IS ACTIVE LESSER RF SUBJECT (not rebelling + 4-tier only)###########
+SUB_is_active_rf_lesser_subject = {
+	NOT = { has_country_flag = SUB_subject_rebellion_flag }
+	SUB_is_rf_lesser_subject = yes
+}
+
+###########SUBJECTS OF RUSSIA - TAX RATE CHANGE AVAILABLE (regional rise/fall decisions)###########
+SUB_can_change_subjects_taxes = {
+	has_country_flag = SUB_taxes_to_open
+	NOT = { has_country_flag = SOV_subjects_no_taxes }
+}
+
+###########SUBJECTS OF RUSSIA - INTERNAL RF SUBJECT (subsidies/buildings modifier eligible)###########
+SUB_is_internal_rf_subject = {
+	OR = {
+		original_tag = CHE
+		original_tag = BSH
+		original_tag = KBK
+		original_tag = TAT
+		original_tag = TUV
+		original_tag = YAK
+		original_tag = BRY
+		original_tag = KOM
+		original_tag = ALT
+		original_tag = KHS
+		original_tag = KAE
+		original_tag = CKK
+		original_tag = YAM
+		original_tag = NEE
+		original_tag = KCC
+		original_tag = ING
+		original_tag = ADY
+		original_tag = DAG
+		original_tag = KLM
+		original_tag = CHU
+		original_tag = MEL
+		original_tag = MOV
+		original_tag = UDM
 	}
 }
 
@@ -252,11 +331,5 @@ SUB_subjects_army_integration = {
 ###########EKATERINBURG - EXIST###########
 SUB_ekaterinburg_exist_development = {
 	has_country_flag = SOV_moscow_no_more
-	OR = {
-		NOT = { has_country_flag = SUB_ekb_2 }
-		NOT = { has_country_flag = SUB_ekb_3 }
-		NOT = { has_country_flag = SUB_ekb_4 }
-		NOT = { has_country_flag = SUB_ekb_5 }
-		NOT = { has_country_flag = SUB_ekb_6 }
-	}
+	check_variable = { SUB_ekb_level < 6 }
 }

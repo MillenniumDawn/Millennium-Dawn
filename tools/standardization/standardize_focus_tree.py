@@ -95,6 +95,12 @@ _COMMENTED_EMPTY_BLOCK_RE = re.compile(
     r"^#\s*(available|bypass|cancel|visible|mutually_exclusive)\s*=\s*\{\s*\}$"
 )
 
+# Matches an existing log line so we can correct a wrong focus ID or missing prefix.
+# Handles [Root.GetName] / [This.GetName] (any capitalisation) and an optional "Focus " prefix.
+_LOG_FOCUS_RE = re.compile(
+    r'(log\s*=\s*"\[GetDateText\]:\s*\[[Rr]oot\.[Gg]etName\]:\s*)(?:Focus\s+)?(\w+)(")'
+)
+
 
 def extract_focus_properties(focus_lines):
     """Extract properties from focus block lines"""
@@ -232,9 +238,15 @@ def compact_block(block_lines):
     return compacted
 
 
+def _fix_log_id(line: str, focus_id: str) -> str:
+    """Correct a log line: ensure 'Focus ' prefix and replace the focus ID."""
+    return _LOG_FOCUS_RE.sub(rf"\g<1>Focus {focus_id}\g<3>", line)
+
+
 def emit_effect_block_with_log(lines, effect_block, focus_id):
     """Append an effect block to `lines`, injecting a log line as the first
-    statement if the block doesn't already contain one."""
+    statement if the block doesn't already contain one, or correcting a
+    mismatched focus ID / missing 'Focus ' prefix in an existing log line."""
     if not effect_block:
         return
     if focus_id and not any("log =" in line for line in effect_block):
@@ -265,6 +277,12 @@ def emit_effect_block_with_log(lines, effect_block, focus_id):
                 if i == 0 and "{" in line:
                     new_block.append(log_line)
             effect_block = new_block
+    elif focus_id:
+        # Log line already exists — correct wrong ID or missing 'Focus ' prefix.
+        effect_block = [
+            _fix_log_id(line, focus_id) if "log =" in line else line
+            for line in effect_block
+        ]
     for line in compact_block(effect_block[:]):
         lines.append(line)
     lines.append("")
