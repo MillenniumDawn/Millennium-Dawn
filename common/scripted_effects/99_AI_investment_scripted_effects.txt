@@ -1,15 +1,44 @@
 # AI Investable Assets Commands
-# Used in 00_influence_on_actions.txt :)
-# Page 1
-# line One - CIC - 1, MIC - 2, NIC - 3
-# Line Two - Infrastructure - 4, Offices - 5, SAM - 6, Radar - 7
-# Page 2
-# Line One - Air Bases - 8, Fuel Silo - 9, Internet Station - 10
-# Line Two - Biofuel Refineries - 11
-# Positions of Line One: { 8, 45, 82, 119 }, 45
-# Positions of Line Two: { 8, 45, 82, 119 }, 76
-# In scope STATE random_owned_state
-# TAG = { random_owned_state = { } }
+#
+# === Per-state scoring contract ===
+# Each AI_get_<building>_score effect runs in a state scope (one of the
+# AI's controlled_states). It computes AI_score for that (state, building)
+# pair, then calls AI_record_score which:
+#   1. Adds a +/-15 random tweak (so the AI doesn't always pick the same
+#      best state when multiple are tied).
+#   2. Compares against AI_best_score and, if higher, updates the trio:
+#      AI_best_score, AI_best_target (state ID), AI_best_type (building 1..14).
+# Caller must set the temp var `AI_score_type` to the building number before
+# calling AI_record_score so the helper knows which type to record.
+#
+# === Building type index ===
+# 1 = CIC (industrial_complex)        8  = air_base
+# 2 = MIC (arms_factory)              9  = fuel_silo
+# 3 = Dockyard                        10 = internet_station
+# 4 = Infrastructure                  11 = renewable_energy_infra
+# 5 = Offices                         12 = fossil_powerplant
+# 6 = SAM (anti_air_building)         13 = nuclear_reactor
+# 7 = Radar                           14 = agriculture_district
+
+# Helper: finalize a per-state score after all building-specific math is done.
+# Inputs (temp vars): AI_score, AI_best_score, AI_score_type
+# Outputs: AI_best_score, AI_best_target (= THIS.id), AI_best_type updated
+#          when AI_score (post-randomization) beats AI_best_score.
+AI_record_score = {
+	set_temp_variable_to_random = {
+		var = state_randomizer
+		min = -15
+		max = 15
+		integer = yes
+	}
+	add_to_temp_variable = { AI_score = state_randomizer }
+
+	if = { limit = { check_variable = { AI_score > AI_best_score } }
+		set_temp_variable = { AI_best_score = AI_score }
+		set_temp_variable = { AI_best_target = THIS.id }
+		set_temp_variable = { AI_best_type = AI_score_type }
+	}
+}
 
 # GUI : PREV = { CONTROLLER = { } }
 invest_cic = {
@@ -18,7 +47,7 @@ invest_cic = {
 		set_variable = { project_build_amount^-1 = 1 }
 		update_gui = yes
 		PREV = {
-			CONTROLLER = { country_event = AC_event.10 }
+			CONTROLLER = { country_event = investments_event.10 }
 		}
 	}
 }
@@ -29,7 +58,7 @@ invest_mic = {
 		set_variable = { project_build_amount^-1 = 1 }
 		update_gui = yes
 		PREV = {
-			CONTROLLER = { country_event = AC_event.10 }
+			CONTROLLER = { country_event = investments_event.10 }
 		}
 	}
 }
@@ -40,7 +69,7 @@ invest_infra = {
 		set_variable = { project_build_amount^-1 = 1 }
 		update_gui = yes
 		PREV = {
-			CONTROLLER = { country_event = AC_event.10 }
+			CONTROLLER = { country_event = investments_event.10 }
 		}
 	}
 }
@@ -55,17 +84,8 @@ AI_get_civilian_industry_score = {
 
 		# Increase section
 		# Adds score if target country has low civs in relation to mils and docks.
-		if = { limit = { CONTROLLER = { num_of_factories > 0 } }
-			if = {
-				limit = {
-					CONTROLLER = {
-						set_temp_variable = { civs_to_factories_ratio = num_of_civilian_factories }
-						divide_temp_variable = { civs_to_factories_ratio = num_of_factories }
-						check_variable = { civs_to_factories_ratio < 0.65 } # civs make up less than 65% of total factories (excluding offices)
-					}
-				}
-				add_to_temp_variable = { v1 = 15 }
-			}
+		if = { limit = { check_variable = { tgt_civs_to_factories_ratio < 0.65 } }
+			add_to_temp_variable = { v1 = 15 }
 		}
 
 		# Decrease Section
@@ -79,33 +99,29 @@ AI_get_civilian_industry_score = {
 		multiply_temp_variable = { pending_penalty = 40 }
 		add_to_temp_variable = { v2 = pending_penalty }
 
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories > 15 } }
+		if = { limit = { check_variable = { tgt_avail_civs > 15 } }
 			add_to_temp_variable = { v2 = 5 }
 		}
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories > 30 } }
+		if = { limit = { check_variable = { tgt_avail_civs > 30 } }
 			add_to_temp_variable = { v2 = 10 }
 		}
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories > 45 } }
+		if = { limit = { check_variable = { tgt_avail_civs > 45 } }
 			add_to_temp_variable = { v2 = 15 }
 		}
 
 		# No points in investing civs if almost no employees are available (scaled for smaller countries population wise)
 		if = {
 			limit = {
-				CONTROLLER = {
-					check_variable = { total_unemployed_percentage_display < 0.020 } # 2% unemployment
-					check_variable = { population_total_m < 30 }
-				}
+				check_variable = { tgt_unemployment < 0.020 } # 2% unemployment
+				check_variable = { tgt_pop_m < 30 }
 			}
 			add_to_temp_variable = { v2 = 100 }
 		}
 		# No point in investing civs if almost no employees are available (scaled for larger countries population wise)
 		if = {
 			limit = {
-				CONTROLLER = {
-					check_variable = { total_unemployed_percentage_display < 0.010 } # 1% unemployment
-					check_variable = { population_total_m > 29.999 }
-				}
+				check_variable = { tgt_unemployment < 0.010 } # 1% unemployment
+				check_variable = { tgt_pop_m > 29.999 }
 			}
 			add_to_temp_variable = { v2 = 100 }
 		}
@@ -117,21 +133,8 @@ AI_get_civilian_industry_score = {
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
-		# Add randomization to prevent always picking the same "best" state (Issue #114)
-		set_temp_variable_to_random = {
-			var = state_randomizer
-			min = -15
-			max = 15
-			integer = yes
-		}
-		add_to_temp_variable = { AI_score = state_randomizer }
-
-		# AI_not_in_home_area = yes # Trigger doesn't work currently
-		if = { limit = { check_variable = { AI_score > AI_best_score } }
-			set_temp_variable = { AI_best_score = AI_score }
-			set_temp_variable = { AI_best_target = THIS.id }
-			set_temp_variable = { AI_best_type = 1 }
-		}
+		set_temp_variable = { AI_score_type = 1 }
+		AI_record_score = yes
 	}
 }
 
@@ -158,16 +161,16 @@ AI_get_military_industry_score = {
 		if = { limit = { threat > 0.4 }
 			add_to_temp_variable = { v1 = 10 }
 		}
-		if = { limit = { CONTROLLER = { num_of_military_factories < 15 } }
+		if = { limit = { check_variable = { tgt_num_mils < 15 } }
 			add_to_temp_variable = { v1 = 10 }
 		}
-		if = { limit = { CONTROLLER = { num_of_military_factories < 10 } }
+		if = { limit = { check_variable = { tgt_num_mils < 10 } }
 			add_to_temp_variable = { v1 = 10 }
 		}
-		if = { limit = { CONTROLLER = { num_of_military_factories < 5 } }
+		if = { limit = { check_variable = { tgt_num_mils < 5 } }
 			add_to_temp_variable = { v1 = 10 }
 		}
-		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+		if = { limit = { check_variable = { tgt_AI_threatened = 1 } }
 			add_to_temp_variable = { v1 = 15 }
 		}
 
@@ -182,32 +185,24 @@ AI_get_military_industry_score = {
 		multiply_temp_variable = { pending_penalty = 40 }
 		add_to_temp_variable = { v2 = pending_penalty }
 
-		if = { limit = { CONTROLLER = { has_war = no } }
+		if = { limit = { check_variable = { tgt_has_war = 0 } }
 			add_to_temp_variable = { v2 = 20 }
 		}
 		## Do not cripple your economy
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 15 } }
+		if = { limit = { check_variable = { tgt_avail_civs < 15 } }
 			add_to_temp_variable = { v2 = 10 }
 		}
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+		if = { limit = { check_variable = { tgt_avail_civs < 10 } }
 			add_to_temp_variable = { v2 = 10 }
 		}
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 5 } }
+		if = { limit = { check_variable = { tgt_avail_civs < 5 } }
 			add_to_temp_variable = { v2 = 10 }
 		}
 
 		# Lowers score if target country has too many mils in relation to civs and docks
-		if = { limit = { CONTROLLER = { num_of_factories > 0 } }
-			if = {
-				limit = {
-					CONTROLLER = {
-						set_temp_variable = { mils_to_factories_ratio = num_of_factories }
-						multiply_temp_variable = { mils_to_factories_ratio = 0.45 }
-						check_variable = { num_of_military_factories > mils_to_factories_ratio }
-					}
-				}
-				add_to_temp_variable = { v2 = 70 }
-			}
+		# Lower priority if mils already exceed 45% of total factories
+		if = { limit = { check_variable = { tgt_mils_to_factories_ratio > 0.45 } }
+			add_to_temp_variable = { v2 = 70 }
 		}
 
 		if = { limit = { check_variable = { pending_shared_slot_building > 0 } }
@@ -215,28 +210,15 @@ AI_get_military_industry_score = {
 		}
 
 		# No point in investing mils if almost no employees are available
-		if = { limit = { CONTROLLER = { check_variable = { total_unemployed_percentage_display < 0.001 } } } # 0.1% unemployment
+		if = { limit = { check_variable = { tgt_unemployment < 0.001 } } # 0.1% unemployment
 			add_to_temp_variable = { v2 = 50 }
 		}
 
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
-		# Add randomization to prevent always picking the same "best" state (Issue #114)
-		set_temp_variable_to_random = {
-			var = state_randomizer
-			min = -15
-			max = 15
-			integer = yes
-		}
-		add_to_temp_variable = { AI_score = state_randomizer }
-
-		# AI_not_in_home_area = yes # Trigger doesn't work currently
-		if = { limit = { check_variable = { AI_score > AI_best_score } }
-			set_temp_variable = { AI_best_score = AI_score }
-			set_temp_variable = { AI_best_target = THIS.id }
-			set_temp_variable = { AI_best_type = 2 }
-		}
+		set_temp_variable = { AI_score_type = 2 }
+		AI_record_score = yes
 	}
 }
 
@@ -248,16 +230,16 @@ AI_get_dockyard_score = {
 		set_temp_variable = { v1 = 170 } # Basis
 
 		# Increase Section
-		if = { limit = { CONTROLLER = { num_of_naval_factories < 15 } }
+		if = { limit = { check_variable = { tgt_num_naval < 15 } }
 			add_to_temp_variable = { v1 = 10 }
 		}
-		if = { limit = { CONTROLLER = { num_of_naval_factories < 10 } }
+		if = { limit = { check_variable = { tgt_num_naval < 10 } }
 			add_to_temp_variable = { v1 = 10 }
 		}
-		if = { limit = { CONTROLLER = { num_of_naval_factories < 5 } }
+		if = { limit = { check_variable = { tgt_num_naval < 5 } }
 			add_to_temp_variable = { v1 = 10 }
 		}
-		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+		if = { limit = { check_variable = { tgt_AI_threatened = 1 } }
 			add_to_temp_variable = { v1 = 15 }
 		}
 
@@ -271,7 +253,7 @@ AI_get_dockyard_score = {
 		multiply_temp_variable = { pending_penalty = 40 }
 		add_to_temp_variable = { v2 = pending_penalty }
 
-		if = { limit = { CONTROLLER = { has_war = no } }
+		if = { limit = { check_variable = { tgt_has_war = 0 } }
 			add_to_temp_variable = { v2 = 35 }
 		}
 
@@ -281,37 +263,32 @@ AI_get_dockyard_score = {
 		}
 
 		# Reduce if nation can't support building a navy resource wise
-		if = { limit = { CONTROLLER = { check_variable = { resource_produced@steel < 200 } } }
+		if = { limit = { check_variable = { tgt_steel_produced < 200 } }
 			add_to_temp_variable = { v2 = 20 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { resource_produced@steel < 100 } } }
+		if = { limit = { check_variable = { tgt_steel_produced < 100 } }
 			add_to_temp_variable = { v2 = 40 }
 		}
 
 		# Reduce if nation can't support building a navy money wise
-		if = { limit = { CONTROLLER = { check_variable = { gdp_total < 1000 } } }
+		if = { limit = { check_variable = { tgt_gdp_total < 1000 } }
 			add_to_temp_variable = { v2 = 100 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { interest_rate > 10.5 } } }
+		if = { limit = { check_variable = { tgt_interest_rate > 10.5 } }
 			add_to_temp_variable = { v2 = 40 }
 		}
 
 		# Lowers score if target country has too many docks in relation to civs and mils
-		if = { limit = { CONTROLLER = { num_of_factories > 0 } }
-			if = {
-				limit = {
-					CONTROLLER = {
-						set_temp_variable = { docks_to_factories_ratio = num_of_naval_factories }
-						divide_temp_variable = { docks_to_factories_ratio = num_of_factories }
-						check_variable = { docks_to_factories_ratio > 0.20 } # when docks make up more than 20% of total factories (excluding offices)
-					}
-				}
+		if = { limit = { check_variable = { tgt_num_factories > 0 } }
+			set_temp_variable = { docks_to_factories_ratio = tgt_num_naval }
+			divide_temp_variable = { docks_to_factories_ratio = tgt_num_factories }
+			if = { limit = { check_variable = { docks_to_factories_ratio > 0.20 } } # when docks make up more than 20% of total factories
 				add_to_temp_variable = { v2 = 50 }
 			}
 		}
 
 		# No point in investing docks if almost no employees are available
-		if = { limit = { CONTROLLER = { check_variable = { total_unemployed_percentage_display < 0.001 } } } # 0.1% unemployment
+		if = { limit = { check_variable = { tgt_unemployment < 0.001 } } # 0.1% unemployment
 			add_to_temp_variable = { v2 = 50 }
 		}
 
@@ -322,21 +299,8 @@ AI_get_dockyard_score = {
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
-		# Add randomization to prevent always picking the same "best" state (Issue #114)
-		set_temp_variable_to_random = {
-			var = state_randomizer
-			min = -15
-			max = 15
-			integer = yes
-		}
-		add_to_temp_variable = { AI_score = state_randomizer }
-
-		# AI_not_in_home_area = yes # Trigger doesn't work currently
-		if = { limit = { check_variable = { AI_score > AI_best_score } }
-			set_temp_variable = { AI_best_score = AI_score }
-			set_temp_variable = { AI_best_target = THIS.id }
-			set_temp_variable = { AI_best_type = 3 }
-		}
+		set_temp_variable = { AI_score_type = 3 }
+		AI_record_score = yes
 	}
 }
 
@@ -392,17 +356,11 @@ AI_get_infrastructure_score = {
 			add_to_temp_variable = { v2 = 15 }
 		}
 
-		# Do not invest infrastructure if you have more then your current value
+		# Do not invest infrastructure if you have more then your current value.
+		# pending_infra is precomputed by AI_count_pending_projects in the same pass
+		# that builds the other pending_* counters — no dedicated loop needed.
 		set_temp_variable = { differential_infra = building_level@infrastructure }
-		for_each_loop = {
-			array = project_type_in_state
-			value = v
-			index = i
-
-			if = { limit = { check_variable = { project_type_in_state^i = 4 } }
-				add_to_temp_variable = { differential_infra = 1 }
-			}
-		}
+		add_to_temp_variable = { differential_infra = pending_infra }
 
 		# Check to ensure they do not invest in infrastructure when at max or when pending projects will reach max
 		if = { limit = { check_variable = { building_level@infrastructure = 5 } }
@@ -420,12 +378,8 @@ AI_get_infrastructure_score = {
 			add_to_temp_variable = { AI_score = v1 }
 		}
 
-		# AI_not_in_home_area = yes # Trigger doesn't work currently
-		if = { limit = { check_variable = { AI_score > AI_best_score } }
-			set_temp_variable = { AI_best_score = AI_score }
-			set_temp_variable = { AI_best_target = THIS.id }
-			set_temp_variable = { AI_best_type = 4 }
-		}
+		set_temp_variable = { AI_score_type = 4 }
+		AI_record_score = yes
 	}
 }
 
@@ -438,13 +392,13 @@ AI_get_offices_score = {
 
 		# Increase section
 		# Higher chance to invest office if target has high corp tax rate (meaning they could utilize the office well)
-		if = { limit = { CONTROLLER = { check_variable = { corporate_tax_rate > 22 } } }
+		if = { limit = { check_variable = { tgt_corp_tax > 22 } }
 			add_to_temp_variable = { v1 = 10 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { corporate_tax_rate > 27 } } }
+		if = { limit = { check_variable = { tgt_corp_tax > 27 } }
 			add_to_temp_variable = { v1 = 15 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { corporate_tax_rate > 32 } } }
+		if = { limit = { check_variable = { tgt_corp_tax > 32 } }
 			add_to_temp_variable = { v1 = 20 }
 		}
 
@@ -459,40 +413,36 @@ AI_get_offices_score = {
 		multiply_temp_variable = { pending_penalty = 40 }
 		add_to_temp_variable = { v2 = pending_penalty }
 
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 1 } }
+		if = { limit = { check_variable = { tgt_avail_civs < 1 } }
 			add_to_temp_variable = { v2 = 15 }
 		}
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 5 } }
+		if = { limit = { check_variable = { tgt_avail_civs < 5 } }
 			add_to_temp_variable = { v2 = 12 }
 		}
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+		if = { limit = { check_variable = { tgt_avail_civs < 10 } }
 			add_to_temp_variable = { v2 = 8 }
 		}
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 15 } }
+		if = { limit = { check_variable = { tgt_avail_civs < 15 } }
 			add_to_temp_variable = { v2 = 5 }
 		}
 
-		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita < 15 } } }
+		if = { limit = { check_variable = { tgt_gdp_per_capita < 15 } }
 			add_to_temp_variable = { v2 = 15 }
 		}
 
 		# No points in investing office if almost no employees are available (scaled for smaller countries population wise)
 		if = {
 			limit = {
-				CONTROLLER = {
-					check_variable = { total_unemployed_percentage_display < 0.020 } # 2% unemployment
-					check_variable = { population_total_m < 30 }
-				}
+				check_variable = { tgt_unemployment < 0.020 } # 2% unemployment
+				check_variable = { tgt_pop_m < 30 }
 			}
 			add_to_temp_variable = { v2 = 100 }
 		}
 		# No points in investing office if almost no employees are available (scaled for larger countries population wise)
 		if = {
 			limit = {
-				CONTROLLER = {
-					check_variable = { total_unemployed_percentage_display < 0.010 } # 1% unemployment
-					check_variable = { population_total_m > 29.999 }
-				}
+				check_variable = { tgt_unemployment < 0.010 } # 1% unemployment
+				check_variable = { tgt_pop_m > 29.999 }
 			}
 			add_to_temp_variable = { v2 = 100 }
 		}
@@ -504,37 +454,54 @@ AI_get_offices_score = {
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
-		# Add randomization to prevent always picking the same "best" state (Issue #114)
-		set_temp_variable_to_random = {
-			var = state_randomizer
-			min = -15
-			max = 15
-			integer = yes
-		}
-		add_to_temp_variable = { AI_score = state_randomizer }
-
-		# AI_not_in_home_area = yes # Trigger doesn't work currently
-		if = { limit = { check_variable = { AI_score > AI_best_score } }
-			set_temp_variable = { AI_best_score = AI_score }
-			set_temp_variable = { AI_best_target = THIS.id }
-			set_temp_variable = { AI_best_type = 5 }
-		}
+		set_temp_variable = { AI_score_type = 5 }
+		AI_record_score = yes
 	}
 }
 
-# Shared helper: counts pending projects of types 6-10 for the current state
-# Call once per state before the individual scoring effects
+# Shared helper: counts pending projects per building type in the current state.
+# Call once per state before the individual scoring effects. Single pass over
+# project_type_in_state increments every per-type counter — keeps the per-state
+# loop in investments_event.500 cheap.
+#
+# pending_shared_slot_building covers types 1/2/3/5 (CIC/MIC/dockyard/offices)
+# which all draw from the same building-slot pool, so any pending project of
+# those types should suppress new investments of those types in the same state.
 AI_count_pending_projects = {
+	set_temp_variable = { pending_civs = 0 }
+	set_temp_variable = { pending_mils = 0 }
+	set_temp_variable = { pending_docks = 0 }
+	set_temp_variable = { pending_offices = 0 }
 	set_temp_variable = { pending_antiair = 0 }
 	set_temp_variable = { pending_radar = 0 }
 	set_temp_variable = { pending_airbases = 0 }
 	set_temp_variable = { pending_fuel_silos = 0 }
 	set_temp_variable = { pending_internet = 0 }
+	set_temp_variable = { pending_infra = 0 }
 	set_temp_variable = { pending_shared_slot_building = 0 }
 	for_each_loop = {
 		array = project_type_in_state
 		value = v
 		index = i
+		if = { limit = { check_variable = { project_type_in_state^i = 1 } }
+			add_to_temp_variable = { pending_civs = 1 }
+			add_to_temp_variable = { pending_shared_slot_building = 1 }
+		}
+		if = { limit = { check_variable = { project_type_in_state^i = 2 } }
+			add_to_temp_variable = { pending_mils = 1 }
+			add_to_temp_variable = { pending_shared_slot_building = 1 }
+		}
+		if = { limit = { check_variable = { project_type_in_state^i = 3 } }
+			add_to_temp_variable = { pending_docks = 1 }
+			add_to_temp_variable = { pending_shared_slot_building = 1 }
+		}
+		if = { limit = { check_variable = { project_type_in_state^i = 4 } }
+			add_to_temp_variable = { pending_infra = 1 }
+		}
+		if = { limit = { check_variable = { project_type_in_state^i = 5 } }
+			add_to_temp_variable = { pending_offices = 1 }
+			add_to_temp_variable = { pending_shared_slot_building = 1 }
+		}
 		if = { limit = { check_variable = { project_type_in_state^i = 6 } }
 			add_to_temp_variable = { pending_antiair = 1 }
 		}
@@ -549,18 +516,6 @@ AI_count_pending_projects = {
 		}
 		if = { limit = { check_variable = { project_type_in_state^i = 10 } }
 			add_to_temp_variable = { pending_internet = 1 }
-		}
-		if = { limit = { check_variable = { project_type_in_state^i = 1 } }
-			add_to_temp_variable = { pending_shared_slot_building = 1 }
-		}
-		if = { limit = { check_variable = { project_type_in_state^i = 2 } }
-			add_to_temp_variable = { pending_shared_slot_building = 1 }
-		}
-		if = { limit = { check_variable = { project_type_in_state^i = 3 } }
-			add_to_temp_variable = { pending_shared_slot_building = 1 }
-		}
-		if = { limit = { check_variable = { project_type_in_state^i = 5 } }
-			add_to_temp_variable = { pending_shared_slot_building = 1 }
 		}
 	}
 }
@@ -584,10 +539,10 @@ AI_get_antiair_score = {
 			add_to_temp_variable = { v1 = 25 }
 		}
 		# War and threat flags
-		if = { limit = { CONTROLLER = { has_war = yes } }
+		if = { limit = { check_variable = { tgt_has_war = 1 } }
 			add_to_temp_variable = { v1 = 40 }
 		}
-		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+		if = { limit = { check_variable = { tgt_AI_threatened = 1 } }
 			add_to_temp_variable = { v1 = 25 }
 		}
 		if = { limit = { CONTROLLER = { any_neighbor_country = { has_war_with = PREV } } }
@@ -611,31 +566,19 @@ AI_get_antiair_score = {
 		add_to_temp_variable = { v2 = pending_penalty }
 
 		# Reduce priority in peacetime
-		if = { limit = { CONTROLLER = { has_war = no threat < 0.5 } }
+		if = { limit = { check_variable = { tgt_has_war = 0 } check_variable = { tgt_threat < 0.5 } }
 			add_to_temp_variable = { v2 = 50 }
 		}
 		# Don't build if economy is struggling
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+		if = { limit = { check_variable = { tgt_avail_civs < 10 } }
 			add_to_temp_variable = { v2 = 30 }
 		}
 
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
-		# Add randomization
-		set_temp_variable_to_random = {
-			var = state_randomizer
-			min = -15
-			max = 15
-			integer = yes
-		}
-		add_to_temp_variable = { AI_score = state_randomizer }
-
-		if = { limit = { check_variable = { AI_score > AI_best_score } }
-			set_temp_variable = { AI_best_score = AI_score }
-			set_temp_variable = { AI_best_target = THIS.id }
-			set_temp_variable = { AI_best_type = 6 }
-		}
+		set_temp_variable = { AI_score_type = 6 }
+		AI_record_score = yes
 	}
 }
 
@@ -658,10 +601,10 @@ AI_get_radar_score = {
 			add_to_temp_variable = { v1 = 25 }
 		}
 		# War and strategic importance
-		if = { limit = { CONTROLLER = { has_war = yes } }
+		if = { limit = { check_variable = { tgt_has_war = 1 } }
 			add_to_temp_variable = { v1 = 35 }
 		}
-		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+		if = { limit = { check_variable = { tgt_AI_threatened = 1 } }
 			add_to_temp_variable = { v1 = 20 }
 		}
 		# Border and coastal states get priority for early warning
@@ -672,7 +615,7 @@ AI_get_radar_score = {
 			add_to_temp_variable = { v1 = 15 }
 		}
 		# Naval powers benefit more from coastal radar
-		if = { limit = { CONTROLLER = { has_idea = maritime_industry } is_coastal = yes }
+		if = { limit = { check_variable = { tgt_has_maritime_industry = 1 } is_coastal = yes }
 			add_to_temp_variable = { v1 = 15 }
 		}
 
@@ -686,31 +629,19 @@ AI_get_radar_score = {
 		add_to_temp_variable = { v2 = pending_penalty }
 
 		# Reduce priority in peacetime
-		if = { limit = { CONTROLLER = { has_war = no threat < 0.5 } }
+		if = { limit = { check_variable = { tgt_has_war = 0 } check_variable = { tgt_threat < 0.5 } }
 			add_to_temp_variable = { v2 = 45 }
 		}
 		# Don't build if economy is struggling
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+		if = { limit = { check_variable = { tgt_avail_civs < 10 } }
 			add_to_temp_variable = { v2 = 25 }
 		}
 
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
-		# Add randomization
-		set_temp_variable_to_random = {
-			var = state_randomizer
-			min = -15
-			max = 15
-			integer = yes
-		}
-		add_to_temp_variable = { AI_score = state_randomizer }
-
-		if = { limit = { check_variable = { AI_score > AI_best_score } }
-			set_temp_variable = { AI_best_score = AI_score }
-			set_temp_variable = { AI_best_target = THIS.id }
-			set_temp_variable = { AI_best_type = 7 }
-		}
+		set_temp_variable = { AI_score_type = 7 }
+		AI_record_score = yes
 	}
 }
 
@@ -722,10 +653,10 @@ AI_get_airbase_score = {
 		set_temp_variable = { v1 = 130 }
 
 		# Increase Section
-		if = { limit = { CONTROLLER = { has_war = yes } }
+		if = { limit = { check_variable = { tgt_has_war = 1 } }
 			add_to_temp_variable = { v1 = 40 }
 		}
-		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+		if = { limit = { check_variable = { tgt_AI_threatened = 1 } }
 			add_to_temp_variable = { v1 = 25 }
 		}
 		# Threat-based scoring
@@ -746,7 +677,7 @@ AI_get_airbase_score = {
 			add_to_temp_variable = { v1 = 10 }
 		}
 		# Countries with air force doctrine benefit more
-		if = { limit = { CONTROLLER = { num_of_military_factories > 20 } }
+		if = { limit = { check_variable = { tgt_num_mils > 20 } }
 			add_to_temp_variable = { v1 = 10 }
 		}
 
@@ -760,38 +691,26 @@ AI_get_airbase_score = {
 		add_to_temp_variable = { v2 = pending_penalty }
 
 		# Reduce priority in peacetime
-		if = { limit = { CONTROLLER = { has_war = no } }
+		if = { limit = { check_variable = { tgt_has_war = 0 } }
 			add_to_temp_variable = { v2 = 30 }
 		}
 		# Don't build if economy is struggling
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 15 } }
+		if = { limit = { check_variable = { tgt_avail_civs < 15 } }
 			add_to_temp_variable = { v2 = 20 }
 		}
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+		if = { limit = { check_variable = { tgt_avail_civs < 10 } }
 			add_to_temp_variable = { v2 = 30 }
 		}
 		# Reduce if low fuel capacity (can't support air force)
-		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k < 100 } } }
+		if = { limit = { check_variable = { tgt_max_fuel < 100 } }
 			add_to_temp_variable = { v2 = 40 }
 		}
 
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
-		# Add randomization
-		set_temp_variable_to_random = {
-			var = state_randomizer
-			min = -15
-			max = 15
-			integer = yes
-		}
-		add_to_temp_variable = { AI_score = state_randomizer }
-
-		if = { limit = { check_variable = { AI_score > AI_best_score } }
-			set_temp_variable = { AI_best_score = AI_score }
-			set_temp_variable = { AI_best_target = THIS.id }
-			set_temp_variable = { AI_best_type = 8 }
-		}
+		set_temp_variable = { AI_score_type = 8 }
+		AI_record_score = yes
 	}
 }
 
@@ -804,30 +723,30 @@ AI_get_fuel_silo_score = {
 
 		# Increase Section
 		# War and threat significantly increase fuel needs
-		if = { limit = { CONTROLLER = { has_war = yes } }
+		if = { limit = { check_variable = { tgt_has_war = 1 } }
 			add_to_temp_variable = { v1 = 40 }
 		}
 		if = { limit = { CONTROLLER = { any_neighbor_country = { has_war_with = PREV } } }
 			add_to_temp_variable = { v1 = 30 }
 		}
-		if = { limit = { CONTROLLER = { has_country_flag = AI_is_threatened } }
+		if = { limit = { check_variable = { tgt_AI_threatened = 1 } }
 			add_to_temp_variable = { v1 = 20 }
 		}
 		# Low fuel capacity countries need storage
-		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k < 250 } } }
+		if = { limit = { check_variable = { tgt_max_fuel < 250 } }
 			add_to_temp_variable = { v1 = 30 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k < 500 } } }
+		if = { limit = { check_variable = { tgt_max_fuel < 500 } }
 			add_to_temp_variable = { v1 = 20 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k < 750 } } }
+		if = { limit = { check_variable = { tgt_max_fuel < 750 } }
 			add_to_temp_variable = { v1 = 15 }
 		}
 		# Countries with large militaries need fuel storage
-		if = { limit = { CONTROLLER = { num_of_military_factories > 20 } }
+		if = { limit = { check_variable = { tgt_num_mils > 20 } }
 			add_to_temp_variable = { v1 = 15 }
 		}
-		if = { limit = { CONTROLLER = { num_of_military_factories > 40 } }
+		if = { limit = { check_variable = { tgt_num_mils > 40 } }
 			add_to_temp_variable = { v1 = 15 }
 		}
 		# Strategic locations
@@ -849,38 +768,26 @@ AI_get_fuel_silo_score = {
 		add_to_temp_variable = { v2 = pending_penalty }
 
 		# Don't build if already have high fuel capacity
-		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k > 1500 } } }
+		if = { limit = { check_variable = { tgt_max_fuel > 1500 } }
 			add_to_temp_variable = { v2 = 40 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { max_fuel_k > 2500 } } }
+		if = { limit = { check_variable = { tgt_max_fuel > 2500 } }
 			add_to_temp_variable = { v2 = 60 }
 		}
 		# Low priority in peacetime
-		if = { limit = { CONTROLLER = { has_war = no threat < 0.1 } }
+		if = { limit = { check_variable = { tgt_has_war = 0 } check_variable = { tgt_threat < 0.1 } }
 			add_to_temp_variable = { v2 = 30 }
 		}
 		# Don't build if economy is struggling
-		if = { limit = { CONTROLLER = { num_of_available_civilian_factories < 10 } }
+		if = { limit = { check_variable = { tgt_avail_civs < 10 } }
 			add_to_temp_variable = { v2 = 25 }
 		}
 
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
-		# Add randomization
-		set_temp_variable_to_random = {
-			var = state_randomizer
-			min = -15
-			max = 15
-			integer = yes
-		}
-		add_to_temp_variable = { AI_score = state_randomizer }
-
-		if = { limit = { check_variable = { AI_score > AI_best_score } }
-			set_temp_variable = { AI_best_score = AI_score }
-			set_temp_variable = { AI_best_target = THIS.id }
-			set_temp_variable = { AI_best_type = 9 }
-		}
+		set_temp_variable = { AI_score_type = 9 }
+		AI_record_score = yes
 	}
 }
 
@@ -916,10 +823,10 @@ AI_get_network_infrastructure_score = {
 			add_to_temp_variable = { v1 = 15 }
 		}
 		# Advanced economies benefit more
-		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita > 20 } } }
+		if = { limit = { check_variable = { tgt_gdp_per_capita > 20 } }
 			add_to_temp_variable = { v1 = 15 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita > 30 } } }
+		if = { limit = { check_variable = { tgt_gdp_per_capita > 30 } }
 			add_to_temp_variable = { v1 = 10 }
 		}
 
@@ -937,30 +844,18 @@ AI_get_network_infrastructure_score = {
 		add_to_temp_variable = { v2 = pending_penalty }
 
 		# Poor countries can't afford/utilize it
-		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita < 9.999 } } }
+		if = { limit = { check_variable = { tgt_gdp_per_capita < 9.999 } }
 			add_to_temp_variable = { v2 = 50 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita < 5.000 } } }
+		if = { limit = { check_variable = { tgt_gdp_per_capita < 5.000 } }
 			add_to_temp_variable = { v2 = 100 }
 		}
 
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
-		# Add randomization
-		set_temp_variable_to_random = {
-			var = state_randomizer
-			min = -10
-			max = 10
-			integer = yes
-		}
-		add_to_temp_variable = { AI_score = state_randomizer }
-
-		if = { limit = { check_variable = { AI_score > AI_best_score } }
-			set_temp_variable = { AI_best_score = AI_score }
-			set_temp_variable = { AI_best_target = THIS.id }
-			set_temp_variable = { AI_best_type = 10 }
-		}
+		set_temp_variable = { AI_score_type = 10 }
+		AI_record_score = yes
 	}
 }
 
@@ -973,12 +868,8 @@ AI_get_renewable_energy_score = {
 
 		# Increase Section
 
-		# Increases score the more the target country is energy deficient in terms of percentage of production to consumption.
-		# The "steps" give less score than fossil plants so that fossil plants are preferred to be invested over renewable, with renewables chosen when the other increase sections are active.
-		CONTROLLER = {
-			set_temp_variable = { energy_balance_ratio = energy_sum }
-			divide_temp_variable = { energy_balance_ratio = energy_consumption }
-		}
+		# energy_balance_ratio is precomputed once per pulse in AC_event.500.
+		# The "steps" give less score than fossil plants so that fossil plants are preferred over renewable.
 		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
 			add_to_temp_variable = { v1 = 5 }
 		}
@@ -1004,12 +895,12 @@ AI_get_renewable_energy_score = {
 		add_to_temp_variable = { v1 = state_renewable_capacity_factor_score }
 
 		# Increases score the more renewable energy gainmultiplier they have (primarily obtained from techs). Note, this section is useless when modifier is below 1.50 due to the reduction section below.
-		CONTROLLER = { set_temp_variable = { renewable_energy_gain_multiplier_score = modifier@renewable_energy_gain_multiplier } }
+		set_temp_variable = { renewable_energy_gain_multiplier_score = tgt_renewable_mult }
 		multiply_temp_variable = { renewable_energy_gain_multiplier_score = 20 }
 		add_to_temp_variable = { v1 = renewable_energy_gain_multiplier_score }
 
 		# Offer Renewables to help reduce imports
-		if = { limit = { CONTROLLER = { check_variable = { resource_imported@oil > 0 } } }
+		if = { limit = { check_variable = { tgt_oil_imported > 0 } }
 			add_to_temp_variable = { v1 = 30 }
 		}
 
@@ -1017,7 +908,7 @@ AI_get_renewable_energy_score = {
 		set_temp_variable = { v2 = 0 }
 
 		# AI won't invest renewable plants if the target country doesn't have at least the 2010 renewable tech that gives a combined 1.50 energy gain multiplier (will earlier if the target country has other bonuses from focuses/spirits)
-		if = { limit = { CONTROLLER = { check_variable = { modifier@renewable_energy_gain_multiplier < 1.50 } } }
+		if = { limit = { check_variable = { tgt_renewable_mult < 1.50 } }
 			add_to_temp_variable = { v2 = 1000 }
 		}
 
@@ -1029,12 +920,8 @@ AI_get_renewable_energy_score = {
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
-		# AI_not_in_home_area = yes # Trigger doesn't work currently
-		if = { limit = { check_variable = { AI_score > AI_best_score } }
-			set_temp_variable = { AI_best_score = AI_score }
-			set_temp_variable = { AI_best_target = THIS.id }
-			set_temp_variable = { AI_best_type = 11 }
-		}
+		set_temp_variable = { AI_score_type = 11 }
+		AI_record_score = yes
 	}
 }
 
@@ -1047,11 +934,7 @@ AI_get_fossil_powerplant_score = {
 
 		# Increase Section
 
-		# Increases score the more the target country is energy deficient in terms of percentage of production to consumption
-		CONTROLLER = {
-			set_temp_variable = { energy_balance_ratio = energy_sum }
-			divide_temp_variable = { energy_balance_ratio = energy_consumption }
-		}
+		# energy_balance_ratio is precomputed once per pulse in AC_event.500.
 		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
 			add_to_temp_variable = { v1 = 10 }
 		}
@@ -1070,29 +953,25 @@ AI_get_fossil_powerplant_score = {
 		if = { limit = { check_variable = { energy_balance_ratio < 0.70 } }
 			add_to_temp_variable = { v1 = 40 }
 		}
-		if = { limit = { CONTROLLER = { has_idea = heavy_power_restrictions_spirit } }
+		if = { limit = { check_variable = { tgt_idea_heavy_power_restrict = 1 } }
 			add_to_temp_variable = { v1 = 10 }
 		}
-		if = { limit = { CONTROLLER = { has_idea = some_power_restrictions_spirit } }
+		if = { limit = { check_variable = { tgt_idea_some_power_restrict = 1 } }
 			add_to_temp_variable = { v1 = 5 }
 		}
 
 		# Being retarded with your power
-		if = { limit = { CONTROLLER = { has_idea = heavy_additional_consumption_spirit } }
+		if = { limit = { check_variable = { tgt_idea_heavy_consumption = 1 } }
 			add_to_temp_variable = { v1 = -25 }
 		}
-		if = { limit = { CONTROLLER = { has_idea = some_additional_consumption_spirit } }
+		if = { limit = { check_variable = { tgt_idea_some_consumption = 1 } }
 			add_to_temp_variable = { v1 = -15 }
 		}
 
 		add_to_temp_variable = { AI_score = v1 }
 
-		# AI_not_in_home_area = yes # Trigger doesn't work currently
-		if = { limit = { check_variable = { AI_score > AI_best_score } }
-			set_temp_variable = { AI_best_score = AI_score }
-			set_temp_variable = { AI_best_target = THIS.id }
-			set_temp_variable = { AI_best_type = 12 }
-		}
+		set_temp_variable = { AI_score_type = 12 }
+		AI_record_score = yes
 	}
 }
 
@@ -1125,13 +1004,13 @@ AI_get_nuclear_reactor_score = {
 			add_to_temp_variable = { v1 = 45 }
 		}
 		# Advanced economies can afford nuclear
-		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita > 25 } } }
+		if = { limit = { check_variable = { tgt_gdp_per_capita > 25 } }
 			add_to_temp_variable = { v1 = 20 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita > 35 } } }
+		if = { limit = { check_variable = { tgt_gdp_per_capita > 35 } }
 			add_to_temp_variable = { v1 = 15 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita > 45 } } }
+		if = { limit = { check_variable = { tgt_gdp_per_capita > 45 } }
 			add_to_temp_variable = { v1 = 10 }
 		}
 		# High population states benefit more
@@ -1145,14 +1024,14 @@ AI_get_nuclear_reactor_score = {
 			add_to_temp_variable = { v1 = 10 }
 		}
 		# Environmental concerns for oil importing
-		if = { limit = { CONTROLLER = { check_variable = { resource_imported@oil > 0 } } }
+		if = { limit = { check_variable = { tgt_oil_imported > 0 } }
 			add_to_temp_variable = { v1 = 25 }
 		}
 		# Power restrictions indicate urgent need
-		if = { limit = { CONTROLLER = { has_idea = heavy_power_restrictions_spirit } }
+		if = { limit = { check_variable = { tgt_idea_heavy_power_restrict = 1 } }
 			add_to_temp_variable = { v1 = 30 }
 		}
-		if = { limit = { CONTROLLER = { has_idea = some_power_restrictions_spirit } }
+		if = { limit = { check_variable = { tgt_idea_some_power_restrict = 1 } }
 			add_to_temp_variable = { v1 = 15 }
 		}
 
@@ -1160,17 +1039,17 @@ AI_get_nuclear_reactor_score = {
 		set_temp_variable = { v2 = 0 }
 
 		# Nuclear is expensive - don't build if economy is weak
-		if = { limit = { CONTROLLER = { check_variable = { gdp_per_capita < 20 } } }
+		if = { limit = { check_variable = { tgt_gdp_per_capita < 20 } }
 			add_to_temp_variable = { v2 = 100 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { gdp_total < 500 } } }
+		if = { limit = { check_variable = { tgt_gdp_total < 500 } }
 			add_to_temp_variable = { v2 = 75 }
 		}
 		# High interest rates mean country can't afford it
-		if = { limit = { CONTROLLER = { check_variable = { interest_rate > 10.5 } } }
+		if = { limit = { check_variable = { tgt_interest_rate > 10.5 } }
 			add_to_temp_variable = { v2 = 60 }
 		}
-		if = { limit = { CONTROLLER = { check_variable = { interest_rate > 8.5 } } }
+		if = { limit = { check_variable = { tgt_interest_rate > 8.5 } }
 			add_to_temp_variable = { v2 = 40 }
 		}
 		# Don't build if already energy positive
@@ -1182,21 +1061,18 @@ AI_get_nuclear_reactor_score = {
 		multiply_temp_variable = { existing_reactors = 50 }
 		add_to_temp_variable = { v2 = existing_reactors }
 		# Countries being reckless with power consumption
-		if = { limit = { CONTROLLER = { has_idea = heavy_additional_consumption_spirit } }
+		if = { limit = { check_variable = { tgt_idea_heavy_consumption = 1 } }
 			add_to_temp_variable = { v2 = 30 }
 		}
-		if = { limit = { CONTROLLER = { has_idea = some_additional_consumption_spirit } }
+		if = { limit = { check_variable = { tgt_idea_some_consumption = 1 } }
 			add_to_temp_variable = { v2 = 20 }
 		}
 
 		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
-		if = { limit = { check_variable = { AI_score > AI_best_score } }
-			set_temp_variable = { AI_best_score = AI_score }
-			set_temp_variable = { AI_best_target = THIS.id }
-			set_temp_variable = { AI_best_type = 13 }
-		}
+		set_temp_variable = { AI_score_type = 13 }
+		AI_record_score = yes
 	}
 }
 
@@ -1223,7 +1099,7 @@ AI_edge_case_calculations = {
 }
 
 AI_country_selection_calculation = {
-	# Investee gets this flag for 75 days when a country (investor) chooses them as best country to invest in but can't find any projects worth investing in them (which the project scoring is the same for all investors to that investee so no point in investors choosing them as the best country for some time). Flag added in AC_events file.
+	# Investee gets this flag for 75 days when a country (investor) chooses them as best country to invest in but can't find any projects worth investing in them (which the project scoring is the same for all investors to that investee so no point in investors choosing them as the best country for some time). Flag added in investments_events file.
 	if = { limit = { has_country_flag = recently_failed_to_invest }
 		add_to_temp_variable = { AI_country_score = -200 }
 	}
@@ -1234,7 +1110,7 @@ AI_country_selection_calculation = {
 	if = { limit = { has_country_flag = recently_refused_investment@PREV }
 		add_to_temp_variable = { AI_country_score = -100 }
 	}
-	#investee gets this flag for 21 days when a country (investor) invests a valid project in that country, so a country can't be spammed by investments in a short period of time (or less liekly). Flag added in AC_events file.
+	#investee gets this flag for 21 days when a country (investor) invests a valid project in that country, so a country can't be spammed by investments in a short period of time (or less liekly). Flag added in investments_events file.
 	if = {
 		limit = { has_country_flag = recently_accepted_an_investment }
 		add_to_temp_variable = { AI_country_score = -50 }
@@ -1250,7 +1126,11 @@ AI_country_selection_calculation = {
 		limit = { has_country_flag = mutual_investment_treaty_@PREV }
 		add_to_temp_variable = { AI_country_score = 25 }
 	}
-	# Check if they have a project in one of their other states
+	# Penalize candidate if investor already has a project targeting them.
+	# project_target_country^N stores the original target tag, so we can read
+	# it directly without opening the state scope (saves a state-scope push
+	# per slot per candidate). The early-out also short-circuits when the
+	# investor has no active projects at all.
 	if = { limit = { NOT = { check_variable = { PREV.project_array^0 = 0 } } }
 		PREV = {
 			for_each_loop = {
@@ -1258,47 +1138,35 @@ AI_country_selection_calculation = {
 				value = v
 				index = i
 				if = {
-					limit = { check_variable = { v < 0 } }
-					var:project_array^i = {
-						if = { limit = { is_owned_and_controlled_by = PREV.PREV }
-							add_to_temp_variable = { AI_country_score = -35 }
-						}
+					limit = {
+						check_variable = { v < 0 }
+						check_variable = { project_target_country^i = PREV.id }
 					}
+					add_to_temp_variable = { AI_country_score = -35 }
 				}
 			}
 		}
 	}
 
-	# Check if the ROOT is ECB President
+	# EU finance bonuses — use hoisted inv_has_ECB_president / inv_has_EU_finance_minister
+	# (set once per pulse in investments_event.500) instead of re-querying PREV.has_idea every iteration.
 	if = { limit = { is_in_array = { global.EU_member = THIS.id } }
-		if = {
-			limit = {
-				PREV = { has_idea = ECB_president }
-			}
+		if = { limit = { check_variable = { inv_has_ECB_president = 1 } }
 			add_to_temp_variable = { AI_country_score = 15 }
 		}
-		if = {
-			limit = {
-				PREV = { has_idea = EU_finance_minister }
-			}
+		if = { limit = { check_variable = { inv_has_EU_finance_minister = 1 } }
 			add_to_temp_variable = { AI_country_score = 5 }
 		}
 	}
 
-	# Check whether someone is an influencer
-	for_each_scope_loop = {
-		array = influence_array
-		if = { limit = { check_variable = { THIS.id = PREV.id } }
-			add_to_temp_variable = { AI_country_score = 40 }
-		}
+	# Influence bonus — replaces two for_each_scope_loop iterations with single
+	# is_in_array primitive lookups. Same semantics: +40 if investor influences
+	# target, +40 if target influences investor.
+	if = { limit = { is_in_array = { array = influence_array value = PREV.id } }
+		add_to_temp_variable = { AI_country_score = 40 }
 	}
-	PREV = {
-		for_each_scope_loop = {
-			array = influence_array
-			if = { limit = { check_variable = { THIS.id = PREV.id } }
-				add_to_temp_variable = { AI_country_score = 40 }
-			}
-		}
+	if = { limit = { PREV = { is_in_array = { array = influence_array value = PREV.id } } }
+		add_to_temp_variable = { AI_country_score = 40 }
 	}
 
 	# Opinion Calculator
@@ -1409,18 +1277,17 @@ AI_country_selection_calculation = {
 	}
 	subtract_from_temp_variable = { AI_country_score = randomizer_country_score }
 
-	# Multipliers
-	set_temp_variable = { AC_score_modifier = 1 }
-	subtract_from_temp_variable = { AC_score_modifier = THIS.modifier@receiving_investment_cost_modifier }
-	add_to_temp_variable = { AC_score_modifier = PREV.modifier@investment_cost_modifier }
-	clamp_temp_variable = { var = AC_score_modifier min = 0.50 max = 1.50 }
+	# Multipliers — uses hoisted inv_cost_modifier / inv_duration_modifier
+	# (precomputed in investments_event.500 since they're invariant per pulse).
+	set_temp_variable = { investments_score_modifier = 1 }
+	subtract_from_temp_variable = { investments_score_modifier = THIS.modifier@receiving_investment_cost_modifier }
+	add_to_temp_variable = { investments_score_modifier = inv_cost_modifier }
+	clamp_temp_variable = { var = investments_score_modifier min = 0.50 max = 1.50 }
+	multiply_temp_variable = { AI_country_score = investments_score_modifier }
 
-	multiply_temp_variable = { AI_country_score = AC_score_modifier }
-
-	set_temp_variable = { AC_duration_modifier = 1 }
-	add_to_temp_variable = { AC_duration_modifier = THIS.modifier@receiving_investment_duration_modifier }
-	add_to_temp_variable = { AC_duration_modifier = PREV.modifier@investment_duration_modifier }
-	clamp_temp_variable = { var = AC_duration_modifier min = 0.50 max = 1.50 }
-
-	multiply_temp_variable = { AI_country_score = AC_duration_modifier }
+	set_temp_variable = { investments_duration_modifier = 1 }
+	add_to_temp_variable = { investments_duration_modifier = THIS.modifier@receiving_investment_duration_modifier }
+	add_to_temp_variable = { investments_duration_modifier = inv_duration_modifier }
+	clamp_temp_variable = { var = investments_duration_modifier min = 0.50 max = 1.50 }
+	multiply_temp_variable = { AI_country_score = investments_duration_modifier }
 }
