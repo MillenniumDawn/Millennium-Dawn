@@ -1,29 +1,5 @@
-# AI Investable Assets Commands
-#
-# === Per-state scoring contract ===
-# Each AI_get_<building>_score effect runs in a state scope (one of the
-# AI's controlled_states). It computes AI_score for that (state, building)
-# pair, then calls AI_record_score which:
-#   1. Adds a +/-15 random tweak (so the AI doesn't always pick the same
-#      best state when multiple are tied).
-#   2. Compares against AI_best_score and, if higher, updates the trio:
-#      AI_best_score, AI_best_target (state ID), AI_best_type (building 1..14).
-# Caller must set the temp var `AI_score_type` to the building number before
-# calling AI_record_score so the helper knows which type to record.
-#
-# === Building type index ===
-# 1 = CIC (industrial_complex)        8  = air_base
-# 2 = MIC (arms_factory)              9  = fuel_silo
-# 3 = Dockyard                        10 = internet_station
-# 4 = Infrastructure                  11 = renewable_energy_infra
-# 5 = Offices                         12 = fossil_powerplant
-# 6 = SAM (anti_air_building)         13 = nuclear_reactor
-# 7 = Radar                           14 = agriculture_district
-
-# Helper: finalize a per-state score after all building-specific math is done.
-# Inputs (temp vars): AI_score, AI_best_score, AI_score_type
-# Outputs: AI_best_score, AI_best_target (= THIS.id), AI_best_type updated
-#          when AI_score (post-randomization) beats AI_best_score.
+# AI investment scoring: evaluate states, pick best (building, state) pair.
+# AI_record_score: add +/-15 randomization, update AI_best_* if score wins.
 AI_record_score = {
 	set_temp_variable_to_random = {
 		var = state_randomizer
@@ -868,7 +844,7 @@ AI_get_renewable_energy_score = {
 
 		# Increase Section
 
-		# energy_balance_ratio is precomputed once per pulse in AC_event.500.
+		# energy_balance_ratio is precomputed once per pulse in investments_event.500.
 		# The "steps" give less score than fossil plants so that fossil plants are preferred over renewable.
 		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
 			add_to_temp_variable = { v1 = 5 }
@@ -934,7 +910,7 @@ AI_get_fossil_powerplant_score = {
 
 		# Increase Section
 
-		# energy_balance_ratio is precomputed once per pulse in AC_event.500.
+		# energy_balance_ratio is precomputed once per pulse in investments_event.500.
 		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
 			add_to_temp_variable = { v1 = 10 }
 		}

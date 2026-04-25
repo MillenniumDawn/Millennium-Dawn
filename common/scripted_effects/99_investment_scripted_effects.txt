@@ -1,105 +1,76 @@
-# Author(s): AngriestBird, Hiddengearz, Chondrite
-# Inspired by the original Allied Construction Project https://steamcommunity.com/sharedfiles/filedetails/?id=1368202826
-#
-# === International Investments System ===
-#
-# Two flows: PLAYER (via the investment GUI) and AI (via investments_event.500
-# weekly pulse). Both end up calling start_project_two, which:
-#   1. Allocates a project slot (0..14) via get_available_project.
-#   2. Stores the chosen state ID in project_array^N (negative — HOI4 stores
-#      state IDs as negative when read via THIS.id from a state scope, so
-#      cancel_trigger / complete_project / end_project all check `< 0`).
-#   3. Activates investments_project_N_decision on the investor (15 separate decisions
-#      because days_remove needs a literal index — the dispatcher uses
-#      meta_effect to substitute the index dynamically).
-#   4. Activates investments_project_N_target_decision on the target country.
-#
-# Slot conventions for per-project variables:
-#   ^-1  GUI / AI staging slot (preview before commit; overwritten freely).
-#   ^-2  "For offer" snapshot (display value at offer time).
-#   ^0..^14  Active project slots.
-#
-# When investments_project_N_decision's days_remove fires:
-#   investments_event.0 -> complete_project -> add_finished_buildings ->
-#     if more segments remain: re-init via init_project, re-activate decision
-#     else: end_project -> investments_event.30 (with project=N) -> project_array^N = 0
-#
-# All duration calculations in init_project, init_project_two, and
-# calculate_ai_construction_speed must apply the SAME modifier set:
-#   - state-local: building_level@infrastructure*0.15, internet_station*0.05,
-#                  currently_encouraged_investments flag, HOL_autonomy_economic_zone flag
-#   - target-controller: ECB_president, EU_finance_minister, FRA_idea_development_investment,
-#                        mutual_investment_treaty flag, modifier@receiving_investment_duration_modifier
-#   - investor: ISR boycott (+1 day-multiplier), modifier@investment_duration_modifier
-# Diverging this modifier set caused the pre-refactor "displayed duration !=
-# actual duration" bug. If you add a new modifier, add it to all three.
-#
-# Decision dispatch (initialize_*_project_decisions) uses meta_effect to
-# substitute the project index (0..14). Do not add per-N if/else_if branches;
-# extend the meta_effect template instead.
-#
-# Country variables:
-#   active_projects        - count of active projects (capped at 15)
-#   project_array^N        - state ID for slot N (negative = active, 0 = free, 1 = cleanup-pending)
-#   project_target_country^N - target country tag for slot N
-#   project_build_amount^N - segments remaining (multi-build queue)
-#   project_building_type^N  - 1..14 (see types below)
-#   project_construction_duration^N  - days_remove for the decision
-#   project_total_construction_duration_display^N  - total queue duration for tooltip
-#   project_monetary_cost^N  - remaining treasury cost
-#
-# State variables:
-#   projects_in_state          - country IDs owning active projects in this state
-#   project_type_in_state      - building types of those projects (parallel array)
-#   project_target_state_@TAG  - which slot (0..14) TAG is using here
-#
-# Building type index (project_building_type^N):
-#   1 = CIC (industrial_complex)        8  = air_base
-#   2 = MIC (arms_factory)              9  = fuel_silo
-#   3 = Dockyard                        10 = internet_station
-#   4 = Infrastructure                  11 = renewable_energy_infra
-#   5 = Offices                         12 = fossil_powerplant
-#   6 = SAM (anti_air_building)         13 = nuclear_reactor
-#   7 = Radar (radar_station)           14 = agriculture_district
+# International Investments System
+# Player (GUI) and AI (investments_event.500) both call start_project_two.
+# Slot conventions: ^-1 = staging, ^-2 = snapshot, ^0..14 = active projects.
+# Building types: 1=CIC, 2=MIC, 3=Dockyard, 4=Infra, 5=Offices, 6=SAM, 7=Radar,
+#                 8=Airbase, 9=Fuel, 10=Internet, 11=Renewable, 12=Fossil, 13=Nuclear, 14=Agri
 
-# Called in the on_startup
-# init_investment_system simply initializes the variable.
-# This is used only ONCE as it sets global variables.
-# Please do not trigger this more than once.
+# Initialize global building cost arrays at game start.
+# Called once in on_startup - do not trigger more than once.
 init_investment_system = {
-	### BUILDING CONSTRUCTION COST
-	# Balance Change: Building construction cost speed 25%
-	set_variable = { global.BUILD_CONST_COST_CIVILIAN_FACTORY = 47500 }
-	set_variable = { global.BUILD_CONST_COST_MILITARY_FACTORY = 52500 }
-	set_variable = { global.BUILD_CONST_COST_DOCKYARD = 47500 }
-	set_variable = { global.BUILD_CONST_COST_INFRASTRUCTURE = 17000 }
-	set_variable = { global.BUILD_CONST_COST_OFFICES = 50000 }
-	set_variable = { global.BUILD_CONST_COST_ANTIAIR = 15000 }
-	set_variable = { global.BUILD_CONST_COST_RADAR = 8000 }
-	set_variable = { global.BUILD_CONST_COST_AIRBASE = 5000 }
-	set_variable = { global.BUILD_CONST_COST_FUEL_SILO = 18000 }
-	set_variable = { global.BUILD_CONST_COST_INTERNET_STATION = 10000 }
-	set_variable = { global.BUILD_CONST_COST_REFINERY = 50000 }
-	set_variable = { global.BUILD_CONST_COST_FOSSIL_POWERPLANT = 16500 }
-	set_variable = { global.BUILD_CONST_COST_NUCLEAR_REACTOR = 62500 }
-	set_variable = { global.BUILD_CONST_COST_AGRICULTURE_DISTRICT = 22500 }
+	set_variable = { global.build_const_cost_civilian_factory = 47500 }
+	set_variable = { global.build_const_cost_military_factory = 52500 }
+	set_variable = { global.build_const_cost_dockyard = 47500 }
+	set_variable = { global.build_const_cost_infrastructure = 17000 }
+	set_variable = { global.build_const_cost_offices = 50000 }
+	set_variable = { global.build_const_cost_antiair = 15000 }
+	set_variable = { global.build_const_cost_radar = 8000 }
+	set_variable = { global.build_const_cost_airbase = 5000 }
+	set_variable = { global.build_const_cost_fuel_silo = 18000 }
+	set_variable = { global.build_const_cost_internet_station = 10000 }
+	set_variable = { global.build_const_cost_refinery = 50000 }
+	set_variable = { global.build_const_cost_fossil_powerplant = 16500 }
+	set_variable = { global.build_const_cost_nuclear_reactor = 62500 }
+	set_variable = { global.build_const_cost_agriculture_district = 22500 }
 
-	### BUILDING MONETARY COST
-	# Balance Change: Cost increased by 60% from standardization
-	set_variable = { global.BUILD_COST_CIVILIAN_FACTORY = 12 }
-	set_variable = { global.BUILD_COST_MILITARY_FACTORY = 12.50 }
-	set_variable = { global.BUILD_COST_DOCKYARD = 12 }
-	set_variable = { global.BUILD_COST_INFRASTRUCTURE = 5.5 }
-	set_variable = { global.BUILD_COST_OFFICES = 20 }
-	set_variable = { global.BUILD_COST_ANTIAIR = 5.50 }
-	set_variable = { global.BUILD_COST_RADAR = 4.50 }
-	set_variable = { global.BUILD_COST_AIRBASE = 5.25 }
-	set_variable = { global.BUILD_COST_FUEL_SILO = 5.25 }
-	set_variable = { global.BUILD_COST_INTERNET_STATION = 4.65 }
-	set_variable = { global.BUILD_COST_REFINERY = 13.60 }
-	set_variable = { global.BUILD_COST_FOSSIL_POWERPLANT = 5.2 }
-	set_variable = { global.BUILD_COST_NUCLEAR_REACTOR = 14.4 }
-	set_variable = { global.BUILD_COST_AGRICULTURE_DISTRICT = 5.8 }
+	# Building monetary cost
+	set_variable = { global.build_cost_civilian_factory = 12 }
+	set_variable = { global.build_cost_military_factory = 12.50 }
+	set_variable = { global.build_cost_dockyard = 12 }
+	set_variable = { global.build_cost_infrastructure = 5.5 }
+	set_variable = { global.build_cost_offices = 20 }
+	set_variable = { global.build_cost_antiair = 5.50 }
+	set_variable = { global.build_cost_radar = 4.50 }
+	set_variable = { global.build_cost_airbase = 5.25 }
+	set_variable = { global.build_cost_fuel_silo = 5.25 }
+	set_variable = { global.build_cost_internet_station = 4.65 }
+	set_variable = { global.build_cost_refinery = 13.60 }
+	set_variable = { global.build_cost_fossil_powerplant = 5.2 }
+	set_variable = { global.build_cost_nuclear_reactor = 14.4 }
+	set_variable = { global.build_cost_agriculture_district = 5.8 }
+
+	# Building cost arrays (for array lookup - index = building type 1..14)
+	set_variable = { global.build_cost_array^0 = 0 }
+	set_variable = { global.build_cost_array^1 = 12 }    # CIC
+	set_variable = { global.build_cost_array^2 = 12.50 } # MIC
+	set_variable = { global.build_cost_array^3 = 12 }    # NIC
+	set_variable = { global.build_cost_array^4 = 5.5 }   # INFRA
+	set_variable = { global.build_cost_array^5 = 20 }    # OFFICES
+	set_variable = { global.build_cost_array^6 = 5.50 }  # AA
+	set_variable = { global.build_cost_array^7 = 4.50 }  # RADAR
+	set_variable = { global.build_cost_array^8 = 5.25 }  # AIRBASE
+	set_variable = { global.build_cost_array^9 = 5.25 }  # FUEL_SILO
+	set_variable = { global.build_cost_array^10 = 4.65 } # INTERNET
+	set_variable = { global.build_cost_array^11 = 13.60 }# REF
+	set_variable = { global.build_cost_array^12 = 5.2 }  # FOSSIL
+	set_variable = { global.build_cost_array^13 = 14.4 } # NUCLEAR
+	set_variable = { global.build_cost_array^14 = 5.8 }  # AGRICULTURE
+
+	# Building const cost arrays (for construction speed calculation)
+	set_variable = { global.build_const_cost_array^0 = 0 }
+	set_variable = { global.build_const_cost_array^1 = 47500 }  # CIC
+	set_variable = { global.build_const_cost_array^2 = 52500 }  # MIC
+	set_variable = { global.build_const_cost_array^3 = 47500 }  # NIC
+	set_variable = { global.build_const_cost_array^4 = 17000 }  # INFRA
+	set_variable = { global.build_const_cost_array^5 = 50000 }  # OFFICES
+	set_variable = { global.build_const_cost_array^6 = 15000 }  # AA
+	set_variable = { global.build_const_cost_array^7 = 8000 }   # RADAR
+	set_variable = { global.build_const_cost_array^8 = 5000 }   # AIRBASE
+	set_variable = { global.build_const_cost_array^9 = 18000 }  # FUEL_SILO
+	set_variable = { global.build_const_cost_array^10 = 10000 } # INTERNET
+	set_variable = { global.build_const_cost_array^11 = 50000 } # REF
+	set_variable = { global.build_const_cost_array^12 = 16500 } # FOSSIL
+	set_variable = { global.build_const_cost_array^13 = 62500 } # NUCLEAR
+	set_variable = { global.build_const_cost_array^14 = 22500 } # AGRICULTURE
 }
 
 # Called in the spawning of a new nation in-game
@@ -112,8 +83,7 @@ ingame_init_investment_system = {
 	resize_array = { array = project_array value = 0 size = 15 } # Index starts at 0
 }
 
-# Function: refresh_gui
-# Purpose: Refreshes the investment GUI
+# Increment GUI refresh counter (avoids per-tick redraws).
 refresh_investment_gui = {
 	if = { limit = { check_variable = { global.refresh_investment_gui = 500000 } }
 		set_variable = { global.refresh_investment_gui = 1 }
@@ -123,14 +93,12 @@ refresh_investment_gui = {
 	}
 }
 
-# Recomputes the staging-slot (^-1) project cost and duration whenever the
-# player tweaks the GUI (state, building type, amount). Called via
-# `ROOT = { update_gui = yes }` from the GUI in state scope, so inside this
-# effect: current = investor (country), PREV = the GUI's selected state.
+# Recomputes staging-slot (^-1) cost/duration when player tweaks GUI.
+# Scope: ROOT = investor, PREV = selected state.
 update_gui = {
 	project_monetary_cost_calculation = yes
 
-	set_variable = { project_type = -1 }
+	set_variable = { project_type = project_building_type^-1 }
 	set_variable = { project = -1 }
 	set_temp_variable = { investments_calc_state = PREV.id }
 	calculate_project_duration = yes
@@ -139,51 +107,11 @@ update_gui = {
 }
 
 
-# Function: project_monetary_cost_calculation
-# Purpose: Calculates the treasury cost for the investment project
+# Calculate treasury cost for project (staging slot ^-1).
 project_monetary_cost_calculation = {
-	if = { limit = { check_variable = { project_building_type^-1 = 1 } }
-		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_CIVILIAN_FACTORY }
-	}
-	else_if = { limit = { check_variable = { project_building_type^-1 = 2 } }
-		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_MILITARY_FACTORY }
-	}
-	else_if = { limit = { check_variable = { project_building_type^-1 = 3 } }
-		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_DOCKYARD }
-	}
-	else_if = { limit = { check_variable = { project_building_type^-1 = 4 } }
-		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_INFRASTRUCTURE }
-	}
-	else_if = { limit = { check_variable = { project_building_type^-1 = 5 } }
-		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_OFFICES }
-	}
-	else_if = { limit = { check_variable = { project_building_type^-1 = 6 } }
-		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_ANTIAIR }
-	}
-	else_if = { limit = { check_variable = { project_building_type^-1 = 7 } }
-		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_RADAR }
-	}
-	else_if = { limit = { check_variable = { project_building_type^-1 = 8 } }
-		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_AIRBASE }
-	}
-	else_if = { limit = { check_variable = { project_building_type^-1 = 9 } }
-		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_FUEL_SILO }
-	}
-	else_if = { limit = { check_variable = { project_building_type^-1 = 10 } }
-		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_INTERNET_STATION }
-	}
-	else_if = { limit = { check_variable = { project_building_type^-1 = 11 } }
-		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_REFINERY }
-	}
-	else_if = { limit = { check_variable = { project_building_type^-1 = 12 } }
-		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_FOSSIL_POWERPLANT }
-	}
-	else_if = { limit = { check_variable = { project_building_type^-1 = 13 } }
-		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_NUCLEAR_REACTOR }
-	}
-	else_if = { limit = { check_variable = { project_building_type^-1 = 14 } }
-		set_variable = { project_monetary_cost^-1 = global.BUILD_COST_AGRICULTURE_DISTRICT }
-	}
+	# Array lookup: project_building_type^-1 (1..14) indexes build_cost_array
+	set_temp_variable = { _cost_idx = project_building_type^-1 }
+	set_variable = { project_monetary_cost^-1 = global.build_cost_array^_cost_idx }
 
 	# AC Build Cost Modifiers
 	set_temp_variable = { investments_cost_modifier = 1 }
@@ -241,64 +169,53 @@ project_monetary_cost_calculation = {
 	multiply_variable = { project_monetary_cost_effect = -1 }
 }
 
-# get_building_construction_values
-# method for handling the cost and construction_speed of any given project.
+# Get construction speed for project_type (1..14). Cost from array; modifiers type-specific.
 get_building_construction_values = {
 	set_temp_variable = { construction_speed = 1 }
-	if = { limit = { check_variable = { project_building_type^project_type = 1 } }
-		set_temp_variable = { building_cost = global.BUILD_CONST_COST_CIVILIAN_FACTORY }
+	# Building cost from array (project_type = 1..14 indexes build_const_cost_array)
+	set_temp_variable = { building_cost = global.build_const_cost_array^project_type }
+
+	# Type-specific construction speed modifiers (each building type has unique modifier)
+	if = { limit = { check_variable = { project_type = 1 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_industrial_complex_factor }
 	}
-	else_if = { limit = { check_variable = { project_building_type^project_type = 2 } }
-		set_temp_variable = { building_cost = global.BUILD_CONST_COST_MILITARY_FACTORY }
+	else_if = { limit = { check_variable = { project_type = 2 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_arms_factory_factor }
 	}
-	else_if = { limit = { check_variable = { project_building_type^project_type = 3 } }
-		set_temp_variable = { building_cost = global.BUILD_CONST_COST_DOCKYARD }
+	else_if = { limit = { check_variable = { project_type = 3 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_dockyard_factor }
 	}
-	else_if = { limit = { check_variable = { project_building_type^project_type = 4 } }
-		set_temp_variable = { building_cost = global.BUILD_CONST_COST_INFRASTRUCTURE }
+	else_if = { limit = { check_variable = { project_type = 4 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_infrastructure_factor }
 	}
-	else_if = { limit = { check_variable = { project_building_type^project_type = 5 } }
-		set_temp_variable = { building_cost = global.BUILD_CONST_COST_OFFICES }
+	else_if = { limit = { check_variable = { project_type = 5 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_offices_factor }
 	}
-	else_if = { limit = { check_variable = { project_building_type^project_type = 6 } }
-		set_temp_variable = { building_cost = global.BUILD_CONST_COST_ANTIAIR }
+	else_if = { limit = { check_variable = { project_type = 6 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_anti_air_building_factor }
 	}
-	else_if = { limit = { check_variable = { project_building_type^project_type = 7 } }
-		set_temp_variable = { building_cost = global.BUILD_CONST_COST_RADAR }
+	else_if = { limit = { check_variable = { project_type = 7 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_radar_station_factor }
 	}
-	else_if = { limit = { check_variable = { project_building_type^project_type = 8 } }
-		set_temp_variable = { building_cost = global.BUILD_CONST_COST_AIRBASE }
+	else_if = { limit = { check_variable = { project_type = 8 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_air_base_factor }
 	}
-	else_if = { limit = { check_variable = { project_building_type^project_type = 9 } }
-		set_temp_variable = { building_cost = global.BUILD_CONST_COST_FUEL_SILO }
+	else_if = { limit = { check_variable = { project_type = 9 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_fuel_silo_factor }
 	}
-	else_if = { limit = { check_variable = { project_building_type^project_type = 10 } }
-		set_temp_variable = { building_cost = global.BUILD_CONST_COST_INTERNET_STATION }
+	else_if = { limit = { check_variable = { project_type = 10 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_internet_station_factor }
 	}
-	else_if = { limit = { check_variable = { project_building_type^project_type = 11 } }
-		set_temp_variable = { building_cost = global.BUILD_CONST_COST_REFINERY }
+	else_if = { limit = { check_variable = { project_type = 11 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_renewable_energy_infra_factor }
 	}
-	else_if = { limit = { check_variable = { project_building_type^project_type = 12 } }
-		set_temp_variable = { building_cost = global.BUILD_CONST_COST_FOSSIL_POWERPLANT }
+	else_if = { limit = { check_variable = { project_type = 12 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_renewable_energy_infra_factor }
 	}
-	else_if = { limit = { check_variable = { project_building_type^project_type = 13 } }
-		set_temp_variable = { building_cost = global.BUILD_CONST_COST_NUCLEAR_REACTOR }
+	else_if = { limit = { check_variable = { project_type = 13 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_nuclear_reactor_factor }
 	}
-	else_if = { limit = { check_variable = { project_building_type^project_type = 14 } }
-		set_temp_variable = { building_cost = global.BUILD_CONST_COST_AGRICULTURE_DISTRICT }
+	else_if = { limit = { check_variable = { project_type = 14 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_agriculture_district_factor }
 	}
 
@@ -307,8 +224,7 @@ get_building_construction_values = {
 	clamp_temp_variable = { var = construction_speed min = 0 }
 }
 
-# Function: get_available_project
-# Purpose: get_available_project searches through the project_array (group of projects) to determine whether a project exists or is available
+# Find first available project slot (0..14), set new_project.
 get_available_project = {
 	for_each_loop = {
 		array = project_array
@@ -319,8 +235,7 @@ get_available_project = {
 	}
 }
 
-# Function: add_finished_buildings
-# Purpose: The function here adds the completed buildings from a project
+# Add completed building to state (called by complete_project).
 add_finished_buildings = {
 	set_temp_variable = { var_cost = ROOT.project_monetary_cost^ROOT.project }
 	multiply_temp_variable = { var_cost = -1 }
@@ -385,19 +300,8 @@ add_finished_buildings = {
 	}
 }
 
-# Compute project_construction_duration^project for an (investor, target_state)
-# pair. Single source of truth for duration math — replaces the old trio
-# (init_project / init_project_two / calculate_ai_construction_speed) which had
-# drifted apart and produced different results for the same logical inputs.
-#
-# Run from INVESTOR scope. Caller MUST set:
-#   investments_calc_state (temp var) — target state ID (negative; from THIS.id of state)
-#   project (country var)             — output slot index (-1 for staging, 0..14 for active)
-#   project_type (country var)        — source slot for project_building_type/build_amount lookup
-# Writes (on investor scope):
-#   project_construction_duration^project  — rounded days
-#   project_construction_duration^-2       — display snapshot (= ^project)
-#   project_total_construction_duration_display^project — only when project >= 0
+# Calculate project duration. Caller sets: investments_calc_state, project, project_type.
+# Writes: project_construction_duration^project, project_construction_duration^-2 (snapshot).
 calculate_project_duration = {
 	get_building_construction_values = yes
 
@@ -483,6 +387,10 @@ calculate_project_duration = {
 	if = { limit = { check_variable = { construction_speed > 0 } }
 		divide_temp_variable = { building_cost = construction_speed }
 	}
+	else = {
+		# construction_speed <= 0 means instant or broken; clamp to 1 day to avoid instant completion
+		set_temp_variable = { building_cost = 1 }
+	}
 
 	set_variable = { project_construction_duration^project = building_cost }
 	round_variable = project_construction_duration^project
@@ -493,21 +401,28 @@ calculate_project_duration = {
 		set_variable = { project_total_construction_duration_display^project = project_construction_duration^project }
 		multiply_variable = { project_total_construction_duration_display^project = project_build_amount^project_type }
 	}
+
+	# GUI Duration preview variable (staged, ^-1 access for display before project starts)
+	set_variable = { project_total_construction_duration_display^-1 = building_cost }
+	multiply_variable = { project_total_construction_duration_display^-1 = project_build_amount^-1 }
+	round_variable = project_total_construction_duration_display^-1
 }
 
 
-# - Used in the investments_event.10 to AC Event Master Event
-# Purpose: It properly calculates the section
+# Start project: allocate slot, deduct treasury, activate decisions.
 start_project_two = {
 	# Get available project
 	get_available_project = yes
+
+	# Debug logging
+	log = "[GetDateText]: [This.GetName]: start_project_two - new_project=[?new_project], state=[?investments_state_target], building_type=[?project_building_type^-1], amount=[?project_build_amount^-1]"
 
 	# new_project sets the correct index for the new project
 	if = { limit = { has_variable = new_project }
 
 		# Initializes the Project
 		set_variable = { project = new_project }
-		set_variable = { project_type = -1 }
+		set_variable = { project_type = project_building_type^-1 }
 
 		set_temp_variable = { investments_calc_state = investments_state_target }
 		calculate_project_duration = yes
@@ -543,44 +458,40 @@ start_project_two = {
 		clear_variable = project
 		clear_variable = project_type
 		clear_variable = new_project
+
+		log = "[GetDateText]: [This.GetName]: start_project_two - project started at slot [?new_project], cost=[?project_monetary_cost^-1], duration=[?project_construction_duration^[?new_project]] days"
+	}
+	else = {
+		log = "[GetDateText]: [This.GetName]: start_project_two - FAILED: no available project slot (all 15 full)"
 	}
 
 	refresh_investment_gui = yes
 }
 
+# Called when project segment finishes (investments_event.0).
 complete_project = {
+	log = "[GetDateText]: [This.GetName]: complete_project - project=[?project], remaining_segments=[?project_build_amount^project]"
+
 	if = { limit = { check_variable = { project_array^project < 0 } }
+		set_variable = { project_type = project_building_type^project }
 
-		set_variable = { project_type = project }
-
-		# State in the project:
-		# project_array^project represents the actual project
 		var:project_array^project = {
 			if = { limit = { investment_building_slot_available = yes }
-
 				add_finished_buildings = yes
-				# Opinion Bonus Towards Builder
 				CONTROLLER = { add_opinion_modifier = { target = ROOT modifier = investments_construction_opinion } }
 
-				# Reactivate Project if there is a queue
 				ROOT = {
 					if = {
 						limit = {
 							check_variable = { project_build_amount^project > 1 }
 							PREV = { investment_building_slot_available = yes }
 						}
-
 						subtract_from_variable = { project_build_amount^project = 1 }
-
-						# project_array^project holds the (negative) target state ID
 						set_temp_variable = { investments_calc_state = project_array^project }
 						calculate_project_duration = yes
-
 						initialize_complete_project_decisions = yes
 					}
-					else = {
-						end_project = yes
-					}
+					else = { end_project = yes }
 				}
 			}
 			else = { ROOT = { end_project = yes } }
@@ -593,9 +504,11 @@ complete_project = {
 	refresh_investment_gui = yes
 }
 
+# Cancel or complete project: refund investor, give 10% to target.
 end_project = {
-	if = { limit = { check_variable = { project_array^project < 0 } }
+	log = "[GetDateText]: [This.GetName]: end_project - project=[?project], refund=[?project_monetary_cost^project]"
 
+	if = { limit = { check_variable = { project_array^project < 0 } }
 		var:project_array^project = {
 			clear_variable = project_target_state_@PREV
 			for_each_loop = {
@@ -604,15 +517,12 @@ end_project = {
 				array = projects_in_state
 				if = { limit = { check_variable = { v = PREV.id } }
 					remove_from_array = { array = projects_in_state value = PREV.id }
-					# Should clear the array
 					remove_from_array = { array = project_type_in_state index = i }
 				}
 			}
-
 			set_temp_variable = { tag_index = THIS.id }
 		}
 
-		# Refund Remaining Cash if the project is unfinished
 		if = { limit = { check_variable = { project_monetary_cost^project > 0 } }
 			add_to_variable = { var = treasury value = project_monetary_cost^project }
 			if = { limit = { check_variable = { int_investments > project_monetary_cost^project } }
@@ -631,7 +541,6 @@ end_project = {
 
 		initialize_end_project_decisions = yes
 
-		# Clear Utility
 		clear_variable = project_build_amount^project
 		clear_variable = project_building_type^project
 		clear_variable = project_construction_duration^project
@@ -645,8 +554,7 @@ end_project = {
 	refresh_investment_gui = yes
 }
 
-# Dispatches start of an active project. Reads `project` (0..14) from the
-# investor (current) scope and activates that slot's investor + target decisions.
+# Activate investor + target decisions for project slot.
 initialize_start_project_decisions = {
 	meta_effect = {
 		text = {
@@ -661,10 +569,7 @@ initialize_start_project_decisions = {
 	}
 }
 
-# Re-dispatches a project after a single segment of a multi-build completes.
-# Reads `project` from ROOT (the investor). PREV here is the state being built in.
-# remove_decision before activate_decision ensures the days_remove timer restarts
-# cleanly on the new project_construction_duration value.
+# Re-activate decisions after segment completes (restarts days_remove timer).
 initialize_complete_project_decisions = {
 	meta_effect = {
 		text = {
@@ -683,8 +588,7 @@ initialize_complete_project_decisions = {
 	}
 }
 
-# Tears down a project: removes the target decision, marks the slot for cleanup,
-# and fires investments_event.30 which clears project_array^project asynchronously.
+# Remove target decision, mark slot for cleanup, fire event.30.
 initialize_end_project_decisions = {
 	var:project_target_country^project = {
 		clear_variable = project_target_construction_duration
@@ -696,98 +600,88 @@ initialize_end_project_decisions = {
 		}
 	}
 
-	set_variable = { project_array^project = 1 }
+	set_variable = { project_array^project = -1 }
 	country_event = investments_event.30
 }
 
-# Owned Development GUI
+# State-owned investment limit: set 120-day flags (max 6 concurrent).
 state_owned_concurrent_investment_limit_implement = {
-	set_temp_variable = { test_string = global.date }
-	add_to_temp_variable = { test_string = 2.88 } # 120 Days. An in-game hour equates to 0.001 Hours
+	set_temp_variable = { soi_expiry_date = global.date }
+	add_to_temp_variable = { soi_expiry_date = 2.88 }
 
-	# Add the Flag
-	set_temp_variable = { b = 0 }
+	set_temp_variable = { max_soi_slots = modifier@internal_investment_slot_number }
+
+	set_temp_variable = { soi_allocated = 0 }
 	if = {
 		limit = {
-			check_variable = { b = 0 }
-			NOT = { has_country_flag = state_owned_investments_project_one }
+			check_variable = { soi_allocated = 0 }
+			check_variable = { max_soi_slots > 0 }
+			NOT = { has_country_flag = soi_slot_1 }
 		}
-		set_country_flag = { flag = state_owned_investments_project_one value = 1 days = 120 }
-		set_variable = { state_owned_investments_project_one_state = PREV.id }
-		set_variable = { state_owned_investments_project_one_expiration_date = test_string }
-		set_temp_variable = { b = 1 }
+		set_country_flag = { flag = soi_slot_1 value = 1 days = 120 }
+		set_variable = { soi_slot_state^1 = PREV.id }
+		set_variable = { soi_slot_expiry^1 = soi_expiry_date }
+		set_temp_variable = { soi_allocated = 1 }
 	}
 	if = {
 		limit = {
-			check_variable = { b = 0 }
-			NOT = { has_country_flag = state_owned_investments_project_two }
+			check_variable = { soi_allocated = 0 }
+			check_variable = { max_soi_slots > 1 }
+			NOT = { has_country_flag = soi_slot_2 }
 		}
-		set_country_flag = { flag = state_owned_investments_project_two value = 1 days = 120 }
-		set_variable = { state_owned_investments_project_two_state = PREV.id }
-		set_variable = { state_owned_investments_project_two_expiration_date = test_string }
-		set_temp_variable = { b = 1 }
+		set_country_flag = { flag = soi_slot_2 value = 1 days = 120 }
+		set_variable = { soi_slot_state^2 = PREV.id }
+		set_variable = { soi_slot_expiry^2 = soi_expiry_date }
+		set_temp_variable = { soi_allocated = 1 }
 	}
 	if = {
 		limit = {
-			check_variable = { b = 0 }
-			OR = {
-				has_idea = super_power
-				has_idea = great_power
-				has_idea = large_power
-				has_idea = regional_power
-			}
-			NOT = { has_country_flag = state_owned_investments_project_three }
+			check_variable = { soi_allocated = 0 }
+			check_variable = { max_soi_slots > 2 }
+			NOT = { has_country_flag = soi_slot_3 }
 		}
-		set_country_flag = { flag = state_owned_investments_project_three value = 1 days = 120 }
-		set_variable = { state_owned_investments_project_three_state = PREV.id }
-		set_variable = { state_owned_investments_project_three_expiration_date = test_string }
-		set_temp_variable = { b = 1 }
+		set_country_flag = { flag = soi_slot_3 value = 1 days = 120 }
+		set_variable = { soi_slot_state^3 = PREV.id }
+		set_variable = { soi_slot_expiry^3 = soi_expiry_date }
+		set_temp_variable = { soi_allocated = 1 }
 	}
 	if = {
 		limit = {
-			check_variable = { b = 0 }
-			OR = {
-				has_idea = super_power
-				has_idea = great_power
-				has_idea = large_power
-			}
-			NOT = { has_country_flag = state_owned_investments_project_four }
+			check_variable = { soi_allocated = 0 }
+			check_variable = { max_soi_slots > 3 }
+			NOT = { has_country_flag = soi_slot_4 }
 		}
-		set_country_flag = { flag = state_owned_investments_project_four value = 1 days = 120 }
-		set_variable = { state_owned_investments_project_four_state = PREV.id }
-		set_variable = { state_owned_investments_project_four_expiration_date = test_string }
-		set_temp_variable = { b = 1 }
+		set_country_flag = { flag = soi_slot_4 value = 1 days = 120 }
+		set_variable = { soi_slot_state^4 = PREV.id }
+		set_variable = { soi_slot_expiry^4 = soi_expiry_date }
+		set_temp_variable = { soi_allocated = 1 }
 	}
 	if = {
 		limit = {
-			check_variable = { b = 0 }
-			OR = {
-				has_idea = super_power
-				has_idea = great_power
-			}
-			NOT = { has_country_flag = state_owned_investments_project_five }
+			check_variable = { soi_allocated = 0 }
+			check_variable = { max_soi_slots > 4 }
+			NOT = { has_country_flag = soi_slot_5 }
 		}
-		set_country_flag = { flag = state_owned_investments_project_five value = 1 days = 120 }
-		set_variable = { state_owned_investments_project_five_state = PREV.id }
-		set_variable = { state_owned_investments_project_five_expiration_date = test_string }
-		set_temp_variable = { b = 1 }
+		set_country_flag = { flag = soi_slot_5 value = 1 days = 120 }
+		set_variable = { soi_slot_state^5 = PREV.id }
+		set_variable = { soi_slot_expiry^5 = soi_expiry_date }
+		set_temp_variable = { soi_allocated = 1 }
 	}
 	if = {
 		limit = {
-			check_variable = { b = 0 }
-			has_idea = super_power
-			NOT = { has_country_flag = state_owned_investments_project_six }
+			check_variable = { soi_allocated = 0 }
+			check_variable = { max_soi_slots > 5 }
+			NOT = { has_country_flag = soi_slot_6 }
 		}
-		set_country_flag = { flag = state_owned_investments_project_six value = 1 days = 120 }
-		set_variable = { state_owned_investments_project_six_state = PREV.id }
-		set_variable = { state_owned_investments_project_six_expiration_date = test_string }
-		set_temp_variable = { b = 1 }
+		set_country_flag = { flag = soi_slot_6 value = 1 days = 120 }
+		set_variable = { soi_slot_state^6 = PREV.id }
+		set_variable = { soi_slot_expiry^6 = soi_expiry_date }
+		set_temp_variable = { soi_allocated = 1 }
 	}
+
 }
 
-# Effect: calculate_internal_investments_costs
-# Purpose: Calculates the internal investments political power costs as well as the amount of money it costs.
-# also sets the flag limits.
+# Calculate internal investment PP + money cost, set flags.
 calculate_internal_investments_costs = {
 	ROOT = {
 		set_temp_variable = { pp_cost = pp_cost_temp }
