@@ -2,6 +2,8 @@
 
 ## Project Overview
 
+**NOTE TO CONTRIBUTORS**: Non‑English localisation files are **never** modified by automated scripts. Translators handle those files separately. All bulk rename operations in this repository target **English only** unless a translator explicitly requests a change.
+
 Millennium Dawn is a Hearts of Iron IV mod set in the modern era (2000-present). It's a Paradox Interactive game modification with extensive game systems including focus trees, events, decisions, ideas, technologies, and more.
 
 ## Directory Structure
