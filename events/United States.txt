@@ -29238,7 +29238,11 @@ country_event = {
 		}
 		set_temp_variable = { treasury_change = -2.5 }
 		modify_treasury_effect = yes
-		USA = { country_event = diplomatic_response.1 }
+		set_country_flag = USA_kee_lung_sold
+		USA = {
+			set_country_flag = USA_kee_lung_sold
+			country_event = diplomatic_response.1
+		}
 		ai_chance = {
 			base = 15
 			modifier = {
@@ -29276,6 +29280,656 @@ country_event = {
 
 	# Decline the Purchase
 
+}
+
+# Additional Kee-Lung Class Destroyer Sale
+country_event = {
+	id = department_of_state.220
+	title = department_of_state.220.t
+	desc = department_of_state.220.d
+	picture = GFX_carrier
+	is_triggered_only = yes
+
+	# Accept expanded purchase
+	option = {
+		name = department_of_state.220.a
+		log = "[GetDateText]: [This.GetName]: department_of_state.220.a executed"
+		USA = {
+			set_temp_variable = { treasury_change = 2 }
+			modify_treasury_effect = yes
+		}
+		set_temp_variable = { treasury_change = -2 }
+		modify_treasury_effect = yes
+		create_ship = {
+			type = destroyer_hull_1
+			equipment_variant = "Kee-Lung Class"
+			creator = USA
+			name = "ROCS Tso Ying II (DDG-1806)"
+		}
+		create_ship = {
+			type = destroyer_hull_1
+			equipment_variant = "Kee-Lung Class"
+			creator = USA
+			name = "ROCS Su Ao II (DDG-1807)"
+		}
+		create_ship = {
+			type = destroyer_hull_1
+			equipment_variant = "Kee-Lung Class"
+			creator = USA
+			name = "ROCS Keelung II (DDG-1808)"
+		}
+		add_war_support = 0.02
+		capital_scope = {
+			add_extra_state_shared_building_slots = 1
+			add_building_construction = {
+				type = dockyard
+				level = 2
+				instant_build = yes
+			}
+		}
+		add_opinion_modifier = {
+			target = USA
+			modifier = positive_fifteen
+		}
+		USA = {
+			add_opinion_modifier = {
+				target = THIS
+				modifier = positive_fifteen
+			}
+			country_event = diplomatic_response.1
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 30
+				CHI = { has_war_with = TAI }
+			}
+			modifier = {
+				add = 20
+				CHI = { has_government = communism }
+			}
+			modifier = {
+				factor = 10
+				is_historical_focus_on = yes
+			}
+		}
+	}
+
+	# Decline
+	option = {
+		name = department_of_state.220.b
+		log = "[GetDateText]: [This.GetName]: department_of_state.220.b executed"
+		USA = { country_event = diplomatic_response.2 }
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				is_subject_of = CHI
+			}
+		}
+	}
+
+}
+
+# MNNA Application - USA decides whether to grant status
+country_event = {
+	id = department_of_state.230
+	title = department_of_state.230.t
+	desc = department_of_state.230.d
+	picture = GFX_generic_diplomacy
+	is_triggered_only = yes
+
+	# Grant MNNA status
+	option = {
+		name = department_of_state.230.a
+		log = "[GetDateText]: [This.GetName]: department_of_state.230.a executed"
+		FROM = {
+			add_ideas = Major_Non_NATO_Ally
+			country_event = { id = department_of_state.231 days = 1 }
+		}
+		add_relation_modifier = {
+			target = FROM
+			modifier = generic_increased_cooperation
+		}
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 20
+				western_liberals_are_in_power = yes
+			}
+			modifier = {
+				add = 15
+				FROM = { has_war = yes }
+			}
+			modifier = {
+				add = 20
+				FROM = {
+					OR = {
+						has_war_with = CHI
+						has_war_with = SOV
+						has_war_with = PER
+					}
+				}
+			}
+			modifier = {
+				factor = 0.5
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+
+	# Reject the application
+	option = {
+		name = department_of_state.230.b
+		log = "[GetDateText]: [This.GetName]: department_of_state.230.b executed"
+		FROM = {
+			set_country_flag = {
+				flag = MNNA_rejected_recently
+				days = 30
+				value = 1
+			}
+			country_event = { id = department_of_state.231 hours = 23 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 40
+				has_opinion = { target = FROM value < 0 }
+			}
+			modifier = {
+				add = 30
+				FROM = {
+					OR = {
+						is_subject_of = CHI
+						is_subject_of = SOV
+						is_subject_of = PER
+					}
+				}
+			}
+			modifier = {
+				factor = 0.2
+				FROM = {
+					OR = {
+						has_war_with = CHI
+						has_war_with = SOV
+						has_war_with = PER
+					}
+				}
+			}
+		}
+	}
+}
+
+# MNNA Application Response - fires on applicant
+country_event = {
+	id = department_of_state.231
+	title = department_of_state.231.t
+	desc = department_of_state.231.d
+	picture = GFX_generic_diplomacy
+	is_triggered_only = yes
+
+	trigger = {
+		OR = {
+			has_idea = Major_Non_NATO_Ally
+			has_country_flag = MNNA_rejected_recently
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = { has_idea = Major_Non_NATO_Ally }
+			set_country_flag = MNNA_application_accepted
+		}
+	}
+
+	option = {
+		name = department_of_state.231.a
+		log = "[GetDateText]: [This.GetName]: department_of_state.231.a executed"
+		trigger = { has_country_flag = MNNA_application_accepted }
+		clr_country_flag = MNNA_application_accepted
+		add_stability = 0.02
+	}
+
+	option = {
+		name = department_of_state.231.b
+		log = "[GetDateText]: [This.GetName]: department_of_state.231.b executed"
+		trigger = {
+			NOT = { has_country_flag = MNNA_application_accepted }
+			has_country_flag = MNNA_rejected_recently
+		}
+		add_stability = -0.01
+	}
+}
+
+# MNNA Under Attack - USA dilemma
+country_event = {
+	id = department_of_state.232
+	title = department_of_state.232.t
+	desc = department_of_state.232.d
+	picture = GFX_generic_diplomacy
+	is_triggered_only = yes
+
+	trigger = {
+		has_idea = NATO_member
+		is_faction_leader = yes
+		NOT = { has_country_flag = collapsed_nation }
+		event_target:mnna_defender = {
+			exists = yes
+			has_idea = Major_Non_NATO_Ally
+			has_war_with = event_target:mnna_aggressor
+		}
+		event_target:mnna_aggressor = {
+			exists = yes
+			NOT = { has_war_with = ROOT }
+		}
+	}
+
+	# Honor the MNNA commitment - enter the war
+	option = {
+		name = department_of_state.232.a
+		log = "[GetDateText]: [This.GetName]: department_of_state.232.a executed"
+		declare_war_on = {
+			target = event_target:mnna_aggressor
+			type = annex_everything
+		}
+		add_war_support = 0.05
+		add_political_power = -50
+		event_target:mnna_defender = {
+			add_opinion_modifier = { target = PREV modifier = positive_fifty }
+			add_relation_modifier = {
+				target = PREV
+				modifier = generic_increased_military_support
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 35
+				event_target:mnna_aggressor = {
+					OR = {
+						original_tag = CHI
+						original_tag = SOV
+						original_tag = PER
+					}
+				}
+			}
+			modifier = {
+				add = 25
+				western_liberals_are_in_power = yes
+			}
+			modifier = {
+				add = 15
+				western_conservatism_are_in_power = yes
+			}
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+			modifier = {
+				factor = 0.5
+				threat > 0.60
+			}
+		}
+	}
+
+	# Provide arms and sanctions - no direct war
+	option = {
+		name = department_of_state.232.b
+		log = "[GetDateText]: [This.GetName]: department_of_state.232.b executed"
+		add_relation_modifier = {
+			target = event_target:mnna_defender
+			modifier = generic_increased_military_support
+		}
+		send_equipment = {
+			amount = 2000
+			type = infantry_weapons_1
+			target = event_target:mnna_defender
+		}
+		send_equipment = {
+			amount = 200
+			type = util_vehicle_type
+			target = event_target:mnna_defender
+		}
+		add_opinion_modifier = {
+			target = event_target:mnna_aggressor
+			modifier = negative_thirty
+		}
+		add_political_power = -25
+		ai_chance = {
+			base = 55
+			modifier = {
+				add = 20
+				has_war = yes
+			}
+			modifier = {
+				add = 15
+				threat > 0.40
+			}
+		}
+	}
+
+	# Stay out entirely
+	option = {
+		name = department_of_state.232.c
+		log = "[GetDateText]: [This.GetName]: department_of_state.232.c executed"
+		event_target:mnna_defender = {
+			add_opinion_modifier = { target = PREV modifier = negative_thirty }
+		}
+		add_stability = -0.03
+		add_political_power = -30
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 40
+				has_war = yes
+			}
+			modifier = {
+				add = 30
+				event_target:mnna_aggressor = {
+					NOT = {
+						OR = {
+							original_tag = CHI
+							original_tag = SOV
+							original_tag = PER
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+# NATO Coup via Influence — USA dilemma
+country_event = {
+	id = department_of_state.233
+	title = department_of_state.233.t
+	desc = department_of_state.233.d
+	picture = GFX_generic_diplomacy
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = USA
+		has_idea = NATO_member
+		is_faction_leader = yes
+		NOT = { has_country_flag = collapsed_nation }
+		event_target:nato_coup_victim = {
+			exists = yes
+			has_idea = NATO_member
+			NOT = { has_government = democratic }
+		}
+	}
+
+	# Eject from NATO and impose sanctions
+	option = {
+		name = department_of_state.233.a
+		log = "[GetDateText]: [This.GetName]: department_of_state.233.a executed"
+		event_target:nato_coup_victim = {
+			remove_ideas = NATO_member
+			leave_faction = yes
+			add_opinion_modifier = { target = USA modifier = negative_thirty }
+			decrease_economic_growth = yes
+			add_stability = -0.05
+			country_event = { id = department_of_state.234 days = 1 }
+		}
+		add_political_power = -25
+		ai_chance = {
+			base = 55
+			modifier = {
+				add = 25
+				western_liberals_are_in_power = yes
+			}
+			modifier = {
+				add = 20
+				western_conservatism_are_in_power = yes
+			}
+		}
+	}
+
+	# Clandestine operations to back the democratic opposition
+	option = {
+		name = department_of_state.233.b
+		log = "[GetDateText]: [This.GetName]: department_of_state.233.b executed"
+		event_target:nato_coup_victim = {
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.15
+			}
+			add_stability = -0.07
+			add_political_power = -50
+			set_temp_variable = { percent_change = 10.00 }
+			set_temp_variable = { tag_index = USA }
+			set_temp_variable = { influence_target = THIS }
+			change_influence_percentage = yes
+			if = {
+				limit = { check_variable = { influence_array^0 = CHI } }
+				set_temp_variable = { percent_change = -15.00 }
+				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = THIS }
+				change_influence_percentage = yes
+			}
+			else_if = {
+				limit = { check_variable = { influence_array^0 = SOV } }
+				set_temp_variable = { percent_change = -15.00 }
+				set_temp_variable = { tag_index = SOV }
+				set_temp_variable = { influence_target = THIS }
+				change_influence_percentage = yes
+			}
+			else_if = {
+				limit = { check_variable = { influence_array^0 = PER } }
+				set_temp_variable = { percent_change = -15.00 }
+				set_temp_variable = { tag_index = PER }
+				set_temp_variable = { influence_target = THIS }
+				change_influence_percentage = yes
+			}
+			country_event = { id = department_of_state.234 days = 1 }
+		}
+		add_political_power = -75
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 25
+				western_liberals_are_in_power = yes
+			}
+			modifier = {
+				factor = 0.5
+				has_war = yes
+			}
+		}
+	}
+
+	# Accept the new regime and hope for the best
+	option = {
+		name = department_of_state.233.c
+		log = "[GetDateText]: [This.GetName]: department_of_state.233.c executed"
+		add_stability = -0.03
+		add_political_power = -40
+		every_country = {
+			limit = {
+				has_idea = NATO_member
+				NOT = { original_tag = USA }
+				NOT = { is_same_country_as = event_target:nato_coup_victim }
+			}
+			add_opinion_modifier = { target = USA modifier = negative_ten }
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 25
+				has_war = yes
+			}
+		}
+	}
+}
+
+# Greenland Purchase — Denmark decides
+country_event = {
+	id = department_of_state.240
+	title = department_of_state.240.t
+	desc = department_of_state.240.d
+	picture = GFX_generic_diplomacy
+	is_triggered_only = yes
+
+	# Accept the sale
+	option = {
+		name = department_of_state.240.a
+		log = "[GetDateText]: [This.GetName]: department_of_state.240.a executed"
+		set_temp_variable = { treasury_change = 500 }
+		modify_treasury_effect = yes
+		add_political_power = -100
+		FROM = {
+			set_temp_variable = { treasury_change = -500 }
+			modify_treasury_effect = yes
+			transfer_state = 1
+			add_opinion_modifier = { target = PREV modifier = positive_fifty }
+		}
+		add_opinion_modifier = { target = FROM modifier = positive_fifty }
+		hidden_effect = {
+			every_country = {
+				limit = { is_ai = no }
+				news_event = { id = department_of_state.241 days = 2 }
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 15
+				check_variable = { debt_ratio > 1.0 }
+			}
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value > 40 }
+			}
+			modifier = {
+				factor = 0
+				is_in_faction_with = FROM
+				NOT = { check_variable = { debt_ratio > 1.5 } }
+			}
+		}
+	}
+
+	# Reject the sale
+	option = {
+		name = department_of_state.240.b
+		log = "[GetDateText]: [This.GetName]: department_of_state.240.b executed"
+		add_political_power = 25
+		FROM = {
+			add_opinion_modifier = { target = PREV modifier = negative_fifteen }
+		}
+		ai_chance = {
+			base = 85
+			modifier = {
+				factor = 0.5
+				check_variable = { debt_ratio > 1.5 }
+			}
+		}
+	}
+}
+
+# Greenland Sale — news event
+news_event = {
+	id = department_of_state.241
+	title = department_of_state.241.t
+	desc = department_of_state.241.d
+	picture = GFX_news_crime_fighting
+	is_triggered_only = yes
+
+	option = {
+		name = department_of_state.241.a
+		log = "[GetDateText]: [This.GetName]: department_of_state.241.a executed"
+	}
+}
+
+# Trump NATO Dilemma
+country_event = {
+	id = department_of_state.242
+	title = department_of_state.242.t
+	desc = department_of_state.242.d
+	picture = GFX_news_leave_NATO
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = USA
+		has_idea = NATO_member
+		has_country_leader = { name = "Donald Trump" ruling_only = yes }
+	}
+
+	# Leave NATO
+	option = {
+		name = department_of_state.242.a
+		log = "[GetDateText]: [This.GetName]: department_of_state.242.a executed"
+		NATO_leave = yes
+		add_stability = -0.05
+		add_political_power = 100
+		every_country = {
+			limit = {
+				has_idea = NATO_member
+				NOT = { original_tag = USA }
+			}
+			add_opinion_modifier = { target = USA modifier = negative_thirty }
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 15
+				has_country_flag = USA_trump_nato_threats_failed
+			}
+		}
+	}
+
+	# Threaten to leave unless allies step up their spending
+	option = {
+		name = department_of_state.242.b
+		log = "[GetDateText]: [This.GetName]: department_of_state.242.b executed"
+		add_political_power = 50
+		every_other_country = {
+			limit = {
+				has_idea = NATO_member
+				NOT = { original_tag = USA }
+			}
+			country_event = {
+				id = department_of_state.60
+				days = 2
+			}
+		}
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			custom_effect_tooltip = USA_2_percent_TT
+		}
+		ai_chance = {
+			base = 65
+		}
+	}
+
+	# Reaffirm American commitment to NATO
+	option = {
+		name = department_of_state.242.c
+		log = "[GetDateText]: [This.GetName]: department_of_state.242.c executed"
+		add_stability = 0.02
+		every_country = {
+			limit = {
+				has_idea = NATO_member
+				NOT = { original_tag = USA }
+			}
+			add_opinion_modifier = { target = USA modifier = positive_ten }
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+}
+
+# NATO Coup — notification to the couped country
+country_event = {
+	id = department_of_state.234
+	title = department_of_state.234.t
+	desc = department_of_state.234.d
+	picture = GFX_generic_diplomacy
+	is_triggered_only = yes
+
+	option = {
+		name = department_of_state.234.a
+		log = "[GetDateText]: [This.GetName]: department_of_state.234.a executed"
+	}
 }
 
 # capture maduro ass
@@ -29641,10 +30295,14 @@ country_event = {
 				target = ROOT
 				modifier = generic_increased_military_support
 			}
-			add_to_variable = { USA_AUKUS_accept_count = 1 }
+			add_to_variable = { USA_aukus_accept_count = 1 }
 			if = {
-				limit = { check_variable = { USA_AUKUS_accept_count > 1 } }
-				set_country_flag = USA_AUKUS_established
+				limit = { check_variable = { USA_aukus_accept_count > 1 } }
+				set_country_flag = USA_aukus_established
+				every_country = {
+					limit = { is_ai = no }
+					news_event = { id = department_of_state.101 days = 1 }
+				}
 			}
 		}
 		add_opinion_modifier = {
