@@ -22,6 +22,7 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
+  checks: write
 
 jobs:
   # ───────────────────────────────────────────────────────────────
@@ -174,6 +175,9 @@ jobs:
           - { script: validate_events.py,                 name: events,                 title: "Events" }
           - { script: validate_history_techs.py,          name: history-techs,          title: "History Technology Dependencies" }
           - { script: validate_unused_scripted.py,        name: unused-scripted,        title: "Unused Scripted Effects & Triggers" }
+          - { script: validate_agency_upgrades.py,        name: agency-upgrades,        title: "Intelligence Agency Upgrades" }
+          # NOTE: validate_defines.py needs vanilla HOI4 files (not checked in) and
+          # therefore only runs as a pre-commit hook on contributors' machines.
 
     steps:
     - name: Checkout code
@@ -205,180 +209,110 @@ jobs:
       if: always()
       with:
         name: validation-${{ matrix.validator.name }}-results
-        path: validation-${{ matrix.validator.name }}.log
+        path: |
+          validation-${{ matrix.validator.name }}.log
+          validation-${{ matrix.validator.name }}.json
+        if-no-files-found: ignore
         retention-days: 7
 
   # ───────────────────────────────────────────────────────────────
-  # Targeted validators — only run when their specific files change
+  # Targeted validators — one matrix entry per validator, each gated
+  # on the specific detect-changes output it cares about. We keep the
+  # display names identical to the old per-job names so branch protection
+  # rules referencing them keep working.
   # ───────────────────────────────────────────────────────────────
-  validate-decisions:
-    name: Validate Decisions
+  validate-targeted:
+    name: ${{ matrix.validator.title }}
     needs: [detect-changes]
-    if: needs.detect-changes.outputs.decisions == 'true'
+    if: >-
+      needs.detect-changes.outputs.decisions == 'true' ||
+      needs.detect-changes.outputs.oob == 'true' ||
+      needs.detect-changes.outputs.ai-strategy == 'true' ||
+      needs.detect-changes.outputs.ai-navy == 'true' ||
+      needs.detect-changes.outputs.ai-equipment == 'true' ||
+      needs.detect-changes.outputs.factions == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        validator:
+          - script: validate_decisions.py
+            name: decisions
+            title: "Validate Decisions"
+            should_run: ${{ needs.detect-changes.outputs.decisions }}
+            sparse: |
+              common/decisions
+              common/scripted_effects
+              common/scripted_triggers
+              tools
+          - script: validate_oob_units.py
+            name: oob-units
+            title: "Validate OOB Unit Names"
+            should_run: ${{ needs.detect-changes.outputs.oob }}
+            sparse: |
+              history/units
+              common/units
+              common/ai_templates
+              common/scripted_effects
+              tools
+          - script: validate_ai_roles.py
+            name: ai-roles
+            title: "Validate AI Role References"
+            should_run: ${{ needs.detect-changes.outputs.ai-strategy }}
+            sparse: |
+              common/ai_strategy
+              common/ai_templates
+              tools
+          - script: validate_ai_navy.py
+            name: ai-navy
+            title: "Validate AI Navy"
+            should_run: ${{ needs.detect-changes.outputs.ai-navy }}
+            sparse: |
+              common/ai_navy
+              common/units
+              tools
+          - script: validate_ai_equipment.py
+            name: ai-equipment
+            title: "Validate AI Equipment Coverage"
+            should_run: ${{ needs.detect-changes.outputs.ai-equipment }}
+            sparse: |
+              common/ai_equipment
+              common/units
+              tools
+          - script: validate_factions.py
+            name: factions
+            title: "Validate Faction System"
+            should_run: ${{ needs.detect-changes.outputs.factions }}
+            sparse: |
+              common/factions
+              tools
     steps:
+    # Per-entry gate: only fetch + run when this validator's file group changed.
+    # Steps below each carry the same `if` so a skipped entry reports cleanly
+    # as "success with no work done" instead of bulk-skipping the whole job.
     - name: Checkout code
+      if: matrix.validator.should_run == 'true'
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         fetch-depth: 1
-        sparse-checkout: |
-          common/decisions
-          common/scripted_effects
-          common/scripted_triggers
-          tools
+        sparse-checkout: ${{ matrix.validator.sparse }}
     - name: Set up Python
+      if: matrix.validator.should_run == 'true'
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
         python-version: '3.x'
     - name: Run validation
-      run: python3 tools/validation/validate_decisions.py --strict --no-color --workers 4 --output validation-decisions.log
+      if: matrix.validator.should_run == 'true'
+      run: python3 tools/validation/${{ matrix.validator.script }} --strict --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
     - name: Upload results
+      if: always() && matrix.validator.should_run == 'true'
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-      if: always()
       with:
-        name: validation-decisions-results
-        path: validation-decisions.log
-        retention-days: 7
-
-  validate-oob-units:
-    name: Validate OOB Unit Names
-    needs: [detect-changes]
-    if: needs.detect-changes.outputs.oob == 'true'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        fetch-depth: 1
-        sparse-checkout: |
-          history/units
-          common/units
-          common/ai_templates
-          common/scripted_effects
-          tools
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
-    - name: Run validation
-      run: python3 tools/validation/validate_oob_units.py --strict --no-color --workers 4 --output validation-oob-units.log
-    - name: Upload results
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-      if: always()
-      with:
-        name: validation-oob-units-results
-        path: validation-oob-units.log
-        retention-days: 7
-
-  validate-ai-roles:
-    name: Validate AI Role References
-    needs: [detect-changes]
-    if: needs.detect-changes.outputs.ai-strategy == 'true'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        fetch-depth: 1
-        sparse-checkout: |
-          common/ai_strategy
-          common/ai_templates
-          tools
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
-    - name: Run validation
-      run: python3 tools/validation/validate_ai_roles.py --strict --no-color --workers 4 --output validation-ai-roles.log
-    - name: Upload results
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-      if: always()
-      with:
-        name: validation-ai-roles-results
-        path: validation-ai-roles.log
-        retention-days: 7
-
-  validate-ai-navy:
-    name: Validate AI Navy
-    needs: [detect-changes]
-    if: needs.detect-changes.outputs.ai-navy == 'true'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        fetch-depth: 1
-        sparse-checkout: |
-          common/ai_navy
-          common/units
-          tools
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
-    - name: Run validation
-      run: python3 tools/validation/validate_ai_navy.py --strict --no-color --workers 4 --output validation-ai-navy.log
-    - name: Upload results
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-      if: always()
-      with:
-        name: validation-ai-navy-results
-        path: validation-ai-navy.log
-        retention-days: 7
-
-  validate-ai-equipment:
-    name: Validate AI Equipment Coverage
-    needs: [detect-changes]
-    if: needs.detect-changes.outputs.ai-equipment == 'true'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        fetch-depth: 1
-        sparse-checkout: |
-          common/ai_equipment
-          common/units
-          tools
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
-    - name: Run validation
-      run: python3 tools/validation/validate_ai_equipment.py --strict --no-color --workers 4 --output validation-ai-equipment.log
-    - name: Upload results
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-      if: always()
-      with:
-        name: validation-ai-equipment-results
-        path: validation-ai-equipment.log
-        retention-days: 7
-
-  validate-factions:
-    name: Validate Faction System
-    needs: [detect-changes]
-    if: needs.detect-changes.outputs.factions == 'true'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        fetch-depth: 1
-        sparse-checkout: |
-          common/factions
-          tools
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
-      with:
-        python-version: '3.x'
-    - name: Run validation
-      run: python3 tools/validation/validate_factions.py --strict --no-color --workers 4 --output validation-factions.log
-    - name: Upload results
-      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-      if: always()
-      with:
-        name: validation-factions-results
-        path: validation-factions.log
+        name: validation-${{ matrix.validator.name }}-results
+        path: |
+          validation-${{ matrix.validator.name }}.log
+          validation-${{ matrix.validator.name }}.json
+        if-no-files-found: ignore
         retention-days: 7
 
   # ───────────────────────────────────────────────────────────────
@@ -387,21 +321,26 @@ jobs:
   validation-report:
     name: Generate Validation Report
     runs-on: ubuntu-latest
-    needs: [validate-core, validate-decisions, validate-oob-units, validate-ai-roles, validate-ai-navy, validate-ai-equipment, validate-factions]
+    needs: [validate-core, validate-targeted]
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
     if: >-
       always() &&
       github.event_name == 'pull_request' &&
       github.event.pull_request.draft == false &&
       !cancelled()
     steps:
-    # Only the report script itself is needed — stdlib only — so sparse-
-    # checkout a single file instead of cloning the whole repo.
-    - name: Checkout report script
+    # Checkout the report generator + the report_lib package it imports.
+    # Stays much smaller than a full checkout — we skip everything else.
+    - name: Checkout report tooling
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         fetch-depth: 1
         sparse-checkout: |
           tools/generate_validation_report.py
+          tools/report_lib
         sparse-checkout-cone-mode: false
 
     - name: Set up Python
@@ -423,9 +362,11 @@ jobs:
           --results-dir validation-results \
           --output report.md \
           --pr-number "${{ github.event.pull_request.number }}" \
-          --commit-sha "${{ github.sha }}" \
+          --commit-sha "${{ github.event.pull_request.head.sha }}" \
+          --workflow-run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
           --github-repository "${{ github.repository }}" \
           --post-comment \
+          --checks-api \
           --print
 
     - name: Upload combined report
