@@ -73,6 +73,20 @@ NOT = { has_idea = foo }
 NOT = { has_idea = bar }
 ```
 
+## Implicit AND in triggers
+
+Multiple conditions in a trigger block are implicitly AND-ed together. Never wrap conditions in redundant `AND = { }` blocks:
+
+```
+# Wrong — redundant AND wrapper
+trigger = { AND = { A B C } }
+
+# Correct — implicit AND
+trigger = { A B C }
+```
+
+This applies to `trigger`, `limit`, `visible`, `available`, `activation`, `cancel_trigger`, and all other trigger contexts.
+
 ## threat scale
 
 `threat` is a decimal 0.0–1.0, never a percentage. Comparisons like `threat > 10` or `threat > 40` are always false. Use `threat > 0.10`, `threat > 0.40`, etc.

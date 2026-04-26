@@ -43,6 +43,7 @@ Use for broader modding context not covered in local docs:
 | `.claude/docs/simplification-patterns.md` | Patterns for replacing N-branch lookups with arrays, parameterized scripted loc, shared helpers, meta_effect consolidation                                                   |
 | `.claude/docs/performance-patterns.md`    | Hoisting invariants, temp-variable booleans, GUI dirty counters, engine arrays, clamp-before-division, early-out guards                                                      |
 | `.claude/docs/refactor-checklist.md`      | Systematic breaking-change checks for prefix renames, array migrations, event namespace, GUI/GFX cross-references, scope safety                                              |
+| `.claude/docs/oob-equipment-reference.md` | OOB equipment type mapping (NSB vs non-NSB), stockpile syntax, chassis/variant validation, common errors                                                                     |
 
 ## AI Agent Definitions
 
