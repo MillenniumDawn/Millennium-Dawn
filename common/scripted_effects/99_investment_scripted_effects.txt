@@ -359,7 +359,7 @@ calculate_project_duration = {
 	# Total queue duration (only meaningful for active slots)
 	if = { limit = { check_variable = { project > -1 } }
 		set_variable = { project_total_construction_duration_display^project = project_construction_duration^project }
-		multiply_variable = { project_total_construction_duration_display^project = project_build_amount^project_type }
+		multiply_variable = { project_total_construction_duration_display^project = project_build_amount^project }
 	}
 
 	# GUI Duration preview variable (staged, ^-1 access for display before project starts)
@@ -384,6 +384,11 @@ start_project_two = {
 		set_variable = { project = new_project }
 		set_variable = { project_type = project_building_type^-1 }
 
+		# Active Project Variables (must precede calculate_project_duration so it can read build_amount^project)
+		set_variable = { project_build_amount^project = project_build_amount^-1 }
+		set_variable = { project_building_type^project = project_building_type^-1 }
+		set_variable = { project_monetary_cost^project = project_monetary_cost^-1 }
+
 		set_temp_variable = { investments_calc_state = investments_state_target }
 		calculate_project_duration = yes
 
@@ -399,11 +404,6 @@ start_project_two = {
 				set_variable = { PREV.PREV.project_target_country^PREV.PREV.project = THIS.id }
 			}
 		}
-
-		# Active Project Variables
-		set_variable = { project_build_amount^project = project_build_amount^-1 }
-		set_variable = { project_building_type^project = project_building_type^-1 }
-		set_variable = { project_monetary_cost^project = project_monetary_cost^-1 }
 
 		# Activate Project
 		add_to_variable = { treasury = project_monetary_cost_effect } # Project Monetary Cost Effect is -1
