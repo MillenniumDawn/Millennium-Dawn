@@ -40,6 +40,23 @@ init_investment_system = {
 	set_variable = { global.build_const_cost_array^12 = 16500 } # FOSSIL
 	set_variable = { global.build_const_cost_array^13 = 62500 } # NUCLEAR
 	set_variable = { global.build_const_cost_array^14 = 22500 } # AGRICULTURE
+
+	# Max build amount per building type (for GUI clamp, indexed by type 1..14)
+	set_variable = { global.max_build_amount_array^0 = 0 }
+	set_variable = { global.max_build_amount_array^1 = 10 }  # CIC
+	set_variable = { global.max_build_amount_array^2 = 10 }  # MIC
+	set_variable = { global.max_build_amount_array^3 = 10 }  # NIC
+	set_variable = { global.max_build_amount_array^4 = 5 }   # INFRA
+	set_variable = { global.max_build_amount_array^5 = 5 }   # OFFICES
+	set_variable = { global.max_build_amount_array^6 = 5 }   # AA
+	set_variable = { global.max_build_amount_array^7 = 6 }   # RADAR
+	set_variable = { global.max_build_amount_array^8 = 10 }  # AIRBASE
+	set_variable = { global.max_build_amount_array^9 = 5 }   # FUEL_SILO
+	set_variable = { global.max_build_amount_array^10 = 6 }  # INTERNET
+	set_variable = { global.max_build_amount_array^11 = 10 } # REF
+	set_variable = { global.max_build_amount_array^12 = 10 } # FOSSIL
+	set_variable = { global.max_build_amount_array^13 = 10 } # NUCLEAR
+	set_variable = { global.max_build_amount_array^14 = 10 } # AGRICULTURE
 }
 
 # Called in the spawning of a new nation in-game
@@ -180,7 +197,7 @@ get_building_construction_values = {
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_renewable_energy_infra_factor }
 	}
 	else_if = { limit = { check_variable = { project_type = 12 } }
-		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_renewable_energy_infra_factor }
+		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_fossil_powerplant_factor }
 	}
 	else_if = { limit = { check_variable = { project_type = 13 } }
 		add_to_temp_variable = { var = construction_speed value = modifier@production_speed_nuclear_reactor_factor }
@@ -209,7 +226,9 @@ get_available_project = {
 add_finished_buildings = {
 	set_temp_variable = { var_cost = ROOT.project_monetary_cost^ROOT.project }
 	multiply_temp_variable = { var_cost = -1 }
-	divide_temp_variable = { var = var_cost value = ROOT.project_build_amount^ROOT.project }
+	set_temp_variable = { _remaining = ROOT.project_build_amount^ROOT.project }
+	clamp_temp_variable = { var = _remaining min = 1 }
+	divide_temp_variable = { var = var_cost value = _remaining }
 
 	# Buildings to Add
 	if = { limit = { check_variable = { ROOT.project_building_type^ROOT.project = 1 } }

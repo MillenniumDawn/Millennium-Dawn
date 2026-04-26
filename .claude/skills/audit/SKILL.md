@@ -1,8 +1,8 @@
-Run a comprehensive code-quality and performance audit on a single file or the entire branch diff.
+Run a comprehensive code-quality, performance, and content audit on a single file or the entire branch diff.
 
 **Syntax:** `/audit [file_path]`
 
-- With `file_path`: audit that specific file for simplification opportunities and performance issues.
+- With `file_path`: audit that specific file for simplification opportunities, performance issues, and content design problems.
 - Without argument: audit all changed files on the current branch against `main`.
 
 ## Execution
@@ -20,9 +20,9 @@ Run a comprehensive code-quality and performance audit on a single file or the e
 - Get the commit log: `git log origin/main..HEAD --oneline`
 - Identify the list of changed files.
 
-### 2. Launch both analyzers in parallel
+### 2. Launch all three analyzers in parallel
 
-Use the Agent tool to launch **both agents in a single message** so they run concurrently.
+Use the Agent tool to launch **all three agents in a single message** so they run concurrently.
 
 **Agent 1: `simplify-analyzer`**
 
@@ -34,19 +34,25 @@ Use the Agent tool to launch **both agents in a single message** so they run con
 - Pass the file path or the branch diff.
 - Instruct it to scan for the 8 performance anti-patterns from `.claude/docs/performance-patterns.md`.
 
-### 3. Wait for both agents to complete
+**Agent 3: `general-purpose` (content review)**
 
-Both agents will return their findings. Do not proceed to the merge step until both have reported back.
+- Pass the file path or the branch diff.
+- Instruct it to apply the `/content-review` skill: read `docs/src/content/resources/content-review-guide.md`, `docs/src/content/resources/new-general-guidelines.md`, and `.claude/docs/content-guidelines.md`, then check every changed file against the full checklist (Economic, Political, Visual, Military, AI, Code, Miscellaneous categories).
+- For file mode, skip categories that don't apply to the file type (e.g., skip Military checks on a decisions file).
+
+### 3. Wait for all three agents to complete
+
+All three agents must report back before proceeding to the merge step.
 
 ### 4. Merge and deduplicate findings
 
-Combine both reports into a single structured output.
+Combine all three reports into a single structured output.
 
 **Deduplication rules:**
 
-- If both agents flag the same line for different reasons, list both reasons under one entry.
-- If both agents flag the same line for the same underlying issue, keep the more detailed explanation.
-- Never drop a finding just because it appears in both reports.
+- If multiple agents flag the same line for different reasons, list both reasons under one entry.
+- If multiple agents flag the same line for the same underlying issue, keep the more detailed explanation.
+- Never drop a finding just because it appears in multiple reports.
 
 **Output structure:**
 
@@ -55,8 +61,9 @@ For each file reviewed, report:
 1. **File summary** — one sentence on purpose and hot-path exposure.
 2. **Simplification findings** — numbered list of issues found by `simplify-analyzer`.
 3. **Performance findings** — numbered list of issues found by `performance-analyzer`, with severity (Critical / High / Medium / Low).
-4. **Cross-cutting concerns** — issues that touch both simplification and performance (e.g., "Replace 15 `if/else_if` branches with array lookup" improves both).
-5. **Action items** — prioritized list of what to fix first, with file and line numbers.
+4. **Content findings** — numbered list of issues found by the content-review agent, with category labels (`[Economic]`, `[Political]`, etc.) and `[blocker]` tags where applicable.
+5. **Cross-cutting concerns** — issues that touch multiple categories (e.g., "Replace 15 `if/else_if` branches with array lookup" improves both simplification and performance).
+6. **Action items** — prioritized list of what to fix first, with file and line numbers. Blockers first.
 
 ### 5. Apply fixes (if user confirms)
 
@@ -71,10 +78,11 @@ After applying fixes, re-run the audit on the changed files to verify no regress
 
 ## Important Notes
 
-- **Do not** run the agents sequentially — always launch both in parallel.
+- **Do not** run the agents sequentially — always launch all three in parallel.
 - **Do not** modify files outside the scope of the audit.
 - **Do not** run validators after fixing unless explicitly asked.
 - When uncertain about a finding, flag it for human review rather than applying blindly.
 - For branch mode, focus on files that are part of the branch diff. Do not audit unchanged files unless the user explicitly asks.
 - If a file is a generated or binary asset (`.dds`, `.png`, etc.), skip it.
 - If a file is a localisation file (`.yml`), run the `focus-localisation-editor` agent instead of `simplify-analyzer` for the simplification pass, but still run `performance-analyzer` for loc performance (e.g., undefined variable substitutions, excessive nested formatters).
+- The content-review agent should skip Military checks for non-character/non-OOB files and skip Economic checks for non-focus-tree files. Instruct it accordingly in the prompt you pass.
