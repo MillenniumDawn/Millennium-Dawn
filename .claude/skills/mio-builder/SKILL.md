@@ -155,6 +155,8 @@ After writing, relay the result in one short sentence. Do not re-read the files 
 
 9. **Generate the full MIO.** Structure per `.claude/docs/mio-reference.md`. Do not read any organizations `.txt` to derive patterns. Token: `TAG_orgname`. Initial trait name: `{org_token}_trait`. Layout and mandatory blocks follow `~/.claude/CLAUDE.md`.
 
+   **`initial_trait` form:** Only `name` plus the bonus block(s) (`equipment_bonus` / `production_bonus` / `organization_modifier`). Never write `icon`, `on_complete`, or `ai_will_do` on the initial trait — it is granted at MIO unlock and has no completion step or AI selection logic. These keys belong on regular traits only.
+
    **`on_complete` form:** Use `expenditure_for_mio_upgrade = yes` for standard traits. Only use the full HOI4 block when custom country effects are explicitly needed.
 
    **`limit_to_equipment_type` usage:**
