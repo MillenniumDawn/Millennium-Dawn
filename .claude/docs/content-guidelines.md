@@ -44,6 +44,14 @@ On-demand quality checklist for new Millennium Dawn content. Condensed from `doc
 - No empty trigger blocks (`allowed`, `available`, `cancel`, `bypass`)
 - Use `relative_position_id` in all focus trees
 - Tags must be capitalised in script IDs (e.g., `SPR_focus_name_here`)
+- High-cost focuses (`cost ≥ 8`, or `cost ≥ 5` tagged with military/economy/research `search_filters`) must have a `factor = 0` modifier in `ai_will_do` when `has_active_mission = bankruptcy_incoming_collapse` — prevents AI queueing expensive focuses during financial collapse without blocking the player
+
+## Miscellaneous
+
+- Do not add nations to the bookmarks screen — bookmarks are added post-merge by leads
+- Changelog entry required before submitting for review — add to `Changelog.txt`
+- Cosmetic tags must be dropped when no longer applicable (e.g., an empire tag lost on regime change)
+- New tags (new countries) require all of: OOB, name lists, political structuring, starting laws, starting leader
 
 ## Generals & Admirals
 

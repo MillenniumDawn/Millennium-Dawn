@@ -42,21 +42,21 @@ scripted_gui = {
 
 		# Graphics for the Buildings
 		properties = {
-			investments_building_cic_button = { image = "[investments_GetCicButtonTexture]" }
-			investments_building_mic_button = { image = "[investments_GetMicButtonTexture]" }
-			investments_building_nic_button = { image = "[investments_GetNicButtonTexture]" }
-			investments_building_infra_button = { image = "[investments_GetInfraButtonTexture]" }
-			investments_building_offices_button = { image = "[investments_GetOfficesButtonTexture]" }
-			investments_building_antiair_button = { image = "[investments_GetAntiairButtonTexture]" }
-			investments_building_radar_button = { image = "[investments_GetRadarButtonTexture]" }
-			investments_building_airbase_button = { image = "[investments_GetAirbaseButtonTexture]" }
-			investments_building_fuel_silos_button = { image = "[investments_GetFuelSiloButtonTexture]" }
-			investments_building_internet_station_button = { image = "[investments_InternetStationButtonTexture]" }
-			investments_building_ref_button = { image = "[investments_GetRefButtonTexture]" }
-			investments_building_power_plant_button = { image = "[investments_GetPowerPlantButtonTexture]" }
-			investments_building_nuclear_reactor_button = { image = "[investments_GetNuclearReactorButtonTexture]" }
-			investments_building_agriculture_district_button = { image = "[investments_GetAgricultureDistrictButtonTexture]" }
-			investments_influence_icon = { image = "[investments_GainInfluence]" }
+			investments_building_cic_button = { image = "[investments_get_cic_button_texture]" }
+			investments_building_mic_button = { image = "[investments_get_mic_button_texture]" }
+			investments_building_nic_button = { image = "[investments_get_nic_button_texture]" }
+			investments_building_infra_button = { image = "[investments_get_infra_button_texture]" }
+			investments_building_offices_button = { image = "[investments_get_offices_button_texture]" }
+			investments_building_antiair_button = { image = "[investments_get_antiair_button_texture]" }
+			investments_building_radar_button = { image = "[investments_get_radar_button_texture]" }
+			investments_building_airbase_button = { image = "[investments_get_airbase_button_texture]" }
+			investments_building_fuel_silos_button = { image = "[investments_get_fuel_silo_button_texture]" }
+			investments_building_internet_station_button = { image = "[investments_get_internet_station_button_texture]" }
+			investments_building_ref_button = { image = "[investments_get_ref_button_texture]" }
+			investments_building_power_plant_button = { image = "[investments_get_power_plant_button_texture]" }
+			investments_building_nuclear_reactor_button = { image = "[investments_get_nuclear_reactor_button_texture]" }
+			investments_building_agriculture_district_button = { image = "[investments_get_agriculture_district_button_texture]" }
+			investments_influence_icon = { image = "[investments_gain_influence]" }
 		}
 
 		effects = {
@@ -133,120 +133,37 @@ scripted_gui = {
 			}
 
 			# Increase/Decrease the number of buildings
-			investments_building_amount_increase_button_click = { #increases investments_build_amount & update build time/cost
+			investments_building_amount_increase_button_click = {
 				ROOT = {
-					# Max amount depends on the selected building type
-					# Antiair Building
-					if = { limit = { check_variable = { project_building_type^-1 = 6 } }
-						add_to_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
-					}
-					# Radar Station
-					else_if = { limit = { check_variable = { project_building_type^-1 = 7 } }
-						add_to_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 6 }
-					}
-					# Fuel Silos
-					else_if = { limit = { check_variable = { project_building_type^-1 = 9 } }
-						add_to_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
-					}
-					# Internet Station
-					else_if = { limit = { check_variable = { project_building_type^-1 = 10 } }
-						add_to_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 6 }
-					}
-					# Infrastructure
-					else_if = { limit = { check_variable = { project_building_type^-1 = 4 } }
-						add_to_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
-					}
-					# Office Sectors
-					# Reverted to 5 from 10 Office Sectors
-					else_if = { limit = { check_variable = { project_building_type^-1 = 5 } }
-						add_to_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
-					}
-					else = {
-						add_to_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 10 }
-					}
+					add_to_variable = { project_build_amount^-1 = 1 }
+					set_temp_variable = { _max_idx = project_building_type^-1 }
+					clamp_variable = { var = project_build_amount^-1 min = 1 max = global.max_build_amount_array^_max_idx }
 					update_gui = yes
 				}
 				refresh_investment_gui = yes
 			}
-			investments_building_amount_decrease_button_click = { ##decreases investments_build_amount & update build time/cost
+			investments_building_amount_decrease_button_click = {
 				ROOT = {
-					# Max amount depends on the selected building type
-					# Antiair Building
-					if = { limit = { check_variable = { project_building_type^-1 = 6 } }
-						subtract_from_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
-					}
-					# Radar Station
-					else_if = { limit = { check_variable = { project_building_type^-1 = 7 } }
-						subtract_from_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 6 }
-					}
-					# Fuel Silos
-					else_if = { limit = { check_variable = { project_building_type^-1 = 9 } }
-						subtract_from_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
-					}
-					# Internet Station
-					else_if = { limit = { check_variable = { project_building_type^-1 = 10 } }
-						subtract_from_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 6 }
-					}
-					# Infrastructure
-					else_if = { limit = { check_variable = { project_building_type^-1 = 4 } }
-						subtract_from_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
-					}
-					# Office Sectors
-					else_if = { limit = { check_variable = { project_building_type^-1 = 5 } }
-						subtract_from_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 5 }
-					}
-					else = {
-						subtract_from_variable = { project_build_amount^-1 = 1 }
-						clamp_variable = { var = project_build_amount^-1 min = 1 max = 10 }
-					}
+					subtract_from_variable = { project_build_amount^-1 = 1 }
+					set_temp_variable = { _max_idx = project_building_type^-1 }
+					clamp_variable = { var = project_build_amount^-1 min = 1 max = global.max_build_amount_array^_max_idx }
 					update_gui = yes
 				}
 				refresh_investment_gui = yes
 			}
 
-			# Button Indexes and Positions
-			# Page 1
-			# line One - CIC - 1, MIC - 2, NIC - 3
-			# Line Two - Infrastructure - 4, Offices - 5, SAM - 6, Radar - 7
-			# Page 2
-			# Line One - Air Bases - 8, Fuel Silo - 9, Internet Station - 10
-			# Line Two - Biofuel Refineries - 11, Nuclear Reactor - 12
-			# Positions of Line One: { 8, 45, 82, 119 }, 45
-			# Positions of Line Two: { 8, 45, 82, 119 }, 76
-			# investments_buiding_xxxx_button_click sets variables for specific buildings and updates build time/cost
-
-			# Shows the Current Set Page of Buildings
+			# Shows the Current Set Page of Buildings (toggles between 1 and 2)
 			investments_increase_page_click = {
 				ROOT = {
-					# 1 is page one
-					if = { limit = { NOT = { has_variable = constructable_buildings } }
-						set_variable = { constructable_buildings = 1 }
-					}
 					if = { limit = { check_variable = { constructable_buildings = 1 } }
-						add_to_variable = { constructable_buildings = 1 }
+						set_variable = { constructable_buildings = 2 }
 					}
-					else_if = { limit = { check_variable = { constructable_buildings = 2 } }
-						set_variable = { constructable_buildings = 1 }
-					}
+					else = { set_variable = { constructable_buildings = 1 } }
 				}
 				refresh_investment_gui = yes
 			}
 
-			# Investable Buildings
-			# Index 1: CIC
+			# Building type IDs: CIC=1, MIC=2, NIC=3, Infra=4, Offices=5, Antiair=6, Radar=7, Airbase=8, FuelSilo=9, Internet=10, Ref=11, PowerPlant=12, Reactor=13, Agriculture=14
 			investments_building_cic_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
@@ -255,134 +172,108 @@ scripted_gui = {
 				}
 				refresh_investment_gui = yes
 			}
-			# Index 2: MIC
 			investments_building_mic_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 2 }
 					update_gui = yes
 				}
-
 				refresh_investment_gui = yes
 			}
-			# Index 3: NIC
 			investments_building_nic_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 3 }
 					update_gui = yes
 				}
-
 				refresh_investment_gui = yes
 			}
-			# Index 4: Infrastructure
 			investments_building_infra_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 4 }
 					update_gui = yes
 				}
-
 				refresh_investment_gui = yes
 			}
-			# Index 5: Offices
 			investments_building_offices_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 5 }
 					update_gui = yes
 				}
-
 				refresh_investment_gui = yes
 			}
-			# Index 6: SAM
 			investments_building_antiair_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 6 }
 					update_gui = yes
 				}
-
 				refresh_investment_gui = yes
 			}
-			# Index 7: Radar
 			investments_building_radar_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 7 }
 					update_gui = yes
 				}
-
 				refresh_investment_gui = yes
 			}
-			# Index 8: Air Bases
 			investments_building_airbase_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 8 }
 					update_gui = yes
 				}
-
 				refresh_investment_gui = yes
 			}
-			#Index 9: Fuel Silos
 			investments_building_fuel_silos_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 9 }
 					update_gui = yes
 				}
-
 				refresh_investment_gui = yes
 			}
-			#Index 10: Internet Station
 			investments_building_internet_station_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 10 }
 					update_gui = yes
 				}
-
 				refresh_investment_gui = yes
 			}
-			#Index 11: Renewable Energy Infrastructure
 			investments_building_ref_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 11 }
 					update_gui = yes
 				}
-
 				refresh_investment_gui = yes
 			}
-			#Index 12: Biofuel Refineries
 			investments_building_power_plant_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 12 }
 					update_gui = yes
 				}
-
 				refresh_investment_gui = yes
 			}
-			#Index 13: Nuclear Reactor
 			investments_building_nuclear_reactor_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 13 }
 					update_gui = yes
 				}
-
 				refresh_investment_gui = yes
 			}
-			#Index 13: Nuclear Reactor
 			investments_building_agriculture_district_button_click = {
 				ROOT = {
 					set_variable = { project_build_amount^-1 = 1 }
 					set_variable = { project_building_type^-1 = 14 }
 					update_gui = yes
 				}
-
 				refresh_investment_gui = yes
 			}
 		}
@@ -407,53 +298,8 @@ scripted_gui = {
 						NOT = { is_justifying_wargoal_against = PREV.CONTROLLER }
 						# General things
 						has_available_treasury_investment = yes
-						currently_is_considering_a_project = yes
 					}
-					if = { limit = { check_variable = { ROOT.project_building_type^-1 = 1 } }
-						investments_building_cic_available = yes
-					}
-					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 2 } }
-						investments_building_mic_available = yes
-					}
-					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 3 } }
-						investments_building_nic_available = yes
-					}
-					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 4 } }
-						investments_building_infra_available = yes
-					}
-					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 5 } }
-						investments_building_offices_available = yes
-					}
-					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 6 } }
-						investments_building_antiair_available = yes
-					}
-					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 7 } }
-						investments_building_radar_available = yes
-					}
-					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 8 } }
-						investments_building_airbase_available = yes
-					}
-					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 9 } }
-						building_fuel_silos_available = yes
-					}
-					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 10 } }
-						building_internet_station_available = yes
-					}
-					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 11 } }
-						investments_building_ref_available = yes
-					}
-					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 12 } }
-						investments_building_foss_fuel_powerplant_available = yes
-					}
-					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 13 } }
-						investments_building_reactor_available = yes
-					}
-					else_if = { limit = { check_variable = { ROOT.project_building_type^-1 = 14 } }
-						investments_building_agriculture_district_available = yes
-					}
-				}
-				else_if = { limit = { NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } currently_is_considering_a_project = yes } }
-					currently_is_considering_a_project = yes
+					check_variable = { ROOT.project_building_available^-1 = 1 }
 				}
 				else = {
 					always = yes
@@ -478,120 +324,79 @@ scripted_gui = {
 				ROOT = { NOT = { has_active_mission = cheap_loan_from_the_imf_mission } }
 			}
 
-			# Investable Buildings
-			# Page 1 - Index One: Civilian Industry
+			# Page 1 buttons (constructable_buildings = 1)
 			investments_building_cic_button_click_enabled = {
 				investments_building_cic_available = yes
 				currently_is_considering_a_project = yes
 			}
-			investments_building_cic_button_visible = {
-				ROOT = { check_variable = { constructable_buildings = 1 } }
-			}
-			# Index Two: Military Industry
+			investments_building_cic_button_visible = { ROOT = { check_variable = { constructable_buildings = 1 } } }
 			investments_building_mic_button_click_enabled = {
 				investments_building_mic_available = yes
 				currently_is_considering_a_project = yes
 			}
-			investments_building_mic_button_visible = {
-				ROOT = { check_variable = { constructable_buildings = 1 } }
-			}
-			# Index Three: Naval Dockyard
+			investments_building_mic_button_visible = { ROOT = { check_variable = { constructable_buildings = 1 } } }
 			investments_building_nic_button_click_enabled = {
 				investments_building_nic_available = yes
 				currently_is_considering_a_project = yes
 			}
-			investments_building_nic_button_visible = {
-				ROOT = { check_variable = { constructable_buildings = 1 } }
-			}
-			# Index Four: Infrastructure
+			investments_building_nic_button_visible = { ROOT = { check_variable = { constructable_buildings = 1 } } }
 			investments_building_infra_button_click_enabled = {
 				investments_building_infra_available = yes
 				currently_is_considering_a_project = yes
 			}
-			investments_building_infra_button_visible = {
-				ROOT = { check_variable = { constructable_buildings = 1 } }
-			}
-			# Index Five: Offices
+			investments_building_infra_button_visible = { ROOT = { check_variable = { constructable_buildings = 1 } } }
 			investments_building_offices_button_click_enabled = {
 				investments_building_offices_available = yes
 				currently_is_considering_a_project = yes
 			}
-			investments_building_offices_button_visible = {
-				ROOT = { check_variable = { constructable_buildings = 1 } }
-			}
-			# Index Six: SAM
+			investments_building_offices_button_visible = { ROOT = { check_variable = { constructable_buildings = 1 } } }
 			investments_building_antiair_button_click_enabled = {
 				investments_building_antiair_available = yes
 				currently_is_considering_a_project = yes
 			}
-			investments_building_antiair_button_visible = {
-				ROOT = { check_variable = { constructable_buildings = 1 } }
-			}
-			# Index Seven: Radar
+			investments_building_antiair_button_visible = { ROOT = { check_variable = { constructable_buildings = 1 } } }
 			investments_building_radar_button_click_enabled = {
 				investments_building_radar_available = yes
 				currently_is_considering_a_project = yes
 			}
-			investments_building_radar_button_visible = {
-				ROOT = { check_variable = { constructable_buildings = 1 } }
-			}
-			# Page Two
-			# Index Eight: Air Bases
+			investments_building_radar_button_visible = { ROOT = { check_variable = { constructable_buildings = 1 } } }
+
+			# Page 2 buttons (constructable_buildings = 2)
 			investments_building_airbase_button_click_enabled = {
 				investments_building_airbase_available = yes
 				currently_is_considering_a_project = yes
 			}
-			investments_building_airbase_button_visible = {
-				ROOT = { check_variable = { constructable_buildings = 2 } }
-			}
-			# Index Nine: Fuel Silo
+			investments_building_airbase_button_visible = { ROOT = { check_variable = { constructable_buildings = 2 } } }
 			investments_building_fuel_silos_button_click_enabled = {
 				building_fuel_silos_available = yes
 				currently_is_considering_a_project = yes
 			}
-			investments_building_fuel_silos_button_visible = {
-				ROOT = { check_variable = { constructable_buildings = 2 } }
-			}
-			# Index Ten: Internet Station
+			investments_building_fuel_silos_button_visible = { ROOT = { check_variable = { constructable_buildings = 2 } } }
 			investments_building_internet_station_button_click_enabled = {
 				building_internet_station_available = yes
 				currently_is_considering_a_project = yes
 			}
-			investments_building_internet_station_button_visible = {
-				ROOT = { check_variable = { constructable_buildings = 2 } }
-			}
-			# Index Eleven: Refineries
+			investments_building_internet_station_button_visible = { ROOT = { check_variable = { constructable_buildings = 2 } } }
 			investments_building_ref_button_click_enabled = {
 				investments_building_ref_available = yes
 				currently_is_considering_a_project = yes
 			}
-			investments_building_ref_button_visible = {
-				ROOT = { check_variable = { constructable_buildings = 2 } }
-			}
-			# Index Eleven: Refineries
+			investments_building_ref_button_visible = { ROOT = { check_variable = { constructable_buildings = 2 } } }
 			investments_building_power_plant_button_click_enabled = {
 				investments_building_foss_fuel_powerplant_available = yes
 				currently_is_considering_a_project = yes
 			}
-			investments_building_power_plant_button_visible = {
-				ROOT = { check_variable = { constructable_buildings = 2 } }
-			}
-			# Index Twelve: Nuclear Reactor
+			investments_building_power_plant_button_visible = { ROOT = { check_variable = { constructable_buildings = 2 } } }
 			investments_building_nuclear_reactor_button_click_enabled = {
 				investments_building_reactor_available = yes
 				currently_is_considering_a_project = yes
 			}
-			investments_building_nuclear_reactor_button_visible = {
-				ROOT = { check_variable = { constructable_buildings = 2 } }
-			}
-			# Index Fourteen: Agriculture District
+			investments_building_nuclear_reactor_button_visible = { ROOT = { check_variable = { constructable_buildings = 2 } } }
 			investments_building_agriculture_district_button_click_enabled = {
 				investments_building_agriculture_district_available = yes
 				currently_is_considering_a_project = yes
 			}
-			investments_building_agriculture_district_button_visible = {
-				ROOT = { check_variable = { constructable_buildings = 2 } }
-			}
+			investments_building_agriculture_district_button_visible = { ROOT = { check_variable = { constructable_buildings = 2 } } }
 		}
 	}
 
@@ -839,7 +644,7 @@ scripted_gui = {
 			}
 
 			expand_local_infrastructure_click = {
-				custom_effect_tooltip = expand_local_renewable_capacity_click_tt
+				custom_effect_tooltip = expand_local_infrastructure_click_tt
 				set_state_flag = { flag = expand_local_infrastructure value = 1 days = 180 }
 
 				add_dynamic_modifier = {
