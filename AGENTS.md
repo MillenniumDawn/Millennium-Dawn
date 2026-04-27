@@ -2,6 +2,8 @@
 
 ## Project Overview
 
+**NOTE TO CONTRIBUTORS**: Non‑English localisation files are **never** modified by automated scripts. Translators handle those files separately. All bulk rename operations in this repository target **English only** unless a translator explicitly requests a change.
+
 Millennium Dawn is a Hearts of Iron IV mod set in the modern era (2000-present). It's a Paradox Interactive game modification with extensive game systems including focus trees, events, decisions, ideas, technologies, and more.
 
 ## Directory Structure
@@ -48,6 +50,7 @@ A standalone diff summary script is also available: `python3 tools/analysis/revi
 - Use multiplication instead of division (e.g., `* 0.01` not `/ 100`)
 - Use `if/else` instead of two consecutive `if` blocks with complementary conditions — avoids double-execution risk and is clearer in intent
 - Use variables instead of magic numbers; always prefix country-specific variables with the country tag (e.g., `ISR_operation_success`, not `oper_succ_var`) to avoid cross-country collisions
+- Use **snake_case** for all identifiers (focus IDs, decision IDs, variable names, idea names, event namespaces, etc.) — never PascalCase or camelCase (e.g., `GER_reform_economy`, not `GER_ReformEconomy` or `GER_reformEconomy`)
 
 ## Performance Tips
 
