@@ -3,17 +3,26 @@ on_actions = {
 		effect = {
 			if = {
 				limit = { ROOT = { has_war_with = ALN } }
-				every_controlled_state = {
-					if = {
-						limit = {
-							has_state_flag = EH_electric_trap_enabled_flag
-							NOT = {
-								is_frontline_state = yes
-								is_second_line_state = yes
-								is_third_line_state = yes
+				# Only check state traps if nation has activated them or any state has trap flags
+				if = {
+					limit = {
+						ROOT = {
+							OR = {
+								has_country_flag = EH_nation_activated_electric_traps_flag
+								any_controlled_state = { has_state_flag = EH_electric_trap_enabled_flag }
 							}
 						}
-						clr_state_flag = EH_electric_trap_enabled_flag
+					}
+					every_controlled_state = {
+						if = {
+							limit = {
+								has_state_flag = EH_electric_trap_enabled_flag
+								NOT = { is_frontline_state = yes }
+								NOT = { is_second_line_state = yes }
+								NOT = { is_third_line_state = yes }
+							}
+							clr_state_flag = EH_electric_trap_enabled_flag
+						}
 					}
 				}
 				if = {
