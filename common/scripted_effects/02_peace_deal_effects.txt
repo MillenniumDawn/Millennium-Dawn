@@ -781,7 +781,15 @@ CPD_sign_peace_deal = {
 
 CPD_execute_white_peace = {
 	# Uses CPD_WP_initiator, CPD_WP_receiver, and CPD_is_ceasefire temp variables set by caller
-	var:CPD_WP_receiver = {
+	if = {
+		limit = {
+			NOT = { var:CPD_WP_initiator = { exists = yes } }
+			NOT = { var:CPD_WP_receiver = { exists = yes } }
+		}
+		log = "[GetDateText]: ERROR: CPD_execute_white_peace called with invalid actors"
+	}
+	else = {
+		var:CPD_WP_receiver = {
 		if = {
 			limit = { var:CPD_WP_initiator = { is_faction_leader = no } }
 			white_peace = var:CPD_WP_initiator
@@ -819,6 +827,7 @@ CPD_execute_white_peace = {
 				limit = { is_in_faction_with = var:CPD_WP_receiver }
 				white_peace = var:CPD_WP_initiator
 			}
+		}
 		}
 	}
 }
