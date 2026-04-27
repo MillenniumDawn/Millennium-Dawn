@@ -195,6 +195,19 @@ Carrier variants (CV prefix):
 - Multirole fighters: MR_Fighter1–7 (carrier: CV_MR_Fighter1–7)
 - Strike fighters: Strike_fighter1–7
 
+**Generation mapping for aircraft airframes** (applies to all archetype + generation combinations like `small_plane_strike_airframe_N`):
+
+| Generation Suffix | Tech Required | Start Year | Example Variants                                   |
+| ----------------- | ------------- | ---------- | -------------------------------------------------- |
+| `_0`              | `gen_3_*`     | 1960       | Early jets (F-4, MiG-21, J 35 Draken)              |
+| `_1`              | `gen_3_*`     | 1960       | 1960s variants (A-4, F-104, JA 37 Viggen)          |
+| `_2`              | `gen_4_*`     | 1980       | 1980s variants (F-16A, F/A-18A, JAS 39 Gripen A/B) |
+| `_3`              | `gen_5_*`     | 2015       | 2010s variants (F-16C, JAS 39E Gripen)             |
+| `_4`              | `gen_6_*`     | 2025       | Future variants                                    |
+| `_5`              | `gen_7_*`     | 2035       | Endgame variants                                   |
+
+**Important:** The generation suffix (`_0`, `_1`, `_2`, etc.) must match a technology that unlocks that equipment type. For example, `small_plane_strike_airframe_2` requires `gen_4_light` to be researched. If you create a variant with `type = small_plane_strike_airframe_3` but the country doesn't have `gen_5_light`, the variant exists but cannot be produced or added to stockpile.
+
 ### Aircraft Variant (BBA)
 
 ```
@@ -361,6 +374,16 @@ A country with MBT bonuses does NOT automatically get APC or IFV bonuses — eac
 9. **Transport airframe type**: Both `medium_plane_air_transport_airframe` and `large_plane_air_transport_airframe` use HOI4 type `suicide` internally (a quirk of the engine). This is normal — don't change it.
 
 10. **NSB vs Non-NSB Stockpile Types**: NSB and non-NSB OOB files use completely different equipment type systems. See "Stockpile Equipment Types" section below.
+
+11. **Aircraft variant name mismatches in events**: Events that create aircraft variants AND add them to stockpile must use matching names. A common bug is creating `"Variant A"` but adding `"Variant B"` to stockpile — the stockpile addition silently fails because the variant doesn't exist. Always verify the `create_equipment_variant` name matches the `add_equipment_to_stockpile` variant_name.
+
+12. **Aircraft parent_version must chain correctly**: The first variant of any equipment type must have `parent_version = 0`. Setting `parent_version = 1` when no version 0 exists can prevent the variant from spawning. Each subsequent variant increments from an existing parent (e.g., if version 0 exists, version 1 can reference it).
+
+13. **BBA OOB stockpile must be uncommented**: Air wings in BBA OOB files reference variants by name, but if the `add_equipment_to_stockpile` block is commented out or missing, the air wings will have no equipment to deploy. Always verify stockpile entries exist for all variants referenced in air_wings.
+
+14. **Higher-generation aircraft variants require technology unlock**: Using `small_plane_strike_airframe_3` (gen 3, 2015+) requires `gen_5_light` technology. If an event creates a gen 3 variant but doesn't grant the tech, the equipment type isn't unlocked and stockpile additions fail. Add `set_technology = { gen_X_Y = 1 }` when introducing advanced variants via event/focus.
+
+15. **BBA/non-BBA event consistency**: Events that add aircraft should have both BBA and non-BBA branches. Use `if = { limit = { has_dlc = "By Blood Alone" } }` for BBA variants with `variant_name`, and `else` for legacy types like `MR_Fighter3`. Don't only add the legacy type — BBA players will get nothing.
 
 ---
 
