@@ -25,7 +25,9 @@ class MIOStandardizer(BaseStandardizer):
             "name": "",
             "allowed": [],
             "icon": [],
+            "include": "",
             "task_capacity": "",
+            "available": [],
             "visible": [],
             "ai_will_do": [],
             "equipment_type": [],
@@ -55,6 +57,11 @@ class MIOStandardizer(BaseStandardizer):
                 props["allowed"].append(block)
                 i = next_i
                 continue
+            elif line.startswith("available ="):
+                block, next_i = self.extract_block(block_lines, i)
+                props["available"].append(block)
+                i = next_i
+                continue
             elif line.startswith("visible ="):
                 block, next_i = self.extract_block(block_lines, i)
                 props["visible"].append(block)
@@ -67,6 +74,8 @@ class MIOStandardizer(BaseStandardizer):
                     i = next_i
                     continue
                 props["icon"].append([f"\t{line}"])
+            elif line.startswith("include ="):
+                props["include"] = line
             elif line.startswith("ai_will_do ="):
                 block, next_i = self.extract_block(block_lines, i)
                 props["ai_will_do"].append(block)
@@ -146,9 +155,17 @@ class MIOStandardizer(BaseStandardizer):
         if props["icon"]:
             self._add_blocks(lines, props["icon"])
 
+        if props["include"]:
+            lines.append(f"\t{props['include']}")
+
         if props["task_capacity"]:
             self._add_blank_line_if_needed(lines)
             lines.append(f"\t{props['task_capacity']}")
+            lines.append("")
+
+        if props["available"]:
+            self._add_blank_line_if_needed(lines)
+            self._add_blocks(lines, props["available"])
             lines.append("")
 
         if props["visible"]:
@@ -182,7 +199,7 @@ class MIOStandardizer(BaseStandardizer):
 
         if props["initial_trait"]:
             self._add_blank_line_if_needed(lines)
-            self._add_blocks(lines, props["initial_trait"])
+            self._add_blocks(lines, props["initial_trait"], is_trait=True)
             lines.append("")
 
         if props["traits"]:
@@ -294,6 +311,106 @@ class MIOStandardizer(BaseStandardizer):
         result.append(f"{indent}}}")
         return result
 
+    def _normalize_modifier_block(
+        self, block_lines: List[str], key: str, indent: str
+    ) -> List[str]:
+        """Format `key = { stat = value ... }` as single-line for 1 modifier, multi-line for 2+.
+        Falls back to compact_block if the block contains comments or nested blocks.
+        """
+        for line in block_lines:
+            if line.strip().startswith("#"):
+                return self.compact_block(block_lines)
+
+        full = " ".join(l.strip() for l in block_lines if l.strip())
+        if not full.startswith(key) or "{" not in full or "}" not in full:
+            return self.compact_block(block_lines)
+
+        inner = full.split("{", 1)[1].rsplit("}", 1)[0].strip()
+        if "{" in inner or "}" in inner:
+            return self.compact_block(block_lines)
+
+        tokens = inner.split()
+        if not tokens:
+            return self.compact_block(block_lines)
+        if len(tokens) % 3 != 0:
+            return self.compact_block(block_lines)
+
+        pairs = []
+        for j in range(0, len(tokens), 3):
+            if tokens[j + 1] != "=":
+                return self.compact_block(block_lines)
+            pairs.append(f"{tokens[j]} = {tokens[j + 2]}")
+
+        if len(pairs) == 1:
+            return [f"{indent}{key} = {{ {pairs[0]} }}"]
+
+        inner_indent = indent + "\t"
+        result = [f"{indent}{key} = {{"]
+        for p in pairs:
+            result.append(f"{inner_indent}{p}")
+        result.append(f"{indent}}}")
+        return result
+
+    def _merge_and_normalize_modifier_blocks(
+        self, blocks: List[List[str]], key: str, indent: str
+    ) -> List[str]:
+        """Merge multiple blocks with the same key into a single block, deduping
+        modifiers (last value wins). Falls back to per-block normalization if any
+        block contains comments or nested blocks.
+        """
+        if not blocks:
+            return []
+        if len(blocks) == 1:
+            return self._normalize_modifier_block(blocks[0], key, indent)
+
+        merged_pairs: Dict[str, str] = {}
+        for block in blocks:
+            for line in block:
+                if line.strip().startswith("#"):
+                    return self._fallback_concat_modifier_blocks(blocks, key, indent)
+
+            full = " ".join(l.strip() for l in block if l.strip())
+            if not full.startswith(key) or "{" not in full or "}" not in full:
+                return self._fallback_concat_modifier_blocks(blocks, key, indent)
+
+            inner = full.split("{", 1)[1].rsplit("}", 1)[0].strip()
+            if "{" in inner or "}" in inner:
+                return self._fallback_concat_modifier_blocks(blocks, key, indent)
+
+            tokens = inner.split()
+            if not tokens:
+                continue
+            if len(tokens) % 3 != 0:
+                return self._fallback_concat_modifier_blocks(blocks, key, indent)
+
+            for j in range(0, len(tokens), 3):
+                if tokens[j + 1] != "=":
+                    return self._fallback_concat_modifier_blocks(blocks, key, indent)
+                merged_pairs[tokens[j]] = tokens[j + 2]
+
+        if not merged_pairs:
+            return self._normalize_modifier_block(blocks[0], key, indent)
+
+        if len(merged_pairs) == 1:
+            stat, value = next(iter(merged_pairs.items()))
+            return [f"{indent}{key} = {{ {stat} = {value} }}"]
+
+        inner_indent = indent + "\t"
+        result = [f"{indent}{key} = {{"]
+        for stat, value in merged_pairs.items():
+            result.append(f"{inner_indent}{stat} = {value}")
+        result.append(f"{indent}}}")
+        return result
+
+    def _fallback_concat_modifier_blocks(
+        self, blocks: List[List[str]], key: str, indent: str
+    ) -> List[str]:
+        """Concat each block separately when merge isn't safe (comments/nested)."""
+        result: List[str] = []
+        for block in blocks:
+            result.extend(self._normalize_modifier_block(block, key, indent))
+        return result
+
     def normalize_mutually_exclusive(
         self, block_lines: List[str], inner_indent: str
     ) -> List[str]:
@@ -332,6 +449,11 @@ class MIOStandardizer(BaseStandardizer):
             "on_complete": [],
             "ai_will_do": [],
             "other": [],
+        }
+        modifier_blocks: Dict[str, List[List[str]]] = {
+            "equipment_bonus": [],
+            "production_bonus": [],
+            "organization_modifier": [],
         }
 
         i = 1
@@ -380,13 +502,13 @@ class MIOStandardizer(BaseStandardizer):
                 )
             elif stripped.startswith("equipment_bonus ="):
                 sub, i = self.extract_block(block_lines, i)
-                sections["equipment_bonus"].extend(self.compact_block(sub))
+                modifier_blocks["equipment_bonus"].append(sub)
             elif stripped.startswith("production_bonus ="):
                 sub, i = self.extract_block(block_lines, i)
-                sections["production_bonus"].extend(self.compact_block(sub))
+                modifier_blocks["production_bonus"].append(sub)
             elif stripped.startswith("organization_modifier ="):
                 sub, i = self.extract_block(block_lines, i)
-                sections["organization_modifier"].extend(self.compact_block(sub))
+                modifier_blocks["organization_modifier"].append(sub)
             elif stripped.startswith("on_complete ="):
                 sub, i = self.extract_block(block_lines, i)
                 sections["on_complete"].extend(self.normalize_on_complete(sub))
@@ -396,6 +518,14 @@ class MIOStandardizer(BaseStandardizer):
             else:
                 sections["other"].append(f"{inner_indent}{stripped}")
                 i += 1
+
+        for mod_key, blocks in modifier_blocks.items():
+            if blocks:
+                sections[mod_key].extend(
+                    self._merge_and_normalize_modifier_blocks(
+                        blocks, mod_key, inner_indent
+                    )
+                )
 
         result = [block_lines[0].rstrip()]
         section_order = [
