@@ -85,9 +85,9 @@ focus = {
 }
 ```
 
-## Example: Bankruptcy Guard in `available`
+## Example: Bankruptcy Guard in `ai_will_do`
 
-High-cost focuses (cost >= 8, or cost >= 5 for military/economy/research) should block during financial collapse:
+High-cost focuses (cost >= 8, or cost >= 5 for military/economy/research) must prevent the AI from queueing them during financial collapse. This is done in `ai_will_do` — not `available` — so the player is never blocked:
 
 ```
 focus = {
@@ -100,10 +100,9 @@ focus = {
 
 	cost = 10
 
-	search_filters = { FOCUS_FILTER_ISRPOLIT FOCUS_FILTER_POLITICAL }
+	search_filters = { FOCUS_FILTER_ISRPOLIT FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
 
 	available = {
-		NOT = { has_active_mission = bankruptcy_incoming_collapse }
 		OR = {
 			emerging_anarchist_communism_are_in_power = yes
 			emerging_communist_state_are_in_power = yes
@@ -119,6 +118,10 @@ focus = {
 
 	ai_will_do = {
 		base = 3
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
 	}
 }
 ```

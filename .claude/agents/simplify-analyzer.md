@@ -29,6 +29,13 @@ You are an expert code simplification analyst specializing in file analysis and 
 - **Respect project conventions**: Follow the formatting rules established in the project (tabs for indentation, opening `{` on same line, single blank lines between elements, etc.).
 - **Be conservative with unclear code**: If you're unsure whether a simplification is safe, flag it rather than applying it blindly.
 - **Consider performance**: Prefer patterns that reduce runtime overhead (e.g., avoiding open-fire MTTH events, preferring tag-specific on_actions).
+- **Apply performance patterns**: When simplifying, also check for HOI4-specific performance anti-patterns from `.claude/docs/performance-patterns.md`:
+  - Unbounded `every_country` / `every_state` loops without narrow arrays
+  - Complex decision `visible` blocks evaluated every frame
+  - GUI `dirty` bound to `global.date` or other per-tick variables
+  - `CONTROLLER = { ... }` scope switches inside per-state loops without hoisting
+  - Division without clamp-before-guard
+  - If you find significant performance issues, flag them for the `performance-analyzer` agent.
 
 ## Known Safe Simplifications
 

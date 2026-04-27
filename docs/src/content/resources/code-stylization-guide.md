@@ -320,4 +320,6 @@ CHI_norinco_manufacturer = {
 # Related Resources
 
 - [Code Resources](/dev-resources/code-resource) - Modifiers and effects
+- [Dynamic Modifiers](/dev-resources/dynamic-modifiers) - Dynamic modifier tooltip usage
+- [Claude Code Skills](/dev-resources/claude-code-skills) - AI-assisted development tools
 - [Game Rules](/player-tutorials/game-rules) - Game rule reference

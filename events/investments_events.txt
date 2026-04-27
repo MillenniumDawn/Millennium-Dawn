@@ -1,49 +1,47 @@
-add_namespace = AC_event
+add_namespace = investments_event
 
-# Notes: Maintenance Events
-# Starts project
+# Project completion event.
 country_event = {
-	id = AC_event.0
+	id = investments_event.0
 	hidden = yes
 	is_triggered_only = yes
 	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.0 executed"
+		log = "[GetDateText]: [This.GetName]: investments_event.0 executed"
 		complete_project = yes
 		refresh_investment_gui = yes
 	}
 }
 
-# Ends project
+# Project cancellation/timeout event.
 country_event = {
-	id = AC_event.1
+	id = investments_event.1
 	hidden = yes
 	is_triggered_only = yes
 	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.1 executed"
+		log = "[GetDateText]: [This.GetName]: investments_event.1 executed"
 		end_project = yes
 		refresh_investment_gui = yes
 	}
 }
 
 country_event = {
-	id = AC_event.3
+	id = investments_event.3
 	hidden = yes
 	is_triggered_only = yes
 	immediate = {
-		log = "[GetDateText]: [ROOT.GetName]: AC_event.3 executed"
-		var:ROOT.AC_nation_target = {
-			country_event = AC_event.10
+		log = "[GetDateText]: [ROOT.GetName]: investments_event.3 executed"
+		var:ROOT.investments_nation_target = {
+			country_event = investments_event.10
 		}
 		refresh_investment_gui = yes
 	}
 }
 
-# AC Event Master Event
-# Offers Investments to THIS from the Investor Nation FROM
+# AI investment offer event.
 country_event = {
-	id = AC_event.10
-	title = AC_event.1.t
-	desc = AC_event.1.d
+	id = investments_event.10
+	title = investments_event.1.t
+	desc = investments_event.1.d
 	picture = GFX_united_states_dollar
 	is_triggered_only = yes
 
@@ -51,19 +49,29 @@ country_event = {
 		hidden_effect = {
 			set_variable = { investor_cost = FROM.project_monetary_cost_effect }
 			multiply_variable = { investor_cost = 0.1 }
+			set_variable = { pending_offer_total_cost = FROM.project_monetary_cost^-1 }
+			set_variable = { pending_offer_duration = FROM.project_construction_duration^-1 }
+			set_variable = { pending_offer_amount = FROM.project_build_amount^-1 }
+			set_variable = { pending_offer_type = FROM.project_building_type^-1 }
+			set_variable = { pending_offer_state = FROM.investments_state_target }
 		}
 	}
 	option = {
-		name = AC_event.1.o1
-		log = "[GetDateText]: [This.GetName]: AC_event.1.o1 executed"
+		name = investments_event.1.o1
+		log = "[GetDateText]: [This.GetName]: investments_event.1.o1 executed"
 		hidden_effect = {
-			# Activates the Investment Project
-			# ROOT is the target country or if you just don't scope it / FROM is the investor nation
-			# Investor Nation Begins Project
 			FROM = {
+				# Restore snapshotted offer values so overlapping offers don't corrupt the staging slots
+				set_variable = { project_building_type^-1 = PREV.pending_offer_type }
+				set_variable = { project_build_amount^-1 = PREV.pending_offer_amount }
+				set_variable = { project_monetary_cost^-1 = PREV.pending_offer_total_cost }
+				set_variable = { project_monetary_cost_effect = PREV.pending_offer_total_cost }
+				multiply_variable = { project_monetary_cost_effect = -1 }
+				set_variable = { investments_state_target = PREV.pending_offer_state }
+
 				start_project_two = yes
 				clr_country_flag = this_investment_offer_pending@PREV
-				clr_country_flag = AC_ai_investment_pending
+				clr_country_flag = investments_ai_pending
 			}
 			# Influence Section
 			if = {
@@ -102,6 +110,11 @@ country_event = {
 			multiply_temp_variable = { treasury_change = 0.1 }
 			modify_treasury_effect = yes
 			clear_variable = investor_cost
+			clear_variable = pending_offer_total_cost
+			clear_variable = pending_offer_duration
+			clear_variable = pending_offer_amount
+			clear_variable = pending_offer_type
+			clear_variable = pending_offer_state
 		}
 
 		# AI Chance of taking the Investment Project
@@ -204,13 +217,18 @@ country_event = {
 	}
 
 	option = {
-		name = AC_event.1.o2 # refuse
-		log = "[GetDateText]: [This.GetName]: AC_event.1.o2 executed"
+		name = investments_event.1.o2 # refuse
+		log = "[GetDateText]: [This.GetName]: investments_event.1.o2 executed"
 		# FROM is the original investor nation
 		# THIS is the target nation
 		clear_variable = investor_cost
+		clear_variable = pending_offer_total_cost
+		clear_variable = pending_offer_duration
+		clear_variable = pending_offer_amount
+		clear_variable = pending_offer_type
+		clear_variable = pending_offer_state
 		FROM = {
-			country_event = AC_event.11
+			country_event = investments_event.11
 		}
 		set_country_flag = { flag = recently_refused_investment@FROM days = 30 value = 1 }
 
@@ -331,212 +349,46 @@ country_event = {
 
 #Construction Refused
 country_event = {
-	id = AC_event.11
-	title = AC_event.2.t
-	desc = AC_event.2.d
+	id = investments_event.11
+	title = investments_event.2.t
+	desc = investments_event.2.d
 	picture = GFX_united_states_dollar
 
 	is_triggered_only = yes
 
 	option = {
-		name = AC_event.2.o1
-		log = "[GetDateText]: [This.GetName]: AC_event.11.o1 executed"
+		name = investments_event.2.o1
+		log = "[GetDateText]: [This.GetName]: investments_event.2.o1 executed"
 		clr_country_flag = this_investment_offer_pending@FROM
-		clr_country_flag = AC_ai_investment_pending
+		clr_country_flag = investments_ai_pending
 	}
 }
 
 #Construction Cancelled
 country_event = {
-	id = AC_event.12
-	title = AC_event.3.t
-	desc = AC_event.3.d
+	id = investments_event.12
+	title = investments_event.3.t
+	desc = investments_event.3.d
 	picture = GFX_united_states_dollar
 
 	is_triggered_only = yes
 
 	option = {
-		name = AC_event.3.o1
-		log = "[GetDateText]: [This.GetName]: AC_event.12.o1 executed"
+		name = investments_event.3.o1
+		log = "[GetDateText]: [This.GetName]: investments_event.3.o1 executed"
 	}
 }
 
-# AC Project Maintenance Events
-# 12/01/2022 - Bird: Reduced the reset timer to a day. Should hypothetically improve the clean up process
-# The project
-country_event = { #Clears project array index 0
-	id = AC_event.30
+# Cleanup event for any project slot. Reads `project` from country scope
+# (set by initialize_end_project_decisions before firing).
+country_event = {
+	id = investments_event.30
 	hidden = yes
 	is_triggered_only = yes
 	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.30 executed"
+		log = "[GetDateText]: [This.GetName]: investments_event.30 cleared project [?project]"
 		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^0 = 0 }
-		refresh_investment_gui = yes
-	}
-}
-country_event = { #Clears project array index 1
-	id = AC_event.31
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.31 executed"
-		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^1 = 0 }
-		refresh_investment_gui = yes
-	}
-
-}
-country_event = { #Clears project array index 2
-	id = AC_event.32
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.32 executed"
-		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^2 = 0 }
-		refresh_investment_gui = yes
-	}
-
-}
-country_event = { #Clears project array index 3
-	id = AC_event.33
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.33 executed"
-		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^3 = 0 }
-		refresh_investment_gui = yes
-	}
-
-}
-country_event = { #Clears project array index 4
-	id = AC_event.34
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.34 executed"
-		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^4 = 0 }
-		refresh_investment_gui = yes
-	}
-
-}
-country_event = { #Clears project array index 5
-	id = AC_event.35
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.35 executed"
-		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^5 = 0 }
-		refresh_investment_gui = yes
-	}
-
-}
-country_event = { #Clears project array index 6
-	id = AC_event.36
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.36 executed"
-		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^6 = 0 }
-		refresh_investment_gui = yes
-	}
-
-}
-country_event = { #Clears project array index 7
-	id = AC_event.37
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.37 executed"
-		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^7 = 0 }
-		refresh_investment_gui = yes
-	}
-
-}
-country_event = { #Clears project array index 8
-	id = AC_event.38
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.38 executed"
-		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^8 = 0 }
-		refresh_investment_gui = yes
-	}
-
-}
-country_event = { #Clears project array index 9
-	id = AC_event.39
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.39 executed"
-		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^9 = 0 }
-		refresh_investment_gui = yes
-	}
-
-}
-country_event = { #Clears project array index 10
-	id = AC_event.310
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.310 executed"
-		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^10 = 0 }
-		refresh_investment_gui = yes
-	}
-
-}
-country_event = { #Clears project array index 11
-	id = AC_event.311
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.311 executed"
-		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^11 = 0 }
-		refresh_investment_gui = yes
-	}
-
-}
-country_event = { #Clears project array index 12
-	id = AC_event.312
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.312 executed"
-		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^12 = 0 }
-		refresh_investment_gui = yes
-	}
-}
-country_event = { #Clears project array index 13
-	id = AC_event.313
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.313 executed"
-		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^13 = 0 }
-		refresh_investment_gui = yes
-	}
-}
-country_event = { #Clears project array index 14
-	id = AC_event.314
-	hidden = yes
-	is_triggered_only = yes
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: AC_event.314 executed"
-		subtract_from_variable = { active_projects = 1 }
-		set_variable = { project_array^14 = 0 }
+		set_variable = { project_array^project = 0 }
 		refresh_investment_gui = yes
 	}
 }
@@ -544,16 +396,19 @@ country_event = { #Clears project array index 14
 # AI Investment Initialization
 # Purpose: The following event triggers the AI nation's upcoming investment offer
 country_event = {
-	id = AC_event.500
+	id = investments_event.500
 	hidden = yes
 	is_triggered_only = yes
 
 	trigger = {
 		is_ai = yes
-		NOT = { has_country_flag = AC_ai_investment_pending }
+		NOT = { has_country_flag = investments_ai_pending }
 		check_variable = { active_projects < 15 }
 		check_variable = { debt_ratio < 2.50 }
 		check_variable = { interest_rate < 8.000 }
+		# Early-out: a broke AI can't fund anything; don't waste a pulse on scoring.
+		# Smallest project types cost ~5 billion; require at least that much on hand.
+		check_variable = { treasury > 5 }
 	}
 
 	immediate = {
@@ -571,12 +426,26 @@ country_event = {
 		set_temp_variable = { AI_best_country = 0 }
 		set_temp_variable = { AI_best_country_score = -1 }
 
+		# Hoisted investor-side modifiers for AI_country_selection_calculation.
+		# These are invariant across the investment_targets loop.
+		set_temp_variable = { inv_cost_modifier = modifier@investment_cost_modifier }
+		set_temp_variable = { inv_duration_modifier = modifier@investment_duration_modifier }
+		set_temp_variable = { inv_has_ECB_president = 0 }
+		if = { limit = { has_idea = ECB_president } set_temp_variable = { inv_has_ECB_president = 1 } }
+		set_temp_variable = { inv_has_EU_finance_minister = 0 }
+		if = { limit = { has_idea = EU_finance_minister } set_temp_variable = { inv_has_EU_finance_minister = 1 } }
+
 		for_each_scope_loop = {
 			array = investment_targets
 			if = {
 				limit = {
 					THIS = { exists = yes }
-					THIS = { NOT = { has_country_flag = int_auto_reject_investment_flag } }
+					THIS = {
+						NOT = { has_country_flag = int_auto_reject_investment_flag }
+						# Don't even run country scoring for targets flagged as recently failed;
+						# AI_country_selection_calculation would assign -200 and they can't win.
+						NOT = { has_country_flag = recently_failed_to_invest }
+					}
 				}
 				set_temp_variable = { AI_selected_country = THIS.id }
 				set_temp_variable = { AI_country_score = 0 }
@@ -616,6 +485,74 @@ country_event = {
 					divide_temp_variable = { energy_balance_ratio = energy_consumption }
 				}
 
+				# === Hoisted target-country invariants ===
+				# All AI_get_*_score functions read these from the target country
+				# many times per state. Caching once per pulse here saves dozens of
+				# CONTROLLER scope-changes inside the per-state loop.
+				set_temp_variable = { tgt_num_factories = num_of_factories }
+				set_temp_variable = { tgt_avail_civs = num_of_available_civilian_factories }
+				set_temp_variable = { tgt_num_mils = num_of_military_factories }
+				set_temp_variable = { tgt_num_naval = num_of_naval_factories }
+				set_temp_variable = { tgt_unemployment = total_unemployed_percentage_display }
+				set_temp_variable = { tgt_pop_m = population_total_m }
+				set_temp_variable = { tgt_gdp_per_capita = gdp_per_capita }
+				set_temp_variable = { tgt_corp_tax = corporate_tax_rate }
+				set_temp_variable = { tgt_gdp_total = gdp_total }
+				set_temp_variable = { tgt_interest_rate = interest_rate }
+				set_temp_variable = { tgt_max_fuel = max_fuel_k }
+				set_temp_variable = { tgt_steel_produced = resource_produced@steel }
+				set_temp_variable = { tgt_oil_imported = resource_imported@oil }
+				set_temp_variable = { tgt_renewable_mult = modifier@renewable_energy_gain_multiplier }
+				set_temp_variable = { tgt_threat = threat }
+
+				set_temp_variable = { tgt_civs_to_factories_ratio = 0 }
+				if = { limit = { check_variable = { tgt_num_factories > 0 } }
+					set_temp_variable = { tgt_civs_to_factories_ratio = num_of_civilian_factories }
+					divide_temp_variable = { tgt_civs_to_factories_ratio = tgt_num_factories }
+				}
+				set_temp_variable = { tgt_mils_to_factories_ratio = 0 }
+				if = { limit = { check_variable = { tgt_num_factories > 0 } }
+					set_temp_variable = { tgt_mils_to_factories_ratio = num_of_military_factories }
+					divide_temp_variable = { tgt_mils_to_factories_ratio = tgt_num_factories }
+				}
+
+				# Boolean caches (1 = true, 0 = false)
+				set_temp_variable = { tgt_has_war = 0 }
+				if = { limit = { has_war = yes } set_temp_variable = { tgt_has_war = 1 } }
+				set_temp_variable = { tgt_AI_threatened = 0 }
+				if = { limit = { has_country_flag = AI_is_threatened } set_temp_variable = { tgt_AI_threatened = 1 } }
+				set_temp_variable = { tgt_has_maritime_industry = 0 }
+				if = { limit = { has_idea = maritime_industry } set_temp_variable = { tgt_has_maritime_industry = 1 } }
+				set_temp_variable = { tgt_idea_some_power_restrict = 0 }
+				if = { limit = { has_idea = some_power_restrictions_spirit } set_temp_variable = { tgt_idea_some_power_restrict = 1 } }
+				set_temp_variable = { tgt_idea_heavy_power_restrict = 0 }
+				if = { limit = { has_idea = heavy_power_restrictions_spirit } set_temp_variable = { tgt_idea_heavy_power_restrict = 1 } }
+				set_temp_variable = { tgt_idea_some_consumption = 0 }
+				if = { limit = { has_idea = some_additional_consumption_spirit } set_temp_variable = { tgt_idea_some_consumption = 1 } }
+				set_temp_variable = { tgt_idea_heavy_consumption = 0 }
+				if = { limit = { has_idea = heavy_additional_consumption_spirit } set_temp_variable = { tgt_idea_heavy_consumption = 1 } }
+
+				# Hoisted war pre-check. has_war_with(ROOT) and any_allied_country
+				# are properties of the target country (not the state), so they're
+				# invariant across the per-state loop. If true, every state would
+				# fail the gate anyway — bail out of the whole loop.
+				set_temp_variable = { tgt_at_war_with_investor = 0 }
+				if = { limit = { has_war_with = ROOT }
+					set_temp_variable = { tgt_at_war_with_investor = 1 }
+				}
+				if = { limit = { any_allied_country = { has_war_with = ROOT } }
+					set_temp_variable = { tgt_at_war_with_investor = 1 }
+				}
+
+				# Hoisted neighbor-at-war check. any_neighbor_country is a
+				# country-level invariant, identical for every controlled state.
+				set_temp_variable = { tgt_neighbor_at_war = 0 }
+				if = {
+					limit = { any_neighbor_country = { has_war_with = THIS } }
+					set_temp_variable = { tgt_neighbor_at_war = 1 }
+				}
+
+				if = { limit = { check_variable = { tgt_at_war_with_investor = 0 } }
 				for_each_scope_loop = {
 					array = controlled_states
 
@@ -627,10 +564,6 @@ country_event = {
 							AI_no_investment_in_these_states = yes
 							NOT = {
 								is_in_array = { array = projects_in_state value = ROOT.id }
-								# Do not invest in this country if it is at war with ROOT
-								PREV = { has_war_with = ROOT }
-								# Do not Invest if any allies of this nation has war with ROOT
-								PREV = { any_allied_country = { has_war_with = ROOT } }
 							}
 							# TODO: Add a check here at some point to make sure they're not a subject, if they are only invest if they are an allies subject or if they're your subject
 						}
@@ -688,6 +621,7 @@ country_event = {
 						AI_edge_case_calculations = yes
 					}
 				}
+				}
 			}
 			if = { limit = { check_variable = { AI_best_score > AI_MIN_STATE_SCORE } }
 				# Project building type
@@ -699,10 +633,12 @@ country_event = {
 
 				project_monetary_cost_calculation = yes
 
-				# Init Project Variables
+				# Init Project Variables (writes ^-1 staging slot since project = -1)
 				# AI_best_target is the best state to invest in
-
-				calculate_ai_construction_speed = yes
+				set_variable = { project = -1 }
+				set_variable = { project_type = project_building_type^-1 }
+				set_temp_variable = { investments_calc_state = AI_best_target }
+				calculate_project_duration = yes
 
 				# Log Values
 				set_temp_variable = { pd = project_construction_duration^-2 }
@@ -722,33 +658,33 @@ country_event = {
 					}
 					var:AI_best_target = {
 						THIS = {
-							set_variable = { ROOT.AC_state_target = THIS.id }
+							set_variable = { ROOT.investments_state_target = THIS.id }
 							# CONTROLLER is pretty obvious
-							CONTROLLER = { set_variable = { ROOT.AC_nation_target = THIS.id } }
+							CONTROLLER = { set_variable = { ROOT.investments_nation_target = THIS.id } }
 						}
-						ROOT = { country_event = AC_event.3 }
+						ROOT = { country_event = investments_event.3 }
 					}
 					# Guard against overlapping proposals overwriting the -1 staging variables
-					set_country_flag = { flag = AC_ai_investment_pending days = 7 value = 1 }
+					set_country_flag = { flag = investments_ai_pending days = 7 value = 1 }
 					# Temporarily pulls this tag from investment targets for the sake of spreading investments around
 					var:AI_best_country = {
 						set_country_flag = { flag = recently_accepted_an_investment value = 1 days = 21 }
 					}
 
-					log = "[GetDateText]: [This.GetName]: Investment Succeeded: project type [?pbt] (x [?pba]) in [?abt.GetName], Project Duration: [?pd], Nation [?ROOT.AC_nation_target.GetName], score = [?abs]"
+					log = "[GetDateText]: [This.GetName]: Investment Succeeded: project type [?pbt] (x [?pba]) in [?abt.GetName], Project Duration: [?pd], Nation [?ROOT.investments_nation_target.GetName], score = [?abs]"
 				}
 				else = {
 					var:AI_best_country = {
 						set_country_flag = { flag = recently_failed_to_invest value = 1 days = 75 }
 					}
-					log = "[GetDateText]: [This.GetName]: Investment Failed: No valid state target found in [?var:target_nation.GetName]. Project Duration: [?pd] [?abt.GetName] scored [?abs]. Skipping this investment pulse."
+					log = "[GetDateText]: [This.GetName]: Investment Failed: project_construction_duration out of range or slot unavailable in [?abt.GetName]. Duration: [?pd], score: [?abs]. Skipping this investment pulse."
 				}
 			}
 			else = {
 				var:AI_best_country = {
 					set_country_flag = { flag = recently_failed_to_invest value = 1 days = 75 }
 				}
-				log = "[GetDateText]: [This.GetName]: Investment Failed: No valid state target found in [?var:target_nation.GetName]. Project Duration: [?pd] [?abt.GetName] scored [?abs]. Skipping this investment pulse."
+				log = "[GetDateText]: [This.GetName]: Investment Failed: no state met minimum score [?AI_MIN_STATE_SCORE] (best [?AI_best_score]). Skipping this investment pulse."
 			}
 		}
 	}
