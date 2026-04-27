@@ -88,6 +88,7 @@ HOI4 localisation files are checked by `check-yaml` in the pre-commit hook. The 
 | Duplicate keys in the same `.yml` file                                  | Remove the earlier duplicate; keep only one definition per key              |
 | Wrong color-code prefix, e.g. `§RY` (stray extra character)             | `§R` then text immediately — no stray character between code and content    |
 | Copy-pasted country-specific flavour text left unreplaced               | Update every reference to the original country's name, demonym, and culture |
+| Lowercase scope keywords: `[From.GetName]`, `[Root.GetName]`            | Always uppercase: `[FROM.GetName]`, `[ROOT.GetName]`, `[THIS.GetName]`      |
 
 ## Recurring Typos
 
