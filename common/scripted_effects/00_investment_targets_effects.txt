@@ -164,18 +164,30 @@ add_permanent_investment_targets = {
 }
 
 # purpose: remove permanent_investment_target or add permanent_investment_target
-# target_nation - The nation that is the nation we want to impact their investment targets
-# adding_nation - The nation that is being added to the investment targeted
+# target_nation - The nation whose investment targets array we modify
+# adding_nation - The nation being added (defaults to ROOT if not set)
 # remove_nation - Executes the removal version of this script
 change_permanent_investment_target = {
 	custom_effect_tooltip = change_permanent_investment_target_tt
 	if = {
 		limit = {
-			NOT = { var:target_nation = { is_in_array = { permanent_investment_targets = var:adding_nation } } }
-			NOT = { check_variable = { adding_nation = 0 } }
+			NOT = { check_variable = { target_nation = 0 } }
 		}
 		var:target_nation = {
-			add_to_array = { permanent_investment_targets = var:adding_nation }
+			if = {
+				limit = {
+					NOT = { check_variable = { adding_nation = 0 } }
+					NOT = { is_in_array = { permanent_investment_targets = var:adding_nation } }
+				}
+				add_to_array = { permanent_investment_targets = var:adding_nation }
+			}
+			else_if = {
+				limit = {
+					check_variable = { adding_nation = 0 }
+					NOT = { is_in_array = { permanent_investment_targets = ROOT } }
+				}
+				add_to_array = { permanent_investment_targets = ROOT }
+			}
 		}
 	}
 	else = {
