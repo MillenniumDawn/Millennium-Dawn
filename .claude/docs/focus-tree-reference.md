@@ -145,7 +145,9 @@ focus = {
 
 ## Example: Cross-Country Event Tooltips
 
-When a focus fires an event to another country, show both outcomes:
+When a focus fires an event to another country, always show the accept outcome. Include the reject outcome only when rejection triggers real effects (opinion penalty, retaliation, tariff, follow-up chain). Omit reject when it just means "nothing happens" — the accept tooltip already implies the alternative.
+
+Both branches have real outcomes (include both):
 
 ```
 focus = {
@@ -166,6 +168,28 @@ focus = {
 		custom_effect_tooltip = TT_IF_THEY_ACCEPT
 		effect_tooltip = {
 			custom_effect_tooltip = oper_city_wall_tt
+		}
+	}
+}
+```
+
+Accept-only (reject is a no-op — omit the reject block):
+
+```
+focus = {
+	id = TAG_propose_trade_deal
+	# ...
+	completion_reward = {
+		log = "[GetDateText]: [This.GetName]: focus TAG_propose_trade_deal executed"
+		OTHER = {
+			country_event = {
+				id = namespace.N
+				days = 1
+			}
+		}
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			custom_effect_tooltip = TAG_trade_deal_effects_tt
 		}
 	}
 }

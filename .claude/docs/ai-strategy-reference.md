@@ -1,0 +1,426 @@
+# AI Strategy & Unit Production Reference
+
+## System Architecture
+
+The AI system in Millennium Dawn has 5 layers that fire at different frequencies:
+
+```
+LAYER 1: INITIALIZATION (on_startup, once)
+  give_AI_templates ──► creates division templates
+  ai_update_build_units ──► sets AI_is_threatened flag
+  yearly_investment_targets_routine ──► builds investment target list
+
+LAYER 2: CONTINUOUS STRATEGIES (ai_strategy files, always-evaluated)
+  MD_combat_ai_strategies ──► army/air/equipment ratios (reads AI_is_threatened)
+  MD_econ_ai ──► building targets, PP priorities, factory ratios
+  naval.txt ──► ship ratios, mission thresholds
+  Country-specific files ──► diplomacy, war, production overrides
+
+LAYER 3: PERIODIC EFFECTS (on_weekly / on_monthly)
+  Weekly:
+    AI Investment Pulse ──► AC_event.500 ──► AI_get_*_score effects
+    ai_cyber_monthly ──► cyber operations against enemies
+    ct_ai_weekly ──► counter-terror actions
+  Monthly:
+    ai_update_build_units ──► refresh AI_is_threatened flag
+    ai_weapon_dump ──► sell excess equipment for cash
+    calculate_ai_taxes_desire ──► adjust tax rates
+    AI influence spreading ──► influence.500 ──► AI_select_influence_target
+    un_ai_evaluate_actions ──► SC/GA proposals
+    recog_ai_monthly ──► recognition campaigns
+    yearly_investment_targets_routine (January) ──► rebuild targets
+
+LAYER 4: EVENT-DRIVEN (on_war, on_puppet, etc.)
+  on_justifying_wargoal_pulse ──► daily ai_update_build_units on target
+  on_declare_war ──► cyber targeting
+  on_puppet / on_liberate ──► give_AI_templates + ai_update_build_units
+  on_join/leave_faction ──► reserve currency switch
+  Template conversions ──► militia→L_Inf→mot→mech (every 300 days)
+
+LAYER 5: GOD OF WAR OVERRIDES (game rule gated)
+  ai_add_xp ──► monthly XP
+  ai_add_equipment ──► top up stockpiles when facing players
+  ai_spawn_units ──► spawn divisions when facing players
+```
+
+---
+
+## On-Action Entry Points
+
+### on_startup (`common/on_actions/00_on_actions.txt`)
+
+- **AI Template Init** (line ~1710): `is_ai = yes AND NOT ZOM` → `give_AI_templates` + `ai_update_build_units`. Also sets microstate tax rates and investment targets.
+
+### on_monthly (`common/on_actions/MD_on_actions.txt`)
+
+- **AI Build Units** (line ~938): All AI → `ai_update_build_units`
+- **AI Weapon Dump** (line ~939): All AI → `ai_weapon_dump`
+- **AI Taxes** (line ~964): All AI → `calculate_ai_taxes_desire`
+- **AI Influence** (line ~817): AI + PP > 200 + not subject + not bankrupt → `influence.500`
+- **AI Investment Targets** (January only, line ~730): Regional+ powers → `yearly_investment_targets_routine`
+- **AI UN Actions** (line ~1241): `un_ai_evaluate_actions`
+- **AI Recognition** (line ~1243): `recog_ai_monthly`
+- **God of War** (line ~966): `ai_add_xp`, and if no player allies + threat > 0.3: `ai_add_equipment` + `ai_spawn_units`
+
+### on_weekly (`common/on_actions/MD_on_actions.txt`)
+
+- **AI Investment Pulse** (line ~80): Regional+ powers with investment targets → `AC_event.500`
+- **AI Cyber** (line ~178): Rotates through 4 weekly batches → `ai_cyber_monthly`
+- **AI Counter-Terror** (same lines): `global.active_terror_orgs^num > 0` → `ct_ai_weekly`
+
+### on_justifying_wargoal_pulse (`00_on_actions.txt:184`)
+
+- Daily: Target AI nation → `ai_update_build_units` (so it starts preparing)
+
+### on_puppet (`01_tfv_on_actions.txt:93`)
+
+- AI puppeted nations → `give_AI_templates` + `ai_update_build_units`
+
+### on_subject_free (`01_tfv_on_actions.txt:3`)
+
+- AI freed nations → `ai_update_build_units`
+
+### on_liberate (`01_tfv_on_actions.txt:117`)
+
+- All liberated nations → `ai_update_build_units` (unconditional)
+
+### on_declare_war (`00_on_actions.txt:2049`)
+
+- AI combatants with cyber capability → `ai_cyber_add_target` on each other
+
+### on_civil_war (`00_on_actions.txt:~1975`)
+
+- Rebel side → `ai_update_build_units` (unconditional)
+
+### on_join_faction / on_leave_faction (`MD_on_actions.txt:1270`)
+
+- AI reserve currency auto-switch (Chinese faction → yuan, Russian → rouble, else → dollar)
+
+---
+
+## Scripted Effects
+
+### `ai_update_build_units` (`99_AI_strategy_scripted_effects.txt`)
+
+Central threat-assessment system. Sets/clears `AI_is_threatened` flag. When set:
+
+- Investment shifts to military (MIC +15, dockyard +15, AA +25, radar +20, airbase +25)
+- Division/ship/plane limiters expand (1.25x multiplier)
+- `ai_default_no_build_units` deactivates → unit training allowed
+
+Conditions for setting: war, subject, government+threat threshold, nationalist/fascism, potential enemies.
+Conditions for clearing: not subject, no war, below thresholds, no enemies.
+
+### `ai_weapon_dump` (`99_weapon_dump_effects.txt`)
+
+Monthly, all AI at peace with threat < 0.51. Sells excess equipment for 30 treasury per dump:
+
+- Infantry weapons > 150k → dump 25k (x2)
+- CNC > 20k → dump 5k
+- L_AT/AA > 12k → dump 2k each
+- Various tank chassis > 2.5-5k → dump 500 each
+- Artillery > 5k → dump 750
+
+### `calculate_ai_taxes_desire` (`00_money_system.txt:5210`)
+
+Monthly tax rate adjustment:
+
+- **Raise taxes** if deficit (treasury_rate < -1 for pop, < -2 for corp, or interest > 8%). Caps: pop=40, corp=50.
+- **Lower taxes** if surplus (treasury_rate > 2, debt_ratio < 0.30, interest < 5). Prefers lowering corp first.
+- **Low stability override**: Lowers pop tax if stability < 0.25.
+
+### AI Investment System (`99_AI_investment_scripted_effects.txt`)
+
+10 building type scoring effects. Each scores states with base value + bonuses/penalties:
+
+- CIC (base 170), MIC (base 150), Dockyard (base 170), Infra (base 175), Offices (base 180)
+- AA (base 120), Radar (base 115), Airbase (base 130)
+- `AI_is_threatened` adds +15-25 to military buildings
+- All add randomization (±15) to prevent same state always winning
+
+### AI Influence System (`99_AI_influence_scripted_effects.txt`)
+
+Monthly target selection scoring: player targets (+30 veteran), faction members (+25), guarantees (+20), trade agreements (+35), existing influence position (up to +95), same ideology (+25), opinion (0.3x clamped), same continent (+25).
+
+### Template Conversion Decisions (`99_ai_templates_decisions.txt`)
+
+| Decision                       | Cooldown  | Requirements                             | Converts                              |
+| ------------------------------ | --------- | ---------------------------------------- | ------------------------------------- |
+| `convert_militia_to_light_inf` | 300 days  | No war, weapons > 2k, CNC > 500, MIL > 5 | 5 militia → L_Inf                     |
+| `convert_l_inf_to_mot_inf`     | 300 days  | No war, util vehicles > 500, MIL > 10    | 5 L_Inf → motorized                   |
+| `convert_mot_to_mech_inf`      | 300 days  | No war, APC chassis > 500, MIL > 20      | 5 mot → mechanized                    |
+| `UKR_convert_stuff`            | Fire once | UKR, date > 2000.6, no war               | All militia → L_Inf, all L_Inf → mech |
+
+---
+
+## AI Strategy Files
+
+### Strategy Structure
+
+```pdx
+my_strategy = {
+    allowed = { ... }            # Checked ONCE at game start (permanent gate)
+    enable = { ... }             # Checked continuously
+    abort = { ... }              # If true, removes strategy (must be false to activate)
+    abort_when_not_enabled = yes # Also removes if enable becomes false
+
+    ai_strategy = {
+        type = role_ratio        # Strategy type
+        id = armor               # Target (role, tag, etc.)
+        value = 50               # Positive = more, negative = less
+    }
+}
+```
+
+### Reversed Strategies
+
+`reversed = yes` swaps direction: instead of "this country does X to id", it becomes "id does X to this country". Requires `enable_reverse = { ... }` (no default scope — must scope into a country).
+
+Example: Iran's `PER_support_shias` makes Shia countries support Iran (rather than Iran supporting them).
+
+### `MD_combat_ai_strategies.txt` — Production & Combat
+
+**Army production (3 tiers by factory count):**
+| Strategy | MIL Range | Key Ratios |
+|----------|-----------|------------|
+| `default_army_production_strategy` | < 11 | L_Inf=30, infantry=20, mech/IFV=50, armor=35 |
+| `default_army_production_strategy_maj` | > 10 | IFV=50, armor=40, SF=50, marines=20 |
+| `default_army_production_strategy_global` | > 29 | Further IFV/armor emphasis |
+
+**Note:** `_maj` and `_global` stack at MIL > 29, doubling role weights.
+
+**Emergency strategies:**
+
+- `default_AI_needs_to_live`: surrender > 49% → L_Inf=150
+- `MD_build_equipment_not_units_while_at_war`: At war + low stocks → halt training, boost weapons
+- `MD_desperately_need_guns`: Zero infantry weapons → massive production, all training halted
+
+**Equipment production (3 tiers):**
+| Strategy | MIL Range | Focus |
+|----------|-----------|-------|
+| `MD_poor_production_strategy` | < 6 | Infantry weapons dominate |
+| `MD_default_production_strategy` | 6-10 | Balanced with mech/armor intro |
+| `MD_major_production_strategy` | > 10 | Full spectrum with min factory targets |
+
+**Division/Ship/Plane Limiters:**
+
+- `division_limiter`: factories × modifiers (war 1.75x, threatened 1.25x, major 1.15x, NATO -0.8x, EU -0.8x)
+- `division_limiter_potato_edition`: 0.5x base, extra penalties for CHI/SOV faction
+- `ship_limiter`: naval_factories × 7 (or ×3 potato)
+- `plane_limiter`: mil_factories × 80 + 50 (or ×40 potato)
+
+**Unit build controls:**
+
+- `ai_default_no_build_units`: No war + not threatened → all roles -500
+- `ai_subject_defensive_build`: Subjects at peace → garrison=5, L_Inf=10, infantry=5, force_build=25
+
+**Air production (3 tiers):**
+
+- `< 25 MIL`: Tactical bombers only
+- `25-49 MIL`: Mixed CAS + interceptors + tactical
+- `> 49 MIL`: Full air force (heavy fighters, strategic bombers)
+
+### `MD_econ_ai.txt` — Economic Behavior
+
+**PP spending:**
+
+- `save_pp_for_laws`: Major economic problems → save all PP for law changes
+- `AI_idea_focus`: Surplus + lacking top ideas → massive idea spending (5000)
+
+**Factory building targets (scaled by power level):**
+| Power Level | CIC Target |
+|-------------|-----------|
+| Minor/non-power | +50 |
+| Regional | +75 |
+| Large | +100 |
+| Great | +125 |
+| Super | +150 |
+
+**Economic crisis response:**
+
+- `AI_stop_building_civilian_industry`: < 1% unemployment → halt industry, build internet/infra
+- `AI_reduce_construction_on_deficit`: High deficit → -20 all building
+- `AI_halt_construction_major_crisis`: Major problems → -50 all building
+- `AI_no_military_industry`: Peacetime + low threat + < 5 available civs → no mils
+
+**Microchip/composite production:**
+
+- Nations consuming + importing more than producing → build chip/composite factories
+- Countries with strategies: USA, CHI, FRA, GER, JAP, KOR, CAN
+
+### `naval.txt` — Naval Behavior
+
+**Default ratios:** Corvettes=30, frigates=20, destroyers=10, attack subs=25, mine sweepers=5
+
+**Mission management:**
+
+- Peacetime: Patrol, strike force, convoy escort/raid
+- Fuel < 25%: Halt most missions
+- All enemies landlocked: Halt all naval
+- Peacetime + any navy: Halt all missions (conserve fuel)
+
+**Regional dominance (war-triggered):** 10 theater-specific strategies covering Pacific, Chinese coastline, Middle East, Mediterranean, Atlantic, Indian Ocean.
+
+### Country-Specific Files (107 files)
+
+**Key force_build_armies values:**
+
+| Country | Value     | Condition                             |
+| ------- | --------- | ------------------------------------- |
+| USA     | 50        | Always                                |
+| SOV     | 50        | Always                                |
+| CHI     | 50        | Always                                |
+| GER     | 50        | Always                                |
+| UKR     | 50/150/50 | Always / SOV threatening / BLR allied |
+| CAN     | 100       | Preparing for war                     |
+| ARG     | 100       | Preparing for war                     |
+| RAJ     | 100       | China aggressive                      |
+| KOS     | 150       | Always                                |
+| DPR/HPR | 150       | Always                                |
+| CHE     | 150       | Always                                |
+| ZOM     | 200       | Always                                |
+
+**Notable diplomacy patterns:**
+
+- **Japan**: Most pacifist AI — `declare_war = -200` against 24 neighbors
+- **SOV**: `declare_war = -4000` against nations guaranteed by TUR/CHI
+- **USA during War on Terror**: `pp_spend_priority` forces decision spending (decisions=250, all others=-9999)
+
+---
+
+## AI Strategy Plans (`common/ai_strategy_plans/`)
+
+22 files defining political path priorities. Key features:
+
+```pdx
+my_plan = {
+    name = "Plan Name"           # For aiview console (never shown to player)
+    allowed = { ... }            # Checked once at start
+    enable = { ... }             # Once met, plan activates permanently
+    abort = { ... }              # Checked daily to deactivate
+
+    ai_national_focuses = { ... }  # Focus order (ignores ai_will_do)
+    focus_factors = { ... }        # Multipliers on focus ai_will_do
+    research = { ... }             # Multipliers on tech category ai_will_do
+    ideas = { ... }                # Multipliers on idea/advisor ai_will_do
+    traits = { ... }               # Multipliers on leader trait ai_will_do
+    ai_strategy = { ... }          # Strategies when plan is active
+    weight = { ... }               # MTTH block for overall plan weight
+}
+```
+
+**Countries with strategy plans:** BHR, BOS, BRA, BRM (5 paths), CAN, CHI (3), CZE (4), FRA (3), HOL (3), ITA (10), JAP, LBA (7), NIG (3), NKO (3), POL (5), SAU (5), SIN (3), SWE (3), SWI (4), SYR (5)
+
+**Notable:** CAN nationalist plan sets `force_build_armies = 1000`, antagonizes USA. HOL all plans set `force_build_armies = 100`.
+
+---
+
+## AI Focuses (`common/ai_focuses/`)
+
+4 files defining research emphasis by AI posture:
+
+| Profile                       | Key Research Categories                              |
+| ----------------------------- | ---------------------------------------------------- |
+| `ai_focus_defense`            | Artillery, infantry weapons, SAM (SOV/USA)           |
+| `ai_focus_aggressive`         | Armor                                                |
+| `ai_focus_war_production`     | Construction, fuel, nanofibers, 3D printing, AI tech |
+| `ai_focus_military_equipment` | Infantry weapons, AT, AA, artillery, doctrine (SOV)  |
+
+Country-specific overrides: SOV (very high war production weights 55.0), USA (SAM in defense, lighter war production), RAJ (India-specific).
+
+---
+
+## AI Templates (`common/ai_templates/`)
+
+### Structure
+
+```pdx
+my_role_entry = {
+    role = armor                 # Role token (targeted by role_ratio)
+    blocked_for = { ... }        # OR available_for (one country = one template per role)
+    upgrade_prio = { ... }       # MTTH: weighted-random for which role to upgrade
+    enable = { ... }             # If false, template doesn't exist
+
+    my_target_template = {
+        upgrade_prio = { ... }   # Deterministic: which target to aim for
+        enable = { ... }
+        reinforce_prio = 1       # 0=low, 1=normal, 2=high
+        target_template = {
+            support = { SP_AA_Battery = 1 }
+            regiments = { armor_Bat = 6  Arm_Inf_Bat = 4 }
+        }
+        replace_at_match = 0.8   # Switch to replace_with at this match score
+        replace_with = better_template
+        target_min_match = 0.5
+    }
+}
+```
+
+### Valid Roles
+
+`garrison`, `Militia`, `L_Inf`, `marines`, `Special_Forces`, `Air_helicopters`, `Air_mech`, `infantry`, `apc_mechanized`, `ifv_mechanized`, `armor`
+
+God of War additional: `Air_helicopters`, `ifv_mechanized`, `armor`, `marines`, `Special_Forces`
+
+Zombie: `zombie_horde`, `zombie_horde_runner`, `zombie_horde_brute`
+
+### Factory Threshold Coverage
+
+| Role            | Template                 | MIL Range              |
+| --------------- | ------------------------ | ---------------------- |
+| garrison        | Militia_garrison         | < 11, not major        |
+| garrison        | L_Inf_gar                | < 21, not major        |
+| Militia         | Militia_generic          | War + < 4, not major   |
+| Militia         | militia_brigade          | War or < 10, not major |
+| L_Inf           | L_Inf_brigade            | < 8, not major         |
+| L_Inf           | L_Inf_division           | 7-15 or major          |
+| infantry        | infantry_generic         | < 8                    |
+| infantry        | infantry_division        | 8-15                   |
+| apc_mechanized  | mechanized_generic       | < 15                   |
+| apc_mechanized  | mechanized_divisions     | > 14                   |
+| ifv_mechanized  | ifv_infantry_generic     | < 16                   |
+| ifv_mechanized  | ifv_infantry_divisions   | > 15                   |
+| armor           | armor_generic            | 11-20                  |
+| armor           | armor_division           | > 20                   |
+| marines         | light_marine_brigades    | < 5, naval > 0         |
+| marines         | mot_marines_brigades     | < 12, naval > 0        |
+| marines         | meh_marines_division_maj | 12-24, naval > 0       |
+| marines         | armored_marines_division | > 14, naval > 0        |
+| Special_Forces  | Special_Forces_generic   | 5-10                   |
+| Special_Forces  | special_forces_division  | > 10                   |
+| Air_helicopters | Arm_Air_assault_brigade  | > 20                   |
+| Air_mech        | Air_Mech_generic         | 10-15                  |
+| Air_mech        | Air_Mech_division        | > 15                   |
+
+---
+
+## MTTH Blocks (Priority/Weight Syntax)
+
+Used throughout the AI system for priorities, weights, and `ai_will_do` values.
+
+- Starts at assumed value of **1**
+- `base = N` — sets value to N
+- `factor = N` — multiplies current value by N
+- `add = N` — adds N to current value
+- Operations apply **in order** (top to bottom)
+- `modifier = { ... }` — conditional: triggers + value operations
+- Variables can be used in value arguments
+
+### ai_will_do vs ai_chance
+
+- `ai_will_do` — focuses, tech, decisions. AI picks highest value after generating random [0, value].
+- `ai_chance` — event options. Probability-proportional-to-size with d100. Min probability = 1%.
+
+---
+
+## Common Pitfalls
+
+| Issue                                          | Impact                                | Prevention                               |
+| ---------------------------------------------- | ------------------------------------- | ---------------------------------------- |
+| `role_ratio id = mechanized`                   | Wasted production weight              | Use `apc_mechanized` or `ifv_mechanized` |
+| `role = armored` in templates                  | Template never selected               | Use `armor`                              |
+| Case-mismatched unit names                     | Battalion silently missing            | `validate_oob_units` pre-commit hook     |
+| Factory threshold gaps                         | No template at specific factory count | Ensure contiguous ranges                 |
+| `_maj` + `_global` stacking at MIL > 29        | Doubled role weights                  | By design but notable                    |
+| Missing equipment coverage for blocked nations | AI can't produce equipment            | Check all roles covered                  |
+| CAS designs with `medium_as_fighter` role      | Deployed as air superiority           | Use `medium_cas_fighter`                 |

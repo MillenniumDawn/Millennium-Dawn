@@ -13,7 +13,7 @@ import glob
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 from validator_common import (
     BaseValidator,
@@ -72,6 +72,43 @@ def process_file_for_set_cosmetic_tag(args: Tuple[str, bool]) -> Dict[str, int]:
             count = text_file.count(f"set_cosmetic_tag = {tag}")
             if count > 0:
                 counts[tag] = count
+    return counts
+
+
+def process_file_for_has_cosmetic_tag_lookup(args: Tuple[str, frozenset]) -> Set[str]:
+    """Return subset of tags_to_find referenced via has_cosmetic_tag = TAG in this file."""
+    filename, tags_to_find = args
+    if _should_skip(filename):
+        return set()
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+    except Exception:
+        return set()
+    cleaned = re.sub(r"#[^\n]*", "", text)
+    if "has_cosmetic_tag =" not in cleaned:
+        return set()
+    all_matches = set(re.findall(r"has_cosmetic_tag = (\S+)", cleaned))
+    return tags_to_find & all_matches
+
+
+def process_file_for_cosmetic_tag_in_loc(args: Tuple[str, frozenset]) -> Dict[str, int]:
+    """Return {tag: count} for cosmetic tag references in a yml localisation file."""
+    filename, tags_to_find = args
+    if _should_skip(filename):
+        return {}
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+    except Exception:
+        return {}
+    cleaned = re.sub(r"#[^\n]*", "", text)
+    counts: Dict[str, int] = {}
+    suffixes = [":"] + [s + ":" for s in MD_IDEOLOGY_SUFFIXES]
+    for tag in tags_to_find:
+        if tag not in cleaned:
+            continue
+        total = sum(cleaned.count(f"{tag}{sfx}") for sfx in suffixes)
+        if total > 0:
+            counts[tag] = total
     return counts
 
 
@@ -205,31 +242,36 @@ class Validator(BaseValidator):
                             cosmetic_tags[tag] += 1
                             break
 
-        for filename in files:
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
-            )
-            not_found = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
-            if "has_cosmetic_tag =" in text_file:
-                all_matches = re.findall(r"has_cosmetic_tag = \S*", text_file)
-                for tag in not_found:
-                    cosmetic_tags[tag] += all_matches.count(f"has_cosmetic_tag = {tag}")
+        remaining_tags = frozenset(t for t in cosmetic_tags if cosmetic_tags[t] == 0)
 
-        yml_files = list(glob.iglob(self.mod_path + "**/*.yml", recursive=True))
-        for filename in yml_files:
-            if _should_skip(filename):
-                continue
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
+        if remaining_tags:
+            # Pool scan over txt files for has_cosmetic_tag = TAG references
+            args_list = [(f, remaining_tags) for f in files]
+            txt_results = self._pool_map(
+                process_file_for_has_cosmetic_tag_lookup, args_list, chunksize=30
             )
-            not_found = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
-            for tag in not_found:
-                if tag in text_file:
-                    all_matches = re.findall(tag + r".*", text_file)
-                    for match in all_matches:
-                        suffixes = [":"] + [s + ":" for s in MD_IDEOLOGY_SUFFIXES]
-                        for p in suffixes:
-                            cosmetic_tags[tag] += match.count(f"{tag}{p}")
+            for found_set in txt_results:
+                for tag in found_set:
+                    cosmetic_tags[tag] += 1
+
+            # Pool scan over yml files for loc references
+            remaining_tags = frozenset(
+                t for t in cosmetic_tags if cosmetic_tags[t] == 0
+            )
+            if remaining_tags:
+                yml_files = list(
+                    glob.iglob(
+                        os.path.join(self.mod_path, "**", "*.yml"), recursive=True
+                    )
+                )
+                yml_files = [f for f in yml_files if not _should_skip(f)]
+                args_list = [(f, remaining_tags) for f in yml_files]
+                yml_results = self._pool_map(
+                    process_file_for_cosmetic_tag_in_loc, args_list, chunksize=30
+                )
+                for counts in yml_results:
+                    for tag, count in counts.items():
+                        cosmetic_tags[tag] += count
 
         cosmetic_tags = DataCleaner.clear_false_positives(
             cosmetic_tags, tuple(false_positives)
@@ -291,14 +333,15 @@ class Validator(BaseValidator):
         )
 
         files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
-        for filename in files:
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
+        remaining_tags = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
+        if remaining_tags:
+            args_list = [(f, False, remaining_tags) for f in files]
+            results = self._pool_map(
+                process_file_for_set_cosmetic_tag, args_list, chunksize=30
             )
-            if "set_cosmetic_tag =" in text_file:
-                not_found = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
-                for tag in not_found:
-                    cosmetic_tags[tag] += text_file.count(f"set_cosmetic_tag = {tag}")
+            for counts in results:
+                for tag, count in counts.items():
+                    cosmetic_tags[tag] += count
 
         unused = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
@@ -323,6 +366,13 @@ class Validator(BaseValidator):
             )
 
     def run_validations(self):
+        if self.staged_only and not self.staged_files:
+            self.log(
+                "No staged files found — skipping cosmetic tags validation",
+                "warning",
+            )
+            return
+
         # Tags containing [ or { are from meta_effect text blocks and should be ignored
         PATTERN_FALSE_POSITIVES = ["[", "{"]
         # Tags that are generated dynamically via meta_effects (e.g. [ROOTTAG]_REB)
@@ -340,13 +390,17 @@ class Validator(BaseValidator):
             "BSH_REB_S_nationalist",  # 05_bashkiriya.txt - nationalist junta override
             "TAT_REB_S_nationalist",  # Tatarstan.txt - nationalist junta override
         ]
+        # validate_missing uses _collect_files() which respects staged mode
         self.validate_missing_cosmetic_tags(PATTERN_FALSE_POSITIVES + META_EFFECT_TAGS)
-        self.validate_unused_cosmetic_tags(
-            PATTERN_FALSE_POSITIVES + KNOWN_BUGS + INCOMPLETE_TAGS
-        )
-        self.validate_unused_cosmetic_tag_colors(
-            PATTERN_FALSE_POSITIVES + META_EFFECT_TAGS
-        )
+
+        # Cross-reference checks scan all .tga/.yml files — skip in staged mode
+        if not self.staged_only:
+            self.validate_unused_cosmetic_tags(
+                PATTERN_FALSE_POSITIVES + KNOWN_BUGS + INCOMPLETE_TAGS
+            )
+            self.validate_unused_cosmetic_tag_colors(
+                PATTERN_FALSE_POSITIVES + META_EFFECT_TAGS
+            )
 
 
 if __name__ == "__main__":

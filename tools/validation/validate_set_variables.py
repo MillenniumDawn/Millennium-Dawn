@@ -59,38 +59,34 @@ def process_file_for_set_variables(
     return (variables, paths)
 
 
-def count_variable_references_wrapper(
-    args: Tuple[str, str, bool, Optional[List[str]]]
-) -> int:
-    mod_path, variable_name, lowercase, staged_files = args
+def count_all_variables_in_file(args: Tuple[str, frozenset, bool]) -> Dict[str, int]:
+    """Scan one file for references to all tracked variables in a single read.
 
-    if staged_files:
-        files_to_scan = [
-            f for f in staged_files if f.endswith(".txt") or f.endswith(".yml")
-        ]
-    else:
-        txt_files = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
-        yml_files = list(glob.iglob(mod_path + "**/*.yml", recursive=True))
-        files_to_scan = txt_files + yml_files
+    Returns {var: net_ref_count} with only variables that have net_ref_count > 0.
+    This inverted approach (scan per-file, not per-variable) eliminates the O(N×M)
+    pool churn of the old per-variable wrapper.
+    """
+    filename, tracked_vars, lowercase = args
 
-    total_refs = 0
-    for filename in files_to_scan:
-        if should_skip_file(filename):
+    if should_skip_file(filename):
+        return {}
+
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
+
+    result = {}
+    for var in tracked_vars:
+        total = text_file.count(var)
+        if total == 0:
             continue
-
-        search_var = variable_name.lower() if lowercase else variable_name
-        text_file = FileOpener.open_text_file(
-            filename, lowercase=lowercase, strip_comments_flag=True
-        )
-
-        total_count = text_file.count(search_var)
-        set_count = text_file.count(f"set_variable = {search_var}")
-        set_count += text_file.count(f"set_variable = {{ {search_var}")
-        set_count += text_file.count(f"set_variable = {{{search_var}")
-
-        total_refs += total_count - set_count
-
-    return total_refs
+        set_count = text_file.count(f"set_variable = {var}")
+        set_count += text_file.count(f"set_variable = {{ {var}")
+        set_count += text_file.count(f"set_variable = {{{var}")
+        net = total - set_count
+        if net > 0:
+            result[var] = net
+    return result
 
 
 class SetVariables:
@@ -109,7 +105,9 @@ class SetVariables:
         if staged_files:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = list(glob.iglob(mod_path + "**/*.txt", recursive=True))
+            files_to_scan = list(
+                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
+            )
 
         process_func = partial(process_file_for_set_variables, lowercase=lowercase)
 
@@ -194,31 +192,34 @@ class Validator(BaseValidator):
         )
 
         self.log(f"Found {len(cleaned_vars)} unique variables set via set_variable")
-        self.log(
-            f"Checking reference counts with {self.workers} workers... (this may take a while)"
-        )
+        self.log(f"Checking reference counts with {self.workers} workers...")
 
-        var_ref_counts = {}
-        args_list = [
-            (self.mod_path, var, True, self.staged_files) for var in cleaned_vars
-        ]
-
-        batch_size = self.workers * 5
-        for i in range(0, len(args_list), batch_size):
-            batch_args = args_list[i : i + batch_size]
-            batch_vars = cleaned_vars[i : i + batch_size]
-
-            with Pool(processes=self.workers) as pool:
-                ref_counts = pool.map(
-                    count_variable_references_wrapper, batch_args, chunksize=1
-                )
-
-            for var, ref_count in zip(batch_vars, ref_counts):
-                var_ref_counts[var] = ref_count
-
-            self.log(
-                f"Progress: {min(i+batch_size, len(cleaned_vars))}/{len(cleaned_vars)} variables checked..."
+        # Build the full file list once, then scan every file once for ALL variables —
+        # O(files) instead of O(variables × files) with the old per-variable approach.
+        if self.staged_files:
+            files_to_scan = [
+                f for f in self.staged_files if f.endswith(".txt") or f.endswith(".yml")
+            ]
+        else:
+            txt_files = list(
+                glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
             )
+            yml_files = list(
+                glob.iglob(os.path.join(self.mod_path, "**", "*.yml"), recursive=True)
+            )
+            files_to_scan = txt_files + yml_files
+
+        tracked_vars = frozenset(cleaned_vars)
+        args_list = [(f, tracked_vars, True) for f in files_to_scan]
+
+        var_ref_counts = {var: 0 for var in cleaned_vars}
+        with Pool(processes=self.workers) as pool:
+            all_file_counts = pool.map(
+                count_all_variables_in_file, args_list, chunksize=20
+            )
+        for file_counts in all_file_counts:
+            for var, count in file_counts.items():
+                var_ref_counts[var] = var_ref_counts.get(var, 0) + count
 
         for var, ref_count in var_ref_counts.items():
             if ref_count <= self.min_references:

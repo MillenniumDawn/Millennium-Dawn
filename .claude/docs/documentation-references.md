@@ -35,6 +35,13 @@ Use for broader modding context not covered in local docs:
 - [Unit Modding](https://hoi4.paradoxwikis.com/Unit_modding)
 - [Faction Modding](https://hoi4.paradoxwikis.com/Faction_modding)
 
+## Millennium Dawn Conventions
+
+| File                                      | Contents                                                                                                                                                                     |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.claude/docs/search-filters.md`          | Complete `search_filters` reference: every `FOCUS_FILTER_*` in the mod, Israel-specific filter mapping, subcategory logic for ISRMILITARY/ISRECON, common mistakes checklist |
+| `.claude/docs/oob-equipment-reference.md` | OOB equipment type mapping (NSB vs non-NSB), stockpile syntax, chassis/variant validation, common errors                                                                     |
+
 ## Repository Access
 
 Use `gh` CLI for GitHub operations: `gh issue list`, `gh pr list`, `gh pr view`, `gh api`

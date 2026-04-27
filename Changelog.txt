@@ -225,6 +225,12 @@ v2.0.0
   - Increased reparation payment cap from 150 to 200
 
  Bugfix:
+  - [GER] Fixed Germany civil war being triggered too easily for the AI: raised ai_will_do base from 1 to 20 on the three BfV crisis purge decisions (GER_purge_banks, GER_purge_government_institutions, GER_purge_military) so the AI takes them within the 100-day mission window; also fixed NOT AND trap in their available blocks that allowed multiple purge decisions to be active simultaneously (Issue #1046)
+  - [ALG] Fixed Su-30 purchase focus not granting any aircraft due to invalid variant name "Su-30MKA"; corrected to "Su-30" (Issue #1025)
+  - [ALG] Fixed division-spawning focuses for special operations and marine forces silently failing because the "104th Operational Maneuvers Regiment RMO" template was never defined; added inline template creation with has_template guard (Issue #1025)
+  - [BRA] Fixed 6 naval MIO traits with incorrect or noop equipment bonuses: deck_materials, tanker_corrosion_protection, and submarine_rescue replaced noop `defense` with `armor_value`; joint_fleet_air replaced incorrect `surface_visibility` with `anti_air_attack`; electronic_warfare replaced noop `defense` with `surface_visibility` reduction; catapult_optimization and hangar_deck carrier_size reduced from 2 to 1 each to prevent exponential stacking (Issue #1036)
+  - Fixed faction_goal_no_terrorism complete_effect calling upgrade_intelligence_agency on faction members that do not have an intelligence agency
+  - Fixed generic fire control modules levels 4-6 being inaccessible on non-destroyer hulls due to wrong module category (Issue #987)
   - [HLS] Removed Vatican City starting unit that immediately disbanded due to insufficient manpower (793 state manpower vs. 2,250 required for 3 infantry battalions) (Issue #872)
   - [ENG] Fixed typo ENG_elisabeth_ruling_monarch → ENG_elizabeth_ruling_monarch in country history, which blocked completion of the Queen's Family focus tree branch (Issue #894)
   - [SWE] Replaced attack_helo_bat with L_Air_assault_Bat in the NSB Helikopterflottiljen template; Sweden lacks attack helicopter tech in 2000 causing "no variant found for heavy_tank_chassis" log errors on every game start (Issue #822)
@@ -254,6 +260,7 @@ v2.0.0
   - Fixed terrorist_menace opinion modifier staying permanently even after a country changes away from Salafist government (Issue #399)
   - [ENG] Fixed Nigeria operation granting oil resource rights on Lagos (state 334) instead of Biafra/Niger Delta (state 332) (Issue #657)
   - [NKO] Fixed Russia declining the Strategic Partnership Treaty still granting the friendship idea to NKO, unlocking all Russian corporation decisions regardless of Russia's choice (Issue #233)
+  - [GER] Fixed East German Anger debuffs reappearing after completing True Unification; the weekly on_action lacked a GER_united flag guard and kept re-adding debuffs based on the GER_east_opinion variable
   - Fixed 29 event option name copy-paste errors across 20 event files where options displayed wrong button text from other events
   - [SWE] Fixed demilitarization decision not downgrading police ideas (swap_ideas removed wrong idea for police_02/police_03)
   - [GER] Fixed V-Fall decision not downgrading police ideas (same swap_ideas bug as Sweden)
@@ -460,11 +467,20 @@ v2.0.0
   - Fixed CHI not correctly declaring war with global war rule enabled
   - [IRQ] Fixed iraqi_events.3 decline option sending rejection notification to Iran instead of Iraq, preventing Saddam's response event from firing
   - [UKR] Fixed HUR partisan point calculation using duplicate police_04 checks instead of descending through police_04/03/02 tiers
+  - Fixed Wrong Tech Bonus names. Now they show where the bonusses have been earned
+  - Fixed German Modernise Equipment decision not giving random rewards
   - [ISR] Changed title and description for Israel's focus ISR_ships_bat_yam: city name changed to Ashdod (city with big harbor, that may be expanded)
   - Fix a label of patrol_boat equipment for MIO's
   - [UKR] Proper namings for ukranian ships
   - [UKR] Added a support ships for ukranian navy
   - [ISR] Added submarine production for Israel (INS Tkuma)
+  - [CZE] Fixed Petr Pavel's political branch not being available after Pavel retires from the army
+  - [SOV] Renamed misspelled SUB_subject_rebeliion_flag to SUB_subject_rebellion_flag across all call sites; save-incompatible — pre-existing saves with the old flag will lose their rebellion-blocking state, allowing affected subjects to rebel again
+  - [SOV] Fixed 37 completion_reward log-id mismatches in the Russian focus tree where logged focus IDs did not match the focus they were inside (copy-paste bugs)
+  - [SOV] Initialized SUB_ekb_level alongside SUB_moscow_level in SOV history so subject city level checks return correct values from game start
+  - [DEN] Fixed gulf exploitation income missing the *0.0003 multiplier, which made the income contribution effectively zero
+  - [WAA] Fixed narcotics income missing original_tag = WAA guard, which could grant income to any country that briefly held the WAA_Narcotics_Producer idea
+  - [DPR] Consolidated duplicated DPR_rf_money weekly contribution blocks while preserving the 0.15/week total (was split across two if blocks at 0.05 + 0.10)
 
  Content:
   - NEW TREES: United Kingdom, Algeria
@@ -583,6 +599,12 @@ v2.0.0
   - Added 3 new drone raid types: Drone Airfield Strike, Drone Power Grid Strike, and Drone Rocket Site Strike
   - Added reparation demand and payment cooldown flags (once per year each) to prevent reparation spam
   - Added several historical disease outbreaks that impacted regional economies and global economic movements
+  - Added Event Horizon custom scenario:
+    - Scenario is activated via a game rule at the very bottom of the list
+    - Scenario starts at the selected year, after an event chain lasting 3-4 months
+    - Scenario features a global war between the humanity and a Chimera nation, monsters inspired by the BETA from the anime/manga series "Muv Luv"
+    - BETA have unique unit models and are extremely powerful, but they do not have access to the full range of equipment and are limited to a few unit types
+    - Entire world forms megastates and alliances to combat the BETA, gaining whole new focus tree, decisions, events and HACS Combat Mechs units to fight them off
 
  Database:
   - Land drone technologies now properly give the Ranger Light Recce company recon bonuses like all other recon units
@@ -634,6 +656,7 @@ v2.0.0
   - Moved deprecated missile UI graphics to resources/deprecated-missile-graphics/
   - Moved unused technology icons to resources/deprecated-tech-graphics/
   - [GUY] Standardized Guyana's leader portrait in 2000
+  - Added 3D models for the HACS mechs, BETA units, Defense Line wall, and Chimera Portal
 
  Game Rules:
   - [ZOM] Added Zombie Spawn Location game rule with India, Central Africa, East Asia, and Multiple Locations options (Issue #205)
@@ -644,8 +667,10 @@ v2.0.0
   - The Game Rule annex microstates for the Oceania tags will now annex into Fiji so you can play w/ the tree (yes I know this is a buff to them)
   - Fixed the Game Rule for disabling "Domestic Independence" not working as expected
   - Added Gamerule to hide obsolete paths in the tree. The available trees of having this will be expanded
+  - Added a game rule to enable the Event Horizon custom scenario
 
  Localization:
+  - Updated faction_goal_no_terrorism description to better reflect counter-terrorism operations theme
   - Updated building tooltip descriptions with base worker requirements, GDP output, and power stats for Fossil Fuel Powerplants, Nuclear Reactors, Renewable Energy, Network Infrastructure, and all factory types
   - Added localisation for the new reactor-grade material purchase diplomatic action (titles, descriptions, tooltips, AI condition labels)
   - Removed obsolete localisation for old reactor-grade material decision and event chain (energy.1, energy.2, energy.3)
@@ -729,6 +754,9 @@ v2.0.0
   - Extracted duplicate plane loss finalization into reusable scripted effect (finalize_raid_plane_losses)
   - Extracted duplicate raid availability and show_target triggers into 6 reusable scripted triggers
   - Refactored influence coup GUI to use is_top_fifty_influencer scripted trigger instead of inline variable checks
+  - [SOV] Consolidated ~20 per-subject separatism event chains (subject_rus.69-89/98/99) into two generic events (subject_rus.69 / subject_rus.98) driven by every_subject_country loops
+  - [SOV] Replaced 38 per-TAG on_monthly_TAG hooks for subject taxation with a single every_subject_country loop inside on_monthly_SOV
+  - [SOV] Restructured 00_money_system.txt income chain into an alphabetised else_if chain; preserved every per-tag income source while reducing maintenance overhead
 
  Quality of Life:
   - [GER] BFV GUI now updates immediately on button clicks instead of waiting for the next daily tick

@@ -216,7 +216,6 @@ country_event = {
 		add_political_power = -100
 		set_temp_variable = { percent_change = 2 }
 		set_temp_variable = { tag_index = SOV.id }
-		set_temp_variable = { influence_target = THIS.id }
 		change_influence_percentage = yes
 	}
 }
@@ -240,7 +239,6 @@ country_event = {
 		SOV = { give_guarantee = ROOT }
 		set_temp_variable = { percent_change = 5 }
 		set_temp_variable = { tag_index = SOV.id }
-		set_temp_variable = { influence_target = THIS.id }
 		change_influence_percentage = yes
 		SOV = { country_event = { id = diplomatic_response.1 days = 1 } }
 		ai_chance = {
@@ -459,7 +457,7 @@ country_event = {
 	#Belarus Refuses!
 	option = {
 		name = russia.10.o2
-		log = "[GetDateText]: [This.GetName]: russia.10.o3 executed"
+		log = "[GetDateText]: [This.GetName]: russia.10.o2 executed"
 		if = {
 			limit = { BLR = { is_subject_of = SOV } }
 			SOV = { release_puppet = BLR }
@@ -745,7 +743,6 @@ country_event = {
 		}
 		set_temp_variable = { percent_change = 5 }
 		set_temp_variable = { tag_index = SOV.id }
-		set_temp_variable = { influence_target = THIS.id }
 		change_influence_percentage = yes
 		SOV = {
 			set_temp_variable = { int_investment_change = 10 }
@@ -778,7 +775,6 @@ country_event = {
 
 		set_temp_variable = { percent_change = -5 }
 		set_temp_variable = { tag_index = SOV.id }
-		set_temp_variable = { influence_target = THIS.id }
 		change_influence_percentage = yes
 		add_opinion_modifier = { target = SOV modifier = diplomatic_distance }
 		reverse_add_opinion_modifier = { target = SOV modifier = diplomatic_distance }
@@ -995,30 +991,34 @@ country_event = {
 	option = {
 		name = russia.24.o1
 		log = "[GetDateText]: [This.GetName]: russia.24.o1 executed"
-		ai_chance = {
-			base = 75
-		}
 		SOV = {
 			set_autonomy = {
-			   target = BLR
-			   autonomy_state = autonomy_union_state
+				target = BLR
+				autonomy_state = autonomy_union_state
 			}
 		}
-		SOV = { country_event = { id = russia.25 } }
+		SOV = { country_event = russia.25 }
+
+		ai_chance = {
+			base = 75
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
+		}
 	}
 
 	option = {
 		name = russia.24.o2
 		log = "[GetDateText]: [This.GetName]: russia.24.o2 executed"
+		SOV = {
+			add_opinion_modifier = { target = BLR modifier = betrayed_our_cause }
+			country_event = russia.4
+		}
+
 		ai_chance = {
 			base = 25
-			modifier = {
-				is_historical_focus_on = yes
-				add = 10
-			}
 		}
-		SOV = { add_opinion_modifier = { target = BLR modifier = betrayed_our_cause } }
-		SOV = { country_event = { id = russia.4 } }
 	}
 }
 #They accepts!
@@ -1034,9 +1034,8 @@ country_event = {
 		name = russia.25.o1
 		log = "[GetDateText]: [This.GetName]: russia.25.o1 executed"
 
-		every_country = {
+		every_allied_country = {
 			limit = {
-				is_in_faction_with = SOV
 				NOT = { tag = SOV }
 				NOT = { tag = BLR }
 			}
@@ -1044,7 +1043,8 @@ country_event = {
 		}
 	}
 }
-#Referendum in Chechnya
+
+# Referendum in Chechnya
 country_event = {
 	id = russia.29
 	title = russia.29.t
@@ -1054,34 +1054,28 @@ country_event = {
 
 	option = {
 		name = russia.29.o1
-		log = "[GetDateText]: [This.GetName]: russia.29.o2 executed"
-		if = {
-			limit = { NOT = { country_exists = CHE } }
-			release_autonomy = {
-				target = CHE
-				autonomy_state = autonomy_republic_rf
-			}
-		}
-		else = {
-			set_autonomy = {
-				target = CHE
-				autonomy_state = autonomy_republic_rf
+		log = "[GetDateText]: [This.GetName]: russia.29.o1 executed"
+		hidden_effect = {
+			if = { limit = { NOT = { country_exists = CHE } }
+				release = CHE
 			}
 		}
 		CHE = {
-			set_country_flag = SOV_subject_agree
 			set_country_flag = SOV_subject_republic
 			transfer_state = 672
 			add_state_core = 672
 		}
-		add_state_core = 672
+		set_autonomy = {
+			target = CHE
+			autonomy_state = autonomy_republic_rf
+		}
 		hidden_effect = {
+			add_state_core = 672
 			CHE = {
 				set_temp_variable = { rul_party_temp = 6 }
 				set_temp_variable = { change_leader_temp = 1 }
 				change_ruling_party_effect = yes
-				if = {
-					limit = { CHE = { is_ai = yes } }
+				if = { limit = { is_ai = yes }
 					set_temp_variable = { party_index = 6 }
 					set_temp_variable = { party_popularity_increase = 0.35 }
 					set_temp_variable = { temp_outlook_increase = 0.35 }
@@ -1093,35 +1087,31 @@ country_event = {
 			modify_subjectnalogs_support = yes
 			SUB_separatism_plus_subject = yes
 		}
+
 		ai_chance = {
 			base = 100
 		}
 	}
+
 	option = {
 		name = russia.29.o2
 		log = "[GetDateText]: [This.GetName]: russia.29.o2 executed"
-		if = {
-			limit = { NOT = { country_exists = CHE } }
-			release_autonomy = {
-				target = CHE
-				autonomy_state = autonomy_republic_rf
-			}
-		}
-		else = {
-			set_autonomy = {
-				target = CHE
-				autonomy_state = autonomy_republic_rf
+		hidden_effect = {
+			if = { limit = { NOT = { country_exists = CHE } }
+				release = CHE
 			}
 		}
 		CHE = {
-			set_country_flag = SOV_subject_agree
 			set_country_flag = SOV_subject_republic
-			change_tag_from = SOV
 			transfer_state = 672
 			add_state_core = 672
 		}
-		add_state_core = 672
+		set_autonomy = {
+			target = CHE
+			autonomy_state = autonomy_republic_rf
+		}
 		hidden_effect = {
+			add_state_core = 672
 			CHE = {
 				set_temp_variable = { rul_party_temp = 6 }
 				set_temp_variable = { change_leader_temp = 1 }
@@ -1132,6 +1122,7 @@ country_event = {
 			modify_subjectnalogs_support = yes
 			SUB_separatism_plus_subject = yes
 		}
+
 		ai_chance = {
 			base = 0
 		}
@@ -1144,13 +1135,13 @@ country_event = {
 	title = russia.30.t
 	desc = russia.30.d
 	picture = GFX_burning_oil_refinery
+	is_triggered_only = yes
 	fire_only_once = yes
 	trigger = {
 		tag = SOV
 		date > 2009.7.1
 		date < 2010.1.1
 	}
-	is_triggered_only = yes
 
 	option = {
 		name = russia.30.o1
@@ -1159,14 +1150,17 @@ country_event = {
 		set_temp_variable = { treasury_change = -8 }
 		modify_treasury_effect = yes
 		add_political_power = -75
-		news_event = {
-			hours = 6
-			id = russia_news.6
-		}
+		news_event = { hours = 6 id = russia_news.6 }
+
 		ai_chance = {
 			base = 50
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
+
 	option = {
 		name = russia.30.o2
 		log = "[GetDateText]: [This.GetName]: russia.30.o2 executed"
@@ -1177,12 +1171,14 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
 		add_relative_party_popularity = yes
-		news_event = {
-			hours = 6
-			id = russia_news.6
-		}
+		news_event = { hours = 6 id = russia_news.6 }
+
 		ai_chance = {
 			base = 5
+			modifier = {
+				factor = 0
+				has_stability < 0.25
+			}
 		}
 	}
 }
@@ -1812,7 +1808,7 @@ country_event = {
 		}
 		1088 = {
 			create_unit = {
-				division = "name = \"Malorossiya Liberation Army\" division_template = \"Malorossiya Liberation Army\" start_experience_base = 1.0"
+				division = "name = \"Malorossiya Liberation Army\" division_template = \"Malorossiya Liberation Army\" start_experience_factor = 1.0"
 				owner = MLR
 				prioritize_location = 3520
 			}
@@ -1820,7 +1816,7 @@ country_event = {
 		}
 		697 = {
 			create_unit = {
-				division = "name = \"Malorossiya Liberation Army\" division_template = \"Malorossiya Liberation Army\" start_experience_base = 1.0"
+				division = "name = \"Malorossiya Liberation Army\" division_template = \"Malorossiya Liberation Army\" start_experience_factor = 1.0"
 				owner = MLR
 				prioritize_location = 3568
 			}
@@ -1839,6 +1835,16 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: russia.58.a"
 		set_country_flag = SOV_unlock_2001_reform_generals
 		effect_tooltip = {
+			create_corps_commander = {
+				name = "Alexander Lapin"
+				portrait_path = "gfx/leaders/SOV/Gen_Alexander_Lapin.dds"
+				traits = { armoured_cavalry_leader panzer_leader }
+				skill = 2
+				attack_skill = 3
+				defense_skill = 2
+				planning_skill = 2
+				logistics_skill = 2
+			}
 			create_corps_commander = {
 				name = "Sergey Kisel"
 				portrait_path = "gfx/leaders/SOV/Gen_Sergey_Kisel.dds"
@@ -2520,7 +2526,7 @@ country_event = {
 	is_triggered_only = yes
 	option = {
 		name = russia.78.o1
-		log = "[GetDateText]: [This.GetName]: russia.38.o1 executed"
+		log = "[GetDateText]: [This.GetName]: russia.78.o1 executed"
 	}
 }
 country_event = {
@@ -2739,7 +2745,7 @@ country_event = {
 	is_triggered_only = yes
 	option = {
 		name = russia.87.o1
-		log = "[GetDateText]: [This.GetName]: russia.38.o1 executed"
+		log = "[GetDateText]: [This.GetName]: russia.87.o1 executed"
 	}
 }
 country_event = {
@@ -2764,6 +2770,7 @@ country_event = {
 	option = {
 		name = russia.89.o1
 		log = "[GetDateText]: [This.GetName]: russia.89.o1 executed"
+		set_temp_variable = { temp_change = 1 }
 		build_enrichment_facilities_effect = yes
 		random_owned_controlled_state = {
 			add_building_construction = {
@@ -2786,6 +2793,7 @@ country_event = {
 		set_temp_variable = { treasury_change = -25 }
 		modify_treasury_effect = yes
 		SOV = {
+			set_temp_variable = { temp_change = 1 }
 			build_enrichment_facilities_effect = yes
 			random_owned_controlled_state = {
 				add_building_construction = {
@@ -2823,7 +2831,7 @@ country_event = {
 	}
 	option = {
 		name = russia.89.o2
-		log = "[GetDateText]: [This.GetName]: russia.86.o2 executed"
+		log = "[GetDateText]: [This.GetName]: russia.89.o2 executed"
 		add_opinion_modifier = {
 			target = SOV
 			modifier = medium_decrease
@@ -3012,10 +3020,12 @@ country_event = {
 	option = {
 		name = russia.98.o1
 		log = "[GetDateText]: [This.GetName]: russia.98.o1 executed"
+		ai_chance = { base = 10 }
 	}
 	option = {
 		name = russia.98.o2
 		log = "[GetDateText]: [This.GetName]: russia.98.o2 executed"
+		ai_chance = { base = 90 }
 		country_event = russia.99
 	}
 }
@@ -3028,6 +3038,7 @@ country_event = {
 	option = {
 		name = russia.99.o1
 		log = "[GetDateText]: [This.GetName]: russia.99.o1 executed"
+		ai_chance = { base = 1 }
 		set_country_flag = SOV_navalny_a
 		update_party_name = yes
 		custom_effect_tooltip = SOV_the_party_TT
@@ -3036,6 +3047,7 @@ country_event = {
 	option = {
 		name = russia.99.o2
 		log = "[GetDateText]: [This.GetName]: russia.99.o2 executed"
+		ai_chance = { base = 1 }
 		set_country_flag = SOV_navalny_p
 		update_party_name = yes
 		custom_effect_tooltip = SOV_the_party_TT
@@ -3044,6 +3056,7 @@ country_event = {
 	option = {
 		name = russia.99.o3
 		log = "[GetDateText]: [This.GetName]: russia.99.o3 executed"
+		ai_chance = { base = 1 }
 		set_country_flag = SOV_navalny_b
 		update_party_name = yes
 		custom_effect_tooltip = SOV_the_party_TT
@@ -3059,10 +3072,12 @@ country_event = {
 	option = {
 		name = russia.100.o1
 		log = "[GetDateText]: [This.GetName]: russia.100.o1 executed"
+		ai_chance = { base = 10 }
 	}
 	option = {
 		name = russia.100.o2
 		log = "[GetDateText]: [This.GetName]: russia.100.o2 executed"
+		ai_chance = { base = 90 }
 		set_country_flag = SOV_navalny_n
 		update_party_name = yes
 		custom_effect_tooltip = SOV_the_party_TT
@@ -3089,10 +3104,12 @@ country_event = {
 	option = {
 		name = russia.101.o1
 		log = "[GetDateText]: [This.GetName]: russia.101.o1 executed"
+		ai_chance = { base = 10 }
 	}
 	option = {
 		name = russia.101.o2
 		log = "[GetDateText]: [This.GetName]: russia.101.o2 executed"
+		ai_chance = { base = 90 }
 		set_country_flag = SOV_gorbach
 		update_party_name = yes
 		custom_effect_tooltip = SOV_the_party_TT
@@ -3108,10 +3125,12 @@ country_event = {
 	option = {
 		name = russia.102.o1
 		log = "[GetDateText]: [This.GetName]: russia.102.o1 executed"
+		ai_chance = { base = 10 }
 	}
 	option = {
 		name = russia.102.o2
 		log = "[GetDateText]: [This.GetName]: russia.102.o2 executed"
+		ai_chance = { base = 90 }
 		create_country_leader = {
 			name = "Mikhail Gorbachev"
 			picture = "mikhail_gorbachev.dds"
@@ -3134,7 +3153,6 @@ country_event = {
 		set_temp_variable = { treasury_change = 2.5 }
 		modify_treasury_effect = yes
 		set_temp_variable = { percent_change = 3.5 }
-		set_temp_variable = { tag_index = ROOT }
 		set_temp_variable = { influence_target = FROM }
 		change_influence_percentage = yes
 	}
@@ -3484,7 +3502,6 @@ country_event = {
 			}
 		}
 		LIT = {
-			set_country_flag = SOV_subject_agree
 			set_country_flag = SOV_subject_governorate
 
 			set_cosmetic_tag = GOV_LIT
@@ -3511,7 +3528,7 @@ country_event = {
 			add_relative_party_popularity = yes
 
 		}
-		SOV = { country_event = { id = russia_governorate.2 } }
+		SOV = { country_event = russia_governorate.2 }
 	}
 	option = {
 		name = russia_governorate.1.o2
@@ -3531,7 +3548,7 @@ country_event = {
 				factor = 90
 			}
 		}
-		SOV = { country_event = { id = russia_governorate.3 } }
+		SOV = { country_event = russia_governorate.3 }
 		SOV = { add_opinion_modifier = { target = LIT modifier = betrayed_our_cause } }
 	}
 }
@@ -3608,7 +3625,6 @@ country_event = {
 			}
 		}
 		LAT = {
-			set_country_flag = SOV_subject_agree
 			set_country_flag = SOV_subject_governorate
 
 			set_cosmetic_tag = GOV_LAT
@@ -3634,7 +3650,7 @@ country_event = {
 			set_temp_variable = { temp_outlook_increase = 0.10 }
 			add_relative_party_popularity = yes
 		}
-		SOV = { country_event = { id = russia_governorate.5 } }
+		SOV = { country_event = russia_governorate.5 }
 	}
 	option = {
 		name = russia_governorate.4.o2
@@ -3654,7 +3670,7 @@ country_event = {
 				factor = 90
 			}
 		}
-		SOV = { country_event = { id = russia_governorate.6 } }
+		SOV = { country_event = russia_governorate.6 }
 		SOV = { add_opinion_modifier = { target = LAT modifier = betrayed_our_cause } }
 	}
 }
@@ -3731,7 +3747,6 @@ country_event = {
 			}
 		}
 		EST = {
-			set_country_flag = SOV_subject_agree
 			set_country_flag = SOV_subject_governorate
 
 			set_cosmetic_tag = GOV_EST
@@ -3757,7 +3772,7 @@ country_event = {
 			set_temp_variable = { temp_outlook_increase = 0.10 }
 			add_relative_party_popularity = yes
 		}
-		SOV = { country_event = { id = russia_governorate.8 } }
+		SOV = { country_event = russia_governorate.8 }
 	}
 	option = {
 		name = russia_governorate.7.o2
@@ -3777,7 +3792,7 @@ country_event = {
 				factor = 90
 			}
 		}
-		SOV = { country_event = { id = russia_governorate.9 } }
+		SOV = { country_event = russia_governorate.9 }
 		SOV = { add_opinion_modifier = { target = EST modifier = betrayed_our_cause } }
 	}
 }
@@ -3854,13 +3869,12 @@ country_event = {
 			}
 		}
 		GEO = {
-			set_country_flag = SOV_subject_agree
 			set_country_flag = SOV_subject_governorate
 
 			set_cosmetic_tag = GOV_GEO
 			clr_country_flag = dynamic_flag
 			SOV = {
-				country_event = { id = russia_governorate.11 }
+				country_event = russia_governorate.11
 				set_autonomy = {
 					target = GEO
 					autonomy_state = autonomy_governorate_rf
@@ -3898,7 +3912,7 @@ country_event = {
 				factor = 90
 			}
 		}
-		SOV = { country_event = { id = russia_governorate.12 } }
+		SOV = { country_event = russia_governorate.12 }
 		SOV = { add_opinion_modifier = { target = GEO modifier = betrayed_our_cause } }
 	}
 }
@@ -3975,13 +3989,12 @@ country_event = {
 			}
 		}
 		MLV = {
-			set_country_flag = SOV_subject_agree
 			set_country_flag = SOV_subject_governorate
 
 			set_cosmetic_tag = GOV_MLV
 			clr_country_flag = dynamic_flag
 			SOV = {
-				country_event = { id = russia_governorate.14 }
+				country_event = russia_governorate.14
 				set_autonomy = {
 					target = MLV
 					autonomy_state = autonomy_governorate_rf
@@ -4018,7 +4031,7 @@ country_event = {
 				factor = 90
 			}
 		}
-		SOV = { country_event = { id = russia_governorate.15 } }
+		SOV = { country_event = russia_governorate.15 }
 		SOV = { add_opinion_modifier = { target = MLV modifier = betrayed_our_cause } }
 	}
 }
@@ -4096,10 +4109,9 @@ country_event = {
 			}
 		}
 		SOV = {
-			country_event = { id = russia_governorate.17 }
+			country_event = russia_governorate.17
 		}
 		BLR = {
-			set_country_flag = SOV_subject_agree
 			set_country_flag = SOV_subject_governorate
 			set_cosmetic_tag = GOV_BLR
 			clr_country_flag = dynamic_flag
@@ -4150,7 +4162,7 @@ country_event = {
 			}
 		}
 		SOV = { add_opinion_modifier = { target = BLR modifier = betrayed_our_cause } }
-		SOV = { country_event = { id = russia_governorate.18 } }
+		SOV = { country_event = russia_governorate.18 }
 	}
 
 	option = {
@@ -4176,7 +4188,7 @@ country_event = {
 				add = 90
 			}
 		}
-		SOV = { country_event = { id = russia_governorate.19 } }
+		SOV = { country_event = russia_governorate.19 }
 	}
 }
 
@@ -4369,16 +4381,15 @@ country_event = {
 			}
 		}
 		SOV = {
-			country_event = { id = russia_governorate.21 }
+			country_event = russia_governorate.21
 		}
 		if = {
 			limit = {
 				NKR = { is_subject_of = ARM }
 			}
-			ARM = { country_event = { id = russia_governorate.24 } }
+			ARM = { country_event = russia_governorate.24 }
 		}
 		ARM = {
-			set_country_flag = SOV_subject_agree
 			set_country_flag = SOV_subject_governorate
 			SOV = {
 				set_autonomy = {
@@ -4400,7 +4411,7 @@ country_event = {
 			}
 		}
 		SOV = { add_opinion_modifier = { target = ARM modifier = betrayed_our_cause } }
-		SOV = { country_event = { id = russia_governorate.22 } }
+		SOV = { country_event = russia_governorate.22 }
 	}
 
 	option = {
@@ -4431,7 +4442,7 @@ country_event = {
 				add = -90
 			}
 		}
-		SOV = { country_event = { id = russia_governorate.23 } }
+		SOV = { country_event = russia_governorate.23 }
 	}
 }
 
@@ -4514,7 +4525,7 @@ country_event = {
 			limit = {
 				NKR = { is_subject_of = ARM }
 			}
-			ARM = { country_event = { id = russia_governorate.24 } }
+			ARM = { country_event = russia_governorate.24 }
 		}
 		ARM = { set_country_flag = USR_armenia_create_union_state }
 		SOV = {
@@ -5130,16 +5141,8 @@ country_event = {
 	}
 	option = {
 		name = sov_vybory.2.a
-		log = "[GetDateText]: [This.GetName]: sov_vybory.1.a executed"
+		log = "[GetDateText]: [This.GetName]: sov_vybory.2.a executed"
 		retire_country_leader = yes
-		create_country_leader = {
-			name = "Vladimir V.Putin"
-			picture = "Vladimir_Putin_older.dds"
-			ideology = Conservative
-			traits = {
-				spy emerging_Conservative geopolitical_thinker political_dancer likeable sly rational
-			}
-		}
 		set_temp_variable = { rul_party_temp = 6 }
 		set_temp_variable = { col_one = 0 }
 		set_temp_variable = { col_two = 15 }
@@ -5147,6 +5150,14 @@ country_event = {
 		set_politics = {
 			ruling_party = communism
 			election_frequency = 72
+		}
+		create_country_leader = {
+			name = "Vladimir V.Putin"
+			picture = "Vladimir_Putin_older.dds"
+			ideology = Conservative
+			traits = {
+				spy emerging_Conservative geopolitical_thinker political_dancer likeable sly rational
+			}
 		}
 
 		add_stability = -0.1
@@ -5185,7 +5196,8 @@ country_event = {
 
 	option = {
 		name = rusboloto.1.a
-		log = "[GetDateText]: [This.GetName]: sov_vybory.1.a executed"
+		log = "[GetDateText]: [This.GetName]: rusboloto.1.a executed"
+		ai_chance = { base = 90 }
 		add_political_power = -100
 		add_stability = 0.05
 		country_event = { id = rusboloto.2 days = 5 }
@@ -5193,7 +5205,8 @@ country_event = {
 
 	option = {
 		name = rusboloto.1.b
-		log = "[GetDateText]: [This.GetName]: sov_vybory.1.a executed"
+		log = "[GetDateText]: [This.GetName]: rusboloto.1.b executed"
+		ai_chance = { base = 10 }
 		hidden_effect = {
 			add_to_variable = { party_pop_array^20 = 0.05 }
 			recalculate_party = yes
@@ -5220,7 +5233,8 @@ country_event = {
 
 	option = {
 		name = rusboloto.2.a
-		log = "[GetDateText]: [This.GetName]: sov_vybory.1.a executed"
+		log = "[GetDateText]: [This.GetName]: rusboloto.2.a executed"
+		ai_chance = { base = 90 }
 		add_political_power = -100
 		add_stability = 0.05
 		country_event = { id = rusboloto.3 days = 3 }
@@ -5228,7 +5242,8 @@ country_event = {
 
 	option = {
 		name = rusboloto.2.b
-		log = "[GetDateText]: [This.GetName]: sov_vybory.1.a executed"
+		log = "[GetDateText]: [This.GetName]: rusboloto.2.b executed"
+		ai_chance = { base = 10 }
 		hidden_effect = {
 			add_to_variable = { party_pop_array^20 = 0.05 }
 			recalculate_party = yes
@@ -5254,7 +5269,7 @@ country_event = {
 
 	option = {
 		name = rusboloto.3.a
-		log = "[GetDateText]: [This.GetName]: sov_vybory.1.a executed"
+		log = "[GetDateText]: [This.GetName]: rusboloto.3.a executed"
 	}
 }
 
@@ -5441,31 +5456,38 @@ country_event = {
 		}
 		log = "[GetDateText]: [This.GetName]: sov_vybory.1.a executed"
 		hidden_effect = {
-			NOV = {
-				remove_state_core = 1076
-				remove_state_core = 1075
-				remove_state_core = 693
-				remove_state_core = 669
-				remove_state_core = 694
-				remove_state_core = 1030
-				remove_state_core = 1087
-				remove_state_core = 696
-				remove_state_core = 1085
-				remove_state_core = 1086
-				remove_state_core = 333
-				remove_state_core = 695
+			if = {
+				limit = { country_exists = NOV }
+				NOV = {
+					remove_state_core = 1076
+					remove_state_core = 1075
+					remove_state_core = 693
+					remove_state_core = 669
+					remove_state_core = 694
+					remove_state_core = 1030
+					remove_state_core = 1087
+					remove_state_core = 696
+					remove_state_core = 1085
+					remove_state_core = 1086
+					remove_state_core = 333
+					remove_state_core = 695
+				}
 			}
-			DPR = {
-				remove_state_core = 693
-				remove_state_core = 1030
-
+			if = {
+				limit = { country_exists = DPR }
+				DPR = {
+					remove_state_core = 693
+					remove_state_core = 1030
+				}
 			}
-			LPR = {
-				remove_state_core = 1076
-				remove_state_core = 1075
+			if = {
+				limit = { country_exists = LPR }
+				LPR = {
+					remove_state_core = 1076
+					remove_state_core = 1075
+				}
 			}
 			set_temp_variable = { percent_change = 20 }
-			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = UKR }
 			change_influence_percentage = yes
 		}
@@ -5489,7 +5511,6 @@ country_event = {
 		}
 		log = "[GetDateText]: [This.GetName]: sov_vybory.1.a executed"
 		set_temp_variable = { percent_change = -5 }
-		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = UKR }
 		change_influence_percentage = yes
 		add_state_core = 1076
@@ -5505,28 +5526,36 @@ country_event = {
 		add_state_core = 333
 		add_state_core = 695
 		hidden_effect = {
-			NOV = {
-				remove_state_core = 1076
-				remove_state_core = 1075
-				remove_state_core = 693
-				remove_state_core = 669
-				remove_state_core = 694
-				remove_state_core = 1030
-				remove_state_core = 1087
-				remove_state_core = 696
-				remove_state_core = 1085
-				remove_state_core = 1086
-				remove_state_core = 333
-				remove_state_core = 695
+			if = {
+				limit = { country_exists = NOV }
+				NOV = {
+					remove_state_core = 1076
+					remove_state_core = 1075
+					remove_state_core = 693
+					remove_state_core = 669
+					remove_state_core = 694
+					remove_state_core = 1030
+					remove_state_core = 1087
+					remove_state_core = 696
+					remove_state_core = 1085
+					remove_state_core = 1086
+					remove_state_core = 333
+					remove_state_core = 695
+				}
 			}
-			DPR = {
-				remove_state_core = 693
-				remove_state_core = 1030
-
+			if = {
+				limit = { country_exists = DPR }
+				DPR = {
+					remove_state_core = 693
+					remove_state_core = 1030
+				}
 			}
-			LPR = {
-				remove_state_core = 1076
-				remove_state_core = 1075
+			if = {
+				limit = { country_exists = LPR }
+				LPR = {
+					remove_state_core = 1076
+					remove_state_core = 1075
+				}
 			}
 		}
 	}
@@ -5762,7 +5791,6 @@ country_event = {
 	option = {
 		name = sov_other.32.a
 		log = "[GetDateText]: [This.GetName]: sov_other.32.a executed"
-		set_country_flag = SOV_subject_agree
 		set_country_flag = SOV_subject_republic
 		SOV = {
 			set_autonomy = {
@@ -5878,6 +5906,7 @@ country_event = {
 	option = {
 		name = sov_other.36.a
 		log = "[GetDateText]: [This.GetName]: sov_other.36.a executed"
+		ai_chance = { base = 90 }
 		set_temp_variable = { party_index = 22 }
 		set_temp_variable = { party_popularity_increase = 0.15 }
 		set_temp_variable = { temp_outlook_increase = 0.15 }
@@ -5889,6 +5918,7 @@ country_event = {
 	option = {
 		name = sov_other.36.b
 		log = "[GetDateText]: [This.GetName]: sov_other.36.b executed"
+		ai_chance = { base = 10 }
 		add_stability = -0.09
 		set_temp_variable = { party_index = 22 }
 		set_temp_variable = { party_popularity_increase = -0.15 }
@@ -6600,7 +6630,7 @@ country_event = {
 			set_equipment_fraction = 0.25
 			696 = {
 				create_unit = {
-					division = "name = \"Russian Revolutionaries\" division_template = \"Russian Revolutionaries\" start_experience_base = 1"
+					division = "name = \"Russian Revolutionaries\" division_template = \"Russian Revolutionaries\" start_experience_factor = 1"
 					owner = NOV
 					count = 1
 					prioritize_location = 3409
@@ -6610,7 +6640,7 @@ country_event = {
 				limit = { ROOT = { has_full_control_of_state = PREV } }
 				prioritize = { 1076 }
 				create_unit = {
-					division = "name = \"Russian Revolutionaries\" division_template = \"Russian Revolutionaries\" start_experience_base = 0.1"
+					division = "name = \"Russian Revolutionaries\" division_template = \"Russian Revolutionaries\" start_experience_factor = 0.1"
 					owner = NOV
 				}
 			}
@@ -6618,7 +6648,7 @@ country_event = {
 				limit = { ROOT = { has_full_control_of_state = PREV } }
 				prioritize = { 1075 }
 				create_unit = {
-					division = "name = \"Russian Revolutionaries\" division_template = \"Russian Revolutionaries\" start_experience_base = 0.1"
+					division = "name = \"Russian Revolutionaries\" division_template = \"Russian Revolutionaries\" start_experience_factor = 0.1"
 					owner = NOV
 				}
 			}
@@ -6626,7 +6656,7 @@ country_event = {
 				limit = { ROOT = { has_full_control_of_state = PREV } }
 				prioritize = { 1030 }
 				create_unit = {
-					division = "name = \"Russian Revolutionaries\" division_template = \"Russian Revolutionaries\" start_experience_base = 0.1"
+					division = "name = \"Russian Revolutionaries\" division_template = \"Russian Revolutionaries\" start_experience_factor = 0.1"
 					owner = NOV
 				}
 			}
@@ -6634,7 +6664,7 @@ country_event = {
 				limit = { ROOT = { has_full_control_of_state = PREV } }
 				prioritize = { 693 }
 				create_unit = {
-					division = "name = \"Russian Revolutionaries\" division_template = \"Russian Revolutionaries\" start_experience_base = 0.1"
+					division = "name = \"Russian Revolutionaries\" division_template = \"Russian Revolutionaries\" start_experience_factor = 0.1"
 					owner = NOV
 				}
 			}
@@ -6651,7 +6681,7 @@ country_event = {
 			add_manpower = 700
 			669 = {
 				create_unit = {
-					division = "name = \"Russian Revolutionaries\" division_template = \"Russian Revolutionaries\" start_experience_base = 1"
+					division = "name = \"Russian Revolutionaries\" division_template = \"Russian Revolutionaries\" start_experience_factor = 1"
 					owner = CRM
 					count = 1
 					prioritize_location = 3686
@@ -6670,7 +6700,7 @@ country_event = {
 			add_manpower = 300
 			1013 = {
 				create_unit = {
-					division = "name = \"Russian Revolutionaries\" division_template = \"Russian Revolutionaries\" start_experience_base = 1"
+					division = "name = \"Russian Revolutionaries\" division_template = \"Russian Revolutionaries\" start_experience_factor = 1"
 					owner = LAG
 					count = 1
 					prioritize_location = 310
@@ -6846,7 +6876,7 @@ country_event = {
 		set_equipment_fraction = 0.25
 		407 = {
 			create_unit = {
-				division = "name = \"Azerbaijan Revolutionaries\" division_template = \"Azerbaijan Revolutionaries\" start_experience_base = 1"
+				division = "name = \"Azerbaijan Revolutionaries\" division_template = \"Azerbaijan Revolutionaries\" start_experience_factor = 1"
 				owner = SAZ
 				count = 1
 				prioritize_location = 1896
@@ -6854,7 +6884,7 @@ country_event = {
 		}
 		407 = {
 			create_unit = {
-				division = "name = \"Azerbaijan Revolutionaries\" division_template = \"Azerbaijan Revolutionaries\" start_experience_base = 1"
+				division = "name = \"Azerbaijan Revolutionaries\" division_template = \"Azerbaijan Revolutionaries\" start_experience_factor = 1"
 				owner = SAZ
 				count = 1
 				prioritize_location = 4553
@@ -6862,7 +6892,7 @@ country_event = {
 		}
 		407 = {
 			create_unit = {
-				division = "name = \"Azerbaijan Revolutionaries\" division_template = \"Azerbaijan Revolutionaries\" start_experience_base = 1"
+				division = "name = \"Azerbaijan Revolutionaries\" division_template = \"Azerbaijan Revolutionaries\" start_experience_factor = 1"
 				owner = SAZ
 				count = 1
 				prioritize_location = 10454
@@ -6870,7 +6900,7 @@ country_event = {
 		}
 		407 = {
 			create_unit = {
-				division = "name = \"Azerbaijan Revolutionaries\" division_template = \"Azerbaijan Revolutionaries\" start_experience_base = 1"
+				division = "name = \"Azerbaijan Revolutionaries\" division_template = \"Azerbaijan Revolutionaries\" start_experience_factor = 1"
 				owner = SAZ
 				count = 1
 				prioritize_location = 12793
@@ -6937,7 +6967,7 @@ country_event = {
 		name = sov_nationalists.12.b
 		log = "[GetDateText]: [This.GetName]: sov_nationalists.12.b"
 		SOV = {
-			country_event = { id = sov_nationalists.13 }
+			country_event = sov_nationalists.13
 		}
 		ai_chance = {
 			base = 50
@@ -7006,7 +7036,7 @@ country_event = {
 		name = sov_nationalists.15.b
 		log = "[GetDateText]: [This.GetName]: sov_nationalists.15.b"
 		SOV = {
-			country_event = { id = sov_nationalists.17 }
+			country_event = sov_nationalists.17
 		}
 		ai_chance = {
 			base = 1
@@ -7117,7 +7147,6 @@ country_event = {
 		if = {
 			limit = { ROOT = { is_subject_of = SOV } }
 			ROOT = {
-				set_country_flag = SOV_subject_agree
 				set_country_flag = SOV_subject_governorate
 				SOV = {
 					set_autonomy = {
@@ -7366,7 +7395,6 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: sov_nationalists.22.a executed"
 		hidden_effect = {
 			PMR = {
-				set_country_flag = SOV_subject_agree
 				set_country_flag = SOV_subject_republic
 				set_country_flag = SUB_russ_polit
 				update_party_name = yes
@@ -7851,7 +7879,6 @@ country_event = {
 			target = UKR
 			type = annex_everything
 		}
-		custom_effect_tooltip = jirik_novorossiya_tt
 		hidden_effect = {
 			jirik_ukraine_novorossia = yes
 			if = {
@@ -7910,7 +7937,6 @@ country_event = {
 	option = {
 		name = sov_nationalists.36.a
 		log = "[GetDateText]: [This.GetName]: sov_nationalists.36.a executed"
-		custom_effect_tooltip = jirik_novorossiya_annex_tt
 		hidden_effect = {
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
@@ -8129,7 +8155,7 @@ country_event = {
 				factor = 90
 			}
 		}
-		SOV = { country_event = { id = sov_nationalists.42 } }
+		SOV = { country_event = sov_nationalists.42 }
 		SOV = { add_opinion_modifier = { target = ROM modifier = betrayed_our_cause } }
 	}
 }
@@ -8179,7 +8205,6 @@ country_event = {
 			}
 		}
 		ASK = {
-			set_country_flag = SOV_subject_agree
 			set_country_flag = SOV_subject_governorate
 			add_stability = -0.06
 			set_temp_variable = { percent_change = 15 }
@@ -8226,7 +8251,7 @@ country_event = {
 		}
 		814 = {
 			create_unit = {
-				division = "name = \"Spetsnaz Brigade\" division_template = \"Spetsnaz Brigade\" start_experience_base = 1.0"
+				division = "name = \"Spetsnaz Brigade\" division_template = \"Spetsnaz Brigade\" start_experience_factor = 1.0"
 				owner = SOV
 				prioritize_location = 7855
 			}
@@ -8285,7 +8310,6 @@ country_event = {
 		name = sov_nationalists.45.o1
 		log = "[GetDateText]: [This.GetName]: sov_nationalists.45.o1 executed"
 		set_temp_variable = { percent_change = 1 }
-		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = FROM }
 		change_influence_percentage = yes
 		add_equipment_to_stockpile = {
@@ -8342,7 +8366,6 @@ country_event = {
 		name = sov_nationalists.47.o1
 		log = "[GetDateText]: [This.GetName]: sov_nationalists.47.o1 executed"
 		set_temp_variable = { percent_change = 2 }
-		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = FROM }
 		change_influence_percentage = yes
 
@@ -9676,7 +9699,6 @@ country_event = {
 		SOV = {
 			end_puppet = ROOT
 		}
-		clr_country_flag = warsaw_pact_reintegrate
 		set_country_flag = WP_escaped
 		remove_ideas = faction_warsaw_pact_idea
 		remove_ideas = SOV_warsaw_pact_joint_exercises_idea
@@ -11247,7 +11269,7 @@ country_event = { # Media in Frenzy
 	}
 	option = {
 		name = russia.301.b
-		log = "[GetDateText]: [This.GetName]: russia.301.a executed"
+		log = "[GetDateText]: [This.GetName]: russia.301.b executed"
 		add_political_power = 150
 		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = 0.055 }
@@ -11279,6 +11301,12 @@ country_event = { # Repaired
 				level = 1
 				instant_build = yes
 				province = 7600
+			}
+			add_extra_state_shared_building_slots = 2
+			add_building_construction = {
+				type = infrastructure
+				level = 1
+				instant_build = yes
 			}
 		}
 	}
@@ -12666,7 +12694,7 @@ country_event = {
 		set_temp_variable = { treasury_change = 5.00 }
 		modify_treasury_effect = yes
 		SOV = {
-			country_event = { id = sov_economic.35 }
+			country_event = sov_economic.35
 		}
 		ai_chance = { base = 90 }
 	}
@@ -12678,7 +12706,7 @@ country_event = {
 		set_temp_variable = { influence_target = PMR }
 		change_influence_percentage = yes
 		SOV = {
-			country_event = { id = sov_economic.36 }
+			country_event = sov_economic.36
 		}
 		ai_chance = { base = 10 }
 	}
@@ -12695,7 +12723,6 @@ country_event = {
 		name = sov_economic.35.a
 		log = "[GetDateText]: [This.GetName]: sov_economic.35.a executed"
 		set_temp_variable = { percent_change = 1 }
-		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = PMR }
 		change_influence_percentage = yes
 		set_temp_variable = { treasury_change = -5.00 }
@@ -12713,7 +12740,6 @@ country_event = {
 		name = sov_economic.36.a
 		log = "[GetDateText]: [This.GetName]: sov_economic.36.a executed"
 		set_temp_variable = { percent_change = -1.5 }
-		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = PMR }
 		change_influence_percentage = yes
 	}
@@ -12735,7 +12761,7 @@ country_event = {
 		set_temp_variable = { influence_target = PMR }
 		change_influence_percentage = yes
 		SOV = {
-			country_event = { id = sov_economic.38 }
+			country_event = sov_economic.38
 		}
 		ai_chance = { base = 90 }
 	}
@@ -12747,7 +12773,7 @@ country_event = {
 		set_temp_variable = { influence_target = PMR }
 		change_influence_percentage = yes
 		SOV = {
-			country_event = { id = sov_economic.39 }
+			country_event = sov_economic.39
 		}
 		ai_chance = { base = 10 }
 	}
@@ -12764,7 +12790,6 @@ country_event = {
 		name = sov_economic.38.a
 		log = "[GetDateText]: [This.GetName]: sov_economic.38.a executed"
 		set_temp_variable = { percent_change = 1.5 }
-		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = PMR }
 		change_influence_percentage = yes
 	}
@@ -12780,7 +12805,6 @@ country_event = {
 		name = sov_economic.39.a
 		log = "[GetDateText]: [This.GetName]: sov_economic.39.a executed"
 		set_temp_variable = { percent_change = -2.5 }
-		set_temp_variable = { tag_index = SOV }
 		set_temp_variable = { influence_target = PMR }
 		change_influence_percentage = yes
 	}
@@ -13853,7 +13877,6 @@ country_event = {
 		name = sov_liberals.27.b
 		log = "[GetDateText]: [This.GetName]: sov_liberals.27.b"
 			set_temp_variable = { percent_change = 4 }
-			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = GEO }
 			change_influence_percentage = yes
 
@@ -13892,6 +13915,13 @@ country_event = {
 	desc = sov_liberals.29.d
 	picture = GFX_nemtsov_killers
 	is_triggered_only = yes
+
+	trigger = {
+		OR = {
+			emerging_reactionaries_are_in_power = yes
+			neutrality_neutral_oligarch_are_in_power = yes
+		}
+	}
 
 	option = {
 		name = sov_liberals.29.a
@@ -14120,8 +14150,8 @@ country_event = {
 				type = puppet_wargoal_focus
 				target = ROOT
 			}
+			add_opinion_modifier = { target = ROOT modifier = betrayed_our_cause }
 		}
-		SOV = { add_opinion_modifier = { target = ROOT modifier = betrayed_our_cause } }
 	}
 }
 
@@ -14178,15 +14208,11 @@ country_event = {
 					count = 1
 					owner = ROOT
 				}
-			}
-			capital_scope = {
 				create_unit = {
 					division = "name = \"[Russia] 14th Spetsnaz Brigade\" division_template = \"GRU Brigade\" start_experience_factor = 1.0"
 					count = 1
 					owner = ROOT
 				}
-			}
-			capital_scope = {
 				create_unit = {
 					division = "name = \"[Russia] 16th Guards Spetsnaz Brigade\" division_template = \"GRU Brigade\" start_experience_factor = 1.0"
 					count = 1

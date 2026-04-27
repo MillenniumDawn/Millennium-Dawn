@@ -11,6 +11,9 @@ on:
     - 'localisation/**'
     - 'interface/**'
     - 'gfx/**'
+    - 'tools/validation/**'
+    - 'tools/standardization/**'
+    - '.github/workflows/coding-pipeline.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -19,17 +22,92 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write
+  checks: write
 
 jobs:
+  # ───────────────────────────────────────────────────────────────
+  # Detect which file groups changed so downstream jobs can skip
+  # ───────────────────────────────────────────────────────────────
+  detect-changes:
+    name: Detect Changes
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    outputs:
+      common:        ${{ steps.filter.outputs.common }}
+      events:        ${{ steps.filter.outputs.events }}
+      history:       ${{ steps.filter.outputs.history }}
+      localisation:  ${{ steps.filter.outputs.localisation }}
+      ai-strategy:   ${{ steps.filter.outputs.ai-strategy }}
+      ai-navy:       ${{ steps.filter.outputs.ai-navy }}
+      ai-equipment:  ${{ steps.filter.outputs.ai-equipment }}
+      factions:      ${{ steps.filter.outputs.factions }}
+      oob:           ${{ steps.filter.outputs.oob }}
+      decisions:     ${{ steps.filter.outputs.decisions }}
+      scripted-loc:  ${{ steps.filter.outputs.scripted-loc }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+
+    - name: Detect changed file groups
+      uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      id: filter
+      with:
+        filters: |
+          common:
+            - 'common/**'
+          events:
+            - 'events/**'
+          history:
+            - 'history/**'
+          localisation:
+            - 'localisation/**'
+          ai-strategy:
+            - 'common/ai_strategy/**'
+            - 'common/ai_templates/**'
+          ai-navy:
+            - 'common/ai_navy/**'
+            - 'common/units/**'
+          ai-equipment:
+            - 'common/ai_equipment/**'
+          factions:
+            - 'common/factions/**'
+          oob:
+            - 'history/units/**'
+            - 'common/units/**'
+            - 'common/ai_templates/**'
+            - 'common/scripted_effects/00_AI_templates.txt'
+          decisions:
+            - 'common/decisions/**'
+          scripted-loc:
+            - 'common/scripted_localisation/**'
+
+  # ───────────────────────────────────────────────────────────────
+  # Linters — run when any game content files change
+  # ───────────────────────────────────────────────────────────────
   coding-standards:
     name: Coding Standards
-    if: github.event.pull_request.draft == false
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.common == 'true' ||
+      needs.detect-changes.outputs.events == 'true'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         fetch-depth: 1
+        sparse-checkout: |
+          common
+          events
+          history
+          localisation
+          interface
+          gfx/flags
+          tools
+          .claude
+          CLAUDE.md
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -37,19 +115,32 @@ jobs:
         python-version: '3.x'
 
     - name: Run coding standards check
-      run: python tools/coding_standards.py
+      run: python tools/linting/coding_standards.py
 
   styling-check:
     name: Style Check
-    if: github.event.pull_request.draft == false
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.common == 'true' ||
+      needs.detect-changes.outputs.events == 'true' ||
+      needs.detect-changes.outputs.history == 'true'
     runs-on: ubuntu-latest
-    needs: [coding-standards]
 
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         fetch-depth: 1
+        sparse-checkout: |
+          common
+          events
+          history
+          localisation
+          interface
+          gfx/flags
+          tools
+          .claude
+          CLAUDE.md
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -58,31 +149,51 @@ jobs:
 
     - name: Run style check
       run: |
-        python tools/check_basic_style.py --mode diff
-        python tools/check_basic_style_2.py --mode diff
+        python tools/linting/check_basic_style.py --mode diff
+        python tools/linting/check_basic_style_2.py --mode diff
 
-  validate:
+  # ───────────────────────────────────────────────────────────────
+  # Core validators — broad scope, run when most game files change
+  # ───────────────────────────────────────────────────────────────
+  validate-core:
     name: Validate ${{ matrix.validator.title }}
-    if: github.event.pull_request.draft == false
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.common == 'true' ||
+      needs.detect-changes.outputs.events == 'true' ||
+      needs.detect-changes.outputs.history == 'true' ||
+      needs.detect-changes.outputs.localisation == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         validator:
-          - { script: validate_variables.py,            name: variables,            title: "Variables" }
-          - { script: validate_scripted_localisation.py, name: scripted-localisation, title: "Scripted Localisation" }
-          - { script: validate_cosmetic_tags.py,         name: cosmetic-tags,        title: "Cosmetic Tags" }
-          - { script: validate_decisions.py,             name: decisions,            title: "Decisions" }
-          - { script: validate_localisation.py,          name: localisation,         title: "Localisation" }
-          - { script: validate_events.py,                name: events,               title: "Events" }
-          - { script: validate_history_techs.py,         name: history-techs,        title: "History Technology Dependencies" }
-          - { script: validate_unused_scripted.py,       name: unused-scripted,      title: "Unused Scripted Effects & Triggers" }
+          - { script: validate_variables.py,              name: variables,              title: "Variables" }
+          - { script: validate_scripted_localisation.py,  name: scripted-localisation,  title: "Scripted Localisation" }
+          - { script: validate_cosmetic_tags.py,          name: cosmetic-tags,          title: "Cosmetic Tags" }
+          - { script: validate_localisation.py,           name: localisation,           title: "Localisation" }
+          - { script: validate_events.py,                 name: events,                 title: "Events" }
+          - { script: validate_history_techs.py,          name: history-techs,          title: "History Technology Dependencies" }
+          - { script: validate_unused_scripted.py,        name: unused-scripted,        title: "Unused Scripted Effects & Triggers" }
+          - { script: validate_agency_upgrades.py,        name: agency-upgrades,        title: "Intelligence Agency Upgrades" }
+          # NOTE: validate_defines.py needs vanilla HOI4 files (not checked in) and
+          # therefore only runs as a pre-commit hook on contributors' machines.
 
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         fetch-depth: 1
+        sparse-checkout: |
+          common
+          events
+          history
+          localisation
+          interface
+          gfx/flags
+          tools
+          .claude
+          CLAUDE.md
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -98,20 +209,139 @@ jobs:
       if: always()
       with:
         name: validation-${{ matrix.validator.name }}-results
-        path: validation-${{ matrix.validator.name }}.log
+        path: |
+          validation-${{ matrix.validator.name }}.log
+          validation-${{ matrix.validator.name }}.json
+        if-no-files-found: ignore
         retention-days: 7
 
-  validation-report:
-    name: Generate Validation Report
+  # ───────────────────────────────────────────────────────────────
+  # Targeted validators — one matrix entry per validator, each gated
+  # on the specific detect-changes output it cares about. We keep the
+  # display names identical to the old per-job names so branch protection
+  # rules referencing them keep working.
+  # ───────────────────────────────────────────────────────────────
+  validate-targeted:
+    name: ${{ matrix.validator.title }}
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.decisions == 'true' ||
+      needs.detect-changes.outputs.oob == 'true' ||
+      needs.detect-changes.outputs.ai-strategy == 'true' ||
+      needs.detect-changes.outputs.ai-navy == 'true' ||
+      needs.detect-changes.outputs.ai-equipment == 'true' ||
+      needs.detect-changes.outputs.factions == 'true'
     runs-on: ubuntu-latest
-    needs: [validate]
-    if: always() && github.event_name == 'pull_request' && github.event.pull_request.draft == false && needs.validate.result != 'cancelled'
-
+    strategy:
+      fail-fast: false
+      matrix:
+        validator:
+          - script: validate_decisions.py
+            name: decisions
+            title: "Validate Decisions"
+            should_run: ${{ needs.detect-changes.outputs.decisions }}
+            sparse: |
+              common/decisions
+              common/scripted_effects
+              common/scripted_triggers
+              tools
+          - script: validate_oob_units.py
+            name: oob-units
+            title: "Validate OOB Unit Names"
+            should_run: ${{ needs.detect-changes.outputs.oob }}
+            sparse: |
+              history/units
+              common/units
+              common/ai_templates
+              common/scripted_effects
+              tools
+          - script: validate_ai_roles.py
+            name: ai-roles
+            title: "Validate AI Role References"
+            should_run: ${{ needs.detect-changes.outputs.ai-strategy }}
+            sparse: |
+              common/ai_strategy
+              common/ai_templates
+              tools
+          - script: validate_ai_navy.py
+            name: ai-navy
+            title: "Validate AI Navy"
+            should_run: ${{ needs.detect-changes.outputs.ai-navy }}
+            sparse: |
+              common/ai_navy
+              common/units
+              tools
+          - script: validate_ai_equipment.py
+            name: ai-equipment
+            title: "Validate AI Equipment Coverage"
+            should_run: ${{ needs.detect-changes.outputs.ai-equipment }}
+            sparse: |
+              common/ai_equipment
+              common/units
+              tools
+          - script: validate_factions.py
+            name: factions
+            title: "Validate Faction System"
+            should_run: ${{ needs.detect-changes.outputs.factions }}
+            sparse: |
+              common/factions
+              tools
     steps:
+    # Per-entry gate: only fetch + run when this validator's file group changed.
+    # Steps below each carry the same `if` so a skipped entry reports cleanly
+    # as "success with no work done" instead of bulk-skipping the whole job.
     - name: Checkout code
+      if: matrix.validator.should_run == 'true'
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         fetch-depth: 1
+        sparse-checkout: ${{ matrix.validator.sparse }}
+    - name: Set up Python
+      if: matrix.validator.should_run == 'true'
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      with:
+        python-version: '3.x'
+    - name: Run validation
+      if: matrix.validator.should_run == 'true'
+      run: python3 tools/validation/${{ matrix.validator.script }} --strict --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
+    - name: Upload results
+      if: always() && matrix.validator.should_run == 'true'
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      with:
+        name: validation-${{ matrix.validator.name }}-results
+        path: |
+          validation-${{ matrix.validator.name }}.log
+          validation-${{ matrix.validator.name }}.json
+        if-no-files-found: ignore
+        retention-days: 7
+
+  # ───────────────────────────────────────────────────────────────
+  # Validation report — collects all results and posts PR comment
+  # ───────────────────────────────────────────────────────────────
+  validation-report:
+    name: Generate Validation Report
+    runs-on: ubuntu-latest
+    needs: [validate-core, validate-targeted]
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    if: >-
+      always() &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.draft == false &&
+      !cancelled()
+    steps:
+    # Checkout the report generator + the report_lib package it imports.
+    # Stays much smaller than a full checkout — we skip everything else.
+    - name: Checkout report tooling
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        fetch-depth: 1
+        sparse-checkout: |
+          tools/generate_validation_report.py
+          tools/report_lib
+        sparse-checkout-cone-mode: false
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -121,17 +351,22 @@ jobs:
     - name: Download all validation results
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       with:
+        pattern: validation-*-results
         path: validation-results
 
     - name: Generate and post validation report
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: |
         python3 tools/generate_validation_report.py \
           --results-dir validation-results \
           --output report.md \
           --pr-number "${{ github.event.pull_request.number }}" \
-          --commit-sha "${{ github.sha }}" \
+          --commit-sha "${{ github.event.pull_request.head.sha }}" \
+          --workflow-run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
           --github-repository "${{ github.repository }}" \
           --post-comment \
+          --checks-api \
           --print
 
     - name: Upload combined report

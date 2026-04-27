@@ -80,7 +80,6 @@ EU_clear_voting = {
 ##############################################
 
 EU_update_vars = {
-	custom_effect_tooltip = tooltip_EU_update_ration_euroscepticism_europeanism
 	hidden_effect = {
 		# EU population vars update
 		# Sets Global EU Population and Country Population
@@ -109,14 +108,20 @@ EU_update_vars = {
 			set_variable = { THIS.EU_pop_ratio = 0 }
 			add_to_variable = { THIS.EU_pop_ratio = THIS.max_manpower_k }
 			multiply_variable = { THIS.EU_pop_ratio = 0.01 }
-			divide_variable = { THIS.EU_pop_ratio = global.var_EUpopTotal }
+			if = {
+				limit = { check_variable = { global.var_EUpopTotal > 0 } }
+				divide_variable = { THIS.EU_pop_ratio = global.var_EUpopTotal }
+			}
 		}
 		for_each_scope_loop = {
 			array = global.EU_member
 			set_variable = { THIS.EU_pop_ratio = 0 }
 			add_to_variable = { THIS.EU_pop_ratio = THIS.max_manpower_k }
 			multiply_variable = { THIS.EU_pop_ratio = 0.01 }
-			divide_variable = { THIS.EU_pop_ratio = global.var_EUpopTotal }
+			if = {
+				limit = { check_variable = { global.var_EUpopTotal > 0 } }
+				divide_variable = { THIS.EU_pop_ratio = global.var_EUpopTotal }
+			}
 		}
 		# End of EU Population Calculations
 
@@ -160,7 +165,10 @@ EU_update_vars = {
 			array = global.EU_member
 			add_to_variable = { global.var_europeanism = THIS.var_proeuropean }
 		}
-		divide_variable = { global.var_europeanism = global.var_EUpopTotal }
+		if = {
+			limit = { check_variable = { global.var_EUpopTotal > 0 } }
+			divide_variable = { global.var_europeanism = global.var_EUpopTotal }
+		}
 		###End of Europeanism update
 
 		# Calculate the Total var for QMV
@@ -1626,7 +1634,7 @@ on_startup_euu_action = {
 			add_to_array = { global.EU_potential = BAY }
 			add_to_array = { global.EU_potential = GRL }
 
-			country_event = { id = EUupdate.1 }
+			country_event = EUupdate.1
 
 			EU_update_vars = yes
 			custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
@@ -1634,6 +1642,16 @@ on_startup_euu_action = {
 				activate_mission = EU_budget_draft_preparations
 				activate_mission = EU_mff_draft_preparations
 				set_country_flag = EU_budget_EP_block
+			}
+			for_each_scope_loop = {
+				array = global.EU_member
+				activate_mission = EU_budget_draft_preparations
+				activate_mission = EU_mff_draft_preparations
+				set_country_flag = EU_budget_EP_block
+			}
+			custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			effect_tooltip = {
+				set_variable = { THIS.EU_budget_call_rate = 1 }
 			}
 			for_each_scope_loop = {
 				array = global.EU_member

@@ -4,10 +4,12 @@
 # Common classes, functions, and base validator used by all validation scripts
 ##########################
 import glob
+import json
 import logging
 import os
 import re
 import sys
+from dataclasses import dataclass, field
 from multiprocessing import Pool, cpu_count
 from typing import Callable, Dict, List, Optional, Set
 
@@ -39,6 +41,112 @@ class Colors:
     UNDERLINE = "\033[4m"
 
 
+class Severity:
+    ERROR = "error"
+    WARNING = "warning"
+
+
+@dataclass
+class Issue:
+    severity: str
+    category: str
+    message: str
+    file: str = ""
+    line: int = 0
+
+    def to_dict(self) -> dict:
+        return {
+            "severity": self.severity,
+            "category": self.category,
+            "message": self.message,
+            "file": self.file,
+            "line": self.line,
+        }
+
+    def to_key(self) -> tuple:
+        return (self.file, self.line, self.severity, self.category)
+
+
+HOI4_BUILTIN_BLOCKS = frozenset(
+    {
+        "if",
+        "else",
+        "else_if",
+        "limit",
+        "AND",
+        "OR",
+        "NOT",
+        "hidden_effect",
+        "random_list",
+        "tooltip",
+        "custom_effect_tooltip",
+        "custom_trigger_tooltip",
+        "modifier",
+        "random",
+        "every_country",
+        "random_country",
+        "every_state",
+        "random_state",
+        "every_owned_state",
+        "random_owned_state",
+        "every_neighbor_country",
+        "random_neighbor_country",
+        "every_enemy_country",
+        "random_enemy_country",
+        "every_other_country",
+        "random_other_country",
+        "capital_scope",
+        "owner",
+        "controller",
+        "ROOT",
+        "PREV",
+        "FROM",
+        "country_event",
+        "news_event",
+        "state_event",
+        "every_army_leader",
+        "random_army_leader",
+        "every_unit_leader",
+        "random_unit_leader",
+        "every_navy_leader",
+        "random_navy_leader",
+        "every_possible_country",
+        "random_possible_country",
+        "all_of",
+        "any_of",
+        "for_each_scope_loop",
+        "while_loop_effect",
+        "for_loop_effect",
+        "effect_tooltip",
+        "add_to_array",
+        "remove_from_array",
+        "overlord",
+        "faction_leader",
+        "any_country",
+        "any_state",
+        "any_owned_state",
+        "any_neighbor_country",
+        "any_enemy_country",
+        "any_other_country",
+        "any_allied_country",
+        "any_country_with_original_tag",
+        "any_army_leader",
+        "any_navy_leader",
+        "any_unit_leader",
+        "any_possible_country",
+        "every_allied_country",
+        "random_allied_country",
+        "every_occupied_country",
+        "random_occupied_country",
+        "any_occupied_country",
+        "every_country_with_original_tag",
+        "random_country_with_original_tag",
+        "meta_effect",
+        "meta_trigger",
+    }
+)
+
+
 class BaseValidator:
     TITLE = "VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -52,10 +160,11 @@ class BaseValidator:
         workers: int = None,
         **kwargs,
     ):
-        if not mod_path.endswith("/"):
-            mod_path += "/"
+        if not mod_path.endswith(os.sep):
+            mod_path += os.sep
         self.mod_path = mod_path
         self.errors_found = 0
+        self.warnings_found = 0
         self.output_file = output_file
         self.use_colors = use_colors
         self.staged_only = staged_only
@@ -63,13 +172,22 @@ class BaseValidator:
         self.staged_files = None
         self.output_lines = []
         self._pool: Optional[Pool] = None
+        self._regex_cache: Dict[str, re.Pattern] = {}
+        self._issues: List[Issue] = []
 
         if staged_only:
-            self.staged_files = get_staged_files(
-                mod_path, extensions=self.STAGED_EXTENSIONS
+            self.staged_files = (
+                get_staged_files(mod_path, extensions=self.STAGED_EXTENSIONS) or []
             )
             if not self.staged_files:
                 logging.warning("No staged files found")
+
+    def get_regex(self, pattern: str, flags: int = 0) -> re.Pattern:
+        """Get a compiled regex pattern from cache or compile and cache it."""
+        key = f"{pattern}:{flags}"
+        if key not in self._regex_cache:
+            self._regex_cache[key] = re.compile(pattern, flags)
+        return self._regex_cache[key]
 
     def log(self, message: str, level: str = "info"):
         display_msg = (
@@ -93,26 +211,176 @@ class BaseValidator:
             except Exception as e:
                 logging.error(f"Failed to save output to {self.output_file}: {e}")
 
-    def _report(self, results: list, ok_msg: str, fail_msg: str):
+        json_file = (
+            os.path.splitext(self.output_file)[0] + ".json"
+            if self.output_file
+            else None
+        )
+        if json_file and self._issues:
+            try:
+                with open(json_file, "w", encoding="utf-8") as f:
+                    f.write(self.get_issues_json())
+                logging.info(f"JSON results saved to: {json_file}")
+            except Exception as e:
+                logging.error(f"Failed to save JSON to {json_file}: {e}")
+
+    def add_issue(
+        self, severity: str, category: str, message: str, file: str = "", line: int = 0
+    ):
+        """Add an issue to the internal list for later deduplication and reporting."""
+        issue = Issue(
+            severity=severity, category=category, message=message, file=file, line=line
+        )
+        self._issues.append(issue)
+        if severity == Severity.ERROR:
+            self.errors_found += 1
+        elif severity == Severity.WARNING:
+            self.warnings_found += 1
+
+    def add_error(self, category: str, message: str, file: str = "", line: int = 0):
+        """Convenience method to add an ERROR level issue."""
+        self.add_issue(Severity.ERROR, category, message, file, line)
+
+    def add_warning(self, category: str, message: str, file: str = "", line: int = 0):
+        """Convenience method to add a WARNING level issue."""
+        self.add_issue(Severity.WARNING, category, message, file, line)
+
+    # Regex patterns for auto-extracting (file, line) from common result string
+    # formats. Tried in order; first match wins. Patterns cover every format
+    # currently emitted by the validators:
+    #   - "path/to/file.ext:42 - something"           (standard colon form)
+    #   - "path/to/file.ext:42: something"            (colon+colon variant)
+    #   - "file.ext - line 42 - something"            (localisation dash form)
+    #   - "file.ext, line 42, something"              (localisation comma form)
+    #   - "id - path/to/file.ext - description"       (two-segment dash form,
+    #                                                  captures file only)
+    _LOC_PATTERNS = (
+        re.compile(
+            r"^(?P<file>[^\s:][^:\s]*?\.\w+):(?P<line>\d+)\s*[-:]\s*(?P<msg>.+)$"
+        ),
+        re.compile(
+            r"^(?P<file>[^\s,]+?\.\w+)\s*-\s*line\s*(?P<line>\d+)\s*-\s*(?P<msg>.+)$"
+        ),
+        re.compile(r"^(?P<file>[^\s,]+?\.\w+),\s*line\s*(?P<line>\d+),\s*(?P<msg>.+)$"),
+        re.compile(
+            r"^(?P<prefix>[^\s].*?)\s*-\s*(?P<file>[^\s]+?\.\w+)\s*-\s*(?P<msg>.+)$"
+        ),
+    )
+
+    @classmethod
+    def _parse_result_location(cls, text: str) -> tuple:
+        """Best-effort extraction of (message, file, line) from a result string.
+
+        Returns the original string as the message when no known format matches.
+        The ``line`` value is 0 when the pattern matched a file-only format.
+        """
+        for pat in cls._LOC_PATTERNS:
+            m = pat.match(text)
+            if not m:
+                continue
+            gd = m.groupdict()
+            line = int(gd["line"]) if gd.get("line") else 0
+            prefix = gd.get("prefix")
+            msg = gd.get("msg", "")
+            if prefix:
+                msg = f"{prefix}: {msg}" if msg else prefix
+            return msg, gd.get("file", ""), line
+        return text, "", 0
+
+    def _report(
+        self,
+        results: list,
+        ok_msg: str,
+        fail_msg: str,
+        severity: str = Severity.ERROR,
+        category: str = "",
+    ):
+        """Report results with specified severity level.
+
+        Each entry in ``results`` may be:
+          - ``str`` — legacy form. Auto-parsed via ``_parse_result_location``
+            so standard ``path:line - msg`` strings get structured into an
+            ``Issue`` with ``file`` / ``line`` populated.
+          - ``(message, file, line)`` tuple — explicit structured form.
+          - ``Issue`` instance — used directly.
+
+        This is the single source of truth for counting and recording issues.
+        Do NOT call add_error/add_warning separately for results passed here.
+        """
+        color = Colors.RED if severity == Severity.ERROR else Colors.YELLOW
+
         if len(results) > 0:
             self.log(
-                f"{Colors.RED if self.use_colors else ''}{fail_msg}{Colors.ENDC if self.use_colors else ''}",
-                "error",
+                f"{color if self.use_colors else ''}{fail_msg}{Colors.ENDC if self.use_colors else ''}",
+                "error" if severity == Severity.ERROR else "warning",
             )
             for r in results:
+                # Normalize into (display_text, Issue) so logging and storage
+                # stay in sync regardless of which input shape was passed.
+                if isinstance(r, Issue):
+                    issue = r
+                    if issue.file and issue.line > 0:
+                        display_text = f"{issue.file}:{issue.line} - {issue.message}"
+                    else:
+                        display_text = issue.message
+                elif isinstance(r, tuple):
+                    # (message, file, line)
+                    msg_t = str(r[0]) if len(r) > 0 else ""
+                    file_t = str(r[1]) if len(r) > 1 else ""
+                    line_t = int(r[2]) if len(r) > 2 and r[2] else 0
+                    issue = Issue(
+                        severity=severity,
+                        category=category or "",
+                        message=msg_t,
+                        file=file_t,
+                        line=line_t,
+                    )
+                    display_text = (
+                        f"{file_t}:{line_t} - {msg_t}" if file_t and line_t else msg_t
+                    )
+                else:
+                    text = str(r)
+                    msg_p, file_p, line_p = self._parse_result_location(text)
+                    issue = Issue(
+                        severity=severity,
+                        category=category or "",
+                        message=msg_p,
+                        file=file_p,
+                        line=line_p,
+                    )
+                    display_text = text  # preserve original formatting in the log
+
                 self.log(
-                    f"  {Colors.YELLOW if self.use_colors else ''}{r}{Colors.ENDC if self.use_colors else ''}",
-                    "error",
+                    f"  {color if self.use_colors else ''}{display_text}{Colors.ENDC if self.use_colors else ''}",
+                    "error" if severity == Severity.ERROR else "warning",
                 )
+                if category:
+                    self._issues.append(issue)
             self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
+                f"{color if self.use_colors else ''}{len(results)} issue(s) found{Colors.ENDC if self.use_colors else ''}",
+                "error" if severity == Severity.ERROR else "warning",
             )
-            self.errors_found += len(results)
+            if severity == Severity.ERROR:
+                self.errors_found += len(results)
+            else:
+                self.warnings_found += len(results)
         else:
             self.log(
                 f"{Colors.GREEN if self.use_colors else ''}{ok_msg}{Colors.ENDC if self.use_colors else ''}"
             )
+
+    def get_issues_json(self) -> str:
+        """Get issues as JSON string."""
+        return json.dumps([issue.to_dict() for issue in self._issues], indent=2)
+
+    def get_summary(self) -> dict:
+        """Get validation summary as dict."""
+        return {
+            "title": self.TITLE,
+            "errors": self.errors_found,
+            "warnings": self.warnings_found,
+            "issues": [issue.to_dict() for issue in self._issues],
+        }
 
     def get_full_path(
         self, basename: str, item: str, file_patterns: Optional[List[str]] = None
@@ -120,7 +388,9 @@ class BaseValidator:
         if file_patterns is None:
             file_patterns = ["**/*.txt"]
         for pattern in file_patterns:
-            for filename in glob.iglob(self.mod_path + pattern, recursive=True):
+            for filename in glob.iglob(
+                os.path.join(self.mod_path, pattern), recursive=True
+            ):
                 if os.path.basename(filename) == basename:
                     if should_skip_file(filename):
                         continue
@@ -155,21 +425,55 @@ class BaseValidator:
             {os.path.splitext(p)[1] for p in patterns if os.path.splitext(p)[1]}
         ) or [".txt"]
 
-        if self.staged_files:
-            dir_hints = [
-                next((s for s in p.split("/") if "*" not in s), "") for p in patterns
-            ]
+        if self.staged_only:
+            if not self.staged_files:
+                return []
+
+            # Build a precise directory-prefix hint per pattern by joining all
+            # leading segments before the first wildcard. For
+            # `common/ai_templates/*.txt` the hint becomes `common/ai_templates/`,
+            # so an unrelated staged file in `common/national_focus/` won't match.
+            dir_hints = []
+            for p in patterns:
+                segments = p.replace("\\", "/").split("/")
+                leading = []
+                for s in segments:
+                    if "*" in s:
+                        break
+                    leading.append(s)
+                # If the pattern has no wildcard (exact file), the full path
+                # is the hint. Otherwise the directory prefix followed by `/`.
+                if leading == segments:
+                    dir_hints.append("/".join(leading))
+                else:
+                    dir_hints.append("/".join(leading) + "/" if leading else "")
+
+            def _matches_hint(path: str, hint: str) -> bool:
+                if hint == "":
+                    return True
+                normalized = path.replace("\\", "/")
+                # Exact-file hint (no trailing slash): require exact suffix match
+                if not hint.endswith("/"):
+                    return normalized == hint or normalized.endswith("/" + hint)
+                # Directory-prefix hint: path must start with the prefix (possibly
+                # after a leading mod-path component)
+                return hint in normalized and (
+                    normalized.startswith(hint) or ("/" + hint) in normalized
+                )
+
             files = [
                 f
                 for f in self.staged_files
                 if any(f.endswith(ext) for ext in extensions)
-                and any(hint == "" or hint in f for hint in dir_hints)
+                and any(_matches_hint(f, hint) for hint in dir_hints)
             ]
         else:
             seen: Set[str] = set()
             files = []
             for pattern in patterns:
-                for f in glob.iglob(self.mod_path + pattern, recursive=True):
+                for f in glob.iglob(
+                    os.path.join(self.mod_path, pattern), recursive=True
+                ):
                     if f not in seen:
                         seen.add(f)
                         files.append(f)
@@ -178,6 +482,20 @@ class BaseValidator:
         if extra_skip is not None:
             result = [f for f in result if not extra_skip(f)]
         return result
+
+    def _load_localisation_keys(self) -> frozenset:
+        """Load all defined keys from English localisation yml files."""
+        yml_files = self._collect_files(["localisation/english/**/*.yml"])
+        key_pattern = re.compile(r"^\s+([\w.]+)\s*:", re.MULTILINE)
+        all_keys: set = set()
+        for filepath in yml_files:
+            try:
+                with open(filepath, encoding="utf-8-sig", errors="ignore") as f:
+                    text = f.read()
+            except Exception:
+                continue
+            all_keys.update(key_pattern.findall(text))
+        return frozenset(all_keys)
 
     def run_validations(self):
         raise NotImplementedError("Subclasses must implement run_validations()")
@@ -206,13 +524,18 @@ class BaseValidator:
             self._pool = None
 
         self.log(f"\n{'#'*80}")
-        if self.errors_found == 0:
+        if self.errors_found == 0 and self.warnings_found == 0:
             self.log(
                 f"{Colors.GREEN if self.use_colors else ''}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC if self.use_colors else ''}"
             )
         else:
+            error_msg = f"✗ VALIDATION COMPLETE"
+            if self.errors_found > 0:
+                error_msg += f" - {self.errors_found} ERROR(S)"
+            if self.warnings_found > 0:
+                error_msg += f" - {self.warnings_found} WARNING(S)"
             self.log(
-                f"{Colors.RED if self.use_colors else ''}✗ VALIDATION COMPLETE - {self.errors_found} TOTAL ISSUES FOUND{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.RED if self.use_colors else ''}{error_msg}{Colors.ENDC if self.use_colors else ''}",
                 "error",
             )
         self.log(f"{'#'*80}\n")

@@ -146,8 +146,10 @@ scripted_diplomatic_actions = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect propose_improved_trade_agreement"
 			ROOT = {
 				clear_variable = pending_trade_offer_country
+				set_country_flag = { flag = rejected_trade_agreement_@PREV days = 180 value = 1 }
 			}
 			THIS = {
+				set_country_flag = { flag = rejected_trade_agreement_@ROOT days = 180 value = 1 }
 				add_opinion_modifier = { target = ROOT modifier = reject_trade_agreement }
 				reverse_add_opinion_modifier = { target = ROOT modifier = reject_trade_agreement }
 			}
@@ -346,6 +348,10 @@ scripted_diplomatic_actions = {
 			modifier = {
 				factor = 0
 				ROOT = { NOT = { check_variable = { pending_trade_offer_country = 0 } } }
+			}
+			modifier = {
+				factor = 0
+				ROOT = { has_country_flag = rejected_trade_agreement_@PREV }
 			}
 			modifier = {
 				factor = 0
@@ -1788,6 +1794,7 @@ scripted_diplomatic_actions = {
 
 		visible = {
 			NOT = { has_war_with = ROOT }
+			ROOT = { NOT = { has_country_flag = recently_demanded_enforce_peace_@PREV } }
 			THIS = {
 				has_offensive_war = yes
 				has_civil_war = no
@@ -1834,12 +1841,14 @@ scripted_diplomatic_actions = {
 			change_influence_percentage = yes
 			ROOT = {
 				clear_variable = pending_enforce_peace_pending_offer
+				set_country_flag = { flag = recently_demanded_enforce_peace_@PREV value = 1 days = 90 }
 			}
 		}
 		reject_effect = {
 			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect enforce_peace_option"
 			ROOT = {
 				clear_variable = pending_enforce_peace_pending_offer
+				set_country_flag = { flag = recently_demanded_enforce_peace_@PREV value = 1 days = 90 }
 			}
 		}
 
@@ -2280,7 +2289,10 @@ scripted_diplomatic_actions = {
 			if = {
 				limit = { THIS = { has_country_flag = energy_load_sharing_recipient } }
 				clr_country_flag = energy_load_sharing_recipient
-				remove_from_array = { ROOT.energy_load_sharing_nations = THIS.id }
+				if = {
+					limit = { is_in_array = { ROOT.energy_load_sharing_nations = THIS.id } }
+					remove_from_array = { ROOT.energy_load_sharing_nations = THIS.id }
+				}
 				clear_variable = energy_load_sharing_use_var
 				clear_variable = energy_load_sharing_gain_var
 				clear_variable = energy_load_sharing_income_var
@@ -2296,7 +2308,10 @@ scripted_diplomatic_actions = {
 					clear_variable = energy_load_sharing_use_var
 					clear_variable = energy_load_sharing_gain_var
 					clear_variable = energy_load_sharing_income_var
-					remove_from_array = { PREV.energy_load_sharing_nations = THIS.id }
+					if = {
+						limit = { is_in_array = { PREV.energy_load_sharing_nations = THIS.id } }
+						remove_from_array = { PREV.energy_load_sharing_nations = THIS.id }
+					}
 				}
 				calculate_energy_load_sharing = yes
 				ingame_update_setup = yes
