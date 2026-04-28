@@ -271,34 +271,34 @@ ALG = {
 
 ## Prefer `multiply_variable` Over `divide_variable`
 
-Division is more expensive than multiplication and has an implicit zero-division edge case. When dividing by a constant, multiply by its reciprocal instead.
+Division is more expensive than multiplication and carries a divide-by-zero risk. When dividing by a constant, multiply by its reciprocal instead.
 
 ### Before
 
 ```
-divide_variable = { var = arab_pop_percent value = 100 }
+divide_variable = { var = my_ratio value = 100 }
 ```
 
 ### After
 
 ```
-multiply_variable = { var = arab_pop_percent value = 0.01 }
+multiply_variable = { var = my_ratio value = 0.01 }
 ```
 
-**Why:** `multiply_variable` is a single engine operation with no divide-by-zero risk. `0.01` is the exact reciprocal of `100`, so the result is identical. This is a project convention — prefer multiplication for all constant divisors.
+**Why:** `multiply_variable` is a single engine operation with no zero-division risk. `0.01` is the exact reciprocal of `100`, so the result is identical. Prefer multiplication for all constant divisors.
 
 ---
 
 ## Add Mutual Exclusion Guards When Splitting `every_country` with `OR`
 
-When converting `every_country = { limit = { OR = { A B } } }` into separate `for_each_scope_loop` blocks, add exclusion limits so countries matching multiple conditions don't receive effects twice.
+When converting a single `every_country = { limit = { OR = { A B } } }` into separate loops (e.g., one per array), add exclusion limits so countries matching multiple conditions don't receive effects twice.
 
 ### Before (single loop)
 
 ```
 every_country = {
-    limit = { OR = { has_idea = NATO_member has_idea = Major_Non_NATO_Ally } }
-    country_event = { id = usa.83 days = 2 }
+    limit = { OR = { has_idea = group_A has_idea = group_B } }
+    country_event = { id = my_event.1 days = 2 }
 }
 ```
 
@@ -306,16 +306,16 @@ every_country = {
 
 ```
 for_each_scope_loop = {
-    array = global.nato_members
-    limit = { NOT = { has_idea = Major_Non_NATO_Ally } }
-    country_event = { id = usa.83 days = 2 }
+    array = global.group_A_members
+    limit = { NOT = { has_idea = group_B } }
+    country_event = { id = my_event.1 days = 2 }
 }
 every_country = {
-    limit = { has_idea = Major_Non_NATO_Ally }
-    country_event = { id = usa.83 days = 2 }
+    limit = { has_idea = group_B }
+    country_event = { id = my_event.1 days = 2 }
 }
 ```
 
-**Why:** The original single loop guaranteed each country received the effect exactly once. Splitting without guards causes countries in both groups (e.g., a NATO member that is also a Major Non-NATO Ally) to fire/receive the effect multiple times. This silently introduces double-firing events, stacked opinion modifiers, or duplicated `change_influence_percentage` calls.
+**Why:** The original single loop guaranteed each country received the effect exactly once. Splitting without guards causes countries in both groups to fire or receive the effect multiple times. This silently introduces double-firing events, stacked opinion modifiers, or duplicated resource transfers.
 
-Apply the same pattern to opinion modifiers, `add_to_variable`, `change_influence_percentage`, and any other non-idempotent effect.
+Apply the same pattern whenever a non-idempotent effect (opinion modifiers, variable changes, events, etc.) is split across multiple loops.
