@@ -36,7 +36,6 @@ class MIOStandardizer(BaseStandardizer):
             "icon": [],
             "include": "",
             "task_capacity": "",
-            "research_bonus": "",
             "available": [],
             "visible": [],
             "on_callbacks": [],
@@ -94,9 +93,6 @@ class MIOStandardizer(BaseStandardizer):
                 continue
             elif line.startswith("task_capacity ="):
                 props["task_capacity"] = line
-            elif line.startswith("research_bonus =") and "{" not in line:
-                value = line.split("=", 1)[1].strip()
-                props["research_bonus"] = value
             elif any(
                 line.startswith(f"{name} =")
                 for name in self.MANUFACTURER_CALLBACK_NAMES
@@ -208,6 +204,11 @@ class MIOStandardizer(BaseStandardizer):
                 lines.extend(self.format_nested_block(block, "\t"))
                 lines.append("")
 
+        if props["other"]:
+            self._add_blank_line_if_needed(lines)
+            self._add_comments(lines, props["other"])
+            lines.append("")
+
         if props["ai_will_do"]:
             self._add_blank_line_if_needed(lines)
             self._add_blocks(lines, props["ai_will_do"])
@@ -232,10 +233,6 @@ class MIOStandardizer(BaseStandardizer):
             self._add_blocks(lines, props["tree_header_text"])
             lines.append("")
 
-        props["research_bonus"] = self._inject_research_bonus_into_initial_trait(
-            props["initial_trait"], props["research_bonus"]
-        )
-
         if props["initial_trait"]:
             self._add_blank_line_if_needed(lines)
             self._add_blocks(lines, props["initial_trait"], is_trait=True)
@@ -245,10 +242,6 @@ class MIOStandardizer(BaseStandardizer):
             self._add_blank_line_if_needed(lines)
             self._add_blocks(lines, props["traits"], is_trait=True)
             lines.append("")
-
-        if props["other"]:
-            self._add_blank_line_if_needed(lines)
-            self._add_comments(lines, props["other"])
 
         lines.append("}")
         return self._clean_blank_lines(lines)
@@ -282,102 +275,6 @@ class MIOStandardizer(BaseStandardizer):
             result.append(base_indent + ("\t" * emit_depth) + stripped)
             depth = max(0, depth + stripped.count("{") - stripped.count("}"))
         return result
-
-    def _inject_research_bonus_into_initial_trait(
-        self,
-        initial_trait_blocks: List[List[str]],
-        research_bonus_value: str,
-    ) -> str:
-        """Inject military_industrial_organization_research_bonus into the
-        initial_trait's existing organization_modifier block (or create one if
-        absent), so the standardizer's later multi/single-line check sees a
-        single, already-merged block. Higher value wins; lower-or-equal existing
-        value short-circuits. Mutates the first initial_trait block in place.
-        Returns the residual research_bonus_value (always empty when the input
-        was a parseable float — the value is consumed even when no change is
-        applied, so it's never re-emitted at manufacturer scope)."""
-        if not initial_trait_blocks or not research_bonus_value:
-            return research_bonus_value
-
-        try:
-            x = float(research_bonus_value)
-        except ValueError:
-            return research_bonus_value
-
-        block = initial_trait_blocks[0]
-
-        org_mod_ranges: List[tuple] = []
-        i = 1
-        while i < len(block) - 1:
-            line = block[i].strip()
-            if line.startswith("organization_modifier"):
-                _sub, next_i = self.extract_block(block, i)
-                org_mod_ranges.append((i, next_i))
-                i = next_i
-            else:
-                i += 1
-
-        existing_pairs: List[tuple] = []
-        existing_max = None
-        for start, end in org_mod_ranges:
-            sub_lines = block[start:end]
-            full = " ".join(l.strip() for l in sub_lines if l.strip())
-            if "{" not in full or "}" not in full:
-                return research_bonus_value
-            inner = full.split("{", 1)[1].rsplit("}", 1)[0].strip()
-            if "{" in inner or "}" in inner:
-                return research_bonus_value
-            tokens = inner.split()
-            if not tokens:
-                continue
-            if len(tokens) % 3 != 0:
-                return research_bonus_value
-            for j in range(0, len(tokens), 3):
-                if tokens[j + 1] != "=":
-                    return research_bonus_value
-                key, val = tokens[j], tokens[j + 2]
-                if key == "military_industrial_organization_research_bonus":
-                    try:
-                        v = float(val)
-                        if existing_max is None or v > existing_max:
-                            existing_max = v
-                    except ValueError:
-                        pass
-                existing_pairs.append((key, val))
-
-        if existing_max is not None and existing_max >= x:
-            return ""
-
-        merged: Dict[str, str] = {}
-        for key, val in existing_pairs:
-            merged[key] = val
-        merged["military_industrial_organization_research_bonus"] = research_bonus_value
-
-        first_line = block[0]
-        outer_indent = first_line[: len(first_line) - len(first_line.lstrip())]
-        inner_indent = outer_indent + "\t"
-        modifier_indent = inner_indent + "\t"
-
-        if len(merged) == 1:
-            stat, value = next(iter(merged.items()))
-            new_block_lines = [
-                f"{inner_indent}organization_modifier = {{ {stat} = {value} }}"
-            ]
-        else:
-            new_block_lines = [f"{inner_indent}organization_modifier = {{"]
-            for stat, value in merged.items():
-                new_block_lines.append(f"{modifier_indent}{stat} = {value}")
-            new_block_lines.append(f"{inner_indent}}}")
-
-        if org_mod_ranges:
-            first_start = org_mod_ranges[0][0]
-            for start, end in reversed(org_mod_ranges):
-                del block[start:end]
-            block[first_start:first_start] = new_block_lines
-        else:
-            block[-1:-1] = new_block_lines
-
-        return ""
 
     def normalize_on_complete(self, block_lines: List[str]) -> List[str]:
         """Normalize on_complete blocks to use expenditure_for_mio_upgrade = yes, preserving other content"""
