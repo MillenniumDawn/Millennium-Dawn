@@ -343,9 +343,7 @@ def main() -> None:
     if venv_py and not in_virtualenv():
         reexec_with(venv_py)
 
-    print("Millennium Dawn Developer Setup")
-    print("=" * 40)
-    print()
+    print("Millennium Dawn Developer Setup\n" + ("=" * 40) + "\n")
 
     # --- Check phase ---
     print("Checking environment:")
@@ -357,15 +355,13 @@ def main() -> None:
 
     docs_ready = True
     if args.docs or args.check:
-        print()
-        print("Checking docs environment:")
+        print("\nChecking docs environment:")
         node_ok, _ = check_node()
         bun_ok = check_bun()
         docs_deps_ok = check_docs_deps()
         docs_ready = node_ok and bun_ok and docs_deps_ok
 
     if args.check:
-        print()
         all_ok = py_ok and pc_ok and hooks_ok and deps_ok and dev_deps_ok
         if args.docs:
             all_ok = all_ok and docs_ready
@@ -411,13 +407,11 @@ def main() -> None:
         elif not docs_deps_ok:
             ok = install_docs_deps() and ok
 
-    print()
-    print("=" * 40)
+    print("\n" + ("=" * 40))
     if ok:
         print("Setup complete. You're ready to develop.")
         if venv_python_path():
-            print()
-            print("Note: A local .venv is used. Activate it in your shell:")
+            print("\nNote: A local .venv is used. Activate it in your shell:")
             if os.name == "nt":
                 print(f"  {REPO_ROOT / '.venv' / 'Scripts' / 'activate.bat'}  (cmd)")
                 print(
@@ -425,8 +419,7 @@ def main() -> None:
                 )
             else:
                 print(f"  source {REPO_ROOT / '.venv' / 'bin' / 'activate'}")
-        print()
-        print("Quick reference:")
+        print("\nQuick reference:")
         print(
             "  git commit                               Pre-commit hooks run automatically"
         )
