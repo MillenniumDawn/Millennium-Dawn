@@ -11,7 +11,7 @@ Unit tests for the five checks added to check_common_mistakes.py:
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "linting"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from check_common_mistakes import (
     _check_consecutive_scope_blocks,
     _check_divide_variable_zero_guard,
