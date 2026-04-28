@@ -141,6 +141,60 @@ else = { set_variable = { page = 1 } }
 
 ---
 
+## Consolidate Identical-Body `else_if` Chains into `OR`
+
+When N consecutive `else_if` branches all execute the same effects, collapse them into one branch with an `OR` limit.
+
+### Before (N branches, same body)
+
+```
+else_if = {
+    limit = { has_country_flag = flag_A }
+    add_stability = 0.05
+}
+else_if = {
+    limit = { has_country_flag = flag_B }
+    add_stability = 0.05
+}
+else_if = {
+    limit = { has_country_flag = flag_C }
+    add_stability = 0.05
+}
+else_if = {
+    limit = { has_country_flag = flag_D }
+    add_stability = 0.05
+}
+else_if = {
+    limit = { has_country_flag = flag_E }
+    add_stability = 0.05
+}
+```
+
+### After (one branch, OR'd conditions)
+
+```
+else_if = {
+    limit = {
+        OR = {
+            has_country_flag = flag_A
+            has_country_flag = flag_B
+            has_country_flag = flag_C
+            has_country_flag = flag_D
+            has_country_flag = flag_E
+        }
+    }
+    add_stability = 0.05
+}
+```
+
+**Go a step further — use `else` when exhaustive:** If the preceding `if/else_if` chain already guarantees at least one condition must be true (e.g., the earlier branches covered all lower values of a sequential range), use a bare `else = { ... }` instead of the `OR` block — it's shorter and can't drift.
+
+**Why:** Eliminates copy-paste drift — adding a new condition doesn't risk forgetting to update one branch. Reduces script size. If the body needs changing, it's one edit instead of N.
+
+**When NOT to use:** If the branches have side effects that interact (e.g., scoping to different targets, setting variables the next branch reads), or if evaluation order matters between conditions that could both be true. `OR` short-circuits logic — all conditions are effectively equal.
+
+---
+
 ## Consolidate Decision Templates with `meta_effect`
 
 When you have N decisions that differ only by an index, use `meta_effect` rather than N copies.
