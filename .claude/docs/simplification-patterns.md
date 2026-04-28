@@ -230,3 +230,39 @@ for_each_scope_loop = {
 - When opinion modifiers target the focus-completing country, add `NOT = { tag = ROOT }` to prevent self-targeting. Use `ROOT` (not `PREV`) — `ROOT` is the fixed original scope, while `PREV` shifts if the loop is nested inside another scope change.
 
 **Why:** Eliminates ~4–8 lines of duplication per call site. Across ~50+ EU/NATO/CSTO/AU focus trees, scripted effects, and GUI buttons, this removes hundreds of redundant lines and prevents drift between tooltip text and real execution. See `.claude/docs/performance-patterns.md` for the performance impact of double-evaluation.
+
+---
+
+## Merge Consecutive Same-Tag Scope Blocks
+
+When two or more scope blocks target the same country tag in sequence, merge them into one. Each scope switch adds a nesting level to the in-game tooltip, making it harder to read.
+
+### Before
+
+```
+ALG = {
+    country_event = nuclear_algeria.19
+}
+ALG = {
+    add_opinion_modifier = {
+        target = ROOT
+        modifier = sanctioned_us
+    }
+}
+```
+
+### After
+
+```
+ALG = {
+    country_event = nuclear_algeria.19
+    add_opinion_modifier = {
+        target = ROOT
+        modifier = sanctioned_us
+    }
+}
+```
+
+**Why:** Each `TAG = { }` scope switch creates a separate indented block in the player-facing tooltip. Two consecutive `ALG = { }` blocks show the ALG header twice, making the tooltip noisy and harder to scan. Merging produces a single clean block.
+
+**When NOT to merge:** If the two blocks are separated by an `if`/`else` that conditionally gates one of them, or if the second block is inside a different trigger/effect context (e.g., one is in `effect_tooltip` and the other is in `hidden_effect`), they cannot be merged.

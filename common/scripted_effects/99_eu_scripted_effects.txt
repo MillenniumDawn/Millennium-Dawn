@@ -1800,6 +1800,7 @@ update_POTEF_arrays = {
 			index = i
 		}
 	}
+	clamp_variable = { var = global.POTEF_pop_vote_total min = 1 }
 	for_each_loop = {
 		array = POTEF_pop_vote_ratio_array
 		set_variable = { global.POTEF_pop_vote_ratio^i = global.POTEF_pop_vote^i }
@@ -1872,9 +1873,9 @@ set_POTEF_elect = {
 
 	meta_effect = {
 		text = {
-			every_country = {
+			for_each_scope_loop = {
+				array = global.EU_member
 				limit = {
-					has_idea = EU_member
 					has_country_flag = POTEF_nominee_[subideology]
 				}
 				set_temp_variable = { potef_term_temp = PREV.POTEF_term }
@@ -1962,6 +1963,7 @@ update_EU_average_gdpc_lvl = { # For calcuations that don't have set_EU_gdp
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 		add_to_variable = { global.EU_gdp_capita = THIS.gdp_total }
 	}
+	clamp_variable = { var = global.var_EUpopTotalDisplay min = 0.001 }
 	divide_variable = { global.EU_gdp_capita = global.var_EUpopTotalDisplay }
 	update_eu_dirty_variable = yes
 }
@@ -1996,7 +1998,10 @@ update_EU_average_eco_lvl = {
 			add_to_variable = { global.EU_average_eco_lvl = EU_average_eco_lvl }
 		}
 	}
-	divide_variable = { global.EU_average_eco_lvl = global.EU_member_count }
+	if = {
+		limit = { check_variable = { global.EU_member_count > 0 } }
+		divide_variable = { global.EU_average_eco_lvl = global.EU_member_count }
+	}
 	update_eu_dirty_variable = yes
 }
 
@@ -2083,6 +2088,7 @@ update_EU_budget_call_rate = {
 		set_variable = { THIS.EU_budget_ratio = THIS.EU_budget_contribution }
 		set_variable = { THIS.EU_budget_contribution_weekly = THIS.EU_budget_contribution }
 		divide_variable = { THIS.EU_budget_contribution_weekly = 52 } #Weeks in a year
+		clamp_variable = { var = global.EU_total_budget min = 0.001 }
 		divide_variable = { THIS.EU_budget_ratio = global.EU_total_budget }
 	}
 	### EU Total Budget
@@ -2208,6 +2214,7 @@ distribute_EU_growth_exp = {
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+		clamp_variable = { var = global.EU_growth_subsidies_total min = 0.001 }
 		divide_variable = { THIS.EU_growth_subsidies = global.EU_growth_subsidies_total }
 		multiply_variable = { THIS.EU_growth_subsidies = global.EU_growth_exp_total }
 	}
@@ -2326,6 +2333,7 @@ distribute_EU_natural_exp = {
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+		clamp_variable = { var = global.EU_natural_subsidies_total min = 0.001 }
 		divide_variable = { THIS.EU_natural_subsidies = global.EU_natural_subsidies_total }
 		multiply_variable = { THIS.EU_natural_subsidies = global.EU_natural_exp_total }
 	}
@@ -2414,6 +2422,7 @@ EU_budget_total_gain = {
 		add_to_variable = { THIS.EU_budget_total_gain = THIS.EU_global_exp_subsidies }
 		add_to_variable = { THIS.EU_budget_total_gain = THIS.EU_admin_subsidies }
 		set_variable = { THIS.EU_budget_ratio_gain = THIS.EU_budget_total_gain }
+		clamp_variable = { var = global.EU_total_exp min = 0.001 }
 		divide_variable = { THIS.EU_budget_ratio_gain = global.EU_total_exp }
 		set_variable = { THIS.EU_budget_net = THIS.EU_budget_total_gain }
 		subtract_from_variable = { THIS.EU_budget_net = THIS.EU_budget_contribution }
@@ -2580,6 +2589,7 @@ election_EU_Parliament = {
 	}
 
 	### check political groups
+	clamp_variable = { var = global.MEP_Total min = 1 }
 	for_each_loop = {
 		array = global.EU_parl_party_number
 		set_variable = { p_number = global.EU_parl_party_number^i }
