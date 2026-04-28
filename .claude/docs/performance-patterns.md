@@ -187,3 +187,13 @@ for_each_scope_loop = {
 ```
 
 **Why:** Skipping an entire `every_country` / `for_each_scope_loop` pulse saves more CPU than any micro-optimization inside the loop.
+
+---
+
+## Avoid `effect_tooltip` + `for_each_scope_loop` Duplication
+
+Never duplicate the same logic in an `effect_tooltip` block and a `for_each_scope_loop` block. Use the loop's built-in `tooltip` parameter instead.
+
+**Why:** HOI4 evaluates both `effect_tooltip` (for tooltip display) and `for_each_scope_loop` (for effect execution). With ~27 EU members, each duplication costs ~27 extra scope switches and ~54 extra opinion modifier evaluations per trigger. In focus trees with 50+ such calls, that's thousands of wasted evaluations per campaign. `tooltip =` tells the engine to display the tooltip once and execute the loop once — a measurable performance win on any frequently-fired code path.
+
+For the before/after migration pattern, see `.claude/docs/simplification-patterns.md`.

@@ -161,3 +161,72 @@ meta_effect = {
 **Why:** 15 investor + 15 target decisions still exist as separate objects (engine requirement), but their activation logic is a single block.
 
 **Caveat:** `meta_effect` runs at parse time, not runtime. It cannot reference runtime variables in its parameter substitution — only static text or `[]`-formatted variables.
+
+---
+
+## Consolidate `custom_effect_tooltip` + `effect_tooltip` + `for_each_scope_loop`
+
+When a focus, decision, or event shows a tooltip for effects applied to every member of an array, the old pattern duplicated the same logic twice — once in `effect_tooltip` (for display) and once in `for_each_scope_loop` (for execution). The `for_each_scope_loop` block accepts a `tooltip` parameter, which combines both.
+
+### Before (self-targeting effects)
+
+```
+custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+effect_tooltip = {
+    add_popularity = { ideology = nationalist popularity = 0.05 }
+    add_war_support = -0.10
+    add_stability = -0.05
+}
+for_each_scope_loop = {
+    array = global.nato_members
+    add_popularity = { ideology = nationalist popularity = 0.05 }
+    add_war_support = -0.10
+    add_stability = -0.05
+}
+```
+
+### After (self-targeting effects)
+
+```
+for_each_scope_loop = {
+    array = global.nato_members
+    tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+    add_popularity = { ideology = nationalist popularity = 0.05 }
+    add_war_support = -0.10
+    add_stability = -0.05
+}
+```
+
+### Before (opinion modifiers with explicit target)
+
+```
+custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+effect_tooltip = {
+    add_opinion_modifier = { target = DEN modifier = drama }
+}
+for_each_scope_loop = {
+    array = global.nato_members
+    add_opinion_modifier = { target = DEN modifier = drama }
+}
+```
+
+### After (opinion modifiers with explicit target)
+
+```
+for_each_scope_loop = {
+    array = global.nato_members
+    tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+    if = {
+        limit = { NOT = { tag = ROOT } }
+        add_opinion_modifier = { target = ROOT modifier = drama }
+    }
+}
+```
+
+**Key differences:**
+
+- `tooltip = TT_ALL_*` replaces both `custom_effect_tooltip` and `effect_tooltip`.
+- The effects live in one place: inside the `for_each_scope_loop`.
+- When opinion modifiers target the focus-completing country, add `NOT = { tag = ROOT }` to prevent self-targeting. Use `ROOT` (not `PREV`) — `ROOT` is the fixed original scope, while `PREV` shifts if the loop is nested inside another scope change.
+
+**Why:** Eliminates ~4–8 lines of duplication per call site. Across ~50+ EU/NATO/CSTO/AU focus trees, scripted effects, and GUI buttons, this removes hundreds of redundant lines and prevents drift between tooltip text and real execution. See `.claude/docs/performance-patterns.md` for the performance impact of double-evaluation.

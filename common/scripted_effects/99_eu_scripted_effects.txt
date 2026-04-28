@@ -84,6 +84,7 @@ EU_update_vars = {
 		# EU population vars update
 		# Sets Global EU Population and Country Population
 		set_variable = { var = global.var_EUpopTotal value = 0 }
+		set_variable = { var = global.EU_member_count value = 0 }
 		for_each_scope_loop = {
 			array = global.EU_member
 			set_temp_variable = { converted_manpower = max_manpower_k }
@@ -91,20 +92,15 @@ EU_update_vars = {
 			set_variable = { EU_member_state_population = converted_manpower }
 			multiply_variable = { EU_member_state_population = 0.1 }
 			add_to_variable = { global.var_EUpopTotal = converted_manpower }
+			add_to_variable = { global.EU_member_count = 1 }
 		}
 		set_variable = { var = global.var_EUpopTotalDisplay value = global.var_EUpopTotal }
 		multiply_variable = { global.var_EUpopTotalDisplay = 0.1 }
 
-		# Sets the total number of EU Member States
-		set_variable = { var = global.EU_member_count value = 0 }
+		set_variable = { var = global.var_europeanism value = 0 }
 		for_each_scope_loop = {
 			array = global.EU_member
-			add_to_variable = { global.EU_member_count = 1 }
-		}
-
-		# Calculates Pop Ratio
-		for_each_scope_loop = {
-			array = global.EU_member
+			# Pop ratio
 			set_variable = { THIS.EU_pop_ratio = 0 }
 			add_to_variable = { THIS.EU_pop_ratio = THIS.max_manpower_k }
 			multiply_variable = { THIS.EU_pop_ratio = 0.01 }
@@ -112,37 +108,22 @@ EU_update_vars = {
 				limit = { check_variable = { global.var_EUpopTotal > 0 } }
 				divide_variable = { THIS.EU_pop_ratio = global.var_EUpopTotal }
 			}
-		}
-		# End of EU Population Calculations
-		###Europeanism update
-		set_variable = { var = global.var_europeanism value = 0 }
-		for_each_scope_loop = {
-			array = global.EU_member
+			# Europeanism
 			clamp_variable = { var = THIS.eurosceptic min = 0 max = 1 }
 			set_variable = { THIS.var_proeuropean = 1 }
-
 			subtract_from_variable = { THIS.var_proeuropean = THIS.eurosceptic }
 			set_temp_variable = { converted_manpower = max_manpower_k }
 			multiply_temp_variable = { converted_manpower = 0.01 }
 			multiply_variable = { THIS.var_proeuropean = converted_manpower }
-		}
-
-		for_each_scope_loop = {
-			array = global.EU_member
 			add_to_variable = { global.var_europeanism = THIS.var_proeuropean }
 		}
 		if = {
 			limit = { check_variable = { global.var_EUpopTotal > 0 } }
 			divide_variable = { global.var_europeanism = global.var_EUpopTotal }
 		}
-		###End of Europeanism update
 
-		# Calculate the Total var for QMV
-		set_temp_variable = { total_member_states = 0 }
-		for_each_scope_loop = {
-			array = global.EU_member
-			add_to_temp_variable = { total_member_states = 1 }
-		}
+		# QMV majority threshold
+		set_temp_variable = { total_member_states = global.EU_member_count }
 		set_temp_variable = { qmv_majority_states = total_member_states }
 		multiply_temp_variable = { qmv_majority_states = 0.55 }
 		round_temp_variable = qmv_majority_states
@@ -1390,8 +1371,8 @@ on_startup_euu_action = {
 				option = yes
 			}
 		}
-		every_country = {
-			limit = { has_idea = EU_member }
+		for_each_scope_loop = {
+			array = global.EU_member
 			remove_ideas = {
 				euro
 				EU_member
@@ -1605,10 +1586,6 @@ on_startup_euu_action = {
 				activate_mission = EU_budget_draft_preparations
 				activate_mission = EU_mff_draft_preparations
 				set_country_flag = EU_budget_EP_block
-			}
-			for_each_scope_loop = {
-				array = global.EU_member
-				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 				set_variable = { THIS.EU_budget_call_rate = 1 }
 			}
 			set_variable = { global.EU_budget_min_call_rate = 1 }
@@ -1851,19 +1828,16 @@ set_POTEF_elect = {
 	}
 	else_if = {
 		limit = {
-			relative_majority_member_states = yes
-			absolute_majority_popular_vote = yes
-			#identical?
-			check_variable = { max_index_1_tmp = max_index_2_tmp }
-		}
-		set_variable = { POTEF_elect = max_index_2_tmp }
-		### three-year term
-		set_variable = { POTEF_term = 1095 } #1095
-	}
-	else_if = {
-		limit = {
-			absolute_majority_member_states = yes
-			relative_majority_popular_vote = yes
+			OR = {
+				AND = {
+					relative_majority_member_states = yes
+					absolute_majority_popular_vote = yes
+				}
+				AND = {
+					absolute_majority_member_states = yes
+					relative_majority_popular_vote = yes
+				}
+			}
 			#identical?
 			check_variable = { max_index_1_tmp = max_index_2_tmp }
 		}
