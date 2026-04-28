@@ -96,6 +96,42 @@ Bind `dirty = global.refresh_investment_gui`. Call `refresh_investment_gui = yes
 
 **Why:** `global.date` changes every tick. The GUI would redraw every frame, causing noticeable lag on slower machines.
 
+### Also applies to `global.num_days`
+
+Some GUIs use `dirty = global.num_days` because `num_days` increments daily. The same fix applies: create a dedicated counter (e.g., `global.EU_dirty_update_var`) and call `update_eu_dirty_variable = yes` whenever the underlying data changes.
+
+---
+
+## Always Add `max_iterations` to `while_loop_effect`
+
+Unbounded loops are a game-crash risk. Every `while_loop_effect` must have a `max_iterations` guard.
+
+### Wrong
+
+```
+while_loop_effect = {
+    limit = { check_variable = { country_counter < targets_count } }
+    # ... body ...
+}
+```
+
+### Right
+
+```
+while_loop_effect = {
+    max_iterations = 500
+    limit = { check_variable = { country_counter < targets_count } }
+    # ... body ...
+}
+```
+
+**Why:** If the loop body fails to make progress (e.g., every candidate fails the `random_scope_in_array` limit and nothing gets added to the array), the while condition stays true and the loop spins forever within a single game tick, freezing the game. A `max_iterations` guard caps the damage.
+
+Choose limits that exceed any realistic need but are low enough to prevent hangs:
+
+- Investment target loops: 500 (targets per nation never exceeds ~20)
+- Debt reduction loops: 5000 (each iteration subtracts 0.1–1000 from debt)
+
 ---
 
 ## Prefer Engine Arrays Over `every_country` / `any_country`
