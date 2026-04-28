@@ -48,7 +48,7 @@ Used inside `equipment_bonus = { ... }` blocks.
 | ------------------------- | --- |
 | `air_agility`             |
 | `air_attack`              |
-| `air_bombing`             |
+| `strategic_attack`        |
 | `air_defence`             |
 | `air_ground_attack`       |
 | `air_range`               |
@@ -92,18 +92,18 @@ Used inside `equipment_bonus = { ... }` blocks.
 | `breakthrough`     | Material/Armor/Helicopter |
 | `defense`          | Material/Armor/Helicopter |
 | `fuel_capacity`    | Armor/Helicopter only     |
-| `fuel_consumption` | non-material              |
 | `hard_attack`      | Material/Armor/Helicopter |
 | `soft_attack`      | Material/Armor/Helicopter |
+| `hardness`         | Armor |
 
 ### Mixed / multi-category
 
 | Key                 | Equipment types               |
 | ------------------- | ----------------------------- |
-| `manpower`          | Air/Naval                     |
 | `maximum_speed`     | Material/Armor/Helicopter/Air |
 | `mines_planting`    | Air/Naval                     |
 | `mines_sweeping`    | Air/Naval                     |
-| `sub_detection`     | Air/Naval                     |
-| `surface_detection` | Air/Naval                     |
+| `sub_detection`     | CV Air/Naval                  |
+| `surface_detection` | CV Air/Naval                  |
 | `weight`            | Air/Armor                     |
+| `fuel_consumption`  | non-material                  |
