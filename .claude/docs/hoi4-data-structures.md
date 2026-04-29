@@ -125,6 +125,17 @@ for_loop_effect = {
 }
 ```
 
+### `while_loop_effect` — conditional loop
+
+```
+while_loop_effect = {
+    limit = { check_variable = { counter < target } }
+    # body — must advance the condition or loop exits at 1000
+}
+```
+
+The engine hard-caps at **1000 iterations** — this is not configurable. `max_iterations` is **not** a valid key and is silently ignored. Design loops so the realistic worst case stays well below 1000.
+
 ---
 
 ## Array / Variable Triggers

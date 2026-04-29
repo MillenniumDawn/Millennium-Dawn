@@ -2091,6 +2091,7 @@ country_event = {
 		set_temp_variable = { tag_index = event_target:coup_contest_sender.id }
 		set_temp_variable = { influence_target = event_target:coup_contest_victim.id }
 		change_influence_percentage = yes
+		set_party_index_to_ruling_party = yes
 		event_target:coup_contest_victim = {
 			set_temp_variable = { contester_influence = 0 }
 			for_each_loop = {
@@ -2104,19 +2105,20 @@ country_event = {
 			}
 			if = {
 				limit = { check_variable = { contester_influence > 59.999 } }
-				add_popularity = { ideology = democratic popularity = 0.15 }
+				set_temp_variable = { party_popularity_increase = 0.15 }
 			}
 			else_if = {
 				limit = { check_variable = { contester_influence > 39.999 } }
-				add_popularity = { ideology = democratic popularity = 0.10 }
+				set_temp_variable = { party_popularity_increase = 0.10 }
 			}
 			else_if = {
 				limit = { check_variable = { contester_influence > 19.999 } }
-				add_popularity = { ideology = democratic popularity = 0.06 }
+				set_temp_variable = { party_popularity_increase = 0.06 }
 			}
 			else = {
-				add_popularity = { ideology = democratic popularity = 0.03 }
+				set_temp_variable = { party_popularity_increase = 0.03 }
 			}
+			add_relative_party_popularity = yes
 			add_political_power = -50
 		}
 		add_political_power = -50
@@ -2157,6 +2159,7 @@ country_event = {
 				modifier = attacked_our_influence
 			}
 		}
+		set_party_index_to_ruling_party = yes
 		event_target:coup_contest_victim = {
 			set_temp_variable = { contester_influence = 0 }
 			for_each_loop = {
@@ -2170,11 +2173,12 @@ country_event = {
 			}
 			if = {
 				limit = { check_variable = { contester_influence > 39.999 } }
-				add_popularity = { ideology = democratic popularity = 0.12 }
+				set_temp_variable = { party_popularity_increase = 0.12 }
 			}
 			else = {
-				add_popularity = { ideology = democratic popularity = 0.06 }
+				set_temp_variable = { party_popularity_increase = 0.06 }
 			}
+			add_relative_party_popularity = yes
 			add_political_power = -100
 		}
 		set_temp_variable = { percent_change = 15 }
@@ -2845,14 +2849,12 @@ country_event = {
 			change_influence_percentage = yes
 		}
 
-		# Cleanup size flags and the persistent helper variables we set in immediate
+		# Cleanup size flags
 		FROM = {
 			clr_country_flag = aid_package_small
 			clr_country_flag = aid_package_medium
 			clr_country_flag = aid_package_large
 		}
-		clear_variable = aid_size_mult
-		clear_variable = aid_was_modern
 
 		# Relation modifier and 90-day cooldown so they can't be spammed with packages
 		add_relation_modifier = {
@@ -2903,6 +2905,10 @@ country_event = {
 				}
 			}
 		}
+
+		# Clear persistent helper variables after news event checks
+		clear_variable = aid_size_mult
+		clear_variable = aid_was_modern
 
 		FROM = { country_event = diplomatic_response.1 }
 		ai_chance = {
