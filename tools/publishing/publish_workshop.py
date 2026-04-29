@@ -457,8 +457,9 @@ def publish(
     else:
         for pline in preamble[:7]:
             print(pline)
-        print("  (pass --verbose to echo workshop_upload.vdf and the steamcmd command)")
-        print()
+        print(
+            "  (pass --verbose to echo workshop_upload.vdf and the steamcmd command)\n"
+        )
 
     # Preserve preamble context in the log file for post-mortem; each
     # attempt appends its own section below.
@@ -554,12 +555,10 @@ def publish(
         proc.wait()
         phase_timings.append((PHASES[phase_idx][0], time.time() - phase_start))
 
-        print()
-        print(f"  --- Phase timings (attempt {attempt}) ---")
+        print(f"\n  --- Phase timings (attempt {attempt}) ---")
         for name, dt in phase_timings:
             print(f"    {name:<28}  {int(dt)}s")
-        print(f"    {'TOTAL':<28}  {elapsed_str(start)}")
-        print()
+        print(f"    {'TOTAL':<28}  {elapsed_str(start)}\n")
 
         if proc.returncode == 0:
             print(
@@ -643,11 +642,11 @@ def main() -> None:
     excludes = set() if args.no_default_excludes else set(DEFAULT_EXCLUDES)
     excludes.update(args.exclude)
 
-    print()
-    print(f"  Repo:   {REPO_ROOT}")
-    print(f"  Target: {args.target} (mod {mod_id})")
-    print(f"  Mode:   {'diff from ' + args.base_ref if args.base_ref else 'full'}")
-    print()
+    print(
+        f"\n  Repo:   {REPO_ROOT}\n"
+        f"  Target: {args.target} (mod {mod_id})\n"
+        f"  Mode:   {'diff from ' + args.base_ref if args.base_ref else 'full'}\n"
+    )
 
     tmp = Path(tempfile.mkdtemp(prefix="md_publish_"))
     try:
@@ -689,8 +688,7 @@ def main() -> None:
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
-    print(f"\n  Total time: {elapsed_str(total_start)}")
-    print()
+    print(f"\n  Total time: {elapsed_str(total_start)}\n")
 
 
 if __name__ == "__main__":
