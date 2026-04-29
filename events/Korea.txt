@@ -4,6 +4,7 @@ add_namespace = kim_jong_il_death
 add_namespace = korea_russia
 add_namespace = korea_russia_news
 add_namespace = korea_china
+add_namespace = nko_naval_buildup
 
 
 ### China Demands Our Withdrawal from the Korean Peninsula
@@ -4661,5 +4662,755 @@ country_event = {
 		name = korea.139.a #Well Done!!
 		log = "[GetDateText]: [This.GetName]: korea.139.a executed"
 		add_political_power = 10
+	}
+}
+
+# ============================================================
+# === Songun Naval Doctrine — buildup mechanic events ========
+# ============================================================
+# .1     tutorial intro fired by NKO_Naval_Modernization focus
+# .10/.20/.30/.40  hidden routers — auto-swap tier ideas + fire flavor
+# .11-.14 submarine flavor      .21-.24 missile boat flavor
+# .31-.34 coastal flavor        .41-.44 naval SF flavor
+# .99    news event (capstone)
+
+# --- Tutorial -----------------------------------------------
+
+country_event = {
+	id = nko_naval_buildup.1
+	title = nko_naval_buildup.1.t
+	desc = nko_naval_buildup.1.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.1.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.1.a executed"
+		hidden_effect = {
+			country_event = { id = nko_naval_buildup.50 days = 30 }
+		}
+	}
+}
+
+# --- Submarine track router ---------------------------------
+
+country_event = {
+	id = nko_naval_buildup.10
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				check_variable = { NKO_submarine_progress > 99 }
+				NOT = { has_country_flag = NKO_sub_tier_4_reached }
+			}
+			set_country_flag = NKO_sub_tier_4_reached
+			swap_ideas = {
+				remove_idea = NKO_sub_tier_3
+				add_idea = NKO_sub_tier_4
+			}
+			country_event = { id = nko_naval_buildup.14 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_submarine_progress > 74 }
+				NOT = { has_country_flag = NKO_sub_tier_3_reached }
+			}
+			set_country_flag = NKO_sub_tier_3_reached
+			swap_ideas = {
+				remove_idea = NKO_sub_tier_2
+				add_idea = NKO_sub_tier_3
+			}
+			country_event = { id = nko_naval_buildup.13 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_submarine_progress > 49 }
+				NOT = { has_country_flag = NKO_sub_tier_2_reached }
+			}
+			set_country_flag = NKO_sub_tier_2_reached
+			swap_ideas = {
+				remove_idea = NKO_sub_tier_1
+				add_idea = NKO_sub_tier_2
+			}
+			country_event = { id = nko_naval_buildup.12 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_submarine_progress > 24 }
+				NOT = { has_country_flag = NKO_sub_tier_1_reached }
+			}
+			set_country_flag = NKO_sub_tier_1_reached
+			add_ideas = NKO_sub_tier_1
+			country_event = { id = nko_naval_buildup.11 days = 0 }
+		}
+	}
+
+	option = {
+		name = nko_naval_buildup.10.a
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.11
+	title = nko_naval_buildup.11.t
+	desc = nko_naval_buildup.11.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.11.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.11.a executed"
+		navy_experience = 25
+		add_manpower = 300
+		add_timed_idea = { idea = NKO_sub_drill_momentum days = 60 }
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.12
+	title = nko_naval_buildup.12.t
+	desc = nko_naval_buildup.12.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.12.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.12.a executed"
+		navy_experience = 30
+		add_manpower = 500
+		add_tech_bonus = {
+			name = nko_naval_buildup_yono_bonus
+			bonus = 0.5
+			uses = 1
+			category = CAT_sub
+		}
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.13
+	title = nko_naval_buildup.13.t
+	desc = nko_naval_buildup.13.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.13.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.13.a executed"
+		navy_experience = 40
+		set_temp_variable = { treasury_change = 0.5 }
+		modify_treasury_effect = yes
+		add_timed_idea = { idea = NKO_sub_drill_momentum days = 90 }
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.14
+	title = nko_naval_buildup.14.t
+	desc = nko_naval_buildup.14.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.14.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.14.a executed"
+		navy_experience = 75
+		add_war_support = 0.05
+		add_manpower = 1500
+		add_tech_bonus = {
+			name = nko_naval_buildup_sinpo_bonus
+			bonus = 1.0
+			uses = 2
+			category = CAT_missile_sub
+		}
+	}
+}
+
+# --- Missile boat track router ------------------------------
+
+country_event = {
+	id = nko_naval_buildup.20
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				check_variable = { NKO_missile_boat_progress > 99 }
+				NOT = { has_country_flag = NKO_mb_tier_4_reached }
+			}
+			set_country_flag = NKO_mb_tier_4_reached
+			swap_ideas = {
+				remove_idea = NKO_mb_tier_3
+				add_idea = NKO_mb_tier_4
+			}
+			country_event = { id = nko_naval_buildup.24 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_missile_boat_progress > 74 }
+				NOT = { has_country_flag = NKO_mb_tier_3_reached }
+			}
+			set_country_flag = NKO_mb_tier_3_reached
+			swap_ideas = {
+				remove_idea = NKO_mb_tier_2
+				add_idea = NKO_mb_tier_3
+			}
+			country_event = { id = nko_naval_buildup.23 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_missile_boat_progress > 49 }
+				NOT = { has_country_flag = NKO_mb_tier_2_reached }
+			}
+			set_country_flag = NKO_mb_tier_2_reached
+			swap_ideas = {
+				remove_idea = NKO_mb_tier_1
+				add_idea = NKO_mb_tier_2
+			}
+			country_event = { id = nko_naval_buildup.22 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_missile_boat_progress > 24 }
+				NOT = { has_country_flag = NKO_mb_tier_1_reached }
+			}
+			set_country_flag = NKO_mb_tier_1_reached
+			add_ideas = NKO_mb_tier_1
+			country_event = { id = nko_naval_buildup.21 days = 0 }
+		}
+	}
+
+	option = {
+		name = nko_naval_buildup.20.a
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.21
+	title = nko_naval_buildup.21.t
+	desc = nko_naval_buildup.21.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.21.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.21.a executed"
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.22
+	title = nko_naval_buildup.22.t
+	desc = nko_naval_buildup.22.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.22.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.22.a executed"
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.23
+	title = nko_naval_buildup.23.t
+	desc = nko_naval_buildup.23.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.23.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.23.a executed"
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.24
+	title = nko_naval_buildup.24.t
+	desc = nko_naval_buildup.24.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.24.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.24.a executed"
+	}
+}
+
+# --- Coastal defense track router ---------------------------
+
+country_event = {
+	id = nko_naval_buildup.30
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				check_variable = { NKO_coastal_defense_progress > 99 }
+				NOT = { has_country_flag = NKO_cd_tier_4_reached }
+			}
+			set_country_flag = NKO_cd_tier_4_reached
+			swap_ideas = {
+				remove_idea = NKO_cd_tier_3
+				add_idea = NKO_cd_tier_4
+			}
+			country_event = { id = nko_naval_buildup.34 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_coastal_defense_progress > 74 }
+				NOT = { has_country_flag = NKO_cd_tier_3_reached }
+			}
+			set_country_flag = NKO_cd_tier_3_reached
+			swap_ideas = {
+				remove_idea = NKO_cd_tier_2
+				add_idea = NKO_cd_tier_3
+			}
+			country_event = { id = nko_naval_buildup.33 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_coastal_defense_progress > 49 }
+				NOT = { has_country_flag = NKO_cd_tier_2_reached }
+			}
+			set_country_flag = NKO_cd_tier_2_reached
+			swap_ideas = {
+				remove_idea = NKO_cd_tier_1
+				add_idea = NKO_cd_tier_2
+			}
+			country_event = { id = nko_naval_buildup.32 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_coastal_defense_progress > 24 }
+				NOT = { has_country_flag = NKO_cd_tier_1_reached }
+			}
+			set_country_flag = NKO_cd_tier_1_reached
+			add_ideas = NKO_cd_tier_1
+			country_event = { id = nko_naval_buildup.31 days = 0 }
+		}
+	}
+
+	option = {
+		name = nko_naval_buildup.30.a
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.31
+	title = nko_naval_buildup.31.t
+	desc = nko_naval_buildup.31.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.31.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.31.a executed"
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.32
+	title = nko_naval_buildup.32.t
+	desc = nko_naval_buildup.32.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.32.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.32.a executed"
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.33
+	title = nko_naval_buildup.33.t
+	desc = nko_naval_buildup.33.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.33.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.33.a executed"
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.34
+	title = nko_naval_buildup.34.t
+	desc = nko_naval_buildup.34.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.34.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.34.a executed"
+	}
+}
+
+# --- Naval special operations track router ------------------
+
+country_event = {
+	id = nko_naval_buildup.40
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				check_variable = { NKO_naval_specops_progress > 99 }
+				NOT = { has_country_flag = NKO_so_tier_4_reached }
+			}
+			set_country_flag = NKO_so_tier_4_reached
+			swap_ideas = {
+				remove_idea = NKO_so_tier_3
+				add_idea = NKO_so_tier_4
+			}
+			country_event = { id = nko_naval_buildup.44 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_naval_specops_progress > 74 }
+				NOT = { has_country_flag = NKO_so_tier_3_reached }
+			}
+			set_country_flag = NKO_so_tier_3_reached
+			swap_ideas = {
+				remove_idea = NKO_so_tier_2
+				add_idea = NKO_so_tier_3
+			}
+			country_event = { id = nko_naval_buildup.43 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_naval_specops_progress > 49 }
+				NOT = { has_country_flag = NKO_so_tier_2_reached }
+			}
+			set_country_flag = NKO_so_tier_2_reached
+			swap_ideas = {
+				remove_idea = NKO_so_tier_1
+				add_idea = NKO_so_tier_2
+			}
+			country_event = { id = nko_naval_buildup.42 days = 0 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { NKO_naval_specops_progress > 24 }
+				NOT = { has_country_flag = NKO_so_tier_1_reached }
+			}
+			set_country_flag = NKO_so_tier_1_reached
+			add_ideas = NKO_so_tier_1
+			country_event = { id = nko_naval_buildup.41 days = 0 }
+		}
+	}
+
+	option = {
+		name = nko_naval_buildup.40.a
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.41
+	title = nko_naval_buildup.41.t
+	desc = nko_naval_buildup.41.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.41.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.41.a executed"
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.42
+	title = nko_naval_buildup.42.t
+	desc = nko_naval_buildup.42.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.42.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.42.a executed"
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.43
+	title = nko_naval_buildup.43.t
+	desc = nko_naval_buildup.43.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.43.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.43.a executed"
+	}
+}
+
+country_event = {
+	id = nko_naval_buildup.44
+	title = nko_naval_buildup.44.t
+	desc = nko_naval_buildup.44.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.44.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.44.a executed"
+	}
+}
+
+# --- Recurring incident cycle -------------------------------
+# .50 is hidden, self-rescheduling every 60 days. Each tick rolls a random_list
+# and fires one of .51–.56 (visible player-choice incidents that grant points).
+# Cooldown flag NKO_naval_buildup_recent_incident gates against pile-up from
+# stale save migrations (per SPA gotcha #9).
+
+country_event = {
+	id = nko_naval_buildup.50
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				has_country_flag = NKO_naval_buildup_unlocked
+				NOT = { has_country_flag = NKO_naval_buildup_capstone_done }
+				NOT = { has_country_flag = NKO_naval_buildup_recent_incident }
+				NOT = { has_civil_war = yes }
+			}
+			set_country_flag = {
+				flag = NKO_naval_buildup_recent_incident
+				days = 30
+				value = 1
+			}
+			random_list = {
+				20 = { country_event = { id = nko_naval_buildup.51 days = 0 } }
+				20 = { country_event = { id = nko_naval_buildup.52 days = 0 } }
+				20 = { country_event = { id = nko_naval_buildup.53 days = 0 } }
+				15 = { country_event = { id = nko_naval_buildup.54 days = 0 } }
+				15 = { country_event = { id = nko_naval_buildup.55 days = 0 } }
+				10 = { country_event = { id = nko_naval_buildup.56 days = 0 } }
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = NKO_naval_buildup_unlocked
+				NOT = { has_country_flag = NKO_naval_buildup_capstone_done }
+			}
+			country_event = { id = nko_naval_buildup.50 days = 60 }
+		}
+	}
+
+	option = {
+		name = nko_naval_buildup.50.a
+	}
+}
+
+# .51 Naval Drill at Wonsan (submarine theme)
+country_event = {
+	id = nko_naval_buildup.51
+	title = nko_naval_buildup.51.t
+	desc = nko_naval_buildup.51.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.51.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.51.a executed"
+		add_to_variable = { var = NKO_naval_points value = 2 }
+		add_stability = -0.01
+		add_war_support = 0.01
+	}
+	option = {
+		name = nko_naval_buildup.51.b
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.51.b executed"
+		add_to_variable = { var = NKO_naval_points value = 1 }
+	}
+	option = {
+		name = nko_naval_buildup.51.c
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.51.c executed"
+		add_political_power = 25
+	}
+}
+
+# .52 Foreign Recon Vessel Sighted (coastal theme)
+country_event = {
+	id = nko_naval_buildup.52
+	title = nko_naval_buildup.52.t
+	desc = nko_naval_buildup.52.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.52.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.52.a executed"
+		add_to_variable = { var = NKO_naval_points value = 2 }
+		add_stability = -0.01
+	}
+	option = {
+		name = nko_naval_buildup.52.b
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.52.b executed"
+		add_to_variable = { var = NKO_naval_points value = 1 }
+	}
+	option = {
+		name = nko_naval_buildup.52.c
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.52.c executed"
+		add_political_power = 15
+	}
+}
+
+# .53 Submarine Defection Crisis (sub / SF theme)
+country_event = {
+	id = nko_naval_buildup.53
+	title = nko_naval_buildup.53.t
+	desc = nko_naval_buildup.53.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.53.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.53.a executed"
+		add_to_variable = { var = NKO_naval_points value = 3 }
+		add_stability = -0.02
+		add_political_power = -10
+	}
+	option = {
+		name = nko_naval_buildup.53.b
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.53.b executed"
+		add_to_variable = { var = NKO_naval_points value = 1 }
+	}
+	option = {
+		name = nko_naval_buildup.53.c
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.53.c executed"
+		add_stability = 0.01
+	}
+}
+
+# .54 Nampo Yard Workers Exceed Quota (industrial)
+country_event = {
+	id = nko_naval_buildup.54
+	title = nko_naval_buildup.54.t
+	desc = nko_naval_buildup.54.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.54.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.54.a executed"
+		add_to_variable = { var = NKO_naval_points value = 2 }
+		add_stability = 0.01
+		add_political_power = -10
+	}
+	option = {
+		name = nko_naval_buildup.54.b
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.54.b executed"
+		add_to_variable = { var = NKO_naval_points value = 1 }
+	}
+}
+
+# .55 Reconnaissance Bureau Mission Brief (SF theme)
+country_event = {
+	id = nko_naval_buildup.55
+	title = nko_naval_buildup.55.t
+	desc = nko_naval_buildup.55.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.55.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.55.a executed"
+		add_to_variable = { var = NKO_naval_points value = 2 }
+		add_war_support = 0.01
+		add_stability = -0.01
+	}
+	option = {
+		name = nko_naval_buildup.55.b
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.55.b executed"
+		add_to_variable = { var = NKO_naval_points value = 1 }
+	}
+	option = {
+		name = nko_naval_buildup.55.c
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.55.c executed"
+		add_political_power = 15
+	}
+}
+
+# .56 Smuggler Vessel Caught (coastal / propaganda)
+country_event = {
+	id = nko_naval_buildup.56
+	title = nko_naval_buildup.56.t
+	desc = nko_naval_buildup.56.d
+	picture = GFX_submarine
+
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.56.a
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.56.a executed"
+		add_to_variable = { var = NKO_naval_points value = 2 }
+		add_war_support = 0.02
+	}
+	option = {
+		name = nko_naval_buildup.56.b
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.56.b executed"
+		add_to_variable = { var = NKO_naval_points value = 1 }
+	}
+	option = {
+		name = nko_naval_buildup.56.c
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.56.c executed"
+		add_to_variable = { var = NKO_naval_points value = 1 }
+		add_stability = -0.01
+		add_political_power = 25
+	}
+}
+
+# --- Capstone news event ------------------------------------
+
+news_event = {
+	id = nko_naval_buildup.99
+	title = nko_naval_buildup.99.t
+	desc = nko_naval_buildup.99.d
+	picture = GFX_submarine
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = nko_naval_buildup.99.a
+		trigger = { original_tag = NKO }
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.99.a executed"
+	}
+
+	option = {
+		name = nko_naval_buildup.99.b
+		trigger = { NOT = { original_tag = NKO } }
+		log = "[GetDateText]: [This.GetName]: nko_naval_buildup.99.b executed"
 	}
 }

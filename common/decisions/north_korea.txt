@@ -198,177 +198,315 @@ NKO_united_front_department = {
 
 ###########NKO NAVAL PROJECTS#########################
 NKO_Navy_projects = {
-	NKO_start_the_projects = {
-		icon = GFX_navy
-		cost = 25
-		days_remove = 100
-		days_re_enable = 45
+
+	# === Songun Naval Doctrine — buildup mechanic ===
+	# Driven by NKO_naval_buildup_consider flag set by NKO_Naval_Modernization focus.
+	# Player accumulates NKO_naval_points via 3 generation decisions, spends them
+	# on 4 invest decisions to push NKO_<track>_progress 0 -> 100. Capstone fires
+	# when all four tracks reach 100.
+
+	NKO_unlock_naval_buildup = {
+		icon = GFX_decision_category_naval_treaties
+
+		fire_only_once = yes
+
 		visible = {
-			has_completed_focus = NKO_Domestic_Naval_Strategy
+			has_country_flag = NKO_naval_buildup_consider
+			NOT = { has_country_flag = NKO_naval_buildup_unlocked }
 		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision add NKO_medicine_relief_active"
-			random_owned_state = {
-				add_manpower = 2000
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_naval_buildup_unlock_ready_tt
+				has_country_flag = NKO_naval_buildup_consider
 			}
-			set_country_flag = NKO_medicine_relief_active
 		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove NKO_medicine_relief_active"
-			clr_country_flag = NKO_medicine_relief_active
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_unlock_naval_buildup"
+			set_country_flag = NKO_naval_buildup_unlocked
+			set_variable = { NKO_naval_points = 0 }
+			set_variable = { NKO_submarine_progress = 0 }
+			set_variable = { NKO_missile_boat_progress = 0 }
+			set_variable = { NKO_coastal_defense_progress = 0 }
+			set_variable = { NKO_naval_specops_progress = 0 }
 		}
-		modifier = {
-			research_speed_factor = 0.1
-			political_power_factor = 0.05
-		}
+
 		ai_will_do = {
-			factor = 300
-			modifier = {
-				check_variable = {
-					var = treasury
-					value = 6
-					compare = greater_than_or_equals
-				}
-				factor = 0
-			}
+			base = 100
 		}
 	}
 
-	NKO_invest_in_vertical_launchers = {
-		cost = 200
-		days_remove = 120
-		icon = GFX_decision_nko_unite_korea_button
+	# --- Point generation ---
+
+	NKO_naval_allocate_party_funds = {
+		icon = GFX_decision_generic_political_rally
+
+		cost = 35
+		days_re_enable = 70
+
 		visible = {
-			has_completed_focus = NKO_Destroyer_Unleashed
-			NOT = { has_country_flag = vlaunch_investment }
+			has_country_flag = NKO_naval_buildup_unlocked
 		}
-		available = {
-			NOT = { has_country_flag = NKO_naval_burden_active }
-		}
+
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision add NKO_naval_burden_active"
-			set_country_flag = NKO_naval_burden_active
-			add_ideas = NKO_naval_project_burden
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_allocate_party_funds"
+			add_to_variable = { var = NKO_naval_points value = 1 }
 		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove vlaunch_investment "
-			set_country_flag = vlaunch_investment
-			clr_country_flag = NKO_naval_burden_active
-			remove_ideas = NKO_naval_project_burden
-			add_tech_bonus = {
-				bonus = 1
-				uses = 2
-				category = CAT_vls_systems
-			}
+
+		ai_will_do = {
+			base = 60
 		}
 	}
 
-	NKO_invest_in_submarine_hulls = {
-		cost = 200
-		days_remove = 120
-		icon = GFX_decision_nko_unite_korea_button
+	NKO_naval_mobilize_nampo_shipyards = {
+		icon = GFX_decision_generic_factory
+
+		days_remove = 90
+
 		visible = {
-			has_completed_focus = NKO_Domestic_Submarine_Program
-			NOT = { has_country_flag = sub_investment }
+			has_country_flag = NKO_naval_buildup_unlocked
 		}
-		available = {
-			NOT = { has_country_flag = NKO_naval_burden_active }
+
+		modifier = {
+			civilian_factory_use = 1
 		}
+
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision add NKO_naval_burden_active"
-			set_country_flag = NKO_naval_burden_active
-			add_ideas = NKO_naval_project_burden
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_mobilize_nampo_shipyards"
 		}
+
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove sub_investment "
-			set_country_flag = sub_investment
-			clr_country_flag = NKO_naval_burden_active
-			remove_ideas = NKO_naval_project_burden
-			add_tech_bonus = {
-				bonus = 1
-				uses = 1
-				category = CAT_atk_sub
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision remove NKO_naval_mobilize_nampo_shipyards"
+			add_to_variable = { var = NKO_naval_points value = 2 }
+		}
+
+		ai_will_do = {
+			base = 50
 		}
 	}
 
-	NKO_ask_russia_for_help_with_submarines = {
-		cost = 200
-		days_remove = 30
-		icon = GFX_decision_nko_unite_korea_button
-		visible = {
-			has_completed_focus = NKO_Domestic_Submarine_Program
-			NOT = { has_country_flag = sov_submarine }
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove sov_submarine "
-			set_country_flag = sov_submarine
-			SOV = {
-				country_event = { id = korea_russia.54 }
-			}
-		}
-	}
+	NKO_naval_juche_drive = {
+		icon = GFX_decision_generic_speech
 
-	NKO_ask_russia_for_help_with_point_defense = {
-		cost = 200
-		days_remove = 30
-		icon = GFX_decision_nko_unite_korea_button
-		visible = {
-			has_completed_focus = NKO_Destroyer_Unleashed
-			NOT = { has_country_flag = sov_pointd }
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove sov_pointd "
-			set_country_flag = sov_pointd
-			SOV = {
-				country_event = { id = korea_russia.56 }
-			}
-		}
-	}
+		cost = 80
+		days_re_enable = 180
 
-	NKO_ask_china_for_help_with_radar = {
-		cost = 200
-		days_remove = 30
-		icon = GFX_decision_nko_unite_korea_button
 		visible = {
-			has_completed_focus = NKO_Domestic_Destroyer_Buildup
-			NOT = { has_country_flag = chi_ship_radar }
+			has_country_flag = NKO_naval_buildup_unlocked
 		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove chi_ship_radar "
-			set_country_flag = chi_ship_radar
-			CHI = {
-				country_event = { id = korea_china.17 }
-			}
-		}
-	}
 
-	NKO_invest_in_destroyer_hulls = {
-		cost = 200
-		days_remove = 120
-		icon = GFX_decision_nko_unite_korea_button
-		visible = {
-			has_completed_focus = NKO_Domestic_Destroyer_Buildup
-			NOT = { has_country_flag = dest_investment }
-		}
 		available = {
-			NOT = { has_country_flag = NKO_naval_burden_active }
+			has_stability > 0.45
+			has_war_support > 0.5
 		}
+
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision add NKO_naval_burden_active"
-			set_country_flag = NKO_naval_burden_active
-			add_ideas = NKO_naval_project_burden
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_juche_drive"
+			add_to_variable = { var = NKO_naval_points value = 4 }
+			add_stability = -0.05
+			add_war_support = 0.05
 		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove dest_investment "
-			set_country_flag = dest_investment
-			clr_country_flag = NKO_naval_burden_active
-			remove_ideas = NKO_naval_project_burden
-			add_tech_bonus = {
-				bonus = 1
-				uses = 1
-				category = CAT_destroyer
+
+		ai_will_do = {
+			base = 30
+		}
+	}
+
+	# --- Invest decisions (1 point -> +5 progress + side bonus + router fire) ---
+
+	NKO_naval_invest_submarine = {
+		icon = GFX_decision_generic_naval
+		days_remove = 14
+
+		visible = {
+			has_country_flag = NKO_naval_buildup_unlocked
+			check_variable = { NKO_submarine_progress < 100 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_naval_buildup_needs_point_tt
+				check_variable = { NKO_naval_points > 0 }
 			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_invest_submarine"
+			subtract_from_variable = { var = NKO_naval_points value = 1 }
+			add_to_variable = { var = NKO_submarine_progress value = 5 }
+			clamp_variable = {
+				var = NKO_submarine_progress
+				min = 0
+				max = 100
+			}
+			navy_experience = 5
+			custom_effect_tooltip = NKO_naval_invest_submarine_tt
+			hidden_effect = {
+				country_event = { id = nko_naval_buildup.10 days = 0 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove NKO_naval_invest_submarine"
+		}
+
+		ai_will_do = {
+			base = 80
+		}
+	}
+
+	NKO_naval_invest_missile_boat = {
+		icon = GFX_decision_generic_naval
+		days_remove = 14
+
+		visible = {
+			has_country_flag = NKO_naval_buildup_unlocked
+			check_variable = { NKO_missile_boat_progress < 100 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_naval_buildup_needs_point_tt
+				check_variable = { NKO_naval_points > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_invest_missile_boat"
+			subtract_from_variable = { var = NKO_naval_points value = 1 }
+			add_to_variable = { var = NKO_missile_boat_progress value = 5 }
+			clamp_variable = {
+				var = NKO_missile_boat_progress
+				min = 0
+				max = 100
+			}
+			navy_experience = 5
+			custom_effect_tooltip = NKO_naval_invest_missile_boat_tt
+			hidden_effect = {
+				country_event = { id = nko_naval_buildup.20 days = 0 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove NKO_naval_invest_missile_boat"
+		}
+
+		ai_will_do = {
+			base = 80
+		}
+	}
+
+	NKO_naval_invest_coastal_defense = {
+		icon = GFX_decision_generic_factory
+		days_remove = 14
+
+		visible = {
+			has_country_flag = NKO_naval_buildup_unlocked
+			check_variable = { NKO_coastal_defense_progress < 100 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_naval_buildup_needs_point_tt
+				check_variable = { NKO_naval_points > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_invest_coastal_defense"
+			subtract_from_variable = { var = NKO_naval_points value = 1 }
+			add_to_variable = { var = NKO_coastal_defense_progress value = 5 }
+			clamp_variable = {
+				var = NKO_coastal_defense_progress
+				min = 0
+				max = 100
+			}
+			army_experience = 5
+			custom_effect_tooltip = NKO_naval_invest_coastal_defense_tt
+			hidden_effect = {
+				country_event = { id = nko_naval_buildup.30 days = 0 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove NKO_naval_invest_coastal_defense"
+		}
+
+		ai_will_do = {
+			base = 80
+		}
+	}
+
+	NKO_naval_invest_specops = {
+		icon = GFX_decision_generic_military
+		days_remove = 14
+
+		visible = {
+			has_country_flag = NKO_naval_buildup_unlocked
+			check_variable = { NKO_naval_specops_progress < 100 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_naval_buildup_needs_point_tt
+				check_variable = { NKO_naval_points > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_invest_specops"
+			subtract_from_variable = { var = NKO_naval_points value = 1 }
+			add_to_variable = { var = NKO_naval_specops_progress value = 5 }
+			clamp_variable = {
+				var = NKO_naval_specops_progress
+				min = 0
+				max = 100
+			}
+			army_experience = 5
+			custom_effect_tooltip = NKO_naval_invest_specops_tt
+			hidden_effect = {
+				country_event = { id = nko_naval_buildup.40 days = 0 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove NKO_naval_invest_specops"
+		}
+
+		ai_will_do = {
+			base = 80
+		}
+	}
+
+	# --- Capstone ---
+
+	NKO_naval_capstone_complete = {
+		icon = GFX_decision_category_naval_treaties
+
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = NKO_naval_buildup_unlocked
+			check_variable = { NKO_submarine_progress = 100 }
+			check_variable = { NKO_missile_boat_progress = 100 }
+			check_variable = { NKO_coastal_defense_progress = 100 }
+			check_variable = { NKO_naval_specops_progress = 100 }
+			NOT = { has_country_flag = NKO_naval_buildup_capstone_done }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_capstone_complete"
+			set_country_flag = NKO_naval_buildup_capstone_done
+			add_ideas = NKO_songun_navy_capstone
+			custom_effect_tooltip = NKO_naval_capstone_news_tt
+			hidden_effect = {
+				news_event = { id = nko_naval_buildup.99 days = 0 }
+			}
+		}
+
+		ai_will_do = {
+			base = 100
 		}
 	}
 }
@@ -2207,7 +2345,7 @@ NKO_black_market = {
 		}
 	}
 }
-g
+
 ###########RUSSIAN-KOREA FRIENDSHIP MECHANIC DECISIONS###########
 NKO_rus_friend_category = {
 	NKO_coop_russian_energy = {
