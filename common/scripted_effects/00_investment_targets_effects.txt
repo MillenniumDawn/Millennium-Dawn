@@ -56,14 +56,14 @@ yearly_investment_targets_routine = {
 get_random_investment_targets = {
 	set_temp_variable = { country_counter = 0 }
 	while_loop_effect = {
-		limit = {
+		max_iterations = 500
+			limit = {
 			check_variable = { country_counter < targets_count }
 		}
 
 		random_scope_in_array = {
 			array = global.countries
 			limit = {
-				NOT = { has_country_flag = not_investment_target }
 				PREV = {
 					has_opinion = { target = THIS value > -25 }
 				}
@@ -79,14 +79,14 @@ get_random_investment_targets = {
 get_random_friend_investment_targets = {
 	set_temp_variable = { country_counter = 0 }
 	while_loop_effect = {
-		limit = {
+		max_iterations = 500
+			limit = {
 			check_variable = { country_counter < friends_targets_count }
 		}
 
 		random_scope_in_array = {
 			array = global.countries
 			limit = {
-				NOT = { has_country_flag = not_investment_target }
 				PREV = {
 					has_opinion = { target = THIS value > 75 }
 				}
@@ -108,6 +108,7 @@ get_random_allies_investment_targets = {
 
 		set_temp_variable = { country_counter = 0 }
 		while_loop_effect = {
+			max_iterations = 500
 			limit = {
 				check_variable = { country_counter < allies_targets_count }
 			}
@@ -116,7 +117,6 @@ get_random_allies_investment_targets = {
 				array = THIS.allies
 				if = {
 					limit = {
-						NOT = { has_country_flag = not_investment_target }
 						NOT = { is_in_array = { PREV.investment_targets = THIS } }
 					}
 					add_to_array = { PREV.investment_targets = THIS }
@@ -129,6 +129,7 @@ get_random_allies_investment_targets = {
 	else = {
 		set_temp_variable = { country_counter = 0 }
 		while_loop_effect = {
+			max_iterations = 500
 			limit = {
 				check_variable = { country_counter < allies_targets_count }
 			}
@@ -136,7 +137,6 @@ get_random_allies_investment_targets = {
 			random_scope_in_array = {
 				array = global.countries
 				limit = {
-					NOT = { has_country_flag = not_investment_target }
 					PREV = {
 						has_opinion = { target = THIS value > 75 }
 					}
@@ -164,24 +164,36 @@ add_permanent_investment_targets = {
 }
 
 # purpose: remove permanent_investment_target or add permanent_investment_target
-# target_nation - The nation that is the nation we want to impact their investment targets
-# adding_nation - The nation that is being added to the investment targeted
+# target_nation - The nation whose investment targets array we modify
+# adding_nation - The nation being added (defaults to ROOT if not set)
 # remove_nation - Executes the removal version of this script
 change_permanent_investment_target = {
 	if = {
 		limit = {
-			NOT = { var:target_nation = { is_in_array = { permanent_investment_targets = var:adding_nation } } }
-			NOT = { check_variable = { adding_nation = 0 } }
+			check_variable = { adding_nation = 0 }
+			check_variable = { remove_nation = 0 }
 		}
-		custom_effect_tooltip = change_permanent_investment_target_tt
-		var:target_nation = {
-			add_to_array = { permanent_investment_targets = var:adding_nation }
-		}
+		set_temp_variable = { adding_nation = ROOT }
 	}
-	else = {
-		custom_effect_tooltip = change_permanent_investment_target_tt
+	custom_effect_tooltip = change_permanent_investment_target_tt
+	if = {
+		limit = {
+			NOT = { check_variable = { target_nation = 0 } }
+		}
 		var:target_nation = {
-			remove_from_array = { permanent_investment_targets = var:remove_nation }
+			if = {
+				limit = {
+					NOT = { check_variable = { adding_nation = 0 } }
+					NOT = { is_in_array = { permanent_investment_targets = var:adding_nation } }
+				}
+				add_to_array = { permanent_investment_targets = var:adding_nation }
+			}
+			else_if = {
+				limit = {
+					NOT = { check_variable = { remove_nation = 0 } }
+				}
+				remove_from_array = { permanent_investment_targets = var:remove_nation }
+			}
 		}
 	}
 }

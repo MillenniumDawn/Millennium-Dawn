@@ -3,26 +3,14 @@ Scaffold a new focus tree file for a country in Millennium Dawn.
 Country TAG (3-letter code): $ARGUMENTS
 
 Steps:
+
 1. Confirm the TAG is valid (3 uppercase letters). If $ARGUMENTS is empty, ask the user for the TAG.
 
 2. Check if `common/national_focus/05_<TAG>.txt` already exists (uppercase TAG). If it does, warn the user before proceeding.
 
 3. Create the file at `common/national_focus/05_<TAG>.txt` (uppercase TAG) with:
    - A `focus_tree` container block with the correct `id`, `country` filter, and a placeholder `continuous_focus_position`
-   - One starter focus block following the required property order from the Code Stylization Guide:
-     ```
-     1.  id                          (always first)
-     2.  icon                        (always second)
-     3.  x, y coordinates
-     4.  relative_position_id
-     5.  cost
-     6.  allow_branch
-     7.  prerequisite / mutually_exclusive
-     8.  search_filters
-     9.  available / bypass / cancel
-     10. completion_reward / select_effect / bypass_effect
-     11. ai_will_do                  (ALWAYS LAST)
-     ```
+   - One starter focus block following the required property order (see `.claude/docs/focus-tree-reference.md` § "Required Property Order")
    - The focus id should follow the pattern `TAG_start` as the root focus
    - All tags must be capitalised in script IDs (e.g., `SER_free_market_capitalism`, not `ser_free_market_capitalism`)
    - Use `relative_position_id` on all subsequent focuses after the root — all focus trees must use relative positioning

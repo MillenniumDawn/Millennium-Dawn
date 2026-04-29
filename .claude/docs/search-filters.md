@@ -63,20 +63,20 @@ Countries that use only custom filters (no generic layer) are invisible to gener
 
 ### Economy & Industry
 
-| Filter                                         | When to use                                                                                                                                   |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `FOCUS_FILTER_INDUSTRY`                        | Factory construction, infrastructure investment, industrial capacity, general economic development                                            |
-| `FOCUS_FILTER_ECONOMY`                         | Macroeconomic policy, fiscal reform, monetary policy, economic restructuring                                                                  |
-| `FOCUS_FILTER_EXPENDITURE`                     | Budget spending decisions, costly investment focuses (pair with `NOT = { has_active_mission = bankruptcy_incoming_collapse }` in `available`) |
-| `FOCUS_FILTER_RESEARCH`                        | Technology research bonuses, university investments, R&D programs, science institutions                                                       |
-| `FOCUS_FILTER_RESOURCE`                        | Natural resource extraction, energy deals, gas/oil agreements, mining                                                                         |
-| `FOCUS_FILTER_TRADE`                           | Trade agreements, export policy, customs union membership                                                                                     |
-| `FOCUS_FILTER_FOREIGN_INVESTMENTS`             | Attracting foreign capital, investment zones, privatisation                                                                                   |
-| `FOCUS_FILTER_ENVIRONMENT`                     | Green energy, conservation, environmental policy                                                                                              |
-| `FOCUS_FILTER_RENEWABLE_ENERGY_INFRASTRUCTURE` | Specifically renewable energy (solar, wind, etc.) infrastructure                                                                              |
-| `FOCUS_FILTER_POWER_INFRASTRUCTURE`            | Electrical grid, power station construction                                                                                                   |
-| `FOCUS_FILTER_ADD_BUILDING`                    | Focuses whose primary effect is directly constructing a specific building type                                                                |
-| `FOCUS_FILTER_INFRASTRUCTURE`                  | Road/rail/port infrastructure projects (not factory slots)                                                                                    |
+| Filter                                         | When to use                                                                                                                                                    |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FOCUS_FILTER_INDUSTRY`                        | Factory construction, infrastructure investment, industrial capacity, general economic development                                                             |
+| `FOCUS_FILTER_ECONOMY`                         | Macroeconomic policy, fiscal reform, monetary policy, economic restructuring                                                                                   |
+| `FOCUS_FILTER_EXPENDITURE`                     | Budget spending decisions, costly investment focuses (pair with a `factor = 0` / `has_active_mission = bankruptcy_incoming_collapse` modifier in `ai_will_do`) |
+| `FOCUS_FILTER_RESEARCH`                        | Technology research bonuses, university investments, R&D programs, science institutions                                                                        |
+| `FOCUS_FILTER_RESOURCE`                        | Natural resource extraction, energy deals, gas/oil agreements, mining                                                                                          |
+| `FOCUS_FILTER_TRADE`                           | Trade agreements, export policy, customs union membership                                                                                                      |
+| `FOCUS_FILTER_FOREIGN_INVESTMENTS`             | Attracting foreign capital, investment zones, privatisation                                                                                                    |
+| `FOCUS_FILTER_ENVIRONMENT`                     | Green energy, conservation, environmental policy                                                                                                               |
+| `FOCUS_FILTER_RENEWABLE_ENERGY_INFRASTRUCTURE` | Specifically renewable energy (solar, wind, etc.) infrastructure                                                                                               |
+| `FOCUS_FILTER_POWER_INFRASTRUCTURE`            | Electrical grid, power station construction                                                                                                                    |
+| `FOCUS_FILTER_ADD_BUILDING`                    | Focuses whose primary effect is directly constructing a specific building type                                                                                 |
+| `FOCUS_FILTER_INFRASTRUCTURE`                  | Road/rail/port infrastructure projects (not factory slots)                                                                                                     |
 
 ### Diplomacy & Foreign Relations
 
@@ -165,14 +165,14 @@ These custom filters exist for other country trees — do not add them to Israel
 
 ## Common Mistakes
 
-| Wrong                                                                  | Correct                                                                                                                  |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Only custom filter, no generic                                         | Always add the paired generic (see tables above)                                                                         |
-| `FOCUS_FILTER_MILITARY`                                                | Use `FOCUS_FILTER_MILITARY_LAWS` (MILITARY is a legacy/unused alias)                                                     |
-| Using `FOCUS_FILTER_DIPLOMACY` for all foreign policy                  | Use `FOCUS_FILTER_FOREIGN_POLICY` for general relations; `FOCUS_FILTER_DIPLOMACY` for specific diplomatic actions        |
-| Tagging economic investment focuses without `FOCUS_FILTER_EXPENDITURE` | Add `FOCUS_FILTER_EXPENDITURE` to high-cost industrial/economic focuses, and pair with a bankruptcy guard in `available` |
-| Missing filter entirely                                                | Every focus must have at least one filter                                                                                |
-| Using another country's custom filter                                  | Custom filters (RUSSIA*\*, UKRAINE*\*, ISRPOLIT, etc.) are country-specific — never cross-assign                         |
+| Wrong                                                                  | Correct                                                                                                             |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Only custom filter, no generic                                         | Always add the paired generic (see tables above)                                                                    |
+| `FOCUS_FILTER_MILITARY`                                                | Use `FOCUS_FILTER_MILITARY_LAWS` (MILITARY is a legacy/unused alias)                                                |
+| Using `FOCUS_FILTER_DIPLOMACY` for all foreign policy                  | Use `FOCUS_FILTER_FOREIGN_POLICY` for general relations; `FOCUS_FILTER_DIPLOMACY` for specific diplomatic actions   |
+| Tagging economic investment focuses without `FOCUS_FILTER_EXPENDITURE` | Add `FOCUS_FILTER_EXPENDITURE` to high-cost industrial/economic focuses, and add a bankruptcy guard in `ai_will_do` |
+| Missing filter entirely                                                | Every focus must have at least one filter                                                                           |
+| Using another country's custom filter                                  | Custom filters (RUSSIA*\*, UKRAINE*\*, ISRPOLIT, etc.) are country-specific — never cross-assign                    |
 
 ---
 
@@ -180,5 +180,5 @@ These custom filters exist for other country trees — do not add them to Israel
 
 1. Choose the **country-specific custom filter** that matches the focus's branch
 2. Choose the **generic filter** from the tables above (one or two — don't over-tag)
-3. For high-cost focuses (`cost >= 8`, or `cost >= 5` for military/economy/research focuses): add `NOT = { has_active_mission = bankruptcy_incoming_collapse }` to `available`
+3. For high-cost focuses (`cost >= 8`, or `cost >= 5` for military/economy/research focuses): add a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse` — this is AI-only, do not put it in `available`
 4. Write the `search_filters` line as a single line: `search_filters = { CUSTOM_FILTER GENERIC_FILTER }`

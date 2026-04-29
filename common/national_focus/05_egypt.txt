@@ -782,14 +782,11 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_squash_diplo"
 			if = {
 				limit = { NOT = { has_global_flag = GAME_RULE_nato_disabled } }
-				custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
-				effect_tooltip = {
-					add_opinion_modifier = { target = USA modifier = diplomatic_support }
-					reverse_add_opinion_modifier = { target = USA modifier = diplomatic_support }
-				}
-				hidden_effect = {
-					for_each_scope_loop = {
-						array = global.nato_members
+				for_each_scope_loop = {
+					array = global.nato_members
+					tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+					if = {
+						limit = { NOT = { tag = ROOT } }
 						add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 						reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 					}
@@ -1348,7 +1345,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_support_fsa"
 			custom_effect_tooltip = dyn_syr_tt
 			if = {
-				limit = { SYR = { has_government = neutrality } }
+				limit = { SYR = { OR = { has_government = neutrality has_government = fascism } } }
 				SYR = { country_event = Egypt.42 }
 				EGY = {
 					add_equipment_to_stockpile = {
@@ -1374,35 +1371,7 @@ focus_tree = {
 				set_temp_variable = { influence_target = SYR }
 				change_influence_percentage = yes
 			}
-			else_if = {
-				limit = { SYR = { has_government = fascism } }
-				SYR = { country_event = Egypt.42 }
-				EGY = {
-					add_equipment_to_stockpile = {
-						type = infantry_weapons_2
-						amount = -2500
-						producer = EGY
-					}
-				}
-				add_popularity = {
-					ideology = neutrality
-					popularity = 0.10
-				}
-				reverse_add_opinion_modifier = {
-					modifier = supports_us
-					target = SYR
-				}
-				add_opinion_modifier = {
-					modifier = supports_us
-					target = SYR
-				}
-				set_temp_variable = { percent_change = 3 }
-				set_temp_variable = { tag_index = EGY }
-				set_temp_variable = { influence_target = SYR }
-				change_influence_percentage = yes
-			}
-			else_if = {
-				limit = { SYR = { has_government = communism } }
+			else = {
 				SYR = {
 					country_event = Egypt.43
 					add_popularity = {
@@ -1416,53 +1385,10 @@ focus_tree = {
 				change_influence_percentage = yes
 				EGY = {
 					SYR = {
-						set_country_flag = embargo@PREV
-						add_opinion_modifier = { target = PREV modifier = embargo }
-						reverse_add_opinion_modifier = { target = PREV modifier = embargo }
-						add_opinion_modifier = { target = PREV modifier = embargo_opinion }
-						reverse_add_opinion_modifier = { target = PREV modifier = embargo_opinion }
-					}
-				}
-			}
-			else_if = {
-				limit = { SYR = { has_government = nationalist } }
-				SYR = {
-					country_event = Egypt.43
-					add_popularity = {
-						ideology = neutrality
-						popularity = 0.05
-					}
-				}
-				set_temp_variable = { percent_change = 3 }
-				set_temp_variable = { tag_index = EGY }
-				set_temp_variable = { influence_target = SYR }
-				change_influence_percentage = yes
-				EGY = {
-					SYR = {
-						set_country_flag = embargo@PREV
-						add_opinion_modifier = { target = PREV modifier = embargo }
-						reverse_add_opinion_modifier = { target = PREV modifier = embargo }
-						add_opinion_modifier = { target = PREV modifier = embargo_opinion }
-						reverse_add_opinion_modifier = { target = PREV modifier = embargo_opinion }
-					}
-				}
-			}
-			else_if = {
-				limit = { SYR = { has_government = democratic } }
-				SYR = {
-					country_event = Egypt.43
-					add_popularity = {
-						ideology = neutrality
-						popularity = 0.05
-					}
-				}
-				set_temp_variable = { percent_change = 3 }
-				set_temp_variable = { tag_index = EGY }
-				set_temp_variable = { influence_target = SYR }
-				change_influence_percentage = yes
-				EGY = {
-					SYR = {
-						set_country_flag = embargo@PREV
+						if = {
+							limit = { has_dlc = "By Blood Alone" }
+							send_embargo = PREV
+						}
 						add_opinion_modifier = { target = PREV modifier = embargo }
 						reverse_add_opinion_modifier = { target = PREV modifier = embargo }
 						add_opinion_modifier = { target = PREV modifier = embargo_opinion }
@@ -2593,15 +2519,11 @@ focus_tree = {
 			set_improved_trade_agreement = yes
 			if = {
 				limit = { NOT = { has_global_flag = GAME_RULE_csto_disabled } }
-				custom_effect_tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
-				effect_tooltip = {
-					add_opinion_modifier = { target = SOV modifier = improve_trade }
-					add_opinion_modifier = { target = SOV modifier = diplomatic_support }
-					reverse_add_opinion_modifier = { target = SOV modifier = diplomatic_support }
-				}
-				hidden_effect = {
-					for_each_scope_loop = {
-						array = global.CSTO_member
+				for_each_scope_loop = {
+					array = global.CSTO_member
+					tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
+					if = {
+						limit = { NOT = { tag = ROOT } }
 						add_opinion_modifier = { target = ROOT modifier = improve_trade }
 						add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 						reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
@@ -3053,7 +2975,10 @@ focus_tree = {
 				change_influence_percentage = yes
 				EGY = {
 					SYR = {
-						set_country_flag = embargo@PREV
+						if = {
+							limit = { has_dlc = "By Blood Alone" }
+							send_embargo = PREV
+						}
 						add_opinion_modifier = { target = PREV modifier = embargo }
 						reverse_add_opinion_modifier = { target = PREV modifier = embargo }
 						add_opinion_modifier = { target = PREV modifier = embargo_opinion }
@@ -3076,7 +3001,10 @@ focus_tree = {
 				change_influence_percentage = yes
 				EGY = {
 					SYR = {
-						set_country_flag = embargo@PREV
+						if = {
+							limit = { has_dlc = "By Blood Alone" }
+							send_embargo = PREV
+						}
 						add_opinion_modifier = { target = PREV modifier = embargo }
 						reverse_add_opinion_modifier = { target = PREV modifier = embargo }
 						add_opinion_modifier = { target = PREV modifier = embargo_opinion }
@@ -4068,18 +3996,12 @@ focus_tree = {
 			set_temp_variable = { receiver_nation = EGY.id }
 			set_temp_variable = { sender_nation = SOV.id }
 			set_improved_trade_agreement = yes
-			custom_effect_tooltip = TT_ALL_AU_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
-				reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
-			}
-			hidden_effect = {
-				SOV = {
-					for_each_scope_loop = {
-						array = global.AU_member
-						add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
-						reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
-					}
+			SOV = {
+				for_each_scope_loop = {
+					array = global.AU_member
+					tooltip = TT_ALL_AU_MEMBER_NATIONS_GAIN
+					add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
+					reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 				}
 			}
 			set_temp_variable = { percent_change = 5 }
@@ -4187,7 +4109,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_ant_bros_tuk"
 			custom_effect_tooltip = dyn_syr_tt
 			if = {
-				limit = { SYR = { has_government = communism } }
+				limit = { SYR = { OR = { has_government = communism has_government = democratic has_government = nationalist } } }
 				SYR = { country_event = Egypt.42 }
 				EGY = {
 					add_equipment_to_stockpile = {
@@ -4213,62 +4135,7 @@ focus_tree = {
 				set_temp_variable = { influence_target = SYR }
 				change_influence_percentage = yes
 			}
-			else_if = {
-				limit = { SYR = { has_government = democratic } }
-				SYR = { country_event = Egypt.42 }
-				EGY = {
-					add_equipment_to_stockpile = {
-						type = infantry_weapons_2
-						amount = -2500
-						producer = EGY
-					}
-				}
-				add_popularity = {
-					ideology = neutrality
-					popularity = 0.10
-				}
-				reverse_add_opinion_modifier = {
-					modifier = supports_us
-					target = SYR
-				}
-				add_opinion_modifier = {
-					modifier = supports_us
-					target = SYR
-				}
-				set_temp_variable = { percent_change = 3 }
-				set_temp_variable = { tag_index = EGY }
-				set_temp_variable = { influence_target = SYR }
-				change_influence_percentage = yes
-			}
-			else_if = {
-				limit = { SYR = { has_government = nationalist } }
-				SYR = { country_event = Egypt.42 }
-				EGY = {
-					add_equipment_to_stockpile = {
-						type = infantry_weapons_2
-						amount = -2500
-						producer = EGY
-					}
-				}
-				add_popularity = {
-					ideology = neutrality
-					popularity = 0.10
-				}
-				reverse_add_opinion_modifier = {
-					modifier = supports_us
-					target = SYR
-				}
-				add_opinion_modifier = {
-					modifier = supports_us
-					target = SYR
-				}
-				set_temp_variable = { percent_change = 3 }
-				set_temp_variable = { tag_index = EGY }
-				set_temp_variable = { influence_target = SYR }
-				change_influence_percentage = yes
-			}
-			else_if = {
-				limit = { SYR = { has_government = neutrality } }
+			else = {
 				SYR = {
 					country_event = Egypt.43
 					add_popularity = {
@@ -4282,30 +4149,10 @@ focus_tree = {
 				change_influence_percentage = yes
 				EGY = {
 					SYR = {
-						set_country_flag = embargo@PREV
-						add_opinion_modifier = { target = PREV modifier = embargo }
-						reverse_add_opinion_modifier = { target = PREV modifier = embargo }
-						add_opinion_modifier = { target = PREV modifier = embargo_opinion }
-						reverse_add_opinion_modifier = { target = PREV modifier = embargo_opinion }
-					}
-				}
-			}
-			else_if = {
-				limit = { SYR = { has_government = fascism } }
-				SYR = {
-					country_event = Egypt.43
-					add_popularity = {
-						ideology = neutrality
-						popularity = 0.05
-					}
-				}
-				set_temp_variable = { percent_change = 3 }
-				set_temp_variable = { tag_index = EGY }
-				set_temp_variable = { influence_target = SYR }
-				change_influence_percentage = yes
-				EGY = {
-					SYR = {
-						set_country_flag = embargo@PREV
+						if = {
+							limit = { has_dlc = "By Blood Alone" }
+							send_embargo = PREV
+						}
 						add_opinion_modifier = { target = PREV modifier = embargo }
 						reverse_add_opinion_modifier = { target = PREV modifier = embargo }
 						add_opinion_modifier = { target = PREV modifier = embargo_opinion }
@@ -5862,8 +5709,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_euarsian_exports_food"
 			SOV = { country_event = Egypt.31 }
-			every_country = {
-				limit = { has_idea = CSTO_member }
+			for_each_scope_loop = {
+				array = global.CSTO_member
+				tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
 				add_opinion_modifier = {
 					target = ROOT
 					modifier = improve_trade

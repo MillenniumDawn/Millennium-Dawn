@@ -35,7 +35,7 @@ When no specific issues are assigned, scan for these known problem patterns:
 - **Missing `search_filters`** in focuses.
 - **Missing logging** in focus completion effects and decision complete_effects.
 - **Two consecutive `if` blocks with complementary conditions** — should use `if/else`.
-- **Missing `NOT = { has_active_mission = bankruptcy_incoming_collapse }`** in `available` for high-cost focuses (cost >= 8, or >= 5 for military/economy/research).
+- **Missing bankruptcy guard** in `ai_will_do` for high-cost focuses (cost >= 8, or >= 5 for military/economy/research) — must be a `factor = 0` modifier conditioned on `has_active_mission = bankruptcy_incoming_collapse`, not in `available` (which would block the player).
 - **Typos from the watchlist** — see `.claude/docs/typo-watchlist.md` for the canonical list.
 - **Localisation issues**: trailing version numbers (`key:0`), missing BOM in yml files, mixed indentation.
 - **`force_update_dynamic_modifier`** usage — should be avoided.
