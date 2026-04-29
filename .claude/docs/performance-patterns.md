@@ -96,6 +96,37 @@ Bind `dirty = global.refresh_investment_gui`. Call `refresh_investment_gui = yes
 
 **Why:** `global.date` changes every tick. The GUI would redraw every frame, causing noticeable lag on slower machines.
 
+### Also applies to incrementing globals
+
+`global.num_days`, `global.date`, and any other variable that changes on a fixed timer (daily, hourly, etc.) are just as bad. The same fix applies: create a dedicated counter and increment it only when the data that backs the GUI actually changes.
+
+---
+
+## Always Add `max_iterations` to `while_loop_effect`
+
+Unbounded loops are a crash risk. If the body fails to advance the loop condition, the engine hangs inside a single tick.
+
+### Wrong
+
+```
+while_loop_effect = {
+    limit = { check_variable = { counter < target } }
+    # ... body ...
+}
+```
+
+### Right
+
+```
+while_loop_effect = {
+    max_iterations = 500
+    limit = { check_variable = { counter < target } }
+    # ... body ...
+}
+```
+
+**Why:** A missing guard means an edge-case bug becomes a hard freeze. Pick a ceiling well above the realistic worst case but low enough that a runaway loop exits before the player notices lag. A good rule of thumb is 10× the expected iteration count.
+
 ---
 
 ## Prefer Engine Arrays Over `every_country` / `any_country`
@@ -187,3 +218,13 @@ for_each_scope_loop = {
 ```
 
 **Why:** Skipping an entire `every_country` / `for_each_scope_loop` pulse saves more CPU than any micro-optimization inside the loop.
+
+---
+
+## Avoid `effect_tooltip` + `for_each_scope_loop` Duplication
+
+Never duplicate the same logic in an `effect_tooltip` block and a `for_each_scope_loop` block. Use the loop's built-in `tooltip` parameter instead.
+
+**Why:** HOI4 evaluates both `effect_tooltip` (for tooltip display) and `for_each_scope_loop` (for effect execution). With ~27 EU members, each duplication costs ~27 extra scope switches and ~54 extra opinion modifier evaluations per trigger. In focus trees with 50+ such calls, that's thousands of wasted evaluations per campaign. `tooltip =` tells the engine to display the tooltip once and execute the loop once — a measurable performance win on any frequently-fired code path.
+
+For the before/after migration pattern, see `.claude/docs/simplification-patterns.md`.
