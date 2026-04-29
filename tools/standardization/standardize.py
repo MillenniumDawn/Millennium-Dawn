@@ -17,6 +17,7 @@ from standardize_decisions import DecisionStandardizer
 from standardize_events import EventStandardizer
 from standardize_focus_tree import standardize_focus_tree
 from standardize_ideas import IdeaStandardizer
+from standardize_mio import MIOStandardizer
 
 
 def main():
@@ -30,6 +31,7 @@ Examples:
   python3 standardize.py event input.txt --backup --verbose
   python3 standardize.py decision input.txt
   python3 standardize.py idea input.txt -v
+  python3 standardize.py mio input.txt
         """,
     )
 
@@ -87,6 +89,20 @@ Examples:
         "-v", "--verbose", action="store_true", help="Verbose output"
     )
 
+    mio_parser = subparsers.add_parser(
+        "mio", help="Standardize military industrial organization files"
+    )
+    mio_parser.add_argument("input_file", help="Input MIO file")
+    mio_parser.add_argument(
+        "-o", "--output", help="Output file (default: overwrites input)"
+    )
+    mio_parser.add_argument(
+        "-b", "--backup", action="store_true", help="Create backup before modifying"
+    )
+    mio_parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Verbose output"
+    )
+
     args = parser.parse_args()
 
     if not args.command:
@@ -124,6 +140,12 @@ Examples:
         run_standardizer(
             IdeaStandardizer,
             "Standardize HOI4 idea files according to Millennium Dawn coding standards",
+            argv=sub_argv,
+        )
+    elif args.command == "mio":
+        run_standardizer(
+            MIOStandardizer,
+            "Standardize HOI4 military industrial organization files according to Millennium Dawn coding standards",
             argv=sub_argv,
         )
     else:
