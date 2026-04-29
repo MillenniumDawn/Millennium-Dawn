@@ -1,0 +1,37 @@
+# =============================================================================
+# Supreme People's Assembly (SPA) — on_action hooks
+# Detected country tag: NKO (from history/countries/NKO - North Korea.txt)
+# MD branch: NorthKoreanAdditions2026
+# Role: Two hooks only — game start (init + inaugural event) and civil-war
+#       start (cleanup). NO on_daily / on_weekly / on_monthly polling: the
+#       session cadence is driven by a self-scheduling cycle event
+#       (NKO_spa.10) that fires once every 120 days. This is roughly 12x
+#       cheaper than an on_monthly approach and fully event-native.
+# =============================================================================
+
+on_actions = {
+
+	# -------------------------------------------------------------------------
+	# Game start — intentionally NO automatic SPA install. The mechanic is
+	# unlocked when the player completes the NKO_humanitarian_aid focus
+	# (see common/national_focus/korea_north.txt). The focus completion_reward
+	# calls NKO_spa_initialise + fires the inaugural event NKO_spa.0.
+	# -------------------------------------------------------------------------
+
+	# -------------------------------------------------------------------------
+	# Civil-war start — strip SPA state from both sides immediately.
+	# Direct effect call (no event hop) for the lowest possible overhead.
+	# -------------------------------------------------------------------------
+	on_civil_war_started = {
+		effect = {
+			if = {
+				limit = { original_tag = NKO }
+				NKO_spa_suppress_for_collapse = yes
+			}
+			if = {
+				limit = { FROM = { original_tag = NKO } }
+				FROM = { NKO_spa_suppress_for_collapse = yes }
+			}
+		}
+	}
+}
