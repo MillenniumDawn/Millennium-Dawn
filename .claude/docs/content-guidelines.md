@@ -52,6 +52,7 @@ On-demand quality checklist for new Millennium Dawn content. Condensed from `doc
 - Changelog entry required before submitting for review — add to `Changelog.txt`
 - Cosmetic tags must be dropped when no longer applicable (e.g., an empire tag lost on regime change)
 - New tags (new countries) require all of: OOB, name lists, political structuring, starting laws, starting leader
+- For name list authoring conventions (division groups, ship hull names, ship class names, naval prefixes), see `docs/src/content/resources/unit-name-lists.md` and `.claude/docs/namelist-reference.md`
 
 ## Generals & Admirals
 
