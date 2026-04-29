@@ -69,6 +69,20 @@ Standardizes idea files according to Millennium Dawn standards.
 python3 standardize_ideas.py input.txt -o output.txt --backup --verbose
 ```
 
+### Military Industrial Organizations (`standardize_mio.py`)
+Standardizes MIO organization files according to Millennium Dawn standards.
+
+**Key features:**
+- Enforces the standard property ordering for MIOs
+- Orders core fields as `name`, `allowed`, `icon`, `task_capacity`, `equipment_type`, `research_categories`, `tree_header_text`, `initial_trait`, then `trait`
+- Compacts blocks by removing excessive blank lines
+- Keeps unrecognized lines in a trailing `other` section
+
+**Usage:**
+```bash
+python3 standardize_mio.py input.txt -o output.txt --backup --verbose
+```
+
 ## Unified Interface
 
 For convenience, use the unified `standardize.py` script:
@@ -85,6 +99,9 @@ python3 standardize.py decision input.txt
 
 # Standardize ideas
 python3 standardize.py idea input.txt -v
+
+# Standardize MIOs
+python3 standardize.py mio input.txt
 ```
 
 ## Common Options
@@ -122,6 +139,12 @@ All standardizers support these command-line options:
 - Remove empty `on_add = { log = "" }`
 - Include `allowed_civil_war = { always = yes }` for civil war tags
 - Log only when on_add/on_remove have actual effects
+
+### Military Industrial Organizations
+- Proper property ordering for organization headers
+- Place all `tree_header_text` blocks before `initial_trait`
+- Place all `trait` blocks after `initial_trait`
+- Remove excessive blank lines inside blocks
 
 ## Performance Optimizations
 
@@ -194,8 +217,9 @@ Consider adding standardization to your pre-commit hooks:
 ```bash
 # In .git/hooks/pre-commit
 #!/bin/bash
-python3 tools/standardization/standardize.py focus common/national_focus/*.txt
-python3 tools/standardization/standardize.py event events/*.txt
+    python3 tools/standardization/standardize.py focus common/national_focus/*.txt
+    python3 tools/standardization/standardize.py event events/*.txt
+    python3 tools/standardization/standardize.py mio common/military_industrial_organization/organizations/*.txt
 ```
 
 ### CI/CD Pipeline
@@ -208,6 +232,7 @@ Add standardization checks to your continuous integration:
   run: |
     python3 tools/standardization/standardize.py focus common/national_focus/*.txt --backup
     python3 tools/standardization/standardize.py event events/*.txt --backup
+    python3 tools/standardization/standardize.py mio common/military_industrial_organization/organizations/*.txt --backup
 ```
 
 ## Related Documentation
