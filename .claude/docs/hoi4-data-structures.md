@@ -34,7 +34,7 @@ global.global_my_var   # read globally
 
 ### Array elements
 
-Accessed via `^` subscript (zero-indexed):
+Accessed via `^` subscript (zero-indexed). Arrays are capped at **1000 elements** — `add_to_array` beyond index 999 silently does nothing.
 
 ```
 my_array^0       # first element
