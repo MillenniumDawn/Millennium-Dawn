@@ -36,6 +36,7 @@ These guidelines help keep the mod running smoothly:
 - **On Actions**: Use tag-specific variants (`on_daily_TAG`) instead of global triggers
 - **Dynamic Modifiers**: Use sparingly. Avoid `force_update_dynamic_modifier` as it causes lag
 - **Arrays**: Replace `every_country`/`random_country` with specific array triggers
+- **Tooltip Duplication**: Never duplicate logic in `effect_tooltip` + `for_each_scope_loop`. Use `tooltip = TT_ALL_*` inside the loop instead — this eliminates double-evaluation and prevents drift between tooltip text and actual execution.
 - **Cleanup**: Remove unused code and commented-out blocks
 
 ---
@@ -320,4 +321,6 @@ CHI_norinco_manufacturer = {
 # Related Resources
 
 - [Code Resources](/dev-resources/code-resource) - Modifiers and effects
+- [Dynamic Modifiers](/dev-resources/dynamic-modifiers) - Dynamic modifier tooltip usage
+- [Claude Code Skills](/dev-resources/claude-code-skills) - AI-assisted development tools
 - [Game Rules](/player-tutorials/game-rules) - Game rule reference

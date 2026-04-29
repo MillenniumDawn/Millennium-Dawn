@@ -1416,8 +1416,6 @@ class Validator(BaseValidator):
             missing = []
             if dec_id not in loc_keys:
                 missing.append(dec_id)
-            if f"{dec_id}_desc" not in loc_keys:
-                missing.append(f"{dec_id}_desc")
             if dec.custom_cost_text and dec.custom_cost_text not in loc_keys:
                 missing.append(dec.custom_cost_text)
             for key in missing:

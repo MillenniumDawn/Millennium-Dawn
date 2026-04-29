@@ -82,10 +82,9 @@ def print_list(tools: dict[str, Path]) -> None:
         group = subdir if subdir != "." else "root"
         if group not in groups:
             continue
-        print(f"  {group}/")
+        print(f"\n  {group}/")
         for name, _ in sorted(groups[group]):
             print(f"    {name}")
-        print()
 
 
 def main() -> None:

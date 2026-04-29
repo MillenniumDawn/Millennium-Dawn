@@ -63,7 +63,7 @@ log = "[GetDateText]: [Root.GetName]: Focus TAG_focus_name"
 ### Important Rules
 
 - Never use `available = { always = no }` on a focus that also has a `bypass`. Set `available` to match or approximate the bypass condition.
-- High-cost focuses (cost >= 8, or cost >= 5 for military/economy/research) should include `NOT = { has_active_mission = bankruptcy_incoming_collapse }` in `available`
+- High-cost focuses (cost >= 8, or cost >= 5 for military/economy/research) must include a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse` — this is an AI-only guard; do not put it in `available`
 - Limit permanent effects to 5; use timed ideas for more
 - Use scripted effects and triggers where applicable
 - Use `if/else` instead of two consecutive `if` blocks with complementary conditions
