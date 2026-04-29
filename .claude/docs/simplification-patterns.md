@@ -141,6 +141,60 @@ else = { set_variable = { page = 1 } }
 
 ---
 
+## Consolidate Identical-Body `else_if` Chains into `OR`
+
+When N consecutive `else_if` branches all execute the same effects, collapse them into one branch with an `OR` limit.
+
+### Before (N branches, same body)
+
+```
+else_if = {
+    limit = { has_country_flag = flag_A }
+    add_stability = 0.05
+}
+else_if = {
+    limit = { has_country_flag = flag_B }
+    add_stability = 0.05
+}
+else_if = {
+    limit = { has_country_flag = flag_C }
+    add_stability = 0.05
+}
+else_if = {
+    limit = { has_country_flag = flag_D }
+    add_stability = 0.05
+}
+else_if = {
+    limit = { has_country_flag = flag_E }
+    add_stability = 0.05
+}
+```
+
+### After (one branch, OR'd conditions)
+
+```
+else_if = {
+    limit = {
+        OR = {
+            has_country_flag = flag_A
+            has_country_flag = flag_B
+            has_country_flag = flag_C
+            has_country_flag = flag_D
+            has_country_flag = flag_E
+        }
+    }
+    add_stability = 0.05
+}
+```
+
+**Go a step further — use `else` when exhaustive:** If the preceding `if/else_if` chain already guarantees at least one condition must be true (e.g., the earlier branches covered all lower values of a sequential range), use a bare `else = { ... }` instead of the `OR` block — it's shorter and can't drift.
+
+**Why:** Eliminates copy-paste drift — adding a new condition doesn't risk forgetting to update one branch. Reduces script size. If the body needs changing, it's one edit instead of N.
+
+**When NOT to use:** If the branches have side effects that interact (e.g., scoping to different targets, setting variables the next branch reads), or if evaluation order matters between conditions that could both be true. `OR` short-circuits logic — all conditions are effectively equal.
+
+---
+
 ## Consolidate Decision Templates with `meta_effect`
 
 When you have N decisions that differ only by an index, use `meta_effect` rather than N copies.
@@ -161,3 +215,161 @@ meta_effect = {
 **Why:** 15 investor + 15 target decisions still exist as separate objects (engine requirement), but their activation logic is a single block.
 
 **Caveat:** `meta_effect` runs at parse time, not runtime. It cannot reference runtime variables in its parameter substitution — only static text or `[]`-formatted variables.
+
+---
+
+## Consolidate `custom_effect_tooltip` + `effect_tooltip` + `for_each_scope_loop`
+
+When a focus, decision, or event shows a tooltip for effects applied to every member of an array, the old pattern duplicated the same logic twice — once in `effect_tooltip` (for display) and once in `for_each_scope_loop` (for execution). The `for_each_scope_loop` block accepts a `tooltip` parameter, which combines both.
+
+### Before (self-targeting effects)
+
+```
+custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+effect_tooltip = {
+    add_popularity = { ideology = nationalist popularity = 0.05 }
+    add_war_support = -0.10
+    add_stability = -0.05
+}
+for_each_scope_loop = {
+    array = global.nato_members
+    add_popularity = { ideology = nationalist popularity = 0.05 }
+    add_war_support = -0.10
+    add_stability = -0.05
+}
+```
+
+### After (self-targeting effects)
+
+```
+for_each_scope_loop = {
+    array = global.nato_members
+    tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+    add_popularity = { ideology = nationalist popularity = 0.05 }
+    add_war_support = -0.10
+    add_stability = -0.05
+}
+```
+
+### Before (opinion modifiers with explicit target)
+
+```
+custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+effect_tooltip = {
+    add_opinion_modifier = { target = DEN modifier = drama }
+}
+for_each_scope_loop = {
+    array = global.nato_members
+    add_opinion_modifier = { target = DEN modifier = drama }
+}
+```
+
+### After (opinion modifiers with explicit target)
+
+```
+for_each_scope_loop = {
+    array = global.nato_members
+    tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+    if = {
+        limit = { NOT = { tag = ROOT } }
+        add_opinion_modifier = { target = ROOT modifier = drama }
+    }
+}
+```
+
+**Key differences:**
+
+- `tooltip = TT_ALL_*` replaces both `custom_effect_tooltip` and `effect_tooltip`.
+- The effects live in one place: inside the `for_each_scope_loop`.
+- When opinion modifiers target the focus-completing country, add `NOT = { tag = ROOT }` to prevent self-targeting. Use `ROOT` (not `PREV`) — `ROOT` is the fixed original scope, while `PREV` shifts if the loop is nested inside another scope change.
+
+**Why:** Eliminates ~4–8 lines of duplication per call site. Across ~50+ EU/NATO/CSTO/AU focus trees, scripted effects, and GUI buttons, this removes hundreds of redundant lines and prevents drift between tooltip text and real execution. See `.claude/docs/performance-patterns.md` for the performance impact of double-evaluation.
+
+---
+
+## Merge Consecutive Same-Tag Scope Blocks
+
+When two or more scope blocks target the same country tag in sequence, merge them into one. Each scope switch adds a nesting level to the in-game tooltip, making it harder to read.
+
+### Before
+
+```
+ALG = {
+    country_event = nuclear_algeria.19
+}
+ALG = {
+    add_opinion_modifier = {
+        target = ROOT
+        modifier = sanctioned_us
+    }
+}
+```
+
+### After
+
+```
+ALG = {
+    country_event = nuclear_algeria.19
+    add_opinion_modifier = {
+        target = ROOT
+        modifier = sanctioned_us
+    }
+}
+```
+
+**Why:** Each `TAG = { }` scope switch creates a separate indented block in the player-facing tooltip. Two consecutive `ALG = { }` blocks show the ALG header twice, making the tooltip noisy and harder to scan. Merging produces a single clean block.
+
+**When NOT to merge:** If the two blocks are separated by an `if`/`else` that conditionally gates one of them, or if the second block is inside a different trigger/effect context (e.g., one is in `effect_tooltip` and the other is in `hidden_effect`), they cannot be merged.
+
+---
+
+## Prefer `multiply_variable` Over `divide_variable`
+
+Division is more expensive than multiplication and carries a divide-by-zero risk. When dividing by a constant, multiply by its reciprocal instead.
+
+### Before
+
+```
+divide_variable = { var = my_ratio value = 100 }
+```
+
+### After
+
+```
+multiply_variable = { var = my_ratio value = 0.01 }
+```
+
+**Why:** `multiply_variable` is a single engine operation with no zero-division risk. `0.01` is the exact reciprocal of `100`, so the result is identical. Prefer multiplication for all constant divisors.
+
+---
+
+## Add Mutual Exclusion Guards When Splitting `every_country` with `OR`
+
+When converting a single `every_country = { limit = { OR = { A B } } }` into separate loops (e.g., one per array), add exclusion limits so countries matching multiple conditions don't receive effects twice.
+
+### Before (single loop)
+
+```
+every_country = {
+    limit = { OR = { has_idea = group_A has_idea = group_B } }
+    country_event = { id = my_event.1 days = 2 }
+}
+```
+
+### After (split loops with exclusion)
+
+```
+for_each_scope_loop = {
+    array = global.group_A_members
+    limit = { NOT = { has_idea = group_B } }
+    country_event = { id = my_event.1 days = 2 }
+}
+every_country = {
+    limit = { has_idea = group_B }
+    country_event = { id = my_event.1 days = 2 }
+}
+```
+
+**Why:** The original single loop guaranteed each country received the effect exactly once. Splitting without guards causes countries in both groups to fire or receive the effect multiple times. This silently introduces double-firing events, stacked opinion modifiers, or duplicated resource transfers.
+
+Apply the same pattern whenever a non-idempotent effect (opinion modifiers, variable changes, events, etc.) is split across multiple loops.

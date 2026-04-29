@@ -138,6 +138,8 @@ When a function uses `^index` array subscripts, the **meaning of the index varia
 
 ## Simplification Patterns
 
+- **Consolidate identical-body `else_if` chains:** When N consecutive `else_if` branches have the same body, collapse into one `OR` limit (or plain `else` if the preceding chain guarantees one condition is true). See `.claude/docs/simplification-patterns.md`.
+
 Replace N parallel `if/else_if` lookup chains with array indexing:
 
 ```
