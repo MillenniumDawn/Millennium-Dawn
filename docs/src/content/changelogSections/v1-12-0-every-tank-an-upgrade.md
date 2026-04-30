@@ -321,7 +321,7 @@ v1.12.0
 - Added FGU, PAT, SPL, SUL to South American group trigger
 - Added ADJ, ADY, CHE, DAG, GOR, ING, KBK, KCC, KUB to Caucasus group trigger
 - Added HWI to Oceania group trigger
-- Added ASK, CKK, GRL, KAE, KOM, NEE, QUE, SIB, YAK, YAM to Arctic group trigger
+- Added ASK, CKK, GRN, KAE, KOM, NEE, QUE, SIB, YAK, YAM to Arctic group trigger
 - Added CNR to Spanish Speaking group trigger
 - Added all Russian Subject tags to Russian Proficient group trigger
 - Adjusted the Kosovar tax rates to 25% for population and 15% to corporate tax rate
