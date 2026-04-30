@@ -162,27 +162,25 @@ EU_voting_category = {
 						set_variable = { global.current_active_agenda_disp = 0 }
 						if = {
 							limit = {
-								has_country_flag = EU_budget_draft
+								has_country_flag = EU_budget_EP_block
 								NOT = { has_active_mission = EU_budget_draft_ongoing }
 								NOT = { has_active_mission = EU_budget_draft_preparations }
 							}
 							for_each_scope_loop = {
 								array = global.EU_member
 								tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-								clr_country_flag = EU_budget_draft
 								clr_country_flag = EU_budget_EP_block
 							}
 						}
 						if = {
 							limit = {
-								has_country_flag = EU_mff_draft
+								has_country_flag = EU_mff_EP_block
 								NOT = { has_active_mission = EU_mff_draft_ongoing }
 								NOT = { has_active_mission = EU_mff_draft_preparations }
 							}
 							for_each_scope_loop = {
 								array = global.EU_member
 								tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-								clr_country_flag = EU_mff_draft
 								clr_country_flag = EU_mff_EP_block
 							}
 						}
@@ -247,27 +245,25 @@ EU_voting_category = {
 							set_variable = { global.current_active_agenda_disp = 0 }
 							if = {
 								limit = {
-									has_country_flag = EU_budget_draft
+									has_country_flag = EU_budget_EP_block
 									NOT = { has_active_mission = EU_budget_draft_ongoing }
 									NOT = { has_active_mission = EU_budget_draft_preparations }
 								}
 								for_each_scope_loop = {
 									array = global.EU_member
 									tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-									clr_country_flag = EU_budget_draft
 									clr_country_flag = EU_budget_EP_block
 								}
 							}
 							if = {
 								limit = {
-									has_country_flag = EU_mff_draft
+									has_country_flag = EU_mff_EP_block
 									NOT = { has_active_mission = EU_mff_draft_ongoing }
 									NOT = { has_active_mission = EU_mff_draft_preparations }
 								}
 								for_each_scope_loop = {
 									array = global.EU_member
 									tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-									clr_country_flag = EU_mff_draft
 									clr_country_flag = EU_mff_EP_block
 								}
 							}
@@ -317,21 +313,27 @@ EU_voting_category = {
 								set_the_eu_parliament_delay = yes
 							}
 							if = {
-								limit = { has_country_flag = EU_budget_draft }
+								limit = {
+									has_country_flag = EU_budget_EP_block
+									NOT = { has_active_mission = EU_budget_draft_ongoing }
+									NOT = { has_active_mission = EU_budget_draft_preparations }
+								}
 								for_each_scope_loop = {
 									array = global.EU_member
 									tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-									clr_country_flag = EU_budget_draft
 									clr_country_flag = EU_budget_EP_block
 									EU_rollback_budget_values = yes
 								}
 							}
 							if = {
-								limit = { has_country_flag = EU_mff_draft }
+								limit = {
+									has_country_flag = EU_mff_EP_block
+									NOT = { has_active_mission = EU_mff_draft_ongoing }
+									NOT = { has_active_mission = EU_mff_draft_preparations }
+								}
 								for_each_scope_loop = {
 									array = global.EU_member
 									tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-									clr_country_flag = EU_mff_draft
 									clr_country_flag = EU_mff_EP_block
 									EU_rollback_mff_values = yes
 								}
@@ -914,10 +916,18 @@ EU_voting_category = {
 		timeout_effect = {
 			set_EU_gdp = yes
 			update_EU_budget_call_rate = yes
-			set_country_flag = focus_EU999_EP_agenda
-			activate_mission = EU_parliament_focus_EUXXX_approve_timer
-			activate_mission = EU_budget_yearly_timer
+			if = {
+				limit = { any_country = { has_idea = ECB_president } }
+				set_country_flag = focus_EU999_EP_agenda
+				set_country_flag = focus_on_EP_agenda
+				activate_mission = EU_parliament_focus_EUXXX_approve_timer
+			}
+			else = {
+				clr_country_flag = EU_budget_EP_block
+			}
+			clr_country_flag = EU_budget_draft
 			remove_mission = EU_budget_draft_ongoing
+			activate_mission = EU_budget_yearly_timer
 		}
 
 		ai_will_do = { base = 0 }
@@ -946,6 +956,8 @@ EU_voting_category = {
 			}
 			assess_MEP_support_party_x = yes
 			set_country_flag = focus_EU999_EP_agenda
+			set_country_flag = focus_on_EP_agenda
+			clr_country_flag = EU_budget_draft
 			activate_mission = EU_parliament_focus_EUXXX_approve
 			activate_mission = EU_budget_yearly_timer
 			set_variable = { global.current_active_agenda_disp = 999 }
@@ -1026,10 +1038,18 @@ EU_voting_category = {
 		timeout_effect = {
 			set_EU_gdp = yes
 			update_EU_budget_call_rate = yes
-			set_country_flag = focus_EU998_EP_agenda
-			activate_mission = EU_parliament_focus_EUXXX_approve_timer
-			activate_mission = EU_mff_yearly_timer
+			if = {
+				limit = { any_country = { has_idea = ECB_president } }
+				set_country_flag = focus_EU998_EP_agenda
+				set_country_flag = focus_on_EP_agenda
+				activate_mission = EU_parliament_focus_EUXXX_approve_timer
+			}
+			else = {
+				clr_country_flag = EU_mff_EP_block
+			}
+			clr_country_flag = EU_mff_draft
 			remove_mission = EU_mff_draft_ongoing
+			activate_mission = EU_mff_yearly_timer
 		}
 
 		ai_will_do = { base = 0 }
@@ -1058,6 +1078,8 @@ EU_voting_category = {
 			}
 			assess_MEP_support_party_x = yes
 			set_country_flag = focus_EU998_EP_agenda
+			set_country_flag = focus_on_EP_agenda
+			clr_country_flag = EU_mff_draft
 			activate_mission = EU_mff_yearly_timer
 			activate_mission = EU_parliament_focus_EUXXX_approve
 			set_variable = { global.current_active_agenda_disp = 998 }
