@@ -3867,39 +3867,8 @@ calculate_resource_sale_rate = {
 	set_variable = { tungsten_exports = resource_exported@tungsten }
 	set_variable = { chromium_exports = resource_exported@chromium }
 	set_variable = { rubber_exports = resource_exported@rubber }
-	# Microchips and Composites use custom calculation since engine doesn't properly calculate resource_exported for these custom resources
-	# Export = Production - Domestic Consumption (civilian + military)
-	if = { limit = { has_variable = country_microchip_production_var }
-		set_temp_variable = { microchip_exports = country_microchip_production_var }
-		subtract_from_temp_variable = { microchip_exports = country_base_civilian_microchip_consumption_var }
-		subtract_from_temp_variable = { microchip_exports = resource_consumed@microchips }
-		clamp_temp_variable = { var = microchip_exports min = 0 }
-	}
-	else = {
-		set_temp_variable = { microchip_exports = resource_exported@microchips }
-	}
-	set_variable = { microchip_exports = microchip_exports }
-
-	# Composites don't have tracked civilian consumption, so just use production minus military consumption
-	if = { limit = { has_variable = country_composite_production_var }
-		set_temp_variable = { composite_exports = country_composite_production_var }
-		subtract_from_temp_variable = { composite_exports = resource_consumed@composites }
-		clamp_temp_variable = { var = composite_exports min = 0 }
-	}
-	else = {
-		set_temp_variable = { composite_exports = resource_exported@composites }
-	}
-	set_variable = { composite_exports = composite_exports }
-
-	# Add up total
-	set_temp_variable = { resource_exports = oil_exports }
-	add_to_temp_variable = { resource_exports = steel_exports }
-	add_to_temp_variable = { resource_exports = aluminium_exports }
-	add_to_temp_variable = { resource_exports = tungsten_exports }
-	add_to_temp_variable = { resource_exports = chromium_exports }
-	add_to_temp_variable = { resource_exports = rubber_exports }
-	add_to_temp_variable = { resource_exports = microchip_exports }
-	add_to_temp_variable = { resource_exports = composite_exports }
+	set_variable = { microchip_exports = resource_exported@microchips }
+	set_variable = { composite_exports = resource_exported@composites }
 
 	#Multiply with cost to get money generated
 	multiply_variable = { oil_exports = global.oil_price }
@@ -3940,9 +3909,6 @@ calculate_resource_sale_rate = {
 	multiply_variable = { rubber_exports = rubber_export_multiplier }
 	multiply_variable = { microchip_exports = microchip_export_multiplier }
 	multiply_variable = { composite_exports = composite_export_multiplier }
-
-	set_variable = { resource_export_multiplier_display = resource_export_multiplier }
-	subtract_from_variable = { resource_export_multiplier_display = 1 }
 
 	multiply_variable = { oil_exports = @resource_sale_rate_constant }
 	multiply_variable = { steel_exports = @resource_sale_rate_constant }
@@ -5347,26 +5313,6 @@ productivity_growth_controlled_display_effect = {
 		set_temp_variable = { state_productivity_growth_multiplier = 1 }
 		add_to_temp_variable = { state_productivity_growth_multiplier = modifier@state_productivity_growth_modifier }
 		set_temp_variable = { current_state = THIS.id }
-
-		# Railway Infrastructure Productivity Bonus
-		if = { limit = { has_railway_level = { state = current_state level = 1 } }
-			add_to_temp_variable = { state_productivity_growth_multiplier = 0.04 }
-		}
-		else_if = { limit = { has_railway_level = { state = current_state level = 2 } }
-			add_to_temp_variable = { state_productivity_growth_multiplier = 0.08 }
-		}
-		else_if = { limit = { has_railway_level = { state = current_state level = 3 } }
-			add_to_temp_variable = { state_productivity_growth_multiplier = 0.12 }
-		}
-		else_if = { limit = { has_railway_level = { state = current_state level = 4 } }
-			add_to_temp_variable = { state_productivity_growth_multiplier = 0.16 }
-		}
-		else_if = { limit = { has_railway_level = { state = current_state level = 5 } }
-			add_to_temp_variable = { state_productivity_growth_multiplier = 0.20 }
-		}
-		else_if = { limit = { has_railway_level = { state = current_state level = 6 } }
-			add_to_temp_variable = { state_productivity_growth_multiplier = 0.24 }
-		}
 
 		# Encourage Productivity from State Owned Investments
 		if = { limit = { has_state_flag = encourage_productivity_in_state }
