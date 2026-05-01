@@ -102,30 +102,22 @@ Bind `dirty = global.refresh_investment_gui`. Call `refresh_investment_gui = yes
 
 ---
 
-## Always Add `max_iterations` to `while_loop_effect`
+## `while_loop_effect` — Limit Semantics and the 1000-Iteration Cap
 
-Unbounded loops are a crash risk. If the body fails to advance the loop condition, the engine hangs inside a single tick.
+`while_loop_effect` re-evaluates its `limit` block before each iteration (not mid-execution). The body only runs if the limit passes; the loop exits as soon as the limit fails or after **1000 iterations** — that is the engine's hard cap, not a configurable parameter.
 
-### Wrong
+`max_iterations` is **not** a valid HOI4 scripting key. Do not add it; the engine will ignore it silently.
+
+### Correct pattern
 
 ```
 while_loop_effect = {
     limit = { check_variable = { counter < target } }
-    # ... body ...
+    # body must advance the condition on every pass or the loop exits at 1000
 }
 ```
 
-### Right
-
-```
-while_loop_effect = {
-    max_iterations = 500
-    limit = { check_variable = { counter < target } }
-    # ... body ...
-}
-```
-
-**Why:** A missing guard means an edge-case bug becomes a hard freeze. Pick a ceiling well above the realistic worst case but low enough that a runaway loop exits before the player notices lag. A good rule of thumb is 10× the expected iteration count.
+**Why this matters:** If the body never advances the loop condition the engine will silently stop at 1000 iterations rather than hanging. Design loops so that the realistic worst case stays well below 1000; if your logic could ever need more iterations, restructure the approach (e.g. use `for_loop_effect` with a known bound instead).
 
 ---
 
