@@ -100,6 +100,7 @@ For structure, ETD system, and examples, see `.claude/docs/event-reference.md`.
 
 ## Ideas
 
+- Always include `picture = sprite_name` — ideas without a picture show a blank icon
 - Include `allowed_civil_war = { always = yes }` for civil war tags
 - Use `original_tag` not `tag` in `allowed` blocks (see `.claude/rules/general-rules.md` for full explanation)
 - **`allowed` blocks by category:** In `country` and `hidden_ideas` categories, `allowed = { always = no }` is the default and should be removed; `allowed = { tag = TAG }` should also be removed (or use `original_tag = TAG` if an explicit restriction is genuinely needed). In all other categories (e.g. `AA_law_budget`), the `allowed` block is load-bearing — must be present to restrict the idea correctly. Note: `check_common_mistakes.py` only flags these violations inside `country` or `hidden_ideas` categories.

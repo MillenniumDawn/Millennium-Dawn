@@ -107,6 +107,16 @@ trigger = { A B C }
 
 This applies to `trigger`, `limit`, `visible`, `available`, `activation`, `cancel_trigger`, and all other trigger contexts.
 
+## Modifier names
+
+Invalid modifier names compile silently and do nothing — the game logs an "Unknown modifier" error but loads the idea/focus anyway. **Never guess a modifier name.** Always verify it exists first:
+
+```bash
+grep -r "modifier_name_here" common/ideas/*.txt common/national_focus/*.txt | head -3
+```
+
+If no results, the name is wrong. Check the wiki or find a similar modifier in the codebase and use the exact same spelling.
+
 ## threat scale
 
 `threat` is a decimal 0.0–1.0, never a percentage. Comparisons like `threat > 10` or `threat > 40` are always false. Use `threat > 0.10`, `threat > 0.40`, etc.
