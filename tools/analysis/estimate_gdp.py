@@ -679,11 +679,9 @@ def main():
             print(f"  Productivity Mult:   {r['productivity_mult']:.3f}")
             print(f"  GDP/C Converging:    {r['gdpc_converging']:.2f}")
             print(f"  Health Level:        {r['health_idea']}")
-            print(f"  Agri Worker %:       {r['agri_worker_pct']:.1%}")
-            print()
+            print(f"  Agri Worker %:       {r['agri_worker_pct']:.1%}\n")
             print(f"  GDP Total:           {r['gdp_total']:.2f}")
-            print(f"  GDP per Capita:      {r['gdp_per_capita']:.2f}")
-            print()
+            print(f"  GDP per Capita:      {r['gdp_per_capita']:.2f}\n")
             gdp = r["gdp_total"]
             b = r["gdp_from_buildings_scaled"]
             h = r["gdp_from_healthcare"]
@@ -693,8 +691,7 @@ def main():
             print(f"    Buildings:         {b:.2f} ({b/gdp*100:.1f}%)")
             print(f"    Healthcare:        {h:.2f} ({h/gdp*100:.1f}%)")
             print(f"    Agriculture:       {a:.2f} ({a/gdp*100:.1f}%)")
-            print(f"    Resources:         {res:.2f} ({res/gdp*100:.1f}%)")
-            print()
+            print(f"    Resources:         {res:.2f} ({res/gdp*100:.1f}%)\n")
             if r["buildings"]:
                 print(f"  Buildings:")
                 for bname, bcount in sorted(
@@ -710,16 +707,15 @@ def main():
             ms = r["modifier_stack"]
             active = {k: v for k, v in ms.items() if abs(v) > 0.001}
             if active and verbose:
-                print()
                 print(
-                    f"  Active GDP Modifiers (from {len(r['starting_ideas'])} ideas):"
+                    f"\n  Active GDP Modifiers (from {len(r['starting_ideas'])} ideas):"
                 )
                 for mk in sorted(active):
                     print(f"    {mk:<45} {active[mk]:+.3f}")
             elif active:
                 # Show count
-                print(f"\n  Modifiers: {len(active)} active " f"(use -v for details)")
-            print()
+                print(f"\n  Modifiers: {len(active)} active (use -v for details)")
+            print("")
 
 
 if __name__ == "__main__":

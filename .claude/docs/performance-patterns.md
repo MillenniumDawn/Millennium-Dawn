@@ -96,6 +96,29 @@ Bind `dirty = global.refresh_investment_gui`. Call `refresh_investment_gui = yes
 
 **Why:** `global.date` changes every tick. The GUI would redraw every frame, causing noticeable lag on slower machines.
 
+### Also applies to incrementing globals
+
+`global.num_days`, `global.date`, and any other variable that changes on a fixed timer (daily, hourly, etc.) are just as bad. The same fix applies: create a dedicated counter and increment it only when the data that backs the GUI actually changes.
+
+---
+
+## `while_loop_effect` — Limit Semantics and the 1000-Iteration Cap
+
+`while_loop_effect` re-evaluates its `limit` block before each iteration (not mid-execution). The body only runs if the limit passes; the loop exits as soon as the limit fails or after **1000 iterations** — that is the engine's hard cap, not a configurable parameter.
+
+`max_iterations` is **not** a valid HOI4 scripting key. Do not add it; the engine will ignore it silently.
+
+### Correct pattern
+
+```
+while_loop_effect = {
+    limit = { check_variable = { counter < target } }
+    # body must advance the condition on every pass or the loop exits at 1000
+}
+```
+
+**Why this matters:** If the body never advances the loop condition the engine will silently stop at 1000 iterations rather than hanging. Design loops so that the realistic worst case stays well below 1000; if your logic could ever need more iterations, restructure the approach (e.g. use `for_loop_effect` with a known bound instead).
+
 ---
 
 ## Prefer Engine Arrays Over `every_country` / `any_country`
@@ -187,3 +210,13 @@ for_each_scope_loop = {
 ```
 
 **Why:** Skipping an entire `every_country` / `for_each_scope_loop` pulse saves more CPU than any micro-optimization inside the loop.
+
+---
+
+## Avoid `effect_tooltip` + `for_each_scope_loop` Duplication
+
+Never duplicate the same logic in an `effect_tooltip` block and a `for_each_scope_loop` block. Use the loop's built-in `tooltip` parameter instead.
+
+**Why:** HOI4 evaluates both `effect_tooltip` (for tooltip display) and `for_each_scope_loop` (for effect execution). With ~27 EU members, each duplication costs ~27 extra scope switches and ~54 extra opinion modifier evaluations per trigger. In focus trees with 50+ such calls, that's thousands of wasted evaluations per campaign. `tooltip =` tells the engine to display the tooltip once and execute the loop once — a measurable performance win on any frequently-fired code path.
+
+For the before/after migration pattern, see `.claude/docs/simplification-patterns.md`.

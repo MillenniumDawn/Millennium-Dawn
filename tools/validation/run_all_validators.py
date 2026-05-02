@@ -270,9 +270,8 @@ def main():
 
     if not args.include_slow:
         print(
-            "\n  (Use --include-slow to also run: set-variables, unused-scripted, variables, unused-textures)"
+            "\n  (Use --include-slow to also run: set-variables, unused-scripted, variables, unused-textures)\n"
         )
-    print()
 
     # Launch all validators in parallel
     processes = {}
@@ -346,8 +345,7 @@ def main():
                     f"\n{Colors.YELLOW}Detailed report saved to: {args.output}{Colors.NC}"
                 )
             else:
-                print()
-                print(report)
+                print(f"\n{report}")
 
         exit_code = 1 if args.strict else 0
         if total_errors > 0:

@@ -10780,6 +10780,45 @@ country_event = {
 	}
 }
 
+#BAE Systems Acquisition of United Defense (historical: 2005-06-24)
+country_event = {
+	id = USA_econ_event.30
+	title = USA_econ_event.30.t
+	desc = USA_econ_event.30.d
+	picture = GFX_stock_market
+	fire_only_once = yes
+	is_triggered_only = yes
+	trigger = {
+		tag = USA
+		NOT = { has_country_flag = usa_bae_acquired_united_defense }
+		NOT = { has_country_flag = usa_bae_acquisition_blocked }
+	}
+
+	option = { # Approve the acquisition
+		name = USA_econ_event.30.a
+		log = "[GetDateText]: [Root.GetName]: USA_econ_event.30.a executed"
+		set_country_flag = usa_bae_acquired_united_defense
+		USA_bae_absorb_united_defense = yes
+		unlock_military_industrial_organization_tooltip = mio:USA_bae_systems_platforms
+		ai_chance = {
+			base = 85
+		}
+	}
+
+	option = { # Order DOJ antitrust review
+		name = USA_econ_event.30.b
+		log = "[GetDateText]: [Root.GetName]: USA_econ_event.30.b executed"
+		set_country_flag = usa_bae_acquisition_blocked
+		mio:USA_united_defense_tank_manufacturer = {
+			add_mio_funds = 250
+		}
+		add_political_power = -25
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
 #Public Discomfort With The Media
 country_event = {
 	id = USA_econ_event.50
@@ -20112,8 +20151,7 @@ country_event = {
 		KUW = {
 			set_temp_variable = { treasury_change = 25 }
 			modify_treasury_effect = yes
-		}
-		KUW = {
+
 			172 = {
 				add_resource = {
 					type = oil
@@ -20231,8 +20269,7 @@ country_event = {
 		KUW = {
 			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
-		}
-		KUW = {
+
 			add_equipment_to_stockpile = {
 				type = Anti_tank_2
 				amount = 250
@@ -23266,10 +23303,9 @@ country_event = {
 		name = usa.82.o1
 		log = "[GetDateText]: [This.GetName]: usa.82.o1 executed"
 		set_country_flag = USA_open_f35_program_nato
-		every_country = {
-			limit = {
-				has_idea = NATO_member
-			}
+		for_each_scope_loop = {
+			array = global.nato_members
+			tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
 			country_event = {
 				id = usa.83
 				days = 2
@@ -23284,12 +23320,21 @@ country_event = {
 		name = usa.82.o2
 		log = "[GetDateText]: [This.GetName]: usa.82.o2 executed"
 		set_country_flag = USA_open_f35_program_allies
+		for_each_scope_loop = {
+			array = global.nato_members
+			if = {
+				limit = {
+					NOT = { has_idea = Major_Non_NATO_Ally }
+				}
+				country_event = {
+					id = usa.83
+					days = 2
+				}
+			}
+		}
 		every_country = {
 			limit = {
-				OR = {
-					has_idea = NATO_member
-					has_idea = Major_Non_NATO_Ally
-				}
+				has_idea = Major_Non_NATO_Ally
 			}
 			country_event = {
 				id = usa.83
@@ -23305,12 +23350,21 @@ country_event = {
 		name = usa.82.o3
 		log = "[GetDateText]: [This.GetName]: usa.82.o3 executed"
 		set_country_flag = USA_open_f35_program_world
+		for_each_scope_loop = {
+			array = global.nato_members
+			if = {
+				limit = {
+					NOT = { has_idea = Major_Non_NATO_Ally }
+				}
+				country_event = {
+					id = usa.93
+					days = 2
+				}
+			}
+		}
 		every_country = {
 			limit = {
-				OR = {
-					has_idea = NATO_member
-					has_idea = Major_Non_NATO_Ally
-				}
+				has_idea = Major_Non_NATO_Ally
 			}
 			country_event = {
 				id = usa.93
@@ -23797,8 +23851,7 @@ country_event = {
 				multiply_temp_variable = { treasury_change = -0.015 }
 				set_temp_variable = { temp_reparation = treasury_change }
 				modify_treasury_effect = yes
-			}
-			ROOT = {
+
 				set_temp_variable = { treasury_change = gdp_total }
 				multiply_temp_variable = { treasury_change = 0.015 }
 				set_temp_variable = { temp_reparation = treasury_change }
@@ -23838,8 +23891,7 @@ country_event = {
 				multiply_temp_variable = { treasury_change = -0.01 }
 				set_temp_variable = { temp_reparation = treasury_change }
 				modify_treasury_effect = yes
-			}
-			ROOT = {
+
 				set_temp_variable = { treasury_change = gdp_total }
 				multiply_temp_variable = { treasury_change = 0.01 }
 				set_temp_variable = { temp_reparation = treasury_change }
@@ -23879,8 +23931,7 @@ country_event = {
 				multiply_temp_variable = { treasury_change = -0.025 }
 				set_temp_variable = { temp_reparation = treasury_change }
 				modify_treasury_effect = yes
-			}
-			ROOT = {
+
 				set_temp_variable = { treasury_change = gdp_total }
 				multiply_temp_variable = { treasury_change = 0.025 }
 				set_temp_variable = { temp_reparation = treasury_change }
@@ -23920,8 +23971,7 @@ country_event = {
 				multiply_temp_variable = { treasury_change = -0.02 }
 				set_temp_variable = { temp_reparation = treasury_change }
 				modify_treasury_effect = yes
-			}
-			ROOT = {
+
 				set_temp_variable = { treasury_change = gdp_total }
 				multiply_temp_variable = { treasury_change = 0.02 }
 				set_temp_variable = { temp_reparation = treasury_change }
@@ -25527,10 +25577,9 @@ country_event = {
 	option = { # Call a NATO summit
 		name = department_of_state.22.a
 		log = "[GetDateText]: [This.GetName]: department_of_state.22.a executed"
-		every_country = {
-			limit = {
-				has_idea = NATO_member
-			}
+		for_each_scope_loop = {
+			array = global.nato_members
+			tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
 			country_event = department_of_state.23
 		}
 		add_relation_modifier = {
@@ -26250,9 +26299,15 @@ country_event = { # Event for RUS tag only
 			add_to_faction = YAM
 			add_to_faction = MOV
 		}
-		RUS = { add_ideas = NATO_member }
-		YAM = { add_ideas = NATO_member }
-		MOV = { add_ideas = NATO_member }
+		RUS = {
+				add_ideas = NATO_member
+			}
+		YAM = {
+				add_ideas = NATO_member
+			}
+		MOV = {
+				add_ideas = NATO_member
+			}
 			if = {
 				limit = {
 					676 = {
@@ -28128,15 +28183,11 @@ country_event = {
 					count = 1
 					owner = IRI
 				}
-			}
-			capital_scope = {
 				create_unit = {
 					division = "name = \"20th. Tip-e 'Ramazan'\" division_template = \"Lashkar-e Zerehiye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
 					count = 1
 					owner = IRI
 				}
-			}
-			capital_scope = {
 				create_unit = {
 					division = "name = \"25th. Lashkar-e 'Karbala'\" division_template = \"Lashkar-e Komando-ye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
 					count = 1
@@ -28629,15 +28680,11 @@ country_event = {
 					count = 1
 					owner = PER
 				}
-			}
-			capital_scope = {
 				create_unit = {
 					division = "name = \"20th. Tip-e 'Ramazan'\" division_template = \"Lashkar-e Zerehiye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
 					count = 1
 					owner = PER
 				}
-			}
-			capital_scope = {
 				create_unit = {
 					division = "name = \"25th. Lashkar-e 'Karbala'\" division_template = \"Lashkar-e Komando-ye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
 					count = 1

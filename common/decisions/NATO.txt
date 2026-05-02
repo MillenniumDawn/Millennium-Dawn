@@ -255,16 +255,17 @@ NATO_decisions = {
 		}
 
 		complete_effect = {
-			every_country = {
-				limit = {
-					has_idea = NATO_member
-					NOT = { has_country_flag = NATO_Ratified_@ROOT }
+			for_each_scope_loop = {
+				array = global.nato_members
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = {
+						NOT = { has_country_flag = NATO_Ratified_@ROOT }
+					}
+					set_temp_variable = { selected_tag = THIS.id }
+					TAG_get_name_with_flag = yes
+					newline = yes
 				}
-				display_individual_scopes = yes
-
-				set_temp_variable = { selected_tag = THIS.id }
-				TAG_get_name_with_flag = yes
-				newline = yes
 			}
 		}
 	}
@@ -300,17 +301,15 @@ NATO_decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision become_NATO_aspirant"
-			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
-				reverse_add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
-				country_event = NATO.7
-			}
 			for_each_scope_loop = {
 				array = global.nato_members
-				add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
-				reverse_add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
-				country_event = NATO.7
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
+					reverse_add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
+					country_event = NATO.7
+				}
 			}
 
 			set_country_flag = NATO_Aspirant
@@ -1972,24 +1971,16 @@ NATO_CSTO_agreement = {
 			log = "[GetDateText]: [Root.GetName]: Decision cancel effect NATO_CSTO_breach_mission"
 			if = {
 				limit = { has_idea = NATO_member }
-				custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
-				effect_tooltip = {
-					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
-				}
 				for_each_scope_loop = {
 					array = global.nato_members
-
+					tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
 					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
 				}
 			}
 			else = {
-				custom_effect_tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
-				effect_tooltip = {
-					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
-				}
 				for_each_scope_loop = {
 					array = global.CSTO_member
-
+					tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
 					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
 				}
 			}
