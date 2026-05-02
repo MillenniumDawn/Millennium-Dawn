@@ -22,6 +22,7 @@ BRA_idea_higher_minimum_wage_1 = {
 
 ## Key Points
 
+- Always include `picture = sprite_name` — without it the idea shows a blank icon in-game. Find an existing sprite by searching the codebase: `grep "picture = " common/ideas/*.txt | sed 's/.*picture = //' | sort -u`
 - Include `allowed_civil_war = { always = yes }` for civil war tags
 - Use `original_tag` not `tag` in `allowed` blocks
 - Remove `allowed = { always = no }` (default, hurts performance)

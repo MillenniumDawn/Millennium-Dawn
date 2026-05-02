@@ -35,47 +35,30 @@ def check_braces(file_path):
     col_num = 1
 
     in_comment = False
-
-    # Pre-process: find lines with odd quote counts to avoid false string tracking
-    lines = content.split("\n")
-    odd_quote_lines = set()
-    for idx, line in enumerate(lines, 1):
-        code_part = line.split("#")[0] if "#" in line else line
-        if code_part.count('"') % 2 == 1:
-            odd_quote_lines.add(idx)
-
     in_string = False
 
     for i, char in enumerate(content):
-        # Track position
         if char == "\n":
-            # Reset string state at end of line if we're in a string
-            # (HOI4 strings don't span lines)
             in_string = False
             line_num += 1
             col_num = 1
-            in_comment = False  # Single-line comments end at newline
+            in_comment = False
             continue
 
         col_num += 1
 
-        # Handle strings (HOI4 uses quotes for strings)
         if char == '"':
-            # Skip quote toggling on lines with odd quote counts
-            if line_num not in odd_quote_lines:
+            if not in_comment:
                 in_string = not in_string
             continue
 
-        # Skip content inside strings or comments
         if in_string or in_comment:
             continue
 
-        # Handle comments (HOI4 uses # for comments)
         if char == "#":
             in_comment = True
             continue
 
-        # Check braces
         if char == "{":
             brace_stack.append((line_num, col_num))
         elif char == "}":
