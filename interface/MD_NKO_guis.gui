@@ -204,16 +204,19 @@ guiTypes = {
 
 	# === Songun Naval Doctrine — buildup window ===
 	# Bound via NKO_Navy_projects decision category scripted_gui.
-	# Header + 4 track rows; each row has a label, progress text and 4 tier
-	# marker icons that become visible as NKO_<track>_progress crosses tier
-	# thresholds (25 / 50 / 75 / 100). Sprites alias existing focus icons
-	# defined in interface/MD_NKO_interface.gfx.
+	# Layout: header (title + points + tracks-at-max counter), 4 track rows
+	# (track name, current tier label, progress bar + progress text, plus a
+	# right-side "Active Bonuses" panel that spells out the current tier's
+	# numeric buffs in plain text), capstone status strip. No decorative
+	# icons — all info is text-based for clarity. Per-element visibility is
+	# driven by triggers in NKO_naval_buildup_gui.
 
 	containerWindowType = {
 		name = "NKO_naval_buildup_window"
-		size = { width = 493 height = 380 }
+		size = { width = 493 height = 496 }
 		position = { x = 5 y = 0 }
 
+		# --- Header --------------------------------------------------
 		instantTextBoxType = {
 			name = "NKO_naval_buildup_title"
 			position = { x = 0 y = 4 }
@@ -234,104 +237,193 @@ guiTypes = {
 			maxHeight = 22
 		}
 
-		# --- Submarine row ---
+		# ========================================================================
+		# Track row template — repeated 4 times below.
+		# Left half (x = 12..295):  track name, current-tier line, progress bar.
+		# Right half (x = 300..485): "Active Bonuses" panel with the current
+		# tier's modifier list spelled out as plain text. 5 mutually exclusive
+		# states per row (none + tier 1..4); only one is visible at a time,
+		# gated by per-tier flags in the scripted_gui triggers block.
+		# Row spacing: 96px. Vertical layout per row (relative y from row top):
+		#   +0  : track label (hoi_18b)
+		#   +24 : current-tier line (hoi_14mbs)
+		#   +50 : progress bar (240 wide) + progress text
+		#   +0..+90 (right column) : Active Bonuses multi-line text block
+		# ========================================================================
+
+		# --- Submarine row (y = 64..150) -----------------------------
 		instantTextBoxType = {
 			name = "NKO_sub_track_label"
-			position = { x = 8 y = 70 }
-			font = "hoi_16mbs"
+			position = { x = 12 y = 64 }
+			font = "hoi_18b"
 			text = "NKO_sub_track_label"
 			format = left
 			maxWidth = 280
-			maxHeight = 20
+			maxHeight = 22
 		}
+		instantTextBoxType = { name = "NKO_sub_current_none"   position = { x = 12 y = 88 } font = "hoi_14mbs" text = "NKO_sub_current_none"   format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_sub_current_tier_1" position = { x = 12 y = 88 } font = "hoi_14mbs" text = "NKO_sub_current_tier_1" format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_sub_current_tier_2" position = { x = 12 y = 88 } font = "hoi_14mbs" text = "NKO_sub_current_tier_2" format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_sub_current_tier_3" position = { x = 12 y = 88 } font = "hoi_14mbs" text = "NKO_sub_current_tier_3" format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_sub_current_tier_4" position = { x = 12 y = 88 } font = "hoi_14mbs" text = "NKO_sub_current_tier_4" format = left maxWidth = 280 maxHeight = 18 }
 		iconType = {
 			name = "NKO_sub_progress_bar"
 			quadTextureSprite = "GFX_NKO_naval_buildup_progress_bar"
-			position = { x = 8 y = 92 }
+			position = { x = 12 y = 128 }
 		}
 		instantTextBoxType = {
 			name = "NKO_sub_progress_text"
-			position = { x = 300 y = 94 }
+			position = { x = 256 y = 128 }
 			font = "hoi_14mbs"
 			text = "NKO_sub_progress_text"
 			format = left
-			maxWidth = 100
+			maxWidth = 60
 			maxHeight = 18
 		}
+		# Right-side Active Bonuses panel — multi-line text, one of 5 visible
+		instantTextBoxType = { name = "NKO_sub_buffs_none"   position = { x = 305 y = 64 } font = "hoi_14mbs" text = "NKO_sub_buffs_none"   format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_sub_buffs_tier_1" position = { x = 305 y = 64 } font = "hoi_14mbs" text = "NKO_sub_buffs_tier_1" format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_sub_buffs_tier_2" position = { x = 305 y = 64 } font = "hoi_14mbs" text = "NKO_sub_buffs_tier_2" format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_sub_buffs_tier_3" position = { x = 305 y = 64 } font = "hoi_14mbs" text = "NKO_sub_buffs_tier_3" format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_sub_buffs_tier_4" position = { x = 305 y = 64 } font = "hoi_14mbs" text = "NKO_sub_buffs_tier_4" format = left maxWidth = 184 maxHeight = 84 }
 
-		# --- Missile boat row ---
+		# --- Missile boat row (y = 160..246) -------------------------
 		instantTextBoxType = {
 			name = "NKO_mb_track_label"
-			position = { x = 8 y = 140 }
-			font = "hoi_16mbs"
+			position = { x = 12 y = 160 }
+			font = "hoi_18b"
 			text = "NKO_mb_track_label"
 			format = left
 			maxWidth = 280
-			maxHeight = 20
+			maxHeight = 22
 		}
+		instantTextBoxType = { name = "NKO_mb_current_none"   position = { x = 12 y = 184 } font = "hoi_14mbs" text = "NKO_mb_current_none"   format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_mb_current_tier_1" position = { x = 12 y = 184 } font = "hoi_14mbs" text = "NKO_mb_current_tier_1" format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_mb_current_tier_2" position = { x = 12 y = 184 } font = "hoi_14mbs" text = "NKO_mb_current_tier_2" format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_mb_current_tier_3" position = { x = 12 y = 184 } font = "hoi_14mbs" text = "NKO_mb_current_tier_3" format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_mb_current_tier_4" position = { x = 12 y = 184 } font = "hoi_14mbs" text = "NKO_mb_current_tier_4" format = left maxWidth = 280 maxHeight = 18 }
 		iconType = {
 			name = "NKO_mb_progress_bar"
 			quadTextureSprite = "GFX_NKO_naval_buildup_progress_bar"
-			position = { x = 8 y = 162 }
+			position = { x = 12 y = 224 }
 		}
 		instantTextBoxType = {
 			name = "NKO_mb_progress_text"
-			position = { x = 300 y = 164 }
+			position = { x = 256 y = 224 }
 			font = "hoi_14mbs"
 			text = "NKO_mb_progress_text"
 			format = left
-			maxWidth = 100
+			maxWidth = 60
 			maxHeight = 18
 		}
+		instantTextBoxType = { name = "NKO_mb_buffs_none"   position = { x = 305 y = 160 } font = "hoi_14mbs" text = "NKO_mb_buffs_none"   format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_mb_buffs_tier_1" position = { x = 305 y = 160 } font = "hoi_14mbs" text = "NKO_mb_buffs_tier_1" format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_mb_buffs_tier_2" position = { x = 305 y = 160 } font = "hoi_14mbs" text = "NKO_mb_buffs_tier_2" format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_mb_buffs_tier_3" position = { x = 305 y = 160 } font = "hoi_14mbs" text = "NKO_mb_buffs_tier_3" format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_mb_buffs_tier_4" position = { x = 305 y = 160 } font = "hoi_14mbs" text = "NKO_mb_buffs_tier_4" format = left maxWidth = 184 maxHeight = 84 }
 
-		# --- Coastal defense row ---
+		# --- Coastal defense row (y = 256..342) ----------------------
 		instantTextBoxType = {
 			name = "NKO_cd_track_label"
-			position = { x = 8 y = 210 }
-			font = "hoi_16mbs"
+			position = { x = 12 y = 256 }
+			font = "hoi_18b"
 			text = "NKO_cd_track_label"
 			format = left
 			maxWidth = 280
-			maxHeight = 20
+			maxHeight = 22
 		}
+		instantTextBoxType = { name = "NKO_cd_current_none"   position = { x = 12 y = 280 } font = "hoi_14mbs" text = "NKO_cd_current_none"   format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_cd_current_tier_1" position = { x = 12 y = 280 } font = "hoi_14mbs" text = "NKO_cd_current_tier_1" format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_cd_current_tier_2" position = { x = 12 y = 280 } font = "hoi_14mbs" text = "NKO_cd_current_tier_2" format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_cd_current_tier_3" position = { x = 12 y = 280 } font = "hoi_14mbs" text = "NKO_cd_current_tier_3" format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_cd_current_tier_4" position = { x = 12 y = 280 } font = "hoi_14mbs" text = "NKO_cd_current_tier_4" format = left maxWidth = 280 maxHeight = 18 }
 		iconType = {
 			name = "NKO_cd_progress_bar"
 			quadTextureSprite = "GFX_NKO_naval_buildup_progress_bar"
-			position = { x = 8 y = 232 }
+			position = { x = 12 y = 320 }
 		}
 		instantTextBoxType = {
 			name = "NKO_cd_progress_text"
-			position = { x = 300 y = 234 }
+			position = { x = 256 y = 320 }
 			font = "hoi_14mbs"
 			text = "NKO_cd_progress_text"
 			format = left
-			maxWidth = 100
+			maxWidth = 60
 			maxHeight = 18
 		}
+		instantTextBoxType = { name = "NKO_cd_buffs_none"   position = { x = 305 y = 256 } font = "hoi_14mbs" text = "NKO_cd_buffs_none"   format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_cd_buffs_tier_1" position = { x = 305 y = 256 } font = "hoi_14mbs" text = "NKO_cd_buffs_tier_1" format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_cd_buffs_tier_2" position = { x = 305 y = 256 } font = "hoi_14mbs" text = "NKO_cd_buffs_tier_2" format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_cd_buffs_tier_3" position = { x = 305 y = 256 } font = "hoi_14mbs" text = "NKO_cd_buffs_tier_3" format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_cd_buffs_tier_4" position = { x = 305 y = 256 } font = "hoi_14mbs" text = "NKO_cd_buffs_tier_4" format = left maxWidth = 184 maxHeight = 84 }
 
-		# --- Naval special operations row ---
+		# --- Naval special operations row (y = 352..438) -------------
 		instantTextBoxType = {
 			name = "NKO_so_track_label"
-			position = { x = 8 y = 280 }
-			font = "hoi_16mbs"
+			position = { x = 12 y = 352 }
+			font = "hoi_18b"
 			text = "NKO_so_track_label"
 			format = left
 			maxWidth = 280
-			maxHeight = 20
+			maxHeight = 22
 		}
+		instantTextBoxType = { name = "NKO_so_current_none"   position = { x = 12 y = 376 } font = "hoi_14mbs" text = "NKO_so_current_none"   format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_so_current_tier_1" position = { x = 12 y = 376 } font = "hoi_14mbs" text = "NKO_so_current_tier_1" format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_so_current_tier_2" position = { x = 12 y = 376 } font = "hoi_14mbs" text = "NKO_so_current_tier_2" format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_so_current_tier_3" position = { x = 12 y = 376 } font = "hoi_14mbs" text = "NKO_so_current_tier_3" format = left maxWidth = 280 maxHeight = 18 }
+		instantTextBoxType = { name = "NKO_so_current_tier_4" position = { x = 12 y = 376 } font = "hoi_14mbs" text = "NKO_so_current_tier_4" format = left maxWidth = 280 maxHeight = 18 }
 		iconType = {
 			name = "NKO_so_progress_bar"
 			quadTextureSprite = "GFX_NKO_naval_buildup_progress_bar"
-			position = { x = 8 y = 302 }
+			position = { x = 12 y = 416 }
 		}
 		instantTextBoxType = {
 			name = "NKO_so_progress_text"
-			position = { x = 300 y = 304 }
+			position = { x = 256 y = 416 }
 			font = "hoi_14mbs"
 			text = "NKO_so_progress_text"
 			format = left
-			maxWidth = 100
+			maxWidth = 60
 			maxHeight = 18
+		}
+		instantTextBoxType = { name = "NKO_so_buffs_none"   position = { x = 305 y = 352 } font = "hoi_14mbs" text = "NKO_so_buffs_none"   format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_so_buffs_tier_1" position = { x = 305 y = 352 } font = "hoi_14mbs" text = "NKO_so_buffs_tier_1" format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_so_buffs_tier_2" position = { x = 305 y = 352 } font = "hoi_14mbs" text = "NKO_so_buffs_tier_2" format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_so_buffs_tier_3" position = { x = 305 y = 352 } font = "hoi_14mbs" text = "NKO_so_buffs_tier_3" format = left maxWidth = 184 maxHeight = 84 }
+		instantTextBoxType = { name = "NKO_so_buffs_tier_4" position = { x = 305 y = 352 } font = "hoi_14mbs" text = "NKO_so_buffs_tier_4" format = left maxWidth = 184 maxHeight = 84 }
+
+		# --- Capstone status strip (y = 446..470) --------------------
+		# Three mutually exclusive states (in-progress / ready / done).
+		# Hover the line for the full capstone country-spirit description.
+		instantTextBoxType = {
+			name = "NKO_naval_capstone_status_progress"
+			position = { x = 12 y = 466 }
+			font = "hoi_16mbs"
+			text = "NKO_naval_capstone_status_progress"
+			format = center
+			maxWidth = 469
+			maxHeight = 22
+			pdx_tooltip = NKO_songun_navy_capstone_desc
+		}
+		instantTextBoxType = {
+			name = "NKO_naval_capstone_status_ready"
+			position = { x = 12 y = 466 }
+			font = "hoi_16mbs"
+			text = "NKO_naval_capstone_status_ready"
+			format = center
+			maxWidth = 469
+			maxHeight = 22
+			pdx_tooltip = NKO_songun_navy_capstone_desc
+		}
+		instantTextBoxType = {
+			name = "NKO_naval_capstone_status_done"
+			position = { x = 12 y = 466 }
+			font = "hoi_16mbs"
+			text = "NKO_naval_capstone_status_done"
+			format = center
+			maxWidth = 469
+			maxHeight = 22
+			pdx_tooltip = NKO_songun_navy_capstone_desc
 		}
 	}
 }

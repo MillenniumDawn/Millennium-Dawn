@@ -1,0 +1,34 @@
+# =============================================================================
+# Songun Naval Doctrine — on_action hooks
+# Detected country tag: NKO
+# Role: Wires the modern-fleet milestone — when NKO finishes researching the
+#       2005-era destroyer hull AND the 1995-era attack submarine hull, fire
+#       a one-shot bounty event that grants 5 hulls of each plus a kicked-off
+#       production line and a visible flavor event.
+# Why on_research_complete: cheaper than daily/weekly polling, fires only on
+# the exact moment a tech finishes. The event itself re-checks the trigger
+# (both techs present + flag not set) so the order in which the two techs
+# finish doesn't matter.
+# =============================================================================
+
+on_actions = {
+
+	# -------------------------------------------------------------------------
+	# Any tech research completes for NKO -> probe the modern-fleet trigger.
+	# The event is fire_only_once + flag-gated, so subsequent researches after
+	# the bounty has fired cost ~zero (the limit fails immediately).
+	# -------------------------------------------------------------------------
+	on_research_complete = {
+		effect = {
+			if = {
+				limit = {
+					original_tag = NKO
+					NOT = { has_country_flag = NKO_naval_modern_fleet_unlocked }
+					has_tech = destroyer_hull_3
+					has_tech = attack_submarine_hull_3
+				}
+				country_event = { id = nko_naval_buildup.74 days = 0 }
+			}
+		}
+	}
+}
