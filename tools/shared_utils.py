@@ -214,6 +214,7 @@ class FileOpener:
     """Helper class for opening and reading files with various options"""
 
     _cache: Dict[Tuple, str] = {}
+    _MAX_CACHE_SIZE = 500
 
     @classmethod
     def open_text_file(
@@ -223,6 +224,8 @@ class FileOpener:
         cache_key = (filename, lowercase, strip_comments_flag)
         if cache_key in cls._cache:
             return cls._cache[cache_key]
+        if len(cls._cache) >= cls._MAX_CACHE_SIZE:
+            cls._cache.clear()
         try:
             with open(filename, "r", encoding="utf-8-sig") as text_file:
                 content = text_file.read()
@@ -283,6 +286,272 @@ class DataCleaner:
             return input_iter
 
 
+# ---------------------------------------------------------------------------
+# Timing utilities
+# ---------------------------------------------------------------------------
+
+
+def timing_enabled() -> bool:
+    """Return True unless MD_TIMING=0 is explicitly set."""
+    return os.environ.get("MD_TIMING", "1") != "0"
+
+
+class Timer:
+    """Lightweight timer that prints elapsed time to stderr.
+
+    Enabled by default. Suppress with MD_TIMING=0.
+
+    Usage:
+        with Timer("file collection"):
+            files = collect(...)
+    """
+
+    def __init__(self, label: str, enabled: Optional[bool] = None):
+        self.label = label
+        self.enabled = enabled if enabled is not None else timing_enabled()
+        self._start: Optional[float] = None
+        self.elapsed: float = 0.0
+
+    def start(self):
+        self._start = time.perf_counter()
+        return self
+
+    def stop(self) -> float:
+        if self._start is not None:
+            self.elapsed = time.perf_counter() - self._start
+            self._start = None
+        if self.enabled:
+            print(
+                f"  \033[90m[timer] {self.label}: {self.elapsed:.3f}s\033[0m",
+                file=sys.stderr,
+            )
+        return self.elapsed
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, *exc):
+        self.stop()
+        return False
+
+
+def print_timing_summary(timings: List[Tuple[str, float]]):
+    """Print a table of step timings. Suppressed when MD_TIMING=0."""
+    if not timings or not timing_enabled():
+        return
+    total = sum(t for _, t in timings)
+    max_label = max(len(label) for label, _ in timings)
+    print(f"\n\033[90m{'─' * (max_label + 18)}", file=sys.stderr)
+    print(f"  Timing summary:", file=sys.stderr)
+    for label, elapsed in timings:
+        bar_len = int(elapsed / total * 20) if total > 0 else 0
+        bar = "█" * bar_len + "░" * (20 - bar_len)
+        print(
+            f"  {label:<{max_label}}  {elapsed:6.3f}s  {bar}",
+            file=sys.stderr,
+        )
+    print(f"  {'total':<{max_label}}  {total:6.3f}s", file=sys.stderr)
+    print(f"{'─' * (max_label + 18)}\033[0m", file=sys.stderr)
+
+
+# ---------------------------------------------------------------------------
+# Linting script helpers (shared argparse, file collection, pool dispatch)
+# ---------------------------------------------------------------------------
+
+
+def create_linting_parser(
+    description: str,
+    include_diff: bool = True,
+    extra_args_fn=None,
+) -> argparse.ArgumentParser:
+    """Standard argument parser for linting scripts.
+
+    Provides --mode, --base-branch, --files, --workers, and positional
+    filenames. Scripts can add custom arguments via extra_args_fn(parser).
+    """
+    parser = argparse.ArgumentParser(description=description)
+    modes = ["all", "staged"]
+    if include_diff:
+        modes.insert(1, "diff")
+    parser.add_argument(
+        "--mode",
+        choices=modes,
+        default="all",
+        help=f"Check mode (default: all)",
+    )
+    if include_diff:
+        parser.add_argument(
+            "--base-branch",
+            default="main",
+            help="Base branch for diff comparison (default: main)",
+        )
+    parser.add_argument(
+        "--files", nargs="+", help="Specific files to check (overrides mode)"
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=max(1, min(os.cpu_count() or 2, 4)),
+        help="Number of parallel workers (default: min(CPU count, 4))",
+    )
+    parser.add_argument(
+        "filenames",
+        nargs="*",
+        help="Files to check (positional, for pre-commit)",
+    )
+    if extra_args_fn:
+        extra_args_fn(parser)
+    return parser
+
+
+def collect_files_by_mode(
+    args,
+    root_dir: str,
+    include_interface: bool = False,
+) -> List[str]:
+    """Collect files based on parsed --mode / --files / positional args.
+
+    Returns a list of existing file paths, or an empty list if nothing
+    matched. Prints diagnostics for missing files.
+    """
+    if getattr(args, "filenames", None):
+        files_list = args.filenames
+    elif getattr(args, "files", None):
+        files_list = args.files
+    elif args.mode == "diff":
+        base = getattr(args, "base_branch", "main")
+        files_list = get_git_diff_files(
+            base_branch=base, include_interface=include_interface
+        )
+    elif args.mode == "staged":
+        files_list = get_git_diff_files(
+            staged_only=True, include_interface=include_interface
+        )
+    else:
+        files_list = get_all_txt_files(root_dir, include_interface=include_interface)
+
+    existing = [f for f in files_list if os.path.exists(f)]
+    missing = len(files_list) - len(existing)
+    if missing:
+        print(f"WARNING: {missing} file(s) not found, skipping")
+    return existing
+
+
+def get_root_dir() -> str:
+    """Resolve the mod root directory (two levels up from tools/linting/)."""
+    return os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
+    )
+
+
+def run_with_pool(func, items: list, workers: int, chunksize: int = None):
+    """Run func over items using Pool when beneficial, sequential otherwise."""
+    if len(items) < 10 or workers == 1:
+        return [func(item) for item in items]
+    from multiprocessing import Pool
+
+    with Pool(processes=workers) as pool:
+        if chunksize:
+            return pool.map(func, items, chunksize=chunksize)
+        return pool.map(func, items)
+
+
+_DEFAULT_DIRECTORIES = ("common", "events", "history")
+_DIRECTORIES_WITH_INTERFACE = ("common", "events", "history", "interface")
+
+_staged_files_cache: Optional[List[str]] = None
+
+
+def _read_staged_from_env() -> Optional[List[str]]:
+    """Read cached staged-file list from MD_STAGED_FILES env var."""
+    raw = os.environ.get("MD_STAGED_FILES")
+    if raw is None:
+        return None
+    return [f for f in raw.split("\n") if f]
+
+
+def get_git_diff_files(
+    base_branch: str = "main",
+    staged_only: bool = False,
+    directories: tuple = _DEFAULT_DIRECTORIES,
+    include_interface: bool = False,
+) -> List[str]:
+    """Get list of modified .txt files from git diff.
+
+    Shared implementation used by all linting scripts. Checks the
+    MD_STAGED_FILES env var first to avoid redundant git subprocess calls
+    during pre-commit runs.
+    """
+    global _staged_files_cache
+
+    if include_interface:
+        directories = _DIRECTORIES_WITH_INTERFACE
+
+    if staged_only and _staged_files_cache is not None:
+        all_files = _staged_files_cache
+    else:
+        env_files = _read_staged_from_env() if staged_only else None
+        if env_files is not None:
+            all_files = env_files
+        else:
+            try:
+                import subprocess as _sp
+
+                if staged_only:
+                    cmd = [
+                        "git",
+                        "diff",
+                        "--cached",
+                        "--name-only",
+                        "--diff-filter=ACMRT",
+                    ]
+                else:
+                    cmd = [
+                        "git",
+                        "diff",
+                        "--name-only",
+                        "--diff-filter=ACMRT",
+                        f"{base_branch}...HEAD",
+                    ]
+                result = _sp.run(cmd, capture_output=True, text=True, check=True)
+                all_files = [f for f in result.stdout.strip().split("\n") if f]
+            except Exception:
+                return []
+
+        if staged_only:
+            _staged_files_cache = all_files
+
+    return [
+        f
+        for f in all_files
+        if f.endswith(".txt")
+        and any(f.startswith(d + "/") for d in directories)
+        and os.path.exists(f)
+    ]
+
+
+def get_all_txt_files(
+    root_dir: str,
+    directories: tuple = _DEFAULT_DIRECTORIES,
+    include_interface: bool = False,
+) -> List[str]:
+    """Get all .txt files from relevant directories."""
+    import fnmatch
+
+    if include_interface:
+        directories = _DIRECTORIES_WITH_INTERFACE
+
+    files_list = []
+    for directory in directories:
+        dir_path = os.path.join(root_dir, directory)
+        if os.path.exists(dir_path):
+            for root, _, filenames in os.walk(dir_path):
+                for filename in fnmatch.filter(filenames, "*.txt"):
+                    files_list.append(os.path.join(root, filename))
+    return files_list
+
+
 def get_staged_files(
     mod_path: str, extensions: Optional[List[str]] = None
 ) -> Optional[List[str]]:
@@ -301,6 +570,10 @@ def get_staged_files(
             for f in names
             if f and any(f.endswith(ext) for ext in extensions)
         ]
+
+    env_files = _read_staged_from_env()
+    if env_files is not None:
+        return _filter(env_files) or None
 
     try:
         import subprocess
