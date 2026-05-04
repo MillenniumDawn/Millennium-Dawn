@@ -66,7 +66,7 @@ Steps:
 - No `:0`/`:1` version suffixes; subideologies have `_icon` and `_desc`; `_desc` contains `\n\n` separator
 - No empty `""` or `"TODO"` strings; no undefined `[variable]` substitutions
 
-**Content Design** — issues from `docs/src/content/resources/content-review-guide.md`:
+**Content Design** — quick-catch items from `docs/src/content/resources/content-review-guide.md`. For the full content audit (economic balance, political neutrality, military guidelines, visual, AI game rules), run `/content-review`:
 
 - `add_ai_strategy` used in effects (harmful to AI performance — consult AI team)
 - Free cores without a mechanic (require 80% compliance or integration system)
@@ -74,6 +74,7 @@ Steps:
 - Budget law changes alone as a focus reward (shallow filler — pair with meaningful effects)
 - Trade opinion effects without a supplementary effect
 - Buildings added without monetary cost (use scripted effects from Code Resource)
-- High-cost focuses (cost ≥ 8, or cost ≥ 5 with military/economy/research `search_filters`) missing `NOT = { has_active_mission = bankruptcy_incoming_collapse }` in `available` — blocks AI from queueing expensive focuses during financial collapse
+- High-cost focuses (cost ≥ 8, or cost ≥ 5 with military/economy/research `search_filters`) missing a `factor = 0` / `has_active_mission = bankruptcy_incoming_collapse` modifier in `ai_will_do` — this is an AI-only guard; do not add it to `available` as that would block the player too
+- Dynamic modifier tooltips mismatched (`adds_dynamic_modifier_tt` vs `modifies_dynamic_modifier_tt`) — see `.claude/docs/dynamic-modifiers-reference.md` for the correct usage pattern
 
 3. Output: list issues per file with line numbers. Flag crash/broken-state risks as **critical**. End with total count or "No issues found".

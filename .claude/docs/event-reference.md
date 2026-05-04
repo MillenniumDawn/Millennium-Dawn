@@ -152,6 +152,76 @@ set_temp_variable = { temp_productivity_change = 0.025 }
 flat_productivity_change_effect = yes
 ```
 
+## News Events
+
+News events use `news_event` (not `country_event`) and `major = yes` so all countries see them. Separate the namespace from the parent events (e.g., `add_namespace = my_news` alongside `add_namespace = my_events`).
+
+Use option `trigger` blocks to give different response text to involved parties, regional neighbors, and the rest of the world. Every country must match exactly one option — ensure the trigger conditions are exhaustive and mutually exclusive.
+
+```
+news_event = {
+	id = my_news.1
+	title = my_news.1.t
+	desc = my_news.1.d
+	picture = GFX_some_picture
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = my_news.1.a
+		trigger = { original_tag = TAG }
+	}
+	option = {
+		name = my_news.1.b
+		trigger = {
+			NOT = { original_tag = TAG }
+			capital_scope = { is_on_continent = CONTINENT }
+		}
+	}
+	option = {
+		name = my_news.1.c
+		trigger = {
+			NOT = { original_tag = TAG }
+			NOT = { capital_scope = { is_on_continent = CONTINENT } }
+		}
+	}
+}
+```
+
+## Conditional Descriptions
+
+Use `text =` inside desc blocks for conditional descriptions — **not** `desc =`:
+
+```
+# Correct
+desc = {
+	text = my_event.d_variant_a
+	trigger = { has_global_flag = chose_option_a }
+}
+
+# Wrong — causes "Unexpected token: desc" error
+desc = {
+	desc = my_event.d_variant_a
+	trigger = { has_global_flag = chose_option_a }
+}
+```
+
+## Cross-Country Event Chains
+
+When firing follow-up events to other countries, wrap in `hidden_effect` so the chain consequences don't appear in the firing option's tooltip:
+
+```
+option = {
+	name = my_event.a
+	add_war_support = 0.05
+	hidden_effect = {
+		OTHER = { country_event = { id = my_event.2 days = 1 } }
+		news_event = { id = my_news.1 days = 1 }
+	}
+	ai_chance = { base = 80 }
+}
+```
+
 ## Content Guidelines for Events
 
 - All events targeting another nation need AI weighting based on opinion/influence

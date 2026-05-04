@@ -2633,6 +2633,7 @@ country_event = {
 		multiply_temp_variable = { military_opinion_coup = 0.005 }
 		add_to_temp_variable = { military_opinion_coup = 1 }
 		multiply_variable = { islamist_support = military_opinion_coup }
+		clamp_temp_variable = { var = military_opinion_coup min = 0.001 }
 		divide_variable = { military_support = military_opinion_coup }
 
 		#Clamp to 1 in case
@@ -2815,9 +2816,7 @@ country_event = {
 	trigger = {
 		original_tag = TUR
 		NOT = { has_country_flag = TUR_Baykal_scandal }
-		OR = {
-			western_conservatism_are_in_power = yes
-		}
+		western_conservatism_are_in_power = yes
 	}
 
 	fire_only_once = yes
@@ -3738,18 +3737,15 @@ country_event = { #Turkey Send back Migrants
 		GRE = {
 			add_stability = -0.05
 		}
-		custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		effect_tooltip = {
-			add_opinion_modifier = {
-				modifier = recent_actions_negative
-				target = TUR
-			}
-		}
 		for_each_scope_loop = {
 			array = global.EU_member
-			add_opinion_modifier = {
-				modifier = recent_actions_negative
-				target = TUR
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_opinion_modifier = {
+					modifier = recent_actions_negative
+					target = TUR
+				}
 			}
 		}
 		934 = { add_manpower = -15000 }
@@ -3759,18 +3755,15 @@ country_event = { #Turkey Send back Migrants
 	option = {
 		name = TurkeyFocusEvents.20.c #Sure
 		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.20.c executed"
-		custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		effect_tooltip = {
-			add_opinion_modifier = {
-				modifier = recent_actions_negative
-				target = TUR
-			}
-		}
 		for_each_scope_loop = {
 			array = global.EU_member
-			add_opinion_modifier = {
-				modifier = recent_actions_negative
-				target = TUR
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_opinion_modifier = {
+					modifier = recent_actions_negative
+					target = TUR
+				}
 			}
 		}
 		GRE = {
@@ -4064,7 +4057,10 @@ country_event = { #Kosovo Matter
 	option = {
 		name = TurkeyFocusEvents.26.b #Sanctions
 		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.26.b executed"
-		TUR = {	send_embargo = SER }
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			TUR = { send_embargo = SER }
+		}
 		add_political_power = 100
 		ai_chance = { factor = 10 }
 	}
@@ -5673,7 +5669,10 @@ country_event = { #Israel does not pays reparations
 		name = TUR_flavor_event.812.a
 		add_war_support = 0.10
 		TUR = {
-			send_embargo = ISR
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				send_embargo = ISR
+			}
 		}
 		TUR = {
 			add_opinion_modifier = {

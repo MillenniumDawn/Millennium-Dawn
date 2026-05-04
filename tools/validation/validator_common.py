@@ -404,7 +404,13 @@ class BaseValidator:
         return None
 
     def _pool_map(self, func: Callable, args_list: List, chunksize: int = 50) -> List:
-        """Run func over args_list using the validator's shared worker pool."""
+        """Run func over args_list using the validator's shared worker pool.
+
+        Falls back to sequential execution when workers == 1 (avoids Pool
+        startup overhead for small staged commits on low-end hardware).
+        """
+        if self.workers == 1 or self._pool is None and len(args_list) < 10:
+            return [func(a) for a in args_list]
         if self._pool is None:
             raise RuntimeError("_pool_map called outside run_all_validations")
         return self._pool.map(func, args_list, chunksize=chunksize)
@@ -515,13 +521,15 @@ class BaseValidator:
         if self.output_file:
             self.log(f"Output file: {self.output_file}")
 
-        self._pool = Pool(processes=self.workers)
+        if self.workers > 1:
+            self._pool = Pool(processes=self.workers)
         try:
             self.run_validations()
         finally:
-            self._pool.terminate()
-            self._pool.join()
-            self._pool = None
+            if self._pool is not None:
+                self._pool.terminate()
+                self._pool.join()
+                self._pool = None
 
         self.log(f"\n{'#'*80}")
         if self.errors_found == 0 and self.warnings_found == 0:

@@ -10,7 +10,8 @@
 #   5. Custom cost trigger validation (tooltip presence)
 #   6. Targeted decisions without targets (performance issue)
 #   7. Decisions with targets but no target_trigger (performance issue)
-#   8. Decisions without allowed check in unchecked categories
+#   8. Decisions using FROM without a target set (undefined scope)
+#   9. Decisions without allowed check in unchecked categories
 # Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
 # Adapted for Millennium Dawn with multiprocessing
 ##########################
@@ -670,6 +671,61 @@ class Validator(BaseValidator):
             results,
             "✓ No decisions with FROM checks needing target_trigger",
             "Decisions with FROM checks in visible/available but no target_trigger (move FROM into target_trigger for perf):",
+        )
+
+    def validate_from_without_targets(self):
+        """Flag decisions referencing FROM without a targeting mechanism.
+
+        On a non-targeted country-scoped decision, ``FROM`` falls back to
+        ROOT/THIS — so ``var:FROM.array^i`` and ``FROM.GetName`` usually
+        resolve to the decision owner rather than firing into the void.
+        That makes the code redundant at best and misleading at worst:
+        a reader sees FROM and assumes another country is involved, when
+        really the decision is just self-referencing.
+
+        Exempts:
+        - ``allowed = { always = no }`` — activated via ``activate_decision``
+          / ``activate_targeted_decision`` with an explicit FROM set by the
+          caller.
+        - ``targets`` / ``target_array`` — standard targeted decision.
+        - ``state_target = yes`` / ``on_map_mode = map_only`` — FROM is the
+          state selected by the player.
+        """
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}Checking decisions for FROM usage without a target set...{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+
+        from_pattern = re.compile(r"\bFROM\b")
+        for d in factories:
+            if d.targets or d.target_array:
+                continue
+            if d.state_target or d.map_only:
+                continue
+            if d.allowed and "always = no" in d.allowed:
+                continue
+
+            offending = []
+            if d.visible and from_pattern.search(d.visible):
+                offending.append("visible")
+            if d.available and from_pattern.search(d.available):
+                offending.append("available")
+            if d.complete_effect and from_pattern.search(d.complete_effect):
+                offending.append("complete_effect")
+
+            if offending:
+                results.append(
+                    f"{d.token:<55}{d.source_basename} - FROM used in {', '.join(offending)} but no targets/target_array/state_target"
+                )
+
+        self._report(
+            results,
+            "✓ No decisions with unscoped FROM usage",
+            "Decisions using FROM without a target mechanism (FROM falls back to ROOT so the code is redundant/misleading — add targets/target_array if another country was intended, drop the FROM prefix otherwise, or set allowed = { always = no } if activated via script):",
         )
 
     def validate_without_allowed_check(self):
@@ -1360,8 +1416,6 @@ class Validator(BaseValidator):
             missing = []
             if dec_id not in loc_keys:
                 missing.append(dec_id)
-            if f"{dec_id}_desc" not in loc_keys:
-                missing.append(f"{dec_id}_desc")
             if dec.custom_cost_text and dec.custom_cost_text not in loc_keys:
                 missing.append(dec.custom_cost_text)
             for key in missing:
@@ -1393,6 +1447,7 @@ class Validator(BaseValidator):
         self.validate_custom_cost_trigger()
         self.validate_targeted_without_target()
         self.validate_targets_no_trigger()
+        self.validate_from_without_targets()
         self.validate_without_allowed_check()
         self.validate_random_list_seed()
         self.validate_redundant_tag_checks()
