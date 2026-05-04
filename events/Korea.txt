@@ -1182,8 +1182,7 @@ country_event = {
 		if = {
 			limit = {
 				NOT = {
-					has_completed_focus = KOR_pave_the_way_for_reunification
-					has_completed_focus = NKO_pave_the_way_for_reunification
+					has_country_flag = korea_peninsula_reunited
 					has_completed_focus = KOR_juche_in_the_south
 				}
 			}
@@ -1397,7 +1396,7 @@ news_event = {
 		if = {
 			limit = {
 				original_tag = KOR
-				has_completed_focus = KOR_offer_talks
+				has_completed_focus = KOR_pursue_peace_treaty
 			}
 			unlock_decision_tooltip = KOR_restart_peace_talks
 		}
@@ -1581,10 +1580,17 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: korea.27.a executed"
 		add_war_support = -0.05
 		support_for_reunification_2 = yes
-		add_opinion_modifier = {
+		annex_country = {
 			target = NKO
-			modifier = imminent_reunification
+			transfer_troops = yes
 		}
+		add_ideas = KOR_reunification_shocks
+		add_ideas = KOR_divided_military
+		add_ideas = KOR_mass_migration
+		add_ideas = KOR_fragmented_governance
+		add_ideas = KOR_uneven_economy1
+		decrease_economic_growth = yes
+		set_country_flag = korea_peninsula_reunited
 	}
 }
 
@@ -1904,14 +1910,21 @@ country_event = {
 	option = {
 		name = korea.27.a #Fantastic news!
 		log = "[GetDateText]: [This.GetName]: korea.35.a executed"
-		add_opinion_modifier = {
-			target = KOR
-			modifier = imminent_reunification
-		}
 		add_war_support = -0.05
 		set_temp_variable = { temp_opinion = -5 }
 		change_the_military_opinion = yes
 		change_communist_cadres_opinion = yes
+		annex_country = {
+			target = KOR
+			transfer_troops = yes
+		}
+		add_ideas = KOR_reunification_shocks
+		add_ideas = KOR_divided_military
+		add_ideas = KOR_mass_migration
+		add_ideas = KOR_fragmented_governance
+		add_ideas = KOR_uneven_economy1
+		decrease_economic_growth = yes
+		set_country_flag = korea_peninsula_reunited
 	}
 }
 
@@ -2213,6 +2226,23 @@ country_event = {
 	option = {
 		name = korea.42.a
 		log = "[GetDateText]: [This.GetName]: korea.42.a executed"
+		set_autonomy = {
+			target = KOR
+			autonomy_state = autonomy_korean_federation
+			end_wars = no
+			end_civil_wars = no
+		}
+		KOR = {
+			add_ideas = KOR_reunification_shocks
+			add_ideas = KOR_divided_military
+			add_ideas = KOR_mass_migration
+			add_ideas = KOR_fragmented_governance
+			add_ideas = KOR_uneven_economy1
+			decrease_economic_growth = yes
+		}
+		set_country_flag = korea_peninsula_reunited
+		KOR = { set_country_flag = korea_peninsula_reunited }
+		news_event = korea.50
 	}
 }
 
@@ -6752,12 +6782,12 @@ country_event = {
 				fixed_ship_engine_slot = module_surface_jet_turbine_power
 				fixed_ship_fire_control_system_slot = module_screen_digital_integrated_fire_control
 				fixed_ship_radar_slot = module_radar_2
-				fixed_ship_auxillary_slot_3 = module_vls_sam_1
+				fixed_ship_auxillary_slot_3 = module_vls_sam_2
 				fixed_ship_auxillary_slot_2 = module_asm_2
 				fixed_ship_auxillary_slot = module_ciws_2
 				fixed_ship_battery_slot = module_76mm_gun_2
 				front_1_custom_slot = module_torpedoes_2
-				mid_1_custom_slot = module_vls_asm_1
+				mid_1_custom_slot = module_vls_asm_2
 				mid_2_custom_slot = module_ram_2
 				rear_1_custom_slot = module_light_helipad_1
 			}
@@ -6776,29 +6806,28 @@ country_event = {
 				fixed_ship_engine_slot = module_sub_diesel_electric_power2
 				fixed_ship_radar_slot = module_sonar_2
 				fixed_ship_auxillary_slot_3 = empty
-				fixed_ship_auxillary_slot_2 = module_sub_esm_1
+				fixed_ship_auxillary_slot_2 = module_sub_esm_2
 				fixed_ship_auxillary_slot_1 = module_torpedoes_2
 				fixed_ship_auxillary_slot = module_torpedoes_2
-				fixed_ship_battery_slot = module_anti_ship_torpedoes_1
+				fixed_ship_battery_slot = module_anti_ship_torpedoes_2
 			}
 		}
 
-		# Stockpile: 5 of each. Inlined (not via the helper) so we can
-		# reference the variants we just created via variant_name — the
-		# helper uses the auto-default variant which can silently fail to
-		# match a hull that has no design yet at the moment it runs.
-		add_equipment_to_stockpile = {
-			type = destroyer_hull_3
-			amount = 5
-			producer = NKO
-			variant_name = "Choe Hyon Class"
-		}
-		add_equipment_to_stockpile = {
-			type = attack_submarine_hull_3
-			amount = 5
-			producer = NKO
-			variant_name = "Sinpo Class"
-		}
+		# Spawn 5 of each hull directly into the NKO fleet. Using
+		# create_ship rather than add_equipment_to_stockpile because the
+		# stockpile path stores spare hulls as equipment — it does NOT
+		# commission them into the navy. create_ship spawns actual vessels
+		# into the country's existing fleet/task force.
+		create_ship = { type = destroyer_hull_3 equipment_variant = "Choe Hyon Class" creator = NKO }
+		create_ship = { type = destroyer_hull_3 equipment_variant = "Choe Hyon Class" creator = NKO }
+		create_ship = { type = destroyer_hull_3 equipment_variant = "Choe Hyon Class" creator = NKO }
+		create_ship = { type = destroyer_hull_3 equipment_variant = "Choe Hyon Class" creator = NKO }
+		create_ship = { type = destroyer_hull_3 equipment_variant = "Choe Hyon Class" creator = NKO }
+		create_ship = { type = attack_submarine_hull_3 equipment_variant = "Sinpo Class" creator = NKO }
+		create_ship = { type = attack_submarine_hull_3 equipment_variant = "Sinpo Class" creator = NKO }
+		create_ship = { type = attack_submarine_hull_3 equipment_variant = "Sinpo Class" creator = NKO }
+		create_ship = { type = attack_submarine_hull_3 equipment_variant = "Sinpo Class" creator = NKO }
+		create_ship = { type = attack_submarine_hull_3 equipment_variant = "Sinpo Class" creator = NKO }
 
 		# Production lines using the variants above, with the matching MIOs
 		# already assigned. The destroyer line is run by the surface ship
@@ -6811,9 +6840,9 @@ country_event = {
 				creator = "NKO"
 				version_name = "Choe Hyon Class"
 			}
-			requested_factories = 2
-			progress = 0.5
-			amount = 5
+			requested_factories = 1
+			progress = 0.9
+			amount = 1
 			industrial_manufacturer = mio:NKO_6_bureau_naval_manufacturer2
 		}
 		add_equipment_production = {
@@ -6822,9 +6851,53 @@ country_event = {
 				creator = "NKO"
 				version_name = "Sinpo Class"
 			}
-			requested_factories = 2
-			progress = 0.5
-			amount = 5
+			requested_factories = 1
+			progress = 0.9
+			amount = 1
+			industrial_manufacturer = mio:NKO_6_bureau_naval_manufacturer
+		}
+		add_equipment_production = {
+			equipment = {
+				type = destroyer_hull_3
+				creator = "NKO"
+				version_name = "Choe Hyon Class"
+			}
+			requested_factories = 1
+			progress = 0.9
+			amount = 1
+			industrial_manufacturer = mio:NKO_6_bureau_naval_manufacturer2
+		}
+		add_equipment_production = {
+			equipment = {
+				type = attack_submarine_hull_3
+				creator = "NKO"
+				version_name = "Sinpo Class"
+			}
+			requested_factories = 1
+			progress = 0.9
+			amount = 1
+			industrial_manufacturer = mio:NKO_6_bureau_naval_manufacturer
+		}
+		add_equipment_production = {
+			equipment = {
+				type = destroyer_hull_3
+				creator = "NKO"
+				version_name = "Choe Hyon Class"
+			}
+			requested_factories = 1
+			progress = 0.9
+			amount = 1
+			industrial_manufacturer = mio:NKO_6_bureau_naval_manufacturer2
+		}
+		add_equipment_production = {
+			equipment = {
+				type = attack_submarine_hull_3
+				creator = "NKO"
+				version_name = "Sinpo Class"
+			}
+			requested_factories = 1
+			progress = 0.9
+			amount = 1
 			industrial_manufacturer = mio:NKO_6_bureau_naval_manufacturer
 		}
 
