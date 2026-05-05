@@ -18,6 +18,7 @@ from validator_common import (
     Colors,
     Severity,
     run_validator_main,
+    scan_meta_constructed_names,
     should_skip_file,
     strip_comments,
 )

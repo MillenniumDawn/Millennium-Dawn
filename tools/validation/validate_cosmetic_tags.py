@@ -20,6 +20,7 @@ from validator_common import (
     Colors,
     DataCleaner,
     FileOpener,
+    Severity,
     run_validator_main,
     should_skip_file,
 )
@@ -172,24 +173,14 @@ class Validator(BaseValidator):
         )
         missing = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
-        if len(missing) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Missing cosmetic tags - referenced via has_cosmetic_tag but never set:{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for tag in missing:
-                self.log(
-                    f"  {Colors.YELLOW if self.use_colors else ''}{tag}{Colors.ENDC if self.use_colors else ''} - {paths.get(tag, 'unknown')}",
-                    "error",
-                )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(missing)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(missing)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No missing cosmetic tags{Colors.ENDC if self.use_colors else ''}"
+        if missing:
+            report_items = [(tag, paths.get(tag, "unknown"), 0) for tag in missing]
+            self._report(
+                report_items,
+                "✓ No missing cosmetic tags",
+                "Missing cosmetic tags - referenced via has_cosmetic_tag but never set:",
+                Severity.ERROR,
+                category="missing-cosmetic-tag",
             )
 
     def validate_unused_cosmetic_tags(self, false_positives: list):
@@ -278,24 +269,14 @@ class Validator(BaseValidator):
         )
         unused = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
-        if len(unused) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Unused cosmetic tags - set but not referenced in cosmetic.txt, .tga flags, has_cosmetic_tag, or loc:{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for tag in unused:
-                self.log(
-                    f"  {Colors.YELLOW if self.use_colors else ''}{tag}{Colors.ENDC if self.use_colors else ''} - {paths.get(tag, 'unknown')}",
-                    "error",
-                )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(unused)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(unused)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No unused cosmetic tags{Colors.ENDC if self.use_colors else ''}"
+        if unused:
+            report_items = [(tag, paths.get(tag, "unknown"), 0) for tag in unused]
+            self._report(
+                report_items,
+                "✓ No unused cosmetic tags",
+                "Unused cosmetic tags - set but not referenced:",
+                Severity.ERROR,
+                category="unused-cosmetic-tag",
             )
 
     def validate_unused_cosmetic_tag_colors(self, false_positives: list):
@@ -345,24 +326,14 @@ class Validator(BaseValidator):
 
         unused = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
-        if len(unused) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Unused cosmetic tag colors - defined in cosmetic.txt but never assigned with set_cosmetic_tag:{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for tag in unused:
-                self.log(
-                    f"  {Colors.YELLOW if self.use_colors else ''}{tag}{Colors.ENDC if self.use_colors else ''}",
-                    "error",
-                )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(unused)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(unused)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No unused cosmetic tag colors{Colors.ENDC if self.use_colors else ''}"
+        if unused:
+            report_items = [(tag, "", 0) for tag in unused]
+            self._report(
+                report_items,
+                "✓ No unused cosmetic tag colors",
+                "Unused cosmetic tag colors - defined in cosmetic.txt but never assigned with set_cosmetic_tag:",
+                Severity.ERROR,
+                category="unused-cosmetic-color",
             )
 
     def run_validations(self):

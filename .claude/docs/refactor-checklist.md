@@ -135,3 +135,36 @@ When a function's requirements change, verify all callers meet the new precondit
 - [ ] `CONTROLLER` is only used inside a **state scope**.
 - [ ] `var:X = { ... }` checks `exists = yes` when X might be 0 or -1 (uninitialized).
 - [ ] Division operations guard the denominator with `clamp_temp_variable` or a zero-check.
+
+---
+
+## 11. Country Tag Removal / Consolidation
+
+When removing a country tag entirely (not just renaming), check every layer:
+
+### Files to update
+
+- [ ] `common/country_tags/00_countries.txt` — remove the tag definition
+- [ ] `common/countries/TAG - Name.txt` — delete the country file
+- [ ] `history/countries/TAG - Name.txt` — delete the history file
+- [ ] `common/countries/colors.txt` — remove the color entry (or move to `cosmetic.txt` if keeping as alias)
+- [ ] `history/states/*.txt` — remove `add_core_of = TAG` and owner/controller references
+- [ ] `common/scripted_localisation/*_FR_loc.txt` — remove from French article trigger tag lists
+
+### If converting to a cosmetic tag alias
+
+- [ ] Add entry to `common/country_tag_aliases/tag_aliases.txt` with `original_tag` and flag condition
+- [ ] Move color definition from `colors.txt` to `common/countries/cosmetic.txt` — `colors.txt` only accepts real country tags
+- [ ] Verify `set_cosmetic_tag = TAG` calls in events reference the alias correctly
+
+### Find-and-replace pitfalls
+
+- [ ] **Never** search-and-replace `tag = TAG ` in dense tag lists on `original_tag` lines — removing `tag = KAS ` from inside `original_tag = KAS original_tag = KAZ` leaves `original_original_tag = KAZ`. Process `tag =` and `original_tag =` lines separately.
+- [ ] After bulk replacement, grep for `original_original_` to catch doubled prefixes.
+
+### Cross-references to verify
+
+```bash
+# Find ALL remaining references to the removed tag
+grep -rn "TAG" common/ events/ history/ localisation/ interface/ --include="*.txt" --include="*.yml" | grep -v "tag_aliases\|cosmetic\|colors"
+```

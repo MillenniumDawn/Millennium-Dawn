@@ -29,6 +29,69 @@ from shared_utils import (
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 
+# Regex for meta_effect/meta_trigger template substitution patterns.
+# Matches identifiers containing at least one [VAR] placeholder with a non-empty
+# constant prefix (e.g. "set_leader_[IDEOLOGY]", "tooltip_EU_[EUXXX]_approve").
+_META_TEMPLATE_RE = re.compile(
+    r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+)"
+)
+
+
+def scan_meta_constructed_names(files, defined_names):
+    """Return the subset of *defined_names* called via meta_effect/meta_trigger
+    template substitution (e.g. ``set_leader_[IDEOLOGY] = yes``).
+
+    For every file containing ``meta_effect`` or ``meta_trigger``, extracts
+    identifier templates of the form ``prefix_[VAR]_suffix``, splits on ``[VAR]``
+    segments, and matches any defined name whose lower-cased form starts with
+    *prefix* and ends with *suffix*.
+    """
+    defined_lower = {n.lower(): n for n in defined_names}
+    used = set()
+
+    for filepath in files:
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as fh:
+                content = fh.read()
+        except Exception:
+            continue
+
+        if "meta_effect" not in content and "meta_trigger" not in content:
+            continue
+
+        content_clean = strip_comments(content)
+
+        for m in _META_TEMPLATE_RE.finditer(content_clean):
+            template = m.group(1)
+            parts = re.split(r"\[[^\]]+\]", template)
+            prefix = parts[0].lower()
+            suffix = parts[-1].lower() if len(parts) > 1 else ""
+
+            if not prefix and not suffix:
+                continue
+
+            for name_lower, name_orig in defined_lower.items():
+                if name_orig in used:
+                    continue
+                if name_lower.startswith(prefix) and name_lower.endswith(suffix):
+                    if len(name_lower) > len(prefix) + len(suffix):
+                        used.add(name_orig)
+
+    return used
+
+
+# Log level from environment — controls output verbosity across all validators.
+# Set MD_LOG_LEVEL=ERROR to see only errors, WARNING (default) for errors+Warnings,
+# or INFO for full output (equivalent to the pre-MD_LOG_LEVEL behaviour).
+_LOG_LEVEL = os.environ.get("MD_LOG_LEVEL", "WARNING").upper()
+if _LOG_LEVEL == "ERROR":
+    logging.basicConfig(level=logging.ERROR, format="%(levelname)s: %(message)s")
+elif _LOG_LEVEL == "INFO":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+else:
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
+
+
 class Colors:
     HEADER = "\033[95m"
     BLUE = "\033[94m"
@@ -190,6 +253,12 @@ class BaseValidator:
         return self._regex_cache[key]
 
     def log(self, message: str, level: str = "info"):
+        # Respect MD_LOG_LEVEL — skip messages below the configured threshold.
+        if level == "info" and _LOG_LEVEL != "INFO":
+            return
+        if level == "warning" and _LOG_LEVEL == "ERROR":
+            return
+
         display_msg = (
             message if self.use_colors else re.sub(r"\033\[[0-9;]+m", "", message)
         )
