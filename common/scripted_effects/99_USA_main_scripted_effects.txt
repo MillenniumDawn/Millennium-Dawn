@@ -619,6 +619,234 @@ USA_FP_CSB_ESB_CORES = { # Fug you luigi
 	1011 = { add_core_of = CSB }
 }
 
+USA_belarus_reauthorization_act_effect = {
+	BLR = {
+		set_temp_variable = { american_influence_percentage = 0 }
+		for_each_loop = {
+			array = influence_array
+			value = inf_tag
+			index = inf_idx
+			if = {
+				limit = { check_variable = { inf_tag = USA } }
+				set_temp_variable = { american_influence_percentage = influence_array_val^inf_idx }
+			}
+		}
+		set_temp_variable = { blr_domestic_influence_var = domestic_influence_amount }
+		set_temp_variable = { blr_democratic_outlook_percentage = party_popularity@democratic }
+		multiply_temp_variable = { blr_democratic_outlook_percentage = 100 }
+		set_temp_variable = { blr_not_democratic_popularity = 100 }
+		subtract_from_temp_variable = { blr_not_democratic_popularity = blr_democratic_outlook_percentage }
+
+		#Chances
+
+		#Coup
+		set_temp_variable = { coup_chance = 0 }
+		add_to_temp_variable = { coup_chance = american_influence_percentage }
+		add_to_temp_variable = { coup_chance = 30 }
+
+		#Civil War
+		set_temp_variable = { civil_war_chance = 0 }
+		add_to_temp_variable = { civil_war_chance = 30 } #Makes civil war easier.
+		add_to_temp_variable = { civil_war_chance = blr_democratic_outlook_percentage }
+		add_to_temp_variable = { civil_war_chance = american_influence_percentage }
+
+		#Nothing happens
+		set_temp_variable = { fail_chance = 0 }
+		add_to_temp_variable = { fail_chance = blr_not_democratic_popularity }
+		add_to_temp_variable = { fail_chance = blr_domestic_influence_var }
+		add_to_temp_variable = { fail_chance = -50 } #Makes civil war easier.
+
+		random_list = {
+			fail_chance = {
+				custom_effect_tooltip = USA_blr_fail_TT
+			}
+			coup_chance = {
+				custom_effect_tooltip = USA_blr_coup_TT
+				hidden_effect = {
+					SOV = {
+						country_event = {
+							id = department_of_state.31
+							days = 2
+						}
+					}
+					news_event = department_of_state.29
+					BLR = {
+						set_political_party = {
+							ideology = democratic
+							popularity = 100
+						}
+						set_temp_variable = { party_index = 1 }
+						set_temp_variable = { party_popularity_increase = 1.00 }
+						add_relative_party_popularity = yes
+
+						set_temp_variable = { rul_party_temp = 1 }
+						set_temp_variable = { disable_elections = 1 }
+						change_ruling_party_effect = yes
+
+						create_country_leader = {
+							name = "Anatolij Lebiedko"
+							picture = "anatoly_lebedko.dds"
+							ideology = conservatism
+							traits = {
+								western_conservatism career_politician pro_american
+							}
+						}
+
+						set_temp_variable = { percent_change = 10.00 }
+						set_temp_variable = { tag_index = USA }
+						set_temp_variable = { influence_target = BLR }
+						change_influence_percentage = yes
+					}
+				}
+			}
+			civil_war_chance = {
+				custom_effect_tooltip = USA_blr_civilwar_TT
+				hidden_effect = {
+					news_event = department_of_state.30
+					create_dynamic_country = {
+						original_tag = BLR
+						set_country_flag = BLR_liberation_tag
+						copy_tag = BLR
+						set_cosmetic_tag = USA_BLR_STATE
+						set_country_flag = disable_different_country_flag
+						set_popularities = {
+							democratic = 100
+						}
+						set_politics = {
+							ruling_party = democratic
+							last_election = "1997.6.8"
+							election_frequency = 48
+							elections_allowed = no
+						}
+						start_politics_input = yes
+						ingame_startup_nations_effect = yes
+						set_variable = { party_pop_array^1 = 1.00 } #conservatism
+						### Ruling Party
+						add_to_array = { ruling_party = 1 }
+						startup_politics = yes
+						# Leader
+						create_country_leader = {
+							name = "Anatolij Lebiedko"
+							picture = "anatoly_lebedko.dds"
+							ideology = conservatism
+							traits = {
+								western_conservatism career_politician pro_american
+							}
+						}
+						load_focus_tree = { tree = belorussia_focus keep_completed = yes }
+						hidden_effect = {
+							702 = { transfer_state_to = BLG }
+							1093 = { transfer_state_to = BLG }
+							BLG = {
+								division_template = {
+									name = "Narodnaya Dyviziya"
+									priority = 0
+									template_counter = 0
+									regiments = {
+										Militia_Bat = { x = 0 y = 0 }
+										Militia_Bat = { x = 0 y = 1 }
+										Militia_Bat = { x = 0 y = 2 }
+										Militia_Bat = { x = 0 y = 3 }
+										Militia_Bat = { x = 0 y = 4 }
+									}
+									support = {
+										L_Recce_Comp = { x = 0 y = 0 }
+									}
+								}
+								702 = {
+									create_unit = {
+										division = "name = \"1st. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+										owner = BLG
+										prioritize_location = 3393
+									}
+									create_unit = {
+										division = "name = \"2nd. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+										owner = BLG
+										prioritize_location = 14537
+									}
+									create_unit = {
+										division = "name = \"3rd. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+										owner = BLG
+										prioritize_location = 6413
+									}
+								}
+								1093 = {
+									create_unit = {
+										division = "name = \"4th. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+										owner = BLG
+										prioritize_location = 3392
+									}
+									create_unit = {
+										division = "name = \"5th. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+										owner = BLG
+										prioritize_location = 9304
+									}
+									create_unit = {
+										division = "name = \"6th. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+										owner = BLG
+										prioritize_location = 535
+									}
+									create_unit = {
+										division = "name = \"7th. Narodnaya Dyviziya\" division_template = \"Narodnaya Dyviziya\" start_experience_factor = 1.0 start_equipment_factor = 0.8"
+										owner = BLG
+										prioritize_location = 535
+									}
+								}
+								declare_war_on = {
+									target = BLR
+									type = civil_war
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	hidden_effect = {
+		if = {
+			limit = {
+				BLR = {
+					has_idea = CSTO_member
+					is_in_faction_with = SOV
+				}
+			}
+			BLR = {
+				leave_faction = yes
+				set_country_flag = BLR_was_in_CSTO
+			}
+		}
+		if = {
+			limit = { country_exists = BLG }
+			# Civil war branch — support the liberation country, Russia backs BLR
+			SOV = {
+				add_relation_modifier = {
+					target = BLR
+					modifier = generic_increased_military_support
+				}
+			}
+			USA = {
+				add_relation_modifier = {
+					target = BLG
+					modifier = generic_increased_military_support
+				}
+			}
+			POL = {
+				add_relation_modifier = {
+					target = BLG
+					modifier = generic_increased_military_support
+				}
+			}
+			FRA = {
+				add_relation_modifier = {
+					target = BLG
+					modifier = generic_increased_military_support
+				}
+			}
+		}
+	}
+}
+
 # Mirrors every completed United Defense trait onto BAE Systems Platforms' legacy branch.
 # Fires from USA_econ_event.30 option A (historical BAE acquisition of UD).
 USA_bae_absorb_united_defense = {

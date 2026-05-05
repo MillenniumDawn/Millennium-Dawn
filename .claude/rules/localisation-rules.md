@@ -7,6 +7,12 @@
 - File header must be `l_english:` on the first line with no leading whitespace.
 - Use **1 space** of indentation for each key (not tabs).
 
+## File Naming
+
+- Country-specific localisation (events, focuses, decisions for a single country): `MD_focus_TAG_l_english.yml`
+- System-wide or multi-country localisation: descriptive prefix, e.g., `MD_NATO_events_l_english.yml`
+- Check existing files in `localisation/english/` for the naming pattern before creating new ones.
+
 ## Key Formatting
 
 - Keys use **no trailing version number**: write `key: "value"`, not `key:0 "value"`.
