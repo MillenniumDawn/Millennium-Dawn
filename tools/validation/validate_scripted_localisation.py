@@ -18,10 +18,11 @@ from validator_common import (
     Colors,
     DataCleaner,
     FileOpener,
+    Severity,
     find_line_number,
     run_validator_main,
+    scan_meta_constructed_names,
     should_skip_file,
-    strip_comments,
 )
 
 
@@ -105,52 +106,6 @@ def process_file_for_used_localisations(
     return (localisations, paths)
 
 
-# Matches meta_effect templates like "tooltip_EU_[EUXXX]_approve" — prefix required
-# so bare "[VAR]" expansions are skipped.
-_META_TEMPLATE_RE = re.compile(
-    r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+"
-    r")"
-)
-
-
-def scan_for_meta_constructed_localisations(
-    files: List[str], defined_names: Set[str]
-) -> List[str]:
-    """Return defined names called via meta_effect/meta_trigger template substitution."""
-    defined_lower = {n.lower(): n for n in defined_names}
-    found: Set[str] = set()
-
-    for filepath in files:
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as fh:
-                content = fh.read()
-        except Exception:
-            continue
-
-        if "meta_effect" not in content and "meta_trigger" not in content:
-            continue
-
-        content_clean = strip_comments(content)
-
-        for m in _META_TEMPLATE_RE.finditer(content_clean):
-            template = m.group(1)
-            parts = re.split(r"\[[^\]]+\]", template)
-            prefix = parts[0].lower()
-            suffix = parts[-1].lower() if len(parts) > 1 else ""
-
-            if not prefix and not suffix:
-                continue
-
-            for name_lower, name_orig in defined_lower.items():
-                if name_orig in found:
-                    continue
-                if name_lower.startswith(prefix) and name_lower.endswith(suffix):
-                    if len(name_lower) > len(prefix) + len(suffix):
-                        found.add(name_orig)
-
-    return list(found)
-
-
 class ScriptedLocalisation:
     @classmethod
     def get_all_defined_localisations(
@@ -160,6 +115,7 @@ class ScriptedLocalisation:
         return_paths=False,
         staged_files=None,
         workers=None,
+        pool=None,
     ):
         localisations = []
         paths = {}
@@ -175,10 +131,10 @@ class ScriptedLocalisation:
             files_to_scan = glob.glob(pattern)
 
         args_list = [(f, lowercase) for f in files_to_scan]
-        with Pool(processes=workers) as pool:
-            results = pool.map(
-                process_file_for_defined_localisations, args_list, chunksize=10
-            )
+        p = pool if pool else Pool(processes=workers)
+        results = p.map(process_file_for_defined_localisations, args_list, chunksize=10)
+        if not pool:
+            p.close()
 
         for locs_list, paths_dict in results:
             localisations.extend(locs_list)
@@ -195,6 +151,7 @@ class ScriptedLocalisation:
         return_paths=False,
         staged_files=None,
         workers=None,
+        pool=None,
     ):
         localisations = []
         paths = {}
@@ -222,10 +179,10 @@ class ScriptedLocalisation:
             files_to_scan = gui_files + yml_files + txt_files
 
         args_list = [(f, search_names, lowercase) for f in files_to_scan]
-        with Pool(processes=workers) as pool:
-            results = pool.map(
-                process_file_for_used_localisations, args_list, chunksize=50
-            )
+        p = pool if pool else Pool(processes=workers)
+        results = p.map(process_file_for_used_localisations, args_list, chunksize=50)
+        if not pool:
+            p.close()
 
         found_names = set()
         for locs_list, paths_dict in results:
@@ -245,9 +202,7 @@ class ScriptedLocalisation:
                 for f in files_to_scan
                 if f.endswith(".txt") and "scripted_localisation" not in f
             ]
-            for loc in scan_for_meta_constructed_localisations(
-                txt_files_for_meta, still_unfound
-            ):
+            for loc in scan_meta_constructed_names(txt_files_for_meta, still_unfound):
                 if loc not in found_names:
                     localisations.append(loc)
                     paths[loc] = "<meta_effect>"
@@ -293,39 +248,20 @@ class Validator(BaseValidator):
                 if full_path:
                     rel_path = os.path.relpath(full_path, self.mod_path)
                     line_num = find_line_number(full_path, loc, lowercase=True)
-                    results.append(
-                        {"localisation": loc, "file": rel_path, "line": line_num}
-                    )
+                    results.append((loc, rel_path, line_num))
                     reported.add(loc)
 
         if len(results) > 0:
             self.log(
-                f"{Colors.RED if self.use_colors else ''}Missing scripted localisations were encountered - they are referenced but not defined in common/scripted_localisation/.{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.log(
                 f"{Colors.YELLOW if self.use_colors else ''}Note: Some of these may be regular localisation keys rather than scripted localisation. Verify manually.{Colors.ENDC if self.use_colors else ''}",
                 "warning",
             )
-            for result in results:
-                if result["line"] > 0:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}:{result['line']}{Colors.ENDC if self.use_colors else ''} - {result['localisation']}",
-                        "error",
-                    )
-                else:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}{Colors.ENDC if self.use_colors else ''} - {result['localisation']}",
-                        "error",
-                    )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(results)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No issues found with missing scripted localisations{Colors.ENDC if self.use_colors else ''}"
+            self._report(
+                results,
+                "✓ No issues found with missing scripted localisations",
+                "Missing scripted localisations - referenced but not defined:",
+                Severity.ERROR,
+                category="missing-scripted-loc",
             )
 
     def validate_unused_scripted_localisations(
@@ -389,36 +325,16 @@ class Validator(BaseValidator):
                     line_num = find_line_number(
                         full_path, f"name = {loc}", lowercase=True
                     )
-                    results.append(
-                        {"localisation": loc, "file": rel_path, "line": line_num}
-                    )
+                    results.append((loc, rel_path, line_num))
                     reported.add(loc)
 
-        if len(results) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Unused scripted localisations were encountered - they are defined but not referenced anywhere.{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for result in results:
-                if result["line"] > 0:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}:{result['line']}{Colors.ENDC if self.use_colors else ''} - {result['localisation']}",
-                        "error",
-                    )
-                else:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}{Colors.ENDC if self.use_colors else ''} - {result['localisation']}",
-                        "error",
-                    )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(results)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No issues found with unused scripted localisations{Colors.ENDC if self.use_colors else ''}"
-            )
+        self._report(
+            results,
+            "✓ No issues found with unused scripted localisations",
+            "Unused scripted localisations - defined but not referenced:",
+            Severity.ERROR,
+            category="unused-scripted-loc",
+        )
 
     def validate_gfx_icons(self):
         self.log(f"\n{'='*80}")
@@ -462,36 +378,16 @@ class Validator(BaseValidator):
                 if gfx_name not in defined_gfx and gfx_name not in reported:
                     rel_path = os.path.relpath(filename, self.mod_path)
                     line_num = find_line_number(filename, gfx_name, lowercase=False)
-                    results.append(
-                        {"gfx": gfx_name, "file": rel_path, "line": line_num}
-                    )
+                    results.append((gfx_name, rel_path, line_num))
                     reported.add(gfx_name)
 
-        if len(results) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}GFX_ icons referenced in scripted localisation but not defined in interface/*.gfx:{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for result in results:
-                if result["line"] > 0:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}:{result['line']}{Colors.ENDC if self.use_colors else ''} - {result['gfx']}",
-                        "error",
-                    )
-                else:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}{Colors.ENDC if self.use_colors else ''} - {result['gfx']}",
-                        "error",
-                    )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(results)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ All GFX_ icons in scripted localisation are defined in .gfx files{Colors.ENDC if self.use_colors else ''}"
-            )
+        self._report(
+            results,
+            "✓ All GFX_ icons in scripted localisation are defined in .gfx files",
+            "GFX_ icons referenced in scripted localisation but not defined in interface/*.gfx:",
+            Severity.ERROR,
+            category="gfx-icon",
+        )
 
     def run_validations(self):
         if self.staged_only and not self.staged_files:

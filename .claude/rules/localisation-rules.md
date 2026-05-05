@@ -9,8 +9,8 @@
 
 ## File Naming
 
-- Country-specific localisation (events, focuses, decisions for a single country): `MD_focus_TAG_l_english.yml`
-- System-wide or multi-country localisation: descriptive prefix, e.g., `MD_NATO_events_l_english.yml`
+- **All country-specific localisation** (events, focuses, decisions, ideas, missions for a single country) goes in the **single unified file**: `MD_focus_TAG_l_english.yml`. Do **not** create separate files per subsystem (e.g., `MD_TAG_rebellion_l_english.yml`, `MD_TAG_events_l_english.yml`). One country, one loc file.
+- Only create a **separate** loc file for a standalone cross-country mechanic or system that is not owned by any single country (e.g., `MD_NATO_events_l_english.yml`, `MD_tooltips_l_english.yml`).
 - Check existing files in `localisation/english/` for the naming pattern before creating new ones.
 
 ## Key Formatting

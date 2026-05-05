@@ -18,6 +18,7 @@ from validator_common import (
     Colors,
     DataCleaner,
     FileOpener,
+    Severity,
     find_line_number,
     run_validator_main,
     should_skip_file,
@@ -98,6 +99,7 @@ class SetVariables:
         return_paths=False,
         staged_files=None,
         workers=None,
+        pool=None,
     ):
         variables = []
         paths = {}
@@ -111,8 +113,10 @@ class SetVariables:
 
         process_func = partial(process_file_for_set_variables, lowercase=lowercase)
 
-        with Pool(processes=workers) as pool:
-            results = pool.map(process_func, files_to_scan, chunksize=50)
+        p = pool if pool else Pool(processes=workers)
+        results = p.map(process_func, files_to_scan, chunksize=50)
+        if not pool:
+            p.close()
 
         for vars_list, paths_dict in results:
             variables.extend(vars_list)
@@ -128,39 +132,6 @@ class Validator(BaseValidator):
     def __init__(self, mod_path, min_refs=0, **kwargs):
         super().__init__(mod_path, **kwargs)
         self.min_references = min_refs
-
-    def run_all_validations(self):
-        self.log(f"\n{'#'*80}")
-        self.log(
-            f"{Colors.BOLD if self.use_colors else ''}MILLENNIUM DAWN {self.TITLE}{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'#'*80}")
-        self.log(f"Mod path: {self.mod_path}")
-        self.log(f"Minimum references required: {self.min_references}")
-        self.log(f"Worker processes: {self.workers}")
-        if self.staged_only:
-            self.log(
-                f"{Colors.CYAN if self.use_colors else ''}Mode: Git staged files only{Colors.ENDC if self.use_colors else ''}"
-            )
-        if self.output_file:
-            self.log(f"Output file: {self.output_file}")
-
-        self.run_validations()
-
-        self.log(f"\n{'#'*80}")
-        if self.errors_found == 0:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC if self.use_colors else ''}"
-            )
-        else:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}✗ VALIDATION COMPLETE - {self.errors_found} TOTAL ISSUES FOUND{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-        self.log(f"{'#'*80}\n")
-
-        self.save_output()
-        return self.errors_found
 
     def validate_set_variables(self, false_positives):
         self.log(f"\n{'='*80}")
@@ -213,10 +184,15 @@ class Validator(BaseValidator):
         args_list = [(f, tracked_vars, True) for f in files_to_scan]
 
         var_ref_counts = {var: 0 for var in cleaned_vars}
-        with Pool(processes=self.workers) as pool:
-            all_file_counts = pool.map(
+        if self._pool is not None:
+            all_file_counts = self._pool.map(
                 count_all_variables_in_file, args_list, chunksize=20
             )
+        else:
+            with Pool(processes=self.workers) as p:
+                all_file_counts = p.map(
+                    count_all_variables_in_file, args_list, chunksize=20
+                )
         for file_counts in all_file_counts:
             for var, count in file_counts.items():
                 var_ref_counts[var] = var_ref_counts.get(var, 0) + count
@@ -224,58 +200,29 @@ class Validator(BaseValidator):
         for var, ref_count in var_ref_counts.items():
             if ref_count <= self.min_references:
                 basename = unique_vars[var]
+                ref_text = f"(refs: {ref_count})"
                 full_path = self.get_full_path(basename, var)
                 if full_path:
                     rel_path = os.path.relpath(full_path, self.mod_path)
                     line_num = find_line_number(full_path, var, lowercase=False)
-                    results.append(
-                        {
-                            "variable": var,
-                            "file": rel_path,
-                            "line": line_num,
-                            "references": ref_count,
-                        }
-                    )
+                    results.append((f"{var} {ref_text}", rel_path, line_num))
                 else:
-                    results.append(
-                        {
-                            "variable": var,
-                            "file": basename,
-                            "line": 0,
-                            "references": ref_count,
-                        }
-                    )
+                    results.append((f"{var} {ref_text}", basename, 0))
 
-        if len(results) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Set variables with {self.min_references} or fewer references were found.{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            results.sort(key=lambda x: (x["references"], x["variable"]))
+        results.sort(key=lambda x: x[0])
 
-            for result in results:
-                ref_text = f"({result['references']} reference{'s' if result['references'] != 1 else ''})"
-                if result["line"] > 0:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}:{result['line']}{Colors.ENDC if self.use_colors else ''} - {result['variable']} {ref_text}",
-                        "error",
-                    )
-                else:
-                    self.log(
-                        f"  {Colors.YELLOW if self.use_colors else ''}{result['file']}{Colors.ENDC if self.use_colors else ''} - {result['variable']} {ref_text}",
-                        "error",
-                    )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(results)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(results)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No issues found - all set variables are referenced{Colors.ENDC if self.use_colors else ''}"
-            )
+        self._report(
+            results,
+            "✓ No issues found - all set variables are referenced",
+            f"Set variables with {self.min_references} or fewer references were found:",
+            Severity.ERROR,
+            category="set-variable",
+        )
 
     def run_validations(self):
+        if self.min_references:
+            self.log(f"Minimum references required: {self.min_references}")
+
         FALSE_POSITIVES = [
             "value",
             "days",
