@@ -90,7 +90,13 @@ _HOI4_IDEA_INNER_KEYS: frozenset = frozenset(
 )
 
 # Categories where `allowed = { always = no }` is flagged as redundant
-_ALWAYS_NO_CATEGORIES = frozenset({"country", "hidden_ideas"})
+# Dynamically parsed from common/idea_tags/*.txt — non-selectable categories
+# (those without slot=/character_slot= or with hidden=yes)
+from shared_utils import (  # noqa: E402
+    get_non_selectable_idea_categories as _get_non_selectable_idea_categories,
+)
+
+_ALWAYS_NO_CATEGORIES = _get_non_selectable_idea_categories()
 
 # Vanilla idea prefixes that we skip for undefined-reference checks
 # (game-engine built-ins, vanilla ideas, etc.)

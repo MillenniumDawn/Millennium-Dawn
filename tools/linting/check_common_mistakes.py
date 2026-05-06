@@ -4,10 +4,10 @@ Check for common scripting mistakes in HOI4 mod files.
 
 Detects mechanically-checkable rule violations from CLAUDE.md:
   - threat/has_war_support/has_stability comparisons >= 1 (all are 0.0-1.0 ranges)
-  - allowed = { always = no } in country/hidden_ideas idea categories (default, hurts performance)
+  - allowed = { always = no } in country/hidden_ideas idea categories (redundant default; checked once at load, bypassed by add_ideas)
   - allowed = { tag = TAG } in country/hidden_ideas (breaks civil war split-offs; use original_tag)
   - allowed_civil_war = { always = no } in ideas (no effect, remove it)
-  - cancel = { always = no } in ideas (checked hourly, never true)
+  - cancel = { always = no } in ideas (checked hourly, never true; redundant default)
   - ai_will_do root-level factor = N (should be base = N; factor only valid in modifier children)
   - Division instead of multiplication (/ 100 -> * 0.01)
   - Multiple values of a single-valued trigger (has_government, tag, original_tag,
@@ -108,6 +108,7 @@ from shared_utils import (
     create_linting_parser,
     get_all_txt_files,
     get_git_diff_files,
+    get_non_selectable_idea_categories,
     get_root_dir,
     print_timing_summary,
     run_with_pool,
@@ -857,8 +858,9 @@ def check_file(filepath):
         or "common/military_industrial_organization" in filepath
     )
 
-    # Only track idea categories for idea files (country/hidden_ideas vs others)
-    FLAGGED_IDEA_CATEGORIES = {"country", "hidden_ideas"}
+    # Only track idea categories for idea files (non-selectable vs selectable)
+    # Dynamically parsed from common/idea_tags/*.txt
+    FLAGGED_IDEA_CATEGORIES = get_non_selectable_idea_categories()
     current_category = None
     brace_depth = 0
     ideas_depth = None
@@ -926,7 +928,7 @@ def check_file(filepath):
                 issues.append(
                     (
                         line_num,
-                        f"allowed = {{ always = no }} is the default for ideas in '{current_category}' -- remove it (hurts performance)",
+                        f"allowed = {{ always = no }} is the default for ideas in '{current_category}' -- remove it (checked once at load; add_ideas bypasses it)",
                     )
                 )
             elif _RE_ALLOWED_OPEN.search(code_part) and "}" not in code_part:
@@ -953,7 +955,7 @@ def check_file(filepath):
                     issues.append(
                         (
                             allowed_block_start_line,
-                            f"allowed = {{ always = no }} is the default for ideas in '{current_category}' -- remove it (hurts performance)",
+                            f"allowed = {{ always = no }} is the default for ideas in '{current_category}' -- remove it (checked once at load; add_ideas bypasses it)",
                         )
                     )
                 in_allowed_block = False
@@ -973,7 +975,7 @@ def check_file(filepath):
                 issues.append(
                     (
                         line_num,
-                        "cancel = { always = no } is checked hourly and never true -- remove it",
+                        "cancel = { always = no } is checked hourly and never true -- remove it (redundant default)",
                     )
                 )
 

@@ -8,6 +8,7 @@
 	NDefines.NGame.CHECKSUM_SALT = "MillenniumDawn"
 	NDefines.NGame.COMBAT_LOG_MAX_MONTHS = 6 -- 12; halve combat log retention for performance
 	NDefines.NGame.MESSAGE_TIMEOUT_DAYS = 7 -- 60; messages expire sooner to reduce memory
+	NDefines.NGame.TRADE_ROUTE_RECALCULATE_FREQUENCY_DAYS = 45 -- vanilla recalculates too often; 60 days matches BI
 
 	-- NDiplomacy Defines
 	NDefines.NDiplomacy.MAX_OPINION_VALUE = 300
@@ -973,7 +974,7 @@
 
 	-- AI Combat Responsiveness — more frequent than vanilla for smarter wartime AI (trades CPU for quality)
 	NDefines.NAI.HOURS_BETWEEN_ENCIRCLEMENT_DISCOVERY = 24 -- 72; 3x faster encirclement detection
-	NDefines.NAI.AI_UPDATE_ROLES_FREQUENCY_HOURS = 12 -- 48; 4x faster unit role reassignment
+	NDefines.NAI.AI_UPDATE_ROLES_FREQUENCY_HOURS = 24 -- 48; 2x faster unit role reassignment
 	NDefines.NAI.UPDATE_SUPPLY_MOTORIZATION_FREQUENCY_HOURS = 24 -- 52; 2x faster supply motorization response
 	NDefines.NAI.UPDATE_SUPPLY_BOTTLENECKS_FREQUENCY_HOURS = 48 -- 168; 3.5x faster supply bottleneck response
 
@@ -986,7 +987,7 @@
 	NDefines.NAI.RESEARCH_NEEDS_FACTOR = 0.05
 	NDefines.NAI.RESEARCH_LENGTH_FACTOR = 2.5
 
-	-- Peace deal AI stuff
+	-- AI Peace Conference
 	NDefines.NAI.PEACE_BID_FOLD_AGAINST_PLAYER_CHANCE = 0.7			-- 0.5 in vanilla
 	NDefines.NAI.PEACE_BID_FOLD_AGAINST_LIBERATE_CONTEST = 1.0			-- 1.0 in vanilla
 	NDefines.NAI.PEACE_AI_GROUP_PEACE_ACTIONS = false					-- Whether AI should group peace actions or greedily just select the most-desired peace actions
