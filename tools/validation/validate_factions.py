@@ -152,11 +152,7 @@ class Validator(BaseValidator):
 
     def _collect_definitions(self):
         """Collect all defined IDs across the faction system."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Collecting faction definitions...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Collecting faction definitions...")
 
         # Collect template IDs
         template_dir = self._faction_path("templates")
@@ -231,11 +227,7 @@ class Validator(BaseValidator):
 
     def _validate_template_manifests(self):
         """Check that every template's manifest references an existing manifest."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking template manifest references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking template manifest references...")
 
         results = []
         template_dir = self._faction_path("templates")
@@ -257,11 +249,7 @@ class Validator(BaseValidator):
 
     def _validate_template_goals(self):
         """Check that every goal listed in a template exists."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking template goal references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking template goal references...")
 
         results = []
         template_dir = self._faction_path("templates")
@@ -284,11 +272,7 @@ class Validator(BaseValidator):
 
     def _validate_template_rules(self):
         """Check that every rule listed in default_rules exists."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking template default_rules references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking template default_rules references...")
 
         results = []
         template_dir = self._faction_path("templates")
@@ -311,11 +295,7 @@ class Validator(BaseValidator):
 
     def _validate_template_icons(self):
         """Check that every template icon exists in pool or interface."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking template icon references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking template icon references...")
 
         results = []
         template_dir = self._faction_path("templates")
@@ -337,11 +317,7 @@ class Validator(BaseValidator):
 
     def _validate_rule_groups(self):
         """Check that every rule referenced in rule groups exists."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking rule group references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking rule group references...")
 
         results = []
         groups_path = self._faction_path("rules", "groups", "rule_groups.txt")
@@ -363,11 +339,7 @@ class Validator(BaseValidator):
 
     def _validate_rule_types(self):
         """Check that every rule has a valid type."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking rule types...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking rule types...")
 
         results = []
         rules_dir = self._faction_path("rules")
@@ -387,11 +359,7 @@ class Validator(BaseValidator):
 
     def _validate_duplicate_templates(self):
         """Check for duplicate template IDs across files."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for duplicate template IDs...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for duplicate template IDs...")
 
         results = []
         seen: Dict[str, str] = {}
@@ -414,11 +382,7 @@ class Validator(BaseValidator):
 
     def _validate_duplicate_goals(self):
         """Check for duplicate goal IDs across files."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for duplicate goal IDs...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for duplicate goal IDs...")
 
         results = []
         seen: Dict[str, str] = {}
@@ -441,11 +405,7 @@ class Validator(BaseValidator):
 
     def _validate_duplicate_rules(self):
         """Check for duplicate rule IDs across files."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for duplicate rule IDs...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for duplicate rule IDs...")
 
         results = []
         seen: Dict[str, str] = {}
@@ -470,11 +430,7 @@ class Validator(BaseValidator):
 
     def _validate_upgrade_groups(self):
         """Check that every upgrade in a group exists."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking upgrade group references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking upgrade group references...")
 
         results = []
         for subdir in ["upgrades/groups", "member_upgrades/member_groups"]:
@@ -498,11 +454,7 @@ class Validator(BaseValidator):
 
     def _check_orphaned_manifests(self):
         """Warn about manifests not referenced by any template."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for orphaned manifests...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for orphaned manifests...")
 
         referenced_manifests: Set[str] = set()
         template_dir = self._faction_path("templates")

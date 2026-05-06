@@ -8,7 +8,7 @@
 	NDefines.NGame.CHECKSUM_SALT = "MillenniumDawn"
 	NDefines.NGame.COMBAT_LOG_MAX_MONTHS = 6 -- 12; halve combat log retention for performance
 	NDefines.NGame.MESSAGE_TIMEOUT_DAYS = 7 -- 60; messages expire sooner to reduce memory
-	NDefines.NGame.TRADE_ROUTE_RECALCULATE_FREQUENCY_DAYS = 45 -- vanilla recalculates too often; 60 days matches BI
+	NDefines.NGame.TRADE_ROUTE_RECALCULATE_FREQUENCY_DAYS = 45 -- vanilla recalculates too often; 45 days matches BI
 
 	-- NDiplomacy Defines
 	NDefines.NDiplomacy.MAX_OPINION_VALUE = 300
