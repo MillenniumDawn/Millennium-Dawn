@@ -203,11 +203,9 @@ class Validator(BaseValidator):
     # ---- Validations ----
 
     def _validate_registry_coverage(self) -> None:
-        self.log(f"\n{'=' * 80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking every defined upgrade is registered in the auto-agency system...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking every defined upgrade is registered in the auto-agency system..."
         )
-        self.log(f"{'=' * 80}")
 
         results: List[str] = []
         registered_short: Set[str] = {
@@ -273,11 +271,7 @@ class Validator(BaseValidator):
         )
 
     def _validate_max_levels(self) -> None:
-        self.log(f"\n{'=' * 80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking agency_max_upgrades vs level block count...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'=' * 80}")
+        self._log_section("Checking agency_max_upgrades vs level block count...")
 
         results: List[str] = []
         for idx, long_tok in sorted(self.registered_upgrades.items()):
@@ -300,11 +294,7 @@ class Validator(BaseValidator):
         )
 
     def _validate_loc_and_gfx(self) -> None:
-        self.log(f"\n{'=' * 80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking loc key triples and GFX references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'=' * 80}")
+        self._log_section("Checking loc key triples and GFX references...")
 
         results: List[str] = []
 
@@ -358,11 +348,7 @@ class Validator(BaseValidator):
         )
 
     def _validate_array_size(self) -> None:
-        self.log(f"\n{'=' * 80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking resize_array size vs registered index count...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'=' * 80}")
+        self._log_section("Checking resize_array size vs registered index count...")
 
         text = strip_comments(_read(Path(self.mod_path) / ON_ACTIONS_FILE))
         declared_sizes = [int(s) for s in RESIZE_ARRAY_RE.findall(text)]
@@ -397,11 +383,9 @@ class Validator(BaseValidator):
     def _validate_agency_calls(self) -> None:
         """Scan the whole mod for create_intelligence_agency and
         upgrade_intelligence_agency calls; validate icons and upgrade names."""
-        self.log(f"\n{'=' * 80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking create_intelligence_agency icons and upgrade_intelligence_agency calls...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking create_intelligence_agency icons and upgrade_intelligence_agency calls..."
         )
-        self.log(f"{'=' * 80}")
 
         files = self._collect_files(
             [
@@ -451,11 +435,7 @@ class Validator(BaseValidator):
         )
 
     def _validate_scripted_gui_prereqs(self) -> None:
-        self.log(f"\n{'=' * 80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking scripted_gui prerequisite references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'=' * 80}")
+        self._log_section("Checking scripted_gui prerequisite references...")
 
         text = strip_comments(_read(Path(self.mod_path) / SCRIPTED_GUI_FILE))
         if not text:

@@ -134,11 +134,9 @@ class Validator(BaseValidator):
         self.min_references = min_refs
 
     def validate_set_variables(self, false_positives):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking set_variable usage (variables set but not referenced)...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking set_variable usage (variables set but not referenced)..."
         )
-        self.log(f"{'='*80}")
 
         results = []
 
