@@ -50,7 +50,9 @@ EXTRA_SKIP_PATTERNS = ["FR_loc"]
 # Decisions activated dynamically (e.g. via variable-constructed IDs) that
 # cannot be detected by static analysis and should be excluded from the
 # unused-decision check.
-DYNAMICALLY_ACTIVATED_DECISIONS = [f"AC_project_{i}_target_decision" for i in range(15)]
+DYNAMICALLY_ACTIVATED_DECISIONS = [
+    f"AC_project_{i}_target_decision" for i in range(15)
+] + [f"investments_project_{i}_target_decision" for i in range(15)]
 
 
 def _should_skip(filename: str) -> bool:
@@ -1576,6 +1578,28 @@ class Validator(BaseValidator):
         )
 
         factories = parse_all_decision_factories(self.mod_path)
+
+        remove_pat = re.compile(r"\bremove_decision\s*=\s*(\w+)")
+        remove_targeted_block_pat = re.compile(
+            r"\bremove_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
+        )
+        decision_name_pat = re.compile(r"\bdecision\s*=\s*(\w+)")
+        externally_removed: set = set()
+
+        for filename in glob.iglob(
+            os.path.join(self.mod_path, "**", "*.txt"), recursive=True
+        ):
+            if _should_skip(filename):
+                continue
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
+            if "remove_decision" not in text_file:
+                continue
+            externally_removed.update(remove_pat.findall(text_file))
+            for block in remove_targeted_block_pat.findall(text_file):
+                externally_removed.update(decision_name_pat.findall(block))
+
         results = []
 
         for d in factories:
@@ -1586,6 +1610,8 @@ class Validator(BaseValidator):
             if d.allowed and "always = no" in d.allowed:
                 continue
             if d.has_days_remove or d.has_remove_trigger:
+                continue
+            if d.token in externally_removed:
                 continue
             results.append(f"{d.token:<55}{d.source_basename}")
 
