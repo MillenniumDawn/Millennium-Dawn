@@ -21,6 +21,7 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - is_in_faction = TAG (boolean trigger misused with a tag; should be is_in_faction_with)
   - has_trade_agreement_with (not a valid trigger; MD uses has_country_flag = trade_agreement@TAG)
   - Dynamic triggers inside decision allowed blocks (allowed is evaluated once at game start)
+  - is_X_nation triggers in runtime contexts (available, effect, limit) — use has_country_flag = X_flag instead
 """
 
 import os
@@ -83,6 +84,7 @@ _RE_DECISION_ALLOWED_DYNAMIC = re.compile(
     r"\b(?:num_of_factories|has_opinion|strength_ratio|"
     r"has_army_size|has_navy_size|has_political_power|date)\b"
 )
+_RE_IS_X_NATION = re.compile(r"\bis_([a-z]+_)?nation\s*=\s*yes\b")
 
 # Single-valued country triggers. A country has exactly one government/tag/etc,
 # so two checks at the same AND depth can never both be true — caller almost
@@ -760,6 +762,59 @@ def _check_empty_log_only_blocks(lines):
     return issues
 
 
+def _check_is_x_nation_runtime(lines):
+    """Flag is_X_nation triggers in runtime contexts (available, visible, effect).
+
+    The is_X_nation scripted triggers iterate over tag lists and are relatively
+    expensive. In runtime contexts (available, visible, effect blocks, limit clauses),
+    use the pre-computed has_country_flag = X_flag instead for O(1) lookup.
+
+    Safe to use in allowed = { } which is evaluated once at game start.
+    """
+    issues = []
+    in_allowed = False
+    allowed_depth = 0
+    brace_depth = 0
+
+    for i, line in enumerate(lines, 1):
+        code = line.split("#")[0]
+        stripped = code.strip()
+
+        # Track brace depth
+        opens = code.count("{")
+        closes = code.count("}")
+
+        # Check for allowed block start
+        if re.search(r"\ballowed\s*=\s*\{", code) and "allowed_civil_war" not in code:
+            in_allowed = True
+            allowed_depth = brace_depth + opens - closes
+
+        # Update brace depth after checking for allowed
+        brace_depth += opens - closes
+
+        # Check if we exited allowed block
+        if in_allowed and brace_depth <= allowed_depth - 1:
+            in_allowed = False
+            allowed_depth = 0
+
+        # Flag is_X_nation if not in allowed block
+        if not in_allowed:
+            match = _RE_IS_X_NATION.search(code)
+            if match:
+                nation_type = match.group(1) if match.group(1) else ""
+                flag_name = (
+                    f"{nation_type}nation_flag" if nation_type else "nation_flag"
+                )
+                issues.append(
+                    (
+                        i,
+                        f"is_X_nation in runtime context -- use has_country_flag = {flag_name} for O(1) lookup (allowed = {{ }} is OK for game-start checks)",
+                    )
+                )
+
+    return issues
+
+
 def _check_every_country_member_array(lines):
     """Flag every_country { limit = { has_idea = X_member } } when a pre-built array exists.
 
@@ -1041,6 +1096,7 @@ def check_file(filepath):
     issues.extend(_check_duplicate_add_to_variable(lines))
     issues.extend(_check_every_country_member_array(lines))
     issues.extend(_check_empty_log_only_blocks(lines))
+    issues.extend(_check_is_x_nation_runtime(lines))
 
     return [(filepath, ln, msg) for ln, msg in issues]
 
