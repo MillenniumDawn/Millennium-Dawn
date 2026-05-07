@@ -169,14 +169,77 @@ jobs:
       fail-fast: false
       matrix:
         validator:
-          - { script: validate_variables.py,              name: variables,              title: "Variables" }
-          - { script: validate_scripted_localisation.py,  name: scripted-localisation,  title: "Scripted Localisation" }
-          - { script: validate_cosmetic_tags.py,          name: cosmetic-tags,          title: "Cosmetic Tags" }
-          - { script: validate_localisation.py,           name: localisation,           title: "Localisation" }
-          - { script: validate_events.py,                 name: events,                 title: "Events" }
-          - { script: validate_history_techs.py,          name: history-techs,          title: "History Technology Dependencies" }
-          - { script: validate_unused_scripted.py,        name: unused-scripted,        title: "Unused Scripted Effects & Triggers" }
-          - { script: validate_agency_upgrades.py,        name: agency-upgrades,        title: "Intelligence Agency Upgrades" }
+          - script: validate_variables.py
+            name: variables
+            title: "Variables"
+            sparse: |
+              common
+              events
+              history
+              localisation
+              tools
+          - script: validate_scripted_localisation.py
+            name: scripted-localisation
+            title: "Scripted Localisation"
+            sparse: |
+              common
+              events
+              history
+              localisation
+              interface
+              tools
+          - script: validate_cosmetic_tags.py
+            name: cosmetic-tags
+            title: "Cosmetic Tags"
+            sparse: |
+              common
+              gfx/flags
+              localisation
+              tools
+          - script: validate_localisation.py
+            name: localisation
+            title: "Localisation"
+            sparse: |
+              common
+              events
+              history
+              localisation
+              interface
+              tools
+          - script: validate_events.py
+            name: events
+            title: "Events"
+            sparse: |
+              common
+              events
+              history
+              localisation
+              tools
+          - script: validate_history_techs.py
+            name: history-techs
+            title: "History Technology Dependencies"
+            sparse: |
+              common/technologies
+              history/countries
+              tools
+          - script: validate_unused_scripted.py
+            name: unused-scripted
+            title: "Unused Scripted Effects & Triggers"
+            sparse: |
+              common
+              events
+              history
+              tools
+          - script: validate_agency_upgrades.py
+            name: agency-upgrades
+            title: "Intelligence Agency Upgrades"
+            sparse: |
+              common
+              events
+              history
+              localisation
+              interface
+              tools
           # NOTE: validate_defines.py needs vanilla HOI4 files (not checked in) and
           # therefore only runs as a pre-commit hook on contributors' machines.
 
@@ -185,16 +248,7 @@ jobs:
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         fetch-depth: 1
-        sparse-checkout: |
-          common
-          events
-          history
-          localisation
-          interface
-          gfx/flags
-          tools
-          .claude
-          CLAUDE.md
+        sparse-checkout: ${{ matrix.validator.sparse }}
 
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
@@ -242,9 +296,9 @@ jobs:
             title: "Validate Decisions"
             should_run: ${{ needs.detect-changes.outputs.decisions }}
             sparse: |
-              common/decisions
-              common/scripted_effects
-              common/scripted_triggers
+              common
+              events
+              localisation/english
               tools
           - script: validate_oob_units.py
             name: oob-units

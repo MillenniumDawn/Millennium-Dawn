@@ -6,6 +6,9 @@
 #   1. Undefined idea references (has_idea / add_ideas / remove_ideas / swap_ideas)
 #   2. Redundant allowed_civil_war = { always = no } (HOI4 default)
 #   3. Redundant allowed = { always = no } in country/hidden_ideas categories
+#      Note: removing allowed = { always = no } trades slightly more memory
+#      usage (the engine keeps the idea in its per-country candidate pool)
+#      for faster load times (skips the allowed evaluation at game start).
 #   4. Missing localisation keys for ideas
 ##########################
 import os
@@ -90,7 +93,13 @@ _HOI4_IDEA_INNER_KEYS: frozenset = frozenset(
 )
 
 # Categories where `allowed = { always = no }` is flagged as redundant
-_ALWAYS_NO_CATEGORIES = frozenset({"country", "hidden_ideas"})
+# Dynamically parsed from common/idea_tags/*.txt — non-selectable categories
+# (those without slot=/character_slot= or with hidden=yes)
+from shared_utils import (  # noqa: E402
+    get_non_selectable_idea_categories as _get_non_selectable_idea_categories,
+)
+
+_ALWAYS_NO_CATEGORIES = _get_non_selectable_idea_categories()
 
 # Vanilla idea prefixes that we skip for undefined-reference checks
 # (game-engine built-ins, vanilla ideas, etc.)
@@ -349,11 +358,7 @@ class Validator(BaseValidator):
     def validate_undefined_idea_refs(
         self, defined_ideas: Dict[str, Tuple[str, Optional[str]]]
     ):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for undefined idea references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for undefined idea references...")
         self.log(f"  Known defined ideas: {len(defined_ideas)}")
 
         # Scan all .txt files for idea references
@@ -448,11 +453,7 @@ class Validator(BaseValidator):
 
     def validate_idea_quality(self, issues_by_file: Dict[str, List[IdeaIssue]]):
         """Validate redundant patterns and misuse found during parsing."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking idea definition quality...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking idea definition quality...")
 
         idea_files = self._collect_files(["common/ideas/**/*.txt"])
         acw_pattern = re.compile(r"allowed_civil_war\s*=\s*\{\s*always\s*=\s*no\s*\}")
@@ -478,6 +479,7 @@ class Validator(BaseValidator):
                 if issue.issue_type == "allowed-always-no":
                     grouped[basename].append(
                         f"line {issue.line}: '{issue.idea_name}' has allowed = {{ always = no }} in {issue.category}"
+                        " (redundant; removing trades slightly more memory for faster load times)"
                     )
                 elif issue.issue_type == "cancel-always-no":
                     grouped[basename].append(
@@ -499,11 +501,7 @@ class Validator(BaseValidator):
     def validate_missing_localisation(
         self, defined_ideas: Dict[str, Tuple[str, Optional[str]]]
     ):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for ideas with missing localisation keys...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for ideas with missing localisation keys...")
 
         sys.path.insert(0, os.path.dirname(__file__))
         from validate_localisation import get_all_loc_keys
@@ -568,11 +566,9 @@ class Validator(BaseValidator):
         if self.missing_loc:
             self.validate_missing_localisation(defined_ideas)
         else:
-            self.log(f"\n{'='*80}")
-            self.log(
-                f"{Colors.CYAN if self.use_colors else ''}Skipping missing localisation check (pass --missing-loc to enable){Colors.ENDC if self.use_colors else ''}"
+            self._log_section(
+                "Skipping missing localisation check (pass --missing-loc to enable)"
             )
-            self.log(f"{'='*80}")
 
 
 def _add_extra_args(parser):

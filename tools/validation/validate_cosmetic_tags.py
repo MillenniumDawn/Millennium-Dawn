@@ -135,11 +135,9 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt", ".yml"]
 
     def validate_missing_cosmetic_tags(self, false_positives: list):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking missing cosmetic tags (has_cosmetic_tag but never set)...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking missing cosmetic tags (has_cosmetic_tag but never set)..."
         )
-        self.log(f"{'='*80}")
 
         files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
 
@@ -184,11 +182,7 @@ class Validator(BaseValidator):
             )
 
     def validate_unused_cosmetic_tags(self, false_positives: list):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking unused cosmetic tags (set but never referenced)...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking unused cosmetic tags (set but never referenced)...")
 
         files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
 
@@ -280,11 +274,9 @@ class Validator(BaseValidator):
             )
 
     def validate_unused_cosmetic_tag_colors(self, false_positives: list):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking unused cosmetic tag colors (defined in cosmetic.txt but never set)...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking unused cosmetic tag colors (defined in cosmetic.txt but never set)..."
         )
-        self.log(f"{'='*80}")
 
         cosmetic_file = Path(self.mod_path) / "common" / "countries" / "cosmetic.txt"
         if not cosmetic_file.exists():

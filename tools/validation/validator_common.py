@@ -9,9 +9,10 @@ import logging
 import os
 import re
 import sys
+import time
 from dataclasses import dataclass, field
 from multiprocessing import Pool, cpu_count
-from typing import Callable, Dict, List, Optional, Set
+from typing import Callable, Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import (
@@ -21,9 +22,11 @@ from shared_utils import (
     find_line_number,
     get_staged_files,
     log_message,
+    print_timing_summary,
     run_validator_main,
     should_skip_file,
     strip_comments,
+    timing_enabled,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -237,6 +240,10 @@ class BaseValidator:
         self._pool: Optional[Pool] = None
         self._regex_cache: Dict[str, re.Pattern] = {}
         self._issues: List[Issue] = []
+        self._section_timings: List[Tuple[str, float]] = []
+        self._section_start: Optional[float] = None
+        self._section_title: str = ""
+        self._show_timing = timing_enabled()
 
         if staged_only:
             self.staged_files = (
@@ -270,6 +277,34 @@ class BaseValidator:
             logging.error(display_msg)
         file_msg = re.sub(r"\033\[[0-9;]+m", "", message)
         self.output_lines.append(file_msg)
+
+    def _log_section(self, title: str):
+        """Emit the standard section header and start timing this section.
+
+        Each call closes the previous section's timer (if any) and starts a
+        new one.  Call ``_finish_sections`` after all checks to close the last
+        section and (when ``MD_TIMING`` is enabled) print a per-check timing
+        summary to stderr.
+        """
+        if self._section_start is not None:
+            elapsed = time.perf_counter() - self._section_start
+            self._section_timings.append((self._section_title, elapsed))
+        self._section_title = title
+        self._section_start = time.perf_counter()
+        self.log(f"\n{'='*80}")
+        self.log(
+            f"{Colors.CYAN if self.use_colors else ''}{title}{Colors.ENDC if self.use_colors else ''}"
+        )
+        self.log(f"{'='*80}")
+
+    def _finish_sections(self):
+        """Close the last section timer and print a timing summary."""
+        if self._section_start is not None:
+            elapsed = time.perf_counter() - self._section_start
+            self._section_timings.append((self._section_title, elapsed))
+            self._section_start = None
+        if self._show_timing and self._section_timings:
+            print_timing_summary(self._section_timings)
 
     def save_output(self):
         if self.output_file and self.output_lines:
@@ -595,6 +630,7 @@ class BaseValidator:
         try:
             self.run_validations()
         finally:
+            self._finish_sections()
             if self._pool is not None:
                 self._pool.terminate()
                 self._pool.join()

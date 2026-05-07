@@ -208,8 +208,8 @@ country_event = {
 ## Best Practices
 
 - Include `allowed_civil_war = { always = yes }` for civil war tags
-- **Remove** `allowed = { always = no }` - this is the default and hurts performance
-- **Remove** `cancel = { always = no }` - checked hourly, never true
+- **Remove** `allowed = { always = no }` - this is the default; `allowed` is checked once at game start/load and `add_ideas` bypasses it entirely. Tradeoff: `has_available_idea_with_trait` builds a list of every idea that passes `allowed`, then evaluates their `available` triggers at runtime. Removing `allowed = { always = no }` lets more ideas into that pool (more runtime checks), while keeping it filters them out. MD does not use that trigger, so the tradeoff is moot here
+- **Remove** `cancel = { always = no }` - checked hourly, never true; redundant default
 - **Remove** empty `on_add = { log = "" }` unless you're actually doing something
 - Log in `on_add` only when making changes
 

@@ -13,7 +13,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Color coding for different log levels
 COLORS = {
@@ -172,6 +172,93 @@ def should_skip_file(
             if pattern in filename:
                 return True
     return False
+
+
+def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozenset:
+    """Parse common/idea_tags/*.txt and return non-selectable idea category names.
+
+    A category is non-selectable if it has `hidden = yes` or has neither
+    `slot =` nor `character_slot =` entries (like `country` with
+    `type = national_spirit`). These are categories where ideas are only
+    added/removed via script (add_ideas/remove_ideas), never picked in the UI,
+    so `allowed = { always = no }` is always redundant.
+
+    Args:
+        mod_root: Path to the mod root (auto-detected if None).
+    Returns:
+        frozenset of non-selectable category names (e.g. {'country', 'hidden_ideas'}).
+    """
+    if mod_root is None:
+        mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+
+    tags_dir = os.path.join(mod_root, "common", "idea_tags")
+    if not os.path.isdir(tags_dir):
+        # If no idea_tags dir found, return safe defaults
+        return frozenset({"country", "hidden_ideas"})
+
+    categories: Set[str] = set()
+
+    for fname in os.listdir(tags_dir):
+        if not fname.endswith(".txt"):
+            continue
+        fpath = os.path.join(tags_dir, fname)
+        try:
+            with open(fpath, "r", encoding="utf-8") as f:
+                text = f.read()
+                text = re.sub(r"#.*", "", text)  # strip comments
+        except Exception:
+            continue
+
+        # Find idea_categories = { ... } block
+        m = re.search(r"idea_categories\s*=\s*\{", text)
+        if not m:
+            continue
+        start = m.end()
+        # Count braces to find the closing brace
+        depth = 1
+        i = start
+        while i < len(text) and depth > 0:
+            if text[i] == "{":
+                depth += 1
+                i += 1
+            elif text[i] == "}":
+                depth -= 1
+                i += 1
+            else:
+                i += 1
+        cat_block = text[start : i - 1] if depth == 0 else text[start:]
+
+        # Extract each category block: key = { ... }
+        for cat_m in re.finditer(r"(\w+)\s*=\s*\{", cat_block):
+            cat_name = cat_m.group(1)
+            cat_start = cat_m.end()
+            cat_depth = 1
+            cat_i = cat_start
+            while cat_i < len(cat_block) and cat_depth > 0:
+                if cat_block[cat_i] == "{":
+                    cat_depth += 1
+                    cat_i += 1
+                elif cat_block[cat_i] == "}":
+                    cat_depth -= 1
+                    cat_i += 1
+                else:
+                    cat_i += 1
+            cat_body = (
+                cat_block[cat_start : cat_i - 1]
+                if cat_depth == 0
+                else cat_block[cat_start:]
+            )
+
+            has_hidden = bool(re.search(r"\bhidden\s*=\s*yes\b", cat_body))
+            has_slot = bool(re.search(r"\bslot\s*=", cat_body))
+            has_char_slot = bool(re.search(r"\bcharacter_slot\s*=", cat_body))
+
+            if has_hidden or (not has_slot and not has_char_slot):
+                categories.add(cat_name)
+
+    return (
+        frozenset(categories) if categories else frozenset({"country", "hidden_ideas"})
+    )
 
 
 def find_line_number(filename: str, pattern: str, lowercase: bool = True) -> int:

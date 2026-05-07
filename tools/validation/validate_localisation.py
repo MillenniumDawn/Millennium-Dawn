@@ -400,11 +400,7 @@ class Validator(BaseValidator):
         )
 
     def validate_duplicated_keys(self, duplicated: List[str], skipped_keys: set):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for duplicated localisation keys...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for duplicated localisation keys...")
 
         filtered = [k for k in duplicated if k not in skipped_keys]
         self._report(
@@ -414,11 +410,7 @@ class Validator(BaseValidator):
         )
 
     def validate_brackets(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for unpaired brackets in localisation...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for unpaired brackets in localisation...")
 
         yml_files = self._get_yml_files()
         args_list = [(f,) for f in yml_files]
@@ -436,11 +428,7 @@ class Validator(BaseValidator):
         )
 
     def validate_syntax(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking localisation color syntax...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking localisation color syntax...")
 
         valid_colors = get_all_colors(self.mod_path)
         yml_files = self._get_yml_files()
@@ -459,11 +447,7 @@ class Validator(BaseValidator):
         )
 
     def validate_mandatory_line(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking mandatory l_english: line in loc files...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking mandatory l_english: line in loc files...")
 
         yml_files = self._get_yml_files()
         args_list = [(f,) for f in yml_files]
@@ -483,11 +467,7 @@ class Validator(BaseValidator):
     def validate_localization_key_references(
         self, loc_keys: Dict, scripted_loc_keys: set
     ):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking localization_key references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking localization_key references...")
 
         txt_files = self._collect_files(["**/*.txt"])
         args_list = [(f, loc_keys, scripted_loc_keys) for f in txt_files]
@@ -505,11 +485,7 @@ class Validator(BaseValidator):
     def validate_custom_tooltip_references(
         self, loc_keys: Dict, scripted_loc_keys: set
     ):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking custom tooltip references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking custom tooltip references...")
 
         txt_files = self._collect_files(["**/*.txt"])
         args_list = [(f, loc_keys, scripted_loc_keys) for f in txt_files]
@@ -525,11 +501,7 @@ class Validator(BaseValidator):
         )
 
     def validate_add_resistance_tooltip(self, loc_keys: Dict):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking add_resistance_target tooltip localisation...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking add_resistance_target tooltip localisation...")
 
         pattern = r"^(\t+)add_resistance_target = (\{\n.*?)^\1\}"
         results = []
@@ -576,11 +548,7 @@ class Validator(BaseValidator):
     def validate_orphaned_tooltip_keys(
         self, loc_keys: Dict, skipped_keys: set, scripted_loc_keys: set
     ):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for orphaned tooltip keys...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for orphaned tooltip keys...")
 
         # Tooltip-named keys: anything ending in _tt/_TT or starting with `tooltip_`.
         # The latter catches modder-named explicit tooltip strings like

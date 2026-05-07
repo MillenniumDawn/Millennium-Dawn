@@ -4,7 +4,14 @@ on_actions = {
 		effect = {
 			worker_requirements_variable_gdpc_converging = yes
 
-			missile_ui_update = yes
+			if = { limit = { NOT = { has_global_flag = on_weekly_global_done } }
+				set_global_flag = { flag = on_weekly_global_done value = 1 days = 7 }
+				missile_ui_update = yes
+				add_to_variable = { global.md_gui_dirty = 1 }
+				if = { limit = { check_variable = { global.md_gui_dirty > 1000000 } }
+					set_variable = { global.md_gui_dirty = 1 }
+				}
+			}
 
 			microchip_update = yes
 			composite_update = yes
@@ -936,7 +943,7 @@ on_actions = {
 						ai_update_build_units = yes
 						ai_weapon_dump = yes
 
-						if = { limit = { NOT = { original_tag = ZOM } }
+						if = { limit = { MD_special_countries = no }
 							if = {
 								limit = {
 									check_variable = { next_slot_from_gdp < 10 }
@@ -1030,7 +1037,7 @@ on_actions = {
 								limit = {
 									NOT = {
 										has_government = neutrality
-										Is_Muslim_Brotherhood = yes
+										has_country_flag = muslim_brotherhood_flag
 										has_country_flag = BROTHER_civil_war_has_started
 									}
 									has_elections = no
