@@ -9531,3 +9531,202 @@ form_UAS_category = {
 		}
 	}
 }
+
+# Angevin Empire
+form_AVG_category = {
+	#Start integrate
+	AVG_integrate_start = {
+		icon = GFX_decision_generic_form_nation
+		ai_will_do = { base = 10 }
+		visible = {
+			NOT = { has_country_flag = is_AVG }
+		}
+		highlight_states = {
+			highlight_state_targets = {
+				# Kingdom of England + Lordship of Wales + Channel Islands
+				state = 10 #Yorkshire and the Humber
+				state = 11 #Greater Manchester
+				state = 12 #West Midlands
+				state = 13 #Greater London
+				state = 14 #East of England
+				state = 15 #Southern England
+				state = 16 #South Wales
+				state = 973 #Cornwall
+				state = 1191 #East Midlands
+				state = 1192 #North Wales
+				state = 1193 #Northern England
+				state = 1197 #Channel Islands
+				# Plantagenet western France
+				state = 55 #Normandie
+				state = 59 #Loire
+				state = 60 #Aquitaine
+				state = 61 #Midi-Pyrenees
+				state = 64 #Bretagne
+				state = 958 #Poitou-Limousin
+				state = 959 #Pays de la Loire
+				# Lordship of Ireland
+				state = 27 #Leinster
+				state = 28 #Munster
+			}
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = AVG_integrate_trigger_tt
+				OR = {
+					ENG = {
+						is_subject_of = ROOT
+						has_war = no
+					}
+					is_england_states_owned = yes
+				}
+				OR = {
+					FRA = {
+						is_subject_of = ROOT
+						has_war = no
+					}
+					is_france_states_owned = yes
+				}
+				OR = {
+					IRE = {
+						is_subject_of = ROOT
+						has_war = no
+					}
+					is_ireland_states_owned = yes
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AVG_integrate_start"
+			if = {
+				limit = { NOT = { has_country_flag = is_AVG } }
+				set_country_flag = is_AVG
+				set_global_flag = AVG_exists
+				clr_country_flag = dynamic_flag
+				clr_country_flag = dynamic_rebel_flag
+			}
+			set_country_flag = integrated_@ROOT
+			custom_effect_tooltip = AVG_start_integrate_tt
+			custom_effect_tooltip = general_integrate_tt
+			hidden_effect = { set_cosmetic_tag = AVG }
+		}
+	}
+	# Integrate western France
+	AVG_integrate_FRA = {
+		icon = GFX_decision_generic_form_nation
+		cost = 300
+		days_remove = 365
+		ai_will_do = { base = 10 }
+		allowed = { NOT = { tag = FRA } }
+		visible = {
+			has_country_flag = is_AVG
+			NOT = { has_country_flag = integrated_FRA }
+		}
+		available = {
+			set_temp_variable = { tag_check = FRA.id }
+			formable_nation_check = yes
+		}
+		remove_effect = {
+			FRA = { every_core_state = { add_core_of = ROOT } }
+			if = {
+				limit = { country_exists = FRA }
+				annex_country = {
+					target = FRA
+					transfer_troops = yes
+				}
+				FRA = {
+					every_unit_leader = {
+						set_nationality = ROOT
+					}
+				}
+			}
+			clr_country_flag = dynamic_flag
+			clr_country_flag = dynamic_rebel_flag
+			set_country_flag = integrated_FRA
+		}
+	}
+	# Integrate southern Ireland
+	AVG_integrate_IRE = {
+		icon = GFX_decision_generic_form_nation
+		cost = 300
+		days_remove = 365
+		ai_will_do = { base = 10 }
+		allowed = { NOT = { tag = IRE } }
+		visible = {
+			has_country_flag = is_AVG
+			NOT = { has_country_flag = integrated_IRE }
+		}
+		available = {
+			set_temp_variable = { tag_check = IRE.id }
+			formable_nation_check = yes
+		}
+		remove_effect = {
+			IRE = { every_core_state = { add_core_of = ROOT } }
+			if = {
+				limit = { country_exists = IRE }
+				annex_country = {
+					target = IRE
+					transfer_troops = yes
+				}
+				IRE = {
+					every_unit_leader = {
+						set_nationality = ROOT
+					}
+				}
+			}
+			clr_country_flag = dynamic_flag
+			clr_country_flag = dynamic_rebel_flag
+			set_country_flag = integrated_IRE
+		}
+	}
+	# Integrate Enhgland
+	AVG_integrate_ENG = {
+		icon = GFX_decision_generic_form_nation
+		cost = 300
+		days_remove = 365
+		ai_will_do = { base = 10 }
+		allowed = { NOT = { tag = ENG } }
+		visible = {
+			has_country_flag = is_AVG
+			NOT = { has_country_flag = integrated_ENG }
+		}
+		available = {
+			set_temp_variable = { tag_check = ENG.id }
+			formable_nation_check = yes
+		}
+		remove_effect = {
+			ENG = { every_core_state = { add_core_of = ROOT } }
+			if = {
+				limit = { country_exists = ENG }
+				annex_country = {
+					target = ENG
+					transfer_troops = yes
+				}
+				ENG = {
+					every_unit_leader = {
+						set_nationality = ROOT
+					}
+				}
+			}
+			clr_country_flag = dynamic_flag
+			clr_country_flag = dynamic_rebel_flag
+			set_country_flag = integrated_ENG
+		}
+	}
+	# Update flag
+	AVG_form = {
+		icon = GFX_decision_generic_form_nation
+		cost = 0
+		ai_will_do = { base = 10000 }
+		visible = {
+			NOT = { has_cosmetic_tag = AVG }
+			has_country_flag = integrated_FRA
+			has_country_flag = integrated_IRE
+			has_country_flag = integrated_ENG
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AVG_update_flag"
+			set_cosmetic_tag = AVG
+		}
+	}
+}
