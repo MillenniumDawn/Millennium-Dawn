@@ -86,7 +86,7 @@ update_gui = {
 
 	set_variable = { project_type = project_building_type^-1 }
 	set_variable = { project = -1 }
-	set_temp_variable = { investments_calc_state = PREV.id }
+	PREV = { save_temp_event_target_as = calc_state_target }
 	calculate_project_duration = yes
 	cache_building_availability = yes
 	clear_variable = project_type
@@ -285,7 +285,7 @@ calculate_project_duration = {
 
 	# State-local construction speed bonus (infra + internet + state-flag effects)
 	set_temp_variable = { local_state_modifier = 0 }
-	var:investments_calc_state = {
+	event_target:calc_state_target = {
 		set_temp_variable = { tmp_speed = building_level@infrastructure }
 		multiply_temp_variable = { tmp_speed = 0.15 }
 		add_to_temp_variable = { local_state_modifier = tmp_speed }
@@ -306,7 +306,7 @@ calculate_project_duration = {
 	# Net duration modifier from investor + target controller. Inside CONTROLLER,
 	# PREV.PREV resolves back to the investor (var: pushed once, CONTROLLER once).
 	set_temp_variable = { receiving_investment_duration_temp = 0 }
-	var:investments_calc_state = {
+	event_target:calc_state_target = {
 		CONTROLLER = {
 			if = {
 				limit = {
@@ -409,11 +409,11 @@ start_project_two = {
 		set_variable = { project_building_type^project = project_building_type^-1 }
 		set_variable = { project_monetary_cost^project = project_monetary_cost^-1 }
 
-		set_temp_variable = { investments_calc_state = investments_state_target }
-		calculate_project_duration = yes
-		# Should scope to the actual project
-		var:investments_state_target = {
-			add_to_array = { projects_in_state = PREV.id } #Should be FROM
+		any_state = {
+			limit = { state = ROOT.investments_state_target }
+			save_temp_event_target_as = calc_state_target
+			
+			add_to_array = { projects_in_state = PREV.id } # Should be FROM
 			# Create a new array for this
 			add_to_array = { project_type_in_state = PREV.project_building_type^-1 }
 			set_variable = { project_target_state_@PREV = PREV.project }
@@ -423,6 +423,8 @@ start_project_two = {
 				set_variable = { PREV.PREV.project_target_country^PREV.PREV.project = THIS.id }
 			}
 		}
+		
+		calculate_project_duration = yes
 
 		# Activate Project
 		add_to_variable = { treasury = project_monetary_cost_effect } # Project Monetary Cost Effect is -1
@@ -449,10 +451,11 @@ start_project_two = {
 complete_project = {
 	log = "[GetDateText]: [This.GetName]: complete_project - project=[?project], remaining_segments=[?project_build_amount^project]"
 
-	if = { limit = { check_variable = { project_array^project < 0 } }
+	if = { limit = { check_variable = { project_array^project > 0 } }
 		set_variable = { project_type = project_building_type^project }
 
-		var:project_array^project = {
+		any_state = {
+			limit = { state = ROOT.project_array^ROOT.project }
 			if = { limit = { investment_building_slot_available = yes }
 				add_finished_buildings = yes
 				CONTROLLER = { add_opinion_modifier = { target = ROOT modifier = investments_construction_opinion } }
@@ -464,7 +467,7 @@ complete_project = {
 							PREV = { investment_building_slot_available = yes }
 						}
 						subtract_from_variable = { project_build_amount^project = 1 }
-						set_temp_variable = { investments_calc_state = project_array^project }
+						PREV = { save_temp_event_target_as = calc_state_target }
 						calculate_project_duration = yes
 						initialize_complete_project_decisions = yes
 					}
@@ -485,8 +488,9 @@ complete_project = {
 end_project = {
 	log = "[GetDateText]: [This.GetName]: end_project - project=[?project], refund=[?project_monetary_cost^project]"
 
-	if = { limit = { check_variable = { project_array^project < 0 } }
-		var:project_array^project = {
+	if = { limit = { check_variable = { project_array^project > 0 } }
+		any_state = {
+			limit = { state = ROOT.project_array^ROOT.project }
 			clear_variable = project_target_state_@PREV
 			for_each_loop = {
 				value = v
