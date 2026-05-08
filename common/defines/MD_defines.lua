@@ -320,7 +320,7 @@
 	NDefines.NMilitary.LAND_COMBAT_COLLATERAL_FORT_FACTOR = 0.07 -- 0.005
 	NDefines.NMilitary.ATTRITION_DAMAGE_ORG = 0.04 -- 0.08
 	NDefines.NMilitary.ATTRITION_EQUIPMENT_LOSS_CHANCE = 0.003 -- 0.1
-	NDefines.NMilitary.ATTRITION_WHILE_MOVING_FACTOR = 0.75 -- 1.2
+	NDefines.NMilitary.ATTRITION_WHILE_MOVING_FACTOR = 1.1 -- 1.2
 	NDefines.NMilitary.COMBAT_MOVEMENT_SPEED = 0.10
 	NDefines.NMilitary.TACTIC_SWAP_FREQUENCEY = 24 -- 24
 	NDefines.NMilitary.LAND_SPEED_MODIFIER = 0.05 -- 0.05
@@ -368,7 +368,7 @@
 	NDefines.NMilitary.STRATEGIC_SPEED_INFRA_MAX = 10.0               -- Additional speed of strategic redeployment on max-level infrastructure
 	NDefines.NMilitary.STRATEGIC_SPEED_RAIL_BASE = 20.0               -- Base speed of strategic redeployment when on railways -- vanilla is 15
 	NDefines.NMilitary.STRATEGIC_SPEED_RAIL_MAX = 40.0                -- Additional speed of strategic redeployment on max-level railways -- vanilla is 25
-	NDefines.NMilitary.STRATEGIC_REDEPLOY_ORG_RATIO = 0.5 -- 0.1
+	NDefines.NMilitary.STRATEGIC_REDEPLOY_ORG_RATIO = 0.4 -- 0.1
 	NDefines.NMilitary.LAND_EQUIPMENT_BASE_COST = 5 -- 10 --Used to determine Upgrade Cost
 	NDefines.NMilitary.LAND_EQUIPMENT_RAMP_COST = 3 -- 5
 	NDefines.NMilitary.NAVAL_EQUIPMENT_BASE_COST = 15 -- 25
@@ -376,7 +376,7 @@
 	NDefines.NMilitary.FASTER_ORG_REGAIN_MULT = 0.40 -- 1.0
 	NDefines.NMilitary.SLOWER_ORG_REGAIN_MULT = -0.6 -- -0.5
 	NDefines.NMilitary.FRONT_MIN_PATH_TO_REDEPLOY = 3 -- 8
-	NDefines.NMilitary.BASE_CAPTURE_EQUIPMENT_RATIO = 0.075 -- 0.0
+	NDefines.NMilitary.BASE_CAPTURE_EQUIPMENT_RATIO = 0.06 -- 0.0
 	NDefines.NMilitary.GARRISON_ORDER_ARMY_CAP_FACTOR = 2.0 -- 3.0
 	NDefines.NMilitary.ACCLIMATIZATION_SPEED_GAIN = 0.1 -- 0.15
 	NDefines.NMilitary.ACCLIMATIZATION_LOSS_SPEED_FACTOR = 0.5 -- 2.0
@@ -468,7 +468,7 @@
 	NDefines.NAir.NAVAL_STRIKE_DAMAGE_TO_ORG = 1.5 -- 3
 	NDefines.NAir.NAVAL_STRIKE_CARRIER_MULTIPLIER = 7.5 -- 5.0
 	NDefines.NAir.ACCIDENT_CHANCE_BASE = 0.025 -- 0.05
-	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 0.875 -- 2.0
+	NDefines.NAir.ACCIDENT_CHANCE_CARRIER_MULT = 1.15 -- 2.0
 	NDefines.NAir.ACCIDENT_CHANCE_BALANCE_MULT = 0.25 -- 0.5
 	NDefines.NAir.AIR_AGILITY_TO_NAVAL_STRIKE_AGILITY = 0.04 -- 0.01
 	NDefines.NAir.AIR_DAMAGE_TO_DIVISION_LOSSES = 1.5 -- 1.0
