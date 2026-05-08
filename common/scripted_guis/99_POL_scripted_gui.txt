@@ -775,4 +775,125 @@ scripted_gui = {
 			}
 		}
 	}
+
+	POL_sre_controlled_economy_scripted_gui = {
+		window_name = "POL_sre_controlled_economy_window"
+		context_type = decision_category
+		dirty = POL_gui_dirty_var
+
+		visible = {
+			has_completed_focus = POL_prl_was_a_failure
+			has_government = communism
+		}
+
+		triggers = {
+			POL_sre_increase_tools_factory_button_click_enabled = {
+				check_variable = { POL.free_factories > 0 }
+			}
+			POL_sre_decrease_tools_factory_button_click_enabled = {
+				check_variable = { POL.machine_tools_factories > 0 }
+			}
+
+			POL_sre_increase_machinery_factory_button_click_enabled = {
+				check_variable = { POL.free_factories > 0 }
+			}
+			POL_sre_decrease_machinery_factory_button_click_enabled = {
+				check_variable = { POL.heavy_machinery_factories > 0 }
+			}
+
+			POL_sre_increase_materials_factory_button_click_enabled = {
+				check_variable = { POL.free_factories > 0 }
+			}
+			POL_sre_decrease_materials_factory_button_click_enabled = {
+				check_variable = { POL.industrial_materials_factories > 0 }
+			}
+
+			POL_sre_increase_effort_button_click_enabled = {
+				NOT = { has_idea = POL_sre_max_effort }
+			}
+			POL_sre_decrease_effort_button_click_enabled = {
+				NOT = { has_idea = POL_sre_low_effort }
+			}
+		}
+
+		effects = {
+			POL_sre_increase_tools_factory_button_click = {
+				log = "[GetDateText]: [Root.GetName]: Button POL_add_tools_factory"
+				subtract_from_variable = { POL.free_factories = 1 }
+				add_to_variable = { POL.machine_tools_factories = 1 }
+				POL_gui_dirty_update = yes
+			}
+			POL_sre_decrease_tools_factory_button_click = {
+				log = "[GetDateText]: [Root.GetName]: Button POL_subtract_tools_factory"
+				subtract_from_variable = { POL.machine_tools_factories = 1 }
+				add_to_variable = { POL.free_factories = 1 }
+				POL_gui_dirty_update = yes
+			}
+
+			POL_sre_increase_machinery_factory_button_click = {
+				log = "[GetDateText]: [Root.GetName]: Button POL_add_machinery_factory"
+				subtract_from_variable = { POL.free_factories = 1 }
+				add_to_variable = { POL.heavy_machinery_factories = 1 }
+				POL_gui_dirty_update = yes
+			}
+			POL_sre_decrease_machinery_factory_button_click = {
+				log = "[GetDateText]: [Root.GetName]: Button POL_subtract_machinery_factory"
+				subtract_from_variable = { POL.heavy_machinery_factories = 1 }
+				add_to_variable = { POL.free_factories = 1 }
+				POL_gui_dirty_update = yes
+			}
+
+			POL_sre_increase_materials_factory_button_click = {
+				log = "[GetDateText]: [Root.GetName]: Button POL_add_materials_factory"
+				subtract_from_variable = { POL.free_factories = 1 }
+				add_to_variable = { POL.industrial_materials_factories = 1 }
+				POL_gui_dirty_update = yes
+			}
+			POL_sre_decrease_materials_factory_button_click = {
+				log = "[GetDateText]: [Root.GetName]: Button POL_subtract_materials_factory"
+				subtract_from_variable = { POL.industrial_materials_factories = 1 }
+				add_to_variable = { POL.free_factories = 1 }
+				POL_gui_dirty_update = yes
+			}
+
+			POL_sre_increase_effort_button_click = {
+				log = "[GetDateText]: [Root.GetName]: Decision POL_increase_effort"
+				if = {
+					limit = { has_idea = POL_sre_low_effort }
+					swap_ideas = {
+						add_idea = POL_sre_medium_effort
+						remove_idea = POL_sre_low_effort
+					}
+				}
+				else = {
+					swap_ideas = {
+						add_idea = POL_sre_max_effort
+						remove_idea = POL_sre_medium_effort
+					}
+				}
+
+				sre_calculate_number_of_factories_and_clear = yes
+				POL_gui_dirty_update = yes
+			}
+			POL_sre_decrease_effort_button_click = {
+				log = "[GetDateText]: [Root.GetName]: Decision POL_decrease_effort"
+				if = {
+					limit = { has_idea = POL_sre_medium_effort }
+					swap_ideas = {
+						add_idea = POL_sre_low_effort
+						remove_idea = POL_sre_medium_effort
+					}
+				}
+				else = {
+					swap_ideas = {
+						add_idea = POL_sre_medium_effort
+						remove_idea = POL_sre_max_effort
+					}
+				}
+
+				sre_calculate_number_of_factories_and_clear = yes
+				POL_gui_dirty_update = yes
+			}
+		}
+	}
 }

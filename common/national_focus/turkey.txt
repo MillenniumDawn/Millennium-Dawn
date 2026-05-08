@@ -4102,8 +4102,7 @@ focus_tree = {
 			}
 			SYR = {
 				emerging_autocracy_are_in_power = yes
-			}
-			SYR = {
+
 				has_war_with = FSA
 			}
 			TUR = {
@@ -4180,7 +4179,10 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TUR_back_assad"
-			send_embargo = FSA
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				send_embargo = FSA
+			}
 			add_equipment_to_stockpile = {
 				type = infantry_weapons_2
 				amount = -400
@@ -4244,7 +4246,10 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TUR_back_fsa"
-			send_embargo = SYR
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				send_embargo = SYR
+			}
 			add_equipment_to_stockpile = {
 				type = infantry_weapons_2
 				amount = -400
@@ -4460,8 +4465,7 @@ focus_tree = {
 				NOT = {
 					has_war_with = IRQ
 				}
-			}
-			TUR = {
+
 				NOT = {
 					has_war_with = USA
 				}
@@ -4635,14 +4639,11 @@ focus_tree = {
 			add_popularity = { ideology = democratic popularity = 0.05 }
 			if = {
 				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
-				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-				effect_tooltip = {
-					add_opinion_modifier = { target = ROOT modifier = recent_actions_positive }
-					reverse_add_opinion_modifier = { target = ROOT modifier = recent_actions_positive }
-				}
-				hidden_effect = {
-					for_each_scope_loop = {
-						array = global.EU_member
+				for_each_scope_loop = {
+					array = global.EU_member
+					tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+					if = {
+						limit = { NOT = { tag = ROOT } }
 						add_opinion_modifier = { target = ROOT modifier = recent_actions_positive }
 						reverse_add_opinion_modifier = { target = ROOT modifier = recent_actions_positive }
 					}
@@ -5449,18 +5450,24 @@ focus_tree = {
 			clr_country_flag = banned_head_scarf
 			set_temp_variable = { FP_pop_drop = party_pop_array^6 }
 			multiply_temp_variable = { FP_pop_drop = -0.25 }
-			add_to_variable = { party_pop_array^6 = FP_pop_drop }
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = FP_pop_drop }
+			add_relative_party_popularity = yes
 			custom_effect_tooltip = TUR_FP_POP_DROP
 			add_popularity = { ideology = communism popularity = FP_pop_drop }
 			set_temp_variable = { AKP_pop_drop = party_pop_array^12 }
 			multiply_temp_variable = { AKP_pop_drop = -0.25 }
-			add_to_variable = { party_pop_array^12 = AKP_pop_drop }
+			set_temp_variable = { party_index = 12 }
+			set_temp_variable = { party_popularity_increase = AKP_pop_drop }
+			add_relative_party_popularity = yes
 			custom_effect_tooltip = TUR_AKP_POP_DROP
 			add_popularity = { ideology = neutrality popularity = AKP_pop_drop }
 			set_temp_variable = { CHP_pop_gain = FP_pop_drop }
 			add_to_temp_variable = { CHP_pop_gain = AKP_pop_drop }
 			multiply_temp_variable = { CHP_pop_gain = -1 }
-			add_to_variable = { party_pop_array^1 = CHP_pop_gain }
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = CHP_pop_gain }
+			add_relative_party_popularity = yes
 			custom_effect_tooltip = TUR_CHP_POP_GAIN
 			add_popularity = { ideology = democratic popularity = CHP_pop_gain }
 			recalculate_party = yes
@@ -6694,26 +6701,19 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus TUR_stern_commitment_to_nato"
 			one_random_arms_factory = yes
 			add_popularity = { ideology = democratic popularity = 0.05 }
-			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = recent_actions_positive
-				}
-				reverse_add_opinion_modifier = {
-					target = ROOT
-					modifier = recent_actions_positive
-				}
-			}
 			for_each_scope_loop = {
 				array = global.nato_members
-				add_opinion_modifier = {
-					target = ROOT
-					modifier = recent_actions_positive
-				}
-				reverse_add_opinion_modifier = {
-					target = ROOT
-					modifier = recent_actions_positive
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = recent_actions_positive
+					}
+					reverse_add_opinion_modifier = {
+						target = ROOT
+						modifier = recent_actions_positive
+					}
 				}
 			}
 		}
@@ -8747,13 +8747,13 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus TUR_leave_NATO"
 			remove_ideas = NATO_member
 			remove_from_tech_sharing_group = NATO_Tech_Share
-			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				add_opinion_modifier = { target = ROOT modifier = left_alliance }
-			}
 			for_each_scope_loop = {
 				array = global.nato_members
-				add_opinion_modifier = { target = ROOT modifier = left_alliance }
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					add_opinion_modifier = { target = ROOT modifier = left_alliance }
+				}
 			}
 			hidden_effect = {
 				news_event = { id = NATO.6 hours = 6 }

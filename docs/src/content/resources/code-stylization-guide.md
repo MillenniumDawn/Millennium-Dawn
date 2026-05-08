@@ -36,6 +36,7 @@ These guidelines help keep the mod running smoothly:
 - **On Actions**: Use tag-specific variants (`on_daily_TAG`) instead of global triggers
 - **Dynamic Modifiers**: Use sparingly. Avoid `force_update_dynamic_modifier` as it causes lag
 - **Arrays**: Replace `every_country`/`random_country` with specific array triggers
+- **Tooltip Duplication**: Never duplicate logic in `effect_tooltip` + `for_each_scope_loop`. Use `tooltip = TT_ALL_*` inside the loop instead — this eliminates double-evaluation and prevents drift between tooltip text and actual execution.
 - **Cleanup**: Remove unused code and commented-out blocks
 
 ---
@@ -207,8 +208,8 @@ country_event = {
 ## Best Practices
 
 - Include `allowed_civil_war = { always = yes }` for civil war tags
-- **Remove** `allowed = { always = no }` - this is the default and hurts performance
-- **Remove** `cancel = { always = no }` - checked hourly, never true
+- **Remove** `allowed = { always = no }` - this is the default; `allowed` is checked once at game start/load and `add_ideas` bypasses it entirely. Tradeoff: `has_available_idea_with_trait` builds a list of every idea that passes `allowed`, then evaluates their `available` triggers at runtime. Removing `allowed = { always = no }` lets more ideas into that pool (more runtime checks), while keeping it filters them out. MD does not use that trigger, so the tradeoff is moot here
+- **Remove** `cancel = { always = no }` - checked hourly, never true; redundant default
 - **Remove** empty `on_add = { log = "" }` unless you're actually doing something
 - Log in `on_add` only when making changes
 
@@ -320,4 +321,6 @@ CHI_norinco_manufacturer = {
 # Related Resources
 
 - [Code Resources](/dev-resources/code-resource) - Modifiers and effects
+- [Dynamic Modifiers](/dev-resources/dynamic-modifiers) - Dynamic modifier tooltip usage
+- [Claude Code Skills](/dev-resources/claude-code-skills) - AI-assisted development tools
 - [Game Rules](/player-tutorials/game-rules) - Game rule reference

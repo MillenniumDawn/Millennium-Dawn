@@ -544,13 +544,14 @@ focus_tree = {
 		}
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_eyeing_the_west"
-			every_country = {
-				limit = {
-					has_idea = NATO_member
-					has_government = democratic
+			for_each_scope_loop = {
+				array = global.nato_members
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { has_government = democratic }
+					add_opinion_modifier = { target = SIN modifier = declaration_of_friendship }
+					reverse_add_opinion_modifier = { target = SIN modifier = declaration_of_friendship }
 				}
-				add_opinion_modifier = { target = SIN modifier = declaration_of_friendship }
-				reverse_add_opinion_modifier = { target = SIN modifier = declaration_of_friendship }
 			}
 		}
 
@@ -2901,13 +2902,34 @@ focus_tree = {
 		mutually_exclusive = { focus = SIN_go_east }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_go_west"
+			for_each_scope_loop = {
+				array = global.nato_members
+				if = {
+					limit = {
+						NOT = { original_tag = SIN }
+						NOT = { has_idea = EU_member }
+						NOT = { has_idea = Major_Non_NATO_Ally }
+					}
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+					add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
+				}
+			}
+			for_each_scope_loop = {
+				array = global.EU_member
+				if = {
+					limit = {
+						NOT = { original_tag = SIN }
+						NOT = { has_idea = Major_Non_NATO_Ally }
+					}
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+					add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
+				}
+			}
 			every_country = {
 				limit = {
-					OR = {
-						has_idea = NATO_member
-						has_idea = EU_member
-						has_idea = Major_Non_NATO_Ally
-					}
+					has_idea = Major_Non_NATO_Ally
 					NOT = { original_tag = SIN }
 				}
 				set_temp_variable = { influence_target = THIS.id }
@@ -2974,12 +2996,21 @@ focus_tree = {
 		prerequisite = { focus = SIN_go_west }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_ally_with_nato"
+			for_each_scope_loop = {
+				array = global.nato_members
+				if = {
+					limit = {
+						NOT = { original_tag = SIN }
+					}
+					set_temp_variable = { receiver_nation = THIS.id }
+					set_temp_variable = { sender_nation = SIN.id }
+					set_improved_trade_agreement = yes
+					SIN_calculate_singaporean_trade_agreements = yes
+				}
+			}
 			every_country = {
 				limit = {
-					OR = {
-						has_idea = Major_Non_NATO_Ally
-						has_idea = NATO_member
-					}
+					has_idea = Major_Non_NATO_Ally
 					NOT = { original_tag = SIN }
 				}
 				set_temp_variable = { receiver_nation = THIS.id }
@@ -3017,46 +3048,27 @@ focus_tree = {
 			is_subject = no
 			has_war = no
 			threat > 0.15
-			USA = {
-				 has_idea = NATO_member
+			OR = {
 				has_government = democratic
-				 NOT = { has_war_with = SIN }
-				has_opinion = {
-					target = SIN
-					value > 9
-				}
-			 }
-			FRA = {
-				 has_government = democratic
-				 NOT = { has_war_with = SIN }
-				has_opinion = {
-					target = SIN
-					value > 9
-				}
-			 }
-			ENG = {
-				 has_government = democratic
-				 NOT = { has_war_with = SIN }
-				has_opinion = {
-					target = SIN
-					value > 9
-				}
-			 }
-			SIN = {
-				NOT = { has_war_with = USA }
-				NOT = { has_government = nationalist }
-				NOT = { has_government = communism }
-				NOT = { has_government = fascism }
-				has_opinion = {
-					target = USA
-					target = FRA
-					target = ENG
-					value > 9
+				has_government = neutrality
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				any_of_scopes = {
+					array = global.nato_members
+					tooltip = TT_NATO_FACTION_LEADER_TOOLTIP
+					is_faction_leader = yes
+					has_opinion = {
+						target = ROOT
+						value > 34
+					}
 				}
 			}
-			NOT = {
-				any_enemy_country = {
-					has_idea = NATO_member
+			else = {
+				OR = {
+					USA = { is_faction_leader = yes has_opinion = { target = ROOT value > 34 } }
+					FRA = { is_faction_leader = yes has_opinion = { target = ROOT value > 34 } }
+					ENG = { is_faction_leader = yes has_opinion = { target = ROOT value > 34 } }
 				}
 			}
 			if = {
@@ -3072,7 +3084,12 @@ focus_tree = {
 		prerequisite = { focus = SIN_ally_with_nato }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_join_nato"
-			add_ideas = NATO_member
+			NATO_join_via_event = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_ideas = NATO_member
+				add_to_tech_sharing_group = NATO_Tech_Share
+			}
 		}
 
 		ai_will_do = {
@@ -5111,15 +5128,11 @@ focus_tree = {
 				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
 				set_temp_variable = { tag_index = SIN.id }
 				set_temp_variable = { percent_change = 1 }
-				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-				effect_tooltip = {
-					set_temp_variable = { influence_target = THIS.id }
-					change_influence_percentage = yes
-					add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
-				}
-				hidden_effect = {
-					for_each_scope_loop = {
-						array = global.EU_member
+				for_each_scope_loop = {
+					array = global.EU_member
+					tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+					if = {
+						limit = { NOT = { tag = ROOT } }
 						set_temp_variable = { influence_target = THIS.id }
 						change_influence_percentage = yes
 						add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
@@ -7099,18 +7112,29 @@ focus_tree = {
 		prerequisite = { focus = SIN_expand_foreign_reserve }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_gi_invest_to_africa_nation"
-			every_country = {
-				limit = {
-					OR = {
-						has_idea = OAU_member
-						has_idea = AU_member
+			for_each_scope_loop = {
+				array = global.AU_member
+				if = {
+					limit = {
+						NOT = { original_tag = SIN }
 					}
-					NOT = { original_tag = SIN }
+					set_temp_variable = { receiver_nation = THIS.id }
+					set_temp_variable = { sender_nation = SIN.id }
+					set_improved_trade_agreement = yes
+					SIN_calculate_singaporean_trade_agreements = yes
 				}
-				set_temp_variable = { receiver_nation = THIS.id }
-				set_temp_variable = { sender_nation = SIN.id }
-				set_improved_trade_agreement = yes
-				SIN_calculate_singaporean_trade_agreements = yes
+			}
+			for_each_scope_loop = {
+				array = global.OAU_member
+				if = {
+					limit = {
+						NOT = { original_tag = SIN }
+					}
+					set_temp_variable = { receiver_nation = THIS.id }
+					set_temp_variable = { sender_nation = SIN.id }
+					set_improved_trade_agreement = yes
+					SIN_calculate_singaporean_trade_agreements = yes
+				}
 			}
 			215 = {
 				add_building_construction = {
@@ -7192,15 +7216,18 @@ focus_tree = {
 		prerequisite = { focus = SIN_expand_foreign_reserve }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_gi_invest_to_europian_union_country"
-			every_country = {
-				limit = {
-					has_idea = EU_member
-					NOT = { original_tag = SIN }
+			for_each_scope_loop = {
+				array = global.EU_member
+				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				if = {
+					limit = {
+						NOT = { original_tag = SIN }
+					}
+					set_temp_variable = { receiver_nation = THIS.id }
+					set_temp_variable = { sender_nation = SIN.id }
+					set_improved_trade_agreement = yes
+					SIN_calculate_singaporean_trade_agreements = yes
 				}
-				set_temp_variable = { receiver_nation = THIS.id }
-				set_temp_variable = { sender_nation = SIN.id }
-				set_improved_trade_agreement = yes
-				SIN_calculate_singaporean_trade_agreements = yes
 			}
 			943 = {
 				add_building_construction = {
@@ -7217,12 +7244,19 @@ focus_tree = {
 				}
 			}
 			set_temp_variable = { percent_change = 1 }
+			for_each_scope_loop = {
+				array = global.EU_member
+				if = {
+					limit = {
+						NOT = { original_tag = SIN }
+					}
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+				}
+			}
 			every_country = {
 				limit = {
-					OR = {
-						is_neighbor_of = SIN
-						has_idea = EU_member
-					}
+					is_neighbor_of = SIN
 					NOT = { original_tag = SIN }
 				}
 				set_temp_variable = { influence_target = THIS.id }
@@ -7267,15 +7301,18 @@ focus_tree = {
 		prerequisite = { focus = SIN_expand_foreign_reserve }
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_gi_invest_to_csto_nation"
-			every_country = {
-				limit = {
-					has_idea = CSTO_member
-					NOT = { original_tag = SIN }
+			for_each_scope_loop = {
+				array = global.CSTO_member
+				tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = {
+						NOT = { original_tag = SIN }
+					}
+					set_temp_variable = { receiver_nation = THIS.id }
+					set_temp_variable = { sender_nation = SIN.id }
+					set_improved_trade_agreement = yes
+					SIN_calculate_singaporean_trade_agreements = yes
 				}
-				set_temp_variable = { receiver_nation = THIS.id }
-				set_temp_variable = { sender_nation = SIN.id }
-				set_improved_trade_agreement = yes
-				SIN_calculate_singaporean_trade_agreements = yes
 			}
 			644 = {
 				add_building_construction = {
@@ -8641,8 +8678,8 @@ focus_tree = {
 
 	###Tuas Area Development###
 	focus = {
-		id = SIN_tuas_bussiness_area_development
-		icon = SIN_tuas_bussiness_area_development
+		id = SIN_tuas_business_area_development
+		icon = SIN_tuas_business_area_development
 
 		x = 3
 		y = 1
@@ -8665,7 +8702,7 @@ focus_tree = {
 		prerequisite = { focus = SIN_singapore_masterplan }
 
 		completion_reward = {
-			log = "[GetDateText]: [THIS.GetName]: Focus SIN_tuas_bussiness_area_development"
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_tuas_business_area_development"
 			530 = {
 				add_building_construction = {
 					type = offices
@@ -8698,7 +8735,7 @@ focus_tree = {
 
 		x = 0
 		y = 1
-		relative_position_id = SIN_tuas_bussiness_area_development
+		relative_position_id = SIN_tuas_business_area_development
 
 		cost = 10 # 70 days
 
@@ -8714,7 +8751,7 @@ focus_tree = {
 		}
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
-		prerequisite = { focus = SIN_tuas_bussiness_area_development }
+		prerequisite = { focus = SIN_tuas_business_area_development }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_tuas_reclamation_project_phase_1"

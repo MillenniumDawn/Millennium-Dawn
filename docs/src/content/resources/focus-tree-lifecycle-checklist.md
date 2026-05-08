@@ -97,3 +97,19 @@ This section is a subsection of coding. It is is mostly for visual and quality a
 <input type="checkbox"> Other localisation teams are notified about incoming content
 
 <input type="checkbox"> Request is merged, job is done, git branch deleted and discord channel archived
+
+---
+
+## Developer Tools
+
+The following Claude Code skills automate checklist items. See [Claude Code Skills](/dev-resources/claude-code-skills/) for the full reference.
+
+| Skill                         | What it automates                                     |
+| ----------------------------- | ----------------------------------------------------- |
+| `/new-focus <TAG>`            | Scaffolds the focus tree file with required structure |
+| `/add-leader <TAG>`           | Scaffolds generals and admirals using count formulas  |
+| `/lifecycle-check <TAG>`      | Checks which lifecycle items are done or missing      |
+| `/search-filter-check <file>` | Validates search filters on all focuses               |
+| `/content-review`             | Runs the full content review checklist                |
+| `/validate`                   | Runs all automated validation tools                   |
+| `/changelog`                  | Updates Changelog.txt with branch changes             |

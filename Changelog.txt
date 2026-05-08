@@ -4,6 +4,9 @@ v2.0.0
   - Add around 70 different achievements for various nations for additional goals/plans for the players
   - [SIN] Increased the year count from 2004 to 2006 for the "Head of the Tigers" achievement
 
+ Content:
+  - Added ~834 new terrain photo province modifiers across ~90 nations
+
  AI:
   - Added AI desire logic to negotiate_operative_release: base 15, opinion/faction/power rank bonuses, PP gating, interest rate kill switch
   - Added AI desire logic to enforce_peace_option: great/super power bonus, faction/subject/opinion bonuses, PP gate, war kill switch
@@ -99,11 +102,13 @@ v2.0.0
   - AI must now have meaningful war contribution before making territorial demands in peace deals
   - AI peace deal acceptance now penalizes excessive demands proportionally
   - [BLR] [SOV] AI will no longer pursue Union State decisions when Belarus has not chosen the Union State path
+  - [USA] Replaced flat base = 55 AI weighting on all foreign policy decisions with contextual modifiers (historical focus, geopolitical context, leader checks, war penalties)
+  - [USA] Extracted Belarus reauthorization act effects (~240 lines) to USA_belarus_reauthorization_act_effect scripted effect
+  - [USA] Replaced any_country with any_of_scopes using global.american_nations array for South America autocracy check
 
  Balance:
   - Increased Fossil Fuel Powerplant base power gain from 1 GW to 2 GW
-  - Increased Nuclear Reactor base power gain from 2 GW to 5 GW
-  - Increased advanced building resource costs (tungsten 2→3, chromium 1→2)
+  - Increased Nuclear Reactor base power gain from 2 GW to 4 GW
   - Rebalanced base worker requirements across all buildings (Civilian Industry 275K→206K, Military Industry 25K→18.8K, Naval Yard 25K→18.8K, Office Sector 630K→473K, Agriculture District 250K→188K, Microchip Plant 50K→37.5K, Composite Plant 50K→37.5K, Synthetic Refinery 245K→184K)
   - Increased base energy consumption for Civilian Industry, Military Industry, and Naval Yards from 0.4 GW to 0.5 GW
   - [LIC] Reduced focus times from 70 days (cost 10) to 55 days (cost 7.86) for 19 Liechtenstein focuses
@@ -225,6 +230,11 @@ v2.0.0
   - Increased reparation payment cap from 150 to 200
 
  Bugfix:
+  - [USA] Fixed USA_two_percent decision checking Iran conditions instead of NATO membership (copy-paste bug from USA_push_iran)
+  - [USA] Added missing date gate (2001-2005) to USA_sale_of_the_kidd_destroyer decision
+  - [USA] Removed tautological OR blocks from resource decision AI weighting (steel, aluminium, tungsten)
+  - Fixed EU Parliament and Council voting being permanently locked after a budget/MFF draft completes: draft flags were never cleared, blocking future reforms; also added ECB president guard on draft missions, fixed NOT-AND-trap in reform button trigger, and fixed typo in remove vote handler (Issue #1177)
+  - Fixed United States of Europe council vote not adding 111 to EU_passed_votes (added 0 instead) because on_annex reset the vote variable during member annexations; also ensured focus_EU111_QMV_yes flag is set on the forming country for USoE focus tree progression (Issue #1071)
   - [GER] Fixed Germany civil war being triggered too easily for the AI: raised ai_will_do base from 1 to 20 on the three BfV crisis purge decisions (GER_purge_banks, GER_purge_government_institutions, GER_purge_military) so the AI takes them within the 100-day mission window; also fixed NOT AND trap in their available blocks that allowed multiple purge decisions to be active simultaneously (Issue #1046)
   - [ALG] Fixed Su-30 purchase focus not granting any aircraft due to invalid variant name "Su-30MKA"; corrected to "Su-30" (Issue #1025)
   - [ALG] Fixed division-spawning focuses for special operations and marine forces silently failing because the "104th Operational Maneuvers Regiment RMO" template was never defined; added inline template creation with has_template guard (Issue #1025)
@@ -274,6 +284,7 @@ v2.0.0
   - Fixed purchase_reactor_grade_material reject log format to be consistent with other diplomatic actions
   - Added missing localisation keys for close_embassy_action accept/reject titles and descriptions
   - [ISR] Fixed liberal leader selection logic preventing Yair Lapid from ever appearing - NOT block incorrectly checked all five party flags as a group instead of individually, causing Yitzhak Mordechai to always trigger first
+  - [SOV] Fixed Uzbekistan missing from CIS democratic foreign policy focuses - added UZB to SOV_russia_inivte_to_cis_former_member, SOV_russia_create_unite_cis_forces, and SOV_russia_create_unite_cis_state scripted effects, plus the autonomy_state_cis allowed block (Issue #1147)
   - Fixed cyber warfare operations not clearing the target attack flag on mission failure, permanently blocking future operations against that country
   - [GAH] Fixed leader succession for conservatism, socialism, Communist-State, Neutral_green, Neutral_Communism, and Monarchist ideologies — successor leaders were in unreachable else_if blocks and could never appear
   - [ZAM] Fixed leader succession for liberalism, socialism, and Neutral_green ideologies — successor leaders were in unreachable else_if blocks and could never appear
@@ -481,9 +492,24 @@ v2.0.0
   - [DEN] Fixed gulf exploitation income missing the *0.0003 multiplier, which made the income contribution effectively zero
   - [WAA] Fixed narcotics income missing original_tag = WAA guard, which could grant income to any country that briefly held the WAA_Narcotics_Producer idea
   - [DPR] Consolidated duplicated DPR_rf_money weekly contribution blocks while preserving the 0.15/week total (was split across two if blocks at 0.05 + 0.10)
+  - [UKR] Fixed Ukrainian spy Alexey Arestovich portrait not being displayed
+  - [CZE] Fixed some of the political party modifiers (the one displayed in political leaders window) not being correctly applied and displayed
+  - [NKO] Fixed Trade for the North Korea
+  - [DAR/SUD] Fixed Northern Darfur falling to Chad when it should still be owned by Darfur
+  - [POL] Fixed State Run Economy not disappearing after no longer being communist
 
  Content:
+  - New Content for North korea and South Korea post reuification and unification
+  - North korea Mandate System  added and naval buildup decisions
   - NEW TREES: United Kingdom, Algeria
+  - NEW MIO TREES: United States of America, Italy, France and Russia
+  - Complete Rework of Generic MIO's and defense companies
+  - [USA] Added 10 new foreign policy decisions: India Civil Nuclear Agreement, Vietnam Comprehensive Partnership, CAATSA Turkey Sanctions, Recognize Guaidó, Cuba Thaw, Cuba Sanctions Tightening, Huawei Export Blacklist, Semiconductor Export Controls, Hong Kong Autonomy Act, Fentanyl Cartel FTO Designation
+  - [USA] Added 10 new response events (department_of_state.210-219) for the new foreign policy decisions
+  - [USA] Added Afghanistan withdrawal event (iraq_war.24) triggered when Iraq war fails while Afghan mission is active
+  - [USA] Added MNF coalition capitulation handling in on_actions for Iraq war
+  - [USA] Added generic_increased_cooperation relation modifier for diplomatic partnership decisions
+  - [USA] Added generic opinion modifiers (negative_five through negative_fifty, positive_five through positive_fifteen)
   - Converted reactor-grade material purchase from targeted decision to scripted diplomatic action with full AI acceptance logic and proper accept/reject flow
   - Expanded the Technology Tree untill 2080
   - 50 new Special Projects
@@ -605,6 +631,9 @@ v2.0.0
     - Scenario features a global war between the humanity and a Chimera nation, monsters inspired by the BETA from the anime/manga series "Muv Luv"
     - BETA have unique unit models and are extremely powerful, but they do not have access to the full range of equipment and are limited to a few unit types
     - Entire world forms megastates and alliances to combat the BETA, gaining whole new focus tree, decisions, events and HACS Combat Mechs units to fight them off
+  - [JAP] Added Japan Air OOB and better GFX for plane
+  - Removed generic eastern europe scientist Victor Kozin because of the too low quality portrait
+  - [POL] State Run Economy decision category no longer has slow decisions, instead it has quick to use buttons.
 
  Database:
   - Land drone technologies now properly give the Ranger Light Recce company recon bonuses like all other recon units
@@ -626,6 +655,9 @@ v2.0.0
   - [ISR] More accurate representation of israeli submarines: added INS Tanin (based on german Type 206 Class)
   - [ISR] More accurate representation of israeli submarine deals: usualy Israel byus 3 submarines and Bibi's deal is also for 3 submarines. Both deals are about upgraded Dolphin class submarines
   - [ISR] Proper representation of israeli corvettes: added templates for Sa'ar 4.5 Aliya Class and Sa'ar 4.5 Hetz Class and ships by those templates
+  - Removed Duplicate Generic MIO Trait trees
+  - Created a new Civilian Ship Equipment Category containing convoy, support ship and repair ship
+  - All number_state_building and number_random_building scripted effects have now a skip_payment check
 
  Factions:
   - Added a new faction goal "Establish an Airborne Corps"
@@ -657,6 +689,8 @@ v2.0.0
   - Moved unused technology icons to resources/deprecated-tech-graphics/
   - [GUY] Standardized Guyana's leader portrait in 2000
   - Added 3D models for the HACS mechs, BETA units, Defense Line wall, and Chimera Portal
+  - Fixed cultural generic unit models overriding country-specific tiered models due to HOI4 1.18 entity matching change (Issue #1106)
+  - Added new Equipment Categories and Trait Icons for MIO's
 
  Game Rules:
   - [ZOM] Added Zombie Spawn Location game rule with India, Central Africa, East Asia, and Multiple Locations options (Issue #205)
@@ -696,6 +730,7 @@ v2.0.0
   - Added localisation for new drone raid types (airfield, power grid, rocket site)
   - [GER] Added 15 missing generic dynamic modifier tooltip keys for army, navy, and air modifiers (Issue #790)
   - [GER] Replaced 13 non-existent GER-specific tooltip keys with existing generic equivalents in the focus tree and events
+  - [CZE] Škoda Superb Car Export countries have now better localized prerequisites
 
  Map:
   - HMNB Clyde is now properly represented with a Level 8 Naval Base + Naval Headquarters for the UK's Nuclear Submarines deployment
@@ -731,6 +766,7 @@ v2.0.0
   - Shifted the renewable energy calculation to the monthly tick for better performance
   - Shifted the Ideological Power subsystem to on demand updates rather than weekly checks and a fallback for monthly
   - Removed the final batch of Mean Time to Happen legacy events to optimize the game better during runtime
+  - Refactored/refined investment subsystem: collapsed redundant scripted localisation, added array-driven building cost lookups, introduced GUI dirty counters, and hoisted AI invariants before per-state loops
   - Removed logging that was not useful to reduce the amount of information being rendered and output to the game
   - Removed and reduced significant numbers of any_country/every_country calls in the mod in various places
   - Moved all productivity state variables into the history/states so as to not do additional scope expansion

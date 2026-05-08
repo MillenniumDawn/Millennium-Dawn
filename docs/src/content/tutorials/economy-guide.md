@@ -1064,14 +1064,9 @@ Immigration control costs money. Stricter restrictions cost more to enforce. The
 
 ## International Investments
 
-You can construct buildings in foreign countries through International Investments. This requires spending treasury funds and takes time, but provides:
+International investments let you fund construction projects in foreign states. Completed buildings permanently join the target state, and you earn passive income — approximately **6% annually** on your total invested value. You also gain influence over the target country with each accepted project. Up to 15 projects can run simultaneously.
 
-- **Investment returns**: approximately 6% annually, paid as weekly income, subject to modification by national spirits and currency strength
-- **Influence**: gaining leverage over the receiving country
-
-Some countries will refuse international investments. AI-controlled countries may also offer to invest in yours.
-
-To initiate an international investment, click on a foreign state, then click the arrow button to open the interface and proceed. Investment returns are denominated in the reserve currency, so a weak domestic currency increases the local value of returns.
+For a full breakdown of buildable types, costs, duration mechanics, ROI calculation, and influence gain, see the [Investments Guide](/player-tutorials/investments-guide).
 
 ### International Market
 
@@ -1081,15 +1076,9 @@ The International Market is a vanilla HOI4 mechanic that Millennium Dawn include
 
 ## Internal Investment
 
-Internal investments work like international investments but target your own states. Click on a domestic state, then click the arrow button to open the interface.
+Internal investments apply temporary modifiers to your own states — things like productivity growth bonuses, construction speed buffs, extra building slots, and resource output boosts. Each option costs **75 Political Power** plus a treasury payment scaled to your GDP and lasts 120–180 days. The number of concurrent investments you can run scales with your power rank (2 slots for minor powers, up to 6 for superpowers).
 
-Internal investments can:
-
-- Increase a state's productivity growth rate
-- Add building slots
-- Apply temporary modifiers for a limited period
-
-Each investment costs political power and treasury funds. Investment costs are increased by inflation.
+For the full list of options, costs, effects, and tips, see the [Investments Guide](/player-tutorials/investments-guide).
 
 ---
 
@@ -1200,6 +1189,7 @@ If interest exceeds 25% and the country is not at war, the AI will default on it
 
 ## Related Documentation
 
+- [Investments Guide](/player-tutorials/investments-guide) - Full detail on international and internal investment systems
 - [International Systems Guide](/player-tutorials/international-systems) - For PMCs, sanctions, and other international economic systems
 - [European Union Tutorial](/player-tutorials/eu-tutorial) - For EU-specific economic mechanics (Eurozone, ECB, single market)
 - [Game Rules](/player-tutorials/game-rules)

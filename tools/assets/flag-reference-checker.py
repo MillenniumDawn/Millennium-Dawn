@@ -80,8 +80,7 @@ def scan_directory(search_dir):
             except (IOError, OSError):
                 continue
 
-    print(f" Done! ({files_processed} files)")
-    print()
+    print(f" Done! ({files_processed} files)\n")
 
     # Now count references for each flag - search per file instead of per flag
     print("Analyzing flag references...")
@@ -103,8 +102,7 @@ def scan_directory(search_dir):
                 flush=True,
             )
 
-    print(f"\r  Processed {flags_processed}/{len(file_contents)} files... Done!")
-    print()
+    print(f"\r  Processed {flags_processed}/{len(file_contents)} files... Done!\n")
 
 
 def main():
@@ -119,13 +117,11 @@ def main():
         sys.exit(1)
 
     print(f"Scanning for flags in: {search_dir}")
-    print("=" * 60)
-    print()
+    print("=" * 60 + "\n")
 
     all_flags, flag_references = scan_directory(search_dir)
 
-    print(f"Found {len(all_flags)} unique flags")
-    print()
+    print(f"Found {len(all_flags)} unique flags\n")
 
     # Sort flags alphabetically
     for flag in sorted(all_flags):

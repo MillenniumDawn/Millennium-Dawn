@@ -73,6 +73,26 @@ NOT = { has_idea = foo }
 NOT = { has_idea = bar }
 ```
 
+## Tautological OR in ai_will_do modifiers
+
+An `OR` block inside an `ai_will_do modifier` that covers all possible values of a trigger is always true and does nothing useful:
+
+```
+# Wrong — OR(yes, no) is always true; modifier fires unconditionally
+modifier = {
+    add = 1
+    OR = {
+        is_historical_focus_on = yes
+        is_historical_focus_on = no
+    }
+}
+
+# Correct — if you want an unconditional bonus, remove the OR entirely
+# and fold the value into base = N, or remove the modifier block
+```
+
+Remove the entire modifier block and increase `base` by the `add` amount instead. If a real condition was intended (e.g., add only when historical focus is on), write it without the tautological OR.
+
 ## Implicit AND in triggers
 
 Multiple conditions in a trigger block are implicitly AND-ed together. Never wrap conditions in redundant `AND = { }` blocks:
@@ -86,6 +106,16 @@ trigger = { A B C }
 ```
 
 This applies to `trigger`, `limit`, `visible`, `available`, `activation`, `cancel_trigger`, and all other trigger contexts.
+
+## Modifier names
+
+Invalid modifier names compile silently and do nothing — the game logs an "Unknown modifier" error but loads the idea/focus anyway. **Never guess a modifier name.** Always verify it exists first:
+
+```bash
+grep -r "modifier_name_here" common/ideas/*.txt common/national_focus/*.txt | head -3
+```
+
+If no results, the name is wrong. Check the wiki or find a similar modifier in the codebase and use the exact same spelling.
 
 ## threat scale
 
@@ -109,6 +139,49 @@ check_variable = {
 
 Valid `compare` values: `equals`, `greater_than`, `less_than`, `greater_than_or_equals`, `less_than_or_equals`, `not_equals`.
 
+## is_in_faction vs is_in_faction_with
+
+`is_in_faction` is a **boolean** trigger (`yes`/`no`). To check faction membership with a specific country, use `is_in_faction_with = TAG`. Using `is_in_faction = TAG` silently fails. **Caught by `check_common_mistakes.py`.**
+
+## add_to_faction scope
+
+`add_to_faction` adds a **country** to the **current scope's faction**. It takes a country tag or scope, not a faction name. `add_to_faction = BRICS` is wrong — use `add_to_faction = TAG`.
+
+## Minimize scope expansion
+
+Avoid opening a scope just to check a single boolean or trigger when a flat equivalent exists. Every `TAG = { ... }` is a scope switch the engine must resolve.
+
+```
+# Wrong — unnecessary scope expansion
+NOT = { PAK = { exists = no } }
+PAK = { exists = yes }
+
+# Correct — flat trigger, no scope switch
+country_exists = PAK
+```
+
+Other common patterns:
+
+| Verbose (scope expansion)       | Flat equivalent        |
+| ------------------------------- | ---------------------- |
+| `TAG = { exists = yes }`        | `country_exists = TAG` |
+| `TAG = { is_puppet = yes }`     | `is_puppet_of = TAG`   |
+| `TAG = { has_war_with = ROOT }` | `has_war_with = TAG`   |
+
+Apply this principle everywhere — focuses, events, decisions, scripted triggers. If a flat trigger exists, prefer it.
+
+## Case sensitivity in references
+
+HOI4 on Linux is **case-sensitive** for all identifiers — ideas, events, decisions, focuses, variables, flags, GFX sprites, and scripted effects/triggers. `has_idea = The_Military` will NOT match a definition `the_military`. Always match the exact case of the definition. **Caught by `validate_ideas.py` for ideas.**
+
+## Trade agreement checks in MD
+
+`has_trade_agreement_with` is **not a valid HOI4 trigger** — compiles silently, always evaluates false. MD uses `has_country_flag = trade_agreement@TAG`. **Caught by `check_common_mistakes.py`.**
+
+## Decision allowed vs available
+
+`allowed` in decisions is evaluated **once at game start** and locked. Dynamic conditions (factory counts, opinion, date) must go in `available` or `visible`. **Caught by `check_common_mistakes.py`** for clearly-dynamic triggers.
+
 ## if/else over if/if
 
 When two consecutive `if` blocks cover complementary conditions, always use `if/else`:
@@ -122,6 +195,66 @@ if = { limit = { check_variable = { X < 7 } } ... }
 if = { limit = { check_variable = { X > 7 } } ... }
 else = { ... }
 ```
+
+# Array Index Semantics
+
+When a function uses `^index` array subscripts, the **meaning of the index variable** must be obvious and consistent. Common bugs arise when two different index types are stored in similarly-named variables.
+
+| Variable name              | Should hold                  | Must NOT hold                                   |
+| -------------------------- | ---------------------------- | ----------------------------------------------- |
+| `project`, `slot`, `idx`   | Slot / array position (0..N) | Building type, category ID, or other lookup key |
+| `type`, `kind`, `category` | Lookup key / type ID (1..N)  | Slot index                                      |
+
+**Rule:** When a function parameter is an array index, document it in the function comment. Verify every caller passes the right kind of index. See `.claude/docs/refactor-checklist.md` for the full verification steps.
+
+---
+
+## Simplification Patterns
+
+- **Consolidate identical-body `else_if` chains:** When N consecutive `else_if` branches have the same body, collapse into one `OR` limit (or plain `else` if the preceding chain guarantees one condition is true). See `.claude/docs/simplification-patterns.md`.
+
+Replace N parallel `if/else_if` lookup chains with array indexing:
+
+```
+# Before: 14 branches
+if = { limit = { check_variable = { type = 1 } } set_variable = { cost = global.BUILD_COST_CIVILIAN_FACTORY } }
+else_if = { limit = { check_variable = { type = 2 } } set_variable = { cost = global.BUILD_COST_MILITARY_FACTORY } }
+# ... etc ...
+
+# After: one array + one lookup
+set_temp_variable = { idx = type }
+set_variable = { cost = global.build_cost_array^idx }
+```
+
+See `.claude/docs/simplification-patterns.md` for the full set of patterns.
+
+---
+
+## Performance Patterns
+
+### Hoist invariant lookups out of loops
+
+Cache country-scope values (`num_of_factories`, `has_war`, flags, ideas) before iterating states. Each `CONTROLLER = { ... }` scope switch inside a per-state loop is expensive.
+
+### GUI `dirty` counters
+
+Never bind `dirty = global.date`. Use a dedicated counter incremented only on relevant state changes. See `.claude/docs/performance-patterns.md`.
+
+---
+
+## Refactor Breaking-Change Checklist
+
+When renaming prefixes, migrating globals to arrays, or changing function signatures:
+
+1. Grep the **entire repo** for old names (flags, variables, events, decisions, GUI, GFX).
+2. Verify array-index semantics: trace every caller to confirm the index variable holds the expected value.
+3. Check localisation for `[?global.old_name]` references — these fail silently to 0.
+4. Verify event `log =` strings match option `name =` keys after any copy/rename.
+5. Confirm GUI `window_name`, button names, and GFX sprite names are cross-referenced.
+
+See `.claude/docs/refactor-checklist.md` for the full checklist.
+
+---
 
 # Event Patterns
 
@@ -147,7 +280,12 @@ effect_tooltip = {
 }
 custom_effect_tooltip = TT_IF_THEY_ACCEPT
 effect_tooltip = {
-	# effects / tooltip keys summarising the acceptance outcome
+	# effects summarising the acceptance outcome
+}
+# Only add the reject block if rejection has actual consequences:
+custom_effect_tooltip = TT_IF_THEY_REJECT
+effect_tooltip = {
+	# effects summarising the rejection outcome (sanctions, opinion hit, etc.)
 }
 ```
 

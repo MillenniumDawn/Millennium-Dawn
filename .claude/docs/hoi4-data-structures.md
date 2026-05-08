@@ -34,7 +34,7 @@ global.global_my_var   # read globally
 
 ### Array elements
 
-Accessed via `^` subscript (zero-indexed):
+Accessed via `^` subscript (zero-indexed). Arrays are capped at **1000 elements** — `add_to_array` beyond index 999 silently does nothing.
 
 ```
 my_array^0       # first element
@@ -124,6 +124,17 @@ for_loop_effect = {
     # effects...
 }
 ```
+
+### `while_loop_effect` — conditional loop
+
+```
+while_loop_effect = {
+    limit = { check_variable = { counter < target } }
+    # body — must advance the condition or loop exits at 1000
+}
+```
+
+The engine hard-caps at **1000 iterations** — this is not configurable. `max_iterations` is **not** a valid key and is silently ignored. Design loops so the realistic worst case stays well below 1000.
 
 ---
 

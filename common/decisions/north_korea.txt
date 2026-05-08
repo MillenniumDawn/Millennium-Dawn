@@ -39,7 +39,6 @@ NKO_united_front_department = {
 			base = 0
 		}
 	}
-
 	NKO_reopen_kaesong_industrial_park = {
 		icon = GFX_decision_nko_unite_korea_button
 		cost = 200
@@ -137,23 +136,17 @@ NKO_united_front_department = {
 	}
 
 	NKO_propose_north_led_reunification_decision = {
+
 		icon = GFX_decision_nko_unite_korea_button
+
 		cost = 200
 		days_remove = 30
-		days_re_enable = 365
-		highlight_states = {
-			highlight_states_trigger = {
-				state = 603
-			}
-		}
 
 		visible = {
 			always = yes
-
 		}
 
 		available = {
-			has_completed_focus = NKO_propose_north_led_unification
 			NOT = { has_war_with = KOR }
 			country_exists = KOR
 			KOR = {
@@ -162,7 +155,6 @@ NKO_united_front_department = {
 					value > -26
 				}
 			}
-
 			OR = {
 				KOR = { KOR_has_progressive_government = yes }
 				KOR = {
@@ -175,27 +167,364 @@ NKO_united_front_department = {
 				NKO = { has_government = neutrality }
 			}
 			custom_trigger_tooltip = {
-				tooltip = NKO_KOR_Koren_War_Ceasefire_tt
-				NOT = { has_opinion_modifier = NKO_KOR_Koren_War_Ceasefire }
+				tooltip = NKO_KOR_Korean_War_Ceasefire_tt
+				NOT = { has_opinion_modifier = NKO_KOR_Korean_War_Ceasefire }
 			}
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove NKO_reunification_talks_failed ,  add NKO_proposed_unity_reunification"
-
 			set_country_flag = NKO_proposed_north_reunification
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Country Event Korea.34 "
-			KOR = {
-				country_event = korea.34
-			}
 		}
 
 		ai_will_do = { base = 0 }
+
+		days_re_enable = 365
+
+		highlight_states = {
+
+			highlight_states_trigger = {
+
+				state = 603
+
+			}
+
+		}
+
+		remove_effect = {
+
+			log = "[GetDateText]: [Root.GetName]: Country Event Korea.34 "
+
+			KOR = {
+
+				country_event = korea.34
+
+			}
+
+		}
+
+
 	}
 
 }
+
+###########NKO NAVAL PROJECTS#########################
+NKO_Navy_projects = {
+
+	# === Songun Naval Doctrine — buildup mechanic ===
+	# Driven by NKO_naval_buildup_consider flag set by NKO_Naval_Modernization focus.
+	# Player accumulates NKO_naval_points via 3 generation decisions, spends them
+	# on 4 invest decisions to push NKO_<track>_progress 0 -> 100. Capstone fires
+	# when all four tracks reach 100.
+
+	NKO_unlock_naval_buildup = {
+		icon = GFX_decision_NKO_naval_unlock
+
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = NKO_naval_buildup_consider
+			NOT = { has_country_flag = NKO_naval_buildup_unlocked }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_naval_buildup_unlock_ready_tt
+				has_country_flag = NKO_naval_buildup_consider
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_unlock_naval_buildup"
+			set_country_flag = NKO_naval_buildup_unlocked
+			set_variable = { NKO_naval_points = 0 }
+			set_variable = { NKO_submarine_progress = 0 }
+			set_variable = { NKO_missile_boat_progress = 0 }
+			set_variable = { NKO_coastal_defense_progress = 0 }
+			set_variable = { NKO_naval_specops_progress = 0 }
+			set_variable = { NKO_naval_tracks_at_max = 0 }
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+	}
+
+	# --- Point generation ---
+
+	NKO_naval_allocate_party_funds = {
+		icon = GFX_decision_NKO_naval_party_funds
+
+		cost = 35
+		days_re_enable = 70
+
+		visible = {
+			has_country_flag = NKO_naval_buildup_unlocked
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_allocate_party_funds"
+			add_to_variable = { var = NKO_naval_points value = 1 }
+		}
+
+		ai_will_do = {
+			base = 60
+		}
+	}
+
+	NKO_naval_mobilize_nampo_shipyards = {
+		icon = GFX_decision_NKO_naval_shipyards
+
+		days_remove = 90
+
+		visible = {
+			has_country_flag = NKO_naval_buildup_unlocked
+		}
+
+		modifier = {
+			civilian_factory_use = 1
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_mobilize_nampo_shipyards"
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove NKO_naval_mobilize_nampo_shipyards"
+			add_to_variable = { var = NKO_naval_points value = 2 }
+		}
+
+		ai_will_do = {
+			base = 50
+		}
+	}
+
+	NKO_naval_juche_drive = {
+		icon = GFX_decision_NKO_naval_juche
+
+		cost = 80
+		days_re_enable = 180
+
+		visible = {
+			has_country_flag = NKO_naval_buildup_unlocked
+		}
+
+		available = {
+			has_stability > 0.45
+			has_war_support > 0.5
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_juche_drive"
+			add_to_variable = { var = NKO_naval_points value = 4 }
+			add_stability = -0.05
+			add_war_support = 0.05
+		}
+
+		ai_will_do = {
+			base = 30
+		}
+	}
+
+	# --- Invest decisions (1 point -> +5 progress + side bonus + router fire) ---
+
+	NKO_naval_invest_submarine = {
+		icon = GFX_decision_NKO_naval_invest
+		days_remove = 14
+
+		visible = {
+			has_country_flag = NKO_naval_buildup_unlocked
+			check_variable = { NKO_submarine_progress < 100 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_naval_buildup_needs_point_tt
+				check_variable = { NKO_naval_points > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_invest_submarine"
+			subtract_from_variable = { var = NKO_naval_points value = 1 }
+			add_to_variable = { var = NKO_submarine_progress value = 5 }
+			clamp_variable = {
+				var = NKO_submarine_progress
+				min = 0
+				max = 100
+			}
+			navy_experience = 5
+			custom_effect_tooltip = NKO_naval_invest_submarine_tt
+			NKO_naval_check_all_tracks_maxed = yes
+			hidden_effect = {
+				country_event = { id = nko_naval_buildup.10 days = 0 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove NKO_naval_invest_submarine"
+		}
+
+		ai_will_do = {
+			base = 80
+		}
+	}
+
+	NKO_naval_invest_missile_boat = {
+		icon = GFX_decision_NKO_naval_invest
+		days_remove = 14
+
+		visible = {
+			has_country_flag = NKO_naval_buildup_unlocked
+			check_variable = { NKO_missile_boat_progress < 100 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_naval_buildup_needs_point_tt
+				check_variable = { NKO_naval_points > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_invest_missile_boat"
+			subtract_from_variable = { var = NKO_naval_points value = 1 }
+			add_to_variable = { var = NKO_missile_boat_progress value = 5 }
+			clamp_variable = {
+				var = NKO_missile_boat_progress
+				min = 0
+				max = 100
+			}
+			navy_experience = 5
+			custom_effect_tooltip = NKO_naval_invest_missile_boat_tt
+			NKO_naval_check_all_tracks_maxed = yes
+			hidden_effect = {
+				country_event = { id = nko_naval_buildup.20 days = 0 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove NKO_naval_invest_missile_boat"
+		}
+
+		ai_will_do = {
+			base = 80
+		}
+	}
+
+	NKO_naval_invest_coastal_defense = {
+		icon = GFX_decision_NKO_naval_invest
+		days_remove = 14
+
+		visible = {
+			has_country_flag = NKO_naval_buildup_unlocked
+			check_variable = { NKO_coastal_defense_progress < 100 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_naval_buildup_needs_point_tt
+				check_variable = { NKO_naval_points > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_invest_coastal_defense"
+			subtract_from_variable = { var = NKO_naval_points value = 1 }
+			add_to_variable = { var = NKO_coastal_defense_progress value = 5 }
+			clamp_variable = {
+				var = NKO_coastal_defense_progress
+				min = 0
+				max = 100
+			}
+			army_experience = 5
+			custom_effect_tooltip = NKO_naval_invest_coastal_defense_tt
+			NKO_naval_check_all_tracks_maxed = yes
+			hidden_effect = {
+				country_event = { id = nko_naval_buildup.30 days = 0 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove NKO_naval_invest_coastal_defense"
+		}
+
+		ai_will_do = {
+			base = 80
+		}
+	}
+
+	NKO_naval_invest_specops = {
+		icon = GFX_decision_NKO_naval_invest
+		days_remove = 14
+
+		visible = {
+			has_country_flag = NKO_naval_buildup_unlocked
+			check_variable = { NKO_naval_specops_progress < 100 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_naval_buildup_needs_point_tt
+				check_variable = { NKO_naval_points > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_invest_specops"
+			subtract_from_variable = { var = NKO_naval_points value = 1 }
+			add_to_variable = { var = NKO_naval_specops_progress value = 5 }
+			clamp_variable = {
+				var = NKO_naval_specops_progress
+				min = 0
+				max = 100
+			}
+			army_experience = 5
+			custom_effect_tooltip = NKO_naval_invest_specops_tt
+			NKO_naval_check_all_tracks_maxed = yes
+			hidden_effect = {
+				country_event = { id = nko_naval_buildup.40 days = 0 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove NKO_naval_invest_specops"
+		}
+
+		ai_will_do = {
+			base = 80
+		}
+	}
+
+	# --- Capstone ---
+
+	NKO_naval_capstone_complete = {
+		icon = GFX_decision_NKO_naval_capstone
+
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = NKO_naval_buildup_unlocked
+			has_country_flag = NKO_naval_buildup_all_tracks_maxed
+			NOT = { has_country_flag = NKO_naval_buildup_capstone_done }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision NKO_naval_capstone_complete"
+			set_country_flag = NKO_naval_buildup_capstone_done
+			add_ideas = NKO_songun_navy_capstone
+			custom_effect_tooltip = NKO_naval_capstone_news_tt
+			hidden_effect = {
+				news_event = { id = nko_naval_buildup.99 days = 0 }
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+		}
+	}
+}
+
 ###########ARDUOUS MARCH MECHANIC DECISIONS###########
 NKO_Arduous_March = {
 	#Send Citizens to Countryside
@@ -418,8 +747,455 @@ NKO_Arduous_March = {
 			base = 10
 		}
 	}
-}
 
+
+	# =========================================================================
+	# Supreme People's Assembly (SPA) — 8 mandate decisions hosted under this
+	# Arduous March category. Each pays PP + treasury, applies a 120-day buff,
+	# and fires a 3-event flavor chain (+25%% chance of bonus event).
+	# =========================================================================
+
+
+	# -------------------------------------------------------------------------
+	# Resolution 1 — Industrial Acceleration (Industry)
+	# -------------------------------------------------------------------------
+	NKO_spa_resolution_industry = {
+		icon = GFX_decision_NKO_spa_industry
+
+		allowed = { original_tag = NKO }
+
+		visible = {
+			NKO_spa_mechanic_enabled = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_domain_unlocked_tt
+				NOT = { has_country_flag = NKO_spa_bonus_industry_active }
+			}
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_picks_remaining_tt
+				NKO_spa_picks_remaining = yes
+			}
+		}
+
+		cost = 50
+
+		custom_cost_text = cost_0_5
+		custom_cost_trigger = { NKO_spa_can_afford_money_05 = yes }
+
+		days_remove = 120
+
+		complete_effect = {
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_productivity_change = 5 }
+			flat_productivity_change_effect = yes
+			NKO_spa_pass_industry = yes
+			country_event = { id = NKO_spa.30 hours = 6 }
+			# 25% chance for the bonus flavor event.
+			custom_effect_tooltip = NKO_spa_bonus_chance_tt
+			hidden_effect = {
+				random_list = {
+					75 = { }
+					25 = { country_event = { id = NKO_spa.20 hours = 6 } }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			modifier = {
+				factor = 0
+				has_country_flag = NKO_spa_bonus_industry_active
+			}
+		}
+	}
+
+	# -------------------------------------------------------------------------
+	# Resolution 2 — Equipment Production Mandate (Production)
+	# -------------------------------------------------------------------------
+	NKO_spa_resolution_production = {
+		icon = GFX_decision_NKO_spa_production
+
+		allowed = { original_tag = NKO }
+
+		visible = {
+			NKO_spa_mechanic_enabled = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_domain_unlocked_tt
+				NOT = { has_country_flag = NKO_spa_bonus_production_active }
+			}
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_picks_remaining_tt
+				NKO_spa_picks_remaining = yes
+			}
+		}
+
+		cost = 50
+
+		custom_cost_text = cost_0_7
+		custom_cost_trigger = { NKO_spa_can_afford_money_07 = yes }
+
+		days_remove = 120
+
+		complete_effect = {
+			set_temp_variable = { treasury_change = -0.7 }
+			modify_treasury_effect = yes
+			NKO_spa_pass_production = yes
+			country_event = { id = NKO_spa.33 hours = 6 }
+			custom_effect_tooltip = NKO_spa_bonus_chance_tt
+			hidden_effect = {
+				random_list = {
+					75 = { }
+					25 = { country_event = { id = NKO_spa.21 hours = 6 } }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 90
+			modifier = {
+				factor = 0
+				has_country_flag = NKO_spa_bonus_production_active
+			}
+			modifier = {
+				add = 30
+				has_war = yes
+			}
+		}
+	}
+
+	# -------------------------------------------------------------------------
+	# Resolution 3 — Songun Resolution (Military)
+	# -------------------------------------------------------------------------
+	NKO_spa_resolution_military = {
+		icon = GFX_decision_NKO_spa_military
+
+		allowed = { original_tag = NKO }
+
+		visible = {
+			NKO_spa_mechanic_enabled = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_domain_unlocked_tt
+				NOT = { has_country_flag = NKO_spa_bonus_military_active }
+			}
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_picks_remaining_tt
+				NKO_spa_picks_remaining = yes
+			}
+		}
+
+		cost = 75
+
+		custom_cost_text = cost_0_4
+		custom_cost_trigger = { NKO_spa_can_afford_money_04 = yes }
+
+		days_remove = 120
+
+		complete_effect = {
+			set_temp_variable = { treasury_change = -0.4 }
+			modify_treasury_effect = yes
+			NKO_spa_pass_military = yes
+			country_event = { id = NKO_spa.36 hours = 6 }
+			custom_effect_tooltip = NKO_spa_bonus_chance_tt
+			hidden_effect = {
+				random_list = {
+					75 = { }
+					25 = { country_event = { id = NKO_spa.22 hours = 6 } }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 80
+			modifier = {
+				factor = 0
+				has_country_flag = NKO_spa_bonus_military_active
+			}
+			modifier = {
+				add = 50
+				has_war = yes
+			}
+		}
+	}
+
+	# -------------------------------------------------------------------------
+	# Resolution 4 — Juche Self-Reliance (Economy)
+	# -------------------------------------------------------------------------
+	NKO_spa_resolution_economy = {
+		icon = GFX_decision_NKO_spa_economy
+
+		allowed = { original_tag = NKO }
+
+		visible = {
+			NKO_spa_mechanic_enabled = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_domain_unlocked_tt
+				NOT = { has_country_flag = NKO_spa_bonus_economy_active }
+			}
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_picks_remaining_tt
+				NKO_spa_picks_remaining = yes
+			}
+		}
+
+		cost = 75
+
+		custom_cost_text = cost_0_3
+		custom_cost_trigger = { NKO_spa_can_afford_money_03 = yes }
+
+		days_remove = 120
+
+		complete_effect = {
+			set_temp_variable = { treasury_change = -0.3 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_productivity_change = 5 }
+			flat_productivity_change_effect = yes
+			NKO_spa_pass_economy = yes
+			country_event = { id = NKO_spa.39 hours = 6 }
+			custom_effect_tooltip = NKO_spa_bonus_chance_tt
+			hidden_effect = {
+				random_list = {
+					75 = { }
+					25 = { country_event = { id = NKO_spa.23 hours = 6 } }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 70
+			modifier = {
+				factor = 0
+				has_country_flag = NKO_spa_bonus_economy_active
+			}
+		}
+	}
+
+	# -------------------------------------------------------------------------
+	# Resolution 5 — Research Drive (Research)
+	# Big-ticket mandate: +200% research speed (+research takes ~1/3 the time)
+	# at premium PP+treasury cost. Lets NK catch up on outdated tech where a
+	# single research can otherwise take 800+ days.
+	# -------------------------------------------------------------------------
+	NKO_spa_resolution_research = {
+		icon = GFX_decision_NKO_spa_research
+
+		allowed = { original_tag = NKO }
+
+		visible = {
+			NKO_spa_mechanic_enabled = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_domain_unlocked_tt
+				NOT = { has_country_flag = NKO_spa_bonus_research_active }
+			}
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_picks_remaining_tt
+				NKO_spa_picks_remaining = yes
+			}
+		}
+
+		cost = 75
+
+		custom_cost_text = cost_1_5
+		custom_cost_trigger = { NKO_spa_can_afford_money_15 = yes }
+
+		days_remove = 120
+
+		complete_effect = {
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+			NKO_spa_pass_research = yes
+			country_event = { id = NKO_spa.42 hours = 6 }
+			custom_effect_tooltip = NKO_spa_bonus_chance_tt
+			hidden_effect = {
+				random_list = {
+					75 = { }
+					25 = { country_event = { id = NKO_spa.24 hours = 6 } }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 75
+			modifier = {
+				factor = 0
+				has_country_flag = NKO_spa_bonus_research_active
+			}
+		}
+	}
+
+	# -------------------------------------------------------------------------
+	# Resolution 6 — Agricultural Drive (Agriculture)
+	# -------------------------------------------------------------------------
+	NKO_spa_resolution_agriculture = {
+		icon = GFX_decision_NKO_spa_agriculture
+
+		allowed = { original_tag = NKO }
+
+		visible = {
+			NKO_spa_mechanic_enabled = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_domain_unlocked_tt
+				NOT = { has_country_flag = NKO_spa_bonus_agriculture_active }
+			}
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_picks_remaining_tt
+				NKO_spa_picks_remaining = yes
+			}
+		}
+
+		cost = 60
+
+		custom_cost_text = cost_0_5
+		custom_cost_trigger = { NKO_spa_can_afford_money_05 = yes }
+
+		days_remove = 120
+
+		complete_effect = {
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			NKO_spa_pass_agriculture = yes
+			country_event = { id = NKO_spa.45 hours = 6 }
+			custom_effect_tooltip = NKO_spa_bonus_chance_tt
+			hidden_effect = {
+				random_list = {
+					75 = { }
+					25 = { country_event = { id = NKO_spa.25 hours = 6 } }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 70
+			modifier = {
+				factor = 0
+				has_country_flag = NKO_spa_bonus_agriculture_active
+			}
+		}
+	}
+
+	# -------------------------------------------------------------------------
+	# Resolution 7 — Foreign Policy Directive (Foreign)
+	# -------------------------------------------------------------------------
+	NKO_spa_resolution_foreign = {
+		icon = GFX_decision_NKO_spa_foreign
+
+		allowed = { original_tag = NKO }
+
+		visible = {
+			NKO_spa_mechanic_enabled = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_domain_unlocked_tt
+				NOT = { has_country_flag = NKO_spa_bonus_foreign_active }
+			}
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_picks_remaining_tt
+				NKO_spa_picks_remaining = yes
+			}
+		}
+
+		cost = 40
+
+		custom_cost_text = cost_0_7
+		custom_cost_trigger = { NKO_spa_can_afford_money_07 = yes }
+
+		days_remove = 120
+
+		complete_effect = {
+			set_temp_variable = { treasury_change = -0.7 }
+			modify_treasury_effect = yes
+			NKO_spa_pass_foreign = yes
+			country_event = { id = NKO_spa.48 hours = 6 }
+			custom_effect_tooltip = NKO_spa_bonus_chance_tt
+			hidden_effect = {
+				random_list = {
+					75 = { }
+					25 = { country_event = { id = NKO_spa.26 hours = 6 } }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 60
+			modifier = {
+				factor = 0
+				has_country_flag = NKO_spa_bonus_foreign_active
+			}
+		}
+	}
+
+	# -------------------------------------------------------------------------
+	# Resolution 8 — Construction Battalion (Construction)
+	# -------------------------------------------------------------------------
+	NKO_spa_resolution_construction = {
+		icon = GFX_decision_NKO_spa_construction
+
+		allowed = { original_tag = NKO }
+
+		visible = {
+			NKO_spa_mechanic_enabled = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_domain_unlocked_tt
+				NOT = { has_country_flag = NKO_spa_bonus_construction_active }
+			}
+			custom_trigger_tooltip = {
+				tooltip = NKO_spa_picks_remaining_tt
+				NKO_spa_picks_remaining = yes
+			}
+		}
+
+		cost = 60
+
+		custom_cost_text = cost_0_75
+		custom_cost_trigger = { NKO_spa_can_afford_money_075 = yes }
+
+		days_remove = 120
+
+		complete_effect = {
+			set_temp_variable = { treasury_change = -0.75 }
+			modify_treasury_effect = yes
+			NKO_spa_pass_construction = yes
+			country_event = { id = NKO_spa.51 hours = 6 }
+			custom_effect_tooltip = NKO_spa_bonus_chance_tt
+			hidden_effect = {
+				random_list = {
+					75 = { }
+					25 = { country_event = { id = NKO_spa.27 hours = 6 } }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 65
+			modifier = {
+				factor = 0
+				has_country_flag = NKO_spa_bonus_construction_active
+			}
+		}
+	}
+}
 
 ###########POWER STRUGGLE MECHANIC DECISIONS###########
 NKO_Power_struggle = {
@@ -637,13 +1413,6 @@ NKO_Power_struggle = {
 				}
 				else = { set_country_flag = Kim_Jong_un }
 			}
-			else_if = {
-				limit = {
-					check_variable = { var = Kim_Jong_un value = 50 compare = less_than_or_equals }
-					check_variable = { var = Kim_Jong_Nam value = 50 compare = less_than_or_equals }
-				}
-				news_event = kim_jong_il_death.6
-			}
 			else = {
 				news_event = kim_jong_il_death.6
 			}
@@ -688,33 +1457,54 @@ NKO_black_market = {
 		ai_will_do = { base = 0 }
 	}
 	##########BLACK MARKET - HACKS BANKS###########
-	#USA
-	NKO_hacks_bank_usa = {
+	#Japan
+	NKO_hacks_bank_japan = {
 		icon = GFX_decision_nko_hack_bank_button
 		cost = 25
 		days_remove = 30
 		days_re_enable = 250
 		fixed_random_seed = no
 		available = {
+				intel_level_over = {
+					target = JAP
+					civilian_intel > 0.9
+				}
 			has_completed_focus = NKO_smuggling_operations
-			USA = {
+			JAP = {
 				OR = {
 					has_government = democratic
 					has_government = neutrality
 				}
+				influence_higher_5 = yes
 			}
-			USA = { influence_higher_5 = yes }
 		}
 		visible = {
-			country_exists = USA
+			country_exists = JAP
 			has_completed_focus = NKO_bureau_39
 			has_country_flag = NKO_black_market_bad_mechanic_open
 		}
 		remove_effect = {
-			set_temp_variable = { percent_change = -12 }
-			set_temp_variable = { tag_index = NKO.id }
-			set_temp_variable = { influence_target = USA.id }
-			change_influence_percentage = yes
+			log = "[GetDateText]: [Root.GetName]: Finished NKO_hacks_bank_japan"
+			if = {
+				limit = {
+					JAP = {
+						intel_level_over = {
+							target = NKO
+							civilian_intel > 0.65
+							army_intel = 0.65
+							navy_intel < 0.65
+						}
+					}
+				}
+				JAP = {
+					country_event = korea.136
+				}
+			}
+			else = {
+				NKO = {
+					country_event = korea.135
+				}
+			}
 			random_list = {
 				20 = {
 					set_temp_variable = { treasury_change = 25 }
@@ -738,57 +1528,6 @@ NKO_black_market = {
 			base = 1000
 		}
 	}
-	#Japan
-	NKO_hacks_bank_japan = {
-		icon = GFX_decision_nko_hack_bank_button
-		cost = 25
-		days_remove = 30
-		days_re_enable = 250
-		fixed_random_seed = no
-		available = {
-			has_completed_focus = NKO_smuggling_operations
-			JAP = {
-				OR = {
-					has_government = democratic
-					has_government = neutrality
-				}
-			}
-			JAP = { influence_higher_15 = yes }
-		}
-		visible = {
-			country_exists = JAP
-			has_completed_focus = NKO_bureau_39
-			has_country_flag = NKO_black_market_bad_mechanic_open
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Finished NKO_hacks_bank_japan"
-			set_temp_variable = { percent_change = -12 }
-			set_temp_variable = { tag_index = NKO.id }
-			set_temp_variable = { influence_target = JAP.id }
-			change_influence_percentage = yes
-			random_list = {
-				20 = {
-					set_temp_variable = { treasury_change = 15 }
-					modify_treasury_effect = yes
-				}
-				20 = {
-					set_temp_variable = { treasury_change = 10 }
-					modify_treasury_effect = yes
-				}
-				20 = {
-					set_temp_variable = { treasury_change = 5 }
-					modify_treasury_effect = yes
-				}
-				20 = {
-					set_temp_variable = { treasury_change = 3 }
-					modify_treasury_effect = yes
-				}
-			}
-		}
-		ai_will_do = {
-			base = 1000
-		}
-	}
 	#South Korea
 	NKO_hacks_bank_korea = {
 		icon = GFX_decision_nko_hack_bank_button
@@ -797,14 +1536,18 @@ NKO_black_market = {
 		days_re_enable = 250
 		fixed_random_seed = no
 		available = {
+				intel_level_over = {
+					target = KOR
+					civilian_intel > 0.9
+				}
 			has_completed_focus = NKO_smuggling_operations
 			KOR = {
 				OR = {
 					has_government = democratic
 					has_government = neutrality
 				}
+				influence_higher_15 = yes
 			}
-			KOR = { influence_higher_15 = yes }
 		}
 		visible = {
 			country_exists = KOR
@@ -813,10 +1556,26 @@ NKO_black_market = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Finished NKO_hacks_bank_korea"
-			set_temp_variable = { percent_change = -12 }
-			set_temp_variable = { tag_index = NKO.id }
-			set_temp_variable = { influence_target = KOR.id }
-			change_influence_percentage = yes
+			if = {
+				limit = {
+					KOR = {
+						intel_level_over = {
+							target = NKO
+							civilian_intel > 0.65
+							army_intel = 0.65
+							navy_intel < 0.65
+						}
+					}
+				}
+				KOR = {
+					country_event = korea.136
+				}
+			}
+			else = {
+				NKO = {
+					country_event = korea.135
+				}
+			}
 			random_list = {
 				20 = {
 					set_temp_variable = { treasury_change = 10 }
@@ -848,14 +1607,18 @@ NKO_black_market = {
 		days_re_enable = 250
 		fixed_random_seed = no
 		available = {
+				intel_level_over = {
+					target = GER
+					civilian_intel > 0.9
+				}
 			has_completed_focus = NKO_smuggling_operations
 			GER = {
 				OR = {
 					has_government = democratic
 					has_government = neutrality
 				}
+				influence_higher_10 = yes
 			}
-			GER = { influence_higher_10 = yes }
 		}
 		visible = {
 			country_exists = GER
@@ -864,10 +1627,26 @@ NKO_black_market = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Finished NKO_hacks_bank_germany"
-			set_temp_variable = { percent_change = -12 }
-			set_temp_variable = { tag_index = NKO.id }
-			set_temp_variable = { influence_target = GER.id }
-			change_influence_percentage = yes
+			if = {
+				limit = {
+					GER = {
+						intel_level_over = {
+							target = NKO
+							civilian_intel > 0.65
+							army_intel = 0.65
+							navy_intel < 0.65
+						}
+					}
+				}
+				GER = {
+					country_event = korea.136
+				}
+			}
+			else = {
+				NKO = {
+					country_event = korea.135
+				}
+			}
 			random_list = {
 				20 = {
 					set_temp_variable = { treasury_change = 15 }
@@ -899,14 +1678,18 @@ NKO_black_market = {
 		days_re_enable = 250
 		fixed_random_seed = no
 		available = {
+				intel_level_over = {
+					target = FRA
+					civilian_intel > 0.9
+				}
 			has_completed_focus = NKO_smuggling_operations
 			FRA = {
 				OR = {
 					has_government = democratic
 					has_government = neutrality
 				}
+				influence_higher_10 = yes
 			}
-			FRA = { influence_higher_10 = yes }
 		}
 		visible = {
 			country_exists = FRA
@@ -915,10 +1698,26 @@ NKO_black_market = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Finished NKO_hacks_bank_france"
-			set_temp_variable = { percent_change = -12 }
-			set_temp_variable = { tag_index = NKO.id }
-			set_temp_variable = { influence_target = FRA.id }
-			change_influence_percentage = yes
+			if = {
+				limit = {
+					FRA = {
+						intel_level_over = {
+							target = NKO
+							civilian_intel > 0.65
+							army_intel = 0.65
+							navy_intel < 0.65
+						}
+					}
+				}
+				FRA = {
+					country_event = korea.136
+				}
+			}
+			else = {
+				NKO = {
+					country_event = korea.135
+				}
+			}
 			random_list = {
 				20 = {
 					set_temp_variable = { treasury_change = 16 }
@@ -950,14 +1749,18 @@ NKO_black_market = {
 		days_re_enable = 250
 		fixed_random_seed = no
 		available = {
+				intel_level_over = {
+					target = ENG
+					civilian_intel > 0.9
+				}
 			has_completed_focus = NKO_smuggling_operations
 			ENG = {
 				OR = {
 					has_government = democratic
 					has_government = neutrality
 				}
+				influence_higher_10 = yes
 			}
-			ENG = { influence_higher_10 = yes }
 		}
 		visible = {
 			country_exists = ENG
@@ -966,10 +1769,26 @@ NKO_black_market = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Finished NKO_hacks_bank_england "
-			set_temp_variable = { percent_change = -12 }
-			set_temp_variable = { tag_index = NKO.id }
-			set_temp_variable = { influence_target = ENG.id }
-			change_influence_percentage = yes
+			if = {
+				limit = {
+					ENG = {
+						intel_level_over = {
+							target = NKO
+							civilian_intel > 0.65
+							army_intel = 0.65
+							navy_intel < 0.65
+						}
+					}
+				}
+				ENG = {
+					country_event = korea.136
+				}
+			}
+			else = {
+				NKO = {
+					country_event = korea.135
+				}
+			}
 			random_list = {
 				20 = {
 					set_temp_variable = { treasury_change = 13 }
@@ -1002,6 +1821,12 @@ NKO_black_market = {
 		days_re_enable = 180
 		fixed_random_seed = no
 		available = {
+			NKO = {
+				network_strength = {
+					target = USA
+					value > 30
+					}
+				}
 			has_completed_focus = NKO_government_directed_drug_manufacture
 			USA = {
 				OR = {
@@ -1017,22 +1842,35 @@ NKO_black_market = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Finished NKO_smuggles_drugs_abroad_usa"
-			set_temp_variable = { treasury_change = 0.5 }
-			modify_treasury_effect = yes
-			random_list = {
-				20 = {
+			if = {
+				limit = {
 					USA = {
-						set_temp_variable = { temp_productivity_change = -10 }
-						flat_productivity_change_effect = yes
-						set_temp_variable = { percent_change = 4 }
-						set_temp_variable = { tag_index = NKO.id }
-						set_temp_variable = { influence_target = USA.id }
-						change_influence_percentage = yes
+						intel_level_over = {
+							target = NKO
+							civilian_intel > 0.65
+							army_intel = 0.65
+							navy_intel < 0.65
+						}
 					}
 				}
-				80 = {
-					# nothing
+				USA = {
+					country_event = korea.137
 				}
+			}
+			else = {
+				NKO = {
+					country_event = korea.138
+				}
+			}
+			set_temp_variable = { treasury_change = 0.5 }
+			modify_treasury_effect = yes
+			USA = {
+				set_temp_variable = { temp_productivity_change = -10 }
+				flat_productivity_change_effect = yes
+				set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { tag_index = NKO.id }
+				set_temp_variable = { influence_target = USA.id }
+				change_influence_percentage = yes
 			}
 			custom_effect_tooltip = NKO_smuggles_drugs_abroad_tt
 		}
@@ -1048,6 +1886,12 @@ NKO_black_market = {
 		days_re_enable = 180
 		fixed_random_seed = no
 		available = {
+			NKO = {
+				network_strength = {
+					target = JAP
+					value > 30
+					}
+				}
 			has_completed_focus = NKO_government_directed_drug_manufacture
 			JAP = {
 				OR = {
@@ -1063,22 +1907,35 @@ NKO_black_market = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Finished NKO_smuggles_drugs_abroad_japan"
-			set_temp_variable = { treasury_change = 0.5 }
-			modify_treasury_effect = yes
-			random_list = {
-				20 = {
+			if = {
+				limit = {
 					JAP = {
-						set_temp_variable = { temp_productivity_change = -10 }
-						flat_productivity_change_effect = yes
-						set_temp_variable = { percent_change = 4 }
-						set_temp_variable = { tag_index = NKO.id }
-						set_temp_variable = { influence_target = JAP.id }
-						change_influence_percentage = yes
+						intel_level_over = {
+							target = NKO
+							civilian_intel > 0.65
+							army_intel = 0.65
+							navy_intel < 0.65
+						}
 					}
 				}
-				80 = {
-					# nothing
+				JAP = {
+					country_event = korea.137
 				}
+			}
+			else = {
+				NKO = {
+					country_event = korea.138
+				}
+			}
+			set_temp_variable = { treasury_change = 0.5 }
+			modify_treasury_effect = yes
+			JAP = {
+				set_temp_variable = { temp_productivity_change = -10 }
+				flat_productivity_change_effect = yes
+				set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { tag_index = NKO.id }
+				set_temp_variable = { influence_target = JAP.id }
+				change_influence_percentage = yes
 			}
 			custom_effect_tooltip = NKO_smuggles_drugs_abroad_tt
 		}
@@ -1094,6 +1951,12 @@ NKO_black_market = {
 		days_re_enable = 150
 		fixed_random_seed = no
 		available = {
+			NKO = {
+				network_strength = {
+					target = KOR
+					value > 30
+					}
+				}
 			has_completed_focus = NKO_government_directed_drug_manufacture
 			KOR = {
 				OR = {
@@ -1109,22 +1972,35 @@ NKO_black_market = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Finished NKO_smuggles_drugs_abroad_korea"
-			set_temp_variable = { treasury_change = 0.5 }
-			modify_treasury_effect = yes
-			random_list = {
-				20 = {
+			if = {
+				limit = {
 					KOR = {
-						set_temp_variable = { temp_productivity_change = -10 }
-						flat_productivity_change_effect = yes
-						set_temp_variable = { percent_change = 4 }
-						set_temp_variable = { tag_index = NKO.id }
-						set_temp_variable = { influence_target = KOR.id }
-						change_influence_percentage = yes
+						intel_level_over = {
+							target = NKO
+							civilian_intel > 0.65
+							army_intel = 0.65
+							navy_intel < 0.65
+						}
 					}
 				}
-				80 = {
-					# nothing
+				KOR = {
+					country_event = korea.137
 				}
+			}
+			else = {
+				NKO = {
+					country_event = korea.138
+				}
+			}
+			set_temp_variable = { treasury_change = 0.5 }
+			modify_treasury_effect = yes
+			KOR = {
+				set_temp_variable = { temp_productivity_change = -10 }
+				flat_productivity_change_effect = yes
+				set_temp_variable = { percent_change = 6 }
+				set_temp_variable = { tag_index = NKO.id }
+				set_temp_variable = { influence_target = KOR.id }
+				change_influence_percentage = yes
 			}
 			custom_effect_tooltip = NKO_smuggles_drugs_abroad_tt
 		}
@@ -1140,6 +2016,12 @@ NKO_black_market = {
 		days_re_enable = 250
 		fixed_random_seed = no
 		available = {
+			NKO = {
+				network_strength = {
+					target = ENG
+					value > 30
+					}
+				}
 			has_completed_focus = NKO_government_directed_drug_manufacture
 			ENG = {
 				OR = {
@@ -1155,22 +2037,35 @@ NKO_black_market = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Finished NKO_smuggles_drugs_abroad_england"
-			set_temp_variable = { treasury_change = 0.5 }
-			modify_treasury_effect = yes
-			random_list = {
-				20 = {
+			if = {
+				limit = {
 					ENG = {
-						set_temp_variable = { temp_productivity_change = -10 }
-						flat_productivity_change_effect = yes
-						set_temp_variable = { percent_change = 4 }
-						set_temp_variable = { tag_index = NKO.id }
-						set_temp_variable = { influence_target = ENG.id }
-						change_influence_percentage = yes
+						intel_level_over = {
+							target = NKO
+							civilian_intel > 0.65
+							army_intel = 0.65
+							navy_intel < 0.65
+						}
 					}
 				}
-				80 = {
-					# nothing
+				ENG = {
+					country_event = korea.137
 				}
+			}
+			else = {
+				NKO = {
+					country_event = korea.138
+				}
+			}
+			set_temp_variable = { treasury_change = 0.5 }
+			modify_treasury_effect = yes
+			ENG = {
+				set_temp_variable = { temp_productivity_change = -10 }
+				flat_productivity_change_effect = yes
+				set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { tag_index = NKO.id }
+				set_temp_variable = { influence_target = ENG.id }
+				change_influence_percentage = yes
 			}
 			custom_effect_tooltip = NKO_smuggles_drugs_abroad_tt
 		}
@@ -1186,6 +2081,12 @@ NKO_black_market = {
 		days_re_enable = 360
 		fixed_random_seed = no
 		available = {
+			NKO = {
+				network_strength = {
+					target = GER
+					value > 30
+					}
+				}
 			has_completed_focus = NKO_government_directed_drug_manufacture
 			GER = {
 				OR = {
@@ -1201,22 +2102,35 @@ NKO_black_market = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Finished NKO_smuggles_drugs_abroad_germany"
-			set_temp_variable = { treasury_change = 0.5 }
-			modify_treasury_effect = yes
-			random_list = {
-				20 = {
+			if = {
+				limit = {
 					GER = {
-						set_temp_variable = { temp_productivity_change = -10 }
-						flat_productivity_change_effect = yes
-						set_temp_variable = { percent_change = 4 }
-						set_temp_variable = { tag_index = NKO.id }
-						set_temp_variable = { influence_target = GER.id }
-						change_influence_percentage = yes
+						intel_level_over = {
+							target = NKO
+							civilian_intel > 0.65
+							army_intel = 0.65
+							navy_intel < 0.65
+						}
 					}
 				}
-				80 = {
-					# nothing
+				GER = {
+					country_event = korea.137
 				}
+			}
+			else = {
+				NKO = {
+					country_event = korea.138
+				}
+			}
+			set_temp_variable = { treasury_change = 0.5 }
+			modify_treasury_effect = yes
+			GER = {
+				set_temp_variable = { temp_productivity_change = -10 }
+				flat_productivity_change_effect = yes
+				set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { tag_index = NKO.id }
+				set_temp_variable = { influence_target = GER.id }
+				change_influence_percentage = yes
 			}
 			custom_effect_tooltip = NKO_smuggles_drugs_abroad_tt
 		}
@@ -1232,6 +2146,12 @@ NKO_black_market = {
 		days_re_enable = 360
 		fixed_random_seed = no
 		available = {
+			NKO = {
+				network_strength = {
+					target = FRA
+					value > 30
+					}
+				}
 			has_completed_focus = NKO_government_directed_drug_manufacture
 			FRA = {
 				OR = {
@@ -1247,22 +2167,35 @@ NKO_black_market = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Finished NKO_smuggles_drugs_abroad_france"
-			set_temp_variable = { treasury_change = 0.5 }
-			modify_treasury_effect = yes
-			random_list = {
-				20 = {
+			if = {
+				limit = {
 					FRA = {
-						set_temp_variable = { temp_productivity_change = -10 }
-						flat_productivity_change_effect = yes
-						set_temp_variable = { percent_change = 4 }
-						set_temp_variable = { tag_index = NKO.id }
-						set_temp_variable = { influence_target = FRA.id }
-						change_influence_percentage = yes
+						intel_level_over = {
+							target = NKO
+							civilian_intel > 0.65
+							army_intel = 0.65
+							navy_intel < 0.65
+						}
 					}
 				}
-				80 = {
-					# nothing
+				FRA = {
+					country_event = korea.137
 				}
+			}
+			else = {
+				NKO = {
+					country_event = korea.138
+				}
+			}
+			set_temp_variable = { treasury_change = 0.5 }
+			modify_treasury_effect = yes
+			FRA = {
+				set_temp_variable = { temp_productivity_change = -10 }
+				flat_productivity_change_effect = yes
+				set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { tag_index = NKO.id }
+				set_temp_variable = { influence_target = FRA.id }
+				change_influence_percentage = yes
 			}
 			custom_effect_tooltip = NKO_smuggles_drugs_abroad_tt
 		}
@@ -1279,6 +2212,12 @@ NKO_black_market = {
 		days_re_enable = 250
 		fixed_random_seed = no
 		available = {
+			NKO = {
+				network_national_coverage = {
+					target = USA
+					value > 70
+					}
+				}
 			has_completed_focus = NKO_counterfeit_production
 			USA = {
 				OR = {
@@ -1294,431 +2233,25 @@ NKO_black_market = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Finished NKO_print_money_usa"
-			set_temp_variable = { treasury_change = 0.2 }
-			modify_treasury_effect = yes
+			NKO = {
+				country_event = korea.139
+			}
 			random_list = {
-				20 = {
-					USA = {
-						set_temp_variable = { treasury_change = -35 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 4 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = USA.id }
-					change_influence_percentage = yes
+				25 = {
+					set_temp_variable = { int_investment_change = 30 }
+					modify_international_investment_effect = yes
 				}
-				20 = {
-					USA = {
-						set_temp_variable = { treasury_change = -25 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 2.5 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = USA.id }
-					change_influence_percentage = yes
+				25 = {
+					set_temp_variable = { int_investment_change = 25 }
+					modify_international_investment_effect = yes
 				}
-				20 = {
-					USA = {
-						set_temp_variable = { treasury_change = -15 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 1.5 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = USA.id }
-					change_influence_percentage = yes
+				25 = {
+					set_temp_variable = { int_investment_change = 20 }
+					modify_international_investment_effect = yes
 				}
-				20 = {
-					USA = {
-						set_temp_variable = { treasury_change = -5 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 1 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = USA.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					# nothing
-				}
-			}
-			custom_effect_tooltip = NKO_print_money_tt
-		}
-		ai_will_do = {
-			base = 1000
-		}
-	}
-	#Japan
-	NKO_print_money_japan = {
-		icon = GFX_decision_nko_fake_currency_button
-		cost = 25
-		days_remove = 30
-		days_re_enable = 150
-		fixed_random_seed = no
-		available = {
-			has_completed_focus = NKO_counterfeit_production
-			JAP = {
-				OR = {
-					has_government = democratic
-					has_government = neutrality
-				}
-			}
-		}
-		visible = {
-			country_exists = JAP
-			has_completed_focus = NKO_counterfeit_production
-			has_country_flag = NKO_black_market_bad_mechanic_open
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Finished NKO_print_money_japan"
-			set_temp_variable = { treasury_change = 0.2 }
-			modify_treasury_effect = yes
-			random_list = {
-				20 = {
-					JAP = {
-						set_temp_variable = { treasury_change = -30 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 4 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = JAP.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					JAP = {
-						set_temp_variable = { treasury_change = -20 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 2.5 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = JAP.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					JAP = {
-						set_temp_variable = { treasury_change = -10 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 1.5 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = JAP.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					JAP = {
-						set_temp_variable = { treasury_change = -3 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 1 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = JAP.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					# nothing
-				}
-			}
-			custom_effect_tooltip = NKO_print_money_tt
-		}
-		ai_will_do = {
-			base = 1000
-		}
-	}
-	#South Korea
-	NKO_print_money_korea = {
-		icon = GFX_decision_nko_fake_currency_button
-		cost = 25
-		days_remove = 30
-		days_re_enable = 120
-		fixed_random_seed = no
-		available = {
-			has_completed_focus = NKO_counterfeit_production
-			KOR = {
-				OR = {
-					has_government = democratic
-					has_government = neutrality
-				}
-			}
-		}
-		visible = {
-			country_exists = KOR
-			has_completed_focus = NKO_counterfeit_production
-			has_country_flag = NKO_black_market_bad_mechanic_open
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Finished NKO_print_money_korea"
-			set_temp_variable = { treasury_change = 0.2 }
-			modify_treasury_effect = yes
-			random_list = {
-				20 = {
-					KOR = {
-						set_temp_variable = { treasury_change = -15 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 4 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = KOR.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					KOR = {
-						set_temp_variable = { treasury_change = -10 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 2.5 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = KOR.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					KOR = {
-						set_temp_variable = { treasury_change = -5 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 1.5 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = KOR.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					KOR = {
-						set_temp_variable = { treasury_change = -1 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 1 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = KOR.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					# nothing
-				}
-			}
-			custom_effect_tooltip = NKO_print_money_tt
-		}
-		ai_will_do = {
-			base = 1000
-		}
-	}
-	#Germany
-	NKO_print_money_germany = {
-		icon = GFX_decision_nko_fake_currency_button
-		cost = 25
-		days_remove = 30
-		days_re_enable = 180
-		fixed_random_seed = no
-		available = {
-			has_completed_focus = NKO_counterfeit_production
-			GER = {
-				OR = {
-					has_government = democratic
-					has_government = neutrality
-				}
-			}
-		}
-		visible = {
-			country_exists = GER
-			has_completed_focus = NKO_counterfeit_production
-			has_country_flag = NKO_black_market_bad_mechanic_open
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Finished NKO_print_money_germany"
-			set_temp_variable = { treasury_change = 0.2 }
-			modify_treasury_effect = yes
-			random_list = {
-				20 = {
-					GER = {
-						set_temp_variable = { treasury_change = -10 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 4 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = GER.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					GER = {
-						set_temp_variable = { treasury_change = -6 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 2.5 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = GER.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					GER = {
-						set_temp_variable = { treasury_change = -3 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 1.5 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = GER.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					GER = {
-						set_temp_variable = { treasury_change = -1 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 1 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = GER.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					# nothing
-				}
-			}
-			custom_effect_tooltip = NKO_print_money_tt
-		}
-		ai_will_do = {
-			base = 1000
-		}
-	}
-	#France
-	NKO_print_money_france = {
-		icon = GFX_decision_nko_fake_currency_button
-		cost = 25
-		days_remove = 30
-		days_re_enable = 180
-		fixed_random_seed = no
-		available = {
-			has_completed_focus = NKO_counterfeit_production
-			FRA = {
-				OR = {
-					has_government = democratic
-					has_government = neutrality
-				}
-			}
-		}
-		visible = {
-			country_exists = FRA
-			has_completed_focus = NKO_counterfeit_production
-			has_country_flag = NKO_black_market_bad_mechanic_open
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Finished NKO_print_money_france"
-			set_temp_variable = { treasury_change = 0.2 }
-			modify_treasury_effect = yes
-			random_list = {
-				20 = {
-					FRA = {
-						set_temp_variable = { treasury_change = -21 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 4 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = FRA.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					FRA = {
-						set_temp_variable = { treasury_change = -15 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 2.5 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = FRA.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					FRA = {
-						set_temp_variable = { treasury_change = -7 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 1.5 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = FRA.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					FRA = {
-						set_temp_variable = { treasury_change = -1 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 1 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = FRA.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					# nothing
-				}
-			}
-			custom_effect_tooltip = NKO_print_money_tt
-		}
-		ai_will_do = {
-			base = 1000
-		}
-	}
-	#England
-	NKO_print_money_england = {
-		icon = GFX_decision_nko_fake_currency_button
-		cost = 25
-		days_remove = 30
-		days_re_enable = 180
-		fixed_random_seed = no
-		available = {
-			has_completed_focus = NKO_counterfeit_production
-			ENG = {
-				OR = {
-					has_government = democratic
-					has_government = neutrality
-				}
-			}
-		}
-		visible = {
-			country_exists = ENG
-			has_completed_focus = NKO_counterfeit_production
-			has_country_flag = NKO_black_market_bad_mechanic_open
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Finished NKO_print_money_england"
-			set_temp_variable = { treasury_change = 0.2 }
-			modify_treasury_effect = yes
-			random_list = {
-				20 = {
-					ENG = {
-						set_temp_variable = { treasury_change = -25 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 4 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = ENG.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					ENG = {
-						set_temp_variable = { treasury_change = -18 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 2.5 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = ENG.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					ENG = {
-						set_temp_variable = { treasury_change = -9 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 1.5 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = ENG.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					ENG = {
-						set_temp_variable = { treasury_change = -4 }
-						modify_treasury_effect = yes
-					}
-					set_temp_variable = { percent_change = 1 }
-					set_temp_variable = { tag_index = NKO.id }
-					set_temp_variable = { influence_target = ENG.id }
-					change_influence_percentage = yes
-				}
-				20 = {
-					# nothing
+				25 = {
+					set_temp_variable = { int_investment_change = 15 }
+					modify_international_investment_effect = yes
 				}
 			}
 			custom_effect_tooltip = NKO_print_money_tt
@@ -2272,6 +2805,7 @@ NKO_black_market = {
 		}
 	}
 }
+
 ###########RUSSIAN-KOREA FRIENDSHIP MECHANIC DECISIONS###########
 NKO_rus_friend_category = {
 	NKO_coop_russian_energy = {
@@ -2289,9 +2823,9 @@ NKO_rus_friend_category = {
 		}
 		visible = {
 			tag = NKO
-			has_idea = NKO_korean_russian_frienship
+			has_idea = NKO_korean_russian_friendship
 			SOV = {
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 			}
 		}
 		remove_effect = {
@@ -2328,9 +2862,9 @@ NKO_rus_friend_category = {
 		visible = {
 			tag = NKO
 			country_exists = SOV
-			has_idea = NKO_korean_russian_frienship
+			has_idea = NKO_korean_russian_friendship
 			SOV = {
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 			}
 			NOT = {
 				SOV = {
@@ -2364,9 +2898,9 @@ NKO_rus_friend_category = {
 		visible = {
 			tag = NKO
 			country_exists = SOV
-			has_idea = NKO_korean_russian_frienship
+			has_idea = NKO_korean_russian_friendship
 			SOV = {
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 			}
 			has_country_flag = SOV_gazprom_mechanic_korean_stream
 			NOT = {
@@ -2421,9 +2955,9 @@ NKO_rus_friend_category = {
 		visible = {
 			tag = NKO
 			country_exists = SOV
-			has_idea = NKO_korean_russian_frienship
+			has_idea = NKO_korean_russian_friendship
 			SOV = {
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 			}
 		}
 		remove_effect = {
@@ -2459,9 +2993,9 @@ NKO_rus_friend_category = {
 		visible = {
 			tag = NKO
 			country_exists = SOV
-			has_idea = NKO_korean_russian_frienship
+			has_idea = NKO_korean_russian_friendship
 			SOV = {
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 			}
 			NOT = {
 				has_country_flag = SOV_agree_nuclear
@@ -2493,9 +3027,9 @@ NKO_rus_friend_category = {
 		visible = {
 			tag = NKO
 			country_exists = SOV
-			has_idea = NKO_korean_russian_frienship
+			has_idea = NKO_korean_russian_friendship
 			SOV = {
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 			}
 			has_country_flag = SOV_agree_nuclear
 		}
@@ -2532,9 +3066,9 @@ NKO_rus_friend_category = {
 		visible = {
 			tag = NKO
 			country_exists = SOV
-			has_idea = NKO_korean_russian_frienship
+			has_idea = NKO_korean_russian_friendship
 			SOV = {
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 			}
 		}
 		complete_effect = {
@@ -2575,9 +3109,9 @@ NKO_rus_friend_category = {
 		visible = {
 			tag = SOV
 			country_exists = NKO
-			has_idea = NKO_korean_russian_frienship
+			has_idea = NKO_korean_russian_friendship
 			NKO = {
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 			}
 			SOV = {
 				has_country_flag = SOV_gazprom_mechanic_korean_stream_agree
@@ -2610,9 +3144,9 @@ NKO_rus_friend_category = {
 		visible = {
 			tag = SOV
 			country_exists = NKO
-			has_idea = NKO_korean_russian_frienship
+			has_idea = NKO_korean_russian_friendship
 			NKO = {
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 			}
 			NOT = {
 				has_idea = NKO_korean_repair_frontline_workers
@@ -2648,9 +3182,9 @@ NKO_rus_friend_category = {
 		visible = {
 			tag = SOV
 			country_exists = NKO
-			has_idea = NKO_korean_russian_frienship
+			has_idea = NKO_korean_russian_friendship
 			NKO = {
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 			}
 			NOT = {
 				has_idea = NKO_korean_repair_civil_workers
@@ -2694,9 +3228,9 @@ NKO_rus_friend_category = {
 		visible = {
 			tag = SOV
 			country_exists = NKO
-			has_idea = NKO_korean_russian_frienship
+			has_idea = NKO_korean_russian_friendship
 			NKO = {
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 			}
 			NOT = {
 				NKO = {
@@ -2736,11 +3270,10 @@ NKO_rus_friend_category = {
 		visible = {
 			tag = SOV
 			country_exists = NKO
-			has_idea = NKO_korean_russian_frienship
+			has_idea = NKO_korean_russian_friendship
 			NKO = {
-				has_idea = NKO_korean_russian_frienship
-			}
-			NKO = {
+				has_idea = NKO_korean_russian_friendship
+
 				NOT = {
 					has_idea = NKO_korean_ratnik_conversion
 				}

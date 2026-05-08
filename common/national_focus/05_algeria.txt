@@ -8404,7 +8404,10 @@ focus_tree = {
 					limit = {
 						is_embargoing = ALG
 					}
-					break_embargo = ALG
+					if = {
+						limit = { has_dlc = "By Blood Alone" }
+						break_embargo = ALG
+					}
 				}
 				newline = yes
 			}
@@ -13485,8 +13488,7 @@ focus_tree = {
 				NOT = {
 					has_war_with = LBA
 				}
-			}
-			ALG = {
+
 				NOT = {
 					has_war_with = USA
 				}
@@ -14002,8 +14004,6 @@ focus_tree = {
 						has_government = neutrality
 					}
 				}
-			}
-			MAL = {
 				influence_higher_60 = yes
 			}
 		}
@@ -21307,7 +21307,14 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ALG_support_fsa"
 			custom_effect_tooltip = dyn_ALG_tt
 			if = {
-				limit = { SYR = { has_government = neutrality } }
+				limit = {
+					SYR = {
+						OR = {
+							has_government = neutrality
+							has_government = fascism
+						}
+					}
+				}
 				SYR = { country_event = algeria.42 }
 				ALG = {
 					add_equipment_to_stockpile = {
@@ -21333,35 +21340,7 @@ focus_tree = {
 				set_temp_variable = { influence_target = SYR }
 				change_influence_percentage = yes
 			}
-			else_if = {
-				limit = { SYR = { has_government = fascism } }
-				SYR = { country_event = algeria.42 }
-				ALG = {
-					add_equipment_to_stockpile = {
-						type = infantry_weapons_1
-						amount = -2500
-						producer = ALG
-					}
-				}
-				add_popularity = {
-					ideology = neutrality
-					popularity = 0.10
-				}
-				reverse_add_opinion_modifier = {
-					modifier = supports_us
-					target = SYR
-				}
-				add_opinion_modifier = {
-					modifier = supports_us
-					target = SYR
-				}
-				set_temp_variable = { percent_change = 3 }
-				set_temp_variable = { tag_index = ALG }
-				set_temp_variable = { influence_target = SYR }
-				change_influence_percentage = yes
-			}
-			else_if = {
-				limit = { SYR = { has_government = communism } }
+			else = {
 				SYR = {
 					country_event = algeria.43
 					add_popularity = {
@@ -21375,53 +21354,10 @@ focus_tree = {
 				change_influence_percentage = yes
 				ALG = {
 					SYR = {
-						set_country_flag = embargo@PREV
-						add_opinion_modifier = { target = PREV modifier = embargo }
-						reverse_add_opinion_modifier = { target = PREV modifier = embargo }
-						add_opinion_modifier = { target = PREV modifier = embargo_opinion }
-						reverse_add_opinion_modifier = { target = PREV modifier = embargo_opinion }
-					}
-				}
-			}
-			else_if = {
-				limit = { SYR = { has_government = nationalist } }
-				SYR = {
-					country_event = algeria.43
-					add_popularity = {
-						ideology = neutrality
-						popularity = 0.05
-					}
-				}
-				set_temp_variable = { percent_change = 3 }
-				set_temp_variable = { tag_index = ALG }
-				set_temp_variable = { influence_target = SYR }
-				change_influence_percentage = yes
-				ALG = {
-					SYR = {
-						set_country_flag = embargo@PREV
-						add_opinion_modifier = { target = PREV modifier = embargo }
-						reverse_add_opinion_modifier = { target = PREV modifier = embargo }
-						add_opinion_modifier = { target = PREV modifier = embargo_opinion }
-						reverse_add_opinion_modifier = { target = PREV modifier = embargo_opinion }
-					}
-				}
-			}
-			else_if = {
-				limit = { SYR = { has_government = democratic } }
-				SYR = {
-					country_event = algeria.43
-					add_popularity = {
-						ideology = neutrality
-						popularity = 0.05
-					}
-				}
-				set_temp_variable = { percent_change = 3 }
-				set_temp_variable = { tag_index = ALG }
-				set_temp_variable = { influence_target = SYR }
-				change_influence_percentage = yes
-				ALG = {
-					SYR = {
-						set_country_flag = embargo@PREV
+						if = {
+							limit = { has_dlc = "By Blood Alone" }
+							send_embargo = PREV
+						}
 						add_opinion_modifier = { target = PREV modifier = embargo }
 						reverse_add_opinion_modifier = { target = PREV modifier = embargo }
 						add_opinion_modifier = { target = PREV modifier = embargo_opinion }
@@ -23212,15 +23148,14 @@ focus_tree = {
 				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
 			}
-			custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				add_opinion_modifier = { target = ROOT modifier = improve_trade }
-				reverse_add_opinion_modifier = { target = ROOT modifier = improve_trade }
-			}
 			for_each_scope_loop = {
 				array = global.EU_member
-				add_opinion_modifier = { target = ROOT modifier = improve_trade }
-				reverse_add_opinion_modifier = { target = ROOT modifier = improve_trade }
+				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					add_opinion_modifier = { target = ROOT modifier = improve_trade }
+					reverse_add_opinion_modifier = { target = ROOT modifier = improve_trade }
+				}
 			}
 		}
 
@@ -23308,19 +23243,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ALG_become_nato_ally"
-			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				set_temp_variable = { percent_change = 2 }
-				set_temp_variable = { tag_index = ALG.id }
-				set_temp_variable = { influence_target = USA.id }
-				change_influence_percentage = yes
-			}
 			for_each_scope_loop = {
 				array = global.nato_members
-				set_temp_variable = { percent_change = 2 }
-				set_temp_variable = { tag_index = ALG.id }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					set_temp_variable = { percent_change = 2 }
+					set_temp_variable = { tag_index = ALG.id }
+					set_temp_variable = { influence_target = THIS.id }
+					change_influence_percentage = yes
+				}
 			}
 			add_war_support = 0.10
 			add_ideas = Major_Non_NATO_Ally
@@ -25311,7 +25243,7 @@ focus_tree = {
 			set_temp_variable = { percent_change = 1.2 }
 			set_temp_variable = { tag_index = ALG.id }
 			every_other_country = {
-				limit = { is_sahel_nation = yes }
+				limit = { has_country_flag = sahel_nation_flag }
 				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
 			}

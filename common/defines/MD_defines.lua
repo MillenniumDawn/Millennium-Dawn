@@ -8,6 +8,7 @@
 	NDefines.NGame.CHECKSUM_SALT = "MillenniumDawn"
 	NDefines.NGame.COMBAT_LOG_MAX_MONTHS = 6 -- 12; halve combat log retention for performance
 	NDefines.NGame.MESSAGE_TIMEOUT_DAYS = 7 -- 60; messages expire sooner to reduce memory
+	NDefines.NGame.TRADE_ROUTE_RECALCULATE_FREQUENCY_DAYS = 45 -- vanilla recalculates too often; 45 days matches BI
 
 	-- NDiplomacy Defines
 	NDefines.NDiplomacy.MAX_OPINION_VALUE = 300
@@ -268,7 +269,7 @@
 	NDefines.NProject.BREAKTHROUGH_DAILY_NUCLEAR_REACTOR_GAIN = 0       -- Amount in 1/100th percentage gained per nuclear reactor. E.g. 2 = 0.02% per nuclear reactor.
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
-	NDefines.NBuildings.SAM_MISSION_SUPERIORITY = 15.0	-- How much air superiority each SAM mission gives per rocket wing performing SAM missions.
+	NDefines.NBuildings.SAM_MISSION_SUPERIORITY = 25.0	-- How much air superiority each SAM mission gives per rocket wing performing SAM missions.
 	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 50
 	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 50
 	NDefines.NBuildings.NAVALBASE_REPAIR_MULT = 0.075 -- 0.05 -- Each level of navalbase building repairs X strength and can repair as many ships as its level
@@ -278,7 +279,7 @@
 	NDefines.NBuildings.MAX_SHARED_SLOTS = 56
 	NDefines.NBuildings.OWNER_CHANGE_EXTRA_SHARED_SLOTS_FACTOR = 0.5
 	NDefines.NBuildings.INFRASTRUCTURE_RESOURCE_BONUS = 0.05	--upped from 0.02, vanilla 0.2
-	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 2.0 -- was 4.0 --Fucked with this to see
+	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 3.5 -- was 4.0 --Fucked with this to see
 	-- NOTE: The below piercing values are granularized to make piercing less punishing for nations with no real tank access
 	-- Nations with huge advantages will keep them, but the narrower the gap, the less effective the buffs get
 	-- these stats may be adjusted further, but for now, the scale remains 50% - 100%
@@ -316,8 +317,10 @@
 	NDefines.NMilitary.LAND_COMBAT_STR_ARMOR_DEFLECTION_FACTOR = 0.5 -- 0.5
 	NDefines.NMilitary.LAND_COMBAT_ORG_ARMOR_DEFLECTION_FACTOR = 0.3 -- 0.5
 	NDefines.NMilitary.LAND_COMBAT_FORT_DAMAGE_CHANCE = 15
+	NDefines.NMilitary.LAND_COMBAT_COLLATERAL_FORT_FACTOR = 0.07 -- 0.005
 	NDefines.NMilitary.ATTRITION_DAMAGE_ORG = 0.04 -- 0.08
-	NDefines.NMilitary.ATTRITION_EQUIPMENT_LOSS_CHANCE = 0.005 -- 0.1
+	NDefines.NMilitary.ATTRITION_EQUIPMENT_LOSS_CHANCE = 0.003 -- 0.1
+	NDefines.NMilitary.ATTRITION_WHILE_MOVING_FACTOR = 0.75 -- 1.2
 	NDefines.NMilitary.COMBAT_MOVEMENT_SPEED = 0.10
 	NDefines.NMilitary.TACTIC_SWAP_FREQUENCEY = 24 -- 24
 	NDefines.NMilitary.LAND_SPEED_MODIFIER = 0.05 -- 0.05
@@ -359,7 +362,7 @@
 	NDefines.NMilitary.PLAN_EXECUTE_BALANCED_LIMIT = 2 -- 0
 	NDefines.NMilitary.COMBAT_OVER_WIDTH_PENALTY = -1.5 -- -1
 	NDefines.NMilitary.COMBAT_OVER_WIDTH_PENALTY_MAX = -0.66 -- -0.33
-	NDefines.NMilitary.RETREAT_SPEED_FACTOR = 1.0 -- 0.25
+	NDefines.NMilitary.RETREAT_SPEED_FACTOR = 0.8 -- 0.25
 	NDefines.NMilitary.WITHDRAWING_SPEED_FACTOR = 0.35 -- 0.15
 	NDefines.NMilitary.STRATEGIC_SPEED_INFRA_BASE = 5.0               -- Base speed of strategic redeployment when not on railways
 	NDefines.NMilitary.STRATEGIC_SPEED_INFRA_MAX = 10.0               -- Additional speed of strategic redeployment on max-level infrastructure
@@ -554,7 +557,7 @@
 	NDefines.NNavy.REPAIR_AND_RETURN_UNIT_DYING_STR = 0.35 -- 0.2
 	NDefines.NNavy.NAVY_EXPENSIVE_IC = 18000 -- 5500
 	NDefines.NNavy.CONVOY_EFFICIENCY_MIN_VALUE = 0.1 -- 0.05
-	NDefines.NNavy.AMPHIBIOUS_LANDING_PENALTY = -0.5 -- -0.7
+	NDefines.NNavy.AMPHIBIOUS_LANDING_PENALTY = -0.35 -- -0.7
 	NDefines.NNavy.BASE_CARRIER_SORTIE_EFFICIENCY = 0.5 -- 0.5
 	NDefines.NNavy.NAVAL_SPEED_MODIFIER = 0.1 -- 0.1
 	NDefines.NNavy.NAVAL_TRANSFER_BASE_SPEED = 12 -- 6
@@ -973,7 +976,7 @@
 
 	-- AI Combat Responsiveness — more frequent than vanilla for smarter wartime AI (trades CPU for quality)
 	NDefines.NAI.HOURS_BETWEEN_ENCIRCLEMENT_DISCOVERY = 24 -- 72; 3x faster encirclement detection
-	NDefines.NAI.AI_UPDATE_ROLES_FREQUENCY_HOURS = 12 -- 48; 4x faster unit role reassignment
+	NDefines.NAI.AI_UPDATE_ROLES_FREQUENCY_HOURS = 24 -- 48; 2x faster unit role reassignment
 	NDefines.NAI.UPDATE_SUPPLY_MOTORIZATION_FREQUENCY_HOURS = 24 -- 52; 2x faster supply motorization response
 	NDefines.NAI.UPDATE_SUPPLY_BOTTLENECKS_FREQUENCY_HOURS = 48 -- 168; 3.5x faster supply bottleneck response
 
@@ -986,7 +989,7 @@
 	NDefines.NAI.RESEARCH_NEEDS_FACTOR = 0.05
 	NDefines.NAI.RESEARCH_LENGTH_FACTOR = 2.5
 
-	-- Peace deal AI stuff
+	-- AI Peace Conference
 	NDefines.NAI.PEACE_BID_FOLD_AGAINST_PLAYER_CHANCE = 0.7			-- 0.5 in vanilla
 	NDefines.NAI.PEACE_BID_FOLD_AGAINST_LIBERATE_CONTEST = 1.0			-- 1.0 in vanilla
 	NDefines.NAI.PEACE_AI_GROUP_PEACE_ACTIONS = false					-- Whether AI should group peace actions or greedily just select the most-desired peace actions
@@ -1080,6 +1083,12 @@
 	-- NSupply Defines
 	NDefines.NSupply.MAX_RAILWAY_LEVEL = 6 -- update railway texture as well, each frame corresponds to a level
 	NDefines.NSupply.DEFAULT_STARTING_TRUCK_RATIO = 1 -- countries get this ratio of starting truck in their buffers compared to their need -- vanilla 1.5
+	NDefines.NSupply.SUPPLY_BASE_MULT = 0.4 -- 0.2
+	NDefines.NSupply.RAILWAY_CONVERSION_COOLDOWN = 6 -- 10
+	NDefines.NSupply.RAILWAY_CONVERSION_COOLDOWN_CORE = 3 -- 5
+
+	-- NGeography Defines
+	NDefines.NGeography.MEDITERRANEAN_SEA_REGIONS = { 29, 68, 69, 168, 169, 214 }
 
 	NDefines.NAI.SHIPS_PRODUCTION_BASE_COST = 15000					-- Used by the AI to normalize IC values when picking what ship to build.
 	NDefines.NAI.NEEDED_NAVAL_FACTORIES_EXPENSIVE_SHIP_BONUS = 10    -- Amount of naval yards you need to get a bonus to building really expensive ships

@@ -1,0 +1,691 @@
+add_namespace = investments_event
+
+# Project completion event.
+country_event = {
+	id = investments_event.0
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: investments_event.0 executed"
+		complete_project = yes
+		refresh_investment_gui = yes
+	}
+}
+
+# Project cancellation/timeout event.
+country_event = {
+	id = investments_event.1
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: investments_event.1 executed"
+		end_project = yes
+		refresh_investment_gui = yes
+	}
+}
+
+country_event = {
+	id = investments_event.3
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		log = "[GetDateText]: [ROOT.GetName]: investments_event.3 executed"
+		var:ROOT.investments_nation_target = {
+			country_event = investments_event.10
+		}
+		refresh_investment_gui = yes
+	}
+}
+
+# AI investment offer event.
+country_event = {
+	id = investments_event.10
+	title = investments_event.1.t
+	desc = investments_event.1.d
+	picture = GFX_united_states_dollar
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			set_variable = { investor_cost = FROM.project_monetary_cost_effect }
+			multiply_variable = { investor_cost = 0.1 }
+			set_variable = { pending_offer_total_cost = FROM.project_monetary_cost^-1 }
+			set_variable = { pending_offer_duration = FROM.project_construction_duration^-1 }
+			set_variable = { pending_offer_amount = FROM.project_build_amount^-1 }
+			set_variable = { pending_offer_type = FROM.project_building_type^-1 }
+			set_variable = { pending_offer_state = FROM.investments_state_target }
+		}
+	}
+	option = {
+		name = investments_event.1.o1
+		log = "[GetDateText]: [This.GetName]: investments_event.1.o1 executed"
+		hidden_effect = {
+			FROM = {
+				# Restore snapshotted offer values so overlapping offers don't corrupt the staging slots
+				set_variable = { project_building_type^-1 = PREV.pending_offer_type }
+				set_variable = { project_build_amount^-1 = PREV.pending_offer_amount }
+				set_variable = { project_monetary_cost^-1 = PREV.pending_offer_total_cost }
+				set_variable = { project_monetary_cost_effect = PREV.pending_offer_total_cost }
+				multiply_variable = { project_monetary_cost_effect = -1 }
+				set_variable = { investments_state_target = PREV.pending_offer_state }
+
+				start_project_two = yes
+				clr_country_flag = this_investment_offer_pending@PREV
+				clr_country_flag = investments_ai_pending
+			}
+			# Influence Section
+			if = {
+				limit = { NOT = { has_country_flag = influence_gained_@FROM } }
+				if = { limit = { has_game_rule = { rule = rule_invest_influence_amount_gain option = gain_0_5_percent_invest } }
+					set_temp_variable = { percent_change = 0.50 }
+				}
+				else_if = { limit = { has_game_rule = { rule = rule_invest_influence_amount_gain option = gain_1_percent_invest } }
+					set_temp_variable = { percent_change = 1.0 }
+				}
+				else_if = { limit = { has_game_rule = { rule = rule_invest_influence_amount_gain option = gain_2_percent_invest } }
+					set_temp_variable = { percent_change = 2.0 }
+				}
+				else = {
+					set_temp_variable = { percent_change = 1.5 }
+				}
+				set_temp_variable = { tag_index = FROM.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+
+				# Cool Down for the Influence Gain
+				if = { limit = { has_game_rule = { rule = rule_influence_cooldown_limits option = day_14_cooldown } }
+					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 14 }
+					custom_effect_tooltip = cooldown_influence_limit_14_tooltip
+				}
+				else_if = { limit = { has_game_rule = { rule = rule_influence_cooldown_limits option = day_30_cooldown } }
+					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 30 }
+					custom_effect_tooltip = cooldown_influence_limit_30_tooltip
+				}
+			}
+
+
+			# THIS Nation
+			# take 10% of the cost of the project
+			set_temp_variable = { treasury_change = FROM.project_monetary_cost_effect }
+			multiply_temp_variable = { treasury_change = 0.1 }
+			modify_treasury_effect = yes
+			clear_variable = investor_cost
+			clear_variable = pending_offer_total_cost
+			clear_variable = pending_offer_duration
+			clear_variable = pending_offer_amount
+			clear_variable = pending_offer_type
+			clear_variable = pending_offer_state
+		}
+
+		# AI Chance of taking the Investment Project
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 1
+				ai_has_same_organization = yes
+			}
+			modifier = {
+				set_temp_variable = { opinion_calculator = opinion@FROM }
+				multiply_temp_variable = { opinion_calculator = 0.05 }
+				check_variable = { opinion_calculator > -30 }
+				add = opinion_calculator
+			}
+			modifier = {
+				add = 1
+				OR = {
+					AND = {
+						has_government = democratic
+						FROM = { has_government = democratic }
+					}
+					AND = {
+						has_government = neutrality
+						FROM = { has_government = neutrality }
+					}
+					AND = {
+						has_government = fascism
+						FROM = { has_government = fascism }
+					}
+					AND = {
+						has_government = nationalist
+						FROM = { has_government = nationalist }
+					}
+					AND = {
+						has_government = communism
+						FROM = { has_government = communism }
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				is_subject_of = FROM
+			}
+			modifier = {
+				factor = 2
+				check_variable = { gdp_per_capita < 15 }
+			}
+			modifier = {
+				add = 5
+				num_of_factories < 30
+			}
+			modifier = {
+				factor = 2
+				num_of_available_civilian_factories < 30
+			}
+			modifier = { #More likely if you are a top influencer
+				factor = 2
+				OR = {
+					check_variable = { influence_array^0 = FROM }
+					check_variable = { influence_array^1 = FROM }
+					check_variable = { influence_array^2 = FROM }
+					check_variable = { influence_array^3 = FROM }
+				}
+			}
+			modifier = {
+				factor = 5
+				set_temp_variable = { tmp = gdp_total }
+				multiply_temp_variable = { tmp = 0.03 }
+				divide_temp_variable = { tmp = 56 }
+
+				# Check if weekly treasury leads to spending at 3% of GDP or greater. Be more likely to accept if this is the case.
+				check_variable = { treasury_rate > tmp }
+				OR = {
+					check_variable = { FROM.project_building_type^-1 = 1 }
+					check_variable = { FROM.project_building_type^-1 = 5 }
+				}
+			}
+			modifier = {
+				factor = 2
+				OR = {
+					check_variable = { FROM.project_building_type^-1 = 12 }
+					check_variable = { FROM.project_building_type^-1 = 13 }
+				}
+				check_variable = { unfulfilled_energy_demand_var > -0.02 }
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					check_variable = { interest_rate > 9.999 }
+					has_country_flag = recently_refused_investment@FROM
+					AND = {
+						original_tag = BOS
+						has_stability < 0.40
+						date < 2000.6.01
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = investments_event.1.o2 # refuse
+		log = "[GetDateText]: [This.GetName]: investments_event.1.o2 executed"
+		# FROM is the original investor nation
+		# THIS is the target nation
+		clear_variable = investor_cost
+		clear_variable = pending_offer_total_cost
+		clear_variable = pending_offer_duration
+		clear_variable = pending_offer_amount
+		clear_variable = pending_offer_type
+		clear_variable = pending_offer_state
+		FROM = {
+			country_event = investments_event.11
+		}
+		set_country_flag = { flag = recently_refused_investment@FROM days = 30 value = 1 }
+
+		# AI chance for rejecting
+		ai_chance = {
+			base = 0
+			modifier = {
+				set_temp_variable = { opinion_calculator = opinion@FROM }
+				multiply_temp_variable = { opinion_calculator = -0.05 }
+				check_variable = { opinion_calculator > -30 }
+				add = opinion_calculator
+			}
+			modifier = {
+				factor = 2
+				has_government = nationalist
+			}
+			modifier = {
+				factor = 1.3
+				has_government = neutrality
+			}
+			modifier = {
+				add = 1
+				OR = {
+					AND = {
+						has_government = democratic
+						NOT = { FROM = { has_government = democratic } }
+					}
+					AND = {
+						has_government = neutrality
+						NOT = { FROM = { has_government = neutrality } }
+					}
+					AND = {
+						has_government = fascism
+						NOT = { FROM = { has_government = fascism } }
+					}
+					AND = {
+						has_government = nationalist
+						NOT = { FROM = { has_government = nationalist } }
+					}
+					AND = {
+						has_government = communism
+						NOT = { FROM = { has_government = communism } }
+					}
+				}
+			}
+			modifier = { #Less likely is not a top influencer
+				add = 1
+				OR = {
+					NOT = { check_variable = { influence_array^0 = FROM } }
+					NOT = { check_variable = { influence_array^1 = FROM } }
+					NOT = { check_variable = { influence_array^2 = FROM } }
+					NOT = { check_variable = { influence_array^3 = FROM } }
+				}
+			}
+			# Tag Specific Rejections
+			modifier = {
+				add = 20
+				OR = {
+					AND = {
+						original_tag = NKO
+						FROM = { NOT = { original_tag = CHI } }
+					}
+					AND = {
+						original_tag = PER
+						FROM = { NOT = { has_government = communism } }
+					}
+					AND = {
+						OR = {
+							original_tag = CHI
+							original_tag = SOV
+						}
+						FROM = { original_tag = USA }
+					}
+				}
+			}
+			modifier = {
+				factor = 2.5
+				check_variable = { domestic_influence_amount < 60.00 }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { domestic_influence_amount < 50.00 }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { domestic_influence_amount < 35.00 }
+			}
+			modifier = {
+				factor = 5
+				check_variable = { domestic_influence_amount < 20.00 }
+			}
+			modifier = {
+				factor = 10
+				check_variable = { domestic_influence_amount < 10.00 }
+			}
+			modifier = {
+				factor = 0.5
+			}
+			modifier = {
+				factor = 10
+				OR = {
+					check_variable = { FROM.project_building_type^-1 = 1 }
+					check_variable = { FROM.project_building_type^-1 = 2 }
+					check_variable = { FROM.project_building_type^-1 = 3 }
+					check_variable = { FROM.project_building_type^-1 = 5 }
+					check_variable = { FROM.project_building_type^-1 = 14 }
+				}
+				check_variable = { unfulfilled_energy_demand_var > -0.02 }
+			}
+			# Reject ALL investments if I recently rejected an offer
+			modifier = {
+				factor = 1000
+				has_country_flag = recently_refused_investment@FROM
+			}
+		}
+	}
+}
+
+#Construction Refused
+country_event = {
+	id = investments_event.11
+	title = investments_event.2.t
+	desc = investments_event.2.d
+	picture = GFX_united_states_dollar
+
+	is_triggered_only = yes
+
+	option = {
+		name = investments_event.2.o1
+		log = "[GetDateText]: [This.GetName]: investments_event.2.o1 executed"
+		clr_country_flag = this_investment_offer_pending@FROM
+		clr_country_flag = investments_ai_pending
+	}
+}
+
+#Construction Cancelled
+country_event = {
+	id = investments_event.12
+	title = investments_event.3.t
+	desc = investments_event.3.d
+	picture = GFX_united_states_dollar
+
+	is_triggered_only = yes
+
+	option = {
+		name = investments_event.3.o1
+		log = "[GetDateText]: [This.GetName]: investments_event.3.o1 executed"
+	}
+}
+
+# Cleanup event for any project slot. Reads `project` from country scope
+# (set by initialize_end_project_decisions before firing).
+country_event = {
+	id = investments_event.30
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: investments_event.30 cleared project [?project]"
+		subtract_from_variable = { active_projects = 1 }
+		set_variable = { project_array^project = 0 }
+		refresh_investment_gui = yes
+	}
+}
+
+# AI Investment Initialization
+# Purpose: The following event triggers the AI nation's upcoming investment offer
+country_event = {
+	id = investments_event.500
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_ai = yes
+		NOT = { has_country_flag = investments_ai_pending }
+		check_variable = { active_projects < 15 }
+		check_variable = { debt_ratio < 2.50 }
+		check_variable = { interest_rate < 8.000 }
+		# Early-out: a broke AI can't fund anything; don't waste a pulse on scoring.
+		# Smallest project types cost ~5 billion; require at least that much on hand.
+		check_variable = { treasury > 5 }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: AI Investment initiation Current Treasury: [?treasury], Current Interest Rate: [?interest_rate], Current Debt Ratio: [?debt_ratio]"
+
+		# Minimum Score for a Valid Project
+		set_temp_variable = { AI_MIN_STATE_SCORE = 100 }
+
+		# Find state with the BEST score possible
+		set_temp_variable = { AI_best_score = -1 }
+		# Find state without a project
+		set_temp_variable = { AI_best_target = -1 }
+		set_temp_variable = { AI_best_type = -1 }
+
+		set_temp_variable = { AI_best_country = 0 }
+		set_temp_variable = { AI_best_country_score = -1 }
+
+		# Hoisted investor-side modifiers for AI_country_selection_calculation.
+		# These are invariant across the investment_targets loop.
+		set_temp_variable = { inv_cost_modifier = modifier@investment_cost_modifier }
+		set_temp_variable = { inv_duration_modifier = modifier@investment_duration_modifier }
+		set_temp_variable = { inv_has_ECB_president = 0 }
+		if = { limit = { has_idea = ECB_president } set_temp_variable = { inv_has_ECB_president = 1 } }
+		set_temp_variable = { inv_has_EU_finance_minister = 0 }
+		if = { limit = { has_idea = EU_finance_minister } set_temp_variable = { inv_has_EU_finance_minister = 1 } }
+
+		for_each_scope_loop = {
+			array = investment_targets
+			if = {
+				limit = {
+					THIS = { exists = yes }
+					THIS = {
+						NOT = { has_country_flag = int_auto_reject_investment_flag }
+						# Don't even run country scoring for targets flagged as recently failed;
+						# AI_country_selection_calculation would assign -200 and they can't win.
+						NOT = { has_country_flag = recently_failed_to_invest }
+					}
+				}
+				set_temp_variable = { AI_selected_country = THIS.id }
+				set_temp_variable = { AI_country_score = 0 }
+				AI_country_selection_calculation = yes
+
+
+				# Sets the new best country
+				if = { limit = { check_variable = { AI_country_score > AI_best_country_score } }
+					set_temp_variable = { AI_best_country_score = AI_country_score }
+					set_temp_variable = { AI_best_country = AI_selected_country }
+				}
+			}
+		}
+
+		# Check Investing Country
+		if = { limit = { check_variable = { AI_best_country_score = -1 } }
+			log = "[GetDateText]: [This.GetName]: Investment Failed. No valid investing country. Skipping this investment pulse."
+		}
+		else = {
+			log = "[GetDateText]: [This.GetName]: Investment Country Succeeded. [?var:AI_best_country.GetName] scored a [?AI_best_country_score]"
+			var:AI_best_country = {
+				set_temp_variable = { target_nation = THIS.id }
+				if = { limit = { ROOT = { OR = { has_idea = defense_industry has_idea = the_military } } }
+					set_temp_variable = { AI_has_military_ideas = 1 }
+				}
+				if = { limit = { ROOT = { has_tech = radar } }
+					set_temp_variable = { AI_has_radar_tech = 1 }
+				}
+				if = { limit = { ROOT = { has_tech = fuel_silos } }
+					set_temp_variable = { AI_has_fuel_silo_tech = 1 }
+				}
+				if = { limit = { ROOT = { has_tech = reactor1 } }
+					set_temp_variable = { AI_has_reactor_tech = 1 }
+				}
+				if = { limit = { check_variable = { energy_consumption > 0 } }
+					set_temp_variable = { energy_balance_ratio = energy_sum }
+					divide_temp_variable = { energy_balance_ratio = energy_consumption }
+				}
+
+				# === Hoisted target-country invariants ===
+				# All AI_get_*_score functions read these from the target country
+				# many times per state. Caching once per pulse here saves dozens of
+				# CONTROLLER scope-changes inside the per-state loop.
+				set_temp_variable = { tgt_num_factories = num_of_factories }
+				set_temp_variable = { tgt_avail_civs = num_of_available_civilian_factories }
+				set_temp_variable = { tgt_num_mils = num_of_military_factories }
+				set_temp_variable = { tgt_num_naval = num_of_naval_factories }
+				set_temp_variable = { tgt_unemployment = total_unemployed_percentage_display }
+				set_temp_variable = { tgt_pop_m = population_total_m }
+				set_temp_variable = { tgt_gdp_per_capita = gdp_per_capita }
+				set_temp_variable = { tgt_corp_tax = corporate_tax_rate }
+				set_temp_variable = { tgt_gdp_total = gdp_total }
+				set_temp_variable = { tgt_interest_rate = interest_rate }
+				set_temp_variable = { tgt_max_fuel = max_fuel_k }
+				set_temp_variable = { tgt_steel_produced = resource_produced@steel }
+				set_temp_variable = { tgt_oil_imported = resource_imported@oil }
+				set_temp_variable = { tgt_renewable_mult = modifier@renewable_energy_gain_multiplier }
+				set_temp_variable = { tgt_threat = threat }
+
+				set_temp_variable = { tgt_civs_to_factories_ratio = 0 }
+				if = { limit = { check_variable = { tgt_num_factories > 0 } }
+					set_temp_variable = { tgt_civs_to_factories_ratio = num_of_civilian_factories }
+					divide_temp_variable = { tgt_civs_to_factories_ratio = tgt_num_factories }
+				}
+				set_temp_variable = { tgt_mils_to_factories_ratio = 0 }
+				if = { limit = { check_variable = { tgt_num_factories > 0 } }
+					set_temp_variable = { tgt_mils_to_factories_ratio = num_of_military_factories }
+					divide_temp_variable = { tgt_mils_to_factories_ratio = tgt_num_factories }
+				}
+
+				# Boolean caches (1 = true, 0 = false)
+				set_temp_variable = { tgt_has_war = 0 }
+				if = { limit = { has_war = yes } set_temp_variable = { tgt_has_war = 1 } }
+				set_temp_variable = { tgt_AI_threatened = 0 }
+				if = { limit = { has_country_flag = AI_is_threatened } set_temp_variable = { tgt_AI_threatened = 1 } }
+				set_temp_variable = { tgt_has_maritime_industry = 0 }
+				if = { limit = { has_idea = maritime_industry } set_temp_variable = { tgt_has_maritime_industry = 1 } }
+				set_temp_variable = { tgt_idea_some_power_restrict = 0 }
+				if = { limit = { has_idea = some_power_restrictions_spirit } set_temp_variable = { tgt_idea_some_power_restrict = 1 } }
+				set_temp_variable = { tgt_idea_heavy_power_restrict = 0 }
+				if = { limit = { has_idea = heavy_power_restrictions_spirit } set_temp_variable = { tgt_idea_heavy_power_restrict = 1 } }
+				set_temp_variable = { tgt_idea_some_consumption = 0 }
+				if = { limit = { has_idea = some_additional_consumption_spirit } set_temp_variable = { tgt_idea_some_consumption = 1 } }
+				set_temp_variable = { tgt_idea_heavy_consumption = 0 }
+				if = { limit = { has_idea = heavy_additional_consumption_spirit } set_temp_variable = { tgt_idea_heavy_consumption = 1 } }
+
+				# Hoisted war pre-check. has_war_with(ROOT) and any_allied_country
+				# are properties of the target country (not the state), so they're
+				# invariant across the per-state loop. If true, every state would
+				# fail the gate anyway — bail out of the whole loop.
+				set_temp_variable = { tgt_at_war_with_investor = 0 }
+				if = { limit = { has_war_with = ROOT }
+					set_temp_variable = { tgt_at_war_with_investor = 1 }
+				}
+				if = { limit = { any_allied_country = { has_war_with = ROOT } }
+					set_temp_variable = { tgt_at_war_with_investor = 1 }
+				}
+
+				# Hoisted neighbor-at-war check. any_neighbor_country is a
+				# country-level invariant, identical for every controlled state.
+				set_temp_variable = { tgt_neighbor_at_war = 0 }
+				if = {
+					limit = { any_neighbor_country = { has_war_with = THIS } }
+					set_temp_variable = { tgt_neighbor_at_war = 1 }
+				}
+
+				if = { limit = { check_variable = { tgt_at_war_with_investor = 0 } }
+				for_each_scope_loop = {
+					array = controlled_states
+
+					if = {
+						limit = {
+							# Check if the Investable State
+							is_in_home_area = yes
+							# Check whether the AI can invest in these states
+							AI_no_investment_in_these_states = yes
+							NOT = {
+								is_in_array = { array = projects_in_state value = ROOT.id }
+							}
+							# TODO: Add a check here at some point to make sure they're not a subject, if they are only invest if they are an allies subject or if they're your subject
+						}
+
+
+						AI_count_pending_projects = yes
+
+						# Free Building Slot Buildings
+						if = { limit = { free_building_slots = { building = industrial_complex size > 0 include_locked = no } }
+							# Get Industrial Complex Score - Building Type - 1
+							AI_get_civilian_industry_score = yes
+							# Get a Military Industry Score if you have defense industry
+							# - Building Type - 2
+							if = { limit = { ROOT = { has_idea = defense_industry } }
+								AI_get_military_industry_score = yes
+							}
+							# Get Naval Dockyard Score if you have Maritime Industry
+							# - Building Type - 3
+							if = { limit = { ROOT = { has_idea = maritime_industry } is_coastal = yes }
+								AI_get_dockyard_score = yes
+							}
+							# Offices - Building Type - 5
+							AI_get_offices_score = yes
+						}
+						# Infrastructure - Building Type - 4
+						AI_get_infrastructure_score = yes
+						# Surface to Air Missiles - Building Type - 6
+						if = { limit = { check_variable = { AI_has_military_ideas = 1 } }
+							AI_get_antiair_score = yes
+						}
+						# Radar Stations - Building Type - 7
+						if = { limit = { OR = { check_variable = { AI_has_military_ideas = 1 } check_variable = { AI_has_radar_tech = 1 } } }
+							AI_get_radar_score = yes
+						}
+						# Air Bases - Building Type - 8
+						if = { limit = { check_variable = { AI_has_military_ideas = 1 } }
+							AI_get_airbase_score = yes
+						}
+						# Fuel Silos - Building Type - 9
+						AI_get_fuel_silo_score = yes
+						# Network Infrastructure - Building Type - 10
+						AI_get_network_infrastructure_score = yes
+						# Renewable Powerplant - Building Type - 11
+						if = { limit = { check_variable = { AI_has_fuel_silo_tech = 1 } }
+							AI_get_renewable_energy_score = yes
+						}
+						# Fossil Fuel Powerplant - Building Type - 12
+						AI_get_fossil_powerplant_score = yes
+						# Nuclear Reactor - Building Type - 13
+						if = { limit = { check_variable = { AI_has_reactor_tech = 1 } }
+							AI_get_nuclear_reactor_score = yes
+						}
+
+						# Outside of Calculation
+						AI_edge_case_calculations = yes
+					}
+				}
+				}
+			}
+			if = { limit = { check_variable = { AI_best_score > AI_MIN_STATE_SCORE } }
+				# Project building type
+				set_variable = { project_building_type = 0 }
+				set_variable = { project_type = -1 }
+				set_variable = { project_building_type^project_type = AI_best_type }
+				# Regardless it will always be one for sake of AI balance
+				set_variable = { project_build_amount^-1 = 1 }
+
+				project_monetary_cost_calculation = yes
+
+				# Init Project Variables (writes ^-1 staging slot since project = -1)
+				# AI_best_target is the best state to invest in
+				set_variable = { project = -1 }
+				set_variable = { project_type = project_building_type^-1 }
+				set_temp_variable = { investments_calc_state = AI_best_target }
+				calculate_project_duration = yes
+
+				# Log Values
+				set_temp_variable = { pd = project_construction_duration^-2 }
+				set_temp_variable = { pbt = project_building_type^-1 }
+				set_temp_variable = { pba = project_build_amount^-1 }
+				set_temp_variable = { abt = AI_best_target }
+				set_temp_variable = { abs = AI_best_score }
+
+				if = {
+					limit = {
+						# Only allow projects between 0 and 700. If construction speed goes negative you'll get instant failing projects
+						check_variable = { project_construction_duration^-2 < 700 }
+						check_variable = { project_construction_duration^-2 > 0 }
+
+						# Check whether it's available
+						var:AI_best_target = { investment_building_slot_available = yes }
+					}
+					var:AI_best_target = {
+						THIS = {
+							set_variable = { ROOT.investments_state_target = THIS.id }
+							# CONTROLLER is pretty obvious
+							CONTROLLER = { set_variable = { ROOT.investments_nation_target = THIS.id } }
+						}
+						ROOT = { country_event = investments_event.3 }
+					}
+					# Guard against overlapping proposals overwriting the -1 staging variables
+					set_country_flag = { flag = investments_ai_pending days = 7 value = 1 }
+					# Temporarily pulls this tag from investment targets for the sake of spreading investments around
+					var:AI_best_country = {
+						set_country_flag = { flag = recently_accepted_an_investment value = 1 days = 21 }
+					}
+
+					log = "[GetDateText]: [This.GetName]: Investment Succeeded: project type [?pbt] (x [?pba]) in [?abt.GetName], Project Duration: [?pd], Nation [?ROOT.investments_nation_target.GetName], score = [?abs]"
+				}
+				else = {
+					var:AI_best_country = {
+						set_country_flag = { flag = recently_failed_to_invest value = 1 days = 75 }
+					}
+					log = "[GetDateText]: [This.GetName]: Investment Failed: project_construction_duration out of range or slot unavailable in [?abt.GetName]. Duration: [?pd], score: [?abs]. Skipping this investment pulse."
+				}
+			}
+			else = {
+				var:AI_best_country = {
+					set_country_flag = { flag = recently_failed_to_invest value = 1 days = 75 }
+				}
+				log = "[GetDateText]: [This.GetName]: Investment Failed: no state met minimum score [?AI_MIN_STATE_SCORE] (best [?AI_best_score]). Skipping this investment pulse."
+			}
+		}
+	}
+}

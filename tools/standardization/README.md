@@ -14,59 +14,88 @@ The standardization tools help maintain consistent code formatting and best prac
 ## Available Standardizers
 
 ### Focus Trees (`standardize_focus_tree.py`)
+
 Standardizes national focus files according to Millennium Dawn standards.
 
 **Key features:**
+
 - Enforces proper property ordering
 - Adds missing logging to completion rewards and effects
 - Formats search_filters into single lines
 - Ensures ai_will_do is properly formatted
 
 **Usage:**
+
 ```bash
 python3 standardize_focus_tree.py input.txt -o output.txt --backup --verbose
 ```
 
 ### Events (`standardize_events.py`)
+
 Standardizes event files according to Millennium Dawn standards.
 
 **Key features:**
+
 - Ensures `is_triggered_only = yes` for triggered events
 - Adds logging to options only when they have effects
 - Maintains proper property ordering
 - Removes excessive blank lines
 
 **Usage:**
+
 ```bash
 python3 standardize_events.py input.txt -o output.txt --backup --verbose
 ```
 
 ### Decisions (`standardize_decisions.py`)
+
 Standardizes decision files according to Millennium Dawn standards.
 
 **Key features:**
+
 - Adds logging to complete_effect blocks
 - Enforces proper property ordering
 - Maintains consistent formatting
 - Preserves ai_will_do blocks
 
 **Usage:**
+
 ```bash
 python3 standardize_decisions.py input.txt -o output.txt --backup --verbose
 ```
 
 ### Ideas (`standardize_ideas.py`)
+
 Standardizes idea files according to Millennium Dawn standards.
 
 **Key features:**
-- Removes performance-hurting properties (`allowed = { always = no }`, `cancel = { always = no }`)
+
+- Removes redundant default properties (`allowed = { always = no }`, `cancel = { always = no }`)
 - Adds logging to on_add/on_remove when they have effects
 - Preserves allowed_civil_war for civil war tags
 - Maintains proper formatting
 
 **Usage:**
+
 ```bash
 python3 standardize_ideas.py input.txt -o output.txt --backup --verbose
+```
+
+### Military Industrial Organizations (`standardize_mio.py`)
+
+Standardizes MIO organization files according to Millennium Dawn standards.
+
+**Key features:**
+
+- Enforces the standard property ordering for MIOs
+- Orders core fields as `name`, `allowed`, `icon`, `task_capacity`, `equipment_type`, `research_categories`, `tree_header_text`, `initial_trait`, then `trait`
+- Compacts blocks by removing excessive blank lines
+- Keeps unrecognized lines in a trailing `other` section
+
+**Usage:**
+
+```bash
+python3 standardize_mio.py input.txt -o output.txt --backup --verbose
 ```
 
 ## Unified Interface
@@ -85,6 +114,9 @@ python3 standardize.py decision input.txt
 
 # Standardize ideas
 python3 standardize.py idea input.txt -v
+
+# Standardize MIOs
+python3 standardize.py mio input.txt
 ```
 
 ## Common Options
@@ -99,29 +131,40 @@ All standardizers support these command-line options:
 ## Code Standards Enforced
 
 ### Focus Trees
+
 - Use `relative_position_id` for positioning
 - Include logging in completion_reward/select_effect/bypass_effect
 - Proper property ordering (id, icon, position, cost, prerequisites, etc.)
 - ai_will_do always last
 
 ### Events
+
 - Use `is_triggered_only = yes` for triggered events
 - Log only options that have actual effects
 - Proper property ordering
 - Remove excessive blank lines
 
 ### Decisions
+
 - Include logging in complete_effect
 - Use `fire_only_once` sparingly
 - Proper property ordering
 - Include ai_will_do
 
 ### Ideas
-- Remove `allowed = { always = no }` (performance optimization)
-- Remove `cancel = { always = no }` (performance optimization)
+
+- Remove `allowed = { always = no }` (redundant default; `allowed` checked once at load, bypassed by `add_ideas`)
+- Remove `cancel = { always = no }` (redundant default; checked hourly, never true)
 - Remove empty `on_add = { log = "" }`
 - Include `allowed_civil_war = { always = yes }` for civil war tags
 - Log only when on_add/on_remove have actual effects
+
+### Military Industrial Organizations
+
+- Proper property ordering for organization headers
+- Place all `tree_header_text` blocks before `initial_trait`
+- Place all `trait` blocks after `initial_trait`
+- Remove excessive blank lines inside blocks
 
 ## Performance Optimizations
 
@@ -129,7 +172,6 @@ The standardizers automatically remove or optimize code patterns that hurt perfo
 
 - **Division operations**: Suggest multiplication instead of division
 - **Empty logging**: Remove `log = ""` statements
-- **Default properties**: Remove `allowed = { always = no }` and `cancel = { always = no }`
 - **MTTH events**: Warn about open-fire MTTH events
 - **Arrays**: Suggest replacing `every_country`/`random_country` with specific arrays
 
@@ -157,17 +199,20 @@ When adding new standardizers:
 ### Common Issues
 
 **Import errors**: Make sure you're running from the `tools/standardization/` directory
+
 ```bash
 cd tools/standardization
 python3 standardize.py focus input.txt
 ```
 
 **File not found**: Verify the input file path is correct
+
 ```bash
 ls -la input.txt  # Check if file exists
 ```
 
 **Permission errors**: Ensure you have write permissions for the output directory
+
 ```bash
 chmod 644 input.txt  # Make sure file is writable
 ```
@@ -175,11 +220,13 @@ chmod 644 input.txt  # Make sure file is writable
 ### Debug Mode
 
 Use `--verbose` to see detailed processing information:
+
 ```bash
 python3 standardize.py focus input.txt --verbose
 ```
 
 This will show:
+
 - Files being processed
 - Blocks being reformatted
 - Properties being extracted
@@ -194,8 +241,9 @@ Consider adding standardization to your pre-commit hooks:
 ```bash
 # In .git/hooks/pre-commit
 #!/bin/bash
-python3 tools/standardization/standardize.py focus common/national_focus/*.txt
-python3 tools/standardization/standardize.py event events/*.txt
+    python3 tools/standardization/standardize.py focus common/national_focus/*.txt
+    python3 tools/standardization/standardize.py event events/*.txt
+    python3 tools/standardization/standardize.py mio common/military_industrial_organization/organizations/*.txt
 ```
 
 ### CI/CD Pipeline
@@ -208,6 +256,7 @@ Add standardization checks to your continuous integration:
   run: |
     python3 tools/standardization/standardize.py focus common/national_focus/*.txt --backup
     python3 tools/standardization/standardize.py event events/*.txt --backup
+    python3 tools/standardization/standardize.py mio common/military_industrial_organization/organizations/*.txt --backup
 ```
 
 ## Related Documentation

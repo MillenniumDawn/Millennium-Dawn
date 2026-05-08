@@ -1439,8 +1439,10 @@ focus_tree = {
 
 		available = {
 			NOT = { country_exists = KUB }
-			SOV = { owns_state = 668 }
-			SOV = { owns_state = 1140 }
+			SOV = {
+				owns_state = 668
+				owns_state = 1140
+			}
 		}
 
 		completion_reward = {
@@ -3036,16 +3038,14 @@ focus_tree = {
 				set_temp_variable = { percent_change = 4 }
 				set_temp_variable = { influence_target = BLR }
 				change_influence_percentage = yes
-			}
-			add_opinion_modifier = {
-				target = BLR
-				modifier = major_breach_of_trust
-			}
-			BLR = {
 				add_opinion_modifier = {
 					target = ROOT
 					modifier = major_breach_of_trust
 				}
+			}
+			add_opinion_modifier = {
+				target = BLR
+				modifier = major_breach_of_trust
 			}
 		}
 
@@ -3287,8 +3287,8 @@ focus_tree = {
 			}
 			modifier = {
 				OR = {
-					LPR = { exists = no }
-					DPR = { exists = no }
+					NOT = { country_exists = LPR }
+					NOT = { country_exists = DPR }
 				}
 				factor = 0
 			}
@@ -3376,8 +3376,9 @@ focus_tree = {
 					limit = {
 						UKR = {
 							has_idea = paralyzing_corruption
+
+							check_variable = { influence_array^0 = SOV }
 						}
-						UKR = { check_variable = { influence_array^0 = SOV } }
 					}
 					UKR = { country_event = { id = ukraine_coup.2 days = 1 } }
 				}
@@ -3870,12 +3871,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_information_war"
-			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				add_timed_idea = { idea = SOV_idea_information days = 365 }
-			}
 			for_each_scope_loop = {
 				array = global.nato_members
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
 				add_timed_idea = { idea = SOV_idea_information days = 365 }
 			}
 			hidden_effect = {
@@ -10587,8 +10585,7 @@ focus_tree = {
 				set_temp_variable = { culture_index = 0 }
 				set_temp_variable = { cultural_opinion = -4 }
 				SPR_modify_cultural_opinion = yes
-			}
-			SPR = {
+
 				set_temp_variable = { culture_index = 3 }
 				set_temp_variable = { cultural_opinion = -4 }
 				SPR_modify_cultural_opinion = yes
@@ -10634,8 +10631,7 @@ focus_tree = {
 				custom_effect_tooltip = GER_bavarian_nationalism_increase_1
 				add_to_variable = { GER_bavarian_nationalism_var = 1 }
 				GER_update_dirty_variable = yes
-			}
-			GER = {
+
 				custom_effect_tooltip = GER_east_decrease_opinion
 				add_to_variable = { GER_east_opinion = -1 }
 			}
@@ -10968,13 +10964,13 @@ focus_tree = {
 			}
 			NOT = {
 				has_war_with = NKO
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 			}
 		}
 
 		bypass = {
 			OR = {
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 				NKO = {
 					is_in_faction = yes
 					is_subject = yes
@@ -12113,13 +12109,12 @@ focus_tree = {
 					}
 				}
 			}
-			every_country = {
-				limit = {
-					OR = {
-						has_idea = EU_member
-						has_idea = NATO_member
-					}
-				}
+			for_each_scope_loop = {
+				array = global.EU_member
+				add_opinion_modifier = { target = SOV modifier = enemy_number_one }
+			}
+			for_each_scope_loop = {
+				array = global.nato_members
 				add_opinion_modifier = { target = SOV modifier = enemy_number_one }
 			}
 			hidden_effect = {
@@ -15268,13 +15263,13 @@ focus_tree = {
 			}
 			NOT = {
 				has_war_with = NKO
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 			}
 		}
 
 		bypass = {
 			OR = {
-				has_idea = NKO_korean_russian_frienship
+				has_idea = NKO_korean_russian_friendship
 				NKO = {
 					is_in_faction = yes
 					is_subject = yes
@@ -15753,8 +15748,9 @@ focus_tree = {
 			news_event = { hours = 1 id = sov_warsaw_pact.2 }
 			if = {
 				limit = { has_idea = CSTO_member is_faction_leader = yes }
-				every_country = {
-					limit = { has_idea = CSTO_member }
+				for_each_scope_loop = {
+					array = global.CSTO_member
+					tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
 					leave_faction = yes
 					remove_ideas = CSTO_member
 				}
@@ -16818,19 +16814,16 @@ focus_tree = {
 			army_experience = 50
 			air_experience = 15
 			navy_experience = 10
-			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				add_opinion_modifier = { target = ROOT modifier = military_cooperation }
-				reverse_add_opinion_modifier = { target = ROOT modifier = military_cooperation }
-				country_event = sov_other.12
-				give_military_access = SOV
-			}
 			for_each_scope_loop = {
 				array = global.nato_members
-				add_opinion_modifier = { target = ROOT modifier = military_cooperation }
-				reverse_add_opinion_modifier = { target = ROOT modifier = military_cooperation }
-				country_event = sov_other.12
-				give_military_access = SOV
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					add_opinion_modifier = { target = ROOT modifier = military_cooperation }
+					reverse_add_opinion_modifier = { target = ROOT modifier = military_cooperation }
+					country_event = sov_other.12
+					give_military_access = SOV
+				}
 			}
 		}
 
@@ -17071,15 +17064,14 @@ focus_tree = {
 				value = -0.20
 				tooltip_side = SOV_west_east_bop_left_side
 			}
-			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
-				reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
-			}
 			for_each_scope_loop = {
 				array = global.nato_members
-				add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
-				reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+					reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+				}
 			}
 			if = {
 				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
@@ -21609,8 +21601,10 @@ focus_tree = {
 					modifier = imminent_danger_to_national_security
 				}
 			}
-			TAI = { country_event = russia.46 }
-			TAI = { country_event = russia.41 }
+			TAI = {
+				country_event = russia.46
+				country_event = russia.41
+			}
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_support_taiwan_military_buildup"
 		}
 
@@ -21703,8 +21697,10 @@ focus_tree = {
 			set_temp_variable = { percent_change = 4 }
 			set_temp_variable = { influence_target = KOR }
 			change_influence_percentage = yes
-			KOR = { country_event = russia.46 }
-			KOR = { country_event = russia.41 }
+			KOR = {
+				country_event = russia.46
+				country_event = russia.41
+			}
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_export_military_hardware_to_south_korea"
 		}
 
@@ -23903,8 +23899,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_csto_training_exercises"
 			army_experience = 30
-			every_country = {
-				limit = { has_idea = CSTO_member }
+			for_each_scope_loop = {
+				array = global.CSTO_member
+				tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
 				add_opinion_modifier = { target = ROOT modifier = military_cooperation }
 				reverse_add_opinion_modifier = { target = ROOT modifier = military_cooperation }
 			}
@@ -25503,7 +25500,7 @@ focus_tree = {
 				name = SOV_hypersonic_missiles
 				bonus = 0.75
 				uses = 1
-				category = CAT_bm
+				category = CAT_OLV
 			}
 			add_tech_bonus = {
 				name = SOV_hypersonic_missiles
@@ -30126,14 +30123,11 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_free_economic_zone"
 			if = {
 				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
-				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-				effect_tooltip = {
-					add_opinion_modifier = { target = ROOT modifier = improve_trade }
-					reverse_add_opinion_modifier = { target = ROOT modifier = improve_trade }
-				}
-				hidden_effect = {
-					for_each_scope_loop = {
-						array = global.EU_member
+				for_each_scope_loop = {
+					array = global.EU_member
+					tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+					if = {
+						limit = { NOT = { tag = ROOT } }
 						add_opinion_modifier = { target = ROOT modifier = improve_trade }
 						reverse_add_opinion_modifier = { target = ROOT modifier = improve_trade }
 					}
@@ -30986,13 +30980,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_Measures_of_rapprochement_with_the_West"
-			every_country = {
-				limit = {
-					OR = {
-						has_idea = NATO_member
-						has_idea = EU_member
-					}
+			for_each_scope_loop = {
+				array = global.nato_members
+				add_opinion_modifier = {
+					target = SOV
+					modifier = recent_actions_positive
 				}
+				add_opinion_modifier = {
+					target = SOV
+					modifier = declaration_of_friendship
+				}
+			}
+			for_each_scope_loop = {
+				array = global.EU_member
 				add_opinion_modifier = {
 					target = SOV
 					modifier = recent_actions_positive
@@ -31350,8 +31350,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_Cooperation_with_Taiwan"
 			TAI = {
 				add_political_power = 100
-			}
-			TAI = {
+
 				add_opinion_modifier = {
 					target = SOV
 					modifier = improve_trade
@@ -32003,8 +32002,10 @@ focus_tree = {
 			hidden_effect = {
 				if = {
 					limit = {
-						UKR = { owns_state = 695 }
-						UKR = { owns_state = 333 }
+						UKR = {
+							owns_state = 695
+							owns_state = 333
+						}
 					}
 					SOV = {
 						transfer_state = 695
@@ -32053,8 +32054,10 @@ focus_tree = {
 				}
 				if = {
 					limit = {
-						UKR = { owns_state = 1076 }
-						UKR = { owns_state = 1075 }
+						UKR = {
+							owns_state = 1076
+							owns_state = 1075
+						}
 					}
 					SOV = {
 						transfer_state = 1076
@@ -32071,8 +32074,10 @@ focus_tree = {
 				}
 				if = {
 					limit = {
-						UKR = { owns_state = 693 }
-						UKR = { owns_state = 1030 }
+						UKR = {
+							owns_state = 693
+							owns_state = 1030
+						}
 					}
 					SOV = {
 						transfer_state = 693

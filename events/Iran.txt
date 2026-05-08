@@ -4,6 +4,7 @@ add_namespace = PER_majlis
 add_namespace = nuclear_iran
 add_namespace = PER_election_events
 add_namespace = axis_of_resistance_events
+add_namespace = iranian_flavor
 
 country_event = {
 	id = iranian_events.1 #Bam Earthquake
@@ -3492,8 +3493,10 @@ country_event = {
 
 	trigger = {
 		country_exists = ISI
-		ISI = { num_of_controlled_states > 0 }
-		ISI = { NOT = { has_country_flag = IRQ_anbar_tribal_council_trigger } }
+		ISI = {
+			num_of_controlled_states > 0
+			NOT = { has_country_flag = IRQ_anbar_tribal_council_trigger }
+		}
 	}
 
 	option = {
@@ -8839,7 +8842,10 @@ country_event = {
 	option = {
 		name = nuclear_iran.17.a
 		log = "[GetDateText]: [This.GetName]: nuclear_iran.17.a executed"
-		send_embargo = PER
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			send_embargo = PER
+		}
 		every_country = {
 			limit = {
 				OR = {
@@ -8907,15 +8913,16 @@ country_event = {
 	option = {
 		name = nuclear_iran.18.a
 		log = "[GetDateText]: [This.GetName]: nuclear_iran.18.a executed"
-		send_embargo = PER
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			send_embargo = PER
+		}
 		add_opinion_modifier = {
 			target = PER
 			modifier = sanctioned_iran
 		}
 		PER = {
 			country_event = nuclear_iran.19
-		}
-		PER = {
 			add_opinion_modifier = {
 				target = ROOT
 				modifier = sanctioned_us
@@ -9819,8 +9826,7 @@ country_event = {
 			}
 			JOR = {
 				give_resource_rights = { receiver = PER state = 210 }
-			}
-			JOR = {
+
 				set_country_flag = JOR_agreed_oil_shale
 			}
 		}
@@ -10022,7 +10028,10 @@ country_event = {
 				target = JOR
 				modifier = major_breach_of_trust
 			}
-			send_embargo = JOR
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				send_embargo = JOR
+			}
 		}
 		ai_chance = {
 			base = 1
@@ -11278,8 +11287,7 @@ country_event = { # Iran asks us for Leapord Tanks
 			PER = {
 				set_temp_variable = { treasury_change = -35.29 }
 				modify_treasury_effect = yes
-			}
-			PER = {
+
 				add_equipment_to_stockpile = {
 					type = medium_tank_chassis_1
 					variant_name = "Leopard 2A5"
@@ -11302,8 +11310,7 @@ country_event = { # Iran asks us for Leapord Tanks
 			PER = {
 				set_temp_variable = { treasury_change = -35.29 }
 				modify_treasury_effect = yes
-			}
-			PER = {
+
 				add_equipment_to_stockpile = {
 					type = MBT_1
 					amount = 100
@@ -13898,7 +13905,7 @@ country_event = {
 			}
 			icon = "gfx/interface/technologies/PER/AIR/MR2.dds"
 			model = "PER_F14A_entity2"
-			design_team = mio:USA_northrop_grumman_aircraft_manufacturer
+			design_team = mio:USA_northrop_grumman_manufacturer
 		}
 		PER = {
 			country_event = {
@@ -18289,8 +18296,10 @@ country_event = {
 			}
 			IRI = {
 				ingame_startup_nations_effect = yes
+				add_ideas = shia
 				division_template = {
 					name = "Niru-ye Daryayi Sepah-e Pasdaran" #Sepah
+					override_model = PER_Militia_Bat_entity
 					regiments = {
 						Special_Forces = { x = 0 y = 0 }
 						L_Marine_Bat = { x = 0 y = 1 }
@@ -18304,6 +18313,7 @@ country_event = {
 				}
 				division_template = {
 					name = "Niru-ye Qods-e Sepah-e Pasdaran" #Sepah
+					override_model = PER_Militia_Bat_entity
 					regiments = {
 						Special_Forces = { x = 0 y = 0 }
 						Special_Forces = { x = 0 y = 1 }
@@ -18320,6 +18330,7 @@ country_event = {
 				}
 				division_template = {
 					name = "Lashkar-e Motorizeh Sepah-e Pasdaran" #Sepah
+					override_model = PER_Militia_Bat_entity
 					regiments = {
 						Mot_Militia_Bat = { x = 0 y = 0 }
 						Mot_Militia_Bat = { x = 0 y = 1 }
@@ -18390,6 +18401,24 @@ country_event = {
 					support = {
 						L_Recce_Comp = { x = 0 y = 0 }
 					}
+					priority = 2
+				}
+				division_template = {
+					name = "Niru-ye Basij-e Sepah-e Pasdaran" #Sepah
+					override_model = PER_Militia_Bat_entity
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 3 y = 0 }
+						Militia_Bat = { x = 1 y = 0 }
+						Militia_Bat = { x = 1 y = 1 }
+						Militia_Bat = { x = 1 y = 2 }
+						Militia_Bat = { x = 4 y = 0 }
+						Militia_Bat = { x = 2 y = 0 }
+						Militia_Bat = { x = 2 y = 1 }
+					}
+
 					priority = 2
 				}
 				transfer_state = 402
@@ -18524,21 +18553,24 @@ country_event = {
 						owner = IRI
 					}
 				}
+				random_owned_controlled_state = {
+					create_unit = {
+						division = "name = \"Niruy-e Basij'\" division_template = \"Niru-ye Basij-e Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
+						count = 15
+						owner = IRI
+					}
+				}
 				capital_scope = {
 					create_unit = {
 						division = "name = \"21st. Tip-e 'Imam Reza'\" division_template = \"Lashkar-e Zerehiye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
 						count = 1
 						owner = IRI
 					}
-				}
-				capital_scope = {
 					create_unit = {
 						division = "name = \"20th. Tip-e 'Ramazan'\" division_template = \"Lashkar-e Zerehiye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
 						count = 1
 						owner = IRI
 					}
-				}
-				capital_scope = {
 					create_unit = {
 						division = "name = \"25th. Lashkar-e 'Karbala'\" division_template = \"Lashkar-e Komando-ye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
 						count = 1
@@ -18550,11 +18582,39 @@ country_event = {
 					type = civil_war
 				}
 			}
+
 			TUR = {
 				country_event = {
 					id = iranian_events.2281
 					days = 12
 				}
+			}
+
+			hidden_effect = {
+				send_equipment = {
+					equipment = infantry_weapons_1
+					amount = 27000
+					target = IRI
+				}
+			}
+
+			# Civil War Flavor Events
+			PER = {
+				country_event = { id = iranian_flavor.50 days = 10 random_days = 7 }
+				country_event = { id = iranian_flavor.51 days = 20 random_days = 10 }
+				country_event = { id = iranian_flavor.52 days = 35 random_days = 14 }
+				country_event = { id = iranian_flavor.53 days = 50 random_days = 14 }
+				country_event = { id = iranian_flavor.54 days = 65 random_days = 14 }
+				country_event = { id = iranian_flavor.55 days = 80 random_days = 20 }
+				country_event = { id = iranian_flavor.56 days = 25 random_days = 10 }
+				country_event = { id = iranian_flavor.57 days = 45 random_days = 14 }
+				country_event = { id = iranian_flavor.58 days = 60 random_days = 20 }
+				country_event = { id = iranian_flavor.59 days = 90 random_days = 20 }
+				country_event = { id = iranian_flavor.60 days = 100 random_days = 30 }
+				country_event = { id = iranian_flavor.61 days = 40 random_days = 14 }
+				country_event = { id = iranian_flavor.62 days = 75 random_days = 20 }
+				country_event = { id = iranian_flavor.63 days = 120 random_days = 30 }
+				country_event = { id = iranian_flavor.64 days = 140 random_days = 30 }
 			}
 		}
 	}
@@ -19033,15 +19093,11 @@ country_event = {
 					count = 1
 					owner = PER
 				}
-			}
-			capital_scope = {
 				create_unit = {
 					division = "name = \"20th. Tip-e 'Ramazan'\" division_template = \"Lashkar-e Zerehiye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
 					count = 1
 					owner = PER
 				}
-			}
-			capital_scope = {
 				create_unit = {
 					division = "name = \"25th. Lashkar-e 'Karbala'\" division_template = \"Lashkar-e Komando-ye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
 					count = 1
@@ -19535,15 +19591,11 @@ country_event = {
 					count = 1
 					owner = PER
 				}
-			}
-			capital_scope = {
 				create_unit = {
 					division = "name = \"20th. Tip-e 'Ramazan'\" division_template = \"Lashkar-e Zerehiye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
 					count = 1
 					owner = PER
 				}
-			}
-			capital_scope = {
 				create_unit = {
 					division = "name = \"25th. Lashkar-e 'Karbala'\" division_template = \"Lashkar-e Komando-ye Sepah-e Pasdaran\"start_experience_factor = 1.00 start_equipment_factor = 1.00"
 					count = 1
@@ -19575,6 +19627,13 @@ country_event = {
 		name = iranian_events.2281.a
 		log = "[GetDateText]: [This.GetName]:iranian_events.2281.a executed"
 		PER_SAZ_independence_alt = yes
+			hidden_effect = {
+				send_equipment = {
+					equipment = infantry_weapons_1
+					amount = 27000
+					target = IRI
+				}
+			}
 		ai_chance = {
 			base = 5
 		}
@@ -19583,6 +19642,13 @@ country_event = {
 	option = {
 		name = iranian_events.2281.b
 		log = "[GetDateText]: [This.GetName]:iranian_events.2281.b executed"
+			hidden_effect = {
+				send_equipment = {
+					equipment = infantry_weapons_1
+					amount = 27000
+					target = IRI
+				}
+			}
 		ai_chance = {
 			base = 0
 		}
@@ -20760,6 +20826,1277 @@ country_event = {
 			set_variable = { PER_sanction_stability_factor = -0.10 }
 
 			set_variable = { PER_IRGC_communism_drift = 0.05 }
+		}
+	}
+}
+
+news_event = {
+	id = iranian_events.910
+	title = iranian_events.910.t
+	desc = iranian_events.910.d
+	major = yes
+	picture = GFX_iran_closes_strait
+	is_triggered_only = yes
+	option = {
+		name = iranian_events.910.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.910.a executed"
+		add_ideas = PER_hormuz_blocked_gang
+	}
+}
+
+news_event = {
+	id = iranian_events.911
+	title = iranian_events.911.t
+	desc = iranian_events.911.d
+	major = yes
+	picture = GFX_iran_reopens_strait
+	is_triggered_only = yes
+	option = {
+		name = iranian_events.911.a
+		log = "[GetDateText]: [This.GetName]:iranian_events.911.a executed"
+	}
+}
+
+country_event = {
+	id = iranian_flavor.1
+	title = iranian_flavor.1.t
+	desc = iranian_flavor.1.d
+	is_triggered_only = yes
+
+	option = { # Expand the fair with government funding
+		name = iranian_flavor.1.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.1.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_research_speed_factor = 0.02 tooltip = research_speed_factor_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -2.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Let publishers handle it themselves
+		name = iranian_flavor.1.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.1.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_propaganda_campaign_cost_modifier = -0.03 tooltip = propaganda_campaign_cost_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.2
+	title = iranian_flavor.2.t
+	desc = iranian_flavor.2.d
+	is_triggered_only = yes
+
+	option = { # Fund further expansion
+		name = iranian_flavor.2.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.2.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_production_speed_infrastructure_factor = 0.03 tooltip = production_speed_infrastructure_factor_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -5.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Celebrate the achievement
+		name = iranian_flavor.2.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.2.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_civilian_factories_productivity = 0.02 tooltip = civilian_factories_productivity_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.3
+	title = iranian_flavor.3.t
+	desc = iranian_flavor.3.d
+	is_triggered_only = yes
+
+	option = { # Invest heavily in port infrastructure
+		name = iranian_flavor.3.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.3.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_supply_factor = 0.03 tooltip = supply_factor_tt }
+		newline = yes
+		add_to_variable = { PER_trade_opinion_factor = 0.03 tooltip = trade_opinion_factor_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -4.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Gradual development over time
+		name = iranian_flavor.3.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.3.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_supply_factor = 0.01 tooltip = supply_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.4
+	title = iranian_flavor.4.t
+	desc = iranian_flavor.4.d
+	is_triggered_only = yes
+
+	option = { # Encourage further investment
+		name = iranian_flavor.4.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.4.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_return_on_investment_modifier = 0.03 tooltip = return_on_investment_modifier_tt }
+		newline = yes
+		add_to_variable = { PER_civilian_industry_tax_modifier = 0.02 tooltip = civilian_industry_tax_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Regulate to prevent a bubble
+		name = iranian_flavor.4.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.4.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_consumer_goods_factor = -0.01 tooltip = consumer_goods_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.5
+	title = iranian_flavor.5.t
+	desc = iranian_flavor.5.d
+	is_triggered_only = yes
+
+	option = { # Launch a cultural preservation campaign
+		name = iranian_flavor.5.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.5.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_drift_defence_factor = 0.05 tooltip = drift_defence_factor_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -1.50 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Issue a diplomatic protest
+		name = iranian_flavor.5.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.5.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_trade_opinion_factor = -0.02 tooltip = trade_opinion_factor_tt }
+		newline = yes
+		add_to_variable = { PER_foreign_influence_defense_modifier = 0.03 tooltip = foreign_influence_defense_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Ignore the provocation
+		name = iranian_flavor.5.c
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.5.c executed"
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.6
+	title = iranian_flavor.6.t
+	desc = iranian_flavor.6.d
+	is_triggered_only = yes
+
+	option = { # Fast-track extraction
+		name = iranian_flavor.6.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.6.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_production_oil_factor = 0.05 tooltip = production_oil_factor_tt }
+		newline = yes
+		add_to_variable = { PER_gdp_from_resource_sector_modifier = 0.03 tooltip = gdp_from_resource_sector_modifier_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -6.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Measured approach to extraction
+		name = iranian_flavor.6.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.6.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_production_oil_factor = 0.02 tooltip = production_oil_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.7
+	title = iranian_flavor.7.t
+	desc = iranian_flavor.7.d
+	is_triggered_only = yes
+
+	option = { # Prioritize domestic energy supply
+		name = iranian_flavor.7.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.7.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_base_fuel_gain_factor = 0.04 tooltip = base_fuel_gain_factor_tt }
+		newline = yes
+		add_to_variable = { PER_energy_use_multiplier = 0.03 tooltip = energy_use_multiplier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Maximize gas exports
+		name = iranian_flavor.7.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.7.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_resource_export_multiplier_modifier = 0.04 tooltip = resource_export_multiplier_modifier_tt }
+		newline = yes
+		add_to_variable = { PER_oil_export_multiplier_modifier = 0.03 tooltip = oil_export_multiplier_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.8
+	title = iranian_flavor.8.t
+	desc = iranian_flavor.8.d
+	is_triggered_only = yes
+
+	option = { # Create research incentives to retain talent
+		name = iranian_flavor.8.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.8.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_research_speed_factor = 0.03 tooltip = research_speed_factor_tt }
+		newline = yes
+		add_to_variable = { PER_migration_rate_value_factor = 0.02 tooltip = migration_rate_value_factor_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -4.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Accept the situation and focus elsewhere
+		name = iranian_flavor.8.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.8.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_migration_rate_value_factor = -0.03 tooltip = migration_rate_value_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.9
+	title = iranian_flavor.9.t
+	desc = iranian_flavor.9.d
+	is_triggered_only = yes
+
+	option = { # Invest in traditional craftsmanship
+		name = iranian_flavor.9.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.9.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_resource_export_multiplier_modifier = 0.02 tooltip = resource_export_multiplier_modifier_tt }
+		newline = yes
+		add_to_variable = { PER_trade_opinion_factor = 0.02 tooltip = trade_opinion_factor_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -2.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Let the market decide
+		name = iranian_flavor.9.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.9.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_resource_export_multiplier_modifier = 0.01 tooltip = resource_export_multiplier_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.10
+	title = iranian_flavor.10.t
+	desc = iranian_flavor.10.d
+	is_triggered_only = yes
+
+	option = { # Expand the free trade zone
+		name = iranian_flavor.10.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.10.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_trade_opinion_factor = 0.03 tooltip = trade_opinion_factor_tt }
+		newline = yes
+		add_to_variable = { PER_return_on_investment_modifier = 0.02 tooltip = return_on_investment_modifier_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -3.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Maintain current scope
+		name = iranian_flavor.10.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.10.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_civilian_industry_tax_modifier = 0.01 tooltip = civilian_industry_tax_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.11
+	title = iranian_flavor.11.t
+	desc = iranian_flavor.11.d
+	is_triggered_only = yes
+
+	option = { # Invest in R&D and modernization
+		name = iranian_flavor.11.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.11.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_production_factory_efficiency_gain_factor = 0.03 tooltip = production_factory_efficiency_gain_factor_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -3.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Expand production lines
+		name = iranian_flavor.11.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.11.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_industrial_capacity_factory = 0.03 tooltip = industrial_capacity_factory_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.12
+	title = iranian_flavor.12.t
+	desc = iranian_flavor.12.d
+	is_triggered_only = yes
+
+	option = { # Modernize with new furnaces
+		name = iranian_flavor.12.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.12.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_production_speed_buildings_factor = 0.02 tooltip = production_speed_buildings_factor_tt }
+		newline = yes
+		add_to_variable = { PER_civilian_factories_productivity = 0.02 tooltip = civilian_factories_productivity_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -5.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Expand capacity with existing technology
+		name = iranian_flavor.12.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.12.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_industrial_capacity_factory = 0.02 tooltip = industrial_capacity_factory_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.13
+	title = iranian_flavor.13.t
+	desc = iranian_flavor.13.d
+	is_triggered_only = yes
+
+	option = { # Invest in tourism infrastructure around it
+		name = iranian_flavor.13.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.13.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_trade_opinion_factor = 0.02 tooltip = trade_opinion_factor_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -2.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Use it as a national broadcast hub
+		name = iranian_flavor.13.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.13.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_propaganda_campaign_cost_modifier = -0.03 tooltip = propaganda_campaign_cost_modifier_tt }
+		newline = yes
+		add_to_variable = { PER_intel_network_gain_factor = 0.02 tooltip = intel_network_gain_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.14
+	title = iranian_flavor.14.t
+	desc = iranian_flavor.14.d
+	is_triggered_only = yes
+
+	option = { # Expand saffron cultivation
+		name = iranian_flavor.14.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.14.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_agricolture_productivity_modifier = 0.03 tooltip = agricolture_productivity_modifier_tt }
+		newline = yes
+		add_to_variable = { PER_agriculture_district_income_tax_modifier = 0.02 tooltip = agriculture_district_income_tax_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Focus on premium exports
+		name = iranian_flavor.14.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.14.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_resource_export_multiplier_modifier = 0.03 tooltip = resource_export_multiplier_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.15
+	title = iranian_flavor.15.t
+	desc = iranian_flavor.15.d
+	is_triggered_only = yes
+
+	option = { # Shut down factories temporarily
+		name = iranian_flavor.15.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.15.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_health_cost = -0.02 tooltip = health_cost_multiplier_modifier_tt }
+		newline = yes
+		add_to_variable = { PER_civilian_factories_productivity = -0.02 tooltip = civilian_factories_productivity_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Issue health advisories only
+		name = iranian_flavor.15.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.15.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_health_cost = 0.02 tooltip = health_cost_multiplier_modifier_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_monthly_population = -0.02 tooltip = monthly_population_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.16
+	title = iranian_flavor.16.t
+	desc = iranian_flavor.16.d
+	is_triggered_only = yes
+
+	option = { # Central bank intervention
+		name = iranian_flavor.16.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.16.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_consumer_goods_factor = -0.02 tooltip = consumer_goods_factor_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -8.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Let the market correct itself
+		name = iranian_flavor.16.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.16.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_consumer_goods_factor = 0.02 tooltip = consumer_goods_factor_tt }
+		newline = yes
+		add_to_variable = { PER_trade_opinion_factor = -0.03 tooltip = trade_opinion_factor_tt }
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.17
+	title = iranian_flavor.17.t
+	desc = iranian_flavor.17.d
+	is_triggered_only = yes
+
+	option = { # Fast-track construction
+		name = iranian_flavor.17.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.17.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_base_fuel_gain_factor = 0.04 tooltip = base_fuel_gain_factor_tt }
+		newline = yes
+		add_to_variable = { PER_production_oil_factor = 0.03 tooltip = production_oil_factor_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -7.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Standard construction timeline
+		name = iranian_flavor.17.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.17.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_base_fuel_gain_factor = 0.02 tooltip = base_fuel_gain_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.18
+	title = iranian_flavor.18.t
+	desc = iranian_flavor.18.d
+	is_triggered_only = yes
+
+	option = { # Emergency water transfer from other provinces
+		name = iranian_flavor.18.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.18.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_agricolture_productivity_modifier = 0.02 tooltip = agricolture_productivity_modifier_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -5.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Implement water rationing
+		name = iranian_flavor.18.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.18.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_agricolture_productivity_modifier = -0.03 tooltip = agricolture_productivity_modifier_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = 3.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 0
+		}
+	}
+
+	option = { # Launch a dam construction project
+		name = iranian_flavor.18.c
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.18.c executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_production_speed_infrastructure_factor = 0.02 tooltip = production_speed_infrastructure_factor_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -8.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.19
+	title = iranian_flavor.19.t
+	desc = iranian_flavor.19.d
+	is_triggered_only = yes
+
+	option = { # Invest in hospitality infrastructure
+		name = iranian_flavor.19.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.19.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_trade_opinion_factor = 0.03 tooltip = trade_opinion_factor_tt }
+		newline = yes
+		add_to_variable = { PER_gdp_from_resource_sector_modifier = 0.02 tooltip = gdp_from_resource_sector_modifier_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -4.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Capitalize on the revenue
+		name = iranian_flavor.19.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.19.b executed"
+		set_temp_variable = { treasury_change = 5.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.20
+	title = iranian_flavor.20.t
+	desc = iranian_flavor.20.d
+	is_triggered_only = yes
+
+	option = { # Deploy the military for relief operations
+		name = iranian_flavor.20.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.20.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_army_org_factor = -0.02 tooltip = army_org_factor_tt }
+		newline = yes
+		add_to_variable = { PER_supply_consumption_factor = 0.02 tooltip = supply_consumption_factor_tt }
+		newline = yes
+		399 = {
+			add_manpower = -500
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Civilian-led disaster response
+		name = iranian_flavor.20.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.20.b executed"
+		set_temp_variable = { treasury_change = -6.00 }
+		modify_treasury_effect = yes
+		newline = yes
+		399 = {
+			add_manpower = -1200
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Appeal for international humanitarian aid
+		name = iranian_flavor.20.c
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.20.c executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_foreign_influence_defense_modifier = -0.02 tooltip = foreign_influence_defense_modifier_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = 3.00 }
+		modify_treasury_effect = yes
+		newline = yes
+		399 = {
+			add_manpower = -800
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+
+country_event = {
+	id = iranian_flavor.50
+	title = iranian_flavor.50.t
+	desc = iranian_flavor.50.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+	}
+
+	option = { # Welcome them and integrate into our ranks
+		name = iranian_flavor.50.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.50.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_experience_gain_army = 0.03 tooltip = experience_gain_army_tt }
+		newline = yes
+		add_to_variable = { PER_training_time_factor = -0.02 tooltip = training_time_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Screen them carefully first - they could be spies
+		name = iranian_flavor.50.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.50.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_intel_network_gain_factor = 0.03 tooltip = intel_network_gain_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Turn them away - we cannot trust IRGC personnel
+		name = iranian_flavor.50.c
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.50.c executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_army_morale_factor = 0.02 tooltip = army_morale_factor_tt }
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.51
+	title = iranian_flavor.51.t
+	desc = iranian_flavor.51.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+	}
+
+	option = { # Divert troops to protect the oil infrastructure
+		name = iranian_flavor.51.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.51.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_production_oil_factor = 0.03 tooltip = production_oil_factor_tt }
+		newline = yes
+		add_to_variable = { PER_oil_export_multiplier_modifier = 0.02 tooltip = oil_export_multiplier_modifier_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_supply_consumption_factor = 0.02 tooltip = supply_consumption_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Focus on the frontlines - we cannot afford distractions
+		name = iranian_flavor.51.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.51.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_production_oil_factor = -0.03 tooltip = production_oil_factor_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_army_org_factor = 0.02 tooltip = army_org_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.52
+	title = iranian_flavor.52.t
+	desc = iranian_flavor.52.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+	}
+
+	option = { # Jam their frequencies and counter with our own broadcasts
+		name = iranian_flavor.52.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.52.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_propaganda_campaign_cost_modifier = -0.05 tooltip = propaganda_campaign_cost_modifier_tt }
+		newline = yes
+		add_to_variable = { PER_drift_defence_factor = 0.05 tooltip = drift_defence_factor_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -3.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Ignore it - our people know the truth
+		name = iranian_flavor.52.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.52.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_drift_defence_factor = -0.03 tooltip = drift_defence_factor_tt }
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.53
+	title = iranian_flavor.53.t
+	desc = iranian_flavor.53.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+	}
+
+	option = { # Launch a sweeping counterinsurgency operation
+		name = iranian_flavor.53.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.53.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_resistance_growth = -0.05 tooltip = resistance_growth_tt }
+		newline = yes
+		add_to_variable = { PER_root_out_resistance_effectiveness_factor = 0.05 tooltip = root_out_resistance_effectiveness_factor_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -2.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Arm local civilian militias to defend their neighborhoods
+		name = iranian_flavor.53.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.53.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_recruitable_population = 0.003 tooltip = recruitable_population_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_training_time_factor = 0.03 tooltip = training_time_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.54
+	title = iranian_flavor.54.t
+	desc = iranian_flavor.54.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+	}
+
+	option = { # Set up refugee camps and provide aid
+		name = iranian_flavor.54.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.54.a executed"
+		set_temp_variable = { treasury_change = -5.00 }
+		modify_treasury_effect = yes
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_monthly_population = 0.03 tooltip = monthly_population_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Redirect refugees to bolster the war economy
+		name = iranian_flavor.54.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.54.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_civilian_factories_productivity = 0.02 tooltip = civilian_factories_productivity_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_monthly_population = -0.02 tooltip = monthly_population_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.55
+	title = iranian_flavor.55.t
+	desc = iranian_flavor.55.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+	}
+
+	option = { # Exploit the networks to resupply our forces
+		name = iranian_flavor.55.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.55.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_equipment_capture_factor = 0.05 tooltip = equipment_capture_factor_tt }
+		newline = yes
+		add_to_variable = { PER_production_lack_of_resource_penalty_factor = -0.03 tooltip = production_lack_of_resource_penalty_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Crack down on all smuggling - it aids the enemy too
+		name = iranian_flavor.55.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.55.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_intel_network_gain_factor = 0.03 tooltip = intel_network_gain_factor_tt }
+		newline = yes
+		add_to_variable = { PER_foreign_subversive_activites = -0.03 tooltip = foreign_subversive_activites_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.56
+	title = iranian_flavor.56.t
+	desc = iranian_flavor.56.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+	}
+
+	option = { # Commit additional squadrons to defend the capital
+		name = iranian_flavor.56.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.56.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_air_home_defence_factor = 0.05 tooltip = air_home_defence_factor_tt }
+		newline = yes
+		add_to_variable = { PER_air_intercept_efficiency = 0.03 tooltip = air_intercept_efficiency_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Prioritize ground support over air defense
+		name = iranian_flavor.56.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.56.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_ground_attack_factor = 0.04 tooltip = ground_attack_factor_tt }
+		newline = yes
+		add_to_variable = { PER_experience_gain_air = 0.03 tooltip = experience_gain_air_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.57
+	title = iranian_flavor.57.t
+	desc = iranian_flavor.57.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+		country_exists = HEZ
+	}
+
+	option = { # Denounce Hezbollah's interference publicly
+		name = iranian_flavor.57.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.57.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_drift_defence_factor = 0.03 tooltip = drift_defence_factor_tt }
+		newline = yes
+		add_to_variable = { PER_foreign_influence_defense_modifier = 0.03 tooltip = foreign_influence_defense_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Target their supply lines into Iran
+		name = iranian_flavor.57.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.57.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_army_attack_factor = 0.02 tooltip = army_attack_factor_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_intel_network_gain_factor = 0.02 tooltip = intel_network_gain_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.58
+	title = iranian_flavor.58.t
+	desc = iranian_flavor.58.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+	}
+
+	option = { # Grant journalists access to boost our image
+		name = iranian_flavor.58.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.58.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_trade_opinion_factor = 0.03 tooltip = trade_opinion_factor_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_foreign_influence_defense_modifier = -0.02 tooltip = foreign_influence_defense_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Restrict media access for operational security
+		name = iranian_flavor.58.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.58.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_civilian_intel_factor = 0.05 tooltip = civilian_intel_factor_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_trade_opinion_factor = -0.02 tooltip = trade_opinion_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.59
+	title = iranian_flavor.59.t
+	desc = iranian_flavor.59.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+	}
+
+	option = { # Deploy engineers to repair and harden the grid
+		name = iranian_flavor.59.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.59.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_energy_use_multiplier = 0.03 tooltip = energy_use_multiplier_tt }
+		newline = yes
+		set_temp_variable = { treasury_change = -4.00 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Ration power and prioritize military installations
+		name = iranian_flavor.59.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.59.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_civilian_factories_productivity = -0.02 tooltip = civilian_factories_productivity_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_military_factories_productivity = 0.02 tooltip = military_factories_productivity_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.60
+	title = iranian_flavor.60.t
+	desc = iranian_flavor.60.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+	}
+
+	option = { # Accept their help - every fighter counts
+		name = iranian_flavor.60.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.60.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_special_forces_cap_flat = 2 tooltip = special_forces_cap_flat_tt }
+		newline = yes
+		add_to_variable = { PER_terrain_penalty_reduction = 0.03 tooltip = terrain_penalty_reduction_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_resistance_growth = 0.03 tooltip = resistance_growth_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Decline - we cannot set a precedent for autonomy
+		name = iranian_flavor.60.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.60.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_drift_defence_factor = 0.03 tooltip = drift_defence_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.61
+	title = iranian_flavor.61.t
+	desc = iranian_flavor.61.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+	}
+
+	option = { # Secure the strait with a naval blockade
+		name = iranian_flavor.61.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.61.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_naval_damage_factor = 0.05 tooltip = naval_damage_factor_tt }
+		newline = yes
+		add_to_variable = { PER_convoy_escort_efficiency = 0.03 tooltip = convoy_escort_efficiency_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_trade_opinion_factor = -0.03 tooltip = trade_opinion_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Keep the strait open for trade - we need the revenue
+		name = iranian_flavor.61.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.61.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_oil_export_multiplier_modifier = 0.03 tooltip = oil_export_multiplier_modifier_tt }
+		newline = yes
+		add_to_variable = { PER_trade_opinion_factor = 0.02 tooltip = trade_opinion_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.62
+	title = iranian_flavor.62.t
+	desc = iranian_flavor.62.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+	}
+
+	option = { # Nationalize key industries for the war effort
+		name = iranian_flavor.62.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.62.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_industrial_capacity_factory = 0.03 tooltip = industrial_capacity_factory_tt }
+		newline = yes
+		add_to_variable = { PER_consumer_goods_factor = 0.03 tooltip = consumer_goods_factor_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_military_factories_productivity = 0.03 tooltip = military_factories_productivity_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Offer tax incentives to keep private industry running
+		name = iranian_flavor.62.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.62.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_civilian_factories_productivity = 0.03 tooltip = civilian_factories_productivity_tt }
+		newline = yes
+		add_to_variable = { PER_civilian_industry_tax_modifier = 0.02 tooltip = civilian_industry_tax_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.63
+	title = iranian_flavor.63.t
+	desc = iranian_flavor.63.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+	}
+
+	option = { # Promise autonomy reforms after the war
+		name = iranian_flavor.63.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.63.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_recruitable_population = 0.005 tooltip = recruitable_population_tt }
+		newline = yes
+		add_to_variable = { PER_resistance_growth = -0.03 tooltip = resistance_growth_tt }
+		newline = yes
+		add_to_variable = { PER_nationalist_drift = 0.02 tooltip = nationalist_drift_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # National unity comes first - no concessions during wartime
+		name = iranian_flavor.63.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.63.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_drift_defence_factor = 0.05 tooltip = drift_defence_factor_tt }
+		newline = yes
+		add_to_variable = { PER_resistance_growth = 0.02 tooltip = resistance_growth_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+country_event = {
+	id = iranian_flavor.64
+	title = iranian_flavor.64.t
+	desc = iranian_flavor.64.d
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = IRI
+	}
+
+	option = { # Exploit the intelligence for military operations
+		name = iranian_flavor.64.a
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.64.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_artesh_modifier }
+		add_to_variable = { PER_planning_speed = 0.05 tooltip = planning_speed_tt }
+		newline = yes
+		add_to_variable = { PER_recon_factor_while_entrenched = 0.05 tooltip = recon_factor_while_entrenched_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Leak the documents to expose IRGC corruption
+		name = iranian_flavor.64.b
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.64.b executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_propaganda_campaign_cost_modifier = -0.05 tooltip = propaganda_campaign_cost_modifier_tt }
+		newline = yes
+		add_to_variable = { PER_drift_defence_factor = 0.05 tooltip = drift_defence_factor_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = { # Share with foreign allies to build international support
+		name = iranian_flavor.64.c
+		log = "[GetDateText]: [This.GetName]: iranian_flavor.64.c executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_economy_modifier }
+		add_to_variable = { PER_trade_opinion_factor = 0.04 tooltip = trade_opinion_factor_tt }
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_political_modifier }
+		add_to_variable = { PER_foreign_influence_defense_modifier = -0.03 tooltip = foreign_influence_defense_modifier_tt }
+		ai_chance = {
+			base = 0
 		}
 	}
 }
