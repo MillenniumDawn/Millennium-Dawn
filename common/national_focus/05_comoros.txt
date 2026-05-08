@@ -1651,7 +1651,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_subsidies_for_education"
 			set_temp_variable = { temp_opinion = 5 }
 			change_farmers_opinion = yes
-			add_ideas = civilian_industry_project
+			improve_civilian_industrial_projects = yes
 			increase_education_budget = yes
 		}
 
@@ -1684,10 +1684,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_social_agenda"
-			swap_ideas = {
-				remove_idea = civilian_industry_project
-				add_idea = civilian_industry_project2
-			}
+			improve_civilian_industrial_projects = yes
 			increase_social_spending = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_maritime_industry_opinion = yes
@@ -1720,13 +1717,11 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_befriend_the_west executed"
 			if = {
 				limit = { NOT = { has_global_flag = GAME_RULE_eu_disabled } }
-				custom_effect_tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-				effect_tooltip = {
-					add_opinion_modifier = { target = COM modifier = declaration_of_friendship }
-				}
-				hidden_effect = {
-					for_each_scope_loop = {
-						array = global.EU_member
+				for_each_scope_loop = {
+					array = global.EU_member
+					tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+					if = {
+						limit = { NOT = { tag = ROOT } }
 						add_opinion_modifier = { target = COM modifier = declaration_of_friendship }
 					}
 				}
@@ -1831,15 +1826,14 @@ focus_tree = {
 			add_ideas = Major_Non_NATO_Ally
 			set_country_flag = Major_Non_NATO_Ally
 			add_to_tech_sharing_group = Major_Non_NATO_Ally_Share
-			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
-				reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
-			}
 			for_each_scope_loop = {
 				array = global.nato_members
-				add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
-				reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+					reverse_add_opinion_modifier = { target = ROOT modifier = NATO_commitment }
+				}
 			}
 			set_temp_variable = { percent_change = 5 }
 			set_temp_variable = { tag_index = FRA }
@@ -1868,10 +1862,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_befriend_the_west executed"
-			every_country = {
-				limit = {
-					has_idea = CSTO_member
-				}
+			for_each_scope_loop = {
+				array = global.CSTO_member
+				tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
 				add_opinion_modifier = {
 					target = COM
 					modifier = declaration_of_friendship
@@ -2082,13 +2075,13 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_draw_closer_to_the_au executed"
 			add_political_power = 100
-			custom_effect_tooltip = TT_ALL_AU_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				add_opinion_modifier = { target = COM modifier = declaration_of_friendship }
-			}
 			for_each_scope_loop = {
 				array = global.AU_member
-				add_opinion_modifier = { target = COM modifier = declaration_of_friendship }
+				tooltip = TT_ALL_AU_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					add_opinion_modifier = { target = COM modifier = declaration_of_friendship }
+				}
 			}
 			add_timed_idea = {
 				idea = AZE_trade_idea
@@ -4282,7 +4275,7 @@ focus_tree = {
 			add_political_power = 75
 			every_other_country = {
 				limit = {
-					is_east_african_nation = yes
+					has_country_flag = east_african_nation_flag
 					NOT = { has_war_with = COM }
 				}
 				add_opinion_modifier = { target = COM modifier = improve_trade }
@@ -4313,7 +4306,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus COM_trade_deals_with_india executed"
 			every_other_country = {
 				limit = {
-					is_east_african_nation = yes
+					has_country_flag = east_african_nation_flag
 					NOT = { has_war_with = COM }
 				}
 				set_temp_variable = { percent_change = -5 }

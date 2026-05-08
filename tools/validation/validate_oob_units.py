@@ -193,11 +193,7 @@ class Validator(BaseValidator):
 
     def _build_canonical_units(self):
         """Build the canonical unit name set from unit definition files."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Building canonical unit name set...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Building canonical unit name set...")
 
         self.canonical = parse_canonical_units(self.mod_path)
         # Build case-insensitive lookup: lowercase -> original name
@@ -216,11 +212,7 @@ class Validator(BaseValidator):
 
     def validate_unit_references(self):
         """Validate that all unit references match canonical definitions."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking unit references in OOB and AI template files...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking unit references in OOB and AI template files...")
 
         files = self._get_files_to_check()
         self.log(f"  Found {len(files)} files to check")

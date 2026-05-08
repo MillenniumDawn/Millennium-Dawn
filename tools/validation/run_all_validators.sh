@@ -50,6 +50,7 @@ declare -A SCRIPTS=(
     [ai-equipment]="validate_ai_equipment.py"
     [ai-roles]="validate_ai_roles.py"
     [factions]="validate_factions.py"
+    [ideas]="validate_ideas.py"
 )
 
 # name -> human-readable label
@@ -68,10 +69,11 @@ declare -A LABELS=(
     [ai-equipment]="AI equipment coverage validation (naval/land/air)"
     [ai-roles]="AI role reference validation"
     [factions]="Faction system validation"
+    [ideas]="Idea definition and reference validation"
 )
 
 # Ordered for consistent output
-ORDERED=(variables scripted-localisation cosmetic-tags decisions localisation events history-techs unused-scripted oob-units defines ai-navy ai-equipment ai-roles factions)
+ORDERED=(variables scripted-localisation cosmetic-tags decisions localisation events history-techs unused-scripted oob-units defines ai-navy ai-equipment ai-roles factions ideas)
 
 declare -A PIDS=()
 

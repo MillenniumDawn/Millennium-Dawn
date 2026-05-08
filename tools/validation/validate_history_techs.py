@@ -408,11 +408,7 @@ class Validator(BaseValidator):
 
     def _build_tech_graph(self):
         """Build the technology dependency graph from tech definition files."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Building technology dependency graph...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Building technology dependency graph...")
 
         self.prerequisites, self.all_techs = parse_tech_dependencies(self.mod_path)
 
@@ -436,11 +432,7 @@ class Validator(BaseValidator):
 
     def validate_tech_dependencies(self):
         """Validate that all history files have correct tech prerequisites."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking technology dependencies in history files...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking technology dependencies in history files...")
 
         files = self._get_history_files()
         self.log(f"  Found {len(files)} history files to check")

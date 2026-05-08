@@ -159,10 +159,8 @@ NATO_decisions = {
 				original_tag = DEN
 				NOT = { has_government = neutrality }
 				NOT = { has_government = democratic }
-				AND = {
-					has_government = nationalist
-					is_in_array = { ruling_party = 20 }
-				}
+				has_government = nationalist
+				is_in_array = { ruling_party = 20 }
 			}
 			# Spain will leave if the Unidas Podemos is in the elections and nationalist not vox
 			modifier = {
@@ -204,10 +202,8 @@ NATO_decisions = {
 			modifier = {
 				factor = 0
 				original_tag = POL
-				AND = {
-					has_government = nationalist
-					has_global_flag = POL_KORWIN_PE_PATH
-				}
+				has_government = nationalist
+				has_global_flag = POL_KORWIN_PE_PATH
 			}
 			modifier = {
 				factor = 0
@@ -227,11 +223,9 @@ NATO_decisions = {
 			modifier = {
 				factor = 0
 				original_tag = CZE
-				AND = {
-					has_government = nationalist
-					nationalist_military_junta_are_in_power = yes
-					is_historical_focus_on = yes
-				}
+				has_government = nationalist
+				nationalist_military_junta_are_in_power = yes
+				is_historical_focus_on = yes
 			}
 		}
 	}
@@ -261,16 +255,17 @@ NATO_decisions = {
 		}
 
 		complete_effect = {
-			every_country = {
-				limit = {
-					has_idea = NATO_member
-					NOT = { has_country_flag = NATO_Ratified_@ROOT }
+			for_each_scope_loop = {
+				array = global.nato_members
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = {
+						NOT = { has_country_flag = NATO_Ratified_@ROOT }
+					}
+					set_temp_variable = { selected_tag = THIS.id }
+					TAG_get_name_with_flag = yes
+					newline = yes
 				}
-				display_individual_scopes = yes
-
-				set_temp_variable = { selected_tag = THIS.id }
-				TAG_get_name_with_flag = yes
-				newline = yes
 			}
 		}
 	}
@@ -306,17 +301,15 @@ NATO_decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision become_NATO_aspirant"
-			custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
-			effect_tooltip = {
-				add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
-				reverse_add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
-				country_event = NATO.7
-			}
 			for_each_scope_loop = {
 				array = global.nato_members
-				add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
-				reverse_add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
-				country_event = NATO.7
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
+					reverse_add_opinion_modifier = { target = PREV modifier = NATO_aspirant }
+					country_event = NATO.7
+				}
 			}
 
 			set_country_flag = NATO_Aspirant
@@ -1978,24 +1971,16 @@ NATO_CSTO_agreement = {
 			log = "[GetDateText]: [Root.GetName]: Decision cancel effect NATO_CSTO_breach_mission"
 			if = {
 				limit = { has_idea = NATO_member }
-				custom_effect_tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
-				effect_tooltip = {
-					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
-				}
 				for_each_scope_loop = {
 					array = global.nato_members
-
+					tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
 					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
 				}
 			}
 			else = {
-				custom_effect_tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
-				effect_tooltip = {
-					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
-				}
 				for_each_scope_loop = {
 					array = global.CSTO_member
-
+					tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
 					set_country_flag = { flag = NATO_CSTO_agreement_breach_warning value = 0 }
 				}
 			}
@@ -2014,6 +1999,122 @@ NATO_CSTO_agreement = {
 			}
 
 			add_threat = 10
+		}
+	}
+}
+
+generic_coalition_politics_decisions = {
+	request_MNNA_status = {
+		allowed = {
+			NOT = { has_global_flag = GAME_RULE_nato_disabled }
+			EH_is_megastate_country = no
+		}
+		icon = GFX_decision_generic_join_nato
+
+		cost = 50
+		days_remove = 14
+		days_re_enable = 60
+
+		visible = {
+			any_of_scopes = {
+				array = global.nato_members
+				is_faction_leader = yes
+				NOT = { has_country_flag = collapsed_nation }
+			}
+			is_subject = no
+			NOT = { has_idea = Major_Non_NATO_Ally }
+			NOT = { has_idea = NATO_member }
+		}
+
+		available = {
+			OR = {
+				has_government = democratic
+				has_government = neutrality
+			}
+			NOT = { has_country_flag = MNNA_rejected_recently }
+			NOT = { is_in_faction_with = CHI }
+			NOT = { is_in_faction_with = SOV }
+			NOT = { is_in_faction_with = PER }
+			custom_trigger_tooltip = {
+				tooltip = nato_leader_not_at_war_with_us_tt
+				any_of_scopes = {
+					array = global.nato_members
+					is_faction_leader = yes
+					NOT = { has_war_with = ROOT }
+				}
+			}
+		}
+
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision request_MNNA_status"
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove request_MNNA_status"
+			random_scope_in_array = {
+				array = global.nato_members
+				limit = {
+					is_faction_leader = yes
+					NOT = { has_country_flag = collapsed_nation }
+				}
+				country_event = { id = department_of_state.230 days = 2 }
+			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				custom_effect_tooltip = MNNA_accept_TT
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				custom_effect_tooltip = MNNA_reject_TT
+			}
+		}
+
+		ai_will_do = {
+			base = 30
+			modifier = {
+				CHI = { has_war_with = ROOT }
+				add = 50
+			}
+			modifier = {
+				SOV = { has_war_with = ROOT }
+				add = 50
+			}
+			modifier = {
+				PER = { has_war_with = ROOT }
+				add = 40
+			}
+			modifier = {
+				has_war = yes
+				add = 20
+			}
+			modifier = {
+				any_of_scopes = {
+					array = global.nato_members
+					is_faction_leader = yes
+					has_opinion = { target = ROOT value > 75 }
+				}
+				add = 15
+			}
+			modifier = {
+				factor = 0
+				any_of_scopes = {
+					array = global.nato_members
+					is_faction_leader = yes
+					has_opinion = { target = ROOT value < -50 }
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_country_flag = MNNA_rejected_recently
+					has_government = communism
+					has_government = nationalist
+					has_government = fascism
+				}
+			}
 		}
 	}
 }

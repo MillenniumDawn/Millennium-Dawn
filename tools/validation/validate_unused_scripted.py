@@ -18,6 +18,7 @@ from validator_common import (
     Colors,
     Severity,
     run_validator_main,
+    scan_meta_constructed_names,
     should_skip_file,
     strip_comments,
 )
@@ -410,18 +411,10 @@ class Validator(BaseValidator):
         return unused_effects, unused_triggers
 
     def validate_unused_effects(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for unused scripted effects...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for unused scripted effects...")
 
     def validate_unused_triggers(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for unused scripted triggers...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for unused scripted triggers...")
 
     def run_validations(self):
         if self.staged_only:

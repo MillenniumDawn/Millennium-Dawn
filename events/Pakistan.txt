@@ -1,0 +1,250 @@
+add_namespace = pakistan
+add_namespace = pakistan_news
+
+### Tribal Areas Pressure Chain ###
+
+# American pressure on the tribal areas
+country_event = {
+	id = pakistan.1
+	title = pakistan.1.t
+	desc = pakistan.1.d
+	picture = GFX_afghanistan_war
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	trigger = {
+		country_exists = TTP
+	}
+
+	# Launch military operation in Waziristan
+	option = {
+		name = pakistan.1.a
+		log = "[GetDateText]: [This.GetName]: pakistan.1.a executed"
+		set_global_flag = PAK_tribal_pressure
+		set_country_flag = PAK_tribal_crackdown
+		add_war_support = 0.05
+		add_stability = -0.05
+		add_opinion_modifier = { target = USA modifier = medium_increase }
+		hidden_effect = {
+			USA = {
+				country_event = { id = pakistan.2 days = 3 }
+				add_war_support = 0.03
+			}
+			country_event = { id = pakistan.4 days = 120 }
+			news_event = { id = pakistan_news.1 days = 1 }
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Negotiate with tribal elders
+	option = {
+		name = pakistan.1.b
+		log = "[GetDateText]: [This.GetName]: pakistan.1.b executed"
+		set_global_flag = PAK_tribal_pressure
+		set_country_flag = PAK_tribal_negotiation
+		add_stability = 0.03
+		add_political_power = 25
+		hidden_effect = {
+			USA = { country_event = { id = pakistan.3 days = 7 } }
+		}
+		ai_chance = { base = 20 }
+	}
+
+	# Refuse American demands
+	option = {
+		name = pakistan.1.c
+		log = "[GetDateText]: [This.GetName]: pakistan.1.c executed"
+		set_global_flag = PAK_tribal_pressure
+		set_country_flag = PAK_refused_pressure
+		reverse_add_opinion_modifier = { target = USA modifier = large_decrease }
+		add_political_power = -50
+		hidden_effect = {
+			USA = { country_event = { id = pakistan.3 days = 7 } }
+		}
+		ai_chance = { base = 10 }
+	}
+}
+
+# USA: Pakistan launches operation
+country_event = {
+	id = pakistan.2
+	title = pakistan.2.t
+	desc = pakistan.2.d
+	picture = GFX_afghan_army_training
+	is_triggered_only = yes
+
+	option = {
+		name = pakistan.2.a
+		log = "[GetDateText]: [This.GetName]: pakistan.2.a executed"
+		add_opinion_modifier = { target = PAK modifier = small_increase }
+		add_political_power = 25
+		ai_chance = { base = 1 }
+	}
+}
+
+# USA: Pakistan refuses to act
+country_event = {
+	id = pakistan.3
+	title = pakistan.3.t
+	desc = pakistan.3.d
+	picture = GFX_USA_generic
+	is_triggered_only = yes
+
+	# Cut military aid
+	option = {
+		name = pakistan.3.a
+		log = "[GetDateText]: [This.GetName]: pakistan.3.a executed"
+		add_opinion_modifier = { target = PAK modifier = medium_decrease }
+		hidden_effect = {
+			PAK = { country_event = { id = pakistan.5 days = 7 } }
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Accept their decision
+	option = {
+		name = pakistan.3.b
+		log = "[GetDateText]: [This.GetName]: pakistan.3.b executed"
+		add_political_power = -25
+		ai_chance = { base = 40 }
+	}
+}
+
+# Militant retaliation
+country_event = {
+	id = pakistan.4
+	title = pakistan.4.t
+	desc = pakistan.4.d
+	picture = GFX_terrorist_attack
+	is_triggered_only = yes
+
+	# Intensify the crackdown
+	option = {
+		name = pakistan.4.a
+		log = "[GetDateText]: [This.GetName]: pakistan.4.a executed"
+		add_stability = -0.05
+		add_war_support = 0.05
+		add_ideas = PAK_waziristan_insurgency
+		hidden_effect = {
+			country_event = { id = pakistan.6 days = 365 }
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Seek a ceasefire
+	option = {
+		name = pakistan.4.b
+		log = "[GetDateText]: [This.GetName]: pakistan.4.b executed"
+		add_stability = 0.03
+		add_war_support = -0.03
+		reverse_add_opinion_modifier = { target = USA modifier = small_decrease }
+		ai_chance = { base = 40 }
+	}
+}
+
+# American aid suspended
+country_event = {
+	id = pakistan.5
+	title = pakistan.5.t
+	desc = pakistan.5.d
+	picture = GFX_USA_generic
+	is_triggered_only = yes
+
+	option = {
+		name = pakistan.5.a
+		log = "[GetDateText]: [This.GetName]: pakistan.5.a executed"
+		reverse_add_opinion_modifier = { target = USA modifier = medium_decrease }
+		add_political_power = -50
+		add_timed_idea = { idea = PAK_suspended_american_aid days = 365 }
+		ai_chance = { base = 1 }
+	}
+}
+
+# Progress in the tribal areas
+country_event = {
+	id = pakistan.6
+	title = pakistan.6.t
+	desc = pakistan.6.d
+	picture = GFX_afghan_army_training
+	is_triggered_only = yes
+
+	# Declare victory and consolidate
+	option = {
+		name = pakistan.6.a
+		log = "[GetDateText]: [This.GetName]: pakistan.6.a executed"
+		remove_ideas = PAK_waziristan_insurgency
+		add_stability = 0.05
+		add_political_power = 50
+		add_opinion_modifier = { target = USA modifier = small_increase }
+		add_timed_idea = { idea = PAK_tribal_pacification days = 730 }
+		hidden_effect = {
+			USA = { add_political_power = 15 }
+			news_event = { id = pakistan_news.2 days = 1 }
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Maintain military presence
+	option = {
+		name = pakistan.6.b
+		log = "[GetDateText]: [This.GetName]: pakistan.6.b executed"
+		add_political_power = 25
+		ai_chance = { base = 30 }
+	}
+}
+
+### News Events ###
+
+news_event = {
+	id = pakistan_news.1
+	title = pakistan_news.1.t
+	desc = pakistan_news.1.d
+	picture = GFX_afghanistan_war
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = pakistan_news.1.a
+		trigger = { original_tag = PAK }
+	}
+
+	option = {
+		name = pakistan_news.1.b
+		trigger = { original_tag = USA }
+	}
+
+	option = {
+		name = pakistan_news.1.c
+		trigger = {
+			NOT = { original_tag = PAK }
+			NOT = { original_tag = USA }
+		}
+	}
+}
+
+news_event = {
+	id = pakistan_news.2
+	title = pakistan_news.2.t
+	desc = pakistan_news.2.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = pakistan_news.2.a
+		trigger = { original_tag = PAK }
+	}
+
+	option = {
+		name = pakistan_news.2.b
+		trigger = { original_tag = USA }
+	}
+
+	option = {
+		name = pakistan_news.2.c
+		trigger = {
+			NOT = { original_tag = PAK }
+			NOT = { original_tag = USA }
+		}
+	}
+}

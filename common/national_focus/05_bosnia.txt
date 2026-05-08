@@ -3592,49 +3592,20 @@ focus_tree = {
 						tag = CHE
 					}
 				}
-				if = {
-					limit = {
-						NOT = { is_subject_of = SOV }
-						NOT = { tag = PER }
-						NOT = { has_war_with = ROOT }
-						OR = {
-							emerging_moderate_shiite_are_in_power = yes
-							emerging_hardline_shiite_are_in_power = yes
-							has_government = fascism
-							tag = CHE
-						}
-					}
-					add_opinion_modifier = { target = ROOT modifier = has_expressed_loyalty }
-					add_to_array = { ROOT.investment_targets = BOS } # Bosnia
-					add_ai_strategy = {
-						type = support
-						id = BOS
-						value = 200
-					}
-					add_ai_strategy = {
-						type = befriend
-						id = BOS
-						value = 200
-					}
-					custom_effect_tooltip = bos_investment
-					custom_effect_tooltip = BOS_more_likely_to_send_support
+				add_opinion_modifier = { target = ROOT modifier = has_expressed_loyalty }
+				add_to_array = { ROOT.investment_targets = BOS } # Bosnia
+				add_ai_strategy = {
+					type = support
+					id = BOS
+					value = 200
 				}
-				else = {
-					add_opinion_modifier = { target = ROOT modifier = has_expressed_loyalty }
-					add_to_array = { ROOT.investment_targets = BOS } # Bosnia
-					add_ai_strategy = {
-						type = support
-						id = BOS
-						value = 200
-					}
-					add_ai_strategy = {
-						type = befriend
-						id = BOS
-						value = 200
-					}
-					custom_effect_tooltip = bos_investment
-					custom_effect_tooltip = BOS_more_likely_to_send_support
+				add_ai_strategy = {
+					type = befriend
+					id = BOS
+					value = 200
 				}
+				custom_effect_tooltip = bos_investment
+				custom_effect_tooltip = BOS_more_likely_to_send_support
 			}
 			every_country = {
 				limit = {
@@ -3819,35 +3790,38 @@ focus_tree = {
 					value = -200
 				}
 			}
-			every_country = {
-				limit = {
-					has_idea = NATO_member
-					NOT = { is_in_faction_with = ROOT }
-				}
+			for_each_scope_loop = {
+				array = global.nato_members
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
 				if = {
-					limit = { ROOT = { original_tag = GER } }
-					ROOT = {
-						set_temp_variable = { wargoal_by = ROOT }
-						set_temp_variable = { wargoal_on = PREV }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							target = PREV
-							type = puppet_wargoal_focus
-							expire = 0
+					limit = {
+						NOT = { is_in_faction_with = ROOT }
+					}
+					if = {
+						limit = { ROOT = { original_tag = GER } }
+						ROOT = {
+							set_temp_variable = { wargoal_by = ROOT }
+							set_temp_variable = { wargoal_on = PREV }
+							add_threat_from_wargoal_effect = yes
+							create_wargoal = {
+								target = PREV
+								type = puppet_wargoal_focus
+								expire = 0
+							}
 						}
 					}
-				}
-				else = {
-					hidden_effect = { add_ideas = BOS_attack_upon_nato }
-					ROOT = {
-						set_temp_variable = { wargoal_by = ROOT }
-						set_temp_variable = { wargoal_on = PREV }
-						set_temp_variable = { wargoal_type = 1 }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							target = PREV
-							type = topple_government
-							expire = 0
+					else = {
+						hidden_effect = { add_ideas = BOS_attack_upon_nato }
+						ROOT = {
+							set_temp_variable = { wargoal_by = ROOT }
+							set_temp_variable = { wargoal_on = PREV }
+							set_temp_variable = { wargoal_type = 1 }
+							add_threat_from_wargoal_effect = yes
+							create_wargoal = {
+								target = PREV
+								type = topple_government
+								expire = 0
+							}
 						}
 					}
 				}
@@ -3856,16 +3830,19 @@ focus_tree = {
 
 		select_effect = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_end_nato"
-			every_country = {
-				limit = {
-					has_idea = NATO_member
-					NOT = { is_in_faction_with = ROOT }
-				}
-				ROOT = {
-					add_ai_strategy = {
-						type = prepare_for_war
-						id = PREV
-						value = 100
+			for_each_scope_loop = {
+				array = global.nato_members
+				tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+				if = {
+					limit = {
+						NOT = { is_in_faction_with = ROOT }
+					}
+					ROOT = {
+						add_ai_strategy = {
+							type = prepare_for_war
+							id = PREV
+							value = 100
+						}
 					}
 				}
 			}
@@ -4088,19 +4065,18 @@ focus_tree = {
 			add_ideas = bos_trade_with_nato
 			log = "[GetDateText]: [This.GetName]: Focus BOS_western_Objectives"
 			if = { limit = { has_government = democratic }
-				every_country = {
-					limit = {
-						has_idea = NATO_member
-						NOT = { has_government = fascism }
-						NOT = { has_government = nationalist }
-						NOT = { has_war_with = ROOT }
-						has_opinion = { target = ROOT value > -25 }
-						OR = {
-							has_idea = NATO_member
-							has_government = democratic
+				for_each_scope_loop = {
+					array = global.nato_members
+					tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+					if = {
+						limit = {
+							NOT = { has_government = fascism }
+							NOT = { has_government = nationalist }
+							NOT = { has_war_with = ROOT }
+							has_opinion = { target = ROOT value > -25 }
 						}
+						add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
 					}
-					add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
 				}
 			}
 			custom_effect_tooltip = BOS_unlocks_EUFOR
@@ -4268,17 +4244,16 @@ focus_tree = {
 				days = 70
 			}
 			USA = {
-			create_production_license = {
-				target = BOS
-				equipment = { type = Strike_fighter2 }
-				cost_factor = 5
-			}
-			USA = {
-			create_production_license = {
-				target = BOS
-				equipment = { type = infantry_weapons_3 }
-				cost_factor = 5
+				create_production_license = {
+					target = BOS
+					equipment = { type = Strike_fighter2 }
+					cost_factor = 5
 				}
+
+				create_production_license = {
+					target = BOS
+					equipment = { type = infantry_weapons_3 }
+					cost_factor = 5
 				}
 			}
 		}
@@ -4508,8 +4483,9 @@ focus_tree = {
 					add_state_core = 1054
 					add_state_core = 1053
 					add_state_core = 129
+
+					set_cosmetic_tag = bos_fed2
 				}
-				BOS = { set_cosmetic_tag = bos_fed2 }
 			}
 			swap_ideas = {
 				remove_idea = the_ulema

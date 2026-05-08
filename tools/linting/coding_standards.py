@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
-import argparse
 import fnmatch
 import os
 import re
-import subprocess
 import sys
 import time
-from multiprocessing import Pool
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from path_utils import clean_filepath
-
-startTime = time.time()
+from shared_utils import Timer, get_git_diff_files, print_timing_summary, run_with_pool
 
 __version__ = 1.1
+
+_RE_TAG_LINE = re.compile(r"^[A-Z]{3}", re.M | re.I)
+_RE_FOCUS_FORMAT = re.compile(r"^[A-Z]{3}_[a-zA-Z0-9_-]+$", re.M | re.U)
+_RE_NEWS_EVENT = re.compile(r"news_event\s*=\s*\{")
+_RE_OPTION = re.compile(r"\boption\s*=\s*\{")
 
 
 def get_tags(rootDir):
@@ -24,7 +25,7 @@ def get_tags(rootDir):
             if (
                 not line.startswith("#") and line.strip()
             ):  # If the line doesn't start with a comment or blank
-                hasTag = re.match(r"^[A-Z]{3}", line, re.M | re.I)  # If it's a tag
+                hasTag = _RE_TAG_LINE.match(line)  # If it's a tag
                 if hasTag:
                     tags.append(hasTag.group())
     return tags
@@ -44,7 +45,7 @@ def hasFocusFormat(focus_id):
     for prefix in SHARED_FOCUS_PREFIXES:
         if focus_id.startswith(prefix):
             return True
-    return re.match(r"^[A-Z]{3}_[a-zA-Z0-9_-]+$", focus_id, re.M | re.U) is not None
+    return _RE_FOCUS_FORMAT.match(focus_id) is not None
 
 
 def checkFocuses(filepath):
@@ -225,7 +226,7 @@ def check_event_for_logs(filepath):
             ):  # If the line doesn't start with a comment or blank
                 # Track news_event blocks to skip them
                 stripped = line.strip()
-                if re.match(r"news_event\s*=\s*\{", stripped):
+                if _RE_NEWS_EVENT.match(stripped):
                     inNewsEvent = True
                     eventBraces = 1
                 elif inNewsEvent:
@@ -237,7 +238,7 @@ def check_event_for_logs(filepath):
                     continue
                 if inNewsEvent:
                     continue
-                if re.search(r"\boption\s*=\s*\{", line):
+                if _RE_OPTION.search(line):
                     optionFound = 1
                     optionLine = lineNum
                     optionName = ""
@@ -381,227 +382,9 @@ def check_Flags(filepath):
     return error_count_file, globalFlags, countryFlags
 
 
-def findPdxSyntax(filename):
-    with open(filename, "r", encoding="utf-8", errors="ignore") as file:
-        content = file.readlines()
-        typeOfCode = 0  # 1 = trigger, 2 = effects
-        pdxTriggers = []
-        pdxEffects = []
-        # 0 0 0 = trigger name
-        # 0 1 x = scopes
-        # 0 2 x = targets
-        # 0 3 x = examples
-        triggerNum = 0
-        EffectrNum = 0
-
-        for line in content:
-            if "==" in line:  # check for triggers
-                if "TRIGGER DOCUMENTATION" in line:
-                    typeOfCode = 1
-                    # print(typeOfCode)
-                elif "EFFECT DOCUMENTATION" in line:
-                    typeOfCode = 2
-
-            if typeOfCode == 1:
-                if "Supported scopes:" in line:
-                    if "state" in line:
-                        pdxTriggers[triggerNum - 1].append(["state"])
-                        # print("scope: " + pdxTriggers[triggerNum-1][1][0])
-                    elif "country" in line:
-                        pdxTriggers[triggerNum - 1].append(["country"])
-                        # print("scope: " + pdxTriggers[triggerNum-1][1][0])
-                    elif "Supported scopes: ???" == line:
-                        pdxTriggers[triggerNum - 1].append(["N/A"])
-                        # print("scope: " + pdxTriggers[triggerNum-1][1][0])
-                    elif "Supported scopes:\n" == line:
-                        pdxTriggers[triggerNum - 1].append(["N/A"])
-                        # print("scope: " + pdxTriggers[triggerNum-1][1][0])
-
-                elif "Supported targets:" in line:
-                    if "none" in line:
-                        pdxTriggers[triggerNum - 1].append(["none"])
-                        # print("scope: " + pdxTriggers[triggerNum-1][2][0])
-                    elif "Supported targets:\n" == line:
-                        pdxTriggers[triggerNum - 1].append(["N/A"])
-                        # print("scope: " + pdxTriggers[triggerNum-1][2][0])
-
-                elif "" != line:
-                    isTrigger = re.search(
-                        r"^([A-Z_?-?]+) -", line, re.M | re.I
-                    )  # If it's a tag
-                    if isTrigger:
-                        isTrigger = re.search(
-                            r"^([A-Z_?-?]+) -", line, re.M | re.I
-                        )  # If it's a tag
-                        pdxTriggers.append([[isTrigger.group(1)]])
-                        triggerNum += 1
-
-            if typeOfCode == 2:
-                if "Supported scopes:" in line:
-                    if "state" in line:
-                        pdxEffects[EffectrNum - 1].append(["state"])
-                        # print("scope: " + pdxTriggers[triggerNum-1][1][0])
-                    elif "country" in line:
-                        pdxEffects[EffectrNum - 1].append(["country"])
-                        # print("scope: " + pdxTriggers[triggerNum-1][1][0])
-                    elif "Supported scopes: ???" == line:
-                        pdxEffects[EffectrNum - 1].append(["N/A"])
-                        # print("scope: " + pdxTriggers[triggerNum-1][1][0])
-                    elif "Supported scopes:\n" == line:
-                        pdxEffects[EffectrNum - 1].append(["N/A"])
-                        # print("scope: " + pdxTriggers[triggerNum-1][1][0])
-                elif "Supported targets:" in line:
-                    if "none" in line:
-                        pdxEffects[EffectrNum - 1].append(["none"])
-                        # print("scope: " + pdxTriggers[triggerNum-1][2][0])
-                    elif "country" in line:
-                        pdxEffects[EffectrNum - 1].append(["country"])
-                        # print("scope: " + pdxTriggers[triggerNum-1][2][0])
-                    elif "Supported targets: none\n" == line:
-                        pdxEffects[EffectrNum - 1].append(["N/A"])
-                        # print("scope: " + pdxTriggers[triggerNum-1][2][0])
-                        # print(content)
-                        # input()
-
-                elif "" != line:
-                    isEffect = re.search(
-                        r"^([A-Z_?-?]+) -", line, re.M | re.I
-                    )  # If it's a tag
-                    if isEffect:
-                        isEffect = re.search(
-                            r"^([A-Z_?-?]+) -", line, re.M | re.I
-                        )  # If it's a tag
-                        pdxEffects.append([[isEffect.group(1)]])
-                        EffectrNum += 1
-
-    return pdxTriggers, pdxEffects
-
-
-def getCountryTriggers(allTriggers):
-    countryTriggers = []
-    for x in allTriggers:
-        # print("x = " + str(len(x)))
-        for y in x:
-            for z in y:
-                if z == "country":
-                    countryTriggers.append(x)
-    # for x in countryTriggers:
-    #    # print("x = " + str(len(x)))
-    #   for y in x:
-    #       for z in y:
-    #           print("x = " + str(x))
-    #           print("y = " + str(y))
-    #           print("z = " + str(z))
-
-    return countryTriggers
-
-
-def getStateTriggers(allTriggers):
-    stateTriggers = []
-    for x in allTriggers:
-        # print("x = " + str(len(x)))
-        for y in x:
-            for z in y:
-                if z == "state":
-                    stateTriggers.append(x)
-    # for x in stateTriggers:
-    #   # print("x = " + str(len(x)))
-    #    for y in x:
-    #        for z in y:
-    #            print("x = " + str(x))
-    #            print("y = " + str(y))
-    #            print("z = " + str(z))
-
-    return stateTriggers
-
-
-def getUnkownTriggers(allTriggers):
-    # print ("test")
-    unkownTriggers = []
-    for x in allTriggers:
-        # print("x = " + str(x))
-        for y in x:
-            for z in y:
-                # print(z)
-                if z == "N/A":
-                    unkownTriggers.append(x)
-    # for x in unkownTriggers:
-    # print("x = " + str(len(x)))
-    #    for y in x:
-    #        for z in y:
-    #           print("x = " + str(x))
-    #            print("y = " + str(y))
-    #            print("z = " + str(z))
-
-    return unkownTriggers
-
-
-def getCountryEffects(allEffects):
-    countryEffects = []
-    for x in allEffects:
-        # print("x = " + str(len(x)))
-        for y in x:
-            for z in y:
-                if z == "country":
-                    countryEffects.append(x)
-    # for x in countryEffects:
-    #    # print("x = " + str(len(x)))
-    #    for y in x:
-    #       for z in y:
-    #            print("x = " + str(x))
-    #           print("y = " + str(y))
-    #           print("z = " + str(z))
-
-    return countryEffects
-
-
-def getStateEffects(allEffects):
-    stateEffects = []
-    for x in allEffects:
-        # print("x = " + str(len(x)))
-        for y in x:
-            for z in y:
-                if z == "state":
-                    stateEffects.append(x)
-    # for x in stateEffects:
-    # print("x = " + str(len(x)))
-    # for y in x:
-    #   for z in y:
-    #        print("x = " + str(x))
-    #       print("y = " + str(y))
-    #        print("z = " + str(z))
-
-    return stateEffects
-
-
-def getUnkownEffects(allEffects):
-    unkownEffects = []
-    for x in allEffects:
-        # print("x = " + str(len(x)))
-        for y in x:
-            for z in y:
-                if z == "N/A":
-                    unkownEffects.append(x)
-    return unkownEffects
-
-
-def get_staged_txt_files():
-    """Get list of staged .txt files from git."""
-    try:
-        result = subprocess.run(
-            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMRT"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        return [
-            f for f in result.stdout.strip().split("\n") if f and f.endswith(".txt")
-        ]
-    except subprocess.CalledProcessError:
-        return []
-
-
 def main():
+    import argparse
+
     parser = argparse.ArgumentParser(
         description="Validate Coding Standards for HOI4 mod files"
     )
@@ -614,85 +397,75 @@ def main():
     parser.add_argument(
         "--workers",
         type=int,
-        default=os.cpu_count() or 4,
-        help="Number of parallel workers (default: CPU count)",
+        default=max(1, min(os.cpu_count() or 2, 4)),
+        help="Number of parallel workers (default: min(CPU count, 4))",
     )
     args = parser.parse_args()
 
+    timings = []
+    start_time = time.time()
     print(f"Validating Coding Standards (Mode: {args.mode})")
-    message = f"Validating Coding Standards (Mode: {args.mode})\n"
 
-    error_count = 0
-    warning_count = 0
-
-    # Allow running from root directory as well as from inside the tools directory
     scriptDir = os.path.realpath(__file__)
     rootDir = os.path.dirname(os.path.dirname(os.path.dirname(scriptDir)))
 
-    # When in staged mode, filter to only staged files
-    staged_files = None
-    if args.mode == "staged":
-        staged_files = set(os.path.abspath(f) for f in get_staged_txt_files())
-        if not staged_files:
-            print("No staged .txt files found")
-            return 0
+    with Timer("file collection") as t:
+        staged_files = None
+        if args.mode == "staged":
+            staged_files = set(
+                os.path.abspath(f) for f in get_git_diff_files(staged_only=True)
+            )
+            if not staged_files:
+                print("No staged .txt files found")
+                return 0
 
-    # Collect focus files (excluding generic.txt)
-    focus_files = []
-    for root, dirnames, filenames in os.walk(
-        rootDir + "/" + "common" + "/national_focus" + "/"
-    ):
-        for filename in fnmatch.filter(filenames, "*.txt"):
-            if filename != "generic.txt":
+        focus_files = []
+        for root, dirnames, filenames in os.walk(
+            os.path.join(rootDir, "common", "national_focus")
+        ):
+            for filename in fnmatch.filter(filenames, "*.txt"):
+                if filename != "generic.txt":
+                    filepath = os.path.join(root, filename)
+                    if (
+                        staged_files is None
+                        or os.path.abspath(filepath) in staged_files
+                    ):
+                        focus_files.append(filepath)
+
+        event_files = []
+        for root, dirnames, filenames in os.walk(os.path.join(rootDir, "events")):
+            for filename in fnmatch.filter(filenames, "*.txt"):
                 filepath = os.path.join(root, filename)
                 if staged_files is None or os.path.abspath(filepath) in staged_files:
-                    focus_files.append(filepath)
+                    event_files.append(filepath)
+    timings.append(("file collection", t.elapsed))
 
-    # Collect event files
-    event_files = []
-    for root, dirnames, filenames in os.walk(rootDir + "/" + "events/"):
-        for filename in fnmatch.filter(filenames, "*.txt"):
-            filepath = os.path.join(root, filename)
-            if staged_files is None or os.path.abspath(filepath) in staged_files:
-                event_files.append(filepath)
+    with Timer("focus checks") as t:
+        focus_results = run_with_pool(checkFocuses, focus_files, args.workers)
+    timings.append(("focus checks", t.elapsed))
 
-    # Check focus files and event files in parallel
-    with Pool(processes=args.workers) as pool:
-        focus_results = pool.map(checkFocuses, focus_files)
-        event_results = pool.map(check_event_for_logs, event_files)
+    with Timer("event log checks") as t:
+        event_results = run_with_pool(check_event_for_logs, event_files, args.workers)
+    timings.append(("event log checks", t.elapsed))
 
     warning_count = sum(focus_results) + sum(event_results)
-    files_list = focus_files + event_files
+    total_files = len(focus_files) + len(event_files)
 
-    total_issues = error_count + warning_count
     print(
-        "------\nChecked {0} files\nErrors detected: {1}\nWarnings detected: {2}\nTotal issues: {3}".format(
-            len(files_list), error_count, warning_count, total_issues
-        )
-    )
-    message += (
-        "------\nChecked {0} files\nErrors detected: {1}\nWarnings detected: {2}\nTotal issues: {3}".format(
-            len(files_list), error_count, warning_count, total_issues
-        )
-        + "\n"
+        f"------\nChecked {total_files} files\n"
+        f"Warnings detected: {warning_count}\nTotal issues: {warning_count}"
     )
 
-    if error_count == 0 and warning_count == 0:
+    if warning_count == 0:
         print("File validation PASSED")
-        message += "File validation PASSED\n"
-        postResults = False
-    elif error_count == 0 and warning_count > 0:
-        print("File validation PASSED WITH WARNINGS")
-        message += "File validation PASSED WITH WARNINGS\n"
-        postResults = True
     else:
-        print("File validation FAILED")
-        message += "File validation FAILED\n"
-        postResults = True
+        print("File validation PASSED WITH WARNINGS")
 
-    print("The script took {0} second!".format(time.time() - startTime))
+    elapsed = time.time() - start_time
+    print(f"Completed in {elapsed:.1f}s")
+    print_timing_summary(timings)
 
-    return error_count
+    return 0
 
 
 if __name__ == "__main__":
