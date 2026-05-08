@@ -324,22 +324,14 @@ class Validator(BaseValidator):
 
     def _validate_ship_types(self):
         """Validate ship types and missions in taskforce templates."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Collecting canonical ship types from common/units/...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Collecting canonical ship types from common/units/...")
 
         ship_types = parse_naval_units(self.mod_path)
         self.log(
             f"  Found {len(ship_types)} naval sub_unit types: {', '.join(sorted(ship_types))}"
         )
 
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking taskforce template ship types...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking taskforce template ship types...")
 
         defined_taskforces = self._defined_taskforces
         ship_refs = self._ship_refs
@@ -392,11 +384,7 @@ class Validator(BaseValidator):
 
     def _validate_fleet_references(self):
         """Validate that fleet templates reference defined taskforce templates."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking fleet template taskforce references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking fleet template taskforce references...")
 
         defined_taskforces = self._defined_taskforces
 
@@ -425,14 +413,11 @@ class Validator(BaseValidator):
 
     def _validate_composition_limits(self):
         """Validate optimal compositions respect NAI define limits."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking taskforce composition limits "
+        self._log_section(
+            f"Checking taskforce composition limits "
             f"(carrier≤{CARRIER_MAX}, capital≤{CAPITAL_MAX}, "
             f"screen≤{SCREEN_MAX}, sub≤{SUB_MAX})..."
-            f"{Colors.ENDC if self.use_colors else ''}"
         )
-        self.log(f"{'='*80}")
 
         results = []
         for tf_name, filename, line_num, composition in self._optimal_compositions:

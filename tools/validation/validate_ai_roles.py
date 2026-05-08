@@ -117,11 +117,7 @@ class Validator(BaseValidator):
 
     def _collect_valid_roles(self):
         """Collect all role definitions from AI template files."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Collecting role definitions from AI templates...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Collecting role definitions from AI templates...")
 
         # Always scan ALL template files for role definitions, even in staged mode.
         # Role definitions are the "truth set" — we need the complete picture.
@@ -143,11 +139,7 @@ class Validator(BaseValidator):
 
     def _validate_strategy_references(self):
         """Validate that all role references in strategy files point to valid roles."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking role references in AI strategy files...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking role references in AI strategy files...")
 
         strategy_files = self._collect_files(["common/ai_strategy/*.txt"])
         self.log(f"  Found {len(strategy_files)} strategy files to check")

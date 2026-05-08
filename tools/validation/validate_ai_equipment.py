@@ -143,11 +143,7 @@ class Validator(BaseValidator):
                 return
 
         # Parse all equipment files
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Parsing AI equipment files...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Parsing AI equipment files...")
 
         generic_templates = []
         custom_templates = []
@@ -203,11 +199,7 @@ class Validator(BaseValidator):
                             role_covered.setdefault(role, set()).add(tag)
 
             # Check: every blocked nation must have custom coverage
-            self.log(f"\n{'='*80}")
-            self.log(
-                f"{Colors.CYAN if self.use_colors else ''}Checking {cat_label} coverage for blocked nations...{Colors.ENDC if self.use_colors else ''}"
-            )
-            self.log(f"{'='*80}")
+            self._log_section(f"Checking {cat_label} coverage for blocked nations...")
 
             coverage_results = []
             for role, blocked_tags in sorted(role_blocked.items()):
@@ -225,11 +217,7 @@ class Validator(BaseValidator):
             )
 
         # Check: duplicate template names across files
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for duplicate template names...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for duplicate template names...")
 
         all_templates = generic_templates + custom_templates
         name_locations: Dict[str, List[str]] = {}

@@ -4,10 +4,10 @@ Check for common scripting mistakes in HOI4 mod files.
 
 Detects mechanically-checkable rule violations from CLAUDE.md:
   - threat/has_war_support/has_stability comparisons >= 1 (all are 0.0-1.0 ranges)
-  - allowed = { always = no } in country/hidden_ideas idea categories (default, hurts performance)
+  - allowed = { always = no } in country/hidden_ideas idea categories (redundant default; checked once at load, bypassed by add_ideas)
   - allowed = { tag = TAG } in country/hidden_ideas (breaks civil war split-offs; use original_tag)
   - allowed_civil_war = { always = no } in ideas (no effect, remove it)
-  - cancel = { always = no } in ideas (checked hourly, never true)
+  - cancel = { always = no } in ideas (checked hourly, never true; redundant default)
   - ai_will_do root-level factor = N (should be base = N; factor only valid in modifier children)
   - Division instead of multiplication (/ 100 -> * 0.01)
   - Multiple values of a single-valued trigger (has_government, tag, original_tag,
@@ -21,6 +21,7 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - is_in_faction = TAG (boolean trigger misused with a tag; should be is_in_faction_with)
   - has_trade_agreement_with (not a valid trigger; MD uses has_country_flag = trade_agreement@TAG)
   - Dynamic triggers inside decision allowed blocks (allowed is evaluated once at game start)
+  - is_X_nation triggers in runtime contexts (available, effect, limit) — use has_country_flag = X_flag instead
 """
 
 import os
@@ -83,6 +84,7 @@ _RE_DECISION_ALLOWED_DYNAMIC = re.compile(
     r"\b(?:num_of_factories|has_opinion|strength_ratio|"
     r"has_army_size|has_navy_size|has_political_power|date)\b"
 )
+_RE_IS_X_NATION = re.compile(r"\bis_([a-z]+_)?nation\s*=\s*yes\b")
 
 # Single-valued country triggers. A country has exactly one government/tag/etc,
 # so two checks at the same AND depth can never both be true — caller almost
@@ -108,6 +110,7 @@ from shared_utils import (
     create_linting_parser,
     get_all_txt_files,
     get_git_diff_files,
+    get_non_selectable_idea_categories,
     get_root_dir,
     print_timing_summary,
     run_with_pool,
@@ -759,6 +762,59 @@ def _check_empty_log_only_blocks(lines):
     return issues
 
 
+def _check_is_x_nation_runtime(lines):
+    """Flag is_X_nation triggers in runtime contexts (available, visible, effect).
+
+    The is_X_nation scripted triggers iterate over tag lists and are relatively
+    expensive. In runtime contexts (available, visible, effect blocks, limit clauses),
+    use the pre-computed has_country_flag = X_flag instead for O(1) lookup.
+
+    Safe to use in allowed = { } which is evaluated once at game start.
+    """
+    issues = []
+    in_allowed = False
+    allowed_depth = 0
+    brace_depth = 0
+
+    for i, line in enumerate(lines, 1):
+        code = line.split("#")[0]
+        stripped = code.strip()
+
+        # Track brace depth
+        opens = code.count("{")
+        closes = code.count("}")
+
+        # Check for allowed block start
+        if re.search(r"\ballowed\s*=\s*\{", code) and "allowed_civil_war" not in code:
+            in_allowed = True
+            allowed_depth = brace_depth + opens - closes
+
+        # Update brace depth after checking for allowed
+        brace_depth += opens - closes
+
+        # Check if we exited allowed block
+        if in_allowed and brace_depth <= allowed_depth - 1:
+            in_allowed = False
+            allowed_depth = 0
+
+        # Flag is_X_nation if not in allowed block
+        if not in_allowed:
+            match = _RE_IS_X_NATION.search(code)
+            if match:
+                nation_type = match.group(1) if match.group(1) else ""
+                flag_name = (
+                    f"{nation_type}nation_flag" if nation_type else "nation_flag"
+                )
+                issues.append(
+                    (
+                        i,
+                        f"is_X_nation in runtime context -- use has_country_flag = {flag_name} for O(1) lookup (allowed = {{ }} is OK for game-start checks)",
+                    )
+                )
+
+    return issues
+
+
 def _check_every_country_member_array(lines):
     """Flag every_country { limit = { has_idea = X_member } } when a pre-built array exists.
 
@@ -857,8 +913,9 @@ def check_file(filepath):
         or "common/military_industrial_organization" in filepath
     )
 
-    # Only track idea categories for idea files (country/hidden_ideas vs others)
-    FLAGGED_IDEA_CATEGORIES = {"country", "hidden_ideas"}
+    # Only track idea categories for idea files (non-selectable vs selectable)
+    # Dynamically parsed from common/idea_tags/*.txt
+    FLAGGED_IDEA_CATEGORIES = get_non_selectable_idea_categories()
     current_category = None
     brace_depth = 0
     ideas_depth = None
@@ -926,7 +983,7 @@ def check_file(filepath):
                 issues.append(
                     (
                         line_num,
-                        f"allowed = {{ always = no }} is the default for ideas in '{current_category}' -- remove it (hurts performance)",
+                        f"allowed = {{ always = no }} is the default for ideas in '{current_category}' -- remove it (checked once at load; add_ideas bypasses it)",
                     )
                 )
             elif _RE_ALLOWED_OPEN.search(code_part) and "}" not in code_part:
@@ -953,7 +1010,7 @@ def check_file(filepath):
                     issues.append(
                         (
                             allowed_block_start_line,
-                            f"allowed = {{ always = no }} is the default for ideas in '{current_category}' -- remove it (hurts performance)",
+                            f"allowed = {{ always = no }} is the default for ideas in '{current_category}' -- remove it (checked once at load; add_ideas bypasses it)",
                         )
                     )
                 in_allowed_block = False
@@ -973,7 +1030,7 @@ def check_file(filepath):
                 issues.append(
                     (
                         line_num,
-                        "cancel = { always = no } is checked hourly and never true -- remove it",
+                        "cancel = { always = no } is checked hourly and never true -- remove it (redundant default)",
                     )
                 )
 
@@ -1039,6 +1096,7 @@ def check_file(filepath):
     issues.extend(_check_duplicate_add_to_variable(lines))
     issues.extend(_check_every_country_member_array(lines))
     issues.extend(_check_empty_log_only_blocks(lines))
+    issues.extend(_check_is_x_nation_runtime(lines))
 
     return [(filepath, ln, msg) for ln, msg in issues]
 
