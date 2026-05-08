@@ -210,24 +210,24 @@ Engine-provided scope arrays. Usable anywhere an array name is accepted: `target
 
 ### Country-scoped
 
-| Array                                        | Contents                                                                                                                                                                                                                              |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `allies`                                     | Fellow faction members + subjects + overlord                                                                                                                                                                                          |
-| `faction_members`                            | All members of the current country's faction                                                                                                                                                                                          |
-| `subjects`                                   | Current country's subjects                                                                                                                                                                                                            |
-| `occupied_countries`                         | Countries currently occupied by this one                                                                                                                                                                                              |
-| `enemies`                                    | Countries currently at war with the current country                                                                                                                                                                                   |
-| `potential_and_current_enemies`              | Current enemies + allies-of-enemies + countries with wargoals — **prefer this over separate `has_war_with` + `is_justifying_wargoal_against` + `has_wargoal_against` checks when you need a single "is hostile toward us" condition** |
-| `enemies_of_allies`                          | Enemies of any of the current country's allies                                                                                                                                                                                        |
-| `neighbors`                                  | Countries sharing a border via **controlled** provinces                                                                                                                                                                               |
-| `neighbors_owned`                            | Countries sharing a border via **owned** states                                                                                                                                                                                       |
-| `owned_states`                               | States owned (but not necessarily controlled)                                                                                                                                                                                         |
-| `controlled_states`                          | States controlled (but not necessarily owned)                                                                                                                                                                                         |
-| `owned_controlled_states`                    | States both owned and controlled                                                                                                                                                                                                      |
-| `core_states`                                | States considered national territory                                                                                                                                                                                                  |
-| `army_leaders`, `navy_leaders`, `operatives` | Recruited characters/operatives                                                                                                                                                                                                       |
-| `researched_techs`                           | Technologies already researched                                                                                                                                                                                                       |
-| `exiles`                                     | Exiled governments this country is hosting                                                                                                                                                                                            |
+| Array                                        | Contents                                                      |
+| -------------------------------------------- | ------------------------------------------------------------- |
+| `allies`                                     | Fellow faction members + subjects + overlord                  |
+| `faction_members`                            | All members of the current country's faction                  |
+| `subjects`                                   | Current country's subjects                                    |
+| `occupied_countries`                         | Countries currently occupied by this one                      |
+| `enemies`                                    | Countries currently at war with the current country           |
+| `potential_and_current_enemies`              | Current enemies + allies-of-enemies + countries with wargoals |
+| `enemies_of_allies`                          | Enemies of any of the current country's allies                |
+| `neighbors`                                  | Countries sharing a border via **controlled** provinces       |
+| `neighbors_owned`                            | Countries sharing a border via **owned** states               |
+| `owned_states`                               | States owned (but not necessarily controlled)                 |
+| `controlled_states`                          | States controlled (but not necessarily owned)                 |
+| `owned_controlled_states`                    | States both owned and controlled                              |
+| `core_states`                                | States considered national territory                          |
+| `army_leaders`, `navy_leaders`, `operatives` | Recruited characters/operatives                               |
+| `researched_techs`                           | Technologies already researched                               |
+| `exiles`                                     | Exiled governments this country is hosting                    |
 
 ### State-scoped
 
