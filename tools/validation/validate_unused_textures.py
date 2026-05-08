@@ -326,11 +326,7 @@ class Validator(BaseValidator):
         return matched_textures
 
     def validate_unused_textures(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Finding all texture files in gfx/...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Finding all texture files in gfx/...")
 
         # Find all texture files
         self.texture_files = find_texture_files(self.mod_path)
@@ -344,11 +340,7 @@ class Validator(BaseValidator):
                 self.texture_filename_lookup[filename] = []
             self.texture_filename_lookup[filename].append(tex_path)
 
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Scanning .gfx files for texture references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Scanning .gfx files for texture references...")
 
         # Get all referenced textures from mod
         self.referenced_textures = self._get_all_referenced_textures(label="mod")
@@ -358,11 +350,7 @@ class Validator(BaseValidator):
 
         # Get all referenced textures from vanilla (if available)
         if self.hoi4_path:
-            self.log(f"\n{'='*80}")
-            self.log(
-                f"{Colors.CYAN if self.use_colors else ''}Scanning vanilla HoI4 .gfx files...{Colors.ENDC if self.use_colors else ''}"
-            )
-            self.log(f"{'='*80}")
+            self._log_section("Scanning vanilla HoI4 .gfx files...")
             self.vanilla_referenced_textures = self._get_all_referenced_textures(
                 search_path=self.hoi4_path, label="vanilla"
             )
@@ -371,21 +359,15 @@ class Validator(BaseValidator):
             )
 
         # Get texture references from game files (common/, history/, events/, portraits/)
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Scanning game files (common/history/events/portraits) for texture references...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Scanning game files (common/history/events/portraits) for texture references..."
         )
-        self.log(f"{'='*80}")
         self.game_file_textures = self._get_game_file_references()
         self.log(
             f"  Found {len(self.game_file_textures)} textures referenced in game files"
         )
 
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for unused textures...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for unused textures...")
 
         # Find unused textures (not in .gfx files OR game files)
         unused_textures = []
@@ -406,11 +388,7 @@ class Validator(BaseValidator):
 
     def validate_missing_textures(self):
         """Check for texture references in .gfx files that point to missing files."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for missing texture files...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for missing texture files...")
 
         missing_textures = []
         for texture_ref in sorted(self.referenced_textures):
@@ -439,11 +417,7 @@ class Validator(BaseValidator):
         self.validate_missing_textures()
 
         # Add summary
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}SUMMARY{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("SUMMARY")
         self.log(f"  Total texture files in gfx/: {len(self.texture_files)}")
         self.log(
             f"  Texture references in mod .gfx files: {len(self.referenced_textures)}"

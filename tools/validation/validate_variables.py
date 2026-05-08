@@ -604,11 +604,7 @@ class Validator(BaseValidator):
         cleared_paths: Dict[str, str],
         set_paths: Dict[str, str],
     ):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking cleared {flag_type} flags that are never set...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section(f"Checking cleared {flag_type} flags that are never set...")
 
         cleared_flags = DataCleaner.clear_false_positives_partial_match(
             list(cleared_paths.keys()), tuple(false_positives)
@@ -643,11 +639,7 @@ class Validator(BaseValidator):
         used_paths: Dict[str, str],
         set_paths: Dict[str, str],
     ):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking missing {flag_type} flags (used but not set)...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section(f"Checking missing {flag_type} flags (used but not set)...")
 
         used_flags = DataCleaner.clear_false_positives_partial_match(
             list(used_paths.keys()), tuple(false_positives)
@@ -682,11 +674,7 @@ class Validator(BaseValidator):
         set_paths: Dict[str, str],
         used_paths: Dict[str, str],
     ):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking unused {flag_type} flags (set but not used)...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section(f"Checking unused {flag_type} flags (set but not used)...")
 
         set_flags = DataCleaner.clear_false_positives_partial_match(
             list(set_paths.keys()), tuple(false_positives)
@@ -726,11 +714,7 @@ class Validator(BaseValidator):
 
         Previously two separate serial rglob loops; now one pool_map pass.
         """
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for set_*_flag syntax issues...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for set_*_flag syntax issues...")
 
         txt_files = self._collect_files(
             ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
@@ -762,11 +746,7 @@ class Validator(BaseValidator):
         cleared_paths: Dict[str, str],
         set_paths: Dict[str, str],
     ):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking cleared event targets that are not set...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking cleared event targets that are not set...")
 
         results = []
         for target in cleared_paths:
@@ -797,11 +777,7 @@ class Validator(BaseValidator):
         used_paths: Dict[str, str],
         set_paths: Dict[str, str],
     ):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking missing event targets (used but not set)...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking missing event targets (used but not set)...")
 
         FALSE_POSITIVES = ["."]
         results = []
@@ -841,11 +817,7 @@ class Validator(BaseValidator):
         set_paths: Dict[str, str],
         used_paths: Dict[str, str],
     ):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking unused event targets (set but not used)...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking unused event targets (set but not used)...")
 
         FALSE_POSITIVES = ["wca_usa_floyd_olson", "wca_usa_al_smith", "target_value"]
         results = []
