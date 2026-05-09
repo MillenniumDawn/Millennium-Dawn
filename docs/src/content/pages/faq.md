@@ -1,6 +1,6 @@
 ---
 title: FAQ
-description: 'Frequently asked questions about Millennium Dawn: A Modern Day mod for Hearts of Iron IV.'
+description: "Frequently asked questions about Millennium Dawn: A Modern Day mod for Hearts of Iron IV."
 permalink: /faq/
 ---
 

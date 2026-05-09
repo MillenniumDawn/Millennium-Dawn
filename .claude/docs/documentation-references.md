@@ -35,6 +35,23 @@ Use for broader modding context not covered in local docs:
 - [Unit Modding](https://hoi4.paradoxwikis.com/Unit_modding)
 - [Faction Modding](https://hoi4.paradoxwikis.com/Faction_modding)
 
+## Millennium Dawn Conventions
+
+| File                                      | Contents                                                                                                                                                                     |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.claude/docs/search-filters.md`          | Complete `search_filters` reference: every `FOCUS_FILTER_*` in the mod, Israel-specific filter mapping, subcategory logic for ISRMILITARY/ISRECON, common mistakes checklist |
+| `.claude/docs/simplification-patterns.md` | Patterns for replacing N-branch lookups with arrays, parameterized scripted loc, shared helpers, meta_effect consolidation                                                   |
+| `.claude/docs/performance-patterns.md`    | Hoisting invariants, temp-variable booleans, GUI dirty counters, engine arrays, clamp-before-division, early-out guards                                                      |
+| `.claude/docs/refactor-checklist.md`      | Systematic breaking-change checks for prefix renames, array migrations, event namespace, GUI/GFX cross-references, scope safety                                              |
+| `.claude/docs/oob-equipment-reference.md` | OOB equipment type mapping (NSB vs non-NSB), stockpile syntax, chassis/variant validation, common errors                                                                     |
+
+## AI Agent Definitions
+
+| File                                     | Purpose                                                                                                                                                                |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.claude/agents/simplify-analyzer.md`    | Analyze and simplify a single file; applies `/simplify` skill with HOI4-specific rules                                                                                 |
+| `.claude/agents/performance-analyzer.md` | Scan files or branch diffs for HOI4 performance anti-patterns: unbounded loops, per-frame visible blocks, GUI dirty misuse, unhoisted invariants, missing clamp guards |
+
 ## Repository Access
 
 Use `gh` CLI for GitHub operations: `gh issue list`, `gh pr list`, `gh pr view`, `gh api`

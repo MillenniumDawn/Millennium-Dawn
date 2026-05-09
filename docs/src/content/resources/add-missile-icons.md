@@ -7,8 +7,8 @@ This page is now deprecated as of MD v1.11.0.
 
 ## How to Add Missile Icons
 
-1. Add the dds files for your missile icons in ``gfx/interface/scripted_gui/missiles/models/TAG``
-2. Create the sprite entries in ``interface/MD_countrymissilesview.gfx``
+1. Add the dds files for your missile icons in `gfx/interface/scripted_gui/missiles/models/TAG`
+2. Create the sprite entries in `interface/MD_countrymissilesview.gfx`
    - This following convention is the standard and the file is structure as missile types -> countries:
 
 ```
@@ -19,9 +19,9 @@ spriteType = {
 }
 ```
 
-{:start="3"}
-3. Create the sprite entries in ``interface/mdult_missiles.gfx`` 
-   - The following convention is the standard and the file is structured as countries -> missile types
+{:start="3"} 3. Create the sprite entries in `interface/mdult_missiles.gfx`
+
+- The following convention is the standard and the file is structured as countries -> missile types
 
 ```
 ### PAK ###

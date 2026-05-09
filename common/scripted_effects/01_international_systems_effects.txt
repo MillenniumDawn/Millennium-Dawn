@@ -94,8 +94,6 @@ on_startup_international = {
 	add_to_array = { global.security_council_members = SOV }
 	add_to_array = { global.security_council_members = USA }
 	add_to_array = { global.security_council_members = ENG }
-
-	set_variable = { global.international_system_refresh_gui = 1 }
 }
 
 
@@ -205,7 +203,7 @@ un_recog_setup_check = {
 				}
 			}
 		}
-	}else = {
+	} else = {
 		add_to_array = { global.UN_general_assembly = THIS }
 		add_dynamic_modifier = { modifier = united_nations_member }
 	}
@@ -216,6 +214,8 @@ un_check_if_valid_for_sanctions = {
 	if = {
 		limit = {
 			check_variable = { has_added_tension_amount > 0 }
+			NOT = { original_tag = ZOM }
+			NOT = { original_tag = ALN }
 		}
 		if = {
 			limit = {
@@ -457,7 +457,9 @@ start_unsc_next_term_voting = {
 				array = global.asian_nations
 				limit = {
 					NOT = { is_in_array = { global.security_council_members = THIS } }
-					NOT = { has_idea = Lacks_International_Recognition has_idea = Non_State_Actor }
+					NOT = { has_idea = Lacks_International_Recognition }
+					NOT = { has_idea = Non_State_Actor }
+					NOT = { has_idea = Lacks_International_Recognition_Taiwan }
 				}
 				add_to_array = { global.new_council_members = THIS }
 			}
@@ -470,7 +472,9 @@ start_unsc_next_term_voting = {
 					array = global.sub_saharan_nations
 					limit = {
 						NOT = { is_in_array = { global.security_council_members = THIS } }
-						NOT = { has_idea = Lacks_International_Recognition has_idea = Non_State_Actor }
+						NOT = { has_idea = Lacks_International_Recognition }
+						NOT = { has_idea = Non_State_Actor }
+						NOT = { has_idea = Lacks_International_Recognition_Taiwan }
 					}
 					add_to_array = { global.new_council_members = THIS }
 				}
@@ -479,7 +483,9 @@ start_unsc_next_term_voting = {
 					array = global.middle_eastern_nations
 					limit = {
 						NOT = { is_in_array = { global.security_council_members = THIS } }
-						NOT = { has_idea = Lacks_International_Recognition has_idea = Non_State_Actor }
+						NOT = { has_idea = Lacks_International_Recognition }
+						NOT = { has_idea = Non_State_Actor }
+						NOT = { has_idea = Lacks_International_Recognition_Taiwan }
 					}
 					add_to_array = { global.new_council_members = THIS }
 				}
@@ -494,7 +500,9 @@ start_unsc_next_term_voting = {
 			array = global.sc_updates_euro_america
 			limit = {
 				NOT = { is_in_array = { global.security_council_members = THIS } }
-				NOT = { has_idea = Lacks_International_Recognition has_idea = Non_State_Actor }
+				NOT = { has_idea = Lacks_International_Recognition }
+				NOT = { has_idea = Non_State_Actor }
+				NOT = { has_idea = Lacks_International_Recognition_Taiwan }
 			}
 			add_to_array = { global.new_council_members = THIS }
 		}
@@ -506,7 +514,9 @@ start_unsc_next_term_voting = {
 			array = global.american_nations
 			limit = {
 				NOT = { is_in_array = { global.security_council_members = THIS } }
-				NOT = { has_idea = Lacks_International_Recognition has_idea = Non_State_Actor }
+				NOT = { has_idea = Lacks_International_Recognition }
+				NOT = { has_idea = Non_State_Actor }
+				NOT = { has_idea = Lacks_International_Recognition_Taiwan }
 				capital_scope = {
 					is_on_continent = south_america
 				}
@@ -514,6 +524,25 @@ start_unsc_next_term_voting = {
 			add_to_array = { global.new_council_members = THIS }
 		}
 	}
+	#Fallback: if regional pools couldn't fill all 5 seats, pick from any UN member
+	set_temp_variable = { seats_needed = 5 }
+	subtract_from_temp_variable = { seats_needed = global.new_council_members^num }
+	for_loop_effect = {
+		end = seats_needed
+		random_scope_in_array = {
+			array = global.UN_general_assembly
+			limit = {
+				NOT = { is_in_array = { global.security_council_members = THIS } }
+				NOT = { is_in_array = { global.new_council_members = THIS } }
+				NOT = { is_in_array = { global.p5_sc_members = THIS } }
+				NOT = { has_idea = Lacks_International_Recognition }
+				NOT = { has_idea = Non_State_Actor }
+				NOT = { has_idea = Lacks_International_Recognition_Taiwan }
+			}
+			add_to_array = { global.new_council_members = THIS }
+		}
+	}
+
 	#Fires in june, should be faster voting efforts (cycle them faster, bypass the queueing system)
 	set_temp_variable = { ga_new_vote_type = 6 }
 	set_temp_variable = { ga_new_vote_nation = global.new_council_members^0 }
@@ -533,11 +562,14 @@ update_security_council_peeps = {
 		add_to_temp_variable = { set_index = 1 }
 	}
 
-	#Add the new members here
+	#Add the new members here — only copy entries that actually exist
+	#Reading past the end of confirmed_new_council_members returns 0, which
+	#causes the GUI to display the viewing country's flag instead of a real member
 	set_temp_variable = { set = 0 }
 	set_temp_variable = { set_index = 5 }
+	set_temp_variable = { confirmed_count = global.confirmed_new_council_members^num }
 	for_loop_effect = {
-		end = 5
+		end = confirmed_count
 		set_variable = { global.security_council_members^set_index = global.confirmed_new_council_members^set }
 		add_to_temp_variable = { set = 1 }
 		add_to_temp_variable = { set_index = 1 }
@@ -579,13 +611,16 @@ un_sc_new_members_re_roll = {
 					NOT = {
 						is_in_array = { global.security_council_members = THIS }
 					}
+					NOT = { has_idea = Lacks_International_Recognition }
+					NOT = { has_idea = Non_State_Actor }
+					NOT = { has_idea = Lacks_International_Recognition_Taiwan }
 					capital_scope = {
 						is_on_continent = south_america
 					}
 				}
 				set_variable = { global.new_council_members^0 = THIS }
 			}
-		}else_if = {
+		} else_if = {
 			limit = {
 				capital_scope = {
 					OR = {
@@ -600,19 +635,43 @@ un_sc_new_members_re_roll = {
 					NOT = {
 						is_in_array = { global.security_council_members = THIS }
 					}
+					NOT = { has_idea = Lacks_International_Recognition }
+					NOT = { has_idea = Non_State_Actor }
+					NOT = { has_idea = Lacks_International_Recognition_Taiwan }
 				}
 				set_variable = { global.new_council_members^0 = THIS }
 			}
-		}else = {
+		} else = {
 			random_scope_in_array = {
 				array = global.sub_saharan_nations
 				limit = {
 					NOT = {
 						is_in_array = { global.security_council_members = THIS }
 					}
+					NOT = { has_idea = Lacks_International_Recognition }
+					NOT = { has_idea = Non_State_Actor }
+					NOT = { has_idea = Lacks_International_Recognition_Taiwan }
 				}
 				set_variable = { global.new_council_members^0 = THIS }
 			}
+		}
+	}
+
+	#Fallback: if the regional re-roll found nobody, try any UN member
+	if = {
+		limit = {
+			check_variable = { global.new_council_members^num < 1 }
+		}
+		random_scope_in_array = {
+			array = global.UN_general_assembly
+			limit = {
+				NOT = { is_in_array = { global.security_council_members = THIS } }
+				NOT = { is_in_array = { global.p5_sc_members = THIS } }
+				NOT = { has_idea = Lacks_International_Recognition }
+				NOT = { has_idea = Non_State_Actor }
+				NOT = { has_idea = Lacks_International_Recognition_Taiwan }
+			}
+			add_to_array = { global.new_council_members = THIS }
 		}
 	}
 
@@ -826,7 +885,7 @@ general_assembly_vote_finished = {
 				var:global.current_ga_vote_nation = {
 					country_event = recognition.71
 				}
-			}else = {
+			} else = {
 				var:global.current_ga_vote_nation = {
 					country_event = recognition.72
 				}
@@ -949,7 +1008,7 @@ general_assembly_vote_finished = {
 				check_variable = { global.current_ga_vote_type = 5 }
 			}
 			news_event = recognition.73
-		}else_if = {
+		} else_if = {
 			limit = {
 				check_variable = { global.current_ga_vote_type = 6 }
 			}
@@ -1188,7 +1247,7 @@ check_for_subsidy_expiration = {
 		}
 		clr_country_flag = is_getting_esco_subsidies
 		remove_from_array = { global.unesco_recipients = THIS }
-		country_event = { id = UN.300 }
+		country_event = UN.300
 	}
 	set_temp_variable = { construction_check = modifier@production_speed_buildings_factor }
 	subtract_from_temp_variable = { construction_check = un_ido_construction_speed_var }
@@ -1202,7 +1261,7 @@ check_for_subsidy_expiration = {
 		}
 		clr_country_flag = is_getting_ido_subsidies
 		remove_from_array = { global.unido_recipients = THIS }
-		country_event = { id = UN.301 }
+		country_event = UN.301
 	}
 	if = {
 		limit = {
@@ -1214,7 +1273,7 @@ check_for_subsidy_expiration = {
 		}
 		clr_country_flag = is_getting_cdf_subsidies
 		remove_from_array = { global.uncdf_recipients = THIS }
-		country_event = { id = UN.302 }
+		country_event = UN.302
 	}
 	if = {
 		limit = {
@@ -1229,12 +1288,12 @@ check_for_subsidy_expiration = {
 	}
 }
 
-# ============================================================
+# ------------------------------------------------------------
 # UN AI System
 # Called from on_monthly in MD_on_actions.txt
 # Picks one random SC member and one random GA member each month
 # to evaluate whether to propose UN actions, without using the GUI
-# ============================================================
+# ------------------------------------------------------------
 
 rebuild_ga_ai_active_pool = {
 	set_global_flag = { flag = ga_ai_pool_rebuild_cooldown days = 60 value = 1 }
@@ -1304,10 +1363,10 @@ un_ai_evaluate_actions = {
 	}
 }
 
-# ============================================================
+# ------------------------------------------------------------
 # SC AI: Evaluate whether to propose a Security Council action
 # Scope: the SC member nation (ROOT)
-# ============================================================
+# ------------------------------------------------------------
 un_ai_sc_consider_action = {
 	if = {
 		limit = {
@@ -1387,10 +1446,10 @@ un_ai_sc_consider_action = {
 	}
 }
 
-# ============================================================
+# ------------------------------------------------------------
 # GA AI: Evaluate whether to propose a General Assembly resolution
 # Scope: the GA member nation (ROOT)
-# ============================================================
+# ------------------------------------------------------------
 un_ai_ga_consider_resolution = {
 	if = {
 		limit = {
@@ -1580,20 +1639,20 @@ un_sway_direction_effect = {
 	if = {
 		limit = { is_in_array = { global.general_assembly_vote_yes = THIS } }
 		remove_from_array = { global.general_assembly_vote_yes = THIS }
-	}else_if = {
+	} else_if = {
 		limit = { is_in_array = { global.general_assembly_vote_no = THIS } }
 		remove_from_array = { global.general_assembly_vote_no = THIS }
-	}else = {
+	} else = {
 		remove_from_array = { global.general_assembly_vote_abstain = THIS }
 	}
 
 	if = {
 		limit = { check_variable = { current_sway_direction = 1 } }
 		add_to_array = { global.general_assembly_vote_yes = THIS }
-	}else_if = {
+	} else_if = {
 		limit = { check_variable = { current_sway_direction = 2 } }
 		add_to_array = { global.general_assembly_vote_no = THIS }
-	}else = {
+	} else = {
 		add_to_array = { global.general_assembly_vote_abstain = THIS }
 	}
 }

@@ -113,9 +113,6 @@ scripted_gui = {
 					OR = {
 						has_civil_war = yes
 						has_war = yes
-						hidden_trigger = {
-							has_country_flag = ai_yes_unit_build
-						}
 						has_country_flag = AI_is_threatened
 						threat > 0.50
 					}
@@ -129,6 +126,17 @@ scripted_gui = {
 				custom_trigger_tooltip = {
 					tooltip = influence_military_aid_TT
 					ROOT = { NOT = { has_country_flag = recently_sent_military_aid@PREV } }
+				}
+				#Target has not received aid from us in the past 90 days, OR is losing a war badly
+				custom_trigger_tooltip = {
+					tooltip = influence_recently_received_aid_TT
+					OR = {
+						NOT = { has_country_flag = received_military_aid_recently@ROOT }
+						AND = {
+							has_war = yes
+							surrender_progress > 0.30
+						}
+					}
 				}
 				ERI_is_not_transitional_government = yes
 			}
@@ -326,7 +334,7 @@ scripted_gui = {
 				ROOT = { # Player Nation
 					save_event_target_as = influence_sender
 					PREV = { # THIS Nation
-						country_event = { id = influence.0 }
+						country_event = influence.0
 						ROOT = {
 							set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 }
 						}
@@ -341,7 +349,7 @@ scripted_gui = {
 			opt_aid_military_button_click = {
 				ROOT = { #Uses the same as Economic AID to ensure the root is correct
 					PREV = {
-						country_event = { id = influence.50 }
+						country_event = influence.50
 						ROOT = {
 							set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 60 }
 						}
@@ -355,7 +363,7 @@ scripted_gui = {
 			opt_military_supply_button_click = {
 				ROOT = { # Player Nation
 					PREV = {
-						country_event = { id = influence.55 }
+						country_event = influence.55
 						ROOT = {
 							set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 60 }
 						}
@@ -370,7 +378,7 @@ scripted_gui = {
 				ROOT = {
 					save_event_target_as = influence_sender
 					PREV = {
-						country_event = { id = influence.22 }
+						country_event = influence.22
 					}
 				}
 				update_dirty_influence_var = yes
@@ -512,7 +520,7 @@ scripted_gui = {
 				ROOT = {
 					save_event_target_as = influence_sender
 					PREV = {
-						country_event = { id = influence.44 }
+						country_event = influence.44
 					}
 				}
 				update_dirty_influence_var = yes
@@ -593,6 +601,12 @@ scripted_gui = {
 					add_opinion_modifier = {
 						target = ROOT
 						modifier = exploited_neighbor
+					}
+				}
+				every_allied_country = {
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = exploited_ally
 					}
 				}
 				update_dirty_influence_var = yes

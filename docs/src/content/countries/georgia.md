@@ -5,10 +5,10 @@ unique_focus_tree: true
 grid_order: 26
 flag_image: /assets/images/flags/georgia.svg.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: GEO
+  - section: Overview
+    stats:
+      - label: Tag
+        value: GEO
 ---
 
 WIP

@@ -1,4 +1,5 @@
-import { defineCollection, z } from "astro:content";
+import { defineCollection } from "astro:content";
+import { z } from "astro/zod";
 import { glob } from "astro/loaders";
 import { baseDocSchema, infoboxSchema, internalPathSchema, slugSchema } from "./schemas/base";
 import {
@@ -55,7 +56,8 @@ const devDiarySchema = baseDocSchema.extend({
 });
 
 const devDiaries = defineCollection({
-  loader: glob({ pattern: "**/*.md", base: "./src/content/devDiaries" }),
+  /** MDX so `MarkdownContent` can map `img` → `MarkdownImage` (plain `.md` bodies compile to HTML only). */
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/devDiaries" }),
   schema: devDiarySchema,
 });
 

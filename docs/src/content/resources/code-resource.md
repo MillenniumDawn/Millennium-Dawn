@@ -387,6 +387,8 @@ four_random_industrial_complex = yes
 
 ### Building Costs (State-Level)
 
+The cost implies the INCLUSION of a building slot. A single building slot is $1.00 so if you want to give a **Civilian Industry** it's $6.50 without a building slot.
+
 | Building                            | Cost   |
 | ----------------------------------- | ------ |
 | Civilian/Military Factory, Dockyard | $7.50  |
@@ -503,6 +505,10 @@ change_small_medium_business_owners_opinion = yes
 
 ### Basic Influence
 
+The following scripts change for the influence system changing a targeted nation (`influence_target`) with another nation's influence (`tag_index`).
+
+`change_domestic_influence_percentage` changes `THIS` domestic influence.
+
 ```hoiscript
 # Domestic influence
 set_temp_variable = { percent_change = 10 }
@@ -514,6 +520,11 @@ set_temp_variable = { tag_index = ROOT }
 set_temp_variable = { influence_target = GER }
 change_influence_percentage = yes
 ```
+
+**NOTES**:
+
+- If you do not define tag_index it will default to `ROOT`.
+- If you do not define influence_target it will default to `THIS`.
 
 ### Index-Based Influence
 
