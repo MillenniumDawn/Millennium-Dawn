@@ -1,0 +1,96 @@
+# Hong Kong scripted effects
+# Triad mechanic, LegCo motion seat calculations, Railway/XRL motion outcomes
+
+#####################
+# Triad System
+#####################
+
+# set_temp_variable = { HKG_modify_triad_strength = +- }
+HKG_modify_triad_strength = {
+	add_to_variable = { HKG_triad_strength = HKG_modify_triad_strength }
+	clamp_variable = {
+		var = HKG_triad_strength
+		min = 0
+		max = 100
+	}
+	custom_effect_tooltip = HKG_modify_triad_strength_tt
+}
+
+# set_temp_variable = { HKG_modify_triad_evidance = +- }
+HKG_modify_triad_evidance = {
+	add_to_variable = { HKG_triad_evidance = HKG_modify_triad_evidance }
+	clamp_variable = {
+		var = HKG_triad_evidance
+		min = 0
+		max = 10
+	}
+	custom_effect_tooltip = HKG_modify_triad_evidance_tt
+}
+
+# add_to_temp_variable = { triads_political_power_cost_var = X } before calling
+triads_update_political_power_factor = {
+	add_to_variable = { triads_political_power_cost_var = triads_political_power_cost_var }
+	clamp_variable = {
+		var = triads_political_power_cost_var
+		min = 0
+		max = 5
+	}
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = HKG_triads_dynamic_modifier } } }
+		add_dynamic_modifier = { modifier = HKG_triads_dynamic_modifier }
+	}
+}
+
+#####################
+# LegCo Seat System
+#####################
+
+# Seat counts for the post-handover Legislative Council (70 seats post-2012)
+set_total_legco_seats = {
+	set_variable = { total_legco_seats = 70 }
+}
+
+# Recalculate four-year electoral cycle seat allocations
+calculate_legco_seats_four_yearly = {
+	set_variable = { legco_geographic_seats = 35 }
+	set_variable = { legco_functional_seats = 35 }
+}
+
+# Sum geographic + functional seats
+calculate_total_legco_seats = {
+	set_variable = { total_legco_seats = legco_geographic_seats }
+	add_to_variable = { total_legco_seats = legco_functional_seats }
+}
+
+# Simple majority threshold (half of total + 1)
+calculate_required_legco_seats = {
+	set_variable = { legco_required_seats = total_legco_seats }
+	divide_variable = { legco_required_seats = 2 }
+	round_variable = legco_required_seats
+}
+
+# Two-thirds supermajority threshold for special motions (typo "sepcially" preserved for compatibility)
+calculate_sepcially_required_legco_seats = {
+	set_variable = { legco_specially_required_seats = total_legco_seats }
+	multiply_variable = { legco_specially_required_seats = 0.6667 }
+	round_variable = legco_specially_required_seats
+}
+
+#####################
+# Motion Outcome Effects
+#####################
+
+HKG_railway_development_strategy_2000_effect = {
+	clr_country_flag = railway_development_strategy_2000_done
+	add_ideas = HKG_idea_railway_development_strategy_2000
+	custom_effect_tooltip = legco_railway_development_strategy_2000_focus_tt
+}
+
+HKG_approve_funding_for_XRL_effect = {
+	clr_country_flag = approve_funding_for_XRL_done
+	set_temp_variable = { treasury_change = -2.5 }
+	modify_treasury_effect = yes
+	add_political_power = 25
+	add_stability = 0.02
+	custom_effect_tooltip = legco_approve_funding_for_XRL_focus_tt
+}
