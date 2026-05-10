@@ -1,0 +1,485 @@
+HKG_legco_decision_categories = {
+
+	legco_current_special_motion_clock = {
+		activation = {
+			legco_has_a_special_active_motion = yes
+		}
+		available = {
+			always = no
+		}
+		days_mission_timeout = 60
+		is_good = yes
+		timeout_effect = {
+			if = {
+				limit = {
+					has_country_flag = HKG_electoral_reform_done
+				}
+				custom_effect_tooltip = legco_decision_effect_tt
+				if = {
+					limit = {
+						check_variable = {
+							HKG_legco_approval_seats > HKG_legco_required_seats
+						}
+					}
+					custom_effect_tooltip = legco_electoral_reform_focus_tt
+				}
+			}
+			if = {
+				limit = {
+					has_country_flag = HKG_electoral_reform_mainland_a
+				}
+				custom_effect_tooltip = legco_decision_effect_tt
+				if = {
+					limit = {
+						check_variable = {
+							HKG_legco_approval_seats > HKG_legco_required_seats
+						}
+					}
+					custom_effect_tooltip = legco_election_reform_a_effect_tt
+				}
+			}
+
+			if = {
+				limit = {
+					has_country_flag = HKG_electoral_reform_mainland_b
+				}
+				custom_effect_tooltip = legco_decision_effect_tt
+				if = {
+					limit = {
+						check_variable = {
+							HKG_legco_approval_seats > HKG_legco_required_seats
+						}
+					}
+					custom_effect_tooltip = legco_election_reform_b_effect_tt
+				}
+			}
+
+			if = {
+				limit = {
+					has_country_flag = HKG_electoral_reform_mainland_c
+				}
+				custom_effect_tooltip = legco_decision_effect_tt
+				if = {
+					limit = {
+						check_variable = {
+							HKG_legco_approval_seats > HKG_legco_required_seats
+						}
+					}
+					custom_effect_tooltip = legco_election_reform_c_effect_tt
+				}
+			}
+		}
+	
+		ai_will_do = {
+			base = 1
+		}
+	}
+}
+
+HKG_triad_decision_categories = {
+
+	HKG_send_undercover_police = {
+		fixed_random_seed = no
+		icon = GFX_decision_spr_political_assassination
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = HKG_triad_decision_mutually_exclusive_tt
+				NOT = {
+					OR = {
+						has_decision = HKG_send_undercover_police
+						has_decision = HKG_search_suspected_triad_gatherings
+						has_decision = HKG_pay_off_informant
+						has_decision = HKG_arrest_peripheral_members_of_triad
+					}
+				}
+			}
+		}
+	  	cost = 25
+	 	days_remove = 120
+	  	days_re_enable = 90
+	  	remove_effect = {
+			random_list = {
+				45 = {
+					set_temp_variable = { HKG_modify_triad_evidence = +1 }
+					HKG_modify_triad_evidence = yes
+				}
+				55 = {
+					add_political_power = 45
+					add_manpower = -5
+				}
+			}
+		log = "[GetDateText]: [Root.GetName]: Decision complete HKG_send_undercover_police"
+	    }
+	
+		ai_will_do = {
+			base = 5
+		modifier = { factor = 0 check_variable = { HKG_triad_strength < 5 } }
+		}
+	}
+  
+	HKG_search_suspected_triad_gatherings = {
+		fixed_random_seed = no
+		icon = GFX_decision_spr_political_assassination
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = HKG_triad_evidence_more_than_1_tt	
+				check_variable = { HKG_triad_evidence > 1 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = HKG_triad_decision_mutually_exclusive_tt
+				NOT = {
+					OR = {
+						has_decision = HKG_send_undercover_police
+						has_decision = HKG_search_suspected_triad_gatherings
+						has_decision = HKG_pay_off_informant
+						has_decision = HKG_arrest_peripheral_members_of_triad
+					}
+				}
+			}
+		}
+		cost = 50
+		days_remove = 15
+		days_re_enable = 90
+		remove_effect = {
+			random_list = {
+				33 = {
+					set_temp_variable = { HKG_modify_triad_strength = -5 }
+					HKG_modify_triad_strength = yes
+				}
+				23 = {
+					set_temp_variable = { HKG_modify_triad_strength = -3 }
+					HKG_modify_triad_strength = yes
+				}
+				23 = {
+					set_temp_variable = { HKG_modify_triad_evidence = +1 }
+					HKG_modify_triad_evidence = yes
+				}
+				10 = {
+					add_stability = 0.01
+				}
+				8 = {
+					add_political_power = 50
+				}
+				3 = {
+					set_temp_variable = { HKG_modify_triad_strength = -8 }
+					HKG_modify_triad_strength = yes
+				}
+			}
+			log = "[GetDateText]: [Root.GetName]: Decision complete HKG_search_suspected_triad_gatherings"
+		}
+	
+		ai_will_do = {
+			base = 6
+		}
+	}
+    HKG_pay_off_informant = {
+		fixed_random_seed = no
+		icon = GFX_decision_spr_political_assassination
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = HKG_triad_decision_mutually_exclusive_tt
+				NOT = {
+					OR = {
+						has_decision = HKG_send_undercover_police
+						has_decision = HKG_search_suspected_triad_gatherings
+						has_decision = HKG_pay_off_informant
+						has_decision = HKG_arrest_peripheral_members_of_triad
+					}
+				}
+			}
+		}
+
+		days_remove = 30
+		days_re_enable = 60
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.05 }
+		}
+		custom_cost_text = cost_0_05
+
+		complete_effect = {
+			set_temp_variable = { treasury_change = -0.05 }
+			modify_treasury_effect = yes
+
+			log = "[GetDateText]: [Root.GetName]: Decision complete HKG_pay_off_informant"
+		}
+		modifier = {
+			political_power_cost = 0.5
+		}
+		remove_effect = {
+			random_list = {
+				20 = {
+					set_temp_variable = { HKG_modify_triad_evidence = +2 }
+					HKG_modify_triad_evidence = yes
+				}
+				50 = {
+					set_temp_variable = { HKG_modify_triad_evidence = +1 }
+					HKG_modify_triad_evidence = yes
+				}
+				30 = {
+					add_political_power = 15
+				}
+			}
+		}
+	
+		ai_will_do = {
+			base = 3
+		modifier = { factor = 0 check_variable = { treasury < 0.5 } }
+		}
+	}
+  	HKG_arrest_peripheral_members_of_triad = {
+		fixed_random_seed = no
+	 	icon = GFX_decision_spr_political_assassination
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = HKG_triad_decision_mutually_exclusive_tt
+				NOT = {
+					OR = {
+						has_decision = HKG_send_undercover_police
+						has_decision = HKG_search_suspected_triad_gatherings
+						has_decision = HKG_pay_off_informant
+						has_decision = HKG_arrest_peripheral_members_of_triad
+					}
+				}
+			}
+		}
+	 	cost = 45
+	  	days_remove = 45
+	 	days_re_enable = 180
+	  	complete_effect = {
+		random_list = {
+			6 = {
+				set_temp_variable = { HKG_modify_triad_evidence = +2 }
+				HKG_modify_triad_evidence = yes
+			}
+			34 = {
+				set_temp_variable = { HKG_modify_triad_evidence = +1 }
+				HKG_modify_triad_evidence = yes
+			}
+			60 = {
+			}
+		}
+		log = "[GetDateText]: [Root.GetName]: Decision complete HKG_arrest_peripheral_members_of_triad"
+	  	}
+	
+		ai_will_do = {
+			base = 4
+		}
+	}
+ 	HKG_crack_down_on_organized_vehicle_theft = {
+		fixed_random_seed = no
+		icon = GFX_decision_spr_political_assassination
+		visible = {
+			has_completed_focus = HKG_crack_down_on_WSW_triad
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = HKG_triad_decision_mutually_exclusive_tt
+				NOT = {
+					OR = {
+						has_decision = HKG_send_undercover_police
+						has_decision = HKG_search_suspected_triad_gatherings
+						has_decision = HKG_pay_off_informant
+						has_decision = HKG_arrest_peripheral_members_of_triad
+					}
+				}
+			}
+		}
+	  cost = 45
+	  days_remove = 45
+	  days_re_enable = 180
+	  complete_effect = {
+		  random_list = {
+			  6 = {
+				  set_temp_variable = { HKG_modify_triad_evidence = +2 }
+				  HKG_modify_triad_evidence = yes
+			  }
+			  34 = {
+				  set_temp_variable = { HKG_modify_triad_evidence = +1 }
+				  HKG_modify_triad_evidence = yes
+			  }
+			  60 = {
+			  }
+		  }
+
+		  log = "[GetDateText]: [Root.GetName]: Decision complete HKG_crack_down_on_organized_vehicle_theft"
+	  }
+	
+		ai_will_do = {
+			base = 3
+		}
+	}
+  	HKG_enhance_crackdown_on_illegal_gambling = {
+		fixed_random_seed = no
+	  icon = GFX_decision_spr_political_assassination
+	  visible = {
+		has_completed_focus = HKG_crack_down_on_Luen_group_triad
+	  }
+	  available = {
+		custom_trigger_tooltip = {
+			tooltip = HKG_triad_decision_mutually_exclusive_tt
+			NOT = {
+				OR = {
+					has_decision = HKG_send_undercover_police
+					has_decision = HKG_search_suspected_triad_gatherings
+					has_decision = HKG_pay_off_informant
+					has_decision = HKG_arrest_peripheral_members_of_triad
+				}
+			}
+		}
+	}
+	  cost = 45
+	  days_remove = 45
+	  days_re_enable = 180
+	  complete_effect = {
+		  random_list = {
+			  6 = {
+				  set_temp_variable = { HKG_modify_triad_evidence = +2 }
+				  HKG_modify_triad_evidence = yes
+			  }
+			  34 = {
+				  set_temp_variable = { HKG_modify_triad_evidence = +1 }
+				  HKG_modify_triad_evidence = yes
+			  }
+			  60 = {
+			  }
+		  }
+
+		  log = "[GetDateText]: [Root.GetName]: Decision complete HKG_enhance_crackdown_on_illegal_gambling"
+	  }
+	
+		ai_will_do = {
+			base = 3
+		}
+	}
+ 	HKG_intensify_efforts_to_combat_human_trafficking = {
+	  icon = GFX_decision_spr_political_assassination
+	  visible = {
+		has_completed_focus = HKG_crack_down_on_SYO_triad
+	  }
+	  available = {
+		custom_trigger_tooltip = {
+			tooltip = HKG_triad_decision_mutually_exclusive_tt
+			NOT = {
+				OR = {
+					has_decision = HKG_send_undercover_police
+					has_decision = HKG_search_suspected_triad_gatherings
+					has_decision = HKG_pay_off_informant
+					has_decision = HKG_arrest_peripheral_members_of_triad
+				}
+			}
+		}
+	}
+	  cost = 45
+	  days_remove = 45
+	  days_re_enable = 180
+	  complete_effect = {
+		  log = "[GetDateText]: [Root.GetName]: Decision complete HKG_intensify_efforts_to_combat_human_trafficking"
+	  }
+	
+		ai_will_do = {
+			base = 3
+		}
+	}
+  	HKG_combat_underground_prostitution = {
+	  	icon = GFX_decision_spr_political_assassination
+		visible = {
+			has_completed_focus = HKG_crack_down_on_WSW_triad
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = HKG_triad_decision_mutually_exclusive_tt
+				NOT = {
+					OR = {
+						has_decision = HKG_send_undercover_police
+						has_decision = HKG_search_suspected_triad_gatherings
+						has_decision = HKG_pay_off_informant
+						has_decision = HKG_arrest_peripheral_members_of_triad
+					}
+				}
+			}
+		}
+	  	cost = 45
+	  	days_remove = 45
+	  	days_re_enable = 180
+	  	complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete HKG_combat_underground_prostitution"
+	  	}
+	
+		ai_will_do = {
+			base = 3
+		}
+	}
+  	HKG_tough_on_drug_trafficking = {
+	  	icon = GFX_decision_spr_political_assassination
+	  	visible = {
+			has_completed_focus = HKG_crack_down_on_14K_triad
+	  	}
+		  available = {
+			custom_trigger_tooltip = {
+				tooltip = HKG_triad_decision_mutually_exclusive_tt
+				NOT = {
+					OR = {
+						has_decision = HKG_send_undercover_police
+						has_decision = HKG_search_suspected_triad_gatherings
+						has_decision = HKG_pay_off_informant
+						has_decision = HKG_arrest_peripheral_members_of_triad
+					}
+				}
+			}
+		}
+	  	cost = 45
+	  	days_remove = 45
+	  	days_re_enable = 180
+	  	complete_effect = {
+		  	log = "[GetDateText]: [Root.GetName]: Decision complete HKG_tough_on_drug_trafficking"
+	  	}
+	
+		ai_will_do = {
+			base = 3
+		}
+	}
+  	HKG_Gong_ou_police_jointly_arrest_triad_members = {
+	  	icon = GFX_decision_spr_political_assassination
+		visible = {
+			has_completed_focus = HKG_step_up_police_raids
+		}
+	  	available = {
+			custom_trigger_tooltip = {
+				tooltip = HKG_triad_evidence_more_than_1_tt	
+				check_variable = { HKG_triad_evidence > 3 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = HKG_triad_decision_mutually_exclusive_tt
+				NOT = {
+					OR = {
+						has_decision = HKG_send_undercover_police
+						has_decision = HKG_search_suspected_triad_gatherings
+						has_decision = HKG_pay_off_informant
+						has_decision = HKG_arrest_peripheral_members_of_triad
+					}
+				}
+			}
+		}
+	  	cost = 45
+	  	days_remove = 45
+	  	days_re_enable = 180
+	  	complete_effect = {
+		  	log = "[GetDateText]: [Root.GetName]: Decision complete HKG_Gong_ou_police_jointly_arrest_triad_members"
+	  	}
+	
+		ai_will_do = {
+			base = 5
+		modifier = { factor = 0 has_war_with = CHI }
+		}
+	}
+}
+
+# HKG_protest_decision_categories = {
+
+# 	HKG_arrest_protesters = {
+# 		complete_effect = {
+# 		  add_political_power = 1
+# 		  log = "[GetDateText]: [Root.GetName]: Decision complete HKG_arrest_protesters"
+# 		}
+# 	}
+# }
