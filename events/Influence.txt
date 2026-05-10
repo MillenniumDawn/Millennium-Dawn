@@ -2627,6 +2627,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.57.a executed"
 		set_country_flag = aid_package_small
 		add_political_power = -25
+		FROM = {
+			country_event = influence.53
+		}
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
 		if = {
 			limit = { has_country_flag = shipment_of_infantry_weapons }
 			effect_tooltip = {
@@ -2652,9 +2656,6 @@ country_event = {
 				send_equipment = { type = land_drone_equipment_type amount = 5 target = FROM }
 			}
 		}
-		FROM = {
-			country_event = influence.53
-		}
 		ai_chance = {
 			base = 5
 			modifier = { add = 2 has_opinion = { target = FROM value < 30 } }
@@ -2673,6 +2674,10 @@ country_event = {
 		set_country_flag = aid_package_medium
 		add_political_power = -75
 		add_threat = 1
+		FROM = {
+			country_event = influence.53
+		}
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
 		if = {
 			limit = { has_country_flag = shipment_of_infantry_weapons }
 			effect_tooltip = {
@@ -2698,9 +2703,6 @@ country_event = {
 				send_equipment = { type = land_drone_equipment_type amount = 15 target = FROM }
 			}
 		}
-		FROM = {
-			country_event = influence.53
-		}
 		ai_chance = {
 			base = 3
 			modifier = { add = 4 FROM = { has_war = yes } }
@@ -2720,6 +2722,10 @@ country_event = {
 		set_country_flag = aid_package_large
 		add_political_power = -150
 		add_threat = 2
+		FROM = {
+			country_event = influence.53
+		}
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
 		if = {
 			limit = { has_country_flag = shipment_of_infantry_weapons }
 			effect_tooltip = {
@@ -2744,9 +2750,6 @@ country_event = {
 				send_equipment = { type = sam_missile_equipment amount = 25 target = FROM }
 				send_equipment = { type = land_drone_equipment_type amount = 25 target = FROM }
 			}
-		}
-		FROM = {
-			country_event = influence.53
 		}
 		ai_chance = {
 			base = 1
@@ -3134,6 +3137,8 @@ country_event = {
 			value = i
 			if = {
 				limit = { NOT = { check_variable = { auto_influence_array^i = 0 } } }
+				set_variable = { ROOT.found_influence_val = 0 }
+				set_variable = { ROOT.found_influence_match = 0 }
 				var:auto_influence_array^i = {
 					set_temp_variable = { influencer_index = -1 }
 					for_loop_effect = {
@@ -3146,8 +3151,16 @@ country_event = {
 					}
 					if = {
 						limit = { NOT = { check_variable = { influencer_index = -1 } } }
-						add_to_array = { ROOT.auto_influence_target_val = influence_array_val^influencer_index }
+						set_variable = { ROOT.found_influence_val = influence_array_val^influencer_index }
+						set_variable = { ROOT.found_influence_match = 1 }
 					}
+				}
+				if = {
+					limit = { check_variable = { found_influence_match = 1 } }
+					set_variable = { auto_influence_target_val^i = found_influence_val }
+				}
+				else = {
+					set_variable = { auto_influence_target_val^i = 0 }
 				}
 				meta_effect = {
 					text = {
@@ -3157,6 +3170,8 @@ country_event = {
 				}
 			}
 		}
+		clear_variable = found_influence_val
+		clear_variable = found_influence_match
 	}
 
 	option = {
@@ -3277,7 +3292,4 @@ country_event = {
 			}
 		}
 	}
-}
-
-country_event = {
 }
