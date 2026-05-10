@@ -1,8 +1,8 @@
 # Reads AA, radar, and rocket building levels from var:target_state and composes
 # the multiplicative AA defence value into the `aa_defense` temp variable.
-# Call when you need the raw aa_defense for downstream damage scaling.
-# Note: aa_defense may be 0 here if the state has no AA infrastructure;
-# callers that divide by aa_defense must guard with `check_variable = { aa_defense > 0 }`.
+# Result is clamped to a minimum of 1 so callers can divide by aa_defense
+# unconditionally (a state with no AA and no rocket sites yields 1, i.e. no
+# damage reduction and no plane-loss multiplier).
 calculate_aa_defense_value = {
 	var:target_state = {
 		set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
@@ -20,13 +20,13 @@ calculate_aa_defense_value = {
 			add_to_temp_variable = { aa_defense = rocket_mult }
 		}
 	}
+	if = { limit = { check_variable = { aa_defense = 0 } } add_to_temp_variable = { aa_defense = 1 } }
 }
 
-# Composes aa_defense (clamped to a minimum of 1) and applies it to raid_planes_lost.
-# Call after setting raid_planes_lost; multiplies it by the composite AA defence.
+# Composes aa_defense and applies it as the plane-loss multiplier.
+# Used in actor_effects after setting raid_planes_lost.
 calculate_raid_aa_defense = {
 	calculate_aa_defense_value = yes
-	if = { limit = { check_variable = { aa_defense = 0 } } add_to_temp_variable = { aa_defense = 1 } }
 	multiply_temp_variable = { raid_planes_lost = aa_defense }
 }
 
@@ -53,8 +53,9 @@ finalize_raid_plane_losses = {
 # Standard 3-tier building-damage flow for a victim_effects block.
 # Caller sets `building_damage_by_missile` (tier base damage) and `raid_damage_mult`
 # (the raid-specific post-multiply, e.g. 10/25/50/70) before calling. The helper
-# rolls per-tier missile luck, divides by aa_defense (guarded against 0), and
-# applies the raid multiplier. Per-tier luck ranges:
+# rolls per-tier missile luck, divides by aa_defense, and applies the raid
+# multiplier. aa_defense is assumed to have been computed by
+# calculate_aa_defense_value (which clamps it to >= 1). Per-tier luck ranges:
 #   limited  0.4-0.6
 #   success  0.6-0.8
 #   critical 0.8-1.0
@@ -65,10 +66,7 @@ apply_raid_building_damage_limited = {
 		max = 0.6
 	}
 	multiply_temp_variable = { building_damage_by_missile = missile_luck_mod }
-	if = {
-		limit = { check_variable = { aa_defense > 0 } }
-		divide_temp_variable = { building_damage_by_missile = aa_defense }
-	}
+	divide_temp_variable = { building_damage_by_missile = aa_defense }
 	multiply_temp_variable = { building_damage_by_missile = raid_damage_mult }
 }
 
@@ -79,10 +77,7 @@ apply_raid_building_damage_success = {
 		max = 0.8
 	}
 	multiply_temp_variable = { building_damage_by_missile = missile_luck_mod }
-	if = {
-		limit = { check_variable = { aa_defense > 0 } }
-		divide_temp_variable = { building_damage_by_missile = aa_defense }
-	}
+	divide_temp_variable = { building_damage_by_missile = aa_defense }
 	multiply_temp_variable = { building_damage_by_missile = raid_damage_mult }
 }
 
@@ -93,10 +88,7 @@ apply_raid_building_damage_critical = {
 		max = 1
 	}
 	multiply_temp_variable = { building_damage_by_missile = missile_luck_mod }
-	if = {
-		limit = { check_variable = { aa_defense > 0 } }
-		divide_temp_variable = { building_damage_by_missile = aa_defense }
-	}
+	divide_temp_variable = { building_damage_by_missile = aa_defense }
 	multiply_temp_variable = { building_damage_by_missile = raid_damage_mult }
 }
 
