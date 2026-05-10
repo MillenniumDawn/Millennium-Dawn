@@ -46,6 +46,18 @@ On-demand quality checklist for new Millennium Dawn content. Condensed from `doc
 - Tags must be capitalised in script IDs (e.g., `SPR_focus_name_here`)
 - High-cost focuses (`cost ≥ 8`, or `cost ≥ 5` tagged with military/economy/research `search_filters`) must have a `factor = 0` modifier in `ai_will_do` when `has_active_mission = bankruptcy_incoming_collapse` — prevents AI queueing expensive focuses during financial collapse without blocking the player
 
+## Balance & Tradeoffs
+
+- No parallel path, idea, or event option should be objectively weaker than its alternative in every dimension.
+- Every choice must have a distinct advantage and a distinct drawback.
+- If an option is strictly dominated, buff the weaker path or remove it.
+- Currency and alliance transitions should never feel like a downgrade to the player.
+
+### Example: Currency Idea Lateral
+
+`cfa_franc_2` offers peak political power (+0.25) and construction speed (+0.25) at the cost of a heavy tax penalty (-0.10).
+`the_eco` trades some of that peak performance for stability (+0.05), lower consumer goods (-0.03), and a positive tax modifier (+0.05). Neither is strictly better — they support different playstyles.
+
 ## Miscellaneous
 
 - Do not add nations to the bookmarks screen — bookmarks are added post-merge by leads
