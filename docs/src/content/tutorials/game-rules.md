@@ -47,7 +47,6 @@ Controls special nation formation options.
 | Rule                            | Options | Default | Description                    |
 | ------------------------------- | ------- | ------- | ------------------------------ |
 | `rule_disable_formable_nations` | yes/no  | no      | Disable all formable nations   |
-| `allow_multiple_formables`      | yes/no  | no      | Allow forming multiple nations |
 | `allow_edgy_flags`              | yes/no  | no      | Allow alternate flag designs   |
 
 ## Organization Options (`MD_ORGANISATION_RULES`)

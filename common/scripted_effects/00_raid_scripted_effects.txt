@@ -96,3 +96,62 @@ send_ct_raid_events_to_victim = {
 		}
 	}
 }
+
+# Applies suicide-drone-swarm damage to the victim's divisions in target_state.
+# Caller must first set:
+#   missile_luck_mod    — pre-rolled luck multiplier per success tier
+#   drone_damage_spread — base spread per success tier (higher = more damage)
+# Required scope vars: var:victim_country, var:target_state
+apply_drone_swarm_damage = {
+	var:victim_country = {
+		set_country_flag = {
+			flag = drone_swarm_striked
+			days = 1
+			value = 1
+		}
+		set_temp_variable = { ROOT.num_divs_targeted = THIS.num_armies_in_state@var:ROOT.target_state }
+	}
+	var:target_state = {
+		set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
+		set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
+	}
+	add_to_temp_variable = { radar_mult = 0.5 }
+	multiply_temp_variable = { aa_defense = radar_mult }
+
+	set_temp_variable = { drone_damage_to_unit = 2 }
+	multiply_temp_variable = { drone_damage_to_unit = missile_luck_mod }
+
+	if = {
+		limit = { check_variable = { aa_defense > 0 } }
+		divide_temp_variable = { drone_damage_to_unit = aa_defense }
+	}
+
+	clamp_temp_variable = { var = num_divs_targeted min = 1 }
+	divide_temp_variable = { drone_damage_spread = num_divs_targeted }
+	multiply_temp_variable = { drone_damage_to_unit = drone_damage_spread }
+
+	multiply_temp_variable = { drone_damage_to_unit = 0.5 }
+	set_temp_variable = { str_dam = drone_damage_to_unit }
+
+	var:target_state = {
+		meta_effect = {
+			text = {
+				damage_units = {
+					state = THIS
+					limit = { has_country_flag = drone_swarm_striked }
+					org_damage = [ORG]
+					str_damage = [STR]
+					ratio = no
+					army = yes
+					navy = no
+				}
+			}
+			ORG = "[?drone_damage_to_unit]"
+			STR = "[?str_dam]"
+		}
+		add_dynamic_modifier = {
+			modifier = sucide_drone_swarms
+			days = 10
+		}
+	}
+}
