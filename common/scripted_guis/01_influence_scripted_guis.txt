@@ -52,10 +52,6 @@ scripted_gui = {
 						tooltip = influence_auto_spread_in_this_nation_TT
 						ROOT = { is_in_array = { auto_influence_array = PREV.id } }
 					}
-					custom_trigger_tooltip = {
-						tooltip = must_wait_30_days_to_cancel_tt
-						ROOT = { NOT = { has_country_flag = recently_set_autoinfluence@PREV } }
-					}
 				}
 				ERI_is_not_transitional_government = yes
 			}
@@ -126,6 +122,17 @@ scripted_gui = {
 				custom_trigger_tooltip = {
 					tooltip = influence_military_aid_TT
 					ROOT = { NOT = { has_country_flag = recently_sent_military_aid@PREV } }
+				}
+				#Target has not received aid from us in the past 90 days, OR is losing a war badly
+				custom_trigger_tooltip = {
+					tooltip = influence_recently_received_aid_TT
+					OR = {
+						NOT = { has_country_flag = received_military_aid_recently@ROOT }
+						AND = {
+							has_war = yes
+							surrender_progress > 0.30
+						}
+					}
 				}
 				ERI_is_not_transitional_government = yes
 			}
@@ -590,6 +597,12 @@ scripted_gui = {
 					add_opinion_modifier = {
 						target = ROOT
 						modifier = exploited_neighbor
+					}
+				}
+				every_allied_country = {
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = exploited_ally
 					}
 				}
 				update_dirty_influence_var = yes

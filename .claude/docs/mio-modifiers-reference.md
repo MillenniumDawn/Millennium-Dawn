@@ -91,7 +91,6 @@ Used inside `equipment_bonus = { ... }` blocks.
 | `armor_value`      | Armor/Helicopter only     |
 | `breakthrough`     | Material/Armor/Helicopter |
 | `defense`          | Material/Armor/Helicopter |
-| `fuel_capacity`    | Armor/Helicopter only     |
 | `hard_attack`      | Material/Armor/Helicopter |
 | `soft_attack`      | Material/Armor/Helicopter |
 | `hardness`         | Armor |

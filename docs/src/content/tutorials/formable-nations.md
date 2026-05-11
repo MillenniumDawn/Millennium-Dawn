@@ -32,6 +32,7 @@ These are formed through the dedicated formable nations decision system.
 | Iberia           | IBR    | Spain, Portugal, Catalonia, Galicia                           | Southern Europe |
 | Austria-Hungary  | AUSHUN | Austria, Hungary, Slovakia, Czech Republic, Slovenia, Croatia | Central Europe  |
 | North Sea Empire | NORDEM | Denmark, England, Norway                                      | Northern Europe |
+| Angevin Empire   | AVG    | England, France                                               | Western Europe  |
 
 ### Americas
 

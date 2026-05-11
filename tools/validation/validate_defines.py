@@ -202,21 +202,13 @@ class Validator(BaseValidator):
                 return
 
         # Parse both files
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Parsing vanilla defines...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Parsing vanilla defines...")
 
         vanilla = parse_vanilla_defines(vanilla_path)
         total_vanilla = sum(len(v) for v in vanilla.values())
         self.log(f"  Found {total_vanilla} defines across {len(vanilla)} namespaces")
 
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Parsing MD defines...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Parsing MD defines...")
 
         md_defines = parse_md_defines(md_path)
         self.log(f"  Found {len(md_defines)} defines")
@@ -228,11 +220,7 @@ class Validator(BaseValidator):
                 all_vanilla_names.setdefault(name, []).append(ns)
 
         # Check 1: Dead/fabricated defines
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for dead/fabricated defines...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for dead/fabricated defines...")
 
         dead_results = []
         namespace_results = []
@@ -274,11 +262,7 @@ class Validator(BaseValidator):
         )
 
         # Check 3: Duplicates within MD
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for duplicate defines...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for duplicate defines...")
 
         seen: Dict[str, Tuple[int, str]] = {}
         duplicate_results = []

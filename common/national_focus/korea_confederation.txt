@@ -1,7 +1,7 @@
-﻿joint_focus = {
-	id = KOR_joint_research
-	icon = Confederation_ECO
-	cost = 10
+joint_focus = {
+	id = KOR_joint_peace
+	icon = NKO_korea_peace
+	cost = 5
 	x = 55
 	y = 18
 	offset = {
@@ -12,10 +12,690 @@
 		}
 	}
 	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_KOREAN_PENINSULA }
-	available = {
-		has_completed_focus = NKO_create_confederation
 
+	available = {
+		country_exists = NKO
+		country_exists = KOR
+		NOT = { NKO = { has_war_with = KOR } }
+		OR = {
+			KOR = { KOR_has_progressive_government = yes }
+			KOR = {
+				custom_trigger_tooltip = {
+					tooltip = KOR_democratic_party_governing_tt
+					is_in_array = { ruling_party = 3 }
+				}
+			}
+			NKO = { has_government = democratic }
+			NKO = { has_government = neutrality }
+		}
 	}
+
+	joint_trigger = {
+		OR = {
+			tag = NKO
+			tag = KOR
+		}
+	}
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus KOR_joint_peace executed"
+		add_political_power = 100
+		add_war_support = -0.02
+		add_stability = 0.02
+		KOR = {
+			support_for_reunification_2 = yes
+		}
+	}
+
+	ai_will_do = {
+		base = 1
+	}
+}
+
+joint_focus = {
+	id = KOR_sunshine_moon_policy
+	icon = align_to_north_korea
+	cost = 10
+	x = 56
+	y = 19
+	offset = {
+		x = 15
+		y = 0
+		trigger = {
+			original_tag = NKO
+		}
+	}
+
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_KOREAN_PENINSULA }
+	prerequisite = { focus = KOR_joint_peace }
+
+	available = {
+		country_exists = NKO
+		country_exists = KOR
+		NOT = { NKO = { has_war_with = KOR } }
+	}
+
+	joint_trigger = {
+		OR = {
+			tag = NKO
+			tag = KOR
+		}
+	}
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus KOR_sunshine_moon_policy executed"
+		KOR = {
+			add_opinion_modifier = { target = NKO modifier = sunshine_policy }
+			support_for_reunification_2 = yes
+			add_war_support = -0.02
+			if = {
+				limit = { has_idea = KOR_northern_propaganda_broadcasts }
+				remove_ideas = KOR_northern_propaganda_broadcasts
+			}
+			remove_opinion_modifier = { target = NKO modifier = propaganda_broadcasts }
+			remove_opinion_modifier = { target = NKO modifier = recent_actions_negative }
+		}
+		NKO = {
+			add_opinion_modifier = { target = KOR modifier = sunshine_policy }
+			add_war_support = -0.02
+			if = {
+				limit = { has_idea = NKO_southern_propaganda_broadcasts }
+				remove_ideas = NKO_southern_propaganda_broadcasts
+			}
+			if = {
+				limit = { has_idea = NKO_southern_balloon_leaflets }
+				remove_ideas = NKO_southern_balloon_leaflets
+			}
+			remove_opinion_modifier = { target = KOR modifier = propaganda_broadcasts }
+			remove_opinion_modifier = { target = KOR modifier = propaganda_leaflets }
+			remove_opinion_modifier = { target = KOR modifier = recent_actions_negative }
+		}
+		if = {
+			limit = { tag = KOR }
+			set_temp_variable = { temp_opinion = -5 }
+			change_intelligence_community_opinion = yes
+			change_the_military_opinion = yes
+		}
+		if = {
+			limit = { tag = NKO }
+			set_temp_variable = { temp_opinion = -5 }
+			change_communist_cadres_opinion = yes
+			change_the_military_opinion = yes
+		}
+	}
+
+	ai_will_do = {
+		base = 1
+	
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
+}
+
+joint_focus = {
+	id = KOR_kaesong_industrial
+	icon = construction4
+	cost = 10
+	x = 54
+	y = 19
+	offset = {
+		x = 15
+		y = 0
+		trigger = {
+			original_tag = NKO
+		}
+	}
+
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_KOREAN_PENINSULA }
+	prerequisite = { focus = KOR_joint_peace }
+
+	available = {
+		country_exists = NKO
+		country_exists = KOR
+		NOT = { NKO = { has_war_with = KOR } }
+	}
+
+	joint_trigger = {
+		OR = {
+			tag = NKO
+			tag = KOR
+		}
+	}
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus KOR_kaesong_industrial executed"
+		KOR = {
+			add_opinion_modifier = { target = NKO modifier = kaesong_industrial_park }
+			if = {
+				limit = { NOT = { has_idea = KOR_kaesong_industrial_park } }
+				add_ideas = KOR_kaesong_industrial_park
+			}
+			support_for_reunification_2 = yes
+			add_war_support = -0.02
+		}
+		NKO = {
+			add_opinion_modifier = { target = KOR modifier = kaesong_industrial_park }
+			if = {
+				limit = { NOT = { has_idea = NKO_kaesong_industrial_park } }
+				add_ideas = NKO_kaesong_industrial_park
+			}
+			add_war_support = -0.02
+		}
+	}
+
+	ai_will_do = {
+		base = 1
+	
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
+}
+
+joint_focus = {
+	id = KOR_cultural_exchange
+	icon = film_industry
+	cost = 10
+	x = 55
+	y = 20
+	offset = {
+		x = 15
+		y = 0
+		trigger = {
+			original_tag = NKO
+		}
+	}
+
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_KOREAN_PENINSULA }
+	prerequisite = { focus = KOR_kaesong_industrial }
+	prerequisite = { focus = KOR_sunshine_moon_policy }
+
+	available = {
+		country_exists = NKO
+		country_exists = KOR
+		NOT = { NKO = { has_war_with = KOR } }
+	}
+
+	joint_trigger = {
+		OR = {
+			tag = NKO
+			tag = KOR
+		}
+	}
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus KOR_cultural_exchange executed"
+		KOR = {
+			add_opinion_modifier = { target = NKO modifier = cultural_exchange }
+			support_for_reunification_2 = yes
+			add_war_support = -0.02
+		}
+		NKO = {
+			add_opinion_modifier = { target = KOR modifier = cultural_exchange }
+			add_war_support = -0.02
+		}
+	}
+
+	ai_will_do = {
+		base = 1
+	
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
+}
+
+joint_focus = {
+	id = KOR_reduce_dmz_militarization
+	icon = military_sphere
+	cost = 10
+	x = 55
+	y = 21
+	offset = {
+		x = 15
+		y = 0
+		trigger = {
+			original_tag = NKO
+		}
+	}
+
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_KOREAN_PENINSULA }
+	prerequisite = { focus = KOR_cultural_exchange }
+
+	available = {
+		country_exists = NKO
+		country_exists = KOR
+		NOT = { NKO = { has_war_with = KOR } }
+	}
+
+	joint_trigger = {
+		OR = {
+			tag = NKO
+			tag = KOR
+		}
+	}
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus KOR_reduce_dmz_militarization executed"
+		KOR = {
+			add_opinion_modifier = { target = NKO modifier = diplomatic_proximity }
+			support_for_reunification_2 = yes
+			add_war_support = -0.05
+		}
+		NKO = {
+			if = {
+				limit = { has_idea = NKO_DMZ_remilitarized }
+				remove_ideas = NKO_DMZ_remilitarized
+			}
+			add_opinion_modifier = { target = KOR modifier = diplomatic_proximity }
+			add_war_support = -0.05
+		}
+	}
+
+	ai_will_do = {
+		base = 1
+	
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
+}
+
+joint_focus = {
+	id = KOR_pursue_peace_treaty
+	icon = peace
+	cost = 10
+	x = 55
+	y = 22
+	offset = {
+		x = 15
+		y = 0
+		trigger = {
+			original_tag = NKO
+		}
+	}
+
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_KOREAN_PENINSULA }
+	prerequisite = { focus = KOR_reduce_dmz_militarization }
+
+	available = {
+		country_exists = NKO
+		country_exists = KOR
+		NOT = { NKO = { has_war_with = KOR } }
+	}
+
+	joint_trigger = {
+		OR = {
+			tag = NKO
+			tag = KOR
+		}
+	}
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus KOR_pursue_peace_treaty executed"
+		KOR = {
+			remove_opinion_modifier = { target = NKO modifier = NKO_KOR_Korean_War_Ceasefire }
+			remove_opinion_modifier = { target = NKO modifier = imminent_danger_to_national_security }
+			remove_opinion_modifier = { target = NKO modifier = danger_to_national_security }
+			remove_opinion_modifier = { target = NKO modifier = recent_actions_negative }
+			support_for_reunification_2 = yes
+			add_war_support = -0.05
+			add_stability = 0.05
+		}
+		NKO = {
+			remove_opinion_modifier = { target = KOR modifier = NKO_KOR_Korean_War_Ceasefire }
+			remove_opinion_modifier = { target = KOR modifier = imminent_danger_to_national_security }
+			remove_opinion_modifier = { target = KOR modifier = danger_to_national_security }
+			remove_opinion_modifier = { target = KOR modifier = recent_actions_negative }
+			add_war_support = -0.05
+			add_stability = 0.05
+		}
+		news_event = korea.6
+	}
+
+	ai_will_do = {
+		base = 1
+	
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
+}
+
+joint_focus = {
+	id = KOR_improve_relations
+	icon = diplomacy
+	cost = 10
+	x = 54
+	y = 23
+	offset = {
+		x = 15
+		y = 0
+		trigger = {
+			original_tag = NKO
+		}
+	}
+
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_KOREAN_PENINSULA }
+	prerequisite = { focus = KOR_pursue_peace_treaty }
+
+	available = {
+		country_exists = NKO
+		country_exists = KOR
+		NOT = { NKO = { has_war_with = KOR } }
+	}
+
+	joint_trigger = {
+		OR = {
+			tag = NKO
+			tag = KOR
+		}
+	}
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus KOR_improve_relations executed"
+		KOR = {
+			add_opinion_modifier = { target = NKO modifier = political_outreach }
+			support_for_reunification_2 = yes
+			add_war_support = -0.02
+		}
+		NKO = {
+			add_opinion_modifier = { target = KOR modifier = political_outreach }
+			add_war_support = -0.02
+		}
+	}
+
+	ai_will_do = {
+		base = 1
+	
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
+}
+
+joint_focus = {
+	id = KOR_our_true_enemy
+	icon = japanese_imperialism
+	cost = 10
+	x = 56
+	y = 23
+	offset = {
+		x = 15
+		y = 0
+		trigger = {
+			original_tag = NKO
+		}
+	}
+
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_KOREAN_PENINSULA }
+	prerequisite = { focus = KOR_pursue_peace_treaty }
+
+	available = {
+		country_exists = NKO
+		country_exists = KOR
+		NOT = { NKO = { has_war_with = KOR } }
+	}
+
+	joint_trigger = {
+		OR = {
+			tag = NKO
+			tag = KOR
+		}
+	}
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus KOR_our_true_enemy executed"
+		KOR = {
+			support_for_reunification_2 = yes
+			if = {
+				limit = { country_exists = JAP }
+				add_opinion_modifier = { target = JAP modifier = criticized_us }
+			}
+		}
+		NKO = {
+			if = {
+				limit = { country_exists = JAP }
+				add_opinion_modifier = { target = JAP modifier = criticized_us }
+			}
+		}
+		if = {
+			limit = { country_exists = JAP }
+			JAP = {
+				add_opinion_modifier = { target = NKO modifier = criticized_us }
+				add_opinion_modifier = { target = KOR modifier = criticized_us }
+			}
+		}
+	}
+
+	ai_will_do = {
+		base = 1
+	
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
+}
+
+joint_focus = {
+	id = KOR_reunification
+	icon = korean_peninsula
+	cost = 15
+	x = 54
+	y = 24
+	offset = {
+		x = 15
+		y = 0
+		trigger = {
+			original_tag = NKO
+		}
+	}
+
+	mutually_exclusive = {
+		focus = KOR_confederation
+	}
+
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_KOREAN_PENINSULA FOCUS_FILTER_ANNEXATION }
+	prerequisite = { focus = KOR_improve_relations }
+	prerequisite = { focus = KOR_our_true_enemy }
+
+	available = {
+		country_exists = NKO
+		country_exists = KOR
+		NOT = { NKO = { has_war_with = KOR } }
+		custom_trigger_tooltip = {
+			tooltip = support_for_reunification_more_50_tt
+			check_variable = { KOR.SFR > 50 }
+		}
+		KOR = {
+			has_opinion = {
+				target = NKO
+				value > -26
+			}
+		}
+		NKO = {
+			has_opinion = {
+				target = KOR
+				value > -26
+			}
+		}
+		custom_trigger_tooltip = {
+			tooltip = NKO_KOR_Korean_War_Ceasefire_tt
+			NOT = {
+				KOR = { has_opinion_modifier = NKO_KOR_Korean_War_Ceasefire }
+			}
+		}
+	}
+
+	joint_trigger = {
+		OR = {
+			tag = NKO
+			tag = KOR
+		}
+	}
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus KOR_reunification executed"
+		if = {
+			limit = { tag = KOR }
+			set_country_flag = KOR_proposed_south_reunification
+			custom_effect_tooltip = negotiation_result_tt
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				annex_country = { target = NKO transfer_troops = yes }
+				add_ideas = KOR_reunification_shocks
+				add_ideas = KOR_divided_military
+				add_ideas = KOR_mass_migration
+				add_ideas = KOR_fragmented_governance
+				add_ideas = KOR_uneven_economy1
+				set_country_flag = korea_peninsula_reunited
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				custom_effect_tooltip = KOR_reunification_talks_failed_tt
+			}
+			hidden_effect = {
+				NKO = {
+					country_event = {
+						id = korea.26
+						days = 30
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = { tag = NKO }
+			set_country_flag = NKO_proposed_north_reunification
+			custom_effect_tooltip = negotiation_result_tt
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				annex_country = { target = KOR transfer_troops = yes }
+				add_ideas = KOR_reunification_shocks
+				add_ideas = KOR_divided_military
+				add_ideas = KOR_mass_migration
+				add_ideas = KOR_fragmented_governance
+				add_ideas = KOR_uneven_economy1
+				set_country_flag = korea_peninsula_reunited
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				custom_effect_tooltip = NKO_reunification_talks_failed_tt
+			}
+			hidden_effect = {
+				KOR = {
+					country_event = {
+						id = korea.34
+						days = 30
+					}
+				}
+			}
+		}
+	}
+
+	ai_will_do = {
+		base = 1
+	
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
+}
+
+joint_focus = {
+	id = KOR_confederation
+	icon = NKO_confederation_create
+	cost = 15
+	x = 56
+	y = 24
+	offset = {
+		x = 15
+		y = 0
+		trigger = {
+			original_tag = NKO
+		}
+	}
+
+	mutually_exclusive = {
+		focus = KOR_reunification
+	}
+
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_KOREAN_PENINSULA }
+	prerequisite = { focus = KOR_improve_relations }
+	prerequisite = { focus = KOR_our_true_enemy }
+
+	available = {
+		country_exists = NKO
+		country_exists = KOR
+		NOT = { NKO = { has_war_with = KOR } }
+		KOR = {
+			has_opinion = {
+				target = NKO
+				value > -26
+			}
+		}
+		custom_trigger_tooltip = {
+			tooltip = NKO_KOR_Korean_War_Ceasefire_tt
+			NOT = {
+				KOR = { has_opinion_modifier = NKO_KOR_Korean_War_Ceasefire }
+			}
+		}
+	}
+
+	joint_trigger = {
+		tag = NKO
+	}
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus KOR_confederation executed"
+		custom_effect_tooltip = negotiation_result_tt
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			set_autonomy = {
+				target = KOR
+				autonomy_state = autonomy_korean_federation
+				end_wars = no
+				end_civil_wars = no
+			}
+			set_country_flag = korea_peninsula_reunited
+		}
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = {
+			custom_effect_tooltip = KOR_confederation_talks_failed_tt
+		}
+		hidden_effect = {
+			KOR = {
+				country_event = {
+					id = korea.41
+					days = 30
+				}
+			}
+		}
+	}
+
+	ai_will_do = {
+		base = 1
+	
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
+}
+
+joint_focus = {
+	id = KOR_joint_research
+	icon = Confederation_ECO
+	cost = 10
+	x = 55
+	y = 25
+	offset = {
+		x = 15
+		y = 0
+		trigger = {
+			original_tag = NKO
+		}
+	}
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_KOREAN_PENINSULA }
+	prerequisite = { focus = KOR_reunification focus = KOR_confederation }
 	joint_trigger = {
 		OR = {
 			tag = NKO
@@ -25,10 +705,27 @@
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus KOR_joint_research executed"
 		add_to_tech_sharing_group = korea_confederation_Tech_Share
-		KOR = { add_to_tech_sharing_group = korea_confederation_Tech_Share }
-		add_opinion_modifier = {
-			target = NKO
-			modifier = mutual_trade_agreement
+		if = {
+			limit = { country_exists = KOR }
+			KOR = { add_to_tech_sharing_group = korea_confederation_Tech_Share }
+		}
+		if = {
+			limit = { country_exists = NKO }
+			NKO = { add_to_tech_sharing_group = korea_confederation_Tech_Share }
+		}
+		if = {
+			limit = { country_exists = NKO }
+			add_opinion_modifier = {
+				target = NKO
+				modifier = mutual_trade_agreement
+			}
+		}
+		if = {
+			limit = { country_exists = KOR }
+			add_opinion_modifier = {
+				target = KOR
+				modifier = mutual_trade_agreement
+			}
 		}
 	}
 
@@ -172,52 +869,20 @@ joint_focus = {
 	}
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus KOR_combined_airforce_technology executed"
-				set_technology = {
-				early_airframe_designs = 1
-				gen_3_light = 1
-				gen_4_light = 1
-				gen_3_medium = 1
-				gen_4_medium = 1
-				gen_3_large = 1
-				gen_4_large = 1
-
-				flying_wing_design = 1
-				variable_wing_design = 1
-				delta_wing_design = 1
-
-				engines_2 = 1
-				engines_3 = 1
-				engines_4 = 1
-
-				refueling_1 = 1
-
-				avionics_1 = 1
-				avionics_2 = 1
-
-				awacs_1 = 1
-				awacs_2 = 1
-
-				redundant_1 = 1
-				redundant_2 = 1
-
-				early_weapons = 1
-				air_weapons_1 = 1
-				air_weapons_2 = 1
-				countermeasures_1 = 1
-				countermeasures_2 = 1
-
-				ag_weapons_1 = 1
-				ag_weapons_2 = 1
-
-				naval_weapons_1 = 1
-				naval_weapons_2 = 1
-				special_mad_1 = 1
-				special_mad_2 = 1
-
-				tgp_recon_1 = 1
-				tgp_recon_2 = 1
-			}
-
+		KOR_inherit_aerospace_tech = yes
+		add_tech_bonus = {
+			name = KOR_combined_airforce_bonus
+			ahead_reduction = 1
+			uses = 2
+			category = CAT_small_plane
+			category = CAT_medium_plane
+			category = CAT_large_plane
+		}
+		add_timed_idea = {
+			idea = KOR_combined_aerospace_renaissance
+			days = 180
+		}
+		air_experience = 50
 	}
 
 		ai_will_do = {

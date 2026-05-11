@@ -12,6 +12,21 @@
 #   7. Decisions with targets but no target_trigger (performance issue)
 #   8. Decisions using FROM without a target set (undefined scope)
 #   9. Decisions without allowed check in unchecked categories
+#  10. Random list without explicit fixed_random_seed
+#  11. Redundant tag checks (allowed already pins tag)
+#  12. Allowed redundant with parent category
+#  13. Political power charge in effects (hidden or double cost)
+#  14. Identical visible and available blocks
+#  15. Bare trigger names missing has_ prefix
+#  16. Missing localisation keys
+#  17. Visible block in missions (does nothing; use activation instead)
+#  18. war_with_on_* = FROM in targeted decisions (use war_with_target_on_*)
+#  19. cancel_if_not_visible without a visible block (dead code)
+#  20. Custom cost with PP but no ai_hint_pp_cost (AI unaware of cost)
+#  21. Incompatible state_target value with explicit targets
+#  22. Mission-only attributes on regular decisions (silently ignored)
+#  23. remove_effect without days_remove or remove_trigger (dead code)
+#  24. targets_dynamic / target_non_existing without targets (meaningless)
 # Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
 # Adapted for Millennium Dawn with multiprocessing
 ##########################
@@ -35,7 +50,9 @@ EXTRA_SKIP_PATTERNS = ["FR_loc"]
 # Decisions activated dynamically (e.g. via variable-constructed IDs) that
 # cannot be detected by static analysis and should be excluded from the
 # unused-decision check.
-DYNAMICALLY_ACTIVATED_DECISIONS = [f"AC_project_{i}_target_decision" for i in range(15)]
+DYNAMICALLY_ACTIVATED_DECISIONS = [
+    f"AC_project_{i}_target_decision" for i in range(15)
+] + [f"investments_project_{i}_target_decision" for i in range(15)]
 
 
 def _should_skip(filename: str) -> bool:
@@ -43,6 +60,50 @@ def _should_skip(filename: str) -> bool:
 
 
 # --- Decision parsing helpers ---
+
+_TAG_TOKEN_PATTERN = re.compile(r"\b(original_tag|tag)\s*=\s*([A-Z][A-Z0-9_]{1,7})\b")
+
+
+def _flat_tag_pins(block: str) -> set:
+    """Return the set of tags pinned by flat (non-nested) tag/original_tag tokens.
+
+    Tokens nested inside OR/NOT/AND/if subblocks are skipped because they are
+    conditional, not hard pins. Handles both multi-line and single-line block
+    formats.
+    """
+    if not block:
+        return set()
+    inner = block.strip()
+    if inner.startswith("{"):
+        inner = inner[1:]
+    if inner.endswith("}"):
+        inner = inner[:-1]
+    tags = set()
+    depth = 0
+    i = 0
+    n = len(inner)
+    while i < n:
+        ch = inner[i]
+        if ch == "{":
+            depth += 1
+            i += 1
+            continue
+        if ch == "}":
+            depth -= 1
+            i += 1
+            continue
+        if ch == "#":
+            while i < n and inner[i] != "\n":
+                i += 1
+            continue
+        if depth == 0:
+            m = _TAG_TOKEN_PATTERN.match(inner, i)
+            if m:
+                tags.add(m.group(2))
+                i = m.end()
+                continue
+        i += 1
+    return tags
 
 
 def extract_value_single_line(obj: str, s: str) -> str:
@@ -76,7 +137,11 @@ class DecisionFactory:
         self.target_trigger = extract_value_multi_line(dec, "target_trigger")
         self.targets = extract_value_multi_line(dec, "targets")
         self.target_array = extract_value_single_line(dec, "target_array")
-        self.state_target = "state_target = yes" in dec
+        _st_match = re.search(r"\bstate_target\s*=\s*(\w+)", dec)
+        self.state_target_value = _st_match.group(1) if _st_match else None
+        self.state_target = (
+            self.state_target_value is not None and self.state_target_value != "no"
+        )
         self.map_only = "on_map_mode = map_only" in dec
         self.mission_subtype = "\tdays_mission_timeout =" in dec
         self.selectable_mission = (
@@ -92,6 +157,19 @@ class DecisionFactory:
         self.fixed_random_seed_explicit = bool(
             re.search(r"\bfixed_random_seed\s*=\s*(yes|no)\b", dec)
         )
+        self.war_with_on_complete = extract_value_single_line(
+            dec, "war_with_on_complete"
+        )
+        self.war_with_on_remove = extract_value_single_line(dec, "war_with_on_remove")
+        self.war_with_on_timeout = extract_value_single_line(dec, "war_with_on_timeout")
+        self.has_timeout_effect = "timeout_effect" in dec
+        self.has_activation_block = bool(re.search(r"\bactivation\s*=\s*\{", dec))
+        self.has_is_good = "is_good" in dec
+        self.has_selectable_mission_kw = "selectable_mission = yes" in dec
+        self.has_days_remove = "days_remove" in dec
+        self.has_remove_trigger = "remove_trigger" in dec
+        self.targets_dynamic = "targets_dynamic" in dec
+        self.target_non_existing = "target_non_existing" in dec
 
 
 # Decisions parsing cache - enabled by default, disabled via --no-cache for CI
@@ -390,11 +468,7 @@ class Validator(BaseValidator):
             _invalidate_decision_cache()
 
     def validate_duplicated_decisions(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for duplicated decisions...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for duplicated decisions...")
 
         names, paths = parse_all_decision_names(self.mod_path)
         self.log(f"  Found {len(names)} total decisions")
@@ -405,11 +479,9 @@ class Validator(BaseValidator):
         )
 
     def validate_unused_decisions(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for unused decisions (always=no but never activated)...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking for unused decisions (always=no but never activated)..."
         )
-        self.log(f"{'='*80}")
 
         factories = parse_all_decision_factories(self.mod_path)
         manual_decisions: set = set()
@@ -469,11 +541,7 @@ class Validator(BaseValidator):
         )
 
     def validate_unused_categories(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for unused decision categories...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for unused decision categories...")
 
         cats_with_decisions = parse_categories_with_decisions(
             self.mod_path, visible_when_empty=False
@@ -514,11 +582,7 @@ class Validator(BaseValidator):
         )
 
     def validate_ai_factors(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking decision AI factors...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking decision AI factors...")
 
         factories = parse_all_decision_factories(self.mod_path)
         categories = parse_decision_categories(self.mod_path)
@@ -581,11 +645,9 @@ class Validator(BaseValidator):
             self._apply_ai_factor_fixes(fixes_needed)
 
     def validate_custom_cost_trigger(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking decisions with custom_cost_trigger have a tooltip...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking decisions with custom_cost_trigger have a tooltip..."
         )
-        self.log(f"{'='*80}")
 
         factories = parse_all_decision_factories(self.mod_path)
         results = []
@@ -610,11 +672,9 @@ class Validator(BaseValidator):
         - ``state_target = yes`` / ``on_map_mode = map_only`` (player-driven map click;
           the engine iterates states/countries only on map interaction, not daily)
         """
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking targeted decisions without targets (performance)...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking targeted decisions without targets (performance)..."
         )
-        self.log(f"{'='*80}")
 
         factories = parse_all_decision_factories(self.mod_path)
         results = []
@@ -643,11 +703,9 @@ class Validator(BaseValidator):
         FROM checks (evaluated every tick per target). Moving those FROM checks
         into ``target_trigger`` makes them daily instead.
         """
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking decisions with FROM checks in visible/available but no target_trigger (performance)...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking decisions with FROM checks in visible/available but no target_trigger (performance)..."
         )
-        self.log(f"{'='*80}")
 
         factories = parse_all_decision_factories(self.mod_path)
         results = []
@@ -691,11 +749,7 @@ class Validator(BaseValidator):
         - ``state_target = yes`` / ``on_map_mode = map_only`` — FROM is the
           state selected by the player.
         """
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking decisions for FROM usage without a target set...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking decisions for FROM usage without a target set...")
 
         factories = parse_all_decision_factories(self.mod_path)
         results = []
@@ -729,11 +783,9 @@ class Validator(BaseValidator):
         )
 
     def validate_without_allowed_check(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking decisions without allowed trigger in unchecked categories...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking decisions without allowed trigger in unchecked categories..."
         )
-        self.log(f"{'='*80}")
 
         cats_with_decs = parse_categories_with_decisions(self.mod_path)
         factories = parse_all_decision_factories(self.mod_path)
@@ -774,11 +826,9 @@ class Validator(BaseValidator):
         an explicit ``fixed_random_seed = yes`` is treated as a deliberate
         choice (e.g. reproducible AI rolls) and left alone.
         """
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking decisions with random_list missing fixed_random_seed = no...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking decisions with random_list missing fixed_random_seed = no..."
         )
-        self.log(f"{'='*80}")
 
         factories = parse_all_decision_factories(self.mod_path)
         results = []
@@ -812,66 +862,10 @@ class Validator(BaseValidator):
         gate. Decisions whose ``allowed`` uses ``OR``/``NOT``/no tag at all
         are skipped — those legitimately need per-tag filtering downstream.
         """
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking decisions for redundant tag checks...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking decisions for redundant tag checks...")
 
         factories = parse_all_decision_factories(self.mod_path)
         results = []
-
-        # Pattern matching a `tag = TAG` or `original_tag = TAG` token anywhere
-        # inside a block. We use brace-depth tracking to ensure the match is at
-        # the *top level* of the surrounding block (depth 0 within the block),
-        # not nested inside OR/NOT/AND/if subblocks.
-        TAG_TOKEN_PATTERN = re.compile(
-            r"\b(original_tag|tag)\s*=\s*([A-Z][A-Z0-9_]{1,7})\b"
-        )
-
-        def _flat_tag_pins(block: str):
-            """Return set of tags pinned by flat (non-OR'd) tag/original_tag tokens.
-
-            Tokens nested inside OR/NOT/AND/if subblocks are skipped — those
-            are conditional, not a hard pin. Handles both multi-line and
-            single-line ``{ original_tag = SER }`` formats.
-            """
-            if not block:
-                return set()
-            # Strip the outer braces of the block if present
-            inner = block.strip()
-            if inner.startswith("{"):
-                inner = inner[1:]
-            if inner.endswith("}"):
-                inner = inner[:-1]
-
-            tags = set()
-            depth = 0
-            i = 0
-            n = len(inner)
-            while i < n:
-                ch = inner[i]
-                if ch == "{":
-                    depth += 1
-                    i += 1
-                    continue
-                if ch == "}":
-                    depth -= 1
-                    i += 1
-                    continue
-                if ch == "#":
-                    # Skip to end of line
-                    while i < n and inner[i] != "\n":
-                        i += 1
-                    continue
-                if depth == 0:
-                    m = TAG_TOKEN_PATTERN.match(inner, i)
-                    if m:
-                        tags.add(m.group(2))
-                        i = m.end()
-                        continue
-                i += 1
-            return tags
 
         def _scan_top_level(block: str):
             """Iterate top-level tokens inside a block.
@@ -1023,52 +1017,13 @@ class Validator(BaseValidator):
         category that already declares ``allowed = { original_tag = SER }``.
         The decision-level allowed is dead weight — remove it.
         """
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking decisions with allowed redundant with parent category...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking decisions with allowed redundant with parent category..."
         )
-        self.log(f"{'='*80}")
 
         factories = parse_all_decision_factories(self.mod_path)
         categories = parse_decision_categories(self.mod_path)
         cats_with_decs = parse_categories_with_decisions(self.mod_path)
-
-        TAG_TOKEN = re.compile(r"\b(original_tag|tag)\s*=\s*([A-Z][A-Z0-9_]{1,7})\b")
-
-        def flat_pins(block):
-            if not block:
-                return set()
-            inner = block.strip()
-            if inner.startswith("{"):
-                inner = inner[1:]
-            if inner.endswith("}"):
-                inner = inner[:-1]
-            tags = set()
-            depth = 0
-            i = 0
-            n = len(inner)
-            while i < n:
-                ch = inner[i]
-                if ch == "{":
-                    depth += 1
-                    i += 1
-                    continue
-                if ch == "}":
-                    depth -= 1
-                    i += 1
-                    continue
-                if ch == "#":
-                    while i < n and inner[i] != "\n":
-                        i += 1
-                    continue
-                if depth == 0:
-                    m = TAG_TOKEN.match(inner, i)
-                    if m:
-                        tags.add(m.group(2))
-                        i = m.end()
-                        continue
-                i += 1
-            return tags
 
         # Build category -> pinned tags
         cat_pins = {}
@@ -1085,13 +1040,13 @@ class Validator(BaseValidator):
                 elif cat_code[i] == "}":
                     depth -= 1
                 i += 1
-            cat_pins[cat_name] = flat_pins(cat_code[a_start:i])
+            cat_pins[cat_name] = _flat_tag_pins(cat_code[a_start:i])
 
         results = []
         for d in factories:
             if not d.allowed:
                 continue
-            dec_pinned = flat_pins(d.allowed)
+            dec_pinned = _flat_tag_pins(d.allowed)
             if len(dec_pinned) != 1:
                 continue
             pinned = next(iter(dec_pinned))
@@ -1154,11 +1109,7 @@ class Validator(BaseValidator):
           are timeout outcomes, not entry costs. Selectable missions still
           get checked because their ``complete_effect`` is the player path.
         """
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking decisions for hand-rolled PP cost in effects...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking decisions for hand-rolled PP cost in effects...")
 
         factories = parse_all_decision_factories(self.mod_path)
         hidden = []
@@ -1264,11 +1215,7 @@ class Validator(BaseValidator):
         blocks are identical, one is redundant. We move available -> visible since
         it's more efficient (only one check instead of two identical checks).
         """
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking decisions with identical visible and available...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking decisions with identical visible and available...")
 
         factories = parse_all_decision_factories(self.mod_path)
         results = []
@@ -1352,11 +1299,7 @@ class Validator(BaseValidator):
         or ``>``), and exclude ``check_variable`` blocks where the bare name
         is a valid variable reference.
         """
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for bare trigger names missing has_ prefix...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for bare trigger names missing has_ prefix...")
 
         BARE_TRIGGERS = {
             "political_power": "has_political_power",
@@ -1397,11 +1340,7 @@ class Validator(BaseValidator):
         )
 
     def validate_missing_localisation(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for decisions with missing localisation keys...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for decisions with missing localisation keys...")
 
         factories = parse_all_decision_factories(self.mod_path, lowercase=False)
         loc_keys = self._load_localisation_keys()
@@ -1427,6 +1366,292 @@ class Validator(BaseValidator):
             "Decisions with missing localisation keys:",
             Severity.WARNING,
             category="missing-decision-localisation",
+        )
+
+    def validate_visible_in_missions(self):
+        """Flag missions that have a visible block.
+
+        The HOI4 engine ignores visible on mission-type decisions entirely.
+        Use activation = { ... } to control when a mission appears.
+        """
+        self._log_section(
+            "Checking missions with visible block (does nothing for missions)..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+
+        for d in factories:
+            if d.mission_subtype and d.visible:
+                results.append(
+                    f"{d.token:<55}{d.source_basename} - visible does nothing on missions; use activation"
+                )
+
+        self._report(
+            results,
+            "✓ No missions with useless visible block",
+            "Missions with visible block (does nothing — use activation instead):",
+        )
+
+    def validate_war_with_targeted(self):
+        """Flag targeted decisions using war_with_on_* = FROM.
+
+        The regular war_with_on_complete/remove/timeout arguments do not work
+        when the target is FROM. Use the war_with_target_on_* = yes variants.
+        """
+        self._log_section("Checking targeted decisions for war_with_on_* = FROM...")
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+
+        for d in factories:
+            issues = []
+            if d.war_with_on_complete == "FROM":
+                issues.append(
+                    "war_with_on_complete = FROM → war_with_target_on_complete = yes"
+                )
+            if d.war_with_on_remove == "FROM":
+                issues.append(
+                    "war_with_on_remove = FROM → war_with_target_on_remove = yes"
+                )
+            if d.war_with_on_timeout == "FROM":
+                issues.append(
+                    "war_with_on_timeout = FROM → war_with_target_on_timeout = yes"
+                )
+            if issues:
+                results.append(
+                    f"{d.token:<55}{d.source_basename} - {'; '.join(issues)}"
+                )
+
+        self._report(
+            results,
+            "✓ No targeted decisions misusing war_with_on_* = FROM",
+            "Targeted decisions using war_with_on_* = FROM (silently fails — use war_with_target_on_* = yes):",
+        )
+
+    def validate_cancel_if_not_visible(self):
+        """Flag decisions with cancel_if_not_visible = yes but no visible block.
+
+        cancel_if_not_visible adds the visible block's conditions to the
+        cancel_trigger. Without a visible block, there are no conditions to
+        add, making it dead code.
+        """
+        self._log_section(
+            "Checking decisions with cancel_if_not_visible but no visible block..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+
+        for d in factories:
+            if d.cancel_if_not_visible and not d.visible:
+                results.append(f"{d.token:<55}{d.source_basename}")
+
+        self._report(
+            results,
+            "✓ No decisions with cancel_if_not_visible but missing visible",
+            "Decisions with cancel_if_not_visible = yes but no visible block (dead code — remove cancel_if_not_visible or add visible):",
+        )
+
+    def validate_custom_cost_ai_hint(self):
+        """Flag decisions with custom_cost_trigger involving PP but no ai_hint_pp_cost.
+
+        A custom cost replaces the regular cost field, so the AI has no idea
+        it needs to save up political power. ai_hint_pp_cost tells the AI
+        how much PP to reserve before attempting the decision.
+        """
+        self._log_section(
+            "Checking decisions with custom PP cost but no ai_hint_pp_cost..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+
+        for d in factories:
+            if not d.custom_cost_trigger:
+                continue
+            if d.ai_hint_pp_cost:
+                continue
+            if d.ai_factor and "base = 0" in d.ai_factor and "add" not in d.ai_factor:
+                continue
+            if "political_power" in d.custom_cost_trigger:
+                results.append(
+                    f"{d.token:<55}{d.source_basename} - custom_cost_trigger checks political_power but no ai_hint_pp_cost"
+                )
+
+        self._report(
+            results,
+            "✓ No custom PP cost decisions missing ai_hint_pp_cost",
+            "Decisions with custom PP cost but no ai_hint_pp_cost (AI won't save up PP):",
+            severity=Severity.WARNING,
+        )
+
+    def validate_state_target_with_targets(self):
+        """Flag state-targeted decisions with explicit targets but incompatible state_target value.
+
+        When using targets = {} or target_array with state-targeted decisions,
+        only state_target = yes or state_target = any will work. Other values
+        (any_owned_state, any_controlled_state, continent keys) produce errors.
+        """
+        self._log_section(
+            "Checking state-targeted decisions for incompatible state_target with explicit targets..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+        valid_with_targets = {"yes", "any"}
+
+        for d in factories:
+            if not d.state_target_value:
+                continue
+            if (
+                d.state_target_value in valid_with_targets
+                or d.state_target_value == "no"
+            ):
+                continue
+            if d.targets or d.target_array:
+                results.append(
+                    f"{d.token:<55}{d.source_basename} - state_target = {d.state_target_value} with explicit targets (only yes/any work; use state_target = yes)"
+                )
+
+        self._report(
+            results,
+            "✓ No incompatible state_target with explicit targets",
+            "State-targeted decisions with incompatible state_target value (produces error):",
+        )
+
+    def validate_mission_only_attributes(self):
+        """Flag regular decisions using mission-only attributes.
+
+        Several attributes only function on mission-type decisions (those with
+        days_mission_timeout). On regular decisions they are silently ignored:
+        timeout_effect, activation, is_good, selectable_mission,
+        war_with_on_timeout, war_with_target_on_timeout.
+        """
+        self._log_section(
+            "Checking regular decisions for mission-only attributes (silently ignored)..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+
+        for d in factories:
+            if d.mission_subtype:
+                continue
+            issues = []
+            if d.has_timeout_effect:
+                issues.append("timeout_effect")
+            if d.has_activation_block:
+                issues.append("activation")
+            if d.has_is_good:
+                issues.append("is_good")
+            if d.has_selectable_mission_kw:
+                issues.append("selectable_mission")
+            if d.war_with_on_timeout:
+                issues.append("war_with_on_timeout")
+            if "war_with_target_on_timeout" in d.raw:
+                issues.append("war_with_target_on_timeout")
+            if issues:
+                results.append(
+                    f"{d.token:<55}{d.source_basename} - mission-only: {', '.join(issues)}"
+                )
+
+        self._report(
+            results,
+            "✓ No regular decisions with mission-only attributes",
+            "Regular decisions using mission-only attributes (silently ignored — add days_mission_timeout to make a mission, or remove these):",
+        )
+
+    def validate_orphaned_remove_effect(self):
+        """Flag decisions with remove_effect but no timer or removal trigger.
+
+        remove_effect fires when a decision's timer expires (days_remove) or
+        when remove_trigger evaluates true. Without either, the effect block
+        is dead code that will never execute (unless removed externally via
+        the remove_decision effect).
+
+        Exempts missions (which use timeout_effect) and decisions activated
+        via script (allowed = { always = no }).
+        """
+        self._log_section(
+            "Checking decisions with remove_effect but no removal mechanism..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+
+        remove_pat = re.compile(r"\bremove_decision\s*=\s*(\w+)")
+        remove_targeted_block_pat = re.compile(
+            r"\bremove_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
+        )
+        decision_name_pat = re.compile(r"\bdecision\s*=\s*(\w+)")
+        externally_removed: set = set()
+
+        for filename in glob.iglob(
+            os.path.join(self.mod_path, "**", "*.txt"), recursive=True
+        ):
+            if _should_skip(filename):
+                continue
+            text_file = FileOpener.open_text_file(
+                filename, lowercase=False, strip_comments_flag=True
+            )
+            if "remove_decision" not in text_file:
+                continue
+            externally_removed.update(remove_pat.findall(text_file))
+            for block in remove_targeted_block_pat.findall(text_file):
+                externally_removed.update(decision_name_pat.findall(block))
+
+        results = []
+
+        for d in factories:
+            if not d.remove_effect:
+                continue
+            if d.mission_subtype:
+                continue
+            if d.allowed and "always = no" in d.allowed:
+                continue
+            if d.has_days_remove or d.has_remove_trigger:
+                continue
+            if d.token in externally_removed:
+                continue
+            results.append(f"{d.token:<55}{d.source_basename}")
+
+        self._report(
+            results,
+            "✓ No decisions with orphaned remove_effect",
+            "Decisions with remove_effect but no days_remove or remove_trigger (dead code — add a timer or removal trigger):",
+            severity=Severity.WARNING,
+        )
+
+    def validate_orphaned_target_modifiers(self):
+        """Flag decisions with targets_dynamic or target_non_existing but no targets.
+
+        targets_dynamic = yes makes the game check dynamic country variants
+        (civil war split-offs). target_non_existing = yes allows targeting
+        countries that don't exist. Both only work with an explicit
+        targets = { } list and are meaningless without one.
+        """
+        self._log_section(
+            "Checking decisions with targets_dynamic/target_non_existing but no targets..."
+        )
+
+        factories = parse_all_decision_factories(self.mod_path)
+        results = []
+
+        for d in factories:
+            issues = []
+            if d.targets_dynamic and not d.targets:
+                issues.append("targets_dynamic")
+            if d.target_non_existing and not d.targets:
+                issues.append("target_non_existing")
+            if issues:
+                results.append(
+                    f"{d.token:<55}{d.source_basename} - {', '.join(issues)} without targets = {{ }}"
+                )
+
+        self._report(
+            results,
+            "✓ No decisions with orphaned target modifiers",
+            "Decisions with targets_dynamic/target_non_existing but no targets (meaningless — add targets or remove):",
         )
 
     def run_validations(self):
@@ -1456,6 +1681,14 @@ class Validator(BaseValidator):
         self.validate_visible_equals_available()
         self.validate_bare_trigger_names()
         self.validate_missing_localisation()
+        self.validate_visible_in_missions()
+        self.validate_war_with_targeted()
+        self.validate_cancel_if_not_visible()
+        self.validate_custom_cost_ai_hint()
+        self.validate_state_target_with_targets()
+        self.validate_mission_only_attributes()
+        self.validate_orphaned_remove_effect()
+        self.validate_orphaned_target_modifiers()
 
 
 def _add_extra_args(parser):
