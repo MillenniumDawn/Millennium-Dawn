@@ -85,9 +85,9 @@ focus = {
 }
 ```
 
-## Example: Bankruptcy Guard in `available`
+## Example: Bankruptcy Guard in `ai_will_do`
 
-High-cost focuses (cost >= 8, or cost >= 5 for military/economy/research) should block during financial collapse:
+High-cost focuses (cost >= 8, or cost >= 5 for military/economy/research) must prevent the AI from queueing them during financial collapse. This is done in `ai_will_do` — not `available` — so the player is never blocked:
 
 ```
 focus = {
@@ -100,10 +100,9 @@ focus = {
 
 	cost = 10
 
-	search_filters = { FOCUS_FILTER_ISRPOLIT FOCUS_FILTER_POLITICAL }
+	search_filters = { FOCUS_FILTER_ISRPOLIT FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
 
 	available = {
-		NOT = { has_active_mission = bankruptcy_incoming_collapse }
 		OR = {
 			emerging_anarchist_communism_are_in_power = yes
 			emerging_communist_state_are_in_power = yes
@@ -119,6 +118,10 @@ focus = {
 
 	ai_will_do = {
 		base = 3
+		modifier = {
+			factor = 0
+			has_active_mission = bankruptcy_incoming_collapse
+		}
 	}
 }
 ```
@@ -145,7 +148,9 @@ focus = {
 
 ## Example: Cross-Country Event Tooltips
 
-When a focus fires an event to another country, show both outcomes:
+When a focus fires an event to another country, always show the accept outcome. Include the reject outcome only when rejection triggers real effects (opinion penalty, retaliation, tariff, follow-up chain). Omit reject when it just means "nothing happens" — the accept tooltip already implies the alternative.
+
+Both branches have real outcomes (include both):
 
 ```
 focus = {
@@ -166,6 +171,28 @@ focus = {
 		custom_effect_tooltip = TT_IF_THEY_ACCEPT
 		effect_tooltip = {
 			custom_effect_tooltip = oper_city_wall_tt
+		}
+	}
+}
+```
+
+Accept-only (reject is a no-op — omit the reject block):
+
+```
+focus = {
+	id = TAG_propose_trade_deal
+	# ...
+	completion_reward = {
+		log = "[GetDateText]: [This.GetName]: focus TAG_propose_trade_deal executed"
+		OTHER = {
+			country_event = {
+				id = namespace.N
+				days = 1
+			}
+		}
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			custom_effect_tooltip = TAG_trade_deal_effects_tt
 		}
 	}
 }

@@ -195,6 +195,19 @@ Carrier variants (CV prefix):
 - Multirole fighters: MR_Fighter1–7 (carrier: CV_MR_Fighter1–7)
 - Strike fighters: Strike_fighter1–7
 
+**Generation mapping for aircraft airframes** (applies to all archetype + generation combinations like `small_plane_strike_airframe_N`):
+
+| Generation Suffix | Tech Required | Start Year | Example Variants                                   |
+| ----------------- | ------------- | ---------- | -------------------------------------------------- |
+| `_0`              | `gen_3_*`     | 1960       | Early jets (F-4, MiG-21, J 35 Draken)              |
+| `_1`              | `gen_3_*`     | 1960       | 1960s variants (A-4, F-104, JA 37 Viggen)          |
+| `_2`              | `gen_4_*`     | 1980       | 1980s variants (F-16A, F/A-18A, JAS 39 Gripen A/B) |
+| `_3`              | `gen_5_*`     | 2015       | 2010s variants (F-16C, JAS 39E Gripen)             |
+| `_4`              | `gen_6_*`     | 2025       | Future variants                                    |
+| `_5`              | `gen_7_*`     | 2035       | Endgame variants                                   |
+
+**Important:** The generation suffix (`_0`, `_1`, `_2`, etc.) must match a technology that unlocks that equipment type. For example, `small_plane_strike_airframe_2` requires `gen_4_light` to be researched. If you create a variant with `type = small_plane_strike_airframe_3` but the country doesn't have `gen_5_light`, the variant exists but cannot be produced or added to stockpile.
+
 ### Aircraft Variant (BBA)
 
 ```
@@ -223,14 +236,16 @@ create_equipment_variant = { #Large Transport
 
 ## Stockpile & Deployment
 
-### Adding to Stockpile (reserve equipment)
+### Adding to Stockpile
+
+See [Stockpile Equipment Types](#stockpile-equipment-types-nsb-vs-non-nsb) below for complete syntax. Quick example:
 
 ```
 add_equipment_to_stockpile = {
     type = medium_tank_chassis_1
     variant_name = "T-64B"
     amount = 500
-    producer = UKR              # who manufactured it
+    producer = UKR
 }
 ```
 
@@ -357,3 +372,106 @@ A country with MBT bonuses does NOT automatically get APC or IFV bonuses — eac
 8. **Helicopter chassis confusion**: Attack and transport helicopters use `heavy_tank_chassis` and `heavy_tank_amphibious_chassis` respectively — they are land equipment despite being aircraft. Don't confuse these with actual heavy tank or amphibious tank variants.
 
 9. **Transport airframe type**: Both `medium_plane_air_transport_airframe` and `large_plane_air_transport_airframe` use HOI4 type `suicide` internally (a quirk of the engine). This is normal — don't change it.
+
+10. **NSB vs Non-NSB Stockpile Types**: NSB and non-NSB OOB files use completely different equipment type systems. See "Stockpile Equipment Types" section below.
+
+11. **Aircraft variant name mismatches in events**: Events that create aircraft variants AND add them to stockpile must use matching names. A common bug is creating `"Variant A"` but adding `"Variant B"` to stockpile — the stockpile addition silently fails because the variant doesn't exist. Always verify the `create_equipment_variant` name matches the `add_equipment_to_stockpile` variant_name.
+
+12. **Aircraft parent_version must chain correctly**: The first variant of any equipment type must have `parent_version = 0`. Setting `parent_version = 1` when no version 0 exists can prevent the variant from spawning. Each subsequent variant increments from an existing parent (e.g., if version 0 exists, version 1 can reference it).
+
+13. **BBA OOB stockpile must be uncommented**: Air wings in BBA OOB files reference variants by name, but if the `add_equipment_to_stockpile` block is commented out or missing, the air wings will have no equipment to deploy. Always verify stockpile entries exist for all variants referenced in air_wings.
+
+14. **Higher-generation aircraft variants require technology unlock**: Using `small_plane_strike_airframe_3` (gen 3, 2015+) requires `gen_5_light` technology. If an event creates a gen 3 variant but doesn't grant the tech, the equipment type isn't unlocked and stockpile additions fail. Add `set_technology = { gen_X_Y = 1 }` when introducing advanced variants via event/focus.
+
+15. **BBA/non-BBA event consistency**: Events that add aircraft should have both BBA and non-BBA branches. Use `if = { limit = { has_dlc = "By Blood Alone" } }` for BBA variants with `variant_name`, and `else` for legacy types like `MR_Fighter3`. Don't only add the legacy type — BBA players will get nothing.
+
+---
+
+## Stockpile Equipment Types (NSB vs Non-NSB)
+
+> **Quick Reference**: For a condensed version of this section, see `.claude/docs/oob-equipment-reference.md`.
+
+The `add_equipment_to_stockpile` entries in OOB files must use different type systems depending on which OOB file you're editing:
+
+### NSB Files (`*_nsb.txt`)
+
+NSB OOB files use **chassis types** with `variant_name` to reference specific equipment variants:
+
+```
+add_equipment_to_stockpile = {
+    type = medium_tank_chassis_1           # chassis type + generation
+    variant_name = "T-72B"                  # must match variant's "name" field
+    amount = 100
+    producer = SOV                          # who built it
+}
+```
+
+The `variant_name` must exactly match the `name` in the `create_equipment_variant` block defined in `history/countries/TAG - Name.txt`.
+
+### Non-NSB Files (`*_nonnsb.txt`)
+
+Non-NSB OOB files use **legacy equipment IDs** without variant names:
+
+```
+add_equipment_to_stockpile = {
+    type = MBT_2           # legacy equipment ID
+    amount = 100
+    producer = GER
+}
+```
+
+**Do NOT use `variant_name`** in non-NSB stockpile entries — it has no effect.
+
+### Equipment Type Mapping
+
+| Vehicle Role         | NSB Chassis Type                   | Non-NSB Legacy ID                                   |
+| -------------------- | ---------------------------------- | --------------------------------------------------- |
+| MBT                  | `medium_tank_chassis_N`            | `MBT_1` – `MBT_8`                                   |
+| APC                  | `medium_tank_amphibious_chassis_N` | `APC_1` – `APC_8`                                   |
+| IFV                  | `medium_tank_flame_chassis_N`      | `IFV_1` – `IFV_8`                                   |
+| Recon/Tank Destroyer | `medium_tank_destroyer_chassis_N`  | `Rec_tank_0` – `Rec_tank_5`                         |
+| SP Artillery         | `medium_tank_artillery_chassis_N`  | `SP_arty_0` – `SP_arty_4`                           |
+| SP Rocket Artillery  | `medium_tank_rocket_chassis_N`     | `SP_R_arty_0` – `SP_R_arty_4`                       |
+| SP Anti-Air          | `medium_tank_aa_chassis_N`         | `SP_Anti_Air_0` – `SP_Anti_Air_4`                   |
+| Towed Artillery      | `artillery_N`                      | `artillery_0` – `artillery_4`                       |
+| Attack Helicopter    | `heavy_tank_chassis_N`             | `attack_helicopter_1` – `attack_helicopter_5`       |
+| Transport Helicopter | `heavy_tank_amphibious_chassis_N`  | `transport_helicopter_1` – `transport_helicopter_5` |
+
+**Generation mapping**: The `_N` suffix maps the same way in both systems:
+
+- `_0` = Gen 1 (1965) → `MBT_1`, `APC_1`, `IFV_1`, etc.
+- `_1` = Gen 2 (1975) → `MBT_2`, `APC_2`, `IFV_2`, etc.
+
+### Common Type/Variant Mismatches
+
+When `add_equipment_to_stockpile` specifies a `variant_name`, the `type` must match what was used in `create_equipment_variant`. Common errors:
+
+| Wrong                                                                 | Correct                                                                    | Issue                                                                    |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `type = medium_tank_flame_chassis_0`, `variant_name = "Grizzly AVGP"` | `type = medium_tank_amphibious_chassis_1`, `variant_name = "AVGP Grizzly"` | Grizzly is an APC (amphibious_chassis), not IFV (flame_chassis)          |
+| `type = APC_2` (in NSB file)                                          | `type = medium_tank_amphibious_chassis_1`                                  | Legacy ID in NSB file                                                    |
+| `type = medium_tank_amphibious_chassis_1` (in non-NSB file)           | `type = APC_2`                                                             | Chassis type in non-NSB file                                             |
+| `type = medium_tank_chassis_0`, `variant_name = "Leopard 2A4"`        | `type = medium_tank_chassis_2`, `variant_name = "Leopard 2A4"`             | Wrong generation — Leopard 2 is 1980s (chassis_2), not 1960s (chassis_0) |
+
+### Verifying Variant Consistency
+
+To check if a stockpile entry matches its variant definition:
+
+1. Find the `variant_name` in the OOB file
+2. Search for it in `history/countries/TAG - Name.txt`: `grep "variant_name" history/countries/TAG\ -\ Name.txt`
+3. Verify the `type` field matches between the `create_equipment_variant` block and the OOB stockpile entry
+4. For inherited equipment (e.g., Soviet gear), check the `producer` country — the variant must be defined there, not in the inheriting country
+
+**Example diagnostic workflow:**
+
+```bash
+# OOB says: type = medium_tank_chassis_0, variant_name = "T-72B"
+# But equipment doesn't appear in-game
+
+# Check if variant exists and what type it uses
+grep -A2 'name = "T-72B"' history/countries/SOV\ -\ Russia.txt
+# Output should show: type = medium_tank_chassis_1 (or similar)
+
+# If mismatch found, update OOB to match
+type = medium_tank_chassis_1  # corrected
+```

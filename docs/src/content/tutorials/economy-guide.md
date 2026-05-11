@@ -69,8 +69,10 @@ Millennium Dawn includes a detailed modern economy system covering revenue, gove
   - [Civilian Microchip Consumption](#civilian-microchip-consumption)
   - [Military Equipment Requirements](#military-equipment-requirements)
   - [Building Employment Values](#building-employment-values)
+- [MD-Specific Buildings](#md-specific-buildings)
 - [Immigration](#immigration)
 - [International Investments](#international-investments)
+  - [International Market](#international-market)
 - [Internal Investment](#internal-investment)
 - [Agrarian Economy](#agrarian-economy)
   - [Crop Allocation](#crop-allocation)
@@ -991,6 +993,67 @@ If buildings cannot be fully staffed, their output is reduced proportionally to 
 
 ---
 
+## MD-Specific Buildings
+
+Millennium Dawn adds several building types beyond the base game. These buildings generate tax revenue, produce resources, and serve key roles in the economy.
+
+### Offices
+
+Offices are a purely economic building that generates corporate tax income. They have a high tax factor of 5.0 per level — the highest of any building — making them the most efficient source of corporate tax revenue. Build offices early to boost your income.
+
+- **Building Slots**: Shares building slots with other production buildings
+- **Max Level**: 50 per state
+
+### Internet Stations
+
+Internet stations represent a country's internet and telecommunications capacity. Each level provides a **+5% state productivity growth modifier**, making it one of the best long-term investments for increasing building output.
+
+- **Max Level**: 6 per state
+- **Upkeep**: Costs a small weekly infrastructure expense per level
+
+### Agriculture Districts
+
+Agriculture districts represent a country's farming sector. They produce fuel (representing ethanol/biofuel) and local supplies. They also generate corporate tax revenue with a factor of 2.6 per level.
+
+- **Max Level**: 10 per state
+- **Produces**: Fuel and local supplies per level
+- **Shares building slots** with other production buildings
+
+### Microchip Plants
+
+Microchip plants produce **microchips**, an advanced resource used in high-tech equipment. Each level produces 20 microchips but consumes tungsten and chromium. They have a tax factor of 4.0 per level.
+
+- **Max Level**: 5 per state
+- **Resource Cost**: Tungsten and chromium per level
+- **Shares building slots** with other production buildings
+
+### Composite Plants
+
+Composite plants produce **composites**, an advanced material used in modern military and civilian equipment. Each level produces 16 composites but consumes rubber, chromium, and oil. They have a tax factor of 3.5 per level.
+
+- **Max Level**: 5 per state
+- **Resource Cost**: Rubber, chromium, and oil per level
+- **Shares building slots** with other production buildings
+
+### Energy Buildings
+
+Three building types generate electricity (see the [Electricity](#electricity) section):
+
+| Building                        | Fuel Source            | Output (base) | Max Level |
+| ------------------------------- | ---------------------- | ------------- | --------- |
+| Fossil Fuel Powerplant          | Fuel                   | 2 GW          | 20        |
+| Nuclear Reactor                 | Reactor-Grade Material | 5 GW          | 20        |
+| Renewable Energy Infrastructure | None                   | 0.5 GW        | 20        |
+
+### Infrastructure Keystones
+
+Two mutually exclusive keystone buildings provide state-wide bonuses. Only one can be built per state.
+
+- **Energy Infrastructure**: Boosts renewable energy generation, nuclear reactor construction speed, and factory repair speed. Also adds building slots.
+- **Industrial Infrastructure**: Increases resource gain efficiency per infrastructure level in the state.
+
+---
+
 ## Immigration
 
 Immigration is one way to grow your population. Migration happens automatically, but you can adjust the acceptance level by changing the stage of **Migration Laws** (found at the far right of Policies in the Politics window).
@@ -1001,28 +1064,21 @@ Immigration control costs money. Stricter restrictions cost more to enforce. The
 
 ## International Investments
 
-You can construct buildings in foreign countries through International Investments. This requires spending treasury funds and takes time, but provides:
+International investments let you fund construction projects in foreign states. Completed buildings permanently join the target state, and you earn passive income — approximately **6% annually** on your total invested value. You also gain influence over the target country with each accepted project. Up to 15 projects can run simultaneously.
 
-- **Investment returns**: approximately 6% annually, paid as weekly income, subject to modification by national spirits and currency strength
-- **Influence**: gaining leverage over the receiving country
+For a full breakdown of buildable types, costs, duration mechanics, ROI calculation, and influence gain, see the [Investments Guide](/player-tutorials/investments-guide).
 
-Some countries will refuse international investments. AI-controlled countries may also offer to invest in yours.
+### International Market
 
-To initiate an international investment, click on a foreign state, then click the arrow button to open the interface and proceed. Investment returns are denominated in the reserve currency, so a weak domestic currency increases the local value of returns.
+The International Market is a vanilla HOI4 mechanic that Millennium Dawn includes with modifications. It allows you to buy and sell **military equipment** (weapons, vehicles, aircraft, etc.) using civilian factories. In MD, it is limited to **1 civilian factory** allocated to the market. When you purchase equipment, the income is sent to the selling nation, which receives a proportional amount based on their corporate tax rate. Raw resources like oil, steel, and aluminium cannot be traded on the International Market — those are handled through the standard civilian factory trade system.
 
 ---
 
 ## Internal Investment
 
-Internal investments work like international investments but target your own states. Click on a domestic state, then click the arrow button to open the interface.
+Internal investments apply temporary modifiers to your own states — things like productivity growth bonuses, construction speed buffs, extra building slots, and resource output boosts. Each option costs **75 Political Power** plus a treasury payment scaled to your GDP and lasts 120–180 days. The number of concurrent investments you can run scales with your power rank (2 slots for minor powers, up to 6 for superpowers).
 
-Internal investments can:
-
-- Increase a state's productivity growth rate
-- Add building slots
-- Apply temporary modifiers for a limited period
-
-Each investment costs political power and treasury funds. Investment costs are increased by inflation.
+For the full list of options, costs, effects, and tips, see the [Investments Guide](/player-tutorials/investments-guide).
 
 ---
 
@@ -1133,6 +1189,9 @@ If interest exceeds 25% and the country is not at war, the AI will default on it
 
 ## Related Documentation
 
+- [Investments Guide](/player-tutorials/investments-guide) - Full detail on international and internal investment systems
 - [International Systems Guide](/player-tutorials/international-systems) - For PMCs, sanctions, and other international economic systems
 - [European Union Tutorial](/player-tutorials/eu-tutorial) - For EU-specific economic mechanics (Eurozone, ECB, single market)
 - [Game Rules](/player-tutorials/game-rules)
+- [Influence Guide](/player-tutorials/influence-guide)
+- [Mechanics Guide](/player-tutorials/mechanics-guide)

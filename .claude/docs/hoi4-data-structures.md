@@ -34,7 +34,7 @@ global.global_my_var   # read globally
 
 ### Array elements
 
-Accessed via `^` subscript (zero-indexed):
+Accessed via `^` subscript (zero-indexed). Arrays are capped at **1000 elements** — `add_to_array` beyond index 999 silently does nothing.
 
 ```
 my_array^0       # first element
@@ -125,6 +125,17 @@ for_loop_effect = {
 }
 ```
 
+### `while_loop_effect` — conditional loop
+
+```
+while_loop_effect = {
+    limit = { check_variable = { counter < target } }
+    # body — must advance the condition or loop exits at 1000
+}
+```
+
+The engine hard-caps at **1000 iterations** — this is not configurable. `max_iterations` is **not** a valid key and is silently ignored. Design loops so the realistic worst case stays well below 1000.
+
 ---
 
 ## Array / Variable Triggers
@@ -175,9 +186,87 @@ Compare values: `less_than`, `less_than_or_equals`, `greater_than`, `greater_tha
 
 ## Dynamic Variables (Read-Only)
 
-Computed by the game engine. Full list in `resources/documentation/dynamic_variables_documentation.md`.
+Computed by the game engine. Full list in `resources/documentation/dynamic_variables_documentation.md` or on the [Paradox Wiki — Game variables](https://hoi4.paradoxwikis.com/Data_structures#Game_variables).
 
 Common: `global.countries`, `global.majors`, `global.states`, `global.year`, `global.threat`, `num_of_civilian_factories`, `num_of_military_factories`, `stability`, `war_support`, `political_power`, `manpower`, `faction_members`, `allies`, `subjects`.
+
+---
+
+## Built-in Game Arrays
+
+Engine-provided scope arrays. Usable anywhere an array name is accepted: `target_array = X` on decisions, `array = X` inside `for_each_scope_loop` / `every_country` / `any_of_scopes`, and inside collection operators. Full list on the [Paradox Wiki — Game arrays](https://hoi4.paradoxwikis.com/Data_structures#Game_arrays).
+
+### Global-scoped
+
+| Array                         | Contents                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------- |
+| `global.countries`            | Every country in the game, including non-existing dynamic tags                        |
+| `global.majors`               | Every country currently marked major                                                  |
+| `global.states`               | Every state in the game                                                               |
+| `global.ideology_groups`      | Every ideology group                                                                  |
+| `global.operations`           | Every operation                                                                       |
+| `global.technology`           | Every technology                                                                      |
+| `global.province_controllers` | Province ID → controller (indexed by province ID: `global.province_controllers^1234`) |
+
+### Country-scoped
+
+| Array                                        | Contents                                                      |
+| -------------------------------------------- | ------------------------------------------------------------- |
+| `allies`                                     | Fellow faction members + subjects + overlord                  |
+| `faction_members`                            | All members of the current country's faction                  |
+| `subjects`                                   | Current country's subjects                                    |
+| `occupied_countries`                         | Countries currently occupied by this one                      |
+| `enemies`                                    | Countries currently at war with the current country           |
+| `potential_and_current_enemies`              | Current enemies + allies-of-enemies + countries with wargoals |
+| `enemies_of_allies`                          | Enemies of any of the current country's allies                |
+| `neighbors`                                  | Countries sharing a border via **controlled** provinces       |
+| `neighbors_owned`                            | Countries sharing a border via **owned** states               |
+| `owned_states`                               | States owned (but not necessarily controlled)                 |
+| `controlled_states`                          | States controlled (but not necessarily owned)                 |
+| `owned_controlled_states`                    | States both owned and controlled                              |
+| `core_states`                                | States considered national territory                          |
+| `army_leaders`, `navy_leaders`, `operatives` | Recruited characters/operatives                               |
+| `researched_techs`                           | Technologies already researched                               |
+| `exiles`                                     | Exiled governments this country is hosting                    |
+
+### State-scoped
+
+| Array            | Contents                                              |
+| ---------------- | ----------------------------------------------------- |
+| `core_countries` | Countries that consider this state national territory |
+
+### Usage
+
+**For `target_array` on decisions** — these are the canonical way to scope a targeted decision to a narrow, engine-maintained set of countries. Prefer these over `target_array = global.countries` + a filter trigger, which iterates every country in the game daily.
+
+```
+# Good — iterates only current subjects, target_trigger filters within them
+target_array = subjects
+target_trigger = {
+    FROM = { influence_higher_5 = yes }
+}
+
+# Good — iterates only land-bordering neighbors
+target_array = neighbors
+target_trigger = {
+    FROM = { check_variable = { FROM.gdp_total > ROOT.gdp_total } }
+}
+
+# Worse — iterates every country in the game, relies on trigger to filter
+target_array = global.countries
+target_trigger = {
+    FROM = { is_neighbor_of = ROOT }
+}
+```
+
+**For `any_of_scopes` / `every_country` / `for_each_scope_loop`** — pass the array name via `array = X`.
+
+```
+any_of_scopes = {
+    array = faction_members
+    NOT = { has_war = yes }
+}
+```
 
 ---
 

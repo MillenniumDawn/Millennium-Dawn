@@ -108,6 +108,12 @@ def _extract_unit_refs_from_blocks(content: str) -> Set[str]:
             i += 1
             continue
 
+        # Depth at the START of this line — unit references live at depth 1
+        # (direct children of the regiments/support block). Deeper lines
+        # (e.g. position `x = 0` / `y = 0` inside `unit_name = { ... }`) must
+        # be skipped.
+        depth_at_line_start = brace_depth
+
         for ch in line:
             if ch == "{":
                 brace_depth += 1
@@ -116,6 +122,10 @@ def _extract_unit_refs_from_blocks(content: str) -> Set[str]:
 
         if brace_depth <= 0:
             in_block = False
+            i += 1
+            continue
+
+        if depth_at_line_start != 1:
             i += 1
             continue
 
@@ -183,11 +193,7 @@ class Validator(BaseValidator):
 
     def _build_canonical_units(self):
         """Build the canonical unit name set from unit definition files."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Building canonical unit name set...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Building canonical unit name set...")
 
         self.canonical = parse_canonical_units(self.mod_path)
         # Build case-insensitive lookup: lowercase -> original name
@@ -206,11 +212,7 @@ class Validator(BaseValidator):
 
     def validate_unit_references(self):
         """Validate that all unit references match canonical definitions."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking unit references in OOB and AI template files...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking unit references in OOB and AI template files...")
 
         files = self._get_files_to_check()
         self.log(f"  Found {len(files)} files to check")

@@ -7,6 +7,12 @@
 - File header must be `l_english:` on the first line with no leading whitespace.
 - Use **1 space** of indentation for each key (not tabs).
 
+## File Naming
+
+- **All country-specific localisation** (events, focuses, decisions, ideas, missions for a single country) goes in the **single unified file**: `MD_focus_TAG_l_english.yml`. Do **not** create separate files per subsystem (e.g., `MD_TAG_rebellion_l_english.yml`, `MD_TAG_events_l_english.yml`). One country, one loc file.
+- Only create a **separate** loc file for a standalone cross-country mechanic or system that is not owned by any single country (e.g., `MD_NATO_events_l_english.yml`, `MD_tooltips_l_english.yml`).
+- Check existing files in `localisation/english/` for the naming pattern before creating new ones.
+
 ## Key Formatting
 
 - Keys use **no trailing version number**: write `key: "value"`, not `key:0 "value"`.
@@ -88,50 +94,8 @@ HOI4 localisation files are checked by `check-yaml` in the pre-commit hook. The 
 | Duplicate keys in the same `.yml` file                                  | Remove the earlier duplicate; keep only one definition per key              |
 | Wrong color-code prefix, e.g. `§RY` (stray extra character)             | `§R` then text immediately — no stray character between code and content    |
 | Copy-pasted country-specific flavour text left unreplaced               | Update every reference to the original country's name, demonym, and culture |
+| Lowercase scope keywords: `[From.GetName]`, `[Root.GetName]`            | Always uppercase: `[FROM.GetName]`, `[ROOT.GetName]`, `[THIS.GetName]`      |
 
-## Recurring Typo Watchlist
+## Recurring Typos
 
-These typos appear frequently across country files — check for them when reviewing:
-
-| Typo                                                        | Correct                   |
-| ----------------------------------------------------------- | ------------------------- |
-| `Estabilish` / `estabilish`                                 | `Establish` / `establish` |
-| `innvoations`                                               | `innovations`             |
-| `irreperable` / `irrepairable`                              | `irreparable`             |
-| `unenmployed`                                               | `unemployed`              |
-| `existance`                                                 | `existence`               |
-| `effectivness`                                              | `effectiveness`           |
-| `disproportinate`                                           | `disproportionate`        |
-| `tarditions`                                                | `traditions`              |
-| `contrats` (used as contrast)                               | `by contrast`             |
-| `Airforce`                                                  | `Air Force`               |
-| `miltiary`                                                  | `military`                |
-| `coaltion`                                                  | `coalition`               |
-| `tumultous`                                                 | `tumultuous`              |
-| `recgonized`                                                | `recognized`              |
-| `Propgramme`                                                | `Programme`               |
-| `poeple`                                                    | `people`                  |
-| `it's` (possessive)                                         | `its`                     |
-| `Unloyal`                                                   | `Disloyal`                |
-| `Isreal`                                                    | `Israel`                  |
-| `unrepairable`                                              | `irreparable`             |
-| `bocme`                                                     | `become`                  |
-| `hovewer`                                                   | `however`                 |
-| `acomplish`                                                 | `accomplish`              |
-| `Endevours`                                                 | `Endeavours`              |
-| `Quiantified`                                               | `Quantified`              |
-| `convering`                                                 | `converting`              |
-| `encomapassing`                                             | `encompassing`            |
-| `fundamnetals`                                              | `fundamentals`            |
-| `civillian`                                                 | `civilian`                |
-| `civillisation` / `civilisation` (American English context) | `civilization`            |
-| `suprised`                                                  | `surprised`               |
-| `alledged`                                                  | `alleged`                 |
-| `succesful` / `succesfull`                                  | `successful`              |
-| `huminliating`                                              | `humiliating`             |
-| `reffered`                                                  | `referred`                |
-| `stronly`                                                   | `strongly`                |
-| `togeather`                                                 | `together`                |
-| `disasterous`                                               | `disastrous`              |
-| `religous`                                                  | `religious`               |
-| `suzerainity`                                               | `suzerainty`              |
+See [`.claude/docs/typo-watchlist.md`](.claude/docs/typo-watchlist.md) for the full list. Check it when reviewing localisation files.

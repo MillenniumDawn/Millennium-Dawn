@@ -13,13 +13,14 @@ import glob
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 from validator_common import (
     BaseValidator,
     Colors,
     DataCleaner,
     FileOpener,
+    Severity,
     run_validator_main,
     should_skip_file,
 )
@@ -75,6 +76,43 @@ def process_file_for_set_cosmetic_tag(args: Tuple[str, bool]) -> Dict[str, int]:
     return counts
 
 
+def process_file_for_has_cosmetic_tag_lookup(args: Tuple[str, frozenset]) -> Set[str]:
+    """Return subset of tags_to_find referenced via has_cosmetic_tag = TAG in this file."""
+    filename, tags_to_find = args
+    if _should_skip(filename):
+        return set()
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+    except Exception:
+        return set()
+    cleaned = re.sub(r"#[^\n]*", "", text)
+    if "has_cosmetic_tag =" not in cleaned:
+        return set()
+    all_matches = set(re.findall(r"has_cosmetic_tag = (\S+)", cleaned))
+    return tags_to_find & all_matches
+
+
+def process_file_for_cosmetic_tag_in_loc(args: Tuple[str, frozenset]) -> Dict[str, int]:
+    """Return {tag: count} for cosmetic tag references in a yml localisation file."""
+    filename, tags_to_find = args
+    if _should_skip(filename):
+        return {}
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
+    except Exception:
+        return {}
+    cleaned = re.sub(r"#[^\n]*", "", text)
+    counts: Dict[str, int] = {}
+    suffixes = [":"] + [s + ":" for s in MD_IDEOLOGY_SUFFIXES]
+    for tag in tags_to_find:
+        if tag not in cleaned:
+            continue
+        total = sum(cleaned.count(f"{tag}{sfx}") for sfx in suffixes)
+        if total > 0:
+            counts[tag] = total
+    return counts
+
+
 def process_file_for_set_cosmetic_tag_defined(
     args: Tuple[str, bool]
 ) -> Tuple[Dict[str, int], Dict[str, str]]:
@@ -97,11 +135,9 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt", ".yml"]
 
     def validate_missing_cosmetic_tags(self, false_positives: list):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking missing cosmetic tags (has_cosmetic_tag but never set)...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking missing cosmetic tags (has_cosmetic_tag but never set)..."
         )
-        self.log(f"{'='*80}")
 
         files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
 
@@ -135,32 +171,18 @@ class Validator(BaseValidator):
         )
         missing = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
-        if len(missing) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Missing cosmetic tags - referenced via has_cosmetic_tag but never set:{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for tag in missing:
-                self.log(
-                    f"  {Colors.YELLOW if self.use_colors else ''}{tag}{Colors.ENDC if self.use_colors else ''} - {paths.get(tag, 'unknown')}",
-                    "error",
-                )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(missing)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(missing)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No missing cosmetic tags{Colors.ENDC if self.use_colors else ''}"
+        if missing:
+            report_items = [(tag, paths.get(tag, "unknown"), 0) for tag in missing]
+            self._report(
+                report_items,
+                "✓ No missing cosmetic tags",
+                "Missing cosmetic tags - referenced via has_cosmetic_tag but never set:",
+                Severity.ERROR,
+                category="missing-cosmetic-tag",
             )
 
     def validate_unused_cosmetic_tags(self, false_positives: list):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking unused cosmetic tags (set but never referenced)...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking unused cosmetic tags (set but never referenced)...")
 
         files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
 
@@ -205,63 +227,56 @@ class Validator(BaseValidator):
                             cosmetic_tags[tag] += 1
                             break
 
-        for filename in files:
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
-            )
-            not_found = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
-            if "has_cosmetic_tag =" in text_file:
-                all_matches = re.findall(r"has_cosmetic_tag = \S*", text_file)
-                for tag in not_found:
-                    cosmetic_tags[tag] += all_matches.count(f"has_cosmetic_tag = {tag}")
+        remaining_tags = frozenset(t for t in cosmetic_tags if cosmetic_tags[t] == 0)
 
-        yml_files = list(glob.iglob(self.mod_path + "**/*.yml", recursive=True))
-        for filename in yml_files:
-            if _should_skip(filename):
-                continue
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
+        if remaining_tags:
+            # Pool scan over txt files for has_cosmetic_tag = TAG references
+            args_list = [(f, remaining_tags) for f in files]
+            txt_results = self._pool_map(
+                process_file_for_has_cosmetic_tag_lookup, args_list, chunksize=30
             )
-            not_found = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
-            for tag in not_found:
-                if tag in text_file:
-                    all_matches = re.findall(tag + r".*", text_file)
-                    for match in all_matches:
-                        suffixes = [":"] + [s + ":" for s in MD_IDEOLOGY_SUFFIXES]
-                        for p in suffixes:
-                            cosmetic_tags[tag] += match.count(f"{tag}{p}")
+            for found_set in txt_results:
+                for tag in found_set:
+                    cosmetic_tags[tag] += 1
+
+            # Pool scan over yml files for loc references
+            remaining_tags = frozenset(
+                t for t in cosmetic_tags if cosmetic_tags[t] == 0
+            )
+            if remaining_tags:
+                yml_files = list(
+                    glob.iglob(
+                        os.path.join(self.mod_path, "**", "*.yml"), recursive=True
+                    )
+                )
+                yml_files = [f for f in yml_files if not _should_skip(f)]
+                args_list = [(f, remaining_tags) for f in yml_files]
+                yml_results = self._pool_map(
+                    process_file_for_cosmetic_tag_in_loc, args_list, chunksize=30
+                )
+                for counts in yml_results:
+                    for tag, count in counts.items():
+                        cosmetic_tags[tag] += count
 
         cosmetic_tags = DataCleaner.clear_false_positives(
             cosmetic_tags, tuple(false_positives)
         )
         unused = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
-        if len(unused) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Unused cosmetic tags - set but not referenced in cosmetic.txt, .tga flags, has_cosmetic_tag, or loc:{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for tag in unused:
-                self.log(
-                    f"  {Colors.YELLOW if self.use_colors else ''}{tag}{Colors.ENDC if self.use_colors else ''} - {paths.get(tag, 'unknown')}",
-                    "error",
-                )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(unused)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(unused)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No unused cosmetic tags{Colors.ENDC if self.use_colors else ''}"
+        if unused:
+            report_items = [(tag, paths.get(tag, "unknown"), 0) for tag in unused]
+            self._report(
+                report_items,
+                "✓ No unused cosmetic tags",
+                "Unused cosmetic tags - set but not referenced:",
+                Severity.ERROR,
+                category="unused-cosmetic-tag",
             )
 
     def validate_unused_cosmetic_tag_colors(self, false_positives: list):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking unused cosmetic tag colors (defined in cosmetic.txt but never set)...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking unused cosmetic tag colors (defined in cosmetic.txt but never set)..."
         )
-        self.log(f"{'='*80}")
 
         cosmetic_file = Path(self.mod_path) / "common" / "countries" / "cosmetic.txt"
         if not cosmetic_file.exists():
@@ -291,35 +306,26 @@ class Validator(BaseValidator):
         )
 
         files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
-        for filename in files:
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
+        remaining_tags = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
+        if remaining_tags:
+            args_list = [(f, False, remaining_tags) for f in files]
+            results = self._pool_map(
+                process_file_for_set_cosmetic_tag, args_list, chunksize=30
             )
-            if "set_cosmetic_tag =" in text_file:
-                not_found = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
-                for tag in not_found:
-                    cosmetic_tags[tag] += text_file.count(f"set_cosmetic_tag = {tag}")
+            for counts in results:
+                for tag, count in counts.items():
+                    cosmetic_tags[tag] += count
 
         unused = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
-        if len(unused) > 0:
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}Unused cosmetic tag colors - defined in cosmetic.txt but never assigned with set_cosmetic_tag:{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            for tag in unused:
-                self.log(
-                    f"  {Colors.YELLOW if self.use_colors else ''}{tag}{Colors.ENDC if self.use_colors else ''}",
-                    "error",
-                )
-            self.log(
-                f"{Colors.RED if self.use_colors else ''}{len(unused)} issues found{Colors.ENDC if self.use_colors else ''}",
-                "error",
-            )
-            self.errors_found += len(unused)
-        else:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No unused cosmetic tag colors{Colors.ENDC if self.use_colors else ''}"
+        if unused:
+            report_items = [(tag, "", 0) for tag in unused]
+            self._report(
+                report_items,
+                "✓ No unused cosmetic tag colors",
+                "Unused cosmetic tag colors - defined in cosmetic.txt but never assigned with set_cosmetic_tag:",
+                Severity.ERROR,
+                category="unused-cosmetic-color",
             )
 
     def run_validations(self):

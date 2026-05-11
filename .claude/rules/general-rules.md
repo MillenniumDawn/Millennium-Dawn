@@ -40,6 +40,24 @@ For the full reference (variables, arrays, loops, collections, formatted loc), r
 
 For more comprehensive HOI4 scripting docs (effects, triggers, modifiers, wiki links), read `.claude/docs/documentation-references.md`.
 
+# Comments
+
+Default to writing **no comments**. Only add one when the WHY is non-obvious:
+
+- A hidden constraint that isn't visible from the surrounding code (e.g., "must run before X or Y fires twice")
+- A subtle invariant the reader would need to know to safely edit this block
+- A deliberate workaround for a specific engine bug or parser quirk
+- Behaviour that would genuinely surprise a competent reader
+
+**Never** add comments that:
+
+- Explain WHAT the code does — well-named effects, triggers, and variables already communicate that
+- Narrate the change ("Added for the X fix", "Handles case from issue #123") — those belong in the commit message, not the script
+- Reference callers or downstream consumers ("used by Y", "called from Z") — these rot as the codebase evolves
+- Restate the effect name in prose (`# add stability` above `add_stability = 0.05`)
+
+When in doubt, delete the comment. If the code is unclear without it, rename or restructure the code first.
+
 # Scripting Patterns
 
 ## NOT block scope
@@ -55,9 +73,114 @@ NOT = { has_idea = foo }
 NOT = { has_idea = bar }
 ```
 
+## Tautological OR in ai_will_do modifiers
+
+An `OR` block inside an `ai_will_do modifier` that covers all possible values of a trigger is always true and does nothing useful:
+
+```
+# Wrong — OR(yes, no) is always true; modifier fires unconditionally
+modifier = {
+    add = 1
+    OR = {
+        is_historical_focus_on = yes
+        is_historical_focus_on = no
+    }
+}
+
+# Correct — if you want an unconditional bonus, remove the OR entirely
+# and fold the value into base = N, or remove the modifier block
+```
+
+Remove the entire modifier block and increase `base` by the `add` amount instead. If a real condition was intended (e.g., add only when historical focus is on), write it without the tautological OR.
+
+## Implicit AND in triggers
+
+Multiple conditions in a trigger block are implicitly AND-ed together. Never wrap conditions in redundant `AND = { }` blocks:
+
+```
+# Wrong — redundant AND wrapper
+trigger = { AND = { A B C } }
+
+# Correct — implicit AND
+trigger = { A B C }
+```
+
+This applies to `trigger`, `limit`, `visible`, `available`, `activation`, `cancel_trigger`, and all other trigger contexts.
+
+## Modifier names
+
+Invalid modifier names compile silently and do nothing — the game logs an "Unknown modifier" error but loads the idea/focus anyway. **Never guess a modifier name.** Always verify it exists first:
+
+```bash
+grep -r "modifier_name_here" common/ideas/*.txt common/national_focus/*.txt | head -3
+```
+
+If no results, the name is wrong. Check the wiki or find a similar modifier in the codebase and use the exact same spelling.
+
 ## threat scale
 
 `threat` is a decimal 0.0–1.0, never a percentage. Comparisons like `threat > 10` or `threat > 40` are always false. Use `threat > 0.10`, `threat > 0.40`, etc.
+
+## check_variable comparison operators
+
+`check_variable` only accepts `=`, `>`, and `<` as inline operators. `>=` and `<=` are **not valid syntax** — the parser silently treats them as something else and the check never matches as intended.
+
+```
+# Wrong — >= and <= are not valid inline
+check_variable = { v >= 0 }
+
+# Correct — use compare = ...
+check_variable = {
+	var = v
+	value = 0
+	compare = greater_than_or_equals
+}
+```
+
+Valid `compare` values: `equals`, `greater_than`, `less_than`, `greater_than_or_equals`, `less_than_or_equals`, `not_equals`.
+
+## is_in_faction vs is_in_faction_with
+
+`is_in_faction` is a **boolean** trigger (`yes`/`no`). To check faction membership with a specific country, use `is_in_faction_with = TAG`. Using `is_in_faction = TAG` silently fails. **Caught by `check_common_mistakes.py`.**
+
+## add_to_faction scope
+
+`add_to_faction` adds a **country** to the **current scope's faction**. It takes a country tag or scope, not a faction name. `add_to_faction = BRICS` is wrong — use `add_to_faction = TAG`.
+
+## Minimize scope expansion
+
+Avoid opening a scope just to check a single boolean or trigger when a flat equivalent exists. Every `TAG = { ... }` is a scope switch the engine must resolve.
+
+```
+# Wrong — unnecessary scope expansion
+NOT = { PAK = { exists = no } }
+PAK = { exists = yes }
+
+# Correct — flat trigger, no scope switch
+country_exists = PAK
+```
+
+Other common patterns:
+
+| Verbose (scope expansion)       | Flat equivalent        |
+| ------------------------------- | ---------------------- |
+| `TAG = { exists = yes }`        | `country_exists = TAG` |
+| `TAG = { is_puppet = yes }`     | `is_puppet_of = TAG`   |
+| `TAG = { has_war_with = ROOT }` | `has_war_with = TAG`   |
+
+Apply this principle everywhere — focuses, events, decisions, scripted triggers. If a flat trigger exists, prefer it.
+
+## Case sensitivity in references
+
+HOI4 on Linux is **case-sensitive** for all identifiers — ideas, events, decisions, focuses, variables, flags, GFX sprites, and scripted effects/triggers. `has_idea = The_Military` will NOT match a definition `the_military`. Always match the exact case of the definition. **Caught by `validate_ideas.py` for ideas.**
+
+## Trade agreement checks in MD
+
+`has_trade_agreement_with` is **not a valid HOI4 trigger** — compiles silently, always evaluates false. MD uses `has_country_flag = trade_agreement@TAG`. **Caught by `check_common_mistakes.py`.**
+
+## Decision allowed vs available
+
+`allowed` in decisions is evaluated **once at game start** and locked. Dynamic conditions (factory counts, opinion, date) must go in `available` or `visible`. **Caught by `check_common_mistakes.py`** for clearly-dynamic triggers.
 
 ## if/else over if/if
 
@@ -73,21 +196,136 @@ if = { limit = { check_variable = { X > 7 } } ... }
 else = { ... }
 ```
 
+## change_influence_percentage
+
+The scripted effect uses temp-variable arguments with these defaults:
+
+| Temp variable      | Required | Default   |
+| ------------------ | -------- | --------- |
+| `percent_change`   | yes      | —         |
+| `tag_index`        | no       | `ROOT.id` |
+| `influence_target` | no       | `THIS.id` |
+
+Three pitfalls to avoid:
+
+1. **Don't write redundant defaults.** `set_temp_variable = { tag_index = ROOT.id }` and `set_temp_variable = { influence_target = THIS.id }` are no-ops — the call already uses those defaults. Leave them out.
+
+2. **Orphan setters are silent bugs.** A `percent_change` / `tag_index` / `influence_target` triple with no following `change_influence_percentage = yes` does nothing — the temp vars get set and discarded. When auditing influence code, grep for `percent_change` setters and confirm each has a matching invocation in the same scope.
+
+3. **Loop-local temp vars need the call inside the loop.** Setting temp vars inside `random_other_country` / `random_country` / `every_country` and then calling `change_influence_percentage = yes` outside the block runs the effect once with stale or undefined values. The invocation must live in the same scope as the temp-var writes.
+
+```
+# Wrong — call runs outside the loop; tag_index/influence_target resolve to outer scope
+random_other_country = {
+    limit = { ... }
+    set_temp_variable = { percent_change = 3 }
+    set_temp_variable = { tag_index = THIS.id }
+    set_temp_variable = { influence_target = PREV.id }
+}
+change_influence_percentage = yes
+
+# Correct — call inside the loop with the loop-local scopes
+random_other_country = {
+    limit = { ... }
+    set_temp_variable = { percent_change = 3 }
+    set_temp_variable = { tag_index = THIS.id }
+    set_temp_variable = { influence_target = PREV.id }
+    change_influence_percentage = yes
+}
+```
+
+Also watch for typos in the temp-var name itself (e.g., `influence_tBRAet` from a botched search-and-replace) — the engine accepts any name, so a typo silently sets a never-read variable and the influence change uses the default `THIS.id` target.
+
+# Array Index Semantics
+
+When a function uses `^index` array subscripts, the **meaning of the index variable** must be obvious and consistent. Common bugs arise when two different index types are stored in similarly-named variables.
+
+| Variable name              | Should hold                  | Must NOT hold                                   |
+| -------------------------- | ---------------------------- | ----------------------------------------------- |
+| `project`, `slot`, `idx`   | Slot / array position (0..N) | Building type, category ID, or other lookup key |
+| `type`, `kind`, `category` | Lookup key / type ID (1..N)  | Slot index                                      |
+
+**Rule:** When a function parameter is an array index, document it in the function comment. Verify every caller passes the right kind of index. See `.claude/docs/refactor-checklist.md` for the full verification steps.
+
+---
+
+## Simplification Patterns
+
+- **Consolidate identical-body `else_if` chains:** When N consecutive `else_if` branches have the same body, collapse into one `OR` limit (or plain `else` if the preceding chain guarantees one condition is true). See `.claude/docs/simplification-patterns.md`.
+
+Replace N parallel `if/else_if` lookup chains with array indexing:
+
+```
+# Before: 14 branches
+if = { limit = { check_variable = { type = 1 } } set_variable = { cost = global.BUILD_COST_CIVILIAN_FACTORY } }
+else_if = { limit = { check_variable = { type = 2 } } set_variable = { cost = global.BUILD_COST_MILITARY_FACTORY } }
+# ... etc ...
+
+# After: one array + one lookup
+set_temp_variable = { idx = type }
+set_variable = { cost = global.build_cost_array^idx }
+```
+
+See `.claude/docs/simplification-patterns.md` for the full set of patterns.
+
+---
+
+## Performance Patterns
+
+### Hoist invariant lookups out of loops
+
+Cache country-scope values (`num_of_factories`, `has_war`, flags, ideas) before iterating states. Each `CONTROLLER = { ... }` scope switch inside a per-state loop is expensive.
+
+### GUI `dirty` counters
+
+Never bind `dirty = global.date`. Use a dedicated counter incremented only on relevant state changes. See `.claude/docs/performance-patterns.md`.
+
+---
+
+## Refactor Breaking-Change Checklist
+
+When renaming prefixes, migrating globals to arrays, or changing function signatures:
+
+1. Grep the **entire repo** for old names (flags, variables, events, decisions, GUI, GFX).
+2. Verify array-index semantics: trace every caller to confirm the index variable holds the expected value.
+3. Check localisation for `[?global.old_name]` references — these fail silently to 0.
+4. Verify event `log =` strings match option `name =` keys after any copy/rename.
+5. Confirm GUI `window_name`, button names, and GFX sprite names are cross-referenced.
+
+See `.claude/docs/refactor-checklist.md` for the full checklist.
+
+---
+
 # Event Patterns
 
 ## Cross-country event tooltips
 
-When a focus `completion_reward` or event option fires an event to another country, add `TT_IF` tooltips immediately after the event fire to show the player both outcomes:
+When a focus `completion_reward` or event option fires an event to another country, add a `TT_IF_THEY_ACCEPT` tooltip immediately after the event fire so the player can see what happens on acceptance:
+
+```
+OTHER = { country_event = { id = foo.1 days = 1 } }
+custom_effect_tooltip = TT_IF_THEY_ACCEPT
+effect_tooltip = {
+	# effects / tooltip keys summarising the acceptance outcome
+}
+```
+
+Only add `TT_IF_THEY_REJECT` when rejection has real consequences on the sender (opinion penalty, retaliation, tariff, follow-up event chain, etc.). If rejection just means "nothing happens," omit it — the accept tooltip already implies the alternative, and empty reject blocks are redundant noise. When both branches have real outcomes, include both:
 
 ```
 OTHER = { country_event = { id = foo.1 days = 1 } }
 custom_effect_tooltip = TT_IF_THEY_REJECT
 effect_tooltip = {
-	# effects / tooltip keys summarising the rejection outcome
+	# effects / tooltip keys summarising the rejection outcome (opinion penalty, retaliation, etc.)
 }
 custom_effect_tooltip = TT_IF_THEY_ACCEPT
 effect_tooltip = {
-	# effects / tooltip keys summarising the acceptance outcome
+	# effects summarising the acceptance outcome
+}
+# Only add the reject block if rejection has actual consequences:
+custom_effect_tooltip = TT_IF_THEY_REJECT
+effect_tooltip = {
+	# effects summarising the rejection outcome (sanctions, opinion hit, etc.)
 }
 ```
 
@@ -113,34 +351,3 @@ option = {
 ```
 
 Copy-pasting from option A and forgetting to update to `.b` is a common source of misleading logs.
-
-# AI System Rules
-
-## Unit name case sensitivity
-
-Unit type names in OOB files (`history/units/`), AI templates (`common/ai_templates/`), and scripted division templates (`common/scripted_effects/00_AI_templates.txt`) are **case-sensitive**. A typo like `Armor_Bat` (capital A) instead of `armor_Bat` silently fails — the battalion slot is left empty. The `validate_oob_units` pre-commit hook catches these.
-
-Common case-sensitivity traps:
-
-| Wrong              | Correct            |
-| ------------------ | ------------------ |
-| `Armor_Bat`        | `armor_Bat`        |
-| `armor_Recce_comp` | `armor_Recce_Comp` |
-| `SP_AA_battery`    | `SP_AA_Battery`    |
-
-## AI strategy role names
-
-`role_ratio id = X` and `build_army id = X` in strategy files must match a `role = X` declared in `common/ai_templates/*.txt`. Orphaned references are silently ignored — the AI wastes production weight on a void. The `validate_ai_roles` pre-commit hook catches these.
-
-Common role name traps:
-
-| Wrong        | Correct                              |
-| ------------ | ------------------------------------ |
-| `mechanized` | `apc_mechanized` or `ifv_mechanized` |
-| `armored`    | `armor`                              |
-
-## AI equipment roles
-
-When a nation is added to a `blocked_for` list in `common/ai_equipment/generic_tank.txt` (or generic_plane/generic_naval), it MUST have coverage for all required equipment roles in a custom or shared file. Missing coverage means the AI cannot produce that equipment type at all.
-
-CAS aircraft designs must use `roles = { medium_cas_fighter }`, not `medium_as_fighter`. Using the wrong role causes the AI to deploy CAS planes as air superiority fighters.

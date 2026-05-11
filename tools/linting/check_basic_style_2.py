@@ -1,62 +1,30 @@
 #!/usr/bin/env python3
 # Author(s): AngriestBird, Hiddengearz
 
-import argparse
-import fnmatch
-import logging
 import os
 import re
-import subprocess
 import sys
 import time
-from multiprocessing import Pool
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from path_utils import clean_filepath
-
-startTime = time.time()
+from shared_utils import (
+    Timer,
+    collect_files_by_mode,
+    create_linting_parser,
+    get_root_dir,
+    print_timing_summary,
+    run_with_pool,
+)
 
 __version__ = 1.2
 
-
-def get_git_diff_files(base_branch="main", staged_only=False):
-    """Get list of modified .txt files from git diff"""
-    try:
-        if staged_only:
-            # Check only staged files
-            cmd = ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMRT"]
-        else:
-            # Check all modified files against base branch
-            cmd = [
-                "git",
-                "diff",
-                "--name-only",
-                "--diff-filter=ACMRT",
-                f"{base_branch}...HEAD",
-            ]
-
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-
-        # Filter for .txt files only
-        modified_files = []
-        for file in result.stdout.strip().split("\n"):
-            if file and file.endswith(".txt"):
-                # Check if file is in relevant directories
-                if any(
-                    file.startswith(dir + "/")
-                    for dir in ["common", "events", "history", "interface"]
-                ):
-                    if os.path.exists(file):
-                        modified_files.append(file)
-
-        return modified_files
-    except subprocess.CalledProcessError as e:
-        print(f"Error getting git diff: {e}")
-        return []
+_RE_COMMENT_BRACE = re.compile(r"#.*[{}]+", re.M | re.I)
+_RE_NO_SP_OPEN = re.compile(r"([^\s]+)\{|\{([^\s]+)", re.M | re.I)
+_RE_NO_SP_CLOSE = re.compile(r"([^\s]+)\}|\}([^\s]+)", re.M | re.I)
+_RE_COMMENT_QUOTE = re.compile(r'#.*["]+', re.M | re.I)
 
 
-# Function: check_basic_style
-# Purpose: Validates files to ensure the basic stylization of MD is ensured.
 def check_basic_style(filepath):
     error_count = 0
     warning_count = 0
@@ -69,8 +37,8 @@ def check_basic_style(filepath):
             lineNum += 1
             if not line.startswith("#"):  # If the line doesn't start with a comment
                 if "{" in line:  # if there is an open brace in this line
-                    hasComment = re.search(
-                        r"#.*[{}]+", line, re.M | re.I
+                    hasComment = _RE_COMMENT_BRACE.search(
+                        line
                     )  # If comment at the start or before {
                     if (
                         not hasComment
@@ -83,8 +51,8 @@ def check_basic_style(filepath):
 
                         # if there are braces we couldn't find using efficient .count, use powerful inefficient regex
                         if closingBraces > 0:
-                            hasNoSpace = re.search(
-                                r"([^\s]+){|{([^\s]+)", line, re.M | re.I
+                            hasNoSpace = _RE_NO_SP_OPEN.search(
+                                line
                             )  # If no space before or after brace
                             if (
                                 hasNoSpace
@@ -96,8 +64,8 @@ def check_basic_style(filepath):
                                 )
                                 warning_count += 1
                 if "}" in line:  # if there is an close brace in this line
-                    hasComment = re.search(
-                        r"#.*[{}]+", line, re.M | re.I
+                    hasComment = _RE_COMMENT_BRACE.search(
+                        line
                     )  # If comment at the start or before {
                     if (
                         not hasComment
@@ -110,8 +78,8 @@ def check_basic_style(filepath):
 
                         # if there are braces we couldn't find using efficient .count, use powerful inefficient regex
                         if openingBraces > 0:
-                            hasNoSpace = re.search(
-                                r"([^\s]+)}|}([^\s]+)", line, re.M | re.I
+                            hasNoSpace = _RE_NO_SP_CLOSE.search(
+                                line
                             )  # If no space before or after brace
                             if (
                                 hasNoSpace
@@ -126,8 +94,8 @@ def check_basic_style(filepath):
                     if (
                         line.count('"') % 2
                     ) != 0:  # if there are an odd number of qoutes on this line
-                        hasComment = re.search(
-                            r"#.*[\"]+", line, re.M | re.I
+                        hasComment = _RE_COMMENT_QUOTE.search(
+                            line
                         )  # If comment at the start or before "
                         if not hasComment:  # if there is no comment before the qoute
                             print(
@@ -178,142 +146,49 @@ def check_basic_style(filepath):
     return (error_count, warning_count)
 
 
-def get_all_files(rootDir):
-    """Get all .txt files from relevant directories"""
-    files_list = []
-    directories = ["common", "events", "history", "interface"]
-
-    for directory in directories:
-        dir_path = os.path.join(rootDir, directory)
-        if os.path.exists(dir_path):
-            for root, dirnames, filenames in os.walk(dir_path):
-                for filename in fnmatch.filter(filenames, "*.txt"):
-                    files_list.append(os.path.join(root, filename))
-
-    return files_list
-
-
 def main():
-    parser = argparse.ArgumentParser(
-        description="Validate Basic Style for HOI4 mod files - Secondary Check"
-    )
-    parser.add_argument(
-        "--mode",
-        choices=["all", "diff", "staged"],
-        default="all",
-        help="Check mode: all files, git diff files, or staged files only (default: all)",
-    )
-    parser.add_argument(
-        "--base-branch",
-        default="main",
-        help="Base branch for diff comparison (default: main)",
-    )
-    parser.add_argument(
-        "--workers",
-        type=int,
-        default=os.cpu_count() or 4,
-        help="Number of parallel workers (default: CPU count)",
-    )
-    parser.add_argument(
-        "filenames",
-        nargs="*",
-        help="Files to check (positional argument for pre-commit)",
+    parser = create_linting_parser(
+        "Validate Basic Style for HOI4 mod files - Secondary Check"
     )
     args = parser.parse_args()
 
-    logging.basicConfig(
-        filename="pythontools.log", format="%(asctime)s %(message)s", filemode="w"
-    )
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    timings = []
+    start_time = time.time()
+    print(f"Validating Basic Style - Secondary Check (Mode: {args.mode})")
 
-    logger.info(f"Validating Basic Style - Secondary Check (Mode: {args.mode})")
-    message = f"Validating Basic Style - Secondary Check (Mode: {args.mode})\n"
-    files_list = []
-    bad_count = 0
-    warningErrors = 0
-
-    # Allow running from root directory as well as from inside the tools directory
-    scriptDir = os.path.realpath(__file__)
-    rootDir = os.path.dirname(os.path.dirname(scriptDir))
-
-    # Determine which files to check
-    if args.filenames:
-        # If positional filenames are provided (from pre-commit)
-        files_list = args.filenames
-        logger.info(f"Checking specified files: {len(files_list)} files")
-        print(f"Checking specified files: {len(files_list)} files")
-    elif args.mode == "diff":
-        # Check only modified files against base branch
-        files_list = get_git_diff_files(base_branch=args.base_branch, staged_only=False)
-        if not files_list:
-            logger.info("No modified .txt files found in git diff")
-            print("No modified .txt files found in git diff")
-            return 0
-        logger.info(
-            f"Checking modified files against {args.base_branch}: {len(files_list)} files"
+    with Timer("file collection") as t:
+        existing_files = collect_files_by_mode(
+            args, get_root_dir(), include_interface=True
         )
-        print(
-            f"Checking modified files against {args.base_branch}: {len(files_list)} files"
-        )
-    elif args.mode == "staged":
-        # Check only staged files
-        files_list = get_git_diff_files(staged_only=True)
-        if not files_list:
-            logger.info("No staged .txt files found")
-            print("No staged .txt files found")
-            return 0
-        logger.info(f"Checking staged files: {len(files_list)} files")
-        print(f"Checking staged files: {len(files_list)} files")
-    else:
-        # Default: check all files
-        logger.debug("Checking all folders...")
-        files_list = get_all_files(rootDir)
-        logger.debug("All folders checked...")
-        logger.info(f"Checking all files: {len(files_list)} files")
-        print(f"Checking all files: {len(files_list)} files")
+    timings.append(("file collection", t.elapsed))
 
-    # Filter to existing files
-    existing_files = []
-    for filename in files_list:
-        if os.path.exists(filename):
-            existing_files.append(filename)
-        else:
-            logger.warning(f"File not found: {filename}")
-            print(f"WARNING: File not found: {filename}")
+    if not existing_files:
+        print("No files to check")
+        return 0
 
-    # Check files in parallel
-    with Pool(processes=args.workers) as pool:
-        results = pool.map(check_basic_style, existing_files)
+    print(f"Checking {len(existing_files)} files...")
+
+    with Timer("checking") as t:
+        results = run_with_pool(check_basic_style, existing_files, args.workers)
+    timings.append(("checking", t.elapsed))
 
     bad_count = sum(r[0] for r in results)
-    warningErrors = sum(r[1] for r in results)
+    warning_count = sum(r[1] for r in results)
 
-    logger.info(
-        "------\nChecked {0} files\nTotal Errors detected: {1}\nTotal Warnings detected: {2}".format(
-            len(existing_files), bad_count, warningErrors
-        )
-    )
-    message = (
-        message
-        + "------\nChecked {0} files\nTotal Errors detected: {1}\nTotal Warnings Detected: {2}\n".format(
-            len(existing_files), bad_count, warningErrors
-        )
+    print(
+        f"------\nChecked {len(existing_files)} files\n"
+        f"Total Errors detected: {bad_count}\n"
+        f"Total Warnings detected: {warning_count}"
     )
 
-    if (bad_count == 0) and (warningErrors <= 4):
-        logger.info("File validation PASSED")
-        message = message + "File validation PASSED\n"
-        postResults = False
+    if bad_count == 0 and warning_count <= 4:
         print("File validation PASSED")
     else:
-        message = (
-            message + "File validation FAILED\n Please fix all errors or warnings."
-        )
-        postResults = True
         print("File validation FAILED")
 
-    logger.info("The script took {0} second!".format(time.time() - startTime))
+    elapsed = time.time() - start_time
+    print(f"Completed in {elapsed:.1f}s")
+    print_timing_summary(timings)
 
     return bad_count
 

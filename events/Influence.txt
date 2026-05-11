@@ -9,7 +9,7 @@ country_event = {
 	is_triggered_only = yes
 	hidden = yes
 	immediate = {
-		log = "[GetDateText]: [This.GetName]: influence.11.a executed"
+		log = "[GetDateText]: [This.GetName]: influence.0 executed"
 		set_variable = { five_gift_sum = gdp_total }
 		multiply_variable = { five_gift_sum = 0.05 }
 		clamp_variable = { var = five_gift_sum min = 1 max = 5000 } # Max Gift Amount Period
@@ -23,7 +23,7 @@ country_event = {
 		clamp_variable = { var = fifteen_gift_sum min = 1 max = 5000 } # Max Gift Amount Period
 
 		# event_target is set in the targeting scope
-		event_target:influence_sender = { country_event = { id = influence.1 } }
+		event_target:influence_sender = { country_event = influence.1 }
 	}
 }
 
@@ -51,7 +51,6 @@ country_event = {
 				custom_effect_tooltip = accept_money
 				set_temp_variable = { percent_change = 2 }
 				set_temp_variable = { tag_index = PREV.id }
-				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
 				reverse_add_opinion_modifier = { target = FROM modifier = given_gift }
 			}
@@ -62,26 +61,21 @@ country_event = {
 		update_money_dirty_variable = yes
 
 		ai_chance = {
-			factor = 1
-			modifier = {
-				add = 1
-				ai_has_same_organization = yes
-			}
-			modifier = {
-				factor = 2
-				OR = {
-					FROM = { check_variable = { interest_rate > 15.0 } }
-					FROM = { check_variable = { debt_ratio > 0.99 } }
-				}
-			}
-			# Fail Safe Commands
-			modifier = {
-				factor = 0
-				OR = {
-					check_variable = { interest_rate < 15.00 }
-					check_variable = { debt_ratio < 2.00 }
-				}
-			}
+			base = 4
+			# Recipient situation
+			modifier = { add = 2 ai_has_same_organization = yes }
+			modifier = { add = 2 FROM = { check_variable = { interest_rate > 15.0 } } }
+			modifier = { add = 2 FROM = { check_variable = { debt_ratio > 0.99 } } }
+			modifier = { add = 1 has_opinion = { target = FROM value > 30 } }
+			# Sender personality
+			modifier = { factor = 1.3 has_government = democratic }
+			modifier = { factor = 1.2 has_government = communism }
+			modifier = { factor = 0.8 has_government = nationalist }
+			# Sender capacity
+			modifier = { factor = 1.3 check_variable = { debt_ratio < 0.5 } }
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 1.5 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 2.0 } }
+			modifier = { factor = 0 has_opinion = { target = FROM value < -20 } }
 		}
 	}
 
@@ -99,7 +93,6 @@ country_event = {
 				custom_effect_tooltip = accept_money
 				set_temp_variable = { percent_change = 4 }
 				set_temp_variable = { tag_index = PREV.id }
-				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
 				reverse_add_opinion_modifier = { target = FROM modifier = given_gift_ten }
 			}
@@ -108,6 +101,23 @@ country_event = {
 		}
 
 		update_money_dirty_variable = yes
+
+		ai_chance = {
+			base = 2
+			modifier = { add = 3 ai_has_same_organization = yes }
+			modifier = { add = 2 is_in_faction_with = FROM }
+			modifier = { add = 2 FROM = { has_war = yes } }
+			modifier = { add = 2 has_opinion = { target = FROM value > 50 } }
+			# Sender personality
+			modifier = { factor = 1.3 has_government = democratic }
+			modifier = { factor = 1.4 has_government = communism }
+			modifier = { factor = 0.7 has_government = nationalist }
+			# Sender capacity
+			modifier = { factor = 1.3 check_variable = { debt_ratio < 0.3 } }
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 1.0 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 1.5 } }
+			modifier = { factor = 0 has_opinion = { target = FROM value < 0 } }
+		}
 	}
 
 	# Send 15% of GDP as Economic Aid
@@ -125,7 +135,6 @@ country_event = {
 				custom_effect_tooltip = accept_money
 				set_temp_variable = { percent_change = 6 }
 				set_temp_variable = { tag_index = PREV.id }
-				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
 				reverse_add_opinion_modifier = { target = FROM modifier = given_gift_fifteen }
 			}
@@ -134,6 +143,22 @@ country_event = {
 		}
 
 		update_money_dirty_variable = yes
+
+		ai_chance = {
+			base = 1
+			modifier = { add = 4 is_in_faction_with = FROM FROM = { has_war = yes } }
+			modifier = { add = 3 FROM = { surrender_progress > 0.20 } }
+			modifier = { add = 3 has_opinion = { target = FROM value > 80 } }
+			modifier = { add = 2 has_idea = super_power }
+			# Sender personality
+			modifier = { factor = 1.5 has_government = communism }
+			modifier = { factor = 1.2 has_government = democratic }
+			modifier = { factor = 0.5 has_government = nationalist }
+			# Hard floors
+			modifier = { factor = 0 NOT = { is_in_faction_with = FROM } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.8 } }
+			modifier = { factor = 0 has_opinion = { target = FROM value < 20 } }
+		}
 	}
 
 	#Let's not bother
@@ -146,18 +171,15 @@ country_event = {
 
 		# AI Section
 		ai_chance = {
-			factor = 0.25
-			modifier = {
-				add = 1
-				ai_has_same_organization = no
-			}
-			modifier = {
-				factor = 2
-				OR = {
-					check_variable = { interest_rate < 15.00 }
-					check_variable = { debt_ratio < 2.00 }
-				}
-			}
+			base = 3
+			modifier = { add = 3 ai_has_same_organization = no }
+			modifier = { add = 3 has_opinion = { target = FROM value < 0 } }
+			modifier = { add = 4 check_variable = { debt_ratio > 1.0 } }
+			modifier = { add = 3 has_war = yes }
+			# Personality
+			modifier = { factor = 1.5 has_government = nationalist }
+			modifier = { factor = 1.3 has_government = fascism }
+			modifier = { factor = 0.7 has_government = democratic }
 		}
 	}
 }
@@ -184,7 +206,6 @@ country_event = {
 			custom_effect_tooltip = accept_money
 			set_temp_variable = { percent_change = 2 }
 			set_temp_variable = { tag_index = FROM.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 			add_opinion_modifier = { target = FROM modifier = given_gift }
 		}
@@ -196,7 +217,6 @@ country_event = {
 			custom_effect_tooltip = accept_money
 			set_temp_variable = { percent_change = 4 }
 			set_temp_variable = { tag_index = FROM.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 			add_opinion_modifier = { target = FROM modifier = given_gift_ten }
 		}
@@ -208,7 +228,6 @@ country_event = {
 			custom_effect_tooltip = accept_money
 			set_temp_variable = { percent_change = 6 }
 			set_temp_variable = { tag_index = FROM.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 			add_opinion_modifier = { target = FROM modifier = given_gift_fifteen }
 		}
@@ -220,8 +239,16 @@ country_event = {
 		clr_country_flag = sending_ten_percent_of_gdp_@FROM
 		clr_country_flag = sending_fifteen_percent_of_gdp_@FROM
 
+		# Every nation we are at war with takes a diplomatic hit at the donor for funding our war effort
+		every_enemy_country = {
+			add_opinion_modifier = {
+				target = FROM
+				modifier = aided_our_enemy
+			}
+		}
+
 		# Generic Response
-		FROM = { country_event = { id = diplomatic_response.1 } }
+		FROM = { country_event = diplomatic_response.1 }
 
 		update_money_dirty_variable = yes
 		# AI Section
@@ -302,7 +329,7 @@ country_event = {
 			custom_effect_tooltip = economic_aid_influence_value_TT
 			add_to_variable = { treasury = temp_amount_gift_sum }
 
-			country_event = { id = diplomatic_response.2 }
+			country_event = diplomatic_response.2
 		}
 
 		clr_country_flag = sending_five_percent_of_gdp_@FROM
@@ -373,7 +400,7 @@ country_event = {
 	hidden = yes
 
 	immediate = {
-		event_target:influence_sender = { country_event = { id = influence.3 } }
+		event_target:influence_sender = { country_event = influence.3 }
 	}
 }
 
@@ -391,7 +418,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.3.a executed"
 
 		FROM = {
-			news_event = { id = News_influence.2 }
+			news_event = News_influence.2
 			set_temp_variable = { percent_change = -2 }
 			change_domestic_influence_percentage = yes
 			effect_tooltip = {
@@ -407,7 +434,12 @@ country_event = {
 		add_political_power = -100
 
 		ai_chance = {
-			factor = 11
+			base = 8
+			modifier = { add = 4 has_government = nationalist }
+			modifier = { add = 3 has_government = fascism }
+			modifier = { add = 2 FROM = { check_variable = { domestic_influence_amount > 30 } } }
+			modifier = { factor = 1.3 has_government = communism }
+			modifier = { factor = 0.7 has_government = democratic }
 		}
 	}
 
@@ -424,16 +456,28 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			factor = 10
+			base = 8
+			modifier = { add = 5 FROM = { check_variable = { influence_array_val^0 > 40 } } }
+			modifier = { add = 4 FROM = { OR = { check_variable = { influence_array^0 = CHI } check_variable = { influence_array^0 = SOV } check_variable = { influence_array^0 = PER } } } }
+			modifier = { add = 3 has_idea = great_power }
+			modifier = { add = 4 has_idea = super_power }
+			modifier = { factor = 1.3 has_government = democratic }
+			modifier = { factor = 1.3 has_government = communism }
+			modifier = { factor = 0.7 num_of_factories < 30 }
 		}
 
-		var:FROM.influence_array^0 = { news_event = { id = News_influence.1 } }
+		var:FROM.influence_array^0 = { news_event = News_influence.1 }
 
 		FROM = {
 			set_temp_variable = { percent_change = -2 }
 			set_temp_variable = { influencer_index = 0 }
 			change_current_influencer_index_percentage = yes
 		}
+
+		set_temp_variable = { percent_change = -1 }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = FROM.id }
+		change_influence_percentage = yes
 
 		add_political_power = -100
 	}
@@ -442,7 +486,11 @@ country_event = {
 		name = influence.3.c
 		log = "[GetDateText]: [This.GetName]: influence.3.c executed"
 		ai_chance = {
-			factor = 6
+			base = 4
+			modifier = { add = 3 FROM = { check_variable = { influence_array_val^1 > 30 } } }
+			modifier = { add = 4 FROM = { OR = { check_variable = { influence_array^1 = CHI } check_variable = { influence_array^1 = SOV } check_variable = { influence_array^1 = PER } } } }
+			modifier = { add = 2 has_idea = great_power }
+			modifier = { factor = 0.8 num_of_factories < 30 }
 		}
 		trigger = {
 			FROM = {
@@ -458,7 +506,7 @@ country_event = {
 		set_temp_variable = { influence_target = FROM.id }
 		change_influence_percentage = yes
 
-		var:FROM.influence_array^1 = { news_event = { id = News_influence.1 } }
+		var:FROM.influence_array^1 = { news_event = News_influence.1 }
 
 		FROM = {
 			set_temp_variable = { percent_change = -2 }
@@ -474,7 +522,9 @@ country_event = {
 		name = influence.3.e
 		log = "[GetDateText]: [This.GetName]: influence.3.e executed"
 		ai_chance = {
-			factor = 3
+			base = 2
+			modifier = { add = 3 FROM = { OR = { check_variable = { influence_array^2 = CHI } check_variable = { influence_array^2 = SOV } check_variable = { influence_array^2 = PER } } } }
+			modifier = { add = 1 has_idea = super_power }
 		}
 		trigger = {
 			FROM = {
@@ -484,7 +534,7 @@ country_event = {
 		}
 
 		# Notification Event
-		var:FROM.influence_array^2 = { news_event = { id = News_influence.1 } }
+		var:FROM.influence_array^2 = { news_event = News_influence.1 }
 
 		# Influence Effect
 		FROM = {
@@ -911,8 +961,8 @@ country_event = {
 		#Base chance is from the popularity of all other Outlooks except defending and attacking
 		#More pluralistic -> higher chance of civil war
 		set_variable = { civil_war_factor = stability }
-		multiply_temp_variable = { civil_war_factor = -1 }
-		add_to_temp_variable = { civil_war_factor = 1 }
+		multiply_variable = { civil_war_factor = -1 }
+		add_to_variable = { civil_war_factor = 1 }
 
 		#Modify civil war chance based on the influence of "neutral" Outlooks
 		set_temp_variable = { civil_war_influence_multiplier = 100 }
@@ -954,7 +1004,7 @@ country_event = {
 		multiply_temp_variable = { civil_war_influence_multiplier = 0.01 }
 		multiply_variable = { civil_war_factor = civil_war_influence_multiplier }
 
-		event_target:influence_sender = { country_event = { id = influence.5 } }
+		event_target:influence_sender = { country_event = influence.5 }
 	}
 }
 
@@ -1116,14 +1166,81 @@ country_event = {
 						hold_elections = yes
 
 						add_opinion_modifier = { target = ROOT modifier = succeded_coup }
-						news_event = { id = News_influence.3 }
+						news_event = News_influence.3
 					}
 				}
 				#add 20% to ROOT influence
 				set_temp_variable = { percent_change = 10 }
-				set_temp_variable = { tag_index = ROOT.id }
 				set_temp_variable = { influence_target = FROM.id }
 				change_influence_percentage = yes
+				# NATO member couped by hostile power — trigger USA response
+				if = {
+					limit = {
+						FROM = {
+							has_idea = NATO_member
+							NOT = { original_tag = USA }
+						}
+						NOT = { has_government = democratic }
+						NOT = { original_tag = USA }
+						OR = {
+							original_tag = CHI
+							original_tag = SOV
+							original_tag = PER
+						}
+						USA = {
+							exists = yes
+							has_idea = NATO_member
+							is_faction_leader = yes
+							NOT = { has_country_flag = collapsed_nation }
+							NOT = { has_country_flag = USA_nato_coup_recently }
+						}
+					}
+					FROM = { save_event_target_as = nato_coup_victim }
+					save_event_target_as = nato_coup_aggressor
+					USA = {
+						set_country_flag = {
+							flag = USA_nato_coup_recently
+							days = 365
+							value = 1
+						}
+						country_event = { id = department_of_state.233 days = 3 }
+					}
+				}
+				# Other major influencers get a chance to contest the coup
+				if = {
+					limit = {
+						NOT = { has_global_flag = GAME_RULE_coup_contest_disabled }
+					}
+					save_event_target_as = coup_contest_sender
+					FROM = { save_event_target_as = coup_contest_victim }
+					# Largest foreign influencer (if over 10% and not the sender)
+					if = {
+						limit = {
+							FROM = {
+								has_variable = influence_array^0
+								check_variable = { influence_array_val^0 > 9.999 }
+								NOT = { check_variable = { influence_array^0 = ROOT.id } }
+							}
+						}
+						var:FROM.influence_array^0 = {
+							country_event = { id = influence.60 days = 2 }
+						}
+					}
+					# Second largest foreign influencer (if over 20% and not the sender)
+					if = {
+						limit = {
+							FROM = {
+								has_variable = influence_array^1
+								check_variable = { influence_array_val^1 > 19.999 }
+								NOT = { check_variable = { influence_array^1 = ROOT.id } }
+								NOT = { check_variable = { influence_array^1 = influence_array^0 } }
+							}
+						}
+						var:FROM.influence_array^1 = {
+							country_event = { id = influence.60 days = 2 }
+						}
+					}
+				}
 				#add event to country and world
 				hidden_effect = {
 					every_country = {
@@ -1142,7 +1259,6 @@ country_event = {
 
 				#remove a LOT of influence
 				set_temp_variable = { percent_change = -15 }
-				set_temp_variable = { tag_index = ROOT.id }
 				set_temp_variable = { influence_target = FROM.id }
 				change_influence_percentage = yes
 				#add event to country and world
@@ -1264,7 +1380,7 @@ country_event = {
 						set_variable = { domestic_influence_amount = FROM.current_influence }
 						add_to_array = { influence_array = ROOT }
 						add_to_array = { influence_array_val = FROM.current_influence }
-						startup_influence = yes
+						sort_influence = yes
 
 						add_opinion_modifier = { target = ROOT modifier = supported_us_in_the_coup }
 					}
@@ -1359,7 +1475,7 @@ country_event = {
 						set_variable = { domestic_influence_amount = FROM.current_influence }
 						add_to_array = { influence_array = ROOT }
 						add_to_array = { influence_array_val = FROM.current_influence }
-						startup_influence = yes
+						sort_influence = yes
 
 						add_opinion_modifier = { target = ROOT modifier = supported_us_in_the_coup }
 					}
@@ -1426,7 +1542,7 @@ country_event = {
 						set_variable = { domestic_influence_amount = FROM.current_influence }
 						add_to_array = { influence_array = ROOT }
 						add_to_array = { influence_array_val = FROM.current_influence }
-						startup_influence = yes
+						sort_influence = yes
 
 						add_opinion_modifier = { target = ROOT modifier = supported_us_in_the_coup }
 					}
@@ -1534,7 +1650,7 @@ country_event = {
 						set_variable = { domestic_influence_amount = FROM.current_influence }
 						add_to_array = { influence_array = ROOT }
 						add_to_array = { influence_array_val = FROM.current_influence }
-						startup_influence = yes
+						sort_influence = yes
 
 						add_opinion_modifier = { target = ROOT modifier = supported_us_in_the_coup }
 					}
@@ -1617,16 +1733,49 @@ country_event = {
 						set_variable = { domestic_influence_amount = FROM.current_influence }
 						add_to_array = { influence_array = ROOT }
 						add_to_array = { influence_array_val = FROM.current_influence }
-						startup_influence = yes
+						sort_influence = yes
 
 						add_opinion_modifier = { target = ROOT modifier = supported_us_in_the_coup }
+					}
+				}
+				# Major foreign influencers get a chance to back the old regime
+				if = {
+					limit = {
+						NOT = { has_global_flag = GAME_RULE_coup_contest_disabled }
+					}
+					save_event_target_as = coup_contest_sender
+					FROM = { save_event_target_as = coup_contest_victim }
+					if = {
+						limit = {
+							FROM = {
+								has_variable = influence_array^0
+								check_variable = { influence_array_val^0 > 19.999 }
+								NOT = { check_variable = { influence_array^0 = ROOT.id } }
+							}
+						}
+						var:FROM.influence_array^0 = {
+							country_event = { id = influence.61 days = 2 }
+						}
+					}
+					if = {
+						limit = {
+							FROM = {
+								has_variable = influence_array^1
+								check_variable = { influence_array_val^1 > 19.999 }
+								NOT = { check_variable = { influence_array^1 = ROOT.id } }
+								NOT = { check_variable = { influence_array^1 = influence_array^0 } }
+							}
+						}
+						var:FROM.influence_array^1 = {
+							country_event = { id = influence.61 days = 2 }
+						}
 					}
 				}
 				#add event to country and world
 				hidden_effect = {
 					every_country = {
 						limit = { is_ai = no }
-						news_event = { id = News_influence.6 }
+						news_event = News_influence.6
 					}
 				}
 			}
@@ -1642,7 +1791,7 @@ country_event = {
 
 	option = {
 		name = influence.5.d1
-		log = "[GetDateText]: [This.GetName]: influence.5.c executed"
+		log = "[GetDateText]: [This.GetName]: influence.5.d1 executed"
 		trigger = {
 			original_tag = ENG
 			FROM = {
@@ -1742,13 +1891,544 @@ news_event = {
 	}
 }
 
+# World condemns the coup-sender after a contester denounces them
+news_event = {
+	id = News_influence.7
+	title = News_influence.7.t
+	desc = News_influence.7.d
+	picture = GFX_news_crime_fighting
+	is_triggered_only = yes
+
+	option = {
+		name = News_influence.7.a
+		log = "[GetDateText]: [This.GetName]: News_influence.7.a executed"
+	}
+}
+
+# Contester backs the old opposition in a post-coup power struggle
+news_event = {
+	id = News_influence.8
+	title = News_influence.8.t
+	desc = News_influence.8.d
+	picture = GFX_news_crime_fighting
+	is_triggered_only = yes
+
+	option = {
+		name = News_influence.8.a
+		log = "[GetDateText]: [This.GetName]: News_influence.8.a executed"
+	}
+}
+
+# Contester openly arms the old regime after the coup sparked a civil war
+news_event = {
+	id = News_influence.9
+	title = News_influence.9.t
+	desc = News_influence.9.d
+	picture = GFX_news_crime_fighting
+	is_triggered_only = yes
+
+	option = {
+		name = News_influence.9.a
+		log = "[GetDateText]: [This.GetName]: News_influence.9.a executed"
+	}
+}
+
+# Contester opens a full-scale military intervention over the coup
+news_event = {
+	id = News_influence.10
+	title = News_influence.10.t
+	desc = News_influence.10.d
+	picture = GFX_news_crime_fighting
+	is_triggered_only = yes
+
+	option = {
+		name = News_influence.10.a
+		log = "[GetDateText]: [This.GetName]: News_influence.10.a executed"
+	}
+}
+
+# Major conventional arms transfer announced (large package, infantry/vehicles)
+news_event = {
+	id = News_influence.11
+	title = News_influence.11.t
+	desc = News_influence.11.d
+	picture = GFX_news_crime_fighting
+	is_triggered_only = yes
+
+	option = {
+		name = News_influence.11.a
+		log = "[GetDateText]: [This.GetName]: News_influence.11.a executed"
+	}
+}
+
+# Modern equipment transfer announced (heavy AT, SAM, drones — more provocative)
+news_event = {
+	id = News_influence.12
+	title = News_influence.12.t
+	desc = News_influence.12.d
+	picture = GFX_news_crime_fighting
+	is_triggered_only = yes
+
+	option = {
+		name = News_influence.12.a
+		log = "[GetDateText]: [This.GetName]: News_influence.12.a executed"
+	}
+}
+
+# Coup Contest — Major influencer gets to respond to a successful foreign coup
+country_event = {
+	id = influence.60
+	title = influence.60.t
+	desc = influence.60.d
+	picture = GFX_politics_surveillence
+	is_triggered_only = yes
+
+	trigger = {
+		event_target:coup_contest_sender = { exists = yes }
+		event_target:coup_contest_victim = { exists = yes }
+		NOT = { has_country_flag = collapsed_nation }
+		# Skip if this is already handled as a NATO coup response
+		NOT = {
+			AND = {
+				has_idea = NATO_member
+				is_faction_leader = yes
+				event_target:coup_contest_victim = { has_idea = NATO_member }
+				event_target:coup_contest_sender = {
+					OR = {
+						original_tag = CHI
+						original_tag = SOV
+						original_tag = PER
+					}
+				}
+			}
+		}
+	}
+
+	# Denounce publicly and sanction the coup-sender
+	option = {
+		name = influence.60.a
+		log = "[GetDateText]: [This.GetName]: influence.60.a executed"
+		add_opinion_modifier = {
+			target = event_target:coup_contest_sender
+			modifier = attacked_our_influence
+		}
+		event_target:coup_contest_sender = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = attacked_our_influence
+			}
+		}
+		add_political_power = -50
+		hidden_effect = {
+			every_country = {
+				limit = { is_ai = no }
+				news_event = { id = News_influence.7 days = 1 }
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_opinion = { target = event_target:coup_contest_sender value < 0 } }
+			modifier = { add = 20 has_government = democratic }
+			modifier = { add = 10 has_government = neutrality }
+			modifier = { factor = 0.7 has_government = nationalist }
+			modifier = { factor = 0.7 has_government = fascism }
+			modifier = { factor = 1.3 num_of_factories < 30 }
+			modifier = { factor = 0.5 has_war = yes }
+		}
+	}
+
+	# Impose targeted economic sanctions on the coup-sender
+	option = {
+		name = influence.60.f
+		log = "[GetDateText]: [This.GetName]: influence.60.f executed"
+		add_opinion_modifier = {
+			target = event_target:coup_contest_sender
+			modifier = attacked_our_influence
+		}
+		event_target:coup_contest_sender = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = attacked_our_influence
+			}
+			decrease_economic_growth = yes
+		}
+		set_temp_variable = { percent_change = -5 }
+		set_temp_variable = { tag_index = event_target:coup_contest_sender.id }
+		set_temp_variable = { influence_target = event_target:coup_contest_victim.id }
+		change_influence_percentage = yes
+		add_political_power = -75
+		hidden_effect = {
+			every_country = {
+				limit = { is_ai = no }
+				news_event = { id = News_influence.7 days = 1 }
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 has_opinion = { target = event_target:coup_contest_sender value < -20 } }
+			modifier = { add = 15 has_idea = great_power }
+			modifier = { add = 20 has_idea = super_power }
+			modifier = { factor = 1.5 has_government = democratic }
+			modifier = { factor = 1.2 has_government = communism }
+			modifier = { factor = 0.5 has_government = nationalist }
+			modifier = { factor = 0.7 num_of_factories < 30 }
+			modifier = { factor = 0.5 is_in_faction_with = event_target:coup_contest_sender }
+		}
+	}
+
+	# Clandestine support for the previous government — try to reverse the coup
+	option = {
+		name = influence.60.b
+		log = "[GetDateText]: [This.GetName]: influence.60.b executed"
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = event_target:coup_contest_victim.id }
+		change_influence_percentage = yes
+		set_temp_variable = { percent_change = -10 }
+		set_temp_variable = { tag_index = event_target:coup_contest_sender.id }
+		set_temp_variable = { influence_target = event_target:coup_contest_victim.id }
+		change_influence_percentage = yes
+		set_party_index_to_ruling_party = yes
+		event_target:coup_contest_victim = {
+			set_temp_variable = { contester_influence = 0 }
+			for_each_loop = {
+				array = influence_array
+				value = v
+				index = i
+				if = {
+					limit = { check_variable = { v = PREV.id } }
+					set_temp_variable = { contester_influence = influence_array_val^i }
+				}
+			}
+			if = {
+				limit = { check_variable = { contester_influence > 59.999 } }
+				set_temp_variable = { party_popularity_increase = 0.15 }
+			}
+			else_if = {
+				limit = { check_variable = { contester_influence > 39.999 } }
+				set_temp_variable = { party_popularity_increase = 0.10 }
+			}
+			else_if = {
+				limit = { check_variable = { contester_influence > 19.999 } }
+				set_temp_variable = { party_popularity_increase = 0.06 }
+			}
+			else = {
+				set_temp_variable = { party_popularity_increase = 0.03 }
+			}
+			add_relative_party_popularity = yes
+			add_political_power = -50
+		}
+		add_political_power = -50
+		hidden_effect = {
+			every_country = {
+				limit = { is_ai = no }
+				news_event = { id = News_influence.8 days = 1 }
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 25 has_opinion = { target = event_target:coup_contest_sender value < -20 } }
+			modifier = { add = 15 has_idea = great_power }
+			modifier = { add = 20 has_idea = super_power }
+			modifier = { factor = 1.5 has_government = democratic }
+			modifier = { factor = 1.3 has_government = communism }
+			modifier = { factor = 0.5 has_government = nationalist }
+			modifier = { factor = 1.2 has_country_leader = { name = "Donald Trump" } }
+			modifier = { factor = 0 has_war = yes }
+		}
+	}
+
+	# Open military intervention — posture against the coup-sender and arm the exiled resistance
+	option = {
+		name = influence.60.e
+		log = "[GetDateText]: [This.GetName]: influence.60.e executed"
+		add_relation_modifier = {
+			target = event_target:coup_contest_sender
+			modifier = generic_military_intervention
+		}
+		add_opinion_modifier = {
+			target = event_target:coup_contest_sender
+			modifier = attacked_our_influence
+		}
+		event_target:coup_contest_sender = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = attacked_our_influence
+			}
+		}
+		set_party_index_to_ruling_party = yes
+		event_target:coup_contest_victim = {
+			set_temp_variable = { contester_influence = 0 }
+			for_each_loop = {
+				array = influence_array
+				value = v
+				index = i
+				if = {
+					limit = { check_variable = { v = PREV.id } }
+					set_temp_variable = { contester_influence = influence_array_val^i }
+				}
+			}
+			if = {
+				limit = { check_variable = { contester_influence > 39.999 } }
+				set_temp_variable = { party_popularity_increase = 0.12 }
+			}
+			else = {
+				set_temp_variable = { party_popularity_increase = 0.06 }
+			}
+			add_relative_party_popularity = yes
+			add_political_power = -100
+		}
+		set_temp_variable = { percent_change = 15 }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = event_target:coup_contest_victim.id }
+		change_influence_percentage = yes
+		set_temp_variable = { percent_change = -15 }
+		set_temp_variable = { tag_index = event_target:coup_contest_sender.id }
+		set_temp_variable = { influence_target = event_target:coup_contest_victim.id }
+		change_influence_percentage = yes
+		add_political_power = -150
+		add_war_support = 0.05
+		add_threat = 3
+		hidden_effect = {
+			every_country = {
+				limit = { is_ai = no }
+				news_event = { id = News_influence.10 days = 1 }
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 20
+				event_target:coup_contest_sender = {
+					OR = {
+						original_tag = CHI
+						original_tag = SOV
+						original_tag = PER
+					}
+				}
+			}
+			modifier = { add = 10 event_target:coup_contest_sender = { has_added_tension_amount > 30 } }
+			modifier = {
+				add = 15
+				has_government = democratic
+				event_target:coup_contest_victim = { has_government = democratic }
+			}
+			modifier = { add = 10 has_idea = super_power }
+			modifier = { factor = 1.3 has_country_leader = { name = "Donald Trump" } }
+			modifier = { factor = 0.5 has_government = neutrality }
+			modifier = { factor = 0 has_war = yes }
+			modifier = { factor = 0.3 threat > 0.70 }
+			modifier = { factor = 0 num_of_military_factories < 50 }
+			modifier = { factor = 0 is_in_faction_with = event_target:coup_contest_sender }
+		}
+	}
+
+	# Accept the new reality — move on
+	option = {
+		name = influence.60.c
+		log = "[GetDateText]: [This.GetName]: influence.60.c executed"
+		add_stability = -0.02
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_war = yes }
+			modifier = { add = 25 has_government = nationalist }
+			modifier = { add = 15 has_government = fascism }
+			modifier = { add = 10 num_of_factories < 30 }
+			modifier = {
+				add = 20
+				has_opinion = { target = event_target:coup_contest_sender value > 0 }
+			}
+		}
+	}
+}
+
+# Coup Contest (civil war variant) — major influencer can back the old regime
+country_event = {
+	id = influence.61
+	title = influence.61.t
+	desc = influence.61.d
+	picture = GFX_politics_surveillence
+	is_triggered_only = yes
+
+	trigger = {
+		event_target:coup_contest_sender = { exists = yes }
+		event_target:coup_contest_victim = {
+			exists = yes
+			has_civil_war = yes
+		}
+		NOT = { has_country_flag = collapsed_nation }
+	}
+
+	# Arm the old regime with equipment, volunteers, and diplomatic backing
+	option = {
+		name = influence.61.a
+		log = "[GetDateText]: [This.GetName]: influence.61.a executed"
+		send_equipment = {
+			amount = 3000
+			type = infantry_weapons_1
+			target = event_target:coup_contest_victim
+		}
+		send_equipment = {
+			amount = 200
+			type = util_vehicle_type
+			target = event_target:coup_contest_victim
+		}
+		add_relation_modifier = {
+			target = event_target:coup_contest_victim
+			modifier = generic_increased_military_support
+		}
+		event_target:coup_contest_victim = {
+			add_stability = 0.03
+			add_war_support = 0.05
+		}
+		add_political_power = -75
+		hidden_effect = {
+			every_country = {
+				limit = { is_ai = no }
+				news_event = { id = News_influence.9 days = 1 }
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_opinion = { target = event_target:coup_contest_sender value < -20 } }
+			modifier = {
+				add = 20
+				has_government = democratic
+				event_target:coup_contest_victim = { has_government = democratic }
+			}
+			modifier = { add = 15 has_idea = great_power }
+			modifier = { add = 20 has_idea = super_power }
+			modifier = { factor = 1.3 has_government = communism event_target:coup_contest_victim = { has_government = communism } }
+			modifier = { factor = 0.6 has_government = nationalist }
+			modifier = { factor = 0.6 num_of_military_factories < 25 }
+			modifier = { factor = 0 has_war = yes }
+		}
+	}
+
+	# Provide economic aid only — keep the regime afloat without getting our hands dirty
+	option = {
+		name = influence.61.b
+		log = "[GetDateText]: [This.GetName]: influence.61.b executed"
+		event_target:coup_contest_victim = {
+			set_temp_variable = { treasury_change = 100 }
+			modify_treasury_effect = yes
+			add_stability = 0.02
+		}
+		add_relation_modifier = {
+			target = event_target:coup_contest_victim
+			modifier = generic_increased_cooperation
+		}
+		set_temp_variable = { treasury_change = -100 }
+		modify_treasury_effect = yes
+		add_political_power = -40
+		ai_chance = {
+			base = 30
+			modifier = { add = 15 has_opinion = { target = event_target:coup_contest_sender value < 0 } }
+			modifier = { add = 10 num_of_military_factories < 30 }
+			modifier = { add = 10 has_war = yes }
+			modifier = { factor = 1.4 has_government = democratic }
+			modifier = { factor = 1.3 has_government = neutrality }
+			modifier = { factor = 0.7 has_government = communism }
+		}
+	}
+
+	# Full military intervention — commit to the old regime's victory
+	option = {
+		name = influence.61.e
+		log = "[GetDateText]: [This.GetName]: influence.61.e executed"
+		add_relation_modifier = {
+			target = event_target:coup_contest_victim
+			modifier = generic_military_intervention
+		}
+		send_equipment = {
+			amount = 5000
+			type = infantry_weapons_1
+			target = event_target:coup_contest_victim
+		}
+		send_equipment = {
+			amount = 400
+			type = util_vehicle_type
+			target = event_target:coup_contest_victim
+		}
+		event_target:coup_contest_victim = {
+			add_stability = 0.05
+			add_war_support = 0.08
+		}
+		add_opinion_modifier = {
+			target = event_target:coup_contest_sender
+			modifier = attacked_our_influence
+		}
+		event_target:coup_contest_sender = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = attacked_our_influence
+			}
+		}
+		set_temp_variable = { percent_change = 20 }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = event_target:coup_contest_victim.id }
+		change_influence_percentage = yes
+		add_political_power = -150
+		add_war_support = 0.05
+		add_threat = 3
+		hidden_effect = {
+			every_country = {
+				limit = { is_ai = no }
+				news_event = { id = News_influence.10 days = 1 }
+			}
+		}
+		ai_chance = {
+			base = 8
+			modifier = {
+				add = 20
+				event_target:coup_contest_sender = {
+					OR = {
+						original_tag = CHI
+						original_tag = SOV
+						original_tag = PER
+					}
+				}
+			}
+			modifier = { add = 10 event_target:coup_contest_sender = { has_added_tension_amount > 30 } }
+			modifier = {
+				add = 15
+				has_government = democratic
+				event_target:coup_contest_victim = { has_government = democratic }
+			}
+			modifier = { add = 15 has_idea = super_power }
+			modifier = { add = 8 has_idea = great_power }
+			modifier = { factor = 1.3 has_country_leader = { name = "Donald Trump" } }
+			modifier = { factor = 0.5 has_government = neutrality }
+			modifier = { factor = 0 has_war = yes }
+			modifier = { factor = 0.3 threat > 0.70 }
+			modifier = { factor = 0 num_of_military_factories < 50 }
+			modifier = { factor = 0 is_in_faction_with = event_target:coup_contest_sender }
+		}
+	}
+
+	# Stay out
+	option = {
+		name = influence.61.c
+		log = "[GetDateText]: [This.GetName]: influence.61.c executed"
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_war = yes }
+			modifier = { add = 25 has_government = nationalist }
+			modifier = { add = 15 has_government = fascism }
+			modifier = { add = 10 num_of_factories < 30 }
+			modifier = { add = 15 has_idea = no_military }
+			modifier = { factor = 0.7 has_government = democratic }
+		}
+	}
+}
+
 ##Military Aid - NONAI Master Event
 country_event = {
 	id = influence.50
 	immediate = {
 		log = "[GetDateText]: [Root.GetName]: event influence.50"
 		FROM = { #
-			country_event = { id = influence.51 } #Should get the military AID event to the ROOT tag
+			country_event = influence.51 #Should get the military AID event to the ROOT tag
 		}
 	}
 	title = "You shouldn't see this. REE DONT TRIGGER MY EVENTS"
@@ -1768,24 +2448,59 @@ country_event = {
 	#Consider the Military Offer
 	option = {
 		name = influence.51.a
-		log = "[GetDateText]: [This.GetName]: influence.1.a executed"
+		log = "[GetDateText]: [This.GetName]: influence.51.a executed"
 
 		custom_effect_tooltip = influence.51.a_tt
-		country_event = { id = influence.52 }
+		country_event = influence.52
 
 		ai_chance = {
-			factor = 1
+			base = 2
+			# Recipient situation
+			modifier = { add = 3 FROM = { has_war = yes } }
+			modifier = { add = 2 FROM = { surrender_progress > 0.10 } }
+			modifier = { add = 2 is_in_faction_with = FROM }
+			modifier = { add = 1 has_opinion = { target = FROM value > 20 } }
+			modifier = { add = 2 has_opinion = { target = FROM value > 50 } }
+			modifier = { add = 2 FROM = { OR = { has_war_with = CHI has_war_with = SOV has_war_with = PER } } }
+			# Sender personality
+			modifier = { factor = 1.3 has_government = democratic }
+			modifier = { factor = 1.2 has_government = communism }
+			modifier = { factor = 0.7 has_government = nationalist }
+			modifier = { factor = 0.5 has_government = fascism }
+			# Power projection
+			modifier = { factor = 1.4 has_idea = super_power }
+			modifier = { factor = 1.2 has_idea = great_power }
+			# Strategic constraints
+			modifier = { factor = 1.3 threat > 0.40 }
+			modifier = { factor = 0.7 has_war = yes }
+			modifier = { factor = 0.5 num_of_military_factories < 20 }
+			modifier = { factor = 0.5 has_idea = no_military }
+			# Hard floors
+			modifier = { factor = 0 has_opinion = { target = FROM value < -20 } }
+			modifier = { factor = 0 has_war_with = FROM }
 		}
 	}
 
 	option = {
 		name = influence.51.b
-		log = "[GetDateText]: [This.GetName]: influence.1.b executed"
+		log = "[GetDateText]: [This.GetName]: influence.51.b executed"
 
 		custom_effect_tooltip = influence.51.b_tt
 		FROM = { ROOT = { clr_country_flag = recently_sent_military_aid@PREV } }
 		ai_chance = {
-			factor = 0
+			base = 2
+			modifier = { add = 3 has_opinion = { target = FROM value < 0 } }
+			modifier = { add = 2 has_opinion = { target = FROM value < -30 } }
+			modifier = { add = 3 has_war = yes }
+			modifier = { add = 2 num_of_military_factories < 15 }
+			modifier = { add = 2 has_idea = no_military }
+			# Personality
+			modifier = { factor = 1.5 has_government = nationalist }
+			modifier = { factor = 1.5 has_government = fascism }
+			modifier = { factor = 0.7 has_government = democratic }
+			# Hard floors
+			modifier = { factor = 0 FROM = { has_war = yes } has_opinion = { target = FROM value > 30 } }
+			modifier = { factor = 0 is_in_faction_with = FROM FROM = { has_war = yes } }
 		}
 	}
 }
@@ -1798,7 +2513,7 @@ country_event = {
 	picture = GFX_handgun
 	is_triggered_only = yes
 
-	#Infantry Equipment - Shoots another event to "send" the equipment
+	#Small Arms / Anti-Tank / AA package — pick a size next
 	option = {
 		name = influence.52.a
 		trigger = {
@@ -1810,79 +2525,25 @@ country_event = {
 		}
 		log = "[GetDateText]: [This.GetName]: influence.52.a executed"
 		set_country_flag = shipment_of_infantry_weapons
-		if = {
-			limit = { has_equipment = { infantry_weapons_type > 250 } }
-			effect_tooltip = {
-				FROM = {
-					add_equipment_to_stockpile = {
-						amount = -250
-						type = infantry_weapons_type
-						producer = PREV
-					}
-				}
-				FROM.FROM = { #Should be the targeted influencing nation
-					add_equipment_to_stockpile = {
-						amount = 250
-						type = infantry_weapons_type
-						producer = FROM
-					}
-				}
-			}
-		}
-		if = {
-			limit = { has_equipment = { L_AT_Equipment > 10 } }
-			effect_tooltip = {
-				FROM = {
-					add_equipment_to_stockpile = {
-						amount = -10
-						type = L_AT_Equipment
-						producer = PREV
-					}
-				}
-				FROM.FROM = { #Should be the targeted influencing nation
-					add_equipment_to_stockpile = {
-						amount = 10
-						type = L_AT_Equipment
-						producer = FROM
-					}
-				}
-			}
-		}
-		if = {
-			limit = { has_equipment = { AA_Equipment > 10 } }
-			effect_tooltip = {
-				FROM = {
-					add_equipment_to_stockpile = {
-						amount = -10
-						type = AA_Equipment
-						producer = PREV
-					}
-				}
-				FROM.FROM = { #Should be the targeted influencing nation
-					add_equipment_to_stockpile = {
-						amount = 10
-						type = AA_Equipment
-						producer = FROM
-					}
-				}
-			}
-		}
-		effect_tooltip = {
-			set_temp_variable = { percent_change = 1.5 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = FROM.FROM.id }
-			change_influence_percentage = yes
-		}
-		FROM.FROM = { #Targeted Influencer should recieve this
-			country_event = { id = influence.53 } #Infantry Equipment
+		custom_effect_tooltip = influence.52.a_preview_tt
+		country_event = influence.57
+		ai_chance = {
+			base = 3
+			modifier = { add = 2 FROM = { has_war = yes } }
+			modifier = { add = 2 FROM = { has_equipment = { infantry_weapons_type < 1000 } } }
+			modifier = { factor = 1.3 has_equipment = { infantry_weapons_type > 5000 } }
+			modifier = { factor = 0.7 has_government = communism }
+			modifier = { factor = 0.7 has_government = democratic }
+			modifier = { factor = 1.2 has_government = nationalist }
 		}
 	}
 
-	#APC/IFV
+	#Vehicles & Armor (now includes regular MBT chassis)
 	option = {
 		name = influence.52.b
 		trigger = {
 			OR = {
+				has_equipment = { medium_tank_chassis > 10 }
 				has_equipment = { medium_tank_amphibious_chassis > 10 }
 				has_equipment = { medium_tank_flame_chassis > 10 }
 				has_equipment = { util_vehicle_type > 10 }
@@ -1890,87 +2551,228 @@ country_event = {
 		}
 		log = "[GetDateText]: [This.GetName]: influence.52.b executed"
 		set_country_flag = forwarding_light_armor_vehicles
-		if = {
-			limit = {
-				has_equipment = { medium_tank_amphibious_chassis > 10 }
-			}
-			effect_tooltip = {
-				FROM = {
-					add_equipment_to_stockpile = {
-						amount = -10
-						type = medium_tank_amphibious_chassis
-						producer = PREV
-					}
-				}
-				FROM.FROM = { #Should be the targeted influencing nation
-					add_equipment_to_stockpile = {
-						amount = 10
-						type = medium_tank_amphibious_chassis
-					}
-				}
+		custom_effect_tooltip = influence.52.b_preview_tt
+		country_event = influence.57
+		ai_chance = {
+			base = 2
+			modifier = { add = 2 FROM = { has_war = yes } }
+			modifier = { add = 1 FROM = { has_equipment = { medium_tank_chassis < 200 } } }
+			modifier = { factor = 1.3 has_equipment = { medium_tank_chassis > 500 } }
+			modifier = { factor = 1.2 has_government = democratic }
+			modifier = { factor = 1.2 has_government = communism }
+			modifier = { factor = 0.8 num_of_military_factories < 30 }
+		}
+	}
+
+	#Modern Equipment Package (Heavy AT, SAM, drones)
+	option = {
+		name = influence.52.e
+		trigger = {
+			OR = {
+				has_equipment = { H_AT_Equipment > 10 }
+				has_equipment = { sam_missile_equipment > 5 }
+				has_equipment = { land_drone_equipment_type > 5 }
 			}
 		}
-		if = {
-			limit = {
-				has_equipment = { medium_tank_flame_chassis > 10 }
-			}
-			effect_tooltip = {
-				FROM = {
-					add_equipment_to_stockpile = {
-						amount = -10
-						type = medium_tank_flame_chassis
-						producer = PREV
-					}
-				}
-				FROM.FROM = { #Should be the targeted influencing nation
-					add_equipment_to_stockpile = {
-						amount = 10
-						type = medium_tank_flame_chassis
-						producer = FROM
-					}
-				}
-			}
-		}
-		if = {
-			limit = {
-				has_equipment = { util_vehicle_type > 10 }
-			}
-			effect_tooltip = {
-				FROM = {
-					add_equipment_to_stockpile = {
-						amount = -10
-						type = util_vehicle_type
-						producer = PREV
-					}
-				}
-				FROM.FROM = { #Should be the targeted influencing nation
-					add_equipment_to_stockpile = {
-						amount = 10
-						type = util_vehicle_type
-						producer = FROM
-					}
-				}
-			}
-		}
-		effect_tooltip = {
-			set_temp_variable = { percent_change = 2 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = FROM.FROM.id }
-			change_influence_percentage = yes
-		}
-		FROM.FROM = { #Targeted Influencer should receive this
-			country_event = { id = influence.53 } #Infantry Equipment
+		log = "[GetDateText]: [This.GetName]: influence.52.e executed"
+		set_country_flag = sending_modern_equipment_package
+		custom_effect_tooltip = influence.52.e_preview_tt
+		country_event = influence.57
+		ai_chance = {
+			base = 1
+			modifier = { add = 3 FROM = { has_war = yes } is_in_faction_with = FROM }
+			modifier = { add = 2 FROM = { OR = { has_war_with = CHI has_war_with = SOV has_war_with = PER } } }
+			modifier = { add = 2 has_idea = super_power }
+			modifier = { add = 1 has_idea = great_power }
+			modifier = { factor = 1.5 has_government = democratic }
+			modifier = { factor = 1.3 has_government = communism }
+			modifier = { factor = 0.6 has_government = nationalist }
+			modifier = { factor = 0.5 num_of_military_factories < 25 }
+			modifier = { factor = 0 has_opinion = { target = FROM value < 0 } }
 		}
 	}
 
 	option = {
 		name = influence.52.c
 		log = "[GetDateText]: [This.GetName]: influence.52.c executed"
-		FROM.FROM = { ROOT = { clr_country_flag = recently_sent_military_aid@PREV } }
+		FROM = { ROOT = { clr_country_flag = recently_sent_military_aid@PREV } }
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 has_war = yes }
+			modifier = { factor = 2 num_of_military_factories < 15 }
+			modifier = { factor = 0.5 FROM = { surrender_progress > 0.10 } }
+		}
 	}
 }
 
-#Receiver Event -- Basiclly haha I gain guns or light vehicles!
+#Pick the size of the aid package
+country_event = {
+	id = influence.57
+	title = influence.57.t
+	desc = influence.57.d
+	picture = GFX_handgun
+	is_triggered_only = yes
+
+	#Small package
+	option = {
+		name = influence.57.a
+		log = "[GetDateText]: [This.GetName]: influence.57.a executed"
+		set_country_flag = aid_package_small
+		add_political_power = -25
+		FROM = {
+			country_event = influence.53
+		}
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		if = {
+			limit = { has_country_flag = shipment_of_infantry_weapons }
+			effect_tooltip = {
+				send_equipment = { type = infantry_weapons_type amount = 250 target = FROM }
+				send_equipment = { type = L_AT_Equipment amount = 10 target = FROM }
+				send_equipment = { type = AA_Equipment amount = 10 target = FROM }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = forwarding_light_armor_vehicles }
+			effect_tooltip = {
+				send_equipment = { type = medium_tank_chassis amount = 10 target = FROM }
+				send_equipment = { type = medium_tank_amphibious_chassis amount = 10 target = FROM }
+				send_equipment = { type = medium_tank_flame_chassis amount = 10 target = FROM }
+				send_equipment = { type = util_vehicle_type amount = 10 target = FROM }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = sending_modern_equipment_package }
+			effect_tooltip = {
+				send_equipment = { type = H_AT_Equipment amount = 10 target = FROM }
+				send_equipment = { type = sam_missile_equipment amount = 5 target = FROM }
+				send_equipment = { type = land_drone_equipment_type amount = 5 target = FROM }
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = { add = 2 has_opinion = { target = FROM value < 30 } }
+			modifier = { add = 1 num_of_military_factories < 30 }
+			modifier = { factor = 1.5 has_government = democratic }
+			modifier = { factor = 1.3 has_government = neutrality }
+			modifier = { factor = 0.7 has_government = communism }
+			modifier = { factor = 0.7 has_idea = super_power }
+		}
+	}
+
+	#Medium package
+	option = {
+		name = influence.57.b
+		log = "[GetDateText]: [This.GetName]: influence.57.b executed"
+		set_country_flag = aid_package_medium
+		add_political_power = -75
+		add_threat = 1
+		FROM = {
+			country_event = influence.53
+		}
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		if = {
+			limit = { has_country_flag = shipment_of_infantry_weapons }
+			effect_tooltip = {
+				send_equipment = { type = infantry_weapons_type amount = 750 target = FROM }
+				send_equipment = { type = L_AT_Equipment amount = 30 target = FROM }
+				send_equipment = { type = AA_Equipment amount = 30 target = FROM }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = forwarding_light_armor_vehicles }
+			effect_tooltip = {
+				send_equipment = { type = medium_tank_chassis amount = 30 target = FROM }
+				send_equipment = { type = medium_tank_amphibious_chassis amount = 30 target = FROM }
+				send_equipment = { type = medium_tank_flame_chassis amount = 30 target = FROM }
+				send_equipment = { type = util_vehicle_type amount = 30 target = FROM }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = sending_modern_equipment_package }
+			effect_tooltip = {
+				send_equipment = { type = H_AT_Equipment amount = 30 target = FROM }
+				send_equipment = { type = sam_missile_equipment amount = 15 target = FROM }
+				send_equipment = { type = land_drone_equipment_type amount = 15 target = FROM }
+			}
+		}
+		ai_chance = {
+			base = 3
+			modifier = { add = 4 FROM = { has_war = yes } }
+			modifier = { add = 2 is_in_faction_with = FROM }
+			modifier = { add = 2 has_opinion = { target = FROM value > 40 } }
+			modifier = { add = 1 has_idea = great_power }
+			modifier = { factor = 1.3 has_government = democratic }
+			modifier = { factor = 1.2 has_government = communism }
+			modifier = { factor = 0.5 num_of_military_factories < 20 }
+		}
+	}
+
+	#Large package
+	option = {
+		name = influence.57.c
+		log = "[GetDateText]: [This.GetName]: influence.57.c executed"
+		set_country_flag = aid_package_large
+		add_political_power = -150
+		add_threat = 2
+		FROM = {
+			country_event = influence.53
+		}
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		if = {
+			limit = { has_country_flag = shipment_of_infantry_weapons }
+			effect_tooltip = {
+				send_equipment = { type = infantry_weapons_type amount = 1250 target = FROM }
+				send_equipment = { type = L_AT_Equipment amount = 50 target = FROM }
+				send_equipment = { type = AA_Equipment amount = 50 target = FROM }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = forwarding_light_armor_vehicles }
+			effect_tooltip = {
+				send_equipment = { type = medium_tank_chassis amount = 50 target = FROM }
+				send_equipment = { type = medium_tank_amphibious_chassis amount = 50 target = FROM }
+				send_equipment = { type = medium_tank_flame_chassis amount = 50 target = FROM }
+				send_equipment = { type = util_vehicle_type amount = 50 target = FROM }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = sending_modern_equipment_package }
+			effect_tooltip = {
+				send_equipment = { type = H_AT_Equipment amount = 50 target = FROM }
+				send_equipment = { type = sam_missile_equipment amount = 25 target = FROM }
+				send_equipment = { type = land_drone_equipment_type amount = 25 target = FROM }
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = { add = 5 FROM = { has_war = yes } is_in_faction_with = FROM }
+			modifier = { add = 3 FROM = { surrender_progress > 0.20 } }
+			modifier = { add = 2 FROM = { OR = { has_war_with = CHI has_war_with = SOV has_war_with = PER } } }
+			modifier = { add = 2 has_idea = super_power }
+			modifier = { factor = 1.5 has_government = communism }
+			modifier = { factor = 1.3 has_government = democratic }
+			modifier = { factor = 0 NOT = { is_in_faction_with = FROM } }
+			modifier = { factor = 0 has_war = yes }
+			modifier = { factor = 0 num_of_military_factories < 30 }
+		}
+	}
+
+	option = {
+		name = influence.57.e
+		log = "[GetDateText]: [This.GetName]: influence.57.e executed"
+		clr_country_flag = shipment_of_infantry_weapons
+		clr_country_flag = forwarding_light_armor_vehicles
+		clr_country_flag = sending_modern_equipment_package
+		FROM = { ROOT = { clr_country_flag = recently_sent_military_aid@PREV } }
+		ai_chance = {
+			base = 1
+			modifier = { add = 3 num_of_military_factories < 20 }
+			modifier = { add = 2 has_war = yes }
+		}
+	}
+}
+
+#Receiver Event — accepts or rejects a military aid package, scaled by package type and size flags
 country_event = {
 	id = influence.53
 	title = influence.53.t
@@ -1978,64 +2780,215 @@ country_event = {
 	picture = GFX_handgun
 	is_triggered_only = yes
 
-	option = { #Accept if shipping guns
-		name = influence.53.a
-		trigger = {
-			FROM = { has_country_flag = shipment_of_infantry_weapons }
-		}
-		log = "[GetDateText]: [This.GetName]: influence.53.a executed"
-		FROM = { clr_country_flag = shipment_of_infantry_weapons }
+	immediate = {
+		# Compute the size multiplier from the size flag set in influence.57
+		set_variable = { aid_size_mult = 1 }
 		if = {
-			limit = { FROM = { has_equipment = { infantry_weapons_type > 250 } } }
-			FROM = {
-				add_equipment_to_stockpile = {
-					amount = -250
-					type = infantry_weapons_type
-					producer = PREV
-				}
-			}
-			add_equipment_to_stockpile = {
-				amount = 250
-				type = infantry_weapons_type
-				producer = FROM
-			}
+			limit = { FROM = { has_country_flag = aid_package_medium } }
+			set_variable = { aid_size_mult = 3 }
 		}
+		else_if = {
+			limit = { FROM = { has_country_flag = aid_package_large } }
+			set_variable = { aid_size_mult = 5 }
+		}
+		# Capture whether modern equipment was sent, before flags are cleared in the option
+		set_variable = { aid_was_modern = 0 }
 		if = {
-			limit = { FROM = { has_equipment = { L_AT_Equipment > 10 } } }
-			FROM = {
-				add_equipment_to_stockpile = {
-					amount = -10
-					type = L_AT_Equipment
-					producer = PREV
-				}
-			}
-			add_equipment_to_stockpile = {
-				amount = 10
-				type = L_AT_Equipment
-				producer = FROM
-			}
+			limit = { FROM = { has_country_flag = sending_modern_equipment_package } }
+			set_variable = { aid_was_modern = 1 }
 		}
-		if = {
-			limit = { FROM = { has_equipment = { AA_Equipment > 10 } } }
-			FROM = {
-				add_equipment_to_stockpile = {
-					amount = -10
-					type = AA_Equipment
-					producer = PREV
-				}
-			}
-			add_equipment_to_stockpile = {
-				amount = 10
-				type = AA_Equipment
-				producer = FROM
-			}
-		}
-		set_temp_variable = { percent_change = 1.5 }
-		set_temp_variable = { tag_index = FROM.id }
-		set_temp_variable = { influence_target = THIS.id }
-		change_influence_percentage = yes
+	}
 
-		FROM = { country_event = { id = diplomatic_response.1 } }
+	# Accept the package
+	option = {
+		name = influence.53.a
+		log = "[GetDateText]: [This.GetName]: influence.53.a executed"
+
+		# Infantry package — small arms, light AT, AA
+		if = {
+			limit = { FROM = { has_country_flag = shipment_of_infantry_weapons } }
+			FROM = { clr_country_flag = shipment_of_infantry_weapons }
+			set_temp_variable = { infantry_amount = 250 }
+			multiply_temp_variable = { infantry_amount = aid_size_mult }
+			set_temp_variable = { support_amount = 10 }
+			multiply_temp_variable = { support_amount = aid_size_mult }
+			FROM = {
+				if = {
+					limit = { has_equipment = { infantry_weapons_type > 250 } }
+					send_equipment = {
+						type = infantry_weapons_type
+						amount = infantry_amount
+						target = PREV
+					}
+				}
+				if = {
+					limit = { has_equipment = { L_AT_Equipment > 10 } }
+					send_equipment = {
+						type = L_AT_Equipment
+						amount = support_amount
+						target = PREV
+					}
+				}
+				if = {
+					limit = { has_equipment = { AA_Equipment > 10 } }
+					send_equipment = {
+						type = AA_Equipment
+						amount = support_amount
+						target = PREV
+					}
+				}
+			}
+			set_temp_variable = { percent_change = 1.5 }
+			set_temp_variable = { tag_index = FROM.id }
+			change_influence_percentage = yes
+		}
+
+		# Vehicle package — MBT, amphibious, flame, utility
+		if = {
+			limit = { FROM = { has_country_flag = forwarding_light_armor_vehicles } }
+			FROM = { clr_country_flag = forwarding_light_armor_vehicles }
+			set_temp_variable = { vehicle_amount = 10 }
+			multiply_temp_variable = { vehicle_amount = aid_size_mult }
+			FROM = {
+				if = {
+					limit = { has_equipment = { medium_tank_chassis > 10 } }
+					send_equipment = {
+						type = medium_tank_chassis
+						amount = vehicle_amount
+						target = PREV
+					}
+				}
+				if = {
+					limit = { has_equipment = { medium_tank_amphibious_chassis > 10 } }
+					send_equipment = {
+						type = medium_tank_amphibious_chassis
+						amount = vehicle_amount
+						target = PREV
+					}
+				}
+				if = {
+					limit = { has_equipment = { medium_tank_flame_chassis > 10 } }
+					send_equipment = {
+						type = medium_tank_flame_chassis
+						amount = vehicle_amount
+						target = PREV
+					}
+				}
+				if = {
+					limit = { has_equipment = { util_vehicle_type > 10 } }
+					send_equipment = {
+						type = util_vehicle_type
+						amount = vehicle_amount
+						target = PREV
+					}
+				}
+			}
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = FROM.id }
+			change_influence_percentage = yes
+		}
+
+		# Modern equipment package — heavy AT, SAMs, drones
+		if = {
+			limit = { FROM = { has_country_flag = sending_modern_equipment_package } }
+			FROM = { clr_country_flag = sending_modern_equipment_package }
+			set_temp_variable = { modern_amount = 10 }
+			multiply_temp_variable = { modern_amount = aid_size_mult }
+			set_temp_variable = { drone_amount = 5 }
+			multiply_temp_variable = { drone_amount = aid_size_mult }
+			FROM = {
+				if = {
+					limit = { has_equipment = { H_AT_Equipment > 10 } }
+					send_equipment = {
+						type = H_AT_Equipment
+						amount = modern_amount
+						target = PREV
+					}
+				}
+				if = {
+					limit = { has_equipment = { sam_missile_equipment > 5 } }
+					send_equipment = {
+						type = sam_missile_equipment
+						amount = drone_amount
+						target = PREV
+					}
+				}
+				if = {
+					limit = { has_equipment = { land_drone_equipment_type > 5 } }
+					send_equipment = {
+						type = land_drone_equipment_type
+						amount = drone_amount
+						target = PREV
+					}
+				}
+			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = FROM.id }
+			change_influence_percentage = yes
+		}
+
+		# Cleanup size flags
+		FROM = {
+			clr_country_flag = aid_package_small
+			clr_country_flag = aid_package_medium
+			clr_country_flag = aid_package_large
+		}
+
+		# Relation modifier and 90-day cooldown so they can't be spammed with packages
+		add_relation_modifier = {
+			target = FROM
+			modifier = generic_increased_military_support
+		}
+		set_country_flag = {
+			flag = received_military_aid_recently@FROM
+			days = 90
+			value = 1
+		}
+
+		# Every nation we are at war with takes a serious diplomatic hit at the donor
+		every_enemy_country = {
+			add_opinion_modifier = {
+				target = FROM
+				modifier = armed_our_enemy
+			}
+		}
+
+		# News event for major arms transfers — differentiated by package type
+		if = {
+			limit = {
+				OR = {
+					check_variable = { aid_was_modern = 1 }
+					check_variable = { aid_size_mult > 4 }
+				}
+			}
+			save_event_target_as = aid_recipient
+			FROM = { save_event_target_as = aid_donor }
+			# Modern equipment package gets its own (more provocative) news flavor
+			if = {
+				limit = { check_variable = { aid_was_modern = 1 } }
+				hidden_effect = {
+					every_country = {
+						limit = { is_ai = no }
+						news_event = { id = News_influence.12 days = 1 }
+					}
+				}
+			}
+			else = {
+				# Large conventional package
+				hidden_effect = {
+					every_country = {
+						limit = { is_ai = no }
+						news_event = { id = News_influence.11 days = 1 }
+					}
+				}
+			}
+		}
+
+		# Clear persistent helper variables after news event checks
+		clear_variable = aid_size_mult
+		clear_variable = aid_was_modern
+
+		FROM = { country_event = diplomatic_response.1 }
 		ai_chance = {
 			factor = 1
 			modifier = { #Sacrifice Influence for free guns
@@ -2106,132 +3059,18 @@ country_event = {
 		}
 	}
 
-	option = {
-		name = influence.53.b
-		trigger = {
-			FROM = { has_country_flag = forwarding_light_armor_vehicles }
-		}
-		log = "[GetDateText]: [This.GetName]: influence.53.b executed"
-		FROM = { clr_country_flag = forwarding_light_armor_vehicles }
-		if = {
-			limit = { FROM = { has_equipment = { medium_tank_amphibious_chassis > 10 } } }
-			FROM = {
-				add_equipment_to_stockpile = {
-					amount = -10
-					type = medium_tank_amphibious_chassis
-					producer = PREV
-				}
-			}
-			add_equipment_to_stockpile = {
-				amount = 10
-				type = medium_tank_amphibious_chassis
-				producer = FROM
-			}
-		}
-		if = {
-			limit = { FROM = { has_equipment = { medium_tank_flame_chassis > 10 } } }
-			FROM = {
-				add_equipment_to_stockpile = {
-					amount = -10
-					type = medium_tank_flame_chassis
-					producer = PREV
-				}
-			}
-			add_equipment_to_stockpile = {
-				amount = 10
-				type = medium_tank_flame_chassis
-				producer = FROM
-			}
-		}
-		if = {
-			limit = { FROM = { has_equipment = { util_vehicle_type > 10 } } }
-			FROM = {
-				add_equipment_to_stockpile = {
-					amount = -10
-					type = util_vehicle_type
-					producer = PREV
-				}
-			}
-			add_equipment_to_stockpile = {
-				amount = 10
-				type = util_vehicle_type
-				producer = FROM
-			}
-		}
-		set_temp_variable = { percent_change = 2 }
-		set_temp_variable = { tag_index = FROM.id }
-		set_temp_variable = { influence_target = THIS.id }
-		change_influence_percentage = yes
-
-		FROM = { country_event = { id = diplomatic_response.1 } }
-		ai_chance = {
-			factor = 1
-			modifier = { #Sacrifice Influence for free guns
-				OR = {
-					has_equipment = { infantry_weapons_type < 250 }
-					has_equipment = { L_AT_Equipment < 10 }
-					has_equipment = { AA_Equipment < 10 }
-				}
-				factor = 100
-			}
-
-			modifier = {
-				factor = 0.01
-				has_government = nationalist
-			}
-			modifier = {
-				has_war = yes
-				factor = 1.5
-			}
-			modifier = {
-				any_neighbor_country = {
-					is_justifying_wargoal_against = THIS
-				}
-				factor = 2.0
-			}
-			modifier = {
-				factor = 1.10
-				has_opinion = { target = FROM value < 10 }
-			}
-			modifier = {
-				factor = 1.25
-				has_opinion = { target = FROM value < -10 }
-			}
-			modifier = {
-				factor = 1.35
-				has_opinion = { target = FROM value < -30 }
-			}
-			modifier = {
-				factor = 1.50
-				has_opinion = { target = FROM value < -60 }
-			}
-			modifier = {
-				factor = 1.60
-				has_opinion = { target = FROM value < -80 }
-			}
-			modifier = {
-				factor = 2.0
-				has_opinion = { target = FROM value < -90 }
-			}
-			modifier = { #Never Accept the issue
-				factor = 100
-				has_opinion = { target = FROM value < -100 }
-			}
-		}
-	}
-
-	#Refusal
+	# Refusal
 	option = {
 		name = influence.53.c
-		trigger = {
-			FROM = {
-				OR = {
-					has_country_flag = shipment_of_infantry_weapons
-					has_country_flag = forwarding_light_armor_vehicles
-				}
-			}
-		}
 		log = "[GetDateText]: [This.GetName]: influence.53.c executed"
+		FROM = {
+			clr_country_flag = shipment_of_infantry_weapons
+			clr_country_flag = forwarding_light_armor_vehicles
+			clr_country_flag = sending_modern_equipment_package
+			clr_country_flag = aid_package_small
+			clr_country_flag = aid_package_medium
+			clr_country_flag = aid_package_large
+		}
 		if = { limit = { NOT = { has_country_flag = refused_military_aid } }
 			set_temp_variable = { percent_change = 2 }
 			change_domestic_influence_percentage = yes
@@ -2242,7 +3081,7 @@ country_event = {
 			custom_effect_tooltip = domestic_timer_military_aid_tt
 		}
 
-		FROM = { country_event = { id = diplomatic_response.2 } }
+		FROM = { country_event = diplomatic_response.2 }
 		ai_chance = { #Should be more likely to reject if they don't need it
 			factor = 5
 			modifier = {
@@ -2255,6 +3094,14 @@ country_event = {
 					has_government = fascism
 				}
 				factor = 1.5
+			}
+			modifier = {
+				factor = 0.1
+				has_war = yes
+			}
+			modifier = {
+				factor = 0.1
+				num_of_military_factories < 10
 			}
 		}
 	}
@@ -2273,226 +3120,47 @@ country_event = {
 	}
 
 	immediate = {
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^0 = 0 } } }
-			set_variable = { auto_influence_target_0_val = 0 }
-			var:auto_influence_array^0 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
+		clear_array = auto_influence_target_val
+		for_loop_effect = {
+			end = auto_influence_array^num
+			value = i
+			if = {
+				limit = { NOT = { check_variable = { auto_influence_array^i = 0 } } }
+				set_variable = { ROOT.found_influence_val = 0 }
+				set_variable = { ROOT.found_influence_match = 0 }
+				var:auto_influence_array^i = {
+					set_temp_variable = { influencer_index = -1 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = { check_variable = { influence_array^v = ROOT } }
+							set_temp_variable = { influencer_index = v }
 						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
+					}
+					if = {
+						limit = { NOT = { check_variable = { influencer_index = -1 } } }
+						set_variable = { ROOT.found_influence_val = influence_array_val^influencer_index }
+						set_variable = { ROOT.found_influence_match = 1 }
 					}
 				}
 				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_0_val = influence_array_val^influencer_index }
+					limit = { check_variable = { found_influence_match = 1 } }
+					set_variable = { auto_influence_target_val^i = found_influence_val }
 				}
-			}
-			custom_effect_tooltip = auto_influence_target_0_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^1 = 0 } } }
-			set_variable = { auto_influence_target_1_val = 0 }
-			var:auto_influence_array^1 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
+				else = {
+					set_variable = { auto_influence_target_val^i = 0 }
+				}
+				meta_effect = {
+					text = {
+						custom_effect_tooltip = auto_influence_target_[IDX]_tt
 					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_1_val = influence_array_val^influencer_index }
+					IDX = "[?i]"
 				}
 			}
-			custom_effect_tooltip = auto_influence_target_1_tt
 		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^2 = 0 } } }
-			set_variable = { auto_influence_target_2_val = 0 }
-			var:auto_influence_array^2 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_2_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_2_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^3 = 0 } } }
-			set_variable = { auto_influence_target_3_val = 0 }
-			var:auto_influence_array^3 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_3_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_3_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^4 = 0 } } }
-			set_variable = { auto_influence_target_4_val = 0 }
-			var:auto_influence_array^4 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_4_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_4_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^5 = 0 } } }
-			set_variable = { auto_influence_target_5_val = 0 }
-			var:auto_influence_array^5 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_5_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_5_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^6 = 0 } } }
-			set_variable = { auto_influence_target_6_val = 0 }
-			var:auto_influence_array^6 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_6_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_6_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^7 = 0 } } }
-			set_variable = { auto_influence_target_7_val = 0 }
-			var:auto_influence_array^7 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_7_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_7_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^8 = 0 } } }
-			set_variable = { auto_influence_target_8_val = 0 }
-			var:auto_influence_array^8 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_8_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_8_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^9 = 0 } } }
-			set_variable = { auto_influence_target_9_val = 0 }
-			var:auto_influence_array^9 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_9_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_9_tt
-		}
+		clear_variable = found_influence_val
+		clear_variable = found_influence_match
 	}
 
 	option = {
@@ -2509,7 +3177,7 @@ country_event = {
 	immediate = {
 		log = "[GetDateText]: [Root.GetName]: event influence.55"
 		FROM = {
-			country_event = { id = influence.56 } #Choose how to ship equipment
+			country_event = influence.56 #Choose how to ship equipment
 		}
 	}
 	title = "You shouldn't see this. REE DONT TRIGGER MY EVENTS"
@@ -2532,7 +3200,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.56.a executed"
 		trigger = {
 			PREV = {
-				tag = PER
+				original_tag = PER
 				has_equipment = { infantry_weapons_type > 250 }
 			}
 		}
@@ -2547,7 +3215,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.56.b executed"
 		trigger = {
 			PREV = {
-				tag = PER
+				original_tag = PER
 				has_equipment = { infantry_weapons_type > 250 }
 			}
 			FROM = {

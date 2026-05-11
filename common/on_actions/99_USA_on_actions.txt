@@ -1,4 +1,46 @@
 on_actions = {
+	on_declare_war = {
+		effect = {
+			# MNNA under attack — fire intervention dilemma to the NATO leader
+			# Skipped if NATO leader is already handling another MNNA attack (event targets are global, so 2nd within 7d would clobber the 1st)
+			if = {
+				limit = {
+					FROM = {
+						has_idea = Major_Non_NATO_Ally
+						NOT = { is_subject_of = ROOT }
+					}
+					NOT = { has_government = democratic }
+					NOT = { has_idea = NATO_member }
+					NOT = { has_idea = Major_Non_NATO_Ally }
+					any_of_scopes = {
+						array = global.nato_members
+						is_faction_leader = yes
+						NOT = { has_country_flag = collapsed_nation }
+						NOT = { has_country_flag = mnna_event_cooldown }
+						NOT = { has_war_with = ROOT }
+						NOT = { tag = ROOT }
+					}
+				}
+				save_event_target_as = mnna_aggressor
+				FROM = { save_event_target_as = mnna_defender }
+				random_scope_in_array = {
+					array = global.nato_members
+					limit = {
+						is_faction_leader = yes
+						NOT = { has_country_flag = collapsed_nation }
+						NOT = { has_country_flag = mnna_event_cooldown }
+						NOT = { has_war_with = event_target:mnna_aggressor }
+					}
+					set_country_flag = {
+						flag = mnna_event_cooldown
+						days = 7
+						value = 1
+					}
+					country_event = { id = department_of_state.232 days = 2 }
+				}
+			}
+		}
+	}
 	on_weekly_USA = {
 		random_events = {
 			1000 = 0

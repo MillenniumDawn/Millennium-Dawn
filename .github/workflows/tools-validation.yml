@@ -22,6 +22,12 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 1
+          sparse-checkout: |
+            tools
+            common
+            events
+            history
+            localisation
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
@@ -34,9 +40,33 @@ jobs:
         run: |
           python tools/validate_tools.py --strict --no-color --output tools_validation.log
       - name: Upload validation report
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: tools-validation-report
           path: tools_validation.log
           retention-days: 7
+
+  report-lib-tests:
+    name: report_lib + validator unit tests
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            tools
+          sparse-checkout-cone-mode: false
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: '3.x'
+      - name: Install test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tools/report_lib/requirements-dev.txt
+      - name: Run pytest
+        run: |
+          python -m pytest tools/report_lib/tests/ tools/validation/tests/ -v

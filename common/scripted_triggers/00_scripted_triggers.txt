@@ -352,20 +352,6 @@ can_ROOT_get_wargoal_on_THIS = {
 	NOT = { is_subject_of = ROOT }
 }
 
-has_specialist_level_trigger = {
-	skill > 5
-	skill < 6
-}
-
-has_expert_level_trigger = {
-	skill > 6
-	skill < 7
-}
-
-has_genius_level_trigger = {
-	skill > 7
-}
-
 state_has_any_resource = {
 	OR = {
 		has_resources_amount = {
@@ -459,6 +445,7 @@ is_locked_faction = {
 		OR = {
 			has_idea = NATO_member
 			has_idea = CSTO_member
+			has_idea = UNASUL_member
 			has_idea = faction_resistance_axis_member
 		}
 	}
@@ -482,13 +469,13 @@ currently_has_a_5_year_plan_selected = {
 
 election_notification_scripted_trigger = {
 	OR = {
-		AND = { PREV = { is_North_America = yes } is_North_America = yes }
-		AND = { PREV = { is_South_America = yes } is_South_America = yes }
-		AND = { PREV = { is_in_array = { global.is_middle_eastern_nation = THIS.id } } is_in_array = { global.is_middle_eastern_nation = THIS.id } }
-		AND = { PREV = { is_in_array = { global.is_african_nation = THIS.id } } is_in_array = { global.is_african_nation = THIS.id } }
-		AND = { PREV = { is_european_nation = yes } is_european_nation = yes }
-		AND = { PREV = { is_asian_nation = yes } is_asian_nation = yes }
-		AND = { PREV = { is_oceania_nation = yes } is_oceania_nation = yes }
+		AND = { PREV = { has_country_flag = north_america_nation_flag } has_country_flag = north_america_nation_flag }
+		AND = { PREV = { has_country_flag = south_america_nation_flag } has_country_flag = south_america_nation_flag }
+		AND = { PREV = { has_country_flag = middle_east_nation_flag } has_country_flag = middle_east_nation_flag }
+		AND = { PREV = { has_country_flag = african_nation_flag } has_country_flag = african_nation_flag }
+		AND = { PREV = { has_country_flag = european_nation_flag } has_country_flag = european_nation_flag }
+		AND = { PREV = { has_country_flag = asian_nation_flag } has_country_flag = asian_nation_flag }
+		AND = { PREV = { has_country_flag = oceania_nation_flag } has_country_flag = oceania_nation_flag }
 	}
 }
 
@@ -507,5 +494,19 @@ we_are_being_justified_against_or_wargoal_against_us = {
 			is_justifying_wargoal_against = PREV
 			has_wargoal_against = PREV
 		}
+	}
+}
+
+# UAR GDP Share Check
+# Checks if ROOT's UAR GDP share exceeds the threshold (40%)
+# Uses total_uar_gdp and total_arabic_gdp variables
+# Clamps denominator to prevent division by zero
+uar_has_required_gdp_share = {
+	set_temp_variable = { gdp_share = total_uar_gdp }
+	clamp_temp_variable = { var = total_arabic_gdp min = 0.001 }
+	divide_temp_variable = { gdp_share = total_arabic_gdp }
+	custom_trigger_tooltip = {
+		tooltip = UAR_unite_uar_tt
+		check_variable = { gdp_share > 0.40 }
 	}
 }
