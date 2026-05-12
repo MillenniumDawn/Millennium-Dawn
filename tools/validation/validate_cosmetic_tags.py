@@ -158,8 +158,15 @@ class Validator(BaseValidator):
             )
             return
 
+        # Cross-reference resolution: a tag set in any file in the repo counts,
+        # not just in the staged subset. Without ignore_staged here, a staged
+        # change adding `has_cosmetic_tag = X` would false-positive whenever
+        # the `set_cosmetic_tag = X` definition lives in an unmodified file.
+        all_files = self._collect_files(
+            ["**/*.txt"], extra_skip=_should_skip, ignore_staged=True
+        )
         remaining_tags = list(cosmetic_tags.keys())
-        args_list = [(f, False, remaining_tags) for f in files]
+        args_list = [(f, False, remaining_tags) for f in all_files]
         results = self._pool_map(process_file_for_set_cosmetic_tag, args_list)
 
         for counts in results:
