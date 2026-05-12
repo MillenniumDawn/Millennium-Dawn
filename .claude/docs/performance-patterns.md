@@ -175,6 +175,8 @@ clr_country_flag = has_valid_investment_target   # when no targets
 
 **Why:** A simple flag check is O(1). An `any_country` loop is O(N) per frame.
 
+**Note:** This advice applies to decision `visible` blocks (per-frame evaluation). For character `visible` blocks (evaluated only during AI assignment pulses and UI opens), `has_completed_focus` is equivalent to `has_country_flag` — both are hash-table lookups. Do **not** add country flags solely to replace `has_completed_focus` in character `visible` blocks; the extra flag persists in save files and bloats them for no benefit.
+
 ---
 
 ## Clamp Before Division
