@@ -1425,6 +1425,12 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = { has_country_flag = korea_peninsula_reunited }
+		NOT = { KOR = { has_country_flag = korea_peninsula_reunited } }
+		country_exists = KOR
+	}
+
 	option = {
 		name = korea.26.a #Our country will be whole again!
 		log = "[GetDateText]: [This.GetName]: korea.26.a executed"
@@ -1572,17 +1578,23 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: korea.27.a executed"
 		add_war_support = -0.05
 		support_for_reunification_2 = yes
-		annex_country = {
-			target = NKO
-			transfer_troops = yes
+		if = {
+			limit = {
+				NOT = { has_country_flag = korea_peninsula_reunited }
+				country_exists = NKO
+			}
+			annex_country = {
+				target = NKO
+				transfer_troops = yes
+			}
+			add_ideas = KOR_reunification_shocks
+			add_ideas = KOR_divided_military
+			add_ideas = KOR_mass_migration
+			add_ideas = KOR_fragmented_governance
+			add_ideas = KOR_uneven_economy1
+			decrease_economic_growth = yes
+			set_country_flag = korea_peninsula_reunited
 		}
-		add_ideas = KOR_reunification_shocks
-		add_ideas = KOR_divided_military
-		add_ideas = KOR_mass_migration
-		add_ideas = KOR_fragmented_governance
-		add_ideas = KOR_uneven_economy1
-		decrease_economic_growth = yes
-		set_country_flag = korea_peninsula_reunited
 	}
 }
 
@@ -1765,6 +1777,12 @@ country_event = {
 	picture = GFX_politics_negotiations
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = { has_country_flag = korea_peninsula_reunited }
+		NOT = { NKO = { has_country_flag = korea_peninsula_reunited } }
+		country_exists = NKO
+	}
+
 	option = {
 		name = korea.26.a #Our country will be whole again!
 		log = "[GetDateText]: [This.GetName]: korea.34.a executed"
@@ -1905,17 +1923,23 @@ country_event = {
 		set_temp_variable = { temp_opinion = -5 }
 		change_the_military_opinion = yes
 		change_communist_cadres_opinion = yes
-		annex_country = {
-			target = KOR
-			transfer_troops = yes
+		if = {
+			limit = {
+				NOT = { has_country_flag = korea_peninsula_reunited }
+				country_exists = KOR
+			}
+			annex_country = {
+				target = KOR
+				transfer_troops = yes
+			}
+			add_ideas = KOR_reunification_shocks
+			add_ideas = KOR_divided_military
+			add_ideas = KOR_mass_migration
+			add_ideas = KOR_fragmented_governance
+			add_ideas = KOR_uneven_economy1
+			decrease_economic_growth = yes
+			set_country_flag = korea_peninsula_reunited
 		}
-		add_ideas = KOR_reunification_shocks
-		add_ideas = KOR_divided_military
-		add_ideas = KOR_mass_migration
-		add_ideas = KOR_fragmented_governance
-		add_ideas = KOR_uneven_economy1
-		decrease_economic_growth = yes
-		set_country_flag = korea_peninsula_reunited
 	}
 }
 
@@ -2092,6 +2116,12 @@ country_event = {
 	picture = GFX_politics_negotiations
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = { has_country_flag = korea_peninsula_reunited }
+		NOT = { NKO = { has_country_flag = korea_peninsula_reunited } }
+		country_exists = NKO
+	}
+
 	option = {
 		name = korea.41.a
 		log = "[GetDateText]: [This.GetName]: korea.41.a executed"
@@ -2193,7 +2223,9 @@ country_event = {
 	option = {
 		name = korea.41.b #Reunification can never take place on these terms...
 		log = "[GetDateText]: [This.GetName]: korea.41.b executed"
+		set_country_flag = KOR_confederation_talks_failed
 		NKO = {
+			set_country_flag = NKO_confederation_talks_failed
 			country_event = {
 				days = 1
 				id = korea.43
@@ -2217,23 +2249,42 @@ country_event = {
 	option = {
 		name = korea.42.a
 		log = "[GetDateText]: [This.GetName]: korea.42.a executed"
-		set_autonomy = {
-			target = KOR
-			autonomy_state = autonomy_korean_federation
-			end_wars = no
-			end_civil_wars = no
-		}
-		KOR = {
+		if = {
+			limit = {
+				NOT = { has_country_flag = korea_peninsula_reunited }
+				country_exists = KOR
+				NOT = { KOR = { has_country_flag = korea_peninsula_reunited } }
+			}
+			set_autonomy = {
+				target = KOR
+				autonomy_state = autonomy_korean_federation
+				end_wars = no
+				end_civil_wars = no
+			}
 			add_ideas = KOR_reunification_shocks
 			add_ideas = KOR_divided_military
 			add_ideas = KOR_mass_migration
 			add_ideas = KOR_fragmented_governance
 			add_ideas = KOR_uneven_economy1
 			decrease_economic_growth = yes
+			set_country_flag = korea_peninsula_reunited
+			KOR = {
+				set_country_flag = korea_peninsula_reunited
+				if = {
+					limit = { has_idea = KOR_wartime_control }
+					remove_ideas = KOR_wartime_control
+				}
+				if = {
+					limit = { NOT = { has_completed_focus = KOR_secure_wartime_control } }
+					complete_national_focus = KOR_secure_wartime_control
+				}
+				if = {
+					limit = { NOT = { has_completed_focus = KOR_korean_security_in_korean_hands } }
+					complete_national_focus = KOR_korean_security_in_korean_hands
+				}
+			}
+			news_event = korea.50
 		}
-		set_country_flag = korea_peninsula_reunited
-		KOR = { set_country_flag = korea_peninsula_reunited }
-		news_event = korea.50
 	}
 }
 
@@ -4559,7 +4610,7 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: NKO_spa.0.a executed"
 		NKO_spa_open_session = yes
 		set_country_flag = { flag = NKO_spa_recent_session days = 100 value = 1 }
-		country_event = { id = NKO_spa.10 days = 120 }
+		country_event = { id = NKO_spa.10 days = 365 }
 	}
 }
 
@@ -4608,7 +4659,7 @@ country_event = {
 	}
 }
 
-# NKO_spa.10 — Cycle tick (hidden, self-scheduling every 120 days).
+# NKO_spa.10 — Cycle tick (hidden, self-scheduling every 365 days).
 # Cooldown-gated: skips opening a new session if NKO_spa_recent_session is
 # still active (i.e., another .10 fired within the last 100 days). Always
 # reschedules so the cycle doesn't die.
@@ -4629,17 +4680,12 @@ country_event = {
 					NOT = { has_civil_war = yes }
 					NOT = { has_country_flag = NKO_spa_recent_session }
 				}
-				if = {
-					limit = { check_variable = { NKO_spa_picks_made < 2 } }
-					NKO_spa_force_pick_fallback = yes
-					country_event = { id = NKO_spa.5 hours = 4 }
-				}
 				NKO_spa_open_session = yes
 				country_event = { id = NKO_spa.1 hours = 6 }
 				set_country_flag = { flag = NKO_spa_recent_session days = 100 value = 1 }
 			}
 			# Always reschedule so the cycle survives skipped iterations.
-			country_event = { id = NKO_spa.10 days = 120 }
+			country_event = { id = NKO_spa.10 days = 365 }
 		}
 	}
 
