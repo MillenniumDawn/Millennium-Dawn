@@ -523,6 +523,7 @@ class BaseValidator:
         self,
         patterns: List[str],
         extra_skip: Optional[Callable[[str], bool]] = None,
+        ignore_staged: bool = False,
     ) -> List[str]:
         """Collect mod files matching glob patterns, with staged-file support.
 
@@ -530,12 +531,17 @@ class BaseValidator:
         directory hint derived from each pattern's first non-wildcard segment.
         In full mode, expands each pattern via glob.iglob relative to mod_path.
         Always applies should_skip_file; extra_skip adds validator-local filtering.
+
+        Pass ``ignore_staged=True`` for cross-reference resolution passes that
+        must always scan the entire repo regardless of staged mode — e.g.
+        confirming a tag/idea/effect is defined somewhere even if its
+        definition file isn't part of the current change set.
         """
         extensions = list(
             {os.path.splitext(p)[1] for p in patterns if os.path.splitext(p)[1]}
         ) or [".txt"]
 
-        if self.staged_only:
+        if self.staged_only and not ignore_staged:
             if not self.staged_files:
                 return []
 
@@ -596,7 +602,7 @@ class BaseValidator:
     def _load_localisation_keys(self) -> frozenset:
         """Load all defined keys from English localisation yml files."""
         yml_files = self._collect_files(["localisation/english/**/*.yml"])
-        key_pattern = re.compile(r"^\s+([\w.]+)\s*:", re.MULTILINE)
+        key_pattern = re.compile(r"^[ \t]*([\w.]+)\s*:", re.MULTILINE)
         all_keys: set = set()
         for filepath in yml_files:
             try:
