@@ -87,6 +87,10 @@ Equipment variants (`common/ai_equipment/`): see `.claude/docs/ai-equipment-refe
 - CV planes: `ai_type` must be one of `cv_fighter`/`cv_interceptor`/`cv_cas`/`cv_naval_bomber`/`cv_suicide`
 - `equipment_variant_production_factor` penalties cascade to subtypes — keep base penalties <= -25%
 
+## Git Commits
+
+- Do NOT add `Co-Authored-By` or sign commits — the project does not use commit signing
+
 ## Key Resources
 
 - [HOI4 Scripting](.claude/docs/hoi4-data-structures.md) | [Documentation Index](.claude/docs/documentation-references.md)

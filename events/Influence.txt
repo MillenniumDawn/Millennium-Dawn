@@ -9,7 +9,7 @@ country_event = {
 	is_triggered_only = yes
 	hidden = yes
 	immediate = {
-		log = "[GetDateText]: [This.GetName]: influence.11.a executed"
+		log = "[GetDateText]: [This.GetName]: influence.0 executed"
 		set_variable = { five_gift_sum = gdp_total }
 		multiply_variable = { five_gift_sum = 0.05 }
 		clamp_variable = { var = five_gift_sum min = 1 max = 5000 } # Max Gift Amount Period
@@ -51,7 +51,6 @@ country_event = {
 				custom_effect_tooltip = accept_money
 				set_temp_variable = { percent_change = 2 }
 				set_temp_variable = { tag_index = PREV.id }
-				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
 				reverse_add_opinion_modifier = { target = FROM modifier = given_gift }
 			}
@@ -94,7 +93,6 @@ country_event = {
 				custom_effect_tooltip = accept_money
 				set_temp_variable = { percent_change = 4 }
 				set_temp_variable = { tag_index = PREV.id }
-				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
 				reverse_add_opinion_modifier = { target = FROM modifier = given_gift_ten }
 			}
@@ -137,7 +135,6 @@ country_event = {
 				custom_effect_tooltip = accept_money
 				set_temp_variable = { percent_change = 6 }
 				set_temp_variable = { tag_index = PREV.id }
-				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
 				reverse_add_opinion_modifier = { target = FROM modifier = given_gift_fifteen }
 			}
@@ -209,7 +206,6 @@ country_event = {
 			custom_effect_tooltip = accept_money
 			set_temp_variable = { percent_change = 2 }
 			set_temp_variable = { tag_index = FROM.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 			add_opinion_modifier = { target = FROM modifier = given_gift }
 		}
@@ -221,7 +217,6 @@ country_event = {
 			custom_effect_tooltip = accept_money
 			set_temp_variable = { percent_change = 4 }
 			set_temp_variable = { tag_index = FROM.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 			add_opinion_modifier = { target = FROM modifier = given_gift_ten }
 		}
@@ -233,7 +228,6 @@ country_event = {
 			custom_effect_tooltip = accept_money
 			set_temp_variable = { percent_change = 6 }
 			set_temp_variable = { tag_index = FROM.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 			add_opinion_modifier = { target = FROM modifier = given_gift_fifteen }
 		}
@@ -479,6 +473,11 @@ country_event = {
 			set_temp_variable = { influencer_index = 0 }
 			change_current_influencer_index_percentage = yes
 		}
+
+		set_temp_variable = { percent_change = -1 }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = FROM.id }
+		change_influence_percentage = yes
 
 		add_political_power = -100
 	}
@@ -962,8 +961,8 @@ country_event = {
 		#Base chance is from the popularity of all other Outlooks except defending and attacking
 		#More pluralistic -> higher chance of civil war
 		set_variable = { civil_war_factor = stability }
-		multiply_temp_variable = { civil_war_factor = -1 }
-		add_to_temp_variable = { civil_war_factor = 1 }
+		multiply_variable = { civil_war_factor = -1 }
+		add_to_variable = { civil_war_factor = 1 }
 
 		#Modify civil war chance based on the influence of "neutral" Outlooks
 		set_temp_variable = { civil_war_influence_multiplier = 100 }
@@ -1172,7 +1171,6 @@ country_event = {
 				}
 				#add 20% to ROOT influence
 				set_temp_variable = { percent_change = 10 }
-				set_temp_variable = { tag_index = ROOT.id }
 				set_temp_variable = { influence_target = FROM.id }
 				change_influence_percentage = yes
 				# NATO member couped by hostile power — trigger USA response
@@ -1261,7 +1259,6 @@ country_event = {
 
 				#remove a LOT of influence
 				set_temp_variable = { percent_change = -15 }
-				set_temp_variable = { tag_index = ROOT.id }
 				set_temp_variable = { influence_target = FROM.id }
 				change_influence_percentage = yes
 				#add event to country and world
@@ -1794,7 +1791,7 @@ country_event = {
 
 	option = {
 		name = influence.5.d1
-		log = "[GetDateText]: [This.GetName]: influence.5.c executed"
+		log = "[GetDateText]: [This.GetName]: influence.5.d1 executed"
 		trigger = {
 			original_tag = ENG
 			FROM = {
@@ -2625,6 +2622,32 @@ country_event = {
 		FROM = {
 			country_event = influence.53
 		}
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		if = {
+			limit = { has_country_flag = shipment_of_infantry_weapons }
+			effect_tooltip = {
+				send_equipment = { type = infantry_weapons_type amount = 250 target = FROM }
+				send_equipment = { type = L_AT_Equipment amount = 10 target = FROM }
+				send_equipment = { type = AA_Equipment amount = 10 target = FROM }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = forwarding_light_armor_vehicles }
+			effect_tooltip = {
+				send_equipment = { type = medium_tank_chassis amount = 10 target = FROM }
+				send_equipment = { type = medium_tank_amphibious_chassis amount = 10 target = FROM }
+				send_equipment = { type = medium_tank_flame_chassis amount = 10 target = FROM }
+				send_equipment = { type = util_vehicle_type amount = 10 target = FROM }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = sending_modern_equipment_package }
+			effect_tooltip = {
+				send_equipment = { type = H_AT_Equipment amount = 10 target = FROM }
+				send_equipment = { type = sam_missile_equipment amount = 5 target = FROM }
+				send_equipment = { type = land_drone_equipment_type amount = 5 target = FROM }
+			}
+		}
 		ai_chance = {
 			base = 5
 			modifier = { add = 2 has_opinion = { target = FROM value < 30 } }
@@ -2645,6 +2668,32 @@ country_event = {
 		add_threat = 1
 		FROM = {
 			country_event = influence.53
+		}
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		if = {
+			limit = { has_country_flag = shipment_of_infantry_weapons }
+			effect_tooltip = {
+				send_equipment = { type = infantry_weapons_type amount = 750 target = FROM }
+				send_equipment = { type = L_AT_Equipment amount = 30 target = FROM }
+				send_equipment = { type = AA_Equipment amount = 30 target = FROM }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = forwarding_light_armor_vehicles }
+			effect_tooltip = {
+				send_equipment = { type = medium_tank_chassis amount = 30 target = FROM }
+				send_equipment = { type = medium_tank_amphibious_chassis amount = 30 target = FROM }
+				send_equipment = { type = medium_tank_flame_chassis amount = 30 target = FROM }
+				send_equipment = { type = util_vehicle_type amount = 30 target = FROM }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = sending_modern_equipment_package }
+			effect_tooltip = {
+				send_equipment = { type = H_AT_Equipment amount = 30 target = FROM }
+				send_equipment = { type = sam_missile_equipment amount = 15 target = FROM }
+				send_equipment = { type = land_drone_equipment_type amount = 15 target = FROM }
+			}
 		}
 		ai_chance = {
 			base = 3
@@ -2667,6 +2716,32 @@ country_event = {
 		add_threat = 2
 		FROM = {
 			country_event = influence.53
+		}
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		if = {
+			limit = { has_country_flag = shipment_of_infantry_weapons }
+			effect_tooltip = {
+				send_equipment = { type = infantry_weapons_type amount = 1250 target = FROM }
+				send_equipment = { type = L_AT_Equipment amount = 50 target = FROM }
+				send_equipment = { type = AA_Equipment amount = 50 target = FROM }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = forwarding_light_armor_vehicles }
+			effect_tooltip = {
+				send_equipment = { type = medium_tank_chassis amount = 50 target = FROM }
+				send_equipment = { type = medium_tank_amphibious_chassis amount = 50 target = FROM }
+				send_equipment = { type = medium_tank_flame_chassis amount = 50 target = FROM }
+				send_equipment = { type = util_vehicle_type amount = 50 target = FROM }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = sending_modern_equipment_package }
+			effect_tooltip = {
+				send_equipment = { type = H_AT_Equipment amount = 50 target = FROM }
+				send_equipment = { type = sam_missile_equipment amount = 25 target = FROM }
+				send_equipment = { type = land_drone_equipment_type amount = 25 target = FROM }
+			}
 		}
 		ai_chance = {
 			base = 1
@@ -2735,36 +2810,36 @@ country_event = {
 			FROM = { clr_country_flag = shipment_of_infantry_weapons }
 			set_temp_variable = { infantry_amount = 250 }
 			multiply_temp_variable = { infantry_amount = aid_size_mult }
-			set_temp_variable = { infantry_amount_neg = infantry_amount }
-			multiply_temp_variable = { infantry_amount_neg = -1 }
 			set_temp_variable = { support_amount = 10 }
 			multiply_temp_variable = { support_amount = aid_size_mult }
-			set_temp_variable = { support_amount_neg = support_amount }
-			multiply_temp_variable = { support_amount_neg = -1 }
-			if = {
-				limit = { FROM = { has_equipment = { infantry_weapons_type > 250 } } }
-				FROM = {
-					add_equipment_to_stockpile = { amount = infantry_amount_neg type = infantry_weapons_type producer = PREV }
+			FROM = {
+				if = {
+					limit = { has_equipment = { infantry_weapons_type > 250 } }
+					send_equipment = {
+						type = infantry_weapons_type
+						amount = infantry_amount
+						target = PREV
+					}
 				}
-				add_equipment_to_stockpile = { amount = infantry_amount type = infantry_weapons_type producer = FROM }
-			}
-			if = {
-				limit = { FROM = { has_equipment = { L_AT_Equipment > 10 } } }
-				FROM = {
-					add_equipment_to_stockpile = { amount = support_amount_neg type = L_AT_Equipment producer = PREV }
+				if = {
+					limit = { has_equipment = { L_AT_Equipment > 10 } }
+					send_equipment = {
+						type = L_AT_Equipment
+						amount = support_amount
+						target = PREV
+					}
 				}
-				add_equipment_to_stockpile = { amount = support_amount type = L_AT_Equipment producer = FROM }
-			}
-			if = {
-				limit = { FROM = { has_equipment = { AA_Equipment > 10 } } }
-				FROM = {
-					add_equipment_to_stockpile = { amount = support_amount_neg type = AA_Equipment producer = PREV }
+				if = {
+					limit = { has_equipment = { AA_Equipment > 10 } }
+					send_equipment = {
+						type = AA_Equipment
+						amount = support_amount
+						target = PREV
+					}
 				}
-				add_equipment_to_stockpile = { amount = support_amount type = AA_Equipment producer = FROM }
 			}
 			set_temp_variable = { percent_change = 1.5 }
 			set_temp_variable = { tag_index = FROM.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 		}
 
@@ -2774,39 +2849,42 @@ country_event = {
 			FROM = { clr_country_flag = forwarding_light_armor_vehicles }
 			set_temp_variable = { vehicle_amount = 10 }
 			multiply_temp_variable = { vehicle_amount = aid_size_mult }
-			set_temp_variable = { vehicle_amount_neg = vehicle_amount }
-			multiply_temp_variable = { vehicle_amount_neg = -1 }
-			if = {
-				limit = { FROM = { has_equipment = { medium_tank_chassis > 10 } } }
-				FROM = {
-					add_equipment_to_stockpile = { amount = vehicle_amount_neg type = medium_tank_chassis producer = PREV }
+			FROM = {
+				if = {
+					limit = { has_equipment = { medium_tank_chassis > 10 } }
+					send_equipment = {
+						type = medium_tank_chassis
+						amount = vehicle_amount
+						target = PREV
+					}
 				}
-				add_equipment_to_stockpile = { amount = vehicle_amount type = medium_tank_chassis producer = FROM }
-			}
-			if = {
-				limit = { FROM = { has_equipment = { medium_tank_amphibious_chassis > 10 } } }
-				FROM = {
-					add_equipment_to_stockpile = { amount = vehicle_amount_neg type = medium_tank_amphibious_chassis producer = PREV }
+				if = {
+					limit = { has_equipment = { medium_tank_amphibious_chassis > 10 } }
+					send_equipment = {
+						type = medium_tank_amphibious_chassis
+						amount = vehicle_amount
+						target = PREV
+					}
 				}
-				add_equipment_to_stockpile = { amount = vehicle_amount type = medium_tank_amphibious_chassis producer = FROM }
-			}
-			if = {
-				limit = { FROM = { has_equipment = { medium_tank_flame_chassis > 10 } } }
-				FROM = {
-					add_equipment_to_stockpile = { amount = vehicle_amount_neg type = medium_tank_flame_chassis producer = PREV }
+				if = {
+					limit = { has_equipment = { medium_tank_flame_chassis > 10 } }
+					send_equipment = {
+						type = medium_tank_flame_chassis
+						amount = vehicle_amount
+						target = PREV
+					}
 				}
-				add_equipment_to_stockpile = { amount = vehicle_amount type = medium_tank_flame_chassis producer = FROM }
-			}
-			if = {
-				limit = { FROM = { has_equipment = { util_vehicle_type > 10 } } }
-				FROM = {
-					add_equipment_to_stockpile = { amount = vehicle_amount_neg type = util_vehicle_type producer = PREV }
+				if = {
+					limit = { has_equipment = { util_vehicle_type > 10 } }
+					send_equipment = {
+						type = util_vehicle_type
+						amount = vehicle_amount
+						target = PREV
+					}
 				}
-				add_equipment_to_stockpile = { amount = vehicle_amount type = util_vehicle_type producer = FROM }
 			}
 			set_temp_variable = { percent_change = 2 }
 			set_temp_variable = { tag_index = FROM.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 		}
 
@@ -2816,36 +2894,36 @@ country_event = {
 			FROM = { clr_country_flag = sending_modern_equipment_package }
 			set_temp_variable = { modern_amount = 10 }
 			multiply_temp_variable = { modern_amount = aid_size_mult }
-			set_temp_variable = { modern_amount_neg = modern_amount }
-			multiply_temp_variable = { modern_amount_neg = -1 }
 			set_temp_variable = { drone_amount = 5 }
 			multiply_temp_variable = { drone_amount = aid_size_mult }
-			set_temp_variable = { drone_amount_neg = drone_amount }
-			multiply_temp_variable = { drone_amount_neg = -1 }
-			if = {
-				limit = { FROM = { has_equipment = { H_AT_Equipment > 10 } } }
-				FROM = {
-					add_equipment_to_stockpile = { amount = modern_amount_neg type = H_AT_Equipment producer = PREV }
+			FROM = {
+				if = {
+					limit = { has_equipment = { H_AT_Equipment > 10 } }
+					send_equipment = {
+						type = H_AT_Equipment
+						amount = modern_amount
+						target = PREV
+					}
 				}
-				add_equipment_to_stockpile = { amount = modern_amount type = H_AT_Equipment producer = FROM }
-			}
-			if = {
-				limit = { FROM = { has_equipment = { sam_missile_equipment > 5 } } }
-				FROM = {
-					add_equipment_to_stockpile = { amount = drone_amount_neg type = sam_missile_equipment producer = PREV }
+				if = {
+					limit = { has_equipment = { sam_missile_equipment > 5 } }
+					send_equipment = {
+						type = sam_missile_equipment
+						amount = drone_amount
+						target = PREV
+					}
 				}
-				add_equipment_to_stockpile = { amount = drone_amount type = sam_missile_equipment producer = FROM }
-			}
-			if = {
-				limit = { FROM = { has_equipment = { land_drone_equipment_type > 5 } } }
-				FROM = {
-					add_equipment_to_stockpile = { amount = drone_amount_neg type = land_drone_equipment_type producer = PREV }
+				if = {
+					limit = { has_equipment = { land_drone_equipment_type > 5 } }
+					send_equipment = {
+						type = land_drone_equipment_type
+						amount = drone_amount
+						target = PREV
+					}
 				}
-				add_equipment_to_stockpile = { amount = drone_amount type = land_drone_equipment_type producer = FROM }
 			}
 			set_temp_variable = { percent_change = 3 }
 			set_temp_variable = { tag_index = FROM.id }
-			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 		}
 
@@ -3042,226 +3120,47 @@ country_event = {
 	}
 
 	immediate = {
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^0 = 0 } } }
-			set_variable = { auto_influence_target_0_val = 0 }
-			var:auto_influence_array^0 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
+		clear_array = auto_influence_target_val
+		for_loop_effect = {
+			end = auto_influence_array^num
+			value = i
+			if = {
+				limit = { NOT = { check_variable = { auto_influence_array^i = 0 } } }
+				set_variable = { ROOT.found_influence_val = 0 }
+				set_variable = { ROOT.found_influence_match = 0 }
+				var:auto_influence_array^i = {
+					set_temp_variable = { influencer_index = -1 }
+					for_loop_effect = {
+						end = influence_array^num
+						value = v
+						if = {
+							limit = { check_variable = { influence_array^v = ROOT } }
+							set_temp_variable = { influencer_index = v }
 						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
+					}
+					if = {
+						limit = { NOT = { check_variable = { influencer_index = -1 } } }
+						set_variable = { ROOT.found_influence_val = influence_array_val^influencer_index }
+						set_variable = { ROOT.found_influence_match = 1 }
 					}
 				}
 				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_0_val = influence_array_val^influencer_index }
+					limit = { check_variable = { found_influence_match = 1 } }
+					set_variable = { auto_influence_target_val^i = found_influence_val }
 				}
-			}
-			custom_effect_tooltip = auto_influence_target_0_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^1 = 0 } } }
-			set_variable = { auto_influence_target_1_val = 0 }
-			var:auto_influence_array^1 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
+				else = {
+					set_variable = { auto_influence_target_val^i = 0 }
+				}
+				meta_effect = {
+					text = {
+						custom_effect_tooltip = auto_influence_target_[IDX]_tt
 					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_1_val = influence_array_val^influencer_index }
+					IDX = "[?i]"
 				}
 			}
-			custom_effect_tooltip = auto_influence_target_1_tt
 		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^2 = 0 } } }
-			set_variable = { auto_influence_target_2_val = 0 }
-			var:auto_influence_array^2 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_2_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_2_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^3 = 0 } } }
-			set_variable = { auto_influence_target_3_val = 0 }
-			var:auto_influence_array^3 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_3_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_3_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^4 = 0 } } }
-			set_variable = { auto_influence_target_4_val = 0 }
-			var:auto_influence_array^4 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_4_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_4_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^5 = 0 } } }
-			set_variable = { auto_influence_target_5_val = 0 }
-			var:auto_influence_array^5 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_5_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_5_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^6 = 0 } } }
-			set_variable = { auto_influence_target_6_val = 0 }
-			var:auto_influence_array^6 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_6_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_6_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^7 = 0 } } }
-			set_variable = { auto_influence_target_7_val = 0 }
-			var:auto_influence_array^7 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_7_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_7_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^8 = 0 } } }
-			set_variable = { auto_influence_target_8_val = 0 }
-			var:auto_influence_array^8 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_8_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_8_tt
-		}
-		if = {
-			limit = { NOT = { check_variable = { auto_influence_array^9 = 0 } } }
-			set_variable = { auto_influence_target_9_val = 0 }
-			var:auto_influence_array^9 = {
-				for_loop_effect = {
-					end = influence_array^num
-					value = v
-					if = {
-						limit = {
-							check_variable = { influence_array^v = ROOT }
-						}
-						set_temp_variable = { influencer_index = v }
-						set_country_flag = found
-					}
-				}
-				if = {
-					limit = { has_country_flag = found }
-					add_to_variable = { ROOT.auto_influence_target_9_val = influence_array_val^influencer_index }
-				}
-			}
-			custom_effect_tooltip = auto_influence_target_9_tt
-		}
+		clear_variable = found_influence_val
+		clear_variable = found_influence_match
 	}
 
 	option = {
@@ -3301,7 +3200,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.56.a executed"
 		trigger = {
 			PREV = {
-				tag = PER
+				original_tag = PER
 				has_equipment = { infantry_weapons_type > 250 }
 			}
 		}
@@ -3316,7 +3215,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.56.b executed"
 		trigger = {
 			PREV = {
-				tag = PER
+				original_tag = PER
 				has_equipment = { infantry_weapons_type > 250 }
 			}
 			FROM = {

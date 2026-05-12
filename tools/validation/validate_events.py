@@ -109,6 +109,32 @@ _EVENT_TYPE_PATTERN = re.compile(
 )
 _ADD_NAMESPACE_PATTERN = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILINE)
 _EVENT_ID_PATTERN = re.compile(r"^\tid\s*=\s*(\S+)", re.MULTILINE)
+_RANDOM_EVENTS_PATTERN = re.compile(r"\brandom_events\s*=\s*\{")
+_RANDOM_EVENT_ID_PATTERN = re.compile(r"=\s*([A-Za-z_]\w*\.[\w.]+)")
+
+
+def _extract_random_event_ids(text: str) -> set:
+    """Find event IDs referenced inside ``random_events = { ... }`` blocks.
+
+    Events fired through ``random_events`` in on_actions use ``mean_time_to_happen``
+    as the engine-side weight even though they're declared ``is_triggered_only``,
+    so they must be excluded from the MTTH+triggered_only warning.
+    """
+    ids: set = set()
+    for m in _RANDOM_EVENTS_PATTERN.finditer(text):
+        start = m.end()
+        depth = 1
+        i = start
+        while i < len(text) and depth > 0:
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+            i += 1
+        body = text[start : i - 1]
+        for id_match in _RANDOM_EVENT_ID_PATTERN.finditer(body):
+            ids.add(id_match.group(1))
+    return ids
 
 
 class Validator(BaseValidator):
@@ -119,6 +145,7 @@ class Validator(BaseValidator):
         super().__init__(*args, **kwargs)
         self._events_cache: Optional[Tuple[List[str], Dict[str, str]]] = None
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
+        self._random_events_cache: Optional[set] = None
 
     def _get_all_events(self) -> Tuple[List[str], Dict[str, str]]:
         if self._events_cache is not None:
@@ -192,6 +219,28 @@ class Validator(BaseValidator):
 
         self._meta_cache = (meta, namespaces)
         return self._meta_cache
+
+    def _get_random_event_ids(self) -> set:
+        """Return event IDs referenced inside ``random_events`` blocks in on_actions.
+
+        These events use ``mean_time_to_happen`` as their relative weight even
+        when ``is_triggered_only = yes`` is set, so MTTH is not redundant.
+        """
+        if self._random_events_cache is not None:
+            return self._random_events_cache
+
+        files = self._collect_files(["common/on_actions/**/*.txt"])
+        ids: set = set()
+        for filepath in files:
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            if not text:
+                continue
+            ids.update(_extract_random_event_ids(text))
+
+        self._random_events_cache = ids
+        return ids
 
     def validate_unsupported_title_desc(self):
         self._log_section(
@@ -418,17 +467,25 @@ class Validator(BaseValidator):
 
         MTTH only applies to auto-firing events. On triggered-only events
         it does nothing and the engine logs a warning.
+
+        Exception: events fired through ``random_events`` blocks in on_actions
+        use MTTH as their selection weight, so the combination is intentional
+        there.
         """
         self._log_section(
             "Checking for mean_time_to_happen on triggered-only events..."
         )
 
         meta, _ = self._get_event_metadata()
+        random_event_ids = self._get_random_event_ids()
         results = []
 
         for ev in meta:
-            if ev["has_mtth"] and ev["is_triggered_only"]:
-                results.append(f"{ev['id']} - {ev['file']}")
+            if not (ev["has_mtth"] and ev["is_triggered_only"]):
+                continue
+            if ev["id"] in random_event_ids:
+                continue
+            results.append(f"{ev['id']} - {ev['file']}")
 
         self._report(
             results,
