@@ -10,6 +10,8 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Key directories: `com
 
 Validation runs on GitHub CI at PR time — don't run proactively. Standardization tools: `tools/standardization/` (see its README). Diff summary: `python3 tools/analysis/review_branch.py [base-branch]`.
 
+**Never run `pre-commit run --all-files`.** Pre-commit's auto-fixers (trailing-whitespace, end-of-file-fixer, mixed-line-ending, fix-byte-order-marker) rewrite every matching file in the repo and leave hundreds of unrelated whitespace-only modifications in the worktree. Always scope runs to actually-modified files: `pre-commit run --files <path1> <path2>`, or rely on the normal `git commit` flow which only feeds staged files to the hooks. The branch you are on may already carry whitespace noise from a prior `--all-files` run — if it does, revert anything outside the scope of the task before committing.
+
 ## Formatting
 
 - Tabs for indentation; `{` on same line, `}` on own line at outer indent; 1 blank line between elements

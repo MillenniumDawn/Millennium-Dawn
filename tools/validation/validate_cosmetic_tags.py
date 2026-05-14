@@ -45,7 +45,7 @@ def _should_skip(filename: str) -> bool:
 
 
 def process_file_for_has_cosmetic_tag(
-    args: Tuple[str, bool]
+    args: Tuple[str, bool],
 ) -> Tuple[Dict[str, int], Dict[str, str]]:
     filename, lowercase = args
     text_file = FileOpener.open_text_file(
@@ -114,7 +114,7 @@ def process_file_for_cosmetic_tag_in_loc(args: Tuple[str, frozenset]) -> Dict[st
 
 
 def process_file_for_set_cosmetic_tag_defined(
-    args: Tuple[str, bool]
+    args: Tuple[str, bool],
 ) -> Tuple[Dict[str, int], Dict[str, str]]:
     filename, lowercase = args
     text_file = FileOpener.open_text_file(

@@ -2,6 +2,15 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 #
+# !! DO NOT RUN `pre-commit run --all-files` !!
+# The auto-fixer hooks (trailing-whitespace, end-of-file-fixer,
+# mixed-line-ending, fix-byte-order-marker) will rewrite every matching file in
+# the repo and produce hundreds of whitespace-only modifications unrelated to
+# your actual work. Always scope runs to specific files:
+#   pre-commit run --files path/to/file1 path/to/file2
+# The normal `git commit` flow already runs hooks against just the staged
+# files, which is what you want.
+#
 # MD-specific hooks (prefixed "MD") are set to stages: [manual] by default
 # so they don't block external contributors. To run them:
 #   pre-commit run --hook-stage manual           # all manual hooks
@@ -10,6 +19,12 @@
 # Team members can enable them on every commit by adding to .pre-commit-config.yaml
 # (local override, don't commit):
 #   default_stages: [pre-commit, manual]
+
+# Global exclude. resources/ is a holding area for unintegrated submods and
+# external contributions — its contents are not subject to MD style rules and
+# must not be auto-modified by any hook. Any hook can still re-include a path
+# inside resources/ by setting its own `files:` pattern explicitly.
+exclude: '^resources/'
 
 repos:
   - repo: https://github.com/Yelp/detect-secrets
@@ -20,15 +35,18 @@ repos:
         args: ['--baseline', '.secrets.baseline']
         exclude: '(^localisation/|^resources/|\.secrets\.baseline$)'
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
+      # Asset-only directories (gfx/, map/, interface/, music/, sound/) are
+      # excluded from the auto-fixers below — these files use significant
+      # tab/whitespace alignment that the fixers shouldn't rewrite.
       - id: trailing-whitespace
-        exclude: '\.mod$'  # Exclude mod files which might need specific formatting
+        exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
       - id: end-of-file-fixer
-        exclude: '\.mod$'
+        exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
       - id: mixed-line-ending
         args: [--fix=lf]
-        exclude: '\.mod$'
+        exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
       - id: check-yaml
         files: 'localisation/english/.*\.yml$'
       - id: check-json
@@ -41,7 +59,7 @@ repos:
         exclude: '\.txt$|\.mod$'
       - id: check-shebang-scripts-are-executable
       - id: fix-byte-order-marker
-        exclude: 'localisation/.*\.yml$'
+        exclude: 'localisation/.*\.yml$|^(gfx|map|interface|music|sound)/'
       - id: check-ast
         files: '\.py$'
       - id: debug-statements
@@ -49,13 +67,13 @@ repos:
       - id: name-tests-test
         files: 'tools/.*test.*\.py$'
   - repo: https://github.com/psf/black
-    rev: 24.8.0
+    rev: 25.1.0
     hooks:
       - id: black
         files: '^tools/.*\.py$'
         args: [--line-length=88]
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 6.0.1
     hooks:
       - id: isort
         files: '^tools/.*\.py$'
