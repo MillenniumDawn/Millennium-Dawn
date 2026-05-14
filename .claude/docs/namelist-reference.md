@@ -60,9 +60,15 @@ TAG_FRIGATE_HISTORICAL = {
 }
 ```
 
-### Ship type tokens
+### Ship type tokens (canonical — match `common/units/MD_naval_units.txt`)
 
-`carrier` `helicopter_operator` `destroyer` `stealth_destroyer` `frigate` `stealth_frigate` `corvette` `stealth_corvette` `cruiser` `battle_cruiser` `battleship` `submarine` `attack_submarine` `diesel_attack_submarine` `missile_submarine`
+Valid: `carrier` `helicopter_operator` `destroyer` `stealth_destroyer` `frigate` `stealth_frigate` `corvette` `stealth_corvette` `cruiser` `battle_cruiser` `battleship` `attack_submarine` `diesel_attack_submarine` `missile_submarine`
+
+**Dead vanilla tokens that silently never match** (these were removed when MD restructured naval units — never use them):
+
+`submarine` `light_cruiser` `heavy_cruiser` `ship_hull_carrier` `ship_hull_cruiser` `ship_hull_heavy` `ship_hull_light` `ship_hull_submarine` `battleship_hull_0`
+
+There are still 17 legacy `names_ships/TAG_ship_names.txt` files and 129 legacy `names/00_TAG_names.txt` files in the repo that reference these dead tokens — their `unique` lists never get used. When you touch a tag's namelists, check for these and migrate the strings into the modern equivalents (`submarine` → `attack_submarine`/`missile_submarine`/`diesel_attack_submarine`; `light_cruiser`/`heavy_cruiser` → `cruiser`).
 
 ### Verified naval prefixes
 
@@ -107,9 +113,54 @@ TAG = {
 
 ---
 
+## Air Wing Names (inside `common/units/names/00_TAG_names.txt`)
+
+Air wing labels come from two layers:
+
+1. **`air_wing_names_template = AIR_WING_NAME_TAG_FALLBACK`** — set once at the top of the `TAG = { }` block. This is the master fallback that the engine uses when generating numbered wing names ("3rd Squadron", "Geschwader 14", etc.).
+2. **Per-archetype `*_airframe` blocks** — one per aircraft sub-unit type, each pointing at a `generic_pattern` loc key for that country.
+
+**Both layers depend on matching loc keys.** Define them in `localisation/english/replace/replaced_from_unit_names_l_english.yml`:
+
+```yaml
+AIR_WING_NAME_TAG_FALLBACK: "$NUMBER$ Squadron"
+AIR_WING_NAME_TAG_GENERIC: "$NR$ $NAME$"
+AIR_WING_NAME_TAG_CARRIER: "$NR$ Carrier Wing $NAME$" # only if you use _CARRIER on cv_* archetypes
+```
+
+If you set `air_wing_names_template = AIR_WING_NAME_FOO_FALLBACK` but no matching loc key exists, HOI4 renders the literal token in-game. **Known dead refs** (currently bugged): `AST`, `FIN`, `JAP`, `USA`, `GER`.
+
+**Coverage:** 36 of 86 country files declare `air_wing_names_template`; the rest fall through to the vanilla `AIR_WING_NAME_GENERIC` family.
+
+### 27 archetypes (must match `common/units/MD_air_units.txt`)
+
+| Land                                                                                                                                                                                                   | Carrier (`cv_`)                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `small_plane_airframe`, `small_plane_strike_airframe`, `small_plane_naval_bomber_airframe`, `small_plane_cas_airframe`, `small_plane_suicide_airframe`                                                 | `cv_small_plane_airframe`, `cv_small_plane_strike_airframe`, `cv_small_plane_naval_bomber_airframe`, `cv_small_plane_cas_airframe`, `cv_small_plane_suicide_airframe`                                                  |
+| `medium_plane_airframe`, `medium_plane_fighter_airframe`, `medium_plane_cas_airframe`, `medium_plane_maritime_patrol_airframe`, `medium_plane_air_transport_airframe`, `medium_plane_suicide_airframe` | `cv_medium_plane_airframe`, `cv_medium_plane_fighter_airframe`, `cv_medium_plane_cas_airframe`, `cv_medium_plane_maritime_patrol_airframe`, `cv_medium_plane_air_transport_airframe`, `cv_medium_plane_scout_airframe` |
+| `large_plane_airframe`, `large_plane_air_transport_airframe`, `large_plane_awacs_airframe`, `large_plane_cas_airframe`, `large_plane_maritime_patrol_airframe`                                         | —                                                                                                                                                                                                                      |
+
+**USA's namelist contains a typo**: `small_plane_sucide_airframe` (missing the `i`). The correct token is `small_plane_suicide_airframe` — copy from `common/units/MD_air_units.txt`, never from `00_USA_names.txt`.
+
+### Minimum scaffold per archetype
+
+```
+small_plane_airframe = {
+	prefix = ""
+	generic = { "Fighter Squadron" }       # in country language
+	generic_pattern = AIR_WING_NAME_TAG_GENERIC
+	unique = { }
+}
+```
+
+Leaving `unique = { }` empty is acceptable on every archetype. The block must still exist so the country gets the flavoured generic pattern instead of the vanilla numbered fallback.
+
+---
+
 ## Checklist for a New Tag
 
 - [ ] `common/units/names_divisions/TAG_names_divisions.txt` — all 7 groups
-- [ ] `common/units/names_ships/TAG_ship_names.txt` — frigate + corvette minimum
-- [ ] `common/units/names/00_TAG_names.txt` — relevant hull types + infantry block
+- [ ] `common/units/names_ships/TAG_ship_names.txt` — frigate + corvette minimum (skip for landlocked)
+- [ ] `common/units/names/00_TAG_names.txt` — relevant hull types + infantry block + `air_wing_names_template` + all 27 airframe blocks
+- [ ] `localisation/english/replace/replaced_from_unit_names_l_english.yml` — `AIR_WING_NAME_TAG_FALLBACK` + `_GENERIC` keys (+ `_CARRIER` if used)
 - [ ] `history/units/TAG_*.oob` — `division_names_group` set on every template
