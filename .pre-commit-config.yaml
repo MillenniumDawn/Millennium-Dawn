@@ -78,8 +78,10 @@ repos:
       - id: isort
         files: '^tools/.*\.py$'
         args: [--profile=black]
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
+  # pre-commit/mirrors-prettier was archived upstream — using rbubley's
+  # maintained fork. Same prettier binary; current pin tracks prettier 3.8.x.
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.8.3
     hooks:
       - id: prettier
         name: Format Markdown files
@@ -200,6 +202,28 @@ repos:
         language: system
         files: '(common/intelligence_agency_upgrades/.*\.txt|common/on_actions/MD_auto_agency_on_actions\.txt|common/scripted_guis/00_MD_auto_agency_scripted_gui\.txt|common/scripted_localisation/00_MD_auto_agency_scripted_localisation\.txt|localisation/english/MD_auto_agency_l_english\.yml)$'
         pass_filenames: false
+      - id: md-validate-ideas
+        name: MD Validate idea references (undefined ideas, redundant allowed blocks)
+        entry: python3 tools/validation/validate_ideas.py --staged --strict --no-color
+        language: system
+        files: '(common/ideas|common/national_focus|common/decisions|events)/.*\.txt$|localisation/english/.*\.yml$'
+        pass_filenames: false
+      - id: md-validate-set-variables
+        name: MD Validate set_variable usage (set but not referenced)
+        entry: python3 tools/validation/validate_set_variables.py --staged --strict --no-color
+        language: system
+        files: '(common|events|history)/.*\.txt$'
+        pass_filenames: false
+      - id: md-validate-unused-textures
+        name: MD Validate unused textures (slow; manual)
+        # Manual: full-repo scan takes ~9s and currently reports thousands of
+        # legacy unreferenced textures. Run before mod-size cleanup passes:
+        #   pre-commit run md-validate-unused-textures --hook-stage manual
+        entry: python3 tools/validation/validate_unused_textures.py --no-color
+        language: system
+        files: '\.(gfx|asset|dds|tga|png)$'
+        pass_filenames: false
+        stages: [manual]
       - id: validate-staged
         name: MD Validate staged files
         entry: python3 tools/validate_staged.py

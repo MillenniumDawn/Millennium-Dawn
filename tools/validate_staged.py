@@ -16,6 +16,13 @@ files themselves (CI handles the full cross-reference validation).
   - common/                           -> validate_cosmetic_tags.py
   - common/scripted_effects/,
     common/scripted_triggers/         -> validate_unused_scripted.py
+  - history/units/, common/units/,
+    common/ai_templates/,
+    common/scripted_effects/          -> validate_oob_units.py
+  - common/ideas/, common/national_focus/,
+    common/decisions/, events/,
+    localisation/                     -> validate_ideas.py
+  - common/, events/, history/        -> validate_set_variables.py
 
 Opt-out via environment variable:
     MD_SKIP_VALIDATE=1 git commit -m "..."
@@ -138,6 +145,36 @@ VALIDATORS = [
         "cmd": [
             "python3",
             "tools/validation/validate_oob_units.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
+    {
+        "name": "ideas",
+        "prefixes": [
+            "common/ideas/",
+            "common/national_focus/",
+            "common/decisions/",
+            "events/",
+            "localisation/",
+        ],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_ideas.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
+    {
+        "name": "set_variables",
+        "prefixes": ["common/", "events/", "history/"],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_set_variables.py",
             "--staged",
             "--strict",
             "--no-color",
