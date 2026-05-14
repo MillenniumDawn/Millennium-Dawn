@@ -162,21 +162,21 @@ Use each navy's documented ship prefix. Verified prefixes:
 
 | Country     | Prefix    | Source                                                       |
 | ----------- | --------- | ------------------------------------------------------------ |
-| USA         | `USS `    | United States Ship                                           |
-| GBR         | `HMS `    | His/Her Majesty's Ship                                       |
-| FRA         | `FS `     | French Ship (NATO designation)                               |
+| USA         | `"USS "`  | United States Ship                                           |
+| GBR         | `"HMS "`  | His/Her Majesty's Ship                                       |
+| FRA         | `"FS "`   | French Ship (NATO designation)                               |
 | RUS         | no prefix | Hull numbers only                                            |
 | CHI         | no prefix | Hull numbers                                                 |
-| JAP         | `JS `     | Japan Ship                                                   |
-| RAJ (India) | `INS `    | Indian Naval Ship                                            |
-| KOR         | `ROKS `   | Republic of Korea Ship                                       |
-| CAN         | `HMCS `   | His/Her Majesty's Canadian Ship                              |
-| AUS         | `HMAS `   | His/Her Majesty's Australian Ship                            |
-| SIN         | `RSS `    | Republic of Singapore Ship                                   |
-| TUN         | `MNT `    | Marine Nationale Tunisienne                                  |
-| AZE         | `ARG `    | Azerbaijani Navy (Azerbaycan Respublikasinin Harbiye Gemisi) |
-| GHA         | `GNS `    | Ghana Naval Ship                                             |
-| TAN         | `TNS `    | Tanzania Naval Ship                                          |
+| JAP         | `"JS "`   | Japan Ship                                                   |
+| RAJ (India) | `"INS "`  | Indian Naval Ship                                            |
+| KOR         | `"ROKS "` | Republic of Korea Ship                                       |
+| CAN         | `"HMCS "` | His/Her Majesty's Canadian Ship                              |
+| AUS         | `"HMAS "` | His/Her Majesty's Australian Ship                            |
+| SIN         | `"RSS "`  | Republic of Singapore Ship                                   |
+| TUN         | `"MNT "`  | Marine Nationale Tunisienne                                  |
+| AZE         | `"ARG "`  | Azerbaijani Navy (Azerbaycan Respublikasinin Harbiye Gemisi) |
+| GHA         | `"GNS "`  | Ghana Naval Ship                                             |
+| TAN         | `"TNS "`  | Tanzania Naval Ship                                          |
 | GEO         | `""`      | No standard prefix; hull numbers                             |
 | SEN         | `""`      | No standard prefix                                           |
 | ERI         | `""`      | No standard prefix                                           |
