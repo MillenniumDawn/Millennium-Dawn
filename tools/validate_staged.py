@@ -93,6 +93,8 @@ VALIDATORS = [
             "--staged",
             "--strict",
             "--no-color",
+            "--workers",
+            "4",
         ],
     },
     {
@@ -105,6 +107,8 @@ VALIDATORS = [
             "--staged",
             "--strict",
             "--no-color",
+            "--workers",
+            "4",
         ],
     },
     {
@@ -117,6 +121,8 @@ VALIDATORS = [
             "--staged",
             "--strict",
             "--no-color",
+            "--workers",
+            "4",
         ],
     },
     {
