@@ -208,22 +208,22 @@ repos:
         language: system
         files: '(common/ideas|common/national_focus|common/decisions|events)/.*\.txt$|localisation/english/.*\.yml$'
         pass_filenames: false
-      - id: md-validate-set-variables
-        name: MD Validate set_variable usage (set but not referenced)
-        entry: python3 tools/validation/validate_set_variables.py --staged --strict --no-color
-        language: system
-        files: '(common|events|history)/.*\.txt$'
-        pass_filenames: false
       - id: md-validate-unused-textures
         name: MD Validate unused textures (slow; manual)
-        # Manual: full-repo scan takes ~9s and currently reports thousands of
-        # legacy unreferenced textures. Run before mod-size cleanup passes:
+        # Manual: full-repo scan is slow and currently reports ~22k legacy
+        # unreferenced textures. CI runs it informationally (no --strict) so
+        # the report is visible without gating PRs. Run before mod-size
+        # cleanup passes:
         #   pre-commit run md-validate-unused-textures --hook-stage manual
         entry: python3 tools/validation/validate_unused_textures.py --no-color
         language: system
         files: '\.(gfx|asset|dds|tga|png)$'
         pass_filenames: false
         stages: [manual]
+      # NOTE: validate_set_variables.py exists but is intentionally not wired
+      # anywhere. False-positive volume at repo scale makes it too noisy as a
+      # gate. Run manually when investigating a specific variable:
+      #   python3 tools/validation/validate_set_variables.py --staged
       - id: validate-staged
         name: MD Validate staged files
         entry: python3 tools/validate_staged.py

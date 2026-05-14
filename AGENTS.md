@@ -20,7 +20,9 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 - `validate_ai_equipment.py` runs without `--strict` locally (coverage gaps would block all commits) but **with** `--strict` on CI. Equipment-coverage gaps that are tolerated locally will fail PR validation.
 - `check_braces.py`, `fix_loc_yaml.py`, `validate_localization_encoding.py`, `validate_mod_encoding.py` are **pre-commit-only** — never run on CI. Web-UI edits or contributors with hooks disabled can land broken braces or BOM regressions.
 - `validate_defines.py` runs on pre-commit but is **skipped on CI** (needs the vanilla `00_defines.lua` not present in the runner). Dead-renamed defines slip through CI unless caught locally.
-- `validate_ideas.py`, `validate_set_variables.py`, `validate_unused_textures.py` exist under `tools/validation/` but are **wired into neither** pre-commit nor CI. Treat them as advisory until the wiring lands.
+- `validate_ideas.py` is wired into both pre-commit (`--staged --strict`) and CI (`strict: false`, informational) until the ~30 pre-existing undefined-idea references on main are triaged. Once cleared, flip the CI entry to strict.
+- `validate_unused_textures.py` is wired into pre-commit as `stages: [manual]` and into CI as informational (`strict: false`). The repo currently carries ~22k unreferenced textures — informational mode keeps the audit visible without blocking PRs.
+- `validate_set_variables.py` is intentionally **not wired** anywhere. False-positive volume at repo scale (across the full common/events/history scope) makes it noisy as a gate. Run it manually against a specific variable when needed.
 
 ### Tooling deprecation watch
 

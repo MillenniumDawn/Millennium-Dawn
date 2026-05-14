@@ -22,7 +22,6 @@ files themselves (CI handles the full cross-reference validation).
   - common/ideas/, common/national_focus/,
     common/decisions/, events/,
     localisation/                     -> validate_ideas.py
-  - common/, events/, history/        -> validate_set_variables.py
 
 Opt-out via environment variable:
     MD_SKIP_VALIDATE=1 git commit -m "..."
@@ -163,18 +162,6 @@ VALIDATORS = [
         "cmd": [
             "python3",
             "tools/validation/validate_ideas.py",
-            "--staged",
-            "--strict",
-            "--no-color",
-        ],
-    },
-    {
-        "name": "set_variables",
-        "prefixes": ["common/", "events/", "history/"],
-        "suffix": ".txt",
-        "cmd": [
-            "python3",
-            "tools/validation/validate_set_variables.py",
             "--staged",
             "--strict",
             "--no-color",
