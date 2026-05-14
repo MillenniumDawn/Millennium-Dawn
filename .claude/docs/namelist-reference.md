@@ -89,9 +89,9 @@ If no documented official prefix exists, use `prefix = ""`.
 
 ---
 
-## Ship Class Design Names (`common/units/names/00_TAG_names.txt`)
+## Ship Class & Land Unit Design Names (`common/units/names/00_TAG_names.txt`)
 
-Names shown in the naval designer for new class designs.
+Names shown in the designer for new class designs (naval and land).
 
 ```
 TAG = {
@@ -100,12 +100,18 @@ TAG = {
 		generic = { "Destroyer" }
 		unique = { "Class One" "Class Two" }
 	}
+	L_Inf_Bat = {
+		prefix = ""
+		generic = { "Infantry Division" }
+		generic_pattern = "UNIT_GENERIC_NAME_GENERIC_INFANTRY"
+		unique = { }
+	}
 }
 ```
 
-- Keys inside `TAG = { }` are **real sub_unit names** — for ships, from `common/units/MD_naval_units.txt`; for land, from `common/units/MD_land_units.txt`. Use `helicopter_operator`, not `LHA` (LHA is the sprite name only).
-- **There is no `infantry` block in MD.** Vanilla's `infantry` sub_unit was renamed when MD restructured land units — MD land sub_units are `L_Inf_Bat`, `Mot_Inf_Bat`, `Mech_Inf_Bat`, `Arm_Inf_Bat`, `Militia_Bat`, `armor_Bat`, etc. (see `MD_land_units.txt`). A bare `infantry = { }` block compiles silently and does nothing; ~53 legacy files still carry one as vanilla cruft — leave them alone unless you're cleaning up, but never add new ones.
-- MD does not use this file for land class design names — only naval. Omit land blocks unless you have specific designer names that match a real MD land sub_unit.
+- Keys inside `TAG = { }` must be **real sub_unit names** — for ships, from `common/units/MD_naval_units.txt`; for land, from `common/units/MD_land_units.txt`. A key that does not correspond to a real MD sub_unit compiles silently and never fires. Use `helicopter_operator`, not `LHA` (LHA is the sprite name only).
+- **Do not use `infantry`.** That was vanilla's sub_unit name; MD renamed it. The canonical MD land sub_units are `L_Inf_Bat`, `Mot_Inf_Bat`, `Mech_Inf_Bat`, `Arm_Inf_Bat`, `Militia_Bat`, `armor_Bat`, etc. (see `MD_land_units.txt`).
+- **Minimum land fallback is `L_Inf_Bat = { ... }`** — the light infantry battalion. Include it (even with empty `unique = { }`) so the country gets a flavoured generic label instead of the unbranded numbered fallback. Localize the `generic` label to the country's language (e.g. `"Infanterie-Division"` for GER, `"Strelkovaya Diviziya"` for SOV).
 - Class names follow national naming traditions (dynasty names for China subs, island names for Turkey corvettes, weapon names for India corvettes, etc.)
 - Encoding: UTF-8 no BOM; same script constraints as division files
 
@@ -159,6 +165,6 @@ Leaving `unique = { }` empty is acceptable on every archetype. The block must st
 
 - [ ] `common/units/names_divisions/TAG_names_divisions.txt` — all 7 groups
 - [ ] `common/units/names_ships/TAG_ship_names.txt` — frigate + corvette minimum (skip for landlocked)
-- [ ] `common/units/names/00_TAG_names.txt` — relevant hull types (naval sub_units from `MD_naval_units.txt`) + `air_wing_names_template` + all 27 airframe blocks. **Do not add an `infantry` block** — `infantry` is not an MD sub_unit.
+- [ ] `common/units/names/00_TAG_names.txt` — relevant hull types (naval sub_units from `MD_naval_units.txt`) + `L_Inf_Bat` block (minimum land fallback; use the MD sub_unit, **never** vanilla's `infantry`) + `air_wing_names_template` + all 27 airframe blocks.
 - [ ] `localisation/english/replace/replaced_from_unit_names_l_english.yml` — `AIR_WING_NAME_TAG_FALLBACK` + `_GENERIC` keys (+ `_CARRIER` if used)
 - [ ] `history/units/TAG_*.oob` — `division_names_group` set on every template

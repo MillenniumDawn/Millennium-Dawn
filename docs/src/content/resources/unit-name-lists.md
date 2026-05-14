@@ -215,12 +215,18 @@ TAG = {
             "Lekiu" "Kasturi"
         }
     }
+    L_Inf_Bat = {
+        prefix = ""
+        generic = { "Infantry Division" }
+        generic_pattern = "UNIT_GENERIC_NAME_GENERIC_INFANTRY"
+        unique = { }
+    }
 }
 ```
 
 Keys inside `TAG = { }` must match real sub_unit names from `common/units/MD_naval_units.txt` (for ships) or `common/units/MD_land_units.txt` (for land). A key that does not correspond to a real MD sub_unit compiles silently and never fires.
 
-**Do not include an `infantry` block.** MD restructured land units and removed vanilla's `infantry` sub_unit; the MD land sub_units are `L_Inf_Bat`, `Mot_Inf_Bat`, `Mech_Inf_Bat`, `Arm_Inf_Bat`, `Militia_Bat`, `armor_Bat`, and so on (see `MD_land_units.txt`). Many legacy `00_TAG_names.txt` files still carry a `infantry = { }` block as vanilla cruft, but it is dead code — never add it to a new file. MD does not use this file for land class design names.
+**Never use `infantry`.** That is vanilla's sub_unit name; MD restructured land units and the canonical land sub_units are `L_Inf_Bat`, `Mot_Inf_Bat`, `Mech_Inf_Bat`, `Arm_Inf_Bat`, `Militia_Bat`, `armor_Bat`, and so on (see `MD_land_units.txt`). Every `00_TAG_names.txt` should include at minimum an `L_Inf_Bat = { ... }` block as the light-infantry fallback — localize the `generic` label to the country's language where appropriate (e.g. `"Infanterie-Division"`, `"Strelkovaya Diviziya"`).
 
 ### Naming conventions
 
@@ -241,7 +247,7 @@ For a new country tag, the following files are required:
 
 - [ ] `common/units/names_divisions/TAG_names_divisions.txt` — all 7 division groups covered
 - [ ] `common/units/names_ships/TAG_ship_names.txt` — frigate, corvette, and at least one additional type (submarine or destroyer where relevant)
-- [ ] `common/units/names/00_TAG_names.txt` — ship class names for all relevant hull types (keys must match `MD_naval_units.txt`). Do **not** include an `infantry` block — it is dead vanilla cruft.
+- [ ] `common/units/names/00_TAG_names.txt` — ship class names for all relevant hull types (keys must match `MD_naval_units.txt`) + an `L_Inf_Bat` block as the minimum land fallback. Never use vanilla's `infantry` key — it does not match any MD sub_unit.
 - [ ] OOB units in `history/units/TAG_*.oob` updated with `division_names_group` assignments
 
 For questions, contact Kalkalash.

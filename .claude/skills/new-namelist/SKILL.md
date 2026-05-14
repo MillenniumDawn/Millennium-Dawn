@@ -111,12 +111,13 @@ For **landlocked nations**, omit the ship hull file — they cannot operate ship
 
 ### 4. Create the ship class design names and airwing fallback structure
 
-Write or append `common/units/names/00_TAG_names.txt`. This file holds two things:
+Write or append `common/units/names/00_TAG_names.txt`. This file holds three things:
 
 1. **Ship class design names** — what the player sees in the naval designer when creating a new ship class. Keys must match real naval sub_units from `common/units/MD_naval_units.txt`.
-2. **Air wing fallback names** — what the game uses when generating squadron labels for the country's aircraft. Without these blocks the country falls through to the engine's generic numbered name and looks unfinished.
+2. **Land unit design names** — minimum is an `L_Inf_Bat` block (light infantry battalion). Keys must match real land sub_units from `common/units/MD_land_units.txt`.
+3. **Air wing fallback names** — what the game uses when generating squadron labels for the country's aircraft. Without these blocks the country falls through to the engine's generic numbered name and looks unfinished.
 
-**Do not add an `infantry = { }` block.** Vanilla's `infantry` sub_unit was renamed when MD restructured land units; the canonical land sub_units now live in `common/units/MD_land_units.txt` as `L_Inf_Bat`, `Mot_Inf_Bat`, `Mech_Inf_Bat`, `Arm_Inf_Bat`, `Militia_Bat`, `armor_Bat`, etc. A bare `infantry = { }` block silently does nothing in MD — ~53 legacy files still have one as vanilla cruft, but new files must not add it. MD does not use this file for land class design names.
+**Never use `infantry = { }`.** Vanilla's `infantry` sub_unit was renamed when MD restructured land units; the canonical MD land sub_units live in `common/units/MD_land_units.txt` as `L_Inf_Bat`, `Mot_Inf_Bat`, `Mech_Inf_Bat`, `Arm_Inf_Bat`, `Militia_Bat`, `armor_Bat`, and so on. A bare `infantry = { }` block compiles silently and never fires. Use `L_Inf_Bat` as the minimum land block — it is the MD light infantry battalion and the natural fallback.
 
 Top-of-file scaffold:
 
@@ -136,6 +137,13 @@ TAG = {
 	}
 	# ...other ship class blocks (keys must match common/units/MD_naval_units.txt)...
 
+	L_Inf_Bat = {
+		prefix = ""
+		generic = { "Infantry Division" }       # localize to country language where appropriate
+		generic_pattern = "UNIT_GENERIC_NAME_GENERIC_INFANTRY"
+		unique = { }
+	}
+
 	# Air wing archetype blocks — see below
 }
 ```
@@ -149,7 +157,7 @@ Class naming traditions by region/country:
 - **Greece:** Ancient heroes for subs; Aegean island names for frigates; mythological names for corvettes
 - **General:** National heroes, geographic features, rivers, battles, historical ships of the same class
 
-For **landlocked nations**, omit all ship class blocks and include only the airwing blocks below.
+For **landlocked nations**, omit all ship class blocks and include only the `L_Inf_Bat` block + the airwing blocks below.
 
 ---
 
