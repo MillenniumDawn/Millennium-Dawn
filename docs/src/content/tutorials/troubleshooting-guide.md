@@ -97,7 +97,8 @@ This gives Windows more disk-backed memory to work with when physical RAM runs l
 
 The Millennium Dawn team tries our best to provide a compatible experience for Linux users. The team does run as a majority of Windows users, but we do run tests and development suites that are catered to supporting Linux first.
 
-**Team Test Distros**
+**Team Tested Distros**
+
 The following are a list of team tested distros that we have tested for support with Millennium Dawn. They should mostly perform the same and well but YMMV depending on you personal setup and configuration. This is non-exhaustive and will be updated over time to include it.
 
 - Ubuntu
