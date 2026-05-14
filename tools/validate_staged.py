@@ -20,8 +20,7 @@ files themselves (CI handles the full cross-reference validation).
     common/ai_templates/,
     common/scripted_effects/          -> validate_oob_units.py
   - common/ideas/, common/national_focus/,
-    common/decisions/, events/,
-    localisation/                     -> validate_ideas.py
+    common/decisions/, events/        -> validate_ideas.py
 
 Opt-out via environment variable:
     MD_SKIP_VALIDATE=1 git commit -m "..."
@@ -156,7 +155,6 @@ VALIDATORS = [
             "common/national_focus/",
             "common/decisions/",
             "events/",
-            "localisation/",
         ],
         "suffix": ".txt",
         "cmd": [
@@ -165,6 +163,8 @@ VALIDATORS = [
             "--staged",
             "--strict",
             "--no-color",
+            "--workers",
+            "4",
         ],
     },
 ]

@@ -288,11 +288,8 @@ jobs:
       # (still produces the log + PR comment but exits 0 on findings). Default
       # is --strict so any entry that omits the field keeps gating behavior.
       run: |
-        if [ "${{ matrix.validator.strict }}" = "false" ]; then
-          python3 tools/validation/${{ matrix.validator.script }} --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
-        else
-          python3 tools/validation/${{ matrix.validator.script }} --strict --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
-        fi
+        STRICT_FLAG=$( [ "${{ matrix.validator.strict }}" = "false" ] && echo "" || echo "--strict" )
+        python3 tools/validation/${{ matrix.validator.script }} $STRICT_FLAG --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
 
     - name: Upload results
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

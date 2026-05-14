@@ -66,9 +66,11 @@ Valid: `carrier` `helicopter_operator` `destroyer` `stealth_destroyer` `frigate`
 
 **Dead vanilla tokens that silently never match** (these were removed when MD restructured naval units — never use them):
 
-`submarine` `light_cruiser` `heavy_cruiser` `ship_hull_carrier` `ship_hull_cruiser` `ship_hull_heavy` `ship_hull_light` `ship_hull_submarine` `battleship_hull_0`
+`submarine` `light_cruiser` `heavy_cruiser` `ship_hull_carrier` `ship_hull_cruiser` `ship_hull_heavy` `ship_hull_light` `ship_hull_submarine` `battleship_hull_0` `LHA`
 
-There are still 17 legacy `names_ships/TAG_ship_names.txt` files and 129 legacy `names/00_TAG_names.txt` files in the repo that reference these dead tokens — their `unique` lists never get used. When you touch a tag's namelists, check for these and migrate the strings into the modern equivalents (`submarine` → `attack_submarine`/`missile_submarine`/`diesel_attack_submarine`; `light_cruiser`/`heavy_cruiser` → `cruiser`).
+**`LHA` is the sprite of `helicopter_operator`, not a sub_unit.** Class-designer blocks (`names/00_TAG_names.txt`) and `ship_types` lists (`names_ships/`) must use `helicopter_operator` — an `LHA = { ... }` block compiles silently and never fires.
+
+There are still 17 legacy `names_ships/TAG_ship_names.txt` files and 129 legacy `names/00_TAG_names.txt` files in the repo that reference these dead tokens — their `unique` lists never get used. When you touch a tag's namelists, check for these and migrate the strings into the modern equivalents (`submarine` → `attack_submarine`/`missile_submarine`/`diesel_attack_submarine`; `light_cruiser`/`heavy_cruiser` → `cruiser`; `LHA` → `helicopter_operator`).
 
 ### Verified naval prefixes
 
@@ -108,6 +110,7 @@ TAG = {
 ```
 
 - **`infantry` block is required** even for pure naval nations — engine always expects it
+- Keys inside `TAG = { }` are **sub_unit names from `MD_naval_units.txt`**, not sprites. Use `helicopter_operator`, not `LHA` (LHA is the sprite name only).
 - Class names follow national naming traditions (dynasty names for China subs, island names for Turkey corvettes, weapon names for India corvettes, etc.)
 - Encoding: UTF-8 no BOM; same script constraints as division files
 
