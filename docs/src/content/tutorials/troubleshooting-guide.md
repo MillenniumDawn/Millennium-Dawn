@@ -9,13 +9,14 @@ Some computers may have performance issues with Millennium Dawn and as such we r
 
 Hearts of Iron IV runs multi-core on most processes but AI remains it's main bottleneck and is what causes most of the lag you see in game. Having a strong CPU with single-core performance will yield you
 
-- Clear the User Directory in your launcher
-- Use DirectX 9 instead of DirectX 11 on older hardware
-  - Modern machines should have no noticeable difference on this but it's worth noting if you have any issues at all
+**Troubleshoot Guide**
+
+- Clear the User Directory via your Hearts of Iron IV Launcher
+- Use DirectX 9 instead of DirectX 11
+  - Modern machines should have no noticeable difference on this but it's worth noting if you have any issues at all.
+  - DX9 for Hearts of Iron IV seems to be more stable then DX11 overall
 - Do NOT use submods, most are poorly optimized and make the experience that much worse.
-- Close CPU intensive background tasks where possible
-- Overloading of the CPU
-  - Linux users we recommend to setting your CPU Frequency to "Performance" rather then powersave for maximum performance
+- Close CPU intensive tasks in the background and minimize multi-tasking with heavy CPU processes
 - Try to run the mod on a SSD if possible. It runs much better and has a more smooth experience on more modern hardware
 
 ## Basic Troubleshooting Steps
@@ -92,13 +93,31 @@ This gives Windows more disk-backed memory to work with when physical RAM runs l
 
 **If none of the above relates to your current issues, please reach out on the Discord.**
 
-# Linux Users
+## Linux Users
 
-The Millennium Dawn team tries our best to provide a compatible experience with Linux users, but as the team is predominantly Windows we struggle to be as effective with Linux.
+The Millennium Dawn team tries our best to provide a compatible experience for Linux users. The team does run as a majority of Windows users, but we do run tests and development suites that are catered to supporting Linux first.
 
-## Help! My game crashes shortly after game start!
+**Team Tested Distros**
 
-This is a known issue with Linux as of the v1.17.\* of Hearts of Iron IV. We have reached out to Paradox Interactive for support on this but until that time we are flying blind.
+The following are a list of team tested distros that we have tested for support with Millennium Dawn. They should mostly perform the same and well but YMMV depending on you personal setup and configuration. This is non-exhaustive and will be updated over time to include it.
+
+- Ubuntu
+- Debian
+- Kubuntu
+- Linux Mint
+- SteamOS
+
+### Performance
+
+If you do not have it already the linux runtime runs the best for performance purposes as it does not have to handle the Proton translation layer.
+
+We also recommend to boot with `gamemoderun %command%` if you are running on a Ubuntu based distro. Furthermore, if you are not already running your CPU governor in performance mode will also provide you with meaningful performance boosts on the Linux runtime.
+
+[More information on gamemoderun](https://manpages.ubuntu.com/manpages/jammy/man1/gamemoderun.1.html)
+
+### Help! My game crashes shortly after game start!
+
+This is a known issue with Linux as of the v1.17.\* of Hearts of Iron IV and the v1.12.3 version of Millennium Dawn. The issue has been fixed in our BETA build and is expected to be resolved with v2.0.
 
 You can easily fix this by switching to a different runtime in your compatibility tab. The team recommends Proton of some form for now as that has been tested and works with the OpenGL renderer.
 
