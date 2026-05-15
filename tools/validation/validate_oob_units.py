@@ -174,6 +174,63 @@ def _extract_ship_types_tokens(content: str) -> Set[str]:
     return refs
 
 
+def _extract_division_types_tokens(content: str) -> Set[str]:
+    """Extract quoted-string tokens from `division_types = { "Foo" "Bar" }` arrays.
+
+    Used by *_names_divisions.txt files. Tokens are quoted (unlike ship_types,
+    which uses bare identifiers).
+    """
+    refs = set()
+    for match in re.finditer(r"division_types\s*=\s*\{([^{}]*)\}", content):
+        for tok in re.findall(r'"([^"]+)"', match.group(1)):
+            refs.add(tok)
+    return refs
+
+
+def _extract_division_group_keys(content: str) -> Set[str]:
+    """Extract top-level group keys defined in a *_names_divisions.txt file.
+
+    The schema is `GROUP_NAME = { name = ... for_countries = ... ... }` at the
+    top level (depth 0 → 1 on the opening brace). Handles both same-line
+    (`KEY = {`) and split-line (`KEY =\\n{`) brace styles.
+    """
+    refs = set()
+
+    # Find every `KEY = {` (allowing whitespace/newlines between `=` and `{`)
+    # then verify the match starts at depth 0.
+    for match in re.finditer(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", content):
+        prefix = content[: match.start()]
+        depth = prefix.count("{") - prefix.count("}")
+        if depth == 0:
+            refs.add(match.group(1))
+
+    return refs
+
+
+def parse_division_group_keys(mod_path: str) -> Set[str]:
+    """Return the set of all division_names_group keys defined across the mod."""
+    keys = set()
+    pattern = os.path.join(mod_path, "common", "units", "names_divisions", "*.txt")
+    for filepath in glob.iglob(pattern):
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as f:
+                content = f.read()
+        except OSError:
+            continue
+        keys |= _extract_division_group_keys(strip_comments(content))
+    return keys
+
+
+def _extract_division_names_group_refs(content: str) -> List[Tuple[str, int]]:
+    """Find `division_names_group = X` references with their 1-based line numbers."""
+    refs = []
+    for ln, line in enumerate(content.split("\n"), 1):
+        match = re.search(r"division_names_group\s*=\s*([A-Za-z_][A-Za-z0-9_]*)", line)
+        if match:
+            refs.append((match.group(1), ln))
+    return refs
+
+
 def _extract_unit_refs_from_blocks(content: str) -> Set[str]:
     """Extract unit names from regiments = { ... } and support = { ... } blocks.
 
@@ -309,10 +366,45 @@ def validate_namelist_file(
     elif parent == "names_ships":
         refs = _extract_ship_types_tokens(content)
         label = "ship_types token"
+    elif parent == "names_divisions":
+        refs = _extract_division_types_tokens(content)
+        label = "division_types token"
     else:
         return []
 
     return _check_refs(refs, canonical, canonical_lower, filename, label)
+
+
+def validate_oob_division_groups_file(
+    args: Tuple[str, Set[str], Dict[str, str]],
+) -> List[str]:
+    """Check that every `division_names_group = X` ref points to a real group."""
+    filepath, group_keys, group_keys_lower = args
+    filename = os.path.basename(filepath)
+
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+    except OSError:
+        return []
+
+    content = strip_comments(content)
+    results = []
+    for ref, line_no in _extract_division_names_group_refs(content):
+        if ref in group_keys:
+            continue
+        msg = f"{filename}:{line_no}: unknown division_names_group '{ref}'"
+        ref_lower = ref.lower()
+        if ref_lower in group_keys_lower:
+            msg += f" (did you mean '{group_keys_lower[ref_lower]}'?)"
+        else:
+            close = get_close_matches(
+                ref_lower, group_keys_lower.keys(), n=1, cutoff=0.7
+            )
+            if close:
+                msg += f" (did you mean '{group_keys_lower[close[0]]}'?)"
+        results.append(msg)
+    return results
 
 
 class Validator(BaseValidator):
@@ -386,6 +478,7 @@ class Validator(BaseValidator):
             [
                 "common/units/names/*.txt",
                 "common/units/names_ships/*.txt",
+                "common/units/names_divisions/*.txt",
             ]
         )
         self.log(f"  Found {len(files)} namelist files to check")
@@ -411,10 +504,37 @@ class Validator(BaseValidator):
             severity=Severity.WARNING,
         )
 
+    def validate_division_names_group_references(self):
+        """Validate every `division_names_group = X` in OOB files points to a real group."""
+        self._log_section("Checking division_names_group references in OOB files...")
+
+        group_keys = parse_division_group_keys(self.mod_path)
+        group_keys_lower = {k.lower(): k for k in group_keys}
+        self.log(f"  Found {len(group_keys)} division_names_group definitions")
+
+        files = self._collect_files(["history/units/*.txt"])
+        self.log(f"  Found {len(files)} OOB files to check")
+
+        args_list = [(f, group_keys, group_keys_lower) for f in files]
+        all_results = self._pool_map(
+            validate_oob_division_groups_file, args_list, chunksize=20
+        )
+
+        results = []
+        for file_results in all_results:
+            results.extend(file_results)
+
+        self._report(
+            results,
+            "✓ All division_names_group references resolve",
+            "OOB files with unknown division_names_group references:",
+        )
+
     def run_validations(self):
         self._build_canonical_units()
         self.validate_unit_references()
         self.validate_namelist_references()
+        self.validate_division_names_group_references()
 
 
 if __name__ == "__main__":
