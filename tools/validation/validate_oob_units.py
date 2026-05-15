@@ -384,7 +384,7 @@ class Validator(BaseValidator):
 
         files = self._collect_files(
             [
-                "common/units/names/00_*_names.txt",
+                "common/units/names/*.txt",
                 "common/units/names_ships/*.txt",
             ]
         )
