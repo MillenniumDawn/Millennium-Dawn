@@ -174,6 +174,11 @@ Apply this principle everywhere — focuses, events, decisions, scripted trigger
 
 HOI4 on Linux is **case-sensitive** for all identifiers — ideas, events, decisions, focuses, variables, flags, GFX sprites, and scripted effects/triggers. `has_idea = The_Military` will NOT match a definition `the_military`. Always match the exact case of the definition. **Caught by `validate_ideas.py` for ideas.**
 
+This also applies inside namelist files:
+
+- `division_types = { ... }` in `common/units/names_divisions/*.txt` must match the canonical sub-unit names in `common/units/MD_land_units.txt` exactly. Real bugs in repo: `arm_inf_bat` should be `Arm_Inf_Bat`; `mech_inf_Bat` should be `Mech_Inf_Bat`; `L_Air_Assault_Bat` should be `L_Air_assault_Bat` (lowercase `a`). When the case is wrong the namelist silently never matches the template.
+- `ship_types = { ... }` in `common/units/names_ships/*.txt` must match `common/units/MD_naval_units.txt`. Watch for legacy vanilla tokens like `submarine`, `light_cruiser`, `ship_hull_*`, `battleship_hull_0` — those types were removed by MD and the entries are dead. See `.claude/docs/namelist-reference.md` for the canonical lists.
+
 ## Trade agreement checks in MD
 
 `has_trade_agreement_with` is **not a valid HOI4 trigger** — compiles silently, always evaluates false. MD uses `has_country_flag = trade_agreement@TAG`. **Caught by `check_common_mistakes.py`.**
