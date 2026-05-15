@@ -62,7 +62,7 @@ TAG_FRIGATE_HISTORICAL = {
 
 ### Ship type tokens (canonical — match `common/units/MD_naval_units.txt`)
 
-Valid: `carrier` `helicopter_operator` `destroyer` `stealth_destroyer` `frigate` `stealth_frigate` `corvette` `stealth_corvette` `cruiser` `battle_cruiser` `battleship` `attack_submarine` `diesel_attack_submarine` `missile_submarine`
+Valid: `carrier` `helicopter_operator` `destroyer` `stealth_destroyer` `frigate` `stealth_frigate` `corvette` `stealth_corvette` `cruiser` `battle_cruiser` `battleship` `attack_submarine` `missile_submarine`
 
 **Dead vanilla tokens that silently never match** (these were removed when MD restructured naval units — never use them):
 
@@ -70,7 +70,7 @@ Valid: `carrier` `helicopter_operator` `destroyer` `stealth_destroyer` `frigate`
 
 **`LHA` is the sprite of `helicopter_operator`, not a sub_unit.** Class-designer blocks (`names/00_TAG_names.txt`) and `ship_types` lists (`names_ships/`) must use `helicopter_operator` — an `LHA = { ... }` block compiles silently and never fires.
 
-There are still 17 legacy `names_ships/TAG_ship_names.txt` files and 129 legacy `names/00_TAG_names.txt` files in the repo that reference these dead tokens — their `unique` lists never get used. When you touch a tag's namelists, check for these and migrate the strings into the modern equivalents (`submarine` → `attack_submarine`/`missile_submarine`/`diesel_attack_submarine`; `light_cruiser`/`heavy_cruiser` → `cruiser`; `LHA` → `helicopter_operator`).
+There are still legacy `names_ships/TAG_ship_names.txt` files and `names/00_TAG_names.txt` files in the repo that reference these dead tokens — their `unique` lists never get used. When you touch a tag's namelists, check for these and migrate the strings into the modern equivalents (`submarine` → `attack_submarine`/`missile_submarine`; `light_cruiser`/`heavy_cruiser` → `cruiser`; `LHA` → `helicopter_operator`).
 
 ### Verified naval prefixes
 
