@@ -295,6 +295,17 @@ def _extract_unit_refs_from_blocks(content: str) -> Set[str]:
     return refs
 
 
+def _suggest_match(ref: str, canonical_lower: Dict[str, str]) -> str:
+    """Return a ' (did you mean ...?)' suffix for a ref, or empty string."""
+    ref_lower = ref.lower()
+    if ref_lower in canonical_lower:
+        return f" (did you mean '{canonical_lower[ref_lower]}'?)"
+    close = get_close_matches(ref_lower, canonical_lower.keys(), n=1, cutoff=0.7)
+    if close:
+        return f" (did you mean '{canonical_lower[close[0]]}'?)"
+    return ""
+
+
 def _check_refs(
     refs: Set[str],
     canonical: Set[str],
@@ -307,16 +318,9 @@ def _check_refs(
     for ref in sorted(refs):
         if ref in canonical:
             continue
-        msg = f"{filename}: unknown {label} '{ref}'"
-        ref_lower = ref.lower()
-        if ref_lower in canonical_lower:
-            msg += f" (did you mean '{canonical_lower[ref_lower]}'?)"
-        else:
-            close = get_close_matches(
-                ref_lower, canonical_lower.keys(), n=1, cutoff=0.7
-            )
-            if close:
-                msg += f" (did you mean '{canonical_lower[close[0]]}'?)"
+        msg = f"{filename}: unknown {label} '{ref}'" + _suggest_match(
+            ref, canonical_lower
+        )
         results.append(msg)
     return results
 
@@ -393,16 +397,10 @@ def validate_oob_division_groups_file(
     for ref, line_no in _extract_division_names_group_refs(content):
         if ref in group_keys:
             continue
-        msg = f"{filename}:{line_no}: unknown division_names_group '{ref}'"
-        ref_lower = ref.lower()
-        if ref_lower in group_keys_lower:
-            msg += f" (did you mean '{group_keys_lower[ref_lower]}'?)"
-        else:
-            close = get_close_matches(
-                ref_lower, group_keys_lower.keys(), n=1, cutoff=0.7
-            )
-            if close:
-                msg += f" (did you mean '{group_keys_lower[close[0]]}'?)"
+        msg = (
+            f"{filename}:{line_no}: unknown division_names_group '{ref}'"
+            + _suggest_match(ref, group_keys_lower)
+        )
         results.append(msg)
     return results
 
