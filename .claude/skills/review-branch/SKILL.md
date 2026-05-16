@@ -65,6 +65,7 @@ Steps:
 - Events have `.t`, `.d`, and all option keys (`ID.a`, `ID.b`, …)
 - No `:0`/`:1` version suffixes; subideologies have `_icon` and `_desc`; `_desc` contains `\n\n` separator
 - No empty `""` or `"TODO"` strings; no undefined `[variable]` substitutions
+- **[critical]** Loc key collisions between focuses and ideas — when an idea uses `name = X` and a focus also has `id = X`, both share the `X` / `X_desc` loc keys. If the `.yml` defines `X:` twice (once for the focus, once for the idea) the duplicate-key rule silently overwrites one. To check: grep the `.yml` for duplicate keys (`sort | uniq -d`), and for any `name = X` in changed ideas, grep `id = X` in `common/national_focus/`. Rename the idea's `name =` if a focus uses the same key.
 
 **Content Design** — quick-catch items from `docs/src/content/resources/content-review-guide.md`. For the full content audit (economic balance, political neutrality, military guidelines, visual, AI game rules), run `/content-review`:
 

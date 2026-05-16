@@ -28,7 +28,7 @@ from validator_common import (
 
 # Multiprocessing helper functions
 def process_file_for_defined_localisations(
-    args: Tuple[str, bool]
+    args: Tuple[str, bool],
 ) -> Tuple[List[str], Dict[str, str]]:
     filename, lowercase = args
 
@@ -59,7 +59,7 @@ def process_file_for_defined_localisations(
 
 
 def process_file_for_used_localisations(
-    args: Tuple[str, Set[str], bool]
+    args: Tuple[str, Set[str], bool],
 ) -> Tuple[List[str], Dict[str, str]]:
     filename, search_names, lowercase = args
 
