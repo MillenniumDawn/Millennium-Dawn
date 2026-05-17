@@ -103,14 +103,15 @@ See `assets/gfxEntryGenerator.md` for the GFX entry generator guide.
 
 Metrics, reference analysis, and review tools.
 
-| Script                              | Description                                                            |
-| ----------------------------------- | ---------------------------------------------------------------------- |
-| **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system              |
-| **estimate_gdp.py**                 | Estimates starting GDP for country tags using MD's building formulas   |
-| **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase |
-| **find_scripted_loc_references.py** | Checks whether scripted localisation names are actually referenced     |
-| **review_branch.py**                | Generates a diff summary of the current branch vs main                 |
-| **search_add_ideas.py**             | Searches for `add_ideas` / `add_timed_idea` usage across the codebase  |
+| Script                              | Description                                                                                                                                                     |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                       |
+| **estimate_gdp.py**                 | Estimates starting GDP for country tags using MD's building formulas                                                                                            |
+| **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase                                                                                          |
+| **find_scripted_loc_references.py** | Checks whether scripted localisation names are actually referenced                                                                                              |
+| **pre_place_power_plants.py**       | Bakes fossil_powerplant + composite_plant counts into `history/states/` to skip startup loops. Re-run after edits to the energy formula or country/state setup. |
+| **review_branch.py**                | Generates a diff summary of the current branch vs main                                                                                                          |
+| **search_add_ideas.py**             | Searches for `add_ideas` / `add_timed_idea` usage across the codebase                                                                                           |
 
 ### Generators (`generators/`)
 
