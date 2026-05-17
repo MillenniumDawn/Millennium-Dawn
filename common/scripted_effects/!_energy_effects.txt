@@ -489,31 +489,6 @@ random_renewable_variable_calculation = {
 	}
 }
 
-# Effect: setup_starting_fossil_powerplants
-# Purpose: Sets the onstartup energy required for all nations without manually setting every fossil fuel power plant
-setup_starting_fossil_powerplants = {
-	set_variable = { startup_energy_needed = energy_consumption } #startup_energy_needed will be the number of needed fossil power plants
-	subtract_from_variable = { startup_energy_needed = energy_sum }
-	round_variable = startup_energy_needed
-	clamp_variable = { var = startup_energy_needed min = 1 } #so every country, even the smallest ones, start with 1 fossil fuel power plant
-	while_loop_effect = {
-		limit = {
-			check_variable = { startup_energy_needed > 0.00001 }
-		}
-		random_owned_controlled_state = {
-			limit = { check_variable = { building_level@fossil_powerplant < 21 } }
-			add_building_construction = {
-				type = fossil_powerplant
-				level = 1
-				instant_build = yes
-			}
-		}
-		add_to_variable = { startup_energy_needed = -2 }
-	}
-	clear_variable = startup_energy_needed
-	calculate_energy_use = yes
-}
-
 build_battery_park_effect = {
 	custom_effect_tooltip = build_battery_park_effect_TT
 	set_temp_variable = { battery_cost_multiplier = modifier@battery_park_construction_cost }
