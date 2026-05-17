@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """
-Pre-place fossil power plants and composite factories into history/states/ files.
+Pre-place fossil power plants, composite factories, and the nuclear reactor
+material stockpile into history files.
 
-Replaces the runtime `setup_starting_fossil_powerplants` and `composite_building_add`
-effects that ran a per-country while-loop over `random_owned_controlled_state` at
-on_startup. By baking the placements into the state history, the engine sees the
-correct building counts before the first GDP pass and the redundant second
-`ingame_update_setup` in on_actions can be removed.
+Replaces the runtime `setup_starting_fossil_powerplants`, `composite_building_add`,
+and `setup_starting_reactor_stockpile` effects that ran in on_startup. By baking
+these into the state and country history, the engine sees the correct building
+counts and the nuclear stockpile before the first `calculate_energy_use` pass —
+so nuclear comes online on the first tick instead of after a manual refresh.
 
 Re-run this tool after any change that shifts the per-country energy balance:
     - energy formula constants in common/scripted_effects/!_energy_effects.txt
     - per-country `startup_composite_fac_needed` seeds in history/countries/
     - state ownership, population, productivity, or building counts in history/states/
+    - state-level nuclear_reactor placement (changes the baked stockpile)
     - ideas that touch `energy_use_*`, `energy_gain_*`, or `fossil_*` modifiers
 
 The tool is idempotent: a second `--write` after the data has stabilised produces
@@ -36,10 +38,16 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 if THIS_DIR not in sys.path:
     sys.path.insert(0, THIS_DIR)
 
-from estimate_gdp import (  # noqa: E402
+from estimate_gdp import (
     COUNTRIES_DIR,
+    HEALTH_GDP_MULT,
+    RESOURCE_FACTOR_KEYS,
     STATES_DIR,
     build_modifier_stack,
+)
+from estimate_gdp import calculate_gdp as _calculate_gdp  # noqa: E402
+from estimate_gdp import finalize_gdp as _finalize_gdp
+from estimate_gdp import (
     parse_all_ideas,
     parse_country_history,
     parse_state_file,
@@ -54,6 +62,9 @@ FOSSIL_GW_PER_PLANT = (
     2  # base modifier@fossil_energy_gain from common/buildings/00_buildings.txt:344
 )
 NUCLEAR_GW_PER_REACTOR = 4  # from !_energy_effects.txt:274
+NUCLEAR_FUEL_PER_REACTOR = (
+    2500  # match setup_starting_reactor_stockpile in 00_missiles_scripted_effects.txt
+)
 RENEWABLE_BASE_GW = 0.5  # per renewable_energy_infra level
 RENEWABLE_AVG_FACTOR = 0.5  # avg of random(min..1); conservative midpoint
 STATE_FOSSIL_CAP = 21  # match runtime limit { building_level@fossil_powerplant < 21 }
@@ -118,19 +129,22 @@ def parse_composite_seeds():
     return seeds
 
 
-def energy_consumption(states, modifier_stack, seeded_gdpc):
-    """Approximate energy consumption (GW), mirroring calculate_energy_use."""
+def energy_consumption(states, modifier_stack, gdpc):
+    """Approximate energy consumption (GW), mirroring calculate_energy_use.
+
+    `gdpc` is the gdp_per_capita the engine will see in calculate_energy_use,
+    i.e. the result of the first calculate_gdp pass (not the seeded value).
+    Pass it directly so the bake's consumption math tracks what the engine
+    actually computes on the first tick.
+    """
     total_pop = sum(s["manpower"] for s in states)
     if total_pop == 0:
         return 0.0
     population_total = total_pop / 100_000  # hundred-thousands
 
-    # GDP/c: prefer history-seeded; else fall back to overall_productivity * 0.05 (gdpc_converging seed)
-    if seeded_gdpc is not None and seeded_gdpc > 0:
-        gdpc = seeded_gdpc
-    else:
-        overall = sum(s["productivity"] * s["manpower"] for s in states) / total_pop
-        gdpc = max(overall * 0.05, 2)
+    if gdpc is None or gdpc <= 0:
+        # Fallback for paper tags without states / GDP — match engine clamp.
+        gdpc = 2
 
     pop_use_mult = 1 + modifier_stack.get("pop_energy_use_multiplier", 0)
     energy_use_mult = 1 + modifier_stack.get("energy_use_multiplier", 0)
@@ -204,13 +218,25 @@ def energy_supply_non_fossil(states, modifier_stack, has_nuclear):
     return renewables + hydro + geo + nuclear + other
 
 
-def fossil_plants_needed(consumption, supply):
-    """Mirror runtime: ceil((consumption - supply) / 2), clamp min=1."""
-    gap = consumption - supply
+def fossil_plants_needed(consumption, supply, safety_gw=2.0):
+    """Compute how many fossil power plants to pre-place.
+
+    Returns ceil((consumption + safety_gw - supply) / 2), clamped to min 1.
+
+    `safety_gw` adds a 1-plant buffer of headroom. The bake model approximates
+    the engine's first-tick energy math but loses a few GW per country to
+    unmodelled effects: state controlled-vs-owned aggregation, manpower
+    fulfillment scaling, drift in estimate_gdp's healthcare constants vs the
+    engine's `health_gdp_level_mult`, the unrolled renewable random factor on
+    first tick, etc. Without a buffer, marginal-balance countries (SOV, CHI,
+    ETH) land just short in-game even though the bake's projection is
+    "balanced." A 2 GW pad covers the noise; the engine's
+    `free_fossil_powerplants_power` auto-throttle absorbs any incidental
+    surplus on the high end.
+    """
+    gap = consumption + safety_gw - supply
     if gap <= 0:
-        return 1  # runtime clamps to min 1
-    # Runtime decrements by 2 per iteration starting from `gap` (rounded);
-    # equivalent to ceil(gap / 2).
+        return 1
     return max(1, math.ceil(gap / 2))
 
 
@@ -327,14 +353,26 @@ def inject_building(filepath, building_name, count):
             return False, "no change"
         content = content[:bldg_open] + new_block + content[bldg_close:]
     else:
-        # No buildings block — create one. Inject right after history = {
-        insert_at = hist_m.end()
+        # No buildings block — create one. MD/HOI4 convention is `owner = TAG`
+        # first inside `history = { ... }`, then everything else. Insert the
+        # new buildings block on the line after `owner = TAG`; fall back to
+        # right after `history = {` only if owner isn't found (paper tags).
         indent = "\t\t"
-        content = (
-            content[:insert_at]
-            + f"\n{indent}buildings = {{\n{indent}\t{building_name} = {count}\n{indent}}}"
-            + content[insert_at:]
-        )
+        owner_m = re.search(r"\bowner\s*=\s*\w+[ \t]*\n", content[hist_m.end() :])
+        if owner_m:
+            insert_at = hist_m.end() + owner_m.end()
+            content = (
+                content[:insert_at]
+                + f"{indent}buildings = {{\n{indent}\t{building_name} = {count}\n{indent}}}\n"
+                + content[insert_at:]
+            )
+        else:
+            insert_at = hist_m.end()
+            content = (
+                content[:insert_at]
+                + f"\n{indent}buildings = {{\n{indent}\t{building_name} = {count}\n{indent}}}"
+                + content[insert_at:]
+            )
 
     with open(filepath, "w", encoding="utf-8", newline="\n") as f:
         f.write(content)
@@ -395,6 +433,106 @@ def _replace_or_append_top_level(block, key, value):
     return f"{trail}\n{indent}{key} = {value}" + block[len(trail) :]
 
 
+# ─── Country history: reactor stockpile injection ──────────────────────────────
+
+
+def find_country_file(tag):
+    """Return the absolute path to the country history file for TAG, or None."""
+    for fname in os.listdir(COUNTRIES_DIR):
+        if fname.startswith(f"{tag} ") and fname.endswith(".txt"):
+            return os.path.join(COUNTRIES_DIR, fname)
+    return None
+
+
+_ENRICHMENT_VALUE_RE = re.compile(
+    r"set_variable\s*=\s*\{\s*enrichment_facilities\s*=\s*(\d+)"
+)
+_STOCKPILE_RE = re.compile(
+    r"(?P<indent>[ \t]*)set_variable\s*=\s*\{\s*var_reactor_material_stockpile\s*=\s*[-\d.]+\s*\}"
+)
+_REACTOR_FLAG_RE = re.compile(
+    r"set_country_flag\s*=\s*enabled_nuclear_reactor_fuel_production\b"
+)
+_ENRICHMENT_BLOCK_RE = re.compile(
+    r"(?P<indent>[ \t]*)add_to_array\s*=\s*\{\s*global\.enrichment_countries\s*=\s*THIS\.id\s*\}[ \t]*\n"
+)
+_OVERALL_PRODUCTIVITY_RE = re.compile(
+    r"(?P<indent>[ \t]*)set_variable\s*=\s*\{\s*overall_productivity\s*=\s*[-\d.]+\s*\}[ \t]*\n"
+)
+
+
+def read_enrichment_count(content):
+    """Return the country's enrichment_facilities value from the country history content, or 0."""
+    m = _ENRICHMENT_VALUE_RE.search(content)
+    return int(m.group(1)) if m else 0
+
+
+def inject_reactor_stockpile(filepath, stockpile, set_flag):
+    """Inject (or update) var_reactor_material_stockpile and optionally the
+    enabled_nuclear_reactor_fuel_production flag into a country history file.
+
+    Placement:
+      - After `add_to_array = { global.enrichment_countries = THIS.id }` if present.
+      - Else after `set_variable = { overall_productivity = N }`.
+
+    Returns (changed: bool, msg: str). Idempotent: re-running on a stabilised file
+    produces no diff.
+    """
+    with open(filepath, "r", encoding="utf-8", errors="replace") as f:
+        content = f.read()
+    original = content
+
+    stockpile_target = (
+        f"set_variable = {{ var_reactor_material_stockpile = {stockpile} }}"
+    )
+
+    # ── Step 1: stockpile var (replace or insert) ──
+    existing = _STOCKPILE_RE.search(content)
+    if existing:
+        indent = existing.group("indent")
+        content = (
+            content[: existing.start()]
+            + f"{indent}{stockpile_target}"
+            + content[existing.end() :]
+        )
+    else:
+        anchor = _ENRICHMENT_BLOCK_RE.search(
+            content
+        ) or _OVERALL_PRODUCTIVITY_RE.search(content)
+        if not anchor:
+            return (
+                False,
+                "no anchor (no enrichment_countries / overall_productivity line)",
+            )
+        indent = anchor.group("indent")
+        content = (
+            content[: anchor.end()]
+            + f"{indent}{stockpile_target}\n"
+            + content[anchor.end() :]
+        )
+
+    # ── Step 2: flag (insert after stockpile line if requested and not present) ──
+    if set_flag and not _REACTOR_FLAG_RE.search(content):
+        m = _STOCKPILE_RE.search(content)
+        indent = m.group("indent")
+        # Insert on the next line after the stockpile assignment.
+        line_end = content.find("\n", m.end())
+        if line_end == -1:
+            line_end = len(content)
+        content = (
+            content[: line_end + 1]
+            + f"{indent}set_country_flag = enabled_nuclear_reactor_fuel_production\n"
+            + content[line_end + 1 :]
+        )
+
+    if content == original:
+        return False, "no change"
+
+    with open(filepath, "w", encoding="utf-8", newline="\n") as f:
+        f.write(content)
+    return True, "written"
+
+
 # ─── Main ──────────────────────────────────────────────────────────────────────
 
 
@@ -417,14 +555,35 @@ def gather_country_data():
     for tag, states in country_states.items():
         country_data = parse_country_history(tag)
         modifier_stack = build_modifier_stack(country_data["ideas"], idea_db)
+        # Apply dynamic resource extraction modifiers (mirrors estimate_gdp's main loop).
+        for var_name, var_val in country_data.get("dynamic_resource_vars", {}).items():
+            for rkey in RESOURCE_FACTOR_KEYS.values():
+                modifier_stack[rkey] = modifier_stack.get(rkey, 0) + var_val
         has_nuclear = any(
             i in ("nuclear_energy", "nuclear_power_off", "nuclear_power_def")
             for i in country_data["ideas"]
         )
+
+        # Run the same GDP pipeline the engine runs on the first calculate_gdp
+        # pass. This is what calculate_energy_use will see for `gdp_per_capita` —
+        # NOT the seeded value, NOT gdpc_converging_var. Using the seeded value
+        # underestimates consumption for countries whose history seeds a gdpc
+        # well below the calculated one (VEN, ITA, RAJ).
+        engine_gdpc = None
+        gdp_result = _calculate_gdp(states, modifier_stack)
+        if gdp_result:
+            health_idea = next(
+                (i for i in country_data["ideas"] if i in HEALTH_GDP_MULT),
+                None,
+            )
+            _finalize_gdp(gdp_result, health_idea, country_data["seeded_gdpc"])
+            engine_gdpc = gdp_result.get("gdp_per_capita")
+
         results[tag] = {
             "states": states,
             "ideas": country_data["ideas"],
             "seeded_gdpc": country_data["seeded_gdpc"],
+            "engine_gdpc": engine_gdpc,
             "modifier_stack": modifier_stack,
             "has_nuclear": has_nuclear,
         }
@@ -472,7 +631,7 @@ def compute_placements(country_data, composite_seeds):
 
         # ─── Fossil plants ────────────────────────────────────────────────────
         consumption = energy_consumption(
-            states_for_energy, c["modifier_stack"], c["seeded_gdpc"]
+            states_for_energy, c["modifier_stack"], c["engine_gdpc"]
         )
         supply = energy_supply_non_fossil(
             states_for_energy, c["modifier_stack"], c["has_nuclear"]
@@ -482,6 +641,17 @@ def compute_placements(country_data, composite_seeds):
         existing = sum(s["buildings"].get("fossil_powerplant", 0) for s in c["states"])
         fossil_to_add = max(0, fossil - existing)
         fossil_dist = distribute(fossil_to_add, c["states"], "fossil_powerplant")
+
+        # ─── Nuclear stockpile (bake setup_starting_reactor_stockpile) ────────
+        reactor_count = sum(
+            s["buildings"].get("nuclear_reactor", 0) for s in c["states"]
+        )
+        stockpile = reactor_count * NUCLEAR_FUEL_PER_REACTOR
+        country_file = find_country_file(tag)
+        enrichment = 0
+        if country_file:
+            with open(country_file, "r", encoding="utf-8", errors="replace") as f:
+                enrichment = read_enrichment_count(f.read())
 
         plan[tag] = {
             "consumption": consumption,
@@ -493,18 +663,23 @@ def compute_placements(country_data, composite_seeds):
             "composite_total": composite_total,
             "composite_added": sum(composite_dist.values()),
             "composite_dist": composite_dist,
+            "reactor_count": reactor_count,
+            "reactor_stockpile": stockpile,
+            "enrichment": enrichment,
+            "country_file": country_file,
         }
     return plan
 
 
 def apply_plan(plan, country_data, write=False, only=None):
-    """Apply the plan: rewrite state files (write=True) or report (write=False)."""
+    """Apply the plan: rewrite state and country history files (write=True) or count (write=False)."""
     by_state_file = defaultdict(dict)  # filepath -> {building: count_delta}
     state_lookup = {}
     for tag, c in country_data.items():
         for s in c["states"]:
             state_lookup[s["id"]] = s
 
+    country_edits = []  # list of (filepath, stockpile, set_flag)
     for tag, p in plan.items():
         if only and tag not in only:
             continue
@@ -518,9 +693,13 @@ def apply_plan(plan, country_data, write=False, only=None):
                 s = state_lookup[sid]
                 existing = s["buildings"].get("composite_plant", 0)
                 by_state_file[s["filepath"]]["composite_plant"] = existing + n
+        if p["reactor_count"] > 0 and p["country_file"]:
+            country_edits.append(
+                (p["country_file"], p["reactor_stockpile"], p["enrichment"] > 0)
+            )
 
     if not write:
-        return len(by_state_file)
+        return len(by_state_file) + len(country_edits)
 
     written = 0
     for fpath, edits in by_state_file.items():
@@ -528,6 +707,10 @@ def apply_plan(plan, country_data, write=False, only=None):
             ok, msg = inject_building(fpath, bname, total)
             if ok:
                 written += 1
+    for fpath, stockpile, set_flag in country_edits:
+        ok, msg = inject_reactor_stockpile(fpath, stockpile, set_flag)
+        if ok:
+            written += 1
     return written
 
 
@@ -575,24 +758,28 @@ def main():
 
     print(
         f"\n{'TAG':<5}  {'Use(GW)':>8} {'Sup(GW)':>8} {'Gap(GW)':>8} "
-        f"{'Foss':>5} {'Have':>5} {'Add':>5} {'Comp+':>6}"
+        f"{'Foss':>5} {'Have':>5} {'Add':>5} {'Comp+':>6} {'Rx':>4} {'Stkpl':>7}"
     )
-    print("-" * 60)
+    print("-" * 75)
     for tag, p in rows:
         gap = p["consumption"] - p["supply_non_fossil"]
         print(
             f"{tag:<5}  {p['consumption']:>8.1f} {p['supply_non_fossil']:>8.1f} "
             f"{gap:>8.1f} {p['fossil_needed']:>5} {p['fossil_existing']:>5} "
-            f"{p['fossil_added']:>5} {p['composite_added']:>6}"
+            f"{p['fossil_added']:>5} {p['composite_added']:>6} "
+            f"{p['reactor_count']:>4} {p['reactor_stockpile']:>7}"
         )
 
     if args.write:
         n = apply_plan(plan, country_data, write=True, only=only)
-        print(f"\nWrote {n} building entries across state files.", file=sys.stderr)
+        print(
+            f"\nWrote {n} building/stockpile entries across state + country files.",
+            file=sys.stderr,
+        )
     else:
         n = apply_plan(plan, country_data, write=False, only=only)
         print(
-            f"\nDry run: {n} state files would be modified. Use --write to apply.",
+            f"\nDry run: {n} state + country files would be modified. Use --write to apply.",
             file=sys.stderr,
         )
 
