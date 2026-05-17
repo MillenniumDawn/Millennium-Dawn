@@ -61,12 +61,13 @@ POP_ENERGY_BALANCE = 28
 FOSSIL_GW_PER_PLANT = (
     2  # base modifier@fossil_energy_gain from common/buildings/00_buildings.txt:344
 )
-NUCLEAR_GW_PER_REACTOR = 4  # from !_energy_effects.txt:274
+NUCLEAR_GW_PER_REACTOR = (
+    4  # nuclear_energy_gain in common/buildings/00_buildings.txt:169
+)
 NUCLEAR_FUEL_PER_REACTOR = (
-    2500  # match setup_starting_reactor_stockpile in 00_missiles_scripted_effects.txt
+    2500  # snapshot of the (removed) setup_starting_reactor_stockpile multiplier
 )
 RENEWABLE_BASE_GW = 0.5  # per renewable_energy_infra level
-RENEWABLE_AVG_FACTOR = 0.5  # avg of random(min..1); conservative midpoint
 STATE_FOSSIL_CAP = 21  # match runtime limit { building_level@fossil_powerplant < 21 }
 
 # Building per-type energy use coefficients
@@ -84,16 +85,20 @@ BUILDING_ENERGY_COEFF = {
 # ─── Helpers ────────────────────────────────────────────────────────────────────
 
 
-def collect_state_renewable_vars(filepath, state):
-    """Pull set_variable hydroelectric/geothermal/renewable_capacity values from a state file."""
-    with open(filepath, "r", encoding="utf-8", errors="replace") as f:
-        content = f.read()
+_RENEWABLE_VAR_PATTERNS = {
+    var: re.compile(rf"set_variable\s*=\s*\{{\s*{var}\s*=\s*([-\d.]+)")
     for var in (
         "hydroelectric_energy_production_var",
         "geothermal_energy_production_var",
         "state_renewable_capacity_factor_modifier_var",
-    ):
-        m = re.search(rf"set_variable\s*=\s*\{{\s*{var}\s*=\s*([-\d.]+)", content)
+    )
+}
+
+
+def collect_state_renewable_vars(content, state):
+    """Pull set_variable hydroelectric/geothermal/renewable_capacity values from state content."""
+    for var, pat in _RENEWABLE_VAR_PATTERNS.items():
+        m = pat.search(content)
         if m:
             try:
                 state[var] = float(m.group(1))
@@ -307,15 +312,18 @@ def distribute(count, states, building_name, cap=STATE_FOSSIL_CAP, weight_fn=Non
 # ─── State parsing extension ────────────────────────────────────────────────────
 
 
+_STATE_CATEGORY_RE = re.compile(r"^\s*state_category\s*=\s*(\w+)", re.MULTILINE)
+
+
 def parse_state_with_category(filepath):
     state = parse_state_file(filepath)
     state["filepath"] = filepath
     with open(filepath, "r", encoding="utf-8", errors="replace") as f:
         content = f.read()
-    m = re.search(r"^\s*state_category\s*=\s*(\w+)", content, re.MULTILINE)
+    m = _STATE_CATEGORY_RE.search(content)
     if m:
         state["state_category"] = m.group(1)
-    collect_state_renewable_vars(filepath, state)
+    collect_state_renewable_vars(content, state)
     return state
 
 
@@ -379,6 +387,10 @@ def inject_building(filepath, building_name, count):
     return True, "written"
 
 
+_TOP_LEVEL_KEY_RE = re.compile(r"(\s*)(\w+)(\s*)=")
+_SAMPLE_INDENT_RE = re.compile(r"^([ \t]+)\w+\s*=", re.MULTILINE)
+
+
 def _replace_or_append_top_level(block, key, value):
     """Inside a `{ ... }` block (without surrounding braces), replace or append `key = value` at depth 0."""
     depth = 0
@@ -397,26 +409,26 @@ def _replace_or_append_top_level(block, key, value):
             continue
         if depth == 0:
             # Try to match `(whitespace)keyword (whitespace)=` at this position
-            m = re.match(r"(\s*)(\w+)(\s*)=", block[i:])
+            m = _TOP_LEVEL_KEY_RE.match(block, i)
             if m and m.group(2) == key:
-                eq_end = i + m.end()
+                eq_end = m.end()
                 # Skip whitespace after =
                 j = eq_end
                 while j < len(block) and block[j] in " \t":
                     j += 1
                 if j < len(block) and block[j] == "{":
                     # Nested block (e.g. province-scoped) - not a simple key=N, skip.
-                    i += m.end()
+                    i = m.end()
                     continue
                 # Match value as a contiguous non-whitespace token
                 k = j
                 while k < len(block) and block[k] not in " \t\r\n":
                     k += 1
-                keyword_start = i + m.start(2)
+                keyword_start = m.start(2)
                 found_end = k
                 break
             if m:
-                i += m.end()
+                i = m.end()
                 continue
         i += 1
 
@@ -426,7 +438,7 @@ def _replace_or_append_top_level(block, key, value):
 
     # Append new entry. Pick indentation by scanning for the first top-level entry.
     indent = "\t\t\t"
-    sample = re.search(r"^([ \t]+)\w+\s*=", block, re.MULTILINE)
+    sample = _SAMPLE_INDENT_RE.search(block)
     if sample:
         indent = sample.group(1)
     trail = block.rstrip("\n\r\t ")
