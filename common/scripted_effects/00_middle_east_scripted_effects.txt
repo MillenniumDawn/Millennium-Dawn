@@ -1609,6 +1609,41 @@ on_weekly_gcc_dominant_member_check = {
 	}
 }
 
+# Idempotent refresh of mutual Muslim_Brotherhood_Relations modifiers for THIS country.
+# Single pass: always clears, then re-adds when both THIS and the peer are MB.
+# Safe to call from on_startup, change_ruling_party_effect, and civil_war_replication_effect.
+mb_refresh_relations_effect = {
+	if = {
+		limit = { is_in_array = { global.possible_muslim_brotherhood_nation = THIS.id } }
+		if = {
+			limit = {
+				Is_Muslim_Brotherhood = yes
+				has_idea = muslim_brotherhood_crackdown
+			}
+			remove_ideas = muslim_brotherhood_crackdown
+		}
+		for_each_loop = {
+			array = global.possible_muslim_brotherhood_nation
+			value = v
+			var:v = {
+				if = {
+					limit = { NOT = { tag = ROOT } }
+					remove_opinion_modifier = { target = ROOT modifier = Muslim_Brotherhood_Relations }
+					ROOT = { remove_opinion_modifier = { target = PREV modifier = Muslim_Brotherhood_Relations } }
+					if = {
+						limit = {
+							Is_Muslim_Brotherhood = yes
+							ROOT = { Is_Muslim_Brotherhood = yes }
+						}
+						add_opinion_modifier = { target = ROOT modifier = Muslim_Brotherhood_Relations }
+						reverse_add_opinion_modifier = { target = ROOT modifier = Muslim_Brotherhood_Relations }
+					}
+				}
+			}
+		}
+	}
+}
+
 # Apply crackdown opinion modifiers from ROOT (crackdown country) to all MB nations in the array,
 # and apply positive mutual opinion with any other countries already cracking down.
 # ROOT = country adding the crackdown idea

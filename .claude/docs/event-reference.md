@@ -224,6 +224,23 @@ option = {
 }
 ```
 
+## `random_events` Dispatch (on_actions)
+
+Events registered inside an `on_actions` `random_events = { … }` block are picked by **weighted roll against the `0 = N` "nothing happens" slot**, not by MTTH alone:
+
+```
+random_events = {
+    2500 = 0          # weight assigned to "no event fires" this tick
+    100 = brotherhood.6
+    100 = brotherhood.7
+}
+```
+
+- A single roll runs each tick the parent `on_action` fires. Each candidate's chance is `weight / sum_of_weights`. The `0` slot exists so most ticks produce nothing.
+- `is_triggered_only = yes` events selected this way still check their own `trigger = { … }` block. If the trigger fails on the rolled country, **nothing fires that tick** — the roll does not retry. So tight triggers thin out effective fire rates a lot.
+- **`mean_time_to_happen` is NOT dead inside `random_events`**: the engine multiplies the candidate's effective weight by the MTTH `factor` modifiers that match the rolled scope. This lets you globally register an event in `random_events` but still tune per-country pacing via MTTH modifier blocks (e.g., "fire 1.5× more often when `neutrality > 0.40`"). Keep MTTH blocks on events listed in `random_events` whenever you want per-country weight tuning.
+- Prefer `random_events` over hand-rolled `random_list` inside on_action effects for systems that should fire across many countries — it's cheaper than iterating arrays and adds a uniform global cadence.
+
 ## Content Guidelines for Events
 
 - All events targeting another nation need AI weighting based on opinion/influence
