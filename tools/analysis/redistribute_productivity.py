@@ -15,7 +15,7 @@ East. For each in-scope country it:
      points, landmark buildings, factory count, dockyards),
   3. Allocates the country's existing total productivity proportionally to
      weight (so the country mean is preserved exactly),
-  4. Clamps any state to [0.40 * mean, 1.85 * mean] and renormalizes,
+  4. Clamps any state to [0.35 * mean, 2.00 * mean] and renormalizes,
   5. Rewrites the productivity_state_var line in each state file.
 
 Idempotent. Default is --dry-run.
@@ -179,10 +179,8 @@ LANDMARK_RE = re.compile(r"\blandmark_[A-Za-z_]+\s*=\s*\{", re.IGNORECASE)
 SPACEPORT_RE = re.compile(r"\bspaceport\s*=\s*\d+")
 
 
-def parse_state_extras(filepath):
-    """Extract victory-point sum, landmark presence, spaceport presence from a state file."""
-    with open(filepath, "r", encoding="utf-8") as f:
-        content = f.read()
+def parse_state_extras(content):
+    """Extract victory-point sum, landmark presence, spaceport presence from state file text."""
     vp_sum = sum(int(m.group(1)) for m in VP_RE.finditer(content))
     has_landmark = bool(LANDMARK_RE.search(content))
     has_spaceport = bool(SPACEPORT_RE.search(content))
@@ -196,10 +194,12 @@ def load_all_states():
         if not fname.endswith(".txt"):
             continue
         fpath = os.path.join(STATES_DIR, fname)
-        state = estimate_gdp.parse_state_file(fpath)
+        with open(fpath, "r", encoding="utf-8") as f:
+            content = f.read()
+        state = estimate_gdp.parse_state_file_from_content(content, fname)
         if not state["owner"] or state["id"] is None:
             continue
-        vp_sum, has_landmark, has_spaceport = parse_state_extras(fpath)
+        vp_sum, has_landmark, has_spaceport = parse_state_extras(content)
         state["filepath"] = fpath
         state["vp_sum"] = vp_sum
         state["has_landmark"] = has_landmark
@@ -270,7 +270,7 @@ def compute_score(state, is_capital=False):
     """
     vp_sum = state["vp_sum"]
     if vp_sum > 0:
-        vp_boost = 1.0 + 0.40 + 0.04 * min(vp_sum, 25)
+        vp_boost = 1.40 + 0.04 * min(vp_sum, 25)
     else:
         vp_boost = 1.0
 
@@ -385,12 +385,12 @@ def redistribute(states, capital_state_id=None):
     # if a full pass through `order` makes no progress (all candidate states
     # pinned at ceil/floor).
     drift_weighted = target_weighted - sum(r * p for r, p in zip(rounded, pops))
-    if abs(drift_weighted) > 0.5 * max(pops):
+    max_pop = max(pops)
+    if abs(drift_weighted) > 0.5 * max_pop:
         order = sorted(range(n), key=lambda i: -pops[i])
         last_drift = drift_weighted
-        no_progress_passes = 0
         guard = 0
-        while abs(drift_weighted) > 0.5 * max(pops) and guard < 20 * n:
+        while abs(drift_weighted) > 0.5 * max_pop and guard < 20 * n:
             idx = order[guard % n]
             if drift_weighted > 0 and rounded[idx] < ceil:
                 rounded[idx] += 1
@@ -399,16 +399,12 @@ def redistribute(states, capital_state_id=None):
                 rounded[idx] -= 1
                 drift_weighted += pops[idx]
             guard += 1
-            # End-of-pass progress check: if a full sweep through `order`
-            # made no change, every state is pinned — exit early.
+            # End-of-pass progress check: if a full sweep made no change,
+            # every state is pinned at the clamp boundary — exit early.
             if guard % n == 0:
                 if drift_weighted == last_drift:
-                    no_progress_passes += 1
-                    if no_progress_passes >= 1:
-                        break
-                else:
-                    no_progress_passes = 0
-                    last_drift = drift_weighted
+                    break
+                last_drift = drift_weighted
 
     return [(s, old, new) for s, old, new in zip(states, old_prods, rounded)]
 
@@ -422,11 +418,11 @@ def rewrite_state(state, new_prod):
     with open(fpath, "r", encoding="utf-8") as f:
         content = f.read()
 
-    if not PROD_RE.search(content):
+    m = PROD_RE.search(content)
+    if not m:
         return False
 
-    cur = int(PROD_RE.search(content).group(2))
-    if cur == new_prod:
+    if int(m.group(2)) == new_prod:
         return False
 
     new_content, count = PROD_RE.subn(
@@ -440,32 +436,6 @@ def rewrite_state(state, new_prod):
     with open(fpath, "w", encoding="utf-8", newline="\n") as f:
         f.write(new_content)
     return True
-
-
-# ─── GDP comparison ────────────────────────────────────────────────────────────
-
-
-def compute_country_gdp(tag, states, idea_db):
-    """Run estimate_gdp.calculate_gdp on the given state snapshot."""
-    country_data = estimate_gdp.parse_country_history(tag)
-    starting_ideas = country_data["ideas"]
-    seeded_gdpc = country_data["seeded_gdpc"]
-    modifier_stack = estimate_gdp.build_modifier_stack(starting_ideas, idea_db)
-    for var_val in country_data["dynamic_resource_vars"].values():
-        for rkey in estimate_gdp.RESOURCE_FACTOR_KEYS.values():
-            modifier_stack[rkey] = modifier_stack.get(rkey, 0) + var_val
-
-    health_idea = None
-    for idea in starting_ideas:
-        if idea in estimate_gdp.HEALTH_GDP_MULT:
-            health_idea = idea
-            break
-
-    result = estimate_gdp.calculate_gdp(states, modifier_stack)
-    if result is None:
-        return None
-    estimate_gdp.finalize_gdp(result, health_idea, seeded_gdpc)
-    return result["gdp_total"]
 
 
 # ─── Main ──────────────────────────────────────────────────────────────────────
@@ -557,34 +527,36 @@ def main():
         states = by_owner[tag]
         plan = redistribute(states, capital_state_id=capitals.get(tag))
 
-        old_total = sum(o for _, o, _ in plan)
-        new_total = sum(n for _, _, n in plan)
-        old_min = min(o for _, o, _ in plan)
-        old_max = max(o for _, o, _ in plan)
-        new_min = min(n for _, _, n in plan)
-        new_max = max(n for _, _, n in plan)
-        changes = sum(1 for _, o, n in plan if o != n)
+        olds = [o for _, o, _ in plan]
+        news = [n for _, _, n in plan]
+        old_total = sum(olds)
+        new_total = sum(news)
+        old_min, old_max = min(olds), max(olds)
+        new_min, new_max = min(news), max(news)
+        changes = sum(1 for o, n in zip(olds, news) if o != n)
         # Population-weighted totals (what the engine actually uses for GDP)
         pops = [max(s["manpower"], 1) for s, _, _ in plan]
         total_pop = sum(pops)
-        old_w = sum(o * p for (_, o, _), p in zip(plan, pops))
-        new_w = sum(n * p for (_, _, n), p in zip(plan, pops))
+        old_w = sum(o * p for o, p in zip(olds, pops))
+        new_w = sum(n * p for n, p in zip(news, pops))
         old_pop_w_mean = old_w / total_pop
         new_pop_w_mean = new_w / total_pop
         pop_w_drift_pct = 100.0 * (new_w - old_w) / old_w if old_w else 0.0
 
         gdp_before = gdp_after = None
         if args.report and idea_db is not None:
-            gdp_before = compute_country_gdp(tag, states, idea_db)
+            before = estimate_gdp.compute_country_gdp(tag, states, idea_db)
             mutated = []
             for s, _, new_prod in plan:
                 ms = dict(s)
                 ms["productivity"] = new_prod
                 mutated.append(ms)
-            gdp_after = compute_country_gdp(tag, mutated, idea_db)
+            after = estimate_gdp.compute_country_gdp(tag, mutated, idea_db)
+            gdp_before = before["gdp_total"] if before else None
+            gdp_after = after["gdp_total"] if after else None
 
         gdp_delta_pct = None
-        if gdp_before and gdp_after and gdp_before > 0:
+        if gdp_before and gdp_after:
             gdp_delta_pct = 100.0 * (gdp_after - gdp_before) / gdp_before
             if abs(gdp_delta_pct) > args.gdp_tolerance:
                 gdp_violations.append((tag, gdp_delta_pct))
