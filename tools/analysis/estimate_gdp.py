@@ -19,7 +19,7 @@ import re
 import sys
 from collections import defaultdict
 
-BASE_DIR = os.path.join(os.path.dirname(__file__), "..")
+BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "..")
 STATES_DIR = os.path.join(BASE_DIR, "history", "states")
 COUNTRIES_DIR = os.path.join(BASE_DIR, "history", "countries")
 IDEAS_DIR = os.path.join(BASE_DIR, "common", "ideas")
