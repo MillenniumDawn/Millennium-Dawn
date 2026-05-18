@@ -297,12 +297,23 @@ def parse_country_history(tag):
             ):
                 dynamic_resource_vars[vm.group(1)] = float(vm.group(2))
 
+            capital = None
+            m = re.search(r"^\s*capital\s*=\s*(\d+)", content, re.MULTILINE)
+            if m:
+                capital = int(m.group(1))
+
             return {
                 "ideas": ideas,
                 "seeded_gdpc": seeded_gdpc,
                 "dynamic_resource_vars": dynamic_resource_vars,
+                "capital": capital,
             }
-    return {"ideas": [], "seeded_gdpc": None, "dynamic_resource_vars": {}}
+    return {
+        "ideas": [],
+        "seeded_gdpc": None,
+        "dynamic_resource_vars": {},
+        "capital": None,
+    }
 
 
 # ─── State Parsing ─────────────────────────────────────────────────────────────
@@ -520,11 +531,13 @@ def calculate_gdp(states, modifier_stack=None):
     }
 
 
-def compute_country_gdp(tag, states, idea_db):
+def compute_country_gdp(tag, states, idea_db, country_data=None):
     """End-to-end per-country GDP: parse history → modifier stack → calculate → finalize.
     Returns the result dict (with `tag` / `starting_ideas` / `seeded_gdpc` attached),
-    or None if calculate_gdp produced no result."""
-    country_data = parse_country_history(tag)
+    or None if calculate_gdp produced no result. Pass `country_data` (from
+    parse_country_history) to skip the re-parse when the caller has it cached."""
+    if country_data is None:
+        country_data = parse_country_history(tag)
     starting_ideas = country_data["ideas"]
     seeded_gdpc = country_data["seeded_gdpc"]
     modifier_stack = build_modifier_stack(starting_ideas, idea_db)

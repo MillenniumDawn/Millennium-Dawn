@@ -208,36 +208,6 @@ def load_all_states():
     return by_owner
 
 
-CAPITAL_RE = re.compile(r"^capital\s*=\s*(\d+)", re.MULTILINE)
-
-
-def load_capitals():
-    """Return {country_tag: capital_state_id} by reading history/countries/*.txt files."""
-    countries_dir = os.path.join(BASE_DIR, "history", "countries")
-    capitals = {}
-    for fname in os.listdir(countries_dir):
-        if not fname.endswith(".txt"):
-            continue
-        # Filename pattern: "TAG - Country Name.txt"
-        tag = fname.split(" ", 1)[0].strip()
-        if not tag or len(tag) > 5:
-            continue
-        try:
-            with open(
-                os.path.join(countries_dir, fname),
-                "r",
-                encoding="utf-8",
-                errors="replace",
-            ) as f:
-                content = f.read()
-        except OSError:
-            continue
-        m = CAPITAL_RE.search(content)
-        if m:
-            capitals[tag] = int(m.group(1))
-    return capitals
-
-
 # ─── Weighting & redistribution ────────────────────────────────────────────────
 
 FACTORY_BUILDINGS = (
@@ -508,8 +478,8 @@ def main():
 
     print("Loading state files...", file=sys.stderr)
     by_owner = load_all_states()
-    capitals = load_capitals()
     tags = select_tags(args, by_owner)
+    country_infos = {tag: estimate_gdp.parse_country_history(tag) for tag in tags}
     print(f"Processing {len(tags)} countries.\n", file=sys.stderr)
 
     if args.report:
@@ -525,7 +495,8 @@ def main():
 
     for tag in tags:
         states = by_owner[tag]
-        plan = redistribute(states, capital_state_id=capitals.get(tag))
+        country_info = country_infos[tag]
+        plan = redistribute(states, capital_state_id=country_info["capital"])
 
         olds = [o for _, o, _ in plan]
         news = [n for _, _, n in plan]
@@ -545,13 +516,17 @@ def main():
 
         gdp_before = gdp_after = None
         if args.report and idea_db is not None:
-            before = estimate_gdp.compute_country_gdp(tag, states, idea_db)
+            before = estimate_gdp.compute_country_gdp(
+                tag, states, idea_db, country_data=country_info
+            )
             mutated = []
             for s, _, new_prod in plan:
                 ms = dict(s)
                 ms["productivity"] = new_prod
                 mutated.append(ms)
-            after = estimate_gdp.compute_country_gdp(tag, mutated, idea_db)
+            after = estimate_gdp.compute_country_gdp(
+                tag, mutated, idea_db, country_data=country_info
+            )
             gdp_before = before["gdp_total"] if before else None
             gdp_after = after["gdp_total"] if after else None
 
