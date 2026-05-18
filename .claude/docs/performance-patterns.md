@@ -84,15 +84,15 @@ dirty = global.date
 ### Right
 
 ```
-refresh_investment_gui = {
-    if = { limit = { check_variable = { global.refresh_investment_gui = 500000 } }
-        set_variable = { global.refresh_investment_gui = 1 }
+refresh_my_gui = {
+    if = { limit = { check_variable = { global.refresh_my_gui = 500000 } }
+        set_variable = { global.refresh_my_gui = 1 }
     }
-    else = { add_to_variable = { global.refresh_investment_gui = 1 } }
+    else = { add_to_variable = { global.refresh_my_gui = 1 } }
 }
 ```
 
-Bind `dirty = global.refresh_investment_gui`. Call `refresh_investment_gui = yes` only when investment state actually changes (project started, completed, cancelled, GUI button clicked).
+Bind `dirty = global.refresh_my_gui`. Call `refresh_my_gui = yes` only when the data that backs the GUI actually changes (a record added, removed, edited; a relevant button clicked). The counter is just a monotonically-increasing token — the engine redraws whenever it changes.
 
 **Why:** `global.date` changes every tick. The GUI would redraw every frame, causing noticeable lag on slower machines.
 
@@ -166,14 +166,14 @@ visible = {
 ### Right
 
 ```
-visible = { has_country_flag = has_valid_investment_target }
+visible = { has_country_flag = TAG_my_decision_visible }
 
-# Set/clear the flag in a daily on_action or event:
-set_country_flag = has_valid_investment_target   # when target found
-clr_country_flag = has_valid_investment_target   # when no targets
+# Set/clear the flag in a daily on_action or the event that creates/removes the precondition:
+set_country_flag = TAG_my_decision_visible   # when precondition is met
+clr_country_flag = TAG_my_decision_visible   # when it ceases to be met
 ```
 
-**Why:** A simple flag check is O(1). An `any_country` loop is O(N) per frame.
+**Why:** A flag check is O(1). An `any_country` loop is O(N) per frame, where N is every country in the world. Push the cost to the moment the precondition changes, not to every frame.
 
 **Note:** This advice applies to decision `visible` blocks (per-frame evaluation). For character `visible` blocks (evaluated only during AI assignment pulses and UI opens), `has_completed_focus` is equivalent to `has_country_flag` — both are hash-table lookups. Do **not** add country flags solely to replace `has_completed_focus` in character `visible` blocks; the extra flag persists in save files and bloats them for no benefit.
 
@@ -199,14 +199,14 @@ divide_temp_variable = { building_cost = construction_speed }
 Add cheap pre-checks before expensive loops to skip work when preconditions aren't met.
 
 ```
-# Cheap guard: broke AI can't fund anything
+# Cheap guards — any one failing skips the entire loop below
 check_variable = { treasury > 5 }
-check_variable = { active_projects < 15 }
-check_variable = { debt_ratio < 2.50 }
+check_variable = { active_records < 15 }
+check_variable = { my_ratio < 2.50 }
 
 # Heavy loop only runs if guards pass
 for_each_scope_loop = {
-    array = investment_targets
+    array = my_candidate_array
     # ... expensive scoring ...
 }
 ```
@@ -219,6 +219,6 @@ for_each_scope_loop = {
 
 Never duplicate the same logic in an `effect_tooltip` block and a `for_each_scope_loop` block. Use the loop's built-in `tooltip` parameter instead.
 
-**Why:** HOI4 evaluates both `effect_tooltip` (for tooltip display) and `for_each_scope_loop` (for effect execution). With ~27 EU members, each duplication costs ~27 extra scope switches and ~54 extra opinion modifier evaluations per trigger. In focus trees with 50+ such calls, that's thousands of wasted evaluations per campaign. `tooltip =` tells the engine to display the tooltip once and execute the loop once — a measurable performance win on any frequently-fired code path.
+**Why:** HOI4 evaluates both `effect_tooltip` (for tooltip display) and `for_each_scope_loop` (for effect execution). For a faction/EU/alliance array of N members, the duplication doubles the per-trigger cost — each scope switch and modifier evaluation runs twice. In focus trees with many such calls per branch, the wasted work compounds. `tooltip =` on the loop tells the engine to display the tooltip and execute the body in one pass — a measurable win on any frequently-fired code path.
 
 For the before/after migration pattern, see `.claude/docs/simplification-patterns.md`.

@@ -49,7 +49,7 @@ LAYER 5: GOD OF WAR OVERRIDES (game rule gated)
 
 ### on_startup (`common/on_actions/00_on_actions.txt`)
 
-- **AI Template Init** (line ~1710): `is_ai = yes AND NOT ZOM` → `give_AI_templates` + `ai_update_build_units`. Also sets microstate tax rates and investment targets.
+- **AI Template Init** (line ~1710): every AI country (zombie/joke tags are excluded — see `give_AI_templates`) → `give_AI_templates` + `ai_update_build_units`. Also sets microstate tax rates and investment targets.
 
 ### on_monthly (`common/on_actions/MD_on_actions.txt`)
 
@@ -204,10 +204,10 @@ Example: Iran's `PER_support_shias` makes Shia countries support Iran (rather th
 
 **Division/Ship/Plane Limiters:**
 
-- `division_limiter`: factories × modifiers (war 1.75x, threatened 1.25x, major 1.15x, NATO -0.8x, EU -0.8x)
-- `division_limiter_potato_edition`: 0.5x base, extra penalties for CHI/SOV faction
-- `ship_limiter`: naval_factories × 7 (or ×3 potato)
-- `plane_limiter`: mil_factories × 80 + 50 (or ×40 potato)
+- `division_limiter`: factories × situational modifiers. Active war scales up (~1.75x — wars demand more divisions than peacetime), `AI_is_threatened` adds ~1.25x, major status adds ~1.15x. Alliances that constrain unilateral builds (NATO, EU) apply a negative multiplier (~-0.8x) so members don't all maintain peer-major standing armies.
+- `division_limiter_potato_edition`: 0.5x base for the "performance" rule path, extra penalties for very large factions (CHI/SOV) so end-game stutter stays manageable.
+- `ship_limiter`: naval_factories × ~7 (or ×3 potato) — tuned so a typical naval power lands at a plausible fleet size, not the engine's hard cap.
+- `plane_limiter`: mil_factories × ~80 + 50 (or ×40 potato) — accounts for air industries producing many cheap units per factory compared to ground.
 
 **Unit build controls:**
 
@@ -245,8 +245,8 @@ Example: Iran's `PER_support_shias` makes Shia countries support Iran (rather th
 
 **Microchip/composite production:**
 
-- Nations consuming + importing more than producing → build chip/composite factories
-- Countries with strategies: USA, CHI, FRA, GER, JAP, KOR, CAN
+- Nations consuming + importing more than producing → build chip/composite factories.
+- Custom production strategies exist for the major industrial powers (currently USA, CHI, FRA, GER, JAP, KOR, CAN); other nations fall back to the generic logic. Add a new strategy when a country becomes a significant chip/composite producer in scenario terms.
 
 ### `naval.txt` — Naval Behavior
 

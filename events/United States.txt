@@ -29456,11 +29456,13 @@ country_event = {
 			base = 70
 			modifier = {
 				add = 20
-				western_liberals_are_in_power = yes
+				FROM = { has_government = democratic }
 			}
+			# Do not intervene in wars that are not our problem
 			modifier = {
-				add = 15
+				add = -25
 				FROM = { has_war = yes }
+				threat < 0.25
 			}
 			modifier = {
 				add = 20
@@ -29475,6 +29477,49 @@ country_event = {
 			modifier = {
 				factor = 0.5
 				has_opinion = { target = FROM value < 0 }
+			}
+			modifier = {
+				factor = 0
+				has_opinion = { target = FROM value < -100 }
+			}
+			# Strategic value of the applicant
+			modifier = {
+				add = 15
+				FROM = { has_army_manpower = { size > 150000 } }
+			}
+			modifier = {
+				add = 15
+				FROM = { num_of_factories > 25 }
+			}
+			modifier = {
+				add = 10
+				FROM = { has_opinion = { target = CHI value < -25 } }
+			}
+			# Risky applicant — unstable client
+			modifier = {
+				add = -15
+				FROM = { has_stability < 0.30 }
+			}
+			# US domestic posture
+			modifier = {
+				add = 10
+				western_conservatism_are_in_power = yes
+			}
+			modifier = {
+				add = 10
+				western_liberals_are_in_power = yes
+			}
+			modifier = {
+				add = -15
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+			# Overstretched — economic crisis blunts new commitments
+			modifier = {
+				factor = 0.7
+				OR = {
+					has_idea = USA_economic_crisis_medium_idea
+					has_idea = USA_economic_crisis_severe_idea
+				}
 			}
 		}
 	}
@@ -29498,14 +29543,8 @@ country_event = {
 				has_opinion = { target = FROM value < 0 }
 			}
 			modifier = {
-				add = 30
-				FROM = {
-					OR = {
-						is_subject_of = CHI
-						is_subject_of = SOV
-						is_subject_of = PER
-					}
-				}
+				factor = 5
+				has_opinion = { target = FROM value < -100 }
 			}
 			modifier = {
 				factor = 0.2
@@ -29516,6 +29555,21 @@ country_event = {
 						has_war_with = PER
 					}
 				}
+			}
+			# Unstable applicant — don't take on a sinking ally
+			modifier = {
+				add = 15
+				FROM = { has_stability < 0.30 }
+			}
+			# Isolationist US — reject more readily
+			modifier = {
+				add = 10
+				nationalist_right_wing_populists_are_in_power = yes
+			}
+			# Costly to reject a serious military partner
+			modifier = {
+				factor = 0.5
+				FROM = { has_army_manpower = { size > 200000 } }
 			}
 		}
 	}
@@ -29622,13 +29676,69 @@ country_event = {
 				add = 15
 				western_conservatism_are_in_power = yes
 			}
+			# Interventionist hawks push for direct action against rivals
+			modifier = {
+				add = 10
+				nationalist_right_wing_populists_are_in_power = yes
+				event_target:mnna_aggressor = {
+					OR = {
+						original_tag = CHI
+						original_tag = SOV
+						original_tag = PER
+					}
+				}
+			}
+			# Progressive wing prefers proxy aid over boots on the ground
+			modifier = {
+				add = -15
+				western_social_democrats_are_in_power = yes
+			}
+			# Defender strategic value
+			modifier = {
+				add = 15
+				event_target:mnna_defender = { num_of_factories > 40 }
+			}
+			modifier = {
+				add = 10
+				event_target:mnna_defender = { has_opinion = { target = ROOT value > 100 } }
+			}
+			# Don't enter a war the defender is already losing
+			modifier = {
+				factor = 0.3
+				event_target:mnna_defender = { surrender_progress > 0.50 }
+			}
+			# US capacity / domestic posture
 			modifier = {
 				factor = 0
 				has_war = yes
 			}
 			modifier = {
+				factor = 0.4
+				NOT = { has_manpower > 200000 }
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support < 0.50
+			}
+			modifier = {
+				add = 10
+				has_war_support > 0.75
+			}
+			modifier = {
+				factor = 0.6
+				has_stability < 0.40
+			}
+			modifier = {
 				factor = 0.5
 				threat > 0.60
+			}
+			# Economic crisis at home — no appetite for foreign wars
+			modifier = {
+				factor = 0.5
+				OR = {
+					has_idea = USA_economic_crisis_medium_idea
+					has_idea = USA_economic_crisis_severe_idea
+				}
 			}
 		}
 	}
@@ -29641,15 +29751,38 @@ country_event = {
 			target = event_target:mnna_defender
 			modifier = generic_increased_military_support
 		}
-		send_equipment = {
-			amount = 2000
-			type = infantry_weapons_1
-			target = event_target:mnna_defender
+		if = {
+			limit = { event_target:mnna_defender = { num_of_factories > 40 } }
+			send_equipment = {
+				amount = 4000
+				type = infantry_weapons_1
+				target = event_target:mnna_defender
+			}
+			send_equipment = {
+				amount = 400
+				type = util_vehicle_type
+				target = event_target:mnna_defender
+			}
 		}
-		send_equipment = {
-			amount = 200
-			type = util_vehicle_type
-			target = event_target:mnna_defender
+		else = {
+			send_equipment = {
+				amount = 2000
+				type = infantry_weapons_1
+				target = event_target:mnna_defender
+			}
+			send_equipment = {
+				amount = 200
+				type = util_vehicle_type
+				target = event_target:mnna_defender
+			}
+		}
+		if = {
+			limit = { date > 2010.1.1 }
+			send_equipment = {
+				amount = 1000
+				type = infantry_weapons_2
+				target = event_target:mnna_defender
+			}
 		}
 		add_opinion_modifier = {
 			target = event_target:mnna_aggressor
@@ -29665,6 +29798,39 @@ country_event = {
 			modifier = {
 				add = 15
 				threat > 0.40
+			}
+			# Proxy doctrine preference across the western spectrum
+			modifier = {
+				add = 15
+				western_liberals_are_in_power = yes
+			}
+			modifier = {
+				add = 10
+				western_social_democrats_are_in_power = yes
+			}
+			modifier = {
+				add = 10
+				western_conservatism_are_in_power = yes
+			}
+			# Prefer arms over war when facing a superpower aggressor
+			modifier = {
+				factor = 1.3
+				event_target:mnna_aggressor = {
+					OR = {
+						original_tag = CHI
+						original_tag = SOV
+					}
+				}
+			}
+			# Futile if defender is collapsing
+			modifier = {
+				factor = 0.5
+				event_target:mnna_defender = { surrender_progress > 0.60 }
+			}
+			# Can't spare the equipment
+			modifier = {
+				add = -10
+				num_of_factories < 80
 			}
 		}
 	}
@@ -29694,6 +29860,53 @@ country_event = {
 							original_tag = PER
 						}
 					}
+				}
+			}
+			# Domestic exhaustion
+			modifier = {
+				add = 20
+				has_war_support < 0.50
+			}
+			modifier = {
+				add = 15
+				has_stability < 0.40
+			}
+			# Isolationist America when the aggressor isn't a direct US rival
+			modifier = {
+				add = 15
+				nationalist_right_wing_populists_are_in_power = yes
+				event_target:mnna_aggressor = {
+					NOT = {
+						OR = {
+							original_tag = CHI
+							original_tag = SOV
+							original_tag = PER
+						}
+					}
+				}
+			}
+			# Aggressor too dangerous to confront over a minor ally
+			modifier = {
+				add = 10
+				event_target:mnna_aggressor = {
+					OR = {
+						original_tag = CHI
+						original_tag = SOV
+					}
+				}
+				event_target:mnna_defender = { num_of_factories < 25 }
+			}
+			# Already an ally — pulling out has bigger costs
+			modifier = {
+				add = -20
+				event_target:mnna_defender = { is_in_faction_with = ROOT }
+			}
+			# Domestic economic crisis pushes toward retrenchment
+			modifier = {
+				add = 15
+				OR = {
+					has_idea = USA_economic_crisis_medium_idea
+					has_idea = USA_economic_crisis_severe_idea
 				}
 			}
 		}
