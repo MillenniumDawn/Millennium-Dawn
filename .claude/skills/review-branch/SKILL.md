@@ -78,4 +78,19 @@ Steps:
 - High-cost focuses (cost ≥ 8, or cost ≥ 5 with military/economy/research `search_filters`) missing a `factor = 0` / `has_active_mission = bankruptcy_incoming_collapse` modifier in `ai_will_do` — this is an AI-only guard; do not add it to `available` as that would block the player too
 - Dynamic modifier tooltips mismatched (`adds_dynamic_modifier_tt` vs `modifies_dynamic_modifier_tt`) — see `.claude/docs/dynamic-modifiers-reference.md` for the correct usage pattern
 
-3. Output: list issues per file with line numbers. Flag crash/broken-state risks as **critical**. End with total count or "No issues found".
+3. **Launch adversarial-review in parallel**
+
+   While performing the review above, launch a `general-purpose` subagent with the `adversarial-review` skill in the same message. Pass it the branch diff context and instruct it to run a full adversarial edge-case review on all changed files.
+
+   Wait for both the main review and the adversarial agent to complete before proceeding.
+
+4. **Merge findings**
+
+   Combine the main review output and the adversarial-review output into a single report per file.
+
+   **Deduplication rules:**
+   - If the main review and adversarial agent flag the same line for the same underlying issue, keep the adversarial agent's explanation (it focuses on the _scenario_ that breaks, which is more actionable).
+   - If they flag the same line for different reasons, list both under one entry.
+   - Never drop a finding just because it appears in both reports.
+
+5. Output: list issues per file with line numbers. Flag crash/broken-state risks as **critical**. End with total count or "No issues found".
