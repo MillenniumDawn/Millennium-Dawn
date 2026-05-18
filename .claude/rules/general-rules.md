@@ -176,8 +176,8 @@ HOI4 on Linux is **case-sensitive** for all identifiers — ideas, events, decis
 
 This also applies inside namelist files:
 
-- `division_types = { ... }` in `common/units/names_divisions/*.txt` must match the canonical sub-unit names in `common/units/MD_land_units.txt` exactly. Real bugs in repo: `arm_inf_bat` should be `Arm_Inf_Bat`; `mech_inf_Bat` should be `Mech_Inf_Bat`; `L_Air_Assault_Bat` should be `L_Air_assault_Bat` (lowercase `a`). When the case is wrong the namelist silently never matches the template.
-- `ship_types = { ... }` in `common/units/names_ships/*.txt` must match `common/units/MD_naval_units.txt`. Watch for legacy vanilla tokens like `submarine`, `light_cruiser`, `ship_hull_*`, `battleship_hull_0` — those types were removed by MD and the entries are dead. See `.claude/docs/namelist-reference.md` for the canonical lists.
+- `division_types = { ... }` in `common/units/names_divisions/*.txt` must match the canonical sub-unit names in `common/units/MD_land_units.txt` exactly — the case of every letter matters. Typical case-typo patterns: lowercase prefixes (`arm_inf_bat` vs canonical `Arm_Inf_Bat`), mid-token capitalisation (`mech_inf_Bat` vs `Mech_Inf_Bat`), or single-letter case slips (`Assault` vs `assault`). When the case is wrong the namelist silently never matches the template.
+- `ship_types = { ... }` in `common/units/names_ships/*.txt` must match `common/units/MD_naval_units.txt`. Legacy vanilla tokens (`submarine`, `light_cruiser`, `ship_hull_*`, `battleship_hull_0`, etc.) were removed by MD — entries using them are silently dead. See `.claude/docs/namelist-reference.md` for the canonical lists.
 
 ## Trade agreement checks in MD
 
@@ -254,36 +254,14 @@ When a function uses `^index` array subscripts, the **meaning of the index varia
 
 ---
 
-## Simplification Patterns
+## Simplification & Performance Patterns
 
-- **Consolidate identical-body `else_if` chains:** When N consecutive `else_if` branches have the same body, collapse into one `OR` limit (or plain `else` if the preceding chain guarantees one condition is true). See `.claude/docs/simplification-patterns.md`.
+These have dedicated catalogs — both are required reading whenever you touch hot-path code or a file with copy-paste branching:
 
-Replace N parallel `if/else_if` lookup chains with array indexing:
+- `.claude/docs/simplification-patterns.md` — array lookup tables, parameterized scripted loc, collapsing parallel `if/else_if` chains, etc.
+- `.claude/docs/performance-patterns.md` — hoist invariants out of loops, GUI `dirty` counters, engine arrays vs `every_country`, clamp-before-divide, etc.
 
-```
-# Before: 14 branches
-if = { limit = { check_variable = { type = 1 } } set_variable = { cost = global.BUILD_COST_CIVILIAN_FACTORY } }
-else_if = { limit = { check_variable = { type = 2 } } set_variable = { cost = global.BUILD_COST_MILITARY_FACTORY } }
-# ... etc ...
-
-# After: one array + one lookup
-set_temp_variable = { idx = type }
-set_variable = { cost = global.build_cost_array^idx }
-```
-
-See `.claude/docs/simplification-patterns.md` for the full set of patterns.
-
----
-
-## Performance Patterns
-
-### Hoist invariant lookups out of loops
-
-Cache country-scope values (`num_of_factories`, `has_war`, flags, ideas) before iterating states. Each `CONTROLLER = { ... }` scope switch inside a per-state loop is expensive.
-
-### GUI `dirty` counters
-
-Never bind `dirty = global.date`. Use a dedicated counter incremented only on relevant state changes. See `.claude/docs/performance-patterns.md`.
+Do not duplicate the principles here — they drift. Cite the canonical doc.
 
 ---
 
