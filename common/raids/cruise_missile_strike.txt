@@ -452,7 +452,7 @@ types = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value > -150
+					value < -50
 				}
 			}
 			modifier = {
@@ -497,10 +497,7 @@ types = {
 			modifier = {
 				factor = 0
 				threat < 0.10
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -533,10 +530,7 @@ types = {
 			modifier = {
 				factor = 0
 				date < 2001.1.1
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				NOT = {
@@ -546,6 +540,26 @@ types = {
 				FROM = {
 					has_idea = NATO_member
 				}
+			}
+			# Alliance gate — back off when target is in a faction and our alliance ratio is weak (<0.7)
+			modifier = {
+				factor = 0
+				raid_alliance_unfavorable = yes
+			}
+			# Doctrinal reach gate — isolation/local_security/limited interventionism can't reach.
+			# Bypassed by the rule_raid_doctrine_reach game rule.
+			modifier = {
+				factor = 0
+				raid_intervention_doctrine_reach_block = yes
+			}
+			# Major-power target dampener — minors raiding super/great powers at peace pay 4×
+			modifier = {
+				factor = 0.25
+				raid_skip_target_non_hostile_no_retaliation = yes
+				FROM = {
+					OR = { has_idea = super_power has_idea = great_power }
+				}
+				NOT = { OR = { has_idea = super_power has_idea = great_power } }
 			}
 			modifier = {
 				has_country_flag = promised_retaliation_against@FROM
@@ -558,27 +572,18 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				# Don't raid nations we have influence in
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				FROM = { is_influencer = yes }
 			}
 			modifier = {
 				# Don't raid if heavily in debt
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				check_variable = { debt_ratio > 0.25 }
 			}
 			modifier = {
@@ -883,7 +888,7 @@ types = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value > -150
+					value < -50
 				}
 			}
 			modifier = {
@@ -928,10 +933,7 @@ types = {
 			modifier = {
 				factor = 0
 				threat < 0.10
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0.05
@@ -970,10 +972,7 @@ types = {
 			modifier = {
 				factor = 0
 				has_war = yes
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -987,10 +986,7 @@ types = {
 			modifier = {
 				factor = 0
 				date < 2001.1.1
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				NOT = {
@@ -1000,6 +996,26 @@ types = {
 				FROM = {
 					has_idea = NATO_member
 				}
+			}
+			# Alliance gate — back off when target is in a faction and our alliance ratio is weak (<0.7)
+			modifier = {
+				factor = 0
+				raid_alliance_unfavorable = yes
+			}
+			# Doctrinal reach gate — isolation/local_security/limited interventionism can't reach.
+			# Bypassed by the rule_raid_doctrine_reach game rule.
+			modifier = {
+				factor = 0
+				raid_intervention_doctrine_reach_block = yes
+			}
+			# Major-power target dampener — minors raiding super/great powers at peace pay 4×
+			modifier = {
+				factor = 0.25
+				raid_skip_target_non_hostile_no_retaliation = yes
+				FROM = {
+					OR = { has_idea = super_power has_idea = great_power }
+				}
+				NOT = { OR = { has_idea = super_power has_idea = great_power } }
 			}
 			modifier = {
 				has_country_flag = promised_retaliation_against@FROM
@@ -1012,27 +1028,18 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				# Don't raid nations we have influence in
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				FROM = { is_influencer = yes }
 			}
 			modifier = {
 				# Don't raid if heavily in debt
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				check_variable = { debt_ratio > 0.25 }
 			}
 			modifier = {
@@ -1068,7 +1075,9 @@ types = {
 			raid_target_eligible = yes
 		}
 
-		# Specific Target is visible
+		# Visible if the target is at war with someone else and we have either doctrine reach
+		# plus opinion < -50, or a direct war/wargoal of our own. Restricted to states with
+		# enemy divisions because the raid only damages units in-state.
 		show_target = {
 			OR = {
 				has_war_with = FROM
@@ -1079,23 +1088,7 @@ types = {
 						target = FROM
 						value < -50
 					}
-					if = {
-						limit = {
-							has_idea = intervention_limited_interventionism
-						}
-						is_neighbor_of = FROM
-					}
-					else_if = {
-						limit = {
-							has_idea = intervention_regional_interventionism
-						}
-						custom_trigger_tooltip = {
-							tooltip = nation_on_same_continent
-							FROM = {
-								is_on_same_continent_as = PREV
-							}
-						}
-					}
+					raid_show_target_intervention_check = yes
 				}
 			}
 			FROM = {
@@ -1188,8 +1181,6 @@ types = {
 			failure = {
 				victim_effects = {
 					send_raid_event_to_victim = yes
-				}
-				actor_effects = {
 				}
 			}
 			limited_success = {
@@ -1422,7 +1413,7 @@ types = {
 				add = 5
 				has_opinion = {
 					target = FROM
-					value > -150
+					value < -50
 				}
 			}
 			modifier = {
@@ -1477,10 +1468,7 @@ types = {
 			modifier = {
 				factor = 0
 				threat < 0.10
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -1513,10 +1501,7 @@ types = {
 			modifier = {
 				factor = 0
 				has_war = yes
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0
@@ -1530,10 +1515,7 @@ types = {
 			modifier = {
 				factor = 0
 				date < 2001.1.1
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				factor = 0.05
@@ -1553,6 +1535,26 @@ types = {
 					has_idea = NATO_member
 				}
 			}
+			# Alliance gate — back off when target is in a faction and our alliance ratio is weak (<0.7)
+			modifier = {
+				factor = 0
+				raid_alliance_unfavorable = yes
+			}
+			# Doctrinal reach gate — isolation/local_security/limited interventionism can't reach.
+			# Bypassed by the rule_raid_doctrine_reach game rule.
+			modifier = {
+				factor = 0
+				raid_intervention_doctrine_reach_block = yes
+			}
+			# Major-power target dampener — minors raiding super/great powers at peace pay 4×
+			modifier = {
+				factor = 0.25
+				raid_skip_target_non_hostile_no_retaliation = yes
+				FROM = {
+					OR = { has_idea = super_power has_idea = great_power }
+				}
+				NOT = { OR = { has_idea = super_power has_idea = great_power } }
+			}
 			modifier = {
 				has_country_flag = promised_retaliation_against@FROM
 				factor = 100
@@ -1564,27 +1566,18 @@ types = {
 			modifier = {
 				factor = 0
 				is_ally_with = FROM
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 			}
 			modifier = {
 				# Don't raid nations we have influence in
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				FROM = { is_influencer = yes }
 			}
 			modifier = {
 				# Don't raid if heavily in debt
 				factor = 0
-				NOT = {
-					has_war_with = FROM
-					has_country_flag = promised_retaliation_against@FROM
-				}
+				raid_skip_target_non_hostile_no_retaliation = yes
 				check_variable = { debt_ratio > 0.25 }
 			}
 			modifier = {
