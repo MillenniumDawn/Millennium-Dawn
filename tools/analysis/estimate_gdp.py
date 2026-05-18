@@ -297,12 +297,23 @@ def parse_country_history(tag):
             ):
                 dynamic_resource_vars[vm.group(1)] = float(vm.group(2))
 
+            capital = None
+            m = re.search(r"^\s*capital\s*=\s*(\d+)", content, re.MULTILINE)
+            if m:
+                capital = int(m.group(1))
+
             return {
                 "ideas": ideas,
                 "seeded_gdpc": seeded_gdpc,
                 "dynamic_resource_vars": dynamic_resource_vars,
+                "capital": capital,
             }
-    return {"ideas": [], "seeded_gdpc": None, "dynamic_resource_vars": {}}
+    return {
+        "ideas": [],
+        "seeded_gdpc": None,
+        "dynamic_resource_vars": {},
+        "capital": None,
+    }
 
 
 # ─── State Parsing ─────────────────────────────────────────────────────────────
@@ -312,10 +323,15 @@ def parse_state_file(filepath):
     """Parse a state history file and extract relevant economic data."""
     with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
+    return parse_state_file_from_content(content, os.path.basename(filepath))
 
+
+def parse_state_file_from_content(content, name=""):
+    """Parse already-loaded state file text. Callers that already have content in
+    hand should use this directly to avoid a second disk read."""
     state = {
         "id": None,
-        "name": os.path.basename(filepath),
+        "name": name,
         "owner": None,
         "manpower": 0,
         "productivity": 0,
@@ -515,6 +531,37 @@ def calculate_gdp(states, modifier_stack=None):
     }
 
 
+def compute_country_gdp(tag, states, idea_db, country_data=None):
+    """End-to-end per-country GDP: parse history → modifier stack → calculate → finalize.
+    Returns the result dict (with `tag` / `starting_ideas` / `seeded_gdpc` attached),
+    or None if calculate_gdp produced no result. Pass `country_data` (from
+    parse_country_history) to skip the re-parse when the caller has it cached."""
+    if country_data is None:
+        country_data = parse_country_history(tag)
+    starting_ideas = country_data["ideas"]
+    seeded_gdpc = country_data["seeded_gdpc"]
+    modifier_stack = build_modifier_stack(starting_ideas, idea_db)
+
+    for var_val in country_data["dynamic_resource_vars"].values():
+        for rkey in RESOURCE_FACTOR_KEYS.values():
+            modifier_stack[rkey] = modifier_stack.get(rkey, 0) + var_val
+
+    health_idea = None
+    for idea in starting_ideas:
+        if idea in HEALTH_GDP_MULT:
+            health_idea = idea
+            break
+
+    result = calculate_gdp(states, modifier_stack)
+    if result is None:
+        return None
+    result["tag"] = tag
+    result["starting_ideas"] = starting_ideas
+    result["seeded_gdpc"] = seeded_gdpc
+    finalize_gdp(result, health_idea, seeded_gdpc)
+    return result
+
+
 def finalize_gdp(result, health_idea=None, seeded_gdpc=None):
     """Apply productivity multiplier and healthcare GDP.
 
@@ -622,31 +669,8 @@ def main():
                 print(f"WARNING: No states found for {tag}")
             continue
 
-        states = country_states[tag]
-        country_data = parse_country_history(tag)
-        starting_ideas = country_data["ideas"]
-        seeded_gdpc = country_data["seeded_gdpc"]
-        modifier_stack = build_modifier_stack(starting_ideas, idea_db)
-
-        # Apply dynamic resource extraction modifiers if found
-        for var_name, var_val in country_data["dynamic_resource_vars"].items():
-            # These typically apply to all resource types
-            for rkey in RESOURCE_FACTOR_KEYS.values():
-                modifier_stack[rkey] = modifier_stack.get(rkey, 0) + var_val
-
-        # Detect health idea
-        health_idea = None
-        for idea in starting_ideas:
-            if idea in HEALTH_GDP_MULT:
-                health_idea = idea
-                break
-
-        result = calculate_gdp(states, modifier_stack)
+        result = compute_country_gdp(tag, country_states[tag], idea_db)
         if result:
-            result["tag"] = tag
-            result["starting_ideas"] = starting_ideas
-            result["seeded_gdpc"] = seeded_gdpc
-            finalize_gdp(result, health_idea, seeded_gdpc)
             results.append(result)
 
     if top_n:
