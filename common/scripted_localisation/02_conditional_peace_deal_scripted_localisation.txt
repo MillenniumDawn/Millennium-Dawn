@@ -319,6 +319,47 @@
 			}
 		}
 
+# Deal Recap — surfaces the deal's current contents in the send-status tooltip.
+# Counts demands, concessions, and total VP cost via temp vars consumed by the
+# loc string. Updates live as the player toggles terms.
+defined_text = {
+	name = CPD_deal_recap
+
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_recap_demands = ROOT.CPD_current_deal_list_DEMANDS^num }
+			set_temp_variable = { CPD_recap_concessions = ROOT.CPD_current_deal_list_CONCESSIONS^num }
+			set_temp_variable = { CPD_recap_total_cost = ROOT.CPD_total_cost_of_built_peace_deal }
+		}
+		localization_key = "CPD_deal_recap_TT"
+	}
+}
+
+# War Reparations Live Preview — resolves to the projected weekly transfer
+# amount. Uses payer's GDP (target if we demand, self if we concede), the
+# 0.0005 multiplier, and the £15B/week clamp. Matches CPD_sign_peace_deal
+# exactly so the preview never disagrees with the actual transfer.
+defined_text = {
+	name = CPD_reparations_preview
+
+	text = {
+		trigger = {
+			if = {
+				limit = { ROOT = { has_country_flag = CPD_giving_concessions } }
+				set_temp_variable = { CPD_rep_preview_temp = ROOT.gdp_total }
+			}
+			else = {
+				set_temp_variable = { CPD_rep_preview_temp = THIS.gdp_total }
+			}
+			multiply_temp_variable = { CPD_rep_preview_temp = 0.0005 }
+			clamp_temp_variable = { var = CPD_rep_preview_temp max = 15 }
+			set_temp_variable = { CPD_rep_preview_total_temp = CPD_rep_preview_temp }
+			multiply_temp_variable = { CPD_rep_preview_total_temp = 52 }
+		}
+		localization_key = "CPD_reparations_preview_TT"
+	}
+}
+
 # AI Acceptance Breakdown Scripted Loc
 defined_text = {
 	name = CPD_ai_accept_economic_cost
