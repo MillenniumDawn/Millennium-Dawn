@@ -138,12 +138,21 @@ on_actions = {
 					ROOT = { has_war_with = FROM }
 				}
 				set_temp_variable = { CPD_SVP = FROM.FROM.state_strategic_value }
+				# Two-pass: first sum every enemy's army presence, then award each
+				# enemy a proportional share of the state's strategic value as VP.
+				# The previous single-pass divided by a running total, which gave
+				# 100% share to the first enemy iterated and shrinking fractions
+				# to the rest — awarding more VP than the state was worth.
 				set_temp_variable = { CPD_VP_total = 0 }
 				ROOT = {
 					every_enemy_country = {
 						add_to_temp_variable = { CPD_VP_total = num_armies_in_state@FROM.FROM }
-						if = {
-							limit = { check_variable = { CPD_VP_total > 0 } }
+					}
+				}
+				if = {
+					limit = { check_variable = { CPD_VP_total > 0 } }
+					ROOT = {
+						every_enemy_country = {
 							set_temp_variable = { CPD_VP_temp = num_armies_in_state@FROM.FROM }
 							divide_temp_variable = { CPD_VP_temp = CPD_VP_total }
 							multiply_temp_variable = { CPD_VP_temp = CPD_SVP }
