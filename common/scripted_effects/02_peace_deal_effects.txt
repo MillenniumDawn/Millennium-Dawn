@@ -903,7 +903,10 @@ CPD_make_puppet_in_state_effect = {
 	}
 }
 CPD_liberate_in_state_effect = {
-	# THIS = state being liberated, ROOT = peace deal sender
+	# THIS = state being liberated, ROOT = peace deal sender.
+	# Recipient filters exclude the current owner (no-op liberation) and any
+	# country at war with ROOT (would hand the state to an active enemy of
+	# our faction, which is not the player's intent when "liberating").
 	set_temp_variable = { CPD_liberated_state = THIS }
 	set_temp_variable = { CPD_liberated_state_owner = THIS.owner }
 
@@ -912,6 +915,7 @@ CPD_liberate_in_state_effect = {
 		limit = {
 			any_country = {
 				NOT = { tag = var:CPD_liberated_state_owner }
+				NOT = { has_war_with = ROOT }
 				var:CPD_liberated_state = { is_core_of = PREV }
 				exists = yes
 			}
@@ -919,6 +923,7 @@ CPD_liberate_in_state_effect = {
 		random_country = {
 			limit = {
 				NOT = { tag = var:CPD_liberated_state_owner }
+				NOT = { has_war_with = ROOT }
 				var:CPD_liberated_state = { is_core_of = PREV }
 				exists = yes
 			}
@@ -926,7 +931,8 @@ CPD_liberate_in_state_effect = {
 		}
 	}
 	else_if = {
-		# No living country with cores - revive a dead tag
+		# No living country with cores - revive a dead tag.
+		# Dead-tag countries can't be "at war" so the war filter is omitted here.
 		limit = {
 			any_country = {
 				NOT = { tag = var:CPD_liberated_state_owner }
