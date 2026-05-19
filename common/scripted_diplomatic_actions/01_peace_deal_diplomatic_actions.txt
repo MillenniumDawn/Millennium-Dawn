@@ -81,12 +81,17 @@ scripted_diplomatic_actions = {
 		}
 
 		can_be_sent = {
-			# If the deal contains any demand (territorial, resource rights, or
-			# country action), the sender must have war contribution.
-			# CPD_has_demands_in_deal covers all demand surfaces.
-			if = {
-				limit = { CPD_has_demands_in_deal = yes }
-				CPD_has_war_contribution = yes
+			# Demands require war contribution. We surface this as a single
+			# custom_trigger_tooltip at the top level so the failure tooltip
+			# shows on the greyed Send button — engine doesn't propagate
+			# tooltips out of if/limit blocks cleanly inside can_be_sent.
+			# The OR allows concession-only or empty deals to send freely.
+			custom_trigger_tooltip = {
+				tooltip = CPD_send_gate_TT
+				OR = {
+					CPD_has_demands_in_deal = no
+					CPD_has_war_contribution = yes
+				}
 			}
 		}
 
