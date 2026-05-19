@@ -42,8 +42,8 @@ CHI_norinco_manufacturer = {
 - Trait grid x is bounded `0..9`; y is unlimited. Use `relative_position_id` for branch internals but keep the total x-spread inside 0..9
 - Children are always placed exactly one row below their parent (`y = 1` relative); never skip rows or place a child on the same row as its parent
 - Mutually Exclusive needs to be on the same row (X)
-- Parent line's are not allowed to cross traits. The parent needs to have a direct line towards the child
-- When using mutually exclusive traits, make sure childs under it use any_parent if there is a joint trait of both traits
+- A parent's connecting line must reach its child without passing through sibling traits on the same row. If the visual line would cross another trait, reposition the child or use `relative_position_id` to nudge it.
+- When using mutually exclusive parent traits, children that should still inherit from either must use `any_parent` (not `parent`) — otherwise picking the "wrong" parent locks the child out.
 - Name the initial trait `{org_token}_trait` (e.g. `CHI_norinco_trait`)
 - On complete always needs to be this line, unless you add custom effects (like idea switch, give a facotory, etc.): on_complete = { expenditure_for_mio_upgrade = yes }
 - Localisation needs to be in the countries specific localisation file (localisation/english/MD_focus_TAG)

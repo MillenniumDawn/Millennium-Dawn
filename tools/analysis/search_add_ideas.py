@@ -53,7 +53,7 @@ def find_idea_patterns(
 
 def search_file(filepath: str) -> List[Tuple[str, int, str, str]]:
     try:
-        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+        with open(filepath, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
         return find_idea_patterns(content, os.path.basename(filepath))
     except Exception as e:

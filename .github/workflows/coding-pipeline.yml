@@ -240,8 +240,26 @@ jobs:
               localisation
               interface
               tools
-          # NOTE: validate_defines.py needs vanilla HOI4 files (not checked in) and
-          # therefore only runs as a pre-commit hook on contributors' machines.
+          - script: validate_ideas.py
+            name: ideas
+            title: "Idea References"
+            # informational: 30 pre-existing undefined-idea references on main
+            # need triage. Switch to --strict once the backlog is cleared.
+            strict: false
+            sparse: |
+              common
+              events
+              history
+              localisation
+              tools
+          # NOTE: validate_defines.py needs vanilla HOI4 files (not checked in)
+          # so it only runs as a pre-commit hook on contributors' machines.
+          # validate_set_variables.py is intentionally not wired anywhere
+          # (false-positive volume at repo scale makes it noisy as a gate).
+          # validate_unused_textures.py is intentionally not wired here either
+          # — ~22k pre-existing unreferenced textures make it a periodic
+          # mod-size audit, not a per-PR signal. Run manually via
+          # `pre-commit run md-validate-unused-textures --hook-stage manual`.
 
     steps:
     - name: Checkout code
@@ -256,8 +274,12 @@ jobs:
         python-version: '3.x'
 
     - name: Run validation
+      # Per-matrix opt-out: `strict: false` makes the validator informational
+      # (still produces the log + PR comment but exits 0 on findings). Default
+      # is --strict so any entry that omits the field keeps gating behavior.
       run: |
-        python3 tools/validation/${{ matrix.validator.script }} --strict --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
+        STRICT_FLAG=$( [ "${{ matrix.validator.strict }}" = "false" ] && echo "" || echo "--strict" )
+        python3 tools/validation/${{ matrix.validator.script }} $STRICT_FLAG --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
 
     - name: Upload results
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
