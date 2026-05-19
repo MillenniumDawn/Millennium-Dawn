@@ -340,23 +340,21 @@
 				}
 			}
 		}
-		# Territorial demands only — gates the war-contribution requirement.
-		# Non-territorial demands (reparations, ceasefire, regime change) bypass it.
-		CPD_has_territorial_demands = {
-			ROOT = {
-				OR = {
-					check_variable = { CPD_annex_state_DEMANDS^num > 0 }
-					check_variable = { CPD_puppet_in_state_DEMANDS^num > 0 }
-					check_variable = { CPD_demilitarise_state_DEMANDS^num > 0 }
-					check_variable = { CPD_liberate_state_DEMANDS^num > 0 }
-				}
+		# Inverse of CPD_has_demands_in_deal — used by CPD_deal_is_sendable so
+		# the [!] tooltip reads as a positive condition ("Deal contains no demands").
+		CPD_deal_has_no_demands = {
+			custom_trigger_tooltip = {
+				tooltip = CPD_deal_has_no_demands_TT
+				NOT = { CPD_has_demands_in_deal = yes }
 			}
 		}
-		# Any non-empty deal (demands or concessions). Used to block sending an empty deal.
-		CPD_has_anything_in_deal = {
-			custom_trigger_tooltip = {
-				tooltip = CPD_has_anything_in_deal_TT
-				ROOT = { check_variable = { CPD_current_deal_list^num > 0 } }
+		# Canonical send-gate. Single source of truth — referenced by
+		# can_be_sent, the send-status icon visibility triggers, and the
+		# dummy scripted-GUI element whose [!click_enabled] feeds the icon TT.
+		CPD_deal_is_sendable = {
+			OR = {
+				CPD_deal_has_no_demands = yes
+				CPD_has_war_contribution = yes
 			}
 		}
 	# OTHER TRIGGERS
