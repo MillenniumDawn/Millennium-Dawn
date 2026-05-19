@@ -10,6 +10,7 @@ How to write PR descriptions for Millennium Dawn. Applies to any agent (Claude, 
 4. **No exhaustive change logs.** The diff and commit history have that. The PR body summarises.
 5. **No emoji, no AI attribution footers.** Per `~/.claude/CLAUDE.md`: never add "Generated with Claude Code" or co-author trailers.
 6. **No "this PR ..." preamble.** The reader already knows it's a PR.
+7. **No em dashes** (`—`). Use a period when the clause stands alone, a comma for participial phrases, or a colon when introducing a list. Em dashes read as soft AI-generated connectors and almost always replace one of those three. (Same rule applies to player-facing loc — see `.claude/rules/localisation-rules.md`.)
 
 ## Structure
 
@@ -48,8 +49,8 @@ If the PR is large (multiple subsystems, weeks of work), use one paragraph per s
 
 ## What NOT to write
 
-- "This PR adds X, Y, Z and improves A, B, C" — start with "Adds X." Drop "this PR".
-- "Comprehensive overhaul" / "robust" / "complete refactor" — say what the actual change is.
+- "This PR adds X, Y, Z and improves A, B, C". Start with "Adds X." Drop "this PR".
+- "Comprehensive overhaul" / "robust" / "complete refactor". Say what the actual change is.
 - "All tests pass" / "Pre-commit hooks pass" — that's the default state and CI shows it. Mention only when _manually_ verified or _bypassed_.
 - File-by-file changelog — the diff has it. Summarise by subsystem if needed.
 - "Co-Authored-By:" trailers from AI agents. Forbidden globally per user CLAUDE.md.
