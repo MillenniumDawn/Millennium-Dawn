@@ -67,18 +67,22 @@ SKIP_KEYWORDS = {
 def extract_idea_names(filepath: Path) -> list[str]:
     """Extract idea names from an ideas file."""
     names: list[str] = []
-    pattern = re.compile(r"^\s{2,}([A-Za-z][A-Za-z0-9_]+)\s*=\s*\{")
+    pattern = re.compile(r"^\s+([A-Za-z][A-Za-z0-9_]+)\s*=\s*\{\s*$")
     tag_pattern = re.compile(r"^[A-Z]{2,4}$")
 
+    depth = 0
     for line in filepath.read_text(encoding="utf-8", errors="replace").splitlines():
-        m = pattern.match(line)
-        if not m:
-            continue
-        name = m.group(1)
-        if name in SKIP_KEYWORDS or tag_pattern.match(name):
-            continue
-        if name not in names:
-            names.append(name)
+        opens = line.count("{")
+        closes = line.count("}")
+        # Idea names are always at depth 2: ideas = { category = { idea_name = {
+        if opens > closes and depth == 2:
+            m = pattern.match(line)
+            if m:
+                name = m.group(1)
+                if name not in SKIP_KEYWORDS and not tag_pattern.match(name):
+                    if name not in names:
+                        names.append(name)
+        depth += opens - closes
     return names
 
 
