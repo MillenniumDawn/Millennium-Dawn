@@ -1,22 +1,19 @@
 ---
 title: v1.7 "Make Millennium Dawn Great Again"
 page_id: changelog-v1-7-make-millennium-dawn-great-again
-toc: 'off'
 order: 8
 ---
 
-# v1.7 "Make Millennium Dawn Great Again"
+## v1.7.5 - Hotfix
 
-<details><summary>v1.7.5 - Hotfix</summary>
-
-Balance:
+### Balance
 
 - Now International Bankers are using new Foreign Modifiers (cost and duration)
 - Rebalanced some generic focuses
 - Ethiopian War ends with both ERI and ETH "demobilizing" (They go down to 2 and 3)
 - Added additional focus to assist Ethiopia in economic management
 
-Bugfixes:
+### Bugfixes
 
 - Fixed broken recruitment officers for some releasable nations like California, Texas, New England, CSA
 - Fixed broken army icons for Armenia
@@ -26,34 +23,33 @@ Bugfixes:
 - Fixed a bug in Ethiopian focus "Request International Loans"
 - Fixed a bug in the Influence Actions logging (?? vs ?)
 
-Performance:
+### Performance
 
 - Eliminated unneeded checks in influence system to optimize calls
 
-Content:
+### Content
 
 - Ledger integration for players
 - Added agriculture mechanics for various African nations
 - Added literacy rate mechanic for all of Africa
 
-Game Rules:
+### Game Rules
 
 - Allowed the disabling of the ledger for more competitive play
 
-Localization:
+### Localization
 
 - Added Initial Investment Cost to all 15 investment projects
 - Added a ID note in the investment decision descriptions for better debugging
 - Added some Localisation for Spain
 
-Performance:
+### Performance
 
 - Eliminated unneeded checks in influence system to optimize calls
-</details>
 
-<details><summary>v1.7.4 - Jan Patch</summary>
+## v1.7.4 - Jan Patch
 
-AI:
+### AI
 
 - Made attempts to stop the AI making such dumb borders
 - AI should no longer liberate countries that don't exist
@@ -64,7 +60,7 @@ AI:
 - Economic AI now takes into account stability in the country and the number of affordable factories with increasing taxes
 - Economic AI active rule now puts priority to solve problems in the economy and corruption
 
-Balance:
+### Balance
 
 - Changed some starting Canadian modifiers
 - Rebalanced peace conferences to cost more the higher the difficulty
@@ -72,7 +68,7 @@ Balance:
 - Rebalanced the likelihood of the "Major Financial Instiutions" event occuring
 - Rebalanced some of Swedish focuses
 
-Bugfixes:
+### Bugfixes
 
 - Fixed Yamassoukro map error
 - Disabled MD unique Embargo function in favour of the vanilla
@@ -87,35 +83,33 @@ Bugfixes:
 - Fixed an event for an Spanish event not firing
 - Fixed wrong years in Bomber Aircraft Tab
 
-Content:
+### Content
 
 - Syrian attempts to cause an intifada will see ISR and PAL retain cores over Gaza
 - Added auto-influencer functionality
 
-Localization:
+### Localization
 
 - Updated localization for Spain
 - Updated localization for Canada
 - Fixed missing localisation for Greek Focus "Foreign Relations"
 - Fixed missing localisation for CnC equipment research bonus
 
-Performance:
+### Performance
 
 - Performance Improvements for Neighbour Effects (should make the game 2% faster)
 
-Modding:
+### Modding
 
 - Added new modifier "foreign_influence_auto_influence_cap_modifier"
 
-</details>
+## v1.7.3 - Next Patch
 
-<details><summary>v1.7.3 - Next Patch</summary>
-
-Balance:
+### Balance
 
 - Rebalanced several African nations starting positions to keep them from early game bankruptcy
 
-Bugfixes:
+### Bugfixes
 
 - Fixed tank upgrades without NSB dlc (hopefully)
 - Fixed bad localization call in Ivory Coast news event
@@ -127,20 +121,20 @@ Bugfixes:
 - Fixed decision visible for ZSR
 - Fixed tooltip for ZSR nationalization
 
-Content:
+### Content
 
 - Victor of the Ivory Coast Civil war should now become Ivory Coast again
 
-Graphics:
+### Graphics
 
 - Added 4 new generic portraits
 - Fixed Polish Portrait Errors
 
-Localisation:
+### Localisation
 
 - Better localisation for 5-year-plan decisions
 
-Performance:
+### Performance
 
 - Removed unneeded dynamic calls in subideology window
 
@@ -149,11 +143,9 @@ Quality of Life (QoL):
 - Debt/International Investment Container in Budget Tab now support the same functionality as the top bar
 - New map modes: SCO (Shanghai Cooperation Organisation)
 
-</details>
+## v1.7.2 - Halloweenie Patch
 
-<details><summary>v1.7.2 - Halloweenie Patch</summary>
-
-AI:
+### AI
 
 - Russia no longer attacks the countries of the former USSR if they are in NATO, until 2016
 - Russia no longer attacks the countries of the former USSR if they have guarantors from China, until 2012
@@ -165,7 +157,7 @@ AI:
 - AI will now send his tank armies to the mountains less often. And in general, AI will now not send troops to slaughter in an unsuitable area
 - A new game rule for economic AI, which removes restrictions on the adoption of economic laws
 
-Balance:
+### Balance
 
 - Updated the popularity drift from operatives
 - Increased Defense for "No Turret" tank turret type: from 4 to 8
@@ -176,7 +168,7 @@ Balance:
 - Adjusted some nations starting tax rates
 - Balanced several italian modifiers, added a couple of recurring decisions
 
-Bugfixes:
+### Bugfixes
 
 - Fixed NATO sharing group if NATO disabled due game rules
 - Fixed Resource Exports disappearing if you lease factories
@@ -217,7 +209,7 @@ Bugfixes:
 - Fixed decision Move our Embassy to Jerusalem
 - Fixed terror threat change for focus The Salafist Rise
 
-Content:
+### Content
 
 - Increased cost to drill oil for China
 - Increased cost to make anti DPP campaign
@@ -237,38 +229,38 @@ Content:
 - New starting political setups for AFG, AGL, BFA, CDI, GUB, GUI, LIB, LUR, MAU, NAM, SHA, and SIE
 - New Equipment Purchasing System to replace decision menu (button can be found in political menu)
 
-Focus Tree:
+### Focus Tree
 
 - Tweaks to the American Focus Tree
 - Added Libertarian Tree within the Reformed Republic added content teased in 1.7's release
 - Improved Generic Tree (Added new focuses and rebalanced some stuff)
 
-Graphics:
+### Graphics
 
 - Changed the Office Sector building to be a light blue so it's more obvious when it is available
 - Additional models for various countries and some bug fixes to them
 - Fixed poorly sized portraits
 - Added icons to ideas missing pictures
 
-GUI:
+### GUI
 
 - Better position for things in topbar
 - Fixed the Ship Filters section in the naval production screen
 - Fixed interface in Naval Intel Ledger
 - Small interface tweaks in country view window
 
-Localisation:
+### Localisation
 
 - Improve localisation for Rentier state - include information on when it will be removed
 - Various improvements in EU focuses localisation
 - Adjusted localisation for SOV cannons
 - Some localisation fixes in User Interface
 
-Modding:
+### Modding
 
 - Introduced four new custom modifiers for content purposes
 
-Performance:
+### Performance
 
 - Optimized on_startup on action so the game should load in faster
 - Optimized the Investment System UI so it should run smoother in game
@@ -280,11 +272,9 @@ Quality of Life (QoL):
 - Added a scrollbar to technology description
 - Rewrote most of the tooltips for the Investment System so requirements are more clear
 
-</details>
+## v1.7.1 - Hotfix & BBA Compatibility
 
-<details><summary>v1.7.1 - Hotfix & BBA Compatibility</summary>
-
-AI:
+### AI
 
 - Azerbaijani AI should no longer suicide into Iran
 - Armenia should be more chummy with Russia
@@ -304,7 +294,7 @@ AI:
 - AI peace deals should see war winners seek to keep puppets close to their border if possible
 - Custom AI peace deal behaviour for Roman Italy (ITA), Nationalist/Salafist Afghanistan (AFG) and IR Iran (PER)
 
-Balance:
+### Balance
 
 - Removed Local PMC decisions, as global are enough even in MP
 - PMC decisions require 'No Step Back' dlc temporarily
@@ -314,7 +304,7 @@ Balance:
 - Decrease air superiority effect on defense from 65% to 50%
 - Revanchism idea in Generic Tree gives you +1 Volunteer size
 
-Bugfixes:
+### Bugfixes
 
 - Fixed Spanish Carlists not coming to power properly when completing the decision "Install the Carlist Monarchy"
 - Fixed Russian tech categories not applying to MTG stuff
@@ -354,7 +344,7 @@ Bugfixes:
 - Fixed Iranian Focus Tree crash
 - Fixed check compliance and resistance for formable nations decisions and other small fixes for these decisions
 
-Focus Trees:
+### Focus Trees
 
 - Redid Korea Unified Tree to get rid of negative debugs
 - Rebalanced Japanese Tree so it's less painful to play
@@ -363,18 +353,18 @@ Focus Trees:
 - Added a protest mechanic to prevent Italy sitting on 0% stability
 - Added a small reduction to reform expectance from some italian recurring decisions
 
-Graphics:
+### Graphics
 
 - ideological powers have all their WIP icons replaced with custom GFX
 - Updated the Spy portraits so now there are at least spies for every nation (need to add more generics)
 
-GUI:
+### GUI
 
 - Improved positions for social buttons
 - Added MD version and release date in main menu
 - Added Subscription window from vanilla
 
-Localisation:
+### Localisation
 
 - Spanish localization improvements for the tree
 - Fixed spelling/grammar for USA, Azerbaijan and Italy focus tree
@@ -384,7 +374,7 @@ Localisation:
 - Fixed localisation for Economic Exploitation action
 - Updated Investment decision description to show active projects
 
-Map:
+### Map
 
 - Handful of new states in Germany for Hamburg and Berlin
 - Provincial fixes around the world per normal
@@ -397,15 +387,13 @@ Quality of Life (QoL):
 - Scrollbar for bookmarks, news events and focus descriptions, now you can have long text without any problems, also scrollbar should fix problem with long textes in other languages and invisible button in news events.
 - No slowdown mode now integrated in Millennium Dawn with small changes
 
-Other things:
+### Other things
 
 - Game rule to disable formable nations
 
-</details>
+## v1.7.0 "MMDGA"
 
-<details><summary>v1.7.0 "MMDGA"</summary>
-
-AI:
+### AI
 
 - Improved Generic Tree AI
 - Economic AI should now evaluate taxes and raise and lower as needed
@@ -419,7 +407,7 @@ AI:
 - AI should be more aggressive at paying down debt
 - Russia should have better war declaration AI
 
-Balance:
+### Balance
 
 - Econ Cycle Upgrade is now 7.50% of your current GDP
 - Healthcare/Social Spending are now more expensive for lower GDP/C nations
@@ -427,7 +415,7 @@ Balance:
 - Rebalanced Afghanistan Tribal Culture to not be too punishing now that other PP
 - Reduced influence from SCO decisions
 
-Bugfixes:
+### Bugfixes
 
 - AFG "Claim Pakistani Paschustani" reworked
 - Adjusted Special Forces Tree and NVG position
@@ -505,7 +493,7 @@ Bugfixes:
 - Fixed 0% influence in some countries
 - Fixed Abdelaziz Bouteflika death in 2004
 
-Content:
+### Content
 
 - New Tags: SPA, TLS
 - Majors are now at the top of the list of game rules
@@ -542,7 +530,7 @@ Content:
 - Dynamic Research Slot System
 - Gave SHB's leader some traits
 
-Focus Trees:
+### Focus Trees
 
 - New/Improved Focus Trees: Spain, Armenia, Azerbaijan, Iran, United States and Italy
 - Rebalanced Ethiopian, French, Danish, Russian and Nigerian trees
@@ -550,19 +538,19 @@ Focus Trees:
 - Norway's tree converted to a shared tree with the generic
 - Expanded the Generic Tree's content
 
-Graphics:
+### Graphics
 
 - 55 or so new models for various vehicles and tags
 - New Graphics for the Alert & Fire Button in the missile UI
 
-Modding:
+### Modding
 
 - Added new modifiers for propaganda campaign cost modifiers
 - Added new modifiers for economic project cost modifiers
 - Added new scripts for adding and removing coalition members at ease
 - Added new utility scripts for setting a new ruling party via effect
 
-Performance:
+### Performance
 
 - Implemented dirty variables to several scripted GUIs to improve runtime
 - Missiles now have a dirty variable optimizing runtime
@@ -576,5 +564,3 @@ Quality of Life (QoL):
 - New map modes: GCC (Gulf Cooperation Council), ECOWAS (Economic Community of West African States)
 - Added close button in Satellite Orbit window for convenience
 - EU map mode now has unique colors for office holders
-
-</details>

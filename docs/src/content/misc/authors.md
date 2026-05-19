@@ -1,6 +1,6 @@
 ---
 title: Authors
-description: 'Authors & Credits for Millennium Dawn: A Modern Day Mod'
+description: "Authors & Credits for Millennium Dawn: A Modern Day Mod"
 ---
 
 The following page is a non-exhaustive list of contributors from over the years who have worked on the mod in some capacity.
@@ -179,6 +179,11 @@ The following page is a non-exhaustive list of contributors from over the years 
 | 81_evan              | -                               | @81_evan       | -             | -                             |
 | arakan94             | @arakan94                       | arakan94       | arakan94      | arakan94@proton.me            |
 | BigRobbo             | @BigRobbo                       | @BigRobbo919   | -             | -                             |
+| pastandrey           | @pastandrey                     | @pastandrey    | -             | -                             |
+| altair6407           | @altair6407                     | @altair6407    | -             | -                             |
+| polski_oski          | @polski_oski                    |                | -             | -                             |
+| Ebby                 | -                               | -              | -             | -                             |
+| Raun139              | -                               | @Raun139       | -             | -                             |
 
 # Fellow Modders/Teams
 
@@ -186,6 +191,10 @@ The following page is a non-exhaustive list of contributors from over the years 
 - **libra** from the [Cold War: Iron Curtain](https://steamcommunity.com/sharedfiles/filedetails/?id=1458561226)
 - **Tallcastle** - Agency Submod creator
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2428791468)_
+- **TheGamerCant** - Automated Agency Upgrades submod creator
+  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3698041064)_
+- **Fight For The Fatherland Team** - Original Automated Agency Upgrades system, later released as a standalone submod
+  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3698041064)_
 - **Orphanmaker** - Indian icons
   _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=1852163517), [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2814175841)_
 - **Stjern** - Total War mod for adaptation of Counter UI
@@ -202,6 +211,10 @@ The following page is a non-exhaustive list of contributors from over the years 
   \*Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2698816291)
 - **AI Rework: Attaché's**
   \*Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3164040395)
+- **Ebby** - AI behavior, naval, performance, and warfare overhaul submods
+  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2877723086), [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3698291549), [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3698288121)_
+- **Better Mechanics : Namelists** - Division namelist inspiration (native-language unit-type vocabulary and categorical unit type variety beyond the standard 7 groups). Used as reference only — no copy-paste; all integrations adapted to MD's `L_Inf_Bat`/`armor_Bat`/`Special_Forces` tokens. WW2-themed entries deliberately excluded.
+  _Source: [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3413087807)_
 
 # Voice Lines
 

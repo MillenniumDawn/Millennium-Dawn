@@ -34,11 +34,25 @@ on_actions = {
 			if = {
 				limit = {
 					NOT = { has_country_flag = CHI_promise_of_elections }
-					CHI = { has_elections = yes }
-					CHI = { NOT = { has_completed_focus = CHI_Free_and_Fair_Elections } }
+					CHI = {
+						has_elections = yes
+						NOT = { has_completed_focus = CHI_Free_and_Fair_Elections }
+					}
 				}
 				set_country_flag = CHI_promise_of_elections
 				country_event = china.6
+			}
+
+			if = {
+				limit = { has_war_with = NKO }
+				if = {
+					limit = { has_idea = CHI_china_economic_assistant }
+					remove_ideas = CHI_china_economic_assistant
+				}
+				if = {
+					limit = { NKO = { has_idea = NKO_china_economic_assistant } }
+					NKO = { remove_ideas = NKO_china_economic_assistant }
+				}
 			}
 		}
 	}
@@ -86,15 +100,13 @@ on_actions = {
 						has_communist_government_or_in_coalition = yes
 						has_communist_government = yes
 					}
-					AND = {
-						OR = {
-							MON = { is_subject_of = CHI }
-							MON = { exists = no }
-						}
-						OR = {
-							TAI = { is_subject_of = CHI }
-							TAI = { exists = no }
-						}
+					OR = {
+						MON = { is_subject_of = CHI }
+						NOT = { country_exists = MON }
+					}
+					OR = {
+						TAI = { is_subject_of = CHI }
+						NOT = { country_exists = TAI }
 					}
 				}
 				country_event = { id = china.58 days = 1 }
@@ -105,8 +117,8 @@ on_actions = {
 						has_communist_government_or_in_coalition = yes
 						has_communist_government = yes
 					}
-					MON = { exists = no }
-					TAI = { exists = no }
+					NOT = { country_exists = MON }
+					NOT = { country_exists = TAI }
 					is_greater_china_state_owned = yes
 					is_outer_manchuria_state_owned = yes
 					is_buryatia_state_owned = yes

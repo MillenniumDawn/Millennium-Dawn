@@ -53,7 +53,7 @@ country_event = {
 			}
 		}
 		hidden_effect = {
-			news_event = { id = MD_raid.17 }
+			news_event = MD_raid.17
 		}
 		if = {
 			limit = {
@@ -124,7 +124,7 @@ country_event = {
 			}
 		}
 		hidden_effect = {
-			news_event = { id = MD_raid.16 }
+			news_event = MD_raid.16
 		}
 		if = {
 			limit = {
@@ -142,6 +142,8 @@ country_event = {
 			target = FROM
 			modifier = violated_territorial_sovereignty
 		}
+		set_temp_variable = { wargoal_on = FROM }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = { type = puppet_wargoal_focus target = FROM expire = 120 }
 		add_stability = -0.05
 		hidden_effect = { FROM = { country_event = MD_raid.15 } }
@@ -328,6 +330,11 @@ country_event = {
 			target = FROM
 			modifier = violated_territorial_sovereignty
 		}
+		set_country_flag = {
+			flag = recently_demanded_reparations
+			days = 365
+			value = 1
+		}
 		FROM = {
 			country_event = {
 				id = MD_raid.2
@@ -360,6 +367,19 @@ country_event = {
 			modifier = {
 				factor = 1.5
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				# Hostile nations won't pay — don't bother demanding
+				factor = 0.05
+				has_opinion = {
+					target = FROM
+					value < -100
+				}
+			}
+			modifier = {
+				# Only demand reparations once per year
+				factor = 0
+				has_country_flag = recently_demanded_reparations
 			}
 			# Country specific
 			modifier = {
@@ -407,7 +427,10 @@ country_event = {
 			modifier = violated_territorial_sovereignty
 		}
 		hidden_effect = { FROM = { country_event = MD_raid.15 } }
-		send_embargo = FROM
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			send_embargo = FROM
+		}
 		ai_chance = {
 			base = 50
 			# If absolutely weaker, completely avoid conflict
@@ -451,9 +474,7 @@ country_event = {
 		name = MD_raid.2.a
 		log = "[GetDateText]: [This.GetName]: MD_raid.2.a executed"
 		FROM = {
-			country_event = {
-				id = MD_raid.4
-			}
+			country_event = MD_raid.4
 		}
 		ai_chance = {
 			base = 5
@@ -479,11 +500,16 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD_raid.2.b executed"
 		custom_effect_tooltip = MD_reparation_TT
 		set_country_flag = { flag = conceded_to@FROM days = 360 value = 1 }
+		set_country_flag = {
+			flag = recently_paid_reparations
+			days = 365
+			value = 1
+		}
 		effect_tooltip = {
 			FROM = {
 				set_temp_variable = { treasury_change = gdp_total }
 				multiply_temp_variable = { treasury_change = 0.02 }
-				clamp_temp_variable = { var = treasury_change min = 0 max = 150 }
+				clamp_temp_variable = { var = treasury_change min = 0 max = 200 }
 
 				set_temp_variable = { temp_reparation = treasury_change }
 				modify_treasury_effect = yes
@@ -495,9 +521,7 @@ country_event = {
 			}
 		}
 		FROM = {
-			country_event = {
-				id = MD_raid.3
-			}
+			country_event = MD_raid.3
 		}
 		ai_chance = {
 			base = 5
@@ -514,6 +538,29 @@ country_event = {
 				multiply_temp_variable = { input_cost = 0.02 }
 				set_temp_variable = { interest_rate_check = 7.99 }
 				calculate_ai_interest = yes
+			}
+			modifier = {
+				# Don't pay reparations more than once per year
+				factor = 0
+				has_country_flag = recently_paid_reparations
+			}
+			modifier = {
+				# Don't pay reparations to a nation that hates us
+				factor = 0
+				FROM = {
+					has_opinion = {
+						target = ROOT
+						value < -75
+					}
+				}
+			}
+			modifier = {
+				# Don't pay reparations to a nation we hate
+				factor = 0
+				has_opinion = {
+					target = FROM
+					value < -75
+				}
 			}
 		}
 	}
@@ -534,7 +581,7 @@ country_event = {
 		ROOT = {
 			set_temp_variable = { treasury_change = gdp_total }
 			multiply_temp_variable = { treasury_change = 0.02 }
-			clamp_temp_variable = { var = treasury_change min = 0 max = 150 }
+			clamp_temp_variable = { var = treasury_change min = 0 max = 200 }
 			set_temp_variable = { temp_reparation = treasury_change }
 			modify_treasury_effect = yes
 		}
@@ -563,7 +610,9 @@ country_event = {
 	option = {
 		name = MD_raid.4.a
 		log = "[GetDateText]: [This.GetName]: MD_raid.4.a executed"
-		news_event = { id = MD_raid.16 }
+		news_event = MD_raid.16
+		set_temp_variable = { wargoal_on = FROM }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = { type = puppet_wargoal_focus target = FROM expire = 120 }
 		ai_chance = {
 			base = 5
@@ -600,8 +649,6 @@ country_event = {
 			NOT = {
 				has_idea = Non_State_Actor
 			}
-		}
-		trigger = {
 			NOT = {
 				has_country_flag = is_raid_sanctioning@FROM
 				FROM = {
@@ -614,9 +661,7 @@ country_event = {
 		set_temp_variable = { ga_new_vote_nation = FROM }
 		update_ga_vote = yes
 
-		set_country_flag = {
-			flag = is_raid_sanctioning@FROM
-		}
+		set_country_flag = is_raid_sanctioning@FROM
 
 		ai_chance = {
 			base = 20
@@ -694,11 +739,9 @@ country_event = {
 	hidden = yes
 	is_triggered_only = yes
 	immediate = {
-		log = "Starting Raid for [THIS.GetTag] To [ROOT.actor_country.GetTag]"
+		log = "Starting Raid for [THIS.GetTag] To [?ROOT.actor_country.GetTag]"
 		var:ROOT.actor_country = {
-			country_event = {
-				id = MD_raid.9
-			}
+			country_event = MD_raid.9
 			set_country_flag = {
 				flag = temp_flag_raids
 				days = 2
@@ -714,11 +757,9 @@ country_event = {
 	hidden = yes
 	is_triggered_only = yes
 	immediate = {
-		log = "Starting Raid for [ROOT.target_country.GetTag] FROM [FROM.GetTag]"
+		log = "Starting Raid for [?ROOT.target_country.GetTag] FROM [FROM.GetTag]"
 		var:ROOT.target_country = {
-			country_event = {
-				id = MD_raid.1
-			}
+			country_event = MD_raid.1
 		}
 	}
 }
@@ -912,7 +953,7 @@ country_event = { # I will bite your fucking ear off if you touch this
 	hidden = yes
 	is_triggered_only = yes
 	immediate = {
-		log = "Starting Raid for [THIS.GetTag] To [ROOT.actor_country.GetTag]"
+		log = "Starting Raid for [THIS.GetTag] To [?ROOT.actor_country.GetTag]"
 		send_events_to_others = yes
 	}
 }
@@ -928,7 +969,6 @@ news_event = {
 
 	option = {
 		name = MD_raid.16.a
-		log = "[GetDateText]: [This.GetName]: MD_raid.16.a executed"
 	}
 }
 
@@ -942,6 +982,5 @@ news_event = {
 
 	option = {
 		name = MD_raid.17.a
-		log = "[GetDateText]: [This.GetName]: MD_raid.17.a executed"
 	}
 }

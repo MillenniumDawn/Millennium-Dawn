@@ -36,6 +36,7 @@ influence_decisions = {
 			custom_effect_tooltip = PER_SAZ_rebel_TT
 			PER_SAZ_independence = yes
 		}
+		ai_will_do = { base = 0 }
 	}
 	rebellion_in_balochistan = {
 		allowed = {
@@ -73,6 +74,7 @@ influence_decisions = {
 			custom_effect_tooltip = PER_BLC_rebel_TT
 			PER_BLC_independence = yes
 		}
+		ai_will_do = { base = 0 }
 	}
 	rebellion_in_kurdistan = {
 		allowed = {
@@ -124,6 +126,7 @@ influence_decisions = {
 			custom_effect_tooltip = PER_IKR_rebel_TT
 			PER_IKR_independence = yes
 		}
+		ai_will_do = { base = 0 }
 	}
 	rebellion_in_arabistan = {
 		allowed = { original_tag = SAU }
@@ -156,6 +159,7 @@ influence_decisions = {
 			custom_effect_tooltip = PER_ARA_rebel_TT
 			PER_ARA_independence = yes
 		}
+		ai_will_do = { base = 0 }
 	}
 	# Generic (Global) Decisions
 	disable_raid_notification_decision = {
@@ -236,8 +240,7 @@ influence_decisions = {
 
 		cost = 100
 
-		days_remove = 50
-		days_re_enable = 50
+		days_re_enable = 100
 
 		visible = {
 			NOT = { check_variable = { influence_array^0 = 0 } }
@@ -249,7 +252,7 @@ influence_decisions = {
 			}
 		}
 
-		remove_effect = {
+		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision combat_foreign_influence"
 			set_temp_variable = { percent_change = 3.5 }
 			change_domestic_influence_percentage = yes
@@ -309,31 +312,13 @@ influence_decisions = {
 			modifier = {
 				factor = 0.75
 				has_idea = EU_member
-				OR = {
-					var:influence_array^0 = { has_idea = EU_member }
-					var:influence_array^1 = { has_idea = EU_member }
-					var:influence_array^2 = { has_idea = EU_member }
+				any_of_scopes = {
+					array = influence_array
+					has_idea = EU_member
 				}
 				NOT = {
-					var:influence_array^0 = {
-						OR = {
-							AND = {
-								original_tag = SOV
-								NOT = { SOV = { has_idea = EU_member } }
-							}
-							original_tag = CHI
-						}
-					}
-					var:influence_array^1 = {
-						OR = {
-							AND = {
-								original_tag = SOV
-								NOT = { SOV = { has_idea = EU_member } }
-							}
-							original_tag = CHI
-						}
-					}
-					var:influence_array^2 = {
+					any_of_scopes = {
+						array = influence_array
 						OR = {
 							AND = {
 								original_tag = SOV
@@ -802,11 +787,8 @@ influence_decisions = {
 		days_remove = 30
 		days_re_enable = 15
 
-		target_root_trigger = {
-			num_subjects > 0
-		}
-
-		visible = {
+		target_array = subjects
+		target_trigger = {
 			FROM = {
 				is_subject_of = ROOT
 				NOT = {
@@ -829,18 +811,19 @@ influence_decisions = {
 			}
 		}
 
+		target_root_trigger = {
+			num_subjects > 0
+		}
+
 		available = {
 			FROM = {
 				influence_higher_5 = yes
 			}
 		}
 
-		target_array = subjects
-
 		remove_effect = {
 			log = "[GetDateText]: [This.GetName]: decision influence_for_autonomy_decision executed"
 			set_temp_variable = { percent_change = -5 }
-			set_temp_variable = { tag_index = ROOT.id }
 			set_temp_variable = { influence_target = FROM.id }
 			change_influence_percentage = yes
 			FROM = {
@@ -863,26 +846,22 @@ influence_decisions = {
 	}
 
 	SOV_separatism_for_autonomy_decision = {
+		fixed_random_seed = no
 		icon = GFX_decision_SOV_puppetdown_button
 		cost = 35
 		days_remove = 30
 		days_re_enable = 15
 
-		target_root_trigger = {
-			num_subjects > 0
-		}
-
-		visible = {
+		target_array = subjects
+		target_trigger = {
 			FROM = {
 				is_subject_of = ROOT
-				NOT = { has_country_flag = SUB_subject_rebeliion_flag }
-				OR = {
-					has_autonomy_state = autonomy_republic_rf
-					has_autonomy_state = autonomy_kray_rf
-					has_autonomy_state = autonomy_oblast_rf
-					has_autonomy_state = autonomy_okrug_rf
-				}
+				SUB_is_active_rf_lesser_subject = yes
 			}
+		}
+
+		target_root_trigger = {
+			num_subjects > 0
 		}
 
 		available = {
@@ -891,12 +870,9 @@ influence_decisions = {
 			}
 		}
 
-		target_array = subjects
-
 		remove_effect = {
 			log = "[GetDateText]: [This.GetName]: decision SOV_separatism_for_autonomy_decision executed"
 			set_temp_variable = { percent_change = -1 }
-			set_temp_variable = { tag_index = ROOT.id }
 			set_temp_variable = { influence_target = FROM.id }
 			change_influence_percentage = yes
 			FROM = {

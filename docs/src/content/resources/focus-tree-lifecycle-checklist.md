@@ -5,7 +5,9 @@ description: Step-by-step checklist for focus tree development lifecycle
 ---
 
 **Warning: Reloading this page will reset all checkboxes**
+
 ### Drafting Phase
+
 <input type="checkbox"> Focus tree is layed out in software (Diagram.net e.g.), it is better to think what focuses will do while making a markup as well
 
 - Example: [MD Spain Content](https://drive.google.com/file/d/1TRd4JlJOCefTLHUeeuZ2jR4ZIQP3s2CT/view)
@@ -22,7 +24,7 @@ description: Step-by-step checklist for focus tree development lifecycle
 
 <input type="checkbox"> Focus tree layout is transferred to hoi4
 
-  - This can be either via [Croc's Focus Tree Tool](/dev-resources/focus-tree-tool) or via manually scripting it
+- This can be either via [Croc's Focus Tree Tool](/dev-resources/focus-tree-tool) or via manually scripting it
 
 <input type="checkbox"> Focus tree completion rewards are set (create stubs if decisions/ideas are mentioned)
 
@@ -81,11 +83,13 @@ This section is a subsection of coding. It is is mostly for visual and quality a
 <input type="checkbox"> Verify all effects match up with the standards in [MD Code Resource](/dev-resources/code-resource)
 
 ### Playtest Phase
+
 <input type="checkbox"> Tester task is written and provided to the playtesters
 
 <input type="checkbox"> Once you have received results implement fixes/improvements to be made
 
 ### Completion Phase
+
 <input type="checkbox"> Changelog.txt and Authors.txt are updated
 
 <input type="checkbox"> Merge request is created, comments are fixed
@@ -93,3 +97,19 @@ This section is a subsection of coding. It is is mostly for visual and quality a
 <input type="checkbox"> Other localisation teams are notified about incoming content
 
 <input type="checkbox"> Request is merged, job is done, git branch deleted and discord channel archived
+
+---
+
+## Developer Tools
+
+The following Claude Code skills automate checklist items. See [Claude Code Skills](/dev-resources/claude-code-skills/) for the full reference.
+
+| Skill                         | What it automates                                     |
+| ----------------------------- | ----------------------------------------------------- |
+| `/new-focus <TAG>`            | Scaffolds the focus tree file with required structure |
+| `/add-leader <TAG>`           | Scaffolds generals and admirals using count formulas  |
+| `/lifecycle-check <TAG>`      | Checks which lifecycle items are done or missing      |
+| `/search-filter-check <file>` | Validates search filters on all focuses               |
+| `/content-review`             | Runs the full content review checklist                |
+| `/validate`                   | Runs all automated validation tools                   |
+| `/changelog`                  | Updates Changelog.txt with branch changes             |

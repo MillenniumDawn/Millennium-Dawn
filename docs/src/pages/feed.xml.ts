@@ -1,46 +1,31 @@
 import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
 import { getCollection } from "astro:content";
-import { stripMarkdownExt } from "../lib/slugs";
-import { withBase } from "../lib/urls";
+import { withBase } from "@/shared/lib/routing/urls";
+import { SITE_DESCRIPTION, SITE_FALLBACK_ORIGIN, SITE_TITLE } from "@/shared/config/site";
+import { getChangelogPath, getDevDiaryPath } from "@/shared/lib/routing/content-routes";
 
-function mapItem(
-  title: string,
-  description: string | undefined,
-  path: string,
-) {
+function mapItem(title: string, description: string | undefined, path: string) {
   return {
     title,
-    description: description || "",
+    description: description ?? "",
     link: withBase(path),
-    pubDate: new Date(),
   };
 }
 
 export async function GET(context: APIContext) {
-  const [changelogs, devDiaries] = await Promise.all([
-    getCollection("changelogSections"),
-    getCollection("devDiaries"),
-  ]);
+  const [changelogs, devDiaries] = await Promise.all([getCollection("changelogSections"), getCollection("devDiaries")]);
+  const visibleChangelogs = changelogs.filter((entry) => !entry.data.hidden);
 
   const items = [
-    ...changelogs.map((entry) =>
-      mapItem(entry.data.title, entry.data.description, `/changelogs/${stripMarkdownExt(entry.id)}/`),
-    ),
-    ...devDiaries.map((entry) =>
-      mapItem(
-        entry.data.title,
-        entry.data.description,
-        entry.data.permalink || `/dev-diaries/${stripMarkdownExt(entry.id)}/`,
-      ),
-    ),
+    ...visibleChangelogs.map((entry) => mapItem(entry.data.title, entry.data.description, getChangelogPath(entry))),
+    ...devDiaries.map((entry) => mapItem(entry.data.title, entry.data.description, getDevDiaryPath(entry))),
   ];
 
   return rss({
-    title: "Millennium Dawn: A Modern Day Mod",
-    description:
-      "Documentation for the Millennium Dawn: A Modern Day mod for the game Hearts of Iron IV.",
-    site: context.site || "https://millenniumdawn.github.io",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    site: context.site ?? SITE_FALLBACK_ORIGIN,
     items,
     customData: `<language>en</language>`,
   });

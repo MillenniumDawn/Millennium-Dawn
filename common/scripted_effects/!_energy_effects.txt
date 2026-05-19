@@ -173,12 +173,12 @@ calculate_energy_use = {
 	multiply_variable = { geothermal_energy_generation = temp_energy_gain_m }
 
 	set_temp_variable = { hydroelectric_generation_multiplier_modifier = 1 }
-	multiply_temp_variable = { hydroelectric_generation_multiplier_modifier = modifier@hydroelectric_power_generation_modifier }
+	add_to_temp_variable = { hydroelectric_generation_multiplier_modifier = modifier@hydroelectric_power_generation_modifier }
 	multiply_variable = { hydroelectric_energy_generation = hydroelectric_generation_multiplier_modifier }
 
 	set_temp_variable = { geothermal_generation_multiplier_modifier = 1 }
-	multiply_temp_variable = { geothermal_generation_multiplier_modifier = modifier@geothermal_power_generation_modifier }
-	multiply_variable = { hydroelectric_energy_generation = geothermal_generation_multiplier_modifier }
+	add_to_temp_variable = { geothermal_generation_multiplier_modifier = modifier@geothermal_power_generation_modifier }
+	multiply_variable = { geothermal_energy_generation = geothermal_generation_multiplier_modifier }
 
 	add_to_variable = { energy_sum = hydroelectric_energy_generation }
 	add_to_variable = { energy_sum = geothermal_energy_generation }
@@ -202,10 +202,12 @@ calculate_energy_use = {
 		multiply_variable = { fossil_pp_fuel_consumption = -1 }
 
 		# Generation of Power per Fossil Power Plant
-		set_variable = { fossil_pp_energy_per_plant_display = 1 }
+		set_variable = { fossil_pp_energy_per_plant_display = 2 }
 		multiply_variable = { fossil_pp_energy_per_plant_display = fossil_pp_energy_generation_multiplier }
 		multiply_variable = { fossil_pp_energy_per_plant_display = temp_energy_gain_m }
 	}
+
+	multiply_variable = { fossil_pp_energy_generation = fossil_powerplants_manpower_fulfillment }
 
 	# Implements the No Fuel Killswitch
 	set_temp_variable = { no_fuel_killswitch_var = 1 }
@@ -265,10 +267,11 @@ calculate_energy_use = {
 		}
 
 		multiply_variable = { nuclear_energy_generation = temp_energy_gain_m }
+		multiply_variable = { nuclear_energy_generation = nuclear_reactors_manpower_fulfillment }
 		add_to_variable = { energy_sum = nuclear_energy_generation }
 
-		# Generation of Power per Fossil Power Plant
-		set_variable = { nuclear_energy_per_reactor_display = 2 }
+		# Generation of Power per Nuclear Reactor
+		set_variable = { nuclear_energy_per_reactor_display = 4 }
 		multiply_variable = { nuclear_energy_per_reactor_display = nuclear_energy_generation_multiplier }
 		multiply_variable = { nuclear_energy_per_reactor_display = temp_energy_gain_m }
 	}
@@ -306,6 +309,7 @@ calculate_energy_use = {
 			check_variable = { stored_energy = max_stored_energy }
 			check_variable = { energy_balance > 0 }
 			check_variable = { fossil_pp_fuel_consumption < 0 }
+			check_variable = { fossil_pp_energy_generation > 0 }
 		}
 		set_temp_variable = { saved_fuel = energy_balance }
 		clamp_temp_variable = {
@@ -314,12 +318,17 @@ calculate_energy_use = {
 			min = 0
 		}
 		set_variable = { free_fossil_powerplants_power = saved_fuel }
+
+		# Calculate fuel savings proportionally: fraction of generation shut down = fraction of fuel saved
+		# This is always correct regardless of energy_gain_m, manpower, or other multiplier combinations
+		set_temp_variable = { fuel_saved = saved_fuel }
+		divide_temp_variable = { fuel_saved = fossil_pp_energy_generation }
+		multiply_temp_variable = { fuel_saved = fossil_pp_fuel_consumption }
+		multiply_temp_variable = { fuel_saved = -1 }
+
 		subtract_from_variable = { fossil_pp_energy_generation = saved_fuel }
 		subtract_from_variable = { energy_sum = saved_fuel }
-		multiply_temp_variable = { saved_fuel = 20 } #base fossil powerplant fuel consumption, found in buildings.txt, positive sicne its saved fuel instead of consumed
-		multiply_temp_variable = { saved_fuel = fossil_pp_fuel_consumption_multiplier }
-		divide_temp_variable = { saved_fuel = fossil_pp_energy_generation_multiplier }
-		add_to_variable = { fossil_pp_fuel_consumption = saved_fuel }
+		add_to_variable = { fossil_pp_fuel_consumption = fuel_saved }
 	}
 
 	divide_temp_variable = { energy_fulfillment = energy_consumption }
@@ -455,18 +464,16 @@ energy_on_daily = {
 		ingame_update_setup = yes
 		if = { limit = { NOT = { has_dynamic_modifier = { modifier = no_fuel_penalties_modifier } } } add_dynamic_modifier = { modifier = no_fuel_penalties_modifier } }
 	}
-	set_temp_variable = { daily_energy_balance = energy_balance }
-	multiply_temp_variable = { daily_energy_balance = 24 } #gw to gwh
-	add_to_variable = { stored_energy = daily_energy_balance }
-
-	if = { limit = { check_variable = { ROOT.max_stored_energy = 0 } }
-		set_temp_variable = { temp_maximum = 1 }
+	# Update stored energy based on daily balance and storage capacity
+	if = { limit = { check_variable = { ROOT.max_stored_energy > 0 } }
+		set_temp_variable = { daily_energy_balance = energy_balance }
+		multiply_temp_variable = { daily_energy_balance = 24 } #gw to gwh
+		add_to_variable = { stored_energy = daily_energy_balance }
+		clamp_variable = { var = ROOT.stored_energy min = 0 max = ROOT.max_stored_energy }
 	}
 	else = {
-		set_temp_variable = { temp_maximum = ROOT.max_stored_energy }
+		set_variable = { ROOT.stored_energy = 0 }
 	}
-
-	clamp_variable = { var = ROOT.stored_energy min = 0 max = temp_maximum }
 }
 
 # Effect: random_renewable_variable_calculation
@@ -480,68 +487,6 @@ random_renewable_variable_calculation = {
 		set_variable = { max_renewable_energy_var = 1 }
 		add_to_variable = { max_renewable_energy_var = modifier@state_renewable_capacity_factor_modifier }
 	}
-}
-
-# Effect: setup_starting_fossil_powerplants
-# Purpose: Sets the onstartup energy required for all nations without manually setting every fossil fuel power plant
-setup_starting_fossil_powerplants = {
-	set_variable = { startup_energy_needed = energy_consumption } #startup_energy_needed will be the number of needed fossil power plants
-	subtract_from_variable = { startup_energy_needed = energy_sum }
-	round_variable = startup_energy_needed
-	clamp_variable = { var = startup_energy_needed min = 1 } #so every country, even the smallest ones, start with 1 fossil fuel power plant
-	while_loop_effect = {
-		limit = { check_variable = { startup_energy_needed > 0.00001 } }
-		random_owned_controlled_state = {
-			limit = { check_variable = { building_level@fossil_powerplant < 21 } }
-			add_building_construction = {
-				type = fossil_powerplant
-				level = 1
-				instant_build = yes
-			}
-		}
-		add_to_variable = { startup_energy_needed = -1 }
-	}
-	clear_variable = startup_energy_needed
-	calculate_energy_use = yes
-}
-
-build_fossil_fuel_power_plant_effect = {
-	custom_effect_tooltip = energy_build_fossil_powerplant_TT
-	if = {
-		limit = {
-			check_variable = { temp_change > 0 }
-		}
-		set_temp_variable = { treasury_change = temp_change }
-		if = { limit = { is_ai = no }
-			multiply_temp_variable = { treasury_change = -5 }
-		}
-		else = {
-			multiply_temp_variable = { treasury_change = -2 }
-		}
-		modify_treasury_effect = yes
-		random_owned_controlled_state = {
-			limit = {
-				NOT = {
-					has_state_flag = building_fossil_fuel_powerplant
-				}
-			}
-			custom_effect_tooltip = building_fossil_fuel_powerplant_tt
-			set_state_flag = {
-				flag = building_fossil_fuel_powerplant
-				days = 100
-				value = 1
-			}
-		}
-	}
-	else = {
-		random_owned_controlled_state = {
-			limit = {
-				check_variable = { number_of_fossil_pps_state_var > 0 }
-			}
-			add_to_variable = { number_of_fossil_pps_state_var = temp_change }
-		}
-	}
-	ingame_update_setup = yes
 }
 
 build_battery_park_effect = {
