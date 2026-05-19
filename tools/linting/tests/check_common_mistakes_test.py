@@ -651,6 +651,38 @@ assert_finds(
     "ideas from different groups not flagged",
 )
 
+# Single-line NOT block with two mutex ideas — must be caught, not silently skipped
+assert_finds(
+    _check_has_idea_mutex_in_not_block,
+    [
+        "trigger = {\n",
+        "\tNOT = { has_idea = intervention_isolation has_idea = intervention_local_security }\n",
+        "}\n",
+    ],
+    1,
+    "single-line NOT with two intervention doctrines flagged",
+)
+
+# Single-line AND block with two mutex ideas — also caught
+assert_finds(
+    _check_has_idea_mutex_in_not_block,
+    [
+        "modifier = { AND = { has_idea = intervention_isolation has_idea = intervention_limited_interventionism } }\n",
+    ],
+    1,
+    "single-line AND with two intervention doctrines flagged",
+)
+
+# Single-line OR block with two mutex ideas — not flagged (OR is the intended structure)
+assert_finds(
+    _check_has_idea_mutex_in_not_block,
+    [
+        "trigger = { OR = { has_idea = intervention_isolation has_idea = intervention_local_security } }\n",
+    ],
+    0,
+    "single-line OR with mutex ideas not flagged",
+)
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Summary
