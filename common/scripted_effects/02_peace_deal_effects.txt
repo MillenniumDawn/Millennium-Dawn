@@ -1011,22 +1011,19 @@ CPD_AI_build_peace_deal = {
 					CPD_change_state_actions = yes
 				}
 			}
-			# Sweetener: accept reparations to make the deal more palatable
-			set_country_flag = CPD_war_reparations_concession
-			add_to_array = { CPD_current_deal_list = 10002 }
-			add_to_array = { CPD_current_deal_list_CONCESSIONS = 10002 }
-			# Last resort: accept regime change when on the brink
-			# Inside ROOT = {}: THIS = AI, PREV = enemy. is_same_government_PREV
-			# compares current scope (AI) to PREV (enemy).
-			if = {
-				limit = {
-					surrender_progress > 0.75
-					NOT = { is_same_government_PREV = yes }
-				}
-				set_country_flag = CPD_regime_change_concession
-				add_to_array = { CPD_current_deal_list = 10004 }
-				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10004 }
+		}
+		# Sweetener: accept reparations to make the deal more palatable.
+		# Toggle effects route through the same code path as player clicks
+		# (giving_concessions flag is set above, so concession variant is used).
+		CPD_toggle_war_reparations = yes
+		# Last resort: accept regime change when on the brink. is_same_government
+		# compares current scope (enemy, since we're at outer scope here) to ROOT (AI).
+		if = {
+			limit = {
+				ROOT = { surrender_progress > 0.75 }
+				NOT = { is_same_government = yes }
 			}
+			CPD_toggle_regime_change = yes
 		}
 	}
 	else_if = {
@@ -1060,11 +1057,11 @@ CPD_AI_build_peace_deal = {
 					CPD_change_state_actions = yes
 				}
 			}
-			# Always demand reparations when winning — economic profit motive
-			set_country_flag = CPD_war_reparations_demand
-			add_to_array = { CPD_current_deal_list = 10002 }
-			add_to_array = { CPD_current_deal_list_DEMANDS = 10002 }
 		}
+		# Always demand reparations when winning — economic profit motive.
+		# Route through CPD_toggle_* so any future toggle guards (e.g., supersession,
+		# cost accounting, cleanup) apply uniformly to AI- and player-built deals.
+		CPD_toggle_war_reparations = yes
 		# Conditional country-action escalation. Evaluated at OUTER scope so
 		# THIS = enemy and ROOT = AI cleanly. is_same_government compares
 		# current scope (enemy) to ROOT (AI).
@@ -1073,33 +1070,24 @@ CPD_AI_build_peace_deal = {
 				surrender_progress > 0.5
 				NOT = { is_same_government = yes }
 			}
-			ROOT = {
-				set_country_flag = CPD_regime_change_demand
-				add_to_array = { CPD_current_deal_list = 10004 }
-				add_to_array = { CPD_current_deal_list_DEMANDS = 10004 }
-			}
+			CPD_toggle_regime_change = yes
 		}
 		if = {
 			limit = {
 				is_in_faction = yes
 				NOT = { is_in_faction_with = ROOT }
 			}
-			ROOT = {
-				set_country_flag = CPD_forced_neutrality_demand
-				add_to_array = { CPD_current_deal_list = 10003 }
-				add_to_array = { CPD_current_deal_list_DEMANDS = 10003 }
-			}
+			CPD_toggle_forced_neutrality = yes
 		}
+		# Full puppet at crushing victory — the toggle also clears any
+		# previously-added puppet-in-state entries (supersession), which the
+		# previous direct-write path missed.
 		if = {
 			limit = {
 				surrender_progress > 0.8
 				is_subject = no
 			}
-			ROOT = {
-				set_country_flag = CPD_full_puppet_demand
-				add_to_array = { CPD_current_deal_list = 10006 }
-				add_to_array = { CPD_current_deal_list_DEMANDS = 10006 }
-			}
+			CPD_toggle_full_puppet = yes
 		}
 	}
 }
@@ -1144,9 +1132,7 @@ CPD_AI_build_peace_deal = {
 # Expects to be called while ROOT is the peace deal builder
 CPD_clear_all_state_actions = {
 	ROOT = {
-		# Reset cost to 0 since we are wiping all state entries (country actions have no cost)
 		set_variable = { CPD_total_cost_of_built_peace_deal = 0 }
-		# Clear all state action arrays
 		clear_array = CPD_annex_state_DEMANDS
 		clear_array = CPD_puppet_in_state_DEMANDS
 		clear_array = CPD_demilitarise_state_DEMANDS

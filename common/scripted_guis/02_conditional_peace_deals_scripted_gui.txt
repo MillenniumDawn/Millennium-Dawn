@@ -130,27 +130,19 @@ scripted_gui = {
 					is_ai = yes
 					CPD_AI_will_accept = yes
 				}
+				# Negate the accept-icon trigger directly so CPD_AI_will_accept
+				# (which runs the expensive CPD_AI_will_accept_calculation) is
+				# evaluated once per frame instead of twice.
 				CPD_AIA_decline_ICON_visible = {
-					OR = {
-						is_ai = no
-						AND = {
-							is_ai = yes
-							CPD_AI_will_accept = no
-						}
-					}
+					NOT = { CPD_AIA_acceptance_ICON_visible = yes }
 				}
 				# Send-readiness — mirrors the can_be_sent gate so the player sees
 				# whether the deal is currently sendable before clicking Send.
+				# Only the ready icon evaluates CPD_deal_is_sendable; blocked and
+				# the dummy button click_enabled negate it to share the result.
 				CPD_send_ready_ICON_visible = { CPD_deal_is_sendable = yes }
-				CPD_send_blocked_ICON_visible = { NOT = { CPD_deal_is_sendable = yes } }
-
-				# Dummy element whose click_enabled is the canonical send-gate.
-				# The icon TTs reference [!CPD_send_dummy_button_click_enabled] —
-				# the engine evaluates the trigger tree and produces a pass/fail
-				# breakdown automatically. Touching the gate logic anywhere it's
-				# used (can_be_sent, icon visibility, this dummy) requires only
-				# updating CPD_deal_is_sendable in scripted_triggers.
-				CPD_send_dummy_button_click_enabled = { CPD_deal_is_sendable = yes }
+				CPD_send_blocked_ICON_visible = { NOT = { CPD_send_ready_ICON_visible = yes } }
+				CPD_send_dummy_button_click_enabled = { CPD_send_ready_ICON_visible = yes }
 			}
 
 			ai_enabled = { always = no }

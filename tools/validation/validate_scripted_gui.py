@@ -450,24 +450,32 @@ class ScriptedGuiValidator(BaseValidator):
                 self._gfx_sprites.add(m.group(1))
         self.log(f"  Indexed {len(self._gfx_sprites)} GFX sprite names")
 
-    def _load_loc_keys(self) -> FrozenSet[str]:
+    def _load_loc_keys_and_cache(self) -> FrozenSet[str]:
+        """Walk English loc once; cache (filepath, text) for downstream checks
+        that need to scan the same content (avoids a second filesystem walk
+        in _check_bang_trigger_refs)."""
         self._log_section("Loading English localisation keys")
         loc_dir = os.path.join(self.mod_path, "localisation", "english")
         keys: Set[str] = set()
+        self._loc_file_texts: List[Tuple[str, str]] = []
         if not os.path.isdir(loc_dir):
             return frozenset()
         for root, _, names in os.walk(loc_dir):
             for n in names:
                 if not n.endswith(".yml"):
                     continue
+                fp = os.path.join(root, n)
                 try:
-                    with open(os.path.join(root, n), "r", encoding="utf-8-sig") as fh:
+                    with open(fp, "r", encoding="utf-8-sig") as fh:
                         text = fh.read()
                 except Exception:
                     continue
+                self._loc_file_texts.append((fp, text))
                 for m in _LOC_KEY.finditer(text):
                     keys.add(m.group(1))
-        self.log(f"  Indexed {len(keys)} loc keys")
+        self.log(
+            f"  Indexed {len(keys)} loc keys across {len(self._loc_file_texts)} files"
+        )
         return frozenset(keys)
 
     # ------------------------------------------------------------------
@@ -526,40 +534,29 @@ class ScriptedGuiValidator(BaseValidator):
 
     def _check_bang_trigger_refs(self) -> None:
         """Tier 1.3 — every [!trigger_name] in loc strings must match a
-        scripted_gui trigger name."""
+        scripted_gui trigger name. Reuses the loc-file text cache populated
+        in _load_loc_keys_and_cache so the loc directory is walked once."""
         self._log_section("Checking [!trigger_name] formatter references in loc")
-        loc_dir = os.path.join(self.mod_path, "localisation", "english")
-        if not os.path.isdir(loc_dir):
-            return
         seen: Set[Tuple[str, str, int]] = set()
-        for root, _, names in os.walk(loc_dir):
-            for n in names:
-                if not n.endswith(".yml"):
+        for fp, text in self._loc_file_texts:
+            rel = os.path.relpath(fp, self.mod_path)
+            for m in _LOC_BANG_REF.finditer(text):
+                trig = m.group(1)
+                if trig in self._sgui_trigger_names:
                     continue
-                fp = os.path.join(root, n)
-                rel = os.path.relpath(fp, self.mod_path)
-                try:
-                    with open(fp, "r", encoding="utf-8-sig") as fh:
-                        text = fh.read()
-                except Exception:
+                line_no = text.count("\n", 0, m.start()) + 1
+                key = (trig, rel, line_no)
+                if key in seen:
                     continue
-                for m in _LOC_BANG_REF.finditer(text):
-                    trig = m.group(1)
-                    if trig in self._sgui_trigger_names:
-                        continue
-                    line_no = text.count("\n", 0, m.start()) + 1
-                    key = (trig, rel, line_no)
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    self.add_issue(
-                        Severity.ERROR,
-                        "DEAD_BANG_REF",
-                        f"[!{trig}] in loc but no scripted_gui trigger named "
-                        f"'{trig}' is defined — formatter will produce empty text",
-                        file=rel,
-                        line=line_no,
-                    )
+                seen.add(key)
+                self.add_issue(
+                    Severity.ERROR,
+                    "DEAD_BANG_REF",
+                    f"[!{trig}] in loc but no scripted_gui trigger named "
+                    f"'{trig}' is defined — formatter will produce empty text",
+                    file=rel,
+                    line=line_no,
+                )
 
     def _check_window_refs(self) -> None:
         """Tier 1.4 — window_name / parent_window_name / parent_window_token
@@ -759,7 +756,7 @@ class ScriptedGuiValidator(BaseValidator):
         self._parse_gui_files()
         self._parse_scripted_gui_files()
         self._parse_gfx_files()
-        self._loc_keys = self._load_loc_keys()
+        self._loc_keys = self._load_loc_keys_and_cache()
 
         # Phase 2: cross-reference checks
         self._check_handler_element_refs()
