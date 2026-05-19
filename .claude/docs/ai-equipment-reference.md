@@ -155,7 +155,7 @@ slot_name = {
 
 ## Coverage Model
 
-The generic files (`generic_tank.txt`, `generic_plane.txt`, `generic_naval.txt`) provide fallback designs for all nations. They use `blocked_for` to exclude ~27 named nations that have custom files.
+The generic files (`generic_tank.txt`, `generic_plane.txt`, `generic_naval.txt`) provide fallback designs for any nation that does not have a custom file. They use `blocked_for = { ... }` to exclude the nations that already have their own coverage. Whenever you add a custom equipment file for a tag, add that tag to `blocked_for` in the matching generic file — otherwise the AI may pick a generic design over the custom one.
 
 **Every nation blocked from generic MUST have coverage in a custom or shared file for each role it needs.** Missing coverage = AI cannot produce that equipment type.
 

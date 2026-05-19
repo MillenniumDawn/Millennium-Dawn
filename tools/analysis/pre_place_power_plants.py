@@ -50,7 +50,7 @@ from estimate_gdp import finalize_gdp as _finalize_gdp
 from estimate_gdp import (
     parse_all_ideas,
     parse_country_history,
-    parse_state_file,
+    parse_state_file_from_content,
 )
 
 REPO_ROOT = os.path.abspath(os.path.join(THIS_DIR, "..", ".."))
@@ -316,10 +316,10 @@ _STATE_CATEGORY_RE = re.compile(r"^\s*state_category\s*=\s*(\w+)", re.MULTILINE)
 
 
 def parse_state_with_category(filepath):
-    state = parse_state_file(filepath)
-    state["filepath"] = filepath
     with open(filepath, "r", encoding="utf-8", errors="replace") as f:
         content = f.read()
+    state = parse_state_file_from_content(content, os.path.basename(filepath))
+    state["filepath"] = filepath
     m = _STATE_CATEGORY_RE.search(content)
     if m:
         state["state_category"] = m.group(1)

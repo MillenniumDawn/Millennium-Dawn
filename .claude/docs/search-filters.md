@@ -180,5 +180,5 @@ These custom filters exist for other country trees — do not add them to Israel
 
 1. Choose the **country-specific custom filter** that matches the focus's branch
 2. Choose the **generic filter** from the tables above (one or two — don't over-tag)
-3. For high-cost focuses (`cost >= 8`, or `cost >= 5` for military/economy/research focuses): add a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse` — this is AI-only, do not put it in `available`
+3. For high-cost focuses, add a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse` — AI-only, do not put it in `available`. Thresholds: `cost >= 8` for any focus, or `cost >= 5` if the focus is tagged military / economy / research. **Why these numbers:** at or above these costs, the focus commits enough treasury that an AI already in collapse will dig deeper; the lower threshold for econ/mil/research reflects that those focuses typically chain larger monetary effects on top of the focus cost itself.
 4. Write the `search_filters` line as a single line: `search_filters = { CUSTOM_FILTER GENERIC_FILTER }`
