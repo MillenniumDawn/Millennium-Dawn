@@ -621,12 +621,22 @@ CPD_sign_peace_deal = {
 		}
 
 	# FULL COUNTRY PUPPET
+	# A faction leader who becomes a puppet would leave members in a stale
+	# leadership state; dissolve their faction first so members are released.
 		if = {
 			limit = { ROOT = { has_country_flag = CPD_full_puppet_demand } }
+			if = {
+				limit = { THIS = { is_faction_leader = yes } }
+				THIS = { dissolve_faction = yes }
+			}
 			ROOT = { puppet = THIS }
 		}
 		if = {
 			limit = { ROOT = { has_country_flag = CPD_full_puppet_concession } }
+			if = {
+				limit = { ROOT = { is_faction_leader = yes } }
+				ROOT = { dissolve_faction = yes }
+			}
 			THIS = { puppet = ROOT }
 		}
 
@@ -704,29 +714,36 @@ CPD_sign_peace_deal = {
 	# in 00_money_system.txt: payer adds to expenses, receiver adds to income.
 	# Amount = 0.05% of payer's GDP per week (~2.6% / year), capped at $15B / week
 	# so superpowers don't drain mid-tier targets with one peace deal.
+	#
+	# Stacking: when a payer signs a second reparations deal while the first is
+	# still active, the new amount adds to their existing weekly. The idea's
+	# on_remove clears the variable when the (refreshed) timer finally expires.
+	# Same applies to receivers who collect from multiple sources.
 		if = {
 			limit = { ROOT = { has_country_flag = CPD_war_reparations_demand } }
+			set_temp_variable = { CPD_reparations_new = THIS.gdp_total }
+			multiply_temp_variable = { CPD_reparations_new = 0.0005 }
+			clamp_temp_variable = { var = CPD_reparations_new max = 15 }
 			THIS = {
-				set_variable = { CPD_reparations_weekly = gdp_total }
-				multiply_variable = { CPD_reparations_weekly = 0.0005 }
-				clamp_variable = { var = CPD_reparations_weekly max = 15 }
+				add_to_variable = { CPD_reparations_weekly = CPD_reparations_new }
 				add_timed_idea = { idea = CPD_war_reparations_payer days = 365 }
 			}
 			ROOT = {
-				set_variable = { CPD_reparations_weekly = THIS.CPD_reparations_weekly }
+				add_to_variable = { CPD_reparations_weekly = CPD_reparations_new }
 				add_timed_idea = { idea = CPD_war_reparations_receiver days = 365 }
 			}
 		}
 		if = {
 			limit = { ROOT = { has_country_flag = CPD_war_reparations_concession } }
+			set_temp_variable = { CPD_reparations_new = ROOT.gdp_total }
+			multiply_temp_variable = { CPD_reparations_new = 0.0005 }
+			clamp_temp_variable = { var = CPD_reparations_new max = 15 }
 			ROOT = {
-				set_variable = { CPD_reparations_weekly = gdp_total }
-				multiply_variable = { CPD_reparations_weekly = 0.0005 }
-				clamp_variable = { var = CPD_reparations_weekly max = 15 }
+				add_to_variable = { CPD_reparations_weekly = CPD_reparations_new }
 				add_timed_idea = { idea = CPD_war_reparations_payer days = 365 }
 			}
 			THIS = {
-				set_variable = { CPD_reparations_weekly = ROOT.CPD_reparations_weekly }
+				add_to_variable = { CPD_reparations_weekly = CPD_reparations_new }
 				add_timed_idea = { idea = CPD_war_reparations_receiver days = 365 }
 			}
 		}
