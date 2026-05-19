@@ -69,11 +69,6 @@ scripted_gui = {
 				# State list interactions
 				CPD_add_state_with_parameters_button_click = { CPD_change_state_actions = yes }
 				CPD_clear_from_current_deal_button_click = { CPD_remove_from_deal = yes }
-
-				# Dummy click handler — the button itself is positioned off-screen
-				# and never clicked by the player. Its click_enabled trigger is the
-				# canonical send-gate, exposed to loc via [!CPD_send_dummy_button_click_enabled].
-				CPD_send_dummy_button_click = { }
 			}
 
 			triggers = {
@@ -138,11 +133,11 @@ scripted_gui = {
 				}
 				# Send-readiness — mirrors the can_be_sent gate so the player sees
 				# whether the deal is currently sendable before clicking Send.
-				# Only the ready icon evaluates CPD_deal_is_sendable; blocked and
-				# the dummy button click_enabled negate it to share the result.
+				# Each trigger evaluates CPD_deal_is_sendable independently — the
+				# engine doesn't resolve cross-references between visibility
+				# triggers, so chaining them caused both icons to show at once.
 				CPD_send_ready_ICON_visible = { CPD_deal_is_sendable = yes }
-				CPD_send_blocked_ICON_visible = { NOT = { CPD_send_ready_ICON_visible = yes } }
-				CPD_send_dummy_button_click_enabled = { CPD_send_ready_ICON_visible = yes }
+				CPD_send_blocked_ICON_visible = { NOT = { CPD_deal_is_sendable = yes } }
 			}
 
 			ai_enabled = { always = no }
