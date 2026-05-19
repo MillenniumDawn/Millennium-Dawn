@@ -132,6 +132,27 @@ dirty = my_update_variable
 
 The GUI only refreshes when this variable's value changes. This does **not** affect visibility checks.
 
+**Only bump the dirty variable from player-initiated paths.** A shared GUI's dirty variable refreshes any open instance — AI-side state changes that bump it wake every player's open GUI for no visible benefit. Guard the bump with `is_ai = no`:
+
+```
+# Wrong — AI changes wake every player's open GUI
+my_effect = {
+    add_to_variable = { global.my_dirty = 1 }
+    # ...actual logic...
+}
+
+# Right — player paths only
+my_effect = {
+    if = {
+        limit = { ROOT = { is_ai = no } }
+        add_to_variable = { global.my_dirty = 1 }
+    }
+    # ...actual logic...
+}
+```
+
+This matters most for any GUI the AI also interacts with — peace deal builders, investment dialogs, scripted-effect-driven menus.
+
 ## AI Configuration
 
 ```

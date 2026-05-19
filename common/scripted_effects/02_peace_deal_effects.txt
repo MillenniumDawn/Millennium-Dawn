@@ -172,19 +172,19 @@ CPD_add_to_concessions = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
 		ROOT = { add_to_array = { CPD_annex_state_CONCESSIONS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
 		ROOT = { add_to_array = { CPD_puppet_in_state_CONCESSIONS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
 		ROOT = { add_to_array = { CPD_demilitarise_state_CONCESSIONS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
 		ROOT = { add_to_array = { CPD_liberate_state_CONCESSIONS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
 		ROOT = { add_to_array = { CPD_resource_rights_CONCESSIONS = PREV } }
 	}
@@ -206,19 +206,19 @@ CPD_remove_from_concessions = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
 		ROOT = { remove_from_array = { CPD_annex_state_CONCESSIONS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
 		ROOT = { remove_from_array = { CPD_puppet_in_state_CONCESSIONS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
 		ROOT = { remove_from_array = { CPD_demilitarise_state_CONCESSIONS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
 		ROOT = { remove_from_array = { CPD_liberate_state_CONCESSIONS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
 		ROOT = { remove_from_array = { CPD_resource_rights_CONCESSIONS = PREV } }
 	}
@@ -240,19 +240,19 @@ CPD_add_to_demands = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
 		ROOT = { add_to_array = { CPD_annex_state_DEMANDS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
 		ROOT = { add_to_array = { CPD_puppet_in_state_DEMANDS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
 		ROOT = { add_to_array = { CPD_demilitarise_state_DEMANDS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
 		ROOT = { add_to_array = { CPD_liberate_state_DEMANDS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
 		ROOT = { add_to_array = { CPD_resource_rights_DEMANDS = PREV } }
 	}
@@ -274,19 +274,19 @@ CPD_remove_from_demands = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
 		ROOT = { remove_from_array = { CPD_annex_state_DEMANDS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
 		ROOT = { remove_from_array = { CPD_puppet_in_state_DEMANDS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
 		ROOT = { remove_from_array = { CPD_demilitarise_state_DEMANDS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
 		ROOT = { remove_from_array = { CPD_liberate_state_DEMANDS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
 		ROOT = { remove_from_array = { CPD_resource_rights_DEMANDS = PREV } }
 	}
@@ -643,29 +643,18 @@ CPD_sign_peace_deal = {
 		}
 
 	# COUNTRY ACTION: REGIME CHANGE
+	# Forces the loser onto the winner's exact subideology via MD's change_ruling_party_effect.
+	# Precedent: put_the_largest_opposition_party_in_power (01_civil_war_effects.txt).
 		if = {
 			limit = { ROOT = { has_country_flag = CPD_regime_change_demand } }
+			set_temp_variable = { rul_party_temp = ROOT.ruling_party^0 }
+			set_temp_variable = { disable_elections = 0 }
+			set_temp_variable = { change_leader_temp = 1 }
 			THIS = {
-				set_politics = {
-					ruling_party = var:ROOT.current_party_ideology_group
-					elections_allowed = yes
-				}
-				set_political_party = {
-					ideology = var:ROOT.current_party_ideology_group
-					popularity = 65
-				}
-				# Spread remaining popularity to other groups
-				set_political_party = { ideology = democratic popularity = 10 }
-				set_political_party = { ideology = communism popularity = 5 }
-				set_political_party = { ideology = neutrality popularity = 10 }
-				set_political_party = { ideology = nationalist popularity = 5 }
-				set_political_party = { ideology = fascism popularity = 5 }
-				# Override the imposed ideology back to 65 since the above resets it
-				set_political_party = {
-					ideology = var:ROOT.current_party_ideology_group
-					popularity = 65
-				}
-				# Islamic nations get salafist (fascism) backlash from foreign regime change
+				clear_array = gov_coalition_array
+				change_ruling_party_effect = yes
+				add_timed_idea = { idea = CPD_regime_change_instability days = 720 }
+				# Salafist backlash on Islamic nations when ideology forced from outside
 				if = {
 					limit = {
 						NOT = { ROOT = { has_government = fascism } }
@@ -677,34 +666,19 @@ CPD_sign_peace_deal = {
 							has_idea = ibadi
 						}
 					}
-					set_political_party = { ideology = fascism popularity = 5 }
+					add_popularity = { ideology = fascism popularity = 0.05 }
 				}
-				add_timed_idea = { idea = CPD_regime_change_instability days = 720 }
 			}
 		}
 		if = {
 			limit = { ROOT = { has_country_flag = CPD_regime_change_concession } }
+			set_temp_variable = { rul_party_temp = THIS.ruling_party^0 }
+			set_temp_variable = { disable_elections = 0 }
+			set_temp_variable = { change_leader_temp = 1 }
 			ROOT = {
-				set_politics = {
-					ruling_party = var:THIS.current_party_ideology_group
-					elections_allowed = yes
-				}
-				set_political_party = {
-					ideology = var:THIS.current_party_ideology_group
-					popularity = 65
-				}
-				# Spread remaining popularity to other groups
-				set_political_party = { ideology = democratic popularity = 10 }
-				set_political_party = { ideology = communism popularity = 5 }
-				set_political_party = { ideology = neutrality popularity = 10 }
-				set_political_party = { ideology = nationalist popularity = 5 }
-				set_political_party = { ideology = fascism popularity = 5 }
-				# Override the imposed ideology back to 65 since the above resets it
-				set_political_party = {
-					ideology = var:THIS.current_party_ideology_group
-					popularity = 65
-				}
-				# Islamic nations get salafist (fascism) backlash from foreign regime change
+				clear_array = gov_coalition_array
+				change_ruling_party_effect = yes
+				add_timed_idea = { idea = CPD_regime_change_instability days = 720 }
 				if = {
 					limit = {
 						NOT = { THIS = { has_government = fascism } }
@@ -716,22 +690,38 @@ CPD_sign_peace_deal = {
 							has_idea = ibadi
 						}
 					}
-					set_political_party = { ideology = fascism popularity = 5 }
+					add_popularity = { ideology = fascism popularity = 0.05 }
 				}
-				add_timed_idea = { idea = CPD_regime_change_instability days = 720 }
 			}
 		}
 
 	# COUNTRY ACTION: WAR REPARATIONS
+	# 1-year duration. Weekly transfer integrated via calculate_additional_*_rate
+	# in 00_money_system.txt: payer adds to expenses, receiver adds to income.
+	# Amount = 0.1% of payer's GDP per week (~5% / year).
 		if = {
 			limit = { ROOT = { has_country_flag = CPD_war_reparations_demand } }
-			THIS = { add_timed_idea = { idea = CPD_war_reparations_payer days = 1800 } }
-			ROOT = { add_timed_idea = { idea = CPD_war_reparations_receiver days = 1800 } }
+			THIS = {
+				set_variable = { CPD_reparations_weekly = gdp_total }
+				multiply_variable = { CPD_reparations_weekly = 0.001 }
+				add_timed_idea = { idea = CPD_war_reparations_payer days = 365 }
+			}
+			ROOT = {
+				set_variable = { CPD_reparations_weekly = THIS.CPD_reparations_weekly }
+				add_timed_idea = { idea = CPD_war_reparations_receiver days = 365 }
+			}
 		}
 		if = {
 			limit = { ROOT = { has_country_flag = CPD_war_reparations_concession } }
-			ROOT = { add_timed_idea = { idea = CPD_war_reparations_payer days = 1800 } }
-			THIS = { add_timed_idea = { idea = CPD_war_reparations_receiver days = 1800 } }
+			ROOT = {
+				set_variable = { CPD_reparations_weekly = gdp_total }
+				multiply_variable = { CPD_reparations_weekly = 0.001 }
+				add_timed_idea = { idea = CPD_war_reparations_payer days = 365 }
+			}
+			THIS = {
+				set_variable = { CPD_reparations_weekly = ROOT.CPD_reparations_weekly }
+				add_timed_idea = { idea = CPD_war_reparations_receiver days = 365 }
+			}
 		}
 
 	# CEASEFIRE STATUS QUO - transfer controlled states before white peace
@@ -829,6 +819,30 @@ CPD_execute_white_peace = {
 			}
 		}
 		}
+		# Cover vassal-only wars: each side's subjects also white-peace the other side.
+		# Faction loops above only cover faction members, not subjects of non-leaders.
+		var:CPD_WP_initiator = {
+			every_subject_country = {
+				limit = { has_war_with = var:CPD_WP_receiver }
+				white_peace = var:CPD_WP_receiver
+				if = {
+					limit = { check_variable = { CPD_is_ceasefire = 1 } }
+					set_truce = { target = var:CPD_WP_receiver days = 720 }
+				}
+				else = { set_truce = { target = var:CPD_WP_receiver days = 360 } }
+			}
+		}
+		var:CPD_WP_receiver = {
+			every_subject_country = {
+				limit = { has_war_with = var:CPD_WP_initiator }
+				white_peace = var:CPD_WP_initiator
+				if = {
+					limit = { check_variable = { CPD_is_ceasefire = 1 } }
+					set_truce = { target = var:CPD_WP_initiator days = 720 }
+				}
+				else = { set_truce = { target = var:CPD_WP_initiator days = 360 } }
+			}
+		}
 	}
 }
 
@@ -857,23 +871,20 @@ CPD_make_puppet_in_state_effect = {
 	else = {
 		create_dynamic_country = {
 			original_tag = THIS.owner
+			# Install taker's exact subideology onto the new puppet via MD's
+			# change_ruling_party_effect — set_politics alone won't pick the
+			# right subideology since MD tracks parties via ruling_party^0.
+			set_temp_variable = { rul_party_temp = var:CPD_taker.ruling_party^0 }
+			set_temp_variable = { change_leader_temp = 1 }
 			if = {
 				limit = { var:CPD_taker = { has_elections = yes } }
-				set_politics = {
-					ruling_party = var:var:CPD_taker.current_party_ideology_group
-					elections_allowed = yes
-				}
+				set_temp_variable = { disable_elections = 0 }
 			}
 			else = {
-				set_politics = {
-					ruling_party = var:var:CPD_taker.current_party_ideology_group
-					elections_allowed = no
-				}
+				set_temp_variable = { disable_elections = 1 }
 			}
-			set_political_party = {
-				ideology = var:var:CPD_taker.current_party_ideology_group
-				popularity = 60
-			}
+			clear_array = gov_coalition_array
+			change_ruling_party_effect = yes
 			reserve_dynamic_country = yes
 			var:CPD_taker = { puppet = PREV }
 			transfer_state = PREV
@@ -943,65 +954,54 @@ CPD_store_state_value = {
 
 # AI SCRIPTED EFFECTS
 
-CPD_AI_will_take_state = {
-	set_variable = { ROOT.CPD_state_option_selection = 1 }
-	CPD_change_state_actions = yes
-}
-
-CPD_AI_will_puppet = {
-	set_variable = { ROOT.CPD_state_option_selection = 2 }
-	CPD_change_state_actions = yes
-}
-
-CPD_AI_will_demilitarise = {
-	set_variable = { ROOT.CPD_state_option_selection = 3 }
-	CPD_change_state_actions = yes
-}
-
 CPD_AI_build_peace_deal = {
-	# Determine AI posture: is ROOT (our AI) losing or winning?
-	# Must scope to ROOT since this effect runs in the enemy's scope
-	set_temp_variable = { CPD_AI_losing = 0 }
+	# Three-posture builder. Called inside random_enemy_country: ROOT = our AI, THIS = target enemy.
+	# Branches: losing (cede + sweeteners) / stalemated (ceasefire only) / winning (states + escalation).
 	if = {
-		limit = {
-			ROOT = {
-				OR = {
-					surrender_progress > 0.4
-					enemies_strength_ratio > 1.5
-				}
-			}
-		}
-		set_temp_variable = { CPD_AI_losing = 1 }
-	}
-
-	if = {
-		# LOSING: offer concessions on states the enemy controls
-		limit = { check_variable = { CPD_AI_losing = 1 } }
+		# — LOSING — concede occupied states, throw in reparations, accept regime change if desperate
+		limit = { CPD_AI_is_losing = yes }
 		ROOT = { set_country_flag = CPD_giving_concessions }
 		CPD_demand_concede_switch = yes
 		ROOT = {
 			for_each_scope_loop = {
 				array = CPD_state_list
-				# Concede states ROOT no longer controls (enemy occupied)
 				if = {
-					limit = {
-						NOT = { is_controlled_by = ROOT }
-					}
+					limit = { NOT = { is_controlled_by = ROOT } }
 					set_variable = { ROOT.CPD_state_option_selection = 1 }
 					CPD_change_state_actions = yes
 				}
 			}
+			# Sweetener: accept reparations to make the deal more palatable
+			set_country_flag = CPD_war_reparations_concession
+			add_to_array = { CPD_current_deal_list = 10002 }
+			add_to_array = { CPD_current_deal_list_CONCESSIONS = 10002 }
+			# Last resort: accept regime change when on the brink
+			if = {
+				limit = {
+					surrender_progress > 0.75
+					NOT = { has_government = THIS.government }
+				}
+				set_country_flag = CPD_regime_change_concession
+				add_to_array = { CPD_current_deal_list = 10004 }
+				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10004 }
+			}
 		}
 	}
+	else_if = {
+		# — STALEMATED — status-quo ceasefire (clears state actions, sets 720-day truce)
+		limit = { CPD_AI_is_stalemated = yes }
+		ROOT = { clr_country_flag = CPD_giving_concessions }
+		CPD_demand_concede_switch = yes
+		CPD_toggle_ceasefire = yes
+	}
 	else = {
-		# WINNING/STALEMATE: demand states we control
+		# — WINNING — annex/demilitarise states we control, plus country-action escalation
 		ROOT = { clr_country_flag = CPD_giving_concessions }
 		CPD_demand_concede_switch = yes
 		ROOT = {
 			for_each_scope_loop = {
 				array = CPD_state_list
 				if = {
-					# Demand annex on states we control and have cores/claims on
 					limit = {
 						is_controlled_by = ROOT
 						OR = {
@@ -1013,21 +1013,84 @@ CPD_AI_build_peace_deal = {
 					CPD_change_state_actions = yes
 				}
 				else_if = {
-					# Demand demilitarise on other states we control
-					limit = {
-						is_controlled_by = ROOT
-					}
+					limit = { is_controlled_by = ROOT }
 					set_variable = { ROOT.CPD_state_option_selection = 3 }
 					CPD_change_state_actions = yes
 				}
+			}
+			# Always demand reparations when winning — economic profit motive
+			set_country_flag = CPD_war_reparations_demand
+			add_to_array = { CPD_current_deal_list = 10002 }
+			add_to_array = { CPD_current_deal_list_DEMANDS = 10002 }
+			# Regime change when enemy is on a different ideology AND clearly losing
+			if = {
+				limit = {
+					THIS = { surrender_progress > 0.5 }
+					NOT = { has_government = THIS.government }
+				}
+				set_country_flag = CPD_regime_change_demand
+				add_to_array = { CPD_current_deal_list = 10004 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10004 }
+			}
+			# Forced neutrality when enemy is in a faction we don't share
+			if = {
+				limit = {
+					THIS = { is_in_faction = yes }
+					NOT = { is_in_faction_with = THIS }
+				}
+				set_country_flag = CPD_forced_neutrality_demand
+				add_to_array = { CPD_current_deal_list = 10003 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10003 }
+			}
+			# Full puppet only at crushing victory
+			if = {
+				limit = {
+					THIS = { surrender_progress > 0.8 }
+					THIS = { is_subject = no }
+				}
+				set_country_flag = CPD_full_puppet_demand
+				add_to_array = { CPD_current_deal_list = 10006 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10006 }
 			}
 		}
 	}
 }
 
 # COUNTRY ACTION TOGGLE EFFECTS
-# Sentinel state IDs for country actions in deal list: 10001-10006
-# When adding a new country action, also update: CPD_reset_built_peace_deal, CPD_remove_from_deal sentinel dispatch
+#
+# Deal-list arrays (CPD_current_deal_list, _DEMANDS, _CONCESSIONS) hold integers
+# in two ranges:
+#   < 10000  →  real state ID (looked up via state scope: state_strategic_value, etc.)
+#   10001-10006  →  country action sentinel (marker that a country-action flag is set)
+#
+# Sentinel-to-flag mapping (HARD-CODED across the system — do not renumber):
+#   10001  ceasefire           CPD_ceasefire_demand        / CPD_ceasefire_concession
+#   10002  war reparations     CPD_war_reparations_demand  / CPD_war_reparations_concession
+#   10003  forced neutrality   CPD_forced_neutrality_demand / CPD_forced_neutrality_concession
+#   10004  regime change       CPD_regime_change_demand    / CPD_regime_change_concession
+#   10005  military basing     CPD_military_basing_demand  / CPD_military_basing_concession
+#   10006  full puppet         CPD_full_puppet_demand      / CPD_full_puppet_concession
+#
+# Adding a new country action — touch ALL of:
+#   1. New sentinel ID (10007+)
+#   2. Two country flags (_demand / _concession)
+#   3. CPD_reset_built_peace_deal — clear both flags
+#   4. CPD_remove_from_deal — sentinel dispatch block (clr flag on sentinel match)
+#   5. CPD_clear_all_state_actions — re-add sentinel arrays for the new action
+#   6. New CPD_toggle_<action> effect (mirror the existing six)
+#   7. Sign-time effect block in CPD_sign_peace_deal
+#   8. CPD_has_demands_in_deal trigger (00_peace_deal_triggers.txt) — add demand-flag check
+#   9. New button + click effect in scripted_guis/02_conditional_peace_deals_scripted_gui.txt
+#   10. New button in interface/conditional_peace_deals.gui
+#   11. CPD_deal_row_label scripted-loc dispatch (02_conditional_peace_deal_scripted_localisation.txt)
+#   12. Loc keys: button TT, country-action label, country-action TT
+#
+# Pitfalls:
+#   - var:X.current_party_ideology_group does NOT exist. For regime change / dynamic
+#     puppet politics, use change_ruling_party_effect with rul_party_temp =
+#     <source>.ruling_party^0 (see CPD_make_puppet_in_state_effect).
+#   - CPD_VP@<TAG> variables leak when a country is annihilated — inert garbage,
+#     no engine hook to clean them up. Accept the leak unless save bloat becomes real.
 
 # Clears all state-level actions from the deal (used when ceasefire is toggled on)
 # Expects to be called while ROOT is the peace deal builder

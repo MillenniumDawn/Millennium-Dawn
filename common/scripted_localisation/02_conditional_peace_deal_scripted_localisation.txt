@@ -130,20 +130,11 @@
 				localization_key = "CPD_demand_cost_value"
 			}
 		}
-	# DEAL ENTRY DISPLAY - returns state name for real states, empty for sentinels
+	# DEAL ROW LABEL - single composite, handles both sentinels (country actions)
+	# and states (action + state info) without the empty-string fallback dance.
 		defined_text = {
-			name = CPD_deal_entry_state_name
-			text = {
-				trigger = { check_variable = { v < 10000 } }
-				localization_key = "CPD_deal_entry_state_format"
-			}
-			text = { localization_key = "CPD_empty_string" }
-		}
-	# ENACTED ACTIONS ON STATE LIST
-		defined_text = {
-			name = CPD_enacted_action_on_state
-
-			# Country action sentinels (checked first - not real states)
+			name = CPD_deal_row_label
+			# Country action sentinels — full label is just the action name
 			text = {
 				trigger = { check_variable = { v = 10001 } }
 				localization_key = "CPD_country_action_ceasefire"
@@ -168,6 +159,15 @@
 				trigger = { check_variable = { v = 10006 } }
 				localization_key = "CPD_country_action_full_puppet"
 			}
+			# States — "Annex Texas +5 VP"
+			text = {
+				trigger = { check_variable = { v < 10000 } }
+				localization_key = "CPD_state_deal_row_format"
+			}
+		}
+	# ENACTED ACTIONS ON STATE LIST — state actions only (sentinels handled by CPD_deal_row_label)
+		defined_text = {
+			name = CPD_enacted_action_on_state
 			# State actions
 			text = {
 				trigger = {
@@ -534,6 +534,125 @@ defined_text = {
 			}
 		}
 		localization_key = "CPD_ai_accept_months_at_war_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_war_weariness
+
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_WW_temp = 0 }
+			if = {
+				limit = { check_variable = { THIS.months_at_war > 12 } }
+				subtract_from_temp_variable = { CPD_WW_temp = 15 }
+			}
+			if = {
+				limit = { check_variable = { THIS.months_at_war > 24 } }
+				subtract_from_temp_variable = { CPD_WW_temp = 15 }
+			}
+			if = {
+				limit = { check_variable = { THIS.months_at_war > 48 } }
+				subtract_from_temp_variable = { CPD_WW_temp = 30 }
+			}
+		}
+		localization_key = "CPD_ai_accept_war_weariness_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_full_puppet_aversion
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_FP_aversion_temp = 0 }
+			if = {
+				limit = { ROOT = { has_country_flag = CPD_full_puppet_demand } }
+				set_temp_variable = { CPD_FP_aversion_temp = -200 }
+				if = { limit = { THIS = { is_subject = yes } }
+					add_to_temp_variable = { CPD_FP_aversion_temp = 100 }
+				}
+			}
+		}
+		localization_key = "CPD_ai_accept_full_puppet_aversion_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_regime_change_aversion
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_RC_aversion_temp = 0 }
+			if = {
+				limit = { ROOT = { has_country_flag = CPD_regime_change_demand } }
+				set_temp_variable = { CPD_RC_aversion_temp = -80 }
+				if = {
+					limit = { THIS = { check_variable = { party_pop_array^ruling_party^0 < 0.4 } } }
+					add_to_temp_variable = { CPD_RC_aversion_temp = 30 }
+				}
+			}
+		}
+		localization_key = "CPD_ai_accept_regime_change_aversion_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_forced_neutrality_aversion
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_FN_aversion_temp = 0 }
+			if = {
+				limit = { ROOT = { has_country_flag = CPD_forced_neutrality_demand } }
+				if = { limit = { THIS = { is_in_faction = yes } }
+					set_temp_variable = { CPD_FN_aversion_temp = -60 }
+				}
+				else = { set_temp_variable = { CPD_FN_aversion_temp = -20 } }
+			}
+		}
+		localization_key = "CPD_ai_accept_forced_neutrality_aversion_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_military_basing_aversion
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_MB_aversion_temp = 0 }
+			if = {
+				limit = { ROOT = { has_country_flag = CPD_military_basing_demand } }
+				set_temp_variable = { CPD_MB_aversion_temp = -25 }
+			}
+		}
+		localization_key = "CPD_ai_accept_military_basing_aversion_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_resource_rights_aversion
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_RR_aversion_temp = 0 }
+			if = {
+				limit = { check_variable = { ROOT.CPD_resource_rights_DEMANDS^num > 0 } }
+				set_temp_variable = { CPD_RR_aversion_temp = -15 }
+				if = { limit = { check_variable = { ROOT.CPD_resource_rights_DEMANDS^num > 3 } }
+					add_to_temp_variable = { CPD_RR_aversion_temp = -25 }
+				}
+			}
+		}
+		localization_key = "CPD_ai_accept_resource_rights_aversion_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_ceasefire_acceptance
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_CF_acceptance_temp = 0 }
+			if = {
+				limit = {
+					ROOT = { has_country_flag = CPD_ceasefire_demand }
+					THIS = {
+						check_variable = { months_at_war > 18 }
+						surrender_progress < 0.4
+					}
+				}
+				set_temp_variable = { CPD_CF_acceptance_temp = 40 }
+			}
+		}
+		localization_key = "CPD_ai_accept_ceasefire_acceptance_tt"
 	}
 }
 defined_text = {

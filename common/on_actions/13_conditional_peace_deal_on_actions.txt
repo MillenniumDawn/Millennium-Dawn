@@ -1,10 +1,16 @@
 on_actions = {
 	on_monthly = {
 		effect = {
+			# Subjects don't initiate peace deals unless their autonomy state
+			# explicitly allows it. Overlord handles peace for restricted subjects.
 			if = {
 				limit = {
 					is_ai = yes
 					has_war = yes
+					OR = {
+						is_subject = no
+						CPD_is_an_autonomy_allowed_to_send_deal = yes
+					}
 				}
 				# Clear stale AI peace flags if conditions no longer apply
 				if = {
@@ -18,7 +24,8 @@ on_actions = {
 					clr_country_flag = CPD_AI_wants_peace
 					clear_variable = CPD_AI_wants_peace_with
 				}
-				# AI considers offering peace
+				# AI considers offering peace — two-pass enemy targeting:
+				# pass 1 prefers enemies near capitulation, pass 2 falls back to random.
 				if = {
 					limit = {
 						has_war = yes
@@ -29,13 +36,72 @@ on_actions = {
 						limit = {
 							has_war_with = ROOT
 							CPD_is_a_custom_civil_war = yes
+							NOT = { ROOT = { has_country_flag = CPD_recently_offered_peace@PREV } }
+							surrender_progress > 0.3
 						}
 						CPD_reset_built_peace_deal = yes
 						CPD_AI_build_peace_deal = yes
 						ROOT = {
 							set_country_flag = CPD_AI_wants_peace
 							set_variable = { CPD_AI_wants_peace_with = PREV }
-							set_country_flag = { flag = CPD_AI_peace_cooldown days = 90 value = 1 }
+							set_country_flag = { flag = CPD_AI_peace_cooldown days = 180 value = 1 }
+							set_country_flag = { flag = CPD_recently_offered_peace@PREV days = 180 value = 1 }
+						}
+					}
+					# Pass 2: nothing near capitulation — random fallback
+					if = {
+						limit = { NOT = { has_country_flag = CPD_AI_wants_peace } }
+						random_enemy_country = {
+							limit = {
+								has_war_with = ROOT
+								CPD_is_a_custom_civil_war = yes
+								NOT = { ROOT = { has_country_flag = CPD_recently_offered_peace@PREV } }
+							}
+							CPD_reset_built_peace_deal = yes
+							CPD_AI_build_peace_deal = yes
+							ROOT = {
+								set_country_flag = CPD_AI_wants_peace
+								set_variable = { CPD_AI_wants_peace_with = PREV }
+								set_country_flag = { flag = CPD_AI_peace_cooldown days = 180 value = 1 }
+								set_country_flag = { flag = CPD_recently_offered_peace@PREV days = 180 value = 1 }
+							}
+						}
+					}
+				}
+			}
+
+			# Overlord proactively offers peace on behalf of restricted vassals at war.
+			# Catches vassal-only wars where the subject can't initiate by autonomy state.
+			if = {
+				limit = {
+					is_ai = yes
+					is_subject = no
+					NOT = { has_country_flag = CPD_AI_peace_cooldown }
+					any_subject_country = {
+						has_war = yes
+						NOT = { CPD_is_an_autonomy_allowed_to_send_deal = yes }
+						CPD_AI_will_offer_peace = yes
+					}
+				}
+				random_subject_country = {
+					limit = {
+						has_war = yes
+						NOT = { CPD_is_an_autonomy_allowed_to_send_deal = yes }
+						CPD_AI_will_offer_peace = yes
+					}
+					random_enemy_country = {
+						limit = {
+							has_war_with = PREV
+							CPD_is_a_custom_civil_war = yes
+							NOT = { ROOT = { has_country_flag = CPD_recently_offered_peace@PREV } }
+						}
+						CPD_reset_built_peace_deal = yes
+						CPD_AI_build_peace_deal = yes
+						ROOT = {
+							set_country_flag = CPD_AI_wants_peace
+							set_variable = { CPD_AI_wants_peace_with = PREV }
+							set_country_flag = { flag = CPD_AI_peace_cooldown days = 180 value = 1 }
+							set_country_flag = { flag = CPD_recently_offered_peace@PREV days = 180 value = 1 }
 						}
 					}
 				}
