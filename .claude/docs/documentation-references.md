@@ -37,13 +37,14 @@ Use for broader modding context not covered in local docs:
 
 ## Millennium Dawn Conventions
 
-| File                                      | Contents                                                                                                                                                                     |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.claude/docs/search-filters.md`          | Complete `search_filters` reference: every `FOCUS_FILTER_*` in the mod, Israel-specific filter mapping, subcategory logic for ISRMILITARY/ISRECON, common mistakes checklist |
-| `.claude/docs/simplification-patterns.md` | Patterns for replacing N-branch lookups with arrays, parameterized scripted loc, shared helpers, meta_effect consolidation                                                   |
-| `.claude/docs/performance-patterns.md`    | Hoisting invariants, temp-variable booleans, GUI dirty counters, engine arrays, clamp-before-division, early-out guards                                                      |
-| `.claude/docs/refactor-checklist.md`      | Systematic breaking-change checks for prefix renames, array migrations, event namespace, GUI/GFX cross-references, scope safety                                              |
-| `.claude/docs/oob-equipment-reference.md` | OOB equipment type mapping (NSB vs non-NSB), stockpile syntax, chassis/variant validation, common errors                                                                     |
+| File                                      | Contents                                                                                                                                                                                    |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.claude/docs/search-filters.md`          | Complete `search_filters` reference: every `FOCUS_FILTER_*` in the mod, Israel-specific filter mapping, subcategory logic for ISRMILITARY/ISRECON, common mistakes checklist                |
+| `.claude/docs/simplification-patterns.md` | Patterns for replacing N-branch lookups with arrays, parameterized scripted loc, shared helpers, meta_effect consolidation                                                                  |
+| `.claude/docs/performance-patterns.md`    | Hoisting invariants, temp-variable booleans, GUI dirty counters, engine arrays, clamp-before-division, early-out guards                                                                     |
+| `.claude/docs/refactor-checklist.md`      | Systematic breaking-change checks for prefix renames, array migrations, event namespace, GUI/GFX cross-references, scope safety                                                             |
+| `.claude/docs/oob-equipment-reference.md` | OOB equipment type mapping (NSB vs non-NSB), stockpile syntax, chassis/variant validation, common errors                                                                                    |
+| `.claude/docs/pr-conventions.md`          | How to write PR descriptions: concise structure (Summary / Why / Risk / Test plan), length budget, what NOT to include (marketing language, AI attribution footers, exhaustive change logs) |
 
 ## AI Agent Definitions
 
