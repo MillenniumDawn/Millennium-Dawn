@@ -821,15 +821,17 @@ CPD_execute_white_peace = {
 		}
 		# Cover vassal-only wars: each side's subjects also white-peace the other side.
 		# Faction loops above only cover faction members, not subjects of non-leaders.
+		# set_truce.target does not accept var:NAME — scope into the counterparty
+		# via var:X = { ... } and reference the looping subject via PREV.
 		var:CPD_WP_initiator = {
 			every_subject_country = {
 				limit = { has_war_with = var:CPD_WP_receiver }
 				white_peace = var:CPD_WP_receiver
 				if = {
 					limit = { check_variable = { CPD_is_ceasefire = 1 } }
-					set_truce = { target = var:CPD_WP_receiver days = 720 }
+					var:CPD_WP_receiver = { set_truce = { target = PREV days = 720 } }
 				}
-				else = { set_truce = { target = var:CPD_WP_receiver days = 360 } }
+				else = { var:CPD_WP_receiver = { set_truce = { target = PREV days = 360 } } }
 			}
 		}
 		var:CPD_WP_receiver = {
@@ -838,9 +840,9 @@ CPD_execute_white_peace = {
 				white_peace = var:CPD_WP_initiator
 				if = {
 					limit = { check_variable = { CPD_is_ceasefire = 1 } }
-					set_truce = { target = var:CPD_WP_initiator days = 720 }
+					var:CPD_WP_initiator = { set_truce = { target = PREV days = 720 } }
 				}
-				else = { set_truce = { target = var:CPD_WP_initiator days = 360 } }
+				else = { var:CPD_WP_initiator = { set_truce = { target = PREV days = 360 } } }
 			}
 		}
 	}
@@ -957,6 +959,8 @@ CPD_store_state_value = {
 CPD_AI_build_peace_deal = {
 	# Three-posture builder. Called inside random_enemy_country: ROOT = our AI, THIS = target enemy.
 	# Branches: losing (cede + sweeteners) / stalemated (ceasefire only) / winning (states + escalation).
+	# Scope on entry: THIS = target enemy, ROOT = our AI.
+	# Inside ROOT = { }: THIS becomes the AI, PREV becomes the enemy.
 	if = {
 		# — LOSING — concede occupied states, throw in reparations, accept regime change if desperate
 		limit = { CPD_AI_is_losing = yes }
@@ -976,10 +980,12 @@ CPD_AI_build_peace_deal = {
 			add_to_array = { CPD_current_deal_list = 10002 }
 			add_to_array = { CPD_current_deal_list_CONCESSIONS = 10002 }
 			# Last resort: accept regime change when on the brink
+			# Inside ROOT = {}: THIS = AI, PREV = enemy. is_same_government_PREV
+			# compares current scope (AI) to PREV (enemy).
 			if = {
 				limit = {
 					surrender_progress > 0.75
-					NOT = { has_government = THIS.government }
+					NOT = { is_same_government_PREV = yes }
 				}
 				set_country_flag = CPD_regime_change_concession
 				add_to_array = { CPD_current_deal_list = 10004 }
@@ -1022,32 +1028,38 @@ CPD_AI_build_peace_deal = {
 			set_country_flag = CPD_war_reparations_demand
 			add_to_array = { CPD_current_deal_list = 10002 }
 			add_to_array = { CPD_current_deal_list_DEMANDS = 10002 }
-			# Regime change when enemy is on a different ideology AND clearly losing
-			if = {
-				limit = {
-					THIS = { surrender_progress > 0.5 }
-					NOT = { has_government = THIS.government }
-				}
+		}
+		# Conditional country-action escalation. Evaluated at OUTER scope so
+		# THIS = enemy and ROOT = AI cleanly. is_same_government compares
+		# current scope (enemy) to ROOT (AI).
+		if = {
+			limit = {
+				surrender_progress > 0.5
+				NOT = { is_same_government = yes }
+			}
+			ROOT = {
 				set_country_flag = CPD_regime_change_demand
 				add_to_array = { CPD_current_deal_list = 10004 }
 				add_to_array = { CPD_current_deal_list_DEMANDS = 10004 }
 			}
-			# Forced neutrality when enemy is in a faction we don't share
-			if = {
-				limit = {
-					THIS = { is_in_faction = yes }
-					NOT = { is_in_faction_with = THIS }
-				}
+		}
+		if = {
+			limit = {
+				is_in_faction = yes
+				NOT = { is_in_faction_with = ROOT }
+			}
+			ROOT = {
 				set_country_flag = CPD_forced_neutrality_demand
 				add_to_array = { CPD_current_deal_list = 10003 }
 				add_to_array = { CPD_current_deal_list_DEMANDS = 10003 }
 			}
-			# Full puppet only at crushing victory
-			if = {
-				limit = {
-					THIS = { surrender_progress > 0.8 }
-					THIS = { is_subject = no }
-				}
+		}
+		if = {
+			limit = {
+				surrender_progress > 0.8
+				is_subject = no
+			}
+			ROOT = {
 				set_country_flag = CPD_full_puppet_demand
 				add_to_array = { CPD_current_deal_list = 10006 }
 				add_to_array = { CPD_current_deal_list_DEMANDS = 10006 }
