@@ -44,6 +44,8 @@ jobs:
       oob:           ${{ steps.filter.outputs.oob }}
       decisions:     ${{ steps.filter.outputs.decisions }}
       scripted-loc:  ${{ steps.filter.outputs.scripted-loc }}
+      scripted-guis: ${{ steps.filter.outputs.scripted-guis }}
+      interface:     ${{ steps.filter.outputs.interface }}
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -82,6 +84,10 @@ jobs:
             - 'common/decisions/**'
           scripted-loc:
             - 'common/scripted_localisation/**'
+          scripted-guis:
+            - 'common/scripted_guis/**'
+          interface:
+            - 'interface/**'
 
   # ───────────────────────────────────────────────────────────────
   # Linters — run when any game content files change
@@ -307,7 +313,9 @@ jobs:
       needs.detect-changes.outputs.ai-strategy == 'true' ||
       needs.detect-changes.outputs.ai-navy == 'true' ||
       needs.detect-changes.outputs.ai-equipment == 'true' ||
-      needs.detect-changes.outputs.factions == 'true'
+      needs.detect-changes.outputs.factions == 'true' ||
+      needs.detect-changes.outputs.scripted-guis == 'true' ||
+      needs.detect-changes.outputs.interface == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -362,6 +370,15 @@ jobs:
             should_run: ${{ needs.detect-changes.outputs.factions }}
             sparse: |
               common/factions
+              tools
+          - script: validate_scripted_gui.py
+            name: scripted-gui
+            title: "Validate Scripted GUIs"
+            should_run: ${{ needs.detect-changes.outputs.scripted-guis == 'true' || needs.detect-changes.outputs.interface == 'true' }}
+            sparse: |
+              common/scripted_guis
+              interface
+              localisation/english
               tools
     steps:
     # Per-entry gate: only fetch + run when this validator's file group changed.
