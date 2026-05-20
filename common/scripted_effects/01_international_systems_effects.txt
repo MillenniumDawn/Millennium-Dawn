@@ -94,6 +94,74 @@ on_startup_international = {
 	add_to_array = { global.security_council_members = SOV }
 	add_to_array = { global.security_council_members = USA }
 	add_to_array = { global.security_council_members = ENG }
+
+	# Starting Recognitions of various tags
+	# Taiwan (ROC) — 21 UN members recognised the ROC in 2000 (later defections happened post-2000)
+	if = { limit = { country_exists = TAI }
+		if = { limit = { country_exists = GUA } GUA = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = HON } HON = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = NIC } NIC = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = PAN } PAN = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = PAR } PAR = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = DOM } DOM = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = ELS } ELS = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = BLZ } BLZ = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = HAI } HAI = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = SEN } SEN = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = CHA } CHA = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = GAM } GAM = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = LIB } LIB = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = MLW } MLW = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = SAO } SAO = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = SWA } SWA = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = NAU } NAU = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = PAU } PAU = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = MAR } MAR = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = SOL } SOL = { set_country_flag = Recognised_TAI } }
+		if = { limit = { country_exists = TUL } TUL = { set_country_flag = Recognised_TAI } }
+		TAI = { add_to_variable = { Granted_Recognition = 21 } }
+	}
+
+	# Taliban Afghanistan (TAL) — recognised by Pakistan, Saudi Arabia, UAE in 2000
+	if = { limit = { country_exists = TAL }
+		if = { limit = { country_exists = PAK } PAK = { set_country_flag = Recognised_TAL } }
+		if = { limit = { country_exists = SAU } SAU = { set_country_flag = Recognised_TAL } }
+		if = { limit = { country_exists = UAE } UAE = { set_country_flag = Recognised_TAL } }
+		TAL = { add_to_variable = { Granted_Recognition = 3 } }
+	}
+
+	# Abkhazia (ABK) — Russia formally recognised in 2008; pre-seeded for game start so the
+	# breakaway doesn't begin from absolute zero.
+	if = {
+		limit = {
+			country_exists = ABK
+			country_exists = SOV
+		}
+		SOV = { set_country_flag = Recognised_ABK }
+		ABK = { add_to_variable = { Granted_Recognition = 1 } }
+	}
+
+	# South Ossetia (SOO) — same as ABK, recognised by Russia.
+	if = {
+		limit = {
+			country_exists = SOO
+			country_exists = SOV
+		}
+		SOV = { set_country_flag = Recognised_SOO }
+		SOO = { add_to_variable = { Granted_Recognition = 1 } }
+	}
+
+	# Stagger initial AI campaign cooldowns so unrecognised states don't all fire on month 1.
+	# random_list spreads each NSA's first action across the opening 9 months.
+	for_each_scope_loop = {
+		array = global.Unrecognised_States
+		random_list = {
+			25 = { }
+			25 = { set_country_flag = { flag = recog_ai_cooldown days = 30 value = 1 } }
+			25 = { set_country_flag = { flag = recog_ai_cooldown days = 120 value = 1 } }
+			25 = { set_country_flag = { flag = recog_ai_cooldown days = 270 value = 1 } }
+		}
+	}
 }
 
 
@@ -214,8 +282,7 @@ un_check_if_valid_for_sanctions = {
 	if = {
 		limit = {
 			check_variable = { has_added_tension_amount > 0 }
-			NOT = { original_tag = ZOM }
-			NOT = { original_tag = ALN }
+			MD_special_countries = no
 		}
 		if = {
 			limit = {
@@ -1630,5 +1697,56 @@ un_sway_direction_effect = {
 		add_to_array = { global.general_assembly_vote_no = THIS }
 	} else = {
 		add_to_array = { global.general_assembly_vote_abstain = THIS }
+	}
+}
+
+# Scales PP gain/loss by FROM's power tier; caller sets pp_sign = 1 (gain) or -1 (loss).
+apply_recognition_pp = {
+	if = {
+		limit = { FROM = { has_idea = non_power } }
+		set_temp_variable = { pp_delta = 5 }
+	}
+	else_if = {
+		limit = { FROM = { has_idea = minor_power } }
+		set_temp_variable = { pp_delta = 10 }
+	}
+	else_if = {
+		limit = { FROM = { has_idea = regional_power } }
+		set_temp_variable = { pp_delta = 15 }
+	}
+	else_if = {
+		limit = { FROM = { has_idea = large_power } }
+		set_temp_variable = { pp_delta = 25 }
+	}
+	else_if = {
+		limit = { FROM = { has_idea = great_power } }
+		set_temp_variable = { pp_delta = 50 }
+	}
+	else_if = {
+		limit = { FROM = { has_idea = super_power } }
+		set_temp_variable = { pp_delta = 100 }
+	}
+	else = {
+		set_temp_variable = { pp_delta = 0 }
+	}
+	multiply_temp_variable = { pp_delta = pp_sign }
+	add_political_power = pp_delta
+}
+
+# Bumps Granted_Recognition on THIS (the breakaway) by 1 and fires a news event when
+# crossing 25 / 50 / 100 recognising states. Equality-on-bump-by-1 is the milestone gate.
+recognition_grant_increment = {
+	add_to_variable = { Granted_Recognition = 1 }
+	if = {
+		limit = { check_variable = { Granted_Recognition = 25 } }
+		news_event = recognition.40
+	}
+	else_if = {
+		limit = { check_variable = { Granted_Recognition = 50 } }
+		news_event = recognition.41
+	}
+	else_if = {
+		limit = { check_variable = { Granted_Recognition = 100 } }
+		news_event = recognition.42
 	}
 }
