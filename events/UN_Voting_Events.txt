@@ -26,11 +26,29 @@ country_event = {
 			value = v
 
 			var:v = {
-				meta_effect = {
-					text = {
-						country_event = UNSC.[ID]
+				if = {
+					limit = {
+						NOT = { has_country_flag = auto_accept_all_sc_votes }
+						NOT = { has_country_flag = auto_reject_all_sc_votes }
+						NOT = { has_country_flag = auto_abstain_all_sc_votes }
 					}
-					ID = "[?global.current_sc_vote_type]"
+					meta_effect = {
+						text = {
+							country_event = UNSC.[ID]
+						}
+						ID = "[?global.current_sc_vote_type]"
+					}
+				} else = {
+					if = {
+						limit = { has_country_flag = auto_accept_all_sc_votes }
+						add_to_array = { global.security_council_vote_yes = THIS }
+					} else_if = {
+						limit = { has_country_flag = auto_reject_all_sc_votes }
+						add_to_array = { global.security_council_vote_no = THIS }
+					} else_if = {
+						limit = { has_country_flag = auto_abstain_all_sc_votes }
+						add_to_array = { global.security_council_vote_abstain = THIS }
+					}
 				}
 				if = {
 					limit = {
@@ -634,10 +652,9 @@ country_event = {
 			var:v = {
 				if = {
 					limit = {
-						NOT = {
-							has_country_flag = auto_accept_all_ga_votes
-							has_country_flag = auto_reject_all_ga_votes
-						}
+						NOT = { has_country_flag = auto_accept_all_ga_votes }
+						NOT = { has_country_flag = auto_reject_all_ga_votes }
+						NOT = { has_country_flag = auto_abstain_all_ga_votes }
 					}
 					meta_effect = {
 						text = {
@@ -656,6 +673,11 @@ country_event = {
 							has_country_flag = auto_reject_all_ga_votes
 						}
 						add_to_array = { global.general_assembly_vote_no = THIS }
+					} else_if = {
+						limit = {
+							has_country_flag = auto_abstain_all_ga_votes
+						}
+						add_to_array = { global.general_assembly_vote_abstain = THIS }
 					}
 				}
 				if = {
