@@ -173,6 +173,18 @@ VALIDATORS = [
             "4",
         ],
     },
+    {
+        "name": "scripted GUI",
+        "prefixes": ["common/scripted_guis/"],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_scripted_gui.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
 ]
 
 

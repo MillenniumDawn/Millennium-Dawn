@@ -1,6 +1,9 @@
-# Reads AA, radar, and rocket building levels from var:target_state and scales raid_planes_lost.
-# Call after setting raid_planes_lost; applies the composite AA defence multiplier.
-calculate_raid_aa_defense = {
+# Reads AA, radar, and rocket building levels from var:target_state and composes
+# the multiplicative AA defence value into the `aa_defense` temp variable.
+# Result is clamped to a minimum of 1 so callers can divide by aa_defense
+# unconditionally (a state with no AA and no rocket sites yields 1, i.e. no
+# damage reduction and no plane-loss multiplier).
+calculate_aa_defense_value = {
 	var:target_state = {
 		set_temp_variable = { ROOT.aa_defense = THIS.non_damaged_building_level@anti_air_building }
 		set_temp_variable = { ROOT.radar_mult = THIS.non_damaged_building_level@radar_station }
@@ -18,6 +21,12 @@ calculate_raid_aa_defense = {
 		}
 	}
 	if = { limit = { check_variable = { aa_defense = 0 } } add_to_temp_variable = { aa_defense = 1 } }
+}
+
+# Composes aa_defense and applies it as the plane-loss multiplier.
+# Used in actor_effects after setting raid_planes_lost.
+calculate_raid_aa_defense = {
+	calculate_aa_defense_value = yes
 	multiply_temp_variable = { raid_planes_lost = aa_defense }
 }
 
@@ -41,14 +50,186 @@ finalize_raid_plane_losses = {
 	}
 }
 
+# Standard 3-tier building-damage flow for a victim_effects block.
+# Caller sets `building_damage_by_missile` (tier base damage) and `raid_damage_mult`
+# (the raid-specific post-multiply, e.g. 10/25/50/70) before calling. The helper
+# rolls per-tier missile luck, divides by aa_defense, and applies the raid
+# multiplier. aa_defense is assumed to have been computed by
+# calculate_aa_defense_value (which clamps it to >= 1). Per-tier luck ranges:
+#   limited  0.4-0.6
+#   success  0.6-0.8
+#   critical 0.8-1.0
+apply_raid_building_damage_limited = {
+	set_temp_variable_to_random = {
+		var = missile_luck_mod
+		min = 0.4
+		max = 0.6
+	}
+	multiply_temp_variable = { building_damage_by_missile = missile_luck_mod }
+	divide_temp_variable = { building_damage_by_missile = aa_defense }
+	multiply_temp_variable = { building_damage_by_missile = raid_damage_mult }
+}
+
+apply_raid_building_damage_success = {
+	set_temp_variable_to_random = {
+		var = missile_luck_mod
+		min = 0.6
+		max = 0.8
+	}
+	multiply_temp_variable = { building_damage_by_missile = missile_luck_mod }
+	divide_temp_variable = { building_damage_by_missile = aa_defense }
+	multiply_temp_variable = { building_damage_by_missile = raid_damage_mult }
+}
+
+apply_raid_building_damage_critical = {
+	set_temp_variable_to_random = {
+		var = missile_luck_mod
+		min = 0.8
+		max = 1
+	}
+	multiply_temp_variable = { building_damage_by_missile = missile_luck_mod }
+	divide_temp_variable = { building_damage_by_missile = aa_defense }
+	multiply_temp_variable = { building_damage_by_missile = raid_damage_mult }
+}
+
+# Standard 4-tier plane-loss flow for an actor_effects block.
+# Caller sets `set_temp_variable = { raid_pp_loss = -100 }` (or -300) before the call;
+# this value is added to political power if the actor is not at war with the victim.
+apply_raid_failure_losses = {
+	set_temp_variable = { raid_planes_lost = 0 }
+	set_temp_variable_to_random = {
+		var = raid_planes_lost
+		max = 8
+	}
+	calculate_raid_aa_defense = yes
+	if = {
+		limit = {
+			var:actor_country = { has_war_with = var:ROOT.victim_country }
+		}
+		multiply_temp_variable = { raid_planes_lost = 1.5 }
+	}
+	else = {
+		set_temp_variable_to_random = {
+			var = random_chance_on_dead_planes
+			max = 2
+			integer = yes
+		}
+		if = { limit = { check_variable = { random_chance_on_dead_planes = 2 } } subtract_from_temp_variable = { random_chance_on_dead_planes = 1 } }
+		multiply_temp_variable = { raid_planes_lost = random_chance_on_dead_planes }
+	}
+	finalize_raid_plane_losses = yes
+	var:actor_country = {
+		if = {
+			limit = {
+				NOT = { has_war_with = var:ROOT.victim_country }
+			}
+			add_political_power = PREV.raid_pp_loss
+		}
+	}
+}
+
+apply_raid_limited_success_losses = {
+	set_temp_variable = { raid_planes_lost = 0 }
+	set_temp_variable_to_random = {
+		var = raid_planes_lost
+		max = 5
+	}
+	calculate_raid_aa_defense = yes
+	if = {
+		limit = {
+			var:actor_country = { has_war_with = var:ROOT.victim_country }
+		}
+		multiply_temp_variable = { raid_planes_lost = 1.25 }
+	}
+	else = {
+		set_temp_variable_to_random = {
+			var = random_chance_on_dead_planes
+			max = 1
+			integer = yes
+		}
+		multiply_temp_variable = { raid_planes_lost = random_chance_on_dead_planes }
+	}
+	finalize_raid_plane_losses = yes
+	var:actor_country = {
+		if = {
+			limit = {
+				NOT = { has_war_with = var:ROOT.victim_country }
+			}
+			add_political_power = PREV.raid_pp_loss
+		}
+	}
+}
+
+apply_raid_success_losses = {
+	set_temp_variable = { raid_planes_lost = 0 }
+	set_temp_variable_to_random = {
+		var = raid_planes_lost
+		max = 3
+	}
+	calculate_raid_aa_defense = yes
+	if = {
+		limit = {
+			var:actor_country = { has_war_with = var:ROOT.victim_country }
+		}
+		multiply_temp_variable = { raid_planes_lost = 1.15 }
+	}
+	else = {
+		set_temp_variable_to_random = {
+			var = random_chance_on_dead_planes
+			max = 1
+			integer = yes
+		}
+		if = { limit = { NOT = { check_variable = { random_chance_on_dead_planes = 1 } } } set_temp_variable = { random_chance_on_dead_planes = 0 } }
+		multiply_temp_variable = { raid_planes_lost = random_chance_on_dead_planes }
+	}
+	finalize_raid_plane_losses = yes
+	var:actor_country = {
+		if = {
+			limit = {
+				NOT = { has_war_with = var:ROOT.victim_country }
+			}
+			add_political_power = PREV.raid_pp_loss
+		}
+	}
+}
+
+apply_raid_critical_success_losses = {
+	set_temp_variable = { raid_planes_lost = 0 }
+	set_temp_variable_to_random = {
+		var = raid_planes_lost
+		max = 2
+	}
+	calculate_raid_aa_defense = yes
+	if = {
+		limit = {
+			var:actor_country = { has_war_with = var:ROOT.victim_country }
+		}
+		multiply_temp_variable = { raid_planes_lost = 0.95 }
+	}
+	else = {
+		set_temp_variable_to_random = {
+			var = random_chance_on_dead_planes
+			max = 1
+		}
+		multiply_temp_variable = { raid_planes_lost = random_chance_on_dead_planes }
+	}
+	finalize_raid_plane_losses = yes
+	var:actor_country = {
+		if = {
+			limit = {
+				NOT = { has_war_with = var:ROOT.victim_country }
+			}
+			add_political_power = PREV.raid_pp_loss
+		}
+	}
+}
+
 send_events_to_others = {
 	hidden_effect = {
 		every_country = {
 			limit = {
-				NOT = {
-					original_tag = var:ROOT.target_country
-					original_tag = var:ROOT.hostile_country
-				}
+				NOT = { original_tag = var:ROOT.target_country }
+				NOT = { original_tag = var:ROOT.hostile_country }
 			}
 			if = { limit = { is_in_faction_with = var:ROOT.target_country }
 				country_event = MD_raid.12
