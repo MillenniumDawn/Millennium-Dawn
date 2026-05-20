@@ -753,7 +753,7 @@
 	-- While allowing them to still shore bombard, while cannons can now attack light ships, and add guns back as a real naval weapon!
 	NDefines.NNavy.NAVY_PIERCING_THRESHOLDS = { 2.00, 1.00, 0.75, 0.50, 0.10, 0.01, 0.00 }
 	NDefines.NNavy.NAVY_PIERCING_THRESHOLD_CRITICAL_VALUES = { 2.00, 1.00, 0.75, 0.50, 0.10, 0.00, 0.00 }
-	NDefines.NNavy.NAVY_PIERCING_THRESHOLD_DAMAGE_VALUES = { 1.00, 1.00, 0.70, 0.40, 0.30, 0.10, 0.00 }
+	NDefines.NNavy.NAVY_PIERCING_THRESHOLD_DAMAGE_VALUES = { 1.00, 1.00, 0.70, 0.40, 0.30, 0.10, 0.05 }
 
 	-- NTrade Defines
 	NDefines.NTrade.DISTANCE_TRADE_FACTOR = -0.03 -- -0.02
