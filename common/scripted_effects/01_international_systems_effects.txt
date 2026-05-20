@@ -95,7 +95,31 @@ on_startup_international = {
 	add_to_array = { global.security_council_members = USA }
 	add_to_array = { global.security_council_members = ENG }
 
-	# Starting Recognitions of various tags
+	# Original-owner flags for curated NSAs that ship with lacks_international_recognition.
+	# Drives recognition.1 / recognition.4 events so the parent state is notified when a third
+	# country grants or withdraws recognition of the breakaway.
+	if = { limit = { country_exists = YEM } YEM = { set_country_flag = original_owner_HOU } }
+	if = { limit = { country_exists = SOM } SOM = { set_country_flag = original_owner_AIA } }
+	if = { limit = { country_exists = SYR } SYR = { set_country_flag = original_owner_ROJ } }
+	if = { limit = { country_exists = LEB } LEB = { set_country_flag = original_owner_HEZ } }
+	if = { limit = { country_exists = AFG } AFG = { set_country_flag = original_owner_TAL } }
+	if = { limit = { country_exists = ISR } ISR = { set_country_flag = original_owner_HAM } }
+	if = { limit = { country_exists = UKR } UKR = { set_country_flag = original_owner_DPR } }
+	if = { limit = { country_exists = UKR } UKR = { set_country_flag = original_owner_LPR } }
+	if = { limit = { country_exists = AZE } AZE = { set_country_flag = original_owner_NKR } }
+	if = { limit = { country_exists = SER } SER = { set_country_flag = original_owner_KOS } }
+	if = { limit = { country_exists = GEO } GEO = { set_country_flag = original_owner_ABK } }
+	if = { limit = { country_exists = GEO } GEO = { set_country_flag = original_owner_SOO } }
+	# Kurdistan is claimed across four parent states
+	if = { limit = { country_exists = IRQ } IRQ = { set_country_flag = original_owner_KUR } }
+	if = { limit = { country_exists = PER } PER = { set_country_flag = original_owner_KUR } }
+	if = { limit = { country_exists = TUR } TUR = { set_country_flag = original_owner_KUR } }
+	if = { limit = { country_exists = SYR } SYR = { set_country_flag = original_owner_KUR } }
+
+	# Pre-seeded recognitions reflecting real-world state at the 2000 game start.
+	# Each block sets the Recognised_<TAG> flag on the granter side AND bumps Granted_Recognition
+	# on the breakaway side so the variable stays consistent with the flag set.
+
 	# Taiwan (ROC) — 21 UN members recognised the ROC in 2000 (later defections happened post-2000)
 	if = { limit = { country_exists = TAI }
 		if = { limit = { country_exists = GUA } GUA = { set_country_flag = Recognised_TAI } }
@@ -165,11 +189,11 @@ on_startup_international = {
 }
 
 international_systems_update = {
-	if = { limit = { check_variable = { global.international_systems_update < 10000000 } }
-		add_to_variable = { global.international_systems_updated = 1 }
+	if = { limit = { check_variable = { global.international_systems_updated > 1000000 } }
+		set_variable = { global.international_systems_updated = 1 }
 	}
 	else = {
-		set_variable = { global.international_systems_updated = 1 }
+		add_to_variable = { global.international_systems_updated = 1 }
 	}
 }
 
@@ -291,7 +315,8 @@ un_check_if_valid_for_sanctions = {
 	if = {
 		limit = {
 			check_variable = { has_added_tension_amount > 0 }
-			MD_special_countries = no
+			NOT = { original_tag = ZOM }
+			NOT = { original_tag = ALN }
 		}
 		if = {
 			limit = {
@@ -533,7 +558,8 @@ start_unsc_next_term_voting = {
 				array = global.asian_nations
 				limit = {
 					NOT = { is_in_array = { global.security_council_members = THIS } }
-					is_full_state = yes
+					NOT = { has_idea = lacks_international_recognition }
+					NOT = { has_idea = non_state_actor }
 				}
 				add_to_array = { global.new_council_members = THIS }
 			}
@@ -546,7 +572,8 @@ start_unsc_next_term_voting = {
 					array = global.sub_saharan_nations
 					limit = {
 						NOT = { is_in_array = { global.security_council_members = THIS } }
-						is_full_state = yes
+						NOT = { has_idea = lacks_international_recognition }
+						NOT = { has_idea = non_state_actor }
 					}
 					add_to_array = { global.new_council_members = THIS }
 				}
@@ -555,7 +582,8 @@ start_unsc_next_term_voting = {
 					array = global.middle_eastern_nations
 					limit = {
 						NOT = { is_in_array = { global.security_council_members = THIS } }
-						is_full_state = yes
+						NOT = { has_idea = lacks_international_recognition }
+						NOT = { has_idea = non_state_actor }
 					}
 					add_to_array = { global.new_council_members = THIS }
 				}
@@ -570,7 +598,8 @@ start_unsc_next_term_voting = {
 			array = global.sc_updates_euro_america
 			limit = {
 				NOT = { is_in_array = { global.security_council_members = THIS } }
-				is_full_state = yes
+				NOT = { has_idea = lacks_international_recognition }
+				NOT = { has_idea = non_state_actor }
 			}
 			add_to_array = { global.new_council_members = THIS }
 		}
@@ -582,7 +611,8 @@ start_unsc_next_term_voting = {
 			array = global.american_nations
 			limit = {
 				NOT = { is_in_array = { global.security_council_members = THIS } }
-				is_full_state = yes
+				NOT = { has_idea = lacks_international_recognition }
+				NOT = { has_idea = non_state_actor }
 				capital_scope = {
 					is_on_continent = south_america
 				}
@@ -601,7 +631,8 @@ start_unsc_next_term_voting = {
 				NOT = { is_in_array = { global.security_council_members = THIS } }
 				NOT = { is_in_array = { global.new_council_members = THIS } }
 				NOT = { is_in_array = { global.p5_sc_members = THIS } }
-				is_full_state = yes
+				NOT = { has_idea = lacks_international_recognition }
+				NOT = { has_idea = non_state_actor }
 			}
 			add_to_array = { global.new_council_members = THIS }
 		}
@@ -675,7 +706,8 @@ un_sc_new_members_re_roll = {
 					NOT = {
 						is_in_array = { global.security_council_members = THIS }
 					}
-					is_full_state = yes
+					NOT = { has_idea = lacks_international_recognition }
+					NOT = { has_idea = non_state_actor }
 					capital_scope = {
 						is_on_continent = south_america
 					}
@@ -694,8 +726,11 @@ un_sc_new_members_re_roll = {
 			random_scope_in_array = {
 				array = global.sc_updates_euro_america
 				limit = {
-					NOT = { is_in_array = { global.security_council_members = THIS } }
-					is_full_state = yes
+					NOT = {
+						is_in_array = { global.security_council_members = THIS }
+					}
+					NOT = { has_idea = lacks_international_recognition }
+					NOT = { has_idea = non_state_actor }
 				}
 				set_variable = { global.new_council_members^0 = THIS }
 			}
@@ -703,8 +738,11 @@ un_sc_new_members_re_roll = {
 			random_scope_in_array = {
 				array = global.sub_saharan_nations
 				limit = {
-					NOT = { is_in_array = { global.security_council_members = THIS } }
-					is_full_state = yes
+					NOT = {
+						is_in_array = { global.security_council_members = THIS }
+					}
+					NOT = { has_idea = lacks_international_recognition }
+					NOT = { has_idea = non_state_actor }
 				}
 				set_variable = { global.new_council_members^0 = THIS }
 			}
@@ -721,7 +759,8 @@ un_sc_new_members_re_roll = {
 			limit = {
 				NOT = { is_in_array = { global.security_council_members = THIS } }
 				NOT = { is_in_array = { global.p5_sc_members = THIS } }
-				is_full_state = yes
+				NOT = { has_idea = lacks_international_recognition }
+				NOT = { has_idea = non_state_actor }
 			}
 			add_to_array = { global.new_council_members = THIS }
 		}
@@ -1709,10 +1748,33 @@ un_sway_direction_effect = {
 	}
 }
 
-# Bumps Granted_Recognition on THIS (the breakaway) by 1 and fires a news event when
-# crossing 25 / 50 / 100 recognising states. Equality-on-bump-by-1 is the milestone gate.
+# Scales PP gain/loss by FROM's power tier; caller sets pp_sign = 1 (gain) or -1 (loss).
+apply_recognition_pp = {
+	if = { limit = { FROM = { has_idea = non_power } }           set_temp_variable = { pp_delta = 5 } }
+	else_if = { limit = { FROM = { has_idea = minor_power } }    set_temp_variable = { pp_delta = 10 } }
+	else_if = { limit = { FROM = { has_idea = regional_power } } set_temp_variable = { pp_delta = 15 } }
+	else_if = { limit = { FROM = { has_idea = large_power } }    set_temp_variable = { pp_delta = 25 } }
+	else_if = { limit = { FROM = { has_idea = great_power } }    set_temp_variable = { pp_delta = 50 } }
+	else_if = { limit = { FROM = { has_idea = super_power } }    set_temp_variable = { pp_delta = 100 } }
+	else = { set_temp_variable = { pp_delta = 0 } }
+	multiply_temp_variable = { pp_delta = pp_sign }
+	add_political_power = pp_delta
+}
+
+# Runs on THIS (the breakaway) when it gains one recognition. PREV must be the recognising
+# country. Bumps Granted_Recognition, grants political power scaled by the recogniser's power
+# tier, and fires milestone news events when crossing 25 / 50 / 100 recognising states.
+# Equality-on-bump-by-1 is the milestone gate.
 recognition_grant_increment = {
 	add_to_variable = { Granted_Recognition = 1 }
+
+	if = { limit = { PREV = { has_idea = non_power } }           add_political_power = 5 }
+	else_if = { limit = { PREV = { has_idea = minor_power } }    add_political_power = 10 }
+	else_if = { limit = { PREV = { has_idea = regional_power } } add_political_power = 15 }
+	else_if = { limit = { PREV = { has_idea = large_power } }    add_political_power = 25 }
+	else_if = { limit = { PREV = { has_idea = great_power } }    add_political_power = 50 }
+	else_if = { limit = { PREV = { has_idea = super_power } }    add_political_power = 100 }
+
 	if = {
 		limit = { check_variable = { Granted_Recognition = 25 } }
 		news_event = recognition.40

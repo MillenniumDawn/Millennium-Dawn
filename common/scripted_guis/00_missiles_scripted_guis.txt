@@ -3664,33 +3664,29 @@ scripted_gui = {
 
 						if = {
 							limit = {
-								NOT = {
-									has_country_flag = original_owner_[stname]
-									has_country_flag = supports_original_owner_[stname]
-								}
+								NOT = { has_country_flag = original_owner_[stname] }
+								NOT = { has_country_flag = supports_original_owner_[stname] }
 							}
-							every_country = {
-								limit = {
-									OR = {
+							for_each_scope_loop = {
+								array = global.UN_general_assembly
+								tooltip = TT_ALL_UN_MEMBERS
+								if = {
+									limit = {
 										has_country_flag = original_owner_[stname]
-										has_country_flag = supports_original_owner_[stname]
+										NOT = { has_country_flag = Recognised_[stname] }
 									}
-									NOT = { has_country_flag = Recognised_[stname] }
+									add_opinion_modifier = { target = ROOT modifier = recognises_them }
+									country_event = recognition.1
+								} else_if = {
+									limit = {
+										has_country_flag = supports_original_owner_[stname]
+										NOT = { has_country_flag = Recognised_[stname] }
+									}
+									add_opinion_modifier = { target = ROOT modifier = recognises_them }
+								} else_if = {
+									limit = { has_country_flag = Recognised_[stname] }
+									add_opinion_modifier = { target = ROOT modifier = supporting_recognized_ally }
 								}
-								add_opinion_modifier = {
-									target = ROOT
-									modifier = recognises_them
-								}
-								news_event = recognition.1
-							}
-							every_country = {
-								limit = { has_country_flag = Recognised_[stname] }
-
-								add_opinion_modifier = {
-									target = ROOT
-									modifier = supporting_recognized_ally
-								}
-								news_event = recognition.9
 							}
 						}
 					}
@@ -3701,23 +3697,26 @@ scripted_gui = {
 						target = ROOT
 						modifier = recognises_us
 					}
-					news_event = recognition.2
-					add_to_variable = { Granted_Recognition = 1 }
+					recognition_grant_increment = yes
 				}
 				international_systems_update = yes
 			}
 			pressure_countries_recog_button_click = {
 				meta_effect = {
 					text = {
-						every_country = {
-							limit = {
-								is_influencer = yes
-								NOT = { has_country_flag = Recognised_[stname] }
-								NOT = { tag = ROOT }
-								is_full_state = yes
+						for_each_scope_loop = {
+							array = global.UN_general_assembly
+							if = {
+								limit = {
+									is_influencer = yes
+									NOT = { has_country_flag = Recognised_[stname] }
+									NOT = { has_country_flag = pressured_to_recognize_[stname] }
+									NOT = { tag = ROOT }
+									is_full_state = yes
+								}
+								set_country_flag = pressured_to_recognize_[stname]
+								country_event = recognition.8
 							}
-							set_country_flag = pressured_to_recognize_[stname]
-							country_event = recognition.8
 						}
 						set_country_flag = {
 							flag = pressure_timer_[stname]
@@ -3734,7 +3733,7 @@ scripted_gui = {
 					text = {
 						clr_country_flag = Recognised_[stname]
 
-						every_country = {
+						random_country = {
 							limit = {
 								has_country_flag = original_owner_[stname]
 								NOT = { has_country_flag = Recognised_[stname] }
@@ -3743,7 +3742,7 @@ scripted_gui = {
 								target = ROOT
 								modifier = withdrew_recognition_them
 							}
-							news_event = recognition.4
+							country_event = recognition.4
 						}
 					}
 					stname = "[?var:open_state.GetTag]"
@@ -3751,7 +3750,7 @@ scripted_gui = {
 				var:open_state = {
 					add_opinion_modifier = { modifier = withdrew_recognition target = ROOT }
 					subtract_from_variable = { var = Granted_Recognition value = 1 }
-					news_event = recognition.3
+					country_event = recognition.3
 				}
 				international_systems_update = yes
 			}
@@ -3777,18 +3776,15 @@ scripted_gui = {
 					value = 1
 				}
 
-				custom_effect_tooltip = TT_ALL_UN_MEMBER_NATIONS_GAIN
-
-				for_each_loop = {
+				for_each_scope_loop = {
 					array = global.UN_general_assembly
-					value = v
-					var:v = {
-						add_opinion_modifier = {
-							target = ROOT
-							modifier = improving_un_relations
-						}
+					tooltip = TT_ALL_UN_MEMBER_NATIONS_GAIN
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = improving_un_relations
 					}
 				}
+				international_systems_update = yes
 			}
 			un_campaign_for_recog_button_click = {
 				add_political_power = -200
@@ -3803,6 +3799,7 @@ scripted_gui = {
 				hidden_effect = {
 					country_event = recognition.17
 				}
+				international_systems_update = yes
 			}
 			un_ask_for_independence_button_click = {
 				add_political_power = -350
@@ -3812,6 +3809,7 @@ scripted_gui = {
 				hidden_effect = {
 					country_event = recognition.30
 				}
+				international_systems_update = yes
 			}
 		}
 	}
@@ -8194,6 +8192,7 @@ scripted_gui = {
 				var:v = { has_idea = lacks_international_recognition }
 			}
 			name_of_state_button_click_enabled = {
+				NOT = { tag = var:v }
 				NOT = { has_war_with = var:v }
 				has_civil_war = no
 			}
@@ -8247,8 +8246,6 @@ scripted_gui = {
 							has_country_flag = recognition_campaign_from@ROOT
 						}
 					}
-				}
-				var:v = {
 					meta_trigger = {
 						text = {
 							custom_trigger_tooltip = {
