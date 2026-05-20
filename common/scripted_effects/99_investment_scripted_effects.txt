@@ -446,10 +446,10 @@ start_project_two = {
 		clear_variable = project_type
 		clear_variable = new_project
 
-		log = "[GetDateText]: [This.GetName]: start_project_two - project started at slot [?new_project], cost=[?project_monetary_cost^-1], duration=[?project_construction_duration^[?new_project]] days"
+		log = "[GetDateText]: [This.GetName]: DEBUG: start_project_two - project started at slot [?new_project], cost=[?project_monetary_cost^-1], duration=[?project_construction_duration^new_project] days"
 	}
 	else = {
-		log = "[GetDateText]: [This.GetName]: start_project_two - FAILED: no available project slot (all 15 full)"
+		log = "[GetDateText]: [This.GetName]: DEBUG: start_project_two - FAILED: no available project slot (all 15 full)"
 	}
 
 	refresh_investment_gui = yes
@@ -457,9 +457,11 @@ start_project_two = {
 
 # Called when project segment finishes (investments_event.0).
 complete_project = {
-	log = "[GetDateText]: [This.GetName]: complete_project - project=[?project], remaining_segments=[?project_build_amount^project]"
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [This.GetName]: DEBUG: complete_project - project=[?project], remaining_segments=[?project_build_amount^project]"
+	}
 
-	if = { limit = { check_variable = { project_array^project > 0 } }
+	if = { limit = { check_variable = { project_array^project < 0 } }
 		set_variable = { project_type = project_building_type^project }
 
 		random_state = {
@@ -494,9 +496,12 @@ complete_project = {
 
 # Cancel or complete project: refund investor, give 10% to target.
 end_project = {
-	log = "[GetDateText]: [This.GetName]: end_project - project=[?project], refund=[?project_monetary_cost^project]"
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [This.GetName]: end_project - project=[?project], refund=[?project_monetary_cost^project]"
+	}
 
-	if = { limit = { check_variable = { project_array^project > 0 } }
+	# INFO: project_array^project is a state. This is always positive.
+	if = { limit = { check_variable = { project_array^project < 0 } }
 		random_state = {
 			limit = { state = ROOT.project_array^ROOT.project }
 			clear_variable = project_target_state_@PREV
