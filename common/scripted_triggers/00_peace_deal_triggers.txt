@@ -29,8 +29,8 @@
 			ROOT = {
 				check_variable = { months_at_war > 18 }
 				surrender_progress < 0.4
-				enemies_strength_ratio < 1.3
-				enemies_strength_ratio > 0.7
+				strength_ratio@THIS < 1.3
+				strength_ratio@THIS > 0.7
 			}
 			THIS = { surrender_progress < 0.4 }
 		}
@@ -362,6 +362,30 @@
 			OR = {
 				CPD_deal_has_no_demands = yes
 				CPD_has_war_contribution = yes
+				CPD_is_ceasefire_only_deal = yes
+			}
+		}
+		# A deal composed only of a ceasefire with no territorial or political
+		# demands. Blocked by CPD_deal_has_no_demands (ceasefire IS a demand) and
+		# CPD_has_war_contribution (no VP gain or months-at-war threshold met),
+		# so it needs its own exemption.
+		CPD_is_ceasefire_only_deal = {
+			has_war = yes
+			ROOT = {
+				OR = {
+					has_country_flag = CPD_ceasefire_demand
+					has_country_flag = CPD_ceasefire_concession
+				}
+				NOT = { has_country_flag = CPD_war_reparations_demand }
+				NOT = { has_country_flag = CPD_forced_neutrality_demand }
+				NOT = { has_country_flag = CPD_regime_change_demand }
+				NOT = { has_country_flag = CPD_military_basing_demand }
+				NOT = { has_country_flag = CPD_full_puppet_demand }
+				check_variable = { CPD_annex_state_DEMANDS^num = 0 }
+				check_variable = { CPD_puppet_in_state_DEMANDS^num = 0 }
+				check_variable = { CPD_demilitarise_state_DEMANDS^num = 0 }
+				check_variable = { CPD_liberate_state_DEMANDS^num = 0 }
+				check_variable = { CPD_resource_rights_DEMANDS^num = 0 }
 			}
 		}
 	# OTHER TRIGGERS
