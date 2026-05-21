@@ -104,12 +104,10 @@ on_startup_international = {
 	if = { limit = { country_exists = LEB } LEB = { set_country_flag = original_owner_HEZ } }
 	if = { limit = { country_exists = AFG } AFG = { set_country_flag = original_owner_TAL } }
 	if = { limit = { country_exists = ISR } ISR = { set_country_flag = original_owner_HAM } }
-	if = { limit = { country_exists = UKR } UKR = { set_country_flag = original_owner_DPR } }
-	if = { limit = { country_exists = UKR } UKR = { set_country_flag = original_owner_LPR } }
+	if = { limit = { country_exists = UKR } UKR = { set_country_flag = original_owner_DPR set_country_flag = original_owner_LPR } }
 	if = { limit = { country_exists = AZE } AZE = { set_country_flag = original_owner_NKR } }
 	if = { limit = { country_exists = SER } SER = { set_country_flag = original_owner_KOS } }
-	if = { limit = { country_exists = GEO } GEO = { set_country_flag = original_owner_ABK } }
-	if = { limit = { country_exists = GEO } GEO = { set_country_flag = original_owner_SOO } }
+	if = { limit = { country_exists = GEO } GEO = { set_country_flag = original_owner_ABK set_country_flag = original_owner_SOO } }
 	# Kurdistan is claimed across four parent states
 	if = { limit = { country_exists = IRQ } IRQ = { set_country_flag = original_owner_KUR } }
 	if = { limit = { country_exists = PER } PER = { set_country_flag = original_owner_KUR } }
@@ -189,11 +187,16 @@ on_startup_international = {
 }
 
 international_systems_update = {
-	if = { limit = { check_variable = { global.international_systems_updated > 1000000 } }
-		set_variable = { global.international_systems_updated = 1 }
-	}
-	else = {
-		add_to_variable = { global.international_systems_updated = 1 }
+	# Only player-initiated paths bump the GUI dirty counter; AI voters/grants would
+	# wake every open GUI ~190 times per GA cycle for no visible benefit.
+	if = {
+		limit = { is_ai = no }
+		if = { limit = { check_variable = { global.international_systems_updated > 1000000 } }
+			set_variable = { global.international_systems_updated = 1 }
+		}
+		else = {
+			add_to_variable = { global.international_systems_updated = 1 }
+		}
 	}
 }
 
