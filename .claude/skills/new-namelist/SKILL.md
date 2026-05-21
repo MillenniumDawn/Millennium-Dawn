@@ -109,16 +109,25 @@ For **landlocked nations**, omit the ship hull file — they cannot operate ship
 
 ---
 
-### 4. Create the ship class design names
+### 4. Create the ship class design names and airwing fallback structure
 
-Write or append `common/units/names/00_TAG_names.txt`.
+Write or append `common/units/names/00_TAG_names.txt`. This file holds three things:
 
-These names appear in the naval designer when the player creates a new ship design class. Include all hull types the country can plausibly build.
+1. **Ship class design names** — what the player sees in the naval designer when creating a new ship class. Keys must match real naval sub_units from `common/units/MD_naval_units.txt`.
+2. **Land unit design names** — minimum is an `L_Inf_Bat` block (light infantry battalion). Keys must match real land sub_units from `common/units/MD_land_units.txt`.
+3. **Air wing fallback names** — what the game uses when generating squadron labels for the country's aircraft. Without these blocks the country falls through to the engine's generic numbered name and looks unfinished.
 
-**The `infantry` block is always required**, even for pure naval nations:
+**Never use `infantry = { }`.** Vanilla's `infantry` sub_unit was renamed when MD restructured land units; the canonical MD land sub_units live in `common/units/MD_land_units.txt` as `L_Inf_Bat`, `Mot_Inf_Bat`, `Mech_Inf_Bat`, `Arm_Inf_Bat`, `Militia_Bat`, `armor_Bat`, and so on. A bare `infantry = { }` block compiles silently and never fires. Use `L_Inf_Bat` as the minimum land block — it is the MD light infantry battalion and the natural fallback.
+
+Top-of-file scaffold:
 
 ```
 TAG = {
+	# Optional: fleet_names_template = FLEET_NAME_TAG   (only if you ALSO add a FLEET_NAME_TAG loc key)
+	# Only set the line below if you ALSO add AIR_WING_NAME_TAG_FALLBACK + _GENERIC keys to
+	# localisation/english/replace/replaced_from_unit_names_l_english.yml.
+	air_wing_names_template = AIR_WING_NAME_TAG_FALLBACK
+
 	destroyer = {
 		prefix = ""
 		generic = { "Destroyer" }
@@ -126,12 +135,16 @@ TAG = {
 			"Class Name One" "Class Name Two"
 		}
 	}
-	infantry = {
+	# ...other ship class blocks (keys must match common/units/MD_naval_units.txt)...
+
+	L_Inf_Bat = {
 		prefix = ""
-		generic = { "Infantry Division" }
+		generic = { "Infantry Division" }       # localize to country language where appropriate
 		generic_pattern = "UNIT_GENERIC_NAME_GENERIC_INFANTRY"
 		unique = { }
 	}
+
+	# Air wing archetype blocks — see below
 }
 ```
 
@@ -144,7 +157,52 @@ Class naming traditions by region/country:
 - **Greece:** Ancient heroes for subs; Aegean island names for frigates; mythological names for corvettes
 - **General:** National heroes, geographic features, rivers, battles, historical ships of the same class
 
-For **landlocked nations**, include only the `infantry` block.
+For **landlocked nations**, omit all ship class blocks and include only the `L_Inf_Bat` block + the airwing blocks below.
+
+---
+
+### 4a. Air wing archetype blocks (do not skip)
+
+In `00_TAG_names.txt`, after the ship class blocks, add one block per aircraft archetype the country can field. **Even when the country has no curated squadron names, the blocks must exist with empty `unique = { }` lists** — otherwise air wings get an unbranded generic label and players see the country as half-finished.
+
+The canonical list of 27 archetypes (mirrors `common/units/MD_air_units.txt`):
+
+| Tier         | Land archetypes                                                                                                                                                                                        | Carrier archetypes (`cv_` prefix)                                                                                                                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Small plane  | `small_plane_airframe` (fighter), `small_plane_strike_airframe`, `small_plane_naval_bomber_airframe`, `small_plane_cas_airframe`, `small_plane_suicide_airframe`                                       | `cv_small_plane_airframe`, `cv_small_plane_strike_airframe`, `cv_small_plane_naval_bomber_airframe`, `cv_small_plane_cas_airframe`, `cv_small_plane_suicide_airframe`                                                  |
+| Medium plane | `medium_plane_airframe`, `medium_plane_fighter_airframe`, `medium_plane_cas_airframe`, `medium_plane_maritime_patrol_airframe`, `medium_plane_air_transport_airframe`, `medium_plane_suicide_airframe` | `cv_medium_plane_airframe`, `cv_medium_plane_fighter_airframe`, `cv_medium_plane_cas_airframe`, `cv_medium_plane_maritime_patrol_airframe`, `cv_medium_plane_air_transport_airframe`, `cv_medium_plane_scout_airframe` |
+| Large plane  | `large_plane_airframe`, `large_plane_air_transport_airframe`, `large_plane_awacs_airframe`, `large_plane_cas_airframe`, `large_plane_maritime_patrol_airframe`                                         | — (no carrier large planes)                                                                                                                                                                                            |
+
+Minimum (fallback-only) block — everyone gets this even with no real squadron names. Use the country's language for the `generic` label:
+
+```
+small_plane_airframe = {
+	prefix = ""
+	generic = { "Fighter Squadron" }        # in country's language
+	generic_pattern = AIR_WING_NAME_TAG_GENERIC
+	unique = { }
+}
+```
+
+Carrier blocks should use a `_CARRIER` pattern suffix:
+
+```
+cv_small_plane_airframe = {
+	prefix = ""
+	generic = { "Carrier Air Wing" }
+	generic_pattern = AIR_WING_NAME_TAG_CARRIER
+	unique = { }
+}
+```
+
+Where to source real squadron names: official air force / navy aviation orders of battle on Wikipedia ("List of {Country} Air Force squadrons"); national defence ministry publications. Aim for 8–15 `unique` entries on the principal fighter / strike / CAS archetypes for major nations; empty `unique = { }` is acceptable on every other archetype.
+
+Common pitfalls to avoid:
+
+- **Typo `sucide` vs `suicide`** — vanilla USA's namelist contains the malformed token `small_plane_sucide_airframe`. The correct token everywhere is `small_plane_suicide_airframe` (matches the equipment archetype in `common/units/MD_air_units.txt`). Always copy from `MD_air_units.txt`, never from USA's namelist.
+- **Missing archetypes** — leaving out an archetype block does not error in-game; it silently falls back to a numbered generic. Reviewers won't catch it. Always include all 27.
+- **Dead template references** — `air_wing_names_template = AIR_WING_NAME_TAG_FALLBACK` only resolves if a matching loc key exists in `localisation/english/replace/replaced_from_unit_names_l_english.yml`. If the key is missing, HOI4 renders the literal token (e.g. `AIR_WING_NAME_TAG_FALLBACK`) as the wing name in-game. **You must add both keys** (`AIR_WING_NAME_TAG_FALLBACK` and `AIR_WING_NAME_TAG_GENERIC`) when you set the template. Known dead refs: AST, FIN, JAP, USA, GER — these will render the raw token until fixed.
+- **`generic_pattern` mismatches** — each archetype's `generic_pattern` must point at a loc key that exists. The convention is `AIR_WING_NAME_TAG_GENERIC` for land archetypes and `AIR_WING_NAME_TAG_CARRIER` for `cv_*` ones (if you defined the latter). If you don't have a `_CARRIER` loc key, point carrier archetypes at `AIR_WING_NAME_TAG_GENERIC` too — never invent a key without backing loc.
 
 ---
 
@@ -172,6 +230,8 @@ Summarise:
 - Division groups written (list all 7 tokens)
 - Ship hull groups written (list name keys used)
 - Ship class types covered
+- Air wing archetypes covered (should be all 27 — flag missing ones)
+- `air_wing_names_template` line added
 - Whether the OOB was updated
 - Any names that need research (flag as "placeholder — verify")
 - Whether portraits or other assets are still needed

@@ -2,6 +2,15 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 #
+# !! DO NOT RUN `pre-commit run --all-files` !!
+# The auto-fixer hooks (trailing-whitespace, end-of-file-fixer,
+# mixed-line-ending, fix-byte-order-marker) will rewrite every matching file in
+# the repo and produce hundreds of whitespace-only modifications unrelated to
+# your actual work. Always scope runs to specific files:
+#   pre-commit run --files path/to/file1 path/to/file2
+# The normal `git commit` flow already runs hooks against just the staged
+# files, which is what you want.
+#
 # MD-specific hooks (prefixed "MD") are set to stages: [manual] by default
 # so they don't block external contributors. To run them:
 #   pre-commit run --hook-stage manual           # all manual hooks
@@ -11,6 +20,12 @@
 # (local override, don't commit):
 #   default_stages: [pre-commit, manual]
 
+# Global exclude. resources/ is a holding area for unintegrated submods and
+# external contributions — its contents are not subject to MD style rules and
+# must not be auto-modified by any hook. Any hook can still re-include a path
+# inside resources/ by setting its own `files:` pattern explicitly.
+exclude: '^resources/'
+
 repos:
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
@@ -18,17 +33,20 @@ repos:
       - id: detect-secrets
         name: Detect secrets
         args: ['--baseline', '.secrets.baseline']
-        exclude: '(^localisation/|^resources/|\.secrets\.baseline$)'
+        exclude: '(^localisation/|\.secrets\.baseline$)'
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
+      # Asset-only directories (gfx/, map/, interface/, music/, sound/) are
+      # excluded from the auto-fixers below — these files use significant
+      # tab/whitespace alignment that the fixers shouldn't rewrite.
       - id: trailing-whitespace
-        exclude: '\.mod$'  # Exclude mod files which might need specific formatting
+        exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
       - id: end-of-file-fixer
-        exclude: '\.mod$'
+        exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
       - id: mixed-line-ending
         args: [--fix=lf]
-        exclude: '\.mod$'
+        exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
       - id: check-yaml
         files: 'localisation/english/.*\.yml$'
       - id: check-json
@@ -41,7 +59,7 @@ repos:
         exclude: '\.txt$|\.mod$'
       - id: check-shebang-scripts-are-executable
       - id: fix-byte-order-marker
-        exclude: 'localisation/.*\.yml$'
+        exclude: 'localisation/.*\.yml$|^(gfx|map|interface|music|sound)/'
       - id: check-ast
         files: '\.py$'
       - id: debug-statements
@@ -49,29 +67,37 @@ repos:
       - id: name-tests-test
         files: 'tools/.*test.*\.py$'
   - repo: https://github.com/psf/black
-    rev: 24.8.0
+    rev: 25.1.0
     hooks:
       - id: black
         files: '^tools/.*\.py$'
         args: [--line-length=88]
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 6.0.1
     hooks:
       - id: isort
         files: '^tools/.*\.py$'
         args: [--profile=black]
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
+  # pre-commit/mirrors-prettier was archived upstream — using rbubley's
+  # maintained fork. Same prettier binary; current pin tracks prettier 3.8.x.
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.8.3
     hooks:
       - id: prettier
         name: Format Markdown files
         files: '\.md$'
         args: [--prose-wrap=preserve, --print-width=120]
+        additional_dependencies:
+          - prettier@3.8.3
+          - prettier-plugin-astro@0.14.1
       - id: prettier
         name: Format docs content YAML (Astro)
         types: [yaml]
         files: '^docs/.*\.yml$'
         args: [--print-width=120]
+        additional_dependencies:
+          - prettier@3.8.3
+          - prettier-plugin-astro@0.14.1
   - repo: local
     hooks:
       - id: fix-localization-encoding
@@ -182,6 +208,39 @@ repos:
         language: system
         files: '(common/intelligence_agency_upgrades/.*\.txt|common/on_actions/MD_auto_agency_on_actions\.txt|common/scripted_guis/00_MD_auto_agency_scripted_gui\.txt|common/scripted_localisation/00_MD_auto_agency_scripted_localisation\.txt|localisation/english/MD_auto_agency_l_english\.yml)$'
         pass_filenames: false
+      - id: md-validate-ideas
+        name: MD Validate idea references (undefined ideas, redundant allowed blocks)
+        entry: python3 tools/validation/validate_ideas.py --staged --strict --no-color --workers 4
+        language: system
+        files: '(common/ideas|common/national_focus|common/decisions|events)/.*\.txt$|localisation/english/.*\.yml$'
+        pass_filenames: false
+      - id: md-validate-scripted-gui
+        name: MD Validate scripted GUI cross-references
+        # Cross-references scripted_guis with interface/.gui, interface/.gfx and
+        # localisation/english/*.yml. Catches silent failures (dead handlers,
+        # missing tooltip loc keys, broken [!] formatters, missing windows or
+        # containers). Runs on changes to any of those file kinds; reports only
+        # issues involving the staged files.
+        entry: python3 tools/validation/validate_scripted_gui.py --staged --strict --no-color
+        language: system
+        files: '(common/scripted_guis/.*\.txt|interface/.*\.(gui|gfx)|localisation/english/.*\.yml)$'
+        pass_filenames: false
+      - id: md-validate-unused-textures
+        name: MD Validate unused textures (slow; manual)
+        # Manual: full-repo scan is slow and currently reports ~22k legacy
+        # unreferenced textures. CI runs it informationally (no --strict) so
+        # the report is visible without gating PRs. Run before mod-size
+        # cleanup passes:
+        #   pre-commit run md-validate-unused-textures --hook-stage manual
+        entry: python3 tools/validation/validate_unused_textures.py --no-color
+        language: system
+        files: '\.(gfx|asset|dds|tga|png)$'
+        pass_filenames: false
+        stages: [manual]
+      # NOTE: validate_set_variables.py exists but is intentionally not wired
+      # anywhere. False-positive volume at repo scale makes it too noisy as a
+      # gate. Run manually when investigating a specific variable:
+      #   python3 tools/validation/validate_set_variables.py --staged
       - id: validate-staged
         name: MD Validate staged files
         entry: python3 tools/validate_staged.py

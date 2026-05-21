@@ -1,0 +1,1134 @@
+types = {
+
+	# =============================================
+	# FUEL RAID - CARRIER DIRECT
+	# =============================================
+	fuel_production_storage_raid_air_carrier = {
+		allowed = { has_game_rule = { rule = allow_carrier_only_raids option = yes } }
+		days_to_prepare = 30
+		days_re_enable = 180
+
+		category = infastructure_strikes
+		command_power = 20
+
+		show_target = {
+			NOT = { is_in_faction_with = FROM }
+			raid_show_target_opinion_neutral = yes
+		}
+
+		available = {
+			FROM = {
+				NOT = { is_subject_of = ROOT }
+				NOT = { has_non_aggression_pact_with = ROOT }
+			}
+			OR = {
+				has_political_power > 99
+				has_war_with = FROM
+				hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+			}
+		}
+
+		launchable = {
+			OR = {
+				has_political_power > 99
+				has_war_with = FROM
+			}
+		}
+
+		target_type = {
+			state = {
+				OR = { oil > 18 fuel_silo > 0 }
+				NOT = {
+					OR = {
+						has_dynamic_modifier = { modifier = oil_refining_modifier }
+						has_dynamic_modifier = { modifier = oil_critical_refining_modifier }
+						has_dynamic_modifier = { modifier = oil_minor_refining_modifier }
+					}
+				}
+			}
+		}
+
+		unit_requirements = {
+			equipment = {
+				type = { tactical_bomber cas strategic_bomber carrier_tactical_bomber carrier_cas carrier_strategic_bomber guided_missile_equipment ballistic_missile_equipment hypersonic_missile_equipment }
+				amount = { min = 10 }
+			}
+		}
+
+		starting_point = {
+			types = { carrier rocket_site submarine }
+		}
+
+		arrow = { type = air }
+		launch_sound = raid_launch_air
+		target_icon = GFX_other_target_icon
+
+		success_factors = {
+			success = {
+				base = 0.20
+				experience = { weight = 0.1 start_weight = -0.1 reference = 1000 }
+				air_agility = { reference = 200 weight = 0.5 start_weight = -0.5 }
+				reliability = { reference = 1 weight = 0.1 start_weight = -0.1 }
+				air_defence = { reference = 150 weight = 0.2 start_weight = -0.2 }
+				air_superiority = { reference = 1 weight = 0.3 start_weight = -0.100 }
+				anti_air = { reference = 5 weight = -0.25 }
+				radar = { reference = 1 weight = -0.15 }
+				interception = { reference = 500 weight = -0.2 }
+				intel = { weight = 0.3 reference = 100 }
+			}
+			disaster = { base = 0.25 }
+			critical = { base = 0.05 }
+		}
+
+		success_levels = {
+			failure = {
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_failure_losses = yes
+				}
+				victim_effects = { send_raid_event_to_victim = yes }
+			}
+			limited_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:target_state = {
+						set_temp_variable = { ROOT.num_fuel_silos = THIS.building_level@fuel_silo }
+					}
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_limited = yes
+					clamp_temp_variable = { var = building_damage_by_missile max = num_fuel_silos }
+					var:target_state = {
+						if = { limit = { oil > 18 }
+							set_temp_variable = { oil_reducer = THIS.resource@oil }
+							multiply_temp_variable = { oil_reducer = 0.75 }
+							divide_temp_variable = { ROOT.building_damage_by_missile = oil_reducer }
+							add_dynamic_modifier = { modifier = oil_minor_refining_modifier days = 150 }
+						}
+					}
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						if = { limit = { fuel_silo > 0 }
+							meta_effect = { text = { damage_building = { type = fuel_silo damage = [DAM] } } DAM = "[?building_damage_by_missile]" }
+						}
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_limited_success_losses = yes
+				}
+			}
+			success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:target_state = {
+						set_temp_variable = { ROOT.num_fuel_silos = THIS.building_level@fuel_silo }
+					}
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_success = yes
+					clamp_temp_variable = { var = building_damage_by_missile max = num_fuel_silos }
+					var:target_state = {
+						if = { limit = { oil > 18 }
+							set_temp_variable = { oil_reducer = THIS.resource@oil }
+							multiply_temp_variable = { oil_reducer = 0.75 }
+							divide_temp_variable = { ROOT.building_damage_by_missile = oil_reducer }
+							add_dynamic_modifier = { modifier = oil_refining_modifier days = 200 }
+						}
+					}
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						if = { limit = { fuel_silo > 0 }
+							meta_effect = { text = { damage_building = { type = fuel_silo damage = [DAM] } } DAM = "[?building_damage_by_missile]" }
+						}
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_success_losses = yes
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:target_state = {
+						set_temp_variable = { ROOT.num_fuel_silos = THIS.building_level@fuel_silo }
+					}
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_critical = yes
+					clamp_temp_variable = { var = building_damage_by_missile max = num_fuel_silos }
+					var:target_state = {
+						if = { limit = { oil > 18 }
+							set_temp_variable = { oil_reducer = THIS.resource@oil }
+							multiply_temp_variable = { oil_reducer = 0.75 }
+							divide_temp_variable = { ROOT.building_damage_by_missile = oil_reducer }
+							add_dynamic_modifier = { modifier = oil_critical_refining_modifier days = 260 }
+						}
+					}
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						if = { limit = { fuel_silo > 0 }
+							meta_effect = { text = { damage_building = { type = fuel_silo damage = [DAM] } } DAM = "[?building_damage_by_missile]" }
+						}
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_critical_success_losses = yes
+				}
+			}
+		}
+
+		# Carrier-only raids are a player QoL duplicate of the standard air/cruise/drone raids:
+		# every other raid type can already launch from a carrier (see starting_point). These
+		# exist for players who want to keep the operation off their land air bases (e.g. to
+		# avoid retaliation on those bases). Keeping base = 0 with no modifiers leaves the AI
+		# to the non-duplicate raid types. Do not "fix" this by adding modifiers.
+		ai_will_do = { base = 0 }
+	}
+
+	# =============================================
+	# METAL RAID - CARRIER DIRECT
+	# =============================================
+	metal_production_raid_air_carrier = {
+		allowed = { has_game_rule = { rule = allow_carrier_only_raids option = yes } }
+		days_to_prepare = 30
+		days_re_enable = 180
+
+		category = infastructure_strikes
+		command_power = 20
+
+		show_target = {
+			NOT = { is_in_faction_with = FROM }
+			raid_show_target_opinion_neutral = yes
+		}
+
+		available = {
+			FROM = {
+				NOT = { is_subject_of = ROOT }
+				NOT = { has_non_aggression_pact_with = ROOT }
+			}
+			OR = {
+				has_political_power > 99
+				has_war_with = FROM
+				hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+			}
+		}
+		launchable = {
+			OR = {
+				has_political_power > 99
+				has_war_with = FROM
+			}
+		}
+
+		target_type = {
+			state = {
+				OR = { tungsten > 8 steel > 24 aluminium > 24 chromium > 8 }
+				NOT = {
+					OR = {
+						has_dynamic_modifier = { modifier = tech_metal_refining_modifier }
+						has_dynamic_modifier = { modifier = tech_metal_critical_refining_modifier }
+						has_dynamic_modifier = { modifier = tech_metal_minor_refining_modifier }
+						has_dynamic_modifier = { modifier = metal_refining_modifier }
+						has_dynamic_modifier = { modifier = metal_critical_refining_modifier }
+						has_dynamic_modifier = { modifier = metal_minor_refining_modifier }
+						has_dynamic_modifier = { modifier = rare_metal_refining_modifier }
+						has_dynamic_modifier = { modifier = rare_metal_critical_refining_modifier }
+						has_dynamic_modifier = { modifier = rare_metal_minor_refining_modifier }
+					}
+				}
+			}
+		}
+
+		unit_requirements = {
+			equipment = {
+				type = { tactical_bomber cas strategic_bomber carrier_tactical_bomber carrier_cas carrier_strategic_bomber guided_missile_equipment ballistic_missile_equipment hypersonic_missile_equipment }
+				amount = { min = 10 }
+			}
+		}
+
+		starting_point = {
+			types = { carrier rocket_site submarine }
+		}
+
+		arrow = { type = air }
+		launch_sound = raid_launch_air
+		target_icon = GFX_other_target_icon
+
+		success_factors = {
+			success = {
+				base = 0.20
+				experience = { weight = 0.1 start_weight = -0.1 reference = 1000 }
+				air_agility = { reference = 200 weight = 0.5 start_weight = -0.5 }
+				reliability = { reference = 1 weight = 0.1 start_weight = -0.1 }
+				air_defence = { reference = 150 weight = 0.2 start_weight = -0.2 }
+				air_superiority = { reference = 1 weight = 0.3 start_weight = -0.100 }
+				anti_air = { reference = 5 weight = -0.25 }
+				radar = { reference = 1 weight = -0.15 }
+				interception = { reference = 500 weight = -0.2 }
+				intel = { weight = 0.3 reference = 100 }
+			}
+			disaster = { base = 0.25 }
+			critical = { base = 0.05 }
+		}
+
+		success_levels = {
+			failure = {
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_failure_losses = yes
+				}
+				victim_effects = { send_raid_event_to_victim = yes }
+			}
+			limited_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:target_state = {
+						if = { limit = { tungsten > 8 } add_dynamic_modifier = { modifier = tech_metal_minor_refining_modifier days = 150 } }
+						if = { limit = { chromium > 8 } add_dynamic_modifier = { modifier = rare_metal_minor_refining_modifier days = 150 } }
+						if = { limit = { OR = { aluminium > 24 steel > 24 } } add_dynamic_modifier = { modifier = metal_minor_refining_modifier days = 150 } }
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_limited_success_losses = yes
+				}
+			}
+			success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:target_state = {
+						if = { limit = { tungsten > 8 } add_dynamic_modifier = { modifier = tech_metal_refining_modifier days = 200 } }
+						if = { limit = { chromium > 8 } add_dynamic_modifier = { modifier = rare_metal_refining_modifier days = 200 } }
+						if = { limit = { OR = { aluminium > 24 steel > 24 } } add_dynamic_modifier = { modifier = metal_refining_modifier days = 200 } }
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_success_losses = yes
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:target_state = {
+						if = { limit = { tungsten > 8 } add_dynamic_modifier = { modifier = tech_metal_critical_refining_modifier days = 280 } }
+						if = { limit = { chromium > 8 } add_dynamic_modifier = { modifier = rare_metal_critical_refining_modifier days = 280 } }
+						if = { limit = { OR = { aluminium > 24 steel > 24 } } add_dynamic_modifier = { modifier = metal_critical_refining_modifier days = 280 } }
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_critical_success_losses = yes
+				}
+			}
+		}
+
+		# Carrier-only raids are a player QoL duplicate of the standard air/cruise/drone raids:
+		# every other raid type can already launch from a carrier (see starting_point). These
+		# exist for players who want to keep the operation off their land air bases (e.g. to
+		# avoid retaliation on those bases). Keeping base = 0 with no modifiers leaves the AI
+		# to the non-duplicate raid types. Do not "fix" this by adding modifiers.
+		ai_will_do = { base = 0 }
+	}
+
+	# =============================================
+	# POWER STRIKE - CARRIER DIRECT
+	# =============================================
+	state_power_strike_air_carrier = {
+		allowed = { has_game_rule = { rule = allow_carrier_only_raids option = yes } }
+		days_to_prepare = 30
+		days_re_enable = 365
+
+		category = infastructure_strikes
+		command_power = 20
+
+		show_target = {
+			NOT = { is_in_faction_with = FROM }
+			FROM = { NOT = { has_country_flag = power_grid_damaged } }
+			raid_show_target_opinion_neutral = yes
+		}
+
+		available = {
+			FROM = {
+				NOT = { is_subject_of = ROOT }
+				NOT = { has_non_aggression_pact_with = ROOT }
+			}
+			OR = {
+				has_political_power > 99
+				has_war_with = FROM
+				hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+			}
+		}
+		launchable = {
+			OR = {
+				has_political_power > 99
+				has_war_with = FROM
+			}
+		}
+
+		target_type = {
+			building = { type = fossil_powerplant }
+			building = { type = synthetic_refinery }
+		}
+
+		unit_requirements = {
+			equipment = {
+				type = { tactical_bomber cas strategic_bomber carrier_tactical_bomber carrier_cas carrier_strategic_bomber guided_missile_equipment ballistic_missile_equipment hypersonic_missile_equipment }
+				amount = { min = 10 }
+			}
+		}
+
+		starting_point = {
+			types = { carrier rocket_site submarine }
+		}
+
+		arrow = { type = air }
+		launch_sound = raid_launch_air
+		target_icon = GFX_other_target_icon
+
+		success_factors = {
+			success = {
+				base = 0.20
+				experience = { weight = 0.3 start_weight = -0.2 reference = 1000 }
+				air_agility = { reference = 200 weight = 0.5 start_weight = -0.5 }
+				reliability = { reference = 1 weight = 0.2 start_weight = -0.1 }
+				air_defence = { reference = 150 weight = 0.2 start_weight = -0.2 }
+				air_superiority = { reference = 1 weight = 0.1 start_weight = -0.100 }
+				anti_air = { reference = 5 weight = -0.25 }
+				radar = { reference = 1 weight = -0.15 }
+				interception = { reference = 100 weight = -0.2 }
+				intel = { weight = 0.5 start_weight = -0.1 start_reference = 10 reference = 100 }
+			}
+			disaster = { base = 0.25 }
+			critical = { base = 0.05 }
+		}
+
+		success_levels = {
+			failure = {
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_failure_losses = yes
+				}
+				victim_effects = { send_raid_event_to_victim = yes }
+			}
+			limited_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:victim_country = {
+						if = {
+							limit = {
+								NOT = {
+									OR = {
+										has_dynamic_modifier = { modifier = power_critical_strike_modifier }
+										has_dynamic_modifier = { modifier = power_strike_modifier }
+										has_dynamic_modifier = { modifier = power_minor_strike_modifier }
+									}
+								}
+							}
+							add_dynamic_modifier = { modifier = power_minor_strike_modifier days = 75 }
+							set_country_flag = { flag = power_grid_damaged days = 75 }
+						}
+					}
+					var:target_state = {
+						set_temp_variable = { num_power_plants = THIS.building_level@fossil_powerplant }
+						set_temp_variable = { num_synthetic_refinery = THIS.building_level@synthetic_refinery }
+					}
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_limited = yes
+					if = { limit = { check_variable = { num_power_plants > 0 } check_variable = { num_synthetic_refinery > 0 } } divide_temp_variable = { building_damage_by_missile = 2 } }
+					set_temp_variable = { max_clamp = num_power_plants }
+					add_to_temp_variable = { max_clamp = num_synthetic_refinery }
+					clamp_temp_variable = { var = building_damage_by_missile min = 0 max = max_clamp }
+					multiply_temp_variable = { building_damage_by_missile = 0.1 }
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						if = { limit = { fossil_powerplant > 0 } meta_effect = { text = { damage_building = { type = fossil_powerplant damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { synthetic_refinery > 0 } meta_effect = { text = { damage_building = { type = synthetic_refinery damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_limited_success_losses = yes
+				}
+			}
+			success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:victim_country = {
+						if = {
+							limit = {
+								NOT = {
+									OR = {
+										has_dynamic_modifier = { modifier = power_critical_strike_modifier }
+										has_dynamic_modifier = { modifier = power_strike_modifier }
+										has_dynamic_modifier = { modifier = power_minor_strike_modifier }
+									}
+								}
+							}
+							add_dynamic_modifier = { modifier = power_strike_modifier days = 120 }
+							set_country_flag = { flag = power_grid_damaged days = 120 }
+						}
+					}
+					var:target_state = {
+						set_temp_variable = { num_power_plants = THIS.building_level@fossil_powerplant }
+						set_temp_variable = { num_synthetic_refinery = THIS.building_level@synthetic_refinery }
+					}
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_success = yes
+					if = { limit = { check_variable = { num_power_plants > 0 } check_variable = { num_synthetic_refinery > 0 } } divide_temp_variable = { building_damage_by_missile = 2 } }
+					set_temp_variable = { max_clamp = num_power_plants }
+					add_to_temp_variable = { max_clamp = num_synthetic_refinery }
+					clamp_temp_variable = { var = building_damage_by_missile min = 0 max = max_clamp }
+					multiply_temp_variable = { building_damage_by_missile = 0.1 }
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						if = { limit = { fossil_powerplant > 0 } meta_effect = { text = { damage_building = { type = fossil_powerplant damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { synthetic_refinery > 0 } meta_effect = { text = { damage_building = { type = synthetic_refinery damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_success_losses = yes
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:victim_country = {
+						if = {
+							limit = {
+								NOT = {
+									OR = {
+										has_dynamic_modifier = { modifier = power_critical_strike_modifier }
+										has_dynamic_modifier = { modifier = power_strike_modifier }
+										has_dynamic_modifier = { modifier = power_minor_strike_modifier }
+									}
+								}
+							}
+							add_dynamic_modifier = { modifier = power_critical_strike_modifier days = 180 }
+							set_country_flag = { flag = power_grid_damaged days = 180 }
+						}
+					}
+					var:target_state = {
+						set_temp_variable = { num_power_plants = THIS.building_level@fossil_powerplant }
+						set_temp_variable = { num_synthetic_refinery = THIS.building_level@synthetic_refinery }
+					}
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_critical = yes
+					if = { limit = { check_variable = { num_power_plants > 0 } check_variable = { num_synthetic_refinery > 0 } } divide_temp_variable = { building_damage_by_missile = 2 } }
+					set_temp_variable = { max_clamp = num_power_plants }
+					add_to_temp_variable = { max_clamp = num_synthetic_refinery }
+					clamp_temp_variable = { var = building_damage_by_missile min = 0 max = max_clamp }
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						if = { limit = { fossil_powerplant > 0 } meta_effect = { text = { damage_building = { type = fossil_powerplant damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { synthetic_refinery > 0 } meta_effect = { text = { damage_building = { type = synthetic_refinery damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_critical_success_losses = yes
+				}
+			}
+		}
+
+		# Carrier-only raids are a player QoL duplicate of the standard air/cruise/drone raids:
+		# every other raid type can already launch from a carrier (see starting_point). These
+		# exist for players who want to keep the operation off their land air bases (e.g. to
+		# avoid retaliation on those bases). Keeping base = 0 with no modifiers leaves the AI
+		# to the non-duplicate raid types. Do not "fix" this by adding modifiers.
+		ai_will_do = { base = 0 }
+	}
+
+	# =============================================
+	# PRODUCTION STRIKE - CARRIER DIRECT
+	# =============================================
+	production_strike_carrier = {
+		allowed = { has_game_rule = { rule = allow_carrier_only_raids option = yes } }
+		days_to_prepare = 30
+		days_re_enable = 356
+
+		category = infastructure_strikes
+		command_power = 20
+
+		show_target = {
+			raid_show_target_opinion_hostile = yes
+		}
+
+		available = {
+			FROM = {
+				NOT = { is_subject_of = ROOT }
+				NOT = { has_non_aggression_pact_with = ROOT }
+			}
+			OR = {
+				has_war_with = FROM
+				has_opinion = { target = FROM value < -50 }
+				hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+			}
+		}
+
+		launchable = {
+			OR = {
+				has_political_power > 99
+				has_war_with = FROM
+			}
+		}
+
+		unit_requirements = {
+			equipment = {
+				type = { tactical_bomber cas strategic_bomber carrier_tactical_bomber carrier_cas carrier_strategic_bomber guided_missile_equipment ballistic_missile_equipment hypersonic_missile_equipment }
+				amount = { min = 10 }
+			}
+		}
+
+		launch_sound = raid_launch_marine
+		target_icon = GFX_other_target_icon
+
+		target_type = {
+			state = {
+				OR = {
+					industrial_complex > 0
+					arms_factory > 0
+					dockyard > 0
+					offices > 0
+					agriculture_district > 0
+				}
+			}
+		}
+
+		starting_point = {
+			types = { carrier rocket_site submarine }
+		}
+
+		success_factors = {
+			success = {
+				base = 0.20
+				air_agility = { reference = 200 weight = 0.5 start_weight = -0.5 }
+				reliability = { reference = 1 weight = 0.3 start_weight = -0.1 }
+				air_defence = { reference = 150 weight = 0.2 start_weight = -0.2 }
+				air_superiority = { reference = 1 weight = 0.1 start_weight = -0.100 }
+				anti_air = { reference = 5 weight = -0.25 }
+				radar = { reference = 1 weight = -0.15 }
+				interception = { reference = 100 weight = -0.2 }
+				intel = { weight = 0.5 start_weight = -0.1 start_reference = 10 reference = 100 }
+			}
+			critical = { base = 0.10 }
+			disaster = { base = 0.25 }
+		}
+
+		success_levels = {
+			failure = {
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_failure_losses = yes
+				}
+				victim_effects = { send_raid_event_to_victim = yes }
+			}
+			limited_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:target_state = {
+						set_temp_variable = { ROOT.num_mil_ind = THIS.building_level@arms_factory }
+						set_temp_variable = { ROOT.num_dockyard = THIS.building_level@dockyard }
+						set_temp_variable = { ROOT.num_industrial_complex = THIS.building_level@industrial_complex }
+						set_temp_variable = { ROOT.num_offices = THIS.building_level@offices }
+						set_temp_variable = { ROOT.num_agriculture_district = THIS.building_level@agriculture_district }
+					}
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_limited = yes
+					set_temp_variable = { target_split_var = 0 }
+					if = { limit = { check_variable = { num_mil_ind > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_dockyard > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_industrial_complex > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_offices > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_agriculture_district > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					divide_temp_variable = { building_damage_by_missile = target_split_var }
+					set_temp_variable = { max_clamp = num_mil_ind }
+					add_to_temp_variable = { max_clamp = num_dockyard }
+					add_to_temp_variable = { max_clamp = num_industrial_complex }
+					add_to_temp_variable = { max_clamp = num_offices }
+					add_to_temp_variable = { max_clamp = num_agriculture_district }
+					clamp_temp_variable = { var = building_damage_by_missile min = 0 max = max_clamp }
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						if = { limit = { arms_factory > 0 } meta_effect = { text = { damage_building = { type = arms_factory damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { dockyard > 0 } meta_effect = { text = { damage_building = { type = dockyard damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { industrial_complex > 0 } meta_effect = { text = { damage_building = { type = industrial_complex damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { offices > 0 } meta_effect = { text = { damage_building = { type = offices damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { agriculture_district > 0 } meta_effect = { text = { damage_building = { type = agriculture_district damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_limited_success_losses = yes
+				}
+			}
+			success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:target_state = {
+						set_temp_variable = { ROOT.num_mil_ind = THIS.building_level@arms_factory }
+						set_temp_variable = { ROOT.num_dockyard = THIS.building_level@dockyard }
+						set_temp_variable = { ROOT.num_industrial_complex = THIS.building_level@industrial_complex }
+						set_temp_variable = { ROOT.num_offices = THIS.building_level@offices }
+						set_temp_variable = { ROOT.num_agriculture_district = THIS.building_level@agriculture_district }
+					}
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_success = yes
+					set_temp_variable = { target_split_var = 0 }
+					if = { limit = { check_variable = { num_mil_ind > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_dockyard > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_industrial_complex > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_offices > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_agriculture_district > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					divide_temp_variable = { building_damage_by_missile = target_split_var }
+					set_temp_variable = { max_clamp = num_mil_ind }
+					add_to_temp_variable = { max_clamp = num_dockyard }
+					add_to_temp_variable = { max_clamp = num_industrial_complex }
+					add_to_temp_variable = { max_clamp = num_offices }
+					add_to_temp_variable = { max_clamp = num_agriculture_district }
+					clamp_temp_variable = { var = building_damage_by_missile min = 0 max = max_clamp }
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						if = { limit = { arms_factory > 0 } meta_effect = { text = { damage_building = { type = arms_factory damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { dockyard > 0 } meta_effect = { text = { damage_building = { type = dockyard damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { industrial_complex > 0 } meta_effect = { text = { damage_building = { type = industrial_complex damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { offices > 0 } meta_effect = { text = { damage_building = { type = offices damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { agriculture_district > 0 } meta_effect = { text = { damage_building = { type = agriculture_district damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_success_losses = yes
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:target_state = {
+						set_temp_variable = { ROOT.num_mil_ind = THIS.building_level@arms_factory }
+						set_temp_variable = { ROOT.num_dockyard = THIS.building_level@dockyard }
+						set_temp_variable = { ROOT.num_industrial_complex = THIS.building_level@industrial_complex }
+						set_temp_variable = { ROOT.num_offices = THIS.building_level@offices }
+						set_temp_variable = { ROOT.num_agriculture_district = THIS.building_level@agriculture_district }
+					}
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_critical = yes
+					set_temp_variable = { target_split_var = 0 }
+					if = { limit = { check_variable = { num_mil_ind > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_dockyard > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_industrial_complex > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_offices > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_agriculture_district > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					divide_temp_variable = { building_damage_by_missile = target_split_var }
+					set_temp_variable = { max_clamp = num_mil_ind }
+					add_to_temp_variable = { max_clamp = num_dockyard }
+					add_to_temp_variable = { max_clamp = num_industrial_complex }
+					add_to_temp_variable = { max_clamp = num_offices }
+					add_to_temp_variable = { max_clamp = num_agriculture_district }
+					clamp_temp_variable = { var = building_damage_by_missile min = 0 max = max_clamp }
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						if = { limit = { arms_factory > 0 } meta_effect = { text = { damage_building = { type = arms_factory damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { dockyard > 0 } meta_effect = { text = { damage_building = { type = dockyard damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { industrial_complex > 0 } meta_effect = { text = { damage_building = { type = industrial_complex damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { offices > 0 } meta_effect = { text = { damage_building = { type = offices damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { agriculture_district > 0 } meta_effect = { text = { damage_building = { type = agriculture_district damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_critical_success_losses = yes
+				}
+			}
+		}
+
+		# Carrier-only raids are a player QoL duplicate of the standard air/cruise/drone raids:
+		# every other raid type can already launch from a carrier (see starting_point). These
+		# exist for players who want to keep the operation off their land air bases (e.g. to
+		# avoid retaliation on those bases). Keeping base = 0 with no modifiers leaves the AI
+		# to the non-duplicate raid types. Do not "fix" this by adding modifiers.
+		ai_will_do = { base = 0 }
+	}
+
+	# =============================================
+	# INFRASTRUCTURE STRIKE - CARRIER DIRECT
+	# =============================================
+	infrastructure_strike_carrier = {
+		allowed = { has_game_rule = { rule = allow_carrier_only_raids option = yes } }
+		days_to_prepare = 30
+		days_re_enable = 356
+
+		category = infastructure_strikes
+		command_power = 20
+
+		show_target = {
+			raid_show_target_opinion_hostile = yes
+		}
+
+		available = {
+			FROM = {
+				NOT = { is_subject_of = ROOT }
+				NOT = { has_non_aggression_pact_with = ROOT }
+			}
+			OR = {
+				has_war_with = FROM
+				has_opinion = { target = FROM value < -50 }
+				hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+			}
+		}
+
+		launchable = {
+			OR = {
+				has_political_power > 99
+				has_war_with = FROM
+			}
+		}
+
+		unit_requirements = {
+			equipment = {
+				type = { tactical_bomber cas strategic_bomber carrier_tactical_bomber carrier_cas carrier_strategic_bomber guided_missile_equipment ballistic_missile_equipment hypersonic_missile_equipment }
+				amount = { min = 10 }
+			}
+		}
+
+		launch_sound = raid_launch_marine
+		target_icon = GFX_other_target_icon
+
+		target_type = {
+			state = {
+				infrastructure > 0
+				internet_station > 0
+				rail_way > 0
+			}
+		}
+
+		starting_point = {
+			types = { carrier rocket_site submarine }
+		}
+
+		success_factors = {
+			success = {
+				base = 0.20
+				air_agility = { reference = 200 weight = 0.5 start_weight = -0.5 }
+				reliability = { reference = 1 weight = 0.3 start_weight = -0.1 }
+				air_defence = { reference = 150 weight = 0.2 start_weight = -0.2 }
+				air_superiority = { reference = 1 weight = 0.1 start_weight = -0.100 }
+				anti_air = { reference = 5 weight = -0.25 }
+				radar = { reference = 1 weight = -0.15 }
+				interception = { reference = 100 weight = -0.2 }
+				intel = { weight = 0.5 start_weight = -0.1 start_reference = 10 reference = 100 }
+			}
+			critical = { base = 0.10 }
+			disaster = { base = 0.25 }
+		}
+
+		success_levels = {
+			failure = {
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_failure_losses = yes
+				}
+				victim_effects = { send_raid_event_to_victim = yes }
+			}
+			limited_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:target_state = {
+						set_temp_variable = { ROOT.num_infrastructure = THIS.building_level@infrastructure }
+						set_temp_variable = { ROOT.num_internet_station = THIS.building_level@internet_station }
+						set_temp_variable = { ROOT.num_rail_way = THIS.building_level@rail_way }
+					}
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_limited = yes
+					set_temp_variable = { target_split_var = 0 }
+					if = { limit = { check_variable = { num_infrastructure > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_internet_station > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_rail_way > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					divide_temp_variable = { building_damage_by_missile = target_split_var }
+					set_temp_variable = { max_clamp = num_infrastructure }
+					add_to_temp_variable = { max_clamp = num_internet_station }
+					add_to_temp_variable = { max_clamp = num_rail_way }
+					clamp_temp_variable = { var = building_damage_by_missile min = 0 max = max_clamp }
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						if = { limit = { infrastructure > 0 } meta_effect = { text = { damage_building = { type = infrastructure damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { internet_station > 0 } meta_effect = { text = { damage_building = { type = internet_station damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { rail_way > 0 } meta_effect = { text = { damage_building = { type = rail_way damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_limited_success_losses = yes
+				}
+			}
+			success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:target_state = {
+						set_temp_variable = { ROOT.num_infrastructure = THIS.building_level@infrastructure }
+						set_temp_variable = { ROOT.num_internet_station = THIS.building_level@internet_station }
+						set_temp_variable = { ROOT.num_rail_way = THIS.building_level@rail_way }
+					}
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_success = yes
+					set_temp_variable = { target_split_var = 0 }
+					if = { limit = { check_variable = { num_infrastructure > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_internet_station > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_rail_way > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					divide_temp_variable = { building_damage_by_missile = target_split_var }
+					set_temp_variable = { max_clamp = num_infrastructure }
+					add_to_temp_variable = { max_clamp = num_internet_station }
+					add_to_temp_variable = { max_clamp = num_rail_way }
+					clamp_temp_variable = { var = building_damage_by_missile min = 0 max = max_clamp }
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						if = { limit = { infrastructure > 0 } meta_effect = { text = { damage_building = { type = infrastructure damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { internet_station > 0 } meta_effect = { text = { damage_building = { type = internet_station damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { rail_way > 0 } meta_effect = { text = { damage_building = { type = rail_way damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_success_losses = yes
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:target_state = {
+						set_temp_variable = { ROOT.num_infrastructure = THIS.building_level@infrastructure }
+						set_temp_variable = { ROOT.num_internet_station = THIS.building_level@internet_station }
+						set_temp_variable = { ROOT.num_rail_way = THIS.building_level@rail_way }
+					}
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_critical = yes
+					set_temp_variable = { target_split_var = 0 }
+					if = { limit = { check_variable = { num_infrastructure > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_internet_station > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					if = { limit = { check_variable = { num_rail_way > 0 } } add_to_temp_variable = { target_split_var = 1 } }
+					divide_temp_variable = { building_damage_by_missile = target_split_var }
+					set_temp_variable = { max_clamp = num_infrastructure }
+					add_to_temp_variable = { max_clamp = num_internet_station }
+					add_to_temp_variable = { max_clamp = num_rail_way }
+					clamp_temp_variable = { var = building_damage_by_missile min = 0 max = max_clamp }
+					if = { limit = { check_variable = { building_damage_by_missile < 1 } } set_temp_variable = { building_damage_by_missile = 1.25 } }
+					var:target_state = {
+						if = { limit = { infrastructure > 0 } meta_effect = { text = { damage_building = { type = infrastructure damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { internet_station > 0 } meta_effect = { text = { damage_building = { type = internet_station damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+						if = { limit = { rail_way > 0 } meta_effect = { text = { damage_building = { type = rail_way damage = [DAM] } } DAM = "[?building_damage_by_missile]" } }
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_critical_success_losses = yes
+				}
+			}
+		}
+
+		# Carrier-only raids are a player QoL duplicate of the standard air/cruise/drone raids:
+		# every other raid type can already launch from a carrier (see starting_point). These
+		# exist for players who want to keep the operation off their land air bases (e.g. to
+		# avoid retaliation on those bases). Keeping base = 0 with no modifiers leaves the AI
+		# to the non-duplicate raid types. Do not "fix" this by adding modifiers.
+		ai_will_do = { base = 0 }
+	}
+
+	# =============================================
+	# FACILITY STRIKE - CARRIER DIRECT
+	# =============================================
+	facility_strike_carrier = {
+		allowed = { has_game_rule = { rule = allow_carrier_only_raids option = yes } }
+		days_to_prepare = 30
+		days_re_enable = 365
+
+		category = infastructure_strikes
+		command_power = 20
+
+		show_target = {
+			NOT = { is_in_faction_with = FROM }
+			raid_show_target_opinion_hostile = yes
+		}
+
+		available = {
+			FROM = {
+				NOT = { is_subject_of = ROOT }
+				NOT = { has_non_aggression_pact_with = ROOT }
+			}
+			OR = {
+				has_political_power > 99
+				has_war_with = FROM
+				hidden_trigger = { has_country_flag = promised_retaliation_against@FROM }
+			}
+		}
+
+		launchable = {
+			OR = {
+				has_political_power > 99
+				has_war_with = FROM
+			}
+		}
+
+		target_type = {
+			building = { tags = facility }
+		}
+
+		target_icon = GFX_facility_icon
+		launch_sound = raid_launch_air
+
+		arrow = { type = air }
+
+		unit_requirements = {
+			equipment = {
+				type = { tactical_bomber cas strategic_bomber carrier_tactical_bomber carrier_cas carrier_strategic_bomber guided_missile_equipment ballistic_missile_equipment hypersonic_missile_equipment }
+				amount = { min = 10 }
+			}
+		}
+
+		starting_point = {
+			types = { carrier rocket_site submarine }
+		}
+
+		success_factors = {
+			success = {
+				base = 0.20
+				experience = { weight = 0.3 start_weight = -0.2 reference = 1000 }
+				air_agility = { reference = 200 weight = 0.5 start_weight = -0.5 }
+				reliability = { reference = 1 weight = 0.2 start_weight = -0.1 }
+				air_defence = { reference = 150 weight = 0.2 start_weight = -0.2 }
+				air_superiority = { reference = 1 weight = 0.1 start_weight = -0.100 }
+				anti_air = { reference = 5 weight = -0.25 }
+				radar = { reference = 1 weight = -0.15 }
+				interception = { reference = 500 weight = -0.2 }
+				intel = { weight = 0.5 start_weight = -0.1 start_reference = 10 reference = 100 }
+			}
+			disaster = { base = 0.25 }
+			critical = { base = 0.05 }
+		}
+
+		success_levels = {
+			failure = {
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_failure_losses = yes
+				}
+				victim_effects = { send_raid_event_to_victim = yes }
+			}
+			limited_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_limited = yes
+					clamp_temp_variable = { var = building_damage_by_missile max = 1 }
+					var:target_state = {
+						meta_effect = {
+							text = {
+								damage_building = {
+									tags = facility
+									damage = [DAM]
+									province = var:ROOT.target_province
+									repair_speed_modifier = -0.05
+								}
+							}
+							DAM = "[?building_damage_by_missile]"
+						}
+						raid_reduce_project_progress_ratio = 0.05
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_limited_success_losses = yes
+				}
+			}
+			success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_success = yes
+					clamp_temp_variable = { var = building_damage_by_missile max = 1 }
+					multiply_temp_variable = { building_damage_by_missile = 0.5 }
+					var:target_state = {
+						meta_effect = {
+							text = {
+								damage_building = {
+									tags = facility
+									damage = [DAM]
+									province = var:ROOT.target_province
+									repair_speed_modifier = -0.25
+								}
+							}
+							DAM = "[?building_damage_by_missile]"
+						}
+						raid_reduce_project_progress_ratio = 0.15
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_success_losses = yes
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					calculate_aa_defense_value = yes
+					set_temp_variable = { building_damage_by_missile = 1.25 }
+					set_temp_variable = { raid_damage_mult = 10 }
+					apply_raid_building_damage_critical = yes
+					clamp_temp_variable = { var = building_damage_by_missile max = 1 }
+					var:target_state = {
+						meta_effect = {
+							text = {
+								damage_building = {
+									tags = facility
+									damage = [DAM]
+									province = var:ROOT.target_province
+									repair_speed_modifier = -0.5
+								}
+							}
+							DAM = "[?building_damage_by_missile]"
+						}
+						raid_reduce_project_progress_ratio = 0.25
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -100 }
+					apply_raid_critical_success_losses = yes
+				}
+			}
+		}
+
+		# Carrier-only raids are a player QoL duplicate of the standard air/cruise/drone raids:
+		# every other raid type can already launch from a carrier (see starting_point). These
+		# exist for players who want to keep the operation off their land air bases (e.g. to
+		# avoid retaliation on those bases). Keeping base = 0 with no modifiers leaves the AI
+		# to the non-duplicate raid types. Do not "fix" this by adding modifiers.
+		ai_will_do = { base = 0 }
+	}
+}
