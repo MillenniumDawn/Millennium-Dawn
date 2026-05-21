@@ -12,7 +12,8 @@
 #   4. Handles DLC if/else branches correctly
 #   5. Builds a module -> enabling-tech map from enable_equipment_modules blocks
 #   6. Verifies every module used in a create_equipment_variant is enabled by
-#      a technology the country has set
+#      a technology the country is guaranteed to have under the variant's own
+#      DLC gating (a BBA-only tech does not cover an NSB-gated variant)
 ##########################
 import glob
 import os
@@ -381,13 +382,57 @@ def _parse_if_block(
     return condition, if_techs, else_techs, i
 
 
-def parse_equipment_variants(filepath: str) -> List[Tuple[str, Set[str]]]:
+def _match_brace_end(text: str, pos: int) -> int:
+    """Given pos pointing just past an opening `{`, return the index just past
+    its matching `}`. Returns len(text) if the braces never balance."""
+    depth = 1
+    j = pos
+    while j < len(text) and depth > 0:
+        ch = text[j]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+        j += 1
+    return j
+
+
+def _find_dlc_if_blocks(content: str) -> List[Tuple[int, int, str]]:
+    """Return (start, end, dlc_name) for every positive `has_dlc` if-block.
+
+    `start`/`end` bracket the whole `if = { ... }` span. Only the if-block's
+    own `limit` is inspected, so a nested DLC if does not mistag its parent,
+    and negated (`NOT = { has_dlc }`) gates are skipped.
+    """
+    blocks = []
+    for m in re.finditer(r"\bif\s*=\s*\{", content):
+        end = _match_brace_end(content, m.end())
+        inner = content[m.end() : end - 1]
+        limit = re.search(r"\blimit\s*=\s*\{(.*?)\}", inner, re.DOTALL)
+        if not limit:
+            continue
+        region = limit.group(1)
+        if "NOT" in region:
+            continue
+        dlc = re.search(r'has_dlc\s*=\s*"([^"]+)"', region)
+        if dlc:
+            blocks.append((m.start(), end, dlc.group(1)))
+    return blocks
+
+
+def parse_equipment_variants(
+    filepath: str,
+) -> List[Tuple[str, Set[str], frozenset]]:
     """Parse a history file and return every create_equipment_variant as a
-    (variant_name, set_of_module_names) pair.
+    (variant_name, set_of_module_names, dlc_gating) triple.
 
     Only the modules listed inside the variant's `modules = { ... }` sub-block
     are collected; `upgrades` and other sub-blocks are ignored. The literal
-    value `empty` (an unfilled slot) is skipped.
+    value `empty` (an unfilled slot) is skipped. Both single-line and
+    multi-line `modules` blocks are handled.
+
+    `dlc_gating` is the set of `has_dlc` conditions whose if-block encloses the
+    variant — i.e. the DLCs that must be active for the variant to exist.
     """
     try:
         with open(filepath, "r", encoding="utf-8-sig") as f:
@@ -396,91 +441,78 @@ def parse_equipment_variants(filepath: str) -> List[Tuple[str, Set[str]]]:
         return []
 
     content = strip_comments(content)
-    lines = content.split("\n")
+    dlc_blocks = _find_dlc_if_blocks(content)
 
     variants = []
-    i = 0
-    while i < len(lines):
-        if re.match(r"^\s*create_equipment_variant\s*=\s*\{", lines[i]):
-            name, modules, i = _extract_variant(lines, i)
-            variants.append((name, modules))
-        else:
-            i += 1
+    for m in re.finditer(r"\bcreate_equipment_variant\s*=\s*\{", content):
+        start = m.start()
+        end = _match_brace_end(content, m.end())
+        block = content[m.end() : end - 1]
+
+        name_match = re.search(r'name\s*=\s*"([^"]*)"', block)
+        name = name_match.group(1) if name_match else "?"
+
+        modules = set()
+        mod_block = re.search(r"\bmodules\s*=\s*\{", block)
+        if mod_block:
+            mod_end = _match_brace_end(block, mod_block.end())
+            mod_inner = block[mod_block.end() : mod_end - 1]
+            for entry in re.finditer(
+                r"[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)", mod_inner
+            ):
+                if entry.group(1) != "empty":
+                    modules.add(entry.group(1))
+
+        gating = frozenset(dlc for (s, e, dlc) in dlc_blocks if s <= start < e)
+        variants.append((name, modules, gating))
+
     return variants
-
-
-def _extract_variant(lines: List[str], start: int) -> Tuple[str, Set[str], int]:
-    """Extract (name, modules, next_index) from one create_equipment_variant."""
-    brace_depth = 0
-    i = start
-    name = "?"
-    modules = set()
-    in_modules = False
-    modules_brace_depth = 0
-
-    while i < len(lines):
-        line = lines[i]
-        stripped = line.strip()
-
-        if name == "?":
-            name_match = re.match(r'name\s*=\s*"([^"]*)"', stripped)
-            if name_match:
-                name = name_match.group(1)
-
-        starts_modules = bool(re.match(r"modules\s*=\s*\{", stripped))
-
-        for ch in line:
-            if ch == "{":
-                brace_depth += 1
-            elif ch == "}":
-                brace_depth -= 1
-
-        if starts_modules:
-            in_modules = True
-            modules_brace_depth = brace_depth
-        elif in_modules and brace_depth < modules_brace_depth:
-            in_modules = False
-
-        # Inside modules = { slot = module_name }
-        if in_modules and not starts_modules:
-            mod_match = re.match(r"[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*(\S+)\s*$", stripped)
-            if mod_match:
-                value = mod_match.group(1)
-                if value != "empty":
-                    modules.add(value)
-
-        i += 1
-        if brace_depth <= 0:
-            break
-
-    return name, modules, i
 
 
 def validate_country_equipment(
     args: Tuple[str, Dict[str, Set[str]]],
 ) -> List[str]:
     """Validate that a country's equipment variants only use modules enabled by
-    a technology the country has set. Returns a list of error strings."""
+    a technology the country is guaranteed to have. Returns error strings.
+
+    A variant must be valid in every DLC combination it can appear in. For each
+    variant only the techs guaranteed under its own DLC gating are counted:
+    techs from a DLC the variant requires are always present; techs from a DLC
+    the variant does not depend on count only when present on both the if- and
+    else-paths. This catches a variant whose enabling tech is granted under a
+    different DLC branch than the one gating the variant.
+    """
     filepath, module_techs = args
     filename = os.path.basename(filepath)
 
-    # Effective tech union across every DLC combination. A module is only
-    # flagged when no enabling tech is present in ANY combination, so this
-    # never produces a false positive from DLC branching.
-    tech_sets = parse_history_file(filepath)
-    have = set()
-    for tech_set, _ in tech_sets:
-        have |= tech_set
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+    except Exception:
+        return []
+    lines = strip_comments(content).split("\n")
+
+    base_techs: Set[str] = set()
+    branches: List[Tuple[str, Set[str], Set[str]]] = []
+    _parse_history_blocks(lines, base_techs, branches)
 
     results = []
     seen = set()
-    for name, modules in parse_equipment_variants(filepath):
+    for name, modules, gating in parse_equipment_variants(filepath):
+        # Techs the variant is guaranteed to have whenever its gating holds.
+        have = set(base_techs)
+        for condition, if_techs, else_techs in branches:
+            if condition in gating:
+                have |= if_techs
+            else:
+                have |= if_techs & else_techs
+
         for module in sorted(modules):
             enabling = module_techs.get(module)
             if not enabling:
                 continue  # module needs no tech (always available)
             if enabling & have:
-                continue  # at least one enabling tech is present
+                continue  # at least one enabling tech is guaranteed
             key = (name, module)
             if key in seen:
                 continue
