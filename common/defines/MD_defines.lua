@@ -336,7 +336,7 @@
 	NDefines.NMilitary.BASE_NIGHT_ATTACK_PENALTY = -0.6 -- -0.5
 	NDefines.NMilitary.UNIT_DIGIN_CAP = 10 -- 5
 	NDefines.NMilitary.EXPERIENCE_COMBAT_FACTOR = 0.05 -- 0.25
-	NDefines.NMilitary.EXPERIENCE_LOSS_FACTOR = 0.7 -- 1.00
+	NDefines.NMilitary.EXPERIENCE_LOSS_FACTOR = 0.45 -- 1.00
 	NDefines.NMilitary.EQUIPMENT_COMBAT_LOSS_FACTOR = 0.7 -- 0.7
 	NDefines.NMilitary.SUPPLY_GRACE = 96 -- 72
 	NDefines.NMilitary.MAX_OUT_OF_SUPPLY_DAYS = 45 -- 30
