@@ -114,7 +114,9 @@ def _parse_tech_file(
             if module_techs is not None:
                 if in_enable:
                     if brace_depth >= enable_brace_depth:
-                        mod_match = re.match(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*$", line)
+                        mod_match = re.match(
+                            r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*$", line.strip()
+                        )
                         if mod_match:
                             module_techs[mod_match.group(1)].add(current_tech)
                     if brace_depth < enable_brace_depth:
