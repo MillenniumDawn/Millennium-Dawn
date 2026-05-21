@@ -12,8 +12,8 @@
 #   4. Handles DLC if/else branches correctly
 #   5. Builds a module -> enabling-tech map from enable_equipment_modules blocks
 #   6. Verifies every module used in a create_equipment_variant is enabled by
-#      a technology the country is guaranteed to have under the variant's own
-#      DLC gating (a BBA-only tech does not cover an NSB-gated variant)
+#      a technology the country has in any DLC branch (BBA and NSB content
+#      is interwoven — an NSB variant may use modules from BBA techs)
 ##########################
 import glob
 import os
@@ -475,14 +475,13 @@ def validate_country_equipment(
     args: Tuple[str, Dict[str, Set[str]]],
 ) -> List[str]:
     """Validate that a country's equipment variants only use modules enabled by
-    a technology the country is guaranteed to have. Returns error strings.
+    a technology the country has in any DLC branch. Returns error strings.
 
-    A variant must be valid in every DLC combination it can appear in. For each
-    variant only the techs guaranteed under its own DLC gating are counted:
-    techs from a DLC the variant requires are always present; techs from a DLC
-    the variant does not depend on count only when present on both the if- and
-    else-paths. This catches a variant whose enabling tech is granted under a
-    different DLC branch than the one gating the variant.
+    DLC branches (NSB, BBA, etc.) contain interwoven content: an NSB-gated
+    helicopter variant may use modules whose enabling tech is granted in the
+    BBA block. Both DLCs are active simultaneously in normal play, and
+    create_equipment_variant bypasses module tech checks anyway, so we
+    accept any tech from any branch.
     """
     filepath, module_techs = args
     filename = os.path.basename(filepath)
@@ -501,13 +500,9 @@ def validate_country_equipment(
     results = []
     seen = set()
     for name, modules, gating in parse_equipment_variants(filepath):
-        # Techs the variant is guaranteed to have whenever its gating holds.
         have = set(base_techs)
         for condition, if_techs, else_techs in branches:
-            if condition in gating:
-                have |= if_techs
-            else:
-                have |= if_techs & else_techs
+            have |= if_techs | else_techs
 
         for module in sorted(modules):
             enabling = module_techs.get(module)
