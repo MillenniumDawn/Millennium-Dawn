@@ -387,6 +387,39 @@ A country with MBT bonuses does NOT automatically get APC or IFV bonuses — eac
 
 ---
 
+## Module Technology Validation
+
+Pitfalls 2, 3, and 14 above are enforced automatically. `validate_history_techs.py`
+builds a module → enabling-tech map from every `enable_equipment_modules` block in
+`common/technologies/` and reports any `create_equipment_variant` that uses a
+module without the enabling technology in the country's `set_technology` block. It
+also checks each granted tech's prerequisite chain, is DLC-aware, and runs in CI.
+
+When adding or editing a variant, grant the enabling tech in the matching block:
+
+- Naval and base-game techs → the plain, un-DLC-gated `set_technology` block.
+- No Step Back techs → `set_technology` inside `if = { limit = { has_dlc = "No Step Back" } }`.
+- By Blood Alone techs → `set_technology` inside `if = { limit = { has_dlc = "By Blood Alone" } }`.
+
+Also grant the tech's prerequisites (whatever `leads_to_tech` it), or the
+prerequisite check fails. Run the validator before committing variant changes:
+
+```bash
+python3 tools/validation/validate_history_techs.py --strict
+```
+
+### Inherited-Technology Countries
+
+The release-only nations Alaska (ASK), Confederate States (CSA), Great Lakes
+Confederation (GLC) and New England (NEN) inherit their technology from the
+United States when they spawn. Their history files still carry an explicit
+`set_technology` block matching the equipment variants they define, so the
+designs stay valid and the validator passes whether the country is inspected at
+game start or after release. Keep that block in sync with their variants —
+inheritance happens at spawn and does not satisfy the static check.
+
+---
+
 ## Stockpile Equipment Types (NSB vs Non-NSB)
 
 > **Quick Reference**: For a condensed version of this section, see `.claude/docs/oob-equipment-reference.md`.
