@@ -154,6 +154,42 @@ ai_acceptance = {
 }
 ```
 
+### Mirror Rule (when the action has a custom GUI showing acceptance math)
+
+If your action's scripted GUI displays the player a "AI will accept (+N) / will not accept" breakdown — i.e., you've built a tooltip that previews the engine's decision — you must keep **three** sources in sync. The engine reads `ai_acceptance`; the GUI cannot. The GUI shows a scripted-trigger calculation, which is a manual mirror of the engine math.
+
+Three updates per new modifier:
+
+1. **Engine math** — `ai_acceptance = { X_factor = { base = N modifier = { ... } } }` in the diplomatic action file.
+2. **Mirror calculation** — scripted trigger that re-implements the same logic by accumulating into a temp variable:
+   ```
+   X_AI_will_accept_calculation = {
+       # ...existing components, each accumulating into X_acceptance_temp...
+       set_temp_variable = { X_factor_temp = 0 }
+       if = {
+           limit = { ...same conditions as the engine modifier... }
+           set_temp_variable = { X_factor_temp = N }
+       }
+       add_to_temp_variable = { X_acceptance_temp = X_factor_temp }
+   }
+   ```
+3. **Player breakdown line** — `defined_text` in scripted localisation, plus a loc string and a reference in the headline tooltip key:
+   ```
+   defined_text = {
+       name = X_ai_accept_factor
+       text = {
+           trigger = { ...same logic, sets X_factor_temp... }
+           localization_key = "X_ai_accept_factor_tt"
+       }
+   }
+   # In .yml:
+   X_ai_accept_factor_tt: "Factor Name: [?X_factor_temp|0+]\n"
+   # In the headline title TT:
+   X_AIA_title_TEXT_DELAYED: "Breakdown: ...[X_ai_accept_factor]..."
+   ```
+
+Forgetting any of the three causes the player-facing score to diverge silently from the engine score. Player sees "will accept (+20)", clicks send, gets rejected. Always-check-three. CPD's `CPD_AI_will_accept_calculation` (in `00_peace_deal_triggers.txt`) and the `CPD_ai_accept_*` defined_text entries are concrete examples.
+
 ## AI Desire Structure
 
 `ai_desire` controls how eagerly the AI initiates the action. Standard gates:

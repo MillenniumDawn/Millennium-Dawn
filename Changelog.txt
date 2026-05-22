@@ -5,6 +5,18 @@ v2.0.0
   - [SIN] Increased the year count from 2004 to 2006 for the "Head of the Tigers" achievement
 
  Content:
+  - Reworked the UN voting and international recognition systems to eliminate event spam: removed redundant news events and replaced world-wide broadcasts with targeted notifications
+  - Added milestone news events marking key international recognition thresholds
+  - Pre-seeded real-world recognition state at game start (21 UN members recognising the Republic of China, Taliban recognition by Pakistan, Saudi Arabia, and the UAE, and the Abkhazia/South Ossetia situation)
+  - Expanded the Conditional Peace Deal system with 11 deal terms: 5 state-level (annex, puppet-in-state, demilitarise, liberate, resource rights) and 6 country-level (ceasefire, war reparations, forced neutrality, regime change, military basing, full puppet)
+  - War reparations now transfer a portion of the loser's GDP weekly for one year, appearing as a line item in both sides' budget via the money system
+  - Regime change replaces the target's ruling party with the sender's ideology and applies post-war instability for two years
+  - Forced neutrality removes the target from their faction and bars them from joining or forming alliances for five years
+  - Full puppet turns the entire target nation into a subject state
+  - Military basing grants free passage through the target's territory
+  - Resource rights diverts all resource output from selected states without transferring ownership
+  - Ceasefire ends the war along current front lines with a 720-day truce, clearing all territorial demands from the deal
+  - Liberate now revives dead nations when a core-holder no longer exists, or spawns a new splinter state when no core-holder remains
   - Added ~834 new terrain photo province modifiers across ~90 nations
   - [HKG] Major Hong Kong content expansion: ~142-focus tree across 12 branches (handover, LegCo, housing, police force, triads, 1C2S crisis, democratic reform, infrastructure, healthcare, labour, financial extension, tourism) plus 4 mutually exclusive endgame paths (loyalist puppet, Greater HK Nation, British Wing, City-State of Resistance)
   - [HKG] Added ~32 national spirits and ideas covering housing, policing, financial autonomy, capital flight, Model SAR status, and the Triad criminal mechanic
@@ -15,6 +27,8 @@ v2.0.0
   - [HKG] Added a CHI-side decision event for the anti-extradition crisis so puppeting goes through Beijing's choice rather than being forced from HKG's scope
 
  AI:
+  - AI countries now auto-vote in UN Security Council and General Assembly votes according to their accept, reject, or abstain preferences
+  - Non-state actors now run a gated monthly recognition campaign instead of broadcasting recognition requests every cycle
   - Added AI desire logic to negotiate_operative_release: base 15, opinion/faction/power rank bonuses, PP gating, interest rate kill switch
   - Added AI desire logic to enforce_peace_option: great/super power bonus, faction/subject/opinion bonuses, PP gate, war kill switch
   - Added AI desire logic to propose_energy_load_sharing: surplus check, faction/subject/opinion/government bonuses, PP gating
@@ -108,12 +122,21 @@ v2.0.0
   - Improved AI peace deal proposals: AI now considers faction leadership, power ranking, war contribution, war duration, economic pressure, and enemy surrender progress
   - AI must now have meaningful war contribution before making territorial demands in peace deals
   - AI peace deal acceptance now penalizes excessive demands proportionally
+  - Added three-posture AI Conditional Peace Deal builder (losing, stalemated, winning) with weighted enemy targeting, per-target cooldowns, and term-specific acceptance aversion modifiers
+  - AI overlords now proactively negotiate Conditional Peace Deals on behalf of restricted subjects who cannot initiate deals by autonomy state
   - [BLR] [SOV] AI will no longer pursue Union State decisions when Belarus has not chosen the Union State path
   - [USA] Replaced flat base = 55 AI weighting on all foreign policy decisions with contextual modifiers (historical focus, geopolitical context, leader checks, war penalties)
   - [USA] Extracted Belarus reauthorization act effects (~240 lines) to USA_belarus_reauthorization_act_effect scripted effect
   - [USA] Replaced any_country with any_of_scopes using global.american_nations array for South America autocracy check
 
  Balance:
+  - Increased Conditional Peace Deal base AI reluctance from -50 to -100 to make the AI harder to convince
+  - Added per-term AI aversion modifiers for full puppet, regime change, forced neutrality, military basing, and resource rights demands
+  - Added war-weariness stubbornness modifier that makes the AI harder to negotiate with in prolonged wars
+  - Added ceasefire acceptance bonus for stalemated wars to incentivize the AI to accept ceasefire offers
+  - War reparations set at 0.05% GDP per week capped at 15 billion for one year
+  - VP differential clamped to plus or minus 150 in acceptance calculations to prevent runaway scores
+  - Added 180-day global AI peace cooldown and 360-day per-target cooldown after rejection
   - Increased Fossil Fuel Powerplant base power gain from 1 GW to 2 GW
   - Increased Nuclear Reactor base power gain from 2 GW to 4 GW
   - Rebalanced base worker requirements across all buildings (Civilian Industry 275K→206K, Military Industry 25K→18.8K, Naval Yard 25K→18.8K, Office Sector 630K→473K, Agriculture District 250K→188K, Microchip Plant 50K→37.5K, Composite Plant 50K→37.5K, Synthetic Refinery 245K→184K)
@@ -238,8 +261,11 @@ v2.0.0
   - [HOL] Doubled PP cost (-50 → -100) on decline/cancel options across Dutch event chains
   - [FRA] Rebalanced the_eco: less raw PP/build, more stability, drift defence, and tax
   - [FRA] France now gains +12% influence change against countries holding the_eco
+  - Removed the corporate tax rate modifier from arms sales
 
  Bugfix:
+  - Fixed several NOT-block logic traps in the UN voting, international recognition, and subsidy expiration checks that caused conditions to be evaluated incorrectly
+  - [GER] Restored the Innere Führung idea swap on the "Reform of the Zentrum Innere Führung" focus, which had been dropped due to a casing error
   - Fixed drone reconnaissance raid granting no reward on success; now grants the targeted drone recon buff scaling with success level
   - Fixed influence military aid not deducting equipment from the sender; also added equipment quantity previews to the package size picker
   - Fixed PMC units failing to spawn after hiring while still charging the player
@@ -257,6 +283,7 @@ v2.0.0
   - [LBA/ETH] Fixed Mengistu's Propaganda national spirit never expiring because the Libya focus added it permanently alongside the timed event (Issue #1222)
   - Fixed attacking a political party boosting its support instead of reducing it when the party is the only one in its ideology group (Issue #1218)
   - Fixed labor regulation law charging 50 PP more than displayed when switching tiers (Issue #1234)
+  - Fixed inverted naval shore bombardment defines: HEAVY_GUN_ATTACK_TO_SHORE_BOMBARDMENT and LIGHT_GUN_ATTACK_TO_SHORE_BOMBARDMENT were accidentally swapped in beta naval AI adjustments, restoring heavy (ASHM) to 0.001 and light (cannon) to 0.85 (Issue #1274)
   - Fixed "No Terrorist Threat" faction goal requiring all global terror orgs to be eliminated instead of just having an intelligence agency (Issue #1045)
   - Fixed auto-influence slot removal being blocked for 30 days after adding a country, making it impossible to remove countries when all slots are filled (Issue #1153)
   - Restored suppression values to all land units after the tech merge stripped them, making garrison of occupied territory functional again (Issue #1039)
@@ -531,6 +558,15 @@ v2.0.0
   - [HEZ] Fixed two Hezbollah anti-Zionist support decisions (BRA, COL) writing influence to a misspelled temp variable (`influence_tBRAet` / `influence_tCOLet`), so the influence boost silently went to the wrong default target instead of Brazil/Colombia
   - [POL] Fixed Department of Foreign Influence (DoFI) decisions reappearing after target countries stop existing
   - [POL] Fixed Surround Germany focus not being available after annexing Czechia and Slovakia
+  - [POL] [CZE] Focuses creating a war goal now give targeted country a warning
+  - [POL] Fixed Visegrad Unifications decisions appearing after uniting Visegrad via annexing nations without help of the focus tree branch
+  - [POL] Fixed communist revolution being locked from progression if failed secret army coup
+  - [POL] Fixed communist revolution not stopping decision "Incoming New Solidarity Revolution" after successfully finishing communist revolution
+  - Fixed foreign building investment never constructing anything in the target country and permanently locking an investment slot (Issue #1287)
+  - [ITA] Fixed incorrect scope within civil war "Partisan Activity" dynamic modifier (Issue #1265)
+  - Fixed incorrect checks for national spirit "superpower", while it should be "super_power" (Issue #1265)
+  - Fixed equipment designs across 70 countries equipping weapon, sensor, and engine modules the nation had never researched, leaving those variants invalid; granted the missing technologies (with prerequisites) so every starting design is fielded as intended
+  - Fixed helicopter sensor, avionics, and air-to-air missile modules being unlockable only through By Blood Alone aircraft technology, leaving every starting helicopter design invalid for players without that DLC; the No Step Back helicopter tech tree now enables them
 
  Content:
   - New Content for North korea and South Korea post reuification and unification
@@ -729,6 +765,7 @@ v2.0.0
   - Fixed Russian "The Third Rome" cosmetic tag being able to be overwritten by the country flag decision
 
  Game Rules:
+  - Added "Allow AI Conditional Peace Offers" game rule (default: off) to toggle whether AI nations can initiate monthly Conditional Peace Deals; requires the parent "Allow Conditional Peace Deals" rule to be enabled
   - [ZOM] Added Zombie Spawn Location game rule with India, Central Africa, East Asia, and Multiple Locations options (Issue #205)
   - [ZOM] Added Zombie Spawn Delay game rule with No Delay, 1 Year, 2 Year, and 3 Year countdown options (Issue #205)
   - [ZOM] Added Anti-Zombie Coalition toggle game rule to enable or disable coalition formation (Issue #205)
@@ -753,6 +790,11 @@ v2.0.0
   - Introduced more flavorful text for the satellite access diplomatic actions
   - Removed the weird gap in additional income or additional expenses that came from the market contracts
   - Fixed a number of missing additional income and additional expenses that were missing from the tooltips so you can actually see those bonuses
+  - Rewrote all Conditional Peace Deal tooltips to match the MD diplomatic-action style with detailed mechanical descriptions for each deal term
+  - Added localisation for all new deal terms (resource rights, ceasefire, war reparations, forced neutrality, regime change, military basing, full puppet) including button labels, delayed tooltips, idea names, and idea descriptions
+  - Added AI acceptance block display names for all peace deal acceptance factors so the engine renders readable labels instead of raw block names
+  - Added war reparations income and expense line items to the money system budget tooltip
+  - Added "Allow AI Conditional Peace Offers" game rule localisation with descriptions matching the existing Conditional Peace Deal rule style
   - [BUL] Updated localisation for new dynamic modifier system, removed obsolete tooltip strings
   - Added localisation for peace deal war contribution and deal fairness categories
   - Added missing dynamic modifier tooltip keys for steel exports, volunteer, railway repair, and military spending modifiers
@@ -783,6 +825,9 @@ v2.0.0
   - Removed junk map modes that were lingering in the files and not adding anything
 
  Performance:
+  - The international systems GUI dirty counter is now only bumped from player-initiated paths, preventing AI voters and recognition grants from waking every open GUI
+  - Added dirty variable (global.CPD_dirty) to the Conditional Peace Deal GUI so it only refreshes on player interaction instead of per-tick
+  - AI paths in the peace deal system no longer bump the GUI dirty variable, preventing unnecessary GUI refreshes for all players when the AI builds deals
   - [GER] Implemented on-demand dirty variable system for BFV, Bundeswehr Recovery, and Bavaria scripted GUIs, replacing date-based polling
   - Extracted automatic debt repayment toggle into a shared scripted effect to reduce duplication
   - Replaced reactor-grade material targeted decision and event chain with a single diplomatic action, eliminating per-country visibility checks and event round-trips
@@ -858,6 +903,11 @@ v2.0.0
   - Removed chassis_truck_gen4 and spaa_chassis_truck_gen4 module unlocks from utility vehicle tech
 
  User Interface:
+  - Added UN Security Council and General Assembly auto-vote toggle buttons (accept all, reject all, abstain all) to the international systems view
+  - Overhauled the Conditional Peace Deal builder GUI with live send-status icons, dynamic tooltips showing gate state with concrete numbers, deal recap (demands, concessions, VP), and projected weekly reparations transfer
+  - Added new buttons for all 11 deal terms in the peace deal builder with detailed tooltip descriptions explaining each term's mechanical effects
+  - Expanded AI acceptance breakdown tooltip with per-term aversion modifiers (full puppet, regime change, forced neutrality, military basing, resource rights, ceasefire appeal, war weariness)
+  - Fixed overlapping send-status icons in the Conditional Peace Deal diplomatic action
   - Added countdown tooltip showing days until next Research Slot when upgrading via GDP or GDP/c
   - Fixed the doctrine's text being unreadable due to a black font on a black interface
   - Fixed the Faction Goal popup being off center and weird in the UI

@@ -6,46 +6,92 @@ color: pink
 memory: project
 ---
 
-You are an expert HOI4 focus tree designer for the Millennium Dawn mod.
+# Focus Tree Builder
 
-Read `.claude/docs/focus-tree-reference.md`, `.claude/docs/search-filters.md`, `.claude/rules/general-rules.md`, and `.claude/docs/known-false-positives.md` before working.
+Authors and audits HOI4 focus trees for Millennium Dawn: complete pasteable focus blocks plus matching English localisation.
 
-## Responsibilities
+## When to invoke
 
-1. **Generate** new focus trees/focuses following all standards
-2. **Review** existing trees for compliance
-3. **Standardize** files to match conventions
-4. **Advise** on design, balancing, best practices
+- Need a new focus tree for a country or a new branch on an existing tree.
+- A focus file needs standardization (formatting, missing fields, defaults to omit).
+- A focus's `ai_will_do`, `search_filters`, logging, or bypass logic is broken.
 
-## Required Properties
+## Inputs
 
-See `.claude/docs/focus-tree-reference.md` for exact order. Key requirements:
+The caller passes:
 
-- `id` = `TAG_focus_name`; `icon`; `cost` (default 10)
-- Positioning via `relative_position_id`
-- `search_filters` — always include, two-layer pattern (see `.claude/docs/search-filters.md`)
-- `ai_will_do = { base = N }` — `base` not `factor` at root; include game options checks
-- `completion_reward` with `log = "[GetDateText]: [Root.GetName]: Focus TAG_focus_name"`
-- Omit defaults: `cancel_if_invalid = yes`, `continue_if_invalid = no`, `available_if_capitulated = no`
-- No empty `mutually_exclusive`/`available` blocks
+- The country tag, branch theme (political / economic / military / etc.), and rough scope (single focus, branch, full tree).
+- For audits: a file path or branch diff.
 
-## Important Rules
+## Required reading
 
-- Never `available = { always = no }` on a focus with `bypass` — match the bypass condition
-- High-cost focuses (>= 8, or >= 5 for mil/econ/research): add `factor = 0` modifier for `has_active_mission = bankruptcy_incoming_collapse` in `ai_will_do`
-- Limit permanent effects to 5; use timed ideas for more
-- Cross-nation rewards: add `TT_IF_THEY_ACCEPT`; `TT_IF_THEY_REJECT` only if rejection has consequences
-- Building scripted effects charge treasury internally — don't double-charge
-- All scripting traps from `.claude/rules/general-rules.md` apply
-- Use `if/else` not complementary `if/if`; `* 0.01` not `/ 100`; prefix variables with tag
+`.claude/docs/agent-conventions.md` + standard required reading. Plus:
 
-## Localisation
-
-Generate `TAG_focus_name: "Title"` and `TAG_focus_name_desc: "Description."` for every focus. UTF-8 with BOM, `l_english:`, 1 space indent.
+- `.claude/docs/focus-tree-reference.md` — property order and reference.
+- `.claude/docs/search-filters.md` — approved filter list + two-layer pattern.
 
 ## Workflow
 
-1. Read reference docs and existing country files for patterns
-2. Generate complete, ready-to-paste focus blocks with all properties
-3. Generate localisation entries
-4. Self-verify: IDs, logging, `ai_will_do`, `search_filters`, no empty blocks, tab indentation
+1. **Read existing tree** — Open the country's existing focus file (if any) to match style, positioning conventions, and namespace numbering.
+2. **Draft focus blocks** — Use the property order in `focus-tree-reference.md`. Always include the required properties below.
+3. **Position via `relative_position_id`** — Never absolute coordinates beyond the root.
+4. **Draft localisation** — One key + `_desc` per focus, in the unified `MD_focus_TAG_l_english.yml`.
+5. **Self-verify** — IDs, logging, `ai_will_do`, `search_filters`, no empty blocks, tabs throughout.
+
+## What to check / produce
+
+**Required on every focus**:
+
+- `id = TAG_focus_name` (snake_case, tag-prefixed).
+- `icon = GFX_focus_*`.
+- `cost = N` (default 10; omit if 10).
+- `search_filters = { FOCUS_FILTER_X FOCUS_FILTER_Y }` — two-layer pattern from `search-filters.md`.
+- `ai_will_do = { base = N }` — `base`, not `factor` at root. Include game-options modifiers (`is_historical_focus_on` etc.) where relevant.
+- `completion_reward = { log = "[GetDateText]: [Root.GetName]: Focus TAG_focus_name" ... }`.
+
+**Always omit** these defaults — they are noise:
+
+- `cancel_if_invalid = yes`
+- `continue_if_invalid = no`
+- `available_if_capitulated = no`
+
+**Never write** empty `mutually_exclusive = { }` or `available = { }` blocks — delete them.
+
+**Bypass rule**: never pair `available = { always = no }` with a `bypass` — the focus locks the player forever. Use a condition matching the bypass.
+
+**High-cost guard**: if `cost >= 8` (or `>= 5` for mil/econ/research), add a bankruptcy guard inside `ai_will_do`:
+
+```
+modifier = {
+	factor = 0
+	has_active_mission = bankruptcy_incoming_collapse
+}
+```
+
+**Cross-nation rewards**: after a `country_event = { ... }` fired at another country, add `custom_effect_tooltip = TT_IF_THEY_ACCEPT` and an `effect_tooltip = { ... }` describing the acceptance outcome. Add `TT_IF_THEY_REJECT` only if rejection has real consequences.
+
+**Other rules**:
+
+- Building scripted effects already charge treasury — do not double-charge.
+- Limit permanent passive effects to 5 — use timed ideas for more.
+- Use `if/else` for complementary branches; `* 0.01` not `/ 100`; tag-prefix every country variable.
+- Cross-cutting HOI4 rules from `agent-conventions.md` apply (`original_tag` in `allowed`, case-sensitive identifiers, etc.).
+
+**Localisation**: every focus needs `TAG_focus_name: "Title"` (3-6 words, title case) and `TAG_focus_name_desc: "..."`. UTF-8 with BOM, `l_english:`, 1 space indent.
+
+## Output format
+
+Return:
+
+- **Focus blocks** — pasteable `focus = { ... }` entries, fully populated.
+- **Localisation** — the `.yml` snippet for both keys per focus.
+- **Wiring notes** — if any prerequisite focuses or events need to exist first.
+- **Self-verification checklist** — confirm IDs, logging, filters, ai_will_do, no defaults left in.
+
+## Do NOT
+
+Universal anti-rules from `agent-conventions.md` apply. Plus:
+
+- Do NOT omit `search_filters`, `ai_will_do`, or completion logging from any focus.
+- Do NOT use absolute `x`/`y` for non-root focuses — use `relative_position_id`.
+- Do NOT pair `available = { always = no }` with `bypass` — locks the focus forever.

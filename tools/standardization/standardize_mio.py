@@ -536,9 +536,7 @@ class MIOStandardizer(BaseStandardizer):
                 )
             elif stripped.startswith("visible ="):
                 sub, i = self.extract_block(block_lines, i)
-                sections["visible"].extend(
-                    self.format_nested_block(sub, inner_indent)
-                )
+                sections["visible"].extend(self.format_nested_block(sub, inner_indent))
             elif stripped.startswith(("all_parents =", "any_parent =", "parent =")):
                 key_name = stripped.split("=", 1)[0].strip()
                 if "{" in stripped:
