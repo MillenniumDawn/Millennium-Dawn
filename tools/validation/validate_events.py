@@ -14,6 +14,8 @@
 #   8. mean_time_to_happen with is_triggered_only (MTTH does nothing)
 #   9. Duplicate event IDs
 #  10. Event namespace not declared via add_namespace
+#  11. Hidden events carrying option blocks (should run from immediate)
+#  12. Hidden events carrying pointless localisation (never displayed)
 # Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
 # Adapted for Millennium Dawn with multiprocessing
 ##########################
@@ -111,6 +113,10 @@ _ADD_NAMESPACE_PATTERN = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILI
 _EVENT_ID_PATTERN = re.compile(r"^\tid\s*=\s*(\S+)", re.MULTILINE)
 _RANDOM_EVENTS_PATTERN = re.compile(r"\brandom_events\s*=\s*\{")
 _RANDOM_EVENT_ID_PATTERN = re.compile(r"=\s*([A-Za-z_]\w*\.[\w.]+)")
+_OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
+# Event-level (depth-1) title/desc fields — option-level name fields are
+# nested deeper and are not matched.
+_EVENT_TITLEDESC_PATTERN = re.compile(r"^\t(?:title|desc)\s*=\s*(.+)$", re.MULTILINE)
 
 
 def _extract_random_event_ids(text: str) -> set:
@@ -167,7 +173,8 @@ class Validator(BaseValidator):
         """Parse all event files and return (event_metadata_list, declared_namespaces).
 
         Each metadata dict has: id, type, file, is_major, is_hidden,
-        is_triggered_only, fire_only_once, has_mtth.
+        is_triggered_only, fire_only_once, has_mtth, option_count,
+        title_desc_refs.
         """
         if self._meta_cache is not None:
             return self._meta_cache
@@ -214,6 +221,10 @@ class Validator(BaseValidator):
                         "is_triggered_only": "is_triggered_only = yes" in body,
                         "fire_only_once": "fire_only_once = yes" in body,
                         "has_mtth": "mean_time_to_happen" in body,
+                        "option_count": len(_OPTION_BLOCK_PATTERN.findall(body)),
+                        "title_desc_refs": [
+                            v.strip() for v in _EVENT_TITLEDESC_PATTERN.findall(body)
+                        ],
                     }
                 )
 
@@ -495,6 +506,66 @@ class Validator(BaseValidator):
             category="mtth-triggered-only",
         )
 
+    def validate_hidden_event_options(self):
+        """Flag hidden events that still carry option blocks.
+
+        A hidden event shows no UI, so its option effects should run from
+        immediate = { } instead. When two or more options exist only the
+        first auto-fires — the rest are dead code.
+        """
+        self._log_section("Checking hidden events for option blocks...")
+
+        meta, _ = self._get_event_metadata()
+        results = []
+
+        for ev in meta:
+            if not ev["is_hidden"] or ev["option_count"] == 0:
+                continue
+            count = ev["option_count"]
+            detail = f"{count} option block{'s' if count != 1 else ''}"
+            if count >= 2:
+                detail += " (only the first auto-fires — the rest are dead code)"
+            results.append(f"{ev['id']} - {ev['file']}: {detail}")
+
+        self._report(
+            results,
+            "✓ No hidden events with option blocks",
+            "Hidden events with option blocks (move effects into immediate = { }):",
+            Severity.WARNING,
+            category="hidden-event-has-options",
+        )
+
+    def validate_hidden_event_localisation(self):
+        """Flag hidden events that declare a title or desc field.
+
+        A hidden event shows no window, so a ``title`` / ``desc`` field in its
+        own body is dead — the field and its loc keys should be removed.
+
+        Only fields declared in the event's own body are flagged. A loc key
+        that merely shares the event's ID prefix is NOT flagged: prefixes are
+        sometimes reused by a separate visible event (e.g. the visible
+        ``investments_event.10`` displays ``investments_event.1.t``), so the
+        hidden event ``investments_event.1`` owning no title field is correct.
+        """
+        self._log_section("Checking hidden events for pointless localisation...")
+
+        meta, _ = self._get_event_metadata()
+        results = []
+
+        for ev in meta:
+            if not ev["is_hidden"] or not ev["title_desc_refs"]:
+                continue
+            detail = "; ".join(ev["title_desc_refs"])
+            results.append(f"{ev['id']} - {ev['file']}: {detail}")
+
+        self._report(
+            results,
+            "✓ No hidden events with pointless localisation",
+            "Hidden events with localisation keys (hidden events display nothing — remove these keys):",
+            Severity.WARNING,
+            category="hidden-event-localisation",
+        )
+
     def validate_duplicate_event_ids(self):
         """Flag events that share the same ID.
 
@@ -559,6 +630,8 @@ class Validator(BaseValidator):
         self.validate_news_event_major()
         self.validate_news_fire_only_once()
         self.validate_mtth_triggered_only()
+        self.validate_hidden_event_options()
+        self.validate_hidden_event_localisation()
         self.validate_duplicate_event_ids()
         self.validate_namespace_mismatch()
 
