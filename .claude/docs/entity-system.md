@@ -48,13 +48,39 @@ In MD, 332 of 391 tags have no bespoke entity file at all and resolve straight t
 
 ## File organisation in `gfx/entities/`
 
-- `GENERIC_infantryandvehicles.asset`, `GENERIC_tanks.asset`, `MD4_units_planes.asset`,
-  `MD4_units_ships.asset` — generic `<suffix>_entity` sets used by most countries.
-- `<TAG>_MD_infantryandvehicle.asset` — per-country override sets (~59 tags have one).
+Entity files (`.asset`) define `entity` blocks; pdxmesh files (`.gfx`) define `pdxmesh` blocks
+in `objectTypes = { }`.
+
+### Shared pdxmesh files
+
+| File                           | Contains                                                                     |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| `infantry.gfx`                 | Shared infantry pdxmesh definitions (fallback variants for generic infantry) |
+| `MD_vehicles.gfx`              | Shared vehicle pdxmesh definitions                                           |
+| `MD_smallarms.gfx`             | Shared small-arms pdxmesh definitions                                        |
+| `MD_ships.gfx`                 | Shared ship pdxmesh definitions                                              |
+| `MD_buildings.gfx`             | Shared building pdxmesh definitions                                          |
+| `MD_units_planes.asset`        | Generic plane entity sets                                                    |
+| `MD_units_ships.asset`         | Generic ship entity sets                                                     |
+| `___MD_planes.gfx`             | Additional shared plane pdxmesh definitions                                  |
+| `___MD_tanks_and_vehicles.gfx` | Additional shared tank/vehicle pdxmesh definitions                           |
+
+Pdxmesh naming follows the `MD_` prefix convention (e.g., `MD_mechanized`, `MD_infantry_2`).
+Historical files may still reference the older `MD4_` prefix — both patterns are valid but new
+definitions should use `MD_`.
+
+### Per-country files
+
+- `<TAG>_MD_infantryandvehicle.asset` / `.gfx` — per-country infantry/vehicle entity sets and
+  associated pdxmesh definitions (~59 tags have one).
+- `<TAG>_MD_planes.asset` — per-country plane entity sets (SOV, USA, JAP, GER, etc.).
+- `<TAG>_MD_tanks.asset` / `*_tanks.asset` — per-country tank entity sets.
+- `<TAG>_MD_ships.asset` — per-country ship entity sets.
 - `northamerican_gfx_infantryandvehicle.asset` — a culture-shared set serving all the
   US-balkanization breakaway nations at once.
-- Shared weapon/accessory entities (`*_weapon_*_entity`, `cigarette_entity`, vehicle entities)
-  are `attach`ed by soldier entities and are referenced across many files.
+
+Shared weapon/accessory entities (`*_weapon_*_entity`, `cigarette_entity`, vehicle entities) are
+`attach`ed by soldier entities and are referenced across many files.
 
 ## The division designer model selector (performance note)
 
