@@ -78,13 +78,8 @@ calculate_sepcially_required_legco_seats = {
 
 
 
-# China Naval Procurement Contracts — core scripted effects (Hong Kong)
-# All effects run in HKG country scope unless noted.
-#
-# Up to 3 contracts run at once, held in parallel fixed-size arrays (one entry
-# per slot, index 0-2). A slot is free when HKG_contract_occupied_array^slot = 0.
-# Class enum: 1 = destroyer, 2 = frigate, 3 = attack submarine, 4 = cruiser,
-# 5 = aircraft carrier.
+# Contract class enum: 1 = destroyer, 2 = frigate, 3 = attack submarine,
+# 4 = cruiser, 5 = aircraft carrier.
 
 HKG_contract_initialize = {
 	set_country_flag = HKG_contract_active
@@ -97,7 +92,6 @@ HKG_contract_initialize = {
 	set_variable = { HKG_contract_completed = 0 }
 	set_variable = { HKG_contract_count = 0 }
 	set_variable = { HKG_contract_gui_dirty = 0 }
-	# Thresholds referenced by comparisons elsewhere — no magic numbers in logic.
 	set_variable = { HKG_contract_band_low = 25 }
 	set_variable = { HKG_contract_band_mid = 50 }
 	set_variable = { HKG_contract_band_high = 75 }
@@ -105,14 +99,12 @@ HKG_contract_initialize = {
 	set_variable = { HKG_contract_standing_gain = 10 }
 	set_variable = { HKG_contract_standing_loss = 15 }
 	set_variable = { HKG_contract_max_slots = 3 }
-	# Days added to every active contract whenever a further one is signed.
 	set_variable = { HKG_contract_grace = 90 }
 	set_variable = { HKG_contract_version = 2 }
 	HKG_contract_build_slots = yes
 	HKG_contract_refresh_gui = yes
 }
 
-# (Re)builds the 3 contract slots as parallel fixed-size arrays, all empty.
 HKG_contract_build_slots = {
 	clear_array = HKG_contract_occupied_array
 	clear_array = HKG_contract_class_array
@@ -140,10 +132,8 @@ HKG_contract_build_slots = {
 	}
 }
 
-# Migrates a save created before the multi-contract rebuild: builds the slot
-# arrays and config the old version lacked, while preserving standing, lifetime
-# revenue and the fulfilled-contract record. Any single in-flight v1 contract is
-# dropped — its scalar variables are simply left orphaned and unread.
+# Any single in-flight v1 contract is dropped; its scalar variables are left
+# orphaned and unread by design.
 HKG_contract_migrate_v2 = {
 	set_variable = { HKG_contract_version = 2 }
 	set_variable = { HKG_contract_count = 0 }
@@ -161,8 +151,6 @@ HKG_contract_migrate_v2 = {
 	HKG_contract_refresh_gui = yes
 }
 
-# Mirrors the array slots into plain scalar variables for the GUI / loc, which
-# read scalars reliably. Called after every change to contract state.
 HKG_contract_refresh_gui = {
 	set_variable = { HKG_contract_disp_class_0 = HKG_contract_class_array^0 }
 	set_variable = { HKG_contract_disp_quota_0 = HKG_contract_quota_array^0 }
@@ -182,9 +170,6 @@ HKG_contract_refresh_gui = {
 	add_to_variable = { HKG_contract_gui_dirty = 1 }
 }
 
-# Builds a pending offer. A license contract supplies China's own design and may
-# request a class HKG cannot yet build; a normal contract is limited to classes
-# HKG already has the hull technology for.
 HKG_contract_generate_offer = {
 	set_variable = { HKG_contract_offer_license = 0 }
 	random_list = {
@@ -238,7 +223,6 @@ HKG_contract_generate_offer = {
 	add_to_variable = { HKG_contract_gui_dirty = 1 }
 }
 
-# Sets quota / deadline / reward package for the rolled offer.
 HKG_contract_set_offer_terms = {
 	if = {
 		limit = { check_variable = { HKG_contract_offer_class = 1 } }
@@ -284,8 +268,6 @@ HKG_contract_set_offer_terms = {
 		set_variable = { HKG_contract_offer_productivity = 45 }
 		set_variable = { HKG_contract_offer_idea_days = 730 }
 	}
-	# Escort orders scale to China's naval drive: 2 ships when the PLA Navy is
-	# expanding hard, 1 otherwise. Capital ships are always single-hull orders.
 	if = {
 		limit = {
 			OR = {
@@ -296,8 +278,6 @@ HKG_contract_set_offer_terms = {
 		}
 		set_variable = { HKG_contract_offer_quota = 1 }
 	}
-	# License contracts pay a premium and allow extra time — China is handing
-	# over a finished design and expects it built to spec.
 	if = {
 		limit = { check_variable = { HKG_contract_offer_license = 1 } }
 		multiply_variable = { HKG_contract_offer_funds = 1.5 }
@@ -307,7 +287,6 @@ HKG_contract_set_offer_terms = {
 		round_variable = HKG_contract_offer_pp
 		round_variable = HKG_contract_offer_deadline
 	}
-	# Negotiated terms (capstone decision): richer reward, longer deadline.
 	if = {
 		limit = { has_country_flag = HKG_contract_better_terms }
 		multiply_variable = { HKG_contract_offer_funds = 1.25 }
@@ -319,13 +298,11 @@ HKG_contract_set_offer_terms = {
 		round_variable = HKG_contract_offer_productivity
 		round_variable = HKG_contract_offer_deadline
 	}
-	# Advance (half) payment — shown in the offer event, paid on signing.
 	set_variable = { HKG_contract_offer_advance = HKG_contract_offer_funds }
 	multiply_variable = { HKG_contract_offer_advance = 0.5 }
 	round_variable = HKG_contract_offer_advance
 }
 
-# Commits the pending offer into the first free contract slot.
 HKG_contract_accept_offer = {
 	set_temp_variable = { free_slot = -1 }
 	for_loop_effect = {
@@ -354,13 +331,10 @@ HKG_contract_accept_offer = {
 		subtract_from_temp_variable = { final_pay = HKG_contract_offer_advance }
 		set_variable = { HKG_contract_final_array^free_slot = final_pay }
 		add_to_variable = { HKG_contract_count = 1 }
-		# Advance payment on signing — money into the treasury and crew manpower,
-		# since Hong Kong must man the ships it is about to build for the PLA Navy.
 		set_temp_variable = { treasury_change = HKG_contract_offer_advance }
 		modify_treasury_effect = yes
 		add_to_variable = { HKG_contract_funds = HKG_contract_offer_advance }
 		add_manpower = 1000
-		# Juggling several contracts buys time on all of them.
 		if = {
 			limit = { check_variable = { HKG_contract_count > 1 } }
 			for_loop_effect = {
@@ -372,7 +346,6 @@ HKG_contract_accept_offer = {
 				}
 			}
 		}
-		# License contract: China supplies the design — grant the hull technology.
 		if = {
 			limit = { check_variable = { HKG_contract_offer_license = 1 } }
 			HKG_contract_grant_license_tech = yes
@@ -382,9 +355,8 @@ HKG_contract_accept_offer = {
 	HKG_contract_refresh_gui = yes
 }
 
-# Grants the hull technology for the licensed class so HKG can build to spec.
-# Each set_technology also grants the predecessor tech so the naval tree stays
-# visually connected — no skipped-ahead gaps.
+# Each set_technology also grants the predecessor tech so the naval tree has no
+# skipped-ahead gaps.
 HKG_contract_grant_license_tech = {
 	if = {
 		limit = { check_variable = { HKG_contract_offer_class = 1 } }
@@ -407,9 +379,8 @@ HKG_contract_grant_license_tech = {
 	}
 }
 
-# Grants only the FIRST naval technology HKG has not yet researched, walking a
-# prerequisite-ordered list. One connected step per call — never skips ahead,
-# never grants a pile. Used by the carrier-branch focuses.
+# Grants only the first naval tech HKG has not yet researched. The list is
+# prerequisite-ordered, so each call advances exactly one connected step.
 HKG_contract_unlock_next_naval_tech = {
 	if = { limit = { NOT = { has_tech = tech_naval_systems_engineering } } set_technology = { tech_naval_systems_engineering = 1 popup = yes } }
 	else_if = { limit = { NOT = { has_tech = tech_early_naval_weapon_systems } } set_technology = { tech_early_naval_weapon_systems = 1 popup = yes } }
@@ -435,8 +406,6 @@ HKG_contract_decline_offer = {
 	add_to_variable = { HKG_contract_gui_dirty = 1 }
 }
 
-# Called by a deliver decision after one ship of deliver_class is transferred.
-# Credits the most urgent (nearest-deadline) active contract of that class.
 HKG_contract_credit_delivery = {
 	set_temp_variable = { target_slot = -1 }
 	set_temp_variable = { best_deadline = 999999 }
@@ -466,7 +435,6 @@ HKG_contract_credit_delivery = {
 	HKG_contract_refresh_gui = yes
 }
 
-# Pays out a completed contract slot and frees it.
 HKG_contract_fulfill_slot = {
 	log = "[GetDateText]: [Root.GetName]: HKG_contract_fulfill_slot - contract paid out"
 	set_variable = { HKG_contract_last_payment = HKG_contract_final_array^done_slot }
@@ -489,7 +457,6 @@ HKG_contract_fulfill_slot = {
 	country_event = { id = HKG_contract.2 days = 1 }
 }
 
-# Penalises a contract slot whose deadline lapsed unmet, then frees it.
 HKG_contract_miss_slot = {
 	add_timed_idea = { idea = HKG_contract_beijing_displeasure days = 365 }
 	subtract_from_variable = { HKG_contract_standing = HKG_contract_standing_loss }
@@ -500,7 +467,6 @@ HKG_contract_miss_slot = {
 	country_event = { id = HKG_contract.3 days = 1 }
 }
 
-# Wipes the contract held in slot done_slot.
 HKG_contract_clear_slot = {
 	set_variable = { HKG_contract_occupied_array^done_slot = 0 }
 	set_variable = { HKG_contract_class_array^done_slot = 0 }
@@ -514,7 +480,6 @@ HKG_contract_clear_slot = {
 	set_variable = { HKG_contract_license_array^done_slot = 0 }
 }
 
-# Weekly deadline countdown — see 99_HKG_on_actions.txt.
 HKG_contract_weekly_tick = {
 	set_temp_variable = { HKG_contract_tick_changed = 0 }
 	for_loop_effect = {
@@ -537,7 +502,6 @@ HKG_contract_weekly_tick = {
 	}
 }
 
-# Weekly capstone watchdog. Skips entirely once the capstone has fired.
 HKG_contract_check_capstone = {
 	if = {
 		limit = { NOT = { has_country_flag = HKG_contract_capstone_done } }
