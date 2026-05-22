@@ -1,7 +1,8 @@
 add_namespace = bulg
 add_namespace = bul_ACDI
 add_namespace = bul_mech
-add_namespace = bulg_export
+add_namespace = bul_expansion
+add_namespace = bul_yug
 
 country_event = {
 	id = bulg.1
@@ -504,7 +505,7 @@ country_event = {
 		}
 		create_country_leader = {
 			name = "Krasimir Karakachanov"
-			desc = "Virgin Gigachad"
+			desc = "A nationalist politician and co-founder of VMRO, Karakachanov served as Deputy Prime Minister and Defence Minister, known for his hardline stances on minority rights and immigration."
 			picture = "krasimir_karakachanov.dds"
 			expire = "2050.1.1"
 			ideology = Nat_populism
@@ -1500,5 +1501,512 @@ country_event = {
 			modifier = recent_actions_negative
 			target = USA
 		}
+	}
+}
+
+country_event = {
+	id = bul_expansion.1
+	title = bul_expansion.1.t
+	desc = bul_expansion.1.d
+	picture = GFX_BUL_expansion_event
+	is_triggered_only = yes
+
+	option = {
+		name = bul_expansion.1.a
+		log = "[GetDateText]: [This.GetName]: bul_expansion.1.a executed"
+		add_opinion_modifier = {
+			modifier = BUL_expansion_supported
+			target = FROM
+		}
+		reverse_add_opinion_modifier = {
+			modifier = BUL_expansion_supported
+			target = FROM
+		}
+		add_opinion_modifier = {
+			modifier = BUL_expansion_trade_support
+			target = FROM
+		}
+		reverse_add_opinion_modifier = {
+			modifier = BUL_expansion_trade_support
+			target = FROM
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > 30
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > 10
+				}
+			}
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+		}
+	}
+
+	option = {
+		name = bul_expansion.1.b
+		log = "[GetDateText]: [This.GetName]: bul_expansion.1.b executed"
+		add_opinion_modifier = {
+			modifier = BUL_expansion_condemned
+			target = FROM
+		}
+		reverse_add_opinion_modifier = {
+			modifier = BUL_expansion_condemned
+			target = FROM
+		}
+		add_opinion_modifier = {
+			modifier = BUL_expansion_trade_condemned
+			target = FROM
+		}
+		reverse_add_opinion_modifier = {
+			modifier = BUL_expansion_trade_condemned
+			target = FROM
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				factor = 0
+				has_opinion = {
+					target = FROM
+					value > 30
+				}
+			}
+		}
+	}
+}
+
+### BUL_yugoslavian_question event chain ###
+
+country_event = {
+	id = bul_yug.1
+	title = bul_yug.1.t
+	desc = bul_yug.1.d
+	picture = GFX_special_forces
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = bul_yug.1.a
+		log = "[GetDateText]: [Root.GetName]: bul_yug.1.a executed"
+		ai_chance = { base = 5 }
+		SER = { country_event = { id = bul_yug.2 days = 7 } }
+		BOS = { country_event = { id = bul_yug.3 days = 7 } }
+		CRO = { country_event = { id = bul_yug.4 days = 7 } }
+		SLV = { country_event = { id = bul_yug.5 days = 7 } }
+	}
+
+	option = {
+		name = bul_yug.1.b
+		log = "[GetDateText]: [Root.GetName]: bul_yug.1.b executed"
+		ai_chance = { base = 5 }
+		set_variable = { BUL_sanctions_count = 0 }
+		set_variable = { BUL_sanctions_tax_value = 0 }
+		add_dynamic_modifier = { modifier = BUL_sanctions_modifier }
+		SER = {
+			every_owned_state = {
+				BUL = { add_state_claim = PREV }
+			}
+		}
+		if = {
+			limit = { country_exists = MNT }
+			MNT = {
+				every_owned_state = {
+					BUL = { add_state_claim = PREV }
+				}
+			}
+		}
+		if = {
+			limit = { country_exists = KOS }
+			KOS = {
+				every_owned_state = {
+					BUL = { add_state_claim = PREV }
+				}
+			}
+		}
+		BOS = {
+			every_owned_state = {
+				BUL = { add_state_claim = PREV }
+			}
+		}
+		CRO = {
+			every_owned_state = {
+				BUL = { add_state_claim = PREV }
+			}
+		}
+		SLV = {
+			every_owned_state = {
+				BUL = { add_state_claim = PREV }
+			}
+		}
+		SER = { country_event = { id = bul_yug.6 days = 1 } }
+		BOS = { country_event = { id = bul_yug.6 days = 1 } }
+		CRO = { country_event = { id = bul_yug.6 days = 1 } }
+		SLV = { country_event = { id = bul_yug.6 days = 1 } }
+		if = {
+			limit = { country_exists = MNT }
+			MNT = { country_event = { id = bul_yug.6 days = 1 } }
+		}
+		if = {
+			limit = { country_exists = KOS }
+			KOS = { country_event = { id = bul_yug.6 days = 1 } }
+		}
+		USA = { country_event = { id = bul_yug.7 days = 3 } }
+		SOV = { country_event = { id = bul_yug.7 days = 3 } }
+		TUR = { country_event = { id = bul_yug.7 days = 3 } }
+		GER = { country_event = { id = bul_yug.7 days = 3 } }
+		FRA = { country_event = { id = bul_yug.7 days = 3 } }
+	}
+}
+
+country_event = {
+	id = bul_yug.2
+	title = bul_yug.2.t
+	desc = bul_yug.2.d
+	picture = GFX_paris_convention
+	is_triggered_only = yes
+
+	option = {
+		name = bul_yug.2.a
+		log = "[GetDateText]: [This.GetName]: bul_yug.2.a executed"
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 50
+				has_opinion = { target = FROM value > 25 }
+			}
+			modifier = {
+				add = 50
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				factor = 0
+				has_opinion = { target = FROM value < -25 }
+			}
+			modifier = {
+				add = -50
+				is_in_faction = yes
+				NOT = { is_in_faction_with = FROM }
+			}
+		}
+		if = {
+			limit = { FROM = { is_in_faction = no } }
+			FROM = { create_faction = BUL_all_of_geo }
+		}
+		FROM = { add_to_faction = PREV }
+	}
+
+	option = {
+		name = bul_yug.2.b
+		log = "[GetDateText]: [This.GetName]: bul_yug.2.b executed"
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 50
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+		add_opinion_modifier = { target = FROM modifier = drama }
+	}
+}
+
+country_event = {
+	id = bul_yug.3
+	title = bul_yug.3.t
+	desc = bul_yug.3.d
+	picture = GFX_paris_convention
+	is_triggered_only = yes
+
+	option = {
+		name = bul_yug.3.a
+		log = "[GetDateText]: [This.GetName]: bul_yug.3.a executed"
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 50
+				has_opinion = { target = FROM value > 25 }
+			}
+			modifier = {
+				add = 50
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				factor = 0
+				has_opinion = { target = FROM value < -25 }
+			}
+			modifier = {
+				add = -50
+				is_in_faction = yes
+				NOT = { is_in_faction_with = FROM }
+			}
+		}
+		if = {
+			limit = { FROM = { is_in_faction = no } }
+			FROM = { create_faction = BUL_all_of_geo }
+		}
+		FROM = { add_to_faction = PREV }
+	}
+
+	option = {
+		name = bul_yug.3.b
+		log = "[GetDateText]: [This.GetName]: bul_yug.3.b executed"
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 50
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+		add_opinion_modifier = { target = FROM modifier = drama }
+	}
+}
+
+country_event = {
+	id = bul_yug.4
+	title = bul_yug.4.t
+	desc = bul_yug.4.d
+	picture = GFX_paris_convention
+	is_triggered_only = yes
+
+	option = {
+		name = bul_yug.4.a
+		log = "[GetDateText]: [This.GetName]: bul_yug.4.a executed"
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 50
+				has_opinion = { target = FROM value > 25 }
+			}
+			modifier = {
+				add = 50
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				factor = 0
+				has_opinion = { target = FROM value < -25 }
+			}
+			modifier = {
+				add = -50
+				is_in_faction = yes
+				NOT = { is_in_faction_with = FROM }
+			}
+		}
+		if = {
+			limit = { FROM = { is_in_faction = no } }
+			FROM = { create_faction = BUL_all_of_geo }
+		}
+		FROM = { add_to_faction = PREV }
+	}
+
+	option = {
+		name = bul_yug.4.b
+		log = "[GetDateText]: [This.GetName]: bul_yug.4.b executed"
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 50
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+		add_opinion_modifier = { target = FROM modifier = drama }
+	}
+}
+
+country_event = {
+	id = bul_yug.5
+	title = bul_yug.5.t
+	desc = bul_yug.5.d
+	picture = GFX_paris_convention
+	is_triggered_only = yes
+
+	option = {
+		name = bul_yug.5.a
+		log = "[GetDateText]: [This.GetName]: bul_yug.5.a executed"
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 50
+				has_opinion = { target = FROM value > 25 }
+			}
+			modifier = {
+				add = 50
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				factor = 0
+				has_opinion = { target = FROM value < -25 }
+			}
+			modifier = {
+				add = -50
+				is_in_faction = yes
+				NOT = { is_in_faction_with = FROM }
+			}
+		}
+		if = {
+			limit = { FROM = { is_in_faction = no } }
+			FROM = { create_faction = BUL_all_of_geo }
+		}
+		FROM = { add_to_faction = PREV }
+	}
+
+	option = {
+		name = bul_yug.5.b
+		log = "[GetDateText]: [This.GetName]: bul_yug.5.b executed"
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 50
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+		add_opinion_modifier = { target = FROM modifier = drama }
+	}
+}
+
+country_event = {
+	id = bul_yug.6
+	title = bul_yug.6.t
+	desc = bul_yug.6.d
+	picture = GFX_special_forces
+	is_triggered_only = yes
+
+	option = {
+		name = bul_yug.6.a
+		log = "[GetDateText]: [This.GetName]: bul_yug.6.a executed"
+		ai_chance = { base = 1 }
+		add_opinion_modifier = { target = FROM modifier = BUL_annexation_hostility }
+	}
+}
+
+country_event = {
+	id = bul_yug.7
+	title = bul_yug.7.t
+	desc = bul_yug.7.d
+	picture = GFX_special_forces
+	is_triggered_only = yes
+
+	option = {
+		name = bul_yug.7.a
+		log = "[GetDateText]: [This.GetName]: bul_yug.7.a executed"
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 30
+				has_government = democratic
+			}
+			modifier = {
+				add = 20
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+		add_opinion_modifier = { target = FROM modifier = BUL_annexation_hostility }
+		FROM = {
+			if = {
+				limit = { NOT = { has_idea = BUL_under_sanctions } }
+				add_ideas = BUL_under_sanctions
+			}
+			add_to_variable = { BUL_sanctions_count = 1 }
+			set_variable = { BUL_sanctions_tax_value = BUL_sanctions_count }
+			multiply_variable = { var = BUL_sanctions_tax_value value = -0.02 }
+		}
+		hidden_effect = {
+			BUL = { country_event = { id = bul_yug.8 days = 1 } }
+		}
+	}
+
+	option = {
+		name = bul_yug.7.b
+		log = "[GetDateText]: [This.GetName]: bul_yug.7.b executed"
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 30
+				has_opinion = { target = FROM value > 25 }
+			}
+			modifier = {
+				add = 20
+				OR = {
+					has_government = neutrality
+					has_government = fascism
+				}
+			}
+		}
+		add_opinion_modifier = { target = FROM modifier = BUL_supporter_trust }
+		add_opinion_modifier = { target = FROM modifier = BUL_supporter_trade }
+		FROM = {
+			add_opinion_modifier = { target = PREV modifier = BUL_supporter_trust }
+			add_opinion_modifier = { target = PREV modifier = BUL_supporter_trade }
+			add_to_variable = { BUL_sanctions_count = -0.5 }
+			clamp_variable = {
+				var = BUL_sanctions_count
+				min = 0
+				max = 5
+			}
+			set_variable = { BUL_sanctions_tax_value = BUL_sanctions_count }
+			multiply_variable = { var = BUL_sanctions_tax_value value = -0.02 }
+		}
+		hidden_effect = {
+			BUL = { country_event = { id = bul_yug.9 days = 1 } }
+		}
+	}
+
+	option = {
+		name = bul_yug.7.c
+		log = "[GetDateText]: [This.GetName]: bul_yug.7.c executed"
+		ai_chance = { base = 15 }
+	}
+}
+
+country_event = {
+	id = bul_yug.8
+	title = bul_yug.8.t
+	desc = bul_yug.8.d
+	picture = GFX_special_forces
+	is_triggered_only = yes
+
+	option = {
+		name = bul_yug.8.a
+		log = "[GetDateText]: [Root.GetName]: bul_yug.8.a executed"
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = {
+	id = bul_yug.9
+	title = bul_yug.9.t
+	desc = bul_yug.9.d
+	picture = GFX_paris_convention
+	is_triggered_only = yes
+
+	option = {
+		name = bul_yug.9.a
+		log = "[GetDateText]: [Root.GetName]: bul_yug.9.a executed"
+		ai_chance = { base = 1 }
 	}
 }

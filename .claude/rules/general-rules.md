@@ -40,6 +40,8 @@ For the full reference (variables, arrays, loops, collections, formatted loc), r
 
 For more comprehensive HOI4 scripting docs (effects, triggers, modifiers, wiki links), read `.claude/docs/documentation-references.md`.
 
+For 3D unit models — the mesh/entity/animation chain, the `<TAG>` → `<graphical_culture>` → generic entity lookup, and `gfx/entities/` organisation — read `.claude/docs/entity-system.md`.
+
 # Comments
 
 Default to writing **no comments**. Only add one when the WHY is non-obvious:
@@ -71,6 +73,30 @@ NOT = { has_idea = foo has_idea = bar }
 # Correct — blocks each independently
 NOT = { has_idea = foo }
 NOT = { has_idea = bar }
+```
+
+## NOR is not a valid trigger
+
+`NOR` is **not** a HOI4 trigger keyword — it is Norway's country tag. Writing `NOR = { ... }` opens a country scope for Norway, not a logical NOR block. There is no built-in NOR trigger; express "none of these" as separate `NOT` blocks or as `NOT = { OR = { ... } }`:
+
+```
+# Wrong — this scopes into Norway, not a logical NOR
+NOR = {
+    has_government = democratic
+    has_idea = social_05
+}
+
+# Correct — separate NOT blocks
+NOT = { has_government = democratic }
+NOT = { has_idea = social_05 }
+
+# Also correct — NOT wrapping an OR
+NOT = {
+    OR = {
+        has_government = democratic
+        has_idea = social_05
+    }
+}
 ```
 
 ## Tautological OR in ai_will_do modifiers

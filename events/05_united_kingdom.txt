@@ -4,6 +4,7 @@ add_namespace = United_Kingdom_News
 add_namespace = devolution
 add_namespace = ENG_military
 add_namespace = ENG_parliament
+add_namespace = ENG_royal_visits
 add_namespace = british_flavor
 
 #### Inner Circle
@@ -26,177 +27,6 @@ add_namespace = ENG_inner_circle_edward
 add_namespace = ENG_inner_circle_philip
 add_namespace = ENG_inner_circle_william
 
-########################## Asteroid Mining Event Chain #########################
-#Launching the Asteroid Mining Initiative
-country_event = {
-	id = ENG_military.001
-	title = ENG_military.001.t
-	desc = ENG_military.001.d
-	picture = GFX_trump_announcement
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = { #Just need to wait for an asteroid...
-		name = ENG_military.001.a
-		log = "[GetDateText]: [This.GetName]: ENG_military.001.a executed"
-		custom_effect_tooltip = ENG_dependency_gui_tooltip2
-	}
-}
-#Asteroid Spotted
-country_event = {
-	id = ENG_military.002
-	title = ENG_military.002.t
-	desc = ENG_military.002.d
-	picture = GFX_asteroid
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = { #Let's get that baby into orbit
-		name = ENG_military.002.a
-		log = "[GetDateText]: [This.GetName]: ENG_military.002.a executed"
-		hidden_effect = {
-			country_event = {
-				id = ENG_military.003
-				days = 50
-				random_hours = 1200
-			}
-		}
-		custom_effect_tooltip = asteroid_mining_spotted_tt
-	}
-}
-#Asteroid in Orbit
-country_event = {
-	id = ENG_military.003
-	title = ENG_asteroid_mining.t
-	desc = ENG_asteroid_mining.d
-	picture = GFX_asteroid_in_orbit
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = { #Mining shall begin
-		name = ENG_military.003.a
-		log = "[GetDateText]: [This.GetName]: ENG_military.003.a executed"
-		hidden_effect = {
-			country_event = {
-				id = ENG_military.004
-				days = 100
-				random_hours = 2400
-			}
-		}
-		custom_effect_tooltip = asteroid_mining_orbit_tt
-		add_to_variable = { asteroid_mining_rate = 2 } #It's set here so the next event's localization isn't screwed up
-		add_to_variable = { global.asteroid_mining_rate = 2 }
-	}
-}
-#Profits from Mining Start Pouring in
-country_event = {
-	id = ENG_military.004
-	title = ENG_military.004.t
-	desc = ENG_military.004.d
-	picture = GFX_asteroid_in_orbit
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = { #Huzzah!
-		name = ENG_military.004.a
-		log = "[GetDateText]: [This.GetName]: ENG_military.004.a executed"
-		set_temp_variable = { party_index = 20 }
-		set_temp_variable = { party_popularity_increase = 0.002 }
-		add_relative_party_popularity = yes
-		capital_scope = {
-			add_resource = {
-				type = tungsten
-				amount = 1
-			}
-			add_resource = {
-				type = steel
-				amount = 2
-			}
-		}
-		add_to_variable = { global.asteroid_mineral_count = 100 }
-		custom_effect_tooltip = asteroid_mining_mined_tt
-		add_to_variable = { treasury = asteroid_mining_rate }
-		custom_effect_tooltip = asteroid_mining_revenue_tt
-		set_country_flag = asteroid_mining
-		news_event = donald_trump_news.3
-	}
-}
-#Profits from Asteroid Mining
-country_event = {
-	id = ENG_military.005
-	title = ENG_military.005.t
-	desc = ENG_military.005.d
-	picture = GFX_asteroid_in_orbit
-
-	is_triggered_only = yes
-
-	option = { #Excellent!
-		name = ENG_military.005.a
-		log = "[GetDateText]: [This.GetName]: ENG_military.005.a executed"
-		if = {
-			limit = {
-				check_variable = {
-					var = global.asteroid_mineral_count
-					value = asteroid_mining_rate
-					compare = greater_than_or_equals
-				}
-			}
-			custom_effect_tooltip = asteroid_mining_mined_tt
-			add_to_variable = { treasury = asteroid_mining_rate }
-			subtract_from_variable = { global.asteroid_mineral_count = asteroid_mining_rate }
-			custom_effect_tooltip = asteroid_mining_revenue_tt
-		}
-		else = {
-			custom_effect_tooltip = asteroid_mining_not_enough_tt
-		}
-		hidden_effect = {
-			if = {
-				limit = {
-					NOT = { has_global_flag = asteroid_mining_start }
-				}
-				set_global_flag = asteroid_mining_start
-				every_country = {
-					limit = {
-						num_of_factories > 40
-					}
-					country_event = { days = 20 id = ENG_military.006 }
-				}
-			}
-		}
-	}
-}
-#Potential for Asteroid Mining
-country_event = {
-	id = ENG_military.006
-	title = ENG_military.006.t
-	desc = ENG_military.006.d
-	picture = GFX_asteroid_in_orbit
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	option = { #Invest in Asteroid Mining
-		name = ENG_military.006.a
-		log = "[GetDateText]: [This.GetName]: ENG_military.006.a executed"
-		add_political_power = -50
-		set_temp_variable = { treasury_change = -25 }
-		modify_treasury_effect = yes
-		add_to_variable = { asteroid_mining_rate = 1 }
-		add_to_variable = { global.asteroid_mining_rate = 1 }
-		capital_scope = {
-			add_resource = {
-				type = steel
-				amount = 1
-			}
-		}
-		custom_effect_tooltip = asteroid_mining_opportunity_tt
-		set_country_flag = asteroid_mining
-		set_global_flag = asteroid_mining
-	}
-	option = { #Too expensive and a waste of our time!
-		name = ENG_military.006.b
-		log = "[GetDateText]: [This.GetName]: ENG_military.006.b executed"
-	}
-}
 ########################## Moon And Space Event Chain #########################
 #Moon Outpost
 country_event = {
@@ -6683,6 +6513,168 @@ country_event = {
 				MODIFIER = ENG_economy_modifier
 			}
 		add_to_variable = { ENG_health_cost = 0.015 tooltip = health_cost_multiplier_modifier_tt }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Royal Visits Abroad — region selection event
+country_event = {
+	id = ENG_royal_visits.1
+	title = ENG_royal_visits.1.t
+	desc = ENG_royal_visits.1.d
+	picture = GFX_report_event_generic_read_write
+
+	is_triggered_only = yes
+
+	option = {
+		name = ENG_royal_visits.1.a
+		log = "[GetDateText]: [This.GetName]: ENG_royal_visits.1.a executed"
+		if = {
+			limit = { country_exists = SAF }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { influence_target = SAF }
+			change_influence_percentage = yes
+			SAF = {
+				add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+				reverse_add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+			}
+		}
+		if = {
+			limit = { country_exists = NIG }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { influence_target = NIG }
+			change_influence_percentage = yes
+			NIG = {
+				add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+				reverse_add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+			}
+		}
+		if = {
+			limit = { country_exists = ETH }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { influence_target = ETH }
+			change_influence_percentage = yes
+			ETH = {
+				add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+				reverse_add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = ENG_royal_visits.1.b
+		log = "[GetDateText]: [This.GetName]: ENG_royal_visits.1.b executed"
+		if = {
+			limit = { country_exists = IND }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { influence_target = IND }
+			change_influence_percentage = yes
+			IND = {
+				add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+				reverse_add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+			}
+		}
+		if = {
+			limit = { country_exists = PAK }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { influence_target = PAK }
+			change_influence_percentage = yes
+			PAK = {
+				add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+				reverse_add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+			}
+		}
+		if = {
+			limit = { country_exists = MAL }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { influence_target = MAL }
+			change_influence_percentage = yes
+			MAL = {
+				add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+				reverse_add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = ENG_royal_visits.1.c
+		log = "[GetDateText]: [This.GetName]: ENG_royal_visits.1.c executed"
+		if = {
+			limit = { country_exists = EGY }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { influence_target = EGY }
+			change_influence_percentage = yes
+			EGY = {
+				add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+				reverse_add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+			}
+		}
+		if = {
+			limit = { country_exists = SAU }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { influence_target = SAU }
+			change_influence_percentage = yes
+			SAU = {
+				add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+				reverse_add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+			}
+		}
+		if = {
+			limit = { country_exists = TUR }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { influence_target = TUR }
+			change_influence_percentage = yes
+			TUR = {
+				add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+				reverse_add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		name = ENG_royal_visits.1.e
+		log = "[GetDateText]: [This.GetName]: ENG_royal_visits.1.e executed"
+		if = {
+			limit = { country_exists = BRA }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { influence_target = BRA }
+			change_influence_percentage = yes
+			BRA = {
+				add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+				reverse_add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+			}
+		}
+		if = {
+			limit = { country_exists = ARG }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { influence_target = ARG }
+			change_influence_percentage = yes
+			ARG = {
+				add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+				reverse_add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+			}
+		}
+		if = {
+			limit = { country_exists = MEX }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { influence_target = MEX }
+			change_influence_percentage = yes
+			MEX = {
+				add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+				reverse_add_opinion_modifier = { target = ENG modifier = ENG_monarch_outreach }
+			}
+		}
 		ai_chance = {
 			base = 1
 		}
