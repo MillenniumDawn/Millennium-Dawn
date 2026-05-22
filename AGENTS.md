@@ -105,6 +105,10 @@ Equipment variants (`common/ai_equipment/`): see `.claude/docs/ai-equipment-refe
 - CV planes: `ai_type` must be one of `cv_fighter`/`cv_interceptor`/`cv_cas`/`cv_naval_bomber`/`cv_suicide`
 - `equipment_variant_production_factor` penalties cascade to subtypes — keep base penalties <= -25%
 
+## Shell Session
+
+- **Never reset the working directory.** Do not `cd` to a different repo, drive, or temp path "just to run one command." The working directory is fixed for the session; relative paths and follow-up edits assume it. Use absolute paths or per-command flags (e.g., `git -C <dir>`, `grep <path>`, `pre-commit run --files <path>`) instead. Even commands that appear to recover (`cd <repo-root> && ...`) have already broken the invariant for any tool that snapshots cwd before the command runs.
+
 ## Git Commits
 
 - Do NOT add `Co-Authored-By` or sign commits — the project does not use commit signing
