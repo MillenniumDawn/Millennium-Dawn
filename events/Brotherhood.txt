@@ -17,6 +17,7 @@ country_event = {
 		NOT = { is_muslim_brotherhood = yes }
 		NOT = { has_country_flag = BROTHER_civil_war_has_started }
 		NOT = { has_country_flag = recently_had_muslim_brotherhood_demanded_election }
+		NOT = { has_country_flag = mb_accommodation }
 		NOT = { has_idea = muslim_brotherhood_crackdown }
 		neutrality > 0.35
 	}
@@ -78,6 +79,34 @@ country_event = {
 
 		ai_chance = {
 			base = 0
+			modifier = {
+				add = 1
+				has_government = democratic
+				neutrality < 0.45
+			}
+		}
+	}
+
+	# Co-opt moderate Brotherhood figures without conceding elections
+	option = {
+		name = brotherhood.6.c
+		log = "[GetDateText]: [This.GetName]: brotherhood.6.c option executed"
+		trigger = {
+			neutrality < 0.6
+		}
+		set_country_flag = { flag = mb_accommodation value = 1 days = 1825 }
+		add_popularity = { ideology = neutrality popularity = -0.05 }
+		recalculate_party = yes
+		add_stability = 0.03
+		add_political_power = -75
+
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 2
+				has_government = democratic
+				neutrality < 0.45
+			}
 		}
 	}
 }
@@ -234,6 +263,57 @@ country_event = {
 
 		ai_chance = {
 			base = 0
+		}
+	}
+}
+
+##### A foreign patron offers to bankroll a crackdown (fired by MB_bankroll_crackdown)
+# FROM = the patron country
+country_event = {
+	id = brotherhood.11
+	title = brotherhood.11.t
+	desc = brotherhood.11.d
+	is_triggered_only = yes
+	trigger = {
+		is_in_array = { global.possible_muslim_brotherhood_nation = THIS.id }
+		has_game_rule = { rule = rule_disable_muslim_brotherhood_civil_war option = no }
+		NOT = { is_muslim_brotherhood = yes }
+		NOT = { has_government = neutrality }
+		NOT = { has_idea = muslim_brotherhood_crackdown }
+	}
+
+	option = {
+		name = brotherhood.11.a
+		log = "[GetDateText]: [This.GetName]: brotherhood.11.a option executed"
+		custom_effect_tooltip = muslim_brotherhood_crackdown_tt
+		hidden_effect = { add_ideas = muslim_brotherhood_crackdown }
+		add_political_power = 50
+		add_opinion_modifier = { target = FROM modifier = MB_crackdown_patron }
+		reverse_add_opinion_modifier = { target = FROM modifier = MB_crackdown_patron }
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 4
+				neutrality > 0.4
+			}
+			modifier = {
+				factor = 0
+				democratic > 0.6
+			}
+		}
+	}
+
+	option = {
+		name = brotherhood.11.b
+		log = "[GetDateText]: [This.GetName]: brotherhood.11.b option executed"
+
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				neutrality > 0.45
+			}
 		}
 	}
 }
