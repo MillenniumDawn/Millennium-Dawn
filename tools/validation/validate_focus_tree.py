@@ -30,6 +30,9 @@ from validator_common import (
 # Opening of a focus_tree or shared_focus block
 _FOCUS_TREE_START = re.compile(r"\bfocus_tree\s*=\s*\{")
 _SHARED_FOCUS_DEF_START = re.compile(r"\bshared_focus\s*=\s*\{")
+# joint_focus blocks are top-level focus definitions (used by multi-country
+# joint focus trees) and behave like shared_focus for prerequisite resolution.
+_JOINT_FOCUS_DEF_START = re.compile(r"\bjoint_focus\s*=\s*\{")
 
 # focus ID extraction
 _FOCUS_ID_RE = re.compile(r"\bfocus\s*=\s*\{")
@@ -136,34 +139,37 @@ def parse_focus_file(
 
     text = strip_comments(raw)
 
-    # --- collect shared_focus definitions (top-level) ---
-    pos = 0
-    while True:
-        m = _SHARED_FOCUS_DEF_START.search(text, pos)
-        if not m:
-            break
-        body, end = _extract_block(text, m.start())
-        if not body:
-            pos = m.end()
-            continue
-        id_match = _ID_LINE_RE.search(body)
-        if id_match:
-            sfid = id_match.group(1)
-            abs_line = _line_of(text, m.start())
-            prereq_groups: List[List[str]] = []
-            for pb in _PREREQ_BLOCK_RE.finditer(body):
-                group = _PREREQ_FOCUS_RE.findall(pb.group(1))
-                if group:
-                    prereq_groups.append(group)
-            # Store shared focus definition for the global duplicate check and
-            # prerequisite resolution.  We also expose (line, filepath) so the
-            # caller can report accurate locations.
-            result["shared_defs"][sfid] = {
-                "line": abs_line,
-                "filepath": filepath,
-                "prereq_groups": prereq_groups,
-            }
-        pos = end
+    # --- collect shared_focus and joint_focus definitions (top-level) ---
+    # joint_focus blocks are top-level focus definitions just like shared_focus;
+    # both are registered as valid prerequisite targets.
+    for def_start in (_SHARED_FOCUS_DEF_START, _JOINT_FOCUS_DEF_START):
+        pos = 0
+        while True:
+            m = def_start.search(text, pos)
+            if not m:
+                break
+            body, end = _extract_block(text, m.start())
+            if not body:
+                pos = m.end()
+                continue
+            id_match = _ID_LINE_RE.search(body)
+            if id_match:
+                sfid = id_match.group(1)
+                abs_line = _line_of(text, m.start())
+                prereq_groups: List[List[str]] = []
+                for pb in _PREREQ_BLOCK_RE.finditer(body):
+                    group = _PREREQ_FOCUS_RE.findall(pb.group(1))
+                    if group:
+                        prereq_groups.append(group)
+                # Store the definition for the global duplicate check and
+                # prerequisite resolution.  We also expose (line, filepath) so
+                # the caller can report accurate locations.
+                result["shared_defs"][sfid] = {
+                    "line": abs_line,
+                    "filepath": filepath,
+                    "prereq_groups": prereq_groups,
+                }
+            pos = end
 
     # --- collect focus_tree blocks ---
     pos = 0

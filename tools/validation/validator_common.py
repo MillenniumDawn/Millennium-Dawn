@@ -602,7 +602,9 @@ class BaseValidator:
     def _load_localisation_keys(self) -> frozenset:
         """Load all defined keys from English localisation yml files."""
         yml_files = self._collect_files(["localisation/english/**/*.yml"])
-        key_pattern = re.compile(r"^[ \t]*([\w.]+)\s*:", re.MULTILINE)
+        # Keys may contain hyphens (e.g. NKO_Anti-Submarine); include '-' in the
+        # character class or such keys are truncated at the hyphen and lost.
+        key_pattern = re.compile(r"^[ \t]*([\w.\-]+)\s*:", re.MULTILINE)
         all_keys: set = set()
         for filepath in yml_files:
             try:
