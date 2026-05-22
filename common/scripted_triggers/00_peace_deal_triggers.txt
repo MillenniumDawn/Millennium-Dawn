@@ -29,8 +29,8 @@
 			ROOT = {
 				check_variable = { months_at_war > 18 }
 				surrender_progress < 0.4
-				strength_ratio@THIS < 1.3
-				strength_ratio@THIS > 0.7
+				check_variable = { strength_ratio@THIS < 1.3 }
+				check_variable = { strength_ratio@THIS > 0.7 }
 			}
 			THIS = { surrender_progress < 0.4 }
 		}
@@ -105,6 +105,13 @@
 				multiply_temp_variable = { CPD_RSB_temp = 100 }
 				round_temp_variable = CPD_RSB_temp
 				subtract_from_temp_variable = { CPD_RSB_temp = 100 }
+				# Dampen when ROOT has no faction — engine metric includes all
+				# co-belligerents, which massively inflates the ratio for solo senders.
+				if = {
+					limit = { ROOT = { NOT = { is_in_faction = yes } } }
+					multiply_temp_variable = { CPD_RSB_temp = 0.25 }
+					round_temp_variable = CPD_RSB_temp
+				}
 				clamp_temp_variable = {
 					var = CPD_RSB_temp
 					max = 1000

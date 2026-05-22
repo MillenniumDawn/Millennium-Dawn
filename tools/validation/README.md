@@ -29,20 +29,20 @@ Output is color-coded. Pass `--no-color` for plain text (e.g. in log files).
 
 ### Standard (run by default)
 
-| Validator                             | Checks                                                                                                         |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| **validate_ai_equipment.py**          | Nations blocked from generic AI equipment roles without custom coverage; duplicate role names                  |
-| **validate_ai_navy.py**               | Naval taskforce ship types, fleet template references, mission types, composition sizes                        |
-| **validate_ai_roles.py**              | `role_ratio`/`build_army` references match defined roles in `common/ai_templates/`                             |
-| **validate_cosmetic_tags.py**         | Missing cosmetic tags (used but never set); unused cosmetic tag colors                                         |
-| **validate_decisions.py**             | Duplicate decisions; unused categories; missing AI weight; custom cost tooltip presence                        |
-| **validate_defines.py**               | MD defines exist in vanilla with correct namespace; duplicate defines within MD                                |
-| **validate_events.py**                | Events missing `is_triggered_only = yes`; unsupported title/desc combinations; redundant long-form event calls |
-| **validate_factions.py**              | Faction template/goal/rule/icon references exist; no duplicate IDs; valid rule types                           |
-| **validate_history_techs.py**         | History files grant all prerequisite technologies (DLC-aware)                                                  |
-| **validate_localisation.py**          | Duplicate keys; unpaired brackets; color code mismatches; orphaned `_tt` tooltip keys                          |
-| **validate_oob_units.py**             | Unit names in OOB files and AI templates match canonical names in `common/units/`                              |
-| **validate_scripted_localisation.py** | Scripted loc keys used but not defined; defined but never referenced; missing GFX icons                        |
+| Validator                             | Checks                                                                                                                                   |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **validate_ai_equipment.py**          | Nations blocked from generic AI equipment roles without custom coverage; duplicate role names                                            |
+| **validate_ai_navy.py**               | Naval taskforce ship types, fleet template references, mission types, composition sizes                                                  |
+| **validate_ai_roles.py**              | `role_ratio`/`build_army` references match defined roles in `common/ai_templates/`                                                       |
+| **validate_cosmetic_tags.py**         | Missing cosmetic tags (used but never set); unused cosmetic tag colors                                                                   |
+| **validate_decisions.py**             | Duplicate decisions; unused categories; missing AI weight; custom cost tooltip presence                                                  |
+| **validate_defines.py**               | MD defines exist in vanilla with correct namespace; duplicate defines within MD                                                          |
+| **validate_events.py**                | Events missing `is_triggered_only = yes`; unsupported title/desc combinations; redundant long-form event calls                           |
+| **validate_factions.py**              | Faction template/goal/rule/icon references exist; no duplicate IDs; valid rule types                                                     |
+| **validate_history_techs.py**         | History files grant all prerequisite technologies, and equipment variant designs only use modules the country has researched (DLC-aware) |
+| **validate_localisation.py**          | Duplicate keys; unpaired brackets; color code mismatches; orphaned `_tt` tooltip keys                                                    |
+| **validate_oob_units.py**             | Unit names in OOB files and AI templates match canonical names in `common/units/`                                                        |
+| **validate_scripted_localisation.py** | Scripted loc keys used but not defined; defined but never referenced; missing GFX icons                                                  |
 
 ### Slow (opt-in with `--include-slow`)
 

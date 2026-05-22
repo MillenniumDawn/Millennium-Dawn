@@ -80,36 +80,14 @@ CPD_demand_concede_switch = {
 	}
 	if = {
 		limit = { ROOT = { has_country_flag = CPD_giving_concessions } }
-		# ROOT = {
-		# 	# CPD_calculate_monetary_war_reparations = yes
-		# 	# more calculate things can go in here
-		# }
-		every_country = {
-			limit = {
-				has_war_with = PREV
-				OR = {
-					tag = ROOT
-					is_subject_of = ROOT
-					AND = {
-						ROOT = { is_faction_leader = yes }
-						is_in_faction_with = ROOT
-					}
-				}
-			}
+		# Concessions: only ROOT's own states — subjects' and faction allies' territory
+		# cannot be offered, preventing the puppet-territory concession exploit.
+		ROOT = {
 			for_each_loop = {
 				array = owned_states
 				if = {
-					limit = {
-						OR = {
-							controls_state = v
-							ROOT = { controls_state = v }
-							any_allied_country = {
-								has_war_with = ROOT
-								controls_state = v
-							}
-						}
-					}
-					ROOT = { add_to_array = { CPD_state_list = v } }
+					limit = { controls_state = v }
+					add_to_array = { CPD_state_list = v }
 				}
 			}
 		}
@@ -627,7 +605,7 @@ CPD_sign_peace_deal = {
 			limit = { ROOT = { has_country_flag = CPD_full_puppet_demand } }
 			if = {
 				limit = { THIS = { is_faction_leader = yes } }
-				THIS = { dissolve_faction = yes }
+				THIS = { dismantle_faction = yes }
 			}
 			ROOT = { puppet = THIS }
 		}
@@ -635,7 +613,7 @@ CPD_sign_peace_deal = {
 			limit = { ROOT = { has_country_flag = CPD_full_puppet_concession } }
 			if = {
 				limit = { ROOT = { is_faction_leader = yes } }
-				ROOT = { dissolve_faction = yes }
+				ROOT = { dismantle_faction = yes }
 			}
 			THIS = { puppet = ROOT }
 		}
@@ -944,7 +922,7 @@ CPD_liberate_in_state_effect = {
 				var:CPD_liberated_state = { is_core_of = PREV }
 				exists = yes
 			}
-			var:CPD_liberated_state_owner = { remove_core = PREV }
+			var:CPD_liberated_state_owner = { remove_state_core = PREV }
 			transfer_state = var:CPD_liberated_state
 		}
 	}
@@ -964,7 +942,7 @@ CPD_liberate_in_state_effect = {
 				var:CPD_liberated_state = { is_core_of = PREV }
 				exists = no
 			}
-			var:CPD_liberated_state_owner = { remove_core = PREV }
+			var:CPD_liberated_state_owner = { remove_state_core = PREV }
 			transfer_state = var:CPD_liberated_state
 		}
 	}

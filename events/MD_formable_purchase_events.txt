@@ -1,0 +1,111 @@
+add_namespace = formable_buy
+
+# Offer received by holder of a formable core state
+# Vars on THIS (holder): formable_offer_buyer_id, formable_offer_state_id
+country_event = {
+	id = formable_buy.1
+	title = formable_buy.1.t
+	desc = formable_buy.1.d
+	picture = GFX_report_event_generic_sign_treaty2
+
+	is_triggered_only = yes
+
+	option = {
+		name = formable_buy.1.a
+		log = "[GetDateText]: [This.GetName]: formable_buy.1.a executed"
+		# Western/democratic governments will not sell away their own core territory
+		trigger = {
+			NOT = {
+				has_government = democratic
+				var:formable_offer_state_id = { is_core_of = ROOT }
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+			modifier = {
+				factor = 0
+				threat > 0.5
+			}
+			modifier = {
+				factor = 0.5
+				threat > 0.25
+			}
+			modifier = {
+				factor = 0.1
+				is_major = yes
+			}
+			modifier = {
+				factor = 0.15
+				var:formable_offer_state_id = { is_core_of = ROOT }
+			}
+		}
+		set_temp_variable = { treasury_change = 100 }
+		modify_treasury_effect = yes
+		set_temp_variable = { tmp_buyer_id = formable_offer_buyer_id }
+		set_temp_variable = { tmp_state_id = formable_offer_state_id }
+		var:tmp_buyer_id = {
+			transfer_state = var:tmp_state_id
+			country_event = { id = formable_buy.2 hours = 6 }
+		}
+		clr_country_flag = formable_purchase_offer_pending
+		clear_variable = formable_offer_buyer_id
+		clear_variable = formable_offer_state_id
+	}
+
+	option = {
+		name = formable_buy.1.b
+		log = "[GetDateText]: [This.GetName]: formable_buy.1.b executed"
+		ai_chance = {
+			base = 70
+		}
+		set_temp_variable = { tmp_buyer_id = formable_offer_buyer_id }
+		var:tmp_buyer_id = {
+			set_temp_variable = { treasury_change = 100 }
+			modify_treasury_effect = yes
+			country_event = { id = formable_buy.3 hours = 6 }
+		}
+		clr_country_flag = formable_purchase_offer_pending
+		clear_variable = formable_offer_buyer_id
+		clear_variable = formable_offer_state_id
+	}
+}
+
+# Acceptance notification sent to the buyer
+# Vars on THIS (buyer): formable_offer_holder_id, formable_offer_state_id
+country_event = {
+	id = formable_buy.2
+	title = formable_buy.2.t
+	desc = formable_buy.2.d
+	picture = GFX_report_event_generic_handshake
+
+	is_triggered_only = yes
+
+	option = {
+		name = formable_buy.2.a
+		log = "[GetDateText]: [This.GetName]: formable_buy.2.a executed"
+		clear_variable = formable_offer_holder_id
+		clear_variable = formable_offer_state_id
+	}
+}
+
+# Rejection notification sent to the buyer (refund already issued in formable_buy.1.b)
+# Vars on THIS (buyer): formable_offer_holder_id, formable_offer_state_id
+country_event = {
+	id = formable_buy.3
+	title = formable_buy.3.t
+	desc = formable_buy.3.d
+	picture = GFX_report_event_generic_diplomacy
+
+	is_triggered_only = yes
+
+	option = {
+		name = formable_buy.3.a
+		log = "[GetDateText]: [This.GetName]: formable_buy.3.a executed"
+		clear_variable = formable_offer_holder_id
+		clear_variable = formable_offer_state_id
+	}
+}

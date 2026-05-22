@@ -5,6 +5,9 @@ v2.0.0
   - [SIN] Increased the year count from 2004 to 2006 for the "Head of the Tigers" achievement
 
  Content:
+  - Reworked the UN voting and international recognition systems to eliminate event spam: removed redundant news events and replaced world-wide broadcasts with targeted notifications
+  - Added milestone news events marking key international recognition thresholds
+  - Pre-seeded real-world recognition state at game start (21 UN members recognising the Republic of China, Taliban recognition by Pakistan, Saudi Arabia, and the UAE, and the Abkhazia/South Ossetia situation)
   - Expanded the Conditional Peace Deal system with 11 deal terms: 5 state-level (annex, puppet-in-state, demilitarise, liberate, resource rights) and 6 country-level (ceasefire, war reparations, forced neutrality, regime change, military basing, full puppet)
   - War reparations now transfer a portion of the loser's GDP weekly for one year, appearing as a line item in both sides' budget via the money system
   - Regime change replaces the target's ruling party with the sender's ideology and applies post-war instability for two years
@@ -24,6 +27,8 @@ v2.0.0
   - [HKG] Added a CHI-side decision event for the anti-extradition crisis so puppeting goes through Beijing's choice rather than being forced from HKG's scope
 
  AI:
+  - AI countries now auto-vote in UN Security Council and General Assembly votes according to their accept, reject, or abstain preferences
+  - Non-state actors now run a gated monthly recognition campaign instead of broadcasting recognition requests every cycle
   - Added AI desire logic to negotiate_operative_release: base 15, opinion/faction/power rank bonuses, PP gating, interest rate kill switch
   - Added AI desire logic to enforce_peace_option: great/super power bonus, faction/subject/opinion bonuses, PP gate, war kill switch
   - Added AI desire logic to propose_energy_load_sharing: surplus check, faction/subject/opinion/government bonuses, PP gating
@@ -256,8 +261,11 @@ v2.0.0
   - [HOL] Doubled PP cost (-50 → -100) on decline/cancel options across Dutch event chains
   - [FRA] Rebalanced the_eco: less raw PP/build, more stability, drift defence, and tax
   - [FRA] France now gains +12% influence change against countries holding the_eco
+  - Removed the corporate tax rate modifier from arms sales
 
  Bugfix:
+  - Fixed several NOT-block logic traps in the UN voting, international recognition, and subsidy expiration checks that caused conditions to be evaluated incorrectly
+  - [GER] Restored the Innere Führung idea swap on the "Reform of the Zentrum Innere Führung" focus, which had been dropped due to a casing error
   - Fixed drone reconnaissance raid granting no reward on success; now grants the targeted drone recon buff scaling with success level
   - Fixed influence military aid not deducting equipment from the sender; also added equipment quantity previews to the package size picker
   - Fixed PMC units failing to spawn after hiring while still charging the player
@@ -554,6 +562,11 @@ v2.0.0
   - [POL] Fixed Visegrad Unifications decisions appearing after uniting Visegrad via annexing nations without help of the focus tree branch
   - [POL] Fixed communist revolution being locked from progression if failed secret army coup
   - [POL] Fixed communist revolution not stopping decision "Incoming New Solidarity Revolution" after successfully finishing communist revolution
+  - Fixed foreign building investment never constructing anything in the target country and permanently locking an investment slot (Issue #1287)
+  - [ITA] Fixed incorrect scope within civil war "Partisan Activity" dynamic modifier (Issue #1265)
+  - Fixed incorrect checks for national spirit "superpower", while it should be "super_power" (Issue #1265)
+  - Fixed equipment designs across 70 countries equipping weapon, sensor, and engine modules the nation had never researched, leaving those variants invalid; granted the missing technologies (with prerequisites) so every starting design is fielded as intended
+  - Fixed helicopter sensor, avionics, and air-to-air missile modules being unlockable only through By Blood Alone aircraft technology, leaving every starting helicopter design invalid for players without that DLC; the No Step Back helicopter tech tree now enables them
 
  Content:
   - New Content for North korea and South Korea post reuification and unification
@@ -812,6 +825,7 @@ v2.0.0
   - Removed junk map modes that were lingering in the files and not adding anything
 
  Performance:
+  - The international systems GUI dirty counter is now only bumped from player-initiated paths, preventing AI voters and recognition grants from waking every open GUI
   - Added dirty variable (global.CPD_dirty) to the Conditional Peace Deal GUI so it only refreshes on player interaction instead of per-tick
   - AI paths in the peace deal system no longer bump the GUI dirty variable, preventing unnecessary GUI refreshes for all players when the AI builds deals
   - [GER] Implemented on-demand dirty variable system for BFV, Bundeswehr Recovery, and Bavaria scripted GUIs, replacing date-based polling
@@ -889,6 +903,7 @@ v2.0.0
   - Removed chassis_truck_gen4 and spaa_chassis_truck_gen4 module unlocks from utility vehicle tech
 
  User Interface:
+  - Added UN Security Council and General Assembly auto-vote toggle buttons (accept all, reject all, abstain all) to the international systems view
   - Overhauled the Conditional Peace Deal builder GUI with live send-status icons, dynamic tooltips showing gate state with concrete numbers, deal recap (demands, concessions, VP), and projected weekly reparations transfer
   - Added new buttons for all 11 deal terms in the peace deal builder with detailed tooltip descriptions explaining each term's mechanical effects
   - Expanded AI acceptance breakdown tooltip with per-term aversion modifiers (full puppet, regime change, forced neutrality, military basing, resource rights, ceasefire appeal, war weariness)
