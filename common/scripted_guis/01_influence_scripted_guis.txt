@@ -68,24 +68,35 @@ scripted_gui = {
 			}
 
 			opt_aid_button_click_enabled = {
-				#selected country have lower GDP/C than us
-				custom_trigger_tooltip = {
-					set_temp_variable = { gdp_total_temp = ROOT.gdp_total }
-					multiply_temp_variable = { gdp_total_temp = 2 }
-					check_variable = { gdp_total_temp > THIS.gdp_total }
-					tooltip = gdp_total_cannot_be_double_ours
+				if = {
+					limit = { has_game_rule = { rule = rule_allow_MP_enhancements option = yes } }
+					#Recently Sent Aid
+					custom_trigger_tooltip = {
+						tooltip = influence_aid_button_TT
+						ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } }
+					}
+					ERI_is_not_transitional_government = yes
 				}
-				#Num of Civ Greater
-				custom_trigger_tooltip = {
-					tooltip = more_civs_than_other
-					check_variable = { num_of_civilian_factories < ROOT.num_of_civilian_factories }
+				else = {
+					#selected country have lower GDP/C than us
+					custom_trigger_tooltip = {
+						set_temp_variable = { gdp_total_temp = ROOT.gdp_total }
+						multiply_temp_variable = { gdp_total_temp = 2 }
+						check_variable = { gdp_total_temp > THIS.gdp_total }
+						tooltip = gdp_total_cannot_be_double_ours
+					}
+					#Num of Civ Greater
+					custom_trigger_tooltip = {
+						tooltip = more_civs_than_other
+						check_variable = { num_of_civilian_factories < ROOT.num_of_civilian_factories }
+					}
+					#Recently Sent Aid
+					custom_trigger_tooltip = {
+						tooltip = influence_aid_button_TT
+						ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } }
+					}
+					ERI_is_not_transitional_government = yes
 				}
-				#Recently Sent Aid
-				custom_trigger_tooltip = {
-					tooltip = influence_aid_button_TT
-					ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } }
-				}
-				ERI_is_not_transitional_government = yes
 			}
 
 			opt_target_other_button_click_enabled = {
@@ -330,9 +341,18 @@ scripted_gui = {
 				ROOT = { # Player Nation
 					save_event_target_as = influence_sender
 					PREV = { # THIS Nation
-						country_event = influence.0
-						ROOT = {
-							set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 }
+						save_event_target_as = influence_recipient
+						if = {
+							limit = { has_game_rule = { rule = rule_allow_MP_enhancements option = yes } }
+							# MP path: the cooldown flag is set in mp_economic_aid_transfer,
+							# only after an aid amount is actually chosen (influence.2 has no cancel option).
+							ROOT = { country_event = influence.2 }
+						}
+						else = {
+							country_event = influence.0
+							ROOT = {
+								set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 }
+							}
 						}
 					}
 				}
