@@ -65,7 +65,7 @@ calculate_total_legco_seats = {
 # Simple majority threshold (half of total + 1)
 calculate_required_legco_seats = {
 	set_variable = { HKG_legco_required_seats = HKG_total_legco_seats }
-	divide_variable = { HKG_legco_required_seats = 2 }
+	multiply_variable = { HKG_legco_required_seats = 0.5 }
 	round_variable = HKG_legco_required_seats
 }
 
@@ -88,6 +88,10 @@ calculate_sepcially_required_legco_seats = {
 
 HKG_contract_initialize = {
 	set_country_flag = HKG_contract_active
+	if = {
+		limit = { country_exists = CHI }
+		CHI = { set_country_flag = HKG_contract_system_live }
+	}
 	set_variable = { HKG_contract_standing = 0 }
 	set_variable = { HKG_contract_funds = 0 }
 	set_variable = { HKG_contract_completed = 0 }
@@ -317,7 +321,7 @@ HKG_contract_set_offer_terms = {
 	}
 	# Advance (half) payment — shown in the offer event, paid on signing.
 	set_variable = { HKG_contract_offer_advance = HKG_contract_offer_funds }
-	divide_variable = { HKG_contract_offer_advance = 2 }
+	multiply_variable = { HKG_contract_offer_advance = 0.5 }
 	round_variable = HKG_contract_offer_advance
 }
 
@@ -471,8 +475,6 @@ HKG_contract_fulfill_slot = {
 	add_to_variable = { HKG_contract_funds = HKG_contract_final_array^done_slot }
 	set_temp_variable = { pp_reward = HKG_contract_pp_array^done_slot }
 	add_political_power = pp_reward
-	set_temp_variable = { prod_reward = HKG_contract_prod_array^done_slot }
-	add_to_variable = { overall_productivity = prod_reward }
 	set_temp_variable = { idea_len = HKG_contract_idea_array^done_slot }
 	add_timed_idea = { idea = HKG_contract_dockyard_revenue days = idea_len }
 	add_to_variable = { HKG_contract_standing = HKG_contract_standing_gain }
@@ -514,12 +516,14 @@ HKG_contract_clear_slot = {
 
 # Weekly deadline countdown — see 99_HKG_on_actions.txt.
 HKG_contract_weekly_tick = {
+	set_temp_variable = { HKG_contract_tick_changed = 0 }
 	for_loop_effect = {
 		start = 0
 		end = 3
 		if = {
 			limit = { check_variable = { HKG_contract_occupied_array^v = 1 } }
 			subtract_from_variable = { HKG_contract_deadline_array^v = 7 }
+			set_temp_variable = { HKG_contract_tick_changed = 1 }
 			if = {
 				limit = { check_variable = { HKG_contract_deadline_array^v < 1 } }
 				set_temp_variable = { gone_slot = v }
@@ -527,23 +531,29 @@ HKG_contract_weekly_tick = {
 			}
 		}
 	}
-	HKG_contract_refresh_gui = yes
+	if = {
+		limit = { check_variable = { HKG_contract_tick_changed = 1 } }
+		HKG_contract_refresh_gui = yes
+	}
 }
 
-# Weekly capstone watchdog.
+# Weekly capstone watchdog. Skips entirely once the capstone has fired.
 HKG_contract_check_capstone = {
 	if = {
-		limit = {
-			NOT = { has_country_flag = HKG_contract_carrier_milestone }
-			has_navy_size = { archetype = carrier size > 0 }
+		limit = { NOT = { has_country_flag = HKG_contract_capstone_done } }
+		if = {
+			limit = {
+				NOT = { has_country_flag = HKG_contract_carrier_milestone }
+				has_navy_size = { archetype = carrier size > 0 }
+			}
+			set_country_flag = HKG_contract_carrier_milestone
 		}
-		set_country_flag = HKG_contract_carrier_milestone
-	}
-	if = {
-		limit = { HKG_contract_capstone_ready = yes }
-		set_country_flag = HKG_contract_capstone_done
-		add_ideas = HKG_contract_naval_power
-		add_to_variable = { HKG_contract_gui_dirty = 1 }
-		news_event = { id = HKG_contract.50 days = 1 }
+		if = {
+			limit = { HKG_contract_capstone_ready = yes }
+			set_country_flag = HKG_contract_capstone_done
+			add_ideas = HKG_contract_naval_power
+			add_to_variable = { HKG_contract_gui_dirty = 1 }
+			news_event = { id = HKG_contract.50 days = 1 }
+		}
 	}
 }
