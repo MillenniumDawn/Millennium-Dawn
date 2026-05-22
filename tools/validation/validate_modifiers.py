@@ -87,6 +87,51 @@ _MODIFIER_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$|^[A-Z][A-Za-z0-9_]*$")
 # Minimum frequency threshold for a modifier name to be "known good"
 _FREQUENCY_THRESHOLD = 3
 
+# Parametric modifier families. HOI4 generates one concrete modifier per game
+# entity for each of these — e.g. the building infrastructure yields
+# state_repair_speed_infrastructure_factor, the trait superior_tactician yields
+# trait_superior_tactician_xp_gain_factor. They are valid but appear too rarely,
+# or only in decision files, to clear the frequency threshold.
+#
+# Sourced from resources/documentation/modifiers_documentation.md. Families with
+# an over-broad generic suffix (<ModifierStat>_factor, <Technology>_cost_factor,
+# <IdeaGroup>_cost_factor, <Operation>_cost/_outcome/_risk,
+# <SpecialProject>_speed_factor) are deliberately omitted — a regex for them
+# would whitelist genuine typos.
+_PARAMETRIC_MODIFIER_PATTERNS: Tuple[re.Pattern, ...] = tuple(
+    re.compile(p)
+    for p in (
+        # <Building>-keyed
+        r"^(?:state_)?repair_speed_[a-z][a-z0-9_]*_factor$",
+        r"^(?:state_)?production_speed_[a-z][a-z0-9_]*_factor$",
+        r"^production_cost_[a-z][a-z0-9_]*_factor$",
+        r"^(?:state_)?[a-z][a-z0-9_]*_max_level_terrain_limit$",
+        # <Trait>-keyed (covers the bare and trait_-prefixed forms)
+        r"^[a-z][a-z0-9_]*_xp_gain_factor$",
+        # <Unit>-keyed
+        r"^experience_gain_[a-z][a-z0-9_]*_(?:combat|mission|training)_factor$",
+        # <Equipment> / <EquipmentModule> / <Unit>-keyed design cost
+        r"^[a-z][a-z0-9_]*_design_cost_factor$",
+        r"^production_cost_max_[a-z][a-z0-9_]*$",
+        # <Doctrine>-keyed (covers _mastery_gain and _track_mastery_gain)
+        r"^[a-z][a-z0-9_]*_mastery_gain_factor$",
+        r"^[a-z][a-z0-9_]*_doctrine_cost_factor$",
+        # <Ideology>-keyed
+        r"^[a-z][a-z0-9_]*_drift(?:_from_guarantees)?$",
+        r"^[a-z][a-z0-9_]*_acceptance$",
+        # <CombatTactic>-keyed
+        r"^[a-z][a-z0-9_]*_preferred_weight_factor$",
+        # <IdeaCategory>-keyed
+        r"^[a-z][a-z0-9_]*_category_type_cost_factor$",
+        # <Resource>-keyed
+        r"^country_resource_(?:cost_)?[a-z][a-z0-9_]*$",
+        r"^state_resource_(?:cost_)?[a-z][a-z0-9_]*$",
+        r"^state_resources_[a-z][a-z0-9_]*_factor$",
+        r"^local_resources_[a-z][a-z0-9_]*_factor$",
+        r"^temporary_state_resource_[a-z][a-z0-9_]*$",
+    )
+)
+
 
 def _extract_modifier_blocks(text: str) -> List[Tuple[int, str]]:
     """Extract the body text and start line of each top-level modifier = { } block.
@@ -354,6 +399,15 @@ def _harvest_flat_modifiers_from_traits_file(filepath: str) -> List[str]:
     return names
 
 
+def _is_parametric_modifier(name: str) -> bool:
+    """True if ``name`` matches a parametric HOI4 modifier family.
+
+    See _PARAMETRIC_MODIFIER_PATTERNS — these are engine-generated per-entity
+    modifiers that are valid but too rare to clear the frequency threshold.
+    """
+    return any(pattern.match(name) for pattern in _PARAMETRIC_MODIFIER_PATTERNS)
+
+
 def _check_file_for_unknown_modifiers(
     args: Tuple[str, FrozenSet[str], str],
 ) -> List[Tuple[str, str, int]]:
@@ -520,6 +574,10 @@ class Validator(BaseValidator):
                 seen.add(key)
                 # Modifiers prefixed with MD_ or md_ are always valid (custom MD)
                 if name.startswith("MD_") or name.startswith("md_"):
+                    continue
+                # Engine-generated parametric modifier families (per building,
+                # trait, unit, doctrine, resource, etc.)
+                if _is_parametric_modifier(name):
                     continue
                 unknown_errors.append((name, rel, lineno))
 
