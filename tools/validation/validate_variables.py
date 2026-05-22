@@ -26,7 +26,7 @@ from validator_common import (
 
 # Multiprocessing helper functions
 def process_file_for_flags(
-    args: Tuple[str, bool, str, str]
+    args: Tuple[str, bool, str, str],
 ) -> Tuple[List[str], Dict[str, str], str]:
     filename, lowercase, flag_type, operation = args
 
@@ -94,7 +94,7 @@ def process_file_for_flags(
 
 
 def process_file_for_all_flags(
-    args: Tuple[str, bool, str]
+    args: Tuple[str, bool, str],
 ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
     """Single-pass worker: extract set, used, and cleared flags for one flag_type.
 
@@ -198,7 +198,7 @@ def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List
 
 
 def process_file_for_all_targets(
-    args: Tuple[str, bool]
+    args: Tuple[str, bool],
 ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
     """Single-pass worker: extract set, used, and cleared event targets.
 
@@ -252,7 +252,7 @@ def process_file_for_all_targets(
 
 
 def process_file_for_targets(
-    args: Tuple[str, bool, str]
+    args: Tuple[str, bool, str],
 ) -> Tuple[List[str], Dict[str, str], str]:
     filename, lowercase, operation = args
 
