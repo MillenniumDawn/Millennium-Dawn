@@ -139,6 +139,32 @@ check_variable = {
 
 Valid `compare` values: `equals`, `greater_than`, `less_than`, `greater_than_or_equals`, `less_than_or_equals`, `not_equals`.
 
+## Variable and array operations do not auto-tooltip
+
+Variable operations — `check_variable`, `is_in_array`, `add_to_variable`, `subtract_from_variable`, `set_variable`, `multiply_variable`, `divide_variable`, `clamp_variable`, `set_temp_variable`, `add_to_temp_variable`, `add_to_array`, `remove_from_array` — produce **no automatic tooltip text**. When used bare in `available`, `visible`, or trigger blocks the player sees nothing (triggers) or a blank line (effects).
+
+If the player needs to see why a focus/decision is locked or what an effect does, wrap the operation:
+
+- **Triggers:** use `custom_trigger_tooltip` with a loc key
+- **Effects:** use `custom_effect_tooltip` before or after the operation
+
+```
+# Wrong — player sees no explanation for why the focus is unavailable
+available = {
+	check_variable = { my_var > 10 }
+}
+
+# Correct — player sees the loc string
+available = {
+	custom_trigger_tooltip = {
+		tooltip = my_requirement_tt
+		check_variable = { my_var > 10 }
+	}
+}
+```
+
+Named scripted triggers (e.g., `my_trigger = yes`) **do** auto-tooltip using the trigger's name as a loc key, so they are safe to use bare in player-facing blocks. Prefer named triggers over raw variable checks in `available`/`visible` when the player needs feedback.
+
 ## is_in_faction vs is_in_faction_with
 
 `is_in_faction` is a **boolean** trigger (`yes`/`no`). To check faction membership with a specific country, use `is_in_faction_with = TAG`. Using `is_in_faction = TAG` silently fails. **Caught by `check_common_mistakes.py`.**
