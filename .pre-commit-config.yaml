@@ -225,6 +225,103 @@ repos:
         language: system
         files: '(common/scripted_guis/.*\.txt|interface/.*\.(gui|gfx)|localisation/english/.*\.yml)$'
         pass_filenames: false
+      - id: md-validate-events
+        name: MD Validate event definitions
+        entry: python3 tools/validation/validate_events.py --staged --strict --no-color
+        language: system
+        files: 'events/.*\.txt$'
+        pass_filenames: false
+      - id: md-validate-scripted-localisation
+        name: MD Validate scripted localisation references
+        entry: python3 tools/validation/validate_scripted_localisation.py --staged --strict --no-color --workers 4
+        language: system
+        files: '(common/scripted_localisation/.*\.txt|interface/.*\.gfx)$'
+        pass_filenames: false
+      - id: md-validate-localisation
+        name: MD Validate localisation (duplicates, color codes, headers)
+        entry: python3 tools/validation/validate_localisation.py --staged --strict --no-color --workers 4
+        language: system
+        files: 'localisation/english/.*\.yml$'
+        pass_filenames: false
+      - id: md-validate-cosmetic-tags
+        name: MD Validate cosmetic tag references
+        entry: python3 tools/validation/validate_cosmetic_tags.py --staged --strict --no-color --workers 4
+        language: system
+        files: '(common|events|history)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-decisions
+        name: MD Validate decision definitions
+        entry: python3 tools/validation/validate_decisions.py --staged --strict --no-color --workers 4
+        language: system
+        files: '(common/decisions|common/balance_of_power)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-variables
+        name: MD Validate variable and event target references
+        entry: python3 tools/validation/validate_variables.py --staged --strict --no-color --workers 4
+        language: system
+        files: '(common|events|history)/.*\.txt$|localisation/english/.*\.yml$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-history-techs
+        name: MD Validate history technology dependencies
+        entry: python3 tools/validation/validate_history_techs.py --staged --strict --no-color
+        language: system
+        files: '(common/technologies|history/countries)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-unused-scripted
+        name: MD Validate unused scripted effects and triggers
+        entry: python3 tools/validation/validate_unused_scripted.py --staged --strict --no-color
+        language: system
+        files: '(common/scripted_effects|common/scripted_triggers)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-factions
+        name: MD Validate faction system references
+        entry: python3 tools/validation/validate_factions.py --staged --strict --no-color
+        language: system
+        files: 'common/factions/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-focus-tree
+        name: MD Validate focus tree structure (orphans, cycles, duplicates)
+        entry: python3 tools/validation/validate_focus_tree.py --staged --strict --no-color
+        language: system
+        files: 'common/national_focus/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-modifiers
+        name: MD Validate modifier names (unknown/typo detection)
+        # No --strict: frequency-based detection has inherent false positives
+        # for rarely-used but valid vanilla modifiers
+        entry: python3 tools/validation/validate_modifiers.py --staged --no-color
+        language: system
+        files: '(common/ideas|common/national_focus|common/decisions|common/dynamic_modifiers)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-on-actions
+        name: MD Validate on_actions event references
+        entry: python3 tools/validation/validate_on_actions.py --staged --strict --no-color
+        language: system
+        files: '(common/on_actions|events)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-scripted-params
+        name: MD Validate scripted effect parameter contracts
+        entry: python3 tools/validation/validate_scripted_params.py --staged --strict --no-color
+        language: system
+        files: '(common/scripted_effects|common/national_focus|common/decisions|events)/.*\.txt$'
+        pass_filenames: false
+        stages: [manual]
+      - id: md-validate-gfx-references
+        name: MD Validate GFX sprite references (.gui vs .gfx)
+        entry: python3 tools/validation/validate_gfx_references.py --staged --strict --no-color
+        language: system
+        files: '(interface/.*\.(gui|gfx)|common/scripted_guis/.*\.txt|common/scripted_localisation/.*\.txt)$'
+        pass_filenames: false
+        stages: [manual]
       - id: md-validate-unused-textures
         name: MD Validate unused textures (slow; manual)
         # Manual: full-repo scan is slow and currently reports ~22k legacy

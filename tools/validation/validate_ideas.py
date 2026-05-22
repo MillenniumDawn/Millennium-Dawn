@@ -38,19 +38,21 @@ from validator_common import (
 
 # Matches `has_idea = FOO`, `add_ideas = FOO`, `remove_ideas = FOO`
 # Captures the full token including `:` and `[` so dynamic refs can be filtered.
+# Hyphens are included so that identifiers like `NKO_Marxism-Leninism` are captured whole.
 _IDEA_REF_SIMPLE = re.compile(
-    r"\b(?:has_idea|add_ideas|remove_ideas)\s*=\s*([A-Za-z0-9_:\[\].]+)"
+    r"\b(?:has_idea|add_ideas|remove_ideas)\s*=\s*([A-Za-z0-9_:\[\].-]+)"
 )
 
 # Matches `add_idea = FOO` and `remove_idea = FOO` inside swap_ideas blocks
-_IDEA_REF_SWAP = re.compile(r"\b(?:add_idea|remove_idea)\s*=\s*([A-Za-z0-9_:\[\].]+)")
+_IDEA_REF_SWAP = re.compile(r"\b(?:add_idea|remove_idea)\s*=\s*([A-Za-z0-9_:\[\].-]+)")
 
 # Matches swap_ideas = { ... } blocks (brace-balanced by hand after this finds the opener)
 _SWAP_BLOCK_START = re.compile(r"\bswap_ideas\s*=\s*\{")
 
 # Matches an idea definition line at brace depth 2 inside `ideas = { CATEGORY = { IDEA = { `
 # We track depth manually; this just recognises `WORD = {` at the right level.
-_IDEA_DEF_LINE = re.compile(r"^[\t ]*([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{")
+# Hyphens are included so that identifiers like `NKO_Marxism-Leninism` are recognised.
+_IDEA_DEF_LINE = re.compile(r"^[\t ]*([A-Za-z][A-Za-z0-9_-]*)\s*=\s*\{")
 
 # HOI4 built-in inner keys that appear at depth 2 but are not idea definitions
 _HOI4_IDEA_INNER_KEYS: frozenset = frozenset(

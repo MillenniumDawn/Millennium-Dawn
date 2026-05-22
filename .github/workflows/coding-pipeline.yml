@@ -46,6 +46,9 @@ jobs:
       scripted-loc:  ${{ steps.filter.outputs.scripted-loc }}
       scripted-guis: ${{ steps.filter.outputs.scripted-guis }}
       interface:     ${{ steps.filter.outputs.interface }}
+      national-focus: ${{ steps.filter.outputs.national-focus }}
+      on-actions:    ${{ steps.filter.outputs.on-actions }}
+      scripted-effects: ${{ steps.filter.outputs.scripted-effects }}
     steps:
     - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -88,6 +91,12 @@ jobs:
             - 'common/scripted_guis/**'
           interface:
             - 'interface/**'
+          national-focus:
+            - 'common/national_focus/**'
+          on-actions:
+            - 'common/on_actions/**'
+          scripted-effects:
+            - 'common/scripted_effects/**'
 
   # ───────────────────────────────────────────────────────────────
   # Linters — run when any game content files change
@@ -315,7 +324,10 @@ jobs:
       needs.detect-changes.outputs.ai-equipment == 'true' ||
       needs.detect-changes.outputs.factions == 'true' ||
       needs.detect-changes.outputs.scripted-guis == 'true' ||
-      needs.detect-changes.outputs.interface == 'true'
+      needs.detect-changes.outputs.interface == 'true' ||
+      needs.detect-changes.outputs.national-focus == 'true' ||
+      needs.detect-changes.outputs.on-actions == 'true' ||
+      needs.detect-changes.outputs.scripted-effects == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -380,6 +392,51 @@ jobs:
               interface
               localisation/english
               tools
+          - script: validate_focus_tree.py
+            name: focus-tree
+            title: "Validate Focus Tree Structure"
+            should_run: ${{ needs.detect-changes.outputs.national-focus }}
+            sparse: |
+              common/national_focus
+              localisation/english
+              tools
+          - script: validate_on_actions.py
+            name: on-actions
+            title: "Validate On Actions"
+            should_run: ${{ needs.detect-changes.outputs.on-actions == 'true' || needs.detect-changes.outputs.events == 'true' }}
+            sparse: |
+              common/on_actions
+              events
+              tools
+          - script: validate_scripted_params.py
+            name: scripted-params
+            title: "Validate Scripted Effect Parameters"
+            should_run: ${{ needs.detect-changes.outputs.scripted-effects == 'true' || needs.detect-changes.outputs.national-focus == 'true' || needs.detect-changes.outputs.decisions == 'true' || needs.detect-changes.outputs.events == 'true' }}
+            sparse: |
+              common/scripted_effects
+              common/national_focus
+              common/decisions
+              events
+              tools
+          - script: validate_gfx_references.py
+            name: gfx-references
+            title: "Validate GFX Sprite References"
+            should_run: ${{ needs.detect-changes.outputs.interface == 'true' || needs.detect-changes.outputs.scripted-guis == 'true' }}
+            sparse: |
+              interface
+              common/scripted_guis
+              common/scripted_localisation
+              tools
+          - script: validate_modifiers.py
+            name: modifiers
+            title: "Validate Modifier Names"
+            # informational: frequency-based detection has inherent false positives
+            # for rarely-used but valid vanilla modifiers
+            strict: false
+            should_run: ${{ needs.detect-changes.outputs.common }}
+            sparse: |
+              common
+              tools
     steps:
     # Per-entry gate: only fetch + run when this validator's file group changed.
     # Steps below each carry the same `if` so a skipped entry reports cleanly
@@ -397,7 +454,9 @@ jobs:
         python-version: '3.x'
     - name: Run validation
       if: matrix.validator.should_run == 'true'
-      run: python3 tools/validation/${{ matrix.validator.script }} --strict --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
+      run: |
+        STRICT_FLAG=$( [ "${{ matrix.validator.strict }}" = "false" ] && echo "" || echo "--strict" )
+        python3 tools/validation/${{ matrix.validator.script }} $STRICT_FLAG --no-color --workers 4 --output validation-${{ matrix.validator.name }}.log
     - name: Upload results
       if: always() && matrix.validator.should_run == 'true'
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
