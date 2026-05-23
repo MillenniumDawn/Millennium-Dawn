@@ -75,7 +75,7 @@ Style checkers, formatters, and encoding validators. These are used in pre-commi
 
 ### Validation (`validation/`)
 
-Content validators run in CI via matrix strategy. See `validation/README.md` for details.
+Content validators run in CI via matrix strategy. See `validation/README.md` for full list of all 22 validators and their checks.
 
 ### Standardization (`standardization/`)
 
