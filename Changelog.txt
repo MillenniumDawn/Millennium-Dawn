@@ -25,6 +25,8 @@ v2.0.0
   - [HKG] Added LegCo seat-tracking and motion-resolution scripted system (functional for railway/XRL/electoral-reform votes); standard policy motion clocks deferred pending GUI buttons
   - [HKG] Added Triad strength/evidence variable system with a dynamic political-power-cost modifier driven by focus tree and decision actions
   - [HKG] Added a CHI-side decision event for the anti-extradition crisis so puppeting goes through Beijing's choice rather than being forced from HKG's scope
+  - [HKG] Added the China Naval Procurement Contracts mechanic: a decision-driven system with solicit/deliver/negotiate actions, a scripted GUI banner tracking standing, lifetime revenue, and up to 3 active contracts, plus a capstone reward
+  - [HKG] Reworked the focus tree, adding a domestic aircraft carrier branch and an expanded trade and offshore-industry branch
 
  AI:
   - AI countries now auto-vote in UN Security Council and General Assembly votes according to their accept, reject, or abstain preferences
@@ -128,8 +130,12 @@ v2.0.0
   - [USA] Replaced flat base = 55 AI weighting on all foreign policy decisions with contextual modifiers (historical focus, geopolitical context, leader checks, war penalties)
   - [USA] Extracted Belarus reauthorization act effects (~240 lines) to USA_belarus_reauthorization_act_effect scripted effect
   - [USA] Replaced any_country with any_of_scopes using global.american_nations array for South America autocracy check
+  - Reduced AI special forces division template from 15 to 12 battalions
+  - Reduced AI air assault brigade template from 15 to 12 battalions
+  - Fixed AI marines generic template incorrectly using Light_armor_Bat instead of armor_Bat
 
  Balance:
+  - Increased naval_strike_attack on all anti-ship drone missile modules
   - Increased Conditional Peace Deal base AI reluctance from -50 to -100 to make the AI harder to convince
   - Added per-term AI aversion modifiers for full puppet, regime change, forced neutrality, military basing, and resource rights demands
   - Added war-weariness stubbornness modifier that makes the AI harder to negotiate with in prolonged wars
@@ -262,8 +268,14 @@ v2.0.0
   - [FRA] Rebalanced the_eco: less raw PP/build, more stability, drift defence, and tax
   - [FRA] France now gains +12% influence change against countries holding the_eco
   - Removed the corporate tax rate modifier from arms sales
+  - Reduced generic_increased_military_support modifier values (send volunteers and lend lease tension from -0.25 to -0.15)
+  - Reduced generic_military_intervention modifier values (volunteers/lend lease tension from -0.50 to -0.25, volunteer divisions required from -0.25 to -0.15, guarantee tension from -0.25 to -0.15, trade opinion factor from 0.25 to 0.15)
+  - Increased internet station state building cap from 6 to 11
+  - [BRA] AI now more likely to take the administrative reform focus when corruption is high
 
  Bugfix:
+  - Fixed APC, motorized infantry, and motorized command vehicles getting corrupted stats in the equipment designer (most visibly the 4th Generation APC Hull's speed forced to 0) caused by stray equipment-need blocks inside land equipment doctrine reward modifiers
+  - [KOR] Fixed the air superiority equipment bonus only applying to fighters; interceptors now receive the same reliability, range, and cost bonus, and corrected the malformed equipment_bonus block
   - Fixed several NOT-block logic traps in the UN voting, international recognition, and subsidy expiration checks that caused conditions to be evaluated incorrectly
   - [GER] Restored the Innere Führung idea swap on the "Reform of the Zentrum Innere Führung" focus, which had been dropped due to a casing error
   - Fixed drone reconnaissance raid granting no reward on success; now grants the targeted drone recon buff scaling with success level
@@ -567,6 +579,24 @@ v2.0.0
   - Fixed incorrect checks for national spirit "superpower", while it should be "super_power" (Issue #1265)
   - Fixed equipment designs across 70 countries equipping weapon, sensor, and engine modules the nation had never researched, leaving those variants invalid; granted the missing technologies (with prerequisites) so every starting design is fielded as intended
   - Fixed helicopter sensor, avionics, and air-to-air missile modules being unlockable only through By Blood Alone aircraft technology, leaving every starting helicopter design invalid for players without that DLC; the No Step Back helicopter tech tree now enables them
+  - [ENG] Fixed ENG_political_power_factor_monarchy set to 0.0.05 instead of 0.05 in country history, causing the monarchy political modifier to apply a near-zero bonus
+  - [ENG] Fixed NOT block in on_actions regime transition trigger so it correctly blocks when any single stabilising condition is present, not only when all are true simultaneously
+  - [ENG] Fixed moonbase progression: added OR guard in ENG_advance_moon_base so the ENG_moonbase_beta_completed flag prevents re-triggering
+  - [ENG] Fixed ENG_royal_visits_abroad focus not granting monthly Commonwealth Realm influence on on_action
+  - [HOL] Fixed focus ID case mismatch: HOL_Oranje_Nassau-Mines renamed to HOL_oranje_nassau-mines (Linux case-sensitive)
+  - [HOL] Fixed add_tech_bonus name in HOL_military.065 event referencing non-existent trait HOL_military.60_bonus; corrected to HOL_military.065.t
+  - [JAP] Fixed JAP_diplomacy.142 option names referencing wrong event ID; corrected to JAP_diplomacy.141.a/b to match the event namespace
+  - [JAP] Fixed JAP_toshiba_materiel_manufacturer trait to check for free building slots before constructing nuclear reactors and internet stations
+  - Carrier raids: removed carrier aircraft types (carrier_tactical_bomber, carrier_cas, carrier_strategic_bomber) from land-based strike unit requirements
+  - Fixed power_grid_damaged set_country_flag missing value = 1 in all carrier raid power strike effects
+  - [POL] Fixed missing localisation within communist decision category Control Everything
+  - [POL] Some communist decisions from ZKP-P path will no longer repeat itself after being completed
+  - [CZE] Fixed monarchist decisions visibility
+  - [CZE] Slightly optimized Petr Pavel's GUI
+  - Fixed influence events (military aid, target influencer, military supply) incorrectly resolving their target through FROM scope; replaced with explicit event_target references to ensure events fire on the correct country
+  - Removed two redundant influence pass-through events (influence.22 and influence.55) that existed only to re-fire events under correct scope
+  - Fixed Somalia election events not clearing the generic_election_killswitch flag for all Somali faction countries (SNA, SWS, PUN)
+  - [BRA] Fixed administrative reform focus granting the French administrative reforms idea instead of the intended effect
 
  Content:
   - New Content for North korea and South Korea post reuification and unification
@@ -705,6 +735,7 @@ v2.0.0
   - [JAP] Add Japan Air OOB and better GFX, rework Ground and Navy OOB, add starting production
   - Removed generic eastern europe scientist Victor Kozin because of the too low quality portrait
   - [POL] State Run Economy decision category no longer has slow decisions, instead it has quick to use buttons.
+  - [BUL] Changes some effects in the Expansion Branch to reflect the situation better (Credit to Natha4796BG)
 
  Database:
   - Land drone technologies now properly give the Ranger Light Recce company recon bonuses like all other recon units
@@ -729,6 +760,9 @@ v2.0.0
   - Removed Duplicate Generic MIO Trait trees
   - Created a new Civilian Ship Equipment Category containing convoy, support ship and repair ship
   - All number_state_building and number_random_building scripted effects have now a skip_payment check
+  - Added Nuclear Bomb Special Project completed to nations who completed the Nuclear Warhead Special Project
+  - Renamed BUL focus tree, events, and ideas files to 05_ prefix convention (05_bulgaria.txt)
+  - Moved some industry from Eastern Quebec to Western Quebec: added offices, arms factory, agriculture district, and internet station to Western Quebec; reduced offices and arms factory in Eastern Quebec
 
  Factions:
   - Added a new faction goal "Establish an Airborne Corps"
@@ -763,6 +797,15 @@ v2.0.0
   - Fixed cultural generic unit models overriding country-specific tiered models due to HOI4 1.18 entity matching change (Issue #1106)
   - Added new Equipment Categories and Trait Icons for MIO's
   - Fixed Russian "The Third Rome" cosmetic tag being able to be overwritten by the country flag decision
+  - Renamed MD4_ era model token to MD_ across all unit sprites, entity assets, pdxmesh definitions, equipment designer icons, and history model references; renamed 19 entity files accordingly (Issue #1392)
+  - Removed 249 orphaned pdxmesh definitions from 33 .gfx files; restored 23 definitions consumed by vanilla entities that were incorrectly flagged as orphans (Issue #1393)
+  - Fixed broken CZE and YUG infantry mesh references in dod_units_infantry.asset by replacing them with working western_european fallback entities (Issue #1393)
+  - Fixed UKR winter infantry mesh (UKR_MDinfantry4alt1winter_mesh) defined under the same name as the base mesh, causing the engine to load the winter model for all references
+  - Fixed CZE infantry entity animation wired to charge_rifle instead of charge_mg to match the mesh animation set
+  - Fixed ENG George Zambellas portrait referencing wrong filename casing
+  - Deleted stray empty test file and entirely-commented-out ___MD_infantry_units.asset/.gfx
+  - Fixed UKR entity filename double-underscore typo (UKR__MD_ to UKR_MD_) and ___MD_tanks_and_vechicles spelling
+  - Removed unused Eastern European special forces technology sprite entries that referenced missing DDS files
 
  Game Rules:
   - Added "Allow AI Conditional Peace Offers" game rule (default: off) to toggle whether AI nations can initiate monthly Conditional Peace Deals; requires the parent "Allow Conditional Peace Deals" rule to be enabled
@@ -803,12 +846,18 @@ v2.0.0
   - Removed localisation keys for deprecated MIRV, MARV, and HGV equipment variants
   - Consolidated naval carrier category localisation: replaced CAT_n_cv, CAT_cv, CAT_lha, CAT_lpd with CAT_carrier and CAT_helicopter_operators
   - Removed CAT_slbm and CAT_conventional_warhead localisation keys
+  - [HOL] Added missing localisation for BEL_referendum_mission and HOL_military.114-115 events
+  - [HOL] Added localisation stubs for HOL_voc_india_*_rebellion2-5 repeated decisions
+  - [HOL] Rewrote HOL_oranje_nassau-mines_desc with factual content replacing generic filler text
   - [SMA] Added localisation for 30 equipment purchase events (SMA_equipment.1–30)
   - [SMA] Fixed title casing for combat experience national spirit names (SMA_no_wars_i/ii/iii)
   - Added localisation for new drone raid types (airfield, power grid, rocket site)
   - [GER] Added 15 missing generic dynamic modifier tooltip keys for army, navy, and air modifiers (Issue #790)
   - [GER] Replaced 13 non-existent GER-specific tooltip keys with existing generic equivalents in the focus tree and events
   - [CZE] Škoda Superb Car Export countries have now better localized prerequisites
+  - [HOL] Fixed missing closing quote on 5 HOL_voc_india_gujurat_rebellion*_desc localisation entries
+  - [JAP] Fixed depopulation national spirit descriptions displaying "§Y2 4 years§!" instead of "§Y2 to 4 years§!" across five national spirit desc keys
+  - Fixed [From.GetXxx] scope keyword capitalization to [FROM.GetXxx] throughout the events localisation file
 
  Map:
   - HMNB Clyde is now properly represented with a Level 8 Naval Base + Naval Headquarters for the UK's Nuclear Submarines deployment
@@ -876,6 +925,8 @@ v2.0.0
   - [SOV] Replaced 38 per-TAG on_monthly_TAG hooks for subject taxation with a single every_subject_country loop inside on_monthly_SOV
   - [SOV] Restructured 00_money_system.txt income chain into an alphabetised else_if chain; preserved every per-tag income source while reducing maintenance overhead
   - Standardized the elections enable/disable scripted effects across the mod by removing the duplicate Italian-defined helpers and folding ~7 inline copies of the has_government election-toggle chain into the canonical helper effects (Issue #628)
+  - Reduced duplicate model definitions to improve performance by relying on graphical culture groups
+  - Removed 249 orphaned pdxmesh definitions to reduce mod load time and memory footprint (Issue #1393)
 
  Quality of Life:
   - [GER] BFV GUI now updates immediately on button clicks instead of waiting for the next daily tick
@@ -901,6 +952,8 @@ v2.0.0
   - Updated strategic bomber tech bonus to use CAT_large_plane instead of CAT_str_bomber
   - Updated artillery tech: direct_fire_conversion module replaced with direct_fire_conversion_medium
   - Removed chassis_truck_gen4 and spaa_chassis_truck_gen4 module unlocks from utility vehicle tech
+  - Stealth destroyers can now mount heavy gun modules across all available weapon and auxiliary slots
+  - Removed duplicate point defense module slot entry from stealth destroyer hull definitions
 
  User Interface:
   - Added UN Security Council and General Assembly auto-vote toggle buttons (accept all, reject all, abstain all) to the international systems view

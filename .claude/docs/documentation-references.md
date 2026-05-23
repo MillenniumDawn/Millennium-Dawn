@@ -39,6 +39,9 @@ Use for broader modding context not covered in local docs:
 
 | File                                      | Contents                                                                                                                                                                                    |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.claude/docs/entity-system.md`           | The mesh → entity → animation chain, three-level lookup, file organisation in `gfx/entities/`, pdxmesh naming convention, division designer performance note                                |
+| `.claude/docs/music-system.md`            | Music system: `.asset` definitions, `.txt` playlists, all MD stations (Main, Regional, UKR-RUS war, Synthwave), chance weight logic, adding new tracks, radio station GUI wiring            |
+| `.claude/docs/sound-system.md`            | Sound system: `sound`/`soundeffect` definitions, combat sounds, country voicelines (23 countries), categories/compressors, adding new voicelines, audio file requirements                   |
 | `.claude/docs/search-filters.md`          | Complete `search_filters` reference: every `FOCUS_FILTER_*` in the mod, Israel-specific filter mapping, subcategory logic for ISRMILITARY/ISRECON, common mistakes checklist                |
 | `.claude/docs/simplification-patterns.md` | Patterns for replacing N-branch lookups with arrays, parameterized scripted loc, shared helpers, meta_effect consolidation                                                                  |
 | `.claude/docs/performance-patterns.md`    | Hoisting invariants, temp-variable booleans, GUI dirty counters, engine arrays, clamp-before-division, early-out guards                                                                     |

@@ -1327,9 +1327,9 @@ country_event = {
 						has_country_leader_with_trait = western_technocrat
 					}
 				}
-				random_list = {
-					35 = { }
-					65 = { country_event = { id = MD4_election_campaign.8 days = 8 } }
+				random = {
+					chance = 65
+					country_event = { id = MD4_election_campaign.8 days = 8 }
 				}
 			}
 		}
@@ -1411,9 +1411,9 @@ country_event = {
 			add_popularity = { ideology = fascism popularity = -0.10 }
 		}
 		recalculate_party = yes
-		random_list = {
-			75 = { custom_effect_tooltip = MD_election_campaign_no_tt }
-			25 = { country_event = { id = MD4_election_campaign.3 days = 8 } }
+		random = {
+			chance = 25
+			country_event = { id = MD4_election_campaign.3 days = 8 }
 		}
 	}
 
@@ -1472,9 +1472,9 @@ country_event = {
 		}
 
 		recalculate_party = yes
-		random_list = {
-			75 = { custom_effect_tooltip = MD_election_campaign_no_tt }
-			25 = { country_event = { id = MD4_election_campaign.4 days = 8 } }
+		random = {
+			chance = 25
+			country_event = { id = MD4_election_campaign.4 days = 8 }
 		}
 	}
 
@@ -1537,9 +1537,9 @@ country_event = {
 		}
 
 		recalculate_party = yes
-		random_list = {
-			75 = { custom_effect_tooltip = MD_election_campaign_no_tt }
-			25 = { country_event = { id = MD4_election_campaign.5 days = 8 } }
+		random = {
+			chance = 25
+			country_event = { id = MD4_election_campaign.5 days = 8 }
 		}
 	}
 
@@ -1599,9 +1599,9 @@ country_event = {
 			add_popularity = { ideology = communism popularity = -0.10 }
 		}
 		recalculate_party = yes
-		random_list = {
-			75 = { custom_effect_tooltip = MD_election_campaign_no_tt }
-			25 = { country_event = { id = MD4_election_campaign.6 days = 8 } }
+		random = {
+			chance = 25
+			country_event = { id = MD4_election_campaign.6 days = 8 }
 		}
 	}
 	### Attack the Western ###
@@ -1658,9 +1658,9 @@ country_event = {
 			add_popularity = { ideology = democratic popularity = -0.10 }
 		}
 		recalculate_party = yes
-		random_list = {
-			75 = { custom_effect_tooltip = MD_election_campaign_no_tt }
-			25 = { country_event = { id = MD4_election_campaign.7 days = 8 } }
+		random = {
+			chance = 25
+			country_event = { id = MD4_election_campaign.7 days = 8 }
 		}
 	}
 	option = {
@@ -2138,75 +2138,77 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		clear_variable = campaign_funding_count
-		hold_elections = yes
-		#any single party is over election threshold - set them to rule immediately
-		if = {
-			limit = {
-				tag = ITA
-				has_completed_focus = ITA_let_the_plebs_vote
-				NOT = {
-					has_completed_focus = ITA_repeal_former_government_measures_6
-				}
-			}
-			country_event = MD4_election.2
-		}
-		else_if = {
-			limit = {
-				check_variable = { party_pop_array^max_index_1 > majority_threshold }
-				is_in_array = { ruling_party = max_index_1 }
-			}
-			country_event = MD4_election.1 #re-elected alone
-		}
-		else_if = {
-			limit = {
-				check_variable = { party_pop_array^max_index_1 > majority_threshold }
-				NOT = { is_in_array = { ruling_party = max_index_1 } }
-			}
-			country_event = MD4_election.3 #different party elected alone
-		}
-		else_if = {
-			limit = {
-				check_variable = { var = government_coalition_strength_elect value = majority_threshold compare = greater_than_or_equals }
-			}
-			country_event = MD4_election.2 #current gov coalition triumphs
-		}
-		else_if = { limit = { is_ai = yes }
-			AI_setup_government = yes
-
-			if = {
-				limit = { is_major = no }
-				every_country = {
-					limit = {
-						is_ai = no
-						election_notification_scripted_trigger = yes
-					}
-					news_event = { days = 1 id = News_MD4_election.1 }
-				}
-			}
-			if = {
-				limit = { is_major = yes }
-				every_country = {
-					limit = { is_ai = no }
-					news_event = { days = 1 id = News_MD4_election.1 }
-				}
-			}
-		}
-		else_if = { limit = { is_ai = no }
-			set_temp_variable = { ruling_party_strength = 0 }
-			for_each_loop = {
-				array = ruling_party
-				value = v
-				add_to_temp_variable = { ruling_party_strength = party_pop_elect_array^v }
-			}
+		hidden_effect = {
+			clear_variable = campaign_funding_count
+			hold_elections = yes
+			#any single party is over election threshold - set them to rule immediately
 			if = {
 				limit = {
-					check_variable = { ruling_party_strength < election_threshold }
+					tag = ITA
+					has_completed_focus = ITA_let_the_plebs_vote
+					NOT = {
+						has_completed_focus = ITA_repeal_former_government_measures_6
+					}
 				}
-				country_event = MD4_election.5
+				country_event = MD4_election.2
 			}
-			else = {
-				country_event = MD4_election.4
+			else_if = {
+				limit = {
+					check_variable = { party_pop_array^max_index_1 > majority_threshold }
+					is_in_array = { ruling_party = max_index_1 }
+				}
+				country_event = MD4_election.1 #re-elected alone
+			}
+			else_if = {
+				limit = {
+					check_variable = { party_pop_array^max_index_1 > majority_threshold }
+					NOT = { is_in_array = { ruling_party = max_index_1 } }
+				}
+				country_event = MD4_election.3 #different party elected alone
+			}
+			else_if = {
+				limit = {
+					check_variable = { var = government_coalition_strength_elect value = majority_threshold compare = greater_than_or_equals }
+				}
+				country_event = MD4_election.2 #current gov coalition triumphs
+			}
+			else_if = { limit = { is_ai = yes }
+				AI_setup_government = yes
+
+				if = {
+					limit = { is_major = no }
+					every_country = {
+						limit = {
+							is_ai = no
+							election_notification_scripted_trigger = yes
+						}
+						news_event = { days = 1 id = News_MD4_election.1 }
+					}
+				}
+				if = {
+					limit = { is_major = yes }
+					every_country = {
+						limit = { is_ai = no }
+						news_event = { days = 1 id = News_MD4_election.1 }
+					}
+				}
+			}
+			else_if = { limit = { is_ai = no }
+				set_temp_variable = { ruling_party_strength = 0 }
+				for_each_loop = {
+					array = ruling_party
+					value = v
+					add_to_temp_variable = { ruling_party_strength = party_pop_elect_array^v }
+				}
+				if = {
+					limit = {
+						check_variable = { ruling_party_strength < election_threshold }
+					}
+					country_event = MD4_election.5
+				}
+				else = {
+					country_event = MD4_election.4
+				}
 			}
 		}
 	}

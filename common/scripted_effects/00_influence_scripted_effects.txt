@@ -292,6 +292,34 @@ economic_aid_action = {
 	}
 }
 
+# MP Enhancements flat Economic Aid transfer.
+# Runs in the SENDER scope. Requires temp vars: mp_aid_amount, mp_aid_influence.
+# event_target:influence_sender / influence_recipient must be set by the caller.
+mp_economic_aid_transfer = {
+	# Hoist the per-option temp vars to globals so they survive the scope switch below.
+	set_variable = { global.mp_aid_amount = mp_aid_amount }
+	set_variable = { global.mp_aid_influence = mp_aid_influence }
+
+	subtract_from_variable = { treasury = global.mp_aid_amount }
+
+	# Influence: influencer = sender, influencee = recipient. Effect uses var:influence_target internally.
+	set_temp_variable = { percent_change = global.mp_aid_influence }
+	set_temp_variable = { tag_index = event_target:influence_sender.id }
+	set_temp_variable = { influence_target = event_target:influence_recipient.id }
+	change_influence_percentage = yes
+
+	event_target:influence_recipient = {
+		add_to_variable = { treasury = global.mp_aid_amount }
+		add_opinion_modifier = { target = event_target:influence_sender modifier = given_economic_aid_mp }
+		event_target:influence_sender = {
+			set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 }
+		}
+	}
+
+	update_money_dirty_variable = yes
+	update_dirty_influence_var = yes
+}
+
 target_other_influencer_action = {
 	PREV.PREV = {
 		country_event = influence.22
