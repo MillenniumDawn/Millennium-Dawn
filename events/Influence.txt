@@ -2457,7 +2457,20 @@ country_event = {
 	}
 }
 
-#Send Military Aid to [THIS.GetName]
+
+country_event = {
+	id = influence.50
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		save_event_target_as = military_aid_target
+		event_target:influence_sender = {
+			country_event = influence.51
+		}
+	}
+}
+
+#Send Military Aid to [FROM.GetName]
 country_event = {
 	id = influence.51
 	title = influence.51.t
@@ -2468,7 +2481,13 @@ country_event = {
 	#Consider the Military Offer
 	option = {
 		name = influence.51.a
-		log = "[GetDateText]: [This.GetName]: influence.51.a executed"
+		log = "[GetDateText]: [THIS.GetName]: influence.51.a executed"
+		event_target:influence_sender = {
+			add_political_power = 100
+		}
+		event_target:military_aid_target = {
+			add_political_power = 100
+		}
 
 		custom_effect_tooltip = influence.51.a_tt
 		country_event = influence.52
@@ -2954,16 +2973,7 @@ country_event = {
 			clr_country_flag = aid_package_large
 		}
 
-		# Relation modifier and 90-day cooldown so they can't be spammed with packages
-		add_relation_modifier = {
-			target = FROM
-			modifier = generic_increased_military_support
-		}
-		set_country_flag = {
-			flag = received_military_aid_recently@FROM
-			days = 90
-			value = 1
-		}
+		set_country_flag = { flag = received_military_aid_recently@FROM days = 90 value = 1 }
 
 		# Every nation we are at war with takes a serious diplomatic hit at the donor
 		every_enemy_country = {
