@@ -602,7 +602,7 @@ class BaseValidator:
     def _load_localisation_keys(self) -> frozenset:
         """Load all defined keys from English localisation yml files."""
         yml_files = self._collect_files(["localisation/english/**/*.yml"])
-        key_pattern = re.compile(r"^[ \t]*([\w.]+)\s*:", re.MULTILINE)
+        key_pattern = re.compile(r"^[ \t]*([\w.\-]+)\s*:", re.MULTILINE)
         all_keys: set = set()
         for filepath in yml_files:
             try:

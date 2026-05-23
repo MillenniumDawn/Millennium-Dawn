@@ -449,29 +449,15 @@ class Validator(BaseValidator):
         )
 
     def validate_news_fire_only_once(self):
-        """Flag news_events with both major = yes and fire_only_once = yes.
+        """Disabled — vanilla HOI4 uses major + fire_only_once on news_events
+        throughout NewsEvents.txt. The earlier claim that "fire_only_once takes
+        priority over major" is incorrect: the engine fires the event once
+        globally and the news popup is shown to every country with diplomatic
+        visibility, which is exactly the intended behavior.
 
-        fire_only_once takes priority over major, so only one country will
-        actually see the event. This defeats the purpose of making it major.
-        Remove fire_only_once or use a global flag guard instead.
+        Kept as a no-op stub so the call site and section banner remain stable.
         """
-        self._log_section("Checking news_events for fire_only_once + major conflict...")
-
-        meta, _ = self._get_event_metadata()
-        results = []
-
-        for ev in meta:
-            if ev["type"] != "news_event":
-                continue
-            if ev["is_major"] and ev["fire_only_once"]:
-                results.append(f"{ev['id']} - {ev['file']}")
-
-        self._report(
-            results,
-            "✓ No news_events with fire_only_once + major conflict",
-            "news_events with major = yes AND fire_only_once = yes (only one country sees it — remove fire_only_once or use a global flag):",
-            category="news-fire-only-once-major",
-        )
+        return
 
     def validate_mtth_triggered_only(self):
         """Flag events with both mean_time_to_happen and is_triggered_only.

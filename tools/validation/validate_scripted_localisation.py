@@ -410,6 +410,10 @@ class Validator(BaseValidator):
             "button",
             "tooltip",
             "euxxx_ep_agenda",
+            # Plain loc keys used as $KEY$ nested substitution wrappers in formable
+            # state integration tooltips \u2014 not scripted localisations
+            "gip",
+            "gis",
             "\u00a7",
             "\u00a3",
             "$",
@@ -429,12 +433,17 @@ class Validator(BaseValidator):
                 workers=self.workers,
             )
         )
+        # Usage scan ALWAYS goes full-repo — even in staged mode. Restricting
+        # the usage scan to staged files only would falsely flag any defined-
+        # text whose only consumer lives in a non-staged file (e.g. editing
+        # 99_PER_scripted_localisation.txt would report every loc as unused
+        # if the matching 99_PER_scripted_guis.txt isn't also staged).
         used_locs, used_paths = ScriptedLocalisation.get_all_used_localisations(
             mod_path=self.mod_path,
             defined_names=set(defined_locs),
             lowercase=False,
             return_paths=True,
-            staged_files=self.staged_files,
+            staged_files=None,
             workers=self.workers,
         )
 

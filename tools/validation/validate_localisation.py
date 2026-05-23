@@ -114,8 +114,12 @@ def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
     return results
 
 
-def process_yml_for_syntax(args: Tuple[str, List[str]]) -> List[str]:
-    filename, valid_colors = args
+_SUBST_KEY_RE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)\$")
+_LINE_KEY_RE = re.compile(r"^[ \t]*([\w.\-]+)\s*:")
+
+
+def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[str]:
+    filename, valid_colors, subst_keys = args
     results = []
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
@@ -125,6 +129,12 @@ def process_yml_for_syntax(args: Tuple[str, List[str]]) -> List[str]:
         if "#" in line or line.strip() in ["", "l_english:"]:
             continue
         if "\u00a7" in line and "desc_end" not in line and "U.S.C." not in line:
+            # Skip \u00a7-balance checks for keys consumed via $KEY$ substitution \u2014
+            # those keys intentionally split their \u00a7 codes across multiple values
+            # (one ends with \u00a7Y, another supplies \u00a7!) so the merged result is balanced.
+            key_match = _LINE_KEY_RE.match(line)
+            if key_match and key_match.group(1) in subst_keys:
+                continue
             count = line.count("\u00a7")
             if count % 2 != 0:
                 results.append(
@@ -399,6 +409,25 @@ class Validator(BaseValidator):
             ["localisation/english/**/*.yml"], extra_skip=_should_skip
         )
 
+    def _collect_substitution_keys(self, yml_files: List[str]) -> frozenset:
+        """Return loc keys referenced via $KEY$ string interpolation.
+
+        These keys intentionally split § color codes across multiple values
+        (e.g. `gip` ends with §Y and `gis` supplies §!) so the per-key
+        §-balance check produces false positives. Caller skips that check
+        for any key in this set.
+        """
+        keys: set = set()
+        for filepath in yml_files:
+            try:
+                text = FileOpener.open_text_file(
+                    filepath, lowercase=False, strip_comments_flag=True
+                )
+            except Exception:
+                continue
+            keys.update(_SUBST_KEY_RE.findall(text))
+        return frozenset(keys)
+
     def validate_duplicated_keys(self, duplicated: List[str], skipped_keys: set):
         self._log_section("Checking for duplicated localisation keys...")
 
@@ -432,7 +461,8 @@ class Validator(BaseValidator):
 
         valid_colors = get_all_colors(self.mod_path)
         yml_files = self._get_yml_files()
-        args_list = [(f, valid_colors) for f in yml_files]
+        subst_keys = self._collect_substitution_keys(yml_files)
+        args_list = [(f, valid_colors, subst_keys) for f in yml_files]
 
         all_results = self._pool_map(process_yml_for_syntax, args_list, chunksize=10)
 
