@@ -15,6 +15,7 @@
 # Adapted for Millennium Dawn with multiprocessing
 ##########################
 import glob
+import logging
 import os
 import re
 from pathlib import Path
@@ -199,13 +200,14 @@ def get_all_loc_keys(
 
     for line in results:
         try:
-            key = line[: line.index(":")].strip()
-            value = line[line.index(":") + 2 :].strip()
+            colon_idx = line.index(":")
+            key = line[:colon_idx].strip()
+            value = line[colon_idx + 2 :].strip()
             if key in loc_dict:
                 duplicated_keys.append(key)
             else:
                 loc_dict[key] = value
-        except (ValueError, IndexError):
+        except ValueError:
             continue
 
     return loc_dict, duplicated_keys
@@ -214,6 +216,9 @@ def get_all_loc_keys(
 def get_all_colors(mod_path: str) -> List[str]:
     filepath = Path(mod_path) / "interface" / "core.gfx"
     if not filepath.exists():
+        logging.warning(
+            "interface/core.gfx not found — color validation will use fallback set"
+        )
         return list("WGRBYCMwgrbycm!")
     text_file = FileOpener.open_text_file(
         str(filepath), lowercase=False, strip_comments_flag=True
@@ -227,6 +232,9 @@ def get_all_colors(mod_path: str) -> List[str]:
         )
         return colors
     except (IndexError, Exception):
+        logging.warning(
+            "Failed to parse interface/core.gfx — color validation will use fallback set"
+        )
         return list("WGRBYCMwgrbycm!")
 
 
@@ -379,9 +387,9 @@ def _get_skipped_loc_keys(mod_path: str) -> set:
             if ":" not in line or "l_english:" in line or (line and line[0] == "#"):
                 continue
             try:
-                key = line[: line.index(":")].strip()
-                keys.add(key)
-            except (ValueError, IndexError):
+                colon_idx = line.index(":")
+                keys.add(line[:colon_idx].strip())
+            except ValueError:
                 continue
     return keys
 

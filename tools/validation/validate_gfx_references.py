@@ -26,6 +26,7 @@
 #   --staged            Only validate staged .gui/.gfx/.txt files
 #   --workers N         Worker processes (default: CPU count / 2)
 ##########################
+import glob
 import os
 import re
 import sys
@@ -369,9 +370,7 @@ class GfxReferenceValidator(BaseValidator):
         defined = set(mod_defined)
         vanilla_dir = _find_vanilla_interface_dir()
         if vanilla_dir:
-            import glob as _glob
-
-            vanilla_gfx = _glob.glob(os.path.join(vanilla_dir, "*.gfx"))
+            vanilla_gfx = glob.glob(os.path.join(vanilla_dir, "*.gfx"))
             vanilla_results = self._pool_map(_parse_gfx_file, vanilla_gfx)
             vanilla_defined: Set[str] = set()
             for s in vanilla_results:

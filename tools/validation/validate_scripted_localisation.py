@@ -276,11 +276,7 @@ class Validator(BaseValidator):
         # Preemptive slot libraries — defined for all possible slots even if only a
         # subset are active.  Suppress unused warnings for the unoccupied slots rather
         # than requiring every slot to have a live caller.
-        UNUSED_ONLY_FALSE_POSITIVES = [
-            # EU parliament PG-party support locs: defined for all 24 party groups but
-            # the GUI display path uses the _icon and _loc_key variants instead.
-            "eu_parl_pg_party_",
-        ]
+        UNUSED_ONLY_FALSE_POSITIVES = ("eu_parl_pg_party_",)
 
         defined_lower_to_original = {loc.lower(): loc for loc in defined_locs}
         defined_locs_lower = [loc.lower() for loc in defined_locs]

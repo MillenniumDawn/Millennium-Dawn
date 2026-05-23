@@ -175,13 +175,13 @@ def _gate_signature(pos: int, gate_spans: List[Tuple[int, int]]) -> Tuple[int, .
     of gating blocks. Refs in sibling `if` branches get different signatures.
     """
     return tuple(
-        sorted(
-            open_pos for open_pos, close_pos in gate_spans if open_pos < pos < close_pos
-        )
+        open_pos for open_pos, close_pos in gate_spans if open_pos < pos < close_pos
     )
 
 
-def _scan_on_action_block(text: str, block_name: str, filepath: str) -> Tuple[
+def _scan_on_action_block(
+    text: str, block_name: str, filepath: str, line_offset: int = 0
+) -> Tuple[
     List[Tuple[str, str, int]],  # (event_id, on_action_name, line_number)
     List[Tuple[str, str, int]],  # duplicates: (event_id, on_action_name, line_number)
 ]:
@@ -192,32 +192,26 @@ def _scan_on_action_block(text: str, block_name: str, filepath: str) -> Tuple[
 
     Duplicate detection accounts for `if`/`else_if`/`else`/`random`/`random_list`
     gating: two refs to the same event aren't flagged as duplicates unless they
-    share the exact same chain of enclosing gate blocks. Two refs to the same
-    event in mutually-exclusive `if` branches (or in different `random_list`
-    weights) are legitimate and not flagged.
+    share the exact same chain of enclosing gate blocks. Two refs in the same
+    event in mutually-exclusive `if` branches are legitimate and not flagged.
     """
     refs: List[Tuple[str, str, int]] = []
     duplicates: List[Tuple[str, str, int]] = []
-    # Key: (event_id, gate_signature)
     seen: Set[Tuple[str, Tuple[int, ...]]] = set()
 
     gate_spans = _compute_gate_index(text)
 
     def _line_of(pos: int) -> int:
-        return text[:pos].count("\n") + 1
+        return line_offset + text[:pos].count("\n") + 1
 
-    def _record(eid: str, pos: int, line: int) -> None:
-        # random_list weights are themselves gating: each `N = { event }` weight
-        # is a separate branch. Treat the random_list as the enclosing gate;
-        # multiple weights referencing the same eid inside one random_list are
-        # legitimate (different probabilities, mutually exclusive picks).
+    def _record(eid: str, pos: int) -> None:
         sig = _gate_signature(pos, gate_spans)
         key = (eid, sig)
         if key in seen:
-            duplicates.append((eid, block_name, line))
+            duplicates.append((eid, block_name, _line_of(pos)))
         else:
             seen.add(key)
-            refs.append((eid, block_name, line))
+            refs.append((eid, block_name, _line_of(pos)))
 
     # Collect random_events entries — these are bare `N = event_id` pairs, NOT
     # inside any block so each weighted entry counts. Duplicates here would be
@@ -236,13 +230,11 @@ def _scan_on_action_block(text: str, block_name: str, filepath: str) -> Tuple[
         body_offset = start
         for entry in _RANDOM_EVENT_ENTRY_RE.finditer(body):
             eid = entry.group(1)
-            pos = body_offset + entry.start()
-            _record(eid, pos, _line_of(pos))
+            _record(eid, body_offset + entry.start())
 
     # Collect long-form calls
     for m in _LONG_FORM_EVENT_RE.finditer(text):
-        eid = m.group(1)
-        _record(eid, m.start(), _line_of(m.start()))
+        _record(m.group(1), m.start())
 
     # Collect short-form calls — but only when the match isn't already inside a
     # long-form call (the long-form pattern consumes the id= part, so a
@@ -250,17 +242,10 @@ def _scan_on_action_block(text: str, block_name: str, filepath: str) -> Tuple[
     # actual token we want).
     long_form_spans = {(m.start(), m.end()) for m in _LONG_FORM_EVENT_RE.finditer(text)}
 
-    def _in_long_form(pos: int) -> bool:
-        for start, end in long_form_spans:
-            if start <= pos < end:
-                return True
-        return False
-
     for m in _SHORT_FORM_EVENT_RE.finditer(text):
-        if _in_long_form(m.start()):
+        if any(start <= m.start() < end for start, end in long_form_spans):
             continue
-        eid = m.group(1)
-        _record(eid, m.start(), _line_of(m.start()))
+        _record(m.group(1), m.start())
 
     return refs, duplicates
 
@@ -339,18 +324,18 @@ def _parse_on_actions_file(
                 bi += 1
             block_body = outer_body[bstart : bi - 1]
 
+            # line_offset: number of lines before block_body in the full file
+            line_offset = text_clean[: outer_offset + bstart].count("\n")
             refs, dupes = _scan_on_action_block(
                 block_body,
                 block_name,
                 filepath,
+                line_offset=line_offset,
             )
-            # Adjust line numbers: outer_offset accounts for the on_actions = { header,
-            # and bstart for the trigger block's own header
-            body_line_base = text_clean[: outer_offset + bstart].count("\n")
             for eid, bname, lno in refs:
-                all_refs.append((eid, bname, body_line_base + lno, relpath))
+                all_refs.append((eid, bname, lno, relpath))
             for eid, bname, lno in dupes:
-                all_dupes.append((eid, bname, body_line_base + lno, relpath))
+                all_dupes.append((eid, bname, lno, relpath))
 
             pos = bi
 

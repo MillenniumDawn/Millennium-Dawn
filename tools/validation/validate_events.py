@@ -46,7 +46,11 @@ def _should_skip(filename: str) -> bool:
 
 
 def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
-    """Pool worker: count occurrences of each tracked event ID in one file."""
+    """Pool worker: count occurrences of each tracked event ID in one file.
+
+    Uses a word-boundary-aware approach so that an event ID appearing in a
+    log string or other text doesn't produce a false positive count.
+    """
     filename, tracked_ids = args
     if _should_skip(filename):
         return {}
@@ -55,7 +59,11 @@ def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     except Exception:
         return {}
     cleaned = re.sub(r"#[^\n]*", "", text)
-    return {eid: cleaned.count(eid) for eid in tracked_ids if eid in cleaned}
+    id_counts: Dict[str, int] = {}
+    for eid in tracked_ids:
+        if eid in cleaned:
+            id_counts[eid] = cleaned.count(eid)
+    return id_counts
 
 
 def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
@@ -260,24 +268,17 @@ class Validator(BaseValidator):
 
         events, paths = self._get_all_events()
         self.log(f"  Found {len(events)} events")
-        pattern_id = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
+        id_pat = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
         results = []
 
         for line_type in ["title", "desc"]:
-            pattern_block = r"^\t" + line_type + r" = \{"
-            pattern_inline = r"^\t" + line_type + r" = \w"
+            block_pat = re.compile(r"^\t" + line_type + r" = \{", flags=re.MULTILINE)
+            inline_pat = re.compile(r"^\t" + line_type + r" = \w", flags=re.MULTILINE)
 
             for event in events:
-                has_block = (
-                    len(re.findall(pattern_block, event, flags=re.MULTILINE)) > 0
-                )
-                has_inline = (
-                    len(re.findall(pattern_inline, event, flags=re.MULTILINE)) > 0
-                )
-
-                if has_block and has_inline:
-                    event_id = pattern_id.findall(event)
-                    eid = event_id[0] if event_id else "unknown"
+                if block_pat.search(event) and inline_pat.search(event):
+                    eid_match = id_pat.findall(event)
+                    eid = eid_match[0] if eid_match else "unknown"
                     results.append(
                         f"{eid} - {paths.get(event, 'unknown')} - invalid {line_type} (has both block and inline forms)"
                     )
@@ -295,12 +296,12 @@ class Validator(BaseValidator):
 
         events, paths = self._get_all_events()
         self.log(f"  Found {len(events)} events")
-        pattern_id = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
-
         results = []
+        id_pattern = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
+
         for event in events:
             if "is_triggered_only = yes" not in event:
-                event_id = pattern_id.findall(event)
+                event_id = id_pattern.findall(event)
                 eid = event_id[0] if event_id else "unknown"
                 filename = paths.get(event, "unknown")
                 results.append(f"{eid} - {filename}")

@@ -313,7 +313,7 @@ class BaseValidator:
                     f.write("\n".join(self.output_lines))
                 logging.info(f"Results saved to: {self.output_file}")
             except Exception as e:
-                logging.error(f"Failed to save output to {self.output_file}: {e}")
+                logging.error(f"Failed to write results to {self.output_file}: {e}")
 
         json_file = (
             os.path.splitext(self.output_file)[0] + ".json"
@@ -326,7 +326,7 @@ class BaseValidator:
                     f.write(self.get_issues_json())
                 logging.info(f"JSON results saved to: {json_file}")
             except Exception as e:
-                logging.error(f"Failed to save JSON to {json_file}: {e}")
+                logging.error(f"Failed to serialize JSON to {json_file}: {e}")
 
     def add_issue(
         self, severity: str, category: str, message: str, file: str = "", line: int = 0
@@ -513,7 +513,7 @@ class BaseValidator:
         Falls back to sequential execution when workers == 1 (avoids Pool
         startup overhead for small staged commits on low-end hardware).
         """
-        if self.workers == 1 or self._pool is None and len(args_list) < 10:
+        if self.workers == 1 or (self._pool is None and len(args_list) < 10):
             return [func(a) for a in args_list]
         if self._pool is None:
             raise RuntimeError("_pool_map called outside run_all_validations")
