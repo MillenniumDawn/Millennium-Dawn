@@ -117,6 +117,7 @@ def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
 
 _SUBST_KEY_RE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)\$")
 _LINE_KEY_RE = re.compile(r"^[ \t]*([\w.\-]+)\s*:")
+_NOT_OPEN_RE = re.compile(r"\bNOT\s*=\s*\{")
 
 
 def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[str]:
@@ -310,10 +311,9 @@ def _extract_not_blocks(text: str) -> List[str]:
     """Return the bodies of every ``NOT = { ... }`` block in ``text``,
     brace-balanced so nested trigger blocks are kept intact."""
     out: List[str] = []
-    not_re = re.compile(r"\bNOT\s*=\s*\{")
     i = 0
     while True:
-        m = not_re.search(text, i)
+        m = _NOT_OPEN_RE.search(text, i)
         if not m:
             break
         start = m.end()

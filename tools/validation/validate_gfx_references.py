@@ -34,6 +34,7 @@ from typing import List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from shared_utils import compute_line_offsets, line_for_offset
 from validator_common import BaseValidator, Colors, Severity, run_validator_main
 
 # ---------------------------------------------------------------------------
@@ -275,12 +276,13 @@ def _parse_gui_file(
         return []
 
     text = _strip_cstyle_comments(raw)
+    offsets = compute_line_offsets(raw)
     results = []
     for m in _GUI_REF.finditer(text):
         sprite = m.group(2)
         if _is_dynamic(sprite):
             continue
-        line = raw.count("\n", 0, m.start()) + 1
+        line = line_for_offset(offsets, m.start())
         results.append((sprite, filepath, line))
     return results
 
@@ -299,12 +301,13 @@ def _parse_sgui_file(
     # but the image = "GFX_xxx" attribute pattern is the same.
     # We don't strip # comments here to avoid stripping scripted loc keys
     # that start with # — just use raw text.
+    offsets = compute_line_offsets(raw)
     results = []
     for m in _SGUI_IMAGE_REF.finditer(raw):
         sprite = m.group(1)
         if _is_dynamic(sprite):
             continue
-        line = raw.count("\n", 0, m.start()) + 1
+        line = line_for_offset(offsets, m.start())
         results.append((sprite, filepath, line))
     return results
 
@@ -319,12 +322,13 @@ def _parse_sloc_file(
     except Exception:
         return []
 
+    offsets = compute_line_offsets(raw)
     results = []
     for m in _SLOC_KEY_REF.finditer(raw):
         sprite = m.group(1)
         if _is_dynamic(sprite):
             continue
-        line = raw.count("\n", 0, m.start()) + 1
+        line = line_for_offset(offsets, m.start())
         results.append((sprite, filepath, line))
     return results
 

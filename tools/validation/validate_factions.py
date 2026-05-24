@@ -22,7 +22,13 @@ import os
 import re
 from typing import Dict, List, Set, Tuple
 
-from validator_common import BaseValidator, Colors, run_validator_main, strip_comments
+from validator_common import (
+    BaseValidator,
+    Colors,
+    FileOpener,
+    run_validator_main,
+    strip_comments,
+)
 
 # Valid faction rule types per engine documentation
 VALID_RULE_TYPES = {
@@ -48,12 +54,11 @@ IS_MANIFEST_RE = re.compile(r"\bis_manifest\s*=\s*yes\b")
 
 
 def read_file(filepath: str) -> str:
-    """Read a file and strip comments."""
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as f:
-            return strip_comments(f.read())
-    except Exception:
-        return ""
+    # FileOpener-cached so the seven check methods that iterate templates only
+    # pay disk cost once.
+    return FileOpener.open_text_file(
+        filepath, lowercase=False, strip_comments_flag=True
+    )
 
 
 def extract_block_ids(content: str) -> List[str]:

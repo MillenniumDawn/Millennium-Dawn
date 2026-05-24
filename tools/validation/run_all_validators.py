@@ -17,40 +17,21 @@ SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 TOOLS_DIR = os.path.dirname(SCRIPTS_DIR)
 
 
-def discover_validators(include_slow: bool = False) -> List[Tuple[str, str, str]]:
-    """Auto-discover validators from the validation directory.
+_NON_VALIDATOR_SCRIPTS = frozenset(
+    ("validate_tools.py", "validate_staged.py", "run_all_validators.py")
+)
 
-    Args:
-        include_slow: If True, include slow validators (set-variables, unused-scripted, etc.)
-    """
+
+def discover_validators() -> List[Tuple[str, str, str]]:
+    """Return (name, script_name, label) for every validate_*.py in this dir."""
     validators = []
-
-    # Validators that are slow and should be opt-in
-    # set-variables: O(N×M) reference counting, times out on full repo scan
-    # unused-textures: ~22k pre-existing unreferenced textures, noisy at repo scale
-    SLOW_VALIDATORS = {
-        "set-variables",
-        "unused-textures",
-    }
-
     for script_path in glob.glob(os.path.join(SCRIPTS_DIR, "validate_*.py")):
         script_name = os.path.basename(script_path)
-
-        if script_name in (
-            "validate_tools.py",
-            "validate_staged.py",
-            "run_all_validators.py",
-        ):
+        if script_name in _NON_VALIDATOR_SCRIPTS:
             continue
-
         name = script_name.replace("validate_", "").replace(".py", "").replace("_", "-")
-
-        if not include_slow and name in SLOW_VALIDATORS:
-            continue
-
         label = _extract_label_from_script(script_path, name)
         validators.append((name, script_name, label))
-
     validators.sort(key=lambda x: x[0])
     return validators
 
@@ -232,11 +213,6 @@ def main():
         default=".",
         help="Path to the mod folder (default: current directory)",
     )
-    parser.add_argument(
-        "--include-slow",
-        action="store_true",
-        help="Include slow validators (set-variables, unused-textures)",
-    )
     args = parser.parse_args()
 
     if args.no_color:
@@ -255,7 +231,7 @@ def main():
         extra_flags.append("--no-color")
 
     output_dir = tempfile.mkdtemp()
-    VALIDATORS = discover_validators(include_slow=args.include_slow)
+    VALIDATORS = discover_validators()
     mod_path = os.path.abspath(args.path)
 
     print(
@@ -268,17 +244,17 @@ def main():
     for name, script, label in VALIDATORS:
         print(f"  - {name}: {label}")
 
-    if not args.include_slow:
-        print("\n  (Use --include-slow to also run: set-variables, unused-textures)\n")
+    print()
 
-    # Launch all validators in parallel
+    # Unbounded subprocess fan-out is intentional: capping concurrency or
+    # forcing per-child --workers starves the regex-heavy slow validators
+    # (verified slower in practice; the suite is I/O-bound, not CPU-bound).
     processes = {}
     for name, script, _label in VALIDATORS:
         processes[name] = launch_validator(
             script, extra_flags, output_dir, name, mod_path
         )
 
-    # Collect results in order
     total_errors = 0
     total_warnings = 0
     crashed_validators = []

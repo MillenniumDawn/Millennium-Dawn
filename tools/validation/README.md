@@ -14,9 +14,6 @@ python3 tools/validation/run_all_validators.py --strict
 # Only check staged files (pre-commit mode)
 python3 tools/validation/run_all_validators.py --staged --strict
 
-# Include slow validators (set-variables, unused-scripted, variables, unused-textures)
-python3 tools/validation/run_all_validators.py --include-slow
-
 # Save combined report to a file
 python3 tools/validation/run_all_validators.py --output report.txt
 ```
@@ -52,9 +49,9 @@ Output is color-coded. Pass `--no-color` for plain text (e.g. in log files).
 | **validate_scripted_localisation.py** | Scripted loc keys used but not defined; defined but never referenced; missing GFX icons                                                  |
 | **validate_scripted_params.py**       | Scripted params declared in `common/scripted_params/` are referenced with compatible types                                               |
 
-### Slow (opt-in with `--include-slow`)
+### Heavy validators
 
-These validators scan a much larger portion of the codebase and take significantly longer to run. They are excluded from the default run and from CI to keep feedback fast.
+These cross-reference the entire codebase. A disk cache under `.validation_cache/` keeps re-runs fast — see [DISK_CACHE.md](DISK_CACHE.md).
 
 | Validator                       | Checks                                                                             |
 | ------------------------------- | ---------------------------------------------------------------------------------- |

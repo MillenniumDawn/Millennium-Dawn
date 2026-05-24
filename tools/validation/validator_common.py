@@ -15,12 +15,15 @@ from multiprocessing import Pool, cpu_count
 from typing import Callable, Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
 from shared_utils import (
     DataCleaner,
     FileOpener,
+    compute_line_offsets,
     create_validation_parser,
     find_line_number,
     get_staged_files,
+    line_for_offset,
     log_message,
     print_timing_summary,
     run_validator_main,
@@ -239,6 +242,8 @@ class BaseValidator:
         self.output_lines = []
         self._pool: Optional[Pool] = None
         self._regex_cache: Dict[str, re.Pattern] = {}
+        self._line_offsets_cache: Dict[str, List[int]] = {}
+        self._shared_cache: Dict[str, object] = {}
         self._issues: List[Issue] = []
         self._section_timings: List[Tuple[str, float]] = []
         self._section_start: Optional[float] = None
@@ -258,6 +263,21 @@ class BaseValidator:
         if key not in self._regex_cache:
             self._regex_cache[key] = re.compile(pattern, flags)
         return self._regex_cache[key]
+
+    def line_offsets(self, path: str, text: str) -> List[int]:
+        # Pool workers must use compute_line_offsets() from shared_utils — this
+        # cache only spans the main process.
+        cached = self._line_offsets_cache.get(path)
+        if cached is None:
+            cached = compute_line_offsets(text)
+            self._line_offsets_cache[path] = cached
+        return cached
+
+    def cached(self, key: str, factory_fn):
+        # Pool workers don't see this cache; populate from the main process.
+        if key not in self._shared_cache:
+            self._shared_cache[key] = factory_fn()
+        return self._shared_cache[key]
 
     def log(self, message: str, level: str = "info"):
         # Respect MD_LOG_LEVEL — skip messages below the configured threshold.
@@ -486,33 +506,53 @@ class BaseValidator:
             "issues": [issue.to_dict() for issue in self._issues],
         }
 
-    def get_full_path(
-        self, basename: str, item: str, file_patterns: Optional[List[str]] = None
-    ) -> Optional[str]:
-        if file_patterns is None:
-            file_patterns = ["**/*.txt"]
-        for pattern in file_patterns:
+    def _basename_index(self, patterns: Tuple[str, ...]) -> Dict[str, List[str]]:
+        # Without this cache, get_full_path() re-globs **/*.txt for every call —
+        # validate_variables makes hundreds of those per run.
+        key = "_basename_index:" + "|".join(patterns)
+        existing = self._shared_cache.get(key)
+        if existing is not None:
+            return existing
+
+        tracked: List[str] = []
+        seen: Set[str] = set()
+        for pattern in patterns:
             for filename in glob.iglob(
                 os.path.join(self.mod_path, pattern), recursive=True
             ):
-                if os.path.basename(filename) == basename:
-                    if should_skip_file(filename):
-                        continue
-                    try:
-                        with open(filename, "r", encoding="utf-8-sig") as f:
-                            content = f.read()
-                            if item in content:
-                                return filename
-                    except Exception:
-                        pass
+                if filename not in seen:
+                    seen.add(filename)
+                    tracked.append(filename)
+
+        def _build():
+            index: Dict[str, List[str]] = {}
+            for filename in tracked:
+                if should_skip_file(filename):
+                    continue
+                index.setdefault(os.path.basename(filename), []).append(filename)
+            return index
+
+        index = disk_cache.aggregate_cached(self.mod_path, key, tracked, _build)
+        self._shared_cache[key] = index
+        return index
+
+    def get_full_path(
+        self, basename: str, item: str, file_patterns: Optional[List[str]] = None
+    ) -> Optional[str]:
+        patterns = tuple(file_patterns) if file_patterns else ("**/*.txt",)
+        index = self._basename_index(patterns)
+        for filename in index.get(basename, ()):
+            try:
+                content = FileOpener.open_text_file(filename, lowercase=False)
+                if item in content:
+                    return filename
+            except Exception:
+                pass
         return None
 
     def _pool_map(self, func: Callable, args_list: List, chunksize: int = 50) -> List:
-        """Run func over args_list using the validator's shared worker pool.
-
-        Falls back to sequential execution when workers == 1 (avoids Pool
-        startup overhead for small staged commits on low-end hardware).
-        """
+        # Falls back to sequential when workers == 1 so low-end machines don't
+        # eat the Pool startup cost on a small staged commit.
         if self.workers == 1 or (self._pool is None and len(args_list) < 10):
             return [func(a) for a in args_list]
         if self._pool is None:
