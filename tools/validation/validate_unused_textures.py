@@ -145,13 +145,17 @@ def process_gfx_file(args: Tuple[str, str, Set[str], Dict[str, List[str]]]) -> S
     return referenced_textures
 
 
-def process_game_file(args: Tuple[str, str, Set[str]]) -> Set[str]:
+def process_game_file(
+    args: Tuple[str, str, Set[str], Dict[str, List[str]]],
+) -> Set[str]:
     """
     Process a game file (common/history/events/portraits) and extract texture references.
     References can be either full paths or just filenames.
     Returns a set of matched texture paths.
+
+    filename_lookup: {basename -> [full_path, ...]} for O(1) basename resolution.
     """
-    filename, mod_path, texture_files = args
+    filename, mod_path, texture_files, filename_lookup = args
     matched_textures = set()
 
     try:
@@ -161,7 +165,7 @@ def process_game_file(args: Tuple[str, str, Set[str]]) -> Set[str]:
 
         # Patterns to match texture references in game files:
         # 1. portrait = "path/to/file.dds" or portrait = "filename.dds"
-        # 2. picture = "path/to/file.dds" or picture = "filename.dds"
+        # 2. portrait = "path/to/file.dds" or portrait = "filename.dds"
         # 3. Direct path references "gfx/leaders/..."
         patterns = [
             r'portrait\s*=\s*"([^"]+\.(?:dds|tga|png))"',
@@ -182,12 +186,11 @@ def process_game_file(args: Tuple[str, str, Set[str]]) -> Set[str]:
                 if ref_path in texture_files:
                     matched_textures.add(ref_path)
                 else:
-                    # Try to match by filename only
+                    # O(1) basename lookup instead of O(n) scan
                     ref_filename = os.path.basename(ref_path)
-                    for texture_path in texture_files:
-                        if os.path.basename(texture_path) == ref_filename:
-                            matched_textures.add(texture_path)
-                            break
+                    if ref_filename in filename_lookup:
+                        for tex_path in filename_lookup[ref_filename]:
+                            matched_textures.add(tex_path)
 
     except Exception as e:
         # Silently skip files that can't be read
@@ -314,7 +317,10 @@ class Validator(BaseValidator):
         self.log(f"  Found {len(game_files)} game files to scan")
 
         # Prepare arguments for multiprocessing
-        args_list = [(f, self.mod_path, self.texture_files) for f in game_files]
+        args_list = [
+            (f, self.mod_path, self.texture_files, self.texture_filename_lookup)
+            for f in game_files
+        ]
 
         all_results = self._pool_map(process_game_file, args_list, chunksize=10)
 
@@ -332,7 +338,7 @@ class Validator(BaseValidator):
         self.texture_files = find_texture_files(self.mod_path)
         self.log(f"  Found {len(self.texture_files)} texture files")
 
-        # Build filename lookup for fast matching
+        # Build filename lookup for fast matching (basename -> full paths)
         self.texture_filename_lookup = {}
         for tex_path in self.texture_files:
             filename = os.path.basename(tex_path)

@@ -63,9 +63,12 @@ def process_file_for_set_variables(
 def count_all_variables_in_file(args: Tuple[str, frozenset, bool]) -> Dict[str, int]:
     """Scan one file for references to all tracked variables in a single read.
 
+    Uses one compiled regex to find all tracked variable names, then checks
+    the surrounding context of each match to distinguish set_variable calls
+    from other references.  This replaces the O(vars × file_length) per-file
+    loop that called text.count() 4 times per variable.
+
     Returns {var: net_ref_count} with only variables that have net_ref_count > 0.
-    This inverted approach (scan per-file, not per-variable) eliminates the O(N×M)
-    pool churn of the old per-variable wrapper.
     """
     filename, tracked_vars, lowercase = args
 
@@ -76,15 +79,30 @@ def count_all_variables_in_file(args: Tuple[str, frozenset, bool]) -> Dict[str, 
         filename, lowercase=lowercase, strip_comments_flag=True
     )
 
+    if not tracked_vars:
+        return {}
+
+    # Escape variables that contain regex-active characters
+    escaped = [re.escape(v) for v in tracked_vars]
+    pattern = re.compile(r"\b(" + "|".join(escaped) + r")\b")
+
+    ref_counts: Dict[str, int] = {}
+    set_counts: Dict[str, int] = {}
+
+    for m in pattern.finditer(text_file):
+        var = m.group(1)
+        # Check ~25 chars before and after for set_variable context
+        start = max(0, m.start() - 25)
+        end = min(len(text_file), m.end() + 25)
+        ctx = text_file[start:end]
+        if "set_variable" in ctx:
+            set_counts[var] = set_counts.get(var, 0) + 1
+        else:
+            ref_counts[var] = ref_counts.get(var, 0) + 1
+
     result = {}
-    for var in tracked_vars:
-        total = text_file.count(var)
-        if total == 0:
-            continue
-        set_count = text_file.count(f"set_variable = {var}")
-        set_count += text_file.count(f"set_variable = {{ {var}")
-        set_count += text_file.count(f"set_variable = {{{var}")
-        net = total - set_count
+    for var in ref_counts:
+        net = ref_counts[var] - set_counts.get(var, 0)
         if net > 0:
             result[var] = net
     return result

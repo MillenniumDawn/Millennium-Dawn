@@ -26,11 +26,11 @@ def discover_validators(include_slow: bool = False) -> List[Tuple[str, str, str]
     validators = []
 
     # Validators that are slow and should be opt-in
+    # set-variables: O(N×M) reference counting, times out on full repo scan
+    # unused-textures: ~22k pre-existing unreferenced textures, noisy at repo scale
     SLOW_VALIDATORS = {
         "set-variables",
-        "unused-scripted",
         "unused-textures",
-        "variables",
     }
 
     for script_path in glob.glob(os.path.join(SCRIPTS_DIR, "validate_*.py")):
@@ -235,7 +235,7 @@ def main():
     parser.add_argument(
         "--include-slow",
         action="store_true",
-        help="Include slow validators (set-variables, unused-scripted, variables, unused-textures)",
+        help="Include slow validators (set-variables, unused-textures)",
     )
     args = parser.parse_args()
 
@@ -269,9 +269,7 @@ def main():
         print(f"  - {name}: {label}")
 
     if not args.include_slow:
-        print(
-            "\n  (Use --include-slow to also run: set-variables, unused-scripted, variables, unused-textures)\n"
-        )
+        print("\n  (Use --include-slow to also run: set-variables, unused-textures)\n")
 
     # Launch all validators in parallel
     processes = {}

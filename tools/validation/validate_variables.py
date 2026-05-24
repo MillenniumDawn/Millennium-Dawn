@@ -357,18 +357,20 @@ class Variables:
         flag_type="country",
         staged_files=None,
         workers=None,
+        files_to_scan=None,
     ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
         """Return (set_paths, used_paths, cleared_paths) in a single pool scan.
 
         Replaces three separate _get_flags() calls per flag_type with one,
         reducing pool overhead and file I/O by ~3×.
         """
-        if staged_files is not None:
-            files_to_scan = [f for f in staged_files if f.endswith(".txt")]
-        else:
-            files_to_scan = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
-            )
+        if files_to_scan is None:
+            if staged_files is not None:
+                files_to_scan = [f for f in staged_files if f.endswith(".txt")]
+            else:
+                files_to_scan = list(
+                    glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
+                )
 
         args_list = [(f, lowercase, flag_type) for f in files_to_scan]
         with Pool(processes=workers) as pool:
@@ -437,18 +439,20 @@ class EventTargets:
         lowercase=False,
         staged_files=None,
         workers=None,
+        files_to_scan=None,
     ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
         """Return (set_paths, used_paths, cleared_paths) in a single pool scan.
 
         Replaces three separate _get_targets() calls with one, reducing pool
         overhead and file I/O by ~3×.
         """
-        if staged_files is not None:
-            files_to_scan = [f for f in staged_files if f.endswith(".txt")]
-        else:
-            files_to_scan = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
-            )
+        if files_to_scan is None:
+            if staged_files is not None:
+                files_to_scan = [f for f in staged_files if f.endswith(".txt")]
+            else:
+                files_to_scan = list(
+                    glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
+                )
 
         args_list = [(f, lowercase) for f in files_to_scan]
         with Pool(processes=workers) as pool:
@@ -899,6 +903,15 @@ class Validator(BaseValidator):
             )
             return
 
+        # Collect the file list once and share across all flag-type and
+        # event-target scans — avoids one glob.iglob per flag_type (×3) plus
+        # one more for event targets, for a total of 4 redundant scans.
+        self.log("Collecting all .txt files (one scan for all validators)...")
+        all_txt_files = list(
+            glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
+        )
+        self.log(f"  Found {len(all_txt_files)} .txt files")
+
         FALSE_POSITIVES_GENERIC = ["@", "[", "{"]
         FALSE_POSITIVES_COUNTRY = [
             "@",
@@ -969,6 +982,7 @@ class Validator(BaseValidator):
                 flag_type=flag_type,
                 staged_files=self.staged_files,
                 workers=self.workers,
+                files_to_scan=all_txt_files,
             )
             self.validate_cleared_flags(flag_type, fp_cleared, cleared_paths, set_paths)
             self.validate_missing_flags(flag_type, fp_missing, used_paths, set_paths)
@@ -980,6 +994,7 @@ class Validator(BaseValidator):
             lowercase=False,
             staged_files=self.staged_files,
             workers=self.workers,
+            files_to_scan=all_txt_files,
         )
         self.validate_cleared_event_targets(et_cleared, et_set)
         self.validate_missing_event_targets(et_used, et_set)
