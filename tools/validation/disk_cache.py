@@ -25,6 +25,15 @@ _CACHE_DIR_NAME = ".validation_cache"
 _PICKLE_ERRORS = (FileNotFoundError, EOFError, pickle.UnpicklingError, OSError)
 
 
+# Setting MD_NO_CACHE=1 in the environment bypasses every cache lookup and
+# every cache write — useful when iterating on a validator's internal logic
+# (the cache keys on file stat, not on validator source, so behavior changes
+# to the validator itself are otherwise invisible until CACHE_VERSION bumps).
+# Inherited automatically by subprocesses launched from run_all_validators.
+def _cache_disabled() -> bool:
+    return os.environ.get("MD_NO_CACHE") == "1"
+
+
 def cache_root(mod_path: str) -> Path:
     return Path(mod_path) / _CACHE_DIR_NAME / f"v{CACHE_VERSION}"
 
@@ -91,6 +100,8 @@ def per_file_cached(
     source_path: str,
     compute_fn: Callable[[], Any],
 ) -> Any:
+    if _cache_disabled():
+        return compute_fn()
     current_stat = _file_stat(source_path)
     if current_stat is None:
         return compute_fn()
@@ -109,6 +120,8 @@ def aggregate_cached(
     tracked_files: Iterable[str],
     factory_fn: Callable[[], Any],
 ) -> Any:
+    if _cache_disabled():
+        return factory_fn()
     tracked: List[str] = list(tracked_files)
     current_stats = {p: _file_stat(p) for p in tracked}
     cache_path = _aggregate_path(mod_path, key)

@@ -47,3 +47,23 @@ rm -rf .validation_cache/
 # or, from a Python REPL:
 python3 -c "import sys; sys.path.insert(0,'tools/validation'); import disk_cache; disk_cache.clear('.')"
 ```
+
+## Bypassing for one run
+
+When iterating on a validator's internal logic, the cache keys on file
+stat (not validator source), so behavior changes are invisible until
+`CACHE_VERSION` bumps. Use `--no-cache` to skip every read and write for a
+single run without touching the on-disk cache:
+
+```bash
+python3 tools/validation/run_all_validators.py --no-cache
+```
+
+Equivalent for individual validators or other entry points:
+
+```bash
+MD_NO_CACHE=1 python3 tools/validation/validate_variables.py
+```
+
+`--no-cache` exports `MD_NO_CACHE=1` for the spawned subprocesses, so a
+single flag covers the entire suite.

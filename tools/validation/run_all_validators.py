@@ -203,6 +203,16 @@ def main():
     parser.add_argument("--staged", action="store_true")
     parser.add_argument("--strict", action="store_true")
     parser.add_argument("--no-color", action="store_true")
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help=(
+            "Bypass the .validation_cache/ disk cache for this run. Use when "
+            "iterating on validator logic — cache keys on file stat, not on "
+            "validator source, so logic changes are otherwise invisible until "
+            "CACHE_VERSION bumps. Sets MD_NO_CACHE=1 for child validators."
+        ),
+    )
     parser.add_argument("--format", choices=["text", "json", "both"], default="text")
     parser.add_argument(
         "--output", "-o", type=str, help="Output file for combined report"
@@ -229,6 +239,11 @@ def main():
         extra_flags.append("--strict")
     if args.no_color:
         extra_flags.append("--no-color")
+
+    if args.no_cache:
+        # subprocess.Popen inherits the parent env by default, so setting
+        # this once here propagates to every spawned validator.
+        os.environ["MD_NO_CACHE"] = "1"
 
     VALIDATORS = discover_validators()
     mod_path = os.path.abspath(args.path)
