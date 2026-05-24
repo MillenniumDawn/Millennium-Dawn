@@ -17,6 +17,14 @@ You are the adversarial reviewer. Your job is not to verify compliance against k
 - `git diff origin/main...HEAD`
 - Identify changed files and their types.
 
+### 1a. Dispatch tools-reviewer for any tools/\*\* changes
+
+If `git diff --name-only origin/main...HEAD` includes any path under `tools/` (linting, validation, standardization, shared_utils, etc.), dispatch the `tools-reviewer` subagent in parallel with your own review of content files. Pass it the list of changed tooling files.
+
+The tools-reviewer covers Python-specific concerns (Correctness, Duplication, Performance, Robustness, Consistency, Style, Wiring) that this skill's HOI4-scripting checklists do not. Folding its findings into your final report gives a single combined review covering both content and tooling changes.
+
+Skip this step when no `tools/**` files changed.
+
 ### 2. Challenge every changed block
 
 Ask these questions systematically. If the answer is "no, it's not handled", flag it.

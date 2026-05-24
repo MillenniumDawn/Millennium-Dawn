@@ -59,6 +59,29 @@ def _should_skip(filename: str) -> bool:
     return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
 
 
+_TARGETED_BLOCK_RE = re.compile(
+    r"\bactivate_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
+)
+_DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
+_MISSION_NAME_RE = re.compile(r"\bactivate_mission\s*=\s*(\S+)")
+
+
+def _scan_activations_in_file(filename: str) -> Tuple[set, set]:
+    if _should_skip(filename):
+        return set(), set()
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    decisions: set = set()
+    missions: set = set()
+    if "activate_targeted_decision" in text_file:
+        for block in _TARGETED_BLOCK_RE.findall(text_file):
+            decisions.update(_DECISION_NAME_RE.findall(block))
+    if "activate_mission" in text_file:
+        missions.update(_MISSION_NAME_RE.findall(text_file))
+    return decisions, missions
+
+
 # --- Decision parsing helpers ---
 
 _TAG_TOKEN_PATTERN = re.compile(r"\b(original_tag|tag)\s*=\s*([A-Z][A-Z0-9_]{1,7})\b")
@@ -494,37 +517,20 @@ class Validator(BaseValidator):
                 else:
                     manual_decisions.add(d.token)
 
-        # Single pass over the mod tree: extract every (decision name) from
-        # `activate_targeted_decision = { ... decision = X ... }` blocks and
-        # every (mission name) from `activate_mission = X`.
-        #
-        # We must NOT treat a bare `decision = X` anywhere in a file that
-        # mentions `activate_targeted_decision` as an activation — the keyword
-        # `decision` appears in many other places (e.g. `on_political_decision`
-        # hook references) and that would hide genuinely unused decisions.
-        # Instead, extract the activate_targeted_decision block first, then
-        # pull `decision = X` from inside that block only.
-        targeted_block_pat = re.compile(
-            r"\bactivate_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
+        # The worker extracts `decision = X` only from inside an
+        # `activate_targeted_decision = { ... }` block; the bare keyword
+        # `decision` appears in unrelated places (on_political_decision hooks etc.)
+        # and matching them would hide genuinely unused decisions.
+        all_files = list(
+            glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
         )
-        decision_name_pat = re.compile(r"\bdecision\s*=\s*(\S+)")
-        mission_name_pat = re.compile(r"\bactivate_mission\s*=\s*(\S+)")
         activated_decisions: set = set()
         activated_missions: set = set()
-
-        for filename in glob.iglob(
-            os.path.join(self.mod_path, "**", "*.txt"), recursive=True
+        for dec_set, mis_set in self._pool_map(
+            _scan_activations_in_file, all_files, chunksize=30
         ):
-            if _should_skip(filename):
-                continue
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
-            )
-            if "activate_targeted_decision" in text_file:
-                for block in targeted_block_pat.findall(text_file):
-                    activated_decisions.update(decision_name_pat.findall(block))
-            if "activate_mission" in text_file:
-                activated_missions.update(mission_name_pat.findall(text_file))
+            activated_decisions.update(dec_set)
+            activated_missions.update(mis_set)
 
         results = sorted(
             (manual_decisions - activated_decisions)
