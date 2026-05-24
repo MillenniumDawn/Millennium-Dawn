@@ -230,10 +230,19 @@ def main():
     if args.no_color:
         extra_flags.append("--no-color")
 
-    output_dir = tempfile.mkdtemp()
     VALIDATORS = discover_validators()
     mod_path = os.path.abspath(args.path)
 
+    # TemporaryDirectory guarantees cleanup even on crashes — the previous
+    # mkdtemp + per-file os.remove pattern leaked the dir on every non-clean
+    # run (strict failures, partial crashes, KeyboardInterrupt).
+    with tempfile.TemporaryDirectory(prefix="md_validators_") as output_dir:
+        exit_code = _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path)
+
+    sys.exit(exit_code)
+
+
+def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     print(
         f"{Colors.CYAN}{'=' * 80}{Colors.NC}\n"
         f"{Colors.CYAN}Running Millennium Dawn Validation Suite{Colors.NC}\n"
@@ -281,59 +290,46 @@ def main():
 
     if total_errors == 0 and total_warnings == 0:
         print(f"{Colors.GREEN}✓ ALL VALIDATIONS PASSED{Colors.NC}")
+        return 0
 
-        for name, _, _ in VALIDATORS:
-            txt_path = os.path.join(output_dir, f"{name}.txt")
-            json_path = os.path.join(output_dir, f"{name}.json")
-            for path in [txt_path, json_path]:
-                if os.path.exists(path):
-                    os.remove(path)
-        try:
-            os.rmdir(output_dir)
-        except:
-            pass
+    report = generate_combined_report(
+        output_dir, VALIDATORS, crashed_validators, not args.no_color
+    )
 
-        sys.exit(0)
-    else:
-        report = generate_combined_report(
-            output_dir, VALIDATORS, crashed_validators, not args.no_color
-        )
+    if args.format in ("json", "both"):
+        combined_json = {
+            "validators": len(VALIDATORS),
+            "total_errors": total_errors,
+            "total_warnings": total_warnings,
+            "issues": collect_all_issues(output_dir, VALIDATORS),
+        }
+        json_output = json.dumps(combined_json, indent=2)
+        if args.output:
+            with open(args.output.replace(".txt", ".json"), "w") as f:
+                f.write(json_output)
 
-        if args.format in ("json", "both"):
-            combined_json = {
-                "validators": len(VALIDATORS),
-                "total_errors": total_errors,
-                "total_warnings": total_warnings,
-                "issues": collect_all_issues(output_dir, VALIDATORS),
-            }
-            json_output = json.dumps(combined_json, indent=2)
-            if args.output:
-                with open(args.output.replace(".txt", ".json"), "w") as f:
-                    f.write(json_output)
-
-        if args.format in ("text", "both"):
-            if args.output:
-                with open(args.output, "w") as f:
-                    f.write(report)
-                print(
-                    f"\n{Colors.YELLOW}Detailed report saved to: {args.output}{Colors.NC}"
-                )
-            else:
-                print(f"\n{report}")
-
-        exit_code = 1 if args.strict else 0
-        if total_errors > 0:
+    if args.format in ("text", "both"):
+        if args.output:
+            with open(args.output, "w") as f:
+                f.write(report)
             print(
-                f"{Colors.RED}✗ VALIDATION FAILED \u2014 {total_errors} error(s), "
-                f"{total_warnings} warning(s){Colors.NC}"
+                f"\n{Colors.YELLOW}Detailed report saved to: {args.output}{Colors.NC}"
             )
         else:
-            print(
-                f"{Colors.YELLOW}⚠ VALIDATION COMPLETED WITH WARNINGS \u2014 "
-                f"{total_warnings} warning(s){Colors.NC}"
-            )
+            print(f"\n{report}")
 
-        sys.exit(exit_code)
+    if total_errors > 0:
+        print(
+            f"{Colors.RED}✗ VALIDATION FAILED \u2014 {total_errors} error(s), "
+            f"{total_warnings} warning(s){Colors.NC}"
+        )
+    else:
+        print(
+            f"{Colors.YELLOW}⚠ VALIDATION COMPLETED WITH WARNINGS \u2014 "
+            f"{total_warnings} warning(s){Colors.NC}"
+        )
+
+    return 1 if args.strict else 0
 
 
 if __name__ == "__main__":

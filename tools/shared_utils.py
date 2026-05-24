@@ -627,7 +627,9 @@ def get_git_diff_files(
                         "--diff-filter=ACMRT",
                         f"{base_branch}...HEAD",
                     ]
-                result = _sp.run(cmd, capture_output=True, text=True, check=True)
+                result = _sp.run(
+                    cmd, capture_output=True, text=True, check=True, timeout=15
+                )
                 all_files = [f for f in result.stdout.strip().split("\n") if f]
             except Exception:
                 return []
@@ -698,6 +700,7 @@ def get_staged_files(
                 capture_output=True,
                 text=True,
                 check=True,
+                timeout=15,
             )
             return result.stdout.strip().split("\n")
 

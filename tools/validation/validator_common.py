@@ -474,20 +474,23 @@ class BaseValidator:
                     )
                     display_text = text  # preserve original formatting in the log
 
+                # Count by the issue's own severity so a pre-built WARNING Issue
+                # passed via a severity=ERROR call doesn't corrupt the counters.
+                actual_severity = issue.severity if isinstance(r, Issue) else severity
                 self.log(
                     f"  {color if self.use_colors else ''}{display_text}{Colors.ENDC if self.use_colors else ''}",
-                    "error" if severity == Severity.ERROR else "warning",
+                    "error" if actual_severity == Severity.ERROR else "warning",
                 )
                 if category:
                     self._issues.append(issue)
+                if actual_severity == Severity.ERROR:
+                    self.errors_found += 1
+                else:
+                    self.warnings_found += 1
             self.log(
                 f"{color if self.use_colors else ''}{len(results)} issue(s) found{Colors.ENDC if self.use_colors else ''}",
                 "error" if severity == Severity.ERROR else "warning",
             )
-            if severity == Severity.ERROR:
-                self.errors_found += len(results)
-            else:
-                self.warnings_found += len(results)
         else:
             self.log(
                 f"{Colors.GREEN if self.use_colors else ''}{ok_msg}{Colors.ENDC if self.use_colors else ''}"

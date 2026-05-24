@@ -182,9 +182,8 @@ def get_all_loc_keys(
     mod_path: str, lowercase: bool = False
 ) -> Tuple[Dict[str, str], List[str]]:
     filepath = str(Path(mod_path) / "localisation" / "english") + "/"
-    results = []
-    loc_dict = {}
-    duplicated_keys = []
+    loc_dict: Dict[str, str] = {}
+    duplicated_keys: List[str] = []
 
     for filename in glob.iglob(filepath + "**/*.yml", recursive=True):
         text_file = FileOpener.open_text_file(
@@ -192,24 +191,19 @@ def get_all_loc_keys(
         )
         if "l_english" not in text_file:
             continue
-        lines = text_file.split("\n")
-        for line in lines:
+        for line in text_file.split("\n"):
             line = line.strip()
             if ":" not in line or "l_english:" in line or (line and line[0] == "#"):
                 continue
-            results.append(line)
-
-    for line in results:
-        try:
-            colon_idx = line.index(":")
+            colon_idx = line.find(":")
+            if colon_idx < 0:
+                continue
             key = line[:colon_idx].strip()
             value = line[colon_idx + 2 :].strip()
             if key in loc_dict:
                 duplicated_keys.append(key)
             else:
                 loc_dict[key] = value
-        except ValueError:
-            continue
 
     return loc_dict, duplicated_keys
 

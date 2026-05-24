@@ -4,16 +4,7 @@ These tests verify the specific bug fixes so future changes don't reintroduce
 the same false positives.
 """
 
-import os
-import re
-import sys
-import tempfile
-from pathlib import Path
-from typing import Dict
-
 import pytest
-
-sys.path.insert(0, os.path.dirname(__file__))
 from validator_common import BaseValidator, Issue, Severity
 
 
@@ -24,81 +15,60 @@ class _DummyValidator(BaseValidator):
         pass
 
 
-def _make_validator() -> _DummyValidator:
-    with tempfile.TemporaryDirectory() as td:
-        return _DummyValidator(mod_path=td, use_colors=False)
+@pytest.fixture
+def dummy_validator(tmp_path):
+    """Validator backed by a real on-disk temp directory that survives the test."""
+    return _DummyValidator(mod_path=str(tmp_path), use_colors=False)
 
 
 # ---------------------------------------------------------------------------
 # Bug: count_event_ids_in_file returning empty dict for zero-count IDs
 # File: validate_events.py
-# Fix: Return all tracked IDs with their counts (0 for absent IDs)
+# Fix: Real function returns ONLY IDs present in the file; callers must
+#      pre-initialize the aggregate dict with zeros for every tracked ID.
+#      Tests pin both halves of that contract.
 # ---------------------------------------------------------------------------
 
 
-def _count_event_ids_in_file_candidate(
-    filename: str, tracked_ids: frozenset
-) -> Dict[str, int]:
-    """Reconstruct the fixed logic: always return all tracked IDs, even with count 0.
+def test_count_event_ids_in_file_returns_only_present_ids(tmp_path):
+    """The real production function returns a dict containing only IDs that
+    appear in the file. Absent IDs are NOT included — callers compensate by
+    pre-initializing their aggregate dict with zero counts."""
+    from validate_events import count_event_ids_in_file
 
-    The bug was that the original loop used `if eid in cleaned: id_counts[eid] = count`
-    which skips IDs that don't appear in the file. The fix returns all tracked IDs.
-    """
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="ignore")
-    except Exception:
-        return {eid: 0 for eid in tracked_ids}
-    cleaned = re.sub(r"#[^\n]*", "", text)
-    id_counts: Dict[str, int] = {}
-    for eid in tracked_ids:
-        id_counts[eid] = cleaned.count(eid)
-    return id_counts
-
-
-def test_count_event_ids_in_file_includes_zero_count_ids():
-    """When a tracked event is not present in a file at all, it must still
-    appear in the result dict with count 0 (not be silently omitted)."""
-    with tempfile.TemporaryDirectory() as td:
-        events_dir = os.path.join(td, "events")
-        os.makedirs(events_dir)
-        # File defines test.1 but the tracked set also includes test.999
-        # which does NOT appear anywhere in this file
-        fpath = os.path.join(events_dir, "test.txt")
-        Path(fpath).write_text(
-            "add_namespace = test\n"
-            "country_event = {\n"
-            "    id = test.1\n"
-            "    title = test.1.t\n"
-            "    desc = test.1.d\n"
-            "    option = { name = test.1.a }\n"
-            "}\n"
-        )
-        # tracked includes test.1 (appears in file) and test.999 (absent)
-        tracked = frozenset(["test.1", "test.999"])
-        result = _count_event_ids_in_file_candidate(fpath, tracked)
-        # Both IDs must be in the result — the bug was omitting absent IDs
-        assert "test.1" in result, "Event ID present in file must be in result"
-        assert (
-            "test.999" in result
-        ), "Event ID absent from file must be in result with count 0"
-        # test.1 appears in id= + 3 loc refs = 4 times
-        assert result["test.999"] == 0
+    events_dir = tmp_path / "events"
+    events_dir.mkdir()
+    fpath = events_dir / "test.txt"
+    fpath.write_text(
+        "add_namespace = test\n"
+        "country_event = {\n"
+        "    id = test.1\n"
+        "    title = test.1.t\n"
+        "    desc = test.1.d\n"
+        "    option = { name = test.1.a }\n"
+        "}\n"
+    )
+    tracked = frozenset(["test.1", "test.999"])
+    result = count_event_ids_in_file((str(fpath), tracked))
+    assert "test.1" in result, "Event ID present in file must be in result"
+    assert (
+        "test.999" not in result
+    ), "Absent ID must NOT be in result — caller pre-initializes zeros"
 
 
-def test_count_event_ids_in_file_handles_referenced_event():
+def test_count_event_ids_in_file_handles_referenced_event(tmp_path):
     """When an event ID IS referenced, the count must be accurate."""
-    with tempfile.TemporaryDirectory() as td:
-        events_dir = os.path.join(td, "events")
-        os.makedirs(events_dir)
-        fpath = os.path.join(events_dir, "test.txt")
-        Path(fpath).write_text(
-            "country_event = test.1\n"
-            "country_event = test.1\n"
-            "country_event = test.1\n"
-        )
-        tracked = frozenset(["test.1"])
-        result = _count_event_ids_in_file_candidate(fpath, tracked)
-        assert result["test.1"] == 3
+    from validate_events import count_event_ids_in_file
+
+    events_dir = tmp_path / "events"
+    events_dir.mkdir()
+    fpath = events_dir / "test.txt"
+    fpath.write_text(
+        "country_event = test.1\n" "country_event = test.1\n" "country_event = test.1\n"
+    )
+    tracked = frozenset(["test.1"])
+    result = count_event_ids_in_file((str(fpath), tracked))
+    assert result["test.1"] == 3
 
 
 # ---------------------------------------------------------------------------
@@ -112,12 +82,9 @@ def test_get_all_colors_warns_on_missing_core_gfx(tmp_path, caplog):
     """When interface/core.gfx is missing, get_all_colors should log a warning
     and return the fallback color set."""
     import logging
-    import sys
 
-    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     from validate_localisation import get_all_colors
 
-    # Set up a minimal mod path with no interface/core.gfx
     (tmp_path / "interface").mkdir()
     fallback_colors = list("WGRBYCMwgrbycm!")
 
@@ -130,7 +97,6 @@ def test_get_all_colors_warns_on_missing_core_gfx(tmp_path, caplog):
 
 def test_get_all_colors_returns_colors_when_file_present(tmp_path):
     """When core.gfx exists and is parseable, return the extracted colors."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     from validate_localisation import get_all_colors
 
     gfx_dir = tmp_path / "interface"
@@ -187,7 +153,6 @@ def test_colon_idx_extraction_preserves_quoted_colon_in_value():
 def test_gate_signature_line_offset_from_full_file():
     """When _scan_on_action_block is called with line_offset > 0, the reported
     line numbers must account for lines before the block in the full file."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     from validate_on_actions import _scan_on_action_block
 
     # Simulate a file that has 10 lines before the on_action block content
@@ -220,7 +185,6 @@ def test_gate_signature_line_offset_from_full_file():
 def test_gate_signature_same_line_different_branch_not_dupe():
     """Two refs to the same event in sibling if/else branches must NOT be
     flagged as duplicates — they are mutually exclusive at runtime."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     from validate_on_actions import _scan_on_action_block
 
     # Two refs to same event in sibling if/else branches
@@ -244,7 +208,6 @@ def test_gate_signature_same_line_different_branch_not_dupe():
 def test_gate_signature_different_line_same_branch_is_dupe():
     """Two refs to the same event in the SAME if branch (not mutually exclusive)
     must be flagged as duplicates."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
     from validate_on_actions import _scan_on_action_block
 
     # Same event fired twice in the same branch body (not inside nested gating)
@@ -267,9 +230,9 @@ def test_gate_signature_different_line_same_branch_is_dupe():
 # ---------------------------------------------------------------------------
 
 
-def test_report_issue_with_category_and_severity():
+def test_report_issue_with_category_and_severity(dummy_validator):
     """Pre-built Issue with both category and severity must be stored unchanged."""
-    v = _make_validator()
+    v = dummy_validator
     pre_built = Issue(
         severity=Severity.WARNING,
         category="custom",
@@ -287,3 +250,38 @@ def test_report_issue_with_category_and_severity():
     assert len(v._issues) == 1
     assert v._issues[0].severity == Severity.WARNING  # pre-built preserved
     assert v._issues[0].category == "custom"
+    # Counter must reflect the Issue's own severity, not the call's severity arg.
+    assert v.warnings_found == 1
+    assert v.errors_found == 0
+
+
+def test_report_counts_mixed_severities_correctly(dummy_validator):
+    """When _report receives a mix of pre-built Issues and tuples, each entry
+    must increment the counter matching its own severity."""
+    v = dummy_validator
+    inputs = [
+        Issue(
+            severity=Severity.WARNING,
+            category="c",
+            message="prebuilt warning",
+            file="a.txt",
+            line=1,
+        ),
+        Issue(
+            severity=Severity.ERROR,
+            category="c",
+            message="prebuilt error",
+            file="b.txt",
+            line=2,
+        ),
+        ("tuple-form result", "c.txt", 3),  # inherits the call's severity
+    ]
+    v._report(
+        inputs,
+        ok_msg="OK",
+        fail_msg="Found issues:",
+        severity=Severity.ERROR,
+        category="c",
+    )
+    assert v.errors_found == 2  # one pre-built ERROR + one tuple
+    assert v.warnings_found == 1  # the pre-built WARNING

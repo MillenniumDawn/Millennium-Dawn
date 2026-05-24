@@ -24,6 +24,17 @@ from validator_common import (
     should_skip_file,
 )
 
+# Module-level regex for per-file flag-syntax check (process_file_for_flag_syntax).
+# Compiled once per worker process import instead of once per file scanned.
+_FLAG_BLOCK_RE = re.compile(
+    r"\bset_(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{[^}]*\}",
+)
+_FLAG_DAYS_RE = re.compile(r"\bdays\s*=\s*[^\s}]+")
+_FLAG_VALUE_RE = re.compile(r"\bvalue\s*=\s*[^\s}]+")
+_FLAG_LONG_FORM_RE = re.compile(
+    r"\bset_(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{\s*flag\s*=\s*([^\s{}]+)\s*\}",
+)
+
 
 def _scan_flags_in_file(
     filename: str, lowercase: bool, flag_type: str
@@ -108,27 +119,18 @@ def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List
     cleaned = re.sub(r"#[^\n]*", "", text)
     rel = os.path.relpath(filename, mod_path)
 
-    flag_block_pattern = re.compile(
-        r"\bset_(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{[^}]*\}",
-    )
-    days_re = re.compile(r"\bdays\s*=\s*[^\s}]+")
-    value_re = re.compile(r"\bvalue\s*=\s*[^\s}]+")
-    long_form_re = re.compile(
-        r"\bset_(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{\s*flag\s*=\s*([^\s{}]+)\s*\}",
-    )
-
     days_issues: List[str] = []
     long_form_issues: List[str] = []
 
-    for m in flag_block_pattern.finditer(cleaned):
+    for m in _FLAG_BLOCK_RE.finditer(cleaned):
         block = m.group(0)
-        if days_re.search(block) and not value_re.search(block):
+        if _FLAG_DAYS_RE.search(block) and not _FLAG_VALUE_RE.search(block):
             line = cleaned[: m.start()].count("\n") + 1
             days_issues.append(
                 f"{rel}:{line} - {block.strip()} (missing value field; flag will default to 0 and fail shortform has_*_flag check)"
             )
 
-    for m in long_form_re.finditer(cleaned):
+    for m in _FLAG_LONG_FORM_RE.finditer(cleaned):
         line = cleaned[: m.start()].count("\n") + 1
         long_form_issues.append(
             f"{rel}:{line} - set_{m.group(1)}_flag = {{ flag = {m.group(2)} }} → use shorthand `set_{m.group(1)}_flag = {m.group(2)}`"
@@ -191,6 +193,19 @@ def process_file_for_all_targets(
     return (set_paths, used_paths, cleared_paths)
 
 
+def _map_with_optional_pool(func, args_list, workers, pool, chunksize=50):
+    """Reuse the caller's pool when given; otherwise spin up a transient one.
+
+    Keeps the helper usable as a standalone library function while letting
+    BaseValidator subclasses pass `self._pool` to avoid spawning a second
+    worker pool inside run_validations().
+    """
+    if pool is not None:
+        return pool.map(func, args_list, chunksize=chunksize)
+    with Pool(processes=workers) as p:
+        return p.map(func, args_list, chunksize=chunksize)
+
+
 class Variables:
     @classmethod
     def get_all_flags(
@@ -201,6 +216,7 @@ class Variables:
         staged_files=None,
         workers=None,
         files_to_scan=None,
+        pool=None,
     ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
         if flag_type not in ("country", "state", "global"):
             raise ValueError(f"Unsupported flag_type: {flag_type!r}")
@@ -208,8 +224,9 @@ class Variables:
             files_to_scan = _collect_txt_files(mod_path, staged_files)
 
         args_list = [(f, lowercase, flag_type, mod_path) for f in files_to_scan]
-        with Pool(processes=workers) as pool:
-            results = pool.map(process_file_for_all_flags, args_list, chunksize=50)
+        results = _map_with_optional_pool(
+            process_file_for_all_flags, args_list, workers, pool
+        )
         return _merge_three_dicts(results)
 
 
@@ -222,13 +239,15 @@ class EventTargets:
         staged_files=None,
         workers=None,
         files_to_scan=None,
+        pool=None,
     ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
         if files_to_scan is None:
             files_to_scan = _collect_txt_files(mod_path, staged_files)
 
         args_list = [(f, lowercase) for f in files_to_scan]
-        with Pool(processes=workers) as pool:
-            results = pool.map(process_file_for_all_targets, args_list, chunksize=50)
+        results = _map_with_optional_pool(
+            process_file_for_all_targets, args_list, workers, pool
+        )
         return _merge_three_dicts(results)
 
 
@@ -702,6 +721,7 @@ class Validator(BaseValidator):
                 staged_files=self.staged_files,
                 workers=self.workers,
                 files_to_scan=all_txt_files,
+                pool=self._pool,
             )
             self.validate_cleared_flags(flag_type, fp_cleared, cleared_paths, set_paths)
             self.validate_missing_flags(flag_type, fp_missing, used_paths, set_paths)
@@ -714,6 +734,7 @@ class Validator(BaseValidator):
             staged_files=self.staged_files,
             workers=self.workers,
             files_to_scan=all_txt_files,
+            pool=self._pool,
         )
         self.validate_cleared_event_targets(et_cleared, et_set)
         self.validate_missing_event_targets(et_used, et_set)

@@ -449,17 +449,6 @@ class Validator(BaseValidator):
             category="news-event-missing-major",
         )
 
-    def validate_news_fire_only_once(self):
-        """Disabled — vanilla HOI4 uses major + fire_only_once on news_events
-        throughout NewsEvents.txt. The earlier claim that "fire_only_once takes
-        priority over major" is incorrect: the engine fires the event once
-        globally and the news popup is shown to every country with diplomatic
-        visibility, which is exactly the intended behavior.
-
-        Kept as a no-op stub so the call site and section banner remain stable.
-        """
-        return
-
     def validate_mtth_triggered_only(self):
         """Flag events with both mean_time_to_happen and is_triggered_only.
 
@@ -615,7 +604,6 @@ class Validator(BaseValidator):
         self.validate_triggered_only_unreferenced()
         self.validate_missing_localisation()
         self.validate_news_event_major()
-        self.validate_news_fire_only_once()
         self.validate_mtth_triggered_only()
         self.validate_hidden_event_options()
         self.validate_hidden_event_localisation()
