@@ -15,6 +15,7 @@
 # Adapted for Millennium Dawn with multiprocessing
 ##########################
 import glob
+import logging
 import os
 import re
 from pathlib import Path
@@ -114,8 +115,13 @@ def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
     return results
 
 
-def process_yml_for_syntax(args: Tuple[str, List[str]]) -> List[str]:
-    filename, valid_colors = args
+_SUBST_KEY_RE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)\$")
+_LINE_KEY_RE = re.compile(r"^[ \t]*([\w.\-]+)\s*:")
+_NOT_OPEN_RE = re.compile(r"\bNOT\s*=\s*\{")
+
+
+def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[str]:
+    filename, valid_colors, subst_keys = args
     results = []
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
@@ -125,6 +131,12 @@ def process_yml_for_syntax(args: Tuple[str, List[str]]) -> List[str]:
         if "#" in line or line.strip() in ["", "l_english:"]:
             continue
         if "\u00a7" in line and "desc_end" not in line and "U.S.C." not in line:
+            # Skip \u00a7-balance checks for keys consumed via $KEY$ substitution \u2014
+            # those keys intentionally split their \u00a7 codes across multiple values
+            # (one ends with \u00a7Y, another supplies \u00a7!) so the merged result is balanced.
+            key_match = _LINE_KEY_RE.match(line)
+            if key_match and key_match.group(1) in subst_keys:
+                continue
             count = line.count("\u00a7")
             if count % 2 != 0:
                 results.append(
@@ -170,9 +182,8 @@ def get_all_loc_keys(
     mod_path: str, lowercase: bool = False
 ) -> Tuple[Dict[str, str], List[str]]:
     filepath = str(Path(mod_path) / "localisation" / "english") + "/"
-    results = []
-    loc_dict = {}
-    duplicated_keys = []
+    loc_dict: Dict[str, str] = {}
+    duplicated_keys: List[str] = []
 
     for filename in glob.iglob(filepath + "**/*.yml", recursive=True):
         text_file = FileOpener.open_text_file(
@@ -180,23 +191,19 @@ def get_all_loc_keys(
         )
         if "l_english" not in text_file:
             continue
-        lines = text_file.split("\n")
-        for line in lines:
+        for line in text_file.split("\n"):
             line = line.strip()
             if ":" not in line or "l_english:" in line or (line and line[0] == "#"):
                 continue
-            results.append(line)
-
-    for line in results:
-        try:
-            key = line[: line.index(":")].strip()
-            value = line[line.index(":") + 2 :].strip()
+            colon_idx = line.find(":")
+            if colon_idx < 0:
+                continue
+            key = line[:colon_idx].strip()
+            value = line[colon_idx + 2 :].strip()
             if key in loc_dict:
                 duplicated_keys.append(key)
             else:
                 loc_dict[key] = value
-        except (ValueError, IndexError):
-            continue
 
     return loc_dict, duplicated_keys
 
@@ -204,6 +211,9 @@ def get_all_loc_keys(
 def get_all_colors(mod_path: str) -> List[str]:
     filepath = Path(mod_path) / "interface" / "core.gfx"
     if not filepath.exists():
+        logging.warning(
+            "interface/core.gfx not found — color validation will use fallback set"
+        )
         return list("WGRBYCMwgrbycm!")
     text_file = FileOpener.open_text_file(
         str(filepath), lowercase=False, strip_comments_flag=True
@@ -217,6 +227,9 @@ def get_all_colors(mod_path: str) -> List[str]:
         )
         return colors
     except (IndexError, Exception):
+        logging.warning(
+            "Failed to parse interface/core.gfx — color validation will use fallback set"
+        )
         return list("WGRBYCMwgrbycm!")
 
 
@@ -292,10 +305,9 @@ def _extract_not_blocks(text: str) -> List[str]:
     """Return the bodies of every ``NOT = { ... }`` block in ``text``,
     brace-balanced so nested trigger blocks are kept intact."""
     out: List[str] = []
-    not_re = re.compile(r"\bNOT\s*=\s*\{")
     i = 0
     while True:
-        m = not_re.search(text, i)
+        m = _NOT_OPEN_RE.search(text, i)
         if not m:
             break
         start = m.end()
@@ -369,9 +381,9 @@ def _get_skipped_loc_keys(mod_path: str) -> set:
             if ":" not in line or "l_english:" in line or (line and line[0] == "#"):
                 continue
             try:
-                key = line[: line.index(":")].strip()
-                keys.add(key)
-            except (ValueError, IndexError):
+                colon_idx = line.index(":")
+                keys.add(line[:colon_idx].strip())
+            except ValueError:
                 continue
     return keys
 
@@ -398,6 +410,25 @@ class Validator(BaseValidator):
         return self._collect_files(
             ["localisation/english/**/*.yml"], extra_skip=_should_skip
         )
+
+    def _collect_substitution_keys(self, yml_files: List[str]) -> frozenset:
+        """Return loc keys referenced via $KEY$ string interpolation.
+
+        These keys intentionally split § color codes across multiple values
+        (e.g. `gip` ends with §Y and `gis` supplies §!) so the per-key
+        §-balance check produces false positives. Caller skips that check
+        for any key in this set.
+        """
+        keys: set = set()
+        for filepath in yml_files:
+            try:
+                text = FileOpener.open_text_file(
+                    filepath, lowercase=False, strip_comments_flag=True
+                )
+            except Exception:
+                continue
+            keys.update(_SUBST_KEY_RE.findall(text))
+        return frozenset(keys)
 
     def validate_duplicated_keys(self, duplicated: List[str], skipped_keys: set):
         self._log_section("Checking for duplicated localisation keys...")
@@ -432,7 +463,8 @@ class Validator(BaseValidator):
 
         valid_colors = get_all_colors(self.mod_path)
         yml_files = self._get_yml_files()
-        args_list = [(f, valid_colors) for f in yml_files]
+        subst_keys = self._collect_substitution_keys(yml_files)
+        args_list = [(f, valid_colors, subst_keys) for f in yml_files]
 
         all_results = self._pool_map(process_yml_for_syntax, args_list, chunksize=10)
 
