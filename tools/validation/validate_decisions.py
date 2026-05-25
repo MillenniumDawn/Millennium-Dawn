@@ -135,6 +135,48 @@ def extract_value_single_line(obj: str, s: str) -> str:
     return matches[0] if f"\t{s} =" in obj and matches else False
 
 
+def _top_level_field_value(raw: str, field: str):
+    """Return the value of ``field = X`` at the top level of a decision body.
+
+    The decision body is at brace depth 1 (depth 0 = before/after the outer
+    braces of the decision token). Occurrences nested inside sub-blocks like
+    ``complete_effect = { create_ship = { name = ... } }`` are ignored.
+
+    Returns ``None`` if the field is absent at depth 1 or if its value is a
+    quoted literal string (which the engine renders verbatim, with no loc
+    lookup to verify).
+    """
+    pat = re.compile(r"\b" + re.escape(field) + r"\s*=\s*(\S+)")
+    depth = 0
+    i = 0
+    n = len(raw)
+    while i < n:
+        ch = raw[i]
+        if ch == "{":
+            depth += 1
+            i += 1
+            continue
+        if ch == "}":
+            depth -= 1
+            i += 1
+            continue
+        if ch == "#":
+            while i < n and raw[i] != "\n":
+                i += 1
+            continue
+        if depth == 1:
+            prev = raw[i - 1] if i > 0 else "\n"
+            if not (prev.isalnum() or prev == "_"):
+                m = pat.match(raw, i)
+                if m:
+                    value = m.group(1)
+                    if value.startswith('"'):
+                        return None
+                    return value
+        i += 1
+    return None
+
+
 def extract_value_multi_line(obj: str, s: str) -> str:
     pattern = r"(\t+)" + s + r" = (\{([^\n]*|.*?^\1)\})"
     if f"\t{s} =" not in obj:
@@ -193,6 +235,13 @@ class DecisionFactory:
         self.has_remove_trigger = "remove_trigger" in dec
         self.targets_dynamic = "targets_dynamic" in dec
         self.target_non_existing = "target_non_existing" in dec
+        # Top-level name/desc overrides redirect the engine's loc lookup.
+        # When set, the engine uses these keys instead of the decision id /
+        # `<id>_desc` pair. Extract them with brace-depth awareness so we
+        # don't pick up nested `name = ...` inside create_ship / create_unit
+        # effect sub-blocks.
+        self.name_override = _top_level_field_value(dec, "name")
+        self.desc_override = _top_level_field_value(dec, "desc")
 
 
 # Decisions parsing cache - enabled by default, disabled via --no-cache for CI
@@ -1359,8 +1408,16 @@ class Validator(BaseValidator):
             dec_id = dec.token
             filename = dec.source_basename
             missing = []
-            if dec_id not in loc_keys:
-                missing.append(dec_id)
+            # Decisions can redirect the engine's loc lookup via top-level
+            # `name = X` / `desc = X` fields. Validate the override key when
+            # present; otherwise check the default `<id>` for the name. The
+            # default `<id>_desc` is *not* checked when no override is set —
+            # many decisions intentionally omit a description tooltip.
+            name_key = dec.name_override if dec.name_override else dec_id
+            if name_key not in loc_keys:
+                missing.append(name_key)
+            if dec.desc_override and dec.desc_override not in loc_keys:
+                missing.append(dec.desc_override)
             if dec.custom_cost_text and dec.custom_cost_text not in loc_keys:
                 missing.append(dec.custom_cost_text)
             for key in missing:
