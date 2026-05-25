@@ -43,6 +43,91 @@ _META_TEMPLATE_RE = re.compile(
 )
 
 
+# Loc keys that live in vanilla HOI4 (not the mod's localisation/ tree) and are
+# inherited by MD decisions/events/focuses that override or reuse the vanilla
+# object. The base loc loader scans only the mod, so without this allowlist
+# these resolve fine at runtime but get flagged as "missing loc key".
+#
+# Verified against vanilla install at
+# steamapps/common/Hearts of Iron IV/localisation/english/.
+KNOWN_VANILLA_LOC_KEYS = frozenset(
+    {
+        # lar_decisions_l_english.yml — La Resistance agent recruitment.
+        # MD's 99_lar_agent_recruitment_decisions.txt redefines all 16 decisions;
+        # the seven non-Europe _state variants use `name = recruit_in_europe_state`
+        # to share the vanilla string.
+        "recruit_in_europe",
+        "recruit_in_europe_state",
+        "recruit_in_north_america",
+        "recruit_in_south_america",
+        "recruit_in_africa",
+        "recruit_in_middle_east",
+        "recruit_in_asia",
+        "recruit_in_australia",
+        "recruit_in_india",
+        # decisions_l_english.yml — shared cost-tooltip strings used as
+        # custom_cost_text on MD decisions.
+        "decision_cost_CP_15",
+        "decision_cost_CP_25_pp_50",
+        "decision_cost_civ_factory_1",
+        # mtg_decisions_l_english.yml — MtG USA political decisions reused
+        # verbatim by MD's USA content.
+        "USA_amend_the_budget",
+        "USA_beat_up_opposition",
+        "USA_give_tax_break",
+        "USA_medium_lobby_effort",
+        "USA_pay_farm_subsidies",
+        "USA_research_grants",
+        "USA_small_lobby_effort",
+        "USA_special_measures",
+        "USA_statehood_for_puerto_rico",
+        # Vanilla focus names reused intact by MD focus trees (string fits the
+        # in-game label — e.g. "Greater Finland", "Worker's Rights").
+        "EST_new_economic_policy",  # ideas_l_english.yml
+        "FIN_greater_finland",  # aat_focus_l_english.yml
+        "GER_workers_rights",  # wuw_focus_l_english.yml
+        "GER_workers_rights_desc",
+        "ITA_all_roads_lead_to_rome",  # bba_focus_l_english.yml
+        "ITA_all_roads_lead_to_rome_desc",
+        "POL_armia_ludowa",  # focus_poland_l_english.yml
+        "POL_armia_ludowa_desc",
+        "RAJ_agrarian_society",  # ideas_l_english.yml
+        "RAJ_agrarian_society_desc",
+        "RAJ_indian_national_congress",
+        "RAJ_indian_national_congress_desc",
+        "RAJ_industrial_expansion",
+        "RAJ_industrial_expansion_desc",
+        # lar_events_l_english.yml — La Resistance operation events reused by
+        # MD's intel/raid systems.
+        "lar_bruneval_raid.1.a",
+        "lar_bruneval_raid.1.desc",
+        "lar_bruneval_raid.1.t",
+        "lar_bruneval_raid.2.desc",
+        "lar_bruneval_raid.2.t",
+        "lar_capture_tito.1.a",
+        "lar_capture_tito.1.desc",
+        "lar_capture_tito.1.t",
+        "lar_collab_gov.1.d",
+        "lar_collab_gov.1.t",
+        "lar_heavy_water.1.a",
+        "lar_heavy_water.1.t",
+        "lar_heavy_water.2.a",
+        "lar_heavy_water.2.desc",
+        "lar_heavy_water.2.t",
+        "lar_rescue_mussolini.1.a",
+        "lar_rescue_mussolini.1.desc",
+        "lar_rescue_mussolini.1.t",
+        "lar_rescue_mussolini.2.a",
+        "lar_rescue_mussolini.2.desc",
+        "lar_rescue_mussolini.2.t",
+        "occupied_countries.1.a",
+        "occupied_countries.1.b",
+        "occupied_countries.1.desc",
+        "occupied_countries.1.title",
+    }
+)
+
+
 def scan_meta_constructed_names(files, defined_names):
     """Return the subset of *defined_names* called via meta_effect/meta_trigger
     template substitution (e.g. ``set_leader_[IDEOLOGY] = yes``).
@@ -643,7 +728,11 @@ class BaseValidator:
         return result
 
     def _load_localisation_keys(self) -> frozenset:
-        """Load all defined keys from English localisation yml files."""
+        """Load all defined keys from English localisation yml files.
+
+        Also includes vanilla-provided keys that MD decisions/events override
+        but reuse the vanilla loc string for (see ``KNOWN_VANILLA_LOC_KEYS``).
+        """
         yml_files = self._collect_files(["localisation/english/**/*.yml"])
         key_pattern = re.compile(r"^[ \t]*([\w.\-]+)\s*:", re.MULTILINE)
         all_keys: set = set()
@@ -654,6 +743,7 @@ class BaseValidator:
             except Exception:
                 continue
             all_keys.update(key_pattern.findall(text))
+        all_keys.update(KNOWN_VANILLA_LOC_KEYS)
         return frozenset(all_keys)
 
     def run_validations(self):
