@@ -107,18 +107,72 @@ MD_protests_forming = {
 		days_re_enable = 700
 		cost = 100
 		visible = {
-			has_active_mission = MD_incoming_revolt
+			OR = {
+				has_active_mission = MD_incoming_protest_movement
+				has_active_mission = MD_incoming_revolt
+			}
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision MD_appease_protesters"
-			add_days_mission_timeout = {
-				mission = MD_incoming_revolt
-				days = 280
+			if = {
+				limit = { has_active_mission = MD_incoming_protest_movement }
+				add_days_mission_timeout = {
+					mission = MD_incoming_protest_movement
+					days = 60
+				}
+			}
+			if = {
+				limit = { has_active_mission = MD_incoming_revolt }
+				add_days_mission_timeout = {
+					mission = MD_incoming_revolt
+					days = 280
+				}
 			}
 		}
 
 		ai_will_do = {
 			base = 20
+		}
+	}
+
+	MD_diagnose_unrest = {
+		days_re_enable = 60
+		cost = 0
+		visible = {
+			check_variable = { protest_strength > 10 }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MD_diagnose_unrest"
+			set_country_flag = {
+				flag = MD_unrest_diagnosed
+				days = 30
+				value = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
+	MD_preemptive_reform = {
+		days_re_enable = 365
+		cost = 75
+		visible = {
+			has_active_mission = MD_incoming_protest_movement
+		}
+		available = {
+			check_variable = { protest_strength > 30 }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MD_preemptive_reform"
+			subtract_from_variable = { protest_strength = 20 }
+			clamp_variable = { var = protest_strength min = 0 max = 100 }
+			add_stability = 0.02
+		}
+
+		ai_will_do = {
+			base = 10
 		}
 	}
 

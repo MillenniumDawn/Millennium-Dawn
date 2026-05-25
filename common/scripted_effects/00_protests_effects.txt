@@ -10,9 +10,11 @@ apply_protest_effects = {
 }
 
 apply_passive_protest_drift = {
+	set_variable = { drift_passive_last = 0 }
 	random = {
 		chance = 50
 		subtract_from_variable = { protest_strength = 2 }
+		set_variable = { drift_passive_last = -2 }
 	}
 
 	if = { limit = { NOT = { has_variable = protest_strength } } set_variable = { protest_strength = 0 } }
@@ -64,10 +66,21 @@ calculate_protest_drift = {
 }
 
 calculate_unrest_growth = {
+	# Reset per-source drift trackers (persistent variables read by MD_protests_gui)
+	set_variable = { drift_spending_last = 0 }
+	set_variable = { drift_stability_last = 0 }
+	set_variable = { drift_interest_last = 0 }
+	set_variable = { drift_recession_last = 0 }
+	set_variable = { drift_depression_last = 0 }
+	set_variable = { drift_war_last = 0 }
+	set_variable = { drift_corruption_last = 0 }
+	set_variable = { drift_ct_last = 0 }
+
 	#Grab our old protest strength
 	set_temp_variable = { start_protest_str = protest_strength }
 	#Calculate based off economics how much the protests should drift
 	calculate_protest_drift = yes
+	set_variable = { drift_spending_last = protest_drift }
 	add_to_variable = { protest_strength = protest_drift }
 
 	#low stability in elected government = unrest
@@ -79,6 +92,7 @@ calculate_unrest_growth = {
 		set_temp_variable = { stab_hold = stability }
 		set_temp_variable = { protest_add = 0.2 }
 		subtract_from_temp_variable = { protest_add = stab_hold }
+		set_variable = { drift_stability_last = protest_add }
 		add_to_variable = { protest_strength = protest_add }
 	}
 	#High interest = unrest
@@ -86,6 +100,7 @@ calculate_unrest_growth = {
 		limit = { check_variable = { interest_rate > 8.9 } }
 		set_temp_variable = { rate_hold = interest_rate }
 		subtract_from_temp_variable = { rate_hold = 8.9 }
+		set_variable = { drift_interest_last = rate_hold }
 		add_to_variable = { protest_strength = protest_drift }
 	}
 
@@ -97,6 +112,7 @@ calculate_unrest_growth = {
 			min = 0.5
 			lambda = 3
 		}
+		set_variable = { drift_recession_last = protest_drift }
 		add_to_variable = { protest_strength = protest_drift }
 	}
 
@@ -108,6 +124,7 @@ calculate_unrest_growth = {
 			min = 0.5
 			lambda = 4
 		}
+		set_variable = { drift_depression_last = protest_drift }
 		add_to_variable = { protest_strength = protest_drift }
 	}
 
@@ -116,6 +133,7 @@ calculate_unrest_growth = {
 		limit = { check_variable = { months_at_war > 36 } }
 		set_temp_variable = { months_hold = months_at_war }
 		divide_temp_variable = { months_hold = 24 }
+		set_variable = { drift_war_last = months_hold }
 		add_to_variable = { protest_strength = months_hold }
 	}
 
@@ -139,6 +157,7 @@ calculate_unrest_growth = {
 		set_temp_variable = { protest_drift = 0.3 }
 		set_temp_variable = { gov_pop_hold = government_coalition_strength }
 		subtract_from_temp_variable = { protest_drift = government_coalition_strength }
+		set_variable = { drift_corruption_last = protest_drift }
 		add_to_variable = { protest_strength = protest_drift }
 	}
 
@@ -156,6 +175,7 @@ calculate_unrest_growth = {
 			min = 0.5
 			lambda = 5
 		}
+		set_variable = { drift_ct_last = protest_drift }
 		add_to_variable = { protest_strength = protest_drift }
 	}
 
@@ -178,7 +198,87 @@ calculate_unrest_growth = {
 	round_variable = protest_strength
 
 	clamp_variable = { var = protest_strength min = 0 max = 100 }
+
+	MD_protests_compute_top_source = yes
+
+	if = {
+		limit = { has_active_mission = MD_incoming_revolt }
+		MD_protests_count_resisting_cores = yes
+	}
+
 	check_protest_trigger = yes
+}
+
+# Writes cores_resisting_count: how many core states currently have resistance.
+# Display-only — used by the revolt-state row in MD_protests_gui.
+# PREV (not ROOT): every_core_state switches to state scope; PREV is the country
+# that owns the iteration. ROOT depends on how this effect was entered and is unsafe.
+MD_protests_count_resisting_cores = {
+	set_variable = { cores_resisting_count = 0 }
+	every_core_state = {
+		limit = { has_resistance = yes }
+		PREV = { add_to_variable = { cores_resisting_count = 1 } }
+	}
+}
+
+# Computes drift_total_last (sum of all source trackers) and drift_top_source
+# (1..8 identifying the largest contributor). Display-only — does not affect math.
+# Index mapping: 1=spending, 2=stability, 3=interest, 4=recession, 5=depression,
+# 6=war, 7=corruption, 8=ct. 0 = no active source.
+MD_protests_compute_top_source = {
+	set_variable = { drift_total_last = drift_passive_last }
+	add_to_variable = { drift_total_last = drift_spending_last }
+	add_to_variable = { drift_total_last = drift_stability_last }
+	add_to_variable = { drift_total_last = drift_interest_last }
+	add_to_variable = { drift_total_last = drift_recession_last }
+	add_to_variable = { drift_total_last = drift_depression_last }
+	add_to_variable = { drift_total_last = drift_war_last }
+	add_to_variable = { drift_total_last = drift_corruption_last }
+	add_to_variable = { drift_total_last = drift_ct_last }
+
+	set_variable = { drift_top_source = 0 }
+	set_temp_variable = { drift_top_value = 0 }
+
+	if = {
+		limit = { check_variable = { drift_spending_last > drift_top_value } }
+		set_temp_variable = { drift_top_value = drift_spending_last }
+		set_variable = { drift_top_source = 1 }
+	}
+	if = {
+		limit = { check_variable = { drift_stability_last > drift_top_value } }
+		set_temp_variable = { drift_top_value = drift_stability_last }
+		set_variable = { drift_top_source = 2 }
+	}
+	if = {
+		limit = { check_variable = { drift_interest_last > drift_top_value } }
+		set_temp_variable = { drift_top_value = drift_interest_last }
+		set_variable = { drift_top_source = 3 }
+	}
+	if = {
+		limit = { check_variable = { drift_recession_last > drift_top_value } }
+		set_temp_variable = { drift_top_value = drift_recession_last }
+		set_variable = { drift_top_source = 4 }
+	}
+	if = {
+		limit = { check_variable = { drift_depression_last > drift_top_value } }
+		set_temp_variable = { drift_top_value = drift_depression_last }
+		set_variable = { drift_top_source = 5 }
+	}
+	if = {
+		limit = { check_variable = { drift_war_last > drift_top_value } }
+		set_temp_variable = { drift_top_value = drift_war_last }
+		set_variable = { drift_top_source = 6 }
+	}
+	if = {
+		limit = { check_variable = { drift_corruption_last > drift_top_value } }
+		set_temp_variable = { drift_top_value = drift_corruption_last }
+		set_variable = { drift_top_source = 7 }
+	}
+	if = {
+		limit = { check_variable = { drift_ct_last > drift_top_value } }
+		set_temp_variable = { drift_top_value = drift_ct_last }
+		set_variable = { drift_top_source = 8 }
+	}
 }
 
 check_protest_trigger = {
