@@ -1609,12 +1609,38 @@ on_weekly_gcc_dominant_member_check = {
 	}
 }
 
-# Idempotent refresh of mutual muslim_brotherhood_relations modifiers for THIS country.
-# Single pass: always clears, then re-adds when both THIS and the peer are MB.
-# Safe to call from on_startup, change_ruling_party_effect, and civil_war_replication_effect.
+# Idempotent: always clears, then re-adds when both THIS and the peer are MB.
 mb_refresh_relations_effect = {
 	if = {
 		limit = { is_in_array = { global.possible_muslim_brotherhood_nation = THIS.id } }
+		# ROOT became MB — strip stale designator state
+		if = {
+			limit = {
+				is_muslim_brotherhood = yes
+				has_country_flag = mb_designated_terrorist
+			}
+			clr_country_flag = mb_designated_terrorist
+			for_each_loop = {
+				array = global.possible_muslim_brotherhood_nation
+				value = v
+				var:v = {
+					if = {
+						limit = { NOT = { tag = ROOT } }
+						remove_opinion_modifier = { target = ROOT modifier = MB_branded_terrorist }
+						remove_opinion_modifier = { target = ROOT modifier = MB_counter_bloc }
+						ROOT = { remove_opinion_modifier = { target = PREV modifier = MB_counter_bloc } }
+					}
+				}
+			}
+		}
+		# ROOT lost MB status — strip the hub idea (gated on is_muslim_brotherhood)
+		if = {
+			limit = {
+				NOT = { is_muslim_brotherhood = yes }
+				has_idea = muslim_brotherhood_faction_member
+			}
+			remove_ideas = muslim_brotherhood_faction_member
+		}
 		for_each_loop = {
 			array = global.possible_muslim_brotherhood_nation
 			value = v
@@ -1637,8 +1663,6 @@ mb_refresh_relations_effect = {
 	}
 }
 
-# Apply crackdown opinion modifiers from ROOT (crackdown country) to all MB nations in the array,
-# and apply positive mutual opinion with any other countries already cracking down.
 # ROOT = country adding the crackdown idea
 mb_apply_crackdown_opinions_effect = {
 	set_temp_variable = { temp_opinion = -8 }
@@ -1661,22 +1685,25 @@ mb_apply_crackdown_opinions_effect = {
 			}
 		}
 	}
-	every_country = {
-		limit = {
-			NOT = { tag = ROOT }
-			has_idea = muslim_brotherhood_crackdown
-		}
-		add_opinion_modifier = { target = ROOT modifier = is_cracking_down_on_muslim_brotherhood_positive }
-		ROOT = {
-			add_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood_positive }
+	for_each_loop = {
+		array = global.crackdown_countries
+		value = v
+		var:v = {
+			if = {
+				limit = { NOT = { tag = ROOT } }
+				add_opinion_modifier = { target = ROOT modifier = is_cracking_down_on_muslim_brotherhood_positive }
+				ROOT = {
+					add_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood_positive }
+				}
+			}
 		}
 	}
+	add_to_array = { global.crackdown_countries = ROOT.id }
 }
 
-# Remove crackdown opinion modifiers between ROOT (crackdown country) and all MB nations,
-# and remove the positive mutual opinion with any other countries still cracking down.
 # ROOT = country removing the crackdown idea
 mb_remove_crackdown_opinions_effect = {
+	remove_from_array = { global.crackdown_countries = ROOT.id }
 	set_temp_variable = { temp_opinion = 8 }
 	change_the_ulema_opinion = yes
 	set_temp_variable = { temp_opinion = -5 }
@@ -1694,14 +1721,14 @@ mb_remove_crackdown_opinions_effect = {
 			}
 		}
 	}
-	every_country = {
-		limit = {
-			NOT = { tag = ROOT }
-			has_idea = muslim_brotherhood_crackdown
-		}
-		remove_opinion_modifier = { target = ROOT modifier = is_cracking_down_on_muslim_brotherhood_positive }
-		ROOT = {
-			remove_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood_positive }
+	for_each_loop = {
+		array = global.crackdown_countries
+		value = v
+		var:v = {
+			remove_opinion_modifier = { target = ROOT modifier = is_cracking_down_on_muslim_brotherhood_positive }
+			ROOT = {
+				remove_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood_positive }
+			}
 		}
 	}
 }

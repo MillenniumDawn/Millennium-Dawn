@@ -74,6 +74,8 @@ muslim_brotherhood_sponsor = {
 				add_popularity = { ideology = neutrality popularity = 0.04 }
 				recalculate_party = yes
 			}
+			remove_opinion_modifier = { target = FROM modifier = MB_sponsored_network }
+			FROM = { remove_opinion_modifier = { target = ROOT modifier = MB_sponsored_network } }
 			add_opinion_modifier = { target = FROM modifier = MB_sponsored_network }
 			reverse_add_opinion_modifier = { target = FROM modifier = MB_sponsored_network }
 			set_temp_variable = { percent_change = 5 }
@@ -88,6 +90,7 @@ muslim_brotherhood_sponsor = {
 							NOT = { tag = ROOT }
 							has_idea = muslim_brotherhood_crackdown
 						}
+						remove_opinion_modifier = { target = ROOT modifier = MB_funding_subversion }
 						add_opinion_modifier = { target = ROOT modifier = MB_funding_subversion }
 					}
 				}
@@ -191,6 +194,7 @@ muslim_brotherhood_suppressor = {
 							NOT = { tag = ROOT }
 							is_muslim_brotherhood = yes
 						}
+						remove_opinion_modifier = { target = ROOT modifier = MB_funding_repression }
 						add_opinion_modifier = { target = ROOT modifier = MB_funding_repression }
 					}
 				}
@@ -217,14 +221,6 @@ muslim_brotherhood_suppressor = {
 
 		cost = 100
 
-		available = {
-			NOT = { has_country_flag = mb_designated_terrorist }
-		}
-
-		visible = {
-			NOT = { has_country_flag = mb_designated_terrorist }
-		}
-
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision MB_designate_terrorist_organization"
 			set_country_flag = mb_designated_terrorist
@@ -235,19 +231,16 @@ muslim_brotherhood_suppressor = {
 				value = v
 				var:v = {
 					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							is_muslim_brotherhood = yes
+						limit = { NOT = { tag = ROOT } }
+						if = {
+							limit = { is_muslim_brotherhood = yes }
+							add_opinion_modifier = { target = ROOT modifier = MB_branded_terrorist }
 						}
-						add_opinion_modifier = { target = ROOT modifier = MB_branded_terrorist }
-					}
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							has_country_flag = mb_designated_terrorist
+						else_if = {
+							limit = { has_country_flag = mb_designated_terrorist }
+							add_opinion_modifier = { target = ROOT modifier = MB_counter_bloc }
+							ROOT = { add_opinion_modifier = { target = PREV modifier = MB_counter_bloc } }
 						}
-						add_opinion_modifier = { target = ROOT modifier = MB_counter_bloc }
-						ROOT = { add_opinion_modifier = { target = PREV modifier = MB_counter_bloc } }
 					}
 				}
 			}
