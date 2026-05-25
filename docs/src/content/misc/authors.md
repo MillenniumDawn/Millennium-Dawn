@@ -184,6 +184,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 | polski_oski          | @polski_oski                    |                | -             | -                             |
 | Ebby                 | -                               | -              | -             | -                             |
 | Raun139              | -                               | @Raun139       | -             | -                             |
+| Karandash1984        | @karandash1984                  | @Karandash1984 | -             | -                             |
 
 # Fellow Modders/Teams
 
