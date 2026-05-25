@@ -688,11 +688,12 @@ assert_finds(
 # Summary
 # ═══════════════════════════════════════════════════════════════════════════
 
-print(f"\n{'=' * 60}")
-print(f"Results: {passed} passed, {failed} failed")
-if failed:
-    print("SOME TESTS FAILED")
-    sys.exit(1)
-else:
-    print("ALL TESTS PASSED")
-    sys.exit(0)
+if __name__ == "__main__":
+    print(f"\n{'=' * 60}")
+    print(f"Results: {passed} passed, {failed} failed")
+    if failed:
+        print("SOME TESTS FAILED")
+        sys.exit(1)
+    else:
+        print("ALL TESTS PASSED")
+        sys.exit(0)

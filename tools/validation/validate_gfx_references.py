@@ -26,6 +26,7 @@
 #   --staged            Only validate staged .gui/.gfx/.txt files
 #   --workers N         Worker processes (default: CPU count / 2)
 ##########################
+import glob
 import os
 import re
 import sys
@@ -33,6 +34,7 @@ from typing import List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from shared_utils import compute_line_offsets, line_for_offset
 from validator_common import BaseValidator, Colors, Severity, run_validator_main
 
 # ---------------------------------------------------------------------------
@@ -134,11 +136,16 @@ _FLAG_SPRITE_RE = re.compile(
     r"^GFX_(?:flag_|.*_flag$|.*_coat_of_arms$|.*_shield$)", re.IGNORECASE
 )
 
-# Sprites defined purely in vanilla (game install) that we can't track.
-# We accept all vanilla-looking names rather than false-positiving on them.
-# The heuristic: if the name has no MD-identifying prefix and a short common
-# suffix, it's probably vanilla. We limit false-positive suppression to a
-# small explicit allowlist of patterns, not a broad sweep.
+# Sprites defined purely in vanilla (game install) that we can't track when
+# the vanilla install isn't present. We accept all vanilla-looking names
+# rather than false-positiving on them. The heuristic: if the name has no
+# MD-identifying prefix and a short common suffix, it's probably vanilla.
+# We limit false-positive suppression to a small explicit allowlist of
+# patterns, not a broad sweep.
+#
+# When the vanilla HOI4 install IS detected (Steam path), the validator
+# instead reads its interface/*.gfx files directly and adds them to the
+# defined-sprites set — much more accurate than the prefix heuristic.
 _VANILLA_PREFIXES = (
     "GFX_zoom_",
     "GFX_topbar_",
@@ -151,6 +158,33 @@ _VANILLA_PREFIXES = (
     "GFX_pp_",
     "GFX_politics_",
 )
+
+# Common Steam install locations for vanilla HOI4 — used to detect vanilla
+# interface/*.gfx for sprite resolution. Mirrors validate_defines.py.
+_VANILLA_HOI4_PATHS = [
+    os.path.expanduser("~/.local/share/Steam/steamapps/common/Hearts of Iron IV"),
+    os.path.expanduser("~/.steam/steam/steamapps/common/Hearts of Iron IV"),
+    "C:/Program Files (x86)/Steam/steamapps/common/Hearts of Iron IV",
+    "C:/Program Files/Steam/steamapps/common/Hearts of Iron IV",
+    os.path.expanduser(
+        "~/Library/Application Support/Steam/steamapps/common/Hearts of Iron IV"
+    ),
+]
+
+
+def _find_vanilla_interface_dir() -> Optional[str]:
+    """Return the vanilla HOI4 interface/ directory if discoverable."""
+    env_path = os.environ.get("HOI4_PATH")
+    if env_path:
+        interface = os.path.join(env_path, "interface")
+        if os.path.isdir(interface):
+            return interface
+    for base in _VANILLA_HOI4_PATHS:
+        interface = os.path.join(base, "interface")
+        if os.path.isdir(interface):
+            return interface
+    return None
+
 
 # Max unused sprites to list before summarising remainder
 _UNUSED_SPRITE_LIMIT = 50
@@ -242,12 +276,13 @@ def _parse_gui_file(
         return []
 
     text = _strip_cstyle_comments(raw)
+    offsets = compute_line_offsets(raw)
     results = []
     for m in _GUI_REF.finditer(text):
         sprite = m.group(2)
         if _is_dynamic(sprite):
             continue
-        line = raw.count("\n", 0, m.start()) + 1
+        line = line_for_offset(offsets, m.start())
         results.append((sprite, filepath, line))
     return results
 
@@ -266,12 +301,13 @@ def _parse_sgui_file(
     # but the image = "GFX_xxx" attribute pattern is the same.
     # We don't strip # comments here to avoid stripping scripted loc keys
     # that start with # — just use raw text.
+    offsets = compute_line_offsets(raw)
     results = []
     for m in _SGUI_IMAGE_REF.finditer(raw):
         sprite = m.group(1)
         if _is_dynamic(sprite):
             continue
-        line = raw.count("\n", 0, m.start()) + 1
+        line = line_for_offset(offsets, m.start())
         results.append((sprite, filepath, line))
     return results
 
@@ -286,12 +322,13 @@ def _parse_sloc_file(
     except Exception:
         return []
 
+    offsets = compute_line_offsets(raw)
     results = []
     for m in _SLOC_KEY_REF.finditer(raw):
         sprite = m.group(1)
         if _is_dynamic(sprite):
             continue
-        line = raw.count("\n", 0, m.start()) + 1
+        line = line_for_offset(offsets, m.start())
         results.append((sprite, filepath, line))
     return results
 
@@ -312,19 +349,48 @@ class GfxReferenceValidator(BaseValidator):
     # Build phases
     # ------------------------------------------------------------------
 
-    def _build_gfx_definitions(self) -> Set[str]:
-        """Scan all interface/*.gfx and return the complete set of GFX sprite names."""
+    def _build_gfx_definitions(self) -> Tuple[Set[str], Set[str]]:
+        """Scan all interface/*.gfx files and return (all_defined, mod_defined).
+
+        `all_defined` includes vanilla HOI4 sprites when a Steam install is
+        detected (or HOI4_PATH env var is set) — without that, the validator
+        would flag any MD .gui referencing vanilla sprites like GFX_divider
+        or GFX_ideology_democratic_group.
+
+        `mod_defined` is just the mod's own sprites — used for the unused-
+        sprite check so vanilla never appears in that report.
+        """
         self._log_section("Building GFX sprite definition set")
         # Always scan the full repo — definitions must come from anywhere.
         gfx_files = self._collect_files(["interface/*.gfx"], ignore_staged=True)
         results = self._pool_map(_parse_gfx_file, gfx_files)
-        defined: Set[str] = set()
+        mod_defined: Set[str] = set()
         for s in results:
-            defined.update(s)
+            mod_defined.update(s)
         self.log(
-            f"  Found {len(defined)} GFX sprite names across {len(gfx_files)} .gfx files"
+            f"  Found {len(mod_defined)} GFX sprite names across {len(gfx_files)} .gfx files (mod)"
         )
-        return defined
+
+        defined = set(mod_defined)
+        vanilla_dir = _find_vanilla_interface_dir()
+        if vanilla_dir:
+            vanilla_gfx = glob.glob(os.path.join(vanilla_dir, "*.gfx"))
+            vanilla_results = self._pool_map(_parse_gfx_file, vanilla_gfx)
+            vanilla_defined: Set[str] = set()
+            for s in vanilla_results:
+                vanilla_defined.update(s)
+            new = vanilla_defined - defined
+            defined.update(vanilla_defined)
+            self.log(
+                f"  Found {len(vanilla_defined)} GFX sprite names in vanilla "
+                f"({len(new)} new) at {vanilla_dir}"
+            )
+        else:
+            self.log(
+                "  Vanilla HOI4 interface/ not detected — set HOI4_PATH to "
+                "enable vanilla sprite cross-reference (CI runs without it)"
+            )
+        return defined, mod_defined
 
     def _collect_gui_refs(self, defined: Set[str]) -> List[Tuple[str, str, int]]:
         """Return undefined GUI sprite references from interface/*.gui files."""
@@ -485,7 +551,7 @@ class GfxReferenceValidator(BaseValidator):
 
     def run_validations(self) -> None:
         # Phase 1: build the complete definition set (always full-repo scan)
-        defined = self._build_gfx_definitions()
+        defined, mod_defined = self._build_gfx_definitions()
 
         # Phase 2: collect all references from the (possibly staged) files
         gui_refs = self._collect_gui_refs(defined)
@@ -520,9 +586,10 @@ class GfxReferenceValidator(BaseValidator):
             category="undefined-sprite",
         )
 
-        # Phase 4: unused sprites (full-repo only)
+        # Phase 4: unused sprites — only against mod-defined; vanilla sprites the
+        # mod doesn't redefine aren't ours to flag as unused.
         all_referenced: Set[str] = {r[0] for r in gui_refs + sgui_refs + sloc_refs}
-        self._check_unused_sprites(defined, all_referenced)
+        self._check_unused_sprites(mod_defined, all_referenced)
 
 
 def main() -> int:
