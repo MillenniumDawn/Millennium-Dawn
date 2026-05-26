@@ -60,7 +60,7 @@ Steps:
 
 3. **Locate the relevant code**
 
-   Search for the named decisions, effects, triggers, scripted GUIs, or on_actions:
+   Search for the named decisions, effects, triggers, scripted GUIs, or on_actions. If you can't find it, you do a wider database search:
 
    ```
    grep -rn "keyword" common/ events/ --include="*.txt" -l
@@ -84,7 +84,7 @@ Steps:
 
 6. **Commit**
 
-   Create a branch, stage only the files changed for this fix, and commit:
+   Create a branch if on main, stage only the files changed for this fix, and commit:
 
    ```
    git checkout -b fix/<short-description>
@@ -92,8 +92,6 @@ Steps:
    git commit -m "Fix <short description> (#<issue number>)
 
    <one or two sentences explaining root cause and fix>
-
-   Co-Authored-By: Claude <noreply@anthropic.com>"
    ```
 
 7. **Ensure branch is up to date**
