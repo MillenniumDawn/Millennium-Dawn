@@ -45,11 +45,7 @@ muslim_brotherhood_sponsor = {
 		target_array = global.possible_muslim_brotherhood_nation
 		target_trigger = {
 			FROM = {
-				NOT = { tag = ROOT }
-				NOT = { has_war_with = ROOT }
-				NOT = { is_muslim_brotherhood = yes }
-				NOT = { has_government = neutrality }
-				NOT = { has_country_flag = BROTHER_civil_war_has_started }
+				mb_eligible_brotherhood_target = yes
 				neutrality < 0.6
 			}
 		}
@@ -60,10 +56,7 @@ muslim_brotherhood_sponsor = {
 		available = {
 			has_idea = muslim_brotherhood_faction_member
 			FROM = {
-				NOT = { has_war_with = ROOT }
-				NOT = { is_muslim_brotherhood = yes }
-				NOT = { has_government = neutrality }
-				NOT = { has_country_flag = BROTHER_civil_war_has_started }
+				mb_eligible_brotherhood_target = yes
 				neutrality < 0.6
 			}
 		}
@@ -135,6 +128,8 @@ muslim_brotherhood_sponsor = {
 							NOT = { tag = ROOT }
 							is_muslim_brotherhood = yes
 						}
+						remove_opinion_modifier = { target = ROOT modifier = MB_solidarity }
+						ROOT = { remove_opinion_modifier = { target = PREV modifier = MB_solidarity } }
 						add_opinion_modifier = { target = ROOT modifier = MB_solidarity }
 						ROOT = { add_opinion_modifier = { target = PREV modifier = MB_solidarity } }
 					}
@@ -156,12 +151,8 @@ muslim_brotherhood_suppressor = {
 		target_array = global.possible_muslim_brotherhood_nation
 		target_trigger = {
 			FROM = {
-				NOT = { tag = ROOT }
-				NOT = { has_war_with = ROOT }
-				NOT = { is_muslim_brotherhood = yes }
-				NOT = { has_government = neutrality }
+				mb_eligible_brotherhood_target = yes
 				NOT = { has_idea = muslim_brotherhood_crackdown }
-				NOT = { has_country_flag = BROTHER_civil_war_has_started }
 			}
 		}
 
@@ -170,11 +161,8 @@ muslim_brotherhood_suppressor = {
 
 		available = {
 			FROM = {
-				NOT = { has_war_with = ROOT }
-				NOT = { is_muslim_brotherhood = yes }
-				NOT = { has_government = neutrality }
+				mb_eligible_brotherhood_target = yes
 				NOT = { has_idea = muslim_brotherhood_crackdown }
-				NOT = { has_country_flag = BROTHER_civil_war_has_started }
 			}
 		}
 
@@ -255,15 +243,57 @@ muslim_brotherhood_suppressor = {
 		}
 	}
 
+	MB_rescind_terrorist_designation = {
+		icon = generic_political_discourse
+
+		cost = 50
+		days_re_enable = 365
+
+		visible = {
+			has_country_flag = mb_designated_terrorist
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MB_rescind_terrorist_designation"
+			clr_country_flag = mb_designated_terrorist
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_wahabi_ulema_opinion = yes
+			for_each_loop = {
+				array = global.possible_muslim_brotherhood_nation
+				value = v
+				var:v = {
+					if = {
+						limit = { NOT = { tag = ROOT } }
+						remove_opinion_modifier = { target = ROOT modifier = MB_branded_terrorist }
+						remove_opinion_modifier = { target = ROOT modifier = MB_counter_bloc }
+						ROOT = { remove_opinion_modifier = { target = PREV modifier = MB_counter_bloc } }
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 1
+				has_government = democratic
+				neutrality > 0.45
+			}
+			modifier = {
+				add = 1
+				NOT = { has_idea = muslim_brotherhood_crackdown }
+				neutrality > 0.5
+			}
+		}
+	}
+
 	MB_counter_sponsor_influence = {
 		icon = generic_political_discourse
 
 		target_array = global.possible_muslim_brotherhood_nation
 		target_trigger = {
 			FROM = {
-				NOT = { tag = ROOT }
-				NOT = { is_muslim_brotherhood = yes }
-				NOT = { has_government = neutrality }
+				mb_eligible_brotherhood_target = yes
 				neutrality > 0.3
 			}
 		}
@@ -273,9 +303,7 @@ muslim_brotherhood_suppressor = {
 
 		available = {
 			FROM = {
-				NOT = { has_war_with = ROOT }
-				NOT = { is_muslim_brotherhood = yes }
-				NOT = { has_government = neutrality }
+				mb_eligible_brotherhood_target = yes
 				neutrality > 0.3
 			}
 		}
