@@ -40,6 +40,8 @@ For the full reference (variables, arrays, loops, collections, formatted loc), r
 
 For more comprehensive HOI4 scripting docs (effects, triggers, modifiers, wiki links), read `.claude/docs/documentation-references.md`.
 
+For 3D unit models — the mesh/entity/animation chain, the `<TAG>` → `<graphical_culture>` → generic entity lookup, and `gfx/entities/` organisation — read `.claude/docs/entity-system.md`.
+
 # Comments
 
 Default to writing **no comments**. Only add one when the WHY is non-obvious:
@@ -71,6 +73,30 @@ NOT = { has_idea = foo has_idea = bar }
 # Correct — blocks each independently
 NOT = { has_idea = foo }
 NOT = { has_idea = bar }
+```
+
+## NOR is not a valid trigger
+
+`NOR` is **not** a HOI4 trigger keyword — it is Norway's country tag. Writing `NOR = { ... }` opens a country scope for Norway, not a logical NOR block. There is no built-in NOR trigger; express "none of these" as separate `NOT` blocks or as `NOT = { OR = { ... } }`:
+
+```
+# Wrong — this scopes into Norway, not a logical NOR
+NOR = {
+    has_government = democratic
+    has_idea = social_05
+}
+
+# Correct — separate NOT blocks
+NOT = { has_government = democratic }
+NOT = { has_idea = social_05 }
+
+# Also correct — NOT wrapping an OR
+NOT = {
+    OR = {
+        has_government = democratic
+        has_idea = social_05
+    }
+}
 ```
 
 ## Tautological OR in ai_will_do modifiers
@@ -139,6 +165,32 @@ check_variable = {
 
 Valid `compare` values: `equals`, `greater_than`, `less_than`, `greater_than_or_equals`, `less_than_or_equals`, `not_equals`.
 
+## Variable and array operations do not auto-tooltip
+
+Variable operations — `check_variable`, `is_in_array`, `add_to_variable`, `subtract_from_variable`, `set_variable`, `multiply_variable`, `divide_variable`, `clamp_variable`, `set_temp_variable`, `add_to_temp_variable`, `add_to_array`, `remove_from_array` — produce **no automatic tooltip text**. When used bare in `available`, `visible`, or trigger blocks the player sees nothing (triggers) or a blank line (effects).
+
+If the player needs to see why a focus/decision is locked or what an effect does, wrap the operation:
+
+- **Triggers:** use `custom_trigger_tooltip` with a loc key
+- **Effects:** use `custom_effect_tooltip` before or after the operation
+
+```
+# Wrong — player sees no explanation for why the focus is unavailable
+available = {
+	check_variable = { my_var > 10 }
+}
+
+# Correct — player sees the loc string
+available = {
+	custom_trigger_tooltip = {
+		tooltip = my_requirement_tt
+		check_variable = { my_var > 10 }
+	}
+}
+```
+
+Named scripted triggers (e.g., `my_trigger = yes`) **do** auto-tooltip using the trigger's name as a loc key, so they are safe to use bare in player-facing blocks. Prefer named triggers over raw variable checks in `available`/`visible` when the player needs feedback.
+
 ## is_in_faction vs is_in_faction_with
 
 `is_in_faction` is a **boolean** trigger (`yes`/`no`). To check faction membership with a specific country, use `is_in_faction_with = TAG`. Using `is_in_faction = TAG` silently fails. **Caught by `check_common_mistakes.py`.**
@@ -174,6 +226,11 @@ Apply this principle everywhere — focuses, events, decisions, scripted trigger
 
 HOI4 on Linux is **case-sensitive** for all identifiers — ideas, events, decisions, focuses, variables, flags, GFX sprites, and scripted effects/triggers. `has_idea = The_Military` will NOT match a definition `the_military`. Always match the exact case of the definition. **Caught by `validate_ideas.py` for ideas.**
 
+This also applies inside namelist files:
+
+- `division_types = { ... }` in `common/units/names_divisions/*.txt` must match the canonical sub-unit names in `common/units/MD_land_units.txt` exactly — the case of every letter matters. Typical case-typo patterns: lowercase prefixes (`arm_inf_bat` vs canonical `Arm_Inf_Bat`), mid-token capitalisation (`mech_inf_Bat` vs `Mech_Inf_Bat`), or single-letter case slips (`Assault` vs `assault`). When the case is wrong the namelist silently never matches the template.
+- `ship_types = { ... }` in `common/units/names_ships/*.txt` must match `common/units/MD_naval_units.txt`. Legacy vanilla tokens (`submarine`, `light_cruiser`, `ship_hull_*`, `battleship_hull_0`, etc.) were removed by MD — entries using them are silently dead. See `.claude/docs/namelist-reference.md` for the canonical lists.
+
 ## Trade agreement checks in MD
 
 `has_trade_agreement_with` is **not a valid HOI4 trigger** — compiles silently, always evaluates false. MD uses `has_country_flag = trade_agreement@TAG`. **Caught by `check_common_mistakes.py`.**
@@ -196,6 +253,46 @@ if = { limit = { check_variable = { X > 7 } } ... }
 else = { ... }
 ```
 
+## change_influence_percentage
+
+The scripted effect uses temp-variable arguments with these defaults:
+
+| Temp variable      | Required | Default   |
+| ------------------ | -------- | --------- |
+| `percent_change`   | yes      | —         |
+| `tag_index`        | no       | `ROOT.id` |
+| `influence_target` | no       | `THIS.id` |
+
+Three pitfalls to avoid:
+
+1. **Don't write redundant defaults.** `set_temp_variable = { tag_index = ROOT.id }` and `set_temp_variable = { influence_target = THIS.id }` are no-ops — the call already uses those defaults. Leave them out.
+
+2. **Orphan setters are silent bugs.** A `percent_change` / `tag_index` / `influence_target` triple with no following `change_influence_percentage = yes` does nothing — the temp vars get set and discarded. When auditing influence code, grep for `percent_change` setters and confirm each has a matching invocation in the same scope.
+
+3. **Loop-local temp vars need the call inside the loop.** Setting temp vars inside `random_other_country` / `random_country` / `every_country` and then calling `change_influence_percentage = yes` outside the block runs the effect once with stale or undefined values. The invocation must live in the same scope as the temp-var writes.
+
+```
+# Wrong — call runs outside the loop; tag_index/influence_target resolve to outer scope
+random_other_country = {
+    limit = { ... }
+    set_temp_variable = { percent_change = 3 }
+    set_temp_variable = { tag_index = THIS.id }
+    set_temp_variable = { influence_target = PREV.id }
+}
+change_influence_percentage = yes
+
+# Correct — call inside the loop with the loop-local scopes
+random_other_country = {
+    limit = { ... }
+    set_temp_variable = { percent_change = 3 }
+    set_temp_variable = { tag_index = THIS.id }
+    set_temp_variable = { influence_target = PREV.id }
+    change_influence_percentage = yes
+}
+```
+
+Also watch for typos in the temp-var name itself (e.g., `influence_tBRAet` from a botched search-and-replace) — the engine accepts any name, so a typo silently sets a never-read variable and the influence change uses the default `THIS.id` target.
+
 # Array Index Semantics
 
 When a function uses `^index` array subscripts, the **meaning of the index variable** must be obvious and consistent. Common bugs arise when two different index types are stored in similarly-named variables.
@@ -209,36 +306,14 @@ When a function uses `^index` array subscripts, the **meaning of the index varia
 
 ---
 
-## Simplification Patterns
+## Simplification & Performance Patterns
 
-- **Consolidate identical-body `else_if` chains:** When N consecutive `else_if` branches have the same body, collapse into one `OR` limit (or plain `else` if the preceding chain guarantees one condition is true). See `.claude/docs/simplification-patterns.md`.
+These have dedicated catalogs — both are required reading whenever you touch hot-path code or a file with copy-paste branching:
 
-Replace N parallel `if/else_if` lookup chains with array indexing:
+- `.claude/docs/simplification-patterns.md` — array lookup tables, parameterized scripted loc, collapsing parallel `if/else_if` chains, etc.
+- `.claude/docs/performance-patterns.md` — hoist invariants out of loops, GUI `dirty` counters, engine arrays vs `every_country`, clamp-before-divide, etc.
 
-```
-# Before: 14 branches
-if = { limit = { check_variable = { type = 1 } } set_variable = { cost = global.BUILD_COST_CIVILIAN_FACTORY } }
-else_if = { limit = { check_variable = { type = 2 } } set_variable = { cost = global.BUILD_COST_MILITARY_FACTORY } }
-# ... etc ...
-
-# After: one array + one lookup
-set_temp_variable = { idx = type }
-set_variable = { cost = global.build_cost_array^idx }
-```
-
-See `.claude/docs/simplification-patterns.md` for the full set of patterns.
-
----
-
-## Performance Patterns
-
-### Hoist invariant lookups out of loops
-
-Cache country-scope values (`num_of_factories`, `has_war`, flags, ideas) before iterating states. Each `CONTROLLER = { ... }` scope switch inside a per-state loop is expensive.
-
-### GUI `dirty` counters
-
-Never bind `dirty = global.date`. Use a dedicated counter incremented only on relevant state changes. See `.claude/docs/performance-patterns.md`.
+Do not duplicate the principles here — they drift. Cite the canonical doc.
 
 ---
 

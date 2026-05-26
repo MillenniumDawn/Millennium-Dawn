@@ -28,67 +28,66 @@
 CPD_reset_built_peace_deal = {
 	if = {
 		limit = { ROOT = { NOT = { has_country_flag = CPD_considering_peace_deal } } }
+		# Dirty bump only on player paths — AI paths would wake every open player GUI for nothing
+		if = {
+			limit = { ROOT = { is_ai = no } }
+			add_to_variable = { global.CPD_dirty = 1 }
+		}
 		ROOT = {
 			# SETS UP INITIAL GUI STATE SELECTION OPTION
-				set_variable = { ROOT.CPD_state_option_selection = 1 }
-				set_variable = { ROOT.CPD_selected_demands_frame_var = 1 }
+			set_variable = { ROOT.CPD_state_option_selection = 1 }
 			# RESETS COST OF PEACE DEAL
-				set_variable = { ROOT.CPD_total_cost_of_built_peace_deal = 0 }
+			set_variable = { ROOT.CPD_total_cost_of_built_peace_deal = 0 }
 			# RESETS DEMANDS
-				clear_array = CPD_annex_state_DEMANDS
-				clear_array = CPD_puppet_in_state_DEMANDS
-				clear_array = CPD_demilitarise_state_DEMANDS
-				clear_array = CPD_liberate_state_DEMANDS
-				clear_array = CPD_current_deal_list_DEMANDS
+			clear_array = CPD_annex_state_DEMANDS
+			clear_array = CPD_puppet_in_state_DEMANDS
+			clear_array = CPD_demilitarise_state_DEMANDS
+			clear_array = CPD_liberate_state_DEMANDS
+			clear_array = CPD_current_deal_list_DEMANDS
 			# RESETS CONCESSIONS
-				clear_array = CPD_annex_state_CONCESSIONS
-				clear_array = CPD_puppet_in_state_CONCESSIONS
-				clear_array = CPD_demilitarise_state_CONCESSIONS
-				clear_array = CPD_liberate_state_CONCESSIONS
-				clear_array = CPD_current_deal_list_CONCESSIONS
+			clear_array = CPD_annex_state_CONCESSIONS
+			clear_array = CPD_puppet_in_state_CONCESSIONS
+			clear_array = CPD_demilitarise_state_CONCESSIONS
+			clear_array = CPD_liberate_state_CONCESSIONS
+			clear_array = CPD_current_deal_list_CONCESSIONS
 			# CLEARS CURRENT DEAL
-				clear_array = CPD_current_deal_list
-				clear_array = CPD_value_of_state
-			# CLEARS COUNTRY ACTION "TICKBOXES"
+			clear_array = CPD_current_deal_list
+			clear_array = CPD_value_of_state
+			# CLEARS NEW STATE ACTION ARRAYS
+			clear_array = CPD_resource_rights_DEMANDS
+			clear_array = CPD_resource_rights_CONCESSIONS
+			# CLEARS COUNTRY ACTION FLAGS
+			clr_country_flag = CPD_ceasefire_demand
+			clr_country_flag = CPD_ceasefire_concession
+			clr_country_flag = CPD_war_reparations_demand
+			clr_country_flag = CPD_war_reparations_concession
+			clr_country_flag = CPD_forced_neutrality_demand
+			clr_country_flag = CPD_forced_neutrality_concession
+			clr_country_flag = CPD_regime_change_demand
+			clr_country_flag = CPD_regime_change_concession
+			clr_country_flag = CPD_military_basing_demand
+			clr_country_flag = CPD_military_basing_concession
+			clr_country_flag = CPD_full_puppet_demand
+			clr_country_flag = CPD_full_puppet_concession
 		}
 		CPD_demand_concede_switch = yes
 	}
 }
 
 CPD_demand_concede_switch = {
-	ROOT = { clear_array = CPD_state_list }
+	ROOT = {
+		clear_array = CPD_state_list
+	}
 	if = {
 		limit = { ROOT = { has_country_flag = CPD_giving_concessions } }
-		# ROOT = {
-		# 	# CPD_calculate_monetary_war_reparations = yes
-		# 	# more calculate things can go in here
-		# }
-		every_country = {
-			limit = {
-				has_war_with = PREV
-				OR = {
-					tag = ROOT
-					is_subject_of = ROOT
-					AND = {
-						ROOT = { is_faction_leader = yes }
-						is_in_faction_with = ROOT
-					}
-				}
-			}
+		# Concessions: only ROOT's own states — subjects' and faction allies' territory
+		# cannot be offered, preventing the puppet-territory concession exploit.
+		ROOT = {
 			for_each_loop = {
 				array = owned_states
 				if = {
-					limit = {
-						OR = {
-							controls_state = v
-							ROOT = { controls_state = v }
-							any_allied_country = {
-								has_war_with = ROOT
-								controls_state = v
-							}
-						}
-					}
-					ROOT = { add_to_array = { CPD_state_list = v } }
+					limit = { controls_state = v }
+					add_to_array = { CPD_state_list = v }
 				}
 			}
 		}
@@ -130,6 +129,10 @@ CPD_demand_concede_switch = {
 
 CPD_change_state_actions = {
 	if = {
+		limit = { ROOT = { is_ai = no } }
+		add_to_variable = { global.CPD_dirty = 1 }
+	}
+	if = {
 		limit = { ROOT = { has_country_flag = CPD_giving_concessions } }
 		if = {
 			limit = { ROOT = { is_in_array = { CPD_current_deal_list = PREV } } }
@@ -151,17 +154,21 @@ CPD_add_to_concessions = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
 		ROOT = { add_to_array = { CPD_annex_state_CONCESSIONS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
 		ROOT = { add_to_array = { CPD_puppet_in_state_CONCESSIONS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
 		ROOT = { add_to_array = { CPD_demilitarise_state_CONCESSIONS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
 		ROOT = { add_to_array = { CPD_liberate_state_CONCESSIONS = PREV } }
+	}
+	else_if = {
+		limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
+		ROOT = { add_to_array = { CPD_resource_rights_CONCESSIONS = PREV } }
 	}
 
 	if = {
@@ -181,17 +188,21 @@ CPD_remove_from_concessions = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
 		ROOT = { remove_from_array = { CPD_annex_state_CONCESSIONS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
 		ROOT = { remove_from_array = { CPD_puppet_in_state_CONCESSIONS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
 		ROOT = { remove_from_array = { CPD_demilitarise_state_CONCESSIONS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
 		ROOT = { remove_from_array = { CPD_liberate_state_CONCESSIONS = PREV } }
+	}
+	else_if = {
+		limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
+		ROOT = { remove_from_array = { CPD_resource_rights_CONCESSIONS = PREV } }
 	}
 
 	if = {
@@ -211,17 +222,21 @@ CPD_add_to_demands = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
 		ROOT = { add_to_array = { CPD_annex_state_DEMANDS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
 		ROOT = { add_to_array = { CPD_puppet_in_state_DEMANDS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
 		ROOT = { add_to_array = { CPD_demilitarise_state_DEMANDS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
 		ROOT = { add_to_array = { CPD_liberate_state_DEMANDS = PREV } }
+	}
+	else_if = {
+		limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
+		ROOT = { add_to_array = { CPD_resource_rights_DEMANDS = PREV } }
 	}
 
 	if = {
@@ -241,17 +256,21 @@ CPD_remove_from_demands = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 1 } }
 		ROOT = { remove_from_array = { CPD_annex_state_DEMANDS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 2 } }
 		ROOT = { remove_from_array = { CPD_puppet_in_state_DEMANDS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 3 } }
 		ROOT = { remove_from_array = { CPD_demilitarise_state_DEMANDS = PREV } }
 	}
-	if = {
+	else_if = {
 		limit = { check_variable = { ROOT.CPD_state_option_selection = 4 } }
 		ROOT = { remove_from_array = { CPD_liberate_state_DEMANDS = PREV } }
+	}
+	else_if = {
+		limit = { check_variable = { ROOT.CPD_state_option_selection = 5 } }
+		ROOT = { remove_from_array = { CPD_resource_rights_DEMANDS = PREV } }
 	}
 
 	if = {
@@ -267,72 +286,117 @@ CPD_remove_from_demands = {
 }
 
 CPD_remove_from_deal = {
-	# DEMANDS
+	if = {
+		limit = { ROOT = { is_ai = no } }
+		add_to_variable = { global.CPD_dirty = 1 }
+	}
+	# COUNTRY ACTION SENTINELS - toggle off the corresponding flag
+	if = {
+		limit = { check_variable = { v > 9999 } }
+		if = { limit = { check_variable = { v = 10001 } } ROOT = { clr_country_flag = CPD_ceasefire_demand clr_country_flag = CPD_ceasefire_concession } }
+		if = { limit = { check_variable = { v = 10002 } } ROOT = { clr_country_flag = CPD_war_reparations_demand clr_country_flag = CPD_war_reparations_concession } }
+		if = { limit = { check_variable = { v = 10003 } } ROOT = { clr_country_flag = CPD_forced_neutrality_demand clr_country_flag = CPD_forced_neutrality_concession } }
+		if = { limit = { check_variable = { v = 10004 } } ROOT = { clr_country_flag = CPD_regime_change_demand clr_country_flag = CPD_regime_change_concession } }
+		if = { limit = { check_variable = { v = 10005 } } ROOT = { clr_country_flag = CPD_military_basing_demand clr_country_flag = CPD_military_basing_concession } }
+		if = { limit = { check_variable = { v = 10006 } } ROOT = { clr_country_flag = CPD_full_puppet_demand clr_country_flag = CPD_full_puppet_concession } }
+		ROOT = {
+			remove_from_array = { CPD_current_deal_list = v }
+			if = {
+				limit = { is_in_array = { CPD_current_deal_list_DEMANDS = v } }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = v }
+			}
+			if = {
+				limit = { is_in_array = { CPD_current_deal_list_CONCESSIONS = v } }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = v }
+			}
+		}
+	}
+	# DEMANDS - if/else_if chain for early exit (a state is only in one array)
 		if = {
 			limit = { ROOT = { is_in_array = { CPD_annex_state_DEMANDS = PREV } } }
 			subtract_from_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_annex_state_DEMANDS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_annex_state_DEMANDS = PREV }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = PREV }
+			}
 		}
-		if = {
+		else_if = {
 			limit = { ROOT = { is_in_array = { CPD_puppet_in_state_DEMANDS = PREV } } }
 			subtract_from_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_puppet_in_state_DEMANDS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_puppet_in_state_DEMANDS = PREV }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = PREV }
+			}
 		}
-		if = {
+		else_if = {
 			limit = { ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } } }
 			subtract_from_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_demilitarise_state_DEMANDS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_demilitarise_state_DEMANDS = PREV }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = PREV }
+			}
 		}
-		if = {
+		else_if = {
 			limit = { ROOT = { is_in_array = { CPD_liberate_state_DEMANDS = PREV } } }
 			subtract_from_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_liberate_state_DEMANDS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_liberate_state_DEMANDS = PREV }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = PREV }
+			}
 		}
-	# CONCESSIONS
+		else_if = {
+			limit = { ROOT = { is_in_array = { CPD_resource_rights_DEMANDS = PREV } } }
+			subtract_from_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
+			ROOT = {
+				remove_from_array = { CPD_resource_rights_DEMANDS = PREV }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = PREV }
+			}
+		}
+	# CONCESSIONS - same early-exit pattern
 		if = {
 			limit = { ROOT = { is_in_array = { CPD_annex_state_CONCESSIONS = PREV } } }
 			add_to_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_annex_state_CONCESSIONS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_annex_state_CONCESSIONS = PREV }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = PREV }
+			}
 		}
-		if = {
+		else_if = {
 			limit = { ROOT = { is_in_array = { CPD_puppet_in_state_CONCESSIONS = PREV } } }
 			add_to_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_puppet_in_state_CONCESSIONS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_puppet_in_state_CONCESSIONS = PREV }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = PREV }
+			}
 		}
-		if = {
+		else_if = {
 			limit = { ROOT = { is_in_array = { CPD_demilitarise_state_CONCESSIONS = PREV } } }
 			add_to_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_demilitarise_state_CONCESSIONS = PREV } }
+			ROOT = {
+				remove_from_array = { CPD_demilitarise_state_CONCESSIONS = PREV }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = PREV }
+			}
 		}
-		if = {
+		else_if = {
 			limit = { ROOT = { is_in_array = { CPD_liberate_state_CONCESSIONS = PREV } } }
 			add_to_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
-			ROOT = { remove_from_array = { CPD_liberate_state_CONCESSIONS = PREV } }
-		}
-	# CLEANUP
-		if = {
-			limit = {
-				OR = {
-					ROOT = { is_in_array = { CPD_annex_state_DEMANDS = PREV } }
-					ROOT = { is_in_array = { CPD_puppet_in_state_DEMANDS = PREV } }
-					ROOT = { is_in_array = { CPD_demilitarise_state_DEMANDS = PREV } }
-					ROOT = { is_in_array = { CPD_liberate_state_DEMANDS = PREV } }
-				}
+			ROOT = {
+				remove_from_array = { CPD_liberate_state_CONCESSIONS = PREV }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = PREV }
 			}
-			ROOT = { remove_from_array = { CPD_current_deal_list_DEMANDS = PREV } }
+		}
+		else_if = {
+			limit = { ROOT = { is_in_array = { CPD_resource_rights_CONCESSIONS = PREV } } }
+			add_to_variable = { ROOT.CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
+			ROOT = {
+				remove_from_array = { CPD_resource_rights_CONCESSIONS = PREV }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = PREV }
+			}
 		}
 		if = {
-			limit = {
-				OR = {
-					ROOT = { is_in_array = { CPD_annex_state_CONCESSIONS = PREV } }
-					ROOT = { is_in_array = { CPD_puppet_in_state_CONCESSIONS = PREV } }
-					ROOT = { is_in_array = { CPD_demilitarise_state_CONCESSIONS = PREV } }
-					ROOT = { is_in_array = { CPD_liberate_state_CONCESSIONS = PREV } }
-				}
-			}
-			ROOT = { remove_from_array = { CPD_current_deal_list_CONCESSIONS = PREV } }
+			limit = { check_variable = { v < 10000 } }
+			ROOT = { remove_from_array = { CPD_current_deal_list = PREV } }
 		}
-		ROOT = { remove_from_array = { CPD_current_deal_list = PREV } }
 }
 
 CPD_clear_victory_points = {
@@ -423,16 +487,16 @@ CPD_sign_peace_deal = {
 				}
 			}
 		}
-	# LIBERATE IN STATE - DEMANDED BY ROOT - to be added later on
-		# if = {
-		# 	limit = { check_variable = { CPD_liberate_state_DEMANDS^0 > -1 } }
-
-		# 	for_each_scope_loop = {
-		# 		array = CPD_liberate_state_DEMANDS
-
-		# 		CPD_liberate_in_state_effect = yes
-		# 	}
-		# }
+	# LIBERATE IN STATE - DEMANDED BY ROOT
+		if = {
+			limit = { check_variable = { CPD_liberate_state_DEMANDS^0 > -1 } }
+			ROOT = {
+				for_each_scope_loop = {
+					array = CPD_liberate_state_DEMANDS
+					CPD_liberate_in_state_effect = yes
+				}
+			}
+		}
 	# ANNEX STATE - CONCEDED BY ROOT
 		if = {
 			limit = { check_variable = { CPD_annex_state_CONCESSIONS^0 > -1 } }
@@ -470,8 +534,8 @@ CPD_sign_peace_deal = {
 	# MAKE PUPPET IN STATE - CONCEDED BY ROOT
 		if = {
 			limit = { check_variable = { CPD_puppet_in_state_CONCESSIONS^0 > -1 } }
-			set_temp_variable = { CPD_taker = ROOT }
-			set_temp_variable = { CPD_giver = THIS }
+			set_temp_variable = { CPD_taker = THIS }
+			set_temp_variable = { CPD_giver = ROOT }
 			ROOT = {
 				for_each_scope_loop = {
 					array = CPD_puppet_in_state_CONCESSIONS
@@ -480,171 +544,310 @@ CPD_sign_peace_deal = {
 				}
 			}
 		}
-	# LIBERATE IN STATE - CONCEDED BY ROOT - to be added later on
-		# if = {
-		# 	limit = { check_variable = { CPD_liberate_state_CONCESSIONS^0 > -1 } }
-
-		# 	for_each_scope_loop = {
-		# 		array = CPD_liberate_state_CONCESSIONS
-
-		# 		CPD_liberate_in_state_effect = yes
-		# 	}
-		# }
-	# WHITE PEACE REQUESTED
+	# LIBERATE IN STATE - CONCEDED BY ROOT
 		if = {
-			limit = {
-				NOT = {
-					OR = {
-						# DEMANDS
-						check_variable = { CPD_annex_state_DEMANDS^0 > -1 }
-						check_variable = { CPD_puppet_in_state_DEMANDS^0 > -1 }
-						check_variable = { CPD_demilitarise_state_DEMANDS^0 > -1 }
-						check_variable = { CPD_liberate_state_DEMANDS^0 > -1 }
-						# CONCESSIONS
-						check_variable = { CPD_annex_state_CONCESSIONS^0 > -1 }
-						check_variable = { CPD_puppet_in_state_CONCESSIONS^0 > -1 }
-						check_variable = { CPD_demilitarise_state_CONCESSIONS^0 > -1 }
-						check_variable = { CPD_liberate_state_CONCESSIONS^0 > -1 }
-					}
-				}
-			}
-			set_temp_variable = { CPD_WP_initiator = ROOT }
-			set_temp_variable = { CPD_WP_receiver = THIS }
-
-			var:CPD_WP_receiver = {
-				if = {
-					limit = { var:CPD_WP_initiator = { is_faction_leader = no } }
-					white_peace = var:CPD_WP_initiator
-
-					var:CPD_WP_initiator = {
-						var:CPD_WP_receiver = {
-							set_truce = {
-								target = PREV
-								days = 360
-							}
-						}
-					}
-				}
-				else = {
-					every_enemy_country = {
-						limit = { is_in_faction_with = var:CPD_WP_initiator }
-						white_peace = PREV
-						set_truce = {
-							target = PREV
-							days = 180
-						}
-					}
-				}
-				if = {
-					limit = { is_faction_leader = no }
-					leave_faction = yes
-				}
-				else = {
-					every_other_country = {
-						limit = { is_in_faction_with = var:CPD_WP_receiver }
-						white_peace = var:CPD_WP_initiator
-					}
+			limit = { check_variable = { CPD_liberate_state_CONCESSIONS^0 > -1 } }
+			ROOT = {
+				for_each_scope_loop = {
+					array = CPD_liberate_state_CONCESSIONS
+					CPD_liberate_in_state_effect = yes
 				}
 			}
 		}
-	# DEMILITARISE STATE - DEMANDED BY ROOT - to be added later on
+	# DEMILITARISE STATES
 		if = {
 			limit = { check_variable = { CPD_demilitarise_state_DEMANDS^0 > -1 } }
-
-			set_temp_variable = { CPD_WP_initiator = ROOT }
-			set_temp_variable = { CPD_WP_receiver = THIS }
-
-			var:CPD_WP_receiver = {
-				if = {
-					limit = { var:CPD_WP_initiator = { is_faction_leader = no } }
-					white_peace = var:CPD_WP_initiator
-
-					var:CPD_WP_initiator = {
-						var:CPD_WP_receiver = {
-							set_truce = {
-								target = PREV
-								days = 360
-							}
-						}
-					}
-				}
-				else = {
-					every_enemy_country = {
-						limit = { is_in_faction_with = var:CPD_WP_initiator }
-						white_peace = PREV
-						set_truce = {
-							target = PREV
-							days = 180
-						}
-					}
-				}
-				if = {
-					limit = { is_faction_leader = no }
-					leave_faction = yes
-				}
-				else = {
-					every_other_country = {
-						limit = { is_in_faction_with = var:CPD_WP_receiver }
-						white_peace = var:CPD_WP_initiator
-					}
-				}
-			}
-
 			for_each_scope_loop = {
 				array = ROOT.CPD_demilitarise_state_DEMANDS
-
 				set_demilitarized_zone = yes
 			}
 		}
-	# DEMILITARISE STATE - CONCEDED BY ROOT - to be added later on
 		if = {
 			limit = { check_variable = { CPD_demilitarise_state_CONCESSIONS^0 > -1 } }
-
-			set_temp_variable = { CPD_WP_initiator = ROOT }
-			set_temp_variable = { CPD_WP_receiver = THIS }
-
-			var:CPD_WP_receiver = {
-				if = {
-					limit = { var:CPD_WP_initiator = { is_faction_leader = no } }
-					white_peace = var:CPD_WP_initiator
-
-					var:CPD_WP_initiator = {
-						var:CPD_WP_receiver = {
-							set_truce = {
-								target = PREV
-								days = 360
-							}
-						}
-					}
-				}
-				else = {
-					every_enemy_country = {
-						limit = { is_in_faction_with = var:CPD_WP_initiator }
-						white_peace = PREV
-						set_truce = {
-							target = PREV
-							days = 180
-						}
-					}
-				}
-				if = {
-					limit = { is_faction_leader = no }
-					leave_faction = yes
-				}
-				else = {
-					every_other_country = {
-						limit = { is_in_faction_with = var:CPD_WP_receiver }
-						white_peace = var:CPD_WP_initiator
-					}
-				}
-			}
-
 			for_each_scope_loop = {
 				array = ROOT.CPD_demilitarise_state_CONCESSIONS
-
 				set_demilitarized_zone = yes
 			}
 		}
+
+	# RESOURCE RIGHTS - uses native give_resource_rights effect
+		if = {
+			limit = { check_variable = { CPD_resource_rights_DEMANDS^0 > -1 } }
+			# ROOT demands resource rights from THIS's states - THIS gives to ROOT
+			for_each_loop = {
+				array = ROOT.CPD_resource_rights_DEMANDS
+				THIS = { give_resource_rights = { receiver = ROOT state = v } }
+			}
+		}
+		if = {
+			limit = { check_variable = { CPD_resource_rights_CONCESSIONS^0 > -1 } }
+			# ROOT concedes resource rights on ROOT's states to THIS - ROOT gives to THIS
+			for_each_loop = {
+				array = ROOT.CPD_resource_rights_CONCESSIONS
+				ROOT = { give_resource_rights = { receiver = THIS state = v } }
+			}
+		}
+
+	# MILITARY BASING RIGHTS
+		if = {
+			limit = { ROOT = { has_country_flag = CPD_military_basing_demand } }
+			THIS = { give_military_access = ROOT }
+		}
+		if = {
+			limit = { ROOT = { has_country_flag = CPD_military_basing_concession } }
+			ROOT = { give_military_access = THIS }
+		}
+
+	# FULL COUNTRY PUPPET
+	# A faction leader who becomes a puppet would leave members in a stale
+	# leadership state; dissolve their faction first so members are released.
+		if = {
+			limit = { ROOT = { has_country_flag = CPD_full_puppet_demand } }
+			if = {
+				limit = { THIS = { is_faction_leader = yes } }
+				THIS = { dismantle_faction = yes }
+			}
+			ROOT = { puppet = THIS }
+		}
+		if = {
+			limit = { ROOT = { has_country_flag = CPD_full_puppet_concession } }
+			if = {
+				limit = { ROOT = { is_faction_leader = yes } }
+				ROOT = { dismantle_faction = yes }
+			}
+			THIS = { puppet = ROOT }
+		}
+
+	# COUNTRY ACTION: FORCED NEUTRALITY
+		if = {
+			limit = { ROOT = { has_country_flag = CPD_forced_neutrality_demand } }
+			THIS = {
+				leave_faction = yes
+				add_timed_idea = { idea = CPD_forced_neutrality_spirit days = 1800 }
+			}
+		}
+		if = {
+			limit = { ROOT = { has_country_flag = CPD_forced_neutrality_concession } }
+			ROOT = {
+				leave_faction = yes
+				add_timed_idea = { idea = CPD_forced_neutrality_spirit days = 1800 }
+			}
+		}
+
+	# COUNTRY ACTION: REGIME CHANGE
+	# Forces the loser onto the winner's exact subideology via MD's change_ruling_party_effect.
+	# Precedent: put_the_largest_opposition_party_in_power (01_civil_war_effects.txt).
+		if = {
+			limit = { ROOT = { has_country_flag = CPD_regime_change_demand } }
+			set_temp_variable = { rul_party_temp = ROOT.ruling_party^0 }
+			set_temp_variable = { disable_elections = 0 }
+			set_temp_variable = { change_leader_temp = 1 }
+			THIS = {
+				clear_array = gov_coalition_array
+				change_ruling_party_effect = yes
+				add_timed_idea = { idea = CPD_regime_change_instability days = 720 }
+				# Salafist backlash on Islamic nations when ideology forced from outside
+				if = {
+					limit = {
+						NOT = { ROOT = { has_government = fascism } }
+						OR = {
+							has_idea = sunni
+							has_idea = shia
+							has_idea = shia_iranian_school
+							has_idea = sufi_islam
+							has_idea = ibadi
+						}
+					}
+					add_popularity = { ideology = fascism popularity = 0.05 }
+				}
+			}
+		}
+		if = {
+			limit = { ROOT = { has_country_flag = CPD_regime_change_concession } }
+			set_temp_variable = { rul_party_temp = THIS.ruling_party^0 }
+			set_temp_variable = { disable_elections = 0 }
+			set_temp_variable = { change_leader_temp = 1 }
+			ROOT = {
+				clear_array = gov_coalition_array
+				change_ruling_party_effect = yes
+				add_timed_idea = { idea = CPD_regime_change_instability days = 720 }
+				if = {
+					limit = {
+						NOT = { THIS = { has_government = fascism } }
+						OR = {
+							has_idea = sunni
+							has_idea = shia
+							has_idea = shia_iranian_school
+							has_idea = sufi_islam
+							has_idea = ibadi
+						}
+					}
+					add_popularity = { ideology = fascism popularity = 0.05 }
+				}
+			}
+		}
+
+	# COUNTRY ACTION: WAR REPARATIONS
+	# 1-year duration. Weekly transfer integrated via calculate_additional_*_rate
+	# in 00_money_system.txt: payer adds to expenses, receiver adds to income.
+	# Amount = 0.05% of payer's GDP per week (~2.6% / year), capped at $15B / week
+	# so superpowers don't drain mid-tier targets with one peace deal.
+	#
+	# Stacking: when a payer signs a second reparations deal while the first is
+	# still active, the new amount adds to their existing weekly. The idea's
+	# on_remove clears the variable when the (refreshed) timer finally expires.
+	# Same applies to receivers who collect from multiple sources.
+		if = {
+			limit = { ROOT = { has_country_flag = CPD_war_reparations_demand } }
+			set_temp_variable = { CPD_reparations_new = THIS.gdp_total }
+			multiply_temp_variable = { CPD_reparations_new = 0.0005 }
+			clamp_temp_variable = { var = CPD_reparations_new max = 15 }
+			THIS = {
+				add_to_variable = { CPD_reparations_weekly = CPD_reparations_new }
+				add_timed_idea = { idea = CPD_war_reparations_payer days = 365 }
+			}
+			ROOT = {
+				add_to_variable = { CPD_reparations_weekly = CPD_reparations_new }
+				add_timed_idea = { idea = CPD_war_reparations_receiver days = 365 }
+			}
+		}
+		if = {
+			limit = { ROOT = { has_country_flag = CPD_war_reparations_concession } }
+			set_temp_variable = { CPD_reparations_new = ROOT.gdp_total }
+			multiply_temp_variable = { CPD_reparations_new = 0.0005 }
+			clamp_temp_variable = { var = CPD_reparations_new max = 15 }
+			ROOT = {
+				add_to_variable = { CPD_reparations_weekly = CPD_reparations_new }
+				add_timed_idea = { idea = CPD_war_reparations_payer days = 365 }
+			}
+			THIS = {
+				add_to_variable = { CPD_reparations_weekly = CPD_reparations_new }
+				add_timed_idea = { idea = CPD_war_reparations_receiver days = 365 }
+			}
+		}
+
+	# CEASEFIRE STATUS QUO - transfer controlled states before white peace
+		if = {
+			limit = {
+				ROOT = {
+					OR = {
+						has_country_flag = CPD_ceasefire_demand
+						has_country_flag = CPD_ceasefire_concession
+					}
+				}
+			}
+			# THIS = receiver, ROOT = sender
+			set_temp_variable = { CPD_ceasefire_receiver = THIS }
+			# Sender gets states it controls that receiver owns
+			every_owned_state = {
+				limit = { is_controlled_by = ROOT }
+				ROOT = { transfer_state = PREV }
+			}
+			# Receiver gets states it controls that sender owns
+			ROOT = {
+				every_owned_state = {
+					limit = { is_controlled_by = var:CPD_ceasefire_receiver }
+					var:CPD_ceasefire_receiver = { transfer_state = PREV }
+				}
+			}
+		}
+
+	# WHITE PEACE - always fires to end the war after all transfers and actions
+		set_temp_variable = { CPD_WP_initiator = ROOT }
+		set_temp_variable = { CPD_WP_receiver = THIS }
+		# Ceasefire extends the truce to 720 days (2 years)
+		set_temp_variable = { CPD_is_ceasefire = 0 }
+		if = {
+			limit = {
+				ROOT = {
+					OR = {
+						has_country_flag = CPD_ceasefire_demand
+						has_country_flag = CPD_ceasefire_concession
+					}
+				}
+			}
+			set_temp_variable = { CPD_is_ceasefire = 1 }
+		}
+		CPD_execute_white_peace = yes
+}
+
+CPD_execute_white_peace = {
+	# Uses CPD_WP_initiator, CPD_WP_receiver, and CPD_is_ceasefire temp variables set by caller
+	if = {
+		limit = {
+			NOT = { var:CPD_WP_initiator = { exists = yes } }
+			NOT = { var:CPD_WP_receiver = { exists = yes } }
+		}
+		log = "[GetDateText]: ERROR: CPD_execute_white_peace called with invalid actors"
+	}
+	else = {
+		var:CPD_WP_receiver = {
+		if = {
+			limit = { var:CPD_WP_initiator = { is_faction_leader = no } }
+			white_peace = var:CPD_WP_initiator
+			if = {
+				limit = { check_variable = { CPD_is_ceasefire = 1 } }
+				var:CPD_WP_initiator = {
+					var:CPD_WP_receiver = { set_truce = { target = PREV days = 720 } }
+				}
+			}
+			else = {
+				var:CPD_WP_initiator = {
+					var:CPD_WP_receiver = { set_truce = { target = PREV days = 360 } }
+				}
+			}
+		}
+		else = {
+			every_enemy_country = {
+				limit = { is_in_faction_with = var:CPD_WP_initiator }
+				white_peace = PREV
+				if = {
+					limit = { check_variable = { CPD_is_ceasefire = 1 } }
+					set_truce = { target = PREV days = 720 }
+				}
+				else = {
+					set_truce = { target = PREV days = 180 }
+				}
+			}
+		}
+		if = {
+			limit = { is_faction_leader = no }
+			leave_faction = yes
+		}
+		else = {
+			every_other_country = {
+				limit = { is_in_faction_with = var:CPD_WP_receiver }
+				white_peace = var:CPD_WP_initiator
+			}
+		}
+		}
+		# Cover vassal-only wars: each side's subjects also white-peace the other side.
+		# Faction loops above only cover faction members, not subjects of non-leaders.
+		# set_truce.target does not accept var:NAME — scope into the counterparty
+		# via var:X = { ... } and reference the looping subject via PREV.
+		var:CPD_WP_initiator = {
+			every_subject_country = {
+				limit = { has_war_with = var:CPD_WP_receiver }
+				white_peace = var:CPD_WP_receiver
+				if = {
+					limit = { check_variable = { CPD_is_ceasefire = 1 } }
+					var:CPD_WP_receiver = { set_truce = { target = PREV days = 720 } }
+				}
+				else = { var:CPD_WP_receiver = { set_truce = { target = PREV days = 360 } } }
+			}
+		}
+		var:CPD_WP_receiver = {
+			every_subject_country = {
+				limit = { has_war_with = var:CPD_WP_initiator }
+				white_peace = var:CPD_WP_initiator
+				if = {
+					limit = { check_variable = { CPD_is_ceasefire = 1 } }
+					var:CPD_WP_initiator = { set_truce = { target = PREV days = 720 } }
+				}
+				else = { var:CPD_WP_initiator = { set_truce = { target = PREV days = 360 } } }
+			}
+		}
+	}
 }
 
 CPD_annex_state_effect = { var:CPD_taker = { transfer_state = PREV } }
@@ -672,23 +875,20 @@ CPD_make_puppet_in_state_effect = {
 	else = {
 		create_dynamic_country = {
 			original_tag = THIS.owner
+			# Install taker's exact subideology onto the new puppet via MD's
+			# change_ruling_party_effect — set_politics alone won't pick the
+			# right subideology since MD tracks parties via ruling_party^0.
+			set_temp_variable = { rul_party_temp = var:CPD_taker.ruling_party^0 }
+			set_temp_variable = { change_leader_temp = 1 }
 			if = {
 				limit = { var:CPD_taker = { has_elections = yes } }
-				set_politics = {
-					ruling_party = var:var:CPD_taker.current_party_ideology_group
-					elections_allowed = yes
-				}
+				set_temp_variable = { disable_elections = 0 }
 			}
 			else = {
-				set_politics = {
-					ruling_party = var:var:CPD_taker.current_party_ideology_group
-					elections_allowed = no
-				}
+				set_temp_variable = { disable_elections = 1 }
 			}
-			set_political_party = {
-				ideology = var:var:CPD_taker.current_party_ideology_group
-				popularity = 60
-			}
+			clear_array = gov_coalition_array
+			change_ruling_party_effect = yes
 			reserve_dynamic_country = yes
 			var:CPD_taker = { puppet = PREV }
 			transfer_state = PREV
@@ -697,7 +897,67 @@ CPD_make_puppet_in_state_effect = {
 		}
 	}
 }
-# CPD_liberate_in_state_effect = {}
+CPD_liberate_in_state_effect = {
+	# THIS = state being liberated, ROOT = peace deal sender.
+	# Recipient filters exclude the current owner (no-op liberation) and any
+	# country at war with ROOT (would hand the state to an active enemy of
+	# our faction, which is not the player's intent when "liberating").
+	set_temp_variable = { CPD_liberated_state = THIS }
+	set_temp_variable = { CPD_liberated_state_owner = THIS.owner }
+
+	# Check if any existing country has cores on this state
+	if = {
+		limit = {
+			any_country = {
+				NOT = { tag = var:CPD_liberated_state_owner }
+				NOT = { has_war_with = ROOT }
+				var:CPD_liberated_state = { is_core_of = PREV }
+				exists = yes
+			}
+		}
+		random_country = {
+			limit = {
+				NOT = { tag = var:CPD_liberated_state_owner }
+				NOT = { has_war_with = ROOT }
+				var:CPD_liberated_state = { is_core_of = PREV }
+				exists = yes
+			}
+			var:CPD_liberated_state_owner = { remove_state_core = PREV }
+			transfer_state = var:CPD_liberated_state
+		}
+	}
+	else_if = {
+		# No living country with cores - revive a dead tag.
+		# Dead-tag countries can't be "at war" so the war filter is omitted here.
+		limit = {
+			any_country = {
+				NOT = { tag = var:CPD_liberated_state_owner }
+				var:CPD_liberated_state = { is_core_of = PREV }
+				exists = no
+			}
+		}
+		random_country = {
+			limit = {
+				NOT = { tag = var:CPD_liberated_state_owner }
+				var:CPD_liberated_state = { is_core_of = PREV }
+				exists = no
+			}
+			var:CPD_liberated_state_owner = { remove_state_core = PREV }
+			transfer_state = var:CPD_liberated_state
+		}
+	}
+	else = {
+		# No core-holder anywhere — spawn a dynamic country derived from the
+		# current owner's tag and hand it the state. The new country inherits
+		# the owner's history-file baseline but is a separate splinter entity.
+		create_dynamic_country = {
+			original_tag = var:CPD_liberated_state_owner
+			transfer_state = var:CPD_liberated_state
+			reserve_dynamic_country = yes
+			ingame_startup_nations_effect = yes
+		}
+	}
+}
 
 
 
@@ -715,29 +975,486 @@ CPD_store_state_value = {
 
 # AI SCRIPTED EFFECTS
 
-# CPD_AI_will_take_state = {
-# 	set_variable = { ROOT.CPD_state_option_selection = 1 }
-# 	CPD_add_to_state_demands = yes
-# }
-
-# CPD_AI_will_puppet = {
-# 	set_variable = { ROOT.CPD_state_option_selection = 2 }
-# 	CPD_add_to_state_demands = yes
-# }
-
-# CPD_AI_will_demilitarise = {
-# 	set_variable = { ROOT.CPD_state_option_selection = 3 }
-# 	CPD_add_to_state_demands = yes
-# }
-
-# CPD_AI_will_liberate = {
-# 	set_variable = { ROOT.CPD_state_option_selection = 4 }
-# 	CPD_add_to_state_demands = yes
-# }
-
+# Called inside random_enemy_country after CPD_AI_build_peace_deal. Validates
+# the deal via the canonical CPD_deal_is_sendable trigger; commits the offer
+# if sendable, otherwise clears the deal so the next monthly tick can try a
+# different target without burning the 180-day cooldown on an unsendable deal.
+# Scope: THIS = target enemy, ROOT = AI sender. PREV inside ROOT={} = enemy.
+CPD_AI_commit_peace_offer = {
+	if = {
+		limit = { CPD_deal_is_sendable = yes }
+		ROOT = {
+			set_country_flag = CPD_AI_wants_peace
+			set_variable = { CPD_AI_wants_peace_with = var:CPD_enemy_tag }
+			set_country_flag = { flag = CPD_AI_peace_cooldown days = 180 value = 1 }
+			set_country_flag = { flag = CPD_recently_offered_peace@var:CPD_enemy_tag days = 180 value = 1 }
+		}
+	}
+	else = {
+		CPD_reset_built_peace_deal = yes
+	}
+}
 
 CPD_AI_build_peace_deal = {
-	for_each_scope_loop = {
-		array = ROOT.CPD_state_list
+	# Three-posture builder. Called inside random_enemy_country: ROOT = our AI, THIS = target enemy.
+	# Branches: losing (cede + sweeteners) / stalemated (ceasefire only) / winning (states + escalation).
+	# Scope on entry: THIS = target enemy, ROOT = our AI.
+	# Inside ROOT = { }: THIS becomes the AI, PREV becomes the enemy.
+	if = {
+		# — LOSING — concede occupied states, throw in reparations, accept regime change if desperate
+		limit = { CPD_AI_is_losing = yes }
+		ROOT = { set_country_flag = CPD_giving_concessions }
+		CPD_demand_concede_switch = yes
+		ROOT = {
+			for_each_scope_loop = {
+				array = CPD_state_list
+				if = {
+					limit = { NOT = { is_controlled_by = ROOT } }
+					set_variable = { ROOT.CPD_state_option_selection = 1 }
+					CPD_change_state_actions = yes
+				}
+			}
+		}
+		# Sweetener: accept reparations to make the deal more palatable.
+		# Toggle effects route through the same code path as player clicks
+		# (giving_concessions flag is set above, so concession variant is used).
+		CPD_toggle_war_reparations = yes
+		# Last resort: accept regime change when on the brink. is_same_government
+		# compares current scope (enemy, since we're at outer scope here) to ROOT (AI).
+		if = {
+			limit = {
+				ROOT = { surrender_progress > 0.75 }
+				NOT = { is_same_government = yes }
+			}
+			CPD_toggle_regime_change = yes
+		}
+	}
+	else_if = {
+		# — STALEMATED — status-quo ceasefire (clears state actions, sets 720-day truce)
+		limit = { CPD_AI_is_stalemated = yes }
+		ROOT = { clr_country_flag = CPD_giving_concessions }
+		CPD_demand_concede_switch = yes
+		CPD_toggle_ceasefire = yes
+	}
+	else = {
+		# — WINNING — annex/demilitarise states we control, plus country-action escalation
+		ROOT = { clr_country_flag = CPD_giving_concessions }
+		CPD_demand_concede_switch = yes
+		ROOT = {
+			for_each_scope_loop = {
+				array = CPD_state_list
+				if = {
+					limit = {
+						is_controlled_by = ROOT
+						OR = {
+							is_core_of = ROOT
+							is_claimed_by = ROOT
+						}
+					}
+					set_variable = { ROOT.CPD_state_option_selection = 1 }
+					CPD_change_state_actions = yes
+				}
+				else_if = {
+					limit = { is_controlled_by = ROOT }
+					set_variable = { ROOT.CPD_state_option_selection = 3 }
+					CPD_change_state_actions = yes
+				}
+			}
+		}
+		# Always demand reparations when winning — economic profit motive.
+		# Route through CPD_toggle_* so any future toggle guards (e.g., supersession,
+		# cost accounting, cleanup) apply uniformly to AI- and player-built deals.
+		CPD_toggle_war_reparations = yes
+		# Conditional country-action escalation. Evaluated at OUTER scope so
+		# THIS = enemy and ROOT = AI cleanly. is_same_government compares
+		# current scope (enemy) to ROOT (AI).
+		if = {
+			limit = {
+				surrender_progress > 0.5
+				NOT = { is_same_government = yes }
+			}
+			CPD_toggle_regime_change = yes
+		}
+		if = {
+			limit = {
+				is_in_faction = yes
+				NOT = { is_in_faction_with = ROOT }
+			}
+			CPD_toggle_forced_neutrality = yes
+		}
+		# Full puppet at crushing victory — the toggle also clears any
+		# previously-added puppet-in-state entries (supersession), which the
+		# previous direct-write path missed.
+		if = {
+			limit = {
+				surrender_progress > 0.8
+				is_subject = no
+			}
+			CPD_toggle_full_puppet = yes
+		}
+	}
+}
+
+# COUNTRY ACTION TOGGLE EFFECTS
+#
+# Deal-list arrays (CPD_current_deal_list, _DEMANDS, _CONCESSIONS) hold integers
+# in two ranges:
+#   < 10000  →  real state ID (looked up via state scope: state_strategic_value, etc.)
+#   10001-10006  →  country action sentinel (marker that a country-action flag is set)
+#
+# Sentinel-to-flag mapping (HARD-CODED across the system — do not renumber):
+#   10001  ceasefire           CPD_ceasefire_demand        / CPD_ceasefire_concession
+#   10002  war reparations     CPD_war_reparations_demand  / CPD_war_reparations_concession
+#   10003  forced neutrality   CPD_forced_neutrality_demand / CPD_forced_neutrality_concession
+#   10004  regime change       CPD_regime_change_demand    / CPD_regime_change_concession
+#   10005  military basing     CPD_military_basing_demand  / CPD_military_basing_concession
+#   10006  full puppet         CPD_full_puppet_demand      / CPD_full_puppet_concession
+#
+# Adding a new country action — touch ALL of:
+#   1. New sentinel ID (10007+)
+#   2. Two country flags (_demand / _concession)
+#   3. CPD_reset_built_peace_deal — clear both flags
+#   4. CPD_remove_from_deal — sentinel dispatch block (clr flag on sentinel match)
+#   5. CPD_clear_all_state_actions — re-add sentinel arrays for the new action
+#   6. New CPD_toggle_<action> effect (mirror the existing six)
+#   7. Sign-time effect block in CPD_sign_peace_deal
+#   8. CPD_has_demands_in_deal trigger (00_peace_deal_triggers.txt) — add demand-flag check
+#   9. New button + click effect in scripted_guis/02_conditional_peace_deals_scripted_gui.txt
+#   10. New button in interface/conditional_peace_deals.gui
+#   11. CPD_deal_row_label scripted-loc dispatch (02_conditional_peace_deal_scripted_localisation.txt)
+#   12. Loc keys: button TT, country-action label, country-action TT
+#
+# Pitfalls:
+#   - var:X.current_party_ideology_group does NOT exist. For regime change / dynamic
+#     puppet politics, use change_ruling_party_effect with rul_party_temp =
+#     <source>.ruling_party^0 (see CPD_make_puppet_in_state_effect).
+#   - CPD_VP@<TAG> variables leak when a country is annihilated — inert garbage,
+#     no engine hook to clean them up. Accept the leak unless save bloat becomes real.
+
+# Clears all state-level actions from the deal (used when ceasefire is toggled on)
+# Expects to be called while ROOT is the peace deal builder
+CPD_clear_all_state_actions = {
+	ROOT = {
+		set_variable = { CPD_total_cost_of_built_peace_deal = 0 }
+		clear_array = CPD_annex_state_DEMANDS
+		clear_array = CPD_puppet_in_state_DEMANDS
+		clear_array = CPD_demilitarise_state_DEMANDS
+		clear_array = CPD_liberate_state_DEMANDS
+		clear_array = CPD_resource_rights_DEMANDS
+		clear_array = CPD_annex_state_CONCESSIONS
+		clear_array = CPD_puppet_in_state_CONCESSIONS
+		clear_array = CPD_demilitarise_state_CONCESSIONS
+		clear_array = CPD_liberate_state_CONCESSIONS
+		clear_array = CPD_resource_rights_CONCESSIONS
+		# Wipe deal lists and rebuild with only country action sentinels
+		clear_array = CPD_current_deal_list
+		clear_array = CPD_current_deal_list_DEMANDS
+		clear_array = CPD_current_deal_list_CONCESSIONS
+		clear_array = CPD_value_of_state
+		# Re-add active country action sentinels
+		if = {
+			limit = { has_country_flag = CPD_ceasefire_demand }
+			add_to_array = { CPD_current_deal_list = 10001 }
+			add_to_array = { CPD_current_deal_list_DEMANDS = 10001 }
+		}
+		if = {
+			limit = { has_country_flag = CPD_ceasefire_concession }
+			add_to_array = { CPD_current_deal_list = 10001 }
+			add_to_array = { CPD_current_deal_list_CONCESSIONS = 10001 }
+		}
+		if = {
+			limit = { has_country_flag = CPD_war_reparations_demand }
+			add_to_array = { CPD_current_deal_list = 10002 }
+			add_to_array = { CPD_current_deal_list_DEMANDS = 10002 }
+		}
+		if = {
+			limit = { has_country_flag = CPD_war_reparations_concession }
+			add_to_array = { CPD_current_deal_list = 10002 }
+			add_to_array = { CPD_current_deal_list_CONCESSIONS = 10002 }
+		}
+		if = {
+			limit = { has_country_flag = CPD_forced_neutrality_demand }
+			add_to_array = { CPD_current_deal_list = 10003 }
+			add_to_array = { CPD_current_deal_list_DEMANDS = 10003 }
+		}
+		if = {
+			limit = { has_country_flag = CPD_forced_neutrality_concession }
+			add_to_array = { CPD_current_deal_list = 10003 }
+			add_to_array = { CPD_current_deal_list_CONCESSIONS = 10003 }
+		}
+		if = {
+			limit = { has_country_flag = CPD_regime_change_demand }
+			add_to_array = { CPD_current_deal_list = 10004 }
+			add_to_array = { CPD_current_deal_list_DEMANDS = 10004 }
+		}
+		if = {
+			limit = { has_country_flag = CPD_regime_change_concession }
+			add_to_array = { CPD_current_deal_list = 10004 }
+			add_to_array = { CPD_current_deal_list_CONCESSIONS = 10004 }
+		}
+		if = {
+			limit = { has_country_flag = CPD_military_basing_demand }
+			add_to_array = { CPD_current_deal_list = 10005 }
+			add_to_array = { CPD_current_deal_list_DEMANDS = 10005 }
+		}
+		if = {
+			limit = { has_country_flag = CPD_military_basing_concession }
+			add_to_array = { CPD_current_deal_list = 10005 }
+			add_to_array = { CPD_current_deal_list_CONCESSIONS = 10005 }
+		}
+		if = {
+			limit = { has_country_flag = CPD_full_puppet_demand }
+			add_to_array = { CPD_current_deal_list = 10006 }
+			add_to_array = { CPD_current_deal_list_DEMANDS = 10006 }
+		}
+		if = {
+			limit = { has_country_flag = CPD_full_puppet_concession }
+			add_to_array = { CPD_current_deal_list = 10006 }
+			add_to_array = { CPD_current_deal_list_CONCESSIONS = 10006 }
+		}
+	}
+}
+
+CPD_toggle_ceasefire = {
+	if = {
+		limit = { ROOT = { is_ai = no } }
+		add_to_variable = { global.CPD_dirty = 1 }
+	}
+	ROOT = {
+		if = {
+			limit = { NOT = { has_country_flag = CPD_giving_concessions } }
+			if = {
+				limit = { has_country_flag = CPD_ceasefire_demand }
+				clr_country_flag = CPD_ceasefire_demand
+				remove_from_array = { CPD_current_deal_list = 10001 }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = 10001 }
+			}
+			else = {
+				set_country_flag = CPD_ceasefire_demand
+				add_to_array = { CPD_current_deal_list = 10001 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10001 }
+			}
+		}
+		else = {
+			if = {
+				limit = { has_country_flag = CPD_ceasefire_concession }
+				clr_country_flag = CPD_ceasefire_concession
+				remove_from_array = { CPD_current_deal_list = 10001 }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = 10001 }
+			}
+			else = {
+				set_country_flag = CPD_ceasefire_concession
+				add_to_array = { CPD_current_deal_list = 10001 }
+				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10001 }
+			}
+		}
+	}
+	# Ceasefire means no territorial changes - clear all state actions after flag is set
+	if = {
+		limit = {
+			ROOT = {
+				OR = {
+					has_country_flag = CPD_ceasefire_demand
+					has_country_flag = CPD_ceasefire_concession
+				}
+			}
+		}
+		CPD_clear_all_state_actions = yes
+	}
+}
+
+CPD_toggle_war_reparations = {
+	if = {
+		limit = { ROOT = { is_ai = no } }
+		add_to_variable = { global.CPD_dirty = 1 }
+	}
+	ROOT = {
+		if = {
+			limit = { NOT = { has_country_flag = CPD_giving_concessions } }
+			if = {
+				limit = { has_country_flag = CPD_war_reparations_demand }
+				clr_country_flag = CPD_war_reparations_demand
+				remove_from_array = { CPD_current_deal_list = 10002 }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = 10002 }
+			}
+			else = {
+				set_country_flag = CPD_war_reparations_demand
+				add_to_array = { CPD_current_deal_list = 10002 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10002 }
+			}
+		}
+		else = {
+			if = {
+				limit = { has_country_flag = CPD_war_reparations_concession }
+				clr_country_flag = CPD_war_reparations_concession
+				remove_from_array = { CPD_current_deal_list = 10002 }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = 10002 }
+			}
+			else = {
+				set_country_flag = CPD_war_reparations_concession
+				add_to_array = { CPD_current_deal_list = 10002 }
+				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10002 }
+			}
+		}
+	}
+}
+
+CPD_toggle_forced_neutrality = {
+	if = {
+		limit = { ROOT = { is_ai = no } }
+		add_to_variable = { global.CPD_dirty = 1 }
+	}
+	ROOT = {
+		if = {
+			limit = { NOT = { has_country_flag = CPD_giving_concessions } }
+			if = {
+				limit = { has_country_flag = CPD_forced_neutrality_demand }
+				clr_country_flag = CPD_forced_neutrality_demand
+				remove_from_array = { CPD_current_deal_list = 10003 }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = 10003 }
+			}
+			else = {
+				set_country_flag = CPD_forced_neutrality_demand
+				add_to_array = { CPD_current_deal_list = 10003 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10003 }
+			}
+		}
+		else = {
+			if = {
+				limit = { has_country_flag = CPD_forced_neutrality_concession }
+				clr_country_flag = CPD_forced_neutrality_concession
+				remove_from_array = { CPD_current_deal_list = 10003 }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = 10003 }
+			}
+			else = {
+				set_country_flag = CPD_forced_neutrality_concession
+				add_to_array = { CPD_current_deal_list = 10003 }
+				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10003 }
+			}
+		}
+	}
+}
+
+CPD_toggle_regime_change = {
+	if = {
+		limit = { ROOT = { is_ai = no } }
+		add_to_variable = { global.CPD_dirty = 1 }
+	}
+	ROOT = {
+		if = {
+			limit = { NOT = { has_country_flag = CPD_giving_concessions } }
+			if = {
+				limit = { has_country_flag = CPD_regime_change_demand }
+				clr_country_flag = CPD_regime_change_demand
+				remove_from_array = { CPD_current_deal_list = 10004 }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = 10004 }
+			}
+			else = {
+				set_country_flag = CPD_regime_change_demand
+				add_to_array = { CPD_current_deal_list = 10004 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10004 }
+			}
+		}
+		else = {
+			if = {
+				limit = { has_country_flag = CPD_regime_change_concession }
+				clr_country_flag = CPD_regime_change_concession
+				remove_from_array = { CPD_current_deal_list = 10004 }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = 10004 }
+			}
+			else = {
+				set_country_flag = CPD_regime_change_concession
+				add_to_array = { CPD_current_deal_list = 10004 }
+				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10004 }
+			}
+		}
+	}
+}
+
+CPD_toggle_military_basing = {
+	if = {
+		limit = { ROOT = { is_ai = no } }
+		add_to_variable = { global.CPD_dirty = 1 }
+	}
+	ROOT = {
+		if = {
+			limit = { NOT = { has_country_flag = CPD_giving_concessions } }
+			if = {
+				limit = { has_country_flag = CPD_military_basing_demand }
+				clr_country_flag = CPD_military_basing_demand
+				remove_from_array = { CPD_current_deal_list = 10005 }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = 10005 }
+			}
+			else = {
+				set_country_flag = CPD_military_basing_demand
+				add_to_array = { CPD_current_deal_list = 10005 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10005 }
+			}
+		}
+		else = {
+			if = {
+				limit = { has_country_flag = CPD_military_basing_concession }
+				clr_country_flag = CPD_military_basing_concession
+				remove_from_array = { CPD_current_deal_list = 10005 }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = 10005 }
+			}
+			else = {
+				set_country_flag = CPD_military_basing_concession
+				add_to_array = { CPD_current_deal_list = 10005 }
+				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10005 }
+			}
+		}
+	}
+}
+
+CPD_toggle_full_puppet = {
+	if = {
+		limit = { ROOT = { is_ai = no } }
+		add_to_variable = { global.CPD_dirty = 1 }
+	}
+	ROOT = {
+		if = {
+			limit = { NOT = { has_country_flag = CPD_giving_concessions } }
+			if = {
+				limit = { has_country_flag = CPD_full_puppet_demand }
+				clr_country_flag = CPD_full_puppet_demand
+				remove_from_array = { CPD_current_deal_list = 10006 }
+				remove_from_array = { CPD_current_deal_list_DEMANDS = 10006 }
+			}
+			else = {
+				set_country_flag = CPD_full_puppet_demand
+				add_to_array = { CPD_current_deal_list = 10006 }
+				add_to_array = { CPD_current_deal_list_DEMANDS = 10006 }
+				# Full puppet supersedes individual puppet-in-state entries - subtract cost and clear
+				for_each_loop = {
+					array = CPD_puppet_in_state_DEMANDS
+					subtract_from_variable = { CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
+					remove_from_array = { CPD_current_deal_list_DEMANDS = v }
+					remove_from_array = { CPD_current_deal_list = v }
+				}
+				clear_array = CPD_puppet_in_state_DEMANDS
+			}
+		}
+		else = {
+			if = {
+				limit = { has_country_flag = CPD_full_puppet_concession }
+				clr_country_flag = CPD_full_puppet_concession
+				remove_from_array = { CPD_current_deal_list = 10006 }
+				remove_from_array = { CPD_current_deal_list_CONCESSIONS = 10006 }
+			}
+			else = {
+				set_country_flag = CPD_full_puppet_concession
+				add_to_array = { CPD_current_deal_list = 10006 }
+				add_to_array = { CPD_current_deal_list_CONCESSIONS = 10006 }
+				# Full puppet supersedes individual puppet-in-state entries - subtract cost and clear
+				for_each_loop = {
+					array = CPD_puppet_in_state_CONCESSIONS
+					add_to_variable = { CPD_total_cost_of_built_peace_deal = CPD_value_of_state^num }
+					remove_from_array = { CPD_current_deal_list_CONCESSIONS = v }
+					remove_from_array = { CPD_current_deal_list = v }
+				}
+				clear_array = CPD_puppet_in_state_CONCESSIONS
+			}
+		}
 	}
 }

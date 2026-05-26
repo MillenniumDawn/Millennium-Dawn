@@ -70,6 +70,10 @@ scripted_diplomatic_actions = {
 			ROOT = {
 				clr_country_flag = CPD_considering_peace_deal
 				clear_variable = CPD_AI_wants_peace_with
+				# Extend the per-target cooldown to 360 days on rejection so the
+				# AI doesn't immediately retry a refused target. (The 180-day
+				# cooldown set on send is overwritten by this longer value.)
+				set_country_flag = { flag = CPD_recently_offered_peace@PREV days = 360 value = 1 }
 			}
 		}
 
@@ -81,10 +85,11 @@ scripted_diplomatic_actions = {
 		}
 
 		can_be_sent = {
-			if = {
-				limit = { CPD_has_demands_in_deal = yes }
-				CPD_has_war_contribution = yes
-			}
+			# Single source of truth — CPD_deal_is_sendable lives in
+			# 00_peace_deal_triggers.txt and is shared with the send-status
+			# icon and the dummy scripted-GUI element that feeds the [!]
+			# loc formatter.
+			CPD_deal_is_sendable = yes
 		}
 
 		receive_scripted_gui = CPD_built_peace_deal
@@ -147,7 +152,7 @@ scripted_diplomatic_actions = {
 			# Economic pressure
 			modifier = {
 				add = 10
-				ROOT = { check_variable = { interest_rate > 9.99 } }
+				check_variable = { ROOT.interest_rate > 9.99 }
 			}
 			modifier = {
 				add = 15
@@ -165,7 +170,7 @@ scripted_diplomatic_actions = {
 		}
 
 		ai_acceptance = {
-			CPD_base_reluctance = { base = -75 }
+			CPD_base_reluctance = { base = -100 }
 			CPD_economic_cost_of_war = {
 				# more likely to surrender if in default or high interest rate
 				base = 0
@@ -241,13 +246,19 @@ scripted_diplomatic_actions = {
 				}
 			}
 			CPD_battles_won = {
-				# more likely to surrender if receiver has less war score than sender
+				# more likely to surrender if receiver has less war score than sender;
+				# clamped to ±150 to prevent runaway numbers from long fronts.
 				base = 0
 				modifier = {
 					set_temp_variable = { CPD_RBW = ROOT.CPD_VP@PREV }
 					set_temp_variable = { CPD_TBW = THIS.CPD_VP@ROOT }
 					subtract_from_temp_variable = { CPD_RBW = CPD_TBW }
 					round_temp_variable = CPD_RBW
+					clamp_temp_variable = {
+						var = CPD_RBW
+						min = -150
+						max = 150
+					}
 					add = var:CPD_RBW
 				}
 			}
@@ -320,11 +331,15 @@ scripted_diplomatic_actions = {
 				}
 			}
 			CPD_months_at_war = {
-				# More likely to surrender if THIS has been at war for a very long time
+				# More likely to surrender if THIS has been at war for a very long time (capped at 120)
 				base = 0
 				modifier = {
 					set_temp_variable = { months_at_war_tmp = THIS.months_at_war }
 					multiply_temp_variable = { months_at_war_tmp = 2 }
+					clamp_temp_variable = {
+						var = months_at_war_tmp
+						max = 120
+					}
 					add = var:months_at_war_tmp
 				}
 			}
@@ -344,13 +359,17 @@ scripted_diplomatic_actions = {
 				}
 			}
 
-			# Acceptance from Calculate Peace Deal
+			# Acceptance from Calculate Peace Deal (capped: concessions bonus maxes at +50)
 			CPD_accepting_peace_deal = {
 				base = 0
 				modifier = {
 					always = yes
 					set_temp_variable = { v = ROOT.CPD_total_cost_of_built_peace_deal }
 					multiply_temp_variable = { v = -5 }
+					clamp_temp_variable = {
+						var = v
+						max = 50
+					}
 					add = var:v
 				}
 			}
@@ -372,6 +391,97 @@ scripted_diplomatic_actions = {
 				modifier = {
 					add = -100
 					check_variable = { ROOT.CPD_total_cost_of_built_peace_deal > 100 }
+				}
+			}
+			# AI dug-in stubbornness — in long wars the AI grows more reluctant
+			# to accept peace from the offerer, simulating sunk-cost / war fatigue
+			# working against the offerer rather than for them.
+			CPD_war_weariness_rejection = {
+				base = 0
+				modifier = {
+					add = -15
+					check_variable = { THIS.months_at_war > 12 }
+				}
+				modifier = {
+					add = -15
+					check_variable = { THIS.months_at_war > 24 }
+				}
+				modifier = {
+					add = -30
+					check_variable = { THIS.months_at_war > 48 }
+				}
+			}
+
+			# Term-specific aversion — receiver hates accepting country-action demands.
+			# Without these the AI accepts full puppet / regime change as readily as a
+			# token reparations clause; players would exploit this.
+			CPD_full_puppet_aversion = {
+				base = 0
+				modifier = {
+					add = -200
+					ROOT = { has_country_flag = CPD_full_puppet_demand }
+				}
+				# Already a subject — being repuppeted is less catastrophic
+				modifier = {
+					add = 100
+					ROOT = { has_country_flag = CPD_full_puppet_demand }
+					is_subject = yes
+				}
+			}
+			CPD_regime_change_aversion = {
+				base = 0
+				modifier = {
+					add = -80
+					ROOT = { has_country_flag = CPD_regime_change_demand }
+				}
+				# Less awful when our ruling party is already weak
+				modifier = {
+					add = 30
+					ROOT = { has_country_flag = CPD_regime_change_demand }
+					check_variable = { party_pop_array^ruling_party^0 < 0.4 }
+				}
+			}
+			CPD_forced_neutrality_aversion = {
+				# -20 base when neutrality is demanded; +(-40) more if currently
+				# in a faction (total -60). is_in_faction yes/no are complements,
+				# so collapsing avoids a redundant has_country_flag check.
+				base = 0
+				modifier = {
+					add = -20
+					ROOT = { has_country_flag = CPD_forced_neutrality_demand }
+				}
+				modifier = {
+					add = -40
+					ROOT = { has_country_flag = CPD_forced_neutrality_demand }
+					is_in_faction = yes
+				}
+			}
+			CPD_military_basing_aversion = {
+				base = 0
+				modifier = {
+					add = -25
+					ROOT = { has_country_flag = CPD_military_basing_demand }
+				}
+			}
+			CPD_resource_rights_aversion = {
+				base = 0
+				modifier = {
+					add = -15
+					check_variable = { ROOT.CPD_resource_rights_DEMANDS^num > 0 }
+				}
+				modifier = {
+					add = -25
+					check_variable = { ROOT.CPD_resource_rights_DEMANDS^num > 3 }
+				}
+			}
+			# Ceasefire is mutually attractive when both sides are stalemated.
+			CPD_ceasefire_acceptance = {
+				base = 0
+				modifier = {
+					add = 40
+					ROOT = { has_country_flag = CPD_ceasefire_demand }
+					check_variable = { months_at_war > 18 }
+					surrender_progress < 0.4
 				}
 			}
 		}

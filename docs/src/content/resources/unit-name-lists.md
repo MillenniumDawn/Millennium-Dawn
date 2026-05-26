@@ -162,21 +162,21 @@ Use each navy's documented ship prefix. Verified prefixes:
 
 | Country     | Prefix    | Source                                                       |
 | ----------- | --------- | ------------------------------------------------------------ |
-| USA         | `USS `    | United States Ship                                           |
-| GBR         | `HMS `    | His/Her Majesty's Ship                                       |
-| FRA         | `FS `     | French Ship (NATO designation)                               |
+| USA         | `"USS "`  | United States Ship                                           |
+| GBR         | `"HMS "`  | His/Her Majesty's Ship                                       |
+| FRA         | `"FS "`   | French Ship (NATO designation)                               |
 | RUS         | no prefix | Hull numbers only                                            |
 | CHI         | no prefix | Hull numbers                                                 |
-| JAP         | `JS `     | Japan Ship                                                   |
-| RAJ (India) | `INS `    | Indian Naval Ship                                            |
-| KOR         | `ROKS `   | Republic of Korea Ship                                       |
-| CAN         | `HMCS `   | His/Her Majesty's Canadian Ship                              |
-| AUS         | `HMAS `   | His/Her Majesty's Australian Ship                            |
-| SIN         | `RSS `    | Republic of Singapore Ship                                   |
-| TUN         | `MNT `    | Marine Nationale Tunisienne                                  |
-| AZE         | `ARG `    | Azerbaijani Navy (Azerbaycan Respublikasinin Harbiye Gemisi) |
-| GHA         | `GNS `    | Ghana Naval Ship                                             |
-| TAN         | `TNS `    | Tanzania Naval Ship                                          |
+| JAP         | `"JS "`   | Japan Ship                                                   |
+| RAJ (India) | `"INS "`  | Indian Naval Ship                                            |
+| KOR         | `"ROKS "` | Republic of Korea Ship                                       |
+| CAN         | `"HMCS "` | His/Her Majesty's Canadian Ship                              |
+| AUS         | `"HMAS "` | His/Her Majesty's Australian Ship                            |
+| SIN         | `"RSS "`  | Republic of Singapore Ship                                   |
+| TUN         | `"MNT "`  | Marine Nationale Tunisienne                                  |
+| AZE         | `"ARG "`  | Azerbaijani Navy (Azerbaycan Respublikasinin Harbiye Gemisi) |
+| GHA         | `"GNS "`  | Ghana Naval Ship                                             |
+| TAN         | `"TNS "`  | Tanzania Naval Ship                                          |
 | GEO         | `""`      | No standard prefix; hull numbers                             |
 | SEN         | `""`      | No standard prefix                                           |
 | ERI         | `""`      | No standard prefix                                           |
@@ -215,7 +215,7 @@ TAG = {
             "Lekiu" "Kasturi"
         }
     }
-    infantry = {
+    L_Inf_Bat = {
         prefix = ""
         generic = { "Infantry Division" }
         generic_pattern = "UNIT_GENERIC_NAME_GENERIC_INFANTRY"
@@ -224,7 +224,9 @@ TAG = {
 }
 ```
 
-Every entry in `00_TAG_names.txt` **must** include an `infantry` block (required by the engine even for pure naval nations).
+Keys inside `TAG = { }` must match real sub_unit names from `common/units/MD_naval_units.txt` (for ships) or `common/units/MD_land_units.txt` (for land). A key that does not correspond to a real MD sub_unit compiles silently and never fires.
+
+**Never use `infantry`.** That is vanilla's sub_unit name; MD restructured land units and the canonical land sub_units are `L_Inf_Bat`, `Mot_Inf_Bat`, `Mech_Inf_Bat`, `Arm_Inf_Bat`, `Militia_Bat`, `armor_Bat`, and so on (see `MD_land_units.txt`). Every `00_TAG_names.txt` should include at minimum an `L_Inf_Bat = { ... }` block as the light-infantry fallback — localize the `generic` label to the country's language where appropriate (e.g. `"Infanterie-Division"`, `"Strelkovaya Diviziya"`).
 
 ### Naming conventions
 
@@ -245,7 +247,7 @@ For a new country tag, the following files are required:
 
 - [ ] `common/units/names_divisions/TAG_names_divisions.txt` — all 7 division groups covered
 - [ ] `common/units/names_ships/TAG_ship_names.txt` — frigate, corvette, and at least one additional type (submarine or destroyer where relevant)
-- [ ] `common/units/names/00_TAG_names.txt` — ship class names for all relevant hull types + required `infantry` block
+- [ ] `common/units/names/00_TAG_names.txt` — ship class names for all relevant hull types (keys must match `MD_naval_units.txt`) + an `L_Inf_Bat` block as the minimum land fallback. Never use vanilla's `infantry` key — it does not match any MD sub_unit.
 - [ ] OOB units in `history/units/TAG_*.oob` updated with `division_names_group` assignments
 
 For questions, contact Kalkalash.

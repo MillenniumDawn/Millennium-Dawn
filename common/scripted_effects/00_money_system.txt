@@ -509,6 +509,13 @@ calculate_additional_income_rate = {
 		set_variable = { seigniorage_income_display = seigniorage_base }
 	}
 	# Additional incomes, set income amount as a variable (weekly gain)
+	if = { limit = { original_tag = GRN }
+		if = {
+			limit = { has_idea = GRN_idea_colonial_subsidy }
+			set_temp_variable = { GRN_colonial_subsidy = 0.300 }
+			add_to_variable = { additional_income_rate = GRN_colonial_subsidy }
+		}
+	}
 	if = { limit = { original_tag = HEZ }
 		if = {
 			limit = { has_idea = HEZ_our_cartels_in_south_america }
@@ -1133,7 +1140,7 @@ calculate_additional_income_rate = {
 			hidden_effect = {
 				every_other_country = {
 					limit = {
-						is_french_africa_nation = yes
+						has_country_flag = french_africa_nation_flag
 						OR = {
 							has_idea = cfa_franc
 							has_idea = cfa_franc_2
@@ -1959,11 +1966,6 @@ calculate_additional_income_rate = {
 		multiply_temp_variable = { temp_sam_missile_equipment_cost = amount_sam_missile_equipment_sold }
 		add_to_temp_variable = { market_sold_cost = temp_sam_missile_equipment_cost }
 
-
-		set_temp_variable = { corporate_tax_cost_mult = corporate_tax_rate }
-		multiply_temp_variable = { corporate_tax_cost_mult = 0.01 }
-		multiply_temp_variable = { market_sold_cost = corporate_tax_cost_mult }
-
 		set_temp_variable = { country_modifier_val = 1 }
 		add_to_temp_variable = { country_modifier_val = international_market_income_modifier }
 		multiply_temp_variable = { market_sold_cost = country_modifier_val }
@@ -1992,6 +1994,10 @@ calculate_additional_income_rate = {
 		set_variable = { energy_load_sharing_income_var = income_from_gw_sold }
 		clamp_variable = { var = energy_load_sharing_income_var min = 0 }
 		add_to_variable = { additional_income_rate = energy_load_sharing_income_var }
+	}
+	# CPD War Reparations Income — variable set in 02_peace_deal_effects.txt on sign
+	if = { limit = { has_idea = CPD_war_reparations_receiver }
+		add_to_variable = { additional_income_rate = CPD_reparations_weekly }
 	}
 }
 #Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
@@ -3838,6 +3844,13 @@ calculate_additional_expense_rate = {
 		multiply_variable = { EH_intensive_research_effort_expenditure = EH_intensive_research_effort_expenditure_multiplier_var }
 		add_to_variable = { additional_expenses_rate = EH_intensive_research_effort_expenditure }
 	}
+
+	# CPD War Reparations Expense — variable set in 02_peace_deal_effects.txt on sign.
+	# Added after inflation multiplier because the weekly amount is already a
+	# fraction of GDP captured at sign-time (no double-inflation).
+	if = { limit = { has_idea = CPD_war_reparations_payer }
+		add_to_variable = { additional_expenses_rate = CPD_reparations_weekly }
+	}
 }
 
 #Income Related Stuff --- International Investments and Calculated Resource Sale Rate
@@ -3988,15 +4001,25 @@ update_display = {
 	set_variable = { resource_to_tax_income = resource_sale_rate } #t these next 2 lines are to get resource export income divided by tax income (pop and corp), then use this ratio as one of the prerequisites for when rentier state cancels so it's not just based on resource extraction as % of GDP
 	clamp_variable = { var = tax_gain min = 0.001 }
 	divide_variable = { resource_to_tax_income = tax_gain }
-	if = { limit = { NOT = { has_country_flag = int_reinvestment_flag } }
+	if = { limit = { check_variable = { int_reinvest_mode = 2 } }
+		set_temp_variable = { _split_display_rate = int_investments_rate }
+		multiply_temp_variable = { _split_display_rate = 0.5 }
+		add_to_variable = { display_income = _split_display_rate }
+	}
+	else_if = { limit = { NOT = { check_variable = { int_reinvest_mode = 1 } } }
 		add_to_variable = { display_income = int_investments_rate }
 	}
 	add_to_variable = { display_income = additional_income_rate }
 
 	# Adjusted Potential Income to the international investments so that people can't exploit the incoming financial collapse
 	set_variable = { potential_income = display_income }
-	if = { limit = { has_country_flag = int_reinvestment_flag }
+	if = { limit = { check_variable = { int_reinvest_mode = 1 } }
 		add_to_variable = { potential_income = int_investments_rate }
+	}
+	else_if = { limit = { check_variable = { int_reinvest_mode = 2 } }
+		set_temp_variable = { _split_potential_rate = int_investments_rate }
+		multiply_temp_variable = { _split_potential_rate = 0.5 }
+		add_to_variable = { potential_income = _split_potential_rate }
 	}
 
 	# Adjust Potential Expense to Include the Debt Rate
@@ -6209,6 +6232,7 @@ calcluate_program_distributions = {
 			set_variable = { un_esco_research_speed_var = esco_research_budget }
 			multiply_variable = { un_esco_research_speed_var = 0.002 }
 			clamp_variable = { var = un_esco_research_speed_var min = 0 max = 0.30 }
+			clamp_variable = { var = un_esco_research_speed_var min = 0 max = 0.50 }
 		}
 	}
 
@@ -6284,7 +6308,7 @@ calcluate_program_distributions = {
 	}
 
 	sort_un_aid_contributor_arrays = yes
-	missile_ui_update = yes
+	international_systems_update = yes
 }
 
 sort_un_aid_contributor_arrays = {

@@ -2003,20 +2003,27 @@ NATO_CSTO_agreement = {
 	}
 }
 
-MNNA_partnership = {
+generic_coalition_politics_decisions = {
 	request_MNNA_status = {
+		allowed = {
+			EH_is_megastate_country = no
+		}
 		icon = GFX_decision_generic_join_nato
 
 		cost = 50
-		days_remove = 14
+		days_remove = 30
+		days_re_enable = 60
 
 		visible = {
+			NOT = { has_global_flag = GAME_RULE_nato_disabled }
 			any_of_scopes = {
 				array = global.nato_members
 				is_faction_leader = yes
 				NOT = { has_country_flag = collapsed_nation }
 			}
 			is_subject = no
+			NOT = { has_idea = Major_Non_NATO_Ally }
+			NOT = { has_idea = NATO_member }
 		}
 
 		available = {
@@ -2025,9 +2032,18 @@ MNNA_partnership = {
 				has_government = neutrality
 			}
 			NOT = { has_country_flag = MNNA_rejected_recently }
-			NOT = { is_in_faction_with = CHI }
-			NOT = { is_in_faction_with = SOV }
-			NOT = { is_in_faction_with = PER }
+			if = {
+				limit = { NOT = { CHI = { has_idea = NATO_member } } }
+				NOT = { is_in_faction_with = CHI }
+			}
+			if = {
+				limit = { NOT = { SOV = { has_idea = NATO_member } } }
+				NOT = { is_in_faction_with = SOV }
+			}
+			if = {
+				limit = { NOT = { PER = { has_idea = NATO_member } } }
+				NOT = { is_in_faction_with = PER }
+			}
 			custom_trigger_tooltip = {
 				tooltip = nato_leader_not_at_war_with_us_tt
 				any_of_scopes = {
@@ -2039,10 +2055,6 @@ MNNA_partnership = {
 		}
 
 		fire_only_once = no
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision request_MNNA_status"
-		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove request_MNNA_status"
@@ -2087,9 +2099,58 @@ MNNA_partnership = {
 				any_of_scopes = {
 					array = global.nato_members
 					is_faction_leader = yes
-					has_opinion = { target = ROOT value > 40 }
+					has_opinion = { target = ROOT value > 75 }
 				}
 				add = 15
+			}
+			modifier = {
+				factor = 0
+				any_of_scopes = {
+					array = global.nato_members
+					is_faction_leader = yes
+					has_opinion = { target = ROOT value < -50 }
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_country_flag = MNNA_rejected_recently
+					has_government = communism
+					has_government = nationalist
+					has_government = fascism
+				}
+			}
+			modifier = {
+				factor = 0
+				threat < 0.10
+			}
+			modifier = {
+				threat > 0.30
+				add = 10
+			}
+			modifier = {
+				threat > 0.50
+				add = 15
+			}
+			modifier = {
+				num_of_factories > 30
+				add = 15
+			}
+			modifier = {
+				has_army_manpower = { size > 200000 }
+				add = 10
+			}
+			modifier = {
+				western_conservatism_are_in_power = yes
+				add = 10
+			}
+			modifier = {
+				western_liberals_are_in_power = yes
+				add = 10
+			}
+			modifier = {
+				factor = 0.5
+				has_stability < 0.30
 			}
 		}
 	}

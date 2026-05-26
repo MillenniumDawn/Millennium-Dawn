@@ -16,6 +16,18 @@ files themselves (CI handles the full cross-reference validation).
   - common/                           -> validate_cosmetic_tags.py
   - common/scripted_effects/,
     common/scripted_triggers/         -> validate_unused_scripted.py
+  - history/units/, common/units/,
+    common/ai_templates/,
+    common/scripted_effects/          -> validate_oob_units.py
+  - common/ideas/, common/national_focus/,
+    common/decisions/, events/        -> validate_ideas.py
+  - common/factions/                  -> validate_factions.py
+  - common/national_focus/            -> validate_focus_tree.py
+  - common/on_actions/                -> validate_on_actions.py
+  - common/scripted_effects/,
+    common/national_focus/,
+    common/decisions/, events/        -> validate_scripted_params.py
+  - interface/*.gui                   -> validate_gfx_references.py
 
 Opt-out via environment variable:
     MD_SKIP_VALIDATE=1 git commit -m "..."
@@ -88,6 +100,8 @@ VALIDATORS = [
             "--staged",
             "--strict",
             "--no-color",
+            "--workers",
+            "4",
         ],
     },
     {
@@ -100,6 +114,8 @@ VALIDATORS = [
             "--staged",
             "--strict",
             "--no-color",
+            "--workers",
+            "4",
         ],
     },
     {
@@ -112,6 +128,8 @@ VALIDATORS = [
             "--staged",
             "--strict",
             "--no-color",
+            "--workers",
+            "4",
         ],
     },
     {
@@ -138,6 +156,104 @@ VALIDATORS = [
         "cmd": [
             "python3",
             "tools/validation/validate_oob_units.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
+    {
+        "name": "ideas",
+        "prefixes": [
+            "common/ideas/",
+            "common/national_focus/",
+            "common/decisions/",
+            "events/",
+        ],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_ideas.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+            "--workers",
+            "4",
+        ],
+    },
+    {
+        "name": "scripted GUI",
+        "prefixes": ["common/scripted_guis/"],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_scripted_gui.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
+    {
+        "name": "factions",
+        "prefixes": [
+            "common/factions/",
+        ],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_factions.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
+    {
+        "name": "focus tree",
+        "prefixes": ["common/national_focus/"],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_focus_tree.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
+    {
+        "name": "on actions",
+        "prefixes": ["common/on_actions/"],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_on_actions.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
+    {
+        "name": "scripted params",
+        "prefixes": [
+            "common/scripted_effects/",
+            "common/national_focus/",
+            "common/decisions/",
+            "events/",
+        ],
+        "suffix": ".txt",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_scripted_params.py",
+            "--staged",
+            "--strict",
+            "--no-color",
+        ],
+    },
+    {
+        "name": "gfx references",
+        "prefixes": ["interface/"],
+        "suffix": ".gui",
+        "cmd": [
+            "python3",
+            "tools/validation/validate_gfx_references.py",
             "--staged",
             "--strict",
             "--no-color",

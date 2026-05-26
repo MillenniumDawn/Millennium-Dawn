@@ -4,15 +4,18 @@ Check for common scripting mistakes in HOI4 mod files.
 
 Detects mechanically-checkable rule violations from CLAUDE.md:
   - threat/has_war_support/has_stability comparisons >= 1 (all are 0.0-1.0 ranges)
-  - allowed = { always = no } in country/hidden_ideas idea categories (default, hurts performance)
+  - allowed = { always = no } in country/hidden_ideas idea categories (redundant default; checked once at load, bypassed by add_ideas)
   - allowed = { tag = TAG } in country/hidden_ideas (breaks civil war split-offs; use original_tag)
   - allowed_civil_war = { always = no } in ideas (no effect, remove it)
-  - cancel = { always = no } in ideas (checked hourly, never true)
+  - cancel = { always = no } in ideas (checked hourly, never true; redundant default)
   - ai_will_do root-level factor = N (should be base = N; factor only valid in modifier children)
   - Division instead of multiplication (/ 100 -> * 0.01)
   - Multiple values of a single-valued trigger (has_government, tag, original_tag,
     has_country_leader_ideology) at the same AND/NOT depth — always false (AND) or
     always true (NOT); caller meant OR = { ... } or separate NOT blocks.
+  - Multiple has_idea checks from the same mutex group (e.g. intervention doctrines)
+    at the same AND/NOT depth — same logic as above; only one slot can be filled at a
+    time so the block is always false (AND) or always true (NOT).
   - Consecutive same-tag scope blocks that should be merged
   - send_embargo/break_embargo without has_dlc = "By Blood Alone" guard
   - divide_variable by a variable without a zero guard
@@ -21,6 +24,7 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - is_in_faction = TAG (boolean trigger misused with a tag; should be is_in_faction_with)
   - has_trade_agreement_with (not a valid trigger; MD uses has_country_flag = trade_agreement@TAG)
   - Dynamic triggers inside decision allowed blocks (allowed is evaluated once at game start)
+  - is_X_nation triggers in runtime contexts (available, effect, limit) — use has_country_flag = X_flag instead
 """
 
 import os
@@ -83,6 +87,7 @@ _RE_DECISION_ALLOWED_DYNAMIC = re.compile(
     r"\b(?:num_of_factories|has_opinion|strength_ratio|"
     r"has_army_size|has_navy_size|has_political_power|date)\b"
 )
+_RE_IS_X_NATION = re.compile(r"\bis_([a-z]+_)?nation\s*=\s*yes\b")
 
 # Single-valued country triggers. A country has exactly one government/tag/etc,
 # so two checks at the same AND depth can never both be true — caller almost
@@ -94,6 +99,33 @@ _MUTUALLY_EXCLUSIVE_TRIGGERS = {
     "original_tag",
     "has_country_leader_ideology",
 }
+
+# Idea slots where only one idea from the group can be active at a time. Two
+# `has_idea = X` checks for ideas in the same group inside a single AND block
+# are always false; inside a NOT block they are always true. The classic bug
+# from CLAUDE.md is `NOT = { has_idea = intervention_isolation
+# has_idea = intervention_local_security }` — silently true forever because no
+# country has both intervention doctrines at once.
+_MUTEX_IDEA_GROUPS = {
+    "intervention_doctrine": {
+        "intervention_isolation",
+        "intervention_local_security",
+        "intervention_limited_interventionism",
+        "intervention_regional_interventionism",
+        "intervention_global_interventionism",
+    },
+}
+# Reverse index: idea -> group_name (for O(1) lookup)
+_IDEA_TO_MUTEX_GROUP = {
+    idea: group_name
+    for group_name, ideas in _MUTEX_IDEA_GROUPS.items()
+    for idea in ideas
+}
+# Token scanner for the mutex check: finds braces and has_idea tokens in order so
+# single-line patterns like `NOT = { has_idea = X has_idea = Y }` are caught.
+_RE_MUTEX_TOKEN = re.compile(r"\{|\}|has_idea\s*=\s*(\w+)")
+_RE_NOT_EQ = re.compile(r"\bNOT\s*=\s*$")
+_RE_OR_EQ = re.compile(r"\bOR\s*=\s*$")
 
 # Populated by main() before spawning Pool workers; inherited via fork on Unix.
 _SCRIPT_COMPLETED_FOCUSES: set = set()
@@ -108,6 +140,7 @@ from shared_utils import (
     create_linting_parser,
     get_all_txt_files,
     get_git_diff_files,
+    get_non_selectable_idea_categories,
     get_root_dir,
     print_timing_summary,
     run_with_pool,
@@ -270,6 +303,77 @@ def _check_mutually_exclusive_contradictions(lines):
                             f" only one {trigger}; wrap in OR = {{ }} to match any"
                         )
                     issues.append((first_line, msg))
+
+    return issues
+
+
+def _check_has_idea_mutex_in_not_block(lines):
+    """Flag NOT/AND blocks containing 2+ has_idea checks from the same mutex group.
+
+    Example bug (from raid_target_eligible before fix):
+        NOT = {
+            has_idea = intervention_local_security
+            has_idea = intervention_isolation
+        }
+    Both ideas are in the intervention-doctrine mutex group. A country can hold
+    at most one at a time, so the AND inside NOT is always false, and the NOT
+    is always true — the gate it was supposed to enforce is silently bypassed.
+    Caller almost always meant `NOT = { OR = { ... } }` or separate NOT blocks.
+
+    Inside a non-NOT AND block, two same-group has_idea checks are always false
+    (a country can't be in both slots), so the entire surrounding modifier or
+    trigger never fires — usually also a bug.
+    """
+    issues = []
+    # Stack entries: (is_or, is_not, {group_name: [(line_num, idea_name), ...]})
+    stack = [(False, False, {})]
+
+    for i, line in enumerate(lines):
+        code = line.split("#")[0]
+        if not code.strip():
+            continue
+
+        last_end = 0
+        for m in _RE_MUTEX_TOKEN.finditer(code):
+            tok = m.group(0)
+            if tok == "{":
+                preceding = code[last_end : m.start()]
+                is_not = bool(_RE_NOT_EQ.search(preceding))
+                is_or = bool(_RE_OR_EQ.search(preceding))
+                stack.append((is_or, is_not, {}))
+            elif tok == "}":
+                if len(stack) > 1:
+                    popped_or, popped_not, popped_groups = stack.pop()
+                    # OR is the intended way to express "any of these mutex ideas"
+                    if popped_or:
+                        last_end = m.end()
+                        continue
+                    for group_name, entries in popped_groups.items():
+                        ideas_set = {idea for _, idea in entries}
+                        if len(ideas_set) < 2:
+                            continue
+                        first_line = entries[0][0]
+                        ideas_str = ", ".join(sorted(ideas_set))
+                        if popped_not:
+                            msg = (
+                                f"NOT = {{ }} contains multiple {group_name} ideas "
+                                f"({ideas_str}) -- always true since they're mutually "
+                                f"exclusive; use NOT = {{ OR = {{ ... }} }} or "
+                                f"separate NOT blocks per idea"
+                            )
+                        else:
+                            msg = (
+                                f"AND block contains multiple {group_name} ideas "
+                                f"({ideas_str}) -- always false since they're mutually "
+                                f"exclusive; wrap in OR = {{ }} to match any"
+                            )
+                        issues.append((first_line, msg))
+            else:
+                idea = m.group(1)
+                group = _IDEA_TO_MUTEX_GROUP.get(idea)
+                if group is not None:
+                    stack[-1][2].setdefault(group, []).append((i + 1, idea))
+            last_end = m.end()
 
     return issues
 
@@ -759,6 +863,59 @@ def _check_empty_log_only_blocks(lines):
     return issues
 
 
+def _check_is_x_nation_runtime(lines):
+    """Flag is_X_nation triggers in runtime contexts (available, visible, effect).
+
+    The is_X_nation scripted triggers iterate over tag lists and are relatively
+    expensive. In runtime contexts (available, visible, effect blocks, limit clauses),
+    use the pre-computed has_country_flag = X_flag instead for O(1) lookup.
+
+    Safe to use in allowed = { } which is evaluated once at game start.
+    """
+    issues = []
+    in_allowed = False
+    allowed_depth = 0
+    brace_depth = 0
+
+    for i, line in enumerate(lines, 1):
+        code = line.split("#")[0]
+        stripped = code.strip()
+
+        # Track brace depth
+        opens = code.count("{")
+        closes = code.count("}")
+
+        # Check for allowed block start
+        if re.search(r"\ballowed\s*=\s*\{", code) and "allowed_civil_war" not in code:
+            in_allowed = True
+            allowed_depth = brace_depth + opens - closes
+
+        # Update brace depth after checking for allowed
+        brace_depth += opens - closes
+
+        # Check if we exited allowed block
+        if in_allowed and brace_depth <= allowed_depth - 1:
+            in_allowed = False
+            allowed_depth = 0
+
+        # Flag is_X_nation if not in allowed block
+        if not in_allowed:
+            match = _RE_IS_X_NATION.search(code)
+            if match:
+                nation_type = match.group(1) if match.group(1) else ""
+                flag_name = (
+                    f"{nation_type}nation_flag" if nation_type else "nation_flag"
+                )
+                issues.append(
+                    (
+                        i,
+                        f"is_X_nation in runtime context -- use has_country_flag = {flag_name} for O(1) lookup (allowed = {{ }} is OK for game-start checks)",
+                    )
+                )
+
+    return issues
+
+
 def _check_every_country_member_array(lines):
     """Flag every_country { limit = { has_idea = X_member } } when a pre-built array exists.
 
@@ -857,8 +1014,9 @@ def check_file(filepath):
         or "common/military_industrial_organization" in filepath
     )
 
-    # Only track idea categories for idea files (country/hidden_ideas vs others)
-    FLAGGED_IDEA_CATEGORIES = {"country", "hidden_ideas"}
+    # Only track idea categories for idea files (non-selectable vs selectable)
+    # Dynamically parsed from common/idea_tags/*.txt
+    FLAGGED_IDEA_CATEGORIES = get_non_selectable_idea_categories()
     current_category = None
     brace_depth = 0
     ideas_depth = None
@@ -926,7 +1084,7 @@ def check_file(filepath):
                 issues.append(
                     (
                         line_num,
-                        f"allowed = {{ always = no }} is the default for ideas in '{current_category}' -- remove it (hurts performance)",
+                        f"allowed = {{ always = no }} is the default for ideas in '{current_category}' -- remove it (checked once at load; add_ideas bypasses it)",
                     )
                 )
             elif _RE_ALLOWED_OPEN.search(code_part) and "}" not in code_part:
@@ -953,7 +1111,7 @@ def check_file(filepath):
                     issues.append(
                         (
                             allowed_block_start_line,
-                            f"allowed = {{ always = no }} is the default for ideas in '{current_category}' -- remove it (hurts performance)",
+                            f"allowed = {{ always = no }} is the default for ideas in '{current_category}' -- remove it (checked once at load; add_ideas bypasses it)",
                         )
                     )
                 in_allowed_block = False
@@ -973,7 +1131,7 @@ def check_file(filepath):
                 issues.append(
                     (
                         line_num,
-                        "cancel = { always = no } is checked hourly and never true -- remove it",
+                        "cancel = { always = no } is checked hourly and never true -- remove it (redundant default)",
                     )
                 )
 
@@ -1025,6 +1183,7 @@ def check_file(filepath):
     for ln, msg in find_redundant_and_blocks(lines):
         issues.append((ln, msg))
     issues.extend(_check_mutually_exclusive_contradictions(lines))
+    issues.extend(_check_has_idea_mutex_in_not_block(lines))
 
     if is_focus_file:
         issues.extend(_check_focus_available_always_no(lines))
@@ -1039,6 +1198,7 @@ def check_file(filepath):
     issues.extend(_check_duplicate_add_to_variable(lines))
     issues.extend(_check_every_country_member_array(lines))
     issues.extend(_check_empty_log_only_blocks(lines))
+    issues.extend(_check_is_x_nation_runtime(lines))
 
     return [(filepath, ln, msg) for ln, msg in issues]
 

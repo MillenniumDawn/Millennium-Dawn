@@ -2,13 +2,18 @@
 ##########################
 # History Technology Dependency Validation Script
 # Validates that country history files include prerequisite technologies
-# when granting technologies via set_technology blocks.
+# when granting technologies via set_technology blocks, and that equipment
+# variant designs only use modules the country has unlocked.
 #
 # Checks:
 #   1. Builds a tech dependency graph from common/technologies/*.txt
 #   2. For each history/countries/*.txt, extracts set_technology blocks
 #   3. Verifies all transitive prerequisites are present
 #   4. Handles DLC if/else branches correctly
+#   5. Builds a module -> enabling-tech map from enable_equipment_modules blocks
+#   6. Verifies every module used in a create_equipment_variant is enabled by
+#      a technology the country has in any DLC branch (BBA and NSB content
+#      is interwoven — an NSB variant may use modules from BBA techs)
 ##########################
 import glob
 import os
@@ -20,15 +25,20 @@ from typing import Dict, List, Optional, Set, Tuple
 from validator_common import BaseValidator, Colors, run_validator_main, strip_comments
 
 
-def parse_tech_dependencies(mod_path: str) -> Dict[str, Set[str]]:
-    """Build a map of tech -> set of prerequisite techs.
+def parse_tech_dependencies(mod_path: str) -> Tuple[Dict, Set, Dict]:
+    """Build the tech prerequisite graph and the module -> enabling-tech map.
 
     A tech B has prerequisite A if A contains `path = { leads_to_tech = B }`.
     Multiple techs can lead to the same tech; any one satisfies the prerequisite.
+
+    A module M is enabled by tech A if A contains M inside an
+    `enable_equipment_modules = { ... }` block. Multiple techs can enable the
+    same module; any one satisfies the requirement.
     """
     tech_dir = os.path.join(mod_path, "common", "technologies")
     prerequisites = defaultdict(set)  # tech -> set of techs that lead to it
     all_techs = set()
+    module_techs = defaultdict(set)  # module -> set of techs that enable it
 
     for filepath in glob.iglob(os.path.join(tech_dir, "*.txt")):
         try:
@@ -38,17 +48,19 @@ def parse_tech_dependencies(mod_path: str) -> Dict[str, Set[str]]:
             continue
 
         content = strip_comments(content)
-        _parse_tech_file(content, prerequisites, all_techs)
+        _parse_tech_file(content, prerequisites, all_techs, module_techs)
 
-    return prerequisites, all_techs
+    return prerequisites, all_techs, module_techs
 
 
 def _parse_tech_file(
     content: str,
     prerequisites: Dict[str, Set[str]],
     all_techs: Set[str],
+    module_techs: Optional[Dict[str, Set[str]]] = None,
 ):
-    """Parse a single tech file to extract tech definitions and their paths."""
+    """Parse a single tech file to extract tech definitions, their paths, and
+    the modules each tech enables."""
     # Find the technologies = { ... } wrapper
     # Then find each tech definition inside it
     lines = content.split("\n")
@@ -57,6 +69,8 @@ def _parse_tech_file(
     in_technologies_block = False
     current_tech = None
     tech_brace_depth = 0
+    in_enable = False
+    enable_brace_depth = 0
 
     while i < len(lines):
         line = lines[i].strip()
@@ -96,9 +110,27 @@ def _parse_tech_file(
                 target = leads_match.group(1)
                 prerequisites[target].add(current_tech)
 
+            # Capture modules listed inside enable_equipment_modules = { ... }
+            if module_techs is not None:
+                if in_enable:
+                    if brace_depth >= enable_brace_depth:
+                        mod_match = re.match(
+                            r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*$", line.strip()
+                        )
+                        if mod_match:
+                            module_techs[mod_match.group(1)].add(current_tech)
+                    if brace_depth < enable_brace_depth:
+                        in_enable = False
+                if not in_enable and re.match(
+                    r"^enable_equipment_modules\s*=\s*\{", line
+                ):
+                    in_enable = True
+                    enable_brace_depth = brace_depth
+
             # Check if we've exited this tech's block
             if brace_depth < tech_brace_depth:
                 current_tech = None
+                in_enable = False
 
         i += 1
 
@@ -352,6 +384,149 @@ def _parse_if_block(
     return condition, if_techs, else_techs, i
 
 
+def _match_brace_end(text: str, pos: int) -> int:
+    """Given pos pointing just past an opening `{`, return the index just past
+    its matching `}`. Returns len(text) if the braces never balance."""
+    depth = 1
+    j = pos
+    while j < len(text) and depth > 0:
+        ch = text[j]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+        j += 1
+    return j
+
+
+def _find_dlc_if_blocks(content: str) -> List[Tuple[int, int, str]]:
+    """Return (start, end, dlc_name) for every positive `has_dlc` if-block.
+
+    `start`/`end` bracket the whole `if = { ... }` span. Only the if-block's
+    own `limit` is inspected, so a nested DLC if does not mistag its parent,
+    and negated (`NOT = { has_dlc }`) gates are skipped.
+    """
+    blocks = []
+    for m in re.finditer(r"\bif\s*=\s*\{", content):
+        end = _match_brace_end(content, m.end())
+        inner = content[m.end() : end - 1]
+        limit = re.search(r"\blimit\s*=\s*\{(.*?)\}", inner, re.DOTALL)
+        if not limit:
+            continue
+        region = limit.group(1)
+        if "NOT" in region:
+            continue
+        dlc = re.search(r'has_dlc\s*=\s*"([^"]+)"', region)
+        if dlc:
+            blocks.append((m.start(), end, dlc.group(1)))
+    return blocks
+
+
+def parse_equipment_variants(
+    filepath: str,
+) -> List[Tuple[str, Set[str], frozenset]]:
+    """Parse a history file and return every create_equipment_variant as a
+    (variant_name, set_of_module_names, dlc_gating) triple.
+
+    Only the modules listed inside the variant's `modules = { ... }` sub-block
+    are collected; `upgrades` and other sub-blocks are ignored. The literal
+    value `empty` (an unfilled slot) is skipped. Both single-line and
+    multi-line `modules` blocks are handled.
+
+    `dlc_gating` is the set of `has_dlc` conditions whose if-block encloses the
+    variant — i.e. the DLCs that must be active for the variant to exist.
+    """
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+    except Exception:
+        return []
+
+    content = strip_comments(content)
+    dlc_blocks = _find_dlc_if_blocks(content)
+
+    variants = []
+    for m in re.finditer(r"\bcreate_equipment_variant\s*=\s*\{", content):
+        start = m.start()
+        end = _match_brace_end(content, m.end())
+        block = content[m.end() : end - 1]
+
+        name_match = re.search(r'name\s*=\s*"([^"]*)"', block)
+        name = name_match.group(1) if name_match else "?"
+
+        modules = set()
+        mod_block = re.search(r"\bmodules\s*=\s*\{", block)
+        if mod_block:
+            mod_end = _match_brace_end(block, mod_block.end())
+            mod_inner = block[mod_block.end() : mod_end - 1]
+            for entry in re.finditer(
+                r"[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)", mod_inner
+            ):
+                if entry.group(1) != "empty":
+                    modules.add(entry.group(1))
+
+        gating = frozenset(dlc for (s, e, dlc) in dlc_blocks if s <= start < e)
+        variants.append((name, modules, gating))
+
+    return variants
+
+
+def validate_country_equipment(
+    args: Tuple[str, Dict[str, Set[str]]],
+) -> List[str]:
+    """Validate that a country's equipment variants only use modules enabled by
+    a technology the country has in any DLC branch. Returns error strings.
+
+    DLC branches (NSB, BBA, etc.) contain interwoven content: an NSB-gated
+    helicopter variant may use modules whose enabling tech is granted in the
+    BBA block. Both DLCs are active simultaneously in normal play, and
+    create_equipment_variant bypasses module tech checks anyway, so we
+    accept any tech from any branch.
+    """
+    filepath, module_techs = args
+    filename = os.path.basename(filepath)
+
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+    except Exception:
+        return []
+    lines = strip_comments(content).split("\n")
+
+    base_techs: Set[str] = set()
+    branches: List[Tuple[str, Set[str], Set[str]]] = []
+    _parse_history_blocks(lines, base_techs, branches)
+
+    results = []
+    seen = set()
+    for name, modules, gating in parse_equipment_variants(filepath):
+        have = set(base_techs)
+        for condition, if_techs, else_techs in branches:
+            have |= if_techs | else_techs
+
+        for module in sorted(modules):
+            enabling = module_techs.get(module)
+            if not enabling:
+                continue  # module needs no tech (always available)
+            if enabling & have:
+                continue  # at least one enabling tech is guaranteed
+            key = (name, module)
+            if key in seen:
+                continue
+            seen.add(key)
+            techs = sorted(enabling)
+            if len(techs) == 1:
+                tech_str = techs[0]
+            else:
+                tech_str = "one of: " + ", ".join(techs)
+            results.append(
+                f'{filename}: variant "{name}" uses {module} '
+                f"without enabling tech {tech_str}"
+            )
+
+    return results
+
+
 def validate_country_file(
     args: Tuple[str, Dict[str, Set[str]], Set[str]],
 ) -> List[str]:
@@ -405,21 +580,21 @@ class Validator(BaseValidator):
         super().__init__(*args, **kwargs)
         self.prerequisites = {}
         self.all_techs = set()
+        self.module_techs = {}
 
     def _build_tech_graph(self):
         """Build the technology dependency graph from tech definition files."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Building technology dependency graph...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Building technology dependency graph...")
 
-        self.prerequisites, self.all_techs = parse_tech_dependencies(self.mod_path)
+        self.prerequisites, self.all_techs, self.module_techs = parse_tech_dependencies(
+            self.mod_path
+        )
 
         # Count techs with prerequisites
         techs_with_prereqs = len(self.prerequisites)
         self.log(f"  Found {len(self.all_techs)} technology definitions")
         self.log(f"  Found {techs_with_prereqs} technologies with prerequisites")
+        self.log(f"  Found {len(self.module_techs)} modules mapped to enabling techs")
 
     def _get_history_files(self) -> List[str]:
         """Get list of history country files to validate."""
@@ -436,11 +611,7 @@ class Validator(BaseValidator):
 
     def validate_tech_dependencies(self):
         """Validate that all history files have correct tech prerequisites."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking technology dependencies in history files...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking technology dependencies in history files...")
 
         files = self._get_history_files()
         self.log(f"  Found {len(files)} history files to check")
@@ -459,9 +630,33 @@ class Validator(BaseValidator):
             "History files with missing technology prerequisites:",
         )
 
+    def validate_equipment_modules(self):
+        """Validate that equipment variants only use unlocked modules."""
+        self._log_section("Checking equipment variant module technologies...")
+
+        files = self._get_history_files()
+        self.log(f"  Found {len(files)} history files to check")
+
+        args_list = [(f, self.module_techs) for f in files]
+
+        all_results = self._pool_map(
+            validate_country_equipment, args_list, chunksize=20
+        )
+
+        results = []
+        for file_results in all_results:
+            results.extend(file_results)
+
+        self._report(
+            results,
+            "✓ All equipment variants use unlocked modules",
+            "Equipment variants using modules without the enabling technology:",
+        )
+
     def run_validations(self):
         self._build_tech_graph()
         self.validate_tech_dependencies()
+        self.validate_equipment_modules()
 
 
 if __name__ == "__main__":

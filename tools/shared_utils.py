@@ -6,14 +6,16 @@ Common functionality shared between standardization and validation tools
 """
 
 import argparse
+import bisect
 import logging
 import os
 import re
 import sys
 import time
+from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Color coding for different log levels
 COLORS = {
@@ -174,15 +176,104 @@ def should_skip_file(
     return False
 
 
+def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozenset:
+    """Parse common/idea_tags/*.txt and return non-selectable idea category names.
+
+    A category is non-selectable if it has `hidden = yes` or has neither
+    `slot =` nor `character_slot =` entries (like `country` with
+    `type = national_spirit`). These are categories where ideas are only
+    added/removed via script (add_ideas/remove_ideas), never picked in the UI,
+    so `allowed = { always = no }` is always redundant.
+
+    Args:
+        mod_root: Path to the mod root (auto-detected if None).
+    Returns:
+        frozenset of non-selectable category names (e.g. {'country', 'hidden_ideas'}).
+    """
+    if mod_root is None:
+        mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+
+    tags_dir = os.path.join(mod_root, "common", "idea_tags")
+    if not os.path.isdir(tags_dir):
+        # If no idea_tags dir found, return safe defaults
+        return frozenset({"country", "hidden_ideas"})
+
+    categories: Set[str] = set()
+
+    for fname in os.listdir(tags_dir):
+        if not fname.endswith(".txt"):
+            continue
+        fpath = os.path.join(tags_dir, fname)
+        try:
+            with open(fpath, "r", encoding="utf-8") as f:
+                text = f.read()
+                text = re.sub(r"#.*", "", text)  # strip comments
+        except Exception:
+            continue
+
+        # Find idea_categories = { ... } block
+        m = re.search(r"idea_categories\s*=\s*\{", text)
+        if not m:
+            continue
+        start = m.end()
+        # Count braces to find the closing brace
+        depth = 1
+        i = start
+        while i < len(text) and depth > 0:
+            if text[i] == "{":
+                depth += 1
+                i += 1
+            elif text[i] == "}":
+                depth -= 1
+                i += 1
+            else:
+                i += 1
+        cat_block = text[start : i - 1] if depth == 0 else text[start:]
+
+        # Extract each category block: key = { ... }
+        for cat_m in re.finditer(r"(\w+)\s*=\s*\{", cat_block):
+            cat_name = cat_m.group(1)
+            cat_start = cat_m.end()
+            cat_depth = 1
+            cat_i = cat_start
+            while cat_i < len(cat_block) and cat_depth > 0:
+                if cat_block[cat_i] == "{":
+                    cat_depth += 1
+                    cat_i += 1
+                elif cat_block[cat_i] == "}":
+                    cat_depth -= 1
+                    cat_i += 1
+                else:
+                    cat_i += 1
+            cat_body = (
+                cat_block[cat_start : cat_i - 1]
+                if cat_depth == 0
+                else cat_block[cat_start:]
+            )
+
+            has_hidden = bool(re.search(r"\bhidden\s*=\s*yes\b", cat_body))
+            has_slot = bool(re.search(r"\bslot\s*=", cat_body))
+            has_char_slot = bool(re.search(r"\bcharacter_slot\s*=", cat_body))
+
+            if has_hidden or (not has_slot and not has_char_slot):
+                categories.add(cat_name)
+
+    return (
+        frozenset(categories) if categories else frozenset({"country", "hidden_ideas"})
+    )
+
+
 def find_line_number(filename: str, pattern: str, lowercase: bool = True) -> int:
-    """Find the line number where a pattern occurs in a file"""
+    # Reads via FileOpener so iterating many lookups against the same file
+    # only hits disk once.
     try:
-        with open(filename, "r", encoding="utf-8-sig") as f:
-            for line_num, line in enumerate(f, 1):
-                search_line = line.lower() if lowercase else line
-                search_pattern = pattern.lower() if lowercase else pattern
-                if search_pattern in search_line:
-                    return line_num
+        content = FileOpener.open_text_file(
+            filename, lowercase=lowercase, strip_comments_flag=False
+        )
+        needle = pattern.lower() if lowercase else pattern
+        idx = content.find(needle)
+        if idx >= 0:
+            return content.count("\n", 0, idx) + 1
     except Exception:
         pass
     return 0
@@ -211,21 +302,20 @@ def strip_comments(text: str) -> str:
 
 
 class FileOpener:
-    """Helper class for opening and reading files with various options"""
-
-    _cache: Dict[Tuple, str] = {}
-    _MAX_CACHE_SIZE = 500
+    # LRU bound is sized for common/ (~3600 files) plus localisation; the old
+    # full-clear on overflow thrashed on any moderately broad scan.
+    _cache: "OrderedDict[Tuple, str]" = OrderedDict()
+    _MAX_CACHE_SIZE = 8192
 
     @classmethod
     def open_text_file(
         cls, filename: str, lowercase: bool = True, strip_comments_flag: bool = False
     ) -> str:
-        """Open a text file with optional processing. Results are cached per process."""
         cache_key = (filename, lowercase, strip_comments_flag)
-        if cache_key in cls._cache:
-            return cls._cache[cache_key]
-        if len(cls._cache) >= cls._MAX_CACHE_SIZE:
-            cls._cache.clear()
+        cached = cls._cache.get(cache_key)
+        if cached is not None:
+            cls._cache.move_to_end(cache_key)
+            return cached
         try:
             with open(filename, "r", encoding="utf-8-sig") as text_file:
                 content = text_file.read()
@@ -237,6 +327,8 @@ class FileOpener:
             log_message("WARNING", f"Skipping the file {filename}, {ex}")
             return ""
         cls._cache[cache_key] = content
+        if len(cls._cache) > cls._MAX_CACHE_SIZE:
+            cls._cache.popitem(last=False)
         return content
 
 
@@ -334,6 +426,27 @@ class Timer:
     def __exit__(self, *exc):
         self.stop()
         return False
+
+
+def compute_line_offsets(text: str) -> List[int]:
+    # Pair with line_for_offset() to turn per-match line lookups from O(N)
+    # (text.count) into O(log N) (bisect). Worth the upfront pass when one
+    # file is scanned many times.
+    offsets: List[int] = []
+    start = 0
+    while True:
+        p = text.find("\n", start)
+        if p == -1:
+            break
+        offsets.append(p)
+        start = p + 1
+    return offsets
+
+
+def line_for_offset(offsets: List[int], pos: int) -> int:
+    # bisect_left (not bisect_right) so a pos landing on a newline reports
+    # the line the newline ends, matching text.count("\n", 0, pos) + 1.
+    return bisect.bisect_left(offsets, pos) + 1
 
 
 def print_timing_summary(timings: List[Tuple[str, float]]):
@@ -514,7 +627,9 @@ def get_git_diff_files(
                         "--diff-filter=ACMRT",
                         f"{base_branch}...HEAD",
                     ]
-                result = _sp.run(cmd, capture_output=True, text=True, check=True)
+                result = _sp.run(
+                    cmd, capture_output=True, text=True, check=True, timeout=15
+                )
                 all_files = [f for f in result.stdout.strip().split("\n") if f]
             except Exception:
                 return []
@@ -585,6 +700,7 @@ def get_staged_files(
                 capture_output=True,
                 text=True,
                 check=True,
+                timeout=15,
             )
             return result.stdout.strip().split("\n")
 

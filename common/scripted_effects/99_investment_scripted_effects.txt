@@ -86,7 +86,7 @@ update_gui = {
 
 	set_variable = { project_type = project_building_type^-1 }
 	set_variable = { project = -1 }
-	set_temp_variable = { investments_calc_state = PREV.id }
+	PREV = { precompute_state_construction_data = yes }
 	calculate_project_duration = yes
 	cache_building_availability = yes
 	clear_variable = project_type
@@ -278,79 +278,85 @@ add_finished_buildings = {
 	add_to_variable = { ROOT.project_monetary_cost^ROOT.project = var_cost }
 }
 
-# Calculate project duration. Caller sets: investments_calc_state, project, project_type.
+# Precompute state-level construction data. Must be called in STATE scope with
+# PREV = the investing country. Writes temp variables: local_state_modifier and
+# receiving_investment_duration_temp, consumed by calculate_project_duration.
+precompute_state_construction_data = {
+	# State-local construction speed bonus (infra + internet + state-flag effects)
+	set_temp_variable = { local_state_modifier = 0 }
+
+	set_temp_variable = { tmp_speed = building_level@infrastructure }
+	multiply_temp_variable = { tmp_speed = 0.15 }
+	add_to_temp_variable = { local_state_modifier = tmp_speed }
+
+	set_temp_variable = { tmp_speed = building_level@internet_station }
+	multiply_temp_variable = { tmp_speed = 0.05 }
+	add_to_temp_variable = { local_state_modifier = tmp_speed }
+
+	if = { limit = { has_state_flag = currently_encouraged_investments }
+		add_to_temp_variable = { local_state_modifier = 0.15 }
+	}
+	if = { limit = { has_state_flag = HOL_autonomy_economic_zone }
+		add_to_temp_variable = { local_state_modifier = 0.15 }
+	}
+
+	# Net duration modifier from target controller.
+	set_temp_variable = { receiving_investment_duration_temp = 0 }
+	CONTROLLER = {
+		if = {
+			limit = {
+				PREV.PREV = {
+					OR = {
+						has_idea = full_isr_boycotte
+						has_idea = econ_isr_boycotte
+					}
+				}
+			}
+			add_to_temp_variable = { receiving_investment_duration_temp = 1 }
+		}
+		if = {
+			limit = {
+				is_in_array = { global.EU_member = THIS.id }
+				PREV.PREV = { has_idea = ECB_president }
+			}
+			add_to_temp_variable = { receiving_investment_duration_temp = -0.15 }
+		}
+		if = {
+			limit = {
+				is_in_array = { global.EU_member = THIS.id }
+				PREV.PREV = { has_idea = EU_finance_minister }
+			}
+			add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+		}
+		if = {
+			limit = {
+				has_idea = FRA_idea_development_investment
+				PREV.PREV = { original_tag = FRA }
+			}
+			add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+		}
+		if = {
+			limit = {
+				PREV.PREV = {
+					has_country_flag = mutual_investment_treaty_@PREV
+				}
+			}
+			add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
+		}
+		add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
+	}
+}
+
+# Calculate project duration. Caller must call precompute_state_construction_data first.
+# Reads: local_state_modifier, receiving_investment_duration_temp (from precompute)
 # Writes: project_construction_duration^project, project_construction_duration^-2 (snapshot).
 calculate_project_duration = {
 	get_building_construction_values = yes
 
-	# State-local construction speed bonus (infra + internet + state-flag effects)
-	set_temp_variable = { local_state_modifier = 0 }
-	var:investments_calc_state = {
-		set_temp_variable = { tmp_speed = building_level@infrastructure }
-		multiply_temp_variable = { tmp_speed = 0.15 }
-		add_to_temp_variable = { local_state_modifier = tmp_speed }
-
-		set_temp_variable = { tmp_speed = building_level@internet_station }
-		multiply_temp_variable = { tmp_speed = 0.05 }
-		add_to_temp_variable = { local_state_modifier = tmp_speed }
-
-		if = { limit = { has_state_flag = currently_encouraged_investments }
-			add_to_temp_variable = { local_state_modifier = 0.15 }
-		}
-		if = { limit = { has_state_flag = HOL_autonomy_economic_zone }
-			add_to_temp_variable = { local_state_modifier = 0.15 }
-		}
-	}
+	# local_state_modifier was pre-computed by precompute_state_construction_data
 	add_to_temp_variable = { construction_speed = local_state_modifier }
 
-	# Net duration modifier from investor + target controller. Inside CONTROLLER,
-	# PREV.PREV resolves back to the investor (var: pushed once, CONTROLLER once).
-	set_temp_variable = { receiving_investment_duration_temp = 0 }
-	var:investments_calc_state = {
-		CONTROLLER = {
-			if = {
-				limit = {
-					PREV.PREV = {
-						OR = {
-							has_idea = full_isr_boycotte
-							has_idea = econ_isr_boycotte
-						}
-					}
-				}
-				add_to_temp_variable = { receiving_investment_duration_temp = 1 }
-			}
-			if = {
-				limit = {
-					is_in_array = { global.EU_member = THIS.id }
-					PREV.PREV = { has_idea = ECB_president }
-				}
-				add_to_temp_variable = { receiving_investment_duration_temp = -0.15 }
-			}
-			if = {
-				limit = {
-					is_in_array = { global.EU_member = THIS.id }
-					PREV.PREV = { has_idea = EU_finance_minister }
-				}
-				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
-			}
-			if = {
-				limit = {
-					has_idea = FRA_idea_development_investment
-					PREV.PREV = { original_tag = FRA }
-				}
-				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
-			}
-			if = {
-				limit = {
-					PREV.PREV = {
-						has_country_flag = mutual_investment_treaty_@PREV
-					}
-				}
-				add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
-			}
-			add_to_temp_variable = { receiving_investment_duration_temp = THIS.modifier@receiving_investment_duration_modifier }
-		}
-	}
+	# receiving_investment_duration_temp was pre-computed by precompute_state_construction_data
 	add_to_temp_variable = { receiving_investment_duration_temp = modifier@investment_duration_modifier }
 	clamp_temp_variable = { var = receiving_investment_duration_temp min = -1 }
 	if = { limit = { check_variable = { receiving_investment_duration_temp > 0 } }
@@ -390,12 +396,15 @@ calculate_project_duration = {
 
 
 # Start project: allocate slot, deduct treasury, activate decisions.
+# Called from investments_event.10 inside FROM = { }: THIS = the investor and
+# ROOT = the target country. Investor variables live on THIS/PREV, never ROOT.
 start_project_two = {
 	# Get available project
 	get_available_project = yes
 
-	# Debug logging
-	log = "[GetDateText]: [This.GetName]: start_project_two - new_project=[?new_project], state=[?investments_state_target], building_type=[?project_building_type^-1], amount=[?project_build_amount^-1]"
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [THIS.GetName]: DEBUG: start_project_two - new_project=[?new_project], state=[?investments_state_target], building_type=[?project_building_type^-1], amount=[?project_build_amount^-1]"
+	}
 
 	# new_project sets the correct index for the new project
 	if = { limit = { has_variable = new_project }
@@ -409,11 +418,10 @@ start_project_two = {
 		set_variable = { project_building_type^project = project_building_type^-1 }
 		set_variable = { project_monetary_cost^project = project_monetary_cost^-1 }
 
-		set_temp_variable = { investments_calc_state = investments_state_target }
-		calculate_project_duration = yes
-		# Should scope to the actual project
-		var:investments_state_target = {
-			add_to_array = { projects_in_state = PREV.id } #Should be FROM
+		random_state = {
+			limit = { state = PREV.investments_state_target }
+
+			add_to_array = { projects_in_state = PREV.id } # Should be FROM
 			# Create a new array for this
 			add_to_array = { project_type_in_state = PREV.project_building_type^-1 }
 			set_variable = { project_target_state_@PREV = PREV.project }
@@ -422,7 +430,10 @@ start_project_two = {
 			CONTROLLER = {
 				set_variable = { PREV.PREV.project_target_country^PREV.PREV.project = THIS.id }
 			}
+			precompute_state_construction_data = yes
 		}
+
+		calculate_project_duration = yes
 
 		# Activate Project
 		add_to_variable = { treasury = project_monetary_cost_effect } # Project Monetary Cost Effect is -1
@@ -436,10 +447,14 @@ start_project_two = {
 		clear_variable = project_type
 		clear_variable = new_project
 
-		log = "[GetDateText]: [This.GetName]: start_project_two - project started at slot [?new_project], cost=[?project_monetary_cost^-1], duration=[?project_construction_duration^[?new_project]] days"
+		if = { limit = { is_debug = yes }
+			log = "[GetDateText]: [THIS.GetName]: DEBUG: start_project_two - project started at slot [?new_project], cost=[?project_monetary_cost^-1], duration=[?project_construction_duration^new_project] days"
+		}
 	}
 	else = {
-		log = "[GetDateText]: [This.GetName]: start_project_two - FAILED: no available project slot (all 15 full)"
+		if = { limit = { is_debug = yes }
+			log = "[GetDateText]: [THIS.GetName]: DEBUG: start_project_two - FAILED: no available project slot (all 15 full)"
+		}
 	}
 
 	refresh_investment_gui = yes
@@ -447,12 +462,15 @@ start_project_two = {
 
 # Called when project segment finishes (investments_event.0).
 complete_project = {
-	log = "[GetDateText]: [This.GetName]: complete_project - project=[?project], remaining_segments=[?project_build_amount^project]"
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [THIS.GetName]: DEBUG: complete_project - project=[?project], remaining_segments=[?project_build_amount^project]"
+	}
 
 	if = { limit = { check_variable = { project_array^project < 0 } }
 		set_variable = { project_type = project_building_type^project }
 
-		var:project_array^project = {
+		random_state = {
+			limit = { state = ROOT.project_array^ROOT.project }
 			if = { limit = { investment_building_slot_available = yes }
 				add_finished_buildings = yes
 				CONTROLLER = { add_opinion_modifier = { target = ROOT modifier = investments_construction_opinion } }
@@ -464,7 +482,7 @@ complete_project = {
 							PREV = { investment_building_slot_available = yes }
 						}
 						subtract_from_variable = { project_build_amount^project = 1 }
-						set_temp_variable = { investments_calc_state = project_array^project }
+						PREV = { precompute_state_construction_data = yes }
 						calculate_project_duration = yes
 						initialize_complete_project_decisions = yes
 					}
@@ -483,10 +501,14 @@ complete_project = {
 
 # Cancel or complete project: refund investor, give 10% to target.
 end_project = {
-	log = "[GetDateText]: [This.GetName]: end_project - project=[?project], refund=[?project_monetary_cost^project]"
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [THIS.GetName]: DEBUG: end_project - project=[?project], refund=[?project_monetary_cost^project]"
+	}
 
+	# INFO: project_array^project is a state. This is always positive.
 	if = { limit = { check_variable = { project_array^project < 0 } }
-		var:project_array^project = {
+		random_state = {
+			limit = { state = ROOT.project_array^ROOT.project }
 			clear_variable = project_target_state_@PREV
 			for_each_loop = {
 				value = v

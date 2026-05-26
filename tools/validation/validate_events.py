@@ -6,6 +6,16 @@
 #   1. Events with unsupported title/desc combinations
 #      (having both block { } and inline value for title or desc)
 #   2. Events missing is_triggered_only = yes
+#   3. Redundant long-form event calls (id-only)
+#   4. Triggered-only events never referenced
+#   5. Missing localisation keys
+#   6. news_event without major = yes (fires for only one country)
+#   7. news_event with fire_only_once = yes + major (only one country sees it)
+#   8. mean_time_to_happen with is_triggered_only (MTTH does nothing)
+#   9. Duplicate event IDs
+#  10. Event namespace not declared via add_namespace
+#  11. Hidden events carrying option blocks (should run from immediate)
+#  12. Hidden events carrying pointless localisation (never displayed)
 # Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
 # Adapted for Millennium Dawn with multiprocessing
 ##########################
@@ -36,7 +46,11 @@ def _should_skip(filename: str) -> bool:
 
 
 def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
-    """Pool worker: count occurrences of each tracked event ID in one file."""
+    """Pool worker: count occurrences of each tracked event ID in one file.
+
+    Uses a word-boundary-aware approach so that an event ID appearing in a
+    log string or other text doesn't produce a false positive count.
+    """
     filename, tracked_ids = args
     if _should_skip(filename):
         return {}
@@ -45,7 +59,11 @@ def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     except Exception:
         return {}
     cleaned = re.sub(r"#[^\n]*", "", text)
-    return {eid: cleaned.count(eid) for eid in tracked_ids if eid in cleaned}
+    id_counts: Dict[str, int] = {}
+    for eid in tracked_ids:
+        if eid in cleaned:
+            id_counts[eid] = cleaned.count(eid)
+    return id_counts
 
 
 def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
@@ -95,6 +113,44 @@ def process_file_for_events(args: Tuple[str, bool]) -> Tuple[List[str], Dict[str
     return events, paths
 
 
+_EVENT_TYPE_PATTERN = re.compile(
+    r"^(country_event|news_event|state_event|unit_leader_event|operative_leader_event)\s*=\s*\{",
+    re.MULTILINE,
+)
+_ADD_NAMESPACE_PATTERN = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILINE)
+_EVENT_ID_PATTERN = re.compile(r"^\tid\s*=\s*(\S+)", re.MULTILINE)
+_RANDOM_EVENTS_PATTERN = re.compile(r"\brandom_events\s*=\s*\{")
+_RANDOM_EVENT_ID_PATTERN = re.compile(r"=\s*([A-Za-z_]\w*\.[\w.]+)")
+_OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
+# Event-level (depth-1) title/desc fields — option-level name fields are
+# nested deeper and are not matched.
+_EVENT_TITLEDESC_PATTERN = re.compile(r"^\t(?:title|desc)\s*=\s*(.+)$", re.MULTILINE)
+
+
+def _extract_random_event_ids(text: str) -> set:
+    """Find event IDs referenced inside ``random_events = { ... }`` blocks.
+
+    Events fired through ``random_events`` in on_actions use ``mean_time_to_happen``
+    as the engine-side weight even though they're declared ``is_triggered_only``,
+    so they must be excluded from the MTTH+triggered_only warning.
+    """
+    ids: set = set()
+    for m in _RANDOM_EVENTS_PATTERN.finditer(text):
+        start = m.end()
+        depth = 1
+        i = start
+        while i < len(text) and depth > 0:
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+            i += 1
+        body = text[start : i - 1]
+        for id_match in _RANDOM_EVENT_ID_PATTERN.finditer(body):
+            ids.add(id_match.group(1))
+    return ids
+
+
 class Validator(BaseValidator):
     TITLE = "EVENT VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -102,6 +158,8 @@ class Validator(BaseValidator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._events_cache: Optional[Tuple[List[str], Dict[str, str]]] = None
+        self._meta_cache: Optional[Tuple[List[dict], set]] = None
+        self._random_events_cache: Optional[set] = None
 
     def _get_all_events(self) -> Tuple[List[str], Dict[str, str]]:
         if self._events_cache is not None:
@@ -119,33 +177,108 @@ class Validator(BaseValidator):
         self._events_cache = (events, paths)
         return self._events_cache
 
+    def _get_event_metadata(self) -> Tuple[List[dict], set]:
+        """Parse all event files and return (event_metadata_list, declared_namespaces).
+
+        Each metadata dict has: id, type, file, is_major, is_hidden,
+        is_triggered_only, fire_only_once, has_mtth, option_count,
+        title_desc_refs.
+        """
+        if self._meta_cache is not None:
+            return self._meta_cache
+
+        files = self._collect_files(["events/**/*.txt"])
+        meta: List[dict] = []
+        namespaces: set = set()
+
+        for filepath in files:
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            if not text:
+                continue
+            basename = os.path.basename(filepath)
+
+            for ns in _ADD_NAMESPACE_PATTERN.findall(text):
+                namespaces.add(ns)
+
+            for m in _EVENT_TYPE_PATTERN.finditer(text):
+                event_type = m.group(1)
+                start = m.end()
+                depth = 1
+                i = start
+                while i < len(text) and depth > 0:
+                    if text[i] == "{":
+                        depth += 1
+                    elif text[i] == "}":
+                        depth -= 1
+                    i += 1
+                body = text[start : i - 1]
+
+                id_match = _EVENT_ID_PATTERN.search(body)
+                if not id_match:
+                    continue
+
+                meta.append(
+                    {
+                        "id": id_match.group(1),
+                        "type": event_type,
+                        "file": basename,
+                        "is_major": "major = yes" in body,
+                        "is_hidden": "hidden = yes" in body,
+                        "is_triggered_only": "is_triggered_only = yes" in body,
+                        "fire_only_once": "fire_only_once = yes" in body,
+                        "has_mtth": "mean_time_to_happen" in body,
+                        "option_count": len(_OPTION_BLOCK_PATTERN.findall(body)),
+                        "title_desc_refs": [
+                            v.strip() for v in _EVENT_TITLEDESC_PATTERN.findall(body)
+                        ],
+                    }
+                )
+
+        self._meta_cache = (meta, namespaces)
+        return self._meta_cache
+
+    def _get_random_event_ids(self) -> set:
+        """Return event IDs referenced inside ``random_events`` blocks in on_actions.
+
+        These events use ``mean_time_to_happen`` as their relative weight even
+        when ``is_triggered_only = yes`` is set, so MTTH is not redundant.
+        """
+        if self._random_events_cache is not None:
+            return self._random_events_cache
+
+        files = self._collect_files(["common/on_actions/**/*.txt"])
+        ids: set = set()
+        for filepath in files:
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            if not text:
+                continue
+            ids.update(_extract_random_event_ids(text))
+
+        self._random_events_cache = ids
+        return ids
+
     def validate_unsupported_title_desc(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for events with unsupported title/desc combinations...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking for events with unsupported title/desc combinations..."
         )
-        self.log(f"{'='*80}")
 
         events, paths = self._get_all_events()
         self.log(f"  Found {len(events)} events")
-        pattern_id = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
+        id_pat = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
         results = []
 
         for line_type in ["title", "desc"]:
-            pattern_block = r"^\t" + line_type + r" = \{"
-            pattern_inline = r"^\t" + line_type + r" = \w"
+            block_pat = re.compile(r"^\t" + line_type + r" = \{", flags=re.MULTILINE)
+            inline_pat = re.compile(r"^\t" + line_type + r" = \w", flags=re.MULTILINE)
 
             for event in events:
-                has_block = (
-                    len(re.findall(pattern_block, event, flags=re.MULTILINE)) > 0
-                )
-                has_inline = (
-                    len(re.findall(pattern_inline, event, flags=re.MULTILINE)) > 0
-                )
-
-                if has_block and has_inline:
-                    event_id = pattern_id.findall(event)
-                    eid = event_id[0] if event_id else "unknown"
+                if block_pat.search(event) and inline_pat.search(event):
+                    eid_match = id_pat.findall(event)
+                    eid = eid_match[0] if eid_match else "unknown"
                     results.append(
                         f"{eid} - {paths.get(event, 'unknown')} - invalid {line_type} (has both block and inline forms)"
                     )
@@ -159,20 +292,16 @@ class Validator(BaseValidator):
         )
 
     def validate_missing_triggered_only(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for events missing is_triggered_only = yes...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for events missing is_triggered_only = yes...")
 
         events, paths = self._get_all_events()
         self.log(f"  Found {len(events)} events")
-        pattern_id = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
-
         results = []
+        id_pattern = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
+
         for event in events:
             if "is_triggered_only = yes" not in event:
-                event_id = pattern_id.findall(event)
+                event_id = id_pattern.findall(event)
                 eid = event_id[0] if event_id else "unknown"
                 filename = paths.get(event, "unknown")
                 results.append(f"{eid} - {filename}")
@@ -193,11 +322,7 @@ class Validator(BaseValidator):
         Scans all .txt files in the mod, not just events/, since events are
         called from focuses, decisions, scripted effects, etc.
         """
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for redundant long-form event calls (id-only)...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for redundant long-form event calls (id-only)...")
 
         txt_files = self._collect_files(
             ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
@@ -215,11 +340,7 @@ class Validator(BaseValidator):
         )
 
     def validate_missing_localisation(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for events with missing localisation keys...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for events with missing localisation keys...")
 
         events, paths = self._get_all_events()
         loc_keys = self._load_localisation_keys()
@@ -252,11 +373,9 @@ class Validator(BaseValidator):
         )
 
     def validate_triggered_only_unreferenced(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for triggered-only events never referenced anywhere...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Checking for triggered-only events never referenced anywhere..."
         )
-        self.log(f"{'='*80}")
 
         events, paths = self._get_all_events()
         pattern_id = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
@@ -300,12 +419,196 @@ class Validator(BaseValidator):
             category="unreferenced-triggered-only",
         )
 
+    def validate_news_event_major(self):
+        """Flag news_event definitions missing major = yes.
+
+        News events are country events under the hood — without major = yes
+        they only fire for the single receiving country, which is almost
+        always unintended. Hidden news events are exempted since they're
+        used as scripted-effect carriers, not player-facing news.
+        """
+        self._log_section("Checking news_events for missing major = yes...")
+
+        meta, _ = self._get_event_metadata()
+        results = []
+
+        for ev in meta:
+            if ev["type"] != "news_event":
+                continue
+            if ev["is_hidden"]:
+                continue
+            if ev["is_major"]:
+                continue
+            results.append(f"{ev['id']} - {ev['file']}")
+
+        self._report(
+            results,
+            "✓ All news_events have major = yes",
+            "news_events missing major = yes (will only fire for one country — add major = yes or use country_event):",
+            Severity.WARNING,
+            category="news-event-missing-major",
+        )
+
+    def validate_mtth_triggered_only(self):
+        """Flag events with both mean_time_to_happen and is_triggered_only.
+
+        MTTH only applies to auto-firing events. On triggered-only events
+        it does nothing and the engine logs a warning.
+
+        Exception: events fired through ``random_events`` blocks in on_actions
+        use MTTH as their selection weight, so the combination is intentional
+        there.
+        """
+        self._log_section(
+            "Checking for mean_time_to_happen on triggered-only events..."
+        )
+
+        meta, _ = self._get_event_metadata()
+        random_event_ids = self._get_random_event_ids()
+        results = []
+
+        for ev in meta:
+            if not (ev["has_mtth"] and ev["is_triggered_only"]):
+                continue
+            if ev["id"] in random_event_ids:
+                continue
+            results.append(f"{ev['id']} - {ev['file']}")
+
+        self._report(
+            results,
+            "✓ No triggered-only events with mean_time_to_happen",
+            "Events with mean_time_to_happen AND is_triggered_only (MTTH does nothing — remove one):",
+            Severity.WARNING,
+            category="mtth-triggered-only",
+        )
+
+    def validate_hidden_event_options(self):
+        """Flag hidden events that still carry option blocks.
+
+        A hidden event shows no UI, so its option effects should run from
+        immediate = { } instead. When two or more options exist only the
+        first auto-fires — the rest are dead code.
+        """
+        self._log_section("Checking hidden events for option blocks...")
+
+        meta, _ = self._get_event_metadata()
+        results = []
+
+        for ev in meta:
+            if not ev["is_hidden"] or ev["option_count"] == 0:
+                continue
+            count = ev["option_count"]
+            detail = f"{count} option block{'s' if count != 1 else ''}"
+            if count >= 2:
+                detail += " (only the first auto-fires — the rest are dead code)"
+            results.append(f"{ev['id']} - {ev['file']}: {detail}")
+
+        self._report(
+            results,
+            "✓ No hidden events with option blocks",
+            "Hidden events with option blocks (move effects into immediate = { }):",
+            Severity.WARNING,
+            category="hidden-event-has-options",
+        )
+
+    def validate_hidden_event_localisation(self):
+        """Flag hidden events that declare a title or desc field.
+
+        A hidden event shows no window, so a ``title`` / ``desc`` field in its
+        own body is dead — the field and its loc keys should be removed.
+
+        Only fields declared in the event's own body are flagged. A loc key
+        that merely shares the event's ID prefix is NOT flagged: prefixes are
+        sometimes reused by a separate visible event (e.g. the visible
+        ``investments_event.10`` displays ``investments_event.1.t``), so the
+        hidden event ``investments_event.1`` owning no title field is correct.
+        """
+        self._log_section("Checking hidden events for pointless localisation...")
+
+        meta, _ = self._get_event_metadata()
+        results = []
+
+        for ev in meta:
+            if not ev["is_hidden"] or not ev["title_desc_refs"]:
+                continue
+            detail = "; ".join(ev["title_desc_refs"])
+            results.append(f"{ev['id']} - {ev['file']}: {detail}")
+
+        self._report(
+            results,
+            "✓ No hidden events with pointless localisation",
+            "Hidden events with localisation keys (hidden events display nothing — remove these keys):",
+            Severity.WARNING,
+            category="hidden-event-localisation",
+        )
+
+    def validate_duplicate_event_ids(self):
+        """Flag events that share the same ID.
+
+        When two events have the same ID, the second definition overwrites
+        the first. This is almost always a copy-paste bug.
+        """
+        self._log_section("Checking for duplicate event IDs...")
+
+        meta, _ = self._get_event_metadata()
+        seen: Dict[str, str] = {}
+        results = []
+
+        for ev in meta:
+            eid = ev["id"]
+            if eid in seen:
+                results.append(f"{eid} - defined in {seen[eid]} and {ev['file']}")
+            else:
+                seen[eid] = ev["file"]
+
+        self._report(
+            results,
+            "✓ No duplicate event IDs",
+            "Duplicate event IDs (second definition overwrites the first):",
+            category="duplicate-event-id",
+        )
+
+    def validate_namespace_mismatch(self):
+        """Flag events whose ID namespace is not declared via add_namespace.
+
+        Every event ID has the format namespace.number. If the namespace
+        isn't declared with add_namespace in any event file, the event ID
+        is a malformed token and the event will silently not work in-game.
+        """
+        self._log_section("Checking event IDs against declared namespaces...")
+
+        meta, namespaces = self._get_event_metadata()
+        self.log(f"  Found {len(namespaces)} declared namespaces, {len(meta)} events")
+        results = []
+
+        for ev in meta:
+            eid = ev["id"]
+            last_dot = eid.rfind(".")
+            if last_dot < 0:
+                continue
+            ns = eid[:last_dot]
+            if ns not in namespaces:
+                results.append(f"{eid} - {ev['file']} (namespace '{ns}' not declared)")
+
+        self._report(
+            results,
+            "✓ All event namespaces are declared",
+            "Events with undeclared namespace (add_namespace missing — event will silently fail):",
+            category="namespace-mismatch",
+        )
+
     def run_validations(self):
         self.validate_unsupported_title_desc()
         self.validate_missing_triggered_only()
         self.validate_event_call_long_form()
         self.validate_triggered_only_unreferenced()
         self.validate_missing_localisation()
+        self.validate_news_event_major()
+        self.validate_mtth_triggered_only()
+        self.validate_hidden_event_options()
+        self.validate_hidden_event_localisation()
+        self.validate_duplicate_event_ids()
+        self.validate_namespace_mismatch()
 
 
 if __name__ == "__main__":

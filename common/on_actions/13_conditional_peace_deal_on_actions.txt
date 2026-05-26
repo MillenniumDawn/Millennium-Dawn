@@ -1,42 +1,111 @@
 on_actions = {
-	# TODO: Make this functional since the AI should offer peace deals at some point but there's no reason to hold onto this until that's done.
-	# Yes, the AI evaluates peace deals effectively when the player offers it to them.
-	# on_weekly = {
-	# 	effect = {
-	# 		if = {
-	# 			limit = {
-	# 				has_country_flag = CPD_AI_wants_peace
-	# 				# ai has to have the flag that tells them they want to not
-	# 				# be at war anymore
-	# 				OR = {
-	# 					var:CPD_AI_wants_peace_with = { NOT = { CPD_AI_will_offer_peace = yes } }
-	# 					NOT = { has_war_with = var:CPD_AI_wants_peace_with }
-	# 					# ^obviously shouldn't be a valid trigger if they're no longer at war
-	# 				}
-	# 			}
-	# 			clr_country_flag = CPD_AI_wants_peace
-	# 			clear_variable = CPD_AI_wants_peace_with
-	# 			CPD_reset_built_peace_deal = yes
-	# 		}
-	# 		if = {
-	# 			limit = {
-	# 				is_ai = yes
-	# 				has_war = yes
-	# 				NOT = { has_country_flag = CPD_AI_wants_peace }
-	# 			}
-	# 			random_enemy_country = {
-	# 				limit = { CPD_AI_will_offer_peace = yes }
-	# 				CPD_reset_built_peace_deal = yes
-	# 				CPD_AI_build_peace_deal = yes
-	# 				# ^need to make this effect still
-	# 				ROOT = {
-	# 					set_country_flag = CPD_AI_wants_peace
-	# 					set_variable = { CPD_AI_wants_peace_with = PREV }
-	# 				}
-	# 			}
-	# 		}
-	# 	}
-	# }
+	on_monthly = {
+		effect = {
+			if = {
+				limit = {
+					has_global_flag = GAME_RULE_conditional_peace_deals_ENABLED
+					has_global_flag = GAME_RULE_CPD_AI_offers_ENABLED
+				}
+				# Subjects don't initiate peace deals unless their autonomy state
+				# explicitly allows it. Overlord handles peace for restricted subjects.
+				if = {
+					limit = {
+						is_ai = yes
+						has_war = yes
+						OR = {
+							is_subject = no
+							CPD_is_an_autonomy_allowed_to_send_deal = yes
+						}
+					}
+					# Clear stale AI peace flags if conditions no longer apply
+					if = {
+						limit = {
+							has_country_flag = CPD_AI_wants_peace
+							OR = {
+								NOT = { has_war_with = var:CPD_AI_wants_peace_with }
+								var:CPD_AI_wants_peace_with = { exists = no }
+							}
+						}
+						clr_country_flag = CPD_AI_wants_peace
+						clear_variable = CPD_AI_wants_peace_with
+					}
+					# AI considers offering peace — two-pass enemy targeting:
+					# pass 1 prefers enemies near capitulation, pass 2 falls back to random.
+					if = {
+						limit = {
+							has_war = yes
+							NOT = { has_country_flag = CPD_AI_wants_peace }
+							CPD_AI_will_offer_peace = yes
+						}
+						random_enemy_country = {
+							limit = {
+								has_war_with = ROOT
+								CPD_is_a_custom_civil_war = yes
+								NOT = { ROOT = { has_country_flag = CPD_recently_offered_peace@PREV } }
+								surrender_progress > 0.3
+							}
+							CPD_reset_built_peace_deal = yes
+							CPD_AI_build_peace_deal = yes
+							CPD_AI_commit_peace_offer = yes
+						}
+						# Pass 2: nothing near capitulation — random fallback
+						if = {
+							limit = { NOT = { has_country_flag = CPD_AI_wants_peace } }
+							random_enemy_country = {
+								limit = {
+									has_war_with = ROOT
+									CPD_is_a_custom_civil_war = yes
+									NOT = { ROOT = { has_country_flag = CPD_recently_offered_peace@PREV } }
+								}
+								CPD_reset_built_peace_deal = yes
+								CPD_AI_build_peace_deal = yes
+								CPD_AI_commit_peace_offer = yes
+							}
+						}
+					}
+				}
+
+				# Overlord proactively offers peace on behalf of restricted vassals at war.
+				# Catches vassal-only wars where the subject can't initiate by autonomy state.
+				# An intermediate overlord (itself a subject of someone else) may still
+				# scan its own subjects, provided its autonomy permits initiating deals —
+				# without this, A→B→C chains where A is restricted leave A orphaned.
+				if = {
+					limit = {
+						is_ai = yes
+						OR = {
+							is_subject = no
+							CPD_is_an_autonomy_allowed_to_send_deal = yes
+						}
+						NOT = { has_country_flag = CPD_AI_peace_cooldown }
+						any_subject_country = {
+							has_war = yes
+							NOT = { CPD_is_an_autonomy_allowed_to_send_deal = yes }
+							CPD_AI_will_offer_peace = yes
+						}
+					}
+					random_subject_country = {
+						limit = {
+							has_war = yes
+							NOT = { CPD_is_an_autonomy_allowed_to_send_deal = yes }
+							CPD_AI_will_offer_peace = yes
+						}
+						random_enemy_country = {
+							limit = {
+								has_war_with = PREV
+								CPD_is_a_custom_civil_war = yes
+								NOT = { ROOT = { has_country_flag = CPD_recently_offered_peace@PREV } }
+							}
+							CPD_reset_built_peace_deal = yes
+							CPD_AI_build_peace_deal = yes
+							set_temp_variable = { CPD_enemy_tag = PREV.id }
+							CPD_AI_commit_peace_offer = yes
+						}
+					}
+				}
+			}
+		}
+	}
 
 	on_capitulation = {
 		effect = {
@@ -82,18 +151,30 @@ on_actions = {
 					ROOT = { has_war_with = FROM }
 				}
 				set_temp_variable = { CPD_SVP = FROM.FROM.state_strategic_value }
+				# Two-pass: first sum every enemy's army presence, then award each
+				# enemy a proportional share of the state's strategic value as VP.
+				# The previous single-pass divided by a running total, which gave
+				# 100% share to the first enemy iterated and shrinking fractions
+				# to the rest — awarding more VP than the state was worth.
 				set_temp_variable = { CPD_VP_total = 0 }
 				ROOT = {
 					every_enemy_country = {
 						add_to_temp_variable = { CPD_VP_total = num_armies_in_state@FROM.FROM }
-						set_temp_variable = { CPD_VP_temp = num_armies_in_state@FROM.FROM }
-						divide_temp_variable = { CPD_VP_temp = CPD_VP_total }
-						multiply_temp_variable = { CPD_VP_temp = CPD_SVP }
-						add_to_variable = { CPD_VP@FROM = CPD_VP_temp }
-						subtract_from_variable = { FROM.CPD_VP@THIS = CPD_VP_temp }
-						clamp_variable = {
-							var = FROM.CPD_VP@THIS
-							min = 0
+					}
+				}
+				if = {
+					limit = { check_variable = { CPD_VP_total > 0 } }
+					ROOT = {
+						every_enemy_country = {
+							set_temp_variable = { CPD_VP_temp = num_armies_in_state@FROM.FROM }
+							divide_temp_variable = { CPD_VP_temp = CPD_VP_total }
+							multiply_temp_variable = { CPD_VP_temp = CPD_SVP }
+							add_to_variable = { CPD_VP@FROM = CPD_VP_temp }
+							subtract_from_variable = { FROM.CPD_VP@THIS = CPD_VP_temp }
+							clamp_variable = {
+								var = FROM.CPD_VP@THIS
+								min = 0
+							}
 						}
 					}
 				}

@@ -1,6 +1,14 @@
 # Drone raid availability — wartime/wargoal/retaliation/PP>300
 # Used by drone raids that require active hostility (airfield, rocket site, swarm)
 drone_raid_available_hostile = {
+	OR = {
+		has_war = yes
+		AND = {
+			NOT = { has_idea = intervention_local_security }
+			NOT = { has_idea = intervention_isolation }
+		}
+		has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
+	}
 	FROM = {
 		NOT = { is_subject_of = ROOT }
 		NOT = { has_non_aggression_pact_with = ROOT }
@@ -18,6 +26,14 @@ drone_raid_available_hostile = {
 # Drone raid availability — grey-zone ops (PP>99 or wartime)
 # Used by drone raids against civilian infrastructure (power grid)
 drone_raid_available_grey_zone = {
+	OR = {
+		has_war = yes
+		AND = {
+			NOT = { has_idea = intervention_local_security }
+			NOT = { has_idea = intervention_isolation }
+		}
+		has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
+	}
 	FROM = {
 		NOT = { is_subject_of = ROOT }
 		NOT = { has_non_aggression_pact_with = ROOT }
@@ -34,6 +50,14 @@ drone_raid_available_grey_zone = {
 # Raid target basic eligibility — not a subject and no NAP
 # Used as a building block in available blocks that have custom OR conditions
 raid_target_eligible = {
+	OR = {
+		has_war = yes
+		AND = {
+			NOT = { has_idea = intervention_local_security }
+			NOT = { has_idea = intervention_isolation }
+		}
+		has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
+	}
 	FROM = {
 		NOT = { is_subject_of = ROOT }
 		NOT = { has_non_aggression_pact_with = ROOT }
@@ -51,17 +75,7 @@ raid_show_target_opinion_neutral = {
 				target = FROM
 				value < 0
 			}
-			if = {
-				limit = { has_idea = intervention_limited_interventionism }
-				is_neighbor_of = FROM
-			}
-			else_if = {
-				limit = { has_idea = intervention_regional_interventionism }
-				custom_trigger_tooltip = {
-					tooltip = nation_on_same_continent
-					FROM = { is_on_same_continent_as = PREV }
-				}
-			}
+			raid_show_target_intervention_check = yes
 		}
 		has_war_with = FROM
 	}
@@ -76,17 +90,7 @@ raid_show_target_opinion_hostile = {
 				target = FROM
 				value < -50
 			}
-			if = {
-				limit = { has_idea = intervention_limited_interventionism }
-				is_neighbor_of = FROM
-			}
-			else_if = {
-				limit = { has_idea = intervention_regional_interventionism }
-				custom_trigger_tooltip = {
-					tooltip = nation_on_same_continent
-					FROM = { is_on_same_continent_as = PREV }
-				}
-			}
+			raid_show_target_intervention_check = yes
 		}
 		has_war_with = FROM
 	}
@@ -101,21 +105,97 @@ raid_show_target_specops_hostile = {
 				target = FROM
 				value < -50
 			}
-			if = {
-				limit = { has_idea = intervention_limited_interventionism }
-				is_neighbor_of = FROM
-			}
-			else_if = {
-				limit = { has_idea = intervention_regional_interventionism }
-				custom_trigger_tooltip = {
-					tooltip = nation_on_same_continent
-					FROM = { is_on_same_continent_as = PREV }
-				}
-			}
+			raid_show_target_intervention_check = yes
 		}
 		has_war_with = FROM
 		has_wargoal_against = FROM
 		is_justifying_wargoal_against = FROM
+	}
+}
+
+# Raid show_target — intervention-doctrine reach check only
+# Limited interventionism requires a neighbour; regional requires same continent. Used by raids
+# where doctrine-based reach is the only visibility gate (the caller adds its own war/wargoal/
+# country-flag check separately, so this trigger stays as a stand-alone doctrine clause).
+# Bypassed entirely when the rule_raid_doctrine_reach game rule is enabled — players who
+# don't want their doctrine restricting raid reach can flip the rule.
+raid_show_target_intervention_check = {
+	OR = {
+		has_game_rule = { rule = rule_raid_doctrine_reach option = yes }
+		if = {
+			limit = { has_idea = intervention_limited_interventionism }
+			is_neighbor_of = FROM
+		}
+		else_if = {
+			limit = { has_idea = intervention_regional_interventionism }
+			custom_trigger_tooltip = {
+				tooltip = nation_on_same_continent
+				FROM = { is_on_same_continent_as = PREV }
+			}
+		}
+	}
+}
+
+# Raid available — special forces tech gate
+# Composes with the caller's own hostility OR-block. Encapsulates the "tech_1 unlocks the
+# raid, tech_4 unlocks intercontinental reach" logic inside a single custom_trigger_tooltip
+# so callers don't reimplement the tooltip wrapper.
+raid_special_forces_tech_available = {
+	has_tech = special_forces_tech_1
+	custom_trigger_tooltip = {
+		tooltip = has_spec_ops_4_TT
+		if = {
+			limit = { NOT = { has_tech = special_forces_tech_4 } }
+			FROM = { is_on_same_continent_as = PREV }
+		}
+	}
+}
+
+# Raid AI — "we are at peace with target and no promised retaliation"
+# 50+ verbatim duplicates of this NOT-pair appear in `factor = 0` AI gates as the standard
+# bail-out predicate. Extracting it makes the intent ("AI should pass on this target at peace
+# unless revenge is owed") readable in one line and keeps additions (e.g. adding a wargoal
+# bypass) in one place.
+raid_skip_target_non_hostile_no_retaliation = {
+	NOT = { has_war_with = FROM }
+	NOT = { has_country_flag = promised_retaliation_against@FROM }
+}
+
+# Raid AI — alliance balance is unfavourable
+# Use as a `factor = 0` gate: AI backs off from raiding faction members when its own
+# alliance-strength-ratio is clearly below parity. Threshold 0.7 matches the existing
+# EH_stable_situation_trigger convention. Bypassed at war or with a retaliation promise so
+# the AI can still strike pre-declared enemies even when outmatched.
+raid_alliance_unfavorable = {
+	FROM = { is_in_faction = yes }
+	check_variable = { alliance_strength_ratio < 0.7 }
+	raid_skip_target_non_hostile_no_retaliation = yes
+}
+
+# Raid AI — actor's intervention doctrine forbids reach to this target
+# Mirrors the show_target/available doctrine gate inside ai_will_do so the AI doesn't waste
+# scoring on raids the system has already hidden. Honors rule_raid_doctrine_reach: when the
+# player sets the rule to yes, the doctrine never blocks AI scoring either.
+# Regional interventionism is deliberately omitted here because its off-continent restriction
+# is already enforced by the show_target triggers (raid_show_target_opinion_*); an AI that
+# passes show_target has already satisfied the regional reach check.
+raid_intervention_doctrine_reach_block = {
+	NOT = { has_game_rule = { rule = rule_raid_doctrine_reach option = yes } }
+	OR = {
+		AND = {
+			has_idea = intervention_isolation
+			NOT = { has_war_with = FROM }
+		}
+		AND = {
+			has_idea = intervention_local_security
+			NOT = { is_neighbor_of = FROM }
+			NOT = { has_war_with = FROM }
+		}
+		AND = {
+			has_idea = intervention_limited_interventionism
+			NOT = { is_neighbor_of = FROM }
+			NOT = { has_war_with = FROM }
+		}
 	}
 }
 
