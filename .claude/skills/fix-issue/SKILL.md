@@ -84,10 +84,18 @@ Steps:
 
 6. **Commit**
 
-   Create a branch if on main, stage only the files changed for this fix, and commit:
+   Never create or switch branches on your own. First check the current branch:
 
    ```
-   git checkout -b fix/<short-description>
+   git rev-parse --abbrev-ref HEAD
+   ```
+
+   - If the current branch is **`main`**: stop and use `AskUserQuestion` to ask the user which branch to use. Offer options: (a) check out an existing branch (user supplies the name), (b) create a new branch (user supplies the name). Only after the user answers do you run `git checkout <name>` or `git checkout -b <name>`. Do not invent a branch name.
+   - If the current branch is **not `main`**: commit on the current branch. Do not switch, do not create a new branch.
+
+   Then stage only the files changed for this fix and commit:
+
+   ```
    git add <files>
    git commit -m "Fix <short description> (#<issue number>)
 
