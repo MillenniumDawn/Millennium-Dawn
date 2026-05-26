@@ -133,6 +133,7 @@ v2.0.0
   - Reduced AI special forces division template from 15 to 12 battalions
   - Reduced AI air assault brigade template from 15 to 12 battalions
   - Fixed AI marines generic template incorrectly using Light_armor_Bat instead of armor_Bat
+  - Reverted DEPLOY_MIN_EQUIPMENT_WAR_FACTOR from 0.60 to 0.90 (vanilla) so AI waits until divisions are 90% equipped before deploying during wartime
 
  Balance:
   - Increased naval_strike_attack on all anti-ship drone missile modules
@@ -274,6 +275,8 @@ v2.0.0
   - [BRA] AI now more likely to take the administrative reform focus when corruption is high
 
  Bugfix:
+  - Removed the empty political_advisor slots in the government idea category that left the engine "You can select a: Political Advisor" alert nagging forever with no UI to fill them (Issue #786); intel advisor characters remain defined pending a follow-up assignment system
+  - Fixed divisions auto-deploying with as little as 60% equipment during wartime; restored vanilla 90% threshold (DEPLOY_MIN_EQUIPMENT_WAR_FACTOR)
   - Fixed APC, motorized infantry, and motorized command vehicles getting corrupted stats in the equipment designer (most visibly the 4th Generation APC Hull's speed forced to 0) caused by stray equipment-need blocks inside land equipment doctrine reward modifiers
   - [KOR] Fixed the air superiority equipment bonus only applying to fighters; interceptors now receive the same reliability, range, and cost bonus, and corrected the malformed equipment_bonus block
   - Fixed several NOT-block logic traps in the UN voting, international recognition, and subsidy expiration checks that caused conditions to be evaluated incorrectly
@@ -332,6 +335,9 @@ v2.0.0
   - [ALG] Fixed ALG_national_space_program focus error caused by referencing ALG_urbanization_initiatives before it was defined
   - Fixed 3 no-op swap_ideas in healthcare budget increase effects where health_06 was swapped to itself at max tier
   - [ARM] Fixed unreachable else_if in ARM_shadow_economy_bad_script with duplicate condition for ARM_economy_shady_idea1
+  - [ARM] Fixed Armenia Union State path never granting union status: arme.14 (Kocharyan) and arme.222 (anarchist-communist) only set a flag and an idea on Russia instead of establishing the autonomy; both now mirror the working russia_governorate.23 pattern with proper accept/reject options that grant ARM the autonomy and all nine Union State ideas (Issue #1284)
+  - [SOV] Fixed Constantine Petrov "Speak in the State Duma" event setting the SOV_did_not_allow_duma_to_speak flag on the wrong option, inverting the KOB focus branch's allow_branch gate and making the player's speech choice cosmetic; also added a defensive flag clear in sov_other.37 so the coup completes SOV_kob_party_start regardless of trigger source (Issue #1273)
+  - [SOV] Fixed Warsaw Pact coup decisions creating an unwinnable mid-civil-war puppet relationship: set_autonomy fired immediately alongside start_civil_war, locking SOV out of sending volunteers to support its own puppet while NATO could freely support the democratic breakaway; the puppet handoff is now deferred to on_civil_war_end so SOV can intervene during the civil war and only puppets the target if the communist side wins (Issue #1214)
   - [HOL] Fixed no-op swap_ideas in HOL_military.069 marine relocation event where idea was swapped to itself
   - Fixed case-sensitive idea name mismatches across 24 files causing has_idea/remove_ideas checks to silently fail (NATO_member, ASEAN_Member, the_ulema, the_military, the_clergy, Major_Non_NATO_Ally, sco_member, and others)
   - [HEZ] Fixed remove_ideas typo HEZ_unknown_cartel_operation missing trailing 's'
@@ -602,6 +608,14 @@ v2.0.0
   - Fixed 7th, 8th, and 9th generation anti-armor tank ammo having equal or lower hard attack than mixed ammo of the same tier; restored the +4 anti-armor advantage seen in earlier generations (Issue #1361)
   - Added rail terminals to the Infrastructure Investiture construction speed boost (Issue #1425)
   - [BRA] Fixed the MERCOSUR diplomacy decision category never appearing in the decisions tab because its allowed block depended on a global array populated after game start; replaced with a static tag list and added a category icon (Issue #1416)
+  - Fixed bankruptcy decisions releasing every subject mid-war: bankruptcy_incoming_collapse timeout and bankruptcy_default_on_debts now only call end_puppet when the overlord is at peace, preventing puppets from being freed when their overlord defaults during a wartime cash crunch (Issue #852)
+  - Fixed the Advanced Officer Training doctrine trait granting no army-size or army-group bonuses because its max_commander_army_size and max_army_group_size modifiers were placed in a generic modifier block instead of the role-specific corps_commander_modifier and field_marshal_modifier blocks (Issue #1266)
+  - [SPR] Fixed the conservative and socialist LGBT focuses (SPR_the_lgbtqa_stance, SPR_lgbtq_affirmations) not stacking because both fired the same three-way choice event; the socialist focus now grants a separate SPR_lgbtq_affirmations_idea that stacks on top of the pro-LGBT stance idea (Issue #1007)
+  - Fixed the Drone Missile Package (land_module_drone_launcher_1-4) blanking the rocket-artillery designer to "Unknown" with no way to recover; added the missing allow_equipment_type = rocket declaration that every other primary-weapon module in MD_arty_modules.txt already carries (Issue #1333)
+  - [IRQ] Fixed Iraq capitulating to USA and triggering the end-game screen when the Multinational Coalition Forces (MNF) capitulated to Iraq during Operation Iraqi Freedom; the Iraqi Forces Scatter on_capitulation handler matched MNF (which shares original_tag = IRQ via copy_tag) and fired iraq_war.9 on the real Iraq, now gated by NOT = { has_country_flag = is_iraq_mnf } on ROOT (Issue #1196)
+  - [RAJ/PAK/CHI] Fixed the Kashmir border clash decision categories firing for the overlord when India was a puppet of a third-party country; the category visible blocks only blocked the puppet-of-each-other and same-faction cases, so RAJ AI kept taking attack decisions and pulling the overlord's troops and generals (including field marshals) onto the Indian border via start_border_war — added is_subject = no checks for both belligerents in each category (Issue #1473)
+  - [BLR/EGY/SOV] Cleaned up the fertilizer-capacity variable writes in BLR_GrodnoAzot, BLR_Chinese_kal, EGY_evergrow, and SOV_economic_grodno_annex; the initialisers used redundant TAG-prefixed set_variable while tooltips read the bare names, so the writes now match the loc and the rest of the focus-tree convention (Issue #1442)
+  - Fixed the Anti-Ship Drone Missile modules contributing nothing when paired with conventional naval armament on the same plane; the five tiers now apply a small flat baseline plus a multiplier to naval strike attack and targetting on naval bomber and port strike missions, so the drones act as a force multiplier on whatever primary anti-ship weapon the plane carries (Issue #1166)
 
  Content:
   - New Content for North korea and South Korea post reuification and unification
@@ -949,6 +963,7 @@ v2.0.0
   - [SMA] Equipment purchase focuses now show treasury cost in tooltip so players can see the price before completing
   - [SMA] Added war and country existence checks to all equipment purchase focuses to prevent purchases during wars with the seller
   - Added a 50/50 split mode to the international investments shift-click toggle: the cycle is now off (all returns to treasury), full reinvest, then 50/50 split (Issue #1409)
+  - [HOL] Military Emergency idea now shows its cancel requirements (military industry count, dependent industry idea, equipment stockpile ratios) in the tooltip
 
  Sound:
   - Ensured that voicelines for various nations are saved in the proper format as to prevent nonsense errors in the logs
