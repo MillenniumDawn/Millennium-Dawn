@@ -276,11 +276,7 @@ class Validator(BaseValidator):
         # Preemptive slot libraries — defined for all possible slots even if only a
         # subset are active.  Suppress unused warnings for the unoccupied slots rather
         # than requiring every slot to have a live caller.
-        UNUSED_ONLY_FALSE_POSITIVES = [
-            # EU parliament PG-party support locs: defined for all 24 party groups but
-            # the GUI display path uses the _icon and _loc_key variants instead.
-            "eu_parl_pg_party_",
-        ]
+        UNUSED_ONLY_FALSE_POSITIVES = ("eu_parl_pg_party_",)
 
         defined_lower_to_original = {loc.lower(): loc for loc in defined_locs}
         defined_locs_lower = [loc.lower() for loc in defined_locs]
@@ -410,6 +406,10 @@ class Validator(BaseValidator):
             "button",
             "tooltip",
             "euxxx_ep_agenda",
+            # Plain loc keys used as $KEY$ nested substitution wrappers in formable
+            # state integration tooltips \u2014 not scripted localisations
+            "gip",
+            "gis",
             "\u00a7",
             "\u00a3",
             "$",
@@ -427,15 +427,22 @@ class Validator(BaseValidator):
                 return_paths=True,
                 staged_files=self.staged_files,
                 workers=self.workers,
+                pool=self._pool,
             )
         )
+        # Usage scan ALWAYS goes full-repo — even in staged mode. Restricting
+        # the usage scan to staged files only would falsely flag any defined-
+        # text whose only consumer lives in a non-staged file (e.g. editing
+        # 99_PER_scripted_localisation.txt would report every loc as unused
+        # if the matching 99_PER_scripted_guis.txt isn't also staged).
         used_locs, used_paths = ScriptedLocalisation.get_all_used_localisations(
             mod_path=self.mod_path,
             defined_names=set(defined_locs),
             lowercase=False,
             return_paths=True,
-            staged_files=self.staged_files,
+            staged_files=None,
             workers=self.workers,
+            pool=self._pool,
         )
 
         self.validate_missing_scripted_localisations(

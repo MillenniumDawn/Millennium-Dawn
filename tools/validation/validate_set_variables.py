@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
-##########################
-# Variable Usage Validation Script (Multiprocessing Optimized)
-# Validates that variables set with set_variable are actually referenced/used
-# Based on the flag validation logic from validate_variables.py
-# Optimized with multiprocessing for significantly faster execution
-# By Claude Code
-##########################
+"""Validate that every set_variable target is referenced somewhere else.
+
+Two passes: extract all `set_variable = X` targets, then scan the whole mod
+for `\\bX\\b` references and report vars whose net refs (refs minus sets) is
+zero. Both passes are multiprocessed and disk-cached via `disk_cache`.
+"""
 import glob
+import hashlib
 import os
 import re
 from functools import partial
 from multiprocessing import Pool
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
+import disk_cache
 from validator_common import (
     BaseValidator,
     Colors,
@@ -24,70 +25,90 @@ from validator_common import (
     should_skip_file,
 )
 
+# 25 chars on each side covers `set_variable = {` plus a short var name.
+SET_CONTEXT_WINDOW = 25
+
+_SET_SHORT_RE = re.compile(r"set_variable = ([^ \t\n\}]+)")
+_SET_LONG_RE = re.compile(
+    r"set_variable = \{[^}]*?([a-z0-9_@\.\^\[\]]+)\s*=",
+    flags=re.MULTILINE | re.DOTALL,
+)
+_SET_LONG_RESERVED = frozenset(("value", "days", "months", "years", "hours"))
+
+
+def _scan_set_variables(filename: str, lowercase: bool) -> Tuple[List[str], str]:
+    text = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
+    variables: List[str] = []
+    if "set_variable =" in text:
+        variables.extend(_SET_SHORT_RE.findall(text))
+        variables.extend(
+            m for m in _SET_LONG_RE.findall(text) if m not in _SET_LONG_RESERVED
+        )
+    return variables, os.path.basename(filename)
+
 
 def process_file_for_set_variables(
-    filename: str, lowercase: bool = True
+    filename: str, lowercase: bool, mod_path: str
 ) -> Tuple[List[str], Dict[str, str]]:
     if should_skip_file(filename):
-        return ([], {})
+        return [], {}
+    namespace = f"set_variables.scan.lc={int(lowercase)}"
+    variables, basename = disk_cache.per_file_cached(
+        mod_path,
+        namespace,
+        filename,
+        lambda: _scan_set_variables(filename, lowercase),
+    )
+    return variables, {v: basename for v in variables}
 
-    variables = []
-    paths = {}
-    basename = os.path.basename(filename)
 
-    text_file = FileOpener.open_text_file(
+def _count_vars_in_file(
+    filename: str, tracked_vars: frozenset, lowercase: bool
+) -> Dict[str, int]:
+    text = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
-
-    if "set_variable =" in text_file:
-        pattern_matches = re.findall(r"set_variable = ([^ \t\n\}]+)", text_file)
-        if len(pattern_matches) > 0:
-            for match in pattern_matches:
-                variables.append(match)
-                paths[match] = basename
-
-        pattern_matches = re.findall(
-            r"set_variable = \{[^}]*?([a-z0-9_@\.\^\[\]]+)\s*=",
-            text_file,
-            flags=re.MULTILINE | re.DOTALL,
-        )
-        if len(pattern_matches) > 0:
-            for match in pattern_matches:
-                if match not in ["value", "days", "months", "years", "hours"]:
-                    variables.append(match)
-                    paths[match] = basename
-
-    return (variables, paths)
-
-
-def count_all_variables_in_file(args: Tuple[str, frozenset, bool]) -> Dict[str, int]:
-    """Scan one file for references to all tracked variables in a single read.
-
-    Returns {var: net_ref_count} with only variables that have net_ref_count > 0.
-    This inverted approach (scan per-file, not per-variable) eliminates the O(N×M)
-    pool churn of the old per-variable wrapper.
-    """
-    filename, tracked_vars, lowercase = args
-
-    if should_skip_file(filename):
+    if not text or not tracked_vars:
         return {}
+    pattern = re.compile(r"\b(" + "|".join(re.escape(v) for v in tracked_vars) + r")\b")
+    ref_counts: Dict[str, int] = {}
+    set_counts: Dict[str, int] = {}
+    for m in pattern.finditer(text):
+        var = m.group(1)
+        start = max(0, m.start() - SET_CONTEXT_WINDOW)
+        end = min(len(text), m.end() + SET_CONTEXT_WINDOW)
+        if "set_variable" in text[start:end]:
+            set_counts[var] = set_counts.get(var, 0) + 1
+        else:
+            ref_counts[var] = ref_counts.get(var, 0) + 1
+    return {
+        v: ref_counts[v] - set_counts.get(v, 0)
+        for v in ref_counts
+        if ref_counts[v] - set_counts.get(v, 0) > 0
+    }
 
-    text_file = FileOpener.open_text_file(
-        filename, lowercase=lowercase, strip_comments_flag=True
+
+def count_all_variables_in_file(
+    args: Tuple[str, frozenset, bool, str],
+) -> Dict[str, int]:
+    # Cache namespace includes a hash of tracked_vars: the alternation regex
+    # output is only reusable when the input set is unchanged. Typical PRs
+    # don't add/remove set_variable definitions, so the hash is stable.
+    filename, tracked_vars, lowercase, mod_path = args
+    if should_skip_file(filename) or not tracked_vars:
+        return {}
+    tracked_hash = hashlib.sha1(
+        "|".join(sorted(tracked_vars)).encode("utf-8")
+    ).hexdigest()[:16]
+    namespace = f"set_variables.counts.lc={int(lowercase)}.{tracked_hash}"
+    return disk_cache.per_file_cached(
+        mod_path,
+        namespace,
+        filename,
+        lambda: _count_vars_in_file(filename, tracked_vars, lowercase),
     )
-
-    result = {}
-    for var in tracked_vars:
-        total = text_file.count(var)
-        if total == 0:
-            continue
-        set_count = text_file.count(f"set_variable = {var}")
-        set_count += text_file.count(f"set_variable = {{ {var}")
-        set_count += text_file.count(f"set_variable = {{{var}")
-        net = total - set_count
-        if net > 0:
-            result[var] = net
-    return result
 
 
 class SetVariables:
@@ -111,7 +132,9 @@ class SetVariables:
                 glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
             )
 
-        process_func = partial(process_file_for_set_variables, lowercase=lowercase)
+        process_func = partial(
+            process_file_for_set_variables, lowercase=lowercase, mod_path=mod_path
+        )
 
         p = pool if pool else Pool(processes=workers)
         results = p.map(process_func, files_to_scan, chunksize=50)
@@ -179,7 +202,7 @@ class Validator(BaseValidator):
             files_to_scan = txt_files + yml_files
 
         tracked_vars = frozenset(cleaned_vars)
-        args_list = [(f, tracked_vars, True) for f in files_to_scan]
+        args_list = [(f, tracked_vars, True, self.mod_path) for f in files_to_scan]
 
         var_ref_counts = {var: 0 for var in cleaned_vars}
         if self._pool is not None:

@@ -170,9 +170,31 @@ def test_build_check_payload_includes_head_sha_and_name():
             )
         ]
     )
-    payload = _build_check_payload(run, head_sha="abc1234")
+    annotations = _pick_annotations(run)
+    payload = _build_check_payload(run, head_sha="abc1234", annotations=annotations)
     assert payload["head_sha"] == "abc1234"
     assert payload["name"] == "Events"
     assert payload["status"] == "completed"
     assert payload["conclusion"] == "failure"
     assert len(payload["output"]["annotations"]) == 1
+
+
+def test_pick_annotations_returns_all_when_under_cap():
+    """When issue count fits in the per-check cap, no truncation notice fires."""
+    issues = [
+        Issue(
+            severity=Severity.ERROR,
+            category="c",
+            message=f"msg {i}",
+            file=f"file_{i}.txt",
+            line=1,
+            validator="events",
+        )
+        for i in range(MAX_ANNOTATIONS_PER_CHECK)
+    ]
+    run = _run_with_issues(issues)
+    anns = _pick_annotations(run)
+    assert len(anns) == MAX_ANNOTATIONS_PER_CHECK
+    # No overflow notice when we land exactly at the cap.
+    assert "truncated" not in anns[-1]["title"]
+    assert anns[-1]["annotation_level"] == "failure"
