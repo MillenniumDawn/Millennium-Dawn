@@ -94,7 +94,7 @@ Rules:
 - Other subsections (`#### AI`, `#### Content`, etc.): include only if there are non-bug changes in that category.
 - **Never use em dashes (`—`, U+2014) anywhere — not in the PR title, body, bullet separators, Changelog.txt, or any `.yml` file.** Replace with a colon (introducing the explanation), a period (ending the bolded prefix and starting a new sentence), or a comma (continuing the clause). Standing user rule, no exceptions even when mimicking AngriestBird's example PRs.
 - Bullet structure: bold the issue reference and title together followed by a period (`**Fixes #N: Issue Title.**`), then a space, then the description. Do not use `—` as a separator.
-- Be specific: name the focus ID, event ID, incorrect value, correct value, and HOI4 effect or trigger involved.
+- Bullet length: **2 sentences, 2–3 lines max** per fix: one sentence for the cause, one for the resolution. Name the key focus/event/decision ID and the wrong-vs-right value, but skip commit hashes, file:line citations, repro chains, and regression notes. Those belong in the commit message and the issue, not the PR body. The `Closes #N` lines at the top of the body are always preserved.
 - Test plan: one bullet per in-game action needed to verify correctness. Separate action from expected result with a comma or period, not `→` or `—`.
 
 ### 6. Check and update `Changelog.txt`
