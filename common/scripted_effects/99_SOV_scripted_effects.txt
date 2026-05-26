@@ -5292,7 +5292,6 @@ SOV_russian_governorates_created = {
 			}
 			hidden_effect = {
 				set_temp_variable = { percent_change = -15 }
-				set_temp_variable = { influence_target = MON }
 				change_influence_percentage = yes
 			}
 		}
@@ -5600,7 +5599,6 @@ SOV_russian_governorates_created = {
 			clr_country_flag = dynamic_flag
 			hidden_effect = {
 				set_temp_variable = { percent_change = -15 }
-				set_temp_variable = { influence_target = POL }
 				change_influence_percentage = yes
 			}
 		}
@@ -13381,21 +13379,15 @@ warsaw_pact_perevorot_core_effect = {
 
 # Called from SOV scope after warsaw_pact_perevorot_core_effect.
 # Requires event_target:warsaw_target to be set.
-# Fires standard news event, sets autonomy, fires country event, and pays treasury.
+# Flags the target for deferred puppet creation; on_civil_war_end (99_SOV_on_actions.txt)
+# fires set_autonomy + news event sov_warsaw_pact.4 + country event sov_warsaw_pact.5
+# once the communist side wins the civil war. This lets SOV send volunteers normally
+# during the civil war instead of being locked out by an early puppet relationship.
 warsaw_pact_perevorot_finish_effect = {
-	news_event = {
-		hours = 1
-		id = sov_warsaw_pact.4
+	event_target:warsaw_target = {
+		set_country_flag = SOV_warsaw_pact_pending_puppet
+		set_variable = { SOV_warsaw_pact_overlord_id = ROOT.id }
 	}
-	SOV = {
-		set_autonomy = {
-			target = event_target:warsaw_target
-			autonomy_state = autonomy_warsaw
-			end_wars = no
-			end_civil_wars = no
-		}
-	}
-	country_event = sov_warsaw_pact.5
 	set_temp_variable = { treasury_change = -15 }
 	modify_treasury_effect = yes
 }

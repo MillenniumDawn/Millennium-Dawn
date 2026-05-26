@@ -40,6 +40,8 @@ For the full reference (variables, arrays, loops, collections, formatted loc), r
 
 For more comprehensive HOI4 scripting docs (effects, triggers, modifiers, wiki links), read `.claude/docs/documentation-references.md`.
 
+For 3D unit models — the mesh/entity/animation chain, the `<TAG>` → `<graphical_culture>` → generic entity lookup, and `gfx/entities/` organisation — read `.claude/docs/entity-system.md`.
+
 # Comments
 
 Default to writing **no comments**. Only add one when the WHY is non-obvious:
@@ -71,6 +73,30 @@ NOT = { has_idea = foo has_idea = bar }
 # Correct — blocks each independently
 NOT = { has_idea = foo }
 NOT = { has_idea = bar }
+```
+
+## NOR is not a valid trigger
+
+`NOR` is **not** a HOI4 trigger keyword — it is Norway's country tag. Writing `NOR = { ... }` opens a country scope for Norway, not a logical NOR block. There is no built-in NOR trigger; express "none of these" as separate `NOT` blocks or as `NOT = { OR = { ... } }`:
+
+```
+# Wrong — this scopes into Norway, not a logical NOR
+NOR = {
+    has_government = democratic
+    has_idea = social_05
+}
+
+# Correct — separate NOT blocks
+NOT = { has_government = democratic }
+NOT = { has_idea = social_05 }
+
+# Also correct — NOT wrapping an OR
+NOT = {
+    OR = {
+        has_government = democratic
+        has_idea = social_05
+    }
+}
 ```
 
 ## Tautological OR in ai_will_do modifiers
@@ -138,6 +164,32 @@ check_variable = {
 ```
 
 Valid `compare` values: `equals`, `greater_than`, `less_than`, `greater_than_or_equals`, `less_than_or_equals`, `not_equals`.
+
+## Variable and array operations do not auto-tooltip
+
+Variable operations — `check_variable`, `is_in_array`, `add_to_variable`, `subtract_from_variable`, `set_variable`, `multiply_variable`, `divide_variable`, `clamp_variable`, `set_temp_variable`, `add_to_temp_variable`, `add_to_array`, `remove_from_array` — produce **no automatic tooltip text**. When used bare in `available`, `visible`, or trigger blocks the player sees nothing (triggers) or a blank line (effects).
+
+If the player needs to see why a focus/decision is locked or what an effect does, wrap the operation:
+
+- **Triggers:** use `custom_trigger_tooltip` with a loc key
+- **Effects:** use `custom_effect_tooltip` before or after the operation
+
+```
+# Wrong — player sees no explanation for why the focus is unavailable
+available = {
+	check_variable = { my_var > 10 }
+}
+
+# Correct — player sees the loc string
+available = {
+	custom_trigger_tooltip = {
+		tooltip = my_requirement_tt
+		check_variable = { my_var > 10 }
+	}
+}
+```
+
+Named scripted triggers (e.g., `my_trigger = yes`) **do** auto-tooltip using the trigger's name as a loc key, so they are safe to use bare in player-facing blocks. Prefer named triggers over raw variable checks in `available`/`visible` when the player needs feedback.
 
 ## is_in_faction vs is_in_faction_with
 

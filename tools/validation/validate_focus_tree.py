@@ -27,9 +27,11 @@ from validator_common import (
 # Regex patterns
 # ---------------------------------------------------------------------------
 
-# Opening of a focus_tree or shared_focus block
+# Opening of a focus_tree or top-level focus definition block
+# (shared_focus and joint_focus are both standalone definitions that can be
+# referenced as prerequisites — they live outside any focus_tree wrapper)
 _FOCUS_TREE_START = re.compile(r"\bfocus_tree\s*=\s*\{")
-_SHARED_FOCUS_DEF_START = re.compile(r"\bshared_focus\s*=\s*\{")
+_SHARED_FOCUS_DEF_START = re.compile(r"\b(?:shared_focus|joint_focus)\s*=\s*\{")
 
 # focus ID extraction
 _FOCUS_ID_RE = re.compile(r"\bfocus\s*=\s*\{")
