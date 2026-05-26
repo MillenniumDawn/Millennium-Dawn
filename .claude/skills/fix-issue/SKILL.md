@@ -60,7 +60,7 @@ Steps:
 
 3. **Locate the relevant code**
 
-   Search for the named decisions, effects, triggers, scripted GUIs, or on_actions:
+   Search for the named decisions, effects, triggers, scripted GUIs, or on_actions. If you can't find it, you do a wider database search:
 
    ```
    grep -rn "keyword" common/ events/ --include="*.txt" -l
@@ -84,16 +84,22 @@ Steps:
 
 6. **Commit**
 
-   Create a branch, stage only the files changed for this fix, and commit:
+   Never create or switch branches on your own. First check the current branch:
 
    ```
-   git checkout -b fix/<short-description>
+   git rev-parse --abbrev-ref HEAD
+   ```
+
+   - If the current branch is **`main`**: stop and use `AskUserQuestion` to ask the user which branch to use. Offer options: (a) check out an existing branch (user supplies the name), (b) create a new branch (user supplies the name). Only after the user answers do you run `git checkout <name>` or `git checkout -b <name>`. Do not invent a branch name.
+   - If the current branch is **not `main`**: commit on the current branch. Do not switch, do not create a new branch.
+
+   Then stage only the files changed for this fix and commit:
+
+   ```
    git add <files>
    git commit -m "Fix <short description> (#<issue number>)
 
    <one or two sentences explaining root cause and fix>
-
-   Co-Authored-By: Claude <noreply@anthropic.com>"
    ```
 
 7. **Ensure branch is up to date**
