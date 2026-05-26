@@ -247,4 +247,231 @@ MD_protests_forming = {
 			base = 10
 		}
 	}
+
+	MD_emergency_police_funding = {
+		days_re_enable = 350
+		cost = 50
+		visible = {
+			OR = {
+				has_active_mission = MD_incoming_protest_movement
+				has_active_mission = MD_incoming_revolt
+			}
+			NOT = { has_country_flag = MD_police_funding_active }
+		}
+		available = {
+			check_variable = { treasury > 2 }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MD_emergency_police_funding"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			set_country_flag = MD_police_funding_active
+			set_variable = { MD_police_baseline_strength = protest_strength }
+			set_variable = { MD_police_target_strength = protest_strength }
+			subtract_from_variable = { MD_police_target_strength = 10 }
+			clamp_variable = { var = MD_police_target_strength min = 0 }
+			add_timed_idea = { idea = MD_emergency_police_funding_idea days = 200 }
+			activate_mission = MD_police_funding_mission
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 4 }
+			}
+		}
+	}
+
+	MD_police_funding_mission = {
+		activation = { always = no }
+		is_good = yes
+		days_mission_timeout = 200
+
+		available = {
+			check_variable = { protest_strength < MD_police_target_strength }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission MD_police_funding_mission completed"
+			if = {
+				limit = { has_active_mission = MD_incoming_revolt }
+				add_days_mission_timeout = {
+					mission = MD_incoming_revolt
+					days = 75
+				}
+			}
+			if = {
+				limit = { has_active_mission = MD_incoming_protest_movement }
+				add_days_mission_timeout = {
+					mission = MD_incoming_protest_movement
+					days = 40
+				}
+			}
+			subtract_from_variable = { protest_radicalisation = 1 }
+			clamp_variable = { var = protest_radicalisation min = 0 max = 10 }
+			add_stability = 0.02
+			clr_country_flag = MD_police_funding_active
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission MD_police_funding_mission timed out"
+			add_to_variable = { protest_strength = 3 }
+			clamp_variable = { var = protest_strength min = 0 max = 100 }
+			clr_country_flag = MD_police_funding_active
+		}
+	}
+
+	MD_tax_relief_promise = {
+		days_re_enable = 500
+		cost = 75
+		visible = {
+			OR = {
+				has_active_mission = MD_incoming_protest_movement
+				has_active_mission = MD_incoming_revolt
+			}
+			NOT = { has_country_flag = MD_tax_relief_active }
+		}
+		available = {
+			check_variable = { treasury > 3 }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MD_tax_relief_promise"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			set_country_flag = MD_tax_relief_active
+			set_variable = { MD_tax_relief_baseline_stability = stability }
+			set_variable = { MD_tax_relief_target_stability = stability }
+			add_to_variable = { MD_tax_relief_target_stability = 0.05 }
+			clamp_variable = { var = MD_tax_relief_target_stability min = 0 max = 1 }
+			add_timed_idea = { idea = MD_tax_relief_promise_idea days = 300 }
+			activate_mission = MD_tax_relief_mission
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 5 }
+			}
+		}
+	}
+
+	MD_tax_relief_mission = {
+		activation = { always = no }
+		is_good = yes
+		days_mission_timeout = 300
+
+		available = {
+			check_variable = { stability > MD_tax_relief_target_stability }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission MD_tax_relief_mission completed"
+			if = {
+				limit = { has_active_mission = MD_incoming_revolt }
+				add_days_mission_timeout = {
+					mission = MD_incoming_revolt
+					days = 100
+				}
+			}
+			if = {
+				limit = { has_active_mission = MD_incoming_protest_movement }
+				add_days_mission_timeout = {
+					mission = MD_incoming_protest_movement
+					days = 50
+				}
+			}
+			subtract_from_variable = { protest_strength = 10 }
+			clamp_variable = { var = protest_strength min = 0 max = 100 }
+			subtract_from_variable = { protest_radicalisation = 1 }
+			clamp_variable = { var = protest_radicalisation min = 0 max = 10 }
+			add_to_variable = { government_coalition_strength = 0.03 }
+			clamp_variable = { var = government_coalition_strength min = 0 max = 1 }
+			clr_country_flag = MD_tax_relief_active
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission MD_tax_relief_mission timed out"
+			add_to_variable = { protest_strength = 5 }
+			clamp_variable = { var = protest_strength min = 0 max = 100 }
+			clr_country_flag = MD_tax_relief_active
+		}
+	}
+
+	MD_jobs_for_unemployed = {
+		days_re_enable = 500
+		cost = 75
+		visible = {
+			OR = {
+				has_active_mission = MD_incoming_protest_movement
+				has_active_mission = MD_incoming_revolt
+			}
+			NOT = { has_country_flag = MD_jobs_program_active }
+		}
+		available = {
+			check_variable = { treasury > 3 }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MD_jobs_for_unemployed"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			set_country_flag = MD_jobs_program_active
+			set_variable = { MD_jobs_baseline_unemployment = total_unemployed_percentage_display }
+			set_variable = { MD_jobs_target_unemployment = total_unemployed_percentage_display }
+			subtract_from_variable = { MD_jobs_target_unemployment = 0.015 }
+			clamp_variable = { var = MD_jobs_target_unemployment min = 0 }
+			add_timed_idea = { idea = MD_jobs_for_unemployed_idea days = 350 }
+			activate_mission = MD_jobs_program_mission
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 5 }
+			}
+		}
+	}
+
+	MD_jobs_program_mission = {
+		activation = { always = no }
+		is_good = yes
+		days_mission_timeout = 350
+
+		available = {
+			check_variable = { total_unemployed_percentage_display < MD_jobs_target_unemployment }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission MD_jobs_program_mission completed"
+			if = {
+				limit = { has_active_mission = MD_incoming_revolt }
+				add_days_mission_timeout = {
+					mission = MD_incoming_revolt
+					days = 120
+				}
+			}
+			if = {
+				limit = { has_active_mission = MD_incoming_protest_movement }
+				add_days_mission_timeout = {
+					mission = MD_incoming_protest_movement
+					days = 60
+				}
+			}
+			subtract_from_variable = { protest_strength = 10 }
+			clamp_variable = { var = protest_strength min = 0 max = 100 }
+			subtract_from_variable = { protest_radicalisation = 1 }
+			clamp_variable = { var = protest_radicalisation min = 0 max = 10 }
+			add_stability = 0.05
+			clr_country_flag = MD_jobs_program_active
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission MD_jobs_program_mission timed out"
+			add_to_variable = { protest_strength = 5 }
+			clamp_variable = { var = protest_strength min = 0 max = 100 }
+			clr_country_flag = MD_jobs_program_active
+		}
+	}
 }
