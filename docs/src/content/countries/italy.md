@@ -12,7 +12,7 @@ infobox:
   - section: Military & Industry
     stats:
       - label: Divisions
-        value: "13"
+        value: "14"
       - label: Total Factories
         value: "56"
       - label: Military Ind.
@@ -45,7 +45,7 @@ Italy starts with $69 Billions in the Treasury, $1419 Billions in Debt, and $100
 
 ### Military
 
-Italy starts with 13 Divisions covering the Esercito Italiano. The army is organised around mechanised and motorised brigades with limited modern armour. The navy starts with cruisers, frigates, and submarines distributed across two main fleets. The air force operates Tornados and early Eurofighter Typhoons. The volunteer army law is active.
+Italy starts with 14 Divisions covering the Esercito Italiano. The army is organised around mechanised and motorised brigades with limited modern armour. The navy starts with cruisers, frigates, and submarines distributed across two main fleets. The air force operates Tornados and early Eurofighter Typhoons. The volunteer army law is active.
 
 ### Resources
 
@@ -73,7 +73,7 @@ Western Left-Wing (Olive Tree / centre-left coalition) holds 34.5% popularity. W
 
 ## Initial National Spirits
 
-In addition to NATO, G7, and EU membership, Italy has 19 unique national spirits at game start:
+In addition to NATO, G7, and EU membership, Italy has 16 unique national spirits at game start:
 
 - **Traditional Education System** — Outdated curriculum and inflexible institutions reduce research and growth.
 - **Southern Question** — The Mezzogiorno's underdevelopment depresses national productivity.
@@ -88,11 +88,14 @@ In addition to NATO, G7, and EU membership, Italy has 19 unique national spirits
 - **Controlled Media (RAI Lotting)** — Political control of state media distorts public discourse.
 - **Radio Radicale** — Liberal media keeps a small but active counter-voice in policy debate.
 - **Banned Nuclear Power** — The 1987 referendum permanently blocks reactor construction.
-- **Ageing Population** — Negative monthly population growth weighs on every long-term plan.
 - **Major Tourist Destination** — Service income contribution from heritage and culture.
 - **Illegal Immigration from Africa** — Migration pressure adds stability and integration challenges.
-- **Reforms Expectancy** — A monthly drift mechanic representing pressure from the EU and markets.
 - **The Mafia** — Four organised-crime networks holding territorial influence in the south.
+
+Italy also has three dynamic modifiers always active in the background:
+
+- **Ageing Population** — Negative monthly population growth weighs on every long-term plan.
+- **Reforms Expectancy** — A monthly drift mechanic representing pressure from the EU and markets.
 - **NIMBY's Influence** — Local opposition slows large-scale infrastructure construction.
 
 ## Unique National Features
