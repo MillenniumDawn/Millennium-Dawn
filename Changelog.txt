@@ -27,6 +27,7 @@ v2.0.0
   - [HKG] Added a CHI-side decision event for the anti-extradition crisis so puppeting goes through Beijing's choice rather than being forced from HKG's scope
   - [HKG] Added the China Naval Procurement Contracts mechanic: a decision-driven system with solicit/deliver/negotiate actions, a scripted GUI banner tracking standing, lifetime revenue, and up to 3 active contracts, plus a capstone reward
   - [HKG] Reworked the focus tree, adding a domestic aircraft carrier branch and an expanded trade and offshore-industry branch
+  - Added two biofuel Special Projects under the Energy tag: early E10 Ethanol Blending (gated on fuel_refining) and advanced FlexFuel and Butanol Synthesis (gated on fuel_efficiency4, requires E10 as parent), with SP_UNLOCK_PROJECT tooltips on both prerequisite techs (Issue #568)
 
  AI:
   - AI countries now auto-vote in UN Security Council and General Assembly votes according to their accept, reject, or abstain preferences
@@ -621,6 +622,11 @@ v2.0.0
   - [RAJ/PAK/CHI] Fixed the Kashmir border clash decision categories firing for the overlord when India was a puppet of a third-party country; the category visible blocks only blocked the puppet-of-each-other and same-faction cases, so RAJ AI kept taking attack decisions and pulling the overlord's troops and generals (including field marshals) onto the Indian border via start_border_war — added is_subject = no checks for both belligerents in each category (Issue #1473)
   - [BLR/EGY/SOV] Cleaned up the fertilizer-capacity variable writes in BLR_GrodnoAzot, BLR_Chinese_kal, EGY_evergrow, and SOV_economic_grodno_annex; the initialisers used redundant TAG-prefixed set_variable while tooltips read the bare names, so the writes now match the loc and the rest of the focus-tree convention (Issue #1442)
   - Fixed the Anti-Ship Drone Missile modules contributing nothing when paired with conventional naval armament on the same plane; the five tiers now apply a small flat baseline plus a multiplier to naval strike attack and targetting on naval bomber and port strike missions, so the drones act as a force multiplier on whatever primary anti-ship weapon the plane carries (Issue #1166)
+  - [HKG] Fixed HKG_carrier_construction calling a non-existent decision unlock_eastern_maritime_shipbuilding_group; the focus now sets the eastern_maritime_shipbuilding_group_unlocked country flag and emits the MIO unlock tooltip, so completing the carrier branch actually grants the Eastern Maritime Shipbuilding Group MIO (Issue #1505)
+  - [CMW] Fixed the Parliament of the Commonwealth focus re-establishing elections for generic-tree countries like Taliban-led Afghanistan; the joint_focus completion_reward broadcasts to every participant, so the enable_elections call now lives in completion_reward_joint_originator and iterates Commonwealth members explicitly via every_country (Issue #1507)
+  - Fixed licensed attack helicopters rendering as tanks because no generic attack_helicopter_1/2/3_entity existed; added the missing fallback entities reusing SOV_Mi24_mesh so any country without a TAG- or culture-specific override now shows a helicopter (Issue #1467)
+  - Fixed medium walker hull (super_heavy_tank_chassis) variants being unbuildable because every walker armament, leg, drone, and defensive module copy-pasted forbid_equipment_type_exact_match = armor from regular tank modules, stripping the chassis' super-heavy-tank role and forcing the design to save as SPG which the medium_walker_battalion could not accept (Issue #1468)
+  - Fixed ahead-of-time inconsistencies on 74 late-game techs across 12 files (AI, robotics, computing, electrification, battery storage, composite production, AA/AT/artillery upgrades, AWACS, fighters, helicopters, naval modules, hypersonics, camouflage) where start_year did not match the visual row macro; start_year and the matching ai_will_do date guards now align with the tree position the player sees (Issue #1510)
 
  Content:
   - New Content for North korea and South Korea post reuification and unification
@@ -831,6 +837,7 @@ v2.0.0
   - Deleted stray empty test file and entirely-commented-out ___MD_infantry_units.asset/.gfx
   - Fixed UKR entity filename double-underscore typo (UKR__MD_ to UKR_MD_) and ___MD_tanks_and_vechicles spelling
   - Removed unused Eastern European special forces technology sprite entries that referenced missing DDS files
+  - Fixed the Trade Agreement diplomatic request icon clipping with a white line on the right side (Issue #458)
 
  Game Rules:
   - Added "Allow AI Conditional Peace Offers" game rule (default: off) to toggle whether AI nations can initiate monthly Conditional Peace Deals; requires the parent "Allow Conditional Peace Deals" rule to be enabled
@@ -883,6 +890,8 @@ v2.0.0
   - [HOL] Fixed missing closing quote on 5 HOL_voc_india_gujurat_rebellion*_desc localisation entries
   - [JAP] Fixed depopulation national spirit descriptions displaying "§Y2 4 years§!" instead of "§Y2 to 4 years§!" across five national spirit desc keys
   - Fixed [From.GetXxx] scope keyword capitalization to [FROM.GetXxx] throughout the events localisation file
+  - Fixed artillery tech tier labels — artillery_4 was "ART 2035" at the 2045 row and artillery_5 was "ART 2045" at the 2065 row; relabelled to match the actual 20-year tech unlock cadence (Issue #1511)
+  - Fixed nine broken dynamic-modifier tooltip substitutions in MD_dm_modifiers (mobilization_laws, trade_laws, economy, political_advisor, tank/naval/aircraft/materiel manufacturer, and industrial concern cost factors) that referenced non-existent loc tokens and spammed the error log (Issue #1504)
 
  Map:
   - HMNB Clyde is now properly represented with a Level 8 Naval Base + Naval Headquarters for the UK's Nuclear Submarines deployment
