@@ -4001,15 +4001,25 @@ update_display = {
 	set_variable = { resource_to_tax_income = resource_sale_rate } #t these next 2 lines are to get resource export income divided by tax income (pop and corp), then use this ratio as one of the prerequisites for when rentier state cancels so it's not just based on resource extraction as % of GDP
 	clamp_variable = { var = tax_gain min = 0.001 }
 	divide_variable = { resource_to_tax_income = tax_gain }
-	if = { limit = { NOT = { has_country_flag = int_reinvestment_flag } }
+	if = { limit = { check_variable = { int_reinvest_mode = 2 } }
+		set_temp_variable = { _split_display_rate = int_investments_rate }
+		multiply_temp_variable = { _split_display_rate = 0.5 }
+		add_to_variable = { display_income = _split_display_rate }
+	}
+	else_if = { limit = { NOT = { check_variable = { int_reinvest_mode = 1 } } }
 		add_to_variable = { display_income = int_investments_rate }
 	}
 	add_to_variable = { display_income = additional_income_rate }
 
 	# Adjusted Potential Income to the international investments so that people can't exploit the incoming financial collapse
 	set_variable = { potential_income = display_income }
-	if = { limit = { has_country_flag = int_reinvestment_flag }
+	if = { limit = { check_variable = { int_reinvest_mode = 1 } }
 		add_to_variable = { potential_income = int_investments_rate }
+	}
+	else_if = { limit = { check_variable = { int_reinvest_mode = 2 } }
+		set_temp_variable = { _split_potential_rate = int_investments_rate }
+		multiply_temp_variable = { _split_potential_rate = 0.5 }
+		add_to_variable = { potential_income = _split_potential_rate }
 	}
 
 	# Adjust Potential Expense to Include the Debt Rate

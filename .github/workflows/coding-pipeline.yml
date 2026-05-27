@@ -290,6 +290,21 @@ jobs:
       with:
         python-version: '3.x'
 
+    # Restore .validation_cache/ from a previous run keyed on the PR base
+    # commit + validator code hash. The disk cache holds per-file scan
+    # results (mtime/size keyed) and aggregate indexes — a PR touching N
+    # files re-scans only those N. The restore-keys fallback walks back to
+    # any prior cache for this validator so cold starts on a new base SHA
+    # still get partial reuse.
+    - name: Restore validator disk cache
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: .validation_cache
+        key: validators-v1-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}
+        restore-keys: |
+          validators-v1-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-
+          validators-v1-${{ runner.os }}-${{ matrix.validator.name }}-
+
     - name: Run validation
       # Per-matrix opt-out: `strict: false` makes the validator informational
       # (still produces the log + PR comment but exits 0 on findings). Default
@@ -454,6 +469,19 @@ jobs:
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
         python-version: '3.x'
+    # Restore .validation_cache/ — see the matching step in validate-core for
+    # the key strategy. Per-file mtime/size entries mean unchanged files are
+    # not re-scanned; the basename_index aggregate cache also pays back
+    # whenever a validator calls get_full_path().
+    - name: Restore validator disk cache
+      if: matrix.validator.should_run == 'true'
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: .validation_cache
+        key: validators-v1-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}
+        restore-keys: |
+          validators-v1-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-
+          validators-v1-${{ runner.os }}-${{ matrix.validator.name }}-
     - name: Run validation
       if: matrix.validator.should_run == 'true'
       run: |

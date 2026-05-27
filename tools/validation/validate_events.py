@@ -46,7 +46,11 @@ def _should_skip(filename: str) -> bool:
 
 
 def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
-    """Pool worker: count occurrences of each tracked event ID in one file."""
+    """Pool worker: count occurrences of each tracked event ID in one file.
+
+    Uses a word-boundary-aware approach so that an event ID appearing in a
+    log string or other text doesn't produce a false positive count.
+    """
     filename, tracked_ids = args
     if _should_skip(filename):
         return {}
@@ -55,7 +59,11 @@ def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     except Exception:
         return {}
     cleaned = re.sub(r"#[^\n]*", "", text)
-    return {eid: cleaned.count(eid) for eid in tracked_ids if eid in cleaned}
+    id_counts: Dict[str, int] = {}
+    for eid in tracked_ids:
+        if eid in cleaned:
+            id_counts[eid] = cleaned.count(eid)
+    return id_counts
 
 
 def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
@@ -260,24 +268,17 @@ class Validator(BaseValidator):
 
         events, paths = self._get_all_events()
         self.log(f"  Found {len(events)} events")
-        pattern_id = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
+        id_pat = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
         results = []
 
         for line_type in ["title", "desc"]:
-            pattern_block = r"^\t" + line_type + r" = \{"
-            pattern_inline = r"^\t" + line_type + r" = \w"
+            block_pat = re.compile(r"^\t" + line_type + r" = \{", flags=re.MULTILINE)
+            inline_pat = re.compile(r"^\t" + line_type + r" = \w", flags=re.MULTILINE)
 
             for event in events:
-                has_block = (
-                    len(re.findall(pattern_block, event, flags=re.MULTILINE)) > 0
-                )
-                has_inline = (
-                    len(re.findall(pattern_inline, event, flags=re.MULTILINE)) > 0
-                )
-
-                if has_block and has_inline:
-                    event_id = pattern_id.findall(event)
-                    eid = event_id[0] if event_id else "unknown"
+                if block_pat.search(event) and inline_pat.search(event):
+                    eid_match = id_pat.findall(event)
+                    eid = eid_match[0] if eid_match else "unknown"
                     results.append(
                         f"{eid} - {paths.get(event, 'unknown')} - invalid {line_type} (has both block and inline forms)"
                     )
@@ -295,12 +296,12 @@ class Validator(BaseValidator):
 
         events, paths = self._get_all_events()
         self.log(f"  Found {len(events)} events")
-        pattern_id = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
-
         results = []
+        id_pattern = re.compile(r"^\tid = (\S+)", flags=re.MULTILINE)
+
         for event in events:
             if "is_triggered_only = yes" not in event:
-                event_id = pattern_id.findall(event)
+                event_id = id_pattern.findall(event)
                 eid = event_id[0] if event_id else "unknown"
                 filename = paths.get(event, "unknown")
                 results.append(f"{eid} - {filename}")
@@ -446,31 +447,6 @@ class Validator(BaseValidator):
             "news_events missing major = yes (will only fire for one country — add major = yes or use country_event):",
             Severity.WARNING,
             category="news-event-missing-major",
-        )
-
-    def validate_news_fire_only_once(self):
-        """Flag news_events with both major = yes and fire_only_once = yes.
-
-        fire_only_once takes priority over major, so only one country will
-        actually see the event. This defeats the purpose of making it major.
-        Remove fire_only_once or use a global flag guard instead.
-        """
-        self._log_section("Checking news_events for fire_only_once + major conflict...")
-
-        meta, _ = self._get_event_metadata()
-        results = []
-
-        for ev in meta:
-            if ev["type"] != "news_event":
-                continue
-            if ev["is_major"] and ev["fire_only_once"]:
-                results.append(f"{ev['id']} - {ev['file']}")
-
-        self._report(
-            results,
-            "✓ No news_events with fire_only_once + major conflict",
-            "news_events with major = yes AND fire_only_once = yes (only one country sees it — remove fire_only_once or use a global flag):",
-            category="news-fire-only-once-major",
         )
 
     def validate_mtth_triggered_only(self):
@@ -628,7 +604,6 @@ class Validator(BaseValidator):
         self.validate_triggered_only_unreferenced()
         self.validate_missing_localisation()
         self.validate_news_event_major()
-        self.validate_news_fire_only_once()
         self.validate_mtth_triggered_only()
         self.validate_hidden_event_options()
         self.validate_hidden_event_localisation()

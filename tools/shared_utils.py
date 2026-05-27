@@ -6,11 +6,13 @@ Common functionality shared between standardization and validation tools
 """
 
 import argparse
+import bisect
 import logging
 import os
 import re
 import sys
 import time
+from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -262,14 +264,16 @@ def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozen
 
 
 def find_line_number(filename: str, pattern: str, lowercase: bool = True) -> int:
-    """Find the line number where a pattern occurs in a file"""
+    # Reads via FileOpener so iterating many lookups against the same file
+    # only hits disk once.
     try:
-        with open(filename, "r", encoding="utf-8-sig") as f:
-            for line_num, line in enumerate(f, 1):
-                search_line = line.lower() if lowercase else line
-                search_pattern = pattern.lower() if lowercase else pattern
-                if search_pattern in search_line:
-                    return line_num
+        content = FileOpener.open_text_file(
+            filename, lowercase=lowercase, strip_comments_flag=False
+        )
+        needle = pattern.lower() if lowercase else pattern
+        idx = content.find(needle)
+        if idx >= 0:
+            return content.count("\n", 0, idx) + 1
     except Exception:
         pass
     return 0
@@ -298,21 +302,20 @@ def strip_comments(text: str) -> str:
 
 
 class FileOpener:
-    """Helper class for opening and reading files with various options"""
-
-    _cache: Dict[Tuple, str] = {}
-    _MAX_CACHE_SIZE = 500
+    # LRU bound is sized for common/ (~3600 files) plus localisation; the old
+    # full-clear on overflow thrashed on any moderately broad scan.
+    _cache: "OrderedDict[Tuple, str]" = OrderedDict()
+    _MAX_CACHE_SIZE = 8192
 
     @classmethod
     def open_text_file(
         cls, filename: str, lowercase: bool = True, strip_comments_flag: bool = False
     ) -> str:
-        """Open a text file with optional processing. Results are cached per process."""
         cache_key = (filename, lowercase, strip_comments_flag)
-        if cache_key in cls._cache:
-            return cls._cache[cache_key]
-        if len(cls._cache) >= cls._MAX_CACHE_SIZE:
-            cls._cache.clear()
+        cached = cls._cache.get(cache_key)
+        if cached is not None:
+            cls._cache.move_to_end(cache_key)
+            return cached
         try:
             with open(filename, "r", encoding="utf-8-sig") as text_file:
                 content = text_file.read()
@@ -324,6 +327,8 @@ class FileOpener:
             log_message("WARNING", f"Skipping the file {filename}, {ex}")
             return ""
         cls._cache[cache_key] = content
+        if len(cls._cache) > cls._MAX_CACHE_SIZE:
+            cls._cache.popitem(last=False)
         return content
 
 
@@ -421,6 +426,27 @@ class Timer:
     def __exit__(self, *exc):
         self.stop()
         return False
+
+
+def compute_line_offsets(text: str) -> List[int]:
+    # Pair with line_for_offset() to turn per-match line lookups from O(N)
+    # (text.count) into O(log N) (bisect). Worth the upfront pass when one
+    # file is scanned many times.
+    offsets: List[int] = []
+    start = 0
+    while True:
+        p = text.find("\n", start)
+        if p == -1:
+            break
+        offsets.append(p)
+        start = p + 1
+    return offsets
+
+
+def line_for_offset(offsets: List[int], pos: int) -> int:
+    # bisect_left (not bisect_right) so a pos landing on a newline reports
+    # the line the newline ends, matching text.count("\n", 0, pos) + 1.
+    return bisect.bisect_left(offsets, pos) + 1
 
 
 def print_timing_summary(timings: List[Tuple[str, float]]):
@@ -601,7 +627,9 @@ def get_git_diff_files(
                         "--diff-filter=ACMRT",
                         f"{base_branch}...HEAD",
                     ]
-                result = _sp.run(cmd, capture_output=True, text=True, check=True)
+                result = _sp.run(
+                    cmd, capture_output=True, text=True, check=True, timeout=15
+                )
                 all_files = [f for f in result.stdout.strip().split("\n") if f]
             except Exception:
                 return []
@@ -672,6 +700,7 @@ def get_staged_files(
                 capture_output=True,
                 text=True,
                 check=True,
+                timeout=15,
             )
             return result.stdout.strip().split("\n")
 
