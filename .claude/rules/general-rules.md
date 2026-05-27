@@ -40,7 +40,7 @@ For the full reference (variables, arrays, loops, collections, formatted loc), r
 
 For more comprehensive HOI4 scripting docs (effects, triggers, modifiers, wiki links), read `.claude/docs/documentation-references.md`.
 
-For 3D unit models — the mesh/entity/animation chain, the `<TAG>` → `<graphical_culture>` → generic entity lookup, and `gfx/entities/` organisation — read `.claude/docs/entity-system.md`.
+For 3D unit models — the mesh/entity/animation chain, the `<TAG>` → `<graphical_culture>` → generic entity lookup, and `gfx/entities/` organisation — read `.claude/docs/entity-system.md`. The same doc covers landmark buildings (state-file placement, `map/buildings.txt` spawn points, `provinces.bmp` validation, heightmap-calibrated `y`, and common rendering gotchas).
 
 # Comments
 

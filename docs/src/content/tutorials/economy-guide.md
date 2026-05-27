@@ -70,9 +70,25 @@ Millennium Dawn includes a detailed modern economy system covering revenue, gove
   - [Military Equipment Requirements](#military-equipment-requirements)
   - [Building Employment Values](#building-employment-values)
 - [MD-Specific Buildings](#md-specific-buildings)
+  - [Offices](#offices-1)
+  - [Internet Stations](#internet-stations-1)
+  - [Agriculture Districts](#agriculture-districts-1)
+  - [Microchip Plants](#microchip-plants-1)
+  - [Composite Plants](#composite-plants-1)
+  - [Energy Buildings](#energy-buildings)
+  - [Infrastructure Keystones](#infrastructure-keystones)
+- [MD-Specific Buildings](#md-specific-buildings-1)
+  - [Offices](#offices-2)
+  - [Network Infrastructure](#network-infrastructure)
+  - [Agriculture Districts](#agriculture-districts-2)
+  - [Microchip Plants](#microchip-plants-2)
+  - [Composite Plants](#composite-plants-2)
+  - [Energy Buildings](#energy-buildings-1)
+  - [Infrastructure Keystones](#infrastructure-keystones-1)
 - [Immigration](#immigration)
 - [International Investments](#international-investments)
   - [International Market](#international-market)
+  - [International Market](#international-market-1)
 - [Internal Investment](#internal-investment)
 - [Agrarian Economy](#agrarian-economy)
   - [Crop Allocation](#crop-allocation)
@@ -1054,6 +1070,67 @@ Two mutually exclusive keystone buildings provide state-wide bonuses. Only one c
 
 ---
 
+## MD-Specific Buildings
+
+Millennium Dawn adds several building types beyond the base game. These buildings generate tax revenue, produce resources, and serve key roles in the economy.
+
+### Offices
+
+Offices are a purely economic building that generates corporate tax income. They have a high tax factor of 5.0 per level — the highest of any building — making them the most efficient source of corporate tax revenue. Build offices early to boost your income.
+
+- **Building Slots**: Shares building slots with other production buildings
+- **Max Level**: 50 per state
+
+### Network Infrastructure
+
+Network infrastructure represents a country's internet and telecommunications capacity. Each level provides a **+5% state productivity growth modifier**, making it one of the best long-term investments for increasing building output.
+
+- **Max Level**: 6 per state
+- **Upkeep**: Costs a small weekly infrastructure expense per level
+
+### Agriculture Districts
+
+Agriculture districts represent a country's farming sector. They produce fuel (representing ethanol/biofuel) and local supplies. They also generate corporate tax revenue with a factor of 2.6 per level.
+
+- **Max Level**: 10 per state
+- **Produces**: Fuel and local supplies per level
+- **Shares building slots** with other production buildings
+
+### Microchip Plants
+
+Microchip plants produce **microchips**, an advanced resource used in high-tech equipment. Each level produces 20 microchips but consumes tungsten and chromium. They have a tax factor of 4.0 per level.
+
+- **Max Level**: 5 per state
+- **Resource Cost**: Tungsten and chromium per level
+- **Shares building slots** with other production buildings
+
+### Composite Plants
+
+Composite plants produce **composites**, an advanced material used in modern military and civilian equipment. Each level produces 16 composites but consumes rubber, chromium, and oil. They have a tax factor of 3.5 per level.
+
+- **Max Level**: 5 per state
+- **Resource Cost**: Rubber, chromium, and oil per level
+- **Shares building slots** with other production buildings
+
+### Energy Buildings
+
+Three building types generate electricity (see the [Electricity](#electricity) section):
+
+| Building                        | Fuel Source            | Output (base) | Max Level |
+| ------------------------------- | ---------------------- | ------------- | --------- |
+| Fossil Fuel Powerplant          | Fuel                   | 2 GW          | 20        |
+| Nuclear Reactor                 | Reactor-Grade Material | 5 GW          | 20        |
+| Renewable Energy Infrastructure | None                   | 0.5 GW        | 20        |
+
+### Infrastructure Keystones
+
+Two mutually exclusive keystone buildings provide state-wide bonuses. Only one can be built per state.
+
+- **Energy Infrastructure**: Boosts renewable energy generation, nuclear reactor construction speed, and factory repair speed. Also adds building slots.
+- **Industrial Infrastructure**: Increases resource gain efficiency per infrastructure level in the state.
+
+---
+
 ## Immigration
 
 Immigration is one way to grow your population. Migration happens automatically, but you can adjust the acceptance level by changing the stage of **Migration Laws** (found at the far right of Policies in the Politics window).
@@ -1067,6 +1144,10 @@ Immigration control costs money. Stricter restrictions cost more to enforce. The
 International investments let you fund construction projects in foreign states. Completed buildings permanently join the target state, and you earn passive income — approximately **6% annually** on your total invested value. You also gain influence over the target country with each accepted project. Up to 15 projects can run simultaneously.
 
 For a full breakdown of buildable types, costs, duration mechanics, ROI calculation, and influence gain, see the [Investments Guide](/player-tutorials/investments-guide).
+
+### International Market
+
+The International Market is a vanilla HOI4 mechanic that Millennium Dawn includes with modifications. It allows you to buy and sell **military equipment** (weapons, vehicles, aircraft, etc.) using civilian factories. In MD, it is limited to **1 civilian factory** allocated to the market. When you purchase equipment, the income is sent to the selling nation, which receives a proportional amount based on their corporate tax rate. Raw resources like oil, steel, and aluminium cannot be traded on the International Market — those are handled through the standard civilian factory trade system.
 
 ### International Market
 
