@@ -95,3 +95,122 @@ look, give them the same `graphical_culture` and define one `<graphical_culture>
 engine's culture-level lookup serves all of them. (The US breakaways were once 17 byte-identical
 per-tag copies — 4,760 entities — later consolidated into a single 280-entity
 `northamerican_gfx_*` set.)
+
+## Landmark buildings (state-placed 3D models)
+
+Landmarks (Big Ben, Statue of Liberty, Mt. Fuji, etc.) use the same mesh/entity chain but add
+two more layers: a **state-file placement** and a **map spawn point**. Both must agree on which
+province the landmark sits in, or the icon shows in the state UI while the 3D model never
+renders. Most rendering bugs are at this layer, not in the asset chain.
+
+### Five files per landmark
+
+| File                                         | Block / line                                                                 | Purpose                                                                              |
+| -------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `common/buildings/01_landmark_buildings.txt` | `landmark_<name> = { spawn_point = landmark_spawn ... }`                     | Building definition (DLC gate, modifiers, icon, scale cap, `enable_for_controllers`) |
+| `gfx/entities/landmarks.asset`               | `entity = { name = "building_landmark_<name>" pdxmesh = "..." }`             | Entity definition + scale + destruction animation states                             |
+| `gfx/entities/landmarks.gfx`                 | `pdxmesh = { name = "landmark_<name>_mesh" file = "..." }`                   | Mesh-name → `.mesh` file mapping                                                     |
+| `history/states/<id>-<Name>.txt`             | Inside `buildings = { <PROVINCE_ID> = { landmark_<name> = { level = 1 } } }` | Per-state placement of the landmark in a specific province                           |
+| `map/buildings.txt`                          | `<state_id>;landmark_spawn;<x>;<y>;<z>;<rot>;<province_id>`                  | World-space spawn coordinates used to render the model                               |
+
+If any of those is missing or inconsistent, the building either silently fails to render or
+errors out in `error.log` (`mapbuildings.cpp:679: ... not over the land - ignoring instance`).
+
+### Validating a spawn point against the province bitmap
+
+The engine determines which province a spawn sits in from `(x, z)` against `map/provinces.bmp`.
+The trailing province-id field on a `landmark_spawn` line is the explicit binding hint — it must
+match the same province that `provinces.bmp` reports at those coordinates and the same province
+the state file places the landmark in. **All three must agree**, otherwise rendering silently
+fails.
+
+Pixel-to-world coordinates: `world_x == pixel_x`, `world_z == (height - 1) - pixel_y`. Map is
+5632×2048. Province colors come from `map/definition.csv`.
+
+Audit script template (used to fix the entire landmark roster during the 2026-05 restoration):
+
+```python
+from PIL import Image
+import numpy as np, csv
+
+arr = np.array(Image.open('map/provinces.bmp')); H, W, _ = arr.shape
+hmap = np.array(Image.open('map/heightmap.bmp').convert('L'))
+color_to_pid = {}
+with open('map/definition.csv', encoding='latin-1') as f:
+    for r in csv.reader(f, delimiter=';'):
+        if r and r[0].isdigit():
+            color_to_pid[(int(r[1]), int(r[2]), int(r[3]))] = int(r[0])
+
+def prov_at(x, z):
+    px, py = int(round(x)), (H-1) - int(round(z))
+    return color_to_pid.get(tuple(arr[py, px].tolist()))
+
+def heightmap_at(x, z):
+    return int(hmap[(H-1) - int(z), int(x)])
+```
+
+To find a known-good spawn for a given province ID, take the centroid of an _eroded_ mask
+(only interior pixels) so the spawn isn't on a province border.
+
+### Y-coordinate calibration from the heightmap
+
+`map/heightmap.bmp` is a single-channel image where sea level ≈ 95. The `y` value on a
+`landmark_spawn` line must sit just above the terrain at that XZ. Empirical fit across 15
+working landmarks: `y ≈ 0.1017 × heightmap + 0.06 + 0.3 clearance`.
+
+Examples that anchored the formula:
+
+- Big Ben at (2802, 1551): heightmap 98 → y = 10.30 (terrain ~10.03, clearance 0.27)
+- Mt. Fuji at (4968, 1243): heightmap 124 → y = 12.40
+- Bojnice Castle at (3098, 1502): heightmap 141 → y = 14.70
+
+If `y` is well below terrain, the engine still accepts the line but the model renders
+underground — invisible from above. If `y` is too far above, the model floats. **Aim for
+heightmap-derived y + ~0.3 clearance.**
+
+### Common gotchas
+
+1. **"not over the land" in error.log** = the spawn's `(x, z)` falls in a sea-province pixel.
+   The trailing `province_id` doesn't help; XZ must be a land tile. Float harbours sit in sea
+   provinces — their coordinates are _not_ valid landmark spawns.
+
+2. **Co-occupancy with `naval_base` in the same province block** breaks landmark rendering.
+   The Statue of Liberty pattern (one landmark in its own dedicated province block, nothing else)
+   reliably works; combining a landmark with `naval_base = N` in the same block does not.
+   Workaround: move the other building to a different province in the state, or split blocks.
+
+3. **Map reworks silently drop `landmark_spawn` lines.** Commits 89ccbf62cc (#725) and 4da960e3c8
+   (#810) regenerated `map/buildings.txt` without preserving the existing landmark spawn entries.
+   When auditing landmark issues, `git log -S "<state_id>;landmark_spawn" -- map/buildings.txt`
+   tells you whether a spawn existed historically.
+
+4. **Same filename = vanilla file is replaced.** MD's `landmarks.gfx` / `landmarks.asset` /
+   `01_landmark_buildings.txt` override vanilla's at the file level (none of those paths are in
+   `descriptor.mod`'s `replace_path` list, but file-level shadowing applies regardless). When
+   adding a vanilla landmark to MD, the entity, mesh, and building definitions must be **copied
+   into MD's files** — they will not be merged from vanilla's. Mesh **binaries** (`.mesh`, `.dds`,
+   `.anim`) under `gfx/models/buildings/landmarks/` use path-based fallback, so MD doesn't need
+   to ship copies when vanilla's bytes are correct.
+
+5. **`enable_for_controllers` gating.** Removing it follows the Mecca pattern: any controller of
+   the state gets the modifier (good for tourism / heritage). Keeping it gates the modifier to
+   the home country only (good for strategic/military buildings like ICBM silos where a foreign
+   occupier shouldn't benefit).
+
+6. **`show_on_map = 0`** means no 3D model is drawn even if a spawn exists. The Binnenhof
+   landmark uses this — it's intentionally state-UI-only.
+
+### Quick troubleshooting flow
+
+When a landmark shows the icon in the state UI but no 3D model appears:
+
+1. Grep `map/buildings.txt` for the state's `landmark_spawn` line. If missing, that's the bug.
+2. Run `prov_at(x, z)` against the spawn's XZ. Confirm it equals the province in the state file.
+   If not, recompute the centroid of the placement province and update the spawn.
+3. Check `error.log` for `mapbuildings.cpp:679` — "not over the land" means XZ is sea, move it.
+4. Confirm the building's `dlc_allowed` matches the DLC the player has installed
+   (`~/.local/share/Steam/steamapps/common/Hearts of Iron IV/dlc/`).
+5. Verify the building's province block in the state file doesn't share with `naval_base` (the
+   Big Ben gotcha).
+6. Confirm the entity + mesh definitions exist in MD's `landmarks.asset` / `landmarks.gfx`
+   (file-level override means vanilla's are not loaded).
