@@ -76,15 +76,15 @@ Closes #M
 
 #### Bug Fixes
 
-- **Fixes #N — [Issue Title]** — [root cause in 1–2 sentences, specific: name focus ID, event ID, wrong value vs. correct value, using `backtick` for code identifiers].
+- **Fixes #N: [Issue Title].** [Root cause in 1-2 sentences, specific: name focus ID, event ID, wrong value vs. correct value, using `backtick` for code identifiers.]
 
 #### [Other grouping, e.g. "AI", "Content", "Localisation", "Validation"]
 
-- **[Component or focus/event ID]** — [what was added or changed and why].
+- **[Component or focus/event ID].** [What was added or changed and why.]
 
 ### Test plan
 
-- [Imperative step: "Play [country], take [focus] → verify [outcome]"]
+- [Imperative step: "Play [country], take [focus], verify [outcome]"]
 - [One bullet per distinct thing to verify in-game]
 ```
 
@@ -92,9 +92,10 @@ Rules:
 - Include `Closes #N` lines only when issue numbers were given. Place them above `### Summary` with one blank line between the last close and `### Summary`.
 - `#### Bug Fixes` subsection: one bullet per distinct fix. Group micro-changes (e.g., "Fixed 12 log copy-paste errors") into a single bullet.
 - Other subsections (`#### AI`, `#### Content`, etc.): include only if there are non-bug changes in that category.
-- Bold the issue reference or component name, then an em-dash (`—`) as separator. Em-dashes are allowed in the PR body markdown — do NOT use them in `Changelog.txt` or `.yml` files.
-- Be specific: name the focus ID, event ID, incorrect value, correct value, and HOI4 effect or trigger involved.
-- Test plan: one bullet per in-game action needed to verify correctness. Use the `→` arrow to separate action from expected result.
+- **Never use em dashes (`—`, U+2014) anywhere — not in the PR title, body, bullet separators, Changelog.txt, or any `.yml` file.** Replace with a colon (introducing the explanation), a period (ending the bolded prefix and starting a new sentence), or a comma (continuing the clause). Standing user rule, no exceptions even when mimicking AngriestBird's example PRs.
+- Bullet structure: bold the issue reference and title together followed by a period (`**Fixes #N: Issue Title.**`), then a space, then the description. Do not use `—` as a separator.
+- Bullet length: **2 sentences, 2–3 lines max** per fix: one sentence for the cause, one for the resolution. Name the key focus/event/decision ID and the wrong-vs-right value, but skip commit hashes, file:line citations, repro chains, and regression notes. Those belong in the commit message and the issue, not the PR body. The `Closes #N` lines at the top of the body are always preserved.
+- Test plan: one bullet per in-game action needed to verify correctness. Separate action from expected result with a comma or period, not `→` or `—`.
 
 ### 6. Check and update `Changelog.txt`
 
@@ -114,8 +115,8 @@ c. For changes **not yet listed**: write entries in the changelog format and ins
 - 1 space before the category name.
 - 2 spaces + `- ` before each entry.
 - `[TAG]` prefix for country-specific changes; no prefix for global changes.
-- Past tense, specific, no em-dashes.
-- If a change does not fit any existing category, use the closest match (e.g., a localisation fix → ` Localization:`, a script fix → ` Bugfix:`).
+- Past tense, specific, no em dashes anywhere (use `:`, `.`, or `,` per the global rule).
+- If a change does not fit any existing category, use the closest match (e.g., a localisation fix goes under ` Localization:`, a script fix under ` Bugfix:`).
 
 d. If changes were added to `Changelog.txt`, stage and commit them separately **before** creating the PR:
 
