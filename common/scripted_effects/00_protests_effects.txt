@@ -201,30 +201,35 @@ calculate_unrest_growth = {
 
 	MD_protests_compute_top_source = yes
 
-	if = {
-		limit = { has_active_mission = MD_incoming_revolt }
-		MD_protests_count_resisting_cores = yes
-	}
+	MD_protests_count_resisting_cores = yes
 
 	check_protest_trigger = yes
 }
 
 # Writes cores_resisting_count: how many core states currently have resistance.
-# Display-only — used by the revolt-state row in MD_protests_gui.
+# Also writes MD_top_resistant_state_value (0-100) and saves the worst state as
+# the global event target MD_top_resistant_state_scope so its name can be read
+# in localisation. Display-only — used by the resistant-state banner and the
+# revolt-state row in MD_protests_gui.
 # PREV (not ROOT): every_core_state switches to state scope; PREV is the country
 # that owns the iteration. ROOT depends on how this effect was entered and is unsafe.
 MD_protests_count_resisting_cores = {
 	set_variable = { cores_resisting_count = 0 }
+	set_variable = { MD_top_resistant_state_value = 0 }
 	every_core_state = {
 		limit = { has_resistance = yes }
 		PREV = { add_to_variable = { cores_resisting_count = 1 } }
+		set_temp_variable = { state_resistance_val = resistance }
+		if = {
+			limit = { check_variable = { state_resistance_val > PREV.MD_top_resistant_state_value } }
+			PREV = { set_variable = { MD_top_resistant_state_value = state_resistance_val } }
+			save_global_event_target_as = MD_top_resistant_state_scope
+		}
 	}
 }
 
-# Computes drift_total_last (sum of all source trackers) and drift_top_source
-# (1..8 identifying the largest contributor). Display-only — does not affect math.
-# Index mapping: 1=spending, 2=stability, 3=interest, 4=recession, 5=depression,
-# 6=war, 7=corruption, 8=ct. 0 = no active source.
+# Computes drift_total_last (sum of all source trackers). Display-only — used by
+# the Net last month banner. Does not affect math.
 MD_protests_compute_top_source = {
 	set_variable = { drift_total_last = drift_passive_last }
 	add_to_variable = { drift_total_last = drift_spending_last }
@@ -235,50 +240,6 @@ MD_protests_compute_top_source = {
 	add_to_variable = { drift_total_last = drift_war_last }
 	add_to_variable = { drift_total_last = drift_corruption_last }
 	add_to_variable = { drift_total_last = drift_ct_last }
-
-	set_variable = { drift_top_source = 0 }
-	set_temp_variable = { drift_top_value = 0 }
-
-	if = {
-		limit = { check_variable = { drift_spending_last > drift_top_value } }
-		set_temp_variable = { drift_top_value = drift_spending_last }
-		set_variable = { drift_top_source = 1 }
-	}
-	if = {
-		limit = { check_variable = { drift_stability_last > drift_top_value } }
-		set_temp_variable = { drift_top_value = drift_stability_last }
-		set_variable = { drift_top_source = 2 }
-	}
-	if = {
-		limit = { check_variable = { drift_interest_last > drift_top_value } }
-		set_temp_variable = { drift_top_value = drift_interest_last }
-		set_variable = { drift_top_source = 3 }
-	}
-	if = {
-		limit = { check_variable = { drift_recession_last > drift_top_value } }
-		set_temp_variable = { drift_top_value = drift_recession_last }
-		set_variable = { drift_top_source = 4 }
-	}
-	if = {
-		limit = { check_variable = { drift_depression_last > drift_top_value } }
-		set_temp_variable = { drift_top_value = drift_depression_last }
-		set_variable = { drift_top_source = 5 }
-	}
-	if = {
-		limit = { check_variable = { drift_war_last > drift_top_value } }
-		set_temp_variable = { drift_top_value = drift_war_last }
-		set_variable = { drift_top_source = 6 }
-	}
-	if = {
-		limit = { check_variable = { drift_corruption_last > drift_top_value } }
-		set_temp_variable = { drift_top_value = drift_corruption_last }
-		set_variable = { drift_top_source = 7 }
-	}
-	if = {
-		limit = { check_variable = { drift_ct_last > drift_top_value } }
-		set_temp_variable = { drift_top_value = drift_ct_last }
-		set_variable = { drift_top_source = 8 }
-	}
 }
 
 check_protest_trigger = {
