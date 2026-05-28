@@ -21,6 +21,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+import disk_cache
 from validator_common import (
     BaseValidator,
     Colors,
@@ -183,12 +184,30 @@ def process_yml_for_mandatory(args: Tuple[str]) -> List[str]:
     return results
 
 
+def _parse_loc_keys_from_text(text: str) -> List[Tuple[str, str]]:
+    """Return (key, value) pairs in file order. Pairs (not a dict) so the caller
+    can still detect within-file and cross-file duplicates exactly as before."""
+    pairs: List[Tuple[str, str]] = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if ":" not in line or "l_english:" in line or (line and line[0] == "#"):
+            continue
+        colon_idx = line.find(":")
+        if colon_idx < 0:
+            continue
+        key = line[:colon_idx].strip()
+        value = line[colon_idx + 2 :].strip()
+        pairs.append((key, value))
+    return pairs
+
+
 def get_all_loc_keys(
     mod_path: str, lowercase: bool = False
 ) -> Tuple[Dict[str, str], List[str]]:
     filepath = str(Path(mod_path) / "localisation" / "english") + "/"
     loc_dict: Dict[str, str] = {}
     duplicated_keys: List[str] = []
+    namespace = f"loc.keys.lc={int(lowercase)}"
 
     for filename in glob.iglob(filepath + "**/*.yml", recursive=True):
         text_file = FileOpener.open_text_file(
@@ -196,15 +215,14 @@ def get_all_loc_keys(
         )
         if "l_english" not in text_file:
             continue
-        for line in text_file.split("\n"):
-            line = line.strip()
-            if ":" not in line or "l_english:" in line or (line and line[0] == "#"):
-                continue
-            colon_idx = line.find(":")
-            if colon_idx < 0:
-                continue
-            key = line[:colon_idx].strip()
-            value = line[colon_idx + 2 :].strip()
+        pairs = disk_cache.per_file_cached_by_content(
+            mod_path,
+            namespace,
+            filename,
+            text_file,
+            lambda: _parse_loc_keys_from_text(text_file),
+        )
+        for key, value in pairs:
             if key in loc_dict:
                 duplicated_keys.append(key)
             else:
