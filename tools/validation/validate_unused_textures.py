@@ -116,14 +116,8 @@ def process_gfx_file(args: Tuple[str, str, Set[str], Dict[str, List[str]]]) -> S
     return referenced_textures
 
 
-def _extract_texture_refs(filename: str) -> Set[str]:
+def _extract_texture_refs(content: str) -> Set[str]:
     refs: Set[str] = set()
-    try:
-        content = FileOpener.open_text_file(
-            filename, lowercase=False, strip_comments_flag=True
-        )
-    except Exception:
-        return refs
     for pat in _TEXTURE_REF_PATTERNS:
         for match in pat.finditer(content):
             ref = match.group(1).replace("\\", "/").lstrip("/")
@@ -138,11 +132,18 @@ def process_game_file(
     # set leak into the cache). Matching against the current texture index
     # runs in the worker after the cache hit.
     filename, mod_path, texture_files, filename_lookup = args
-    refs = disk_cache.per_file_cached(
+    try:
+        content = FileOpener.open_text_file(
+            filename, lowercase=False, strip_comments_flag=True
+        )
+    except Exception:
+        content = ""
+    refs = disk_cache.per_file_cached_by_content(
         mod_path,
         "unused_textures.refs",
         filename,
-        lambda: _extract_texture_refs(filename),
+        content,
+        lambda: _extract_texture_refs(content),
     )
     matched: Set[str] = set()
     for ref in refs:

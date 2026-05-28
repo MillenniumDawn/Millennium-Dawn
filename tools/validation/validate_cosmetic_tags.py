@@ -9,6 +9,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
+import disk_cache
 from validator_common import (
     BaseValidator,
     Colors,
@@ -54,20 +55,13 @@ def process_file_for_set_cosmetic_tag(
     return counts
 
 
-def process_file_for_both_cosmetic_tags(
-    args: Tuple[str, bool],
+def _scan_both_cosmetic_tags(
+    text_file: str, basename: str
 ) -> Tuple[Dict[str, int], Dict[str, str], Dict[str, int], Dict[str, str]]:
-    # Returns (has_tags, has_paths, set_tags, set_paths). Dict values for the
-    # *_tags maps are initialised to 0 so callers can sum reference counts in.
-    filename, lowercase = args
-    text_file = FileOpener.open_text_file(
-        filename, lowercase=lowercase, strip_comments_flag=True
-    )
     has_tags: Dict[str, int] = {}
     has_paths: Dict[str, str] = {}
     set_tags: Dict[str, int] = {}
     set_paths: Dict[str, str] = {}
-    basename = os.path.basename(filename)
     if "has_cosmetic_tag =" in text_file:
         for match in re.findall(r"has_cosmetic_tag = (\S+)", text_file):
             if "[" not in match:
@@ -78,6 +72,25 @@ def process_file_for_both_cosmetic_tags(
             set_tags[match] = 0
             set_paths[match] = basename
     return (has_tags, has_paths, set_tags, set_paths)
+
+
+def process_file_for_both_cosmetic_tags(
+    args: Tuple[str, bool, str],
+) -> Tuple[Dict[str, int], Dict[str, str], Dict[str, int], Dict[str, str]]:
+    # Returns (has_tags, has_paths, set_tags, set_paths). Dict values for the
+    # *_tags maps are initialised to 0 so callers can sum reference counts in.
+    filename, lowercase, mod_path = args
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=lowercase, strip_comments_flag=True
+    )
+    basename = os.path.basename(filename)
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        f"cosmetic.both.lc={int(lowercase)}",
+        filename,
+        text_file,
+        lambda: _scan_both_cosmetic_tags(text_file, basename),
+    )
 
 
 def process_file_for_has_cosmetic_tag_lookup(args: Tuple[str, frozenset]) -> Set[str]:
@@ -126,7 +139,7 @@ class Validator(BaseValidator):
         # instead of each running its own pool scan.
         def _build():
             files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
-            args_list = [(f, False) for f in files]
+            args_list = [(f, False, self.mod_path) for f in files]
             scan_results = self._pool_map(
                 process_file_for_both_cosmetic_tags, args_list
             )

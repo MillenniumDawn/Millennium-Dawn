@@ -12,6 +12,7 @@ import re
 from pathlib import Path
 from typing import Dict, List, Set
 
+import disk_cache
 from validator_common import BaseValidator, Colors, run_validator_main, strip_comments
 
 ON_ACTIONS_FILE = "common/on_actions/MD_auto_agency_on_actions.txt"
@@ -70,14 +71,7 @@ def _line_of(text: str, offset: int) -> int:
     return text.count("\n", 0, offset) + 1
 
 
-def process_file_for_agency_calls(filepath: str):
-    """Return (create_icons, upgrade_calls) as lists of (relpath, line, value)."""
-    try:
-        raw = Path(filepath).read_text(encoding="utf-8-sig", errors="ignore")
-    except Exception:
-        return [], []
-    stripped = strip_comments(raw)
-
+def _scan_agency_calls(stripped: str, filepath: str):
     create_icons = []
     for m in CREATE_AGENCY_RE.finditer(stripped):
         body = m.group(1)
@@ -97,6 +91,23 @@ def process_file_for_agency_calls(filepath: str):
         upgrade_calls.append((filepath, line, upgrade))
 
     return create_icons, upgrade_calls
+
+
+def process_file_for_agency_calls(args):
+    """Return (create_icons, upgrade_calls) as lists of (relpath, line, value)."""
+    filepath, mod_path = args
+    try:
+        raw = Path(filepath).read_text(encoding="utf-8-sig", errors="ignore")
+    except Exception:
+        return [], []
+    stripped = strip_comments(raw)
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "agency.calls",
+        filepath,
+        stripped,
+        lambda: _scan_agency_calls(stripped, filepath),
+    )
 
 
 class Validator(BaseValidator):
@@ -371,7 +382,9 @@ class Validator(BaseValidator):
             ]
         )
         scan_results = self._pool_map(
-            process_file_for_agency_calls, files, chunksize=50
+            process_file_for_agency_calls,
+            [(f, self.mod_path) for f in files],
+            chunksize=50,
         )
 
         create_icons: List = []

@@ -22,6 +22,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+import disk_cache
 from validator_common import BaseValidator, Colors, run_validator_main, strip_comments
 
 
@@ -128,7 +129,25 @@ def _parse_tech_file(
         i += 1
 
 
-def parse_history_file(filepath: str) -> List[Tuple[Set[str], str]]:
+def _parse_history_text(content: str) -> List[Tuple[Set[str], str]]:
+    """Parse comment-stripped history text into tech sets with their context."""
+    lines = content.split("\n")
+
+    base_techs: Set[str] = set()
+    branches: List[Tuple[str, Set[str], Set[str]]] = []
+
+    _parse_history_blocks(lines, base_techs, branches)
+
+    if not branches:
+        return [(base_techs, "unconditional")]
+
+    tech_sets: List[Tuple[Set[str], str]] = []
+    _build_tech_sets(base_techs, branches, 0, set(), "", tech_sets)
+
+    return tech_sets
+
+
+def parse_history_file(filepath: str, mod_path: str) -> List[Tuple[Set[str], str]]:
     """Parse a history file and return tech sets with their context.
 
     Returns a list of (tech_set, context_label) where context_label
@@ -144,20 +163,13 @@ def parse_history_file(filepath: str) -> List[Tuple[Set[str], str]]:
         return []
 
     content = strip_comments(content)
-    lines = content.split("\n")
-
-    base_techs = set()
-    branches = []  # list of (condition_label, if_techs, else_techs)
-
-    _parse_history_blocks(lines, base_techs, branches)
-
-    if not branches:
-        return [(base_techs, "unconditional")]
-
-    tech_sets = []
-    _build_tech_sets(base_techs, branches, 0, set(), "", tech_sets)
-
-    return tech_sets
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "history_techs.history_parse",
+        filepath,
+        content,
+        lambda: _parse_history_text(content),
+    )
 
 
 def _build_tech_sets(
@@ -387,27 +399,8 @@ def _find_dlc_if_blocks(content: str) -> List[Tuple[int, int, str]]:
     return blocks
 
 
-def parse_equipment_variants(
-    filepath: str,
-) -> List[Tuple[str, Set[str], frozenset]]:
-    """Parse a history file and return every create_equipment_variant as a
-    (variant_name, set_of_module_names, dlc_gating) triple.
-
-    Only the modules listed inside the variant's `modules = { ... }` sub-block
-    are collected; `upgrades` and other sub-blocks are ignored. The literal
-    value `empty` (an unfilled slot) is skipped. Both single-line and
-    multi-line `modules` blocks are handled.
-
-    `dlc_gating` is the set of `has_dlc` conditions whose if-block encloses the
-    variant — i.e. the DLCs that must be active for the variant to exist.
-    """
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as f:
-            content = f.read()
-    except Exception:
-        return []
-
-    content = strip_comments(content)
+def _parse_variants_text(content: str) -> List[Tuple[str, Set[str], frozenset]]:
+    """Parse comment-stripped history text into create_equipment_variant triples."""
     dlc_blocks = _find_dlc_if_blocks(content)
 
     variants = []
@@ -436,8 +429,38 @@ def parse_equipment_variants(
     return variants
 
 
+def parse_equipment_variants(
+    filepath: str, mod_path: str
+) -> List[Tuple[str, Set[str], frozenset]]:
+    """Parse a history file and return every create_equipment_variant as a
+    (variant_name, set_of_module_names, dlc_gating) triple.
+
+    Only the modules listed inside the variant's `modules = { ... }` sub-block
+    are collected; `upgrades` and other sub-blocks are ignored. The literal
+    value `empty` (an unfilled slot) is skipped. Both single-line and
+    multi-line `modules` blocks are handled.
+
+    `dlc_gating` is the set of `has_dlc` conditions whose if-block encloses the
+    variant — i.e. the DLCs that must be active for the variant to exist.
+    """
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+    except Exception:
+        return []
+
+    content = strip_comments(content)
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "history_techs.variant_parse",
+        filepath,
+        content,
+        lambda: _parse_variants_text(content),
+    )
+
+
 def validate_country_equipment(
-    args: Tuple[str, Dict[str, Set[str]]],
+    args: Tuple[str, Dict[str, Set[str]], str],
 ) -> List[str]:
     """Validate that a country's equipment variants only use modules enabled by
     a technology the country has in any DLC branch. Returns error strings.
@@ -448,7 +471,7 @@ def validate_country_equipment(
     create_equipment_variant bypasses module tech checks anyway, so we
     accept any tech from any branch.
     """
-    filepath, module_techs = args
+    filepath, module_techs, mod_path = args
     filename = os.path.basename(filepath)
 
     try:
@@ -464,7 +487,7 @@ def validate_country_equipment(
 
     results = []
     seen = set()
-    for name, modules, gating in parse_equipment_variants(filepath):
+    for name, modules, gating in parse_equipment_variants(filepath, mod_path):
         have = set(base_techs)
         for condition, if_techs, else_techs in branches:
             have |= if_techs | else_techs
@@ -493,13 +516,13 @@ def validate_country_equipment(
 
 
 def validate_country_file(
-    args: Tuple[str, Dict[str, Set[str]], Set[str]],
+    args: Tuple[str, Dict[str, Set[str]], Set[str], str],
 ) -> List[str]:
     """Validate a single country history file. Returns list of error strings."""
-    filepath, prerequisites, all_techs = args
+    filepath, prerequisites, all_techs, mod_path = args
     filename = os.path.basename(filepath)
 
-    tech_sets = parse_history_file(filepath)
+    tech_sets = parse_history_file(filepath, mod_path)
     total_sets = len(tech_sets)
 
     # Track which (tech, prereq_str) errors appear in which contexts
@@ -577,7 +600,9 @@ class Validator(BaseValidator):
         files = self._get_history_files()
         self.log(f"  Found {len(files)} history files to check")
 
-        args_list = [(f, self.prerequisites, self.all_techs) for f in files]
+        args_list = [
+            (f, self.prerequisites, self.all_techs, self.mod_path) for f in files
+        ]
 
         all_results = self._pool_map(validate_country_file, args_list, chunksize=20)
 
@@ -598,7 +623,7 @@ class Validator(BaseValidator):
         files = self._get_history_files()
         self.log(f"  Found {len(files)} history files to check")
 
-        args_list = [(f, self.module_techs) for f in files]
+        args_list = [(f, self.module_techs, self.mod_path) for f in files]
 
         all_results = self._pool_map(
             validate_country_equipment, args_list, chunksize=20
