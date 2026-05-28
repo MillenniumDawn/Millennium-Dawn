@@ -118,7 +118,7 @@ calculate_unrest_growth = {
 		if = { limit = { has_country_flag = open_protests_screen }
 			set_variable = { drift_interest_last = rate_hold }
 		}
-		add_to_variable = { protest_strength = protest_drift }
+		add_to_variable = { protest_strength = rate_hold }
 	}
 
 	if = {
@@ -230,6 +230,7 @@ calculate_unrest_growth = {
 	if = { limit = { has_country_flag = open_protests_screen }
 		MD_protests_compute_top_source = yes
 		MD_protests_count_resisting_cores = yes
+		add_to_variable = { global.protest_ui_dirty = 1 }
 	}
 
 	check_protest_trigger = yes
@@ -245,14 +246,17 @@ calculate_unrest_growth = {
 MD_protests_count_resisting_cores = {
 	set_variable = { cores_resisting_count = 0 }
 	set_variable = { MD_top_resistant_state_value = 0 }
-	every_core_state = {
-		limit = { has_resistance = yes }
-		PREV = { add_to_variable = { cores_resisting_count = 1 } }
-		set_temp_variable = { state_resistance_val = resistance }
-		if = {
-			limit = { check_variable = { state_resistance_val > PREV.MD_top_resistant_state_value } }
-			PREV = { set_variable = { MD_top_resistant_state_value = state_resistance_val } }
-			save_global_event_target_as = MD_top_resistant_state_scope
+	if = {
+		limit = { has_active_mission = MD_incoming_revolt }
+		every_core_state = {
+			limit = { has_resistance = yes }
+			PREV = { add_to_variable = { cores_resisting_count = 1 } }
+			set_temp_variable = { state_resistance_val = resistance }
+			if = {
+				limit = { check_variable = { state_resistance_val > PREV.MD_top_resistant_state_value } }
+				PREV = { set_variable = { MD_top_resistant_state_value = PREV.state_resistance_val } }
+				save_global_event_target_as = MD_top_resistant_state_scope
+			}
 		}
 	}
 }
@@ -305,6 +309,7 @@ check_protest_trigger = {
 			chance = var:protest_roll
 			country_event = { id = protests.200 days = 1 }
 			activate_mission = MD_incoming_protest_movement
+			set_country_flag = MD_protest_mission_active
 		}
 	}
 }

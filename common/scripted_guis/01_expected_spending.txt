@@ -24,6 +24,7 @@ scripted_gui = {
 					MD_protests_clear_display_vars = yes
 				}
 				update_money_dirty_variable = yes
+				add_to_variable = { global.protest_ui_dirty = 1 }
 			}
 		}
 	}
@@ -32,11 +33,13 @@ scripted_gui = {
 		context_type = player_context
 		window_name = "protest_mechanic_decision_ui_window"
 
-		dirty = global.update_monie_ui
+		dirty = global.protest_ui_dirty
 
 		visible = {
 			ROOT = { has_country_flag = open_protests_screen }
 		}
+
+		ai_enabled = { always = no }
 
 		properties = {
 			welfare_spending_1_icon = {
@@ -161,14 +164,14 @@ scripted_gui = {
 			close_protest_screen_click = {
 				clr_country_flag = open_protests_screen
 				update_money_dirty_variable = yes
+				add_to_variable = { global.protest_ui_dirty = 1 }
 			}
 		}
 
 		triggers = {
 			# Lifecycle state badges — only one visible at a time
 			MD_protests_state_calm_visible = {
-				NOT = { has_active_mission = MD_incoming_protest_movement }
-				NOT = { has_active_mission = MD_incoming_revolt }
+				NOT = { has_country_flag = MD_protest_mission_active }
 				NOT = { has_country_flag = MD_protest_cooldown }
 			}
 			MD_protests_state_warning_visible = {
@@ -179,8 +182,7 @@ scripted_gui = {
 			}
 			MD_protests_state_cooldown_visible = {
 				has_country_flag = MD_protest_cooldown
-				NOT = { has_active_mission = MD_incoming_protest_movement }
-				NOT = { has_active_mission = MD_incoming_revolt }
+				NOT = { has_country_flag = MD_protest_mission_active }
 			}
 
 			# Drift source rows — render when contributing (spending shows both signs)
@@ -213,14 +215,6 @@ scripted_gui = {
 			}
 			MD_drift_passive_row_visible = {
 				check_variable = { drift_passive_last < 0 }
-			}
-
-			# Top driver banner — always visible; the loc string switches between a
-			# prompt ("Use Diagnose Unrest to reveal") and the actual top contributor
-			# based on the MD_unrest_diagnosed flag, so the right half of the banner
-			# row is always populated.
-			MD_drift_diagnosed_visible = {
-				always = yes
 			}
 
 			# Revolt-state tracker only during revolt
