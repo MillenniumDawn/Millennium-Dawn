@@ -93,6 +93,19 @@ def read_validator_counts(output_dir: str, name: str) -> Tuple[int, int]:
     return 0, 0
 
 
+def _issue_sort_key(issue: Dict):
+    line = issue.get("line", 0)
+    if not isinstance(line, int):
+        line = 0
+    return (
+        str(issue.get("file", "")),
+        line,
+        str(issue.get("severity", "")),
+        str(issue.get("category", "")),
+        str(issue.get("message", "")),
+    )
+
+
 def collect_all_issues(
     output_dir: str, validators: List[Tuple[str, str, str]]
 ) -> List[Dict]:
@@ -106,6 +119,11 @@ def collect_all_issues(
             try:
                 with open(json_path, "r", encoding="utf-8") as f:
                     issues = json.load(f)
+                    # Sort before the first-seen dedup: some validators emit
+                    # same-key (file/line/severity/category) issues in
+                    # nondeterministic order, which would otherwise make the
+                    # surviving representative vary between runs.
+                    issues.sort(key=_issue_sort_key)
                     for issue in issues:
                         key = (
                             issue.get("file", ""),

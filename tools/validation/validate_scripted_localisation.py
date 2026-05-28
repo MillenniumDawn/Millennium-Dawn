@@ -144,6 +144,7 @@ class ScriptedLocalisation:
         results = p.map(process_file_for_defined_localisations, args_list, chunksize=10)
         if not pool:
             p.close()
+            p.join()
 
         for locs_list, paths_dict in results:
             localisations.extend(locs_list)
@@ -192,6 +193,7 @@ class ScriptedLocalisation:
         results = p.map(process_file_for_used_localisations, args_list, chunksize=50)
         if not pool:
             p.close()
+            p.join()
 
         found_names = set()
         for locs_list, paths_dict in results:
