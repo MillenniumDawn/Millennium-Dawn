@@ -27,6 +27,7 @@ v2.0.0
   - [HKG] Added a CHI-side decision event for the anti-extradition crisis so puppeting goes through Beijing's choice rather than being forced from HKG's scope
   - [HKG] Added the China Naval Procurement Contracts mechanic: a decision-driven system with solicit/deliver/negotiate actions, a scripted GUI banner tracking standing, lifetime revenue, and up to 3 active contracts, plus a capstone reward
   - [HKG] Reworked the focus tree, adding a domestic aircraft carrier branch and an expanded trade and offshore-industry branch
+  - Added two biofuel Special Projects under the Energy tag: early E10 Ethanol Blending (gated on fuel_refining) and advanced FlexFuel and Butanol Synthesis (gated on fuel_efficiency4, requires E10 as parent), with SP_UNLOCK_PROJECT tooltips on both prerequisite techs (Issue #568)
 
  AI:
   - AI countries now auto-vote in UN Security Council and General Assembly votes according to their accept, reject, or abstain preferences
@@ -41,6 +42,7 @@ v2.0.0
   - Removed outdated TODO comment from negotiate_operative_release
   - Added AI desire logic to all 6 satellite access request actions (request_mil/civ_gnss/com/spy_access): +100 to request from friends, -100 to avoid requesting from foes, +50 bonus when provider has a strictly superior system tier
   - Added explicit base = 0 to all 6 offer_* and 6 revoke_* satellite actions for consistency with the rest of the codebase
+  - Added an auto-reject toggle in the satellite-management screen: when enabled, AI countries will not initiate any satellite-access request against the player; human players can still propose access manually (Issue #1243)
   - Added employment-based staffing triggers (can_staff_an_industrial_complex, can_staff_an_arms_industry, can_staff_an_dockyard, can_staff_an_offices) to prevent AI from taking construction focuses when it cannot staff the resulting building
   - Applied staffing triggers to 9 generic focus tree construction focuses (civilian factories, military factories, dockyards)
   - [SER] Applied staffing triggers to 17 construction focuses (10 civilian, 5 military, 3 offices)
@@ -134,6 +136,11 @@ v2.0.0
   - Reduced AI air assault brigade template from 15 to 12 battalions
   - Fixed AI marines generic template incorrectly using Light_armor_Bat instead of armor_Bat
   - Reverted DEPLOY_MIN_EQUIPMENT_WAR_FACTOR from 0.60 to 0.90 (vanilla) so AI waits until divisions are 90% equipped before deploying during wartime
+  - [ITA] Added DEFAULT handler to ITA_ai_behavior game rule so the AI always gets a strategy plan when the rule is left at default, biased toward the historical Democratic Party path (Issue #177)
+  - [ITA] Reweighted ITA RANDOM ai_behavior list toward historical coalitions: Democratic Party and Forza at 50 weight, other paths at 10 to 20 (Issue #177)
+  - Removed propaganda_campaign_decision and its mutual exclusion blocks from all three combat influencer decisions; cleaned up its money system cost calculation, scripted localisation entry, and loc keys
+  - Rebalanced combat_foreign_influence: reduced percent_change from 3.5 to 2.5 and softened AI modifier factors from 2 to 1.5
+  - Overhauled AI weights for combat influencer decisions: corrected variable scope errors, switched to step-based domestic influence scaling, added same-bloc ally de-influence penalty for NATO/EU members, added financial guard, and fixed second influencer threshold
 
  Balance:
   - Increased naval_strike_attack on all anti-ship drone missile modules
@@ -273,6 +280,12 @@ v2.0.0
   - Reduced generic_military_intervention modifier values (volunteers/lend lease tension from -0.50 to -0.25, volunteer divisions required from -0.25 to -0.15, guarantee tension from -0.25 to -0.15, trade opinion factor from 0.25 to 0.15)
   - Increased internet station state building cap from 6 to 11
   - [BRA] AI now more likely to take the administrative reform focus when corruption is high
+  - [ITA] Trimmed Italy's starting multipurpose modifier values: interest rate multiplier from -5 to -3, stability factor from -0.1 to -0.05, research speed from -0.1 to -0.05, building speed from -0.05 to -0.03, and reform expectance drift base from -0.14 to -0.07 (Issue #1130)
+  - [ITA] Softened ruling-party popularity to stability feedback from 0.15 to 0.08 to slow the late-game stability spiral (Issue #1130)
+  - [ITA] Clamped the reform expectancy stability component so a stability spiral cannot compound reform pressure past the 30% stability floor (Issue #1130)
+  - [ITA] Halved the mafia-strength stability drain coefficient from -0.005 to -0.0025 (Issue #1130)
+  - [ITA] Clamped ITA_stability_factor_var to plus or minus 0.2 to prevent runaway accumulation from the weekly stability modifier (Issue #1130)
+  - Rebalanced landmark bonuses to a small stability boost plus tourism income for whichever country owns the state
 
  Bugfix:
   - Removed the empty political_advisor slots in the government idea category that left the engine "You can select a: Political Advisor" alert nagging forever with no UI to fill them (Issue #786); intel advisor characters remain defined pending a follow-up assignment system
@@ -334,6 +347,11 @@ v2.0.0
   - [MAL] Fixed malformed Gotterdammerung DLC if/else block preventing air defense techs from being set
   - [ALG] Fixed ALG_national_space_program focus error caused by referencing ALG_urbanization_initiatives before it was defined
   - Fixed 3 no-op swap_ideas in healthcare budget increase effects where health_06 was swapped to itself at max tier
+  - [ARM] Fixed ARM_tourism_calculate Azer region awarding 0.031 treasury instead of 0.015 in the 20-weight random_list option (copy-paste from Armenia region)
+  - [ARM] Fixed ARM_multigroup_script skipping idea tier 1 (idea upgraded directly to idea2)
+  - [ARM] Fixed ARM_multigroup_destroy_script missing idea7 to idea6 step-down block
+  - [ARM] Fixed ARM_it_sector_idea7 projects_cost_modifier stalling at -0.30 instead of progressing to -0.35
+  - [ARM] Fixed ARM_armenian_mafia_3 industrial_capacity_factory set to -0.9 (90% penalty) instead of -0.09
   - [ARM] Fixed unreachable else_if in ARM_shadow_economy_bad_script with duplicate condition for ARM_economy_shady_idea1
   - [ARM] Fixed Armenia Union State path never granting union status: arme.14 (Kocharyan) and arme.222 (anarchist-communist) only set a flag and an idea on Russia instead of establishing the autonomy; both now mirror the working russia_governorate.23 pattern with proper accept/reject options that grant ARM the autonomy and all nine Union State ideas (Issue #1284)
   - [SOV] Fixed Constantine Petrov "Speak in the State Duma" event setting the SOV_did_not_allow_duma_to_speak flag on the wrong option, inverting the KOB focus branch's allow_branch gate and making the player's speech choice cosmetic; also added a defensive flag clear in sov_other.37 so the coup completes SOV_kob_party_start regardless of trigger source (Issue #1273)
@@ -616,6 +634,16 @@ v2.0.0
   - [RAJ/PAK/CHI] Fixed the Kashmir border clash decision categories firing for the overlord when India was a puppet of a third-party country; the category visible blocks only blocked the puppet-of-each-other and same-faction cases, so RAJ AI kept taking attack decisions and pulling the overlord's troops and generals (including field marshals) onto the Indian border via start_border_war — added is_subject = no checks for both belligerents in each category (Issue #1473)
   - [BLR/EGY/SOV] Cleaned up the fertilizer-capacity variable writes in BLR_GrodnoAzot, BLR_Chinese_kal, EGY_evergrow, and SOV_economic_grodno_annex; the initialisers used redundant TAG-prefixed set_variable while tooltips read the bare names, so the writes now match the loc and the rest of the focus-tree convention (Issue #1442)
   - Fixed the Anti-Ship Drone Missile modules contributing nothing when paired with conventional naval armament on the same plane; the five tiers now apply a small flat baseline plus a multiplier to naval strike attack and targetting on naval bomber and port strike missions, so the drones act as a force multiplier on whatever primary anti-ship weapon the plane carries (Issue #1166)
+  - [ITA/GER] Fixed AI and player investment building nuclear reactors in countries with a policy ban; added country_can_build_nuclear_reactors scripted trigger that both the investment GUI gate (investments_building_reactor_available) and the AI investment scorer (AI_get_nuclear_reactor_score) consult, covering ITA_nuclear_power_banned and GER_idea_carbon_neutral (Issue #1130)
+  - [ITA] Fixed mafia event spam firing 2 to 6 events per month even when all four organisations were at Negligible strength; counter increments now gate by the relevant organisation's strength tier (Negligible skips entirely, Low at 25%, Medium and Endemic at 50%) with a 14-day global cooldown (Issue #1130)
+  - Fixed civil-war participants being dismissed from NATO and flagged by the EU breach-of-values system as starting an offensive war; added has_civil_war guards to dismissal_rule_offensive_war and check_breach_of_EU_value, and excluded same-original_tag enemies from the EU peace check
+  - [HKG] Fixed HKG_carrier_construction calling a non-existent decision unlock_eastern_maritime_shipbuilding_group; the focus now sets the eastern_maritime_shipbuilding_group_unlocked country flag and emits the MIO unlock tooltip, so completing the carrier branch actually grants the Eastern Maritime Shipbuilding Group MIO (Issue #1505)
+  - [CMW] Fixed the Parliament of the Commonwealth focus re-establishing elections for generic-tree countries like Taliban-led Afghanistan; the joint_focus completion_reward broadcasts to every participant, so the enable_elections call now lives in completion_reward_joint_originator and iterates Commonwealth members explicitly via every_country (Issue #1507)
+  - Fixed licensed attack helicopters rendering as tanks because no generic attack_helicopter_1/2/3_entity existed; added the missing fallback entities reusing SOV_Mi24_mesh so any country without a TAG- or culture-specific override now shows a helicopter (Issue #1467)
+  - Fixed medium walker hull (super_heavy_tank_chassis) variants being unbuildable because every walker armament, leg, drone, and defensive module copy-pasted forbid_equipment_type_exact_match = armor from regular tank modules, stripping the chassis' super-heavy-tank role and forcing the design to save as SPG which the medium_walker_battalion could not accept (Issue #1468)
+  - Fixed ahead-of-time inconsistencies on 74 late-game techs across 12 files (AI, robotics, computing, electrification, battery storage, composite production, AA/AT/artillery upgrades, AWACS, fighters, helicopters, naval modules, hypersonics, camouflage) where start_year did not match the visual row macro; start_year and the matching ai_will_do date guards now align with the tree position the player sees (Issue #1510)
+  - Fixed every internal-faction preview tooltip displaying all multipliers as 0% on factions the country had not yet added, making 1200 PP "add faction" decisions look pointless; the *_opinion_tt tooltips now lead with a shared header explaining that effects scale with opinion (0% at 50, max at 100) and show 0% until the faction is active (Issue #1516)
+  - [GER] Fixed El Radii Class frigate variant using tier-3 ASM and VLS-SAM modules without the enabling tech; downgraded to module_asm_2 and module_vls_sam_2 to match Germany's starting naval tech (tier 2) and bring the variant in line with the other GER frigate_hull_3 designs (Brandenburg, MEKO Anzac)
 
  Content:
   - New Content for North korea and South Korea post reuification and unification
@@ -783,6 +811,8 @@ v2.0.0
   - Added Nuclear Bomb Special Project completed to nations who completed the Nuclear Warhead Special Project
   - Renamed BUL focus tree, events, and ideas files to 05_ prefix convention (05_bulgaria.txt)
   - Moved some industry from Eastern Quebec to Western Quebec: added offices, arms factory, agriculture district, and internet station to Western Quebec; reduced offices and arms factory in Eastern Quebec
+  - Added state_fossil_fuel_energy_generation_modifier and state_nuclear_energy_generation_modifier so content can boost per-state fossil and nuclear output the same way state_renewable_energy_generation_modifier already covers renewables; energy_infrastructure building now grants +10% to all three state energy modifiers, replacing its old slot/repair/nuclear-construction bonuses (Issue #84)
+  - Split energy_use_modifier_mils into separate energy_use_modifier_mils (arms_factory only) and energy_use_modifier_dockyards so the two building types can be tuned independently; energy consumption tooltip now shows arms_factory and dockyard rows separately (Issue #84)
 
  Factions:
   - Added a new faction goal "Establish an Airborne Corps"
@@ -826,6 +856,13 @@ v2.0.0
   - Deleted stray empty test file and entirely-commented-out ___MD_infantry_units.asset/.gfx
   - Fixed UKR entity filename double-underscore typo (UKR__MD_ to UKR_MD_) and ___MD_tanks_and_vechicles spelling
   - Removed unused Eastern European special forces technology sprite entries that referenced missing DDS files
+  - Fixed and restored all 3D models that were previously broken in the 1.12.x build
+    - Restored landmarks now rendering: Big Ben, Statue of Liberty, Mount Fuji, Golden Gate Bridge, Minot ICBM silos
+    - NOTE: Eiffel Tower and Big Ben are DLC locked as we use the vanilla models for these
+  - Integrated missing vanilla DLC based landmarks that were missing from various DLC
+    - Hagia Sophia, Forbidden City, Tokyo Imperial Palace, Taj Mahal, Prague Castle, Bojnice Castle, Sa'dabad Complex
+  - Removed the Volkshalle landmark (doesn't fit a 2000s setting)
+  - Fixed the Trade Agreement diplomatic request icon clipping with a white line on the right side (Issue #458)
 
  Game Rules:
   - Added "Allow AI Conditional Peace Offers" game rule (default: off) to toggle whether AI nations can initiate monthly Conditional Peace Deals; requires the parent "Allow Conditional Peace Deals" rule to be enabled
@@ -878,6 +915,10 @@ v2.0.0
   - [HOL] Fixed missing closing quote on 5 HOL_voc_india_gujurat_rebellion*_desc localisation entries
   - [JAP] Fixed depopulation national spirit descriptions displaying "§Y2 4 years§!" instead of "§Y2 to 4 years§!" across five national spirit desc keys
   - Fixed [From.GetXxx] scope keyword capitalization to [FROM.GetXxx] throughout the events localisation file
+  - Refreshed landmark descriptions for the 2000s setting and consolidated all landmark loc into a single file for easier maintenance
+  - Fixed artillery tech tier labels — artillery_4 was "ART 2035" at the 2045 row and artillery_5 was "ART 2045" at the 2065 row; relabelled to match the actual 20-year tech unlock cadence (Issue #1511)
+  - Fixed nine broken dynamic-modifier tooltip substitutions in MD_dm_modifiers (mobilization_laws, trade_laws, economy, political_advisor, tank/naval/aircraft/materiel manufacturer, and industrial concern cost factors) that referenced non-existent loc tokens and spammed the error log (Issue #1504)
+  - Added display strings and tooltip helpers for the elite_forces_doctrine_cost_factor and equipment_doctrine_cost_factor modifiers so they render with the army doctrine cost icon in idea and dynamic_modifier tooltips, and removed the orphan special_forces_doctrine_cost_factor_tt entry that pointed at a non-existent modifier (Issue #662)
 
  Map:
   - HMNB Clyde is now properly represented with a Level 8 Naval Base + Naval Headquarters for the UK's Nuclear Submarines deployment
@@ -894,6 +935,7 @@ v2.0.0
   - Removed junk map modes that were lingering in the files and not adding anything
 
  Performance:
+  - [ENG] Replaced the is_commonwealth_member dynamic-modifier lookup with a global.commonwealth_member id array; the array is populated from the 54 Commonwealth history files and kept in sync at the Rwanda event and the denounce-Commonwealth decision (Issue #1515)
   - The international systems GUI dirty counter is now only bumped from player-initiated paths, preventing AI voters and recognition grants from waking every open GUI
   - Added dirty variable (global.CPD_dirty) to the Conditional Peace Deal GUI so it only refreshes on player interaction instead of per-tick
   - AI paths in the peace deal system no longer bump the GUI dirty variable, preventing unnecessary GUI refreshes for all players when the AI builds deals
@@ -903,6 +945,12 @@ v2.0.0
   - Converted more add AI strategy to save performance in the long term and reduce the save games
   - Optimized some early European Union initialization to be more performant in the early game when loading histories
   - Refactored the power ranking system so it's 33% faster on the weekly ticks to improve tick speed
+  - [ARM] Consolidated ARM scripted effects from 4872 to 2685 lines: extracted shared helpers, grouped 65 state integration blocks by focus condition, replaced 9 Kurdish rebellion blocks with for_each_loop, restructured tourism calculation from 15 random_lists to 3 (Issue #1453)
+  - [ARM] Consolidated ARM scripted triggers from 1126 to 372 lines: extracted shared emigration triggers, grouped state availability checks
+  - Extracted NATO_major_non_nato_ally_join scripted effect, replacing 23 inline add_ideas + every_other_country loops across 27 focus trees and 3 event files
+  - Replaced every_other_country EU member loops with for_each_scope_loop on global.EU_member array across 27 focus trees and ARM events
+  - Rebalanced Major Non-NATO Ally decision AI weights and added faction membership guards to prevent allies of SOV/CHI from applying
+  - Removed duplicate NATO_apply_to_become_major_non_nato_ally decision from Political Decisions (consolidated into NATO.txt)
   - Improved the weekly tick by reordering/shifting content around and reducing the check count to better optimize the mod
   - Moved the European Union's checking of EU breach of values to monthly
   - [BUL] Replaced ~30 static hidden ideas with 3 dynamic modifiers and removed associated scripted localisation
@@ -949,6 +997,8 @@ v2.0.0
   - Reduced duplicate model definitions to improve performance by relying on graphical culture groups
   - Removed 249 orphaned pdxmesh definitions to reduce mod load time and memory footprint (Issue #1393)
   - Removed 9 redundant country flags that mirrored idea lifetimes by swapping check sites to has_idea ([POL] depression flag, [NKO] 8 SPA bonus flags)
+  - Converted 127 two-bucket random_list calls with an empty bucket to random = { chance = N effect } across 42 files for a lighter engine path; three-plus-bucket and two-non-empty-bucket lists are preserved as random_list
+  - [SOV] Consolidated three Gazprom/Rosneft capitalisation_*_calculate clusters into single init-add-apply units (5 gas-stream blocks, 7 Gazprom oil-province blocks, 8 Rosneft oil-province blocks): drops ~120 lines from 99_SOV_scripted_effects.txt and 20 redundant _support helper calls per monthly tick (Issue #1452)
 
  Quality of Life:
   - [GER] BFV GUI now updates immediately on button clicks instead of waiting for the next daily tick
@@ -969,6 +1019,7 @@ v2.0.0
   - Ensured that voicelines for various nations are saved in the proper format as to prevent nonsense errors in the logs
 
  Technology:
+  - Gated infrastructure building levels 1-5 behind the civilian rail research path so level 5 is no longer available at game start (Issue #1400)
   - Consolidated naval technology categories: merged CAT_n_cv and CAT_cv into CAT_carrier; merged CAT_lha and CAT_lpd into CAT_helicopter_operators
   - Removed CAT_slbm and CAT_conventional_warhead technology categories
   - Removed commented-out MIRV, MARV, and HGV tech tree branches from ICBM and IRBM research trees

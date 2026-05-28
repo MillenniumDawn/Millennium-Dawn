@@ -343,6 +343,50 @@ multiply_variable = { var = my_ratio value = 0.01 }
 
 ---
 
+## Prefer `random` Over Two-Bucket `random_list` With an Empty Side
+
+When a `random_list` has exactly two buckets and one of them is empty (a "do nothing" placeholder for the "miss" case), collapse it to `random = { chance = N effect }`. Same semantics, lighter engine path, less script.
+
+### Before
+
+```
+random_list = {
+    50 = { add_to_variable = { event_counter = 1 } }
+    50 = {}
+}
+```
+
+or with the empty bucket first:
+
+```
+random_list = {
+    80 = { }
+    20 = { increase_corruption = yes }
+}
+```
+
+### After
+
+```
+random = {
+    chance = 50
+    add_to_variable = { event_counter = 1 }
+}
+```
+
+```
+random = {
+    chance = 20
+    increase_corruption = yes
+}
+```
+
+**Why:** `random_list` builds a weighted-list dispatch table internally; the engine resolves the active bucket on every fire. `random = { chance = N effect }` is a direct Bernoulli trial — one roll, branch, done. The pattern is also less code and easier to read at a glance: the player/dev sees the probability and the effect together.
+
+**When NOT to convert:** Three or more buckets, or two non-empty buckets with different effects. Those genuinely need `random_list`. The chance value also has to be the weight of the non-empty bucket — `random_list = { 80 = {} 20 = { effect } }` becomes `random = { chance = 20 effect }`, not `chance = 80`.
+
+---
+
 ## Add Mutual Exclusion Guards When Splitting `every_country` with `OR`
 
 When converting a single `every_country = { limit = { OR = { A B } } }` into separate loops (e.g., one per array), add exclusion limits so countries matching multiple conditions don't receive effects twice.
