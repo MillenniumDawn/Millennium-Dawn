@@ -36,6 +36,11 @@ VANILLA_LOC_KEYS = {
     "SP_UNLOCK_PROJECT",
     "SP_UNLOCK_TECH",
     "available_scientist_one_line_tt",
+    # Vanilla HOI4 building name keys (mod overrides only the _desc variants)
+    "air_base",
+    "infrastructure",
+    "nuclear_reactor",
+    "radar_station",
     # Vanilla US Congress keys borrowed from MTG
     "mtg_usa_congress_add_state_tt",
     "mtg_usa_congress_large_opposition_tt",

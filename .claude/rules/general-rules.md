@@ -386,3 +386,6 @@ option = {
 ```
 
 Copy-pasting from option A and forgetting to update to `.b` is a common source of misleading logs.
+
+## Ignore Resources folder
+When making a plan or making a change, ignore any files in `resources/`

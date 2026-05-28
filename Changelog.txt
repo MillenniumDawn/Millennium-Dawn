@@ -42,6 +42,7 @@ v2.0.0
   - Removed outdated TODO comment from negotiate_operative_release
   - Added AI desire logic to all 6 satellite access request actions (request_mil/civ_gnss/com/spy_access): +100 to request from friends, -100 to avoid requesting from foes, +50 bonus when provider has a strictly superior system tier
   - Added explicit base = 0 to all 6 offer_* and 6 revoke_* satellite actions for consistency with the rest of the codebase
+  - Added an auto-reject toggle in the satellite-management screen: when enabled, AI countries will not initiate any satellite-access request against the player; human players can still propose access manually (Issue #1243)
   - Added employment-based staffing triggers (can_staff_an_industrial_complex, can_staff_an_arms_industry, can_staff_an_dockyard, can_staff_an_offices) to prevent AI from taking construction focuses when it cannot staff the resulting building
   - Applied staffing triggers to 9 generic focus tree construction focuses (civilian factories, military factories, dockyards)
   - [SER] Applied staffing triggers to 17 construction focuses (10 civilian, 5 military, 3 offices)
@@ -631,6 +632,8 @@ v2.0.0
   - Fixed licensed attack helicopters rendering as tanks because no generic attack_helicopter_1/2/3_entity existed; added the missing fallback entities reusing SOV_Mi24_mesh so any country without a TAG- or culture-specific override now shows a helicopter (Issue #1467)
   - Fixed medium walker hull (super_heavy_tank_chassis) variants being unbuildable because every walker armament, leg, drone, and defensive module copy-pasted forbid_equipment_type_exact_match = armor from regular tank modules, stripping the chassis' super-heavy-tank role and forcing the design to save as SPG which the medium_walker_battalion could not accept (Issue #1468)
   - Fixed ahead-of-time inconsistencies on 74 late-game techs across 12 files (AI, robotics, computing, electrification, battery storage, composite production, AA/AT/artillery upgrades, AWACS, fighters, helicopters, naval modules, hypersonics, camouflage) where start_year did not match the visual row macro; start_year and the matching ai_will_do date guards now align with the tree position the player sees (Issue #1510)
+  - Fixed every internal-faction preview tooltip displaying all multipliers as 0% on factions the country had not yet added, making 1200 PP "add faction" decisions look pointless; the *_opinion_tt tooltips now lead with a shared header explaining that effects scale with opinion (0% at 50, max at 100) and show 0% until the faction is active (Issue #1516)
+  - [GER] Fixed El Radii Class frigate variant using tier-3 ASM and VLS-SAM modules without the enabling tech; downgraded to module_asm_2 and module_vls_sam_2 to match Germany's starting naval tech (tier 2) and bring the variant in line with the other GER frigate_hull_3 designs (Brandenburg, MEKO Anzac)
 
  Content:
   - New Content for North korea and South Korea post reuification and unification
@@ -798,6 +801,8 @@ v2.0.0
   - Added Nuclear Bomb Special Project completed to nations who completed the Nuclear Warhead Special Project
   - Renamed BUL focus tree, events, and ideas files to 05_ prefix convention (05_bulgaria.txt)
   - Moved some industry from Eastern Quebec to Western Quebec: added offices, arms factory, agriculture district, and internet station to Western Quebec; reduced offices and arms factory in Eastern Quebec
+  - Added state_fossil_fuel_energy_generation_modifier and state_nuclear_energy_generation_modifier so content can boost per-state fossil and nuclear output the same way state_renewable_energy_generation_modifier already covers renewables; energy_infrastructure building now grants +10% to all three state energy modifiers, replacing its old slot/repair/nuclear-construction bonuses (Issue #84)
+  - Split energy_use_modifier_mils into separate energy_use_modifier_mils (arms_factory only) and energy_use_modifier_dockyards so the two building types can be tuned independently; energy consumption tooltip now shows arms_factory and dockyard rows separately (Issue #84)
 
  Factions:
   - Added a new faction goal "Establish an Airborne Corps"
@@ -903,6 +908,7 @@ v2.0.0
   - Refreshed landmark descriptions for the 2000s setting and consolidated all landmark loc into a single file for easier maintenance
   - Fixed artillery tech tier labels — artillery_4 was "ART 2035" at the 2045 row and artillery_5 was "ART 2045" at the 2065 row; relabelled to match the actual 20-year tech unlock cadence (Issue #1511)
   - Fixed nine broken dynamic-modifier tooltip substitutions in MD_dm_modifiers (mobilization_laws, trade_laws, economy, political_advisor, tank/naval/aircraft/materiel manufacturer, and industrial concern cost factors) that referenced non-existent loc tokens and spammed the error log (Issue #1504)
+  - Added display strings and tooltip helpers for the elite_forces_doctrine_cost_factor and equipment_doctrine_cost_factor modifiers so they render with the army doctrine cost icon in idea and dynamic_modifier tooltips, and removed the orphan special_forces_doctrine_cost_factor_tt entry that pointed at a non-existent modifier (Issue #662)
 
  Map:
   - HMNB Clyde is now properly represented with a Level 8 Naval Base + Naval Headquarters for the UK's Nuclear Submarines deployment
@@ -919,6 +925,7 @@ v2.0.0
   - Removed junk map modes that were lingering in the files and not adding anything
 
  Performance:
+  - [ENG] Replaced the is_commonwealth_member dynamic-modifier lookup with a global.commonwealth_member id array; the array is populated from the 54 Commonwealth history files and kept in sync at the Rwanda event and the denounce-Commonwealth decision (Issue #1515)
   - The international systems GUI dirty counter is now only bumped from player-initiated paths, preventing AI voters and recognition grants from waking every open GUI
   - Added dirty variable (global.CPD_dirty) to the Conditional Peace Deal GUI so it only refreshes on player interaction instead of per-tick
   - AI paths in the peace deal system no longer bump the GUI dirty variable, preventing unnecessary GUI refreshes for all players when the AI builds deals
@@ -980,6 +987,7 @@ v2.0.0
   - Reduced duplicate model definitions to improve performance by relying on graphical culture groups
   - Removed 249 orphaned pdxmesh definitions to reduce mod load time and memory footprint (Issue #1393)
   - Removed 9 redundant country flags that mirrored idea lifetimes by swapping check sites to has_idea ([POL] depression flag, [NKO] 8 SPA bonus flags)
+  - [SOV] Consolidated three Gazprom/Rosneft capitalisation_*_calculate clusters into single init-add-apply units (5 gas-stream blocks, 7 Gazprom oil-province blocks, 8 Rosneft oil-province blocks): drops ~120 lines from 99_SOV_scripted_effects.txt and 20 redundant _support helper calls per monthly tick (Issue #1452)
 
  Quality of Life:
   - [GER] BFV GUI now updates immediately on button clicks instead of waiting for the next daily tick
@@ -1000,6 +1008,7 @@ v2.0.0
   - Ensured that voicelines for various nations are saved in the proper format as to prevent nonsense errors in the logs
 
  Technology:
+  - Gated infrastructure building levels 1-5 behind the civilian rail research path so level 5 is no longer available at game start (Issue #1400)
   - Consolidated naval technology categories: merged CAT_n_cv and CAT_cv into CAT_carrier; merged CAT_lha and CAT_lpd into CAT_helicopter_operators
   - Removed CAT_slbm and CAT_conventional_warhead technology categories
   - Removed commented-out MIRV, MARV, and HGV tech tree branches from ICBM and IRBM research trees
