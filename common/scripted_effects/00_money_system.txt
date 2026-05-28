@@ -3182,17 +3182,7 @@ calculate_additional_expense_rate = {
 
 			add_to_variable = { additional_expenses_rate = promote_outlook_salafist_costs }
 		}
-		if = {
-			limit = { has_decision = propaganda_campaign_decision }
-			set_variable = { propaganda_campaign_influence_decision_costs = gdp_total }
-			multiply_variable = { propaganda_campaign_influence_decision_costs = 0.001 }
 
-			set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
-			add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
-			multiply_variable = { propaganda_campaign_influence_decision_costs = propaganda_campaign_cost_modifier }
-
-			add_to_variable = { additional_expenses_rate = propaganda_campaign_influence_decision_costs }
-		}
 		# NOTE: For now the AI do not lease factories. Do not count these.
 		set_temp_variable = { gdp_per_capita_leasing_multiplier = gdp_per_capita }
 		multiply_temp_variable = { gdp_per_capita_leasing_multiplier = 0.001 }
@@ -4001,15 +3991,25 @@ update_display = {
 	set_variable = { resource_to_tax_income = resource_sale_rate } #t these next 2 lines are to get resource export income divided by tax income (pop and corp), then use this ratio as one of the prerequisites for when rentier state cancels so it's not just based on resource extraction as % of GDP
 	clamp_variable = { var = tax_gain min = 0.001 }
 	divide_variable = { resource_to_tax_income = tax_gain }
-	if = { limit = { NOT = { has_country_flag = int_reinvestment_flag } }
+	if = { limit = { check_variable = { int_reinvest_mode = 2 } }
+		set_temp_variable = { _split_display_rate = int_investments_rate }
+		multiply_temp_variable = { _split_display_rate = 0.5 }
+		add_to_variable = { display_income = _split_display_rate }
+	}
+	else_if = { limit = { NOT = { check_variable = { int_reinvest_mode = 1 } } }
 		add_to_variable = { display_income = int_investments_rate }
 	}
 	add_to_variable = { display_income = additional_income_rate }
 
 	# Adjusted Potential Income to the international investments so that people can't exploit the incoming financial collapse
 	set_variable = { potential_income = display_income }
-	if = { limit = { has_country_flag = int_reinvestment_flag }
+	if = { limit = { check_variable = { int_reinvest_mode = 1 } }
 		add_to_variable = { potential_income = int_investments_rate }
+	}
+	else_if = { limit = { check_variable = { int_reinvest_mode = 2 } }
+		set_temp_variable = { _split_potential_rate = int_investments_rate }
+		multiply_temp_variable = { _split_potential_rate = 0.5 }
+		add_to_variable = { potential_income = _split_potential_rate }
 	}
 
 	# Adjust Potential Expense to Include the Debt Rate
@@ -4167,6 +4167,8 @@ update_state_variables = {
 	set_variable = { var = dockyard_fac value = 0 }
 	set_variable = { var = fuel_silos value = 0 }
 	set_variable = { var = state_renewable_energy_var value = 0 }
+	set_variable = { var = state_fossil_energy_var value = 0 }
+	set_variable = { var = state_nuclear_energy_var value = 0 }
 	set_variable = { var = minimum_renewable_energy_var value = 0 }
 	set_variable = { var = maximum_renewable_energy_var value = 1 }
 	set_variable = { var = hydroelectric_energy_generation value = 0 }
@@ -4253,6 +4255,25 @@ update_state_variables = {
 				add_to_variable = { var = PREV.minimum_renewable_energy_var value = min_state_renewable_generation }
 				add_to_variable = { var = PREV.maximum_renewable_energy_var value = max_state_renewable_generation }
 				add_to_variable = { var = PREV.state_renewable_energy_var value = state_renewable_generation }
+			}
+
+			# Per-state building output only; country idea bonuses to fossil_energy_gain stay applied at the country level
+			if = { limit = { check_variable = { building_level@fossil_powerplant > 0 } }
+				set_temp_variable = { var = state_fossil_generation value = building_level@fossil_powerplant }
+				multiply_temp_variable = { var = state_fossil_generation value = 2 } #base power of a fossil powerplant
+				set_temp_variable = { var = state_fossil_generation_modifier value = 1 }
+				add_to_temp_variable = { var = state_fossil_generation_modifier value = THIS.modifier@state_fossil_fuel_energy_generation_modifier }
+				multiply_temp_variable = { var = state_fossil_generation value = state_fossil_generation_modifier }
+				add_to_variable = { var = PREV.state_fossil_energy_var value = state_fossil_generation }
+			}
+
+			if = { limit = { check_variable = { building_level@nuclear_reactor > 0 } }
+				set_temp_variable = { var = state_nuclear_generation value = building_level@nuclear_reactor }
+				multiply_temp_variable = { var = state_nuclear_generation value = 4 } #base power of a nuclear reactor
+				set_temp_variable = { var = state_nuclear_generation_modifier value = 1 }
+				add_to_temp_variable = { var = state_nuclear_generation_modifier value = THIS.modifier@state_nuclear_energy_generation_modifier }
+				multiply_temp_variable = { var = state_nuclear_generation value = state_nuclear_generation_modifier }
+				add_to_variable = { var = PREV.state_nuclear_energy_var value = state_nuclear_generation }
 			}
 
 			set_temp_variable = { var = temp_pop value = state_population_k } #in thousands

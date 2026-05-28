@@ -165,11 +165,11 @@ def energy_consumption(states, modifier_stack, gdpc):
         for b, c in s["buildings"].items():
             buildings[b] += c
 
-    # Engine groups arms_factory + dockyard under the "mils" energy modifier and
-    # industrial_complex under "civs"; the rest use a per-type modifier key.
+    # Engine groups industrial_complex under "civs"; arms_factory and dockyard each have a dedicated modifier;
+    # the rest use a per-type modifier key.
     BUILDING_MODIFIER_KEY = {
         "arms_factory": "energy_use_modifier_mils",
-        "dockyard": "energy_use_modifier_mils",
+        "dockyard": "energy_use_modifier_dockyards",
         "industrial_complex": "energy_use_modifier_civs",
     }
     bldg_energy = 0
