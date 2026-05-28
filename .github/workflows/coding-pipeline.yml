@@ -269,10 +269,20 @@ jobs:
               history
               localisation
               tools
+          - script: validate_set_variables.py
+            name: set-variables
+            title: "Set Variable References"
+            # informational: ~89 pre-existing unused-variable findings on main
+            # need triage. Switch to --strict once the backlog is cleared.
+            strict: false
+            sparse: |
+              common
+              events
+              history
+              localisation
+              tools
           # NOTE: validate_defines.py needs vanilla HOI4 files (not checked in)
           # so it only runs as a pre-commit hook on contributors' machines.
-          # validate_set_variables.py is intentionally not wired anywhere
-          # (false-positive volume at repo scale makes it noisy as a gate).
           # validate_unused_textures.py is intentionally not wired here either
           # — ~22k pre-existing unreferenced textures make it a periodic
           # mod-size audit, not a per-PR signal. Run manually via
@@ -300,10 +310,10 @@ jobs:
       uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: .validation_cache
-        key: validators-v1-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}
+        key: validators-v3-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}
         restore-keys: |
-          validators-v1-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-
-          validators-v1-${{ runner.os }}-${{ matrix.validator.name }}-
+          validators-v3-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-
+          validators-v3-${{ runner.os }}-${{ matrix.validator.name }}-
 
     - name: Run validation
       # Per-matrix opt-out: `strict: false` makes the validator informational
@@ -478,10 +488,10 @@ jobs:
       uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
         path: .validation_cache
-        key: validators-v1-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}
+        key: validators-v3-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-${{ hashFiles('tools/validation/**', 'tools/shared_utils.py') }}
         restore-keys: |
-          validators-v1-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-
-          validators-v1-${{ runner.os }}-${{ matrix.validator.name }}-
+          validators-v3-${{ runner.os }}-${{ matrix.validator.name }}-${{ github.event.pull_request.base.sha }}-
+          validators-v3-${{ runner.os }}-${{ matrix.validator.name }}-
     - name: Run validation
       if: matrix.validator.should_run == 'true'
       run: |
