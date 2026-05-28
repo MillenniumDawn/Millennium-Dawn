@@ -446,19 +446,16 @@
 			add_to_variable = { sacra_corona_unita_strength = 0.002 }
 		}
 	}
-	# Counter increments are gated by the relevant organisation's strength tier
-	# (mirrors the loc thresholds: <0.10 Negligible, <0.40 Low, <0.666 Medium, ≥0.666 High).
-	# Negligible silences increments entirely. A 14-day global cooldown caps total mafia
-	# event frequency so even at High tier the worst case is ~2 events/month, not 6+.
+	# Strength-tier gates mirror loc thresholds (<0.10 Negligible, <0.40 Low, etc.)
+	# and a 14-day global cooldown caps total event frequency at ~2/month.
 	mafia_event_counters = {
-		# Decrement global cooldown (called weekly, so subtract 7 days each tick).
 		if = {
 			limit = { check_variable = { ITA_mafia_event_cd_days > 0 } }
 			subtract_from_variable = { ITA_mafia_event_cd_days = 7 }
 			clamp_variable = { var = ITA_mafia_event_cd_days min = 0 }
 		}
 
-		#recurring mafia events (general) — gated by overall mafia_strength
+		#general
 		if = {
 			limit = { check_variable = { mafia_strength > 0.399 } }
 			random = {
@@ -474,7 +471,7 @@
 			}
 		}
 
-		#sicily — gated by cosa_nostra_strength
+		#sicily
 		if = {
 			limit = { check_variable = { cosa_nostra_strength > 0.399 } }
 			random = { chance = 50 add_to_variable = { event_counter_1_sicily = 1 } }
@@ -490,7 +487,7 @@
 			random = { chance = 25 add_to_variable = { event_counter_4_sicily = 1 } }
 		}
 
-		#campania — gated by camorra_strength
+		#campania
 		if = {
 			limit = { check_variable = { camorra_strength > 0.399 } }
 			random = { chance = 50 add_to_variable = { event_counter_1_campania = 1 } }
@@ -506,7 +503,7 @@
 			random = { chance = 25 add_to_variable = { event_counter_4_campania = 1 } }
 		}
 
-		#calabria — gated by ndrangheta_strength
+		#calabria
 		if = {
 			limit = { check_variable = { ndrangheta_strength > 0.399 } }
 			random = { chance = 50 add_to_variable = { event_counter_1_calabria = 1 } }
@@ -522,7 +519,7 @@
 			random = { chance = 25 add_to_variable = { event_counter_4_calabria = 1 } }
 		}
 
-		#puglia — gated by sacra_corona_unita_strength
+		#puglia
 		if = {
 			limit = { check_variable = { sacra_corona_unita_strength > 0.399 } }
 			random = { chance = 50 add_to_variable = { event_counter_1_puglia = 1 } }
@@ -538,9 +535,7 @@
 			random = { chance = 25 add_to_variable = { event_counter_4_puglia = 1 } }
 		}
 
-		# Threshold fires are gated by the global 14-day cooldown. Skipping all 17
-		# threshold-counter checks when cooldown is active is the early-out — inner
-		# cd-checks remain so the first fire in a cooldown-free tick locks out the rest.
+		# Only one mafia event fires per 14-day cooldown window.
 		if = {
 			limit = { check_variable = { ITA_mafia_event_cd_days < 1 } }
 
@@ -1539,8 +1534,7 @@
 		}
 	}
 	reform_expectance_from_situation = {
-		#stability effect — clamp stability used in the formula at 0.3 minimum so a
-		#stability spiral can't push reform expectancy through the roof
+		# Clamp stability input at 0.3 so a spiral can't compound reform pressure indefinitely
 		set_temp_variable = { reform_stab_clamped = stability }
 		clamp_temp_variable = { var = reform_stab_clamped min = 0.3 max = 1.0 }
 		set_temp_variable = { reform_expectance_from_stability = 0.6 }
