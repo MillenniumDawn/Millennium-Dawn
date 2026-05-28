@@ -209,10 +209,15 @@ class SetVariables:
             process_file_for_set_variables, lowercase=lowercase, mod_path=mod_path
         )
 
-        p = pool if pool else Pool(processes=workers)
-        results = p.map(process_func, files_to_scan, chunksize=50)
-        if not pool:
-            p.close()
+        if pool is not None:
+            # Reuse the caller's pool (e.g. the shared self._pool); it owns the
+            # lifecycle, so don't close it here.
+            results = pool.map(process_func, files_to_scan, chunksize=50)
+        elif workers == 1:
+            results = [process_func(f) for f in files_to_scan]
+        else:
+            with Pool(processes=workers) as p:
+                results = p.map(process_func, files_to_scan, chunksize=50)
 
         for vars_list, paths_dict in results:
             variables.extend(vars_list)
@@ -245,6 +250,7 @@ class Validator(BaseValidator):
             return_paths=True,
             staged_files=self.staged_files,
             workers=self.workers,
+            pool=self._pool,
         )
 
         unique_vars = {}
