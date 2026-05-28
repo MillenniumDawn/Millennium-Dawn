@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
-##########################
-# Comprehensive Variable and Event Target Validation Script (Multiprocessing Optimized)
-# Validates flags (country/state/global) and event targets
-# Checks for: cleared but not set, used but not set, and unused items
-# Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
-# Optimized with multiprocessing for significantly faster execution
-##########################
+# Variable and event target validation: checks flags (country/state/global) and
+# event targets for cleared-but-not-set, used-but-not-set, and unused items.
+# Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323).
 import glob
 import os
 import re
@@ -24,8 +20,7 @@ from validator_common import (
     should_skip_file,
 )
 
-# Module-level regex for per-file flag-syntax check (process_file_for_flag_syntax).
-# Compiled once per worker process import instead of once per file scanned.
+# Compiled at module load (once per worker process) instead of once per file scanned.
 _FLAG_BLOCK_RE = re.compile(
     r"\bset_(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{[^}]*\}",
 )

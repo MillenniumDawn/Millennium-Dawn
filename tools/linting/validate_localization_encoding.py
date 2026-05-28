@@ -40,7 +40,7 @@ class LocalizationValidator:
             True if file is valid or was fixed, False if errors occurred
         """
         try:
-            # Read file in binary mode to check BOM
+            # Binary mode so the BOM bytes are visible rather than stripped on decode
             with open(file_path, "rb") as f:
                 content = f.read()
 
@@ -55,7 +55,6 @@ class LocalizationValidator:
                     )
                     return False
 
-            # Verify the file is valid UTF-8
             try:
                 with open(file_path, "r", encoding="utf-8-sig") as f:
                     f.read()
@@ -82,10 +81,9 @@ class LocalizationValidator:
             True if file was fixed successfully, False otherwise
         """
         try:
-            # Verify content is valid UTF-8 before fixing
+            # Reject non-UTF-8 input before prepending a BOM would corrupt it
             content.decode("utf-8")
 
-            # Add BOM and write back
             with open(file_path, "wb") as f:
                 f.write(codecs.BOM_UTF8 + content)
 
@@ -136,7 +134,6 @@ class LocalizationValidator:
             for msg in self.errors:
                 print(msg, file=sys.stderr)
 
-        # Print summary counts
         total = len(self.valid) + len(self.fixed) + len(self.errors)
         if total > 1:
             print(
@@ -189,7 +186,6 @@ Examples:
 
     args = parser.parse_args()
 
-    # Determine which files to check
     if args.files:
         files = [Path(f) for f in args.files]
     else:
@@ -202,7 +198,6 @@ Examples:
             )
             return 1
 
-    # Validate files
     validator = LocalizationValidator(fix_mode=args.fix)
     success = validator.validate_files(files)
     validator.print_summary()

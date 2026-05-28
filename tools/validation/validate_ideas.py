@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-##########################
-# Idea Validation Script
-# Validates idea definitions and usage in Millennium Dawn
+# Idea validation: checks idea definitions and usage in Millennium Dawn.
 # Checks for:
 #   1. Undefined idea references (has_idea / add_ideas / remove_ideas / swap_ideas)
 #   2. Redundant allowed_civil_war = { always = no } (HOI4 default)
@@ -15,7 +13,6 @@
 #      (matching or absent) desc, where switching the duplicates to `name = <base>`
 #      lets you drop the redundant loc keys. Advisory only — never an error.
 #   6. Missing localisation keys for ideas (opt-in: --missing-loc)
-##########################
 import os
 import re
 import sys
@@ -422,7 +419,6 @@ class Validator(BaseValidator):
         self._log_section("Checking for undefined idea references...")
         self.log(f"  Known defined ideas: {len(defined_ideas)}")
 
-        # Scan all .txt files for idea references
         scan_files = self._collect_files(
             [
                 "common/national_focus/**/*.txt",
@@ -687,7 +683,6 @@ class Validator(BaseValidator):
         self.log(f"  Found {len(defined_ideas)} defined ideas total")
 
         if self.staged_only:
-            # In staged mode, only run quality checks on staged idea files
             staged_files_set = set(self.staged_files or [])
             staged_issues = {
                 fp: issues
@@ -703,7 +698,6 @@ class Validator(BaseValidator):
                 self.validate_idea_quality(staged_issues)
             else:
                 self.log("  No staged idea files — skipping quality checks")
-            # Undefined refs: only scan staged files for broken references
             self.validate_undefined_idea_refs(defined_ideas)
             ideas_for_consolidation = staged_ideas_by_file
         else:

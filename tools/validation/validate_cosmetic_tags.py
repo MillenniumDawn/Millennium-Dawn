@@ -1,14 +1,8 @@
 #!/usr/bin/env python3
-##########################
-# Cosmetic Tag Validation Script (Multiprocessing Optimized)
-# Validates cosmetic tag definitions and usage
-# Checks for:
-#   1. Missing cosmetic tags (has_cosmetic_tag but never set_cosmetic_tag)
-#   2. Unused cosmetic tags (set_cosmetic_tag but never referenced)
-#   3. Unused cosmetic tag colors (defined in cosmetic.txt but never set)
+# Validate cosmetic tag definitions and usage: missing tags (has_cosmetic_tag
+# but never set), unused tags (set but never referenced), and unused tag colors
+# (defined in cosmetic.txt but never set).
 # Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
-# Adapted for Millennium Dawn with multiprocessing
-##########################
 import glob
 import os
 import re
@@ -44,7 +38,9 @@ def _should_skip(filename: str) -> bool:
 # --- Multiprocessing helpers ---
 
 
-def process_file_for_set_cosmetic_tag(args: Tuple[str, bool]) -> Dict[str, int]:
+def process_file_for_set_cosmetic_tag(
+    args: Tuple[str, bool, List[str]],
+) -> Dict[str, int]:
     filename, lowercase, tags_to_find = args
     text_file = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True

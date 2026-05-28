@@ -1,15 +1,7 @@
 #!/usr/bin/env python3
-##########################
-# AI Role Reference Validation Script
-# Cross-references role_ratio and build_army references in AI strategy files
-# against role definitions in AI template files.
-#
-# Checks:
-#   1. Collects all valid role names from common/ai_templates/*.txt
-#   2. Finds all role_ratio id = X and build_army id = X in common/ai_strategy/*.txt
-#   3. Reports any referenced role not found in the template definitions
-#   4. Suggests closest match for likely typos
-##########################
+# Cross-reference role_ratio and build_army role references in
+# common/ai_strategy/*.txt against role definitions in common/ai_templates/*.txt
+# (plus known vanilla roles), suggesting the closest match for likely typos.
 import difflib
 import glob
 import os

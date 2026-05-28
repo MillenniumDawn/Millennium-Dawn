@@ -24,13 +24,10 @@ _TEXTURE_REF_PATTERNS = [
 ]
 _DOUBLE_SLASH = re.compile(r"/{2,}")
 
-# Texture file extensions to search for
 TEXTURE_EXTENSIONS = [".dds", ".tga", ".png"]
 
-# Skip patterns for known directories that should be excluded
 EXTRA_SKIP_PATTERNS = ["resources", "loadingscreens"]
 
-# Common Hearts of Iron IV installation paths
 COMMON_HOI4_PATHS = [
     # Linux (Steam)
     os.path.expanduser(
@@ -97,9 +94,7 @@ def process_gfx_file(args: Tuple[str, str, Set[str], Dict[str, List[str]]]) -> S
             matches = re.finditer(pattern, content, re.IGNORECASE)
             for match in matches:
                 texture_path = match.group(1)
-                # Normalize the path (remove leading slashes, convert backslashes, collapse multiple slashes)
                 texture_path = texture_path.replace("\\", "/").lstrip("/")
-                # Collapse multiple slashes into single slash
                 while "//" in texture_path:
                     texture_path = texture_path.replace("//", "/")
 
@@ -239,7 +234,6 @@ class Validator(BaseValidator):
         gfx_files = self._find_all_gfx_files(search_path)
         self.log(f"  Found {len(gfx_files)} {label} .gfx files to process")
 
-        # Prepare arguments for multiprocessing
         args_list = [
             (
                 f,
@@ -252,7 +246,6 @@ class Validator(BaseValidator):
 
         all_results = self._pool_map(process_gfx_file, args_list, chunksize=10)
 
-        # Combine all results
         referenced_textures = set()
         for texture_set in all_results:
             referenced_textures.update(texture_set)
@@ -277,7 +270,6 @@ class Validator(BaseValidator):
 
         self.log(f"  Found {len(game_files)} game files to scan")
 
-        # Prepare arguments for multiprocessing
         args_list = [
             (f, self.mod_path, self.texture_files, self.texture_filename_lookup)
             for f in game_files
@@ -285,7 +277,6 @@ class Validator(BaseValidator):
 
         all_results = self._pool_map(process_game_file, args_list, chunksize=10)
 
-        # Combine all results
         matched_textures = set()
         for texture_set in all_results:
             matched_textures.update(texture_set)
@@ -295,7 +286,6 @@ class Validator(BaseValidator):
     def validate_unused_textures(self):
         self._log_section("Finding all texture files in gfx/...")
 
-        # Find all texture files
         self.texture_files = find_texture_files(self.mod_path)
         self.log(f"  Found {len(self.texture_files)} texture files")
 
@@ -309,13 +299,11 @@ class Validator(BaseValidator):
 
         self._log_section("Scanning .gfx files for texture references...")
 
-        # Get all referenced textures from mod
         self.referenced_textures = self._get_all_referenced_textures(label="mod")
         self.log(
             f"  Found {len(self.referenced_textures)} unique texture references in mod"
         )
 
-        # Get all referenced textures from vanilla (if available)
         if self.hoi4_path:
             self._log_section("Scanning vanilla HoI4 .gfx files...")
             self.vanilla_referenced_textures = self._get_all_referenced_textures(
@@ -325,7 +313,6 @@ class Validator(BaseValidator):
                 f"  Found {len(self.vanilla_referenced_textures)} unique texture references in vanilla"
             )
 
-        # Get texture references from game files (common/, history/, events/, portraits/)
         self._log_section(
             "Scanning game files (common/history/events/portraits) for texture references..."
         )

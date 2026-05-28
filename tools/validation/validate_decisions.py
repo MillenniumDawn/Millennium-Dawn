@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-##########################
-# Decision Validation Script (Multiprocessing Optimized)
-# Validates decision definitions and usage
+# Decision validation: checks decision definitions and usage.
+# Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
+# adapted for Millennium Dawn with multiprocessing.
 # Checks for:
 #   1. Duplicated decisions
 #   2. Unused decisions (always=no in allowed but never manually activated)
@@ -27,9 +27,6 @@
 #  22. Mission-only attributes on regular decisions (silently ignored)
 #  23. remove_effect without days_remove or remove_trigger (dead code)
 #  24. targets_dynamic / target_non_existing without targets (meaningless)
-# Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
-# Adapted for Millennium Dawn with multiprocessing
-##########################
 import glob
 import os
 import re
@@ -283,7 +280,6 @@ def parse_all_decisions(
 
     def _parse():
         filepath = str(Path(mod_path) / "common" / "decisions")
-        # Pre-compile pattern once
         _decisions_pattern = re.compile(
             r"^\t[^\t#]+ = \{.*?^\t\}", flags=re.MULTILINE | re.DOTALL
         )
@@ -353,7 +349,6 @@ def parse_decision_categories(
     def _parse():
         filepath = str(Path(mod_path) / "common" / "decisions" / "categories")
         categories = {}
-        # Pre-compile patterns once
         _cat_pattern = re.compile(r"^\w* = \{.*?^\}", flags=re.DOTALL | re.MULTILINE)
         _name_pattern = re.compile(r"^(.*) = \{")
 
@@ -381,7 +376,6 @@ def parse_categories_with_decisions(
     """Parse categories with their decisions - reuses category cache."""
 
     def _parse():
-        # Reuse the categories cache instead of re-parsing
         categories = parse_decision_categories(mod_path, lowercase, visible_when_empty)
         category_names = list(categories.keys())
 

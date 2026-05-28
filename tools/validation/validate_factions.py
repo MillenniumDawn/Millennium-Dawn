@@ -1,22 +1,7 @@
 #!/usr/bin/env python3
-##########################
-# Faction System Validation Script
-# Cross-references faction templates, goals, rules, manifests, upgrades, and icons
-# to catch broken references that cause crashes or silent failures.
-#
-# Checks:
-#   1. Template manifest references exist
-#   2. Template goal references exist
-#   3. Template default_rules references exist
-#   4. Template icon references exist in pool or interface
-#   5. Rule group references exist
-#   6. Rule types are valid engine types
-#   7. No duplicate template IDs
-#   8. No duplicate goal IDs
-#   9. No duplicate rule IDs
-#  10. Upgrade group references exist
-#  11. Orphaned manifests (warnings)
-##########################
+# Cross-reference faction templates, goals, rules, manifests, upgrades, and icons
+# to catch broken references and duplicate IDs that cause crashes or silent
+# failures, and warn about orphaned manifests.
 import glob
 import os
 import re
@@ -166,7 +151,7 @@ class Validator(BaseValidator):
             for block_id in extract_block_ids(content):
                 fname = os.path.basename(filepath)
                 if block_id in self.template_ids:
-                    pass  # Duplicate check happens later
+                    pass  # collection intentionally does not dedup; _validate_duplicate_templates reports duplicates
                 self.template_ids[block_id] = fname
 
         # Collect goal and manifest IDs from goals/

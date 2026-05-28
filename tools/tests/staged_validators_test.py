@@ -26,7 +26,6 @@ os.chdir(REPO_ROOT)
 # Maximum seconds a staged validator should take
 MAX_TIME = 5.0
 
-# Track results
 passed = 0
 failed = 0
 errors = []
@@ -72,14 +71,12 @@ def run_validator(script, label, expect_issues=True):
     ok = True
     status_parts = []
 
-    # Check timing
     if elapsed > MAX_TIME:
         ok = False
         status_parts.append(f"TOO SLOW ({elapsed:.1f}s > {MAX_TIME}s)")
     else:
         status_parts.append(f"{elapsed:.2f}s")
 
-    # Check exit code
     if expect_issues and result.returncode == 0:
         ok = False
         status_parts.append("expected issues but validator passed")

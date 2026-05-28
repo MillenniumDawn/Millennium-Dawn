@@ -1,36 +1,12 @@
 #!/usr/bin/env python3
-##########################
-# Agency Upgrade Validation Script
-# Treats common/intelligence_agency_upgrades/*.txt as the source of truth and
-# verifies every defined upgrade is fully integrated across the mod:
-#
-#   - common/on_actions/MD_auto_agency_on_actions.txt (registry arrays)
-#   - localisation/english/MD_auto_agency_l_english.yml (loc key triples)
-#   - interface/*.gfx (sprite definitions referenced by picture/_gfx loc)
-#   - common/scripted_guis/00_MD_auto_agency_scripted_gui.txt (prereq refs)
-#
-# Purpose: when a contributor adds a new intelligence agency upgrade, this
-# validator flags every place it must also be wired up so nothing silently
-# falls out of the auto-agency system. It also cross-checks every
-# `create_intelligence_agency` and `upgrade_intelligence_agency` call across
-# the mod to make sure icons and upgrade names are valid.
-#
-# Checks:
-#   1. Every upgrade_X definition is registered in the auto-agency arrays
-#      (global.agency_upgrades / _names / _gfx / _max_upgrades) and vice versa
-#   2. global.agency_max_upgrades^N equals the number of level = { } blocks
-#   3. Every indexed MD_auto_agency_NN_* key triple (id/_name/_gfx) exists
-#      in loc and the _gfx value matches the upgrade's `picture` field
-#   4. Every GFX sprite referenced by `picture =` or the _gfx loc value
-#      is defined in some .gfx file
-#   5. resize_array size matches the registered index count (no gaps)
-#   6. has_done_agency_upgrade references in scripted_guis resolve to real
-#      upgrade names
-#   7. Every `create_intelligence_agency = { icon = GFX_X ... }` across the
-#      mod references a sprite defined in some .gfx file
-#   8. Every `upgrade_intelligence_agency = upgrade_X` call references an
-#      upgrade defined in common/intelligence_agency_upgrades/
-##########################
+# Treat common/intelligence_agency_upgrades/*.txt as the source of truth and
+# verify every defined upgrade is fully integrated across the mod: the
+# auto-agency registry arrays, the loc key triples, the GFX sprites, and the
+# scripted-GUI prerequisites. When a contributor adds a new upgrade, this flags
+# every place it must also be wired up so nothing silently falls out of the
+# auto-agency system. It also cross-checks every create_intelligence_agency and
+# upgrade_intelligence_agency call mod-wide to confirm icons and upgrade names
+# are valid.
 import glob
 import re
 from pathlib import Path

@@ -10,10 +10,10 @@ def find_flags(content):
     """Extract all flags from set_country_flag syntax patterns."""
     flags = set()
 
-    # Pattern 1: set_country_flag = FLAG_NAME
     flags.update(re.findall(r"set_country_flag\s*=\s*([A-Za-z0-9_]+)", content))
 
-    # Pattern 2: flag = FLAG_NAME (inside set_country_flag blocks)
+    # Only match the bare `flag = X` form when the file uses set_country_flag,
+    # to avoid catching unrelated `flag = ...` assignments.
     if "set_country_flag" in content:
         flags.update(re.findall(r"flag\s*=\s*([A-Za-z0-9_]+)", content))
 
@@ -22,17 +22,15 @@ def find_flags(content):
 
 def should_skip(root, filename):
     """Check if file should be skipped."""
-    # Skip hidden files
     if filename.startswith("."):
         return True
 
     root_lower = root.lower()
 
-    # Skip gfx folder (binary files)
+    # gfx holds binary assets, not flag-bearing script
     if "gfx" in root_lower.split(os.sep):
         return True
 
-    # Skip localisation files
     if "localisation" in root_lower or "localization" in root_lower:
         if filename.endswith((".yml", ".yaml", ".csv")):
             return True
@@ -48,7 +46,6 @@ def scan_directory(search_dir):
 
     print("Reading files...", end="", flush=True)
 
-    # Single pass: read all files and find flags
     for root, dirs, files in os.walk(search_dir):
         # Remove hidden, localisation, and gfx directories
         dirs[:] = [
@@ -69,7 +66,6 @@ def scan_directory(search_dir):
                     content = f.read()
                     file_contents[filepath] = content
 
-                    # Find flags in this file
                     flags = find_flags(content)
                     all_flags.update(flags)
 
@@ -82,16 +78,14 @@ def scan_directory(search_dir):
 
     print(f" Done! ({files_processed} files)\n")
 
-    # Now count references for each flag - search per file instead of per flag
+    # Count references by scanning each file once, not each flag once (faster)
     print("Analyzing flag references...")
     flag_references = defaultdict(lambda: defaultdict(int))
 
     flags_processed = 0
     for filepath, content in file_contents.items():
-        # Check which flags appear in this file
         for flag in all_flags:
             if flag in content:
-                # Count occurrences using simple count (very fast)
                 flag_references[flag][filepath] = content.count(flag)
 
         flags_processed += 1
@@ -104,10 +98,12 @@ def scan_directory(search_dir):
 
     print(f"\r  Processed {flags_processed}/{len(file_contents)} files... Done!\n")
 
+    return all_flags, flag_references
+
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: python check_flags.py <directory>")
+        print("Usage: python flag-reference-checker.py <directory>")
         sys.exit(1)
 
     search_dir = sys.argv[1]

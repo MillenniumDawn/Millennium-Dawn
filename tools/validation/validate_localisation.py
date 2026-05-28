@@ -136,9 +136,9 @@ def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[str]:
         if "#" in line or line.strip() in ["", "l_english:"]:
             continue
         if "\u00a7" in line and "desc_end" not in line and "U.S.C." not in line:
-            # Skip \u00a7-balance checks for keys consumed via $KEY$ substitution \u2014
-            # those keys intentionally split their \u00a7 codes across multiple values
-            # (one ends with \u00a7Y, another supplies \u00a7!) so the merged result is balanced.
+            # Skip \u00a7-balance checks for keys consumed via $KEY$ substitution: those
+            # keys intentionally split their \u00a7 codes across multiple values (one ends
+            # with \u00a7Y, another supplies \u00a7!) so only the merged result is balanced.
             key_match = _LINE_KEY_RE.match(line)
             if key_match and key_match.group(1) in subst_keys:
                 continue
@@ -609,7 +609,6 @@ class Validator(BaseValidator):
             return
 
         # 1. Collect all tooltip keys referenced in script, GUI, and scripted loc files.
-        #    Use pool_map for parallel file scanning instead of a serial loop.
         referenced_in_scripts: set = set(scripted_loc_keys)
         txt_patterns = [
             r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)",

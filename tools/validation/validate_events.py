@@ -35,7 +35,6 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = ["FR_loc"]
 
-# Pre-compiled pattern for the long-form check (used in pool worker)
 _LONG_FORM_PATTERN = re.compile(
     r"\b((?:country|news|state|unit_leader|character|operative)_event)\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
 )

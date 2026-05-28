@@ -1,9 +1,6 @@
 #!/usr/bin/env python
-###############################################################################
-# Run all validation scripts in parallel (cross-platform)
-# Usage:
-#   python run_all_validators.py [--staged] [--strict] [--no-color] [--format json]
-###############################################################################
+# Run all validation scripts in parallel (cross-platform).
+# Usage: python run_all_validators.py [--staged] [--strict] [--no-color] [--format json]
 import argparse
 import glob
 import json

@@ -77,7 +77,6 @@ def _scan_event_file(filepath: str) -> Tuple[Set[str], Set[str]]:
     except Exception:
         return defined_ids, triggered_only_ids
 
-    # Strip comments
     text = re.sub(r"#[^\n]*", "", text)
 
     for m in _EVENT_BLOCK_OPEN_RE.finditer(text):
@@ -232,7 +231,6 @@ def _scan_on_action_block(
             eid = entry.group(1)
             _record(eid, body_offset + entry.start())
 
-    # Collect long-form calls
     for m in _LONG_FORM_EVENT_RE.finditer(text):
         _record(m.group(1), m.start())
 
@@ -266,15 +264,12 @@ def _parse_on_actions_file(
         return all_refs, all_dupes
 
     relpath = filepath
-    # Strip comments
     text_clean = re.sub(r"#[^\n]*", "", text)
 
-    # Locate the outer on_actions = { ... } wrapper and iterate on_action blocks
     outer_re = re.compile(r"\bon_actions\s*=\s*\{")
     trigger_open_re = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*\{")
 
     for outer_m in outer_re.finditer(text_clean):
-        # Find the body of the on_actions block
         start = outer_m.end()
         depth = 1
         i = start
@@ -312,7 +307,6 @@ def _parse_on_actions_file(
                 pos = tm.end()
                 continue
 
-            # Extract this trigger block's body
             bstart = tm.end()
             bdepth = 1
             bi = bstart

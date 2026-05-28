@@ -29,7 +29,6 @@ def check_braces(file_path):
     except Exception as e:
         return False, [f"Error reading file: {e}"]
 
-    # Track brace depth and positions
     brace_stack = []
     line_num = 1
     col_num = 1
@@ -69,7 +68,6 @@ def check_braces(file_path):
             else:
                 brace_stack.pop()
 
-    # Check for unclosed braces
     if brace_stack:
         for line, col in brace_stack:
             errors.append(
