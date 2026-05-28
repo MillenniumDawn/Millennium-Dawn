@@ -95,12 +95,20 @@ def _is_md_gui_file(filepath: str) -> bool:
 
 _BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
 _LINE_COMMENT_RE = re.compile(r"//.*")
+_HASH_COMMENT_RE = re.compile(r"#.*")
 
 
-def _strip_cstyle_comments(text: str) -> str:
-    """Remove // line comments and /* block comments from Clausewitz GUI/GFX text."""
+def _strip_comments(text: str) -> str:
+    """Remove comments from Clausewitz GUI/GFX text.
+
+    `#` is the actual Clausewitz line-comment marker (interface/*.gui|*.gfx use
+    it almost exclusively); `//` and `/* */` are also stripped for safety. Without
+    `#` stripping, sprite references inside commented-out blocks leak through and
+    are wrongly reported as missing.
+    """
     text = _BLOCK_COMMENT_RE.sub("", text)
     text = _LINE_COMMENT_RE.sub("", text)
+    text = _HASH_COMMENT_RE.sub("", text)
     return text
 
 
@@ -243,7 +251,7 @@ def _parse_gfx_file(filepath: str) -> Set[str]:
     except Exception:
         return set()
 
-    text = _strip_cstyle_comments(raw)
+    text = _strip_comments(raw)
     names: Set[str] = set()
 
     # Walk sprite-type block openers and extract the name inside each block.
@@ -275,7 +283,7 @@ def _parse_gui_file(
     except Exception:
         return []
 
-    text = _strip_cstyle_comments(raw)
+    text = _strip_comments(raw)
     offsets = compute_line_offsets(raw)
     results = []
     for m in _GUI_REF.finditer(text):
