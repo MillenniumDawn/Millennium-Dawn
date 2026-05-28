@@ -99,6 +99,26 @@ NOT = {
 }
 ```
 
+## Use `random` over two-bucket `random_list`
+
+A `random_list` with exactly two buckets where one is empty is a Bernoulli trial wearing the wrong syntax. Collapse it:
+
+```
+# Heavier — weighted-list dispatch with a placeholder bucket
+random_list = {
+    50 = { add_to_variable = { my_counter = 1 } }
+    50 = {}
+}
+
+# Lighter — direct probability roll
+random = {
+    chance = 50
+    add_to_variable = { my_counter = 1 }
+}
+```
+
+Three+ buckets, or two non-empty buckets with different effects, must stay as `random_list`. See `.claude/docs/simplification-patterns.md` for edge cases.
+
 ## Tautological OR in ai_will_do modifiers
 
 An `OR` block inside an `ai_will_do modifier` that covers all possible values of a trigger is always true and does nothing useful:
@@ -386,3 +406,6 @@ option = {
 ```
 
 Copy-pasting from option A and forgetting to update to `.b` is a common source of misleading logs.
+
+## Ignore Resources folder
+When making a plan or making a change, ignore any files in `resources/`

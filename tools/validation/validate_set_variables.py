@@ -25,15 +25,45 @@ from validator_common import (
     should_skip_file,
 )
 
-# 25 chars on each side covers `set_variable = {` plus a short var name.
-SET_CONTEXT_WINDOW = 25
+# Look-behind window for deciding whether a matched variable is the left-hand
+# target of a `set_variable` assignment. `set_variable = {` is 17 chars; 40
+# gives margin while staying tight enough never to reach a prior statement.
+SET_LOOKBACK_WINDOW = 40
 
 _SET_SHORT_RE = re.compile(r"set_variable = ([^ \t\n\}]+)")
+# Char class includes A-Z so tag-prefixed targets (e.g. GER_event_counter_1_wot,
+# ITA_ageing_population_var) are captured whole instead of having their uppercase
+# prefix silently dropped — which previously made every such name fail to match
+# its own reads and get reported as unused.
 _SET_LONG_RE = re.compile(
-    r"set_variable = \{[^}]*?([a-z0-9_@\.\^\[\]]+)\s*=",
+    r"set_variable = \{[^}]*?([A-Za-z0-9_@\.\^\[\]]+)\s*=",
     flags=re.MULTILINE | re.DOTALL,
 )
 _SET_LONG_RESERVED = frozenset(("value", "days", "months", "years", "hours"))
+
+# A matched variable is a set-target when `set_variable = {?` sits immediately
+# before it (only whitespace, an optional brace, and an optional scope chain
+# between). Anchored at the end of the look-behind slice so a `set_variable` on
+# a *following* line can never be mistaken for the current match's context, and
+# so a value on the RHS of an assignment (`set_variable = { x = y }` → `y`) is
+# correctly counted as a read. The `(?:scope\.)*` tail lets the scope-stripped
+# target (see _strip_scope_prefix) still be recognised inside a scoped write
+# like `set_variable = { THIS.eurosceptic = ... }`.
+_SET_TARGET_PREFIX_RE = re.compile(r"set_variable\s*=\s*\{?\s*(?:[a-z_][a-z0-9_]*\.)*$")
+
+
+def _strip_scope_prefix(name: str) -> str:
+    """Reduce a scope-qualified set_variable target to its bare variable name.
+
+    `set_variable = { PREV.foo = ... }` stores `foo` on the PREV scope, but the
+    same variable is read elsewhere as `THIS.foo`, `var:foo`, or bare `foo`.
+    Matching the scope-prefixed capture against those reads fails and the var is
+    wrongly reported unused, so track the bare name. `global.` vars are a real
+    namespace (always read as `global.X`) and are left intact.
+    """
+    if "." not in name or name.startswith("global."):
+        return name
+    return name.rsplit(".", 1)[1]
 
 
 def _scan_set_variables(filename: str, lowercase: bool) -> Tuple[List[str], str]:
@@ -46,6 +76,7 @@ def _scan_set_variables(filename: str, lowercase: bool) -> Tuple[List[str], str]
         variables.extend(
             m for m in _SET_LONG_RE.findall(text) if m not in _SET_LONG_RESERVED
         )
+        variables = [_strip_scope_prefix(v) for v in variables]
     return variables, os.path.basename(filename)
 
 
@@ -72,22 +103,26 @@ def _count_vars_in_file(
     )
     if not text or not tracked_vars:
         return {}
-    pattern = re.compile(r"\b(" + "|".join(re.escape(v) for v in tracked_vars) + r")\b")
+    # tracked_vars keep their original case from the case-sensitive scan, but
+    # `text` is lowercased here, so match case-insensitively and map each hit
+    # back to its canonical name. Without IGNORECASE a tag-prefixed GER_/ITA_
+    # name would never match the lowercased reads.
+    lc_to_orig = {v.lower(): v for v in tracked_vars}
+    pattern = re.compile(
+        r"\b(" + "|".join(re.escape(v) for v in tracked_vars) + r")\b",
+        flags=re.IGNORECASE,
+    )
     ref_counts: Dict[str, int] = {}
-    set_counts: Dict[str, int] = {}
     for m in pattern.finditer(text):
-        var = m.group(1)
-        start = max(0, m.start() - SET_CONTEXT_WINDOW)
-        end = min(len(text), m.end() + SET_CONTEXT_WINDOW)
-        if "set_variable" in text[start:end]:
-            set_counts[var] = set_counts.get(var, 0) + 1
-        else:
-            ref_counts[var] = ref_counts.get(var, 0) + 1
-    return {
-        v: ref_counts[v] - set_counts.get(v, 0)
-        for v in ref_counts
-        if ref_counts[v] - set_counts.get(v, 0) > 0
-    }
+        before = text[max(0, m.start() - SET_LOOKBACK_WINDOW) : m.start()]
+        if _SET_TARGET_PREFIX_RE.search(before):
+            # Left-hand target of a set_variable assignment: a definition, not a use.
+            continue
+        var = lc_to_orig.get(m.group(1).lower())
+        if var is None:
+            continue
+        ref_counts[var] = ref_counts.get(var, 0) + 1
+    return {v: c for v, c in ref_counts.items() if c > 0}
 
 
 def count_all_variables_in_file(
