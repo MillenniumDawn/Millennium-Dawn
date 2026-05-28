@@ -136,6 +136,8 @@ v2.0.0
   - Reduced AI air assault brigade template from 15 to 12 battalions
   - Fixed AI marines generic template incorrectly using Light_armor_Bat instead of armor_Bat
   - Reverted DEPLOY_MIN_EQUIPMENT_WAR_FACTOR from 0.60 to 0.90 (vanilla) so AI waits until divisions are 90% equipped before deploying during wartime
+  - [ITA] Added DEFAULT handler to ITA_ai_behavior game rule so the AI always gets a strategy plan when the rule is left at default, biased toward the historical Democratic Party path (Issue #177)
+  - [ITA] Reweighted ITA RANDOM ai_behavior list toward historical coalitions: Democratic Party and Forza at 50 weight, other paths at 10 to 20 (Issue #177)
   - Removed propaganda_campaign_decision and its mutual exclusion blocks from all three combat influencer decisions; cleaned up its money system cost calculation, scripted localisation entry, and loc keys
   - Rebalanced combat_foreign_influence: reduced percent_change from 3.5 to 2.5 and softened AI modifier factors from 2 to 1.5
   - Overhauled AI weights for combat influencer decisions: corrected variable scope errors, switched to step-based domestic influence scaling, added same-bloc ally de-influence penalty for NATO/EU members, added financial guard, and fixed second influencer threshold
@@ -278,6 +280,11 @@ v2.0.0
   - Reduced generic_military_intervention modifier values (volunteers/lend lease tension from -0.50 to -0.25, volunteer divisions required from -0.25 to -0.15, guarantee tension from -0.25 to -0.15, trade opinion factor from 0.25 to 0.15)
   - Increased internet station state building cap from 6 to 11
   - [BRA] AI now more likely to take the administrative reform focus when corruption is high
+  - [ITA] Trimmed Italy's starting multipurpose modifier values: interest rate multiplier from -5 to -3, stability factor from -0.1 to -0.05, research speed from -0.1 to -0.05, building speed from -0.05 to -0.03, and reform expectance drift base from -0.14 to -0.07 (Issue #1130)
+  - [ITA] Softened ruling-party popularity to stability feedback from 0.15 to 0.08 to slow the late-game stability spiral (Issue #1130)
+  - [ITA] Clamped the reform expectancy stability component so a stability spiral cannot compound reform pressure past the 30% stability floor (Issue #1130)
+  - [ITA] Halved the mafia-strength stability drain coefficient from -0.005 to -0.0025 (Issue #1130)
+  - [ITA] Clamped ITA_stability_factor_var to plus or minus 0.2 to prevent runaway accumulation from the weekly stability modifier (Issue #1130)
   - Rebalanced landmark bonuses to a small stability boost plus tourism income for whichever country owns the state
 
  Bugfix:
@@ -627,6 +634,9 @@ v2.0.0
   - [RAJ/PAK/CHI] Fixed the Kashmir border clash decision categories firing for the overlord when India was a puppet of a third-party country; the category visible blocks only blocked the puppet-of-each-other and same-faction cases, so RAJ AI kept taking attack decisions and pulling the overlord's troops and generals (including field marshals) onto the Indian border via start_border_war — added is_subject = no checks for both belligerents in each category (Issue #1473)
   - [BLR/EGY/SOV] Cleaned up the fertilizer-capacity variable writes in BLR_GrodnoAzot, BLR_Chinese_kal, EGY_evergrow, and SOV_economic_grodno_annex; the initialisers used redundant TAG-prefixed set_variable while tooltips read the bare names, so the writes now match the loc and the rest of the focus-tree convention (Issue #1442)
   - Fixed the Anti-Ship Drone Missile modules contributing nothing when paired with conventional naval armament on the same plane; the five tiers now apply a small flat baseline plus a multiplier to naval strike attack and targetting on naval bomber and port strike missions, so the drones act as a force multiplier on whatever primary anti-ship weapon the plane carries (Issue #1166)
+  - [ITA/GER] Fixed AI and player investment building nuclear reactors in countries with a policy ban; added country_can_build_nuclear_reactors scripted trigger that both the investment GUI gate (investments_building_reactor_available) and the AI investment scorer (AI_get_nuclear_reactor_score) consult, covering ITA_nuclear_power_banned and GER_idea_carbon_neutral (Issue #1130)
+  - [ITA] Fixed mafia event spam firing 2 to 6 events per month even when all four organisations were at Negligible strength; counter increments now gate by the relevant organisation's strength tier (Negligible skips entirely, Low at 25%, Medium and Endemic at 50%) with a 14-day global cooldown (Issue #1130)
+  - Fixed civil-war participants being dismissed from NATO and flagged by the EU breach-of-values system as starting an offensive war; added has_civil_war guards to dismissal_rule_offensive_war and check_breach_of_EU_value, and excluded same-original_tag enemies from the EU peace check
   - [HKG] Fixed HKG_carrier_construction calling a non-existent decision unlock_eastern_maritime_shipbuilding_group; the focus now sets the eastern_maritime_shipbuilding_group_unlocked country flag and emits the MIO unlock tooltip, so completing the carrier branch actually grants the Eastern Maritime Shipbuilding Group MIO (Issue #1505)
   - [CMW] Fixed the Parliament of the Commonwealth focus re-establishing elections for generic-tree countries like Taliban-led Afghanistan; the joint_focus completion_reward broadcasts to every participant, so the enable_elections call now lives in completion_reward_joint_originator and iterates Commonwealth members explicitly via every_country (Issue #1507)
   - Fixed licensed attack helicopters rendering as tanks because no generic attack_helicopter_1/2/3_entity existed; added the missing fallback entities reusing SOV_Mi24_mesh so any country without a TAG- or culture-specific override now shows a helicopter (Issue #1467)
@@ -987,6 +997,7 @@ v2.0.0
   - Reduced duplicate model definitions to improve performance by relying on graphical culture groups
   - Removed 249 orphaned pdxmesh definitions to reduce mod load time and memory footprint (Issue #1393)
   - Removed 9 redundant country flags that mirrored idea lifetimes by swapping check sites to has_idea ([POL] depression flag, [NKO] 8 SPA bonus flags)
+  - Converted 127 two-bucket random_list calls with an empty bucket to random = { chance = N effect } across 42 files for a lighter engine path; three-plus-bucket and two-non-empty-bucket lists are preserved as random_list
   - [SOV] Consolidated three Gazprom/Rosneft capitalisation_*_calculate clusters into single init-add-apply units (5 gas-stream blocks, 7 Gazprom oil-province blocks, 8 Rosneft oil-province blocks): drops ~120 lines from 99_SOV_scripted_effects.txt and 20 redundant _support helper calls per monthly tick (Issue #1452)
 
  Quality of Life:
