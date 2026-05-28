@@ -10,11 +10,17 @@ apply_protest_effects = {
 }
 
 apply_passive_protest_drift = {
-	set_variable = { drift_passive_last = 0 }
+	# Display vars persisted only while the player has the panel open. AI never
+	# writes drift_passive_last; player only writes it when MD_protests_GUI is open.
+	if = { limit = { is_ai = no has_country_flag = open_protests_screen }
+		set_variable = { drift_passive_last = 0 }
+	}
 	random = {
 		chance = 50
 		subtract_from_variable = { protest_strength = 2 }
-		set_variable = { drift_passive_last = -2 }
+		if = { limit = { is_ai = no has_country_flag = open_protests_screen }
+			set_variable = { drift_passive_last = -2 }
+		}
 	}
 
 	if = { limit = { NOT = { has_variable = protest_strength } } set_variable = { protest_strength = 0 } }
@@ -66,21 +72,28 @@ calculate_protest_drift = {
 }
 
 calculate_unrest_growth = {
-	# Reset per-source drift trackers (persistent variables read by MD_protests_gui)
-	set_variable = { drift_spending_last = 0 }
-	set_variable = { drift_stability_last = 0 }
-	set_variable = { drift_interest_last = 0 }
-	set_variable = { drift_recession_last = 0 }
-	set_variable = { drift_depression_last = 0 }
-	set_variable = { drift_war_last = 0 }
-	set_variable = { drift_corruption_last = 0 }
-	set_variable = { drift_ct_last = 0 }
+	# Reset per-source drift trackers — only when the panel is open so the values
+	# are not persisted between sessions where the player never views them.
+	# (calculate_unrest_growth is already gated to player-only by MD_on_actions.)
+	if = {
+		limit = { has_country_flag = open_protests_screen }
+		set_variable = { drift_spending_last = 0 }
+		set_variable = { drift_stability_last = 0 }
+		set_variable = { drift_interest_last = 0 }
+		set_variable = { drift_recession_last = 0 }
+		set_variable = { drift_depression_last = 0 }
+		set_variable = { drift_war_last = 0 }
+		set_variable = { drift_corruption_last = 0 }
+		set_variable = { drift_ct_last = 0 }
+	}
 
 	#Grab our old protest strength
 	set_temp_variable = { start_protest_str = protest_strength }
 	#Calculate based off economics how much the protests should drift
 	calculate_protest_drift = yes
-	set_variable = { drift_spending_last = protest_drift }
+	if = { limit = { has_country_flag = open_protests_screen }
+		set_variable = { drift_spending_last = protest_drift }
+	}
 	add_to_variable = { protest_strength = protest_drift }
 
 	#low stability in elected government = unrest
@@ -92,7 +105,9 @@ calculate_unrest_growth = {
 		set_temp_variable = { stab_hold = stability }
 		set_temp_variable = { protest_add = 0.2 }
 		subtract_from_temp_variable = { protest_add = stab_hold }
-		set_variable = { drift_stability_last = protest_add }
+		if = { limit = { has_country_flag = open_protests_screen }
+			set_variable = { drift_stability_last = protest_add }
+		}
 		add_to_variable = { protest_strength = protest_add }
 	}
 	#High interest = unrest
@@ -100,7 +115,9 @@ calculate_unrest_growth = {
 		limit = { check_variable = { interest_rate > 8.9 } }
 		set_temp_variable = { rate_hold = interest_rate }
 		subtract_from_temp_variable = { rate_hold = 8.9 }
-		set_variable = { drift_interest_last = rate_hold }
+		if = { limit = { has_country_flag = open_protests_screen }
+			set_variable = { drift_interest_last = rate_hold }
+		}
 		add_to_variable = { protest_strength = protest_drift }
 	}
 
@@ -112,7 +129,9 @@ calculate_unrest_growth = {
 			min = 0.5
 			lambda = 3
 		}
-		set_variable = { drift_recession_last = protest_drift }
+		if = { limit = { has_country_flag = open_protests_screen }
+			set_variable = { drift_recession_last = protest_drift }
+		}
 		add_to_variable = { protest_strength = protest_drift }
 	}
 
@@ -124,7 +143,9 @@ calculate_unrest_growth = {
 			min = 0.5
 			lambda = 4
 		}
-		set_variable = { drift_depression_last = protest_drift }
+		if = { limit = { has_country_flag = open_protests_screen }
+			set_variable = { drift_depression_last = protest_drift }
+		}
 		add_to_variable = { protest_strength = protest_drift }
 	}
 
@@ -133,7 +154,9 @@ calculate_unrest_growth = {
 		limit = { check_variable = { months_at_war > 36 } }
 		set_temp_variable = { months_hold = months_at_war }
 		divide_temp_variable = { months_hold = 24 }
-		set_variable = { drift_war_last = months_hold }
+		if = { limit = { has_country_flag = open_protests_screen }
+			set_variable = { drift_war_last = months_hold }
+		}
 		add_to_variable = { protest_strength = months_hold }
 	}
 
@@ -157,7 +180,9 @@ calculate_unrest_growth = {
 		set_temp_variable = { protest_drift = 0.3 }
 		set_temp_variable = { gov_pop_hold = government_coalition_strength }
 		subtract_from_temp_variable = { protest_drift = government_coalition_strength }
-		set_variable = { drift_corruption_last = protest_drift }
+		if = { limit = { has_country_flag = open_protests_screen }
+			set_variable = { drift_corruption_last = protest_drift }
+		}
 		add_to_variable = { protest_strength = protest_drift }
 	}
 
@@ -175,7 +200,9 @@ calculate_unrest_growth = {
 			min = 0.5
 			lambda = 5
 		}
-		set_variable = { drift_ct_last = protest_drift }
+		if = { limit = { has_country_flag = open_protests_screen }
+			set_variable = { drift_ct_last = protest_drift }
+		}
 		add_to_variable = { protest_strength = protest_drift }
 	}
 
@@ -199,9 +226,11 @@ calculate_unrest_growth = {
 
 	clamp_variable = { var = protest_strength min = 0 max = 100 }
 
-	MD_protests_compute_top_source = yes
-
-	MD_protests_count_resisting_cores = yes
+	# Display-only computations: only run when the player has the panel open.
+	if = { limit = { has_country_flag = open_protests_screen }
+		MD_protests_compute_top_source = yes
+		MD_protests_count_resisting_cores = yes
+	}
 
 	check_protest_trigger = yes
 }
@@ -226,6 +255,26 @@ MD_protests_count_resisting_cores = {
 			save_global_event_target_as = MD_top_resistant_state_scope
 		}
 	}
+}
+
+# Clears every display-only variable written by the protest GUI. Called when the
+# player closes the panel so these floats do not sit in the save between viewing
+# sessions. The actual gameplay state (protest_strength, protest_radicalisation,
+# cooldown flag, promise baselines) is left untouched.
+MD_protests_clear_display_vars = {
+	clear_variable = drift_spending_last
+	clear_variable = drift_stability_last
+	clear_variable = drift_interest_last
+	clear_variable = drift_recession_last
+	clear_variable = drift_depression_last
+	clear_variable = drift_war_last
+	clear_variable = drift_corruption_last
+	clear_variable = drift_ct_last
+	clear_variable = drift_passive_last
+	clear_variable = drift_total_last
+	clear_variable = cores_resisting_count
+	clear_variable = MD_top_resistant_state_value
+	clear_global_event_target = MD_top_resistant_state_scope
 }
 
 # Computes drift_total_last (sum of all source trackers). Display-only — used by
