@@ -26,7 +26,7 @@ infobox:
       - label: Treasury
         value: $69 Billions
       - label: Debt
-        value: $1419 Billions
+        value: $2606 Billions
       - label: Investments
         value: $100 Billions
 ---
@@ -41,11 +41,11 @@ Italy starts with 56 Factories: 32 Civilian Industries, 15 Military Industries, 
 
 ### Economy
 
-Italy starts with $69 Billions in the Treasury, $1419 Billions in Debt, and $100 Billions in International Investments. Debt service is the dominant fiscal pressure: the starting interest-rate multiplier modifier is heavily negative, meaning every percentage point above 3% costs the budget more than it would for a less indebted nation.
+Italy starts with $69 Billions in the Treasury, $2606 Billions in Debt, and $100 Billions in International Investments. Debt service is the dominant fiscal pressure: the starting interest-rate multiplier modifier is substantially negative, meaning every percentage point above 3% costs the budget more than it would for a less indebted nation.
 
 ### Military
 
-Italy starts with 14 Divisions covering the Esercito Italiano. The army is organised around mechanised and motorised brigades with limited modern armour. The navy starts with cruisers, frigates, and submarines distributed across two main fleets. The air force operates Tornados and early Eurofighter Typhoons. The volunteer army law is active.
+Italy starts with 14 Divisions covering the Esercito Italiano. The army is organised around mechanised and motorised brigades with limited modern armour. The navy starts with cruisers, frigates, and submarines distributed across several Mediterranean fleets. The air force operates Tornados and early Eurofighter Typhoons. The volunteer army law is active.
 
 ### Resources
 
@@ -73,7 +73,7 @@ Western Left-Wing (Olive Tree / centre-left coalition) holds 34.5% popularity. W
 
 ## Initial National Spirits
 
-In addition to NATO, G7, and EU membership, Italy has 16 unique national spirits at game start:
+In addition to NATO, G7, and EU membership, Italy has 19 unique national spirits at game start:
 
 - **Traditional Education System** — Outdated curriculum and inflexible institutions reduce research and growth.
 - **Southern Question** — The Mezzogiorno's underdevelopment depresses national productivity.
@@ -82,6 +82,7 @@ In addition to NATO, G7, and EU membership, Italy has 16 unique national spirits
 - **Inefficient Administration** — Bureaucracy slows construction and policy execution.
 - **Inefficient Judicial System** — Slow courts hinder enforcement and investor confidence.
 - **Building Abuse** — Unregulated construction harms infrastructure speed and stability.
+- **Wasted Foreign Funds** — Misallocated EU and international aid drags on the south.
 - **Unsustainable Pension System** — High pension expenses crowd out public investment.
 - **Legacy of the PCI** — The Italian Communist Party's tradition keeps left-wing drift elevated.
 - **Legacy of Fascism** — The post-war republic still wrestles with the MSI's neo-fascist inheritance.
@@ -90,6 +91,8 @@ In addition to NATO, G7, and EU membership, Italy has 16 unique national spirits
 - **Banned Nuclear Power** — The 1987 referendum permanently blocks reactor construction.
 - **Major Tourist Destination** — Service income contribution from heritage and culture.
 - **Illegal Immigration from Africa** — Migration pressure adds stability and integration challenges.
+- **Small and Medium Business** — Italy's SME-dominated economy underpins industrial output but limits scale.
+- **World-Renown Cuisine** — Food, wine, and gastronomy add a soft-power and export contribution.
 - **The Mafia** — Four organised-crime networks holding territorial influence in the south.
 
 Italy also has three dynamic modifiers always active in the background:
@@ -136,7 +139,7 @@ You influence mafia strength through:
 
 A monthly drift representing Brussels and markets demanding economic and social reform. The expectancy variable trends upward from five sources:
 
-- **Stability** — when stability is low, pressure rises. (Clamped to a minimum effect at 30% stability so a stability spiral can't run the meter to infinity.)
+- **Stability** — when stability is low, pressure rises. The stability term is clamped to a 30% input floor so a stability spiral can't compound reform pressure indefinitely.
 - **Interest rate** — every percentage point above 3% adds pressure proportionally.
 - **Social/Health/Education laws** — more generous laws raise pressure; austere laws lower it.
 - **War** — being at war with low war-support raises pressure.
@@ -173,7 +176,7 @@ The EU Breach of Values system tracks democratic backsliding. Civil-war particip
 
 ### Civil War Path
 
-The italy_md.69 event chain can trigger a civil war from sustained low stability and protest accumulation. Padania secession is the most common branch. After the rebalance, the stability spiral has a 5% floor, a clamped reform-expectancy stability component, and a less aggressive party-popularity-to-stability feedback, so getting all the way to a civil war takes deliberate misplay rather than a normal run of bad luck.
+The italy_md.69 event chain can trigger a civil war from sustained low stability and protest accumulation. Padania secession is the most common branch. After the rebalance, the accumulated stability drift is clamped to ±0.2, the reform-expectancy stability component is held to a 30% input floor, and the party-popularity-to-stability feedback is less aggressive, so getting all the way to a civil war takes deliberate misplay rather than a normal run of bad luck.
 
 ## National Focus
 
@@ -212,7 +215,7 @@ Army modernisation, NATO partnership deepening, navy expansion in the Mediterran
 
 ### How do I stop the stability spiral?
 
-After the rebalance, stability has a 5% floor below which the dynamic-modifier drain does not accumulate further, and the reform-expectancy stability component is clamped at 30% input. To recover from a low-stability state:
+After the rebalance, the accumulated stability drift modifier is clamped to ±0.2 (so the drain can't run away), and the reform-expectancy stability component is clamped at a 30% input floor. To recover from a low-stability state:
 
 1. Take focuses that explicitly add `stability_factor` or `stability_weekly` modifiers.
 2. Accept reform events even at temporary popularity cost — refusing compounds pressure.
@@ -238,7 +241,7 @@ Italy holds the nuclear ban (`ITA_nuclear_power_banned`). The investment system 
 
 ### What happens during a civil war?
 
-The italy_md.69 chain triggers from the `stability_protests_counter` hitting -15 (about 45 weeks at 0% stability, longer with floor in place). The split is most often Padania secession. Civil-war participation no longer counts as an "offensive war" against allies, so:
+The italy_md.69 chain triggers from the `stability_protests_counter` hitting -15 (about 45 weeks at 0% stability, longer once the rebalanced clamps slow drift). The split is most often Padania secession. Civil-war participation no longer counts as an "offensive war" against allies, so:
 
 - NATO will not dismiss you for fighting your other half.
 - The EU breach-of-values system ignores civil-war combatants when scoring offensive-war flags.
@@ -250,7 +253,7 @@ Once Eurobonds passes the EU Council (a multi-step EU voting process), every eur
 
 ### Should I take the historical or alt-history path?
 
-For first-time Italy players, the historical centre-left (Democratic Party) or centre-right (Forza Italia) paths are the most forgiving — the rebalanced stability floor and reform expectancy clamp mean these can be played without aggressive optimisation. Populist and authoritarian branches (Lega, M5S, fascism, communism) demand more careful coalition management because they amplify drift modifiers; only attempt them once you understand the popularity feedback.
+For first-time Italy players, the historical centre-left (Democratic Party) or centre-right (Forza Italia) paths are the most forgiving — the rebalanced stability-drift clamp and reform-expectancy clamp mean these can be played without aggressive optimisation. Populist and authoritarian branches (Lega, M5S, fascism, communism) demand more careful coalition management because they amplify drift modifiers; only attempt them once you understand the popularity feedback.
 
 ### How do I deal with reform expectancy?
 
