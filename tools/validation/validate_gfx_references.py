@@ -254,12 +254,11 @@ def _parse_gfx_file(filepath: str) -> Set[str]:
     text = _strip_comments(raw)
     names: Set[str] = set()
 
-    # Walk sprite-type block openers and extract the name inside each block.
     for m in _GFX_SPRITE_TYPES.finditer(text):
         block_start = m.end()
         block_end = _balance_braces(text, block_start)
         if block_end is None:
-            # Fallback: scan remainder of line for name
+            # Unbalanced braces: fall back to scanning the rest of the line.
             line_end = text.find("\n", m.start())
             snippet = text[
                 block_start : line_end if line_end != -1 else block_start + 200
@@ -566,7 +565,6 @@ class GfxReferenceValidator(BaseValidator):
         sgui_refs = self._collect_sgui_refs(defined)
         sloc_refs = self._collect_sloc_refs(defined)
 
-        # Phase 3: cross-reference checks
         self._log_section("Checking undefined GFX sprite references in .gui files")
         self._check_undefined_refs(
             gui_refs,

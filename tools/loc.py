@@ -178,8 +178,6 @@ parser.add_argument(
 args = parser.parse_args()
 
 parsed_file = readfile(args.input)
-# if not parsed_file[1][0] and not parsed_file[1][1] and not parsed_file[1][2:]:
-#    sys.exit("File " + args.input + " is not a valid event, national_focus or ideas file.")
 lines = list()
 try:
     with open(args.output, "r") as f:

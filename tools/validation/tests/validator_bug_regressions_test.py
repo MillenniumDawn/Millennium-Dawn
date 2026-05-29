@@ -300,14 +300,34 @@ def test_report_counts_mixed_severities_correctly(dummy_validator):
 # ---------------------------------------------------------------------------
 
 
+def _scan_set_vars(path):
+    """Return a file's set_variable targets via the case-preserving pass-1 scan."""
+    from shared_utils import FileOpener
+    from validate_set_variables import _scan_set_variables
+
+    text = FileOpener.open_text_file(path, lowercase=False, strip_comments_flag=True)
+    return _scan_set_variables(text)
+
+
+def _count_refs(path, tracked):
+    """Count non-definition references to `tracked` vars in a file, driving the
+    same pass-2 worker path the Pool initializer sets up."""
+    import validate_set_variables as sv
+    from shared_utils import FileOpener
+
+    bare = {v.lower(): v for v in tracked if "." not in v}
+    dotted = {v.lower(): v for v in tracked if "." in v}
+    sv._pass2_init("", bare, dotted, "test")
+    text = FileOpener.open_text_file(path, lowercase=True, strip_comments_flag=True)
+    return sv._count_refs_in_text(text)
+
+
 def test_scan_captures_tag_prefixed_target_whole(tmp_path):
     """A tag-prefixed set_variable target must be captured whole, not truncated
     at its uppercase prefix."""
-    from validate_set_variables import _scan_set_variables
-
     f = tmp_path / "x.txt"
     f.write_text("set_variable = { GER_event_counter_1_wot = 1 }\n")
-    variables, _ = _scan_set_variables(str(f), lowercase=False)
+    variables = _scan_set_vars(str(f))
     assert "GER_event_counter_1_wot" in variables
     assert "_event_counter_1_wot" not in variables
 
@@ -315,61 +335,47 @@ def test_scan_captures_tag_prefixed_target_whole(tmp_path):
 def test_tag_prefixed_var_set_and_read_not_flagged(tmp_path):
     """A tag-prefixed var that is set and also read must show a positive ref
     count (the reads match case-insensitively against the lowercased text)."""
-    from validate_set_variables import _count_vars_in_file, _scan_set_variables
-
     f = tmp_path / "x.txt"
     f.write_text(
         "add_to_variable = { GER_event_counter_1_wot = 1 }\n"
         "if = { limit = { check_variable = { GER_event_counter_1_wot > 6 } } }\n"
         "set_variable = { GER_event_counter_1_wot = 0 }\n"
     )
-    tracked = frozenset(_scan_set_variables(str(f), lowercase=False)[0])
-    counts = _count_vars_in_file(str(f), tracked, lowercase=True)
+    tracked = frozenset(_scan_set_vars(str(f)))
+    counts = _count_refs(str(f), tracked)
     assert counts.get("GER_event_counter_1_wot", 0) == 2  # add_to + check_variable
 
 
 def test_var_set_once_read_once_counts_as_referenced(tmp_path):
     """A var set exactly once and read exactly once must count as referenced —
     the old ref-minus-set subtraction wrongly netted this to zero."""
-    from validate_set_variables import _count_vars_in_file
-
     f = tmp_path / "x.txt"
     f.write_text(
         "set_variable = { ruling_party_popularity_var = 5 }\n"
         "if = { limit = { check_variable = { ruling_party_popularity_var < 10 } } }\n"
     )
-    counts = _count_vars_in_file(
-        str(f), frozenset(["ruling_party_popularity_var"]), lowercase=True
-    )
+    counts = _count_refs(str(f), frozenset(["ruling_party_popularity_var"]))
     assert counts.get("ruling_party_popularity_var", 0) == 1
 
 
 def test_read_followed_by_set_variable_line_counts_as_read(tmp_path):
     """A read immediately followed by a `set_variable` statement on the next
     line must still count as a read — only the look-behind decides set vs read."""
-    from validate_set_variables import _count_vars_in_file
-
     f = tmp_path / "x.txt"
     f.write_text(
         "multiply_temp_variable = { income = global.price_per_gw_for_els }\n"
         "set_variable = { other_var = income }\n"
     )
-    counts = _count_vars_in_file(
-        str(f), frozenset(["global.price_per_gw_for_els"]), lowercase=True
-    )
+    counts = _count_refs(str(f), frozenset(["global.price_per_gw_for_els"]))
     assert counts.get("global.price_per_gw_for_els", 0) == 1
 
 
 def test_rhs_value_in_set_variable_counts_as_read(tmp_path):
     """In `set_variable = { target = source }`, the LHS target is a definition
     but the RHS source is a read."""
-    from validate_set_variables import _count_vars_in_file
-
     f = tmp_path / "x.txt"
     f.write_text("set_variable = { target = source_var }\n")
-    counts = _count_vars_in_file(
-        str(f), frozenset(["source_var", "target"]), lowercase=True
-    )
+    counts = _count_refs(str(f), frozenset(["source_var", "target"]))
     assert counts.get("source_var", 0) == 1
     assert counts.get("target", 0) == 0
 
@@ -377,20 +383,18 @@ def test_rhs_value_in_set_variable_counts_as_read(tmp_path):
 def test_genuinely_unused_var_still_has_zero_refs(tmp_path):
     """A var that is only ever set (never read) must report zero refs so the
     validator still catches real dead variables — no false negative."""
-    from validate_set_variables import _count_vars_in_file
-
     f = tmp_path / "x.txt"
     f.write_text(
         "set_variable = { ALG_drs_type = 6 }\n" "set_variable = { ALG_drs_type = 5 }\n"
     )
-    counts = _count_vars_in_file(str(f), frozenset(["ALG_drs_type"]), lowercase=True)
+    counts = _count_refs(str(f), frozenset(["ALG_drs_type"]))
     assert counts.get("ALG_drs_type", 0) == 0
 
 
 def test_scope_prefixed_target_tracked_by_bare_name(tmp_path):
     """A scope-qualified target (PREV./ROOT./TAG.) is stored under its bare name
     so reads via a different scope prefix or `var:` are matched."""
-    from validate_set_variables import _scan_set_variables, _strip_scope_prefix
+    from validate_set_variables import _strip_scope_prefix
 
     assert _strip_scope_prefix("PREV.foreign_celeb_country") == "foreign_celeb_country"
     assert _strip_scope_prefix("ALB.eurosceptic") == "eurosceptic"
@@ -401,7 +405,7 @@ def test_scope_prefixed_target_tracked_by_bare_name(tmp_path):
 
     f = tmp_path / "x.txt"
     f.write_text("set_variable = { PREV.foreign_celeb_country = THIS.id }\n")
-    variables, _ = _scan_set_variables(str(f), lowercase=False)
+    variables = _scan_set_vars(str(f))
     assert "foreign_celeb_country" in variables
     assert "PREV.foreign_celeb_country" not in variables
 
@@ -409,27 +413,21 @@ def test_scope_prefixed_target_tracked_by_bare_name(tmp_path):
 def test_scope_prefixed_var_read_via_other_scope_not_flagged(tmp_path):
     """Set on PREV scope, read via `var:` — must count as referenced, and the
     set occurrence itself must NOT count (look-behind tolerates the scope chain)."""
-    from validate_set_variables import _count_vars_in_file
-
     f = tmp_path / "x.txt"
     f.write_text(
         "set_variable = { PREV.foreign_celeb_country = THIS.id }\n"
         "var:foreign_celeb_country = { add_stability = 0.05 }\n"
     )
-    counts = _count_vars_in_file(
-        str(f), frozenset(["foreign_celeb_country"]), lowercase=True
-    )
+    counts = _count_refs(str(f), frozenset(["foreign_celeb_country"]))
     assert counts.get("foreign_celeb_country", 0) == 1  # the var: read, not the set
 
 
 def test_scope_prefixed_var_only_set_still_flagged(tmp_path):
     """A scope-qualified var that is only ever set (never read) must still report
     zero refs — the scope-chain-tolerant look-behind must classify it as a set."""
-    from validate_set_variables import _count_vars_in_file
-
     f = tmp_path / "x.txt"
     f.write_text("set_variable = { THIS.never_read_var = 1 }\n")
-    counts = _count_vars_in_file(str(f), frozenset(["never_read_var"]), lowercase=True)
+    counts = _count_refs(str(f), frozenset(["never_read_var"]))
     assert counts.get("never_read_var", 0) == 0
 
 

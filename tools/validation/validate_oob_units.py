@@ -1,23 +1,12 @@
 #!/usr/bin/env python3
-##########################
-# OOB Unit Name Validation Script
-# Validates that unit names used in OOB files, AI templates, and namelists
-# reference canonical sub-unit definitions from common/units/*.txt.
+# Validate that unit names in OOB files, AI templates, and namelists reference
+# canonical sub-unit definitions from common/units/*.txt, suggesting the closest
+# case-insensitive match for likely typos.
 #
-# Checks:
-#   1. Parses common/units/*.txt to build a set of canonical sub-unit names
-#   2. Parses history/units/*.txt to extract unit names from regiments/support blocks
-#   3. Parses common/ai_templates/*.txt and common/scripted_effects/00_AI_templates.txt
-#   4. Parses common/units/names/00_*_names.txt block keys (legacy namelist schema)
-#   5. Parses common/units/names_ships/*.txt ship_types arrays (modern namelist schema)
-#   6. Reports any reference not in the canonical set
-#   7. Suggests closest case-insensitive match for likely typos
-#
-# Note: namelist blocks accept both sub_unit names AND equipment-type names
-# (used by air namelists like small_plane_airframe). The canonical set for
+# Namelist blocks accept both sub_unit names AND equipment-type names (air
+# namelists use keys like small_plane_airframe), so the canonical set for
 # namelist validation extends the sub_unit set with equipment names extracted
 # from `need = { ... }` blocks inside sub_unit definitions.
-##########################
 import glob
 import os
 import re

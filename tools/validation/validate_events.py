@@ -22,8 +22,9 @@
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
+import disk_cache
 from validator_common import (
     BaseValidator,
     Colors,
@@ -35,7 +36,6 @@ from validator_common import (
 
 EXTRA_SKIP_PATTERNS = ["FR_loc"]
 
-# Pre-compiled pattern for the long-form check (used in pool worker)
 _LONG_FORM_PATTERN = re.compile(
     r"\b((?:country|news|state|unit_leader|character|operative)_event)\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
 )
@@ -94,23 +94,35 @@ def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
 # --- Event parsing ---
 
 
-def process_file_for_events(args: Tuple[str, bool]) -> Tuple[List[str], Dict[str, str]]:
-    filename, lowercase = args
-    pattern = re.compile(
-        r"^(?:country_event|news_event) = \{(.*?)^\}", flags=re.DOTALL | re.MULTILINE
-    )
+_EVENT_BLOCK_PATTERN = re.compile(
+    r"^(?:country_event|news_event) = \{(.*?)^\}", flags=re.DOTALL | re.MULTILINE
+)
+
+
+def _parse_events(text: str, basename: str) -> Tuple[List[str], Dict[str, str]]:
     events = []
     paths = {}
+    for match in _EVENT_BLOCK_PATTERN.findall(text):
+        events.append(match)
+        paths[match] = basename
+    return events, paths
 
+
+def process_file_for_events(
+    args: Tuple[str, bool, str],
+) -> Tuple[List[str], Dict[str, str]]:
+    filename, lowercase, mod_path = args
     text_file = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
-    matches = pattern.findall(text_file)
-    for match in matches:
-        events.append(match)
-        paths[match] = os.path.basename(filename)
-
-    return events, paths
+    basename = os.path.basename(filename)
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        f"events.blocks.lc={int(lowercase)}",
+        filename,
+        text_file,
+        lambda: _parse_events(text_file, basename),
+    )
 
 
 _EVENT_TYPE_PATTERN = re.compile(
@@ -151,6 +163,45 @@ def _extract_random_event_ids(text: str) -> set:
     return ids
 
 
+def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str]]:
+    namespaces: Set[str] = set(_ADD_NAMESPACE_PATTERN.findall(text))
+    meta: List[dict] = []
+    for m in _EVENT_TYPE_PATTERN.finditer(text):
+        event_type = m.group(1)
+        start = m.end()
+        depth = 1
+        i = start
+        while i < len(text) and depth > 0:
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+            i += 1
+        body = text[start : i - 1]
+
+        id_match = _EVENT_ID_PATTERN.search(body)
+        if not id_match:
+            continue
+
+        meta.append(
+            {
+                "id": id_match.group(1),
+                "type": event_type,
+                "file": basename,
+                "is_major": "major = yes" in body,
+                "is_hidden": "hidden = yes" in body,
+                "is_triggered_only": "is_triggered_only = yes" in body,
+                "fire_only_once": "fire_only_once = yes" in body,
+                "has_mtth": "mean_time_to_happen" in body,
+                "option_count": len(_OPTION_BLOCK_PATTERN.findall(body)),
+                "title_desc_refs": [
+                    v.strip() for v in _EVENT_TITLEDESC_PATTERN.findall(body)
+                ],
+            }
+        )
+    return meta, namespaces
+
+
 class Validator(BaseValidator):
     TITLE = "EVENT VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -165,7 +216,7 @@ class Validator(BaseValidator):
         if self._events_cache is not None:
             return self._events_cache
         files = self._collect_files(["events/**/*.txt"])
-        args_list = [(f, False) for f in files]
+        args_list = [(f, False, self.mod_path) for f in files]
         all_results = self._pool_map(process_file_for_events, args_list, chunksize=10)
 
         events = []
@@ -198,43 +249,15 @@ class Validator(BaseValidator):
             if not text:
                 continue
             basename = os.path.basename(filepath)
-
-            for ns in _ADD_NAMESPACE_PATTERN.findall(text):
-                namespaces.add(ns)
-
-            for m in _EVENT_TYPE_PATTERN.finditer(text):
-                event_type = m.group(1)
-                start = m.end()
-                depth = 1
-                i = start
-                while i < len(text) and depth > 0:
-                    if text[i] == "{":
-                        depth += 1
-                    elif text[i] == "}":
-                        depth -= 1
-                    i += 1
-                body = text[start : i - 1]
-
-                id_match = _EVENT_ID_PATTERN.search(body)
-                if not id_match:
-                    continue
-
-                meta.append(
-                    {
-                        "id": id_match.group(1),
-                        "type": event_type,
-                        "file": basename,
-                        "is_major": "major = yes" in body,
-                        "is_hidden": "hidden = yes" in body,
-                        "is_triggered_only": "is_triggered_only = yes" in body,
-                        "fire_only_once": "fire_only_once = yes" in body,
-                        "has_mtth": "mean_time_to_happen" in body,
-                        "option_count": len(_OPTION_BLOCK_PATTERN.findall(body)),
-                        "title_desc_refs": [
-                            v.strip() for v in _EVENT_TITLEDESC_PATTERN.findall(body)
-                        ],
-                    }
-                )
+            file_meta, file_ns = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                "events.metadata",
+                filepath,
+                text,
+                lambda: _parse_event_metadata(text, basename),
+            )
+            meta.extend(file_meta)
+            namespaces |= file_ns
 
         self._meta_cache = (meta, namespaces)
         return self._meta_cache

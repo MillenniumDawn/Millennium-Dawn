@@ -70,7 +70,6 @@ NUCLEAR_FUEL_PER_REACTOR = (
 RENEWABLE_BASE_GW = 0.5  # per renewable_energy_infra level
 STATE_FOSSIL_CAP = 21  # match runtime limit { building_level@fossil_powerplant < 21 }
 
-# Building per-type energy use coefficients
 BUILDING_ENERGY_COEFF = {
     "industrial_complex": 0.5,
     "offices": 0.25,
@@ -159,7 +158,6 @@ def energy_consumption(states, modifier_stack, gdpc):
         population_total * 0.001 * pop_use_mult * gdpc * 0.025 * POP_ENERGY_BALANCE
     )
 
-    # Building energy
     buildings = defaultdict(int)
     for s in states:
         for b, c in s["buildings"].items():
@@ -335,7 +333,6 @@ def inject_building(filepath, building_name, count):
     with open(filepath, "r", encoding="utf-8", errors="replace") as f:
         content = f.read()
 
-    # Find history = { ... buildings = { ... } ... }
     hist_m = re.search(r"\bhistory\s*=\s*\{", content)
     if not hist_m:
         return False, "no history block"
@@ -343,7 +340,6 @@ def inject_building(filepath, building_name, count):
     bldg_m = re.search(r"\bbuildings\s*=\s*\{", content[hist_m.end() :])
     if bldg_m:
         bldg_open = hist_m.end() + bldg_m.end()
-        # Find matching close brace
         depth = 1
         i = bldg_open
         while i < len(content) and depth > 0:
@@ -408,11 +404,9 @@ def _replace_or_append_top_level(block, key, value):
             i += 1
             continue
         if depth == 0:
-            # Try to match `(whitespace)keyword (whitespace)=` at this position
             m = _TOP_LEVEL_KEY_RE.match(block, i)
             if m and m.group(2) == key:
                 eq_end = m.end()
-                # Skip whitespace after =
                 j = eq_end
                 while j < len(block) and block[j] in " \t":
                     j += 1
@@ -420,7 +414,6 @@ def _replace_or_append_top_level(block, key, value):
                     # Nested block (e.g. province-scoped) - not a simple key=N, skip.
                     i = m.end()
                     continue
-                # Match value as a contiguous non-whitespace token
                 k = j
                 while k < len(block) and block[k] not in " \t\r\n":
                     k += 1
