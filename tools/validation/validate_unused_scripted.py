@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-##########################
-# Unused Scripted Effects & Triggers Validation
-# Finds scripted effects and triggers that are defined but never called
-# Checks:
-#   1. Scripted effects defined in common/scripted_effects/ but never used
-#   2. Scripted triggers defined in common/scripted_triggers/ but never used
-##########################
+# Find scripted effects and triggers defined in common/scripted_effects/ and
+# common/scripted_triggers/ that are never called anywhere in the mod.
 import glob
 import os
 import re

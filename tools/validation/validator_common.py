@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-##########################
-# Shared Validation Infrastructure
-# Common classes, functions, and base validator used by all validation scripts
-##########################
+# Shared validation infrastructure: common classes, helpers, and the base
+# validator used by all validation scripts.
 import glob
 import json
 import logging
@@ -171,9 +169,8 @@ def scan_meta_constructed_names(files, defined_names):
     return used
 
 
-# Log level from environment — controls output verbosity across all validators.
-# Set MD_LOG_LEVEL=ERROR to see only errors, WARNING (default) for errors+Warnings,
-# or INFO for full output (equivalent to the pre-MD_LOG_LEVEL behaviour).
+# Output verbosity across all validators. MD_LOG_LEVEL=ERROR shows only errors,
+# WARNING (default) shows errors and warnings, INFO shows full output.
 _LOG_LEVEL = os.environ.get("MD_LOG_LEVEL", "WARNING").upper()
 if _LOG_LEVEL == "ERROR":
     logging.basicConfig(level=logging.ERROR, format="%(levelname)s: %(message)s")
@@ -384,12 +381,10 @@ class BaseValidator:
         self.output_lines.append(file_msg)
 
     def _log_section(self, title: str):
-        """Emit the standard section header and start timing this section.
+        """Emit the section header and start timing this section.
 
-        Each call closes the previous section's timer (if any) and starts a
-        new one.  Call ``_finish_sections`` after all checks to close the last
-        section and (when ``MD_TIMING`` is enabled) print a per-check timing
-        summary to stderr.
+        Each call closes the previous section's timer (if any). Call
+        ``_finish_sections`` after all checks to close the last section.
         """
         if self._section_start is not None:
             elapsed = time.perf_counter() - self._section_start
@@ -447,11 +442,11 @@ class BaseValidator:
             self.warnings_found += 1
 
     def add_error(self, category: str, message: str, file: str = "", line: int = 0):
-        """Convenience method to add an ERROR level issue."""
+        """Add an ERROR-level issue."""
         self.add_issue(Severity.ERROR, category, message, file, line)
 
     def add_warning(self, category: str, message: str, file: str = "", line: int = 0):
-        """Convenience method to add a WARNING level issue."""
+        """Add a WARNING-level issue."""
         self.add_issue(Severity.WARNING, category, message, file, line)
 
     # Regex patterns for auto-extracting (file, line) from common result string

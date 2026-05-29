@@ -19,6 +19,7 @@ import os
 import re
 from typing import Dict, List, Set, Tuple
 
+import disk_cache
 from validator_common import BaseValidator, Severity, run_validator_main, strip_comments
 
 # ---------------------------------------------------------------------------
@@ -326,7 +327,11 @@ def _validate_call_sites_in_file(
         return []
 
     results: List[Tuple[str, str, int]] = []
-    tokens = _tokenize(text)
+    # Cache the tokenisation (the expensive, contract-independent step); the
+    # contract validation below runs per call against the cached tokens.
+    tokens = disk_cache.per_file_cached_by_content(
+        mod_path, "scripted_params.tokens", filepath, text, lambda: _tokenize(text)
+    )
 
     # Scope stack.  Each frame:
     #   "scope_changing": bool — True if opened by a scope-changing keyword

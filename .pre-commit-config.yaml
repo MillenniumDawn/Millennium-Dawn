@@ -334,10 +334,13 @@ repos:
         files: '\.(gfx|asset|dds|tga|png)$'
         pass_filenames: false
         stages: [manual]
-      # NOTE: validate_set_variables.py exists but is intentionally not wired
-      # anywhere. False-positive volume at repo scale makes it too noisy as a
-      # gate. Run manually when investigating a specific variable:
-      #   python3 tools/validation/validate_set_variables.py --staged
+      - id: md-validate-set-variables
+        name: MD Validate set_variable references
+        entry: python3 tools/validation/validate_set_variables.py --staged --no-color --workers 4
+        language: system
+        files: '(common|events|history)/.*\.txt$|localisation/english/.*\.yml$'
+        pass_filenames: false
+        stages: [manual]
       - id: validate-staged
         name: MD Validate staged files
         entry: python3 tools/validate_staged.py

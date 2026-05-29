@@ -35,69 +35,47 @@ def check_basic_style(filepath):
 
         for line in content:
             lineNum += 1
-            if not line.startswith("#"):  # If the line doesn't start with a comment
-                if "{" in line:  # if there is an open brace in this line
-                    hasComment = _RE_COMMENT_BRACE.search(
-                        line
-                    )  # If comment at the start or before {
-                    if (
-                        not hasComment
-                    ):  # if the line doesn't have a comment before the open brace
+            if not line.startswith("#"):
+                if "{" in line:
+                    hasComment = _RE_COMMENT_BRACE.search(line)
+                    if not hasComment:
                         openBraces[0] += line.count("{")
-                        # count total open braces and subtract open braces that are easy to find and used correctly
+                        # Subtract braces already styled correctly so the slow regex below only runs for the rest
                         closingBraces = (
                             line.count("{") - line.count(" {\n") - line.count(" { ")
                         )
 
-                        # if there are braces we couldn't find using efficient .count, use powerful inefficient regex
                         if closingBraces > 0:
-                            hasNoSpace = _RE_NO_SP_OPEN.search(
-                                line
-                            )  # If no space before or after brace
-                            if (
-                                hasNoSpace
-                            ):  # If regex finds open braces not styled correctly
+                            hasNoSpace = _RE_NO_SP_OPEN.search(line)
+                            if hasNoSpace:
                                 print(
                                     "WARNING: Missing a space before or after open brace at {0} Line number: {1}".format(
                                         clean_filepath(filepath), lineNum
                                     )
                                 )
                                 warning_count += 1
-                if "}" in line:  # if there is an close brace in this line
-                    hasComment = _RE_COMMENT_BRACE.search(
-                        line
-                    )  # If comment at the start or before {
-                    if (
-                        not hasComment
-                    ):  # if the line doesn't have a comment before the open brace
+                if "}" in line:
+                    hasComment = _RE_COMMENT_BRACE.search(line)
+                    if not hasComment:
                         openBraces[0] += -line.count("}")
-                        # count total close braces and subtract open braces that are easy to find and used correctly
+                        # Subtract braces already styled correctly so the slow regex below only runs for the rest
                         openingBraces = (
                             line.count("}") - line.count(" }\n") - line.count(" } ")
                         )
 
-                        # if there are braces we couldn't find using efficient .count, use powerful inefficient regex
                         if openingBraces > 0:
-                            hasNoSpace = _RE_NO_SP_CLOSE.search(
-                                line
-                            )  # If no space before or after brace
-                            if (
-                                hasNoSpace
-                            ):  # If regex finds open braces not styled correctly
+                            hasNoSpace = _RE_NO_SP_CLOSE.search(line)
+                            if hasNoSpace:
                                 print(
                                     "WARNING: Missing a space before or after close brace at {0} Line number: {1}".format(
                                         clean_filepath(filepath), lineNum
                                     )
                                 )
                                 warning_count += 1
-                if '"' in line:  # if the line has a qoute
-                    if (
-                        line.count('"') % 2
-                    ) != 0:  # if there are an odd number of qoutes on this line
-                        hasComment = _RE_COMMENT_QUOTE.search(
-                            line
-                        )  # If comment at the start or before "
-                        if not hasComment:  # if there is no comment before the qoute
+                if '"' in line:
+                    if (line.count('"') % 2) != 0:
+                        hasComment = _RE_COMMENT_QUOTE.search(line)
+                        if not hasComment:
                             print(
                                 "WARNING: Missing a quotation sign at {0} Line number: {1}".format(
                                     clean_filepath(filepath), lineNum
@@ -105,9 +83,9 @@ def check_basic_style(filepath):
                             )
                             warning_count += 1
 
-                if "=" in line:  # if the line has an equal sign
+                if "=" in line:
                     equalSign = 0
-                    # count total equal signs that are easy to find and used correctly
+                    # Count only the equal signs not already correctly spaced
                     equalSign = line.count("=") - line.count(" = ") - line.count(" =\n")
 
                     if (line.count("  =") > 0) or (line.count("=  ") > 0):
@@ -118,16 +96,14 @@ def check_basic_style(filepath):
                         )
                         equalSign = equalSign - line.count("  =") - line.count("=  ")
                         warning_count += 1
-                    if (
-                        equalSign != 0
-                    ):  # if there are equal signs that aren't used correctly
+                    if equalSign != 0:
                         print(
                             "WARNING: Missing a space before or after an equal sign at {0} Line number: {1}".format(
                                 clean_filepath(filepath), lineNum
                             )
                         )
                         warning_count += 1
-                if "    " in line:  # if 4 spaces in the line
+                if "    " in line:
                     print(
                         "WARNING: spaces indent (4) detected instead of tab at {0} Line number: {1}".format(
                             clean_filepath(filepath), lineNum

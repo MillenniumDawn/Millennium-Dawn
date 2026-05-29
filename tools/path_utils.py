@@ -5,14 +5,13 @@ Path utility functions for coding standards scripts.
 
 
 def clean_filepath(filepath):
-    """
-    Clean up the filepath to show only from relevant directory onwards.
+    """Trim a filepath to start from the first known mod directory.
 
     Args:
-        filepath (str): The full filepath to clean
+        filepath (str): The full filepath to clean.
 
     Returns:
-        str: The cleaned filepath showing only from the relevant directory
+        str: The trimmed path, or the original if no known prefix is present.
     """
     for prefix in ("common", "events", "history", "interface"):
         if prefix in filepath:

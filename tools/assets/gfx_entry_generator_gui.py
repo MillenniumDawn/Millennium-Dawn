@@ -73,7 +73,6 @@ event_pictures_img = PhotoImage(data=event_pictures_base64)
 idea_icons_img = PhotoImage(data=idea_icons_base64)
 
 gui.overrideredirect(True)
-# gui.attributes('-topmost', True)
 gui.bind("<Button-1>", SaveLastClickPos)
 gui.bind("<B1-Motion>", Dragging)
 
@@ -86,27 +85,25 @@ def main(event=None):
 
     if int(selection.get()) == 1:
         path = os.path.abspath(
-            os.path.join(os.path.dirname("Millennium_Dawn"), "..\gfx\interface\goals")
+            os.path.join(os.path.dirname("Millennium_Dawn"), r"..\gfx\interface\goals")
         )
         print(path)
         getfiles(path)
     elif int(selection.get()) == 2:
         path = os.path.abspath(
-            os.path.join(os.path.dirname("Millennium_Dawn"), "..\gfx\event_pictures")
+            os.path.join(os.path.dirname("Millennium_Dawn"), r"..\gfx\event_pictures")
         )
         print(path)
         getfiles(path)
     elif int(selection.get()) == 3:
         path = os.path.abspath(
-            os.path.join(os.path.dirname("Millennium_Dawn"), "..\gfx\interface\ideas")
+            os.path.join(os.path.dirname("Millennium_Dawn"), r"..\gfx\interface\ideas")
         )
         print(path)
         getfiles(path)
     else:
-        messagebox.showerror("Errro!", "\nSelect an option before generating.")
+        messagebox.showerror("Error!", "\nSelect an option before generating.")
         return
-        # print(f"There are " + str(len(ddslist)) + f" .dds, .png or .tga files available in this directory\n")
-        # Variable Init
     x = ""  # X == the file name. It is only used to parse out the path
     y = ""  # Y == becomes the path that is implemented texturefile
     z = ""  # Z == is used to "sort" for a file
@@ -115,7 +112,7 @@ def main(event=None):
     if True:
 
         if int(selection.get()) == 1:
-            gfxbool = 0  # int(input("Would you like me to append \"GFX_\" to the front of the icon?\n1 for yes, 0 for no.\n"))
+            gfxbool = 0
             print(1)
 
             with open("goals.gfx", "w") as ffile:
@@ -276,7 +273,7 @@ def main(event=None):
                 "Done",
                 "\neventpictures.gfx has been generated for "
                 + str(len(ddslist))
-                + " event pictures.\n\nThe files have been outputted in into the interface files.",
+                + " event pictures.\n\nThe files have been outputted into the interface files.",
             )
             return
         elif int(selection.get()) == 3:

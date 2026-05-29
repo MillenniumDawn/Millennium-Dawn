@@ -110,20 +110,18 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
         line = lines[i]
         block_lines.append(line)
 
-        # Count braces
         brace_count += line.count("{") - line.count("}")
 
         if brace_count == 0 and "{" in lines[start_index]:
-            # We've closed all braces, block is complete
             i += 1
             break
         elif brace_count < 0:
-            # More closing than opening braces - malformed
+            # Malformed: more closing than opening braces.
             break
 
         i += 1
 
-    return block_lines, i  # Return the position AFTER the block (not i-1)
+    return block_lines, i  # position AFTER the block, not i-1
 
 
 def compact_block(block_lines: List[str]) -> List[str]:
@@ -133,9 +131,7 @@ def compact_block(block_lines: List[str]) -> List[str]:
 
     compacted = []
     for line in block_lines:
-        stripped = line.strip()
-        if stripped:  # Only keep non-empty lines
-            # Preserve the original indentation structure
+        if line.strip():
             compacted.append(line.rstrip())
 
     return compacted
@@ -195,7 +191,6 @@ def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozen
 
     tags_dir = os.path.join(mod_root, "common", "idea_tags")
     if not os.path.isdir(tags_dir):
-        # If no idea_tags dir found, return safe defaults
         return frozenset({"country", "hidden_ideas"})
 
     categories: Set[str] = set()
@@ -207,16 +202,14 @@ def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozen
         try:
             with open(fpath, "r", encoding="utf-8") as f:
                 text = f.read()
-                text = re.sub(r"#.*", "", text)  # strip comments
+                text = re.sub(r"#.*", "", text)
         except Exception:
             continue
 
-        # Find idea_categories = { ... } block
         m = re.search(r"idea_categories\s*=\s*\{", text)
         if not m:
             continue
         start = m.end()
-        # Count braces to find the closing brace
         depth = 1
         i = start
         while i < len(text) and depth > 0:
@@ -230,7 +223,6 @@ def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozen
                 i += 1
         cat_block = text[start : i - 1] if depth == 0 else text[start:]
 
-        # Extract each category block: key = { ... }
         for cat_m in re.finditer(r"(\w+)\s*=\s*\{", cat_block):
             cat_name = cat_m.group(1)
             cat_start = cat_m.end()
@@ -284,12 +276,11 @@ def strip_comments(text: str) -> str:
     lines = text.split("\n")
     result = []
     for line in lines:
-        # Check if line is entirely a comment
         stripped = line.lstrip()
         if stripped.startswith("#"):
             result.append("")
             continue
-        # Strip inline comments (# not inside quotes)
+        # Strip inline comments, ignoring '#' inside quoted strings.
         in_quote = False
         for i, ch in enumerate(line):
             if ch == '"':
@@ -302,8 +293,8 @@ def strip_comments(text: str) -> str:
 
 
 class FileOpener:
-    # LRU bound is sized for common/ (~3600 files) plus localisation; the old
-    # full-clear on overflow thrashed on any moderately broad scan.
+    # LRU bound sized for common/ (~3600 files) plus localisation, so a broad
+    # scan stays cached without evicting on every overflow.
     _cache: "OrderedDict[Tuple, str]" = OrderedDict()
     _MAX_CACHE_SIZE = 8192
 
@@ -324,7 +315,7 @@ class FileOpener:
                 if lowercase:
                     content = content.lower()
         except Exception as ex:
-            log_message("WARNING", f"Skipping the file {filename}, {ex}")
+            log_message("WARNING", f"Skipping file {filename}: {ex}")
             return ""
         cls._cache[cache_key] = content
         if len(cls._cache) > cls._MAX_CACHE_SIZE:
@@ -378,9 +369,7 @@ class DataCleaner:
             return input_iter
 
 
-# ---------------------------------------------------------------------------
 # Timing utilities
-# ---------------------------------------------------------------------------
 
 
 def timing_enabled() -> bool:
@@ -468,9 +457,7 @@ def print_timing_summary(timings: List[Tuple[str, float]]):
     print(f"{'─' * (max_label + 18)}\033[0m", file=sys.stderr)
 
 
-# ---------------------------------------------------------------------------
-# Linting script helpers (shared argparse, file collection, pool dispatch)
-# ---------------------------------------------------------------------------
+# Linting script helpers: shared argparse, file collection, pool dispatch.
 
 
 def create_linting_parser(
@@ -773,7 +760,6 @@ def run_validator_main(
         staged_only=args.staged,
         workers=args.workers,
     )
-    # Pass any extra args as kwargs
     if extra_args_fn:
         for key in vars(args):
             if key not in ("path", "strict", "output", "no_color", "staged", "workers"):

@@ -37,7 +37,6 @@ def stage_file_as_modified(path):
     # This is needed because `git add` on an unchanged file won't mark it staged
     with open(path, "r", encoding="utf-8-sig") as f:
         original = f.read()
-    # Append a blank line
     with open(path, "a", encoding="utf-8-sig") as f:
         f.write("\n")
     run(["git", "add", path])

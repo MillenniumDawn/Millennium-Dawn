@@ -84,8 +84,20 @@ Closes #M
 
 ### Test plan
 
-- [Imperative step: "Play [country], take [focus], verify [outcome]"]
-- [One bullet per distinct thing to verify in-game]
+**Playthrough A: <TAG> <year> (covers #N, #M)**
+
+<phase header, e.g. "Game start, before unpausing:">
+
+- [ ] `tag <TAG>`, <action>, confirm <expected outcome> (#N).
+- [ ] <next checkbox> (#M).
+
+<next phase header, e.g. "Mid-game checks (advance several in-game weeks first):">
+
+- [ ] <action>, confirm <expected outcome> (#N).
+
+**Playthrough B: <TAG> <year> (covers #X)**
+
+- [ ] <action>, confirm <expected outcome> (#X).
 ```
 
 Rules:
@@ -95,7 +107,10 @@ Rules:
 - **Never use em dashes (`—`, U+2014) anywhere — not in the PR title, body, bullet separators, Changelog.txt, or any `.yml` file.** Replace with a colon (introducing the explanation), a period (ending the bolded prefix and starting a new sentence), or a comma (continuing the clause). Standing user rule, no exceptions even when mimicking AngriestBird's example PRs.
 - Bullet structure: bold the issue reference and title together followed by a period (`**Fixes #N: Issue Title.**`), then a space, then the description. Do not use `—` as a separator.
 - Bullet length: **2 sentences, 2–3 lines max** per fix: one sentence for the cause, one for the resolution. Name the key focus/event/decision ID and the wrong-vs-right value, but skip commit hashes, file:line citations, repro chains, and regression notes. Those belong in the commit message and the issue, not the PR body. The `Closes #N` lines at the top of the body are always preserved.
-- Test plan: one bullet per in-game action needed to verify correctness. Separate action from expected result with a comma or period, not `→` or `—`.
+- Test plan: write it as one or more **playthroughs**, like PR #1525 does. Each playthrough block starts with a bold header naming the country tag, start year, and the issue numbers it covers, e.g. `**Playthrough A: ENG 2000 (covers #1400, #1515, #1516)**`. Group checks under phase sub-headers when the test needs setup beyond game start (e.g. `Game start, before unpausing:` vs `Mid-game checks (advance several in-game weeks first):`).
+- Every check is a markdown task list item: start the line with `- [ ]`, never bare `- `. One checkbox per distinct in-game action. End each checkbox with the issue ref it covers, `(#N)`, so the reviewer can match steps to fixes.
+- Checkbox structure: console command (if any) in backticks, then the action, then `confirm <expected outcome>`. Separate clauses with commas or periods, not `→` or `—`. Example: `` - [ ] `tag UKR`, hover an internal faction the country does not have, confirm the preview tooltip opens with the shared header (#1516). ``
+- Single-issue PRs may use just one playthrough block. Skip phase sub-headers if every check happens at game start. The `- [ ]` checkbox rule still applies.
 
 ### 6. Check and update `Changelog.txt`
 
