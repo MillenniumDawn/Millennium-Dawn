@@ -78,29 +78,12 @@ MD_auto_agency_verify_queue = {
 			if = {
 				limit = {
 					MD_auto_agency_v_index_valid = yes
-					MD_auto_agency_v_can_select = yes
 					MD_auto_agency_v_not_completed = yes
 					MD_auto_agency_v_not_maxed_in_queue = yes
 				}
 
 				add_to_array = { agency_queue_hold = v }
 				add_to_variable = { agency_upgrades_in_queue_count^v = 1 }
-			}
-			else_if = {
-				# Heals pre-fix saves: an upgrade queued before its tech/prereq was
-				# met can never be selected, so drop it and release its
-				# completed_and_queued reservation so it can be re-queued later.
-				limit = {
-					MD_auto_agency_v_index_valid = yes
-					NOT = { MD_auto_agency_v_can_select = yes }
-					check_variable = {
-						var = agency_upgrades_completed_and_queued^v
-						value = 0
-						compare = greater_than
-					}
-				}
-
-				subtract_from_variable = { agency_upgrades_completed_and_queued^v = 1 }
 			}
 		}
 
