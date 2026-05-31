@@ -45,31 +45,31 @@ set_variable = { cost = global.build_cost_array^idx }
 
 Scripted localisation (`defined_text`) has no function parameters. Use a temp variable as a "parameter" to collapse N near-identical blocks.
 
-### Before (15 blocks, one per slot)
+### Before (N blocks, one per slot)
 
 ```
 defined_text = {
-    name = AC_GetProjectText0
-    text = { trigger = { check_variable = { project_array^0 = 1 } } localization_key = cancelled }
-    text = { localization_key = AC_project_0_text }
+    name = my_feature_get_slot_text_0
+    text = { trigger = { check_variable = { slot_array^0 = 1 } } localization_key = cancelled }
+    text = { localization_key = my_feature_slot_0_text }
 }
 defined_text = {
-    name = AC_GetProjectText1
+    name = my_feature_get_slot_text_1
     # ... identical structure, different index ...
 }
-# ... 13 more ...
+# ... N more ...
 ```
 
 ### After (one block reading a temp var)
 
 ```
 # Caller sets the temp variable before using the loc key
-set_temp_variable = { completed_project_building_type = project_building_type^project }
+set_temp_variable = { selected_slot_type = slot_type_array^slot }
 
 defined_text = {
-    name = investments_get_completed_building_type
-    text = { trigger = { check_variable = { completed_project_building_type = 1 } } localization_key = industrial_complex }
-    text = { trigger = { check_variable = { completed_project_building_type = 2 } } localization_key = arms_factory }
+    name = my_feature_get_slot_type
+    text = { trigger = { check_variable = { selected_slot_type = 1 } } localization_key = type_one_loc }
+    text = { trigger = { check_variable = { selected_slot_type = 2 } } localization_key = type_two_loc }
     # ... etc ...
 }
 ```
@@ -202,17 +202,17 @@ When you have N decisions that differ only by an index, use `meta_effect` rather
 ```
 meta_effect = {
     text = {
-        activate_decision = investments_project_[INDEX]_decision
-        var:project_target_country^project = {
-            set_variable = { project_target_construction_duration = PREV.project_construction_duration^PREV.project }
-            activate_targeted_decision = { target = PREV decision = investments_project_[INDEX]_target_decision }
+        activate_decision = my_feature_slot_[INDEX]_decision
+        var:slot_target_country^slot = {
+            set_variable = { slot_target_duration = PREV.slot_duration^PREV.slot }
+            activate_targeted_decision = { target = PREV decision = my_feature_slot_[INDEX]_target_decision }
         }
     }
-    INDEX = "[?project]"
+    INDEX = "[?slot]"
 }
 ```
 
-**Why:** 15 investor + 15 target decisions still exist as separate objects (engine requirement), but their activation logic is a single block.
+**Why:** The N decisions still exist as separate objects (engine requirement — decision IDs must be static), but their activation logic is a single block. Adding a new slot is a parameter increment instead of N more lines.
 
 **Caveat:** `meta_effect` runs at parse time, not runtime. It cannot reference runtime variables in its parameter substitution — only static text or `[]`-formatted variables.
 
@@ -340,6 +340,50 @@ multiply_variable = { var = my_ratio value = 0.01 }
 ```
 
 **Why:** `multiply_variable` is a single engine operation with no zero-division risk. `0.01` is the exact reciprocal of `100`, so the result is identical. Prefer multiplication for all constant divisors.
+
+---
+
+## Prefer `random` Over Two-Bucket `random_list` With an Empty Side
+
+When a `random_list` has exactly two buckets and one of them is empty (a "do nothing" placeholder for the "miss" case), collapse it to `random = { chance = N effect }`. Same semantics, lighter engine path, less script.
+
+### Before
+
+```
+random_list = {
+    50 = { add_to_variable = { event_counter = 1 } }
+    50 = {}
+}
+```
+
+or with the empty bucket first:
+
+```
+random_list = {
+    80 = { }
+    20 = { increase_corruption = yes }
+}
+```
+
+### After
+
+```
+random = {
+    chance = 50
+    add_to_variable = { event_counter = 1 }
+}
+```
+
+```
+random = {
+    chance = 20
+    increase_corruption = yes
+}
+```
+
+**Why:** `random_list` builds a weighted-list dispatch table internally; the engine resolves the active bucket on every fire. `random = { chance = N effect }` is a direct Bernoulli trial — one roll, branch, done. The pattern is also less code and easier to read at a glance: the player/dev sees the probability and the effect together.
+
+**When NOT to convert:** Three or more buckets, or two non-empty buckets with different effects. Those genuinely need `random_list`. The chance value also has to be the weight of the non-empty bucket — `random_list = { 80 = {} 20 = { effect } }` becomes `random = { chance = 20 effect }`, not `chance = 80`.
 
 ---
 

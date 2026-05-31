@@ -59,7 +59,7 @@
 				trigger = { ROOT = { has_country_flag = CPD_giving_concessions } }
 				localization_key = "CPD_make_puppet_button_TT_DELAYED_CONCESSION"
 			}
-			text = { localization_key = "Error in Scripted Localisation, Fix \"CPD_ANNEX_STATE_TT_DELAYED_LOC\"" }
+			text = { localization_key = "Error in Scripted Localisation, Fix \"CPD_MAKE_PUPPET_TT_DELAYED_LOC\"" }
 		}
 	# DEMILITARISE STATE BUTTON
 		defined_text = {
@@ -86,58 +86,30 @@
 			}
 			text = { localization_key = "Error in Scripted Localisation, Fix \"CPD_DEMILITARISE_TT_DELAYED_LOC\"" }
 		}
-# ICON/BUTTON GFX LOC
-	# ANNEX STATE BUTTON
+	# LIBERATE IN STATE BUTTON TOOLTIP
 		defined_text = {
-			name = CPD_ANNEX_STATE_BUTTON_LOC
-
-			text = { # SELECTED
-				trigger = { ROOT = { check_variable = { CPD_state_option_selection = 1 } } }
-				localization_key = "GFX_peace_annex_green"
+			name = CPD_LIBERATE_TT_LOC
+			text = {
+				trigger = { NOT = { ROOT = { has_country_flag = CPD_giving_concessions } } }
+				localization_key = "CPD_liberate_in_state_button_TT_DEMAND"
 			}
-			text = { # UNSELECTED
-				trigger = { always = yes }
-				localization_key = "GFX_peace_annex"
+			text = {
+				trigger = { ROOT = { has_country_flag = CPD_giving_concessions } }
+				localization_key = "CPD_liberate_in_state_button_TT_CONCESSION"
 			}
+			text = { localization_key = "Error in Scripted Localisation, Fix \"CPD_LIBERATE_TT_LOC\"" }
 		}
-	# MAKE PUPPET IN STATE BUTTON
 		defined_text = {
-			name = CPD_MAKE_PUPPET_IN_STATE_BUTTON_LOC
-
-			text = { # SELECTED
-				trigger = { ROOT = { check_variable = { CPD_state_option_selection = 2 } } }
-				localization_key = "GFX_peace_puppet_green"
+			name = CPD_LIBERATE_TT_DELAYED_LOC
+			text = {
+				trigger = { NOT = { ROOT = { has_country_flag = CPD_giving_concessions } } }
+				localization_key = "CPD_liberate_in_state_button_TT_DELAYED_DEMAND"
 			}
-			text = { # UNSELECTED
-				trigger = { always = yes }
-				localization_key = "GFX_peace_puppet"
+			text = {
+				trigger = { ROOT = { has_country_flag = CPD_giving_concessions } }
+				localization_key = "CPD_liberate_in_state_button_TT_DELAYED_CONCESSION"
 			}
-		}
-	# DEMILITARISE STATE BUTTON
-		defined_text = {
-			name = CPD_DEMILITARISE_STATE_BUTTON_LOC
-
-			text = { # SELECTED
-				trigger = { ROOT = { check_variable = { CPD_state_option_selection = 3 } } }
-				localization_key = "GFX_peace_demilitarize_selected"
-			}
-			text = { # UNSELECTED
-				trigger = { always = yes }
-				localization_key = "GFX_peace_demilitarize"
-			}
-		}
-	# LIBERATE IN STATE BUTTON
-		defined_text = {
-			name = CPD_LIBERATE_IN_STATE_BUTTON_LOC
-
-			text = { # SELECTED
-				trigger = { ROOT = { check_variable = { CPD_state_option_selection = 4 } } }
-				localization_key = "GFX_icon_exiled_governments"
-			}
-			text = { # UNSELECTED
-				trigger = { always = yes }
-				localization_key = "GFX_icon_exiled_governments"
-			}
+			text = { localization_key = "Error in Scripted Localisation, Fix \"CPD_LIBERATE_TT_DELAYED_LOC\"" }
 		}
 	# DEMAND/CONCESSION COST SWITCH
 		defined_text = {
@@ -158,10 +130,45 @@
 				localization_key = "CPD_demand_cost_value"
 			}
 		}
-	# ENACTED ACTIONS ON STATE LIST
+	# DEAL ROW LABEL - single composite, handles both sentinels (country actions)
+	# and states (action + state info) without the empty-string fallback dance.
+		defined_text = {
+			name = CPD_deal_row_label
+			# Country action sentinels — full label is just the action name
+			text = {
+				trigger = { check_variable = { v = 10001 } }
+				localization_key = "CPD_country_action_ceasefire"
+			}
+			text = {
+				trigger = { check_variable = { v = 10002 } }
+				localization_key = "CPD_country_action_war_reparations"
+			}
+			text = {
+				trigger = { check_variable = { v = 10003 } }
+				localization_key = "CPD_country_action_forced_neutrality"
+			}
+			text = {
+				trigger = { check_variable = { v = 10004 } }
+				localization_key = "CPD_country_action_regime_change"
+			}
+			text = {
+				trigger = { check_variable = { v = 10005 } }
+				localization_key = "CPD_country_action_military_basing"
+			}
+			text = {
+				trigger = { check_variable = { v = 10006 } }
+				localization_key = "CPD_country_action_full_puppet"
+			}
+			# States — "Annex Texas +5 VP"
+			text = {
+				trigger = { check_variable = { v < 10000 } }
+				localization_key = "CPD_state_deal_row_format"
+			}
+		}
+	# ENACTED ACTIONS ON STATE LIST — state actions only (sentinels handled by CPD_deal_row_label)
 		defined_text = {
 			name = CPD_enacted_action_on_state
-
+			# State actions
 			text = {
 				trigger = {
 					OR = {
@@ -198,11 +205,45 @@
 				}
 				localization_key = "CPD_liberation_of_state"
 			}
+			text = {
+				trigger = {
+					OR = {
+						ROOT = { is_in_array = { CPD_resource_rights_DEMANDS = PREV } }
+						ROOT = { is_in_array = { CPD_resource_rights_CONCESSIONS = PREV } }
+					}
+				}
+				localization_key = "CPD_resource_rights_of_state"
+			}
 		}
 	# ENACTED ACTIONS ON STATE LIST TOOLTIP
 		defined_text = {
 			name = CPD_enacted_action_on_state_TT
 
+			# Country action sentinels
+				text = {
+					trigger = { check_variable = { v = 10001 } }
+					localization_key = "CPD_country_action_ceasefire_TT"
+				}
+				text = {
+					trigger = { check_variable = { v = 10002 } }
+					localization_key = "CPD_country_action_war_reparations_TT"
+				}
+				text = {
+					trigger = { check_variable = { v = 10003 } }
+					localization_key = "CPD_country_action_forced_neutrality_TT"
+				}
+				text = {
+					trigger = { check_variable = { v = 10004 } }
+					localization_key = "CPD_country_action_regime_change_TT"
+				}
+				text = {
+					trigger = { check_variable = { v = 10005 } }
+					localization_key = "CPD_country_action_military_basing_TT"
+				}
+				text = {
+					trigger = { check_variable = { v = 10006 } }
+					localization_key = "CPD_country_action_full_puppet_TT"
+				}
 			# DEMANDS
 				text = {
 					trigger = { ROOT = { is_in_array = { CPD_annex_state_DEMANDS = PREV } } }
@@ -237,6 +278,15 @@
 					trigger = { ROOT = { is_in_array = { CPD_liberate_state_CONCESSIONS = PREV } } }
 					localization_key = "CPD_conceding_liberation_of_state_TT"
 				}
+			# RESOURCE RIGHTS
+				text = {
+					trigger = { ROOT = { is_in_array = { CPD_resource_rights_DEMANDS = PREV } } }
+					localization_key = "CPD_demanding_resource_rights_TT"
+				}
+				text = {
+					trigger = { ROOT = { is_in_array = { CPD_resource_rights_CONCESSIONS = PREV } } }
+					localization_key = "CPD_conceding_resource_rights_TT"
+				}
 		}
 	# AI/PLAYER ACCEPTANCE
 		defined_text = {
@@ -255,19 +305,77 @@
 			}
 			text = { localization_key = "CPD_AIA_no" }
 		}
-	# RECEIPT FLAVOUR LOC
-		defined_text = {
-			name = CPD_receive_offer_DESC_WAR_TYPE
+# Send-Status Breakdown — exposes current months_at_war and VP vs the gate
+# requirements so the player sees the concrete numbers in the send tooltip.
+defined_text = {
+	name = CPD_send_status_breakdown
 
-			text = {
-				trigger = { THIS = { has_offensive_war = yes } }
-				localization_key = "CPD_receive_offer_DESC_OFFENSIVE_WAR"
-			}
-			text = {
-				trigger = { THIS = { has_defensive_war = yes } }
-				localization_key = "CPD_receive_offer_DESC_DEFENSIVE_WAR"
-			}
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_send_vp_temp = ROOT.CPD_VP@THIS }
+			set_temp_variable = { CPD_send_months_temp = ROOT.months_at_war }
 		}
+		localization_key = "CPD_send_status_breakdown_TT"
+	}
+}
+
+# Deal Recap — surfaces the deal's current contents in the send-status tooltip.
+# Counts demands, concessions, and total VP cost via temp vars consumed by the
+# loc string. Updates live as the player toggles terms.
+defined_text = {
+	name = CPD_deal_recap
+
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_recap_demands = ROOT.CPD_current_deal_list_DEMANDS^num }
+			set_temp_variable = { CPD_recap_concessions = ROOT.CPD_current_deal_list_CONCESSIONS^num }
+			set_temp_variable = { CPD_recap_total_cost = ROOT.CPD_total_cost_of_built_peace_deal }
+		}
+		localization_key = "CPD_deal_recap_TT"
+	}
+}
+
+# Money-system breakdown line items — surface the reparations transfer in
+# the player's additional income / expense summary tooltip.
+defined_text = {
+	name = additional_income_war_reparations
+	text = {
+		trigger = { has_idea = CPD_war_reparations_receiver }
+		localization_key = additional_income_war_reparations_tt
+	}
+}
+defined_text = {
+	name = additional_expense_war_reparations
+	text = {
+		trigger = { has_idea = CPD_war_reparations_payer }
+		localization_key = additional_expense_war_reparations_tt
+	}
+}
+
+# War Reparations Live Preview — resolves to the projected weekly transfer
+# amount. Uses payer's GDP (target if we demand, self if we concede), the
+# 0.0005 multiplier, and the £15B/week clamp. Matches CPD_sign_peace_deal
+# exactly so the preview never disagrees with the actual transfer.
+defined_text = {
+	name = CPD_reparations_preview
+
+	text = {
+		trigger = {
+			if = {
+				limit = { ROOT = { has_country_flag = CPD_giving_concessions } }
+				set_temp_variable = { CPD_rep_preview_temp = ROOT.gdp_total }
+			}
+			else = {
+				set_temp_variable = { CPD_rep_preview_temp = THIS.gdp_total }
+			}
+			multiply_temp_variable = { CPD_rep_preview_temp = 0.0005 }
+			clamp_temp_variable = { var = CPD_rep_preview_temp max = 15 }
+			set_temp_variable = { CPD_rep_preview_total_temp = CPD_rep_preview_temp }
+			multiply_temp_variable = { CPD_rep_preview_total_temp = 52 }
+		}
+		localization_key = "CPD_reparations_preview_TT"
+	}
+}
 
 # AI Acceptance Breakdown Scripted Loc
 defined_text = {
@@ -275,30 +383,33 @@ defined_text = {
 
 	text = {
 		trigger = {
+			# Mirrors CPD_AI_will_accept_calculation in 00_peace_deal_triggers.txt.
+			# Both must use CPD_IR_temp (additions to econ_temp would never init
+			# and never roll up to the engine's acceptance score).
 			set_temp_variable = { CPD_IR_temp = var:THIS.interest_rate }
 			if = {
 				limit = { THIS = { has_active_mission = debt_default_main_mission } }
-				add_to_temp_variable = { CPD_econ_temp = 5 }
+				add_to_temp_variable = { CPD_IR_temp = 5 }
 			}
 			if = {
 				limit = { check_variable = { CPD_IR_temp > 14.99 } }
-				add_to_temp_variable = { CPD_econ_temp = 10 }
+				add_to_temp_variable = { CPD_IR_temp = 10 }
 			}
 			else_if = {
 				limit = { check_variable = { CPD_IR_temp > 12.99 } }
-				add_to_temp_variable = { CPD_econ_temp = 8 }
+				add_to_temp_variable = { CPD_IR_temp = 8 }
 			}
 			else_if = {
 				limit = { check_variable = { CPD_IR_temp > 9.99 } }
-				add_to_temp_variable = { CPD_econ_temp = 6 }
+				add_to_temp_variable = { CPD_IR_temp = 6 }
 			}
 			else_if = {
 				limit = { check_variable = { CPD_IR_temp > 7.99 } }
-				add_to_temp_variable = { CPD_econ_temp = 4 }
+				add_to_temp_variable = { CPD_IR_temp = 4 }
 			}
 			else_if = {
 				limit = { check_variable = { CPD_IR_temp > 4.99 } }
-				add_to_temp_variable = { CPD_econ_temp = 2 }
+				add_to_temp_variable = { CPD_IR_temp = 2 }
 			}
 		}
 		localization_key = "CPD_ai_accept_economic_cost_tt"
@@ -326,6 +437,11 @@ defined_text = {
 			multiply_temp_variable = { CPD_RSB_temp = 100 }
 			round_temp_variable = CPD_RSB_temp
 			subtract_from_temp_variable = { CPD_RSB_temp = 100 }
+			if = {
+				limit = { ROOT = { NOT = { is_in_faction = yes } } }
+				multiply_temp_variable = { CPD_RSB_temp = 0.25 }
+				round_temp_variable = CPD_RSB_temp
+			}
 			clamp_temp_variable = {
 				var = CPD_RSB_temp
 				max = 1000
@@ -361,6 +477,11 @@ defined_text = {
 			set_temp_variable = { CPD_TBW_temp = THIS.CPD_VP@ROOT }
 			subtract_from_temp_variable = { CPD_RBW_temp = CPD_TBW_temp }
 			round_temp_variable = CPD_RBW_temp
+			clamp_temp_variable = {
+				var = CPD_RBW_temp
+				min = -150
+				max = 150
+			}
 		}
 		localization_key = "CPD_ai_accept_battles_won_tt"
 	}
@@ -459,6 +580,7 @@ defined_text = {
 
 	text = {
 		trigger = {
+			set_temp_variable = { CPD_FB_temp = 0 }
 			if = {
 				limit = { THIS = { has_idea = NATO_member } }
 				add_to_temp_variable = { CPD_FB_temp = -25 }
@@ -478,8 +600,131 @@ defined_text = {
 		trigger = {
 			set_temp_variable = { months_at_war_tmp = THIS.months_at_war }
 			multiply_temp_variable = { months_at_war_tmp = 2 }
+			clamp_temp_variable = {
+				var = months_at_war_tmp
+				max = 120
+			}
 		}
 		localization_key = "CPD_ai_accept_months_at_war_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_war_weariness
+
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_WW_temp = 0 }
+			if = {
+				limit = { check_variable = { THIS.months_at_war > 12 } }
+				subtract_from_temp_variable = { CPD_WW_temp = 15 }
+			}
+			if = {
+				limit = { check_variable = { THIS.months_at_war > 24 } }
+				subtract_from_temp_variable = { CPD_WW_temp = 15 }
+			}
+			if = {
+				limit = { check_variable = { THIS.months_at_war > 48 } }
+				subtract_from_temp_variable = { CPD_WW_temp = 30 }
+			}
+		}
+		localization_key = "CPD_ai_accept_war_weariness_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_full_puppet_aversion
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_FP_aversion_temp = 0 }
+			if = {
+				limit = { ROOT = { has_country_flag = CPD_full_puppet_demand } }
+				set_temp_variable = { CPD_FP_aversion_temp = -200 }
+				if = { limit = { THIS = { is_subject = yes } }
+					add_to_temp_variable = { CPD_FP_aversion_temp = 100 }
+				}
+			}
+		}
+		localization_key = "CPD_ai_accept_full_puppet_aversion_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_regime_change_aversion
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_RC_aversion_temp = 0 }
+			if = {
+				limit = { ROOT = { has_country_flag = CPD_regime_change_demand } }
+				set_temp_variable = { CPD_RC_aversion_temp = -80 }
+				if = {
+					limit = { THIS = { check_variable = { party_pop_array^ruling_party^0 < 0.4 } } }
+					add_to_temp_variable = { CPD_RC_aversion_temp = 30 }
+				}
+			}
+		}
+		localization_key = "CPD_ai_accept_regime_change_aversion_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_forced_neutrality_aversion
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_FN_aversion_temp = 0 }
+			if = {
+				limit = { ROOT = { has_country_flag = CPD_forced_neutrality_demand } }
+				if = { limit = { THIS = { is_in_faction = yes } }
+					set_temp_variable = { CPD_FN_aversion_temp = -60 }
+				}
+				else = { set_temp_variable = { CPD_FN_aversion_temp = -20 } }
+			}
+		}
+		localization_key = "CPD_ai_accept_forced_neutrality_aversion_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_military_basing_aversion
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_MB_aversion_temp = 0 }
+			if = {
+				limit = { ROOT = { has_country_flag = CPD_military_basing_demand } }
+				set_temp_variable = { CPD_MB_aversion_temp = -25 }
+			}
+		}
+		localization_key = "CPD_ai_accept_military_basing_aversion_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_resource_rights_aversion
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_RR_aversion_temp = 0 }
+			if = {
+				limit = { check_variable = { ROOT.CPD_resource_rights_DEMANDS^num > 0 } }
+				set_temp_variable = { CPD_RR_aversion_temp = -15 }
+				if = { limit = { check_variable = { ROOT.CPD_resource_rights_DEMANDS^num > 3 } }
+					add_to_temp_variable = { CPD_RR_aversion_temp = -25 }
+				}
+			}
+		}
+		localization_key = "CPD_ai_accept_resource_rights_aversion_tt"
+	}
+}
+defined_text = {
+	name = CPD_ai_accept_ceasefire_acceptance
+	text = {
+		trigger = {
+			set_temp_variable = { CPD_CF_acceptance_temp = 0 }
+			if = {
+				limit = {
+					ROOT = { has_country_flag = CPD_ceasefire_demand }
+					THIS = {
+						check_variable = { months_at_war > 18 }
+						surrender_progress < 0.4
+					}
+				}
+				set_temp_variable = { CPD_CF_acceptance_temp = 40 }
+			}
+		}
+		localization_key = "CPD_ai_accept_ceasefire_acceptance_tt"
 	}
 }
 defined_text = {
@@ -489,6 +734,10 @@ defined_text = {
 		trigger = {
 			set_temp_variable = { v = ROOT.CPD_total_cost_of_built_peace_deal }
 			multiply_temp_variable = { v = -5 }
+			clamp_temp_variable = {
+				var = v
+				max = 50
+			}
 		}
 		localization_key = "CPD_ai_accept_cost_of_peace_tt"
 	}
@@ -499,14 +748,15 @@ defined_text = {
 
 	text = {
 		trigger = {
+			set_temp_variable = { v = 0 }
 			if = { limit = { difficulty < 1 }
-				set_temp_variable = { v = 15 }
-			}
-			if = { limit = { difficulty > 1 }
-				set_temp_variable = { v = 15 }
+				add_to_temp_variable = { v = 15 }
 			}
 			if = { limit = { difficulty > 2 }
-				set_temp_variable = { v = 15 }
+				add_to_temp_variable = { v = -15 }
+			}
+			if = { limit = { difficulty > 1 }
+				add_to_temp_variable = { v = -15 }
 			}
 		}
 		localization_key = "CPD_ai_acceptance_difficulty_setting_tt"

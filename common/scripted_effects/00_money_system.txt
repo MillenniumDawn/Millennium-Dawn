@@ -1966,11 +1966,6 @@ calculate_additional_income_rate = {
 		multiply_temp_variable = { temp_sam_missile_equipment_cost = amount_sam_missile_equipment_sold }
 		add_to_temp_variable = { market_sold_cost = temp_sam_missile_equipment_cost }
 
-
-		set_temp_variable = { corporate_tax_cost_mult = corporate_tax_rate }
-		multiply_temp_variable = { corporate_tax_cost_mult = 0.01 }
-		multiply_temp_variable = { market_sold_cost = corporate_tax_cost_mult }
-
 		set_temp_variable = { country_modifier_val = 1 }
 		add_to_temp_variable = { country_modifier_val = international_market_income_modifier }
 		multiply_temp_variable = { market_sold_cost = country_modifier_val }
@@ -1999,6 +1994,10 @@ calculate_additional_income_rate = {
 		set_variable = { energy_load_sharing_income_var = income_from_gw_sold }
 		clamp_variable = { var = energy_load_sharing_income_var min = 0 }
 		add_to_variable = { additional_income_rate = energy_load_sharing_income_var }
+	}
+	# CPD War Reparations Income — variable set in 02_peace_deal_effects.txt on sign
+	if = { limit = { has_idea = CPD_war_reparations_receiver }
+		add_to_variable = { additional_income_rate = CPD_reparations_weekly }
 	}
 }
 #Updates interest rate, is called on init and on_daily in MD4_money_on_actions.txt
@@ -3183,17 +3182,7 @@ calculate_additional_expense_rate = {
 
 			add_to_variable = { additional_expenses_rate = promote_outlook_salafist_costs }
 		}
-		if = {
-			limit = { has_decision = propaganda_campaign_decision }
-			set_variable = { propaganda_campaign_influence_decision_costs = gdp_total }
-			multiply_variable = { propaganda_campaign_influence_decision_costs = 0.001 }
 
-			set_temp_variable = { propaganda_campaign_cost_modifier = 1 }
-			add_to_temp_variable = { propaganda_campaign_cost_modifier = modifier@propaganda_campaign_cost_modifier }
-			multiply_variable = { propaganda_campaign_influence_decision_costs = propaganda_campaign_cost_modifier }
-
-			add_to_variable = { additional_expenses_rate = propaganda_campaign_influence_decision_costs }
-		}
 		# NOTE: For now the AI do not lease factories. Do not count these.
 		set_temp_variable = { gdp_per_capita_leasing_multiplier = gdp_per_capita }
 		multiply_temp_variable = { gdp_per_capita_leasing_multiplier = 0.001 }
@@ -3845,6 +3834,13 @@ calculate_additional_expense_rate = {
 		multiply_variable = { EH_intensive_research_effort_expenditure = EH_intensive_research_effort_expenditure_multiplier_var }
 		add_to_variable = { additional_expenses_rate = EH_intensive_research_effort_expenditure }
 	}
+
+	# CPD War Reparations Expense — variable set in 02_peace_deal_effects.txt on sign.
+	# Added after inflation multiplier because the weekly amount is already a
+	# fraction of GDP captured at sign-time (no double-inflation).
+	if = { limit = { has_idea = CPD_war_reparations_payer }
+		add_to_variable = { additional_expenses_rate = CPD_reparations_weekly }
+	}
 }
 
 #Income Related Stuff --- International Investments and Calculated Resource Sale Rate
@@ -3995,15 +3991,25 @@ update_display = {
 	set_variable = { resource_to_tax_income = resource_sale_rate } #t these next 2 lines are to get resource export income divided by tax income (pop and corp), then use this ratio as one of the prerequisites for when rentier state cancels so it's not just based on resource extraction as % of GDP
 	clamp_variable = { var = tax_gain min = 0.001 }
 	divide_variable = { resource_to_tax_income = tax_gain }
-	if = { limit = { NOT = { has_country_flag = int_reinvestment_flag } }
+	if = { limit = { check_variable = { int_reinvest_mode = 2 } }
+		set_temp_variable = { _split_display_rate = int_investments_rate }
+		multiply_temp_variable = { _split_display_rate = 0.5 }
+		add_to_variable = { display_income = _split_display_rate }
+	}
+	else_if = { limit = { NOT = { check_variable = { int_reinvest_mode = 1 } } }
 		add_to_variable = { display_income = int_investments_rate }
 	}
 	add_to_variable = { display_income = additional_income_rate }
 
 	# Adjusted Potential Income to the international investments so that people can't exploit the incoming financial collapse
 	set_variable = { potential_income = display_income }
-	if = { limit = { has_country_flag = int_reinvestment_flag }
+	if = { limit = { check_variable = { int_reinvest_mode = 1 } }
 		add_to_variable = { potential_income = int_investments_rate }
+	}
+	else_if = { limit = { check_variable = { int_reinvest_mode = 2 } }
+		set_temp_variable = { _split_potential_rate = int_investments_rate }
+		multiply_temp_variable = { _split_potential_rate = 0.5 }
+		add_to_variable = { potential_income = _split_potential_rate }
 	}
 
 	# Adjust Potential Expense to Include the Debt Rate
@@ -4161,6 +4167,8 @@ update_state_variables = {
 	set_variable = { var = dockyard_fac value = 0 }
 	set_variable = { var = fuel_silos value = 0 }
 	set_variable = { var = state_renewable_energy_var value = 0 }
+	set_variable = { var = state_fossil_energy_var value = 0 }
+	set_variable = { var = state_nuclear_energy_var value = 0 }
 	set_variable = { var = minimum_renewable_energy_var value = 0 }
 	set_variable = { var = maximum_renewable_energy_var value = 1 }
 	set_variable = { var = hydroelectric_energy_generation value = 0 }
@@ -4247,6 +4255,25 @@ update_state_variables = {
 				add_to_variable = { var = PREV.minimum_renewable_energy_var value = min_state_renewable_generation }
 				add_to_variable = { var = PREV.maximum_renewable_energy_var value = max_state_renewable_generation }
 				add_to_variable = { var = PREV.state_renewable_energy_var value = state_renewable_generation }
+			}
+
+			# Per-state building output only; country idea bonuses to fossil_energy_gain stay applied at the country level
+			if = { limit = { check_variable = { building_level@fossil_powerplant > 0 } }
+				set_temp_variable = { var = state_fossil_generation value = building_level@fossil_powerplant }
+				multiply_temp_variable = { var = state_fossil_generation value = 2 } #base power of a fossil powerplant
+				set_temp_variable = { var = state_fossil_generation_modifier value = 1 }
+				add_to_temp_variable = { var = state_fossil_generation_modifier value = THIS.modifier@state_fossil_fuel_energy_generation_modifier }
+				multiply_temp_variable = { var = state_fossil_generation value = state_fossil_generation_modifier }
+				add_to_variable = { var = PREV.state_fossil_energy_var value = state_fossil_generation }
+			}
+
+			if = { limit = { check_variable = { building_level@nuclear_reactor > 0 } }
+				set_temp_variable = { var = state_nuclear_generation value = building_level@nuclear_reactor }
+				multiply_temp_variable = { var = state_nuclear_generation value = 4 } #base power of a nuclear reactor
+				set_temp_variable = { var = state_nuclear_generation_modifier value = 1 }
+				add_to_temp_variable = { var = state_nuclear_generation_modifier value = THIS.modifier@state_nuclear_energy_generation_modifier }
+				multiply_temp_variable = { var = state_nuclear_generation value = state_nuclear_generation_modifier }
+				add_to_variable = { var = PREV.state_nuclear_energy_var value = state_nuclear_generation }
 			}
 
 			set_temp_variable = { var = temp_pop value = state_population_k } #in thousands
@@ -6216,6 +6243,7 @@ calcluate_program_distributions = {
 			set_variable = { un_esco_research_speed_var = esco_research_budget }
 			multiply_variable = { un_esco_research_speed_var = 0.002 }
 			clamp_variable = { var = un_esco_research_speed_var min = 0 max = 0.30 }
+			clamp_variable = { var = un_esco_research_speed_var min = 0 max = 0.50 }
 		}
 	}
 
@@ -6291,7 +6319,7 @@ calcluate_program_distributions = {
 	}
 
 	sort_un_aid_contributor_arrays = yes
-	missile_ui_update = yes
+	international_systems_update = yes
 }
 
 sort_un_aid_contributor_arrays = {

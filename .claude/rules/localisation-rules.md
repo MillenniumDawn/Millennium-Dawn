@@ -27,8 +27,10 @@
 - **Be concise.** Remove filler words and redundant phrasing. Prefer shorter sentences.
 - **No excessive hyphenation.** Only hyphenate compound modifiers before a noun (e.g., "pro-Western government"), not elsewhere.
 - **No ellipsis abuse.** Do not use `...` in descriptions or tooltips.
+- **No em dashes** (`—`) in player-facing strings. Use a period when the clause stands alone ("Their economy answers to us. Their borders remain intact."), a comma when introducing a participial phrase ("...transfers weekly, appearing as a new expense..."), or a colon when introducing a list or requirement ("Requires war contribution: one battle won or three months at war."). Em dashes read as soft connectors and almost always replace one of those three punctuation choices.
 - Capitalize proper nouns, party names, ideology group names, and in-game concepts (e.g., Political Power, Stability).
 - Do not use all-caps for emphasis; use in-game formatting codes instead if needed (e.g., `£icon`, `§Y...§!`).
+- **No padding filler.** Every sentence in a description should carry real information — founding facts, political orientation, mechanical implication, alignment. Sentences that restate the title or fill the box with "the party has remained influential over the years" add nothing. This applies to subideology descs, focus descs, idea descs, event flavour, and option text alike.
 
 ## Subideology Localisation Format
 
@@ -47,8 +49,7 @@ Rules:
 - **Description** (`TAG.ideology_desc`):
   - Opens with the dominant ideology group in parentheses (e.g., `(Classic Liberalism)`), then the full English party name, then native-language names in parentheses listed as `Language: Native Name`, comma-separated, followed by the abbreviation.
   - A `\n\n` separates the header line from the body paragraph.
-  - Body paragraph: 2–5 sentences covering founding, political orientation, notable history, and international alignments. Written in third person, past/present mix, encyclopedic tone.
-  - Do not pad with vague filler sentences.
+  - Body paragraph: 2–5 sentences covering founding, political orientation, notable history, and international alignments. Written in third person, past/present mix, encyclopedic tone. The "no padding filler" rule in Writing Style applies — every sentence should carry real information.
 
 Example:
 
@@ -76,6 +77,27 @@ HOI4 localisation files are checked by `check-yaml` in the pre-commit hook. The 
 - **Embedded double quotes**: `"He called it "important""` is invalid. Use `\"important\"` for emphasis, or rephrase to remove the inner quotes entirely.
 - **Mixed indentation**: All keys in a file must be consistently indented (all with 1 leading space, or all without). Mixing indented and non-indented keys in the same file causes YAML to see two separate mappings. Remove stray spaces to make indentation uniform.
 - **Colons in values**: A bare colon followed by a space inside a quoted string can confuse some parsers — wrap the value in quotes as usual and this is safe, but watch for unquoted values.
+
+## Loc Key Collisions Between Game Objects
+
+An idea's `name = X` field redirects **both** the displayed name and the tooltip description: the game looks up `X` for the name and `X_desc` for the description. The idea's own ID is no longer used for loc.
+
+This creates a collision risk when an idea shares a name with a focus, decision, event, or other idea:
+
+- A focus `id = ENG_british_commercial_spaceport` and an idea `name = ENG_british_commercial_spaceport` will both read from the same `ENG_british_commercial_spaceport` / `_desc` loc keys.
+- If both define those keys in the same `.yml`, YAML treats it as a duplicate and the later definition wins — the focus name silently changes to the idea's text (or vice versa).
+- Even if only one side defines the keys, the other game object will display whatever text happens to be there — usually wrong.
+
+**Rule:** When picking a `name = X` for an idea, choose a key that no focus, decision, or other idea uses. If the idea's display text matches the focus's display text intentionally (e.g., the focus awards the idea and they share branding), still use a distinct key — they may need to diverge later, and identical text in two keys is cheap.
+
+Quick check before merging:
+
+```bash
+# Replace KEY with the value of your `name = ` field
+grep -rn "id = KEY\b\|^\s*KEY:\s*\"" common/ localisation/english/
+```
+
+If you see hits in both `common/national_focus/` and `common/ideas/` for the same KEY, rename one side.
 
 ## Common Mistakes to Avoid
 

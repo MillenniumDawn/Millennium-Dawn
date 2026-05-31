@@ -316,10 +316,8 @@ quarterly_inflation_calculation = {
 
 	#Adjust the inflation rate based on GDP/C + Taxes
 	set_temp_variable = { inflation_rate_adjuster = gdpc_growth_inflation_adjuster }
-	log = "Pre Tax Rate Inflation Adjusted [?inflation_rate_adjuster]"
 	multiply_temp_variable = { gdpc_growth_inflation_adjuster = tax_rate_modifier }
 	subtract_from_temp_variable = { inflation_rate_adjuster = gdpc_growth_inflation_adjuster }
-	log = "Post Tax Rate Inflation Adjusted [?inflation_rate_adjuster]"
 
 	# Real rate = policy rate minus current inflation (both in %)
 	# Neutral floor at 2%: a zero-rate policy is always mildly stimulative, even in low-inflation environments
@@ -334,7 +332,6 @@ quarterly_inflation_calculation = {
 	subtract_from_temp_variable = { cb_real_rate = cb_infl_pct }
 	multiply_temp_variable = { cb_real_rate = 0.003 }
 	subtract_from_temp_variable = { inflation_rate_adjuster = cb_real_rate }
-	log = "Post CB Rate Inflation Adjusted [?inflation_rate_adjuster]"
 
 	#Adjust inflation further by the base GDP/C Amount
 	#Take the GDP/C and multiply it by the growth rate
@@ -343,9 +340,7 @@ quarterly_inflation_calculation = {
 	multiply_temp_variable = { gdpc_inflation_adjuster = 0.01 }
 	multiply_temp_variable = { gdpc_inflation_adjuster = last_quarter_gdpc_growth_rate }
 
-	log = "Pre GDP/C Inflation Adjusted - [?inflation_rate_adjuster]"
 	add_to_temp_variable = { inflation_rate_adjuster = gdpc_inflation_adjuster }
-	log = "Post GDP/C Inflation Adjusted - [?inflation_rate_adjuster]"
 
 	#Adjust inflation by economic cycle
 	#Faster economic growth means more money and spending, which drives up the price of goods
@@ -373,9 +368,7 @@ quarterly_inflation_calculation = {
 	multiply_temp_variable = { economic_expense_multiplier = 0.01 }
 	multiply_temp_variable = { cycle_inflation_adjustment = economic_expense_multiplier }
 
-	log = "Pre Econ Cycle Inflation Adjustment [?inflation_rate_adjuster]"
 	add_to_temp_variable = { inflation_rate_adjuster = cycle_inflation_adjustment }
-	log = "Post Econ Cycle Inflation Adjustment [?inflation_rate_adjuster]"
 
 	#Finally, adjust inflation based on the budget deficit. Larger deficit means more government effort in the economy
 	#Typically, this would be by passively printing money/removing currency, which this system uses the deficit / surplus to simulate
@@ -439,7 +432,8 @@ quarterly_inflation_calculation = {
 	clamp_temp_variable = { var = new_inflation_rate min = -2 max = 2 } #Hard cap inflation at -200% to 200%
 	set_variable = { inflation_rate_var = new_inflation_rate }
 	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: Inflation Update: Current Inflation Rate: [?THIS.inflation_rate_var|%] - Last Four Quarters: [?THIS.year_quarter_inflation_tracker^0|%] - [?THIS.year_quarter_inflation_tracker^1|%] - [?THIS.year_quarter_inflation_tracker^2|%] - [?THIS.year_quarter_inflation_tracker^3|%]"
+		log = "[GetDateText]: [THIS.GetName]: DEBUG: Inflation Update: Current Inflation Rate: [?THIS.inflation_rate_var|%]"
+		log = "[GetDateText]: [THIS.GetName]: DEBUG: Inflation Update: Last Four Quarters: [?THIS.year_quarter_inflation_tracker^0|%] - [?THIS.year_quarter_inflation_tracker^1|%] - [?THIS.year_quarter_inflation_tracker^2|%] - [?THIS.year_quarter_inflation_tracker^3|%]"
 	}
 	calculate_inflation_effects = yes
 

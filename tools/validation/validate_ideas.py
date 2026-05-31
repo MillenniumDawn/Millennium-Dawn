@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-##########################
-# Idea Validation Script
-# Validates idea definitions and usage in Millennium Dawn
+# Idea validation: checks idea definitions and usage in Millennium Dawn.
 # Checks for:
 #   1. Undefined idea references (has_idea / add_ideas / remove_ideas / swap_ideas)
 #   2. Redundant allowed_civil_war = { always = no } (HOI4 default)
@@ -9,8 +7,12 @@
 #      Note: removing allowed = { always = no } trades slightly more memory
 #      usage (the engine keeps the idea in its per-country candidate pool)
 #      for faster load times (skips the allowed evaluation at game start).
-#   4. Missing localisation keys for ideas
-##########################
+#   4. on_add blocks containing only log = "..." lines (no real effect — drop the block)
+#   5. Loc-consolidation suggestions (opt-in: --suggest-consolidation) — sibling
+#      ideas in the same file that share an identical English display name and
+#      (matching or absent) desc, where switching the duplicates to `name = <base>`
+#      lets you drop the redundant loc keys. Advisory only — never an error.
+#   6. Missing localisation keys for ideas (opt-in: --missing-loc)
 import os
 import re
 import sys
@@ -20,6 +22,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import disk_cache
 from validator_common import (
     BaseValidator,
     Colors,
@@ -33,19 +36,21 @@ from validator_common import (
 
 # Matches `has_idea = FOO`, `add_ideas = FOO`, `remove_ideas = FOO`
 # Captures the full token including `:` and `[` so dynamic refs can be filtered.
+# Hyphens are included so that identifiers like `NKO_Marxism-Leninism` are captured whole.
 _IDEA_REF_SIMPLE = re.compile(
-    r"\b(?:has_idea|add_ideas|remove_ideas)\s*=\s*([A-Za-z0-9_:\[\].]+)"
+    r"\b(?:has_idea|add_ideas|remove_ideas)\s*=\s*([A-Za-z0-9_:\[\].-]+)"
 )
 
 # Matches `add_idea = FOO` and `remove_idea = FOO` inside swap_ideas blocks
-_IDEA_REF_SWAP = re.compile(r"\b(?:add_idea|remove_idea)\s*=\s*([A-Za-z0-9_:\[\].]+)")
+_IDEA_REF_SWAP = re.compile(r"\b(?:add_idea|remove_idea)\s*=\s*([A-Za-z0-9_:\[\].-]+)")
 
 # Matches swap_ideas = { ... } blocks (brace-balanced by hand after this finds the opener)
 _SWAP_BLOCK_START = re.compile(r"\bswap_ideas\s*=\s*\{")
 
 # Matches an idea definition line at brace depth 2 inside `ideas = { CATEGORY = { IDEA = { `
 # We track depth manually; this just recognises `WORD = {` at the right level.
-_IDEA_DEF_LINE = re.compile(r"^[\t ]*([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{")
+# Hyphens are included so that identifiers like `NKO_Marxism-Leninism` are recognised.
+_IDEA_DEF_LINE = re.compile(r"^[\t ]*([A-Za-z][A-Za-z0-9_-]*)\s*=\s*\{")
 
 # HOI4 built-in inner keys that appear at depth 2 but are not idea definitions
 _HOI4_IDEA_INNER_KEYS: frozenset = frozenset(
@@ -136,6 +141,43 @@ _ALLOWED_ALWAYS_NO = re.compile(r"\ballowed\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _CANCEL_ALWAYS_NO = re.compile(r"\bcancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _ALLOWED_TAG_CHECK = re.compile(r"\ballowed\s*=\s*\{[^}]*\btag\s*=\s*([A-Z]{3})[^}]*\}")
 _PICTURE_LINE = re.compile(r"^\s+picture\s*=", re.MULTILINE)
+_ON_ADD_BLOCK_START = re.compile(r"\bon_add\s*=\s*\{")
+_LOG_LINE = re.compile(r'^\s*log\s*=\s*"[^"]*"\s*$')
+
+
+def _on_add_is_log_only(idea_text: str) -> bool:
+    """True if every on_add block in this idea contains only log = "..." lines.
+
+    Returns False if there are no on_add blocks at all, so callers can use
+    the boolean directly as "should we flag this idea".
+    """
+    found_any = False
+    for m in _ON_ADD_BLOCK_START.finditer(idea_text):
+        start = m.end()
+        depth = 1
+        i = start
+        n = len(idea_text)
+        while i < n and depth > 0:
+            if idea_text[i] == "{":
+                depth += 1
+            elif idea_text[i] == "}":
+                depth -= 1
+            i += 1
+        body = idea_text[start : i - 1]
+        found_any = True
+
+        non_log = False
+        for line in body.split("\n"):
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            if _LOG_LINE.match(stripped):
+                continue
+            non_log = True
+            break
+        if non_log:
+            return False
+    return found_any
 
 
 @dataclass
@@ -148,19 +190,27 @@ class IdeaIssue:
 
 
 def _parse_ideas_from_file(
-    filepath: str,
+    filepath: str, mod_path: str
 ) -> Tuple[Dict[str, Tuple[str, Optional[str]]], List[IdeaIssue]]:
-    """Parse one ideas file and return (defined_ideas, issues).
-
-    defined_ideas maps idea_name -> (category_name, name_override_or_None).
-    issues is a list of IdeaIssue for problems found during parsing.
-    """
+    """Read one ideas file and return (defined_ideas, issues), content-cached."""
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
     )
     if not text:
         return {}, []
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "ideas.defs", filepath, text, lambda: _parse_ideas_from_text(text)
+    )
 
+
+def _parse_ideas_from_text(
+    text: str,
+) -> Tuple[Dict[str, Tuple[str, Optional[str]]], List[IdeaIssue]]:
+    """Parse ideas-file text and return (defined_ideas, issues).
+
+    defined_ideas maps idea_name -> (category_name, name_override_or_None).
+    issues is a list of IdeaIssue for problems found during parsing.
+    """
     defined: Dict[str, Tuple[str, Optional[str]]] = {}
     issues: List[IdeaIssue] = []
 
@@ -256,6 +306,16 @@ def _parse_ideas_from_file(
                             )
                         )
 
+                if _on_add_is_log_only(idea_text):
+                    issues.append(
+                        IdeaIssue(
+                            current_idea,
+                            category_name,
+                            current_idea_line,
+                            "on-add-log-only",
+                        )
+                    )
+
                 current_idea = None
                 idea_lines = []
 
@@ -265,9 +325,17 @@ def _parse_ideas_from_file(
     return defined, issues
 
 
-def _check_file_for_refs(args: Tuple[str]) -> List[str]:
+def _scan_idea_refs(text: str) -> List[str]:
+    """Return every raw idea reference token in the text (unfiltered)."""
+    refs: List[str] = []
+    refs.extend(_IDEA_REF_SIMPLE.findall(text))
+    refs.extend(_extract_swap_idea_refs(text))
+    return refs
+
+
+def _check_file_for_refs(args: Tuple[str, frozenset, str]) -> List[str]:
     """Pool worker: return undefined idea references found in one file."""
-    filepath, defined_ideas_frozen = args
+    filepath, defined_ideas_frozen, mod_path = args
     if should_skip_file(filepath):
         return []
     text = FileOpener.open_text_file(
@@ -282,9 +350,11 @@ def _check_file_for_refs(args: Tuple[str]) -> List[str]:
     ):
         return []
 
-    refs: List[str] = []
-    refs.extend(_IDEA_REF_SIMPLE.findall(text))
-    refs.extend(_extract_swap_idea_refs(text))
+    # Cache the raw (filter-independent) ref extraction; the filter below depends
+    # on the volatile defined-set, so it must run per call after the cache hit.
+    refs = disk_cache.per_file_cached_by_content(
+        mod_path, "ideas.refs", filepath, text, lambda: _scan_idea_refs(text)
+    )
 
     results: List[str] = []
     basename = os.path.basename(filepath)
@@ -308,12 +378,17 @@ class Validator(BaseValidator):
 
     def __init__(self, *args, **kwargs):
         self.missing_loc = kwargs.pop("missing_loc", False)
+        self.suggest_consolidation = kwargs.pop("suggest_consolidation", False)
         super().__init__(*args, **kwargs)
 
     def _parse_all_ideas(
         self,
-    ) -> Tuple[Dict[str, Tuple[str, Optional[str]]], Dict[str, List[IdeaIssue]]]:
-        """Parse all idea files and return (defined_ideas, issues_by_file).
+    ) -> Tuple[
+        Dict[str, Tuple[str, Optional[str]]],
+        Dict[str, List[IdeaIssue]],
+        Dict[str, List[str]],
+    ]:
+        """Parse all idea files and return (defined_ideas, issues_by_file, ideas_by_file).
 
         Always parses every idea file regardless of staged mode — the full
         set of defined ideas is needed as the reference for undefined-ref checks.
@@ -327,10 +402,12 @@ class Validator(BaseValidator):
 
         all_defined: Dict[str, Tuple[str, Optional[str]]] = {}
         issues_by_file: Dict[str, List[IdeaIssue]] = {}
+        ideas_by_file: Dict[str, List[str]] = {}
 
         for filepath in idea_files:
-            defined, issues = _parse_ideas_from_file(filepath)
+            defined, issues = _parse_ideas_from_file(filepath, self.mod_path)
             all_defined.update(defined)
+            ideas_by_file[filepath] = list(defined.keys())
             if issues:
                 issues_by_file[filepath] = issues
 
@@ -353,7 +430,7 @@ class Validator(BaseValidator):
                     char_tokens += 1
         self.log(f"  Found {char_tokens} character idea_token entries")
 
-        return all_defined, issues_by_file
+        return all_defined, issues_by_file, ideas_by_file
 
     def validate_undefined_idea_refs(
         self, defined_ideas: Dict[str, Tuple[str, Optional[str]]]
@@ -361,7 +438,6 @@ class Validator(BaseValidator):
         self._log_section("Checking for undefined idea references...")
         self.log(f"  Known defined ideas: {len(defined_ideas)}")
 
-        # Scan all .txt files for idea references
         scan_files = self._collect_files(
             [
                 "common/national_focus/**/*.txt",
@@ -374,7 +450,7 @@ class Validator(BaseValidator):
         self.log(f"  Scanning {len(scan_files)} files for idea references...")
 
         defined_frozen = frozenset(defined_ideas.keys())
-        args_list = [(f, defined_frozen) for f in scan_files]
+        args_list = [(f, defined_frozen, self.mod_path) for f in scan_files]
 
         raw_results = self._pool_map(_check_file_for_refs, args_list)
         results: List[str] = []
@@ -489,6 +565,11 @@ class Validator(BaseValidator):
                     grouped[basename].append(
                         f"line {issue.line}: '{issue.idea_name}' uses tag = {issue.detail} in allowed (use original_tag for civil war safety)"
                     )
+                elif issue.issue_type == "on-add-log-only":
+                    grouped[basename].append(
+                        f"line {issue.line}: '{issue.idea_name}' has on_add = {{ log = ... }} with no real effects"
+                        " (drop the on_add block — tracing-only logs are dead weight)"
+                    )
 
         self._report_grouped(
             grouped,
@@ -496,6 +577,80 @@ class Validator(BaseValidator):
             "Idea definition issues:",
             severity=Severity.WARNING,
             category="idea-quality",
+        )
+
+    def validate_loc_consolidation(
+        self,
+        defined_ideas: Dict[str, Tuple[str, Optional[str]]],
+        ideas_by_file: Dict[str, List[str]],
+    ):
+        """Suggest consolidation when sibling ideas in the same file share
+        identical English loc strings but don't use `name = X` to point at a
+        shared key. Catches the case where N tiers each get their own
+        `TAG_idea_2`, `TAG_idea_3` loc entries with the same text — the
+        upgraded tiers should set `name = TAG_idea_1` and drop the duplicate
+        loc keys.
+
+        Reports at WARNING severity only — never an error. This is an
+        advisory cleanup hint, not a correctness check, so it must never
+        fail CI even in strict mode.
+        """
+        self._log_section("Checking for loc-consolidation opportunities...")
+
+        sys.path.insert(0, os.path.dirname(__file__))
+        from validate_localisation import get_all_loc_keys
+
+        loc_values, _ = get_all_loc_keys(self.mod_path, lowercase=False)
+
+        def _norm(s: Optional[str]) -> Optional[str]:
+            if s is None:
+                return None
+            s = s.strip()
+            if s.startswith("$") and s.endswith("$"):
+                return s[1:-1].strip()
+            return s
+
+        grouped: Dict[str, List[str]] = defaultdict(list)
+
+        for filepath, idea_ids in ideas_by_file.items():
+            by_display: Dict[str, List[str]] = defaultdict(list)
+
+            for idea_id in idea_ids:
+                _cat, name_override = defined_ideas.get(idea_id, (None, None))
+                if name_override is not None:
+                    continue
+                display = loc_values.get(idea_id)
+                if not display:
+                    continue
+                by_display[display].append(idea_id)
+
+            for display, members in by_display.items():
+                if len(members) < 2:
+                    continue
+
+                desc_norm: Dict[str, Optional[str]] = {}
+                for m in members:
+                    desc_norm[m] = _norm(loc_values.get(m + "_desc"))
+                unique_descs = {v for v in desc_norm.values() if v is not None}
+                if len(unique_descs) > 1:
+                    continue
+
+                base = sorted(members)[0]
+                redundant = sorted(m for m in members if m != base)
+                basename = os.path.basename(filepath)
+                grouped[basename].append(
+                    f"{len(members)} ideas share display name '{display}': "
+                    f"{', '.join(members)} — set `name = {base}` on "
+                    f"{', '.join(redundant)} and drop their duplicate loc keys"
+                )
+
+        self._report_grouped(
+            grouped,
+            "✓ No loc-consolidation opportunities found",
+            "Loc-consolidation suggestions (advisory — siblings with identical loc strings):",
+            severity=Severity.WARNING,
+            category="loc-consolidation",
+            max_detail_per_file=3,
         )
 
     def validate_missing_localisation(
@@ -543,25 +698,39 @@ class Validator(BaseValidator):
 
     def run_validations(self):
         # Always parse all ideas — needed as the reference set even in staged mode
-        defined_ideas, issues_by_file = self._parse_all_ideas()
+        defined_ideas, issues_by_file, ideas_by_file = self._parse_all_ideas()
         self.log(f"  Found {len(defined_ideas)} defined ideas total")
 
         if self.staged_only:
-            # In staged mode, only run quality checks on staged idea files
+            staged_files_set = set(self.staged_files or [])
             staged_issues = {
                 fp: issues
                 for fp, issues in issues_by_file.items()
-                if any(fp.endswith(sf) for sf in (self.staged_files or []))
+                if any(fp.endswith(sf) for sf in staged_files_set)
+            }
+            staged_ideas_by_file = {
+                fp: ids
+                for fp, ids in ideas_by_file.items()
+                if any(fp.endswith(sf) for sf in staged_files_set)
             }
             if staged_issues:
                 self.validate_idea_quality(staged_issues)
             else:
                 self.log("  No staged idea files — skipping quality checks")
-            # Undefined refs: only scan staged files for broken references
             self.validate_undefined_idea_refs(defined_ideas)
+            ideas_for_consolidation = staged_ideas_by_file
         else:
             self.validate_undefined_idea_refs(defined_ideas)
             self.validate_idea_quality(issues_by_file)
+            ideas_for_consolidation = ideas_by_file
+
+        if self.suggest_consolidation:
+            if ideas_for_consolidation:
+                self.validate_loc_consolidation(defined_ideas, ideas_for_consolidation)
+        else:
+            self._log_section(
+                "Skipping loc-consolidation suggestions (pass --suggest-consolidation to enable)"
+            )
 
         if self.missing_loc:
             self.validate_missing_localisation(defined_ideas)
@@ -577,6 +746,13 @@ def _add_extra_args(parser):
         action="store_true",
         dest="missing_loc",
         help="Enable the missing localisation check (noisy until backlog is cleared)",
+    )
+    parser.add_argument(
+        "--suggest-consolidation",
+        action="store_true",
+        dest="suggest_consolidation",
+        help="Suggest `name = X` consolidation for sibling ideas with identical loc"
+        " (advisory; emits warnings only, never errors)",
     )
 
 

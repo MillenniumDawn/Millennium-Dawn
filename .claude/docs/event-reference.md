@@ -2,19 +2,21 @@
 
 On-demand reference for event structure, examples, and patterns. For best practices, see CLAUDE.md.
 
+In every example below, replace `TAG`, `tag_ns`, and the namespace number with the values for your event. `tag_ns` is whatever the file declared via `add_namespace = ...` at the top.
+
 ## Example: Basic Triggered Event
 
 ```
 country_event = {
-	id = france_md.504
-	title = france_md.504.t
-	desc = france_md.504.d
-	picture = GFX_france_mcdonalds_bombing
+	id = tag_ns.N
+	title = tag_ns.N.t
+	desc = tag_ns.N.d
+	picture = GFX_some_picture
 	is_triggered_only = yes
 
 	option = {
-		name = france_md.504.a
-		log = "[GetDateText]: [This.GetName]: france_md.504.a executed"
+		name = tag_ns.N.a
+		log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"
 		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = -0.01 }
 		add_relative_party_popularity = yes
@@ -25,7 +27,7 @@ country_event = {
 	}
 
 	option = {
-		name = france_md.504.b
+		name = tag_ns.N.b
 		ai_chance = {
 			base = 0
 		}
@@ -35,25 +37,25 @@ country_event = {
 
 ## Example: Per-Option Log Messages
 
-Each option's log must match its own ID — copy-paste errors are common:
+Each option's log must match its own ID — copy-paste errors between `.a` and `.b` (or `.b` and `.c`) are common:
 
 ```
 country_event = {
-	id = israel.66
-	title = israel.66.t
-	desc = israel.66.d
-	picture = GFX_report_event_Arrest_3
+	id = tag_ns.N
+	title = tag_ns.N.t
+	desc = tag_ns.N.d
+	picture = GFX_some_picture
 	is_triggered_only = yes
 
 	option = {
-		name = israel.66.a
-		log = "[GetDateText]: [This.GetName]: israel.66.a executed"  # .a not .b
+		name = tag_ns.N.a
+		log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"  # .a not .b
 		# ...
 	}
 
 	option = {
-		name = israel.66.b
-		log = "[GetDateText]: [This.GetName]: israel.66.b executed"  # .b not .a
+		name = tag_ns.N.b
+		log = "[GetDateText]: [This.GetName]: tag_ns.N.b executed"  # .b not .a
 		# ...
 	}
 }
@@ -61,25 +63,25 @@ country_event = {
 
 ## Example: Multi-Option Cross-Country Event
 
-Events fired to another country should have AI weighting based on opinion/influence, not random chance:
+When an event is fired to a different country than the one that initiated the action, AI weighting must reflect that country's situation (opinion, influence, ideology) — never base-only random chance. In the template below, `SNDR` is the sender (whoever fired the event) and the receiver is the current scope (`This`):
 
 ```
 country_event = {
-	id = israel.68
-	title = israel.68.t
-	desc = israel.68.d
-	picture = GFX_specops_isr
+	id = tag_ns.N
+	title = tag_ns.N.t
+	desc = tag_ns.N.d
+	picture = GFX_some_picture
 	is_triggered_only = yes
 	trigger = {
-		original_tag = PAL
+		original_tag = TAG   # narrow to receiver if needed
 	}
 
 	option = { # reject
-		name = israel.68.a
-		log = "[GetDateText]: [This.GetName]: israel.68.a executed"
+		name = tag_ns.N.a
+		log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"
 		# rejection effects...
-		ISR = {
-			country_event = { id = israel.70 days = 1 }
+		SNDR = {
+			country_event = { id = tag_ns.M days = 1 }   # tell the sender we rejected
 		}
 		ai_chance = {
 			base = 15
@@ -89,17 +91,17 @@ country_event = {
 			}
 			modifier = {
 				add = 10
-				has_opinion = { target = ISR value < -15 }
+				has_opinion = { target = SNDR value < -15 }
 			}
 		}
 	}
 
 	option = { # accept
-		name = israel.68.b
-		log = "[GetDateText]: [This.GetName]: israel.68.b executed"
+		name = tag_ns.N.b
+		log = "[GetDateText]: [This.GetName]: tag_ns.N.b executed"
 		# acceptance effects...
-		ISR = {
-			country_event = { id = israel.69 days = 1 }
+		SNDR = {
+			country_event = { id = tag_ns.K days = 1 }   # tell the sender we accepted
 		}
 		ai_chance = {
 			base = 0

@@ -18,6 +18,7 @@ from check_common_mistakes import (
     _check_duplicate_add_to_variable,
     _check_embargo_dlc_guard,
     _check_every_country_member_array,
+    _check_has_idea_mutex_in_not_block,
 )
 
 passed = 0
@@ -39,9 +40,7 @@ def assert_finds(check_fn, lines, expected_count, label):
             print(f"        line {ln}: {msg}")
 
 
-# ═══════════════════════════════════════════════════════════════════════════
 # 1. Consecutive same-tag scope blocks
-# ═══════════════════════════════════════════════════════════════════════════
 
 print("\n── Consecutive scope blocks ──")
 
@@ -219,9 +218,7 @@ assert_finds(
 )
 
 
-# ═══════════════════════════════════════════════════════════════════════════
 # 2. send_embargo / break_embargo without DLC guard
-# ═══════════════════════════════════════════════════════════════════════════
 
 print("\n── Embargo DLC guard ──")
 
@@ -280,9 +277,7 @@ assert_finds(
 )
 
 
-# ═══════════════════════════════════════════════════════════════════════════
 # 3. divide_variable without zero guard
-# ═══════════════════════════════════════════════════════════════════════════
 
 print("\n── Divide variable zero guard ──")
 
@@ -368,9 +363,7 @@ assert_finds(
 )
 
 
-# ═══════════════════════════════════════════════════════════════════════════
 # 4. Duplicate consecutive add_to_variable
-# ═══════════════════════════════════════════════════════════════════════════
 
 print("\n── Duplicate add_to_variable ──")
 
@@ -432,9 +425,7 @@ assert_finds(
 )
 
 
-# ═══════════════════════════════════════════════════════════════════════════
 # 5. every_country with has_idea = X_member
-# ═══════════════════════════════════════════════════════════════════════════
 
 print("\n── every_country member array ──")
 
@@ -557,15 +548,138 @@ assert_finds(
 )
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# Summary
-# ═══════════════════════════════════════════════════════════════════════════
+# has_idea mutex inside NOT block (raid_target_eligible bug)
 
-print(f"\n{'=' * 60}")
-print(f"Results: {passed} passed, {failed} failed")
-if failed:
-    print("SOME TESTS FAILED")
-    sys.exit(1)
-else:
-    print("ALL TESTS PASSED")
-    sys.exit(0)
+print("\n── has_idea mutex inside NOT/AND blocks ──")
+
+# Classic raid_target_eligible bug: two intervention ideas inside one NOT block
+assert_finds(
+    _check_has_idea_mutex_in_not_block,
+    [
+        "raid_target_eligible = {\n",
+        "\tNOT = {\n",
+        "\t\thas_idea = intervention_local_security\n",
+        "\t\thas_idea = intervention_isolation\n",
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "NOT block with two intervention doctrines flagged",
+)
+
+# Same trap inside an AND block (also broken — always false)
+assert_finds(
+    _check_has_idea_mutex_in_not_block,
+    [
+        "modifier = {\n",
+        "\tAND = {\n",
+        "\t\thas_idea = intervention_isolation\n",
+        "\t\thas_idea = intervention_limited_interventionism\n",
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "AND block with two intervention doctrines flagged",
+)
+
+# Same group split across separate NOT blocks — not flagged (this is the FIX)
+assert_finds(
+    _check_has_idea_mutex_in_not_block,
+    [
+        "raid_target_eligible = {\n",
+        "\tNOT = { has_idea = intervention_local_security }\n",
+        "\tNOT = { has_idea = intervention_isolation }\n",
+        "}\n",
+    ],
+    0,
+    "separate NOT blocks for same group not flagged",
+)
+
+# Two intervention ideas inside OR — not flagged (OR is the intended structure)
+assert_finds(
+    _check_has_idea_mutex_in_not_block,
+    [
+        "trigger = {\n",
+        "\tNOT = {\n",
+        "\t\tOR = {\n",
+        "\t\t\thas_idea = intervention_isolation\n",
+        "\t\t\thas_idea = intervention_local_security\n",
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "NOT { OR { ... } } not flagged",
+)
+
+# Single intervention idea in a NOT block — fine
+assert_finds(
+    _check_has_idea_mutex_in_not_block,
+    [
+        "trigger = {\n",
+        "\tNOT = { has_idea = intervention_isolation }\n",
+        "}\n",
+    ],
+    0,
+    "single intervention idea in NOT not flagged",
+)
+
+# Ideas from different mutex groups inside one NOT — not flagged (no false positive)
+assert_finds(
+    _check_has_idea_mutex_in_not_block,
+    [
+        "trigger = {\n",
+        "\tNOT = {\n",
+        "\t\thas_idea = intervention_isolation\n",
+        "\t\thas_idea = NATO_member\n",
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "ideas from different groups not flagged",
+)
+
+# Single-line NOT block with two mutex ideas — must be caught, not silently skipped
+assert_finds(
+    _check_has_idea_mutex_in_not_block,
+    [
+        "trigger = {\n",
+        "\tNOT = { has_idea = intervention_isolation has_idea = intervention_local_security }\n",
+        "}\n",
+    ],
+    1,
+    "single-line NOT with two intervention doctrines flagged",
+)
+
+# Single-line AND block with two mutex ideas — also caught
+assert_finds(
+    _check_has_idea_mutex_in_not_block,
+    [
+        "modifier = { AND = { has_idea = intervention_isolation has_idea = intervention_limited_interventionism } }\n",
+    ],
+    1,
+    "single-line AND with two intervention doctrines flagged",
+)
+
+# Single-line OR block with two mutex ideas — not flagged (OR is the intended structure)
+assert_finds(
+    _check_has_idea_mutex_in_not_block,
+    [
+        "trigger = { OR = { has_idea = intervention_isolation has_idea = intervention_local_security } }\n",
+    ],
+    0,
+    "single-line OR with mutex ideas not flagged",
+)
+
+
+# Summary
+
+if __name__ == "__main__":
+    print(f"\n{'=' * 60}")
+    print(f"Results: {passed} passed, {failed} failed")
+    if failed:
+        print("SOME TESTS FAILED")
+        sys.exit(1)
+    else:
+        print("ALL TESTS PASSED")
+        sys.exit(0)

@@ -43,3 +43,140 @@ expenditure_large_for_mio_upgrade = {
 		}
 	}
 }
+
+# MIO Unlock Catalog — master token array seeded in setup_global_arrays (00_startup_effects.txt).
+
+update_mio_catalog_dirty_variable = {
+	if = { limit = { check_variable = { global.mio_catalog_dirty_update_var < 10000 } }
+		add_to_variable = { global.mio_catalog_dirty_update_var = 1 }
+	}
+	else = {
+		set_variable = { global.mio_catalog_dirty_update_var = 1 }
+	}
+}
+
+mio_catalog_rebuild_visible_yes = {
+	clear_array = mio_catalog_visible_array
+	set_temp_variable = { mio_catalog_iter = 1 }
+	while_loop_effect = {
+		limit = { check_variable = { mio_catalog_iter < 24 } }
+		set_temp_variable = { v = mio_catalog_iter }
+		if = {
+			limit = { mio_catalog_entry_available_yes = yes }
+			add_to_array = { mio_catalog_visible_array = mio_catalog_iter }
+		}
+		add_to_temp_variable = { mio_catalog_iter = 1 }
+	}
+}
+
+# Caller charges 50 PP. Per-entry XP cost + the bare-name `_unlocked` flag are set here because
+# meta_effect can't strip the GENERIC_ prefix from the token key. The meta_effect tail handles the
+# only piece that needs the full token name (`mio:<NAME>`).
+mio_catalog_entry_unlock_yes = {
+	if = {
+		limit = { check_variable = { v = 1 } }
+		set_country_flag = krepost_state_defense_bureau_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 2 } }
+		army_experience = -50
+		set_country_flag = north_plains_heavy_industries_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 3 } }
+		set_country_flag = sentinel_grid_networks_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 4 } }
+		set_country_flag = brunn_heavy_engineering_werke_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 5 } }
+		set_country_flag = reichswerke_konstrukt_dynamik_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 6 } }
+		set_country_flag = vector_defense_labs_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 7 } }
+		army_experience = -75
+		set_country_flag = marshall_tractor_works_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 8 } }
+		army_experience = -100
+		set_country_flag = vanderlind_hartwell_systems_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 9 } }
+		air_experience = -50
+		set_country_flag = mil_kamov_rotorworks_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 10 } }
+		set_country_flag = helitech_avionique_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 11 } }
+		air_experience = -100
+		set_country_flag = aurora_aerodynamics_corporation_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 12 } }
+		air_experience = -75
+		set_country_flag = societe_europeenne_daerostructures_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 13 } }
+		set_country_flag = southwestern_aerospace_dynamics_bureau_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 14 } }
+		set_country_flag = skyforge_autonomous_systems_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 15 } }
+		set_country_flag = compagnie_aeronatique_darmement_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 16 } }
+		set_country_flag = whitehall_strategic_solutions_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 17 } }
+		navy_experience = -100
+		set_country_flag = triton_maritime_defense_group_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 18 } }
+		set_country_flag = eastern_maritime_shipbuilding_group_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 19 } }
+		set_country_flag = sevmorprom_submarine_yards_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 20 } }
+		set_country_flag = halland_civic_engineering_group_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 21 } }
+		set_country_flag = second_academy_missile_bureau_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 22 } }
+		set_country_flag = western_orbital_systems_bureau_unlocked
+	}
+	else_if = {
+		limit = { check_variable = { v = 23 } }
+		set_country_flag = central_heavy_atomics_power_unlocked
+	}
+
+	meta_effect = {
+		text = {
+			unlock_military_industrial_organization_tooltip = mio:[ORG]
+		}
+		ORG = "[?global.mio_catalog_all_tokens^v.GetTokenKey]"
+	}
+}

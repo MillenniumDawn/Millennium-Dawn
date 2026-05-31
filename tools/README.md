@@ -45,6 +45,7 @@ tools/
 ├── standardize_staged.py Pre-commit hook: routes staged files to standardizers
 ├── generate_validation_report.py CI: generates PR validation reports
 ├── validate_tools.py  CI: validates Python scripts in tools/
+├── COMMENT_STYLE.md   Comment style for Python tooling (why, not what)
 └── README.md
 ```
 
@@ -53,6 +54,7 @@ tools/
 - **Writing a new validator?** Subclass `BaseValidator` from `tools/validation/validator_common.py`. Prefer `add_error(category, msg, file, line)` for structured issues; `_report(list_of_strings, ...)` still works and now auto-parses common `path:line - msg` formats into file+line for the PR comment's inline annotations.
 - **Writing a new linter or fixer?** Import helpers from `tools/shared_utils.py`. Skip `validator_common` — linters don't emit the structured issue stream validators produce.
 - **Reading validator output?** Import from `tools/report_lib`. It parses the JSON sidecars each validator writes and renders the PR comment + GitHub Check Runs.
+- **Writing comments?** See [COMMENT_STYLE.md](COMMENT_STYLE.md). Default to none; add one when the _why_ is non-obvious.
 
 ## Scripts by Category
 
@@ -75,7 +77,7 @@ Style checkers, formatters, and encoding validators. These are used in pre-commi
 
 ### Validation (`validation/`)
 
-Content validators run in CI via matrix strategy. See `validation/README.md` for details.
+Content validators run in CI via matrix strategy. See `validation/README.md` for full list of all 22 validators and their checks.
 
 ### Standardization (`standardization/`)
 
@@ -103,14 +105,15 @@ See `assets/gfxEntryGenerator.md` for the GFX entry generator guide.
 
 Metrics, reference analysis, and review tools.
 
-| Script                              | Description                                                            |
-| ----------------------------------- | ---------------------------------------------------------------------- |
-| **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system              |
-| **estimate_gdp.py**                 | Estimates starting GDP for country tags using MD's building formulas   |
-| **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase |
-| **find_scripted_loc_references.py** | Checks whether scripted localisation names are actually referenced     |
-| **review_branch.py**                | Generates a diff summary of the current branch vs main                 |
-| **search_add_ideas.py**             | Searches for `add_ideas` / `add_timed_idea` usage across the codebase  |
+| Script                              | Description                                                                                                                                                     |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                       |
+| **estimate_gdp.py**                 | Estimates starting GDP for country tags using MD's building formulas                                                                                            |
+| **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase                                                                                          |
+| **find_scripted_loc_references.py** | Checks whether scripted localisation names are actually referenced                                                                                              |
+| **pre_place_power_plants.py**       | Bakes fossil_powerplant + composite_plant counts into `history/states/` to skip startup loops. Re-run after edits to the energy formula or country/state setup. |
+| **review_branch.py**                | Generates a diff summary of the current branch vs main                                                                                                          |
+| **search_add_ideas.py**             | Searches for `add_ideas` / `add_timed_idea` usage across the codebase                                                                                           |
 
 ### Generators (`generators/`)
 
