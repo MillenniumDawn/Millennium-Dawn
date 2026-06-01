@@ -3,14 +3,9 @@ import codecs
 import os
 import shutil
 
-# Global Init
-# country_tag_list: Country Tag List
-# inputpath: Path to the given directory
 country_tag_list = []
 inputpath = ""
 
-# Modfolder = the mod folder name
-# mod = The mod name
 modfolder = "Millennium_Dawn\\"
 mod = "Millennium_Dawn"
 newline = "\n\t\t\t"
@@ -54,7 +49,6 @@ def main():
 
 def createcountrytaglist():
     temp_array = []
-    # Country Tag List Array Creation
     tag_path = os.path.abspath(
         os.path.join(os.path.dirname(mod), "..\\common\\country_tags")
     )
@@ -76,7 +70,6 @@ def createcountrytaglist():
 
 def pulldynamictags():
     temp_array = []
-    # Country Tag List Array Creation
     tag_path = os.path.abspath(
         os.path.join(os.path.dirname(mod), "..\\common\\country_tags")
     )

@@ -99,7 +99,7 @@ def main():
         getfiles(path)
     else:
         print(
-            f"{bcolors.FAIL}1 through 7 dumbfuck {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} isn't a fucking option.\n\nRun the script again cunt.\n{bcolors.RESET}"
+            f"{bcolors.FAIL}Invalid selection: {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} is not an option. Please enter a number between 1 and 7 and run the script again.\n{bcolors.RESET}"
         )
         return
 
@@ -332,7 +332,6 @@ def main():
                             (match := substring) in fname
                             for substring in country_tag_list
                         ):
-                            # DEBUG: print("Match:" + match)
                             tag_of_nation = match
                         file_location = fname
                         file_location = file_location.split(modfolder)
@@ -487,14 +486,11 @@ def main():
             return
         else:
             print(
-                f"{bcolors.FAIL}1 through 7 dumbfuck {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} isn't a fucking option.\n\nRun the script again cunt.\n{bcolors.RESET}"
+                f"{bcolors.FAIL}Invalid selection: {bcolors.RESET}{bcolors.INFO}{selection}{bcolors.RESET}{bcolors.FAIL} is not an option. Please enter a number between 1 and 7 and run the script again.\n{bcolors.RESET}"
             )
             return
 
 
-# Utilities:
-# Class Name: bcolors
-# Purpose: I don't think I need to be more specific here
 class bcolors:
     OK = "\033[92m"  # GREEN
     WARNING = "\033[93m"  # YELLOW
@@ -503,9 +499,6 @@ class bcolors:
     INFO = "\x1b[33;25m"  # INFO COLOR
 
 
-# Method: movefilestointerface
-# Parameters: filename, filename2
-# Purpose: Moves output files from the tools directory to the ../interface directory
 def movefilestointerface(filename, filename2=""):
     print(f"Moving {filename} from tools to the interface directory")
     shutil.copy(filename, "../interface")
@@ -517,7 +510,7 @@ def movefilestointerface(filename, filename2=""):
             f"{filename} && {filename2} has been moved successfully to the interface directory."
         )
     else:
-        print(f"{filename} has been moved sucessfully to the interface directory")
+        print(f"{filename} has been moved successfully to the interface directory")
 
 
 def createitemcall(filecall, type=0):
@@ -568,8 +561,6 @@ def createcountrytaglist():
     return temp_array
 
 
-# Method: getfiles
-# Purpose: Recursively serach and find binding path throughout the given directory and binds it to a .dds, .png, .tga
 def getfiles(path):
     for filename in os.listdir(path):
         f = os.path.join(path, filename)
@@ -589,6 +580,5 @@ def getfiles(path):
             getfiles(f)
 
 
-# I don't need to explain what this
 if __name__ == "__main__":
     main()

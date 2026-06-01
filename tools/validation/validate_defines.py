@@ -1,16 +1,8 @@
 #!/usr/bin/env python3
-##########################
-# Defines Validation Script
-# Cross-references MD_defines.lua against vanilla 00_defines.lua to catch
-# dead/fabricated defines, wrong namespaces, and duplicates.
-#
-# Checks:
-#   1. Every define in MD exists in vanilla with the correct namespace
-#   2. No duplicate defines within MD (last-write-wins is a silent bug)
-#   3. Suggests closest match for likely typos
-#
+# Cross-reference MD_defines.lua against vanilla 00_defines.lua to catch
+# dead/fabricated defines, wrong namespaces, and duplicates (where last-write
+# silently wins), suggesting the closest match for likely typos.
 # Requires vanilla HOI4 installed; auto-detects common Steam paths.
-##########################
 import difflib
 import os
 import re

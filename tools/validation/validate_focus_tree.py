@@ -14,6 +14,7 @@ import re
 from collections import defaultdict
 from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
+import disk_cache
 from validator_common import (
     BaseValidator,
     Colors,
@@ -111,10 +112,26 @@ def _parse_focus_ids_from_block(block: str) -> List[Tuple[str, int, List[List[st
     return results
 
 
-def parse_focus_file(
-    filepath: str,
-) -> Dict:
-    """Parse one focus tree file and return a structured result dict.
+def parse_focus_file(args: Tuple[str, str]) -> Dict:
+    """Read one focus tree file and return its parsed structure, content-cached."""
+    filepath, mod_path = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig", errors="ignore") as fh:
+            raw = fh.read()
+    except Exception:
+        return {"filepath": filepath, "trees": [], "shared_defs": {}}
+    text = strip_comments(raw)
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "focus_tree.parse",
+        filepath,
+        text,
+        lambda: _parse_focus_text(text, filepath),
+    )
+
+
+def _parse_focus_text(text: str, filepath: str) -> Dict:
+    """Parse comment-stripped focus tree text into a structured result dict.
 
     Keys:
       "filepath"      — absolute path
@@ -130,13 +147,6 @@ def parse_focus_file(
         "trees": [],
         "shared_defs": {},
     }
-    try:
-        with open(filepath, "r", encoding="utf-8-sig", errors="ignore") as fh:
-            raw = fh.read()
-    except Exception:
-        return result
-
-    text = strip_comments(raw)
 
     # --- collect shared_focus definitions (top-level) ---
     pos = 0
@@ -252,7 +262,9 @@ class Validator(BaseValidator):
         if self._parsed_cache is not None:
             return self._parsed_cache
         files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
-        self._parsed_cache = self._pool_map(parse_focus_file, files, chunksize=10)
+        self._parsed_cache = self._pool_map(
+            parse_focus_file, [(f, self.mod_path) for f in files], chunksize=10
+        )
         return self._parsed_cache
 
     def _build_focus_registry(

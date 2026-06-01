@@ -110,21 +110,40 @@ Steps:
 
    Run `/changelog` to add an entry for the fix under the current version in `Changelog.txt`. Commit the changelog update separately.
 
-9. **Open a pull request**
+9. **Open or update the pull request**
 
-   Push the branch and create a PR that closes the issue:
+   Push the branch first:
 
    ```
    git push -u origin <branch>
-   gh pr create --title "Fix <short description> (#<issue number>)" --body "..."
    ```
 
-   PR body must include:
-   - Closes #<issue number>
-   - **Root cause** — what was wrong and why
-   - **Fix** — what was changed and how it resolves it
-   - **Test plan** — steps to verify the fix in-game
+   Then check whether an open PR already exists for this branch:
+
+   ```
+   gh pr list --head <branch> --state open --json number,url,body
+   ```
+
+   **a. If no open PR exists**: hand off to `/open-pr <issue number>`. That skill is the single source of truth for the create path — it writes the AngriestBird-format body, opens the draft PR, and handles the changelog. Do not duplicate its logic inline here.
+
+   **b. If an open PR already exists**: rewrite its body in AngriestBird format and apply with `gh pr edit <PR#> --body "..."`. Do NOT create a second PR.
+
+   When rewriting an existing PR body:
+   - **Preserve every existing `Closes #N` line** at the top, then append a new `Closes #<this issue number>` for the fix you just made.
+   - **Preserve every existing `#### Bug Fixes` bullet** — append a new bullet for this fix, never replace the prior bullets. Same for `#### Other`, `#### AI`, `#### Content`, etc. if present.
+   - **Preserve every existing test-plan bullet** — append new bullets for the new fix.
+   - If the existing body is in the older deep-dive format (root-cause code blocks, `file:line` citations, per-issue regression notes), normalise the whole body to AngriestBird format while still keeping every fact: each prior fix gets recomposed as a single bolded bullet in `#### Bug Fixes`, with the regression / file-citation details dropped (they live in the commits and the linked issues).
+   - Follow `/open-pr` step 5 formatting rules: bold `**Fixes #N: Issue Title.**` prefix followed by a period, then 2 sentences (cause + resolution), 2–3 lines max, backticks for code identifiers, no em dashes (`—`) anywhere, no `→` separator. Use a colon, period, or comma instead.
+
+   Apply with a heredoc to keep formatting intact:
+
+   ```
+   gh pr edit <PR#> --body "$(cat <<'EOF'
+   <full rewritten body>
+   EOF
+   )"
+   ```
 
 10. **Report back**
 
-Output the PR URL and a one-paragraph summary of the root cause and fix.
+Output the PR URL, whether the PR was **created** or **updated**, and a one-paragraph summary of the root cause and fix.

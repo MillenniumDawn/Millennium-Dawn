@@ -58,9 +58,8 @@ class DecisionStandardizer(BaseStandardizer):
                 i = next_i
                 continue
             else:
-                # Other content (including the decision ID which is the first word)
+                # The decision ID is the first word of the first non-comment line.
                 if not props["id"] and line and not line.startswith("#"):
-                    # Extract decision ID from the first non-comment line
                     props["id"] = line.split()[0] if line.split() else ""
                 props["other"].append(block_lines[i])
 
