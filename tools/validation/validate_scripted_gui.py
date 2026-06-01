@@ -267,8 +267,8 @@ class ScriptedGuiValidator(BaseValidator):
     ) -> None:
         """Override: in staged_only mode, suppress issues whose file isn't in
         the staged set so pre-commit only reports on what the commit changes."""
-        if self.staged_only and self._staged_set:
-            if _normalise_path(file) not in self._staged_set:
+        if self.staged_only:
+            if not self._staged_set or _normalise_path(file) not in self._staged_set:
                 return
         super().add_issue(severity, category, message, file, line)
 
