@@ -68,24 +68,35 @@ scripted_gui = {
 			}
 
 			opt_aid_button_click_enabled = {
-				#selected country have lower GDP/C than us
-				custom_trigger_tooltip = {
-					set_temp_variable = { gdp_total_temp = ROOT.gdp_total }
-					multiply_temp_variable = { gdp_total_temp = 2 }
-					check_variable = { gdp_total_temp > THIS.gdp_total }
-					tooltip = gdp_total_cannot_be_double_ours
+				if = {
+					limit = { has_game_rule = { rule = rule_allow_MP_enhancements option = yes } }
+					#Recently Sent Aid
+					custom_trigger_tooltip = {
+						tooltip = influence_aid_button_TT
+						ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } }
+					}
+					ERI_is_not_transitional_government = yes
 				}
-				#Num of Civ Greater
-				custom_trigger_tooltip = {
-					tooltip = more_civs_than_other
-					check_variable = { num_of_civilian_factories < ROOT.num_of_civilian_factories }
+				else = {
+					#selected country have lower GDP/C than us
+					custom_trigger_tooltip = {
+						set_temp_variable = { gdp_total_temp = ROOT.gdp_total }
+						multiply_temp_variable = { gdp_total_temp = 2 }
+						check_variable = { gdp_total_temp > THIS.gdp_total }
+						tooltip = gdp_total_cannot_be_double_ours
+					}
+					#Num of Civ Greater
+					custom_trigger_tooltip = {
+						tooltip = more_civs_than_other
+						check_variable = { num_of_civilian_factories < ROOT.num_of_civilian_factories }
+					}
+					#Recently Sent Aid
+					custom_trigger_tooltip = {
+						tooltip = influence_aid_button_TT
+						ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } }
+					}
+					ERI_is_not_transitional_government = yes
 				}
-				#Recently Sent Aid
-				custom_trigger_tooltip = {
-					tooltip = influence_aid_button_TT
-					ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } }
-				}
-				ERI_is_not_transitional_government = yes
 			}
 
 			opt_target_other_button_click_enabled = {
@@ -330,9 +341,18 @@ scripted_gui = {
 				ROOT = { # Player Nation
 					save_event_target_as = influence_sender
 					PREV = { # THIS Nation
-						country_event = influence.0
-						ROOT = {
-							set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 }
+						save_event_target_as = influence_recipient
+						if = {
+							limit = { has_game_rule = { rule = rule_allow_MP_enhancements option = yes } }
+							# MP path: the cooldown flag is set in mp_economic_aid_transfer,
+							# only after an aid amount is actually chosen (influence.2 has no cancel option).
+							ROOT = { country_event = influence.2 }
+						}
+						else = {
+							country_event = influence.0
+							ROOT = {
+								set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 }
+							}
 						}
 					}
 				}
@@ -343,12 +363,11 @@ scripted_gui = {
 			# Send Military Equipment
 			# Similar to Economic Aid but it is related to military equipment
 			opt_aid_military_button_click = {
-				ROOT = { #Uses the same as Economic AID to ensure the root is correct
+				ROOT = {
+					save_event_target_as = influence_sender
+					set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 60 }
 					PREV = {
 						country_event = influence.50
-						ROOT = {
-							set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 60 }
-						}
 					}
 				}
 				update_dirty_influence_var = yes
@@ -358,12 +377,9 @@ scripted_gui = {
 			# Weapons that are sent to overthrow a nation
 			opt_military_supply_button_click = {
 				ROOT = { # Player Nation
-					PREV = {
-						country_event = influence.55
-						ROOT = {
-							set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 60 }
-						}
-					}
+					set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 60 }
+					PREV = { save_event_target_as = military_supply_target }
+					country_event = influence.56
 				}
 				update_dirty_influence_var = yes
 			}
@@ -373,9 +389,8 @@ scripted_gui = {
 			opt_target_other_button_click = {
 				ROOT = {
 					save_event_target_as = influence_sender
-					PREV = {
-						country_event = influence.22
-					}
+					PREV = { save_event_target_as = influence_target }
+					country_event = influence.3
 				}
 				update_dirty_influence_var = yes
 			}
