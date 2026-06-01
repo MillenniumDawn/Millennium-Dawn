@@ -67,65 +67,25 @@ The space technology tree has five branches, each representing a different type 
 
 Global Navigation Satellite Systems provide precision positioning for both military targeting and civilian infrastructure.
 
-| Generation | Available | Research Cost |
-| ---------- | --------- | ------------- |
-| GNSS1      | 1965      | 1.5           |
-| GNSS2      | 1975      | 1.5           |
-| GNSS3      | 1985      | 1.5           |
-| GNSS4      | 1995      | 1.5           |
-| GNSS5      | 2005      | 1.5           |
-| GNSS6      | 2015      | 1.5           |
-| GNSS7      | 2025      | 1.5           |
-| GNSS8      | 2035      | 1.5           |
-
-Each generation unlocks the ability to build that tier of GNSS satellite. Higher tiers provide better maximum bonuses when deployed in sufficient numbers.
+A new GNSS generation becomes available every 10 years, from GNSS1 in 1965 through GNSS8 in 2035. Each generation unlocks the ability to build that tier of GNSS satellite. Higher tiers provide better maximum bonuses when deployed in sufficient numbers.
 
 ### COMSAT (Communications Satellites)
 
 Communications satellites enhance command and control for military forces and provide political/intelligence bonuses for civilian use.
 
-| Generation | Available | Research Cost |
-| ---------- | --------- | ------------- |
-| COMSAT1    | 1965      | 1.7           |
-| COMSAT2    | 1975      | 1.7           |
-| COMSAT3    | 1985      | 1.7           |
-| COMSAT4    | 1995      | 1.7           |
-| COMSAT5    | 2005      | 1.7           |
-| COMSAT6    | 2015      | 1.7           |
-| COMSAT7    | 2025      | 1.7           |
-| COMSAT8    | 2035      | 1.7           |
-
-COMSAT systems also account for ground-based receiver technology. Even with full satellite coverage, insufficient receivers reduce the effective bonus.
+A new COMSAT generation becomes available every 10 years, from COMSAT1 in 1965 through COMSAT8 in 2035. COMSAT systems also account for ground-based receiver technology. Even with full satellite coverage, insufficient receivers reduce the effective bonus.
 
 ### SPYSAT (Reconnaissance Satellites)
 
 Spy satellites provide intelligence gathering, weather prediction for air operations, and naval detection capabilities.
 
-| Generation | Available | Research Cost |
-| ---------- | --------- | ------------- |
-| SPYSAT1    | 1965      | 1.7           |
-| SPYSAT2    | 1975      | 1.7           |
-| SPYSAT3    | 1985      | 1.7           |
-| SPYSAT4    | 1995      | 1.7           |
-| SPYSAT5    | 2005      | 1.7           |
-| SPYSAT6    | 2015      | 1.7           |
-| SPYSAT7    | 2025      | 1.7           |
-| SPYSAT8    | 2035      | 1.7           |
-
-Spy satellites that are not assigned to the military or civilian constellation can be deployed on dedicated espionage missions.
+A new SPYSAT generation becomes available every 10 years, from SPYSAT1 in 1965 through SPYSAT8 in 2035. Spy satellites that are not assigned to the military or civilian constellation can be deployed on dedicated espionage missions.
 
 ### KILLSAT (Anti-Satellite Weapons)
 
 Anti-satellite weapons allow you to target enemy satellites and, at higher tiers, unlock orbital fire support. This branch starts later and has stricter requirements.
 
-| Generation | Available | Research Cost |
-| ---------- | --------- | ------------- |
-| KILLSAT1   | 1985      | 2.0           |
-| KILLSAT2   | 1995      | 2.0           |
-| KILLSAT3   | 2005      | 2.0           |
-| KILLSAT4   | 2015      | 2.0           |
-| KILLSAT5   | 2025      | 2.0           |
-| KILLSAT6   | 2035      | 2.0           |
+A new KILLSAT generation becomes available every 10 years, from KILLSAT1 in 1985 through KILLSAT6 in 2035.
 
 **Requirements**: KILLSAT technologies require both the Space Program **and** the Space-Based Weapons project to be completed. KILLSAT3 additionally unlocks the Space Artillery special project.
 
@@ -133,18 +93,7 @@ Anti-satellite weapons allow you to target enemy satellites and, at higher tiers
 
 Orbital Launch Vehicles are the rockets used to deliver satellites (and other payloads) into orbit. Higher tiers cost more but are necessary for deploying advanced satellite generations.
 
-| Generation | Available | Research Cost |
-| ---------- | --------- | ------------- |
-| OLV1       | 1965      | 2.0           |
-| OLV2       | 1975      | 2.0           |
-| OLV3       | 1985      | 2.0           |
-| OLV4       | 1995      | 2.0           |
-| OLV5       | 2005      | 2.0           |
-| OLV6       | 2015      | 2.0           |
-| OLV7       | 2025      | 2.0           |
-| OLV8       | 2035      | 2.0           |
-
-Starting with OLV6, the tech tree branches into reusable variants that reduce costs and build time.
+A new OLV generation becomes available every 10 years, from OLV1 in 1965 through OLV8 in 2035. Starting with OLV6, the tech tree branches into reusable variants that reduce costs and build time.
 
 ---
 
