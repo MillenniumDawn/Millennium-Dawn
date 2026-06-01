@@ -250,8 +250,7 @@ class ScriptedGuiValidator(BaseValidator):
         self._gui_element_files: Dict[str, str] = {}
         # element_name -> .gui file path
         self._gui_scripted_window_elements: Dict[str, Set[str]] = defaultdict(set)
-        # window_name -> set of child element names (one level deep)
-        # currently unused for tier-2 unused-button check, populated for future use
+        # window_name -> set of child element names (one level deep); currently unused
 
         self._sgui_blocks: List[Dict] = []
         # Each: { name, window_name, parent_window_name, parent_window_token,
@@ -318,7 +317,6 @@ class ScriptedGuiValidator(BaseValidator):
             if not name_m:
                 continue
             name = name_m.group(1)
-            # Skip nested elements' own definitions — we want all element types
             self._gui_elements[name] = (type_name, rel, line_no)
             self._gui_element_files[name] = rel
             if type_name.lower() == "containerwindowtype":

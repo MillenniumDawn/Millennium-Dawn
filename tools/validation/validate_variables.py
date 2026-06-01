@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
-##########################
-# Comprehensive Variable and Event Target Validation Script (Multiprocessing Optimized)
-# Validates flags (country/state/global) and event targets
-# Checks for: cleared but not set, used but not set, and unused items
-# Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
-# Optimized with multiprocessing for significantly faster execution
-##########################
+# Variable and event target validation: checks flags (country/state/global) and
+# event targets for cleared-but-not-set, used-but-not-set, and unused items.
+# Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323).
 import glob
 import os
 import re
 from multiprocessing import Pool
 from typing import Dict, List, Optional, Tuple
 
+import disk_cache
 from validator_common import (
     BaseValidator,
     Colors,
@@ -23,129 +20,79 @@ from validator_common import (
     should_skip_file,
 )
 
+# Compiled at module load (once per worker process) instead of once per file scanned.
+_FLAG_BLOCK_RE = re.compile(
+    r"\bset_(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{[^}]*\}",
+)
+_FLAG_DAYS_RE = re.compile(r"\bdays\s*=\s*[^\s}]+")
+_FLAG_VALUE_RE = re.compile(r"\bvalue\s*=\s*[^\s}]+")
+_FLAG_LONG_FORM_RE = re.compile(
+    r"\bset_(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{\s*flag\s*=\s*([^\s{}]+)\s*\}",
+)
 
-# Multiprocessing helper functions
-def process_file_for_flags(
-    args: Tuple[str, bool, str, str],
-) -> Tuple[List[str], Dict[str, str], str]:
-    filename, lowercase, flag_type, operation = args
 
-    if should_skip_file(filename):
-        return ([], {}, operation)
+def _scan_flags_in_file(
+    text: str, flag_type: str
+) -> Tuple[List[str], List[str], List[str]]:
+    set_list: List[str] = []
+    used_list: List[str] = []
+    cleared_list: List[str] = []
 
-    flags = []
-    paths = {}
-    basename = os.path.basename(filename)
-    text_file = FileOpener.open_text_file(
-        filename, lowercase=lowercase, strip_comments_flag=True
-    )
-
-    if operation == "used":
-        if (
-            f"has_{flag_type}_flag =" in text_file
-            or f"modify_{flag_type}_flag =" in text_file
-        ):
-            pattern_matches = re.findall(
-                r"has_" + flag_type + r"_flag = ([^ \t\n]+)", text_file
+    if f"set_{flag_type}_flag =" in text:
+        set_list.extend(re.findall(r"set_" + flag_type + r"_flag = ([^ \t\n]+)", text))
+        set_list.extend(
+            re.findall(
+                r"set_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
+                text,
+                flags=re.MULTILINE | re.DOTALL,
             )
-            for match in pattern_matches:
-                flags.append(match)
-                paths[match] = basename
+        )
 
-            pattern_matches = re.findall(
+    if f"has_{flag_type}_flag =" in text or f"modify_{flag_type}_flag =" in text:
+        used_list.extend(re.findall(r"has_" + flag_type + r"_flag = ([^ \t\n]+)", text))
+        used_list.extend(
+            re.findall(
                 r"(?:has|modify)_"
                 + flag_type
                 + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
-                text_file,
+                text,
                 flags=re.MULTILINE | re.DOTALL,
             )
-            for match in pattern_matches:
-                flags.append(match)
-                paths[match] = basename
+        )
 
-    elif operation == "set":
-        if f"set_{flag_type}_flag =" in text_file:
-            pattern_matches = re.findall(
-                r"set_" + flag_type + r"_flag = ([^ \t\n]+)", text_file
-            )
-            for match in pattern_matches:
-                flags.append(match)
-                paths[match] = basename
+    if f"clr_{flag_type}_flag =" in text:
+        cleared_list.extend(
+            re.findall(r"clr_" + flag_type + r"_flag = ([^ \t\n]+)", text)
+        )
 
-            pattern_matches = re.findall(
-                r"set_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
-                text_file,
-                flags=re.MULTILINE | re.DOTALL,
-            )
-            for match in pattern_matches:
-                flags.append(match)
-                paths[match] = basename
-
-    elif operation == "cleared":
-        if f"clr_{flag_type}_flag =" in text_file:
-            pattern_matches = re.findall(
-                r"clr_" + flag_type + r"_flag = ([^ \t\n]+)", text_file
-            )
-            for match in pattern_matches:
-                flags.append(match)
-                paths[match] = basename
-
-    return (flags, paths, operation)
+    return set_list, used_list, cleared_list
 
 
 def process_file_for_all_flags(
-    args: Tuple[str, bool, str],
+    args: Tuple[str, bool, str, str],
 ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
-    """Single-pass worker: extract set, used, and cleared flags for one flag_type.
-
-    Returns (set_paths, used_paths, cleared_paths) dicts mapping flag → basename.
-    Replaces three separate pool scans per flag_type with one.
-    """
-    filename, lowercase, flag_type = args
-
+    filename, lowercase, flag_type, mod_path = args
     if should_skip_file(filename):
-        return ({}, {}, {})
-
-    basename = os.path.basename(filename)
-    text_file = FileOpener.open_text_file(
+        return {}, {}, {}
+    text = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
-
-    set_paths: Dict[str, str] = {}
-    used_paths: Dict[str, str] = {}
-    cleared_paths: Dict[str, str] = {}
-
-    # set
-    if f"set_{flag_type}_flag =" in text_file:
-        for m in re.findall(r"set_" + flag_type + r"_flag = ([^ \t\n]+)", text_file):
-            set_paths[m] = basename
-        for m in re.findall(
-            r"set_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
-            text_file,
-            flags=re.MULTILINE | re.DOTALL,
-        ):
-            set_paths[m] = basename
-
-    # used
-    if (
-        f"has_{flag_type}_flag =" in text_file
-        or f"modify_{flag_type}_flag =" in text_file
-    ):
-        for m in re.findall(r"has_" + flag_type + r"_flag = ([^ \t\n]+)", text_file):
-            used_paths[m] = basename
-        for m in re.findall(
-            r"(?:has|modify)_" + flag_type + r"_flag = \{.*?flag = ([^ \t\n\}]+).*?\}",
-            text_file,
-            flags=re.MULTILINE | re.DOTALL,
-        ):
-            used_paths[m] = basename
-
-    # cleared
-    if f"clr_{flag_type}_flag =" in text_file:
-        for m in re.findall(r"clr_" + flag_type + r"_flag = ([^ \t\n]+)", text_file):
-            cleared_paths[m] = basename
-
-    return (set_paths, used_paths, cleared_paths)
+    if not text:
+        return {}, {}, {}
+    basename = os.path.basename(filename)
+    namespace = f"variables.flags.{flag_type}.lc={int(lowercase)}"
+    set_list, used_list, cleared_list = disk_cache.per_file_cached_by_content(
+        mod_path,
+        namespace,
+        filename,
+        text,
+        lambda: _scan_flags_in_file(text, flag_type),
+    )
+    return (
+        {m: basename for m in set_list},
+        {m: basename for m in used_list},
+        {m: basename for m in cleared_list},
+    )
 
 
 def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List[str]]:
@@ -168,27 +115,18 @@ def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List
     cleaned = re.sub(r"#[^\n]*", "", text)
     rel = os.path.relpath(filename, mod_path)
 
-    flag_block_pattern = re.compile(
-        r"\bset_(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{[^}]*\}",
-    )
-    days_re = re.compile(r"\bdays\s*=\s*[^\s}]+")
-    value_re = re.compile(r"\bvalue\s*=\s*[^\s}]+")
-    long_form_re = re.compile(
-        r"\bset_(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{\s*flag\s*=\s*([^\s{}]+)\s*\}",
-    )
-
     days_issues: List[str] = []
     long_form_issues: List[str] = []
 
-    for m in flag_block_pattern.finditer(cleaned):
+    for m in _FLAG_BLOCK_RE.finditer(cleaned):
         block = m.group(0)
-        if days_re.search(block) and not value_re.search(block):
+        if _FLAG_DAYS_RE.search(block) and not _FLAG_VALUE_RE.search(block):
             line = cleaned[: m.start()].count("\n") + 1
             days_issues.append(
                 f"{rel}:{line} - {block.strip()} (missing value field; flag will default to 0 and fail shortform has_*_flag check)"
             )
 
-    for m in long_form_re.finditer(cleaned):
+    for m in _FLAG_LONG_FORM_RE.finditer(cleaned):
         line = cleaned[: m.start()].count("\n") + 1
         long_form_issues.append(
             f"{rel}:{line} - set_{m.group(1)}_flag = {{ flag = {m.group(2)} }} → use shorthand `set_{m.group(1)}_flag = {m.group(2)}`"
@@ -197,24 +135,16 @@ def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List
     return (days_issues, long_form_issues)
 
 
-def process_file_for_all_targets(
-    args: Tuple[str, bool],
+def _scan_targets_in_text(
+    text_file: str, filename: str
 ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
-    """Single-pass worker: extract set, used, and cleared event targets.
+    """Extract set/used/cleared event targets from one file's text.
 
-    Returns (set_paths, used_paths, cleared_paths) dicts mapping target → basename.
-    Replaces three separate pool scans with one.
+    `filename` only drives stable per-file branches (tag_aliases path check,
+    basename labelling), so the result is deterministic for a (path, content)
+    pair and safe to content-cache.
     """
-    filename, lowercase = args
-
-    if should_skip_file(filename):
-        return ({}, {}, {})
-
     basename = os.path.basename(filename)
-    text_file = FileOpener.open_text_file(
-        filename, lowercase=lowercase, strip_comments_flag=True
-    )
-
     set_paths: Dict[str, str] = {}
     used_paths: Dict[str, str] = {}
     cleared_paths: Dict[str, str] = {}
@@ -251,104 +181,48 @@ def process_file_for_all_targets(
     return (set_paths, used_paths, cleared_paths)
 
 
-def process_file_for_targets(
+def process_file_for_all_targets(
     args: Tuple[str, bool, str],
-) -> Tuple[List[str], Dict[str, str], str]:
-    filename, lowercase, operation = args
+) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
+    """Single-pass worker: extract set, used, and cleared event targets.
+
+    Returns (set_paths, used_paths, cleared_paths) dicts mapping target → basename.
+    Replaces three separate pool scans with one.
+    """
+    filename, lowercase, mod_path = args
 
     if should_skip_file(filename):
-        return ([], {}, operation)
+        return ({}, {}, {})
 
-    targets = []
-    paths = {}
-    basename = os.path.basename(filename)
     text_file = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
+    if not text_file:
+        return ({}, {}, {})
 
-    if operation == "used":
-        if "tag_aliases" in filename:
-            if "global_event_target =" in text_file:
-                pattern_matches = re.findall(
-                    r'global_event_target = ([^ \n\t\#"]+)', text_file
-                )
-                for match in pattern_matches:
-                    targets.append(match)
-                    paths[match] = basename
-        else:
-            if "event_target:" in text_file:
-                pattern_matches = re.findall(r'event_target:([^ \n\t\#"]+)', text_file)
-                for match in pattern_matches:
-                    targets.append(match)
-                    paths[match] = basename
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        f"variables.targets.lc={int(lowercase)}",
+        filename,
+        text_file,
+        lambda: _scan_targets_in_text(text_file, filename),
+    )
 
-            if "has_event_target =" in text_file:
-                pattern_matches = re.findall(
-                    r'has_event_target = ([^ \n\t"]+)', text_file
-                )
-                for match in pattern_matches:
-                    targets.append(match)
-                    paths[match] = basename
 
-    elif operation == "set":
-        if "tag_aliases" not in filename:
-            if "save_global_event_target_as =" in text_file:
-                pattern_matches = re.findall(
-                    r'save_global_event_target_as = ([^ \n\t\#"]+)', text_file
-                )
-                for match in pattern_matches:
-                    targets.append(match)
-                    paths[match] = basename
+def _map_with_optional_pool(func, args_list, workers, pool, chunksize=50):
+    """Reuse the caller's pool when given; otherwise spin up a transient one.
 
-            if "save_event_target_as =" in text_file:
-                pattern_matches = re.findall(
-                    r'save_event_target_as = ([^ \n\t\#"]+)', text_file
-                )
-                for match in pattern_matches:
-                    targets.append(match)
-                    paths[match] = basename
-
-    elif operation == "cleared":
-        if "clear_global_event_target =" in text_file:
-            pattern_matches = re.findall(
-                r'clear_global_event_target = ([^ \n\t\#"]+)', text_file
-            )
-            for match in pattern_matches:
-                targets.append(match)
-                paths[match] = basename
-
-    return (targets, paths, operation)
+    Keeps the helper usable as a standalone library function while letting
+    BaseValidator subclasses pass `self._pool` to avoid spawning a second
+    worker pool inside run_validations().
+    """
+    if pool is not None:
+        return pool.map(func, args_list, chunksize=chunksize)
+    with Pool(processes=workers) as p:
+        return p.map(func, args_list, chunksize=chunksize)
 
 
 class Variables:
-    @classmethod
-    def _get_flags(
-        cls, mod_path, lowercase, flag_type, operation, staged_files, workers
-    ):
-        flags = []
-        paths = {}
-        if flag_type not in ["country", "state", "global"]:
-            raise ValueError(
-                "Unsupported flag value passed. Expected country, state, global"
-            )
-
-        if staged_files is not None:
-            files_to_scan = [f for f in staged_files if f.endswith(".txt")]
-        else:
-            files_to_scan = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
-            )
-
-        args_list = [(f, lowercase, flag_type, operation) for f in files_to_scan]
-        with Pool(processes=workers) as pool:
-            results = pool.map(process_file_for_flags, args_list, chunksize=50)
-
-        for flags_list, paths_dict, _ in results:
-            flags.extend(flags_list)
-            paths.update(paths_dict)
-
-        return (flags, paths)
-
     @classmethod
     def get_all_flags(
         cls,
@@ -357,76 +231,19 @@ class Variables:
         flag_type="country",
         staged_files=None,
         workers=None,
+        files_to_scan=None,
+        pool=None,
     ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
-        """Return (set_paths, used_paths, cleared_paths) in a single pool scan.
+        if flag_type not in ("country", "state", "global"):
+            raise ValueError(f"Unsupported flag_type: {flag_type!r}")
+        if files_to_scan is None:
+            files_to_scan = _collect_txt_files(mod_path, staged_files)
 
-        Replaces three separate _get_flags() calls per flag_type with one,
-        reducing pool overhead and file I/O by ~3×.
-        """
-        if staged_files is not None:
-            files_to_scan = [f for f in staged_files if f.endswith(".txt")]
-        else:
-            files_to_scan = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
-            )
-
-        args_list = [(f, lowercase, flag_type) for f in files_to_scan]
-        with Pool(processes=workers) as pool:
-            results = pool.map(process_file_for_all_flags, args_list, chunksize=50)
-
-        set_paths: Dict[str, str] = {}
-        used_paths: Dict[str, str] = {}
-        cleared_paths: Dict[str, str] = {}
-        for s, u, c in results:
-            set_paths.update(s)
-            used_paths.update(u)
-            cleared_paths.update(c)
-        return set_paths, used_paths, cleared_paths
-
-    @classmethod
-    def get_all_used_flags(
-        cls,
-        mod_path,
-        lowercase=True,
-        flag_type="country",
-        return_paths=False,
-        staged_files=None,
-        workers=None,
-    ):
-        flags, paths = cls._get_flags(
-            mod_path, lowercase, flag_type, "used", staged_files, workers
+        args_list = [(f, lowercase, flag_type, mod_path) for f in files_to_scan]
+        results = _map_with_optional_pool(
+            process_file_for_all_flags, args_list, workers, pool
         )
-        return (flags, paths) if return_paths else flags
-
-    @classmethod
-    def get_all_set_flags(
-        cls,
-        mod_path,
-        lowercase=True,
-        flag_type="country",
-        return_paths=False,
-        staged_files=None,
-        workers=None,
-    ):
-        flags, paths = cls._get_flags(
-            mod_path, lowercase, flag_type, "set", staged_files, workers
-        )
-        return (flags, paths) if return_paths else flags
-
-    @classmethod
-    def get_all_cleared_flags(
-        cls,
-        mod_path,
-        lowercase=True,
-        flag_type="country",
-        return_paths=False,
-        staged_files=None,
-        workers=None,
-    ):
-        flags, paths = cls._get_flags(
-            mod_path, lowercase, flag_type, "cleared", staged_files, workers
-        )
-        return (flags, paths) if return_paths else flags
+        return _merge_three_dicts(results)
 
 
 class EventTargets:
@@ -437,95 +254,36 @@ class EventTargets:
         lowercase=False,
         staged_files=None,
         workers=None,
+        files_to_scan=None,
+        pool=None,
     ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
-        """Return (set_paths, used_paths, cleared_paths) in a single pool scan.
+        if files_to_scan is None:
+            files_to_scan = _collect_txt_files(mod_path, staged_files)
 
-        Replaces three separate _get_targets() calls with one, reducing pool
-        overhead and file I/O by ~3×.
-        """
-        if staged_files is not None:
-            files_to_scan = [f for f in staged_files if f.endswith(".txt")]
-        else:
-            files_to_scan = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
-            )
-
-        args_list = [(f, lowercase) for f in files_to_scan]
-        with Pool(processes=workers) as pool:
-            results = pool.map(process_file_for_all_targets, args_list, chunksize=50)
-
-        set_paths: Dict[str, str] = {}
-        used_paths: Dict[str, str] = {}
-        cleared_paths: Dict[str, str] = {}
-        for s, u, c in results:
-            set_paths.update(s)
-            used_paths.update(u)
-            cleared_paths.update(c)
-        return set_paths, used_paths, cleared_paths
-
-    @classmethod
-    def _get_targets(cls, mod_path, lowercase, operation, staged_files, workers):
-        targets = []
-        paths = {}
-
-        if staged_files is not None:
-            files_to_scan = [f for f in staged_files if f.endswith(".txt")]
-        else:
-            files_to_scan = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
-            )
-
-        args_list = [(f, lowercase, operation) for f in files_to_scan]
-        with Pool(processes=workers) as pool:
-            results = pool.map(process_file_for_targets, args_list, chunksize=50)
-
-        for targets_list, paths_dict, _ in results:
-            targets.extend(targets_list)
-            paths.update(paths_dict)
-
-        return (targets, paths)
-
-    @classmethod
-    def get_all_used_targets(
-        cls,
-        mod_path,
-        lowercase=True,
-        return_paths=False,
-        staged_files=None,
-        workers=None,
-    ):
-        targets, paths = cls._get_targets(
-            mod_path, lowercase, "used", staged_files, workers
+        args_list = [(f, lowercase, mod_path) for f in files_to_scan]
+        results = _map_with_optional_pool(
+            process_file_for_all_targets, args_list, workers, pool
         )
-        return (targets, paths) if return_paths else targets
+        return _merge_three_dicts(results)
 
-    @classmethod
-    def get_all_set_targets(
-        cls,
-        mod_path,
-        lowercase=True,
-        return_paths=False,
-        staged_files=None,
-        workers=None,
-    ):
-        targets, paths = cls._get_targets(
-            mod_path, lowercase, "set", staged_files, workers
-        )
-        return (targets, paths) if return_paths else targets
 
-    @classmethod
-    def get_all_cleared_targets(
-        cls,
-        mod_path,
-        lowercase=True,
-        return_paths=False,
-        staged_files=None,
-        workers=None,
-    ):
-        targets, paths = cls._get_targets(
-            mod_path, lowercase, "cleared", staged_files, workers
-        )
-        return (targets, paths) if return_paths else targets
+def _collect_txt_files(mod_path: str, staged_files) -> List[str]:
+    if staged_files is not None:
+        return [f for f in staged_files if f.endswith(".txt")]
+    return list(glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True))
+
+
+def _merge_three_dicts(
+    results,
+) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
+    a: Dict[str, str] = {}
+    b: Dict[str, str] = {}
+    c: Dict[str, str] = {}
+    for da, db, dc in results:
+        a.update(da)
+        b.update(db)
+        c.update(dc)
+    return a, b, c
 
 
 class Validator(BaseValidator):
@@ -899,6 +657,15 @@ class Validator(BaseValidator):
             )
             return
 
+        # Collect the file list once and share across all flag-type and
+        # event-target scans — avoids one glob.iglob per flag_type (×3) plus
+        # one more for event targets, for a total of 4 redundant scans.
+        self.log("Collecting all .txt files (one scan for all validators)...")
+        all_txt_files = list(
+            glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
+        )
+        self.log(f"  Found {len(all_txt_files)} .txt files")
+
         FALSE_POSITIVES_GENERIC = ["@", "[", "{"]
         FALSE_POSITIVES_COUNTRY = [
             "@",
@@ -969,6 +736,8 @@ class Validator(BaseValidator):
                 flag_type=flag_type,
                 staged_files=self.staged_files,
                 workers=self.workers,
+                files_to_scan=all_txt_files,
+                pool=self._pool,
             )
             self.validate_cleared_flags(flag_type, fp_cleared, cleared_paths, set_paths)
             self.validate_missing_flags(flag_type, fp_missing, used_paths, set_paths)
@@ -980,6 +749,8 @@ class Validator(BaseValidator):
             lowercase=False,
             staged_files=self.staged_files,
             workers=self.workers,
+            files_to_scan=all_txt_files,
+            pool=self._pool,
         )
         self.validate_cleared_event_targets(et_cleared, et_set)
         self.validate_missing_event_targets(et_used, et_set)

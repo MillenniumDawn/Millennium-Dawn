@@ -10,7 +10,7 @@
 		add_to_variable = { mafia_strength = sacra_corona_unita_strength }
 		multiply_variable = { mafia_strength = 0.25 }
 		set_variable = { mafia_strength_stab_var = mafia_strength }
-		multiply_variable = { mafia_strength_stab_var = -0.005 }
+		multiply_variable = { mafia_strength_stab_var = -0.0025 }
 		set_variable = { mafia_strength_construction_var = mafia_strength }
 		multiply_variable = { mafia_strength_construction_var = -0.5 }
 		set_variable = { mafia_strength_investment_var = mafia_strength }
@@ -446,228 +446,263 @@
 			add_to_variable = { sacra_corona_unita_strength = 0.002 }
 		}
 	}
+	# Strength-tier gates mirror loc thresholds (<0.10 Negligible, <0.40 Low, etc.)
+	# and a 14-day global cooldown caps total event frequency at ~2/month.
 	mafia_event_counters = {
-		#recurring mafia events
-		random_list = {
-			50 = {
+		if = {
+			limit = { check_variable = { ITA_mafia_event_cd_days > 0 } }
+			subtract_from_variable = { ITA_mafia_event_cd_days = 7 }
+			clamp_variable = { var = ITA_mafia_event_cd_days min = 0 }
+		}
+
+		#general
+		if = {
+			limit = { check_variable = { mafia_strength > 0.399 } }
+			random = {
+				chance = 50
 				add_to_variable = { event_counter_1_mafia = 1 }
 			}
-			50 = {
+		}
+		else_if = {
+			limit = { check_variable = { mafia_strength > 0.099 } }
+			random = {
+				chance = 25
+				add_to_variable = { event_counter_1_mafia = 1 }
 			}
 		}
-		if = {
-			limit = { check_variable = { event_counter_1_mafia > 5 } }
-				set_variable = { event_counter_1_mafia = 0 }
-				random_list = {
-					25 = {
-						country_event = mafia.33
-					}
-					25 = {
-						country_event = mafia.34
-					}
-					25 = {
-						country_event = mafia.35
-					}
-					25 = {
-						country_event = mafia.36
-					}
-				}
-		}
+
 		#sicily
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_1_sicily = 1 }
-			}
-			50 = {
-			}
-		}
 		if = {
-			limit = { check_variable = { event_counter_1_sicily > 15 } }
+			limit = { check_variable = { cosa_nostra_strength > 0.399 } }
+			random = { chance = 50 add_to_variable = { event_counter_1_sicily = 1 } }
+			random = { chance = 50 add_to_variable = { event_counter_2_sicily = 1 } }
+			random = { chance = 50 add_to_variable = { event_counter_3_sicily = 1 } }
+			random = { chance = 50 add_to_variable = { event_counter_4_sicily = 1 } }
+		}
+		else_if = {
+			limit = { check_variable = { cosa_nostra_strength > 0.099 } }
+			random = { chance = 25 add_to_variable = { event_counter_1_sicily = 1 } }
+			random = { chance = 25 add_to_variable = { event_counter_2_sicily = 1 } }
+			random = { chance = 25 add_to_variable = { event_counter_3_sicily = 1 } }
+			random = { chance = 25 add_to_variable = { event_counter_4_sicily = 1 } }
+		}
+
+		#campania
+		if = {
+			limit = { check_variable = { camorra_strength > 0.399 } }
+			random = { chance = 50 add_to_variable = { event_counter_1_campania = 1 } }
+			random = { chance = 50 add_to_variable = { event_counter_2_campania = 1 } }
+			random = { chance = 50 add_to_variable = { event_counter_3_campania = 1 } }
+			random = { chance = 50 add_to_variable = { event_counter_4_campania = 1 } }
+		}
+		else_if = {
+			limit = { check_variable = { camorra_strength > 0.099 } }
+			random = { chance = 25 add_to_variable = { event_counter_1_campania = 1 } }
+			random = { chance = 25 add_to_variable = { event_counter_2_campania = 1 } }
+			random = { chance = 25 add_to_variable = { event_counter_3_campania = 1 } }
+			random = { chance = 25 add_to_variable = { event_counter_4_campania = 1 } }
+		}
+
+		#calabria
+		if = {
+			limit = { check_variable = { ndrangheta_strength > 0.399 } }
+			random = { chance = 50 add_to_variable = { event_counter_1_calabria = 1 } }
+			random = { chance = 50 add_to_variable = { event_counter_2_calabria = 1 } }
+			random = { chance = 50 add_to_variable = { event_counter_3_calabria = 1 } }
+			random = { chance = 50 add_to_variable = { event_counter_4_calabria = 1 } }
+		}
+		else_if = {
+			limit = { check_variable = { ndrangheta_strength > 0.099 } }
+			random = { chance = 25 add_to_variable = { event_counter_1_calabria = 1 } }
+			random = { chance = 25 add_to_variable = { event_counter_2_calabria = 1 } }
+			random = { chance = 25 add_to_variable = { event_counter_3_calabria = 1 } }
+			random = { chance = 25 add_to_variable = { event_counter_4_calabria = 1 } }
+		}
+
+		#puglia
+		if = {
+			limit = { check_variable = { sacra_corona_unita_strength > 0.399 } }
+			random = { chance = 50 add_to_variable = { event_counter_1_puglia = 1 } }
+			random = { chance = 50 add_to_variable = { event_counter_2_puglia = 1 } }
+			random = { chance = 50 add_to_variable = { event_counter_3_puglia = 1 } }
+			random = { chance = 50 add_to_variable = { event_counter_4_puglia = 1 } }
+		}
+		else_if = {
+			limit = { check_variable = { sacra_corona_unita_strength > 0.099 } }
+			random = { chance = 25 add_to_variable = { event_counter_1_puglia = 1 } }
+			random = { chance = 25 add_to_variable = { event_counter_2_puglia = 1 } }
+			random = { chance = 25 add_to_variable = { event_counter_3_puglia = 1 } }
+			random = { chance = 25 add_to_variable = { event_counter_4_puglia = 1 } }
+		}
+
+		# Only one mafia event fires per 14-day cooldown window.
+		if = {
+			limit = { check_variable = { ITA_mafia_event_cd_days < 1 } }
+
+			#general
+			if = {
+				limit = { check_variable = { event_counter_1_mafia > 5 } }
+				set_variable = { event_counter_1_mafia = 0 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
+				random_list = {
+					25 = { country_event = mafia.33 }
+					25 = { country_event = mafia.34 }
+					25 = { country_event = mafia.35 }
+					25 = { country_event = mafia.36 }
+				}
+			}
+
+			#sicily
+			if = {
+				limit = {
+					check_variable = { event_counter_1_sicily > 15 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.6
 				set_variable = { event_counter_1_sicily = 0 }
-		}
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_2_sicily = 1 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-			50 = {
-			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_2_sicily > 15 } }
+			if = {
+				limit = {
+					check_variable = { event_counter_2_sicily > 15 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.9
 				set_variable = { event_counter_2_sicily = 0 }
-		}
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_3_sicily = 1 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-			50 = {
-			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_3_sicily > 15 } }
+			if = {
+				limit = {
+					check_variable = { event_counter_3_sicily > 15 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.25
 				set_variable = { event_counter_3_sicily = 0 }
-		}
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_4_sicily = 1 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-			50 = {
-			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_4_sicily > 23 } }
+			if = {
+				limit = {
+					check_variable = { event_counter_4_sicily > 23 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.26
 				set_variable = { event_counter_4_sicily = 0 }
-		}
-		#campania
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_1_campania = 1 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-			50 = {
-			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_1_campania > 15 } }
+
+			#campania
+			if = {
+				limit = {
+					check_variable = { event_counter_1_campania > 15 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.6
 				set_variable = { event_counter_1_campania = 0 }
-		}
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_2_campania = 1 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-			50 = {
-			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_2_campania > 15 } }
+			if = {
+				limit = {
+					check_variable = { event_counter_2_campania > 15 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.10
 				set_variable = { event_counter_2_campania = 0 }
-		}
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_3_campania = 1 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-			50 = {
+			if = {
+				limit = {
+					check_variable = { event_counter_3_campania > 15 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
+				country_event = mafia.21
+				set_variable = { event_counter_3_campania = 0 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_3_campania > 15 } }
-			country_event = mafia.21
-			set_variable = { event_counter_3_campania = 0 }
-		}
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_4_campania = 1 }
-			}
-			50 = {
-			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_4_campania > 23 } }
+			if = {
+				limit = {
+					check_variable = { event_counter_4_campania > 23 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.22
 				set_variable = { event_counter_4_campania = 0 }
-		}
-		#calabria
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_1_calabria = 1 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-			50 = {
-			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_1_calabria > 15 } }
+
+			#calabria
+			if = {
+				limit = {
+					check_variable = { event_counter_1_calabria > 15 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.7
 				set_variable = { event_counter_1_calabria = 0 }
-		}
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_2_calabria = 1 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-			50 = {
-			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_2_calabria > 15 } }
+			if = {
+				limit = {
+					check_variable = { event_counter_2_calabria > 15 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.11
 				set_variable = { event_counter_2_calabria = 0 }
-		}
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_3_calabria = 1 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-			50 = {
-			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_3_calabria > 15 } }
+			if = {
+				limit = {
+					check_variable = { event_counter_3_calabria > 15 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.17
 				set_variable = { event_counter_3_calabria = 0 }
-		}
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_4_calabria = 1 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-			50 = {
-			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_4_calabria > 23 } }
+			if = {
+				limit = {
+					check_variable = { event_counter_4_calabria > 23 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.18
 				set_variable = { event_counter_4_calabria = 0 }
-		}
-		#puglia
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_1_puglia = 1 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-			50 = {
-			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_1_puglia > 15 } }
+
+			#puglia
+			if = {
+				limit = {
+					check_variable = { event_counter_1_puglia > 15 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.8
 				set_variable = { event_counter_1_puglia = 0 }
-		}
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_2_puglia = 1 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-			50 = {
-			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_2_puglia > 15 } }
+			if = {
+				limit = {
+					check_variable = { event_counter_2_puglia > 15 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.12
 				set_variable = { event_counter_2_puglia = 0 }
-		}
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_3_puglia = 1 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-			50 = {
-			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_3_puglia > 15 } }
+			if = {
+				limit = {
+					check_variable = { event_counter_3_puglia > 15 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.13
 				set_variable = { event_counter_3_puglia = 0 }
-		}
-		random_list = {
-			50 = {
-				add_to_variable = { event_counter_4_puglia = 1 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
 			}
-			50 = {
-			}
-		}
-		if = {
-			limit = { check_variable = { event_counter_4_puglia > 23 } }
+			if = {
+				limit = {
+					check_variable = { event_counter_4_puglia > 23 }
+					check_variable = { ITA_mafia_event_cd_days < 1 }
+				}
 				country_event = mafia.14
 				set_variable = { event_counter_4_puglia = 0 }
+				set_variable = { ITA_mafia_event_cd_days = 14 }
+			}
 		}
 	}
 	mafia_utilize_extraordinary_funds_effect = {
@@ -881,7 +916,6 @@
 			set_temp_variable = { mafia_industrial_focus_cost = mafia_industrial_focus_base_cost }
 			set_temp_variable = { mafia_industrial_focus_cost_multiplier = 1 }
 			add_to_temp_variable = { mafia_industrial_focus_cost_multiplier = mafia_strength }
-			add_to_temp_variable = { mafia_industrial_focus_cost_multiplier = mafia_strength }
 			multiply_temp_variable = { mafia_industrial_focus_cost = mafia_industrial_focus_cost_multiplier }
 			set_temp_variable = { treasury_change = mafia_industrial_focus_cost }
 			modify_treasury_effect = yes
@@ -1018,7 +1052,13 @@
 			}
 			set_temp_variable = { coalition_subparty_drift_modified_var = ruling_subparty_drift_store }
 			multiply_temp_variable = { coalition_subparty_drift_modified_var = 0.07 }
-			divide_temp_variable = { coalition_subparty_drift_modified_var = gov_coalition_array^num }
+			if = {
+				limit = { check_variable = { gov_coalition_array^num > 0 } }
+				divide_temp_variable = { coalition_subparty_drift_modified_var = gov_coalition_array^num }
+			}
+			else = {
+				set_temp_variable = { coalition_subparty_drift_modified_var = 0 }
+			}
 			for_each_loop = {
 				array = gov_coalition_array
 				set_temp_variable = { coalition_subparty_drift_modified_multiplied_var = coalition_subparty_drift_modified_var }
@@ -1165,7 +1205,13 @@
 				has_country_leader_with_trait = western_technocrat
 			}
 			set_temp_variable = { coalition_drift_switch_var = drift_switch_var_base }
-			divide_temp_variable = { coalition_drift_switch_var = gov_coalition_array^num }
+			if = {
+				limit = { check_variable = { gov_coalition_array^num > 0 } }
+				divide_temp_variable = { coalition_drift_switch_var = gov_coalition_array^num }
+			}
+			else = {
+				set_temp_variable = { coalition_drift_switch_var = 0 }
+			}
 			if = {
 				limit = {
 					is_in_array = { gov_coalition_array = 0 }
@@ -1488,9 +1534,11 @@
 		}
 	}
 	reform_expectance_from_situation = {
-		#stability effect
+		# Clamp stability input at 0.3 so a spiral can't compound reform pressure indefinitely
+		set_temp_variable = { reform_stab_clamped = stability }
+		clamp_temp_variable = { var = reform_stab_clamped min = 0.3 max = 1.0 }
 		set_temp_variable = { reform_expectance_from_stability = 0.6 }
-		subtract_from_temp_variable = { reform_expectance_from_stability = stability }
+		subtract_from_temp_variable = { reform_expectance_from_stability = reform_stab_clamped }
 		multiply_temp_variable = { reform_expectance_from_stability = 0.1 }
 		#interest rate effect
 		set_temp_variable = { reform_expectance_from_interest_rate = interest_rate }
@@ -1732,27 +1780,27 @@
 		if = {
 			limit = { has_government = fascism }
 				set_temp_variable = { party_pop_stab = party_popularity@fascism }
-				multiply_temp_variable = { party_pop_stab = 0.15 }
+				multiply_temp_variable = { party_pop_stab = 0.08 }
 		}
 		else_if = {
 			limit = { has_government = communism }
 				set_temp_variable = { party_pop_stab = party_popularity@communism }
-				multiply_temp_variable = { party_pop_stab = 0.15 }
+				multiply_temp_variable = { party_pop_stab = 0.08 }
 		}
 		else_if = {
 			limit = { has_government = democratic }
 				set_temp_variable = { party_pop_stab = party_popularity@democratic }
-				multiply_temp_variable = { party_pop_stab = 0.15 }
+				multiply_temp_variable = { party_pop_stab = 0.08 }
 		}
 		else_if = {
 			limit = { has_government = neutrality }
 				set_temp_variable = { party_pop_stab = party_popularity@neutrality }
-				multiply_temp_variable = { party_pop_stab = 0.15 }
+				multiply_temp_variable = { party_pop_stab = 0.08 }
 		}
 		else_if = {
 			limit = { has_government = nationalist }
 				set_temp_variable = { party_pop_stab = party_popularity@nationalist }
-				multiply_temp_variable = { party_pop_stab = 0.15 }
+				multiply_temp_variable = { party_pop_stab = 0.08 }
 		}
 		subtract_from_temp_variable = { base_stability = party_pop_stab }
 		if = {
@@ -1763,6 +1811,7 @@
 				}
 			}
 			add_to_variable = { var = ITA_stability_factor_var value = modifier@stability_weekly }
+			clamp_variable = { var = ITA_stability_factor_var min = -0.2 max = 0.2 }
 		}
 	}
 

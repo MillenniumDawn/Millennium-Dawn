@@ -1029,7 +1029,6 @@ def check_file(filepath):
     for line_num, line in enumerate(lines, 1):
         stripped = line.strip()
 
-        # Brace/category tracking is only needed for idea files
         if is_ideas:
             brace_depth += stripped.count("{") - stripped.count("}")
 

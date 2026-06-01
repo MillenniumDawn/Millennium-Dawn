@@ -45,6 +45,7 @@ tools/
 ├── standardize_staged.py Pre-commit hook: routes staged files to standardizers
 ├── generate_validation_report.py CI: generates PR validation reports
 ├── validate_tools.py  CI: validates Python scripts in tools/
+├── COMMENT_STYLE.md   Comment style for Python tooling (why, not what)
 └── README.md
 ```
 
@@ -53,6 +54,7 @@ tools/
 - **Writing a new validator?** Subclass `BaseValidator` from `tools/validation/validator_common.py`. Prefer `add_error(category, msg, file, line)` for structured issues; `_report(list_of_strings, ...)` still works and now auto-parses common `path:line - msg` formats into file+line for the PR comment's inline annotations.
 - **Writing a new linter or fixer?** Import helpers from `tools/shared_utils.py`. Skip `validator_common` — linters don't emit the structured issue stream validators produce.
 - **Reading validator output?** Import from `tools/report_lib`. It parses the JSON sidecars each validator writes and renders the PR comment + GitHub Check Runs.
+- **Writing comments?** See [COMMENT_STYLE.md](COMMENT_STYLE.md). Default to none; add one when the _why_ is non-obvious.
 
 ## Scripts by Category
 
@@ -75,7 +77,7 @@ Style checkers, formatters, and encoding validators. These are used in pre-commi
 
 ### Validation (`validation/`)
 
-Content validators run in CI via matrix strategy. See `validation/README.md` for details.
+Content validators run in CI via matrix strategy. See `validation/README.md` for full list of all 22 validators and their checks.
 
 ### Standardization (`standardization/`)
 

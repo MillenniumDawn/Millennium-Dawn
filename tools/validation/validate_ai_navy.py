@@ -1,15 +1,9 @@
 #!/usr/bin/env python3
-##########################
-# Naval Template Validation Script
-# Validates AI navy taskforce and fleet template definitions.
-#
-# Checks:
-#   1. Ship types in taskforce templates match canonical sub_unit definitions
-#   2. Taskforce names referenced in fleet templates match defined taskforces
-#   3. Mission types in taskforce templates are valid HOI4 naval missions
-#   4. Optimal composition sizes respect NAI define limits
-#   5. Suggests closest match for likely typos
-##########################
+# Validate AI navy taskforce and fleet template definitions: ship types against
+# canonical sub_unit definitions, fleet taskforce references against defined
+# taskforces, mission types against valid HOI4 naval missions, and optimal
+# composition sizes against NAI define limits. Suggests the closest match for
+# likely typos.
 import difflib
 import glob
 import os

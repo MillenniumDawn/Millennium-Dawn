@@ -33,19 +33,16 @@ def fix_line_endings(file_path: Path) -> bool:
             print(f"⚠️  {file_path}: Not a file, skipping")
             return False
 
-        # Read file in binary mode to preserve exact content
+        # Binary mode preserves bytes other than the line endings we rewrite
         with open(file_path, "rb") as f:
             original_content = f.read()
 
-        # Check if file has CRLF line endings
         if b"\r\n" not in original_content:
             print(f"✅ {file_path}: Already has Unix line endings")
             return False
 
-        # Convert CRLF to LF
         fixed_content = original_content.replace(b"\r\n", b"\n")
 
-        # Write back the fixed content
         with open(file_path, "wb") as f:
             f.write(fixed_content)
 

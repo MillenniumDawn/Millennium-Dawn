@@ -244,6 +244,52 @@ Example fix — change the nonexistent parent to the correct one:
 
 ---
 
+## Landmark Spawn Not Over Land
+
+```plaintext
+mapbuildings.cpp:679: map/buildings.txt error at line N: map building location is not over the land - ignoring instance.
+```
+
+**Cause:** A `landmark_spawn` line's `(x, z)` coordinates fall on a sea-province pixel. The trailing `province_id` field on the spawn line is just a binding hint — the engine still validates that the XZ pixel is on a land province via `map/provinces.bmp`.
+
+**Common trigger:** copying a floating-harbor's coordinates as a starting point for a landmark spawn. Floating harbors sit in water, so their XZ is not a valid landmark position.
+
+**How to diagnose:** read the bitmap directly to confirm which province the XZ lands in:
+
+```python
+from PIL import Image
+import numpy as np, csv
+
+arr = np.array(Image.open('map/provinces.bmp')); H, W, _ = arr.shape
+color_to_pid = {}
+with open('map/definition.csv', encoding='latin-1') as f:
+    for r in csv.reader(f, delimiter=';'):
+        if r and r[0].isdigit():
+            color_to_pid[(int(r[1]), int(r[2]), int(r[3]))] = int(r[0])
+
+px, py = int(round(x)), (H-1) - int(round(z))
+pid = color_to_pid.get(tuple(arr[py, px].tolist()))
+print(f'XZ ({x},{z}) is in province {pid}')
+```
+
+If `pid` is a sea province (compare to `map/definition.csv` where the fifth column is `sea`), move the spawn to a land pixel. See [Add Landmarks](/resources/add-landmarks/) for the full workflow including heightmap-calibrated `y`.
+
+---
+
+## Landmark Icon Shows but 3D Model Does Not Render
+
+No error log entry, but the landmark icon appears in the state buildings panel and no 3D model is drawn on the map. Walk through this checklist:
+
+1. `grep "^<state_id>;landmark_spawn" map/buildings.txt` — does a spawn line exist for the state at all? Map reworks have silently deleted spawn lines (commits `89ccbf62cc` and `4da960e3c8`); restore the deleted entry. Use `git log -S "<state_id>;landmark_spawn" -- map/buildings.txt` to confirm.
+2. Confirm the spawn's `(x, z)` falls in the same province the state file places the landmark in (see the bitmap snippet above).
+3. Check whether the placement province block in the state file shares with another building, particularly `naval_base = N`. Co-occupancy with naval_base blocks landmark rendering — split into separate province blocks.
+4. Confirm the player has the DLC declared in the building's `dlc_allowed`.
+5. Confirm MD's `gfx/entities/landmarks.asset` and `landmarks.gfx` contain the entity and mesh definitions. MD's copies of those files file-override vanilla — vanilla's entries for new landmarks are not merged in and must be copied across.
+
+See [Add Landmarks](/resources/add-landmarks/) for the full file-by-file mapping.
+
+---
+
 ## Parent Window Not Found (GUI)
 
 ```plaintext
