@@ -1,25 +1,15 @@
 #!/usr/bin/env python3
-"""Suggest simplifications where inline script duplicates a shared trigger.
+"""Suggest replacing inline random-build limits with the shared triggers.
 
-Currently focuses on random-construction build-location limits. Many focuses,
-decisions, and scripted effects open a `random_owned_controlled_state` (or
-`every_controlled_state` / `random_controlled_state` / `random_owned_state`)
-and inline the same ~20-line "is there a free building slot in a home-area
-state" limit that now lives as a shared scripted trigger in
-`common/scripted_triggers/00_scripted_triggers.txt`:
+When a random_owned_controlled_state (or every/random_controlled_state,
+random_owned_state) block's limit is a token-exact match of a build-location
+trigger in common/scripted_triggers/00_scripted_triggers.txt, flag it (WARNING)
+with the one-line replacement. The match is exact on purpose: a different
+size threshold, a missing or extra include_locked, or any added condition will
+not match, so it never suggests a behaviour-changing rewrite.
 
-  - `free_shared_building_slots`        any pooled shared-slot building
-  - `<building>_random_build_loc`       the non-pooled buildings
-
-When a block's `limit` is a byte-for-byte (token) match of one of those
-triggers, this validator flags it as a WARNING suggesting the one-line
-replacement. It is intentionally conservative: a different slot threshold
-(`size > 1`), a missing/extra `include_locked`, or any extra condition will
-NOT match, so it never suggests a behaviour-changing rewrite.
-
-It also flags the invalid effect `every_owned_controlled_state` (it does not
-exist in the engine; the valid effect is `every_controlled_state`), which is
-the exact mistake the shared helpers were rewritten to avoid.
+Also flags the non-existent effect every_owned_controlled_state (the valid
+effect is every_controlled_state).
 """
 import os
 import re
@@ -30,10 +20,8 @@ from validator_common import (
     run_validator_main,
 )
 
-# Pooled shared-slot buildings: every shares_slots=yes building (00_buildings.txt)
-# whose random-build limit carries no extra condition. They all draw from the
-# same pooled state slots, so the single free_shared_building_slots trigger
-# (which checks industrial_complex with include_locked=yes) covers them.
+# Every shares_slots=yes building draws from the same pooled state slots, so one
+# free_shared_building_slots check covers them all.
 _SHARED_TRIGGER = "free_shared_building_slots"
 _SHARED_BUILDINGS = frozenset(
     {
@@ -49,9 +37,8 @@ _SHARED_BUILDINGS = frozenset(
     }
 )
 
-# building -> (trigger, include_locked, coastal). The flags must mirror exactly
-# what the trigger in 00_scripted_triggers.txt encodes; a candidate limit that
-# differs on either flag is not equivalent and is left alone.
+# building -> (trigger, include_locked, coastal). The flags must match what the
+# trigger encodes, or the inline limit isn't equivalent and is left alone.
 _BUILDING_TRIGGER = {
     "dockyard": ("dockyard_random_build_loc", True, True),
     "infrastructure": ("infrastructure_random_build_loc", False, False),
@@ -122,8 +109,9 @@ _BUILDING_RE = re.compile(r"building = (\w+)")
 
 
 def _scan_text(text: str):
-    """Yield (line_1based, building, trigger) for each replaceable limit and
-    ("__invalid_effect__", line_1based) for every_owned_controlled_state use."""
+    """Return (suggestions, invalid_lines): suggestions are (line, building,
+    trigger) for each replaceable limit; invalid_lines are
+    every_owned_controlled_state line numbers."""
     lines = text.split("\n")
     suggestions = []
     invalid = []
