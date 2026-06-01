@@ -24,6 +24,7 @@ On-demand quality checklist for new Millennium Dawn content. Condensed from `doc
 ## Visual
 
 - Every focus needs an icon and `search_filters`
+- Decision `icon =` accepts the bare sprite stem; the engine auto-prepends `GFX_decision_` (so `icon = generic_political_discourse` == `icon = GFX_decision_generic_political_discourse`). Don't add the prefix to a working bare icon. See `decision-reference.md` → Icon Field.
 - Use tooltips for event outcomes triggered from focuses
 - Max 1 meme GFX per content set
 - No unlocalised strings; focus descriptions must not be blank or reuse the focus name

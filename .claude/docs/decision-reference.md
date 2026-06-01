@@ -4,6 +4,17 @@ On-demand reference for decision structure and examples. For best practices, see
 
 Full HOI4 wiki reference: https://hoi4.paradoxwikis.com/Decision_modding
 
+## Icon Field
+
+The decision `icon = X` field accepts **either** the bare sprite stem **or** the fully-qualified `GFX_decision_` name — the engine auto-prepends `GFX_decision_` when resolving a bare name. Both render identically:
+
+```
+icon = generic_political_discourse              # resolves to GFX_decision_generic_political_discourse
+icon = GFX_decision_generic_political_discourse # explicit, same result
+```
+
+The bare form is the dominant convention in this codebase (e.g. `generic_decision`, `political_actions`, `generic_nationalism`). **Do not "fix" a bare decision icon by adding the `GFX_decision_` prefix — it is not broken.** Only flag an icon when neither `GFX_decision_<name>` nor `GFX_<name>` exists in any `interface/*.gfx` file. (Decision **category** icons and most other contexts still require the explicit `GFX_` sprite name — this auto-prefix shortcut is specific to the decision `icon` field.)
+
 ## Targeted Decisions
 
 A decision becomes targeted when it includes `targets`, `target_array`, `target_trigger`, or `target_root_trigger`. The decision clones itself for each valid target. `ROOT` is the country taking the decision; `FROM` is the target.
