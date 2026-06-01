@@ -7,9 +7,6 @@ trigger in common/scripted_triggers/00_scripted_triggers.txt, flag it (WARNING)
 with the one-line replacement. The match is exact on purpose: a different
 size threshold, a missing or extra include_locked, or any added condition will
 not match, so it never suggests a behaviour-changing rewrite.
-
-Also flags the non-existent effect every_owned_controlled_state (the valid
-effect is every_controlled_state).
 """
 import os
 import re
@@ -109,15 +106,10 @@ _BUILDING_RE = re.compile(r"building = (\w+)")
 
 
 def _scan_text(text: str):
-    """Return (suggestions, invalid_lines): suggestions are (line, building,
-    trigger) for each replaceable limit; invalid_lines are
-    every_owned_controlled_state line numbers."""
+    """Return a list of (line, building, trigger) for each replaceable limit."""
     lines = text.split("\n")
     suggestions = []
-    invalid = []
     for i, line in enumerate(lines):
-        if "every_owned_controlled_state" in line and not line.lstrip().startswith("#"):
-            invalid.append(i + 1)
         m = _SCOPE_RE.match(line)
         if not m:
             continue
@@ -141,7 +133,7 @@ def _scan_text(text: str):
             building, il, coastal
         ):
             suggestions.append((lk + 1, building, trigger))
-    return suggestions, invalid
+    return suggestions
 
 
 class Validator(BaseValidator):
@@ -153,21 +145,16 @@ class Validator(BaseValidator):
         self.log(f"Scanning {len(files)} files for simplification opportunities")
 
         dedup_results = []
-        invalid_results = []
         for path in files:
             try:
                 with open(path, encoding="utf-8") as f:
                     text = f.read()
             except (OSError, UnicodeDecodeError):
                 continue
-            if (
-                "any_owned_state" not in text
-                and "every_owned_controlled_state" not in text
-            ):
+            if "any_owned_state" not in text:
                 continue
             rel = os.path.relpath(path, self.mod_path)
-            suggestions, invalid = _scan_text(text)
-            for line, building, trigger in suggestions:
+            for line, building, trigger in _scan_text(text):
                 dedup_results.append(
                     (
                         f"inline build-location limit for '{building}' can be replaced "
@@ -176,23 +163,7 @@ class Validator(BaseValidator):
                         line,
                     )
                 )
-            for line in invalid:
-                invalid_results.append(
-                    (
-                        "every_owned_controlled_state is not a real effect; "
-                        "use every_controlled_state",
-                        rel,
-                        line,
-                    )
-                )
 
-        self._report(
-            invalid_results,
-            "No invalid every_owned_controlled_state usage found",
-            "Invalid effect (does not exist in engine):",
-            severity=Severity.WARNING,
-            category="invalid-effect",
-        )
         self._report(
             dedup_results,
             "No duplicated build-location limits found",
