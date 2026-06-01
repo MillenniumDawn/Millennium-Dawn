@@ -171,8 +171,6 @@ def _extract_modifier_blocks(text: str) -> List[Tuple[int, str]]:
                 hi = mid - 1
         return lo + 1  # 1-based
 
-    # Tokenise the text into assignment-like tokens and braces.
-    # We walk character by character tracking brace depth.
     i = 0
     current_depth = 0
     in_string = False
@@ -201,13 +199,11 @@ def _extract_modifier_blocks(text: str) -> List[Tuple[int, str]]:
             i += 1
             continue
 
-        # Look for `WORD = {` patterns
         if ch.isalpha() or ch == "_":
             j = i
             while j < n and (text[j].isalnum() or text[j] == "_"):
                 j += 1
             word = text[i:j]
-            # Skip whitespace after word
             k = j
             while k < n and text[k] in " \t":
                 k += 1
@@ -216,16 +212,13 @@ def _extract_modifier_blocks(text: str) -> List[Tuple[int, str]]:
                 while k < n and text[k] in " \t":
                     k += 1
                 if k < n and text[k] == "{":
-                    # This is a WORD = { block
                     if word in _SKIP_BLOCK_KEYS:
                         # Mark depth at which this skip-block opens
                         # The { hasn't been counted yet, so after we pass it
                         # depth becomes current_depth + 1
                         skip_depth_stack.append(current_depth + 1)
                     elif word == "modifier" and not skip_depth_stack:
-                        # This is a modifier = { block we care about
                         block_lineno = char_to_lineno(i)
-                        # Extract the block body
                         body_start = k + 1
                         depth = 1
                         p = body_start
@@ -264,15 +257,12 @@ def _is_ai_weight_block(body: str) -> bool:
     like ``has_idea``, ``OR = {``, comparison operators) — these are always weight
     blocks even if factor/base/add hasn't been seen yet.
     """
-    # Quick check: if any AI weight indicator key appears in the raw body text
-    # as a standalone token, treat this as an AI weight block.
-    # This handles cases like:  has_decision = X \n factor = 1.25
+    # An indicator key anywhere in the body marks an AI weight block, even when
+    # it follows the modifier lines (e.g. `has_decision = X` then `factor = 1.25`).
     for indicator in _AI_WEIGHT_INDICATOR_KEYS:
-        # Look for `factor =`, `base =`, `add =` as standalone assignments
         if re.search(r"\b" + indicator + r"\s*=", body):
             return True
 
-    # Also flag blocks whose first non-comment key has a non-numeric value
     for line in body.split("\n"):
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
@@ -306,9 +296,8 @@ def _extract_modifier_names_from_body(body: str) -> List[str]:
         if not stripped or stripped.startswith("#"):
             continue
 
-        # Track depth changes
         opens = stripped.count("{") - stripped.count("}")
-        # Check if this line opens a sub-block — skip the key itself
+        # A line opening a sub-block names that block, not a modifier — skip it.
         if "{" in stripped:
             depth += opens
             continue
