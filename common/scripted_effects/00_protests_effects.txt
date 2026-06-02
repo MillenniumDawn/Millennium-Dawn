@@ -72,9 +72,6 @@ calculate_protest_drift = {
 }
 
 calculate_unrest_growth = {
-	# Reset per-source drift trackers — only when the panel is open so the values
-	# are not persisted between sessions where the player never views them.
-	# (calculate_unrest_growth is already gated to player-only by MD_on_actions.)
 	if = {
 		limit = { has_country_flag = open_protests_screen }
 		set_variable = { drift_spending_last = 0 }
@@ -236,11 +233,92 @@ calculate_unrest_growth = {
 	check_protest_trigger = yes
 }
 
-# Writes cores_resisting_count: how many core states currently have resistance.
-# Also writes MD_top_resistant_state_value (0-100) and saves the worst state as
-# the global event target MD_top_resistant_state_scope so its name can be read
-# in localisation. Display-only — used by the resistant-state banner and the
-# revolt-state row in MD_protests_gui.
+# Projects next month's per-source drift for the panel without mutating
+# protest_strength, so the breakdown shows numbers on open instead of waiting
+# a monthly tick. Random sources (recession/depression/CT) project their poisson
+# expected value (lambda); passive drift is genuinely random and omitted here.
+# Writes persistent vars because the GUI reads them via [?var] at render time;
+# they are freed by MD_protests_clear_display_vars on close, so save cost is zero
+# while the panel is shut.
+MD_protests_recompute_display = {
+	set_variable = { drift_spending_last = 0 }
+	set_variable = { drift_stability_last = 0 }
+	set_variable = { drift_interest_last = 0 }
+	set_variable = { drift_recession_last = 0 }
+	set_variable = { drift_depression_last = 0 }
+	set_variable = { drift_war_last = 0 }
+	set_variable = { drift_corruption_last = 0 }
+	set_variable = { drift_ct_last = 0 }
+
+	set_temp_variable = { protest_drift = 0 }
+	calculate_protest_drift = yes
+	set_variable = { drift_spending_last = protest_drift }
+
+	if = {
+		limit = {
+			has_stability < 0.2
+			has_elections = yes
+		}
+		set_temp_variable = { protest_add = 0.2 }
+		subtract_from_temp_variable = { protest_add = stability }
+		set_variable = { drift_stability_last = protest_add }
+	}
+
+	if = {
+		limit = { check_variable = { interest_rate > 8.9 } }
+		set_temp_variable = { rate_hold = interest_rate }
+		subtract_from_temp_variable = { rate_hold = 8.9 }
+		set_variable = { drift_interest_last = rate_hold }
+	}
+
+	if = {
+		limit = { has_idea = recession }
+		set_variable = { drift_recession_last = 3 }
+	}
+
+	if = {
+		limit = { has_idea = depression }
+		set_variable = { drift_depression_last = 4 }
+	}
+
+	if = {
+		limit = { check_variable = { months_at_war > 36 } }
+		set_temp_variable = { months_hold = months_at_war }
+		divide_temp_variable = { months_hold = 24 }
+		set_variable = { drift_war_last = months_hold }
+	}
+
+	if = {
+		limit = {
+			check_variable = { government_coalition_strength < 0.3 }
+			OR = {
+				has_elections = no
+				has_idea = paralyzing_corruption
+				has_idea = crippling_corruption
+				has_idea = rampant_corruption
+				has_idea = unrestrained_corruption
+				has_idea = systematic_corruption
+				has_idea = widespread_corruption
+			}
+		}
+		set_temp_variable = { protest_drift = 0.3 }
+		subtract_from_temp_variable = { protest_drift = government_coalition_strength }
+		set_variable = { drift_corruption_last = protest_drift }
+	}
+
+	if = {
+		limit = {
+			OR = {
+				has_idea = CT_internet_monitoring
+				has_idea = CT_protesting_arrests
+			}
+		}
+		set_variable = { drift_ct_last = 5 }
+	}
+
+	MD_protests_compute_top_source = yes
+}
+
 # PREV (not ROOT): every_core_state switches to state scope; PREV is the country
 # that owns the iteration. ROOT depends on how this effect was entered and is unsafe.
 MD_protests_count_resisting_cores = {
@@ -254,17 +332,13 @@ MD_protests_count_resisting_cores = {
 			set_temp_variable = { state_resistance_val = resistance }
 			if = {
 				limit = { check_variable = { state_resistance_val > PREV.MD_top_resistant_state_value } }
-				PREV = { set_variable = { MD_top_resistant_state_value = PREV.state_resistance_val } }
+				PREV = { set_variable = { MD_top_resistant_state_value = state_resistance_val } }
 				save_global_event_target_as = MD_top_resistant_state_scope
 			}
 		}
 	}
 }
 
-# Clears every display-only variable written by the protest GUI. Called when the
-# player closes the panel so these floats do not sit in the save between viewing
-# sessions. The actual gameplay state (protest_strength, protest_radicalisation,
-# cooldown flag, promise baselines) is left untouched.
 MD_protests_clear_display_vars = {
 	clear_variable = drift_spending_last
 	clear_variable = drift_stability_last
@@ -281,8 +355,6 @@ MD_protests_clear_display_vars = {
 	clear_global_event_target = MD_top_resistant_state_scope
 }
 
-# Computes drift_total_last (sum of all source trackers). Display-only — used by
-# the Net last month banner. Does not affect math.
 MD_protests_compute_top_source = {
 	set_variable = { drift_total_last = drift_passive_last }
 	add_to_variable = { drift_total_last = drift_spending_last }
