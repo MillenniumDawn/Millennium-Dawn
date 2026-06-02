@@ -72,52 +72,19 @@ calculate_protest_drift = {
 }
 
 calculate_unrest_growth = {
-	if = {
-		limit = { has_country_flag = open_protests_screen }
-		set_variable = { drift_spending_last = 0 }
-		set_variable = { drift_stability_last = 0 }
-		set_variable = { drift_interest_last = 0 }
-		set_variable = { drift_recession_last = 0 }
-		set_variable = { drift_depression_last = 0 }
-		set_variable = { drift_war_last = 0 }
-		set_variable = { drift_corruption_last = 0 }
-		set_variable = { drift_ct_last = 0 }
-	}
-
 	#Grab our old protest strength
 	set_temp_variable = { start_protest_str = protest_strength }
-	#Calculate based off economics how much the protests should drift
-	calculate_protest_drift = yes
-	if = { limit = { has_country_flag = open_protests_screen }
-		set_variable = { drift_spending_last = protest_drift }
-	}
-	add_to_variable = { protest_strength = protest_drift }
 
-	#low stability in elected government = unrest
-	if = {
-		limit = {
-			has_stability < 0.2
-			has_elections = yes
-		}
-		set_temp_variable = { stab_hold = stability }
-		set_temp_variable = { protest_add = 0.2 }
-		subtract_from_temp_variable = { protest_add = stab_hold }
-		if = { limit = { has_country_flag = open_protests_screen }
-			set_variable = { drift_stability_last = protest_add }
-		}
-		add_to_variable = { protest_strength = protest_add }
-	}
-	#High interest = unrest
-	if = {
-		limit = { check_variable = { interest_rate > 8.9 } }
-		set_temp_variable = { rate_hold = interest_rate }
-		subtract_from_temp_variable = { rate_hold = 8.9 }
-		if = { limit = { has_country_flag = open_protests_screen }
-			set_variable = { drift_interest_last = rate_hold }
-		}
-		add_to_variable = { protest_strength = rate_hold }
-	}
 
+	MD_protests_calc_deterministic_drift = yes
+	add_to_variable = { protest_strength = det_spending_drift }
+	add_to_variable = { protest_strength = det_stability_drift }
+	add_to_variable = { protest_strength = det_interest_drift }
+	add_to_variable = { protest_strength = det_war_drift }
+	add_to_variable = { protest_strength = det_corruption_drift }
+
+	#Random sources: the live tick rolls a real poisson value; the panel
+	#projection (MD_protests_recompute_display) uses the expected value instead.
 	if = {
 		limit = { has_idea = recession }
 		randomize_temp_variable = {
@@ -126,7 +93,7 @@ calculate_unrest_growth = {
 			min = 0.5
 			lambda = 3
 		}
-		if = { limit = { has_country_flag = open_protests_screen }
+		if = { limit = { is_ai = no has_country_flag = open_protests_screen }
 			set_variable = { drift_recession_last = protest_drift }
 		}
 		add_to_variable = { protest_strength = protest_drift }
@@ -140,45 +107,8 @@ calculate_unrest_growth = {
 			min = 0.5
 			lambda = 4
 		}
-		if = { limit = { has_country_flag = open_protests_screen }
+		if = { limit = { is_ai = no has_country_flag = open_protests_screen }
 			set_variable = { drift_depression_last = protest_drift }
-		}
-		add_to_variable = { protest_strength = protest_drift }
-	}
-
-	#Long wars = unrest
-	if = {
-		limit = { check_variable = { months_at_war > 36 } }
-		set_temp_variable = { months_hold = months_at_war }
-		divide_temp_variable = { months_hold = 24 }
-		if = { limit = { has_country_flag = open_protests_screen }
-			set_variable = { drift_war_last = months_hold }
-		}
-		add_to_variable = { protest_strength = months_hold }
-	}
-
-	#If goverment popularity is less than 30%, check for needing elections or corruption
-	if = {
-		limit = {
-			check_variable = { government_coalition_strength < 0.3 }
-			OR = {
-				has_elections = no
-				OR = {
-					has_idea = paralyzing_corruption
-					has_idea = crippling_corruption
-					has_idea = rampant_corruption
-					has_idea = unrestrained_corruption
-					has_idea = systematic_corruption
-					has_idea = widespread_corruption
-				}
-			}
-		}
-
-		set_temp_variable = { protest_drift = 0.3 }
-		set_temp_variable = { gov_pop_hold = government_coalition_strength }
-		subtract_from_temp_variable = { protest_drift = government_coalition_strength }
-		if = { limit = { has_country_flag = open_protests_screen }
-			set_variable = { drift_corruption_last = protest_drift }
 		}
 		add_to_variable = { protest_strength = protest_drift }
 	}
@@ -197,7 +127,7 @@ calculate_unrest_growth = {
 			min = 0.5
 			lambda = 5
 		}
-		if = { limit = { has_country_flag = open_protests_screen }
+		if = { limit = { is_ai = no has_country_flag = open_protests_screen }
 			set_variable = { drift_ct_last = protest_drift }
 		}
 		add_to_variable = { protest_strength = protest_drift }
@@ -224,8 +154,8 @@ calculate_unrest_growth = {
 	clamp_variable = { var = protest_strength min = 0 max = 100 }
 
 	# Display-only computations: only run when the player has the panel open.
-	if = { limit = { has_country_flag = open_protests_screen }
-		MD_protests_compute_top_source = yes
+	if = { limit = { is_ai = no has_country_flag = open_protests_screen }
+		MD_protests_compute_drift_total = yes
 		MD_protests_count_resisting_cores = yes
 		add_to_variable = { global.protest_ui_dirty = 1 }
 	}
@@ -233,59 +163,44 @@ calculate_unrest_growth = {
 	check_protest_trigger = yes
 }
 
-# Projects next month's per-source drift for the panel without mutating
-# protest_strength, so the breakdown shows numbers on open instead of waiting
-# a monthly tick. Random sources (recession/depression/CT) project their poisson
-# expected value (lambda); passive drift is genuinely random and omitted here.
-# Writes persistent vars because the GUI reads them via [?var] at render time;
-# they are freed by MD_protests_clear_display_vars on close, so save cost is zero
-# while the panel is shut.
-MD_protests_recompute_display = {
-	set_variable = { drift_spending_last = 0 }
-	set_variable = { drift_stability_last = 0 }
-	set_variable = { drift_interest_last = 0 }
-	set_variable = { drift_recession_last = 0 }
-	set_variable = { drift_depression_last = 0 }
-	set_variable = { drift_war_last = 0 }
-	set_variable = { drift_corruption_last = 0 }
-	set_variable = { drift_ct_last = 0 }
+# Computes the five deterministic drift sources into det_*_drift temp vars
+# (always set, AI-safe, no save cost) and mirrors them into the drift_*_last
+# display vars gated to player + open-panel. Also zeros the three random
+# display vars so callers only set them when their source is active.
+# Shared by the live monthly tick (calculate_unrest_growth) and the panel
+# projection (MD_protests_recompute_display) so the drift formulas live in one
+# place. The live tick adds det_*_drift to protest_strength and rolls the random
+# sources for real; the projection adds the random sources' expected value.
+MD_protests_calc_deterministic_drift = {
+	set_temp_variable = { det_spending_drift = 0 }
+	set_temp_variable = { det_stability_drift = 0 }
+	set_temp_variable = { det_interest_drift = 0 }
+	set_temp_variable = { det_war_drift = 0 }
+	set_temp_variable = { det_corruption_drift = 0 }
 
 	set_temp_variable = { protest_drift = 0 }
 	calculate_protest_drift = yes
-	set_variable = { drift_spending_last = protest_drift }
+	set_temp_variable = { det_spending_drift = protest_drift }
 
 	if = {
 		limit = {
 			has_stability < 0.2
 			has_elections = yes
 		}
-		set_temp_variable = { protest_add = 0.2 }
-		subtract_from_temp_variable = { protest_add = stability }
-		set_variable = { drift_stability_last = protest_add }
+		set_temp_variable = { det_stability_drift = 0.2 }
+		subtract_from_temp_variable = { det_stability_drift = stability }
 	}
 
 	if = {
 		limit = { check_variable = { interest_rate > 8.9 } }
-		set_temp_variable = { rate_hold = interest_rate }
-		subtract_from_temp_variable = { rate_hold = 8.9 }
-		set_variable = { drift_interest_last = rate_hold }
-	}
-
-	if = {
-		limit = { has_idea = recession }
-		set_variable = { drift_recession_last = 3 }
-	}
-
-	if = {
-		limit = { has_idea = depression }
-		set_variable = { drift_depression_last = 4 }
+		set_temp_variable = { det_interest_drift = interest_rate }
+		subtract_from_temp_variable = { det_interest_drift = 8.9 }
 	}
 
 	if = {
 		limit = { check_variable = { months_at_war > 36 } }
-		set_temp_variable = { months_hold = months_at_war }
-		divide_temp_variable = { months_hold = 24 }
-		set_variable = { drift_war_last = months_hold }
+		set_temp_variable = { det_war_drift = months_at_war }
+		divide_temp_variable = { det_war_drift = 24 }
 	}
 
 	if = {
@@ -301,11 +216,32 @@ MD_protests_recompute_display = {
 				has_idea = widespread_corruption
 			}
 		}
-		set_temp_variable = { protest_drift = 0.3 }
-		subtract_from_temp_variable = { protest_drift = government_coalition_strength }
-		set_variable = { drift_corruption_last = protest_drift }
+		set_temp_variable = { det_corruption_drift = 0.3 }
+		subtract_from_temp_variable = { det_corruption_drift = government_coalition_strength }
 	}
 
+	if = { limit = { is_ai = no has_country_flag = open_protests_screen }
+		set_variable = { drift_spending_last = det_spending_drift }
+		set_variable = { drift_stability_last = det_stability_drift }
+		set_variable = { drift_interest_last = det_interest_drift }
+		set_variable = { drift_war_last = det_war_drift }
+		set_variable = { drift_corruption_last = det_corruption_drift }
+		set_variable = { drift_recession_last = 0 }
+		set_variable = { drift_depression_last = 0 }
+		set_variable = { drift_ct_last = 0 }
+	}
+}
+
+
+MD_protests_recompute_display = {
+	MD_protests_calc_deterministic_drift = yes
+
+	if = { limit = { has_idea = recession }
+		set_variable = { drift_recession_last = 3 }
+	}
+	if = { limit = { has_idea = depression }
+		set_variable = { drift_depression_last = 4 }
+	}
 	if = {
 		limit = {
 			OR = {
@@ -316,7 +252,7 @@ MD_protests_recompute_display = {
 		set_variable = { drift_ct_last = 5 }
 	}
 
-	MD_protests_compute_top_source = yes
+	MD_protests_compute_drift_total = yes
 }
 
 # PREV (not ROOT): every_core_state switches to state scope; PREV is the country
@@ -355,7 +291,7 @@ MD_protests_clear_display_vars = {
 	clear_global_event_target = MD_top_resistant_state_scope
 }
 
-MD_protests_compute_top_source = {
+MD_protests_compute_drift_total = {
 	set_variable = { drift_total_last = drift_passive_last }
 	add_to_variable = { drift_total_last = drift_spending_last }
 	add_to_variable = { drift_total_last = drift_stability_last }
