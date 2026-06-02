@@ -2297,6 +2297,17 @@ ingame_startup_nations_effect = {
 		calculate_expected_spending = yes
 		setup_missile_configuration_effect = yes
 		microchip_startup = yes
+		add_country_to_power_ranking = yes
+		# Released nations skip on_startup, so enroll them in the counter-terror staggered
+		# cycle. That cycle is also what re-applies each nation's power ranking idea every
+		# quarter, so without this their Power Status idea would freeze at its release value.
+		# counter_terror_nation_startup appends to per-country arrays, so only run it for a
+		# nation that has not been set up yet (empty CT intel array = never initialised).
+		if = {
+			limit = { NOT = { check_variable = { international_terror_org_intel^num > 0 } } }
+			counter_terror_nation_startup = yes
+			add_on_creation = yes
+		}
 	}
 }
 
