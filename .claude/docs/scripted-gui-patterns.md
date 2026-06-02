@@ -1,14 +1,12 @@
 # Scripted GUI Patterns
 
-Recurring patterns for data-driven scripted GUIs in Millennium Dawn. The MIO Unlock Catalog (`common/scripted_guis/00_mio_unlock_catalog.txt`) and the EU council (`common/scripted_guis/01_european_union_guis.txt`) are the reference implementations.
+Recurring patterns for data-driven scripted GUIs in MD. Reference implementations: MIO Unlock Catalog (`common/scripted_guis/00_mio_unlock_catalog.txt`) and the EU council (`common/scripted_guis/01_european_union_guis.txt`).
 
-For raw scripted*gui mechanics (context types, parent windows, AI checks), see [`/.claude/rules/scripted-gui-rules.md`](../rules/scripted-gui-rules.md). This doc is about the recurring \_shapes* you build on top of those primitives.
-
----
+For raw scripted_gui mechanics (context types, parent windows, AI checks), see [`/.claude/rules/scripted-gui-rules.md`](../rules/scripted-gui-rules.md). This doc is about the recurring shapes built on top of those primitives.
 
 ## Data-driven entries via `dynamic_lists`
 
-When a catalog/list has N similar entries (votes, MIO unlocks, member states), replace N hardcoded `containerWindowType` blocks with one `entry_container` template + a `gridboxType` driven by `dynamic_lists`. Entries that should be hidden are simply absent from the backing array — no `_visible` games on nested containers (which silently fail anyway).
+When a catalog has N similar entries (votes, MIO unlocks, member states), replace N hardcoded `containerWindowType` blocks with one `entry_container` template + a `gridboxType` driven by `dynamic_lists`. Hidden entries are simply absent from the backing array — no `_visible` games on nested containers (which silently fail anyway).
 
 ### Backing array
 
@@ -55,13 +53,11 @@ dynamic_lists = {
 
 ### Element-name reuse
 
-Each entry container is instantiated N times, but the scripted_gui only writes one set of `_click_enabled` / `_visible` / `_click` blocks. The engine evaluates them once per entry, with `v` set to that entry's value. So `mio_cat_unlock_btn_click_enabled` runs 23 times per refresh (once per visible entry), each time with `v` set to that entry's ID.
-
----
+Each entry container is instantiated N times, but the scripted_gui writes only one set of `_click_enabled` / `_visible` / `_click` blocks. The engine evaluates them once per entry, with `v` set to that entry's value. So `mio_cat_unlock_btn_click_enabled` runs 23 times per refresh (once per visible entry), each with `v` set to that entry's ID.
 
 ## Per-entry display via scripted-localisation dispatchers
 
-Per-entry data (name, icon, tooltip) lives in `defined_text` blocks keyed on `v`. The GUI references the dispatcher by name; the dispatcher returns the right loc key per entry.
+Per-entry data (name, icon, tooltip) lives in `defined_text` blocks keyed on `v`. The GUI references the dispatcher by name; it returns the right loc key per entry.
 
 ```
 defined_text = {
@@ -99,8 +95,6 @@ instantTextboxType = {
 
 23 entries × 5 fields (name, trait, equip label, icon, desc) = 115 `defined_text` branches. Verbose, but every branch is one line; the alternative is 23 entry-container copies with 5 hardcoded fields each (~30 lines per copy = 690 lines). Net win once you have ~6+ entries.
 
----
-
 ## Dirty variable — MD standard
 
 GUIs with `dirty = global.X` only refresh when X's value changes. Use this to avoid per-tick re-evaluation of expensive triggers / scripted-loc.
@@ -128,7 +122,7 @@ References:
 
 ### Variable naming convention
 
-`global.<system>_dirty_update_var` (NATO, MIO) or `global.<system>_ui_dirty_var` (ledger). Either is acceptable — pick one for the system and use it everywhere.
+`global.<system>_dirty_update_var` (NATO, MIO) or `global.<system>_ui_dirty_var` (ledger). Either is acceptable — pick one per system and use it everywhere.
 
 ### Call from every state-changing effect
 
@@ -136,9 +130,7 @@ Every click handler / state-toggling effect in the scripted*gui should end with 
 
 ### Player-only guard
 
-The [`scripted-gui-rules.md` dirty rule](../rules/scripted-gui-rules.md) says to guard bumps with `is_ai = no` for GUIs the AI also interacts with. In practice, MD's `update_*_dirty_variable` effects don't carry the guard — the dirty variable is only bumped from player-initiated click paths in the scripted_gui's `effects` block, and those paths are reached only when the player clicks. If your effect can be invoked from an AI on_action, wrap the call site (not the dirty effect itself) with `is_ai = no`.
-
----
+The [`scripted-gui-rules.md` dirty rule](../rules/scripted-gui-rules.md) says to guard bumps with `is_ai = no` for GUIs the AI also interacts with. In practice MD's `update_*_dirty_variable` effects don't carry the guard — the dirty variable is only bumped from player-initiated click paths in the scripted_gui's `effects` block, reached only when the player clicks. If your effect can be invoked from an AI on_action, wrap the call site (not the dirty effect itself) with `is_ai = no`.
 
 ## Filter checkbox — image swap, not frame swap
 
@@ -174,8 +166,6 @@ buttonType = {
 
 Reference: `interface/MD_countryconstructionsview.gui:13-21` (`toggle_construction_building_speed`).
 
----
-
 ## Per-entry tooltip with dynamic per-MIO ✓/✗ icons
 
 Standard `[!trigger]` rendering shows each subcondition with a green/red icon. To make it per-entry (different requirements per MIO/vote/etc), put `[!]` on a static-name outer trigger that uses `meta_trigger` to forward into the per-entity check.
@@ -195,16 +185,12 @@ mio_catalog_entry_prereqs_yes = {
 
 See [`tokenization-patterns.md`](tokenization-patterns.md) for the meta_trigger mechanics and why this is the only way to keep `[!]` rendering working with per-entry dispatch.
 
----
-
 ## Visibility rule of thumb
 
-`visible` on the scripted_gui's `window_name` works fine. `_visible` triggers on **nested** `containerWindowType` elements (entries inside a scrollable parent) silently fail to hide them — there is no working precedent in MD. Always use array filtering instead: rebuild the visible array to exclude the entries that shouldn't show. Hiding individual button/icon/textbox elements within a rendered entry **does** work via `_visible`; only the wrapping containerWindowType is the broken case.
-
----
+`visible` on the scripted_gui's `window_name` works fine. `_visible` triggers on **nested** `containerWindowType` elements (entries inside a scrollable parent) silently fail to hide them — there is no working precedent in MD. Always use array filtering instead: rebuild the visible array to exclude entries that shouldn't show. Hiding individual button/icon/textbox elements within a rendered entry **does** work via `_visible`; only the wrapping containerWindowType is the broken case.
 
 ## State that needs to persist across saves
 
-`set_country_flag` and `set_global_flag` persist with the save. Variables persist if they're `set_variable` (not `set_temp_variable`). Master arrays seeded once at game start — put them in `setup_global_arrays` (`common/scripted_effects/00_startup_effects.txt`) so the master is populated for every save without lazy-seeding logic. Per-country derived arrays should be rebuilt on demand via the scripted_gui's `effects`, not stored in the save (cheap to rebuild, expensive to bloat the save).
+`set_country_flag` and `set_global_flag` persist with the save. Variables persist if `set_variable` (not `set_temp_variable`). Master arrays seeded once at game start — put them in `setup_global_arrays` (`common/scripted_effects/00_startup_effects.txt`) so the master is populated for every save without lazy-seeding logic. Per-country derived arrays should be rebuilt on demand via the scripted_gui's `effects`, not stored in the save (cheap to rebuild, expensive to bloat the save).
 
 For initial AI population — call your `rebuild_*_yes` effect inside `every_country = { ... }` at the bottom of `setup_global_arrays` so every AI starts with the array populated. Without that, AI never triggers a click that would build it.

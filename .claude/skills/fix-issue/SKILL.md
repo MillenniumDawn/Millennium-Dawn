@@ -22,7 +22,7 @@ Steps:
 
    Prefer issues labelled `bug` with a clear reproduction path. Skip issues that already have an open PR or are vague with no reproduction steps.
 
-   **If no actionable GitHub issues remain** (all are too vague, graphical, engine-level crashes, or already covered), scan the codebase for common bug patterns instead. Examples of patterns to search for:
+   **If no actionable GitHub issues remain** (all too vague, graphical, engine-level crashes, or already covered), scan the codebase for common bug patterns instead. Patterns to search for:
    - `swap_ideas` where `remove_idea` and `add_idea` are the same, or `remove_idea` doesn't match the `limit` condition
    - Event options with `name =` referencing a different event's ID (copy-paste errors)
    - Duplicate option names within the same event
@@ -53,14 +53,11 @@ Steps:
 
 2. **Understand the bug**
 
-   Read the issue body carefully. Identify:
-   - The specific behaviour that is wrong
-   - The expected behaviour
-   - Any country, decision, event, or system named in the report
+   Read the issue body. Identify the wrong behaviour, the expected behaviour, and any country, decision, event, or system named in the report.
 
 3. **Locate the relevant code**
 
-   Search for the named decisions, effects, triggers, scripted GUIs, or on_actions. If you can't find it, you do a wider database search:
+   Search for the named decisions, effects, triggers, scripted GUIs, or on_actions. If not found, do a wider search:
 
    ```
    grep -rn "keyword" common/ events/ --include="*.txt" -l
@@ -70,13 +67,13 @@ Steps:
 
 4. **Diagnose the root cause**
 
-   Trace through the logic to find exactly where the wrong value is produced or the wrong branch is taken. Do not guess — confirm the cause in the code before writing a fix.
+   Trace the logic to find exactly where the wrong value is produced or the wrong branch is taken. Do not guess; confirm the cause in code before writing a fix.
 
 5. **Fix the bug**
 
-   Make the minimal change needed. Follow all rules in CLAUDE.md:
+   Make the minimal change. Follow CLAUDE.md:
    - Tabs for indentation
-   - No magic numbers — use variables
+   - No magic numbers; use variables
    - No empty blocks, no commented-out code
    - Only add a comment if the fix is non-obvious
 
@@ -90,8 +87,8 @@ Steps:
    git rev-parse --abbrev-ref HEAD
    ```
 
-   - If the current branch is **`main`**: stop and use `AskUserQuestion` to ask the user which branch to use. Offer options: (a) check out an existing branch (user supplies the name), (b) create a new branch (user supplies the name). Only after the user answers do you run `git checkout <name>` or `git checkout -b <name>`. Do not invent a branch name.
-   - If the current branch is **not `main`**: commit on the current branch. Do not switch, do not create a new branch.
+   - If on **`main`**: stop and use `AskUserQuestion` to ask which branch to use. Offer: (a) check out an existing branch (user supplies the name), (b) create a new branch (user supplies the name). Only after the user answers, run `git checkout <name>` or `git checkout -b <name>`. Do not invent a branch name.
+   - If **not on `main`**: commit on the current branch. Do not switch or create a branch.
 
    Then stage only the files changed for this fix and commit:
 
@@ -124,16 +121,16 @@ Steps:
    gh pr list --head <branch> --state open --json number,url,body
    ```
 
-   **a. If no open PR exists**: hand off to `/open-pr <issue number>`. That skill is the single source of truth for the create path — it writes the AngriestBird-format body, opens the draft PR, and handles the changelog. Do not duplicate its logic inline here.
+   **a. If no open PR exists**: hand off to `/open-pr <issue number>`. That skill is the single source of truth for the create path (AngriestBird-format body, draft PR, changelog). Do not duplicate its logic here.
 
    **b. If an open PR already exists**: rewrite its body in AngriestBird format and apply with `gh pr edit <PR#> --body "..."`. Do NOT create a second PR.
 
    When rewriting an existing PR body:
-   - **Preserve every existing `Closes #N` line** at the top, then append a new `Closes #<this issue number>` for the fix you just made.
-   - **Preserve every existing `#### Bug Fixes` bullet** — append a new bullet for this fix, never replace the prior bullets. Same for `#### Other`, `#### AI`, `#### Content`, etc. if present.
-   - **Preserve every existing test-plan bullet** — append new bullets for the new fix.
-   - If the existing body is in the older deep-dive format (root-cause code blocks, `file:line` citations, per-issue regression notes), normalise the whole body to AngriestBird format while still keeping every fact: each prior fix gets recomposed as a single bolded bullet in `#### Bug Fixes`, with the regression / file-citation details dropped (they live in the commits and the linked issues).
-   - Follow `/open-pr` step 5 formatting rules: bold `**Fixes #N: Issue Title.**` prefix followed by a period, then 2 sentences (cause + resolution), 2–3 lines max, backticks for code identifiers, no em dashes (`—`) anywhere, no `→` separator. Use a colon, period, or comma instead.
+   - **Preserve every existing `Closes #N` line** at the top, then append a new `Closes #<this issue number>`.
+   - **Preserve every existing `#### Bug Fixes` bullet**; append a new bullet, never replace prior ones. Same for `#### Other`, `#### AI`, `#### Content`, etc.
+   - **Preserve every existing test-plan bullet**; append new bullets for the new fix.
+   - If the existing body uses the older deep-dive format (root-cause code blocks, `file:line` citations, per-issue regression notes), normalise the whole body to AngriestBird format while keeping every fact: recompose each prior fix as a single bolded bullet in `#### Bug Fixes`, dropping regression/file-citation details (they live in the commits and linked issues).
+   - Follow `/open-pr` step 5 formatting: bold `**Fixes #N: Issue Title.**` prefix + period, then 2 sentences (cause + resolution), 2-3 lines max, backticks for code identifiers, no em dashes (`—`) anywhere, no `→` separator. Use a colon, period, or comma instead.
 
    Apply with a heredoc to keep formatting intact:
 

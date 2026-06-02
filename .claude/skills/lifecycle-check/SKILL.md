@@ -7,27 +7,25 @@ Audit a country's content branch against the focus tree lifecycle checklist and 
 
 The authoritative checklist is `docs/src/content/resources/focus-tree-lifecycle-checklist.md`. Read it before starting.
 
----
-
 ## Execution
 
 ### 1. Determine the TAG
 
-If TAG is provided, use it directly (uppercase). Otherwise, run:
+If TAG is provided, use it directly (uppercase). Otherwise run:
 
 ```
 git diff origin/main...HEAD --name-only
 ```
 
-and infer the TAG from the most frequently changed country-specific prefix in the diff.
+and infer the TAG from the most frequently changed country-specific prefix.
 
 ### 2. Check each lifecycle item
 
-Run the checks below. For each item mark it **Done**, **Missing**, or **Partial** (file exists but seems incomplete — e.g. an empty stub).
+For each item mark **Done**, **Missing**, or **Partial** (file exists but seems incomplete, e.g. an empty stub).
 
 #### Drafting Phase
 
-These cannot be checked from files — mark them as "not verifiable from code" and remind the user that draft approval must happen before coding.
+Cannot be checked from files. Mark "not verifiable from code" and remind the user that draft approval must happen before coding.
 
 #### Coding Phase
 
@@ -100,4 +98,4 @@ COMPLETION PHASE
 Summary: N done, N missing, N partial, N manual-only
 ```
 
-Flag any **Missing** items that are required before a lead review can be requested (focus tree, OOB, localisation, changelog).
+Flag any **Missing** items required before a lead review can be requested (focus tree, OOB, localisation, changelog).
