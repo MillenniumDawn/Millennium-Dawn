@@ -2,8 +2,6 @@
 
 For full lists of effects, triggers, modifiers, and dynamic variables, see the corresponding files in `resources/documentation/`.
 
----
-
 ## Variable Types
 
 ### Persistent variables
@@ -17,7 +15,7 @@ SOV.my_var         # read from another scope
 
 ### Temporary variables
 
-Exist only for the duration of the current scripted block. Prefixed with `temp_` in effects but accessed by name.
+Exist only for the current scripted block. Prefixed with `temp_` in effects but accessed by name.
 
 ```
 set_temp_variable = { var = my_temp value = 10 }
@@ -34,15 +32,13 @@ global.global_my_var   # read globally
 
 ### Array elements
 
-Accessed via `^` subscript (zero-indexed). Arrays are capped at **1000 elements** — `add_to_array` beyond index 999 silently does nothing.
+Accessed via `^` subscript (zero-indexed). Arrays cap at **1000 elements** — `add_to_array` beyond index 999 silently does nothing.
 
 ```
 my_array^0       # first element
 my_array^3       # fourth element
 my_array^i       # element at index i (dynamic index from a loop variable)
 ```
-
----
 
 ## Variable Access Syntax
 
@@ -58,14 +54,7 @@ var:v = { ... }                 # scope into the country stored in loop value v 
 var:v^i = { ... }               # WRONG — v is a scalar value, not an array
 ```
 
-**Key rule:** `value = v` in a loop stores the **scalar element** (e.g. a country tag number) into `v`. It is NOT an array reference. To scope into the country at position `i`, use either:
-
-- `var:v = { ... }` (v holds the country reference directly)
-- `var:ARRAYNAME^i = { ... }` (explicit array name + dynamic index)
-
-Never use `var:v^i` — `v` is a scalar and `^i` subscripting does not apply.
-
----
+**Key rule:** `value = v` in a loop stores the **scalar element** (e.g. a country tag number) into `v`. It is NOT an array reference. To scope into the country at position `i`, use either `var:v = { ... }` (v holds the country reference) or `var:ARRAYNAME^i = { ... }` (explicit array name + dynamic index). Never `var:v^i` — `v` is a scalar and `^i` does not apply.
 
 ## Variable & Array Effects
 
@@ -76,8 +65,6 @@ All use `{ var = X value = Y }` syntax. All have `_temp_` equivalents (e.g. `add
 **Arrays:** `add_to_array`, `remove_from_array` (by value or index), `clear_array`, `resize_array`, `find_highest_in_array`, `find_lowest_in_array`, `random_scope_in_array`
 
 Short forms: `add_to_array = { my_array = 42 }`, `remove_from_array = { my_array = 42 }`, `is_in_array = { my_array = 42 }`
-
----
 
 ## Loop Effects
 
@@ -134,9 +121,7 @@ while_loop_effect = {
 }
 ```
 
-The engine hard-caps at **1000 iterations** — this is not configurable. `max_iterations` is **not** a valid key and is silently ignored. Design loops so the realistic worst case stays well below 1000.
-
----
+Engine hard-caps at **1000 iterations** (not configurable). `max_iterations` is **not** a valid key and is silently ignored. Design loops so the realistic worst case stays well below 1000.
 
 ## Array / Variable Triggers
 
@@ -182,15 +167,11 @@ Compare values: `less_than`, `less_than_or_equals`, `greater_than`, `greater_tha
 - `is_in_array = { my_array = 42 }` — check membership
 - `var:my_var = { exists = yes }` — check if country in variable actually exists in-game
 
----
-
 ## Dynamic Variables (Read-Only)
 
-Computed by the game engine. Full list in `resources/documentation/dynamic_variables_documentation.md` or on the [Paradox Wiki — Game variables](https://hoi4.paradoxwikis.com/Data_structures#Game_variables).
+Computed by the engine. Full list in `resources/documentation/dynamic_variables_documentation.md` or the [Paradox Wiki — Game variables](https://hoi4.paradoxwikis.com/Data_structures#Game_variables).
 
 Common: `global.countries`, `global.majors`, `global.states`, `global.year`, `global.threat`, `num_of_civilian_factories`, `num_of_military_factories`, `stability`, `war_support`, `political_power`, `manpower`, `faction_members`, `allies`, `subjects`.
-
----
 
 ## Built-in Game Arrays
 
@@ -237,7 +218,7 @@ Engine-provided scope arrays. Usable anywhere an array name is accepted: `target
 
 ### Usage
 
-**For `target_array` on decisions** — these are the canonical way to scope a targeted decision to a narrow, engine-maintained set of countries. Prefer these over `target_array = global.countries` + a filter trigger, which iterates every country in the game daily.
+**For `target_array` on decisions** — the canonical way to scope a targeted decision to a narrow, engine-maintained set of countries. Prefer these over `target_array = global.countries` + a filter trigger, which iterates every country in the game daily.
 
 ```
 # Good — iterates only current subjects, target_trigger filters within them
@@ -268,11 +249,9 @@ any_of_scopes = {
 }
 ```
 
----
-
 ## Script Collections
 
-Collections are sets of game objects that support chained operators for filtering and expansion — more efficient than manual array loops for many use cases.
+Sets of game objects supporting chained operators for filtering and expansion — more efficient than manual array loops for many use cases.
 
 ### Structure
 
@@ -316,13 +295,9 @@ my_collection = game:all_states   # equivalent to { input = game:all_states }
 
 For full collection docs, see `resources/documentation/script_collection_input.md` and `script_collection_operator.md`.
 
----
-
 ## Script Constants
 
 Reusable constants usable across all script files (unlike file-local `@` macros). No runtime cost. Usage: `constant:numeric_constants.pi`. See `resources/documentation/script_concept_documentation.md`.
-
----
 
 ## Formatted Localization
 
