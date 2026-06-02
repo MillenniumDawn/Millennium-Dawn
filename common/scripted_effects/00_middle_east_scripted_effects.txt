@@ -1615,7 +1615,7 @@ on_weekly_gcc_dominant_member_check = {
 mb_refresh_relations_effect = {
 	if = {
 		limit = { is_in_array = { global.possible_muslim_brotherhood_nation = THIS.id } }
-		save_scope_as = mb_origin
+		save_event_target_as = mb_origin
 		# Became MB — strip stale anti-MB state from when it was a suppressor
 		if = {
 			limit = {
@@ -1628,10 +1628,10 @@ mb_refresh_relations_effect = {
 				value = v
 				var:v = {
 					if = {
-						limit = { NOT = { is_same_country_as = scope:mb_origin } }
-						remove_opinion_modifier = { target = scope:mb_origin modifier = MB_branded_terrorist }
-						remove_opinion_modifier = { target = scope:mb_origin modifier = MB_counter_bloc }
-						scope:mb_origin = { remove_opinion_modifier = { target = PREV modifier = MB_counter_bloc } }
+						limit = { NOT = { tag = event_target:mb_origin } }
+						remove_opinion_modifier = { target = event_target:mb_origin modifier = MB_branded_terrorist }
+						remove_opinion_modifier = { target = event_target:mb_origin modifier = MB_counter_bloc }
+						event_target:mb_origin = { remove_opinion_modifier = { target = PREV modifier = MB_counter_bloc } }
 					}
 				}
 			}
@@ -1643,12 +1643,12 @@ mb_refresh_relations_effect = {
 				value = v
 				var:v = {
 					if = {
-						limit = { NOT = { is_same_country_as = scope:mb_origin } }
+						limit = { NOT = { tag = event_target:mb_origin } }
 						# It is now MB, so it can no longer be a crackdown patron or its target
-						remove_opinion_modifier = { target = scope:mb_origin modifier = MB_crackdown_patron }
-						scope:mb_origin = { remove_opinion_modifier = { target = PREV modifier = MB_crackdown_patron } }
+						remove_opinion_modifier = { target = event_target:mb_origin modifier = MB_crackdown_patron }
+						event_target:mb_origin = { remove_opinion_modifier = { target = PREV modifier = MB_crackdown_patron } }
 						# Repression-funding modifiers v held against it-as-patron are stale
-						remove_opinion_modifier = { target = scope:mb_origin modifier = MB_funding_repression }
+						remove_opinion_modifier = { target = event_target:mb_origin modifier = MB_funding_repression }
 					}
 				}
 			}
@@ -1668,14 +1668,14 @@ mb_refresh_relations_effect = {
 				value = v
 				var:v = {
 					if = {
-						limit = { NOT = { is_same_country_as = scope:mb_origin } }
+						limit = { NOT = { tag = event_target:mb_origin } }
 						# Bloc-solidarity and sponsor-of-network modifiers are stale once it is no longer MB
-						remove_opinion_modifier = { target = scope:mb_origin modifier = MB_solidarity }
-						scope:mb_origin = { remove_opinion_modifier = { target = PREV modifier = MB_solidarity } }
-						remove_opinion_modifier = { target = scope:mb_origin modifier = MB_sponsored_network }
-						scope:mb_origin = { remove_opinion_modifier = { target = PREV modifier = MB_sponsored_network } }
+						remove_opinion_modifier = { target = event_target:mb_origin modifier = MB_solidarity }
+						event_target:mb_origin = { remove_opinion_modifier = { target = PREV modifier = MB_solidarity } }
+						remove_opinion_modifier = { target = event_target:mb_origin modifier = MB_sponsored_network }
+						event_target:mb_origin = { remove_opinion_modifier = { target = PREV modifier = MB_sponsored_network } }
 						# Subversion-funding modifiers v held against it-as-sponsor are stale
-						remove_opinion_modifier = { target = scope:mb_origin modifier = MB_funding_subversion }
+						remove_opinion_modifier = { target = event_target:mb_origin modifier = MB_funding_subversion }
 					}
 				}
 			}
@@ -1685,16 +1685,16 @@ mb_refresh_relations_effect = {
 			value = v
 			var:v = {
 				if = {
-					limit = { NOT = { is_same_country_as = scope:mb_origin } }
-					remove_opinion_modifier = { target = scope:mb_origin modifier = muslim_brotherhood_relations }
-					scope:mb_origin = { remove_opinion_modifier = { target = PREV modifier = muslim_brotherhood_relations } }
+					limit = { NOT = { tag = event_target:mb_origin } }
+					remove_opinion_modifier = { target = event_target:mb_origin modifier = muslim_brotherhood_relations }
+					event_target:mb_origin = { remove_opinion_modifier = { target = PREV modifier = muslim_brotherhood_relations } }
 					if = {
 						limit = {
 							is_muslim_brotherhood = yes
-							scope:mb_origin = { is_muslim_brotherhood = yes }
+							event_target:mb_origin = { is_muslim_brotherhood = yes }
 						}
-						add_opinion_modifier = { target = scope:mb_origin modifier = muslim_brotherhood_relations }
-						reverse_add_opinion_modifier = { target = scope:mb_origin modifier = muslim_brotherhood_relations }
+						add_opinion_modifier = { target = event_target:mb_origin modifier = muslim_brotherhood_relations }
+						reverse_add_opinion_modifier = { target = event_target:mb_origin modifier = muslim_brotherhood_relations }
 					}
 				}
 			}
@@ -1704,7 +1704,7 @@ mb_refresh_relations_effect = {
 
 # Entry scope (saved as mb_origin) = country adding the crackdown idea
 mb_apply_crackdown_opinions_effect = {
-	save_scope_as = mb_origin
+	save_event_target_as = mb_origin
 	set_temp_variable = { temp_opinion = -8 }
 	change_the_ulema_opinion = yes
 	set_temp_variable = { temp_opinion = 5 }
@@ -1715,13 +1715,13 @@ mb_apply_crackdown_opinions_effect = {
 		var:v = {
 			if = {
 				limit = {
-					NOT = { is_same_country_as = scope:mb_origin }
+					NOT = { tag = event_target:mb_origin }
 					is_muslim_brotherhood = yes
 				}
-				scope:mb_origin = {
+				event_target:mb_origin = {
 					add_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood }
 				}
-				add_opinion_modifier = { target = scope:mb_origin modifier = is_muslim_brotherhood_negative }
+				add_opinion_modifier = { target = event_target:mb_origin modifier = is_muslim_brotherhood_negative }
 			}
 		}
 	}
@@ -1730,21 +1730,21 @@ mb_apply_crackdown_opinions_effect = {
 		value = v
 		var:v = {
 			if = {
-				limit = { NOT = { is_same_country_as = scope:mb_origin } }
-				add_opinion_modifier = { target = scope:mb_origin modifier = is_cracking_down_on_muslim_brotherhood_positive }
-				scope:mb_origin = {
+				limit = { NOT = { tag = event_target:mb_origin } }
+				add_opinion_modifier = { target = event_target:mb_origin modifier = is_cracking_down_on_muslim_brotherhood_positive }
+				event_target:mb_origin = {
 					add_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood_positive }
 				}
 			}
 		}
 	}
-	scope:mb_origin = { add_to_array = { global.crackdown_countries = THIS.id } }
+	event_target:mb_origin = { add_to_array = { global.crackdown_countries = THIS.id } }
 }
 
 # Entry scope (saved as mb_origin) = country removing the crackdown idea
 mb_remove_crackdown_opinions_effect = {
-	save_scope_as = mb_origin
-	scope:mb_origin = { remove_from_array = { global.crackdown_countries = THIS.id } }
+	save_event_target_as = mb_origin
+	event_target:mb_origin = { remove_from_array = { global.crackdown_countries = THIS.id } }
 	set_temp_variable = { temp_opinion = 8 }
 	change_the_ulema_opinion = yes
 	set_temp_variable = { temp_opinion = -5 }
@@ -1754,11 +1754,11 @@ mb_remove_crackdown_opinions_effect = {
 		value = v
 		var:v = {
 			if = {
-				limit = { NOT = { is_same_country_as = scope:mb_origin } }
-				scope:mb_origin = {
+				limit = { NOT = { tag = event_target:mb_origin } }
+				event_target:mb_origin = {
 					remove_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood }
 				}
-				remove_opinion_modifier = { target = scope:mb_origin modifier = is_muslim_brotherhood_negative }
+				remove_opinion_modifier = { target = event_target:mb_origin modifier = is_muslim_brotherhood_negative }
 			}
 		}
 	}
@@ -1766,8 +1766,8 @@ mb_remove_crackdown_opinions_effect = {
 		array = global.crackdown_countries
 		value = v
 		var:v = {
-			remove_opinion_modifier = { target = scope:mb_origin modifier = is_cracking_down_on_muslim_brotherhood_positive }
-			scope:mb_origin = {
+			remove_opinion_modifier = { target = event_target:mb_origin modifier = is_cracking_down_on_muslim_brotherhood_positive }
+			event_target:mb_origin = {
 				remove_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood_positive }
 			}
 		}
